@@ -1,6 +1,6 @@
 import type { FieldPath, FieldValues, UseFormReturn } from "react-hook-form";
 
-import type { EntityRow } from "@/client/src/lib/entityRequests.ts";
+import type { LinkedEntity } from "./entityFields.ts";
 
 /**
  * What a form's columns read past their description, of the entity it edits: the entities it links to and grants (so
@@ -11,7 +11,7 @@ export interface ColumnContext {
   /** Labels of the entities it grants that a search may not list (an inherited level's feats), by `grantKey` */
   grantLabels?: ReadonlyMap<string, string>;
   /** The entities its links may already name (the entity's own: a feat's pools), so they show by name */
-  knownLinks?: EntityRow[];
+  knownLinks?: LinkedEntity[];
   /** The columns it keeps as they are (a duplicate's type, slot and template, copied from its source) */
   locked?: readonly string[];
   /** A new entity's form (a create dialog's), which sends every field and needs what a new one needs */

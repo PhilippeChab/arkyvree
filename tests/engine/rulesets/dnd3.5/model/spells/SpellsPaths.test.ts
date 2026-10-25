@@ -15,12 +15,9 @@ describe("SpellsPaths.generateSpellPaths", () => {
     const rulesetData = await RulesetViews.getData((await Rulesets.findOne(db, { id: rulesetId }))!);
     const fields = Object.keys(rulesetData.valuesOf(enthrall.id).fields);
     const operatorsOf = (kind: "modifier" | "requirement") =>
-      SpellsPaths.generateSpellPaths(
-        [{ ...enthrall, spellsAptitudesInRules: [], fields }],
-        new Map(),
-        new Set(),
-        kind,
-      ).find((path) => path.path === `spells.enthrall.fields.${SPELL_COMPONENT}`)?.operators;
+      SpellsPaths.generateSpellPaths([{ ...enthrall, fields, lists: [] }], new Map(), new Set(), kind).find(
+        (path) => path.path === `spells.enthrall.fields.${SPELL_COMPONENT}`,
+      )?.operators;
     expect([operatorsOf("requirement"), operatorsOf("modifier")]).toEqual([
       ["contains", "not_contains"],
       ["add", "subtract"],

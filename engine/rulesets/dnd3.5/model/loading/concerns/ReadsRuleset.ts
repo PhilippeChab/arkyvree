@@ -30,8 +30,8 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
 
     /**
      * Ruleset-scoped rows read from the composed cache's pre-built Maps: the character's languages, class levels and
-     * their saves, and its classes and their skills, once each. languagesById is the view's (`RulesetData.byId`): stored
-     * pre-COW language ids auto-resolve on lookup.
+     * their saves (their `baseBonus` links), and its classes and their skills (their `classSkill` links), once each.
+     * languagesById is the view's (`RulesetData.byId`): stored pre-COW language ids auto-resolve on lookup.
      */
     protected readCachedRows(rows: CharacterRows, rulesetData: RulesetData, klassLevelIds: string[]) {
       const dnd35 = Dnd35View.of(rulesetData);
@@ -40,9 +40,9 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
       return {
         languages: rows.links.languages.flatMap((l) => dnd35.languagesById.get(l.languageId) ?? []),
         klassLevelsRaw,
-        klassLevelSaves: klassLevelIds.flatMap((id) => dnd35.klassLevelSavesByKlassLevel.get(id) ?? []),
+        klassLevelSaves: klassLevelIds.flatMap((id) => dnd35.baseBonusesOf(id)),
         klasses: klassEntityIds.flatMap((id) => dnd35.klassesById.get(id) ?? []),
-        klassSkills: klassEntityIds.flatMap((id) => dnd35.klassSkillsByKlass.get(id) ?? []),
+        klassSkills: klassEntityIds.flatMap((id) => dnd35.classSkillsOf(id)),
         klassEntityIds,
       };
     }

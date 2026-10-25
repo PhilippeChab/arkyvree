@@ -1,7 +1,7 @@
 /**
  * The parts of an entity a kind may have past its own row, each bound to the entity as the view has it: the entities it
- * owns (a class's levels), the join it edits (a class's skills), its progression (its owned entities' at once) and its
- * tables. A kind that has none of one has it refused as not found (`RulesetEngine`'s `part`).
+ * owns (a class's levels), the links of a role it edits one at a time (a class's skills), its progression (its owned
+ * entities' at once) and its tables. A kind that has none of one has it refused as not found (`RulesetEngine`'s `part`).
  */
 
 import type { EntityForm } from "@/engine/core/fields/index.ts";
@@ -15,7 +15,10 @@ import type {
   ProgressionPlan,
 } from "@/engine/core/module/index.ts";
 
-/** The links an entity edits through a join (a class's skills): described, and what adding or removing one writes. */
+/**
+ * The links of a role an entity edits one at a time (a class's skills): described, and what adding or removing one
+ * writes.
+ */
 export interface EntityLinks {
   describe(): unknown;
   planAdd(toId: string): LinkAddPlan;

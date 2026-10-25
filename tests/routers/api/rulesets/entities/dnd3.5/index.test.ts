@@ -315,7 +315,7 @@ describe("rulesets entities by kind", () => {
     const visited: string[] = [];
     for (const [type, columns] of Object.entries(rules["Dungeons & Dragons: 3.5"].columns)) {
       for (const column of columns ?? []) {
-        if ((column.input !== "links" && column.input !== "leveledLinks") || !column.links) continue;
+        if ((column.input !== "links" && column.input !== "leveledLinks") || !column.role) continue;
         // An entity of its kind in a pool: its read holds its link to it, its aptitude named, its level where it has one
         visited.push(type);
         expect(Object.keys(pools)).toContain(type);
@@ -325,12 +325,14 @@ describe("rulesets entities by kind", () => {
         const read: Record<string, unknown> = await expectOk(
           entity.$get({ param: { id, entityType, entityId: listed.id } }),
         );
-        expect({ type, links: read[column.links] }).toMatchObject({
+        expect({ type, links: read.links }).toMatchObject({
           type,
           links: expect.arrayContaining([
             expect.objectContaining({
-              aptitudesInRule: expect.objectContaining({ id: pools[type], name: expect.any(String) }),
-              ...(column.input === "leveledLinks" && { level: expect.any(Number) }),
+              role: column.role,
+              toId: pools[type],
+              toName: expect.any(String),
+              ...(column.input === "leveledLinks" && { tier: expect.any(Number) }),
             }),
           ]),
         });

@@ -6,18 +6,11 @@ import type { Aptitude, Feat, RulesetAbility, Skill } from "@/engine/rulesets/dn
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import {
-  Entities,
-  EntitySnapshots,
-  Joins,
-  Modifiers,
-  Picks,
-  Requirements,
-  Rulesets,
-} from "@/server/repositories/index.ts";
+import { Entities, EntitySnapshots, Modifiers, Picks, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createSeedCharacter } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { levelUpPlan } from "@/tests/support/dnd3.5/levelPlans.ts";
+import { findLists } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { getStepOptions } from "@/tests/support/levels.ts";
 import {
@@ -245,9 +238,7 @@ describe("Skill Focus", () => {
     const feat = await findFeat(ruleset.id, "Skill Focus: Knowledge (Arcana)");
 
     expect(feat.description).toBe("You get a +3 bonus on all Knowledge (Arcana) checks.");
-    expect(
-      await Joins.findMany<{ aptitudeId: string; featId: string }>(db, { join: "feats_aptitudes", fromIds: [feat.id] }),
-    ).toMatchObject([{ aptitudeId: general!.id }]);
+    expect(await findLists(db, [feat.id])).toMatchObject([{ toId: general!.id }]);
     expect(await Modifiers.findMany(db, { sourceIds: [feat.id], sourceType: "feats" })).toMatchObject([
       { target: "skills.knowledgearcana.misc", operator: "add", value: "3", valueType: "number" },
     ]);
@@ -326,9 +317,7 @@ test("a fork's new skills and spells put their feats in the General aptitude it 
   for (const name of ["Skill Focus: Swim", "Spell Focus: Evocation", "Greater Spell Focus: Evocation"]) {
     const feat = await findFeat(fork.id, name);
     expect(feat.generated).toBe(true);
-    expect(
-      await Joins.findMany<{ aptitudeId: string; featId: string }>(db, { join: "feats_aptitudes", fromIds: [feat.id] }),
-    ).toMatchObject([{ aptitudeId: parent.general!.id }]);
+    expect(await findLists(db, [feat.id])).toMatchObject([{ toId: parent.general!.id }]);
   }
 });
 

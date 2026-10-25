@@ -3,7 +3,7 @@ import type { Constructor } from "@/lib/mixins.ts";
 import { EntityEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { Joins, type RulesetEntityType } from "@/server/repositories/index.ts";
+import { EntityLinks, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { hasCharacterPicks } from "@/server/services/rulesets/characterPicks.ts";
@@ -11,15 +11,15 @@ import { getActivityName } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /**
- * The links an entity edits through a join (a class's skills), as its kind's rules answer them
+ * The links of a role an entity's page edits one at a time (a class's skills), as its kind's rules answer them
  * (`Engine.for(scope).links(type, ownerId)`): their list, and their adds and removals, each written on the entity the
- * view's resolves to (its copy, made on its first edit) and recorded as the join's activity.
+ * view's resolves to (its copy, made on its first edit) and recorded as an activity named for their role.
  */
 export function Links<B extends Constructor>(Base: B) {
   abstract class WithLinks extends Base {
     /**
-     * A link from an entity (`ownerId`) to another (`targetId`) through the join it edits: the entity copied when it's
-     * inherited (the new row would otherwise name the source ruleset's). Answers the join's row.
+     * A link from an entity (`ownerId`) to another (`targetId`), of the role it edits: the entity copied when it's
+     * inherited (the new link would otherwise be the source ruleset's). Answers the link written.
      */
     async addEntityLink(
       session: Session,
@@ -37,17 +37,17 @@ export function Links<B extends Constructor>(Base: B) {
             const plan = Engine.for(scope).links(type, ownerId).planAdd(targetId);
 
             const { id: fromId } = await new EntityEdit(ruleset).cowToEdit(tx, type, plan.owner);
-            const [row] = await Joins.createMany<Record<string, unknown>>(tx, plan.join, [plan.row], { fromId });
+            const [link] = await EntityLinks.createMany(tx, [{ ...plan.link, fromId, fromType: type }]);
 
             await createActivityWithNotifications(tx, {
               userId: session.userId,
               targetId: fromId,
-              targetTable: plan.join,
-              type: `add${getActivityName(plan.join)}`,
+              targetTable: plan.link.role,
+              type: `add${getActivityName(plan.link.role)}`,
               data: plan.activity,
             });
 
-            return row;
+            return link;
           }),
       );
       RulesetViews.invalidate(rulesetId);
@@ -62,7 +62,7 @@ export function Links<B extends Constructor>(Base: B) {
     /**
      * A link's removal from an entity (`ownerId`) to another (`targetId`): refused while a character names the entity,
      * which its link may count for, the entity copied when it's inherited (the removal would otherwise remove the
-     * source ruleset's). Answers the join's row it removed.
+     * source ruleset's). Answers the link it removed.
      */
     async removeEntityLink(
       session: Session,
@@ -81,19 +81,19 @@ export function Links<B extends Constructor>(Base: B) {
             const plan = Engine.for(scope).links(type, ownerId).planRemove(targetId);
 
             const { id: fromId } = await new EntityEdit(ruleset).cowToEdit(tx, type, plan.owner);
-            const [row] = await Joins.delete<Record<string, unknown>>(tx, { join: plan.join, fromId, toId: plan.toId });
+            const [link] = await EntityLinks.delete(tx, { fromId, role: plan.role, toId: plan.toId });
             // Another removal took it since the view was read
-            if (!row) throw new ConflictError(STALE_ENTITY_MESSAGE);
+            if (!link) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
             await createActivityWithNotifications(tx, {
               userId: session.userId,
               targetId: fromId,
-              targetTable: plan.join,
-              type: `remove${getActivityName(plan.join)}`,
+              targetTable: plan.role,
+              type: `remove${getActivityName(plan.role)}`,
               data: plan.activity,
             });
 
-            return row;
+            return link;
           }),
       );
       RulesetViews.invalidate(rulesetId);

@@ -4,9 +4,10 @@ import Dnd35FieldDefs from "./Dnd35FieldDefs.ts";
 
 /**
  * How 3.5 stores its data in the generic tables: its kinds' columns (a class's hit die is its `CLASS_HD` field, a
- * save's ability its `keyAbility` link), its joins (a feat's pools are its `listedIn` links), its characters' (a race is
- * a `race` link, a level an advancement, its feats `feats` picks), and its registries' rows, which migration 0080 wrote
- * (`tests/database/dnd3.5/registries.test.ts` checks the database holds them).
+ * save's ability its `keyAbility` link), its characters' (a race is a `race` link, a level an advancement, its feats
+ * `feats` picks), and its registries' rows, which migration 0080 wrote (`tests/database/dnd3.5/registries.test.ts`
+ * checks the database holds them): its link roles among them, by which its entities' links are read (a feat's pools
+ * are its `listedIn` links, a class's skills its `classSkill` links).
  */
 export const DND35_STORAGE: StorageDeclaration = {
   kinds: {
@@ -19,7 +20,6 @@ export const DND35_STORAGE: StorageDeclaration = {
         selectable: { kind: "flag", field: "FEAT_SELECTABLE", default: true },
         generated: { kind: "flag", field: "FEAT_GENERATED", default: false },
       },
-      lists: { featsAptitudesInRules: { join: "feats_aptitudes", target: "aptitudesInRule" } },
       namesakes: "reprints",
     },
     items: {
@@ -44,6 +44,7 @@ export const DND35_STORAGE: StorageDeclaration = {
         parentId: { kind: "link", role: "subclassOf" },
         kind: { kind: "partition", default: "pc" },
       },
+      editedLinks: "classSkill",
     },
     class_levels: { customizable: true, columns: { klassId: { kind: "owner" }, level: { kind: "position" } } },
     languages: { columns: { type: { kind: "text", field: "LANGUAGE_TYPE" } } },
@@ -54,7 +55,6 @@ export const DND35_STORAGE: StorageDeclaration = {
         saveId: { kind: "link", role: "resistedBy" },
         saveEffect: { kind: "text", field: "SPELL_SAVE_EFFECT" },
       },
-      lists: { spellsAptitudesInRules: { join: "spells_aptitudes", target: "aptitudesInRule" } },
       namesakes: "reprints",
     },
     races: {
@@ -68,45 +68,6 @@ export const DND35_STORAGE: StorageDeclaration = {
     },
     saves: { columns: { abilityId: { kind: "link", role: "keyAbility" } } },
     skills: { columns: { primaryAbilityId: { kind: "link", role: "keyAbility" } } },
-  },
-  joins: {
-    feats_aptitudes: {
-      role: "listedIn",
-      from: "feats",
-      to: "aptitudes",
-      columns: { featId: "from", aptitudeId: "to" },
-    },
-    spells_aptitudes: {
-      role: "listedIn",
-      from: "spells",
-      to: "aptitudes",
-      columns: { spellId: "from", aptitudeId: "to", level: "tier" },
-    },
-    class_skills: {
-      role: "classSkill",
-      from: "classes",
-      to: "skills",
-      columns: { klassId: "from", skillId: "to" },
-      edited: true,
-    },
-    class_level_feats: {
-      role: "grants",
-      from: "class_levels",
-      to: "feats",
-      columns: { id: "id", klassLevelId: "from", featId: "to", aptitudeId: "via", free: "free" },
-    },
-    class_level_spells: {
-      role: "grants",
-      from: "class_levels",
-      to: "spells",
-      columns: { klassLevelId: "from", spellId: "to", aptitudeId: "via", free: "free" },
-    },
-    class_level_saves: {
-      role: "baseBonus",
-      from: "class_levels",
-      to: "saves",
-      columns: { klassLevelId: "from", saveId: "to", base: "amount" },
-    },
   },
   character: {
     columns: {

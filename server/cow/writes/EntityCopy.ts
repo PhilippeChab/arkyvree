@@ -1,12 +1,13 @@
 import type { Db } from "@/drizzle/database.ts";
-import { type CowData, Engine, type EntityCustomizations, type RulesetSources } from "@/engine/index.ts";
+import { type CowData, Engine, type EntityCustomizations, type RulesetSources, type ViewLink } from "@/engine/index.ts";
 import CowDataReader from "@/server/cow/views/CowDataReader.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
   CUSTOMIZABLE_TYPES,
   Entities,
+  EntityLinks,
   EntitySnapshots,
-  Joins,
+  type NewLink,
   type RulesetEntityType,
 } from "@/server/repositories/index.ts";
 
@@ -33,6 +34,25 @@ export default class EntityCopy {
     this.entityId = entityId;
     this.ruleset = ruleset;
     this.sourceType = CUSTOMIZABLE_TYPES.includes(entityType) ? entityType : undefined;
+  }
+
+  /**
+   * A link as a copy of its entity holds it (`link`, from an entity of a kind, `type`): from the copy (`fromId`), the
+   * entities it names resolved (`resolve`: to what stands for them), its other parts kept; a new link, no id of its own.
+   */
+  private static copyOf(link: ViewLink, fromId: string, type: string, resolve: (id: string) => string): NewLink {
+    const { amount, free, role, tier, toId, toType, viaId } = link;
+    return {
+      fromId,
+      fromType: type,
+      role,
+      toId: resolve(toId),
+      toType,
+      viaId: viaId === null ? null : resolve(viaId),
+      tier,
+      amount,
+      free,
+    };
   }
 
   /**
@@ -130,30 +150,27 @@ export default class EntityCopy {
     return newEntity;
   }
 
-  /** Copies the join rows from entities of a kind (`ids`: each one's copy, by its id) onto their copies. */
-  private async copyJoins(tx: Db, type: string, ids: ReadonlyMap<string, string>, resolve: (id: string) => string) {
-    const storage = Engine.storage();
-    for (const join of storage.joinNames()) {
-      if (storage.join(join).from !== type) continue;
-      const from = Object.keys(storage.join(join).columns).find((name) => storage.join(join).columns[name] === "from")!;
-      const rows = await Joins.findMany(tx, { join, fromIds: [...ids.keys()] });
-      await Joins.createIds(
-        tx,
-        join,
-        rows.map((row) => storage.joinCopyOf(join, row, ids.get(String(row[from]))!, resolve)),
-      );
-    }
+  /**
+   * Copies the links of the roles they hold many of from entities of a kind (`ids`: each one's copy, by its id) onto
+   * their copies, in their order.
+   */
+  private async copyLinks(tx: Db, type: string, ids: ReadonlyMap<string, string>, resolve: (id: string) => string) {
+    const links = await EntityLinks.findMany(tx, { fromIds: [...ids.keys()] });
+    await EntityLinks.createMany(
+      tx,
+      links.map((link) => EntityCopy.copyOf(link, ids.get(link.fromId)!, type, resolve)),
+    );
   }
 
   /**
-   * Copies the join rows of every join from the entity's kind (a feat's pools, a class's skills) onto the copy, then
-   * the entities it owns (a class's levels), with their customizations and their join rows (a level's grants and
-   * saves). Each names what the copy's CowData resolves it to (true overrides and sibling-loser aliases): a copy's
-   * references point at the canonical winner, never at a stale loser.
+   * Copies the entity's links of the roles it holds many of (a feat's pools, a class's skills) onto the copy, then the
+   * entities it owns (a class's levels), with their customizations and their links (a level's grants and saves). Each
+   * names what the copy's CowData resolves it to (true overrides and sibling-loser aliases): a copy's references point
+   * at the canonical winner, never at a stale loser.
    */
   private async copyRelationships(tx: Db, targetEntityId: string, cow: CowData) {
     const resolve = (id: string) => cow.resolve(id);
-    await this.copyJoins(tx, this.entityType, new Map([[this.entityId, targetEntityId]]), resolve);
+    await this.copyLinks(tx, this.entityType, new Map([[this.entityId, targetEntityId]]), resolve);
     const storage = Engine.storage();
     for (const { ownerType, type } of storage.registries().entityTypes) {
       if (ownerType !== this.entityType) continue;
@@ -174,45 +191,35 @@ export default class EntityCopy {
         const own = customizations.get(id);
         if (own) await CustomizationCopies.copy(tx, copyId, type, own, this.copiedIds);
       }
-      await this.copyJoins(tx, type, ids, resolve);
+      await this.copyLinks(tx, type, ids, resolve);
     }
   }
 
   /**
-   * Merges sibling list links of a feat or a spell (`copyOnWrite().mergeListLinks`), each to the list that stands for
-   * it, as the copy's own (`copyRelationships`): the losers' links, read by their stored ids.
+   * Merges sibling links of the roles that merge (a feat's or a spell's lists: `copyOnWrite().mergeLinks`), each to the
+   * target that stands for it, as the copy's own (`copyRelationships`): the losers' links, read by their stored ids.
    */
-  private async mergeListLinks(tx: Db, targetEntityId: string, siblingIds: string[], cow: CowData) {
-    const storage = Engine.storage();
-    const list = storage.listRowsOf(this.entityType, targetEntityId, []);
-    if (!list) return;
+  private async mergeLinks(tx: Db, targetEntityId: string, siblingIds: string[], cow: CowData) {
     const resolve = (id: string) => cow.resolve(id);
-    const own = storage.listLinksOf(
-      this.entityType,
-      await Joins.findMany(tx, { join: list.join, fromIds: [targetEntityId] }),
-    );
-    const siblingLinks = Map.groupBy(
-      storage.listLinksOf(this.entityType, await Joins.findMany(tx, { join: list.join, fromIds: siblingIds })),
-      (link) => link.fromId,
-    );
-    const links = Engine.copyOnWrite().mergeListLinks(
+    const own = await EntityLinks.findMany(tx, { fromIds: [targetEntityId] });
+    const siblingLinks = Map.groupBy(await EntityLinks.findMany(tx, { fromIds: siblingIds }), (link) => link.fromId);
+    const links = Engine.copyOnWrite().mergeLinks(
       own,
       siblingIds.map((id) => siblingLinks.get(id) ?? []),
       resolve,
-    );
-    const rows = storage.listRowsOf(
       this.entityType,
-      targetEntityId,
-      links.map((link) => ({ ...link, listId: resolve(link.listId) })),
-    )!.rows;
-    await Joins.createIds(tx, list.join, rows);
+    );
+    await EntityLinks.createMany(
+      tx,
+      links.map((link) => EntityCopy.copyOf(link, targetEntityId, this.entityType, resolve)),
+    );
   }
 
   /**
    * Merge sibling data into the copy. When multiple extensions COW the same base entity, the "winner" is copied first.
    * This merges what its siblings add, by the rules a ruleset's view merges them by (`siblingMerge.ts`), so the child
    * fork starts from the merged view: their modifiers (each with its requirements) and requirements against the
-   * winner's (`own`, which the copy holds), its stored values with theirs merged in, then their aptitude links. Each
+   * winner's (`own`, which the copy holds), its stored values with theirs merged in, then their links of the roles that merge (a feat's pools). Each
    * copied row's id is recorded.
    */
   private async mergeSiblings(
@@ -227,6 +234,6 @@ export default class EntityCopy {
     const siblings = siblingIds.flatMap((id) => siblingCusts.get(id) ?? []);
     const merged = Engine.copyOnWrite().mergeCustomizations(own, siblings, targetEntityId, this.entityType);
     await CustomizationCopies.copy(tx, targetEntityId, this.entityType, merged, this.copiedIds);
-    await this.mergeListLinks(tx, targetEntityId, siblingIds, cow);
+    await this.mergeLinks(tx, targetEntityId, siblingIds, cow);
   }
 }

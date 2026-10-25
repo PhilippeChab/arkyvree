@@ -42,7 +42,7 @@ export default abstract class GeneratedFeats {
     return feats.map(({ description, fields, modifiers, name: featName, requirements }) => ({
       columns: { description, generated: true, name: featName },
       fields,
-      links: [{ listId: aptitudeId }],
+      links: [{ links: [{ toId: aptitudeId }], role: "listedIn", toType: "aptitudes" }],
       modifiers,
       requirements,
       type: "feats",

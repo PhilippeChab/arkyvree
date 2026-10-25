@@ -113,10 +113,10 @@ export default class SpellLists {
     if (this.built.featListSpells) return this.built.featListSpells;
     const featListSpells = new Map([...this.featListIds].map((id) => [id, new Map<number, Set<string>>()]));
     for (const spell of this.dnd35.spells) {
-      for (const { aptitudeId, level } of spell.spellsAptitudesInRules) {
-        const levels = featListSpells.get(aptitudeId);
-        if (level == null || !levels) continue;
-        levels.set(level, (levels.get(level) ?? new Set<string>()).add(spell.id));
+      for (const { tier, toId } of this.dnd35.listLinksOf(spell.id)) {
+        const levels = featListSpells.get(toId);
+        if (tier == null || !levels) continue;
+        levels.set(tier, (levels.get(tier) ?? new Set<string>()).add(spell.id));
       }
     }
     return (this.built.featListSpells = featListSpells);
@@ -130,7 +130,7 @@ export default class SpellLists {
     if (this.built.leveledAptitudeIds) return this.built.leveledAptitudeIds;
     const leveledAptitudeIds = new Set([...this.classListIds, ...this.featListIds]);
     for (const spell of this.dnd35.spells)
-      for (const link of spell.spellsAptitudesInRules) if (link.level != null) leveledAptitudeIds.add(link.aptitudeId);
+      for (const link of this.dnd35.listLinksOf(spell.id)) if (link.tier != null) leveledAptitudeIds.add(link.toId);
     return (this.built.leveledAptitudeIds = leveledAptitudeIds);
   }
 

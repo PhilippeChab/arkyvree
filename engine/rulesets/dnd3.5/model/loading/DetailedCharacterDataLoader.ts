@@ -1,19 +1,12 @@
 import { CharacterDataLoader, type LoadedCharacter, type ModifierSource } from "@/engine/core/character/index.ts";
 import type { CharacterRows } from "@/engine/core/module/index.ts";
-import { type RulesetView } from "@/engine/core/view/index.ts";
+import { type RulesetView, type ViewLink } from "@/engine/core/view/index.ts";
 import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import type { AbilityIncrease } from "@/engine/rulesets/dnd3.5/levelUp/plans.ts";
 import SavedPicks, { type SavedPickRows } from "@/engine/rulesets/dnd3.5/levelUp/SavedPicks.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type {
-  CharacterLevel,
-  Klass,
-  KlassLevelSave,
-  KlassSkill,
-  Language,
-  Skill,
-} from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { CharacterLevel, Klass, Language, Skill } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { include } from "@/lib/mixins.ts";
 import type { Character } from "@/shared/relations.ts";
 import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
@@ -57,9 +50,11 @@ export interface LoadedCharacterData extends LoadedCharacter {
   klasses: Klass[];
   klassLevelFeatCountsByAptitudeId: Record<string, number>;
   klassLevels: CustomizedClassLevel[];
-  klassLevelSaves: KlassLevelSave[];
+  /** Its class levels' base bonuses to the saves: their `baseBonus` links. */
+  klassLevelSaves: readonly ViewLink[];
   klassLevelSpellCountsByAptitudeId: Record<string, number>;
-  klassSkills: KlassSkill[];
+  /** Its classes' class skills: their `classSkill` links. */
+  klassSkills: readonly ViewLink[];
   /** The languages it picked, as its rows store them. */
   languages: Language[];
   /** What its levels give it whatever its classes, by its ruleset's Settings: its general feats, its increases. */

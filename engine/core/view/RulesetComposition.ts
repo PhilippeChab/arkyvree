@@ -2,23 +2,15 @@ import type { CowData } from "@/engine/core/cow/index.ts";
 import { type DeclaredFields, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
-import type { Row } from "./rows.ts";
+import type { Row, ViewLink } from "./rows.ts";
 import RulesetData, { type KindValue, type RulesetLists } from "./RulesetData.ts";
 import SiblingMerge from "./SiblingMerge.ts";
 import SiblingRows from "./SiblingRows.ts";
 
-/** A list a kind's rows nest (a feat's pools): its links, each with its target's row. */
-interface ViewList {
-  /** The column its links name their entity by */
-  from: string;
-  /** The key its rows hold it under */
-  name: string;
-  /** The key a link holds its target's row under */
-  target: string;
-  /** The column a link names its target by */
-  to: string;
-  /** The kind its targets are */
-  toType: string;
+/** An entity's links of the roles it holds many of, in their order, and its kind (`type`). */
+interface HeldLinks {
+  links: readonly ViewLink[];
+  type: string;
 }
 
 /** A row of the view: its id, and its columns. */
@@ -28,18 +20,18 @@ type ViewRow = Row & { id: string };
 export interface RulesetRawData {
   /** Each kind's rows, by its type, an owned kind's by position and owner */
   entities: Record<string, ViewRow[]>;
-  /** Each join's rows, by its name, but those a kind's lists nest */
-  joins: Record<string, Row[]>;
   /**
    * Each kind's values kind-wide, by its type: each value of each field with the entities that hold it, in the order
    * those values were written
    */
   kindValues: ReadonlyMap<string, readonly KindValue[]>;
+  /** Each entity's links of the roles it holds many of, by its id: one that holds none is left out */
+  links: ReadonlyMap<string, HeldLinks>;
   /** Every modifier whose source is an entity in this ruleset — all sourceTypes. */
   modifiers: Modifier[];
   /** Every requirement row in this ruleset, including those attached to modifiers. */
   requirements: Requirement[];
-  /** Of the entities its lists name, those a link of a join with a tier points at */
+  /** Of its entities, those a link with a tier points at, from any ruleset's entity (a spell list at a level) */
   tieredIds: Set<string>;
   /**
    * Each owner's stored values (its entities', its own Settings), by its type then its id: one that holds none is left
@@ -50,38 +42,38 @@ export interface RulesetRawData {
 
 /**
  * What a ruleset's view is composed by, of its modules' storage declarations: each kind (its owner's kind and the
- * column naming it, an owned kind's; the lists its rows nest), and each join its kinds' lists don't nest (the kind it's
- * from, and the column naming it).
+ * column naming it, an owned kind's), and the links whose sibling copies' merge into their winner's (`unionLinks`, each
+ * by its role, from a kind to another: a feat's pools).
  */
 export interface ViewSchema {
-  joins: { from: string; fromColumn: string; name: string }[];
   /**
-   * Each kind, an owner before the kinds it owns; `tracked`: its visible ids read by another kind's or a join's;
-   * `customizable`: whether a user customizes its entities; `fields`: whether they hold fields of their own;
-   * `inherits`: the fields they read off another entity when they hold none, and the column naming it
+   * Each kind, an owner before the kinds it owns; `tracked`: its visible ids read by another kind's; `customizable`:
+   * whether a user customizes its entities; `fields`: whether they hold fields of their own; `inherits`: the fields
+   * they read off another entity when they hold none, and the column naming it
    */
   kinds: {
     customizable: boolean;
     fields: boolean;
     inherits?: { column: string; fields: ReadonlySet<string> };
-    lists: ViewList[];
     /** Its owner's kind, the column its row names its owner by, and the one it holds its position in it at */
     owner?: { column: string; position: string; type: string };
     tracked: boolean;
     type: string;
   }[];
+  unionLinks: { fromType: string; role: string; toType: string }[];
 }
 
 /**
  * A ruleset's view: its own rows and its source chain's (`chain`, the ruleset's first), composed by its copy-on-write
  * data. The copies' and siblings' exclusions apply, a sibling loser's customizations merge into its winner's, references
- * resolve to the winners, and every id-keyed map takes a stored id. An owned kind's rows follow their owners', and a
- * join's rows the entities they're from. Built on every read (`RulesetViews.getData`).
+ * resolve to the winners, and every id-keyed map takes a stored id. An owned kind's rows follow their owners', and an
+ * entity's links are composed the first time they're read (`composeLinks`). Built on every read
+ * (`RulesetViews.getData`).
  */
 export default class RulesetComposition {
   /**
    * `declared`: the fields its modules declare, which order its owners' values and merge a sibling's into its
-   * winner's; `schema`: what its modules declare of its kinds and joins; `labels`: what its module calls an entity of
+   * winner's; `schema`: what its modules declare of its kinds and links; `labels`: what its module calls an entity of
    * each kind.
    */
   constructor(
@@ -96,6 +88,7 @@ export default class RulesetComposition {
     this.cow = cow;
     this.declared = declared;
     this.schema = schema;
+    this.unionLinks = new Set(schema.unionLinks.map(({ fromType, role, toType }) => `${fromType} ${role} ${toType}`));
   }
 
   private readonly chain: RulesetRawData[];
@@ -110,31 +103,14 @@ export default class RulesetComposition {
 
   private readonly schema: ViewSchema;
 
-  /**
-   * Each sibling loser's links of a list (`list`, a kind's: `type`), by the loser, on its winner (their `from`), for the
-   * winner's links to merge: read from the raw chain, since compose leaves the losers out.
-   */
-  private collectSiblingLinks(type: string, list: ViewList) {
-    const links = new Map<string, Row[]>();
-    if (this.cow.siblingIds.size === 0) return links;
-    for (const raw of this.chain) {
-      for (const row of raw.entities[type] ?? []) {
-        const winnerId = this.cow.isOverridden(row.id) ? undefined : this.cow.getWinner(row.id);
-        if (!winnerId) continue;
-        links.set(
-          row.id,
-          (row[list.name] as Row[]).map((link) => ({ ...link, [list.from]: winnerId })),
-        );
-      }
-    }
-    return links;
-  }
+  /** The links whose sibling copies' merge into their winner's, each by its kind, its role and its target's kind. */
+  private readonly unionLinks: ReadonlySet<string>;
 
   /**
    * Each kind's rows, an owner's before the kinds it owns: an owned kind's rows whose owner the view shows (a copied
    * class's levels are overridden by its copy's, paired by `CowDataBuilder`, and a sibling loser's owner leaves its
-   * own out), and the visible ids another kind or a join reads. Then each join's rows of the entities it's from the
-   * view shows. Answers too the owned entities the view leaves out, whose customizations go with them.
+   * own out), and the visible ids another kind reads. Answers too the owned entities the view leaves out, whose
+   * customizations go with them.
    */
   private composeEntities() {
     const visibleIds = new Map<string, Set<string>>();
@@ -158,16 +134,7 @@ export default class RulesetComposition {
       if (tracked) visibleIds.set(type, new Set(rows.map((row) => row.id)));
       entities.set(type, this.cow.resolveRows(rows));
     }
-    const joins = new Map<string, Row[]>();
-    for (const { from, fromColumn, name } of this.schema.joins) {
-      const froms = visibleIds.get(from);
-      if (!froms) throw new Error(`The view composes ${name} without the visible ${from} it's from`);
-      const rows = this.chain.flatMap((raw) =>
-        (raw.joins[name] ?? []).filter((row) => froms.has(row[fromColumn] as string)),
-      );
-      joins.set(name, this.cow.resolveRows(rows));
-    }
-    return { entities, joins, leftOut };
+    return { entities, leftOut };
   }
 
   /**
@@ -202,26 +169,65 @@ export default class RulesetComposition {
       );
   }
 
+  /**
+   * An entity's links (`entityId`, one the view shows), as the view composes them: its own, then, of the roles that
+   * merge (`unionLinks`), those its sibling losers hold (but a copied one) to targets it doesn't link to
+   * (`SiblingMerge.mergeLinks`, which `EntityCopy` writes the same way), each from it; each naming the entities that
+   * stand for those it names (a copy, a winner). Of the roles that merge, links that name one target collapse, the first
+   * one kept.
+   */
+  private composeLinks(entityId: string): readonly ViewLink[] {
+    const held = this.heldLinksOf(entityId);
+    if (this.cow.isEmpty()) return held?.links ?? [];
+    const losers = this.cow.hasSiblings(entityId)
+      ? this.cow
+          .getSiblings(entityId)
+          .flatMap((loserId) => (this.cow.isOverridden(loserId) ? [] : (this.heldLinksOf(loserId) ?? [])))
+      : [];
+    const type = held?.type ?? losers[0]?.type;
+    if (type === undefined) return [];
+    const own = held?.links ?? [];
+    const merges = (link: ViewLink) => this.unionLinks.has(`${type} ${link.role} ${link.toType}`);
+    const resolve = (id: string) => this.cow.resolve(id);
+    const links = [
+      ...own,
+      ...SiblingMerge.mergeLinks(
+        own.filter(merges),
+        losers.map((loser) => loser.links.filter(merges)),
+        resolve,
+      ),
+    ];
+    const targets = new Set<string>();
+    const composed: ViewLink[] = [];
+    for (const link of links) {
+      const toId = resolve(link.toId);
+      if (merges(link)) {
+        const key = `${link.role} ${link.toType} ${toId}`;
+        if (targets.has(key)) continue;
+        targets.add(key);
+      }
+      composed.push({ ...link, fromId: entityId, toId, viaId: link.viaId === null ? null : resolve(link.viaId) });
+    }
+    return composed;
+  }
+
   /** The composed rows, before the lookup indices: each list across the chain, COW-resolved. */
   private composeLists(): RulesetLists {
     // A row is left out when a copy overrides it or it's a sibling loser. A loser's customizations merge into its winner
     // (the customization steps below skip only the overridden ones), and every stored id resolves to the winner.
     // An owned entity whose owner the view leaves out is left out with its customizations: none, mostly
-    const { entities, joins, leftOut } = this.composeEntities();
+    const { entities, leftOut } = this.composeEntities();
     const { modifiers, excludedModifierIds } = this.composeModifiers(leftOut);
     const { taken, values } = this.composeValues(leftOut);
-    const composed = {
+    return {
       entities,
-      joins,
       kindValuesOf: (type: string) => this.composeKindValues(type, leftOut, taken),
+      linksOf: (entityId: string) => this.composeLinks(entityId),
       tieredIds: this.composeTieredIds(),
       modifiers,
       requirements: this.composeRequirements(leftOut, excludedModifierIds),
       values,
     };
-    if (!this.cow.isEmpty()) this.resolveListLinks(entities);
-
-    return composed;
   }
 
   /**
@@ -320,55 +326,15 @@ export default class RulesetComposition {
   }
 
   /**
-   * An entity's links of a list (`list`), its siblings' merged in (`SiblingMerge.mergeListLinks`, which `EntityCopy`
-   * writes the same way), each to the target that stands for it. Its own links that resolve to one target collapse too,
-   * the first one kept.
+   * An entity's links as its ruleset holds them (`entityId`, as stored), and its kind: none for one that holds none.
+   * An entity is one ruleset's of the chain.
    */
-  private linkTargets(
-    entityId: string,
-    own: Row[],
-    list: ViewList,
-    siblingLinks: Map<string, Row[]>,
-    targetsById: Map<string, ViewRow>,
-  ): Row[] {
-    const links = this.cow.hasSiblings(entityId)
-      ? [
-          ...own,
-          ...SiblingMerge.mergeListLinks(
-            own,
-            this.cow.getSiblings(entityId).map((loserId) => siblingLinks.get(loserId) ?? []),
-            (id) => this.cow.resolve(id),
-            list.to,
-          ),
-        ]
-      : own;
-    const targetIds = new Set<string>();
-    const resolved: Row[] = [];
-    for (const link of links) {
-      const targetId = this.cow.resolve(link[list.to] as string);
-      if (targetIds.has(targetId)) continue;
-      targetIds.add(targetId);
-      resolved.push({ ...link, [list.to]: targetId, [list.target]: targetsById.get(targetId) ?? link[list.target] });
+  private heldLinksOf(entityId: string): HeldLinks | undefined {
+    for (const raw of this.chain) {
+      const held = raw.links.get(entityId);
+      if (held) return held;
     }
-    return resolved;
-  }
-
-  /**
-   * Resolve the ids inside the kinds' list links (a feat's pools), which `CowData.resolveRows` doesn't reach: each
-   * link's target, and the target's row on it, to the one that stands for it (after a target's copy or a sibling merge),
-   * so that a reader comparing it with the view's ids (`rulesetData.byId`) matches. A sibling loser's links merge into
-   * its winner's here. Siblings always imply stale ids (`CowDataBuilder` aliases each sibling loser to its winner), so
-   * the caller runs this only when the scope resolves an id, and the shallow-copied rows are safe to mutate.
-   */
-  private resolveListLinks(entities: Map<string, ViewRow[]>) {
-    for (const { lists, type } of this.schema.kinds) {
-      for (const list of lists) {
-        const siblingLinks = this.collectSiblingLinks(type, list);
-        const targetsById = new Map((entities.get(list.toType) ?? []).map((target) => [target.id, target]));
-        for (const row of entities.get(type) ?? [])
-          row[list.name] = this.linkTargets(row.id, row[list.name] as Row[], list, siblingLinks, targetsById);
-      }
-    }
+    return undefined;
   }
 
   build(): RulesetData {

@@ -37,8 +37,15 @@ export type ClassProgressionBody = InferRequestType<(typeof classApi)["progressi
 /** A class's level as its Progression tab lists it */
 export type LevelRow = InferResponseType<(typeof classApi)["owned"]["$get"], 200>[number];
 
-/** A link of a class to an entity, by the keys its kind's `links` describe: the entity's, the class's, and its row. */
-export type LinkRow = Record<string, unknown>;
+/**
+ * A class's link to an entity, of the role its kind's `links` describe, as its tab reads it: the class it's from
+ * (`fromId`, a copy's where an edit of an inherited one copied it), the entity it's to (`toId`) and that entity's name
+ * (`toName`).
+ */
+export type LinkRow = Pick<
+  InferResponseType<(typeof classApi)["links"]["$get"], 200>[number],
+  "fromId" | "toId" | "toName"
+>;
 
 /**
  * A level of one of a class's tables its tables' tab edits, as its route answers it: the level, and its totals at the

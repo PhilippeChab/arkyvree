@@ -14,12 +14,12 @@ export {
   Contributors,
   EmailVerifications,
   Entities,
+  EntityLinks,
   EntityReferences,
   EntitySnapshots,
   Exports,
   Fields,
   Invites,
-  Joins,
   Modifiers,
   Notifications,
   OauthAccounts,
@@ -38,10 +38,11 @@ export {
 export type { ReferencedType } from "./rulesets/entityReferences.ts";
 export {
   CUSTOMIZABLE_TYPES,
-  EDITED_JOINS,
+  EDITED_LINKS,
   IDENTITY_TYPES,
   OWNED_TYPES,
   RULESET_ENTITY_TYPES,
 } from "./rulesets/entityTables.ts";
 export type { RulesetEntityType } from "./rulesets/entityTables.ts";
 export type { EntityRow } from "./stored/StoredEntities.ts";
+export type { NewLink } from "./stored/StoredLinks.ts";

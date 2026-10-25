@@ -5,7 +5,7 @@ import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading
 import type { CustomizedSpell } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { Spell, SpellWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { formatFieldValues } from "@/shared/customization/fields.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
@@ -65,12 +65,14 @@ export default class SpellsComponent extends CharacterComponent<LoadedCharacterD
    * from `abilityDcName`, with its customizations. None when the spell isn't on the list.
    */
   static toVirtualSpell(
-    spellRow: SpellWithAptitudes,
+    spellRow: Spell,
     aptitudeId: string,
     abilityDcName: string | null,
     rulesetData: RulesetData,
   ): CustomizedSpell | undefined {
-    const link = spellRow.spellsAptitudesInRules.find((pa) => pa.aptitudeId === aptitudeId);
+    const link = Dnd35View.of(rulesetData)
+      .listLinksOf(spellRow.id)
+      .find((list) => list.toId === aptitudeId);
     if (!link) return undefined;
     return {
       ...spellRow,
@@ -82,7 +84,7 @@ export default class SpellsComponent extends CharacterComponent<LoadedCharacterD
       free: true,
       given: true,
       saveName: SpellsComponent.saveNameOf(spellRow, rulesetData),
-      spellLevel: link.level,
+      spellLevel: link.tier,
       modifiers: rulesetData.modifiersBySource.get(spellRow.id) ?? [],
       requirements: rulesetData.requirementsByEntity.get(spellRow.id) ?? [],
     };
@@ -105,9 +107,9 @@ export default class SpellsComponent extends CharacterComponent<LoadedCharacterD
 
     for (const spell of dnd35.spells) {
       const spellSlug = stripSeparators(spell.name);
-      for (const pa of spell.spellsAptitudesInRules) {
-        if (pa.level == null) continue;
-        const aptSlug = aptitudeIdToSlug.get(pa.aptitudeId);
+      for (const link of dnd35.listLinksOf(spell.id)) {
+        if (link.tier == null) continue;
+        const aptSlug = aptitudeIdToSlug.get(link.toId);
         if (!aptSlug) continue;
 
         if (!this.spells[spellSlug]) this.spells[spellSlug] = {} as Record<string, { known: boolean }>;
@@ -126,7 +128,7 @@ export default class SpellsComponent extends CharacterComponent<LoadedCharacterD
     }
 
     this.holdDcs();
-    this.seedEmptyDcs(dnd35.spells);
+    this.seedEmptyDcs(dnd35);
     this.holdGroupings();
   }
 
@@ -162,9 +164,9 @@ export default class SpellsComponent extends CharacterComponent<LoadedCharacterD
    * gets an empty DC there once the cast ones have theirs, so a modifier on it reaches nothing and a requirement on it is
    * unmet, as a school's empty group.
    */
-  private seedEmptyDcs(rulesetSpells: SpellWithAptitudes[]): void {
-    for (const spell of rulesetSpells) {
-      if (!spell.spellsAptitudesInRules.some((pa) => pa.level != null)) continue;
+  private seedEmptyDcs(dnd35: Dnd35View): void {
+    for (const spell of dnd35.spells) {
+      if (!dnd35.listLinksOf(spell.id).some((link) => link.tier != null)) continue;
       const entry: { dc?: SpellDcsByClass } = (this.spells[stripSeparators(spell.name)] ??= {});
       entry.dc ??= {};
     }

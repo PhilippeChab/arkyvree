@@ -31,7 +31,7 @@ import StarredRulesetsRepository from "./rulesets/StarredRulesetsRepository.ts";
 import StoredCharacterLinks from "./stored/StoredCharacterLinks.ts";
 import StoredEntities from "./stored/StoredEntities.ts";
 import StoredFields from "./stored/StoredFields.ts";
-import StoredJoins from "./stored/StoredJoins.ts";
+import StoredLinks from "./stored/StoredLinks.ts";
 import StoredPicks from "./stored/StoredPicks.ts";
 import { withRequestCache } from "./withRequestCache.ts";
 
@@ -50,12 +50,12 @@ export const EmailVerifications = withRequestCache(
   new AccountCodesRepository(emailVerificationsInAccount),
 );
 export const Entities = withRequestCache("Entities", new StoredEntities());
+export const EntityLinks = withRequestCache("EntityLinks", new StoredLinks());
 export const EntityReferences = withRequestCache("EntityReferences", new EntityReferencesRepository());
 export const EntitySnapshots = withRequestCache("EntitySnapshots", new EntitySnapshotsRepository());
 export const Exports = withRequestCache("Exports", new ExportsRepository());
 export const Fields = withRequestCache("Fields", new StoredFields());
 export const Invites = withRequestCache("Invites", new InvitesRepository());
-export const Joins = withRequestCache("Joins", new StoredJoins());
 export const Modifiers = withRequestCache("Modifiers", new ModifiersRepository());
 export const Notifications = withRequestCache("Notifications", new NotificationsRepository());
 export const OauthAccounts = withRequestCache("OauthAccounts", new OauthAccountsRepository());

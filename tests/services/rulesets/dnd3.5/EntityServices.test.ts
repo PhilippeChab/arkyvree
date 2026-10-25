@@ -9,18 +9,13 @@ import type { RulesetAbility, RulesetSave, Skill } from "@/engine/rulesets/dnd3.
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import {
-  CUSTOMIZABLE_TYPES,
-  Entities,
-  Joins,
-  Requirements,
-  type RulesetEntityType,
-} from "@/server/repositories/index.ts";
+import { CUSTOMIZABLE_TYPES, Entities, Requirements, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { findCustomizations } from "@/tests/support/customizations.ts";
 import { customize } from "@/tests/support/dnd3.5/customizations.ts";
+import { findLists } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
@@ -108,22 +103,13 @@ const FORM_REFS: Record<
     kind: "aptitudes",
     label: "Aptitude",
     ref: "featAptitudeId",
-    stored: async (id) =>
-      (
-        await Joins.findMany<{ aptitudeId: string; featId: string }>(db, { join: "feats_aptitudes", fromIds: [id] })
-      ).map(({ aptitudeId }) => aptitudeId),
+    stored: async (id) => (await findLists(db, [id])).map(({ toId }) => toId),
   },
   spells: {
     kind: "aptitudes",
     label: "Aptitude",
     ref: "spellAptitudeId",
-    stored: async (id) =>
-      (
-        await Joins.findMany<{ aptitudeId: string; level: number | null; spellId: string }>(db, {
-          join: "spells_aptitudes",
-          fromIds: [id],
-        })
-      ).map(({ aptitudeId }) => aptitudeId),
+    stored: async (id) => (await findLists(db, [id])).map(({ toId }) => toId),
   },
   saves: {
     kind: "abilities",

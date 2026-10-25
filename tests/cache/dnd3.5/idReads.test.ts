@@ -73,12 +73,12 @@ test("a fork's own feats and spells, listed alone, name a list the fork copied b
 
   for (const childOnly of [false, true]) {
     const feats = await EntitiesService.getEntities(fork.id, "feats", { childOnly }, PAGE);
-    expect(feats.items.find((row) => row.id === feat.id)?.featsAptitudesInRules).toMatchObject([
-      { aptitudeId: poolCopy.id, aptitudesInRule: { id: poolCopy.id, name: "Copied Pool" } },
+    expect(feats.items.find((row) => row.id === feat.id)?.links).toMatchObject([
+      { role: "listedIn", toId: poolCopy.id, toName: "Copied Pool" },
     ]);
     const spells = await EntitiesService.getEntities(fork.id, "spells", { childOnly }, PAGE);
-    expect(spells.items.find((row) => row.id === spell.id)?.spellsAptitudesInRules).toMatchObject([
-      { aptitudeId: listCopy.id, level: 1, aptitudesInRule: { id: listCopy.id, name: "Copied Spells" } },
+    expect(spells.items.find((row) => row.id === spell.id)?.links).toMatchObject([
+      { role: "listedIn", toId: listCopy.id, tier: 1, toName: "Copied Spells" },
     ]);
   }
 });

@@ -589,6 +589,13 @@
       "when": 1792917507111,
       "tag": "0083_one-live-child-per-kind",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1792924403397,
+      "tag": "0084_link-activities",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,5 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetView, ViewLink } from "@/engine/core/view/index.ts";
 import type {
   LoadedCharacterData,
   SkillWithRank,
@@ -10,14 +10,15 @@ import type {
   CustomizedSpell,
 } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { CharacterLevel, Klass, KlassLevel, KlassSkill } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { CharacterLevel, Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 interface ClassesData {
   [key: string]: {
     bonuscasterlevel: number;
     klass: Klass;
-    klassSkills: KlassSkill[];
+    /** Its class skills: its `classSkill` links */
+    klassSkills: ViewLink[];
     level: number;
     levels: {
       characterLevel: CharacterLevel;
@@ -54,11 +55,11 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
     for (const kl of klassLevels) klassLevelsById.set(kl.id, kl);
     const klassesById = new Map<string, Klass>();
     for (const k of klasses) klassesById.set(k.id, k);
-    const klassSkillsByKlass = new Map<string, KlassSkill[]>();
-    for (const ks of klassSkills) {
-      const group = klassSkillsByKlass.get(ks.klassId);
-      if (group) group.push(ks);
-      else klassSkillsByKlass.set(ks.klassId, [ks]);
+    const klassSkillsByKlass = new Map<string, ViewLink[]>();
+    for (const link of klassSkills) {
+      const group = klassSkillsByKlass.get(link.fromId);
+      if (group) group.push(link);
+      else klassSkillsByKlass.set(link.fromId, [link]);
     }
     const featsByCharacterLevelId = new Map<string, typeof feats>();
     for (const f of feats) {

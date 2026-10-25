@@ -7,7 +7,7 @@ import { sql } from "drizzle-orm";
 
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
-import { findSeededCharacter } from "@/tests/support/seed.ts";
+import { findSeededCharacter, getSeedCtx } from "@/tests/support/seed.ts";
 
 /** A migration's statements, as drizzle splits them. */
 function statementsOf(file: string) {
@@ -136,6 +136,49 @@ describe("0082_fields", () => {
       ["modifiers", "createModifier", '{"target":"spells.fireball.fields.SPELL_DESCRIPTOR","value":"Fire"}'],
       ["spells", "updateSpell", '{"changedFields":[{"field":"properties","from":"a.properties.B","to":"B"}]}'],
     ].map(([target_table, type, data]) => ({ target_table, type, data }));
+    for (const [table, ids] of [
+      ["account.activities", activityIds],
+      ["account.notifications", notificationIds],
+    ] as const) {
+      const { rows } = await db.execute(sql`
+        SELECT target_table, type, data::text AS data FROM ${sql.raw(table)}
+        WHERE id = ANY (${`{${ids.join(",")}}`}::uuid[]) ORDER BY array_position(${`{${ids.join(",")}}`}::uuid[], id)
+      `);
+      expect({ table, rows }).toEqual({ table, rows: expected });
+    }
+  });
+});
+
+describe("0084_link-activities", () => {
+  test("names a class's skill's role in what activities and notifications recorded, and nothing else", async () => {
+    const classId = (await getSeedCtx()).klassMap.pc["Fighter"];
+    // What an activity and a notification recorded of each change to a class's skills, and of others
+    const recorded = [
+      ["class_skills", "addClassSkill", '{"skillId":"s","entityName":"Fighter","skillName":"Climb"}'],
+      ["class_skills", "removeClassSkill", '{"skillId":"s","entityName":"Fighter","skillName":"Climb"}'],
+      ["classes", "updateClass", '{"entityName":"Fighter","changedFields":[]}'],
+      ["class_level_feats", "addClassLevelFeat", '{"entityName":"class_skills"}'],
+    ];
+    const activityIds: string[] = [];
+    const notificationIds: string[] = [];
+    for (const [table, type, data] of recorded) {
+      const { rows: activity } = await db.execute<{ id: string }>(sql`
+        INSERT INTO account.activities (user_id, target_id, target_table, type, data)
+        VALUES (${SEED_USER_ID}, ${classId}, ${table}, ${type}, ${data}) RETURNING id
+      `);
+      activityIds.push(activity[0]!.id);
+      const { rows: notification } = await db.execute<{ id: string }>(sql`
+        INSERT INTO account.notifications (recipient_id, actor_id, activity_id, type, target_id, target_table, data)
+        VALUES (${SEED_USER_ID}, ${SEED_USER_ID}, ${activity[0]!.id}, ${type}, ${classId}, ${table}, ${data}) RETURNING id
+      `);
+      notificationIds.push(notification[0]!.id);
+    }
+
+    for (const statement of statementsOf("0084_link-activities.sql")) await db.execute(sql.raw(statement));
+
+    const expected = recorded
+      .map(([table, type, data]) => [table === "class_skills" ? "classSkill" : table, type, data])
+      .map(([target_table, type, data]) => ({ target_table, type, data }));
     for (const [table, ids] of [
       ["account.activities", activityIds],
       ["account.notifications", notificationIds],

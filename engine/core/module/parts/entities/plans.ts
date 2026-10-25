@@ -1,20 +1,20 @@
 /**
  * What an entity kind's `plan*` operations answer: what the server writes of an entity's create, edit or delete, each a
- * named plan, by table, without ids it doesn't have yet: its row, its lists, what it writes beside it.
+ * named plan, by table, without ids it doesn't have yet: its row, its links, what it writes beside it.
  */
 
 import type { FieldsWrite } from "@/engine/core/fields/index.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /**
- * What a create or an edit writes of an entity: its row's columns (`C`), the lists it's linked to (`links`, none:
- * kept), what it writes beside its row, and the fields the entity keeps once written (`F`, which the action answers
- * with its row).
+ * What a create or an edit writes of an entity: its row's columns (`C`), its links of the roles it sets (`links`, each
+ * set replacing the entity's of its role and kind; a role it leaves out: kept), what it writes beside its row, and the
+ * fields the entity keeps once written (`F`, which the action answers with its row).
  */
 interface EntityWrite<C, F> {
   columns: C;
   fields: F;
-  links?: ListLink[];
+  links?: LinkSet[];
   writes?: EntityWrites;
 }
 
@@ -91,50 +91,67 @@ export interface EntityWrites {
 }
 
 /**
- * Adding a link from an entity through the join its owner edits (`join`: a class's skills): the owner as the view has
- * it, the join's row but its from-column (`row`), and what its activity records (`activity`).
+ * Adding a link of the role its owner edits one at a time (a class's skills): the owner as the view has it, the link
+ * from it (`link`: its role, its target), and what its activity records (`activity`).
  */
 export interface LinkAddPlan {
   activity: Record<string, unknown>;
-  join: string;
+  link: LinkWrite;
   owner: PlanOwner;
-  row: Record<string, unknown>;
 }
 
 /**
- * Removing a link through the join its owner edits (`join`): the owner, the link's target, and what its activity
- * records.
+ * Removing a link of the role its owner edits one at a time: the owner, the link's role and target, and what its
+ * activity records.
  */
 export interface LinkRemovePlan {
   activity: Record<string, unknown>;
-  join: string;
   owner: PlanOwner;
+  role: string;
   toId: string;
 }
 
-/** A list an entity is linked to (`listId`), and its level on it (a spell's spell level on a class's list). */
-export interface ListLink {
-  level?: number | null;
-  listId: string;
+/**
+ * The links of a role to a kind (`role`, `toType`) a plan sets on an entity, in their order, replacing those it held
+ * (a feat's pools, a class level's grants): each its target, and its pool, tier, amount and whether it's free when it
+ * holds them.
+ */
+export interface LinkSet {
+  links: Omit<LinkWrite, "role" | "toType">[];
+  role: string;
+  toType: string;
+}
+
+/**
+ * A link a plan writes from an entity: its role, its target (`toId`, of `toType`), and the pool it's taken through
+ * (`viaId`), its tier, its amount and whether it's free, when it holds them.
+ */
+export interface LinkWrite {
+  amount?: number | null;
+  free?: boolean;
+  role: string;
+  tier?: number | null;
+  toId: string;
+  toType: string;
+  viaId?: string | null;
 }
 
 /**
  * An entity a plan makes with the one it writes, in the same ruleset: its table (`type`), its row's columns, its stored
- * values (`fields`), the lists it's linked to (`links`), and its modifiers and requirements.
+ * values (`fields`), its links (`links`, by role), and its modifiers and requirements.
  */
 export interface MadeEntity {
   columns: Record<string, unknown> & { description: string; name: string };
   fields: FieldsWrite;
-  links: ListLink[];
+  links: LinkSet[];
   modifiers: Pick<Modifier, "operator" | "target" | "value" | "valueType">[];
   requirements: RequirementWrite[];
   type: string;
 }
 
-/** What an owned entity's create writes past an entity's: its joins' rows, its owner, and what its activity records. */
+/** What an owned entity's create writes past an entity's: its owner, and what its activity records. */
 export interface OwnedCreatePlan<C = Record<string, unknown>, F = object> extends EntityCreatePlan<C, F> {
   activity: Record<string, unknown>;
-  joins: JoinRows;
   owner: PlanOwner;
 }
 
@@ -144,14 +161,13 @@ export interface OwnedDeletePlan<E = { id: string; name: string }> extends Entit
   owner: PlanOwner;
 }
 
-/** What an owned entity's edit writes past an entity's: its joins' rows, its owner, and what its activity records. */
+/** What an owned entity's edit writes past an entity's: its owner, and what its activity records. */
 export interface OwnedEditPlan<
   C = Record<string, unknown>,
   F = object,
   E = { id: string; name: string },
 > extends EntityEditPlan<C, F, E> {
   activity: Record<string, unknown>;
-  joins: JoinRows;
   owner: PlanOwner;
 }
 
@@ -181,9 +197,3 @@ export interface ProgressionPlan {
   ownedType: string;
   owner: PlanOwner;
 }
-
-/**
- * The rows of the joins from an entity a plan writes, by the join's name (a class level's granted feats), each row by
- * its join's columns but the one it's from, which the server fills: a join the plan leaves out it keeps.
- */
-export type JoinRows = Record<string, Record<string, unknown>[] | undefined>;

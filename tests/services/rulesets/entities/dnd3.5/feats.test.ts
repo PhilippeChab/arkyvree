@@ -2,11 +2,12 @@ import { describe, expect, test } from "bun:test";
 
 import type { Aptitude, Klass } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Characters, Entities, EntitySnapshots, Joins } from "@/server/repositories/index.ts";
+import { Characters, Entities, EntityLinks, EntitySnapshots } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { pickFeat } from "@/tests/support/dnd3.5/levels.ts";
+import { findLists } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { writeStoredValues } from "@/tests/support/storedValues.ts";
@@ -17,11 +18,7 @@ import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 const APTITUDES = ["Combat", "Metamagic", "General"];
 
 async function linkedAptitudeIds(featId: string) {
-  const rows = await Joins.findMany<{ aptitudeId: string; featId: string }>(db, {
-    join: "feats_aptitudes",
-    fromIds: [featId],
-  });
-  return rows.map((row) => row.aptitudeId).sort();
+  return (await findLists(db, [featId])).map((link) => link.toId).sort();
 }
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
@@ -167,7 +164,7 @@ describe("EntitiesService: feats", () => {
 
     expect(await linkedAptitudeIds(feat.id)).toEqual([]);
     // A grant's feat is its link's to-entity
-    expect(await Joins.findMany(db, { join: "class_level_feats", toIds: [feat.id] })).toEqual([]);
+    expect(await EntityLinks.findMany(db, { fromType: "class_levels", role: "grants", toIds: [feat.id] })).toEqual([]);
   });
 
   describe("deleting a feat characters picked", () => {

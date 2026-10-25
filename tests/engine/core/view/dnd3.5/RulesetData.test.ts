@@ -7,7 +7,7 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
-import { composeView, type Join, type Kind, rawRows } from "@/tests/support/composedViews.ts";
+import { composeView, type Kind, rawRows } from "@/tests/support/composedViews.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { writeStoredValues } from "@/tests/support/storedValues.ts";
@@ -89,9 +89,10 @@ describe("A ruleset's view's reads", () => {
     expect(view.find("owners" as Kind, "missing")).toBeUndefined();
   });
 
-  test("answer a join or a kind the module declares none of with no rows", () => {
-    expect(view.joinRows("nothing" as Join)).toEqual([]);
+  test("answer a kind the module declares none of with no rows, and an entity that holds no links with none", () => {
     expect(view.rows("nothing" as Kind)).toEqual([]);
+    expect(view.linksOf("o2")).toEqual([]);
+    expect(view.linksOf("missing", "any")).toEqual([]);
   });
 
   test("name a type by its module's label, or by itself for one it labels none of", () => {

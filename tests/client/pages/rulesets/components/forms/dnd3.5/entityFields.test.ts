@@ -73,11 +73,6 @@ const WORN_FIELDS: EntityField[] = [
   },
 ];
 
-/** An aptitude as an entity read's link names it. */
-function aptitude(id: string, name: string) {
-  return { id, name, rulesetId: "r", description: null };
-}
-
 describe("an entity's fields in its form", () => {
   test("start empty: no choice, no text, a flag off (none, a three-state one), a number its default", () => {
     expect(emptyFieldValues(FIELDS)).toEqual({
@@ -255,17 +250,19 @@ describe("an entity's columns in its form", () => {
 });
 
 describe("an entity's pools in its form", () => {
-  /** A pool's links, a feat's and a spell's each at its level, which an entity read holds apart from the form's keys. */
+  /**
+   * A pool's links, a feat's and a spell's each at its level, which an entity read holds among its links, by their
+   * roles, apart from the form's keys.
+   */
   const POOLS: EntityField[] = [
     {
       ...BASE,
       key: "aptitudeIds",
       label: "Pools",
       input: "links",
-      links: "poolLinks",
       references: "pools",
       required: "Pick a pool",
-      target: "linked",
+      role: "pool",
     },
     {
       ...BASE,
@@ -273,17 +270,18 @@ describe("an entity's pools in its form", () => {
       label: "Lists",
       input: "leveledLinks",
       references: "pools",
-      links: "listLinks",
       max: 9,
       min: 0,
-      target: "linked",
+      role: "list",
     },
   ];
   const entity = {
-    poolLinks: [{ linked: aptitude("b", "Bonus Feats") }, { linked: aptitude("a", "General") }, {}],
-    listLinks: [
-      { linked: aptitude("w", "Wizard"), level: 3 },
-      { linked: aptitude("c", "Cleric"), level: null },
+    links: [
+      { role: "pool", toId: "b", toName: "Bonus Feats" },
+      { role: "pool", toId: "a", toName: "General" },
+      { role: "pool" },
+      { role: "list", toId: "w", toName: "Wizard", tier: 3 },
+      { role: "list", toId: "c", toName: "Cleric", tier: null },
     ],
   };
 
@@ -292,9 +290,9 @@ describe("an entity's pools in its form", () => {
       aptitudeIds: ["b", "a"],
       aptitudes: [{ id: "c" }, { id: "w", level: 3 }],
     });
-    // An entity read without its links holds none, and a link's entity is at its column's target alone
+    // An entity read without its links holds none, and a link of another role is none of its column's
     expect(toColumnValues(POOLS, {})).toEqual({ aptitudeIds: [], aptitudes: [] });
-    expect(toColumnValues(POOLS, { poolLinks: [{ other: aptitude("x", "Other") }] }).aptitudeIds).toEqual([]);
+    expect(toColumnValues(POOLS, { links: [{ role: "other", toId: "x", toName: "Other" }] }).aptitudeIds).toEqual([]);
   });
 
   test("name the entities it links, which its pickers show by name", () => {

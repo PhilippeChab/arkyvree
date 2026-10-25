@@ -8,7 +8,7 @@ import RulesError from "@/engine/core/RulesError.ts";
 import ListedEntity from "@/engine/rulesets/dnd3.5/entities/ListedEntity.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { FeatWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Feat } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { FEAT_COLUMNS } from "./columns.ts";
@@ -62,7 +62,7 @@ export default class FeatEntity extends ListedEntity<
    * Refuses renaming a generated feat (its name names its option, `Weapon Focus: Longsword`,
    * which checks and generators find it by), and a feat linked to a pool the view's spells use.
    */
-  protected override checkForm(body: FeatBody, feat?: FeatWithAptitudes) {
+  protected override checkForm(body: FeatBody, feat?: Feat) {
     if (feat && body.name !== feat.name && feat.generated)
       throw new RulesError("invalid", "Generated feats cannot be renamed");
     const message = "Cannot link feat to aptitude(s) already used for spells";
@@ -70,7 +70,7 @@ export default class FeatEntity extends ListedEntity<
   }
 
   /** A form's columns: a new feat's not generated (`planCreate` marks one that stands in for a generated one). */
-  protected override columnsOf({ description, name }: FeatBody, feat?: FeatWithAptitudes) {
+  protected override columnsOf({ description, name }: FeatBody, feat?: Feat) {
     return { description, name, ...(!feat && { generated: false }) };
   }
 
@@ -84,14 +84,9 @@ export default class FeatEntity extends ListedEntity<
     };
   }
 
-  /** A feat's pool links, as the view composes them. */
-  protected override linksIn({ featsAptitudesInRules }: FeatWithAptitudes) {
-    return { featsAptitudesInRules };
-  }
-
   /** The pools a form links the feat to (none: an edit's kept). */
   protected override linksOf({ aptitudeIds }: FeatBody) {
-    return aptitudeIds?.map((listId) => ({ listId }));
+    return aptitudeIds && this.listedIn(aptitudeIds.map((toId) => ({ toId })));
   }
 
   /**

@@ -3,7 +3,7 @@
  * copy in `entity_snapshots`, so the ruleset shows the copy in place of the original.
  */
 
-import { Joins } from "@/database/seeders/core/SeederState.ts";
+import { EntityLinks } from "@/database/seeders/core/SeederState.ts";
 import type { Dnd35ContentSeeder } from "@/database/seeders/dnd3.5/Dnd35ContentSeeder.ts";
 import type { Feat, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
@@ -42,9 +42,9 @@ export function CopiesOnWrite<B extends Constructor<Dnd35ContentSeeder>>(Base: B
           generated: feat.generated,
         },
       ]);
-      await this.insertJoins(
-        "feats_aptitudes",
-        (await this.listedIn("feats_aptitudes", [featId])).map(({ aptitudeId }) => ({ featId: copyId, aptitudeId })),
+      await this.insertListings(
+        "feats",
+        (await this.listedIn([featId])).map(({ toId }) => ({ entityId: copyId, aptitudeId: toId })),
       );
       const copies = new Map([[featId, copyId]]);
       await this.copyCustomizations("feats", copies);
@@ -84,27 +84,24 @@ export function CopiesOnWrite<B extends Constructor<Dnd35ContentSeeder>>(Base: B
       await this.copyCustomizations("spells", copies);
       await this.recordCopies("spells", copies);
       const kept = await this.keptSpellLinks([...copies.keys()]);
-      await this.insertJoins(
-        "spells_aptitudes",
+      await this.insertListings(
+        "spells",
         entries.flatMap(({ links, spellId }) => {
           const linked = new Set<string>();
           return [...(kept.get(spellId) ?? []), ...links]
             .filter(({ aptitudeId }) => !linked.has(aptitudeId) && linked.add(aptitudeId))
-            .map((link) => ({ spellId: copies.get(spellId)!, ...link }));
+            .map((link) => ({ entityId: copies.get(spellId)!, ...link }));
         }),
       );
       return copies;
     }
 
-    /** The aptitudes feats or spells are listed in (`join`, `ids`), each link with its level (a spell list's). */
-    protected async listedIn(join: "feats_aptitudes" | "spells_aptitudes", ids: string[]) {
-      if (ids.length === 0) return [];
-      return await Joins.findMany<{
-        aptitudeId: string;
-        featId?: string;
-        level?: number | null;
-        spellId?: string;
-      }>(this.db, { join, fromIds: ids });
+    /**
+     * The aptitudes feats or spells are listed in (`ids`): their `listedIn` links, each its entity (`fromId`), its
+     * aptitude (`toId`) and its level there (`tier`, a spell list's).
+     */
+    protected async listedIn(ids: string[]) {
+      return await EntityLinks.findMany(this.db, { fromIds: ids, role: "listedIn" });
     }
 
     /** Adds a spell to aptitudes, each at its level: the first link to an aptitude it isn't in yet. */
@@ -117,21 +114,17 @@ export function CopiesOnWrite<B extends Constructor<Dnd35ContentSeeder>>(Base: B
      * one write.
      */
     async linkSpells(entries: SpellLinks[]) {
-      const listed = await this.listedIn(
-        "spells_aptitudes",
-        entries.map((entry) => entry.spellId),
-      );
+      const listed = await this.listedIn(entries.map((entry) => entry.spellId));
       const linked = new Map<string, Set<string>>();
-      for (const link of listed)
-        linked.set(link.spellId!, (linked.get(link.spellId!) ?? new Set()).add(link.aptitudeId));
-      await this.insertJoins(
-        "spells_aptitudes",
+      for (const link of listed) linked.set(link.fromId, (linked.get(link.fromId) ?? new Set()).add(link.toId));
+      await this.insertListings(
+        "spells",
         entries.flatMap(({ links, spellId }) => {
           const its = linked.get(spellId) ?? new Set<string>();
           linked.set(spellId, its);
           return links
             .filter(({ aptitudeId }) => !its.has(aptitudeId) && its.add(aptitudeId))
-            .map((link) => ({ spellId, ...link }));
+            .map((link) => ({ entityId: spellId, ...link }));
         }),
       );
     }

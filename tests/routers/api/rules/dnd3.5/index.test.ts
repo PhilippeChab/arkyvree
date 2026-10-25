@@ -133,32 +133,21 @@ describe("rules", () => {
       ["spells", "fixed"],
       ["items", "fluid"],
     ]);
-    // A class's page links it to its class skills, through the join their activities name
-    expect(kind("classes")?.links).toEqual({
-      join: "class_skills",
-      key: "skillId",
-      owner: "klassId",
-      target: "skillsInRule",
-      targetName: "skillName",
-      type: "skills",
-    });
+    // A class's page links it to its class skills, by the role their activities are named for
+    expect(kind("classes")?.links).toEqual({ role: "classSkill", targetName: "skillName", type: "skills" });
     expect(kind("feats")?.lockedName).toEqual({ flag: "generated", reason: "A generated feat keeps its name" });
-    // A pool's links column reads its links where an entity read holds them
-    expect(dnd35.columns.feats?.find((column) => column.key === "aptitudeIds")).toMatchObject({
-      links: "featsAptitudesInRules",
-    });
-    expect(dnd35.columns.spells?.find((column) => column.key === "aptitudes")).toMatchObject({
-      links: "spellsAptitudesInRules",
-    });
+    // A pool's links column reads an entity read's links of its role
+    expect(dnd35.columns.feats?.find((column) => column.key === "aptitudeIds")).toMatchObject({ role: "listedIn" });
+    expect(dnd35.columns.spells?.find((column) => column.key === "aptitudes")).toMatchObject({ role: "listedIn" });
     expect(kind("items")?.copies).toEqual({
       locked: ["slot", "sourceItemId", "type"],
       most: 50,
       source: "sourceItemId",
       template: "isTemplate",
     });
-    // A pools column reads the links its list's rows hold, each its pool where the column says
-    expect(dnd35.lists.feats?.columns.map(({ key, reads, target }) => [key, reads, target])).toEqual([
-      ["featsAptitudesInRules", "pools", "aptitudesInRule"],
+    // A pools column reads its list's rows' links of its role, each its pool's name
+    expect(dnd35.lists.feats?.columns.map(({ key, reads, role }) => [key, reads, role])).toEqual([
+      ["links", "pools", "listedIn"],
     ]);
     // Its classes' progression: a level's base attack bonus and skill points, a base per save, two spell tables
     expect(dnd35.progression.tracks.map(({ key, source }) => [key, source])).toEqual([

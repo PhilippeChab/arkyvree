@@ -189,16 +189,13 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
     });
   });
 
-  test("describes the links a kind's page edits as the join its storage declares edited, by its columns", () => {
-    const storage = Engine.storage();
-    for (const { links, type } of Engine.rules().describeAll()[rules].kinds) {
-      if (!links) continue;
-      const joins = storage.joinNames().map((name) => ({ name, ...storage.join(name) }));
-      const [join] = joins.filter((each) => each.edited && each.from === type && each.to === links.type);
-      expect(join).toBeDefined();
-      expect(storage.joinFromColumn(join.name)).toBe(links.owner);
-      expect(Object.entries(join.columns).find(([, part]) => part === "to")?.[0]).toBe(links.key);
-    }
+  test("describes the links a kind's page edits by the role its storage declares edited, to their kind", () => {
+    const edited = Engine.storage().editedLinks();
+    const described = Engine.rules()
+      .describeAll()
+      [rules].kinds.flatMap(({ links, type }) => (links ? [[links.role, { from: type, to: links.type }]] : []));
+    expect(described.length).toBeGreaterThan(0);
+    expect(new Map(described as [string, { from: string; to: string }][])).toEqual(edited);
   });
 
   test("says why a new entity's required list of links is refused, in words of its own", () => {

@@ -1,10 +1,10 @@
 import type { Db } from "@/drizzle/database.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
-import type { KlassLevel, KlassLevelFeat, KlassLevelSpell } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { EntityEdit, RulesetViews } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
-import { Entities, Joins, type RulesetEntityType } from "@/server/repositories/index.ts";
+import { Entities, EntityLinks, type RulesetEntityType } from "@/server/repositories/index.ts";
 
 type Fork = Parameters<typeof RulesetViews.getData>[0];
 
@@ -18,26 +18,24 @@ function typeOf(data: RulesetData, id: string): RulesetEntityType | undefined {
  * their stored ids: a feat's or a spell's lists, a class's levels' granted feats' and spells'. None, for a right copy.
  */
 async function findStaleAptitudeIds(tx: Db, view: RulesetData, type: RulesetEntityType, copyId: string) {
-  const links = await readAptitudeLinks(tx, type, copyId);
-  return links.map((link) => link.aptitudeId).filter((id) => view.canonicalize(id) !== id);
+  return (await readAptitudeIds(tx, type, copyId)).filter((id) => view.canonicalize(id) !== id);
 }
 
-/** A copy's links to lists as stored: a feat's or a spell's lists, a class's levels' granted feats' and spells'. */
-async function readAptitudeLinks(tx: Db, type: RulesetEntityType, copyId: string) {
-  if (type === "feats" || type === "spells") {
-    return await Joins.findMany<{ aptitudeId: string }>(tx, {
-      join: type === "feats" ? "feats_aptitudes" : "spells_aptitudes",
-      fromIds: [copyId],
-    });
-  }
+/**
+ * The lists a copy's links name as stored: a feat's or a spell's lists (its `listedIn` links), a class's levels'
+ * granted feats' and spells' (their `grants` links' pools).
+ */
+async function readAptitudeIds(tx: Db, type: RulesetEntityType, copyId: string) {
+  if (type === "feats" || type === "spells")
+    return (await EntityLinks.findMany(tx, { fromIds: [copyId], role: "listedIn" })).map((link) => link.toId);
+
   if (type !== "classes") return [];
   const klassLevelIds = (
     await Entities.findMany<KlassLevel>(tx, { entityType: "class_levels", ownerIds: [copyId] })
   ).map((level) => level.id);
-  return [
-    ...(await Joins.findMany<KlassLevelFeat>(tx, { join: "class_level_feats", fromIds: klassLevelIds })),
-    ...(await Joins.findMany<KlassLevelSpell>(tx, { join: "class_level_spells", fromIds: klassLevelIds })),
-  ];
+  return (await EntityLinks.findMany(tx, { fromIds: klassLevelIds, role: "grants" })).flatMap(
+    (link) => link.viaId ?? [],
+  );
 }
 
 /**
@@ -75,14 +73,10 @@ export function customizationsOf(data: RulesetData, id: string) {
       .sort(),
     requirements: requirementsOf(id),
     values: valuesOf(data, id),
-    links: [
-      ...(Dnd35View.of(data)
-        .featsById.get(id)
-        ?.featsAptitudesInRules.map((l) => l.aptitudeId) ?? []),
-      ...(Dnd35View.of(data)
-        .spellsById.get(id)
-        ?.spellsAptitudesInRules.map((l) => `${l.aptitudeId}|${l.level}`) ?? []),
-    ].sort(),
+    links: Dnd35View.of(data)
+      .listLinksOf(id)
+      .map((link) => (data.find("spells", id) ? `${link.toId}|${link.tier}` : link.toId))
+      .sort(),
   };
 }
 

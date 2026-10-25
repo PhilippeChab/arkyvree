@@ -1,7 +1,7 @@
 /**
- * 3.5's rows, as its storage declaration reads them (`StorageEngine.rowOf`, `joinRowsOf`, `characterLinkRowOf`,
- * `pickRowOf`): its kinds' and joins', which it declares into the view's registries (`ViewEntities`, `ViewJoins`), and
- * a character's build's.
+ * 3.5's rows, as its storage declaration reads them (`StorageEngine.rowOf`, `characterLinkRowOf`, `pickRowOf`): its
+ * kinds', which it declares into the view's registry (`ViewEntities`), and a character's build's. Its entities' links
+ * of a role they hold many of are the view's (`ViewLink`, by role: a feat's `listedIn`, a class level's `grants`).
  */
 
 import type { EntityRow, LinkRow } from "@/engine/core/view/index.ts";
@@ -9,14 +9,10 @@ import type { ItemLocation, SizeType } from "@/shared/enums.ts";
 import type { Character } from "@/shared/relations.ts";
 import type { Alignment, Gender } from "@/vocabulary/dnd3.5/identity.ts";
 
-type FeatAptitude = LinkRow & { aptitudeId: string; featId: string };
-
 /** A pick's row: its level, and its timestamps. */
 type PickRow = LinkRow & {
   characterLevelId: string;
 };
-
-type SpellAptitude = LinkRow & { aptitudeId: string; level: number | null; spellId: string };
 
 declare module "@/engine/core/module/CharacterInputs.ts" {
   /** A 3.5 character's links' rows: its ability scores and its picked languages. */
@@ -57,22 +53,14 @@ declare module "@/engine/core/view/rows.ts" {
     aptitudes: Aptitude;
     class_levels: KlassLevel;
     classes: Klass;
-    feats: FeatWithAptitudes;
+    feats: Feat;
     items: Item;
     languages: Language;
     mechanics: Mechanic;
     races: Race;
     saves: RulesetSave;
     skills: Skill;
-    spells: SpellWithAptitudes;
-  }
-
-  /** 3.5's joins' rows, by name: those its kinds' lists don't nest. */
-  interface ViewJoins {
-    class_level_feats: KlassLevelFeat;
-    class_level_saves: KlassLevelSave;
-    class_level_spells: KlassLevelSpell;
-    class_skills: KlassSkill;
+    spells: Spell;
   }
 }
 
@@ -103,9 +91,6 @@ export type CharacterLevel = Pick<EntityRow, "createdAt" | "deletedAt" | "id" | 
   position: number;
 };
 export type Feat = EntityRow & { generated: boolean; selectable: boolean; stackable: boolean };
-export type FeatWithAptitudes = Feat & {
-  featsAptitudesInRules: (FeatAptitude & { aptitudesInRule: Aptitude })[];
-};
 export type Item = EntityRow & {
   costGp: string | null;
   isTemplate: boolean;
@@ -119,16 +104,6 @@ export type KlassLevel = Pick<EntityRow, "createdAt" | "deletedAt" | "id" | "upd
   klassId: string;
   level: number;
 };
-export type KlassLevelFeat = LinkRow & {
-  aptitudeId: string;
-  featId: string;
-  free: boolean;
-  id: string;
-  klassLevelId: string;
-};
-export type KlassLevelSave = LinkRow & { base: number; klassLevelId: string; saveId: string };
-export type KlassLevelSpell = LinkRow & { aptitudeId: string; free: boolean; klassLevelId: string; spellId: string };
-export type KlassSkill = LinkRow & { klassId: string; skillId: string };
 export type Language = EntityRow & { type: string };
 /** An ability increase a character's level took. */
 export type LevelAbilityIncrease = PickRow & { abilityId: string; amount: number };
@@ -144,6 +119,3 @@ export type RulesetAbility = EntityRow & { description: string };
 export type RulesetSave = EntityRow & { abilityId: string };
 export type Skill = EntityRow & { primaryAbilityId: string };
 export type Spell = EntityRow & { saveEffect: string | null; saveId: string | null };
-export type SpellWithAptitudes = Spell & {
-  spellsAptitudesInRules: (SpellAptitude & { aptitudesInRule: Aptitude })[];
-};

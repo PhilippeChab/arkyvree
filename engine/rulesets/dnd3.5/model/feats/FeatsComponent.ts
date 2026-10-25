@@ -3,7 +3,7 @@ import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import type { CustomizedFeat } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { FeatWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Feat } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 interface FeatsData {
@@ -29,7 +29,7 @@ function isFeatEntry(entry: FeatEntry | FeatGroupEntry | undefined): entry is Fe
  */
 export default class FeatsComponent extends CharacterComponent<LoadedCharacterData> {
   /** A feat the character has without a pick, from a modifier or a bonded creature's stat block: no level picked it. */
-  static toVirtualFeat(featRow: FeatWithAptitudes, rulesetData: RulesetData): CustomizedFeat {
+  static toVirtualFeat(featRow: Feat, rulesetData: RulesetData): CustomizedFeat {
     return {
       ...featRow,
       klassLevelId: "",

@@ -14,17 +14,9 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { useClassCopy } from "./useClassCopy.ts";
 
 /**
- * The class a link's row names (`owner`, its key: `klassId`): the copy an edit of an inherited class wrote it on, or
- * the class itself (`classId`) when the row names none.
- */
-function classOf(row: Record<string, unknown>, owner: string, classId: string) {
-  const id = row[owner];
-  return typeof id === "string" ? id : classId;
-}
-
-/**
- * A class's links to the entities of a kind (`links`, its kind's: 3.5's class skills), which its links' tab lists, adds
- * to and removes from, each said in its rules' words (`words`).
+ * A class's links to the entities of a kind (`links`, its kind's role's: 3.5's class skills), which its links' tab
+ * lists, adds to and removes from, each said in its rules' words (`words`). An add or a remove answers its link, from
+ * the class it was written on (`fromId`): the copy an edit of an inherited class wrote it on.
  */
 export function useClassLinks(
   rulesetId: string,
@@ -84,7 +76,7 @@ export function useClassLinks(
         // brings the real one
         queryClient.setQueryData(linksKey, (old) => {
           if (!old) return [];
-          return [...old, { [links.key]: targetId, [links.owner]: classId, [links.target]: option }];
+          return [...old, { fromId: classId, toId: targetId, toName: option.name }];
         });
       }
 
@@ -93,7 +85,7 @@ export function useClassLinks(
     },
     onSuccess: (added) => {
       snackbar.success(`${words.one} added to ${words.owner}`);
-      followCopy(classOf(added, links.owner, classId), added.sourceEntityId);
+      followCopy(added.fromId, added.sourceEntityId);
     },
     onError: (error, _targetId, context) => {
       snackbar.error(error, `Failed to add ${one} to ${words.owner}`);
@@ -127,7 +119,7 @@ export function useClassLinks(
       // Optimistically remove the link
       queryClient.setQueryData(linksKey, (old) => {
         if (!old) return [];
-        return old.filter((link) => link[links.key] !== targetId);
+        return old.filter((link) => link.toId !== targetId);
       });
 
       // Return a context object with the snapshotted value
@@ -136,7 +128,7 @@ export function useClassLinks(
     onSuccess: (removed) => {
       snackbar.success(`${words.one} removed from ${words.owner}`);
       removeDialog.close();
-      followCopy(classOf(removed, links.owner, classId), removed.sourceEntityId);
+      followCopy(removed.fromId, removed.sourceEntityId);
     },
     onError: (error, _targetId, context) => {
       snackbar.error(error, `Failed to remove ${one} from ${words.owner}`);

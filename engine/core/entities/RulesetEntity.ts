@@ -18,7 +18,7 @@ import type {
   EntityDeletePlan,
   EntityEditPlan,
   EntityWrites,
-  ListLink,
+  LinkSet,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetData, type RulesetView, type ViewEntities } from "@/engine/core/view/index.ts";
@@ -42,7 +42,7 @@ const COPY_ACTIONS: readonly EntityAction[] = ["duplicate", "templates", "varian
  *   what else it carries by its kind's keys (`formKeys`), the entities it names by id, as the view reads them (`resolveIds`:
  *   a copy's for its source's id, refused, naming it, when the view shows none), the fields the form gives, read by its
  *   codec against the ruleset's declarations of them (`FieldCodec.parse`), the form checked (`checkForm`), its row's
- *   columns (`columnsOf`), the lists it's linked to (`linksOf`), what it writes beside them (`writesOf`: its fields,
+ *   columns (`columnsOf`), the links it sets (`linksOf`), what it writes beside them (`writesOf`: its fields,
  *   the feats it makes), and the fields it keeps once written (`fields`, which a create or an edit answers with its
  *   row);
  * - what deleting one writes (`planDelete`): checked (`checkDelete`), and what it writes with it (`deleteWritesOf`).
@@ -213,15 +213,18 @@ export default abstract class RulesetEntity<
     return entity ? this.valuesOf(entity) : OwnerValues.NONE;
   }
 
-  /** The lists a form links the entity to: none (`undefined`, an edit's kept), unless its kind is listed. */
-  protected linksOf(_body: Body): ListLink[] | undefined {
+  /**
+   * The links a form sets on the entity, by role (a feat's pools, a class level's grants): none (`undefined`, an edit's
+   * kept), unless its kind's form sets some.
+   */
+  protected linksOf(_body: Body): LinkSet[] | undefined {
     return undefined;
   }
 
   /**
    * A page of the kind's rows, of the filters its query gives (`where`, read): what the server reads it with
    * (`filters`: the ruleset's rows, of the values its query gives of its list's columns; a kind's list may narrow them
-   * by ids, fields or the join that links them), and its rows described.
+   * by ids, fields or the links of a role from a kind that name them, `linkedBy`), and its rows described.
    */
   protected listOf(where: { childOnly?: boolean } & Record<string, unknown>) {
     const named = this.listColumns.filter((name) => where[name] !== undefined);
@@ -229,7 +232,7 @@ export default abstract class RulesetEntity<
       columns?: Record<string, unknown>;
       fields?: Record<string, string>;
       ids?: string[];
-      joinedBy?: string;
+      linkedBy?: { fromType: string; role: string };
     } = named.length === 0 ? {} : { columns: Object.fromEntries(named.map((name) => [name, where[name]])) };
     return {
       describe: <T extends Record<string, unknown> & { id: string }>(rows: T[]) => this.describeRows(rows),

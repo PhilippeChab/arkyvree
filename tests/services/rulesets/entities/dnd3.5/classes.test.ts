@@ -4,10 +4,6 @@ import type {
   Aptitude,
   Feat,
   KlassLevel,
-  KlassLevelFeat,
-  KlassLevelSave,
-  KlassLevelSpell,
-  KlassSkill,
   RulesetAbility,
   RulesetSave,
   Skill,
@@ -15,10 +11,11 @@ import type {
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Entities, Joins, Modifiers, Requirements } from "@/server/repositories/index.ts";
+import { Entities, EntityLinks, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { addClassSkills, addGrants } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findStoredValues } from "@/tests/support/storedValues.ts";
@@ -95,18 +92,14 @@ describe("EntitiesService: classes", () => {
     });
 
     const klass = await EntitiesService.createEntity(session, rulesetId, "classes", { name: "Doomed Class" });
-    await Joins.create<KlassSkill>(db, "class_skills", { klassId: klass.id, skillId: skill.id });
+    await addClassSkills(db, klass.id, [skill.id]);
     const level = await EntitiesService.createOwnedEntity(session, rulesetId, "classes", klass.id, {
       level: 1,
       fields: { bab: 1, skills: 4 },
       feats: [{ featId: feat.id, aptitudeId: aptitude.id }],
       saves: [{ saveId: save.id, base: 2 }],
     });
-    await Joins.create<KlassLevelSpell>(db, "class_level_spells", {
-      klassLevelId: level.id,
-      spellId: spell.id,
-      aptitudeId: aptitude.id,
-    });
+    await addGrants(db, level.id, "spells", [{ toId: spell.id, aptitudeId: aptitude.id }]);
     await Modifiers.create(db, {
       sourceId: level.id,
       sourceType: "class_levels",
@@ -119,10 +112,7 @@ describe("EntitiesService: classes", () => {
     await EntitiesService.deleteEntity(session, rulesetId, "classes", klass.id);
 
     expect(await Entities.findOne<KlassLevel>(db, { entityType: "class_levels", id: level.id })).toBeUndefined();
-    expect(await Joins.findMany<KlassLevelFeat>(db, { join: "class_level_feats", fromIds: [level.id] })).toEqual([]);
-    expect(await Joins.findMany<KlassLevelSpell>(db, { join: "class_level_spells", fromIds: [level.id] })).toEqual([]);
-    expect(await Joins.findMany<KlassLevelSave>(db, { join: "class_level_saves", fromIds: [level.id] })).toEqual([]);
-    expect(await Joins.findMany<KlassSkill>(db, { join: "class_skills", fromIds: [klass.id] })).toEqual([]);
+    expect(await EntityLinks.findMany(db, { fromIds: [level.id, klass.id] })).toEqual([]);
     expect(await Modifiers.findMany(db, { sourceIds: [level.id], sourceType: "class_levels" })).toEqual([]);
   });
 

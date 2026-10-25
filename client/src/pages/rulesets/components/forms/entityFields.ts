@@ -34,6 +34,9 @@ export type EntityFieldValues = NonNullable<
   InferRequestType<(typeof rpc.api.rulesets)[":id"]["entities"][":entityType"]["$post"]>["json"]["fields"]
 >;
 
+/** An entity a link of an entity read names, as its server sends it: its id and its name. */
+export type LinkedEntity = Pick<EntityRow, "id" | "name">;
+
 /**
  * The columns that hold a value, each key once: of several columns at one key (an item's type, a template's narrower),
  * the one that takes any value it holds, not one that must hold one of its own.
@@ -49,11 +52,12 @@ function columnsByKey(columns: readonly EntityField[]): ValueField[] {
 }
 
 /**
- * A column's value as an entity read holds it: at its key, or, for links an entity read holds apart (`links`), off
- * them: each its linked entity's id, at its level where the column takes one, in their names' order.
+ * A column's value as an entity read holds it: at its key, or, for links an entity read holds among its links (a
+ * column's `role`'s), off them: each its linked entity's id, at its level where the column takes one, in their names'
+ * order.
  */
 function columnValueOf(column: ValueField, entity: unknown): unknown {
-  const linked = (column.input === "links" || column.input === "leveledLinks") && !!column.links;
+  const linked = (column.input === "links" || column.input === "leveledLinks") && !!column.role;
   if (!linked) return valueAt(entity, column.key);
   const links = linksOf(column, entity).sort((a, b) => byName(a.linked, b.linked));
   if (column.input === "links") return links.map(({ linked }) => linked.id);
@@ -119,11 +123,6 @@ function formValueOf(field: ValueField, value: unknown): ColumnValue {
   }
 }
 
-/** A linked entity a link of an entity read holds (at its column's `target`), as its server sends it. */
-function isLinkedEntity(value: unknown): value is EntityRow {
-  return isRecord(value) && typeof value.id === "string" && typeof value.name === "string";
-}
-
 /** Whether a value is a progression's: a frequency, and the levels it gives more at, each its level and its amount. */
 function isProgression(value: unknown): value is ProgressionValue {
   return (
@@ -135,15 +134,16 @@ function isProgression(value: unknown): value is ProgressionValue {
 }
 
 /**
- * An entity read's links of a links column (`links`), each its linked entity (at `target`) and its level, as its
- * server sends them.
+ * An entity read's links of a links column (its `role`'s, among its `links`), each its linked entity (its `toId` and
+ * `toName`) and its level (`tier`), as its server sends them.
  */
 function linksOf(column: LinksField, entity: unknown) {
-  const links = column.links ? valueAt(entity, column.links) : undefined;
-  return (Array.isArray(links) ? links : []).flatMap((link) => {
-    const linked = isRecord(link) && column.target ? link[column.target] : undefined;
-    return isRecord(link) && isLinkedEntity(linked) ? [{ linked, level: link.level }] : [];
-  });
+  const links = column.role ? valueAt(entity, "links") : undefined;
+  return (Array.isArray(links) ? links : []).flatMap((link) =>
+    isRecord(link) && link.role === column.role && typeof link.toId === "string" && typeof link.toName === "string"
+      ? [{ linked: { id: link.toId, name: link.toName }, level: link.tier }]
+      : [],
+  );
 }
 
 /** A decimal's text as its save sends it: its number, null for none (which clears it). */
@@ -209,10 +209,10 @@ export function isFieldShown(field: EntityField, watched: readonly unknown[]) {
 }
 
 /**
- * The entities an entity read links its links columns to (`links`), which its form shows by name, each column's in
- * name order.
+ * The entities an entity read links its links columns to (their roles' links), which its form shows by name, each
+ * column's in name order.
  */
-export function linkedEntities(columns: readonly EntityField[], entity: unknown): EntityRow[] {
+export function linkedEntities(columns: readonly EntityField[], entity: unknown): LinkedEntity[] {
   return columns.flatMap((column) => poolsOf([column], entity).sort(byName));
 }
 
@@ -236,10 +236,10 @@ export function ownFieldValues(fields: readonly EntityField[], values: unknown, 
 }
 
 /**
- * The pools an entity read is linked to through its pools' columns (`links`), as its server lists them: a feat's feat
- * pools, each a choice its pickers offer it in.
+ * The pools an entity read is linked to through its pools' columns (their roles' links), as its server lists them: a
+ * feat's feat pools, each a choice its pickers offer it in.
  */
-export function poolsOf(columns: readonly EntityField[], entity: unknown): EntityRow[] {
+export function poolsOf(columns: readonly EntityField[], entity: unknown): LinkedEntity[] {
   return columns.flatMap((column) =>
     column.input === "links" || column.input === "leveledLinks"
       ? linksOf(column, entity).map(({ linked }) => linked)

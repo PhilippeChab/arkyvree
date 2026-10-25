@@ -8,12 +8,11 @@ import {
   DND35_RULESET_NAME,
 } from "@/content/dnd3.5/rulesetNames.ts";
 import { entitiesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
-import type { FeatWithAptitudes, SpellWithAptitudes } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Joins } from "@/server/repositories/index.ts";
+import { EntityLinks } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createSeededTestRulesetWithExtensions, type Described } from "@/tests/support/rulesets.ts";
 
@@ -93,9 +92,9 @@ describe("aptitude deduplication across sibling extensions", () => {
     // Composed rulesetData already has sibling-merged + FK-remapped aptitude links.
     const composedSpell = dnd35.spellsById.get(spell.id);
     expect(composedSpell).toBeDefined();
-    const blackguardLink = composedSpell!.spellsAptitudesInRules.find((l) => l.aptitudeId === winningApt!.id);
+    const blackguardLink = dnd35.listLinksOf(composedSpell!.id).find((l) => l.toId === winningApt!.id);
     expect(blackguardLink).toBeDefined();
-    expect(blackguardLink!.level).toBe(4);
+    expect(blackguardLink!.tier).toBe(4);
   });
 
   test("all sibling spell aptitudes that exist in multiple extensions are deduped", async () => {
@@ -129,7 +128,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     const { ruleset } = await setup();
     // "Visage of the Deity, Lesser" is a CD spell with "Blackguard Spells" aptitude
     // Both DMG and CD create this aptitude — service should dedup
-    const { items } = await EntitiesService.getEntities<SpellWithAptitudes>(
+    const { items } = await EntitiesService.getEntities<Described<"spells">>(
       ruleset.id,
       "spells",
       { search: "Visage of the Deity, Lesser" },
@@ -138,7 +137,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     const spell = items.find((p) => p.name === "Visage of the Deity, Lesser");
     expect(spell).toBeDefined();
 
-    const aptNames = spell!.spellsAptitudesInRules.map((pa) => pa.aptitudesInRule.name);
+    const aptNames = spell!.links.map((link) => link.toName);
     const uniqueNames = new Set(aptNames);
     expect(aptNames.length).toBe(uniqueNames.size);
     expect(aptNames).toContain("Blackguard Spells");
@@ -153,7 +152,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     );
 
     const spell = await EntitiesService.getEntity<Described<"spells">>(ruleset.id, "spells", seeded.id);
-    const aptNames = spell.spellsAptitudesInRules.map((pa) => pa.aptitudesInRule.name);
+    const aptNames = spell.links.map((link) => link.toName);
     const uniqueNames = new Set(aptNames);
     expect(aptNames.length).toBe(uniqueNames.size);
   });
@@ -180,7 +179,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     const winningApt = Dnd35View.of(rulesetData).aptitudes.find((a) => a.name === "Blackguard Spells");
     expect(winningApt).toBeDefined();
 
-    const { items } = await EntitiesService.getEntities<FeatWithAptitudes>(
+    const { items } = await EntitiesService.getEntities<Described<"feats">>(
       ruleset.id,
       "feats",
       { aptitudeId: winningApt!.id },
@@ -188,7 +187,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     );
 
     for (const feat of items) {
-      const aptNames = feat.featsAptitudesInRules.map((fa) => fa.aptitudesInRule.name);
+      const aptNames = feat.links.map((link) => link.toName);
       const uniqueNames = new Set(aptNames);
       expect(aptNames.length).toBe(uniqueNames.size);
     }
@@ -240,11 +239,8 @@ describe("aptitude ownership (seed-level invariants)", () => {
     const [cwManyshot] = await namedEntities("feats", ["Manyshot"], [cwId]);
     expect(cwManyshot).toBeDefined();
 
-    const links = await Joins.findMany<{ aptitudeId: string; featId: string }>(db, {
-      join: "feats_aptitudes",
-      fromIds: [cwManyshot.id],
-    });
-    const aptIds = new Set(links.map((l) => l.aptitudeId));
+    const links = await EntityLinks.findMany(db, { fromIds: [cwManyshot.id], role: "listedIn" });
+    const aptIds = new Set(links.map((l) => l.toId));
 
     expect(aptIds.has(srdGeneral.id)).toBe(true);
 
@@ -263,11 +259,8 @@ describe("aptitude ownership (seed-level invariants)", () => {
 
     const [cwManyshot] = await namedEntities("feats", ["Manyshot"], [cwId]);
 
-    const links = await Joins.findMany<{ aptitudeId: string; featId: string }>(db, {
-      join: "feats_aptitudes",
-      fromIds: [cwManyshot.id],
-    });
+    const links = await EntityLinks.findMany(db, { fromIds: [cwManyshot.id], role: "listedIn" });
 
-    expect(links.some((l) => l.aptitudeId === cwRonin.id)).toBe(true);
+    expect(links.some((l) => l.toId === cwRonin.id)).toBe(true);
   });
 });

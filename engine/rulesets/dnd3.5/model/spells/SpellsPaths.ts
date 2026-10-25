@@ -1,10 +1,10 @@
 import CategoryPaths from "@/engine/core/paths/CategoryPaths.ts";
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
-import type { RulesetData } from "@/engine/core/view/index.ts";
+import type { RulesetData, ViewLink } from "@/engine/core/view/index.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { SpellWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { formatFieldName } from "@/shared/customization/fields.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
@@ -49,8 +49,12 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
     return paths;
   }
 
+  /**
+   * Each spell's paths (`spells`, each with the fields it holds and the lists it's on, its `listedIn` links): its fields',
+   * and its `known` path on each list it's on at a level, but the lists a feat brings.
+   */
   static generateSpellPaths(
-    spells: (SpellWithAptitudes & { fields: string[] })[],
+    spells: (Spell & { fields: string[]; lists: readonly Pick<ViewLink, "tier" | "toId">[] })[],
     spellSlugByAptitudeId: Map<string, string>,
     featListIds: Set<string>,
     kind: "modifier" | "requirement",
@@ -80,9 +84,9 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
     const seen = new Set<string>();
     for (const spell of spells) {
       const spellSlug = stripSeparators(spell.name);
-      for (const pa of spell.spellsAptitudesInRules) {
-        if (pa.level == null) continue;
-        const aptSlug = aptitudeIdToSlug.get(pa.aptitudeId);
+      for (const link of spell.lists) {
+        if (link.tier == null) continue;
+        const aptSlug = aptitudeIdToSlug.get(link.toId);
         if (!aptSlug) continue;
 
         const path = `spells.${spellSlug}.${aptSlug}.known`;
@@ -134,23 +138,24 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
   readonly name = "spells";
 
   /** Each spell a list has at a level, by its slug: its own DC paths. */
-  private leveledSpellNames(spells: Dnd35View["spells"]) {
+  private leveledSpellNames(dnd35: Dnd35View) {
     return [
       ...new Set(
-        spells
-          .filter((p) => p.spellsAptitudesInRules.some((pa) => pa.level != null))
-          .map((p) => stripSeparators(p.name)),
+        dnd35.spells
+          .filter((spell) => dnd35.listLinksOf(spell.id).some((link) => link.tier != null))
+          .map((spell) => stripSeparators(spell.name)),
       ),
     ];
   }
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    const { spells } = Dnd35View.of(rulesetData);
+    const dnd35 = Dnd35View.of(rulesetData);
     const spellLists = SpellLists.of(rulesetData);
     const spellValues = rulesetData.kindValues("spells");
-    const spellsWithFields = spells.map((spell) => ({
+    const spellsWithFields = dnd35.spells.map((spell) => ({
       ...spell,
       fields: Object.keys(rulesetData.valuesOf(spell.id).fields),
+      lists: dnd35.listLinksOf(spell.id),
     }));
     return [
       ...SpellsPaths.generateSpellPaths(
@@ -171,7 +176,7 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
         true,
         "descriptor",
       ),
-      ...SpellsPaths.generateGroupingPaths(this.leveledSpellNames(spells), kind, false),
+      ...SpellsPaths.generateGroupingPaths(this.leveledSpellNames(dnd35), kind, false),
     ];
   }
 

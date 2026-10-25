@@ -13,7 +13,7 @@ import {
 } from "@/server/repositories/index.ts";
 
 import { hasCharacterPicks } from "./characterPicks.ts";
-import { createListLinks } from "./listLinks.ts";
+import { createLinks } from "./linkWrites.ts";
 
 /** An entity's table, as a plan names it: refused when it isn't a ruleset entity's. */
 function entityTypeOf(type: string): RulesetEntityType {
@@ -23,14 +23,14 @@ function entityTypeOf(type: string): RulesetEntityType {
 }
 
 /**
- * An entity a plan makes, in the scope's ruleset: its row, its list links, its modifiers, its stored values and its
+ * An entity a plan makes, in the scope's ruleset: its row, its links, its modifiers, its stored values and its
  * requirements.
  */
 async function makeEntity(tx: Db, scope: RulesetScope, made: MadeEntity) {
   const type = entityTypeOf(made.type);
   const [entity] = await EntityRepositories.of(type).create(tx, { ...made.columns, rulesetId: scope.ruleset.id });
-  await createListLinks(tx, type, entity.id, made.links);
   const owner = { entityId: entity.id, entityType: type };
+  await createLinks(tx, owner, made.links);
   await Modifiers.createMany(
     tx,
     made.modifiers.map((modifier) => ({ ...modifier, sourceId: entity.id, sourceType: type })),

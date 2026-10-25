@@ -40,7 +40,8 @@ interface PageBounds {
  * A list of a kind's entities (`entityType`): a ruleset's own, its source chain's (less what a later ruleset copied,
  * and the `hiddenIds` its copy-on-write data gives), a campaign's; those of `ids`, of the values of `columns` (each
  * column's value, or one of its values: a field's, a single link's, its partition), of the values of `fields` (a feat's
- * family), the targets of a join's links (`joinedBy`: an aptitude a feat is listed in); searched, in an order.
+ * family), the targets of the links of a role from a kind (`linkedBy`: an aptitude a feat is listed in); searched, in
+ * an order.
  */
 export interface EntityListWhere {
   ancestorRulesetIds?: string[];
@@ -51,7 +52,7 @@ export interface EntityListWhere {
   fields?: Record<string, string>;
   hiddenIds?: string[];
   ids?: string[];
-  joinedBy?: string;
+  linkedBy?: { fromType: string; role: string };
   orderBy?: "createdAt" | "name" | "updatedAt";
   /** A character's (its id): the kind's entities first by the highest of theirs it advanced in (a class's levels) */
   orderByAdvancementsOf?: string;
@@ -256,19 +257,6 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     return ids.flatMap((id) => byId.get(id) ?? []);
   }
 
-  /** Stored entities as their kinds' rows, with their lists and the entities those name (a list's read). */
-  private async rowsWithLists<R extends EntityRow>(db: Db, entities: StoredEntity[]): Promise<R[]> {
-    const storage = Engine.storage();
-    const listed = entities.filter((entity) => storage.kind(entity.type).lists);
-    const targetIds = [...new Set(listed.flatMap((entity) => entity.links.map((link) => link.toId)))];
-    const targets =
-      targetIds.length === 0
-        ? []
-        : await this.read(db, inArray(entitiesInRules.id, targetIds), [this.orderBy(entitiesInRules.id)]);
-    const byId = new Map(targets.map((target) => [target.id, target]));
-    return entities.map((entity) => storage.rowOf(entity, { targets: byId }) as R);
-  }
-
   /**
    * Writes stored entities' fields and single links (`writes`: each entity's ids and what it sets), in batches:
    * replacing what they held of them when `replacing` (an update's; a new entity holds none).
@@ -428,7 +416,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
    */
   async findGroupPage(
     db: Db,
-    where: Omit<EntityListWhere, "columns" | "fields" | "joinedBy" | "orderBy" | "orderDir"> & { groupField: string },
+    where: Omit<EntityListWhere, "columns" | "fields" | "linkedBy" | "orderBy" | "orderDir"> & { groupField: string },
     pagination: { limit: number; page: number },
   ) {
     if (where.ids !== undefined && where.ids.length === 0) return this.paginated([], pagination);
@@ -605,35 +593,32 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     return this.paginated(rows as { description: string | null; id: string; name: string }[], pagination);
   }
 
-  /**
-   * A page of a ruleset's list of a kind (`where`), each as its kind's row with its lists (a feat's pools, each with its
-   * aptitude).
-   */
+  /** A page of a ruleset's list of a kind (`where`), each as its kind's row. */
   async findPage<R extends EntityRow = EntityRow>(
     db: Db,
     where: EntityListWhere,
     pagination: { limit: number; page: number },
   ) {
     if (where.ids !== undefined && where.ids.length === 0) return this.paginated<R>([], pagination);
-    const { search, orderBy = "name", orderDir = "asc", joinedBy } = where;
+    const { search, orderBy = "name", orderDir = "asc", linkedBy } = where;
     const searchColumns = [entitiesInRules.name, entitiesInRules.description];
-    const join = joinedBy === undefined ? undefined : Engine.storage().join(joinedBy);
     const conditions = [
       eq(entitiesInRules.type, where.entityType),
       this.buildRulesetCondition(db, where),
       isNull(entitiesInRules.deletedAt),
       this.fuzzySearch(search, searchColumns),
       where.ids !== undefined && inArray(entitiesInRules.id, where.ids),
-      join !== undefined &&
-        sql`${entitiesInRules.id} IN (SELECT ${entityLinksInRules.toId} FROM ${entityLinksInRules} WHERE ${and(eq(entityLinksInRules.role, join.role), eq(entityLinksInRules.fromType, join.from), eq(entityLinksInRules.toType, join.to))})`,
+      linkedBy !== undefined &&
+        sql`${entitiesInRules.id} IN (SELECT ${entityLinksInRules.toId} FROM ${entityLinksInRules} WHERE ${and(eq(entityLinksInRules.role, linkedBy.role), eq(entityLinksInRules.fromType, linkedBy.fromType), eq(entityLinksInRules.toType, where.entityType))})`,
       ...StoredEntities.buildValueConditions(where),
     ];
     const order = where.orderByAdvancementsOf
       ? this.orderByAdvancements(where.orderByAdvancementsOf)
       : [this.searchOrderBy(search, searchColumns, this.orderBy(entitiesInRules[orderBy], orderDir))];
-    return await this.withPagination(pagination, async (page) =>
-      this.rowsWithLists<R>(db, await this.read(db, this.where(conditions), this.pageOrder(order), { page })),
-    );
+    return await this.withPagination(pagination, async (page) => {
+      const entities = await this.read(db, this.where(conditions), this.pageOrder(order), { page });
+      return entities.map((entity) => Engine.storage().rowOf(entity) as R);
+    });
   }
 
   /**

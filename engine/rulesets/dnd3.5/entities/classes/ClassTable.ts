@@ -68,11 +68,13 @@ export default class ClassTable {
     const dnd35 = Dnd35View.of(rulesetData);
     const { levels } = this;
     const featModifiers: Modifier[] = levels.flatMap((level) =>
-      (dnd35.klassLevelFeatsByKlassLevel.get(level.id) ?? []).flatMap((levelFeat) =>
-        (rulesetData.modifiersBySource.get(levelFeat.featId) ?? [])
-          .filter((modifier) => modifier.sourceType === "feats")
-          .map((modifier) => ({ ...modifier, sourceId: levelFeat.klassLevelId })),
-      ),
+      dnd35
+        .grantedFeatsOf(level.id)
+        .flatMap((grant) =>
+          (rulesetData.modifiersBySource.get(grant.toId) ?? [])
+            .filter((modifier) => modifier.sourceType === "feats")
+            .map((modifier) => ({ ...modifier, sourceId: grant.fromId })),
+        ),
     );
     const nameBySlug = new Map(dnd35.aptitudes.map((aptitude) => [stripSeparators(aptitude.name), aptitude.name]));
     const totals = LevelTotals.computeRunning<number>(

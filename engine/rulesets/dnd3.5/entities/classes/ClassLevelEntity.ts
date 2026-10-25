@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues, EntityForm } from "@/engine/core/fields/index.ts";
-import type { EntityWrites } from "@/engine/core/module/index.ts";
+import type { EntityWrites, LinkSet } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
@@ -32,8 +32,8 @@ const LEVEL = z.number().int().min(1).max(RULESET_LIMITS.classLevel);
 
 /**
  * A class's levels (`klass`, as the view has it) as the ruleset describes them, and what a level's save writes beside
- * its row: its fields, the feats it grants and its saves' base bonuses (`joinRows`), and its requirement of the class's
- * previous level.
+ * its row: its fields, the feats it grants and its saves' base bonuses (its `grants` and `baseBonus` links, `linksOf`),
+ * and its requirement of the class's previous level.
  */
 export default class ClassLevelEntity extends CustomizationPageEntity<
   "class_levels",
@@ -72,6 +72,33 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   /** A form's columns: none, a level's number is its own (a new one's, its form's: `planCreate`). */
   protected override columnsOf() {
     return {};
+  }
+
+  /**
+   * A form's links, by role: the feats it grants (`grants`, each through its pool, free unless it says), and its saves'
+   * base bonuses (`baseBonus`), each entity the view's (`resolveIds`). A role the form leaves out it keeps.
+   */
+  protected override linksOf({ feats, saves }: ClassLevelBody): LinkSet[] {
+    return [
+      ...(feats
+        ? [
+            {
+              role: "grants",
+              toType: "feats",
+              links: feats.map((feat) => ({ toId: feat.featId, viaId: feat.aptitudeId, free: feat.free ?? true })),
+            },
+          ]
+        : []),
+      ...(saves
+        ? [
+            {
+              role: "baseBonus",
+              toType: "saves",
+              links: saves.map((save) => ({ toId: save.saveId, amount: save.base })),
+            },
+          ]
+        : []),
+    ];
   }
 
   /**
@@ -129,16 +156,13 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   }
 
   /**
-   * A new level of the class: the class as the view has it, the level's row and join rows, what its form writes beside
+   * A new level of the class: the class as the view has it, the level's row and links, what its form writes beside
    * them, and the level it answers once written, with the fields it keeps.
    */
   override planCreate(form: EntityForm) {
     const plan = super.planCreate(form);
-    const body = this.formOf(form);
-    // Its join rows' ids read first, then its number
-    const joins = this.joinRows(body);
-    const level = RulesError.parse(LEVEL, body.level);
-    return { ...plan, activity: { entityName: this.klass.name, level }, columns: { level }, joins, owner: this.klass };
+    const level = RulesError.parse(LEVEL, this.formOf(form).level);
+    return { ...plan, activity: { entityName: this.klass.name, level }, columns: { level }, owner: this.klass };
   }
 
   /** Deleting one of the class's levels: the class and the level, as the view has them. */
@@ -149,28 +173,22 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   }
 
   /**
-   * One of the class's levels' edit: the class and the level, as the view has them, its new join rows when the form
-   * sends them, what its form writes against the stored values the view composes for it (those a copy of it holds), and
-   * the level it answers once written, with the fields it keeps.
+   * One of the class's levels' edit: the class and the level, as the view has them, its new links when the form sends
+   * them, what its form writes against the stored values the view composes for it (those a copy of it holds), and the
+   * level it answers once written, with the fields it keeps.
    */
   override planEdit(levelId: string, form: EntityForm) {
     const plan = super.planEdit(levelId, form);
-    return {
-      ...plan,
-      activity: { entityName: this.klass.name, level: plan.entity.level },
-      joins: this.joinRows(this.formOf(form, plan.entity)),
-      owner: this.klass,
-    };
+    return { ...plan, activity: { entityName: this.klass.name, level: plan.entity.level }, owner: this.klass };
   }
 
   /**
    * A level's details: the feats it grants (each with its pool's name and whether it's free), its saves' base bonuses.
    */
   private detailsOf(level: { id: string }) {
-    const levelSaves = this.dnd35.klassLevelSavesByKlassLevel.get(level.id) ?? [];
     return {
       feats: this.grantedFeats(level.id),
-      saves: levelSaves.map((ls) => ({ saveId: ls.saveId, base: ls.base })),
+      saves: this.dnd35.baseBonusesOf(level.id).map((link) => ({ saveId: link.toId, base: link.amount ?? 0 })),
     };
   }
 
@@ -179,35 +197,18 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     return Dnd35View.of(this.rulesetData);
   }
 
-  /** The feats a class level grants, each with its pool's name and whether it's free. */
+  /**
+   * The feats a class level grants, each with its pool (its link's `viaId`), the pool's name when the feat is listed in
+   * it, and whether it's free.
+   */
   private grantedFeats(levelId: string) {
     const { dnd35 } = this;
-    return (dnd35.klassLevelFeatsByKlassLevel.get(levelId) ?? []).map((lf) => {
-      const feat = dnd35.featsById.get(lf.featId);
-      const aptitudeEntry = feat?.featsAptitudesInRules?.find((fa) => fa.aptitudeId === lf.aptitudeId);
-      return {
-        ...feat!,
-        aptitudeId: lf.aptitudeId,
-        aptitudeName: aptitudeEntry?.aptitudesInRule?.name ?? null,
-        free: lf.free,
-      };
+    return dnd35.grantedFeatsOf(levelId).map((link) => {
+      const feat = dnd35.featsById.get(link.toId);
+      const listed = feat && dnd35.listLinksOf(feat.id).some((list) => list.toId === link.viaId);
+      const pool = listed && link.viaId !== null ? dnd35.aptitudesById.get(link.viaId) : undefined;
+      return { ...feat!, aptitudeId: link.viaId!, aptitudeName: pool?.name ?? null, free: link.free };
     });
-  }
-
-  /**
-   * A form's join rows, by join: the feats it grants (free unless it says), and its saves' base bonuses, each entity
-   * the view's (`resolveIds`). One the form leaves out it keeps.
-   */
-  private joinRows(body: ClassLevelBody) {
-    const { feats, saves } = { ...body, ...this.resolveIds(body) };
-    return {
-      class_level_feats: feats?.map((feat) => ({
-        aptitudeId: feat.aptitudeId,
-        featId: feat.featId,
-        free: feat.free ?? true,
-      })),
-      class_level_saves: saves?.map((save) => ({ base: save.base, saveId: save.saveId })),
-    };
   }
 
   /**

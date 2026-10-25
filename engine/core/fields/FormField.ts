@@ -117,30 +117,28 @@ export interface GroupFormField {
 /**
  * Links to entities of a list, of its kind (`references`: 3.5's `aptitudes`), each with a level of its own, none too
  * (3.5's spell's spell lists, each at its spell level): from `min` to `max`. A new entity's empty list is refused,
- * saying `required`, when it has one. An entity read holds them at `links` (each link its list, at `target`, and its
- * level), which its form reads them from.
+ * saying `required`, when it has one. An entity read holds them among its `links`, by their `role` (each its list,
+ * `toId`, its name, `toName`, and its level, `tier`), which its form reads them from.
  */
 export interface LeveledLinksFormField extends FormFieldBase {
   input: "leveledLinks";
-  links?: string;
   max: number;
   min: number;
   references: string;
   required?: string;
-  target?: string;
+  role?: string;
 }
 
 /**
  * Links to entities of a list, of its kind (`references`: 3.5's `aptitudes`), none too (3.5's feat's pools). A new
- * entity's empty list is refused, saying `required`, when it has one. An entity read holds them at `links` (each link
- * its list, at `target`), which its form reads them from.
+ * entity's empty list is refused, saying `required`, when it has one. An entity read holds them among its `links`, by
+ * their `role` (each its list, `toId`, and its name, `toName`), which its form reads them from.
  */
 export interface LinksFormField extends FormFieldBase {
   input: "links";
-  links?: string;
   references: string;
   required?: string;
-  target?: string;
+  role?: string;
 }
 
 /** A whole number in its bounds, in its `unit` ("feet"), which its label names: none, when it has no `default`. */

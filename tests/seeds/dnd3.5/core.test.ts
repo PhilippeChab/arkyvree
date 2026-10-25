@@ -176,12 +176,12 @@ describe("The seeded core rules", () => {
       expect(rows.feats.filter((feat) => feat.name.endsWith(" Domain")).length).toBe(ALL_DOMAINS.length);
       for (const domain of ALL_DOMAINS) {
         const feat = rows.feat(`${domain.name} Domain`);
-        expect(feat.featsAptitudesInRules.map((link) => link.aptitudeId)).toEqual([clericDomain.id]);
+        expect(feat.lists.map((link) => link.aptitudeId)).toEqual([clericDomain.id]);
         expect(rows.requirementsOf(feat.id)).toEqual([]);
 
         const spellList = rows.aptitude(`${domain.name} Domain Spells`);
         const spells = rows.spells.flatMap((spell) =>
-          spell.spellsAptitudesInRules
+          spell.lists
             .filter((link) => link.aptitudeId === spellList.id)
             .map((link) => `${link.level} ${spell.name.toLowerCase()}`),
         );
@@ -307,7 +307,7 @@ describe("The seeded core rules", () => {
         expect({
           name,
           stackable: feat.stackable,
-          aptitudes: feat.featsAptitudesInRules.map((link) => link.aptitudeId),
+          aptitudes: feat.lists.map((link) => link.aptitudeId),
           family,
         }).toEqual({ name, stackable: false, aptitudes: [aptitude.id], family: ["Favored Enemy"] });
       }

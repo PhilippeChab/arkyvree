@@ -22,8 +22,8 @@ export function CopiesIntoExtensions<B extends Constructor<BaseSeeder>>(Base: B)
      * aptitudes), at their levels.
      */
     protected override async keptSpellLinks(fromIds: string[]) {
-      const links = await this.listedIn("spells_aptitudes", fromIds);
-      const aptitudeIds = [...new Set(links.map((link) => link.aptitudeId))];
+      const links = await this.listedIn(fromIds);
+      const aptitudeIds = [...new Set(links.map((link) => link.toId))];
       const names = new Map(
         aptitudeIds.length === 0
           ? []
@@ -35,9 +35,9 @@ export function CopiesIntoExtensions<B extends Constructor<BaseSeeder>>(Base: B)
             ).map((aptitude) => [aptitude.id, aptitude.name ?? ""]),
       );
       const kept = new Map<string, SpellLink[]>();
-      for (const { aptitudeId, level, spellId } of links) {
-        if (!/^(\w[\w ]*) Spells$/.test(names.get(aptitudeId) ?? "")) continue;
-        kept.set(spellId!, [...(kept.get(spellId!) ?? []), { aptitudeId, level: level ?? null }]);
+      for (const { fromId, tier, toId } of links) {
+        if (!/^(\w[\w ]*) Spells$/.test(names.get(toId) ?? "")) continue;
+        kept.set(fromId, [...(kept.get(fromId) ?? []), { aptitudeId: toId, level: tier }]);
       }
       return kept;
     }
@@ -104,11 +104,11 @@ export function CopiesIntoExtensions<B extends Constructor<BaseSeeder>>(Base: B)
         const copyId = await this.cowFeat(featId);
         this.ctx.featMap[entry.feat] = copyId;
         await this.addClassLevelAlternatives(copyId, entry.requirements);
-        await this.insertJoins(
-          "feats_aptitudes",
+        await this.insertListings(
+          "feats",
           entry.aptitudes
             .filter((aptitude) => this.ctx.aptMap[aptitude])
-            .map((aptitude) => ({ featId: copyId, aptitudeId: this.ctx.aptMap[aptitude] })),
+            .map((aptitude) => ({ entityId: copyId, aptitudeId: this.ctx.aptMap[aptitude] })),
         );
       }
     }

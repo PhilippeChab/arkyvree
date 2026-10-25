@@ -36,7 +36,6 @@ import {
   Characters,
   Entities,
   Fields,
-  Joins,
   Modifiers,
   Picks,
   Requirements,
@@ -51,6 +50,7 @@ import { insertRows, measure } from "@/tests/support/database.ts";
 import { buildAs, createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createRaceModifier } from "@/tests/support/dnd3.5/customizations.ts";
 import { addCharacterLevel, createTestKlassLevel, findKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { addListings, addLists } from "@/tests/support/dnd3.5/links.ts";
 import { type Carried, carry, createTestItem } from "@/tests/support/items.ts";
 import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
@@ -2774,9 +2774,9 @@ describe("DetailedCharacter", () => {
           { name: "Fifth Order Hymn", rulesetId: fork.id },
           { name: "Sixth Order Hymn", rulesetId: fork.id },
         ]);
-        await Joins.createMany(db, "spells_aptitudes", [
-          { spellId: fifth.id, aptitudeId: order.id, level: 5 },
-          { spellId: sixth.id, aptitudeId: order.id, level: 6 },
+        await addListings(db, "spells", [
+          { entityId: fifth.id, aptitudeId: order.id, level: 5 },
+          { entityId: sixth.id, aptitudeId: order.id, level: 6 },
         ]);
         const [orderDomain] = await Entities.createMany<Feat>(db, "feats", [
           { name: "Order Domain", rulesetId: fork.id },
@@ -3000,9 +3000,7 @@ describe("DetailedCharacter", () => {
           { name: "Test Raider Class Feature", rulesetId: ctx.rulesetId },
           { name: "Test Raider Spells", rulesetId: ctx.rulesetId },
         ]);
-        await Joins.createMany(db, "spells_aptitudes", [
-          { spellId: ctx.spellMap["Bless"], aptitudeId: raiderSpells.id, level: 1 },
-        ]);
+        await addLists(db, "spells", ctx.spellMap["Bless"], [{ aptitudeId: raiderSpells.id, level: 1 }]);
         const [luck] = await Entities.createMany<Feat>(db, "feats", [
           { name: "Test Raider Luck", rulesetId: ctx.rulesetId },
         ]);
@@ -3056,9 +3054,7 @@ describe("DetailedCharacter", () => {
         const [sunPriestSpells] = await Entities.createMany<Aptitude>(db, "aptitudes", [
           { name: "Test Sun Priest Spells", rulesetId: ctx.rulesetId },
         ]);
-        await Joins.createMany(db, "spells_aptitudes", [
-          { spellId: ctx.spellMap["Bless"], aptitudeId: sunPriestSpells.id, level: 1 },
-        ]);
+        await addLists(db, "spells", ctx.spellMap["Bless"], [{ aptitudeId: sunPriestSpells.id, level: 1 }]);
         const { levelIds } = await new RulesetSeeder(db, ctx).seedClass({
           name: "Test Sun Priest",
           description: "Draws on a domain",
@@ -3134,7 +3130,7 @@ describe("DetailedCharacter", () => {
         const [reserve] = await Entities.createMany<Feat>(db, "feats", [
           { name: "Test Arcane Reserve", rulesetId: fork.id },
         ]);
-        await Joins.createMany(db, "feats_aptitudes", [{ featId: reserve.id, aptitudeId: ctx.aptMap["General"] }]);
+        await addLists(db, "feats", reserve.id, [{ aptitudeId: ctx.aptMap["General"] }]);
         await insertRows(modifiersInCustomization, [
           {
             sourceId: reserve.id,
@@ -3218,19 +3214,19 @@ describe("DetailedCharacter", () => {
           { name: "Dusk Hymn", rulesetId: fork.id },
           { name: "Noon Hymn", rulesetId: fork.id },
         ]);
-        await Joins.createMany(db, "spells_aptitudes", [
-          { spellId: dawn.id, aptitudeId: prayers.id, level: 1 },
-          { spellId: dusk.id, aptitudeId: moon.id, level: 1 },
-          { spellId: noon.id, aptitudeId: litany.id, level: 1 },
+        await addListings(db, "spells", [
+          { entityId: dawn.id, aptitudeId: prayers.id, level: 1 },
+          { entityId: dusk.id, aptitudeId: moon.id, level: 1 },
+          { entityId: noon.id, aptitudeId: litany.id, level: 1 },
         ]);
         const [sun, moonDomain] = await Entities.createMany<Feat>(db, "feats", [
           { name: "Prayers of the Sun", rulesetId: fork.id },
           { name: "Moon Domain", rulesetId: fork.id },
         ]);
         const clericDomain = ctx.aptMap["Cleric Domain"];
-        await Joins.createMany(db, "feats_aptitudes", [
-          { featId: sun.id, aptitudeId: clericDomain },
-          { featId: moonDomain.id, aptitudeId: clericDomain },
+        await addListings(db, "feats", [
+          { entityId: sun.id, aptitudeId: clericDomain },
+          { entityId: moonDomain.id, aptitudeId: clericDomain },
         ]);
         const slot = (sourceId: string, list: string) => [
           {
