@@ -68,7 +68,7 @@ describe("A module's storage", () => {
     );
   });
 
-  test("reads the kinds a user customizes and the types whose properties hold fields into the view's kinds", () => {
+  test("reads the kinds a user customizes and the types whose entities hold fields into the view's kinds", () => {
     const storage = StorageEngine.shared();
     const { fieldDefs } = storage.registries();
     // A property type's fields aren't its columns', and every customizable kind's are a kind's
@@ -81,9 +81,9 @@ describe("A module's storage", () => {
     );
     for (const type of storage.propertyTypes())
       expect(fieldDefs.some((def) => def.ownerType === type && !columnFields.has(def.field))).toBe(true);
-    for (const { customizable, properties, type } of storage.viewSchema().kinds) {
+    for (const { customizable, fields, type } of storage.viewSchema().kinds) {
       expect(customizable).toBe(!!storage.kind(type).customizable);
-      expect(properties).toBe(storage.propertyTypes().includes(type));
+      expect(fields).toBe(storage.propertyTypes().includes(type));
     }
   });
 

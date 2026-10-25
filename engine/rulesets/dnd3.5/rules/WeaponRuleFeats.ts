@@ -22,10 +22,10 @@ export default class WeaponRuleFeats {
   /** What it derived: each rule's feats, the first time they're read. */
   private readonly built: Partial<Record<WeaponRule, FeatWithAptitudes[]>> = {};
 
-  /** The view's feats that change `rule`, by their properties' fields. */
+  /** The view's feats that change `rule`, by their fields. */
   featsWith(rule: WeaponRule): FeatWithAptitudes[] {
     return (this.built[rule] ??= Dnd35View.of(this.rulesetData).feats.filter(
-      (feat) => FEAT_FIELDS.read(this.rulesetData.propertiesByEntity.get(feat.id) ?? [])[rule],
+      (feat) => FEAT_FIELDS.read(this.rulesetData.valuesOf(feat.id))[rule],
     ));
   }
 }

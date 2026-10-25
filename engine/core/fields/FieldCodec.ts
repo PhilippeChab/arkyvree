@@ -1,4 +1,4 @@
-import type { PropertyValue } from "@/engine/core/module/index.ts";
+import type { FieldValue, PropertyValue } from "@/engine/core/module/index.ts";
 import { copyProgression, countRoomAt, type ProgressionValue } from "@/shared/customization/progression.ts";
 
 import Field, {
@@ -6,12 +6,14 @@ import Field, {
   type FieldSpec,
   type FieldValues,
   type FlagSpec,
+  type LeafSpec,
   type NoFields,
   type NumberSpec,
   type ProgressionSpec,
 } from "./Field.ts";
 import FieldForms, { type FormContext } from "./FieldForms.ts";
 import type { FormField } from "./FormField.ts";
+import type { StoredValues } from "./OwnerValues.ts";
 
 /** What a codec's rules add to its fields': when the entity keeps none of them. */
 interface FieldRules<V> {
@@ -19,19 +21,12 @@ interface FieldRules<V> {
   storesWhen?(values: Partial<V>): boolean;
 }
 
-/** A property row, as a codec reads it: its type and value, and its id when it has one. */
-interface Row {
-  id?: string;
-  type: string;
-  value: string;
-}
-
 /**
- * An entity's fields kept in its properties, read and written by one spec (`fields`, as its ruleset's vocabulary
- * declares them: `FieldSpec`): their defaults, the property types that store them, the rows of an entity read into
- * values in one pass, values written back as rows (all of them, or those another's don't hold: `toOverrides`), an
- * edit's values merged over what's kept, a form's fields read as a save takes them (`parse`), and described as a form
- * shows them (`describe`).
+ * An entity's fields, read and written by one spec (`fields`, as its ruleset's vocabulary declares them: `FieldSpec`):
+ * their defaults, the stored fields that keep them, an owner's stored values read into values (`read`), values written
+ * back as the properties a save still writes (all of them, or those another's don't hold: `toOverrides`), an edit's
+ * values merged over what's kept, a form's fields read as a save takes them (`parse`), and described as a form shows
+ * them (`describe`).
  */
 export default class FieldCodec<S extends Fields> {
   constructor(
@@ -40,11 +35,11 @@ export default class FieldCodec<S extends Fields> {
   ) {
     this.defaults = FieldCodec.defaultsOf(fields) as FieldValues<S>;
     this.keys = Object.keys(fields) as (keyof S & string)[];
-    this.types = Field.leavesOf(fields).map((field) => field.type);
-    this.typeSet = new Set(this.types);
+    this.leaves = new Map(Field.leavesOf(fields).map((field) => [field.field, field]));
+    this.types = [...this.leaves.keys()];
   }
 
-  /** No fields: a kind's whose properties hold none of its own, read as nothing. */
+  /** No fields: a kind's whose entities hold none of their own, read as nothing. */
   static readonly NONE: FieldCodec<NoFields> = new FieldCodec({});
 
   /** A flag's value without a row: none when it tells its absence apart, false otherwise. */
@@ -90,41 +85,45 @@ export default class FieldCodec<S extends Fields> {
     return Map.groupBy(rows, (row) => row.type);
   }
 
-  /** A field's value off its rows' values (`values`), in their order: what its kind reads. */
-  private static readField(field: FieldSpec, rows: Map<string, string[]>): unknown {
-    if (field.kind === "group") return FieldCodec.readFields(field.fields, rows);
-    const values = rows.get(field.type) ?? [];
+  /**
+   * A field's value off an owner's stored values (`stored`): its field's, in their order, as its kind reads them (a
+   * text's as text), or a reference's link's.
+   */
+  private static readField(field: FieldSpec, stored: StoredValues): unknown {
+    if (field.kind === "group") return FieldCodec.readFields(field.fields, stored);
+    if (field.kind === "ref") return stored.links[field.role] ?? null;
+    const values = stored.fields[field.field] ?? [];
     switch (field.kind) {
       case "flag":
-        return values.length === 0 ? FieldCodec.absentOf(field) : values.includes("true");
+        return values.length === 0 ? FieldCodec.absentOf(field) : values.some((value) => String(value) === "true");
       case "number":
         return FieldCodec.readNumber(field, values);
       case "choice": {
-        const [first] = values;
+        const first = values[0] === undefined ? undefined : String(values[0]);
         return first !== undefined && field.values.includes(first) ? first : null;
       }
       case "list":
-        return [...values];
+        return values.map(String);
       case "progression":
-        return FieldCodec.readProgression(field, values);
+        return FieldCodec.readProgression(field, values.map(String));
       default:
-        return values[0] ?? null;
+        return values[0] === undefined ? null : String(values[0]);
     }
   }
 
-  /** The fields' values off their rows' values, by property type, each that doesn't count at its default. */
-  private static readFields(fields: Fields, rows: Map<string, string[]>): Record<string, unknown> {
+  /** The fields' values off an owner's stored values, each that doesn't count at its default. */
+  private static readFields(fields: Fields, stored: StoredValues): Record<string, unknown> {
     const values = Object.fromEntries(
-      Object.entries(fields).map(([key, field]) => [key, FieldCodec.readField(field, rows)]),
+      Object.entries(fields).map(([key, field]) => [key, FieldCodec.readField(field, stored)]),
     );
     return FieldCodec.applyConditions(fields, values);
   }
 
-  /** A number field's value: the first of its rows' values that's a number in its bounds, its default otherwise. */
-  private static readNumber(field: NumberSpec, values: string[]): number | null {
+  /** A number field's value: the first of its values that's a number in its bounds (as text too), its default otherwise. */
+  private static readNumber(field: NumberSpec, values: readonly FieldValue[]): number | null {
     for (const value of values) {
-      const number = Number(value);
-      if (value.trim() === "" || !Number.isFinite(number)) continue;
+      const number = typeof value === "number" ? value : Number(value);
+      if (typeof value === "boolean" || String(value).trim() === "" || !Number.isFinite(number)) continue;
       if ((field.min !== undefined && number < field.min) || (field.max !== undefined && number > field.max)) continue;
       return number;
     }
@@ -173,18 +172,18 @@ export default class FieldCodec<S extends Fields> {
       case "group":
         return FieldCodec.writeFields(field.fields, value as Record<string, unknown>);
       case "list":
-        return (value as string[]).map((item) => ({ type: field.type, value: item }));
+        return (value as string[]).map((item) => ({ type: field.field, value: item }));
       case "progression": {
         const { every, extra } = value as ProgressionValue;
         const rows = [`every:${every}`, ...extra.map(({ amount, level }) => `${level}:${amount}`)];
-        return rows.map((row) => ({ type: field.type, value: row }));
+        return rows.map((row) => ({ type: field.field, value: row }));
       }
       case "flag":
-        return field.absent === null || value === true ? [{ type: field.type, value: String(value) }] : [];
+        return field.absent === null || value === true ? [{ type: field.field, value: String(value) }] : [];
       case "number":
-        return field.write !== "always" && value === field.default ? [] : [{ type: field.type, value: String(value) }];
+        return field.write !== "always" && value === field.default ? [] : [{ type: field.field, value: String(value) }];
       default:
-        return value === "" ? [] : [{ type: field.type, value: String(value) }];
+        return value === "" ? [] : [{ type: field.field, value: String(value) }];
     }
   }
 
@@ -194,7 +193,8 @@ export default class FieldCodec<S extends Fields> {
     return Object.entries(fields).flatMap(([key, field]) => FieldCodec.writeField(field, counted[key]));
   }
 
-  private readonly typeSet: ReadonlySet<string>;
+  /** The fields' leaves, by the stored field that keeps each. */
+  private readonly leaves: ReadonlyMap<string, LeafSpec>;
 
   /** Each field's value without a row. */
   readonly defaults: FieldValues<S>;
@@ -202,7 +202,7 @@ export default class FieldCodec<S extends Fields> {
   /** The fields' names, in the spec's order. */
   readonly keys: (keyof S & string)[];
 
-  /** The property types that store the fields, a group's too, in the spec's order. */
+  /** The stored fields that keep the fields, a group's too, in the spec's order: those a write replaces. */
   readonly types: string[];
 
   /**
@@ -220,6 +220,15 @@ export default class FieldCodec<S extends Fields> {
   }
 
   /**
+   * The values a stored field of the codec's takes, as text, in their order, when they're a closed list (a flag's, true
+   * and false): none for a free one, or a field it doesn't declare.
+   */
+  optionsOf(field: string): readonly string[] | null {
+    const leaf = this.leaves.get(field);
+    return leaf ? Field.closedValuesOf(leaf) : null;
+  }
+
+  /**
    * A form's fields (`given`), as a save takes them: those it gives, each of its field's shape, a field a condition
    * leaves out dropped, a reference resolved (`FieldForms.parse`); refused as invalid otherwise.
    */
@@ -229,16 +238,9 @@ export default class FieldCodec<S extends Fields> {
     >;
   }
 
-  /** The fields' values off an entity's property rows (several entities' too), in one pass. */
-  read(rows: readonly Row[]): FieldValues<S> {
-    const byType = new Map<string, string[]>();
-    for (const { type, value } of rows) {
-      if (!this.typeSet.has(type)) continue;
-      const values = byType.get(type);
-      if (values) values.push(value);
-      else byType.set(type, [value]);
-    }
-    return FieldCodec.readFields(this.fields, byType) as FieldValues<S>;
+  /** The fields' values off an owner's stored values (`stored`: its fields' and the links they read). */
+  read(stored: StoredValues): FieldValues<S> {
+    return FieldCodec.readFields(this.fields, stored) as FieldValues<S>;
   }
 
   /** The values, each reference the id `resolve` gives for the one it holds (the view's: a copy's for its source's). */
@@ -247,6 +249,21 @@ export default class FieldCodec<S extends Fields> {
       .filter(([key, field]) => field.kind === "ref" && typeof values[key] === "string")
       .map(([key]) => [key, resolve(values[key] as string)]);
     return { ...values, ...Object.fromEntries(references) };
+  }
+
+  /**
+   * The stored values the properties a save writes keep (`rows`, `toProperties`'), as `read` reads them: each field's
+   * in their order, a reference's as its link's. Rows of a field the codec doesn't declare are left out.
+   */
+  storedOf(rows: readonly PropertyValue[]): StoredValues {
+    const fields: Record<string, FieldValue[]> = {};
+    const links: Record<string, string> = {};
+    for (const { type, value } of rows) {
+      const leaf = this.leaves.get(type);
+      if (leaf?.kind === "ref") links[leaf.role] ??= value;
+      else if (leaf) (fields[type] ??= []).push(value);
+    }
+    return { fields, links };
   }
 
   /**

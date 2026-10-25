@@ -1,9 +1,9 @@
 import type { CowData } from "@/engine/core/cow/index.ts";
-import type { PropertyTypesProvider } from "@/engine/core/customizations/index.ts";
-import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
+import { type DeclaredFields, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
+import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 import type { Row } from "./rows.ts";
-import RulesetData, { type RulesetLists } from "./RulesetData.ts";
+import RulesetData, { type KindValue, type RulesetLists } from "./RulesetData.ts";
 import SiblingMerge from "./SiblingMerge.ts";
 import SiblingRows from "./SiblingRows.ts";
 
@@ -30,14 +30,22 @@ export interface RulesetRawData {
   entities: Record<string, ViewRow[]>;
   /** Each join's rows, by its name, but those a kind's lists nest */
   joins: Record<string, Row[]>;
+  /**
+   * Each kind's values kind-wide, by its type: each value of each field with the entities that hold it, in the order
+   * those values were written
+   */
+  kindValues: ReadonlyMap<string, readonly KindValue[]>;
   /** Every modifier whose source is an entity in this ruleset — all sourceTypes. */
   modifiers: Modifier[];
-  /** Every property row owned by this ruleset — all entityTypes. Consumers filter. */
-  properties: Property[];
   /** Every requirement row in this ruleset, including those attached to modifiers. */
   requirements: Requirement[];
   /** Of the entities its lists name, those a link of a join with a tier points at */
   tieredIds: Set<string>;
+  /**
+   * Each owner's stored values (its entities', its own Settings), by its type then its id: one that holds none is left
+   * out
+   */
+  values: ReadonlyMap<string, ReadonlyMap<string, StoredValues>>;
 }
 
 /**
@@ -49,14 +57,16 @@ export interface ViewSchema {
   joins: { from: string; fromColumn: string; name: string }[];
   /**
    * Each kind, an owner before the kinds it owns; `tracked`: its visible ids read by another kind's or a join's;
-   * `customizable`: whether a user customizes its entities; `properties`: whether their properties hold fields
+   * `customizable`: whether a user customizes its entities; `fields`: whether they hold fields of their own;
+   * `inherits`: the fields they read off another entity when they hold none, and the column naming it
    */
   kinds: {
     customizable: boolean;
+    fields: boolean;
+    inherits?: { column: string; fields: ReadonlySet<string> };
     lists: ViewList[];
     /** Its owner's kind, the column its row names its owner by, and the one it holds its position in it at */
     owner?: { column: string; position: string; type: string };
-    properties: boolean;
     tracked: boolean;
     type: string;
   }[];
@@ -70,23 +80,21 @@ export interface ViewSchema {
  */
 export default class RulesetComposition {
   /**
-   * `propertyTypes`: the ruleset's property types, as its rules read them, which its view orders its entities'
-   * properties by; `schema`: what its modules declare of its kinds and joins; `labels`: what its module calls an entity
-   * of each kind.
+   * `declared`: the fields its modules declare, which order its owners' values and merge a sibling's into its
+   * winner's; `schema`: what its modules declare of its kinds and joins; `labels`: what its module calls an entity of
+   * each kind.
    */
   constructor(
     chain: RulesetRawData[],
     cow: CowData,
-    propertyTypes: PropertyTypesProvider,
-    isSingle: (entityType: string, type: string) => boolean,
+    declared: DeclaredFields,
     schema: ViewSchema,
     labels: Readonly<Record<string, string>>,
   ) {
     this.labels = labels;
     this.chain = chain;
     this.cow = cow;
-    this.propertyTypes = propertyTypes;
-    this.isSingle = isSingle;
+    this.declared = declared;
     this.schema = schema;
   }
 
@@ -94,13 +102,11 @@ export default class RulesetComposition {
 
   private readonly cow: CowData;
 
-  /** Whether a property type holds a single value, which a sibling merge takes one of (`SiblingMerge`) */
-  private readonly isSingle: (entityType: string, type: string) => boolean;
+  /** The fields its modules declare: their order, and how sibling copies merge them */
+  private readonly declared: DeclaredFields;
 
   /** What the ruleset's module calls an entity of each kind, which its view answers */
   private readonly labels: Readonly<Record<string, string>>;
-
-  private readonly propertyTypes: PropertyTypesProvider;
 
   private readonly schema: ViewSchema;
 
@@ -164,6 +170,38 @@ export default class RulesetComposition {
     return { entities, joins, leftOut };
   }
 
+  /**
+   * A kind's values kind-wide (`type`'s), as stat blocks show them (`RulesetData.kindValues`): each raw ruleset's, the
+   * fork's first, each value's entities in their order, but a copied entity's and an owned entity's the view leaves out;
+   * a sibling loser's stands as its winner where the winner took the value from it (`taken`), and is left out otherwise.
+   */
+  private composeKindValues(
+    type: string,
+    leftOut: ReadonlySet<string>,
+    taken: ReadonlyMap<string, StoredValues>,
+  ): KindValue[] {
+    const byValue = new Map<string, KindValue>();
+    for (const raw of this.chain) {
+      for (const { entityIds, field, value } of raw.kindValues.get(type) ?? []) {
+        const key = `${field}\u0000${value}`;
+        const held = byValue.get(key) ?? byValue.set(key, { entityIds: [], field, value }).get(key)!;
+        for (const id of entityIds) {
+          if (this.cow.isOverridden(id) || leftOut.has(id)) continue;
+          const winnerId = this.cow.getWinner(id);
+          if (winnerId === undefined) held.entityIds.push(id);
+          else if (taken.get(id)?.fields[field]?.some((given) => String(given) === value))
+            held.entityIds.push(winnerId);
+        }
+      }
+    }
+    return [...byValue.values()]
+      .filter((held) => held.entityIds.length > 0)
+      .toSorted(
+        (a, b) =>
+          this.declared.compareFields(a.field, b.field) || this.declared.compareValues(a.field, a.value, b.value),
+      );
+  }
+
   /** The composed rows, before the lookup indices: each list across the chain, COW-resolved. */
   private composeLists(): RulesetLists {
     // A row is left out when a copy overrides it or it's a sibling loser. A loser's customizations merge into its winner
@@ -171,13 +209,15 @@ export default class RulesetComposition {
     // An owned entity whose owner the view leaves out is left out with its customizations: none, mostly
     const { entities, joins, leftOut } = this.composeEntities();
     const { modifiers, excludedModifierIds } = this.composeModifiers(leftOut);
+    const { taken, values } = this.composeValues(leftOut);
     const composed = {
       entities,
       joins,
+      kindValuesOf: (type: string) => this.composeKindValues(type, leftOut, taken),
       tieredIds: this.composeTieredIds(),
-      properties: this.composeProperties(leftOut),
       modifiers,
       requirements: this.composeRequirements(leftOut, excludedModifierIds),
+      values,
     };
     if (!this.cow.isEmpty()) this.resolveListLinks(entities);
 
@@ -204,28 +244,6 @@ export default class RulesetComposition {
     for (const m of groups.flatMap(({ siblings }) => siblings.flat())) if (!taken.has(m)) excludedModifierIds.add(m.id);
 
     return { modifiers: siblingRows.moveTaken(taken, (m, sourceId) => ({ ...m, sourceId })), excludedModifierIds };
-  }
-
-  /**
-   * Properties, the fork's first: a copied entity's and an owned entity's the view leaves out are left out, and a
-   * sibling loser's the merge leaves out (`SiblingMerge.mergeProperties`); the rest of a loser's move to its winner. A
-   * ruleset's own properties always stay: a ruleset is never overridden.
-   */
-  private composeProperties(leftOut: ReadonlySet<string>): Property[] {
-    const siblingRows = new SiblingRows<Property>(this.cow);
-    for (const raw of this.chain) {
-      for (const p of raw.properties) {
-        if (this.cow.isOverridden(p.entityId)) continue;
-        if (leftOut.has(p.entityId)) continue;
-        siblingRows.add(p, p.entityId);
-      }
-    }
-    const taken = new Set(
-      siblingRows
-        .getGroups()
-        .flatMap(({ own, siblings }) => SiblingMerge.mergeProperties(own, siblings, this.isSingle)),
-    );
-    return siblingRows.moveTaken(taken, (p, entityId) => ({ ...p, entityId }));
   }
 
   /**
@@ -262,6 +280,43 @@ export default class RulesetComposition {
     for (const raw of this.chain) for (const id of raw.tieredIds) if (!this.cow.isHidden(id)) tieredIds.add(id);
 
     return tieredIds;
+  }
+
+  /**
+   * Each owner's stored values across the chain, the fork's first, by its id, each the raw ruleset's own, as it's kept: a
+   * copied entity's and an owned entity's the view leaves out are left out, and a sibling loser's merge into its
+   * winner's, each field and link by its declared merge (`SiblingMerge.mergeValues`). A ruleset's own always stay: a
+   * ruleset is never overridden. Answers too what each loser gave its winner (`taken`, by the loser).
+   */
+  private composeValues(leftOut: ReadonlySet<string>) {
+    const values = new Map<string, StoredValues>();
+    const groups = new Map<string, { losers: Map<string, StoredValues>; own?: StoredValues; type: string }>();
+    const groupOf = (winnerId: string, type: string) =>
+      groups.get(winnerId) ?? groups.set(winnerId, { losers: new Map(), type }).get(winnerId)!;
+    const merging = this.cow.siblingIds.size > 0;
+    for (const raw of this.chain) {
+      for (const [type, owners] of raw.values) {
+        for (const [id, stored] of owners) {
+          if (this.cow.isOverridden(id) || leftOut.has(id)) continue;
+          const winnerId = merging ? this.cow.getWinner(id) : undefined;
+          if (winnerId !== undefined) {
+            groupOf(winnerId, type).losers.set(id, stored);
+            continue;
+          }
+          if (merging && this.cow.hasSiblings(id)) groupOf(id, type).own ??= stored;
+          if (!values.has(id)) values.set(id, stored);
+        }
+      }
+    }
+    const taken = new Map<string, StoredValues>();
+    for (const [winnerId, { losers, own, type }] of groups) {
+      const loserIds = this.cow.getSiblings(winnerId);
+      const siblings = loserIds.map((loserId) => losers.get(loserId) ?? OwnerValues.NONE);
+      const merged = SiblingMerge.mergeValues(own ?? OwnerValues.NONE, siblings, type, this.declared);
+      values.set(winnerId, merged.values);
+      for (const [index, loserId] of loserIds.entries()) taken.set(loserId, merged.taken[index]);
+    }
+    return { taken, values };
   }
 
   /**
@@ -318,11 +373,11 @@ export default class RulesetComposition {
 
   build(): RulesetData {
     const kinds = Object.fromEntries(
-      this.schema.kinds.map(({ customizable, owner, properties, type }) => [
+      this.schema.kinds.map(({ customizable, fields, inherits, owner, type }) => [
         type,
-        { customizable, properties, ...(owner && { position: owner.position }) },
+        { customizable, fields, ...(inherits && { inherits }), ...(owner && { position: owner.position }) },
       ]),
     );
-    return new RulesetData(this.composeLists(), this.cow, this.propertyTypes, this.labels, kinds);
+    return new RulesetData(this.composeLists(), this.cow, this.labels, kinds);
   }
 }

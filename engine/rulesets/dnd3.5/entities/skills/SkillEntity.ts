@@ -11,7 +11,7 @@ import { stripSeparators } from "@/shared/text.ts";
 import { SKILL_COLUMNS } from "./columns.ts";
 import { SKILL_FIELDS, type SkillFieldValues } from "./fields.ts";
 
-/** A skill's save, as its form sends it: its row's columns, and the fields its properties keep (an edit's, those it changes). */
+/** A skill's save, as its form sends it: its row's columns, and its fields (an edit's, those it changes). */
 interface SkillBody {
   description?: string | null;
   fields?: EntityFieldValues;

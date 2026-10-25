@@ -1,9 +1,12 @@
+import { DeclaredFields, type Fields, type StoredValues } from "@/engine/core/fields/index.ts";
 import type {
   CharacterRoleDef,
   FieldDef,
+  FieldValue,
   LinkPart,
   LinkRoleDef,
   ListLink,
+  Merge,
   RulesetModule,
   StepDef,
   StorageRegistries,
@@ -21,7 +24,7 @@ import type {
   StoredRuleset,
   StoredWrite,
 } from "@/engine/core/module/index.ts";
-import type { ViewSchema } from "@/engine/core/view/index.ts";
+import type { KindValue, ViewSchema } from "@/engine/core/view/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 import Modules from "./Modules.ts";
@@ -105,6 +108,7 @@ export default class StorageEngine {
     this.baseRules = modules.map(([baseRules]) => baseRules);
     this.kinds = mergeRecords(modules, (module) => module.storage.kinds);
     this.joins = mergeRecords(modules, (module) => module.storage.joins);
+    this.fields = mergeRecords(modules, (module) => module.fields);
     this.linkedEntityProperties = mergeRecords(modules, (module) => module.storage.linkedProperties.entities);
     this.linkedRulesetProperties = mergeRecords(modules, (module) => module.storage.linkedProperties.rulesets);
     const characters = modules.map(([, module]) => module.storage.character);
@@ -129,6 +133,28 @@ export default class StorageEngine {
   /** Every module's storage, merged once: the modules never change. */
   private static instance: StorageEngine | undefined;
 
+  /**
+   * A kind's values kind-wide off its owners' written values (`rows`, each as text): each field's value, with the
+   * entities that hold it in the order they were written, then by id.
+   */
+  private static kindValuesOf(rows: { createdAt: string; field: string; ownerId: string; value: string }[]) {
+    rows.sort(
+      (a, b) =>
+        compareText(a.createdAt, b.createdAt) ||
+        compareText(a.ownerId, b.ownerId) ||
+        compareText(a.field, b.field) ||
+        compareText(a.value, b.value),
+    );
+    const byValue = new Map<string, KindValue>();
+    for (const { field, ownerId, value } of rows) {
+      const key = `${field}\u0000${value}`;
+      const held = byValue.get(key);
+      if (held) held.entityIds.push(ownerId);
+      else byValue.set(key, { entityIds: [ownerId], field, value });
+    }
+    return [...byValue.values()];
+  }
+
   /** Every registered module's storage, merged: one instance, built on its first read. */
   static shared(): StorageEngine {
     StorageEngine.instance ??= new StorageEngine(Modules.all());
@@ -142,6 +168,9 @@ export default class StorageEngine {
   /** Each kind's row's columns, in their order: an entity's own (an owned kind's fewer), then its kind's. */
   private readonly columnOrders = new Map<string, string[]>();
 
+  /** Every module's owners' fields, by owner type. */
+  private readonly fields: Record<string, Fields>;
+
   private readonly joins: Record<string, StoredJoin>;
 
   private readonly kinds: Record<string, StoredKind>;
@@ -153,6 +182,9 @@ export default class StorageEngine {
   private readonly merged: StorageRegistries;
 
   private columnFieldNames: Set<string> | undefined;
+
+  /** The fields every module declares, as views keep their values, once read (`declaredFields`). */
+  private declared?: DeclaredFields;
 
   private rowReads: { fields: string[]; roles: string[] } | undefined;
 
@@ -209,6 +241,20 @@ export default class StorageEngine {
     }
   }
 
+  /**
+   * What a kind's entities read off another's when they hold none (`inherits`: an item's template's fields), by the
+   * column its row names that entity by: none for a kind that reads none.
+   */
+  private inheritsOf(type: string): { inherits?: { column: string; fields: ReadonlySet<string> } } {
+    const inheritance = this.declaredFields().inheritance(type);
+    if (!inheritance) return {};
+    const found = Object.entries(this.kind(type).columns).find(
+      ([, column]) => column.kind === "link" && column.role === inheritance.role,
+    );
+    if (!found) throw new Error(`The kind ${type} names no ${inheritance.role} its fields are read off`);
+    return { inherits: { column: found[0], fields: inheritance.fields } };
+  }
+
   /** The column a join's row holds one of its parts in (`part`: its from-entity, its target), refused without one. */
   private joinColumn(name: string, part: LinkPart, word: string): string {
     const found = Object.entries(this.join(name).columns).find(([, held]) => held === part);
@@ -234,6 +280,43 @@ export default class StorageEngine {
     };
     for (const column in join.columns) row[column] = parts[join.columns[column]];
     return row;
+  }
+
+  /**
+   * An owner's stored values (of `type`), off its fields (`fields`) and its links (`links`): each field's values, a set's
+   * in its declared order, its fields in theirs, and the links its type's fields read, by role. None when it holds none.
+   */
+  private storedValuesOf(
+    type: string,
+    fields: { field: string; value: FieldValue }[],
+    links: { role: string; toId: string }[],
+  ): StoredValues | undefined {
+    const declared = this.declaredFields();
+    const roles = declared.fieldRoles(type);
+    if (fields.length === 0 && (roles.length === 0 || links.length === 0)) return undefined;
+    const byField = new Map<string, FieldValue[]>();
+    for (const { field, value } of fields) {
+      const held = byField.get(field);
+      if (held) held.push(value);
+      else byField.set(field, [value]);
+    }
+    const stored: StoredValues = {
+      fields: Object.fromEntries(
+        [...byField.keys()]
+          .toSorted((a, b) => declared.compareFields(a, b))
+          .map((field) => {
+            const values = byField.get(field)!;
+            return [field, values.length > 1 ? declared.orderValues(field, values) : values];
+          }),
+      ),
+      links: Object.fromEntries(
+        roles.flatMap((role) => {
+          const link = links.find((held) => held.role === role);
+          return link ? [[role, link.toId]] : [];
+        }),
+      ),
+    };
+    return Object.keys(stored.fields).length > 0 || Object.keys(stored.links).length > 0 ? stored : undefined;
   }
 
   /** A level's row (`values`, by its module's columns), as what a write of its advancement stores: its track, its value. */
@@ -351,6 +434,12 @@ export default class StorageEngine {
     return Object.keys(this.kinds).filter((type) => this.kinds[type].customizable);
   }
 
+  /** The fields every module declares, as a ruleset's view keeps their values (`DeclaredFields`): built once. */
+  declaredFields(): DeclaredFields {
+    this.declared ??= new DeclaredFields(this.fields, this.merged);
+    return this.declared;
+  }
+
   /** A field of an owner's type (an entity type, `rulesets` or `characters`), if a module declares it. */
   field(ownerType: string, field: string): FieldDef | undefined {
     return this.merged.fieldDefs.find((def) => def.ownerType === ownerType && def.field === field);
@@ -422,7 +511,7 @@ export default class StorageEngine {
 
   /**
    * What every kind's row reads of its entity past its own columns: its columns' fields (their single value, ordinal
-   * 0), and its single links' and lists' roles. A read of rows alone reads no more (a property's fields it leaves).
+   * 0), and its single links' and lists' roles. A read of rows alone reads no more (an owner's other fields, `valuesOf`'s, it leaves).
    */
   kindReads(): { fields: string[]; roles: string[] } {
     this.rowReads ??= {
@@ -612,62 +701,13 @@ export default class StorageEngine {
   }
 
   /**
-   * The properties of stored entities and rulesets, as the engine reads them (`Property`): their fields past their
-   * kinds' columns (a feat's family), each value as text, and the entities the properties a link holds name (a class's
-   * bonus spell ability). In the order they were written, by owner, type and value; of `entityType` and of `type`
-   * when given.
+   * How sibling copies merge a property a copy still writes (`propertyType`, of an owner's type): the merge of the link
+   * role that holds it (a class's bonus spell ability), or its field's (`DeclaredFields.mergeOf`).
    */
-  propertiesOf(
-    owners: { entities?: StoredEntity[]; rulesets?: StoredRuleset[] },
-    where: { entityType?: string; type?: string } = {},
-  ): Row[] {
-    const columnFields = this.columnFields();
-    const rows: {
-      createdAt: string;
-      entityId: string;
-      entityType: string;
-      ordinal: number;
-      type: string;
-      updatedAt: string;
-      value: string;
-    }[] = [];
-    const owned = [
-      ...(owners.entities ?? []).map((entity) => ({ ...entity, ownerType: entity.type })),
-      ...(owners.rulesets ?? []).map((ruleset) => ({ ...ruleset, ownerType: "rulesets" })),
-    ];
-    for (const { fields, id: entityId, links, ownerType: entityType } of owned) {
-      const own = fields.filter((field) => entityType === "rulesets" || !columnFields.has(field.field));
-      rows.push(
-        ...own.map((field) => ({ ...field, entityId, entityType, type: field.field, value: String(field.value) })),
-      );
-      for (const [type, role] of this.linkedProperties(entityType)) {
-        const linked = links.filter((link: { role: string }) => link.role === role);
-        rows.push(...linked.map((link) => ({ ...link, entityId, entityType, ordinal: 0, type, value: link.toId })));
-      }
-    }
-    return rows
-      .filter(
-        (row) => (!where.entityType || row.entityType === where.entityType) && (!where.type || row.type === where.type),
-      )
-      .sort(
-        (a, b) =>
-          compareText(a.createdAt, b.createdAt) ||
-          compareText(a.entityId, b.entityId) ||
-          compareText(a.type, b.type) ||
-          compareText(a.value, b.value),
-      )
-      .map((row) => ({
-        // In the order a property's answer gives its columns
-        createdAt: row.createdAt,
-        updatedAt: row.updatedAt,
-        deletedAt: null,
-        id: `${row.entityId}:${row.type}:${row.ordinal}`,
-        entityId: row.entityId,
-        entityType: row.entityType,
-        value: row.value,
-        type: row.type,
-        description: null,
-      }));
+  propertyMerge(ownerType: string, propertyType: string): Merge {
+    const role = this.linkedProperty(ownerType, propertyType);
+    const declared = this.declaredFields();
+    return role ? declared.roleMergeOf(ownerType, role) : declared.mergeOf(ownerType, propertyType);
   }
 
   /**
@@ -750,6 +790,36 @@ export default class StorageEngine {
   }
 
   /**
+   * The stored values of a ruleset's own owners (`owners`: its entities, and itself for its Settings), as its view
+   * composes them: each owner's, by its type then its id (`values`), its fields past its kind's columns (a ruleset's
+   * all of them), each set's values and the fields themselves in their declared order (`DeclaredFields`), and the
+   * links its kind's fields read, by role; an owner that holds none is left out. And each kind's values kind-wide
+   * (`kindValues`), each with the entities that hold it, in the order those values were written.
+   */
+  valuesOf(owners: { entities: StoredEntity[]; ruleset?: StoredRuleset }): {
+    kindValues: Map<string, KindValue[]>;
+    values: Map<string, Map<string, StoredValues>>;
+  } {
+    const columnFields = this.columnFields();
+    const values = new Map<string, Map<string, StoredValues>>();
+    const written = new Map<string, { createdAt: string; field: string; ownerId: string; value: string }[]>();
+    for (const entity of owners.entities) {
+      const fields = entity.fields.filter((field) => !columnFields.has(field.field));
+      const stored = this.storedValuesOf(entity.type, fields, entity.links);
+      if (stored)
+        (values.get(entity.type) ?? values.set(entity.type, new Map()).get(entity.type)!).set(entity.id, stored);
+      const rows = written.get(entity.type) ?? written.set(entity.type, []).get(entity.type)!;
+      for (const { createdAt, field, value } of fields)
+        rows.push({ createdAt, field, ownerId: entity.id, value: String(value) });
+    }
+    const { ruleset } = owners;
+    const settings = ruleset && this.storedValuesOf("rulesets", ruleset.fields, ruleset.links);
+    if (settings) values.set("rulesets", new Map([[ruleset.id, settings]]));
+    const kindValues = new Map([...written].map(([type, rows]) => [type, StorageEngine.kindValuesOf(rows)]));
+    return { kindValues, values };
+  }
+
+  /**
    * What a ruleset's view is composed by, of every module's declaration (`ViewSchema`): each kind's owner and the lists
    * its rows nest, each join its kinds' lists don't nest. Read once.
    */
@@ -769,7 +839,7 @@ export default class StorageEngine {
       ...types.flatMap(({ ownerType }) => (ownerType ? [ownerType] : [])),
       ...joins.map(({ from }) => from),
     ]);
-    const properties = new Set(this.propertyTypes());
+    const fields = new Set(this.propertyTypes());
     this.schema = {
       // An owner before the kinds it owns, each in its declared order otherwise
       kinds: types
@@ -777,7 +847,8 @@ export default class StorageEngine {
         .map(({ ownerType, type }) => ({
           type,
           customizable: this.kind(type).customizable ?? false,
-          properties: properties.has(type),
+          fields: fields.has(type),
+          ...this.inheritsOf(type),
           ...(ownerType
             ? { owner: { column: this.ownerColumn(type), position: this.positionColumn(type), type: ownerType } }
             : {}),

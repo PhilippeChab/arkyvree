@@ -89,7 +89,7 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
   private skillPointKlassLevelProperties: Map<string, { bab: number; skills: number }> = new Map();
 
   /**
-   * Each of the ruleset's skills, with the fields its properties hold (`skillFields`) and the ranks the character's class
+   * Each of the ruleset's skills, with the fields its stored values hold (`skillFields`) and the ranks the character's class
    * levels put in it; and the skill points' budget, from the ruleset's skill point ability (`skillPointAbilityId`) and
    * each class level's points (`klassLevelProperties`).
    */
@@ -151,7 +151,7 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
     for (const skill of rulesetSkills) {
       const abilityName = this.abilities.getAbilityName(skill.primaryAbilityId) ?? "";
       this.abilityNameBySkill.set(stripSeparators(skill.name), abilityName);
-      // A skill without its fields' rows has their defaults: armor doesn't weigh on it, and it needs training
+      // A skill without its fields' values has their defaults: armor doesn't weigh on it, and it needs training
       const fields = skillFields.get(skill.id) ?? SKILL_FIELDS.defaults;
       this.skills[stripSeparators(skill.name)] = this.newSkill(skill, abilityName, fields);
     }

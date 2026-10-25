@@ -17,8 +17,8 @@ interface RaceBody {
 }
 
 /**
- * A race as the ruleset has it: its row, its size and base speed, the fields its properties hold (whether it walks on
- * four legs, whether armor and load leave its speed), and its customizations.
+ * A race as the ruleset has it: its row, its size and base speed, the fields its stored values hold (whether it walks
+ * on four legs, whether armor and load leave its speed), and its customizations.
  */
 export default class RaceEntity extends CustomizationPageEntity<
   "races",

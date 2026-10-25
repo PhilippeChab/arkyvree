@@ -6,7 +6,7 @@
  */
 
 import type { ViewEntities } from "@/engine/core/view/index.ts";
-import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
+import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 import type { SheetBlock } from "./blocks.ts";
 import type { InventoryEntryPlan } from "./plans.ts";
@@ -185,11 +185,11 @@ export type CreationSection = { title: string } & (
 
 /**
  * A character's inventory entry, as its sheet lists it: the entry, what its ruleset shows of it (`X`: where its item
- * can go, where it's worn), and its item as the view composes it.
+ * can go, where it's worn), and its item as the view composes it, with its fields (`F`, as its kind reads them).
  */
-export type DescribedInventoryEntry<T, X = unknown> = T &
+export type DescribedInventoryEntry<T, X = unknown, F = unknown> = T &
   X & {
-    item: ViewEntities["items"] & { modifiers: Modifier[]; properties: Property[]; requirements: Requirement[] };
+    item: ViewEntities["items"] & { fields: F; modifiers: Modifier[]; requirements: Requirement[] };
   };
 
 /**

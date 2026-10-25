@@ -41,14 +41,20 @@ export default class SpellPicker extends LevelPicker {
     if (aptitude?.name !== "Wizard Spells") return [];
 
     const prohibitedSchools = new Set(
-      this.character.getHeldFeats().flatMap((feat) => FEAT_FIELDS.read(feat.properties).prohibitedSchools),
+      this.character
+        .getHeldFeats()
+        .flatMap((feat) => FEAT_FIELDS.read(this.rulesetData.valuesOf(feat.id)).prohibitedSchools),
     );
-    // The spells of each school, by the view's reverse property index
+    // The spells of each school, by the view's kind-wide values
+    const spellIdsBySchool = new Map(
+      this.rulesetData
+        .kindValues("spells")
+        .flatMap(({ entityIds, field, value }) => (field === SPELL_SCHOOL ? [[value, entityIds] as const] : [])),
+    );
     const excludedSpellIds = new Set<string>();
-    for (const school of prohibitedSchools) {
-      const ids = this.rulesetData.entityIdsByProperty.get(`spells:${SPELL_SCHOOL}:${school}`) ?? [];
-      for (const id of ids) excludedSpellIds.add(id);
-    }
+    for (const school of prohibitedSchools)
+      for (const id of spellIdsBySchool.get(school) ?? []) excludedSpellIds.add(id);
+
     return [...excludedSpellIds];
   }
 }

@@ -38,7 +38,7 @@ export interface PathCategory<C = Components> {
   /** Its name in the path picker */
   label: string;
   /**
-   * The labels of the ruleset's own names in its paths (its entities', its properties' values): `names` label their
+   * The labels of the ruleset's own names in its paths (its entities', its fields' values): `names` label their
    * segment over any other label, `fallbacks` only one no other label names
    */
   labelNames?(rulesetData: RulesetData): CategoryLabelNames;

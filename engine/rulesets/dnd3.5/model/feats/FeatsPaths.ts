@@ -1,6 +1,5 @@
 import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import { FEAT_FIELDS } from "@/engine/rulesets/dnd3.5/entities/feats/fields.ts";
 import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterComponents.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Feat } from "@/engine/rulesets/dnd3.5/view/rows.ts";
@@ -131,8 +130,8 @@ export default class FeatsPaths implements PathCategory<Dnd35Components> {
   private familyLabels(rulesetData: RulesetData) {
     const featGroupingLabels = { ...KNOWN_FAMILY_LABELS };
     // Every family a feat of the ruleset names
-    for (const family of FEAT_FIELDS.read(rulesetData.propertiesByEntityType.get("feats") ?? []).families)
-      featGroupingLabels[stripSeparators(family)] = family;
+    for (const { field, value } of rulesetData.kindValues("feats"))
+      if (field === FEAT_FAMILY) featGroupingLabels[stripSeparators(value)] = value;
 
     return featGroupingLabels;
   }
@@ -157,15 +156,15 @@ export default class FeatsPaths implements PathCategory<Dnd35Components> {
 
   /**
    * The ruleset's feats, labeled by their names; and, where no other label names them, every family the rules know,
-   * its feats' properties' values, and a family's wildcard ("Weapon Focus (Any)").
+   * its feats' fields' values, and a family's wildcard ("Weapon Focus (Any)").
    */
   labelNames(rulesetData: RulesetData) {
     const fallbacks = { ...KNOWN_FAMILY_LABELS };
-    for (const { type, value } of rulesetData.propertiesByEntityType.get("feats") ?? []) {
+    for (const { field, value } of rulesetData.kindValues("feats")) {
       const slug = stripSeparators(value);
       if (!slug) continue;
       fallbacks[slug] ??= value;
-      if (type === FEAT_FAMILY) fallbacks[`${slug}*`] ??= `${value} (Any)`;
+      if (field === FEAT_FAMILY) fallbacks[`${slug}*`] ??= `${value} (Any)`;
     }
     return { fallbacks, names: deriveNameLabels(Dnd35View.of(rulesetData).feats.map(({ name }) => name)) };
   }

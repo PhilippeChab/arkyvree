@@ -1,13 +1,12 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
-import Dnd35PropertyTypes from "@/engine/rulesets/dnd3.5/Dnd35PropertyTypes.ts";
+import { SPELL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/spells/fields.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import type { CustomizedSpell } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Spell, SpellWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";
-import { formatPropertyValues, groupPropertyValues } from "@/shared/customization/properties.ts";
-import type { Property } from "@/shared/relations.ts";
+import { formatPropertyValues } from "@/shared/customization/properties.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import type SpellGroupingsComponent from "./SpellGroupingsComponent.ts";
@@ -17,7 +16,7 @@ interface SpellEntry {
   /** Its DC as each of the character's classes casts it, by the class's aptitude slug. */
   dc?: SpellDcsByClass;
   /**
-   * Each property type's values, in its options' order: a list, which a requirement's `contains` asks one of and a
+   * Each field's values as text, in its declared order: a list, which a requirement's `contains` asks one of and a
    * modifier adds a value to or takes one from. A sheet lists them joined (`getFlatSpells`).
    */
   properties: Record<string, string[]>;
@@ -42,7 +41,7 @@ type SpellGroupEntry = Record<string, Record<string, { dc: SpellDc }>>;
 type SpellGroupsNamespace = Record<string, SpellGroupEntry>;
 
 /**
- * A character's spells: each one's entry, with its properties' values, its known flag on each list it's on and its DC as
+ * A character's spells: each one's entry, with its fields' values, its known flag on each list it's on and its DC as
  * each class casts it, and its schools' and descriptors' groupings under `groups`, the spell groupings' DCs.
  */
 export default class SpellsComponent extends CharacterComponent<LoadedCharacterData> {
@@ -53,6 +52,12 @@ export default class SpellsComponent extends CharacterComponent<LoadedCharacterD
   /** The name of the save a spell's targets make, none without one. */
   static saveNameOf(spell: { saveId: string | null }, rulesetData: RulesetData): string | null {
     return spell.saveId ? (Dnd35View.of(rulesetData).savesById.get(spell.saveId)?.name ?? null) : null;
+  }
+
+  /** A spell's stored values (`spellId`'s, the view's) as text, by field, in their declared order: what its entry holds. */
+  static textsOf(rulesetData: RulesetData, spellId: string): Record<string, string[]> {
+    const { fields } = rulesetData.valuesOf(spellId);
+    return Object.fromEntries(Object.entries(fields).map(([field, values]) => [field, values.map(String)]));
   }
 
   /**
@@ -78,7 +83,6 @@ export default class SpellsComponent extends CharacterComponent<LoadedCharacterD
       given: true,
       saveName: SpellsComponent.saveNameOf(spellRow, rulesetData),
       spellLevel: link.level,
-      properties: rulesetData.propertiesByEntity.get(spellRow.id) ?? [],
       modifiers: rulesetData.modifiersBySource.get(spellRow.id) ?? [],
       requirements: rulesetData.requirementsByEntity.get(spellRow.id) ?? [],
     };
@@ -93,7 +97,7 @@ export default class SpellsComponent extends CharacterComponent<LoadedCharacterD
    */
   override initialize({ spells }: Pick<LoadedCharacterData, "spells">, { rulesetData }: RulesetView) {
     const dnd35 = Dnd35View.of(rulesetData);
-    this.addSpellEntries(spells);
+    this.addSpellEntries(spells, rulesetData);
 
     // Build spell known data nested under each spell entry: spell → aptitude → { known }, but on the lists a feat brings
     const { featListIds, spellSlugByAptitudeId } = SpellLists.of(rulesetData);
@@ -166,9 +170,10 @@ export default class SpellsComponent extends CharacterComponent<LoadedCharacterD
     }
   }
 
-  addSpellEntries(spells: (Spell & { properties: Property[] })[]) {
+  /** Each spell's entry (`spells`), with its fields' values as text, off the view's stored values. */
+  addSpellEntries(spells: Spell[], rulesetData: RulesetData) {
     for (const spell of spells) {
-      const propertiesMap = groupPropertyValues(spell.properties, Dnd35PropertyTypes.valuesOf);
+      const propertiesMap = SpellsComponent.textsOf(rulesetData, spell.id);
 
       // A spell already listed keeps what's on its entry: its known flags and its DCs by class
       const slug = stripSeparators(spell.name);
@@ -176,13 +181,16 @@ export default class SpellsComponent extends CharacterComponent<LoadedCharacterD
     }
   }
 
-  /** The spells as a sheet lists them: each property type's values joined, those modifiers add included. */
+  /** The spells as a sheet lists them: each field's values joined, those modifiers add included. */
   getFlatSpells(): Record<string, Omit<SpellEntry, "properties"> & { properties: Record<string, string> }> {
     const result: Record<string, Omit<SpellEntry, "properties"> & { properties: Record<string, string> }> = {};
     for (const [key, value] of Object.entries(this.spells)) {
       if ("spell" in value) {
         const entry = value as SpellEntry;
-        result[key] = { ...entry, properties: formatPropertyValues(entry.properties, Dnd35PropertyTypes.valuesOf) };
+        result[key] = {
+          ...entry,
+          properties: formatPropertyValues(entry.properties, (field) => SPELL_FIELDS.optionsOf(field)),
+        };
       }
     }
     return result;

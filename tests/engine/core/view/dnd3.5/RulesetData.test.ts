@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import type { StoredValues } from "@/engine/core/fields/index.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
@@ -12,8 +13,8 @@ import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { RULESET_SKILL_POINT_ABILITY_ID } from "@/vocabulary/dnd3.5/properties/index.ts";
 
-describe("An item's properties", () => {
-  test("are its template's of each type it doesn't set, then its own: its damage types replace all the template's", async () => {
+describe("An item's stored values", () => {
+  test("are its template's of each field it doesn't set, then its own: its damage types replace all the template's", async () => {
     const ruleset = await createSeededTestRuleset(makeSession().userId);
     const longsword = await withRulesetScope(db, ruleset.id, async ({ rulesetData }) =>
       Dnd35View.of(rulesetData).items.find((item) => item.isTemplate && item.name === "Longsword"),
@@ -30,11 +31,12 @@ describe("An item's properties", () => {
     RulesetViews.invalidate(ruleset.id);
 
     const properties = await withRulesetScope(db, ruleset.id, async ({ rulesetData }) => ({
-      plain: rulesetData.itemProperties(longsword!),
-      own: rulesetData.propertiesByEntity.get(variant.id) ?? [],
-      variant: rulesetData.itemProperties(variant),
+      plain: rulesetData.inheritedValuesOf("items", longsword!),
+      own: rulesetData.valuesOf(variant.id),
+      variant: rulesetData.inheritedValuesOf("items", variant),
     }));
-    const pairs = (rows: { type: string; value: string }[]) => rows.map((row) => `${row.type}=${row.value}`);
+    const pairs = ({ fields }: StoredValues) =>
+      Object.entries(fields).flatMap(([field, values]) => values.map((value) => `${field}=${value}`));
     expect(pairs(properties.own).toSorted()).toEqual([
       "DAMAGE_TYPE=Piercing",
       "DAMAGE_TYPE=Slashing",
@@ -48,9 +50,9 @@ describe("An item's properties", () => {
   });
 });
 
-describe("A ruleset's own properties", () => {
-  test("are each type's of the nearest ruleset of its chain that holds it, the fork's whatever its value", async () => {
-    // Abilities whose ids sort first and last, before and after the source's: the view sorts every property by its value
+describe("A ruleset's own stored values", () => {
+  test("are each field's and link's of the nearest ruleset of its chain that holds it, the fork's whatever its value", async () => {
+    // Abilities whose ids sort first and last, before and after the source's: the nearest ruleset's, whatever its value
     const abilityIds = Object.values((await getSeedCtx()).abilityMap).toSorted();
     for (const value of [abilityIds[0], abilityIds.at(-1)!]) {
       const fork = await createSeededTestRuleset(makeSession().userId);
@@ -59,16 +61,16 @@ describe("A ruleset's own properties", () => {
       await Properties.delete(db, { entityIds: [fork.id], entityType: "rulesets", types: [type] });
       RulesetViews.invalidate(fork.id);
       const read = () =>
-        withRulesetScope(db, fork.id, async ({ rulesetData }) =>
-          rulesetData
-            .rulesetPropertiesOf(fork.id)
-            .map((row) => [row.entityId === fork.id ? "fork" : "source", row.type, row.value]),
-        );
-      expect(await read()).toEqual([["source", type, expect.any(String)]]);
+        withRulesetScope(db, fork.id, async ({ rulesetData }) => {
+          const { links } = rulesetData.rulesetValuesOf(fork.id);
+          const own = rulesetData.valuesOf(fork.id).links;
+          return Object.entries(links).map(([role, toId]) => [own[role] === toId ? "fork" : "source", role, toId]);
+        });
+      expect(await read()).toEqual([["source", "skillPointAbility", expect.any(String)]]);
 
       await Properties.createMany(db, [{ entityId: fork.id, entityType: "rulesets", type, value }]);
       RulesetViews.invalidate(fork.id);
-      expect(await read()).toEqual([["fork", type, value]]);
+      expect(await read()).toEqual([["fork", "skillPointAbility", value]]);
     }
   });
 });

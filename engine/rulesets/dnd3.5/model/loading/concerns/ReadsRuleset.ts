@@ -11,8 +11,8 @@ import type { Constructor } from "@/lib/mixins.ts";
 import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
 
 /**
- * What a character's load reads of its ruleset's view: its rows, its fields and the 3.5 meaning of its properties, and
- * the character's ability scores.
+ * What a character's load reads of its ruleset's view: its rows, its fields and the 3.5 meaning of its stored values,
+ * and the character's ability scores.
  */
 export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCharacterData>>>(Base: B) {
   abstract class ReadingRuleset extends Base {
@@ -56,9 +56,7 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
       const klassBonusSpellAbilityMap = new Map<string, string>();
       const klassCasterTypeMap = new Map<string, CasterType>();
       for (const klassId of klassEntityIds) {
-        const { bonusSpellAbilityId, casterType } = CLASS_FIELDS.read(
-          rulesetData.propertiesByEntity.get(klassId) ?? [],
-        );
+        const { bonusSpellAbilityId, casterType } = CLASS_FIELDS.read(rulesetData.valuesOf(klassId));
         const abilityName = bonusSpellAbilityId ? abilityLookup.get(bonusSpellAbilityId) : undefined;
         if (abilityName) klassBonusSpellAbilityMap.set(klassId, abilityName);
         if (casterType) klassCasterTypeMap.set(klassId, casterType);
@@ -67,21 +65,17 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
     }
 
     /**
-     * The D&D 3.5 reading of the cache's raw property rows: the fields of each skill that has any, and the ruleset's
+     * The D&D 3.5 reading of the view's stored values: the fields of each of the ruleset's skills, and the ruleset's
      * Settings: the skill-point ability, and the feats and ability increases its levels give (`LevelRules`).
      */
-    protected readRulesetProperties({ ruleset, rulesetData }: RulesetView, resolveId: (id: string) => string) {
-      const propertiesBySkillId = Map.groupBy(
-        rulesetData.propertiesByEntityType.get("skills") ?? [],
-        (row) => row.entityId,
-      );
+    protected readRulesetValues({ ruleset, rulesetData }: RulesetView, resolveId: (id: string) => string) {
       const skillFields = new Map(
-        [...propertiesBySkillId].map(([skillId, rows]) => [skillId, SKILL_FIELDS.read(rows)]),
+        rulesetData.rows("skills").map((skill) => [skill.id, SKILL_FIELDS.read(rulesetData.valuesOf(skill.id))]),
       );
 
       // Each setting is the nearest ruleset of the chain's that holds it: the fork's own once it saves one, its
       // source's until then
-      const settings = RULESET_FIELDS.read(rulesetData.rulesetPropertiesOf(ruleset.id));
+      const settings = RULESET_FIELDS.read(rulesetData.rulesetValuesOf(ruleset.id));
       const skillPointAbilityId = settings.skillPointAbilityId ? resolveId(settings.skillPointAbilityId) : null;
       return { levelRules: new LevelRules(settings), skillFields, skillPointAbilityId };
     }

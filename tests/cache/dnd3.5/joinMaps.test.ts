@@ -8,7 +8,8 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 
 import { type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
-import { type RulesetData } from "@/engine/core/view/index.ts";
+import StorageEngine from "@/engine/api/StorageEngine.ts";
+import { type RulesetData, type ViewEntities } from "@/engine/core/view/index.ts";
 import type {
   Feat,
   KlassLevelFeat,
@@ -23,6 +24,11 @@ import { db } from "@/server/database/index.ts";
 import { Entities, Joins, Rulesets } from "@/server/repositories/index.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
+
+/** Every kind a ruleset's view holds, as the modules declare them. */
+const KINDS = StorageEngine.shared()
+  .viewSchema()
+  .kinds.map(({ type }) => type as keyof ViewEntities);
 
 function sortById<T extends { id: string }>(xs: T[]) {
   return [...xs].sort((a, b) => a.id.localeCompare(b.id));
@@ -130,48 +136,37 @@ describe("cache join-maps — parity with repository queries", () => {
     expect(sortBySkillId(fromCache).map(mapRow)).toEqual(sortBySkillId(fromDb).map(mapRow));
   });
 
-  test("entityIdsByProperty indexes every (entityType, type, value) triple", () => {
-    // The reverse index must contain every composed property row — verify by
-    // reconstructing the expected mapping from the per-entity index and
-    // comparing to the pre-built reverse Map.
-    const expected = new Map<string, Set<string>>();
-    for (const props of rulesetData.propertiesByEntity.values()) {
-      for (const p of props) {
-        const key = `${p.entityType}:${p.type}:${p.value}`;
-        const set = expected.get(key) ?? new Set<string>();
-        set.add(p.entityId);
-        expected.set(key, set);
+  test("kindValues indexes every (field, value) pair of every kind's entities' stored values", () => {
+    // The kind-wide index must hold every value of each entity of each kind the view holds, and none more — verify by
+    // reconstructing the expected mapping from each entity's stored values and comparing to the kind-wide one.
+    let total = 0;
+    for (const type of KINDS) {
+      const expected = new Map<string, Set<string>>();
+      for (const { id } of rulesetData.rows(type) as { id: string }[]) {
+        for (const [field, values] of Object.entries(rulesetData.valuesOf(id).fields)) {
+          for (const value of values) {
+            const key = `${field}:${String(value)}`;
+            expected.set(key, (expected.get(key) ?? new Set<string>()).add(id));
+            total++;
+          }
+        }
       }
+      const actual = new Map(
+        rulesetData.kindValues(type).map(({ entityIds, field, value }) => [`${field}:${value}`, new Set(entityIds)]),
+      );
+      expect(actual).toEqual(expected);
     }
+    // Every kind holding values among them: its classes', levels', skills' and races' too
+    for (const type of ["classes", "class_levels", "feats", "items", "races", "skills", "spells"])
+      expect(rulesetData.kindValues(type).length).toBeGreaterThan(0);
+    expect(total).toBeGreaterThan(0);
 
-    for (const [key, expectedIds] of expected.entries()) {
-      const actual = new Set(rulesetData.entityIdsByProperty.get(key) ?? []);
-      expect(actual).toEqual(expectedIds);
-    }
-
-    // And: looking up a known D&D 3.5 triple returns the expected spells.
-    const evocation = rulesetData.entityIdsByProperty.get(`spells:${SPELL_SCHOOL}:Evocation`) ?? [];
+    // And: looking up a known D&D 3.5 value returns the expected spells.
+    const evocation =
+      rulesetData.kindValues("spells").find(({ field, value }) => field === SPELL_SCHOOL && value === "Evocation")
+        ?.entityIds ?? [];
     expect(evocation.length).toBeGreaterThan(0);
     for (const id of evocation) expect(Dnd35View.of(rulesetData).spellsById.has(id)).toBe(true);
-  });
-
-  test("propertiesByEntity + propertiesByEntityType cover the same row set", () => {
-    // Both indices are built from the same composed rows; total counts must match.
-    const totalByEntity = [...rulesetData.propertiesByEntity.values()].reduce((sum, rows) => sum + rows.length, 0);
-    const totalByEntityType = [...rulesetData.propertiesByEntityType.values()].reduce(
-      (sum, rows) => sum + rows.length,
-      0,
-    );
-    expect(totalByEntity).toBe(totalByEntityType);
-
-    // Every row reachable via entityType is also reachable via entityId.
-    for (const rows of rulesetData.propertiesByEntityType.values()) {
-      for (const p of rows) {
-        const bucket = rulesetData.propertiesByEntity.get(p.entityId);
-        expect(bucket).toBeDefined();
-        expect(bucket!.some((row) => row.id === p.id)).toBe(true);
-      }
-    }
   });
 
   test("featsById / spellsById / skillsById resolve every composed row", () => {

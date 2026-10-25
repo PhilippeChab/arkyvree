@@ -1,9 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
+import { OwnerValues } from "@/engine/core/fields/index.ts";
 import { RULESET_FIELDS } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
 import { db } from "@/server/database/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
+import { storedValues } from "@/tests/support/storedValues.ts";
 import {
   RULESET_ABILITY_INCREASES,
   RULESET_FEAT_ADVANCEMENT,
@@ -17,17 +19,21 @@ const CORE = {
 };
 
 describe("A ruleset's own fields", () => {
-  test("are the core rules' progression and no ability without their properties, each off its type's rows with them", () => {
-    expect(RULESET_FIELDS.read([])).toEqual({ ...CORE, skillPointAbilityId: null });
+  test("are the core rules' progression and no ability without their values, each off its field's values with them", () => {
+    expect(RULESET_FIELDS.read(OwnerValues.NONE)).toEqual({ ...CORE, skillPointAbilityId: null });
     expect(
-      RULESET_FIELDS.read([
-        { type: "SOMETHING_ELSE", value: "1" },
-        { type: RULESET_SKILL_POINT_ABILITY_ID, value: "intelligence" },
-        { type: RULESET_SKILL_POINT_ABILITY_ID, value: "wisdom" },
-        { type: RULESET_FEAT_ADVANCEMENT, value: "every:3" },
-        { type: RULESET_FEAT_ADVANCEMENT, value: "3:1" },
-        { type: RULESET_FEAT_ADVANCEMENT, value: "5:1" },
-      ]),
+      RULESET_FIELDS.read(
+        storedValues(
+          [
+            ["SOMETHING_ELSE", 1],
+            [RULESET_SKILL_POINT_ABILITY_ID, "wisdom"],
+            [RULESET_FEAT_ADVANCEMENT, "every:3"],
+            [RULESET_FEAT_ADVANCEMENT, "3:1"],
+            [RULESET_FEAT_ADVANCEMENT, "5:1"],
+          ],
+          { skillPointAbility: "intelligence" },
+        ),
+      ),
     ).toEqual({
       ...CORE,
       featAdvancement: {
@@ -61,7 +67,8 @@ describe("A ruleset's own fields", () => {
     for (const stored of Map.groupBy(rows, (row) => row.entityId).values()) {
       // A field the ruleset holds no row of reads as its default, which it doesn't store
       const types = new Set(stored.map(({ type }) => type));
-      const rebuilt = RULESET_FIELDS.toProperties(RULESET_FIELDS.read(stored)).filter(({ type }) => types.has(type));
+      const read = RULESET_FIELDS.read(RULESET_FIELDS.storedOf(stored));
+      const rebuilt = RULESET_FIELDS.toProperties(read).filter(({ type }) => types.has(type));
       expect(rebuilt).toEqual(stored.map(({ type, value }) => ({ type, value })));
     }
   });

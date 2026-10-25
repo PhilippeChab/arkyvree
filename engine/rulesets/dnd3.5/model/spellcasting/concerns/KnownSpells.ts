@@ -8,7 +8,7 @@ import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import type { Modifier, Property } from "@/shared/relations.ts";
+import type { Modifier } from "@/shared/relations.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 /** The spells a character's aptitudes give it, each with what it knows of them, and the spell tags they carry. */
@@ -117,7 +117,6 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
           klassLevelId: firstLevel.klassLevel.id,
           characterLevelId: firstLevel.characterLevel.id,
           free: true,
-          properties: this.aptitudeSpellProperties.filter((p) => p.entityId === spell.id),
           modifiers: [],
           requirements: [],
         };
@@ -188,8 +187,8 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
     }
 
     /**
-     * The spells of the lists the character knows every spell of (or a level of), off the view, with their properties
-     * and the lists each is on.
+     * The spells of the lists the character knows every spell of (or a level of), off the view, and the lists each is
+     * on.
      */
     protected collectAptitudeSpells(rulesetData: RulesetData, spells: CustomizedSpell[], appliedModifiers: Modifier[]) {
       const dnd35 = Dnd35View.of(rulesetData);
@@ -220,18 +219,8 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
       this.allAptitudeSpells = allAptitudeSpells;
       if (this.allAptitudeSpells.length === 0) return;
 
-      // Gather properties (own + template via sourceItemId-style inheritance does
-      // not apply to spells) and the spell→aptitude link table from the cache.
-      // Virtuals already live in `spells` with their properties attached, so
-      // they no longer need to be folded into `aptitudeSpellProperties`.
+      // The spell→aptitude link table from the cache
       const aptitudeSpellIds = new Set(this.allAptitudeSpells.map((p) => p.id));
-      const propertyEntityIds = new Set<string>(aptitudeSpellIds);
-
-      const properties: Property[] = [];
-      for (const id of propertyEntityIds) {
-        const ps = rulesetData.propertiesByEntity.get(id);
-        if (ps) properties.push(...ps);
-      }
 
       const allSpellIdSet = new Set<string>([...spells.map((p) => p.id), ...aptitudeSpellIds]);
       const spellAptitudeLinks: { aptitudeId: string; spellId: string }[] = [];
@@ -242,7 +231,6 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
           spellAptitudeLinks.push({ spellId: p.id, aptitudeId: link.aptitudeId });
       }
 
-      this.aptitudeSpellProperties = properties;
       this.spellAptitudeLinks = spellAptitudeLinks;
     }
 
@@ -273,7 +261,7 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
      */
     registerKnownSpells(rulesetData: RulesetData, newSpells: CustomizedSpell[]) {
       const { spellSlugByAptitudeId } = SpellLists.of(rulesetData);
-      this.spells.addSpellEntries(newSpells);
+      this.spells.addSpellEntries(newSpells, rulesetData);
       for (const spell of newSpells) {
         const list = Dnd35View.of(rulesetData).aptitudesById.get(spell.aptitudeId);
         // Mark as known in spell map
@@ -282,7 +270,7 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
           if (entry) entry.known = true;
         }
         const aptitudeSlug = spellSlugByAptitudeId.get(spell.aptitudeId) ?? spell.aptitudeId;
-        this.spellGroupings.registerSpell({ ...spell, aptitudeSlug }, spell.properties);
+        this.spellGroupings.registerSpell({ ...spell, aptitudeSlug }, rulesetData.valuesOf(spell.id));
       }
       this.spells.readGroupings();
     }

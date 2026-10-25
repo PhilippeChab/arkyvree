@@ -30,5 +30,10 @@ export async function seededRows(rulesetName = DND35_RULESET_NAME) {
       rows.klassLevels.find((l) => l.klassId === named(rows.klasses, klass).id && l.level === level)!,
     modifiersOf: (sourceId: string) => rows.modifiers.filter((m) => m.sourceId === sourceId),
     requirementsOf: (entityId: string) => rows.requirements.filter((r) => r.entityId === entityId),
+    /** An entity's values of a field, as text (none without the field): the stored values the seed wrote. */
+    textsOf: (entityId: string, field: string) => {
+      const values = [...raw.values.values()].find((owners) => owners.has(entityId))?.get(entityId);
+      return (values?.fields[field] ?? []).map(String);
+    },
   };
 }

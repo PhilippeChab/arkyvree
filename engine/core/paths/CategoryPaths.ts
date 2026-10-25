@@ -78,9 +78,9 @@ export default abstract class CategoryPaths<C = Components> implements TargetPat
     };
   }
 
-  /** The distinct slugs of the properties' values of `type`. */
-  static collectPropertySlugs(properties: { type: string; value: string }[], type: string) {
-    return [...new Set(properties.filter((p) => p.type === type).map((p) => stripSeparators(p.value)))];
+  /** The distinct slugs of a kind's values of `field`, kind-wide (`RulesetData.kindValues`), in their order. */
+  static collectValueSlugs(values: readonly { field: string; value: string }[], field: string) {
+    return [...new Set(values.filter((held) => held.field === field).map((held) => stripSeparators(held.value)))];
   }
 
   private readonly byName: ReadonlyMap<string, PathCategory<C>>;

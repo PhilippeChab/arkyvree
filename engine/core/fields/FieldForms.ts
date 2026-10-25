@@ -125,7 +125,7 @@ export default class FieldForms {
 
   /** A field's place in its form: its type's rank among its spec's leaves, a group's first field's. */
   private static rankOf(field: FieldSpec, ranks: ReadonlyMap<string, number>): number {
-    if (field.kind !== "group") return ranks.get(field.type) ?? ranks.size;
+    if (field.kind !== "group") return ranks.get(field.field) ?? ranks.size;
     return Math.min(ranks.size, ...Object.values(field.fields).map((inner) => FieldForms.rankOf(inner, ranks)));
   }
 
@@ -221,7 +221,7 @@ export default class FieldForms {
    * where its value goes, labeled and explained as it declares them.
    */
   static describe(fields: Fields): FormField[] {
-    const ranks = new Map(Field.leavesOf(fields).map((field, rank) => [field.type, rank]));
+    const ranks = new Map(Field.leavesOf(fields).map((field, rank) => [field.field, rank]));
     return FieldForms.describePlaced(FieldForms.placedAt(fields, ""), fields, ranks);
   }
 

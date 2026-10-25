@@ -5,7 +5,7 @@ import FeatsComponent from "@/engine/rulesets/dnd3.5/model/feats/FeatsComponent.
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Properties, Rulesets } from "@/server/repositories/index.ts";
+import { Rulesets } from "@/server/repositories/index.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/properties/index.ts";
 
@@ -17,7 +17,7 @@ describe("FeatsComponent.injectGroupings", () => {
     const named = (name: string) => Dnd35View.of(rulesetData).feats.find((feat) => feat.name === name)!;
     const generic = named("Martial Weapon Proficiency");
     const rapier = named("Martial Weapon Proficiency: Rapier");
-    const family = await Properties.findMany(db, { entityIds: [rapier.id], entityType: "feats", type: FEAT_FAMILY });
+    const family = (rulesetData.valuesOf(rapier.id).fields[FEAT_FAMILY] ?? []).map(String);
     const feats = new FeatsComponent();
     // The character holds the rapier's
     feats.initialize({ feats: [FeatsComponent.toVirtualFeat(rapier, rulesetData)] }, { ruleset, rulesetData });

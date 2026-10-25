@@ -28,7 +28,7 @@ export interface EquippedEntry {
 }
 
 /**
- * A character's inventory: its entries, and the properties of what each slot holds (a weapon set's hands, the other
+ * A character's inventory: its entries, and the field values of what each slot holds (a weapon set's hands, the other
  * equipment's slots). The items it has equipped in a slot (`getEquipped`) are what its combat holds and its armors and
  * shields list.
  */
@@ -41,7 +41,7 @@ export default class InventoryComponent extends CharacterComponent<LoadedCharact
 
   private rawItems: InventoryEntry[] = [];
 
-  /** The entries, and each equipped one in a slot: what the slot holds, its properties, and the item with its fields. */
+  /** The entries, and each equipped one in a slot: what the slot holds, its field values, and the item with its fields. */
   override initialize({ inventory }: Pick<LoadedCharacterData, "inventory">) {
     this.rawItems = inventory;
     for (const entry of inventory) {
@@ -50,13 +50,11 @@ export default class InventoryComponent extends CharacterComponent<LoadedCharact
       const slot = InventorySlots.getSlot(entry.item.type, entry.location);
       if (!slot) continue;
 
-      const propertiesMap: Record<string, string> = {};
-      for (const prop of entry.item.properties) {
-        if (prop.type in propertiesMap) propertiesMap[prop.type] += `, ${prop.value}`;
-        else propertiesMap[prop.type] = prop.value;
-      }
+      const propertiesMap = Object.fromEntries(
+        Object.entries(entry.item.values.fields).map(([field, values]) => [field, values.map(String).join(", ")]),
+      );
 
-      this.equipped.push({ entry, fields: ITEM_FIELDS.read(entry.item.properties) });
+      this.equipped.push({ entry, fields: ITEM_FIELDS.read(entry.item.values) });
       if (entry.item.type === "Weapon") {
         // Weapons go into each weapon set that holds them
         const slotKey = slot as "mainhand" | "offhand" | "twohanded";

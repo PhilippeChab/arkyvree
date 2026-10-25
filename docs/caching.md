@@ -30,7 +30,7 @@ return await withRulesetScopes(db, rulesetIds, async (views) => {
 Inside the scope:
 
 - `ruleset` — the ruleset row (non-null; throws `NotFoundError` if missing).
-- `rulesetData` — the composed cache: `byId(type)`, `rows(type)`, `joinRows(join)`, `propertiesByEntity`, etc., and what a module derives of it (3.5's `Dnd35View.of(rulesetData)`: `klassLevelByKlassAndLevel`…). Also `rulesetData.cow` exposes the underlying `CowData` (its `sourceChain`, `siblingIds`, and what an id resolves to: `resolve`, `isOverridden`, `isHidden`, `getWinner`) for lineage checks.
+- `rulesetData` — the composed cache: `byId(type)`, `rows(type)`, `joinRows(join)`, `valuesOf(id)`, etc., and what a module derives of it (3.5's `Dnd35View.of(rulesetData)`: `klassLevelByKlassAndLevel`…). Also `rulesetData.cow` exposes the underlying `CowData` (its `sourceChain`, `siblingIds`, and what an id resolves to: `resolve`, `isOverridden`, `isHidden`, `getWinner`) for lineage checks.
 
 Nothing else: a repository read inside the scope returns rows as stored, and a query takes the ids it's given. What a read needs of copy-on-write it asks `rulesetData.cow` for, explicitly ([below](#cow-transparency)): a list's filters (`listFilters`), an entity's equivalent ids for a query on stored rows (`getEquivalentIds`), the id a stored one stands for (`resolve`). Rows that reach the engine are read as the view does there.
 
@@ -230,11 +230,12 @@ The view's own, by kind (`RulesetData`, `engine/core/view/RulesetData.ts`):
 | `byId(type)`, `find(type, id)` | Each entity of a kind by id (a stored pre-COW id resolves to its copy) |
 | `storedById(type)` | Each entity of a kind by id as stored, unresolved: what a module's derived indices join rows by |
 | `rows(type)`, `joinRows(join)` | A kind's rows, a join's rows, as the view composes them |
-| `propertiesByEntity` | An entity's properties |
-| `propertiesByEntityType` (key `"items"` / `"rulesets"` / ...) | Every property of one entity type |
+| `valuesOf(id)` | An owner's stored values: an entity's fields past its kind's columns, and the links its fields read |
+| `inheritedValuesOf(type, entity)` | An entity's stored values with those it reads off another (an item's template's) |
+| `rulesetValuesOf(rulesetId)` | A ruleset's Settings, each field's and link's of the nearest ruleset of its chain that holds it |
+| `kindValues(type)` | A kind's values kind-wide: each value of each field, with the entities that hold it |
 | `modifiersBySource` | A source's modifiers |
 | `requirementsByEntity` | An entity's requirements |
-| `entityIdsByProperty` (key `${entityType}:${type}:${value}`) | The entities with a property value |
 | `modifiersById` | Each modifier by id |
 | `tieredIds` | The entities a tiered join's links point at |
 
@@ -462,7 +463,7 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 ## References
 
 - `server/cache/MemoryCache.ts` — TTL + LRU + pin primitive
-- `server/cow/views/` — `RulesetViews` (`RulesetViews.ts`: the raw-tier and target-paths caches, the composed reads, invalidation and the boot warm-up; the engine composes a read's view, `Engine.copyOnWrite().buildView`, in its module's property order; the target paths, the engine's listing of a view), and what it reads with: a ruleset's own rows (`RawDataReader.ts`) and its `CowData` (`CowDataReader.ts`, which a copy's transaction reads too)
+- `server/cow/views/` — `RulesetViews` (`RulesetViews.ts`: the raw-tier and target-paths caches, the composed reads, invalidation and the boot warm-up; the engine composes a read's view, `Engine.copyOnWrite().buildView`, its owners' values in their declared fields' order; the target paths, the engine's listing of a view), and what it reads with: a ruleset's own rows (`RawDataReader.ts`) and its `CowData` (`CowDataReader.ts`, which a copy's transaction reads too)
 - `server/cow/views/` (copy-on-write's read side) — `withRulesetScope` / `withRulesetScopes` (`scope.ts`), the scope a service reads a view in
 - `engine/core/view/` — the compose step with its sibling merging and FK remap (`RulesetComposition.ts`, with `RulesetRawData`, the rows it takes; `buildView`, `engine/api/CopyOnWriteEngine.ts`, runs it), the view it builds, whose lookup indices and resolving maps are built on first read (`RulesetData.ts`), the sibling merge's rules, which the compose step and a copy share (`SiblingMerge.ts`), and the list the compose step gathers a merge's rows in (`SiblingRows.ts`)
 - `server/cow/` (copy-on-write's write side) (`server/cow/writes/`) — `EntityEdit` (the row an entity's change writes), `CustomizationEdit` (the row a customization's change writes), `EntityNames` (the names a create, a rename, a restore or a subscribe takes), `EntityCopy` (a copy of an inherited entity), `EntityRevert` (a copy reverted to its source), `CustomizationCopies` (an entity's customizations read and copied), `EntityRepositories` (each entity type's repository, and its lock)

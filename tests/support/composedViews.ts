@@ -1,6 +1,7 @@
 /** A ruleset's view of a made-up module, composed from rows a test writes: what the view's own tests read. */
 
 import { CowData } from "@/engine/core/cow/index.ts";
+import { DeclaredFields } from "@/engine/core/fields/index.ts";
 import {
   RulesetComposition,
   type RulesetData,
@@ -9,7 +10,7 @@ import {
   type ViewJoins,
   type ViewSchema,
 } from "@/engine/core/view/index.ts";
-import type { Modifier, Property, Requirement } from "@/shared/relations.ts";
+import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /** A join of the made-up module a test composes a view of, by its name. */
 export type Join = keyof ViewJoins;
@@ -17,7 +18,8 @@ export type Join = keyof ViewJoins;
 /** A kind of the made-up module a test composes a view of, by its name. */
 export type Kind = keyof ViewEntities;
 
-export const NO_PROPERTY_TYPES = { getTypes: () => [], getValues: () => null };
+/** No module's fields: a made-up module's owners hold values of fields none declares, in no order but their own. */
+export const NO_FIELDS = new DeclaredFields({}, { fieldDefs: [], linkRoles: [] });
 
 /**
  * A made-up module's declaration: owners and the entities they own, by `ownerId`; owners' links (`owner_links`); and
@@ -25,12 +27,12 @@ export const NO_PROPERTY_TYPES = { getTypes: () => [], getValues: () => null };
  */
 export const VIEW_SCHEMA: ViewSchema = {
   kinds: [
-    { type: "owners", customizable: false, properties: false, tracked: true, lists: [] },
-    { type: "targets", customizable: false, properties: false, tracked: false, lists: [] },
+    { type: "owners", customizable: false, fields: false, tracked: true, lists: [] },
+    { type: "targets", customizable: false, fields: false, tracked: false, lists: [] },
     {
       type: "listed",
       customizable: false,
-      properties: false,
+      fields: false,
       tracked: false,
       lists: [{ name: "links", from: "listedId", target: "target", to: "targetId", toType: "targets" }],
     },
@@ -38,7 +40,7 @@ export const VIEW_SCHEMA: ViewSchema = {
       type: "owned",
       customizable: false,
       owner: { column: "ownerId", position: "position", type: "owners" },
-      properties: false,
+      fields: false,
       tracked: false,
       lists: [],
     },
@@ -48,11 +50,12 @@ export const VIEW_SCHEMA: ViewSchema = {
 
 /**
  * The view of the made-up module a chain composes (`chain`, its own first), by its copy-on-write data's overrides,
- * aliases and siblings: its owners labeled "Owner".
+ * aliases and siblings, and the fields it declares (`declared`, none by default): its owners labeled "Owner".
  */
 export function composeView(
   chain: RulesetRawData[],
   { overrides = [], siblings = [] }: { overrides?: [string, string][]; siblings?: [string, string[]][] } = {},
+  declared = NO_FIELDS,
 ): RulesetData {
   const aliases = [...overrides, ...siblings.flatMap(([winner, losers]) => losers.map((loser) => [loser, winner]))];
   const cow = new CowData(
@@ -62,7 +65,7 @@ export function composeView(
     new Map(siblings),
     new Set(),
   );
-  return new RulesetComposition(chain, cow, NO_PROPERTY_TYPES, () => false, VIEW_SCHEMA, { owners: "Owner" }).build();
+  return new RulesetComposition(chain, cow, declared, VIEW_SCHEMA, { owners: "Owner" }).build();
 }
 
 /** A kind's rows' ids, as a view lists them. */
@@ -71,8 +74,8 @@ export function idsOf(view: RulesetData, type: string) {
 }
 
 /**
- * A ruleset's own rows of the made-up module: its kinds' and its join's, and a modifier, a property and a requirement
- * on each owned entity of `customized`.
+ * A ruleset's own rows of the made-up module: its kinds' and its join's, and a modifier, a field's value and a
+ * requirement on each owned entity of `customized`.
  */
 export function rawRows(
   entities: Record<string, Record<string, unknown>[]>,
@@ -82,11 +85,12 @@ export function rawRows(
   return {
     entities: entities as RulesetRawData["entities"],
     joins,
+    kindValues: new Map(),
     modifiers: customized.map((sourceId) => ({ id: `m-${sourceId}`, sourceId, sourceType: "owned" }) as Modifier),
-    properties: customized.map((entityId) => ({ entityId, entityType: "owned", type: "T", value: "v" }) as Property),
     requirements: customized.map(
       (entityId) => ({ id: `r-${entityId}`, entityId, entityType: "owned", level: "1" }) as Requirement,
     ),
     tieredIds: new Set(),
+    values: new Map([["owned", new Map(customized.map((id) => [id, { fields: { T: ["v"] }, links: {} }]))]]),
   };
 }

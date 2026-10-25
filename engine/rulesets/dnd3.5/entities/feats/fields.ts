@@ -4,8 +4,5 @@ import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/properties/index.ts";
 /** A feat's fields' values. */
 export type FeatFieldValues = FieldValues<typeof FEAT_FIELDS.fields>;
 
-/**
- * A feat's fields its properties hold, as the vocabulary declares them (`ENTITY_FIELDS.feats`). Read off several
- * feats' rows at once, they're all of theirs.
- */
+/** A feat's fields its stored values hold, as the vocabulary declares them (`ENTITY_FIELDS.feats`). */
 export const FEAT_FIELDS = new FieldCodec(ENTITY_FIELDS.feats);

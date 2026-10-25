@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
+import StorageEngine from "@/engine/api/StorageEngine.ts";
+import type { ViewEntities } from "@/engine/core/view/index.ts";
 import {
   type Aptitude,
   type Feat,
@@ -24,7 +26,6 @@ import { findKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
-import { RULESET_SKILL_POINT_ABILITY_ID } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 /** A published system ruleset built on the seeded one, as a book a fork takes is. */
 function createBook(seedId: string) {
@@ -113,7 +114,7 @@ describe("RulesetViews", () => {
     expect(dnd35.klassLevelSaves.length).toBeGreaterThan(0);
     expect(dnd35.leveledAptitudeIds).toBeInstanceOf(Set);
     // Customization rows exposed via pre-built Maps (per-entity / per-source indices).
-    expect(rulesetData.propertiesByEntity).toBeInstanceOf(Map);
+    expect(rulesetData.kindValues("spells").length).toBeGreaterThan(0);
     expect(rulesetData.modifiersBySource).toBeInstanceOf(Map);
     expect(rulesetData.requirementsByEntity).toBeInstanceOf(Map);
   });
@@ -141,12 +142,12 @@ describe("RulesetViews", () => {
     expect(secondView.feats.length).toBe(firstView.feats.length);
     expect(secondView.skills.length).toBe(firstView.skills.length);
     expect(secondView.klasses.length).toBe(firstView.klasses.length);
-    expect(second.propertiesByEntity.size).toBe(first.propertiesByEntity.size);
+    expect(second.kindValues("spells")).toEqual(first.kindValues("spells"));
     expect(second.modifiersBySource.size).toBe(first.modifiersBySource.size);
     expect(second.requirementsByEntity.size).toBe(first.requirementsByEntity.size);
   });
 
-  test("lists an entity's modifiers in the order they were made, a tie by target, and its properties as its stat block shows them", async () => {
+  test("lists an entity's modifiers in the order they were made, a tie by target, and its values as its stat block shows them", async () => {
     const ruleset = await createTestRuleset(SEED_USER_ID);
     const [item] = await Entities.createMany<Item>(db, "items", [
       { rulesetId: ruleset.id, name: `Ordered ${uniqueId()}` },
@@ -176,7 +177,7 @@ describe("RulesetViews", () => {
       "abilities.str.score",
     ]);
     // A damage type's options are Slashing, Piercing, Bludgeoning
-    expect(data.propertiesByEntity.get(item.id)?.map((p) => p.value)).toEqual(["Slashing", "Piercing"]);
+    expect(data.valuesOf(item.id).fields.DAMAGE_TYPE).toEqual(["Slashing", "Piercing"]);
   });
 
   test("system-seeded rulesets are pinned; user forks (and orphaned forks) are not", async () => {
@@ -271,11 +272,8 @@ describe("RulesetViews", () => {
     expect(klassNames).toContain("Fighter");
     expect(klassNames).toContain("Wizard");
 
-    // Verify the ruleset-level skill point ability property points at Intelligence.
-    const skillPointAbilityProp = (rulesetData.propertiesByEntity.get(ruleset.id) ?? []).find(
-      (p) => p.type === RULESET_SKILL_POINT_ABILITY_ID,
-    );
-    expect(skillPointAbilityProp?.value).toBe(c.abilityMap["Intelligence"]);
+    // Verify the ruleset-level skill point ability link points at Intelligence.
+    expect(rulesetData.valuesOf(ruleset.id).links.skillPointAbility).toBe(c.abilityMap["Intelligence"]);
   });
 
   test("campaign-scoped raw cache is independent from base raw cache", async () => {
@@ -323,8 +321,14 @@ describe("RulesetViews", () => {
       expect(forkView.klasses.length).toBe(seedView.klasses.length);
       expect(forkView.abilities.length).toBe(seedView.abilities.length);
       expect(forkView.aptitudes.length).toBe(seedView.aptitudes.length);
-      // Fork inherits all customizations via compose.
-      expect(forkData.propertiesByEntity.size).toBe(seedData.propertiesByEntity.size);
+      // Fork inherits all customizations via compose: every entity's stored values, of every kind, and the Settings
+      for (const { type } of StorageEngine.shared().viewSchema().kinds) {
+        const ids = seedData.rows(type as keyof ViewEntities).map((row) => (row as { id: string }).id);
+        expect(ids.map((id) => forkData.valuesOf(id))).toEqual(ids.map((id) => seedData.valuesOf(id)));
+        expect(forkData.kindValues(type)).toEqual(seedData.kindValues(type));
+      }
+      expect(Object.keys(seedData.rulesetValuesOf(seed.id).links)).not.toHaveLength(0);
+      expect(forkData.rulesetValuesOf(fork.id)).toEqual(seedData.rulesetValuesOf(seed.id));
       expect(forkData.modifiersBySource.size).toBe(seedData.modifiersBySource.size);
       expect(forkData.requirementsByEntity.size).toBe(seedData.requirementsByEntity.size);
       // Fork also inherits races, languages, items, and klass-level data.

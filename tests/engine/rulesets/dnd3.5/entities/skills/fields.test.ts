@@ -3,9 +3,12 @@ import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
 import { entitiesInRules } from "@/drizzle/schema.ts";
+import { OwnerValues } from "@/engine/core/fields/index.ts";
+import type { FieldValue } from "@/engine/core/module/index.ts";
 import { SKILL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import { db } from "@/server/database/index.ts";
 import { Properties } from "@/server/repositories/index.ts";
+import { storedValues } from "@/tests/support/storedValues.ts";
 import {
   SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,
@@ -18,27 +21,31 @@ function multiset(rows: { type: string; value: string }[]) {
 }
 
 describe("A skill's fields", () => {
-  test("are none without their properties, and as stored with them", () => {
-    expect(SKILL_FIELDS.read([])).toEqual(SKILL_FIELDS.defaults);
+  test("are none without their values, and as stored with them", () => {
+    expect(SKILL_FIELDS.read(OwnerValues.NONE)).toEqual(SKILL_FIELDS.defaults);
     expect(
-      SKILL_FIELDS.read([
-        { type: SKILL_IMPACTED_BY_WEIGHT, value: "true" },
-        { type: SKILL_CHECK_PENALTY_MULTIPLIER, value: "2" },
-        { type: SKILL_USABLE_WITHOUT_TRAINING, value: "true" },
-        { type: "SOMETHING_ELSE", value: "1" },
-      ]),
+      SKILL_FIELDS.read(
+        storedValues([
+          [SKILL_IMPACTED_BY_WEIGHT, true],
+          [SKILL_CHECK_PENALTY_MULTIPLIER, 2],
+          [SKILL_USABLE_WITHOUT_TRAINING, true],
+          ["SOMETHING_ELSE", 1],
+        ]),
+      ),
     ).toEqual({ impactedByWeight: true, checkPenaltyMultiplier: 2, usableWithoutTraining: true });
   });
 
-  test("take the multiplier from the first row of a positive number", () => {
+  test("take the multiplier from the first value of a positive number", () => {
     // On a skill armor weighs on: any other keeps 1
-    const multiplierOf = (...values: string[]) =>
-      SKILL_FIELDS.read([
-        { type: SKILL_IMPACTED_BY_WEIGHT, value: "true" },
-        ...values.map((value) => ({ type: SKILL_CHECK_PENALTY_MULTIPLIER, value })),
-      ]).checkPenaltyMultiplier;
-    expect(multiplierOf("3", "2")).toBe(3);
-    expect(multiplierOf("0", "-1", "2")).toBe(2);
+    const multiplierOf = (...values: FieldValue[]) =>
+      SKILL_FIELDS.read(
+        storedValues([
+          [SKILL_IMPACTED_BY_WEIGHT, true],
+          ...values.map((value): [string, FieldValue] => [SKILL_CHECK_PENALTY_MULTIPLIER, value]),
+        ]),
+      ).checkPenaltyMultiplier;
+    expect(multiplierOf(3, 2)).toBe(3);
+    expect(multiplierOf(0, -1, 2)).toBe(2);
     expect(multiplierOf("none")).toBe(1);
   });
 
@@ -54,7 +61,8 @@ describe("A skill's fields", () => {
 
     const mismatches = [...rowsBySkill].filter(
       ([, stored]) =>
-        multiset(SKILL_FIELDS.toProperties(SKILL_FIELDS.read(stored))).join("|") !== multiset(stored).join("|"),
+        multiset(SKILL_FIELDS.toProperties(SKILL_FIELDS.read(SKILL_FIELDS.storedOf(stored)))).join("|") !==
+        multiset(stored).join("|"),
     );
     expect(mismatches).toEqual([]);
   });

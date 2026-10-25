@@ -5,14 +5,14 @@ import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/properties/entityFields.ts";
 
 /** The keys each kind of field declares: what a codec reads of it, and no other (a misspelled key reads as none). */
 const KEYS: { [K in FieldSpec["kind"]]: readonly (keyof Extract<FieldSpec, { kind: K }>)[] } = {
-  choice: ["description", "kind", "label", "shownIn", "type", "values", "when"],
-  flag: ["absent", "description", "kind", "label", "shownIn", "type", "when"],
+  choice: ["description", "field", "kind", "label", "shownIn", "values", "when"],
+  flag: ["absent", "description", "field", "kind", "label", "shownIn", "when"],
   group: ["fields", "kind", "label", "shownIn", "when"],
-  list: ["description", "kind", "label", "placeholder", "shownIn", "type", "values", "when"],
-  number: ["default", "description", "kind", "label", "max", "min", "shownIn", "type", "when", "write"],
-  progression: ["default", "description", "kind", "label", "levels", "max", "shownIn", "type", "when"],
-  ref: ["description", "kind", "label", "references", "required", "shownIn", "type", "when"],
-  text: ["description", "kind", "label", "placeholder", "shownIn", "type", "values", "when"],
+  list: ["description", "field", "kind", "label", "placeholder", "shownIn", "values", "when"],
+  number: ["default", "description", "field", "kind", "label", "max", "min", "shownIn", "when", "write"],
+  progression: ["default", "description", "field", "kind", "label", "levels", "max", "shownIn", "when"],
+  ref: ["description", "field", "kind", "label", "references", "required", "role", "shownIn", "when"],
+  text: ["description", "field", "kind", "label", "placeholder", "shownIn", "values", "when"],
 };
 
 /**
@@ -32,9 +32,9 @@ function findIssues(fields: Fields, path: string): string[] {
 }
 
 describe("The 3.5 entities' fields", () => {
-  test("declare each property type once, across every entity type", () => {
-    const types = Object.values(ENTITY_FIELDS).flatMap((fields) => Field.leavesOf(fields).map((leaf) => leaf.type));
-    expect(types.filter((type, index) => types.indexOf(type) !== index)).toEqual([]);
+  test("declare each stored field once, across every entity type", () => {
+    const fields = Object.values(ENTITY_FIELDS).flatMap((owned) => Field.leavesOf(owned).map((leaf) => leaf.field));
+    expect(fields.filter((field, index) => fields.indexOf(field) !== index)).toEqual([]);
   });
 
   test.each(Object.keys(ENTITY_FIELDS))(

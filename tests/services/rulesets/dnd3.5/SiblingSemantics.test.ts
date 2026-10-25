@@ -265,9 +265,9 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
   expect(feat.modifiers.filter((m) => m.startsWith("abilities.dexterity"))).toEqual([
     "abilities.dexterity.misc|add|2|number|1||abilities.wisdom.total|greater_than_or_equal|11|number",
   ]);
-  expect(feat.properties.filter((p) => p.startsWith(FEAT_FAMILY))).toEqual([
-    `${FEAT_FAMILY}|shared|`,
-    `${FEAT_FAMILY}|sibling|`,
+  expect(feat.values.filter((value) => value.startsWith(FEAT_FAMILY))).toEqual([
+    `${FEAT_FAMILY}|shared`,
+    `${FEAT_FAMILY}|sibling`,
   ]);
   expect(feat.requirements.filter((r) => r.includes("strength"))).toHaveLength(1);
   expect(feat.requirements.filter((r) => r.includes("|or|"))).toHaveLength(2);

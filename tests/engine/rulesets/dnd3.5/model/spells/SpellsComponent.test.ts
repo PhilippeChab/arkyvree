@@ -4,36 +4,46 @@ import type { Spell } from "@/engine/rulesets/dnd3.5/index.ts";
 import AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import SpellGroupingsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellGroupingsComponent.ts";
 import SpellsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellsComponent.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Properties } from "@/server/repositories/index.ts";
-import { getSeedCtx } from "@/tests/support/seed.ts";
-import { SPELL_COMPONENT, SPELL_DESCRIPTOR, SPELL_TARGET } from "@/vocabulary/dnd3.5/properties/index.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { makeSession } from "@/tests/support/users.ts";
+import { SPELL_COMPONENT, SPELL_DESCRIPTOR, SPELL_SCHOOL, SPELL_TARGET } from "@/vocabulary/dnd3.5/properties/index.ts";
 
 describe("SpellsComponent.addSpellEntries", () => {
-  test("lists a spell's values of a type in its options' order, whatever order their rows are in", async () => {
-    const { rulesetId } = await getSeedCtx();
-    const enthrall = (await Entities.findOne<Spell>(db, { entityType: "spells", name: "Enthrall", rulesetId }))!;
-    const stored = await Properties.findMany(db, { entityIds: [enthrall.id], entityType: "spells" });
-    // Stored backwards, as a copy can hold them, with a value no option names, and a second value of a free-text type
-    // (Enthrall's target: "Any number of creatures")
-    const properties = [
-      ...stored.toReversed(),
-      { ...stored[0], type: SPELL_COMPONENT, value: "Chanting" },
-      { ...stored[0], type: SPELL_TARGET, value: "One creature" },
+  test("lists a spell's values of a field in its options' order, whatever order they were stored in", async () => {
+    const ruleset = await createSeededTestRuleset(makeSession().userId);
+    const [spell] = await Entities.createMany<Spell>(db, "spells", [{ name: "Probe Chant", rulesetId: ruleset.id }]);
+    // Stored backwards, as a copy can hold them, with a value no option names
+    const stored = [
+      [SPELL_SCHOOL, "Enchantment"],
+      [SPELL_COMPONENT, "Chanting"],
+      [SPELL_COMPONENT, "Somatic"],
+      [SPELL_COMPONENT, "Verbal"],
+      [SPELL_DESCRIPTOR, "Sonic"],
+      [SPELL_DESCRIPTOR, "Mind-Affecting"],
+      [SPELL_DESCRIPTOR, "Language-Dependent"],
+      [SPELL_TARGET, "Any number of creatures"],
     ];
+    await Properties.createMany(
+      db,
+      stored.map(([type, value]) => ({ entityId: spell.id, entityType: "spells", type, value })),
+    );
+    const rulesetData = await RulesetViews.getData(ruleset);
     const spells = new SpellsComponent(new SpellGroupingsComponent(new AbilitiesComponent()));
-    spells.addSpellEntries([{ ...enthrall, properties }]);
+    spells.addSpellEntries([spell], rulesetData);
 
-    // Each type's values a list, which a requirement asks one of, and a sheet's line joined
-    expect(spells.getSpell("Enthrall")?.properties).toMatchObject({
+    // Each field's values a list, which a requirement asks one of, and a sheet's line joined
+    expect(spells.getSpell("Probe Chant")?.properties).toMatchObject({
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Chanting"],
       [SPELL_DESCRIPTOR]: ["Language-Dependent", "Mind-Affecting", "Sonic"],
-      [SPELL_TARGET]: ["Any number of creatures", "One creature"],
+      [SPELL_TARGET]: ["Any number of creatures"],
     });
-    expect(spells.getFlatSpells()["enthrall"].properties).toMatchObject({
+    expect(spells.getFlatSpells()["probechant"].properties).toMatchObject({
       [SPELL_COMPONENT]: "Verbal, Somatic, Chanting",
       [SPELL_DESCRIPTOR]: "Language-Dependent, Mind-Affecting, Sonic",
-      [SPELL_TARGET]: "Any number of creatures, One creature",
+      [SPELL_TARGET]: "Any number of creatures",
     });
   });
 });

@@ -1,6 +1,7 @@
+import type { StoredValues } from "@/engine/core/fields/index.ts";
 import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type { RulesetData, RulesetView, ViewEntities } from "@/engine/core/view/index.ts";
-import type { Character, CharacterInventory, Modifier, Property, Requirement } from "@/shared/relations.ts";
+import type { Character, CharacterInventory, Modifier, Requirement } from "@/shared/relations.ts";
 
 /**
  * What a character's build loads of its rows and its ruleset's view (`CharacterDataLoader`), as every ruleset's build
@@ -31,17 +32,17 @@ export interface ModifierSource {
 
 /**
  * An entry of a character's inventory, as its build reads it: its item as the view composes it (the stored row's copy
- * or winner, the row itself without one), with its properties (its template's of each type it doesn't set, then its
- * own), its requirements as its template splits them, and its modifiers when it's equipped.
+ * or winner, the row itself without one), with its stored values (its template's of each field it holds none of, then
+ * its own), its requirements as its template splits them, and its modifiers when it's equipped.
  */
 export type InventoryEntry = CharacterInventory & {
   item: ViewEntities["items"] & {
     modifiers: Modifier[];
     /** The base item's requirements: its template's, or its own when it is one */
     proficiency: Requirement[];
-    properties: Property[];
     /** Its other requirements, which its modifiers need */
     requirements: Requirement[];
+    values: StoredValues;
   };
 };
 
@@ -103,7 +104,7 @@ export default abstract class CharacterDataLoader<D extends LoadedCharacter, P e
 
   /**
    * The character's inventory, each entry's item as the view composes it (a copy's, or a sibling winner's, for an entry
-   * stored before), with its properties, its requirements (the base item's, its proficiency, and its own on top of a
+   * stored before), with its stored values, its requirements (the base item's, its proficiency, and its own on top of a
    * template, or a plain item's) and, equipped, its modifiers (`RulesetData.entriesWithItems`).
    */
   private loadInventory(rows: CharacterRows, rulesetData: RulesetData): InventoryEntry[] {
@@ -113,10 +114,10 @@ export default abstract class CharacterDataLoader<D extends LoadedCharacter, P e
         ...entry,
         item: {
           ...item,
-          properties: rulesetData.itemProperties(item),
           modifiers: entry.equipped ? (rulesetData.modifiersBySource.get(item.id) ?? []) : [],
           proficiency: template,
           requirements: own,
+          values: rulesetData.inheritedValuesOf("items", item),
         },
       };
     });

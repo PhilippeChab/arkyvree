@@ -28,19 +28,77 @@ function columnFields(): string[] {
     );
 }
 
+/** How two texts sort by their characters' codes, as the database's collation (C) orders text. */
+function compareText(a: string, b: string) {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
 /** A field's rows' value, typed by the column that holds it: a text, a number or a flag. */
 function valueOf(table: typeof entityFieldsInRules | typeof rulesetFieldsInRules) {
   return sql<FieldValue>`coalesce(to_json(${table.textValue}), to_json(${table.numberValue}), to_json(${table.flagValue}))`;
 }
 
 /**
- * An entity's and a ruleset's properties: the fields their module declares beside their kind's columns (a feat's family,
- * a spell's school, a ruleset's feat advancement), and those whose value names an entity, which are links (a class's
- * bonus spell ability, a ruleset's skill point ability). Read as their stored fields and links, which the engine reads
- * as properties (`Engine.storage().propertiesOf`), and written from properties, each value typed by its field's
- * declaration (`rules.entity_fields`, `ruleset_fields`) or a link (`entity_links`, `ruleset_links`).
+ * An entity's and a ruleset's properties, as a copy still copies them and a save still writes them: the fields their
+ * module declares beside their kind's columns (a feat's family, a spell's school, a ruleset's feat advancement), and
+ * those whose value names an entity, which are links (a class's bonus spell ability, a ruleset's skill point ability).
+ * Read as their stored fields and links, each value as text (`findMany`), and written from properties, each value typed
+ * by its field's declaration (`rules.entity_fields`, `ruleset_fields`) or a link (`entity_links`, `ruleset_links`).
  */
 class StoredProperties {
+  /**
+   * The properties of owners' stored fields and links (`owners`, each of its type), each value as text, and the
+   * entities the properties a link holds name: in the order they were written, by owner, type and value; of
+   * `entityType` and of `type` when given.
+   */
+  private static propertiesOf(
+    owners: (Pick<StoredRuleset, "fields" | "id" | "links"> & { type: string })[],
+    where: { entityType?: string; type?: string },
+  ): Property[] {
+    const storage = Engine.storage();
+    const rows: {
+      createdAt: string;
+      entityId: string;
+      entityType: string;
+      ordinal: number;
+      type: string;
+      updatedAt: string;
+      value: string;
+    }[] = [];
+    for (const { fields, id: entityId, links, type: entityType } of owners) {
+      rows.push(
+        ...fields.map((field) => ({ ...field, entityId, entityType, type: field.field, value: String(field.value) })),
+      );
+      for (const [type, role] of storage.linkedProperties(entityType)) {
+        const linked = links.filter((link) => link.role === role);
+        rows.push(...linked.map((link) => ({ ...link, entityId, entityType, ordinal: 0, type, value: link.toId })));
+      }
+    }
+    return rows
+      .filter(
+        (row) => (!where.entityType || row.entityType === where.entityType) && (!where.type || row.type === where.type),
+      )
+      .sort(
+        (a, b) =>
+          compareText(a.createdAt, b.createdAt) ||
+          compareText(a.entityId, b.entityId) ||
+          compareText(a.type, b.type) ||
+          compareText(a.value, b.value),
+      )
+      .map((row) => ({
+        // In the order a property's answer gives its columns
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        deletedAt: null,
+        id: `${row.entityId}:${row.type}:${row.ordinal}`,
+        entityId: row.entityId,
+        entityType: row.entityType,
+        value: row.value,
+        type: row.type,
+        description: null,
+      }));
+  }
+
   /** A field's value of a declared kind, from its text: a number parsed, a flag `true` or not. */
   private static typed(value: FieldValues) {
     const def = Engine.storage().field(value.entityType, value.type);
@@ -295,10 +353,10 @@ class StoredProperties {
         : await StoredProperties.readEntities(db, { entityIds: where.entityIds, entityType });
     const rulesets =
       !entityType || entityType === "rulesets" ? await this.findRulesets(db, { ids: where.entityIds }) : [];
-    return Engine.storage().propertiesOf(
-      { entities: entities as never, rulesets },
+    return StoredProperties.propertiesOf(
+      [...entities, ...rulesets.map((ruleset) => ({ ...ruleset, type: "rulesets" }))],
       { entityType, type: "type" in where ? where.type : undefined },
-    ) as Property[];
+    );
   }
 
   /** Rulesets' own settings as stored (`ids`): their fields' values and their links. */

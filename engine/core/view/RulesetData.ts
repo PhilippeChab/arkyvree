@@ -1,19 +1,24 @@
 import type { CowData } from "@/engine/core/cow/index.ts";
-import { PropertyOrder, type PropertyTypesProvider } from "@/engine/core/customizations/index.ts";
-import type { Modifier, Property, Requirement, Ruleset } from "@/shared/relations.ts";
+import { OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
+import type { Modifier, Requirement, Ruleset } from "@/shared/relations.ts";
 
 import type { ViewEntities, ViewJoins } from "./rows.ts";
 
 /** Each index a ruleset's view builds on first read, and keeps. */
 interface Indices {
-  entityIdsByProperty: Map<string, string[]>;
   modifiersById: Map<string, Modifier>;
   modifiersBySource: Map<string, Modifier[]>;
-  propertiesByEntity: Map<string, Property[]>;
-  propertiesByEntityType: Map<string, Property[]>;
   requirementsByEntity: Map<string, Requirement[]>;
-  /** Properties as stat blocks show them */
-  sortedProperties: Property[];
+}
+
+/**
+ * A value a kind's entities hold of a field, kind-wide, as text (a flag's `"true"`), and the entities that hold it, in
+ * the order the view composes them (`RulesetData.kindValues`).
+ */
+export interface KindValue {
+  entityIds: string[];
+  field: string;
+  value: string;
 }
 
 /** A ruleset's lists, composed across its chain (`RulesetComposition`): what its view holds and indexes. */
@@ -22,11 +27,14 @@ export interface RulesetLists {
   entities: ReadonlyMap<string, readonly object[]>;
   /** Each join's rows, by its name, but those a kind's lists nest */
   joins: ReadonlyMap<string, readonly object[]>;
+  /** Each kind's values kind-wide (its type's), as stat blocks show them: built when it's first read */
+  kindValuesOf(type: string): KindValue[];
   modifiers: Modifier[];
-  properties: Property[];
   requirements: Requirement[];
   /** The entities a link of a join with a tier points at (a spell list at a level) */
   tieredIds: Set<string>;
+  /** Each owner's stored values (an entity's, a ruleset's own Settings), by its id: a sibling loser's in its winner's */
+  values: ReadonlyMap<string, StoredValues>;
 }
 
 /** A ruleset as a character's build reads it: its row, and its view, composed by copy-on-write. */
@@ -37,13 +45,15 @@ export interface RulesetView {
 
 /**
  * What a ruleset's view knows of a kind past its rows, as its module declares it: whether a user customizes its entities
- * (`customizable`), whether their properties hold fields (`properties`), and the column an owned kind's row holds its
- * position in its owner at (`position`: a class level's `level`).
+ * (`customizable`), whether they hold fields of their own (`fields`), the fields they read off another entity when they
+ * hold none and the column their row names it by (`inherits`: an item's template's), and the column an owned kind's
+ * row holds its position in its owner at (`position`: a class level's `level`).
  */
 export interface ViewKind {
   customizable: boolean;
+  fields: boolean;
+  inherits?: { column: string; fields: ReadonlySet<string> };
   position?: string;
-  properties: boolean;
 }
 
 /** Rows by id. */
@@ -60,14 +70,12 @@ function buildById<T extends { id: string }>(list: readonly T[]): Map<string, T>
  */
 export default class RulesetData {
   /**
-   * `propertyTypes`: the ruleset's property types, as its rules read them, which order its entities' properties;
    * `labels`: what its module calls an entity of each kind; `kinds`: what its modules declare of each kind past its rows
    * (`ViewKind`).
    */
   constructor(
     lists: RulesetLists,
     cow: CowData,
-    propertyTypes: PropertyTypesProvider,
     labels: Readonly<Record<string, string>>,
     kinds: Readonly<Record<string, ViewKind>>,
   ) {
@@ -75,12 +83,12 @@ export default class RulesetData {
     this.kinds = kinds;
     this.entities = lists.entities;
     this.joins = lists.joins;
+    this.kindValuesOf = (type) => lists.kindValuesOf(type);
     this.modifiers = lists.modifiers;
-    this.properties = lists.properties;
     this.requirements = lists.requirements;
     this.tieredIds = lists.tieredIds;
+    this.values = lists.values;
     this.cow = cow;
-    this.propertyOrder = new PropertyOrder(propertyTypes);
   }
 
   private readonly built: Partial<Indices> = {};
@@ -97,15 +105,20 @@ export default class RulesetData {
 
   private readonly kinds: Readonly<Record<string, ViewKind>>;
 
+  /** Each kind's values kind-wide, by its type, once read. */
+  private readonly kindValuesByType = new Map<string, KindValue[]>();
+
+  /** Each kind's values kind-wide, built on first read: what `kindValues` keeps. */
+  private readonly kindValuesOf: (type: string) => KindValue[];
+
   private readonly labels: Readonly<Record<string, string>>;
 
   private readonly modifiers: Modifier[];
 
-  private readonly properties: Property[];
-
-  private readonly propertyOrder: PropertyOrder;
-
   private readonly requirements: Requirement[];
+
+  /** Each owner's stored values, by its id. */
+  private readonly values: ReadonlyMap<string, StoredValues>;
 
   /**
    * The ruleset's copy-on-write state: the id Maps resolve through it on their own; rows as stored (a character's, a
@@ -147,11 +160,6 @@ export default class RulesetData {
     });
   }
 
-  /** Each entity's properties as its stat block shows them, whoever reads them. */
-  private get sortedProperties(): Property[] {
-    return (this.built.sortedProperties ??= this.propertyOrder.sort(this.properties));
-  }
-
   /** A kind's rows by id (`type`), a stored (pre-COW) id resolving to its copy's or its winner's. */
   byId<K extends keyof ViewEntities>(type: K): Map<string, ViewEntities[K]> {
     return this.indexOf(type).resolved as Map<string, ViewEntities[K]>;
@@ -165,12 +173,12 @@ export default class RulesetData {
     return this.cow.resolve(id);
   }
 
-  /** An entity's customizations, as the view composes them: its modifiers, its properties and its requirements. */
+  /** An entity's customizations, as the view composes them: its modifiers, its stored values and its requirements. */
   customizationsOf(entityId: string) {
     return {
       modifiers: this.modifiersBySource.get(entityId) ?? [],
-      properties: this.propertiesByEntity.get(entityId) ?? [],
       requirements: this.requirementsByEntity.get(entityId) ?? [],
+      values: this.valuesOf(entityId),
     };
   }
 
@@ -184,19 +192,6 @@ export default class RulesetData {
     const derived = new kind(this);
     this.derived.set(kind, derived);
     return derived;
-  }
-
-  /**
-   * Reverse property index: `${entityType}:${type}:${value}` → the ids of the entities with that property. Replaces
-   * O(N) scans of a kind's entities' properties for one value.
-   */
-  get entityIdsByProperty(): Map<string, string[]> {
-    return (this.built.entityIdsByProperty ??= new Map(
-      [...Map.groupBy(this.sortedProperties, (p) => `${p.entityType}:${p.type}:${p.value}`)].map(([key, rows]) => [
-        key,
-        rows.map((p) => p.entityId),
-      ]),
-    ));
   }
 
   /**
@@ -220,23 +215,23 @@ export default class RulesetData {
     return this.byId(type).get(id);
   }
 
+  /**
+   * An entity's stored values (`entity`, of `type`), those it reads off another included (`ViewKind.inherits`: an item's
+   * template's): each such field of the other's it holds none of, the other's first, then its own. Its own alone for a
+   * kind that reads none, or an entity that names none.
+   */
+  inheritedValuesOf(type: string, entity: { id: string }): StoredValues {
+    const own = this.valuesOf(entity.id);
+    const inherits = this.kinds[type]?.inherits;
+    if (!inherits) return own;
+    const baseId = (entity as Record<string, unknown>)[inherits.column];
+    if (typeof baseId !== "string") return own;
+    return OwnerValues.inherit(own, this.valuesOf(baseId), inherits.fields);
+  }
+
   /** Whether a user customizes a kind's entities (`type`): their modifiers and requirements. */
   isCustomizable(type: string): boolean {
     return this.kinds[type]?.customizable ?? false;
-  }
-
-  /**
-   * An item's properties: its template's of each type the item doesn't set, then its own. An item made from a
-   * template (`sourceItemId`) holds only what it overrides, a type at a time: its own damage types replace all the
-   * template's.
-   */
-  itemProperties(item: Pick<ViewEntities["items"], "id" | "sourceItemId">): Property[] {
-    const { propertiesByEntity } = this;
-    const own = propertiesByEntity.get(item.id) ?? [];
-    if (!item.sourceItemId) return [...own];
-    const ownTypes = new Set(own.map((property) => property.type));
-    const template = propertiesByEntity.get(item.sourceItemId) ?? [];
-    return [...template.filter((property) => !ownTypes.has(property.type)), ...own];
   }
 
   /**
@@ -254,6 +249,20 @@ export default class RulesetData {
   /** A join's rows (`join`), across the chain, as the view composes them. */
   joinRows<J extends keyof ViewJoins>(join: J): ViewJoins[J][] {
     return (this.joins.get(join) ?? []) as ViewJoins[J][];
+  }
+
+  /**
+   * A kind's values kind-wide (`type`'s), each value of each of its fields with the entities that hold it, as stat
+   * blocks show them: by field, in their declared order, then by value, in their closed list's order, then by text; the
+   * entities in the order the view composes them. Built the first time a kind's are read.
+   */
+  kindValues(type: string): KindValue[] {
+    let values = this.kindValuesByType.get(type);
+    if (!values) {
+      values = this.kindValuesOf(type);
+      this.kindValuesByType.set(type, values);
+    }
+    return values;
   }
 
   /**
@@ -280,15 +289,6 @@ export default class RulesetData {
   positionOf(type: string, entity: object): number | undefined {
     const column = this.kinds[type]?.position;
     return column === undefined ? undefined : ((entity as Record<string, number>)[column] ?? undefined);
-  }
-
-  get propertiesByEntity(): Map<string, Property[]> {
-    return (this.built.propertiesByEntity ??= this.resolvingIds(Map.groupBy(this.sortedProperties, (p) => p.entityId)));
-  }
-
-  /** entityType → its properties across the chain (every entity's of a kind): what TargetPaths groups properties by. */
-  get propertiesByEntityType(): Map<string, Property[]> {
-    return (this.built.propertiesByEntityType ??= Map.groupBy(this.sortedProperties, (p) => p.entityType));
   }
 
   /** entityId → its requirements (a sibling's merged into its winner's). */
@@ -320,19 +320,19 @@ export default class RulesetData {
   }
 
   /**
-   * A ruleset's own properties (its Settings), as its chain holds them: each type's of the nearest ruleset that holds
-   * it, the ruleset's own first, then its source chain's in order. The view sorts every property by its value, so its
-   * rows by entity type mix the chain's: a fork's saved setting would read after its source's otherwise.
+   * A ruleset's own stored values (its Settings), as its chain holds them: each field's and each link's of the nearest
+   * ruleset that holds it, the ruleset's own first, then its source chain's in order.
    */
-  rulesetPropertiesOf(rulesetId: string): Property[] {
-    const held = new Set<string>();
-    return [rulesetId, ...this.cow.sourceChain].flatMap((id) => {
-      const rows = (this.propertiesByEntity.get(id) ?? []).filter(
-        (row) => row.entityType === "rulesets" && !held.has(row.type),
-      );
-      for (const row of rows) held.add(row.type);
-      return rows;
-    });
+  rulesetValuesOf(rulesetId: string): StoredValues {
+    const fields: Record<string, StoredValues["fields"][string]> = {};
+    const links: Record<string, string> = {};
+    for (const id of [rulesetId, ...this.cow.sourceChain]) {
+      const held = this.values.get(id);
+      if (!held) continue;
+      for (const [field, values] of Object.entries(held.fields)) fields[field] ??= values;
+      for (const [role, toId] of Object.entries(held.links)) links[role] ??= toId;
+    }
+    return { fields, links };
   }
 
   /**
@@ -343,8 +343,16 @@ export default class RulesetData {
     return this.indexOf(type).stored as Map<string, ViewEntities[K]>;
   }
 
-  /** Whether a kind's entities' (`type`) properties hold fields, which their form shows and their save writes. */
-  takesProperties(type: string): boolean {
-    return this.kinds[type]?.properties ?? false;
+  /** Whether a kind's entities (`type`) hold fields of their own, which their form shows and their save writes. */
+  takesFields(type: string): boolean {
+    return this.kinds[type]?.fields ?? false;
+  }
+
+  /**
+   * An owner's stored values (an entity's, a ruleset's Settings), by its id (a stored one its copy's or its winner's,
+   * which holds a sibling loser's merged in): none for one that holds none.
+   */
+  valuesOf(id: string): StoredValues {
+    return this.values.get(this.cow.resolve(id)) ?? OwnerValues.NONE;
   }
 }

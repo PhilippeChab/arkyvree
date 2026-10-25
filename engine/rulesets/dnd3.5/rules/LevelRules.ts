@@ -36,7 +36,7 @@ export default class LevelRules {
    * holds them, the fork's first, the core rules' when none does.
    */
   static of({ ruleset, rulesetData }: RulesetView): LevelRules {
-    return new LevelRules(RULESET_FIELDS.read(rulesetData.rulesetPropertiesOf(ruleset.id)));
+    return new LevelRules(RULESET_FIELDS.read(rulesetData.rulesetValuesOf(ruleset.id)));
   }
 
   /** The ability increases the level after `totalLevel` levels takes, by its Settings (`abilityIncreases`). */

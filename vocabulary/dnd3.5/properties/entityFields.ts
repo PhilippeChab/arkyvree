@@ -1,10 +1,10 @@
 /**
- * The D&D 3.5 entities' fields, which their properties keep: each entity type's, in the order a stat block shows them
- * (and its form its fields), each declared once, as data the engine builds its kind's codec from (`FieldCodec`,
- * `engine/core/fields/`, whose `FieldSpec` is a declaration's shape): its name, the property type that stores it, its
+ * The D&D 3.5 entities' fields: each entity type's, in the order a stat block shows them (and its form its fields),
+ * each declared once, as data the engine builds its kind's codec from (`FieldCodec`, `engine/core/fields/`, whose
+ * `FieldSpec` is a declaration's shape): its name, the stored field that keeps it (a reference's link role too), its
  * label and what it's for, its kind, its closed list of values or the entity its value names, its default and bounds,
  * when it counts (`when`) and where its form shows it (`shownIn`). The engine reads them through the 3.5 module's
- * property types too: the order a ruleset's view keeps every entity's properties in (`PropertyOrder`).
+ * fields too: the order a ruleset's view keeps every entity's values in (`DeclaredFields`).
  */
 
 import {
@@ -97,27 +97,27 @@ const FEAT_FIELDS = {
     description: "Feat family grouping (Weapon Focus, Spell Focus, etc.)",
     kind: "list",
     label: "Families",
-    type: FEAT_FAMILY,
+    field: FEAT_FAMILY,
     values: FEAT_FAMILIES,
   },
   weaponFinesse: {
     description: "Whether the feat lets its owner attack with Dexterity with a finessable weapon (Weapon Finesse)",
     kind: "flag",
     label: "Weapon Finesse",
-    type: FEAT_WEAPON_FINESSE,
+    field: FEAT_WEAPON_FINESSE,
   },
   oversizedTwoWeaponFighting: {
     description:
       "Whether the feat makes a one-handed off-hand weapon count as light in two-weapon fighting (Oversized Two-Weapon Fighting)",
     kind: "flag",
     label: "Oversized Two-Weapon Fighting",
-    type: FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
+    field: FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
   },
   prohibitedSchools: {
     description: "School of magic prohibited by wizard specialization",
     kind: "list",
     label: "Prohibited Schools",
-    type: WIZARD_PROHIBITED_SCHOOL,
+    field: WIZARD_PROHIBITED_SCHOOL,
   },
 } as const;
 
@@ -136,21 +136,21 @@ const ITEM_FIELDS = {
         description: "Base weapon type for feat/modifier targeting (e.g. Longsword, Shortsword)",
         kind: "text",
         label: "Base Weapon",
-        type: WEAPON_TYPE,
+        field: WEAPON_TYPE,
         values: WEAPON_TYPE_NAMES,
       },
       proficiency: {
         description: "Weapon proficiency classification (Simple, Martial, Exotic)",
         kind: "text",
         label: "Proficiency",
-        type: WEAPON_PROFICIENCY,
+        field: WEAPON_PROFICIENCY,
         values: WEAPON_PROFICIENCIES,
       },
       family: {
         description: "Weapon family grouping (Sword, Axe, Bow, etc.)",
         kind: "text",
         label: "Family",
-        type: WEAPON_FAMILY,
+        field: WEAPON_FAMILY,
         values: WEAPON_FAMILIES,
       },
       size: {
@@ -158,46 +158,46 @@ const ITEM_FIELDS = {
           "The weapon's effort, as the table gives it for a Medium wielder: Tiny or Small light, Medium one-handed, Large two-handed",
         kind: "text",
         label: "Size",
-        type: WEAPON_SIZE,
+        field: WEAPON_SIZE,
       },
       baseDamage: {
         description: "Base damage dice for weapons",
         kind: "text",
         label: "Damage",
         placeholder: 'e.g., "1d8"',
-        type: WEAPON_BASE_DAMAGE,
+        field: WEAPON_BASE_DAMAGE,
       },
       doubleDamage: {
         description: "A double weapon's other end's damage dice: in two hands, it fights as two weapons",
         kind: "text",
         label: "Other End's Damage",
         placeholder: 'e.g., "1d6"',
-        type: WEAPON_DOUBLE_DAMAGE,
+        field: WEAPON_DOUBLE_DAMAGE,
       },
       damageTypes: {
         description: "Type of damage dealt",
         kind: "list",
         label: "Damage Types",
-        type: DAMAGE_TYPE,
+        field: DAMAGE_TYPE,
         values: DAMAGE_TYPES,
       },
       criticalRange: {
         description: "Critical threat count (1 = 20, 2 = 19-20, 3 = 18-20, etc.)",
         kind: "number",
         label: "Critical Range",
-        type: WEAPON_CRITICAL_RANGE,
+        field: WEAPON_CRITICAL_RANGE,
       },
       criticalMultiplier: {
         description: "Critical hit damage multiplier",
         kind: "number",
         label: "Critical Multiplier",
-        type: WEAPON_CRITICAL_MULTIPLIER,
+        field: WEAPON_CRITICAL_MULTIPLIER,
       },
       strengthDamage: {
         description: "Strength to damage: Slot (the hand's share; default), Rating (bows: up to Mighty), None",
         kind: "text",
         label: "Strength to Damage",
-        type: WEAPON_STRENGTH_DAMAGE,
+        field: WEAPON_STRENGTH_DAMAGE,
         values: STRENGTH_DAMAGE_RULES,
       },
       mighty: {
@@ -205,7 +205,7 @@ const ITEM_FIELDS = {
           "A composite bow's Strength rating: the most Strength bonus it adds to damage; below it, -2 to attack",
         kind: "number",
         label: "Mighty Rating",
-        type: WEAPON_MIGHTY,
+        field: WEAPON_MIGHTY,
       },
       ranged: {
         absent: null,
@@ -213,33 +213,33 @@ const ITEM_FIELDS = {
           "Whether it's a ranged weapon (thrown or projectile, not used in melee): its attacks use Dexterity",
         kind: "flag",
         label: "Ranged",
-        type: WEAPON_RANGED,
+        field: WEAPON_RANGED,
       },
       range: {
         description: "Range increment in feet: a ranged weapon's, or a thrown melee weapon's (0 or absent = none)",
         kind: "number",
         label: "Range Increment (ft.)",
-        type: WEAPON_RANGE,
+        field: WEAPON_RANGE,
       },
       maxRangeIncrements: {
         description:
           "How many range increments it reaches: 10 for a projectile weapon (a bow, a crossbow, a sling), 1 for a net (absent = 5)",
         kind: "number",
         label: "Range Increments",
-        type: WEAPON_MAX_RANGE_INCREMENTS,
+        field: WEAPON_MAX_RANGE_INCREMENTS,
       },
       reach: {
         description: "Melee reach in feet (0 or absent = 5 ft.)",
         kind: "number",
         label: "Reach (ft.)",
-        type: WEAPON_REACH,
+        field: WEAPON_REACH,
       },
       finessable: {
         absent: null,
         description: "Whether a feat with FEAT_WEAPON_FINESSE (Weapon Finesse) lets this weapon attack with Dexterity",
         kind: "flag",
         label: "Finessable",
-        type: WEAPON_FINESSABLE,
+        field: WEAPON_FINESSABLE,
       },
       oneHandTraining: {
         absent: null,
@@ -247,14 +247,14 @@ const ITEM_FIELDS = {
           "Whether it's too large for one hand without training (a bastard sword): there, only its proficiency lets it be used",
         kind: "flag",
         label: "One-Hand Training",
-        type: WEAPON_ONE_HAND_TRAINING,
+        field: WEAPON_ONE_HAND_TRAINING,
       },
       oneHandedPenalty: {
         description:
           "Penalty to attack in one hand, when it takes two to load: a crossbow's (-2 light, -4 heavy; absent = none)",
         kind: "number",
         label: "One-Handed Penalty",
-        type: WEAPON_ONE_HANDED_PENALTY,
+        field: WEAPON_ONE_HANDED_PENALTY,
       },
     },
     kind: "group",
@@ -267,21 +267,21 @@ const ITEM_FIELDS = {
         description: "Base armor type for feat/modifier targeting (e.g. Leather Armor, Full Plate)",
         kind: "text",
         label: "Base Armor",
-        type: ARMOR_TYPE,
+        field: ARMOR_TYPE,
         values: ARMOR_TYPE_NAMES,
       },
       proficiency: {
         description: "Armor proficiency classification (Light, Medium, Heavy)",
         kind: "text",
         label: "Proficiency",
-        type: ARMOR_PROFICIENCY,
+        field: ARMOR_PROFICIENCY,
         values: ARMOR_PROFICIENCIES,
       },
       acBonus: {
         description: "Armor class bonus from armor",
         kind: "number",
         label: "Armor Bonus",
-        type: ARMOR_AC_BONUS,
+        field: ARMOR_AC_BONUS,
       },
     },
     kind: "group",
@@ -294,21 +294,21 @@ const ITEM_FIELDS = {
         description: "Base shield type for feat/modifier targeting (e.g. Buckler, Tower Shield)",
         kind: "text",
         label: "Base Shield",
-        type: SHIELD_TYPE,
+        field: SHIELD_TYPE,
         values: SHIELD_TYPE_NAMES,
       },
       proficiency: {
         description: "Shield proficiency classification (Light, Heavy, Tower)",
         kind: "text",
         label: "Proficiency",
-        type: SHIELD_PROFICIENCY,
+        field: SHIELD_PROFICIENCY,
         values: SHIELD_PROFICIENCIES,
       },
       acBonus: {
         description: "Armor class bonus from shield",
         kind: "number",
         label: "Shield Bonus",
-        type: SHIELD_AC_BONUS,
+        field: SHIELD_AC_BONUS,
       },
     },
     kind: "group",
@@ -321,7 +321,7 @@ const ITEM_FIELDS = {
     kind: "number",
     label: "Max Dex Bonus",
     shownIn: WORN,
-    type: ARMOR_MAX_DEX,
+    field: ARMOR_MAX_DEX,
   },
   /** An armor's or a shield's. */
   checkPenalty: {
@@ -329,27 +329,27 @@ const ITEM_FIELDS = {
     kind: "number",
     label: "Armor Check Penalty",
     shownIn: WORN,
-    type: ARMOR_CHECK_PENALTY,
+    field: ARMOR_CHECK_PENALTY,
   },
   spellFailure: {
     description: "Arcane spell failure chance percentage",
     kind: "number",
     label: "Arcane Spell Failure (%)",
     shownIn: WORN,
-    type: ITEM_SPELL_FAILURE,
+    field: ITEM_SPELL_FAILURE,
   },
   masterwork: {
     absent: null,
     description: "Whether this item is masterwork quality (reduces armor check penalty by 1)",
     kind: "flag",
     label: "Masterwork",
-    type: ITEM_MASTERWORK,
+    field: ITEM_MASTERWORK,
   },
   madeOf: {
     description: "Material composition",
     kind: "text",
     label: "Material",
-    type: ITEM_MADE_OF,
+    field: ITEM_MADE_OF,
     values: ["Adamantine", "Mithral", "Cold Iron", "Silver", "Darkwood"],
   },
   /** The charges it comes with, none for an item without charges. */
@@ -357,19 +357,19 @@ const ITEM_FIELDS = {
     description: "Default number of charges for this item",
     kind: "number",
     label: "Charges",
-    type: ITEM_HAS_CHARGES,
+    field: ITEM_HAS_CHARGES,
   },
   magicCasterLevel: {
     description: "Caster level required to create this magic item",
     kind: "number",
     label: "Caster Level",
-    type: MAGIC_CASTER_LEVEL,
+    field: MAGIC_CASTER_LEVEL,
   },
   magicAuras: {
     description: "Magic aura strength and school (e.g. Moderate transmutation)",
     kind: "list",
     label: "Auras",
-    type: MAGIC_AURA,
+    field: MAGIC_AURA,
   },
 } as const;
 
@@ -380,13 +380,14 @@ const KLASS_FIELDS = {
     kind: "ref",
     label: "Bonus Spell Ability",
     references: "abilities",
-    type: CLASS_BONUS_SPELL_ABILITY_ID,
+    field: CLASS_BONUS_SPELL_ABILITY_ID,
+    role: "bonusSpellAbility",
   },
   casterType: {
     description: "Whether this class casts arcane or divine spells",
     kind: "choice",
     label: "Caster Type",
-    type: CLASS_CASTER_TYPE,
+    field: CLASS_CASTER_TYPE,
     values: CASTER_TYPES,
   },
 } as const;
@@ -404,7 +405,7 @@ const KLASS_LEVEL_FIELDS = {
     // A full base attack bonus's at the last level: one never outruns its level
     max: MAX_CLASS_LEVEL,
     min: 0,
-    type: CLASS_LEVEL_BAB,
+    field: CLASS_LEVEL_BAB,
     write: "always",
   },
   skills: {
@@ -414,7 +415,7 @@ const KLASS_LEVEL_FIELDS = {
     label: "Skill Points",
     max: MAX_TABLE_COUNT,
     min: 0,
-    type: CLASS_LEVEL_SKILL_POINTS,
+    field: CLASS_LEVEL_SKILL_POINTS,
     write: "always",
   },
 } as const;
@@ -426,13 +427,13 @@ const RACE_FIELDS = {
       "Whether the race keeps its speed in medium or heavy armor and under a medium or heavy load (the dwarf)",
     kind: "flag",
     label: "Speed Ignores Encumbrance",
-    type: RACE_SPEED_IGNORES_ENCUMBRANCE,
+    field: RACE_SPEED_IGNORES_ENCUMBRANCE,
   },
   quadruped: {
     description: "Whether the race walks on four legs, which carries more: x1 1/2 when Medium, x3 when Large (SRD)",
     kind: "flag",
     label: "Quadruped",
-    type: RACE_QUADRUPED,
+    field: RACE_QUADRUPED,
   },
 } as const;
 
@@ -449,7 +450,8 @@ const RULESET_FIELDS = {
     label: "Skill Point Ability",
     references: "abilities",
     required: true,
-    type: RULESET_SKILL_POINT_ABILITY_ID,
+    field: RULESET_SKILL_POINT_ABILITY_ID,
+    role: "skillPointAbility",
   },
   featAdvancement: {
     default: { every: GENERAL_FEAT_LEVEL_INTERVAL, extra: [{ amount: FIRST_LEVEL_GENERAL_FEATS, level: 1 }] },
@@ -459,7 +461,7 @@ const RULESET_FIELDS = {
     label: "Feat Advancement",
     levels: MAX_CHARACTER_LEVEL,
     max: MAX_GENERAL_FEATS_PER_LEVEL,
-    type: RULESET_FEAT_ADVANCEMENT,
+    field: RULESET_FEAT_ADVANCEMENT,
   },
   abilityIncreases: {
     default: { every: ABILITY_INCREASE_LEVEL_INTERVAL, extra: [] },
@@ -470,7 +472,7 @@ const RULESET_FIELDS = {
     levels: MAX_CHARACTER_LEVEL,
     // One at most: a level's increase raises one ability, which the level-up wizard picks
     max: 1,
-    type: RULESET_ABILITY_INCREASES,
+    field: RULESET_ABILITY_INCREASES,
   },
 } as const;
 
@@ -484,7 +486,7 @@ const SKILL_FIELDS = {
     description: "Whether the skill is impacted by armor check penalty",
     kind: "flag",
     label: "Impacted by Weight",
-    type: SKILL_IMPACTED_BY_WEIGHT,
+    field: SKILL_IMPACTED_BY_WEIGHT,
   },
   checkPenaltyMultiplier: {
     default: 1,
@@ -492,14 +494,14 @@ const SKILL_FIELDS = {
     kind: "number",
     label: "Armor Check Penalty Multiplier",
     min: 1,
-    type: SKILL_CHECK_PENALTY_MULTIPLIER,
+    field: SKILL_CHECK_PENALTY_MULTIPLIER,
     when: { field: "impactedByWeight", values: [true] },
   },
   usableWithoutTraining: {
     description: "Whether the skill can be used without training",
     kind: "flag",
     label: "Usable Without Training",
-    type: SKILL_USABLE_WITHOUT_TRAINING,
+    field: SKILL_USABLE_WITHOUT_TRAINING,
   },
 } as const;
 
@@ -509,28 +511,28 @@ const SPELL_FIELDS = {
     description: "Spell school (Abjuration, Conjuration, etc.)",
     kind: "text",
     label: "School",
-    type: SPELL_SCHOOL,
+    field: SPELL_SCHOOL,
     values: SPELL_SCHOOLS,
   },
   subschool: {
     description: "Spell subschool (Calling, Charm, Creation, etc.)",
     kind: "text",
     label: "Subschool",
-    type: SPELL_SUBSCHOOL,
+    field: SPELL_SUBSCHOOL,
     values: SPELL_SUBSCHOOLS,
   },
   descriptors: {
     description: "Spell descriptor (Fire, Cold, Mind-Affecting, etc.)",
     kind: "list",
     label: "Descriptors",
-    type: SPELL_DESCRIPTOR,
+    field: SPELL_DESCRIPTOR,
     values: SPELL_DESCRIPTORS,
   },
   components: {
     description: "Required component (Verbal, Somatic, Material, Focus, Divine Focus, XP Cost)",
     kind: "list",
     label: "Components",
-    type: SPELL_COMPONENT,
+    field: SPELL_COMPONENT,
     values: SPELL_COMPONENTS,
   },
   castingTime: {
@@ -538,49 +540,49 @@ const SPELL_FIELDS = {
     kind: "text",
     label: "Casting Time",
     placeholder: 'e.g., "1 standard action"',
-    type: SPELL_CASTING_TIME,
+    field: SPELL_CASTING_TIME,
   },
   rangeType: {
     description: 'Range, as its book writes it (e.g., "Touch", "Close (25 ft. + 5 ft./2 levels)", "60 ft.")',
     kind: "text",
     label: "Range",
     placeholder: 'e.g., "Close (25 ft. + 5 ft./2 levels)"',
-    type: SPELL_RANGE_TYPE,
+    field: SPELL_RANGE_TYPE,
   },
   target: {
     description: 'Valid targets (e.g., "One creature", "You")',
     kind: "text",
     label: "Target",
     placeholder: 'e.g., "One creature"',
-    type: SPELL_TARGET,
+    field: SPELL_TARGET,
   },
   effect: {
     description: 'What the spell brings into being (e.g., "One summoned creature", "Ray")',
     kind: "text",
     label: "Effect",
     placeholder: 'e.g., "One summoned creature"',
-    type: SPELL_EFFECT,
+    field: SPELL_EFFECT,
   },
   areaOfEffect: {
     description: 'Area of effect (e.g., "20-ft. radius", "Cone")',
     kind: "text",
     label: "Area of Effect",
     placeholder: 'e.g., "20-ft. radius"',
-    type: SPELL_AREA_OF_EFFECT,
+    field: SPELL_AREA_OF_EFFECT,
   },
   duration: {
     description: 'Duration description (e.g., "1 round/level", "Instantaneous")',
     kind: "text",
     label: "Duration",
     placeholder: 'e.g., "1 round/level"',
-    type: SPELL_DURATION,
+    field: SPELL_DURATION,
   },
   spellResistance: {
     description: 'Whether spell resistance applies, as its book writes it (e.g., "Yes", "No", "Yes (harmless)")',
     kind: "text",
     label: "Spell Resistance",
     placeholder: 'e.g., "Yes (harmless)"',
-    type: SPELL_RESISTANCE,
+    field: SPELL_RESISTANCE,
   },
 } as const;
 
