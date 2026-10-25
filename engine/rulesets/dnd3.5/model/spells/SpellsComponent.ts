@@ -6,7 +6,7 @@ import type { CustomizedSpell } from "@/engine/rulesets/dnd3.5/model/loading/loa
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Spell, SpellWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";
-import { formatPropertyValues } from "@/shared/customization/properties.ts";
+import { formatFieldValues } from "@/shared/customization/fields.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import type SpellGroupingsComponent from "./SpellGroupingsComponent.ts";
@@ -19,7 +19,7 @@ interface SpellEntry {
    * Each field's values as text, in its declared order: a list, which a requirement's `contains` asks one of and a
    * modifier adds a value to or takes one from. A sheet lists them joined (`getFlatSpells`).
    */
-  properties: Record<string, string[]>;
+  fields: Record<string, string[]>;
   spell: Spell;
 }
 
@@ -173,23 +173,23 @@ export default class SpellsComponent extends CharacterComponent<LoadedCharacterD
   /** Each spell's entry (`spells`), with its fields' values as text, off the view's stored values. */
   addSpellEntries(spells: Spell[], rulesetData: RulesetData) {
     for (const spell of spells) {
-      const propertiesMap = SpellsComponent.textsOf(rulesetData, spell.id);
+      const fields = SpellsComponent.textsOf(rulesetData, spell.id);
 
       // A spell already listed keeps what's on its entry: its known flags and its DCs by class
       const slug = stripSeparators(spell.name);
-      this.spells[slug] = { ...this.spells[slug], spell, properties: propertiesMap };
+      this.spells[slug] = { ...this.spells[slug], spell, fields };
     }
   }
 
   /** The spells as a sheet lists them: each field's values joined, those modifiers add included. */
-  getFlatSpells(): Record<string, Omit<SpellEntry, "properties"> & { properties: Record<string, string> }> {
-    const result: Record<string, Omit<SpellEntry, "properties"> & { properties: Record<string, string> }> = {};
+  getFlatSpells(): Record<string, Omit<SpellEntry, "fields"> & { fields: Record<string, string> }> {
+    const result: Record<string, Omit<SpellEntry, "fields"> & { fields: Record<string, string> }> = {};
     for (const [key, value] of Object.entries(this.spells)) {
       if ("spell" in value) {
         const entry = value as SpellEntry;
         result[key] = {
           ...entry,
-          properties: formatPropertyValues(entry.properties, (field) => SPELL_FIELDS.optionsOf(field)),
+          fields: formatFieldValues(entry.fields, (field) => SPELL_FIELDS.optionsOf(field)),
         };
       }
     }

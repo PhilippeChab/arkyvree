@@ -1,6 +1,6 @@
 import { type ChangedField, getActivityName } from "@/shared/activity.ts";
+import { formatFieldName } from "@/shared/customization/fields.ts";
 import { formatOperator } from "@/shared/customization/operators.ts";
-import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { formatSegment } from "@/shared/customization/target.ts";
 import { BASE_RULES_OPTIONS } from "@/shared/enums.ts";
 import { isRecord } from "@/shared/isRecord.ts";
@@ -49,17 +49,17 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
   // create
   createModifier: (actor, d) => `${actor} added a modifier to ${d.entityName || "an entity"}`,
   createRequirement: (actor, d) => `${actor} added a requirement to ${d.entityName || "an entity"}`,
-  createProperty: (actor, d) => `${actor} added a property to ${d.entityName || "an entity"}`,
+  createField: (actor, d) => `${actor} added a field to ${d.entityName || "an entity"}`,
 
   // Ruleset content — update
   updateModifier: (actor, d) => `${actor} updated a modifier on ${d.entityName || "an entity"}`,
   updateRequirement: (actor, d) => `${actor} updated a requirement on ${d.entityName || "an entity"}`,
-  updateProperty: (actor, d) => `${actor} updated a property on ${d.entityName || "an entity"}`,
+  updateField: (actor, d) => `${actor} updated a field on ${d.entityName || "an entity"}`,
 
   // Ruleset content — delete
   deleteModifier: (actor, d) => `${actor} removed a modifier from ${d.entityName || "an entity"}`,
   deleteRequirement: (actor, d) => `${actor} removed a requirement from ${d.entityName || "an entity"}`,
-  deleteProperty: (actor, d) => `${actor} removed a property from ${d.entityName || "an entity"}`,
+  deleteField: (actor, d) => `${actor} removed a field from ${d.entityName || "an entity"}`,
 
   // Exports
   pdfReady: (_actor, d) => `Your PDF for ${d.characterName || "your character"} is ready to download`,
@@ -174,7 +174,7 @@ function wordsOf(d: Record<string, unknown>, rules: RulesDescriptions | undefine
 
 /**
  * What an activity of `type` changed: its fields (named as the columns of the entity it names, `rules`: every base
- * rules'), its level, its modifier's or requirement's change, its property.
+ * rules'), its level, its modifier's or requirement's change, its field's value.
  */
 export function formatActivityDetails(type: string, data: unknown, rules?: RulesDescriptions): string | null {
   const d = payload(data);
@@ -195,9 +195,8 @@ export function formatActivityDetails(type: string, data: unknown, rules?: Rules
     parts.push(`${operator}${d.value ? ` ${d.value}` : ""} on ${d.target}`);
   }
 
-  // Property details
-  if (typeof d.propertyType === "string" && d.propertyType)
-    parts.push(`${formatPropertyType(d.propertyType)}: ${d.value ?? ""}`);
+  // A field's value
+  if (typeof d.field === "string" && d.field) parts.push(`${formatFieldName(d.field)}: ${d.value ?? ""}`);
 
   return parts.length > 0 ? parts.join("\n") : null;
 }

@@ -57,7 +57,7 @@ describe("ModifierEvaluator", () => {
   });
 
   test("adds a value to a list and takes one from it: a charm's descriptors", () => {
-    const descriptor = { valueType: "string", target: "charms.fear.properties.DESCRIPTOR" } as const;
+    const descriptor = { valueType: "string", target: "charms.fear.fields.DESCRIPTOR" } as const;
     expect(evaluate(modifier({ ...descriptor, operator: "add", value: "Evil" }), ["Fear", "Mind-Affecting"])).toEqual({
       value: ["Fear", "Mind-Affecting", "Evil"],
       applied: 1,

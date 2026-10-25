@@ -486,7 +486,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingBottom: 2,
   },
-  spellProperties: {
+  spellFields: {
     fontSize: FONT_SIZE.sm,
     color: "#666",
   },

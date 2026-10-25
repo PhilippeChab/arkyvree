@@ -503,24 +503,24 @@ describe("DetailedCharacter", () => {
       });
     });
 
-    test("resolves every property path listed for the spells it has, each type written its own way", async () => {
+    test("resolves every field path listed for the spells it has, each field written its own way", async () => {
       const record = await findSeededCharacter("Elara Starweaver");
       const elara = await build(record);
       const targetPaths = new Dnd35TargetPaths();
       const { paths } = await withRulesetScope(db, record.rulesetId, async ({ rulesetData }) =>
         targetPaths.list(rulesetData, "requirement"),
       );
-      // The spells it has: their entries carry their properties (a spell it hasn't is #335's)
+      // The spells it has: their entries carry their fields (a spell it hasn't is #335's)
       const spells = new Set(
         Object.entries(elara.components.spells.getSpells())
-          .filter(([, entry]) => isRecord(entry) && "properties" in entry)
+          .filter(([, entry]) => isRecord(entry) && "fields" in entry)
           .map(([slug]) => slug),
       );
-      const propertyPaths = paths
+      const fieldPaths = paths
         .map(({ path }) => path)
-        .filter((path) => /^spells\.[a-z0-9]+\.properties\./.test(path) && spells.has(path.split(".")[1]));
-      expect(propertyPaths.length).toBeGreaterThan(0);
-      const errors = propertyPaths.flatMap((path) =>
+        .filter((path) => /^spells\.[a-z0-9]+\.fields\./.test(path) && spells.has(path.split(".")[1]));
+      expect(fieldPaths.length).toBeGreaterThan(0);
+      const errors = fieldPaths.flatMap((path) =>
         targetPaths
           .traversePathInit(path, elara.components)
           .flatMap((result) => (result.error === null ? [] : [`${path}: ${result.error}`])),
@@ -1020,7 +1020,7 @@ describe("DetailedCharacter", () => {
       ]);
     });
 
-    test("read how many range increments a weapon reaches off its properties, five when they don't say", async () => {
+    test("read how many range increments a weapon reaches off its fields, five when they don't say", async () => {
       const weapon = (name: string, fields: Record<string, FieldValue>) =>
         createTestItem(
           { name, type: "Weapon", slot: "Main Hand" },
@@ -1076,7 +1076,7 @@ describe("DetailedCharacter", () => {
       expect(weaponSet(bjorn, "1").mainhand).toMatchObject({ name: "Handaxe", range: 0, thrown: null });
     });
 
-    test("read whether a weapon is ranged and how strength adds to its damage off its properties, not its family", async () => {
+    test("read whether a weapon is ranged and how strength adds to its damage off its fields, not its family", async () => {
       const weapon = (name: string, family: string, fields: Record<string, FieldValue> = {}) =>
         createTestItem(
           { name, type: "Weapon", slot: "Main Hand" },
@@ -1685,6 +1685,16 @@ describe("DetailedCharacter", () => {
       expect(read("items.weapons.slayingarrow.damage")).toEqual([]);
       expect(read("items.weapons.unarmedstrike.damage").map((r) => r.error)).toEqual([null]);
     });
+
+    test("show on the sheet what a weapon set's hand holds by its item's fields", async () => {
+      const bjorn = await findSeededCharacter("Bjorn Ironhand");
+      const { inventory } = CharacterResponse.buildSheet(bjorn, await build(bjorn));
+      expect(inventory.weaponsets["0"]).toEqual({
+        mainhand: { fields: expect.objectContaining({ [WEAPON_TYPE]: "Longsword", [WEAPON_BASE_DAMAGE]: "1d8" }) },
+        offhand: null,
+        twohanded: null,
+      });
+    });
   });
 
   describe("armor class", () => {
@@ -1851,7 +1861,7 @@ describe("DetailedCharacter", () => {
       });
     });
 
-    test("reads the armor properties of an item made from a template", async () => {
+    test("reads the armor fields of an item made from a template", async () => {
       const { itemMap } = await getSeedCtx();
       const derived = await createTestItem({
         name: "Full Plate +1",
@@ -3423,10 +3433,10 @@ describe("DetailedCharacter", () => {
         expect(requirementIssues(detailed).find((issue) => issue.entityName === "Magic Missile")).toBeUndefined();
       });
 
-      test("list each of their properties' values, in the books' order", async () => {
+      test("list each of their fields' values, in the books' order", async () => {
         // Magic Missile's components: Verbal and Somatic, on a sheet's granted spells as on its others
         const virtualSpells = (await setupGrantedSpell()).getVirtualSpells();
-        expect(virtualSpells.find((spell) => spell.name === "Magic Missile")?.properties).toMatchObject({
+        expect(virtualSpells.find((spell) => spell.name === "Magic Missile")?.fields).toMatchObject({
           SPELL_COMPONENT: "Verbal, Somatic",
           SPELL_SCHOOL: "Evocation",
         });

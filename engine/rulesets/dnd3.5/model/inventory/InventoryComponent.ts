@@ -9,7 +9,7 @@ type InventoryData = Record<string, InventorySlotData> & {
 };
 
 type InventorySlotData = {
-  properties: Record<string, string>;
+  fields: Record<string, string>;
 } | null;
 
 type WeaponSetInventory = Record<
@@ -50,7 +50,7 @@ export default class InventoryComponent extends CharacterComponent<LoadedCharact
       const slot = InventorySlots.getSlot(entry.item.type, entry.location);
       if (!slot) continue;
 
-      const propertiesMap = Object.fromEntries(
+      const fields = Object.fromEntries(
         Object.entries(entry.item.values.fields).map(([field, values]) => [field, values.map(String).join(", ")]),
       );
 
@@ -64,13 +64,11 @@ export default class InventoryComponent extends CharacterComponent<LoadedCharact
             offhand: null,
             twohanded: null,
           });
-          weaponSet[slotKey] = { properties: propertiesMap };
+          weaponSet[slotKey] = { fields };
         }
       } else if (entry.item.type !== "Armor" && entry.item.type !== "Shield") {
         // Non-combat equipment goes into flat equipment slots; the armors and the shields list the armor and shields
-        this.inventory[slot] = {
-          properties: propertiesMap,
-        };
+        this.inventory[slot] = { fields };
       }
     }
   }

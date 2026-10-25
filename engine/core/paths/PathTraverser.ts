@@ -21,7 +21,7 @@ export type Component = object;
  */
 export type Components = object;
 
-/** The key of `value` whose slug is `slug`: one written its own way, as a spell's property types are (`SPELL_COMPONENT`). */
+/** The key of `value` whose slug is `slug`: one written its own way, as a spell's fields are (`SPELL_COMPONENT`). */
 function keyBySlug(value: Record<string, unknown>, slug: string) {
   return Object.keys(value).find((key) => stripSeparators(key) === slug);
 }

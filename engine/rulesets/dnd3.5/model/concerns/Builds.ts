@@ -17,7 +17,7 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
   abstract class Building extends Base {
     /**
      * Whether a modifier applies after the spellcasting's finish (`SpellcastingComponent.finalize`): a spell's, its DC,
-     * which its school's and its list's read, and its properties. A modifier that makes a spell known on a list
+     * which its school's and its list's read, and its fields. A modifier that makes a spell known on a list
      * (`spells.<spell>.<list>.known` set true) is a grant, given in the rounds as any (`PossessesVirtually`).
      */
     protected override isLateModifier(modifier: Modifier): boolean {

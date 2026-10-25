@@ -16,7 +16,7 @@ export function and(...children: RequirementEntry[]): RequirementGroup {
   return { chainingOperator: "and", children };
 }
 
-/** `target` true: a feat possessed, a property held. */
+/** `target` true: a feat possessed, a flag field held. */
 export function eq(target: string): RequirementCondition {
   return condition(target, "equal", "true", "boolean");
 }

@@ -96,7 +96,7 @@ describe("RequirementEvaluator", () => {
     ["not_contains", "Somatic", ["Verbal", "Somatic", "Divine Focus"], unmet],
     ["contains", "Focus", "Divine Focus", met],
   ] as const)("%s %p on %p", (operator, value, data, expected) => {
-    const group = [requirement({ target: "charms.bless.properties.COMPONENT", operator, value, valueType: "string" })];
+    const group = [requirement({ target: "charms.bless.fields.COMPONENT", operator, value, valueType: "string" })];
     expect(evaluate(group, () => [result(data)])).toEqual({ ...expected, invalid: [] });
   });
 

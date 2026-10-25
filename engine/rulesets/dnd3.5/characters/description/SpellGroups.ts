@@ -1,7 +1,7 @@
 import type { SheetStat } from "@/engine/core/module/index.ts";
 import type { SpellTagLists } from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
-import { formatPropertyType } from "@/shared/customization/properties.ts";
+import { formatFieldName } from "@/shared/customization/fields.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
@@ -18,10 +18,10 @@ interface GivenSpell {
   aptitudeId: string;
   dc: number | null;
   description: string | null;
+  fields: Record<string, string>;
   id: string;
   level: number;
   name: string;
-  properties: Record<string, string>;
   saveEffect: string | null;
   saveName: string | null;
 }
@@ -65,16 +65,16 @@ interface SpellGroup {
 }
 
 /**
- * A spell as a sheet lists it: its school, save and DC, its description and properties (and those its details show,
+ * A spell as a sheet lists it: its school, save and DC, its description and fields (and those its details show,
  * its school aside, labelled: `details`), and its tags.
  */
 interface SpellRow {
   dc: number | null;
   description: string;
   details: SheetStat[];
+  fields: Record<string, string>;
   id: string;
   name: string;
-  properties: Record<string, string>;
   save: string;
   school: string;
   tags?: SpellRowTag[];
@@ -100,7 +100,7 @@ interface SpellSheet {
     {
       // Its DC as each class casts it, by the class's aptitude slug
       dc?: Record<string, { total: number }> | null;
-      properties?: Record<string, string>;
+      fields?: Record<string, string>;
       spell?: { description?: string | null };
     }
   >;
@@ -149,11 +149,11 @@ export default class SpellGroups {
       .flatMap((lists) => lists.aptitudeIds.filter((id) => !sheet.featListSpells.has(id)));
   }
 
-  /** A spell's properties as its details show them, labelled, its school aside (its row shows it). */
-  private static detailsOf(properties: Record<string, string>): SheetStat[] {
-    return Object.entries(properties)
+  /** A spell's fields as its details show them, labelled, its school aside (its row shows it). */
+  private static detailsOf(fields: Record<string, string>): SheetStat[] {
+    return Object.entries(fields)
       .filter(([key]) => key !== SPELL_SCHOOL)
-      .map(([key, value]) => ({ label: formatPropertyType(key), value }));
+      .map(([key, value]) => ({ label: formatFieldName(key), value }));
   }
 
   /**
@@ -238,7 +238,7 @@ export default class SpellGroups {
         for (const spell of level.spells || []) {
           const group = groupOf(spell.aptitudeId, spell.spellLevel ?? level.klassLevel?.level ?? 0);
           const spellData = sheet.spells[stripSeparators(spell.name)];
-          const properties = spellData?.properties ?? {};
+          const fields = spellData?.fields ?? {};
           const tags = SpellGroups.tagsFor(sheet, spell.id, spell.aptitudeId);
           const existing = group.spells.find((row) => row.name === spell.name);
           if (existing) {
@@ -249,12 +249,12 @@ export default class SpellGroups {
           group.spells.push({
             id: spell.id,
             name: spell.name,
-            school: properties[SPELL_SCHOOL] || "—",
+            school: fields[SPELL_SCHOOL] || "—",
             save: SpellGroups.saveOf(spell.saveName, spell.saveEffect),
             dc: spellData?.dc?.[SpellLists.toSpellPossessionSlug(group.aptitudeName)]?.total ?? null,
             description: spellData?.spell?.description || spell.description || "",
-            details: SpellGroups.detailsOf(properties),
-            properties,
+            details: SpellGroups.detailsOf(fields),
+            fields,
             tags,
           });
         }
@@ -262,16 +262,16 @@ export default class SpellGroups {
     }
 
     for (const given of sheet.virtualSpells) {
-      const properties = given.properties ?? {};
+      const fields = given.fields ?? {};
       groupOf(given.aptitudeId, given.level).spells.push({
         id: given.id,
         name: given.name,
-        school: properties[SPELL_SCHOOL] || "—",
+        school: fields[SPELL_SCHOOL] || "—",
         save: SpellGroups.saveOf(given.saveName, given.saveEffect),
         dc: given.dc ?? null,
         description: given.description || "",
-        details: SpellGroups.detailsOf(properties),
-        properties,
+        details: SpellGroups.detailsOf(fields),
+        fields,
       });
     }
     SpellGroups.groupFeatListSlots(sheet, groupMap, groupOf);

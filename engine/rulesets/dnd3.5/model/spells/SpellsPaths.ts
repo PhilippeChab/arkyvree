@@ -5,8 +5,8 @@ import { type Dnd35Components } from "@/engine/rulesets/dnd3.5/model/CharacterCo
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { SpellWithAptitudes } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import { formatFieldName } from "@/shared/customization/fields.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
-import { formatPropertyType } from "@/shared/customization/properties.ts";
 import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } from "@/shared/customization/target.ts";
 import { capitalize, stripSeparators } from "@/shared/text.ts";
 import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/properties/index.ts";
@@ -57,15 +57,15 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
   ): TargetPath[] {
     const paths: TargetPath[] = [];
 
-    // Each field a spell holds is a path of its, which the sheet names its property
+    // Each field a spell holds is a path of its
     for (const spell of spells) {
       const normalizedSpellName = stripSeparators(spell.name);
 
-      for (const type of spell.fields) {
+      for (const field of spell.fields) {
         paths.push({
-          path: `spells.${normalizedSpellName}.properties.${type}`,
+          path: `spells.${normalizedSpellName}.fields.${field}`,
           category: "spells",
-          description: `${spell.name} ${formatPropertyType(type)} property`,
+          description: `${spell.name} ${formatFieldName(field)} field`,
           valueType: "string",
           // A list of values: one of them is required or added, never the whole list as text
           operators: kind === "modifier" ? ["add", "subtract"] : ["contains", "not_contains"],
@@ -122,12 +122,12 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
 
   readonly component = { key: "spells", getter: "getSpells" } as const;
 
-  readonly description = "Spell DC, possession, and properties";
+  readonly description = "Spell DC, possession, and fields";
 
   /** A modifier setting a spell known on a list true grants it there (`PossessesVirtually`) */
   readonly grants = { entity: "spell", leaf: "known" };
 
-  readonly groupDescriptionTemplates = { spells: "{name} spell DC and properties" };
+  readonly groupDescriptionTemplates = { spells: "{name} spell DC and fields" };
 
   readonly label = "Spells";
 
@@ -177,7 +177,7 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
 
   getSegmentLabels(): Record<string, string> {
     return {
-      properties: "Properties",
+      fields: "Fields",
       known: "Known",
       // D&D 3.5 surfaces spell groupings as schools in the path picker
       ...deriveSegmentLabels(NAVIGATABLE_SPELL_DC_PATHS, { dc: "DC", groups: "Schools" }),
@@ -194,7 +194,7 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
     for (const { name } of dnd35.aptitudes)
       fallbacks[SpellLists.toSpellPossessionSlug(name)] ??= name.replace(/ Spells$/, "");
     for (const { field, value } of rulesetData.kindValues("spells")) {
-      fallbacks[field] ??= formatPropertyType(field);
+      fallbacks[field] ??= formatFieldName(field);
       const slug = stripSeparators(value);
       if (/[a-z]/.test(slug)) fallbacks[slug] ??= value;
     }

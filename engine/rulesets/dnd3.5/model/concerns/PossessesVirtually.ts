@@ -8,7 +8,7 @@ import SpellsPaths from "@/engine/rulesets/dnd3.5/model/spells/SpellsPaths.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { formatPropertyValues } from "@/shared/customization/properties.ts";
+import { formatFieldValues } from "@/shared/customization/fields.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
 /**
@@ -116,7 +116,7 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
             aptitudeId: spell.aptitudeId,
             level,
             dc: this.components.spells.getSpell(spell.name)?.dc?.[aptitudeSlug]?.total ?? null,
-            properties: formatPropertyValues(SpellsComponent.textsOf(this.rulesetData, spell.id), (field) =>
+            fields: formatFieldValues(SpellsComponent.textsOf(this.rulesetData, spell.id), (field) =>
               SPELL_FIELDS.optionsOf(field),
             ),
           },

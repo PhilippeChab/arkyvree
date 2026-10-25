@@ -103,3 +103,87 @@ describe("0081_spells-and-classes", () => {
     ]);
   });
 });
+
+describe("0082_fields", () => {
+  test("names a spell's fields in what customizations, activities and notifications recorded, and nothing else", async () => {
+    const { rows: spells } = await db.execute<{ id: string }>(
+      sql`SELECT id FROM rules.entities WHERE type = 'spells' LIMIT 1`,
+    );
+    const spellId = spells[0]!.id;
+    // What a customization recorded before it: a spell's field paths, and paths and words it leaves as they are
+    const { rows: modifiers } = await db.execute<{ id: string }>(sql`
+      INSERT INTO customization.modifiers (source_id, source_type, target, value, value_type, operator) VALUES
+        (${spellId}, 'spells', 'spells.fireball.properties.SPELL_DESCRIPTOR', 'Fire', 'string', 'add'),
+        (${spellId}, 'spells', 'spells.fireball.dc.wizard.misc', '{{ [spells.fireball.properties.SPELL_SCHOOL] }}', 'number', 'add'),
+        (${spellId}, 'spells', 'spells.fireball.wizard.known', 'true', 'boolean', 'set'),
+        (${spellId}, 'spells', 'abilities.spells.properties.SPELL_SCHOOL', 'properties.SPELL_SCHOOL', 'string', 'set')
+      RETURNING id
+    `);
+    const { rows: requirements } = await db.execute<{ id: string }>(sql`
+      INSERT INTO customization.requirements (entity_id, entity_type, level, target, value, value_type, operator) VALUES
+        (${spellId}, 'spells', '9001', 'spells.magicmissile.properties.SPELL_COMPONENT', 'Verbal', 'string', 'contains'),
+        (${spellId}, 'spells', '9002', 'spells.groups.evocation.*.dc.total', '15', 'number', 'greater_than')
+      RETURNING id
+    `);
+    // What an activity and a notification recorded of each change to a property, and of others
+    const recorded = [
+      ["properties", "createProperty", '{"entityName":"Fireball","propertyType":"SPELL_SCHOOL","value":"Evocation"}'],
+      ["properties", "updateProperty", '{"entityName":"Fireball", "propertyType" : "SPELL_RANGE_TYPE","value":"Long"}'],
+      ["properties", "deleteProperty", '{"propertyType":"SPELL_COMPONENT","value":"Material"}'],
+      ["modifiers", "createModifier", '{"target":"spells.fireball.properties.SPELL_DESCRIPTOR","value":"Fire"}'],
+      ["spells", "updateSpell", '{"changedFields":[{"field":"properties","from":"a.properties.B","to":"B"}]}'],
+    ];
+    const activityIds: string[] = [];
+    const notificationIds: string[] = [];
+    for (const [table, type, data] of recorded) {
+      const { rows: activity } = await db.execute<{ id: string }>(sql`
+        INSERT INTO account.activities (user_id, target_id, target_table, type, data)
+        VALUES (${SEED_USER_ID}, ${spellId}, ${table}, ${type}, ${data}) RETURNING id
+      `);
+      activityIds.push(activity[0]!.id);
+      const { rows: notification } = await db.execute<{ id: string }>(sql`
+        INSERT INTO account.notifications (recipient_id, actor_id, activity_id, type, target_id, target_table, data)
+        VALUES (${SEED_USER_ID}, ${SEED_USER_ID}, ${activity[0]!.id}, ${type}, ${spellId}, ${table}, ${data}) RETURNING id
+      `);
+      notificationIds.push(notification[0]!.id);
+    }
+
+    for (const statement of statementsOf("0082_fields.sql")) await db.execute(sql.raw(statement));
+
+    const { rows: modifier } = await db.execute(sql`
+      SELECT target, value FROM customization.modifiers WHERE id = ANY (${`{${modifiers.map(({ id }) => id).join(",")}}`}::uuid[])
+      ORDER BY created_at, target
+    `);
+    expect(modifier).toEqual([
+      { target: "abilities.spells.properties.SPELL_SCHOOL", value: "properties.SPELL_SCHOOL" },
+      { target: "spells.fireball.dc.wizard.misc", value: "{{ [spells.fireball.fields.SPELL_SCHOOL] }}" },
+      { target: "spells.fireball.fields.SPELL_DESCRIPTOR", value: "Fire" },
+      { target: "spells.fireball.wizard.known", value: "true" },
+    ]);
+    const { rows: requirement } = await db.execute(sql`
+      SELECT target FROM customization.requirements
+      WHERE id = ANY (${`{${requirements.map(({ id }) => id).join(",")}}`}::uuid[]) ORDER BY level
+    `);
+    expect(requirement).toEqual([
+      { target: "spells.magicmissile.fields.SPELL_COMPONENT" },
+      { target: "spells.groups.evocation.*.dc.total" },
+    ]);
+    const expected = [
+      ["entity_fields", "createField", '{"entityName":"Fireball","field":"SPELL_SCHOOL","value":"Evocation"}'],
+      ["entity_fields", "updateField", '{"entityName":"Fireball", "field" : "SPELL_RANGE_TYPE","value":"Long"}'],
+      ["entity_fields", "deleteField", '{"field":"SPELL_COMPONENT","value":"Material"}'],
+      ["modifiers", "createModifier", '{"target":"spells.fireball.fields.SPELL_DESCRIPTOR","value":"Fire"}'],
+      ["spells", "updateSpell", '{"changedFields":[{"field":"properties","from":"a.properties.B","to":"B"}]}'],
+    ].map(([target_table, type, data]) => ({ target_table, type, data }));
+    for (const [table, ids] of [
+      ["account.activities", activityIds],
+      ["account.notifications", notificationIds],
+    ] as const) {
+      const { rows } = await db.execute(sql`
+        SELECT target_table, type, data::text AS data FROM ${sql.raw(table)}
+        WHERE id = ANY (${`{${ids.join(",")}}`}::uuid[]) ORDER BY array_position(${`{${ids.join(",")}}`}::uuid[], id)
+      `);
+      expect({ table, rows }).toEqual({ table, rows: expected });
+    }
+  });
+});

@@ -54,7 +54,7 @@ export interface TargetPath {
   operators: string[];
   path: string;
   possibleValues?: { label: string; value: string }[];
-  /** It reaches several values (a skill family's skills) or a list (a spell's property values): no template reads it */
+  /** It reaches several values (a skill family's skills) or a list (a spell's field values): no template reads it */
   readsMany?: boolean;
   /** When set, a `set` on this path takes only these values: a spell level's slots set to -1 are all known */
   setValues?: { label: string; value: string }[];

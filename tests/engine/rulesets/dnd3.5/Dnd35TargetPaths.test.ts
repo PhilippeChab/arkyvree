@@ -110,15 +110,15 @@ describe("Dnd35TargetPaths.traversePathInit", () => {
       [
         "a spell's DC",
         "spells.scorchingray.dc.total",
-        { spells: { scorchingray: { spell: {}, properties: {}, dc: { total: 17 } } } },
+        { spells: { scorchingray: { spell: {}, fields: {}, dc: { total: 17 } } } },
         [17],
       ],
       [
-        "a spell's properties next to its groupings",
-        "spells.magicmissile.properties.SPELL_SCHOOL",
+        "a spell's fields next to its groupings",
+        "spells.magicmissile.fields.SPELL_SCHOOL",
         {
           spells: {
-            magicmissile: { properties: { SPELL_SCHOOL: "Evocation" } },
+            magicmissile: { fields: { SPELL_SCHOOL: "Evocation" } },
             groups: { evocation: { magicmissile: {} } },
           },
         },

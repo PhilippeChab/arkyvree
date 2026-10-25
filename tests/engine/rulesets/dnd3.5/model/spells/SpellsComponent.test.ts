@@ -33,12 +33,12 @@ describe("SpellsComponent.addSpellEntries", () => {
     spells.addSpellEntries([spell], rulesetData);
 
     // Each field's values a list, which a requirement asks one of, and a sheet's line joined
-    expect(spells.getSpell("Probe Chant")?.properties).toMatchObject({
+    expect(spells.getSpell("Probe Chant")?.fields).toMatchObject({
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Chanting"],
       [SPELL_DESCRIPTOR]: ["Language-Dependent", "Mind-Affecting", "Sonic"],
       [SPELL_TARGET]: ["Any number of creatures"],
     });
-    expect(spells.getFlatSpells()["probechant"].properties).toMatchObject({
+    expect(spells.getFlatSpells()["probechant"].fields).toMatchObject({
       [SPELL_COMPONENT]: "Verbal, Somatic, Chanting",
       [SPELL_DESCRIPTOR]: "Language-Dependent, Mind-Affecting, Sonic",
       [SPELL_TARGET]: "Any number of creatures",

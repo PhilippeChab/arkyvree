@@ -3,7 +3,7 @@ import { Page, Text, View } from "@react-pdf/renderer";
 import SpellGroups from "@/engine/rulesets/dnd3.5/characters/description/SpellGroups.ts";
 import { SPELL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/spells/fields.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
-import { formatPropertyType } from "@/shared/customization/properties.ts";
+import { formatFieldName } from "@/shared/customization/fields.ts";
 import {
   SPELL_AREA_OF_EFFECT,
   SPELL_CASTING_TIME,
@@ -24,10 +24,10 @@ import SpellsPerDayTable from "./SpellsPerDayTable.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
 /**
- * Short labels so each spell's property row fits on a single line. A legend at the top of the spells section spells
+ * Short labels so each spell's row of fields fits on a single line. A legend at the top of the spells section spells
  * each one out as its field's label.
  */
-const SPELL_PROPERTY_ABBR: Record<string, string> = {
+const SPELL_FIELD_ABBR: Record<string, string> = {
   [SPELL_SUBSCHOOL]: "SS",
   [SPELL_DESCRIPTOR]: "Desc",
   [SPELL_COMPONENT]: "Comp",
@@ -40,14 +40,14 @@ const SPELL_PROPERTY_ABBR: Record<string, string> = {
   [SPELL_RESISTANCE]: "SR",
 };
 
-/** Each spell property's label, as its field declares it. */
-const SPELL_PROPERTY_LABELS = new Map<string, string>(
+/** Each spell field's label, as it's declared. */
+const SPELL_FIELD_LABELS = new Map<string, string>(
   Object.values(SPELL_FIELDS.fields).map((field) => [field.field, field.label]),
 );
-/** The spell properties in a 3.5 stat block's order (the order its fields are declared in); the others follow by name. */
-const SPELL_PROPERTY_ORDER: string[] = Object.values(SPELL_FIELDS.fields).map((field) => field.field);
+/** The spell fields in a 3.5 stat block's order (the order they're declared in); the others follow by name. */
+const SPELL_FIELD_ORDER: string[] = Object.values(SPELL_FIELDS.fields).map((field) => field.field);
 
-const SPELL_PROPERTY_ORDER_INDEX = new Map(SPELL_PROPERTY_ORDER.map((k, i) => [k, i]));
+const SPELL_FIELD_ORDER_INDEX = new Map(SPELL_FIELD_ORDER.map((k, i) => [k, i]));
 
 /**
  * The sheet's spells page: the character's slots per day, then the spells it knows and has without a pick, by list and
@@ -74,14 +74,14 @@ function SpellsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacte
           for (const apt of sorted) {
             for (const group of apt.levels) {
               for (const spell of group.spells) {
-                for (const key of Object.keys(spell.properties))
-                  if (key !== SPELL_SCHOOL && SPELL_PROPERTY_ABBR[key]) presentKeys.add(key);
+                for (const key of Object.keys(spell.fields))
+                  if (key !== SPELL_SCHOOL && SPELL_FIELD_ABBR[key]) presentKeys.add(key);
               }
             }
           }
-          const legendEntries = SPELL_PROPERTY_ORDER.filter((key) => presentKeys.has(key)).map((key) => ({
-            full: SPELL_PROPERTY_LABELS.get(key),
-            short: SPELL_PROPERTY_ABBR[key],
+          const legendEntries = SPELL_FIELD_ORDER.filter((key) => presentKeys.has(key)).map((key) => ({
+            full: SPELL_FIELD_LABELS.get(key),
+            short: SPELL_FIELD_ABBR[key],
           }));
           if (legendEntries.length === 0) return null;
           return (
@@ -129,11 +129,11 @@ function SpellsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacte
 
                 {/* Spell rows */}
                 {group.spells.map((spell) => {
-                  const detailProps = Object.entries(spell.properties)
+                  const detailFields = Object.entries(spell.fields)
                     .filter(([key]) => key !== SPELL_SCHOOL)
                     .sort(([a], [b]) => {
-                      const ai = SPELL_PROPERTY_ORDER_INDEX.get(a) ?? SPELL_PROPERTY_ORDER.length;
-                      const bi = SPELL_PROPERTY_ORDER_INDEX.get(b) ?? SPELL_PROPERTY_ORDER.length;
+                      const ai = SPELL_FIELD_ORDER_INDEX.get(a) ?? SPELL_FIELD_ORDER.length;
+                      const bi = SPELL_FIELD_ORDER_INDEX.get(b) ?? SPELL_FIELD_ORDER.length;
                       return ai !== bi ? ai - bi : a.localeCompare(b);
                     });
 
@@ -160,15 +160,15 @@ function SpellsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacte
                         <Text style={styles.spellSave}>{spell.save}</Text>
                         <Text style={styles.spellDc}>{spell.dc ?? "—"}</Text>
                       </View>
-                      {(detailProps.length > 0 || spell.description) && (
+                      {(detailFields.length > 0 || spell.description) && (
                         <View style={styles.spellDetails}>
-                          {detailProps.length > 0 && (
-                            <Text style={styles.spellProperties}>
-                              {detailProps.map(([key, value], i) => (
+                          {detailFields.length > 0 && (
+                            <Text style={styles.spellFields}>
+                              {detailFields.map(([key, value], i) => (
                                 <Text key={key}>
                                   {i > 0 ? " • " : ""}
                                   <Text style={{ fontWeight: "bold", color: "#333" }}>
-                                    {SPELL_PROPERTY_ABBR[key] ?? formatPropertyType(key)}
+                                    {SPELL_FIELD_ABBR[key] ?? formatFieldName(key)}
                                   </Text>{" "}
                                   {value}
                                 </Text>
