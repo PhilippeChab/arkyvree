@@ -263,9 +263,9 @@ describe("CampaignCharactersService", () => {
       const identity = partial.blocks.find((block) => block.key === "identity");
       if (identity?.kind !== "fields") throw new Error("no identity block");
       expect(Object.fromEntries(identity.lines.flat().map((field) => [field.key, field.value]))).toMatchObject({
-        gender: character.gender,
-        height: character.height,
-        weight: character.weight,
+        gender: character.fields.CHARACTER_GENDER,
+        height: character.fields.CHARACTER_HEIGHT,
+        weight: character.fields.CHARACTER_WEIGHT,
       });
       expect(partial.blocks).toHaveLength(1);
 

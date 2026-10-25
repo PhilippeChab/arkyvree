@@ -3,14 +3,9 @@
  * file, and the report of what it imported and couldn't.
  */
 
-import type {
-  CharacterColumns,
-  CreationColumns,
-  InventoryEntryPlan,
-  LinkPlan,
-} from "@/engine/core/module/parts/characters/index.ts";
+import type { CharacterOwnValues, InventoryEntryPlan, LinkPlan } from "@/engine/core/module/parts/characters/index.ts";
 import type { AdvancementPlan, ChildrenPlan } from "@/engine/core/module/parts/levelUp/index.ts";
-import type { Character } from "@/shared/relations.ts";
+import type { Character, CharacterFieldValue } from "@/shared/relations.ts";
 
 /**
  * What an importer makes of a file it recognizes, before any ruleset is picked: the file (`source`), and why the
@@ -29,7 +24,7 @@ export interface ImportOwner {
 
 /**
  * What an import writes: a new character's row (its owner and ruleset aside), its advancements as if leveled up one at
- * a time (each its track and its picks, in order), its links by name (each scored link's amounts, each picked link's
+ * a time (each its track and its picks, in order), its links by role (each scored link's amounts, each picked link's
  * picks), its inventory entries, and what its children become; and the report of what it did.
  */
 export interface ImportPlan extends ChildrenPlan {
@@ -63,5 +58,12 @@ export interface ImportSource {
   version: string;
 }
 
-/** A new character's row, as an import fills it: its name and notes, and the columns its module stores of it. */
-export type ImportedRow = CharacterColumns & CreationColumns & Pick<Character, "name" | "notes" | "privateNotes">;
+/**
+ * A new character's row, as an import fills it: its name, notes and own columns, its fields' values (null: none) and
+ * its single links' entities, by role (3.5's race).
+ */
+export type ImportedRow = CharacterOwnValues &
+  Pick<Character, "name" | "notes" | "privateNotes"> & {
+    fields: Record<string, CharacterFieldValue | null>;
+    links: Record<string, string>;
+  };

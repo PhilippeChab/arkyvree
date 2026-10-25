@@ -5,11 +5,10 @@ import type { Character } from "@/shared/relations.ts";
 
 import { createAdvancement } from "./advancementWrites.ts";
 
-/** A new child, its row as the engine plans it, with its links (3.5's ability scores). */
+/** A new child, its row as the engine plans it, with its links by role (3.5's ability scores). */
 async function createChild(tx: Db, child: NewChild) {
   const [created] = await Characters.create(tx, child.row);
-  for (const [link, links] of Object.entries(child.links))
-    await CharacterLinks.createPlanned(tx, link, created.id, links);
+  for (const [role, links] of Object.entries(child.links)) await CharacterLinks.createMany(tx, created.id, role, links);
   return created.id;
 }
 

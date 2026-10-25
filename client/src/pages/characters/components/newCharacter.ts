@@ -9,9 +9,9 @@ import type { rpc } from "@/client/src/services/rpc.ts";
 export type CharacterForm = RulesDescription["characterForm"];
 
 /**
- * What a new character's form holds: what every character is made from (its ruleset, name, its creation's picks by
- * column, its scored links' amounts by link, and notes), and its rules' fields by their keys (a number's NaN while
- * it's empty, a select's "" while it's unset).
+ * What a new character's form holds: what every character is made from (its ruleset, name, its creation's picks and
+ * its scored links' amounts, each by its link's role, and notes), and its rules' fields by their keys (a number's NaN
+ * while it's empty, a select's "" while it's unset).
  */
 export type CreateCharacterFormData = Omit<CreateCharacterRequest, "fields" | "notes"> & {
   notes: string;
@@ -26,7 +26,7 @@ export type CreationField = Extract<CreationItem, { key: string }>;
 /** An item of a new character's form's line: one of the form's own, or one of its rules' fields. */
 export type CreationItem = Extract<CharacterForm["sections"][number], { kind: "fields" }>["lines"][number][number];
 
-/** A creation pick of a new character's form: the entity of a single link its row holds, by its column. */
+/** A creation pick of a new character's form: the entity of a single link its row holds, by its role. */
 export type CreationPick = Extract<CreationItem, { kind: "pick" }>;
 
 /** The rules' fields of a new character's form, in its order. */
@@ -52,8 +52,8 @@ export function emptyNewCharacter(form: CharacterForm): CreateCharacterFormData 
   return {
     rulesetId: "",
     name: "",
-    picks: Object.fromEntries(creationPicksOf(form).map((pick) => [pick.column, ""])),
-    scores: Object.fromEntries(scoredLinksOf(form).map((link) => [link, {}])),
+    picks: Object.fromEntries(creationPicksOf(form).map((pick) => [pick.role, ""])),
+    scores: Object.fromEntries(scoredRolesOf(form).map((role) => [role, {}])),
     notes: "",
     ...Object.fromEntries(
       creationFieldsOf(form).map((field) => [field.key, field.kind === "number" ? (field.start ?? Number.NaN) : ""]),
@@ -73,9 +73,9 @@ export function narrowingOf(keys: string[], values: unknown[]) {
   return Object.fromEntries(keys.map((key, index) => [key, typeof values[index] === "string" ? values[index] : ""]));
 }
 
-/** The scored links a new character's form sets (its `scores` sections'), in its order. */
-export function scoredLinksOf(form: CharacterForm) {
-  return form.sections.flatMap((section) => (section.kind === "scores" ? [section.link] : []));
+/** The roles of the scored links a new character's form sets (its `scores` sections'), in its order. */
+export function scoredRolesOf(form: CharacterForm) {
+  return form.sections.flatMap((section) => (section.kind === "scores" ? [section.role] : []));
 }
 
 /** A form's rules' fields as its create sends them, by their keys: an empty number or an unset select, none. */

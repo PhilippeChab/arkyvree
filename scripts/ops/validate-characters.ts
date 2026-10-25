@@ -22,12 +22,10 @@ import { checkJunctions } from "./validateCharacters/junctions.ts";
 import { checkReferences } from "./validateCharacters/references.ts";
 
 async function main() {
-  const characters = StoredCharacters.mapRows<Character>(
-    await db
-      .select(StoredCharacters.buildColumns())
-      .from(charactersInCharacter)
-      .where(isNull(charactersInCharacter.deletedAt)),
-  );
+  const characters: Character[] = await db
+    .select(StoredCharacters.buildColumns())
+    .from(charactersInCharacter)
+    .where(isNull(charactersInCharacter.deletedAt));
   if (characters.length === 0) {
     console.log("No characters to validate.");
     process.exit(0);

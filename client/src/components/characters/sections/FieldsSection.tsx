@@ -138,20 +138,20 @@ function FieldInput({ control, field, readOnly }: FieldInputProps) {
 }
 
 /**
- * A picked link's field (3.5's languages), its form's `links.<link>`: staged via the form like every other field (a
+ * A picked link's field (3.5's languages), its form's `links.<role>`: staged via the form like every other field (a
  * selection persists when the user clicks Save, as the rest of the block), what its picker offers the rules' answer
  * for the picks the form holds. What the character has without picking it (its modifiers' grants) stays: only its
  * picks come and go.
  */
 function LinkPicksField({ characterId, control, declared, readOnly }: LinkPicksFieldProps) {
-  const { field: picks } = useController({ control, name: `links.${declared.link}` });
+  const { field: picks } = useController({ control, name: `links.${declared.role}` });
   const selectedIds = picks.value as unknown as string[];
   const {
     data: room = NO_ANSWER,
     error,
     isLoading,
   } = useQuery({
-    ...characterLinkQuery(characterId, declared.link, selectedIds),
+    ...characterLinkQuery(characterId, declared.role, selectedIds),
     placeholderData: keepPreviousData,
     enabled: !readOnly,
   });
@@ -294,7 +294,7 @@ export function FieldsSection({
 
             {block.links?.map((link) => (
               <LinkPicksField
-                key={link.link}
+                key={link.role}
                 characterId={characterId}
                 control={form.control}
                 declared={link}

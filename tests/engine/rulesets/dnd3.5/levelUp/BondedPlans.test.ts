@@ -50,28 +50,28 @@ describe("planBondedCreature", () => {
     const { bonded, ctx, master, record, view } = await masterOf(() => createDruidWithCompanion(3));
     const plan = new BondedPlans(view).planBondedCreature(master, record, "animalcompanion", {
       id: bonded.id,
-      raceId: NIL_UUID,
+      links: { race: NIL_UUID },
     });
     if (!("created" in plan)) throw new Error("No creature made");
     const abilityName = new Map(view.abilities.map((ability) => [ability.id, ability.name]));
     expect(
-      Object.fromEntries(
-        plan.created.links.abilities.map(({ amount, entityId }) => [abilityName.get(entityId), amount]),
-      ),
+      Object.fromEntries(plan.created.links.score.map(({ amount, entityId }) => [abilityName.get(entityId), amount])),
     ).toEqual({ Charisma: 6, Constitution: 15, Dexterity: 15, Intelligence: 2, Strength: 13, Wisdom: 12 });
     // Its row whole: its master's, of its kind, named for its race, of its master's alignment and gender, without xp
     expect(plan).toMatchObject({
       created: {
         row: {
-          alignment: record.alignment,
-          gender: record.gender,
+          fields: {
+            CHARACTER_ALIGNMENT: record.fields.CHARACTER_ALIGNMENT,
+            CHARACTER_GENDER: record.fields.CHARACTER_GENDER,
+            CHARACTER_XP: 0,
+          },
           kind: "animalcompanion",
+          links: { race: ctx.raceMap.animalcompanion["Wolf"] },
           name: "Wolf",
           parentCharacterId: record.id,
-          raceId: ctx.raceMap.animalcompanion["Wolf"],
           rulesetId: record.rulesetId,
           userId: record.userId,
-          xp: 0,
         },
       },
       removedId: bonded.id,
@@ -84,7 +84,7 @@ describe("planBondedCreature", () => {
 
   test("removes the creature of a kind the master has no race for", async () => {
     const { master, record, view } = await masterOf(() => createWizardWithFamiliar());
-    const companion = { id: NIL_UUID, raceId: NIL_UUID };
+    const companion = { id: NIL_UUID, links: { race: NIL_UUID } };
     expect(new BondedPlans(view).planBondedCreature(master, record, "animalcompanion", companion)).toEqual({
       removedId: NIL_UUID,
     });

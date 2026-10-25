@@ -8,9 +8,6 @@ import type {
   StepDef,
   StorageRegistries,
   StoredCharacter,
-  StoredCharacterLink,
-  StoredCharacterRow,
-  StoredCharacterWrite,
   StoredColumn,
   StoredEntity,
   StoredKind,
@@ -93,11 +90,8 @@ export default class StorageEngine {
     this.baseRules = modules.map(([baseRules]) => baseRules);
     this.kinds = mergeRecords(modules, (module) => module.storage.kinds);
     this.fields = mergeRecords(modules, (module) => module.fields);
-    const characters = modules.map(([, module]) => module.storage.character);
     this.characterDeclaration = {
-      ...characters[0],
-      columns: mergeRecords(modules, (module) => module.storage.character.columns),
-      links: mergeRecords(modules, (module) => module.storage.character.links),
+      scoredRoles: modules.flatMap(([, module]) => module.storage.character.scoredRoles),
     };
     const registries = modules.map(([, module]) => module.storage.registries);
     this.merged = {
@@ -169,11 +163,6 @@ export default class StorageEngine {
   /** What every module declares of a view's kinds and links, once read (`viewSchema`). */
   private schema?: ViewSchema;
 
-  /** A character link role. */
-  private characterRole(role: string): CharacterRoleDef {
-    return this.merged.characterRoles.find((def) => def.role === role)!;
-  }
-
   /** The fields every kind's columns hold, which its row reads: not its owner's other stored values. */
   private columnFields(): Set<string> {
     this.columnFieldNames ??= new Set(
@@ -233,93 +222,16 @@ export default class StorageEngine {
     return { inherits: { column: found[0], fields: inheritance.fields } };
   }
 
-  /** A character's data, as every module stores it: its columns and its links. */
+  /** A character's data, as every module stores it past its registries: the roles of its links that hold an amount. */
   character(): StoredCharacter {
     return this.characterDeclaration;
   }
 
-  /** A character link's row (`row`, by its columns), of a link's (`name`), as what a write of it stores. */
-  characterLinkOf(name: string, row: Row) {
-    const link = this.characterDeclaration.links[name];
-    const role = this.characterRole(link.role);
-    return {
-      characterId: row.characterId as string,
-      role: link.role,
-      single: role.single,
-      entityId: row[link.entity] as string,
-      entityType: role.entityType,
-      amount: link.amount ? (row[link.amount] as number) : null,
-      createdAt: row.createdAt as string | undefined,
-      updatedAt: row.updatedAt as string | undefined,
-    };
-  }
-
-  /**
-   * A character's link a plan writes (`link`: its entity, its amount if its link holds one), of a link's (`name`), as
-   * what a write of it stores.
-   */
-  characterLinkOfPlan(name: string, characterId: string, link: { amount?: number; entityId: string }) {
-    const declared = this.characterDeclaration.links[name];
-    return this.characterLinkOf(name, {
-      characterId,
-      [declared.entity]: link.entityId,
-      ...(declared.amount ? { [declared.amount]: link.amount } : {}),
-    });
-  }
-
-  /** A character's link as its module's row of `name` (its scores, its languages): its entity, its amount. */
-  characterLinkRowOf(name: string, link: StoredCharacterLink): Row {
-    const declared = this.characterDeclaration.links[name];
-    return {
-      characterId: link.characterId,
-      [declared.entity]: link.entityId,
-      ...(declared.amount ? { [declared.amount]: link.amount } : {}),
-      createdAt: link.createdAt,
-      updatedAt: link.updatedAt,
-      deletedAt: null,
-    };
-  }
-
-  /**
-   * A stored character as its module's row: its own columns, then what its fields and single links hold (a number's
-   * rounded to a whole one), in its declared order.
-   */
-  characterRowOf({ fields, links, ...own }: StoredCharacterRow): Row {
-    const { columns, order } = this.characterDeclaration;
-    const row: Row = { ...own };
-    for (const [name, column] of Object.entries(columns)) {
-      if (column.kind === "link") {
-        row[name] = links.find((link) => link.role === column.role)?.toId ?? null;
-        continue;
-      }
-      const value = fields.find((field) => field.field === column.field)?.value ?? null;
-      row[name] = value !== null && column.kind === "number" ? Number(roundDecimal(numberText(value), 0)) : value;
-    }
-    return order ? Object.fromEntries(order.map((name) => [name, row[name]])) : row;
-  }
-
-  /** What a write of a character's row stores (`values`, by its columns). */
-  characterWriteOf(values: Row): StoredCharacterWrite {
-    const { columns } = this.characterDeclaration;
-    const write: StoredCharacterWrite = {
-      own: Object.fromEntries(Object.entries(values).filter(([name]) => !(name in columns))),
-      fields: [],
-      links: [],
-    };
-    for (const [name, column] of Object.entries(columns)) {
-      const value = values[name];
-      // A value left undefined is left as it is, as an update leaves a column it's given undefined
-      if (value === undefined) continue;
-      if (column.kind !== "link") {
-        const held = value === null ? null : column.kind === "number" ? toNumber(value) : String(value);
-        write.fields.push({ field: column.field, kind: column.kind, value: held });
-        continue;
-      }
-      const role = this.characterRole(column.role);
-      const toId = value === null ? null : String(value);
-      write.links.push({ role: column.role, single: role.single, entityType: role.entityType, toId });
-    }
-    return write;
+  /** A character's link role (3.5's `race`, `score`, `speaks`): the type of its entities, and whether it holds one. */
+  characterRole(role: string): CharacterRoleDef {
+    const found = this.merged.characterRoles.find((def) => def.role === role);
+    if (!found) throw new Error(`No module declares the character role ${role}`);
+    return found;
   }
 
   /** The kinds a user customizes (`StoredKind.customizable`: 3.5's feats, items, spells, races, classes and levels). */

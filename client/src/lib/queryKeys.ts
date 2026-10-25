@@ -22,10 +22,10 @@ export const QUERY_KEYS = {
     /** The extensions a ruleset subscribes to. */
     extensions: (id: string) => ["rulesets", "detail", id, "extensions"] as const,
     /**
-     * How a new character of the ruleset sets its scores of a scored link (`link`), and the entities it scores in its
-     * sheets' order. Nested under `creations`, which a write to the ruleset's content refreshes.
+     * How a new character of the ruleset sets its scores of a scored link's role (`role`), and the entities it scores in
+     * its sheets' order. Nested under `creations`, which a write to the ruleset's content refreshes.
      */
-    characterCreation: (id: string, link: string) => ["rulesets", "detail", id, "creation", link] as const,
+    characterCreation: (id: string, role: string) => ["rulesets", "detail", id, "creation", role] as const,
     /** Every scored link's creation of the ruleset (`characterCreation`'s). */
     creations: (id: string) => ["rulesets", "detail", id, "creation"] as const,
     /**
@@ -87,11 +87,11 @@ export const QUERY_KEYS = {
     contributors: (id: string) => ["characters", "detail", id, "contributors"] as const,
     inventory: (id: string) => ["characters", "detail", id, "inventory"] as const,
     /**
-     * What a character has of a picked link (`link`) and may pick, for its form's picks: nested in the character, which
-     * a save refreshes.
+     * What a character has of a picked link's role (`role`) and may pick, for its form's picks: nested in the character,
+     * which a save refreshes.
      */
-    links: (id: string, link: string, query: Record<string, unknown>) =>
-      ["characters", "detail", id, "links", link, query] as const,
+    links: (id: string, role: string, query: Record<string, unknown>) =>
+      ["characters", "detail", id, "links", role, query] as const,
     /**
      * What keeps a slot from taking an item, as an inventory dialog asks it: nested in the inventory, which a save
      * refreshes.
@@ -104,8 +104,8 @@ export const QUERY_KEYS = {
         ? (["characters", "unlinked", campaignId, filters] as const)
         : (["characters", "unlinked", campaignId] as const),
     /** A new character's creation pick's options (`column`'s), as the fields that narrow them hold (`filters`). */
-    creationOptions: (rulesetId: string, column: string, filters?: Record<string, unknown>) =>
-      ["characters", "creationOptions", rulesetId, column, filters] as const,
+    creationOptions: (rulesetId: string, role: string, filters?: Record<string, unknown>) =>
+      ["characters", "creationOptions", rulesetId, role, filters] as const,
     /** A level-up read's cache: its key holds the query (or the body) it sends, so no parameter is left out of it. */
     levelUp: {
       all: (characterId: string) => ["characters", "levelUp", characterId] as const,

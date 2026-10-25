@@ -1,34 +1,25 @@
 /**
  * What the characters part's `plan*` operations answer: what the server writes of a character, each a named plan: what
- * a new character starts with, a scored link's edit, a picked link's, an inventory entry's fields. Each names the
- * entities it writes by the ids the ruleset's view keys them by, whichever the request sent (`RequestIds`).
+ * a new character starts with (its fields, its single links, its scores), a scored link's edit, a picked link's, an
+ * inventory entry's fields. Each names the entities it writes by the ids the ruleset's view keys them by, whichever the
+ * request sent (`RequestIds`).
  */
 
 import type { ItemLocation } from "@/shared/enums.ts";
+import type { Character, CharacterFieldValue } from "@/shared/relations.ts";
 
-/**
- * The columns of a character's row its module stores as its fields and single links (`StoredCharacter.columns`), as
- * it writes them: its module declares its own into it (`declare module`).
- */
-export interface CharacterColumns {}
-
-/** What a character's edit writes: its fields' columns, and each picked link's picks it sends (`links`, by name). */
+/** What a character's edit writes: its fields' values and own columns, and each picked link's picks it sends, by role. */
 export interface CharacterEditPlan extends FieldsPlan {
   links?: Record<string, LinkPicksPlan>;
 }
 
 /**
- * The columns of a character's row its creation's picks write (each single link's entity: 3.5's race), which every
- * character has: its module declares its own into it (`declare module`).
- */
-export interface CreationColumns {}
-
-/**
- * What a character's fields edit writes: the columns its ruleset stores its fields in (`CharacterColumns`), each
- * checked.
+ * What a character's fields edit writes, each checked: its fields' values, by field (3.5's `CHARACTER_XP`), null to
+ * clear one, and its row's own columns its rules' fields write (`own`: 3.5's description).
  */
 export interface FieldsPlan {
-  columns: Partial<CharacterColumns>;
+  fields: Record<string, CharacterFieldValue | null>;
+  own: CharacterOwnValues;
 }
 
 /**
@@ -57,11 +48,12 @@ export interface LinkPlan {
 }
 
 /**
- * What a new character stores: what it starts with (`StartPlan`), and the columns its fields write, those its row
- * requires among them.
+ * What a new character stores: what it starts with (`StartPlan`), and its fields' values and own columns its form
+ * writes, those its rules require among them.
  */
 export interface NewCharacterPlan extends StartPlan {
-  columns: CharacterColumns & CreationColumns;
+  fields: Record<string, CharacterFieldValue | null>;
+  own: CharacterOwnValues;
 }
 
 /** A character's scored link to an entity, as a write stores it: the entity, and its amount. */
@@ -75,10 +67,13 @@ export interface ScoresPlan {
 }
 
 /**
- * What a new character starts with: the columns its creation's picks write (each single link's entity), and each
- * scored link's rows, by name: an amount for each entity of its kind.
+ * What a new character starts with: the entity of each of its single links its creation picks (`links`, by role: 3.5's
+ * race), and each scored link's amounts (`scores`, by role: 3.5's ability scores), one for each entity of its kind.
  */
 export interface StartPlan {
-  columns: CreationColumns;
-  links: Record<string, ScorePlan[]>;
+  links: Record<string, string>;
+  scores: Record<string, ScorePlan[]>;
 }
+
+/** The own columns of a character's row its rules' fields write (3.5's description), each it sets. */
+export type CharacterOwnValues = Partial<Pick<Character, "description">>;

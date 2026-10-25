@@ -2,21 +2,20 @@ import { and, count, eq, exists, inArray, isNull, not, or, type SQL, sql } from 
 
 import type { Db } from "@/drizzle/database.ts";
 import { charactersInCharacter, contributorsInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
-import { Engine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
 import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
-import StoredCharacters from "@/server/repositories/stored/StoredCharacters.ts";
+import StoredCharacters, { type CharacterValuesWrite } from "@/server/repositories/stored/StoredCharacters.ts";
 import type { Character } from "@/shared/relations.ts";
 
-/** A character's row as a write gives it: its own columns, and those its module stores as its fields and links. */
-type CharacterValues = Partial<Character>;
+/** A character's row as a write gives it: its own columns, and its fields' values and single links' entities it sets. */
+type CharacterValues = Partial<typeof charactersInCharacter.$inferInsert> & CharacterValuesWrite;
 
 /**
- * The characters: each one's row, with what its module stores of it as its fields and links (`StoredCharacters`: 3.5's
- * race, alignment, XP), read as its module's row.
+ * The characters: each one's row as stored, with its fields' values and its single links (`StoredCharacters`: 3.5's
+ * race, alignment, XP).
  */
 class CharactersRepository extends include(
   BaseRepository<typeof charactersInCharacter>,
@@ -75,7 +74,7 @@ class CharactersRepository extends include(
       .from(charactersInCharacter)
       .where(where)
       .orderBy(...order);
-    return StoredCharacters.mapRows<Character>(page ? await query.limit(page.limit).offset(page.offset) : await query);
+    return page ? await query.limit(page.limit).offset(page.offset) : await query;
   }
 
   /** Archives a character and its children (`{ id }`), or every character a user owns (`{ userId }`). */
@@ -120,14 +119,11 @@ class CharactersRepository extends include(
     return result.count;
   }
 
-  /** Writes a new character: its row, and what its module stores of it as its fields and links. */
+  /** Writes a new character: its row, its fields' values and its single links. */
   async create(db: Db, values: CharacterValues & Pick<Character, "name" | "rulesetId" | "userId">) {
-    const { own, ...stored } = Engine.storage().characterWriteOf(values);
-    const [created] = await db
-      .insert(this.table)
-      .values(own as typeof charactersInCharacter.$inferInsert)
-      .returning({ id: this.table.id });
-    await StoredCharacters.write(db, [created.id], stored);
+    const { fields, links, ...own } = values;
+    const [created] = await db.insert(this.table).values(own).returning({ id: this.table.id });
+    await StoredCharacters.write(db, [created.id], { fields, links });
     return await this.rows(db, eq(this.table.id, created.id));
   }
 
@@ -252,10 +248,7 @@ class CharactersRepository extends include(
         .orderBy(...this.pageOrder(this.orderBy(this.table[orderBy], orderDir)))
         .limit(limit)
         .offset(offset);
-      return rows.map(({ accessRole, ...row }) => ({
-        ...StoredCharacters.mapRows<Character>([row])[0],
-        accessRole,
-      }));
+      return rows;
     });
   }
 
@@ -290,7 +283,7 @@ class CharactersRepository extends include(
         .limit(limit)
         .offset(offset);
 
-      return StoredCharacters.mapRows<Character>(results);
+      return results;
     });
   }
 
@@ -310,14 +303,14 @@ class CharactersRepository extends include(
 
   /**
    * Writes a change to a live character (`values`), if it's still the version the editor read (`expectedUpdatedAt`):
-   * its row's columns, and what its module stores of it, its `updatedAt` moved as any change moves it. Answers it as
-   * written, or nothing.
+   * its row's columns, its fields' values and its single links it gives, its `updatedAt` moved as any change moves it.
+   * Answers it as written, or nothing.
    */
   async update(db: Db, values: CharacterValues, where: { expectedUpdatedAt?: string; id: string }) {
-    const { own, ...stored } = Engine.storage().characterWriteOf(values);
+    const { fields, links, ...own } = values;
     const updated = await db
       .update(this.table)
-      .set({ ...(own as Partial<typeof charactersInCharacter.$inferInsert>), updatedAt: new Date().toISOString() })
+      .set({ ...own, updatedAt: new Date().toISOString() })
       .where(
         this.where([
           eq(this.table.id, where.id),
@@ -327,7 +320,7 @@ class CharactersRepository extends include(
       )
       .returning({ id: this.table.id });
     const ids = updated.map((row) => row.id);
-    await StoredCharacters.write(db, ids, stored);
+    await StoredCharacters.write(db, ids, { fields, links });
     return ids.length === 0 ? [] : await this.rows(db, inArray(this.table.id, ids));
   }
 }

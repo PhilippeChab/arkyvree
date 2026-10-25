@@ -10,7 +10,7 @@ import type { ItemLocation } from "@/shared/enums.ts";
 import type { InventoryEntryPlan } from "./plans.ts";
 
 /**
- * A character's edit, as its sheet sends it: its fields by their keys, and each picked link's picks by its name, each
+ * A character's edit, as its sheet sends it: its fields by their keys, and each picked link's picks by its role, each
  * when it sends them.
  */
 export interface CharacterEditRequest {
@@ -44,7 +44,8 @@ export interface SheetRequest {
 
 /**
  * What a new character starts with, as its form or its import gives it: the entity each of its creation's picks names
- * (`picks`, by the column of its single link), and each scored link's amounts (`scores`, by the link's name).
+ * (`picks`, by its single link's role: 3.5's `race`), and each scored link's amounts (`scores`, by its role: 3.5's
+ * `score`).
  */
 export interface StartRequest {
   picks: Record<string, string>;

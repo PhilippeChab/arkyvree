@@ -1,6 +1,7 @@
 import { CharacterDataLoader, type LoadedCharacter, type ModifierSource } from "@/engine/core/character/index.ts";
 import type { CharacterRows, StoredAdvancement, StoredPick } from "@/engine/core/module/index.ts";
 import { type RulesetView, type ViewLink } from "@/engine/core/view/index.ts";
+import CharacterValues from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import type { AbilityIncrease } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
@@ -114,7 +115,7 @@ export default class DetailedCharacterDataLoader extends include(
     const { rulesetData } = view;
     const dnd35 = Dnd35View.of(rulesetData);
     // The character's race, from the view: racesById resolves a stored id (RulesetComposition)
-    const race = dnd35.racesById.get(this.character.raceId);
+    const race = dnd35.racesById.get(CharacterValues.read(this.character).raceId);
     if (!race) throw new Error("Race not found");
 
     const abilityLookup = new Map(dnd35.abilities.map((a) => [a.id, a.name]));
@@ -132,7 +133,7 @@ export default class DetailedCharacterDataLoader extends include(
     const classFields = this.readClassFields(klassEntityIds, rulesetData, abilityLookup);
     const dcAbilities = { klassBonusSpellAbilityMap: classFields.klassBonusSpellAbilityMap, klassLevels };
     return {
-      characterAbilityScores: rows.links.abilities.map((ca) => this.buildAbilityScore(ca, abilityLookup)),
+      characterAbilityScores: rows.links.score.map((link) => this.buildAbilityScore(link, abilityLookup)),
       abilityIncreases: this.readAbilityIncreases(rows.picks.abilities, levels.characterLevels, LevelRules.of(view)),
       race: this.toCustomizedRace(race, rulesetData),
       languages,

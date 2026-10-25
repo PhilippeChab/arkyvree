@@ -4,8 +4,9 @@ import Dnd35FieldDefs from "./Dnd35FieldDefs.ts";
 
 /**
  * How 3.5 stores its data in the generic tables: its kinds' columns (a class's hit die is its `CLASS_HD` field, a
- * save's ability its `keyAbility` link), its characters' (a race is a `race` link, a level an advancement, its feats
- * `feats` picks), and its registries' rows, which migration 0080 wrote (`tests/database/dnd3.5/registries.test.ts`
+ * save's ability its `keyAbility` link), its characters' (its links of the `score` role hold an amount; its identity
+ * is its `CHARACTER_*` fields, its race a `race` link, a level an advancement, its feats `feats` picks), and its
+ * registries' rows, which migration 0080 wrote (`tests/database/dnd3.5/registries.test.ts`
  * checks the database holds them): its link roles among them, by which its entities' links are read (a feat's pools
  * are its `listedIn` links, a class's skills its `classSkill` links).
  */
@@ -69,27 +70,7 @@ export const DND35_STORAGE: StorageDeclaration = {
     saves: { columns: { abilityId: { kind: "link", role: "keyAbility" } } },
     skills: { columns: { primaryAbilityId: { kind: "link", role: "keyAbility" } } },
   },
-  character: {
-    columns: {
-      raceId: { kind: "link", role: "race" },
-      xp: { kind: "number", field: "CHARACTER_XP" },
-      alignment: { kind: "text", field: "CHARACTER_ALIGNMENT" },
-      age: { kind: "number", field: "CHARACTER_AGE" },
-      gender: { kind: "text", field: "CHARACTER_GENDER" },
-      height: { kind: "text", field: "CHARACTER_HEIGHT" },
-      weight: { kind: "text", field: "CHARACTER_WEIGHT" },
-      deity: { kind: "text", field: "CHARACTER_DEITY" },
-    },
-    order: [
-      ...["createdAt", "updatedAt", "deletedAt", "id", "userId", "rulesetId", "raceId", "kind", "parentCharacterId"],
-      ...["xp", "name", "alignment", "age", "gender", "height", "weight", "deity", "description", "notes"],
-      ...["privateNotes", "shareToken", "lastChangedAt"],
-    ],
-    links: {
-      abilities: { role: "score", entity: "abilityId", amount: "score" },
-      languages: { role: "speaks", entity: "languageId" },
-    },
-  },
+  character: { scoredRoles: ["score"] },
   registries: {
     entityTypes: [
       ...[

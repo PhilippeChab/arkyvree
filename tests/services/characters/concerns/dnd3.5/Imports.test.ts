@@ -1,14 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import type { CharacterLanguage } from "@/engine/rulesets/dnd3.5/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import { CharacterAdvancements, CharacterInventory, CharacterLinks, Characters } from "@/server/repositories/index.ts";
+import { CharacterAdvancements, CharacterInventory, Characters } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
-import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
+import { findLinks } from "@/tests/support/characters.ts";
+import { buildAs, valuesOf } from "@/tests/support/dnd3.5/characters.ts";
 import { findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { type PcgenCharacter, readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
@@ -27,7 +27,7 @@ describe("Imports", () => {
   test("creates the character a PCGen file holds, as the engine plans it, a valid one", async () => {
     const { imported, user } = await importAsNewUser("brannoc");
     const { character } = imported;
-    expect(character).toMatchObject({ name: "Brannoc Vale", userId: user.id, xp: 29500 });
+    expect(valuesOf(character)).toMatchObject({ name: "Brannoc Vale", userId: user.id, xp: 29500 });
 
     const levels = await CharacterAdvancements.findMany(db, { characterId: character.id });
     expect(levels).toHaveLength(8);
@@ -36,9 +36,7 @@ describe("Imports", () => {
       levels.map((level) => level.id),
     );
     expect(feats).toHaveLength(8);
-    expect(
-      await CharacterLinks.findMany<CharacterLanguage>(db, { link: "languages", characterId: character.id }),
-    ).toHaveLength(1);
+    expect(await findLinks("speaks", character.id)).toHaveLength(1);
     expect(await CharacterInventory.findMany(db, { characterId: character.id })).toHaveLength(12);
 
     // Built as the app builds it, it passes every check a level-up runs

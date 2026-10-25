@@ -10,7 +10,7 @@ async function setup() {
     api.api.characters.$post({
       json: {
         rulesetId: ctx.rulesetId,
-        picks: { raceId: ctx.raceMap.pc["Human"] },
+        picks: { race: ctx.raceMap.pc["Human"] },
         scores: {},
         name: "Shared Character",
         fields: {

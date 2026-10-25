@@ -12,7 +12,6 @@ import {
 import { entitySnapshotsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
 import {
   type Aptitude,
-  type CharacterLanguage,
   type Feat,
   type Item,
   type Klass,
@@ -54,6 +53,7 @@ import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
+import { findLinks } from "@/tests/support/characters.ts";
 import { buildAs, createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { levelUpPlan } from "@/tests/support/dnd3.5/levelPlans.ts";
@@ -146,8 +146,9 @@ async function createCharacterOn(userId: string, rulesetId: string) {
   const character = await createTestCharacter(userId, { rulesetId });
   await CharacterLinks.createMany(
     db,
-    "abilities",
-    Object.values(abilityMap).map((abilityId) => ({ characterId: character.id, abilityId, score: 16 })),
+    character.id,
+    "score",
+    Object.values(abilityMap).map((entityId) => ({ entityId, amount: 16 })),
   );
   return character;
 }
@@ -1099,7 +1100,7 @@ describe("unsubscribing from an extension", () => {
     const characterOn = async (rulesetId: string) => {
       const character = await createTestCharacter(user.id, { rulesetId, raceId: copies.race });
       await CharacterInventory.create(db, { characterId: character.id, itemId: copies.item, quantity: 1 });
-      await CharacterLinks.create(db, "languages", { characterId: character.id, languageId: copies.language });
+      await CharacterLinks.createMany(db, character.id, "speaks", [{ entityId: copies.language }]);
       const { klassLevel } = await createTestKlassLevel(rulesetId);
       const level = await addCharacterLevel(character.id, klassLevel.id, {
         skills: { [copies.skill]: 2 },
@@ -1107,11 +1108,9 @@ describe("unsubscribing from an extension", () => {
       return { character, level };
     };
     const named = async ({ character, level }: Awaited<ReturnType<typeof characterOn>>) => ({
-      race: (await Characters.findOne(db, { id: character.id }))!.raceId,
+      race: (await Characters.findOne(db, { id: character.id }))!.links.race,
       item: (await CharacterInventory.findMany(db, { characterId: character.id }))[0].itemId,
-      language: (
-        await CharacterLinks.findMany<CharacterLanguage>(db, { link: "languages", characterId: character.id })
-      )[0].languageId,
+      language: (await findLinks("speaks", character.id))[0].entityId,
       skill: (await findPicks("skills", [level.id]))[0].entityId,
     });
     const other = await forkBase(session);
@@ -1474,8 +1473,9 @@ describe("an extension's content in a fork", () => {
     const character = await createTestCharacter(user.id, { rulesetId: draft.id, xp: 21000 });
     await CharacterLinks.createMany(
       db,
-      "abilities",
-      Object.values(abilityMap).map((abilityId) => ({ characterId: character.id, abilityId, score: 10 })),
+      character.id,
+      "score",
+      Object.values(abilityMap).map((entityId) => ({ entityId, amount: 10 })),
     );
     const barbarianLevels = (
       await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [klassMap.pc["Barbarian"]] })

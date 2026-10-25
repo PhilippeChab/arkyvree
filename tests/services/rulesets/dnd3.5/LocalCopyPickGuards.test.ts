@@ -1,5 +1,6 @@
 import { afterEach, expect, test } from "bun:test";
 
+import CharacterValues from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import type { Language, Race } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
@@ -23,14 +24,16 @@ async function setup() {
   const [character] = await Characters.create(db, {
     userId: session.userId,
     rulesetId: fork.id,
-    raceId: human.id,
     name: "Pick Guard",
-    xp: 0,
-    alignment: "True Neutral",
-    age: 25,
-    gender: "Male",
-    height: "6'0",
-    weight: "180 lbs",
+    ...CharacterValues.write({
+      age: 25,
+      alignment: "True Neutral",
+      gender: "Male",
+      height: "6'0",
+      raceId: human.id,
+      weight: "180 lbs",
+      xp: 0,
+    }),
   });
   return { session, fork, baseId, human, character };
 }
@@ -51,7 +54,7 @@ test("a race picked before the fork copied it blocks deleting the copy, but not 
     await withRulesetScope(
       db,
       fork.id,
-      async ({ rulesetData }) => Dnd35View.of(rulesetData).racesById.get(character.raceId)?.id,
+      async ({ rulesetData }) => Dnd35View.of(rulesetData).racesById.get(character.links.race)?.id,
     ),
   ).toBe(local.id);
 
@@ -61,7 +64,7 @@ test("a race picked before the fork copied it blocks deleting the copy, but not 
     await withRulesetScope(
       db,
       fork.id,
-      async ({ rulesetData }) => Dnd35View.of(rulesetData).racesById.get(character.raceId)?.id,
+      async ({ rulesetData }) => Dnd35View.of(rulesetData).racesById.get(character.links.race)?.id,
     ),
   ).toBe(human.id);
 });
@@ -75,7 +78,7 @@ test("a language picked before the fork copied it blocks deleting the copy", asy
     { entityType: "languages", rulesetId: baseId, childOnly: true },
     { limit: 1, page: 1 },
   );
-  await CharacterLinks.create(db, "languages", { characterId: character.id, languageId: language.id });
+  await CharacterLinks.createMany(db, character.id, "speaks", [{ entityId: language.id }]);
   const local = await EntitiesService.updateEntity(session, fork.id, "languages", language.id, {
     name: language.name,
     description: "Local",

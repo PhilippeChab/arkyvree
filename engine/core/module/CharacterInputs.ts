@@ -8,7 +8,7 @@ import type {
   Requirement,
 } from "@/shared/relations.ts";
 
-import type { StoredAdvancement, StoredPick } from "./storage.ts";
+import type { StoredAdvancement, StoredCharacterLink, StoredPick } from "./storage.ts";
 
 /**
  * A character's row and the rows it's built from, as the server reads them in its ruleset's scope: a child's with its
@@ -21,14 +21,8 @@ export interface CharacterInput {
 }
 
 /**
- * Each of a character's links' rows as the view holds them, by the link's name: its module declares its own into it
- * (`declare module`), as its kinds' rows (`ViewEntities`).
- */
-export interface CharacterLinkTypes {}
-
-/**
  * A character's own rows, which the server reads (`readCharacterInput`) and its module builds the character from: its
- * seat in a campaign, its advancements (its levels) and their picks by step, its links by name (`links`), its
+ * seat in a campaign, its advancements (its levels) and their picks by step, its links by role (`links`), its
  * inventory, and the modifiers set on the character itself, with their requirements. An inventory entry and a pick are
  * the links they are, whose entities are the view's. Read as stored: the engine resolves their references as they
  * enter it (`CharacterInputs`).
@@ -45,10 +39,10 @@ export interface CharacterRows {
 }
 
 /**
- * A character's rows of each link its module stores (`StoredCharacter.links`), by the link's name: each row as its
- * module's declaration reads it (`CharacterLinkTypes`).
+ * Its links of each role it holds many of, as stored, by role (3.5's `score`, its ability scores, and `speaks`, its
+ * languages): a role every module declares holds its links, none a list of none, in the order they were made.
  */
-export type CharacterLinks = { [K in keyof CharacterLinkTypes]: CharacterLinkTypes[K][] };
+export type CharacterLinks = Record<string, StoredCharacterLink[]>;
 
 /**
  * Its advancements' picks as stored, by step (3.5's `hp`, `abilities`, `skills`, `feats`, `spells`): a step every
@@ -58,16 +52,26 @@ export type CharacterLinks = { [K in keyof CharacterLinkTypes]: CharacterLinkTyp
 export type CharacterPicks = Record<string, StoredPick[]>;
 
 /**
- * A character's rows as its ruleset's view reads them: each reference to an entity (a link's, an advancement's track,
- * an item, a pick's entity and pool) resolved to the one the view shows in its place, a copy's or a sibling winner's,
- * since a row stored before the copy names its source. The engine resolves what it's handed once, as it enters; the
- * server passes rows as stored.
+ * A character's rows as its ruleset's view reads them: each reference to an entity (a single link's, a link's, an
+ * advancement's track, an inventory entry's item, a pick's entity and pool) resolved to the one the view shows in its
+ * place, a copy's or a sibling winner's, since a row stored before the copy names its source. The engine resolves what
+ * it's handed once, as it enters; the server passes rows as stored.
  */
 export default class CharacterInputs {
   /** Advancements, each one's track resolved. */
   private static resolveAdvancements(advancements: StoredAdvancement[], cow: CowData): StoredAdvancement[] {
     return advancements.map((advancement) =>
       advancement.trackId === null ? advancement : { ...advancement, trackId: cow.resolve(advancement.trackId) },
+    );
+  }
+
+  /** Links by role, each one's entity resolved. */
+  private static resolveLinks(links: CharacterLinks, cow: CowData): CharacterLinks {
+    return Object.fromEntries(
+      Object.entries(links).map(([role, stored]) => [
+        role,
+        stored.map((link) => ({ ...link, entityId: cow.resolve(link.entityId) })),
+      ]),
     );
   }
 
@@ -85,22 +89,24 @@ export default class CharacterInputs {
     );
   }
 
+  /** A character's row, each of its single links' entities resolved. */
+  private static resolveRecord(record: CharacterRecord, cow: CowData): CharacterRecord {
+    const links = Object.entries(record.links).map(([role, entityId]) => [role, cow.resolve(entityId)]);
+    return { ...record, links: Object.fromEntries(links) };
+  }
+
   /** A character's input, its parent's too, its rows' references resolved. */
   static resolve(input: CharacterInput, cow: CowData): CharacterInput {
     if (cow.isEmpty()) return input;
     const { rows } = input;
-    const [record] = cow.resolveRows([input.record]);
     return {
       ...(input.parent && { parent: CharacterInputs.resolve(input.parent, cow) }),
-      record,
+      record: CharacterInputs.resolveRecord(input.record, cow),
       rows: {
         ...rows,
         advancements: CharacterInputs.resolveAdvancements(rows.advancements, cow),
-        inventory: cow.resolveRows(rows.inventory),
-        links: CharacterInputs.resolveNamed(
-          rows.links as Record<string, Record<string, unknown>[]>,
-          cow,
-        ) as CharacterLinks,
+        inventory: CharacterInputs.resolveEntries(rows.inventory, cow),
+        links: CharacterInputs.resolveLinks(rows.links, cow),
         picks: CharacterInputs.resolvePicks(rows.picks, cow),
       },
     };
@@ -111,8 +117,9 @@ export default class CharacterInputs {
     return inputs.map((input) => CharacterInputs.resolve(input, cow));
   }
 
-  /** A character's rows by name (its links), each row's entity resolved. */
-  static resolveNamed<P extends Record<string, Record<string, unknown>[]>>(picks: P, cow: CowData): P {
-    return Object.fromEntries(Object.entries(picks).map(([pick, rows]) => [pick, cow.resolveRows(rows)])) as P;
+  /** Inventory entries, each one's item resolved: the same array when the scope resolves nothing. */
+  static resolveEntries<E extends { itemId: string }>(entries: E[], cow: CowData): E[] {
+    if (cow.isEmpty()) return entries;
+    return entries.map((entry) => ({ ...entry, itemId: cow.resolve(entry.itemId) }));
   }
 }

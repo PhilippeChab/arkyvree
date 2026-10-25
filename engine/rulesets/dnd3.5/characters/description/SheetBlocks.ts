@@ -183,7 +183,7 @@ export default class SheetBlocks {
       empty: "No ability scores",
       edit: {
         failed: "Failed to update ability score",
-        link: "abilities",
+        role: "score",
         lower: {
           title: "Decrease Ability Score",
           message:

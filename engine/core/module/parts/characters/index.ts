@@ -42,9 +42,8 @@ export type {
   SheetSummary,
 } from "./descriptions.ts";
 export type {
-  CharacterColumns,
   CharacterEditPlan,
-  CreationColumns,
+  CharacterOwnValues,
   FieldsPlan,
   InventoryEntryPlan,
   LinkPicksPlan,

@@ -43,7 +43,7 @@ export async function createCharacter(page: Page, name: string, scores: Record<s
   const api = apiOf(page);
   const rulesetId = await coreRulesetId(page);
   const races = await parseResponse(
-    api.api.characters.creation[":column"].$get({ param: { column: "raceId" }, query: { rulesetId, search: "Human" } }),
+    api.api.characters.creation[":role"].$get({ param: { role: "race" }, query: { rulesetId, search: "Human" } }),
   );
   const human = races.items.find((race) => race.name === "Human");
   if (!human) throw new Error("The core rules have no Human");
@@ -57,7 +57,7 @@ export async function createCharacter(page: Page, name: string, scores: Record<s
     api.api.characters.$post({
       json: {
         rulesetId,
-        picks: { raceId: human.id },
+        picks: { race: human.id },
         name,
         fields: {
           xp: 0,
@@ -65,7 +65,7 @@ export async function createCharacter(page: Page, name: string, scores: Record<s
           gender: "Other",
         },
         scores: {
-          abilities: Object.fromEntries(abilities.items.map((ability) => [ability.id, scores[ability.name] ?? 10])),
+          score: Object.fromEntries(abilities.items.map((ability) => [ability.id, scores[ability.name] ?? 10])),
         },
       },
     }),
@@ -85,7 +85,7 @@ export async function fillNewCharacter(page: Page, name: string) {
   // own ruleset, whose races load first).
   const rulesetId = await coreRulesetId(page);
   const races = page.waitForResponse(
-    (r) => r.url().includes("/api/characters/creation/raceId") && r.url().includes(`rulesetId=${rulesetId}`) && r.ok(),
+    (r) => r.url().includes("/api/characters/creation/race") && r.url().includes(`rulesetId=${rulesetId}`) && r.ok(),
     { timeout: 10_000 },
   );
   await selectOption(page, "Ruleset", "Core SRD 3.5");

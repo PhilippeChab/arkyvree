@@ -42,7 +42,7 @@ test.describe("Characters", () => {
     await expect(dialog.getByText(/Name is required/i)).toHaveCount(0);
 
     // The race select shows its error by its style only: the dialog must stay open.
-    const races = page.waitForResponse((r) => r.url().includes("/api/characters/creation/raceId") && r.ok());
+    const races = page.waitForResponse((r) => r.url().includes("/api/characters/creation/race") && r.ok());
     await selectOption(page, "Ruleset", "Core SRD 3.5");
     await races;
     await submit.click();
@@ -142,7 +142,7 @@ test.describe("Characters", () => {
       .locator("..")
       .filter({ has: raise });
     const decrease = page.getByRole("dialog", { name: "Decrease Ability Score" });
-    const saved = () => apiResponse(page, "PUT", /\/api\/characters\/[a-f0-9-]+\/scores\/abilities$/);
+    const saved = () => apiResponse(page, "PUT", /\/api\/characters\/[a-f0-9-]+\/scores\/score$/);
 
     await expect(base).toHaveText("Base: 10", { timeout: 10_000 });
     for (const _ of [1, 2]) {

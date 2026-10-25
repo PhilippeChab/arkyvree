@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
 import { CHARACTERS } from "@/content/dnd3.5/testData/characters.ts";
 import { charactersInCharacter } from "@/drizzle/schema.ts";
-import type { CharacterAbility, CharacterLanguage, KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import seedCharacters from "@/scripts/db/seeds/characters.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
@@ -13,12 +13,12 @@ import { db } from "@/server/database/index.ts";
 import {
   CharacterAdvancements,
   CharacterInventory,
-  CharacterLinks,
   Characters,
   Entities,
   Visibility,
 } from "@/server/repositories/index.ts";
 import type { Character } from "@/shared/relations.ts";
+import { findLinks } from "@/tests/support/characters.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
@@ -95,23 +95,19 @@ async function written(character: Character) {
     identity: {
       rulesetId: character.rulesetId,
       name: character.name,
-      race: races[character.raceId],
-      xp: character.xp,
-      alignment: character.alignment,
-      age: character.age,
-      gender: character.gender,
-      height: character.height,
-      weight: character.weight,
+      race: races[character.links.race],
+      xp: character.fields.CHARACTER_XP,
+      alignment: character.fields.CHARACTER_ALIGNMENT,
+      age: character.fields.CHARACTER_AGE,
+      gender: character.fields.CHARACTER_GENDER,
+      height: character.fields.CHARACTER_HEIGHT,
+      weight: character.fields.CHARACTER_WEIGHT,
       description: character.description,
     },
     abilities: Object.fromEntries(
-      (await CharacterLinks.findMany<CharacterAbility>(db, { link: "abilities", characterId: character.id })).map(
-        (ability) => [abilities[ability.abilityId], ability.score],
-      ),
+      (await findLinks("score", character.id)).map((ability) => [abilities[ability.entityId], ability.amount]),
     ),
-    languages: (await CharacterLinks.findMany<CharacterLanguage>(db, { link: "languages", characterId: character.id }))
-      .map((language) => languages[language.languageId])
-      .sort(),
+    languages: (await findLinks("speaks", character.id)).map((language) => languages[language.entityId]).sort(),
     levels: (await findPicks("hp", levelIds)).map((hp) => `${levelNames[hp.advancementId]}: ${hp.amount} hp`).sort(),
     skills: (await findPicks("skills", levelIds))
       .map((s) => `${levelNames[s.advancementId]}: ${skills[s.entityId!]} ${s.amount}`)

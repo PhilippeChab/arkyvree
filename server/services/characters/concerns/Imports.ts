@@ -43,8 +43,8 @@ export function Imports<B extends Constructor>(Base: B) {
               rulesetId,
               userId: session.userId,
             });
-            for (const [link, links] of Object.entries(plan.links))
-              await CharacterLinks.createPlanned(tx, link, characterId, links);
+            for (const [role, links] of Object.entries(plan.links))
+              await CharacterLinks.createMany(tx, characterId, role, links);
             for (const advancement of plan.advancements) await createAdvancement(tx, characterId, advancement);
             await CharacterInventory.createMany(
               tx,

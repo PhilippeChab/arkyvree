@@ -4,8 +4,8 @@ import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/vocabulary/dnd3.5/identity.
 /**
  * A new 3.5 character's form: its name and experience, its ruleset and race, its alignment and gender (which narrow the
  * races it can pick, and are required); its ability scores; its physical details; and its deity, description and notes,
- * all optional. Its fields are the identity's columns, each keyed as its create sends it (`NewCharacters.planFields`):
- * its experience by its column's name, `xp`, which the identity's edit keys `experience`.
+ * all optional. Its fields are the identity's, each keyed as its create sends it (`NewCharacters.planFields`): its
+ * experience as `xp`, which the identity's edit keys `experience`.
  */
 export const CHARACTER_FORM: CharacterForm = {
   sections: [
@@ -27,7 +27,7 @@ export const CHARACTER_FORM: CharacterForm = {
         [
           { kind: "ruleset" },
           {
-            column: "raceId",
+            role: "race",
             kind: "pick",
             label: "Race",
             required: "Race is required",
@@ -56,7 +56,7 @@ export const CHARACTER_FORM: CharacterForm = {
     },
     {
       kind: "scores",
-      link: "abilities",
+      role: "score",
       title: "Ability Scores",
       none: "No abilities in this ruleset",
       pick: "Pick a ruleset to see its abilities",

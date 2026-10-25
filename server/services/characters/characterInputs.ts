@@ -17,7 +17,7 @@ import type { Character } from "@/shared/relations.ts";
 
 /**
  * The character's own rows (`CharacterRows`), read as stored through `database`: its seat in a campaign, its links of
- * each name its module stores, its inventory, its advancements and their picks by step, and the modifiers set on the
+ * each role it holds many of, its inventory, its advancements and their picks by step, and the modifiers set on the
  * character, then their requirements.
  */
 async function readCharacterRows(database: Db, character: Character): Promise<CharacterRows> {
@@ -25,7 +25,7 @@ async function readCharacterRows(database: Db, character: Character): Promise<Ch
   const playerCharacter = await PlayerCharacters.findOne(database, { characterId });
   const player = playerCharacter ? await Players.findOne(database, { id: playerCharacter.playerId }) : undefined;
   const campaign = player ? await Campaigns.findOne(database, { id: player.campaignId }) : undefined;
-  const links = await CharacterLinks.findPerLink(database, { characterId });
+  const links = await CharacterLinks.findPerRole(database, { characterId });
   const inventory = await CharacterInventory.findMany(database, { characterId });
   const advancements = await CharacterAdvancements.findMany(database, { characterId });
   const picks = await Picks.findPerStep(database, { advancementIds: advancements.map(({ id }) => id) });

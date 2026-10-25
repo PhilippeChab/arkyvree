@@ -1,5 +1,6 @@
 import type { CharacterInput, ChildLevelsPlan, ChildrenPlan, NewChild } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import CharacterValues, { RACE_ROLE } from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import BondedRaceData from "@/engine/rulesets/dnd3.5/rules/BondedRaceData.ts";
 import type Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
@@ -36,23 +37,21 @@ function buildCreature(
   abilities: Dnd35View["abilities"],
 ): NewChild {
   const stats = BondedRaceData.getStats(race.name);
+  const { alignment, gender } = CharacterValues.read(master);
   return {
     links: {
-      abilities: abilities.map((ability) => ({
+      score: abilities.map((ability) => ({
         entityId: ability.id,
         amount: stats?.abilities[ability.name.toLowerCase() as keyof typeof stats.abilities] ?? STARTING_ABILITY_SCORE,
       })),
     },
     row: {
-      alignment: master.alignment,
-      gender: master.gender,
       kind,
       name: race.name,
       parentCharacterId: master.id,
-      raceId: race.id,
       rulesetId: master.rulesetId,
       userId: master.userId,
-      xp: 0,
+      ...CharacterValues.write({ alignment, gender, raceId: race.id, xp: 0 }),
     },
   };
 }
@@ -70,7 +69,7 @@ export default class BondedPlans {
     master: DetailedCharacter,
     record: Character,
     kind: BondedKind,
-    existing: { id: string; raceId: string } | undefined,
+    existing: Pick<Character, "id" | "links"> | undefined,
   ): BondedCreaturePlan {
     const { view } = this;
     const raceName = master.components.bonded.getBondedRace(kind);
@@ -83,7 +82,7 @@ export default class BondedPlans {
     // Each grant feat adds to bonded.<kind>.level by a template (a druid's `{{ [classes.druid.level] }}`, a ranger's
     // `{{ floor([classes.ranger.level] / 2) }}`): a class that gives a creature needs only a feat with its template
     const levels = { hitDice: Math.max(1, master.components.bonded.getBondedLevel(kind)), klassId: klass.id };
-    if (existing?.raceId === race.id) return { keptId: existing.id, levels };
+    if (existing && existing.links[RACE_ROLE] === race.id) return { keptId: existing.id, levels };
     return { created: buildCreature(record, kind, race, view.abilities), levels, removedId: existing?.id };
   }
 

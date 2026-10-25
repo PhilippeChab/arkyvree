@@ -21,6 +21,7 @@ import { charactersInCharacter, modifiersInCustomization, requirementsInCustomiz
 import type { FieldValue } from "@/engine/core/module/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
+import { CHARACTER_FIELDS } from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import CharacterResponse from "@/engine/rulesets/dnd3.5/characters/description/CharacterResponse.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import type { Aptitude, Feat, Klass, Race, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
@@ -151,6 +152,12 @@ function spellUses(detailed: Detailed, aptitude: string, levels: number[]) {
   return levels.map((level) => spellLevel(detailed, aptitude, level).uses);
 }
 
+/** A character's fields, with no age, height or weight. */
+function unsetPhysiology({ fields }: Character) {
+  const unset: string[] = [CHARACTER_FIELDS.age, CHARACTER_FIELDS.height, CHARACTER_FIELDS.weight];
+  return Object.fromEntries(Object.entries(fields).filter(([field]) => !unset.includes(field)));
+}
+
 function weaponSet(detailed: Detailed, set = "0") {
   return detailed.components.combat.getCombat().weaponsets[set];
 }
@@ -163,8 +170,8 @@ async function asHalfling(name: string) {
     name: "Halfling",
     rulesetId: character.rulesetId,
   }))!;
-  await Characters.update(db, { raceId: halfling.id }, { id: character.id });
-  return { ...character, raceId: halfling.id };
+  await Characters.update(db, { links: { race: halfling.id } }, { id: character.id });
+  return { ...character, links: { ...character.links, race: halfling.id } };
 }
 
 async function build(character: Character) {
@@ -462,23 +469,9 @@ async function setupWeaponTrick(intelligence: number) {
 describe("DetailedCharacter", () => {
   describe("building", () => {
     test("fails without its ruleset or its race", async () => {
-      const { rulesetId } = await getSeedCtx();
-      const character = {
-        name: "Test Character",
-        userId: SEED_USER_ID,
-        xp: 0,
-        alignment: "True Neutral",
-        age: 20,
-        gender: "Male",
-        height: "180",
-        weight: "80",
-      };
-      expect(
-        buildAs(DetailedCharacter, { ...character, rulesetId: NIL_UUID, raceId: NIL_UUID } as Character),
-      ).rejects.toThrow("Ruleset not found");
-      expect(buildAs(DetailedCharacter, { ...character, rulesetId, raceId: NIL_UUID } as Character)).rejects.toThrow(
-        "Race not found",
-      );
+      const bjorn = await findSeededCharacter("Bjorn Ironhand");
+      expect(buildAs(DetailedCharacter, { ...bjorn, rulesetId: NIL_UUID })).rejects.toThrow("Ruleset not found");
+      expect(buildAs(DetailedCharacter, { ...bjorn, links: { race: NIL_UUID } })).rejects.toThrow("Race not found");
     });
 
     test("builds in the scope its caller holds: it reads no ruleset and composes no view, for the same sheet", async () => {
@@ -545,7 +538,7 @@ describe("DetailedCharacter", () => {
 
     test("reaches no value a character doesn't have, and reads an unset height or weight as empty", async () => {
       const bjorn = await findSeededCharacter("Bjorn Ironhand");
-      const unset = await build({ ...bjorn, age: null, height: null, weight: null });
+      const unset = await build({ ...bjorn, fields: unsetPhysiology(bjorn) });
       const targetPaths = new Dnd35TargetPaths();
       expect(targetPaths.traversePathInit("identity.physiology.age", unset.components)).toEqual([]);
       const old = requiring("identity.physiology.age", {
@@ -583,7 +576,7 @@ describe("DetailedCharacter", () => {
       const bjorn = await findSeededCharacter("Bjorn Ironhand");
       const characters = [
         await buildCarrying("Bjorn Ironhand", [{ item: "Heavy Crossbow", location: "Two Handed", groups: [0] }]),
-        await build({ ...bjorn, age: null, height: null, weight: null }),
+        await build({ ...bjorn, fields: unsetPhysiology(bjorn) }),
         await buildSeeded("Elara Starweaver"),
       ];
       const { paths } = await withRulesetScope(db, bjorn.rulesetId, async ({ rulesetData }) =>
@@ -1706,7 +1699,7 @@ describe("DetailedCharacter", () => {
       };
       const before = await ac();
       await Modifiers.create(db, {
-        sourceId: bjorn.raceId,
+        sourceId: bjorn.links.race,
         sourceType: "races",
         target: "combat.ac.dodge",
         operator: "add",
@@ -2027,7 +2020,7 @@ describe("DetailedCharacter", () => {
       expect(light.misc).toBeGreaterThan(0);
       // Heavy enough for a medium load: no fast movement (a medium load slows 30 feet to 20), no Wisdom to AC
       await Modifiers.create(db, {
-        sourceId: zen.raceId,
+        sourceId: zen.links.race,
         sourceType: "races",
         target: "combat.encumbrance.carriedweight",
         operator: "add",
@@ -2109,7 +2102,7 @@ describe("DetailedCharacter", () => {
       expect(bjorn.components.combat.getCombat().hp.misc).toBe(5);
       const race = (await Entities.findOne<Race>(db, {
         entityType: "races",
-        id: (await findSeededCharacter("Bjorn Ironhand")).raceId,
+        id: (await findSeededCharacter("Bjorn Ironhand")).links.race,
       }))!.name;
       expect(
         bjorn
@@ -2138,7 +2131,7 @@ describe("DetailedCharacter", () => {
       const bjorn = await buildSeeded("Bjorn Ironhand");
       const race = (await Entities.findOne<Race>(db, {
         entityType: "races",
-        id: (await findSeededCharacter("Bjorn Ironhand")).raceId,
+        id: (await findSeededCharacter("Bjorn Ironhand")).links.race,
       }))!.name;
       expect(
         bjorn
@@ -2213,7 +2206,7 @@ describe("DetailedCharacter", () => {
       const bjorn = await findSeededCharacter("Bjorn Ironhand");
       const { abilityMap } = await getSeedCtx();
       await CharacterLinks.updateAmount(db, 10, {
-        link: "abilities",
+        role: "score",
         characterId: bjorn.id,
         entityIds: [abilityMap["Strength"]],
       });
@@ -3681,7 +3674,7 @@ describe("DetailedCharacter", () => {
         const before = await carried();
         const character = await findSeededCharacter(name);
         const [modifier] = await Modifiers.create(db, {
-          sourceId: character.raceId,
+          sourceId: character.links.race,
           sourceType: "races",
           target: "combat.encumbrance.carriedweight",
           operator: "add",
@@ -3699,7 +3692,7 @@ describe("DetailedCharacter", () => {
       // +5 initiative while under a medium load and with a grapple of 1 or more: Bjorn, STR 18, with 4 barrels
       const bjorn = await findSeededCharacter("Bjorn Ironhand");
       const [modifier] = await Modifiers.create(db, {
-        sourceId: bjorn.raceId,
+        sourceId: bjorn.links.race,
         sourceType: "races",
         target: "combat.initiative.misc",
         operator: "add",

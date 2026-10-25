@@ -4,6 +4,8 @@ import type { FieldsBlock, FieldsPlan, FieldsRequest, SheetField } from "@/engin
 import RulesError from "@/engine/core/RulesError.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/vocabulary/dnd3.5/identity.ts";
 
+import CharacterValues from "./CharacterValues.ts";
+
 /** A 3.5 character's identity, as its sheet reads it: who it is, its beliefs, its experience, and its notes. */
 interface SheetIdentity {
   background: { notes: string; privateNotes?: string };
@@ -122,7 +124,7 @@ export default class IdentityFields {
       links: [
         {
           label: "Languages",
-          link: "languages",
+          role: "speaks",
           none: "No language left to pick",
           picked: (physiology.languages ?? []).map(({ id, name }) => ({ id, name })),
         },
@@ -145,16 +147,16 @@ export default class IdentityFields {
       ["fields"],
     );
     return {
-      columns: {
+      fields: CharacterValues.write({
         ...(age !== undefined && { age }),
         ...(alignment && { alignment }),
         ...(deity !== undefined && { deity }),
-        ...(description !== undefined && { description }),
         ...(experience !== undefined && { xp: experience }),
         ...(gender && { gender }),
         ...(height !== undefined && { height: height || null }),
         ...(weight !== undefined && { weight: weight || null }),
-      },
+      }).fields,
+      own: { ...(description !== undefined && { description }) },
     };
   }
 }

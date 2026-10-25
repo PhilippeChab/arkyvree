@@ -56,8 +56,8 @@ describe("InfoPage", () => {
     const character = await createTestCharacter(SEED_USER_ID, { rulesetId: fork.id });
     const { abilityMap } = await getSeedCtx();
     // Written out of order: the page orders them, not the rows
-    const score = (abilityId: string, value: number) => ({ characterId: character.id, abilityId, score: value });
-    await CharacterLinks.createMany(db, "abilities", [
+    const score = (entityId: string, amount: number) => ({ entityId, amount });
+    await CharacterLinks.createMany(db, character.id, "score", [
       score(sanity.id, 9),
       score(forcePoints.id, 14),
       ...Object.values(abilityMap).map((abilityId) => score(abilityId, 12)),

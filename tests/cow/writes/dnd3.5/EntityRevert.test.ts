@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 
-import type { CharacterLanguage, Feat, Klass, KlassLevel, Race, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { Feat, Klass, KlassLevel, Race, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -16,6 +16,7 @@ import {
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
+import { findLinks } from "@/tests/support/characters.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestKlassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import {
@@ -188,7 +189,7 @@ describe("reverting a fork's copy", () => {
       skills: { [skill.id]: 2 },
     });
     await CharacterInventory.create(db, { characterId: character.id, itemId: itemCopy.id, quantity: 1 });
-    await CharacterLinks.create(db, "languages", { characterId: character.id, languageId: languageCopy.id });
+    await CharacterLinks.createMany(db, character.id, "speaks", [{ entityId: languageCopy.id }]);
 
     await RulesetChangesService.revertOverride(session, fork.id, "feats", dodge);
     await RulesetChangesService.revertOverride(session, fork.id, "skills", climb);
@@ -198,11 +199,9 @@ describe("reverting a fork's copy", () => {
 
     expect(await findPicks("feats", [level.id])).toMatchObject([{ entityId: dodge }]);
     expect(await findPicks("skills", [level.id])).toMatchObject([{ entityId: climb, amount: 2 }]);
-    expect(await Characters.findOne(db, { id: character.id })).toMatchObject({ raceId: human });
+    expect(await Characters.findOne(db, { id: character.id })).toMatchObject({ links: { race: human } });
     expect(await CharacterInventory.findMany(db, { characterId: character.id })).toMatchObject([{ itemId: item.id }]);
-    expect(
-      await CharacterLinks.findMany<CharacterLanguage>(db, { link: "languages", characterId: character.id }),
-    ).toMatchObject([{ languageId: language }]);
+    expect(await findLinks("speaks", character.id)).toMatchObject([{ entityId: language }]);
   });
 
   test("moves a character's levels in a copied class to the source's levels of the same number", async () => {

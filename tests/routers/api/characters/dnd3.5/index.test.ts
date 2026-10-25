@@ -52,7 +52,7 @@ describe("characters", () => {
     expect(created).toMatchObject({
       name: "Router Character",
       rulesetId: ctx.rulesetId,
-      raceId: ctx.raceMap.pc["Human"],
+      links: { race: ctx.raceMap.pc["Human"] },
     });
 
     expect(await expectOk(character.$get({ param: { id: created.id } }))).toMatchObject({ id: created.id });
@@ -69,12 +69,14 @@ describe("characters", () => {
       alignment: "Chaotic Good",
     };
     expect(await expectOk(character.$put({ param: { id: created.id }, json: { fields } }))).toMatchObject({
-      age: 30,
-      gender: "Female",
-      height: "5'6\"",
-      weight: "130 lbs",
-      xp: 1000,
-      alignment: "Chaotic Good",
+      fields: {
+        CHARACTER_AGE: 30,
+        CHARACTER_GENDER: "Female",
+        CHARACTER_HEIGHT: "5'6\"",
+        CHARACTER_WEIGHT: "130 lbs",
+        CHARACTER_XP: 1000,
+        CHARACTER_ALIGNMENT: "Chaotic Good",
+      },
     });
   });
 
@@ -83,7 +85,8 @@ describe("characters", () => {
     const cleared = await expectOk(
       character.$put({ param: { id }, json: { fields: { age: null, height: null, weight: null } } }),
     );
-    expect(cleared).toMatchObject({ age: null, height: null, weight: null });
+    for (const field of ["CHARACTER_AGE", "CHARACTER_HEIGHT", "CHARACTER_WEIGHT"])
+      expect(cleared.fields).not.toHaveProperty(field);
     await expectStatus(character.$put({ param: { id }, json: { fields: { age: 0 } } }), 400);
     await expectStatus(character.$put({ param: { id }, json: { fields: { age: 2.5 } } }), 400);
   });
@@ -91,24 +94,22 @@ describe("characters", () => {
   test("lists the races a new character can pick", async () => {
     const ctx = await getSeedCtx();
     const races = await expectOk(
-      characters.creation[":column"].$get({
-        param: { column: "raceId" },
+      characters.creation[":role"].$get({
+        param: { role: "race" },
         query: { rulesetId: ctx.rulesetId, search: "Human" },
       }),
     );
     expect(races.items.map((r) => r.id)).toContain(ctx.raceMap.pc["Human"]);
-    // A column that's no single link of the character's picks nothing
-    for (const column of ["name", "unknown", "constructor"]) {
+    // A role that's no single link of the character's picks nothing
+    for (const role of ["score", "unknown", "constructor"]) {
       const query = { rulesetId: ctx.rulesetId };
-      await expectStatus(characters.creation[":column"].$get({ param: { column }, query }), 404);
+      await expectStatus(characters.creation[":role"].$get({ param: { role }, query }), 404);
     }
   });
 
   test("answers how a new character of a ruleset sets its ability scores, and refuses a ruleset that isn't", async () => {
     const ctx = await getSeedCtx();
-    const creation = await expectOk(
-      characters.creation.$get({ query: { link: "abilities", rulesetId: ctx.rulesetId } }),
-    );
+    const creation = await expectOk(characters.creation.$get({ query: { role: "score", rulesetId: ctx.rulesetId } }));
     expect(creation.methods.map((method) => method.label)).toEqual([
       "4d6 Drop Lowest",
       "3d6 Straight",
@@ -119,13 +120,13 @@ describe("characters", () => {
     expect(creation.entities).toEqual(ABILITY_NAMES.map((name) => ({ id: ctx.abilityMap[name], name })));
     expect(creation.modifiers[15]).toBe(2);
 
-    await expectStatus(characters.creation.$get({ query: { link: "abilities", rulesetId: NIL_UUID } }), 404);
-    // A link that's no scored link of the character's: a picked one, an unknown one, an object's own member
-    for (const link of ["languages", "unknown", "constructor"])
-      await expectStatus(characters.creation.$get({ query: { link, rulesetId: ctx.rulesetId } }), 404);
-    await expectStatus(characters.creation.$get({ query: { link: "abilities", rulesetId: "not-an-id" } }), 400);
+    await expectStatus(characters.creation.$get({ query: { role: "score", rulesetId: NIL_UUID } }), 404);
+    // A role that's no scored link of the character's: a picked one, an unknown one, an object's own member
+    for (const role of ["speaks", "unknown", "constructor"])
+      await expectStatus(characters.creation.$get({ query: { role, rulesetId: ctx.rulesetId } }), 404);
+    await expectStatus(characters.creation.$get({ query: { role: "score", rulesetId: "not-an-id" } }), 400);
     await expectStatus(
-      guestApi.api.characters.creation.$get({ query: { link: "abilities", rulesetId: ctx.rulesetId } }),
+      guestApi.api.characters.creation.$get({ query: { role: "score", rulesetId: ctx.rulesetId } }),
       401,
     );
   });
@@ -221,7 +222,7 @@ describe("characters", () => {
       const { abilityMap } = await getSeedCtx();
       const { id } = await postCharacter();
       await expectOk(
-        character.scores[":link"].$put({ param: { id, link: "abilities" }, json: { [abilityMap["Strength"]]: 18 } }),
+        character.scores[":role"].$put({ param: { id, role: "score" }, json: { [abilityMap["Strength"]]: 18 } }),
       );
 
       const detail = await sheetOf(id);
@@ -264,7 +265,7 @@ describe("characters", () => {
     test("refuses an ability the ruleset doesn't have", async () => {
       const { id } = await postCharacter();
       await expectStatus(
-        character.scores[":link"].$put({ param: { id, link: "abilities" }, json: { [NIL_UUID]: 15 } }),
+        character.scores[":role"].$put({ param: { id, role: "score" }, json: { [NIL_UUID]: 15 } }),
         400,
       );
     });
@@ -274,8 +275,8 @@ describe("characters", () => {
       const { id } = await postCharacter();
       for (const score of [0, 1000]) {
         await expectStatus(
-          character.scores[":link"].$put({
-            param: { id, link: "abilities" },
+          character.scores[":role"].$put({
+            param: { id, role: "score" },
             json: { [abilityMap["Strength"]]: score },
           }),
           400,
@@ -443,7 +444,7 @@ describe("characters", () => {
       const { langMap } = await getSeedCtx();
       const { id } = await postCharacter({ abilities: await scoresWith("Intelligence", 14) });
       const put = (languageIds: string[]) =>
-        character.links[":link"].$put({ param: { id, link: "languages" }, json: { entityIds: languageIds } });
+        character.links[":role"].$put({ param: { id, role: "speaks" }, json: { entityIds: languageIds } });
 
       // A human speaks Common, which its race grants, and picks a language per point of Intelligence bonus: two
       await expectOk(put([langMap["Draconic"], langMap["Elven"]]));
@@ -458,7 +459,7 @@ describe("characters", () => {
       const { langMap } = await getSeedCtx();
       const { id } = await postCharacter({ abilities: await scoresWith("Intelligence", 12) });
       const put = (languageIds: string[]) =>
-        character.links[":link"].$put({ param: { id, link: "languages" }, json: { entityIds: languageIds } });
+        character.links[":role"].$put({ param: { id, role: "speaks" }, json: { entityIds: languageIds } });
 
       expect(await (await expectStatus(put([langMap["Draconic"], langMap["Elven"]]), 400)).text()).toContain("Elven");
       expect(await (await expectStatus(put([langMap["Druidic"]]), 400)).text()).toContain("Druidic");
@@ -470,8 +471,8 @@ describe("characters", () => {
       const { id } = await postCharacter({ abilities: await scoresWith("Intelligence", 12) });
       const languages = (languageIds: string[]) =>
         expectOk(
-          character.links[":link"].$get({
-            param: { id, link: "languages" },
+          character.links[":role"].$get({
+            param: { id, role: "speaks" },
             query: { entityIds: languageIds.join(",") },
           }),
         );
@@ -490,11 +491,11 @@ describe("characters", () => {
     test("rejects a language the ruleset doesn't have", async () => {
       const { id } = await postCharacter();
       await expectStatus(
-        character.links[":link"].$put({ param: { id, link: "languages" }, json: { entityIds: [NIL_UUID] } }),
+        character.links[":role"].$put({ param: { id, role: "speaks" }, json: { entityIds: [NIL_UUID] } }),
         400,
       );
       await expectStatus(
-        character.links[":link"].$get({ param: { id, link: "languages" }, query: { entityIds: NIL_UUID } }),
+        character.links[":role"].$get({ param: { id, role: "speaks" }, query: { entityIds: NIL_UUID } }),
         400,
       );
     });
@@ -509,7 +510,7 @@ describe("characters", () => {
       const { id } = await postCharacter({ rulesetId: fork.id });
 
       const put = (languageIds: string[]) =>
-        character.links[":link"].$put({ param: { id, link: "languages" }, json: { entityIds: languageIds } });
+        character.links[":role"].$put({ param: { id, role: "speaks" }, json: { entityIds: languageIds } });
       await expectStatus(put([langMap["Draconic"]]), 400);
       await expectStatus(put([langMap["Common"], langMap["Common"]]), 400);
       await expectOk(put([langMap["Common"]]));
@@ -518,7 +519,7 @@ describe("characters", () => {
     test("answers a bonded creature's languages, as its master's editor reads them", async () => {
       const { bonded } = await createWizardWithFamiliar();
       const languages = await expectOk(
-        character.links[":link"].$get({ param: { id: bonded.id, link: "languages" }, query: {} }),
+        character.links[":role"].$get({ param: { id: bonded.id, role: "speaks" }, query: {} }),
       );
       // A cat speaks nothing its race grants, and its Intelligence gives it no pick
       expect(languages).toEqual({ automatic: [], options: [], picks: [] });
@@ -528,18 +529,18 @@ describe("characters", () => {
       const { id } = await postCharacter();
       const { api: otherApi } = await createSignedInUser();
       const other = otherApi.api.characters[":id"];
-      await expectStatus(other.links[":link"].$get({ param: { id, link: "languages" }, query: {} }), 404);
+      await expectStatus(other.links[":role"].$get({ param: { id, role: "speaks" }, query: {} }), 404);
     });
 
-    test("answers a link that's no picked link of the character's as not found, its scores' edit too", async () => {
+    test("answers a role that's no picked link of the character's as not found, its scores' edit too", async () => {
       const { id } = await postCharacter();
-      for (const link of ["abilities", "unknown", "constructor"]) {
-        await expectStatus(character.links[":link"].$get({ param: { id, link }, query: {} }), 404);
-        await expectStatus(character.links[":link"].$put({ param: { id, link }, json: { entityIds: [] } }), 404);
-        await expectStatus(character.$put({ param: { id }, json: { links: { [link]: [] } } }), 404);
+      for (const role of ["score", "race", "unknown", "constructor"]) {
+        await expectStatus(character.links[":role"].$get({ param: { id, role }, query: {} }), 404);
+        await expectStatus(character.links[":role"].$put({ param: { id, role }, json: { entityIds: [] } }), 404);
+        await expectStatus(character.$put({ param: { id }, json: { links: { [role]: [] } } }), 404);
       }
-      for (const link of ["languages", "unknown", "constructor"])
-        await expectStatus(character.scores[":link"].$put({ param: { id, link }, json: {} }), 404);
+      for (const role of ["speaks", "race", "unknown", "constructor"])
+        await expectStatus(character.scores[":role"].$put({ param: { id, role }, json: {} }), 404);
     });
   });
 
@@ -556,7 +557,7 @@ describe("characters", () => {
       expect(identity.lines[0][0]).toMatchObject({ value: "Human", fixed: true });
       expect(identity.fields.map(({ key }) => key)).toEqual(["description"]);
       expect(identity.notes).toEqual({ notes: "Public notes", privateNotes: "" });
-      expect(identity.links?.map(({ label, link }) => [link, label])).toEqual([["languages", "Languages"]]);
+      expect(identity.links?.map(({ label, role }) => [role, label])).toEqual([["speaks", "Languages"]]);
     });
 
     test("saves the fields an edit sends by their keys, each as its ruleset writes it", async () => {
@@ -579,22 +580,25 @@ describe("characters", () => {
         }),
       );
       // An age cleared, an empty height cleared, an unset gender left as it is, experience its xp
-      expect(saved).toMatchObject({
-        alignment: "Chaotic Good",
-        xp: 1200,
-        deity: "Pelor",
-        age: null,
-        gender: "Male",
-        height: null,
-        weight: "75",
-        description: "Tall",
+      expect(saved.fields).toEqual({
+        CHARACTER_ALIGNMENT: "Chaotic Good",
+        CHARACTER_DEITY: "Pelor",
+        CHARACTER_GENDER: "Male",
+        CHARACTER_WEIGHT: "75",
+        CHARACTER_XP: 1200,
       });
+      expect(saved.description).toBe("Tall");
     });
 
     test("leaves a field the edit doesn't send as it is", async () => {
       const { id } = await postCharacter({ age: 30, deity: "Pelor" });
       const saved = await expectOk(character.$put({ param: { id }, json: { fields: { deity: "Moradin" } } }));
-      expect(saved).toMatchObject({ deity: "Moradin", age: 30, gender: "Male", alignment: "True Neutral" });
+      expect(saved.fields).toMatchObject({
+        CHARACTER_DEITY: "Moradin",
+        CHARACTER_AGE: 30,
+        CHARACTER_GENDER: "Male",
+        CHARACTER_ALIGNMENT: "True Neutral",
+      });
     });
 
     test("saves its fields and its languages together, and neither when a field is refused", async () => {
@@ -603,13 +607,13 @@ describe("characters", () => {
       await expectOk(
         character.$put({
           param: { id },
-          json: { fields: { deity: "Pelor" }, links: { languages: [langMap["Elven"]] } },
+          json: { fields: { deity: "Pelor" }, links: { speaks: [langMap["Elven"]] } },
         }),
       );
       expect(await languageNames(id)).toContain("Elven");
       // A refused field writes nothing: not its other fields, not its languages
       await expectStatus(
-        character.$put({ param: { id }, json: { fields: { deity: "Moradin", age: 0 }, links: { languages: [] } } }),
+        character.$put({ param: { id }, json: { fields: { deity: "Moradin", age: 0 }, links: { speaks: [] } } }),
         400,
       );
       expect((await sheetOf(id)).identity.beliefs.deity).toBe("Pelor");
@@ -716,7 +720,7 @@ describe("characters", () => {
     await expectStatus(guestApi.api.characters.$get({ query: {} }), 401);
     await expectStatus(guestApi.api.characters[":id"].share.$post({ param: { id } }), 401);
     await expectStatus(
-      guestApi.api.characters[":id"].scores[":link"].$put({ param: { id, link: "abilities" }, json: {} }),
+      guestApi.api.characters[":id"].scores[":role"].$put({ param: { id, role: "score" }, json: {} }),
       401,
     );
   });
@@ -726,7 +730,7 @@ describe("characters", () => {
     const fields = { xp: 0, alignment: "True Neutral", age: 25, gender: "Male", height: "5'10\"", weight: "170 lbs" };
     const valid = {
       rulesetId: ctx.rulesetId,
-      picks: { raceId: ctx.raceMap.pc["Human"] },
+      picks: { race: ctx.raceMap.pc["Human"] },
       name: "Test",
       scores: {},
       fields,
@@ -757,13 +761,12 @@ describe("characters", () => {
       description: "Tall",
     });
     expect(await Characters.findOne(db, { id })).toMatchObject({
-      xp: 1500,
-      alignment: "Lawful Good",
-      gender: "Female",
-      age: null,
-      height: null,
-      weight: "60",
-      deity: null,
+      fields: {
+        CHARACTER_ALIGNMENT: "Lawful Good",
+        CHARACTER_GENDER: "Female",
+        CHARACTER_WEIGHT: "60",
+        CHARACTER_XP: 1500,
+      },
       description: "Tall",
     });
   });

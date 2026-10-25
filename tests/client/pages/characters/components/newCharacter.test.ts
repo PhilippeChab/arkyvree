@@ -7,7 +7,7 @@ import {
   emptyNewCharacter,
   narrowingKeysOf,
   narrowingOf,
-  scoredLinksOf,
+  scoredRolesOf,
   sentCreationFieldsOf,
 } from "@/client/src/pages/characters/components/newCharacter.ts";
 
@@ -24,12 +24,12 @@ const FORM: CharacterForm = {
         ],
         [
           { kind: "ruleset" },
-          { column: "originId", kind: "pick", label: "Origin", required: "Origin is required", ineligible: "Not open" },
+          { role: "origin", kind: "pick", label: "Origin", required: "Origin is required", ineligible: "Not open" },
         ],
         [{ key: "outlook", kind: "select", label: "Outlook", narrows: true, options: ["Steadfast"] }],
       ],
     },
-    { kind: "scores", link: "stats", title: "Stat Scores", none: "None", pick: "Pick" },
+    { kind: "scores", role: "stat", title: "Stat Scores", none: "None", pick: "Pick" },
     {
       kind: "fields",
       title: "Details",
@@ -54,8 +54,8 @@ describe("A new character's form", () => {
     expect(empty).toMatchObject({
       rulesetId: "",
       name: "",
-      picks: { originId: "" },
-      scores: { stats: {} },
+      picks: { origin: "" },
+      scores: { stat: {} },
       notes: "",
       renown: 0,
       outlook: "",
@@ -72,8 +72,8 @@ describe("A new character's form", () => {
   });
 
   test("lists its creation picks and its scored links in its order", () => {
-    expect(creationPicksOf(FORM).map(({ column }) => column)).toEqual(["originId"]);
-    expect(scoredLinksOf(FORM)).toEqual(["stats"]);
+    expect(creationPicksOf(FORM).map(({ role }) => role)).toEqual(["origin"]);
+    expect(scoredRolesOf(FORM)).toEqual(["stat"]);
   });
 
   test("sends its fields by their keys, an empty number or an unset select as none", () => {

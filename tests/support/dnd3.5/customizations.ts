@@ -28,9 +28,10 @@ export const STRENGTH_BONUS = {
  */
 function textValues(type: string): FieldsWrite | null {
   const storage = Engine.storage();
-  // The columns its row stores as fields: a kind's, a character's; none of another owner's
+  // A character's fields are its row's own values; a kind's columns its row's
+  if (type === "characters") return null;
   const isKind = storage.registries().entityTypes.some((def) => def.type === type);
-  const columns = type === "characters" ? storage.character().columns : isKind ? storage.kind(type).columns : {};
+  const columns = isKind ? storage.kind(type).columns : {};
   const def = storage
     .registries()
     .fieldDefs.find(
@@ -47,12 +48,12 @@ function textValues(type: string): FieldsWrite | null {
  * given, each a condition of its one group: it applies to the character, and to every character of its race.
  */
 export async function createRaceModifier(
-  character: Pick<Character, "raceId">,
+  character: Pick<Character, "links">,
   modifier: { operator?: string; target: string; value: string; valueType?: string },
   requirements: { operator: string; target: string; value: string; valueType: string }[] = [],
 ) {
   const [created] = await Modifiers.create(db, {
-    sourceId: character.raceId,
+    sourceId: character.links.race,
     sourceType: "races",
     operator: "add",
     valueType: "number",

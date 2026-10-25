@@ -99,7 +99,7 @@ export default class SpokenLanguages {
    */
   plan(languageIds: string[]): string[] {
     const picks = this.picksOf(languageIds);
-    const keptIds = new Set(this.input.rows.links.languages.map(({ languageId }) => languageId));
+    const keptIds = new Set(this.input.rows.links.speaks.map(({ entityId }) => entityId));
     let taken = picks.filter(({ id }) => keptIds.has(id)).length;
     const refusals: string[] = [];
     for (const pick of picks.filter(({ id }) => !keptIds.has(id))) {

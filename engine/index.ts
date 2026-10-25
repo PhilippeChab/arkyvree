@@ -43,8 +43,6 @@ export type {
   StorageRegistries,
   StoredAdvancement,
   StoredCharacterLink,
-  StoredCharacterRow,
-  StoredCharacterWrite,
   StoredEntity,
   StoredLink,
   StoredPick,

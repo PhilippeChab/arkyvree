@@ -134,30 +134,30 @@ export async function createCharacter(
   const [character] = await Characters.create(db, {
     userId: SEED_USER_ID,
     rulesetId: data.rulesetId ?? ctx.rulesetId,
-    raceId: ctx.raceMap.pc[data.raceName],
     name: data.name,
-    xp: data.xp,
-    alignment: data.alignment,
-    age: data.age,
-    gender: data.gender,
-    height: data.height,
-    weight: data.weight,
     description: data.description,
+    fields: {
+      CHARACTER_XP: data.xp,
+      CHARACTER_ALIGNMENT: data.alignment,
+      CHARACTER_AGE: data.age,
+      CHARACTER_GENDER: data.gender,
+      CHARACTER_HEIGHT: data.height,
+      CHARACTER_WEIGHT: data.weight,
+    },
+    links: { race: ctx.raceMap.pc[data.raceName] },
   });
 
   await CharacterLinks.createMany(
     db,
-    "abilities",
-    Object.entries(data.abilities).map(([name, score]) => ({
-      characterId: character.id,
-      abilityId: ctx.abilityMap[name],
-      score,
-    })),
+    character.id,
+    "score",
+    Object.entries(data.abilities).map(([name, amount]) => ({ entityId: ctx.abilityMap[name], amount })),
   );
   await CharacterLinks.createMany(
     db,
-    "languages",
-    data.languages.map((lang) => ({ characterId: character.id, languageId: ctx.langMap[lang] })),
+    character.id,
+    "speaks",
+    data.languages.map((language) => ({ entityId: ctx.langMap[language] })),
   );
 
   return character.id;

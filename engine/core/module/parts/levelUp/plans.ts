@@ -5,9 +5,9 @@
  * value step's too, 3.5's hit points).
  */
 
-import type { CharacterColumns, CreationColumns, LinkPlan } from "@/engine/core/module/parts/characters/index.ts";
+import type { LinkPlan } from "@/engine/core/module/parts/characters/index.ts";
 import type { StoredAdvancement } from "@/engine/core/module/storage.ts";
-import type { Character } from "@/shared/relations.ts";
+import type { Character, CharacterFieldValue } from "@/shared/relations.ts";
 
 /** What a level-up writes of an advancement: its track (3.5's class level), and its picks under it. */
 export interface AdvancementPlan {
@@ -46,14 +46,15 @@ export interface LevelsPlan extends ChildrenPlan {
 }
 
 /**
- * A child a plan makes: its character's row, whole (its parent's, of its kind, the columns its module stores of it, and
- * what it takes of its parent), and its links, by the name its module declares each under (3.5's ability scores).
+ * A child a plan makes: its character's row, whole (its parent's, of its kind, its fields' values and single links'
+ * entities, and what it takes of its parent), and its links of each role it holds many of, by role (3.5's `score`).
  */
 export interface NewChild {
   links: Record<string, LinkPlan[]>;
-  row: CharacterColumns &
-    CreationColumns &
-    Pick<Character, "kind" | "name" | "parentCharacterId" | "rulesetId" | "userId">;
+  row: Pick<Character, "kind" | "name" | "parentCharacterId" | "rulesetId" | "userId"> & {
+    fields: Record<string, CharacterFieldValue | null>;
+    links: Record<string, string>;
+  };
 }
 
 /**

@@ -20,7 +20,7 @@ const IDENTITY = {
 };
 
 describe("IdentityFields", () => {
-  test("writes each field it's sent into its column, experience as xp, an empty height or weight cleared", () => {
+  test("writes each field it's sent as its field's value, an empty height or weight cleared, its description apart", () => {
     expect(
       IdentityFields.plan({
         alignment: "Chaotic Good",
@@ -33,22 +33,23 @@ describe("IdentityFields", () => {
         description: "Short",
       }),
     ).toEqual({
-      columns: {
-        alignment: "Chaotic Good",
-        xp: 300,
-        deity: "",
-        age: null,
-        gender: "Other",
-        height: null,
-        weight: "70",
-        description: "Short",
+      fields: {
+        CHARACTER_ALIGNMENT: "Chaotic Good",
+        CHARACTER_XP: 300,
+        CHARACTER_DEITY: "",
+        CHARACTER_AGE: null,
+        CHARACTER_GENDER: "Other",
+        CHARACTER_HEIGHT: null,
+        CHARACTER_WEIGHT: "70",
       },
+      own: { description: "Short" },
     });
   });
 
   test("leaves a select it's sent unset, and a field it isn't sent, as they are", () => {
     expect(IdentityFields.plan({ alignment: null, gender: null, deity: "Moradin" })).toEqual({
-      columns: { deity: "Moradin" },
+      fields: { CHARACTER_DEITY: "Moradin" },
+      own: {},
     });
   });
 
@@ -81,7 +82,7 @@ describe("IdentityFields", () => {
     expect(block.links).toEqual([
       {
         label: "Languages",
-        link: "languages",
+        role: "speaks",
         none: "No language left to pick",
         picked: [{ id: "common", name: "Common" }],
       },

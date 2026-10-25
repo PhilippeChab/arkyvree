@@ -20,9 +20,7 @@ import type {
   ScoresCreation,
 } from "./descriptions.ts";
 import type {
-  CharacterColumns,
   CharacterEditPlan,
-  CreationColumns,
   FieldsPlan,
   InventoryEntryPlan,
   LinkPicksPlan,
@@ -50,8 +48,9 @@ import type {
  * member reads them, printed), their cards and inventories, how a new one's scores are set, what it stores and the
  * options its creation's picks offer, its links' edits (a scored link's amounts, a picked link's picks and the room its
  * rules leave them), and an inventory entry's add or edit. Its descriptions are the ruleset's own (`D`). What reads the
- * schema's rows alone is every ruleset's: what a character takes from its ruleset, its links by the names its module
- * stores them under (`StoredCharacter.links`: a link with an amount is scored, one without picked), its inventory. So
+ * schema's rows alone is every ruleset's: what a character takes from its ruleset, its links by role (a role its
+ * module stores with an amount is scored, `StoredCharacter.scoredRoles`; another it holds many of, picked; a single
+ * one, a creation pick), its inventory. So
  * are the checks that guard a character's privacy and integrity, which no ruleset can skip: a reader reads the private
  * notes the reading gives them, a partly seen character's card and summary name none of its build, an entity a request
  * names is one its ruleset's view shows (a pick's, a link's, an item: `RequestIds`, which reads a source's id as its
@@ -61,7 +60,7 @@ import type {
  * `checkCreationPick` and `openPicker`, and a picked link's room and fit: `describeLinkRoom`, `fitLinks`).
  */
 export default abstract class CharactersPart<D extends Descriptions> {
-  /** The module's storage, whose character's links and columns name the kinds this part's requests name. */
+  /** The module's storage, whose character's roles name the kinds this part's requests name. */
   constructor(private readonly storage: StorageDeclaration) {}
 
   /** An amount of a scored link's, by entity id: each a whole number within its bounds. */
@@ -108,10 +107,10 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * Refuses a creation pick (`entity`, the one a new character's single link `column` names) a ruleset's rules don't
+   * Refuses a creation pick (`entity`, the one a new character's single link of `role` names) a ruleset's rules don't
    * let a new character make (3.5's race of a kind that isn't a player character's).
    */
-  protected abstract checkCreationPick(column: string, entity: unknown): void;
+  protected abstract checkCreationPick(role: string, entity: unknown): void;
 
   /**
    * A character's sheet as the API answers it (`NotedSheet`), its private notes as its rows have them (none when its
@@ -145,13 +144,13 @@ export default abstract class CharactersPart<D extends Descriptions> {
   protected abstract describeInventoryItemFields(values: StoredValues): D["inventoryItemFields"];
 
   /**
-   * What a character (`character`) has of a picked link (`link`), and what its picks (`entityIds`, each the view's)
-   * leave it room for, as the ruleset's rules give it them: what its link's picker offers.
+   * What a character (`character`) has of a picked link's role (`role`), and what its picks (`entityIds`, each the
+   * view's) leave it room for, as the ruleset's rules give it them: what its role's picker offers.
    */
   protected abstract describeLinkRoom(
     view: RulesetView,
     character: CharacterInput,
-    link: string,
+    role: string,
     entityIds: string[],
   ): LinkRoom;
 
@@ -162,31 +161,31 @@ export default abstract class CharactersPart<D extends Descriptions> {
   protected abstract describePartial(view: RulesetView, character: CharacterInput): D["partialSheet"];
 
   /**
-   * How a new character's scores of a scored link (`link`) are set, as its form offers it (3.5's abilities, the ways
-   * its form rolls or buys them, their bounds and modifiers): its bounds are what an edit and a new character's form
-   * check its amounts by, and start at.
+   * How a new character's scores of a scored link's role (`role`) are set, as its form offers it (3.5's abilities, the
+   * ways its form rolls or buys them, their bounds and modifiers): its bounds are what an edit and a new character's
+   * form check its amounts by, and start at.
    */
-  protected abstract describeScores(view: RulesetView, link: string): ScoresCreation;
+  protected abstract describeScores(view: RulesetView, role: string): ScoresCreation;
 
   /**
-   * The picks of a picked link's edit (`link`, `entityIds`, each the view's) a character (`character`) stores: those it
+   * The picks of a picked link's edit (`role`, `entityIds`, each the view's) a character (`character`) stores: those it
    * picked, past those its rules give it without a pick. Refused, naming it, when one it doesn't keep (its rows' own)
    * is past what the ruleset's rules let it have; one it keeps never is.
    */
   protected abstract fitLinks(
     view: RulesetView,
     character: CharacterInput,
-    link: string,
+    role: string,
     entityIds: string[],
   ): string[];
 
   /**
-   * The picker of a new character's creation pick (the single link `column` names, 3.5's race) of what its form says
+   * The picker of a new character's creation pick (the single link of `role`, 3.5's race) of what its form says
    * (`query`): the entities it offers, each checked.
    */
   protected abstract openPicker(
     view: RulesetView,
-    column: string,
+    role: string,
     query: CreationPickQuery,
   ): OpenedPicker<{ columns: Record<string, string> }, { id: string }, D["creationOption"]>;
 
@@ -198,10 +197,10 @@ export default abstract class CharactersPart<D extends Descriptions> {
   protected abstract planFields(view: RulesetView, character: CharacterInput, request: FieldsRequest): FieldsPlan;
 
   /**
-   * What a new character's fields (`fields`, its form's, by their keys) write: their columns, each checked, refused
-   * when one its form requires is missing or a value is one its field doesn't take.
+   * What a new character's fields (`fields`, its form's, by their keys) write: their values and own columns, each
+   * checked, refused when one its form requires is missing or a value is one its field doesn't take.
    */
-  protected abstract planNewFields(fields: FieldsRequest): { columns: CharacterColumns };
+  protected abstract planNewFields(fields: FieldsRequest): Pick<NewCharacterPlan, "fields" | "own">;
 
   /**
    * Where an inventory entry's add or edit (`change`) holds its item: whether it's equipped, where, and its groups
@@ -225,28 +224,25 @@ export default abstract class CharactersPart<D extends Descriptions> {
   /** A character's printed sheet: the document the server renders. */
   abstract describeSheet(view: RulesetView, character: CharacterInput, request: SheetRequest): D["sheetDocument"];
 
-  /** The kind of the entities a role of the module's character's links names. */
-  private kindOfRole(role: string) {
-    const declared = this.storage.registries.characterRoles.find((def) => def.role === role);
-    if (!declared) throw new Error(`No character role ${role}`);
-    return declared.entityType as keyof ViewEntities;
+  /**
+   * A role of the module's characters' links it holds many of (`role`), scored (with an amount) or picked, and its
+   * entities' kind: refused as not found for any other.
+   */
+  private roleOf(role: string, scored: boolean) {
+    const declared = this.storage.registries.characterRoles.find((def) => def.role === role && !def.single);
+    if (!declared || this.storage.character.scoredRoles.includes(role) !== scored)
+      throw new RulesError("not-found", `No ${scored ? "scored" : "picked"} link ${role}`);
+    return { kind: declared.entityType as keyof ViewEntities, role };
   }
 
-  /** A link the module stores of its characters (`name`), scored (with an amount) or picked, and its entities' kind. */
-  private linkOf(name: string, scored: boolean) {
-    const { links } = this.storage.character;
-    const link = Object.hasOwn(links, name) ? links[name] : undefined;
-    if (!link || Boolean(link.amount) !== scored)
-      throw new RulesError("not-found", `No ${scored ? "scored" : "picked"} link ${name}`);
-    return { kind: this.kindOfRole(link.role), name };
+  /** The scored roles the module stores of its characters, each with its entities' kind. */
+  private scoredRoles() {
+    return this.storage.character.scoredRoles.map((role) => this.roleOf(role, true));
   }
 
-  /** The scored links the module stores of its characters, each with its entities' kind. */
-  private scoredLinks() {
-    const { links } = this.storage.character;
-    return Object.keys(links)
-      .filter((name) => links[name].amount)
-      .map((name) => this.linkOf(name, true));
+  /** The single roles of the module's characters' links (3.5's race): what a new character's creation picks. */
+  private singleRoles() {
+    return this.storage.registries.characterRoles.filter((def) => def.single);
   }
 
   /**
@@ -282,11 +278,11 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * How a new character's scores of a scored link (`link`) are set, as its form offers it (`describeScores`). Refused
-   * as not found when the link is no scored link of the character's.
+   * How a new character's scores of a scored link's role (`role`) are set, as its form offers it (`describeScores`).
+   * Refused as not found when the role is no scored link's of the character's.
    */
-  describeCreation(view: RulesetView, link: string): ScoresCreation {
-    return this.describeScores(view, this.linkOf(link, true).name);
+  describeCreation(view: RulesetView, role: string): ScoresCreation {
+    return this.describeScores(view, this.roleOf(role, true).role);
   }
 
   /**
@@ -334,52 +330,50 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * What a character has of a picked link (`link`), and what its picks (`entityIds`, as an edit is being made) leave it
-   * room for (`describeLinkRoom`), each by the id the view keys it by. Refused, naming it, when one isn't an entity of
-   * the link's kind in the character's ruleset, or is sent twice.
+   * What a character has of a picked link's role (`role`), and what its picks (`entityIds`, as an edit is being made)
+   * leave it room for (`describeLinkRoom`), each by the id the view keys it by. Refused, naming it, when one isn't an
+   * entity of the role's kind in the character's ruleset, or is sent twice.
    */
-  describeLinkPicks(view: RulesetView, character: CharacterInput, link: string, entityIds: string[]): LinkRoom {
-    const picks = CharactersPart.idsOf(view).resolveAll(this.linkOf(link, false).kind, entityIds);
-    return this.describeLinkRoom(view, character, link, picks);
+  describeLinkPicks(view: RulesetView, character: CharacterInput, role: string, entityIds: string[]): LinkRoom {
+    const picks = CharactersPart.idsOf(view).resolveAll(this.roleOf(role, false).kind, entityIds);
+    return this.describeLinkRoom(view, character, role, picks);
   }
 
   /**
-   * The picker of a new character's creation pick (the single link `column` names, 3.5's race) of what its form says
-   * (`query`): the entities it offers, each checked (`openPicker`), read as the entities of its link's kind
-   * (`entityType`). Refused as not found when the column is no single link of the character's.
+   * The picker of a new character's creation pick (the single link of `role`, 3.5's race) of what its form says
+   * (`query`): the entities it offers, each checked (`openPicker`), read as the entities of its role's kind
+   * (`entityType`). Refused as not found when the role is no single link's of the character's.
    */
-  openCreationPicker(view: RulesetView, column: string, query: CreationPickQuery) {
-    const { columns } = this.storage.character;
-    const declared = Object.hasOwn(columns, column) ? columns[column] : undefined;
-    if (declared?.kind !== "link") throw new RulesError("not-found", `No creation pick ${column}`);
-    const picker = this.openPicker(view, column, query);
+  openCreationPicker(view: RulesetView, role: string, query: CreationPickQuery) {
+    const declared = this.singleRoles().find((def) => def.role === role);
+    if (!declared) throw new RulesError("not-found", `No creation pick ${role}`);
+    const picker = this.openPicker(view, role, query);
     return {
       describe: picker.describe.bind(picker),
-      filters: { ...picker.filters, entityType: this.kindOfRole(declared.role) },
+      filters: { ...picker.filters, entityType: declared.entityType },
     };
   }
 
   /**
-   * What a new character stores: what it starts with (`planStart`), and its fields' columns (`planNewFields`). Refused
-   * as its start is, or when a field is.
+   * What a new character stores: what it starts with (`planStart`), and its fields' values and own columns
+   * (`planNewFields`). Refused as its start is, or when a field is.
    */
   planCreate(view: RulesetView, request: NewCharacterRequest): NewCharacterPlan {
     const { fields, ...start } = request;
-    const plan = this.planStart(view, start);
-    return { ...plan, columns: { ...plan.columns, ...this.planNewFields(fields).columns } };
+    return { ...this.planStart(view, start), ...this.planNewFields(fields) };
   }
 
   /**
-   * What an edit of a character (`edit`) writes: its fields' columns (`planFields`), each checked, and each picked
-   * link's picks it sends (`planLinkPicks`).
+   * What an edit of a character (`edit`) writes: its fields' values and own columns (`planFields`), each checked, and
+   * each picked link's picks it sends, by role (`planLinkPicks`).
    */
   planEdit(view: RulesetView, character: CharacterInput, edit: CharacterEditRequest): CharacterEditPlan {
     const links = edit.links && Object.entries(edit.links);
     return {
-      columns: edit.fields ? this.planFields(view, character, edit.fields).columns : {},
+      ...(edit.fields ? this.planFields(view, character, edit.fields) : { fields: {}, own: {} }),
       ...(links && {
         links: Object.fromEntries(
-          links.map(([link, entityIds]) => [link, this.planLinkPicks(view, character, link, entityIds)]),
+          links.map(([role, entityIds]) => [role, this.planLinkPicks(view, character, role, entityIds)]),
         ),
       }),
     };
@@ -410,59 +404,58 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * The picks a character's picked link's edit (`link`, `entityIds`) stores, each by the id the view keys it by: those
-   * it picked, past those its rules give it (`fitLinks`). Refused, naming it, when one isn't an entity of the link's
+   * The picks a character's picked link's edit (`role`, `entityIds`) stores, each by the id the view keys it by: those
+   * it picked, past those its rules give it (`fitLinks`). Refused, naming it, when one isn't an entity of the role's
    * kind in the character's ruleset (unknown, of an unrelated ruleset, or deleted), is sent twice (by one id, or by its
    * source's and its copy's), or is a new pick past what the rules let the character have.
    */
-  planLinkPicks(view: RulesetView, character: CharacterInput, link: string, entityIds: string[]): LinkPicksPlan {
-    const picks = CharactersPart.idsOf(view).resolveAll(this.linkOf(link, false).kind, entityIds);
-    return { entityIds: this.fitLinks(view, character, link, picks) };
+  planLinkPicks(view: RulesetView, character: CharacterInput, role: string, entityIds: string[]): LinkPicksPlan {
+    const picks = CharactersPart.idsOf(view).resolveAll(this.roleOf(role, false).kind, entityIds);
+    return { entityIds: this.fitLinks(view, character, role, picks) };
   }
 
   /**
-   * The amounts a character's scored link's edit (`link`, `scores`, by entity id) stores, each under the id the view
-   * keys its entity by. Refused when an amount is past the link's bounds (`describeScores`), or names no entity of its
+   * The amounts a character's scored link's edit (`role`, `scores`, by entity id) stores, each under the id the view
+   * keys its entity by. Refused when an amount is past the role's bounds (`describeScores`), or names no entity of its
    * kind in the ruleset, or two name one.
    */
-  planScores(view: RulesetView, link: string, scores: ScoresRequest): ScoresPlan {
-    const { kind } = this.linkOf(link, true);
-    RulesError.parse(CharactersPart.boundedScores(this.describeScores(view, link).scores), scores);
+  planScores(view: RulesetView, role: string, scores: ScoresRequest): ScoresPlan {
+    const { kind } = this.roleOf(role, true);
+    RulesError.parse(CharactersPart.boundedScores(this.describeScores(view, role).scores), scores);
     const amounts = CharactersPart.idsOf(view).resolveKeys(kind, scores);
     return { links: [...amounts].map(([entityId, amount]) => ({ entityId, amount })) };
   }
 
   /**
    * What a new character starts with, as its form or its import gives it: the entity of each of its single links
-   * (`picks`, by column: 3.5's race), and an amount for each entity of each scored link's kind, the one given
-   * (`scores`, by link, then entity id) or the one an unset entity starts at (`describeScores`), each by the id the
-   * view keys it by. Refused when an amount is past its link's bounds, a pick or a scored entity isn't one of the
-   * ruleset's, two amounts name one entity, or a pick is one its ruleset's rules refuse (`checkCreationPick`).
+   * (`picks`, by role: 3.5's race), and an amount for each entity of each scored role's kind, the one given (`scores`,
+   * by role, then entity id) or the one an unset entity starts at (`describeScores`), each by the id the view keys it
+   * by. Refused when an amount is past its role's bounds, a pick or a scored entity isn't one of the ruleset's, two
+   * amounts name one entity, or a pick is one its ruleset's rules refuse (`checkCreationPick`).
    */
   planStart(view: RulesetView, request: StartRequest): StartPlan {
-    const links = this.scoredLinks().map((link) => ({
-      ...link,
-      bounds: this.describeScores(view, link.name).scores,
+    const scored = this.scoredRoles().map((scoredRole) => ({
+      ...scoredRole,
+      bounds: this.describeScores(view, scoredRole.role).scores,
     }));
-    for (const { bounds, name } of links)
-      RulesError.parse(CharactersPart.boundedScores(bounds), request.scores[name] ?? {}, [name]);
+    for (const { bounds, role } of scored)
+      RulesError.parse(CharactersPart.boundedScores(bounds), request.scores[role] ?? {}, [role]);
     const ids = CharactersPart.idsOf(view);
-    const columns: Record<string, string> = {};
-    for (const [column, declared] of Object.entries(this.storage.character.columns)) {
-      if (declared.kind !== "link") continue;
-      const picked = request.picks[column];
-      const kind = this.kindOfRole(declared.role);
+    const links: Record<string, string> = {};
+    for (const { entityType, role } of this.singleRoles()) {
+      const picked = request.picks[role];
+      const kind = entityType as keyof ViewEntities;
       if (picked === undefined)
         throw new RulesError("invalid", `A new character's ${view.rulesetData.labelOf(kind)} is required`);
       const entity = ids.find(kind, picked);
-      this.checkCreationPick(column, entity);
-      columns[column] = (entity as { id: string }).id;
+      this.checkCreationPick(role, entity);
+      links[role] = (entity as { id: string }).id;
     }
-    const scored = links.map(({ bounds, kind, name }) => {
-      const given = ids.resolveKeys(kind, request.scores[name] ?? {});
+    const scores = scored.map(({ bounds, kind, role }) => {
+      const given = ids.resolveKeys(kind, request.scores[role] ?? {});
       const rows = view.rulesetData.rows(kind) as { id: string }[];
-      return [name, rows.map(({ id }) => ({ entityId: id, amount: given.get(id) ?? bounds.start }))];
+      return [role, rows.map(({ id }) => ({ entityId: id, amount: given.get(id) ?? bounds.start }))];
     });
-    return { columns: columns as unknown as CreationColumns, links: Object.fromEntries(scored) };
+    return { links, scores: Object.fromEntries(scores) };
   }
 }

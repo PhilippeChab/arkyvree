@@ -10,7 +10,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { sql } from "drizzle-orm";
 
 import type { FieldsRequest } from "@/engine/core/module/index.ts";
-import type { CharacterAbility, RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestPool } from "@/server/database/test.ts";
 import { CharacterLinks, Characters, Entities } from "@/server/repositories/index.ts";
@@ -18,8 +18,9 @@ import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
+import { findLinks } from "@/tests/support/characters.ts";
 import { runWhileLocked } from "@/tests/support/database.ts";
-import { createCharacterAs, createTestCharacter, postCharacter } from "@/tests/support/dnd3.5/characters.ts";
+import { createCharacterAs, createTestCharacter, postCharacter, valuesOf } from "@/tests/support/dnd3.5/characters.ts";
 import {
   createSeedCharacter,
   createWizardWithFamiliar,
@@ -268,7 +269,7 @@ describe("a ruleset's entities", () => {
     });
     // A character's score in it, which would make it in use: refused first, as a write its kind has none of
     const character = await createTestCharacter(owner.userId, { rulesetId: ruleset.id });
-    await CharacterLinks.create(db, "abilities", { characterId: character.id, abilityId: ability.id, score: 12 });
+    await CharacterLinks.createMany(db, character.id, "score", [{ entityId: ability.id, amount: 12 }]);
     const form = { name: "Luck", description: null };
     expect(EntitiesService.createEntity(owner, ruleset.id, "abilities", form)).rejects.toThrow("No create");
     expect(EntitiesService.updateEntity(owner, ruleset.id, "abilities", ability.id, form)).rejects.toThrow("No update");
@@ -280,8 +281,8 @@ describe("a character's identity", () => {
   test("refuses a new character's negative experience, or an age under 1", async () => {
     expect(createCharacterAs(session, { xp: -1 })).rejects.toMatchObject(invalidAt("fields.xp"));
     expect(createCharacterAs(session, { age: 0 })).rejects.toMatchObject(invalidAt("fields.age"));
-    expect(await createCharacterAs(session, { xp: 0, age: 1 })).toMatchObject({ xp: 0, age: 1 });
-    expect(await createCharacterAs(session, { age: null })).toMatchObject({ age: null });
+    expect(valuesOf(await createCharacterAs(session, { xp: 0, age: 1 }))).toMatchObject({ xp: 0, age: 1 });
+    expect(valuesOf(await createCharacterAs(session, { age: null }))).toMatchObject({ age: null });
   });
 
   test("refuses a new character without an alignment, a gender or a race, or with one not among its options", async () => {
@@ -290,7 +291,7 @@ describe("a character's identity", () => {
       CharactersService.createCharacter(session, {
         fields: { xp: 0, ...fields },
         name: "Nameless",
-        picks: { raceId },
+        picks: { race: raceId },
         scores: {},
         rulesetId,
       });
@@ -304,7 +305,7 @@ describe("a character's identity", () => {
     // Its creation requires its race: a request that picks none is refused
     const abilities = Object.fromEntries(Object.values(abilityMap).map((id) => [id, 10]));
     const fields = { xp: 0, alignment: "Lawful Good", gender: "Male" };
-    const json = { fields, name: "Nameless", picks: {}, rulesetId, scores: { abilities } };
+    const json = { fields, name: "Nameless", picks: {}, rulesetId, scores: { score: abilities } };
     const refused = await expectStatus(api.api.characters.$post({ json }), 400);
     expect(await refused.text()).toContain("A new character's Race is required");
   });
@@ -321,7 +322,7 @@ describe("a character's identity", () => {
       expect(CharactersService.updateCharacter(session, id, { fields })).rejects.toMatchObject(invalidAt(category));
     // An alignment or a gender left unset keeps its value: the character always has one
     const fields = { experience: 0, age: null, alignment: null, gender: null };
-    expect(await CharactersService.updateCharacter(session, id, { fields })).toMatchObject({
+    expect(valuesOf(await CharactersService.updateCharacter(session, id, { fields }))).toMatchObject({
       xp: 0,
       age: null,
       alignment: "Lawful Good",
@@ -334,19 +335,17 @@ describe("a character's identity", () => {
     const strength = abilityMap["Strength"];
     for (const score of [0, 101]) {
       expect(createCharacterAs(session, { abilities: { [strength]: score } })).rejects.toMatchObject(
-        invalidAt(`abilities.${strength}`),
+        invalidAt(`score.${strength}`),
       );
     }
     const { id } = await createCharacterAs(session, { abilities: { [strength]: 1 } });
     for (const score of [0, 101]) {
-      expect(CharactersService.updateScores(session, id, "abilities", { [strength]: score })).rejects.toMatchObject(
+      expect(CharactersService.updateScores(session, id, "score", { [strength]: score })).rejects.toMatchObject(
         invalidAt(strength),
       );
     }
-    await CharactersService.updateScores(session, id, "abilities", { [strength]: 100 });
-    expect(await CharacterLinks.findMany<CharacterAbility>(db, { link: "abilities", characterId: id })).toContainEqual(
-      expect.objectContaining({ abilityId: strength, score: 100 }),
-    );
+    await CharactersService.updateScores(session, id, "score", { [strength]: 100 });
+    expect(await findLinks("score", id)).toContainEqual(expect.objectContaining({ entityId: strength, amount: 100 }));
   });
 
   test("holds an import's columns to the rules: no negative experience, no age under 1, its options, a race", async () => {
@@ -357,8 +356,8 @@ describe("a character's identity", () => {
       .replace("ALIGN:LN", "ALIGN:XX")
       .replace("GENDER:Male", "GENDER:Unknown");
     const { character } = await CharactersService.importCharacter(session, rulesetId, text);
-    expect(character).toMatchObject({ xp: 0, age: null, alignment: "True Neutral", gender: "Other" });
-    expect(character.raceId).toBeString();
+    expect(valuesOf(character)).toMatchObject({ xp: 0, age: null, alignment: "True Neutral", gender: "Other" });
+    expect(character.links.race).toBeString();
     const raceless = text.replace("RACE:Human", "RACE:Warforged");
     expect(CharactersService.importCharacter(session, rulesetId, raceless)).rejects.toMatchObject({
       message: "The file's race (Warforged) isn't in this ruleset",

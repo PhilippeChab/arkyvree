@@ -3,8 +3,6 @@ export { default as Dnd35Module } from "./Dnd35Module.ts";
 export type { Dnd35EntityKinds } from "./entities/Dnd35Entities.ts";
 export type {
   Aptitude,
-  CharacterAbility,
-  CharacterLanguage,
   Feat,
   Item,
   Klass,

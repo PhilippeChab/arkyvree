@@ -45,14 +45,14 @@ describe("rules", () => {
         section.kind === "fields"
           ? section.lines
               .flat()
-              .map((item) => ("key" in item ? item.key : item.kind === "pick" ? item.column : item.kind))
+              .map((item) => ("key" in item ? item.key : item.kind === "pick" ? item.role : item.kind))
           : [],
       ),
     ).toEqual([
       "name",
       "xp",
       "ruleset",
-      "raceId",
+      "race",
       "alignment",
       "gender",
       "age",

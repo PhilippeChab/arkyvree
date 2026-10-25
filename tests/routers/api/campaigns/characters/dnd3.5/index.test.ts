@@ -73,7 +73,7 @@ async function postFilledCharacter() {
   await expectOk(
     api.api.characters[":id"].$put({
       param: { id },
-      json: { privateNotes, links: { languages: [langMap["Draconic"]] } },
+      json: { privateNotes, links: { speaks: [langMap["Draconic"]] } },
     }),
   );
   await addCharacterLevel(id, (await findKlassLevel(klassMap.pc["Fighter"], 1))!.id);
