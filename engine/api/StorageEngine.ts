@@ -86,9 +86,10 @@ function roundDecimal(given: string, scale: number): string {
   return negative && units !== 0n ? `-${rounded}` : rounded;
 }
 
-/** A value a number column is written with, refused when it's no number (a blank text, a word), as the column is. */
+/** A value a number column is written with, refused when it's no number (a blank text, a word, a flag), as the column is. */
 function toNumber(value: unknown): number {
-  const number = typeof value === "string" && value.trim() === "" ? Number.NaN : Number(value);
+  const number =
+    typeof value === "number" || (typeof value === "string" && value.trim() !== "") ? Number(value) : Number.NaN;
   if (!Number.isFinite(number)) throw new Error(`Not a number: ${String(value)}`);
   return number;
 }

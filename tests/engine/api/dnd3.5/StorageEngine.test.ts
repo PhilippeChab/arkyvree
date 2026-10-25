@@ -8,10 +8,11 @@ describe("A character's row", () => {
     expect(row.xp).toBe(1e21);
   });
 
-  test("writes a number, refusing a blank or a word for one, as its number column does", () => {
+  test("writes a number, refusing a blank, a word or a flag for one, as its number column does", () => {
     const write = StorageEngine.shared().characterWriteOf({ xp: "1500" });
     expect(write.fields).toEqual([{ field: "CHARACTER_XP", kind: "number", value: 1500 }]);
     expect(() => StorageEngine.shared().characterWriteOf({ xp: "" })).toThrow("Not a number");
     expect(() => StorageEngine.shared().characterWriteOf({ xp: " " })).toThrow("Not a number");
+    expect(() => StorageEngine.shared().characterWriteOf({ xp: true })).toThrow("Not a number");
   });
 });
