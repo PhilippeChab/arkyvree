@@ -12,18 +12,18 @@ export type LinkedEntity = LinkRoom["automatic"][number];
 /**
  * What a character has of a picked link and may pick, as its ruleset's rules answer it for the picks its form holds.
  */
-export type LinkRoom = InferResponseType<(typeof rpc.api.characters)[":id"]["links"][":link"]["$get"], 200>;
+export type LinkRoom = InferResponseType<(typeof rpc.api.characters)[":id"]["links"][":role"]["$get"], 200>;
 
 /**
- * What a character has of a picked link (`link`: 3.5's languages) without picking it, its picks (`entityIds`: its
- * form's, as it's edited), and the entities one more pick may add: what the link's picker offers, as its ruleset's
- * rules answer it.
+ * What a character has of a picked link's role (`role`: 3.5's `speaks`, its languages) without picking it, its picks
+ * (`entityIds`: its form's, as it's edited), and the entities one more pick may add: what the role's picker offers, as
+ * its ruleset's rules answer it.
  */
-export function characterLinkQuery(characterId: string, link: string, entityIds: string[]) {
+export function characterLinkQuery(characterId: string, role: string, entityIds: string[]) {
   const query = { entityIds: entityIds.join(",") };
   return queryOptions({
-    queryKey: QUERY_KEYS.characters.links(characterId, link, query),
+    queryKey: QUERY_KEYS.characters.links(characterId, role, query),
     queryFn: () =>
-      parseResponse(rpc.api.characters[":id"].links[":link"].$get({ param: { id: characterId, link }, query })),
+      parseResponse(rpc.api.characters[":id"].links[":role"].$get({ param: { id: characterId, role }, query })),
   });
 }

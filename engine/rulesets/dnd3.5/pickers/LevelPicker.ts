@@ -53,8 +53,7 @@ export default abstract class LevelPicker<Details extends object = object> exten
 
   /** The feats and spells the wizard picked so far, each in its pool, which the picker's level holds. */
   private get pickedSoFar() {
-    const { featPicks: feats, spellPicks: spells } = this.query.planned ?? {};
-    return { feats, spells };
+    return CharacterProjection.picksOf(this.query.planned ?? {});
   }
 
   /**
@@ -66,7 +65,7 @@ export default abstract class LevelPicker<Details extends object = object> exten
     const { abilityIncreases, editedLevelId, laterKlassLevelIds = [], planned = {} } = this.query;
     const projection = new CharacterProjection(this.input);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
-    const replacing = this.input.rows.levels.find((level) => level.id === editedLevelId);
+    const replacing = this.input.rows.advancements.find((level) => level.id === editedLevelId);
     projection.addLevels(planned.klassLevelIds ?? [], { abilityIncreases: planned.abilityIncreases, hp });
     projection.pick(projection.addLevel(this.klassLevel.id, { abilityIncreases, hp, replacing }), this.pickedSoFar);
     projection.addLevels(laterKlassLevelIds, { hp });

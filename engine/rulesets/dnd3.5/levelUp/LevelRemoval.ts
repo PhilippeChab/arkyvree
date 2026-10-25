@@ -11,11 +11,11 @@ export default class LevelRemoval<C> extends LevelUpBase<C> {
    * (`bonded`, their rows) become without it: refused when it has no level.
    */
   planRemoval(bonded: CharacterInput[]) {
-    const level = this.character.rows.levels.at(-1);
+    const level = this.character.rows.advancements.at(-1);
     if (!level) throw new RulesError("not-found", "No level to remove");
     const projection = new CharacterProjection(this.character);
     projection.dropLevel(level.id);
     const without = this.build(projection);
-    return { ...this.planBondedOf(without, bonded), level };
+    return { ...this.planBondedOf(without, bonded), advancement: level };
   }
 }

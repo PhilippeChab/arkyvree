@@ -165,7 +165,7 @@ describe("EntitiesService: skills", () => {
     const skill = await EntitiesService.createEntity(session, ruleset.id, "skills", body());
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     const { klassLevel } = await createTestKlassLevel(ruleset.id);
-    await addCharacterLevel(character.id, klassLevel.id, { skills: [{ skillId: skill.id, rank: 1 }] });
+    await addCharacterLevel(character.id, klassLevel.id, { skills: { [skill.id]: 1 } });
 
     expect(EntitiesService.deleteEntity(session, ruleset.id, "skills", skill.id)).rejects.toThrow(ConflictError);
   });

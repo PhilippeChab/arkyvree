@@ -1,44 +1,35 @@
 import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { LevelPicks } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import { db } from "@/server/database/index.ts";
-import { CharacterAdvancements, Entities, Picks } from "@/server/repositories/index.ts";
-import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
+import { Entities, Picks } from "@/server/repositories/index.ts";
+import { CharacterLevelsService, createAdvancement } from "@/server/services/characters/levels/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
 
 import { createTestCharacter } from "./characters.ts";
 import { levelUpPlan } from "./levelPlans.ts";
 
-interface LevelPicks {
-  feats?: { aptitudeId: string; featId: string }[];
-  skills?: { rank: number; skillId: string }[];
-  spells?: { aptitudeId: string; spellId: string }[];
-}
-
 /** A level's ability increases as 3.5 gives them: `abilityId` raised by 1, or none. */
 export function increasesOf(abilityId: string | null | undefined) {
   return abilityId ? [{ abilityId, amount: 1 }] : [];
 }
 
-/** Gives a character a level in a class level, with these picks, straight in the database: no level-up rule applies. */
-export async function addCharacterLevel(characterId: string, klassLevelId: string, picks: LevelPicks = {}) {
-  const [level] = await CharacterAdvancements.create(db, { characterId, klassLevelId, hp: 1 });
-  const characterLevelId = level.id;
-  await Picks.createMany(
-    db,
-    "feats",
-    (picks.feats ?? []).map((pick) => ({ ...pick, characterLevelId })),
-  );
-  await Picks.createMany(
-    db,
-    "spells",
-    (picks.spells ?? []).map((pick) => ({ ...pick, characterLevelId })),
-  );
-  await Picks.createMany(
-    db,
-    "skills",
-    (picks.skills ?? []).map((pick) => ({ ...pick, characterLevelId })),
-  );
-  return level;
+/**
+ * Gives a character a level in a class level (1 hit point), with these picks (its feats and spells by pool, its skills'
+ * ranks), straight in the database: no level-up rule applies.
+ */
+export async function addCharacterLevel(characterId: string, klassLevelId: string, picks: Partial<LevelPicks> = {}) {
+  const pooled = (step: string, byPool: Record<string, string[]> = {}) =>
+    Object.entries(byPool).flatMap(([viaId, ids]) => ids.map((entityId) => ({ step, entityId, viaId })));
+  return await createAdvancement(db, characterId, {
+    trackId: klassLevelId,
+    picks: [
+      { step: "hp", amount: 1 },
+      ...pooled("feats", picks.feats),
+      ...pooled("spells", picks.spells),
+      ...Object.entries(picks.skills ?? {}).map(([entityId, amount]) => ({ step: "skills", entityId, amount })),
+    ],
+  });
 }
 
 /**
@@ -81,10 +72,18 @@ export async function findKlassLevel(klassId: string, level: number) {
   );
 }
 
+/**
+ * The picks of a step (`step`: `hp`, `abilities`, `skills`, `feats`, `spells`) these levels took (`advancementIds`), as
+ * stored, by the picked entity's name.
+ */
+export async function findPicks(step: string, advancementIds: string[]) {
+  return (await Picks.findPerStep(db, { advancementIds }))[step];
+}
+
 /** A character of `userId`'s on `rulesetId`, who picked the feat at their first level. */
 export async function pickFeat(userId: string, rulesetId: string, featId: string, aptitudeId: string) {
   const character = await createTestCharacter(userId, { rulesetId });
   const { klassLevel } = await createTestKlassLevel(rulesetId);
-  await addCharacterLevel(character.id, klassLevel.id, { feats: [{ featId, aptitudeId }] });
+  await addCharacterLevel(character.id, klassLevel.id, { feats: { [aptitudeId]: [featId] } });
   return character;
 }

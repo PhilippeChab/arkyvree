@@ -2,12 +2,12 @@ import { ImportReport } from "@/engine/core/imports/index.ts";
 import type { CharacterInput, ImportedRow, ImportOwner, ImportPlan, ScorePlan } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import CharacterValues, { RACE_ROLE } from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import Dnd35Characters from "@/engine/rulesets/dnd3.5/characters/Dnd35Characters.ts";
 import type { ImportedCharacter } from "@/engine/rulesets/dnd3.5/imports/imported.ts";
 import { DND35_STORAGE } from "@/engine/rulesets/dnd3.5/storage/Dnd35Storage.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { MAX_CHARACTER_NAME_LENGTH, MAX_CHARACTER_NUMBER } from "@/shared/characters.ts";
-import type { Character } from "@/shared/relations.ts";
 import { type Gender, GENDER_OPTIONS } from "@/vocabulary/dnd3.5/identity.ts";
 
 import GearImport from "./GearImport.ts";
@@ -16,8 +16,8 @@ import { PCGEN_ALIGNMENTS } from "./names.ts";
 import PcgenNames from "./PcgenNames.ts";
 import ScoresImport from "./ScoresImport.ts";
 
-/** The row a 3.5 import fills: every column of it, its details too. */
-type FilledRow = ImportedRow & Pick<Character, "age" | "deity" | "description" | "height" | "weight">;
+/** The row a 3.5 import fills: its name, notes and description, each of its fields' values, and its race. */
+type FilledRow = ImportedRow & Required<Pick<ImportedRow, "description">> & { raceId: string };
 
 /** The inches in a foot, which a height PCGen writes in inches is said in. */
 const INCHES_PER_FOOT = 12;
@@ -83,12 +83,14 @@ export default class PcgenImport {
    * The character's rows before its levels: its row, under the id it's created with and its owner's, its ability scores,
    * and nothing else yet. What its levels, languages and gear are planned against, and its bonded creatures take after.
    */
-  private newInput(row: FilledRow, abilities: ScorePlan[]): CharacterInput {
+  private newInput({ fields, raceId: _raceId, ...row }: FilledRow, abilities: ScorePlan[]): CharacterInput {
     const now = new Date().toISOString();
     const stamps = { createdAt: now, deletedAt: null, updatedAt: now };
     const { characterId: id, userId } = this.owner;
+    const held = Object.entries(fields).flatMap(([field, value]) => (value === null ? [] : [[field, value] as const]));
     const record = {
       ...row,
+      fields: Object.fromEntries(held),
       ...stamps,
       id,
       kind: "pc",
@@ -99,20 +101,21 @@ export default class PcgenImport {
       userId,
     };
     const rows = {
+      advancements: [],
       campaign: undefined,
       inventory: [],
-      levels: [],
       links: {
-        abilities: abilities.map(({ amount, entityId }) => ({
-          abilityId: entityId,
-          score: amount,
-          ...stamps,
+        score: abilities.map(({ amount, entityId }) => ({
+          amount,
           characterId: id,
+          createdAt: now,
+          entityId,
+          updatedAt: now,
         })),
-        languages: [],
+        speaks: [],
       },
       modifiers: [],
-      picks: { abilityIncreases: [], feats: [], spells: [], skills: [] },
+      picks: { hp: [], abilities: [], skills: [], feats: [], spells: [] },
       player: undefined,
       requirements: [],
     };
@@ -126,7 +129,7 @@ export default class PcgenImport {
   private planLanguages(character: CharacterInput): string[] {
     const kept: string[] = [];
     // The last plan that took a language: what the character speaks with those kept
-    let planned = this.characters.planLinkPicks(this.view, character, "languages", kept);
+    let planned = this.characters.planLinkPicks(this.view, character, "speaks", kept);
     for (const language of this.imported.languages) {
       const found = this.names.findLanguage(language.name);
       if (!found) {
@@ -138,7 +141,7 @@ export default class PcgenImport {
         continue;
       }
       try {
-        planned = this.characters.planLinkPicks(this.view, character, "languages", [...kept, found.id]);
+        planned = this.characters.planLinkPicks(this.view, character, "speaks", [...kept, found.id]);
         kept.push(found.id);
       } catch (error) {
         if (!(error instanceof RulesError)) throw error;
@@ -170,19 +173,23 @@ export default class PcgenImport {
       this.report.skip(identity.gender.line, `${identity.gender.value} isn't a gender of the app's: Other kept`);
     this.report.import(`Name: ${name}`);
     this.report.import(`Race: ${race.name}`);
-    return {
+    const values = CharacterValues.write({
       age: identity.age && identity.age >= 1 ? this.bounded("Age", identity.age, MAX_CHARACTER_NUMBER) : null,
       alignment: alignment ?? "True Neutral",
       deity: identity.deity ?? null,
-      description: biography.description.join("\n\n") || null,
       gender: gender ?? "Other",
       height: identity.height ? PcgenImport.feetOf(identity.height) : null,
+      raceId: race.id,
+      weight: identity.weight ? `${identity.weight} lb.` : null,
+      xp: Math.max(0, this.bounded("Experience", identity.xp, MAX_CHARACTER_NUMBER)),
+    });
+    return {
+      description: biography.description.join("\n\n") || null,
+      ...values,
       name,
       notes: biography.notes.join("\n") || null,
       privateNotes: biography.privateNotes.join("\n\n") || null,
       raceId: race.id,
-      weight: identity.weight ? `${identity.weight} lb.` : null,
-      xp: Math.max(0, this.bounded("Experience", identity.xp, MAX_CHARACTER_NUMBER)),
     };
   }
 
@@ -194,12 +201,12 @@ export default class PcgenImport {
    */
   plan(): { plan: ImportPlan } | { refused: LevelStop } {
     for (const { line, reason } of this.imported.unread) this.report.skip(line, reason);
-    const row = this.readRow();
+    const { raceId, ...row } = this.readRow();
     const levelsImport = new LevelsImport(this.view, this.imported, this.names, this.report, this.stop);
     const scores = new ScoresImport(this.view, this.imported, this.report).planScores(levelsImport.levelCount);
-    const start = { picks: { raceId: row.raceId }, scores: { abilities: scores.starting } };
-    const { abilities } = this.characters.planStart(this.view, start).links;
-    const leveled = levelsImport.planLevels(this.newInput(row, abilities), scores.increases);
+    const start = { picks: { [RACE_ROLE]: raceId }, scores: { score: scores.starting } };
+    const { score: abilities } = this.characters.planStart(this.view, start).scores;
+    const leveled = levelsImport.planLevels(this.newInput({ ...row, raceId }, abilities), scores.increases);
     if ("refused" in leveled) return leveled;
     const languageIds = this.planLanguages(leveled.character);
     const inventory = new GearImport(this.view, this.names, this.report).planInventory(
@@ -207,11 +214,11 @@ export default class PcgenImport {
       this.imported.gear,
     );
     const plan = {
+      advancements: leveled.advancements,
       character: row,
       children: leveled.children,
       inventory,
-      levels: leveled.levels,
-      links: { abilities, languages: languageIds.map((entityId) => ({ entityId })) },
+      links: { score: abilities, speaks: languageIds.map((entityId) => ({ entityId })) },
       report: this.report.describe(),
     };
     return { plan };

@@ -1,13 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
 import { Engine } from "@/engine/index.ts";
-import type { CharacterLanguage, Feat, Race } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { Feat, Race } from "@/engine/rulesets/dnd3.5/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLinks, Entities, Modifiers } from "@/server/repositories/index.ts";
 import { readCharacterInput } from "@/server/services/characters/characterInputs.ts";
 import type { Character } from "@/shared/relations.ts";
+import { findLinks } from "@/tests/support/characters.ts";
 import { createCharacterAs, sheetOf } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestKlassLevel, findKlassLevel, pickFeat } from "@/tests/support/dnd3.5/levels.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
@@ -48,7 +49,7 @@ async function describeLanguages(record: Character, picks: string[] = []) {
   const { langMap } = await getSeedCtx();
   return await languagesOf(record, (engine) =>
     engine.describeLinkPicks(
-      "languages",
+      "speaks",
       picks.map((name) => langMap[name]),
     ),
   );
@@ -75,7 +76,7 @@ async function planLanguages(record: Character, picks: string[]) {
   const { langMap } = await getSeedCtx();
   const plan = await languagesOf(record, (engine) =>
     engine.planLinkPicks(
-      "languages",
+      "speaks",
       picks.map((name) => langMap[name]),
     ),
   );
@@ -97,9 +98,7 @@ describe("A character's languages", () => {
 
     expect(namesOf(sheet.identity.physiology.languages)).toEqual(["Common", "Dwarven"]);
     expect(namesOf((await describeLanguages(dwarf)).automatic)).toEqual(["Common", "Dwarven"]);
-    expect(await CharacterLinks.findMany<CharacterLanguage>(db, { link: "languages", characterId: dwarf.id })).toEqual(
-      [],
-    );
+    expect(await findLinks("speaks", dwarf.id)).toEqual([]);
   });
 
   test("take any language but a secret one, a pick per point of the permanent Intelligence modifier", async () => {
@@ -180,7 +179,7 @@ describe("A character's languages", () => {
     const { klassMap, skillMap } = await getSeedCtx();
     const bard = await newCharacter("Human");
     const level = await findKlassLevel(klassMap.pc["Bard"], 1);
-    await addCharacterLevel(bard.id, level!.id, { skills: [{ skillId: skillMap["Speak Language"], rank: 2 }] });
+    await addCharacterLevel(bard.id, level!.id, { skills: { [skillMap["Speak Language"]]: 2 } });
 
     // Its Intelligence of 10 gives none: both are its ranks'
     expect(await roomOf(bard)).toBe(2);
@@ -236,7 +235,7 @@ describe("A character's languages", () => {
     const { langMap } = await getSeedCtx();
     const human = await newCharacter("Human");
     for (const name of ["Abyssal", "Aquan"])
-      await CharacterLinks.create(db, "languages", { characterId: human.id, languageId: langMap[name] });
+      await CharacterLinks.createMany(db, human.id, "speaks", [{ entityId: langMap[name] }]);
 
     // Its picks stand, and the picker offers none more
     const described = await describeLanguages(human, ["Abyssal", "Aquan"]);

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import type { AdvancementPlan } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import PcgenFile from "@/engine/rulesets/dnd3.5/imports/pcgen/file/PcgenFile.ts";
 import PcgenImport from "@/engine/rulesets/dnd3.5/imports/pcgen/PcgenImport.ts";
@@ -12,6 +13,11 @@ import { planImportOf, readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.t
 import { createTestItem } from "@/tests/support/items.ts";
 import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
+
+/** An advancement's picks of a step. */
+function picksOf({ picks }: AdvancementPlan, step: string) {
+  return picks.filter((pick) => pick.step === step);
+}
 
 /** A PCGen file of a human fighter 1, with these lines (`lines`): its skills and feats. */
 function riderFile(lines: string[]) {
@@ -38,24 +44,24 @@ function totalPoints(levels: Awaited<ReturnType<typeof nameLevels>>) {
 }
 
 /**
- * A plan's levels named: each its class and class level, its ability increases, its feats, and the points it spends on
- * each skill.
+ * A plan's levels named: each its class and class level, its hit points, its ability increases, its feats, and the
+ * points it spends on each skill.
  */
 async function nameLevels(plan: Awaited<ReturnType<typeof planImportOf>>) {
-  const data = await seededData();
-  return plan.levels.map(({ columns, rows }) => {
-    const klassLevel = Dnd35View.of(data).klassLevelsById.get(columns.klassLevelId)!;
+  const dnd35 = Dnd35View.of(await seededData());
+  return plan.advancements.map((advancement) => {
+    const klassLevel = dnd35.klassLevelsById.get(advancement.trackId)!;
     return {
-      hp: columns.hp,
-      increases: rows.abilityIncreases.map(
-        ({ abilityId, amount }) => `${Dnd35View.of(data).abilitiesById.get(abilityId)?.name} +${amount}`,
+      hp: picksOf(advancement, "hp")[0].amount,
+      increases: picksOf(advancement, "abilities").map(
+        ({ amount, entityId }) => `${dnd35.abilitiesById.get(entityId!)?.name} +${amount}`,
       ),
-      feats: rows.feats.map(({ featId }) => Dnd35View.of(data).featsById.get(featId)?.name),
-      klass: `${Dnd35View.of(data).klassesById.get(klassLevel.klassId)?.name} ${klassLevel.level}`,
+      feats: picksOf(advancement, "feats").map(({ entityId }) => dnd35.featsById.get(entityId!)?.name),
+      klass: `${dnd35.klassesById.get(klassLevel.klassId)?.name} ${klassLevel.level}`,
       skills: Object.fromEntries(
-        rows.skills.map(({ rank, skillId }): [string, number] => [
-          Dnd35View.of(data).skillsById.get(skillId)?.name ?? skillId,
-          rank,
+        picksOf(advancement, "skills").map(({ amount, entityId }): [string, number] => [
+          dnd35.skillsById.get(entityId!)?.name ?? entityId!,
+          amount!,
         ]),
       ),
     };
@@ -118,10 +124,7 @@ describe("A PCGen fighter / rogue", () => {
     const plan = await planImportOf(await readPcgenFile("brannoc"));
     const data = await seededData();
     const scores = Object.fromEntries(
-      plan.links.abilities.map(({ amount, entityId }) => [
-        Dnd35View.of(data).abilitiesById.get(entityId)?.name,
-        amount,
-      ]),
+      plan.links.score.map(({ amount, entityId }) => [Dnd35View.of(data).abilitiesById.get(entityId)?.name, amount]),
     );
     expect(scores).toEqual({
       Charisma: 8,
@@ -170,7 +173,7 @@ describe("A PCGen fighter / rogue", () => {
     const plan = await planImportOf(await readPcgenFile("brannoc"));
     const data = await seededData();
     const dataView = Dnd35View.of(data);
-    expect(plan.links.languages.map(({ entityId }) => dataView.languagesById.get(entityId)?.name)).toEqual(["Dwarven"]);
+    expect(plan.links.speaks.map(({ entityId }) => dataView.languagesById.get(entityId)?.name)).toEqual(["Dwarven"]);
     const worn = plan.inventory
       .filter((entry) => entry.equipped)
       .map((entry) =>
@@ -198,11 +201,13 @@ describe("A PCGen fighter / rogue", () => {
     expect(report.program).toBe("PCGen 6.09.08.RC1");
     expect(report.imported).toContain("Race: Human");
     expect(character).toMatchObject({
-      alignment: "Lawful Neutral",
-      gender: "Male",
-      height: `6' 0"`,
+      fields: {
+        CHARACTER_ALIGNMENT: "Lawful Neutral",
+        CHARACTER_GENDER: "Male",
+        CHARACTER_HEIGHT: `6' 0"`,
+        CHARACTER_XP: 29500,
+      },
       name: "Brannoc Vale",
-      xp: 29500,
     });
     const reasons = report.unmatched.map(({ reason }) => reason);
     expect(reasons).toContain(
@@ -241,7 +246,7 @@ describe("A PCGen fighter / rogue", () => {
       .map(({ reason }) => reason);
     // The levels it takes give the increases: the 8th's, which it doesn't take, stays in the starting score
     const data = await seededData();
-    const strength = plan.links.abilities.find(
+    const strength = plan.links.score.find(
       ({ entityId }) => Dnd35View.of(data).abilitiesById.get(entityId)?.name === "Strength",
     );
     expect(strength?.amount).toBe(17);
@@ -285,9 +290,9 @@ describe("What a file holds past what the app keeps", () => {
       .replace("CHARACTERNAME:Brannoc Vale", `CHARACTERNAME:${"B".repeat(300)}`)
       .replace("GENDER:Male", "GENDER:Unknown");
     const { character, report } = await planImportOf(text);
-    expect(character.xp).toBe(2_147_483_647);
+    expect(character.fields.CHARACTER_XP).toBe(2_147_483_647);
     expect(character.name).toHaveLength(255);
-    expect(character.gender).toBe("Other");
+    expect(character.fields.CHARACTER_GENDER).toBe("Other");
     expect(report.issues).toContain("Experience 99999999999 is past the largest the app keeps: 2147483647 kept");
     expect(report.unmatched.map(({ reason }) => reason)).toContain("Unknown isn't a gender of the app's: Other kept");
   });
@@ -299,7 +304,7 @@ describe("What a file holds past what the app keeps", () => {
 
   test("a height in inches with a fraction, in whole feet and inches", async () => {
     const text = (await readPcgenFile("brannoc")).replace("HEIGHT:72", "HEIGHT:71.6");
-    expect((await planImportOf(text)).character.height).toBe(`6' 0"`);
+    expect((await planImportOf(text)).character.fields.CHARACTER_HEIGHT).toBe(`6' 0"`);
   });
 
   test("a feat two lines name is picked once, the second listed", async () => {
@@ -326,7 +331,7 @@ describe("What a file holds past what the app keeps", () => {
   test("a score its increases leave past a new character's bounds, brought to them", async () => {
     const plan = await planImportOf((await readPcgenFile("brannoc")).replace("STAT:CHA|SCORE:8", "STAT:CHA|SCORE:0"));
     const data = await seededData();
-    const charisma = plan.links.abilities.find(
+    const charisma = plan.links.score.find(
       ({ entityId }) => Dnd35View.of(data).abilitiesById.get(entityId)?.name === "Charisma",
     );
     expect(charisma?.amount).toBe(1);
@@ -380,7 +385,7 @@ describe("What a file holds past what the app keeps", () => {
       "LANGUAGE:Common|LANGUAGE:Dwarven|LANGUAGE:Dwarven",
     );
     const { links, report } = await planImportOf(text);
-    const languageIds = links.languages.map(({ entityId }) => entityId);
+    const languageIds = links.speaks.map(({ entityId }) => entityId);
     expect(languageIds).toHaveLength(new Set(languageIds).size);
     expect(report.unmatched.map(({ reason }) => reason)).toContain(
       "Dwarven is imported already, from another name of it",
@@ -458,7 +463,7 @@ describe("What a file holds past what the app keeps", () => {
 
   test("a gender in another case, or its initial", async () => {
     const text = (await readPcgenFile("brannoc")).replace("GENDER:Male", "GENDER:f");
-    expect((await planImportOf(text)).character.gender).toBe("Female");
+    expect((await planImportOf(text)).character.fields.CHARACTER_GENDER).toBe("Female");
   });
 });
 
@@ -473,10 +478,7 @@ describe("A PCGen cleric", () => {
     const plan = await planImportOf(await readPcgenFile("hilda"));
     const data = await seededData();
     const scores = Object.fromEntries(
-      plan.links.abilities.map(({ amount, entityId }) => [
-        Dnd35View.of(data).abilitiesById.get(entityId)?.name,
-        amount,
-      ]),
+      plan.links.score.map(({ amount, entityId }) => [Dnd35View.of(data).abilitiesById.get(entityId)?.name, amount]),
     );
     expect(scores).toMatchObject({ Constitution: 14, Wisdom: 15 });
     expect((await nameLevels(plan))[3].increases).toEqual(["Wisdom +1"]);
@@ -495,8 +497,10 @@ describe("A PCGen sorcerer", () => {
   test("learns the spells she chose, each on the first level her spell list has room for it at its spell level", async () => {
     const plan = await planImportOf(await readPcgenFile("selene"));
     const data = await seededData();
-    const spells = plan.levels.map(({ rows }) =>
-      rows.spells.map(({ spellId }) => Dnd35View.of(data).spellsById.get(spellId)?.name).toSorted(),
+    const spells = plan.advancements.map((advancement) =>
+      picksOf(advancement, "spells")
+        .map(({ entityId }) => Dnd35View.of(data).spellsById.get(entityId!)?.name)
+        .toSorted(),
     );
     expect(spells).toEqual([
       ["Detect Magic", "Light", "Mage Hand", "Magic Missile", "Prestidigitation", "Shield"],
@@ -530,7 +534,7 @@ describe("A PCGen sorcerer", () => {
   test("leaves out a spell its class knows all of, which a file PCGen saved without its auto-known spells holds", async () => {
     const text = `${await readPcgenFile("hilda")}\nSPELLNAME:Bless|TIMES:1|CLASS:Cleric|BOOK:Known Spells|SPELLLEVEL:1|SOURCE:[TYPE:CLASS|NAME:Cleric]`;
     const plan = await planImportOf(text);
-    expect(plan.levels.flatMap(({ rows }) => rows.spells)).toEqual([]);
+    expect(plan.advancements.flatMap((advancement) => picksOf(advancement, "spells"))).toEqual([]);
     expect(plan.report.unmatched).toEqual([]);
   });
 });
@@ -546,9 +550,9 @@ describe("A level a level-up refuses", () => {
     );
     if (!("plan" in planned)) throw new Error("The import was refused again");
     const { plan } = planned;
-    expect(plan.levels).toHaveLength(5);
+    expect(plan.advancements).toHaveLength(5);
     const data = await seededData();
-    const strength = plan.links.abilities.find(
+    const strength = plan.links.score.find(
       ({ entityId }) => Dnd35View.of(data).abilitiesById.get(entityId)?.name === "Strength",
     );
     expect(strength?.amount).toBe(17);

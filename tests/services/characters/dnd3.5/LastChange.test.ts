@@ -80,10 +80,10 @@ describe("a character's last change", () => {
     const characterId = await createSeedCharacter(ctx);
 
     await expectMoved(characterId, () =>
-      CharactersService.updateScores(session, characterId, "abilities", { [ctx.abilityMap["Strength"]]: 17 }),
+      CharactersService.updateScores(session, characterId, "score", { [ctx.abilityMap["Strength"]]: 17 }),
     );
     await expectMoved(characterId, () =>
-      CharactersService.updateLinkPicks(session, characterId, "languages", [ctx.langMap["Draconic"]]),
+      CharactersService.updateLinkPicks(session, characterId, "speaks", [ctx.langMap["Draconic"]]),
     );
   });
 

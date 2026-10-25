@@ -124,8 +124,8 @@ describe("EntitiesService: aptitudes", () => {
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     const { klassLevel } = await createTestKlassLevel(ruleset.id);
     await addCharacterLevel(character.id, klassLevel.id, {
-      feats: [{ featId: feat.id, aptitudeId: featAptitude.id }],
-      spells: [{ spellId: spell.id, aptitudeId: spellAptitude.id }],
+      feats: { [featAptitude.id]: [feat.id] },
+      spells: { [spellAptitude.id]: [spell.id] },
     });
 
     expect(EntitiesService.deleteEntity(session, ruleset.id, "aptitudes", featAptitude.id)).rejects.toThrow(

@@ -1,4 +1,4 @@
-import type { HeldInventoryEntry, ImportOwner } from "@/engine/core/module/index.ts";
+import { CharacterInputs, type HeldInventoryEntry, type ImportOwner } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
 import type { Module, Rest } from "./Modules.ts";
@@ -31,12 +31,15 @@ export default class CharactersEngine {
    * the view has it, where it can go and where it's worn.
    */
   describeInventory<T extends HeldInventoryEntry & { itemId: string }>(entries: T[]) {
-    return this.module.characters.describeInventory(this.view, this.view.rulesetData.cow.resolveRows(entries));
+    return this.module.characters.describeInventory(
+      this.view,
+      CharacterInputs.resolveEntries(entries, this.view.rulesetData.cow),
+    );
   }
 
   /**
-   * The picker of a new character's creation pick (a single link's column) of what its form says: each entity of a
-   * page, with whether it can pick it.
+   * The picker of a new character's creation pick (a single link's role: 3.5's race) of what its form says: each
+   * entity of a page, with whether it can pick it.
    */
   openCreationPicker(...args: Args<"openCreationPicker">) {
     return this.module.characters.openCreationPicker(this.view, ...args);
@@ -44,7 +47,7 @@ export default class CharactersEngine {
 
   /**
    * What a new character stores: its creation's picks and its scored links' amounts, by the view's ids, refused when a
-   * pick is one its rules refuse or one isn't the ruleset's, and its fields' columns, refused when one is.
+   * pick is one its rules refuse or one isn't the ruleset's, and its fields' values, refused when one is.
    */
   planCreate(...args: Args<"planCreate">) {
     return this.module.characters.planCreate(this.view, ...args);

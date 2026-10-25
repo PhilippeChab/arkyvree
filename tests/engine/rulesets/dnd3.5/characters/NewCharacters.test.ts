@@ -47,7 +47,7 @@ describe("A new 3.5 character's creation", () => {
       expect(modifiers[score]).toBe(AbilityRules.computeModifier(score));
   });
 
-  test("writes a new character's fields into their columns, an empty or a missing optional one left out", () => {
+  test("writes a new character's fields as their values, an empty or a missing optional one left out", () => {
     expect(
       NewCharacters.planFields({
         xp: 0,
@@ -59,9 +59,18 @@ describe("A new 3.5 character's creation", () => {
         deity: null,
         description: "Tall",
       }),
-    ).toEqual({ columns: { alignment: "Lawful Good", gender: "Female", xp: 0, weight: "60", description: "Tall" } });
+    ).toEqual({
+      fields: {
+        CHARACTER_ALIGNMENT: "Lawful Good",
+        CHARACTER_GENDER: "Female",
+        CHARACTER_XP: 0,
+        CHARACTER_WEIGHT: "60",
+      },
+      own: { description: "Tall" },
+    });
     expect(NewCharacters.planFields({ xp: 300, alignment: "True Neutral", gender: "Male", age: 30 })).toEqual({
-      columns: { alignment: "True Neutral", gender: "Male", xp: 300, age: 30 },
+      fields: { CHARACTER_ALIGNMENT: "True Neutral", CHARACTER_GENDER: "Male", CHARACTER_XP: 300, CHARACTER_AGE: 30 },
+      own: {},
     });
   });
 

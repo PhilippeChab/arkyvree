@@ -2,6 +2,7 @@ import type { InferRequestType } from "hono/client";
 
 import type { Db } from "@/drizzle/database.ts";
 import { CharacterInputs, type FieldsRequest } from "@/engine/core/module/index.ts";
+import CharacterValues, { RACE_ROLE } from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import CharacterResponse from "@/engine/rulesets/dnd3.5/characters/description/CharacterResponse.ts";
 import CharacterProjection from "@/engine/rulesets/dnd3.5/levelUp/CharacterProjection.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
@@ -29,7 +30,7 @@ interface NewFields {
 
 /**
  * A 3.5 character's start as a test names it: its race (`raceId`, its creation pick) and its ability scores
- * (`abilities`, its scored link's amounts), which a create sends as its `picks` and `scores`.
+ * (`abilities`, its scored link's amounts), which a create sends as its `picks` and `scores`, by role.
  */
 interface NewStart {
   abilities?: Record<string, number>;
@@ -62,7 +63,12 @@ function splitFields<T extends NewFields & { fields?: FieldsRequest }>(values: T
 /** A create's `picks` and `scores` of a test's 3.5 start (`raceId`, `abilities`), and the rest of what it gives. */
 function splitStart<T extends NewStart>(values: T, start: Required<NewStart>) {
   const { abilities = start.abilities, raceId = start.raceId, ...rest } = values;
-  return { picks: { raceId }, scores: { abilities }, rest };
+  return { picks: { [RACE_ROLE]: raceId }, scores: { score: abilities }, rest };
+}
+
+/** A character's row with its own values past its columns, as 3.5 reads them off its fields and its race link. */
+export function valuesOf(character: Character) {
+  return { ...character, ...CharacterValues.read(character) };
 }
 
 /**
@@ -127,24 +133,30 @@ export async function createCharacterAs(
 }
 
 /**
- * A human character of `userId`'s on the seeded ruleset, written straight to
- * the database: no abilities, levels or activity. Create one with
- * `createCharacterAs` when the test needs those.
+ * A human character of `userId`'s on the seeded ruleset, written straight to the database: a Neutral Good man of 25,
+ * 180 tall and 75 heavy, with no experience, unless `values` says otherwise (its race, `raceId`; its experience, `xp`;
+ * its row's own columns), and no abilities, levels or activity. Create one with `createCharacterAs` when the test
+ * needs those.
  */
-export async function createTestCharacter(userId: string, values: Partial<Character> = {}) {
+export async function createTestCharacter(
+  userId: string,
+  { raceId, xp = 0, ...values }: Partial<Omit<Character, "fields" | "links">> & { raceId?: string; xp?: number } = {},
+) {
   const ctx = await getSeedCtx();
   const [character] = await Characters.create(db, {
     userId,
     rulesetId: ctx.rulesetId,
-    raceId: ctx.raceMap.pc["Human"],
     name: `Test Character ${uniqueId()}`,
-    xp: 0,
-    alignment: "Neutral Good",
-    age: 25,
-    gender: "Male",
-    height: "180",
-    weight: "75",
     ...values,
+    ...CharacterValues.write({
+      age: 25,
+      alignment: "Neutral Good",
+      gender: "Male",
+      height: "180",
+      raceId: raceId ?? ctx.raceMap.pc["Human"],
+      weight: "75",
+      xp,
+    }),
   });
   return character;
 }

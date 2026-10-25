@@ -4,6 +4,7 @@ import {
   CharactersPart,
   type CreationPickQuery,
   type FieldsRequest,
+  type StoredAdvancement,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
@@ -11,10 +12,11 @@ import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import RacePicker from "@/engine/rulesets/dnd3.5/pickers/RacePicker.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { CharacterLevel, Race } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Race } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Character } from "@/shared/relations.ts";
 
 import CharacterCards from "./CharacterCards.ts";
+import CharacterValues from "./CharacterValues.ts";
 import CharacterDescription from "./description/CharacterDescription.ts";
 import IdentityFields from "./IdentityFields.ts";
 import InventoryEntries from "./inventory/InventoryEntries.ts";
@@ -31,7 +33,7 @@ import CharacterSheet from "./sheet/CharacterSheet.tsx";
  */
 export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   /** A new character's race: a player character's (of kind `pc`), not a monster's or a bonded creature's. */
-  protected override checkCreationPick(_column: string, race: Race) {
+  protected override checkCreationPick(_role: string, race: Race) {
     if (race.kind !== "pc") throw new RulesError("invalid", "Race is not valid for a player character");
   }
 
@@ -41,8 +43,8 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   }
 
   /** A character's card: its race and its classes at their highest level. */
-  protected override describeFullCard(view: RulesetView, character: Character, levels: CharacterLevel[]) {
-    return CharacterCards.describe(Dnd35View.of(view.rulesetData), character, levels);
+  protected override describeFullCard(view: RulesetView, character: Character, advancements: StoredAdvancement[]) {
+    return CharacterCards.describe(Dnd35View.of(view.rulesetData), CharacterValues.read(character), advancements);
   }
 
   /** An inventory entry beside its row: where its item can go, and where it's worn. */
@@ -56,7 +58,7 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   }
 
   /** What a character speaks without picking it, its picked languages, and what one more may add. */
-  protected override describeLinkRoom(view: RulesetView, character: CharacterInput, _link: string, picks: string[]) {
+  protected override describeLinkRoom(view: RulesetView, character: CharacterInput, _role: string, picks: string[]) {
     return new SpokenLanguages(view, character).describe(picks);
   }
 
@@ -66,7 +68,7 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   }
 
   /**
-   * How a new character's ability scores are set (its one scored link's, `abilities`): the ruleset's abilities, the
+   * How a new character's ability scores are set (its one scored link's, `score`): the ruleset's abilities, the
    * SRD's methods, the scores' bounds, each score's modifier.
    */
   protected override describeScores(view: RulesetView) {
@@ -74,16 +76,16 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   }
 
   /** The languages an edit stores: a new one refused when secret, or past the room its rules give the picks. */
-  protected override fitLinks(view: RulesetView, character: CharacterInput, _link: string, picks: string[]) {
+  protected override fitLinks(view: RulesetView, character: CharacterInput, _role: string, picks: string[]) {
     return new SpokenLanguages(view, character).plan(picks);
   }
 
   /** The race picker of a new character: the races it offers, and whether each is eligible. */
-  protected override openPicker(view: RulesetView, _column: string, query: CreationPickQuery) {
+  protected override openPicker(view: RulesetView, _role: string, query: CreationPickQuery) {
     return new RacePicker(view, query);
   }
 
-  /** What an edit of a character's identity writes: its fields, each checked, into its columns. */
+  /** What an edit of a character's identity writes: its fields, each checked, as its fields' values. */
   protected override planFields(_view: RulesetView, _character: CharacterInput, request: FieldsRequest) {
     return IdentityFields.plan(request);
   }

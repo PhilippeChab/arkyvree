@@ -5,8 +5,9 @@ import { and, eq } from "drizzle-orm";
 import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
-import { Campaigns, CharacterAdvancements, Characters, Players } from "@/server/repositories/index.ts";
+import { Campaigns, Characters, Players } from "@/server/repositories/index.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
+import { createAdvancement } from "@/server/services/characters/levels/index.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
 import { measure } from "@/tests/support/database.ts";
@@ -30,7 +31,7 @@ async function addLevels(characterId: string, levels: [string, number][]) {
   const ctx = await getSeedCtx();
   for (const [klass, level] of levels) {
     const klassLevel = (await findKlassLevel(ctx.klassMap.pc[klass], level))!;
-    await CharacterAdvancements.create(db, { characterId, klassLevelId: klassLevel.id, hp: 8 });
+    await createAdvancement(db, characterId, { trackId: klassLevel.id, picks: [{ step: "hp", amount: 8 }] });
   }
 }
 
@@ -262,9 +263,9 @@ describe("CampaignCharactersService", () => {
       const identity = partial.blocks.find((block) => block.key === "identity");
       if (identity?.kind !== "fields") throw new Error("no identity block");
       expect(Object.fromEntries(identity.lines.flat().map((field) => [field.key, field.value]))).toMatchObject({
-        gender: character.gender,
-        height: character.height,
-        weight: character.weight,
+        gender: character.fields.CHARACTER_GENDER,
+        height: character.fields.CHARACTER_HEIGHT,
+        weight: character.fields.CHARACTER_WEIGHT,
       });
       expect(partial.blocks).toHaveLength(1);
 

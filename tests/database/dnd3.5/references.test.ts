@@ -16,10 +16,11 @@ describe("A repoint of what names an entity, an unsubscribe's or a revert's", ()
       await db.execute<{ id: string }>(sql`SELECT id FROM rules.entities WHERE type = 'feats' ORDER BY id LIMIT 2`)
     ).rows.map((feat) => feat.id);
     // The level picked `from` twice (a stackable feat), and `to` once
-    await Picks.createMany(db, "feats", [
-      { characterLevelId: pick.advancement_id, featId: from, aptitudeId: pick.via_id },
-      { characterLevelId: pick.advancement_id, featId: from, aptitudeId: pick.via_id },
-      { characterLevelId: pick.advancement_id, featId: to, aptitudeId: pick.via_id },
+    const at = { advancementId: pick.advancement_id, step: "feats", viaId: pick.via_id };
+    await Picks.createMany(db, [
+      { ...at, entityId: from },
+      { ...at, entityId: from },
+      { ...at, entityId: to },
     ]);
 
     await db.transaction(async (tx) => {

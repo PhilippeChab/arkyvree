@@ -8,10 +8,6 @@ import type {
   Feat,
   Klass,
   KlassLevel,
-  LevelAbilityIncrease,
-  LevelFeat,
-  LevelSkill,
-  LevelSpell,
   Race,
   RulesetAbility,
   Skill,
@@ -32,7 +28,7 @@ import {
   Picks,
   Requirements,
 } from "@/server/repositories/index.ts";
-import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
+import { CharacterLevelsService, createAdvancement } from "@/server/services/characters/levels/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
@@ -56,7 +52,13 @@ import {
   type PlanPicks,
   savedPicksOf,
 } from "@/tests/support/dnd3.5/levelPlans.ts";
-import { addCharacterLevel, addOneLevel, findKlassLevel, increasesOf } from "@/tests/support/dnd3.5/levels.ts";
+import {
+  addCharacterLevel,
+  addOneLevel,
+  findKlassLevel,
+  findPicks,
+  increasesOf,
+} from "@/tests/support/dnd3.5/levels.ts";
 import { addClassSkills, addGrants, addListings, addLists } from "@/tests/support/dnd3.5/links.ts";
 import { getPlanAnswer, getStepOptions, stepAnswerOf } from "@/tests/support/levels.ts";
 import {
@@ -532,12 +534,13 @@ describe("LevelsService", () => {
     test("list the ruleset's skills with the class's marked and the character's current ranks", async () => {
       const { session, character, klass, klassLevels, skills } = await setupRuleset();
       await addClassSkills(db, klass.id, [skills["Diplomacy"].id]);
-      const [level] = await CharacterAdvancements.create(db, {
-        characterId: character.id,
-        klassLevelId: klassLevels[0].id,
-        hp: 8,
+      const level = await createAdvancement(db, character.id, {
+        trackId: klassLevels[0].id,
+        picks: [{ step: "hp", amount: 8 }],
       });
-      await Picks.createMany(db, "skills", [{ characterLevelId: level.id, skillId: skills["Diplomacy"].id, rank: 1 }]);
+      await Picks.createMany(db, [
+        { advancementId: level.id, step: "skills", entityId: skills["Diplomacy"].id, amount: 1 },
+      ]);
 
       const answer = await getPlanAnswer(session, character.id, levelUpPlan([planned(klass.id, 2)]));
       // The character's second level
@@ -738,7 +741,7 @@ describe("LevelsService", () => {
         { toId: feats["Power Attack"].id, aptitudeId: featAptitude.id, free: true },
       ]);
       await addCharacterLevel(character.id, klassLevels[0].id, {
-        feats: [{ featId: feats["Dodge"].id, aptitudeId: featAptitude.id }],
+        feats: { [featAptitude.id]: [feats["Dodge"].id] },
       });
       const copies = [];
       for (const name of ["Dodge", "Power Attack"]) {
@@ -791,10 +794,7 @@ describe("LevelsService", () => {
       });
       await addLists(db, "feats", classFeature.id, [{ aptitudeId: featAptitude.id }]);
       await addCharacterLevel(character.id, klassLevels[0].id, {
-        feats: [feats["Power Attack"], feats["Weapon Focus"]].map((f) => ({
-          featId: f.id,
-          aptitudeId: featAptitude.id,
-        })),
+        feats: { [featAptitude.id]: [feats["Power Attack"].id, feats["Weapon Focus"].id] },
       });
 
       const available = await featGroups(owner, character.id, levelUpPlan([planned(klass.id, 2)]), featAptitude.id);
@@ -1194,8 +1194,11 @@ describe("LevelsService", () => {
       await levelUp(session, ctx, other, "Cleric", 1, WAR_CLERIC_1);
       const levels = await CharacterAdvancements.findMany(db, { characterId: other });
       const picked = (
-        await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: levels.map((l) => l.id) })
-      ).map((f) => f.featId);
+        await findPicks(
+          "feats",
+          levels.map((l) => l.id),
+        )
+      ).map((f) => f.entityId);
       expect(picked).toEqual(
         expect.arrayContaining([ctx.featMap["Weapon Focus: Greataxe"], ctx.featMap["War Domain Weapon: Longsword"]]),
       );
@@ -1207,7 +1210,7 @@ describe("LevelsService", () => {
       const { session, character, klass, klassLevels, spellAptitude, spells } = await setupRuleset();
       await addGrants(db, klassLevels[1].id, "spells", [{ toId: spells["Rage"].id, aptitudeId: spellAptitude.id }]);
       await addCharacterLevel(character.id, klassLevels[0].id, {
-        spells: [{ spellId: spells["Sneak Attack"].id, aptitudeId: spellAptitude.id }],
+        spells: { [spellAptitude.id]: [spells["Sneak Attack"].id] },
       });
 
       const plan = levelUpPlan([planned(klass.id, 2)]);
@@ -1342,7 +1345,7 @@ describe("LevelsService", () => {
       });
       await addGrants(db, klassLevels[0].id, "spells", [{ toId: spells["Rage"].id, aptitudeId: spellAptitude.id }]);
       await addCharacterLevel(character.id, klassLevels[0].id, {
-        spells: [{ spellId: spells["Sneak Attack"].id, aptitudeId: spellAptitude.id }],
+        spells: { [spellAptitude.id]: [spells["Sneak Attack"].id] },
       });
       for (const name of ["Rage", "Sneak Attack"]) {
         await EntitiesService.updateEntity(session, ruleset.id, "spells", spells[name].id, {
@@ -1369,7 +1372,9 @@ describe("LevelsService", () => {
       });
       const characterId = await createSeedCharacter(ctx, "wizard", { rulesetId: fork.id });
       const [characterLevelId] = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
-      await Picks.createMany(db, "spells", [{ characterLevelId, spellId: merged.loserId, aptitudeId: wizardSpells }]);
+      await Picks.createMany(db, [
+        { advancementId: characterLevelId, step: "spells", entityId: merged.loserId, viaId: wizardSpells },
+      ]);
 
       expect(await spellNames(characterId, 2)).not.toContain(merged.name);
     });
@@ -1467,39 +1472,25 @@ describe("LevelsService", () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx, "sorcerer");
       const level = await levelUp(session, ctx, characterId, "Sorcerer", 1, SORCERER_1);
-      expect(level).toMatchObject({ characterId, hp: 4 });
-      expect(
-        await Picks.findMany<LevelAbilityIncrease>(db, { pick: "abilityIncreases", characterLevelIds: [level.id] }),
-      ).toEqual([]);
+      expect(level).toMatchObject({ characterId, position: 1 });
+      expect(await findPicks("hp", [level.id])).toMatchObject([{ amount: 4 }]);
+      expect(await findPicks("abilities", [level.id])).toEqual([]);
 
       const { skills, feats, spells } = picks(ctx, SORCERER_1);
       const saved = async <T>(rows: Promise<T[]>, key: (row: T) => string) => (await rows).map(key).sort();
-      expect(
-        await saved(
-          Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: [level.id] }),
-          (s) => `${s.skillId}:${s.rank}`,
-        ),
-      ).toEqual(
+      expect(await saved(findPicks("skills", [level.id]), (s) => `${s.entityId}:${s.amount}`)).toEqual(
         Object.entries(skills)
           .map(([id, rank]) => `${id}:${rank}`)
           .sort(),
       );
-      expect(
-        await saved(
-          Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [level.id] }),
-          (f) => `${f.aptitudeId}:${f.featId}`,
-        ),
-      ).toEqual(
+      expect(await saved(findPicks("feats", [level.id]), (f) => `${f.viaId}:${f.entityId}`)).toEqual(
         Object.entries(feats)
           .flatMap(([aptitude, ids]) => ids.map((id) => `${aptitude}:${id}`))
           .sort(),
       );
-      expect(
-        await saved(
-          Picks.findMany<LevelSpell>(db, { pick: "spells", characterLevelIds: [level.id] }),
-          (p) => p.spellId,
-        ),
-      ).toEqual(Object.values(spells).flat().sort());
+      expect(await saved(findPicks("spells", [level.id]), (p) => p.entityId!)).toEqual(
+        Object.values(spells).flat().sort(),
+      );
     });
 
     test("saves the ability increase of every fourth level", async () => {
@@ -1507,9 +1498,9 @@ describe("LevelsService", () => {
       const characterId = await createSeedCharacter(ctx, "fighter", { xp: 6000 });
       await addFighterLevels(session, ctx, characterId, 3);
       const level = await levelUp(session, ctx, characterId, "Fighter", 4, FIGHTER_LEVELS[3]);
-      expect(
-        await Picks.findMany<LevelAbilityIncrease>(db, { pick: "abilityIncreases", characterLevelIds: [level.id] }),
-      ).toMatchObject([{ abilityId: ctx.abilityMap["Strength"], amount: 1 }]);
+      expect(await findPicks("abilities", [level.id])).toMatchObject([
+        { entityId: ctx.abilityMap["Strength"], amount: 1 },
+      ]);
     });
 
     test("refuses picks the level can't take", async () => {
@@ -1674,9 +1665,7 @@ describe("LevelsService", () => {
 
       const characterId = await createSeedCharacter(ctx, "fighter", { abilities: { Dexterity: 8 } });
       const level = await levelUp(session, ctx, characterId, "Fighter", 1, plan, true);
-      expect(
-        (await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [level.id] })).map((f) => f.featId),
-      ).toContain(ctx.featMap["Dodge"]);
+      expect((await findPicks("feats", [level.id])).map((f) => f.entityId)).toContain(ctx.featMap["Dodge"]);
     });
 
     test("works on a fork, with the content it inherits", async () => {
@@ -1691,9 +1680,9 @@ describe("LevelsService", () => {
 
       const wizard = await createSeedCharacter(ctx, "wizard", { rulesetId: fork.id });
       const level = await levelUp(session, ctx, wizard, "Wizard", 1, WIZARD_1);
-      expect(
-        (await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [level.id] })).map((f) => f.featId),
-      ).toEqual(expect.arrayContaining(Object.values(picks(ctx, WIZARD_1).feats).flat()));
+      expect((await findPicks("feats", [level.id])).map((f) => f.entityId)).toEqual(
+        expect.arrayContaining(Object.values(picks(ctx, WIZARD_1).feats).flat()),
+      );
     });
   });
 
@@ -1772,11 +1761,9 @@ describe("LevelsService", () => {
           levelEditPlan({ hp: 10 }, { feats }),
           true,
         );
-        expect(
-          (await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [fighter1] }))
-            .map((f) => f.featId)
-            .sort(),
-        ).toEqual(Object.values(feats).flat().sort());
+        expect((await findPicks("feats", [fighter1])).map((f) => f.entityId).sort()).toEqual(
+          Object.values(feats).flat().sort(),
+        );
       });
 
       test("reports the skill budget the save validates, the first level keeping its ×4", async () => {
@@ -1809,8 +1796,8 @@ describe("LevelsService", () => {
             levelEditPlan({ hp: 8 }, { skills: skillPoints(ctx, points) }),
             true,
           );
-          const saved = await Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: [levelIds[index]] });
-          return { budget, room, saved: saved.reduce((sum, s) => sum + s.rank, 0) };
+          const saved = await findPicks("skills", [levelIds[index]]);
+          return { budget, room, saved: saved.reduce((sum, s) => sum + s.amount!, 0) };
         };
 
         // Editing the barbarian level: 22 less the 18 the fighter levels spent; Intimidate's 9 ranks elsewhere are past
@@ -1846,12 +1833,8 @@ describe("LevelsService", () => {
           levelEditPlan({ hp: 4 }, { spells: picks(ctx, { spells: { "Sorcerer Spells": ["Magic Missile"] } }).spells }),
           true,
         );
-        expect(
-          await Picks.findMany<LevelSpell>(db, { pick: "spells", characterLevelIds: [levelIds[2]] }),
-        ).toMatchObject([{ spellId: ctx.spellMap["Magic Missile"] }]);
-        expect(await Picks.findMany<LevelSpell>(db, { pick: "spells", characterLevelIds: [levelIds[0]] })).toHaveLength(
-          2,
-        );
+        expect(await findPicks("spells", [levelIds[2]])).toMatchObject([{ entityId: ctx.spellMap["Magic Missile"] }]);
+        expect(await findPicks("spells", [levelIds[0]])).toHaveLength(2);
       });
     });
 
@@ -1962,23 +1945,21 @@ describe("LevelsService", () => {
       const characterId = await createSeedCharacter(ctx, "fighter", { xp: 3000 });
       const klassLevel = async (klass: string, level: number) =>
         (await findKlassLevel(ctx.klassMap.pc[klass], level))!.id;
-      const [fighter2] = await CharacterAdvancements.create(db, {
-        characterId,
-        klassLevelId: await klassLevel("Fighter", 2),
-        hp: 10,
+      const fighter2 = await createAdvancement(db, characterId, {
+        trackId: await klassLevel("Fighter", 2),
+        picks: [{ step: "hp", amount: 10 }],
       });
-      const [rogue1] = await CharacterAdvancements.create(db, {
-        characterId,
-        klassLevelId: await klassLevel("Rogue", 1),
-        hp: 6,
+      const rogue1 = await createAdvancement(db, characterId, {
+        trackId: await klassLevel("Rogue", 1),
+        picks: [{ step: "hp", amount: 6 }],
       });
       await addSkills(db, ctx, [rogue1.id], [{ levelIndex: 0, skillName: "Hide", rank: 4 }]);
       await addFeats(db, ctx, [rogue1.id], [{ levelIndex: 0, featName: "Dodge", aptitude: "General" }]);
 
       expect(await CharacterLevelsService.removeLevel(session, characterId)).toMatchObject({ success: true });
       expect(await CharacterAdvancements.findMany(db, { characterId })).toMatchObject([{ id: fighter2.id }]);
-      expect(await Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: [rogue1.id] })).toEqual([]);
-      expect(await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [rogue1.id] })).toEqual([]);
+      expect(await findPicks("skills", [rogue1.id])).toEqual([]);
+      expect(await findPicks("feats", [rogue1.id])).toEqual([]);
     });
   });
 

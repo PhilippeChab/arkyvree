@@ -35,7 +35,7 @@ describe("EntitiesService: languages", () => {
     });
     const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
-    await CharacterLinks.create(db, "languages", { characterId: character.id, languageId: language.id });
+    await CharacterLinks.createMany(db, character.id, "speaks", [{ entityId: language.id }]);
 
     expect(EntitiesService.deleteEntity(session, extension.id, "languages", language.id)).rejects.toThrow(
       ConflictError,

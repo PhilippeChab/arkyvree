@@ -3,6 +3,7 @@ import { eq, or } from "drizzle-orm";
 import { charactersInCharacter } from "@/drizzle/schema.ts";
 import type { SheetBlock } from "@/engine/core/module/index.ts";
 import { db } from "@/server/database/index.ts";
+import { CharacterLinks } from "@/server/repositories/index.ts";
 
 /** The notes a sheet's identity block holds: its public ones, and its private ones for a reader who reads them. */
 export function notesOf(sheet: { blocks: SheetBlock[] }) {
@@ -30,4 +31,9 @@ export async function backdateLastChange(characterId: string, at = "2000-01-01T0
     .update(charactersInCharacter)
     .set({ lastChangedAt: at })
     .where(or(eq(charactersInCharacter.id, characterId), eq(charactersInCharacter.parentCharacterId, characterId)));
+}
+
+/** A character's links of a role it holds many of (`role`: 3.5's `score`, `speaks`), as stored, in their order. */
+export async function findLinks(role: string, characterId: string) {
+  return (await CharacterLinks.findPerRole(db, { characterId }))[role];
 }

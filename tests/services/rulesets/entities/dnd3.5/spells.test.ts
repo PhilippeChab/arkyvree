@@ -271,7 +271,7 @@ describe("EntitiesService: spells", () => {
 
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
     const { klassLevel } = await createTestKlassLevel(host.id);
-    await addCharacterLevel(character.id, klassLevel.id, { spells: [{ spellId: spell.id, aptitudeId: wizard }] });
+    await addCharacterLevel(character.id, klassLevel.id, { spells: { [wizard]: [spell.id] } });
 
     await expectRefusedWith(EntitiesService.deleteEntity(session, extension.id, "spells", spell.id), 409);
   });

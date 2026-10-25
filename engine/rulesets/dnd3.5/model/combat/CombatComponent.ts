@@ -1,7 +1,7 @@
+import type { StoredAdvancement } from "@/engine/core/module/index.ts";
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
-import type { CharacterLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { include } from "@/lib/mixins.ts";
 import { UNARMED_STRIKE, UNARMED_STRIKE_STATS } from "@/vocabulary/dnd3.5/combat.ts";
 
@@ -17,19 +17,23 @@ import { InitiativeAndSpeed } from "./concerns/InitiativeAndSpeed.ts";
  */
 class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoints, InitiativeAndSpeed) {
   /**
-   * The sheet from the character's classes (its hit dice, its base attack bonus) and race (its speed), an unarmed strike
-   * in its first set's main hand, then what its inventory has equipped.
+   * The sheet from the character's classes (its hit dice, its levels' hit points, its base attack bonus) and race (its
+   * speed), an unarmed strike in its first set's main hand, then what its inventory has equipped.
    */
-  override initialize({ classLevelFields, race }: Pick<LoadedCharacterData, "classLevelFields" | "race">) {
+  override initialize({
+    classLevelFields,
+    levelHitPoints,
+    race,
+  }: Pick<LoadedCharacterData, "classLevelFields" | "levelHitPoints" | "race">) {
     const classes = this.classes.getClasses();
     const levels = Object.values(classes).reduce((acc, klass) => {
       for (const level of klass.levels) acc.push(level.characterLevel);
 
       return acc;
-    }, [] as CharacterLevel[]);
+    }, [] as StoredAdvancement[]);
 
     this.initializeArmorClass();
-    this.initializeHitPoints(levels);
+    this.initializeHitPoints(levels.map((level) => levelHitPoints.get(level.id)!));
     this.initializeInitiative();
     this.initializeBaseAttackBonus(classes, classLevelFields);
     this.initializeGrapple();

@@ -49,7 +49,7 @@ export default class LevelUpSteps extends LevelUpState {
     const hp = LevelRules.UNROLLED_LEVEL_HP;
     projection.addLevels(planned?.klassLevelIds ?? [], { abilityIncreases: planned?.abilityIncreases, hp });
     // The levels before this one: the level added or edited is the next
-    const levelsBefore = projection.input.rows.levels.length;
+    const levelsBefore = projection.input.rows.advancements.length;
     if (!LevelRules.of(this.view).isAbilityIncreaseLevel(levelsBefore))
       return { isAvailable: false, attributes: [], picked: true };
     return {
@@ -84,7 +84,7 @@ export default class LevelUpSteps extends LevelUpState {
     const levels = {
       perLevelClassSkillIds: [dnd35.skills.filter(({ id }) => classSkillIds.has(id)).map(({ id }) => id)],
       perLevelSkillPoints: [this.getSkillPointsToSpend(character)],
-      savedLevelCount: projection.input.rows.levels.length - 1,
+      savedLevelCount: projection.input.rows.advancements.length - 1,
     };
     return this.skillStep(character, classSkillIds, levels, step.picks?.skills ?? {});
   }
@@ -109,7 +109,7 @@ export default class LevelUpSteps extends LevelUpState {
     projection.addLevels(step.planned?.klassLevelIds ?? [], { abilityIncreases: step.planned?.abilityIncreases, hp });
     const replacing = step.editedLevel;
     const level = projection.addLevel(klassLevelId, { abilityIncreases: step.abilityIncreases, hp, replacing });
-    if (picks) projection.pick(level, this.toPickRows({ ...picks, skills: {} }));
+    if (picks) projection.pick(level, this.toPickPlans({ ...picks, skills: {} }));
     return projection;
   }
 
@@ -122,7 +122,7 @@ export default class LevelUpSteps extends LevelUpState {
   /** The step's projection, the edited level's place read off the character's levels: refused when it has no such level. */
   private readStep({ editedLevelId, ...step }: LevelQuery): StepProjection {
     if (!editedLevelId) return step;
-    const editedLevel = this.character.rows.levels.find((level) => level.id === editedLevelId);
+    const editedLevel = this.character.rows.advancements.find((level) => level.id === editedLevelId);
     if (!editedLevel) throw new RulesError("not-found", "Character level not found");
     return { ...step, editedLevel };
   }

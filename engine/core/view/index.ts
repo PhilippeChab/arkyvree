@@ -8,7 +8,6 @@
 export { default as RequestIds } from "./RequestIds.ts";
 export type {
   EntityRow,
-  LinkRow,
   NamedLink,
   OwnedEntities,
   OwnedKind,

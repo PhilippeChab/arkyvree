@@ -1,10 +1,16 @@
+import type { StoredPick } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 
 import type { LevelUpRules } from "./LevelUpBase.ts";
-import type { AbilityIncrease, FeatPick, LevelPickRows, SpellPick } from "./plans.ts";
-import type { LevelPicks } from "./requests.ts";
+import type { AbilityIncrease, FeatPick, LevelPicks, SpellPick } from "./requests.ts";
+
+/** An edited level's own saved feats and spells, each in its pool: the level's, whatever else holds them. */
+interface KeptPicks {
+  feats: StoredPick[];
+  spells: StoredPick[];
+}
 
 /** The level's hit points and selections a check reads, with its class. */
 interface LevelChecked {
@@ -21,9 +27,6 @@ interface LevelPick {
   kind: "feats" | "spells";
   name: string;
 }
-
-/** An edited level's own saved feats and spells, each in its pool: the level's, whatever else holds them. */
-type KeptPicks = Pick<LevelPickRows, "feats" | "spells">;
 
 /** A level's (or a level-up's) own feats and spells, each by the pool it's picked in. */
 type PoolPicks = Pick<LevelPicks, "feats" | "spells">;
@@ -118,8 +121,8 @@ export default class SelectionChecks {
    * way in: the last by name first, then by id. A pick the level holds already (`kept`) is its own, whatever gives it.
    */
   private findGivenPicks(picks: PoolPicks, holding: Holding, kept: KeptPicks): LevelPick[] {
-    const ownFeats = new Set(kept.feats.map(({ featId }) => featId));
-    const ownSpells = new Set(kept.spells.map(({ aptitudeId, spellId }) => `${spellId}:${aptitudeId}`));
+    const ownFeats = new Set(kept.feats.map(({ entityId }) => entityId));
+    const ownSpells = new Set(kept.spells.map(({ entityId, viaId }) => `${entityId}:${viaId}`));
     const { featsById, spellsById } = this.dnd35;
     const picked = [
       ...this.listPicks("feats", picks.feats, featsById).filter(({ id }) => !this.isStackable(id) && !ownFeats.has(id)),
@@ -188,12 +191,12 @@ export default class SelectionChecks {
    * stack once; one that stacks is the level's to pick again. A pick the level holds already (`kept`, an edited level's
    * saved picks) is its own, whatever else holds it.
    */
-  private splitHeldFeats(feats: Record<string, string[]>, held: () => HeldFeat[], kept: FeatPick[]) {
+  private splitHeldFeats(feats: Record<string, string[]>, held: () => HeldFeat[], kept: StoredPick[]) {
     const repeated: FeatPick[] = [];
     const picked = Object.values(feats).flat();
     if (picked.every((featId) => this.isStackable(featId))) return { fresh: feats, repeated };
     const seen = new Set(held().map(({ id }) => id));
-    const own = new Set(kept.map(({ featId }) => featId));
+    const own = new Set(kept.map(({ entityId }) => entityId));
     const fresh: Record<string, string[]> = {};
     for (const [aptitudeId, ids] of Object.entries(feats)) {
       fresh[aptitudeId] = [];
@@ -236,12 +239,12 @@ export default class SelectionChecks {
    * known by its modifiers), or picked there before them. A character knows a spell once in a pool, and may know it in
    * another. A pick the level holds already (`kept`, an edited level's saved picks) is its own, whatever else knows it.
    */
-  private splitKnownSpells(spells: Record<string, string[]>, known: () => KnownSpell[], kept: SpellPick[]) {
+  private splitKnownSpells(spells: Record<string, string[]>, known: () => KnownSpell[], kept: StoredPick[]) {
     const repeated: SpellPick[] = [];
     if (Object.values(spells).every((ids) => ids.length === 0)) return { fresh: spells, repeated };
     const keyOf = (aptitudeId: string, spellId: string) => `${spellId}:${aptitudeId}`;
     const seen = new Set(known().map(({ aptitudeId, id }) => keyOf(aptitudeId, id)));
-    const own = new Set(kept.map(({ aptitudeId, spellId }) => keyOf(aptitudeId, spellId)));
+    const own = new Set(kept.map(({ entityId, viaId }) => keyOf(viaId!, entityId!)));
     const fresh: Record<string, string[]> = {};
     for (const [aptitudeId, ids] of Object.entries(spells)) {
       fresh[aptitudeId] = [];

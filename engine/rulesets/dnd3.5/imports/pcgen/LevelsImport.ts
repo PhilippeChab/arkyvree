@@ -1,5 +1,5 @@
 import type { ImportReport } from "@/engine/core/imports/index.ts";
-import type { CharacterInput, ChildPlan } from "@/engine/core/module/index.ts";
+import type { AdvancementPlan, CharacterInput, ChildPlan } from "@/engine/core/module/index.ts";
 import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { ImportedCharacter, ImportedFeat, ImportedLevel } from "@/engine/rulesets/dnd3.5/imports/imported.ts";
@@ -12,8 +12,13 @@ import PicksPlacement, {
 import Dnd35LevelUp from "@/engine/rulesets/dnd3.5/levelUp/Dnd35LevelUp.ts";
 import LevelByLevel from "@/engine/rulesets/dnd3.5/levelUp/LevelByLevel.ts";
 import type { PlannedClassLevel } from "@/engine/rulesets/dnd3.5/levelUp/LevelUpBase.ts";
-import type { AbilityIncrease, FeatPick, LevelWrites, SpellPick } from "@/engine/rulesets/dnd3.5/levelUp/plans.ts";
-import type { LevelPicks, LevelRequest } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
+import type {
+  AbilityIncrease,
+  FeatPick,
+  LevelPicks,
+  LevelRequest,
+  SpellPick,
+} from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
@@ -230,8 +235,10 @@ export default class LevelsImport {
    * Lists what no level took: a feat another line of the file picked already isn't imported again, one its class or
    * race gives anyway is imported, the others aren't.
    */
-  private reportLeft(placement: PicksPlacement, character: DetailedCharacter, writes: LevelWrites[]) {
-    const picked = new Set(writes.flatMap(({ rows }) => rows.feats.map(({ featId }) => featId)));
+  private reportLeft(placement: PicksPlacement, character: DetailedCharacter, writes: AdvancementPlan[]) {
+    const picked = new Set(
+      writes.flatMap(({ picks }) => picks.flatMap(({ entityId, step }) => (step === "feats" ? [entityId] : []))),
+    );
     const held = new Set(character.getHeldFeats().map((feat) => feat.id));
     for (const feat of placement.leftFeats()) {
       // Two lines the ruleset reads as one feat (a choice it keeps whole): the second isn't another pick
@@ -305,7 +312,7 @@ export default class LevelsImport {
   planLevels(
     character: CharacterInput,
     increases: AbilityIncrease[][],
-  ): { refused: LevelStop } | { character: CharacterInput; children: ChildPlan[]; levels: LevelWrites[] } {
+  ): { refused: LevelStop } | { advancements: AdvancementPlan[]; character: CharacterInput; children: ChildPlan[] } {
     const { levels } = this;
     const placement = new PicksPlacement(
       this.view.rulesetData,
@@ -315,7 +322,7 @@ export default class LevelsImport {
     );
     const leveling = new LevelByLevel<DetailedCharacter>(this.view, character, this.levelUp);
     const lastOfClass = new Map(levels.map((level, index) => [level.level.className, index + 1]));
-    const writes: LevelWrites[] = [];
+    const writes: AdvancementPlan[] = [];
     let issuesBefore = new Set<string>();
     for (const [index, level] of levels.entries()) {
       const abilityIncreases = increases[index] ?? [];
@@ -356,6 +363,6 @@ export default class LevelsImport {
     }
     const leveled = leveling.buildCharacter();
     this.reportLeft(placement, leveled, writes);
-    return { character: leveling.character, children: leveling.planBonded(leveled).children, levels: writes };
+    return { advancements: writes, character: leveling.character, children: leveling.planBonded(leveled).children };
   }
 }

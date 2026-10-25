@@ -1,11 +1,10 @@
-import type { CharacterInput, ChildrenPlan } from "@/engine/core/module/index.ts";
+import type { AdvancementPlan, CharacterInput, ChildrenPlan } from "@/engine/core/module/index.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
 import CharacterProjection from "./CharacterProjection.ts";
 import LevelsPlanning, { type CheckedCharacter } from "./LevelsPlanning.ts";
 import type { LevelUpRules } from "./LevelUpBase.ts";
-import type { LevelWrites } from "./plans.ts";
 import type { LevelPicks, LevelRequest } from "./requests.ts";
 
 /**
@@ -49,15 +48,11 @@ export default class LevelByLevel<C extends CheckedCharacter> {
    * The next level (`level`, with its `picks`), saved after those before it, forced: what it writes, and what the
    * character with it fails of what a level-up checks (none when it passes), as an unforced level-up would refuse it.
    */
-  planLevel(level: LevelRequest, picks: LevelPicks): { issues: RulesIssue[]; writes: LevelWrites } {
+  planLevel(level: LevelRequest, picks: LevelPicks): { issues: RulesIssue[]; writes: AdvancementPlan } {
     const planned = new LevelsPlanning(this.view, this.input, this.rules).planLevelsForced({ levels: [level], picks });
-    const [writes] = planned.levels;
+    const [writes] = planned.advancements;
     const projection = new CharacterProjection(this.input);
-    const { abilityIncreases } = writes.rows;
-    projection.pick(
-      projection.addLevel(writes.columns.klassLevelId, { abilityIncreases, hp: writes.columns.hp }),
-      writes.rows,
-    );
+    projection.addAdvancement(writes);
     this.input = projection.input;
     return { issues: planned.issues, writes };
   }

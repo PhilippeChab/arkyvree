@@ -4,13 +4,8 @@ import { and, eq } from "drizzle-orm";
 import { isValidElement } from "react";
 
 import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
-import type {
-  CharacterAbility,
-  CharacterLanguage,
-  LevelFeat,
-  LevelSkill,
-  Race,
-} from "@/engine/rulesets/dnd3.5/index.ts";
+import CharacterValues from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
+import type { Race } from "@/engine/rulesets/dnd3.5/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -26,7 +21,6 @@ import {
   Characters,
   Entities,
   Modifiers,
-  Picks,
   PlayerCharacters,
   Players,
   Requirements,
@@ -35,10 +29,10 @@ import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
-import { backdateLastChange } from "@/tests/support/characters.ts";
+import { backdateLastChange, findLinks } from "@/tests/support/characters.ts";
 import { addRulesetContributor } from "@/tests/support/contributors.ts";
-import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
-import { addCharacterLevel, findKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { createCharacterAs, valuesOf } from "@/tests/support/dnd3.5/characters.ts";
+import { addCharacterLevel, findKlassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestAttachment } from "@/tests/support/files.ts";
 import { queuedPdfJobs } from "@/tests/support/jobs.ts";
 import {
@@ -93,17 +87,13 @@ describe("CharactersService", () => {
       } as const;
       const scores = { [abilityMap["Strength"]]: 18, [abilityMap["Dexterity"]]: 14 };
       const paladin = await createCharacterAs(session, { ...details, abilities: scores });
-      expect(paladin).toMatchObject({ ...details, userId: user.id });
+      expect(valuesOf(paladin)).toMatchObject({ ...details, userId: user.id });
 
-      const abilities = Object.fromEntries(
-        (await CharacterLinks.findMany<CharacterAbility>(db, { link: "abilities", characterId: paladin.id })).map(
-          (a) => [a.abilityId, a.score],
-        ),
-      );
+      const abilities = Object.fromEntries((await findLinks("score", paladin.id)).map((a) => [a.entityId, a.amount]));
       expect(Object.keys(abilities)).toHaveLength(6);
       expect(abilities).toMatchObject({ ...scores, [abilityMap["Wisdom"]]: 10 });
 
-      expect(await createCharacterAs(session)).toMatchObject({ deity: null, description: null, notes: null });
+      expect(valuesOf(await createCharacterAs(session))).toMatchObject({ deity: null, description: null, notes: null });
     });
 
     test("has no limit on how many characters a user keeps", async () => {
@@ -125,11 +115,14 @@ describe("CharactersService", () => {
       const { user: player, session: playerSession } = await createTestUser();
       const [campaign] = await Campaigns.create(db, { name: "Test Campaign", rulesetId: ruleset.id });
       await Players.create(db, { userId: player.id, campaignId: campaign.id, role: "Player Character" });
-      expect(await createCharacterAs(playerSession, onPrivate)).toMatchObject({ ...onPrivate, userId: player.id });
+      expect(valuesOf(await createCharacterAs(playerSession, onPrivate))).toMatchObject({
+        ...onPrivate,
+        userId: player.id,
+      });
 
       const { user: contributor, session: contributorSession } = await createTestUser();
       await addRulesetContributor(ruleset.id, contributor, owner.id);
-      expect(await createCharacterAs(contributorSession, onPrivate)).toMatchObject({
+      expect(valuesOf(await createCharacterAs(contributorSession, onPrivate))).toMatchObject({
         ...onPrivate,
         userId: contributor.id,
       });
@@ -152,7 +145,7 @@ describe("CharactersService", () => {
         await createTestRuleset(user.id, { rulesetId: grandparent.id, ancestorRulesetIds: [grandparent.id] }),
         await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id, grandparent.id] }),
       ]) {
-        expect(await createCharacterAs(session, { rulesetId: fork.id, raceId: race.id })).toMatchObject({
+        expect(valuesOf(await createCharacterAs(session, { rulesetId: fork.id, raceId: race.id }))).toMatchObject({
           rulesetId: fork.id,
           raceId: race.id,
         });
@@ -184,13 +177,10 @@ describe("CharactersService", () => {
         abilities: { [ctx.abilityMap["Strength"]]: 17 },
       };
       const character = await createCharacterAs(session, values);
-      expect(character.raceId).toBe(elf.id);
-      const scores = await CharacterLinks.findMany<CharacterAbility>(db, {
-        link: "abilities",
-        characterId: character.id,
-      });
-      expect(scores.map(({ abilityId }) => abilityId)).not.toContain(ctx.abilityMap["Strength"]);
-      expect(scores.find(({ abilityId }) => abilityId === strength.id)?.score).toBe(17);
+      expect(character.links.race).toBe(elf.id);
+      const scores = await findLinks("score", character.id);
+      expect(scores.map(({ entityId }) => entityId)).not.toContain(ctx.abilityMap["Strength"]);
+      expect(scores.find(({ entityId }) => entityId === strength.id)?.amount).toBe(17);
 
       const twice = { [ctx.abilityMap["Strength"]]: 17, [strength.id]: 12 };
       expect(createCharacterAs(session, { ...values, abilities: twice })).rejects.toMatchObject({
@@ -219,7 +209,7 @@ describe("CharactersService", () => {
 
       const fields = { age: 35, experience: 5000, alignment: "Chaotic Good", description: "Updated" };
       expect(
-        await CharactersService.updateCharacter(session, created.id, { fields, notes: "Updated notes" }),
+        valuesOf(await CharactersService.updateCharacter(session, created.id, { fields, notes: "Updated notes" })),
       ).toMatchObject({
         age: 35,
         xp: 5000,
@@ -248,12 +238,9 @@ describe("CharactersService", () => {
       const copy = (await copyEntity(db, "abilities", ctx.abilityMap["Strength"], fork)).id as string;
       RulesetViews.invalidate(fork.id);
 
-      await CharactersService.updateScores(session, character.id, "abilities", { [copy]: 17 });
-      const scores = await CharacterLinks.findMany<CharacterAbility>(db, {
-        link: "abilities",
-        characterId: character.id,
-      });
-      expect(scores.find((a) => a.abilityId === ctx.abilityMap["Strength"])?.score).toBe(17);
+      await CharactersService.updateScores(session, character.id, "score", { [copy]: 17 });
+      const scores = await findLinks("score", character.id);
+      expect(scores.find((a) => a.entityId === ctx.abilityMap["Strength"])?.amount).toBe(17);
     });
 
     test("sets a score by either id of an ability its fork copied, and refuses one it lacks by name", async () => {
@@ -264,21 +251,16 @@ describe("CharactersService", () => {
       const strength = await copyEntity(db, "abilities", ctx.abilityMap["Strength"], fork);
       RulesetViews.invalidate(fork.id);
 
-      await CharactersService.updateScores(session, character.id, "abilities", { [ctx.abilityMap["Strength"]]: 15 });
-      const scores = await CharacterLinks.findMany<CharacterAbility>(db, {
-        link: "abilities",
-        characterId: character.id,
-      });
-      expect(scores.find(({ abilityId }) => abilityId === ctx.abilityMap["Strength"])?.score).toBe(15);
+      await CharactersService.updateScores(session, character.id, "score", { [ctx.abilityMap["Strength"]]: 15 });
+      const scores = await findLinks("score", character.id);
+      expect(scores.find(({ entityId }) => entityId === ctx.abilityMap["Strength"])?.amount).toBe(15);
 
       const twice = { [ctx.abilityMap["Strength"]]: 15, [strength.id]: 16 };
-      expect(CharactersService.updateScores(session, character.id, "abilities", twice)).rejects.toMatchObject({
+      expect(CharactersService.updateScores(session, character.id, "score", twice)).rejects.toMatchObject({
         message: `Ability ${strength.id} is given more than once`,
         refusal: "invalid",
       });
-      expect(
-        CharactersService.updateScores(session, character.id, "abilities", { [NIL_UUID]: 15 }),
-      ).rejects.toMatchObject({
+      expect(CharactersService.updateScores(session, character.id, "score", { [NIL_UUID]: 15 })).rejects.toMatchObject({
         message: `Ability ${NIL_UUID} does not belong to the character's ruleset`,
         refusal: "invalid",
       });
@@ -293,25 +275,22 @@ describe("CharactersService", () => {
       // A human of Intelligence 14: two languages to pick, of any kind but a secret one
       const abilities = { [ctx.abilityMap["Intelligence"]]: 14 };
       const character = await createCharacterAs(session, { rulesetId: fork.id, abilities });
-      const spoken = async () =>
-        (await CharacterLinks.findMany<CharacterLanguage>(db, { link: "languages", characterId: character.id })).map(
-          ({ languageId }) => languageId,
-        );
+      const spoken = async () => (await findLinks("speaks", character.id)).map(({ entityId }) => entityId);
 
-      await CharactersService.updateLinkPicks(session, character.id, "languages", [ctx.langMap["Draconic"]]);
+      await CharactersService.updateLinkPicks(session, character.id, "speaks", [ctx.langMap["Draconic"]]);
       expect(await spoken()).toEqual([draconic.id]);
       // Common is the human's own: what it speaks without a pick isn't stored
       const languageIds = [ctx.langMap["Common"], ctx.langMap["Draconic"], ctx.langMap["Elven"]];
-      await CharactersService.updateCharacter(session, character.id, { links: { languages: languageIds } });
+      await CharactersService.updateCharacter(session, character.id, { links: { speaks: languageIds } });
       expect((await spoken()).toSorted()).toEqual([draconic.id, ctx.langMap["Elven"]].toSorted());
 
       // Its source's id and its copy's name one language
       const both = [ctx.langMap["Draconic"], draconic.id];
-      expect(CharactersService.updateLinkPicks(session, character.id, "languages", both)).rejects.toMatchObject({
+      expect(CharactersService.updateLinkPicks(session, character.id, "speaks", both)).rejects.toMatchObject({
         message: `Language ${draconic.id} is given more than once`,
         refusal: "invalid",
       });
-      expect(CharactersService.updateLinkPicks(session, character.id, "languages", [NIL_UUID])).rejects.toMatchObject({
+      expect(CharactersService.updateLinkPicks(session, character.id, "speaks", [NIL_UUID])).rejects.toMatchObject({
         message: `Language ${NIL_UUID} does not belong to the character's ruleset`,
         refusal: "invalid",
       });
@@ -433,18 +412,16 @@ describe("CharactersService", () => {
       const ctx = await getSeedCtx();
       const character = await createCharacterAs(session);
       const level = await addCharacterLevel(character.id, (await fighterLevel()).id, {
-        skills: [{ skillId: ctx.skillMap["Climb"], rank: 1 }],
-        feats: [{ featId: ctx.featMap["Toughness"], aptitudeId: ctx.aptMap["General"] }],
+        skills: { [ctx.skillMap["Climb"]]: 1 },
+        feats: { [ctx.aptMap["General"]]: [ctx.featMap["Toughness"]] },
       });
-      await CharacterLinks.create(db, "languages", { characterId: character.id, languageId: ctx.langMap["Common"] });
+      await CharacterLinks.createMany(db, character.id, "speaks", [{ entityId: ctx.langMap["Common"] }]);
       await CharacterInventory.create(db, { characterId: character.id, itemId: ctx.itemMap["Longsword"], quantity: 1 });
       const children = async () => ({
         levels: (await CharacterAdvancements.findMany(db, { characterId: character.id })).length,
-        skills: (await Picks.findMany<LevelSkill>(db, { pick: "skills", characterLevelIds: [level.id] })).length,
-        feats: (await Picks.findMany<LevelFeat>(db, { pick: "feats", characterLevelIds: [level.id] })).length,
-        languages: (
-          await CharacterLinks.findMany<CharacterLanguage>(db, { link: "languages", characterId: character.id })
-        ).filter((l) => !l.deletedAt).length,
+        skills: (await findPicks("skills", [level.id])).length,
+        feats: (await findPicks("feats", [level.id])).length,
+        languages: (await findLinks("speaks", character.id)).length,
         inventory: (await CharacterInventory.findMany(db, { characterId: character.id })).filter((i) => !i.deletedAt)
           .length,
       });
@@ -477,13 +454,10 @@ describe("CharactersService", () => {
         const [familiar] = await Characters.create(db, {
           userId: session.userId,
           rulesetId,
-          raceId: raceMap.pc["Human"],
           parentCharacterId: character.id,
           kind: "familiar",
-          xp: 0,
           name: "Whiskers",
-          alignment: "True Neutral",
-          gender: "Male",
+          ...CharacterValues.write({ raceId: raceMap.pc["Human"], xp: 0, alignment: "True Neutral", gender: "Male" }),
         });
 
         const portraits = [
@@ -586,7 +560,7 @@ describe("CharactersService", () => {
   describe("races a new character can take", () => {
     test("are all eligible on the seeded ruleset", async () => {
       const { rulesetId } = await getSeedCtx();
-      const { items, page: pageNumber } = await CharactersService.getCreationOptions(rulesetId, "raceId", {}, {}, page);
+      const { items, page: pageNumber } = await CharactersService.getCreationOptions(rulesetId, "race", {}, {}, page);
       expect(pageNumber).toBe(1);
       expect(items.map((r) => r.name)).toEqual(expect.arrayContaining(["Human", "Elf", "Dwarf"]));
       expect(items.filter((r) => !r.eligible)).toEqual([]);
@@ -614,7 +588,7 @@ describe("CharactersService", () => {
       });
       invalidateSeededRuleset(rulesetId);
       const eligible = async (form: Record<string, string>) =>
-        (await CharactersService.getCreationOptions(rulesetId, "raceId", form, {}, page)).items.find(
+        (await CharactersService.getCreationOptions(rulesetId, "race", form, {}, page)).items.find(
           (r) => r.id === race.id,
         )!.eligible;
 
@@ -640,7 +614,7 @@ describe("CharactersService", () => {
       ]);
       invalidateSeededRuleset(rulesetId);
       const eligible = async (form: Record<string, string>) =>
-        (await CharactersService.getCreationOptions(rulesetId, "raceId", form, {}, page)).items.find(
+        (await CharactersService.getCreationOptions(rulesetId, "race", form, {}, page)).items.find(
           (r) => r.id === race.id,
         )!.eligible;
 

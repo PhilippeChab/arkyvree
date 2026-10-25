@@ -77,7 +77,7 @@ describe("A character's languages, as its requirements read them", () => {
     const human = await createTestCharacter(SEED_USER_ID);
     expect(await speaks(human, "draconic")).toBe(false);
 
-    await CharacterLinks.create(db, "languages", { characterId: human.id, languageId: langMap["Draconic"] });
+    await CharacterLinks.createMany(db, human.id, "speaks", [{ entityId: langMap["Draconic"] }]);
     expect(await speaks(human, "draconic")).toBe(true);
   });
 
@@ -104,7 +104,7 @@ describe("A character's languages, as its requirements read them", () => {
     const { langMap } = await getSeedCtx();
     const picker = await pickDraconicGatedFeat();
     expect(await bluffMisc(picker)).toBe(0);
-    await CharacterLinks.create(db, "languages", { characterId: picker.id, languageId: langMap["Draconic"] });
+    await CharacterLinks.createMany(db, picker.id, "speaks", [{ entityId: langMap["Draconic"] }]);
     expect(await bluffMisc(picker)).toBe(2);
 
     const granted = await pickDraconicGatedFeat();

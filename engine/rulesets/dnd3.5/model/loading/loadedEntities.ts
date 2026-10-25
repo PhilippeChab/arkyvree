@@ -1,12 +1,17 @@
 /** The entities a 3.5 character's load gives (`DetailedCharacterDataLoader`), each with its customizations. */
 
+import type { StoredAdvancement } from "@/engine/core/module/index.ts";
 import type { RaceFieldValues } from "@/engine/rulesets/dnd3.5/entities/races/fields.ts";
-import type { CharacterLevel, Feat, KlassLevel, Race, Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Feat, KlassLevel, Race, Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
-/** The character's levels, in the order it took them, and their class levels' ids. */
+/**
+ * The character's levels (its advancements), in the order it took them, the hit points each rolled (by its id), and
+ * their class levels' ids.
+ */
 export interface CharacterLevels {
-  characterLevels: CharacterLevel[];
+  characterLevels: StoredAdvancement[];
+  hitPoints: Map<string, number>;
   klassLevelIds: string[];
 }
 

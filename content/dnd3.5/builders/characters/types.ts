@@ -1,5 +1,5 @@
 import type { ItemLocation } from "@/shared/enums.ts";
-import type { Character } from "@/shared/relations.ts";
+import type { Alignment, Gender } from "@/vocabulary/dnd3.5/identity.ts";
 
 /** A pick at one of a seeded character's levels (`levelIndex` counts all its levels, from 0). */
 type Picks<K extends string> = { levelIndex: number } & Record<K, string>;
@@ -11,11 +11,11 @@ type Picks<K extends string> = { levelIndex: number } & Record<K, string>;
 export interface CharacterSeed {
   abilities: Record<string, number>;
   age: number;
-  alignment: Character["alignment"];
+  alignment: Alignment;
   classes: { hp: number[]; klass: string }[];
   description: string;
   feats: (Picks<"featName"> & { aptitude: string })[];
-  gender: Character["gender"];
+  gender: Gender;
   height: string;
   inventory: InventorySeed[];
   languages: string[];

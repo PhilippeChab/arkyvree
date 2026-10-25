@@ -30,33 +30,33 @@ export type CreationMethod = CharacterCreation["methods"][number];
 export type ImportFileDescription = InferResponseType<typeof rpc.api.characters.import.source.$post, 200>;
 
 /**
- * How a new character of a ruleset sets its scores of a scored link (`link`: 3.5's abilities), for the entities it
+ * How a new character of a ruleset sets its scores of a scored link's role (`role`: 3.5's `score`), for the entities it
  * scores: its methods and bounds only a deploy changes, and a write to the ruleset's content refreshes its entities
  * (`invalidateRulesetEdit`); none until it's picked.
  */
-export function characterCreationQuery(rulesetId: string, link: string) {
+export function characterCreationQuery(rulesetId: string, role: string) {
   return queryOptions({
-    queryKey: QUERY_KEYS.rulesets.characterCreation(rulesetId, link),
+    queryKey: QUERY_KEYS.rulesets.characterCreation(rulesetId, role),
     queryFn: rulesetId
-      ? () => parseResponse(rpc.api.characters.creation.$get({ query: { link, rulesetId } }))
+      ? () => parseResponse(rpc.api.characters.creation.$get({ query: { role, rulesetId } }))
       : skipToken,
     staleTime: FOREVER,
   });
 }
 
 /**
- * The options a ruleset offers a new character's creation pick (`column`: 3.5's race), each marked eligible or not for
+ * The options a ruleset offers a new character's creation pick (`role`: 3.5's race), each marked eligible or not for
  * what the fields that narrow them hold (`narrowing`, by their keys: `""` while unpicked); skipped until a ruleset is
  * picked.
  */
-export function creationOptionsQuery(rulesetId: string, column: string, narrowing: Record<string, string>) {
+export function creationOptionsQuery(rulesetId: string, role: string, narrowing: Record<string, string>) {
   return infiniteQueryOptions({
-    queryKey: QUERY_KEYS.characters.creationOptions(rulesetId, column, narrowing),
+    queryKey: QUERY_KEYS.characters.creationOptions(rulesetId, role, narrowing),
     queryFn: rulesetId
       ? ({ pageParam }) =>
           parseResponse(
-            rpc.api.characters.creation[":column"].$get({
-              param: { column },
+            rpc.api.characters.creation[":role"].$get({
+              param: { role },
               query: {
                 rulesetId,
                 // A field not set yet narrows nothing

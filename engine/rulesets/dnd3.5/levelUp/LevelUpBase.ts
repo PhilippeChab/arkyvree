@@ -1,4 +1,4 @@
-import { type CharacterInput, type ChildrenPlan } from "@/engine/core/module/index.ts";
+import { type CharacterInput, type ChildrenPlan, type PickPlan, type StoredPick } from "@/engine/core/module/index.ts";
 import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
@@ -7,9 +7,7 @@ import type { Character } from "@/shared/relations.ts";
 
 import CharacterProjection from "./CharacterProjection.ts";
 import type { OverfullPool } from "./PicksDistribution.ts";
-import type { AbilityIncrease, LevelPickRows, LevelRows } from "./plans.ts";
-import type { LevelPicks, LevelRequest } from "./requests.ts";
-import SavedPicks from "./SavedPicks.ts";
+import type { AbilityIncrease, LevelPicks, LevelRequest } from "./requests.ts";
 import SelectionChecks from "./SelectionChecks.ts";
 
 /** The hit points a level of a class gains, as its hit die bounds them: the least, the most, and the average. */
@@ -79,6 +77,9 @@ export interface PlannedClassLevel {
   klassLevel: KlassLevel;
 }
 
+/** A saved level's picks, by its steps: its hit points, ability increases, skill ranks, feats and spells. */
+export type SavedLevelPicks = Record<"abilities" | "feats" | "hp" | "skills" | "spells", StoredPick[]>;
+
 /**
  * What every level-up flow reads: the ruleset's view, the character's rows (`character`) and the level-up rules
  * (`rules`), and the class levels the levels take, the picks they write.
@@ -140,9 +141,9 @@ export default abstract class LevelUpBase<C> {
     return klassLevel;
   }
 
-  /** A saved character level's class level and class, in the composed ruleset, or a 404. */
-  protected getSavedKlassLevel(characterLevel: { klassLevelId: string }) {
-    const klassLevel = this.dnd35.klassLevelsById.get(characterLevel.klassLevelId);
+  /** A saved character level's class level (its advancement's track) and class, in the composed ruleset, or a 404. */
+  protected getSavedKlassLevel(characterLevel: { trackId: string | null }) {
+    const klassLevel = characterLevel.trackId ? this.dnd35.klassLevelsById.get(characterLevel.trackId) : undefined;
     if (!klassLevel) throw new RulesError("not-found", "Class level not found");
 
     const klass = this.dnd35.klassesById.get(klassLevel.klassId);
@@ -152,18 +153,20 @@ export default abstract class LevelUpBase<C> {
   }
 
   /**
-   * The rows saved level `characterLevelId` holds under it, as the character's rows hold them: its ability increases,
-   * its feats and spells, each in its pool, and its skill ranks; none for a level it hasn't saved (a level-up's).
+   * The picks saved level `characterLevelId` holds, by step, as the character's rows hold them: its hit points, its
+   * ability increases, its skill ranks, and its feats and spells, each in its pool; none for a level it hasn't saved (a
+   * level-up's).
    */
-  protected getSavedPicks(characterLevelId: string | undefined): LevelRows {
-    const atLevel = <P extends { characterLevelId: string }>(rows: P[]) =>
-      rows.filter((pick) => pick.characterLevelId === characterLevelId);
-    const { abilityIncreases, feats, spells, skills } = SavedPicks.of(this.character.rows);
+  protected getSavedPicks(characterLevelId: string | undefined): SavedLevelPicks {
+    const { picks } = this.character.rows;
+    const atLevel = (step: keyof SavedLevelPicks) =>
+      picks[step].filter((pick) => pick.advancementId === characterLevelId);
     return {
-      abilityIncreases: atLevel(abilityIncreases),
-      feats: atLevel(feats),
-      spells: atLevel(spells),
-      skills: atLevel(skills),
+      hp: atLevel("hp"),
+      abilities: atLevel("abilities"),
+      skills: atLevel("skills"),
+      feats: atLevel("feats"),
+      spells: atLevel("spells"),
     };
   }
 
@@ -179,14 +182,19 @@ export default abstract class LevelUpBase<C> {
     return this.view.rulesetData;
   }
 
-  /** A level's picks as the rows a save writes: its skill ranks but those at none, and its feats and spells by pool. */
-  protected toPickRows({ feats, spells, skills }: LevelPicks): LevelPickRows {
-    return {
-      feats: Object.entries(feats).flatMap(([aptitudeId, ids]) => ids.map((featId) => ({ featId, aptitudeId }))),
-      spells: Object.entries(spells).flatMap(([aptitudeId, ids]) => ids.map((spellId) => ({ spellId, aptitudeId }))),
-      skills: Object.entries(skills)
+  /**
+   * A level's picks as a save writes them: its feats and its spells, each in its pool, and its skill ranks but those at
+   * none.
+   */
+  protected toPickPlans({ feats, spells, skills }: LevelPicks): PickPlan[] {
+    const pooled = (step: string, byPool: Record<string, string[]>) =>
+      Object.entries(byPool).flatMap(([viaId, ids]) => ids.map((entityId) => ({ step, entityId, viaId })));
+    return [
+      ...pooled("feats", feats),
+      ...pooled("spells", spells),
+      ...Object.entries(skills)
         .filter(([, rank]) => rank > 0)
-        .map(([skillId, rank]) => ({ skillId, rank })),
-    };
+        .map(([entityId, amount]) => ({ step: "skills", entityId, amount })),
+    ];
   }
 }

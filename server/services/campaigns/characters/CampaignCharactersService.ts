@@ -133,8 +133,8 @@ class CampaignCharactersService {
 
     if (characters.length === 0) return { items: [], page: paginationMeta.page, nextPage: paginationMeta.nextPage };
 
-    // Batch fetch levels for all characters, and the ones the session contributes to: it edits them
-    const levels = await CharacterAdvancements.findMany(db, { characterIds });
+    // Batch fetch advancements for all characters, and the ones the session contributes to: it edits them
+    const advancements = await CharacterAdvancements.findMany(db, { characterIds });
     const contributions = await CharacterContributors.findMany(db, {
       characterIds,
       status: "Active",
@@ -160,7 +160,7 @@ class CampaignCharactersService {
       db,
       characters.map((c) => c.rulesetId),
       async (views) => {
-        const cards = describeCharacterCards(views, characters, levels, partialIds);
+        const cards = describeCharacterCards(views, characters, advancements, partialIds);
 
         // Maintain order from linkedCharacters (which is already sorted by createdAt desc)
         const characterMap = new Map(characters.map((c) => [c.id, c]));

@@ -53,7 +53,7 @@ import {
   emptyNewCharacter,
   narrowingKeysOf,
   narrowingOf,
-  scoredLinksOf,
+  scoredRolesOf,
   sentCreationFieldsOf,
 } from "./newCharacter.ts";
 
@@ -89,7 +89,7 @@ interface ScoreCardProps {
   score: number;
 }
 
-/** A scored link's scores, its form's `scores.<link>`, set the way its method sets them. */
+/** A scored link's scores, its form's `scores.<role>`, set the way its method sets them. */
 interface ScoresFieldProps {
   control: Control<CreateCharacterFormData>;
   /** How the ruleset sets its scores: their bounds and modifiers. */
@@ -97,8 +97,8 @@ interface ScoresFieldProps {
   /** The dialog's roll of the scores, which they show as it tumbles. */
   diceRoll: DiceRoll;
   entities: ScoredEntity[];
-  link: string;
   method: CreationMethod;
+  role: string;
 }
 
 /** The scores a method that sets them shows (a point buy, an array), and their change. */
@@ -130,13 +130,13 @@ type ScoredEntity = CharacterCreation["entities"][number];
 const NO_CHARACTER_YET: CreateCharacterFormData = { rulesetId: "", name: "", picks: {}, scores: {}, notes: "" };
 
 /**
- * A new character's creation pick (`item`: 3.5's race), its form's `picks.<column>`: the options its ruleset offers,
+ * A new character's creation pick (`item`: 3.5's race), its form's `picks.<role>`: the options its ruleset offers,
  * each eligible or not for what the fields that narrow them hold. One the list for the ruleset and those fields
  * doesn't offer, once it has loaded, is refused, and the field says why; while a new list loads, the previous one is
  * still shown, and a failed load says nothing.
  */
 function CreationPickField({ control, item, narrowing, rulesetId }: CreationPickFieldProps) {
-  const name = `picks.${item.column}`;
+  const name = `picks.${item.role}`;
   const {
     items: options,
     isPending,
@@ -144,7 +144,7 @@ function CreationPickField({ control, item, narrowing, rulesetId }: CreationPick
     error,
     onScroll,
   } = useListboxQuery({
-    ...creationOptionsQuery(rulesetId, item.column, narrowing),
+    ...creationOptionsQuery(rulesetId, item.role, narrowing),
     placeholderData: keepPreviousData,
   });
   const picked = useWatch({ control, name });
@@ -182,10 +182,10 @@ function defaultScore(method: CreationMethod, index: number, start: number) {
   return start;
 }
 
-/** A line's item's React key: its field's key, a pick's column, else its kind (the form's own are one each). */
+/** A line's item's React key: its field's key, a pick's role, else its kind (the form's own are one each). */
 function itemKeyOf(item: CreationItem) {
   if ("key" in item) return item.key;
-  return item.kind === "pick" ? item.column : item.kind;
+  return item.kind === "pick" ? item.role : item.kind;
 }
 
 /** What a point buy's scores cost: each score's price, summed. */
@@ -275,12 +275,12 @@ function ScoreCard({
 }
 
 /**
- * A new character's scores of a scored link (3.5's abilities), its form's `scores.<link>`, set as its method sets them.
+ * A new character's scores of a scored link (3.5's abilities), its form's `scores.<role>`, set as its method sets them.
  */
-function ScoresField({ control, creation, diceRoll, entities, link, method }: ScoresFieldProps) {
+function ScoresField({ control, creation, diceRoll, entities, role, method }: ScoresFieldProps) {
   const {
     field: { value, onChange },
-  } = useController({ control, name: `scores.${link}` });
+  } = useController({ control, name: `scores.${role}` });
   const values = scoresOf(entities, value as Record<string, number> | undefined, method, creation.scores.start);
   const { max, min } = creation.scores;
 
@@ -382,7 +382,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const diceRoll = useDiceRoll();
-  // Each scored link's method picked, by link: its first until one is
+  // Each scored link's method picked, by its role: its first until one is
   const [methodIds, setMethodIds] = useState<Record<string, string>>({});
   const rulesetOptions = useRulesetPickerOptions("character", open);
   const { preselected } = rulesetOptions;
@@ -419,17 +419,17 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
   const narrowing = narrowingOf(narrowingKeys, watch(narrowingKeys));
 
   // How the ruleset sets each scored link's scores, its entities in its sheets' order
-  const scoredLinks = characterForm ? scoredLinksOf(characterForm) : [];
+  const scoredRoles = characterForm ? scoredRolesOf(characterForm) : [];
   const creations = useQueries({
-    queries: scoredLinks.map((link) => characterCreationQuery(selectedRulesetId, link)),
+    queries: scoredRoles.map((role) => characterCreationQuery(selectedRulesetId, role)),
   });
-  const creationOf = (link: string) => creations[scoredLinks.indexOf(link)];
-  const methodOf = (creation: CharacterCreation | undefined, link: string) =>
-    creation?.methods.find((m) => m.id === methodIds[link]) ?? creation?.methods[0];
+  const creationOf = (role: string) => creations[scoredRoles.indexOf(role)];
+  const methodOf = (creation: CharacterCreation | undefined, role: string) =>
+    creation?.methods.find((m) => m.id === methodIds[role]) ?? creation?.methods[0];
 
   // A method that rolls dice rolls each score: they land one by one, the roll keeping the scores so far
-  const handleRollAll = (link: string, entities: ScoredEntity[], rollMethod: RollMethod, start: number) => {
-    const name = `scores.${link}`;
+  const handleRollAll = (role: string, entities: ScoredEntity[], rollMethod: RollMethod, start: number) => {
+    const name = `scores.${role}`;
     const rolled = scoresOf(entities, getValues(name) as Record<string, number> | undefined, rollMethod, start);
     diceRoll.roll(
       entities.map((entity) => ({ key: entity.id, roll: () => rollDice(rollMethod.dice) })),
@@ -457,11 +457,11 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
   const handleCreate = (data: CreateCharacterFormData) => {
     if (!characterForm) return;
     const scores = Object.fromEntries(
-      scoredLinks.map((link) => {
-        const creation = creationOf(link).data;
-        const method = methodOf(creation, link);
-        const given = data.scores[link];
-        return [link, creation && method ? scoresOf(creation.entities, given, method, creation.scores.start) : given];
+      scoredRoles.map((role) => {
+        const creation = creationOf(role).data;
+        const method = methodOf(creation, role);
+        const given = data.scores[role];
+        return [role, creation && method ? scoresOf(creation.entities, given, method, creation.scores.start) : given];
       }),
     );
     createCharacterMutation.mutate({
@@ -496,7 +496,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
                 onChange={(ruleset) => {
                   setPickedRuleset(ruleset);
                   field.onChange(ruleset?.id ?? "");
-                  for (const link of scoredLinks) setValue(`scores.${link}`, {}, { shouldDirty: true });
+                  for (const role of scoredRoles) setValue(`scores.${role}`, {}, { shouldDirty: true });
                   // Without a ruleset, no creation pick stands
                   const picks = ruleset ? [] : Object.keys(getValues("picks"));
                   for (const key of picks) setValue(`picks.${key}`, "", { shouldDirty: true });
@@ -510,7 +510,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
       case "pick":
         return (
           <CreationPickField
-            key={item.column}
+            key={item.role}
             control={control}
             item={item}
             narrowing={narrowing}
@@ -568,12 +568,12 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
 
   /** A scored link's scores, under their section's title, set the way the method picked sets them. */
   const renderScores = (section: Extract<CharacterForm["sections"][number], { kind: "scores" }>) => {
-    const { link } = section;
-    const { data: creation, error: creationError, isLoading: creationLoading } = creationOf(link);
+    const { role } = section;
+    const { data: creation, error: creationError, isLoading: creationLoading } = creationOf(role);
     const entities = creation?.entities ?? [];
-    const method = methodOf(creation, link);
+    const method = methodOf(creation, role);
     // What a point buy's scores cost, its chip says
-    const given = watch(`scores.${link}`) as Record<string, number> | undefined;
+    const given = watch(`scores.${role}`) as Record<string, number> | undefined;
     const pointBuyPoints =
       creation && method?.kind === "pointBuy"
         ? pointBuyCost(method, Object.values(scoresOf(entities, given, method, creation.scores.start)))
@@ -590,8 +590,8 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
                 value={method.id}
                 onChange={(e) => {
                   // Another method's scores start from its defaults
-                  setMethodIds((picked) => ({ ...picked, [link]: e.target.value }));
-                  setValue(`scores.${link}`, {}, { shouldDirty: true });
+                  setMethodIds((picked) => ({ ...picked, [role]: e.target.value }));
+                  setValue(`scores.${role}`, {}, { shouldDirty: true });
                 }}
                 size="small"
                 sx={{ minWidth: 200 }}
@@ -604,7 +604,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
               </TextField>
               {method.kind === "roll" && (
                 <RollAllButton
-                  onClick={() => handleRollAll(link, entities, method, creation.scores.start)}
+                  onClick={() => handleRollAll(role, entities, method, creation.scores.start)}
                   disabled={!entities.length || diceRoll.rolling}
                 />
               )}
@@ -623,7 +623,7 @@ export function CreateCharacterDialog({ open, onClose, onExited }: CreateCharact
               creation={creation}
               diceRoll={diceRoll}
               entities={entities}
-              link={link}
+              role={role}
               method={method}
             />
           ) : creationError ? (

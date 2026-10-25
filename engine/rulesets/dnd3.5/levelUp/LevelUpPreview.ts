@@ -97,7 +97,7 @@ export default class LevelUpPreview extends PlannedLevelsState {
    * far (`picks`: the skill points spent, by skill, in the form's order, and the feats and spells picked, by pool).
    */
   describePreview({ levels, picks = {} }: PreviewRequest) {
-    const savedLevelCount = this.character.rows.levels.length;
+    const savedLevelCount = this.character.rows.advancements.length;
     const levelRules = LevelRules.of(this.view);
     const increased = levels.map((level, i) =>
       levelRules.isAbilityIncreaseLevel(savedLevelCount + i) ? level : { ...level, abilityIncreases: [] },

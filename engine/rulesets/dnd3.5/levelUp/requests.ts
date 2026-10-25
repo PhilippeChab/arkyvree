@@ -4,7 +4,17 @@
  * level's, what it plans before it, the levels its plan's answer reads).
  */
 
-import type { AbilityIncrease, FeatPick, SpellPick } from "./plans.ts";
+/** An ability a level raises, and by how much. */
+export interface AbilityIncrease {
+  abilityId: string;
+  amount: number;
+}
+
+/** A feat picked in a pool. */
+export interface FeatPick {
+  aptitudeId: string;
+  featId: string;
+}
 
 /** A level's picks, as a form sends them: its skill ranks, and its feats and spells by the pool they're picked in. */
 export interface LevelPicks {
@@ -58,6 +68,12 @@ export interface PlannedSoFar {
 export interface PreviewRequest {
   levels: Omit<LevelRequest, "hp">[];
   picks?: Partial<LevelPicks>;
+}
+
+/** A spell picked in a pool. */
+export interface SpellPick {
+  aptitudeId: string;
+  spellId: string;
 }
 
 /** A feat picker's query: a level's pool, and a family's feats when it names one. */

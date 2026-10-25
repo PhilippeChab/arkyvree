@@ -16,6 +16,7 @@ import {
   type PlanPicks,
   savedPicksOf,
 } from "@/tests/support/dnd3.5/levelPlans.ts";
+import { findKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createSeededTestRulesetWithExtensions } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
@@ -144,7 +145,7 @@ describe("character levels", () => {
 
       expect(await nextFighterLevel()).toMatchObject({ track: { next: 1 }, eligible: true });
       const created = await addLevelOk(characterId, fighter, 1, 8, fighter1(ctx));
-      expect(created).toMatchObject({ characterId, hp: 8 });
+      expect(created).toMatchObject({ characterId, position: 1, trackId: (await findKlassLevel(fighter, 1))!.id });
       expect(await nextFighterLevel()).toMatchObject({ track: { next: 2 } });
       await addLevelOk(characterId, fighter, 2, 6, fighter2(ctx));
       expect(await nextFighterLevel()).toMatchObject({ track: { next: 3 } });

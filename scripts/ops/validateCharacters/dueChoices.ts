@@ -21,7 +21,7 @@ export async function checkDueChoices(characters: Character[]) {
     await withRulesetScope(db, char.rulesetId, async (scope) => {
       const character = await readCharacterInput(db, char);
       const levelUp = Engine.for(scope).character(character).levelUp();
-      for (const [index, level] of character.rows.levels.entries()) {
+      for (const [index, level] of character.rows.advancements.entries()) {
         // Its edit's plan, answering nothing (a pick a reference check flags would refuse the saved one): a `choose`
         // step that takes a choice at the level makes one due. A level the plan can't read (what it's on gone, which
         // the reference check reports) is skipped, and logged

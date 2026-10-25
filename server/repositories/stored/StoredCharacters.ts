@@ -1,27 +1,53 @@
-import { and, eq, getTableColumns, inArray, type SQL, sql } from "drizzle-orm";
+import { and, getTableColumns, inArray, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { charactersInCharacter, entitiesInRules, fieldsInCharacter, linksInCharacter } from "@/drizzle/schema.ts";
-import { Engine, type StoredCharacterRow, type StoredCharacterWrite } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
+import type { Character, CharacterFieldValue } from "@/shared/relations.ts";
 
 import { toQualified } from "./toQualified.ts";
 
+/** What a write of a character's row stores past its own columns: its fields' values and its single links' entities. */
+export interface CharacterValuesWrite {
+  /** Each field's value it sets, by field (3.5's `CHARACTER_XP`), null to clear it */
+  fields?: Record<string, CharacterFieldValue | null>;
+  /** The entity of each single link it sets, by role (3.5's `race`), null to clear it */
+  links?: Record<string, string | null>;
+}
+
 /**
- * A character's row as the generic tables store it: its own columns (`character.characters`), its fields' values
- * (`character.fields`: 3.5's alignment, XP) and its single links (`character.links`: its race), read in one query
- * (`buildColumns`) and mapped to its module's row by the engine (`mapRows`), and written as the engine splits a row.
+ * A character's row as the generic tables store it: its own columns (`character.characters`), its fields' values by
+ * field (`character.fields`: 3.5's alignment, XP), each as typed as its column holds it, and its single links' entities
+ * by role (`character.links`: its race), read in one query (`buildColumns`), and written as given (`write`), each
+ * field's kind and each role's entity type as the modules declare them.
  */
 export default class StoredCharacters {
+  /** A field's value as its column holds it, refused when it isn't of its declared kind. */
+  private static columnsOf(field: string, value: CharacterFieldValue) {
+    const def = Engine.storage().field("characters", field);
+    if (!def) throw new Error(`No module declares the character field ${field}`);
+    if (def.valueKind === "number" && (typeof value !== "number" || !Number.isFinite(value)))
+      throw new Error(`The character field ${field} holds a number, not ${String(value)}`);
+    if (def.valueKind === "text" && typeof value !== "string")
+      throw new Error(`The character field ${field} holds a text, not ${String(value)}`);
+    return {
+      valueKind: def.valueKind,
+      multiple: false,
+      textValue: def.valueKind === "text" ? String(value) : null,
+      numberValue: def.valueKind === "number" ? String(value) : null,
+    };
+  }
+
   /** The columns a character's read selects: its own, its fields' values (typed) and its single links' entities. */
   static buildColumns() {
     const id = toQualified(charactersInCharacter.id);
     return {
       ...getTableColumns(charactersInCharacter),
-      fields: sql<StoredCharacterRow["fields"]>`(
-        SELECT coalesce(json_agg(json_build_object('field', ${fieldsInCharacter.field}, 'value', coalesce(to_json(${fieldsInCharacter.textValue}), to_json(${fieldsInCharacter.numberValue})))), '[]')
+      fields: sql<Character["fields"]>`(
+        SELECT coalesce(json_object_agg(${fieldsInCharacter.field}, coalesce(to_json(${fieldsInCharacter.textValue}), to_json(${fieldsInCharacter.numberValue})) ORDER BY ${fieldsInCharacter.field}), '{}')
         FROM ${fieldsInCharacter} WHERE ${fieldsInCharacter.characterId} = ${id} AND ${fieldsInCharacter.ordinal} = 0)`,
-      links: sql<StoredCharacterRow["links"]>`(
-        SELECT coalesce(json_agg(json_build_object('role', ${linksInCharacter.role}, 'toId', ${linksInCharacter.entityId})), '[]')
+      links: sql<Character["links"]>`(
+        SELECT coalesce(json_object_agg(${linksInCharacter.role}, ${linksInCharacter.entityId} ORDER BY ${linksInCharacter.role}), '{}')
         FROM ${linksInCharacter} WHERE ${linksInCharacter.characterId} = ${id} AND ${linksInCharacter.single})`,
     };
   }
@@ -31,47 +57,41 @@ export default class StoredCharacters {
     return sql<string>`(SELECT ${entitiesInRules.type} FROM ${entitiesInRules} WHERE ${entitiesInRules.id} = ${entityId})`;
   }
 
-  /** Stored characters (`buildColumns`'s) as their module's rows. */
-  static mapRows<R>(rows: StoredCharacterRow[]): R[] {
-    return rows.map((row) => Engine.storage().characterRowOf(row) as R);
-  }
-
   /**
    * Writes the fields and single links of characters (`ids`) a write gives: each value set (null, none) replacing what
    * they held of it.
    */
-  static async write(db: Db, ids: string[], { fields, links }: Omit<StoredCharacterWrite, "own">) {
+  static async write(db: Db, ids: string[], { fields = {}, links = {} }: CharacterValuesWrite) {
     if (ids.length === 0) return;
-    for (const link of links) {
+    const roles = Object.keys(links);
+    if (roles.length > 0) {
       await db
         .delete(linksInCharacter)
-        .where(and(inArray(linksInCharacter.characterId, ids), eq(linksInCharacter.role, link.role)));
-      if (link.toId === null) continue;
-      await db.insert(linksInCharacter).values(
-        ids.map((characterId) => ({
+        .where(and(inArray(linksInCharacter.characterId, ids), inArray(linksInCharacter.role, roles)));
+      const written = Object.entries(links).flatMap(([role, entityId]) => {
+        if (entityId === null) return [];
+        const def = Engine.storage().characterRole(role);
+        if (!def.single) throw new Error(`The character role ${role} isn't a single link`);
+        return ids.map((characterId) => ({
           characterId,
-          role: link.role,
-          single: link.single,
-          entityId: link.toId!,
-          entityType: link.entityType,
-        })),
-      );
+          role,
+          single: def.single,
+          entityId,
+          entityType: def.entityType,
+        }));
+      });
+      if (written.length > 0) await db.insert(linksInCharacter).values(written);
     }
-    for (const field of fields) {
-      await db
-        .delete(fieldsInCharacter)
-        .where(and(inArray(fieldsInCharacter.characterId, ids), eq(fieldsInCharacter.field, field.field)));
-      if (field.value === null) continue;
-      await db.insert(fieldsInCharacter).values(
-        ids.map((characterId) => ({
-          characterId,
-          field: field.field,
-          valueKind: field.kind,
-          multiple: false,
-          textValue: field.kind === "text" ? String(field.value) : null,
-          numberValue: field.kind === "number" ? String(field.value) : null,
-        })),
-      );
-    }
+    const names = Object.keys(fields);
+    if (names.length === 0) return;
+    await db
+      .delete(fieldsInCharacter)
+      .where(and(inArray(fieldsInCharacter.characterId, ids), inArray(fieldsInCharacter.field, names)));
+    const written = Object.entries(fields).flatMap(([field, value]) =>
+      value === null
+        ? []
+        : ids.map((characterId) => ({ characterId, field, ...StoredCharacters.columnsOf(field, value) })),
+    );
+    if (written.length > 0) await db.insert(fieldsInCharacter).values(written);
   }
 }

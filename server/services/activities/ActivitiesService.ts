@@ -176,8 +176,8 @@ class ActivitiesService {
         return (await Rulesets.findOne(db, { id: targetId }, Visibility.All)) ? `/rulesets/${targetId}` : null;
       case "characters":
       // Character sub-entities: targetId is the characterId
+      case "advancements":
       case "inventory":
-      case "levels":
         return (await Characters.findOne(db, { id: targetId }, Visibility.All)) ? `/characters/${targetId}` : null;
       case "campaigns":
         return (await Campaigns.findOne(db, { id: targetId }, Visibility.All)) ? `/campaigns/${targetId}` : null;

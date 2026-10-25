@@ -5,8 +5,9 @@
  * character's fields and links (`character.fields`, `links`) and its advancements and their picks
  * (`character.advancements`, `advancement_picks`). The registries those rows are checked against (`rules.entity_types`,
  * `field_defs`, `link_roles`, …) hold what each module declares here, and a module's rows read as its own shapes by
- * these declarations: its kinds' columns, its character's. An entity's links of a role many of which it holds (a feat's
- * pools, a class level's grants) are read and written as links, by role.
+ * these declarations: its kinds' columns. An entity's links of a role many of which it holds (a feat's pools, a class
+ * level's grants) are read and written as links, by role, and a character's rows as stored: its fields by field, its
+ * links by role, its advancements' picks by step.
  */
 
 /** A character's link of a role, to an entity of a type: whether it holds one, and what deleting it does. */
@@ -95,7 +96,10 @@ export interface StorageRegistries {
   steps: StepDef[];
 }
 
-/** A character's advancement as stored (`character.advancements`): its track, and its value step's amount. */
+/**
+ * A character's advancement as stored (`character.advancements`): its track (3.5's class level), and where it stands
+ * among the character's (`position`). What it picks are its picks, its value step's among them (3.5's hit points).
+ */
 export interface StoredAdvancement {
   characterId: string;
   createdAt: string;
@@ -104,53 +108,24 @@ export interface StoredAdvancement {
   position: number;
   trackId: string | null;
   updatedAt: string;
-  value: number | null;
 }
 
 /**
- * A character's data, as the module's rows name it: its columns stored as fields or as a single link (its race), its
- * links of a role with an amount (its scores) or none (its languages), and its advancements' picks by step.
+ * A character's data past what the registries hold of it: which of its link roles hold an amount (`scoredRoles`: its
+ * scores, 3.5's `score`), the others of a role it holds many of being picked (3.5's `speaks`). Its own values are its
+ * fields (`field_defs` of owner type `characters`) and its single links (`character_roles`: 3.5's `race`).
  */
 export interface StoredCharacter {
-  /** Each advancement's track (its class level), and its value step's amount (its hit points) */
-  advancement: { track: string; value: { column: string; step: string } };
-  /** The character row's columns past its own, each a field or a single link's entity */
-  columns: Record<string, { field: string; kind: "number" | "text" } | { kind: "link"; role: string }>;
-  /** Each link role's rows: their entity's column and their amount's, if they hold one */
-  links: Record<string, { amount?: string; entity: string; role: string }>;
-  /** The row's columns in the order its answers give them, when it isn't the character's own then `columns` */
-  order?: string[];
-  /** Each pick step's rows: their entity's column, their pool's and their amount's */
-  picks: Record<string, { amount?: string; entity: string; id?: true; step: string; via?: string }>;
+  scoredRoles: string[];
 }
 
-/** A character's link of a role (`character.links`): its entity, and its amount if it holds one. */
+/** A character's link of a role it holds many of (`character.links`): its entity, and its amount if it holds one. */
 export interface StoredCharacterLink {
   amount: number | null;
   characterId: string;
   createdAt: string;
   entityId: string;
   updatedAt: string;
-}
-
-/**
- * A character as the generic tables store it: its own columns (`character.characters`), and the values of its fields
- * (`character.fields`, as text) and the entities of its single links (`character.links`), which its row reads by its
- * module's declaration (`StorageEngine.characterRowOf`).
- */
-export interface StoredCharacterRow extends Record<string, unknown> {
-  fields: { field: string; value: FieldValue }[];
-  links: { role: string; toId: string }[];
-}
-
-/**
- * What a write of a character's row stores (`StorageEngine.characterWriteOf`): its own columns it gives, and the fields
- * and single links of each column its module stores it gives, each value typed, or null to clear it.
- */
-export interface StoredCharacterWrite {
-  fields: { field: string; kind: "number" | "text"; value: FieldValue | null }[];
-  links: { entityType: string; role: string; single: boolean; toId: string | null }[];
-  own: Record<string, unknown>;
 }
 
 /**

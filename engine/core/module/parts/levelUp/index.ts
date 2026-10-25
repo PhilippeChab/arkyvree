@@ -33,14 +33,13 @@ export type {
 } from "./mechanics.ts";
 export { default as Payloads } from "./Payloads.ts";
 export type {
+  AdvancementPlan,
   ChildLevelsPlan,
   ChildPlan,
   ChildrenPlan,
-  LevelColumns,
   LevelEditPlan,
   LevelRemovalPlan,
-  LevelRows,
   LevelsPlan,
-  LevelWrites,
   NewChild,
+  PickPlan,
 } from "./plans.ts";

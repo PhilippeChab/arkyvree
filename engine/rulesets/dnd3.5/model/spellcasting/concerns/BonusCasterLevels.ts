@@ -1,4 +1,5 @@
 import type { BuiltCharacter } from "@/engine/core/character/index.ts";
+import type { StoredAdvancement } from "@/engine/core/module/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
@@ -8,7 +9,7 @@ import ClassesPaths from "@/engine/rulesets/dnd3.5/model/classes/ClassesPaths.ts
 import type { CustomizedClassLevel, CustomizedFeat } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import type SpellcastingState from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { CharacterLevel, Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier } from "@/shared/relations.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
@@ -26,13 +27,13 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       bonusKlassLevels: KlassLevel[],
       klassLevels: CustomizedClassLevel[],
       feats: CustomizedFeat[],
-      characterLevels: CharacterLevel[],
+      characterLevels: StoredAdvancement[],
       rulesetKlasses: Klass[],
     ) {
       // Pre-built indices so the attribution is O(classes × feats)
       // instead of O(classes × klassLevels × feats × characterLevels).
       const rulesetKlassById = new Map(rulesetKlasses.map((k) => [k.id, k]));
-      const takenAt = new Set(characterLevels.map((cl) => levelKey(cl.id, cl.klassLevelId)));
+      const takenAt = new Set(characterLevels.map((cl) => levelKey(cl.id, cl.trackId!)));
       const bonusLevelsByKlassId = Map.groupBy(bonusKlassLevels, (kl) => kl.klassId);
 
       for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
@@ -167,7 +168,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       rulesetData: RulesetData,
       klassLevels: CustomizedClassLevel[],
       feats: CustomizedFeat[],
-      characterLevels: CharacterLevel[],
+      characterLevels: StoredAdvancement[],
       rulesetKlasses: Klass[],
     ) {
       const classNameByLevel = this.bonusLevelClassNames();

@@ -34,20 +34,21 @@ import { findEditableCharacterOrChild, getEditableCharacter } from "./editableCh
 import { enqueueCharacterPdf, findExportableCharacter } from "./pdf.ts";
 
 class CharactersService extends include(Object, Archives, Imports) {
-  /** A character's picks of a picked link (`link`) as a plan has them: its picks replaced. */
-  private async writeLinkPicks(tx: Db, characterId: string, link: string, plan: LinkPicksPlan): Promise<void> {
-    await CharacterLinks.delete(tx, { characterId, link });
-    await CharacterLinks.createPlanned(
+  /** A character's picks of a picked link's role (`role`) as a plan has them: its picks replaced. */
+  private async writeLinkPicks(tx: Db, characterId: string, role: string, plan: LinkPicksPlan): Promise<void> {
+    await CharacterLinks.delete(tx, { characterId, role });
+    await CharacterLinks.createMany(
       tx,
-      link,
       characterId,
+      role,
       plan.entityIds.map((entityId) => ({ entityId })),
     );
   }
 
   /**
    * A new character, as its form sends it: its ruleset, name and notes, its fields, the entity each of its creation's
-   * picks names (`picks`, by column), and each scored link's amounts (`scores`, by link), as its ruleset plans it.
+   * picks names (`picks`, by its single link's role), and each scored link's amounts (`scores`, by role), as its
+   * ruleset plans it.
    */
   async createCharacter(
     session: Session,
@@ -68,15 +69,17 @@ class CharactersService extends include(Object, Archives, Imports) {
           const plan = Engine.for(scope).characters().planCreate({ fields, picks, scores });
 
           const [newCharacter] = await Characters.create(tx, {
-            ...plan.columns,
+            ...plan.own,
+            fields: plan.fields,
+            links: plan.links,
             userId: session.userId,
             rulesetId: characterData.rulesetId,
             name: characterData.name,
             notes: characterData.notes,
           });
 
-          for (const [link, links] of Object.entries(plan.links))
-            await CharacterLinks.createPlanned(tx, link, newCharacter.id, links);
+          for (const [role, links] of Object.entries(plan.scores))
+            await CharacterLinks.createMany(tx, newCharacter.id, role, links);
 
           // Log the activity
           await Activities.create(tx, {
@@ -136,7 +139,7 @@ class CharactersService extends include(Object, Archives, Imports) {
     const charactersList = result.items;
     const characterIds = charactersList.map((char) => char.id);
 
-    const levels = await CharacterAdvancements.findMany(db, { characterIds });
+    const advancements = await CharacterAdvancements.findMany(db, { characterIds });
 
     // Each card from its character's ruleset's view: a copied or renamed race or class shows its name there
     return await withRulesetScopes(
@@ -144,7 +147,7 @@ class CharactersService extends include(Object, Archives, Imports) {
       charactersList.map((c) => c.rulesetId),
       async (views) => {
         // The user's own characters: every card whole
-        const cards = describeCharacterCards(views, charactersList, levels, new Set());
+        const cards = describeCharacterCards(views, charactersList, advancements, new Set());
         const enrichedCharacters = charactersList.map((char) => {
           const { chips } = cards.get(char.id)!;
           return {
@@ -166,27 +169,28 @@ class CharactersService extends include(Object, Archives, Imports) {
   }
 
   /**
-   * How a new character of a ruleset (`rulesetId`) sets its scores of a scored link (`link`), as its rules answer it.
+   * How a new character of a ruleset (`rulesetId`) sets its scores of a scored link's role (`role`), as its rules answer
+   * it.
    */
-  async getCreation(rulesetId: string, link: string) {
+  async getCreation(rulesetId: string, role: string) {
     return await withRulesetScope(db, rulesetId, async (scope) =>
-      Engine.for(scope).characters().describeCreation(link),
+      Engine.for(scope).characters().describeCreation(role),
     );
   }
 
   /**
-   * The options of a new character's creation pick (`column`, a single link's: 3.5's race) of a ruleset, as what its
-   * form says so far narrows them (`formData`), a page of them, each checked.
+   * The options of a new character's creation pick (`role`, a single link's: 3.5's race) of a ruleset, as what its form
+   * says so far narrows them (`formData`), a page of them, each checked.
    */
   async getCreationOptions(
     rulesetId: string,
-    column: string,
+    role: string,
     formData: CreationPickQuery,
     where: { search?: string },
     pagination: { limit: number; page: number },
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
-      const picker = Engine.for(scope).characters().openCreationPicker(column, formData);
+      const picker = Engine.for(scope).characters().openCreationPicker(role, formData);
       // Each option as an entity's row: its columns past those every kind's has are its kind's
       const result = await Entities.findPage<EntityRow>(
         db,
@@ -206,17 +210,17 @@ class CharactersService extends include(Object, Archives, Imports) {
   }
 
   /**
-   * What a character the session may edit (or a child of one) has of a picked link (`link`), and what its picks
-   * (`entityIds`, as its edit is being made) leave it room for: what the link's picker offers.
+   * What a character the session may edit (or a child of one) has of a picked link's role (`role`), and what its picks
+   * (`entityIds`, as its edit is being made) leave it room for: what the role's picker offers.
    */
-  async getLinkPicks(session: Session, characterId: string, link: string, entityIds: string[]) {
+  async getLinkPicks(session: Session, characterId: string, role: string, entityIds: string[]) {
     const record = await findEditableCharacterOrChild(db, characterId, session.userId);
     if (!record) throw new NotFoundError("Character not found");
 
     return await withRulesetScope(db, record.rulesetId, async (scope) =>
       Engine.for(scope)
         .character(await readCharacterInput(db, record))
-        .describeLinkPicks(link, entityIds),
+        .describeLinkPicks(role, entityIds),
     );
   }
 
@@ -267,7 +271,7 @@ class CharactersService extends include(Object, Archives, Imports) {
 
       const updatedRows = await Characters.update(
         tx,
-        { ...characterFields, ...planned?.columns },
+        { ...characterFields, ...planned?.own, fields: planned?.fields },
         { id: characterId, expectedUpdatedAt },
       );
       if (expectedUpdatedAt && updatedRows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
@@ -275,8 +279,8 @@ class CharactersService extends include(Object, Archives, Imports) {
       const [updatedCharacter] = updatedRows;
 
       // Its picked links' picks, atomically with it, when it sends them: none sent leaves them alone, `[]` clears them
-      for (const [link, plan] of Object.entries(planned?.links ?? {}))
-        await this.writeLinkPicks(tx, characterId, link, plan);
+      for (const [role, plan] of Object.entries(planned?.links ?? {}))
+        await this.writeLinkPicks(tx, characterId, role, plan);
 
       await Activities.create(tx, {
         userId: session.userId,
@@ -290,18 +294,18 @@ class CharactersService extends include(Object, Archives, Imports) {
   }
 
   /**
-   * Replaces a character's picks of a picked link (`link`: 3.5's languages), as its ruleset plans them from its rows
+   * Replaces a character's picks of a picked link's role (`role`: 3.5's `speaks`), as its ruleset plans them from its rows
    * (`planLinkPicks`: each the view's entity, a copy's when the ruleset copied one; those its rules give it left out;
    * refused when the view has none, it's sent twice, or a new pick is past what its rules let it have).
    */
-  async updateLinkPicks(session: Session, characterId: string, link: string, entityIds: string[]) {
+  async updateLinkPicks(session: Session, characterId: string, role: string, entityIds: string[]) {
     return await withTransaction(async (tx) => {
       const characterRecord = await getEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
         const character = await readCharacterInput(tx, characterRecord);
-        const plan = Engine.for(scope).character(character).planLinkPicks(link, entityIds);
-        await this.writeLinkPicks(tx, characterId, link, plan);
+        const plan = Engine.for(scope).character(character).planLinkPicks(role, entityIds);
+        await this.writeLinkPicks(tx, characterId, role, plan);
 
         await Activities.create(tx, {
           userId: session.userId,
@@ -313,17 +317,17 @@ class CharactersService extends include(Object, Archives, Imports) {
     });
   }
 
-  /** Sets a character's amounts of a scored link (`link`: 3.5's ability scores), as its ruleset plans them. */
-  async updateScores(session: Session, characterId: string, link: string, scores: Record<string, number>) {
+  /** Sets a character's amounts of a scored link's role (`role`: 3.5's `score`), as its ruleset plans them. */
+  async updateScores(session: Session, characterId: string, role: string, scores: Record<string, number>) {
     return await withTransaction(async (tx) => {
       const characterRecord = await getEditableCharacter(tx, session, characterId);
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
-        const plan = Engine.for(scope).characters().planScores(link, scores);
+        const plan = Engine.for(scope).characters().planScores(role, scores);
         // An amount stored before its entity was copied names the source: the copy's id the client sends matches it
         for (const { amount, entityId } of plan.links) {
           const entityIds = scope.rulesetData.cow.getEquivalentIds(entityId);
-          const rows = await CharacterLinks.updateAmount(tx, amount, { link, characterId, entityIds });
+          const rows = await CharacterLinks.updateAmount(tx, amount, { role, characterId, entityIds });
           if (rows.length === 0) throw new NotFoundError("Score not found");
         }
 

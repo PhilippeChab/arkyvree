@@ -1,4 +1,5 @@
 import type { SheetStat } from "@/engine/core/module/index.ts";
+import CharacterValues from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import type { Character, Modifier, Requirement } from "@/shared/relations.ts";
@@ -139,7 +140,7 @@ export default class CharacterResponse {
       kind: record.kind,
       parentCharacterId: record.parentCharacterId,
       name: record.name,
-      raceId: record.raceId,
+      raceId: CharacterValues.read(record).raceId,
       rulesetId: record.rulesetId,
       rulesetName: ruleset.name,
       baseRules: ruleset.baseRules,

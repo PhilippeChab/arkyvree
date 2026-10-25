@@ -129,7 +129,7 @@ never a separate Page in the same context (cookies would leak). The demo's
 cross-tab test is the exception: its two tabs share a context on purpose.
 
 **API-response gates.** Tests that depend on async server work
-(`createCharacter` waits for `/creation/raceId`; `answerInvite` waits for
+(`createCharacter` waits for `/creation/race`; `answerInvite` waits for
 the answer's `POST`; mark-all-read waits for `POST /read-all`) start
 `apiResponse` (or `page.waitForResponse`) _before_ the triggering action to
 avoid race conditions.

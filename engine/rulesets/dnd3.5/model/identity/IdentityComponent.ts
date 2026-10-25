@@ -1,4 +1,5 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
+import CharacterValues from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type LanguagesComponent from "@/engine/rulesets/dnd3.5/model/languages/LanguagesComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
@@ -62,21 +63,22 @@ export default class IdentityComponent extends CharacterComponent<LoadedCharacte
     const spoken = () => this.languages.getSpoken();
     let levelBonus = 0;
 
+    const values = CharacterValues.read(character);
     this.identity.physiology = {
       name: character.name,
       description: character.description || "",
-      age: character.age ?? undefined,
-      gender: character.gender,
-      height: character.height ?? "",
-      weight: character.weight ?? "",
+      age: values.age ?? undefined,
+      gender: values.gender,
+      height: values.height ?? "",
+      weight: values.weight ?? "",
       race,
       get languages() {
         return spoken();
       },
     };
     this.identity.beliefs = {
-      deity: character.deity || "",
-      alignment: character.alignment,
+      deity: values.deity || "",
+      alignment: values.alignment,
     };
     this.identity.background = {
       notes: character.notes || "",
@@ -90,7 +92,7 @@ export default class IdentityComponent extends CharacterComponent<LoadedCharacte
       set level(value: number) {
         levelBonus = value - levelOfClasses();
       },
-      xp: character.xp,
+      xp: values.xp,
     };
   }
 

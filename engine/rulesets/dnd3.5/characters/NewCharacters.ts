@@ -1,12 +1,14 @@
 import { z } from "zod";
 
-import type { CharacterColumns, CreationMethod, FieldsRequest, ScoresCreation } from "@/engine/core/module/index.ts";
+import type { CreationMethod, FieldsRequest, NewCharacterPlan, ScoresCreation } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import AbilityRules from "@/engine/rulesets/dnd3.5/rules/AbilityRules.ts";
 import { MIN_ABILITY_SCORE, STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 import { CREATION_METHODS } from "@/vocabulary/dnd3.5/creation.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/vocabulary/dnd3.5/identity.ts";
+
+import CharacterValues from "./CharacterValues.ts";
 
 /** What a new character's form reads of a ruleset's view: its abilities, each by its id and name. */
 interface CreationData {
@@ -71,23 +73,21 @@ export default class NewCharacters {
   /**
    * What a new character's fields (`fields`, its form's, by their keys) write, each checked: refused when one is
    * missing that's required, names a field the form hasn't, or holds a value its field doesn't take. One left empty
-   * writes nothing: its column's default.
+   * writes nothing: no value, no description.
    */
-  static planFields(fields: FieldsRequest): { columns: CharacterColumns } {
+  static planFields(fields: FieldsRequest): Pick<NewCharacterPlan, "fields" | "own"> {
     const { age, alignment, deity, description, gender, height, weight, xp } = RulesError.parse(NEW_FIELDS, fields, [
       "fields",
     ]);
-    return {
-      columns: {
-        alignment,
-        gender,
-        xp,
-        ...(age && { age }),
-        ...(deity && { deity }),
-        ...(description && { description }),
-        ...(height && { height }),
-        ...(weight && { weight }),
-      },
-    };
+    const { fields: values } = CharacterValues.write({
+      alignment,
+      gender,
+      xp,
+      ...(age && { age }),
+      ...(deity && { deity }),
+      ...(height && { height }),
+      ...(weight && { weight }),
+    });
+    return { fields: values, own: { ...(description && { description }) } };
   }
 }

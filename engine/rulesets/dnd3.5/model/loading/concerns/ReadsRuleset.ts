@@ -1,5 +1,5 @@
 import type { CharacterDataLoader } from "@/engine/core/character/index.ts";
-import type { CharacterRows } from "@/engine/core/module/index.ts";
+import type { CharacterRows, StoredCharacterLink } from "@/engine/core/module/index.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import { CLASS_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
 import { SKILL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
@@ -16,15 +16,12 @@ import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
  */
 export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCharacterData>>>(Base: B) {
   abstract class ReadingRuleset extends Base {
-    /** A character ability's score, with its ability's name. */
-    protected buildAbilityScore(
-      record: CharacterRows["links"]["abilities"][number],
-      abilityLookup: Map<string, string>,
-    ) {
+    /** A character ability's score (`link`, its `score` link), with its ability's name. */
+    protected buildAbilityScore(link: StoredCharacterLink, abilityLookup: Map<string, string>) {
       return {
-        abilityId: record.abilityId,
-        name: abilityLookup.get(record.abilityId) ?? "Unknown",
-        score: record.score,
+        abilityId: link.entityId,
+        name: abilityLookup.get(link.entityId) ?? "Unknown",
+        score: link.amount!,
       };
     }
 
@@ -38,7 +35,7 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
       const klassLevelsRaw = klassLevelIds.flatMap((id) => dnd35.klassLevelsById.get(id) ?? []);
       const klassEntityIds = [...new Set(klassLevelsRaw.map((level) => level.klassId))];
       return {
-        languages: rows.links.languages.flatMap((l) => dnd35.languagesById.get(l.languageId) ?? []),
+        languages: rows.links.speaks.flatMap((link) => dnd35.languagesById.get(link.entityId) ?? []),
         klassLevelsRaw,
         klassLevelSaves: klassLevelIds.flatMap((id) => dnd35.baseBonusesOf(id)),
         klasses: klassEntityIds.flatMap((id) => dnd35.klassesById.get(id) ?? []),

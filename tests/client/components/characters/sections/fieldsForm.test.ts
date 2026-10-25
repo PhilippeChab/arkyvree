@@ -22,7 +22,7 @@ const BLOCK: BlockOf<"fields"> = {
     ],
   ],
   fields: [{ key: "description", kind: "textarea", label: "Description", placeholder: "", value: "Tall" }],
-  links: [{ label: "Tongues", link: "tongues", none: "None", picked: [{ id: "common", name: "Common" }] }],
+  links: [{ label: "Tongues", none: "None", picked: [{ id: "common", name: "Common" }], role: "tongues" }],
   notes: { notes: "Public" },
 };
 

@@ -46,7 +46,7 @@ export default class ClassPicker
    * counts.
    */
   protected override detailsOf() {
-    const left = LevelRules.countLevelsLeft(this.input.rows.levels.length);
+    const left = LevelRules.countLevelsLeft(this.input.rows.advancements.length);
     return (klass: EntityRow) => {
       const next = this.nextLevelOf(klass)!;
       const last = this.dnd35.klassLevelsByKlass.get(klass.id)?.at(-1)?.level ?? next.level;
@@ -79,10 +79,9 @@ export default class ClassPicker
     const projection = new CharacterProjection(this.input);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
     const levels = projection.addLevels(klassLevelIds, { abilityIncreases, hp });
-    for (const [i, skills] of this.plan.spreadSkillPoints(this.planned).entries())
-      projection.pick(levels[i], { skills });
-    const pickedAt = levels[0] ?? this.input.rows.levels.toSorted((a, b) => a.position - b.position).at(-1);
-    if (pickedAt) projection.pick(pickedAt, { feats: featPicks });
+    for (const [i, skills] of this.plan.spreadSkillPoints(this.planned).entries()) projection.pick(levels[i], skills);
+    const pickedAt = levels[0] ?? this.input.rows.advancements.toSorted((a, b) => a.position - b.position).at(-1);
+    if (pickedAt) projection.pick(pickedAt, CharacterProjection.picksOf({ featPicks }));
     return projection.input;
   }
 
@@ -107,8 +106,8 @@ export default class ClassPicker
   /** The character's highest level in each class it has levels of, by the class's id. */
   private readMaxLevels() {
     const maxLevels = new Map<string, number>();
-    for (const level of this.input.rows.levels) {
-      const klassLevel = this.dnd35.klassLevelsById.get(level.klassLevelId);
+    for (const level of this.input.rows.advancements) {
+      const klassLevel = level.trackId === null ? undefined : this.dnd35.klassLevelsById.get(level.trackId);
       if (klassLevel)
         maxLevels.set(klassLevel.klassId, Math.max(maxLevels.get(klassLevel.klassId) ?? 0, klassLevel.level));
     }

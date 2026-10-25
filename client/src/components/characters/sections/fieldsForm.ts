@@ -4,7 +4,7 @@ import type { BlockOf, SheetField } from "./sheetBlocks.ts";
 
 /**
  * A `fields` block as its form holds it: each field's value by its key (a number's NaN while it's empty, a select's
- * "" while it's unset), each picked link's entities' ids by its name (`links`), and its notes.
+ * "" while it's unset), each picked link's entities' ids by its role (`links`), and its notes.
  */
 export type FieldsFormData = Record<string, number | Record<string, string[]> | string>;
 
@@ -59,7 +59,7 @@ export function toFieldsForm(block: BlockOf<"fields">, filled: boolean): FieldsF
     notes: filled ? (block.notes?.notes ?? "") : "",
     privateNotes: filled ? (block.notes?.privateNotes ?? "") : "",
     links: Object.fromEntries(
-      (block.links ?? []).map(({ link, picked }) => [link, filled ? picked.map(({ id }) => id) : []]),
+      (block.links ?? []).map(({ picked, role }) => [role, filled ? picked.map(({ id }) => id) : []]),
     ),
   };
 }

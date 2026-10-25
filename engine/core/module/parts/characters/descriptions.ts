@@ -31,10 +31,10 @@ export interface CharacterCard {
 
 /**
  * A new character's form, as its rules lay it out: its sections in order, each under its title, a scored link's scores
- * (`scores`: its `link`'s, set the ways its ruleset's creation offers, what it says without entities to score, `none`,
+ * (`scores`: its `role`'s, set the ways its ruleset's creation offers, what it says without entities to score, `none`,
  * and before a ruleset is picked, `pick`) or its lines (`fields`). A line of one item stands alone, of several side by
  * side from a tablet's width. An item is the form's own (`name`, under its label; its `ruleset`; a creation pick,
- * `pick`: the single link its `column` names, 3.5's race, under its label, which the fields marked `narrows` narrow,
+ * `pick`: the single link of its `role`, 3.5's race, under its label, which the fields marked `narrows` narrow,
  * what's said without one, `required`, and of one they rule out, `ineligible`; its `notes`) or one of its ruleset's
  * fields (`CreationField`).
  */
@@ -151,13 +151,13 @@ export type CreationField = { key: string; label: string } & (
 
 /**
  * An item of a new character's form's line: one of the form's own (its name, its notes, its ruleset, or a creation
- * pick: the entity of a single link its row holds, by its `column`, picked from its picker under its label, what's said
+ * pick: the entity of a single link its row holds, by its `role`, picked from its picker under its label, what's said
  * without one, `required`, and of one the fields that narrow it rule out, `ineligible`: 3.5's race), or one of its
  * ruleset's fields.
  */
 export type CreationItem =
   | CreationField
-  | { column: string; ineligible: string; kind: "pick"; label: string; required: string }
+  | { ineligible: string; kind: "pick"; label: string; required: string; role: string }
   | { kind: "name"; label: string }
   | { kind: "notes" }
   | { kind: "ruleset" };
@@ -174,13 +174,13 @@ export type CreationMethod = { id: string; label: string } & (
 );
 
 /**
- * A section of a new character's form, under its title: a scored link's amounts (`link`: 3.5's ability scores, set the
+ * A section of a new character's form, under its title: a scored link's amounts (`role`: 3.5's ability scores, set the
  * ways its creation offers; what it says without entities to score, `none`, and before a ruleset is picked, `pick`),
  * or its lines of items.
  */
 export type CreationSection = { title: string } & (
   | { kind: "fields"; lines: CreationItem[][] }
-  | { kind: "scores"; link: string; none: string; pick: string }
+  | { kind: "scores"; none: string; pick: string; role: string }
 );
 
 /**
