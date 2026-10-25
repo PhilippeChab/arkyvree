@@ -7,7 +7,7 @@
 
 export { default as Engine } from "./api/Engine.ts";
 export type { default as LevelUpEngine } from "./api/LevelUpEngine.ts";
-export type { EntityKinds } from "./api/Modules.ts";
+export type { Accepted, EntityKinds } from "./api/Modules.ts";
 export type { ProgressionForm } from "./api/RulesetEngine.ts";
 export type { CowData, CowRows, RulesetSources } from "./core/cow/index.ts";
 export type { EntityAction } from "./core/entities/index.ts";

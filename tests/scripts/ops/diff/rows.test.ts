@@ -27,7 +27,7 @@ describe("A compared row", () => {
         name: "Dodge",
         selectable: true,
         cost: 5,
-        source_item_id: UUID,
+        owner_id: UUID,
         properties: { die: 8 },
       }),
     ).toEqual({ name: "Dodge", selectable: true, cost: 5, properties: { die: 8 } });
