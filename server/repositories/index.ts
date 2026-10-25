@@ -1,7 +1,6 @@
 export { SESSION_TTL_SECONDS } from "./accounts/sessionTtl.ts";
 export { Visibility, visibilityMap } from "./BaseRepository.ts";
 export { fetchEveryPage, paginateItems } from "./concerns/Paginates.ts";
-export type { Paginated } from "./concerns/Paginates.ts";
 export {
   Activities,
   Attachments,
@@ -46,6 +45,4 @@ export {
   RULESET_ENTITY_TYPES,
 } from "./rulesets/entityTables.ts";
 export type { RulesetEntityType } from "./rulesets/entityTables.ts";
-export type { EntityListWhere, EntityRow } from "./stored/StoredEntities.ts";
-export type { JoinRow } from "./stored/StoredJoins.ts";
-export type { FieldValues } from "./stored/StoredProperties.ts";
+export type { EntityRow } from "./stored/StoredEntities.ts";

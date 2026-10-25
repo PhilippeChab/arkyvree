@@ -103,10 +103,6 @@ class ContributorsService {
     return invite;
   }
 
-  async getUserInvites(userId: string) {
-    return await Contributors.findManyWithRuleset(db, { userId, status: "Pending" }, { limit: 10 });
-  }
-
   async inviteContributor(session: Session, rulesetId: string, email: string, role: ContributorRole) {
     const { contributor, emailData } = await withTransaction(async (tx) => {
       const ruleset = await Rulesets.findOne(tx, { id: rulesetId }, Visibility.All);

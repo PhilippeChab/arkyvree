@@ -80,11 +80,11 @@ describe("CharacterContributorsService", () => {
   describe("answering an invite", () => {
     test("accepting gives the invitee edit access", async () => {
       const { inviteeSession, character, invite } = await setup(true);
-      expect(await CharacterContributorsService.getUserInvites(inviteeSession.userId)).toMatchObject([
-        { id: invite.id },
-      ]);
+      expect(await CharacterContributorsService.getInvite(inviteeSession, invite.id)).toMatchObject({
+        id: invite.id,
+        status: "Pending",
+      });
       expect((await CharacterContributorsService.acceptInvite(inviteeSession, invite.id)).status).toBe("Active");
-      expect(await CharacterContributorsService.getUserInvites(inviteeSession.userId)).toEqual([]);
       expect(
         (await CharactersService.updateCharacter(inviteeSession, character.id, { notes: "edited by contributor" }))
           .notes,

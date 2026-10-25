@@ -68,27 +68,6 @@ class CharacterContributorsRepository extends include(
     });
   }
 
-  async findManyWithCharacter(
-    db: Db,
-    where: { status: ContributorStatus; userId: string },
-    pagination: { limit: number } = { limit: 100 },
-  ) {
-    return await db.query.contributorsInCharacter.findMany({
-      where: this.where([
-        eq(this.table.userId, where.userId),
-        eq(this.table.status, where.status),
-        isNull(this.table.deletedAt),
-      ]),
-      with: {
-        charactersInCharacter: {
-          columns: { id: true, name: true },
-        },
-      },
-      orderBy: [this.orderBy(this.table.createdAt, "desc")],
-      limit: pagination.limit,
-    });
-  }
-
   async findOne(
     db: Db,
     where:

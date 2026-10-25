@@ -61,12 +61,12 @@ describe("A table's diff", () => {
 
   test("writes a field that references other rows as a comment: its value is their names, which no id column takes", () => {
     const diff = collectDiff(
-      [row("Spiked Shield", { source_item_id: "Core: Shield" })],
-      [row("Spiked Shield", { source_item_id: "Core: Dagger" }, "t1")],
+      [row("Homebrew", { extension_ruleset_ids: "Psionics" })],
+      [row("Homebrew", { extension_ruleset_ids: "Epic" }, "t1")],
     );
-    expect(renderSql("rules.items", diff, ["source_item_id"])).toEqual([
-      "-- rules.items:",
-      '--   Spiked Shield.source_item_id: reference "Core: Shield", target "Core: Dagger" (UPDATE skipped — it references other rows)',
+    expect(renderSql("rules.rulesets", diff, ["extension_ruleset_ids"])).toEqual([
+      "-- rules.rulesets:",
+      '--   Homebrew.extension_ruleset_ids: reference "Psionics", target "Epic" (UPDATE skipped — it references other rows)',
     ]);
   });
 

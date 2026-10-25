@@ -110,7 +110,7 @@ describe("a ruleset's entities", () => {
       level: 1,
       saves: [{ base: 12, saveId }],
     });
-    expect(await EntitiesService.getOwnedEntity(rulesetId, "classes", klassId, level.id)).toMatchObject({
+    expect(await EntitiesService.getOwnedEntityWithOwner(rulesetId, "classes", level.id)).toMatchObject({
       saves: [{ base: 12, saveId }],
     });
     for (const base of [-1, 13]) {
@@ -128,7 +128,7 @@ describe("a ruleset's entities", () => {
     await EntitiesService.updateProgression(owner, rulesetId, "classes", klassId, {
       levels: [{ levelId: level.id, saves: [{ base: 0, saveId }] }],
     });
-    expect(await EntitiesService.getOwnedEntity(rulesetId, "classes", klassId, level.id)).toMatchObject({
+    expect(await EntitiesService.getOwnedEntityWithOwner(rulesetId, "classes", level.id)).toMatchObject({
       saves: [{ base: 0, saveId }],
     });
   });

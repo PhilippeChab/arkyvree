@@ -89,10 +89,6 @@ class CampaignInvitesService {
     return await Invites.findPage(db, { campaignId, ...where }, pagination);
   }
 
-  async getUserInvites(userId: string) {
-    return await Invites.findMany(db, { userId }, { limit: 10 }, { campaign: true });
-  }
-
   async rejectInvite(session: Session, inviteId: string) {
     return await withTransaction(async (tx) => {
       const invite = await this.getPendingInviteFor(tx, session, inviteId);
