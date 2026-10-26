@@ -21,9 +21,6 @@ interface UseAddLevelWizardParams {
   trackId?: string;
 }
 
-/** The Add Level wizard's state: what its dialog and its steps read. */
-export type AddLevelWizard = ReturnType<typeof useAddLevelWizard>;
-
 /** The plan's options, a page at a time: its picker opens over the plan, at the character's next advancement. */
 const PLAN_OPTIONS_PAGE = 10;
 

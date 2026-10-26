@@ -4,7 +4,7 @@ import { alias } from "drizzle-orm/pg-core";
 import type { Db } from "@/drizzle/database.ts";
 import { entitiesInRules, entitySnapshotsInRules } from "@/drizzle/schema.ts";
 
-import { RULESET_ENTITY_TYPES, type RulesetEntityType } from "./entityTables.ts";
+import { RULESET_ENTITY_TYPES, type RulesetEntityType } from "./entityTypes.ts";
 
 /**
  * The rows `findNames` reads: a ruleset's own, those with these ids, or the rows of these rulesets themselves (not a

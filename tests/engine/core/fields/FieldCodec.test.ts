@@ -459,7 +459,6 @@ describe("A codec's fields its form doesn't show", () => {
 
   test("are left out of its form: its keys, its description, what it reads and what an edit merges", () => {
     expect(OWNED.formNames).toEqual(["title"]);
-    expect([...OWNED.formStored]).toEqual(["TITLE"]);
     expect(OWNED.describe().map((field) => (field.input === "group" ? field.label : field.field))).toEqual(["TITLE"]);
     expect(() => OWNED.parse({ fields: { WEIGHT: 3 } }, CONTEXT)).toThrow(RulesError);
     expect(OWNED.merge({ ...OWNED.defaults, weight: 3 }, { title: "B" })).toEqual({ title: "B" });

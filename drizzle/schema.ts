@@ -447,8 +447,6 @@ export const advancementPicksInCharacter = character.table(
     amount: integer(),
     ordinal: smallint().default(0).notNull(),
     repeats: boolean().notNull(),
-    tier: integer(),
-    parentPickId: uuid("parent_pick_id"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
   },
@@ -456,9 +454,6 @@ export const advancementPicksInCharacter = character.table(
     index("advancement_picks_entity_idx")
       .using("btree", table.entityId.asc().nullsLast())
       .where(sql`(entity_id IS NOT NULL)`),
-    index("advancement_picks_parent_idx")
-      .using("btree", table.parentPickId.asc().nullsLast())
-      .where(sql`(parent_pick_id IS NOT NULL)`),
     uniqueIndex("advancement_picks_unique_idx").using(
       "btree",
       table.advancementId.asc().nullsLast(),
@@ -480,11 +475,6 @@ export const advancementPicksInCharacter = character.table(
       foreignColumns: [entitiesInRules.id, entitiesInRules.type],
       name: "advancement_picks_entity_id_entity_type_fkey",
     }),
-    foreignKey({
-      columns: [table.parentPickId],
-      foreignColumns: [table.id],
-      name: "advancement_picks_parent_pick_id_fkey",
-    }).onDelete("cascade"),
     foreignKey({
       columns: [table.step, table.entityType],
       foreignColumns: [stepsInCharacter.step, stepsInCharacter.entityType],

@@ -10,7 +10,7 @@ import {
 } from "@/drizzle/schema.ts";
 import type { OwnedKind } from "@/engine/index.ts";
 
-import type { RulesetEntityType } from "./entityTables.ts";
+import type { RulesetEntityType } from "./entityTypes.ts";
 
 /** A row naming an entity: the column holding the entity's id, and what the row belongs to. */
 export interface EntityReference {

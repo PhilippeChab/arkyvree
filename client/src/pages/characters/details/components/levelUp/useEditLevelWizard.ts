@@ -27,9 +27,6 @@ interface UseEditLevelWizardParams {
   open: boolean;
 }
 
-/** The Edit Level wizard's state: what its dialog and its steps read. */
-export type EditLevelWizard = ReturnType<typeof useEditLevelWizard>;
-
 /** The edited level's one advancement: its values and choices are kept by its key. */
 const EDITED_SLOTS = [{ key: 0 }];
 

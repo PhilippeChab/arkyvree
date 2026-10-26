@@ -15,7 +15,7 @@ import {
 import { hasCharacterPicks } from "./characterPicks.ts";
 import { createLinks } from "./linkWrites.ts";
 
-/** An entity's table, as a plan names it: refused when it isn't a ruleset entity's. */
+/** An entity's type, as a plan names it: refused when it isn't a ruleset entity's. */
 function entityTypeOf(type: string): RulesetEntityType {
   const entityType = RULESET_ENTITY_TYPES.find((known) => known === type);
   if (!entityType) throw new Error(`A save cannot write a ${type} entity`);

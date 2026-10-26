@@ -1,11 +1,5 @@
-import { FieldCodec, type FieldValues } from "@/engine/core/fields/index.ts";
+import { FieldCodec } from "@/engine/core/fields/index.ts";
 import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
-
-/** A class's fields' values. */
-export type ClassFieldValues = FieldValues<typeof CLASS_FIELDS.fields>;
-
-/** A class level's fields' values. */
-export type ClassLevelFieldValues = FieldValues<typeof CLASS_LEVEL_FIELDS.fields>;
 
 /**
  * A class's fields, as the vocabulary declares them (`ENTITY_FIELDS.classes`): its hit die, its caster type (one of

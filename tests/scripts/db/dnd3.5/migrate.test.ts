@@ -17,6 +17,20 @@ function statementsOf(file: string) {
 }
 
 /**
+ * The columns of a pick 0093 drops, as 0080 made them, none of them written: its tier, and its parent pick, with the
+ * parent's foreign key and its partial index. What the migrations before 0093 ran on.
+ */
+async function addPickColumns() {
+  await db.execute(sql`
+    ALTER TABLE character.advancement_picks ADD COLUMN tier integer;
+    ALTER TABLE character.advancement_picks
+      ADD COLUMN parent_pick_id uuid REFERENCES character.advancement_picks(id) ON DELETE CASCADE;
+    CREATE INDEX advancement_picks_parent_idx ON character.advancement_picks (parent_pick_id)
+      WHERE parent_pick_id IS NOT NULL;
+  `);
+}
+
+/**
  * The registries' columns 0086 drops, as 0080 made them (their checks, the inheritance's key), each row's as the
  * modules declare it (a field's merge and the role it's read off another through, its declaration's): what the
  * migrations before 0086 ran on.
@@ -180,6 +194,20 @@ async function keptRows() {
     FROM rules.field_defs
     UNION ALL SELECT 'role ' || role || ' ' || from_type || ' ' || to_type || ' ' || coalesce(via_type, '-') || ' '
       || single || ' ' || on_delete || ' ' || via_on_delete FROM rules.link_roles
+    UNION ALL SELECT 'character ' || id || ' ' || last_changed_at::text FROM character.characters
+    ORDER BY line
+  `);
+  return rows.map((row) => row.line);
+}
+
+/**
+ * Every pick, each as one line (every column 0093 keeps), and every character's last change: what 0093 leaves.
+ */
+async function pickRows() {
+  const { rows } = await db.execute<{ line: string }>(sql`
+    SELECT 'pick ' || concat_ws(' ', id, advancement_id, step, entity_id, entity_type, via_id, via_type, amount, ordinal,
+      repeats, created_at::text, updated_at::text) AS line
+    FROM character.advancement_picks
     UNION ALL SELECT 'character ' || id || ' ' || last_changed_at::text FROM character.characters
     ORDER BY line
   `);
@@ -978,5 +1006,47 @@ describe("0092_stored-type-forms", () => {
       .registries()
       .entityTypes.map(({ type }) => type);
     expect(types.map(({ type }) => type).toSorted()).toEqual(declared.toSorted());
+  });
+});
+
+describe("0093_unused-pick-columns", () => {
+  test("drops a pick's tier and parent pick, which nothing wrote, with the parent's key and index, and changes no row", async () => {
+    await addPickColumns();
+    const before = await pickRows();
+    expect(before.filter((line) => line.startsWith("pick ")).length).toBeGreaterThan(0);
+
+    for (const statement of statementsOf("0093_unused-pick-columns.sql")) await db.execute(sql.raw(statement));
+
+    const { rows: dropped } = await db.execute<{ name: string }>(sql`
+      SELECT column_name AS name FROM information_schema.columns
+      WHERE table_schema = 'character' AND table_name = 'advancement_picks' AND column_name IN ('tier', 'parent_pick_id')
+      UNION ALL SELECT indexname FROM pg_indexes WHERE indexname = 'advancement_picks_parent_idx'
+      UNION ALL SELECT conname FROM pg_constraint
+      WHERE conrelid = 'character.advancement_picks'::regclass AND conname = 'advancement_picks_parent_pick_id_fkey'
+    `);
+    expect(dropped).toEqual([]);
+    expect(await pickRows()).toEqual(before);
+  });
+
+  test("refuses a pick that holds a tier or a parent pick", async () => {
+    await addPickColumns();
+    await db.execute(sql`
+      UPDATE character.advancement_picks SET tier = 1
+      WHERE id = (SELECT id FROM character.advancement_picks ORDER BY id LIMIT 1)
+    `);
+    await db.execute(sql`
+      UPDATE character.advancement_picks
+      SET parent_pick_id = (SELECT id FROM character.advancement_picks ORDER BY id LIMIT 1)
+      WHERE id = (SELECT id FROM character.advancement_picks ORDER BY id DESC LIMIT 1)
+    `);
+
+    const refused = await db
+      .transaction(async (tx) => {
+        for (const statement of statementsOf("0093_unused-pick-columns.sql")) await tx.execute(sql.raw(statement));
+      })
+      .catch((error: unknown) => error);
+    expect(refused).toMatchObject({
+      cause: { message: "Picks hold columns nothing reads: tier, parent_pick_id" },
+    });
   });
 });

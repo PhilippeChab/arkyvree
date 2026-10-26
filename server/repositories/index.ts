@@ -43,6 +43,6 @@ export {
   IDENTITY_TYPES,
   OWNED_TYPES,
   RULESET_ENTITY_TYPES,
-} from "./rulesets/entityTables.ts";
-export type { RulesetEntityType } from "./rulesets/entityTables.ts";
+} from "./rulesets/entityTypes.ts";
+export type { RulesetEntityType } from "./rulesets/entityTypes.ts";
 export type { NewLink } from "./stored/StoredLinks.ts";

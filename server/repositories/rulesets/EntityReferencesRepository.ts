@@ -20,7 +20,7 @@ import {
   type ReferencedType,
   type ReferenceOwner,
 } from "./entityReferences.ts";
-import type { RulesetEntityType } from "./entityTables.ts";
+import type { RulesetEntityType } from "./entityTypes.ts";
 import { buildLineageCondition } from "./rulesetLineage.ts";
 
 /** What a character's row naming an entity belongs to: the character, or one of its levels. */

@@ -246,7 +246,7 @@ The view's own, by kind (`RulesetData`, `engine/core/view/RulesetData.ts`):
 
 | Index | Holds |
 | --- | --- |
-| `featsById`, `spellsById`, `skillsById`, `aptitudesById`, `abilitiesById`, `savesById`, `classesById`, `racesById`, `languagesById`, `itemsById`, `mechanicsById`, `classLevelsById` | Each of its kinds' entities by id: the view's `byId(type)` |
+| `featsById`, `spellsById`, `skillsById`, `aptitudesById`, `abilitiesById`, `savesById`, `classesById`, `racesById`, `languagesById`, `itemsById`, `classLevelsById` | Each of its kinds' entities by id: the view's `byId(type)` |
 | `classLevelByClassAndLevel` (key `${ownerId}:${position}`) | A class's level, by its class and its number |
 | `classLevelsByClass` | A class's levels, by their number (`position`): the last its highest |
 | `grantedFeatsOf(id)`, `grantedSpellsOf(id)` | A class level's `grants` links to feats and to spells, by their entities' names |
