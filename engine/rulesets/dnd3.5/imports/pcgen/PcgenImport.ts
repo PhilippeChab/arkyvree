@@ -8,6 +8,7 @@ import type { ImportedCharacter } from "@/engine/rulesets/dnd3.5/imports/importe
 import { DND35_STORAGE } from "@/engine/rulesets/dnd3.5/storage/Dnd35Storage.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { MAX_CHARACTER_NAME_LENGTH, MAX_CHARACTER_NUMBER } from "@/shared/characters.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import { type Gender, GENDER_OPTIONS } from "@/vocabulary/dnd3.5/identity.ts";
 
 import GearImport from "./GearImport.ts";
@@ -93,7 +94,6 @@ export default class PcgenImport {
       fields: Object.fromEntries(held),
       ...stamps,
       id,
-      kind: "pc",
       lastChangedAt: now,
       parentCharacterId: null,
       rulesetId: this.view.ruleset.id,
@@ -186,6 +186,7 @@ export default class PcgenImport {
     return {
       description: biography.description.join("\n\n") || null,
       ...values,
+      kind: PLAYER_CHARACTER_KIND,
       name,
       notes: biography.notes.join("\n") || null,
       privateNotes: biography.privateNotes.join("\n\n") || null,

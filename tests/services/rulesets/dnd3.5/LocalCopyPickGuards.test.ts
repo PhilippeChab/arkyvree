@@ -11,6 +11,7 @@ import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { findPlainItem } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import {
   ITEM_COST_GP,
   ITEM_SLOT,
@@ -30,6 +31,7 @@ async function setup() {
   const baseId = fork.ancestorRulesetIds[0];
   const human = (await Entities.findOne<Race>(db, { entityType: "races", name: "Human", rulesetId: baseId }))!;
   const [character] = await Characters.create(db, {
+    kind: PLAYER_CHARACTER_KIND,
     userId: session.userId,
     rulesetId: fork.id,
     name: "Pick Guard",

@@ -4,7 +4,7 @@ import { charactersInCharacter } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { InternalError, NotFoundError } from "@/server/errors/index.ts";
-import { Activities, Characters, PlayerCharacters, Visibility } from "@/server/repositories/index.ts";
+import { Activities, Characters, PLAYER_KINDS, PlayerCharacters, Visibility } from "@/server/repositories/index.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -18,7 +18,8 @@ export function Archives<B extends Constructor>(Base: B) {
           userId: session.userId,
         });
 
-        if (!existingCharacter || existingCharacter.kind !== "pc") throw new NotFoundError("Character not found");
+        if (!existingCharacter || !PLAYER_KINDS.includes(existingCharacter.kind))
+          throw new NotFoundError("Character not found");
 
         // Archive flips deletedAt on the character row only — level/inventory/
         // language children stay live. They're unreachable once the parent is
@@ -49,7 +50,8 @@ export function Archives<B extends Constructor>(Base: B) {
           Visibility.ArchivedOnly,
         );
 
-        if (!existingCharacter || existingCharacter.kind !== "pc") throw new NotFoundError("Character not found");
+        if (!existingCharacter || !PLAYER_KINDS.includes(existingCharacter.kind))
+          throw new NotFoundError("Character not found");
 
         const inActiveCampaign = await PlayerCharacters.exists(tx, { characterId, campaignArchived: false });
         (await CharactersPolicy.for(tx, session, existingCharacter)).canHardDelete({ inActiveCampaign });
@@ -80,7 +82,8 @@ export function Archives<B extends Constructor>(Base: B) {
           Visibility.ArchivedOnly,
         );
 
-        if (!existingCharacter || existingCharacter.kind !== "pc") throw new NotFoundError("Character not found");
+        if (!existingCharacter || !PLAYER_KINDS.includes(existingCharacter.kind))
+          throw new NotFoundError("Character not found");
 
         const rows = await Characters.unarchive(tx, { id: characterId });
         const unarchivedCharacter = rows[0];

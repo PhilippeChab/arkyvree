@@ -3,7 +3,7 @@ import { RACE_SIZE_PATH } from "@/codegen/dnd3.5/tools/terms/races.ts";
 import { eqStr, or } from "@/content/core/builders/customization/requirements.ts";
 import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { SIZE_OPTIONS } from "@/shared/enums.ts";
+import { SIZE_OPTIONS } from "@/vocabulary/dnd3.5/sizes.ts";
 
 /** The sizes, as a prerequisite names one. */
 const SIZE_NAMES = SIZE_OPTIONS.join("|");

@@ -2,6 +2,7 @@ import { Document } from "@react-pdf/renderer";
 
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import type { CharacterKind } from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 import DiagnosticsPage from "./DiagnosticsPage.tsx";
 import FeatsPage from "./FeatsPage.tsx";
@@ -14,7 +15,7 @@ import SpellsPage from "./SpellsPage.tsx";
 function DetailedCharacterSheet({
   detailedCharacter,
   diagnostics,
-  kind = "pc",
+  kind = PLAYER_CHARACTER_KIND,
   portraitUrl,
 }: {
   detailedCharacter: DetailedCharacter;
@@ -22,7 +23,7 @@ function DetailedCharacterSheet({
   kind?: CharacterKind;
   portraitUrl?: string | null;
 }) {
-  const isBonded = kind !== "pc";
+  const isBonded = kind !== PLAYER_CHARACTER_KIND;
 
   return (
     <Document>

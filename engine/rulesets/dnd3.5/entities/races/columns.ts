@@ -1,7 +1,7 @@
 import type { FormField } from "@/engine/core/fields/index.ts";
 import type { ListDescription } from "@/engine/core/module/index.ts";
-import { SIZE_OPTIONS } from "@/shared/enums.ts";
 import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { SIZE_OPTIONS } from "@/vocabulary/dnd3.5/sizes.ts";
 
 /** A 3.5 race's columns, as its form shows them beside its name and description: its size and its base speed. */
 export const RACE_COLUMNS: FormField[] = [

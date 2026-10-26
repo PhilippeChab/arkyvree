@@ -9,6 +9,7 @@ import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import { BAB_PROGRESSIONS, SAVE_PROGRESSIONS } from "@/vocabulary/dnd3.5/classes.ts";
 import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -215,7 +216,7 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
           name: def.name,
           description: def.description,
           fields: { [CLASS_HD]: def.hd },
-          partition: def.kind ?? "pc",
+          partition: def.kind ?? PLAYER_CHARACTER_KIND,
         },
       ]);
       const klass = { id: klassId };

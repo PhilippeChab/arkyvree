@@ -14,6 +14,7 @@ import { CharactersService, readCharacterInput } from "@/server/services/charact
 import type { Character, Session } from "@/shared/relations.ts";
 import { api, expectOk } from "@/tests/support/api.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import type { Alignment, Gender } from "@/vocabulary/dnd3.5/identity.ts";
 
 /** A new character's fields, past those every character has, as the seeded ruleset's form sends them (3.5's). */
@@ -144,6 +145,7 @@ export async function createTestCharacter(
 ) {
   const ctx = await getSeedCtx();
   const [character] = await Characters.create(db, {
+    kind: PLAYER_CHARACTER_KIND,
     userId,
     rulesetId: ctx.rulesetId,
     name: `Test Character ${uniqueId()}`,

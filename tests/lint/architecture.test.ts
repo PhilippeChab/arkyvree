@@ -442,7 +442,7 @@ describe("architecture rules", () => {
       await lint({
         "vocabulary/dnd3.5/a.ts": 'import { x } from "@/engine/core/RulesError.ts";\nexport const a = x;\n',
         "vocabulary/dnd3.5/b.ts":
-          'import type { ItemLocation } from "@/shared/enums.ts";\nexport const b: ItemLocation[] = [];\n',
+          'import type { BaseRules } from "@/shared/enums.ts";\nexport const b: BaseRules[] = [];\n',
         "vocabulary/dnd3.5/c.ts": 'import { y } from "@/client/src/lib/z.ts";\nexport const c = y;\n',
       }),
     ).toEqual(["root-folders vocabulary/dnd3.5/a.ts", "root-folders vocabulary/dnd3.5/c.ts"]);

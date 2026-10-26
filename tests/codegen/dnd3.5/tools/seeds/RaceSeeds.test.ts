@@ -6,7 +6,7 @@ import Library from "@/codegen/dnd3.5/tools/seeds/Library.ts";
 import type { ReferenceType } from "@/codegen/dnd3.5/tools/types/reference.ts";
 import { grantLanguage } from "@/content/dnd3.5/builders/languages/knowledge.ts";
 import { LANGUAGES } from "@/content/dnd3.5/data/coreRules.ts";
-import { SIZE_OPTIONS } from "@/shared/enums.ts";
+import { SIZE_OPTIONS } from "@/vocabulary/dnd3.5/sizes.ts";
 
 /** The SRD race `name`'s seeded modifiers on its languages: the grants of those it speaks. */
 function grantedBy(name: string) {

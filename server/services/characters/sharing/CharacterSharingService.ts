@@ -6,7 +6,7 @@ import { withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { isProduction } from "@/server/environment.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Activities, Characters, Visibility } from "@/server/repositories/index.ts";
+import { Activities, Characters, PLAYER_KINDS, Visibility } from "@/server/repositories/index.ts";
 import { getSlotUrl } from "@/server/services/attachments/index.ts";
 import { readCharacterInput, readChildInputs } from "@/server/services/characters/characterInputs.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -35,7 +35,8 @@ class CharacterSharingService {
         userId: session.userId,
       });
 
-      if (!characterRecord || characterRecord.kind !== "pc") throw new NotFoundError("Character not found");
+      if (!characterRecord || !PLAYER_KINDS.includes(characterRecord.kind))
+        throw new NotFoundError("Character not found");
 
       const shareToken = crypto.randomUUID();
       const [updated] = await Characters.update(tx, { shareToken }, { id: characterId });
@@ -71,7 +72,8 @@ class CharacterSharingService {
         userId: session.userId,
       });
 
-      if (!characterRecord || characterRecord.kind !== "pc") throw new NotFoundError("Character not found");
+      if (!characterRecord || !PLAYER_KINDS.includes(characterRecord.kind))
+        throw new NotFoundError("Character not found");
 
       const [updated] = await Characters.update(tx, { shareToken: null }, { id: characterId });
 

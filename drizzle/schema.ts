@@ -157,7 +157,7 @@ export const charactersInCharacter = character.table(
       .notNull(),
     userId: uuid("user_id").notNull(),
     rulesetId: uuid("ruleset_id").notNull(),
-    kind: text().notNull().default("pc"),
+    kind: text().notNull(),
     parentCharacterId: uuid("parent_character_id"),
     name: text().notNull(),
     description: text(),
@@ -721,74 +721,6 @@ export const emailVerificationsInAccount = account.table(
   ],
 );
 
-export const linkRoleKindsInRules = rules.table(
-  "link_role_kinds",
-  {
-    role: text().notNull(),
-    fromType: text("from_type").notNull(),
-    single: boolean().notNull(),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.fromType],
-      foreignColumns: [entityTypesInRules.type],
-      name: "link_role_kinds_from_type_fkey",
-    }),
-    primaryKey({ columns: [table.role, table.fromType], name: "link_role_kinds_pkey" }),
-    unique("link_role_kinds_role_from_type_single_key").on(table.role, table.fromType, table.single),
-  ],
-);
-
-export const linkRolesInRules = rules.table(
-  "link_roles",
-  {
-    role: text().notNull(),
-    fromType: text("from_type").notNull(),
-    toType: text("to_type").notNull(),
-    viaType: text("via_type"),
-    hasVia: boolean("has_via").generatedAlwaysAs(sql`(via_type IS NOT NULL)`),
-    single: boolean().notNull(),
-    onDelete: text("on_delete").notNull(),
-    viaOnDelete: text("via_on_delete").notNull(),
-    merge: text().notNull(),
-  },
-  (table) => [
-    foreignKey({
-      columns: [table.fromType],
-      foreignColumns: [entityTypesInRules.type],
-      name: "link_roles_from_type_fkey",
-    }),
-    foreignKey({
-      columns: [table.role, table.fromType, table.single],
-      foreignColumns: [linkRoleKindsInRules.role, linkRoleKindsInRules.fromType, linkRoleKindsInRules.single],
-      name: "link_roles_role_from_type_single_fkey",
-    }).onUpdate("cascade"),
-    foreignKey({
-      columns: [table.toType],
-      foreignColumns: [entityTypesInRules.type],
-      name: "link_roles_to_type_fkey",
-    }),
-    foreignKey({
-      columns: [table.viaType],
-      foreignColumns: [entityTypesInRules.type],
-      name: "link_roles_via_type_fkey",
-    }),
-    primaryKey({ columns: [table.role, table.fromType, table.toType], name: "link_roles_pkey" }),
-    unique("link_roles_role_from_type_to_type_single_key").on(table.role, table.fromType, table.toType, table.single),
-    unique("link_roles_role_from_type_to_type_has_via_key").on(table.role, table.fromType, table.toType, table.hasVia),
-    unique("link_roles_role_from_type_to_type_via_type_key").on(
-      table.role,
-      table.fromType,
-      table.toType,
-      table.viaType,
-    ),
-    check("link_roles_check", sql`(NOT single) OR (merge <> 'union'::text)`),
-    check("link_roles_merge_check", sql`merge = ANY (ARRAY['winner'::text, 'fallback'::text, 'union'::text])`),
-    check("link_roles_on_delete_check", sql`on_delete = ANY (ARRAY['refuse'::text, 'unlink'::text, 'delete'::text])`),
-    check("link_roles_via_on_delete_check", sql`via_on_delete = ANY (ARRAY['refuse'::text, 'unlink'::text])`),
-  ],
-);
-
 export const fieldDefsInRules = rules.table(
   "field_defs",
   {
@@ -802,29 +734,12 @@ END`),
     field: text().notNull(),
     valueKind: text("value_kind").notNull(),
     multiple: boolean().notNull(),
-    merge: text().notNull(),
-    inheritsVia: text("inherits_via"),
-    inheritsSingle: boolean("inherits_single").generatedAlwaysAs(sql`
-CASE
-    WHEN (inherits_via IS NOT NULL) THEN true
-    ELSE NULL::boolean
-END`),
   },
   (table) => [
     foreignKey({
       columns: [table.entityType],
       foreignColumns: [entityTypesInRules.type],
       name: "field_defs_entity_type_fkey",
-    }),
-    foreignKey({
-      columns: [table.inheritsVia, table.entityType, table.entityType, table.inheritsSingle],
-      foreignColumns: [
-        linkRolesInRules.role,
-        linkRolesInRules.fromType,
-        linkRolesInRules.toType,
-        linkRolesInRules.single,
-      ],
-      name: "field_defs_inherits_via_entity_type_entity_type_inherits_s_fkey",
     }),
     primaryKey({ columns: [table.ownerType, table.field], name: "field_defs_pkey" }),
     unique("field_defs_owner_type_field_value_kind_multiple_key").on(
@@ -837,9 +752,6 @@ END`),
       "field_defs_check",
       sql`((owner_kind = 'ruleset'::text) = (owner_type = 'rulesets'::text)) AND ((owner_kind = 'character'::text) = (owner_type = 'characters'::text))`,
     ),
-    check("field_defs_check1", sql`multiple OR (merge <> 'union'::text)`),
-    check("field_defs_check2", sql`(owner_kind = 'entity'::text) OR (inherits_via IS NULL)`),
-    check("field_defs_merge_check", sql`merge = ANY (ARRAY['winner'::text, 'fallback'::text, 'union'::text])`),
     check(
       "field_defs_owner_kind_check",
       sql`owner_kind = ANY (ARRAY['entity'::text, 'ruleset'::text, 'character'::text])`,
@@ -907,6 +819,71 @@ export const entityFieldsInRules = rules.table(
       sql`number_value <> ALL (ARRAY['NaN'::numeric, 'Infinity'::numeric, '-Infinity'::numeric])`,
     ),
     check("entity_fields_ordinal_check", sql`ordinal >= 0`),
+  ],
+);
+
+export const linkRoleKindsInRules = rules.table(
+  "link_role_kinds",
+  {
+    role: text().notNull(),
+    fromType: text("from_type").notNull(),
+    single: boolean().notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.fromType],
+      foreignColumns: [entityTypesInRules.type],
+      name: "link_role_kinds_from_type_fkey",
+    }),
+    primaryKey({ columns: [table.role, table.fromType], name: "link_role_kinds_pkey" }),
+    unique("link_role_kinds_role_from_type_single_key").on(table.role, table.fromType, table.single),
+  ],
+);
+
+export const linkRolesInRules = rules.table(
+  "link_roles",
+  {
+    role: text().notNull(),
+    fromType: text("from_type").notNull(),
+    toType: text("to_type").notNull(),
+    viaType: text("via_type"),
+    hasVia: boolean("has_via").generatedAlwaysAs(sql`(via_type IS NOT NULL)`),
+    single: boolean().notNull(),
+    onDelete: text("on_delete").notNull(),
+    viaOnDelete: text("via_on_delete").notNull(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.fromType],
+      foreignColumns: [entityTypesInRules.type],
+      name: "link_roles_from_type_fkey",
+    }),
+    foreignKey({
+      columns: [table.role, table.fromType, table.single],
+      foreignColumns: [linkRoleKindsInRules.role, linkRoleKindsInRules.fromType, linkRoleKindsInRules.single],
+      name: "link_roles_role_from_type_single_fkey",
+    }).onUpdate("cascade"),
+    foreignKey({
+      columns: [table.toType],
+      foreignColumns: [entityTypesInRules.type],
+      name: "link_roles_to_type_fkey",
+    }),
+    foreignKey({
+      columns: [table.viaType],
+      foreignColumns: [entityTypesInRules.type],
+      name: "link_roles_via_type_fkey",
+    }),
+    primaryKey({ columns: [table.role, table.fromType, table.toType], name: "link_roles_pkey" }),
+    unique("link_roles_role_from_type_to_type_single_key").on(table.role, table.fromType, table.toType, table.single),
+    unique("link_roles_role_from_type_to_type_has_via_key").on(table.role, table.fromType, table.toType, table.hasVia),
+    unique("link_roles_role_from_type_to_type_via_type_key").on(
+      table.role,
+      table.fromType,
+      table.toType,
+      table.viaType,
+    ),
+    check("link_roles_on_delete_check", sql`on_delete = ANY (ARRAY['refuse'::text, 'unlink'::text, 'delete'::text])`),
+    check("link_roles_via_on_delete_check", sql`via_on_delete = ANY (ARRAY['refuse'::text, 'unlink'::text])`),
   ],
 );
 

@@ -16,8 +16,8 @@ import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
-import type { ItemLocation } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
+import type { ItemLocation } from "@/vocabulary/dnd3.5/equipment.ts";
 import { ITEM_COST_GP, ITEM_IS_TEMPLATE, ITEM_SLOT, ITEM_TYPE, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { TEMPLATE_ITEM_TYPES } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 

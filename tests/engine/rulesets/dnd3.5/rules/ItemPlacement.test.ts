@@ -3,9 +3,8 @@ import { describe, expect, test } from "bun:test";
 import { OwnerValues } from "@/engine/core/fields/index.ts";
 import type { FieldValue } from "@/engine/core/module/index.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
-import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { storedValues } from "@/tests/support/storedValues.ts";
-import { HAND_LOCATIONS } from "@/vocabulary/dnd3.5/equipment.ts";
+import { HAND_LOCATIONS, type ItemLocation, LOCATION_OPTIONS } from "@/vocabulary/dnd3.5/equipment.ts";
 import { ITEM_HAS_CHARGES, ITEM_SLOT, ITEM_TYPE, WEAPON_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** An item's stored values, its `ITEM_HAS_CHARGES` field holding `value`. */

@@ -5,7 +5,6 @@
  * request sent (`RequestIds`).
  */
 
-import type { ItemLocation } from "@/shared/enums.ts";
 import type { Character, CharacterFieldValue } from "@/shared/relations.ts";
 
 /** What a character's edit writes: its fields' values and own columns, and each picked link's picks it sends, by role. */
@@ -31,7 +30,7 @@ export interface InventoryEntryPlan {
   /** The groups it's held in, stored from 0 (3.5's weapon sets a hand holds it in): none outside them */
   groups: number[];
   itemId: string;
-  location: ItemLocation | null;
+  location: string | null;
   remainingCharges: number | null;
   totalCharges: number | null;
 }
@@ -48,11 +47,13 @@ export interface LinkPlan {
 }
 
 /**
- * What a new character stores: what it starts with (`StartPlan`), and its fields' values and own columns its form
- * writes, those its rules require among them.
+ * What a new character stores: what it starts with (`StartPlan`), its kind (its module's player character's,
+ * `StoredCharacter.playerKind`), and its fields' values and own columns its form writes, those its rules require among
+ * them.
  */
 export interface NewCharacterPlan extends StartPlan {
   fields: Record<string, CharacterFieldValue | null>;
+  kind: string;
   own: CharacterOwnValues;
 }
 

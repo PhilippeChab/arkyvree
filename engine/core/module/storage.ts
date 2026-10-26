@@ -75,7 +75,8 @@ export interface EntityWrite {
 /**
  * A field: its owner (an entity of a type, a ruleset, a character), its value's kind, whether it's a set (`multiple`),
  * how sibling copies merge it, and the role an entity follows to read it off another when it has none (`inheritsVia`:
- * an item's template).
+ * an item's template). The registry keeps its owner, kind and set-ness, which its rows are checked against; the engine
+ * alone reads its merge and inheritance (`DeclaredFields`).
  */
 export interface FieldDef {
   field: string;
@@ -90,7 +91,8 @@ export interface FieldDef {
 /**
  * A link role, from a type to another: whether an entity holds one (`single`), what deleting its target or its via does
  * (`onDelete`, `viaOnDelete`: delete the linking entity, unlink, or refuse), the type of the pool it's taken through
- * (`viaType`), and how sibling copies merge it.
+ * (`viaType`), and how sibling copies merge it, which the engine alone reads (`DeclaredFields`,
+ * `StorageEngine.viewSchema`): the registry keeps the rest, which its links are checked against.
  */
 export interface LinkRoleDef {
   fromType: string;
@@ -129,7 +131,10 @@ export interface StorageDeclaration {
   registries: StorageRegistries;
 }
 
-/** What the registries hold of a module: its entity types, link roles, fields, roles, steps and the types items are. */
+/**
+ * What a module declares of its entity types, link roles, fields, roles, steps and the types items are: the registries'
+ * rows, past a field's and a role's merge and a field's inheritance, which the engine alone reads.
+ */
 export interface StorageRegistries {
   characterRoles: CharacterRoleDef[];
   entityTypes: EntityTypeDef[];
@@ -155,11 +160,17 @@ export interface StoredAdvancement {
 }
 
 /**
- * A character's data past what the registries hold of it: which of its link roles hold an amount (`scoredRoles`: its
- * scores, 3.5's `score`), the others of a role it holds many of being picked (3.5's `speaks`). Its own values are its
- * fields (`field_defs` of owner type `characters`) and its single links (`character_roles`: 3.5's `race`).
+ * A character's data past what the registries hold of it: the kind of a player character (`playerKind`, 3.5's `pc`),
+ * and which of its link roles hold an amount (`scoredRoles`: its scores, 3.5's `score`), the others of a role it holds
+ * many of being picked (3.5's `speaks`). Its own values are its fields (`field_defs` of owner type `characters`) and
+ * its single links (`character_roles`: 3.5's `race`).
  */
 export interface StoredCharacter {
+  /**
+   * The kind a new character is (`characters.kind`): a player character's, which its user lists, shares and links to a
+   * campaign; a character of another kind is another's child (3.5's bonded creatures), which follows its parent
+   */
+  playerKind: string;
   scoredRoles: string[];
 }
 

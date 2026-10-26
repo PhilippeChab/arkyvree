@@ -1,6 +1,6 @@
 import { CharacterBuilder } from "@/engine/core/character/index.ts";
 import type { Character as CharacterRecord } from "@/shared/relations.ts";
-import type { BondedKind } from "@/vocabulary/dnd3.5/bondedKinds.ts";
+import type { BondedKind, PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 import DetailedCharacterAnimalCompanion from "./bonded/DetailedCharacterAnimalCompanion.ts";
 import DetailedCharacterFamiliar from "./bonded/DetailedCharacterFamiliar.ts";
@@ -8,7 +8,7 @@ import DetailedCharacterMount from "./bonded/DetailedCharacterMount.ts";
 import DetailedCharacter from "./DetailedCharacter.ts";
 
 /** What a 3.5 character is: a player character, or a creature bonded to one. */
-export type CharacterKind = "pc" | BondedKind;
+export type CharacterKind = typeof PLAYER_CHARACTER_KIND | BondedKind;
 
 /** The 3.5 characters built from the rows the server read, on core's builder: each of its row's kind. */
 class Dnd35CharacterBuilder extends CharacterBuilder<DetailedCharacter> {

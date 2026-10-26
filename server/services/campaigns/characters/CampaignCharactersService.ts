@@ -11,6 +11,7 @@ import {
   CharacterAdvancements,
   CharacterContributors,
   Characters,
+  PLAYER_KINDS,
   PlayerCharacters,
   Players,
   Visibility,
@@ -124,9 +125,12 @@ class CampaignCharactersService {
     if (linkedCharacters.length === 0) return { items: [], page: paginationMeta.page, nextPage: undefined };
 
     const characterMeta = new Map(
-      linkedCharacters.map((pc) => [pc.characterId, { playerId: pc.playerId, visibility: pc.visibility }]),
+      linkedCharacters.map((linked) => [
+        linked.characterId,
+        { playerId: linked.playerId, visibility: linked.visibility },
+      ]),
     );
-    const characterIds = linkedCharacters.map((pc) => pc.characterId);
+    const characterIds = linkedCharacters.map((linked) => linked.characterId);
 
     // Get character details using direct query with character IDs
     const characters = await Characters.findMany(db, { ids: characterIds });
@@ -212,7 +216,8 @@ class CampaignCharactersService {
       const character = await Characters.findOne(tx, { id: characterId, userId: session.userId });
       if (!character) throw new NotFoundError("Character not found");
 
-      if (character.kind !== "pc") throw new BadRequestError("Only player characters can be linked to a campaign");
+      if (!PLAYER_KINDS.includes(character.kind))
+        throw new BadRequestError("Only player characters can be linked to a campaign");
 
       // The campaign's exact ruleset: not a fork of it, nor its parent.
       if (character.rulesetId !== campaign.rulesetId)

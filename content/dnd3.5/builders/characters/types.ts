@@ -1,4 +1,4 @@
-import type { ItemLocation } from "@/shared/enums.ts";
+import type { ItemLocation } from "@/vocabulary/dnd3.5/equipment.ts";
 import type { Alignment, Gender } from "@/vocabulary/dnd3.5/identity.ts";
 
 /** A pick at one of a seeded character's levels (`levelIndex` counts all its levels, from 0). */

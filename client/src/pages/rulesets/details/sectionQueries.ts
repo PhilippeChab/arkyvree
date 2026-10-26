@@ -12,7 +12,7 @@ import { nextPage } from "@/client/src/lib/pageItems.ts";
 import type { Direction, EntityKindDescription } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import {
-  DEFAULT_ENTITY_FILTERS,
+  DEFAULT_ENTITY_SORT,
   type EntityKind,
   type EntitySortField,
 } from "@/client/src/pages/rulesets/hooks/useEntityFilters.ts";
@@ -172,15 +172,17 @@ export function invalidateRulesetEdit(
 }
 
 /**
- * Warm the first page of a tab the way it opens: switching tabs clears the URL's filters, so that's no search, the
- * default kind and sort, no pool and every level, and the ruleset's default "Local Changes" setting: an entity kind's
- * tab's (`kind`) list, or its groups where its kind groups its variants (`families`), its Settings' fields.
+ * Warm the first page of a tab the way it opens: switching tabs clears the URL's filters, so that's no search, the kind
+ * its rules list first (`entityKind`, a player character's) and the default sort, no pool and every level, and the
+ * ruleset's default "Local Changes" setting: an entity kind's tab's (`kind`) list, or its groups where its kind groups
+ * its variants (`families`), its Settings' fields.
  */
 export function prefetchSection(
   queryClient: QueryClient,
   rulesetId: string,
   section: RulesetSection,
   kind: EntityKindDescription | null,
+  entityKind: EntityKind | undefined,
   childOnly: boolean,
 ) {
   const filters = { search: "", childOnly };
@@ -192,6 +194,6 @@ export function prefetchSection(
   }
   if (!kind) return;
   if (kind.families) return queryClient.prefetchInfiniteQuery(entityGroupsQuery(rulesetId, kind, filters));
-  const where = kind.partitioned ? { ...filters, ...DEFAULT_ENTITY_FILTERS } : filters;
+  const where = kind.partitioned ? { ...filters, kind: entityKind, ...DEFAULT_ENTITY_SORT } : filters;
   return queryClient.prefetchInfiniteQuery(entitiesQuery(rulesetId, kind, where));
 }

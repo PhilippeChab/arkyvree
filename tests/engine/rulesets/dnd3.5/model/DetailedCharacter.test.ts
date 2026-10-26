@@ -42,7 +42,6 @@ import {
   Requirements,
 } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
-import type { ItemLocation } from "@/shared/enums.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import type { Character, Requirement } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -57,6 +56,7 @@ import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rule
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import type { ItemLocation } from "@/vocabulary/dnd3.5/equipment.ts";
 import {
   ARMOR_AC_BONUS,
   ARMOR_CHECK_PENALTY,

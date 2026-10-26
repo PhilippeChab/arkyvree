@@ -9,9 +9,13 @@ import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35Character
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
-import type { ItemLocation } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
-import { ITEM_TYPE_LOCATIONS, MAX_FINGER_ITEMS, SINGLE_OCCUPANCY_LOCATIONS } from "@/vocabulary/dnd3.5/equipment.ts";
+import {
+  ITEM_TYPE_LOCATIONS,
+  type ItemLocation,
+  MAX_FINGER_ITEMS,
+  SINGLE_OCCUPANCY_LOCATIONS,
+} from "@/vocabulary/dnd3.5/equipment.ts";
 import { ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** An inventory entry an item is equipped from: the entry (null for a new one), and its item. */

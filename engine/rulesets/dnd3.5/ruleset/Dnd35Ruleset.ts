@@ -1,6 +1,7 @@
 import { RulesetPart } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 import { RULESET_FIELDS } from "./fields.ts";
 import { RULES } from "./rules.ts";
@@ -20,8 +21,8 @@ export default class Dnd35Ruleset extends RulesetPart {
   protected override findMissingContent(view: RulesetView) {
     const { feats, klasses, races, skills } = Dnd35View.of(view.rulesetData);
     return [
-      { kind: "race", present: races.some((race) => race.partition === "pc") },
-      { kind: "class", present: klasses.some((klass) => klass.partition === "pc") },
+      { kind: "race", present: races.some((race) => race.partition === PLAYER_CHARACTER_KIND) },
+      { kind: "class", present: klasses.some((klass) => klass.partition === PLAYER_CHARACTER_KIND) },
       { kind: "skill", present: skills.length > 0 },
       { kind: "feat", present: feats.length > 0 },
     ]

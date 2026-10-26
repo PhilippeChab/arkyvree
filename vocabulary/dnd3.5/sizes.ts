@@ -1,4 +1,10 @@
-/** A creature's size, in the numbers its rules read: its modifiers to AC and attack, grapple and Hide, and its weapons' damage step. */
+/**
+ * A creature's size, and the numbers its rules read of it: its modifiers to AC and attack, grapple and Hide, and its
+ * weapons' damage step.
+ */
+
+/** A creature's or a weapon's size. */
+export type SizeType = (typeof SIZE_OPTIONS)[number];
 
 /** Size modifier applied to AC and to-hit (same magnitude, same direction). */
 export const SIZE_AC_ATTACK_MOD: Record<string, number> = {
@@ -38,6 +44,19 @@ export const SIZE_HIDE_MOD: Record<string, number> = {
   Gargantuan: -12,
   Colossal: -16,
 };
+
+/** Every size, smallest first. */
+export const SIZE_OPTIONS = [
+  "Fine",
+  "Diminutive",
+  "Tiny",
+  "Small",
+  "Medium",
+  "Large",
+  "Huge",
+  "Gargantuan",
+  "Colossal",
+] as const;
 
 /** Weapon damage size step (Medium = 0; +1 step = bigger damage die). */
 export const SIZE_STEPS: Record<string, number> = {

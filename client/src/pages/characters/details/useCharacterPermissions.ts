@@ -6,7 +6,9 @@ import { useAuthStore } from "@/client/src/stores/authStore.ts";
  * What the session may do with a character it opened, as its owner or a contributor (the API shows it no one else);
  * nothing of the owner's until the character has loaded.
  */
-export function useCharacterPermissions(character: Pick<CharacterDetail, "deletedAt" | "kind" | "userId"> | undefined) {
+export function useCharacterPermissions(
+  character: Pick<CharacterDetail, "deletedAt" | "parentCharacterId" | "userId"> | undefined,
+) {
   const currentUserId = useAuthStore((s) => s.user?.id);
   // Demo users keep their characters in the app, as the server holds them: they can't pull other users in, share a
   // link, nor export a PDF.
@@ -14,7 +16,7 @@ export function useCharacterPermissions(character: Pick<CharacterDetail, "delete
   const isArchived = !!character?.deletedAt;
   const isOwner = !!currentUserId && character?.userId === currentUserId;
   // A character under another (a subsheet: 3.5's bonded creature) follows it: archived, unarchived and deleted with it
-  const isSubsheet = !!character && character.kind !== "pc";
+  const isSubsheet = !!character && character.parentCharacterId !== null;
 
   return {
     isArchived,

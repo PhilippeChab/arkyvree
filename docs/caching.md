@@ -66,7 +66,7 @@ const feat = rulesetData.find("feats", storedFeatId);
 
 This covers ~30 lookup sites. Zero caller changes after the rollout. When the ruleset has no overrides (e.g. the base itself), the Proxy is skipped and the underlying Map is returned directly — zero overhead.
 
-Also at compose time: an entity's links (`linksOf`, a feat's or a spell's `listedIn` links, a class level's `grants`) name the entities that stand for their targets and pools (`toId`, `viaId` resolved), and a sibling loser's links of a role that merges (its registry's `merge`, `union`: a feat's pools) merge into its winner's, deduped by target. `CowData.resolveLinks` only touches an entity's single links (its record's `links`, by role), so its links are composed apart from the entities, the first time an entity's are read.
+Also at compose time: an entity's links (`linksOf`, a feat's or a spell's `listedIn` links, a class level's `grants`) name the entities that stand for their targets and pools (`toId`, `viaId` resolved), and a sibling loser's links of a role that merges (its declared `merge`, `union`: a feat's pools) merge into its winner's, deduped by target. `CowData.resolveLinks` only touches an entity's single links (its record's `links`, by role), so its links are composed apart from the entities, the first time an entity's are read.
 
 ### Layer 2 — the engine reads the rows it's handed as the view does
 

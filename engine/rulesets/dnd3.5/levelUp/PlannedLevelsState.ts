@@ -9,6 +9,7 @@ import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedChara
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
 import { include } from "@/lib/mixins.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 import CharacterProjection from "./CharacterProjection.ts";
 import { PlansAptitudeSlots } from "./concerns/PlansAptitudeSlots.ts";
@@ -201,7 +202,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
       const klass = this.dnd35.klassesById.get(klassId);
       if (!klass) throw new RulesError("invalid", `Level ${i + 1}: Class does not belong to the character's ruleset`);
 
-      if (klass.partition !== "pc")
+      if (klass.partition !== PLAYER_CHARACTER_KIND)
         throw new RulesError("invalid", `Level ${i + 1}: Class is not valid for a player character`);
 
       const klassLevel = this.dnd35.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);

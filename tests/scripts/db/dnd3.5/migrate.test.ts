@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 
 import { sql } from "drizzle-orm";
 
+import { Engine } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { findSeededCharacter, getSeedCtx } from "@/tests/support/seed.ts";
@@ -14,8 +15,60 @@ function statementsOf(file: string) {
   return readFileSync(`drizzle/${file}`, "utf8").split("--> statement-breakpoint");
 }
 
+/**
+ * The registries' columns 0086 drops, as 0080 made them (their checks, the inheritance's key), each row's as the
+ * modules declare it: what the migrations before 0086 ran on.
+ */
+async function addRegistryColumns() {
+  const { fieldDefs, linkRoles } = Engine.storage().registries();
+  await db.execute(sql`
+      ALTER TABLE rules.link_roles ADD COLUMN merge text NOT NULL DEFAULT 'winner';
+      ALTER TABLE rules.link_roles ADD CONSTRAINT link_roles_merge_check
+        CHECK (merge IN ('winner', 'fallback', 'union'));
+      ALTER TABLE rules.link_roles ADD CONSTRAINT link_roles_check CHECK (NOT single OR merge <> 'union');
+      ALTER TABLE rules.field_defs ADD COLUMN merge text NOT NULL DEFAULT 'winner';
+      ALTER TABLE rules.field_defs ADD COLUMN inherits_via text;
+      ALTER TABLE rules.field_defs ADD COLUMN inherits_single boolean
+        GENERATED ALWAYS AS (CASE WHEN inherits_via IS NOT NULL THEN true END) STORED;
+      ALTER TABLE rules.field_defs ADD CONSTRAINT field_defs_inherits_via_entity_type_entity_type_inherits_s_fkey
+        FOREIGN KEY (inherits_via, entity_type, entity_type, inherits_single)
+        REFERENCES rules.link_roles(role, from_type, to_type, single);
+      ALTER TABLE rules.field_defs ADD CONSTRAINT field_defs_check1 CHECK (multiple OR merge <> 'union');
+      ALTER TABLE rules.field_defs ADD CONSTRAINT field_defs_check2
+        CHECK (owner_kind = 'entity' OR inherits_via IS NULL);
+      ALTER TABLE rules.field_defs ADD CONSTRAINT field_defs_merge_check
+        CHECK (merge IN ('winner', 'fallback', 'union'));
+    `);
+  await db.execute(sql`
+      UPDATE rules.link_roles r SET merge = d.merge
+      FROM jsonb_to_recordset(${JSON.stringify(linkRoles)}::jsonb)
+        AS d(role text, "fromType" text, "toType" text, merge text)
+      WHERE r.role = d.role AND r.from_type = d."fromType" AND r.to_type = d."toType"
+    `);
+  await db.execute(sql`
+      UPDATE rules.field_defs f SET merge = d.merge, inherits_via = d."inheritsVia"
+      FROM jsonb_to_recordset(${JSON.stringify(fieldDefs)}::jsonb)
+        AS d("ownerType" text, field text, merge text, "inheritsVia" text)
+      WHERE f.owner_type = d."ownerType" AND f.field = d.field
+    `);
+}
+
+/** The registries' columns 0086 keeps, each row as one line, and every character's last change: what it leaves. */
+async function keptRows() {
+  const { rows } = await db.execute<{ line: string }>(sql`
+    SELECT 'field ' || owner_kind || ' ' || owner_type || ' ' || field || ' ' || value_kind || ' ' || multiple AS line
+    FROM rules.field_defs
+    UNION ALL SELECT 'role ' || role || ' ' || from_type || ' ' || to_type || ' ' || coalesce(via_type, '-') || ' '
+      || single || ' ' || on_delete || ' ' || via_on_delete FROM rules.link_roles
+    UNION ALL SELECT 'character ' || id || ' ' || last_changed_at::text FROM character.characters
+    ORDER BY line
+  `);
+  return rows.map((row) => row.line);
+}
+
 describe("0081_spells-and-classes", () => {
   test("runs in the transaction of the rows before it, and renames what customizations and activities recorded", async () => {
+    await addRegistryColumns();
     const { id: characterId } = await findSeededCharacter("Bjorn Ironhand");
     // A row whose deferred checks are pending, as 0080's are when drizzle runs 0081 in the same transaction
     await db.execute(sql`
@@ -234,5 +287,53 @@ describe("0085_advancement-activities", () => {
       `);
       expect({ table, rows }).toEqual({ table, rows: expected });
     }
+  });
+});
+
+describe("0086_registry-declarations", () => {
+  test("drops the registries' merges and inheritance, as the modules declared them, and nothing else", async () => {
+    await addRegistryColumns();
+    const { rows: held } = await db.execute<{ n: number }>(sql`
+      SELECT count(*)::int AS n FROM rules.field_defs WHERE inherits_via IS NOT NULL AND merge = 'union'
+    `);
+    expect(held[0]!.n).toBeGreaterThan(0);
+    const before = await keptRows();
+
+    for (const statement of statementsOf("0086_registry-declarations.sql")) await db.execute(sql.raw(statement));
+
+    const { rows: columns } = await db.execute<{ name: string }>(sql`
+      SELECT table_name || '.' || column_name AS name FROM information_schema.columns
+      WHERE table_schema = 'rules' AND table_name IN ('field_defs', 'link_roles')
+        AND column_name IN ('merge', 'inherits_via', 'inherits_single')
+    `);
+    expect(columns).toEqual([]);
+    expect(await keptRows()).toEqual(before);
+  });
+});
+
+describe("0087_player-kind", () => {
+  test("leaves a character's kind to its module's create, and changes no character", async () => {
+    await db.execute(sql`ALTER TABLE character.characters ALTER COLUMN kind SET DEFAULT 'pc'`);
+    const before = await keptRows();
+
+    for (const statement of statementsOf("0087_player-kind.sql")) await db.execute(sql.raw(statement));
+
+    const { rows: columns } = await db.execute<{ fallback: string | null }>(sql`
+      SELECT column_default AS fallback FROM information_schema.columns
+      WHERE table_schema = 'character' AND table_name = 'characters' AND column_name = 'kind'
+    `);
+    expect(columns).toEqual([{ fallback: null }]);
+    expect(await keptRows()).toEqual(before);
+    const { rulesetId } = await getSeedCtx();
+    const refused = await db
+      .transaction(
+        async (tx) =>
+          await tx.execute(sql`
+            INSERT INTO character.characters (user_id, ruleset_id, name)
+            VALUES (${SEED_USER_ID}, ${rulesetId}, 'Kindless')
+          `),
+      )
+      .catch((error: unknown) => error);
+    expect(refused).toMatchObject({ cause: { code: "23502", column: "kind" } });
   });
 });

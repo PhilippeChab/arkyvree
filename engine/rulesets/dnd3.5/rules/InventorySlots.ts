@@ -1,5 +1,5 @@
-import { type ItemLocation, LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
-import type { HandLocation } from "@/vocabulary/dnd3.5/equipment.ts";
+import { type HandLocation, type ItemLocation, LOCATION_OPTIONS } from "@/vocabulary/dnd3.5/equipment.ts";
+import { SIZE_OPTIONS } from "@/vocabulary/dnd3.5/sizes.ts";
 
 import ItemPlacement from "./ItemPlacement.ts";
 

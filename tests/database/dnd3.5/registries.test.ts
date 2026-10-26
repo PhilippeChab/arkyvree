@@ -58,10 +58,10 @@ describe("The registries, which the generic tables' rows are checked against", (
   test("hold the link roles every module declares, each single or not for its from-type", async () => {
     expect(
       await rowsOf(sql`SELECT role, from_type AS "fromType", to_type AS "toType", via_type AS "viaType", single,
-        on_delete AS "onDelete", via_on_delete AS "viaOnDelete", merge FROM rules.link_roles`),
+        on_delete AS "onDelete", via_on_delete AS "viaOnDelete" FROM rules.link_roles`),
     ).toEqual(
       linesOf(
-        registries.linkRoles.map(({ role, fromType, toType, viaType, single, onDelete, viaOnDelete, merge }) => ({
+        registries.linkRoles.map(({ role, fromType, toType, viaType, single, onDelete, viaOnDelete }) => ({
           role,
           fromType,
           toType,
@@ -69,7 +69,6 @@ describe("The registries, which the generic tables' rows are checked against", (
           single,
           onDelete,
           viaOnDelete,
-          merge,
         })),
       ),
     );
@@ -82,20 +81,18 @@ describe("The registries, which the generic tables' rows are checked against", (
     );
   });
 
-  test("hold the fields every module declares, their kinds, sets, merges and inheritance", async () => {
+  test("hold the fields every module declares, their kinds and sets", async () => {
     expect(
       await rowsOf(sql`SELECT owner_kind AS "ownerKind", owner_type AS "ownerType", field, value_kind AS "valueKind",
-        multiple, merge, inherits_via AS "inheritsVia" FROM rules.field_defs`),
+        multiple FROM rules.field_defs`),
     ).toEqual(
       linesOf(
-        registries.fieldDefs.map(({ ownerKind, ownerType, field, valueKind, multiple, merge, inheritsVia }) => ({
+        registries.fieldDefs.map(({ ownerKind, ownerType, field, valueKind, multiple }) => ({
           ownerKind,
           ownerType,
           field,
           valueKind,
           multiple,
-          merge,
-          inheritsVia,
         })),
       ),
     );
@@ -177,23 +174,6 @@ describe("The registry sync, which every migrate runs", () => {
     expect(before.length).toBeGreaterThan(0);
     await StoredRegistries.reconcile(db);
     expect(await registriesRows()).toEqual(before);
-  });
-
-  test("writes a role that stops being single as the fields that inherited through it stop", async () => {
-    const changed = declared();
-    for (const def of changed.registries.linkRoles) if (def.role === "madeFrom") def.single = false;
-    for (const def of changed.registries.fieldDefs) if (def.inheritsVia === "madeFrom") def.inheritsVia = null;
-    await StoredRegistries.reconcile(db, changed);
-    expect(await countOf(sql`SELECT count(*) AS n FROM rules.field_defs WHERE inherits_via = 'madeFrom'`)).toBe(0);
-    expect(await countOf(sql`SELECT count(*) AS n FROM rules.link_roles WHERE role = 'madeFrom' AND single`)).toBe(0);
-
-    await StoredRegistries.reconcile(db);
-    expect(
-      await countOf(sql`SELECT count(*) AS n FROM rules.field_defs WHERE inherits_via = 'madeFrom'`),
-    ).toBeGreaterThan(0);
-    expect(await countOf(sql`SELECT count(*) AS n FROM rules.link_roles WHERE role = 'madeFrom' AND NOT single`)).toBe(
-      0,
-    );
   });
 
   test("writes a new declaration, and removes it once no module declares it", async () => {

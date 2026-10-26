@@ -34,6 +34,7 @@ import { readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { findPlainItem, findSeededCharacter, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { LOCATION_OPTIONS } from "@/vocabulary/dnd3.5/equipment.ts";
 import {
   CLASS_HD,
   ITEM_COST_GP,
@@ -500,28 +501,34 @@ describe("a character's bonded creatures", () => {
 });
 
 describe("a character's inventory", () => {
-  test("refuses an entry's location not among its options, on an add and an edit", async () => {
+  test("refuses a location not among its options, on an add, an edit and a placement's query", async () => {
     const { rulesetId } = await getSeedCtx();
     const { id: characterId } = await postCharacter();
     const { id: itemId } = await findPlainItem(rulesetId);
     const inventory = api.api.characters.inventory[":characterId"];
     const entry = { quantity: 1, equipped: true, totalCharges: null, remainingCharges: null };
+    const issue = {
+      category: "location",
+      message: `Invalid option: expected one of ${LOCATION_OPTIONS.map((location) => `"${location}"`).join("|")}`,
+    };
     const refusedAdd = await expectStatus(
-      inventory.$post({ param: { characterId }, json: { ...entry, itemId, location: "Pocket" as never } }),
+      inventory.$post({ param: { characterId }, json: { ...entry, itemId, location: "Pocket" } }),
       400,
     );
-    expect(await refusedAdd.text()).toContain('"location"');
+    expect(await refusedAdd.json()).toMatchObject({ message: "Request validation failed", issues: [issue] });
     const added = await expectOk(
       inventory.$post({ param: { characterId }, json: { ...entry, itemId, location: "Trinket" } }),
     );
     expect(added).toMatchObject({ location: "Trinket" });
     const refusedEdit = await expectStatus(
-      inventory[":entryId"].$put({
-        param: { characterId, entryId: added.id },
-        json: { ...entry, location: "Pocket" as never },
-      }),
+      inventory[":entryId"].$put({ param: { characterId, entryId: added.id }, json: { ...entry, location: "Pocket" } }),
       400,
     );
-    expect(await refusedEdit.text()).toContain('"location"');
+    expect(await refusedEdit.json()).toMatchObject({ message: "Request validation failed", issues: [issue] });
+    const refusedQuery = await expectStatus(
+      inventory.placement.$get({ param: { characterId }, query: { location: "Pocket", groups: "" } }),
+      400,
+    );
+    expect(await refusedQuery.json()).toMatchObject({ message: "Request validation failed", issues: [issue] });
   });
 });

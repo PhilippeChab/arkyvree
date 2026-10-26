@@ -5,10 +5,10 @@ import type {
   FieldDef,
   FieldValue,
   LinkRoleDef,
+  Merge,
   RulesetModule,
   StepDef,
   StorageRegistries,
-  StoredCharacter,
   StoredEntity,
   StoredKind,
   StoredRuleset,
@@ -17,6 +17,9 @@ import type { KindValue, ViewLink, ViewSchema } from "@/engine/core/view/index.t
 import type { BaseRules } from "@/shared/enums.ts";
 
 import Modules from "./Modules.ts";
+
+/** The merges the engine composes sibling copies by (`SiblingMerge`). */
+const MERGES: readonly Merge[] = ["fallback", "union", "winner"];
 
 /** How two texts sort by their characters' codes, as the database's collation (C) orders text. */
 function compareText(a: string, b: string) {
@@ -38,18 +41,16 @@ function mergeRecords<T>(modules: [BaseRules, RulesetModule][], pick: (module: R
 /**
  * How every registered module stores its data in the generic tables, which the server reads and writes them by: each
  * kind (`kind`: its own fields, its defaults), what an entity's record reads of its fields and links (`recordReads`), an
- * entity's links as a view holds them (`viewLinksOf`), a character's (`character`), each field and link role (`field`,
- * `role`), and the registries' rows (`registries`). Names are global: two modules declaring one kind, field or role is
- * refused, as the registries' keys refuse it.
+ * entity's links as a view holds them (`viewLinksOf`), a player character's kind (`playerKinds`), each field and link
+ * role (`field`, `role`), and the registries' rows (`registries`). Names are global: two modules declaring one kind,
+ * field or role is refused, as the registries' keys refuse it.
  */
 export default class StorageEngine {
   constructor(modules: [BaseRules, RulesetModule][]) {
     this.baseRules = modules.map(([baseRules]) => baseRules);
     this.kinds = mergeRecords(modules, (module) => module.storage.kinds);
     this.fields = mergeRecords(modules, (module) => module.fields);
-    this.characterDeclaration = {
-      scoredRoles: modules.flatMap(([, module]) => module.storage.character.scoredRoles),
-    };
+    this.playerKindList = modules.map(([, module]) => module.storage.character.playerKind);
     const registries = modules.map(([, module]) => module.storage.registries);
     this.merged = {
       entityTypes: registries.flatMap((registry) => registry.entityTypes),
@@ -60,10 +61,43 @@ export default class StorageEngine {
       steps: registries.flatMap((registry) => registry.steps),
       itemTypes: registries.flatMap((registry) => registry.itemTypes),
     };
+    StorageEngine.checkDeclarations(this.merged);
   }
 
   /** Every module's storage, merged once: the modules never change. */
   private static instance: StorageEngine | undefined;
+
+  /**
+   * Refuses a field or a link role whose merge or inheritance the engine can't read: a merge it has no rule for, a union
+   * of what isn't a set (a single field's values, a single link), or a field read off another but an entity's, or
+   * through a role that isn't single from its type to its type (an item's template).
+   */
+  private static checkDeclarations({ fieldDefs, linkRoles }: StorageRegistries) {
+    for (const { merge, name } of [
+      ...linkRoles.map((role) => ({ merge: role.merge, name: `The link role ${role.role} from ${role.fromType}` })),
+      ...fieldDefs.map((def) => ({ merge: def.merge, name: `The field ${def.field} of ${def.ownerType}` })),
+    ])
+      if (!MERGES.includes(merge)) throw new Error(`${name} merges by ${String(merge)}, no rule the engine has`);
+
+    for (const role of linkRoles) {
+      if (role.single && role.merge === "union") {
+        throw new Error(
+          `The link role ${role.role} from ${role.fromType} is single: its sibling copies can't union it`,
+        );
+      }
+    }
+    for (const def of fieldDefs) {
+      const name = `The field ${def.field} of ${def.ownerType}`;
+      if (!def.multiple && def.merge === "union")
+        throw new Error(`${name} holds one value: its sibling copies can't union it`);
+      if (def.inheritsVia === null) continue;
+      const via = linkRoles.find(
+        (role) => role.role === def.inheritsVia && role.fromType === def.ownerType && role.toType === def.ownerType,
+      );
+      if (def.ownerKind !== "entity" || !via?.single)
+        throw new Error(`${name} is read off another through ${def.inheritsVia}, no single role from its type to it`);
+    }
+  }
 
   /**
    * A kind's values kind-wide off its owners' written values (`rows`, each as text): each field's value, with the
@@ -95,14 +129,15 @@ export default class StorageEngine {
 
   private readonly baseRules: BaseRules[];
 
-  private readonly characterDeclaration: StoredCharacter;
-
   /** Every module's owners' fields, by owner type. */
   private readonly fields: Record<string, Fields>;
 
   private readonly kinds: Record<string, StoredKind>;
 
   private readonly merged: StorageRegistries;
+
+  /** Each module's player character's kind. */
+  private readonly playerKindList: readonly string[];
 
   /** The single links each type's record reads, by its type, once read (`recordRoles`). */
   private readonly recordRolesByType = new Map<string, readonly string[]>();
@@ -142,11 +177,6 @@ export default class StorageEngine {
       this.recordRolesByType.set(type, roles);
     }
     return roles;
-  }
-
-  /** A character's data, as every module stores it past its registries: the roles of its links that hold an amount. */
-  character(): StoredCharacter {
-    return this.characterDeclaration;
   }
 
   /** A character's link role (3.5's `race`, `score`, `speaks`): the type of its entities, and whether it holds one. */
@@ -243,6 +273,14 @@ export default class StorageEngine {
   /** The kinds that own another (3.5's classes, their levels'), in the order their owned kinds are declared. */
   ownerKinds(): string[] {
     return [...new Set(this.merged.entityTypes.flatMap((def) => (def.ownerType ? [def.ownerType] : [])))];
+  }
+
+  /**
+   * Every module's player character's kind (3.5's `pc`): what a user's lists, shares and campaigns hold, a character of
+   * any other kind being another's child.
+   */
+  playerKinds(): readonly string[] {
+    return this.playerKindList;
   }
 
   /**

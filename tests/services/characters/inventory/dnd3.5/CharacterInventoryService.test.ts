@@ -10,13 +10,13 @@ import { CharacterInventory, Entities, Fields, Modifiers, Requirements } from "@
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
-import type { ItemLocation, SizeType } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
 import { createTestItem } from "@/tests/support/items.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findPlainItem, findSeededCharacter, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import type { ItemLocation } from "@/vocabulary/dnd3.5/equipment.ts";
 import {
   ITEM_COST_GP,
   ITEM_IS_TEMPLATE,
@@ -27,6 +27,7 @@ import {
   WEAPON_PROFICIENCY,
   WEAPON_SIZE,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
+import type { SizeType } from "@/vocabulary/dnd3.5/sizes.ts";
 
 interface Placement {
   charges?: [number | null, number | null];
