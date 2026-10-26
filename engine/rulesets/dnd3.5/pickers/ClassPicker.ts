@@ -76,13 +76,18 @@ export default class ClassPicker
    * the first planned level, or at the character's last level when it plans none.
    */
   protected override project() {
-    const { abilityIncreases, featPicks, klassLevelIds = [] } = this.planned;
+    const { abilityIncreases, classLevelIds = [], picks = [] } = this.planned;
     const projection = new CharacterProjection(this.input);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
-    const levels = projection.addLevels(klassLevelIds, { abilityIncreases, hp });
+    const levels = projection.addLevels(classLevelIds, { abilityIncreases, hp });
     for (const [i, skills] of this.plan.spreadSkillPoints(this.planned).entries()) projection.pick(levels[i], skills);
     const pickedAt = levels[0] ?? this.input.rows.advancements.toSorted((a, b) => a.position - b.position).at(-1);
-    if (pickedAt) projection.pick(pickedAt, CharacterProjection.picksOf({ featPicks }));
+    if (pickedAt) {
+      projection.pick(
+        pickedAt,
+        picks.filter(({ step }) => step === "feats"),
+      );
+    }
     return projection.input;
   }
 

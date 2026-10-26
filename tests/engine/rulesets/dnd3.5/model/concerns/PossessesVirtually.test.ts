@@ -105,7 +105,9 @@ describe("A grant", () => {
 
       expect(detailed.components.feats.getFeat("Great Fortitude")).toMatchObject(entry);
       expect(detailed.getVirtualFeats().map(({ name }) => name)).toEqual([...virtual]);
-      expect(detailed.getHeldFeats().filter(({ name }) => name === "Great Fortitude")).toHaveLength(virtual.length);
+      expect(detailed.getHeldFeats().filter(({ entity }) => entity.name === "Great Fortitude")).toHaveLength(
+        virtual.length,
+      );
       expect(detailed.components.saves.getSaves().fortitude.misc).toBe(misc);
       const { appliedModifiers, unappliedModifiers } = detailed.modifierEvaluator.getModifiers();
       expect(appliedModifiers.some(({ id }) => id === modifier.id)).toBe(virtual.length > 0);
@@ -125,7 +127,7 @@ describe("A grant", () => {
 
       expect(detailed.components.spells.getSpellEntry("Magic Missile", "Wizard Spells")?.known).toBe(known);
       expect(detailed.getVirtualSpells().map(({ name }) => name)).toEqual([...virtual]);
-      expect(detailed.getHeldSpells().map(({ name }) => name)).toEqual([...virtual]);
+      expect(detailed.getHeldSpells().map(({ entity }) => entity.name)).toEqual([...virtual]);
     },
   );
 

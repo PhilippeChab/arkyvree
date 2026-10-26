@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import { type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
 import type { LevelPlanAnswer } from "@/engine/core/module/index.ts";
-import type { AbilityIncrease } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -23,7 +22,13 @@ import {
   WAR_CLERIC_1,
   WIZARD_1,
 } from "@/tests/support/dnd3.5/levelFixtures.ts";
-import { levelEditPlan, levelUpPlan, type PlanPicks, savedPicksOf } from "@/tests/support/dnd3.5/levelPlans.ts";
+import {
+  levelEditPlan,
+  levelUpPlan,
+  type PlannedClassLevel,
+  type PlanPicks,
+  savedPicksOf,
+} from "@/tests/support/dnd3.5/levelPlans.ts";
 import { addCharacterLevel, findKlassLevel, findPicks, increasesOf } from "@/tests/support/dnd3.5/levels.ts";
 import { addLists } from "@/tests/support/dnd3.5/links.ts";
 import { getPlanAnswer, getStepOptions, stepAnswerOf } from "@/tests/support/levels.ts";
@@ -1717,7 +1722,7 @@ describe("re-saving a level", () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx, "fighter", { xp: 6000 });
       const [strength, dexterity] = [ctx.abilityMap["Strength"], ctx.abilityMap["Dexterity"]];
-      const save = (increases: AbilityIncrease[]) =>
+      const save = (increases: PlannedClassLevel["abilityIncreases"]) =>
         CharacterLevelsService.addLevels(
           session,
           characterId,

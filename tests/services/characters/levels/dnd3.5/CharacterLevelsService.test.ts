@@ -788,8 +788,8 @@ describe("LevelsService", () => {
         );
         return detailedCharacter
           .getHeldFeats()
-          .filter((feat) => !feat.fields[FEAT_STACKABLE])
-          .map((feat) => feat.id);
+          .filter(({ entity }) => !entity.fields[FEAT_STACKABLE])
+          .map(({ entity }) => entity.id);
       };
       expect(await held()).toEqual([feats["Power Attack"].id]);
 

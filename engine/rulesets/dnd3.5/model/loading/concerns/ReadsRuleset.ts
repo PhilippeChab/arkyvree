@@ -1,5 +1,5 @@
 import type { CharacterDataLoader } from "@/engine/core/character/index.ts";
-import type { CharacterRows, StoredCharacterLink } from "@/engine/core/module/index.ts";
+import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import { CLASS_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
 import { SKILL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
@@ -10,49 +10,37 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
 
-/**
- * What a character's load reads of its ruleset's view: its rows, its fields and the 3.5 meaning of its stored values,
- * and the character's ability scores.
- */
+/** What a character's load reads of its ruleset's view: its rows, its fields and the 3.5 meaning of its stored values. */
 export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCharacterData>>>(Base: B) {
   abstract class ReadingRuleset extends Base {
-    /** A character ability's score (`link`, its `score` link), with its ability's name. */
-    protected buildAbilityScore(link: StoredCharacterLink, abilityLookup: Map<string, string>) {
-      return {
-        abilityId: link.entityId,
-        name: abilityLookup.get(link.entityId) ?? "Unknown",
-        score: link.amount!,
-      };
-    }
-
     /**
      * Ruleset-scoped rows read from the composed cache's pre-built Maps: the character's languages, class levels and
      * their saves (their `baseBonus` links), and its classes and their skills (their `classSkill` links), once each.
      * languagesById is the view's (`RulesetData.byId`): stored pre-COW language ids auto-resolve on lookup.
      */
-    protected readCachedRows(rows: CharacterRows, rulesetData: RulesetData, klassLevelIds: string[]) {
+    protected readCachedRows(rows: CharacterRows, rulesetData: RulesetData, classLevelIds: string[]) {
       const dnd35 = Dnd35View.of(rulesetData);
-      const klassLevelsRaw = klassLevelIds.flatMap((id) => dnd35.klassLevelsById.get(id) ?? []);
-      const klassEntityIds = [...new Set(klassLevelsRaw.map((level) => level.ownerId))];
+      const klassLevelsRaw = classLevelIds.flatMap((id) => dnd35.klassLevelsById.get(id) ?? []);
+      const classIds = [...new Set(klassLevelsRaw.map((level) => level.ownerId))];
       return {
         languages: rows.links.speaks.flatMap((link) => dnd35.languagesById.get(link.entityId) ?? []),
         klassLevelsRaw,
-        klassLevelSaves: klassLevelIds.flatMap((id) => dnd35.baseBonusesOf(id)),
-        klasses: klassEntityIds.flatMap((id) => dnd35.klassesById.get(id) ?? []),
-        klassSkills: klassEntityIds.flatMap((id) => dnd35.classSkillsOf(id)),
-        klassEntityIds,
+        baseBonusLinks: classLevelIds.flatMap((id) => dnd35.baseBonusesOf(id)),
+        klasses: classIds.flatMap((id) => dnd35.klassesById.get(id) ?? []),
+        classSkillLinks: classIds.flatMap((id) => dnd35.classSkillsOf(id)),
+        classIds,
       };
     }
 
     /** Each class's fields: its bonus spell ability, by the ability's name, and its caster type. */
-    protected readClassFields(klassEntityIds: string[], rulesetData: RulesetData, abilityLookup: Map<string, string>) {
+    protected readClassFields(classIds: string[], rulesetData: RulesetData, abilityLookup: Map<string, string>) {
       const klassBonusSpellAbilityMap = new Map<string, string>();
       const klassCasterTypeMap = new Map<string, CasterType>();
-      for (const klassId of klassEntityIds) {
-        const { bonusSpellAbilityId, casterType } = CLASS_FIELDS.read(rulesetData.valuesOf(klassId));
+      for (const classId of classIds) {
+        const { bonusSpellAbilityId, casterType } = CLASS_FIELDS.read(rulesetData.valuesOf(classId));
         const abilityName = bonusSpellAbilityId ? abilityLookup.get(bonusSpellAbilityId) : undefined;
-        if (abilityName) klassBonusSpellAbilityMap.set(klassId, abilityName);
-        if (casterType) klassCasterTypeMap.set(klassId, casterType);
+        if (abilityName) klassBonusSpellAbilityMap.set(classId, abilityName);
+        if (casterType) klassCasterTypeMap.set(classId, casterType);
       }
       return { klassBonusSpellAbilityMap, klassCasterTypeMap };
     }

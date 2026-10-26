@@ -1435,7 +1435,7 @@ describe("an extension's content in a fork", () => {
 
     const detailed = await buildAs(DetailedCharacter, character);
     const [level] = detailed.components.classes.getClasses()["favoredsoul"].levels;
-    expect(Object.fromEntries(level.spells.map((spell) => [spell.name, spell.spellLevel]))).toEqual({
+    expect(Object.fromEntries(level.spells.map((spell) => [spell.entity.name, spell.spellLevel]))).toEqual({
       Bane: 1,
       "Bless Water": 1,
     });

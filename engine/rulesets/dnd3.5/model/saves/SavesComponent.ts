@@ -28,13 +28,13 @@ export default class SavesComponent extends CharacterComponent<LoadedCharacterDa
   private readonly saves: SavesData = {} as SavesData;
 
   /** Each of the ruleset's saves: its base, the sum of each class's last level's, and its ability's modifier. */
-  override initialize({ klassLevelSaves }: Pick<LoadedCharacterData, "klassLevelSaves">, { rulesetData }: RulesetView) {
+  override initialize({ baseBonusLinks }: Pick<LoadedCharacterData, "baseBonusLinks">, { rulesetData }: RulesetView) {
     const saveBaseValues = new Map<string, number>();
     const classes = this.classes.getClasses();
     for (const klass of Object.values(classes)) {
       const lastLevel = klass.levels.at(-1);
       if (lastLevel) {
-        const levelSaves = klassLevelSaves.filter((link) => link.fromId === lastLevel.klassLevel.id);
+        const levelSaves = baseBonusLinks.filter((link) => link.fromId === lastLevel.klassLevel.id);
         for (const link of levelSaves)
           saveBaseValues.set(link.toId, (saveBaseValues.get(link.toId) ?? 0) + (link.amount ?? 0));
       }

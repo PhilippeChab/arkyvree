@@ -47,7 +47,7 @@ export default class LevelUpSteps extends LevelUpState {
     const projection = new CharacterProjection(this.character);
     if (editedLevel) projection.dropLevelsFrom(editedLevel.id);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
-    projection.addLevels(planned?.klassLevelIds ?? [], { abilityIncreases: planned?.abilityIncreases, hp });
+    projection.addLevels(planned?.classLevelIds ?? [], { abilityIncreases: planned?.abilityIncreases, hp });
     // The levels before this one: the level added or edited is the next
     const levelsBefore = projection.input.rows.advancements.length;
     if (!LevelRules.of(this.view).isAbilityIncreaseLevel(levelsBefore))
@@ -99,16 +99,16 @@ export default class LevelUpSteps extends LevelUpState {
   }
 
   /**
-   * The step's projection: a level of class level `klassLevelId` after the levels planned before it, or in the edited
+   * The step's projection: a level of class level `classLevelId` after the levels planned before it, or in the edited
    * level's place, so the first level stays the first (its x4 skill points), with the feats and spells it picks
    * (`picks`), when given.
    */
-  private projectStep(klassLevelId: string, step: StepProjection, picks?: PoolPicks) {
+  private projectStep(classLevelId: string, step: StepProjection, picks?: PoolPicks) {
     const projection = new CharacterProjection(this.character);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
-    projection.addLevels(step.planned?.klassLevelIds ?? [], { abilityIncreases: step.planned?.abilityIncreases, hp });
+    projection.addLevels(step.planned?.classLevelIds ?? [], { abilityIncreases: step.planned?.abilityIncreases, hp });
     const replacing = step.editedLevel;
-    const level = projection.addLevel(klassLevelId, { abilityIncreases: step.abilityIncreases, hp, replacing });
+    const level = projection.addLevel(classLevelId, { abilityIncreases: step.abilityIncreases, hp, replacing });
     if (picks) projection.pick(level, this.toPickPlans({ ...picks, skills: {} }));
     return projection;
   }

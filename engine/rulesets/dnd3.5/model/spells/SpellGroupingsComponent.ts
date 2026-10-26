@@ -4,6 +4,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import { SPELL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/spells/fields.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
+import type { HeldSpell } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -53,8 +54,11 @@ export default class SpellGroupingsComponent extends CharacterComponent<LoadedCh
 
     const { spellSlugByAptitudeId } = SpellLists.of(rulesetData);
     for (const spell of spells) {
-      const aptitudeSlug = spellSlugByAptitudeId.get(spell.aptitudeId) ?? spell.aptitudeId;
-      this.registerSpell({ ...spell, aptitudeSlug }, rulesetData.valuesOf(spell.id));
+      this.registerSpell(
+        spell,
+        spellSlugByAptitudeId.get(spell.viaId) ?? spell.viaId,
+        rulesetData.valuesOf(spell.entity.id),
+      );
     }
   }
 
@@ -83,22 +87,24 @@ export default class SpellGroupingsComponent extends CharacterComponent<LoadedCh
   }
 
   /**
-   * A spell's DC as one class casts it (`aptitudeSlug`): its level on that class's list and that class's casting ability.
-   * The spell's other classes keep theirs. Its school and descriptor groupings hold it, and so do its DCs (`getDcs`).
+   * A spell's DC as one class casts it (`aptitudeSlug`, its list's): its level on that class's list and that class's
+   * casting ability, its school and descriptors read off its stored values (`values`). The spell's other classes keep
+   * theirs. Its school and descriptor groupings hold it, and so do its DCs (`getDcs`).
    */
   registerSpell(
-    spell: { abilityDcName: string | null; aptitudeSlug: string; name: string; spellLevel: number | null },
+    { abilityDcName, entity, spellLevel }: Pick<HeldSpell, "abilityDcName" | "entity" | "spellLevel">,
+    aptitudeSlug: string,
     values: StoredValues,
   ): SpellDc | null {
-    if (spell.spellLevel == null || spell.abilityDcName == null) return null;
+    if (spellLevel == null || abilityDcName == null) return null;
 
     const abilities = this.abilities;
-    const abilityName = spell.abilityDcName;
+    const abilityName = abilityDcName;
 
     // The casting ability's modifier and the total are computed when read, so a raised ability raises the DC
     const dc: SpellDc = {
       base: SPELL_SAVE_DC_BASE,
-      level: spell.spellLevel,
+      level: spellLevel,
       get ability() {
         return abilities.getAbilityModifier(abilityName);
       },
@@ -108,17 +114,17 @@ export default class SpellGroupingsComponent extends CharacterComponent<LoadedCh
       },
     };
 
-    const normalizedSpellName = stripSeparators(spell.name);
+    const normalizedSpellName = stripSeparators(entity.name);
     // A spell is grouped under its school and each of its descriptors
     const { descriptors, school } = SPELL_FIELDS.read(values);
     for (const value of school === null ? descriptors : [school, ...descriptors]) {
       const grouping = stripSeparators(value);
       if (!grouping) continue;
       const group = (this.spellGroupings[grouping] ??= {});
-      (group[normalizedSpellName] ??= {})[spell.aptitudeSlug] = dc;
+      (group[normalizedSpellName] ??= {})[aptitudeSlug] = dc;
     }
 
-    (this.dcsBySpell[normalizedSpellName] ??= {})[spell.aptitudeSlug] = dc;
+    (this.dcsBySpell[normalizedSpellName] ??= {})[aptitudeSlug] = dc;
     return dc;
   }
 }

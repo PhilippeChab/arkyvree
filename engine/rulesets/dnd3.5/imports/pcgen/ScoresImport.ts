@@ -1,9 +1,8 @@
 import type { ImportReport } from "@/engine/core/imports/index.ts";
-import type { ScoreBounds } from "@/engine/core/module/index.ts";
+import type { PickPlan, ScoreBounds } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import NewCharacters from "@/engine/rulesets/dnd3.5/characters/NewCharacters.ts";
 import type { ImportedCharacter } from "@/engine/rulesets/dnd3.5/imports/imported.ts";
-import type { AbilityIncrease } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { formatSigned } from "@/shared/text.ts";
@@ -11,9 +10,12 @@ import { ABILITY_NAMES } from "@/vocabulary/dnd3.5/abilities.ts";
 
 import { PCGEN_ABILITIES } from "./names.ts";
 
-/** A character's scores as an import writes them: its starting scores by ability id, and each level's increases. */
+/**
+ * A character's scores as an import writes them: its starting scores by ability id, and each level's increases (its
+ * `abilities` picks).
+ */
 export interface ImportedScores {
-  increases: AbilityIncrease[][];
+  increases: PickPlan[][];
   starting: Record<string, number>;
 }
 
@@ -122,7 +124,9 @@ export default class ScoresImport {
         }
       }
       for (const [key, amount] of taken) totals.set(key, (totals.get(key) ?? 0) + amount);
-      return [...taken].flatMap(([key, amount]) => (ids.has(key) ? [{ abilityId: ids.get(key)!, amount }] : []));
+      return [...taken].flatMap(([key, amount]) =>
+        ids.has(key) ? [{ step: "abilities", entityId: ids.get(key)!, amount }] : [],
+      );
     });
     const bounds = NewCharacters.describeCreation(Dnd35View.of(this.view.rulesetData)).scores;
     const starting = Object.fromEntries(

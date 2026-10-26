@@ -22,7 +22,6 @@ import LevelUpSteps from "./LevelUpSteps.ts";
 import type {
   FeatPickQuery,
   LevelEditRequest,
-  LevelPicks,
   LevelRequest,
   LevelUpRequest,
   PlannedSoFar,
@@ -311,18 +310,8 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
   }
 
   /** The plan's levels' class levels' ids, each a class's level, refused when one isn't. */
-  private plannedKlassLevelIds(levels: Pick<LevelRequest, "klassId" | "level">[]) {
+  private plannedClassLevelIds(levels: Pick<LevelRequest, "klassId" | "level">[]) {
     return levels.map(({ klassId, level }) => this.getKlassLevel(klassId, level).id);
-  }
-
-  /** The plan's picks (`picks`) as pickers check their options against them: its feats' and its spells' pairs. */
-  private plannedPicks({ feats, spells }: LevelPicks): Pick<PlannedSoFar, "featPicks" | "spellPicks"> {
-    return {
-      featPicks: Object.entries(feats).flatMap(([aptitudeId, ids]) => ids.map((featId) => ({ aptitudeId, featId }))),
-      spellPicks: Object.entries(spells).flatMap(([aptitudeId, ids]) =>
-        ids.map((spellId) => ({ aptitudeId, spellId })),
-      ),
-    };
   }
 
   /**
@@ -346,7 +335,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
       }
       return {
         ...track,
-        abilityIncreases: (choices[i] ?? []).map(({ amount, id }) => ({ abilityId: id, amount })),
+        abilityIncreases: (choices[i] ?? []).map(({ amount, id }) => ({ step: "abilities", entityId: id, amount })),
         hp: hp ?? LevelRules.UNROLLED_LEVEL_HP,
       };
     });
@@ -444,11 +433,11 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
       editedLevelId: characterLevelId,
       steps: {
         [STEP.hp.name]: [saved.hp],
-        [STEP.abilities.name]: [saved.abilityIncreases.map(({ abilityId, amount }) => ({ amount, id: abilityId }))],
+        [STEP.abilities.name]: [
+          saved.abilityIncreases.map(({ amount, entityId }) => ({ amount: amount!, id: entityId! })),
+        ],
         [STEP.skills.name]: Object.entries(saved.skills).map(([id, points]) => ({ id, points })),
-        [STEP.feats.name]: Object.entries(saved.feats).flatMap(([pool, feats]) =>
-          feats.map(({ id }) => ({ id, pool })),
-        ),
+        [STEP.feats.name]: Object.entries(saved.feats).flatMap(([pool, ids]) => ids.map((id) => ({ id, pool }))),
         [STEP.spells.name]: Object.entries(saved.spells).flatMap(([pool, spells]) =>
           spells.map(({ id, spellLevel }) => ({
             id,
@@ -492,14 +481,15 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
    */
   readStepPicker(step: string, query: StepPickerQuery): StepPickerRead {
     const plan = this.readPlan(query.plan, false);
-    const picked = this.plannedPicks(plan.picks);
+    // The feats and spells picked so far, as pickers check their options against them
+    const picks = this.toPickPlans({ ...plan.picks, skills: {} });
     if (step === STEP.plan.name) {
       return {
         kind: "classes",
         planned: {
-          ...picked,
           abilityIncreases: plan.levels.map((level) => level.abilityIncreases),
-          klassLevelIds: this.plannedKlassLevelIds(plan.levels),
+          classLevelIds: this.plannedClassLevelIds(plan.levels),
+          picks,
           skillPoints: plan.picks.skills,
         },
       };
@@ -516,12 +506,12 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
       aptitudeId: query.pool,
       ...(plan.editedLevelId && { editedLevelId: plan.editedLevelId }),
       klassId: level.klassId,
-      laterKlassLevelIds: plan.editedLevelId ? [] : this.plannedKlassLevelIds(plan.levels.slice(index + 1)),
+      laterClassLevelIds: plan.editedLevelId ? [] : this.plannedClassLevelIds(plan.levels.slice(index + 1)),
       level: level.level,
       planned: {
-        ...picked,
         abilityIncreases: before.map((planned) => planned.abilityIncreases),
-        klassLevelIds: this.plannedKlassLevelIds(before),
+        classLevelIds: this.plannedClassLevelIds(before),
+        picks,
       },
     };
     return step === STEP.feats.name

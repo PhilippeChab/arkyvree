@@ -33,8 +33,8 @@ export default class FeatPicker extends LevelPicker<{ aptitudeModifiers: PoolMod
       ids: Dnd35View.of(this.rulesetData).listFeatIds(query.aptitudeId),
       excludeIds: this.holder
         .getHeldFeats()
-        .filter((feat) => !feat.fields[FEAT_STACKABLE])
-        .map((feat) => feat.id),
+        .filter(({ entity }) => !entity.fields[FEAT_STACKABLE])
+        .map(({ entity }) => entity.id),
     };
     this.filters = { ...offered, fields: { ...offered.fields, ...(query.family && { [FEAT_FAMILY]: query.family }) } };
     this.groupFilters = { ...offered, groups: this.feats.groupByFamily(offered.ids) };

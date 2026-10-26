@@ -29,7 +29,7 @@ async function placementOf(ranks: number) {
   const data = await getSeededData();
   const skill = Dnd35View.of(data).skills.find(({ name }) => name === "Climb")!;
   const line = { number: 1, text: "SKILL:Climb" };
-  const matched = { className: "Fighter", line, name: skill.name, ranks, skillId: skill.id };
+  const matched = { className: "Fighter", entityId: skill.id, line, name: skill.name, ranks };
   return { placement: new PicksPlacement(data, [], [matched], []), skillId: skill.id };
 }
 
@@ -65,8 +65,8 @@ describe("PicksPlacement", () => {
       await getSeededData(),
       [],
       [
-        { ...line(1), ranks: 3, skillId },
-        { ...line(2), ranks: 3, skillId },
+        { ...line(1), entityId: skillId, ranks: 3 },
+        { ...line(2), entityId: skillId, ranks: 3 },
       ],
       [],
     );
@@ -97,11 +97,11 @@ describe("PicksPlacement", () => {
     const dataView = Dnd35View.of(data);
     const sorcerer = dataView.aptitudes.find(({ name }) => name === "Sorcerer Spells")!;
     const spell = (name: string, level: number, number: number) => ({
-      aptitudeId: sorcerer.id,
+      entityId: dataView.spells.find((spell) => spell.name === name)!.id,
       level,
       line: { number, text: `SPELLNAME:${name}` },
       name,
-      spellId: dataView.spells.find((spell) => spell.name === name)!.id,
+      viaId: sorcerer.id,
     });
     const placement = new PicksPlacement(
       data,
@@ -111,7 +111,7 @@ describe("PicksPlacement", () => {
     );
     const shield = dataView.spells.find((spell) => spell.name === "Shield")!.id;
     const placed = placement.placeSpells({
-      held: [{ aptitudeId: sorcerer.id, id: shield }],
+      held: [{ entity: { id: shield }, viaId: sorcerer.id }],
       room: new Map([
         [
           sorcerer.id,
@@ -122,7 +122,7 @@ describe("PicksPlacement", () => {
         ],
       ]),
     });
-    expect(placed.map(({ spellId }) => dataView.spellsById.get(spellId)?.name)).toEqual(["Light", "Magic Missile"]);
+    expect(placed.map(({ entityId }) => dataView.spellsById.get(entityId!)?.name)).toEqual(["Light", "Magic Missile"]);
     // No room at the 2nd level yet, and Shield known already: both left for a later level, or the report
     expect(placement.leftSpells().map(({ name }) => name)).toEqual(["Scorching Ray", "Shield"]);
   });

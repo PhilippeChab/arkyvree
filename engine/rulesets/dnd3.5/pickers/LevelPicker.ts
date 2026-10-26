@@ -46,29 +46,24 @@ export default abstract class LevelPicker<Details extends object = object> exten
     const projection = new CharacterProjection(this.input);
     if (editedLevelId) projection.dropLevelsFrom(editedLevelId);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
-    projection.addLevels(planned.klassLevelIds ?? [], { abilityIncreases: planned.abilityIncreases, hp });
-    projection.pick(projection.addLevel(this.klassLevel.id, { abilityIncreases, hp }), this.pickedSoFar);
+    projection.addLevels(planned.classLevelIds ?? [], { abilityIncreases: planned.abilityIncreases, hp });
+    projection.pick(projection.addLevel(this.klassLevel.id, { abilityIncreases, hp }), planned.picks ?? []);
     return projection.input;
-  }
-
-  /** The feats and spells the wizard picked so far, each in its pool, which the picker's level holds. */
-  private get pickedSoFar() {
-    return CharacterProjection.picksOf(this.query.planned ?? {});
   }
 
   /**
    * The character with every level it has and the wizard plans: this class level with its own ability increases and
-   * the feats and spells picked so far, in the edited level's place (an edit), or after the levels planned before it
-   * and before those planned after it.
+   * the feats and spells picked so far (`planned.picks`), in the edited level's place (an edit), or after the levels
+   * planned before it and before those planned after it.
    */
   private projectHolder() {
-    const { abilityIncreases, editedLevelId, laterKlassLevelIds = [], planned = {} } = this.query;
+    const { abilityIncreases, editedLevelId, laterClassLevelIds = [], planned = {} } = this.query;
     const projection = new CharacterProjection(this.input);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
     const replacing = this.input.rows.advancements.find((level) => level.id === editedLevelId);
-    projection.addLevels(planned.klassLevelIds ?? [], { abilityIncreases: planned.abilityIncreases, hp });
-    projection.pick(projection.addLevel(this.klassLevel.id, { abilityIncreases, hp, replacing }), this.pickedSoFar);
-    projection.addLevels(laterKlassLevelIds, { hp });
+    projection.addLevels(planned.classLevelIds ?? [], { abilityIncreases: planned.abilityIncreases, hp });
+    projection.pick(projection.addLevel(this.klassLevel.id, { abilityIncreases, hp, replacing }), planned.picks ?? []);
+    projection.addLevels(laterClassLevelIds, { hp });
     return projection;
   }
 
@@ -81,8 +76,8 @@ export default abstract class LevelPicker<Details extends object = object> exten
    */
   protected get holder(): DetailedCharacter {
     // With no level edited or planned after it, it's the character the pick is made for
-    const { editedLevelId, laterKlassLevelIds = [] } = this.query;
-    if (!editedLevelId && laterKlassLevelIds.length === 0) return this.character;
+    const { editedLevelId, laterClassLevelIds = [] } = this.query;
+    if (!editedLevelId && laterClassLevelIds.length === 0) return this.character;
     return (this.heldBy ??= this.build(this.projectHolder().input));
   }
 }

@@ -7,8 +7,6 @@ import type {
   StoredPick,
 } from "@/engine/core/module/index.ts";
 
-import type { AbilityIncrease, PlannedSoFar } from "./requests.ts";
-
 /**
  * A character's rows (`character`) with what a level-up adds before it's saved, as the rows it would save: the
  * advancements it adds, replaces or leaves out, and their picks (their hit points, ability increases, skill ranks,
@@ -20,14 +18,6 @@ import type { AbilityIncrease, PlannedSoFar } from "./requests.ts";
 export default class CharacterProjection {
   constructor(private readonly character: CharacterInput) {
     this.nextPosition = Math.max(0, ...character.rows.advancements.map((level) => level.position)) + 1;
-  }
-
-  /** The feats and spells a plan picked so far (`planned`), each in its pool, as picks a save writes. */
-  static picksOf({ featPicks = [], spellPicks = [] }: Pick<PlannedSoFar, "featPicks" | "spellPicks">): PickPlan[] {
-    return [
-      ...featPicks.map(({ aptitudeId, featId }) => ({ step: "feats", entityId: featId, viaId: aptitudeId })),
-      ...spellPicks.map(({ aptitudeId, spellId }) => ({ step: "spells", entityId: spellId, viaId: aptitudeId })),
-    ];
   }
 
   private readonly advancements: StoredAdvancement[] = [];
@@ -86,28 +76,27 @@ export default class CharacterProjection {
   }
 
   /**
-   * Adds a level of class level `klassLevelId`, with its ability increases and hit points: after the character's
-   * levels, or in the place of the level it's `replacing`, which it leaves out.
+   * Adds a level of class level `classLevelId`, with its ability increases (its `abilities` picks) and hit points: after
+   * the character's levels, or in the place of the level it's `replacing`, which it leaves out.
    */
   addLevel(
-    klassLevelId: string,
+    classLevelId: string,
     {
       abilityIncreases = [],
       hp,
       replacing,
-    }: { abilityIncreases?: AbilityIncrease[]; hp: number; replacing?: { id: string; position: number } },
+    }: { abilityIncreases?: PickPlan[]; hp: number; replacing?: { id: string; position: number } },
   ): StoredAdvancement {
-    const level = this.place(klassLevelId, replacing);
+    const level = this.place(classLevelId, replacing);
     this.add(level.id, { step: "hp", amount: hp });
-    for (const { abilityId, amount } of abilityIncreases)
-      this.add(level.id, { step: "abilities", entityId: abilityId, amount });
+    for (const increase of abilityIncreases) this.add(level.id, increase);
     return level;
   }
 
   /** Adds levels of these class levels, in order, with their ability increases (by place) when given. */
-  addLevels(klassLevelIds: string[], { abilityIncreases, hp }: { abilityIncreases?: AbilityIncrease[][]; hp: number }) {
-    return klassLevelIds.map((klassLevelId, i) =>
-      this.addLevel(klassLevelId, { abilityIncreases: abilityIncreases?.[i], hp }),
+  addLevels(classLevelIds: string[], { abilityIncreases, hp }: { abilityIncreases?: PickPlan[][]; hp: number }) {
+    return classLevelIds.map((classLevelId, i) =>
+      this.addLevel(classLevelId, { abilityIncreases: abilityIncreases?.[i], hp }),
     );
   }
 

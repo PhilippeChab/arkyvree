@@ -61,7 +61,11 @@ describe("SpellGroups", () => {
 
   test("shows a spell's tags on the lists they name, with whether their list joins its class's", () => {
     // Burning Hands, a cleric's through the fire domain and a specialist wizard's evocation spell
-    const burningHands = (aptitudeId: string) => ({ id: "burning", name: "Burning Hands", aptitudeId, spellLevel: 1 });
+    const burningHands = (viaId: string) => ({
+      entity: { id: "burning", name: "Burning Hands" },
+      spellLevel: 1,
+      viaId,
+    });
     const character = {
       components: {
         aptitudes: {
@@ -141,7 +145,7 @@ describe("SpellGroups", () => {
               levels: [
                 {
                   klassLevel: { position: 1 },
-                  spells: [{ id: "endure", name: "Endure Elements", aptitudeId: "sun", spellLevel: 1 }],
+                  spells: [{ entity: { id: "endure", name: "Endure Elements" }, spellLevel: 1, viaId: "sun" }],
                 },
               ],
             },

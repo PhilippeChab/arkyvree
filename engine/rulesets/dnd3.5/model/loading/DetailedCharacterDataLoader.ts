@@ -1,12 +1,11 @@
 import { CharacterDataLoader, type LoadedCharacter, type ModifierSource } from "@/engine/core/character/index.ts";
-import type { CharacterRows, StoredAdvancement, StoredPick } from "@/engine/core/module/index.ts";
+import type { CharacterRows, StoredAdvancement, StoredCharacterLink, StoredPick } from "@/engine/core/module/index.ts";
 import { type RulesetView, type ViewLink } from "@/engine/core/view/index.ts";
 import CharacterValues from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import { type SkillFieldValues } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
-import type { AbilityIncrease } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { Klass, Language, Skill } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Klass, Language } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { include } from "@/lib/mixins.ts";
 import type { Character } from "@/shared/relations.ts";
 import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
@@ -14,7 +13,7 @@ import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
 import { CustomizesEntities } from "./concerns/CustomizesEntities.ts";
 import { LoadsPicks } from "./concerns/LoadsPicks.ts";
 import { ReadsRuleset } from "./concerns/ReadsRuleset.ts";
-import type { CustomizedClassLevel, CustomizedFeat, CustomizedRace, CustomizedSpell } from "./loadedEntities.ts";
+import type { CustomizedClassLevel, CustomizedRace, HeldFeat, HeldSpell, SkillPick } from "./loadedEntities.ts";
 
 /**
  * What a 3.5 character has of its ruleset's entities (`partsOf`): its data past core's, but its own row and the
@@ -24,7 +23,7 @@ type LoadedParts = Omit<
   LoadedCharacterData,
   keyof LoadedCharacter | "character" | "levelRules" | "skillFields" | "skillPointAbilityId"
 > & {
-  klassEntityIds: string[];
+  classIds: string[];
 };
 
 /**
@@ -33,29 +32,31 @@ type LoadedParts = Omit<
  * build reads off the view itself.
  */
 export interface LoadedCharacterData extends LoadedCharacter {
-  /** The ability increases the character's levels take. */
-  abilityIncreases: AbilityIncrease[];
+  /**
+   * The ability increases its levels take, by its ruleset's Settings: their `abilities` picks, each its ability and
+   * amount.
+   */
+  abilityPicks: StoredPick[];
+  /** Its class levels' base bonuses to the saves: their `baseBonus` links. */
+  baseBonusLinks: readonly ViewLink[];
   /** The character's own row: who it is (`IdentityComponent`). */
   character: Character;
-  characterAbilityScores: { abilityId: string; name: string; score: number }[];
   /** Its levels: its advancements, in the order it took them. */
   characterLevels: StoredAdvancement[];
   classLevelFields: Map<string, { bab: number; skills: number }>;
+  /** Its classes' class skills: their `classSkill` links. */
+  classSkillLinks: readonly ViewLink[];
   /**
    * The feats it holds: its levels' picks and grants as it loads, then those its modifiers grant it as they apply in
    * the build's rounds (`PossessesVirtually`).
    */
-  feats: CustomizedFeat[];
+  feats: HeldFeat[];
+  /** The room its class levels' grants make in each pool, by the pool's id: a feat's, and a spell's but a free one. */
+  grantCountsByPool: Record<string, number>;
   klassBonusSpellAbilityMap: Map<string, string>;
   klassCasterTypeMap: Map<string, CasterType>;
   klasses: Klass[];
-  klassLevelFeatCountsByAptitudeId: Record<string, number>;
   klassLevels: CustomizedClassLevel[];
-  /** Its class levels' base bonuses to the saves: their `baseBonus` links. */
-  klassLevelSaves: readonly ViewLink[];
-  klassLevelSpellCountsByAptitudeId: Record<string, number>;
-  /** Its classes' class skills: their `classSkill` links. */
-  klassSkills: readonly ViewLink[];
   /** The languages it picked, as its rows store them. */
   languages: Language[];
   /** The hit points each of its levels rolled, by its advancement's id. */
@@ -63,22 +64,19 @@ export interface LoadedCharacterData extends LoadedCharacter {
   /** What its levels give it whatever its classes, by its ruleset's Settings: its general feats, its increases. */
   levelRules: LevelRules;
   race: CustomizedRace;
+  /** Its ability scores: its `score` links, each its ability and score. */
+  scoreLinks: StoredCharacterLink[];
   skillFields: Map<string, SkillFieldValues>;
   skillPointAbilityId: string | null;
-  skills: SkillWithRank[];
+  /** The skill points its levels spend: their `skills` picks. */
+  skills: SkillPick[];
   /**
    * The spells it knows, each in its pool: its levels' picks and grants as it loads, then those its modifiers make it
    * know as they apply in the build's rounds (`PossessesVirtually`), and those its lists make it know as its
    * spellcasting finishes (`KnownSpells`).
    */
-  spells: CustomizedSpell[];
+  spells: HeldSpell[];
 }
-
-export type SkillWithRank = Skill & {
-  characterLevelId: string;
-  klassLevelId: string;
-  rank: number;
-};
 
 /**
  * The 3.5 loader, on core's (`CharacterDataLoader`): what a character has of its ruleset's entities (its levels, its
@@ -96,7 +94,7 @@ export default class DetailedCharacterDataLoader extends include(
   /** The character's data: core's (`loaded`), its parts, its own row, and the ruleset's Settings. */
   protected override loadOwn(
     view: RulesetView,
-    { klassEntityIds: _klassEntityIds, ...parts }: LoadedParts,
+    { classIds: _classIds, ...parts }: LoadedParts,
     loaded: LoadedCharacter,
   ): LoadedCharacterData {
     return {
@@ -120,35 +118,33 @@ export default class DetailedCharacterDataLoader extends include(
 
     const abilityLookup = new Map(dnd35.abilities.map((a) => [a.id, a.name]));
     const levels = this.sortLevels(rows.advancements, rows.picks);
-    const { languages, klassLevelsRaw, klassLevelSaves, klasses, klassSkills, klassEntityIds } = this.readCachedRows(
+    const { languages, klassLevelsRaw, baseBonusLinks, klasses, classSkillLinks, classIds } = this.readCachedRows(
       rows,
       rulesetData,
-      levels.klassLevelIds,
+      levels.classLevelIds,
     );
-    const { skills, allFeats, klassLevelFeatCountsByAptitudeId, allSpells, klassLevelSpellCountsByAptitudeId } =
-      this.buildPicks(rows.picks, rulesetData, levels);
+    const { feats, grantCountsByPool, skills, spells } = this.buildPicks(rows.picks, rulesetData, levels);
 
     // Each entity's customizations: per-entity lookups resolve via the cache's pre-built Maps
     const { klassLevels, classLevelFields } = this.toCustomizedKlassLevels(klassLevelsRaw, rulesetData);
-    const classFields = this.readClassFields(klassEntityIds, rulesetData, abilityLookup);
+    const classFields = this.readClassFields(classIds, rulesetData, abilityLookup);
     const dcAbilities = { klassBonusSpellAbilityMap: classFields.klassBonusSpellAbilityMap, klassLevels };
     return {
-      characterAbilityScores: rows.links.score.map((link) => this.buildAbilityScore(link, abilityLookup)),
-      abilityIncreases: this.readAbilityIncreases(rows.picks.abilities, levels.characterLevels, LevelRules.of(view)),
+      scoreLinks: rows.links.score,
+      abilityPicks: this.readAbilityPicks(rows.picks.abilities, levels.characterLevels, LevelRules.of(view)),
       race: this.toCustomizedRace(race, rulesetData),
       languages,
       characterLevels: levels.characterLevels,
       levelHitPoints: levels.hitPoints,
-      klassEntityIds,
+      classIds,
       klassLevels,
-      klassSkills,
-      klassLevelSaves,
+      classSkillLinks,
+      baseBonusLinks,
       klasses,
-      feats: this.toCustomizedFeats(allFeats, rulesetData),
+      feats: this.toHeldFeats(feats, rulesetData),
       skills,
-      spells: this.toCustomizedSpells(allSpells, rulesetData, dcAbilities),
-      klassLevelFeatCountsByAptitudeId,
-      klassLevelSpellCountsByAptitudeId,
+      spells: this.toHeldSpells(spells, rulesetData, dcAbilities),
+      grantCountsByPool,
       classLevelFields,
       ...classFields,
     };
@@ -162,7 +158,7 @@ export default class DetailedCharacterDataLoader extends include(
    * join the build as it applies (`PossessesVirtually`).
    */
   protected override sourcesOf(
-    { feats, klassEntityIds, klassLevels, spells, race }: LoadedParts,
+    { feats, classIds, klassLevels, spells, race }: LoadedParts,
     items: ModifierSource[],
     { rulesetData }: RulesetView,
   ): ModifierSource[] {
@@ -170,12 +166,12 @@ export default class DetailedCharacterDataLoader extends include(
       race,
       ...items,
       ...klassLevels,
-      ...klassEntityIds.map((klassId) => ({
-        modifiers: rulesetData.modifiersBySource.get(klassId) ?? [],
-        requirements: rulesetData.requirementsByEntity.get(klassId) ?? [],
+      ...classIds.map((classId) => ({
+        modifiers: rulesetData.modifiersBySource.get(classId) ?? [],
+        requirements: rulesetData.requirementsByEntity.get(classId) ?? [],
       })),
-      ...feats.map((feat) => (feat.klassLevelFeatId ? { modifiers: feat.modifiers } : feat)),
-      ...[...Map.groupBy(spells, (spell) => spell.id).values()].map(([spell]) =>
+      ...feats.map((feat) => (feat.grant ? { modifiers: feat.modifiers } : feat)),
+      ...[...Map.groupBy(spells, (spell) => spell.entity.id).values()].map(([spell]) =>
         spell.free ? { modifiers: spell.modifiers } : spell,
       ),
     ];
@@ -184,18 +180,12 @@ export default class DetailedCharacterDataLoader extends include(
   /**
    * The ability increases (`increases`, its `abilities` picks, as the view resolves them) of the character's levels
    * (`characterLevels`, in order) that take one by its ruleset's Settings (`levelRules`): one its Settings since moved
-   * off its level counts for nothing, as its level's edit opens it without it (`describeLevel`).
+   * off its level counts for nothing, as its level's edit opens it without it (`LevelSelections.describeLevel`).
    */
-  private readAbilityIncreases(
-    increases: StoredPick[],
-    characterLevels: StoredAdvancement[],
-    levelRules: LevelRules,
-  ): AbilityIncrease[] {
+  private readAbilityPicks(increases: StoredPick[], characterLevels: StoredAdvancement[], levelRules: LevelRules) {
     const taking = new Set(
       characterLevels.filter((_, before) => levelRules.isAbilityIncreaseLevel(before)).map(({ id }) => id),
     );
-    return increases
-      .filter(({ advancementId }) => taking.has(advancementId))
-      .map(({ amount, entityId }) => ({ abilityId: entityId!, amount: amount! }));
+    return increases.filter(({ advancementId }) => taking.has(advancementId));
   }
 }

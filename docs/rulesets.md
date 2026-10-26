@@ -677,7 +677,7 @@ engine/rulesets/
     │   ├── loading/                       (DetailedCharacterDataLoader, on core's CharacterDataLoader, and
     │   │                                  LoadedCharacterData; its steps its concerns/: CustomizesEntities,
     │   │                                  LoadsPicks, ReadsRuleset; loadedEntities.ts: the entities it loads,
-    │   │                                  CustomizedFeat, CustomizedSpell…)
+    │   │                                  HeldPick, HeldFeat, HeldSpell…)
     │   ├── combat/                        (CombatComponent on CombatState, which includes concerns/: ArmorClass,
     │   │                                  HitPoints, Attacks, InitiativeAndSpeed; ArmorsComponent, ShieldsComponent,
     │   │                                  WeaponsComponent, EncumbranceComponent; the combat, items.* and weapon.*
@@ -1033,7 +1033,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms. It predates 
 - `server/routers/api/characters/levels/` had 3.5-shaped query params (`spellLevel`): moved under `dnd3.5/`, then back once the level flows asked the module (`levelUp`), which reads them.
 
 **Not leaks (confirmed generic):**
-- `SkillWithRank.rank: number`, `CustomizedSpell.spellLevel: number | null`, `CustomizedSpell.saveName: string | null` — neutral primitive fields with 3.5-flavored seeded content but no schema constraint forcing 3.5 semantics.
+- `SkillPick.amount: number`, `HeldSpell.spellLevel: number | null`, `HeldSpell.saveName: string | null` — neutral primitive fields with 3.5-flavored seeded content but no schema constraint forcing 3.5 semantics.
 - Aptitudes and saves (entity types), requirements/modifiers tables, fields (an entity's stored values) — generic primitives; see "What's intentionally generic" above.
 - `SavesComponent` (`dnd3.5/model/saves/`) — iterates generic save data, no 3.5 hardcoding.
 - Alignment path in `IdentityComponent` — "alignment" is a fantasy-RPG convention, string field value is content-level.

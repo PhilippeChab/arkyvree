@@ -181,7 +181,9 @@ describe("characters", () => {
     const tags = [...new Set(spells.flatMap((spell) => spell.tags?.map((tag) => tag.name) ?? []))].sort();
     expect(tags).toEqual(["Healing Domain", "Sun Domain"]);
     const classSpellIds = new Set(
-      Object.values(detail.classes).flatMap((klass) => klass.levels.flatMap((level) => level.spells.map((p) => p.id))),
+      Object.values(detail.classes).flatMap((klass) =>
+        klass.levels.flatMap((level) => level.spells.map((p) => p.entity.id)),
+      ),
     );
     expect(spells.some((spell) => spell.tags && classSpellIds.has(spell.id))).toBe(true);
   });

@@ -1,13 +1,9 @@
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type CharacterState from "@/engine/rulesets/dnd3.5/model/CharacterState.ts";
-import type {
-  CustomizedClassLevel,
-  CustomizedFeat,
-  CustomizedSpell,
-} from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
+import type { CustomizedClassLevel } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Feat, Klass, Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier } from "@/shared/relations.ts";
 import { GENERAL_FEATS_APTITUDE } from "@/vocabulary/dnd3.5/feats.ts";
@@ -69,7 +65,8 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
     /** The character's race, classes, skills, feats and spells, which its source chain must hold. */
     protected override listEntityRows() {
       const { race, klasses, skills, feats, spells } = this.data;
-      return { races: [race], klasses, skills, feats, spells };
+      const entities = <E>(held: { entity: E }[]) => held.map(({ entity }) => entity);
+      return { races: [race], klasses, skills: entities(skills), feats: entities(feats), spells: entities(spells) };
     }
 
     /**
@@ -122,10 +119,10 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
 
     private getDiagnosticsIndex() {
       if (this.diagnosticsIndex) return this.diagnosticsIndex;
-      const featsById = new Map<string, CustomizedFeat>();
-      for (const f of this.data.feats) featsById.set(f.id, f);
-      const spellsById = new Map<string, CustomizedSpell>();
-      for (const p of this.data.spells) spellsById.set(p.id, p);
+      const featsById = new Map<string, Feat>();
+      for (const { entity } of this.data.feats) featsById.set(entity.id, entity);
+      const spellsById = new Map<string, Spell>();
+      for (const { entity } of this.data.spells) spellsById.set(entity.id, entity);
       const klassLevelsById = new Map<string, CustomizedClassLevel>();
       for (const kl of this.data.klassLevels) klassLevelsById.set(kl.id, kl);
       const rulesetKlassesById = new Map<string, Klass>();
@@ -135,7 +132,7 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       // entity that owns modifiers so resolveModifierSourceName becomes O(1).
       const modifierOwner = new Map<string, { name: string; type: string }>();
       for (const feat of this.data.feats)
-        for (const m of feat.modifiers) modifierOwner.set(m.id, { name: feat.name, type: "feats" });
+        for (const m of feat.modifiers) modifierOwner.set(m.id, { name: feat.entity.name, type: "feats" });
 
       for (const inv of this.data.inventory)
         for (const m of inv.item.modifiers) modifierOwner.set(m.id, { name: inv.item.name, type: "items" });
@@ -149,7 +146,7 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
         for (const m of kl.modifiers) modifierOwner.set(m.id, { name: label, type: "class_levels" });
       }
       for (const spell of this.data.spells)
-        for (const m of spell.modifiers) modifierOwner.set(m.id, { name: spell.name, type: "spells" });
+        for (const m of spell.modifiers) modifierOwner.set(m.id, { name: spell.entity.name, type: "spells" });
 
       this.diagnosticsIndex = {
         featsById,

@@ -21,6 +21,7 @@ import {
   createSeededTestRulesetWithExtensions,
   invalidateTestRulesets,
 } from "@/tests/support/rulesets.ts";
+import { NIL_UUID } from "@/tests/support/seed.ts";
 import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -156,14 +157,19 @@ for (const [chainingOperator, reverseOrder] of [
         pagination,
       ),
     );
-    abilities.initialize({
-      abilityIncreases: [],
-      characterAbilityScores: rows.map((row) => ({
-        abilityId: row.id,
-        name: row.name,
-        score: row.name === "Strength" ? 13 : 10,
-      })),
-    });
+    // The base's scores, each its `score` link, its ability named by the base's view
+    const base = (await Rulesets.findOne(db, { id: host.ancestorRulesetIds[0] }))!;
+    const scoreLinks = rows.map((row) => ({
+      amount: row.name === "Strength" ? 13 : 10,
+      characterId: NIL_UUID,
+      createdAt: "",
+      entityId: row.id,
+      updatedAt: "",
+    }));
+    abilities.initialize(
+      { abilityPicks: [], scoreLinks },
+      { ruleset: base, rulesetData: await RulesetViews.getData(base) },
+    );
     const evaluate = (groups: Requirement[][]) => {
       const engine = new RequirementEvaluator(new Dnd35TargetPaths());
       engine.evaluateRequirements({ abilities }, groups);

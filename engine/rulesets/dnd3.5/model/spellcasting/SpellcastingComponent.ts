@@ -25,19 +25,18 @@ class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels
    */
   override finalize(
     {
-      characterLevels,
       feats,
       klassBonusSpellAbilityMap,
       klassLevels,
       spells,
-    }: Pick<LoadedCharacterData, "characterLevels" | "feats" | "klassBonusSpellAbilityMap" | "klassLevels" | "spells">,
+    }: Pick<LoadedCharacterData, "feats" | "klassBonusSpellAbilityMap" | "klassLevels" | "spells">,
     { rulesetData }: RulesetView,
     character: BuiltCharacter,
   ) {
     const spellLists = SpellLists.of(rulesetData);
     const isGateMet = (modifier: Modifier, metTargets?: string[]) =>
       this.isGateMet(character, rulesetData, modifier, metTargets);
-    this.readBonusCasterLevels(rulesetData, klassLevels, feats, characterLevels, Dnd35View.of(rulesetData).klasses);
+    this.readBonusCasterLevels(rulesetData, klassLevels, feats, Dnd35View.of(rulesetData).klasses);
     this.applyBonusCasterLevels(character, feats, spellLists.featListIds, isGateMet);
     this.applyBonusSpells(klassBonusSpellAbilityMap);
     // The modifiers applied once the bonus caster levels' have: what the lists the character knows read

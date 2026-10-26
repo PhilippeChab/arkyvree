@@ -87,13 +87,13 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
 
   /**
    * A feats step, the wizard's and the preview's alike: how many feats the character picks with what's planned
-   * (`pools`), in which pools, and the feats the class levels (`klassLevelIds`) grant.
+   * (`pools`), in which pools, and the feats the class levels (`classLevelIds`) grant.
    */
-  protected featStep(pools: LevelUpPools, klassLevelIds: string[]) {
+  protected featStep(pools: LevelUpPools, classLevelIds: string[]) {
     const { dnd35 } = this;
     return {
       featsToSelect: pools.featsToSelect,
-      autoGrantedFeats: klassLevelIds.flatMap((id) =>
+      autoGrantedFeats: classLevelIds.flatMap((id) =>
         dnd35.grantedFeatsOf(id).flatMap((grant) => dnd35.featsById.get(grant.toId) ?? []),
       ),
       aptitudePools: pools.featPools,
@@ -138,13 +138,13 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
 
   /**
    * A spells step, the wizard's and the preview's alike: how many spells the character picks with what's planned
-   * (`pools`), in which pools, and the spells the class levels (`klassLevelIds`) grant, each saying whether it's free.
+   * (`pools`), in which pools, and the spells the class levels (`classLevelIds`) grant, each saying whether it's free.
    */
-  protected spellStep(pools: LevelUpPools, klassLevelIds: string[]) {
+  protected spellStep(pools: LevelUpPools, classLevelIds: string[]) {
     const { dnd35 } = this;
     return {
       spellsToSelect: pools.spellsToSelect,
-      autoGrantedSpells: klassLevelIds.flatMap((id) =>
+      autoGrantedSpells: classLevelIds.flatMap((id) =>
         dnd35.grantedSpellsOf(id).flatMap((grant) => {
           const spell = dnd35.spellsById.get(grant.toId);
           return spell ? [{ ...spell, free: grant.free }] : [];
