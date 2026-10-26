@@ -2,14 +2,13 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
+import { FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const HORIZON_WALKER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Planar Terrain Mastery (Horizon Walker)",
     description:
       "As a horizon walker advances, her understanding of terrain broadens to encompass other planes of existence. Planar terrain mastery operates identically to terrain mastery, but at each level the horizon walker may select from the planar terrain options instead. She may also choose a standard (non-planar) terrain type if she prefers.",
-    stackable: true,
-    selectable: false,
     aptitudes: ["Horizon Walker Class Feature"],
     modifiers: [
       {
@@ -19,17 +18,17 @@ export const HORIZON_WALKER_CLASS_FEATS: FeatSeed[] = [
         valueType: "number",
       },
     ],
+    fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
   },
   {
     name: "Terrain Mastery (Horizon Walker)",
     description:
       "Through their extensive travels, horizon walkers develop a supernatural bond with the landscapes they traverse. Each level, they select an additional terrain type from the options listed below. Mastering a terrain grants the horizon walker either a bonus on checks with a skill relevant to that environment or another fitting advantage. Additionally, a horizon walker learns the fighting habits of dangerous creatures native to that terrain, receiving a +1 insight bonus on attack rolls and damage rolls against any creature whose stat block specifically names that terrain in its Environment entry. These terrain mastery benefits are permanent and portable-the horizon walker retains all associated bonuses to skill checks, attack rolls, and damage rolls regardless of current location. For instance, a horizon walker who has chosen desert terrain mastery remains immune to fatigue whether she is below ground, atop a mountain, or within a settlement.",
-    stackable: true,
-    selectable: false,
     aptitudes: ["Horizon Walker Class Feature"],
     modifiers: [
       { target: "aptitudes.horizonwalkerterrainmastery.allowed", operator: "add", value: "1", valueType: "number" },
     ],
+    fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
   },
   {
     name: "Terrain Mastery: Aligned (Planar) (Horizon Walker Planar Terrain Mastery)",
@@ -136,7 +135,7 @@ export const HORIZON_WALKER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Weapon and Armor Proficiency (Horizon Walker)",
     description: "Horizon walkers do not receive proficiency with any additional weapons or armor.",
-    selectable: false,
     aptitudes: ["Horizon Walker Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
 ];

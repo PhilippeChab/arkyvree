@@ -13,16 +13,15 @@ import { CharacterInventory, CharacterLinks, Characters, Entities, Picks } from 
 import { readCharacterInput, readChildInputs } from "@/server/services/characters/index.ts";
 import { createAdvancement, writeChildren } from "@/server/services/characters/levels/index.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
-import {
-  CHARACTER_AGE,
-  CHARACTER_ALIGNMENT,
-  CHARACTER_GENDER,
-  CHARACTER_HEIGHT,
-  CHARACTER_WEIGHT,
-  CHARACTER_XP,
-} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { type SeedContext } from "./seedContext.ts";
+
+/** The id of an entity a character's seed names (`name`, of `ids`), or an error that says which (`what`). */
+function idOf(ids: Record<string, string>, name: string, what: string): string {
+  const id = ids[name];
+  if (!id) throw new Error(`${what}: "${name}" isn't seeded`);
+  return id;
+}
 
 async function addInventory(db: Db, ctx: SeedContext, characterId: string, items: InventorySeed[]) {
   if (items.length === 0) return;
@@ -30,7 +29,7 @@ async function addInventory(db: Db, ctx: SeedContext, characterId: string, items
     db,
     items.map((item) => ({
       characterId,
-      itemId: ctx.itemMap[item.name],
+      itemId: idOf(ctx.itemMap, item.name, "An inventory's item"),
       quantity: item.quantity,
       equipped: item.equipped ?? false,
       location: item.location,
@@ -64,7 +63,7 @@ export async function addClassLevels(
   levels: number[],
   hpPerLevel: number[],
 ) {
-  const klassId = ctx.klassMap.pc[className];
+  const klassId = idOf(ctx.klassMap.pc, className, "A character's class");
   const levelIds: string[] = [];
 
   const klassLevels = await Entities.findPositions(db, { entityType: "class_levels", ownerIds: [klassId] });
@@ -91,8 +90,8 @@ export async function addFeats(
     feats.map((f) => ({
       advancementId: charLevelIds[f.levelIndex],
       step: "feats",
-      entityId: ctx.featMap[f.featName],
-      viaId: ctx.aptMap[f.aptitude],
+      entityId: idOf(ctx.featMap, f.featName, "A character's feat"),
+      viaId: idOf(ctx.aptMap, f.aptitude, "A character's feat's aptitude"),
     })),
   );
 }
@@ -108,7 +107,7 @@ export async function addSkills(
     skills.map((s) => ({
       advancementId: charLevelIds[s.levelIndex],
       step: "skills",
-      entityId: ctx.skillMap[s.skillName],
+      entityId: idOf(ctx.skillMap, s.skillName, "A character's skill"),
       amount: s.rank,
     })),
   );
@@ -125,8 +124,8 @@ export async function addSpells(
     spells.map((p) => ({
       advancementId: charLevelIds[p.levelIndex],
       step: "spells",
-      entityId: ctx.spellMap[p.spellName],
-      viaId: ctx.aptMap[p.aptitude],
+      entityId: idOf(ctx.spellMap, p.spellName, "A character's spell"),
+      viaId: idOf(ctx.aptMap, p.aptitude, "A character's spell's aptitude"),
     })),
   );
 }
@@ -145,28 +144,24 @@ export async function createCharacter(
     rulesetId: data.rulesetId ?? ctx.rulesetId,
     name: data.name,
     description: data.description,
-    fields: {
-      [CHARACTER_XP]: data.xp,
-      [CHARACTER_ALIGNMENT]: data.alignment,
-      [CHARACTER_AGE]: data.age,
-      [CHARACTER_GENDER]: data.gender,
-      [CHARACTER_HEIGHT]: data.height,
-      [CHARACTER_WEIGHT]: data.weight,
-    },
-    links: { race: ctx.raceMap.pc[data.raceName] },
+    fields: { ...data.fields },
+    links: { race: idOf(ctx.raceMap.pc, data.links.race, `${data.name}'s race`) },
   });
 
   await CharacterLinks.createMany(
     db,
     character.id,
     "score",
-    Object.entries(data.abilities).map(([name, amount]) => ({ entityId: ctx.abilityMap[name], amount })),
+    Object.entries(data.abilities).map(([name, amount]) => ({
+      entityId: idOf(ctx.abilityMap, name, `${data.name}'s ability`),
+      amount,
+    })),
   );
   await CharacterLinks.createMany(
     db,
     character.id,
     "speaks",
-    data.languages.map((language) => ({ entityId: ctx.langMap[language] })),
+    data.languages.map((language) => ({ entityId: idOf(ctx.langMap, language, `${data.name}'s language`) })),
   );
 
   return character.id;

@@ -9,6 +9,7 @@ import type {
 } from "@/content/core/builders/customization/types.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
+import { FEAT_FAMILY, FEAT_GENERATED } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * Writing a feat, and a template family's feats made per item (weapon, skill, school…). What a template's code uses
@@ -16,9 +17,9 @@ import type { Constructor } from "@/lib/mixins.ts";
  */
 export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
   abstract class WritingFeats extends Base {
-    /** Ends a template: its feats' family. */
+    /** Ends a template: its feats' fields, each made by its ruleset (`FEAT_GENERATED`) and of its family. */
     private closeTemplate(familyName: string): void {
-      this.lines.push(`  fields: ${this.fieldValue({ families: [familyName] })},`);
+      this.lines.push(`  fields: ${this.seedFields({ [FEAT_GENERATED]: true, [FEAT_FAMILY]: [familyName] })},`);
       this.lines.push(`}));`);
       this.lines.push("");
     }
@@ -79,7 +80,6 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
       );
       this.lines.push(`  name: \`${this.escapeTemplate(familyName)}: \${${variable}}\`,`);
       this.lines.push(`  description: \`${description}\`,`);
-      this.lines.push(`  generated: true,`);
       this.lines.push(`  aptitudes: [${aptitudes.map((name) => this.quote(name)).join(", ")}],`);
     }
 
@@ -186,9 +186,6 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
         `  {`,
         `    name: ${this.quote(feat.name)},`,
         `    description: ${this.quote(feat.description)},`,
-        ...(feat.stackable ? [`    stackable: true,`] : []),
-        ...(feat.selectable === false ? [`    selectable: false,`] : []),
-        ...(feat.generated ? [`    generated: true,`] : []),
         `    aptitudes: [${feat.aptitudes.map((name) => this.quote(name)).join(", ")}],`,
         ...this.listField(
           "requirements",
@@ -200,7 +197,7 @@ export function WritesFeats<B extends Constructor<BaseCodeFile>>(Base: B) {
           (feat.modifiers ?? []).map((m) => this.modifier(m)),
           "    ",
         ),
-        ...(feat.fields ? [`    fields: ${this.fieldValue(feat.fields)},`] : []),
+        ...(feat.fields ? [`    fields: ${this.seedFields(feat.fields)},`] : []),
         `  },`,
       ];
     }

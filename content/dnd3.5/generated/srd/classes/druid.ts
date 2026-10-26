@@ -7,12 +7,13 @@
 
 import { eqStr, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const DRUID: ClassSeed = {
   name: "Druid",
   description:
     "Storm's wrath, the warm glow of dawn, a fox's cleverness, a bear's raw might - the druid commands all of these forces and countless others. Yet no druid would claim dominion over the natural world. Such boasts, she insists, belong to those who dwell behind city walls. A druid draws power not from controlling nature but from existing in harmony with it. To those who trespass in her sacred groves or provoke her anger, this distinction hardly matters. Druids set out on adventures to expand their understanding of the natural world - particularly unfamiliar flora and fauna - and to grow in power. On occasion, their elders may summon them for specific missions. Druids also wield their abilities to defend the wild places they cherish, whether ancient forests or remote mountain ranges, often prioritizing these over civilized settlements. Although druids accept nature's brutality and harshness as part of its cycle, they despise anything that defies the natural order, such as aberrations (like beholders and carrion crawlers) and undead (like zombies and vampires). Druids frequently organize strikes against such abominations, especially when they intrude upon druidic lands. Like clerics, druids channel divine magic, though most draw their spells from the essence of nature itself rather than from specific deities. Their spell selection centers on the natural world and its creatures. As druids advance in level, they also unlock a growing repertoire of supernatural abilities, including the power to physically transform into animals.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8, [CLASS_CASTER_TYPE]: "Divine" },
   levels: 20,
   skillPoints: 4,
   bab: "medium",
@@ -69,8 +70,7 @@ export const DRUID: ClassSeed = {
     [18, "Wild Shape (Druid)"],
     [20, "Wild Shape (Druid)"],
   ],
-  bonusSpellAbility: "Wisdom",
-  casterType: "Divine",
+  links: { bonusSpellAbility: "Wisdom" },
   spells: {
     slug: "druidspells",
     perDay: [

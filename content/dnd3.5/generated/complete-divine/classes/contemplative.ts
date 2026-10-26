@@ -7,11 +7,12 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const CONTEMPLATIVE: ClassSeed = {
   name: "Contemplative",
   description: "Contemplatives dedicate themselves to deepening their spiritual connection with their patron deity.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 10,
   skillPoints: 2,
   bab: "poor",

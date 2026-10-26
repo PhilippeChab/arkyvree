@@ -603,6 +603,16 @@ describe("characters", () => {
       });
     });
 
+    test("clears a text an edit sends empty: no row, read as one never set, its sheet's the same", async () => {
+      const { id } = await postCharacter({ deity: "Pelor" });
+      const { id: unset } = await postCharacter({});
+      const saved = await expectOk(character.$put({ param: { id }, json: { fields: { deity: "" } } }));
+      expect(saved.fields).not.toHaveProperty("CHARACTER_DEITY");
+      expect((await Characters.findOne(db, { id }))!.fields).not.toHaveProperty("CHARACTER_DEITY");
+      expect((await sheetOf(id)).identity.beliefs).toEqual((await sheetOf(unset)).identity.beliefs);
+      expect((await sheetOf(id)).identity.beliefs.deity).toBe("");
+    });
+
     test("saves its fields and its languages together, and neither when a field is refused", async () => {
       const { langMap } = await getSeedCtx();
       const { id } = await postCharacter({ abilities: await scoresWith("Intelligence", 14) });

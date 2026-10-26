@@ -1,15 +1,25 @@
 import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Human Druid 3 — Skills: (4+0+1)*4 + (4+0+1)*2 = 30 */
 export default {
-  raceName: "Human",
   name: "Rowan Thornwalker",
-  xp: 3000,
-  alignment: "True Neutral",
-  age: 32,
-  gender: "Male",
-  height: "180",
-  weight: "78",
+  links: { race: "Human" },
+  fields: {
+    [CHARACTER_XP]: 3000,
+    [CHARACTER_ALIGNMENT]: "True Neutral",
+    [CHARACTER_AGE]: 32,
+    [CHARACTER_GENDER]: "Male",
+    [CHARACTER_HEIGHT]: "180",
+    [CHARACTER_WEIGHT]: "78",
+  },
   description:
     "Rowan grew up deep in the Whispering Forest, raised by a circle of druids who taught him to listen to the voice of the land. He wields the primal forces of nature to protect the wild places from those who would despoil them.",
   abilities: { Strength: 14, Dexterity: 12, Constitution: 14, Intelligence: 10, Wisdom: 16, Charisma: 8 },

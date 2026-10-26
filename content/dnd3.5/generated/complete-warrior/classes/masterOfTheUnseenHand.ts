@@ -7,12 +7,13 @@
 
 import { gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const MASTER_OF_THE_UNSEEN_HAND: ClassSeed = {
   name: "Master of the Unseen Hand",
   description:
     "Those who pursue this path revel in the power of telekinetic force, using invisible energy to smash opponents, hurl heavy objects skyward, and strip weapons from foes through sheer mental will.",
-  hd: 4,
+  fields: { [CLASS_HD]: 4 },
   levels: 5,
   skillPoints: 2,
   bab: "good",

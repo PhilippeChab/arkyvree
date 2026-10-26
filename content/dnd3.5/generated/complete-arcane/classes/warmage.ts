@@ -6,11 +6,12 @@
  */
 
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const WARMAGE: ClassSeed = {
   name: "Warmage",
   description: "A militant spellcaster whose training focuses on battlefield magic.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6, [CLASS_CASTER_TYPE]: "Arcane" },
   levels: 20,
   skillPoints: 2,
   bab: "poor",
@@ -42,8 +43,7 @@ export const WARMAGE: ClassSeed = {
     [15, "Sudden Widen", "Warmage Class Feature"],
     [20, "Sudden Maximize", "Warmage Class Feature"],
   ],
-  bonusSpellAbility: "Charisma",
-  casterType: "Arcane",
+  links: { bonusSpellAbility: "Charisma" },
   spells: {
     slug: "warmagespells",
     perDay: [

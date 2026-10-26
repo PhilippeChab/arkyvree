@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const ALIENIST: ClassSeed = {
   name: "Alienist",
   description:
     "Alienists deal with powers and entities from terrifyingly remote reaches of space and time. For them, magical power is the triumph of the mind over the rude boundaries of dimension, distance, and often, sanity. With knowledge and determination, they pierce the barrier at the edge of time itself. In the Far Realm, outside time, Herculean minds drift, absorbed in contemplations of madness. Unspeakable beings whisper terrifying secrets to those who dare communication. These secrets were not meant for mortals, but the alienist plunges into abysses of chaos and entropy that would blast a weaker mind. An alienist's mad certainty is sometimes strong enough to sway others to believe in her own future transcendence. Alienists might, on rare occasions, gather in secluded groups to enact some obscure ritual, but more often they are encountered singly. NPC alienists sometimes haunt libraries or specialty bookshops in large cities, skulking and mumbling among stacks of rare (and dangerous) volumes.",
-  hd: 4,
+  fields: { [CLASS_HD]: 4 },
   levels: 10,
   skillPoints: 2,
   bab: "poor",

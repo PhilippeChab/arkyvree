@@ -2,90 +2,85 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
+import { FEAT_FAMILY, FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const BLACKGUARD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Aura of Despair (Blackguard)",
     description:
       "From 3rd level onward, the blackguard projects a demoralizing supernatural aura. All enemies within 10 feet suffer a -2 penalty on their saving throws.",
-    selectable: false,
     aptitudes: ["Blackguard Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Aura of Evil (Blackguard)",
     description:
       "The intensity of a blackguard's evil aura (as perceived by detect evil) equals his blackguard class level combined with any cleric levels he possesses.",
-    selectable: false,
     aptitudes: ["Blackguard Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Command Undead (Blackguard)",
     description:
       "At 3rd level, a blackguard acquires the supernatural capacity to command and rebuke undead creatures. His effective cleric level for this ability is two levels below his blackguard class level.",
-    selectable: false,
     aptitudes: ["Blackguard Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Dark Blessing (Blackguard)",
     description:
       "A blackguard adds his Charisma modifier (if it is a positive value) as a bonus to all of his saving throws.",
-    selectable: false,
     aptitudes: ["Blackguard Class Feature"],
     modifiers: [
       { target: "saves.*.misc", operator: "add", value: "{{ [abilities.charisma.modifier] }}", valueType: "number" },
     ],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Detect Good (Blackguard)",
     description:
       "A blackguard may use detect good at will as a spell-like ability, replicating the effects of the detect good spell.",
-    selectable: false,
     aptitudes: ["Blackguard Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Fiendish Servant (Blackguard)",
     description: "",
-    selectable: false,
     aptitudes: ["Blackguard Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Poison Use (Blackguard)",
     description:
       "Blackguards are trained in handling poisons and never accidentally expose themselves to a toxin when coating a weapon with poison.",
-    selectable: false,
     aptitudes: ["Blackguard Class Feature"],
-    fields: { families: ["Poison Use"] },
+    fields: { [FEAT_SELECTABLE]: false, [FEAT_FAMILY]: ["Poison Use"] },
   },
   {
     name: "Smite Good (Blackguard)",
     description:
       "Starting at 2nd level, a blackguard can attempt to smite a good-aligned creature once per day using a single normal melee attack. The blackguard adds his Charisma modifier (if positive) to the attack roll and inflicts 1 additional point of damage for each blackguard class level. As an example, a 9th-level blackguard wielding a longsword would deal 1d8+9 damage, before any other applicable bonuses from Strength or magic. If the target of the smite is not good-aligned, the attempt produces no effect but still expends one daily use. The blackguard gains an additional daily use of this ability at 5th level and again at 10th level.",
-    stackable: true,
-    selectable: false,
     aptitudes: ["Blackguard Class Feature"],
-    fields: { families: ["Smite"] },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false, [FEAT_FAMILY]: ["Smite"] },
   },
   {
     name: "Sneak Attack (Blackguard)",
     description:
       "At 4th level, the blackguard gains the sneak attack ability, which functions identically to the rogue class feature of the same name. The bonus damage increases by +1d6 at every third level after 4th (at 7th and 10th level). If a blackguard has sneak attack damage from another source (such as levels in rogue), the damage bonuses are cumulative.",
-    stackable: true,
-    selectable: false,
     aptitudes: ["Blackguard Class Feature"],
-    fields: { families: ["Sneak Attack"] },
+    fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false, [FEAT_FAMILY]: ["Sneak Attack"] },
   },
   {
     name: "Spells (Blackguard)",
     description:
       "A blackguard can cast a limited selection of divine spells. Casting a blackguard spell requires a minimum Wisdom score equal to 10 + the spell's level; a blackguard whose Wisdom is 10 or lower is unable to cast any of these spells. Bonus spells for this class are determined by Wisdom, and the saving throw DC against blackguard spells equals 10 + spell level + the blackguard's Wisdom modifier. At any spell level where the blackguard receives 0 base spells per day (such as 1st-level spells at class level 1), only bonus spells from a high Wisdom score are available. The blackguard has access to the entire blackguard spell list and may freely select which spells to prepare each day, functioning identically to cleric spellcasting in terms of preparation and use. However, a blackguard cannot spontaneously convert prepared spells into cure or inflict spells.",
-    selectable: false,
     aptitudes: ["Blackguard Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Weapon and Armor Proficiency (Blackguard)",
     description:
       "Blackguards have proficiency with every simple and martial weapon, all armor types (light, medium, and heavy), and shields.",
-    selectable: false,
     aptitudes: ["Blackguard Class Feature"],
     modifiers: [
       { target: "feats.simpleweaponproficiency.possessed", operator: "set", value: "true", valueType: "boolean" },
@@ -95,14 +90,15 @@ export const BLACKGUARD_CLASS_FEATS: FeatSeed[] = [
       { target: "feats.armorproficiencyheavy.possessed", operator: "set", value: "true", valueType: "boolean" },
       { target: "feats.shieldproficiency.possessed", operator: "set", value: "true", valueType: "boolean" },
     ],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Advance Blackguard Spellcasting",
     description:
       "Your effective Blackguard caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Blackguard.",
-    stackable: true,
     aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.blackguard.level", 1)],
     modifiers: [{ target: "classes.blackguard.bonuscasterlevel", operator: "add", value: "1", valueType: "number" }],
+    fields: { [FEAT_STACKABLE]: true },
   },
 ];

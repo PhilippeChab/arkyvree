@@ -7,12 +7,13 @@
 
 import { eqStr, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const SAMURAI: ClassSeed = {
   name: "Samurai",
   description:
     "Trained to fight with their paired katana and wakizashi at the same time, samurai rival fighters in close combat effectiveness but possess a narrower range of martial techniques.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 20,
   skillPoints: 2,
   bab: "good",

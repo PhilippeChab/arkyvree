@@ -2,6 +2,7 @@ import { normalizeDescription } from "@/codegen/dnd3.5/tools/text/scrapedText.ts
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { include } from "@/lib/mixins.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { BaseClassSeeds } from "./BaseClassSeeds.ts";
 import { AptitudePicks } from "./concerns/AptitudePicks.ts";
@@ -70,7 +71,7 @@ export class ClassSeeds extends include(
       return {
         name: raw.name,
         description: normalizeDescription(mapping.description),
-        hd: detected.hd,
+        fields: { [CLASS_HD]: detected.hd, ...casting.fields },
         levels: detected.levels,
         skillPoints: detected.skillPoints,
         bab: mapping.bab,
@@ -82,7 +83,7 @@ export class ClassSeeds extends include(
         ...(classFeatures.length > 0 ? { classFeatures } : {}),
         ...(mapping.proficiencies?.length ? { proficiencies: mapping.proficiencies } : {}),
         ...(freeFeats.length > 0 ? { freeFeats } : {}),
-        ...casting,
+        ...(casting.links && { links: casting.links }),
         ...(spells ? { spells } : {}),
         ...(modifiers.length > 0 ? { modifiers } : {}),
         ...(aptitudePicks.length > 0 ? { aptitudePicks } : {}),

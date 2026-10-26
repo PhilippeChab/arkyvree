@@ -1,8 +1,8 @@
 /**
  * An entity's fields as a ruleset's vocabulary declares them (`FieldSpec`, data written `as const`), and the values
  * they read (`FieldValues`): what the engine stores, merges, reads and writes them by (its codecs, its storage), and
- * what a ruleset's content types its seeds' fields with (`PartialFieldValues`). A reference names an entity kind (`K`),
- * which the engine binds to its view's kinds. And how a sheet shows them: a field's name as a label
+ * what a ruleset's content types its seeds' fields with, as stored (`StoredFieldValues`). A reference names an entity
+ * kind (`K`), which the engine binds to its view's kinds. And how a sheet shows them: a field's name as a label
  * (`formatFieldName`), its values joined in their options' order (`formatFieldValues`).
  */
 
@@ -41,6 +41,11 @@ interface StoredLeafBase extends LeafBase {
   /** The role of its owner's single link to the entity it reads it off when it holds none: none, its own alone */
   inherits?: string;
   /**
+   * Whether its owner keeps the fields its form shows only while it holds a value of this one (a spell's school): none
+   * of their rows otherwise, whoever writes them. None: they're kept whatever it holds
+   */
+  keepsForm?: true;
+  /**
    * Whether its values are read kind-wide, each with the owners that hold it (`RulesetData.kindValues`): the groupings
    * its kind's values name (a weapon's type, a feat's family, a spell's school) and their target paths' labels. None:
    * its owner's alone
@@ -69,6 +74,29 @@ type KindValueOf<F extends FieldSpec> = F extends GroupSpec
             : F extends { default: string }
               ? string
               : string | null;
+
+/** A field's leaves: a group's own fields, or the field itself. */
+type LeavesOf<F> = F extends GroupSpec ? F["fields"][keyof F["fields"]] : F;
+
+/** The stored field that keeps a leaf. */
+type StoredFieldOf<L> = L extends { field: infer F extends string } ? F : never;
+
+/**
+ * The leaves of a spec its owner's fields keep (a group's included): each one but a reference, which is a single
+ * link's, and a progression, which a ruleset's Settings alone hold.
+ */
+type StoredLeafOf<S extends Fields> = Exclude<LeavesOf<S[keyof S]>, ProgressionSpec | RefSpec>;
+
+/** A stored field's value, of its kind: a flag, a number, one of a choice's values, a list's values, a text. */
+type StoredValueOf<F> = F extends FlagSpec
+  ? boolean
+  : F extends NumberSpec
+    ? number
+    : F extends ChoiceSpec
+      ? F["values"][number]
+      : F extends ListSpec
+        ? string[]
+        : string;
 
 /**
  * A field's value: by its kind (`KindValueOf`), unknown for any field (a kind's fields read without their spec, whatever
@@ -204,11 +232,11 @@ export type LeafSpec<K extends string = string> = Exclude<FieldSpec<K>, GroupSpe
 export type Merge = "fallback" | "union" | "winner";
 
 /**
- * Some of the values an entity's fields read (`FieldValues`), by name, a group's some of its own: what a seed gives of
- * its entity's fields, the others its entity doesn't keep (a group it gives is written whole, its others cleared).
+ * Some of an entity's fields as stored, by the stored field that keeps each (a group's leaves among them), each a value
+ * of its kind: what a ruleset's content seeds an entity with, which the seeders write as it is.
  */
-export type PartialFieldValues<S extends Fields> = {
-  -readonly [K in keyof S]?: S[K] extends GroupSpec ? PartialFieldValues<S[K]["fields"]> : ValueOf<S[K]>;
+export type StoredFieldValues<S extends Fields> = {
+  [F in StoredFieldOf<StoredLeafOf<S>>]?: StoredValueOf<Extract<StoredLeafOf<S>, { field: F }>>;
 };
 
 /** An UPPER_SNAKE_CASE field's name as a label ("SPELL_SCHOOL" → "Spell School"). */

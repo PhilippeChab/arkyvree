@@ -7,12 +7,13 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const SHADOWDANCER: ClassSeed = {
   name: "Shadowdancer",
   description:
     "Shadowdancers thrive at the threshold where light meets shadow, employing agility and trickery as their primary tools.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 10,
   skillPoints: 6,
   bab: "medium",

@@ -8,12 +8,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const DAGGERSPELL_MAGE: ClassSeed = {
   name: "Daggerspell Mage",
   description:
     "Daggerspell mages see the quick movements of their deadly daggers as an attendant part of their spellcasting. These sometimes reclusive ?gures remain spellcasters ?rst and melee combatants second. Daggerspell mages, like their colleagues the daggerspell shapers, seek truth and justice, but they de?ne such concepts in the heat of the moment. Daggerspell mages do not see morality as an absolute, and their ideals are guided by their sense of what is right and fair. Daggerspell mages are closely related to the daggerspell shapers, the other half of the organization known as the Daggerspell Guardians. Both preserve the work of good folk and balance the concerns of civilized communities against the sanctity of nature, but where a shaper is quiet and calculating, a daggerspell mage is wild and impulsive. The two halves of the organization work together amicably, but they have decidedly different approaches to most problems. Almost every daggerspell mage begins his career as a wizard or sorcerer, taking a level or two of rogue after a few successful adventures. Drawn to the exotic ?ghting style and balanced ideas of the Daggerspell Guardian, these individuals enjoy the enigmatic reputation and unorthodox techniques of the guild. Although members of the guild are primarily spellcasters, some follow more complicated multiclass pathways that include ?ghter or paladin levels. These characters follow all precepts of the guild, but they are more likely to defend truth with the sharp points of their daggers than with the arcane power of their spells.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 10,
   skillPoints: 6,
   bab: "medium",

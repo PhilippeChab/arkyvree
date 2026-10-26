@@ -4,7 +4,6 @@ import type { SaveSeed } from "@/content/dnd3.5/builders/saves/types.ts";
 import type { Dnd35ContentSeeder } from "@/database/seeders/dnd3.5/Dnd35ContentSeeder.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { LANGUAGE_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Seeding a base ruleset's own rules: its abilities, saves and languages. */
 export function SeedsCoreRules<B extends Constructor<Dnd35ContentSeeder>>(Base: B) {
@@ -38,30 +37,30 @@ export function SeedsCoreRules<B extends Constructor<Dnd35ContentSeeder>>(Base: 
       );
     }
 
-    /** The languages. */
+    /** The languages, with their fields. */
     async seedLanguages(languages: LanguageSeed[]) {
       await this.insertEntities(
         "languages",
-        languages.map(({ description, name, type }) => ({
+        languages.map(({ description, name, fields }) => ({
           rulesetId: this.ctx.rulesetId,
           name,
           description,
-          fields: { [LANGUAGE_TYPE]: type },
+          fields,
         })),
       );
     }
 
-    /** The saves, each with its ability. */
+    /** The saves, each with its ability (its `keyAbility` link). */
     async seedSaves(saves: SaveSeed[]) {
       Object.assign(
         this.ctx.saveMap,
         await this.insertEntities(
           "saves",
-          saves.map(({ name, description, ability }) => ({
+          saves.map(({ name, description, links }) => ({
             rulesetId: this.ctx.rulesetId,
             name,
             description,
-            links: { keyAbility: this.ctx.abilityMap[ability] },
+            links: { keyAbility: this.idOf(this.ctx.abilityMap, links.keyAbility, `${name}'s key ability`) },
           })),
         ),
       );

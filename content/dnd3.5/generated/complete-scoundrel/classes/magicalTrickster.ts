@@ -7,12 +7,13 @@
 
 import { gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const MAGICAL_TRICKSTER: ClassSeed = {
   name: "Magical Trickster",
   description:
     "Relying as much on her wits as on her spellcasting prowess, the magical trickster can sacrifice her spellcasting ability to gain even greater access to skill tricks.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 3,
   skillPoints: 4,
   bab: "poor",

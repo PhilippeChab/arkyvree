@@ -7,11 +7,12 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const GEOMETER: ClassSeed = {
   name: "Geometer",
   description: "The geometer is the master of written magic and spells inscribed within a perfectly rendered diagram.",
-  hd: 4,
+  fields: { [CLASS_HD]: 4 },
   levels: 5,
   skillPoints: 2,
   bab: "poor",

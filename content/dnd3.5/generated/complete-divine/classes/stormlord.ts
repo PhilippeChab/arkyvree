@@ -7,12 +7,13 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const STORMLORD: ClassSeed = {
   name: "Stormlord",
   description:
     "Stormlords tend to live as bandits, pursuing their desires for riches, fine food, luxuries, and reckless indulgence, driven by an appetite for sudden, dramatic destruction.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 10,
   skillPoints: 2,
   bab: "medium",

@@ -8,11 +8,12 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const VIRTUOSO: ClassSeed = {
   name: "Virtuoso",
   description: "The typical virtuoso is outgoing, charismatic, and gregarious.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 10,
   skillPoints: 6,
   bab: "poor",

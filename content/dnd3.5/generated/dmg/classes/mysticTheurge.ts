@@ -7,12 +7,13 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const MYSTIC_THEURGE: ClassSeed = {
   name: "Mystic Theurge",
   description:
     "Mystic theurges bridge the gap between arcane and divine magic, channeling power drawn from both scholarly study and sacred devotion.",
-  hd: 4,
+  fields: { [CLASS_HD]: 4 },
   levels: 10,
   skillPoints: 2,
   bab: "poor",

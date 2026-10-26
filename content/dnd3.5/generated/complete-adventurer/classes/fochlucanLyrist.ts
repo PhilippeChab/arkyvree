@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const FOCHLUCAN_LYRIST: ClassSeed = {
   name: "Fochlucan Lyrist",
   description:
     "The Fochlucan lyrist is a legendary figure who serves as the herald and teacher to great kings, the champion of the common folk, and the keeper of lore long forgotten elsewhere. Those who aspire to join the Fochlucan College face a long and dif?cult road. The great bards who lead the school choose only individuals who have demonstrated skill at arms and stealth, learning and cleverness, superb talent with the lute and an ear for the stories of old. Finally, all applicants must ?rst study the lore of the druids, learning the ways of growth and the hidden secrets of nature. Few indeed can stand up to the rigorous scrutiny of the Fochlucan masters. Fochlucan lyrists adventure to gain information. They are spies and rumormongers, ever on the watch for news of events that may upset the balance they seek to preserve. A lyrist can serve as a diplomat, messenger, or assassin, as needed. The Fochlucans strongly believe in fostering the careers of other adventurers whose viewpoints align with their own, and many lyrists attach themselves to adventuring companies speci?cally for the purpose of guiding their comrades to oppose the right enemies and advance the interests of the Fochlucan College.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 10,
   skillPoints: 6,
   bab: "good",

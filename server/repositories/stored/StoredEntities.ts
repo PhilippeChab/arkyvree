@@ -282,21 +282,25 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
 
   /**
    * Writes entities' fields and single links (`writes`: each entity's ids and what it sets, by field and by role), in
-   * batches, each value in its field's column by its declaration (`toFieldRows`), a set's in its order, and each link
-   * to its role's kind: replacing what they held of each it names when `replacing` (an update's; a new entity holds
-   * none). None (no value, null) writes none.
+   * batches, each field as every write stores it, a seed's, a form's or an import's (`Engine.storage().writtenFields`:
+   * a set's values once, no false flag, default number or empty text, none whose condition doesn't hold), each value
+   * in its field's column by its declaration (`toFieldRows`), a set's in its order, and each link to its role's kind:
+   * replacing what they held of each it names when `replacing` (an update's; a new entity holds none). None (no value,
+   * null) writes none. A copy's fields (`copied`: its source's rows, as they're stored) are written as they are.
    */
   private async writeParts(
     db: Db,
     entityType: string,
     writes: { ids: string[]; write: Pick<EntityWrite, "fields" | "links"> }[],
     replacing: boolean,
+    copied = false,
   ) {
     const storage = Engine.storage();
     const fieldRows: PgInsertValue<typeof entityFieldsInRules>[] = [];
     const linkRows: (typeof entityLinksInRules.$inferInsert)[] = [];
     for (const { ids, write } of writes) {
-      const fields = Object.entries(write.fields ?? {});
+      const given = write.fields ?? {};
+      const fields = Object.entries(copied ? given : storage.writtenFields(entityType, given, !replacing));
       const links = Object.entries(write.links ?? {});
       if (ids.length === 0) continue;
       if (replacing && fields.length > 0) {
@@ -339,17 +343,27 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
       await db.insert(entityLinksInRules).values(linkRows.slice(i, i + WRITE_BATCH));
   }
 
-  /** Writes a kind's new entity (`write`, an owned one under its owner, `ownerId`): answers its record. */
-  async create<R extends Pick<EntityRecord, "id"> = EntityRecord>(db: Db, entityType: string, write: EntityWrite) {
-    return await this.createMany<R>(db, entityType, [write]);
+  /**
+   * Writes a kind's new entity (`write`, an owned one under its owner, `ownerId`; a copy's, `copied`, as `createIds`
+   * writes it): answers its record.
+   */
+  async create<R extends Pick<EntityRecord, "id"> = EntityRecord>(
+    db: Db,
+    entityType: string,
+    write: EntityWrite,
+    copied = false,
+  ) {
+    return await this.createMany<R>(db, entityType, [write], copied);
   }
 
   /**
    * Writes a kind's new entities (`writes`), each an entity, its fields (one always written it leaves out, or clears,
    * its default: `defaultsOf`) and its single links, its partition its kind's default when it gives none. An owned
-   * entity takes its owner's ruleset and campaign. Answers their ids, in order.
+   * entity takes its owner's ruleset and campaign. Their fields are stored as every write stores them, but a copy's
+   * (`copied`: copy-on-write's of another entity, its source's rows as they're stored), which keeps them as they are.
+   * Answers their ids, in order.
    */
-  async createIds(db: Db, entityType: string, writes: EntityWrite[]): Promise<string[]> {
+  async createIds(db: Db, entityType: string, writes: EntityWrite[], copied = false): Promise<string[]> {
     if (writes.length === 0) return [];
     const storage = Engine.storage();
     const defaults = storage.defaultsOf(entityType);
@@ -408,17 +422,19 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
       entityType,
       withDefaults.map((write, index) => ({ ids: [ids[index]], write })),
       false,
+      copied,
     );
     return ids;
   }
 
-  /** Writes a kind's new entities, as `createIds` does: answers their records, in order. */
+  /** Writes a kind's new entities (a copy's, `copied`), as `createIds` does: answers their records, in order. */
   async createMany<R extends Pick<EntityRecord, "id"> = EntityRecord>(
     db: Db,
     entityType: string,
     writes: EntityWrite[],
+    copied = false,
   ): Promise<R[]> {
-    return await this.readRecords<R>(db, await this.createIds(db, entityType, writes));
+    return await this.readRecords<R>(db, await this.createIds(db, entityType, writes, copied));
   }
 
   /**

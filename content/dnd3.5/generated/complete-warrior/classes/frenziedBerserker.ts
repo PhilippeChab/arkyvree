@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const FRENZIED_BERSERKER: ClassSeed = {
   name: "Frenzied Berserker",
   description:
     "Driven by an unquenchable thirst for violence, the frenzied berserker seeks ever-greater conflicts to satiate her relentless appetite for warfare.",
-  hd: 12,
+  fields: { [CLASS_HD]: 12 },
   levels: 10,
   skillPoints: 2,
   bab: "good",

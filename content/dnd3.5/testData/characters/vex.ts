@@ -1,15 +1,25 @@
 import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Human Sorcerer 3 — Skills: (2+0+1)*4 + (2+0+1)*2 = 18 */
 export default {
-  raceName: "Human",
   name: "Vex Flamecaller",
-  xp: 3000,
-  alignment: "Chaotic Good",
-  age: 22,
-  gender: "Male",
-  height: "178",
-  weight: "72",
+  links: { race: "Human" },
+  fields: {
+    [CHARACTER_XP]: 3000,
+    [CHARACTER_ALIGNMENT]: "Chaotic Good",
+    [CHARACTER_AGE]: 22,
+    [CHARACTER_GENDER]: "Male",
+    [CHARACTER_HEIGHT]: "178",
+    [CHARACTER_WEIGHT]: "72",
+  },
   description:
     "Born with fire in his veins, Vex discovered his sorcerous bloodline during a childhood accident that left his family barn in ashes. He now channels his innate power with reckless confidence.",
   abilities: { Strength: 8, Dexterity: 14, Constitution: 14, Intelligence: 10, Wisdom: 10, Charisma: 18 },

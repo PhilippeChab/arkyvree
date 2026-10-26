@@ -5,14 +5,18 @@ import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { CLASS_CASTER_TYPE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * A class's spellcasting: its bonus spells' ability and caster type, its spells, the feats advancing and choosing them.
  */
 export function Spellcasting<B extends Constructor<BaseClassSeeds>>(Base: B) {
   abstract class WithSpellcasting extends Base {
-    /** The class's spellcasting: its bonus spells' ability and its caster type, which one without the other refuses. */
-    protected casting(): Pick<ClassSeed, "bonusSpellAbility" | "casterType"> {
+    /**
+     * The class's spellcasting: its caster type (its field) and the ability its bonus spells come from (its
+     * `bonusSpellAbility` link, by name), which one without the other refuses.
+     */
+    protected casting(): Pick<ClassSeed, "fields" | "links"> {
       const { bonusSpellAbility, casterType } = this.ref.mapping;
       if (bonusSpellAbility && !casterType)
         throw new Error(`${this.ref.raw.name}: has bonusSpellAbility ("${bonusSpellAbility}") but no casterType`);
@@ -20,7 +24,10 @@ export function Spellcasting<B extends Constructor<BaseClassSeeds>>(Base: B) {
       if (casterType && !bonusSpellAbility)
         throw new Error(`${this.ref.raw.name}: has casterType ("${casterType}") but no bonusSpellAbility`);
 
-      return { ...(bonusSpellAbility ? { bonusSpellAbility } : {}), ...(casterType ? { casterType } : {}) };
+      return {
+        fields: casterType ? { [CLASS_CASTER_TYPE]: casterType } : {},
+        ...(bonusSpellAbility ? { links: { bonusSpellAbility } } : {}),
+      };
     }
 
     /**
@@ -36,7 +43,6 @@ export function Spellcasting<B extends Constructor<BaseClassSeeds>>(Base: B) {
         .map(({ name }) => ({
           name: `${name} Domain (${this.ref.raw.name})`,
           description: `The ${name} domain's spells, one at each spell level, are her spell list. She doesn't gain the domain's granted power.`,
-          selectable: true,
           aptitudes: [pool],
           modifiers: [setFlag(`aptitudes.${stripSeparators(domainSpells(name))}.joinsclasslist`)],
         }))
@@ -53,7 +59,7 @@ export function Spellcasting<B extends Constructor<BaseClassSeeds>>(Base: B) {
         {
           name: `Advance ${raw.name} Spellcasting`,
           description: `Your effective ${raw.name} caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in ${raw.name}.`,
-          stackable: true,
+          fields: { [FEAT_STACKABLE]: true },
           aptitudes: [
             casterType === "Divine" ? "Bonus Divine Caster Level" : "Bonus Arcane Caster Level",
             "Bonus Caster Level",

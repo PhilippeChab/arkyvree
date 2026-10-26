@@ -7,11 +7,12 @@
 
 import { eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const ASSASSIN: ClassSeed = {
   name: "Assassin",
   description: "The assassin specializes in swift, deadly strikes that dispatch targets with ruthless efficiency.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6, [CLASS_CASTER_TYPE]: "Arcane" },
   levels: 10,
   skillPoints: 4,
   bab: "medium",
@@ -72,8 +73,7 @@ export const ASSASSIN: ClassSeed = {
     [9, "Sneak Attack (Assassin)"],
     [10, "Save Against Poison (Assassin)"],
   ],
-  bonusSpellAbility: "Intelligence",
-  casterType: "Arcane",
+  links: { bonusSpellAbility: "Intelligence" },
   spells: {
     slug: "assassinspells",
     perDay: [[0], [1], [2, 0], [3, 1], [3, 2, 0], [3, 3, 1], [3, 3, 2, 0], [3, 3, 3, 1], [3, 3, 3, 2], [3, 3, 3, 3]],

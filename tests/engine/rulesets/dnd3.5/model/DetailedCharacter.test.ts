@@ -62,8 +62,12 @@ import {
   ARMOR_PROFICIENCY,
   ARMOR_TYPE,
   CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
   CHARACTER_HEIGHT,
   CHARACTER_WEIGHT,
+  CHARACTER_XP,
+  CLASS_HD,
   DAMAGE_TYPE,
   FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
   FEAT_STACKABLE,
@@ -339,18 +343,20 @@ async function seedHuman(
 ) {
   const ctx = await getSeedCtx();
   return createCharacter(db, ctx, {
-    raceName: "Human",
     name,
-    xp: values.xp ?? 0,
-    alignment: values.alignment ?? "Neutral Good",
-    age: 30,
-    gender: "Male",
-    height: "180",
-    weight: "80",
     description: "Test",
     abilities,
     languages: ["Common"],
     rulesetId: values.rulesetId,
+    links: { race: "Human" },
+    fields: {
+      [CHARACTER_XP]: values.xp ?? 0,
+      [CHARACTER_ALIGNMENT]: values.alignment ?? "Neutral Good",
+      [CHARACTER_AGE]: 30,
+      [CHARACTER_GENDER]: "Male",
+      [CHARACTER_HEIGHT]: "180",
+      [CHARACTER_WEIGHT]: "80",
+    },
   });
 }
 
@@ -2630,7 +2636,7 @@ describe("DetailedCharacter", () => {
         const { levelIds } = await new RulesetSeeder(db, ctx).seedClass({
           name: "Test Theurge",
           description: "Advances divine casting",
-          hd: 6,
+          fields: { [CLASS_HD]: 6 },
           levels: 10,
           skillPoints: 2,
           bab: "medium",
@@ -3047,7 +3053,7 @@ describe("DetailedCharacter", () => {
         }).seedClass({
           name: "Test Raider",
           description: "Steals a domain's luck",
-          hd: 6,
+          fields: { [CLASS_HD]: 6 },
           levels: 2,
           skillPoints: 4,
           bab: "medium",
@@ -3084,7 +3090,7 @@ describe("DetailedCharacter", () => {
         const { levelIds } = await new RulesetSeeder(db, ctx).seedClass({
           name: "Test Sun Priest",
           description: "Draws on a domain",
-          hd: 6,
+          fields: { [CLASS_HD]: 6 },
           levels: 2,
           skillPoints: 2,
           bab: "medium",

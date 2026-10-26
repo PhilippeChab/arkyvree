@@ -142,16 +142,12 @@ export abstract class GeneratedCode<T extends string> {
 
   /**
    * A value of a seed's fields written as code: a text as a string literal, a number or a flag as it is, a list as an
-   * array of them, and a group's fields (`{ weapon: { … } }`) as an object of them, each field by its name.
+   * array of them.
    */
   fieldValue(value: unknown): string {
     if (typeof value === "string") return this.quote(value);
-    if (typeof value === "number" || typeof value === "boolean" || value === null) return String(value);
+    if (typeof value === "number" || typeof value === "boolean") return String(value);
     if (Array.isArray(value)) return `[${value.map((item) => this.fieldValue(item)).join(", ")}]`;
-    if (typeof value === "object") {
-      const fields = Object.entries(value).filter(([, field]) => field !== undefined);
-      return `{ ${fields.map(([name, field]) => `${name}: ${this.fieldValue(field)}`).join(", ")} }`;
-    }
     throw new Error(`A field's value can't be written as code: ${String(value)}`);
   }
 
@@ -235,5 +231,20 @@ export abstract class GeneratedCode<T extends string> {
     }
     const { target, operator, value, valueType } = req;
     return `{ target: ${this.quote(target)}, operator: ${this.quote(operator)}, value: ${this.quote(value)}, valueType: ${this.quote(valueType)} }`;
+  }
+
+  /**
+   * A seed's fields as stored written as code, in their order: each by the constant that names its stored field
+   * (`[ITEM_WEIGHT]: 35`, a name the file uses, which its imports give), its value as `fieldValue` writes it, then
+   * `spread` (a builder's call that gives the others: `...weaponFields("Club")`).
+   */
+  storedFields(fields: Readonly<Record<string, unknown>>, spread?: string): string {
+    const written = Object.entries(fields)
+      .filter(([, value]) => value !== undefined)
+      .map(([field, value]) => {
+        this.uses.add(field);
+        return `[${field}]: ${this.fieldValue(value)}`;
+      });
+    return `{ ${[...written, ...(spread ? [`...${spread}`] : [])].join(", ")} }`;
   }
 }

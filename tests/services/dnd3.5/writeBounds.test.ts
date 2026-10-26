@@ -266,10 +266,10 @@ describe("a ruleset's entities", () => {
     ).rejects.toThrow(`Ability ${NIL_UUID} does not belong to this ruleset`);
   });
 
-  test("refuses a language without its type, and keeps an empty one", async () => {
+  test("refuses a language without its type, and stores none for an empty one, as every write stores an empty text", async () => {
     const { session: owner, ruleset } = await createTestUserAndRuleset();
     const common = await EntitiesService.createEntity(owner, ruleset.id, "languages", { name: "Common" });
-    expect(common.fields).toEqual({ [LANGUAGE_TYPE]: "" });
+    expect(common.fields).toEqual({ [LANGUAGE_TYPE]: null });
     expect(
       EntitiesService.updateEntity(owner, ruleset.id, "languages", common.id, { name: "Common", type: null }),
     ).rejects.toMatchObject(invalidAt("type"));

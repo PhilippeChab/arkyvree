@@ -2,6 +2,7 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
+import { FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const HULKING_HURLER_CLASS_FEATS: FeatSeed[] = [
   {
@@ -15,8 +16,8 @@ export const HULKING_HURLER_CLASS_FEATS: FeatSeed[] = [
     name: "Catch Weapon (Hulking Hurler)",
     description:
       "A hulking hurler receives the Snatch Arrows feat as a bonus, regardless of whether he meets its normal prerequisites. He can catch thrown weapons of his own size category or smaller, and may immediately hurl a caught weapon back at the attacker if he wishes.",
-    selectable: false,
     aptitudes: ["Hulking Hurler Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Knockdown Blow (Hulking Hurler Two-Handed Hurl Trick)",
@@ -50,24 +51,23 @@ export const HULKING_HURLER_CLASS_FEATS: FeatSeed[] = [
     name: "Really Throw Anything (Hulking Hurler)",
     description:
       "A hulking hurler receives the Throw Anything feat as a bonus. Because this class relies on sheer physical might rather than finesse, the character can hurl any object he is capable of lifting as a light load - not just weapons. When throwing an improvised weapon, he suffers only a -2 penalty on the attack roll rather than the standard -4. The range increment for any thrown weapon or improvised weapon used by a hulking hurler is 10 feet, plus an additional 5 feet for each size category he exceeds Large.",
-    selectable: false,
     aptitudes: ["Hulking Hurler Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Two-handed Hurl Trick (Hulking Hurler)",
     description:
       "At 2nd level and once more at 3rd level, the hulking hurler selects one of the following special techniques. To employ any of these tricks, the character must grasp the weapon or improvised weapon with both hands and throw it as a full-round action.",
-    stackable: true,
-    selectable: false,
     aptitudes: ["Hulking Hurler Class Feature"],
     modifiers: [
       { target: "aptitudes.hulkinghurlertwohandedhurltrick.allowed", operator: "add", value: "1", valueType: "number" },
     ],
+    fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
   },
   {
     name: "Weapon and Armor Proficiency (Hulking Hurler)",
     description: "This prestige class does not grant proficiency with any weapons or armor.",
-    selectable: false,
     aptitudes: ["Hulking Hurler Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
 ];

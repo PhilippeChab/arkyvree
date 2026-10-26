@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const EYE_OF_GRUUMSH: ClassSeed = {
   name: "Eye of Gruumsh",
   description:
     "An orc or half-orc called to serve Gruumsh as his living vessel can pursue the path of the eye of Gruumsh, becoming a fearsome war leader devoted to the one-eyed god.",
-  hd: 12,
+  fields: { [CLASS_HD]: 12 },
   levels: 10,
   skillPoints: 2,
   bab: "good",

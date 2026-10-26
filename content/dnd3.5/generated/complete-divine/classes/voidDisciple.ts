@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const VOID_DISCIPLE: ClassSeed = {
   name: "Void Disciple",
   description:
     "Among all elemental forces composing the universe, the most potent and hardest to master is the binding essence that exists between and connects the others: Void. Those who follow this path recognize that every object in existence contains all fundamental elements, unified by this most intangible of essences. Void functions like the silence separating musical notes, providing structure and form to the whole composition. For those who grasp how Void relates to all other things and who possess the innate capacity to directly perceive that connection, concepts of distance and physical form become meaningless.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 13,
   skillPoints: 2,
   bab: "poor",

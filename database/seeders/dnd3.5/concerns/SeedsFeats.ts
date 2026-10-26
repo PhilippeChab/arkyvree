@@ -1,10 +1,7 @@
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import type { Dnd35ContentSeeder } from "@/database/seeders/dnd3.5/Dnd35ContentSeeder.ts";
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
-import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
-import { FEAT_GENERATED, FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Seeding feats. */
 export function SeedsFeats<B extends Constructor<Dnd35ContentSeeder>>(Base: B) {
@@ -19,12 +16,7 @@ export function SeedsFeats<B extends Constructor<Dnd35ContentSeeder>>(Base: B) {
           rulesetId: this.ctx.rulesetId,
           name: f.name,
           description: f.description,
-          fields: {
-            ...Engine.forRules(DND35_BASE_RULES).toFieldsWrite("feats", f.fields ?? {}).fields,
-            [FEAT_STACKABLE]: f.stackable ?? false,
-            [FEAT_SELECTABLE]: f.selectable ?? true,
-            [FEAT_GENERATED]: f.generated ?? false,
-          },
+          fields: f.fields,
         })),
       );
       Object.assign(this.ctx.featMap, ids);

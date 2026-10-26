@@ -6,12 +6,13 @@
  */
 
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const SHUGENJA: ClassSeed = {
   name: "Shugenja",
   description:
     "The shugenja is a divine spellcaster who channels the raw elemental forces of nature through personal attunement, shaping that power within the body to produce magical effects.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6, [CLASS_CASTER_TYPE]: "Divine" },
   levels: 20,
   skillPoints: 4,
   bab: "poor",
@@ -42,8 +43,7 @@ export const SHUGENJA: ClassSeed = {
     [1, "Spells (Shugenja)"],
     [1, "Weapon and Armor Proficiency (Shugenja)"],
   ],
-  bonusSpellAbility: "Charisma",
-  casterType: "Divine",
+  links: { bonusSpellAbility: "Charisma" },
   spells: {
     slug: "shugenjaspells",
     perDay: [

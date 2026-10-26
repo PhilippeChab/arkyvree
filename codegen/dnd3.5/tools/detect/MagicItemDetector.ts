@@ -3,7 +3,8 @@ import { normalizeDescription } from "@/codegen/dnd3.5/tools/text/scrapedText.ts
 import type { MagicItemCategory, MagicItemReference } from "@/codegen/dnd3.5/tools/types/magicItems.ts";
 import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import type { Modifier } from "@/content/core/builders/customization/types.ts";
-import { withOwnFields } from "@/content/dnd3.5/builders/items/fields.ts";
+import type { ItemFields } from "@/content/dnd3.5/builders/items/types.ts";
+import { MAGIC_AURA, MAGIC_CASTER_LEVEL } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { BaseDetector, type Resolved } from "./BaseDetector.ts";
 import { MagicItemMetadata } from "./readers/items/MagicItemMetadata.ts";
@@ -72,16 +73,17 @@ export class MagicItemDetector extends BaseDetector<MagicItemReference> {
       const description = normalizeDescription(ovr?.description ?? rawEntry?.description ?? "");
       const stats = ARMOR_CATEGORIES.has(det.category) ? new MagicItemText(description).armorStats() : undefined;
       // The weight its override or its text gives, else the detected one when it isn't none: else its base item's
-      const weight = ovr?.weight ?? stats?.weight ?? (det.weight !== "0" ? det.weight : undefined);
+      const weight = ovr?.weight ?? stats?.weight ?? (det.weight !== 0 ? det.weight : undefined);
 
       const aura = ovr?.aura ?? det.aura;
       const casterLevel = ovr?.casterLevel ?? det.casterLevel;
       // Its aura's and its caster level's fields, its stats' over them, its override's over all
-      const own = withOwnFields(
-        { ...(aura ? { magicAuras: [aura] } : {}), ...(casterLevel ? { magicCasterLevel: casterLevel } : {}) },
-        stats?.fields ?? {},
-      );
-      const fields = withOwnFields(own, ovr?.fields ?? {});
+      const fields: ItemFields = {
+        ...(aura ? { [MAGIC_AURA]: [aura] } : {}),
+        ...(casterLevel ? { [MAGIC_CASTER_LEVEL]: casterLevel } : {}),
+        ...stats?.fields,
+        ...ovr?.fields,
+      };
       // Its enhancement bonus: an armor's or a shield's to its part of the AC, a weapon's to its own attack and damage
       // (not ammunition's, made from no weapon, which no hand holds)
       const enhancement: Modifier[] = stats?.enhancement

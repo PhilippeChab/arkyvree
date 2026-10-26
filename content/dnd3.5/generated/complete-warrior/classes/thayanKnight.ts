@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const THAYAN_KNIGHT: ClassSeed = {
   name: "Thayan Knight",
   description:
     "Thayan knights are skilled swordfighters with knowledge of the arcane arts who serve as devoted protectors of the Red Wizards.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 5,
   skillPoints: 2,
   bab: "good",

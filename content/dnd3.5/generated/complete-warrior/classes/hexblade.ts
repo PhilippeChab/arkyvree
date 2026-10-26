@@ -7,12 +7,13 @@
 
 import { eqStr, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const HEXBLADE: ClassSeed = {
   name: "Hexblade",
   description:
     "The hexblade merges martial combat skill with arcane power, posing a formidable threat to enemies who are unprepared for such a versatile adversary.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10, [CLASS_CASTER_TYPE]: "Arcane" },
   levels: 20,
   skillPoints: 2,
   bab: "good",
@@ -60,8 +61,7 @@ export const HEXBLADE: ClassSeed = {
     [20, "Aura of Unlucky (Hexblade)"],
     [20, "Bonus Feat (Hexblade)"],
   ],
-  bonusSpellAbility: "Charisma",
-  casterType: "Arcane",
+  links: { bonusSpellAbility: "Charisma" },
   spells: {
     slug: "hexbladespells",
     perDay: [

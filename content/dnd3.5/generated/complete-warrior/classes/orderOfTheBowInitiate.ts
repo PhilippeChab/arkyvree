@@ -7,12 +7,13 @@
 
 import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const ORDER_OF_THE_BOW_INITIATE: ClassSeed = {
   name: "Order of the Bow Initiate",
   description:
     "Through the contemplative discipline known as the Way of the Bow, an archer hones his accuracy, mental focus, and inner awareness.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 10,
   skillPoints: 2,
   bab: "good",

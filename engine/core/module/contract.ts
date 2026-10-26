@@ -27,18 +27,16 @@ export interface Descriptions {
 /**
  * A base rules' module: the parts the engine's handles ask what its rules answer, each an abstract class of
  * `engine/core/module/parts/` a ruleset extends (the compiler lists what a part lacks), its paths and fields, and its
- * storage. `D` is what it describes in its own shape, `E` its entity kinds by type, `F` the fields its content
- * seeds, by entity.
+ * storage. `D` is what it describes in its own shape, `E` its entity kinds by type.
  */
 export interface RulesetModule<
   D extends Descriptions = Descriptions,
   E extends EntityKindsContract = EntityKindsContract,
-  F = Record<string, Fields>,
 > {
   /** What the ruleset answers of its characters, from the rows the server reads: their sheets, their links, an item */
   characters: CharactersPart<D>;
-  /** What the ruleset answers its content's seeders and codegen: the paths a book can target, its fields' writes */
-  content: ContentPart<F>;
+  /** What the ruleset answers its content's seeders and codegen: the paths a book can target */
+  content: ContentPart;
   createTargetPaths(): TargetPaths;
   /** What the ruleset answers of its entities: their fields, and what their forms write */
   entities: EntitiesPart<E>;

@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const DREAD_PIRATE: ClassSeed = {
   name: "Dread Pirate",
   description:
     "Thugs and cutthroats in every port lay claim to the title ?pirate,? but actually making a fortune through piracy is no easy task. A dread pirate, however, has mastered every aspect of larceny on the high seas. Some dread pirates accomplish their goals through fear, killing indiscriminately and ruling their ships at rapier-point. Others minimize bloodshed and exhibit a curious sort of chivalry, perhaps realizing that the captain and crew of a prize ship are more likely to surrender if they believe they will live to see port again. Now and then a dread pirate takes his chivalric streak a step farther and preys only on the ships of enemy nations?or even solely on other pirates. A dread pirate's lifestyle is ideal for most rogues, because the job requires a number of skills that other classes don't have the time or inclination to learn. However, the class also attracts some spellcasters, who can use magic to conceal their ships or incapacitate a prize vessel's cre",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 10,
   skillPoints: 6,
   bab: "good",

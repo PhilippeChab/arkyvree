@@ -268,10 +268,10 @@ describe("The generated feats", () => {
     const scoundrel = featsCode(References.load(join(References.dir, "complete-scoundrel", "feats.json"), "feat"));
     expect(entry(scoundrel, "Tempting Fate")).toContain(`eq("feats.luck.*.possessed"),`);
     expect(entry(scoundrel, "Better Lucky than Good")).toContain(`gte("feats.luck.count", 2),`);
-    expect(entry(scoundrel, "Better Lucky than Good")).toContain(`fields: { families: ["Luck"] },`);
+    expect(entry(scoundrel, "Better Lucky than Good")).toContain(`fields: { [FEAT_FAMILY]: ["Luck"] },`);
     const arcane = featsCode(References.load(join(References.dir, "complete-arcane", "feats.json"), "feat"));
     expect(entry(arcane, "Draconic Legacy")).toContain(`gte("feats.draconic.count", 4),`);
-    expect(entry(arcane, "Draconic Breath")).toContain(`fields: { families: ["Draconic"] },`);
+    expect(entry(arcane, "Draconic Breath")).toContain(`fields: { [FEAT_FAMILY]: ["Draconic"] },`);
   });
 });
 

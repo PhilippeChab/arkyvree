@@ -4,6 +4,7 @@ import type { FeatReference } from "@/codegen/dnd3.5/tools/types/feats.ts";
 import { and, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { BaseDetector } from "./BaseDetector.ts";
 import { BenefitModifiers } from "./readers/modifiers/BenefitModifiers.ts";
@@ -105,7 +106,7 @@ export class FeatDetector extends BaseDetector<FeatReference> {
         aptitudes,
         requirements: prerequisites.requirements,
         modifiers: benefit.modifiers,
-        ...(family ? { fields: { families: [family] } } : {}),
+        ...(family ? { fields: { [FEAT_FAMILY]: [family] } } : {}),
         ...(errors.length > 0 ? { errors } : {}),
         ...(!template && benefit.unresolved.length > 0 ? { unresolvedModifiers: benefit.unresolved } : {}),
         ...(!template && prerequisites.unresolved.length > 0 ? { unresolvedPrereqs: prerequisites.unresolved } : {}),

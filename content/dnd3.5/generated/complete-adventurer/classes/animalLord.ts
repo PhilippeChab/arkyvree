@@ -7,12 +7,13 @@
 
 import { eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const ANIMAL_LORD: ClassSeed = {
   name: "Animal Lord",
   description:
     "Each animal lord forms a bond with one group of animals. Apelords, bearlords, birdlords, catlords, horselords, sharklords, snakelords, and wol?ords all exist. Animals in his selected group accept an animal lord as a kindred soul and a leader. They offer him their support, and he watches over them in turn. Barbarians, rangers, and druids are the most likely characters to adopt this class. Barbarians prefer the more physically powerful options, including apelord, bearlord, and horselord. Rangers gravitate toward the stealthier selections, such as catlord and wol?ord. Most birdlords are druids with the ability to use wild shape, but druids are equally likely to select any type of animal to bond with. Some scouts, rogues, and even rare monks ?nd this path rewarding as well. Among the races, elves and half-elves are the most common examples of animal lords due to their close bond to nature. A character can choose this prestige class more than once but must select a different group of associated animals and start at 1st level each time. Levels of different animal lord classes do not stack when determining level-based class features.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 10,
   skillPoints: 4,
   bab: "good",

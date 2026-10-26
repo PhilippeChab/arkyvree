@@ -2,6 +2,7 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
+import { FEAT_FAMILY, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const DIVINE_FEATS: FeatSeed[] = [
   {
@@ -36,9 +37,9 @@ export const DIVINE_FEATS: FeatSeed[] = [
     name: "Domain Spontaneity",
     description:
       "Choose one domain you have access to each time you take this feat. You can sacrifice a prepared divine spell of equal or higher level, along with one daily turn undead attempt, to spontaneously cast any spell from that domain. This functions like the way good clerics spontaneously convert spells into cure spells.",
-    stackable: true,
     aptitudes: ["General"],
     requirements: [eq("feats.turnorrebukeundead.*.possessed")],
+    fields: { [FEAT_STACKABLE]: true },
   },
   {
     name: "Elemental Healing",
@@ -95,9 +96,9 @@ export const EPIC_FEATS: FeatSeed[] = [
     name: "Bonus Domain",
     description:
       "Select one additional domain from those offered by your deity. You receive the granted power and spell access of that domain, functioning identically to your other domain spells.",
-    stackable: true,
     aptitudes: ["General"],
     requirements: [gte("abilities.wisdom.total", 21), gte("spellcasting.divine", 9)],
+    fields: { [FEAT_STACKABLE]: true },
   },
 ];
 
@@ -161,9 +162,9 @@ export const GENERAL_FEATS: FeatSeed[] = [
     name: "Extra Wild Shape",
     description:
       "You gain two additional daily uses of wild shape. If you can assume elemental form through wild shape, you also receive one extra elemental wild shape use per day.",
-    stackable: true,
     aptitudes: ["General"],
     requirements: [eq("feats.wildshape.*.possessed")],
+    fields: { [FEAT_STACKABLE]: true },
   },
   {
     name: "Improved Smiting",
@@ -179,9 +180,9 @@ export const GENERAL_FEATS: FeatSeed[] = [
     name: "Practiced Spellcaster",
     description:
       "Your caster level for one chosen spellcasting class increases by 4, though it cannot exceed your total Hit Dice. If you cannot immediately benefit from the full increase, any remaining bonus applies as you gain additional non-caster Hit Dice later. Characters with multiple spellcasting classes must designate which class receives this benefit. This feat does not grant additional spells per day or spells known; it only raises your effective caster level for purposes such as spell resistance penetration, duration, and other level-dependent effects.",
-    stackable: true,
     aptitudes: ["General"],
     requirements: [gte("skills.spellcraft.rank", 4)],
+    fields: { [FEAT_STACKABLE]: true },
   },
   {
     name: "Quicken Turning",
@@ -305,7 +306,7 @@ export const ITEM_CREATION_FEATS: FeatSeed[] = [
     description: "You can create relics, which are special magic items imbued with divine significance.",
     aptitudes: ["General", "Wizard Bonus Feat"],
     requirements: [eq("feats.itemcreation.*.possessed")],
-    fields: { families: ["Item Creation"] },
+    fields: { [FEAT_FAMILY]: ["Item Creation"] },
   },
 ];
 
@@ -322,7 +323,7 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
         eqStr("identity.beliefs.alignment", "Chaotic Good"),
       ),
     ],
-    fields: { families: ["Metamagic"] },
+    fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
   {
     name: "Corrupt Spell",
@@ -336,28 +337,28 @@ export const METAMAGIC_FEATS: FeatSeed[] = [
         eqStr("identity.beliefs.alignment", "Chaotic Evil"),
       ),
     ],
-    fields: { families: ["Metamagic"] },
+    fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
   {
     name: "Rapid Spell",
     description:
       "This metamagic feat can only be applied to spells whose casting time exceeds 1 standard action. A rapid spell that normally takes 1 full round to cast instead requires only a standard action. Spells measured in rounds become 1 full round, those measured in minutes become 1 minute, and those measured in hours become 1 hour. A rapid spell occupies a spell slot one level higher than normal.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    fields: { families: ["Metamagic"] },
+    fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
   {
     name: "Reach Spell",
     description:
       "A touch-range spell modified by this feat can be delivered at a range of up to 30 feet. The spell functions as a ray, requiring a successful ranged touch attack to affect the target. A reach spell uses a spell slot two levels higher than its actual level.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    fields: { families: ["Metamagic"] },
+    fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
   {
     name: "Transdimensional Spell",
     description:
       "A spell enhanced with this metamagic feat fully affects incorporeal creatures, creatures on the Ethereal Plane or the Plane of Shadow, and creatures occupying extradimensional spaces within the spell's area. This includes ethereal beings, creatures using blink or shadow walk, manifested ghosts, and creatures inside spaces created by effects like rope trick or portable hole. You still need to perceive a creature to target it directly, but area effects (bursts, cones, emanations, and spreads) can catch creatures you cannot perceive. The modified spell uses a slot one level higher than normal.",
     aptitudes: ["General", "Wizard Bonus Feat"],
-    fields: { families: ["Metamagic"] },
+    fields: { [FEAT_FAMILY]: ["Metamagic"] },
   },
 ];
 

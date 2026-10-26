@@ -7,12 +7,13 @@
 
 import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const ELEMENTAL_SAVANT: ClassSeed = {
   name: "Elemental Savant",
   description:
     "Elemental savants study the basic building blocks of existence - air, earth, fire, and water - learning to harness their powers.",
-  hd: 4,
+  fields: { [CLASS_HD]: 4 },
   levels: 10,
   skillPoints: 2,
   bab: "poor",

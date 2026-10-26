@@ -7,12 +7,13 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const BATTLE_TRICKSTER: ClassSeed = {
   name: "Battle Trickster",
   description:
     "The battle trickster engages in combat not only to defeat enemies but to impress them with martial and acrobatic prowess.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 3,
   skillPoints: 4,
   bab: "good",

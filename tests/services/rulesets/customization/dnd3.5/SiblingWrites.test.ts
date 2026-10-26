@@ -1,18 +1,20 @@
 import { expect, test } from "bun:test";
 
+import { entityFieldsInRules } from "@/drizzle/schema.ts";
 import type { FieldValue } from "@/engine/core/module/index.ts";
 import type { Aptitude, Feat } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, EntitySnapshots, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
+import { toFieldRows } from "@/server/repositories/stored/toFieldRows.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
-import { measure } from "@/tests/support/database.ts";
+import { insertRows, measure } from "@/tests/support/database.ts";
 import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { addLists } from "@/tests/support/dnd3.5/links.ts";
 import { findFormValues, type HeldValues, viewValuesOf, writeFieldValues } from "@/tests/support/ownerValues.ts";
@@ -36,6 +38,17 @@ const PRECEDENCE: Record<EntityType, { type: string; valueOf: (index: number) =>
   feats: { type: FEAT_WEAPON_FINESSE, valueOf: (index) => index === 1 },
   spells: { type: SPELL_SUBSCHOOL, valueOf: (index) => `Extension ${index}` },
 };
+
+/**
+ * A field's row of an entity (`type`, `id`), as stored, whatever a write would store of it: a feat's false flag, which
+ * every write now stores as none, as data written before that holds it, which the view still reads by precedence.
+ */
+async function insertFieldRow(type: string, id: string, field: string, value: FieldValue) {
+  await insertRows(
+    entityFieldsInRules,
+    toFieldRows(type, field, value).map((row) => ({ entityId: id, entityType: type, ...row })),
+  );
+}
 
 async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 2) {
   const session = makeSession();
@@ -342,7 +355,7 @@ for (const entityType of ["feats", "spells"] as const) {
       const precedence = PRECEDENCE[entityType];
       for (const [index, { copy }] of extensions.entries()) {
         if (index === 0) continue;
-        await writeFieldValues(entityType, copy.id, [[precedence.type, precedence.valueOf(index)]]);
+        await insertFieldRow(entityType, copy.id, precedence.type, precedence.valueOf(index));
         const [modifier] = await Modifiers.create(db, {
           ...STRENGTH_BONUS,
           sourceId: copy.id,

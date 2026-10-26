@@ -7,12 +7,13 @@
 
 import { eqStr, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const OLLAM: ClassSeed = {
   name: "Ollam",
   description:
     "In Dwarven, the word ?ollam' means teacher. The education of the dwarf people is considered a sacred duty, and those who are considered knowledgeable in dwarf history and legend - and thought to possess above-average common sense - are often called upon to take up the respected role of teacher in the community. While other cultures might see this as a job for young girls or old men, the dwarves see an ollam as a protector of their cherished culture. No one in the dwarf community takes that position lightly. An ollam is granted a special position in the temple hierarchy - Moradin gives her spells that allow her not only to delve into the secrets of the universe but also to heal and keep an eye on her charges. While most ollams are clerics or bards, individuals of other classes are welcomed, as long as they possess the knowledge needed to teach the children properly.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 5,
   skillPoints: 6,
   bab: "poor",

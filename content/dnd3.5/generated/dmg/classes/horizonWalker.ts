@@ -7,12 +7,13 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const HORIZON_WALKER: ClassSeed = {
   name: "Horizon Walker",
   description:
     "A horizon walker is a relentless explorer who ventures into the most perilous regions across all planes of existence.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 10,
   skillPoints: 4,
   bab: "good",

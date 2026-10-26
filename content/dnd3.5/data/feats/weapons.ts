@@ -2,6 +2,7 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
+import { FEAT_FAMILY, FEAT_GENERATED, FEAT_SELECTABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 /**
@@ -11,10 +12,9 @@ import { MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts"
 export const SPELL_WEAPON_FOCUS_FEATS: FeatSeed[] = ["Ranged Spell", "Touch Spell"].map((spell) => ({
   name: `Weapon Focus: ${spell}`,
   description: `You gain a +1 bonus on attack rolls you make with ${spell.toLowerCase()}s.`,
-  generated: true,
+  fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Weapon Focus"] },
   aptitudes: ["General", "Fighter Bonus Feat"],
   requirements: [gte("combat.bab", 1)],
-  fields: { families: ["Weapon Focus"] },
 }));
 
 /**
@@ -28,14 +28,12 @@ export const WEAPON_PROFICIENCY_FEATS: FeatSeed[] = [
     name: `Simple Weapon Proficiency: ${w}`,
     description: `You are proficient with the ${w.toLowerCase()}.`,
     aptitudes: ["General"],
-    selectable: false,
-    generated: true,
+    fields: { [FEAT_SELECTABLE]: false, [FEAT_GENERATED]: true },
   })),
   ...MARTIAL_WEAPONS.map((w) => ({
     name: `Martial Weapon Proficiency: ${w}`,
     description: `You are proficient with the ${w.toLowerCase()}.`,
     aptitudes: ["General"],
-    generated: true,
-    fields: { families: ["Martial Weapon Proficiency"] },
+    fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Martial Weapon Proficiency"] },
   })),
 ];

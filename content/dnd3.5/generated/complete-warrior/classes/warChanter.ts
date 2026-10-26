@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const WAR_CHANTER: ClassSeed = {
   name: "War Chanter",
   description:
     "The war chanter wields musical power as a weapon on the battlefield, sweeping up allies and enemies alike in the surge of her performance.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 10,
   skillPoints: 4,
   bab: "good",

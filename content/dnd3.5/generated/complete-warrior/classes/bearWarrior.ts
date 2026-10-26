@@ -7,12 +7,13 @@
 
 import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const BEAR_WARRIOR: ClassSeed = {
   name: "Bear Warrior",
   description:
     "Bear warriors forge a spiritual bond with bear totems, channeling ursine ferocity in combat. When they enter a battle fury, they physically transform into bears, gaining the raw power and resilience of these mighty creatures.",
-  hd: 12,
+  fields: { [CLASS_HD]: 12 },
   levels: 10,
   skillPoints: 4,
   bab: "good",

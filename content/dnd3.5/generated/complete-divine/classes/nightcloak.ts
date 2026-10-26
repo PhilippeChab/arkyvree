@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const NIGHTCLOAK: ClassSeed = {
   name: "Nightcloak",
   description:
     "Nightcloaks are the most favored servants of their dark deity, wholly committed to her cause, safeguarding her mysteries, and wielding her corrupted magic.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 10,
   skillPoints: 2,
   bab: "medium",

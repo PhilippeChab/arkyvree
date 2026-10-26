@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 
 import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
 import { CHARACTERS } from "@/content/dnd3.5/testData/characters.ts";
+import { createCharacter } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import { charactersInCharacter } from "@/drizzle/schema.ts";
 import type { KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
@@ -48,13 +49,8 @@ function seeded(
     identity: {
       rulesetId,
       name: identity.name,
-      race: identity.raceName,
-      xp: identity.xp,
-      alignment: identity.alignment,
-      age: identity.age,
-      gender: identity.gender,
-      height: identity.height,
-      weight: identity.weight,
+      race: identity.links.race,
+      fields: { ...identity.fields },
       description: identity.description,
     },
     abilities,
@@ -96,12 +92,7 @@ async function written(character: Character) {
       rulesetId: character.rulesetId,
       name: character.name,
       race: races[character.links.race],
-      xp: character.fields.CHARACTER_XP,
-      alignment: character.fields.CHARACTER_ALIGNMENT,
-      age: character.fields.CHARACTER_AGE,
-      gender: character.fields.CHARACTER_GENDER,
-      height: character.fields.CHARACTER_HEIGHT,
-      weight: character.fields.CHARACTER_WEIGHT,
+      fields: character.fields as Readonly<Record<string, unknown>>,
       description: character.description,
     },
     abilities: Object.fromEntries(
@@ -163,3 +154,18 @@ test("The test data seeds the seed user's characters as written, each valid, wit
     "Vex Flamecaller: familiar Cat",
   ]);
 }, 30_000);
+
+test("A character's seed naming a race the ruleset doesn't seed is refused", async () => {
+  const ctx = await getSeedCtx();
+  const [{ name, description, fields }] = CHARACTERS;
+  expect(
+    createCharacter(db, ctx, {
+      name,
+      description,
+      fields,
+      abilities: {},
+      languages: [],
+      links: { race: "Test Nothing" },
+    }),
+  ).rejects.toThrow(`${name}'s race: "Test Nothing" isn't seeded`);
+});

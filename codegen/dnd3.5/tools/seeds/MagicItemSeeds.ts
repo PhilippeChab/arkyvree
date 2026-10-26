@@ -1,9 +1,17 @@
 /** A magic item reference's seeds: its Dnd35ItemSeed[], by category. */
 
 import { type MagicItemCategory, type MagicItemReference } from "@/codegen/dnd3.5/tools/types/magicItems.ts";
-import { armorFields, withOwnFields } from "@/content/dnd3.5/builders/items/fields.ts";
+import { armorFields } from "@/content/dnd3.5/builders/items/fields.ts";
 import type { Dnd35ItemSeed, ItemFields } from "@/content/dnd3.5/builders/items/types.ts";
 import { LOCATION_OPTIONS } from "@/vocabulary/dnd3.5/equipment.ts";
+import {
+  ARMOR_PROFICIENCY,
+  ITEM_COST_GP,
+  ITEM_IS_TEMPLATE,
+  ITEM_SLOT,
+  ITEM_TYPE,
+  ITEM_WEIGHT,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { ItemSeeds } from "./ItemSeeds.ts";
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
@@ -21,9 +29,15 @@ export interface MagicItemSeedSets {
 /** The word a ring's, a rod's or a staff's name holds, prefixed when the SRD heading is just the bare name. */
 const CATEGORY_PREFIX: Partial<Record<MagicItemCategory, string>> = { ring: "Ring", rod: "Rod", staff: "Staff" };
 
-/** A template of `fields`: its requirements are the proficiency with it, by its category. */
-function templateOf(fields: ItemFields): Pick<Dnd35ItemSeed, "isTemplate" | "requirements" | "fields"> {
-  return { isTemplate: true, requirements: ItemSeeds.armorProficiency(fields.armor?.proficiency ?? undefined), fields };
+/**
+ * A template of `fields` (an item's own, its armor's under them): a template, made from none, whose requirements are
+ * the proficiency with it, by its category.
+ */
+function templateOf(fields: ItemFields): Pick<Dnd35ItemSeed, "requirements" | "fields"> {
+  return {
+    requirements: ItemSeeds.armorProficiency(fields[ARMOR_PROFICIENCY]),
+    fields: { ...fields, [ITEM_IS_TEMPLATE]: true },
+  };
 }
 
 /**
@@ -74,8 +88,8 @@ export class MagicItemSeeds extends ReferenceSeeds<MagicItemReference> {
 
       for (const { name, det, item, slot } of this.seeded()) {
         const sourceItem = item.baseItem;
-        // Its mapping's weight (its override's or its text's), else its base item's, else none ("0", as detected)
-        const weight = item.weight ?? (sourceItem && baseWeights[sourceItem]) ?? det.weight;
+        // Its mapping's weight (its override's or its text's), else its base item's, else none (0, as detected)
+        const weight = item.weight ?? (sourceItem ? baseWeights[sourceItem] : undefined) ?? det.weight;
 
         const bucket = categoryBuckets[det.category];
         if (!bucket) throw new Error(`${name}: the seed has no magic items of the category "${det.category}"`);
@@ -95,19 +109,18 @@ export class MagicItemSeeds extends ReferenceSeeds<MagicItemReference> {
         if (item.template && (det.category !== "specificArmor" || !sourceItem))
           throw new Error(`${name}: only a specific armor made from a base armor can be a template`);
 
+        const own: ItemFields = {
+          [ITEM_COST_GP]: item.costGp,
+          [ITEM_WEIGHT]: weight,
+          [ITEM_TYPE]: det.itemType,
+          ...(slot && { [ITEM_SLOT]: this.checkedValue(slot) }),
+        };
         bucket.push({
           name: itemName,
           description: item.description,
-          weight,
-          costGp: item.costGp,
-          type: det.itemType,
-          slot: slot && this.checkedValue(slot),
           ...(item.template && sourceItem
-            ? templateOf(withOwnFields(armorFields(sourceItem), item.fields))
-            : {
-                ...(Object.keys(item.fields).length > 0 ? { fields: item.fields } : {}),
-                ...(sourceItem ? { sourceItem } : {}),
-              }),
+            ? templateOf({ ...own, ...armorFields(sourceItem), ...item.fields })
+            : { fields: { ...own, ...item.fields }, ...(sourceItem ? { links: { madeFrom: sourceItem } } : {}) }),
           ...(item.modifiers.length ? { modifiers: item.modifiers } : {}),
         });
       }

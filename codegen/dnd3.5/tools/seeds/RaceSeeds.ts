@@ -3,6 +3,7 @@
 import { type RaceReference } from "@/codegen/dnd3.5/tools/types/races.ts";
 import { grantLanguage } from "@/content/dnd3.5/builders/languages/knowledge.ts";
 import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
+import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { SIZE_OPTIONS } from "@/vocabulary/dnd3.5/sizes.ts";
 
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
@@ -25,8 +26,8 @@ export class RaceSeeds extends ReferenceSeeds<RaceReference> {
   }
 
   /**
-   * Its seeds, each with its mapping's modifiers, then the grants of the languages it speaks from the start: a size the
-   * seed doesn't accept throws.
+   * Its seeds, each with its fields as stored (its size and speed, and its mapping's), its mapping's modifiers, then
+   * the grants of the languages it speaks from the start: a size the seed doesn't accept throws.
    */
   seeds(): RaceSeed[] {
     return this.memo("seeds", () =>
@@ -40,10 +41,8 @@ export class RaceSeeds extends ReferenceSeeds<RaceReference> {
         return {
           name: mapping.name,
           description: mapping.description ?? entry.description,
-          size: this.checkedValue(size),
-          baseSpeed: mapping.baseSpeed,
+          fields: { [RACE_SIZE]: this.checkedValue(size), [RACE_BASE_SPEED]: mapping.baseSpeed, ...mapping.fields },
           ...(modifiers.length > 0 ? { modifiers } : {}),
-          ...(mapping.fields ? { fields: mapping.fields } : {}),
         };
       }),
     );

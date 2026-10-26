@@ -7,12 +7,13 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const SUBLIME_CHORD: ClassSeed = {
   name: "Sublime Chord",
   description:
     "In return for abandoning her continuing study of bardic music, a sublime chord instead masters a number of spells more powerful than most bards can ever use.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6, [CLASS_CASTER_TYPE]: "Arcane" },
   levels: 10,
   skillPoints: 4,
   bab: "poor",
@@ -60,8 +61,7 @@ export const SUBLIME_CHORD: ClassSeed = {
     [6, "Song of Timelessness (Sublime Chord)"],
     [10, "Song of Cosmic Fire (Sublime Chord)"],
   ],
-  bonusSpellAbility: "Charisma",
-  casterType: "Arcane",
+  links: { bonusSpellAbility: "Charisma" },
   spells: {
     slug: "sublimechordspells",
     perDay: [

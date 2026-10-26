@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const BLOOD_MAGUS: ClassSeed = {
   name: "Blood Magus",
   description:
     "Blood magi are deceased spellcasters who gain an understanding of blood's importance when returned to life.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 10,
   skillPoints: 2,
   bab: "poor",

@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const NATURES_WARRIOR: ClassSeed = {
   name: "Nature's Warrior",
   description:
     "Nature's warriors champion the untamed wilderness, serving as guardians of the natural order. Many are druids who have embraced their wild shape so deeply that the boundary between their civilized and bestial selves has blurred.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 5,
   skillPoints: 2,
   bab: "good",

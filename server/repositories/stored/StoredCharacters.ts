@@ -15,6 +15,9 @@ export interface CharacterValuesWrite {
   links?: Record<string, string | null>;
 }
 
+/** The owner type of a character's fields, as the modules declare them. */
+const CHARACTERS = "characters";
+
 /**
  * A character's row as the generic tables store it: its own columns (`character.characters`), its fields' values by
  * field (`character.fields`: 3.5's alignment, XP), each as typed as its column holds it, and its single links' entities
@@ -26,9 +29,9 @@ export default class StoredCharacters {
    * A field's value as its column holds it, refused when it isn't of its declared kind, or a number its field doesn't
    * hold exactly (`StorageEngine.storedNumber`).
    */
-  private static columnsOf(field: string, value: CharacterFieldValue) {
+  private static columnsOf(field: string, value: unknown) {
     const storage = Engine.storage();
-    const def = storage.field("characters", field);
+    const def = storage.field(CHARACTERS, field);
     if (!def) throw new Error(`No module declares the character field ${field}`);
     if (def.valueKind === "text" && typeof value !== "string")
       throw new Error(`The character field ${field} holds a text, not ${String(value)}`);
@@ -36,7 +39,7 @@ export default class StoredCharacters {
       valueKind: def.valueKind,
       multiple: false,
       textValue: def.valueKind === "text" ? String(value) : null,
-      numberValue: def.valueKind === "number" ? storage.storedNumber("characters", field, value) : null,
+      numberValue: def.valueKind === "number" ? storage.storedNumber(CHARACTERS, field, value) : null,
     };
   }
 
@@ -61,7 +64,7 @@ export default class StoredCharacters {
 
   /**
    * Writes the fields and single links of characters (`ids`) a write gives: each value set (null, none) replacing what
-   * they held of it.
+   * they held of it, a field's as every write stores it (`Engine.storage().writtenFields`: an empty text, none).
    */
   static async write(db: Db, ids: string[], { fields = {}, links = {} }: CharacterValuesWrite) {
     if (ids.length === 0) return;
@@ -89,10 +92,14 @@ export default class StoredCharacters {
     await db
       .delete(fieldsInCharacter)
       .where(and(inArray(fieldsInCharacter.characterId, ids), inArray(fieldsInCharacter.field, names)));
-    const written = Object.entries(fields).flatMap(([field, value]) =>
-      value === null
-        ? []
-        : ids.map((characterId) => ({ characterId, field, ...StoredCharacters.columnsOf(field, value) })),
+    const stored = Engine.storage().writtenFields(CHARACTERS, fields, false);
+    const written = Object.entries(stored).flatMap(([field, values]) =>
+      // A field none declares as it's given, which `columnsOf` refuses
+      [values ?? []]
+        .flat()
+        .flatMap((value) =>
+          ids.map((characterId) => ({ characterId, field, ...StoredCharacters.columnsOf(field, value) })),
+        ),
     );
     if (written.length > 0) await db.insert(fieldsInCharacter).values(written);
   }

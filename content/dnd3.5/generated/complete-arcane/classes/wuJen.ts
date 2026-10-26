@@ -6,11 +6,12 @@
  */
 
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const WU_JEN: ClassSeed = {
   name: "Wu Jen",
   description: "A mysterious wizard of the eastern world, whose arcane lore revolves around mastery of the elements.",
-  hd: 4,
+  fields: { [CLASS_HD]: 4, [CLASS_CASTER_TYPE]: "Arcane" },
   levels: 20,
   skillPoints: 2,
   bab: "poor",
@@ -46,8 +47,7 @@ export const WU_JEN: ClassSeed = {
     [15, "Spell Secret (Wu Jen)"],
     [18, "Spell Secret (Wu Jen)"],
   ],
-  bonusSpellAbility: "Intelligence",
-  casterType: "Arcane",
+  links: { bonusSpellAbility: "Intelligence" },
   spells: {
     slug: "wujenspells",
     perDay: [

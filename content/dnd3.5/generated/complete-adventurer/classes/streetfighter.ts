@@ -7,12 +7,13 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const STREETFIGHTER: ClassSeed = {
   name: "Streetfighter",
   description:
     "Streetfighters seek the challenges of the back alleys as a way of testing themselves and their experience in the wilder world.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 5,
   skillPoints: 4,
   bab: "good",

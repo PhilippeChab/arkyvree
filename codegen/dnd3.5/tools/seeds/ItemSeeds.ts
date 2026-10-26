@@ -15,6 +15,7 @@ import {
 } from "@/content/dnd3.5/builders/items/proficiencies.ts";
 import type { Dnd35ItemSeed } from "@/content/dnd3.5/builders/items/types.ts";
 import { ARMOR_TYPE_DEFINITIONS, SHIELD_TYPE_DEFINITIONS } from "@/vocabulary/dnd3.5/armor.ts";
+import { ITEM_COST_GP, ITEM_IS_TEMPLATE, ITEM_SLOT, ITEM_TYPE, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
 
@@ -29,8 +30,9 @@ export interface ItemSeedSets {
 
 /**
  * An item reference's seeds, by category (`seeds`): each item whole, its requirements (being proficient with it) and
- * its fields (its weapon, armor or shield type's) built from its name; and the weight of each weapon, armor and
- * shield (`weights`), which an item made from one weighs.
+ * its fields (its cost, weight, type and slot, and its weapon, armor or shield type's, built from its name: a weapon,
+ * an armor or a shield a template others are made from); and the weight of each weapon, armor and shield (`weights`),
+ * which an item made from one weighs.
  */
 export class ItemSeeds extends ReferenceSeeds<ItemReference> {
   /** The proficiency an armor of `category` requires: light armor's for one without a category. */
@@ -65,16 +67,19 @@ export class ItemSeeds extends ReferenceSeeds<ItemReference> {
         const seed: Dnd35ItemSeed = {
           name: det.generatorName,
           description,
-          weight,
-          costGp,
-          type: "Weapon",
           requirements:
             det.proficiency === "Simple"
               ? simple(det.generatorName)
               : det.proficiency === "Martial"
                 ? martial(det.generatorName)
                 : exotic(det.generatorName),
-          fields: weaponFields(det.generatorName),
+          fields: {
+            [ITEM_COST_GP]: costGp,
+            [ITEM_WEIGHT]: weight,
+            [ITEM_TYPE]: "Weapon",
+            [ITEM_IS_TEMPLATE]: true,
+            ...weaponFields(det.generatorName),
+          },
         };
 
         if (det.proficiency === "Simple") simpleWeapons.push(seed);
@@ -91,23 +96,19 @@ export class ItemSeeds extends ReferenceSeeds<ItemReference> {
         const categoryLabel = det.proficiencyCategory.replace(/ armor$/i, "");
         const description = item.description ?? `${det.type === "Shield" ? "A shield" : `${categoryLabel} armor`}.`;
 
+        const own = { [ITEM_COST_GP]: costGp, [ITEM_WEIGHT]: weight, [ITEM_TYPE]: det.type, [ITEM_IS_TEMPLATE]: true };
         const seed: Dnd35ItemSeed = {
           name: det.generatorName,
           description,
-          weight,
-          costGp,
-          type: det.type,
           ...(det.type === "Armor"
             ? {
-                slot: "Torso" as const,
                 requirements: ItemSeeds.armorProficiency(ARMOR_TYPE_DEFINITIONS[det.generatorName]?.armorType),
-                fields: armorFields(det.generatorName),
+                fields: { ...own, [ITEM_SLOT]: "Torso", ...armorFields(det.generatorName) },
               }
             : {
-                slot: "Off Hand" as const,
                 requirements:
                   SHIELD_TYPE_DEFINITIONS[det.generatorName]?.shieldType === "Tower" ? TOWER_SHIELD_PROF : SHIELD_PROF,
-                fields: shieldFields(det.generatorName),
+                fields: { ...own, [ITEM_SLOT]: "Off Hand", ...shieldFields(det.generatorName) },
               }),
         };
 
@@ -123,10 +124,12 @@ export class ItemSeeds extends ReferenceSeeds<ItemReference> {
         goods.push({
           name,
           description: item.description ?? "",
-          weight: item.weight,
-          costGp: item.costGp,
-          type: "Other",
-          slot: "Other" as const,
+          fields: {
+            [ITEM_COST_GP]: item.costGp,
+            [ITEM_WEIGHT]: item.weight,
+            [ITEM_TYPE]: "Other",
+            [ITEM_SLOT]: "Other",
+          },
         });
       }
 
@@ -135,9 +138,9 @@ export class ItemSeeds extends ReferenceSeeds<ItemReference> {
   }
 
   /** The weight of each weapon, armor and shield it seeds, by name: what an item made from one weighs. */
-  weights(): Record<string, string> {
+  weights(): Record<string, number> {
     const { simpleWeapons, martialWeapons, exoticWeapons, armor, shields } = this.seeds();
     const bases = [...simpleWeapons, ...martialWeapons, ...exoticWeapons, ...armor, ...shields];
-    return Object.fromEntries(bases.map((item) => [item.name, item.weight]));
+    return Object.fromEntries(bases.map((item) => [item.name, item.fields[ITEM_WEIGHT] ?? 0]));
   }
 }

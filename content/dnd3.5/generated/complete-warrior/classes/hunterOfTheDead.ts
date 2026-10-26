@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const HUNTER_OF_THE_DEAD: ClassSeed = {
   name: "Hunter of the Dead",
   description:
     "A hunter of the dead devotes every waking moment to pursuing undead creatures, seeking out their hiding places and purging the world of their unholy taint.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8, [CLASS_CASTER_TYPE]: "Divine" },
   levels: 10,
   skillPoints: 2,
   bab: "good",
@@ -45,8 +46,7 @@ export const HUNTER_OF_THE_DEAD: ClassSeed = {
     [10, "Smite Undead (Hunter of the Dead)"],
   ],
   freeFeats: [[6, "Extra Turning", "Hunter of the Dead Class Feature"]],
-  bonusSpellAbility: "Wisdom",
-  casterType: "Divine",
+  links: { bonusSpellAbility: "Wisdom" },
   spells: {
     slug: "hunterofthedeadspells",
     perDay: [[0], [1], [1, 0], [1, 1], [1, 1, 0], [1, 1, 1], [2, 1, 1, 0], [2, 1, 1, 1], [2, 2, 1, 1], [2, 2, 2, 1]],

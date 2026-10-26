@@ -5,13 +5,11 @@ import type { BabType, CasterLevelAdvancement, ClassSeed, SaveType } from "@/con
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import { getSpellLevelOpenings } from "@/database/seeders/dnd3.5/spellTable.ts";
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
-import { Engine, type EntityWrite } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import { BAB_PROGRESSIONS, SAVE_PROGRESSIONS } from "@/vocabulary/dnd3.5/classes.ts";
-import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A class's levels, as seeded: each level's id and number. */
 type Levels = { id: string; level: number }[];
@@ -85,17 +83,14 @@ function tableGains(table: number[][]) {
 /** Seeding classes. */
 export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class SeedingClasses extends Base {
-    /**
-     * What a class's row writes of it: its hit die, its bonus spell ability (its `bonusSpellAbility` link) and its caster
-     * type.
-     */
-    private classWrite(def: ClassSeed): Pick<EntityWrite, "fields" | "links"> {
-      const bonusSpellAbilityId = (def.bonusSpellAbility && this.ctx.abilityMap[def.bonusSpellAbility]) || null;
-      const { fields, links } = Engine.forRules(DND35_BASE_RULES).toFieldsWrite("classes", {
-        bonusSpellAbilityId,
-        casterType: def.casterType ?? null,
-      });
-      return { fields: { [CLASS_HD]: def.hd, ...fields }, links };
+    /** A class's single links (`bonusSpellAbility`: the ability its bonus spells come from), each an ability's id. */
+    private classLinks(def: ClassSeed): Record<string, string> {
+      return Object.fromEntries(
+        Object.entries(def.links ?? {}).map(([role, name]) => [
+          role,
+          this.idOf(this.ctx.abilityMap, name, `${def.name}'s ${role}`),
+        ]),
+      );
     }
 
     /** The feats its levels grant: its class features, its proficiencies and its free feats. */
@@ -205,8 +200,9 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
           rulesetId: this.ctx.rulesetId,
           name: def.name,
           description: def.description,
-          ...this.classWrite(def),
-          partition: def.kind ?? PLAYER_CHARACTER_KIND,
+          fields: def.fields,
+          links: this.classLinks(def),
+          partition: def.partition ?? PLAYER_CHARACTER_KIND,
         },
       ]);
       const klass = { id: klassId };
@@ -217,10 +213,7 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
         numbers.map((level) => ({
           ownerId: klassId,
           position: level,
-          fields: Engine.forRules(DND35_BASE_RULES).toFieldsWrite("klassLevels", {
-            bab: babAt(def.bab, level),
-            skills: def.skillPoints,
-          }).fields,
+          fields: { [CLASS_LEVEL_BAB]: babAt(def.bab, level), [CLASS_LEVEL_SKILL_POINTS]: def.skillPoints },
         })),
       );
       const levels = numbers.map((level, i) => ({ id: levelRowIds[i], level }));

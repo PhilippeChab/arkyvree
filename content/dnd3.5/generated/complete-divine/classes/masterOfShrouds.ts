@@ -7,12 +7,13 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const MASTER_OF_SHROUDS: ClassSeed = {
   name: "Master of Shrouds",
   description:
     "A master of shrouds is an evil divine caster who specializes in compelling incorporeal undead into service. She wrenches creatures like wraiths and shadows from their haunted lairs, calling them forth and forcing them to carry out her commands. Enraged by their involuntary bondage, these undead leave devastation and terror wherever they go. Most who pursue this path have cleric training. Paladins never follow this route, though fallen paladins may, especially those who have strayed far enough from lawful good ideals to become blackguards. Multiclassed clerics are also commonly drawn to this prestige class, including cleric/fighters and cleric/rogues. A handful of cleric/necromancer/mystic theurges adopt this role at their highest levels.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 10,
   skillPoints: 2,
   bab: "medium",

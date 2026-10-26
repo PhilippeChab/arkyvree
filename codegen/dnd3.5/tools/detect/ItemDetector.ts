@@ -166,7 +166,7 @@ export class ItemDetector extends BaseDetector<ItemReference> {
   /** Each item's cost and weight, its override's or else as detected, its override's description, and its skip. */
   protected override mapping(detected: ItemReference["detected"]): ItemReference["mapping"] {
     const { overrides } = this.stored;
-    const corrected = (items: Record<string, { costGp: string; weight: string }>) =>
+    const corrected = (items: Record<string, { costGp: number; weight: number }>) =>
       Object.fromEntries(
         Object.entries(items).map(([name, det]) => {
           const override = overrides?.[name];

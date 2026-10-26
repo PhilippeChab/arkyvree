@@ -6,12 +6,13 @@
  */
 
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const RANGER: ClassSeed = {
   name: "Ranger",
   description:
     "Wilderness warriors who master the art of tracking and survival, rangers are expert hunters equally at home stalking prey through dense forests or open plains. Through dedicated study of specific enemy types and rigorous combat training, they develop deadly effectiveness against their chosen foes. Rangers serve as guardians of the frontier, protecting travelers and settlers from the dangerous creatures that roam wild lands. They combine martial prowess with specialized fighting techniques, keen survival instincts, and the ability to form bonds with animal companions. As they grow in experience, rangers develop an ever-deepening connection to the natural world, eventually gaining the capacity to channel divine magic drawn from nature itself, similar to a druid's power.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8, [CLASS_CASTER_TYPE]: "Divine" },
   levels: 20,
   skillPoints: 6,
   bab: "good",
@@ -66,8 +67,7 @@ export const RANGER: ClassSeed = {
     [1, "Track", "Ranger Class Feature"],
     [3, "Endurance", "Ranger Class Feature"],
   ],
-  bonusSpellAbility: "Wisdom",
-  casterType: "Divine",
+  links: { bonusSpellAbility: "Wisdom" },
   spells: {
     slug: "rangerspells",
     perDay: [

@@ -2,11 +2,16 @@ import { bonus, setNum, setStr } from "@/content/core/builders/customization/mod
 import { gte, lt } from "@/content/core/builders/customization/requirements.ts";
 import { formatWithArticle } from "@/content/dnd3.5/builders/bonds/articles.ts";
 import type { BondContent } from "@/content/dnd3.5/builders/bonds/types.ts";
-import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
 import { grantFeat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { QUADRUPED_FIELDS } from "@/content/dnd3.5/builders/races/fields.ts";
-import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
+import {
+  CLASS_HD,
+  FEAT_FAMILY,
+  FEAT_SELECTABLE,
+  RACE_BASE_SPEED,
+  RACE_SIZE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const ANIMAL_COMPANION_APTITUDE = "Animal Companion Bond";
 const ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE = "Animal Companion Class Feature";
@@ -18,14 +23,14 @@ const ANIMAL_COMPANION_APTITUDES = [
   BONDED_RACE_FEATURE_APTITUDE,
 ];
 
-const ANIMAL_COMPANION_CLASS: ClassSeed = {
+const ANIMAL_COMPANION_CLASS: BondContent["klass"] = {
   name: "Animal Companion",
   description:
     "A creature of the wild bonded to its master. The companion's hit points, base attack bonus, and saving throws are derived from the master; its class progression grants special bonds and abilities as the master grows in power.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 20,
   skillPoints: 2,
-  kind: "animalcompanion",
+  partition: "animalcompanion",
   bab: "medium",
   saves: { fortitude: "good", reflex: "good", will: "poor" },
   classSkills: ["Listen", "Spot", "Survival", "Swim"],
@@ -45,37 +50,36 @@ const ANIMAL_COMPANION_CLASS_FEATURE_FEATS: FeatSeed[] = [
     name: "Link (Animal Companion)",
     description:
       "The master can handle the animal companion as a free action, or push it as a move action, even without ranks in Handle Animal. The master gains a +4 circumstance bonus on all wild empathy checks and Handle Animal checks made regarding the animal companion.",
-    selectable: false,
+    fields: { [FEAT_SELECTABLE]: false },
     aptitudes: [ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE],
   },
   {
     name: "Share Spells (Animal Companion)",
     description:
       "At the master's option, any spell (but not spell-like ability) cast on themselves may also affect the animal companion, provided the companion is within 5 feet at the time of casting. The master may also cast spells with a target of 'You' on the companion as a touch range spell.",
-    selectable: false,
+    fields: { [FEAT_SELECTABLE]: false },
     aptitudes: [ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE],
   },
   {
     name: "Evasion (Animal Companion)",
     description:
       "If the animal companion is subjected to an attack that normally allows a Reflex save for half damage, it takes no damage on a successful save.",
-    selectable: false,
+    fields: { [FEAT_SELECTABLE]: false, [FEAT_FAMILY]: ["Evasion"] },
     aptitudes: [ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE],
     // Like every class's Evasion (`CLASS_FEAT_FAMILIES`, codegen/dnd3.5/tools/terms/classFeatFamilies.ts)
-    fields: { families: ["Evasion"] },
   },
   {
     name: "Devotion (Animal Companion)",
     description:
       "The animal companion's devotion to its master is so complete that it gains a +4 morale bonus on Will saves against enchantment spells and effects.",
-    selectable: false,
+    fields: { [FEAT_SELECTABLE]: false },
     aptitudes: [ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE],
   },
   {
     name: "Multiattack (Animal Companion)",
     description:
       "The animal companion gains Multiattack as a bonus feat if it has three or more natural attacks. If it does not, it instead gains a second attack with its primary natural weapon at a -5 penalty.",
-    selectable: false,
+    fields: { [FEAT_SELECTABLE]: false },
     aptitudes: [ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE],
     // Multiattack: its secondary attacks at -2; without three attacks, a second one with its primary natural weapon
     modifiers: [
@@ -93,7 +97,7 @@ const ANIMAL_COMPANION_CLASS_FEATURE_FEATS: FeatSeed[] = [
     name: "Improved Evasion (Animal Companion)",
     description:
       "When subjected to an attack that normally allows a Reflex save for half damage, the animal companion takes no damage on a successful save and only half on a failed save.",
-    selectable: false,
+    fields: { [FEAT_SELECTABLE]: false },
     aptitudes: [ANIMAL_COMPANION_CLASS_FEATURE_APTITUDE],
   },
 ];
@@ -118,110 +122,101 @@ const ANIMAL_COMPANION_RACE_NAMES = [
 const ANIMAL_COMPANION_RACE_PICK_FEATS: FeatSeed[] = ANIMAL_COMPANION_RACE_NAMES.map((race) => ({
   name: `${race} Animal Companion`,
   description: `Bond with ${formatWithArticle(race)} as your animal companion. The companion appears on your sheet with stats derived from your level and the ${race} race profile.`,
-  selectable: true,
+  fields: { [FEAT_SELECTABLE]: true },
   aptitudes: [ANIMAL_COMPANION_APTITUDE],
   modifiers: [setStr("bonded.animalcompanion.race", race)],
 }));
 
-const ANIMAL_COMPANION_RACES: RaceSeed[] = [
+const ANIMAL_COMPANION_RACES: BondContent["races"] = [
   {
     name: "Badger",
     description: "A burrowing carnivore known for its tenacity. Strong claws and a thick hide.",
-    size: "Small",
-    baseSpeed: 30,
-    fields: QUADRUPED_FIELDS,
+    fields: { [RACE_SIZE]: "Small", [RACE_BASE_SPEED]: 30, ...QUADRUPED_FIELDS },
+    partition: "animalcompanion",
   },
   {
     name: "Camel",
     description: "A pack animal of the deserts. Slow but enduring across long distances.",
-    size: "Large",
-    baseSpeed: 50,
-    fields: QUADRUPED_FIELDS,
+    fields: { [RACE_SIZE]: "Large", [RACE_BASE_SPEED]: 50, ...QUADRUPED_FIELDS },
+    partition: "animalcompanion",
   },
   {
     name: "Dire Rat",
     description: "An oversized, disease-ridden rodent. Surprisingly agile climbers and swimmers.",
-    size: "Small",
-    baseSpeed: 40,
-    fields: QUADRUPED_FIELDS,
+    fields: { [RACE_SIZE]: "Small", [RACE_BASE_SPEED]: 40, ...QUADRUPED_FIELDS },
+    partition: "animalcompanion",
     modifiers: [grantFeat("Disease (Filth Fever)")],
   },
   {
     name: "Dog",
     description: "A small, alert canine companion. Excellent at scent tracking.",
-    size: "Small",
-    baseSpeed: 40,
-    fields: QUADRUPED_FIELDS,
+    fields: { [RACE_SIZE]: "Small", [RACE_BASE_SPEED]: 40, ...QUADRUPED_FIELDS },
+    partition: "animalcompanion",
   },
   {
     name: "Riding Dog",
     description: "A larger working dog bred for harness and battle. Can carry a Small rider.",
-    size: "Medium",
-    baseSpeed: 40,
-    fields: QUADRUPED_FIELDS,
+    fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 40, ...QUADRUPED_FIELDS },
+    partition: "animalcompanion",
     modifiers: [grantFeat("Trip")],
   },
   {
     name: "Eagle",
     description: "A keen-eyed bird of prey. Swift and powerful in flight.",
-    size: "Small",
-    baseSpeed: 10,
+    fields: { [RACE_SIZE]: "Small", [RACE_BASE_SPEED]: 10 },
+    partition: "animalcompanion",
   },
   {
     name: "Hawk",
     description:
       "A small bird of prey with sharp talons and unmatched eyesight in daylight. Its Spot counts a +8 racial bonus that applies only in daylight.",
-    size: "Tiny",
-    baseSpeed: 10,
+    fields: { [RACE_SIZE]: "Tiny", [RACE_BASE_SPEED]: 10 },
+    partition: "animalcompanion",
   },
   {
     name: "Horse, Light",
     description: "A swift riding horse, agile and fast over open ground.",
-    size: "Large",
-    baseSpeed: 60,
-    fields: QUADRUPED_FIELDS,
+    fields: { [RACE_SIZE]: "Large", [RACE_BASE_SPEED]: 60, ...QUADRUPED_FIELDS },
+    partition: "animalcompanion",
   },
   {
     name: "Horse, Heavy",
     description: "A draft horse bred for endurance and strength. Slower but tougher.",
-    size: "Large",
-    baseSpeed: 50,
-    fields: QUADRUPED_FIELDS,
+    fields: { [RACE_SIZE]: "Large", [RACE_BASE_SPEED]: 50, ...QUADRUPED_FIELDS },
+    partition: "animalcompanion",
   },
   {
     name: "Owl",
     description:
       "A nocturnal raptor whose silent flight surprises prey. It has a +8 racial bonus on Spot checks in shadowy illumination, applied at the table.",
-    size: "Tiny",
-    baseSpeed: 10,
+    fields: { [RACE_SIZE]: "Tiny", [RACE_BASE_SPEED]: 10 },
+    partition: "animalcompanion",
   },
   {
     name: "Pony",
     description: "A small sturdy equine, suited as a mount for halflings and gnomes.",
-    size: "Medium",
-    baseSpeed: 40,
-    fields: QUADRUPED_FIELDS,
+    fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 40, ...QUADRUPED_FIELDS },
+    partition: "animalcompanion",
   },
   {
     name: "Snake, Small Viper",
     description: "A small venomous serpent. Quick to strike and difficult to spot.",
-    size: "Small",
-    baseSpeed: 20,
+    fields: { [RACE_SIZE]: "Small", [RACE_BASE_SPEED]: 20 },
+    partition: "animalcompanion",
     modifiers: [grantFeat("Poison")],
   },
   {
     name: "Snake, Medium Viper",
     description: "A medium-sized venomous serpent. Lethal bite and unsettling speed.",
-    size: "Medium",
-    baseSpeed: 20,
+    fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 20 },
+    partition: "animalcompanion",
     modifiers: [grantFeat("Poison")],
   },
   {
     name: "Wolf",
     description: "A pack predator. Devastating trip attack and a powerful sense of smell.",
-    size: "Medium",
-    baseSpeed: 50,
-    fields: QUADRUPED_FIELDS,
+    fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 50, ...QUADRUPED_FIELDS },
+    partition: "animalcompanion",
     modifiers: [grantFeat("Trip")],
   },
 ];
@@ -231,27 +226,26 @@ const BONDED_RACE_FEATURE_FEATS: FeatSeed[] = [
     name: "Trip",
     description:
       "After a successful bite attack, the creature may attempt to trip the target as a free action without making a touch attack and without provoking an attack of opportunity. If the trip attempt fails, the target cannot make a counter-trip in return.",
-    selectable: false,
+    fields: { [FEAT_SELECTABLE]: false },
     aptitudes: [BONDED_RACE_FEATURE_APTITUDE],
   },
   {
     name: "Poison",
     description:
       "A target struck by this creature's bite must succeed on a Fortitude save (DC depends on the creature) or take initial Constitution damage. One minute later the target must save again or take secondary Constitution damage. Consult the SRD entry for the specific creature for the exact DC and damage.",
-    selectable: false,
+    fields: { [FEAT_SELECTABLE]: false },
     aptitudes: [BONDED_RACE_FEATURE_APTITUDE],
   },
   {
     name: "Disease (Filth Fever)",
     description:
       "A target bitten by the creature is exposed to filth fever (disease, injury, Fort DC 12, incubation 1d3 days, damage 1d3 Dex and 1d3 Con).",
-    selectable: false,
+    fields: { [FEAT_SELECTABLE]: false },
     aptitudes: [BONDED_RACE_FEATURE_APTITUDE],
   },
 ];
 
 export const ANIMAL_COMPANIONS: BondContent = {
-  kind: "animalcompanion",
   aptitudes: ANIMAL_COMPANION_APTITUDES,
   feats: [...ANIMAL_COMPANION_CLASS_FEATURE_FEATS, ...ANIMAL_COMPANION_RACE_PICK_FEATS, ...BONDED_RACE_FEATURE_FEATS],
   races: ANIMAL_COMPANION_RACES,

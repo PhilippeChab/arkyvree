@@ -6,12 +6,13 @@
  */
 
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const UNCANNY_TRICKSTER: ClassSeed = {
   name: "Uncanny Trickster",
   description:
     "The uncanny trickster combines the features of his primary class with a wider range of skill tricks than any other character can achieve.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 3,
   skillPoints: 8,
   bab: "medium",

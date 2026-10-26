@@ -7,12 +7,13 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const FATESPINNER: ClassSeed = {
   name: "Fatespinner",
   description:
     "A fatespinner has pulled back the curtain of chance, circumstance, and chaos to glimpse a deeper truth: probability.",
-  hd: 4,
+  fields: { [CLASS_HD]: 4 },
   levels: 5,
   skillPoints: 2,
   bab: "poor",

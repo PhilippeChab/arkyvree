@@ -7,11 +7,12 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const SPYMASTER: ClassSeed = {
   name: "Spymaster",
   description: "Spymasters do their work quietly and in private, and they often have a cover identity.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 7,
   skillPoints: 8,
   bab: "medium",

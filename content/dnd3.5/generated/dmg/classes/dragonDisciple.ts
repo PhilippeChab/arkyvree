@@ -2,12 +2,13 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const DRAGON_DISCIPLE: ClassSeed = {
   name: "Dragon Disciple",
   description:
     "Dragon disciples channel their arcane power to awaken the latent draconic blood flowing through their veins.",
-  hd: 12,
+  fields: { [CLASS_HD]: 12 },
   levels: 10,
   skillPoints: 2,
   bab: "medium",

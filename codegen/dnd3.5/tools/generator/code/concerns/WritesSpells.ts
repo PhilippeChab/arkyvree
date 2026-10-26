@@ -5,7 +5,10 @@ import type { Constructor } from "@/lib/mixins.ts";
 /** Writing a spell. */
 export function WritesSpells<B extends Constructor<BaseCodeFile>>(Base: B) {
   abstract class WritingSpells extends Base {
-    /** A spell written as code, a list's item, without its level: its file is its level's. */
+    /**
+     * A spell written as code, a list's item, without its level (its file is its level's): its fields as stored, and
+     * the save that resists it (its `resistedBy` link) by its name.
+     */
     spell(spell: LeveledSpellSeed): string[] {
       const levels = Object.entries(spell.aptitudeLevels ?? {})
         .sort(([a], [b]) => a.localeCompare(b))
@@ -16,8 +19,8 @@ export function WritesSpells<B extends Constructor<BaseCodeFile>>(Base: B) {
         `    description: ${this.quote(spell.description)},`,
         `    aptitudes: [${spell.aptitudes.map((name) => this.quote(name)).join(", ")}],`,
         ...(levels.length > 0 ? [`    aptitudeLevels: { ${levels.join(", ")} },`] : []),
-        ...(spell.savingThrow ? [`    savingThrow: ${this.quote(spell.savingThrow)},`] : []),
-        `    fields: ${this.fieldValue(spell.fields)},`,
+        `    fields: ${this.seedFields(spell.fields)},`,
+        ...(spell.links?.resistedBy ? [`    links: { resistedBy: ${this.quote(spell.links.resistedBy)} },`] : []),
         `  },`,
       ];
     }

@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const HULKING_HURLER: ClassSeed = {
   name: "Hulking Hurler",
   description:
     "Members of this prestige class are massive creatures who revel in uprooting enormous objects - boulders, trees, even structures - and launching them at enemies with devastating force.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 3,
   skillPoints: 2,
   bab: "good",

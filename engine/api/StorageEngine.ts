@@ -1,9 +1,17 @@
-import { Decimals, DeclaredFields, Field, type Fields, type StoredValues } from "@/engine/core/fields/index.ts";
+import {
+  Decimals,
+  DeclaredFields,
+  Field,
+  type Fields,
+  FieldWrites,
+  type StoredValues,
+} from "@/engine/core/fields/index.ts";
 import type {
   CharacterRoleDef,
   EntityRecord,
   FieldDef,
   FieldValue,
+  FieldWrite,
   LinkRoleDef,
   RulesetModule,
   StepDef,
@@ -156,6 +164,9 @@ export default class StorageEngine {
 
   /** What every module declares of a view's kinds and links, once read (`viewSchema`). */
   private schema?: ViewSchema;
+
+  /** What a write of every module's owners' fields stores, once read (`writtenFields`). */
+  private writes?: FieldWrites;
 
   /** A character's link role (3.5's `race`, `score`, `speaks`): the type of its entities, and whether it holds one. */
   characterRole(role: string): CharacterRoleDef {
@@ -411,5 +422,24 @@ export default class StorageEngine {
         .map(({ fromType, role, toType }) => ({ fromType, role, toType })),
     };
     return this.schema;
+  }
+
+  /**
+   * What a write of an owner's fields (`fields`, of `ownerType`: an entity type, `rulesets`, a character's) stores, by
+   * field, whoever writes it (a seed, a form's save, an import), so the same values store the same rows
+   * (`FieldWrites`): a new owner's (`creating`) or an existing one's. A character's fields, which no spec declares,
+   * each by its stored kind (`Field.writtenValues`: no empty text, no false flag).
+   */
+  writtenFields(ownerType: string, fields: Readonly<Record<string, FieldWrite>>, creating: boolean) {
+    if (!(ownerType in this.fields)) {
+      return Object.fromEntries(
+        Object.entries(fields).map(([field, write]) => {
+          const def = this.field(ownerType, field);
+          return [field, def ? Field.writtenValues({ kind: def.valueKind }, write) : write];
+        }),
+      );
+    }
+    this.writes ??= new FieldWrites(this.fields);
+    return this.writes.written(ownerType, fields, creating);
   }
 }

@@ -7,12 +7,13 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const MAGE_OF_THE_ARCANE_ORDER: ClassSeed = {
   name: "Mage of the Arcane Order",
   description:
     'Also called a "guildmage," a member of this prestige class is a spellcaster who belongs to an academy and guild known as the Arcane Order.',
-  hd: 4,
+  fields: { [CLASS_HD]: 4 },
   levels: 10,
   skillPoints: 2,
   bab: "poor",

@@ -2,12 +2,13 @@
 
 import { eqStr, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const MONK: ClassSeed = {
   name: "Monk",
   description:
     "Scattered throughout the world are isolated monasteries - small, fortified enclaves where monks devote themselves to achieving personal excellence through disciplined action and focused meditation. They hone their bodies into versatile fighting instruments, mastering combat without reliance on weapons or armor. Those who study under virtuous masters serve as guardians of the common folk, blending seamlessly into crowds while remaining ever-ready to confront bandits, tyrants, and corrupt officials. Conversely, monks trained under sinister masters use fear to dominate nearby territories, functioning much like warlords with loyal retinues. Such monks excel as spies, saboteurs, and assassins. Most individual monks care little for crusading on behalf of the downtrodden or accumulating riches. Their primary concern is the mastery of their discipline and, through that mastery, the perfection of themselves. They aspire to transcend mortal limitations entirely. A monk treats every adventure as a crucible for self-improvement. Though not inclined toward ostentatious displays, monks readily pit their abilities against any challenge that presents itself. Material wealth holds little appeal for them, but they eagerly pursue anything that furthers their art.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 20,
   skillPoints: 4,
   bab: "medium",

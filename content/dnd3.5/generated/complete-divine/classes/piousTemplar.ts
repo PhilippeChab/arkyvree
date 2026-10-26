@@ -7,12 +7,13 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const PIOUS_TEMPLAR: ClassSeed = {
   name: "Pious Templar",
   description:
     "Dedicated to safeguarding a holy site, the pious templar is a divine warrior who receives supernatural combat ability and exceptional resilience from her patron deity.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10, [CLASS_CASTER_TYPE]: "Divine" },
   levels: 10,
   skillPoints: 2,
   bab: "good",
@@ -38,8 +39,7 @@ export const PIOUS_TEMPLAR: ClassSeed = {
     [8, "Bonus Feat (Pious Templar)"],
     [10, "Smite (Pious Templar)"],
   ],
-  bonusSpellAbility: "Wisdom",
-  casterType: "Divine",
+  links: { bonusSpellAbility: "Wisdom" },
   spells: {
     slug: "pioustemplarspells",
     perDay: [[0], [1, 0], [1, 1], [1, 1], [1, 1, 0], [1, 1, 1], [2, 1, 1, 0], [2, 1, 1, 1], [2, 2, 1, 1], [2, 2, 2, 1]],

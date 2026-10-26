@@ -7,11 +7,12 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const ARCHMAGE: ClassSeed = {
   name: "Archmage",
   description: "Those who reach the pinnacle of arcane spellcasting mastery often pursue the path of the archmage.",
-  hd: 4,
+  fields: { [CLASS_HD]: 4 },
   levels: 5,
   skillPoints: 2,
   bab: "poor",

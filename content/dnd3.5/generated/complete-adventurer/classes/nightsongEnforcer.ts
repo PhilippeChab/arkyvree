@@ -7,12 +7,13 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const NIGHTSONG_ENFORCER: ClassSeed = {
   name: "Nightsong Enforcer",
   description:
     "The enforcers of the Nightsong Guild focus on the stealth-centered combat training that rogues usually learn; they forgo some of the sleight of hand or fast-talking aspects of being a thief. However, nightsong enforcers are not mere thugs. They are deadly opponents who strike from hidden positions and move silently behind their foes. When in battle, their goal is to eliminate their enemies, not to ?ght. Thus, they strike quickly from the shadows. They do not worry about honor or ?ghting fair, scof?ng at such ideals as childish. Rogues most often become nightsong enforcers, although bards, ?ghters, and urban rangers are also known to undertake the class. On occasion a wizard or sorcerer will endure the intensive training required to join the enforcers' ranks. When working with others, a nightsong enforcer is the linchpin. She is the very picture of ?delity when it comes to supporting teammates on a mission. It is common for an enforcer to lead a team composed of not only other enforcers, but ?ghters, spellcasters, or rogues.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 10,
   skillPoints: 4,
   bab: "good",

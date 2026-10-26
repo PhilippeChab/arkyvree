@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const SHADOWBANE_STALKER: ClassSeed = {
   name: "Shadowbane Stalker",
   description:
     "Shadowbane stalkers find evil hidden in civilized areas so that the martial arm of the order (the inquisitors) can spearhead the attack. Those they name as heretics or servants of evil call them zealots. Those they protect from darkness call them saviors and defenders of the truth. Whatever their label, shadowbane stalkers rank as some of the most feared individuals wherever they go.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 10,
   skillPoints: 6,
   bab: "medium",

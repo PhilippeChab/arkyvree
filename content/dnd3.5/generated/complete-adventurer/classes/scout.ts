@@ -6,12 +6,13 @@
  */
 
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const SCOUT: ClassSeed = {
   name: "Scout",
   description:
     "A scout has some training in weapons and a unique combat style that favors fast movement and devastating attacks.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 20,
   skillPoints: 8,
   bab: "medium",

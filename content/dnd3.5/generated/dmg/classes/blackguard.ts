@@ -7,11 +7,12 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const BLACKGUARD: ClassSeed = {
   name: "Blackguard",
   description: "The blackguard epitomizes the dark knight archetype, a warrior who has wholly embraced evil.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10, [CLASS_CASTER_TYPE]: "Divine" },
   levels: 10,
   skillPoints: 2,
   bab: "good",
@@ -58,8 +59,7 @@ export const BLACKGUARD: ClassSeed = {
     [10, "Smite Good (Blackguard)"],
     [10, "Sneak Attack (Blackguard)"],
   ],
-  bonusSpellAbility: "Wisdom",
-  casterType: "Divine",
+  links: { bonusSpellAbility: "Wisdom" },
   spells: {
     slug: "blackguardspells",
     perDay: [[0], [1], [1, 0], [1, 1], [1, 1, 0], [1, 1, 1], [2, 1, 1, 0], [2, 1, 1, 1], [2, 2, 1, 1], [2, 2, 2, 1]],

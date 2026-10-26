@@ -6,12 +6,13 @@
  */
 
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const WIZARD: ClassSeed = {
   name: "Wizard",
   description:
     "Through years of rigorous academic study, wizards unlock the secrets of arcane magic. What appears effortless - a few uttered syllables and a wave of the hand - actually represents countless hours spent poring over ancient texts and preparing each incantation with painstaking precision. Long apprenticeships and tireless research form the foundation of a wizard's power. Unlike those born with innate magical talent, wizards treat spellcraft as a scholarly discipline that demands dedication and intellect. They approach adventuring methodically, planning carefully and leveraging their prepared spells to devastating effect, though they remain vulnerable when caught off guard. Their motivations center on the pursuit of knowledge, arcane power, and the resources needed to further their studies, though personal ambitions vary as widely as any adventurer's. A wizard's primary asset is her spell repertoire; all other abilities take a back seat. As she gains experience and conducts her own magical experiments, she discovers new spells, and can also transcribe them from the spellbooks of fellow practitioners. Over time, she learns to modify her magic - extending its reach, amplifying its potency, or enhancing it in other ways. Some wizards opt to focus on a particular school of magic. This specialization grants greater command within that discipline but restricts access to certain spells outside it. Like sorcerers, wizards can also summon a familiar - a small magical creature that serves as a companion and aide. For some wizards, this familiar is their closest confidant.",
-  hd: 4,
+  fields: { [CLASS_HD]: 4, [CLASS_CASTER_TYPE]: "Arcane" },
   levels: 20,
   skillPoints: 2,
   bab: "poor",
@@ -46,8 +47,7 @@ export const WIZARD: ClassSeed = {
     [20, "Bonus Feat (Wizard)"],
   ],
   freeFeats: [[1, "Scribe Scroll", "Wizard Class Feature"]],
-  bonusSpellAbility: "Intelligence",
-  casterType: "Arcane",
+  links: { bonusSpellAbility: "Intelligence" },
   spells: {
     slug: "wizardspells",
     perDay: [

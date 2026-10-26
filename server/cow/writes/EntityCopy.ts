@@ -137,15 +137,13 @@ export default class EntityCopy {
     const [{ campaignId, description, fields, links, name, partition }] = cow.resolveLinks([
       { ...parentEntity, ...merged },
     ]);
-    const [newEntity] = await Entities.create(tx, entityType, {
-      rulesetId: childRulesetId,
-      campaignId,
-      name: name!,
-      description,
-      partition,
-      fields,
-      links,
-    });
+    // Its rows as they're stored, its source's: a copy keeps them as they are
+    const [newEntity] = await Entities.create(
+      tx,
+      entityType,
+      { rulesetId: childRulesetId, campaignId, name: name!, description, partition, fields, links },
+      true,
+    );
 
     // 3. Copy customizations
     const customizations = await CustomizationCopies.read(tx, [this.entityId], this.entityType, this.sourceType);
@@ -206,6 +204,7 @@ export default class EntityCopy {
           createdAt,
           updatedAt,
         })),
+        true,
       );
       const ids = new Map(owned.map((row, index) => [row.id, copies[index].id]));
       const customizable = CUSTOMIZABLE_TYPES.includes(type) ? type : undefined;

@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const CAVALIER: ClassSeed = {
   name: "Cavalier",
   description:
     "The cavalier embodies the pinnacle of mounted combat, serving as the archetypal armored knight astride a warhorse.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 10,
   skillPoints: 2,
   bab: "good",

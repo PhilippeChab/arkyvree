@@ -4,6 +4,7 @@ export { default as Field } from "./Field.ts";
 export type { Fields, FieldValues, LeafSpec, NoFields, StoredLeaf } from "./Field.ts";
 export { default as FieldCodec } from "./FieldCodec.ts";
 export type { FormContext } from "./FieldForms.ts";
+export { default as FieldWrites } from "./FieldWrites.ts";
 export { default as FormColumns } from "./FormColumns.ts";
 export type {
   AmountsFormField,

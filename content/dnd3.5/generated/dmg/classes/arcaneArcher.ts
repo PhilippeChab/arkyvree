@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const ARCANE_ARCHER: ClassSeed = {
   name: "Arcane Archer",
   description:
     "The arcane archer combines martial archery expertise with arcane magical ability, weaving spells into her ranged combat techniques.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 10,
   skillPoints: 4,
   bab: "good",

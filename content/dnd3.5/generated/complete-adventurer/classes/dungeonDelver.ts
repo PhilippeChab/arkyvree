@@ -7,12 +7,13 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const DUNGEON_DELVER: ClassSeed = {
   name: "Dungeon Delver",
   description:
     "In many ways, the dungeon delver is the ultimate adventuring rogue. He's skilled at moving stealthily through all types of dungeon terrain, detecting and disarming inconvenient traps, bypassing locks, locating treasure, and ?lching protected items. Since a dungeon delver frequently works alone, he must learn to think and act independently, relying upon no one but himself. Even when exploring a dungeon in the company of other adventurers, he often keeps to himself?scouting ahead, disarming traps a safe distance from the group, or seeking treasure while the others are distracted. The typical dungeon delver has forsaken interaction skills to concentrate on the nuts and bolts of dungeon exploration and treasure retrieval. Rogues and scouts make excellent dungeon delvers, as do the rare few ninjas and spellthieves who choose to pursue this track. Multiclass rogue/rangers who favor the darkness of caverns to the light of the sky also make good dungeon delvers.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 10,
   skillPoints: 8,
   bab: "medium",

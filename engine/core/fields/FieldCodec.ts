@@ -1,5 +1,5 @@
 import type { FieldValue } from "@/engine/core/module/index.ts";
-import type { NumberSpec, PartialFieldValues, ProgressionSpec } from "@/shared/customization/fields.ts";
+import type { NumberSpec, ProgressionSpec } from "@/shared/customization/fields.ts";
 import { copyProgression, countRoomAt, type ProgressionValue } from "@/shared/customization/progression.ts";
 
 import Field, { type Fields, type FieldSpec, type FieldValues, type LeafSpec, type NoFields } from "./Field.ts";
@@ -7,23 +7,14 @@ import FieldForms, { type FormContext } from "./FieldForms.ts";
 import type { FormField } from "./FormField.ts";
 import OwnerValues, { type FieldsWrite, type StoredValues } from "./OwnerValues.ts";
 
-/** What a codec's rules add to its fields': when the entity keeps none of them. */
-interface FieldRules<S extends Fields> {
-  /** Whether the entity keeps the fields its form shows: it stores none of their rows otherwise. */
-  storesWhen?(values: WrittenValues<S>): boolean;
-}
-
 /** A write being built: each field's values and each link role's entity, by name. */
 interface WriteRecord {
   fields: Record<string, FieldValue[]>;
   links: Record<string, string | null>;
 }
 
-/**
- * The values a write takes: a field's each (a save's, read whole), or some of them, a group's some of its own (a
- * seed's), a group given written whole.
- */
-type WrittenValues<S extends Fields> = Partial<FieldValues<S>> | PartialFieldValues<S>;
+/** The values a write takes: a field's each (a save's, read whole), or some of them (a group given whole). */
+type WrittenValues<S extends Fields> = Partial<FieldValues<S>>;
 
 /**
  * An entity's fields, read and written by one spec (`fields`, as its ruleset's vocabulary declares them: `FieldSpec`):
@@ -33,10 +24,7 @@ type WrittenValues<S extends Fields> = Partial<FieldValues<S>> | PartialFieldVal
  * over what's kept, a form's read as a save takes them (`parse`), and described as a form shows them (`describe`).
  */
 export default class FieldCodec<S extends Fields> {
-  constructor(
-    readonly fields: S,
-    private readonly rules: FieldRules<S> = {},
-  ) {
+  constructor(readonly fields: S) {
     this.defaults = FieldCodec.defaultsOf(fields) as FieldValues<S>;
     this.formFields = Object.fromEntries(
       Object.entries(fields).filter(([, field]) => !("form" in field && field.form)),
@@ -158,9 +146,9 @@ export default class FieldCodec<S extends Fields> {
   }
 
   /**
-   * A field's value into a write (`write`): its field's values (none for no value: an empty text, a default number, a
-   * false flag, unless always written, a text then its default; a list's each once), or a reference's link's entity
-   * (none for no value). A field without a value writes none.
+   * A field's value into a write (`write`): its field's values, as every write stores them (`Field.writtenValues`: none
+   * for no value, an empty text, a default number, a false flag, unless always written; a list's each once), a
+   * progression's as its rows, or a reference's link's entity (none for no value). A field without a value writes none.
    */
   private static writeField(field: FieldSpec, value: unknown, write: WriteRecord) {
     if (value === undefined || value === null) return;
@@ -171,28 +159,16 @@ export default class FieldCodec<S extends Fields> {
       case "ref":
         if (value !== "") write.links[field.role] = String(value);
         return;
-      case "list":
-        write.fields[field.field] = [...new Set(value as string[])];
-        return;
       case "progression": {
         const { every, extra } = value as ProgressionValue;
         write.fields[field.field] = [`every:${every}`, ...extra.map(({ amount, level }) => `${level}:${amount}`)];
         return;
       }
-      case "flag":
-        if (field.absent === null || field.write === "always" || value === true)
-          write.fields[field.field] = [value as boolean];
-        return;
-      case "number":
-        if (field.write === "always" || value !== field.default) write.fields[field.field] = [value as number];
-        return;
-      case "text": {
-        const text = value === "" && field.write === "always" ? field.default : String(value);
-        if (text) write.fields[field.field] = [text];
-        return;
+      default: {
+        const stored = field.kind === "text" || field.kind === "choice" ? String(value) : value;
+        const values = Field.writtenValues(field, stored);
+        if (values.length > 0) write.fields[field.field] = values;
       }
-      default:
-        if (value !== "") write.fields[field.field] = [String(value)];
     }
   }
 
@@ -239,7 +215,7 @@ export default class FieldCodec<S extends Fields> {
   /**
    * The values as a write of their owner's fields and links: every field and link role of the fields they give (a
    * group's all), each a value's own, of its kind (a number's a number, a flag's a flag); those its form shows none of
-   * when the entity keeps none of them (`storesWhen`).
+   * when the entity keeps none of them (a field it holds no value of that keeps them, `keepsForm`: a spell's school).
    */
   private writeOf(values: WrittenValues<S>): WriteRecord {
     const write: WriteRecord = { fields: {}, links: {} };
@@ -248,7 +224,7 @@ export default class FieldCodec<S extends Fields> {
       if (leaf.kind === "ref") write.links[leaf.role] = null;
       else write.fields[leaf.field] = [];
     }
-    const kept = !this.rules.storesWhen || this.rules.storesWhen(values);
+    const kept = Field.keepersOf(this.fields).every(([key]) => !!values[key as keyof S]);
     const written = kept ? this.fields : Object.fromEntries(given.filter(([key]) => !(key in this.formFields)));
     FieldCodec.writeFields(written, values as Record<string, unknown>, write);
     return write;
@@ -328,7 +304,7 @@ export default class FieldCodec<S extends Fields> {
 
   /**
    * The values as a write of their owner's fields and links: every field and link role of the fields they give, each
-   * replaced by its value's (none for one its form shows when the entity keeps none of them, `storesWhen`, or for a
+   * replaced by its value's (none for one its form shows when the entity keeps none of them, `keepsForm`, or for a
    * value that writes none); a field they leave out isn't named, so its owner keeps it. A form's save gives every field
    * it shows: it names them.
    */

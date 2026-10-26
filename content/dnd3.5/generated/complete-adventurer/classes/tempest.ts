@@ -7,11 +7,12 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const TEMPEST: ClassSeed = {
   name: "Tempest",
   description: "A tempest is the point of calm within a whirling barrier of deadly blades.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 5,
   skillPoints: 2,
   bab: "good",

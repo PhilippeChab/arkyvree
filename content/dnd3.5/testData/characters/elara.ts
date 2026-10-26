@@ -1,15 +1,25 @@
 import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Elf Wizard 3 — Skills: (2+4)*4 + (2+4)*2 = 36 */
 export default {
-  raceName: "Elf",
   name: "Elara Starweaver",
-  xp: 3000,
-  alignment: "Neutral Good",
-  age: 130,
-  gender: "Female",
-  height: "170",
-  weight: "48",
+  links: { race: "Elf" },
+  fields: {
+    [CHARACTER_XP]: 3000,
+    [CHARACTER_ALIGNMENT]: "Neutral Good",
+    [CHARACTER_AGE]: 130,
+    [CHARACTER_GENDER]: "Female",
+    [CHARACTER_HEIGHT]: "170",
+    [CHARACTER_WEIGHT]: "48",
+  },
   description:
     "A studious elven wizard from the Celestial Academy, Elara weaves arcane formulae with mathematical precision. Her spellbook is filled with meticulous notes and elegant diagrams.",
   abilities: { Strength: 8, Dexterity: 14, Constitution: 12, Intelligence: 18, Wisdom: 12, Charisma: 10 },

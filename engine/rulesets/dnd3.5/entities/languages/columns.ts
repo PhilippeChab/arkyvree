@@ -2,7 +2,10 @@ import type { FormField } from "@/engine/core/fields/index.ts";
 import type { ListDescription } from "@/engine/core/module/index.ts";
 import { LANGUAGE_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
-/** A language's columns, as its form shows them beside its name and description: its type, an empty one too. */
+/**
+ * A language's columns, as its form shows them beside its name and description: its type, which a form gives (empty
+ * when it has none, which stores no row, as every write stores an empty text).
+ */
 export const LANGUAGE_COLUMNS: FormField[] = [
   {
     field: LANGUAGE_TYPE,

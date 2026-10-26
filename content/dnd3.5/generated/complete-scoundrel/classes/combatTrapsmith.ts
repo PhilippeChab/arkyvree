@@ -7,11 +7,12 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const COMBAT_TRAPSMITH: ClassSeed = {
   name: "Combat Trapsmith",
   description: "Combat trapsmiths can litter a battlefield or dungeon with devices of their own cunning design.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 5,
   skillPoints: 6,
   bab: "medium",
