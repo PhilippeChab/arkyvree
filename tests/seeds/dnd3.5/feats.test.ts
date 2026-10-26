@@ -3,7 +3,7 @@ import { expect, test } from "bun:test";
 import * as RULESET_NAMES from "@/content/dnd3.5/rulesetNames.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { FEAT_FAMILY, FEAT_GENERATED } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { seededRows } from "./seededRows.ts";
 
@@ -26,9 +26,11 @@ test("The seeded families of feats are the built-in ones the customization offer
 test("The seeded generated feats are a family's feats for each of its options, its name naming the option", async () => {
   const feats = (await seededRulesets()).flatMap((rows) => rows.feats);
   const familiesOf = (generated: boolean) => [
-    ...new Set(feats.filter((feat) => feat.generated === generated).map((feat) => feat.name.split(": ")[0])),
+    ...new Set(
+      feats.filter((feat) => feat.fields[FEAT_GENERATED] === generated).map((feat) => feat.name.split(": ")[0]),
+    ),
   ];
-  expect(feats.filter((feat) => feat.generated && !/^[^:]+: ./.test(feat.name))).toEqual([]);
+  expect(feats.filter((feat) => feat.fields[FEAT_GENERATED] && !/^[^:]+: ./.test(feat.name))).toEqual([]);
   expect(familiesOf(true).sort()).toEqual([
     "Arcane Defense",
     "Deity's Weapon Focus",

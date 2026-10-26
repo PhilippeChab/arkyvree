@@ -30,7 +30,7 @@ export default class LevelTotals {
    * steps the total of the key it counts toward (`stepOf`; none counts toward no key), over the levels by their number.
    */
   static computeRunning<V>(
-    levels: { id: string; level: number }[],
+    levels: { id: string; position: number }[],
     modifiers: TableModifier[],
     stepOf: (modifier: TableModifier) => TableStep<V> | undefined,
   ): Map<string, Record<string | number, V>> {
@@ -43,7 +43,7 @@ export default class LevelTotals {
     );
     const totals: Record<string | number, V> = {};
     const totalsByLevelId = new Map<string, Record<string | number, V>>();
-    for (const level of levels.toSorted((a, b) => a.level - b.level)) {
+    for (const level of levels.toSorted((a, b) => a.position - b.position)) {
       for (const { key, step } of stepsByLevelId.get(level.id) ?? []) totals[key] = step(totals[key]);
       totalsByLevelId.set(level.id, { ...totals });
     }

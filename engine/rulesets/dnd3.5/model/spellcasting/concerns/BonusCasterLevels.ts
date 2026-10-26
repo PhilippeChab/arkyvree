@@ -34,7 +34,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       // instead of O(classes × klassLevels × feats × characterLevels).
       const rulesetKlassById = new Map(rulesetKlasses.map((k) => [k.id, k]));
       const takenAt = new Set(characterLevels.map((cl) => levelKey(cl.id, cl.trackId!)));
-      const bonusLevelsByKlassId = Map.groupBy(bonusKlassLevels, (kl) => kl.klassId);
+      const bonusLevelsByKlassId = Map.groupBy(bonusKlassLevels, (kl) => kl.ownerId);
 
       for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
         if (klassData.bonuscasterlevel <= 0) continue;
@@ -42,7 +42,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
         const target = ClassesPaths.bonusCasterLevel(className);
         const grantingLevels = this.grantingLevels(target, klassLevels, feats, takenAt, rulesetKlassById);
         const receivingBonusLevels = (bonusLevelsByKlassId.get(klassData.klass.id) ?? []).toSorted(
-          (a, b) => a.level - b.level,
+          (a, b) => a.position - b.position,
         );
         for (let i = 0; i < receivingBonusLevels.length && i < grantingLevels.length; i++) {
           this.bonusKlassLevelAttribution.set(
@@ -113,10 +113,10 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
         if (kl.modifiers.some((m) => m.target === target && m.operator === "add")) continue;
         for (const feat of featsWithTargetMod) {
           if (!takenAt.has(levelKey(feat.characterLevelId, kl.id))) continue;
-          const klass = rulesetKlassById.get(kl.klassId);
+          const klass = rulesetKlassById.get(kl.ownerId);
           grantingLevels.push({
             klassName: klass?.name ?? "Unknown",
-            level: kl.level,
+            level: kl.position,
           });
         }
       }
@@ -183,7 +183,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       // Store bonus klass levels for source resolution in diagnostics
       this.bonusKlassLevels = bonusKlassLevels;
       for (const kl of bonusKlassLevels) {
-        const className = classNameByLevel.get(`${kl.klassId}:${kl.level}`);
+        const className = classNameByLevel.get(`${kl.ownerId}:${kl.position}`);
         if (className) this.bonusKlassLevelClassMap.set(kl.id, className);
       }
       this.attributeBonusLevels(bonusKlassLevels, klassLevels, feats, characterLevels, rulesetKlasses);

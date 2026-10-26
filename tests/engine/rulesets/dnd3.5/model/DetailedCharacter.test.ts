@@ -65,9 +65,15 @@ import {
   ARMOR_TYPE,
   DAMAGE_TYPE,
   FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
+  FEAT_STACKABLE,
   FEAT_WEAPON_FINESSE,
+  ITEM_IS_TEMPLATE,
   ITEM_MASTERWORK,
+  ITEM_SLOT,
   ITEM_SPELL_FAILURE,
+  ITEM_TYPE,
+  RACE_BASE_SPEED,
+  RACE_SIZE,
   RACE_SPEED_IGNORES_ENCUMBRANCE,
   SHIELD_AC_BONUS,
   SHIELD_PROFICIENCY,
@@ -154,7 +160,7 @@ function spellUses(detailed: Detailed, aptitude: string, levels: number[]) {
 
 /** A character's fields, with no age, height or weight. */
 function unsetPhysiology({ fields }: Character) {
-  const unset: string[] = [CHARACTER_FIELDS.age, CHARACTER_FIELDS.height, CHARACTER_FIELDS.weight];
+  const unset: string[] = [CHARACTER_FIELDS.age.field, CHARACTER_FIELDS.height.field, CHARACTER_FIELDS.weight.field];
   return Object.fromEntries(Object.entries(fields).filter(([field]) => !unset.includes(field)));
 }
 
@@ -210,7 +216,10 @@ async function buildSeeded(name: string) {
 
 /** A new wondrous item of the seeded ruleset, worn at `slot`, that raises an ability by `bonus`. */
 async function createAbilityItem(ability: string, bonus: number, slot: ItemLocation) {
-  const item = await createTestItem({ name: `${ability} +${bonus}`, type: "Wondrous Item", slot });
+  const item = await createTestItem(
+    { name: `${ability} +${bonus}` },
+    { [ITEM_TYPE]: "Wondrous Item", [ITEM_SLOT]: slot },
+  );
   await Modifiers.create(db, {
     sourceId: item.id,
     sourceType: "items",
@@ -269,11 +278,9 @@ async function mightyBow(rating: number) {
   return createTestItem(
     {
       name: `Composite Longbow (+${rating} Str)`,
-      type: "Weapon",
-      slot: "Two Handed",
-      sourceItemId: (await getSeedCtx()).itemMap["Composite Longbow"],
+      links: { madeFrom: (await getSeedCtx()).itemMap["Composite Longbow"] },
     },
-    { [WEAPON_MIGHTY]: rating },
+    { [ITEM_TYPE]: "Weapon", [ITEM_SLOT]: "Two Handed", [WEAPON_MIGHTY]: rating },
   );
 }
 
@@ -807,8 +814,10 @@ describe("DetailedCharacter", () => {
 
     test("group a weapon under its type, not its name", async () => {
       const variant = await createTestItem(
-        { name: "Longsword +1", type: "Weapon", slot: "Main Hand" },
+        { name: "Longsword +1" },
         {
+          [ITEM_TYPE]: "Weapon",
+          [ITEM_SLOT]: "Main Hand",
           [WEAPON_PROFICIENCY]: "Martial",
           [WEAPON_FAMILY]: "Sword",
           [WEAPON_BASE_DAMAGE]: "1d8",
@@ -828,8 +837,10 @@ describe("DetailedCharacter", () => {
 
     test("apply a weapon's own bonus to the hand that holds it, not the other", async () => {
       const blade = await createTestItem(
-        { name: "Keen Blade", type: "Weapon", slot: "Main Hand" },
+        { name: "Keen Blade" },
         {
+          [ITEM_TYPE]: "Weapon",
+          [ITEM_SLOT]: "Main Hand",
           [WEAPON_PROFICIENCY]: "Martial",
           [WEAPON_FAMILY]: "Sword",
           [WEAPON_BASE_DAMAGE]: "1d8",
@@ -1016,8 +1027,10 @@ describe("DetailedCharacter", () => {
     test("read how many range increments a weapon reaches off its fields, five when they don't say", async () => {
       const weapon = (name: string, fields: Record<string, FieldValue>) =>
         createTestItem(
-          { name, type: "Weapon", slot: "Main Hand" },
+          { name },
           {
+            [ITEM_TYPE]: "Weapon",
+            [ITEM_SLOT]: "Main Hand",
             [WEAPON_PROFICIENCY]: "Simple",
             [WEAPON_BASE_DAMAGE]: "1d6",
             [WEAPON_TYPE]: name,
@@ -1042,12 +1055,10 @@ describe("DetailedCharacter", () => {
     });
 
     test("reach a bow's ten range increments with a magic bow made from its template, the seeded oathbow's too", async () => {
-      const plusOne = await createTestItem({
-        name: "+1 Longbow",
-        type: "Weapon",
-        slot: "Two Handed",
-        sourceItemId: (await getSeedCtx()).itemMap["Longbow"],
-      });
+      const plusOne = await createTestItem(
+        { name: "+1 Longbow", links: { madeFrom: (await getSeedCtx()).itemMap["Longbow"] } },
+        { [ITEM_TYPE]: "Weapon", [ITEM_SLOT]: "Two Handed" },
+      );
       const bjorn = await buildCarrying("Bjorn Ironhand", [
         { item: plusOne.id, location: "Two Handed", groups: [0] },
         { item: "Oathbow", location: "Two Handed", groups: [1] },
@@ -1072,8 +1083,10 @@ describe("DetailedCharacter", () => {
     test("read whether a weapon is ranged and how strength adds to its damage off its fields, not its family", async () => {
       const weapon = (name: string, family: string, fields: Record<string, FieldValue> = {}) =>
         createTestItem(
-          { name, type: "Weapon", slot: "Main Hand" },
+          { name },
           {
+            [ITEM_TYPE]: "Weapon",
+            [ITEM_SLOT]: "Main Hand",
             [WEAPON_PROFICIENCY]: "Simple",
             [WEAPON_FAMILY]: family,
             [WEAPON_BASE_DAMAGE]: "1d6",
@@ -1151,7 +1164,10 @@ describe("DetailedCharacter", () => {
       test("take a carried shield's armor check penalty, keeping strength once that's better", async () => {
         // An elf rogue: STR 10 (+0), DEX 20 (+5), proficient with shields through a charm; a heavy steel shield costs 2,
         // a tower shield 10.
-        const charm = await createTestItem({ name: "Shield Charm", type: "Wondrous Item", slot: "Neck" });
+        const charm = await createTestItem(
+          { name: "Shield Charm" },
+          { [ITEM_TYPE]: "Wondrous Item", [ITEM_SLOT]: "Neck" },
+        );
         for (const feat of ["shieldproficiency", "towershieldproficiency"]) {
           await Modifiers.create(db, {
             sourceId: charm.id,
@@ -1411,12 +1427,10 @@ describe("DetailedCharacter", () => {
       test("reads the hand holding a weapon in its own modifiers' requirements too", async () => {
         // A battleaxe whose +1 to hit is only for the main hand
         const { itemMap, rulesetId } = await getSeedCtx();
-        const sword = await createTestItem({
-          name: "Main-Hand Axe",
-          type: "Weapon",
-          slot: "Main Hand",
-          sourceItemId: itemMap["Battleaxe"],
-        });
+        const sword = await createTestItem(
+          { name: "Main-Hand Axe", links: { madeFrom: itemMap["Battleaxe"] } },
+          { [ITEM_TYPE]: "Weapon", [ITEM_SLOT]: "Main Hand" },
+        );
         const [bonus] = await Modifiers.create(db, {
           sourceId: sword.id,
           sourceType: "items",
@@ -1511,8 +1525,15 @@ describe("DetailedCharacter", () => {
       test("costs a base weapon the character isn't proficient with 4 to hit, and nothing else", async () => {
         const blade = await requiringWithBonus(
           await createTestItem(
-            { name: "Base Blade", type: "Weapon", slot: "Main Hand", isTemplate: true },
-            { [WEAPON_PROFICIENCY]: "Martial", [WEAPON_BASE_DAMAGE]: "1d8", [WEAPON_TYPE]: "Longsword" },
+            { name: "Base Blade" },
+            {
+              [ITEM_TYPE]: "Weapon",
+              [ITEM_SLOT]: "Main Hand",
+              [ITEM_IS_TEMPLATE]: true,
+              [WEAPON_PROFICIENCY]: "Martial",
+              [WEAPON_BASE_DAMAGE]: "1d8",
+              [WEAPON_TYPE]: "Longsword",
+            },
           ),
           "feats.martialweaponproficiency.possessed",
         );
@@ -1526,8 +1547,15 @@ describe("DetailedCharacter", () => {
       test("counts a base weapon whose proficiency names nothing as one the character isn't proficient with", async () => {
         const blade = await requiringWithBonus(
           await createTestItem(
-            { name: "Lost Blade", type: "Weapon", slot: "Main Hand", isTemplate: true },
-            { [WEAPON_PROFICIENCY]: "Martial", [WEAPON_BASE_DAMAGE]: "1d8", [WEAPON_TYPE]: "Longsword" },
+            { name: "Lost Blade" },
+            {
+              [ITEM_TYPE]: "Weapon",
+              [ITEM_SLOT]: "Main Hand",
+              [ITEM_IS_TEMPLATE]: true,
+              [WEAPON_PROFICIENCY]: "Martial",
+              [WEAPON_BASE_DAMAGE]: "1d8",
+              [WEAPON_TYPE]: "Longsword",
+            },
           ),
           "feats.nosuchproficiency.possessed",
         );
@@ -1540,8 +1568,14 @@ describe("DetailedCharacter", () => {
       test("never costs a plain weapon, neither a template nor made from one: its requirements are its own", async () => {
         const blade = await requiringWithBonus(
           await createTestItem(
-            { name: "Plain Blade", type: "Weapon", slot: "Main Hand" },
-            { [WEAPON_PROFICIENCY]: "Martial", [WEAPON_BASE_DAMAGE]: "1d8", [WEAPON_TYPE]: "Longsword" },
+            { name: "Plain Blade" },
+            {
+              [ITEM_TYPE]: "Weapon",
+              [ITEM_SLOT]: "Main Hand",
+              [WEAPON_PROFICIENCY]: "Martial",
+              [WEAPON_BASE_DAMAGE]: "1d8",
+              [WEAPON_TYPE]: "Longsword",
+            },
           ),
           "feats.martialweaponproficiency.possessed",
         );
@@ -1555,12 +1589,10 @@ describe("DetailedCharacter", () => {
       test("costs a weapon nothing for another requirement unmet, which turns its own bonuses off", async () => {
         const { itemMap } = await getSeedCtx();
         const blade = await requiringWithBonus(
-          await createTestItem({
-            name: "Giant's Blade",
-            type: "Weapon",
-            slot: "Main Hand",
-            sourceItemId: itemMap["Longsword"],
-          }),
+          await createTestItem(
+            { name: "Giant's Blade", links: { madeFrom: itemMap["Longsword"] } },
+            { [ITEM_TYPE]: "Weapon", [ITEM_SLOT]: "Main Hand" },
+          ),
           "abilities.strength.total",
           { operator: "greater_than_or_equal", value: "30", valueType: "number" },
         );
@@ -1856,12 +1888,10 @@ describe("DetailedCharacter", () => {
 
     test("reads the armor fields of an item made from a template", async () => {
       const { itemMap } = await getSeedCtx();
-      const derived = await createTestItem({
-        name: "Full Plate +1",
-        type: "Armor",
-        slot: "Torso",
-        sourceItemId: itemMap["Full Plate"],
-      });
+      const derived = await createTestItem(
+        { name: "Full Plate +1", links: { madeFrom: itemMap["Full Plate"] } },
+        { [ITEM_TYPE]: "Armor", [ITEM_SLOT]: "Torso" },
+      );
       const bjorn = await buildCarrying("Bjorn Ironhand", [{ item: derived.id, location: "Torso" }]);
       // By its template's type, which it inherits: an item is never reached by its name
       expect(bjorn.components.armors.getArmors()["fullplate"]).toMatchObject({
@@ -1876,8 +1906,10 @@ describe("DetailedCharacter", () => {
 
     test("lowers a masterwork armor or shield's check penalty by 1", async () => {
       const armor = await createTestItem(
-        { name: "Chain Mail (Masterwork)", type: "Armor", slot: "Torso" },
+        { name: "Chain Mail (Masterwork)" },
         {
+          [ITEM_TYPE]: "Armor",
+          [ITEM_SLOT]: "Torso",
           [ARMOR_PROFICIENCY]: "Heavy",
           [ARMOR_TYPE]: "Chain Mail",
           [ARMOR_AC_BONUS]: 5,
@@ -1888,8 +1920,10 @@ describe("DetailedCharacter", () => {
         },
       );
       const shield = await createTestItem(
-        { name: "Heavy Steel Shield (Masterwork)", type: "Shield", slot: "Off Hand" },
+        { name: "Heavy Steel Shield (Masterwork)" },
         {
+          [ITEM_TYPE]: "Shield",
+          [ITEM_SLOT]: "Off Hand",
           [SHIELD_PROFICIENCY]: "Heavy",
           [SHIELD_TYPE]: "Heavy Steel Shield",
           [SHIELD_AC_BONUS]: 2,
@@ -2244,8 +2278,7 @@ describe("DetailedCharacter", () => {
       const [race] = await Entities.create<Race>(db, "races", {
         name: "Test Race",
         rulesetId: ruleset.id,
-        size: "Medium",
-        baseSpeed: 30,
+        fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
       });
       const { klassLevel } = await createTestKlassLevel(ruleset.id);
       const character = await createTestCharacter(SEED_USER_ID, { rulesetId: ruleset.id, raceId: race.id });
@@ -2319,7 +2352,7 @@ describe("DetailedCharacter", () => {
       expect(general.available).toBe(general.allowed - general.spent);
       const nonStacking = Object.values(detailed.components.classes.getCharacterClasses())
         .flatMap((klass) => klass.levels.flatMap((level) => level.feats))
-        .filter((f) => !f.stackable)
+        .filter((f) => !f.fields[FEAT_STACKABLE])
         .map((f) => f.id);
       expect(new Set(nonStacking).size).toBe(nonStacking.length);
     });

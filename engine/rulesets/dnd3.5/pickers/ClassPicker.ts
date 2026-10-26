@@ -1,6 +1,6 @@
-import type { CharacterInput, OpenedTrackPicker } from "@/engine/core/module/index.ts";
+import type { CharacterInput, EntityFilters, EntityRecord, OpenedTrackPicker } from "@/engine/core/module/index.ts";
 import { CharacterPicker } from "@/engine/core/pickers/index.ts";
-import type { EntityRow, RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import CharacterProjection from "@/engine/rulesets/dnd3.5/levelUp/CharacterProjection.ts";
 import type LevelUpPlan from "@/engine/rulesets/dnd3.5/levelUp/LevelUpPlan.ts";
 import type { PlannedSoFar } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
@@ -19,8 +19,8 @@ import { stripSeparators } from "@/shared/text.ts";
  * points spent so far go on the planned levels as a save would spread them (`plan`).
  */
 export default class ClassPicker
-  extends CharacterPicker<DetailedCharacter, EntityRow, { track: { last: number; left: number; next: number } }>
-  implements OpenedTrackPicker<{ columns: { kind: string } }, EntityRow>
+  extends CharacterPicker<DetailedCharacter, EntityRecord, { track: { last: number; left: number; next: number } }>
+  implements OpenedTrackPicker<EntityFilters, EntityRecord>
 {
   constructor(
     view: RulesetView,
@@ -31,8 +31,8 @@ export default class ClassPicker
     super(view, input, Dnd35CharacterBuilder);
   }
 
-  /** What the picker offers: a player character's classes. */
-  override readonly filters = { columns: { kind: "pc" } };
+  /** What the picker offers: a player character's classes (their partition, `pc`). */
+  override readonly filters = { partitions: ["pc"] };
 
   /** Its options are classes, each a track. */
   readonly tracks = true;
@@ -47,26 +47,26 @@ export default class ClassPicker
    */
   protected override detailsOf() {
     const left = LevelRules.countLevelsLeft(this.input.rows.advancements.length);
-    return (klass: EntityRow) => {
+    return (klass: EntityRecord) => {
       const next = this.nextLevelOf(klass)!;
-      const last = this.dnd35.klassLevelsByKlass.get(klass.id)?.at(-1)?.level ?? next.level;
-      return { track: { last, left, next: next.level } };
+      const last = this.dnd35.klassLevelsByKlass.get(klass.id)?.at(-1)?.position ?? next.position;
+      return { track: { last, left, next: next.position } };
     };
   }
 
   /** Whether the character meets a class's requirement groups with the class's next level added. */
-  protected override meets(groups: Requirement[][], klass: EntityRow) {
-    return this.character.meetsWithNextLevel(stripSeparators(klass.name), this.nextLevelOf(klass)!, groups);
+  protected override meets(groups: Requirement[][], klass: EntityRecord) {
+    return this.character.meetsWithNextLevel(stripSeparators(klass.name ?? ""), this.nextLevelOf(klass)!, groups);
   }
 
   /** The classes the character can take another level of. */
-  protected override offer(klasses: EntityRow[]) {
+  protected override offer(klasses: EntityRecord[]) {
     return klasses.filter((klass) => this.nextLevelOf(klass));
   }
 
   /** Highest next level first, then by name. */
-  protected override order<O extends EntityRow & { track: { next: number } }>(options: O[]) {
-    return options.sort((a, b) => b.track.next - a.track.next || a.name.localeCompare(b.name));
+  protected override order<O extends EntityRecord & { track: { next: number } }>(options: O[]) {
+    return options.sort((a, b) => b.track.next - a.track.next || (a.name ?? "").localeCompare(b.name ?? ""));
   }
 
   /**
@@ -86,7 +86,7 @@ export default class ClassPicker
   }
 
   /** A class's requirement groups: its own and its next level's. */
-  protected override requirementsOf(klass: EntityRow) {
+  protected override requirementsOf(klass: EntityRecord) {
     return [klass.id, this.nextLevelOf(klass)!.id]
       .map((id) => this.rulesetData.requirementsByEntity.get(id) ?? [])
       .filter((requirements) => requirements.length > 0);
@@ -98,7 +98,7 @@ export default class ClassPicker
   }
 
   /** The class's next level for the character: after its highest in the class. */
-  private nextLevelOf(klass: EntityRow): KlassLevel | undefined {
+  private nextLevelOf(klass: EntityRecord): KlassLevel | undefined {
     this.maxLevels ??= this.readMaxLevels();
     return this.dnd35.klassLevelByKlassAndLevel.get(`${klass.id}:${(this.maxLevels.get(klass.id) || 0) + 1}`);
   }
@@ -109,7 +109,7 @@ export default class ClassPicker
     for (const level of this.input.rows.advancements) {
       const klassLevel = level.trackId === null ? undefined : this.dnd35.klassLevelsById.get(level.trackId);
       if (klassLevel)
-        maxLevels.set(klassLevel.klassId, Math.max(maxLevels.get(klassLevel.klassId) ?? 0, klassLevel.level));
+        maxLevels.set(klassLevel.ownerId, Math.max(maxLevels.get(klassLevel.ownerId) ?? 0, klassLevel.position));
     }
     return maxLevels;
   }

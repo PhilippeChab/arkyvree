@@ -4,7 +4,13 @@ import { ALL_DOMAINS } from "@/content/dnd3.5/generated/srd/domains.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { UNARMED_STRIKE } from "@/vocabulary/dnd3.5/combat.ts";
 import { CREATURE_TYPES } from "@/vocabulary/dnd3.5/creatureTypes.ts";
-import { FEAT_FAMILY, WEAPON_MAX_RANGE_INCREMENTS, WEAPON_RANGE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  FEAT_FAMILY,
+  FEAT_STACKABLE,
+  LANGUAGE_TYPE,
+  WEAPON_MAX_RANGE_INCREMENTS,
+  WEAPON_RANGE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 import { SECRET_LANGUAGE_TYPE } from "@/vocabulary/dnd3.5/languages.ts";
 import { WEAPON_TYPE_DEFINITIONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
@@ -101,7 +107,7 @@ describe("The seeded core rules", () => {
     "give the %s its automatic languages, as its modifiers' grants, each a language of the rules",
     async (race, slugs) => {
       const rows = await seededRows();
-      const { id } = rows.races.find((row) => row.name === race && row.kind === "pc")!;
+      const { id } = rows.races.find((row) => row.name === race && row.partition === "pc")!;
       expect(grantedLanguages(rows, id)).toEqual(slugs.map((slug) => grant(slug)));
       const known = new Set(rows.languages.map(({ name }) => stripSeparators(name)));
       expect(slugs.filter((slug) => !known.has(slug))).toEqual([]);
@@ -116,9 +122,9 @@ describe("The seeded core rules", () => {
       ({ sourceId, target }) => levelIds.has(sourceId) && target?.startsWith("languages."),
     );
     expect(granting.map(({ sourceId }) => sourceId)).toEqual([rows.klassLevel("Druid", 1).id]);
-    expect(rows.languages.filter(({ type }) => type === SECRET_LANGUAGE_TYPE).map(({ name }) => name)).toEqual([
-      "Druidic",
-    ]);
+    expect(
+      rows.languages.filter(({ fields }) => fields[LANGUAGE_TYPE] === SECRET_LANGUAGE_TYPE).map(({ name }) => name),
+    ).toEqual(["Druidic"]);
   });
 
   test("name a weapon's feats as its item, and the unarmed strike's, a simple weapon that's no item", async () => {
@@ -306,7 +312,7 @@ describe("The seeded core rules", () => {
         const family = rows.textsOf(feat.id, FEAT_FAMILY);
         expect({
           name,
-          stackable: feat.stackable,
+          stackable: feat.fields[FEAT_STACKABLE],
           aptitudes: feat.lists.map((link) => link.aptitudeId),
           family,
         }).toEqual({ name, stackable: false, aptitudes: [aptitude.id], family: ["Favored Enemy"] });

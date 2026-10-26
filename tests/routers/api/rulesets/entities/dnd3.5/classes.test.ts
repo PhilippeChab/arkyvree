@@ -4,6 +4,7 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const kinds = api.api.rulesets[":id"].entities[":entityType"];
 const entity = kinds[":entityId"];
@@ -20,17 +21,21 @@ describe("rulesets entities: classes", () => {
         json: { name: "Test Class", description: "A test class", hd: 10 },
       }),
     );
-    expect(created).toMatchObject({ name: "Test Class", description: "A test class", hd: 10 });
+    expect(created).toMatchObject({ name: "Test Class", description: "A test class", fields: { [CLASS_HD]: 10 } });
     const param = { id, entityType, entityId: created.id };
 
-    expect(await expectOk(entity.$get({ param }))).toMatchObject({ id: created.id, name: "Test Class", hd: 10 });
+    expect(await expectOk(entity.$get({ param }))).toMatchObject({
+      id: created.id,
+      name: "Test Class",
+      fields: { [CLASS_HD]: 10 },
+    });
     const list = await expectOk(kinds.$get({ param: { id, entityType }, query: { search: "Test Class" } }));
     expect(list.items.map((c) => c.id)).toContain(created.id);
 
     const updated = await expectOk(
       entity.$put({ param, json: { name: "Renamed Class", description: "Updated", hd: 12 } }),
     );
-    expect(updated).toMatchObject({ name: "Renamed Class", description: "Updated", hd: 12 });
+    expect(updated).toMatchObject({ name: "Renamed Class", description: "Updated", fields: { [CLASS_HD]: 12 } });
 
     await expectOk(entity.$delete({ param }));
     await expectStatus(entity.$get({ param }), 404);
@@ -39,7 +44,7 @@ describe("rulesets entities: classes", () => {
   test("gives a class a d8 hit die by default", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const created = await expectOk(kinds.$post({ param: { id, entityType }, json: { name: "Default HD Class" } }));
-    expect(created.hd).toBe(8);
+    expect(created.fields[CLASS_HD]).toBe(8);
   });
 
   test("requires a session", async () => {

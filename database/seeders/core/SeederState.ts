@@ -4,7 +4,7 @@ import type { PgTable } from "drizzle-orm/pg-core";
 import type { Modifier, ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { Db } from "@/drizzle/database.ts";
 import { entitySnapshotsInRules, modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
-import { Engine } from "@/engine/index.ts";
+import type { EntityWrite } from "@/engine/index.ts";
 import StoredEntities from "@/server/repositories/stored/StoredEntities.ts";
 import StoredFields, { type FieldsUpdate } from "@/server/repositories/stored/StoredFields.ts";
 import StoredLinks, { type NewLink } from "@/server/repositories/stored/StoredLinks.ts";
@@ -145,10 +145,9 @@ export abstract class SeederState {
     await this.writeFields([...copies].map(([id, copyId]) => ({ id: copyId, type, values: values.get(id)! })));
   }
 
-  /** A kind's rows of entities (`type`, `ids`), by their columns. */
-  protected async entityRows<R>(type: string, ids: string[]): Promise<R[]> {
-    const stored = await Entities.findStored(this.db, { ids });
-    return stored.filter((entity) => entity.type === type).map((entity) => Engine.storage().rowOf(entity) as R);
+  /** A kind's entities (`type`, `ids`), as their records: their own columns, own fields and single links. */
+  protected async entityRecords<R extends { id: string }>(type: string, ids: string[]): Promise<R[]> {
+    return await Entities.findMany<R>(this.db, { entityType: type, ids });
   }
 
   /** Inserts the rows, if there are any. */
@@ -156,10 +155,10 @@ export abstract class SeederState {
     if (rows.length > 0) await this.db.insert(table).values(rows);
   }
 
-  /** Inserts a kind's rows (`type`), each by its columns: answers their ids by name. */
-  protected async insertEntities(type: string, rows: Record<string, unknown>[]): Promise<Ids> {
-    const ids = await this.insertRows(type, rows);
-    return Object.fromEntries(rows.map((row, i) => [row.name as string, ids[i]]));
+  /** Inserts a kind's entities (`type`, `writes`): answers their ids by name. */
+  protected async insertEntities(type: string, writes: EntityWrite[]): Promise<Ids> {
+    const ids = await this.insertRows(type, writes);
+    return Object.fromEntries(writes.map((write, i) => [write.name!, ids[i]]));
   }
 
   /** Inserts entities' links (`links`, each from its entity, by its role: a feat's pools, a class level's grants). */
@@ -189,9 +188,9 @@ export abstract class SeederState {
     }
   }
 
-  /** Inserts a kind's rows (`type`), each by its columns (an owned kind's, which has no name): answers their ids. */
-  protected async insertRows(type: string, rows: Record<string, unknown>[]): Promise<string[]> {
-    return await Entities.createIds(this.db, type, rows);
+  /** Inserts a kind's entities (`type`, `writes`: an owned kind's, which has no name, too): answers their ids. */
+  protected async insertRows(type: string, writes: EntityWrite[]): Promise<string[]> {
+    return await Entities.createIds(this.db, type, writes);
   }
 
   /** Records copies (`copies`: each entity's copy, by its id) in `entity_snapshots`: the ruleset shows each in place of its original. */

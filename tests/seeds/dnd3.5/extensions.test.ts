@@ -9,6 +9,7 @@ import {
 } from "@/content/dnd3.5/rulesetNames.ts";
 import { db } from "@/server/database/index.ts";
 import { EntitySnapshots, Rulesets } from "@/server/repositories/index.ts";
+import { FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { seededRows } from "./seededRows.ts";
 
@@ -40,7 +41,7 @@ describe("The seeded extensions", () => {
     const rows = await seededRows(ruleset);
     const { id } = rows.klasses.find((row) => row.name === klass)!;
     const picking = rows.klassLevels
-      .filter((level) => level.klassId === id)
+      .filter((level) => level.ownerId === id)
       .filter((level) =>
         rows
           .modifiersOf(level.id)
@@ -48,7 +49,7 @@ describe("The seeded extensions", () => {
             ({ operator, target, value }) => target === "languages.extrapicks" && operator === "add" && value === "1",
           ),
       )
-      .map(({ level }) => level);
+      .map(({ position }) => position);
     expect(picking.toSorted((a, b) => a - b)).toEqual([...levels]);
   });
 
@@ -281,7 +282,9 @@ describe("The seeded extensions", () => {
         ]),
       ),
     ).toEqual(Object.fromEntries(domains.map(([name, join]) => [name, [`${join} true`]])));
-    expect(choices.every((feat) => feat.selectable && divine.requirementsOf(feat.id).length === 0)).toBe(true);
+    expect(choices.every((feat) => feat.fields[FEAT_SELECTABLE] && divine.requirementsOf(feat.id).length === 0)).toBe(
+      true,
+    );
     // Picked at her first level
     expect(
       divine.modifiersOf(divine.klassLevel("Divine Crusader", 1).id).map((m) => `${m.target} ${m.operator} ${m.value}`),
@@ -297,7 +300,7 @@ describe("The seeded extensions", () => {
       return Object.fromEntries(
         choices.map((feat) => [
           feat.name,
-          [feat.stackable, ...rows.requirementsOf(feat.id).map((q) => `${q.target} ${q.value}`)],
+          [feat.fields[FEAT_STACKABLE], ...rows.requirementsOf(feat.id).map((q) => `${q.target} ${q.value}`)],
         ]),
       );
     };
@@ -335,7 +338,7 @@ describe("The seeded extensions", () => {
     // Each feature opens its pick at each of its levels
     const picksOf = (rows: typeof arcane, feature: string) => {
       const feat = rows.feat(feature);
-      return [feat.stackable, ...rows.modifiersOf(feat.id).map((m) => m.target)];
+      return [feat.fields[FEAT_STACKABLE], ...rows.modifiersOf(feat.id).map((m) => m.target)];
     };
     expect(picksOf(arcane, "Spell Secret (Wu Jen)")).toEqual([true, "aptitudes.wujenspellsecret.allowed"]);
     expect(picksOf(arcane, "Elemental Mastery (Wu Jen)")).toEqual([false, "aptitudes.wujenelementalmastery.allowed"]);
@@ -350,7 +353,10 @@ describe("The seeded extensions", () => {
       const options = divine.feats.filter((feat) => feat.lists.some((link) => link.aptitudeId === pool));
       return {
         // The pick each of its levels opens
-        pick: [feature.stackable, ...divine.modifiersOf(feature.id).map((m) => `${m.target} ${m.operator} ${m.value}`)],
+        pick: [
+          feature.fields[FEAT_STACKABLE],
+          ...divine.modifiersOf(feature.id).map((m) => `${m.target} ${m.operator} ${m.value}`),
+        ],
         levels: Array.from({ length: 10 }, (_, index) => index + 1).filter((level) =>
           divine.klassLevelFeats.some(
             (grant) => grant.fromId === divine.klassLevel("Geomancer", level).id && grant.toId === feature.id,
@@ -358,7 +364,7 @@ describe("The seeded extensions", () => {
         ),
         // Ten drifts, each taken once, open from the stage's first level
         options: options.length,
-        stackable: options.some((feat) => feat.stackable),
+        stackable: options.some((feat) => feat.fields[FEAT_STACKABLE]),
         requirements: [
           ...new Set(options.flatMap((feat) => divine.requirementsOf(feat.id).map((q) => `${q.target} ${q.value}`))),
         ],

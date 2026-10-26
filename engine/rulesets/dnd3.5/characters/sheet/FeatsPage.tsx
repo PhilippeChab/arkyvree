@@ -1,6 +1,7 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import { FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
@@ -34,7 +35,7 @@ function FeatsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter
           for (const [groupIndex, featGroup] of Object.values(groupedFeats).entries()) {
             const feat = featGroup[0];
             const count = featGroup.length;
-            if (feat.stackable && count > 1) {
+            if (feat.fields[FEAT_STACKABLE] && count > 1) {
               featEntries.push({
                 key: `${feat.name}-${groupIndex}`,
                 label: `${feat.name} (x${count})`,

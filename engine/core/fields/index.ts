@@ -1,3 +1,4 @@
+export { default as Decimals } from "./Decimals.ts";
 export { default as DeclaredFields } from "./DeclaredFields.ts";
 export { default as Field } from "./Field.ts";
 export type { Fields, FieldValues, LeafSpec, NoFields } from "./Field.ts";

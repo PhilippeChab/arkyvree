@@ -30,7 +30,7 @@ export function SeedsSkills<B extends Constructor<BaseSeeder>>(Base: B) {
             rulesetId: this.ctx.rulesetId,
             name,
             description,
-            primaryAbilityId: this.ctx.abilityMap[ability],
+            links: { keyAbility: this.ctx.abilityMap[ability] },
           })),
         ),
       );

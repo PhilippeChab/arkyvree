@@ -1,4 +1,4 @@
-/** Orders a class's levels by their number, as its tabs list them. */
-export function byLevel(a: { level: number }, b: { level: number }) {
-  return a.level - b.level;
+/** Orders a class's levels by their number (`position`), as its tabs list them. */
+export function byLevel(a: { position: number }, b: { position: number }) {
+  return a.position - b.position;
 }

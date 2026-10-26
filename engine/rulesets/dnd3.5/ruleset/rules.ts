@@ -12,6 +12,7 @@ import { SAVE_COLUMNS, SAVE_LIST } from "@/engine/rulesets/dnd3.5/entities/saves
 import { SKILL_COLUMNS, SKILL_LIST } from "@/engine/rulesets/dnd3.5/entities/skills/columns.ts";
 import { SPELL_COLUMNS, SPELL_LIST } from "@/engine/rulesets/dnd3.5/entities/spells/columns.ts";
 import { BONDED_KINDS } from "@/vocabulary/dnd3.5/bondedKinds.ts";
+import { FEAT_GENERATED, ITEM_IS_TEMPLATE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { MAX_ITEM_VARIANTS } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
@@ -62,7 +63,7 @@ export const RULES: RulesDeclaration = {
     {
       families: true,
       icon: "spoke",
-      lockedName: { flag: "generated", reason: "A generated feat keeps its name" },
+      lockedName: { field: FEAT_GENERATED, reason: "A generated feat keeps its name" },
       opens: "customization",
       pools: { ...APTITUDE_POOLS, scope: "feats" },
       type: "feats",
@@ -80,7 +81,7 @@ export const RULES: RulesDeclaration = {
         locked: ["slot", "sourceItemId", "type"],
         most: MAX_ITEM_VARIANTS,
         source: "sourceItemId",
-        template: "isTemplate",
+        template: { field: ITEM_IS_TEMPLATE, key: "isTemplate" },
       },
       icon: "construction",
       opens: "customization",

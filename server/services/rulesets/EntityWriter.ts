@@ -1,5 +1,12 @@
 import type { Db } from "@/drizzle/database.ts";
-import type { EntityCreatePlan, EntityDeletePlan, EntityEditPlan, EntityForm, EntityWrites } from "@/engine/index.ts";
+import type {
+  EntityCreatePlan,
+  EntityDeletePlan,
+  EntityEditPlan,
+  EntityForm,
+  EntityRecord,
+  EntityWrites,
+} from "@/engine/index.ts";
 import {
   CustomizationCopies,
   EntityEdit,
@@ -9,14 +16,8 @@ import {
   withRulesetScope,
 } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
-import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import {
-  CUSTOMIZABLE_TYPES,
-  Entities,
-  EntityLinks,
-  type EntityRow,
-  type RulesetEntityType,
-} from "@/server/repositories/index.ts";
+import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { CUSTOMIZABLE_TYPES, Entities, EntityLinks, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { getActivityName } from "@/shared/activity.ts";
@@ -33,8 +34,8 @@ interface PlannedEntity {
   rulesetId: string;
 }
 
-/** A kind's row, as a write answers it (`Entities`). */
-type Row = EntityRow & { description: string | null; name: string; rulesetId: string; updatedAt: string };
+/** An entity as a write answers it: its record as written (`Entities`), named. */
+type Row = EntityRecord & { name: string };
 
 /**
  * A ruleset entity's form, as its route carries it (`entityBody`): its name, when it was last read (an update's), and
@@ -45,7 +46,8 @@ export type EntityBody = EntityForm & { name: string; updatedAt?: string };
 /**
  * A ruleset entity kind's writer (`type`): the steps every kind's create, update and delete
  * take, in one order, around the plan its rules give (`Engine.for(scope).entities(type)`). A create checks access,
- * keeps the name free (taking over a deleted copy's tombstone), writes the row, its list links, the customizations it
+ * keeps the name free (taking over a deleted copy's tombstone), writes the row (its own columns, its own fields and its
+ * single links, as its plan stores them), its links of the roles it holds many of, the customizations it
  * copies and what the plan writes beside it (its fields, over the stored values it copied). An update keeps a
  * new name free as a create does, and writes the row the view's entity resolves to (its copy, made on its first edit),
  * refused when stale. A delete is refused while the entity is in use. Each first opens the kind's rules for its action
@@ -103,14 +105,14 @@ export default class EntityWriter {
   /**
    * A new entity in the ruleset (`name`, which must be free in its view), as its rules plan it (`plan`, given the
    * ancestor whose deleted copy's tombstone the new entity takes over, and the transaction to read what the plan needs):
-   * the row written, with the fields the plan keeps.
+   * what its plan answers once written (`describe`: the row, with its links as stored).
    */
-  async create<P extends EntityCreatePlan<object>>(
+  async create<P extends EntityCreatePlan>(
     session: Session,
     rulesetId: string,
     name: string,
     plan: (scope: RulesetScope, reads: { tombstoneAncestorId: string | null; tx: Db }) => P | Promise<P>,
-  ): Promise<Row & P["fields"]> {
+  ): Promise<ReturnType<P["describe"]>> {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
@@ -122,7 +124,7 @@ export default class EntityWriter {
           const { tombstoneAncestorId } = await names.assertNameAvailable(tx, this.type, name);
           const planned = await plan(scope, { tombstoneAncestorId, tx });
 
-          const [row] = await Entities.create<Row>(tx, this.type, { ...planned.columns, rulesetId });
+          const [row] = await Entities.create<Row>(tx, this.type, { ...planned.row, rulesetId });
           if (tombstoneAncestorId) await names.repointTombstone(tx, this.type, tombstoneAncestorId, row.id);
           await createLinks(tx, { entityId: row.id, entityType: this.type }, planned.links ?? []);
           // The customizations it copies first: the fields the plan writes replace the stored values it copied
@@ -130,7 +132,7 @@ export default class EntityWriter {
           await this.writeBeside(tx, scope, row.id, planned.writes);
 
           await this.recordActivity(tx, session, "create", row.id, { entityName: row.name });
-          return { ...row, ...planned.fields };
+          return planned.describe(row, await EntityLinks.findOwn(tx, row.id)) as ReturnType<P["describe"]>;
         }),
     );
     RulesetViews.invalidate(rulesetId);
@@ -177,14 +179,14 @@ export default class EntityWriter {
    * An entity's update, as its rules plan it (`plan`, given the transaction to read what the plan needs) from its form
    * (`body`): a new name kept free in its view, as a create's is, the row the view's entity resolves to (the ruleset's
    * own, or its copy, made on its first edit) updated, refused when stale (`body.updatedAt`, a copy's never is), its
-   * list links replaced, and what the plan writes beside it. The row written, with the fields the plan keeps.
+   * list links replaced, and what the plan writes beside it. What its plan answers once written (`describe`).
    */
-  async update<P extends EntityEditPlan<object, object, PlannedEntity>>(
+  async update<P extends EntityEditPlan<object, PlannedEntity>>(
     session: Session,
     rulesetId: string,
     body: { name: string; updatedAt?: string },
     plan: (scope: RulesetScope, reads: { tx: Db }) => P | Promise<P>,
-  ): Promise<Row & P["fields"]> {
+  ): Promise<ReturnType<P["describe"]>> {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
@@ -201,13 +203,10 @@ export default class EntityWriter {
           );
           const { id: targetId, copied } = await new EntityEdit(ruleset).cowToEdit(tx, this.type, planned.entity);
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
-          const rows = await Entities.update<Row>(
-            tx,
-            this.type,
-            { ...planned.columns },
-            { id: targetId, expectedUpdatedAt },
-          );
+          const rows = await Entities.update<Row>(tx, this.type, planned.row, { id: targetId, expectedUpdatedAt });
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+          // A row deleted since the view was read: no token to call it stale by
+          if (rows.length === 0) throw new NotFoundError(`${getActivityName(this.type)} not found`);
 
           await setLinks(tx, { entityId: targetId, entityType: this.type }, planned.links);
           await this.writeBeside(tx, scope, targetId, planned.writes);
@@ -215,10 +214,10 @@ export default class EntityWriter {
           const [row] = rows;
           await this.recordActivity(tx, session, "update", targetId, {
             entityName: body.name,
-            // The columns its plan writes, never the body, whose other keys it doesn't
-            changedFields: getChangedFields(planned.entity, planned.columns),
+            // The columns its plan writes, by its form's keys, never the body, whose other keys it doesn't
+            changedFields: getChangedFields(planned.changes.before, planned.changes.after),
           });
-          return { ...row, ...planned.fields };
+          return planned.describe(row, await EntityLinks.findOwn(tx, targetId)) as ReturnType<P["describe"]>;
         }),
     );
     RulesetViews.invalidate(rulesetId);

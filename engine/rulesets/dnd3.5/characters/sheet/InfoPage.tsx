@@ -3,6 +3,7 @@ import { Image, Page, Text, View } from "@react-pdf/renderer";
 import ClassLevels from "@/engine/rulesets/dnd3.5/characters/ClassLevels.ts";
 import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import { RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import AbilityScores from "./AbilityScores.tsx";
 import SheetFormat from "./SheetFormat.ts";
@@ -88,7 +89,7 @@ function InfoPage({
             </View>
             <View style={styles.headerRow}>
               <Text style={styles.headerLabel}>Size:</Text>
-              <Text style={styles.headerValue}>{identityData.physiology.race?.size || "Medium"}</Text>
+              <Text style={styles.headerValue}>{identityData.physiology.race?.fields[RACE_SIZE] || "Medium"}</Text>
             </View>
             <View style={styles.headerRow}>
               <Text style={styles.headerLabel}>Weight:</Text>

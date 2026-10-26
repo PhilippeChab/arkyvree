@@ -1,10 +1,11 @@
 /** Where an item goes: the locations its type sets, the hands a weapon set applies to, and where an entry is worn. */
 
 import type { StoredValues } from "@/engine/core/fields/index.ts";
+import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { type ItemLocation, LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { HAND_LOCATIONS, type HandLocation, ITEM_TYPE_LOCATIONS } from "@/vocabulary/dnd3.5/equipment.ts";
-import { ITEM_HAS_CHARGES, WEAPON_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { ITEM_HAS_CHARGES, ITEM_SLOT, ITEM_TYPE, WEAPON_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** An inventory entry, as where it's worn reads it. */
 interface HeldEntry {
@@ -14,10 +15,9 @@ interface HeldEntry {
   location: string | null;
 }
 
-/** An item, as its placement reads it: its type, and the slot it's worn in (`"Other"` for none). */
+/** An item, as its placement reads it: its type, and the slot it's worn in (`"Other"` for none), its own fields. */
 interface PlacedItem {
-  slot: ItemLocation;
-  type: string | null;
+  fields: Pick<Item["fields"], typeof ITEM_SLOT | typeof ITEM_TYPE>;
 }
 
 /** An item type that sets the locations its items go to (`ITEM_TYPE_LOCATIONS`). */
@@ -63,10 +63,11 @@ export default class ItemPlacement {
    * worn nowhere in particular, else any.
    */
   private static offeredLocations(item: PlacedItem, values: StoredValues): readonly ItemLocation[] {
+    const { [ITEM_SLOT]: slot, [ITEM_TYPE]: type = null } = item.fields;
     const [held] = values.fields[WEAPON_SIZE] ?? [];
     const size = held === undefined ? undefined : String(held);
-    if (item.type === "Weapon" && ItemPlacement.isTwoHanded(size)) return ["Two Handed"];
-    return ItemPlacement.locationsOf(item.type) ?? (item.slot === "Other" ? ["Other"] : LOCATION_OPTIONS);
+    if (type === "Weapon" && ItemPlacement.isTwoHanded(size)) return ["Two Handed"];
+    return ItemPlacement.locationsOf(type) ?? (slot === "Other" ? ["Other"] : LOCATION_OPTIONS);
   }
 
   /**
@@ -74,16 +75,17 @@ export default class ItemPlacement {
    * own slot), the locations it can take (a weapon's or a shield's form asks for a weapon set in a hand), and its charges.
    */
   static describe(item: PlacedItem, values: StoredValues): ItemPlacementDescription {
-    const typeLocations = ItemPlacement.locationsOf(item.type);
-    const asksWeaponSet = item.type === "Weapon" || item.type === "Shield";
+    const { [ITEM_SLOT]: slot, [ITEM_TYPE]: type = null } = item.fields;
+    const typeLocations = ItemPlacement.locationsOf(type);
+    const asksWeaponSet = type === "Weapon" || type === "Shield";
     return {
       charges: ItemPlacement.chargesOf(values),
-      hand: item.type === "Weapon",
+      hand: type === "Weapon",
       locations: ItemPlacement.offeredLocations(item, values).map((location) => ({
         location,
         grouped: asksWeaponSet && ItemPlacement.isHand(location),
       })),
-      slot: typeLocations ? (typeLocations.length === 1 ? typeLocations[0] : null) : item.slot,
+      slot: typeLocations ? (typeLocations.length === 1 ? typeLocations[0] : null) : slot,
     };
   }
 

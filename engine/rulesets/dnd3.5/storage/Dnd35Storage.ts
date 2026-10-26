@@ -1,75 +1,79 @@
 import type { StorageDeclaration } from "@/engine/core/module/index.ts";
+import {
+  CLASS_HD,
+  FEAT_GENERATED,
+  FEAT_SELECTABLE,
+  FEAT_STACKABLE,
+  ITEM_COST_GP,
+  ITEM_IS_TEMPLATE,
+  ITEM_SLOT,
+  ITEM_TYPE,
+  ITEM_WEIGHT,
+  LANGUAGE_TYPE,
+  RACE_BASE_SPEED,
+  RACE_SIZE,
+  SPELL_SAVE_EFFECT,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import Dnd35FieldDefs from "./Dnd35FieldDefs.ts";
 
 /**
- * How 3.5 stores its data in the generic tables: its kinds' columns (a class's hit die is its `CLASS_HD` field, a
- * save's ability its `keyAbility` link), its characters' (its links of the `score` role hold an amount; its identity
- * is its `CHARACTER_*` fields, its race a `race` link, a level an advancement, its feats `feats` picks), and its
- * registries' rows, which migration 0080 wrote (`tests/database/dnd3.5/registries.test.ts`
- * checks the database holds them): its link roles among them, by which its entities' links are read (a feat's pools
- * are its `listedIn` links, a class's skills its `classSkill` links).
+ * 3.5's kinds: each one's own fields (a class's hit die, `CLASS_HD`; a feat's flags, a feat picked at a level up by
+ * default; an item's cost, weight, type and slot, `"Other"` by default, and whether it's a template), what a new class
+ * or race is for by default (`pc`), and which kinds a user customizes and how their namesakes pair.
+ */
+const KINDS: StorageDeclaration["kinds"] = {
+  abilities: {},
+  aptitudes: { namesakes: "identity" },
+  feats: {
+    customizable: true,
+    fields: {
+      [FEAT_STACKABLE]: { kind: "flag", default: false },
+      [FEAT_SELECTABLE]: { kind: "flag", default: true },
+      [FEAT_GENERATED]: { kind: "flag", default: false },
+    },
+    namesakes: "reprints",
+  },
+  items: {
+    customizable: true,
+    fields: {
+      [ITEM_WEIGHT]: { kind: "number", scale: 2 },
+      [ITEM_COST_GP]: { kind: "number", scale: 2 },
+      [ITEM_TYPE]: { kind: "text" },
+      [ITEM_SLOT]: { kind: "text", default: "Other" },
+      [ITEM_IS_TEMPLATE]: { kind: "flag", default: false },
+    },
+    template: ITEM_IS_TEMPLATE,
+  },
+  classes: {
+    customizable: true,
+    editedLinks: "classSkill",
+    fields: { [CLASS_HD]: { kind: "number" } },
+    partition: "pc",
+  },
+  class_levels: { customizable: true },
+  languages: { fields: { [LANGUAGE_TYPE]: { kind: "text" } } },
+  mechanics: {},
+  spells: { customizable: true, fields: { [SPELL_SAVE_EFFECT]: { kind: "text" } }, namesakes: "reprints" },
+  races: {
+    customizable: true,
+    fields: { [RACE_SIZE]: { kind: "text" }, [RACE_BASE_SPEED]: { kind: "number" } },
+    partition: "pc",
+  },
+  saves: {},
+  skills: {},
+};
+
+/**
+ * How 3.5 stores its data in the generic tables: its kinds (`KINDS`: their own fields, a save's ability its
+ * `keyAbility` link), its characters' (its links of the `score` role hold an amount; its identity is its `CHARACTER_*`
+ * fields, its race a `race` link, a level an advancement, its feats `feats` picks), and its registries' rows, which
+ * migration 0080 wrote (`tests/database/dnd3.5/registries.test.ts` checks the database holds them): its link roles
+ * among them, by which its entities' links are read (an item's template is its `madeFrom` link, a feat's pools its
+ * `listedIn` links, a class's skills its `classSkill` links).
  */
 export const DND35_STORAGE: StorageDeclaration = {
-  kinds: {
-    abilities: { columns: {} },
-    aptitudes: { columns: {}, namesakes: "identity" },
-    feats: {
-      customizable: true,
-      columns: {
-        stackable: { kind: "flag", field: "FEAT_STACKABLE", default: false },
-        selectable: { kind: "flag", field: "FEAT_SELECTABLE", default: true },
-        generated: { kind: "flag", field: "FEAT_GENERATED", default: false },
-      },
-      namesakes: "reprints",
-    },
-    items: {
-      customizable: true,
-      columns: {
-        sourceItemId: { kind: "link", role: "madeFrom" },
-        isTemplate: { kind: "flag", field: "ITEM_IS_TEMPLATE", default: false },
-        weight: { kind: "number", field: "ITEM_WEIGHT", scale: 2 },
-        costGp: { kind: "number", field: "ITEM_COST_GP", scale: 2 },
-        type: { kind: "text", field: "ITEM_TYPE" },
-        slot: { kind: "text", field: "ITEM_SLOT", default: "Other" },
-      },
-      order: [
-        ...["createdAt", "updatedAt", "deletedAt", "id", "rulesetId", "campaignId", "sourceItemId", "isTemplate"],
-        ...["name", "description", "weight", "costGp", "type", "slot"],
-      ],
-    },
-    classes: {
-      customizable: true,
-      columns: {
-        hd: { kind: "number", field: "CLASS_HD", integer: true },
-        parentId: { kind: "link", role: "subclassOf" },
-        kind: { kind: "partition", default: "pc" },
-      },
-      editedLinks: "classSkill",
-    },
-    class_levels: { customizable: true, columns: { klassId: { kind: "owner" }, level: { kind: "position" } } },
-    languages: { columns: { type: { kind: "text", field: "LANGUAGE_TYPE" } } },
-    mechanics: { columns: {} },
-    spells: {
-      customizable: true,
-      columns: {
-        saveId: { kind: "link", role: "resistedBy" },
-        saveEffect: { kind: "text", field: "SPELL_SAVE_EFFECT" },
-      },
-      namesakes: "reprints",
-    },
-    races: {
-      customizable: true,
-      columns: {
-        size: { kind: "text", field: "RACE_SIZE" },
-        baseSpeed: { kind: "number", field: "RACE_BASE_SPEED", integer: true },
-        parentId: { kind: "link", role: "subraceOf" },
-        kind: { kind: "partition", default: "pc" },
-      },
-    },
-    saves: { columns: { abilityId: { kind: "link", role: "keyAbility" } } },
-    skills: { columns: { primaryAbilityId: { kind: "link", role: "keyAbility" } } },
-  },
+  kinds: KINDS,
   character: { scoredRoles: ["score"] },
   registries: {
     entityTypes: [
@@ -135,7 +139,7 @@ export const DND35_STORAGE: StorageDeclaration = {
       viaOnDelete: role.viaType ? "unlink" : "refuse",
       merge: role.role === "listedIn" ? "union" : role.role === "bonusSpellAbility" ? "fallback" : "winner",
     })),
-    fieldDefs: Dnd35FieldDefs.build(),
+    fieldDefs: Dnd35FieldDefs.build(KINDS),
     rulesetRoles: [{ role: "skillPointAbility", toType: "abilities", onDelete: "unlink" }],
     characterRoles: [
       { role: "race", entityType: "races", single: true, onDelete: "refuse" },

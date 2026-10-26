@@ -10,6 +10,7 @@ export const SKILL_COLUMNS: FormField[] = [
     label: "Primary Ability",
     references: "abilities",
     required: true,
+    role: "keyAbility",
   },
 ];
 
@@ -17,7 +18,14 @@ export const SKILL_COLUMNS: FormField[] = [
 export const SKILL_LIST: ListDescription = {
   nameShare: 25,
   columns: [
-    { key: "primaryAbilityId", label: "Primary Ability", reads: "reference", references: "abilities", share: 15 },
+    {
+      key: "primaryAbilityId",
+      label: "Primary Ability",
+      reads: "reference",
+      references: "abilities",
+      role: "keyAbility",
+      share: 15,
+    },
     { key: "usableWithoutTraining", label: "Trained Only", reads: "flag", share: 15, yesWhen: false },
   ],
 };

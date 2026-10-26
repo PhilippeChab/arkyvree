@@ -4,10 +4,10 @@
  * its links (`rules.entity_links`, by role); a ruleset's settings (`rules.ruleset_fields`, `ruleset_links`); a
  * character's fields and links (`character.fields`, `links`) and its advancements and their picks
  * (`character.advancements`, `advancement_picks`). The registries those rows are checked against (`rules.entity_types`,
- * `field_defs`, `link_roles`, …) hold what each module declares here, and a module's rows read as its own shapes by
- * these declarations: its kinds' columns. An entity's links of a role many of which it holds (a feat's pools, a class
- * level's grants) are read and written as links, by role, and a character's rows as stored: its fields by field, its
- * links by role, its advancements' picks by step.
+ * `field_defs`, `link_roles`, …) hold what each module declares here. Every row is read and written as stored: an
+ * entity as its own columns, its own fields by field and its single links by role (`EntityRecord`, `EntityWrite`), its
+ * links of a role many of which it holds (a feat's pools, a class level's grants) as links, by role, and a character's
+ * rows as its fields by field, its links by role, its advancements' picks by step.
  */
 
 /** A character's link of a role, to an entity of a type: whether it holds one, and what deleting it does. */
@@ -18,14 +18,58 @@ export interface CharacterRoleDef {
   single: boolean;
 }
 
+/**
+ * An entity as the server reads and writes it: its own columns (`rules.entities`), its own fields' values by field
+ * (`fields`: those its kind holds of its own, `StoredKind.fields`), typed as stored (a number a number), and its single
+ * links' targets by role (`links`, but those its fields read, which its stored values hold). Timestamps are Postgres's
+ * text.
+ */
+export interface EntityRecord {
+  campaignId: string | null;
+  createdAt: string;
+  deletedAt: string | null;
+  description: string | null;
+  fields: Readonly<Record<string, FieldValue>>;
+  id: string;
+  links: Readonly<Record<string, string>>;
+  name: string | null;
+  ownerId: string | null;
+  partition: string;
+  position: number | null;
+  rulesetId: string;
+  type: string;
+  updatedAt: string;
+}
+
 /** An entity type, and the type that owns its entities (a class level's class). */
 export interface EntityTypeDef {
   /**
-   * The kind that owns its entities (a class level's class), none for a kind no entity owns. An owned kind's row names
-   * its owner (an `owner` column) and its position in it (a `position` column), by which its copies pair
+   * The kind that owns its entities (a class level's class), none for a kind no entity owns. An owned entity names its
+   * owner (`ownerId`) and its position in it (`position`), by which its copies pair
    */
   ownerType: string | null;
   type: string;
+}
+
+/**
+ * What a write of an entity stores (a create's, an edit's): the own columns it gives, and each own field's value and
+ * each single link's target it sets, by field and by role (null clears one). A create leaves out what its kind
+ * defaults (`StoredKind.fields`, `partition`), and an owned entity takes its owner's ruleset and campaign.
+ */
+export interface EntityWrite {
+  campaignId?: string | null;
+  createdAt?: string;
+  deletedAt?: string | null;
+  description?: string | null;
+  fields?: Readonly<Record<string, FieldValue | null>>;
+  id?: string;
+  links?: Readonly<Record<string, string | null>>;
+  name?: string;
+  ownerId?: string;
+  partition?: string;
+  position?: number;
+  rulesetId?: string;
+  updatedAt?: string;
 }
 
 /**
@@ -78,7 +122,7 @@ export interface StepDef {
   viaType: string | null;
 }
 
-/** How a module stores its data: its registries' rows, its kinds' row shapes, and its character's. */
+/** How a module stores its data: its registries' rows, its kinds' own fields and defaults, and its character's. */
 export interface StorageDeclaration {
   character: StoredCharacter;
   kinds: Record<string, StoredKind>;
@@ -129,9 +173,9 @@ export interface StoredCharacterLink {
 }
 
 /**
- * An entity as the generic tables store it: its own columns (`rules.entities`), its fields' values (`entity_fields`,
- * a set's one a row) and its links (`entity_links`, from it, in their order), which its kind's row reads by its module's
- * declaration (`StorageEngine.rowOf`). Timestamps are Postgres's text.
+ * An entity as the generic tables store it, whole: its own columns (`rules.entities`), every field's values
+ * (`entity_fields`, a set's one a row) and every link (`entity_links`, from it, in their order), which a ruleset's view
+ * is read from (`Engine.copyOnWrite().buildRawData`). Timestamps are Postgres's text.
  */
 export interface StoredEntity {
   campaignId: string | null;
@@ -159,9 +203,11 @@ export interface StoredFieldValue {
   value: FieldValue;
 }
 
-/** An entity kind's row: its columns past an entity's own (id, scope, name, description, timestamps), by their names. */
+/**
+ * An entity kind, past what the registries hold of it: whether a user customizes its entities, the links its page edits,
+ * how its namesakes pair, its own fields and what a new entity defaults, and what makes one a template.
+ */
 export interface StoredKind {
-  columns: Record<string, StoredColumn>;
   /**
    * Whether a user customizes its entities: their modifiers and requirements, on a page of their own or a tab of their
    * owner's (3.5's feats, items, spells, races, classes and class levels)
@@ -173,13 +219,25 @@ export interface StoredKind {
    */
   editedLinks?: string;
   /**
+   * The fields its entities hold of their own, past those its module's fields declare (which their stored values
+   * keep): each a single value of its kind, its entity's own on every read (`EntityRecord.fields`: 3.5's class's
+   * `CLASS_HD`), and the winning copy's of siblings; one with a `default` is written with it when a new entity's write
+   * leaves it out, and a number with a `scale` is written kept to that many places (3.5's item's weight and cost)
+   */
+  fields?: Readonly<Record<string, { default?: FieldValue; kind: ValueKind; scale?: number }>>;
+  /**
    * How its entities of one name in a ruleset's chain pair: always, a name its identity (`identity`: 3.5's pools), or,
    * when no copy pairs them, as a book's reprint (`reprints`: 3.5's feats and spells); none, never (a race or a class
    * of one name in two books is more likely two things)
    */
   namesakes?: "identity" | "reprints";
-  /** The row's columns in the order its answers give them, when it isn't an entity's own then `columns` */
-  order?: string[];
+  /** The partition a new entity's write takes when it gives none (3.5's class's and race's, `pc`): none, the empty one */
+  partition?: string;
+  /**
+   * The flag of its own fields that makes one of its entities a template others are made from (3.5's item's
+   * `ITEM_IS_TEMPLATE`), whose requirements its copies take as their template's (`RulesetData.itemRequirements`)
+   */
+  template?: string;
 }
 
 /** A link from an entity, of a role, to another entity (`toId`), through a pool (`viaId`), in its entity's order. */
@@ -215,17 +273,6 @@ export interface StoredRuleset {
   links: { createdAt: string; role: string; toId: string; updatedAt: string }[];
 }
 
-/**
- * What a write of a kind's row stores (`StorageEngine.writeOf`): its entity's own columns it gives (`own`: its id,
- * scope, name, description, timestamps, owner, position and partition), and the fields and single links it sets, each
- * value typed, or null to clear it.
- */
-export interface StoredWrite {
-  fields: { field: string; kind: ValueKind; value: FieldValue | null }[];
-  links: { role: string; single: boolean; toId: string | null; toType: string }[];
-  own: Partial<Omit<StoredEntity, "fields" | "links" | "type">>;
-}
-
 /** A stored field's value, as its typed column holds it. */
 export type FieldValue = boolean | number | string;
 
@@ -234,25 +281,6 @@ export type FieldValue = boolean | number | string;
  * copy's else the first sibling's (`fallback`), or every sibling's (`union`, a set's).
  */
 export type Merge = "fallback" | "union" | "winner";
-
-/**
- * A column an entity kind's row holds past an entity's own, and where it's stored. A field with a `default` is written
- * with it when a write leaves it out, and always holds a value.
- */
-export type StoredColumn =
-  /** A field's value: a flag, a number (an integer, or a decimal kept to `scale` places as text) or a text */
-  | { default?: boolean; field: string; kind: "flag" }
-  | { field: string; integer: true; kind: "number" }
-  | { field: string; kind: "number"; scale: number }
-  | { default?: string; field: string; kind: "text" }
-  /** The entity a single-valued link of `role` points at: its id */
-  | { kind: "link"; role: string }
-  /** The entity's partition, which its name is unique within (a class's or a race's kind) */
-  | { default: string; kind: "partition" }
-  /** An owned entity's owner (a class level's class) */
-  | { kind: "owner" }
-  /** An owned entity's position in its owner (a class level's level) */
-  | { kind: "position" };
 
 /** Where a value is held: a field's typed column. */
 export type ValueKind = "flag" | "number" | "text";

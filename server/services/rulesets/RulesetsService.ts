@@ -58,7 +58,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
           await RulesetExtensions.upsert(tx, { rulesetId: newRuleset.id, extensionId: extId });
       }
 
-      // 3. Copy the ruleset's Settings as stored (parent entity IDs — `CowData.resolveRows` resolves them at read time)
+      // 3. Copy the ruleset's Settings as stored (parent entity IDs, which the fork's view resolves at read time)
       await Fields.createRulesetCopy(tx, { fromId: id, toId: newRuleset.id });
 
       // 4. Log the fork activity

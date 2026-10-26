@@ -34,7 +34,7 @@ import CharacterSheet from "./sheet/CharacterSheet.tsx";
 export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   /** A new character's race: a player character's (of kind `pc`), not a monster's or a bonded creature's. */
   protected override checkCreationPick(_role: string, race: Race) {
-    if (race.kind !== "pc") throw new RulesError("invalid", "Race is not valid for a player character");
+    if (race.partition !== "pc") throw new RulesError("invalid", "Race is not valid for a player character");
   }
 
   /** A character's sheet as the API answers it, with its bonded creatures', or a creature's. */

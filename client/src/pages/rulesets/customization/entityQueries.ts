@@ -28,13 +28,14 @@ export type CustomizationEntity =
   | { entity: OwnedEntity; holder: "owned"; owner: string; ownerId: string; type: string };
 
 /**
- * An owned entity as its page reads it (a class's level): its row, its kind's columns at their keys, with its owner's
- * name.
+ * An owned entity as its page reads it (a class's level): as stored (its owner, `ownerId`, and its place on its owner's
+ * track, `position`), with its owner's name.
  */
 export type OwnedEntity = Record<string, unknown> & {
   id: string;
-  level: number;
   name: string;
+  ownerId: string;
+  position: number;
   rulesetId: string;
   updatedAt: string;
 };
@@ -46,7 +47,7 @@ export const MODIFIER_PAGE: CustomizationPage = { type: "modifiers" };
 
 async function fetchEntity(
   id: string,
-  { owner, ownerKey, type }: CustomizationPage,
+  { owner, type }: CustomizationPage,
   entityId: string,
 ): Promise<CustomizationEntity> {
   if (type === "modifiers") {
@@ -60,16 +61,14 @@ async function fetchEntity(
       ),
     };
   }
-  // An owned entity, by its owner's kind, its owner's id at its page's key
+  // An owned entity, by its owner's kind, and its owner
   if (owner) {
     const entity: OwnedEntity = await parseResponse(
       rulesetApi.entities[":entityType"].owned[":ownedId"].$get({
         param: { id, entityType: entitySegment(getUrlSegment(owner)), ownedId: entityId },
       }),
     );
-    const ownerId = entity[ownerKey ?? ""];
-    if (typeof ownerId !== "string") throw new Error(`No owner of ${type} ${entityId}`);
-    return { holder: "owned", owner, ownerId, type, entity };
+    return { holder: "owned", owner, ownerId: entity.ownerId, type, entity };
   }
   // A kind's entity, through the routes by kind
   return { holder: "entity", type, entity: await readEntityFn(id, type, entityId) };

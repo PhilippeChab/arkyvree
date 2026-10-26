@@ -1,11 +1,13 @@
 import type { FormField } from "@/engine/core/fields/index.ts";
 import type { ListDescription } from "@/engine/core/module/index.ts";
 import { SIZE_OPTIONS } from "@/shared/enums.ts";
+import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A 3.5 race's columns, as its form shows them beside its name and description: its size and its base speed. */
 export const RACE_COLUMNS: FormField[] = [
   {
     default: "Medium",
+    field: RACE_SIZE,
     help: "Its members' size",
     input: "choice",
     key: "size",
@@ -16,6 +18,7 @@ export const RACE_COLUMNS: FormField[] = [
   },
   {
     default: 30,
+    field: RACE_BASE_SPEED,
     help: "How far its members move a round",
     input: "number",
     key: "baseSpeed",
@@ -29,7 +32,7 @@ export const RACE_COLUMNS: FormField[] = [
 export const RACE_LIST: ListDescription = {
   nameShare: 15,
   columns: [
-    { key: "size", label: "Size", reads: "chip", share: 10 },
-    { key: "baseSpeed", label: "Speed", reads: "number", share: 10, unit: "ft" },
+    { field: RACE_SIZE, key: "size", label: "Size", reads: "chip", share: 10 },
+    { field: RACE_BASE_SPEED, key: "baseSpeed", label: "Speed", reads: "number", share: 10, unit: "ft" },
   ],
 };

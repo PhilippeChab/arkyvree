@@ -1,7 +1,27 @@
 import { describe, expect, test } from "bun:test";
 
 import StorageEngine from "@/engine/api/StorageEngine.ts";
-import type { StoredLink } from "@/engine/core/module/index.ts";
+import type { FieldValue, StoredEntity, StoredFieldValue, StoredLink } from "@/engine/core/module/index.ts";
+
+/** A stored entity of a kind (`type`), holding these fields' values (`fields`) and links (`links`). */
+function storedEntity(type: string, fields: StoredFieldValue[], links: StoredLink[]): StoredEntity {
+  return {
+    campaignId: null,
+    createdAt: "2026-01-01 00:00:00+00",
+    deletedAt: null,
+    description: null,
+    fields,
+    id: "e",
+    links,
+    name: "E",
+    ownerId: null,
+    partition: "",
+    position: null,
+    rulesetId: "r",
+    type,
+    updatedAt: "2026-01-01 00:00:00+00",
+  };
+}
 
 /** A stored link of a role (`role`, to an entity of `toType`), made at `createdAt`, its `ordinal`th. */
 function storedLink(role: string, toType: string, toId: string, createdAt: string, ordinal: number): StoredLink {
@@ -20,52 +40,25 @@ function storedLink(role: string, toType: string, toId: string, createdAt: strin
   };
 }
 
-/** The value an item's weight is written as (rounded to its scale), from what its form gives. */
-function writtenWeight(weight: number | string) {
-  const write = StorageEngine.shared().writeOf("items", { name: "Pebble", rulesetId: "r", weight }, true);
-  return write.fields.find((field) => field.field === "ITEM_WEIGHT")?.value;
+/** A stored value of a field, its first. */
+function storedValue(field: string, value: FieldValue): StoredFieldValue {
+  return { createdAt: "2026-01-01 00:00:00+00", field, ordinal: 0, updatedAt: "2026-01-01 00:00:00+00", value };
 }
 
-describe("A kind's write", () => {
-  test("rounds a decimal to its scale, half away from zero, as Postgres's round does", () => {
-    expect(writtenWeight("1.005")).toBe(1.01);
-    expect(writtenWeight("0.000001")).toBe(0);
-    expect(writtenWeight("-2.345")).toBe(-2.35);
-  });
-
-  test("reads a decimal JavaScript writes in exponent form (below 1e-6)", () => {
-    expect(writtenWeight(String(0.0000001))).toBe(0);
-    expect(writtenWeight("1.5e2")).toBe(150);
-  });
-
-  test("writes a number of 1e21 or more, which JavaScript writes in exponent form", () => {
-    expect(writtenWeight(1e21)).toBe(1e21);
-  });
-});
-
 describe("A module's storage", () => {
-  test("names the column an owned kind keeps its owner in, refusing a kind no module stores as owned", () => {
-    const storage = StorageEngine.shared();
-    const { entityTypes } = storage.registries();
-    const owned = entityTypes.filter((def) => def.ownerType !== null);
-    expect(owned.length).toBeGreaterThan(0);
-    for (const { type } of owned) expect(storage.kind(type).columns[storage.ownerColumn(type)].kind).toBe("owner");
-    const unowned = entityTypes.find((def) => def.ownerType === null)!;
-    expect(() => storage.ownerColumn(unowned.type)).toThrow(`No module stores ${unowned.type} as owned`);
-  });
-
   test("declares a view's kinds, an owner before what it owns, and the links whose sibling copies' merge", () => {
     const storage = StorageEngine.shared();
     const schema = storage.viewSchema();
     expect(storage.viewSchema()).toBe(schema);
     const order = schema.kinds.map(({ type }) => type);
-    for (const { owner, type } of schema.kinds) {
-      if (!owner) continue;
-      expect(owner.column).toBe(storage.ownerColumn(type));
-      expect(order.indexOf(owner.type)).toBeLessThan(order.indexOf(type));
+    const { entityTypes } = storage.registries();
+    expect(schema.kinds.some(({ ownerType }) => ownerType)).toBe(true);
+    for (const { ownerType, type } of schema.kinds) {
+      expect(ownerType ?? null).toBe(entityTypes.find((def) => def.type === type)!.ownerType);
+      if (ownerType) expect(order.indexOf(ownerType)).toBeLessThan(order.indexOf(type));
     }
-    // A kind's visible ids are kept when an owned kind's rows read them alone
-    const read = new Set(schema.kinds.flatMap(({ owner }) => (owner ? [owner.type] : [])));
+    // A kind's visible ids are kept when an owned kind's entities read them alone
+    const read = new Set(schema.kinds.flatMap(({ ownerType }) => (ownerType ? [ownerType] : [])));
     expect(schema.kinds.filter(({ tracked }) => tracked).map(({ type }) => type)).toEqual(
       order.filter((type) => read.has(type)),
     );
@@ -81,20 +74,67 @@ describe("A module's storage", () => {
   test("reads the kinds a user customizes and the types whose entities hold fields into the view's kinds", () => {
     const storage = StorageEngine.shared();
     const { fieldDefs } = storage.registries();
-    // A field owner's fields aren't its columns', and every customizable kind's are a kind's
-    const columnFields = new Set(
-      storage
-        .registries()
-        .entityTypes.flatMap(({ type }) =>
-          Object.values(storage.kind(type).columns).flatMap((column) => ("field" in column ? [column.field] : [])),
-        ),
+    // A field owner's fields aren't all its kind's own, and every customizable kind's are a kind's
+    const own = new Set(
+      storage.registries().entityTypes.flatMap(({ type }) => Object.keys(storage.kind(type).fields ?? {})),
     );
+    expect(own.size).toBeGreaterThan(0);
     for (const type of storage.fieldOwners())
-      expect(fieldDefs.some((def) => def.ownerType === type && !columnFields.has(def.field))).toBe(true);
+      expect(fieldDefs.some((def) => def.ownerType === type && !own.has(def.field))).toBe(true);
     for (const { customizable, fields, type } of storage.viewSchema().kinds) {
       expect(customizable).toBe(!!storage.kind(type).customizable);
       expect(fields).toBe(storage.fieldOwners().includes(type));
     }
+  });
+
+  test("reads an entity's record: its own fields' values and its single links, not its stored values", () => {
+    const storage = StorageEngine.shared();
+    const { entityTypes, fieldDefs, linkRoles } = storage.registries();
+    const ownOf = (type: string) => storage.kind(type).fields ?? {};
+    const { type } = entityTypes.find(
+      (def) =>
+        Object.keys(ownOf(def.type)).length > 0 &&
+        fieldDefs.some((field) => field.ownerType === def.type && !(field.field in ownOf(def.type))),
+    )!;
+    const [ownField] = Object.keys(ownOf(type));
+    const declared = fieldDefs.find((def) => def.ownerType === type && !(def.field in ownOf(type)))!;
+    const single = linkRoles.find(
+      (def) => def.fromType === type && def.single && storage.recordReads().roles.includes(def.role),
+    );
+    const many = linkRoles.find((def) => def.fromType === type && !def.single);
+    const record = storage.recordOf(
+      storedEntity(
+        type,
+        [storedValue(ownField, 2), storedValue(declared.field, "held")],
+        [
+          ...(single ? [storedLink(single.role, single.toType, "s", "2026-01-01 00:00:00+00", 0)] : []),
+          ...(many ? [storedLink(many.role, many.toType, "m", "2026-01-01 00:00:00+00", 0)] : []),
+        ],
+      ),
+    );
+    expect(record).toMatchObject({ id: "e", name: "E", type, partition: "" });
+    expect(record.fields).toEqual({ [ownField]: 2 });
+    expect(record.links).toEqual(single ? { [single.role]: "s" } : {});
+    expect(storage.recordReads().fields).toContain(ownField);
+    expect(storage.recordReads().fields).not.toContain(declared.field);
+  });
+
+  test("writes a new entity with its kind's own fields' defaults and its partition", () => {
+    const storage = StorageEngine.shared();
+    const { entityTypes } = storage.registries();
+    for (const { type } of entityTypes) {
+      const kind = storage.kind(type);
+      const { fields, partition } = storage.defaultsOf(type);
+      expect(partition).toBe(kind.partition ?? "");
+      expect(fields).toEqual(
+        Object.fromEntries(
+          Object.entries(kind.fields ?? {}).flatMap(([field, own]) =>
+            own.default === undefined ? [] : [[field, own.default]],
+          ),
+        ),
+      );
+    }
+    expect(entityTypes.some(({ type }) => Object.keys(storage.defaultsOf(type).fields).length > 0)).toBe(true);
   });
 
   test("reads an entity's links of the roles it holds many of, in their order, as a view holds them", () => {

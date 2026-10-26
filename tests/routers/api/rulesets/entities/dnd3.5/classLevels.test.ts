@@ -40,7 +40,7 @@ describe("rulesets class levels", () => {
     const created = await expectOk(
       levels.$post({ param: classParam(id, classId), json: { level: 1, fields: { bab: 1, skills: 4 } } }),
     );
-    expect(created).toMatchObject({ level: 1, bab: 1, skills: 4 });
+    expect(created).toMatchObject({ position: 1, bab: 1, skills: 4 });
     const param = { ...classParam(id, classId), ownedId: created.id };
 
     const byId = await expectOk(
@@ -48,13 +48,13 @@ describe("rulesets class levels", () => {
         param: { id, entityType: "classes", ownedId: created.id },
       }),
     );
-    expect(byId).toMatchObject({ id: created.id, level: 1 });
+    expect(byId).toMatchObject({ id: created.id, position: 1 });
     expect((await expectOk(levels.$get({ param: classParam(id, classId) }))).map((l) => l.id)).toEqual([created.id]);
 
     // The level number is fixed once created.
     const { updatedAt } = created;
     expect(await expectOk(level.$put({ param, json: { fields: { bab: 3, skills: 6 }, updatedAt } }))).toMatchObject({
-      level: 1,
+      position: 1,
       bab: 3,
       skills: 6,
     });
@@ -87,7 +87,7 @@ describe("rulesets class levels", () => {
 
     const read = async (classId: string, name: string) =>
       (await expectOk(table.$get({ param: { ...classParam(id, classId), table: name } }))) as Record<string, unknown>[];
-    const firstLevel = (rows: Record<string, unknown>[]) => rows.find((l) => l.level === 1);
+    const firstLevel = (rows: Record<string, unknown>[]) => rows.find((l) => l.position === 1);
 
     expect(firstLevel(await read(klassMap.pc["Wizard"], "spells"))).toMatchObject({ spellsPerDay: { 0: 3, 1: 1 } });
     expect(firstLevel(await read(klassMap.pc["Sorcerer"], "spells-known"))).toMatchObject({

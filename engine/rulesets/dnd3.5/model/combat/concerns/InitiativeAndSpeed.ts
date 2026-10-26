@@ -2,6 +2,7 @@ import type CombatState from "@/engine/rulesets/dnd3.5/model/combat/CombatState.
 import type { CustomizedRace } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { OVERLOADED_SPEED } from "@/vocabulary/dnd3.5/carrying.ts";
+import { RACE_BASE_SPEED } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A character's initiative, and its speed under its armor and load (which a dwarf's ignores). */
 export function InitiativeAndSpeed<B extends Constructor<CombatState>>(Base: B) {
@@ -34,7 +35,7 @@ export function InitiativeAndSpeed<B extends Constructor<CombatState>>(Base: B) 
       const loadedSpeed = (base: number) => this.loadedSpeed(base);
       this.speedIgnoresEncumbrance = race.speedIgnoresEncumbrance;
       this.combat.speed = {
-        base: race.baseSpeed,
+        base: race.fields[RACE_BASE_SPEED],
         misc: 0,
         get total() {
           // The overloaded 5 ft has nothing to add to; otherwise the misc comes on top of the slowed base

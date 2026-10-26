@@ -26,6 +26,7 @@ import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { formatSigned } from "@/shared/text.ts";
+import { CLASS_HD, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { PCGEN_POOLS } from "./names.ts";
 import type PcgenNames from "./PcgenNames.ts";
@@ -82,7 +83,7 @@ export default class LevelsImport {
     { feats, spells }: { feats: FeatPick[]; spells: SpellPick[] },
   ) {
     const { abilitiesById, featsById, spellsById } = this.dnd35;
-    const parts = [`${level.klass.name} ${level.klassLevel.level}`, `${level.hp} hit points`];
+    const parts = [`${level.klass.name} ${level.klassLevel.position}`, `${level.hp} hit points`];
     for (const { abilityId, amount } of increases)
       parts.push(`${abilitiesById.get(abilityId)?.name} ${formatSigned(amount)}`);
     for (const { featId } of feats) parts.push(featsById.get(featId)?.name ?? featId);
@@ -150,10 +151,13 @@ export default class LevelsImport {
         this.skipFrom(level, reason);
         break;
       }
-      const { max, min } = this.levelUp.hitPointsOf(klass.hd);
+      const { max, min } = this.levelUp.hitPointsOf(klass.fields[CLASS_HD]);
       const hp = Math.min(max, Math.max(min, Math.round(level.hp)));
-      if (hp !== level.hp)
-        this.report.issue(`Level ${matched.length + 1}: ${level.hp} hit points outside a d${klass.hd}: ${hp} kept`);
+      if (hp !== level.hp) {
+        this.report.issue(
+          `Level ${matched.length + 1}: ${level.hp} hit points outside a d${klass.fields[CLASS_HD]}: ${hp} kept`,
+        );
+      }
       matched.push({ hp, klass, klassLevel, level });
     }
     return matched;
@@ -243,7 +247,7 @@ export default class LevelsImport {
     for (const feat of placement.leftFeats()) {
       // Two lines the ruleset reads as one feat (a choice it keeps whole): the second isn't another pick
       // A stackable feat's copy no level took is lost as any feat, however many copies the levels took
-      const stackable = this.dnd35.featsById.get(feat.featId)?.stackable === true;
+      const stackable = this.dnd35.featsById.get(feat.featId)?.fields[FEAT_STACKABLE] === true;
       if (picked.has(feat.featId) && !stackable)
         this.report.skip(feat.line, `${feat.name} is imported already, from another line`);
       else if (held.has(feat.featId) && !picked.has(feat.featId))
@@ -348,7 +352,7 @@ export default class LevelsImport {
       for (const { aptitudeId, featId } of featPicks) (feats[aptitudeId] ??= []).push(featId);
       const spells: Record<string, string[]> = {};
       for (const { aptitudeId, spellId } of spellPicks) (spells[aptitudeId] ??= []).push(spellId);
-      const request = { abilityIncreases, hp: level.hp, klassId: level.klass.id, level: level.klassLevel.level };
+      const request = { abilityIncreases, hp: level.hp, klassId: level.klass.id, level: level.klassLevel.position };
       const planned = this.planLevel(leveling, request, { feats, spells, skills });
       // Refused even forced: the import is planned again without it, its increases out of the starting scores
       if ("refusal" in planned)

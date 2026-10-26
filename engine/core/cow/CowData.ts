@@ -121,18 +121,19 @@ export default class CowData {
   }
 
   /**
-   * Rows with every string field naming a stale id resolved (`abilityId`, `parentId`, `sourceItemId`…): the same array
-   * when the scope resolves nothing.
+   * Entities (`entities`: records, as stored or as a view holds them) with each single link naming the entity that
+   * stands for its target (a copy, a winner): the same array when the scope resolves nothing, and the same entity when
+   * its links name no stale id (or it carries none: a picker's option read by its name alone).
    */
-  resolveRows<T extends Record<string, unknown>>(rows: T[]): T[] {
-    if (this.isEmpty()) return rows;
-    return rows.map((row) => {
-      const resolved = { ...row };
-      for (const [key, value] of Object.entries(resolved)) {
-        if (typeof value === "string" && this.aliases.has(value))
-          (resolved as Record<string, unknown>)[key] = this.aliases.get(value);
-      }
-      return resolved;
+  resolveLinks<T extends { links?: Readonly<Partial<Record<string, string>>> }>(entities: readonly T[]): T[] {
+    if (this.isEmpty()) return entities as T[];
+    return entities.map((entity) => {
+      const links = Object.entries(entity.links ?? {});
+      if (links.every(([, toId]) => toId === undefined || !this.aliases.has(toId))) return entity;
+      return {
+        ...entity,
+        links: Object.fromEntries(links.map(([role, toId]) => [role, toId === undefined ? toId : this.resolve(toId)])),
+      };
     });
   }
 }

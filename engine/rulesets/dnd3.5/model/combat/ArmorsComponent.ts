@@ -5,6 +5,7 @@ import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading
 import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { MASTERWORK_CHECK_PENALTY_REDUCTION } from "@/vocabulary/dnd3.5/combat.ts";
+import { ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 interface ArmorSlot {
   ac: { bonus: number; misc: number; readonly total: number };
@@ -31,7 +32,7 @@ export default class ArmorsComponent extends CharacterComponent<LoadedCharacterD
   /** Each armor the inventory has equipped, in its order. */
   override initialize() {
     for (const { entry, fields } of this.inventory.getEquipped())
-      if (entry.item.type === "Armor") this.registerArmor(entry.item, fields);
+      if (entry.item.fields[ITEM_TYPE] === "Armor") this.registerArmor(entry.item, fields);
   }
 
   private registerArmor(item: Item, fields: ItemFieldValues): void {

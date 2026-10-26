@@ -3,6 +3,7 @@ import { Page, Text, View } from "@react-pdf/renderer";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import { capitalize } from "@/shared/text.ts";
+import { ITEM_COST_GP, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
@@ -60,10 +61,10 @@ function InventoryPage({ detailedCharacter }: { detailedCharacter: DetailedChara
                     {ItemPlacement.describeSlot(entry) ?? "—"}
                   </Text>
                   <Text style={{ fontSize: FONT_SIZE.base, width: "8%", paddingHorizontal: 2, textAlign: "right" }}>
-                    {entry.item.weight ? `${parseFloat(entry.item.weight)} lb` : "—"}
+                    {entry.item.fields[ITEM_WEIGHT] === undefined ? "—" : `${entry.item.fields[ITEM_WEIGHT]} lb`}
                   </Text>
                   <Text style={{ fontSize: FONT_SIZE.base, width: "8%", paddingHorizontal: 2, textAlign: "right" }}>
-                    {entry.item.costGp ? `${parseFloat(entry.item.costGp)} gp` : "—"}
+                    {entry.item.fields[ITEM_COST_GP] === undefined ? "—" : `${entry.item.fields[ITEM_COST_GP]} gp`}
                   </Text>
                   <Text style={{ fontSize: FONT_SIZE.base, width: "9%", paddingHorizontal: 2, textAlign: "center" }}>
                     {entry.totalCharges != null ? `${entry.remainingCharges ?? 0}/${entry.totalCharges}` : "—"}

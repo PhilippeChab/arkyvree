@@ -44,7 +44,7 @@ export interface LevelKeys {
   grants?: { entityKey: string; key: string; viaKey: string };
 }
 
-/** A level as its route reads it: its row (its fields), its amounts and its grants, by its columns. */
+/** A level as its route reads it: its row (its fields), its number, its amounts and its grants, by its columns. */
 export interface LevelRead {
   amounts: Amount[];
   grants: Grant[];
@@ -108,11 +108,12 @@ export function nextLevel(levels: readonly LevelRead[] | undefined, keys: LevelK
 }
 
 /**
- * A level as its route reads it (`row`), its amounts and its grants at its columns' keys (`columns`): a grant its
- * entity's row, the one it's through and its name beside it, and whether it's free.
+ * A level as its route reads it (`row`: its number its `position` on its class's track), its amounts and its grants at
+ * its columns' keys (`columns`): a grant its entity's row, the one it's through and its name beside it, and whether
+ * it's free.
  */
 export function readLevel(
-  row: { id: string; level: number; updatedAt: string } & Record<string, unknown>,
+  row: { id: string; position: number; updatedAt: string } & Record<string, unknown>,
   { amounts, grants }: LevelColumns,
 ): LevelRead {
   return {
@@ -129,7 +130,7 @@ export function readLevel(
       viaName: textAt(record, grants?.viaName ?? ""),
     })),
     id: row.id,
-    level: row.level,
+    level: row.position,
     row,
     updatedAt: row.updatedAt,
   };

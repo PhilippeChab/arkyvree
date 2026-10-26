@@ -1,12 +1,13 @@
 import { getSeedContext, type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
-import type { ViewEntities } from "@/engine/index.ts";
+import type { ViewKinds } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Characters, Entities, fetchEveryPage, Rulesets } from "@/server/repositories/index.ts";
+import { ITEM_IS_TEMPLATE, ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** An item, as the view registers it. */
-type Item = ViewEntities["items"];
+type Item = ViewKinds["items"];
 
 let seedContext: Promise<SeedContext> | undefined;
 
@@ -29,11 +30,11 @@ export async function findPlainItem(rulesetId: string) {
   const items = await fetchEveryPage((pagination) =>
     Entities.findPage<Item>(
       db,
-      { entityType: "items", rulesetId, childOnly: true, columns: { isTemplate: false } },
+      { entityType: "items", rulesetId, childOnly: true, fields: { [ITEM_IS_TEMPLATE]: false } },
       pagination,
     ),
   );
-  const item = items.find((candidate) => candidate.sourceItemId === null && candidate.type === "Other");
+  const item = items.find((candidate) => !candidate.links.madeFrom && candidate.fields[ITEM_TYPE] === "Other");
   if (!item) throw new Error(`The ruleset ${rulesetId} has no plain item`);
   return item;
 }

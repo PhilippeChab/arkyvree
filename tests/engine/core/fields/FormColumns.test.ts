@@ -62,6 +62,17 @@ describe("A form's columns", () => {
     expect(read({ poolIds: [] }, false)).toEqual({ poolIds: [] });
   });
 
+  test("round a decimal to its two places, half away from zero, as its text reads", () => {
+    expect(read({ cost: 1.239 }, false)).toEqual({ cost: 1.24 });
+    expect(read({ cost: 0.125 }, false)).toEqual({ cost: 0.13 });
+    expect(read({ cost: 1.005 }, false)).toEqual({ cost: 1.01 });
+    expect(read({ cost: 15 }, false)).toEqual({ cost: 15 });
+    // One JavaScript writes in exponent form: below 1e-6, and from 1e21
+    expect(read({ cost: 0.0000001 }, false)).toEqual({ cost: 0 });
+    expect(read({ cost: 0.000005 }, false)).toEqual({ cost: 0 });
+    expect(read({ cost: 1e21 }, false)).toEqual({ cost: 1e21 });
+  });
+
   test("read an empty select or text as none, where none clears it", () => {
     expect(read({ traitId: "", slot: "", effect: "", type: "" }, false)).toEqual({
       effect: null,

@@ -8,6 +8,7 @@ import RulesError from "@/engine/core/RulesError.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { DEFAULT_HIT_DIE } from "@/vocabulary/dnd3.5/classes.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import ClassLevelEntity from "./ClassLevelEntity.ts";
 import ClassProgression from "./ClassProgression.ts";
@@ -48,6 +49,9 @@ export default class ClassEntity extends RulesetEntity<
   /** Its list's filters: the kind it's for. */
   protected override readonly listFilters = { kind: z.string() };
 
+  /** The kind it's for: its partition. */
+  protected override readonly storedAt = { kind: "partition" } as const;
+
   /** Its levels' kind, which it owns. */
   override readonly ownedType = "class_levels";
 
@@ -57,7 +61,7 @@ export default class ClassEntity extends RulesetEntity<
    * A form's columns: the hit die it gives (a new class's `DEFAULT_HIT_DIE` when it gives none), or the edited class's.
    */
   protected override columnsOf({ description, hd, name }: ClassBody, klass?: Klass) {
-    return { description, hd: hd ?? klass?.hd ?? DEFAULT_HIT_DIE, name };
+    return { description, hd: hd ?? klass?.fields[CLASS_HD] ?? DEFAULT_HIT_DIE, name };
   }
 
   /**
@@ -75,7 +79,7 @@ export default class ClassEntity extends RulesetEntity<
   describeOwned(levelId: string) {
     const level = Dnd35View.of(this.rulesetData).klassLevelsById.get(levelId);
     if (!level) throw new RulesError("not-found", "Class level not found in this ruleset");
-    const klass = this.find(level.klassId);
+    const klass = this.find(level.ownerId);
     return { ...this.owned(klass.id).describe(level.id), name: klass.name, rulesetId: klass.rulesetId };
   }
 

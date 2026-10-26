@@ -7,6 +7,7 @@ import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { LANGUAGE_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
 describe("EntitiesService: languages", () => {
@@ -17,14 +18,14 @@ describe("EntitiesService: languages", () => {
       description: "Spoken by dragons",
       type: "Exotic",
     });
-    expect(created).toMatchObject({ type: "Exotic", description: "Spoken by dragons" });
+    expect(created).toMatchObject({ fields: { [LANGUAGE_TYPE]: "Exotic" }, description: "Spoken by dragons" });
 
     const updated = await EntitiesService.updateEntity(session, ruleset.id, "languages", created.id, {
       name: "Draconic",
       description: "Common among kobolds",
       type: "Standard",
     });
-    expect(updated).toMatchObject({ type: "Standard", description: "Common among kobolds" });
+    expect(updated).toMatchObject({ fields: { [LANGUAGE_TYPE]: "Standard" }, description: "Common among kobolds" });
   });
 
   test("refuses to delete a language that a character of a subscribing ruleset speaks", async () => {

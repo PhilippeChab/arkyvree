@@ -41,7 +41,7 @@ export function Owned<B extends Constructor>(Base: B) {
             const plan = owned.planCreate(body);
 
             const { id: targetOwnerId } = await new EntityEdit(ruleset).cowToEdit(tx, type, plan.owner);
-            const [row] = await Entities.create(tx, owned.type, plan.columns, { ownerId: targetOwnerId });
+            const [row] = await Entities.create(tx, owned.type, { ...plan.row, ownerId: targetOwnerId });
             await createLinks(tx, { entityId: row.id, entityType: owned.type }, plan.links ?? []);
             if (plan.writes)
               await writeEntityWrites(tx, scope, { entityId: row.id, entityType: owned.type }, plan.writes);
@@ -147,7 +147,7 @@ export function Owned<B extends Constructor>(Base: B) {
             const targetId = await edit.cowOwner(tx, owned.type, plan.entity.id);
 
             const expectedUpdatedAt = targetId === plan.entity.id ? updatedAt : undefined;
-            const rows = await Entities.update(tx, owned.type, {}, { id: targetId, expectedUpdatedAt });
+            const rows = await Entities.update(tx, owned.type, plan.row, { id: targetId, expectedUpdatedAt });
             if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
             if (plan.writes)

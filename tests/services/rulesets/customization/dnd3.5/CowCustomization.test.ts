@@ -18,7 +18,7 @@ import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
-import { CLASS_CASTER_TYPE, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 interface Kind {
   create: (session: Session, rulesetId: string, ownerType: string, ownerId: string) => Promise<Written>;
@@ -120,8 +120,12 @@ async function setup() {
     value: "13",
   });
 
-  const [klass] = await Entities.create<Klass>(db, "classes", { name: "Fighter", rulesetId, hd: 10 });
-  const [level] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: klass.id, level: 1 });
+  const [klass] = await Entities.create<Klass>(db, "classes", {
+    name: "Fighter",
+    rulesetId,
+    fields: { [CLASS_HD]: 10 },
+  });
+  const [level] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: 1 });
   for (const [sourceId, sourceType] of [
     [level.id, "class_levels"],
     [klass.id, "classes"],

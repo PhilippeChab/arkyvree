@@ -1,3 +1,5 @@
+import type { EntityFilters } from "./parts/entities/index.ts";
+
 /** A grouped picker, as an operation opens it: a picker that also lists its options by group (a feat's family). */
 export interface OpenedGroupedPicker<
   Filters,
@@ -37,22 +39,21 @@ export interface OpenedTrackPicker<Filters, Row extends { id: string }> extends 
 
 /**
  * What a page of a list's entities is read with: those of the list (`ids`), less those left out (`excludeIds`), of the
- * values of `columns` (a feat's selectable) and of `fields` (the options of a group, by the field that names it).
+ * values of their fields (`fields`: a feat's selectable; the options of a group, by the field that names it).
  */
 export interface PickFilters {
-  columns?: Record<string, unknown>;
   excludeIds: string[];
-  fields?: Record<string, string>;
+  fields?: EntityFilters["fields"];
   ids: string[];
 }
 
 /**
- * What a page of a list's groups is read with: the list's entities, less those left out, of the values of `columns`,
- * and the group each one is in (`groups`, as the ruleset groups them): an entity in none stands alone.
+ * What a page of a list's groups is read with: the list's entities, less those left out, of the values of their
+ * fields, and the group each one is in (`groups`, as the ruleset groups them): an entity in none stands alone.
  */
 export interface PickGroupFilters {
-  columns?: Record<string, unknown>;
   excludeIds: string[];
+  fields?: EntityFilters["fields"];
   groups: { group: string; id: string }[];
   ids: string[];
 }

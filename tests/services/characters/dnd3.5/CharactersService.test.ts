@@ -43,6 +43,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const page = { limit: 100, page: 1 };
 
@@ -62,8 +63,7 @@ async function setupPrivateRuleset() {
   const [race] = await Entities.create<Race>(db, "races", {
     name: "Private Race",
     rulesetId: ruleset.id,
-    size: "Medium",
-    baseSpeed: 30,
+    fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
   });
   return { owner, ruleset, race };
 }
@@ -574,8 +574,7 @@ describe("CharactersService", () => {
       const [race] = await Entities.create<Race>(db, "races", {
         name: `Restricted Race ${uniqueId()}`,
         rulesetId,
-        size: "Medium",
-        baseSpeed: 30,
+        fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
       });
       await Requirements.create(db, {
         entityId: race.id,
@@ -603,8 +602,7 @@ describe("CharactersService", () => {
       const [race] = await Entities.create<Race>(db, "races", {
         name: `Restricted Race ${uniqueId()}`,
         rulesetId,
-        size: "Medium",
-        baseSpeed: 30,
+        fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
       });
       const owner = { entityId: race.id, entityType: "races", operator: "equal", valueType: "string" } as const;
       await Requirements.createMany(db, [

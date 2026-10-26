@@ -4,6 +4,7 @@ export {
   emptyFieldValues,
   type EntityFieldValues,
   linkedEntities,
+  ownFieldOf,
   poolsOf,
   withEntityFields,
 } from "./entityFields.ts";

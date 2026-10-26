@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import type { Aptitude, Klass } from "@/engine/rulesets/dnd3.5/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters, Entities, EntityLinks, EntitySnapshots } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
@@ -12,7 +13,7 @@ import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { CLASS_HD, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The aptitudes of the test's ruleset. */
 const APTITUDES = ["Combat", "Metamagic", "General"];
@@ -134,8 +135,8 @@ describe("EntitiesService: feats", () => {
       { limit: 10, page: 1 },
     );
     expect(grouped.items.map((row) => ({ ...row, variantCount: Number(row.variantCount) }))).toMatchObject([
-      { displayName: "Cleave", family: null, variantCount: 1 },
-      { displayName: "Focus", family: "Focus", variantCount: 2 },
+      { displayName: "Cleave", group: null, variantCount: 1 },
+      { displayName: "Focus", group: "Focus", variantCount: 2 },
     ]);
   });
 
@@ -152,8 +153,10 @@ describe("EntitiesService: feats", () => {
     const [klass] = await Entities.create<Klass>(db, "classes", {
       name: "Granting Class",
       rulesetId: ruleset.id,
-      hd: 10,
+      fields: { [CLASS_HD]: 10 },
     });
+    // Written past the services, after the feat's create read the ruleset's view
+    RulesetViews.invalidate(ruleset.id);
     await EntitiesService.createOwnedEntity(session, ruleset.id, "classes", klass.id, {
       level: 1,
       fields: { bab: 1, skills: 2 },

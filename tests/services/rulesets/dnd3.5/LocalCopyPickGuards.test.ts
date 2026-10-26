@@ -11,6 +11,14 @@ import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { findPlainItem } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import {
+  ITEM_COST_GP,
+  ITEM_SLOT,
+  ITEM_TYPE,
+  ITEM_WEIGHT,
+  RACE_BASE_SPEED,
+  RACE_SIZE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * A character that picked an inherited entity stores the source id. Deleting the fork's later local copy leaves a
@@ -45,8 +53,8 @@ test("a race picked before the fork copied it blocks deleting the copy, but not 
   const local = await EntitiesService.updateEntity(session, fork.id, "races", human.id, {
     name: human.name,
     description: "Local",
-    size: human.size,
-    baseSpeed: human.baseSpeed,
+    size: human.fields[RACE_SIZE],
+    baseSpeed: human.fields[RACE_BASE_SPEED],
   });
 
   expect(EntitiesService.deleteEntity(session, fork.id, "races", local.id)).rejects.toThrow("in use by characters");
@@ -95,10 +103,10 @@ test("an item picked before the fork copied it blocks deleting the copy", async 
   const local = await EntitiesService.updateEntity(session, fork.id, "items", item.id, {
     name: item.name,
     description: "Local",
-    type: item.type,
-    slot: item.slot ?? undefined,
-    weight: Number(item.weight),
-    costGp: Number(item.costGp),
+    type: item.fields[ITEM_TYPE],
+    slot: item.fields[ITEM_SLOT],
+    weight: item.fields[ITEM_WEIGHT],
+    costGp: item.fields[ITEM_COST_GP],
   });
 
   expect(EntitiesService.deleteEntity(session, fork.id, "items", local.id)).rejects.toThrow("in use by characters");

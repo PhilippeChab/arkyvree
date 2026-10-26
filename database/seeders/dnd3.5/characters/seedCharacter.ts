@@ -6,7 +6,6 @@
 import type { CharacterSeed, InventorySeed } from "@/content/dnd3.5/builders/characters/types.ts";
 import type { Db } from "@/drizzle/database.ts";
 import { Engine } from "@/engine/index.ts";
-import type { KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
@@ -59,9 +58,9 @@ export async function addClassLevels(
   const klassId = ctx.klassMap.pc[className];
   const levelIds: string[] = [];
 
-  const klassLevels = await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [klassId] });
+  const klassLevels = await Entities.findPositions(db, { entityType: "class_levels", ownerIds: [klassId] });
   for (let i = 0; i < levels.length; i++) {
-    const klassLevel = klassLevels.find((row) => row.level === levels[i])!;
+    const klassLevel = klassLevels.find((owned) => owned.position === levels[i])!;
     const advancement = await createAdvancement(db, characterId, {
       trackId: klassLevel.id,
       picks: [{ step: "hp", amount: hpPerLevel[i] }],

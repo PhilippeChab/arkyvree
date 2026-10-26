@@ -27,6 +27,7 @@ import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { ITEM_IS_TEMPLATE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const BONDS = [FAMILIARS, ANIMAL_COMPANIONS, SPECIAL_MOUNTS];
 function sortedNames(rows: { name: string }[]) {
@@ -113,7 +114,7 @@ test("Every content package seeds into a database without them, its extensions e
   expect(bases.map((base) => base.name)).toEqual([DND35_RULESET_NAME]);
   for (const base of bases) {
     const items = await Entities.findMany<Item>(db, { entityType: "items", rulesetIds: [base.id] });
-    const templates = items.filter((item) => item.isTemplate);
+    const templates = items.filter((item) => item.fields[ITEM_IS_TEMPLATE]);
     expect({ base: base.name, templates: sortedNames(templates) }).toEqual({
       base: base.name,
       templates: expect.arrayContaining(sortedNames(TEMPLATE_ITEMS)),

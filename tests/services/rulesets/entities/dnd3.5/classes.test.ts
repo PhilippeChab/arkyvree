@@ -9,6 +9,7 @@ import type {
   Skill,
   Spell,
 } from "@/engine/rulesets/dnd3.5/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Entities, EntityLinks, Modifiers, Requirements } from "@/server/repositories/index.ts";
@@ -19,6 +20,7 @@ import { addClassSkills, addGrants } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findStoredValues } from "@/tests/support/storedValues.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
 describe("EntitiesService: classes", () => {
@@ -29,12 +31,15 @@ describe("EntitiesService: classes", () => {
       description: "A mighty warrior",
       hd: 12,
     });
-    expect(warrior).toMatchObject({ name: "Warrior", description: "A mighty warrior", hd: 12 });
+    expect(warrior).toMatchObject({ name: "Warrior", description: "A mighty warrior", fields: { [CLASS_HD]: 12 } });
     expect(
-      (await EntitiesService.updateEntity(session, ruleset.id, "classes", warrior.id, { name: "Warrior", hd: 10 })).hd,
+      (await EntitiesService.updateEntity(session, ruleset.id, "classes", warrior.id, { name: "Warrior", hd: 10 }))
+        .fields[CLASS_HD],
     ).toBe(10);
 
-    expect((await EntitiesService.createEntity(session, ruleset.id, "classes", { name: "Mage" })).hd).toBe(8);
+    expect(
+      (await EntitiesService.createEntity(session, ruleset.id, "classes", { name: "Mage" })).fields[CLASS_HD],
+    ).toBe(8);
     // A hit die the rules have no die for is refused, by its column
     expect(
       EntitiesService.createEntity(session, ruleset.id, "classes", { name: "Commoner", hd: 0 }),
@@ -56,6 +61,8 @@ describe("EntitiesService: classes", () => {
       description: "Intelligence",
       rulesetId: ruleset.id,
     });
+    // Written past the services, after the wizard's create read the ruleset's view
+    RulesetViews.invalidate(ruleset.id);
     await EntitiesService.updateEntity(session, ruleset.id, "classes", wizard.id, {
       name: "Wizard",
       fields: { bonusSpellAbilityId: intelligence.id },
@@ -82,13 +89,13 @@ describe("EntitiesService: classes", () => {
     const [spell] = await Entities.create<Spell>(db, "spells", { name: "Class Spell", rulesetId });
     const [save] = await Entities.create<RulesetSave>(db, "saves", {
       name: "Class Save",
-      abilityId: ability.id,
       rulesetId,
+      links: { keyAbility: ability.id },
     });
     const [skill] = await Entities.create<Skill>(db, "skills", {
       name: "Class Skill",
-      primaryAbilityId: ability.id,
       rulesetId,
+      links: { keyAbility: ability.id },
     });
 
     const klass = await EntitiesService.createEntity(session, rulesetId, "classes", { name: "Doomed Class" });
@@ -145,7 +152,7 @@ describe("EntitiesService: classes", () => {
     });
 
     const [copiedLevel] = await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [copy.id] });
-    expect(copiedLevel).toMatchObject({ level: 1 });
+    expect(copiedLevel).toMatchObject({ position: 1 });
     const [copiedModifier] = await Modifiers.findMany(db, {
       sourceIds: [copiedLevel.id],
       sourceType: "class_levels",

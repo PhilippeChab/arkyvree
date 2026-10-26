@@ -1,6 +1,6 @@
 import {
   Engine,
-  type EntityRow,
+  type EntityRecord,
   type LevelPlanRequest,
   type StepOption,
   type StepOptionGroup,
@@ -87,7 +87,7 @@ export function Plans<B extends Constructor>(Base: B) {
             ...opened.picker.filters,
             search,
           };
-          const result = await Entities.findPage<EntityRow>(db, filters, pagination);
+          const result = await Entities.findPage<EntityRecord & { name: string }>(db, filters, pagination);
           const items = opened.picker
             .describe(result.items)
             .map((row): StepOption => ({ ...optionOf(row), track: row.track }));
@@ -101,7 +101,7 @@ export function Plans<B extends Constructor>(Base: B) {
             count: row.variantCount,
             description: row.description,
             eligible: row.eligible,
-            group: row.family,
+            group: row.group,
             id: row.representativeId,
             name: row.displayName,
             ...(row.requirementTree && { requirementTree: row.requirementTree }),

@@ -4,6 +4,7 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const kinds = api.api.rulesets[":id"].entities[":entityType"];
 const entity = kinds[":entityId"];
@@ -15,7 +16,11 @@ describe("rulesets entities: races", () => {
 
     const json = { name: "Test Race", description: "A test race", size: "Medium", baseSpeed: 30 };
     const created = await expectOk(kinds.$post({ param: { id, entityType }, json }));
-    expect(created).toMatchObject(json);
+    expect(created).toMatchObject({
+      name: json.name,
+      description: json.description,
+      fields: { [RACE_SIZE]: json.size, [RACE_BASE_SPEED]: json.baseSpeed },
+    });
     const param = { id, entityType, entityId: created.id };
 
     expect(await expectOk(entity.$get({ param }))).toMatchObject({ id: created.id, name: "Test Race" });
@@ -23,7 +28,11 @@ describe("rulesets entities: races", () => {
     expect(list.items.map((r) => r.id)).toContain(created.id);
 
     const update = { name: "Renamed Race", description: "Updated", size: "Large", baseSpeed: 40 };
-    expect(await expectOk(entity.$put({ param, json: update }))).toMatchObject(update);
+    expect(await expectOk(entity.$put({ param, json: update }))).toMatchObject({
+      name: update.name,
+      description: update.description,
+      fields: { [RACE_SIZE]: update.size, [RACE_BASE_SPEED]: update.baseSpeed },
+    });
 
     await expectOk(entity.$delete({ param }));
     await expectStatus(entity.$get({ param }), 404);

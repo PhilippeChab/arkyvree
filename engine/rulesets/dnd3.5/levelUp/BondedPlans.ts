@@ -74,10 +74,10 @@ export default class BondedPlans {
     const { view } = this;
     const raceName = master.components.bonded.getBondedRace(kind);
     if (!raceName) return { removedId: existing?.id };
-    const race = view.races.find((r) => r.name === raceName && r.kind === kind);
+    const race = view.races.find((r) => r.name === raceName && r.partition === kind);
     if (!race) throw new RulesError("invalid", `Bonded ${kind} race "${raceName}" not found in ruleset`);
     const { className } = BONDED_KIND_BY_SLUG[kind];
-    const klass = view.klasses.find((k) => k.name === className && k.kind === kind);
+    const klass = view.klasses.find((k) => k.name === className && k.partition === kind);
     if (!klass) throw new RulesError("invalid", `${className} class not found in ruleset — content seed missing`);
     // Each grant feat adds to bonded.<kind>.level by a template (a druid's `{{ [classes.druid.level] }}`, a ranger's
     // `{{ floor([classes.ranger.level] / 2) }}`): a class that gives a creature needs only a feat with its template
@@ -93,7 +93,7 @@ export default class BondedPlans {
    */
   planBondedLevels(levels: { id: string }[], { hitDice, klassId }: BondedLevels): ChildLevelsPlan {
     const klassLevelByLevel = new Map(
-      (this.view.klassLevelsByKlass.get(klassId) ?? []).map((klassLevel) => [klassLevel.level, klassLevel]),
+      (this.view.klassLevelsByKlass.get(klassId) ?? []).map((klassLevel) => [klassLevel.position, klassLevel]),
     );
     const added: ChildLevelsPlan["added"] = [];
     for (let level = levels.length + 1; level <= hitDice; level++) {

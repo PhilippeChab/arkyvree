@@ -15,6 +15,7 @@ import {
   SIZE_CARRY_MULTIPLIERS,
   SPEED_STEP,
 } from "@/vocabulary/dnd3.5/carrying.ts";
+import { ITEM_WEIGHT, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export interface EncumbranceData {
   carriedweight: number;
@@ -74,7 +75,7 @@ export default class EncumbranceComponent extends CharacterComponent<LoadedChara
   override initialize({ inventory }: Pick<LoadedCharacterData, "inventory">): void {
     let totalWeight = 0;
     for (const entry of inventory) {
-      const itemWeight = Number(entry.item.weight ?? 0);
+      const itemWeight = entry.item.fields[ITEM_WEIGHT] ?? 0;
       const quantity = entry.quantity ?? 1;
       totalWeight += itemWeight * quantity;
     }
@@ -101,7 +102,8 @@ export default class EncumbranceComponent extends CharacterComponent<LoadedChara
    */
   private getHeavyLoad(): number {
     const strTotal = this.abilities.getAbility("Strength")?.total ?? 0;
-    const { quadruped, size } = this.identity.getIdentity().physiology.race;
+    const { fields, quadruped } = this.identity.getIdentity().physiology.race;
+    const size = fields[RACE_SIZE];
     const sizeMultiplier = (quadruped ? QUADRUPED_SIZE_CARRY_MULTIPLIERS : SIZE_CARRY_MULTIPLIERS)[size] ?? 1;
     return Math.floor(this.getCarryingCapacity(strTotal) * sizeMultiplier);
   }

@@ -137,6 +137,22 @@ class StoredLinks extends BaseRepository<typeof entityLinksInRules> {
   }
 
   /**
+   * An entity's own links (`fromId`'s), single ones too (an item's template), as stored: in their order, as they were
+   * made, then by their ordinal and their target.
+   */
+  async findOwn(db: Db, fromId: string): Promise<ViewLink[]> {
+    return await db
+      .select(LINK_COLUMNS)
+      .from(entityLinksInRules)
+      .where(eq(entityLinksInRules.fromId, fromId))
+      .orderBy(
+        this.orderBy(entityLinksInRules.createdAt),
+        this.orderBy(entityLinksInRules.ordinal),
+        this.orderBy(entityLinksInRules.toId),
+      );
+  }
+
+  /**
    * Whether a link of a role that refuses its target's delete points at an entity of a kind (`toId`, of `toType`): an
    * in-use check (a class level's base bonus to a save, whose delete the database would refuse).
    */

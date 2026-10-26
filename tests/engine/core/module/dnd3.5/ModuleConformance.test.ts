@@ -13,6 +13,7 @@ import { readCharacterInput, readChildInputs } from "@/server/services/character
 import { BASE_RULES_OPTIONS, type BaseRules } from "@/shared/enums.ts";
 import { createTestItem } from "@/tests/support/items.ts";
 import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { LANGUAGE_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** An inventory entry's request to carry its item: unequipped, without charges. */
 const CARRIED = { equipped: false, location: null, remainingCharges: null, totalCharges: null, groups: [] };
@@ -146,7 +147,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
     const [{ id: foreign }] = await Entities.create<Language>(db, "languages", {
       rulesetId: otherRuleset.id,
       name: "Foreign",
-      type: "Common",
+      fields: { [LANGUAGE_TYPE]: "Common" },
     });
 
     await withRulesetScope(db, record.rulesetId, async (scope) => {

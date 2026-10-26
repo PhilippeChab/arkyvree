@@ -23,7 +23,7 @@ const KEYS = levelKeysOf(COLUMNS);
 
 /** A class level as its route reads it, its saves' bases among it. */
 function level(number: number, saves: { base: number; saveId: string }[]) {
-  return readLevel({ id: `l${number}`, level: number, updatedAt: "", bab: number, skills: 4, saves }, COLUMNS);
+  return readLevel({ id: `l${number}`, position: number, updatedAt: "", bab: number, skills: 4, saves }, COLUMNS);
 }
 
 describe("a class level's form", () => {

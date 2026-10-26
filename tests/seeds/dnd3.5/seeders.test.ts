@@ -12,14 +12,21 @@ import { ALL_CLASSES as SRD_CLASSES } from "@/content/dnd3.5/generated/srd/class
 import type { Dnd35SeedContext as SeedContext } from "@/database/seeders/dnd3.5/Dnd35ContentSeeder.ts";
 import { findSpellcastingClass } from "@/database/seeders/dnd3.5/spellTable.ts";
 import { entitySnapshotsInRules, requirementsInCustomization } from "@/drizzle/schema.ts";
-import { Engine } from "@/engine/index.ts";
 import { type Feat, type Item, type Klass, type Race, type Spell } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, EntityLinks } from "@/server/repositories/index.ts";
 import {
   CLASS_CASTER_TYPE,
+  CLASS_HD,
   CLASS_LEVEL_BAB,
   CLASS_LEVEL_SKILL_POINTS,
+  FEAT_SELECTABLE,
+  FEAT_STACKABLE,
+  ITEM_IS_TEMPLATE,
+  ITEM_SLOT,
+  RACE_BASE_SPEED,
+  RACE_SIZE,
+  SPELL_SAVE_EFFECT,
   SPELL_SCHOOL,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -147,10 +154,12 @@ async function levelsOf(ctx: SeedContext, levelIds: Record<number, string>) {
   return levels;
 }
 
-/** A kind's rows (`type`), as its repository reads them: an entity's (`id`), or a ruleset's own (`rulesetId`). */
-async function rowsOf<R>(type: string, where: { id: string } | { rulesetId: string }) {
-  const stored = await Entities.findStored(db, "id" in where ? { ids: [where.id] } : where);
-  return stored.filter((entity) => entity.type === type).map((entity) => Engine.storage().rowOf(entity) as R);
+/** A kind's records (`type`), as its repository reads them: an entity's (`id`), or a ruleset's own (`rulesetId`). */
+async function rowsOf<R extends { id: string }>(type: string, where: { id: string } | { rulesetId: string }) {
+  return await Entities.findMany<R>(
+    db,
+    "id" in where ? { entityType: type, ids: [where.id] } : { entityType: type, rulesetIds: [where.rulesetId] },
+  );
 }
 
 /** The spell lists a spell is in, "aptitude level" each. */
@@ -246,12 +255,12 @@ describe("Seeding", () => {
       const rows = await rowsOf<Feat>("feats", { rulesetId: ctx.rulesetId });
       expect(
         rows
-          .map(({ id, name, description, stackable, selectable }) => ({
+          .map(({ id, name, description, fields }) => ({
             named: ctx.featMap[name] === id,
             name,
             description,
-            stackable,
-            selectable,
+            stackable: fields[FEAT_STACKABLE],
+            selectable: fields[FEAT_SELECTABLE],
           }))
           .sort((a, b) => a.name.localeCompare(b.name)),
       ).toEqual([
@@ -328,8 +337,8 @@ describe("Seeding", () => {
         rulesetId: ctx.rulesetId,
         name: "Test Mage",
         description: "A mage",
-        hd: 6,
-        kind: "pc",
+        fields: { [CLASS_HD]: 6 },
+        partition: "pc",
       });
       expect(await describeCustomizations(klassId)).toEqual({
         requirements: [],
@@ -404,7 +413,7 @@ describe("Seeding", () => {
           spells: { slug: "testhealerspells", perDay: [[1], [2], [2, 1]], knowAll: true, noCantrips: true },
         }),
       );
-      expect((await rowsOf<Klass>("classes", { id: klassId }))[0].kind).toBe("npc");
+      expect((await rowsOf<Klass>("classes", { id: klassId }))[0].partition).toBe("npc");
       expect(await describeCustomizations(klassId)).toEqual({ requirements: [], modifiers: [], fields: [] });
       const levels = await levelsOf(ctx, levelIds);
       expect(levels.map(({ level, fields, modifiers }) => ({ level, fields, modifiers }))).toEqual([
@@ -477,11 +486,11 @@ describe("Seeding", () => {
     const rows = await rowsOf<Item>("items", { rulesetId: ctx.rulesetId });
     expect(
       rows
-        .map(({ name, isTemplate, slot, sourceItemId }) => ({
+        .map(({ name, fields, links }) => ({
           name,
-          isTemplate,
-          slot,
-          source: sourceItemId && names[sourceItemId],
+          isTemplate: fields[ITEM_IS_TEMPLATE],
+          slot: fields[ITEM_SLOT],
+          source: links.madeFrom ? names[links.madeFrom] : null,
         }))
         .sort((a, b) => a.name.localeCompare(b.name)),
     ).toEqual([
@@ -522,11 +531,11 @@ describe("Seeding", () => {
     const spells = await rowsOf<Spell>("spells", { rulesetId: ctx.rulesetId });
     expect(
       spells
-        .map(({ id, name, saveId, saveEffect }) => ({
+        .map(({ id, name, fields, links }) => ({
           named: ctx.spellMap[name] === id,
           name,
-          save: saveId && saves[saveId],
-          saveEffect,
+          save: links.resistedBy ? saves[links.resistedBy] : null,
+          saveEffect: fields[SPELL_SAVE_EFFECT] ?? null,
         }))
         .sort((a, b) => a.name.localeCompare(b.name)),
     ).toEqual([
@@ -567,7 +576,12 @@ describe("Seeding", () => {
     const rows = await rowsOf<Race>("races", { rulesetId: ctx.rulesetId });
     expect(
       rows
-        .map(({ name, size, baseSpeed, kind }) => ({ name, size, baseSpeed, kind }))
+        .map(({ name, fields, partition }) => ({
+          name,
+          size: fields[RACE_SIZE],
+          baseSpeed: fields[RACE_BASE_SPEED],
+          kind: partition,
+        }))
         .sort((a, b) => a.name.localeCompare(b.name)),
     ).toEqual([
       { name: "Test Elf", size: "Medium", baseSpeed: 30, kind: "pc" },
@@ -676,10 +690,10 @@ describe("Seeding", () => {
 
     expect(await aptitudesOfFeat(ctx, ctx.featMap["Test Alertness"])).toEqual(["Test Familiar Feature"]);
     expect(await rowsOf<Race>("races", { rulesetId: ctx.rulesetId })).toMatchObject([
-      { name: "Test Cat", kind: "familiar" },
+      { name: "Test Cat", partition: "familiar" },
     ]);
     expect(await rowsOf<Klass>("classes", { rulesetId: ctx.rulesetId })).toMatchObject([
-      { name: "Test Familiar", kind: "familiar" },
+      { name: "Test Familiar", partition: "familiar" },
     ]);
     expect(
       await EntityLinks.findMany(db, {
@@ -823,7 +837,11 @@ describe("Seeding", () => {
 
       const boltId = ctx.spellMap["Test Bolt"];
       const [bolt] = await rowsOf<Spell>("spells", { id: boltId });
-      expect(bolt).toMatchObject({ rulesetId: ctx.rulesetId, name: "Test Bolt", saveEffect: "See text" });
+      expect(bolt).toMatchObject({
+        rulesetId: ctx.rulesetId,
+        name: "Test Bolt",
+        fields: { [SPELL_SAVE_EFFECT]: "See text" },
+      });
       expect(await spellListsOf(ctx, boltId)).toEqual(["Arcane Spells 2", "Wizard Spells 3"]);
       expect((await describeCustomizations(boltId)).fields).toEqual([`${SPELL_SCHOOL} Evocation`]);
       // Its own spell keeps the inherited one's lists, and isn't copied

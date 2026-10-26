@@ -1,5 +1,5 @@
 import RulesError from "@/engine/core/RulesError.ts";
-import type { RulesetData, RulesetView, ViewEntities } from "@/engine/core/view/index.ts";
+import type { RulesetData, RulesetView, ViewKinds } from "@/engine/core/view/index.ts";
 
 /** An entity customizations are made on, as the ruleset's view has it: its id there, and the name a history shows. */
 export default class CustomizedEntity {
@@ -14,11 +14,10 @@ export default class CustomizedEntity {
       return modifier ? `${modifier.target} ${modifier.operator} ${modifier.value}` : undefined;
     }
     if (!rulesetData.isCustomizable(entityType)) return undefined;
-    const entity = rulesetData.find(entityType as keyof ViewEntities, entityId);
+    const entity = rulesetData.find(entityType as keyof ViewKinds, entityId);
     if (!entity) return undefined;
-    const position = rulesetData.positionOf(entityType, entity);
-    if (position !== undefined) return `Level ${position}`;
-    return "name" in entity ? entity.name : undefined;
+    if (entity.ownerId !== null && entity.position !== null) return `Level ${entity.position}`;
+    return entity.name ?? undefined;
   }
 
   /**

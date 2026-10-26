@@ -61,7 +61,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
     }
     if (omitLastLevel) {
       const last = (await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [copy.id] })).find(
-        (level) => level.level === 20,
+        (level) => level.position === 20,
       )!;
       await EntitiesService.deleteOwnedEntity(session, extension.id, "classes", copy.id, last.id);
     }
@@ -139,7 +139,7 @@ for (const action of ["add skill", "remove skill", "create level", "update level
         otherSkill: Dnd35View.of(rulesetData).skills.find((skill) => !assigned.some((link) => link.toId === skill.id))!
           .id,
         levelId: [...Dnd35View.of(rulesetData).klassLevelsById.values()].find(
-          (level) => level.klassId === id && level.level === 1,
+          (level) => level.ownerId === id && level.position === 1,
         )!.id,
       };
     });

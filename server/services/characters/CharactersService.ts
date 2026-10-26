@@ -5,7 +5,7 @@ import { charactersInCharacter } from "@/drizzle/schema.ts";
 import {
   type CreationPickQuery,
   Engine,
-  type EntityRow,
+  type EntityRecord,
   type FieldsRequest,
   type LinkPicksPlan,
 } from "@/engine/index.ts";
@@ -192,7 +192,7 @@ class CharactersService extends include(Object, Archives, Imports) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const picker = Engine.for(scope).characters().openCreationPicker(role, formData);
       // Each option as an entity's row: its columns past those every kind's has are its kind's
-      const result = await Entities.findPage<EntityRow>(
+      const result = await Entities.findPage<EntityRecord>(
         db,
         {
           rulesetId,

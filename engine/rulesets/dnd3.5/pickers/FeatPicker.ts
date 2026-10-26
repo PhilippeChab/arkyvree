@@ -3,7 +3,7 @@ import type { RulesetView } from "@/engine/core/view/index.ts";
 import FeatEntity, { type PoolModifier } from "@/engine/rulesets/dnd3.5/entities/feats/FeatEntity.ts";
 import type { FeatPickQuery } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { FEAT_FAMILY, FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import LevelPicker from "./LevelPicker.ts";
 
@@ -29,14 +29,14 @@ export default class FeatPicker extends LevelPicker<{ aptitudeModifiers: PoolMod
     super(view, input, query);
     const offered = {
       // A feat a character picks is a selectable one
-      columns: { selectable: true },
+      fields: { [FEAT_SELECTABLE]: true },
       ids: Dnd35View.of(this.rulesetData).listFeatIds(query.aptitudeId),
       excludeIds: this.holder
         .getHeldFeats()
-        .filter((feat) => !feat.stackable)
+        .filter((feat) => !feat.fields[FEAT_STACKABLE])
         .map((feat) => feat.id),
     };
-    this.filters = { ...offered, ...(query.family && { fields: { [FEAT_FAMILY]: query.family } }) };
+    this.filters = { ...offered, fields: { ...offered.fields, ...(query.family && { [FEAT_FAMILY]: query.family }) } };
     this.groupFilters = { ...offered, groups: this.feats.groupByFamily(offered.ids) };
   }
 

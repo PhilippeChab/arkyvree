@@ -17,7 +17,12 @@ describe("rulesets entities: skills", () => {
     const columns = { name: "Test Skill", description: "A test skill", primaryAbilityId: abilityMap["Intelligence"] };
     const fields = { impactedByWeight: false, checkPenaltyMultiplier: 1, usableWithoutTraining: true };
     const created = await expectOk(kinds.$post({ param: { id, entityType }, json: { ...columns, fields } }));
-    expect(created).toMatchObject({ ...columns, ...fields });
+    const { primaryAbilityId, ...own } = columns;
+    expect(created).toMatchObject({
+      ...own,
+      ...fields,
+      links: [{ role: "keyAbility", toId: primaryAbilityId, toName: "Intelligence" }],
+    });
     const param = { id, entityType, entityId: created.id };
 
     expect(await expectOk(entity.$get({ param }))).toMatchObject({ id: created.id, name: "Test Skill" });
@@ -27,12 +32,42 @@ describe("rulesets entities: skills", () => {
     const update = { ...columns, name: "Renamed Skill", primaryAbilityId: abilityMap["Wisdom"] };
     const updatedFields = { ...fields, impactedByWeight: true };
     expect(await expectOk(entity.$put({ param, json: { ...update, fields: updatedFields } }))).toMatchObject({
-      ...update,
+      name: update.name,
       ...updatedFields,
+      links: [{ role: "keyAbility", toId: update.primaryAbilityId, toName: "Wisdom" }],
     });
 
     await expectOk(entity.$delete({ param }));
     await expectStatus(entity.$get({ param }), 404);
+  });
+
+  test("answers a save as a read answers the skill: its create, its update, and an inherited one's copied on its edit", async () => {
+    const { abilityMap, skillMap } = await getSeedCtx();
+    const { id } = await createSeededTestRuleset(SEED_USER_ID);
+    const read = (entityId: string) => expectOk(entity.$get({ param: { id, entityType, entityId } }));
+    const fields = { impactedByWeight: false, checkPenaltyMultiplier: 1, usableWithoutTraining: true };
+
+    const json = { name: "Test Skill", primaryAbilityId: abilityMap["Intelligence"], fields };
+    const created = await expectOk(kinds.$post({ param: { id, entityType }, json }));
+    expect(created).toEqual(await read(created.id));
+    expect(created.links).toMatchObject([
+      { role: "keyAbility", toId: abilityMap["Intelligence"], toName: "Intelligence" },
+    ]);
+
+    const param = { id, entityType, entityId: created.id };
+    const update = { ...json, name: "Renamed Skill", primaryAbilityId: abilityMap["Wisdom"] };
+    const updated = await expectOk(entity.$put({ param, json: update }));
+    expect(updated).toEqual(await read(created.id));
+    expect(updated.links).toMatchObject([{ role: "keyAbility", toId: abilityMap["Wisdom"], toName: "Wisdom" }]);
+
+    // The fork's first edit of an inherited skill writes its copy, which the answer and a read by either id give
+    const climbId = skillMap["Climb"];
+    const climb = { name: "Climb", primaryAbilityId: abilityMap["Dexterity"], fields };
+    const copied = await expectOk(entity.$put({ param: { id, entityType, entityId: climbId }, json: climb }));
+    expect(copied.id).not.toBe(climbId);
+    expect(copied).toEqual(await read(copied.id));
+    expect(copied).toEqual(await read(climbId));
+    expect(copied.links).toMatchObject([{ role: "keyAbility", toId: abilityMap["Dexterity"], toName: "Dexterity" }]);
   });
 
   test("requires a session", async () => {

@@ -9,6 +9,7 @@ import { CharacterInventoryService } from "@/server/services/characters/inventor
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { linkedId, linksOf } from "@/tests/support/entityLinks.ts";
 import { copyEntity, createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findPlainItem } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -29,8 +30,8 @@ async function setupOwnRows() {
   });
   const [save] = await Entities.create<RulesetSave>(db, "saves", {
     name: "Stored Save",
-    abilityId: ability.id,
     rulesetId: parent.id,
+    links: { keyAbility: ability.id },
   });
   RulesetViews.invalidate(parent.id);
   const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
@@ -54,13 +55,18 @@ test("a page's inherited rows name an entity the fork copied by its copy", async
     rulesetId: fork.ancestorRulesetIds[0],
   }))!;
   // Constitution, copied in the fork: the core's Fortitude and Concentration still store the core's id
-  const constitution = await copyEntity(db, "abilities", fortitude.abilityId, fork);
+  const constitution = await copyEntity(db, "abilities", fortitude.links.keyAbility!, fork);
   RulesetViews.invalidateAll();
 
   const saves = await EntitiesService.getEntities(fork.id, "saves", {}, PAGE);
-  expect(saves.items.find((save) => save.id === fortitude.id)?.abilityId).toBe(constitution.id);
+  expect(
+    linkedId(
+      saves.items.find((save) => save.id === fortitude.id),
+      "keyAbility",
+    ),
+  ).toBe(constitution.id);
   const skills = await EntitiesService.getEntities(fork.id, "skills", { search: "Concentration" }, PAGE);
-  expect(skills.items.map((skill) => skill.primaryAbilityId)).toEqual([constitution.id]);
+  expect(skills.items.map((skill) => linkedId(skill, "keyAbility"))).toEqual([constitution.id]);
 });
 
 test("a fork's own feats and spells, listed alone, name a list the fork copied by its copy", async () => {
@@ -73,13 +79,19 @@ test("a fork's own feats and spells, listed alone, name a list the fork copied b
 
   for (const childOnly of [false, true]) {
     const feats = await EntitiesService.getEntities(fork.id, "feats", { childOnly }, PAGE);
-    expect(feats.items.find((row) => row.id === feat.id)?.links).toMatchObject([
-      { role: "listedIn", toId: poolCopy.id, toName: "Copied Pool" },
-    ]);
+    expect(
+      linksOf(
+        feats.items.find((row) => row.id === feat.id),
+        "listedIn",
+      ),
+    ).toMatchObject([{ role: "listedIn", toId: poolCopy.id, toName: "Copied Pool" }]);
     const spells = await EntitiesService.getEntities(fork.id, "spells", { childOnly }, PAGE);
-    expect(spells.items.find((row) => row.id === spell.id)?.links).toMatchObject([
-      { role: "listedIn", toId: listCopy.id, tier: 1, toName: "Copied Spells" },
-    ]);
+    expect(
+      linksOf(
+        spells.items.find((row) => row.id === spell.id),
+        "listedIn",
+      ),
+    ).toMatchObject([{ role: "listedIn", toId: listCopy.id, tier: 1, toName: "Copied Spells" }]);
   }
 });
 
@@ -95,7 +107,7 @@ test("a spell names its save by the view's id, and carries no stored save row", 
   )!;
   const page = await EntitiesService.getEntity(fork.id, "spells", spell.id);
   for (const read of [listed, page]) {
-    expect(read.saveId).toBe(saveCopy.id);
+    expect(linkedId(read, "resistedBy")).toBe(saveCopy.id);
     expect(read).not.toHaveProperty("savesInRule");
   }
 });

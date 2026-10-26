@@ -2,11 +2,12 @@ import { getTableName } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { rulesetsInRules } from "@/drizzle/schema.ts";
-import { CowDataReader, EntityNames, EntityRepositories, EntityRevert, RulesetViews } from "@/server/cow/index.ts";
+import { CowDataReader, EntityNames, EntityRevert, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import {
   Activities,
+  Entities,
   EntityReferences,
   EntitySnapshots,
   type RulesetEntityType,
@@ -144,9 +145,7 @@ class RulesetExtensionsService {
       const extensionSnapshots = [];
       for (const snap of snapshots) {
         const entityType = snap.entityType as RulesetEntityType;
-        const repo = EntityRepositories.of(entityType);
-        if (!repo) continue;
-        const sourceEntity = await repo.findOne(tx, { id: snap.sourceEntityId });
+        const sourceEntity = await Entities.findOne(tx, { entityType, id: snap.sourceEntityId });
         if (sourceEntity?.rulesetId === extensionId) extensionSnapshots.push(snap);
       }
 

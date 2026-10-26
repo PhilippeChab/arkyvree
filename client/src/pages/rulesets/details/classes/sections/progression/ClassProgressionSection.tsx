@@ -181,12 +181,8 @@ export function ClassProgressionSection({ rulesetId, classId, className, classTy
           }),
         ),
       ),
-    // The class the level was made on: the copy an edit of an inherited class made, at its owner's key
-    onCreateSuccess: (created) => {
-      const made: Record<string, unknown> = created;
-      const ownerId = made[levelPage?.ownerKey ?? ""];
-      followCopy(typeof ownerId === "string" ? ownerId : classId, created.sourceEntityId);
-    },
+    // The class the level was made on: the copy an edit of an inherited class made, its owner
+    onCreateSuccess: (created) => followCopy(created.ownerId ?? classId, created.sourceEntityId),
   });
 
   const tracks = trackRules.flatMap((rules): Track[] =>

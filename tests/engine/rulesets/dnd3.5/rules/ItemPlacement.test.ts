@@ -3,14 +3,19 @@ import { describe, expect, test } from "bun:test";
 import { OwnerValues } from "@/engine/core/fields/index.ts";
 import type { FieldValue } from "@/engine/core/module/index.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
-import { LOCATION_OPTIONS } from "@/shared/enums.ts";
+import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
 import { storedValues } from "@/tests/support/storedValues.ts";
 import { HAND_LOCATIONS } from "@/vocabulary/dnd3.5/equipment.ts";
-import { ITEM_HAS_CHARGES, WEAPON_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { ITEM_HAS_CHARGES, ITEM_SLOT, ITEM_TYPE, WEAPON_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** An item's stored values, its `ITEM_HAS_CHARGES` field holding `value`. */
 function charges(value: FieldValue) {
   return storedValues([[ITEM_HAS_CHARGES, value]]);
+}
+
+/** An item as its placement reads it: its type (none for none) and its slot, its own fields. */
+function placed(type: string | null, slot: ItemLocation) {
+  return { fields: { [ITEM_SLOT]: slot, ...(type !== null && { [ITEM_TYPE]: type }) } };
 }
 
 describe("A location", () => {
@@ -34,13 +39,13 @@ describe("An item type", () => {
 
 describe("An item's placement", () => {
   test("goes to the one location its type sets, the hand its wielder picks for a weapon, else its own slot", () => {
-    expect(ItemPlacement.describe({ type: "Armor", slot: "Other" }, OwnerValues.NONE).slot).toBe("Torso");
-    expect(ItemPlacement.describe({ type: "Shield", slot: "Other" }, OwnerValues.NONE).slot).toBe("Off Hand");
-    expect(ItemPlacement.describe({ type: "Weapon", slot: "Main Hand" }, OwnerValues.NONE)).toMatchObject({
+    expect(ItemPlacement.describe(placed("Armor", "Other"), OwnerValues.NONE).slot).toBe("Torso");
+    expect(ItemPlacement.describe(placed("Shield", "Other"), OwnerValues.NONE).slot).toBe("Off Hand");
+    expect(ItemPlacement.describe(placed("Weapon", "Main Hand"), OwnerValues.NONE)).toMatchObject({
       slot: null,
       hand: true,
     });
-    expect(ItemPlacement.describe({ type: null, slot: "Neck" }, OwnerValues.NONE)).toMatchObject({
+    expect(ItemPlacement.describe(placed(null, "Neck"), OwnerValues.NONE)).toMatchObject({
       slot: "Neck",
       hand: false,
     });
@@ -48,7 +53,7 @@ describe("An item's placement", () => {
 
   test("offers the locations its type sets, else its own slot's or every one", () => {
     const offered = (type: string | null, slot: "Head" | "Other") =>
-      ItemPlacement.describe({ type, slot }, OwnerValues.NONE).locations.map((option) => option.location);
+      ItemPlacement.describe(placed(type, slot), OwnerValues.NONE).locations.map((option) => option.location);
     expect(offered("Weapon", "Other")).toEqual([...HAND_LOCATIONS]);
     expect(offered("Shield", "Other")).toEqual(["Off Hand"]);
     expect(offered(null, "Other")).toEqual(["Other"]);
@@ -57,7 +62,7 @@ describe("An item's placement", () => {
 
   test("offers a weapon too large for one hand both hands alone: Large or past it", () => {
     const offered = (size: string) =>
-      ItemPlacement.describe({ type: "Weapon", slot: "Other" }, storedValues([[WEAPON_SIZE, size]])).locations.map(
+      ItemPlacement.describe(placed("Weapon", "Other"), storedValues([[WEAPON_SIZE, size]])).locations.map(
         (option) => option.location,
       );
     expect(offered("Large")).toEqual(["Two Handed"]);
@@ -68,7 +73,7 @@ describe("An item's placement", () => {
 
   test("asks for a weapon set in a weapon's or a shield's hand only", () => {
     const asked = (type: string | null) =>
-      ItemPlacement.describe({ type, slot: "Head" }, OwnerValues.NONE)
+      ItemPlacement.describe(placed(type, "Head"), OwnerValues.NONE)
         .locations.filter((option) => option.grouped)
         .map((option) => option.location);
     expect(asked("Weapon")).toEqual([...HAND_LOCATIONS]);
@@ -78,7 +83,7 @@ describe("An item's placement", () => {
   });
 
   test("comes with the charges its field counts: none without one, 0 for one that counts none", () => {
-    const item = { type: null, slot: "Other" as const };
+    const item = placed(null, "Other");
     expect(ItemPlacement.describe(item, OwnerValues.NONE).charges).toBeNull();
     expect(ItemPlacement.describe(item, charges(50)).charges).toBe(50);
     expect(ItemPlacement.describe(item, charges("many")).charges).toBe(0);

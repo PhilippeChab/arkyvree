@@ -112,7 +112,7 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
         const enrichedSpell: CustomizedSpell = {
           ...spell,
           // Its DC's ability, as a loaded spell's (`CustomizesEntities.withDcAbilities`): its class's bonus spell ability
-          abilityDcName: klassBonusSpellAbilityMap.get(firstLevel.klassLevel.klassId) ?? null,
+          abilityDcName: klassBonusSpellAbilityMap.get(firstLevel.klassLevel.ownerId) ?? null,
           aptitudeId,
           klassLevelId: firstLevel.klassLevel.id,
           characterLevelId: firstLevel.characterLevel.id,

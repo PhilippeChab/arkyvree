@@ -16,7 +16,11 @@ describe("rulesets entities: saves", () => {
 
     const json = { name: "Test Save", description: "A test save", abilityId: abilityMap["Constitution"] };
     const created = await expectOk(kinds.$post({ param: { id, entityType }, json }));
-    expect(created).toMatchObject(json);
+    expect(created).toMatchObject({
+      name: json.name,
+      description: json.description,
+      links: [{ role: "keyAbility", toId: json.abilityId, toName: "Constitution" }],
+    });
     const param = { id, entityType, entityId: created.id };
 
     expect(await expectOk(entity.$get({ param }))).toMatchObject({ id: created.id, name: "Test Save" });
@@ -24,7 +28,11 @@ describe("rulesets entities: saves", () => {
     expect(list.items.map((s) => s.id)).toContain(created.id);
 
     const update = { name: "Renamed Save", description: "Updated", abilityId: abilityMap["Wisdom"] };
-    expect(await expectOk(entity.$put({ param, json: update }))).toMatchObject(update);
+    expect(await expectOk(entity.$put({ param, json: update }))).toMatchObject({
+      name: update.name,
+      description: update.description,
+      links: [{ role: "keyAbility", toId: update.abilityId, toName: "Wisdom" }],
+    });
 
     await expectOk(entity.$delete({ param }));
     await expectStatus(entity.$get({ param }), 404);

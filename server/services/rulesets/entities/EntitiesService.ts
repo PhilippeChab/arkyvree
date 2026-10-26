@@ -38,7 +38,7 @@ class EntitiesService extends include(Object, Copies, Links, Owned, Progressions
     copies: EntityCopies | undefined,
   ) {
     if (!copies) return;
-    const rows = await Entities.findList<EntityRow>(tx, {
+    const rows = await Entities.findList(tx, {
       entityType: type,
       rulesetId: ruleset.id,
       ...rulesetData.cow.listFilters,

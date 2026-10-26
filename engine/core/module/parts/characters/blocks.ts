@@ -48,11 +48,14 @@ export interface FieldsBlock extends BlockHead {
  * The items a character holds (`inventory`), of a kind (`entityType`, whose pages their names link to): each entry its
  * item's name and description, where it's held (`slot`, none unplaced), how many, its weight and cost in the block's
  * units, whether it's held in use (`held`) and its charges; then the load they make (`load`: its figures, each its
- * label, its short one for a box and its weight, and its status past what's light, as grave as it is). `units`: how
- * its figures read ("5.00 lbs", a box's "1 lb"); `words`: what its table, its dialogs and its toasts say.
+ * label, its short one for a box and its weight, and its status past what's light, as grave as it is). `itemFields`:
+ * the fields of its kind's entities their cost and weight are (among an item's own `fields`), which its add dialog
+ * shows each item's by; `units`: how its figures read ("5.00 lbs", a box's "1 lb"); `words`: what its table, its
+ * dialogs and its toasts say.
  */
 export interface InventoryBlock extends BlockHead {
   entityType: string;
+  itemFields: { cost: string; weight: string };
   kind: "inventory";
   load?: {
     figures: { label: string; short: string; weight: number | null }[];
@@ -69,7 +72,7 @@ export interface InventoryBlock extends BlockHead {
  */
 export interface InventoryRow {
   charges?: { remaining: number | null; total: number };
-  cost: number | string | null;
+  cost: number | null;
   description: string | null;
   held: boolean;
   id: string;
@@ -77,7 +80,7 @@ export interface InventoryRow {
   name: string;
   quantity: number | null;
   slot: string | null;
-  weight: number | string | null;
+  weight: number | null;
 }
 
 /** What an `inventory` block's table, its add, edit and remove dialogs, their fields and their toasts say. */

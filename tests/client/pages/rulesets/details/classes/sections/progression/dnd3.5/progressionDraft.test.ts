@@ -26,7 +26,7 @@ const KEYS = levelKeysOf(COLUMNS);
 function level(id: string, number: number, feats: { aptitudeId: string; id: string; name: string }[] = []) {
   const row = {
     id,
-    level: number,
+    position: number,
     updatedAt: "",
     bab: number,
     skills: 4,

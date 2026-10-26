@@ -6,6 +6,7 @@ import { test } from "@/tests/e2e/fixtures.ts";
 import { uniqueName } from "@/tests/e2e/support/page.ts";
 import { forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
 import { signIn } from "@/tests/e2e/support/signIn.ts";
+import { ITEM_IS_TEMPLATE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type DuplicatedItem = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["entities"][":entityType"][":entityId"]["duplicate"]["$post"],
@@ -46,8 +47,8 @@ for (const width of [375, 1280]) {
       const saveResponse = await saved;
       expect(saveResponse.ok()).toBe(true);
       const edited: EditedItem = await saveResponse.json();
-      expect(edited.isTemplate).toBe(true);
-      expect(edited.sourceItemId).toBeNull();
+      expect(edited.fields[ITEM_IS_TEMPLATE]).toBe(true);
+      expect(edited.links).toEqual([]);
       expect(edited.description).toBe("Homebrew heavy mace template");
 
       await page.reload();
@@ -62,8 +63,10 @@ for (const width of [375, 1280]) {
       );
       expect(duplicateResponse.ok()).toBe(true);
       const copy: DuplicatedItem = await duplicateResponse.json();
-      expect(copy.isTemplate).toBe(false);
-      expect(copy.sourceItemId).toBe(edited.id);
+      expect(copy.fields[ITEM_IS_TEMPLATE]).toBe(false);
+      expect(copy.links).toEqual([
+        expect.objectContaining({ role: "madeFrom", toId: edited.id, toName: "Heavy Mace" }),
+      ]);
 
       await page.goto(`/rulesets/${forkId}/items/${copy.id}/customization`);
       await expect(page.locator('input[name="name"]')).toHaveValue("Heavy Mace +3");

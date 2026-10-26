@@ -1,7 +1,11 @@
-/** A ruleset entity, any kind's, as its page or its list reads it: its row, with the fields it holds, and its last save. */
+/**
+ * A ruleset entity, any kind's, as its page or its list reads it: as stored (its own columns, its own fields by field,
+ * its links), with the fields it holds, and its last save.
+ */
 export interface EntityRow {
   [key: string]: unknown;
   description: string | null;
+  fields: Readonly<Record<string, unknown>>;
   id: string;
   name: string;
   rulesetId: string;

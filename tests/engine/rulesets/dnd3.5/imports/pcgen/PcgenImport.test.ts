@@ -57,7 +57,7 @@ async function nameLevels(plan: Awaited<ReturnType<typeof planImportOf>>) {
         ({ amount, entityId }) => `${dnd35.abilitiesById.get(entityId!)?.name} +${amount}`,
       ),
       feats: picksOf(advancement, "feats").map(({ entityId }) => dnd35.featsById.get(entityId!)?.name),
-      klass: `${dnd35.klassesById.get(klassLevel.klassId)?.name} ${klassLevel.level}`,
+      klass: `${dnd35.klassesById.get(klassLevel.ownerId)?.name} ${klassLevel.position}`,
       skills: Object.fromEntries(
         picksOf(advancement, "skills").map(({ amount, entityId }): [string, number] => [
           dnd35.skillsById.get(entityId!)?.name ?? entityId!,

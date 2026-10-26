@@ -12,7 +12,7 @@
  */
 
 import type { RulesWord } from "@/engine/core/module/parts/ruleset/index.ts";
-import type { ViewEntities } from "@/engine/core/view/index.ts";
+import type { ViewKinds } from "@/engine/core/view/index.ts";
 
 /**
  * The words a level's advancements take, whatever step shows them: a position's word on a track ("Level", "Levels":
@@ -287,11 +287,11 @@ export interface ValueBounds {
  */
 export type LevelStep = {
   [M in StepMechanic]: {
-    kind?: keyof ViewEntities;
+    kind?: keyof ViewKinds;
     label: string;
     mechanic: M;
     name: string;
-    pools?: keyof ViewEntities;
+    pools?: keyof ViewKinds;
     words: StepWords[M];
   };
 }[StepMechanic];

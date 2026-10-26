@@ -4,7 +4,7 @@
  * reader reads a sheet and what a printed one adds. Whether to force the rules is always an operation's last argument.
  */
 
-import type { ViewEntities } from "@/engine/core/view/index.ts";
+import type { ViewKinds } from "@/engine/core/view/index.ts";
 import type { ItemLocation } from "@/shared/enums.ts";
 
 import type { InventoryEntryPlan } from "./plans.ts";
@@ -83,7 +83,7 @@ export type MemberReading = "partial" | PrivateNotes;
  * (`item`), or an `entry` of the character's.
  */
 export type PlacementChange =
-  | { item: ViewEntities["items"]; request: InventoryEntryRequest }
+  | { item: ViewKinds["items"]; request: InventoryEntryRequest }
   | { entry: { id: string; itemId: string }; request: InventoryEntryRequest };
 
 /** Whether a viewer reads a character's private notes: shown, or left out of its sheet (`hide`). */

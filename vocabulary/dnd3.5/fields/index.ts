@@ -4,6 +4,7 @@ export * from "./classLevel.ts";
 export * from "./entityFields.ts";
 export * from "./feat.ts";
 export * from "./item.ts";
+export * from "./language.ts";
 export * from "./race.ts";
 export * from "./ruleset.ts";
 export * from "./shield.ts";

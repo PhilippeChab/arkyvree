@@ -3,11 +3,11 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 
 import { PCGEN_FEATS, PCGEN_ITEMS } from "./names.ts";
 
-/** An entity of the view a name finds: its id and its name, and its kind when it has one (a race's, a class's). */
+/** An entity of the view a name finds: its id, its name, and what it's for (`partition`: a race's, a class's `pc`). */
 interface Named {
   id: string;
-  kind?: string;
   name: string;
+  partition: string;
 }
 
 /** A list's entities, each with its compared name, in the view's order: what a scan of the list reads. */
@@ -80,7 +80,7 @@ export default class PcgenNames {
     const cached = this.compares.get(list);
     if (cached) return cached;
     const entities: Named[] = Dnd35View.of(this.rulesetData)[list];
-    const players = PLAYER_LISTS.has(list) ? entities.filter((entity) => entity.kind === "pc") : entities;
+    const players = PLAYER_LISTS.has(list) ? entities.filter((entity) => entity.partition === "pc") : entities;
     const compared = players.map((entity) => ({ compared: PcgenNames.compared(entity.name), entity }));
     this.compares.set(list, compared);
     return compared;

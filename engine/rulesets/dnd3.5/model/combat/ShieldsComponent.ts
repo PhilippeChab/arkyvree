@@ -5,6 +5,7 @@ import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { MASTERWORK_CHECK_PENALTY_REDUCTION } from "@/vocabulary/dnd3.5/combat.ts";
+import { ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A type's shields, by the inventory entry holding each: one entry held in two sets is one shield, in each set. */
 type ShieldGroup = Record<string, ShieldSlot>;
@@ -42,7 +43,7 @@ export default class ShieldsComponent extends CharacterComponent<LoadedCharacter
   /** Each shield the inventory has equipped, in its order. */
   override initialize() {
     for (const { entry, fields } of this.inventory.getEquipped())
-      if (entry.item.type === "Shield") this.registerShield(entry, fields);
+      if (entry.item.fields[ITEM_TYPE] === "Shield") this.registerShield(entry, fields);
   }
 
   /**

@@ -11,6 +11,7 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A new user's empty ruleset with two classes and two skills. */
 async function setup() {
@@ -21,14 +22,22 @@ async function setup() {
     description: "Strength",
     rulesetId,
   });
-  const [fighter] = await Entities.create<Klass>(db, "classes", { name: "Fighter", rulesetId, hd: 8 });
-  const [rogue] = await Entities.create<Klass>(db, "classes", { name: "Rogue", rulesetId, hd: 8 });
+  const [fighter] = await Entities.create<Klass>(db, "classes", {
+    name: "Fighter",
+    rulesetId,
+    fields: { [CLASS_HD]: 8 },
+  });
+  const [rogue] = await Entities.create<Klass>(db, "classes", { name: "Rogue", rulesetId, fields: { [CLASS_HD]: 8 } });
   const [climb] = await Entities.create<Skill>(db, "skills", {
     name: "Climb",
     rulesetId,
-    primaryAbilityId: ability.id,
+    links: { keyAbility: ability.id },
   });
-  const [swim] = await Entities.create<Skill>(db, "skills", { name: "Swim", rulesetId, primaryAbilityId: ability.id });
+  const [swim] = await Entities.create<Skill>(db, "skills", {
+    name: "Swim",
+    rulesetId,
+    links: { keyAbility: ability.id },
+  });
   return { user, session, ruleset, fighter, rogue, climb, swim };
 }
 
@@ -105,7 +114,7 @@ describe("EntitiesService: a class's skills", () => {
   test("refuses to remove a class skill while a character has a level in the class", async () => {
     const { user, session, ruleset, fighter, climb } = await setup();
     await EntitiesService.addEntityLink(session, ruleset.id, "classes", fighter.id, climb.id);
-    const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: fighter.id, level: 1 });
+    const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: fighter.id, position: 1 });
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     await addCharacterLevel(character.id, klassLevel.id);
 

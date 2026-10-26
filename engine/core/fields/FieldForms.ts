@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import RulesError from "@/engine/core/RulesError.ts";
-import type { ViewEntities } from "@/engine/core/view/index.ts";
+import type { ViewKinds } from "@/engine/core/view/index.ts";
 import type { ChoiceSpec, FieldCondition, ListSpec, ProgressionSpec, TextSpec } from "@/shared/customization/fields.ts";
 import { copyProgression, findProgressionIssues } from "@/shared/customization/progression.ts";
 import { isRecord } from "@/shared/isRecord.ts";
@@ -24,7 +24,7 @@ export interface FormContext {
   /** What the entity keeps (an edit's, a new one's defaults), which a field's condition reads past what's given. */
   kept?: Readonly<Record<string, unknown>>;
   /** An entity's id as the view keys it, refused when the view shows none (`RequestIds.resolve`). */
-  resolve(entityType: keyof ViewEntities, id: string): string;
+  resolve(entityType: keyof ViewKinds, id: string): string;
 }
 
 /**

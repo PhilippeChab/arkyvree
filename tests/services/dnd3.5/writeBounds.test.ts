@@ -34,6 +34,14 @@ import { readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { findPlainItem, findSeededCharacter, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import {
+  CLASS_HD,
+  ITEM_COST_GP,
+  ITEM_WEIGHT,
+  LANGUAGE_TYPE,
+  RACE_BASE_SPEED,
+  RACE_SIZE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A connection of its own, which holds a lock the test's call waits on. */
 const lockPool = createTestPool();
@@ -69,7 +77,7 @@ describe("a ruleset's entities", () => {
       EntitiesService.createEntity(owner, ruleset.id, "classes", { name: "Commoner", hd: 7 }),
     ).rejects.toMatchObject(refusal);
     const fighter = await EntitiesService.createEntity(owner, ruleset.id, "classes", { name: "Fighter", hd: 12 });
-    expect(fighter.hd).toBe(12);
+    expect(fighter.fields[CLASS_HD]).toBe(12);
     expect(
       EntitiesService.updateEntity(owner, ruleset.id, "classes", fighter.id, { name: "Fighter", hd: 7 }),
     ).rejects.toMatchObject(refusal);
@@ -77,7 +85,9 @@ describe("a ruleset's entities", () => {
       EntitiesService.updateEntity(owner, ruleset.id, "classes", fighter.id, { name: "Fighter", hd: null }),
     ).rejects.toMatchObject(refusal);
     expect(
-      (await EntitiesService.updateEntity(owner, ruleset.id, "classes", fighter.id, { name: "Fighter", hd: 4 })).hd,
+      (await EntitiesService.updateEntity(owner, ruleset.id, "classes", fighter.id, { name: "Fighter", hd: 4 })).fields[
+        CLASS_HD
+      ],
     ).toBe(4);
   });
 
@@ -92,10 +102,10 @@ describe("a ruleset's entities", () => {
       invalidAt("level"),
     );
     expect(await EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, { level: 20 })).toMatchObject({
-      level: 20,
+      position: 20,
     });
     expect(await EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, { level: 1 })).toMatchObject({
-      level: 1,
+      position: 1,
     });
   });
 
@@ -147,7 +157,7 @@ describe("a ruleset's entities", () => {
     ).rejects.toMatchObject(invalidAt("size"));
     // A new race left without them takes their defaults: a medium one, of 30 feet
     const created = await EntitiesService.createEntity(owner, ruleset.id, "races", { name: "Elf" });
-    expect(created).toMatchObject({ size: "Medium", baseSpeed: 30 });
+    expect(created.fields).toMatchObject({ [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 });
     const edits: [string, Record<string, unknown>][] = [
       ["baseSpeed", { baseSpeed: 0 }],
       ["baseSpeed", { baseSpeed: null }],
@@ -166,7 +176,7 @@ describe("a ruleset's entities", () => {
         size: "Tiny",
         baseSpeed: 1,
       }),
-    ).toMatchObject({ size: "Tiny", baseSpeed: 1 });
+    ).toMatchObject({ fields: { [RACE_SIZE]: "Tiny", [RACE_BASE_SPEED]: 1 } });
   });
 
   test("refuses an item's weight or cost past its numeric(…, 2) columns' range, and keeps them to two decimals", async () => {
@@ -177,7 +187,7 @@ describe("a ruleset's entities", () => {
       ).rejects.toMatchObject(invalidAt(key));
     }
     const gem = await EntitiesService.createEntity(owner, ruleset.id, "items", { name: "Gem", weight: 0, costGp: 0 });
-    expect(gem).toMatchObject({ weight: "0.00", costGp: "0.00" });
+    expect(gem.fields).toMatchObject({ [ITEM_WEIGHT]: 0, [ITEM_COST_GP]: 0 });
     for (const key of ["weight", "costGp"]) {
       expect(
         EntitiesService.updateEntity(owner, ruleset.id, "items", gem.id, { name: "Gem", [key]: -1 }),
@@ -198,9 +208,9 @@ describe("a ruleset's entities", () => {
       weight: 9_999.99,
       costGp: 99_999_999.99,
     });
-    expect(await EntitiesService.getEntity(ruleset.id, "items", gem.id)).toMatchObject({
-      weight: "9999.99",
-      costGp: "99999999.99",
+    expect((await EntitiesService.getEntity(ruleset.id, "items", gem.id)).fields).toMatchObject({
+      [ITEM_WEIGHT]: 9_999.99,
+      [ITEM_COST_GP]: 99_999_999.99,
     });
     // A third decimal is rounded off as it's written, half away from zero, as the numeric(…, 2) columns did
     await EntitiesService.updateEntity(owner, ruleset.id, "items", gem.id, {
@@ -208,9 +218,9 @@ describe("a ruleset's entities", () => {
       weight: 0.125,
       costGp: 1.005,
     });
-    expect(await EntitiesService.getEntity(ruleset.id, "items", gem.id)).toMatchObject({
-      weight: "0.13",
-      costGp: "1.01",
+    expect((await EntitiesService.getEntity(ruleset.id, "items", gem.id)).fields).toMatchObject({
+      [ITEM_WEIGHT]: 0.13,
+      [ITEM_COST_GP]: 1.01,
     });
     const [stored] = (
       await db.execute<{ number_value: string }>(
@@ -235,7 +245,7 @@ describe("a ruleset's entities", () => {
       name: "Tumble",
       primaryAbilityId: abilityId,
     });
-    expect(tumble).toMatchObject({ primaryAbilityId: abilityId });
+    expect(tumble.links).toMatchObject([{ role: "keyAbility", toId: abilityId }]);
     expect(
       EntitiesService.updateEntity(owner, rulesetId, "skills", tumble.id, { name: "Tumble", primaryAbilityId: "" }),
     ).rejects.toMatchObject(invalidAt("primaryAbilityId"));
@@ -251,13 +261,13 @@ describe("a ruleset's entities", () => {
   test("refuses a language without its type, and keeps an empty one", async () => {
     const { session: owner, ruleset } = await createTestUserAndRuleset();
     const common = await EntitiesService.createEntity(owner, ruleset.id, "languages", { name: "Common" });
-    expect(common).toMatchObject({ type: "" });
+    expect(common.fields).toEqual({ [LANGUAGE_TYPE]: "" });
     expect(
       EntitiesService.updateEntity(owner, ruleset.id, "languages", common.id, { name: "Common", type: null }),
     ).rejects.toMatchObject(invalidAt("type"));
     expect(
       await EntitiesService.updateEntity(owner, ruleset.id, "languages", common.id, { name: "Common", type: "Spoken" }),
-    ).toMatchObject({ type: "Spoken" });
+    ).toMatchObject({ fields: { [LANGUAGE_TYPE]: "Spoken" } });
   });
 
   test("offers no write of an ability, whose description its rules seed", async () => {

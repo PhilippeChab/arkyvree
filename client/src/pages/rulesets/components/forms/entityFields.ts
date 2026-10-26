@@ -20,8 +20,8 @@ type ColumnValue = LeafValue | unknown[];
 /** A field's value, but a group's: a flag's, a number's, a text's, a choice's, a list's, a progression's; null none. */
 type LeafValue = boolean | number | string | string[] | null | ProgressionValue;
 
-/** A column of a pool's links: a feat's feat pools, a spell's spell lists each at its level. */
-type LinksField = Extract<EntityField, { input: "leveledLinks" | "links" }>;
+/** A column of an entity's links of a role: a feat's feat pools, a spell's spell lists each at its level, its save. */
+type LinksField = Extract<EntityField, { input: "leveledLinks" | "links" | "ref" | "template" }>;
 
 /** What levels give of something, as a progression's field holds it: a frequency, and more at the levels it names. */
 type ProgressionValue = Extract<EntityField, { input: "progression" }>["default"];
@@ -52,11 +52,15 @@ function columnsByKey(columns: readonly EntityField[]): ValueField[] {
 }
 
 /**
- * A column's value as an entity read holds it: at its key, or, for links an entity read holds among its links (a
- * column's `role`'s), off them: each its linked entity's id, at its level where the column takes one, in their names'
- * order.
+ * A column's value as an entity read holds it: its own field's (`field`, among its `fields`), its link's of the column's
+ * role (a reference's or a template's `role`, among its `links`: the linked entity's id), else at its key; or, for
+ * links an entity read holds among its links (a column's `role`'s), off them: each its linked entity's id, at its level
+ * where the column takes one, in their names' order.
  */
 function columnValueOf(column: ValueField, entity: unknown): unknown {
+  if (column.field) return ownFieldOf(entity, column.field);
+  if ((column.input === "ref" || column.input === "template") && column.role)
+    return linksOf(column, entity)[0]?.linked.id;
   const linked = (column.input === "links" || column.input === "leveledLinks") && !!column.role;
   if (!linked) return valueAt(entity, column.key);
   const links = linksOf(column, entity).sort((a, b) => byName(a.linked, b.linked));
@@ -219,6 +223,12 @@ export function linkedEntities(columns: readonly EntityField[], entity: unknown)
 /** The first choice of a select for none: "None", or "Default" when "None" is one of its values. */
 export function noneLabel(options: readonly (number | string)[]) {
   return options.includes("None") ? "Default" : "None";
+}
+
+/** An entity read's own field's value (`field`, among its `fields`): none where it holds none. */
+export function ownFieldOf(entity: unknown, field: string): unknown {
+  const fields = valueAt(entity, "fields");
+  return isRecord(fields) ? fields[field] : undefined;
 }
 
 /**

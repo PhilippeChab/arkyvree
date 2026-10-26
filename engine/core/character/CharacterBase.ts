@@ -284,7 +284,8 @@ export default abstract class CharacterBase<
     this.itemNames = new Map();
     for (const { item } of this.data.inventory) {
       this.itemNames.set(item.id, item.name);
-      if (item.sourceItemId) this.itemNames.set(item.sourceItemId, item.name);
+      const templateId = this.rulesetData.inheritedFrom("items", item);
+      if (templateId) this.itemNames.set(templateId, item.name);
     }
     return this.itemNames;
   }

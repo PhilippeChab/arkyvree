@@ -212,10 +212,10 @@ export function EntityGroupsTable({
     >
       <DataTable framed columns={GROUPED_COLUMNS} containerSx={TABLE_CONTAINER_SX} minWidth={TABLE_MIN_WIDTH}>
         {groups.items.map((row, index) => {
-          const family = row.variantCount > 1 ? row.family : null;
+          const family = row.variantCount > 1 ? row.group : null;
           return (
             <GroupRow
-              key={row.family ?? row.representativeId}
+              key={row.group ?? row.representativeId}
               row={row}
               rulesetId={rulesetId}
               entityType={kind.type}

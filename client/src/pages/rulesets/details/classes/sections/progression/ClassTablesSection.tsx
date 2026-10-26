@@ -100,8 +100,10 @@ function ClassTables({ rulesetId, classId, className, classType, ruleset, counts
     enabled: editable,
   });
 
-  // Its levels are its first table's rows
-  const levels = (reads[0]?.data ?? []).toSorted(byLevel);
+  // Its levels are its first table's rows, each its number (`position`)
+  const levels = (reads[0]?.data ?? [])
+    .toSorted(byLevel)
+    .map(({ id, position, updatedAt }) => ({ id, level: position, updatedAt }));
   // Its rules' word for the class ("Class")
   const word = entityTypeLabel(classType, rules.words);
   const save = useProgressionSave(rulesetId, classId, {
@@ -316,7 +318,7 @@ function ClassTables({ rulesetId, classId, className, classType, ruleset, counts
 function totalsOf(rows: readonly TableRow[], table: TableRules): LevelTotals[] {
   return rows.map((row) => {
     const totals = row[table.totals];
-    return { id: row.id, level: row.level, totals: isRecord(totals) ? (totals as LevelTotals["totals"]) : {} };
+    return { id: row.id, level: row.position, totals: isRecord(totals) ? (totals as LevelTotals["totals"]) : {} };
   });
 }
 

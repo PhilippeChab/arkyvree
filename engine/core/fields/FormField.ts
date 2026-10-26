@@ -2,6 +2,11 @@ import type { ProgressionValue } from "@/shared/customization/progression.ts";
 
 /** What every field of a form has. */
 interface FormFieldBase {
+  /**
+   * The field of its entity's own a column's value is stored in, which an entity read holds among its `fields` (3.5's
+   * item's cost, `ITEM_COST_GP`): none for a column stored otherwise, and a declared field's (its form key's).
+   */
+  field?: string;
   /** What it's for, as its ruleset says. */
   help: string;
   /**
@@ -54,7 +59,7 @@ export interface ChoiceFormField extends FormFieldBase {
 
 /**
  * A decimal, none too (an item's cost, its weight), at least `min` and at most `max`, in its `unit` ("gp"), which its
- * label names.
+ * label names: kept to two places.
  */
 export interface DecimalFormField extends FormFieldBase {
   input: "decimal";
@@ -161,19 +166,26 @@ export interface ProgressionFormField extends FormFieldBase {
   max: number;
 }
 
-/** An entity of the ruleset, by its id (`references`: its kind, `abilities`): none too, unless it's `required`. */
+/**
+ * An entity of the ruleset, by its id (`references`: its kind, `abilities`): none too, unless it's `required`. A
+ * column's is its entity's single link of a `role`, which an entity read holds among its `links` (its target, `toId`);
+ * a declared field's, at its key.
+ */
 export interface RefFormField extends FormFieldBase {
   input: "ref";
   references: string;
   required: boolean;
+  role?: string;
 }
 
 /**
  * The template an item is made from, by its id: one of its own type (`typeKey`, the column whose value its templates
- * are of), whose fields an item starts from; none too. A change of its type empties it.
+ * are of), whose fields an item starts from; none too. A change of its type empties it. It's its entity's single link
+ * of a `role`, which an entity read holds among its `links` (its target, `toId`).
  */
 export interface TemplateFormField extends FormFieldBase {
   input: "template";
+  role: string;
   typeKey: string;
 }
 

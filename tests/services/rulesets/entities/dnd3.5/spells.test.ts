@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Activities, EntityLinks } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
@@ -12,7 +13,12 @@ import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rule
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
-import { SPELL_CASTING_TIME, SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  SPELL_CASTING_TIME,
+  SPELL_DESCRIPTOR,
+  SPELL_SAVE_EFFECT,
+  SPELL_SCHOOL,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The aptitudes of the test's ruleset. */
 const APTITUDES = ["Wizard", "Cleric", "Druid"];
@@ -44,14 +50,16 @@ describe("EntitiesService: spells", () => {
     expect(
       await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, { name: "Hold Person" }),
     ).toMatchObject({
-      saveEffect: "negates",
+      fields: { [SPELL_SAVE_EFFECT]: "negates" },
     });
     expect(
-      await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, {
-        name: "Hold Person",
-        saveEffect: "",
-      }),
-    ).toMatchObject({ saveEffect: null });
+      (
+        await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, {
+          name: "Hold Person",
+          saveEffect: "",
+        })
+      ).fields,
+    ).toEqual({});
   });
 
   test("records the columns an edit changes, never what its form sends that it doesn't write", async () => {
@@ -223,6 +231,8 @@ describe("EntitiesService: spells", () => {
       fields: { school: "Evocation", castingTime: "1 round" },
     });
     await writeStoredValues("spells", spell.id, [[SPELL_DESCRIPTOR, "Fire"]]);
+    // A value a user added, written past the services, after the create read the ruleset's view
+    RulesetViews.invalidate(ruleset.id);
 
     await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, {
       name: "Fireball",

@@ -41,7 +41,7 @@ describe("rulesets entities: feats", () => {
     const grouped = await expectOk(
       kinds.grouped.$get({ param: { id, entityType }, query: { search: "Weapon Focus", limit: "100" } }),
     );
-    const rows = grouped.items.filter((row) => row.family === "Weapon Focus");
+    const rows = grouped.items.filter((row) => row.group === "Weapon Focus");
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ displayName: "Weapon Focus" });
     expect(Number(rows[0].variantCount)).toBeGreaterThan(1);

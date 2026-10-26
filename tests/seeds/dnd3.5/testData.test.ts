@@ -88,7 +88,7 @@ async function written(character: Character) {
       entityType: "class_levels",
       id: level.trackId!,
     }))!;
-    levelNames[level.id] = `${klasses[klassLevel.klassId]} ${klassLevel.level}`;
+    levelNames[level.id] = `${klasses[klassLevel.ownerId]} ${klassLevel.position}`;
   }
   const levelIds = levels.map(({ id }) => id);
   return {

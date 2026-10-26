@@ -1,5 +1,4 @@
 import type { OwnedKind } from "@/engine/index.ts";
-import { EntityRepositories } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Activities,
@@ -94,7 +93,7 @@ class ActivitiesService {
       return owned ? await this.ownerRulesetId(owned.ownerId, ownerType) : null;
     }
     if (!isOneOf(entityType, RULESET_ENTITY_TYPES)) return null;
-    return (await EntityRepositories.of(entityType).findOne(db, { id: entityId }))?.rulesetId ?? null;
+    return (await Entities.findOne(db, { entityType, id: entityId }))?.rulesetId ?? null;
   }
 
   /** The page of a player's campaign (`path` under it), or null when the player is gone. */
@@ -139,7 +138,7 @@ class ActivitiesService {
   /** A ruleset entity's page, any type's: its customization page when it has one, else its own. */
   private async resolveRulesSubEntity(targetTable: string, targetId: string): Promise<string | null> {
     if (!isOneOf(targetTable, RULESET_ENTITY_TYPES)) return null;
-    const entity = await EntityRepositories.of(targetTable).findOne(db, { id: targetId });
+    const entity = await Entities.findOne(db, { entityType: targetTable, id: targetId });
     if (!entity) return null;
 
     return hasCustomizationPage(targetTable)

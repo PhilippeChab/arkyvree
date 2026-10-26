@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import StorageEngine from "@/engine/api/StorageEngine.ts";
-import type { ViewEntities } from "@/engine/core/view/index.ts";
+import type { ViewKinds } from "@/engine/core/view/index.ts";
 import { type Aptitude, type Feat, type Item, type Klass, type KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
@@ -20,6 +20,7 @@ import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { CLASS_HD, ITEM_COST_GP, ITEM_IS_TEMPLATE, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A published system ruleset built on the seeded one, as a book a fork takes is. */
 function createBook(seedId: string) {
@@ -317,7 +318,7 @@ describe("RulesetViews", () => {
       expect(forkView.aptitudes.length).toBe(seedView.aptitudes.length);
       // Fork inherits all customizations via compose: every entity's stored values, of every kind, and the Settings
       for (const { type } of StorageEngine.shared().viewSchema().kinds) {
-        const ids = seedData.rows(type as keyof ViewEntities).map((row) => (row as { id: string }).id);
+        const ids = seedData.rows(type as keyof ViewKinds).map((row) => (row as { id: string }).id);
         expect(ids.map((id) => forkData.valuesOf(id))).toEqual(ids.map((id) => seedData.valuesOf(id)));
         expect(forkData.kindValues(type)).toEqual(seedData.kindValues(type));
       }
@@ -341,8 +342,8 @@ describe("RulesetViews", () => {
 
       // The seed should have BOTH templates (isTemplate=true) and concrete catalog
       // items (isTemplate=false) — e.g., weapons/armor archetypes + magic items.
-      const templates = seedView.items.filter((i) => i.isTemplate);
-      const nonTemplates = seedView.items.filter((i) => !i.isTemplate);
+      const templates = seedView.items.filter((i) => i.fields[ITEM_IS_TEMPLATE]);
+      const nonTemplates = seedView.items.filter((i) => !i.fields[ITEM_IS_TEMPLATE]);
       expect(templates.length).toBeGreaterThan(0);
       expect(nonTemplates.length).toBeGreaterThan(0);
     });
@@ -648,8 +649,7 @@ describe("RulesetViews", () => {
           name: `Sibling Base Item ${uniqueId()}`,
           description: "To be COW'd by two extensions",
           rulesetId: seed.id,
-          weight: "1",
-          costGp: "1",
+          fields: { [ITEM_WEIGHT]: 1, [ITEM_COST_GP]: 1 },
         },
       ]);
 
@@ -693,7 +693,7 @@ describe("RulesetViews", () => {
         { name: featName, rulesetId: second.id },
       ]);
       const [baseItem] = await Entities.createMany<Item>(db, "items", [
-        { name: `Probe Item ${uniqueId()}`, rulesetId: seed.id, weight: "1", costGp: "1" },
+        { name: `Probe Item ${uniqueId()}`, rulesetId: seed.id, fields: { [ITEM_WEIGHT]: 1, [ITEM_COST_GP]: 1 } },
       ]);
       const bookItem = await copyEntity(db, "items", baseItem.id, first);
       await Entities.update<Item>(db, "items", { name: itemName }, { id: bookItem.id as string });
@@ -704,7 +704,7 @@ describe("RulesetViews", () => {
       });
       const [ownFeat] = await Entities.createMany<Feat>(db, "feats", [{ name: featName, rulesetId: fork.id }]);
       const [ownItem] = await Entities.createMany<Item>(db, "items", [
-        { name: itemName, rulesetId: fork.id, weight: "1", costGp: "1" },
+        { name: itemName, rulesetId: fork.id, fields: { [ITEM_WEIGHT]: 1, [ITEM_COST_GP]: 1 } },
       ]);
       await insertRows(modifiersInCustomization, [{ ...STRENGTH_BONUS, sourceType: "feats", sourceId: firstFeat.id }]);
 
@@ -735,26 +735,30 @@ describe("RulesetViews", () => {
       const seed = await getRuleset();
       const book = await createBook(seed.id);
       const name = `Homebrew Class ${uniqueId()}`;
-      const [bookClass] = await Entities.createMany<Klass>(db, "classes", [{ name, rulesetId: book.id, hd: 8 }]);
+      const [bookClass] = await Entities.createMany<Klass>(db, "classes", [
+        { name, rulesetId: book.id, fields: { [CLASS_HD]: 8 } },
+      ]);
       const [bookFirst, bookSecond] = await Entities.createMany<KlassLevel>(db, "class_levels", [
-        { klassId: bookClass.id, level: 1 },
-        { klassId: bookClass.id, level: 2 },
+        { ownerId: bookClass.id, position: 1 },
+        { ownerId: bookClass.id, position: 2 },
       ]);
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,
         ancestorRulesetIds: [seed.id],
         extensionRulesetIds: [book.id],
       });
-      const [ownClass] = await Entities.createMany<Klass>(db, "classes", [{ name, rulesetId: fork.id, hd: 10 }]);
+      const [ownClass] = await Entities.createMany<Klass>(db, "classes", [
+        { name, rulesetId: fork.id, fields: { [CLASS_HD]: 10 } },
+      ]);
       const [ownFirst] = await Entities.createMany<KlassLevel>(db, "class_levels", [
-        { klassId: ownClass.id, level: 1 },
+        { ownerId: ownClass.id, position: 1 },
       ]);
 
       const view = await RulesetViews.getData(fork);
       const dnd35 = Dnd35View.of(view);
       expect(dnd35.klasses.filter((klass) => klass.name === name).map((klass) => klass.id)).toEqual([ownClass.id]);
       expect(view.cow.resolve(bookFirst.id)).toBe(ownFirst.id);
-      expect(dnd35.klassLevels.filter((level) => level.klassId === ownClass.id).map((level) => level.id)).toEqual([
+      expect(dnd35.klassLevels.filter((level) => level.ownerId === ownClass.id).map((level) => level.id)).toEqual([
         ownFirst.id,
       ]);
       expect(dnd35.klassLevels.find((level) => level.id === bookSecond.id)).toBeUndefined();
@@ -778,10 +782,10 @@ describe("RulesetViews", () => {
         extensionRulesetIds: [book.id],
       });
       const [ownClass] = await Entities.createMany<Klass>(db, "classes", [
-        { name: "Cleric", rulesetId: fork.id, hd: 8 },
+        { name: "Cleric", rulesetId: fork.id, fields: { [CLASS_HD]: 8 } },
       ]);
       const [ownFirst] = await Entities.createMany<KlassLevel>(db, "class_levels", [
-        { klassId: ownClass.id, level: 1 },
+        { ownerId: ownClass.id, position: 1 },
       ]);
 
       const view = await RulesetViews.getData(fork);

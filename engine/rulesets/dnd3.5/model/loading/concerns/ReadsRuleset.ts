@@ -33,7 +33,7 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
     protected readCachedRows(rows: CharacterRows, rulesetData: RulesetData, klassLevelIds: string[]) {
       const dnd35 = Dnd35View.of(rulesetData);
       const klassLevelsRaw = klassLevelIds.flatMap((id) => dnd35.klassLevelsById.get(id) ?? []);
-      const klassEntityIds = [...new Set(klassLevelsRaw.map((level) => level.klassId))];
+      const klassEntityIds = [...new Set(klassLevelsRaw.map((level) => level.ownerId))];
       return {
         languages: rows.links.speaks.flatMap((link) => dnd35.languagesById.get(link.entityId) ?? []),
         klassLevelsRaw,

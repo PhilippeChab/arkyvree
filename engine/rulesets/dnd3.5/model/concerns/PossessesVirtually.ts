@@ -10,6 +10,7 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { formatFieldValues } from "@/shared/customization/fields.ts";
 import type { Modifier } from "@/shared/relations.ts";
+import { SPELL_SAVE_EFFECT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * The feats, spells and languages a 3.5 character has without a pick: those its modifiers grant (`set …possessed`, `set
@@ -92,7 +93,7 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
     getVirtualFeats() {
       return this.data.feats
         .filter((feat) => feat.virtual)
-        .map((feat) => ({ id: feat.id, name: feat.name, description: feat.description, stackable: feat.stackable }));
+        .map((feat) => ({ id: feat.id, name: feat.name, description: feat.description, fields: feat.fields }));
     }
 
     /**
@@ -112,7 +113,7 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
             name: spell.name,
             description: spell.description,
             saveName: spell.saveName,
-            saveEffect: spell.saveEffect,
+            saveEffect: spell.fields[SPELL_SAVE_EFFECT] ?? null,
             aptitudeId: spell.aptitudeId,
             level,
             dc: this.components.spells.getSpell(spell.name)?.dc?.[aptitudeSlug]?.total ?? null,

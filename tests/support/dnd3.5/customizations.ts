@@ -23,23 +23,18 @@ export const STRENGTH_BONUS = {
 } as const;
 
 /**
- * A write of a text field of `type`'s a module declares past its row's columns: a value a test sets ("doomed"), or
+ * A write of a text field of `type`'s a module declares past its kind's own fields: a value a test sets ("doomed"), or
  * none when the type keeps no such field (an ability, a save).
  */
 function textValues(type: string): FieldsWrite | null {
   const storage = Engine.storage();
-  // A character's fields are its row's own values; a kind's columns its row's
+  // A character's fields are its row's own values; a kind's own fields its record's
   if (type === "characters") return null;
   const isKind = storage.registries().entityTypes.some((def) => def.type === type);
-  const columns = isKind ? storage.kind(type).columns : {};
+  const own = isKind ? (storage.kind(type).fields ?? {}) : {};
   const def = storage
     .registries()
-    .fieldDefs.find(
-      (field) =>
-        field.ownerType === type &&
-        field.valueKind === "text" &&
-        !Object.values(columns).some((column) => "field" in column && column.field === field.field),
-    );
+    .fieldDefs.find((field) => field.ownerType === type && field.valueKind === "text" && !(field.field in own));
   return def ? { fields: { [def.field]: ["doomed"] }, links: {} } : null;
 }
 

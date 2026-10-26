@@ -1,4 +1,5 @@
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 import type { PoolPicks } from "./LevelUpState.ts";
@@ -39,9 +40,9 @@ export default class LevelUpPreview extends PlannedLevelsState {
         klassId: klass.id,
         klassName: klass.name,
         klassLevelId: klassLevel.id,
-        level: klassLevel.level,
-        hd: klass.hd,
-        hitPoints: this.rules.hitPointsOf(klass.hd),
+        level: klassLevel.position,
+        hd: klass.fields[CLASS_HD],
+        hitPoints: this.rules.hitPointsOf(klass.fields[CLASS_HD]),
         skillPoints: perLevelSkillPoints[i],
       })),
       nextPickLevels: this.nextPickLevelsOf(gains, fitted.picks),

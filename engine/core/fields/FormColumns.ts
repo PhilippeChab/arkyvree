@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import Decimals from "./Decimals.ts";
 import type { ChoiceFormField, FormField } from "./FormField.ts";
 
 /** What a column's input takes: its value, whether none clears it, and whether a new entity's form gives it. */
@@ -24,7 +25,7 @@ const ID = z.string().uuid();
 /**
  * An entity's columns as a form gives them, read by their descriptions (its rules'), for a new entity or an edit:
  * - a column takes its input's values (a reference an id, a choice one of its options, a number a whole one in its
- *   bounds), several for a multiple one;
+ *   bounds, a decimal one kept to two places), several for a multiple one;
  * - none clears a nullable one (an empty text or select is none), and refuses any other;
  * - a new entity's form gives a required one, or its default fills it in, and a required list of links one link at
  *   least; an edit leaves those it doesn't give as they are.
@@ -109,7 +110,8 @@ export default class FormColumns {
           schema: z
             .number()
             .min(column.min ?? Number.NEGATIVE_INFINITY)
-            .max(column.max ?? Number.POSITIVE_INFINITY),
+            .max(column.max ?? Number.POSITIVE_INFINITY)
+            .transform((value) => Decimals.toPlaces(value, 2)),
         };
       case "flag":
         return { nullable: column.nullable, required: !column.nullable, schema: z.boolean() };

@@ -14,6 +14,7 @@ import { db } from "@/server/database/index.ts";
 import { Entities, Modifiers } from "@/server/repositories/index.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { CLASS_HD, RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 describe("CustomizedEntity", () => {
   test("names the entity of each type, as its ruleset's view has it", async () => {
@@ -25,11 +26,14 @@ describe("CustomizedEntity", () => {
     const [race] = await Entities.create<Race>(db, "races", {
       rulesetId,
       name: "Test Race",
-      size: "Medium",
-      baseSpeed: 30,
+      fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
     });
-    const [klass] = await Entities.create<Klass>(db, "classes", { rulesetId, name: "Test Class", hd: 10 });
-    const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { klassId: klass.id, level: 1 });
+    const [klass] = await Entities.create<Klass>(db, "classes", {
+      rulesetId,
+      name: "Test Class",
+      fields: { [CLASS_HD]: 10 },
+    });
+    const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: 1 });
     const [modifier] = await Modifiers.create(db, {
       sourceId: feat.id,
       sourceType: "feats",

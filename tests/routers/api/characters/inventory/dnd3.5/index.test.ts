@@ -4,6 +4,7 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
+import { ITEM_COST_GP, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const inventory = api.api.characters.inventory[":characterId"];
 const entry = inventory[":entryId"];
@@ -98,6 +99,7 @@ describe("character inventory", () => {
     expect(block).toMatchObject({
       title: "Equipment & Inventory",
       entityType: "items",
+      itemFields: { cost: ITEM_COST_GP, weight: ITEM_WEIGHT },
       units: { cost: { one: "gp", many: "gp" }, weight: { one: "lb", many: "lbs" } },
       words: { add: "Add Item", remove: { title: "Remove Item" } },
     });
@@ -108,8 +110,8 @@ describe("character inventory", () => {
       description: null,
       slot: "Trinket",
       quantity: 1,
-      weight: "5.00",
-      cost: "10.00",
+      weight: 5,
+      cost: 10,
       held: true,
     });
     expect(block.rows.find((row) => row.key === charged.id)).toMatchObject({

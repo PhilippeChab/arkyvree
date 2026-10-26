@@ -4,6 +4,7 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { ITEM_COST_GP, ITEM_IS_TEMPLATE, ITEM_SLOT, ITEM_TYPE, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const kinds = api.api.rulesets[":id"].entities[":entityType"];
 const entity = kinds[":entityId"];
@@ -19,18 +20,23 @@ describe("rulesets entities: items", () => {
         json: { name: "Test Item", description: "An item", weight: 2.5, costGp: 150 },
       }),
     );
-    // Numeric columns come back as fixed-point strings.
-    expect(created).toMatchObject({ name: "Test Item", description: "An item", weight: "2.50", costGp: "150.00" });
+    // Its weight and cost are its own fields, numbers
+    const amounts = { [ITEM_WEIGHT]: 2.5, [ITEM_COST_GP]: 150 };
+    expect(created).toMatchObject({ name: "Test Item", description: "An item", fields: amounts });
     const param = { id, entityType, entityId: created.id };
 
-    expect(await expectOk(entity.$get({ param }))).toMatchObject({ id: created.id, weight: "2.50", costGp: "150.00" });
+    expect(await expectOk(entity.$get({ param }))).toMatchObject({ id: created.id, fields: amounts });
     const list = await expectOk(kinds.$get({ param: { id, entityType }, query: { search: "Test Item" } }));
     expect(list.items.map((i) => i.id)).toContain(created.id);
 
     const updated = await expectOk(
       entity.$put({ param, json: { name: "Renamed Item", description: "Updated", weight: 3.2, costGp: 200 } }),
     );
-    expect(updated).toMatchObject({ name: "Renamed Item", description: "Updated", weight: "3.20", costGp: "200.00" });
+    expect(updated).toMatchObject({
+      name: "Renamed Item",
+      description: "Updated",
+      fields: { [ITEM_WEIGHT]: 3.2, [ITEM_COST_GP]: 200 },
+    });
 
     await expectOk(entity.$delete({ param }));
     await expectStatus(entity.$get({ param }), 404);
@@ -56,7 +62,8 @@ describe("rulesets entities: items", () => {
         json: { name: "Test Blade", type: "Weapon", sourceItemId: null, weight: null, costGp: null },
       }),
     );
-    expect(cleared).toMatchObject({ sourceItemId: null, weight: null, costGp: null });
+    expect(cleared.links).toEqual([]);
+    expect([ITEM_WEIGHT, ITEM_COST_GP].filter((field) => field in cleared.fields)).toEqual([]);
 
     // A slot's none is "Other": worn nowhere in particular
     const hat = await expectOk(kinds.$post({ param: { id, entityType }, json: { name: "Test Hat", slot: "Head" } }));
@@ -64,7 +71,7 @@ describe("rulesets entities: items", () => {
       await expectOk(
         entity.$put({ param: { id, entityType, entityId: hat.id }, json: { name: "Test Hat", slot: null } }),
       ),
-    ).toMatchObject({ slot: "Other" });
+    ).toMatchObject({ fields: { [ITEM_SLOT]: "Other" } });
   });
 
   test("keeps an edited item's type, whose template's type sets its slot", async () => {
@@ -81,20 +88,20 @@ describe("rulesets entities: items", () => {
         json: { name: "Test Plate", type: "Armor", sourceItemId: template.id },
       }),
     );
-    expect(plate).toMatchObject({ type: "Armor", slot: "Torso" });
+    expect(plate).toMatchObject({ fields: { [ITEM_TYPE]: "Armor", [ITEM_SLOT]: "Torso" } });
     // An edit that leaves its type out keeps it: an armor is worn on the torso, whatever slot the form gives
     expect(
       await expectOk(
         entity.$put({ param: { id, entityType, entityId: plate.id }, json: { name: "Test Plate", slot: "Head" } }),
       ),
-    ).toMatchObject({ type: "Armor", slot: "Torso" });
+    ).toMatchObject({ fields: { [ITEM_TYPE]: "Armor", [ITEM_SLOT]: "Torso" } });
   });
 
   test("lists the templates of one type", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const templates = await expectOk(kinds.templates.$get({ param: { id, entityType }, query: { type: "Shield" } }));
     expect(templates.length).toBeGreaterThan(0);
-    expect(templates.every((t) => t.type === "Shield" && t.isTemplate)).toBe(true);
+    expect(templates.every((t) => t.fields[ITEM_TYPE] === "Shield" && t.fields[ITEM_IS_TEMPLATE])).toBe(true);
   });
 
   test("refuses the templates of a type no item is based on a template of", async () => {
@@ -113,7 +120,7 @@ describe("rulesets entities: items", () => {
         json: { name: "Duplicate Copy", weight: 1, costGp: 5 },
       }),
     );
-    expect(copy).toMatchObject({ name: "Duplicate Copy", weight: "1.00", costGp: "5.00" });
+    expect(copy).toMatchObject({ name: "Duplicate Copy", fields: { [ITEM_WEIGHT]: 1, [ITEM_COST_GP]: 5 } });
     expect(copy.id).not.toBe(source.id);
   });
 
@@ -129,12 +136,12 @@ describe("rulesets entities: items", () => {
       }),
     );
     // Each variant it made, in no particular order
-    const copied = { costGp: "25.00", weight: "0.10" };
+    const fields = expect.objectContaining({ [ITEM_COST_GP]: 25, [ITEM_WEIGHT]: 0.1 });
     expect(created).toHaveLength(2);
     expect(created).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ name: "Bulk Variant A", ...copied }),
-        expect.objectContaining({ name: "Bulk Variant B", ...copied }),
+        expect.objectContaining({ name: "Bulk Variant A", fields }),
+        expect.objectContaining({ name: "Bulk Variant B", fields }),
       ]),
     );
   });
@@ -206,7 +213,7 @@ describe("rulesets entities: items", () => {
       other.api.api.rulesets[":id"].unsubscribe.$post({ param: { id: fork.id }, json: { extensionId: id } }),
     );
     expect(await expectOk(authorItem.$put({ param, json: { name: sword.name, type: "Armor" } }))).toMatchObject({
-      type: "Armor",
+      fields: { [ITEM_TYPE]: "Armor" },
     });
     await expectOk(authorItem.$delete({ param }));
   });

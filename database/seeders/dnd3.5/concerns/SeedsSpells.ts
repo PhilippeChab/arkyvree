@@ -3,13 +3,17 @@ import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
+import { SPELL_SAVE_EFFECT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
-/** A saving throw as its save and effect: "Will negates" is Will, "negates". Text that names no save is all effect. */
+/**
+ * A saving throw as its save (its `resistedBy` link) and effect (its `SPELL_SAVE_EFFECT`): "Will negates" is Will,
+ * "negates". Text that names no save is all effect.
+ */
 function parseSavingThrow(savingThrow: string | undefined, saveMap: Record<string, string>) {
-  if (!savingThrow || savingThrow === "None") return { saveId: null, saveEffect: null };
+  if (!savingThrow || savingThrow === "None") return {};
   const match = savingThrow.match(/^(Will|Reflex|Fortitude)\s+(.+)$/);
-  if (!match) return { saveId: null, saveEffect: savingThrow };
-  return { saveId: saveMap[match[1]] ?? null, saveEffect: match[2] };
+  if (!match) return { fields: { [SPELL_SAVE_EFFECT]: savingThrow } };
+  return { fields: { [SPELL_SAVE_EFFECT]: match[2] }, links: { resistedBy: saveMap[match[1]] ?? null } };
 }
 
 /** Seeding spells. */

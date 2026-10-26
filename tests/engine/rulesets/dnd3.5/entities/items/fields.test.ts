@@ -44,7 +44,10 @@ describe("An item's fields", () => {
       .where(and(eq(entitiesInRules.type, "items"), isNull(entitiesInRules.deletedAt)));
     const ids = itemIds.map(({ id }) => id);
     const sources = new Map(
-      (await Entities.findMany<Item>(db, { entityType: "items", ids })).map((item) => [item.id, item.sourceItemId]),
+      (await Entities.findMany<Item>(db, { entityType: "items", ids })).map((item) => [
+        item.id,
+        item.links.madeFrom ?? null,
+      ]),
     );
     const values = await Fields.findMany(db, { ownerIds: ids, ownerType: "items" });
     const held = [...values].filter(([, stored]) => Object.keys(stored.fields).length > 0);

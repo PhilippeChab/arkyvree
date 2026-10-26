@@ -10,6 +10,7 @@ import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { type Carried, carry, createTestItem } from "@/tests/support/items.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, getSeedCtx } from "@/tests/support/seed.ts";
+import { ITEM_SLOT, ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** What a modifier a test makes does: its target, operator and value. */
 type Effect = Pick<Modifier, "operator" | "target" | "value" | "valueType">;
@@ -72,7 +73,10 @@ async function seedHuman(name: string, className: string, carried: Carried[]) {
 /** A rapier of the seeded ruleset (the seeded Rapier its template), whose modifier does `effect` behind `gate`. */
 async function testRapier(name: string, effect: Effect, gate: Gate) {
   const ctx = await getSeedCtx();
-  const rapier = await createTestItem({ name, type: "Weapon", slot: "Main Hand", sourceItemId: ctx.itemMap["Rapier"] });
+  const rapier = await createTestItem(
+    { name, links: { madeFrom: ctx.itemMap["Rapier"] } },
+    { [ITEM_TYPE]: "Weapon", [ITEM_SLOT]: "Main Hand" },
+  );
   const modifier = await gated({ sourceId: rapier.id, sourceType: "items" }, effect, gate);
   invalidateSeededRuleset(ctx.rulesetId);
   return { rapier, modifier };

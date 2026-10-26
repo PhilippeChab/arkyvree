@@ -6,6 +6,7 @@ import type IdentityComponent from "@/engine/rulesets/dnd3.5/model/identity/Iden
 import type InventoryComponent from "@/engine/rulesets/dnd3.5/model/inventory/InventoryComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import { type ARMOR_CATEGORIES, COMBAT_RULES } from "@/vocabulary/dnd3.5/combat.ts";
+import { RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import type ArmorsComponent from "./ArmorsComponent.ts";
 import type { ArmorsData } from "./ArmorsComponent.ts";
@@ -331,7 +332,7 @@ export default abstract class CombatState extends CharacterComponent<LoadedChara
 
   /** The character's size, as its identity's race has it: a modifier on `identity.physiology.race.size` changes it. */
   protected get raceSize(): string {
-    return this.identity.getIdentity().physiology.race.size;
+    return this.identity.getIdentity().physiology.race.fields[RACE_SIZE];
   }
 
   /** The weapon set of key `setKey` (stored from 0), made with its hands empty when the character has none there yet. */

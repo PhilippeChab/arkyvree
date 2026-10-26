@@ -23,7 +23,10 @@ export type {
   EntityCreatePlan,
   EntityDeletePlan,
   EntityEditPlan,
+  EntityFilters,
+  EntityRecord,
   EntityRemoval,
+  EntityWrite,
   EntityWrites,
   FieldsRequest,
   FieldValue,
@@ -47,15 +50,14 @@ export type {
   StoredLink,
   StoredPick,
   StoredRuleset,
-  StoredWrite,
 } from "./core/module/index.ts";
 export { default as RulesError } from "./core/RulesError.ts";
 export type {
   EntityCustomizations,
-  EntityRow,
   OwnedKind,
   RulesetData,
   RulesetRawData,
-  ViewEntities,
+  ViewEntity,
+  ViewKinds,
   ViewLink,
 } from "./core/view/index.ts";

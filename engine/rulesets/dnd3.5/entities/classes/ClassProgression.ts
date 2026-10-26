@@ -244,7 +244,7 @@ export default class ClassProgression {
 
   /** The class's levels, as the view has them, by their number. */
   private get classLevels(): KlassLevel[] {
-    return (this.dnd35.klassLevelsByKlass.get(this.klass.id) ?? []).toSorted((a, b) => a.level - b.level);
+    return (this.dnd35.klassLevelsByKlass.get(this.klass.id) ?? []).toSorted((a, b) => a.position - b.position);
   }
 
   /** The view's 3.5 lists and indices. */
@@ -442,7 +442,7 @@ export default class ClassProgression {
       );
       const edit = edits.get(level.id);
       return edit || removedIds.length > 0 || added.length > 0
-        ? [{ added, edit, entity: level, position: level.level, removedIds }]
+        ? [{ added, edit, entity: level, position: level.position, removedIds }]
         : [];
     });
     return {

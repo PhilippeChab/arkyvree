@@ -10,7 +10,6 @@ import {
 } from "@/server/repositories/index.ts";
 
 import type EntityNames from "./EntityNames.ts";
-import EntityRepositories from "./EntityRepositories.ts";
 
 /**
  * A fork's copy of an inherited entity reverted to its source (`EntityRevert.revert`): `EntityCopy`'s inverse. What
@@ -63,15 +62,14 @@ export default class EntityRevert {
     if (!snapshot) throw new NotFoundError("Entity is not an override in this ruleset");
 
     const copyId = snapshot.forkedEntityId;
-    const repository = EntityRepositories.of(entityType);
-    await repository.lock(tx, { id: copyId });
+    await Entities.lock(tx, { id: copyId });
     await names?.assertRestoreAvailable(tx, entityType, sourceEntityId, copyId);
     for (const [ownedType, ownerType] of OWNED_TYPES)
       if (ownerType === entityType) await EntityRevert.repointOwned(tx, ownedType, copyId, sourceEntityId, rulesetId);
     await EntityReferences.update(tx, { entityId: sourceEntityId }, { entityType, entityId: copyId });
     await EntitySnapshots.update(tx, { sourceEntityId }, { sourceEntityId: copyId });
     // The database deletes its own rows with it, and its customizations
-    await repository.delete(tx, { id: copyId });
+    await Entities.delete(tx, { entityType, id: copyId });
     await EntitySnapshots.delete(tx, { rulesetId, sourceEntityId });
   }
 }

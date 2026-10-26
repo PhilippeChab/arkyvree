@@ -2,9 +2,10 @@
 
 import type { Db } from "@/drizzle/database.ts";
 import type { EntityRemoval, EntityWrites, MadeEntity } from "@/engine/index.ts";
-import { CustomizationEdit, EntityRepositories, type RulesetScope } from "@/server/cow/index.ts";
+import { CustomizationEdit, type RulesetScope } from "@/server/cow/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
+  Entities,
   Fields,
   Modifiers,
   Requirements,
@@ -28,7 +29,7 @@ function entityTypeOf(type: string): RulesetEntityType {
  */
 async function makeEntity(tx: Db, scope: RulesetScope, made: MadeEntity) {
   const type = entityTypeOf(made.type);
-  const [entity] = await EntityRepositories.of(type).create(tx, { ...made.columns, rulesetId: scope.ruleset.id });
+  const [entity] = await Entities.create(tx, type, { ...made.row, rulesetId: scope.ruleset.id });
   const owner = { entityId: entity.id, entityType: type };
   await createLinks(tx, owner, made.links);
   await Modifiers.createMany(
@@ -54,7 +55,7 @@ async function removeEntity(tx: Db, scope: RulesetScope, removal: EntityRemoval)
     throw new ConflictError(removal.inUse);
 
   const targetId = await new CustomizationEdit(ruleset, rulesetData.cow).cowOwner(tx, type, removal.id);
-  await EntityRepositories.of(type).delete(tx, { id: targetId });
+  await Entities.delete(tx, { entityType: type, id: targetId });
 }
 
 /**
