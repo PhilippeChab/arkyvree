@@ -310,7 +310,7 @@ describe("Item templates", () => {
     });
     const { items } = await Activities.findPage(
       db,
-      { userId: session.userId, targetTable: "items" },
+      { userId: session.userId, targetType: "items" },
       { limit: 10, page: 1 },
     );
     const edit = items.find((activity) => activity.targetId === mine.id && activity.type === "updateItem");

@@ -33,7 +33,7 @@ export default class ClassEntity extends RulesetEntity<"classes", typeof CLASS_F
   protected override readonly listFilters = { partition: z.string() };
 
   /** Its levels' kind, which it owns. */
-  override readonly ownedType = "class_levels";
+  override readonly ownedType = "class-levels";
 
   override readonly type = "classes";
 

@@ -35,7 +35,6 @@ import {
   type ViewKinds,
   type ViewLink,
 } from "@/engine/core/view/index.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 /**
  * A form as its kind reads it, where it stores it: its name and its description, its columns' and its own fields by the
@@ -262,7 +261,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
     if (unknown.length > 0) {
       const issues = unknown.map((key) => ({
         category: key,
-        message: `${getUrlSegment(this.type)} take no ${key} filter`,
+        message: `${this.type} take no ${key} filter`,
       }));
       throw new RulesError("invalid", "Request validation failed", issues);
     }
@@ -271,7 +270,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
 
   /** Refuses an action the kind has none of (`words`, what it's called): "No templates for classes". */
   private refuseAction(words: EntityAction): never {
-    throw new RulesError("not-found", `No ${words} for ${getUrlSegment(this.type)}`);
+    throw new RulesError("not-found", `No ${words} for ${this.type}`);
   }
 
   /** Refuses deleting an entity: nothing does, unless its kind's rules say. */
@@ -362,7 +361,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
       if (key === "partition") filters.partitions = [String(value)];
       else if (stored.has(key)) (filters.fields ??= {})[key] = value as FieldValue;
       else if (roles.has(key)) (filters.links ??= {})[key] = Array.isArray(value) ? value : [String(value)];
-      else throw new Error(`${getUrlSegment(this.type)} store nothing at ${key}`);
+      else throw new Error(`${this.type} store nothing at ${key}`);
     }
     return filters;
   }

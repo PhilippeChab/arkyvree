@@ -66,13 +66,13 @@ export async function createTestClassLevel(rulesetId: string) {
     rulesetId,
     fields: { [CLASS_HD]: 8 },
   });
-  const [classLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: 1 });
+  const [classLevel] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
   return { klass, classLevel };
 }
 
 /** A class's level `level`. */
 export async function findClassLevel(classId: string, level: number) {
-  return (await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [classId] })).find(
+  return (await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [classId] })).find(
     (classLevel) => classLevel.position === level,
   );
 }

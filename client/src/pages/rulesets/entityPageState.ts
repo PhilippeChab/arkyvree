@@ -1,7 +1,6 @@
 import type { RulesWords } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { isRecord } from "@/shared/isRecord.ts";
-import { getEntityTypeOfSegment, getUrlSegment } from "@/shared/urlSegments.ts";
 
 /** The router state a ruleset entity's page is opened with (`useOpenEntity`). */
 export interface EntityPageState {
@@ -26,9 +25,7 @@ const ENTITY_PAGE = /^\/rulesets\/[^/]+\/([^/]+)\/[^/?#]+/;
  * else the ruleset.
  */
 function backLabel(to: string, words: RulesWords | undefined, tabbedPages: ReadonlyMap<string, string>) {
-  const segment = CUSTOMIZATION_PAGE.exec(to)?.[1];
-  const named = segment && getEntityTypeOfSegment(segment);
-  const customized = named && getUrlSegment(named) === segment ? named : undefined;
+  const customized = CUSTOMIZATION_PAGE.exec(to)?.[1];
   if (customized) return words?.[customized] ? `Back to ${entityTypeLabel(customized, words)}` : "Back";
   const tabbed = tabbedPages.get(ENTITY_PAGE.exec(to)?.[1] ?? "");
   return tabbed ? `Back to ${tabbed}` : "Back to Ruleset";
@@ -37,7 +34,7 @@ function backLabel(to: string, words: RulesWords | undefined, tabbedPages: Reado
 /**
  * Where an entity page's Back goes, and its name: the list the page was opened from (a ruleset's tab, a class's, another
  * entity's customization tab: its Modifiers' row), else `fallback`; an entity named in its ruleset's words (`words`,
- * once its rules are in: 3.5's `class_levels` is a "Class Level"), a page with tabs by its kind's word (`tabbedPages`,
+ * once its rules are in: 3.5's `class-levels` is a "Class Level"), a page with tabs by its kind's word (`tabbedPages`,
  * by segment).
  */
 export function entityPageBack(

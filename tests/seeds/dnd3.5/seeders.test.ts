@@ -739,7 +739,7 @@ describe("Seeding", () => {
     ]);
     expect(
       await EntityLinks.findMany(db, {
-        fromType: "class_levels",
+        fromType: "class-levels",
         role: "grants",
         toIds: [ctx.featMap["Test Alertness"]],
       }),

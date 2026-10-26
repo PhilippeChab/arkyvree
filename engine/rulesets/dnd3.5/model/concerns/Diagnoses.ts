@@ -92,7 +92,7 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
 
           break;
         }
-        case "class_levels": {
+        case "class-levels": {
           const kl = idx.classLevelsById.get(entityId);
           if (kl) {
             const klass = idx.rulesetClassesById.get(kl.ownerId);
@@ -143,7 +143,7 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       for (const kl of this.data.classLevels) {
         const klass = rulesetClassesById.get(kl.ownerId);
         const label = klass ? `${klass.name} Level ${kl.position}` : `Level ${kl.position}`;
-        for (const m of kl.modifiers) modifierOwner.set(m.id, { name: label, type: "class_levels" });
+        for (const m of kl.modifiers) modifierOwner.set(m.id, { name: label, type: "class-levels" });
       }
       for (const spell of this.data.spells)
         for (const m of spell.modifiers) modifierOwner.set(m.id, { name: spell.entity.name, type: "spells" });

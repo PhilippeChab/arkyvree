@@ -1,6 +1,3 @@
-import { getTableName } from "drizzle-orm";
-
-import { inventoryInCharacter } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -8,6 +5,7 @@ import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/err
 import { Activities, CharacterInventory, Visibility } from "@/server/repositories/index.ts";
 import { readCharacterInput } from "@/server/services/characters/characterInputs.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class CharacterInventoryService {
@@ -36,7 +34,7 @@ class CharacterInventoryService {
         await Activities.create(tx, {
           userId: session.userId,
           targetId: characterId,
-          targetTable: getTableName(inventoryInCharacter),
+          targetType: TARGET_TYPES.inventory,
           type: "addItem",
         });
 
@@ -88,7 +86,7 @@ class CharacterInventoryService {
         await Activities.create(tx, {
           userId: session.userId,
           targetId: characterId,
-          targetTable: getTableName(inventoryInCharacter),
+          targetType: TARGET_TYPES.inventory,
           type: "removeItem",
         });
 
@@ -131,7 +129,7 @@ class CharacterInventoryService {
         await Activities.create(tx, {
           userId: session.userId,
           targetId: characterId,
-          targetTable: getTableName(inventoryInCharacter),
+          targetType: TARGET_TYPES.inventory,
           type: "updateItem",
         });
 

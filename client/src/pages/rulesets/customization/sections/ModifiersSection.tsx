@@ -30,7 +30,6 @@ import { followCopiesOf } from "@/client/src/pages/rulesets/followCopies.ts";
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 interface ModifiersSectionProps {
   entityId: string;
@@ -71,7 +70,7 @@ export function ModifiersSection({
   const openEntity = useOpenEntity(ruleset.id);
 
   const { tag, followCopies } = followCopiesOf(entityId, followCopy);
-  const entityParam = { id: ruleset.id, entityType: getUrlSegment(entityType), entityId };
+  const entityParam = { id: ruleset.id, entityType, entityId };
 
   const {
     data: modifiers,

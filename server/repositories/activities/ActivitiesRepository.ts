@@ -33,7 +33,7 @@ class ActivitiesRepository extends include(BaseRepository<typeof activitiesInAcc
       orderBy?: "createdAt" | "type";
       orderDir?: "asc" | "desc";
       search?: string;
-      targetTable?: string;
+      targetType?: string;
       type?: string;
       userId: string;
     },
@@ -41,14 +41,14 @@ class ActivitiesRepository extends include(BaseRepository<typeof activitiesInAcc
   ) {
     const { search, orderBy = "createdAt", orderDir = "desc" } = where;
 
-    const searchConditions = this.search(search, [this.table.type, this.table.targetTable]);
+    const searchConditions = this.search(search, [this.table.type, this.table.targetType]);
 
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
     const whereConditions = this.where([
       eq(this.table.userId, where.userId),
-      "targetTable" in where && !!where.targetTable && eq(this.table.targetTable, where.targetTable),
+      "targetType" in where && !!where.targetType && eq(this.table.targetType, where.targetType),
       "type" in where && !!where.type && eq(this.table.type, where.type),
       searchConditions,
       gte(this.table.createdAt, threeMonthsAgo.toISOString()),

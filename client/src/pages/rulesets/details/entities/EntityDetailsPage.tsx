@@ -3,7 +3,6 @@ import { parseResponse } from "hono/client";
 import { Navigate, useLocation, useParams } from "react-router-dom";
 
 import { useRules } from "@/client/src/hooks/index.ts";
-import { entitySegment } from "@/client/src/lib/entityRequests.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type EntityKindDescription, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
@@ -17,7 +16,6 @@ import {
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
 import { useEntityFields, useEntityPageBack } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { getEntityTypeOfSegment, getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { entityQuery } from "./entityDetailQueries.ts";
 import { RulesetEntityDetail } from "./RulesetEntityDetail.tsx";
@@ -36,8 +34,7 @@ interface EntityDetailsProps {
  * ability's).
  */
 function EntityDetails({ entityId, kind, label, rulesetId }: EntityDetailsProps) {
-  const segment = getUrlSegment(kind.type);
-  const param = { id: rulesetId, entityType: entitySegment(segment), entityId };
+  const param = { id: rulesetId, entityType: kind.type, entityId };
   const endpoint = rpc.api.rulesets[":id"].entities[":entityType"][":entityId"];
   const { fields } = useEntityFields(rulesetId, kind.type);
 
@@ -45,7 +42,7 @@ function EntityDetails({ entityId, kind, label, rulesetId }: EntityDetailsProps)
     <RulesetEntityDetail
       rulesetId={rulesetId}
       entityId={entityId}
-      section={segment}
+      section={kind.type}
       label={label}
       query={(id) => entityQuery(rulesetId, kind.type, id)}
       editing={
@@ -96,8 +93,8 @@ export default function EntityDetailsPage() {
   const { data: ruleset, isLoading, error } = useQuery(rulesetDetailQuery(rulesetId));
   const { rules } = useRules(ruleset?.baseRules);
   // Read alongside its ruleset, under the key its details read it by: a segment no kind has is refused
-  useQuery(entityQuery(rulesetId, getEntityTypeOfSegment(section), entityId));
-  const kind = rules?.kinds.find((each) => each.opens === "page" && getUrlSegment(each.type) === section);
+  useQuery(entityQuery(rulesetId, section, entityId));
+  const kind = rules?.kinds.find((each) => each.opens === "page" && each.type === section);
   const label = kind ? entityTypeLabel(kind.type, rules?.words) : "Entity";
   const back = useEntityPageBack(location.state, `/rulesets/${rulesetId}/${section}`, rules?.words);
 

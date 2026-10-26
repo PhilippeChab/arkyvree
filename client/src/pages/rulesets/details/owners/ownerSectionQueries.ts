@@ -7,12 +7,11 @@ import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-q
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 
 import { NO_TIME } from "@/client/src/lib/durations.ts";
-import { type EntityRow, entitySegment, readEntityFn } from "@/client/src/lib/entityRequests.ts";
+import { type EntityRow, readEntityFn } from "@/client/src/lib/entityRequests.ts";
 import type { EntityKindDescription } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entitiesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 /** One of an owner's tables, any of them, as its route answers it. */
 type OwnerTable = InferResponseType<(typeof ownerApi)["tables"][":table"]["$get"], 200>;
@@ -100,7 +99,7 @@ export function ownerDetailQuery(rulesetId: string, ownerType: string, ownerId: 
 /** The entities of a kind (`type`: 3.5's skills) an owner links to, its links' tab's, each link with its entity. */
 export function ownerLinksQuery(rulesetId: string, ownerType: string, ownerId: string, type: string) {
   return queryOptions({
-    queryKey: QUERY_KEYS.rulesets.ownerLinks(rulesetId, ownerId, getUrlSegment(type)),
+    queryKey: QUERY_KEYS.rulesets.ownerLinks(rulesetId, ownerId, type),
     queryFn: async (): Promise<LinkRow[]> =>
       await parseResponse(ownerApi.links.$get(ownerParam(rulesetId, ownerType, ownerId))),
   });
@@ -119,7 +118,7 @@ export function ownerListsQuery(rulesetId: string, ownerType: string, ownerId: s
 
 /** An owner's route's params: the ruleset, and the owner, an entity of its kind (`ownerType`: 3.5's `classes`). */
 export function ownerParam(rulesetId: string, ownerType: string, ownerId: string) {
-  return { param: { id: rulesetId, entityType: entitySegment(getUrlSegment(ownerType)), entityId: ownerId } };
+  return { param: { id: rulesetId, entityType: ownerType, entityId: ownerId } };
 }
 
 /**

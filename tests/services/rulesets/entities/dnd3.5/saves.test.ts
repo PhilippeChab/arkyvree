@@ -58,7 +58,7 @@ describe("EntitiesService: saves", () => {
       rulesetId: ruleset.id,
       fields: { [CLASS_HD]: 10 },
     });
-    const [classLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: 1 });
+    const [classLevel] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
     await addBaseBonuses(db, classLevel.id, [{ saveId: save.id, base: 2 }]);
 
     expect(EntitiesService.deleteEntity(session, ruleset.id, "saves", save.id)).rejects.toThrow(ConflictError);

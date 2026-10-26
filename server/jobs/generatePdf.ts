@@ -9,10 +9,11 @@ import { Exports, Notifications } from "@/server/repositories/index.ts";
 import { getSlotUrl } from "@/server/services/attachments/index.ts";
 import {
   findExportableCharacter,
-  getCharacterPdfTargetTable,
+  getCharacterPdfTargetType,
   readCharacterInput,
 } from "@/server/services/characters/index.ts";
 import { publishWsEvent } from "@/server/websockets/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import { formatSheetFileName } from "@/shared/exports.ts";
 
 interface GeneratePdfPayload {
@@ -43,7 +44,7 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
           actorId: userId,
           type: "pdfFailed",
           targetId: characterId,
-          targetTable: getCharacterPdfTargetTable(campaignId),
+          targetType: getCharacterPdfTargetType(campaignId),
           data: { characterName },
         }),
       );
@@ -91,7 +92,7 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
         actorId: userId,
         type: "pdfReady",
         targetId: exportRecord.id,
-        targetTable: "exports",
+        targetType: TARGET_TYPES.exports,
         data: {
           characterName,
           characterId,
@@ -119,7 +120,7 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
             actorId: userId,
             type: "pdfFailed",
             targetId: characterId,
-            targetTable: getCharacterPdfTargetTable(campaignId),
+            targetType: getCharacterPdfTargetType(campaignId),
             data: { characterName },
           }),
         );

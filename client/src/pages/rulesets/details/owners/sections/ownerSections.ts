@@ -14,7 +14,6 @@ import {
   ownerTableQuery,
 } from "@/client/src/pages/rulesets/details/owners/ownerSectionQueries.ts";
 import type { OwnerTab } from "@/client/src/pages/rulesets/details/owners/ownerTab.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { OwnerModifiersSection, OwnerRequirementsSection } from "./OwnerCustomizationSections.tsx";
 import { OwnerLinksSection } from "./OwnerLinksSection.tsx";
@@ -68,7 +67,7 @@ export function describeCountsTabs(counts: ProgressionCounts, rules: RulesDescri
 export function describeLinksTab(links: EntityLinksDescription, rules: RulesDescription): OwnerTab {
   const ownerType = ownerKindOf(rules)?.type ?? "";
   return {
-    key: getUrlSegment(links.type),
+    key: links.type,
     label: entityTypeLabel(links.type, rules.words, true),
     icon: kindIconOf(rules, links.type),
     Section: OwnerLinksSection,

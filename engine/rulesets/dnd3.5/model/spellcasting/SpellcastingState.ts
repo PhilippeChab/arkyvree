@@ -182,7 +182,7 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
     const classes = Object.entries(this.classes.getClasses());
     const classNameByClassLevelId = this.classNameByClassLevelId();
     const classOf = (modifier: Modifier) => {
-      if (modifier.sourceType === "class_levels")
+      if (modifier.sourceType === "class-levels")
         return classNameByClassLevelId.get(modifier.sourceId) ?? this.bonusClassLevelClassMap.get(modifier.sourceId);
 
       if (modifier.sourceType !== "feats") return undefined;

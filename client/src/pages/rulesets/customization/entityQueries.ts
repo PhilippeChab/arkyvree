@@ -7,10 +7,9 @@ import { queryOptions, skipToken } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 
 import type { CustomizationPage } from "@/client/src/hooks/index.ts";
-import { type EntityRow, entitySegment, readEntityFn } from "@/client/src/lib/entityRequests.ts";
+import { type EntityRow, readEntityFn } from "@/client/src/lib/entityRequests.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 type CustomizedModifier = InferResponseType<
   (typeof rulesetApi)["customization"][":entityType"][":entityId"]["modifiers"][":modifierId"]["$get"],
@@ -56,7 +55,7 @@ async function fetchEntity(
       type,
       entity: await parseResponse(
         rulesetApi.customization[":entityType"][":entityId"].modifiers[":modifierId"].$get({
-          param: { id, entityType: getUrlSegment(type), entityId, modifierId: entityId },
+          param: { id, entityType: type, entityId, modifierId: entityId },
         }),
       ),
     };
@@ -65,7 +64,7 @@ async function fetchEntity(
   if (owner) {
     const entity: OwnedEntity = await parseResponse(
       rulesetApi.entities[":entityType"].owned[":ownedId"].$get({
-        param: { id, entityType: entitySegment(getUrlSegment(owner)), ownedId: entityId },
+        param: { id, entityType: owner, ownedId: entityId },
       }),
     );
     return { holder: "owned", owner, ownerId: entity.ownerId, type, entity };

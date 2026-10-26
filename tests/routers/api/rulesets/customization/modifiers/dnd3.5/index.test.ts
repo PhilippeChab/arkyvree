@@ -3,7 +3,6 @@ import { describe, expect, test } from "bun:test";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { CUSTOMIZABLE_TYPES } from "@/server/repositories/index.ts";
 import { application } from "@/server/routers/application.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 import { createCustomizableFeat, createEntity } from "@/tests/routers/api/rulesets/customization/dnd3.5/entities.ts";
 import { api, expectOk, expectStatus, guestApi, SEED_SESSION_ID } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
@@ -63,7 +62,7 @@ describe("rulesets customization modifiers", () => {
     const entityId = await createEntity(id, entityType);
     const created = await expectOk(
       modifiers.$post({
-        param: { id, entityType: getUrlSegment(entityType), entityId },
+        param: { id, entityType, entityId },
         json: { target: "combat.hp.misc", value: "5", operator: "add" },
       }),
     );

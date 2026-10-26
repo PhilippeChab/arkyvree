@@ -1,6 +1,3 @@
-import { getTableName } from "drizzle-orm";
-
-import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { withRulesetScope, withRulesetScopes } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -24,6 +21,7 @@ import {
   readChildInputs,
 } from "@/server/services/characters/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { CharacterVisibility } from "@/shared/campaigns.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -242,7 +240,7 @@ class CampaignCharactersService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: characterId,
-        targetTable: getTableName(playerCharactersInCampaign),
+        targetType: TARGET_TYPES.playerCharacters,
         type: "linkCharacter",
         data: { campaignId, characterId, visibility },
       });
@@ -275,7 +273,7 @@ class CampaignCharactersService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: characterId,
-        targetTable: getTableName(playerCharactersInCampaign),
+        targetType: TARGET_TYPES.playerCharacters,
         type: "updateCharacterVisibility",
         data: { campaignId, characterId, visibility },
       });

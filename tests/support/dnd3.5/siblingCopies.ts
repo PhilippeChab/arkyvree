@@ -32,7 +32,7 @@ async function readAptitudeIds(tx: Db, type: RulesetEntityType, copyId: string) 
 
   if (type !== "classes") return [];
   const classLevelIds = (
-    await Entities.findMany<KlassLevel>(tx, { entityType: "class_levels", ownerIds: [copyId] })
+    await Entities.findMany<KlassLevel>(tx, { entityType: "class-levels", ownerIds: [copyId] })
   ).map((level) => level.id);
   return (await EntityLinks.findMany(tx, { fromIds: classLevelIds, role: "grants" })).flatMap(
     (link) => link.viaId ?? [],

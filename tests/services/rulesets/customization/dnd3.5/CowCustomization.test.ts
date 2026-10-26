@@ -40,7 +40,7 @@ const CASES = [
   ["feats", "requirements"],
   ["classes", "modifiers"],
   ["classes", "requirements"],
-  ["class_levels", "modifiers"],
+  ["class-levels", "modifiers"],
   ["modifiers", "requirements"],
 ] as const;
 
@@ -125,9 +125,9 @@ async function setup() {
     rulesetId,
     fields: { [CLASS_HD]: 10 },
   });
-  const [level] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: 1 });
+  const [level] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
   for (const [sourceId, sourceType] of [
-    [level.id, "class_levels"],
+    [level.id, "class-levels"],
     [klass.id, "classes"],
   ]) {
     await Modifiers.create(db, {
@@ -156,7 +156,7 @@ async function setup() {
     fork,
     feat,
     klass,
-    owners: { feats: feat.id, classes: klass.id, class_levels: level.id, modifiers: modifier.id },
+    owners: { feats: feat.id, classes: klass.id, "class-levels": level.id, modifiers: modifier.id },
   };
 }
 
@@ -177,7 +177,7 @@ describe.each(CASES)("an inherited %s's %s", (ownerType, kindName) => {
     expect(created.resolvedEntityId).not.toBe(ownerId);
     expect((await kind.rowsOf(ownerType, created.resolvedEntityId)).map((r) => r.id)).toContain(created.id);
     const copied =
-      ownerType === "classes" || ownerType === "class_levels"
+      ownerType === "classes" || ownerType === "class-levels"
         ? { entityType: "classes", sourceEntityId: klass.id }
         : { entityType: "feats", sourceEntityId: feat.id };
     expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toMatchObject([copied]);

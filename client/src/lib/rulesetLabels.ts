@@ -3,7 +3,7 @@ import { getActivityName } from "@/shared/activity.ts";
 import type { RulesWords } from "./queries.ts";
 
 /**
- * The ruleset's word for an entity type (`words`, its rules': "Class Level" for 3.5's `class_levels`, "Class Levels"
+ * The ruleset's word for an entity type (`words`, its rules': "Class Level" for 3.5's `class-levels`, "Class Levels"
  * with `many`), else a generic one ("Entity"): never the type as the code names it.
  */
 export function entityTypeLabel(entityType: string, words: RulesWords | undefined, many = false): string {

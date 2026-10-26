@@ -136,7 +136,7 @@ export function Progressions<B extends Constructor>(Base: B) {
             await createActivityWithNotifications(tx, {
               userId: session.userId,
               targetId: target.id,
-              targetTable: type,
+              targetType: type,
               type: `update${getActivityName(type)}Progression`,
               data: plan.activity,
             });

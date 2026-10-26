@@ -1,6 +1,3 @@
-import { getTableName } from "drizzle-orm";
-
-import { charactersInCharacter } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
@@ -8,6 +5,7 @@ import { withTransaction } from "@/server/database/index.ts";
 import { Activities, CharacterInventory, CharacterLinks, Characters } from "@/server/repositories/index.ts";
 import { createAdvancement, writeChildren } from "@/server/services/characters/levels/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** Importing a character from another program's file into a ruleset, and what such a file is before one is picked. */
@@ -55,7 +53,7 @@ export function Imports<B extends Constructor>(Base: B) {
             await Activities.create(tx, {
               userId: session.userId,
               targetId: characterId,
-              targetTable: getTableName(charactersInCharacter),
+              targetType: TARGET_TYPES.characters,
               type: "createCharacter",
             });
 

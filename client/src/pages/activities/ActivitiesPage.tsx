@@ -84,11 +84,11 @@ export default function ActivitiesPage() {
             >
               <DataTable framed columns={ACTIVITY_COLUMNS}>
                 {activities.items.map((activity) => {
-                  const isNavigable = isNavigableTarget(activity.targetTable);
+                  const isNavigable = isNavigableTarget(activity.targetType);
                   return (
                     <DataRow
                       key={activity.id}
-                      {...(isNavigable && clickableProps(() => openTarget(activity.targetTable, activity.targetId)))}
+                      {...(isNavigable && clickableProps(() => openTarget(activity.targetType, activity.targetId)))}
                       sx={[isNavigable && CLICKABLE_ROW_SX]}
                     >
                       <DataCell slot="primary">

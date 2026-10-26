@@ -95,7 +95,7 @@ describe("rules", () => {
       { type: "spells" },
       { type: "items" },
       { type: "races" },
-      { type: "class_levels", owner: "classes" },
+      { type: "class-levels", owner: "classes" },
     ]);
     // A kind that opens a customization page is one such a page shows, and every kind one shows but an owned kind's
     // (which no tab lists) opens it
@@ -166,7 +166,7 @@ describe("rules", () => {
     for (const columns of Object.values(dnd35.columns))
       for (const column of columns ?? []) expect(Object.keys(column)).not.toContain("key");
     expect(
-      dnd35.columns.class_levels?.map((column) => [column.input, column.input === "group" ? "" : column.role]),
+      dnd35.columns["class-levels"]?.map((column) => [column.input, column.input === "group" ? "" : column.role]),
     ).toEqual([
       ["amounts", "baseBonus"],
       ["grants", "grants"],

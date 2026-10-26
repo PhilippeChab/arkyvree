@@ -1244,10 +1244,10 @@ describe("unsubscribing from an extension", () => {
       rulesetId: parent.id,
       fields: { [CLASS_HD]: 8 },
     });
-    const [sourceLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: source.id, position: 1 });
+    const [sourceLevel] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: source.id, position: 1 });
     const copy = await copyEntity(db, "classes", source.id, extension);
-    const [copyLevel] = await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [copy.id] });
-    const [added] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: copy.id, position: 2 });
+    const [copyLevel] = await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [copy.id] });
+    const [added] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: copy.id, position: 2 });
     const { classLevel: own } = await createTestClassLevel(extension.id);
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     const character = await createTestCharacter(user.id, { rulesetId: draft.id });
@@ -1427,7 +1427,7 @@ describe("an extension's content in a fork", () => {
       rulesetId: warrior.id,
     }))!;
     const [first] = (
-      await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [favoredSoul.id] })
+      await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [favoredSoul.id] })
     ).filter((level) => level.position === 1);
     await addCharacterLevel(character.id, first.id, {
       spells: { [list.id]: [bane.id, blessWater.id] },
@@ -1517,7 +1517,7 @@ describe("an extension's content in a fork", () => {
       Object.values(abilityMap).map((entityId) => ({ entityId, amount: 10 })),
     );
     const barbarianLevels = (
-      await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [classMap.pc["Barbarian"]] })
+      await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [classMap.pc["Barbarian"]] })
     )
       .filter((l) => l.position <= 7)
       .sort((a, b) => a.position - b.position);

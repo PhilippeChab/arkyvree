@@ -1,6 +1,6 @@
-import { getTableName, type InferInsertModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
-import { usersInAccount } from "@/drizzle/schema.ts";
+import type { usersInAccount } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { BadRequestError, InternalError, UnauthorizedError } from "@/server/errors/index.ts";
@@ -21,6 +21,7 @@ import {
 import { purgeAttachmentsForRecords } from "@/server/services/attachments/index.ts";
 import { toSafeUser } from "@/server/services/authentication/accounts.ts";
 import { compareInConstantTime, generateVerificationCode } from "@/server/services/authentication/codes.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class AccountService {
@@ -35,7 +36,7 @@ class AccountService {
       await Activities.create(tx, {
         userId: user.id,
         targetId: user.id,
-        targetTable: getTableName(usersInAccount),
+        targetType: TARGET_TYPES.users,
         type: "cancelEmailChange",
       });
     });
@@ -85,7 +86,7 @@ class AccountService {
       await Activities.create(tx, {
         userId,
         targetId: userId,
-        targetTable: getTableName(usersInAccount),
+        targetType: TARGET_TYPES.users,
         type: "deleteAccount",
       });
 
@@ -138,7 +139,7 @@ class AccountService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: session.userId,
-        targetTable: getTableName(usersInAccount),
+        targetType: TARGET_TYPES.users,
         type: "setPassword",
       });
 
@@ -169,7 +170,7 @@ class AccountService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: session.userId,
-        targetTable: getTableName(usersInAccount),
+        targetType: TARGET_TYPES.users,
         type: "updatePassword",
       });
 
@@ -221,7 +222,7 @@ class AccountService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: session.userId,
-        targetTable: getTableName(usersInAccount),
+        targetType: TARGET_TYPES.users,
         type: "updateProfile",
       });
 
@@ -275,7 +276,7 @@ class AccountService {
       await Activities.create(tx, {
         userId: user.id,
         targetId: user.id,
-        targetTable: getTableName(usersInAccount),
+        targetType: TARGET_TYPES.users,
         type: "verifyEmailChange",
       });
 

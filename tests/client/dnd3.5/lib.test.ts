@@ -210,10 +210,10 @@ describe("An entity type", () => {
     expect(entityTypeLabel("spells", DND35_WORDS)).toBe("Spell");
     expect(entityTypeLabel("spells", DND35_WORDS, true)).toBe("Spells");
     expect(entityTypeLabel("classes", DND35_WORDS, true)).toBe("Classes");
-    expect(entityTypeLabel("class_levels", DND35_WORDS)).toBe("Class Level");
+    expect(entityTypeLabel("class-levels", DND35_WORDS)).toBe("Class Level");
     expect(entityTypeLabel("modifiers", DND35_WORDS, true)).toBe("Modifiers");
     // Before the rules load, or for a type with no word, a generic word: never its type as the code names it
-    expect(entityTypeLabel("class_levels", undefined)).toBe("Entity");
+    expect(entityTypeLabel("class-levels", undefined)).toBe("Entity");
     expect(entityTypeLabel("widgets", DND35_WORDS, true)).toBe("Entities");
   });
 });

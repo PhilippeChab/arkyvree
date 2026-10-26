@@ -33,7 +33,7 @@ describe("CustomizedEntity", () => {
       name: "Test Class",
       fields: { [CLASS_HD]: 10 },
     });
-    const [classLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: 1 });
+    const [classLevel] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
     const [modifier] = await Modifiers.create(db, {
       sourceId: feat.id,
       sourceType: "feats",
@@ -49,7 +49,7 @@ describe("CustomizedEntity", () => {
       [spell.id, "spells"],
       [race.id, "races"],
       [klass.id, "classes"],
-      [classLevel.id, "class_levels"],
+      [classLevel.id, "class-levels"],
       [modifier.id, "modifiers"],
     ];
     const names = await withRulesetScope(db, rulesetId, async (scope) =>
@@ -72,7 +72,7 @@ describe("CustomizedEntity", () => {
     const [feat] = await Entities.create<Feat>(db, "feats", { rulesetId: theirs.id, name: "Their Feat" });
 
     await withRulesetScope(db, mine.id, async (scope) => {
-      for (const type of ["feats", "items", "spells", "races", "classes", "class_levels", "modifiers", "characters"])
+      for (const type of ["feats", "items", "spells", "races", "classes", "class-levels", "modifiers", "characters"])
         expect(() => CustomizedEntity.find(scope, type, NIL_UUID)).toThrow(`${type} not supported`);
       expect(() => CustomizedEntity.find(scope, "feats", feat.id)).toThrow("feats not supported");
     });

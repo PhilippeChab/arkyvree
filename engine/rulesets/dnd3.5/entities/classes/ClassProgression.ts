@@ -447,7 +447,7 @@ export default class ClassProgression {
         owner: "Class no longer exists; refresh the class",
       },
       owned,
-      ownedType: "class_levels",
+      ownedType: "class-levels",
       owner: this.klass,
     };
   }

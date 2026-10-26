@@ -167,7 +167,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       if (bonusClassLevels.length === 0) return;
 
       this.bonusClassLevelModifiers = bonusClassLevels.flatMap((kl) =>
-        (rulesetData.modifiersBySource.get(kl.id) ?? []).filter((m) => m.sourceType === "class_levels"),
+        (rulesetData.modifiersBySource.get(kl.id) ?? []).filter((m) => m.sourceType === "class-levels"),
       );
       // Store bonus class levels for source resolution in diagnostics
       this.bonusClassLevels = bonusClassLevels;

@@ -24,7 +24,6 @@ import {
   type RulesetListFilters,
   rulesetListQuery,
 } from "@/client/src/lib/queries.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { RulesetFactChips, RulesetStarButton } from "./components/index.ts";
 import { prefetchSection } from "./details/sectionQueries.ts";
@@ -111,7 +110,7 @@ export default function RulesetsPage() {
                     void prefetchSection(
                       queryClient,
                       ruleset.id,
-                      getUrlSegment(first.type),
+                      first.type,
                       first,
                       rules.entityKinds.at(0)?.value,
                       ruleset.kind === "extension",

@@ -1,10 +1,8 @@
-import { getTableName } from "drizzle-orm";
-
-import { campaignsInCampaign } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { InternalError, NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Campaigns, Players, Rulesets, Visibility, visibilityMap } from "@/server/repositories/index.ts";
 import { CampaignsPolicy, RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class CampaignsService {
@@ -30,7 +28,7 @@ class CampaignsService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: archivedCampaign.id,
-        targetTable: getTableName(campaignsInCampaign),
+        targetType: TARGET_TYPES.campaigns,
         type: "archiveCampaign",
       });
 
@@ -68,7 +66,7 @@ class CampaignsService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: campaign.id,
-        targetTable: getTableName(campaignsInCampaign),
+        targetType: TARGET_TYPES.campaigns,
         type: "createCampaign",
       });
 
@@ -123,7 +121,7 @@ class CampaignsService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: id,
-        targetTable: getTableName(campaignsInCampaign),
+        targetType: TARGET_TYPES.campaigns,
         type: "hardDeleteCampaign",
       });
 
@@ -147,7 +145,7 @@ class CampaignsService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: unarchivedCampaign.id,
-        targetTable: getTableName(campaignsInCampaign),
+        targetType: TARGET_TYPES.campaigns,
         type: "unarchiveCampaign",
       });
 
@@ -178,7 +176,7 @@ class CampaignsService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: updatedCampaign.id,
-        targetTable: getTableName(campaignsInCampaign),
+        targetType: TARGET_TYPES.campaigns,
         type: "updateCampaign",
       });
 

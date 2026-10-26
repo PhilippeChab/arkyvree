@@ -277,7 +277,7 @@ describe("activity notifications", () => {
     });
   });
 
-  // The client names a change in its ruleset's words (3.5's `class_levels` a class level), which its base rules pick:
+  // The client names a change in its ruleset's words (3.5's `class-levels` a class level), which its base rules pick:
   // every change to a ruleset's content records them, an entity's and what belongs to one alike
   test("of a ruleset's content carry its base rules, as their activities do", async () => {
     const [owner, author] = await users(2);

@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import { Engine } from "@/engine/index.ts";
 import { application } from "@/server/routers/application.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 /** What a path's parameter stands for in a request: an id, or a file a regex parameter accepts. */
 const PARAM_VALUES = ["00000000-0000-4000-8000-000000000000", "file.js"];
@@ -44,7 +43,7 @@ describe("application", () => {
   // client's to call by its type. A kind's own resources sit past its entity (a class's levels).
   test("no route of a kind's own serves its entities: the routes by kind do", () => {
     const segments = new Set(
-      Object.values(Engine.rules().describeAll()).flatMap(({ kinds }) => kinds.map(({ type }) => getUrlSegment(type))),
+      Object.values(Engine.rules().describeAll()).flatMap(({ kinds }) => kinds.map(({ type }) => type)),
     );
     // A route is listed once by each of its handlers (its validators')
     const ownRoutes = new Set(

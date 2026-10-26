@@ -1,7 +1,7 @@
 import { parseResponse } from "hono/client";
 
 import { useRulesetRules } from "@/client/src/hooks/index.ts";
-import { type EntityRow, entitySegment } from "@/client/src/lib/entityRequests.ts";
+import type { EntityRow } from "@/client/src/lib/entityRequests.ts";
 import type { EntityKindDescription } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
@@ -18,7 +18,6 @@ import {
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import { useEntityColumns, useEntityFields, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import type { EditorProps } from "./renderEditor.tsx";
 
@@ -48,7 +47,6 @@ export function EntityEditor({
   const { columns } = useEntityColumns(rulesetId, kind.type);
   const label = entityTypeLabel(kind.type, useRulesetRules(rulesetId).rules?.words);
   const { copies, lockedName } = kind;
-  const segment = getUrlSegment(kind.type);
   const { form, save } = useEntityForm({
     empty: withTemplateFlag(toEntityForm<EntityFormData>(columns), copies, false),
     values: withEntityFields(
@@ -69,7 +67,7 @@ export function EntityEditor({
     entityId,
     followCopy,
     storeSaved: refetchSaved,
-    listKey: QUERY_KEYS.rulesets.section(rulesetId, segment),
+    listKey: QUERY_KEYS.rulesets.section(rulesetId, kind.type),
     label,
     // Moved to another template, it holds that one's fields: the save sends them all, the server keeping its own
     sendsAllFields: copies
@@ -81,7 +79,7 @@ export function EntityEditor({
     saveFn: (data: EntityFormData, updatedAt: string | undefined) =>
       parseResponse(
         rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].$put({
-          param: { id: rulesetId, entityType: entitySegment(segment), entityId },
+          param: { id: rulesetId, entityType: kind.type, entityId },
           json: { ...toEntityBody<EntityFormData, EntityFormData>(columns, data), updatedAt },
         }),
       ),

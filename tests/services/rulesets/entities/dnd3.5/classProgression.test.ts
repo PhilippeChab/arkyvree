@@ -174,7 +174,7 @@ describe("EntitiesService: a class's progression", () => {
     )!;
     const [gated] = await Modifiers.create(db, {
       sourceId: first.id,
-      sourceType: "class_levels",
+      sourceType: "class-levels",
       target: "aptitudes.wizardspells.1.uses",
       operator: "add",
       value: "1",

@@ -7,7 +7,10 @@ import type { RulesDescriptions } from "@/client/src/lib/queries.ts";
 import { getActivityLabelOverrides } from "@/client/src/lib/rulesetLabels.ts";
 
 /** A ruleset whose perks are talents, and whose owner levels are as they're spelled */
-const WORDS = { perks: { one: "Talent", many: "Talents" }, owner_levels: { one: "Owner Level", many: "Owner Levels" } };
+const WORDS = {
+  perks: { one: "Talent", many: "Talents" },
+  "owner-levels": { one: "Owner Level", many: "Owner Levels" },
+};
 const RULES = {
   "Some Rules": { words: WORDS, customizationPages: [], kinds: [], columns: {} },
 } as unknown as RulesDescriptions;

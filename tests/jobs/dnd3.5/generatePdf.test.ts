@@ -28,7 +28,7 @@ describe("generatePdf", () => {
       );
 
       const [ready] = await notificationsOf(SEED_USER_ID, "pdfReady");
-      expect(ready).toMatchObject({ targetTable: "exports", data: { characterId: character.id } });
+      expect(ready).toMatchObject({ targetType: "exports", data: { characterId: character.id } });
       const pdf = await Exports.findOne(db, { id: ready.targetId, userId: SEED_USER_ID });
       // A file name keeps no path separator or colon.
       expect(pdf).toMatchObject({ type: "pdf", mimeType: "application/pdf", fileName: `${name}_ Draft_1-sheet.pdf` });

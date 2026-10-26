@@ -1,6 +1,3 @@
-import { getTableName } from "drizzle-orm";
-
-import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -14,6 +11,7 @@ import {
   StarredRulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -65,7 +63,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: newRuleset.id,
-        targetTable: getTableName(rulesetsInRules),
+        targetType: TARGET_TYPES.rulesets,
         type: "forkRuleset",
         data: { sourceRulesetId: id },
       });
@@ -184,7 +182,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: updatedRuleset.id,
-        targetTable: getTableName(rulesetsInRules),
+        targetType: TARGET_TYPES.rulesets,
         type: "updateRuleset",
       });
 

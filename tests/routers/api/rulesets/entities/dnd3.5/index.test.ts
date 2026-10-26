@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { isRecord } from "@/shared/isRecord.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
@@ -318,7 +317,7 @@ describe("rulesets entities by kind", () => {
       return isRecord(body) && body.message === `No ${words} for ${entityType}`;
     };
     for (const { copies, families, levels, pools, readOnly, type } of rules["Dungeons & Dragons: 3.5"].kinds) {
-      const entityType = getUrlSegment(type) as Segment;
+      const entityType = type as Segment;
       const list = (query: Record<string, string>) => kinds.$get({ param: { id, entityType }, query });
       const groups = await grouped.$get({ param: { id, entityType }, query: {} });
       // A copy of an entity the ruleset has none of: missing for a kind that copies, refused for any other
@@ -380,7 +379,7 @@ describe("rulesets entities by kind", () => {
         // An entity of its kind in a pool: its read holds its link to it, its aptitude named, its level where it has one
         visited.push(type);
         expect(Object.keys(pools)).toContain(type);
-        const entityType = getUrlSegment(type) as Segment;
+        const entityType = type as Segment;
         const query = { listedIn: pools[type] ?? "", limit: "1" };
         const [listed] = (await expectOk(kinds.$get({ param: { id, entityType }, query }))).items;
         const read: Record<string, unknown> = await expectOk(
@@ -407,7 +406,7 @@ describe("rulesets entities by kind", () => {
     const { id } = await setup();
     await expectStatus(kinds.$get({ param: { id, entityType: "widgets" as never }, query: {} }), 400);
     // A kind of two words is named by its URL segment, never by its type's own spelling
-    await expectStatus(kinds.$get({ param: { id, entityType: "class_levels" as never }, query: {} }), 400);
+    await expectStatus(kinds.$get({ param: { id, entityType: "class-levels" as never }, query: {} }), 400);
     await expectStatus(entity.$get({ param: { id, entityType: "races", entityId: NIL_UUID } }), 404);
   });
 });

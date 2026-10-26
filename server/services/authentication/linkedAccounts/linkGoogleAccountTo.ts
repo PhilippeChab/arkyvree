@@ -1,9 +1,7 @@
-import { getTableName } from "drizzle-orm";
-
-import { oauthAccountsInAccount } from "@/drizzle/schema.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 import { Activities, OauthAccounts } from "@/server/repositories/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** Links the Google account `googleAccountId` (Google verified it) to the session's user. */
@@ -29,7 +27,7 @@ export async function linkGoogleAccountTo(session: Session, googleAccountId: str
     await Activities.create(tx, {
       userId: session.userId,
       targetId: session.userId,
-      targetTable: getTableName(oauthAccountsInAccount),
+      targetType: TARGET_TYPES.oauthAccounts,
       type: "linkOauth",
       data: { provider: "google" },
     });

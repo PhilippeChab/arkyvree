@@ -115,7 +115,7 @@ describe("EntitiesService: classes", () => {
     await addGrants(db, level.id, "spells", [{ toId: spell.id, aptitudeId: aptitude.id }]);
     await Modifiers.create(db, {
       sourceId: level.id,
-      sourceType: "class_levels",
+      sourceType: "class-levels",
       target: "abilities.strength",
       value: "1",
       valueType: "number",
@@ -124,9 +124,9 @@ describe("EntitiesService: classes", () => {
 
     await EntitiesService.deleteEntity(session, rulesetId, "classes", klass.id);
 
-    expect(await Entities.findOne<KlassLevel>(db, { entityType: "class_levels", id: level.id })).toBeUndefined();
+    expect(await Entities.findOne<KlassLevel>(db, { entityType: "class-levels", id: level.id })).toBeUndefined();
     expect(await EntityLinks.findMany(db, { fromIds: [level.id, klass.id] })).toEqual([]);
-    expect(await Modifiers.findMany(db, { sourceIds: [level.id], sourceType: "class_levels" })).toEqual([]);
+    expect(await Modifiers.findMany(db, { sourceIds: [level.id], sourceType: "class-levels" })).toEqual([]);
   });
 
   test("copies an inherited class into a fork with its levels, their modifiers and those modifiers' requirements", async () => {
@@ -138,7 +138,7 @@ describe("EntitiesService: classes", () => {
     });
     const [modifier] = await Modifiers.create(db, {
       sourceId: level.id,
-      sourceType: "class_levels",
+      sourceType: "class-levels",
       target: "saves.fortitude.misc",
       value: "1",
       valueType: "number",
@@ -157,11 +157,11 @@ describe("EntitiesService: classes", () => {
       description: "Forked",
     });
 
-    const [copiedLevel] = await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [copy.id] });
+    const [copiedLevel] = await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [copy.id] });
     expect(copiedLevel).toMatchObject({ position: 1 });
     const [copiedModifier] = await Modifiers.findMany(db, {
       sourceIds: [copiedLevel.id],
-      sourceType: "class_levels",
+      sourceType: "class-levels",
     });
     expect(copiedModifier).toMatchObject({ target: "saves.fortitude.misc", value: "1" });
     const copiedRequirements = await Requirements.findMany(db, {

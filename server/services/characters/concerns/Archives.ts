@@ -1,11 +1,9 @@
-import { getTableName } from "drizzle-orm";
-
-import { charactersInCharacter } from "@/drizzle/schema.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { InternalError, NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Characters, PLAYER_KINDS, PlayerCharacters, Visibility } from "@/server/repositories/index.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** Archiving a character, bringing it back, and deleting it for good. */
@@ -32,7 +30,7 @@ export function Archives<B extends Constructor>(Base: B) {
         await Activities.create(tx, {
           userId: session.userId,
           targetId: archivedCharacter.id,
-          targetTable: getTableName(charactersInCharacter),
+          targetType: TARGET_TYPES.characters,
           type: "archiveCharacter",
         });
 
@@ -61,7 +59,7 @@ export function Archives<B extends Constructor>(Base: B) {
         await Activities.create(tx, {
           userId: session.userId,
           targetId: characterId,
-          targetTable: getTableName(charactersInCharacter),
+          targetType: TARGET_TYPES.characters,
           type: "hardDeleteCharacter",
         });
 
@@ -91,7 +89,7 @@ export function Archives<B extends Constructor>(Base: B) {
         await Activities.create(tx, {
           userId: session.userId,
           targetId: unarchivedCharacter.id,
-          targetTable: getTableName(charactersInCharacter),
+          targetType: TARGET_TYPES.characters,
           type: "unarchiveCharacter",
         });
 

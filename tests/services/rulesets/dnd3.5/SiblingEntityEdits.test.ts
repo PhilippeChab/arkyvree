@@ -68,7 +68,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
       });
     }
     if (omitLastLevel) {
-      const last = (await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [copy.id] })).find(
+      const last = (await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [copy.id] })).find(
         (level) => level.position === 20,
       )!;
       await EntitiesService.deleteOwnedEntity(session, extension.id, "classes", copy.id, last.id);

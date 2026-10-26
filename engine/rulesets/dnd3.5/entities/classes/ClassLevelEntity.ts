@@ -25,7 +25,7 @@ const LEVEL = z.number().int().min(1).max(RULESET_LIMITS.classLevel);
  * and its requirement of the class's previous level. A level's number is its `position` on its class's.
  */
 export default class ClassLevelEntity extends CustomizationPageEntity<
-  "class_levels",
+  "class-levels",
   typeof CLASS_LEVEL_FIELDS.fields
 > {
   constructor(
@@ -43,7 +43,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
 
   protected override readonly label = "Class level";
 
-  override readonly type = "class_levels";
+  override readonly type = "class-levels";
 
   /**
    * Refuses a new level without its number (its `position`), or past the class's bounds (its columns refuse a save's

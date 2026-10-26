@@ -91,7 +91,7 @@ export default class EntityWriter {
     await createActivityWithNotifications(tx, {
       userId: session.userId,
       targetId,
-      targetTable: this.type,
+      targetType: this.type,
       type: `${verb}${getActivityName(this.type)}`,
       data,
     });

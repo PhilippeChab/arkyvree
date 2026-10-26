@@ -9,7 +9,6 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { type CharacterDetail, invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { type EditingLevel, TrackLevels } from "./TrackLevels.tsx";
 
@@ -163,7 +162,7 @@ export function CharacterHeader({
                   )}
                   <TrackLevels
                     track={track}
-                    trackLink={rulesetId && `/rulesets/${rulesetId}/${getUrlSegment(track.entityType)}/${track.id}`}
+                    trackLink={rulesetId && `/rulesets/${rulesetId}/${track.entityType}/${track.id}`}
                     onAddLevel={onAddLevel}
                     onEditLevel={onEditLevel}
                   />

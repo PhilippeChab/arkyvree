@@ -1,7 +1,4 @@
-import { getTableName } from "drizzle-orm";
-
 import type { Db } from "@/drizzle/database.ts";
-import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { CowDataReader, EntityNames, EntityRevert, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
@@ -15,6 +12,7 @@ import {
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { type Departures, findDepartures, repointDepartingReferences } from "./departingReferences.ts";
@@ -116,7 +114,7 @@ class RulesetExtensionsService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: id,
-        targetTable: getTableName(rulesetsInRules),
+        targetType: TARGET_TYPES.rulesets,
         type: "subscribeExtension",
         data: { extensionIds: newExtensionIds },
       });
@@ -185,7 +183,7 @@ class RulesetExtensionsService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: id,
-        targetTable: getTableName(rulesetsInRules),
+        targetType: TARGET_TYPES.rulesets,
         type: "unsubscribeExtension",
         data: { extensionId },
       });

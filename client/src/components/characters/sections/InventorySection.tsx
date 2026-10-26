@@ -32,7 +32,6 @@ import { formatAmount } from "@/client/src/lib/formatNumeric.ts";
 import { invalidateCharacter, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { requiredRules } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import {
   EMPTY_INVENTORY_FORM,
@@ -280,7 +279,7 @@ export function InventorySection({ block, characterId, rulesetId, readOnly, load
                   variant="outlined"
                   size="small"
                   component={Link}
-                  to={`/rulesets/${rulesetId}/${getUrlSegment(block.entityType)}`}
+                  to={`/rulesets/${rulesetId}/${block.entityType}`}
                   target="_blank"
                 >
                   {words.create}

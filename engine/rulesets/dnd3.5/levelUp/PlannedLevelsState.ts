@@ -67,7 +67,7 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
     const { skills } = character.components;
     return classLevelIds.map((classLevelId) =>
       skills.getLevelPointsPerLevel(
-        CLASS_LEVEL_FIELDS.read(this.rulesetData.find("class_levels", classLevelId) ?? OwnerValues.NONE).skills,
+        CLASS_LEVEL_FIELDS.read(this.rulesetData.find("class-levels", classLevelId) ?? OwnerValues.NONE).skills,
       ),
     );
   }

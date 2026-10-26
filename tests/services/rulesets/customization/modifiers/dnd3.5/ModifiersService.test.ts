@@ -1,6 +1,5 @@
 import { describe, expect, test } from "bun:test";
 
-import { modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import {
   type Aptitude,
   type Feat,
@@ -14,6 +13,7 @@ import { ForbiddenError } from "@/server/errors/index.ts";
 import { Entities, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestClassLevel } from "@/tests/support/dnd3.5/levels.ts";
@@ -40,7 +40,7 @@ async function setup() {
     fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
   });
   const { classLevel } = await createTestClassLevel(rulesetId);
-  const owners = { feats: feat.id, items: item.id, spells: spell.id, races: race.id, class_levels: classLevel.id };
+  const owners = { feats: feat.id, items: item.id, spells: spell.id, races: race.id, "class-levels": classLevel.id };
   return { session, rulesetId, feat, item, owners };
 }
 
@@ -266,11 +266,11 @@ describe("ModifiersService", () => {
       await ModifiersService.deleteModifier(session, rulesetId, "feats", feat.id, modifier.id);
 
       expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toEqual([]);
-      expect(await activityTypes(session.userId, modifiersInCustomization, modifier.id)).toEqual([
+      expect(await activityTypes(session.userId, TARGET_TYPES.modifiers, modifier.id)).toEqual([
         "createModifier",
         "deleteModifier",
       ]);
-      expect(await activityTypes(session.userId, requirementsInCustomization, requirements[0].id)).toEqual([
+      expect(await activityTypes(session.userId, TARGET_TYPES.requirements, requirements[0].id)).toEqual([
         "createRequirement",
       ]);
       // The other modifier keeps its requirement.

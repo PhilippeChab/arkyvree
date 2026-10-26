@@ -966,7 +966,7 @@ describe("previewing a level-up", () => {
     await addCharacterLevel(characterId, (await findClassLevel(cleric, 1))!.id);
     await Modifiers.create(db, {
       sourceId: (await findClassLevel(cleric, 2))!.id,
-      sourceType: "class_levels",
+      sourceType: "class-levels",
       target: "aptitudes.clericspells.1.allowed",
       operator: "add",
       value: "1",

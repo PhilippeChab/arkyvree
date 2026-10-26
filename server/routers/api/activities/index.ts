@@ -5,7 +5,7 @@ import { sessionMiddleware, validate } from "@/server/middlewares/index.ts";
 import { limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
 import { ActivitiesService } from "@/server/services/activities/index.ts";
 
-const targetParams = z.object({ targetTable: z.string(), targetId: z.string().uuid() });
+const targetParams = z.object({ targetType: z.string(), targetId: z.string().uuid() });
 
 export default new Hono()
   .use(sessionMiddleware)
@@ -17,20 +17,20 @@ export default new Hono()
         limit,
         page,
         search: z.string().optional(),
-        targetTable: z.string().optional(),
+        targetType: z.string().optional(),
         type: z.string().optional(),
         orderBy: z.enum(["createdAt", "type"]).default("createdAt"),
         orderDir: orderDirDesc,
       }),
     ),
     async (c) => {
-      const { search, targetTable, type, orderBy, orderDir, limit, page } = c.req.valid("query");
+      const { search, targetType, type, orderBy, orderDir, limit, page } = c.req.valid("query");
       return c.json(
         await ActivitiesService.getActivities(
           c.var.requestSession,
           {
             search,
-            targetTable,
+            targetType,
             type,
             orderBy,
             orderDir,
@@ -42,10 +42,10 @@ export default new Hono()
     },
   )
   // Resolve activity target to frontend URL
-  .get("/resolve/:targetTable/:targetId", validate("param", targetParams), async (c) => {
-    const { targetTable, targetId } = c.req.valid("param");
+  .get("/resolve/:targetType/:targetId", validate("param", targetParams), async (c) => {
+    const { targetType, targetId } = c.req.valid("param");
 
-    const value = await ActivitiesService.getActivityUrl(c.var.requestSession, targetTable, targetId);
+    const value = await ActivitiesService.getActivityUrl(c.var.requestSession, targetType, targetId);
     if (!value) {
       return c.json(
         { error: "NotFoundError", cause: "notFound", message: "Entity not found or no link available" },

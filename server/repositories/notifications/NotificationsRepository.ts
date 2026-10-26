@@ -62,7 +62,7 @@ class NotificationsRepository extends include(BaseRepository<typeof notification
     pagination: { limit: number; page: number },
   ) {
     const { search, orderDir = "desc" } = where;
-    const searchConditions = this.search(search, [this.table.type, this.table.targetTable]);
+    const searchConditions = this.search(search, [this.table.type, this.table.targetType]);
 
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);

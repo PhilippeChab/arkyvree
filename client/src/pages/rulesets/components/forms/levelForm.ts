@@ -94,7 +94,7 @@ export function emptyLevel({ amounts, grants }: LevelColumns): LevelFormData {
   };
 }
 
-/** A level kind's columns (`type`: 3.5's `class_levels`) read past its fields. */
+/** A level kind's columns (`type`: 3.5's `class-levels`) read past its fields. */
 export function levelColumnsOf(rules: RulesDescription | undefined, type: string): LevelColumns {
   const columns = rules?.columns[type] ?? [];
   return {
