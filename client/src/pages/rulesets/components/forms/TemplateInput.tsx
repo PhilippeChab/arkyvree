@@ -10,7 +10,7 @@ import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { templatesQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
 
 import type { ColumnInputProps } from "./columnContext.ts";
-import { emptyFieldValues, toFieldValues } from "./entityFields.ts";
+import { emptyFieldValues, setFormParts, toFieldValues } from "./entityFields.ts";
 import { templateOptions } from "./templateOptions.ts";
 
 /** The template an entity is made from (an item's). */
@@ -27,16 +27,16 @@ function fetchTemplate(queryClient: QueryClient, rulesetId: string, entityType: 
   });
 }
 
-/** A path of a form's values, which a column's description names as text (`sourceItemId`). */
+/** A path of a form's values, which a column's description names as text (`fields.ITEM_TYPE`). */
 function formPath<T extends FieldValues>(path: string): FieldPath<T> {
   return path as FieldPath<T>;
 }
 
 /**
- * The template an item is made from: a select of its type's templates (`typeKey`, the column whose value they're of),
- * named for it ("Weapon Template"). An item starts with its template's fields, which a save keeps none of while
- * they're the template's: another template's fill in once they load, unless another was picked since, and none leaves
- * them empty.
+ * The template an item is made from: a select of its type's templates (`typeField`, the stored field whose value
+ * they're of), named for it ("Weapon Template"). An item starts with its template's fields, which a save keeps none of
+ * while they're the template's: another template's fill in once they load, unless another was picked since, and none
+ * leaves them empty. Its columns (its cost, its weight) stay as they are.
  */
 export function TemplateInput<T extends FieldValues>({
   context,
@@ -48,20 +48,19 @@ export function TemplateInput<T extends FieldValues>({
 }: ColumnInputProps<T, TemplateField>) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
-  const type: unknown = useWatch({ control: form.control, name: formPath<T>(field.typeKey) });
+  const type: unknown = useWatch({ control: form.control, name: formPath<T>(`fields.${field.typeField}`) });
   const held: unknown = useWatch({ control: form.control, name });
   const { data: templates, isLoading, error } = useQuery(templatesQuery(rulesetId, entityType, String(type)));
   const { fields } = useEntityFields(rulesetId, entityType);
 
   const handleTemplateChange = (templateId: unknown) => {
     if (!fields) return;
-    const fieldsPath = formPath<T>("fields");
-    form.setValue(fieldsPath, emptyFieldValues(fields) as never, { shouldDirty: true });
+    setFormParts(form, emptyFieldValues(fields));
     if (typeof templateId !== "string" || !templateId) return;
     const stillPicked = () => form.getValues(name) === templateId;
     fetchTemplate(queryClient, rulesetId, entityType, templateId).then(
       ({ entity }) => {
-        if (stillPicked()) form.setValue(fieldsPath, toFieldValues(fields, entity) as never, { shouldDirty: true });
+        if (stillPicked()) setFormParts(form, toFieldValues(fields, entity));
       },
       (fetchError) => {
         if (stillPicked()) snackbar.error(fetchError, "Failed to load the template's fields");
@@ -77,7 +76,7 @@ export function TemplateInput<T extends FieldValues>({
       options={templateOptions(templates, held, context.templateName)}
       emptyLabel="None"
       onChange={handleTemplateChange}
-      disabled={isLoading || (context.locked?.includes(field.key) ?? false)}
+      disabled={isLoading || (context.locked?.includes(field.role) ?? false)}
       loadError={error}
     />
   );

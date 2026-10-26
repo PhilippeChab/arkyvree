@@ -4,6 +4,7 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { LANGUAGE_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const rulesets = api.api.rulesets;
 const ruleset = rulesets[":id"];
@@ -98,7 +99,7 @@ describe("rulesets", () => {
     await expectOk(
       ruleset.entities[":entityType"][":entityId"].$put({
         param: { id, entityType: "languages", entityId },
-        json: { name: "Draconic", description: "Edited", type: "Exotic" },
+        json: { name: "Draconic", description: "Edited", fields: { [LANGUAGE_TYPE]: "Exotic" } },
       }),
     );
 

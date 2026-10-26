@@ -3,10 +3,13 @@ import type { FieldValues } from "react-hook-form";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import type { FormSync } from "@/client/src/hooks/index.ts";
-import { changedFieldValues } from "@/client/src/pages/rulesets/components/forms/entityFields.ts";
+import { changedValues } from "@/client/src/pages/rulesets/components/forms/entityFields.ts";
+import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 
 export interface EntitySaveOptions<TForm extends FieldValues, TSaved> {
+  /** Its columns, as its rules describe them, which a save sends whatever it changed: none */
+  columns?: readonly EntityField[];
   /** The record the form edits, from the URL */
   entityId: string;
   /**
@@ -38,26 +41,28 @@ export interface EntitySaveOptions<TForm extends FieldValues, TSaved> {
 }
 
 /**
- * A form's values as an edit sends them: of its `fields`, those it changed from what it's based on (`baseline`), or
- * every one when `sendsAllFields` says so.
+ * A form's values as an edit sends them: of its fields and its links, its columns' (`columns`) and those it changed
+ * from what it's based on (`baseline`), or every one when `sendsAllFields` says so.
  */
 function changesOf<TForm extends FieldValues>(
   data: TForm,
   baseline: TForm | undefined,
+  columns: readonly EntityField[],
   sendsAllFields?: EntitySaveOptions<TForm, unknown>["sendsAllFields"],
 ): TForm {
-  if (!("fields" in data) || sendsAllFields?.(data, baseline)) return data;
-  return { ...data, fields: changedFieldValues(data.fields, baseline?.fields) };
+  if (!("fields" in data || "links" in data) || sendsAllFields?.(data, baseline)) return data;
+  return changedValues(data, baseline, columns);
 }
 
 /**
- * The save of a ruleset entity's inline form, its page's details: sends it under its token, its fields those it changed
- * alone (a value its ruleset no longer lists stays until it's changed), rebaselines the form, puts the saved row in the
+ * The save of a ruleset entity's inline form, its page's details: sends it under its token, its columns whole and its
+ * declared fields those it changed alone (a value its ruleset no longer lists stays until it's changed), rebaselines the form, puts the saved row in the
  * cache, follows a copy of an inherited entity, refreshes its list and says so.
  */
 export function useEntitySave<TForm extends FieldValues, TSaved extends { id: string; updatedAt?: string }>({
   rulesetId,
   entityId,
+  columns = [],
   label,
   listKey,
   sync,
@@ -75,7 +80,7 @@ export function useEntitySave<TForm extends FieldValues, TSaved extends { id: st
       sourceId: entityId,
       listKey,
       label,
-      saved: await saveFn(changesOf(data, sync.baseline(), sendsAllFields), sync.updatedAt()),
+      saved: await saveFn(changesOf(data, sync.baseline(), columns, sendsAllFields), sync.updatedAt()),
     }),
     onSuccess: ({ saved, sourceId, listKey: savedListKey, label: savedLabel }, submitted) => {
       sync.saved(toFormValues ? toFormValues(saved) : submitted, saved.updatedAt);

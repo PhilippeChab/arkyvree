@@ -21,7 +21,6 @@ import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import {
   levelColumnsOf,
   type LevelFormData,
-  levelKeysOf,
   type LevelRead,
   nextLevel,
   readLevel,
@@ -74,11 +73,10 @@ interface Track {
   rules: ProgressionTrack;
 }
 
-/** A pool of a progression's answer, by the key its levels' grants hold one's id at (`viaKey`). */
-function readPool(pool: unknown, viaKey: string | undefined): PoolRow[] {
-  if (!isRecord(pool) || viaKey === undefined) return [];
-  const { name, picks } = pool;
-  const id = pool[viaKey];
+/** A pool of a progression's answer: its `id`, its name and its picks by level. */
+function readPool(pool: unknown): PoolRow[] {
+  if (!isRecord(pool)) return [];
+  const { id, name, picks } = pool;
   if (typeof id !== "string" || typeof name !== "string" || !isRecord(picks)) return [];
   return [{ id, name, picks: picks as PoolRow["picks"] }];
 }
@@ -88,7 +86,7 @@ function readPool(pool: unknown, viaKey: string | undefined): PoolRow[] {
  * features at once, which opens a level's page from its row; its progression, each track a preset to follow or its
  * levels to set; and its features and pools by level (3.5's feat pools; shown read-only to who can't edit). What it
  * changes waits for its save bar, which writes it all at once. Its levels are its rules' class kind's owned kind's,
- * their grants and amounts at their columns' keys.
+ * their grants and amounts at their columns' roles.
  */
 export function ClassProgressionSection({ rulesetId, classId, className, classType, ruleset }: ClassSectionProps) {
   const openEntity = useOpenEntity(rulesetId);
@@ -97,7 +95,6 @@ export function ClassProgressionSection({ rulesetId, classId, className, classTy
   const levelPage = levelPageOf(rules);
   const levelType = levelPage?.type ?? "";
   const levelColumns = levelColumnsOf(rules, levelType);
-  const keys = levelKeysOf(levelColumns);
   const amountsType = levelColumns.amounts?.references ?? "";
   const owner = entityTypeLabel(levelPage?.owner ?? "", rules?.words).toLowerCase();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
@@ -112,7 +109,6 @@ export function ClassProgressionSection({ rulesetId, classId, className, classTy
   const fieldTracks = trackRules.flatMap(({ field, key, source }) =>
     source === "field" && field ? [{ field, key }] : [],
   );
-  const fieldKeys = fieldTracks.map((track) => track.key);
   const { followCopy, queryKeysToInvalidate, tag } = useClassCopy(rulesetId, classType, classId);
 
   const query = levelsQuery(rulesetId, classType, classId);
@@ -127,9 +123,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, classTy
   const savedFeatures = describeFeatureRows(levels);
   // Its pools, and the picks a granted entity gives in them, at the keys its rules say
   const answer: Record<string, unknown> | undefined = progression;
-  const savedPools = (Array.isArray(answer?.pools) ? answer.pools : []).flatMap((pool) =>
-    readPool(pool, keys.grants?.viaKey),
-  );
+  const savedPools = (Array.isArray(answer?.pools) ? answer.pools : []).flatMap(readPool);
   const picksOf = (entityId: string) => {
     const byEntity = answer?.[grantsRules?.picks ?? ""];
     const picks = isRecord(byEntity) ? byEntity[entityId] : undefined;
@@ -144,8 +138,8 @@ export function ClassProgressionSection({ rulesetId, classId, className, classTy
   const draft = useProgressionDraft(classId, levels, !isFetching, (edits) => {
     const body = buildProgressionBody(
       levels,
-      keys,
-      fieldKeys,
+      levelColumns,
+      fieldTracks,
       amountEntities?.map(({ id }) => id),
       savedFeatures,
       savedPools,
@@ -169,7 +163,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, classTy
   // A message's word for a level ("Class level")
   const levelWord = entityTypeLabel(levelType, rules?.words);
   const { createDialogProps, handleCreate } = useRulesetSection({
-    createDefaults: withEntityFields(nextLevel(levels, keys), levelFields, savedRows.at(-1)),
+    createDefaults: withEntityFields(nextLevel(levels, levelColumns), levelFields, savedRows.at(-1)),
     rulesetId,
     label: `${levelWord.charAt(0)}${levelWord.slice(1).toLowerCase()}`,
     query,
@@ -234,15 +228,15 @@ export function ClassProgressionSection({ rulesetId, classId, className, classTy
 
   const body = buildProgressionBody(
     levels,
-    keys,
-    fieldKeys,
+    levelColumns,
+    fieldTracks,
     amountEntities?.map(({ id }) => id),
     savedFeatures,
     savedPools,
     draft.edits,
   );
-  // A pool's id in the save, at the key its levels' grants hold one at
-  const poolIdOf = (pool: Record<string, unknown>) => String(pool[keys.grants?.viaKey ?? ""]);
+  // A pool's id in the save
+  const poolIdOf = (pool: Record<string, unknown>) => String(pool.id);
   const changes = [
     ...tracks.flatMap((track) => {
       const before = valuesOf((level) => readTrack(level, track.key));

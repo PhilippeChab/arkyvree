@@ -5,7 +5,7 @@
 
 import { z } from "zod";
 
-import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
+import type { EntityFieldValues, EntityLinkValues } from "@/engine/core/fields/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
@@ -32,9 +32,9 @@ interface LevelModifier {
   value: string;
 }
 
-/** A pool's picks a progression's save gives: how many each level adds, by the level's id. */
+/** A pool's picks a progression's save gives (`id`, the pool's): how many each level adds, by the level's id. */
 interface PoolPicks {
-  aptitudeId: string;
+  id: string;
   picks: { count: number; levelId: string }[];
 }
 
@@ -67,47 +67,42 @@ const COUNTS = z.object({
     .optional(),
 });
 
-/** A form's fields, an object of them, which their codec reads. */
+/** A form's fields, an object of them by stored field, which their codec reads. */
 const FIELDS = z.custom<EntityFieldValues>((value) => isRecord(value), "Expected an object of the entity's fields");
 
+/** A form's links, an object of them by role, which its columns read. */
+const LINKS = z.custom<EntityLinkValues>((value) => isRecord(value), "Expected an object of the entity's links");
+
 /**
- * A progression's save, as its form sends it: its levels' forms (each its fields, its saves' base bonuses and the feats
- * it grants), its pools' picks by level, and its spell tables' totals, a level's one a spell level from 0 (`null` for
- * none).
+ * A progression's save, as its form sends it: its levels' forms (each its fields, and its links: its saves' base
+ * bonuses and the feats it grants, by role), its pools' picks by level (each pool by its `id`), and its spell tables'
+ * totals, a level's one a spell level from 0 (`null` for none). Each part refuses a key it doesn't take, as an entity's
+ * form does.
  */
-const PROGRESSION_BODY = z.object({
+const PROGRESSION_BODY = z.strictObject({
   levels: z
-    .array(
-      z.object({
-        levelId: z.string().uuid(),
-        fields: FIELDS.optional(),
-        saves: z.array(z.object({ saveId: z.string().uuid(), base: z.number().int() })).optional(),
-        feats: z
-          .array(z.object({ featId: z.string().uuid(), aptitudeId: z.string().uuid(), free: z.boolean().optional() }))
-          .optional(),
-      }),
-    )
+    .array(z.strictObject({ levelId: z.string().uuid(), fields: FIELDS.optional(), links: LINKS.optional() }))
     .optional(),
   pools: z
     .array(
-      z.object({
-        aptitudeId: z.string().uuid(),
-        picks: z.array(z.object({ levelId: z.string().uuid(), count: z.number().int() })),
+      z.strictObject({
+        id: z.string().uuid(),
+        picks: z.array(z.strictObject({ levelId: z.string().uuid(), count: z.number().int() })),
       }),
     )
     .optional(),
   spells: z
-    .object({
+    .strictObject({
       known: z
         .array(
-          z.object({
+          z.strictObject({
             levelId: z.string().uuid(),
             counts: z.array(z.union([z.number().int(), z.literal("all")]).nullable()),
           }),
         )
         .optional(),
       perDay: z
-        .array(z.object({ levelId: z.string().uuid(), counts: z.array(z.number().int().nullable()) }))
+        .array(z.strictObject({ levelId: z.string().uuid(), counts: z.array(z.number().int().nullable()) }))
         .optional(),
     })
     .optional(),
@@ -272,8 +267,8 @@ export default class ClassProgression {
    * A pool's picks, each level's (`count`), as its own modifiers on the pool (`aptitudes.<pool>.allowed`): refused for
    * a class's spell list (any class's, this one's before its levels give it slots), which its spell tables write.
    */
-  private planPool(working: Map<string, LevelModifier[]>, { aptitudeId, picks }: PoolPicks) {
-    const pool = this.ids.find("aptitudes", aptitudeId);
+  private planPool(working: Map<string, LevelModifier[]>, { id, picks }: PoolPicks) {
+    const pool = this.ids.find("aptitudes", id);
     const notPool = `${pool.name} is a spell list, not a feat pool`;
     const lists = SpellLists.of(this.rulesetData).classListIds;
     if (lists.has(pool.id) || pool.id === this.spellList?.id) throw new RulesError("invalid", notPool);
@@ -374,7 +369,7 @@ export default class ClassProgression {
   }
 
   /**
-   * What the class's tabs read beside its levels and its tables: its pools, each with its levels' own picks (what the
+   * What the class's tabs read beside its levels and its tables: its pools (each by its `id`), each with its levels' own picks (what the
    * pool's own modifiers add, by the level's id; a feat the level grants adds its own apart), the spell list its
    * spells go to (none for a class without one), whether its levels give spells in several (`severalSpellLists`:
    * its tables add them up, which no save can split), and the picks the ruleset's feats give in pools (`featPicks`, a
@@ -396,7 +391,7 @@ export default class ClassProgression {
     }
     const pools = [...picksBySlug].flatMap(([slug, picks]) => {
       const aptitude = dnd35.aptitudesById.get(dnd35.aptitudeIdBySlug.get(slug) ?? "");
-      return aptitude && !lists.has(aptitude.id) ? [{ aptitudeId: aptitude.id, name: aptitude.name, picks }] : [];
+      return aptitude && !lists.has(aptitude.id) ? [{ id: aptitude.id, name: aptitude.name, picks }] : [];
     });
     const featPicks = ClassProgression.readFeatPicks(rulesetData);
     const list = this.spellList;

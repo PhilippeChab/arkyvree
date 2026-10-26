@@ -14,9 +14,9 @@ describe("rulesets entities: languages", () => {
   test("creates, reads, lists, updates and deletes a language", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
 
-    const json = { name: "Test Language", description: "A test language", type: "Common" };
+    const json = { name: "Test Language", description: "A test language", fields: { [LANGUAGE_TYPE]: "Common" } };
     const created = await expectOk(kinds.$post({ param: { id, entityType }, json }));
-    const read = { name: json.name, description: json.description, fields: { [LANGUAGE_TYPE]: json.type } };
+    const read = { name: json.name, description: json.description, fields: json.fields };
     expect(created).toMatchObject(read);
     const param = { id, entityType, entityId: created.id };
 
@@ -24,11 +24,11 @@ describe("rulesets entities: languages", () => {
     const list = await expectOk(kinds.$get({ param: { id, entityType }, query: { search: "Test Language" } }));
     expect(list.items.map((l) => l.id)).toContain(created.id);
 
-    const update = { name: "Renamed Language", description: "Updated", type: "Exotic" };
+    const update = { name: "Renamed Language", description: "Updated", fields: { [LANGUAGE_TYPE]: "Exotic" } };
     expect(await expectOk(entity.$put({ param, json: update }))).toMatchObject({
       name: update.name,
       description: update.description,
-      fields: { [LANGUAGE_TYPE]: update.type },
+      fields: update.fields,
     });
 
     await expectOk(entity.$delete({ param }));
@@ -43,7 +43,10 @@ describe("rulesets entities: languages", () => {
 
   test("rejects a language without a name", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    const response = await kinds.$post({ param: { id, entityType }, json: { type: "Common" } as never });
+    const response = await kinds.$post({
+      param: { id, entityType },
+      json: { fields: { [LANGUAGE_TYPE]: "Common" } } as never,
+    });
     await expectStatus(response, 400);
   });
 
@@ -51,7 +54,7 @@ describe("rulesets entities: languages", () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     await expectStatus(kinds.$get({ param: { id: NIL_UUID, entityType }, query: {} }), 404);
     const param = { id, entityType, entityId: NIL_UUID };
-    await expectStatus(entity.$put({ param, json: { name: "Missing", type: "Common" } }), 404);
+    await expectStatus(entity.$put({ param, json: { name: "Missing", fields: { [LANGUAGE_TYPE]: "Common" } } }), 404);
     await expectStatus(entity.$delete({ param }), 404);
   });
 });

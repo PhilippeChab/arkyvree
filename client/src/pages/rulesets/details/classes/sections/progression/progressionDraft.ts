@@ -1,10 +1,10 @@
 /**
  * What a class's Progression tab changes before its save: its tracks' values (a level's fields its rules set, its
  * amounts: 3.5's saves), its features' levels and its pools' picks, by level id, over the class as saved; and the save
- * they make, at the keys its rules' columns say.
+ * they make, each level's fields by stored field and its amounts and grants among its links, at its columns' roles.
  */
 
-import type { LevelKeys, LevelRead } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import type { LevelColumns, LevelRead } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import type { ClassProgressionBody } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
 
 /** A feature the class grants (3.5's feat, through a feat pool), and the levels it grants it at, by their ids. */
@@ -56,14 +56,15 @@ export function amountTrackKey(entityId: string): TrackKey {
 }
 
 /**
- * The save a tab's edits make (`edits`, over the class's `levels`, `features` and `pools` as saved), at the keys its
- * rules' columns say (`keys`), each level's with the fields its tracks set (`fieldKeys`) and the ruleset's entities
- * its amounts are of (`amountIds`: 3.5's saves; none while they load, the level's own then, never an empty list).
+ * The save a tab's edits make (`edits`, over the class's `levels`, `features` and `pools` as saved): each level's
+ * fields its tracks set (`fieldTracks`: each its stored field, by its track's key), and its amounts and grants among
+ * its links, at its columns' roles (`columns`), of the ruleset's entities its amounts are of (`amountIds`: 3.5's
+ * saves; none while they load, the level's own then, never an empty list); each pool's picks by the pool's `id`.
  */
 export function buildProgressionBody(
   levels: readonly LevelRead[],
-  keys: LevelKeys,
-  fieldKeys: readonly string[],
+  columns: LevelColumns,
+  fieldTracks: readonly { field: string; key: string }[],
   amountIds: readonly string[] | undefined,
   features: readonly FeatureRow[],
   pools: readonly PoolRow[],
@@ -81,7 +82,10 @@ export function buildProgressionBody(
   const levelEdits = levels.flatMap((level) => {
     // The ruleset's entities, as a level's form sends their amounts; until they're read, the level's own
     const levelAmountIds = amountIds ?? level.amounts.map((amount) => amount.entityId);
-    const trackKeys: TrackKey[] = [...fieldKeys, ...levelAmountIds.map((id) => amountTrackKey(id))];
+    const trackKeys: TrackKey[] = [
+      ...fieldTracks.map(({ key }) => key),
+      ...levelAmountIds.map((id) => amountTrackKey(id)),
+    ];
     const tracksChanged = trackKeys.some((key) => valueOf(level, key) !== readTrack(level, key));
     const granted = rows.filter((row) => levelsOf(row).includes(level.id));
     const grantsChanged = !sameLevels(
@@ -89,25 +93,23 @@ export function buildProgressionBody(
       features.filter((row) => row.levelIds.includes(level.id)).map((row) => row.key),
     );
     if (!tracksChanged && !grantsChanged) return [];
-    const { amounts, grants } = keys;
+    const { amounts, grants } = columns;
     return [
       {
         levelId: level.id,
-        fields: Object.fromEntries(fieldKeys.map((key) => [key, valueOf(level, key)])),
-        ...(amounts && {
-          [amounts.key]: levelAmountIds.map((entityId) => ({
-            [amounts.entityKey]: entityId,
-            [amounts.amountKey]: valueOf(level, amountTrackKey(entityId)),
-          })),
-        }),
-        ...(grants &&
-          grantsChanged && {
-            [grants.key]: granted.map((row) => ({
-              [grants.entityKey]: row.entityId,
-              [grants.viaKey]: row.viaId,
-              free: freeOf(row, level),
+        fields: Object.fromEntries(fieldTracks.map(({ field, key }) => [field, valueOf(level, key)])),
+        links: {
+          ...(amounts && {
+            [amounts.role]: levelAmountIds.map((entityId) => ({
+              toId: entityId,
+              amount: valueOf(level, amountTrackKey(entityId)),
             })),
           }),
+          ...(grants &&
+            grantsChanged && {
+              [grants.role]: granted.map((row) => ({ toId: row.entityId, viaId: row.viaId, free: freeOf(row, level) })),
+            }),
+        },
       },
     ];
   });
@@ -116,13 +118,12 @@ export function buildProgressionBody(
     const picks = Object.entries(edits.pools[pool.id] ?? {})
       .filter(([levelId, count]) => savedLevelIds.has(levelId) && count !== (pool.picks[levelId] ?? 0))
       .map(([levelId, count]) => ({ levelId, count }));
-    return picks.length > 0 && keys.grants ? [{ [keys.grants.viaKey]: pool.id, picks }] : [];
+    return picks.length > 0 && columns.grants ? [{ id: pool.id, picks }] : [];
   });
-  // Its keys are its rules' columns', which its route's schema reads
   return {
     ...(levelEdits.length > 0 && { levels: levelEdits }),
     ...(poolEdits.length > 0 && { pools: poolEdits }),
-  } as Omit<ClassProgressionBody, "ownedTokens">;
+  };
 }
 
 /** A feature's key: its entity, and the one it's granted through (a feat can be granted in several pools). */

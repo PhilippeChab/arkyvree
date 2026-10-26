@@ -1,10 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
 import {
-  changedFieldValues,
+  changedValues,
   choiceOptions,
   emptyFieldValues,
-  type EntityFieldValues,
   isFieldShown,
   linkedEntities,
   noneLabel,
@@ -18,7 +17,22 @@ import {
 } from "@/client/src/pages/rulesets/components/forms/entityFields.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { Engine } from "@/engine/index.ts";
-import { CLASS_HD, ITEM_COST_GP, ITEM_SLOT, ITEM_TYPE, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  CLASS_HD,
+  ITEM_COST_GP,
+  ITEM_IS_TEMPLATE,
+  ITEM_MASTERWORK,
+  ITEM_SLOT,
+  ITEM_TYPE,
+  ITEM_WEIGHT,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
+
+/** A form's values: any, its fields and its links among them. */
+interface Form {
+  [key: string]: unknown;
+  fields?: Record<string, unknown>;
+  links?: Record<string, unknown>;
+}
 
 /** A field's description, but what it's for. */
 const BASE = { help: "" };
@@ -31,29 +45,26 @@ const FIELDS: EntityField[] = [
   {
     ...BASE,
     field: "SCHOOL",
-    key: "school",
     label: "School",
     input: "choice",
     multiple: false,
     options: ["Evocation", "Illusion"],
   },
-  { ...BASE, field: "TAG", key: "tags", label: "Tags", input: "choice", multiple: true, options: ["Fire"] },
-  { ...BASE, field: "NOTE", key: "notes", label: "Notes", input: "text", multiple: true, nullable: true },
-  { ...BASE, field: "TARGET", key: "target", label: "Target", input: "text", multiple: false, nullable: true },
-  { ...BASE, field: "WEIGHTED", key: "weighted", label: "Weighted", input: "flag", nullable: false },
+  { ...BASE, field: "TAG", label: "Tags", input: "choice", multiple: true, options: ["Fire"] },
+  { ...BASE, field: "NOTE", label: "Notes", input: "text", multiple: true, nullable: true },
+  { ...BASE, field: "TARGET", label: "Target", input: "text", multiple: false, nullable: true },
+  { ...BASE, field: "WEIGHTED", label: "Weighted", input: "flag", nullable: false },
   {
     ...BASE,
     field: "COUNT",
-    key: "count",
     label: "Count",
     input: "number",
     default: 1,
     min: 1,
-    shownWhen: [{ path: "fields.weighted", values: [true] }],
+    shownWhen: [{ path: "fields.WEIGHTED", values: [true] }],
   },
   {
     ...BASE,
-    key: "abilityId",
     label: "Ability",
     input: "ref",
     references: "abilities",
@@ -61,13 +72,12 @@ const FIELDS: EntityField[] = [
     role: "ability",
   },
   {
-    key: "weapon",
     label: "Weapon",
     input: "group",
-    shownWhen: [{ path: "type", values: ["Weapon"] }],
+    shownWhen: [{ path: "fields.TYPE", values: ["Weapon"] }],
     fields: [
-      { ...BASE, field: "REACH", key: "weapon.reach", label: "Reach", input: "number", default: null },
-      { ...BASE, field: "RANGED", key: "weapon.ranged", label: "Ranged", input: "flag", nullable: true },
+      { ...BASE, field: "REACH", label: "Reach", input: "number", default: null },
+      { ...BASE, field: "RANGED", label: "Ranged", input: "flag", nullable: true },
     ],
   },
 ];
@@ -75,21 +85,19 @@ const FIELDS: EntityField[] = [
 /** Two groups that both show a field held at the entity's own level: an armor's and a shield's max Dex bonus. */
 const WORN_FIELDS: EntityField[] = [
   {
-    key: "armor",
     label: "Armor",
     input: "group",
     fields: [
-      { ...BASE, field: "ARMOR_BONUS", key: "armor.bonus", label: "Armor Bonus", input: "number", default: null },
-      { ...BASE, field: "MAX_DEX", key: "maxDex", label: "Max Dex Bonus", input: "number", default: null },
+      { ...BASE, field: "ARMOR_BONUS", label: "Armor Bonus", input: "number", default: null },
+      { ...BASE, field: "MAX_DEX", label: "Max Dex Bonus", input: "number", default: null },
     ],
   },
   {
-    key: "shield",
     label: "Shield",
     input: "group",
     fields: [
-      { ...BASE, field: "SHIELD_BONUS", key: "shield.bonus", label: "Shield Bonus", input: "number", default: null },
-      { ...BASE, field: "MAX_DEX", key: "maxDex", label: "Max Dex Bonus", input: "number", default: null },
+      { ...BASE, field: "SHIELD_BONUS", label: "Shield Bonus", input: "number", default: null },
+      { ...BASE, field: "MAX_DEX", label: "Max Dex Bonus", input: "number", default: null },
     ],
   },
 ];
@@ -97,14 +105,8 @@ const WORN_FIELDS: EntityField[] = [
 describe("an entity's fields in its form", () => {
   test("start empty: no choice, no text, a flag off (none, a three-state one), a number its default", () => {
     expect(emptyFieldValues(FIELDS)).toEqual({
-      school: "",
-      tags: [],
-      notes: [],
-      target: "",
-      weighted: false,
-      count: 1,
-      abilityId: "",
-      weapon: { reach: null, ranged: null },
+      fields: { SCHOOL: "", TAG: [], NOTE: [], TARGET: "", WEIGHTED: false, COUNT: 1, REACH: null, RANGED: null },
+      links: { ability: "" },
     });
   });
 
@@ -115,40 +117,43 @@ describe("an entity's fields in its form", () => {
       links: [],
     };
     expect(toFieldValues(FIELDS, entity)).toEqual({
-      school: "Evocation",
-      tags: ["Fire"],
-      notes: [],
-      target: "",
-      weighted: true,
-      count: 2,
-      abilityId: "",
-      weapon: { reach: 10, ranged: false },
+      fields: {
+        SCHOOL: "Evocation",
+        TAG: ["Fire"],
+        NOTE: [],
+        TARGET: "",
+        WEIGHTED: true,
+        COUNT: 2,
+        REACH: 10,
+        RANGED: false,
+      },
+      links: { ability: "" },
     });
     const linked = { ...entity, links: [{ role: "ability", toId: "wis", toName: "Wisdom" }] };
-    expect(toFieldValues(FIELDS, linked).abilityId).toBe("wis");
+    expect(toFieldValues(FIELDS, linked).links.ability).toBe("wis");
   });
 
   test("hold a progression: its default in an empty form, an entity's when it's of its shape, each a copy", () => {
     const core = { every: 3, extra: [{ amount: 1, level: 1 }] };
     const fields: EntityField[] = [
-      { ...BASE, key: "feats", label: "Feats", input: "progression", default: core, levels: 20, max: 2 },
+      { ...BASE, field: "FEATS", label: "Feats", input: "progression", default: core, levels: 20, max: 2 },
     ];
     const empty = emptyFieldValues(fields);
-    expect(empty).toEqual({ feats: core });
-    expect(empty.feats).not.toBe(core);
+    expect(empty).toEqual({ fields: { FEATS: core }, links: {} });
+    expect(empty.fields.FEATS).not.toBe(core);
     const own = { every: 0, extra: [{ amount: 2, level: 5 }] };
-    expect(toFieldValues(fields, { feats: own })).toEqual({ feats: own });
+    expect(toFieldValues(fields, { fields: { FEATS: own } })).toEqual({ fields: { FEATS: own }, links: {} });
     for (const feats of [[1, 0], { every: 3 }, { every: 3, extra: [{ level: "5", amount: 1 }] }, null])
-      expect(toFieldValues(fields, { feats })).toEqual({ feats: core });
+      expect(toFieldValues(fields, { fields: { FEATS: feats } })).toEqual({ fields: { FEATS: core }, links: {} });
   });
 
-  test("join a form's values once they load: a new entity's empty, an entity's own", () => {
-    const form: { fields?: EntityFieldValues; name: string } = { name: "" };
-    expect(withEntityFields(form, undefined)).toEqual({ name: "", fields: {} });
-    expect(withEntityFields(form, FIELDS.slice(0, 1))).toEqual({ name: "", fields: { school: "" } });
+  test("join a form's values once they load, over its columns': a new entity's empty, an entity's own", () => {
+    const form: Form = { name: "", fields: { COST: "1.00" }, links: { madeFrom: "t" } };
+    expect(withEntityFields(form, undefined)).toEqual(form);
+    expect(withEntityFields(form, FIELDS.slice(0, 1))).toEqual({ ...form, fields: { COST: "1.00", SCHOOL: "" } });
     expect(withEntityFields(form, FIELDS.slice(0, 1), { fields: { SCHOOL: "Illusion" } })).toEqual({
-      name: "",
-      fields: { school: "Illusion" },
+      ...form,
+      fields: { COST: "1.00", SCHOOL: "Illusion" },
     });
   });
 
@@ -161,23 +166,23 @@ describe("an entity's fields in its form", () => {
 
   test("show a field on its conditions, off the form's values at their paths, each in or, `except`, out of its values", () => {
     const [, , , , , count, , weapon] = FIELDS;
-    const values = { type: "Weapon", fields: { weighted: false } };
+    const values = { fields: { TYPE: "Weapon", WEIGHTED: false } };
     expect(isFieldShown(FIELDS[0], [])).toBe(true);
-    expect(isFieldShown(count, [valueAt(values, "fields.weighted")])).toBe(false);
+    expect(isFieldShown(count, [valueAt(values, "fields.WEIGHTED")])).toBe(false);
     expect(isFieldShown(count, [true])).toBe(true);
-    expect(isFieldShown(weapon, [valueAt(values, "type")])).toBe(true);
-    expect(valueAt(values, "fields.weighted.deeper")).toBeUndefined();
+    expect(isFieldShown(weapon, [valueAt(values, "fields.TYPE")])).toBe(true);
+    expect(valueAt(values, "fields.WEIGHTED.deeper")).toBeUndefined();
     // Every condition holds: an item's template, while it's of a template's type and isn't one itself
     const template: EntityField = {
       ...BASE,
-      key: "sourceItemId",
+
       label: "Template",
       input: "template",
       role: "madeFrom",
-      typeKey: "type",
+      typeField: "TYPE",
       shownWhen: [
-        { path: "type", values: ["Weapon"] },
-        { path: "isTemplate", values: [true], except: true },
+        { path: "fields.TYPE", values: ["Weapon"] },
+        { path: "fields.TEMPLATE", values: [true], except: true },
       ],
     };
     expect(isFieldShown(template, ["Weapon", false])).toBe(true);
@@ -189,34 +194,57 @@ describe("an entity's fields in its form", () => {
     const template = {
       fields: { SCHOOL: "Evocation", TAG: ["Fire"], TARGET: "One creature", REACH: 10, RANGED: true },
     };
-    const values = { school: "Evocation", tags: [], target: "You", weapon: { reach: 10, ranged: false } };
+    const values = { fields: { SCHOOL: "Evocation", TAG: [], TARGET: "You", REACH: 10, RANGED: false } };
+    const empty = emptyFieldValues(FIELDS);
     expect(ownFieldValues(FIELDS, values, template)).toEqual({
-      ...emptyFieldValues(FIELDS),
-      tags: [],
-      target: "You",
-      weapon: { reach: null, ranged: false },
+      ...empty,
+      fields: { ...empty.fields, TAG: [], TARGET: "You", REACH: null, RANGED: false },
     });
-    expect(ownFieldValues(FIELDS, values, undefined)).toEqual({ ...emptyFieldValues(FIELDS), ...values });
+    expect(ownFieldValues(FIELDS, values, undefined)).toEqual({
+      ...empty,
+      fields: { ...empty.fields, ...values.fields },
+    });
   });
 
-  test("send an edit's changed fields alone, a group whole", () => {
-    const baseline = { school: "Sorcery", tags: ["Fire"], weapon: { reach: 10, ranged: null } };
+  test("send an edit's changed fields and links alone, a group's by each field, its columns' whole", () => {
+    const columns: EntityField[] = [{ ...BASE, field: "COST", label: "Cost", input: "decimal" }];
+    const baseline = { fields: { SCHOOL: "Sorcery", TAG: ["Fire"], REACH: 10, COST: "1.00" }, links: { ability: "a" } };
     expect(
-      changedFieldValues({ school: "Sorcery", tags: ["Fire"], weapon: { reach: 15, ranged: null } }, baseline),
-    ).toEqual({ weapon: { reach: 15, ranged: null } });
-    expect(changedFieldValues({ school: "Evocation", tags: ["Fire"] }, baseline)).toEqual({ school: "Evocation" });
-    expect(changedFieldValues(undefined, baseline)).toEqual({});
-    expect(changedFieldValues({ school: "Illusion" }, undefined)).toEqual({ school: "Illusion" });
+      changedValues(
+        {
+          name: "Bolt",
+          fields: { SCHOOL: "Sorcery", TAG: ["Fire"], REACH: 15, COST: "1.00" },
+          links: { ability: "a" },
+        } as Form,
+        baseline,
+        columns,
+      ),
+    ).toEqual({ name: "Bolt", fields: { REACH: 15, COST: "1.00" }, links: {} });
+    expect(changedValues<Form>({ fields: { SCHOOL: "Evocation" }, links: { ability: "b" } }, baseline, [])).toEqual({
+      fields: { SCHOOL: "Evocation" },
+      links: { ability: "b" },
+    });
+    expect(changedValues<Form>({ name: "Bolt" }, baseline, [])).toEqual({
+      name: "Bolt",
+      fields: undefined,
+      links: undefined,
+    });
+    expect(changedValues<Form>({ fields: { SCHOOL: "Illusion" } }, undefined, [])).toEqual({
+      fields: { SCHOOL: "Illusion" },
+      links: undefined,
+    });
   });
 });
 
 describe("an entity's fields shown in a group but held at its own level", () => {
-  test("hold their value once, at their own key, whichever group shows them", () => {
-    expect(emptyFieldValues(WORN_FIELDS)).toEqual({ armor: { bonus: null }, maxDex: null, shield: { bonus: null } });
+  test("hold their value once, at their own stored field, whichever group shows them", () => {
+    expect(emptyFieldValues(WORN_FIELDS)).toEqual({
+      fields: { ARMOR_BONUS: null, MAX_DEX: null, SHIELD_BONUS: null },
+      links: {},
+    });
     expect(toFieldValues(WORN_FIELDS, { fields: { ARMOR_BONUS: 4, MAX_DEX: 6 } })).toEqual({
-      armor: { bonus: 4 },
-      maxDex: 6,
-      shield: { bonus: null },
+      fields: { ARMOR_BONUS: 4, MAX_DEX: 6, SHIELD_BONUS: null },
+      links: {},
     });
   });
 });
@@ -228,8 +256,11 @@ describe("an entity's columns in its form", () => {
   const CLASS = Engine.rules().describeAll()["Dungeons & Dragons: 3.5"].columns.classes ?? [];
 
   test("start empty: a required choice its default, a decimal no text, a template none", () => {
-    expect(toColumnValues(CLASS)).toEqual({ hd: 8 });
-    expect(toColumnValues(ITEM)).toEqual({ costGp: "", slot: "", sourceItemId: "", type: "", weight: "" });
+    expect(toColumnValues(CLASS)).toEqual({ fields: { [CLASS_HD]: 8 }, links: {} });
+    expect(toColumnValues(ITEM)).toEqual({
+      fields: { [ITEM_COST_GP]: "", [ITEM_WEIGHT]: "", [ITEM_TYPE]: "", [ITEM_SLOT]: "" },
+      links: { madeFrom: "" },
+    });
   });
 
   test("hold an entity's: a decimal as its text, a type a template couldn't be of, a die it doesn't offer its default", () => {
@@ -239,47 +270,63 @@ describe("an entity's columns in its form", () => {
         links: [],
       }),
     ).toEqual({
-      costGp: "15.00",
-      slot: "Finger",
-      sourceItemId: "",
-      type: "Ring",
-      weight: "2.50",
+      fields: { [ITEM_COST_GP]: "15.00", [ITEM_WEIGHT]: "2.50", [ITEM_TYPE]: "Ring", [ITEM_SLOT]: "Finger" },
+      links: { madeFrom: "" },
     });
-    expect(toColumnValues(CLASS, { fields: { [CLASS_HD]: 7 } })).toEqual({ hd: 8 });
+    expect(toColumnValues(CLASS, { fields: { [CLASS_HD]: 7 } })).toEqual({ fields: { [CLASS_HD]: 8 }, links: {} });
     // Its template, its link's of the template's role
     const madeFrom = { role: "madeFrom", toId: "t", toName: "Longsword" };
-    expect(toColumnValues(ITEM, { fields: {}, links: [madeFrom] })).toMatchObject({ sourceItemId: "t" });
+    expect(toColumnValues(ITEM, { fields: {}, links: [madeFrom] })).toMatchObject({ links: { madeFrom: "t" } });
   });
 
   test("send a decimal's number, none null, and a column the form hides null", () => {
-    const ring = { costGp: "1500", weight: "", type: "Ring", slot: "Finger", sourceItemId: "", isTemplate: false };
+    const ring: Form & { fields: Record<string, unknown> } = {
+      name: "Ring",
+      fields: {
+        [ITEM_COST_GP]: "1500",
+        [ITEM_WEIGHT]: "",
+        [ITEM_TYPE]: "Ring",
+        [ITEM_SLOT]: "Finger",
+        [ITEM_IS_TEMPLATE]: false,
+        [ITEM_MASTERWORK]: true,
+      },
+      links: { madeFrom: "" },
+    };
     expect(toColumnsBody(ITEM, ring)).toEqual({
-      costGp: 1500,
-      slot: "Finger",
-      sourceItemId: null,
-      type: "Ring",
-      weight: null,
+      name: "Ring",
+      fields: {
+        [ITEM_COST_GP]: 1500,
+        [ITEM_WEIGHT]: null,
+        [ITEM_TYPE]: "Ring",
+        [ITEM_SLOT]: "Finger",
+        [ITEM_IS_TEMPLATE]: false,
+        [ITEM_MASTERWORK]: true,
+      },
+      links: { madeFrom: null },
     });
     // A weapon's template shows, its slot doesn't; a template's own template never does
-    const weapon = { ...ring, type: "Weapon", slot: "Finger", sourceItemId: "t1" };
-    expect(toColumnsBody(ITEM, weapon)).toMatchObject({ slot: null, sourceItemId: "t1" });
-    expect(toColumnsBody(ITEM, { ...weapon, isTemplate: true })).toMatchObject({
-      slot: null,
-      sourceItemId: null,
-      type: "Weapon",
+    const weapon = {
+      ...ring,
+      fields: { ...ring.fields, [ITEM_TYPE]: "Weapon" },
+      links: { madeFrom: "t1" },
+    };
+    expect(toColumnsBody(ITEM, weapon)).toMatchObject({ fields: { [ITEM_SLOT]: null }, links: { madeFrom: "t1" } });
+    expect(toColumnsBody(ITEM, { ...weapon, fields: { ...weapon.fields, [ITEM_IS_TEMPLATE]: true } })).toMatchObject({
+      fields: { [ITEM_SLOT]: null, [ITEM_TYPE]: "Weapon" },
+      links: { madeFrom: null },
     });
   });
 });
 
 describe("an entity's pools in its form", () => {
   /**
-   * A pool's links, a feat's and a spell's each at its level, which an entity read holds among its links, by their
-   * roles, apart from the form's keys.
+   * A pool's links, a feat's and a spell's each at its tier, which an entity read holds among its links, by their
+   * roles, and a form holds and sends by them.
    */
   const POOLS: EntityField[] = [
     {
       ...BASE,
-      key: "aptitudeIds",
+
       label: "Pools",
       input: "links",
       references: "pools",
@@ -288,7 +335,7 @@ describe("an entity's pools in its form", () => {
     },
     {
       ...BASE,
-      key: "aptitudes",
+
       label: "Lists",
       input: "leveledLinks",
       references: "pools",
@@ -309,12 +356,12 @@ describe("an entity's pools in its form", () => {
 
   test("read them off the entity's links, by their aptitudes' names, a level where one is held, none left without one", () => {
     expect(toColumnValues(POOLS, entity)).toEqual({
-      aptitudeIds: ["b", "a"],
-      aptitudes: [{ id: "c" }, { id: "w", level: 3 }],
+      fields: {},
+      links: { pool: [{ toId: "b" }, { toId: "a" }], list: [{ toId: "c" }, { toId: "w", tier: 3 }] },
     });
     // An entity read without its links holds none, and a link of another role is none of its column's
-    expect(toColumnValues(POOLS, {})).toEqual({ aptitudeIds: [], aptitudes: [] });
-    expect(toColumnValues(POOLS, { links: [{ role: "other", toId: "x", toName: "Other" }] }).aptitudeIds).toEqual([]);
+    expect(toColumnValues(POOLS, {})).toEqual({ fields: {}, links: { pool: [], list: [] } });
+    expect(toColumnValues(POOLS, { links: [{ role: "other", toId: "x", toName: "Other" }] }).links.pool).toEqual([]);
   });
 
   test("name the entities it links, which its pickers show by name", () => {

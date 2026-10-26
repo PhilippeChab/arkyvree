@@ -42,9 +42,9 @@ interface PoolFilters extends ListFilters {
   pool?: string;
 }
 
-/** What a kind's list query reads of its kind: its type, and what narrows its list (its pools, by their key). */
+/** What a kind's list query reads of its kind: its type, and what narrows its list (its pools, by their links' role). */
 type EntityListKind = Pick<EntityKindDescription, "levels" | "partitioned" | "type"> & {
-  pools?: Pick<NonNullable<EntityKindDescription["pools"]>, "key">;
+  pools?: Pick<NonNullable<EntityKindDescription["pools"]>, "role">;
 };
 
 /** A group of an entity kind's list (a feat's family), as its grouped list gives it. */
@@ -66,13 +66,16 @@ function entityListKey(rulesetId: string, kind: EntityListKind, filters: EntityF
   ];
 }
 
-/** A kind's list's search params: its page's, and each filter its kind narrows it by. */
+/**
+ * A kind's list's search params: its page's, and each filter its kind narrows it by, by what it filters: what a race
+ * or a class is for (its `partition`), a pool (its entities' links' role), a tier.
+ */
 function entityListParams(pageParam: number, kind: EntityListKind, filters: EntityFilters) {
   return {
     ...pageSearchParams(pageParam, filters),
-    ...(kind.partitioned && { kind: filters.kind, orderBy: filters.orderBy, orderDir: filters.orderDir }),
-    ...(kind.pools && { [kind.pools.key]: filters.pool }),
-    ...(kind.levels && { level: filters.level?.toString() }),
+    ...(kind.partitioned && { partition: filters.kind, orderBy: filters.orderBy, orderDir: filters.orderDir }),
+    ...(kind.pools && { [kind.pools.role]: filters.pool }),
+    ...(kind.levels && { tier: filters.level?.toString() }),
   };
 }
 
@@ -104,10 +107,15 @@ export function entitiesQuery(rulesetId: string, kind: EntityListKind, filters: 
 }
 
 /**
- * The variants of a family of a kind (`type`: a feat's), which its group's row lists as it expands; a row of one
- * entity has none to ask for.
+ * The variants of a family of a kind (`type`: a feat's), by the field that holds its families (`field`), which its
+ * group's row lists as it expands; a row of one entity has none to ask for.
  */
-export function entityFamilyQuery(rulesetId: string, type: string, family: string | null, childOnly: boolean) {
+export function entityFamilyQuery(
+  rulesetId: string,
+  { field, type }: { field: string; type: string },
+  family: string | null,
+  childOnly: boolean,
+) {
   const segment = getUrlSegment(type);
   return infiniteQueryOptions({
     queryKey: QUERY_KEYS.rulesets.familyVariants(rulesetId, segment, family ?? "", childOnly),
@@ -116,7 +124,7 @@ export function entityFamilyQuery(rulesetId: string, type: string, family: strin
           readEntitiesFn(rulesetId, type, {
             limit: "50",
             page: pageParam.toString(),
-            family,
+            [field]: family,
             childOnly: childOnly ? "true" : undefined,
           })
       : skipToken,
@@ -148,7 +156,7 @@ export function entityGroupsQuery(
           param: { id: rulesetId, entityType: entitySegment(segment) },
           query: givenParams({
             ...pageSearchParams(pageParam, filters),
-            ...(kind.pools && { [kind.pools.key]: filters.pool }),
+            ...(kind.pools && { [kind.pools.role]: filters.pool }),
           }),
         }),
       ),

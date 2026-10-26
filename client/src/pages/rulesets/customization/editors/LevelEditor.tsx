@@ -10,10 +10,10 @@ import {
   type Grant,
   grantKey,
   grantLabel,
+  type LevelColumns,
   levelColumnsOf,
   type LevelFormData,
-  type LevelKeys,
-  levelKeysOf,
+  type LevelLinks,
   type LevelRead,
   readLevel,
   sortGrants,
@@ -41,24 +41,26 @@ function labelOf(grant: Grant) {
   return grantLabel(grant.name, grant.viaName);
 }
 
-/** A level's form off its read (`level`): its number, and its amounts and grants at its columns' keys (`keys`). */
-function toLevelForm(level: LevelRead, { amounts, grants }: LevelKeys): LevelFormData {
+/**
+ * A level's form off its read (`level`): its number, and its amounts and grants among its links, at its columns' roles
+ * (`columns`).
+ */
+function toLevelForm(level: LevelRead, { amounts, grants }: LevelColumns): LevelFormData {
   return {
-    level: level.level,
-    ...(amounts && { [amounts.key]: level.amounts.map((amount) => toAmountRow(amount, amounts)) }),
-    ...(grants && {
-      [grants.key]: sortGrants(level.grants, labelOf).map((grant) => ({
-        [grants.entityKey]: grant.entityId,
-        [grants.viaKey]: grant.viaId,
-      })),
-    }),
+    position: level.level,
+    links: {
+      ...(amounts && { [amounts.role]: level.amounts.map(toAmountRow) }),
+      ...(grants && {
+        [grants.role]: sortGrants(level.grants, labelOf).map((grant) => ({ toId: grant.entityId, viaId: grant.viaId })),
+      }),
+    },
   };
 }
 
 /**
  * An owned level's details on its customization page (3.5's class level's), as its rules describe its kind (`type`):
- * its declared fields, and its amounts and grants at its columns' keys, saved through its owner's routes, every amount
- * sent (`useAllAmounts`).
+ * its declared fields, and its amounts and grants among its links, at its columns' roles, saved through its owner's
+ * routes, every amount sent (`useAllAmounts`).
  */
 export function LevelEditor({
   rulesetId,
@@ -75,14 +77,15 @@ export function LevelEditor({
   refetchSaved,
 }: LevelEditorProps) {
   const columns = levelColumnsOf(rules, type);
-  const keys = levelKeysOf(columns);
   const level = readLevel(entity, columns);
+  const { amounts, grants } = columns;
   const word = entityTypeLabel(type, rules?.words);
   const { fields } = useEntityFields(rulesetId, type);
   const { withAll } = useAllAmounts(rulesetId, columns.amounts);
   const { form, save } = useEntityForm({
-    empty: emptyLevel(keys),
-    values: withEntityFields(toLevelForm(level, keys), fields, entity),
+    empty: emptyLevel(columns),
+    values: withEntityFields(toLevelForm(level, columns), fields, entity),
+    columns: rules?.columns[type],
     formKey: recordKey,
     adoptKey,
     updatedAt: entity.updatedAt,
@@ -105,8 +108,11 @@ export function LevelEditor({
           },
           json: {
             fields: data.fields,
-            ...(keys.amounts && { [keys.amounts.key]: withAll(data[keys.amounts.key] ?? []) }),
-            ...(keys.grants && { [keys.grants.key]: data[keys.grants.key] ?? [] }),
+            links: {
+              ...data.links,
+              ...(amounts && { [amounts.role]: withAll(data.links?.[amounts.role] ?? []) as LevelLinks[string] }),
+              ...(grants && { [grants.role]: data.links?.[grants.role] ?? [] }),
+            },
             updatedAt,
           },
         }),

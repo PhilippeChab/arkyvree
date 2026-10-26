@@ -7,6 +7,7 @@ import {
   EntityFormFields,
   type LevelColumns,
   type LevelFormData,
+  type LevelLinks,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import type { LinkWords } from "@/client/src/pages/rulesets/details/classes/classTab.ts";
 import { useAllAmounts } from "@/client/src/pages/rulesets/hooks/index.ts";
@@ -54,9 +55,16 @@ export function CreateLevelDialog({
   const lastLevel = useRules(baseRules).rules?.progression.lastLevel;
 
   // The endpoint takes an amount of every entity its amounts are of (3.5's every ruleset save), 0 when unset
-  const amountsKey = columns.amounts?.key;
+  const amountsRole = columns.amounts?.role;
   const handleSubmit = (data: LevelFormData) =>
-    onSubmit(amountsKey ? { ...data, [amountsKey]: withAll(data[amountsKey] ?? []) } : data);
+    onSubmit(
+      amountsRole
+        ? {
+            ...data,
+            links: { ...data.links, [amountsRole]: withAll(data.links?.[amountsRole] ?? []) as LevelLinks[string] },
+          }
+        : data,
+    );
 
   return (
     <CreateDialog
@@ -69,7 +77,7 @@ export function CreateLevelDialog({
     >
       <FormTextField
         control={form.control}
-        name="level"
+        name="position"
         rules={wholeNumberRules(1, "Level is required", lastLevel)}
         number
         label="Level"

@@ -65,7 +65,7 @@ describe("A feat's fields", () => {
       links: {},
     });
     // Its form writes its families, its schools and its rules: the others aren't its form's
-    expect(FEAT_FIELDS.formKeys).toEqual([
+    expect(FEAT_FIELDS.formNames).toEqual([
       "families",
       "weaponFinesse",
       "oversizedTwoWeaponFighting",

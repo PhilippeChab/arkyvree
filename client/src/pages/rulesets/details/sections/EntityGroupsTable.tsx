@@ -41,8 +41,8 @@ interface EntityGroupsTableProps {
   childOnly: boolean;
   /** What it says while it lists no group */
   empty: { description: string; icon: SvgIconComponent; title: string };
-  /** Its kind: its type (`feats`), and the pools it narrows by */
-  kind: Pick<EntityKindDescription, "pools" | "type">;
+  /** Its kind: its type (`feats`), the pools it narrows by, and the field its families are of */
+  kind: Pick<EntityKindDescription, "families" | "pools" | "type">;
   /** Opens an entity's page: a row's own, or one of its variants'. */
   onRowClick: (entity: { id: string }) => void;
   /** Warms an entity's page, as it's about to be opened (`useRowPrefetch`). */
@@ -63,6 +63,8 @@ interface GroupRowProps {
   entityType: string;
   /** Set on a row that groups several variants. */
   family: string | null;
+  /** The field its kind's families are of (a feat's), which its variants' list filters by */
+  familyField: string;
   isExpanded: boolean;
   onRowClick: (entity: { id: string }) => void;
   onRowPrefetch: (entity: { id: string }) => void;
@@ -81,6 +83,7 @@ const VARIANT_INDENT_SX = { pl: 6 };
 
 function GroupRow({
   entityType,
+  familyField,
   row,
   rulesetId,
   childOnly,
@@ -93,7 +96,7 @@ function GroupRow({
   onRowPrefetch,
 }: GroupRowProps) {
   const variantQuery = useInfiniteQuery({
-    ...entityFamilyQuery(rulesetId, entityType, family, childOnly),
+    ...entityFamilyQuery(rulesetId, { field: familyField, type: entityType }, family, childOnly),
     enabled: isExpanded,
   });
   const prefetchProps = useRowPrefetch(onRowPrefetch);
@@ -221,6 +224,7 @@ export function EntityGroupsTable({
               entityType={kind.type}
               childOnly={childOnly}
               family={family}
+              familyField={kind.families?.field ?? ""}
               isExpanded={family !== null && expandedFamilies.has(family)}
               animationIndex={index}
               animationOffset={groups.offset}

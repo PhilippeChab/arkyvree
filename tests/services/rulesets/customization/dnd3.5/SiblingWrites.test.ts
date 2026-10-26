@@ -127,11 +127,17 @@ for (const entityType of ["feats", "spells"] as const) {
       if (entityType === "feats") {
         const feat = await EntitiesService.getEntity<Described<"feats">>(host.id, "feats", local.resolvedEntityId);
         expect(feat.links.some((a) => a.toId === aptitude.id)).toBe(true);
-        await EntitiesService.updateEntity(session, host.id, "feats", feat.id, { name: feat.name, aptitudeIds: [] });
+        await EntitiesService.updateEntity(session, host.id, "feats", feat.id, {
+          name: feat.name,
+          links: { listedIn: [] },
+        });
       } else {
         const spell = await EntitiesService.getEntity<Described<"spells">>(host.id, "spells", local.resolvedEntityId);
         expect(spell.links.some((a) => a.toId === aptitude.id)).toBe(true);
-        await EntitiesService.updateEntity(session, host.id, "spells", spell.id, { name: spell.name, aptitudes: [] });
+        await EntitiesService.updateEntity(session, host.id, "spells", spell.id, {
+          name: spell.name,
+          links: { listedIn: [] },
+        });
       }
       for (const cold of [false, true]) {
         if (cold) invalidateTestRulesets(...rulesetIds);
@@ -330,7 +336,7 @@ test("installing another extension preserves the local override and exposes unre
   await RulesetExtensionsService.unsubscribeExtension(session, host.id, loserRulesetId);
   const local = await EntitiesService.updateEntity(session, host.id, "feats", winnerId, {
     name: "Toughness",
-    fields: { families: ["Luck"] },
+    fields: { [FEAT_FAMILY]: ["Luck"] },
   });
   const [unrelated] = await Entities.create<Feat>(db, "feats", {
     name: "Unrelated extension feat",

@@ -11,6 +11,7 @@ import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/
 import { createSeededTestRuleset, readTargetPaths } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * Real repository reads in separate request contexts: an earlier request loads again only after another request's
@@ -87,7 +88,7 @@ for (const scenario of ["entity", "cow", "paths"] as const) {
       if (scenario === "cow") {
         const copy = await EntitiesService.updateEntity(session, fork.id, "feats", seed.featMap.Toughness, {
           name: "Toughness",
-          fields: { families: ["Luck"] },
+          fields: { [FEAT_FAMILY]: ["Luck"] },
         });
         copyId = copy.id;
       } else {

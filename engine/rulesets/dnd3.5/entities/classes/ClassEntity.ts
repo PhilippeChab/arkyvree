@@ -2,8 +2,7 @@
 
 import { z } from "zod";
 
-import { RulesetEntity } from "@/engine/core/entities/index.ts";
-import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
+import { type FormBody, type FormColumnValues, RulesetEntity } from "@/engine/core/entities/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
@@ -17,24 +16,11 @@ import ClassTable from "./ClassTable.ts";
 import { CLASS_COLUMNS } from "./columns.ts";
 import { CLASS_FIELDS, CLASS_LEVEL_FIELDS } from "./fields.ts";
 
-/** A class's form: its name, description and hit die, and its fields (its bonus spell ability, its caster type). */
-interface ClassBody {
-  description?: string | null;
-  fields?: EntityFieldValues;
-  hd?: number;
-  name: string;
-}
-
 /**
  * A class as the ruleset describes it, what its form stores, and its parts, each bound to the class as the view has
  * it: its levels, its class skills, its table.
  */
-export default class ClassEntity extends RulesetEntity<
-  "classes",
-  ClassBody,
-  { description?: string | null; hd: number; name: string },
-  typeof CLASS_FIELDS.fields
-> {
+export default class ClassEntity extends RulesetEntity<"classes", typeof CLASS_FIELDS.fields> {
   /** Its hit die. */
   protected override readonly columns = CLASS_COLUMNS;
 
@@ -43,14 +29,8 @@ export default class ClassEntity extends RulesetEntity<
 
   protected override readonly label = "Class";
 
-  /** A list of the player classes or of the others', by their kind. */
-  protected override readonly listColumns = ["kind"];
-
-  /** Its list's filters: the kind it's for. */
-  protected override readonly listFilters = { kind: z.string() };
-
-  /** The kind it's for: its partition. */
-  protected override readonly storedAt = { kind: "partition" } as const;
+  /** Its list's filters: the kind it's for, its partition (the player classes', or the others'). */
+  protected override readonly listFilters = { partition: z.string() };
 
   /** Its levels' kind, which it owns. */
   override readonly ownedType = "class_levels";
@@ -60,8 +40,10 @@ export default class ClassEntity extends RulesetEntity<
   /**
    * A form's columns: the hit die it gives (a new class's `DEFAULT_HIT_DIE` when it gives none), or the edited class's.
    */
-  protected override columnsOf({ description, hd, name }: ClassBody, klass?: Klass) {
-    return { description, hd: hd ?? klass?.fields[CLASS_HD] ?? DEFAULT_HIT_DIE, name };
+  protected override columnsOf(body: FormBody, klass?: Klass): FormColumnValues {
+    const columns = super.columnsOf(body, klass);
+    const hd = (body.fields[CLASS_HD] as number | undefined) ?? klass?.fields[CLASS_HD] ?? DEFAULT_HIT_DIE;
+    return { ...columns, fields: { ...columns.fields, [CLASS_HD]: hd } };
   }
 
   /**

@@ -4,6 +4,7 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const kinds = api.api.rulesets[":id"].entities[":entityType"];
 const progression = kinds[":entityId"].progression;
@@ -41,7 +42,7 @@ describe("rulesets class progression", () => {
       progression.$put({
         param,
         json: {
-          levels: [{ levelId: first.id, fields: { bab: 1, skills: 4 } }],
+          levels: [{ levelId: first.id, fields: { [CLASS_LEVEL_BAB]: 1, [CLASS_LEVEL_SKILL_POINTS]: 4 } }],
           ownedTokens: [{ id: first.id, updatedAt: first.updatedAt }],
         },
       }),

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   type EntityForm,
+  Field,
   type FieldCodec,
   type Fields,
   type FieldsWrite,
@@ -9,6 +10,7 @@ import {
   FormColumns,
   type FormField,
   type NoFields,
+  type PartialFieldValues,
 } from "@/engine/core/fields/index.ts";
 import type {
   EntityCopiesPlan,
@@ -21,6 +23,7 @@ import type {
   EntityWrites,
   FieldValue,
   LinkSet,
+  LinkWrite,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import {
@@ -35,16 +38,49 @@ import {
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 /**
- * Where a kind stores the value its form or its list's query gives at a key (`StoredAt`): its entity's own field, its
- * single link of a role, or its partition.
+ * A form as its kind reads it, where it stores it: its name and its description, its columns' and its own fields by the
+ * stored field that keeps each (`fields`), its columns' links by role (`links`: a single link's target, a list of links'
+ * entries), and its place among its owner's (`position`, an owned entity's).
  */
-type StoredAt = "partition" | { field: string } | { role: string };
+export interface FormBody {
+  description?: string | null;
+  fields: Readonly<Record<string, unknown>>;
+  links: Readonly<Record<string, unknown>>;
+  name: string;
+  position?: number;
+}
+
+/** A form's columns as its save writes them, where they're stored: its name, its description, its fields, its links. */
+export interface FormColumnValues {
+  description?: string | null;
+  fields: Record<string, FieldValue | null | undefined>;
+  links: Record<string, string | null | undefined>;
+  name?: string;
+}
 
 /** An action a kind may have none of: its writes, its groups, its copies. */
 export type EntityAction = "create" | "delete" | "duplicate" | "groups" | "templates" | "update" | "variants";
 
 /** The actions of a kind's copies. */
 const COPY_ACTIONS: readonly EntityAction[] = ["duplicate", "templates", "variants"];
+
+/** Whether a column is a list of links: its links of a role, many. */
+function isLinkList(column: FormField) {
+  return ["amounts", "grants", "leveledLinks", "links"].includes(column.input);
+}
+
+/** A form's part (`part`: its fields, its links) as it's given: an object, none when it gives none. */
+function partOf(form: EntityForm, part: "fields" | "links"): Record<string, unknown> {
+  const given: unknown = form[part];
+  return typeof given === "object" && given !== null && !Array.isArray(given) ? { ...given } : {};
+}
+
+/** A column's place in its form: its stored field's (`fields`), or its link's role's (`links`). */
+function placeOf(column: FormField): { at: string; part: "fields" | "links" } | undefined {
+  if (column.input === "group") return undefined;
+  if (column.field !== undefined) return { at: column.field, part: "fields" };
+  return column.role === undefined ? undefined : { at: column.role, part: "links" };
+}
 
 /**
  * A ruleset's entity kind (its type, `type`), as its rules answer the server of it in a ruleset's view. Every kind
@@ -53,27 +89,22 @@ const COPY_ACTIONS: readonly EntityAction[] = ["duplicate", "templates", "varian
  *   as its codec reads them, by the stored field that keeps each, an item's template's it holds none of among them,
  *   `fieldsHeldBy`; its single links each with its target's name), its fields as its form shows them
  *   (`describeFields`);
- * - a page of its records (`openList`): its query's filters read by their schemas (`listFilters`), what the server
- *   reads it with (`filters`, `listOf`: those of its columns, by where it stores them), and its records described
- *   alike; its groups, a kind's that lists by group (`openGroups`: `groupFilters`, `groupsOf`);
- * - what its form writes (`planCreate`, `planEdit`): its columns read by their descriptions (`columns`, its rules'), and
- *   what else it carries by its kind's keys (`formKeys`), the entities it names by id, as the view reads them (`resolveIds`:
- *   a copy's for its source's id, refused, naming it, when the view shows none), the fields the form gives, read by its
- *   codec against the ruleset's declarations of them (`FieldCodec.parse`), the form checked (`checkForm`), its form's
- *   columns (`columnsOf`), written where they're stored (`storedOf`: each by its description's `field` or `role`, or by
- *   `storedAt`), its fields with them (`fieldsWrite`), the links it sets (`linksOf`), and what it writes beside them
- *   (`writesOf`: the feats it makes);
+ * - a page of its records (`openList`): its query's filters read by their schemas (`listFilters`, each by the field,
+ *   the role or the partition it filters), what the server reads it with (`filters`, `listOf`), and its records
+ *   described alike; its groups, a kind's that lists by group (`openGroups`: `groupFilters`, `groupsOf`);
+ * - what its form writes (`planCreate`, `planEdit`), its form being where it stores it (its fields by the stored field
+ *   that keeps each, its links by role): its columns read by their descriptions (`columns`, its rules', each at its
+ *   field or its role), and its own fields past them (`ownFields`), the entities it names by id, as the view reads them
+ *   (`resolveIds`: a copy's for its source's id, refused, naming it, when the view shows none), the fields the form
+ *   gives, read by its codec against the ruleset's declarations of them (`FieldCodec.parse`), the form checked
+ *   (`checkForm`), its form's columns (`columnsOf`), written where they're stored (`storedOf`), its fields with them
+ *   (`fieldsWrite`), the links it sets (`linksOf`), and what it writes beside them (`writesOf`: the feats it makes);
  * - what deleting one writes (`planDelete`): checked (`checkDelete`), and what it writes with it (`deleteWritesOf`).
  * An action a kind has none of it refuses as not found (`checkAction`): a read-only kind's writes (`readOnly`: "No
  * create for abilities"), the groups of a kind that lists none, a duplicate, variants and templates of a kind that makes
  * no copies (`copies`: "No templates for races").
  */
-export default abstract class RulesetEntity<
-  K extends keyof ViewKinds,
-  Body extends object,
-  Columns extends object = Body,
-  S extends Fields = NoFields,
-> {
+export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends Fields = NoFields> {
   constructor(protected readonly view: RulesetView) {}
 
   /** Its form's columns, as its rules describe them (`RulesDescription.columns`): none of its own. */
@@ -85,29 +116,23 @@ export default abstract class RulesetEntity<
   /** The fields its entities hold, as its module declares them: `FieldCodec.NONE`, none. */
   protected abstract readonly fields: FieldCodec<S>;
 
-  /** What its form carries past its name, its description, its fields and its columns, by key: nothing. */
-  protected readonly formKeys: z.ZodRawShape = {};
-
   /** Its groups' filters, by query key: none, a kind that lists by group alone has them (a feat's pool). */
   protected readonly groupFilters?: z.ZodRawShape;
 
   /** What a refusal calls one: "Save" in "Save not found in this ruleset". */
   protected abstract readonly label: string;
 
-  /** The columns its list's query narrows it by, a value each (a race's kind): none. */
-  protected readonly listColumns: readonly string[] = [];
-
-  /** Its list's filters past the shared ones, by query key, each its value's schema (a pool's, a level's): none. */
+  /**
+   * Its list's filters past the shared ones, each by the field, the role or the partition it filters (`partition`), and
+   * its value's schema (a race's partition, a feat's pool by its `listedIn` role): none.
+   */
   protected readonly listFilters: z.ZodRawShape = {};
+
+  /** The fields its form gives past its columns' and its fields', by stored field (an item's template flag): none. */
+  protected readonly ownFields: z.ZodRawShape = {};
 
   /** Whether its ruleset reads it but never writes it (its rules seed it: an ability), which refuses its writes. */
   protected readonly readOnly: boolean = false;
-
-  /**
-   * Where it stores what its form or its list's query gives at a key past its columns' descriptions (a column says where
-   * its own is stored, `FormField.field` or `role`): none, unless its kind has others (an item's `isTemplate`).
-   */
-  protected readonly storedAt: Readonly<Record<string, StoredAt>> = {};
 
   /**
    * The kind of the entities it owns (`owned(ownerId)`: a class's levels'), none for a kind that owns none: what a
@@ -125,21 +150,53 @@ export default abstract class RulesetEntity<
   abstract readonly type: K;
 
   /**
-   * A form's columns, by its keys: its name, its description and the ones its kind takes (`entity`: the one edited,
-   * none for a new one), each where its kind stores it (`storedOf`).
+   * What an edit's activity compares (`columns`, its form's, and `entity`, the one edited): their values by where
+   * they're stored (its name, its description, its fields by stored field, its single links by role), in its form's
+   * order (its columns' as described, then its own), the entity's at the form's places (none: null).
    */
-  protected abstract columnsOf(body: Body, entity?: ViewKinds[K]): Columns;
+  private changesOf(
+    columns: FormColumnValues,
+    entity: Pick<EntityRecord, "description" | "name"> & Pick<ViewEntity, "fields" | "links">,
+  ) {
+    const described = this.columns.flatMap((column) => placeOf(column)?.at ?? []);
+    const order = (keys: string[]) => [...new Set([...described.filter((key) => keys.includes(key)), ...keys])];
+    const after: Record<string, unknown> = { name: columns.name, description: columns.description };
+    const before: Record<string, unknown> = { name: entity.name, description: entity.description };
+    for (const key of order([...Object.keys(columns.fields), ...Object.keys(columns.links)])) {
+      const isField = Object.hasOwn(columns.fields, key);
+      after[key] = isField ? columns.fields[key] : columns.links[key];
+      before[key] = (isField ? entity.fields[key] : entity.links[key]) ?? null;
+    }
+    return { after, before };
+  }
 
-  /** Where the kind stores what its form or its list's query gives, by key: its columns' and its own (`storedAt`). */
-  private get keysStored(): Map<string, StoredAt> {
-    const described = this.columns.flatMap((column): [string, StoredAt][] => {
-      if (column.input === "group") return [];
-      if (column.field) return [[column.key, { field: column.field }]];
-      return (column.input === "ref" || column.input === "template") && column.role
-        ? [[column.key, { role: column.role }]]
-        : [];
-    });
-    return new Map([...described, ...Object.entries(this.storedAt)]);
+  /** The stored fields and the roles a form's columns and its own fields take, which its codec doesn't read. */
+  private get formPlaces(): { fields: Set<string>; links: Set<string> } {
+    const columns = this.columns.flatMap((column) => placeOf(column) ?? []);
+    return {
+      fields: new Set([
+        ...columns.flatMap(({ at, part }) => (part === "fields" ? [at] : [])),
+        ...Object.keys(this.ownFields),
+      ]),
+      links: new Set(columns.flatMap(({ at, part }) => (part === "links" ? [at] : []))),
+    };
+  }
+
+  /** The stored fields and the roles its form and its list's query name (its columns', its fields', its own). */
+  private get places(): { fields: Set<string>; roles: Set<string> } {
+    const leaves = Field.leavesOf(this.fields.fields);
+    const columns = this.columns.flatMap((column) => placeOf(column) ?? []);
+    return {
+      fields: new Set([
+        ...leaves.flatMap((leaf) => (leaf.kind === "ref" ? [] : [leaf.field])),
+        ...columns.flatMap(({ at, part }) => (part === "fields" ? [at] : [])),
+        ...Object.keys(this.ownFields),
+      ]),
+      roles: new Set([
+        ...leaves.flatMap((leaf) => (leaf.kind === "ref" ? [leaf.role] : [])),
+        ...columns.flatMap(({ at, part }) => (part === "links" ? [at] : [])),
+      ]),
+    };
   }
 
   /**
@@ -148,10 +205,10 @@ export default abstract class RulesetEntity<
    * of it named, `savedLinks`).
    */
   private planWrite(
-    body: Body,
-    given: Partial<FieldValues<S>>,
+    body: FormBody,
+    given: PartialFieldValues<S>,
     entity?: ViewKinds[K],
-  ): EntityCreatePlan & { columns: Columns } {
+  ): EntityCreatePlan & { columns: FormColumnValues } {
     const columns = this.columnsOf(body, entity);
     const row = this.storedOf(columns);
     const written = this.fieldsWrite(body, given, entity);
@@ -171,23 +228,33 @@ export default abstract class RulesetEntity<
   }
 
   /**
-   * The fields a form gives (its `fields`, which the route carries as it is), read by the kind's codec, those it gives
-   * (none when it gives none): refused as invalid, by field, as a route's validation refuses a body, when one isn't a
-   * field its kind declares, of its field's type, in its bounds or among its values, or names an entity the view shows
-   * none of. A reference reads as the id the view keys its entity by.
+   * The fields a form gives past its columns and its own (`form`: those of its fields and its links the kind's codec
+   * reads), read by the kind's codec, those it gives (none when it gives none): refused as invalid, by field, as a
+   * route's validation refuses a body, when one isn't a field its kind declares, of its field's type, in its bounds or
+   * among its values, or names an entity the view shows none of. A reference reads as the id the view keys its entity
+   * by. A kind that holds no fields refuses any its form gives past its columns alike.
    */
-  private readFields(body: Body, entity?: ViewKinds[K]): Partial<FieldValues<S>> {
-    const given = "fields" in body ? body.fields : undefined;
-    if (!this.rulesetData.takesFields(this.type)) return {};
-    return this.fields.parse(given, {
-      kept: entity && this.fieldsOf(entity),
-      resolve: (type, id) => this.ids.resolve(type, id),
-    });
+  private readFields(form: EntityForm, entity?: ViewKinds[K]): PartialFieldValues<S> {
+    const taken = this.formPlaces;
+    const rest = (part: "fields" | "links") =>
+      Object.fromEntries(Object.entries(partOf(form, part)).filter(([key]) => !taken[part].has(key)));
+    if (!this.rulesetData.takesFields(this.type)) {
+      const unknown = (["fields", "links"] as const).flatMap((part) =>
+        Object.keys(rest(part)).map((key) => ({ category: `${part}.${key}`, message: "Not a field of this entity" })),
+      );
+      if (unknown.length > 0) throw new RulesError("invalid", "Request validation failed", unknown);
+      return {};
+    }
+    if (form.fields === undefined && form.links === undefined) return {};
+    return this.fields.parse(
+      { fields: rest("fields"), links: rest("links") },
+      { kept: entity && this.fieldsOf(entity), resolve: (type, id) => this.ids.resolve(type, id) },
+    );
   }
 
   /**
    * A query's filters (`given`) read by their schemas (`shape`, the list's or the groups'): refused as invalid, by key,
-   * as a route's validation refuses a query, when one isn't the kind's ("races take no level filter") or isn't of its
+   * as a route's validation refuses a query, when one isn't the kind's ("races take no tier filter") or isn't of its
    * type. Every filter is optional: a list takes none.
    */
   private readFilters(shape: z.ZodRawShape, given: Record<string, unknown>): Record<string, unknown> {
@@ -211,7 +278,28 @@ export default abstract class RulesetEntity<
   protected checkDelete(_entity: ViewKinds[K]) {}
 
   /** Refuses a form (`entity`: the one edited, none for a new one): nothing does, unless its kind's rules say. */
-  protected checkForm(_body: Body, _entity?: ViewKinds[K]) {}
+  protected checkForm(_body: FormBody, _entity?: ViewKinds[K]) {}
+
+  /**
+   * A form's columns (`entity`: the one edited, none for a new one), where they're stored: its name, its description,
+   * its columns' and its own fields, and its columns' single links, as it gives them.
+   */
+  protected columnsOf(body: FormBody, _entity?: ViewKinds[K]): FormColumnValues {
+    const singles = new Set(
+      this.columns.flatMap((column) => {
+        const place = placeOf(column);
+        return !isLinkList(column) && place?.part === "links" ? [place.at] : [];
+      }),
+    );
+    return {
+      description: body.description,
+      fields: { ...body.fields } as FormColumnValues["fields"],
+      links: Object.fromEntries(
+        Object.entries(body.links).filter(([role]) => singles.has(role)),
+      ) as FormColumnValues["links"],
+      name: body.name,
+    };
+  }
 
   /** What deleting an entity writes with it: nothing, unless its kind's rules say. */
   protected deleteWritesOf(_entity: ViewKinds[K]): EntityWrites | undefined {
@@ -256,26 +344,25 @@ export default abstract class RulesetEntity<
    * The fields a form writes (`given`: those it gives, read; `entity`: the one edited), with the links its references
    * set: those it gives over those the entity keeps (`formFields`); none when it gives none.
    */
-  protected fieldsWrite(_body: Body, given: Partial<FieldValues<S>>, entity?: ViewKinds[K]): FieldsWrite | undefined {
+  protected fieldsWrite(_body: FormBody, given: PartialFieldValues<S>, entity?: ViewKinds[K]): FieldsWrite | undefined {
     const fields = this.formFields(given, entity);
     return fields && this.fields.write(fields);
   }
 
   /**
-   * What the server reads the kind's entities by, of the values given at its keys (`given`: a list's query's, its
-   * templates'), each where it's stored (`storedAt`, its columns'): a field's value, a link's targets, a partition.
+   * What the server reads the kind's entities by, of the values given (`given`: a list's query's, its templates'), each
+   * by what it filters: a stored field's value, a single link's targets by its role, a partition (`partition`).
    */
   protected filtersOf(given: Readonly<Record<string, unknown>>): EntityFilters {
-    const stored = this.keysStored;
+    const { fields: stored, roles } = this.places;
     const filters: { fields?: Record<string, FieldValue>; links?: Record<string, string[]>; partitions?: string[] } =
       {};
     for (const [key, value] of Object.entries(given)) {
-      const at = stored.get(key);
       if (value === undefined) continue;
-      if (!at) throw new Error(`${getUrlSegment(this.type)} store nothing at ${key}`);
-      if (at === "partition") filters.partitions = [String(value)];
-      else if ("field" in at) (filters.fields ??= {})[at.field] = value as FieldValue;
-      else (filters.links ??= {})[at.role] = Array.isArray(value) ? value : [String(value)];
+      if (key === "partition") filters.partitions = [String(value)];
+      else if (stored.has(key)) (filters.fields ??= {})[key] = value as FieldValue;
+      else if (roles.has(key)) (filters.links ??= {})[key] = Array.isArray(value) ? value : [String(value)];
+      else throw new Error(`${getUrlSegment(this.type)} store nothing at ${key}`);
     }
     return filters;
   }
@@ -284,36 +371,29 @@ export default abstract class RulesetEntity<
    * The fields a form writes, of those its form shows: the ones it gives over the edited entity's (a new one's
    * defaults). None when the form gives none: an edit keeps those it has, and a new entity keeps none.
    */
-  protected formFields(given: Partial<FieldValues<S>>, entity?: ViewKinds[K]) {
-    if (this.fields.formKeys.every((key) => given[key] === undefined)) return undefined;
+  protected formFields(given: PartialFieldValues<S>, entity?: ViewKinds[K]) {
+    if (this.fields.formNames.every((key) => given[key] === undefined)) return undefined;
     return this.fields.merge(entity ? this.fieldsOf(entity) : this.fields.defaults, given);
   }
 
   /**
    * A form as its kind reads it (`entity`: the one edited, none for a new one): its name, its description and its
-   * fields as its route carries them, its columns read by their descriptions (`FormColumns`) and what else it carries
-   * by its kind's keys (`formKeys`), refused as invalid, by key, as a route's validation refuses a body.
+   * position as its route carries them, its columns read by their descriptions at their places (`FormColumns`: a
+   * field's among its fields, a link's among its links) and its own fields (`ownFields`), refused as invalid, by place,
+   * as a route's validation refuses a body. The fields and links its codec reads it leaves out (`readFields`).
    */
-  protected formOf(form: EntityForm, entity?: ViewKinds[K]): Body {
-    const { description, fields, name } = form;
-    const schema = FormColumns.schema(this.columns, !entity).extend(this.formKeys);
-    // Every key `Body` names is read: its route's, its columns' and its kind's own
-    return { description, fields, name, ...RulesError.parse(schema, form) } as Body;
-  }
-
-  /**
-   * An entity's values by its form's keys (`entity`, as the view has it): its name, its description, and its columns'
-   * and its kind's keys', each read where it's stored (none: null). What an edit's activity compares its form's with.
-   */
-  protected formValuesOf(
-    entity: Pick<EntityRecord, "description" | "name" | "partition"> & Pick<ViewEntity, "fields" | "links">,
-  ): Record<string, unknown> {
-    const values: Record<string, unknown> = { name: entity.name, description: entity.description };
-    for (const [key, at] of this.keysStored) {
-      if (at === "partition") values[key] = entity.partition;
-      else values[key] = ("field" in at ? entity.fields[at.field] : entity.links[at.role]) ?? null;
-    }
-    return values;
+  protected formOf(form: EntityForm, entity?: ViewKinds[K]): FormBody {
+    const shapes = FormColumns.shapes(this.columns, !entity);
+    const pick = (part: "fields" | "links", shape: z.ZodRawShape) =>
+      Object.fromEntries(Object.entries(partOf(form, part)).filter(([key]) => Object.hasOwn(shape, key)));
+    const fieldShape = { ...shapes.fields, ...this.ownFields };
+    return {
+      description: form.description,
+      fields: RulesError.parse(z.object(fieldShape), pick("fields", fieldShape), ["fields"]),
+      links: RulesError.parse(z.object(shapes.links), pick("links", shapes.links), ["links"]),
+      name: form.name ?? "",
+      position: form.position,
+    };
   }
 
   /** A page of its groups, of the filters the query gives (`where`, read): what the server reads it with. */
@@ -327,23 +407,30 @@ export default abstract class RulesetEntity<
   }
 
   /**
-   * The links a form sets on the entity, by role (a feat's pools, a class level's grants): none (`undefined`, an edit's
-   * kept), unless its kind's form sets some.
+   * The links a form sets on the entity, by role (a feat's pools, a class level's grants): each list of links its
+   * columns describe that it gives, of its column's kind (`references`), its entries as they are; a role it leaves out
+   * is kept (none given: `undefined`, an edit's every one).
    */
-  protected linksOf(_body: Body): LinkSet[] | undefined {
-    return undefined;
+  protected linksOf(body: FormBody): LinkSet[] | undefined {
+    const sets = this.columns.flatMap((column): LinkSet[] => {
+      if (!isLinkList(column) || !("references" in column) || column.role === undefined) return [];
+      const links = body.links[column.role];
+      return Array.isArray(links)
+        ? [{ links: links as Omit<LinkWrite, "role" | "toType">[], role: column.role, toType: column.references }]
+        : [];
+    });
+    return sets.length > 0 ? sets : undefined;
   }
 
   /**
    * A page of the kind's records, of the filters its query gives (`where`, read): what the server reads it with
-   * (`filters`: the ruleset's entities, of the values its query gives of its list's columns, where they're stored; a
-   * kind's list may narrow them by ids or the links of a role from a kind that name them, `linkedBy`), and its records
-   * described.
+   * (`filters`: the ruleset's entities, of the values its query gives, by the field, the role or the partition each
+   * filters; a kind's list may narrow them by ids or the links of a role from a kind that name them, `linkedBy`), and
+   * its records described.
    */
-  protected listOf(where: { childOnly?: boolean } & Record<string, unknown>) {
-    const filters: EntityFilters & { ids?: string[]; linkedBy?: { fromType: string; role: string } } = this.filtersOf(
-      Object.fromEntries(this.listColumns.map((name) => [name, where[name]])),
-    );
+  protected listOf({ childOnly: _, ...where }: { childOnly?: boolean } & Record<string, unknown>) {
+    const filters: EntityFilters & { ids?: string[]; linkedBy?: { fromType: string; role: string } } =
+      this.filtersOf(where);
     return {
       describe: <T extends Pick<EntityRecord, "fields" | "id" | "links">>(rows: T[]) => this.describeRows(rows),
       filters,
@@ -351,12 +438,31 @@ export default abstract class RulesetEntity<
   }
 
   /**
-   * The entities a form names by id, each the one the view shows (`ids`: a copy's for its source's id), as the fields
-   * that replace the form's as it enters (`planCreate`, `planEdit`): refused, naming one the view shows none of. None,
-   * unless its kind's form names one.
+   * The entities a form names by id (`body`, its columns' links), each the one the view shows (`ids`: a copy's for its
+   * source's id), as the links that replace the form's as it enters (`planCreate`, `planEdit`): a single link's target,
+   * a list of links' targets (refused when it names one twice, by its source's id and its copy's). Refused, naming one
+   * the view shows none of.
    */
-  protected resolveIds(_body: Body): object {
-    return {};
+  protected resolveIds(body: FormBody): FormBody["links"] {
+    const resolved: Record<string, unknown> = { ...body.links };
+    for (const column of this.columns) {
+      const role = column.input === "group" ? undefined : column.role;
+      const value = role === undefined ? undefined : body.links[role];
+      if (role === undefined || value === undefined || value === null) continue;
+      const type = (
+        column.input === "template" ? this.type : "references" in column ? column.references : ""
+      ) as keyof ViewKinds;
+      if (typeof value === "string") {
+        resolved[role] = value ? this.ids.resolve(type, value) : value;
+      } else if (Array.isArray(value) && column.input !== "grants") {
+        const toIds = this.ids.resolveAll(
+          type,
+          value.map((entry: { toId: string }) => entry.toId),
+        );
+        resolved[role] = value.map((entry: object, index) => ({ ...entry, toId: toIds[index] }));
+      }
+    }
+    return resolved;
   }
 
   /** The ruleset's view, as its rules read it. */
@@ -373,29 +479,17 @@ export default abstract class RulesetEntity<
   }
 
   /**
-   * What a form's columns (`columns`, by its keys) write of its entity's row: its name and its description, and every
-   * other key where its kind stores it (`storedOf`'s keys: a field, its single link, its partition). A key it leaves
-   * out (undefined) it keeps; null clears it.
+   * What a form's columns (`columns`, where they're stored) write of its entity's row: its name and its description,
+   * its fields and its single links. A value it leaves out (undefined) it keeps; null clears it.
    */
-  protected storedOf(columns: Columns): EntityWrite {
-    const stored = this.keysStored;
-    const fields: Record<string, FieldValue | null> = {};
-    const links: Record<string, string | null> = {};
-    const own: { description?: string | null; name?: string; partition?: string } = {};
-    for (const [key, value] of Object.entries(columns)) {
-      if (value === undefined) continue;
-      if (key === "name" || key === "description") {
-        own[key] = value as string;
-        continue;
-      }
-      const at = stored.get(key);
-      if (!at) throw new Error(`${getUrlSegment(this.type)} store nothing at ${key}`);
-      if (at === "partition") own.partition = value as string;
-      else if ("field" in at) fields[at.field] = value as FieldValue | null;
-      else links[at.role] = value as string | null;
-    }
+  protected storedOf(columns: FormColumnValues): EntityWrite {
+    const given = <V>(values: Record<string, V | undefined>) =>
+      Object.fromEntries(Object.entries(values).filter(([, value]) => value !== undefined)) as Record<string, V>;
+    const fields = given(columns.fields);
+    const links = given(columns.links);
     return {
-      ...own,
+      ...(columns.name !== undefined && { name: columns.name }),
+      ...(columns.description !== undefined && { description: columns.description }),
       ...(Object.keys(fields).length > 0 && { fields }),
       ...(Object.keys(links).length > 0 && { links }),
     };
@@ -405,7 +499,7 @@ export default abstract class RulesetEntity<
    * What a form writes beside the row (`given`: the fields it gives, read; `entity`: the one edited): nothing, unless
    * its kind's rules say (the feats it makes).
    */
-  protected writesOf(_body: Body, _given: Partial<FieldValues<S>>, _entity?: ViewKinds[K]): EntityWrites | undefined {
+  protected writesOf(_body: FormBody, _given: PartialFieldValues<S>, _entity?: ViewKinds[K]): EntityWrites | undefined {
     return undefined;
   }
 
@@ -485,8 +579,8 @@ export default abstract class RulesetEntity<
   planCreate(sent: EntityForm, _ancestor?: EntityRecord): EntityCreatePlan {
     this.checkAction("create");
     const body = this.formOf(sent);
-    const form: Body = { ...body, ...this.resolveIds(body) };
-    const given = this.readFields(form);
+    const form: FormBody = { ...body, links: this.resolveIds(body) };
+    const given = this.readFields(sent);
     this.checkForm(form);
     const { columns: _, ...plan } = this.planWrite(form, given);
     return plan;
@@ -508,21 +602,17 @@ export default abstract class RulesetEntity<
   /**
    * An entity's edit (`id`): the entity as the view has it, its new row off its form (an edit leaves the columns and the
    * fields it doesn't give as they are), what it writes beside it, and what its activity compares (`changes`: the
-   * entity's values and the form's columns, by the form's keys).
+   * entity's values and the form's columns, by where they're stored: `changesOf`).
    */
   planEdit(id: string, sent: EntityForm): EntityEditPlan<ViewKinds[K]> {
     this.checkAction("update");
     const entity = this.find(id);
     const body = this.formOf(sent, entity);
-    const form: Body = { ...body, ...this.resolveIds(body) };
-    const given = this.readFields(form, entity);
+    const form: FormBody = { ...body, links: this.resolveIds(body) };
+    const given = this.readFields(sent, entity);
     this.checkForm(form, entity);
     const { columns, ...plan } = this.planWrite(form, given, entity);
-    return {
-      ...plan,
-      changes: { after: columns as Record<string, unknown>, before: this.formValuesOf(entity) },
-      entity,
-    };
+    return { ...plan, changes: this.changesOf(columns, entity), entity };
   }
 
   /** Copies of an entity (`sourceId`), each its own name and description: none, unless its kind makes copies. */

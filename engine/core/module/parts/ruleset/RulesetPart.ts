@@ -1,9 +1,26 @@
-import type { EntityFieldValues, FieldCodec, FieldsWrite, FormField, LeafSpec } from "@/engine/core/fields/index.ts";
+import type {
+  EntityFieldValues,
+  EntityLinkValues,
+  FieldCodec,
+  FieldsWrite,
+  FieldValues,
+  FormField,
+  LeafSpec,
+} from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
 
 import type { RulesDeclaration, RulesWord } from "./RulesDescription.ts";
+
+/**
+ * A ruleset's Settings as its form holds them and its save sends them: its fields by the stored field that keeps each
+ * (`fields`), its links by role (`links`: the entity each names, none null); a save's, those it changes.
+ */
+export interface SettingsForm {
+  fields?: EntityFieldValues;
+  links?: EntityLinkValues;
+}
 
 /** The words of the types the engine itself holds, whatever the rules: a customization's modifier. */
 const ENGINE_WORDS: Readonly<Record<string, RulesWord>> = { modifiers: { many: "Modifiers", one: "Modifier" } };
@@ -54,9 +71,12 @@ export default abstract class RulesetPart {
     return { ...this.rules, words: { ...ENGINE_WORDS, ...this.rules.words } };
   }
 
-  /** The ruleset's Settings, by name: what its Settings tab shows. */
-  describeSettings(view: RulesetView): EntityFieldValues {
-    return this.settingsOf(view);
+  /**
+   * The ruleset's Settings, as its form holds them and its save sends them: its fields by the stored field that keeps
+   * each (`fields`), its links by role (`links`), what its Settings tab shows.
+   */
+  describeSettings(view: RulesetView): SettingsForm {
+    return this.fields.toForm(this.settingsOf(view)) as SettingsForm;
   }
 
   /** The fields of the ruleset's Settings, as it declares them: their labels, their inputs and their options. */
@@ -65,21 +85,17 @@ export default abstract class RulesetPart {
   }
 
   /**
-   * A save of the ruleset's Settings (`body.fields`, those it changes): read as an entity's fields are, against the
-   * ruleset's declarations (refused as invalid otherwise), over those it has. The values it keeps once written, and
-   * the write of the ruleset's own fields and links that keep them.
+   * A save of the ruleset's Settings (`body`: its fields by stored field, its links by role, those it changes): read as
+   * an entity's fields are, against the ruleset's declarations (refused as invalid otherwise), over those it has. The
+   * Settings it keeps once written, as its form holds them (`describeSettings`), and the write of the ruleset's own
+   * fields and links that keep them.
    */
-  planSettings(
-    view: RulesetView,
-    body: { fields?: EntityFieldValues },
-  ): { fields: EntityFieldValues; write: FieldsWrite } {
+  planSettings(view: RulesetView, body: SettingsForm): SettingsForm & { write: FieldsWrite } {
     const kept = this.settingsOf(view);
     const ids = new RequestIds(view.rulesetData, "this ruleset");
-    const given = this.fields.parse(body.fields, {
-      kept,
-      resolve: (type, id) => ids.resolve(type, id),
-    });
+    const given = this.fields.parse(body, { kept, resolve: (type, id) => ids.resolve(type, id) });
     const fields = this.fields.merge(kept, given);
-    return { fields, write: this.fields.write(fields) };
+    const form = this.fields.toForm(fields as FieldValues<Readonly<Record<string, LeafSpec>>>) as SettingsForm;
+    return { ...form, write: this.fields.write(fields) };
   }
 }

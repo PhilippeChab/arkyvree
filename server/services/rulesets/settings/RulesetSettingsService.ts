@@ -1,7 +1,7 @@
 import { getTableName } from "drizzle-orm";
 
 import { rulesetsInRules } from "@/drizzle/schema.ts";
-import { Engine, type EntityFieldValues } from "@/engine/index.ts";
+import { Engine, type SettingsForm } from "@/engine/index.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { Activities, RulesetSettings } from "@/server/repositories/index.ts";
@@ -10,27 +10,30 @@ import type { Session } from "@/shared/relations.ts";
 
 /** A ruleset's Settings: its own fields (3.5's skill points' ability), as its chain composes them, and their save. */
 class RulesetSettingsService {
-  /** The ruleset's Settings (`fields`, by name): its own, or those its chain holds, the fork's first. */
+  /**
+   * The ruleset's Settings (its fields by stored field, its links by role, as its form sends them): its own, or those
+   * its chain holds, the fork's first.
+   */
   async getSettings(rulesetId: string) {
     return await withRulesetScope(db, rulesetId, async (scope) => ({
       id: rulesetId,
-      fields: Engine.for(scope).describeSettings(),
+      ...Engine.for(scope).describeSettings(),
     }));
   }
 
   /**
-   * A save of the ruleset's Settings (`body.fields`, those it changes), by who may edit its content: checked by its
-   * rules, written as the ruleset's own fields and links, which its chain's give way to, and recorded as the ruleset's
-   * own update is. Answers the Settings it keeps, as `getSettings` does.
+   * A save of the ruleset's Settings (`body`: its fields by stored field and its links by role, those it changes), by who
+   * may edit its content: checked by its rules, written as the ruleset's own fields and links, which its chain's give
+   * way to, and recorded as the ruleset's own update is. Answers the Settings it keeps, as `getSettings` does.
    */
-  async updateSettings(session: Session, rulesetId: string, body: { fields?: EntityFieldValues }) {
+  async updateSettings(session: Session, rulesetId: string, body: SettingsForm) {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
           const { ruleset } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const { fields, write } = Engine.for(scope).planSettings(body);
+          const { write, ...settings } = Engine.for(scope).planSettings(body);
           await RulesetSettings.update(tx, [{ id: ruleset.id, write }]);
           await Activities.create(tx, {
             userId: session.userId,
@@ -39,7 +42,7 @@ class RulesetSettingsService {
             type: "updateRulesetSettings",
             data: { entityName: ruleset.name },
           });
-          return { id: rulesetId, fields };
+          return { id: rulesetId, ...settings };
         }),
     );
     RulesetViews.invalidate(rulesetId);

@@ -7,10 +7,10 @@ import { ITEM_TYPES, TEMPLATE_ITEM_TYPES } from "@/vocabulary/dnd3.5/itemTemplat
 import { ITEM_FIELDS } from "./fields.ts";
 
 /** A template's form shows it while its item is one: whether it's one isn't a column its form changes. */
-const AS_TEMPLATE = { path: "isTemplate", values: [true] };
+const AS_TEMPLATE = { path: `fields.${ITEM_IS_TEMPLATE}`, values: [true] };
 
 /** While its item is of a type a template can be of: a weapon, an armor or a shield. */
-const OF_TEMPLATE_TYPE = { path: "type", values: TEMPLATE_ITEM_TYPES };
+const OF_TEMPLATE_TYPE = { path: `fields.${ITEM_TYPE}`, values: TEMPLATE_ITEM_TYPES };
 
 /**
  * A 3.5 item's columns, as its form shows them beside its name and description: its cost and its weight (each within
@@ -22,7 +22,6 @@ export const ITEM_COLUMNS: FormField[] = [
     field: ITEM_COST_GP,
     help: "What it costs",
     input: "decimal",
-    key: "costGp",
     label: "Cost",
     max: Field.boundsOf(ITEM_FIELDS.fields.cost).max,
     min: ITEM_FIELDS.fields.cost.min,
@@ -32,7 +31,6 @@ export const ITEM_COLUMNS: FormField[] = [
     field: ITEM_WEIGHT,
     help: "What it weighs",
     input: "decimal",
-    key: "weight",
     label: "Weight",
     max: Field.boundsOf(ITEM_FIELDS.fields.weight).max,
     min: ITEM_FIELDS.fields.weight.min,
@@ -42,7 +40,6 @@ export const ITEM_COLUMNS: FormField[] = [
     field: ITEM_TYPE,
     help: "What kind of item it is",
     input: "choice",
-    key: "type",
     label: "Item Type",
     multiple: false,
     options: ITEM_TYPES,
@@ -52,7 +49,6 @@ export const ITEM_COLUMNS: FormField[] = [
     field: ITEM_TYPE,
     help: "What kind of item its copies are",
     input: "choice",
-    key: "type",
     label: "Item Type",
     multiple: false,
     options: TEMPLATE_ITEM_TYPES,
@@ -63,7 +59,6 @@ export const ITEM_COLUMNS: FormField[] = [
     field: ITEM_SLOT,
     help: "Where it's worn or held",
     input: "choice",
-    key: "slot",
     label: "Slot",
     multiple: false,
     options: LOCATION_OPTIONS,
@@ -72,11 +67,10 @@ export const ITEM_COLUMNS: FormField[] = [
   {
     help: "The template of its type it's made from, whose fields it starts from",
     input: "template",
-    key: "sourceItemId",
     label: "Template",
     role: "madeFrom",
     shownWhen: [OF_TEMPLATE_TYPE, { ...AS_TEMPLATE, except: true }],
-    typeKey: "type",
+    typeField: ITEM_TYPE,
   },
 ];
 
@@ -84,9 +78,9 @@ export const ITEM_COLUMNS: FormField[] = [
 export const ITEM_LIST: ListDescription = {
   nameShare: 25,
   columns: [
-    { field: ITEM_TYPE, key: "type", label: "Type", reads: "muted", share: 10, slot: "inline" },
-    { field: ITEM_IS_TEMPLATE, key: "template", label: "Template", reads: "template", share: 8 },
-    { field: ITEM_COST_GP, key: "costGp", label: "Cost", reads: "decimal", share: 10, slot: "inline", unit: "gp" },
-    { field: ITEM_WEIGHT, key: "weight", label: "Weight", reads: "decimal", share: 10, slot: "inline", unit: "lbs" },
+    { field: ITEM_TYPE, label: "Type", reads: "muted", share: 10, slot: "inline" },
+    { field: ITEM_IS_TEMPLATE, label: "Template", reads: "template", share: 8 },
+    { field: ITEM_COST_GP, label: "Cost", reads: "decimal", share: 10, slot: "inline", unit: "gp" },
+    { field: ITEM_WEIGHT, label: "Weight", reads: "decimal", share: 10, slot: "inline", unit: "lbs" },
   ],
 };

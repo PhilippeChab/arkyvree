@@ -2,21 +2,15 @@
 
 import { z } from "zod";
 
-import { RulesetEntity } from "@/engine/core/entities/index.ts";
+import { type FormBody, RulesetEntity } from "@/engine/core/entities/index.ts";
 import { FieldCodec } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import type { Aptitude } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-/** An aptitude's form: its name and description. */
-interface AptitudeBody {
-  description?: string | null;
-  name: string;
-}
-
 /** What an aptitude's edit may change: the rules count on a pool's name. */
-export default class AptitudeEntity extends RulesetEntity<"aptitudes", AptitudeBody> {
+export default class AptitudeEntity extends RulesetEntity<"aptitudes"> {
   /** None of its own. */
   protected override readonly fields = FieldCodec.NONE;
 
@@ -33,22 +27,17 @@ export default class AptitudeEntity extends RulesetEntity<"aptitudes", AptitudeB
   }
 
   /** Refuses renaming an aptitude the rules count on by name. */
-  protected override checkForm(body: AptitudeBody, aptitude?: Aptitude) {
+  protected override checkForm(body: FormBody, aptitude?: Aptitude) {
     if (aptitude) this.checkName(aptitude, body.name);
-  }
-
-  /** A form's columns. */
-  protected override columnsOf({ description, name }: AptitudeBody) {
-    return { description, name };
   }
 
   /**
    * A page of the ruleset's aptitudes: a kind's pools when its query says (`scope`: the feats', the spells' lists, those
    * their `listedIn` links name).
    */
-  protected override listOf(where: { childOnly?: boolean; scope?: "feats" | "spells" }) {
+  protected override listOf({ scope, ...where }: { childOnly?: boolean; scope?: "feats" | "spells" }) {
     const list = super.listOf(where);
-    const linkedBy = where.scope && { fromType: where.scope, role: "listedIn" };
+    const linkedBy = scope && { fromType: scope, role: "listedIn" };
     return { ...list, filters: linkedBy ? { ...list.filters, linkedBy } : list.filters };
   }
 

@@ -20,7 +20,7 @@ import { addClassSkills, addGrants } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { findFormValues } from "@/tests/support/ownerValues.ts";
 import { createTestRuleset, type Described } from "@/tests/support/rulesets.ts";
-import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { CLASS_HD, CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
 describe("EntitiesService: classes", () => {
@@ -29,12 +29,16 @@ describe("EntitiesService: classes", () => {
     const warrior = await EntitiesService.createEntity(session, ruleset.id, "classes", {
       name: "Warrior",
       description: "A mighty warrior",
-      hd: 12,
+      fields: { [CLASS_HD]: 12 },
     });
     expect(warrior).toMatchObject({ name: "Warrior", description: "A mighty warrior", fields: { [CLASS_HD]: 12 } });
     expect(
-      (await EntitiesService.updateEntity(session, ruleset.id, "classes", warrior.id, { name: "Warrior", hd: 10 }))
-        .fields[CLASS_HD],
+      (
+        await EntitiesService.updateEntity(session, ruleset.id, "classes", warrior.id, {
+          name: "Warrior",
+          fields: { [CLASS_HD]: 10 },
+        })
+      ).fields[CLASS_HD],
     ).toBe(10);
 
     expect(
@@ -42,9 +46,9 @@ describe("EntitiesService: classes", () => {
     ).toBe(8);
     // A hit die the rules have no die for is refused, by its column
     expect(
-      EntitiesService.createEntity(session, ruleset.id, "classes", { name: "Commoner", hd: 0 }),
+      EntitiesService.createEntity(session, ruleset.id, "classes", { name: "Commoner", fields: { [CLASS_HD]: 0 } }),
     ).rejects.toMatchObject({
-      issues: [{ category: "hd", message: "Hit Die must be one of: 4, 6, 8, 10, 12" }],
+      issues: [{ category: `fields.${CLASS_HD}`, message: "Hit Die must be one of: 4, 6, 8, 10, 12" }],
     });
   });
 
@@ -57,7 +61,10 @@ describe("EntitiesService: classes", () => {
         .map((link) => link.toId);
     expect(await bonusSpellAbilityOf(fighter.id)).toEqual([]);
 
-    const wizard = await EntitiesService.createEntity(session, ruleset.id, "classes", { name: "Wizard", hd: 4 });
+    const wizard = await EntitiesService.createEntity(session, ruleset.id, "classes", {
+      name: "Wizard",
+      fields: { [CLASS_HD]: 4 },
+    });
     const [intelligence] = await Entities.create<RulesetAbility>(db, "abilities", {
       name: "Intelligence",
       description: "Intelligence",
@@ -67,7 +74,7 @@ describe("EntitiesService: classes", () => {
     RulesetViews.invalidate(ruleset.id);
     await EntitiesService.updateEntity(session, ruleset.id, "classes", wizard.id, {
       name: "Wizard",
-      fields: { bonusSpellAbilityId: intelligence.id },
+      links: { bonusSpellAbility: intelligence.id },
     });
     expect(await bonusSpellAbilityOf(wizard.id)).toEqual([intelligence.id]);
     expect(await findFormValues("classes", wizard.id)).toEqual({
@@ -101,10 +108,9 @@ describe("EntitiesService: classes", () => {
     const klass = await EntitiesService.createEntity(session, rulesetId, "classes", { name: "Doomed Class" });
     await addClassSkills(db, klass.id, [skill.id]);
     const level = await EntitiesService.createOwnedEntity(session, rulesetId, "classes", klass.id, {
-      level: 1,
-      fields: { bab: 1, skills: 4 },
-      feats: [{ featId: feat.id, aptitudeId: aptitude.id }],
-      saves: [{ saveId: save.id, base: 2 }],
+      fields: { [CLASS_LEVEL_BAB]: 1, [CLASS_LEVEL_SKILL_POINTS]: 4 },
+      links: { grants: [{ toId: feat.id, viaId: aptitude.id }], baseBonus: [{ toId: save.id, amount: 2 }] },
+      position: 1,
     });
     await addGrants(db, level.id, "spells", [{ toId: spell.id, aptitudeId: aptitude.id }]);
     await Modifiers.create(db, {
@@ -127,8 +133,8 @@ describe("EntitiesService: classes", () => {
     const { user, session, ruleset: parent } = await createTestUserAndRuleset();
     const klass = await EntitiesService.createEntity(session, parent.id, "classes", { name: "Cleric" });
     const level = await EntitiesService.createOwnedEntity(session, parent.id, "classes", klass.id, {
-      level: 1,
-      fields: { bab: 0, skills: 2 },
+      fields: { [CLASS_LEVEL_BAB]: 0, [CLASS_LEVEL_SKILL_POINTS]: 2 },
+      position: 1,
     });
     const [modifier] = await Modifiers.create(db, {
       sourceId: level.id,
@@ -170,8 +176,8 @@ describe("EntitiesService: classes", () => {
     const { user, session, ruleset } = await createTestUserAndRuleset();
     const klass = await EntitiesService.createEntity(session, ruleset.id, "classes", { name: "Taken Class" });
     const level = await EntitiesService.createOwnedEntity(session, ruleset.id, "classes", klass.id, {
-      level: 1,
-      fields: { bab: 1, skills: 2 },
+      fields: { [CLASS_LEVEL_BAB]: 1, [CLASS_LEVEL_SKILL_POINTS]: 2 },
+      position: 1,
     });
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     await addCharacterLevel(character.id, level.id);

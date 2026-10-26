@@ -16,14 +16,14 @@ describe("EntitiesService: languages", () => {
     const created = await EntitiesService.createEntity(session, ruleset.id, "languages", {
       name: "Draconic",
       description: "Spoken by dragons",
-      type: "Exotic",
+      fields: { [LANGUAGE_TYPE]: "Exotic" },
     });
     expect(created).toMatchObject({ fields: { [LANGUAGE_TYPE]: "Exotic" }, description: "Spoken by dragons" });
 
     const updated = await EntitiesService.updateEntity(session, ruleset.id, "languages", created.id, {
       name: "Draconic",
       description: "Common among kobolds",
-      type: "Standard",
+      fields: { [LANGUAGE_TYPE]: "Standard" },
     });
     expect(updated).toMatchObject({ fields: { [LANGUAGE_TYPE]: "Standard" }, description: "Common among kobolds" });
   });
@@ -32,7 +32,7 @@ describe("EntitiesService: languages", () => {
     const { user, session, ruleset: extension } = await createTestUserAndRuleset();
     const language = await EntitiesService.createEntity(session, extension.id, "languages", {
       name: "Extension Tongue",
-      type: "Standard",
+      fields: { [LANGUAGE_TYPE]: "Standard" },
     });
     const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
     const character = await createTestCharacter(user.id, { rulesetId: host.id });

@@ -14,17 +14,21 @@ describe("rulesets entities: spells", () => {
   test("creates, reads, lists, updates and deletes a spell", async () => {
     const { id, aptitudeId } = await createSeededForkWithAptitude();
 
-    const json = { name: "Test Spell", description: "A test spell", aptitudes: [{ id: aptitudeId, level: 2 }] };
+    const json = {
+      name: "Test Spell",
+      description: "A test spell",
+      links: { listedIn: [{ toId: aptitudeId, tier: 2 }] },
+    };
     const created = await expectOk(kinds.$post({ param: { id, entityType }, json }));
     expect(created).toMatchObject({ name: "Test Spell", description: "A test spell" });
     const param = { id, entityType, entityId: created.id };
 
     expect(await expectOk(entity.$get({ param }))).toMatchObject({ id: created.id, name: "Test Spell" });
-    const list = await expectOk(kinds.$get({ param: { id, entityType }, query: { aptitudeId } }));
+    const list = await expectOk(kinds.$get({ param: { id, entityType }, query: { listedIn: aptitudeId } }));
     expect(list.items.map((p) => p.id)).toEqual([created.id]);
 
     const updated = await expectOk(
-      entity.$put({ param, json: { name: "Renamed Spell", description: "Updated", aptitudes: [] } }),
+      entity.$put({ param, json: { name: "Renamed Spell", description: "Updated", links: { listedIn: [] } } }),
     );
     expect(updated).toMatchObject({ name: "Renamed Spell", description: "Updated" });
 
@@ -42,8 +46,8 @@ describe("rulesets entities: spells", () => {
     const { id, aptitudeId } = await createSeededForkWithAptitude();
     for (const json of [
       { name: "" },
-      { name: "Spell", aptitudes: aptitudeId },
-      { name: "Spell", aptitudes: [{ id: aptitudeId, level: 10 }] },
+      { name: "Spell", links: { listedIn: aptitudeId } },
+      { name: "Spell", links: { listedIn: [{ toId: aptitudeId, tier: 10 }] } },
     ])
       await expectStatus(kinds.$post({ param: { id, entityType }, json }), 400);
   });
@@ -60,11 +64,14 @@ describe("rulesets entities: spells", () => {
   test("refuses a spell in an aptitude that feats already use", async () => {
     const { id, aptitudeId } = await createSeededForkWithAptitude();
     await expectOk(
-      kinds.$post({ param: { id, entityType: "feats" }, json: { name: "Test Feat", aptitudeIds: [aptitudeId] } }),
+      kinds.$post({
+        param: { id, entityType: "feats" },
+        json: { name: "Test Feat", links: { listedIn: [{ toId: aptitudeId }] } },
+      }),
     );
     const response = await kinds.$post({
       param: { id, entityType },
-      json: { name: "Test Spell", aptitudes: [{ id: aptitudeId }] },
+      json: { name: "Test Spell", links: { listedIn: [{ toId: aptitudeId }] } },
     });
     await expectStatus(response, 409);
   });

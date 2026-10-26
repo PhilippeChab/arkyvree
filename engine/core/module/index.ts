@@ -162,6 +162,7 @@ export {
   type RulesDescription,
   RulesetPart,
   type RulesWord,
+  type SettingsForm,
 } from "./parts/ruleset/index.ts";
 export type {
   OpenedGroupedPicker,

@@ -17,14 +17,14 @@ import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/se
 import { useEntityFields, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-/** The ruleset's Settings, as the API answers them: its own fields' values. */
+/** The ruleset's Settings, as the API answers them: its own fields' values by stored field, its links' by role. */
 type Settings = InferResponseType<(typeof rpc.api.rulesets)[":id"]["settings"]["$get"], 200>;
 
-/** The Settings' form: the ruleset's own fields, as their save sends them. */
+/** The Settings' form: the ruleset's own fields and links, as their save sends them. */
 type SettingsFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["settings"]["$put"]>["json"];
 
 /** The Settings' form before they load. */
-const EMPTY_SETTINGS: SettingsFormData = { fields: {} };
+const EMPTY_SETTINGS: SettingsFormData = { fields: {}, links: {} };
 
 /** Nowhere to follow: a ruleset's Settings are its own, never a copy's. */
 function followNoCopy() {}
@@ -39,7 +39,7 @@ export function SettingsSection({ ruleset }: RulesetSectionProps) {
   const settingsQuery = rulesetSettingsQuery(ruleset.id);
   const { data: settings, error } = useQuery(settingsQuery);
   const { fields } = useEntityFields(ruleset.id, "rulesets");
-  const toFormValues = (saved: Settings) => withSavedFields(EMPTY_SETTINGS, fields, saved.fields);
+  const toFormValues = (saved: Settings) => withSavedFields(EMPTY_SETTINGS, fields, saved);
   const { form, save } = useEntityForm({
     empty: EMPTY_SETTINGS,
     values: settings && toFormValues(settings),

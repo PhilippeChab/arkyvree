@@ -13,7 +13,7 @@ import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { writeFieldValues } from "@/tests/support/ownerValues.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
-import { CLASS_HD, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { CLASS_HD, CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The aptitudes of the test's ruleset. */
 const APTITUDES = ["Combat", "Metamagic", "General"];
@@ -33,13 +33,13 @@ describe("EntitiesService: feats", () => {
       } = await createTestUserAndRuleset(APTITUDES);
       const feat = await EntitiesService.createEntity(session, ruleset.id, "feats", {
         name: "Power Attack",
-        aptitudeIds: [combat, metamagic],
+        links: { listedIn: [{ toId: combat }, { toId: metamagic }] },
       });
       expect(await linkedAptitudeIds(feat.id)).toEqual([combat, metamagic].sort());
 
       await EntitiesService.updateEntity(session, ruleset.id, "feats", feat.id, {
         name: "Power Attack",
-        aptitudeIds: [general],
+        links: { listedIn: [{ toId: general }] },
       });
       expect(await linkedAptitudeIds(feat.id)).toEqual([general]);
 
@@ -51,7 +51,7 @@ describe("EntitiesService: feats", () => {
 
       await EntitiesService.updateEntity(session, ruleset.id, "feats", feat.id, {
         name: "Power Attack",
-        aptitudeIds: [],
+        links: { listedIn: [] },
       });
       expect(await linkedAptitudeIds(feat.id)).toEqual([]);
     });
@@ -59,7 +59,7 @@ describe("EntitiesService: feats", () => {
     test("refuses a new feat without an aptitude", async () => {
       const { session, ruleset } = await createTestUserAndRuleset(APTITUDES);
       await expectRefusedWith(
-        EntitiesService.createEntity(session, ruleset.id, "feats", { name: "Orphan Feat", aptitudeIds: [] }),
+        EntitiesService.createEntity(session, ruleset.id, "feats", { name: "Orphan Feat", links: { listedIn: [] } }),
         400,
       );
     });
@@ -72,21 +72,24 @@ describe("EntitiesService: feats", () => {
       } = await createTestUserAndRuleset(APTITUDES);
       await EntitiesService.createEntity(session, ruleset.id, "spells", {
         name: "Magic Missile",
-        aptitudes: [{ id: spells }],
+        links: { listedIn: [{ toId: spells }] },
       });
       await expectRefusedWith(
-        EntitiesService.createEntity(session, ruleset.id, "feats", { name: "Spell Feat", aptitudeIds: [spells] }),
+        EntitiesService.createEntity(session, ruleset.id, "feats", {
+          name: "Spell Feat",
+          links: { listedIn: [{ toId: spells }] },
+        }),
         409,
       );
 
       const feat = await EntitiesService.createEntity(session, ruleset.id, "feats", {
         name: "Combat Feat",
-        aptitudeIds: [combat],
+        links: { listedIn: [{ toId: combat }] },
       });
       await expectRefusedWith(
         EntitiesService.updateEntity(session, ruleset.id, "feats", feat.id, {
           name: "Combat Feat",
-          aptitudeIds: [spells],
+          links: { listedIn: [{ toId: spells }] },
         }),
         409,
       );
@@ -104,12 +107,12 @@ describe("EntitiesService: feats", () => {
       const [spellFork, featFork] = [await forkOf(), await forkOf()];
       await EntitiesService.createEntity(spellFork.session, spellFork.fork.id, "spells", {
         name: "Spark",
-        aptitudes: [{ id: list.id }],
+        links: { listedIn: [{ toId: list.id }] },
       });
 
       const feat = await EntitiesService.createEntity(featFork.session, featFork.fork.id, "feats", {
         name: "Listed Feat",
-        aptitudeIds: [list.id],
+        links: { listedIn: [{ toId: list.id }] },
       });
       expect(feat).toMatchObject({ name: "Listed Feat" });
     });
@@ -122,16 +125,25 @@ describe("EntitiesService: feats", () => {
       aptitudeIds: [combat, general],
     } = await createTestUserAndRuleset(APTITUDES);
     for (const name of ["Focus: Axe", "Focus: Sword"]) {
-      const feat = await EntitiesService.createEntity(session, ruleset.id, "feats", { name, aptitudeIds: [combat] });
+      const feat = await EntitiesService.createEntity(session, ruleset.id, "feats", {
+        name,
+        links: { listedIn: [{ toId: combat }] },
+      });
       await writeFieldValues("feats", feat.id, [[FEAT_FAMILY, "Focus"]]);
     }
-    await EntitiesService.createEntity(session, ruleset.id, "feats", { name: "Cleave", aptitudeIds: [combat] });
-    await EntitiesService.createEntity(session, ruleset.id, "feats", { name: "Alertness", aptitudeIds: [general] });
+    await EntitiesService.createEntity(session, ruleset.id, "feats", {
+      name: "Cleave",
+      links: { listedIn: [{ toId: combat }] },
+    });
+    await EntitiesService.createEntity(session, ruleset.id, "feats", {
+      name: "Alertness",
+      links: { listedIn: [{ toId: general }] },
+    });
 
     const grouped = await EntitiesService.getEntityGroups(
       ruleset.id,
       "feats",
-      { aptitudeId: combat },
+      { listedIn: combat },
       { limit: 10, page: 1 },
     );
     expect(grouped.items.map((row) => ({ ...row, variantCount: Number(row.variantCount) }))).toMatchObject([
@@ -148,7 +160,7 @@ describe("EntitiesService: feats", () => {
     } = await createTestUserAndRuleset(APTITUDES);
     const feat = await EntitiesService.createEntity(session, ruleset.id, "feats", {
       name: "Doomed Feat",
-      aptitudeIds: [combat],
+      links: { listedIn: [{ toId: combat }] },
     });
     const [klass] = await Entities.create<Klass>(db, "classes", {
       name: "Granting Class",
@@ -158,9 +170,9 @@ describe("EntitiesService: feats", () => {
     // Written past the services, after the feat's create read the ruleset's view
     RulesetViews.invalidate(ruleset.id);
     await EntitiesService.createOwnedEntity(session, ruleset.id, "classes", klass.id, {
-      level: 1,
-      fields: { bab: 1, skills: 2 },
-      feats: [{ featId: feat.id, aptitudeId: combat }],
+      fields: { [CLASS_LEVEL_BAB]: 1, [CLASS_LEVEL_SKILL_POINTS]: 2 },
+      links: { grants: [{ toId: feat.id, viaId: combat }] },
+      position: 1,
     });
 
     await EntitiesService.deleteEntity(session, ruleset.id, "feats", feat.id);
@@ -180,7 +192,7 @@ describe("EntitiesService: feats", () => {
       } = await createTestUserAndRuleset(APTITUDES);
       const feat = await EntitiesService.createEntity(session, ruleset.id, "feats", {
         name: "Picked Feat",
-        aptitudeIds: [combat],
+        links: { listedIn: [{ toId: combat }] },
       });
       const character = await pickFeat(user.id, ruleset.id, feat.id, combat);
       await expectRefusedWith(EntitiesService.deleteEntity(session, ruleset.id, "feats", feat.id), 409);
@@ -199,7 +211,7 @@ describe("EntitiesService: feats", () => {
       } = await createTestUserAndRuleset(APTITUDES);
       const feat = await EntitiesService.createEntity(session, parent.id, "feats", {
         name: "Inherited Feat",
-        aptitudeIds: [combat],
+        links: { listedIn: [{ toId: combat }] },
       });
       const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
       await pickFeat(user.id, fork.id, feat.id, combat);
@@ -215,7 +227,7 @@ describe("EntitiesService: feats", () => {
       } = await createTestUserAndRuleset(APTITUDES);
       const feat = await EntitiesService.createEntity(session, extension.id, "feats", {
         name: "Extension Feat",
-        aptitudeIds: [combat],
+        links: { listedIn: [{ toId: combat }] },
       });
       const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
       await pickFeat(user.id, host.id, feat.id, combat);
@@ -232,7 +244,7 @@ describe("EntitiesService: feats", () => {
       await createTestCharacter(user.id, { rulesetId: ruleset.id });
       const feat = await EntitiesService.createEntity(session, ruleset.id, "feats", {
         name: "Unpicked Feat",
-        aptitudeIds: [combat],
+        links: { listedIn: [{ toId: combat }] },
       });
       expect(await EntitiesService.deleteEntity(session, ruleset.id, "feats", feat.id)).toMatchObject({ id: feat.id });
     });
@@ -249,7 +261,7 @@ describe("EntitiesService: feats", () => {
     } = await createTestUserAndRuleset(APTITUDES);
     const source = await EntitiesService.createEntity(session, parent.id, "feats", {
       name: "Endurance",
-      aptitudeIds: [combat],
+      links: { listedIn: [{ toId: combat }] },
     });
     const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
 
@@ -260,7 +272,7 @@ describe("EntitiesService: feats", () => {
     await EntitiesService.deleteEntity(session, fork.id, "feats", copy.id);
     const recreated = await EntitiesService.createEntity(session, fork.id, "feats", {
       name: "Endurance",
-      aptitudeIds: [combat],
+      links: { listedIn: [{ toId: combat }] },
     });
 
     const snapshots = await EntitySnapshots.findMany(db, { rulesetId: fork.id, entityType: "feats" });

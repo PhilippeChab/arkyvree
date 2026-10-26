@@ -44,7 +44,10 @@ describe("EntitiesService: a class's progression", () => {
   test("gives an inherited monk a good base attack bonus and 6 skill points, on its fork's copy alone", async () => {
     const { session, fork, klass, levelId } = await forkWithClass("Monk");
     const body = {
-      levels: [1, 2, 20].map((level) => ({ levelId: levelId(level), fields: { bab: level, skills: 6 } })),
+      levels: [1, 2, 20].map((level) => ({
+        levelId: levelId(level),
+        fields: { [CLASS_LEVEL_BAB]: level, [CLASS_LEVEL_SKILL_POINTS]: 6 },
+      })),
     };
 
     const { saved, levels } = await save(session, fork.id, klass.id, body);
@@ -76,15 +79,17 @@ describe("EntitiesService: a class's progression", () => {
     }))!;
     const before = await EntitiesService.getOwnedEntities(fork.id, "classes", klass.id);
     const first = before.find((level) => level.position === 1)!;
-    const saves = first.saves.map((s) => (s.saveId === fortitude.id ? { ...s, base: 0 } : s));
-    const feats = first.feats.slice(1).map(({ id, aptitudeId }) => ({ featId: id, aptitudeId }));
+    const baseBonus = first.baseBonus.map((s) => (s.toId === fortitude.id ? { ...s, amount: 0 } : s));
+    const grants = first.grants.slice(1).map(({ id, viaId }) => ({ toId: id, viaId }));
 
-    const { levels } = await save(session, fork.id, klass.id, { levels: [{ levelId: levelId(1), saves, feats }] });
+    const { levels } = await save(session, fork.id, klass.id, {
+      levels: [{ levelId: levelId(1), links: { baseBonus, grants } }],
+    });
 
     const level = levels.get(1)!;
-    expect(level.saves.find((s) => s.saveId === fortitude.id)?.base).toBe(0);
-    expect(level.feats.map((feat) => feat.name).toSorted()).toEqual(
-      first.feats
+    expect(level.baseBonus.find((s) => s.toId === fortitude.id)?.amount).toBe(0);
+    expect(level.grants.map((feat) => feat.name).toSorted()).toEqual(
+      first.grants
         .slice(1)
         .map((f) => f.name)
         .toSorted(),
@@ -162,7 +167,7 @@ describe("EntitiesService: a class's progression", () => {
     const { session, fork, klass, levelId } = await forkWithClass("Wizard");
     // The fork's own wizard, its first level given a 1st-level spell a day more past 5th character level
     const { saved } = await save(session, fork.id, klass.id, {
-      levels: [{ levelId: levelId(1), fields: { bab: 0, skills: 4 } }],
+      levels: [{ levelId: levelId(1), fields: { [CLASS_LEVEL_BAB]: 0, [CLASS_LEVEL_SKILL_POINTS]: 4 } }],
     });
     const first = (await EntitiesService.getOwnedEntities(fork.id, "classes", saved.entityId)).find(
       (level) => level.position === 1,
@@ -207,7 +212,7 @@ describe("EntitiesService: a class's progression", () => {
 
     await expectRefusedWith(
       EntitiesService.updateProgression(session, fork.id, "classes", klass.id, {
-        pools: [{ aptitudeId: list.id, picks: [{ levelId: levelId(1), count: 1 }] }],
+        pools: [{ id: list.id, picks: [{ levelId: levelId(1), count: 1 }] }],
       }),
       400,
     );
@@ -216,7 +221,7 @@ describe("EntitiesService: a class's progression", () => {
   test("reads the picks a feature gives in its pool where it's granted", async () => {
     const { fork, klass } = await forkWithClass("Fighter");
     const levels = await EntitiesService.getOwnedEntities(fork.id, "classes", klass.id);
-    const bonusFeat = levels[0].feats.find((feat) => feat.name === "Bonus Feat (Fighter)")!;
+    const bonusFeat = levels[0].grants.find((feat) => feat.name === "Bonus Feat (Fighter)")!;
 
     const { featPicks } = await EntitiesService.getProgression(fork.id, "classes", klass.id);
 
@@ -232,7 +237,7 @@ describe("EntitiesService: a class's progression", () => {
     const { progression, saved } = await save(session, fork.id, klass.id, {
       pools: [
         {
-          aptitudeId: pool.aptitudeId,
+          id: pool.id,
           picks: [
             { levelId: levelId(1), count: 0 },
             { levelId: levelId(3), count: 2 },
@@ -251,13 +256,13 @@ describe("EntitiesService: a class's progression", () => {
   test("refuses a stale save of its own class's level, a count past the rules' bounds, and spells for a class without a list", async () => {
     const { session, fork, klass, levelId } = await forkWithClass("Fighter");
     const { saved } = await save(session, fork.id, klass.id, {
-      levels: [{ levelId: levelId(1), fields: { bab: 1, skills: 4 } }],
+      levels: [{ levelId: levelId(1), fields: { [CLASS_LEVEL_BAB]: 1, [CLASS_LEVEL_SKILL_POINTS]: 4 } }],
     });
     const own = (await Entities.findOne<Klass>(db, { entityType: "classes", id: saved.entityId }))!;
     const ownLevels = await EntitiesService.getOwnedEntities(fork.id, "classes", own.id);
     const first = ownLevels.find((level) => level.position === 1)!.id;
 
-    const change = { levels: [{ levelId: first, fields: { bab: 1, skills: 6 } }] };
+    const change = { levels: [{ levelId: first, fields: { [CLASS_LEVEL_BAB]: 1, [CLASS_LEVEL_SKILL_POINTS]: 6 } }] };
     const stale = "2000-01-01T00:00:00Z";
     expect(
       EntitiesService.updateProgression(session, fork.id, "classes", own.id, {
@@ -271,7 +276,7 @@ describe("EntitiesService: a class's progression", () => {
     });
     await expectRefusedWith(
       EntitiesService.updateProgression(session, fork.id, "classes", own.id, {
-        pools: [{ aptitudeId: aptitude.id, picks: [{ levelId: first, count: 100 }] }],
+        pools: [{ id: aptitude.id, picks: [{ levelId: first, count: 100 }] }],
       }),
       400,
     );

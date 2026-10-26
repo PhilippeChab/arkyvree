@@ -37,12 +37,11 @@ async function setupOwnRows() {
   const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
   const feat = await EntitiesService.createEntity(session, fork.id, "feats", {
     name: "Own Feat",
-    aptitudeIds: [pool.id],
+    links: { listedIn: [{ toId: pool.id }] },
   });
   const spell = await EntitiesService.createEntity(session, fork.id, "spells", {
     name: "Own Spell",
-    saveId: save.id,
-    aptitudes: [{ id: spellList.id, level: 1 }],
+    links: { resistedBy: save.id, listedIn: [{ toId: spellList.id, tier: 1 }] },
   });
   return { session, fork, ability, pool, spellList, save, feat, spell };
 }
@@ -99,7 +98,7 @@ test("a spell names its save by the view's id, and carries no stored save row", 
   const { session, fork, ability, save, spell } = await setupOwnRows();
   const saveCopy = await EntitiesService.updateEntity(session, fork.id, "saves", save.id, {
     name: "Copied Save",
-    abilityId: ability.id,
+    links: { keyAbility: ability.id },
   });
 
   const listed = (await EntitiesService.getEntities(fork.id, "spells", {}, PAGE)).items.find(

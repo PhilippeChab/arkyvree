@@ -743,3 +743,106 @@ describe("0090_empty-texts", () => {
     expect(before.filter((line) => line.endsWith(" ''"))).toHaveLength(4);
   });
 });
+
+describe("0091_stored-name-activities", () => {
+  test("names an update's changed columns by their stored field or role, in the order an update records them, and nothing else", async () => {
+    const targetId = (await getSeedCtx()).klassMap.pc["Fighter"];
+    // What an activity and a notification recorded of each kind's update, as its form's keys named them, and of others
+    const recorded = [
+      [
+        "items",
+        "updateItem",
+        '{"entityName":"Rope","changedFields":[{"field":"costGp","from":"1","to":"2"},{"field":"description"},{"field":"name","from":"Cord","to":"Rope"},{"field":"slot","to":"Head"},{"field":"type","from":"Gear","to":"Ring"},{"field":"weight","to":"1"},{"field":"sourceItemId","to":"t"}],"baseRules":"B"}',
+        '{"entityName":"Rope","changedFields":[{"field":"name","from":"Cord","to":"Rope"},{"field":"description"},{"field":"ITEM_COST_GP","from":"1","to":"2"},{"field":"ITEM_WEIGHT","to":"1"},{"field":"ITEM_TYPE","from":"Gear","to":"Ring"},{"field":"ITEM_SLOT","to":"Head"},{"field":"madeFrom","to":"t"}],"baseRules":"B"}',
+      ],
+      [
+        "classes",
+        "updateClass",
+        '{"baseRules":"B","entityName":"Fighter","changedFields":[{"field":"description"},{"field":"hd","from":"10","to":"12"}],"actorName":"A"}',
+        '{"baseRules":"B","entityName":"Fighter","changedFields":[{"field":"description"},{"field":"CLASS_HD","from":"10","to":"12"}],"actorName":"A"}',
+      ],
+      [
+        "races",
+        "updateRace",
+        '{"entityName":"Elf","changedFields":[{"field":"baseSpeed","to":"20"},{"field":"size","to":"Small"}]}',
+        '{"entityName":"Elf","changedFields":[{"field":"RACE_SIZE","to":"Small"},{"field":"RACE_BASE_SPEED","to":"20"}]}',
+      ],
+      [
+        "languages",
+        "updateLanguage",
+        '{"entityName":"Elven","changedFields":[{"field":"type","to":"Secret"}]}',
+        '{"entityName":"Elven","changedFields":[{"field":"LANGUAGE_TYPE","to":"Secret"}]}',
+      ],
+      [
+        "skills",
+        "updateSkill",
+        '{"entityName":"Climb","changedFields":[{"field":"primaryAbilityId","from":"a","to":"b"}]}',
+        '{"entityName":"Climb","changedFields":[{"field":"keyAbility","from":"a","to":"b"}]}',
+      ],
+      [
+        "saves",
+        "updateSave",
+        '{"entityName":"Will","changedFields":[{"field":"abilityId","from":"a","to":"b"}]}',
+        '{"entityName":"Will","changedFields":[{"field":"keyAbility","from":"a","to":"b"}]}',
+      ],
+      [
+        "spells",
+        "updateSpell",
+        '{"entityName":"Light","changedFields":[{"field":"description"},{"field":"name","from":"Glow","to":"Light"},{"field":"saveEffect","to":"Half"},{"field":"saveId","to":"s"}]}',
+        '{"entityName":"Light","changedFields":[{"field":"name","from":"Glow","to":"Light"},{"field":"description"},{"field":"resistedBy","to":"s"},{"field":"SPELL_SAVE_EFFECT","to":"Half"}]}',
+      ],
+      [
+        "feats",
+        "updateFeat",
+        '{"entityName":"Dodge","changedFields":[{"field":"description"},{"field":"name","from":"Duck","to":"Dodge"}]}',
+        '{"entityName":"Dodge","changedFields":[{"field":"name","from":"Duck","to":"Dodge"},{"field":"description"}]}',
+      ],
+      [
+        "skills",
+        "updateSkill",
+        '{"entityName":"Climb","changedFields":[]}',
+        '{"entityName":"Climb","changedFields":[]}',
+      ],
+      [
+        "classes",
+        "createClass",
+        '{"entityName":"Fighter","changedFields":[{"field":"hd"}]}',
+        '{"entityName":"Fighter","changedFields":[{"field":"hd"}]}',
+      ],
+      [
+        "characters",
+        "updateCharacter",
+        '{"entityName":"Hero","changedFields":[{"field":"type"},{"field":"name"}]}',
+        '{"entityName":"Hero","changedFields":[{"field":"type"},{"field":"name"}]}',
+      ],
+    ];
+    const activityIds: string[] = [];
+    const notificationIds: string[] = [];
+    for (const [table, type, data] of recorded) {
+      const { rows: activity } = await db.execute<{ id: string }>(sql`
+        INSERT INTO account.activities (user_id, target_id, target_table, type, data)
+        VALUES (${SEED_USER_ID}, ${targetId}, ${table}, ${type}, ${data}) RETURNING id
+      `);
+      activityIds.push(activity[0]!.id);
+      const { rows: notification } = await db.execute<{ id: string }>(sql`
+        INSERT INTO account.notifications (recipient_id, actor_id, activity_id, type, target_id, target_table, data)
+        VALUES (${SEED_USER_ID}, ${SEED_USER_ID}, ${activity[0]!.id}, ${type}, ${targetId}, ${table}, ${data}) RETURNING id
+      `);
+      notificationIds.push(notification[0]!.id);
+    }
+
+    for (const statement of statementsOf("0091_stored-name-activities.sql")) await db.execute(sql.raw(statement));
+
+    const expected = recorded.map(([target_table, type, , data]) => ({ target_table, type, data }));
+    for (const [table, ids] of [
+      ["account.activities", activityIds],
+      ["account.notifications", notificationIds],
+    ] as const) {
+      const { rows } = await db.execute(sql`
+        SELECT target_table, type, data::text AS data FROM ${sql.raw(table)}
+        WHERE id = ANY (${`{${ids.join(",")}}`}::uuid[]) ORDER BY array_position(${`{${ids.join(",")}}`}::uuid[], id)
+      `);
+      expect({ table, rows }).toEqual({ table, rows: expected });
+    }
+  });
+});

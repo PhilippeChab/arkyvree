@@ -14,9 +14,12 @@ import {
   CLASS_CASTER_TYPE,
   CLASS_LEVEL_BAB,
   CLASS_LEVEL_SKILL_POINTS,
+  DAMAGE_TYPE,
   FEAT_FAMILY,
   FEAT_WEAPON_FINESSE,
+  ITEM_IS_TEMPLATE,
   ITEM_MASTERWORK,
+  ITEM_TYPE,
   RACE_BASE_SPEED,
   RACE_QUADRUPED,
   RACE_SIZE,
@@ -26,30 +29,44 @@ import {
   SPELL_SCHOOL,
   SPELL_SUBSCHOOL,
   WEAPON_BASE_DAMAGE,
+  WEAPON_CRITICAL_MULTIPLIER,
+  WEAPON_CRITICAL_RANGE,
+  WEAPON_DOUBLE_DAMAGE,
+  WEAPON_FAMILY,
+  WEAPON_FINESSABLE,
+  WEAPON_MAX_RANGE_INCREMENTS,
+  WEAPON_MIGHTY,
+  WEAPON_ONE_HAND_TRAINING,
+  WEAPON_ONE_HANDED_PENALTY,
   WEAPON_PROFICIENCY,
+  WEAPON_RANGE,
+  WEAPON_RANGED,
+  WEAPON_REACH,
+  WEAPON_SIZE,
+  WEAPON_STRENGTH_DAMAGE,
   WEAPON_TYPE,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A weapon's fields, each but those it gives none. */
 const WEAPON = {
-  baseDamage: "1d8",
-  criticalMultiplier: 2,
-  criticalRange: 2,
-  damageTypes: ["Slashing"],
-  doubleDamage: "",
-  family: "Sword",
-  finessable: null,
-  maxRangeIncrements: null,
-  mighty: null,
-  oneHandedPenalty: null,
-  oneHandTraining: null,
-  proficiency: "Martial",
-  range: null,
-  ranged: null,
-  reach: null,
-  size: "Medium",
-  strengthDamage: "",
-  type: "Longsword",
+  [WEAPON_BASE_DAMAGE]: "1d8",
+  [WEAPON_CRITICAL_MULTIPLIER]: 2,
+  [WEAPON_CRITICAL_RANGE]: 2,
+  [DAMAGE_TYPE]: ["Slashing"],
+  [WEAPON_DOUBLE_DAMAGE]: "",
+  [WEAPON_FAMILY]: "Sword",
+  [WEAPON_FINESSABLE]: null,
+  [WEAPON_MAX_RANGE_INCREMENTS]: null,
+  [WEAPON_MIGHTY]: null,
+  [WEAPON_ONE_HANDED_PENALTY]: null,
+  [WEAPON_ONE_HAND_TRAINING]: null,
+  [WEAPON_PROFICIENCY]: "Martial",
+  [WEAPON_RANGE]: null,
+  [WEAPON_RANGED]: null,
+  [WEAPON_REACH]: null,
+  [WEAPON_SIZE]: "Medium",
+  [WEAPON_STRENGTH_DAMAGE]: "",
+  [WEAPON_TYPE]: "Longsword",
 };
 
 /** The entity a single link of an answer's names, by its role: none without one. */
@@ -79,15 +96,12 @@ async function setupTemplate() {
   const { session, rulesetId } = await setup();
   const template = await EntitiesService.createEntity(session, rulesetId, "items", {
     name: "Longsword",
-    type: "Weapon",
-    isTemplate: true,
-    fields: { weapon: WEAPON },
+    fields: { ...WEAPON, [ITEM_TYPE]: "Weapon", [ITEM_IS_TEMPLATE]: true },
   });
   const sword = await EntitiesService.createEntity(session, rulesetId, "items", {
     name: "Sword",
-    type: "Weapon",
-    sourceItemId: template.id,
-    fields: { weapon: WEAPON },
+    fields: { ...WEAPON, [ITEM_TYPE]: "Weapon" },
+    links: { madeFrom: template.id },
   });
   return { session, rulesetId, template, sword };
 }
@@ -97,13 +111,13 @@ describe("An entity's fields", () => {
     const { session, rulesetId, featPool, intelligence } = await setup();
     const feat = await EntitiesService.createEntity(session, rulesetId, "feats", {
       name: "Finesse",
-      aptitudeIds: [featPool],
-      fields: { families: ["Luck"], weaponFinesse: true },
+      fields: { [FEAT_FAMILY]: ["Luck"], [FEAT_WEAPON_FINESSE]: true },
+      links: { listedIn: [{ toId: featPool }] },
     });
     expect(feat.fields).toMatchObject({ [FEAT_FAMILY]: ["Luck"], [FEAT_WEAPON_FINESSE]: true });
     await EntitiesService.updateEntity(session, rulesetId, "feats", feat.id, {
       name: "Finesse",
-      fields: { families: [] },
+      fields: { [FEAT_FAMILY]: [] },
     });
     expect(await fieldsOf(rulesetId, "feats", feat.id)).toMatchObject({
       [FEAT_FAMILY]: [],
@@ -114,15 +128,13 @@ describe("An entity's fields", () => {
     // A list given a value twice keeps it once
     await EntitiesService.updateEntity(session, rulesetId, "feats", feat.id, {
       name: "Finesse",
-      fields: { families: ["Luck", "Lore", "Luck"] },
+      fields: { [FEAT_FAMILY]: ["Luck", "Lore", "Luck"] },
     });
     expect(await fieldsOf(rulesetId, "feats", feat.id)).toMatchObject({ [FEAT_FAMILY]: ["Luck", "Lore"] });
 
     const race = await EntitiesService.createEntity(session, rulesetId, "races", {
       name: "Centaur",
-      size: "Large",
-      baseSpeed: 50,
-      fields: { quadruped: true },
+      fields: { [RACE_QUADRUPED]: true, [RACE_SIZE]: "Large", [RACE_BASE_SPEED]: 50 },
     });
     expect(await fieldsOf(rulesetId, "races", race.id)).toMatchObject({
       [RACE_SIZE]: "Large",
@@ -132,7 +144,8 @@ describe("An entity's fields", () => {
 
     const wizard = await EntitiesService.createEntity(session, rulesetId, "classes", {
       name: "Wizard",
-      fields: { bonusSpellAbilityId: intelligence.id, casterType: "Arcane" },
+      fields: { [CLASS_CASTER_TYPE]: "Arcane" },
+      links: { bonusSpellAbility: intelligence.id },
     });
     const described = await EntitiesService.getEntity<Described<"classes">>(rulesetId, "classes", wizard.id);
     expect(described.fields).toMatchObject({ [CLASS_CASTER_TYPE]: "Arcane" });
@@ -140,16 +153,16 @@ describe("An entity's fields", () => {
     // None, as its form's select says it
     await EntitiesService.updateEntity(session, rulesetId, "classes", wizard.id, {
       name: "Wizard",
-      fields: { casterType: "" },
+      fields: { [CLASS_CASTER_TYPE]: "" },
     });
     expect(listValues(await findFormValues("classes", wizard.id))).toEqual([`bonusSpellAbility=${intelligence.id}`]);
 
     const level = await EntitiesService.createOwnedEntity(session, rulesetId, "classes", wizard.id, {
-      level: 1,
-      fields: { bab: 0, skills: 2 },
+      fields: { [CLASS_LEVEL_BAB]: 0, [CLASS_LEVEL_SKILL_POINTS]: 2 },
+      position: 1,
     });
     await EntitiesService.updateOwnedEntity(session, rulesetId, "classes", wizard.id, level.id, {
-      fields: { skills: 4 },
+      fields: { [CLASS_LEVEL_SKILL_POINTS]: 4 },
     });
     expect((await EntitiesService.getOwnedEntityWithOwner(rulesetId, "classes", level.id)).fields).toMatchObject({
       [CLASS_LEVEL_BAB]: 0,
@@ -162,61 +175,69 @@ describe("An entity's fields", () => {
     const create = (fields: Record<string, unknown>) =>
       EntitiesService.createEntity(session, rulesetId, "feats", {
         name: "Odd",
-        aptitudeIds: [featPool],
+        links: { listedIn: [{ toId: featPool }] },
         fields: fields as never,
       });
-    expect(create({ school: "Evocation" })).rejects.toMatchObject({
+    expect(create({ [SPELL_SCHOOL]: "Evocation" })).rejects.toMatchObject({
       refusal: "invalid",
-      issues: [{ category: "fields.school", message: "Not a field of this entity" }],
+      issues: [{ category: `fields.${SPELL_SCHOOL}`, message: "Not a field of this entity" }],
     });
-    expect(create({ families: ["Not a family"] })).rejects.toMatchObject({
+    expect(create({ [FEAT_FAMILY]: ["Not a family"] })).rejects.toMatchObject({
       refusal: "invalid",
-      issues: [{ category: "fields.families.0" }],
+      issues: [{ category: `fields.${FEAT_FAMILY}.0` }],
     });
-    expect(create({ weaponFinesse: "yes" })).rejects.toMatchObject({ issues: [{ category: "fields.weaponFinesse" }] });
+    expect(create({ [FEAT_WEAPON_FINESSE]: "yes" })).rejects.toMatchObject({
+      issues: [{ category: `fields.${FEAT_WEAPON_FINESSE}` }],
+    });
 
     const wizard = await EntitiesService.createEntity(session, rulesetId, "classes", { name: "Wizard" });
     expect(
       EntitiesService.updateEntity(session, rulesetId, "classes", wizard.id, {
         name: "Wizard",
-        fields: { casterType: "Psionic" },
+        fields: { [CLASS_CASTER_TYPE]: "Psionic" },
       }),
-    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.casterType" }] });
+    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: `fields.${CLASS_CASTER_TYPE}` }] });
     expect(
       EntitiesService.updateEntity(session, rulesetId, "classes", wizard.id, {
         name: "Wizard",
-        fields: { bonusSpellAbilityId: NIL_UUID },
+        links: { bonusSpellAbility: NIL_UUID },
       }),
     ).rejects.toMatchObject({ refusal: "invalid", message: `Ability ${NIL_UUID} does not belong to this ruleset` });
     expect(
-      EntitiesService.createOwnedEntity(session, rulesetId, "classes", wizard.id, { level: 1, fields: { skills: -1 } }),
-    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.skills" }] });
+      EntitiesService.createOwnedEntity(session, rulesetId, "classes", wizard.id, {
+        fields: { [CLASS_LEVEL_SKILL_POINTS]: -1 },
+        position: 1,
+      }),
+    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: `fields.${CLASS_LEVEL_SKILL_POINTS}` }] });
     // A base attack bonus past the last level's full one, and skill points past a table's most
     expect(
-      EntitiesService.createOwnedEntity(session, rulesetId, "classes", wizard.id, { level: 1, fields: { bab: 21 } }),
-    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.bab" }] });
+      EntitiesService.createOwnedEntity(session, rulesetId, "classes", wizard.id, {
+        fields: { [CLASS_LEVEL_BAB]: 21 },
+        position: 1,
+      }),
+    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: `fields.${CLASS_LEVEL_BAB}` }] });
     expect(
       EntitiesService.createOwnedEntity(session, rulesetId, "classes", wizard.id, {
-        level: 1,
-        fields: { skills: 100 },
+        fields: { [CLASS_LEVEL_SKILL_POINTS]: 100 },
+        position: 1,
       }),
-    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.skills" }] });
+    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: `fields.${CLASS_LEVEL_SKILL_POINTS}` }] });
     expect(await Entities.findOne<Feat>(db, { entityType: "feats", name: "Odd", rulesetId })).toBeUndefined();
   });
 
   test("hold a spell's school to its ruleset's, a new one bringing its Spell Focus feats", async () => {
     const { session, rulesetId, spellList } = await setup();
-    const spell = { name: "Bolt", aptitudes: [{ id: spellList, level: 1 }] };
+    const spell = { name: "Bolt", links: { listedIn: [{ toId: spellList, tier: 1 }] } };
     expect(
-      EntitiesService.createEntity(session, rulesetId, "spells", { ...spell, fields: { school: "Sorcery" } }),
-    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.school" }] });
+      EntitiesService.createEntity(session, rulesetId, "spells", { ...spell, fields: { [SPELL_SCHOOL]: "Sorcery" } }),
+    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: `fields.${SPELL_SCHOOL}` }] });
     const bolt = await EntitiesService.createEntity(session, rulesetId, "spells", {
       ...spell,
-      fields: { school: "Evocation" },
+      fields: { [SPELL_SCHOOL]: "Evocation" },
     });
     await EntitiesService.updateEntity(session, rulesetId, "spells", bolt.id, {
       ...spell,
-      fields: { school: "Conjuration" },
+      fields: { [SPELL_SCHOOL]: "Conjuration" },
     });
     const focus = await EntitiesService.getEntities(
       rulesetId,
@@ -235,8 +256,8 @@ describe("An entity's fields", () => {
 
   test("of a spell take its range and its spell resistance in its book's words: free texts, no list", async () => {
     const { session, rulesetId, spellList } = await setup();
-    const spell = { name: "Bolt", aptitudes: [{ id: spellList, level: 1 }] };
-    const fields = { school: "Evocation", rangeType: "60 ft.", spellResistance: "Yes (harmless)" };
+    const spell = { name: "Bolt", links: { listedIn: [{ toId: spellList, tier: 1 }] } };
+    const fields = { [SPELL_SCHOOL]: "Evocation", [SPELL_RANGE_TYPE]: "60 ft.", [SPELL_RESISTANCE]: "Yes (harmless)" };
     const bolt = await EntitiesService.createEntity(session, rulesetId, "spells", { ...spell, fields });
     expect(listValues(await findFormValues("spells", bolt.id))).toEqual([
       `${SPELL_RANGE_TYPE}=60 ft.`,
@@ -247,17 +268,17 @@ describe("An entity's fields", () => {
 
   test("keep a value their ruleset no longer lists while an edit leaves its field out", async () => {
     const { session, rulesetId, spellList } = await setup();
-    const spell = { name: "Bolt", aptitudes: [{ id: spellList, level: 1 }] };
+    const spell = { name: "Bolt", links: { listedIn: [{ toId: spellList, tier: 1 }] } };
     const bolt = await EntitiesService.createEntity(session, rulesetId, "spells", {
       ...spell,
-      fields: { school: "Conjuration" },
+      fields: { [SPELL_SCHOOL]: "Conjuration" },
     });
     await writeFieldValues("spells", bolt.id, [[SPELL_SUBSCHOOL, "Creation or Calling"]]);
     RulesetViews.invalidate(rulesetId);
 
     await EntitiesService.updateEntity(session, rulesetId, "spells", bolt.id, {
       ...spell,
-      fields: { castingTime: "1 round" },
+      fields: { [SPELL_CASTING_TIME]: "1 round" },
     });
     expect(await fieldsOf(rulesetId, "spells", bolt.id)).toMatchObject({
       [SPELL_CASTING_TIME]: "1 round",
@@ -267,9 +288,9 @@ describe("An entity's fields", () => {
     expect(
       EntitiesService.updateEntity(session, rulesetId, "spells", bolt.id, {
         ...spell,
-        fields: { subschool: "Creation or Calling" },
+        fields: { [SPELL_SUBSCHOOL]: "Creation or Calling" },
       }),
-    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.subschool" }] });
+    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: `fields.${SPELL_SUBSCHOOL}` }] });
   });
 
   test("copy an inherited entity to save them, its source's left as they were", async () => {
@@ -287,7 +308,8 @@ describe("An entity's fields", () => {
     // The seed's ids are the sources': the API takes them, and stores the fork's copy's
     const saved = await EntitiesService.updateEntity<Described<"classes">>(session, fork.id, "classes", fighter!.id, {
       name: "Fighter",
-      fields: { bonusSpellAbilityId: abilityMap["Wisdom"], casterType: "Divine" },
+      fields: { [CLASS_CASTER_TYPE]: "Divine" },
+      links: { bonusSpellAbility: abilityMap["Wisdom"] },
     });
     expect(saved.id).not.toBe(fighter!.id);
     expect(saved.fields).toMatchObject({ [CLASS_CASTER_TYPE]: "Divine" });
@@ -310,8 +332,7 @@ describe("An entity's fields", () => {
 
       await EntitiesService.updateEntity(session, rulesetId, "items", sword.id, {
         name: "Sword",
-        type: "Weapon",
-        fields: { weapon: { ...WEAPON, baseDamage: "1d10" }, masterwork: true },
+        fields: { ...WEAPON, [WEAPON_BASE_DAMAGE]: "1d10", [ITEM_MASTERWORK]: true, [ITEM_TYPE]: "Weapon" },
       });
       expect(listValues(await findFormValues("items", sword.id))).toEqual([
         "ITEM_MASTERWORK=true",
@@ -321,8 +342,7 @@ describe("An entity's fields", () => {
       // Its template's change reaches what the item doesn't hold
       await EntitiesService.updateEntity(session, rulesetId, "items", template.id, {
         name: "Longsword",
-        type: "Weapon",
-        fields: { weapon: { ...WEAPON, proficiency: "Exotic" } },
+        fields: { ...WEAPON, [WEAPON_PROFICIENCY]: "Exotic", [ITEM_TYPE]: "Weapon" },
       });
       expect(await fieldsOf(rulesetId, "items", sword.id)).toMatchObject({
         [ITEM_MASTERWORK]: true,
@@ -336,13 +356,11 @@ describe("An entity's fields", () => {
       const { session, rulesetId, sword } = await setupTemplate();
       await EntitiesService.updateEntity(session, rulesetId, "items", sword.id, {
         name: "Sword",
-        type: "Weapon",
-        fields: { weapon: { ...WEAPON, baseDamage: "1d10" } },
+        fields: { ...WEAPON, [WEAPON_BASE_DAMAGE]: "1d10", [ITEM_TYPE]: "Weapon" },
       });
       const copy = await EntitiesService.duplicateEntity(session, rulesetId, "items", sword.id, {
         name: "Sword (Copy)",
-        type: "Weapon",
-        fields: { weapon: { ...WEAPON, baseDamage: "1d12" } },
+        fields: { ...WEAPON, [WEAPON_BASE_DAMAGE]: "1d12", [ITEM_TYPE]: "Weapon" },
       });
       expect(copy.fields).toMatchObject({ [WEAPON_BASE_DAMAGE]: "1d12", [WEAPON_PROFICIENCY]: "Martial" });
       expect(listValues(await findFormValues("items", copy.id))).toEqual([`${WEAPON_BASE_DAMAGE}=1d12`]);
@@ -354,7 +372,7 @@ describe("An entity's fields", () => {
     const { session, rulesetId, featPool } = await setup();
     const feat = await EntitiesService.createEntity(session, rulesetId, "feats", {
       name: "Lucky",
-      aptitudeIds: [featPool],
+      links: { listedIn: [{ toId: featPool }] },
     });
     await writeFieldValues("feats", feat.id, [[FEAT_FAMILY, "homebrew"]]);
     RulesetViews.invalidate(rulesetId);
@@ -362,8 +380,8 @@ describe("An entity's fields", () => {
     expect(
       EntitiesService.updateEntity(session, rulesetId, "feats", feat.id, {
         name: "Lucky",
-        fields: { families: ["homebrew"] },
+        fields: { [FEAT_FAMILY]: ["homebrew"] },
       }),
-    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: "fields.families.0" }] });
+    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: `fields.${FEAT_FAMILY}.0` }] });
   });
 });

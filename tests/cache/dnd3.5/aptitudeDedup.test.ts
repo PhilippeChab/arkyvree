@@ -182,7 +182,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     const { items } = await EntitiesService.getEntities<Described<"feats">>(
       ruleset.id,
       "feats",
-      { aptitudeId: winningApt!.id },
+      { listedIn: winningApt!.id },
       { limit: 100, page: 1 },
     );
 

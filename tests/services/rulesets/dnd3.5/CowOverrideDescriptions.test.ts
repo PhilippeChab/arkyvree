@@ -11,7 +11,12 @@ import { createSeedCharacter } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
-import { SPELL_SAVE_EFFECT } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  SKILL_CHECK_PENALTY_MULTIPLIER,
+  SKILL_IMPACTED_BY_WEIGHT,
+  SKILL_USABLE_WITHOUT_TRAINING,
+  SPELL_SAVE_EFFECT,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 // A level picks the inherited feat, spell or skill by its id: the sheet must show the fork's copy of it all the same.
 describe("A fork's own description of an inherited", () => {
@@ -35,8 +40,12 @@ describe("A fork's own description of an inherited", () => {
       await EntitiesService.updateEntity(session, fork.id, "skills", skill.id, {
         name,
         description,
-        primaryAbilityId: skill.links.keyAbility,
-        fields: { checkPenaltyMultiplier: 1, impactedByWeight: true, usableWithoutTraining: true },
+        fields: {
+          [SKILL_CHECK_PENALTY_MULTIPLIER]: 1,
+          [SKILL_IMPACTED_BY_WEIGHT]: true,
+          [SKILL_USABLE_WITHOUT_TRAINING]: true,
+        },
+        links: { keyAbility: skill.links.keyAbility },
       });
     }
 
@@ -73,8 +82,8 @@ test("A fork's own saving throw of an inherited spell is on the sheet", async ()
   const name = "Magic Missile";
   await EntitiesService.updateEntity(session, fork.id, "spells", ctx.spellMap[name], {
     name,
-    saveId: will.id,
-    saveEffect: "negates",
+    fields: { [SPELL_SAVE_EFFECT]: "negates" },
+    links: { resistedBy: will.id },
   });
 
   const characterId = await createSeedCharacter(ctx, "wizard", { rulesetId: fork.id });

@@ -19,6 +19,14 @@ import { findLists } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import {
+  LANGUAGE_TYPE,
+  RACE_BASE_SPEED,
+  RACE_SIZE,
+  SKILL_CHECK_PENALTY_MULTIPLIER,
+  SKILL_IMPACTED_BY_WEIGHT,
+  SKILL_USABLE_WITHOUT_TRAINING,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 interface Page {
   items: { id: string; name: string }[];
@@ -56,17 +64,21 @@ interface Service {
 /** What each kind's form gives past its name, of the entities it names by id (`Refs`). */
 const BODIES: Partial<Record<RulesetEntityType, (refs: Refs) => Record<string, unknown>>> = {
   aptitudes: () => ({}),
-  feats: (refs) => ({ aptitudeIds: [refs.featAptitudeId] }),
+  feats: (refs) => ({ links: { listedIn: [{ toId: refs.featAptitudeId }] } }),
   items: () => ({}),
   classes: () => ({}),
-  languages: () => ({ type: "Standard" }),
+  languages: () => ({ fields: { [LANGUAGE_TYPE]: "Standard" } }),
   mechanics: () => ({}),
-  spells: (refs) => ({ aptitudes: [{ id: refs.spellAptitudeId }] }),
-  races: () => ({ size: "Medium", baseSpeed: 30 }),
-  saves: (refs) => ({ abilityId: refs.abilityId }),
+  spells: (refs) => ({ links: { listedIn: [{ toId: refs.spellAptitudeId }] } }),
+  races: () => ({ fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 } }),
+  saves: (refs) => ({ links: { keyAbility: refs.abilityId } }),
   skills: (refs) => ({
-    primaryAbilityId: refs.abilityId,
-    fields: { impactedByWeight: false, checkPenaltyMultiplier: 1, usableWithoutTraining: true },
+    links: { keyAbility: refs.abilityId },
+    fields: {
+      [SKILL_IMPACTED_BY_WEIGHT]: false,
+      [SKILL_CHECK_PENALTY_MULTIPLIER]: 1,
+      [SKILL_USABLE_WITHOUT_TRAINING]: true,
+    },
   }),
 };
 
@@ -314,7 +326,10 @@ test("refuses a form naming one list twice: by its source's id and its copy's", 
 
   const aptitudeIds = [refs.featAptitudeId, copy.id];
   expect(
-    EntitiesService.createEntity(session, fork.id, "feats", { name: "Listed Twice", aptitudeIds }),
+    EntitiesService.createEntity(session, fork.id, "feats", {
+      name: "Listed Twice",
+      links: { listedIn: aptitudeIds.map((toId) => ({ toId })) },
+    }),
   ).rejects.toMatchObject({
     message: `Aptitude ${copy.id} is given more than once`,
     refusal: "invalid",

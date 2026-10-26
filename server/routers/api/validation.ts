@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { EntityFieldValues } from "@/engine/index.ts";
+import type { EntityFieldValues, EntityLinkValues } from "@/engine/index.ts";
 import { sanitizeEmail } from "@/server/emailAddress.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { sanitizeText } from "@/shared/text.ts";
@@ -27,17 +27,28 @@ export const entityFields = z.custom<EntityFieldValues>(
 );
 
 /**
- * A ruleset entity's form, its create's and its update's: its name, its description (none when it's empty), its fields
- * and when it was last read (an update's), and every other key as it is, which its kind's rules read by their
- * descriptions (its columns), refusing as invalid what they don't take.
+ * An entity's links as its form sends them, by role (a single link's target, a list of links' entries), which the
+ * engine reads by its kind's columns, refusing as invalid what they don't take.
  */
-export const entityBody = z.looseObject({
+export const entityLinks = z.custom<EntityLinkValues>(
+  (value) => isRecord(value),
+  "Expected an object of the entity's links",
+);
+
+/**
+ * A ruleset entity's form, its create's and its update's, as it stores it: its name, its description (none when it's
+ * empty), its fields by stored field and its links by role, which its kind's rules read by their descriptions (its
+ * columns, its fields), refusing as invalid what they don't take, and when it was last read (an update's). No other
+ * key.
+ */
+export const entityBody = z.strictObject({
   name: z.string().min(1),
   description: z
     .string()
     .optional()
     .transform((v) => v || null),
   fields: entityFields.optional(),
+  links: entityLinks.optional(),
   updatedAt: z.string().optional(),
 });
 

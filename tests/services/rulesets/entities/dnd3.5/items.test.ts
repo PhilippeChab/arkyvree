@@ -34,14 +34,12 @@ const noCustomizations = { modifiers: [], values: [], requirements: [] };
 
 /**
  * A weapon template with a field and a requirement, which its instances read, and a modifier, which they don't; and
- * the weight and cost `columns` give it.
+ * the weight and cost `columns` give it, by their stored fields.
  */
-async function createTemplate(session: Session, rulesetId: string, columns: { costGp?: number; weight?: number } = {}) {
+async function createTemplate(session: Session, rulesetId: string, columns: Record<string, number> = {}) {
   const template = await EntitiesService.createEntity(session, rulesetId, "items", {
     name: "Sword Template",
-    type: "Weapon",
-    isTemplate: true,
-    ...columns,
+    fields: { [ITEM_TYPE]: "Weapon", [ITEM_IS_TEMPLATE]: true, ...columns },
   });
   await customize("items", template.id, { values: COLD_IRON });
   return template;
@@ -79,13 +77,16 @@ describe("EntitiesService: items", () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     const scroll = await EntitiesService.createEntity(session, ruleset.id, "items", {
       name: "Scroll",
-      weight: 0.5,
-      costGp: 2.25,
+      fields: { [ITEM_WEIGHT]: 0.5, [ITEM_COST_GP]: 2.25 },
     });
     expect(scroll.fields).toMatchObject({ [ITEM_WEIGHT]: 0.5, [ITEM_COST_GP]: 2.25 });
     expect(
-      (await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Feather", weight: 0, costGp: 0 }))
-        .fields,
+      (
+        await EntitiesService.createEntity(session, ruleset.id, "items", {
+          name: "Feather",
+          fields: { [ITEM_WEIGHT]: 0, [ITEM_COST_GP]: 0 },
+        })
+      ).fields,
     ).toMatchObject({ [ITEM_WEIGHT]: 0, [ITEM_COST_GP]: 0 });
     const { fields: rock } = await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Rock" });
     expect([rock[ITEM_WEIGHT], rock[ITEM_COST_GP]]).toEqual([null, null]);
@@ -93,8 +94,7 @@ describe("EntitiesService: items", () => {
     expect(
       await EntitiesService.updateEntity(session, ruleset.id, "items", scroll.id, {
         name: "Scroll",
-        weight: 10,
-        costGp: 100,
+        fields: { [ITEM_WEIGHT]: 10, [ITEM_COST_GP]: 100 },
       }),
     ).toMatchObject({ fields: { [ITEM_WEIGHT]: 10, [ITEM_COST_GP]: 100 } });
   });
@@ -103,9 +103,7 @@ describe("EntitiesService: items", () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     const hat = await EntitiesService.createEntity(session, ruleset.id, "items", {
       name: "Hat",
-      slot: "Head",
-      weight: 5,
-      costGp: 10,
+      fields: { [ITEM_SLOT]: "Head", [ITEM_WEIGHT]: 5, [ITEM_COST_GP]: 10 },
     });
 
     const kept = await EntitiesService.updateEntity(session, ruleset.id, "items", hat.id, {
@@ -117,9 +115,7 @@ describe("EntitiesService: items", () => {
     // A slot's none is "Other", the slot of an item worn nowhere in particular
     const cleared = await EntitiesService.updateEntity(session, ruleset.id, "items", hat.id, {
       name: "Hat",
-      slot: null,
-      weight: null,
-      costGp: null,
+      fields: { [ITEM_SLOT]: null, [ITEM_WEIGHT]: null, [ITEM_COST_GP]: null },
     });
     const none = { [ITEM_IS_TEMPLATE]: false, [ITEM_SLOT]: "Other", [ITEM_WEIGHT]: null, [ITEM_COST_GP]: null };
     expect(cleared.fields).toMatchObject(none);
@@ -136,20 +132,24 @@ describe("EntitiesService: items", () => {
     const template = await createTemplate(session, ruleset.id);
     const sword = await EntitiesService.createEntity(session, ruleset.id, "items", {
       name: "Sword",
-      type: "Weapon",
-      sourceItemId: template.id,
+      fields: { [ITEM_TYPE]: "Weapon" },
+      links: { madeFrom: template.id },
     });
 
     expect(
-      (await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, { name: "Sword", type: "Weapon" }))
-        .links,
+      (
+        await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
+          name: "Sword",
+          fields: { [ITEM_TYPE]: "Weapon" },
+        })
+      ).links,
     ).toMatchObject([{ role: "madeFrom", toId: template.id, toName: template.name }]);
     expect(
       (
         await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
           name: "Sword",
-          type: "Weapon",
-          sourceItemId: null,
+          fields: { [ITEM_TYPE]: "Weapon" },
+          links: { madeFrom: null },
         })
       ).links,
     ).toEqual([]);
@@ -162,8 +162,14 @@ describe("EntitiesService: items", () => {
 
   test("describes where a character carrying it can place it", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
-    const sword = await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Sword", type: "Weapon" });
-    const ring = await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Ring", slot: "Finger" });
+    const sword = await EntitiesService.createEntity(session, ruleset.id, "items", {
+      name: "Sword",
+      fields: { [ITEM_TYPE]: "Weapon" },
+    });
+    const ring = await EntitiesService.createEntity(session, ruleset.id, "items", {
+      name: "Ring",
+      fields: { [ITEM_SLOT]: "Finger" },
+    });
     expect((await EntitiesService.getEntity(ruleset.id, "items", sword.id)).placement).toMatchObject({
       hand: true,
       slot: null,
@@ -180,23 +186,24 @@ describe("EntitiesService: items", () => {
     expect(
       await EntitiesService.createEntity(session, ruleset.id, "items", {
         name: "Chainmail",
-        type: "Armor",
-        slot: "Other",
+        fields: { [ITEM_TYPE]: "Armor", [ITEM_SLOT]: "Other" },
       }),
     ).toMatchObject({ fields: { [ITEM_SLOT]: "Torso" } });
     expect(
-      await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Ring", slot: "Finger" }),
+      await EntitiesService.createEntity(session, ruleset.id, "items", {
+        name: "Ring",
+        fields: { [ITEM_SLOT]: "Finger" },
+      }),
     ).toMatchObject({ fields: { [ITEM_SLOT]: "Finger" } });
 
     const buckler = await EntitiesService.createEntity(session, ruleset.id, "items", {
       name: "Buckler",
-      slot: "Other",
+      fields: { [ITEM_SLOT]: "Other" },
     });
     expect(
       await EntitiesService.updateEntity(session, ruleset.id, "items", buckler.id, {
         name: "Buckler",
-        type: "Shield",
-        slot: "Other",
+        fields: { [ITEM_TYPE]: "Shield", [ITEM_SLOT]: "Other" },
       }),
     ).toMatchObject({ fields: { [ITEM_SLOT]: "Off Hand" } });
   });
@@ -221,25 +228,23 @@ describe("EntitiesService: items", () => {
       const template = await createTemplate(session, ruleset.id);
       const copy = await EntitiesService.duplicateEntity(session, ruleset.id, "items", template.id, {
         name: "Sword",
-        type: "Weapon",
+        fields: { [ITEM_TYPE]: "Weapon" },
       });
       await expectTemplateInstance(ruleset.id, copy.id, template.id);
     });
 
     test("of an instance, keeps every field it holds of its own, its weight and cost over its template's", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
-      const template = await createTemplate(session, ruleset.id, { weight: 4, costGp: 15 });
+      const template = await createTemplate(session, ruleset.id, { [ITEM_WEIGHT]: 4, [ITEM_COST_GP]: 15 });
       const instance = await EntitiesService.createEntity(session, ruleset.id, "items", {
         name: "Heavy Sword",
-        type: "Weapon",
-        sourceItemId: template.id,
-        weight: 5,
-        costGp: 20,
+        fields: { [ITEM_TYPE]: "Weapon", [ITEM_WEIGHT]: 5, [ITEM_COST_GP]: 20 },
+        links: { madeFrom: template.id },
       });
 
       const copy = await EntitiesService.duplicateEntity(session, ruleset.id, "items", instance.id, {
         name: "Heavy Sword Copy",
-        type: "Weapon",
+        fields: { [ITEM_TYPE]: "Weapon" },
       });
       const own = { [ITEM_WEIGHT]: 5, [ITEM_COST_GP]: 20 };
       expect(copy.fields).toMatchObject(own);
@@ -261,10 +266,7 @@ describe("EntitiesService: items", () => {
       const source = await EntitiesService.createEntity(session, ruleset.id, "items", {
         name: "Scroll",
         description: "Blank",
-        type: "Other",
-        slot: "Other",
-        weight: 0.1,
-        costGp: 25,
+        fields: { [ITEM_TYPE]: "Other", [ITEM_SLOT]: "Other", [ITEM_WEIGHT]: 0.1, [ITEM_COST_GP]: 25 },
       });
       await customize("items", source.id, { values: COLD_IRON });
 
@@ -312,8 +314,8 @@ describe("EntitiesService: items", () => {
       const template = await createTemplate(session, ruleset.id);
       const instance = await EntitiesService.createEntity(session, ruleset.id, "items", {
         name: "Longsword",
-        type: "Weapon",
-        sourceItemId: template.id,
+        fields: { [ITEM_TYPE]: "Weapon" },
+        links: { madeFrom: template.id },
       });
 
       const [ofTemplate] = await EntitiesService.createVariants(session, ruleset.id, "items", template.id, [
@@ -328,7 +330,7 @@ describe("EntitiesService: items", () => {
 
     test("of a template hold none of its weight or cost, and read them as it changes them", async () => {
       const { session, ruleset } = await createTestUserAndRuleset();
-      const template = await createTemplate(session, ruleset.id, { weight: 4, costGp: 15 });
+      const template = await createTemplate(session, ruleset.id, { [ITEM_WEIGHT]: 4, [ITEM_COST_GP]: 15 });
       const [variant] = await EntitiesService.createVariants(session, ruleset.id, "items", template.id, [
         { name: "Sword +1" },
       ]);
@@ -341,8 +343,7 @@ describe("EntitiesService: items", () => {
 
       await EntitiesService.updateEntity(session, ruleset.id, "items", template.id, {
         name: "Sword Template",
-        weight: 6,
-        costGp: 30,
+        fields: { [ITEM_WEIGHT]: 6, [ITEM_COST_GP]: 30 },
       });
       expect((await EntitiesService.getEntity(ruleset.id, "items", variant.id)).fields).toMatchObject({
         [ITEM_WEIGHT]: 6,
@@ -354,7 +355,7 @@ describe("EntitiesService: items", () => {
       const { user, session, ruleset: parent } = await createTestUserAndRuleset();
       const source = await EntitiesService.createEntity(session, parent.id, "items", {
         name: "Parent Scroll",
-        weight: 0.1,
+        fields: { [ITEM_WEIGHT]: 0.1 },
       });
       const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
 

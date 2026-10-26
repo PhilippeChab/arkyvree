@@ -11,10 +11,8 @@ import RulesetEntity from "./RulesetEntity.ts";
  */
 export default abstract class CustomizationPageEntity<
   K extends keyof ViewKinds,
-  Body extends object,
-  Columns extends object = Body,
   S extends Fields = NoFields,
-> extends RulesetEntity<K, Body, Columns, S> {
+> extends RulesetEntity<K, S> {
   /** An entity as its page shows it, with its fields, its modifiers and its requirements. */
   override describe(id: string) {
     const entity = super.describe(id);

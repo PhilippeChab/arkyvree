@@ -6,7 +6,7 @@ import { test } from "@/tests/e2e/fixtures.ts";
 import { uniqueName } from "@/tests/e2e/support/page.ts";
 import { forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
 import { signIn } from "@/tests/e2e/support/signIn.ts";
-import { ITEM_IS_TEMPLATE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { ITEM_IS_TEMPLATE, ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type DuplicatedItem = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["entities"][":entityType"][":entityId"]["duplicate"]["$post"],
@@ -58,7 +58,7 @@ for (const width of [375, 1280]) {
       const duplicateResponse = await page.request.post(
         `/api/rulesets/${forkId}/entities/items/${edited.id}/duplicate`,
         {
-          data: { name: "Heavy Mace +3", type: "Weapon" },
+          data: { name: "Heavy Mace +3", fields: { [ITEM_TYPE]: "Weapon" } },
         },
       );
       expect(duplicateResponse.ok()).toBe(true);

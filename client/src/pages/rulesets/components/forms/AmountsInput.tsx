@@ -11,8 +11,11 @@ import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQue
 
 import type { ColumnInputProps } from "./columnContext.ts";
 
-/** An amount given an entity, as its input holds it: the entity's id and the amount, at its field's keys. */
-type Amount = Record<string, number | string>;
+/** An amount given an entity, as its input holds it and its save sends it: the entity's id (`toId`) and the amount. */
+interface Amount {
+  amount: number;
+  toId: string;
+}
 
 /** An amount an entity gives each entity of a kind (a class level's base bonus to each save). */
 type AmountsField = Extract<EntityField, { input: "amounts" }>;
@@ -28,7 +31,6 @@ export function AmountsInput<T extends FieldValues>({
   name,
   rulesetId,
 }: ColumnInputProps<T, AmountsField>) {
-  const { amountKey, entityKey } = field;
   const amountError = (amount: number) => wholeNumberError(amount, field.min, field.max);
   const { data: rulesetEntities, error: entitiesError } = useQuery(rulesetOptionsQuery(field.references, rulesetId));
   const { rules } = useRulesetRules(rulesetId);
@@ -36,21 +38,21 @@ export function AmountsInput<T extends FieldValues>({
     control: form.control,
     name,
     rules: {
-      validate: (value: Amount[] | undefined) => (value ?? []).every((given) => !amountError(Number(given[amountKey]))),
+      validate: (value: Amount[] | undefined) => (value ?? []).every((given) => !amountError(Number(given.amount))),
     },
   });
   const amounts: Amount[] = Array.isArray(bound.value) ? bound.value : [];
   const invalid = !!fieldState.error;
   const readOnly = useReadOnlyFields();
   const entities = rulesetEntities ?? [];
-  const amountFor = (id: string) => Number(amounts.find((given) => given[entityKey] === id)?.[amountKey] ?? 0);
+  const amountFor = (id: string) => Number(amounts.find((given) => given.toId === id)?.amount ?? 0);
 
   // Update in place, so changing a value back leaves the form clean.
   const setAmount = (id: string, amount: number) =>
     bound.onChange(
-      amounts.some((given) => given[entityKey] === id)
-        ? amounts.map((given) => (given[entityKey] === id ? { [entityKey]: id, [amountKey]: amount } : given))
-        : [...amounts, { [entityKey]: id, [amountKey]: amount }],
+      amounts.some((given) => given.toId === id)
+        ? amounts.map((given) => (given.toId === id ? { toId: id, amount } : given))
+        : [...amounts, { toId: id, amount }],
     );
 
   if (!!entitiesError && entities.length === 0)

@@ -24,6 +24,8 @@ import {
   CHARACTER_HEIGHT,
   CHARACTER_WEIGHT,
   CHARACTER_XP,
+  RULESET_ABILITY_INCREASES,
+  RULESET_FEAT_ADVANCEMENT,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The core rules' feats: one every 3 levels, and one more at the first. */
@@ -33,7 +35,10 @@ const CORE_FEATS = { every: 3, extra: [{ amount: 1, level: 1 }] };
  * The core rules' progression, which a fork of theirs reads until it saves its own: its feats, and an ability increase
  * every 4 levels.
  */
-const CORE_PROGRESSION = { abilityIncreases: { every: 4, extra: [] }, featAdvancement: CORE_FEATS };
+const CORE_PROGRESSION = {
+  [RULESET_FEAT_ADVANCEMENT]: CORE_FEATS,
+  [RULESET_ABILITY_INCREASES]: { every: 4, extra: [] },
+};
 
 /**
  * A human fighter of the fork's, Intelligence 10 and Wisdom 18, of `levels` fighter levels, as the fork builds it, its
@@ -96,15 +101,20 @@ describe("RulesetSettingsService", () => {
     const { session, fork, abilityMap } = await setup();
     expect(await RulesetSettingsService.getSettings(fork.id)).toEqual({
       id: fork.id,
-      fields: { ...CORE_PROGRESSION, skillPointAbilityId: abilityMap["Intelligence"] },
+      fields: CORE_PROGRESSION,
+      links: { skillPointAbility: abilityMap["Intelligence"] },
     });
     // A human fighter's 2 a level, and the human's 1, four times over at the first: with Intelligence's +0
     expect(await fighterBudget(fork.id)).toBe(12);
 
     const saved = await RulesetSettingsService.updateSettings(session, fork.id, {
-      fields: { skillPointAbilityId: abilityMap["Wisdom"] },
+      links: { skillPointAbility: abilityMap["Wisdom"] },
     });
-    expect(saved).toEqual({ id: fork.id, fields: { ...CORE_PROGRESSION, skillPointAbilityId: abilityMap["Wisdom"] } });
+    expect(saved).toEqual({
+      id: fork.id,
+      fields: CORE_PROGRESSION,
+      links: { skillPointAbility: abilityMap["Wisdom"] },
+    });
     expect(await RulesetSettingsService.getSettings(fork.id)).toEqual(saved);
     // With Wisdom's +4
     expect(await fighterBudget(fork.id)).toBe(28);
@@ -112,7 +122,7 @@ describe("RulesetSettingsService", () => {
     // Its own row in place of the copy it held; its source's as they were
     expect((await findFormValues("rulesets", fork.id)).links).toEqual({ skillPointAbility: abilityMap["Wisdom"] });
     expect(await RulesetSettingsService.getSettings(fork.rulesetId!)).toMatchObject({
-      fields: { skillPointAbilityId: abilityMap["Intelligence"] },
+      links: { skillPointAbility: abilityMap["Intelligence"] },
     });
     expect(await activityTypes(session.userId, rulesetsInRules, fork.id)).toEqual(["updateRulesetSettings"]);
   });
@@ -142,9 +152,12 @@ describe("RulesetSettingsService", () => {
     };
     const abilityIncreases = { every: 0, extra: [{ amount: 1, level: 2 }] };
     const saved = await RulesetSettingsService.updateSettings(session, fork.id, {
-      fields: { abilityIncreases, featAdvancement },
+      fields: { [RULESET_ABILITY_INCREASES]: abilityIncreases, [RULESET_FEAT_ADVANCEMENT]: featAdvancement },
     });
-    expect(saved.fields).toMatchObject({ abilityIncreases, featAdvancement });
+    expect(saved.fields).toMatchObject({
+      [RULESET_ABILITY_INCREASES]: abilityIncreases,
+      [RULESET_FEAT_ADVANCEMENT]: featAdvancement,
+    });
     expect(await RulesetSettingsService.getSettings(fork.id)).toEqual(saved);
 
     expect(await fighterGeneralFeats(fork.id, 3)).toBe(4);
@@ -155,9 +168,9 @@ describe("RulesetSettingsService", () => {
 
     // None at any level stands for the fork, its source's progression aside
     const none = { every: 0, extra: [] };
-    await RulesetSettingsService.updateSettings(session, fork.id, { fields: { abilityIncreases: none } });
+    await RulesetSettingsService.updateSettings(session, fork.id, { fields: { [RULESET_ABILITY_INCREASES]: none } });
     expect(await RulesetSettingsService.getSettings(fork.id)).toMatchObject({
-      fields: { abilityIncreases: none, featAdvancement },
+      fields: { [RULESET_ABILITY_INCREASES]: none, [RULESET_FEAT_ADVANCEMENT]: featAdvancement },
     });
   });
 
@@ -190,7 +203,9 @@ describe("RulesetSettingsService", () => {
 
     // The increases move to every fifth level
     const abilityIncreases = { every: 5, extra: [] };
-    await RulesetSettingsService.updateSettings(session, fork.id, { fields: { abilityIncreases } });
+    await RulesetSettingsService.updateSettings(session, fork.id, {
+      fields: { [RULESET_ABILITY_INCREASES]: abilityIncreases },
+    });
     expect(await savedLevel()).toMatchObject({ abilityIncreases: [] });
     expect(await strengthScore()).toBe(10);
     for (const increases of [[strength], [{ ...strength, abilityId: abilityMap["Dexterity"] }]])
@@ -201,43 +216,51 @@ describe("RulesetSettingsService", () => {
 
   test("refuses a setting its rules don't take: an ability the ruleset lacks, none, another field", async () => {
     const { session, fork, abilityMap } = await setup();
-    const update = (fields: Record<string, unknown>) =>
-      RulesetSettingsService.updateSettings(session, fork.id, { fields: fields as never });
-    expect(update({ skillPointAbilityId: NIL_UUID })).rejects.toMatchObject({
+    const update = (fields: Record<string, unknown>, links: Record<string, unknown> = {}) =>
+      RulesetSettingsService.updateSettings(session, fork.id, { fields: fields as never, links: links as never });
+    expect(update({}, { skillPointAbility: NIL_UUID })).rejects.toMatchObject({
       refusal: "invalid",
       message: `Ability ${NIL_UUID} does not belong to this ruleset`,
     });
-    expect(update({ skillPointAbilityId: null })).rejects.toMatchObject({
+    expect(update({}, { skillPointAbility: null })).rejects.toMatchObject({
       refusal: "invalid",
-      issues: [{ category: "fields.skillPointAbilityId" }],
+      issues: [{ category: "links.skillPointAbility" }],
     });
-    expect(update({ skillPointAbilityId: abilityMap["Wisdom"], epicFeats: 3 })).rejects.toMatchObject({
+    expect(update({ EPIC_FEATS: 3 }, { skillPointAbility: abilityMap["Wisdom"] })).rejects.toMatchObject({
       refusal: "invalid",
-      issues: [{ category: "fields.epicFeats", message: "Not a field of this entity" }],
+      issues: [{ category: "fields.EPIC_FEATS", message: "Not a field of this entity" }],
+    });
+    // A field's name in its declaration is no stored field
+    expect(update({ abilityIncreases: { every: 4, extra: [] } })).rejects.toMatchObject({
+      issues: [{ category: "fields.abilityIncreases", message: "Not a field of this entity" }],
     });
     // An increase at a level its frequency gives one already, a progression not of its shape
     const twice = { every: 4, extra: [{ amount: 1, level: 8 }] };
-    expect(update({ abilityIncreases: twice })).rejects.toMatchObject({
+    expect(update({ [RULESET_ABILITY_INCREASES]: twice })).rejects.toMatchObject({
       refusal: "invalid",
       issues: [
-        { category: "fields.abilityIncreases.extra.0.level", message: "Level 8 gives one already, every 4 levels" },
+        {
+          category: `fields.${RULESET_ABILITY_INCREASES}.extra.0.level`,
+          message: "Level 8 gives one already, every 4 levels",
+        },
       ],
     });
-    expect(update({ featAdvancement: [1, 0, 1] })).rejects.toMatchObject({
+    expect(update({ [RULESET_FEAT_ADVANCEMENT]: [1, 0, 1] })).rejects.toMatchObject({
       refusal: "invalid",
-      issues: [{ category: "fields.featAdvancement" }],
+      issues: [{ category: `fields.${RULESET_FEAT_ADVANCEMENT}` }],
     });
     expect(await RulesetSettingsService.getSettings(fork.id)).toMatchObject({
-      fields: { ...CORE_PROGRESSION, skillPointAbilityId: abilityMap["Intelligence"] },
+      fields: CORE_PROGRESSION,
+      links: { skillPointAbility: abilityMap["Intelligence"] },
     });
   });
 
   test("refuses who can't edit the ruleset's content, and a system ruleset", async () => {
     const { fork, abilityMap } = await setup();
     const { session: other } = await createTestUser();
-    const fields = { skillPointAbilityId: abilityMap["Wisdom"] };
-    expect(RulesetSettingsService.updateSettings(other, fork.id, { fields })).rejects.toThrow(ForbiddenError);
+    const links = { skillPointAbility: abilityMap["Wisdom"] };
+    expect(RulesetSettingsService.updateSettings(other, fork.id, { links })).rejects.toThrow(ForbiddenError);
     const { session } = await setup();
-    expect(RulesetSettingsService.updateSettings(session, fork.rulesetId!, { fields })).rejects.toThrow(ForbiddenError);
+    expect(RulesetSettingsService.updateSettings(session, fork.rulesetId!, { links })).rejects.toThrow(ForbiddenError);
   });
 });

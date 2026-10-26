@@ -6,7 +6,6 @@ export const SAVE_COLUMNS: FormField[] = [
   {
     help: "The ability its bonus comes from",
     input: "ref",
-    key: "abilityId",
     label: "Linked Ability",
     references: "abilities",
     required: true,
@@ -19,7 +18,6 @@ export const SAVE_LIST: ListDescription = {
   nameShare: 25,
   columns: [
     {
-      key: "abilityId",
       label: "Linked Ability",
       reads: "reference",
       references: "abilities",

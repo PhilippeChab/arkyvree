@@ -22,6 +22,7 @@ import {
   ITEM_SLOT,
   ITEM_TYPE,
   ITEM_WEIGHT,
+  LANGUAGE_TYPE,
   RACE_BASE_SPEED,
   RACE_SIZE,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -60,8 +61,7 @@ test("a race picked before the fork copied it blocks deleting the copy, but not 
   const local = await EntitiesService.updateEntity(session, fork.id, "races", human.id, {
     name: human.name,
     description: "Local",
-    size: human.fields[RACE_SIZE],
-    baseSpeed: human.fields[RACE_BASE_SPEED],
+    fields: { [RACE_SIZE]: human.fields[RACE_SIZE], [RACE_BASE_SPEED]: human.fields[RACE_BASE_SPEED] },
   });
 
   expect(EntitiesService.deleteEntity(session, fork.id, "races", local.id)).rejects.toThrow("in use by characters");
@@ -97,7 +97,7 @@ test("a language picked before the fork copied it blocks deleting the copy", asy
   const local = await EntitiesService.updateEntity(session, fork.id, "languages", language.id, {
     name: language.name,
     description: "Local",
-    type: language.type,
+    fields: { [LANGUAGE_TYPE]: language.type },
   });
 
   expect(EntitiesService.deleteEntity(session, fork.id, "languages", local.id)).rejects.toThrow("in use by characters");
@@ -110,10 +110,12 @@ test("an item picked before the fork copied it blocks deleting the copy", async 
   const local = await EntitiesService.updateEntity(session, fork.id, "items", item.id, {
     name: item.name,
     description: "Local",
-    type: item.fields[ITEM_TYPE],
-    slot: item.fields[ITEM_SLOT],
-    weight: item.fields[ITEM_WEIGHT],
-    costGp: item.fields[ITEM_COST_GP],
+    fields: {
+      [ITEM_TYPE]: item.fields[ITEM_TYPE],
+      [ITEM_SLOT]: item.fields[ITEM_SLOT],
+      [ITEM_WEIGHT]: item.fields[ITEM_WEIGHT],
+      [ITEM_COST_GP]: item.fields[ITEM_COST_GP],
+    },
   });
 
   expect(EntitiesService.deleteEntity(session, fork.id, "items", local.id)).rejects.toThrow("in use by characters");

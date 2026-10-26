@@ -428,7 +428,7 @@ describe("InventoryService", () => {
       const fork = await createSeededTestRuleset(SEED_USER_ID);
       const copy = await EntitiesService.updateEntity(session, fork.id, "items", plain.id, {
         name: plain.name,
-        type: "Weapon",
+        fields: { [ITEM_TYPE]: "Weapon" },
       });
       const character = await createCharacterAs(session, { rulesetId: fork.id });
       expect(add(session, character.id, plain.id, equipped("Torso"))).rejects.toThrow(

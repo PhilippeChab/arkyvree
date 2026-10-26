@@ -2,8 +2,8 @@
 
 import { z } from "zod";
 
-import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
-import type { EntityFieldValues, EntityForm } from "@/engine/core/fields/index.ts";
+import { CustomizationPageEntity, type FormBody, type FormColumnValues } from "@/engine/core/entities/index.ts";
+import type { EntityForm, EntityLinkEntry, PartialFieldValues } from "@/engine/core/fields/index.ts";
 import type { EntityWrites, LinkSet } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
@@ -14,18 +14,7 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 import { CLASS_LEVEL_COLUMNS } from "./columns.ts";
-import { CLASS_LEVEL_FIELDS, type ClassLevelFieldValues } from "./fields.ts";
-
-/**
- * A class level's save, as its form sends it: its number (a new level's), its fields, the feats it grants and its
- * saves' base bonuses.
- */
-interface ClassLevelBody {
-  feats?: { aptitudeId: string; featId: string; free?: boolean }[];
-  fields?: EntityFieldValues;
-  level?: number;
-  saves?: { base: number; saveId: string }[];
-}
+import { CLASS_LEVEL_FIELDS } from "./fields.ts";
 
 /** A new level's number: the class's first to its last. */
 const LEVEL = z.number().int().min(1).max(RULESET_LIMITS.classLevel);
@@ -33,12 +22,10 @@ const LEVEL = z.number().int().min(1).max(RULESET_LIMITS.classLevel);
 /**
  * A class's levels (`klass`, as the view has it) as the ruleset describes them, and what a level's save writes beside
  * its row: its fields, the feats it grants and its saves' base bonuses (its `grants` and `baseBonus` links, `linksOf`),
- * and its requirement of the class's previous level.
+ * and its requirement of the class's previous level. A level's number is its `position` on its class's.
  */
 export default class ClassLevelEntity extends CustomizationPageEntity<
   "class_levels",
-  ClassLevelBody,
-  { level?: number },
   typeof CLASS_LEVEL_FIELDS.fields
 > {
   constructor(
@@ -54,68 +41,55 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   /** Its base attack bonus and its skill points. */
   protected override readonly fields = CLASS_LEVEL_FIELDS;
 
-  /** A new level's number, which its class's levels are ordered by. */
-  protected override readonly formKeys = { level: LEVEL.optional() };
-
   protected override readonly label = "Class level";
 
   override readonly type = "class_levels";
 
   /**
-   * Refuses a new level without its number, or past the class's bounds (its columns refuse a save's base bonus past the
-   * rules').
+   * Refuses a new level without its number (its `position`), or past the class's bounds (its columns refuse a save's
+   * base bonus past the rules').
    */
-  protected override checkForm({ level: number }: ClassLevelBody, level?: KlassLevel) {
-    if (!level) RulesError.parse(LEVEL, number, ["level"]);
+  protected override checkForm({ position }: FormBody, level?: KlassLevel) {
+    if (!level) RulesError.parse(LEVEL, position, ["position"]);
   }
 
   /** A form's columns: none, a level's number is its own (a new one's, its form's: `planCreate`). */
-  protected override columnsOf() {
-    return {};
+  protected override columnsOf(): FormColumnValues {
+    return { fields: {}, links: {} };
   }
 
   /**
    * A form's links, by role: the feats it grants (`grants`, each through its pool, free unless it says), and its saves'
    * base bonuses (`baseBonus`), each entity the view's (`resolveIds`). A role the form leaves out it keeps.
    */
-  protected override linksOf({ feats, saves }: ClassLevelBody): LinkSet[] {
+  protected override linksOf(body: FormBody): LinkSet[] {
+    const sets = super.linksOf(body) ?? [];
+    const grants = sets.filter((set) => set.role === "grants");
     return [
-      ...(feats
-        ? [
-            {
-              role: "grants",
-              toType: "feats",
-              links: feats.map((feat) => ({ toId: feat.featId, viaId: feat.aptitudeId, free: feat.free ?? true })),
-            },
-          ]
-        : []),
-      ...(saves
-        ? [
-            {
-              role: "baseBonus",
-              toType: "saves",
-              links: saves.map((save) => ({ toId: save.saveId, amount: save.base })),
-            },
-          ]
-        : []),
+      ...grants.map((set) => ({ ...set, links: set.links.map((link) => ({ ...link, free: link.free ?? true })) })),
+      ...sets.filter((set) => set.role !== "grants"),
     ];
   }
 
   /**
-   * A form's granted feats and their pools, and its saves, the view's: refused when it names a save twice (by its
-   * source's id and its copy's).
+   * A form's granted feats and their pools, and its saves, the view's: refused when it names a save or a feat twice (by
+   * its source's id and its copy's), a level granting a feat once.
    */
-  protected override resolveIds({ feats, saves }: ClassLevelBody) {
-    const saveIds = this.ids.resolveAll("saves", saves?.map(({ saveId }) => saveId) ?? []);
+  protected override resolveIds(body: FormBody) {
+    const links = super.resolveIds(body);
+    const grants = links.grants as EntityLinkEntry[] | undefined;
+    if (!grants) return links;
+    const featIds = this.ids.resolveAll(
+      "feats",
+      grants.map((grant) => grant.toId),
+    );
     return {
-      ...(feats && {
-        feats: feats.map((feat) => ({
-          ...feat,
-          aptitudeId: this.ids.resolve("aptitudes", feat.aptitudeId),
-          featId: this.ids.resolve("feats", feat.featId),
-        })),
-      }),
-      ...(saves && { saves: saves.map((save, index) => ({ ...save, saveId: saveIds[index] })) }),
+      ...links,
+      grants: grants.map((grant, index) => ({
+        ...grant,
+        toId: featIds[index],
+        viaId: this.ids.resolve("aptitudes", grant.viaId!),
+      })),
     };
   }
 
@@ -124,16 +98,16 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
    * requirement of the class's previous level (`classes.<slug>.level` above it).
    */
   protected override writesOf(
-    body: ClassLevelBody,
-    _given: Partial<ClassLevelFieldValues>,
+    body: FormBody,
+    _given: PartialFieldValues<typeof CLASS_LEVEL_FIELDS.fields>,
     level?: KlassLevel,
   ): EntityWrites {
     const writes: EntityWrites = {};
-    if (!level && body.level !== undefined && body.level > 1) {
+    if (!level && body.position !== undefined && body.position > 1) {
       writes.requirement = {
         level: "1",
         target: ClassesPaths.level(this.klass.name),
-        value: (body.level - 1).toString(),
+        value: (body.position - 1).toString(),
         valueType: "number",
         operator: "greater_than",
       };
@@ -160,7 +134,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
    */
   override planCreate(form: EntityForm) {
     const plan = super.planCreate(form);
-    const level = RulesError.parse(LEVEL, this.formOf(form).level);
+    const level = RulesError.parse(LEVEL, this.formOf(form).position);
     return {
       ...plan,
       activity: { entityName: this.klass.name, level },
@@ -187,12 +161,14 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   }
 
   /**
-   * A level's details: the feats it grants (each with its pool's name and whether it's free), its saves' base bonuses.
+   * A level's details, its links of the roles its form edits as lists: the feats it grants (`grants`, each with its
+   * pool, `viaId`, its name and whether it's free), its saves' base bonuses (`baseBonus`, each its save, `toId`, and its
+   * `amount`).
    */
   private detailsOf(level: { id: string }) {
     return {
-      feats: this.grantedFeats(level.id),
-      saves: this.dnd35.baseBonusesOf(level.id).map((link) => ({ saveId: link.toId, base: link.amount ?? 0 })),
+      baseBonus: this.dnd35.baseBonusesOf(level.id).map((link) => ({ toId: link.toId, amount: link.amount ?? 0 })),
+      grants: this.grantedFeats(level.id),
     };
   }
 
@@ -211,7 +187,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
       const feat = dnd35.featsById.get(link.toId);
       const listed = feat && dnd35.listLinksOf(feat.id).some((list) => list.toId === link.viaId);
       const pool = listed && link.viaId !== null ? dnd35.aptitudesById.get(link.viaId) : undefined;
-      return { ...feat!, aptitudeId: link.viaId!, aptitudeName: pool?.name ?? null, free: link.free };
+      return { ...feat!, free: link.free, viaId: link.viaId!, viaName: pool?.name ?? null };
     });
   }
 

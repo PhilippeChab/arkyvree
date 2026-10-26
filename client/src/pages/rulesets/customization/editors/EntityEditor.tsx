@@ -13,6 +13,7 @@ import {
   toEntityBody,
   toEntityForm,
   withEntityFields,
+  withTemplateFlag,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import { useEntityColumns, useEntityFields, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
@@ -49,15 +50,17 @@ export function EntityEditor({
   const { copies, lockedName } = kind;
   const segment = getUrlSegment(kind.type);
   const { form, save } = useEntityForm({
-    empty: { ...toEntityForm<EntityFormData>(columns), ...(copies && { [copies.template.key]: false }) },
+    empty: withTemplateFlag(toEntityForm<EntityFormData>(columns), copies, false),
     values: withEntityFields(
-      {
-        ...toEntityForm<EntityFormData>(columns, entity),
-        ...(copies && { [copies.template.key]: ownFieldOf(entity, copies.template.field) === true }),
-      },
+      withTemplateFlag(
+        toEntityForm<EntityFormData>(columns, entity),
+        copies,
+        ownFieldOf(entity, copies?.template.field ?? "") === true,
+      ),
       fields,
       entity,
     ),
+    columns,
     formKey: recordKey,
     adoptKey,
     updatedAt: entity.updatedAt,
@@ -70,7 +73,10 @@ export function EntityEditor({
     label,
     // Moved to another template, it holds that one's fields: the save sends them all, the server keeping its own
     sendsAllFields: copies
-      ? (data, baseline) => !!data[copies.source] && data[copies.source] !== baseline?.[copies.source]
+      ? (data, baseline) => {
+          const source = data.links?.[copies.source];
+          return !!source && source !== baseline?.links?.[copies.source];
+        }
       : undefined,
     saveFn: (data: EntityFormData, updatedAt: string | undefined) =>
       parseResponse(

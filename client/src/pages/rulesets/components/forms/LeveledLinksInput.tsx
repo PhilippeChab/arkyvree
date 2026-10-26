@@ -12,18 +12,21 @@ import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQue
 
 import type { ColumnInputProps } from "./columnContext.ts";
 
-/** A link and its level, as the form holds it: no `level` key for none, so clearing one leaves the form clean. */
+/**
+ * A link and its tier, as the form holds it and its save sends it (`{ toId, tier }`): no `tier` key for none, so
+ * clearing one leaves the form clean.
+ */
 interface LeveledLink {
-  id: string;
-  level?: number;
+  tier?: number;
+  toId: string;
 }
 
 /** Links to a list's entities, each with a level of its own. */
 type LeveledLinksField = Extract<EntityField, { input: "leveledLinks" }>;
 
-/** A link and its level, none without one. */
-function leveledLink(id: string, level: number | null | undefined): LeveledLink {
-  return level == null ? { id } : { id, level };
+/** A link and its tier, none without one. */
+function leveledLink(toId: string, tier: number | null | undefined): LeveledLink {
+  return tier == null ? { toId } : { toId, tier };
 }
 
 /**
@@ -49,14 +52,14 @@ export function LeveledLinksInput<T extends FieldValues>({
     rules: {
       ...(field.required !== undefined && context.newEntity && requiredRules(field.required)),
       validate: (value: LeveledLink[] | undefined) =>
-        (value ?? []).every((link) => levelError(link.level) === undefined),
+        (value ?? []).every((link) => levelError(link.tier) === undefined),
     },
   });
   // An empty list is the list's error; a level's is its input's
   const levelsInvalid = fieldState.error?.type === "validate";
   const selected: LeveledLink[] = Array.isArray(bound.value) ? bound.value : [];
-  const selectedEntities = linked.resolve(selected.map((link) => link.id));
-  const levelOf = (id: string) => selected.find((link) => link.id === id)?.level;
+  const selectedEntities = linked.resolve(selected.map((link) => link.toId));
+  const levelOf = (id: string) => selected.find((link) => link.toId === id)?.tier;
   const readOnly = useReadOnlyFields();
 
   return (
@@ -97,7 +100,9 @@ export function LeveledLinksInput<T extends FieldValues>({
                 helperText={levelsInvalid && levelError(levelOf(entity.id))}
                 onChange={(event) => {
                   const level = readNumberInput(event.target.value);
-                  bound.onChange(selected.map((held) => (held.id === entity.id ? leveledLink(held.id, level) : held)));
+                  bound.onChange(
+                    selected.map((held) => (held.toId === entity.id ? leveledLink(held.toId, level) : held)),
+                  );
                 }}
                 sx={{ width: 80 }}
               />

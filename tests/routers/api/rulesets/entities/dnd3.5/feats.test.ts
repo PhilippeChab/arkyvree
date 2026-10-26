@@ -17,18 +17,18 @@ describe("rulesets entities: feats", () => {
     const created = await expectOk(
       kinds.$post({
         param: { id, entityType },
-        json: { name: "Test Feat", description: "A test feat", aptitudeIds: [aptitudeId] },
+        json: { name: "Test Feat", description: "A test feat", links: { listedIn: [{ toId: aptitudeId }] } },
       }),
     );
     expect(created).toMatchObject({ name: "Test Feat", description: "A test feat" });
     const param = { id, entityType, entityId: created.id };
 
     expect(await expectOk(entity.$get({ param }))).toMatchObject({ id: created.id, name: "Test Feat" });
-    const list = await expectOk(kinds.$get({ param: { id, entityType }, query: { aptitudeId } }));
+    const list = await expectOk(kinds.$get({ param: { id, entityType }, query: { listedIn: aptitudeId } }));
     expect(list.items.map((f) => f.id)).toEqual([created.id]);
 
     const updated = await expectOk(
-      entity.$put({ param, json: { name: "Renamed Feat", description: "Updated", aptitudeIds: [] } }),
+      entity.$put({ param, json: { name: "Renamed Feat", description: "Updated", links: { listedIn: [] } } }),
     );
     expect(updated).toMatchObject({ name: "Renamed Feat", description: "Updated" });
 
@@ -56,9 +56,11 @@ describe("rulesets entities: feats", () => {
   test("rejects a feat without a name or an aptitude", async () => {
     const { id, aptitudeId } = await createSeededForkWithAptitude();
     for (const json of [
-      { name: "", aptitudeIds: [aptitudeId] },
-      { name: "Feat", aptitudeIds: [] },
-      { name: "Feat", aptitudeIds: aptitudeId },
+      { name: "", links: { listedIn: [{ toId: aptitudeId }] } },
+      { name: "Feat", links: { listedIn: [] } },
+      { name: "Feat", links: { listedIn: aptitudeId } },
+      // Its pools by the old join's key, which no body takes
+      { name: "Feat", aptitudeIds: [aptitudeId] } as never,
     ])
       await expectStatus(kinds.$post({ param: { id, entityType }, json }), 400);
   });
@@ -77,12 +79,12 @@ describe("rulesets entities: feats", () => {
     await expectOk(
       kinds.$post({
         param: { id, entityType: "spells" },
-        json: { name: "Test Spell", aptitudes: [{ id: aptitudeId }] },
+        json: { name: "Test Spell", links: { listedIn: [{ toId: aptitudeId }] } },
       }),
     );
     const response = await kinds.$post({
       param: { id, entityType },
-      json: { name: "Test Feat", aptitudeIds: [aptitudeId] },
+      json: { name: "Test Feat", links: { listedIn: [{ toId: aptitudeId }] } },
     });
     await expectStatus(response, 409);
   });

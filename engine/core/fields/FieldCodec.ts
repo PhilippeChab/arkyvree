@@ -2,7 +2,14 @@ import type { FieldValue } from "@/engine/core/module/index.ts";
 import type { NumberSpec, ProgressionSpec } from "@/shared/customization/fields.ts";
 import { copyProgression, countRoomAt, type ProgressionValue } from "@/shared/customization/progression.ts";
 
-import Field, { type Fields, type FieldSpec, type FieldValues, type LeafSpec, type NoFields } from "./Field.ts";
+import Field, {
+  type Fields,
+  type FieldSpec,
+  type FieldValues,
+  type LeafSpec,
+  type NoFields,
+  type PartialFieldValues,
+} from "./Field.ts";
 import FieldForms, { type FormContext } from "./FieldForms.ts";
 import type { FormField } from "./FormField.ts";
 import OwnerValues, { type FieldsWrite, type StoredValues } from "./OwnerValues.ts";
@@ -20,7 +27,7 @@ type WrittenValues<S extends Fields> = Partial<FieldValues<S>>;
  * An entity's fields, read and written by one spec (`fields`, as its ruleset's vocabulary declares them: `FieldSpec`):
  * their defaults, the stored fields and link roles that keep them, an owner's values read into values (`read`), values
  * written back as what a save writes of its fields and links (all of them, or those another's don't hold:
- * `toOverrides`), and those its form shows (`formKeys`: not a column's, nor one its rules alone set): an edit's merged
+ * `toOverrides`), and those its form shows (`formNames`: not a column's, nor one its rules alone set): an edit's merged
  * over what's kept, a form's read as a save takes them (`parse`), and described as a form shows them (`describe`).
  */
 export default class FieldCodec<S extends Fields> {
@@ -29,7 +36,7 @@ export default class FieldCodec<S extends Fields> {
     this.formFields = Object.fromEntries(
       Object.entries(fields).filter(([, field]) => !("form" in field && field.form)),
     ) as Fields;
-    this.formKeys = Object.keys(this.formFields) as (keyof S & string)[];
+    this.formNames = Object.keys(this.formFields) as (keyof S & string)[];
     this.formStored = new Set(Field.storedLeavesOf(this.formFields).map((leaf) => leaf.field));
     this.leaves = new Map(Field.storedLeavesOf(fields).map((leaf) => [leaf.field, leaf]));
   }
@@ -206,8 +213,8 @@ export default class FieldCodec<S extends Fields> {
   /** Each field's value without a row. */
   readonly defaults: FieldValues<S>;
 
-  /** The names of the fields its form shows among its own, in the spec's order. */
-  readonly formKeys: (keyof S & string)[];
+  /** The spec's own names of the fields its form shows (its declarations' keys, never their stored fields), in its order. */
+  readonly formNames: (keyof S & string)[];
 
   /** The stored fields that keep those its form shows among its own. */
   readonly formStored: ReadonlySet<string>;
@@ -239,12 +246,23 @@ export default class FieldCodec<S extends Fields> {
   }
 
   /**
-   * The values a form's save keeps, of the fields its form shows (`formKeys`): what's kept, with the fields the form
-   * gives over it.
+   * The values a form's save keeps, of the fields its form shows (`formNames`): what's kept, with the fields the form
+   * gives over it (a group's, those it gives of its own).
    */
-  merge(kept: FieldValues<S>, given: Partial<FieldValues<S>>): Partial<FieldValues<S>> {
+  merge(kept: FieldValues<S>, given: PartialFieldValues<S>): Partial<FieldValues<S>> {
     const merged: Partial<FieldValues<S>> = {};
-    for (const key of this.formKeys) merged[key] = given[key] === undefined ? kept[key] : given[key];
+    for (const key of this.formNames) {
+      const value = given[key];
+      // A group's fields it gives over those kept
+      const group = this.fields[key].kind === "group";
+      if (value === undefined) {
+        merged[key] = kept[key];
+      } else {
+        merged[key] = (
+          group ? { ...(kept[key] as object), ...(value as object) } : value
+        ) as FieldValues<S>[typeof key];
+      }
+    }
     return merged;
   }
 
@@ -258,13 +276,15 @@ export default class FieldCodec<S extends Fields> {
   }
 
   /**
-   * A form's fields (`given`), as a save takes them: those it gives, each of its field's shape, a field a condition
+   * A form's fields and links (`given`: its fields by the stored field that keeps each, its references by their links'
+   * roles), as a save takes them, by the spec's names: those it gives, each of its field's shape, a field a condition
    * leaves out dropped, a reference resolved (`FieldForms.parse`); refused as invalid otherwise.
    */
-  parse(given: unknown, context: FormContext): Partial<FieldValues<S>> {
-    return FieldForms.parse(this.formFields, given, { ...context, kept: context.kept ?? this.defaults }) as Partial<
-      FieldValues<S>
-    >;
+  parse(given: { fields?: unknown; links?: unknown }, context: FormContext): PartialFieldValues<S> {
+    return FieldForms.parse(this.formFields, given, {
+      ...context,
+      kept: context.kept ?? this.defaults,
+    }) as PartialFieldValues<S>;
   }
 
   /** The fields' values off an owner's values (`stored`: its fields, and its single links its references read). */
@@ -286,6 +306,23 @@ export default class FieldCodec<S extends Fields> {
       .filter(([key, field]) => field.kind === "ref" && typeof values[key] === "string")
       .map(([key]) => [key, resolve(values[key] as string)]);
     return { ...values, ...Object.fromEntries(references) };
+  }
+
+  /**
+   * The values of the fields its form shows, as its form holds them and its save sends them: each by the stored field
+   * that keeps it (`fields`), a reference by its link's role (`links`).
+   */
+  toForm(values: FieldValues<S>): { fields: Record<string, unknown>; links: Record<string, unknown> } {
+    const form = { fields: {} as Record<string, unknown>, links: {} as Record<string, unknown> };
+    const place = (fields: Fields, level: Record<string, unknown>) => {
+      for (const [key, field] of Object.entries(fields)) {
+        if (field.kind === "group") place(field.fields, level[key] as Record<string, unknown>);
+        else if (field.kind === "ref") form.links[field.role] = level[key];
+        else form.fields[field.field] = level[key];
+      }
+    };
+    place(this.formFields, values);
+    return form;
   }
 
   /**

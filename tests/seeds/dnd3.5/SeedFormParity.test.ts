@@ -5,6 +5,7 @@ import { Entities } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import {
+  DAMAGE_TYPE,
   FEAT_FAMILY,
   ITEM_COST_GP,
   ITEM_IS_TEMPLATE,
@@ -14,33 +15,46 @@ import {
   SPELL_CASTING_TIME,
   SPELL_RANGE_TYPE,
   WEAPON_BASE_DAMAGE,
+  WEAPON_CRITICAL_MULTIPLIER,
+  WEAPON_CRITICAL_RANGE,
   WEAPON_DOUBLE_DAMAGE,
+  WEAPON_FAMILY,
   WEAPON_FINESSABLE,
+  WEAPON_MAX_RANGE_INCREMENTS,
+  WEAPON_MIGHTY,
+  WEAPON_ONE_HAND_TRAINING,
+  WEAPON_ONE_HANDED_PENALTY,
+  WEAPON_PROFICIENCY,
+  WEAPON_RANGE,
+  WEAPON_RANGED,
+  WEAPON_REACH,
+  WEAPON_SIZE,
+  WEAPON_STRENGTH_DAMAGE,
   WEAPON_TYPE,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { freshSeeder } from "./freshSeed.ts";
 
-/** A double weapon's fields, as its form gives them whole: each but those it gives none. */
+/** A double weapon's fields, as its form gives them whole, by stored field: each but those it gives none. */
 const WEAPON = {
-  baseDamage: "1d8",
-  criticalMultiplier: 2,
-  criticalRange: 2,
-  damageTypes: ["Slashing"],
-  doubleDamage: "1d6",
-  family: "Sword",
-  finessable: null,
-  maxRangeIncrements: null,
-  mighty: null,
-  oneHandedPenalty: null,
-  oneHandTraining: null,
-  proficiency: "Martial",
-  range: null,
-  ranged: null,
-  reach: null,
-  size: "Medium",
-  strengthDamage: "",
-  type: "Longsword",
+  [WEAPON_BASE_DAMAGE]: "1d8",
+  [WEAPON_CRITICAL_MULTIPLIER]: 2,
+  [WEAPON_CRITICAL_RANGE]: 2,
+  [DAMAGE_TYPE]: ["Slashing"],
+  [WEAPON_DOUBLE_DAMAGE]: "1d6",
+  [WEAPON_FAMILY]: "Sword",
+  [WEAPON_FINESSABLE]: null,
+  [WEAPON_MAX_RANGE_INCREMENTS]: null,
+  [WEAPON_MIGHTY]: null,
+  [WEAPON_ONE_HANDED_PENALTY]: null,
+  [WEAPON_ONE_HAND_TRAINING]: null,
+  [WEAPON_PROFICIENCY]: "Martial",
+  [WEAPON_RANGE]: null,
+  [WEAPON_RANGED]: null,
+  [WEAPON_REACH]: null,
+  [WEAPON_SIZE]: "Medium",
+  [WEAPON_STRENGTH_DAMAGE]: "",
+  [WEAPON_TYPE]: "Longsword",
 };
 
 /** A new user's ruleset, with a feat pool and a spell list, its form's save writes into. */
@@ -69,8 +83,8 @@ describe("The same values, through a seed and through a form's save, store the s
     const { session, rulesetId, featPool } = await formRuleset();
     const saved = await EntitiesService.createEntity(session, rulesetId, "feats", {
       name: "Test Lucky",
-      aptitudeIds: [featPool],
-      fields: { families: ["Luck", "Luck"] },
+      links: { listedIn: [{ toId: featPool }] },
+      fields: { [FEAT_FAMILY]: ["Luck", "Luck"] },
     });
 
     const seeded = await rowsOf(seeder.ctx.featMap["Test Lucky"]);
@@ -93,8 +107,8 @@ describe("The same values, through a seed and through a form's save, store the s
     const { session, rulesetId, spellList } = await formRuleset();
     const saved = await EntitiesService.createEntity(session, rulesetId, "spells", {
       name: "Test Bolt",
-      aptitudes: [{ id: spellList, level: 1 }],
-      fields: { castingTime: "1 round", rangeType: "Close" },
+      links: { listedIn: [{ toId: spellList, tier: 1 }] },
+      fields: { [SPELL_CASTING_TIME]: "1 round", [SPELL_RANGE_TYPE]: "Close" },
     });
 
     expect(await rowsOf(seeder.ctx.spellMap["Test Bolt"])).toEqual([]);
@@ -117,15 +131,18 @@ describe("The same values, through a seed and through a form's save, store the s
     const { session, rulesetId } = await formRuleset();
     const template = await EntitiesService.createEntity(session, rulesetId, "items", {
       name: "Test Sword",
-      type: "Weapon",
-      isTemplate: true,
-      fields: { weapon: WEAPON },
+      fields: { ...WEAPON, [ITEM_TYPE]: "Weapon", [ITEM_IS_TEMPLATE]: true },
     });
     const saved = await EntitiesService.createEntity(session, rulesetId, "items", {
       name: "Test Plain Sword",
-      type: "Weapon",
-      sourceItemId: template.id,
-      fields: { weapon: { ...WEAPON, doubleDamage: "", finessable: false }, masterwork: false },
+      fields: {
+        ...WEAPON,
+        [ITEM_TYPE]: "Weapon",
+        [WEAPON_DOUBLE_DAMAGE]: "",
+        [WEAPON_FINESSABLE]: false,
+        [ITEM_MASTERWORK]: false,
+      },
+      links: { madeFrom: template.id },
     });
 
     const fields = [WEAPON_DOUBLE_DAMAGE, ITEM_MASTERWORK, WEAPON_FINESSABLE];

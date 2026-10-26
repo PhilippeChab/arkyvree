@@ -19,8 +19,9 @@ export interface Pagination {
 }
 
 /**
- * What a list reads: every kind's (its search, its own entities alone, its order), and its kind's filters past them, by
- * their query keys (a race's `kind`, a spell's `aptitudeId` and `level`), which its kind's rules read.
+ * What a list reads: every kind's (its search, its own entities alone, its order), and its kind's filters past them,
+ * each by the field, the role or the partition it filters (a race's `partition`, a spell's list by its `listedIn` role
+ * and its `tier`), which its kind's rules read.
  */
 export type ListWhere = Record<string, unknown> & {
   childOnly?: boolean;

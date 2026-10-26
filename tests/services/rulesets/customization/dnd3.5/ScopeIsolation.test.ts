@@ -11,6 +11,7 @@ import { expectRefusedWith } from "@/tests/support/api.ts";
 import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { createSeededTestRuleset, editRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 async function createModifier(sourceId: string) {
   const [modifier] = await Modifiers.create(db, {
@@ -203,7 +204,7 @@ describe("stale ancestor customization IDs", () => {
       invalidateSeededRuleset(feat.rulesetId);
       const local = await EntitiesService.updateEntity(session, own.id, "feats", feat.id, {
         name: feat.name,
-        fields: { families: ["Skill Focus"] },
+        fields: { [FEAT_FAMILY]: ["Skill Focus"] },
       });
       const operation =
         action === "update"

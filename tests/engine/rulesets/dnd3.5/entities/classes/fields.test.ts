@@ -55,7 +55,7 @@ describe("A class's fields", () => {
     });
     expect(CLASS_FIELDS.read(written)).toEqual(values);
     // Its form writes its caster type and its bonus spell ability; its hit die is a column of its own
-    expect(CLASS_FIELDS.formKeys).toEqual(["bonusSpellAbilityId", "casterType"]);
+    expect(CLASS_FIELDS.formNames).toEqual(["bonusSpellAbilityId", "casterType"]);
   });
 });
 

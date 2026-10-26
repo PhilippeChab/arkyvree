@@ -2,13 +2,13 @@
 
 import { z } from "zod";
 
-import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
+import { CustomizationPageEntity, type FormBody, type FormColumnValues } from "@/engine/core/entities/index.ts";
 import {
-  type EntityFieldValues,
   type EntityForm,
   Field,
   type FieldsWrite,
   OwnerValues,
+  type PartialFieldValues,
 } from "@/engine/core/fields/index.ts";
 import type { EntityRecord, EntityWrite } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
@@ -22,23 +22,7 @@ import { ITEM_IS_TEMPLATE, ITEM_SLOT, ITEM_TYPE } from "@/vocabulary/dnd3.5/fiel
 import { TEMPLATE_ITEM_TYPES } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 
 import { ITEM_COLUMNS } from "./columns.ts";
-import { ITEM_FIELDS, type ItemFieldValues } from "./fields.ts";
-
-/**
- * An item's save, as its form sends it: a cost, a weight, a slot or a template it leaves out is kept, null clears it;
- * and its fields (its weapon's, its armor's…).
- */
-interface ItemBody {
-  costGp?: number | null;
-  description?: string | null;
-  fields?: EntityFieldValues;
-  isTemplate?: boolean;
-  name: string;
-  slot?: ItemLocation | null;
-  sourceItemId?: string | null;
-  type?: string | null;
-  weight?: number | null;
-}
+import { ITEM_FIELDS } from "./fields.ts";
 
 /** A variant of an item, as its form sends it. */
 interface VariantBody {
@@ -46,11 +30,8 @@ interface VariantBody {
   name: string;
 }
 
-/**
- * An item's columns, as its forms write them: a template keeps no source, an edit leaves whether it's one as it is, and
- * a slot is always one (`"Other"` for none).
- */
-type ItemColumns = Omit<ItemBody, "fields" | "slot"> & { slot?: ItemLocation };
+/** A slot as a form gives it: a location, none (null), or left out. */
+type SlotGiven = ItemLocation | null | undefined;
 
 /**
  * The columns an item reads off its template where it holds none of its own (its cost, its weight), by the stored field
@@ -73,12 +54,7 @@ const VARIANTS = z.array(z.unknown()).max(RULESET_LIMITS.itemVariants);
  * template, `inherits`) and requirements, its own over them, and saved by its template rules: a template is its copies'
  * source, never one's copy.
  */
-export default class ItemEntity extends CustomizationPageEntity<
-  "items",
-  ItemBody,
-  ItemColumns,
-  typeof ITEM_FIELDS.fields
-> {
+export default class ItemEntity extends CustomizationPageEntity<"items", typeof ITEM_FIELDS.fields> {
   /** Its cost, weight, type, slot and template. */
   protected override readonly columns = ITEM_COLUMNS;
 
@@ -88,41 +64,43 @@ export default class ItemEntity extends CustomizationPageEntity<
   /** Its armor's, its shield's and its weapon's, its charges, its make. */
   protected override readonly fields = ITEM_FIELDS;
 
-  /** Whether a new item is a template (an edit's is its own: its form doesn't change it). */
-  protected override readonly formKeys = { isTemplate: z.boolean().optional() };
-
   protected override readonly label = "Item";
 
-  /** A list of the templates or of the other items. */
-  protected override readonly listColumns = ["isTemplate"];
+  /** Its list's filters: templates, or the items that aren't (its template flag). */
+  protected override readonly listFilters = { [ITEM_IS_TEMPLATE]: z.stringbool() };
 
-  /** Its list's filters: templates, or the items that aren't. */
-  protected override readonly listFilters = { isTemplate: z.stringbool() };
-
-  /** Whether it's a template: its own flag. */
-  protected override readonly storedAt = { isTemplate: { field: ITEM_IS_TEMPLATE } };
+  /** Whether a new item is a template, its own flag (an edit's is its own: its form doesn't change it). */
+  protected override readonly ownFields = { [ITEM_IS_TEMPLATE]: z.boolean().optional() };
 
   override readonly type = "items";
 
   /** Refuses a template's form (`checkTemplate`), or an item's based on a template (`checkTemplateOf`). */
-  protected override checkForm(body: ItemBody, item?: Item) {
-    if (item ? item.fields[ITEM_IS_TEMPLATE] : body.isTemplate) this.checkTemplate(body, item);
+  protected override checkForm(body: FormBody, item?: Item) {
+    if (item ? item.fields[ITEM_IS_TEMPLATE] : body.fields[ITEM_IS_TEMPLATE]) this.checkTemplate(body, item);
     else this.checkTemplateOf(body, item);
   }
 
-  /** A form's columns: a new item's template, and whether it's one; an edited template keeps no source. */
-  protected override columnsOf(body: ItemBody, item?: Item): ItemColumns {
-    const columns = {
-      costGp: body.costGp,
-      description: body.description,
-      name: body.name,
-      // An edit's type is the one it keeps when it gives none, which sets the slot of a template's type
-      slot: this.slotOf({ slot: body.slot, type: this.typeOf(body, item) }),
-      type: body.type,
-      weight: body.weight,
+  /**
+   * A form's columns: its slot always one (`"Other"` for none, a template's type's its own), a new item's template, and
+   * whether it's one; an edited template keeps no source.
+   */
+  protected override columnsOf(body: FormBody, item?: Item): FormColumnValues {
+    const columns = super.columnsOf(body, item);
+    // An edit's type is the one it keeps when it gives none, which sets the slot of a template's type
+    const slot = this.slotOf({ slot: body.fields[ITEM_SLOT] as SlotGiven, type: this.typeOf(body, item) });
+    const madeFrom = this.madeFromOf(body);
+    if (item) {
+      // Whether it's a template is its own: an edit leaves it as it is
+      const { [ITEM_IS_TEMPLATE]: _, ...fields } = columns.fields;
+      const links = { madeFrom: item.fields[ITEM_IS_TEMPLATE] ? null : madeFrom };
+      return { ...columns, fields: { ...fields, [ITEM_SLOT]: slot }, links };
+    }
+    const template = (body.fields[ITEM_IS_TEMPLATE] as boolean | undefined) ?? false;
+    return {
+      ...columns,
+      fields: { ...columns.fields, [ITEM_SLOT]: slot, [ITEM_IS_TEMPLATE]: template },
+      links: { madeFrom },
     };
-    if (item) return { ...columns, sourceItemId: item.fields[ITEM_IS_TEMPLATE] ? null : body.sourceItemId };
-    return { ...columns, isTemplate: body.isTemplate ?? false, sourceItemId: body.sourceItemId };
   }
 
   /**
@@ -132,19 +110,16 @@ export default class ItemEntity extends CustomizationPageEntity<
    * the template's value of (its cost, its weight, as its form shows them). None when the form gives neither.
    */
   protected override fieldsWrite(
-    body: ItemBody,
-    given: Partial<ItemFieldValues>,
+    body: FormBody,
+    given: PartialFieldValues<typeof ITEM_FIELDS.fields>,
     item?: Item,
   ): FieldsWrite | undefined {
     const templateId = this.templateIdOf(body, item);
     const template = templateId ? this.templateValuesOf(templateId) : OwnerValues.NONE;
-    const sent = body as unknown as Record<string, unknown>;
     // A column its form gives its template's value of: none of its own
-    const inherited = this.columns.flatMap((column) => {
-      const field = "field" in column ? column.field : undefined;
-      if (!templateId || !field || !INHERITED_COLUMNS.has(field) || sent[column.key] === undefined) return [];
-      return sent[column.key] === template.fields[field] ? [field] : [];
-    });
+    const inherited = [...INHERITED_COLUMNS].filter(
+      (field) => templateId && body.fields[field] !== undefined && body.fields[field] === template.fields[field],
+    );
     const fields = this.formFields(given, item);
     if (!fields && inherited.length === 0) return undefined;
     const write = fields ? this.fields.toOverrides(fields, this.fields.read(template)) : { fields: {}, links: {} };
@@ -155,7 +130,7 @@ export default class ItemEntity extends CustomizationPageEntity<
   }
 
   /** A page of the ruleset's items, each with its template's name. */
-  protected override listOf(where: { childOnly?: boolean; isTemplate?: boolean }) {
+  protected override listOf(where: { childOnly?: boolean } & Record<string, unknown>) {
     const list = super.listOf(where);
     return {
       ...list,
@@ -170,11 +145,6 @@ export default class ItemEntity extends CustomizationPageEntity<
   protected override requirementsOf(item: Pick<Item, "fields" | "id" | "links">) {
     const { own: requirements, template: proficiency } = this.rulesetData.templateRequirements("items", item);
     return [...proficiency, ...requirements];
-  }
-
-  /** A form's template, the view's. */
-  protected override resolveIds({ sourceItemId }: ItemBody) {
-    return sourceItemId ? { sourceItemId: this.ids.resolve("items", sourceItemId) } : {};
   }
 
   /**
@@ -196,7 +166,7 @@ export default class ItemEntity extends CustomizationPageEntity<
    */
   override openTemplates(type?: string) {
     const parsed = RulesError.parse(TEMPLATE_TYPE.optional(), type, ["type"]);
-    return { filters: this.filtersOf({ isTemplate: true, type: parsed }) };
+    return { filters: this.filtersOf({ [ITEM_IS_TEMPLATE]: true, [ITEM_TYPE]: parsed }) };
   }
 
   /**
@@ -226,7 +196,11 @@ export default class ItemEntity extends CustomizationPageEntity<
    */
   override planDuplicate(sourceItemId: string, body: EntityForm) {
     const source = this.findSource(sourceItemId);
-    const plan = this.planCreate({ ...body, isTemplate: false, sourceItemId: this.templateOf(source) });
+    const plan = this.planCreate({
+      ...body,
+      fields: { ...body.fields, [ITEM_IS_TEMPLATE]: false },
+      links: { ...body.links, madeFrom: this.templateOf(source) ?? null },
+    });
     if (source.fields[ITEM_IS_TEMPLATE]) return plan;
     return {
       ...plan,
@@ -301,8 +275,8 @@ export default class ItemEntity extends CustomizationPageEntity<
    * Refuses a template made from another item (a template is its copies' source, never one's copy), or of a type no
    * item can be based on a template of: a new one's, or the one an edit changes it to (one it keeps stays).
    */
-  private checkTemplate(body: ItemBody, template?: Item) {
-    if (body.sourceItemId) throw new RulesError("unprocessable", "Template items cannot have a source item");
+  private checkTemplate(body: FormBody, template?: Item) {
+    if (this.madeFromOf(body)) throw new RulesError("unprocessable", "Template items cannot have a source item");
     const type = this.typeOf(body, template);
     if ((!template || type !== (template.fields[ITEM_TYPE] ?? null)) && !isOneOf(type, TEMPLATE_ITEM_TYPES)) {
       throw new RulesError(
@@ -316,7 +290,7 @@ export default class ItemEntity extends CustomizationPageEntity<
    * Refuses an item based on anything but a template of its type (the one its form gives, or the one it keeps), which
    * it would read its fields and requirements off: a weapon's, an armor's or a shield's.
    */
-  private checkTemplateOf(body: ItemBody, item?: Item) {
+  private checkTemplateOf(body: FormBody, item?: Item) {
     const templateId = this.templateIdOf(body, item);
     if (!templateId) return;
 
@@ -335,7 +309,7 @@ export default class ItemEntity extends CustomizationPageEntity<
 
   /** What the server reads a template's copies with: the items naming it by its id, or by one it stands for. */
   private copiesOf(template: Item) {
-    return this.filtersOf({ sourceItemId: this.rulesetData.cow.getEquivalentIds(template.id) });
+    return this.filtersOf({ madeFrom: this.rulesetData.cow.getEquivalentIds(template.id) });
   }
 
   /** The item a duplicate or variants are made from, as the view has it: refused when there's none of its id. */
@@ -360,21 +334,27 @@ export default class ItemEntity extends CustomizationPageEntity<
     ].join(", and ");
   }
 
+  /** The template a form gives (its `madeFrom` link: null none), none when it leaves it out. */
+  private madeFromOf(body: Pick<FormBody, "links">) {
+    return body.links.madeFrom as string | null | undefined;
+  }
+
   /**
    * An item's slot: the one its type sets (an armor's the torso, a shield's the off hand), or the one its form gives,
    * `"Other"` for none (null: an item worn nowhere in particular).
    */
-  private slotOf(item: { slot?: ItemLocation | null; type?: string | null }): ItemLocation | undefined {
+  private slotOf(item: { slot?: SlotGiven; type?: string | null }): ItemLocation | undefined {
     return ItemPlacement.slotOfType(item.type ?? null) ?? (item.slot === null ? "Other" : item.slot);
   }
 
   /**
-   * The template a form (its body, or its columns) saves an item with: none for an edited template, which keeps no
-   * source, or the form's (null: none), or the one the edited item keeps.
+   * The template a form saves an item with: none for an edited template, which keeps no source, or the form's (null:
+   * none), or the one the edited item keeps.
    */
-  private templateIdOf(form: { sourceItemId?: string | null }, item?: Item) {
+  private templateIdOf(body: Pick<FormBody, "links">, item?: Item) {
     if (item?.fields[ITEM_IS_TEMPLATE]) return null;
-    return form.sourceItemId === undefined ? (item?.links.madeFrom ?? null) : form.sourceItemId;
+    const madeFrom = this.madeFromOf(body);
+    return madeFrom === undefined ? (item?.links.madeFrom ?? null) : madeFrom;
   }
 
   /**
@@ -397,7 +377,8 @@ export default class ItemEntity extends CustomizationPageEntity<
   }
 
   /** The type a form saves an item with: the form's (null: none), or the one the edited item keeps. */
-  private typeOf(body: ItemBody, item?: Item) {
-    return body.type === undefined ? (item?.fields[ITEM_TYPE] ?? null) : body.type;
+  private typeOf(body: Pick<FormBody, "fields">, item?: Item) {
+    const type = body.fields[ITEM_TYPE] as string | null | undefined;
+    return type === undefined ? (item?.fields[ITEM_TYPE] ?? null) : type;
   }
 }

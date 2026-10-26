@@ -14,25 +14,25 @@ describe("rulesets entities: races", () => {
   test("creates, reads, lists, updates and deletes a race", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
 
-    const json = { name: "Test Race", description: "A test race", size: "Medium", baseSpeed: 30 };
+    const json = {
+      name: "Test Race",
+      description: "A test race",
+      fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
+    };
     const created = await expectOk(kinds.$post({ param: { id, entityType }, json }));
-    expect(created).toMatchObject({
-      name: json.name,
-      description: json.description,
-      fields: { [RACE_SIZE]: json.size, [RACE_BASE_SPEED]: json.baseSpeed },
-    });
+    expect(created).toMatchObject(json);
     const param = { id, entityType, entityId: created.id };
 
     expect(await expectOk(entity.$get({ param }))).toMatchObject({ id: created.id, name: "Test Race" });
     const list = await expectOk(kinds.$get({ param: { id, entityType }, query: { search: "Test Race" } }));
     expect(list.items.map((r) => r.id)).toContain(created.id);
 
-    const update = { name: "Renamed Race", description: "Updated", size: "Large", baseSpeed: 40 };
-    expect(await expectOk(entity.$put({ param, json: update }))).toMatchObject({
-      name: update.name,
-      description: update.description,
-      fields: { [RACE_SIZE]: update.size, [RACE_BASE_SPEED]: update.baseSpeed },
-    });
+    const update = {
+      name: "Renamed Race",
+      description: "Updated",
+      fields: { [RACE_SIZE]: "Large", [RACE_BASE_SPEED]: 40 },
+    };
+    expect(await expectOk(entity.$put({ param, json: update }))).toMatchObject(update);
 
     await expectOk(entity.$delete({ param }));
     await expectStatus(entity.$get({ param }), 404);
@@ -46,13 +46,13 @@ describe("rulesets entities: races", () => {
 
   test("rejects a race without a name, with an unknown size, or a speed that isn't a whole number above 0", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    const valid = { name: "Race", size: "Medium", baseSpeed: 30 };
+    const valid = { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 };
     for (const json of [
-      { ...valid, name: "" },
-      { ...valid, size: "Colossal-ish" },
-      { ...valid, baseSpeed: "fast" },
-      { ...valid, baseSpeed: 0 },
-      { ...valid, baseSpeed: 7.5 },
+      { name: "", fields: valid },
+      { name: "Race", fields: { ...valid, [RACE_SIZE]: "Colossal-ish" } },
+      { name: "Race", fields: { ...valid, [RACE_BASE_SPEED]: "fast" } },
+      { name: "Race", fields: { ...valid, [RACE_BASE_SPEED]: 0 } },
+      { name: "Race", fields: { ...valid, [RACE_BASE_SPEED]: 7.5 } },
     ])
       await expectStatus(kinds.$post({ param: { id, entityType }, json }), 400);
   });
@@ -61,7 +61,10 @@ describe("rulesets entities: races", () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     await expectStatus(kinds.$get({ param: { id: NIL_UUID, entityType }, query: {} }), 404);
     const param = { id, entityType, entityId: NIL_UUID };
-    await expectStatus(entity.$put({ param, json: { name: "Missing", size: "Medium", baseSpeed: 30 } }), 404);
+    await expectStatus(
+      entity.$put({ param, json: { name: "Missing", fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 } } }),
+      404,
+    );
     await expectStatus(entity.$delete({ param }), 404);
   });
 });

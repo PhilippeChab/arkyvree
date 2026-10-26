@@ -32,6 +32,14 @@ import {
 import { ApiError } from "@/client/src/services/ApiError.ts";
 import { Engine } from "@/engine/index.ts";
 import { PASSWORD_MIN_LENGTH } from "@/shared/auth.ts";
+import {
+  CLASS_HD,
+  ITEM_COST_GP,
+  ITEM_SLOT,
+  ITEM_TYPE,
+  LANGUAGE_TYPE,
+  RACE_BASE_SPEED,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Every base rules' words, kinds and license, as the engine describes them to the client. */
 const RULES = Engine.rules().describeAll();
@@ -281,36 +289,38 @@ describe("An activity", () => {
           baseRules: "Dungeons & Dragons: 3.5",
           changedFields: [
             { field: "name", from: "A", to: "B" },
-            { field: "costGp", from: "15", to: "20" },
-            { field: "slot", from: "Neck" },
-            { field: "baseSpeed" },
-            {
-              field: "primaryAbilityId",
-              from: "7c0d4b52-0c0e-4b8e-9d7f-1f2a3b4c5d6e",
-              to: "00000000-0000-0000-0000-000000000000",
-            },
-            { field: "sourceItemId", to: "00000000-0000-0000-0000-000000000000" },
+            { field: ITEM_COST_GP, from: "15", to: "20" },
+            { field: ITEM_SLOT, from: "Neck" },
+            { field: RACE_BASE_SPEED },
+            { field: "madeFrom", to: "00000000-0000-0000-0000-000000000000" },
             { bad: true },
           ],
           level: 3,
         },
         RULES,
       ),
-    ).toBe(
-      "Name: A → B\nCost: 15.00 gp → 20.00 gp\nSlot cleared\nBase Speed updated\nPrimary Ability updated\nSource Item updated\nLevel 3",
-    );
-    // A field reads as its own entity's column, never another's of the same key: a class's hit die, a language's type
+    ).toBe("Name: A → B\nCost: 15.00 gp → 20.00 gp\nSlot cleared\nRace Base Speed updated\nTemplate updated\nLevel 3");
+    // A field reads as its own entity's column, by the stored field or the role that keeps it, never another's: a
+    // class's hit die, a language's type, a skill's ability by its link's role, which says only that it changed
     const baseRules = "Dungeons & Dragons: 3.5";
-    expect(formatActivityDetails("updateClass", { baseRules, changedFields: [{ field: "hd", to: "8" }] }, RULES)).toBe(
-      "Hit Die set to d8",
-    );
+    expect(
+      formatActivityDetails("updateClass", { baseRules, changedFields: [{ field: CLASS_HD, to: "8" }] }, RULES),
+    ).toBe("Hit Die set to d8");
     expect(
       formatActivityDetails(
         "updateLanguage",
-        { baseRules, changedFields: [{ field: "type", from: "Common", to: "Exotic" }] },
+        { baseRules, changedFields: [{ field: LANGUAGE_TYPE, from: "Common", to: "Exotic" }] },
         RULES,
       ),
     ).toBe("Type: Common → Exotic");
+    const ability = {
+      field: "keyAbility",
+      from: "7c0d4b52-0c0e-4b8e-9d7f-1f2a3b4c5d6e",
+      to: "00000000-0000-0000-0000-000000000000",
+    };
+    expect(formatActivityDetails("updateSkill", { baseRules, changedFields: [ability] }, RULES)).toBe(
+      "Primary Ability updated",
+    );
     expect([
       formatActivityDetails("createModifier", { target: "combat.ac.misc", operator: "add", value: "1" }),
       formatActivityDetails("updateRequirement", { target: "identity.name", operator: "not_empty" }),
@@ -320,6 +330,27 @@ describe("An activity", () => {
       null,
       null,
     ]);
+  });
+
+  test("details an older activity's changes, which names no base rules, by every base rules' columns", () => {
+    // As 0090 rewrote what an item's, a race's and a spell's update recorded before its activity named its base rules
+    const changedFields = [
+      { field: "madeFrom", from: "7c0d4b52-0c0e-4b8e-9d7f-1f2a3b4c5d6e", to: "00000000-0000-0000-0000-000000000000" },
+      { field: ITEM_TYPE, from: "Weapon", to: "Armor" },
+    ];
+    const read = "Template updated\nItem Type: Weapon → Armor";
+    expect(formatActivityDetails("updateItem", { entityName: "Blade", changedFields }, RULES)).toBe(read);
+    expect(
+      formatActivityDetails(
+        "updateItem",
+        { baseRules: "Dungeons & Dragons: 3.5", entityName: "Blade", changedFields },
+        RULES,
+      ),
+    ).toBe(read);
+    const speed = { changedFields: [{ field: RACE_BASE_SPEED, from: "30", to: "20" }] };
+    expect(formatActivityDetails("updateRace", speed, RULES)).toBe("Base Speed: 30 → 20");
+    const save = { changedFields: [{ field: "resistedBy", to: "00000000-0000-0000-0000-000000000000" }] };
+    expect(formatActivityDetails("updateSpell", save, RULES)).toBe("Saving Throw updated");
   });
 
   test("happened a while ago, in the unit that reads best", () => {

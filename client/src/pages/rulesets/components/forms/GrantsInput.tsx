@@ -19,15 +19,18 @@ import type { ColumnInputProps } from "./columnContext.ts";
 import { poolsOf } from "./entityFields.ts";
 import { grantKey, grantLabel, sortGrants } from "./grants.ts";
 
+/** A grant as its input holds it and its save sends it: its entity's id (`toId`) and the one it's through's (`viaId`). */
+interface Grant {
+  toId: string;
+  viaId: string;
+}
+
 /** A grant its input offers or shows: its entity's id and the one it's through's, and its label. */
 interface GrantOption {
   entityId: string;
   label: string;
   viaId: string;
 }
-
-/** A grant as its input holds it: its entity's id and the one it's through's, at its field's keys. */
-type Grant = Record<string, string>;
 
 /** The entities an entity grants, each through another (a class level's feats, each through a pool). */
 type GrantsField = Extract<EntityField, { input: "grants" }>;
@@ -44,7 +47,6 @@ export function GrantsInput<T extends FieldValues>({
   name,
   rulesetId,
 }: ColumnInputProps<T, GrantsField>) {
-  const { entityKey, viaKey } = field;
   const { field: bound } = useController({ control: form.control, name });
   const grants: Grant[] = Array.isArray(bound.value) ? bound.value : [];
   const readOnly = useReadOnlyFields();
@@ -77,10 +79,10 @@ export function GrantsInput<T extends FieldValues>({
 
   // The freshest label first: the loaded options, then the saved entity's, then the one it was picked with.
   const selected = grants.map((grant): GrantOption => {
-    const key = grantKey(grant[entityKey], grant[viaKey]);
+    const key = grantKey(grant.toId, grant.viaId);
     return {
-      entityId: grant[entityKey],
-      viaId: grant[viaKey],
+      entityId: grant.toId,
+      viaId: grant.viaId,
       label:
         options.find((option) => keyOf(option) === key)?.label ??
         context.grantLabels?.get(key) ??
@@ -93,10 +95,7 @@ export function GrantsInput<T extends FieldValues>({
   const setGrants = (next: GrantOption[]) => {
     setPickedLabels((labels) => new Map([...labels, ...next.map((option) => [keyOf(option), option.label] as const)]));
     bound.onChange(
-      sortGrants(next, (option) => option.label).map(({ entityId, viaId }) => ({
-        [entityKey]: entityId,
-        [viaKey]: viaId,
-      })),
+      sortGrants(next, (option) => option.label).map(({ entityId, viaId }): Grant => ({ toId: entityId, viaId })),
     );
   };
 

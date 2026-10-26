@@ -5,6 +5,7 @@ import type {
   FieldSpec as DeclaredFieldSpec,
   FieldValues as DeclaredFieldValues,
   LeafSpec as DeclaredLeafSpec,
+  GroupSpec,
   NumberSpec,
 } from "@/shared/customization/fields.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
@@ -40,6 +41,11 @@ export type LeafSpec = DeclaredLeafSpec<StandaloneKind>;
 
 /** No fields: a kind whose entities hold none of their own (`FieldCodec.NONE`). */
 export type NoFields = Record<never, never>;
+
+/** Some of the values an entity's fields read, by name, a group's some of its own: what a form gives of them. */
+export type PartialFieldValues<S extends Fields> = {
+  -readonly [K in keyof S]?: S[K] extends GroupSpec ? PartialFieldValues<S[K]["fields"]> : FieldValues<S>[K];
+};
 
 /** A leaf its owner's fields keep: any but a reference, whose value is a single link's. */
 export type StoredLeaf = Exclude<LeafSpec, { kind: "ref" }>;

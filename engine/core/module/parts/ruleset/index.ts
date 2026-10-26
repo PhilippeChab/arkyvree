@@ -13,4 +13,4 @@ export type {
   RulesDescription,
   RulesWord,
 } from "./RulesDescription.ts";
-export { default as RulesetPart } from "./RulesetPart.ts";
+export { default as RulesetPart, type SettingsForm } from "./RulesetPart.ts";

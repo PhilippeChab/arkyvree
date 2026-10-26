@@ -8,7 +8,7 @@ import { Entities } from "@/server/repositories/index.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
-import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { CLASS_HD, CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const klass = api.api.rulesets[":id"].entities[":entityType"][":entityId"];
 const levels = klass.owned;
@@ -28,7 +28,7 @@ async function setup() {
   const created = await expectOk(
     api.api.rulesets[":id"].entities[":entityType"].$post({
       param: { id, entityType: "classes" },
-      json: { name: "Level Class", hd: 10 },
+      json: { name: "Level Class", fields: { [CLASS_HD]: 10 } },
     }),
   );
   return { id, classId: created.id };
@@ -39,7 +39,10 @@ describe("rulesets class levels", () => {
     const { id, classId } = await setup();
 
     const created = await expectOk(
-      levels.$post({ param: classParam(id, classId), json: { level: 1, fields: { bab: 1, skills: 4 } } }),
+      levels.$post({
+        param: classParam(id, classId),
+        json: { fields: { [CLASS_LEVEL_BAB]: 1, [CLASS_LEVEL_SKILL_POINTS]: 4 }, position: 1 },
+      }),
     );
     expect(created).toMatchObject({
       position: 1,
@@ -57,12 +60,16 @@ describe("rulesets class levels", () => {
 
     // The level number is fixed once created.
     const { updatedAt } = created;
-    expect(await expectOk(level.$put({ param, json: { fields: { bab: 3, skills: 6 }, updatedAt } }))).toMatchObject({
+    expect(
+      await expectOk(
+        level.$put({ param, json: { fields: { [CLASS_LEVEL_BAB]: 3, [CLASS_LEVEL_SKILL_POINTS]: 6 }, updatedAt } }),
+      ),
+    ).toMatchObject({
       position: 1,
       fields: { [CLASS_LEVEL_BAB]: 3, [CLASS_LEVEL_SKILL_POINTS]: 6 },
     });
     // An edit started from the level before that one is stale
-    await expectStatus(level.$put({ param, json: { fields: { bab: 4 }, updatedAt } }), 409);
+    await expectStatus(level.$put({ param, json: { fields: { [CLASS_LEVEL_BAB]: 4 }, updatedAt } }), 409);
 
     await expectOk(level.$delete({ param }));
     expect(await expectOk(levels.$get({ param: classParam(id, classId) }))).toEqual([]);
@@ -71,10 +78,16 @@ describe("rulesets class levels", () => {
   test("requires the previous class level from level 2 on", async () => {
     const { id, classId } = await setup();
     const first = await expectOk(
-      levels.$post({ param: classParam(id, classId), json: { level: 1, fields: { bab: 1, skills: 4 } } }),
+      levels.$post({
+        param: classParam(id, classId),
+        json: { fields: { [CLASS_LEVEL_BAB]: 1, [CLASS_LEVEL_SKILL_POINTS]: 4 }, position: 1 },
+      }),
     );
     const fifth = await expectOk(
-      levels.$post({ param: classParam(id, classId), json: { level: 5, fields: { bab: 5, skills: 4 } } }),
+      levels.$post({
+        param: classParam(id, classId),
+        json: { fields: { [CLASS_LEVEL_BAB]: 5, [CLASS_LEVEL_SKILL_POINTS]: 4 }, position: 5 },
+      }),
     );
 
     const param = (entityId: string) => ({ id, entityType: "class-levels" as const, entityId });
@@ -144,7 +157,7 @@ describe("rulesets class levels", () => {
     const param = { ...classParam(id, classId), ownedId: NIL_UUID };
     const byId = api.api.rulesets[":id"].entities[":entityType"].owned[":ownedId"];
     await expectStatus(byId.$get({ param: { id, entityType: "classes", ownedId: NIL_UUID } }), 404);
-    await expectStatus(level.$put({ param, json: { fields: { bab: 1 } } }), 404);
+    await expectStatus(level.$put({ param, json: { fields: { [CLASS_LEVEL_BAB]: 1 } } }), 404);
     await expectStatus(level.$delete({ param }), 404);
   });
 });

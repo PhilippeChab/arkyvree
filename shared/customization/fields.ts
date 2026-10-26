@@ -193,8 +193,8 @@ export interface TextSpec extends StoredLeafBase {
  * - while another of the entity's fields (`field`, at the same level) holds one of `values`: the codec reads it, writes
  *   it and takes it from a form only then, and its default otherwise (a skill's armor check multiplier, while armor
  *   weighs on it);
- * - while one of the entity's columns (`column`) holds one of `values`, which only its form reads: it shows the field
- *   then (an item's weapon, while it's a weapon).
+ * - while one of the entity's columns (`column`, the stored field that keeps it: 3.5's `ITEM_TYPE`) holds one of
+ *   `values`, which only its form reads: it shows the field then (an item's weapon, while it's a weapon).
  */
 export type FieldCondition =
   | { field: string; values: readonly (boolean | string)[] }

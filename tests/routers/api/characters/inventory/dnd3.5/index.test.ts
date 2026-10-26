@@ -17,7 +17,7 @@ async function setup() {
   const item = await expectOk(
     api.api.rulesets[":id"].entities[":entityType"].$post({
       param: { id: rulesetId, entityType: "items" },
-      json: { name: "Inventory Item", weight: 5, costGp: 10 },
+      json: { name: "Inventory Item", fields: { [ITEM_WEIGHT]: 5, [ITEM_COST_GP]: 10 } },
     }),
   );
   const abilities = Object.fromEntries(Object.values(ctx.abilityMap).map((id) => [id, 10]));

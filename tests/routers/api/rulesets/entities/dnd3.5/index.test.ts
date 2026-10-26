@@ -9,6 +9,7 @@ import { NIL_UUID } from "@/tests/support/seed.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
 import {
   CLASS_HD,
+  FEAT_FAMILY,
   FEAT_GENERATED,
   ITEM_COST_GP,
   ITEM_IS_TEMPLATE,
@@ -16,6 +17,7 @@ import {
   LANGUAGE_TYPE,
   RACE_BASE_SPEED,
   RACE_SIZE,
+  SPELL_SAVE_EFFECT,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** An entity kind's URL segment, as the routes by kind take it. */
@@ -52,23 +54,31 @@ describe("rulesets entities by kind", () => {
     // Each kind by its URL segment, a new one's form (its columns, as its rules describe them), and what its answer
     // keeps, as a read describes it: its own fields, its links
     const forms: [Segment, Record<string, unknown>, Record<string, unknown>][] = [
-      ["races", { size: "Small", baseSpeed: 20 }, { fields: { [RACE_SIZE]: "Small", [RACE_BASE_SPEED]: 20 } }],
-      ["languages", { type: "Spoken" }, { fields: { [LANGUAGE_TYPE]: "Spoken" } }],
+      [
+        "races",
+        { fields: { [RACE_SIZE]: "Small", [RACE_BASE_SPEED]: 20 } },
+        { fields: { [RACE_SIZE]: "Small", [RACE_BASE_SPEED]: 20 } },
+      ],
+      ["languages", { fields: { [LANGUAGE_TYPE]: "Spoken" } }, { fields: { [LANGUAGE_TYPE]: "Spoken" } }],
       [
         "skills",
-        { primaryAbilityId: ability.id },
+        { links: { keyAbility: ability.id } },
         { links: [{ role: "keyAbility", toId: ability.id, toName: ability.name }] },
       ],
-      ["feats", { aptitudeIds: [featPool.id] }, { fields: { [FEAT_GENERATED]: false } }],
+      ["feats", { links: { listedIn: [{ toId: featPool.id }] } }, { fields: { [FEAT_GENERATED]: false } }],
       [
         "spells",
-        { aptitudes: [{ id: spellList.id, level: 1 }], saveEffect: "" },
+        { fields: { [SPELL_SAVE_EFFECT]: "" }, links: { listedIn: [{ toId: spellList.id, tier: 1 }] } },
         { fields: {}, links: [{ role: "listedIn", toId: spellList.id, toName: spellList.name, tier: 1 }] },
       ],
-      ["items", { costGp: 5 }, { fields: { [ITEM_COST_GP]: 5 } }],
+      ["items", { fields: { [ITEM_COST_GP]: 5 } }, { fields: { [ITEM_COST_GP]: 5 } }],
       ["aptitudes", {}, {}],
-      ["classes", { hd: 10 }, { fields: { [CLASS_HD]: 10 } }],
-      ["saves", { abilityId: ability.id }, { links: [{ role: "keyAbility", toId: ability.id, toName: ability.name }] }],
+      ["classes", { fields: { [CLASS_HD]: 10 } }, { fields: { [CLASS_HD]: 10 } }],
+      [
+        "saves",
+        { links: { keyAbility: ability.id } },
+        { links: [{ role: "keyAbility", toId: ability.id, toName: ability.name }] },
+      ],
       ["mechanics", {}, {}],
     ];
     for (const [entityType, columns, kept] of forms) {
@@ -106,48 +116,62 @@ describe("rulesets entities by kind", () => {
 
     // A new pool's feats, and its feats of a family: those alone
     const pool = await expectOk(kinds.$post({ param: { id, entityType: "aptitudes" }, json: { name: "Test Pool" } }));
-    const feat = (form: { fields?: { families: string[] }; name: string }) =>
-      expectOk(kinds.$post({ param: { id, entityType: "feats" }, json: { ...form, aptitudeIds: [pool.id] } }));
-    const focus = await feat({ name: "Test Focus", fields: { families: [FEAT_FAMILIES[0]] } });
+    const feat = (form: { fields?: Record<string, string[]>; name: string }) =>
+      expectOk(
+        kinds.$post({
+          param: { id, entityType: "feats" },
+          json: { ...form, links: { listedIn: [{ toId: pool.id }] } },
+        }),
+      );
+    const focus = await feat({ name: "Test Focus", fields: { [FEAT_FAMILY]: [FEAT_FAMILIES[0]] } });
     const plain = await feat({ name: "Test Plain" });
-    expect(ids(await list("feats", { aptitudeId: pool.id }))).toEqual([focus.id, plain.id].sort());
-    expect(ids(await list("feats", { aptitudeId: pool.id, family: FEAT_FAMILIES[0] }))).toEqual([focus.id]);
+    expect(ids(await list("feats", { listedIn: pool.id }))).toEqual([focus.id, plain.id].sort());
+    expect(ids(await list("feats", { listedIn: pool.id, [FEAT_FAMILY]: FEAT_FAMILIES[0] }))).toEqual([focus.id]);
     const groups = (query: Record<string, string>) =>
-      expectOk(grouped.$get({ param: { id, entityType: "feats" }, query: { aptitudeId: pool.id, ...query } }));
+      expectOk(grouped.$get({ param: { id, entityType: "feats" }, query: { listedIn: pool.id, ...query } }));
     const representatives = (page: { items: { representativeId: string }[] }) =>
       page.items.map((group) => group.representativeId).sort();
     expect(representatives(await groups({}))).toEqual([focus.id, plain.id].sort());
     expect(representatives(await groups({ search: "Test Focus" }))).toEqual([focus.id]);
 
     // A spell list's spells of one level: none of another's
-    const zero = ids(await list("spells", { aptitudeId: spellList.id, level: "0" }));
-    const one = ids(await list("spells", { aptitudeId: spellList.id, level: "1" }));
+    const zero = ids(await list("spells", { listedIn: spellList.id, tier: "0" }));
+    const one = ids(await list("spells", { listedIn: spellList.id, tier: "1" }));
     expect(zero.length).toBeGreaterThan(0);
     expect(one.length).toBeGreaterThan(0);
     expect(zero.filter((spellId) => one.includes(spellId))).toEqual([]);
 
     // A player character's races and classes, an item's templates and the items that aren't
     for (const entityType of ["races", "classes"] as const) {
-      const pcs = (await list(entityType, { kind: "pc" })).items;
+      const pcs = (await list(entityType, { partition: "pc" })).items;
       expect(pcs.length).toBeGreaterThan(0);
       expect(pcs.every((row) => row.partition === "pc")).toBe(true);
     }
     const templated = async (isTemplate: boolean) =>
-      (await list("items", { isTemplate: String(isTemplate) })).items.every(
+      (await list("items", { [ITEM_IS_TEMPLATE]: String(isTemplate) })).items.every(
         (item) => item.fields[ITEM_IS_TEMPLATE] === isTemplate,
       );
     expect(await templated(true)).toBe(true);
     expect(await templated(false)).toBe(true);
 
     // A filter its kind takes none of, its groups' too, by key, and a filter's value of another type
-    const refused = await expectStatus(kinds.$get({ param: { id, entityType: "races" }, query: { level: "1" } }), 400);
+    const refused = await expectStatus(kinds.$get({ param: { id, entityType: "races" }, query: { tier: "1" } }), 400);
     expect(await refused.json()).toMatchObject({
-      issues: [{ category: "level", message: "races take no level filter" }],
+      issues: [{ category: "tier", message: "races take no tier filter" }],
     });
-    const groupFamily = grouped.$get({ param: { id, entityType: "feats" }, query: { family: FEAT_FAMILIES[0] } });
-    expect(await (await expectStatus(groupFamily, 400)).json()).toMatchObject({ issues: [{ category: "family" }] });
-    await expectStatus(kinds.$get({ param: { id, entityType: "feats" }, query: { aptitudeId: "pool" } }), 400);
-    await expectStatus(kinds.$get({ param: { id, entityType: "spells" }, query: { level: "one" } }), 400);
+    const family = { [FEAT_FAMILY]: FEAT_FAMILIES[0] };
+    const groupFamily = grouped.$get({ param: { id, entityType: "feats" }, query: family });
+    expect(await (await expectStatus(groupFamily, 400)).json()).toMatchObject({ issues: [{ category: FEAT_FAMILY }] });
+    await expectStatus(kinds.$get({ param: { id, entityType: "feats" }, query: { listedIn: "pool" } }), 400);
+    await expectStatus(kinds.$get({ param: { id, entityType: "spells" }, query: { tier: "one" } }), 400);
+    // The old join's and the old table's keys, filters no kind takes
+    for (const [entityType, query] of [
+      ["feats", { aptitudeId: pool.id }],
+      ["spells", { level: "1" }],
+      ["items", { isTemplate: "true" }],
+      ["races", { kind: "pc" }],
+    ] as const)
+      await expectStatus(kinds.$get({ param: { id, entityType }, query }), 400);
   });
 
   test("reads a list's shared query: its order, its page, its own entities alone", async () => {
@@ -169,7 +193,10 @@ describe("rulesets entities by kind", () => {
 
     // A fork's own entities, those it inherits left out; "false" reads as no
     await expectOk(
-      kinds.$post({ param: { id, entityType: "languages" }, json: { name: "Test Cant", type: "Secret" } }),
+      kinds.$post({
+        param: { id, entityType: "languages" },
+        json: { name: "Test Cant", fields: { [LANGUAGE_TYPE]: "Secret" } },
+      }),
     );
     expect(names(await list({ childOnly: "true" }))).toEqual(["Test Cant"]);
     const all = names(await list({ childOnly: "false", limit: "100" }));
@@ -191,7 +218,9 @@ describe("rulesets entities by kind", () => {
       id: shield.id,
       placement: { hand: false, locations: expect.arrayContaining([expect.objectContaining({ grouped: true })]) },
     });
-    const copy = await expectOk(entity.duplicate.$post({ param, json: { name: "Test Buckler", type: "Shield" } }));
+    const copy = await expectOk(
+      entity.duplicate.$post({ param, json: { name: "Test Buckler", fields: { [ITEM_TYPE]: "Shield" } } }),
+    );
     expect(copy).toMatchObject({
       name: "Test Buckler",
       fields: { [ITEM_IS_TEMPLATE]: false },
@@ -302,8 +331,8 @@ describe("rulesets entities by kind", () => {
       expect({ type, statuses }).toEqual({ type, statuses: [404, 404, 404] });
       expect({
         type,
-        pools: (await list({ aptitudeId: NIL_UUID })).status === 200,
-        levels: (await list({ level: "1" })).status === 200,
+        pools: (await list({ listedIn: NIL_UUID })).status === 200,
+        levels: (await list({ tier: "1" })).status === 200,
         groups: groups.status === 200,
         duplicate: !(await refusesAction(duplicate, "duplicate", entityType)),
         variants: !(await refusesAction(variants, "variants", entityType)),
@@ -324,7 +353,7 @@ describe("rulesets entities by kind", () => {
     const { id } = await setup();
     const rules = await expectOk(api.api.rules.$get());
     const scoped = rules["Dungeons & Dragons: 3.5"].kinds.filter((kind) => kind.pools);
-    const aptitudes = { key: "aptitudeId", param: "aptitude", type: "aptitudes" };
+    const aptitudes = { param: "aptitude", role: "listedIn", type: "aptitudes" };
     expect(scoped.map(({ pools }) => pools)).toEqual([
       { ...aptitudes, scope: "feats" },
       { ...aptitudes, scope: "spells" },
@@ -352,7 +381,7 @@ describe("rulesets entities by kind", () => {
         visited.push(type);
         expect(Object.keys(pools)).toContain(type);
         const entityType = getUrlSegment(type) as Segment;
-        const query = { aptitudeId: pools[type] ?? "", limit: "1" };
+        const query = { listedIn: pools[type] ?? "", limit: "1" };
         const [listed] = (await expectOk(kinds.$get({ param: { id, entityType }, query }))).items;
         const read: Record<string, unknown> = await expectOk(
           entity.$get({ param: { id, entityType, entityId: listed.id } }),

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { type LevelColumns, levelKeysOf, readLevel } from "@/client/src/pages/rulesets/components/forms/levelForm.ts";
+import { type LevelColumns, readLevel } from "@/client/src/pages/rulesets/components/forms/levelForm.ts";
 import {
   buildProgressionBody,
   describeFeatureRows,
@@ -15,30 +15,26 @@ const COLUMNS: LevelColumns = {
   grants: CLASS_LEVEL_COLUMNS.find((column) => column.input === "grants"),
 } as LevelColumns;
 
-const EVASION = { id: "evasion", aptitudeId: "features", name: "Evasion" };
+const EVASION = { id: "evasion", viaId: "features", name: "Evasion" };
 
 /** The fields a 3.5 class's Progression tab sets: its base attack bonus and skill points, each by its stored field. */
 const TRACKS = [
   { field: CLASS_LEVEL_BAB, key: "bab" },
   { field: CLASS_LEVEL_SKILL_POINTS, key: "skills" },
 ];
-const FIELDS = TRACKS.map((track) => track.key);
-
-/** Where the save writes them: a level's `saves` and `feats`, a pool's `aptitudeId`. */
-const KEYS = levelKeysOf(COLUMNS);
 
 /**
  * A class level as its query reads it: its base attack bonus and skill points among its fields, a save's base and its
  * granted feats.
  */
-function level(id: string, number: number, feats: { aptitudeId: string; id: string; name: string }[] = []) {
+function level(id: string, number: number, grants: { id: string; name: string; viaId: string }[] = []) {
   const row = {
     id,
     position: number,
     updatedAt: "",
     fields: { [CLASS_LEVEL_BAB]: number, [CLASS_LEVEL_SKILL_POINTS]: 4 },
-    saves: [{ saveId: "fort", base: 2 }],
-    feats: feats.map((feat) => ({ ...feat, description: null, aptitudeName: "Class Features", free: false })),
+    baseBonus: [{ toId: "fort", amount: 2 }],
+    grants: grants.map((grant) => ({ ...grant, description: null, viaName: "Class Features", free: false })),
   };
   return readLevel(row, COLUMNS, TRACKS);
 }
@@ -64,21 +60,21 @@ describe("A Progression tab's save", () => {
 
   test("sends nothing for a tab that changed nothing", () => {
     expect(
-      buildProgressionBody(twoLevels(), KEYS, FIELDS, ["fort"], describeFeatureRows(twoLevels()), [], NO_EDITS),
+      buildProgressionBody(twoLevels(), COLUMNS, TRACKS, ["fort"], describeFeatureRows(twoLevels()), [], NO_EDITS),
     ).toEqual({});
   });
 
   test("sends a level's own saves as they are while the ruleset's aren't read yet, never none", () => {
-    const body = buildProgressionBody(twoLevels(), KEYS, FIELDS, undefined, [], [], {
+    const body = buildProgressionBody(twoLevels(), COLUMNS, TRACKS, undefined, [], [], {
       ...NO_EDITS,
       tracks: { bab: { l1: 0 } },
     });
-    expect(body.levels?.[0].saves).toEqual([{ saveId: "fort", base: 2 }]);
+    expect(body.levels?.[0].links?.baseBonus).toEqual([{ toId: "fort", amount: 2 }]);
   });
 
   test("sends no pick at a level the class no longer has", () => {
     const pools = [{ id: "pool", name: "Pool", picks: {} }];
-    const body = buildProgressionBody(twoLevels(), KEYS, FIELDS, ["fort"], [], pools, {
+    const body = buildProgressionBody(twoLevels(), COLUMNS, TRACKS, ["fort"], [], pools, {
       ...NO_EDITS,
       pools: { pool: { gone: 1 } },
     });
@@ -89,8 +85,8 @@ describe("A Progression tab's save", () => {
     const features = describeFeatureRows(twoLevels());
     const body = buildProgressionBody(
       twoLevels(),
-      KEYS,
-      FIELDS,
+      COLUMNS,
+      TRACKS,
       ["fort"],
       features,
       [{ id: "pool", name: "Pool", picks: { l1: 1 } }],
@@ -105,13 +101,15 @@ describe("A Progression tab's save", () => {
       levels: [
         {
           levelId: "l1",
-          fields: { bab: 1, skills: 6 },
-          saves: [{ saveId: "fort", base: 2 }],
-          // Granted at a new level, as its first grant is: not free
-          feats: [{ featId: "evasion", aptitudeId: "features", free: false }],
+          fields: { [CLASS_LEVEL_BAB]: 1, [CLASS_LEVEL_SKILL_POINTS]: 6 },
+          links: {
+            baseBonus: [{ toId: "fort", amount: 2 }],
+            // Granted at a new level, as its first grant is: not free
+            grants: [{ toId: "evasion", viaId: "features", free: false }],
+          },
         },
       ],
-      pools: [{ aptitudeId: "pool", picks: [{ levelId: "l2", count: 2 }] }],
+      pools: [{ id: "pool", picks: [{ levelId: "l2", count: 2 }] }],
     });
   });
 });
