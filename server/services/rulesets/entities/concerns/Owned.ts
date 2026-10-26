@@ -54,8 +54,8 @@ export function Owned<B extends Constructor>(Base: B) {
               data: plan.activity,
             });
 
-            // Its row, as its kind's rules find one
-            return { ...(row as unknown as ReturnType<typeof owned.find>), ...plan.fields };
+            // Its row, as its kind's rules find one: its record, its fields among it
+            return row as unknown as ReturnType<typeof owned.find>;
           }),
       );
       RulesetViews.invalidate(rulesetId);
@@ -162,7 +162,7 @@ export function Owned<B extends Constructor>(Base: B) {
               data: plan.activity,
             });
 
-            return { ...(rows[0] as unknown as ReturnType<typeof owned.find>), ...plan.fields };
+            return rows[0] as unknown as ReturnType<typeof owned.find>;
           }),
       );
       RulesetViews.invalidate(rulesetId);

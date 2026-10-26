@@ -33,8 +33,9 @@ interface SheetIdentity {
 
 /**
  * Each field an identity edit sends, by its key, and how it's read: a select's value is one of its options (null: as it
- * is), an age a whole number from 1 or null (cleared), experience a whole number from 0, a height or a weight a text
- * (empty or null: cleared). The race is its creation's, never edited.
+ * is), an age a whole number from 1 or null (cleared), experience a whole number from 0 (each a safe integer, which
+ * a field holds exactly), a height or a weight a text (empty or null: cleared). The race is its
+ * creation's, never edited.
  */
 const FIELDS_REQUEST = z
   .object({

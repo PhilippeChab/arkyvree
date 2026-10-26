@@ -30,6 +30,7 @@ export type {
   EntityWrites,
   FieldsRequest,
   FieldValue,
+  FieldWrite,
   LevelEditPlan,
   LevelPlanRequest,
   LinkPicksPlan,

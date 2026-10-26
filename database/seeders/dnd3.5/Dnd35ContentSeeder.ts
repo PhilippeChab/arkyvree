@@ -78,7 +78,7 @@ export abstract class Dnd35ContentSeeder extends ContentSeeder<CoreContent, Book
     };
   }
 
-  /** An item's seeded fields as the write of its stored values, by 3.5's item codec. */
+  /** An item's seeded fields as their write, by stored field, by 3.5's item codec. */
   protected override itemFieldsWrite(fields: ItemFields) {
     return Engine.forRules(DND35_BASE_RULES).toFieldsWrite("items", fields);
   }

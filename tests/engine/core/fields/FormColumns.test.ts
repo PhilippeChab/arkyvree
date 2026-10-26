@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import { FormColumns, type FormField } from "@/engine/core/fields/index.ts";
+import { Decimals, FormColumns, type FormField } from "@/engine/core/fields/index.ts";
 
 /** A column of each input a form takes as a column, as a module describes them. */
 const COLUMNS: FormField[] = [
-  { help: "", input: "ref", key: "statId", label: "Stat", references: "stats", required: true },
-  { help: "", input: "ref", key: "traitId", label: "Trait", references: "traits", required: false },
+  { help: "", input: "ref", key: "statId", label: "Stat", references: "stats", required: true, role: "stat" },
+  { help: "", input: "ref", key: "traitId", label: "Trait", references: "traits", required: false, role: "trait" },
   {
     default: 8,
     help: "",
@@ -67,10 +67,21 @@ describe("A form's columns", () => {
     expect(read({ cost: 0.125 }, false)).toEqual({ cost: 0.13 });
     expect(read({ cost: 1.005 }, false)).toEqual({ cost: 1.01 });
     expect(read({ cost: 15 }, false)).toEqual({ cost: 15 });
-    // One JavaScript writes in exponent form: below 1e-6, and from 1e21
+    // One JavaScript writes in exponent form: below 1e-6
     expect(read({ cost: 0.0000001 }, false)).toEqual({ cost: 0 });
     expect(read({ cost: 0.000005 }, false)).toEqual({ cost: 0 });
-    expect(read({ cost: 1e21 }, false)).toEqual({ cost: 1e21 });
+  });
+
+  test("refuse a number or a decimal past what it holds exactly, its value times ten to its places a safe integer", () => {
+    expect(read({ cost: Decimals.largest(2), speed: Number.MAX_SAFE_INTEGER }, false)).toEqual({
+      cost: Decimals.largest(2),
+      speed: Number.MAX_SAFE_INTEGER,
+    });
+    expect(read({ cost: 1e21, speed: Number.MAX_SAFE_INTEGER + 1 }, false)).toEqual([
+      `speed: Too big: expected int to be <=${Number.MAX_SAFE_INTEGER}`,
+      `cost: Too big: expected number to be <=${Decimals.largest(2)}`,
+    ]);
+    expect(read({ cost: Number("12345678901234567.89") }, false)).toHaveLength(1);
   });
 
   test("read an empty select or text as none, where none clears it", () => {

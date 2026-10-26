@@ -90,7 +90,7 @@ export function Copies<B extends Constructor>(Base: B) {
 
     /**
      * The entities of a type others are made from (`templateType`: an item's templates of a type), by name: each as
-     * stored (its own columns, its own fields, its single links), named.
+     * stored (its own columns, every field it holds, its single links), named.
      */
     async getTemplates(rulesetId: string, type: RulesetEntityType, templateType?: string) {
       return await withRulesetScope(db, rulesetId, async (scope) => {

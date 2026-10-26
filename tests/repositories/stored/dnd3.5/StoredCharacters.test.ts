@@ -7,12 +7,18 @@ import StoredCharacters from "@/server/repositories/stored/StoredCharacters.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 
 describe("A character's fields", () => {
-  test("reads a number as stored, 1e21 or more too", async () => {
+  test("reads a number as stored, the largest it holds exactly too, and refuses one past it", async () => {
     const { id } = await createTestCharacter(SEED_USER_ID);
-    await StoredCharacters.write(db, [id], { fields: { CHARACTER_XP: 1e21 } });
+    await StoredCharacters.write(db, [id], { fields: { CHARACTER_XP: Number.MAX_SAFE_INTEGER } });
 
     const character = await Characters.findOne(db, { id }, Visibility.All);
-    expect(character?.fields.CHARACTER_XP).toBe(1e21);
+    expect(character?.fields.CHARACTER_XP).toBe(Number.MAX_SAFE_INTEGER);
+    for (const xp of [1e21, Number.MAX_SAFE_INTEGER + 1]) {
+      const refused = await db
+        .transaction((tx) => StoredCharacters.write(tx, [id], { fields: { CHARACTER_XP: xp } }))
+        .catch((error: unknown) => error);
+      expect(refused).toBeInstanceOf(Error);
+    }
   });
 
   test("refuses a value of another kind than its field's, and a field no module declares", async () => {

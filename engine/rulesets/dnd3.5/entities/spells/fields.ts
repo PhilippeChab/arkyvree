@@ -5,7 +5,7 @@ import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 export type SpellFieldValues = FieldValues<typeof SPELL_FIELDS.fields>;
 
 /**
- * A spell's fields its stored values hold, as the vocabulary declares them (`ENTITY_FIELDS.spells`). A spell without
- * a school keeps none of them.
+ * A spell's fields, as the vocabulary declares them (`ENTITY_FIELDS.spells`). A spell without a school keeps none of
+ * them its form shows.
  */
 export const SPELL_FIELDS = new FieldCodec(ENTITY_FIELDS.spells, { storesWhen: (fields) => !!fields.school });

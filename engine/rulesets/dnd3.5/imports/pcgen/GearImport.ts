@@ -8,7 +8,7 @@ import ItemPlacement, { type ItemPlacementDescription } from "@/engine/rulesets/
 import { DND35_STORAGE } from "@/engine/rulesets/dnd3.5/storage/Dnd35Storage.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
-import { MAX_CHARACTER_NUMBER } from "@/shared/characters.ts";
+import { MAX_ITEM_QUANTITY } from "@/shared/characters.ts";
 import { MAX_FINGER_ITEMS } from "@/vocabulary/dnd3.5/equipment.ts";
 
 import { PCGEN_LOCATIONS } from "./names.ts";
@@ -90,7 +90,7 @@ export default class GearImport {
    * slot taken, a requirement unmet): the report says which.
    */
   private planEntry(character: CharacterInput, gear: ImportedGear, item: Item): ImportedEntry {
-    const described = ItemPlacement.describe(item, this.view.rulesetData.inheritedValuesOf("items", item));
+    const described = ItemPlacement.describe(this.view.rulesetData.withInheritedFields("items", item));
     const placement = this.placementOf(gear, described);
     const { charges } = described;
     // The charges the file says are left, within those the item comes with
@@ -114,7 +114,7 @@ export default class GearImport {
    */
   private quantityOf(gear: ImportedGear, item: Item) {
     const whole = Math.max(1, Math.round(gear.quantity));
-    const quantity = Math.min(whole, MAX_CHARACTER_NUMBER);
+    const quantity = Math.min(whole, MAX_ITEM_QUANTITY);
     if (quantity < whole) this.report.issue(`${item.name} ×${whole} is past the most the app keeps: ${quantity} kept`);
     if (gear.notCarried) this.report.issue(`${item.name} ×${quantity}: not carried in PCGen, carried here`);
     return quantity;
@@ -162,7 +162,7 @@ export default class GearImport {
       const same = entry.equipped ? undefined : carried.get(key);
       if (same) {
         const total = same.quantity + entry.quantity;
-        same.quantity = Math.min(MAX_CHARACTER_NUMBER, total);
+        same.quantity = Math.min(MAX_ITEM_QUANTITY, total);
         if (same.quantity < total)
           this.report.issue(`${item.name} ×${total} is past the most the app keeps: ${same.quantity} kept`);
         continue;

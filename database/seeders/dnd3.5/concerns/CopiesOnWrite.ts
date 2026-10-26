@@ -29,7 +29,7 @@ export function CopiesOnWrite<B extends Constructor<Dnd35ContentSeeder>>(Base: B
      */
     protected abstract keptSpellLinks(fromIds: string[]): Promise<Map<string, SpellLink[]>>;
 
-    /** Copies an inherited feat into the ruleset, with its aptitudes and customizations. */
+    /** Copies an inherited feat into the ruleset, with its fields, its aptitudes and its customizations. */
     protected async cowFeat(featId: string) {
       const [feat] = await this.entityRecords<Feat>("feats", [featId]);
       const { [feat.name]: copyId } = await this.insertEntities("feats", [
@@ -40,15 +40,15 @@ export function CopiesOnWrite<B extends Constructor<Dnd35ContentSeeder>>(Base: B
         (await this.listedIn([featId])).map(({ toId }) => ({ entityId: copyId, aptitudeId: toId })),
       );
       const copies = new Map([[featId, copyId]]);
-      await this.copyCustomizations("feats", copies);
+      await this.copyCustomizations(copies);
       await this.recordCopies("feats", copies);
       return copyId;
     }
 
     /**
-     * Copies inherited spells into the ruleset (`entries`), each with its customizations, the links its copy keeps and
-     * the ruleset's own (`links`, the first link to each aptitude): a few writes, however many spells. Answers each
-     * copy's id, by its original's.
+     * Copies inherited spells into the ruleset (`entries`), each with its fields and single links, its customizations,
+     * the links its copy keeps and the ruleset's own (`links`, the first link to each aptitude): a few writes, however
+     * many spells. Answers each copy's id, by its original's.
      */
     protected async cowSpells(entries: SpellLinks[]): Promise<Map<string, string>> {
       if (entries.length === 0) return new Map();
@@ -74,7 +74,7 @@ export function CopiesOnWrite<B extends Constructor<Dnd35ContentSeeder>>(Base: B
         }),
       );
       const copies = new Map(entries.map(({ spellId }) => [spellId, ids[spells.get(spellId)!.name]]));
-      await this.copyCustomizations("spells", copies);
+      await this.copyCustomizations(copies);
       await this.recordCopies("spells", copies);
       const kept = await this.keptSpellLinks([...copies.keys()]);
       await this.insertListings(

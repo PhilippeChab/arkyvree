@@ -9,9 +9,9 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { addGrants, findLists } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
-import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import {
   SPELL_CASTING_TIME,
@@ -59,7 +59,8 @@ describe("EntitiesService: spells", () => {
           saveEffect: "",
         })
       ).fields,
-    ).toEqual({});
+    ).toMatchObject({ [SPELL_SAVE_EFFECT]: null });
+    expect(await findFormValues("spells", spell.id)).toEqual({ fields: {}, links: {} });
   });
 
   test("records the columns an edit changes, never what its form sends that it doesn't write", async () => {
@@ -230,7 +231,7 @@ describe("EntitiesService: spells", () => {
       aptitudes: [{ id: wizard }],
       fields: { school: "Evocation", castingTime: "1 round" },
     });
-    await writeStoredValues("spells", spell.id, [[SPELL_DESCRIPTOR, "Fire"]]);
+    await writeFieldValues("spells", spell.id, [[SPELL_DESCRIPTOR, "Fire"]]);
     // A value a user added, written past the services, after the create read the ruleset's view
     RulesetViews.invalidate(ruleset.id);
 
@@ -239,7 +240,7 @@ describe("EntitiesService: spells", () => {
       fields: { school: "Conjuration" },
     });
 
-    expect((await findStoredValues("spells", spell.id)).fields).toEqual({
+    expect((await findFormValues("spells", spell.id)).fields).toEqual({
       [SPELL_SCHOOL]: ["Conjuration"],
       [SPELL_DESCRIPTOR]: ["Fire"],
       [SPELL_CASTING_TIME]: ["1 round"],

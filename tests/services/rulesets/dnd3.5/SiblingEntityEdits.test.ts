@@ -5,16 +5,16 @@ import { type Item, type Klass, type KlassLevel, type Race } from "@/engine/rule
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, Fields, Modifiers, Rulesets } from "@/server/repositories/index.ts";
+import { Entities, Modifiers, Rulesets } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
+import { findFormValues, viewValuesOf, writeFieldValues } from "@/tests/support/ownerValues.ts";
 import {
   copyEntity,
   createSeededTestRuleset,
   invalidateSeededRuleset,
   invalidateTestRulesets,
 } from "@/tests/support/rulesets.ts";
-import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { CLASS_CASTER_TYPE, DAMAGE_TYPE, RACE_QUADRUPED } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -47,7 +47,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
   for (let i = 0; i < 2; i++) {
     const extension = await createSeededTestRuleset(session.userId);
     const copy = await copyEntity(db, entityType, source.id, extension);
-    await writeStoredValues(entityType, copy.id, [[marker.type, marker.values[i]]]);
+    await writeFieldValues(entityType, copy.id, [[marker.type, marker.values[i]]]);
     // Classes have modifiers on their levels, not directly on the class.
     if (entityType !== "classes") {
       await Modifiers.create(db, {
@@ -78,7 +78,7 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
     withRulesetScope(db, host.id, async ({ rulesetData }) => {
       const id = rulesetData.canonicalize(source.id);
       return {
-        values: (rulesetData.valuesOf(id).fields[marker.type] ?? []).map(String).sort(),
+        values: (viewValuesOf(rulesetData, id).fields[marker.type] ?? []).map(String).sort(),
         modifiers: (rulesetData.modifiersBySource.get(id) ?? [])
           .filter((m) => m.target === "abilities.strength.misc" && Number(m.value) >= 10)
           .map((m) => m.value)
@@ -87,7 +87,8 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
     });
   const before = await read();
   expect(before).toEqual({ values: marker.merged, modifiers: entityType === "classes" ? [] : ["10", "11"] });
-  const originals = await Fields.findMany(db, { ownerIds: sourceIds, ownerType: entityType });
+  const sourcesValues = () => Promise.all(sourceIds.map((id) => findFormValues(entityType, id)));
+  const originals = await sourcesValues();
   const assertCopied = async () => {
     for (const cold of [false, true]) {
       if (cold) invalidateTestRulesets(host.id, ...extensions);
@@ -96,9 +97,9 @@ async function setup(entityType: EntityType, omitLastLevel = false) {
     const id = await withRulesetScope(db, host.id, async ({ rulesetData }) => rulesetData.canonicalize(source.id));
     expect(sourceIds).not.toContain(id);
     // Verify rows were actually copied, not merely re-merged into the read view.
-    const stored = await findStoredValues(entityType, id);
+    const stored = await findFormValues(entityType, id);
     expect((stored.fields[marker.type] ?? []).map(String).sort()).toEqual(before.values);
-    expect(await Fields.findMany(db, { ownerIds: sourceIds, ownerType: entityType })).toEqual(originals);
+    expect(await sourcesValues()).toEqual(originals);
   };
   return { session, host, source, assertCopied };
 }

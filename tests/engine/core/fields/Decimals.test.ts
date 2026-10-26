@@ -2,6 +2,22 @@ import { describe, expect, test } from "bun:test";
 
 import { Decimals } from "@/engine/core/fields/index.ts";
 
+describe("Decimals.holds and Decimals.largest", () => {
+  test("hold a number to its places while its value times ten to them is a safe integer, and no further", () => {
+    expect(Decimals.largest()).toBe(Number.MAX_SAFE_INTEGER);
+    expect(Decimals.largest(2)).toBe(Number.MAX_SAFE_INTEGER / 100);
+    for (const places of [0, 2]) {
+      expect(Decimals.holds(Decimals.largest(places), places)).toBe(true);
+      expect(Decimals.holds(-Decimals.largest(places), places)).toBe(true);
+    }
+    expect(Decimals.holds(90_071_992_547_409.9, 2)).toBe(true);
+    // Past them, a number is kept rounded off: 12345678901234567.89 as …568
+    for (const value of [Number("12345678901234567.89"), 1e21, -1e21, 1e300])
+      expect(Decimals.holds(value, 2)).toBe(false);
+    expect(Decimals.holds(Number.MAX_SAFE_INTEGER + 1)).toBe(false);
+  });
+});
+
 describe("Decimals.toPlaces", () => {
   test.each([
     [2.4, 0, 2],

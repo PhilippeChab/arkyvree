@@ -257,10 +257,7 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
      */
     registerKnownSpells(rulesetData: RulesetData, newSpells: HeldSpell[]) {
       const { spellSlugByAptitudeId } = SpellLists.of(rulesetData);
-      this.spells.addSpellEntries(
-        newSpells.map(({ entity }) => entity),
-        rulesetData,
-      );
+      this.spells.addSpellEntries(newSpells.map(({ entity }) => entity));
       for (const spell of newSpells) {
         const list = Dnd35View.of(rulesetData).aptitudesById.get(spell.viaId);
         // Mark as known in spell map
@@ -269,7 +266,7 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
           if (entry) entry.known = true;
         }
         const aptitudeSlug = spellSlugByAptitudeId.get(spell.viaId) ?? spell.viaId;
-        this.spellGroupings.registerSpell(spell, aptitudeSlug, rulesetData.valuesOf(spell.entity.id));
+        this.spellGroupings.registerSpell(spell, aptitudeSlug);
       }
       this.spells.readGroupings();
     }

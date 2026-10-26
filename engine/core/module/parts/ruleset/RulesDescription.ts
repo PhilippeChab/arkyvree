@@ -194,13 +194,14 @@ export interface ProgressionTable {
 }
 
 /**
- * A column of a class's table its Progression tab sets: where a level holds it (`source`: one of its fields, by `key`,
- * or its amounts, by `key`, one per entity of a kind: 3.5's base per save of the ruleset), its labels (the table's
- * `shortLabel`, the value's `unitLabel` when one number sets every level), its bounds, each value's label from `min`
- * (`labels[value - min]`: none reads it as it is), and the progressions it follows (`presets`: each its value at each
- * level, from the first).
+ * A column of a class's table its Progression tab sets: where a level holds it (`source`: one of its fields, the stored
+ * `field` a level's read holds it at, which its form's save gives at `key`; or its amounts, by `key`, one per entity of
+ * a kind: 3.5's base per save of the ruleset), its labels (the table's `shortLabel`, the value's `unitLabel` when one
+ * number sets every level), its bounds, each value's label from `min` (`labels[value - min]`: none reads it as it is),
+ * and the progressions it follows (`presets`: each its value at each level, from the first).
  */
 export interface ProgressionTrack {
+  field?: string;
   key: string;
   label: string;
   labels?: string[];

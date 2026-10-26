@@ -27,7 +27,7 @@ interface GivenSpell {
 }
 
 /**
- * A spell a level holds (picked, granted, or known by its list): the spell, what a save against it does among its own
+ * A spell a level holds (picked, granted, or known by its list): the spell, what a save against it does among its
  * fields, and its pool and spell level there.
  */
 interface LevelSpell {

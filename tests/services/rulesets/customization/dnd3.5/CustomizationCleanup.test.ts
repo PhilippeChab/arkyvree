@@ -1,8 +1,7 @@
 /**
  * A modifier or a requirement names what it belongs to by type and id, with no foreign key. The database deletes it with
  * that row, whatever deletes the row: a service, or a foreign key's cascade (drizzle/0070_customization_cleanup.sql, and
- * drizzle/0080_generic-tables.sql's for an entity). A stored value is a field's row or a link, which its foreign key
- * deletes.
+ * drizzle/0080_generic-tables.sql's for an entity). An entity's fields' rows and its links go by their foreign keys.
  */
 
 import { describe, expect, test } from "bun:test";
@@ -37,8 +36,8 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { customize, STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { createTestKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { findFormValues } from "@/tests/support/ownerValues.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
-import { findStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import {
   CLASS_HD,
@@ -68,8 +67,8 @@ const OWNERS = {
 } satisfies Record<string, PgTable>;
 
 /**
- * The stored values given a row that isn't an entity, which `customize` picks only for an entity's kind: a ruleset a
- * setting of its own, a character none (its fields are its row's columns).
+ * The fields and links given a row that isn't an entity, which `customize` picks only for an entity's kind: a ruleset
+ * a setting of its own, a character none (its fields are its row's).
  */
 const VALUES: Record<string, FieldsWrite | null> = {
   characters: null,
@@ -129,7 +128,7 @@ async function createOwner(type: OwnerType, userId: string, rulesetId: string): 
   }
 }
 
-/** Customizes a row of the type (`customize`), with its type's stored values. */
+/** Customizes a row of the type (`customize`), with its type's fields and links. */
 async function customizeOwner(type: string, id: string) {
   return await customize(type, id, type in VALUES ? { values: VALUES[type] } : {});
 }
@@ -189,7 +188,7 @@ describe("customization cleanup", () => {
     await customize("feats", await createOwner("feats", user.id, fork.id));
     await customize("class_levels", klassLevel.id);
     await customizeOwner("characters", character.id);
-    expect(await findStoredValues("rulesets", fork.id)).not.toEqual({ fields: {}, links: {} });
+    expect(await findFormValues("rulesets", fork.id)).not.toEqual({ fields: {}, links: {} });
 
     // Signing out purges a demo account, and the foreign keys' cascades its rulesets and characters
     await AuthenticationService.signOut(makeSession(user.id));

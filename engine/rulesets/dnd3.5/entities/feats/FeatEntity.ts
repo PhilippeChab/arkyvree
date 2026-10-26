@@ -99,7 +99,7 @@ export default class FeatEntity extends ListedEntity<
    */
   protected override listOf(where: { aptitudeId?: string; family?: string }) {
     return {
-      describe: <T extends Pick<EntityRecord, "id" | "links">>(rows: T[]) => this.describeListed(rows),
+      describe: <T extends Pick<EntityRecord, "fields" | "id" | "links">>(rows: T[]) => this.describeListed(rows),
       filters: {
         ids: this.poolFeatIds(where.aptitudeId),
         ...(where.family && { fields: { [FEAT_FAMILY]: where.family } }),
@@ -160,7 +160,7 @@ export default class FeatEntity extends ListedEntity<
     return featIds.flatMap((featId) => {
       const feat = this.dnd35.featsById.get(featId);
       if (!feat) return [];
-      const { families } = this.fields.read(this.valuesOf(feat));
+      const { families } = this.fields.read(feat);
       return families.filter((family) => feat.name.startsWith(family)).map((family) => ({ group: family, id: featId }));
     });
   }

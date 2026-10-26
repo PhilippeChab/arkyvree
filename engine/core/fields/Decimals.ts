@@ -1,5 +1,18 @@
-/** A decimal's value as a field keeps it. */
+/**
+ * A number's value as a field keeps it: to its places, and within what it holds exactly, its value times ten to its
+ * places a safe integer (`Number.MAX_SAFE_INTEGER`): past it, a number is stored rounded off unseen.
+ */
 export default class Decimals {
+  /** Whether a number kept to `places` places (none: a whole number) holds exactly: within `largest`. */
+  static holds(value: number, places = 0): boolean {
+    return Math.abs(value) * 10 ** places <= Number.MAX_SAFE_INTEGER;
+  }
+
+  /** The largest number kept to `places` places (none: a whole number) holds exactly, its smallest the opposite. */
+  static largest(places = 0): number {
+    return Number.MAX_SAFE_INTEGER / 10 ** places;
+  }
+
   /**
    * A decimal kept to `places` places, half away from zero, as its shortest text reads it (to two, `1.005` is `1.01`),
    * written out whatever its size (never in exponent form: `1e-7` is `0`).

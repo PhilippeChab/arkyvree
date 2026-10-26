@@ -1,11 +1,15 @@
+import type { ValueKind } from "@/engine/core/module/index.ts";
 import type { StandaloneKind } from "@/engine/core/view/index.ts";
 import type {
   Fields as DeclaredFields,
   FieldSpec as DeclaredFieldSpec,
   FieldValues as DeclaredFieldValues,
   LeafSpec as DeclaredLeafSpec,
+  NumberSpec,
 } from "@/shared/customization/fields.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
+
+import Decimals from "./Decimals.ts";
 
 /**
  * An entity's fields, by name, in the order its form shows them, as `shared/customization/fields.ts` declares them: each
@@ -13,23 +17,38 @@ import { isOneOf } from "@/shared/isOneOf.ts";
  */
 export type Fields = DeclaredFields<StandaloneKind>;
 
-/** A field an entity keeps in its stored values, as its ruleset's vocabulary declares it: a reference names a view's kind. */
+/** A field an entity holds, as its ruleset's vocabulary declares it: a reference names a view's kind. */
 export type FieldSpec = DeclaredFieldSpec<StandaloneKind>;
 
 /** The values an entity's fields read, by name: each by its kind, a choice one of its values. */
 export type FieldValues<S extends Fields> = DeclaredFieldValues<S>;
 
-/** A field of a spec that isn't a group: a value of its own, which its stored field keeps. */
+/** A field of a spec that isn't a group: a value of its own, which its stored field keeps (a reference's, a link). */
 export type LeafSpec = DeclaredLeafSpec<StandaloneKind>;
 
 /** No fields: a kind whose entities hold none of their own (`FieldCodec.NONE`). */
 export type NoFields = Record<never, never>;
 
+/** A leaf its owner's fields keep: any but a reference, whose value is a single link's. */
+export type StoredLeaf = Exclude<LeafSpec, { kind: "ref" }>;
+
 /** A flag's values, true first: the order a stat block lists them in. */
 const FLAG_VALUES = ["true", "false"] as const;
 
-/** What every kind of field shares: when one counts, the leaves a spec's fields hold, and a leaf's closed values. */
+/**
+ * What every kind of field shares: when one counts, the leaves a spec's fields hold, a leaf's closed values, and how
+ * its owner stores it.
+ */
 export default class Field {
+  /**
+   * The bounds of a number field's values: its declared ones, within those it holds exactly to its places
+   * (`Decimals.largest`), which every number field takes alike.
+   */
+  static boundsOf(leaf: Pick<NumberSpec, "max" | "min" | "scale">): { max: number; min: number } {
+    const largest = Decimals.largest(leaf.scale);
+    return { max: Math.min(leaf.max ?? largest, largest), min: Math.max(leaf.min ?? -largest, -largest) };
+  }
+
   /**
    * The values a leaf takes, in their order, when they're a closed list (a flag's, true and false; a choice's, a list's
    * or a text's), as text: none for a free one.
@@ -52,5 +71,32 @@ export default class Field {
   /** The fields that hold a value of their own, a group's too, in the spec's order. */
   static leavesOf(fields: Fields): LeafSpec[] {
     return Object.values(fields).flatMap((field) => (field.kind === "group" ? Field.leavesOf(field.fields) : [field]));
+  }
+
+  /**
+   * How a leaf's values are stored, by its kind: the kind of value each is (a flag's, a number's, text), and whether
+   * it's a set (a list's, a progression's). A kind this doesn't name fails to type-check, never stores as text.
+   */
+  static storedKindOf(leaf: StoredLeaf): { multiple: boolean; valueKind: ValueKind } {
+    switch (leaf.kind) {
+      case "flag":
+      case "number":
+        return { multiple: false, valueKind: leaf.kind };
+      case "choice":
+      case "text":
+        return { multiple: false, valueKind: "text" };
+      case "list":
+      case "progression":
+        return { multiple: true, valueKind: "text" };
+      default: {
+        const unknown: never = leaf;
+        throw new Error(`No stored kind for the field ${JSON.stringify(unknown)}`);
+      }
+    }
+  }
+
+  /** The leaves its owner's fields keep, a group's too, in the spec's order: a reference's value is a link's. */
+  static storedLeavesOf(fields: Fields): StoredLeaf[] {
+    return Field.leavesOf(fields).flatMap((leaf) => (leaf.kind === "ref" ? [] : [leaf]));
   }
 }

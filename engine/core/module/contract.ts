@@ -13,13 +13,11 @@ import type { StorageDeclaration } from "./storage.ts";
  * What a ruleset describes in its own shape, which the server hands to the client as it is: what its creation picker
  * adds to an option (`creationOption`), a character's sheet (as the API answers it, its private notes where every
  * ruleset's holds them; as a member who reads it partly reads it, its summary as every ruleset's holds it; printed),
- * what an inventory entry shows beside its row and of its item's fields, and a level step's picker (`stepPicker`) by the kind it reads a page
- * of.
+ * what an inventory entry shows beside its row, and a level step's picker (`stepPicker`) by the kind it reads a page of.
  */
 export interface Descriptions {
   creationOption: object;
   inventoryEntry: object;
-  inventoryItemFields: object;
   partialSheet: { summary: SheetSummary };
   sheet: NotedSheet;
   sheetDocument: unknown;
@@ -46,7 +44,7 @@ export interface RulesetModule<
   entities: EntitiesPart<E>;
   /**
    * Its owners' fields (its entity types', its rulesets'), by owner type, in the order a stat block shows them: what
-   * its stored values are read by and its view orders them by (`DeclaredFields`)
+   * its owners' fields are stored, read and merged by, and its view orders them by (`DeclaredFields`)
    */
   fields: Readonly<Record<string, Fields>>;
   /** What the ruleset answers of a character imported from another program's file: which importers it offers */

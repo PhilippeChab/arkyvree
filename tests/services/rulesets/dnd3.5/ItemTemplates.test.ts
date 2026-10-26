@@ -9,17 +9,31 @@ import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
+import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
 import { createSeededTestRuleset, type Described, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
-import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import {
+  ARMOR_AC_BONUS,
+  ARMOR_CHECK_PENALTY,
+  ARMOR_MAX_DEX,
+  ARMOR_PROFICIENCY,
+  ARMOR_TYPE,
+  ITEM_COST_GP,
   ITEM_IS_TEMPLATE,
   ITEM_MADE_OF,
   ITEM_SLOT,
+  ITEM_SPELL_FAILURE,
   ITEM_TYPE,
   ITEM_WEIGHT,
+  SHIELD_AC_BONUS,
+  SHIELD_PROFICIENCY,
+  SHIELD_TYPE,
   WEAPON_BASE_DAMAGE,
+  WEAPON_FAMILY,
+  WEAPON_PROFICIENCY,
+  WEAPON_SIZE,
+  WEAPON_TYPE,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** An item as a save or a read answers it, as its form's columns read it: its template its `madeFrom` link's. */
@@ -32,7 +46,10 @@ function columnsOf(answer: Described<"items">) {
  * (`sourceItemId`, null for none): its own columns, whether it's a template, its template, its type, its slot and its
  * weight.
  */
-function formColumnsOf(item: Pick<EntityRecord, "description" | "fields" | "name">, sourceItemId: string | null) {
+function formColumnsOf(
+  item: Pick<EntityRecord, "description" | "name"> & { fields: Readonly<Record<string, unknown>> },
+  sourceItemId: string | null,
+) {
   return {
     name: item.name,
     description: item.description,
@@ -91,30 +108,90 @@ describe("Item templates", () => {
     test.each([
       [
         "Longsword",
-        { weapon: { proficiency: "Martial", family: "Sword", baseDamage: "1d8", size: "Medium", type: "Longsword" } },
+        {
+          [WEAPON_PROFICIENCY]: "Martial",
+          [WEAPON_FAMILY]: "Sword",
+          [WEAPON_BASE_DAMAGE]: "1d8",
+          [WEAPON_SIZE]: "Medium",
+          [WEAPON_TYPE]: "Longsword",
+        },
       ],
       [
         "Chain Mail",
         {
-          armor: { proficiency: "Medium", type: "Chain Mail", acBonus: 5 },
-          maxDex: 2,
-          checkPenalty: -5,
-          spellFailure: 30,
+          [ARMOR_PROFICIENCY]: "Medium",
+          [ARMOR_TYPE]: "Chain Mail",
+          [ARMOR_AC_BONUS]: 5,
+          [ARMOR_MAX_DEX]: 2,
+          [ARMOR_CHECK_PENALTY]: -5,
+          [ITEM_SPELL_FAILURE]: 30,
         },
       ],
       [
         "Heavy Steel Shield",
         {
-          shield: { proficiency: "Heavy", type: "Heavy Steel Shield", acBonus: 2 },
-          checkPenalty: -2,
-          spellFailure: 15,
+          [SHIELD_PROFICIENCY]: "Heavy",
+          [SHIELD_TYPE]: "Heavy Steel Shield",
+          [SHIELD_AC_BONUS]: 2,
+          [ARMOR_CHECK_PENALTY]: -2,
+          [ITEM_SPELL_FAILURE]: 15,
         },
       ],
     ])("%s fields", async (name, expected) => {
       const { ruleset, instance } = await setup();
-      expect(
-        await EntitiesService.getEntity<Described<"items">>(ruleset.id, "items", (await instance(name)).id),
-      ).toMatchObject(expected);
+      const { fields } = await EntitiesService.getEntity<Described<"items">>(
+        ruleset.id,
+        "items",
+        (await instance(name)).id,
+      );
+      expect(fields).toMatchObject(expected);
+    });
+
+    test("weight and cost, which they hold none of, as its page and its list read them", async () => {
+      const { ruleset, template, instance } = await setup();
+      const longsword = await template("Longsword");
+      const sword = await instance("Longsword");
+      // Its record, as stored, holds none of its own
+      const record = await Entities.findOne<Item>(db, { entityType: "items", id: sword.id });
+      expect(record!.fields).not.toHaveProperty(ITEM_WEIGHT);
+      expect(record!.fields).not.toHaveProperty(ITEM_COST_GP);
+      const inherited = {
+        [ITEM_WEIGHT]: longsword.fields[ITEM_WEIGHT],
+        [ITEM_COST_GP]: longsword.fields[ITEM_COST_GP],
+      };
+      expect(inherited).toEqual({ [ITEM_WEIGHT]: 4, [ITEM_COST_GP]: 15 });
+      expect((await EntitiesService.getEntity<Described<"items">>(ruleset.id, "items", sword.id)).fields).toMatchObject(
+        inherited,
+      );
+      const { items } = await EntitiesService.getEntities(
+        ruleset.id,
+        "items",
+        { search: sword.name },
+        { limit: 10, page: 1 },
+      );
+      expect(items.find((item) => item.id === sword.id)?.fields).toMatchObject(inherited);
+    });
+
+    test("weight and cost of their own only where their form gives another than the template's", async () => {
+      const { session, ruleset, instance } = await setup();
+      const sword = await instance("Longsword");
+      const stored = async () => (await Entities.findOne<Item>(db, { entityType: "items", id: sword.id }))!.fields;
+      // Its form shows the template's, which a save sends back as they are: still none of its own
+      await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
+        name: sword.name,
+        weight: 4,
+        costGp: 15,
+      });
+      expect(await stored()).not.toHaveProperty(ITEM_WEIGHT);
+      expect(await stored()).not.toHaveProperty(ITEM_COST_GP);
+      const saved = await EntitiesService.updateEntity<Described<"items">>(session, ruleset.id, "items", sword.id, {
+        name: sword.name,
+        weight: 5,
+        costGp: 15,
+      });
+      expect(saved.fields).toMatchObject({ [ITEM_WEIGHT]: 5, [ITEM_COST_GP]: 15 });
+      expect(await stored()).toMatchObject({ [ITEM_WEIGHT]: 5 });
+      expect(await stored()).not.toHaveProperty(ITEM_COST_GP);
     });
 
     test.each([
@@ -138,16 +215,18 @@ describe("Item templates", () => {
     test("current fields, next to their own", async () => {
       const { ruleset, template, instance } = await setup();
       const sword = await instance("Longsword");
-      await writeStoredValues("items", sword.id, [[ITEM_MADE_OF, "Adamantine"]]);
-      await writeStoredValues("items", (await template("Longsword")).id, [[WEAPON_BASE_DAMAGE, "2d6"]]);
+      await writeFieldValues("items", sword.id, [[ITEM_MADE_OF, "Adamantine"]]);
+      await writeFieldValues("items", (await template("Longsword")).id, [[WEAPON_BASE_DAMAGE, "2d6"]]);
       invalidateSeededRuleset(ruleset.rulesetId!);
       // The instance's own value, written past the services, after its create read the fork's view
       RulesetViews.invalidate(ruleset.id);
 
-      expect(await EntitiesService.getEntity<Described<"items">>(ruleset.id, "items", sword.id)).toMatchObject({
-        weapon: { baseDamage: "2d6" },
-        madeOf: "Adamantine",
-      });
+      expect((await EntitiesService.getEntity<Described<"items">>(ruleset.id, "items", sword.id)).fields).toMatchObject(
+        {
+          [WEAPON_BASE_DAMAGE]: "2d6",
+          [ITEM_MADE_OF]: "Adamantine",
+        },
+      );
     });
   });
 
@@ -163,7 +242,7 @@ describe("Item templates", () => {
     expect(items.find((item) => item.id === sword.id)?.templateName).toBe("Longsword");
   });
 
-  test("an item without a template has no stored values or requirements of its own", async () => {
+  test("an item without a template has no fields its form shows or requirements of its own", async () => {
     const { session, ruleset } = await setup();
     const item = await EntitiesService.createEntity(session, ruleset.id, "items", {
       name: "Custom Item",
@@ -172,7 +251,7 @@ describe("Item templates", () => {
     expect(await EntitiesService.getEntity<Described<"items">>(ruleset.id, "items", item.id)).toMatchObject({
       requirements: [],
     });
-    expect(await findStoredValues("items", item.id)).toEqual({ fields: {}, links: {} });
+    expect(await findFormValues("items", item.id)).toEqual({ fields: {}, links: {} });
   });
 
   test("an instance can switch templates", async () => {
@@ -193,8 +272,8 @@ describe("Item templates", () => {
         }),
       ),
     ).toMatchObject({ isTemplate: false, sourceItemId: sword.id });
-    expect(await EntitiesService.getEntity<Described<"items">>(ruleset.id, "items", copy.id)).toMatchObject({
-      weapon: { type: "Longsword" },
+    expect((await EntitiesService.getEntity<Described<"items">>(ruleset.id, "items", copy.id)).fields).toMatchObject({
+      [WEAPON_TYPE]: "Longsword",
     });
   });
 

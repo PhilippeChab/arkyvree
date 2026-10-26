@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
 import { CowData } from "@/engine/core/cow/index.ts";
-import { DeclaredFields, type StoredValues } from "@/engine/core/fields/index.ts";
-import type { FieldDef, LinkRoleDef } from "@/engine/core/module/index.ts";
-import { RulesetComposition, type StandaloneKind } from "@/engine/core/view/index.ts";
+import { DeclaredFields, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
+import type { LinkRoleDef } from "@/engine/core/module/index.ts";
+import { RulesetComposition, type RulesetData, type StandaloneKind } from "@/engine/core/view/index.ts";
 import {
   composeView,
   idsOf,
@@ -14,51 +14,49 @@ import {
   VIEW_SCHEMA,
 } from "@/tests/support/composedViews.ts";
 
-/** What a made-up module's owners' field definitions share: a single value, its first sibling's without the winner's. */
-const SINGLE = {
-  inheritsVia: null,
-  merge: "fallback",
-  multiple: false,
-  ownerKind: "entity",
-  ownerType: "owners",
-} as const;
-
 /** The made-up module's kind its owners' ally is of, typed as the view's registry types a kind. */
 const TARGETS = "targets" as string as StandaloneKind;
 
-/** The made-up owners' fields: a set in its closed list's order, two single values, and a link a field reads. */
+/**
+ * The made-up owners' fields: a set in its closed list's order, its sibling copies' values unioned, two single values,
+ * the winner's or else its first sibling's, and a link a field reads, its first sibling's without the winner's.
+ */
 const OWNER_FIELDS = new DeclaredFields(
   {
     owners: {
-      set: { description: "Its set", field: "SET", kind: "list", label: "Set", values: ["c", "b", "a"] },
-      one: { description: "Its one", field: "ONE", kind: "text", label: "One" },
-      extra: { description: "Its extra", field: "EXTRA", kind: "text", label: "Extra" },
+      set: {
+        description: "Its set",
+        field: "SET",
+        kind: "list",
+        label: "Set",
+        merge: "union",
+        values: ["c", "b", "a"],
+      },
+      one: { description: "Its one", field: "ONE", kind: "text", label: "One", merge: "fallback" },
+      extra: { description: "Its extra", field: "EXTRA", kind: "text", label: "Extra", merge: "fallback" },
       ally: { description: "Its ally", kind: "ref", label: "Ally", references: TARGETS, role: "ally" },
     },
   },
-  {
-    fieldDefs: [
-      { ...SINGLE, field: "SET", merge: "union", multiple: true, valueKind: "text" },
-      { ...SINGLE, field: "ONE", valueKind: "text" },
-      { ...SINGLE, field: "EXTRA", valueKind: "text" },
-    ] satisfies FieldDef[],
-    linkRoles: [{ fromType: "owners", merge: "fallback", role: "ally" } as LinkRoleDef],
-  },
+  [{ fromType: "owners", merge: "fallback", role: "ally" } as LinkRoleDef],
 );
 
-/** A made-up ruleset's owners (`values`, by id) and its kind-wide values, as its raw data holds them. */
-function ownersRaw(values: Record<string, StoredValues>) {
-  const entries = Object.entries(values);
-  const raw = rawRows({ owners: entries.map(([id]) => ({ id })) });
+/** An entity of the view (`type`'s, by its id or a stored id it stands for): none when the view hasn't it. */
+function entityOf(view: RulesetData, type: string, id: string) {
+  return view.find(type as Kind, id) as unknown as StoredValues | undefined;
+}
+
+/** A made-up ruleset's owners (`owners`: each one's fields and single links, by id) and its kind-wide values. */
+function ownersRaw(owners: Record<string, StoredValues>) {
+  const entries = Object.entries(owners);
+  const raw = rawRows({ owners: entries.map(([id, { fields, links }]) => ({ id, fields, links })) });
   const held = entries.flatMap(([id, { fields }]) =>
-    Object.entries(fields).flatMap(([field, list]) => list.map((value) => ({ field, id, value }))),
+    Object.keys(fields).flatMap((field) => OwnerValues.valuesOf(fields, field).map((value) => ({ field, id, value }))),
   );
   return {
     ...raw,
     kindValues: new Map([
       ["owners", held.map(({ field, id, value }) => ({ entityIds: [id], field, value: String(value) }))],
     ]),
-    values: new Map([["owners", new Map(entries)]]),
   };
 }
 
@@ -93,8 +91,8 @@ describe("A ruleset's view, composed by its modules' declarations", () => {
       expect(customizations.get("a")).toBeUndefined();
       expect(customizations.get("b")).toHaveLength(1);
     }
-    expect(view.valuesOf("a").fields).toEqual({});
-    expect(view.valuesOf("b").fields).toEqual({ T: ["v"] });
+    expect(entityOf(view, "owned", "a")).toBeUndefined();
+    expect(entityOf(view, "owned", "b")!.fields).toEqual({ T: "v" });
   });
 
   test("resolves an entity's links to the targets the view shows, and merges a sibling loser's of a role that merges", () => {
@@ -132,19 +130,18 @@ describe("A ruleset's view, composed by its modules' declarations", () => {
     expect((view.find("listed" as Kind, "l3") as unknown as { id: string }).id).toBe("l2");
   });
 
-  test("merges a sibling loser's stored values into its winner's, each field and link by its declared merge", () => {
-    const base = ownersRaw({ o1: { fields: { SET: ["b"], ONE: ["w"] }, links: {} } });
-    const book = ownersRaw({
-      o2: { fields: { EXTRA: ["x"], ONE: ["l"], SET: ["a", "b", "c"] }, links: { ally: "t2" } },
-    });
+  test("merges a sibling loser's fields into its winner's, each field and link by its declared merge", () => {
+    const base = ownersRaw({ o1: { fields: { SET: ["b"], ONE: "w" }, links: {} } });
+    const book = ownersRaw({ o2: { fields: { EXTRA: "x", ONE: "l", SET: ["a", "b", "c"] }, links: { ally: "t2" } } });
     const view = composeView([base, book], { siblings: [["o1", ["o2"]]] }, OWNER_FIELDS);
 
     // The set's values the winner lacks, in its closed list's order; a single value the winner's, else the loser's
-    const merged = { fields: { SET: ["c", "b", "a"], ONE: ["w"], EXTRA: ["x"] }, links: { ally: "t2" } };
-    expect(view.valuesOf("o1")).toEqual(merged);
-    expect(Object.keys(view.valuesOf("o1").fields)).toEqual(["SET", "ONE", "EXTRA"]);
+    const winner = entityOf(view, "owners", "o1")!;
+    expect(winner.fields).toEqual({ SET: ["c", "b", "a"], ONE: "w", EXTRA: "x" });
+    expect(Object.keys(winner.fields)).toEqual(["SET", "ONE", "EXTRA"]);
+    expect(winner.links).toEqual({ ally: "t2" });
     // A stored id finds its winner's
-    expect(view.valuesOf("o2")).toEqual(merged);
+    expect(entityOf(view, "owners", "o2")).toBe(winner);
     // Kind-wide, the winner holds what it took from the loser, and the loser nothing it didn't give
     expect(view.kindValues("owners").map(({ entityIds, field, value }) => `${field}=${value}:${entityIds}`)).toEqual([
       "SET=c:o1",
@@ -155,13 +152,15 @@ describe("A ruleset's view, composed by its modules' declarations", () => {
     ]);
   });
 
-  test("reuses an owner's stored values as its raw ruleset holds them, none for one that holds none", () => {
-    const own = { fields: { ONE: ["mine"] }, links: {} };
-    const raw = ownersRaw({ o1: own, o2: { fields: { EXTRA: ["theirs"], ONE: ["theirs"] }, links: {} } });
+  test("keeps an owner's fields as its raw ruleset holds them without a sibling, and a ruleset's Settings", () => {
+    const own = { fields: { ONE: "mine" }, links: {} };
+    const raw = ownersRaw({ o1: own, o2: { fields: { EXTRA: "theirs", ONE: "theirs" }, links: {} } });
     const view = composeView([raw], {}, OWNER_FIELDS);
-    expect(view.valuesOf("o1")).toBe(own);
-    expect(view.valuesOf("missing")).toEqual({ fields: {}, links: {} });
+    expect(entityOf(view, "owners", "o1")!.fields).toBe(own.fields);
     expect(view.rulesetValuesOf("base")).toEqual({ fields: {}, links: {} });
+    const settings = { fields: { ONE: "set" }, links: { ally: "t1" } };
+    const withSettings = composeView([{ ...raw, settings: { rulesetId: "base", values: settings } }], {}, OWNER_FIELDS);
+    expect(withSettings.rulesetValuesOf("base")).toEqual(settings);
   });
 
   test("refuses a declaration that lists an owned kind before its owner", () => {

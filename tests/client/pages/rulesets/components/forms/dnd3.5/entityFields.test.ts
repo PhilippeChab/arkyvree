@@ -23,15 +23,27 @@ import { CLASS_HD, ITEM_COST_GP, ITEM_SLOT, ITEM_TYPE, ITEM_WEIGHT } from "@/voc
 /** A field's description, but what it's for. */
 const BASE = { help: "" };
 
-/** An entity type's fields, one of each input: a group's, and one shown on another's value. */
+/**
+ * An entity type's fields, one of each input, each with the stored field that keeps it (a reference, its link's role):
+ * a group's, and one shown on another's value.
+ */
 const FIELDS: EntityField[] = [
-  { ...BASE, key: "school", label: "School", input: "choice", multiple: false, options: ["Evocation", "Illusion"] },
-  { ...BASE, key: "tags", label: "Tags", input: "choice", multiple: true, options: ["Fire"] },
-  { ...BASE, key: "notes", label: "Notes", input: "text", multiple: true, nullable: true },
-  { ...BASE, key: "target", label: "Target", input: "text", multiple: false, nullable: true },
-  { ...BASE, key: "weighted", label: "Weighted", input: "flag", nullable: false },
   {
     ...BASE,
+    field: "SCHOOL",
+    key: "school",
+    label: "School",
+    input: "choice",
+    multiple: false,
+    options: ["Evocation", "Illusion"],
+  },
+  { ...BASE, field: "TAG", key: "tags", label: "Tags", input: "choice", multiple: true, options: ["Fire"] },
+  { ...BASE, field: "NOTE", key: "notes", label: "Notes", input: "text", multiple: true, nullable: true },
+  { ...BASE, field: "TARGET", key: "target", label: "Target", input: "text", multiple: false, nullable: true },
+  { ...BASE, field: "WEIGHTED", key: "weighted", label: "Weighted", input: "flag", nullable: false },
+  {
+    ...BASE,
+    field: "COUNT",
     key: "count",
     label: "Count",
     input: "number",
@@ -39,15 +51,23 @@ const FIELDS: EntityField[] = [
     min: 1,
     shownWhen: [{ path: "fields.weighted", values: [true] }],
   },
-  { ...BASE, key: "abilityId", label: "Ability", input: "ref", references: "abilities", required: false },
+  {
+    ...BASE,
+    key: "abilityId",
+    label: "Ability",
+    input: "ref",
+    references: "abilities",
+    required: false,
+    role: "ability",
+  },
   {
     key: "weapon",
     label: "Weapon",
     input: "group",
     shownWhen: [{ path: "type", values: ["Weapon"] }],
     fields: [
-      { ...BASE, key: "weapon.reach", label: "Reach", input: "number", default: null },
-      { ...BASE, key: "weapon.ranged", label: "Ranged", input: "flag", nullable: true },
+      { ...BASE, field: "REACH", key: "weapon.reach", label: "Reach", input: "number", default: null },
+      { ...BASE, field: "RANGED", key: "weapon.ranged", label: "Ranged", input: "flag", nullable: true },
     ],
   },
 ];
@@ -59,8 +79,8 @@ const WORN_FIELDS: EntityField[] = [
     label: "Armor",
     input: "group",
     fields: [
-      { ...BASE, key: "armor.bonus", label: "Armor Bonus", input: "number", default: null },
-      { ...BASE, key: "maxDex", label: "Max Dex Bonus", input: "number", default: null },
+      { ...BASE, field: "ARMOR_BONUS", key: "armor.bonus", label: "Armor Bonus", input: "number", default: null },
+      { ...BASE, field: "MAX_DEX", key: "maxDex", label: "Max Dex Bonus", input: "number", default: null },
     ],
   },
   {
@@ -68,8 +88,8 @@ const WORN_FIELDS: EntityField[] = [
     label: "Shield",
     input: "group",
     fields: [
-      { ...BASE, key: "shield.bonus", label: "Shield Bonus", input: "number", default: null },
-      { ...BASE, key: "maxDex", label: "Max Dex Bonus", input: "number", default: null },
+      { ...BASE, field: "SHIELD_BONUS", key: "shield.bonus", label: "Shield Bonus", input: "number", default: null },
+      { ...BASE, field: "MAX_DEX", key: "maxDex", label: "Max Dex Bonus", input: "number", default: null },
     ],
   },
 ];
@@ -88,16 +108,11 @@ describe("an entity's fields in its form", () => {
     });
   });
 
-  test("hold an entity's, its none as their empty values, a group's off its own object", () => {
+  test("hold an entity's, each off its stored field (a reference off its link), its none as their empty values", () => {
     const entity = {
       name: "Bolt",
-      school: "Evocation",
-      tags: ["Fire", 3],
-      target: null,
-      weighted: true,
-      count: 2,
-      abilityId: null,
-      weapon: { reach: 10, ranged: false },
+      fields: { SCHOOL: "Evocation", TAG: ["Fire", 3], WEIGHTED: true, COUNT: 2, REACH: 10, RANGED: false },
+      links: [],
     };
     expect(toFieldValues(FIELDS, entity)).toEqual({
       school: "Evocation",
@@ -109,6 +124,8 @@ describe("an entity's fields in its form", () => {
       abilityId: "",
       weapon: { reach: 10, ranged: false },
     });
+    const linked = { ...entity, links: [{ role: "ability", toId: "wis", toName: "Wisdom" }] };
+    expect(toFieldValues(FIELDS, linked).abilityId).toBe("wis");
   });
 
   test("hold a progression: its default in an empty form, an entity's when it's of its shape, each a copy", () => {
@@ -129,7 +146,7 @@ describe("an entity's fields in its form", () => {
     const form: { fields?: EntityFieldValues; name: string } = { name: "" };
     expect(withEntityFields(form, undefined)).toEqual({ name: "", fields: {} });
     expect(withEntityFields(form, FIELDS.slice(0, 1))).toEqual({ name: "", fields: { school: "" } });
-    expect(withEntityFields(form, FIELDS.slice(0, 1), { school: "Illusion" })).toEqual({
+    expect(withEntityFields(form, FIELDS.slice(0, 1), { fields: { SCHOOL: "Illusion" } })).toEqual({
       name: "",
       fields: { school: "Illusion" },
     });
@@ -170,10 +187,7 @@ describe("an entity's fields in its form", () => {
 
   test("hold of their own those another entity doesn't hold the same, a group's by each field", () => {
     const template = {
-      school: "Evocation",
-      tags: ["Fire"],
-      target: "One creature",
-      weapon: { reach: 10, ranged: true },
+      fields: { SCHOOL: "Evocation", TAG: ["Fire"], TARGET: "One creature", REACH: 10, RANGED: true },
     };
     const values = { school: "Evocation", tags: [], target: "You", weapon: { reach: 10, ranged: false } };
     expect(ownFieldValues(FIELDS, values, template)).toEqual({
@@ -182,7 +196,7 @@ describe("an entity's fields in its form", () => {
       target: "You",
       weapon: { reach: null, ranged: false },
     });
-    expect(ownFieldValues(FIELDS, values, undefined)).toEqual(toFieldValues(FIELDS, values));
+    expect(ownFieldValues(FIELDS, values, undefined)).toEqual({ ...emptyFieldValues(FIELDS), ...values });
   });
 
   test("send an edit's changed fields alone, a group whole", () => {
@@ -199,7 +213,7 @@ describe("an entity's fields in its form", () => {
 describe("an entity's fields shown in a group but held at its own level", () => {
   test("hold their value once, at their own key, whichever group shows them", () => {
     expect(emptyFieldValues(WORN_FIELDS)).toEqual({ armor: { bonus: null }, maxDex: null, shield: { bonus: null } });
-    expect(toFieldValues(WORN_FIELDS, { armor: { bonus: 4 }, maxDex: 6, shield: { bonus: null } })).toEqual({
+    expect(toFieldValues(WORN_FIELDS, { fields: { ARMOR_BONUS: 4, MAX_DEX: 6 } })).toEqual({
       armor: { bonus: 4 },
       maxDex: 6,
       shield: { bonus: null },

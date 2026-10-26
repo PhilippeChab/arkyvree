@@ -23,9 +23,9 @@ import { readClassTable } from "@/tests/support/dnd3.5/classTables.ts";
 import { addCharacterLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { addGrants } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { findFormValues } from "@/tests/support/ownerValues.ts";
 import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, NIL_UUID } from "@/tests/support/seed.ts";
-import { findStoredValues } from "@/tests/support/storedValues.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type LevelBody = Parameters<typeof EntitiesService.createOwnedEntity>[4];
@@ -42,6 +42,11 @@ function createLevel(
     fields: { bab: level, skills: 4 },
     ...body,
   });
+}
+
+/** A level's fields as its answer holds them: its base attack bonus and its skill points, by their stored fields. */
+function levelFields(bab: number, skills: number) {
+  return { [CLASS_LEVEL_BAB]: bab, [CLASS_LEVEL_SKILL_POINTS]: skills };
 }
 
 function modifier(sourceId: string, target: string, value: string) {
@@ -107,12 +112,11 @@ describe("EntitiesService: a class's levels", () => {
       expect(await EntitiesService.getOwnedEntities(ruleset.id, "classes", klass.id)).toMatchObject([
         {
           position: 1,
-          bab: 1,
-          skills: 4,
+          fields: levelFields(1, 4),
           feats: [{ id: feat.id, aptitudeId: aptitude.id, aptitudeName: aptitude.name, free: false }],
           saves: [{ saveId: fortitude.id, base: 2 }],
         },
-        { position: 2, bab: 2, feats: [], saves: [] },
+        { position: 2, fields: { [CLASS_LEVEL_BAB]: 2 }, feats: [], saves: [] },
       ]);
     });
 
@@ -216,8 +220,7 @@ describe("EntitiesService: a class's levels", () => {
     const detail = {
       id: level.id,
       position: 2,
-      bab: 2,
-      skills: 4,
+      fields: levelFields(2, 4),
       modifiers: [{ target: "combat.bab" }],
       requirements: [{ target: "classes.testclass.level", value: "1" }],
     };
@@ -236,8 +239,8 @@ describe("EntitiesService: a class's levels", () => {
       await EntitiesService.updateOwnedEntity(session, ruleset.id, "classes", klass.id, level.id, {
         fields: { bab: 3 },
       }),
-    ).toMatchObject({ bab: 3, skills: 4 });
-    const { fields } = await findStoredValues("class_levels", level.id);
+    ).toMatchObject({ fields: levelFields(3, 4) });
+    const { fields } = await findFormValues("class_levels", level.id);
     expect(Object.keys(fields).sort()).toEqual([CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS]);
   });
 
@@ -253,8 +256,8 @@ describe("EntitiesService: a class's levels", () => {
     const edited = await update(2, level.updatedAt);
     expect(edited.updatedAt).not.toBe(level.updatedAt);
     await expectRefusedWith(update(3, level.updatedAt), 409);
-    expect(await update(4, edited.updatedAt)).toMatchObject({ bab: 4 });
-    expect(await update(5)).toMatchObject({ bab: 5 });
+    expect(await update(4, edited.updatedAt)).toMatchObject({ fields: { [CLASS_LEVEL_BAB]: 4 } });
+    expect(await update(5)).toMatchObject({ fields: { [CLASS_LEVEL_BAB]: 5 } });
   });
 
   describe("feat pools", () => {
@@ -430,7 +433,7 @@ describe("EntitiesService: a class's levels", () => {
 
       expect(await Modifiers.findMany(db, { sourceIds: [level.id], sourceType: "class_levels" })).toEqual([]);
       expect(await Requirements.findMany(db, { entityIds: [level.id], entityType: "class_levels" })).toEqual([]);
-      expect(await findStoredValues("class_levels", level.id)).toEqual({ fields: {}, links: {} });
+      expect(await findFormValues("class_levels", level.id)).toEqual({ fields: {}, links: {} });
     });
 
     test("is refused while a character has taken it", async () => {
@@ -453,7 +456,7 @@ describe("EntitiesService: a class's levels", () => {
     test("reads the inherited class's levels", async () => {
       const { parent, fork, klass, inheritedLevel } = await setupFork();
       expect(await EntitiesService.getOwnedEntities(fork.id, "classes", klass.id)).toMatchObject([
-        { id: inheritedLevel.id, position: 1, bab: 1 },
+        { id: inheritedLevel.id, position: 1, fields: { [CLASS_LEVEL_BAB]: 1 } },
       ]);
       expect(await EntitiesService.getOwnedEntityWithOwner(fork.id, "classes", inheritedLevel.id)).toMatchObject({
         id: inheritedLevel.id,
@@ -494,13 +497,13 @@ describe("EntitiesService: a class's levels", () => {
           fields: { bab: 5 },
           updatedAt: inheritedLevel.updatedAt,
         }),
-      ).toMatchObject({ bab: 5, skills: 4 });
+      ).toMatchObject({ fields: levelFields(5, 4) });
 
       await EntitiesService.deleteOwnedEntity(session, fork.id, "classes", klass.id, inheritedLevel.id);
       expect(await RulesetViews.getRawData(parent.id)).toBe(parentRows);
       expect(await EntitiesService.getOwnedEntities(fork.id, "classes", klass.id)).toEqual([]);
       expect(await EntitiesService.getOwnedEntities(parent.id, "classes", klass.id)).toMatchObject([
-        { id: inheritedLevel.id, bab: 1, skills: 4 },
+        { id: inheritedLevel.id, fields: levelFields(1, 4) },
       ]);
     });
 

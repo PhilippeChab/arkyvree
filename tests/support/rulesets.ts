@@ -8,7 +8,7 @@ import type { CowData, RulesetSources } from "@/engine/core/cow/index.ts";
 import type { EntityKinds } from "@/engine/index.ts";
 import { EntityCopy, RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Fields, type RulesetEntityType, Rulesets } from "@/server/repositories/index.ts";
+import { type RulesetEntityType, Rulesets, RulesetSettings } from "@/server/repositories/index.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
@@ -80,7 +80,7 @@ export async function createSeededTestRuleset(
   });
 
   // Copy the ruleset's Settings, as a fork does (its skill point ability)
-  await Fields.createRulesetCopy(db, { fromId: coreId, toId: ruleset.id });
+  await RulesetSettings.createCopy(db, { fromId: coreId, toId: ruleset.id });
 
   return ruleset;
 }

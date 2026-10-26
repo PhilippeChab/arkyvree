@@ -52,10 +52,10 @@ function columnsByKey(columns: readonly EntityField[]): ValueField[] {
 }
 
 /**
- * A column's value as an entity read holds it: its own field's (`field`, among its `fields`), its link's of the column's
- * role (a reference's or a template's `role`, among its `links`: the linked entity's id), else at its key; or, for
- * links an entity read holds among its links (a column's `role`'s), off them: each its linked entity's id, at its level
- * where the column takes one, in their names' order.
+ * A column's or a field's value as an entity read holds it: its stored field's (`field`, among its `fields`), its
+ * link's of its role (a reference's or a template's `role`, among its `links`: the linked entity's id), else at its
+ * key; or, for links an entity read holds among its links (a column's `role`'s), off them: each its linked entity's
+ * id, at its level where the column takes one, in their names' order.
  */
 function columnValueOf(column: ValueField, entity: unknown): unknown {
   if (column.field) return ownFieldOf(entity, column.field);
@@ -239,7 +239,7 @@ export function ownFieldValues(fields: readonly EntityField[], values: unknown, 
   return valuesByKey(
     valueFieldsOf(fields).map((field) => {
       const value = formValueOf(field, valueAt(values, field.key));
-      const same = JSON.stringify(value) === JSON.stringify(formValueOf(field, valueAt(base, field.key)));
+      const same = JSON.stringify(value) === JSON.stringify(formValueOf(field, columnValueOf(field, base)));
       return [field.key, (same ? emptyValueOf(field) : value) as LeafValue];
     }),
   );
@@ -308,10 +308,13 @@ export function toColumnValues(columns: readonly EntityField[], entity?: unknown
   );
 }
 
-/** An entity's fields as its form holds them, off its description (`entity`, which carries each at its key). */
+/**
+ * An entity's fields as its form holds them, off its description (`entity`, which holds each at its stored field, a
+ * reference at its link's role).
+ */
 export function toFieldValues(fields: readonly EntityField[], entity: unknown): EntityFieldValues {
   return valuesByKey(
-    valueFieldsOf(fields).map((field) => [field.key, formValueOf(field, valueAt(entity, field.key)) as LeafValue]),
+    valueFieldsOf(fields).map((field) => [field.key, formValueOf(field, columnValueOf(field, entity)) as LeafValue]),
   );
 }
 
@@ -331,4 +334,22 @@ export function withEntityFields<V extends { fields?: EntityFieldValues }>(
 ): V {
   if (!fields) return { ...values, fields: {} };
   return { ...values, fields: entity === undefined ? emptyFieldValues(fields) : toFieldValues(fields, entity) };
+}
+
+/**
+ * A form's values (`values`) with its fields as its ruleset declares them (`fields`), as its save sent them and its
+ * server keeps them (`saved`: each at its key, a ruleset's Settings'); none until the fields load.
+ */
+export function withSavedFields<V extends { fields?: EntityFieldValues }>(
+  values: V,
+  fields: readonly EntityField[] | undefined,
+  saved: unknown,
+): V {
+  if (!fields) return { ...values, fields: {} };
+  return {
+    ...values,
+    fields: valuesByKey(
+      valueFieldsOf(fields).map((field) => [field.key, formValueOf(field, valueAt(saved, field.key)) as LeafValue]),
+    ),
+  };
 }

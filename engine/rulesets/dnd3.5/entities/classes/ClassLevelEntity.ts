@@ -120,16 +120,15 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   }
 
   /**
-   * What saving a level writes (`level`: the one edited): the base attack and skill points its form gives, over those
-   * it keeps, and, made with a level past the class's first, its requirement of the class's previous level
-   * (`classes.<slug>.level` above it).
+   * What saving a level writes beside its row (`level`: the one edited): made with a level past the class's first, its
+   * requirement of the class's previous level (`classes.<slug>.level` above it).
    */
   protected override writesOf(
     body: ClassLevelBody,
-    given: Partial<ClassLevelFieldValues>,
+    _given: Partial<ClassLevelFieldValues>,
     level?: KlassLevel,
   ): EntityWrites {
-    const writes: EntityWrites = { ...super.writesOf(body, given, level) };
+    const writes: EntityWrites = {};
     if (!level && body.level !== undefined && body.level > 1) {
       writes.requirement = {
         level: "1",
@@ -179,7 +178,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
 
   /**
    * One of the class's levels' edit: the class and the level, as the view has them, its new links when the form sends
-   * them, what its form writes against the stored values the view composes for it (those a copy of it holds), and the
+   * them, what its form writes against the fields the view composes for it (those a copy of it holds), and the
    * level it answers once written, with the fields it keeps.
    */
   override planEdit(levelId: string, form: EntityForm) {
@@ -222,10 +221,10 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
    */
   describeAll() {
     const levels = this.dnd35.klassLevelsByKlass.get(this.klass.id) ?? [];
-    return this.describeRows(levels).map((level) => ({
+    return this.describeRows(levels).map((level, index) => ({
       ...level,
       ...this.detailsOf(level),
-      babLabel: CombatSheet.formatBab(level.bab),
+      babLabel: CombatSheet.formatBab(this.fieldsOf(levels[index]).bab),
     }));
   }
 }

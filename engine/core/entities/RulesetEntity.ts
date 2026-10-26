@@ -9,8 +9,6 @@ import {
   FormColumns,
   type FormField,
   type NoFields,
-  OwnerValues,
-  type StoredValues,
 } from "@/engine/core/fields/index.ts";
 import type {
   EntityCopiesPlan,
@@ -51,8 +49,9 @@ const COPY_ACTIONS: readonly EntityAction[] = ["duplicate", "templates", "varian
 /**
  * A ruleset's entity kind (its type, `type`), as its rules answer the server of it in a ruleset's view. Every kind
  * takes the same steps, and adds its rules to the ones they name:
- * - an entity found by its id (`find`) and described (`describe`): as stored (its own columns, its own fields, its
- *   single links each with its target's name), with the fields its stored values hold (`fields`), as its form shows them
+ * - an entity found by its id (`find`) and described (`describe`): as the view composes it (its own columns, its fields
+ *   as its codec reads them, by the stored field that keeps each, an item's template's it holds none of among them,
+ *   `fieldsHeldBy`; its single links each with its target's name), its fields as its form shows them
  *   (`describeFields`);
  * - a page of its records (`openList`): its query's filters read by their schemas (`listFilters`), what the server
  *   reads it with (`filters`, `listOf`: those of its columns, by where it stores them), and its records described
@@ -62,8 +61,8 @@ const COPY_ACTIONS: readonly EntityAction[] = ["duplicate", "templates", "varian
  *   a copy's for its source's id, refused, naming it, when the view shows none), the fields the form gives, read by its
  *   codec against the ruleset's declarations of them (`FieldCodec.parse`), the form checked (`checkForm`), its form's
  *   columns (`columnsOf`), written where they're stored (`storedOf`: each by its description's `field` or `role`, or by
- *   `storedAt`), the links it sets (`linksOf`), what it writes beside them (`writesOf`: its fields, the feats it makes),
- *   and the fields it keeps once written (`fields`, which a create or an edit answers with its row);
+ *   `storedAt`), its fields with them (`fieldsWrite`), the links it sets (`linksOf`), and what it writes beside them
+ *   (`writesOf`: the feats it makes);
  * - what deleting one writes (`planDelete`): checked (`checkDelete`), and what it writes with it (`deleteWritesOf`).
  * An action a kind has none of it refuses as not found (`checkAction`): a read-only kind's writes (`readOnly`: "No
  * create for abilities"), the groups of a kind that lists none, a duplicate, variants and templates of a kind that makes
@@ -83,7 +82,7 @@ export default abstract class RulesetEntity<
   /** Whether it makes copies of its entities: their templates, a duplicate, variants (an item's). */
   protected readonly copies: boolean = false;
 
-  /** The fields its entities hold: `FieldCodec.NONE`, none of its own. */
+  /** The fields its entities hold, as its module declares them: `FieldCodec.NONE`, none. */
   protected abstract readonly fields: FieldCodec<S>;
 
   /** What its form carries past its name, its description, its fields and its columns, by key: nothing. */
@@ -144,28 +143,30 @@ export default abstract class RulesetEntity<
   }
 
   /**
-   * What a form writes, the fields the entity keeps (`fields`), and what its save answers once written (`describe`: its
-   * record, the links a read describes of it named, `savedLinks`, and the fields it keeps).
+   * What a form writes (its row: its columns where they're stored, `storedOf`, and its fields, `fieldsWrite`), and what
+   * its save answers once written (`describe`: its record, its fields as a read gives them, the links a read describes
+   * of it named, `savedLinks`).
    */
   private planWrite(
     body: Body,
     given: Partial<FieldValues<S>>,
     entity?: ViewKinds[K],
-  ): EntityCreatePlan<FieldValues<S>> & { columns: Columns } {
+  ): EntityCreatePlan & { columns: Columns } {
     const columns = this.columnsOf(body, entity);
-    const writes = this.writesOf(body, given, entity);
-    const fields = this.fields.read(this.writtenValues(columns, writes?.fields, entity));
+    const row = this.storedOf(columns);
+    const written = this.fieldsWrite(body, given, entity);
     return {
       columns,
-      describe: (row, links) => ({
-        ...row,
-        links: this.rulesetData.nameLinks(this.savedLinks(row, links)),
-        ...fields,
+      describe: (saved, links) => ({
+        ...saved,
+        fields: this.fields.readByField(this.rulesetData.withInheritedFields(this.type, saved)),
+        links: this.rulesetData.nameLinks(this.savedLinks(saved, links)),
       }),
-      fields,
       links: this.linksOf(body),
-      row: this.storedOf(columns),
-      writes,
+      row: written
+        ? { ...row, fields: { ...row.fields, ...written.fields }, links: { ...row.links, ...written.links } }
+        : row,
+      writes: this.writesOf(body, given, entity),
     };
   }
 
@@ -218,23 +219,46 @@ export default abstract class RulesetEntity<
   }
 
   /**
-   * Entities as stored (`rows`: records, or the view's), each with its single links as the view composes them, each
-   * with its target's name (`links`), and the fields its stored values hold.
+   * Entities as stored (`rows`: records, or the view's), each with its fields as its codec reads them, as the view
+   * composes them (`fieldsHeldBy`), and its single links as the view composes them, each with its target's name
+   * (`links`).
    */
-  protected describeRows<T extends Pick<EntityRecord, "id" | "links">>(
+  protected describeRows<T extends Pick<EntityRecord, "fields" | "id" | "links">>(
     rows: T[],
-  ): (Omit<T, "links"> & FieldValues<S> & { links: NamedLink[] })[] {
+  ): (Omit<T, "fields" | "links"> & { fields: Record<string, unknown>; links: NamedLink[] })[] {
     return rows.map((row) => ({
       ...row,
+      fields: this.fieldsHeldBy(row),
       links: this.rulesetData.nameLinks(this.rulesetData.linksOf(row.id).filter((link) => link.role in row.links)),
-      ...this.fieldsOf(row),
     }));
   }
 
-  /** The fields an entity's stored values hold, a reference the id the view keys its entity by (a copy's). */
-  protected fieldsOf(entity: Pick<ViewEntity, "id" | "links">): FieldValues<S> {
-    const values = this.fields.read(this.valuesOf(entity));
+  /**
+   * An entity's fields as a read answers them (`entity`: a record, or the view's), each as its codec reads it, by the
+   * stored field that keeps it (`FieldCodec.readByField`): the view's, its sibling copies' merged in, with those it
+   * reads off another when it holds none (an item's, its template's); a record's own where the view shows none of it.
+   */
+  protected fieldsHeldBy(entity: Pick<EntityRecord, "fields" | "id" | "links">): Record<string, unknown> {
+    const viewed: Pick<ViewEntity, "fields" | "links"> = this.rulesetData.find(this.type, entity.id) ?? entity;
+    return this.fields.readByField(this.rulesetData.withInheritedFields(this.type, viewed));
+  }
+
+  /**
+   * An entity's fields read by its codec (`entity`, as the view has it: those it reads off another when it holds none
+   * among them, an item's template's), a reference the id the view keys its entity by (a copy's).
+   */
+  protected fieldsOf(entity: Pick<ViewEntity, "fields" | "links">): FieldValues<S> {
+    const values = this.fields.read(this.rulesetData.withInheritedFields(this.type, entity));
     return this.fields.resolveReferences(values, (id) => this.rulesetData.cow.resolve(id));
+  }
+
+  /**
+   * The fields a form writes (`given`: those it gives, read; `entity`: the one edited), with the links its references
+   * set: those it gives over those the entity keeps (`formFields`); none when it gives none.
+   */
+  protected fieldsWrite(_body: Body, given: Partial<FieldValues<S>>, entity?: ViewKinds[K]): FieldsWrite | undefined {
+    const fields = this.formFields(given, entity);
+    return fields && this.fields.write(fields);
   }
 
   /**
@@ -257,11 +281,11 @@ export default abstract class RulesetEntity<
   }
 
   /**
-   * The fields a form writes: the ones it gives over the edited entity's (a new one's defaults). None when the form
-   * gives none: an edit keeps those it has, and a new entity keeps none.
+   * The fields a form writes, of those its form shows: the ones it gives over the edited entity's (a new one's
+   * defaults). None when the form gives none: an edit keeps those it has, and a new entity keeps none.
    */
   protected formFields(given: Partial<FieldValues<S>>, entity?: ViewKinds[K]) {
-    if (this.fields.keys.every((key) => given[key] === undefined)) return undefined;
+    if (this.fields.formKeys.every((key) => given[key] === undefined)) return undefined;
     return this.fields.merge(entity ? this.fieldsOf(entity) : this.fields.defaults, given);
   }
 
@@ -303,14 +327,6 @@ export default abstract class RulesetEntity<
   }
 
   /**
-   * The stored values a written entity's fields are read off when its form writes none: the edited one's, none for a
-   * new one (an item's, its template's).
-   */
-  protected keptValues(_columns: Columns, entity?: ViewKinds[K]): StoredValues {
-    return entity ? this.valuesOf(entity) : OwnerValues.NONE;
-  }
-
-  /**
    * The links a form sets on the entity, by role (a feat's pools, a class level's grants): none (`undefined`, an edit's
    * kept), unless its kind's form sets some.
    */
@@ -329,7 +345,7 @@ export default abstract class RulesetEntity<
       Object.fromEntries(this.listColumns.map((name) => [name, where[name]])),
     );
     return {
-      describe: <T extends Pick<EntityRecord, "id" | "links">>(rows: T[]) => this.describeRows(rows),
+      describe: <T extends Pick<EntityRecord, "fields" | "id" | "links">>(rows: T[]) => this.describeRows(rows),
       filters,
     };
   }
@@ -358,8 +374,8 @@ export default abstract class RulesetEntity<
 
   /**
    * What a form's columns (`columns`, by its keys) write of its entity's row: its name and its description, and every
-   * other key where its kind stores it (`storedOf`'s keys: its own field, its single link, its partition). A key it
-   * leaves out (undefined) it keeps; null clears it.
+   * other key where its kind stores it (`storedOf`'s keys: a field, its single link, its partition). A key it leaves
+   * out (undefined) it keeps; null clears it.
    */
   protected storedOf(columns: Columns): EntityWrite {
     const stored = this.keysStored;
@@ -385,27 +401,12 @@ export default abstract class RulesetEntity<
     };
   }
 
-  /** The stored values an entity's fields are read off: its own (an item's, merged with its template's). */
-  protected valuesOf(entity: Pick<ViewEntity, "id" | "links">): StoredValues {
-    return this.rulesetData.valuesOf(entity.id);
-  }
-
   /**
-   * What a form writes beside the row (`given`: the fields it gives, read; `entity`: the one edited): its fields, those
-   * it gives over those the entity keeps, which replace its stored values; nothing when it gives none. Its kind's rules
-   * add theirs (the feats it makes).
+   * What a form writes beside the row (`given`: the fields it gives, read; `entity`: the one edited): nothing, unless
+   * its kind's rules say (the feats it makes).
    */
-  protected writesOf(_body: Body, given: Partial<FieldValues<S>>, entity?: ViewKinds[K]): EntityWrites | undefined {
-    const fields = this.formFields(given, entity);
-    return fields && { fields: this.fields.write(fields) };
-  }
-
-  /**
-   * The stored values a written entity's fields are read off: those its form writes (`written`), or, when it writes
-   * none, those it keeps (`keptValues`).
-   */
-  protected writtenValues(columns: Columns, written: FieldsWrite | undefined, entity?: ViewKinds[K]): StoredValues {
-    return written ? OwnerValues.written(written) : this.keptValues(columns, entity);
+  protected writesOf(_body: Body, _given: Partial<FieldValues<S>>, _entity?: ViewKinds[K]): EntityWrites | undefined {
+    return undefined;
   }
 
   /**
@@ -424,8 +425,8 @@ export default abstract class RulesetEntity<
   }
 
   /**
-   * An entity as its page shows it: as the view has it (its own columns, its own fields, its single links each with its
-   * target's name), with the fields its stored values hold.
+   * An entity as its page shows it: as the view has it (its own columns, its fields, an item's template's it holds none
+   * of among them, its single links each with its target's name).
    */
   describe(id: string) {
     return this.describeRows([this.find(id)])[0];
@@ -478,11 +479,10 @@ export default abstract class RulesetEntity<
   }
 
   /**
-   * A new entity's row off its form, what it writes beside it, and the fields it keeps once written. Named as an
-   * ancestor its ruleset deleted (`ancestor`, its stored record, which the view hides), it stands in for it: its kind
-   * may take after it.
+   * A new entity's row off its form, and what it writes beside it. Named as an ancestor its ruleset deleted
+   * (`ancestor`, its stored record, which the view hides), it stands in for it: its kind may take after it.
    */
-  planCreate(sent: EntityForm, _ancestor?: EntityRecord): EntityCreatePlan<FieldValues<S>> {
+  planCreate(sent: EntityForm, _ancestor?: EntityRecord): EntityCreatePlan {
     this.checkAction("create");
     const body = this.formOf(sent);
     const form: Body = { ...body, ...this.resolveIds(body) };
@@ -501,16 +501,16 @@ export default abstract class RulesetEntity<
   }
 
   /** A copy of an entity (`sourceId`) off its form: none, unless its kind makes copies. */
-  planDuplicate(_sourceId: string, _sent: EntityForm): EntityCreatePlan<FieldValues<S>> {
+  planDuplicate(_sourceId: string, _sent: EntityForm): EntityCreatePlan {
     return this.refuseAction("duplicate");
   }
 
   /**
-   * An entity's edit (`id`): the entity as the view has it, its new row off its form (an edit leaves the columns it
-   * doesn't give as they are), what it writes beside it, the fields it keeps once written, and what its activity
-   * compares (`changes`: the entity's values and the form's columns, by the form's keys).
+   * An entity's edit (`id`): the entity as the view has it, its new row off its form (an edit leaves the columns and the
+   * fields it doesn't give as they are), what it writes beside it, and what its activity compares (`changes`: the
+   * entity's values and the form's columns, by the form's keys).
    */
-  planEdit(id: string, sent: EntityForm): EntityEditPlan<FieldValues<S>, ViewKinds[K]> {
+  planEdit(id: string, sent: EntityForm): EntityEditPlan<ViewKinds[K]> {
     this.checkAction("update");
     const entity = this.find(id);
     const body = this.formOf(sent, entity);

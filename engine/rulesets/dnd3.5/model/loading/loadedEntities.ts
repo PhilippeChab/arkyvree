@@ -60,7 +60,7 @@ export type CustomizedClassLevel = KlassLevel & {
   requirements: Requirement[];
 };
 
-/** A race as the character reads it: its row, the fields its stored values hold, and its customizations. */
+/** A race as the character reads it: its row, its fields' values, and its customizations. */
 export type CustomizedRace = Race &
   RaceFieldValues & {
     modifiers: Modifier[];

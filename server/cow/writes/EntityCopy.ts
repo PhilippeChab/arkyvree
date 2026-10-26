@@ -5,6 +5,7 @@ import {
   type EntityCustomizations,
   type EntityRecord,
   type RulesetSources,
+  type StoredValues,
   type ViewLink,
 } from "@/engine/index.ts";
 import CowDataReader from "@/server/cow/views/CowDataReader.ts";
@@ -127,10 +128,15 @@ export default class EntityCopy {
     // The ruleset's copy-on-write data, as the transaction sees it, its own copies included: what the copy's references
     // (its row's, its relationships') are remapped by
     const cow = await CowDataReader.read(tx, this.ruleset);
+    const siblingIds = cow.getSiblings(this.entityId);
 
-    // 2. Copy the entity, its own fields and its single links to the child ruleset, each link to the entity the ruleset
-    // shows in its target's place (a race's parent, an item's template, a spell's save)
-    const [{ campaignId, description, fields, links, name, partition }] = cow.resolveLinks([parentEntity]);
+    // 2. Copy the entity, its fields and its single links (its sibling copies' merged in, as the view merges them) to
+    // the child ruleset, each link to the entity the ruleset shows in its target's place (a race's parent, an item's
+    // template, a spell's save)
+    const merged = await this.mergeValues(tx, parentEntity, siblingIds);
+    const [{ campaignId, description, fields, links, name, partition }] = cow.resolveLinks([
+      { ...parentEntity, ...merged },
+    ]);
     const [newEntity] = await Entities.create(tx, entityType, {
       rulesetId: childRulesetId,
       campaignId,
@@ -150,7 +156,6 @@ export default class EntityCopy {
     await this.copyRelationships(tx, newEntity.id, cow);
 
     // 4b. Merge sibling data when multiple extensions COW the same base entity
-    const siblingIds = cow.getSiblings(this.entityId);
     if (siblingIds.length > 0) await this.mergeSiblings(tx, newEntity.id, cust, siblingIds, cow);
 
     // 5. Record the copy: the ruleset's view shows it in place of the parent
@@ -189,7 +194,7 @@ export default class EntityCopy {
       if (ownerType !== this.entityType) continue;
       const owned = await Entities.findMany(tx, { entityType: type, ownerIds: [this.entityId] });
       if (owned.length === 0) continue;
-      // Each its position, its own fields and its single links (each to what stands for its target), and its times
+      // Each its position, its fields and its single links (each to what stands for its target), and its times
       const copies = await Entities.createMany(
         tx,
         type,
@@ -234,11 +239,11 @@ export default class EntityCopy {
   }
 
   /**
-   * Merge sibling data into the copy. When multiple extensions COW the same base entity, the "winner" is copied first.
-   * This merges what its siblings add, by the rules a ruleset's view merges them by (`siblingMerge.ts`), so the child
-   * fork starts from the merged view: their modifiers (each with its requirements) and requirements against the
-   * winner's (`own`, which the copy holds), its stored values with theirs merged in, then their links of the roles that
-   * merge (a feat's pools). Each copied row's id is recorded.
+   * Merge sibling data into the copy. When multiple extensions COW the same base entity, the "winner" is copied first,
+   * its fields and single links with its siblings' merged in (`mergeValues`). This merges what else its siblings add,
+   * by the rules a ruleset's view merges them by (`siblingMerge.ts`), so the child fork starts from the merged view:
+   * their modifiers (each with its requirements) and requirements against the winner's (`own`, which the copy holds),
+   * then their links of the roles that merge (a feat's pools). Each copied row's id is recorded.
    */
   private async mergeSiblings(
     tx: Db,
@@ -250,8 +255,21 @@ export default class EntityCopy {
     // The losers' own rows, by their stored ids
     const siblingCusts = await CustomizationCopies.read(tx, siblingIds, this.entityType, this.sourceType);
     const siblings = siblingIds.flatMap((id) => siblingCusts.get(id) ?? []);
-    const merged = Engine.copyOnWrite().mergeCustomizations(own, siblings, targetEntityId, this.entityType);
+    const merged = Engine.copyOnWrite().mergeCustomizations(own, siblings, targetEntityId);
     await CustomizationCopies.copy(tx, targetEntityId, this.entityType, merged, this.copiedIds);
     await this.mergeLinks(tx, targetEntityId, siblingIds, cow);
+  }
+
+  /**
+   * The entity's fields and single links (`entity`, as stored) with its sibling copies' (`siblingIds`, by their stored
+   * ids, in the order its `CowData` pairs them) merged in, as the view merges them (`copyOnWrite().mergeValues`): its own
+   * without any.
+   */
+  private async mergeValues(tx: Db, entity: EntityRecord, siblingIds: string[]): Promise<StoredValues> {
+    if (siblingIds.length === 0) return entity;
+    const records = await Entities.findMany(tx, { entityType: this.entityType, ids: siblingIds });
+    const byId = new Map(records.map((record) => [record.id, record]));
+    const siblings = siblingIds.map((id) => byId.get(id) ?? { fields: {}, links: {} });
+    return Engine.copyOnWrite().mergeValues(entity, siblings, this.entityType);
   }
 }

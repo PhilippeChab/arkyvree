@@ -1,9 +1,9 @@
 /**
  * An entity's fields as a ruleset's vocabulary declares them (`FieldSpec`, data written `as const`), and the values
- * they read (`FieldValues`): what the engine reads and writes them by (its codecs), and what a ruleset's content types
- * its seeds' fields with (`PartialFieldValues`). A reference names an entity kind (`K`), which the engine binds to its
- * view's kinds. And how a sheet shows them: a field's name as a label (`formatFieldName`), its values joined in their
- * options' order (`formatFieldValues`).
+ * they read (`FieldValues`): what the engine stores, merges, reads and writes them by (its codecs, its storage), and
+ * what a ruleset's content types its seeds' fields with (`PartialFieldValues`). A reference names an entity kind (`K`),
+ * which the engine binds to its view's kinds. And how a sheet shows them: a field's name as a label
+ * (`formatFieldName`), its values joined in their options' order (`formatFieldValues`).
  */
 
 import { sortByOrder } from "@/shared/sortByOrder.ts";
@@ -26,9 +26,27 @@ interface LeafBase extends FieldBase {
   label: string;
 }
 
-/** What a field its owner's stored values keep declares past a leaf's: the stored field that keeps them. */
+/**
+ * What a field its owner stores declares past a leaf's: the stored field that keeps it, how its owner's sibling copies
+ * merge it (`merge`), the role of the link its owner reads it off another through when it holds none (`inherits`: an
+ * item's, its template's `madeFrom`), and where its owner's form shows it (`form`).
+ */
 interface StoredLeafBase extends LeafBase {
   field: string;
+  /**
+   * Where its owner's form shows it past its fields: as one of its kind's columns (an item's cost, beside its name), or
+   * nowhere (`hidden`: its kind's rules set it, a feat's flags). None: among its form's fields
+   */
+  form?: "column" | "hidden";
+  /** The role of its owner's single link to the entity it reads it off when it holds none: none, its own alone */
+  inherits?: string;
+  /**
+   * Whether its values are read kind-wide, each with the owners that hold it (`RulesetData.kindValues`): the groupings
+   * its kind's values name (a weapon's type, a feat's family, a spell's school) and their target paths' labels. None:
+   * its owner's alone
+   */
+  kindWide?: true;
+  merge: Merge;
 }
 
 /** A field's value, by its kind (a group's, its own fields'). */
@@ -48,7 +66,9 @@ type KindValueOf<F extends FieldSpec> = F extends GroupSpec
           ? string[]
           : F extends ProgressionSpec
             ? ProgressionValue
-            : string | null;
+            : F extends { default: string }
+              ? string
+              : string | null;
 
 /**
  * A field's value: by its kind (`KindValueOf`), unknown for any field (a kind's fields read without their spec, whatever
@@ -63,12 +83,15 @@ export interface ChoiceSpec extends StoredLeafBase {
 }
 
 /**
- * True once one of its values is; without any, false, or none when it tells its absence apart (`absent: null`, an
- * item's: a false value is written and read too).
+ * True once one of its values is; without any, its `default` (false without one), or none when it tells its absence
+ * apart (`absent: null`, an item's: a false value is written and read too). Written when it's true, or always
+ * (`write`: false too, its default for none).
  */
 export interface FlagSpec extends StoredLeafBase {
   absent?: null;
+  default?: boolean;
   kind: "flag";
+  write?: "always";
 }
 
 /** Fields of their own, read off the same values (an item's weapon, its armor), which a form shows under `label`. */
@@ -87,14 +110,16 @@ export interface ListSpec extends StoredLeafBase {
 }
 
 /**
- * A whole number, its field's first value that's one in its bounds; its default without one (none without a
- * `default`). Written unless it's its default, or always (`write`).
+ * A number, its field's first value that's one in its bounds; its default without one (none without a `default`): a
+ * whole number, or a decimal kept to `scale` places (an item's cost and weight, to the hundredth). Written unless it's
+ * its default, or always (`write`).
  */
 export interface NumberSpec extends StoredLeafBase {
   default?: number;
   kind: "number";
   max?: number;
   min?: number;
+  scale?: number;
   write?: "always";
 }
 
@@ -122,12 +147,17 @@ export interface RefSpec<K extends string = string> extends LeafBase {
   role: string;
 }
 
-/** A text, its field's first value, among `values` when they're a closed list: none without one, or written empty. */
+/**
+ * A text, its field's first value, among `values` when they're a closed list: its `default` without one (none without
+ * a default), or written empty. Written unless it's empty, or always (`write`: its default for none).
+ */
 export interface TextSpec extends StoredLeafBase {
+  default?: string;
   kind: "text";
   /** An example of one, when it takes any. */
   placeholder?: string;
   values?: readonly string[];
+  write?: "always";
 }
 
 /**
@@ -146,9 +176,9 @@ export type FieldCondition =
 export type Fields<K extends string = string> = Readonly<Record<string, FieldSpec<K>>>;
 
 /**
- * A field an entity keeps in its stored values, as its ruleset's vocabulary declares it (data, written `as const`, which
- * types its value: `FieldValues`): its kind, the stored field that keeps it (a reference's link), its label and what
- * it's for, how its values read, when it counts and where its form shows it.
+ * A field an entity holds, as its ruleset's vocabulary declares it (data, written `as const`, which types its value:
+ * `FieldValues`): its kind, the stored field that keeps it (a reference's single link), its label and what it's for,
+ * how its values read and how its owner's copies merge them, when it counts and where its form shows it.
  */
 export type FieldSpec<K extends string = string> =
   | ChoiceSpec
@@ -165,6 +195,13 @@ export type FieldValues<S extends Fields> = { -readonly [K in keyof S]: ValueOf<
 
 /** A field of a spec that isn't a group: a value of its own, which its stored field keeps. */
 export type LeafSpec<K extends string = string> = Exclude<FieldSpec<K>, GroupSpec<K>>;
+
+/**
+ * How an owner's sibling copies (one entity copied by two books, a book's reprint of another's) merge a field or a
+ * single link into the winning copy's: the winner's value or none (`winner`), the winner's else the first sibling's
+ * that holds one (`fallback`), or every copy's values (`union`, a set's).
+ */
+export type Merge = "fallback" | "union" | "winner";
 
 /**
  * Some of the values an entity's fields read (`FieldValues`), by name, a group's some of its own: what a seed gives of

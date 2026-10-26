@@ -1,4 +1,3 @@
-import type { StoredValues } from "@/engine/core/fields/index.ts";
 import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type { InventoryItem, RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import type { Character, CharacterInventory, Modifier, Requirement } from "@/shared/relations.ts";
@@ -32,8 +31,9 @@ export interface ModifierSource {
 
 /**
  * An entry of a character's inventory, as its build reads it: its item as the view composes it (the stored row's copy
- * or winner, the row itself without one), with its stored values (its template's of each field it holds none of, then
- * its own), its requirements as its template splits them, and its modifiers when it's equipped.
+ * or winner, the row itself without one), its fields those it reads off its template when it holds none among them
+ * (`RulesetData.withInheritedFields`), its requirements as its template splits them, and its modifiers when it's
+ * equipped.
  */
 export type InventoryEntry = CharacterInventory & {
   item: InventoryItem & {
@@ -42,7 +42,6 @@ export type InventoryEntry = CharacterInventory & {
     proficiency: Requirement[];
     /** Its other requirements, which its modifiers need */
     requirements: Requirement[];
-    values: StoredValues;
   };
 };
 
@@ -104,8 +103,9 @@ export default abstract class CharacterDataLoader<D extends LoadedCharacter, P e
 
   /**
    * The character's inventory, each entry's item as the view composes it (a copy's, or a sibling winner's, for an entry
-   * stored before), with its stored values, its requirements (the base item's, its proficiency, and its own on top of a
-   * template, or a plain item's) and, equipped, its modifiers (`RulesetData.entriesWithItems`).
+   * stored before), with its template's fields of those it holds none of, its requirements (the base item's, its
+   * proficiency, and its own on top of a template, or a plain item's) and, equipped, its modifiers
+   * (`RulesetData.entriesWithItems`).
    */
   private loadInventory(rows: CharacterRows, rulesetData: RulesetData): InventoryEntry[] {
     return rulesetData.entriesWithItems(rows.inventory).map(({ entry, item }) => {
@@ -113,11 +113,10 @@ export default abstract class CharacterDataLoader<D extends LoadedCharacter, P e
       return {
         ...entry,
         item: {
-          ...item,
+          ...rulesetData.withInheritedFields(item.type, item),
           modifiers: entry.equipped ? (rulesetData.modifiersBySource.get(item.id) ?? []) : [],
           proficiency: template,
           requirements: own,
-          values: rulesetData.inheritedValuesOf(item.type, item),
         },
       };
     });

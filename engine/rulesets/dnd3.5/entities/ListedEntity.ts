@@ -35,7 +35,7 @@ export default abstract class ListedEntity<
   }
 
   /** Records of a page, described: each with all its links (`links`). */
-  protected describeListed<T extends Pick<EntityRecord, "id" | "links">>(rows: T[]) {
+  protected describeListed<T extends Pick<EntityRecord, "fields" | "id" | "links">>(rows: T[]) {
     return this.describeRows(rows).map((row) => ({ ...row, links: this.linksIn(row.id) }));
   }
 

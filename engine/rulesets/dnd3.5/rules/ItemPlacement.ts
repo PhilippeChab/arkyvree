@@ -1,6 +1,5 @@
 /** Where an item goes: the locations its type sets, the hands a weapon set applies to, and where an entry is worn. */
 
-import type { StoredValues } from "@/engine/core/fields/index.ts";
 import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import {
@@ -21,9 +20,12 @@ interface HeldEntry {
   location: string | null;
 }
 
-/** An item, as its placement reads it: its type, and the slot it's worn in (`"Other"` for none), its own fields. */
+/**
+ * An item, as its placement reads it: its fields (its template's of those it holds none of among them): its type, the
+ * slot it's worn in (`"Other"` for none), its weapon's size, its charges.
+ */
 interface PlacedItem {
-  fields: Pick<Item["fields"], typeof ITEM_SLOT | typeof ITEM_TYPE>;
+  fields: Item["fields"];
 }
 
 /** An item type that sets the locations its items go to (`ITEM_TYPE_LOCATIONS`). */
@@ -54,8 +56,8 @@ const TWO_HANDED_SIZES = SIZE_OPTIONS.slice(SIZE_OPTIONS.indexOf("Large"));
  */
 export default class ItemPlacement {
   /** The charges an item comes with: its `ITEM_HAS_CHARGES` count (0 when it names none), none without the field. */
-  private static chargesOf(values: StoredValues) {
-    const [charges] = values.fields[ITEM_HAS_CHARGES] ?? [];
+  private static chargesOf(item: PlacedItem) {
+    const charges = item.fields[ITEM_HAS_CHARGES];
     return charges === undefined ? null : Number.parseInt(String(charges), 10) || 0;
   }
 
@@ -68,26 +70,26 @@ export default class ItemPlacement {
    * The locations an item can take: its type's (both hands alone for a two-handed weapon), else its own slot when it's
    * worn nowhere in particular, else any.
    */
-  private static offeredLocations(item: PlacedItem, values: StoredValues): readonly ItemLocation[] {
-    const { [ITEM_SLOT]: slot, [ITEM_TYPE]: type = null } = item.fields;
-    const [held] = values.fields[WEAPON_SIZE] ?? [];
+  private static offeredLocations(item: PlacedItem): readonly ItemLocation[] {
+    const { [ITEM_SLOT]: slot, [ITEM_TYPE]: type = null, [WEAPON_SIZE]: held } = item.fields;
     const size = held === undefined ? undefined : String(held);
     if (type === "Weapon" && ItemPlacement.isTwoHanded(size)) return ["Two Handed"];
     return ItemPlacement.locationsOf(type) ?? (slot === "Other" ? ["Other"] : LOCATION_OPTIONS);
   }
 
   /**
-   * How an item is placed: where it goes once picked (the one location its type sets, none for a weapon's hand, else its
-   * own slot), the locations it can take (a weapon's or a shield's form asks for a weapon set in a hand), and its charges.
+   * How an item is placed (`item`, its template's fields among its own): where it goes once picked (the one location its
+   * type sets, none for a weapon's hand, else its own slot), the locations it can take (a weapon's or a shield's form
+   * asks for a weapon set in a hand), and its charges.
    */
-  static describe(item: PlacedItem, values: StoredValues): ItemPlacementDescription {
+  static describe(item: PlacedItem): ItemPlacementDescription {
     const { [ITEM_SLOT]: slot, [ITEM_TYPE]: type = null } = item.fields;
     const typeLocations = ItemPlacement.locationsOf(type);
     const asksWeaponSet = type === "Weapon" || type === "Shield";
     return {
-      charges: ItemPlacement.chargesOf(values),
+      charges: ItemPlacement.chargesOf(item),
       hand: type === "Weapon",
-      locations: ItemPlacement.offeredLocations(item, values).map((location) => ({
+      locations: ItemPlacement.offeredLocations(item).map((location) => ({
         location,
         grouped: asksWeaponSet && ItemPlacement.isHand(location),
       })),

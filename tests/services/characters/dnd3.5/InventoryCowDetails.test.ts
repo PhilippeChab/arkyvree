@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import type { OwnerFields } from "@/engine/core/module/index.ts";
 import CharacterResponse from "@/engine/rulesets/dnd3.5/characters/description/CharacterResponse.ts";
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
@@ -10,9 +11,9 @@ import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset, type Described } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
-import { ITEM_COST_GP, ITEM_TYPE, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { ITEM_COST_GP, ITEM_TYPE, ITEM_WEIGHT, WEAPON_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 async function setup() {
   const user = await Users.findOne(db, { emailAddress: "testuser1@example.com" });
@@ -71,14 +72,13 @@ describe("COW inventory item details", () => {
         fields: { [ITEM_WEIGHT]: 12, [ITEM_COST_GP]: 30, [ITEM_TYPE]: "Weapon" },
       });
       expect(entry).toMatchObject({ quantity: 2, equipped: true, location: "Main Hand", groups: [0] });
-      // Its fields, its template's of each it holds none of: the inventory's as an item's page reads them, the sheet's
-      // off its stored values
-      const fields = "values" in entry.item ? ITEM_FIELDS.read(entry.item.values) : entry.item.fields;
-      expect(fields.weapon.type).toBe("Heavy Mace");
-      const described = await EntitiesService.getEntity<Record<string, unknown>>(ruleset.id, "items", updated.id);
-      const declared = (held: object) =>
-        Object.fromEntries(ITEM_FIELDS.keys.map((key) => [key, (held as Record<string, unknown>)[key]]));
-      expect(declared(fields)).toEqual(declared(described));
+      // Its fields, its template's of each it holds none of: the inventory's by field, as an item's page reads them, the
+      // sheet's as the view holds them
+      const held = entry.item.fields as OwnerFields;
+      const fields = view === "character sheet" ? ITEM_FIELDS.readByField({ fields: held, links: {} }) : held;
+      expect(fields[WEAPON_TYPE]).toBe("Heavy Mace");
+      const described = await EntitiesService.getEntity<Described<"items">>(ruleset.id, "items", updated.id);
+      expect(fields).toEqual(described.fields);
 
       // Reading a fork does not rewrite the pick or change the parent item.
       const [stored] = await CharacterInventory.findMany(db, { characterId: character.id });

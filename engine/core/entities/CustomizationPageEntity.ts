@@ -6,8 +6,8 @@ import RulesetEntity from "./RulesetEntity.ts";
 
 /**
  * A kind whose page shows its customizations (a race, a feat, a spell, an item, a class level): described with its
- * modifiers and its requirements, as the view composes them (its stored values are its fields). A class's customizations
- * are tabs of its page, which reads them apart.
+ * modifiers and its requirements, as the view composes them. A class's customizations are tabs of its page, which reads
+ * them apart.
  */
 export default abstract class CustomizationPageEntity<
   K extends keyof ViewKinds,

@@ -163,7 +163,7 @@ export function readEditedTrack(level: LevelRead, key: TrackKey, edits: Progress
 export function readTrack(level: LevelRead, key: TrackKey) {
   if (key.startsWith(AMOUNT_TRACK))
     return level.amounts.find((amount) => amountTrackKey(amount.entityId) === key)?.amount ?? 0;
-  const value = level.row[key];
+  const value = level.values[key];
   return typeof value === "number" ? value : 0;
 }
 

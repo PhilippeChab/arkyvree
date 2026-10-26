@@ -8,9 +8,9 @@ import { ConflictError, ForbiddenError, NotFoundError, STALE_ENTITY_MESSAGE } fr
 import {
   Activities,
   Contributors,
-  Fields,
   RulesetExtensions,
   Rulesets,
+  RulesetSettings,
   StarredRulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
@@ -59,7 +59,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       }
 
       // 3. Copy the ruleset's Settings as stored (parent entity IDs, which the fork's view resolves at read time)
-      await Fields.createRulesetCopy(tx, { fromId: id, toId: newRuleset.id });
+      await RulesetSettings.createCopy(tx, { fromId: id, toId: newRuleset.id });
 
       // 4. Log the fork activity
       await Activities.create(tx, {

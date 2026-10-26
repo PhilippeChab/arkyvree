@@ -6,8 +6,8 @@ import type { Db } from "@/drizzle/database.ts";
 import { entitySnapshotsInRules, modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
 import type { EntityWrite } from "@/engine/index.ts";
 import StoredEntities from "@/server/repositories/stored/StoredEntities.ts";
-import StoredFields, { type FieldsUpdate } from "@/server/repositories/stored/StoredFields.ts";
 import StoredLinks, { type NewLink } from "@/server/repositories/stored/StoredLinks.ts";
+import StoredSettings, { type SettingsUpdate } from "@/server/repositories/stored/StoredSettings.ts";
 
 type ModifierRow = typeof modifiersInCustomization.$inferInsert;
 type RequirementRow = typeof requirementsInCustomization.$inferInsert;
@@ -26,14 +26,14 @@ export type Ids = Record<string, string>;
 /** The generic tables' repositories a seeder writes through, as the server does (no request's cache: no request). */
 export const Entities = new StoredEntities();
 export const EntityLinks = new StoredLinks();
-export const Fields = new StoredFields();
+export const RulesetSettings = new StoredSettings();
 
 /**
  * A seeder's state, which every seeding step builds on (`concerns/`, and a ruleset's): the database it writes to, the
  * context it names rows by (`ctx`, its ruleset's id and the ids its steps add), and what the steps write with: the
- * entities' rows, their links and their stored values as the generic tables store them (`Entities`, `EntityLinks`,
- * `Fields`, by what the module declares), the customizations' rows and their inserts, and the copies an extension makes
- * of what it changes.
+ * entities' rows with their fields and single links, their links and a ruleset's Settings, as the generic tables store
+ * them (`Entities`, `EntityLinks`, `RulesetSettings`, by what the module declares), the customizations' rows and their
+ * inserts, and the copies an extension makes of what it changes.
  */
 export abstract class SeederState {
   constructor(
@@ -116,10 +116,10 @@ export abstract class SeederState {
   }
 
   /**
-   * Copies entities' requirements, modifiers (with theirs) and stored values onto their copies (`copies`: each entity's
-   * copy, by its id), of a type: a few writes, however many copies.
+   * Copies entities' requirements and modifiers (with theirs) onto their copies (`copies`: each entity's copy, by its
+   * id), of a type: a few writes, however many copies.
    */
-  protected async copyCustomizations(type: string, copies: Map<string, string>) {
+  protected async copyCustomizations(copies: Map<string, string>) {
     if (copies.size === 0) return;
     await this.copyRequirements(copies);
     const modifiers = await this.db
@@ -141,11 +141,9 @@ export abstract class SeederState {
       })),
     );
     await this.copyRequirements(modifierCopies);
-    const values = await Fields.findMany(this.db, { ownerIds: [...copies.keys()], ownerType: type });
-    await this.writeFields([...copies].map(([id, copyId]) => ({ id: copyId, type, values: values.get(id)! })));
   }
 
-  /** A kind's entities (`type`, `ids`), as their records: their own columns, own fields and single links. */
+  /** A kind's entities (`type`, `ids`), as their records: their own columns, their fields and their single links. */
   protected async entityRecords<R extends { id: string }>(type: string, ids: string[]): Promise<R[]> {
     return await Entities.findMany<R>(this.db, { entityType: type, ids });
   }
@@ -206,8 +204,8 @@ export abstract class SeederState {
     );
   }
 
-  /** Writes owners' stored values (`writes`: an entity's or a ruleset's fields, and the links its fields read). */
-  protected async writeFields(writes: FieldsUpdate[]) {
-    await Fields.update(this.db, writes);
+  /** Writes rulesets' Settings (`writes`: each a ruleset's fields and links it replaces). */
+  protected async writeSettings(writes: SettingsUpdate[]) {
+    await RulesetSettings.update(this.db, writes);
   }
 }

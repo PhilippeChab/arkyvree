@@ -185,13 +185,13 @@ export type CreationSection = { title: string } & (
 
 /**
  * A character's inventory entry, as its sheet lists it: the entry, what its ruleset shows of it (`X`: where its item
- * can go, where it's worn), and its item as the view composes it, with its fields (`F`, as its kind reads them, then its
- * own by name).
+ * can go, where it's worn), and its item as the view composes it, its fields as an item's answer carries them (its
+ * template's of those it holds none of among them).
  */
-export type DescribedInventoryEntry<T, X = unknown, F = unknown> = T &
+export type DescribedInventoryEntry<T, X = unknown> = T &
   X & {
     item: Omit<InventoryItem, "fields"> & {
-      fields: F & InventoryItem["fields"];
+      fields: Record<string, unknown>;
       modifiers: Modifier[];
       requirements: Requirement[];
     };

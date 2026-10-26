@@ -286,14 +286,17 @@ describe("What a file holds past what the app keeps", () => {
 
   test("its experience past the largest the app keeps, a name too long, a gender of its own", async () => {
     const text = (await readPcgenFile("brannoc"))
-      .replace("EXPERIENCE:29500", "EXPERIENCE:99999999999")
+      .replace("EXPERIENCE:29500", "EXPERIENCE:99999999999999999")
       .replace("CHARACTERNAME:Brannoc Vale", `CHARACTERNAME:${"B".repeat(300)}`)
       .replace("GENDER:Male", "GENDER:Unknown");
     const { character, report } = await planImportOf(text);
-    expect(character.fields.CHARACTER_XP).toBe(2_147_483_647);
+    // A number field holds what it keeps exactly: the largest safe integer
+    expect(character.fields.CHARACTER_XP).toBe(Number.MAX_SAFE_INTEGER);
     expect(character.name).toHaveLength(255);
     expect(character.fields.CHARACTER_GENDER).toBe("Other");
-    expect(report.issues).toContain("Experience 99999999999 is past the largest the app keeps: 2147483647 kept");
+    expect(report.issues).toContain(
+      "Experience 100000000000000000 is past the largest the app keeps: 9007199254740991 kept",
+    );
     expect(report.unmatched.map(({ reason }) => reason)).toContain("Unknown isn't a gender of the app's: Other kept");
   });
 

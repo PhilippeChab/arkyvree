@@ -6,7 +6,6 @@ import { CustomizationEdit, type RulesetScope } from "@/server/cow/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
   Entities,
-  Fields,
   Modifiers,
   Requirements,
   RULESET_ENTITY_TYPES,
@@ -24,8 +23,8 @@ function entityTypeOf(type: string): RulesetEntityType {
 }
 
 /**
- * An entity a plan makes, in the scope's ruleset: its row, its links, its modifiers, its stored values and its
- * requirements.
+ * An entity a plan makes, in the scope's ruleset: its row (its fields and single links among it), its links, its
+ * modifiers and its requirements.
  */
 async function makeEntity(tx: Db, scope: RulesetScope, made: MadeEntity) {
   const type = entityTypeOf(made.type);
@@ -36,7 +35,6 @@ async function makeEntity(tx: Db, scope: RulesetScope, made: MadeEntity) {
     tx,
     made.modifiers.map((modifier) => ({ ...modifier, sourceId: entity.id, sourceType: type })),
   );
-  await Fields.update(tx, [{ id: entity.id, type, values: made.fields }]);
   await Requirements.createMany(
     tx,
     made.requirements.map((requirement) => ({ ...owner, ...requirement })),
@@ -60,8 +58,7 @@ async function removeEntity(tx: Db, scope: RulesetScope, removal: EntityRemoval)
 
 /**
  * Writes what the engine plans an entity's create or edit (`entity`: its id, of its type) writes beside its row
- * (`writes`): the entities it removes, its stored values (each field and link role it names replaced), a requirement
- * on it, and the entities it makes.
+ * (`writes`): the entities it removes, a requirement on it, and the entities it makes.
  */
 export async function writeEntityWrites(
   tx: Db,
@@ -70,7 +67,6 @@ export async function writeEntityWrites(
   writes: EntityWrites,
 ) {
   for (const removal of writes.removed ?? []) await removeEntity(tx, scope, removal);
-  if (writes.fields) await Fields.update(tx, [{ id: entity.entityId, type: entity.entityType, values: writes.fields }]);
   if (writes.requirement) await Requirements.create(tx, { ...entity, ...writes.requirement });
   for (const made of writes.made ?? []) await makeEntity(tx, scope, made);
 }

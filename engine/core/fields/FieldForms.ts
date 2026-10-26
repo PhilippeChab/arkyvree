@@ -32,14 +32,28 @@ export interface FormContext {
  * a form as a save takes them (`parse`).
  */
 export default class FieldForms {
-  /** A field that isn't a group, as a form shows it: its input, by its kind and its values. */
+  /**
+   * A field that isn't a group, as a form shows it: its input, by its kind and its values, and the stored field that
+   * keeps it (`field`), a reference's single link's role (`role`), which an entity read holds it at.
+   */
   private static describeLeaf(key: string, field: LeafSpec): FormField {
-    const base = { help: field.description, key, label: field.label };
+    const base = {
+      help: field.description,
+      key,
+      label: field.label,
+      ...(field.kind !== "ref" && { field: field.field }),
+    };
     switch (field.kind) {
       case "flag":
         return { ...base, input: "flag", nullable: field.absent === null };
       case "number":
-        return { ...base, default: field.default ?? null, input: "number", max: field.max, min: field.min };
+        return {
+          ...base,
+          default: field.default ?? null,
+          input: "number",
+          max: Field.boundsOf(field).max,
+          min: field.min,
+        };
       case "progression":
         return {
           ...base,
@@ -49,7 +63,13 @@ export default class FieldForms {
           max: field.max,
         };
       case "ref":
-        return { ...base, input: "ref", references: field.references, required: field.required ?? false };
+        return {
+          ...base,
+          input: "ref",
+          references: field.references,
+          required: field.required ?? false,
+          role: field.role,
+        };
       case "choice":
         return { ...base, input: "choice", multiple: false, options: field.values };
       default: {
@@ -165,6 +185,7 @@ export default class FieldForms {
       case "flag":
         return field.absent === null ? z.boolean().nullable() : z.boolean();
       case "number": {
+        // A whole number, which holds exactly what's a safe integer (`Field.boundsOf`): `int` refuses any past it
         let number = z.number().int();
         if (field.min !== undefined) number = number.min(field.min);
         if (field.max !== undefined) number = number.max(field.max);

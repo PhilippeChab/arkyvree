@@ -7,6 +7,7 @@ import {
   NO_EDITS,
 } from "@/client/src/pages/rulesets/details/classes/sections/progression/progressionDraft.ts";
 import { CLASS_LEVEL_COLUMNS } from "@/engine/rulesets/dnd3.5/entities/classes/columns.ts";
+import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A 3.5 class level's columns the tab reads past its fields: its saves' bases and its granted feats. */
 const COLUMNS: LevelColumns = {
@@ -16,24 +17,30 @@ const COLUMNS: LevelColumns = {
 
 const EVASION = { id: "evasion", aptitudeId: "features", name: "Evasion" };
 
-/** The fields a 3.5 class's Progression tab sets: its base attack bonus and skill points. */
-const FIELDS = ["bab", "skills"];
+/** The fields a 3.5 class's Progression tab sets: its base attack bonus and skill points, each by its stored field. */
+const TRACKS = [
+  { field: CLASS_LEVEL_BAB, key: "bab" },
+  { field: CLASS_LEVEL_SKILL_POINTS, key: "skills" },
+];
+const FIELDS = TRACKS.map((track) => track.key);
 
 /** Where the save writes them: a level's `saves` and `feats`, a pool's `aptitudeId`. */
 const KEYS = levelKeysOf(COLUMNS);
 
-/** A class level as its query reads it: its base attack bonus, skill points, a save's base and its granted feats. */
+/**
+ * A class level as its query reads it: its base attack bonus and skill points among its fields, a save's base and its
+ * granted feats.
+ */
 function level(id: string, number: number, feats: { aptitudeId: string; id: string; name: string }[] = []) {
   const row = {
     id,
     position: number,
     updatedAt: "",
-    bab: number,
-    skills: 4,
+    fields: { [CLASS_LEVEL_BAB]: number, [CLASS_LEVEL_SKILL_POINTS]: 4 },
     saves: [{ saveId: "fort", base: 2 }],
     feats: feats.map((feat) => ({ ...feat, description: null, aptitudeName: "Class Features", free: false })),
   };
-  return readLevel(row, COLUMNS);
+  return readLevel(row, COLUMNS, TRACKS);
 }
 
 /** A class's first two levels, its second granting Evasion. */

@@ -14,9 +14,9 @@ describe("3.5's storage", () => {
     ]);
   });
 
-  test("holds fields past their columns in its customizable kinds, its skills and its rulesets", () => {
+  test("holds fields in its customizable kinds, its skills, its languages and its rulesets", () => {
     expect(StorageEngine.shared().fieldOwners().toSorted()).toEqual([
-      ...["class_levels", "classes", "feats", "items", "races", "rulesets", "skills", "spells"],
+      ...["class_levels", "classes", "feats", "items", "languages", "races", "rulesets", "skills", "spells"],
     ]);
   });
 
@@ -28,22 +28,23 @@ describe("3.5's storage", () => {
     ]);
   });
 
-  test("defines each field once, as its vocabulary, its kinds' own fields and its character's declare it", () => {
+  test("defines each field once, as its vocabulary and its character's declare it, its kind and set as stored", () => {
     const { fieldDefs } = DND35_STORAGE.registries;
-    const defined = fieldDefs.map(({ field, ownerType, valueKind }) => `${ownerType} ${field} ${valueKind}`);
+    const defined = fieldDefs.map(
+      ({ field, multiple, ownerType, valueKind }) => `${ownerType} ${field} ${valueKind}${multiple ? "[]" : ""}`,
+    );
     expect(new Set(fieldDefs.map(({ field, ownerType }) => `${ownerType} ${field}`)).size).toBe(fieldDefs.length);
     const vocabulary = Object.entries(ENTITY_FIELDS).flatMap(([ownerType, fields]) =>
-      Field.leavesOf(fields).flatMap((leaf) => (leaf.kind === "ref" ? [] : [`${ownerType} ${leaf.field}`])),
-    );
-    const own = Object.entries(DND35_STORAGE.kinds).flatMap(([ownerType, kind]) =>
-      Object.entries(kind.fields ?? {}).map(([field, { kind: valueKind }]) => `${ownerType} ${field} ${valueKind}`),
+      Field.storedLeavesOf(fields).map((leaf) => {
+        const { multiple, valueKind } = Field.storedKindOf(leaf);
+        return `${ownerType} ${leaf.field} ${valueKind}${multiple ? "[]" : ""}`;
+      }),
     );
     const character = Object.entries(CHARACTER_FIELDS).map(([field, { kind }]) => `characters ${field} ${kind}`);
-    expect(
-      defined.filter((def) => !own.includes(def) && !character.includes(def)).map((def) => def.replace(/ \w+$/, "")),
-    ).toEqual(vocabulary);
-    expect(defined.filter((def) => own.includes(def) || character.includes(def)).toSorted()).toEqual(
-      [...own, ...character].toSorted(),
-    );
+    expect(defined).toEqual([...vocabulary, ...character]);
+    // A ruleset's are its own, a character's its, every other owner's an entity's
+    const kindOf = (ownerType: string) =>
+      ownerType === "rulesets" ? "ruleset" : ownerType === "characters" ? "character" : "entity";
+    expect(fieldDefs.filter(({ ownerKind, ownerType }) => ownerKind !== kindOf(ownerType))).toEqual([]);
   });
 });

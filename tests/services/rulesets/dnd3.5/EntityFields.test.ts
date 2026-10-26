@@ -6,19 +6,28 @@ import { db } from "@/server/database/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
-import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { findFormValues, listValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
+import { copyEntity, createSeededTestRuleset, type Described } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
-import { findStoredValues, listStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import {
   CLASS_CASTER_TYPE,
+  CLASS_LEVEL_BAB,
+  CLASS_LEVEL_SKILL_POINTS,
   FEAT_FAMILY,
   FEAT_WEAPON_FINESSE,
+  ITEM_MASTERWORK,
+  RACE_BASE_SPEED,
+  RACE_QUADRUPED,
+  RACE_SIZE,
+  SPELL_CASTING_TIME,
   SPELL_RANGE_TYPE,
   SPELL_RESISTANCE,
   SPELL_SCHOOL,
   SPELL_SUBSCHOOL,
   WEAPON_BASE_DAMAGE,
+  WEAPON_PROFICIENCY,
+  WEAPON_TYPE,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A weapon's fields, each but those it gives none. */
@@ -42,6 +51,16 @@ const WEAPON = {
   strengthDamage: "",
   type: "Longsword",
 };
+
+/** The entity a single link of an answer's names, by its role: none without one. */
+function linkedBy(answer: { links: readonly { role: string; toId: string }[] }, role: string) {
+  return answer.links.find((link) => link.role === role)?.toId ?? null;
+}
+
+/** An entity's fields as its answer holds them (`type`'s `id`, in `rulesetId`): by the stored field that keeps each. */
+async function fieldsOf(rulesetId: string, type: "classes" | "feats" | "items" | "races" | "spells", id: string) {
+  return (await EntitiesService.getEntity<{ fields: Record<string, unknown> }>(rulesetId, type, id)).fields;
+}
 
 /** A new user's empty ruleset with a feat pool and a spell list, and its Intelligence. */
 async function setup() {
@@ -81,23 +100,23 @@ describe("An entity's fields", () => {
       aptitudeIds: [featPool],
       fields: { families: ["Luck"], weaponFinesse: true },
     });
-    expect(feat).toMatchObject({ families: ["Luck"], weaponFinesse: true });
+    expect(feat.fields).toMatchObject({ [FEAT_FAMILY]: ["Luck"], [FEAT_WEAPON_FINESSE]: true });
     await EntitiesService.updateEntity(session, rulesetId, "feats", feat.id, {
       name: "Finesse",
       fields: { families: [] },
     });
-    expect(await EntitiesService.getEntity(rulesetId, "feats", feat.id)).toMatchObject({
-      families: [],
-      weaponFinesse: true,
+    expect(await fieldsOf(rulesetId, "feats", feat.id)).toMatchObject({
+      [FEAT_FAMILY]: [],
+      [FEAT_WEAPON_FINESSE]: true,
     });
-    expect(listStoredValues(await findStoredValues("feats", feat.id))).toEqual([`${FEAT_WEAPON_FINESSE}=true`]);
+    expect(listValues(await findFormValues("feats", feat.id))).toEqual([`${FEAT_WEAPON_FINESSE}=true`]);
 
     // A list given a value twice keeps it once
     await EntitiesService.updateEntity(session, rulesetId, "feats", feat.id, {
       name: "Finesse",
       fields: { families: ["Luck", "Lore", "Luck"] },
     });
-    expect(await EntitiesService.getEntity(rulesetId, "feats", feat.id)).toMatchObject({ families: ["Luck", "Lore"] });
+    expect(await fieldsOf(rulesetId, "feats", feat.id)).toMatchObject({ [FEAT_FAMILY]: ["Luck", "Lore"] });
 
     const race = await EntitiesService.createEntity(session, rulesetId, "races", {
       name: "Centaur",
@@ -105,24 +124,25 @@ describe("An entity's fields", () => {
       baseSpeed: 50,
       fields: { quadruped: true },
     });
-    expect(await EntitiesService.getEntity(rulesetId, "races", race.id)).toMatchObject({ quadruped: true });
+    expect(await fieldsOf(rulesetId, "races", race.id)).toMatchObject({
+      [RACE_SIZE]: "Large",
+      [RACE_BASE_SPEED]: 50,
+      [RACE_QUADRUPED]: true,
+    });
 
     const wizard = await EntitiesService.createEntity(session, rulesetId, "classes", {
       name: "Wizard",
       fields: { bonusSpellAbilityId: intelligence.id, casterType: "Arcane" },
     });
-    expect(await EntitiesService.getEntity(rulesetId, "classes", wizard.id)).toMatchObject({
-      bonusSpellAbilityId: intelligence.id,
-      casterType: "Arcane",
-    });
+    const described = await EntitiesService.getEntity<Described<"classes">>(rulesetId, "classes", wizard.id);
+    expect(described.fields).toMatchObject({ [CLASS_CASTER_TYPE]: "Arcane" });
+    expect(linkedBy(described, "bonusSpellAbility")).toBe(intelligence.id);
     // None, as its form's select says it
     await EntitiesService.updateEntity(session, rulesetId, "classes", wizard.id, {
       name: "Wizard",
       fields: { casterType: "" },
     });
-    expect(listStoredValues(await findStoredValues("classes", wizard.id))).toEqual([
-      `bonusSpellAbility=${intelligence.id}`,
-    ]);
+    expect(listValues(await findFormValues("classes", wizard.id))).toEqual([`bonusSpellAbility=${intelligence.id}`]);
 
     const level = await EntitiesService.createOwnedEntity(session, rulesetId, "classes", wizard.id, {
       level: 1,
@@ -131,9 +151,9 @@ describe("An entity's fields", () => {
     await EntitiesService.updateOwnedEntity(session, rulesetId, "classes", wizard.id, level.id, {
       fields: { skills: 4 },
     });
-    expect(await EntitiesService.getOwnedEntityWithOwner(rulesetId, "classes", level.id)).toMatchObject({
-      bab: 0,
-      skills: 4,
+    expect((await EntitiesService.getOwnedEntityWithOwner(rulesetId, "classes", level.id)).fields).toMatchObject({
+      [CLASS_LEVEL_BAB]: 0,
+      [CLASS_LEVEL_SKILL_POINTS]: 4,
     });
   });
 
@@ -210,7 +230,7 @@ describe("An entity's fields", () => {
       "Spell Focus: Conjuration",
       "Spell Focus: Evocation",
     ]);
-    expect(listStoredValues(await findStoredValues("spells", bolt.id))).toEqual([`${SPELL_SCHOOL}=Conjuration`]);
+    expect(listValues(await findFormValues("spells", bolt.id))).toEqual([`${SPELL_SCHOOL}=Conjuration`]);
   });
 
   test("of a spell take its range and its spell resistance in its book's words: free texts, no list", async () => {
@@ -218,30 +238,30 @@ describe("An entity's fields", () => {
     const spell = { name: "Bolt", aptitudes: [{ id: spellList, level: 1 }] };
     const fields = { school: "Evocation", rangeType: "60 ft.", spellResistance: "Yes (harmless)" };
     const bolt = await EntitiesService.createEntity(session, rulesetId, "spells", { ...spell, fields });
-    expect(listStoredValues(await findStoredValues("spells", bolt.id))).toEqual([
+    expect(listValues(await findFormValues("spells", bolt.id))).toEqual([
       `${SPELL_RANGE_TYPE}=60 ft.`,
       `${SPELL_RESISTANCE}=Yes (harmless)`,
       `${SPELL_SCHOOL}=Evocation`,
     ]);
   });
 
-  test("keep a stored value their ruleset no longer lists while an edit leaves its field out", async () => {
+  test("keep a value their ruleset no longer lists while an edit leaves its field out", async () => {
     const { session, rulesetId, spellList } = await setup();
     const spell = { name: "Bolt", aptitudes: [{ id: spellList, level: 1 }] };
     const bolt = await EntitiesService.createEntity(session, rulesetId, "spells", {
       ...spell,
       fields: { school: "Conjuration" },
     });
-    await writeStoredValues("spells", bolt.id, [[SPELL_SUBSCHOOL, "Creation or Calling"]]);
+    await writeFieldValues("spells", bolt.id, [[SPELL_SUBSCHOOL, "Creation or Calling"]]);
     RulesetViews.invalidate(rulesetId);
 
     await EntitiesService.updateEntity(session, rulesetId, "spells", bolt.id, {
       ...spell,
       fields: { castingTime: "1 round" },
     });
-    expect(await EntitiesService.getEntity(rulesetId, "spells", bolt.id)).toMatchObject({
-      castingTime: "1 round",
-      subschool: "Creation or Calling",
+    expect(await fieldsOf(rulesetId, "spells", bolt.id)).toMatchObject({
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_SUBSCHOOL]: "Creation or Calling",
     });
     // Given back, it's refused as any value outside the list
     expect(
@@ -265,35 +285,35 @@ describe("An entity's fields", () => {
     });
 
     // The seed's ids are the sources': the API takes them, and stores the fork's copy's
-    const saved = await EntitiesService.updateEntity(session, fork.id, "classes", fighter!.id, {
+    const saved = await EntitiesService.updateEntity<Described<"classes">>(session, fork.id, "classes", fighter!.id, {
       name: "Fighter",
       fields: { bonusSpellAbilityId: abilityMap["Wisdom"], casterType: "Divine" },
     });
     expect(saved.id).not.toBe(fighter!.id);
-    expect(saved).toMatchObject({ bonusSpellAbilityId: wisdom.id, casterType: "Divine" });
-    expect(listStoredValues(await findStoredValues("classes", saved.id))).toEqual(
+    expect(saved.fields).toMatchObject({ [CLASS_CASTER_TYPE]: "Divine" });
+    expect(linkedBy(saved, "bonusSpellAbility")).toBe(wisdom.id);
+    expect(listValues(await findFormValues("classes", saved.id))).toEqual(
       [`bonusSpellAbility=${wisdom.id}`, `${CLASS_CASTER_TYPE}=Divine`].toSorted(),
     );
-    expect(listStoredValues(await findStoredValues("classes", fighter!.id))).toEqual([]);
-    expect(await EntitiesService.getEntity(fork.rulesetId!, "classes", fighter!.id)).toMatchObject({
-      bonusSpellAbilityId: null,
-      casterType: null,
-    });
+    expect(listValues(await findFormValues("classes", fighter!.id))).toEqual([]);
+    const source = await EntitiesService.getEntity<Described<"classes">>(fork.rulesetId!, "classes", fighter!.id);
+    expect(source.fields).toMatchObject({ [CLASS_CASTER_TYPE]: null });
+    expect(linkedBy(source, "bonusSpellAbility")).toBeNull();
   });
 
   describe("on an item made from a template", () => {
     test("keep of their values those its template doesn't hold, reading the others off it", async () => {
       const { session, rulesetId, template, sword } = await setupTemplate();
       // What its form shows of its template, its own once saved, stores nothing of its own
-      expect(sword).toMatchObject({ weapon: { baseDamage: "1d8", proficiency: "Martial" } });
-      expect(listStoredValues(await findStoredValues("items", sword.id))).toEqual([]);
+      expect(sword.fields).toMatchObject({ [WEAPON_BASE_DAMAGE]: "1d8", [WEAPON_PROFICIENCY]: "Martial" });
+      expect(listValues(await findFormValues("items", sword.id))).toEqual([]);
 
       await EntitiesService.updateEntity(session, rulesetId, "items", sword.id, {
         name: "Sword",
         type: "Weapon",
         fields: { weapon: { ...WEAPON, baseDamage: "1d10" }, masterwork: true },
       });
-      expect(listStoredValues(await findStoredValues("items", sword.id))).toEqual([
+      expect(listValues(await findFormValues("items", sword.id))).toEqual([
         "ITEM_MASTERWORK=true",
         `${WEAPON_BASE_DAMAGE}=1d10`,
       ]);
@@ -304,13 +324,15 @@ describe("An entity's fields", () => {
         type: "Weapon",
         fields: { weapon: { ...WEAPON, proficiency: "Exotic" } },
       });
-      expect(await EntitiesService.getEntity(rulesetId, "items", sword.id)).toMatchObject({
-        masterwork: true,
-        weapon: { baseDamage: "1d10", proficiency: "Exotic", type: "Longsword" },
+      expect(await fieldsOf(rulesetId, "items", sword.id)).toMatchObject({
+        [ITEM_MASTERWORK]: true,
+        [WEAPON_BASE_DAMAGE]: "1d10",
+        [WEAPON_PROFICIENCY]: "Exotic",
+        [WEAPON_TYPE]: "Longsword",
       });
     });
 
-    test("copy over a duplicate's copied stored values, of the item's own", async () => {
+    test("hold a duplicate's own of the fields its source holds, its form's over them", async () => {
       const { session, rulesetId, sword } = await setupTemplate();
       await EntitiesService.updateEntity(session, rulesetId, "items", sword.id, {
         name: "Sword",
@@ -322,9 +344,9 @@ describe("An entity's fields", () => {
         type: "Weapon",
         fields: { weapon: { ...WEAPON, baseDamage: "1d12" } },
       });
-      expect(copy).toMatchObject({ weapon: { baseDamage: "1d12", proficiency: "Martial" } });
-      expect(listStoredValues(await findStoredValues("items", copy.id))).toEqual([`${WEAPON_BASE_DAMAGE}=1d12`]);
-      expect(listStoredValues(await findStoredValues("items", sword.id))).toEqual([`${WEAPON_BASE_DAMAGE}=1d10`]);
+      expect(copy.fields).toMatchObject({ [WEAPON_BASE_DAMAGE]: "1d12", [WEAPON_PROFICIENCY]: "Martial" });
+      expect(listValues(await findFormValues("items", copy.id))).toEqual([`${WEAPON_BASE_DAMAGE}=1d12`]);
+      expect(listValues(await findFormValues("items", sword.id))).toEqual([`${WEAPON_BASE_DAMAGE}=1d10`]);
     });
   });
 
@@ -334,9 +356,9 @@ describe("An entity's fields", () => {
       name: "Lucky",
       aptitudeIds: [featPool],
     });
-    await writeStoredValues("feats", feat.id, [[FEAT_FAMILY, "homebrew"]]);
+    await writeFieldValues("feats", feat.id, [[FEAT_FAMILY, "homebrew"]]);
     RulesetViews.invalidate(rulesetId);
-    expect(await EntitiesService.getEntity(rulesetId, "feats", feat.id)).toMatchObject({ families: ["homebrew"] });
+    expect(await fieldsOf(rulesetId, "feats", feat.id)).toMatchObject({ [FEAT_FAMILY]: ["homebrew"] });
     expect(
       EntitiesService.updateEntity(session, rulesetId, "feats", feat.id, {
         name: "Lucky",

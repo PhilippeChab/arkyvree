@@ -35,7 +35,6 @@ import {
   CharacterLinks,
   Characters,
   Entities,
-  Fields,
   Modifiers,
   Picks,
   Requirements,
@@ -51,9 +50,9 @@ import { createRaceModifier } from "@/tests/support/dnd3.5/customizations.ts";
 import { type Carried, carry, createTestItem } from "@/tests/support/dnd3.5/items.ts";
 import { addCharacterLevel, createTestKlassLevel, findKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { addListings, addLists } from "@/tests/support/dnd3.5/links.ts";
+import { writeFieldValues, writeValues } from "@/tests/support/ownerValues.ts";
 import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
-import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import type { ItemLocation } from "@/vocabulary/dnd3.5/equipment.ts";
 import {
@@ -1142,13 +1141,7 @@ describe("DetailedCharacter", () => {
 
       test("come from a feat's field, not its name", async () => {
         const { featMap, rulesetId } = await getSeedCtx();
-        await Fields.update(db, [
-          {
-            id: featMap["Weapon Finesse"],
-            type: "feats",
-            values: { fields: { [FEAT_WEAPON_FINESSE]: [] }, links: {} },
-          },
-        ]);
+        await writeValues("feats", featMap["Weapon Finesse"], { fields: { [FEAT_WEAPON_FINESSE]: [] }, links: {} });
         invalidateSeededRuleset(rulesetId);
         // An elf rogue with Weapon Finesse, which no longer says it finesses: STR 10 (+0), DEX 20.
         expect(weaponSet(await buildSeeded("Lyra Shadowstep")).mainhand).toMatchObject({ tohit: { strength: 0 } });
@@ -1272,7 +1265,7 @@ describe("DetailedCharacter", () => {
       test("count a one-handed off-hand weapon as light with a feat with FEAT_OVERSIZED_TWO_WEAPON_FIGHTING", async () => {
         // The ranger's Two-Weapon Fighting made to say it's Oversized Two-Weapon Fighting: a battleaxe off hand, -2 / -2
         const { featMap, rulesetId } = await getSeedCtx();
-        await writeStoredValues("feats", featMap["Two-Weapon Fighting"], [[FEAT_OVERSIZED_TWO_WEAPON_FIGHTING, true]]);
+        await writeFieldValues("feats", featMap["Two-Weapon Fighting"], [[FEAT_OVERSIZED_TWO_WEAPON_FIGHTING, true]]);
         invalidateSeededRuleset(rulesetId);
         const set = weaponSet(
           await buildRanger([
@@ -1993,13 +1986,7 @@ describe("DetailedCharacter", () => {
       expect(await speed()).toMatchObject({ base: 30, misc: 0, total: 30 });
 
       const { raceMap, rulesetId } = await getSeedCtx();
-      await Fields.update(db, [
-        {
-          id: raceMap.pc["Dwarf"],
-          type: "races",
-          values: { fields: { [RACE_SPEED_IGNORES_ENCUMBRANCE]: [] }, links: {} },
-        },
-      ]);
+      await writeValues("races", raceMap.pc["Dwarf"], { fields: { [RACE_SPEED_IGNORES_ENCUMBRANCE]: [] }, links: {} });
       invalidateSeededRuleset(rulesetId);
       // Without the field, the armor slows it as anyone's, fast movement first: 30 feet become 20 (the SRD's
       // halfling barbarian)

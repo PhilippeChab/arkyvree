@@ -1,11 +1,11 @@
 /**
- * The entities a ruleset's view holds, each as stored (`ViewEntity`: its own columns, its own fields by field, its
- * single links by role), the registries each module fills with its own kinds (`ViewKinds`), which the view's reads are
- * typed by, and with the kinds an entity of another kind owns (`OwnedKinds`); and an entity's links as the view composes
- * them (`ViewLink`).
+ * The entities a ruleset's view holds, each as stored (`ViewEntity`: its own columns, its fields by field, its single
+ * links by role), the registries each module fills with its own kinds (`ViewKinds`), which the view's reads are typed
+ * by, and with the kinds an entity of another kind owns (`OwnedKinds`); and an entity's links as the view composes them
+ * (`ViewLink`).
  */
 
-import type { EntityRecord, FieldValue } from "@/engine/core/module/index.ts";
+import type { EntityRecord, OwnerFields } from "@/engine/core/module/index.ts";
 
 /**
  * The kinds of the view a character's inventory holds, by type (3.5's items), as its module declares them
@@ -27,9 +27,9 @@ export interface NamedLink extends ViewLink {
 export interface OwnedKinds {}
 
 /**
- * Each kind's entity as the view holds it, by its type (a `ViewEntity`, its own fields and single links typed): every
- * registered module declares its own kinds' into it (`declare module`), which `RulesetData.rows`, `byId` and `find`
- * answer.
+ * Each kind's entity as the view holds it, by its type (a `ViewEntity`, the fields its rules read by name and its
+ * single links typed): every registered module declares its own kinds' into it (`declare module`), which
+ * `RulesetData.rows`, `byId` and `find` answer.
  */
 export interface ViewKinds {}
 
@@ -62,11 +62,12 @@ export type OwnedKind = keyof OwnedKinds;
 export type StandaloneKind = Exclude<keyof ViewKinds, OwnedKind>;
 
 /**
- * An entity as the view holds it: its record as stored (`EntityRecord`), its own fields' values by field (`F`, typed as
- * its kind holds them) and its single links' targets by role (of `L`, its kind's roles), each the entity the view shows
- * for it (its copy's, its winner's); a standalone kind's named.
+ * An entity as the view holds it: its record as stored (`EntityRecord`), every field it holds by field, its sibling
+ * copies' merged in (`OwnerFields`, those its rules read by name typed as its kind holds them: `F`), and its single
+ * links' targets by role (of `L`, its kind's roles), each the entity the view shows for it (its copy's, its winner's); a
+ * standalone kind's named.
  */
-export type ViewEntity<F extends object = Readonly<Record<string, FieldValue>>, L extends string = string> = Omit<
+export type ViewEntity<F extends object = OwnerFields, L extends string = string> = Omit<
   EntityRecord,
   "fields" | "links" | "name"
-> & { fields: Readonly<F>; links: Readonly<Partial<Record<L, string>>>; name: string };
+> & { fields: OwnerFields & Readonly<F>; links: Readonly<Partial<Record<L, string>>>; name: string };

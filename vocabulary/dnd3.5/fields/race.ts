@@ -1,6 +1,6 @@
-/** A race's base speed in feet, its own. */
+/** A race's base speed in feet. */
 export const RACE_BASE_SPEED = "RACE_BASE_SPEED";
 export const RACE_QUADRUPED = "RACE_QUADRUPED";
-/** Its members' size, its own. */
+/** Its members' size. */
 export const RACE_SIZE = "RACE_SIZE";
 export const RACE_SPEED_IGNORES_ENCUMBRANCE = "RACE_SPEED_IGNORES_ENCUMBRANCE";

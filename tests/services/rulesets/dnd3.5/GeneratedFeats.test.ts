@@ -13,6 +13,7 @@ import { levelUpPlan } from "@/tests/support/dnd3.5/levelPlans.ts";
 import { findLists } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { getStepOptions } from "@/tests/support/levels.ts";
+import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
 import {
   copyEntity,
   createSeededTestRuleset,
@@ -20,7 +21,6 @@ import {
   createTestRuleset,
 } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
-import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 import { FEAT_FAMILY, FEAT_GENERATED, WEAPON_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -65,7 +65,7 @@ async function featNames(rulesetId: string, search?: string) {
     .sort();
 }
 
-/** What a feat is made of, ids aside: its description, its stored values, its modifiers and its requirements. */
+/** What a feat is made of, ids aside: its description, its fields, its modifiers and its requirements. */
 async function featShape(featId: string) {
   const feat = (await Entities.findOne<Feat>(db, { entityType: "feats", id: featId }))!;
   const strip = <T extends object>(rows: T[]) =>
@@ -73,7 +73,7 @@ async function featShape(featId: string) {
   return {
     description: feat.description,
     generated: feat.fields[FEAT_GENERATED],
-    values: await findStoredValues("feats", featId),
+    values: await findFormValues("feats", featId),
     modifiers: strip(await Modifiers.findMany(db, { sourceIds: [featId], sourceType: "feats" })),
     requirements: strip(await Requirements.findMany(db, { entityIds: [featId], entityType: "feats" })),
   };
@@ -110,9 +110,9 @@ async function seededForkWithClimb() {
   return { session, fork, climb, climbBody, feat: await findFeat(climb.rulesetId, "Skill Focus: Climb") };
 }
 
-/** A spell's stored values, its fields as written: `field: value`, sorted. */
+/** A spell's fields as written: `field: value`, sorted. */
 async function spellFields(spellId: string) {
-  return Object.entries((await findStoredValues("spells", spellId)).fields)
+  return Object.entries((await findFormValues("spells", spellId)).fields)
     .flatMap(([field, values]) => values.map((value) => `${field}: ${value}`))
     .sort();
 }
@@ -560,7 +560,7 @@ describe("generated feats", () => {
         valueType: "number",
       });
     }
-    await writeStoredValues("feats", local.id, [[FEAT_FAMILY, "Remove with feat"]]);
+    await writeFieldValues("feats", local.id, [[FEAT_FAMILY, "Remove with feat"]]);
 
     const names = ["Mountaineering", "Scaling", "Climb"];
     for (const name of names) {
@@ -577,7 +577,7 @@ describe("generated feats", () => {
     expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: local.id })).toBeUndefined();
     expect(await Modifiers.findMany(db, { sourceIds: [local.id], sourceType: "feats" })).toEqual([]);
     expect(await Requirements.findMany(db, { entityIds: [local.id, modifier.id] })).toEqual([]);
-    expect(await findStoredValues("feats", local.id)).toEqual({ fields: {}, links: {} });
+    expect(await findFormValues("feats", local.id)).toEqual({ fields: {}, links: {} });
     expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toEqual(feat);
   });
 
@@ -588,7 +588,7 @@ describe("generated feats", () => {
       type: "Weapon",
     });
     // A weapon type of its own, outside the catalog an item's fields offer
-    await writeStoredValues("items", weapon.id, [[WEAPON_TYPE, "Unique Weapon"]]);
+    await writeFieldValues("items", weapon.id, [[WEAPON_TYPE, "Unique Weapon"]]);
     RulesetViews.invalidate(fork.id);
     const [feat] = await Entities.create<Feat>(db, "feats", {
       rulesetId: fork.id,

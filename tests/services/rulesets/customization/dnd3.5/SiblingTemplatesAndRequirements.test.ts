@@ -1,14 +1,17 @@
 import { expect, test } from "bun:test";
 
+import type { OwnerFields } from "@/engine/core/module/index.ts";
 import type { FieldValue } from "@/engine/index.ts";
+import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import { type Feat, type Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, Fields, Requirements, Rulesets } from "@/server/repositories/index.ts";
+import { Entities, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { api, expectRefusedWith, expectStatus } from "@/tests/support/api.ts";
+import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
 import {
   copyEntity,
   createSeededTestRuleset,
@@ -16,7 +19,6 @@ import {
   invalidateSeededRuleset,
   invalidateTestRulesets,
 } from "@/tests/support/rulesets.ts";
-import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import {
   ITEM_IS_TEMPLATE,
@@ -63,7 +65,7 @@ async function setup(
     if (configure) {
       await configure(copy.id, i);
     } else if (entityType === "items") {
-      await writeStoredValues(entityType, copy.id, [TEMPLATE_FIELDS[i]]);
+      await writeFieldValues(entityType, copy.id, [TEMPLATE_FIELDS[i]]);
     } else if (i === 1) {
       await Requirements.create(db, {
         entityId: copy.id,
@@ -94,22 +96,26 @@ test.each([
     name: "Audit Derived Item",
     type: "Weapon",
   });
-  const templateValues = await Fields.findMany(db, { ownerIds: copies, ownerType: "items" });
+  const copiesValues = () => Promise.all(copies.map((id) => findFormValues("items", id)));
+  const templateValues = await copiesValues();
   // Its template's fields, each extension's copy's own, as the view merges them
-  const { weapon } = await EntitiesService.getEntity<Described<"items">>(host.id, "items", item.id);
-  expect(weapon).toMatchObject({ baseDamage: "1d6", criticalRange: 2 });
+  const read = await EntitiesService.getEntity<Described<"items">>(host.id, "items", item.id);
+  expect(read.fields).toMatchObject({ [WEAPON_BASE_DAMAGE]: "1d6", [WEAPON_CRITICAL_RANGE]: 2 });
+  // Its weapon's fields as its form holds them, off those it answers with a value
+  const held = Object.fromEntries(Object.entries(read.fields).filter(([, value]) => value !== null));
+  const { weapon } = ITEM_FIELDS.read({ fields: held as OwnerFields, links: {} });
   await EntitiesService.updateEntity(session, host.id, "items", item.id, {
     name: item.name,
     type: "Weapon",
     fields: { weapon: { ...weapon, ...override } },
   });
-  expect(await Fields.findMany(db, { ownerIds: copies, ownerType: "items" })).toEqual(templateValues);
+  expect(await copiesValues()).toEqual(templateValues);
   // The item stores only the field it overrides, and reads the other off its template
-  const own = await findStoredValues("items", item.id);
+  const own = await findFormValues("items", item.id);
   expect(Object.entries(own.fields).flatMap(([field, values]) => values.map((value) => [field, value]))).toEqual([row]);
-  expect((await EntitiesService.getEntity<Described<"items">>(host.id, "items", item.id)).weapon).toMatchObject({
-    ...weapon,
-    ...override,
+  expect((await EntitiesService.getEntity<Described<"items">>(host.id, "items", item.id)).fields).toMatchObject({
+    ...read.fields,
+    [row[0] as string]: row[1],
   });
 });
 

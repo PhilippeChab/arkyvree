@@ -5,6 +5,7 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { EntityEdit, RulesetViews } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { Entities, EntityLinks, type RulesetEntityType } from "@/server/repositories/index.ts";
+import { viewValuesOf } from "@/tests/support/ownerValues.ts";
 
 type Fork = Parameters<typeof RulesetViews.getData>[0];
 
@@ -88,9 +89,9 @@ export function partOf(ids: string[], part: number, parts: number) {
   return ids.filter((_, index) => index % parts === part - 1);
 }
 
-/** An entity's stored values, as the view shows them: each field's value and each link, `<field or role>|<value>`. */
+/** An entity's fields, as the view shows them: each field's value and each single link, `<field or role>|<value>`. */
 export function valuesOf(data: RulesetData, id: string) {
-  const { fields, links } = data.valuesOf(id);
+  const { fields, links } = viewValuesOf(data, id);
   return [
     ...Object.entries(fields).flatMap(([field, values]) => values.map((value) => `${field}|${String(value)}`)),
     ...Object.entries(links).map(([role, toId]) => `${role}|${toId}`),

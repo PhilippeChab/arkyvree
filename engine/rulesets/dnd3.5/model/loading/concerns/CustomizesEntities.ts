@@ -42,17 +42,15 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
         }))
         .sort((a, b) => a.position - b.position);
 
-      const classLevelFields = new Map(
-        klassLevels.map((level) => [level.id, CLASS_LEVEL_FIELDS.read(rulesetData.valuesOf(level.id))]),
-      );
+      const classLevelFields = new Map(klassLevels.map((level) => [level.id, CLASS_LEVEL_FIELDS.read(level)]));
       return { klassLevels, classLevelFields };
     }
 
-    /** The race with the fields its stored values hold (read once, here), its modifiers and requirements. */
+    /** The race with its fields read (once, here), its modifiers and requirements. */
     protected toCustomizedRace(race: Race, rulesetData: RulesetData): CustomizedRace {
       return {
         ...race,
-        ...RACE_FIELDS.read(rulesetData.valuesOf(race.id)),
+        ...RACE_FIELDS.read(race),
         modifiers: rulesetData.modifiersBySource.get(race.id) ?? [],
         requirements: rulesetData.requirementsByEntity.get(race.id) ?? [],
       };

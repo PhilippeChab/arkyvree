@@ -6,6 +6,7 @@ import {
   CowSources,
   type RulesetSources,
 } from "@/engine/core/cow/index.ts";
+import type { StoredValues } from "@/engine/core/fields/index.ts";
 import type { StoredEntity, StoredLink, StoredRuleset } from "@/engine/core/module/index.ts";
 import {
   type EntityCustomizations,
@@ -58,9 +59,10 @@ export default class CopyOnWriteEngine {
 
   /**
    * A ruleset's own rows as its view composes them, off its stored rows (`stored`): each kind's entities by its type,
-   * each its record (`StorageEngine.recordOf`: its own columns, its own fields, its single links), an owned kind's by
-   * position and owner, and only those whose owner it holds; each entity's links (`StorageEngine.viewLinksOf`); their
-   * stored values and its own Settings', kind-wide too (`StorageEngine.valuesOf`), its modifiers and requirements.
+   * each its record (`StorageEngine.recordOf`: its own columns, its fields, its single links), an owned kind's by
+   * position and owner, and only those whose owner it holds; each entity's links (`StorageEngine.viewLinksOf`); each
+   * kind's values kind-wide (`StorageEngine.kindValues`), its own Settings (`StorageEngine.settingsOf`), its modifiers
+   * and requirements.
    */
   buildRawData(stored: StoredRulesetRows): RulesetRawData {
     const storage = StorageEngine.shared();
@@ -82,15 +84,15 @@ export default class CopyOnWriteEngine {
       const held = storage.viewLinksOf(entity);
       if (held.length > 0) links.set(entity.id, { links: held, type: entity.type });
     }
-    const { kindValues, values } = storage.valuesOf({ entities: live, ruleset: stored.ruleset });
+    const { ruleset } = stored;
     return {
       entities,
-      kindValues,
+      kindValues: storage.kindValues(live),
       links,
       tieredIds: stored.tieredIds,
       modifiers: stored.modifiers,
       requirements: stored.requirements,
-      values,
+      ...(ruleset && { settings: { rulesetId: ruleset.id, values: storage.settingsOf(ruleset) } }),
     };
   }
 
@@ -129,17 +131,15 @@ export default class CopyOnWriteEngine {
   }
 
   /**
-   * What a copy of a sibling winner (of `entityType`) takes of its siblings' customizations beside its own, merged as
-   * the view merges: their modifiers and requirements it lacks, and its stored values with theirs merged in.
+   * What a copy of a sibling winner takes of its siblings' customizations beside its own, merged as the view merges:
+   * their modifiers and requirements it lacks.
    */
   mergeCustomizations(
     own: EntityCustomizations,
     siblings: EntityCustomizations[],
     targetEntityId: string,
-    entityType: string,
   ): EntityCustomizations {
-    const declared = StorageEngine.shared().declaredFields();
-    return SiblingMerge.mergeCustomizations(own, siblings, targetEntityId, entityType, declared);
+    return SiblingMerge.mergeCustomizations(own, siblings, targetEntityId);
   }
 
   /**
@@ -162,5 +162,13 @@ export default class CopyOnWriteEngine {
       siblings.map((links) => links.filter(merges)),
       resolve,
     );
+  }
+
+  /**
+   * A sibling winner's fields and single links (`own`, of `entityType`, as stored), with its siblings' (`siblings`, in
+   * the order its `CowData` pairs them) merged in as the view merges them: each field and role by its declared merge.
+   */
+  mergeValues(own: StoredValues, siblings: StoredValues[], entityType: string): StoredValues {
+    return SiblingMerge.mergeValues(own, siblings, entityType, StorageEngine.shared().declaredFields()).values;
   }
 }

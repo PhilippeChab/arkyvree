@@ -16,9 +16,9 @@ import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { findKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { writeFieldValues } from "@/tests/support/ownerValues.ts";
 import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
-import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { CLASS_HD, ITEM_COST_GP, ITEM_IS_TEMPLATE, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -161,7 +161,7 @@ describe("RulesetViews", () => {
       modifier("abilities.str.score", "2026-01-02T00:00:00Z"),
       modifier("abilities.dex.score", "2026-01-01T00:00:00Z"),
     ]);
-    await writeStoredValues("items", item.id, [
+    await writeFieldValues("items", item.id, [
       ["DAMAGE_TYPE", "Piercing"],
       ["DAMAGE_TYPE", "Slashing"],
     ]);
@@ -172,7 +172,7 @@ describe("RulesetViews", () => {
       "abilities.str.score",
     ]);
     // A damage type's options are Slashing, Piercing, Bludgeoning
-    expect(data.valuesOf(item.id).fields.DAMAGE_TYPE).toEqual(["Slashing", "Piercing"]);
+    expect(data.find("items", item.id)!.fields.DAMAGE_TYPE).toEqual(["Slashing", "Piercing"]);
   });
 
   test("system-seeded rulesets are pinned; user forks (and orphaned forks) are not", async () => {
@@ -268,7 +268,7 @@ describe("RulesetViews", () => {
     expect(klassNames).toContain("Wizard");
 
     // Verify the ruleset-level skill point ability link points at Intelligence.
-    expect(rulesetData.valuesOf(ruleset.id).links.skillPointAbility).toBe(c.abilityMap["Intelligence"]);
+    expect(rulesetData.rulesetValuesOf(ruleset.id).links.skillPointAbility).toBe(c.abilityMap["Intelligence"]);
   });
 
   test("campaign-scoped raw cache is independent from base raw cache", async () => {
@@ -316,10 +316,11 @@ describe("RulesetViews", () => {
       expect(forkView.klasses.length).toBe(seedView.klasses.length);
       expect(forkView.abilities.length).toBe(seedView.abilities.length);
       expect(forkView.aptitudes.length).toBe(seedView.aptitudes.length);
-      // Fork inherits all customizations via compose: every entity's stored values, of every kind, and the Settings
+      // Fork inherits all customizations via compose: every entity's fields, of every kind, and the Settings
       for (const { type } of StorageEngine.shared().viewSchema().kinds) {
-        const ids = seedData.rows(type as keyof ViewKinds).map((row) => (row as { id: string }).id);
-        expect(ids.map((id) => forkData.valuesOf(id))).toEqual(ids.map((id) => seedData.valuesOf(id)));
+        const fieldsOf = (data: typeof seedData) =>
+          data.rows(type as keyof ViewKinds).map((row) => (row as { fields: unknown }).fields);
+        expect(fieldsOf(forkData)).toEqual(fieldsOf(seedData));
         expect(forkData.kindValues(type)).toEqual(seedData.kindValues(type));
       }
       expect(Object.keys(seedData.rulesetValuesOf(seed.id).links)).not.toHaveLength(0);

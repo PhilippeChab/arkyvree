@@ -1,7 +1,7 @@
 /**
  * An owned kind's level (3.5's class level), by its rules' columns: what its read gives of it (`readLevel`: its row,
- * the entities it grants through its `grants` field, its amounts through its `amounts` field), and its form, its
- * create's and its edit's body, which writes them at those fields' keys.
+ * its fields' values its tracks read, the entities it grants through its `grants` field, its amounts through its
+ * `amounts` field), and its form, its create's and its edit's body, which writes them at those fields' keys.
  */
 
 import type { RulesDescription } from "@/client/src/lib/queries.ts";
@@ -44,7 +44,10 @@ export interface LevelKeys {
   grants?: { entityKey: string; key: string; viaKey: string };
 }
 
-/** A level as its route reads it: its row (its fields), its number, its amounts and its grants, by its columns. */
+/**
+ * A level as its route reads it: its row, its number, its amounts and its grants, by its columns, and its fields'
+ * values its Progression tab's tracks read (`values`, by their tracks' keys).
+ */
 export interface LevelRead {
   amounts: Amount[];
   grants: Grant[];
@@ -52,6 +55,7 @@ export interface LevelRead {
   level: number;
   row: Record<string, unknown>;
   updatedAt: string;
+  values: Record<string, unknown>;
 }
 
 /** A level's form: its number, its declared fields, and its amounts and grants at their columns' keys. */
@@ -110,11 +114,12 @@ export function nextLevel(levels: readonly LevelRead[] | undefined, keys: LevelK
 /**
  * A level as its route reads it (`row`: its number its `position` on its class's track), its amounts and its grants at
  * its columns' keys (`columns`): a grant its entity's row, the one it's through and its name beside it, and whether
- * it's free.
+ * it's free; and the values of its fields its tracks read (`tracks`: each a stored field, by its track's key).
  */
 export function readLevel(
   row: { id: string; position: number; updatedAt: string } & Record<string, unknown>,
   { amounts, grants }: LevelColumns,
+  tracks: readonly { field: string; key: string }[] = [],
 ): LevelRead {
   return {
     amounts: recordsAt(row, amounts?.key).map((record): Amount => ({
@@ -133,6 +138,9 @@ export function readLevel(
     level: row.position,
     row,
     updatedAt: row.updatedAt,
+    values: Object.fromEntries(
+      tracks.map(({ field, key }) => [key, isRecord(row.fields) ? row.fields[field] : undefined]),
+    ),
   };
 }
 

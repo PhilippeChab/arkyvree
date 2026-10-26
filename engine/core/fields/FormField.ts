@@ -3,8 +3,9 @@ import type { ProgressionValue } from "@/shared/customization/progression.ts";
 /** What every field of a form has. */
 interface FormFieldBase {
   /**
-   * The field of its entity's own a column's value is stored in, which an entity read holds among its `fields` (3.5's
-   * item's cost, `ITEM_COST_GP`): none for a column stored otherwise, and a declared field's (its form key's).
+   * The stored field its value is kept in, which an entity read holds among its `fields` (3.5's item's cost,
+   * `ITEM_COST_GP`; a weapon's base damage, `WEAPON_BASE_DAMAGE`): none for one stored otherwise (a link's, a list of
+   * links', its entity's partition).
    */
   field?: string;
   /** What it's for, as its ruleset says. */
@@ -167,15 +168,14 @@ export interface ProgressionFormField extends FormFieldBase {
 }
 
 /**
- * An entity of the ruleset, by its id (`references`: its kind, `abilities`): none too, unless it's `required`. A
- * column's is its entity's single link of a `role`, which an entity read holds among its `links` (its target, `toId`);
- * a declared field's, at its key.
+ * An entity of the ruleset, by its id (`references`: its kind, `abilities`): none too, unless it's `required`. It's its
+ * entity's single link of a `role`, which an entity read holds among its `links` (its target, `toId`).
  */
 export interface RefFormField extends FormFieldBase {
   input: "ref";
   references: string;
   required: boolean;
-  role?: string;
+  role: string;
 }
 
 /**

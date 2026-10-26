@@ -86,8 +86,9 @@ export default class RulesetEngine {
   }
 
   /**
-   * The fields each entity's form shows, by its type, and the ruleset's Settings' (`rulesets`), as the ruleset declares
-   * them: what a form lays out and what its save holds each to.
+   * The fields each entity's form shows among its own, by its type, and the ruleset's Settings' (`rulesets`), as the
+   * ruleset declares them: what a form lays out and what its save holds each to. A type whose form shows none (its
+   * fields its columns', 3.5's language's type) is left out.
    */
   describeFields(): Record<string, FormField[]> {
     const ownerOf = new Map(
@@ -106,7 +107,10 @@ export default class RulesetEngine {
       StorageEngine.shared()
         .fieldOwners()
         .toSorted()
-        .map((type) => [type, fieldsOf(type)]),
+        .flatMap((type) => {
+          const fields = fieldsOf(type);
+          return fields.length > 0 ? [[type, fields]] : [];
+        }),
     );
   }
 
@@ -151,7 +155,7 @@ export default class RulesetEngine {
     return this.part(type, "owned", ownerId) as Extract<PartOf<EntityKinds[K], "owned">, OwnedEntities>;
   }
 
-  /** A save of the ruleset's Settings (`body.fields`): checked, the values it keeps, and the stored values it writes. */
+  /** A save of the ruleset's Settings (`body.fields`): checked, the values it keeps, and the fields and links it writes. */
   planSettings(body: { fields?: EntityFieldValues }) {
     return this.module.ruleset.planSettings(this.view, body);
   }

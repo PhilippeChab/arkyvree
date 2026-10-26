@@ -18,10 +18,22 @@ function statementsOf(file: string) {
 
 /**
  * The registries' columns 0086 drops, as 0080 made them (their checks, the inheritance's key), each row's as the
- * modules declare it: what the migrations before 0086 ran on.
+ * modules declare it (a field's merge and the role it's read off another through, its declaration's): what the
+ * migrations before 0086 ran on.
  */
 async function addRegistryColumns() {
-  const { fieldDefs, linkRoles } = Engine.storage().registries();
+  const storage = Engine.storage();
+  const { linkRoles } = storage.registries();
+  const declared = storage.declaredFields();
+  const fieldDefs = storage.registries().fieldDefs.map(({ field, ownerType }) => {
+    const inheritance = declared.inheritance(ownerType);
+    return {
+      field,
+      inheritsVia: inheritance?.fields.has(field) ? inheritance.role : null,
+      merge: declared.mergeOf(ownerType, field),
+      ownerType,
+    };
+  });
   await db.execute(sql`
       ALTER TABLE rules.link_roles ADD COLUMN merge text NOT NULL DEFAULT 'winner';
       ALTER TABLE rules.link_roles ADD CONSTRAINT link_roles_merge_check

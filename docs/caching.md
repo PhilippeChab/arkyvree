@@ -30,7 +30,7 @@ return await withRulesetScopes(db, rulesetIds, async (views) => {
 Inside the scope:
 
 - `ruleset` — the ruleset row (non-null; throws `NotFoundError` if missing).
-- `rulesetData` — the composed cache: `byId(type)`, `rows(type)`, `linksOf(id, role)`, `valuesOf(id)`, etc., and what a module derives of it (3.5's `Dnd35View.of(rulesetData)`: `klassLevelByKlassAndLevel`…). Also `rulesetData.cow` exposes the underlying `CowData` (its `sourceChain`, `siblingIds`, and what an id resolves to: `resolve`, `isOverridden`, `isHidden`, `getWinner`) for lineage checks.
+- `rulesetData` — the composed cache: `byId(type)`, `rows(type)`, `linksOf(id, role)`, `withInheritedFields(type, entity)`, etc., and what a module derives of it (3.5's `Dnd35View.of(rulesetData)`: `klassLevelByKlassAndLevel`…). Also `rulesetData.cow` exposes the underlying `CowData` (its `sourceChain`, `siblingIds`, and what an id resolves to: `resolve`, `isOverridden`, `isHidden`, `getWinner`) for lineage checks.
 
 Nothing else: a repository read inside the scope returns rows as stored, and a query takes the ids it's given. What a read needs of copy-on-write it asks `rulesetData.cow` for, explicitly ([below](#cow-transparency)): a list's filters (`listFilters`), an entity's equivalent ids for a query on stored rows (`getEquivalentIds`), the id a stored one stands for (`resolve`). Rows that reach the engine are read as the view does there.
 
@@ -230,14 +230,13 @@ The view's own, by kind (`RulesetData`, `engine/core/view/RulesetData.ts`):
 | --- | --- |
 | `byId(type)`, `find(type, id)` | Each entity of a kind by id (a stored pre-COW id resolves to its copy) |
 | `storedById(type)` | Each entity of a kind by id as stored, unresolved: what a module's derived indices join rows by |
-| `rows(type)` | A kind's entities, as the view composes them (`ViewEntity`: its record, its own fields and single links typed) |
-| `linksOf(id, role?, toType?)` | An entity's links, by role, as the view composes them (`ViewLink`), its single links among them but those its fields read: composed the first time they're read |
+| `rows(type)` | A kind's entities, as the view composes them (`ViewEntity`: its record, every field it holds and its single links, typed; a sibling winner's with its losers' merged in, each field and link by its declared merge) |
+| `linksOf(id, role?, toType?)` | An entity's links, by role, as the view composes them (`ViewLink`), its single links among them: composed the first time they're read |
 | `nameLinks(links)` | Links whose targets the view shows, each with its target's name (`toName`): what an entity's answer carries |
-| `valuesOf(id)` | An owner's stored values: an entity's fields but its kind's own, and the links its fields read |
-| `inheritedValuesOf(type, entity)` | An entity's stored values with those it reads off another (an item's template's, by its `madeFrom` link: `inheritedFrom`) |
+| `withInheritedFields(type, entity)` | An entity with the fields it reads off another where it holds none (an item's template's, its weight and cost among them, by its `madeFrom` link: `inheritedFrom`) |
 | `isTemplate(type, entity)` | Whether an entity is one others are made from: its kind's template flag holds (an item's `ITEM_IS_TEMPLATE`) |
 | `rulesetValuesOf(rulesetId)` | A ruleset's Settings, each field's and link's of the nearest ruleset of its chain that holds it |
-| `kindValues(type)` | A kind's values kind-wide: each value of each field, with the entities that hold it |
+| `kindValues(type)` | A kind's values kind-wide: each value of each field it reads so (`kindWide`), with the entities that hold it |
 | `modifiersBySource` | A source's modifiers |
 | `requirementsByEntity` | An entity's requirements |
 | `modifiersById` | Each modifier by id |
@@ -260,9 +259,9 @@ The view's own, by kind (`RulesetData`, `engine/core/view/RulesetData.ts`):
 
 Each is built from the composed lists the first time it's read and kept with the view: a request pays for the indices it reads. Building every one costs about 2.5 ms on the core ruleset and 10 ms on a fork using every extension, on top of composing its lists (under 1 ms and about 14 ms).
 
-Every id-keyed Map in these tables is wrapped by `RulesetData.resolvingIds` — `.get(key)` / `.has(key)` auto-resolve `key` through `CowData.resolve`. Callers can pass stored pre-COW ids directly. `RulesetData.find(type, id)` reads an entity of a table through its `byId(type)` Map (the engine's `entities(type).find(id)`), and `customizationsOf(id)` an entity's modifiers, requirements and field values (`entities(type).describe(id)`).
+Every id-keyed Map in these tables is wrapped by `RulesetData.resolvingIds` — `.get(key)` / `.has(key)` auto-resolve `key` through `CowData.resolve`. Callers can pass stored pre-COW ids directly. `RulesetData.find(type, id)` reads an entity of a table through its `byId(type)` Map (the engine's `entities(type).find(id)`), which an entity's description reads (`entities(type).describe(id)`) with its modifiers and its requirements (`modifiersBySource`, `requirementsByEntity`).
 
-The flat `modifiers` / `requirements` arrays were removed from `RulesetData`, and an owner's field values are read by its id (`valuesOf`) — flat arrays encouraged scans (`arr.filter(p => set.has(p.entityId))`) that were all replaced with one of the Maps above. Sibling-sourced rows are pre-merged by the compose step into the winner's bucket (sourceId / entityId remapped, deduped), so every index above already reflects the full multi-extension view — consumers never see sibling-loser rows.
+The flat `modifiers` / `requirements` arrays were removed from `RulesetData`, and an entity's fields are its own (`ViewEntity.fields`) — flat arrays encouraged scans (`arr.filter(p => set.has(p.entityId))`) that were all replaced with one of the Maps above. Sibling-sourced rows are pre-merged by the compose step into the winner's bucket (sourceId / entityId remapped, deduped), so every index above already reflects the full multi-extension view — consumers never see sibling-loser rows.
 
 ### What's not in the ruleset cache (and why)
 

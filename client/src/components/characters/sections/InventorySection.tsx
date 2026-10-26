@@ -64,7 +64,7 @@ interface InventorySectionProps {
   rulesetId: string;
 }
 
-/** An item's cost or weight as its read holds it (`field`, its own field's): a number, none else. */
+/** An item's cost or weight as its read holds it (`field`'s): a number, none else. */
 function amountOf(item: RulesetItem, field: string) {
   const value = item.fields[field];
   return typeof value === "number" ? value : null;

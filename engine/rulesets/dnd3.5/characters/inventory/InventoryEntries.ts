@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-import type { StoredValues } from "@/engine/core/fields/index.ts";
 import type {
   CharacterInput,
   HeldInventoryEntry,
@@ -41,9 +40,12 @@ export default class InventoryEntries {
     };
   }
 
-  /** What an inventory entry shows beside its row: where its item can go (`placement`), and where it's worn. */
-  static describeInventoryEntry(entry: HeldInventoryEntry, item: Item, values: StoredValues) {
-    return { placement: ItemPlacement.describe(item, values), slotLabel: ItemPlacement.describeSlot(entry) };
+  /**
+   * What an inventory entry shows beside its row: where its item can go (`placement`, its fields its template's of
+   * those it holds none of among them), and where it's worn.
+   */
+  static describeInventoryEntry(entry: HeldInventoryEntry, item: Item) {
+    return { placement: ItemPlacement.describe(item), slotLabel: ItemPlacement.describeSlot(entry) };
   }
 
   /**

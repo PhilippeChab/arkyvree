@@ -6,13 +6,14 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import { CharacterInventory, Entities, Fields, Modifiers, Requirements } from "@/server/repositories/index.ts";
+import { CharacterInventory, Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
 import { createTestItem, findPlainItem } from "@/tests/support/dnd3.5/items.ts";
+import { writeValues } from "@/tests/support/ownerValues.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
@@ -163,9 +164,7 @@ describe("InventoryService", () => {
   test("lists what the character carries with each item's customizations, removed items gone, archived characters included", async () => {
     const { session, character, item, newItem } = await setup();
     expect(await CharacterInventoryService.getInventory(session, character.id)).toEqual([]);
-    await Fields.update(db, [
-      { id: item.id, type: "items", values: { fields: { [WEAPON_PROFICIENCY]: ["Martial"] }, links: {} } },
-    ]);
+    await writeValues("items", item.id, { fields: { [WEAPON_PROFICIENCY]: ["Martial"] }, links: {} });
     await Modifiers.create(db, {
       sourceId: item.id,
       sourceType: "items",
@@ -196,7 +195,7 @@ describe("InventoryService", () => {
         equipped: false,
         item: {
           name: item.name,
-          fields: { weapon: { proficiency: "Martial" } },
+          fields: { [WEAPON_PROFICIENCY]: "Martial" },
           modifiers: [{ target: "combat.bab" }],
           requirements: [{ target: "abilities.strength.misc" }],
         },

@@ -15,6 +15,7 @@ import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/
 import type { Requirement } from "@/shared/relations.ts";
 import { addLists } from "@/tests/support/dnd3.5/links.ts";
 import { compareCopies, customizationsOf } from "@/tests/support/dnd3.5/siblingCopies.ts";
+import { writeFieldValues } from "@/tests/support/ownerValues.ts";
 import {
   copyEntity,
   createSeededTestRuleset,
@@ -22,7 +23,6 @@ import {
   invalidateTestRulesets,
 } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
-import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -222,7 +222,7 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
         ancestorRulesetIds: [baseId],
       });
       const owner = { entityId: featCopy.id, entityType: "feats" };
-      await writeStoredValues("feats", featCopy.id, [[FEAT_FAMILY, "shared"]]);
+      await writeFieldValues("feats", featCopy.id, [[FEAT_FAMILY, "shared"]]);
       if (index === 0) return;
       const [modifier] = await Modifiers.create(db, {
         sourceId: featCopy.id,
@@ -240,7 +240,7 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
         { ...owner, ...condition, level: "2.1", target: "abilities.dexterity.total", value: String(10 + index) },
         { ...owner, ...condition, level: "2.2", target: "abilities.constitution.total", value: String(10 + index) },
       ]);
-      await writeStoredValues("feats", featCopy.id, [
+      await writeFieldValues("feats", featCopy.id, [
         [FEAT_FAMILY, "shared"],
         [FEAT_FAMILY, "sibling"],
       ]);

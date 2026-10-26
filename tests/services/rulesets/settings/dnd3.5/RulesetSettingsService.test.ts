@@ -13,9 +13,9 @@ import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { levelEditPlan, levelUpPlan, savedPicksOf } from "@/tests/support/dnd3.5/levelPlans.ts";
 import { findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { getPlanAnswer, stepAnswerOf } from "@/tests/support/levels.ts";
+import { findFormValues } from "@/tests/support/ownerValues.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
-import { findStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 /** The core rules' feats: one every 3 levels, and one more at the first. */
@@ -100,7 +100,7 @@ describe("RulesetSettingsService", () => {
     expect(await fighterBudget(fork.id)).toBe(28);
 
     // Its own row in place of the copy it held; its source's as they were
-    expect((await findStoredValues("rulesets", fork.id)).links).toEqual({ skillPointAbility: abilityMap["Wisdom"] });
+    expect((await findFormValues("rulesets", fork.id)).links).toEqual({ skillPointAbility: abilityMap["Wisdom"] });
     expect(await RulesetSettingsService.getSettings(fork.rulesetId!)).toMatchObject({
       fields: { skillPointAbilityId: abilityMap["Intelligence"] },
     });

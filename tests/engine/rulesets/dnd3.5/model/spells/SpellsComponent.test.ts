@@ -7,8 +7,8 @@ import SpellsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellsCompone
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
+import { writeFieldValues } from "@/tests/support/ownerValues.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
-import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { SPELL_COMPONENT, SPELL_DESCRIPTOR, SPELL_SCHOOL, SPELL_TARGET } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -27,10 +27,10 @@ describe("SpellsComponent.addSpellEntries", () => {
       [SPELL_DESCRIPTOR, "Language-Dependent"],
       [SPELL_TARGET, "Any number of creatures"],
     ];
-    await writeStoredValues("spells", spell.id, stored);
+    await writeFieldValues("spells", spell.id, stored);
     const rulesetData = await RulesetViews.getData(ruleset);
     const spells = new SpellsComponent(new SpellGroupingsComponent(new AbilitiesComponent()));
-    spells.addSpellEntries([spell], rulesetData);
+    spells.addSpellEntries([rulesetData.find("spells", spell.id)!]);
 
     // Each field's values a list, which a requirement asks one of, and a sheet's line joined
     expect(spells.getSpell("Probe Chant")?.fields).toMatchObject({

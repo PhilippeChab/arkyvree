@@ -30,9 +30,9 @@ import RulesetsRepository from "./rulesets/RulesetsRepository.ts";
 import StarredRulesetsRepository from "./rulesets/StarredRulesetsRepository.ts";
 import StoredCharacterLinks from "./stored/StoredCharacterLinks.ts";
 import StoredEntities from "./stored/StoredEntities.ts";
-import StoredFields from "./stored/StoredFields.ts";
 import StoredLinks from "./stored/StoredLinks.ts";
 import StoredPicks from "./stored/StoredPicks.ts";
+import StoredSettings from "./stored/StoredSettings.ts";
 import { withRequestCache } from "./withRequestCache.ts";
 
 export const Activities = withRequestCache("Activities", new ActivitiesRepository());
@@ -54,7 +54,6 @@ export const EntityLinks = withRequestCache("EntityLinks", new StoredLinks());
 export const EntityReferences = withRequestCache("EntityReferences", new EntityReferencesRepository());
 export const EntitySnapshots = withRequestCache("EntitySnapshots", new EntitySnapshotsRepository());
 export const Exports = withRequestCache("Exports", new ExportsRepository());
-export const Fields = withRequestCache("Fields", new StoredFields());
 export const Invites = withRequestCache("Invites", new InvitesRepository());
 export const Modifiers = withRequestCache("Modifiers", new ModifiersRepository());
 export const Notifications = withRequestCache("Notifications", new NotificationsRepository());
@@ -67,6 +66,7 @@ export const Requirements = withRequestCache("Requirements", new RequirementsRep
 export const RulesetEntities = withRequestCache("RulesetEntities", new RulesetEntitiesRepository());
 export const RulesetExtensions = withRequestCache("RulesetExtensions", new RulesetExtensionsRepository());
 export const Rulesets = withRequestCache("Rulesets", new RulesetsRepository());
+export const RulesetSettings = withRequestCache("RulesetSettings", new StoredSettings());
 export const Sessions = withRequestCache("Sessions", new SessionsRepository());
 export const StarredRulesets = withRequestCache("StarredRulesets", new StarredRulesetsRepository());
 export const Users = withRequestCache("Users", new UsersRepository());
