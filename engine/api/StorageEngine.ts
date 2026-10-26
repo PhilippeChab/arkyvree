@@ -60,10 +60,37 @@ export default class StorageEngine {
       steps: registries.flatMap((registry) => registry.steps),
       itemTypes: registries.flatMap((registry) => registry.itemTypes),
     };
+    StorageEngine.checkDeclarations(this.merged);
   }
 
   /** Every module's storage, merged once: the modules never change. */
   private static instance: StorageEngine | undefined;
+
+  /**
+   * Refuses a field or a link role whose merge or inheritance the engine can't read: a union of what isn't a set (a
+   * single field's values, a single link), or a field read off another but an entity's, or through a role that isn't
+   * single from its type to its type (an item's template).
+   */
+  private static checkDeclarations({ fieldDefs, linkRoles }: StorageRegistries) {
+    for (const role of linkRoles) {
+      if (role.single && role.merge === "union") {
+        throw new Error(
+          `The link role ${role.role} from ${role.fromType} is single: its sibling copies can't union it`,
+        );
+      }
+    }
+    for (const def of fieldDefs) {
+      const name = `The field ${def.field} of ${def.ownerType}`;
+      if (!def.multiple && def.merge === "union")
+        throw new Error(`${name} holds one value: its sibling copies can't union it`);
+      if (def.inheritsVia === null) continue;
+      const via = linkRoles.find(
+        (role) => role.role === def.inheritsVia && role.fromType === def.ownerType && role.toType === def.ownerType,
+      );
+      if (def.ownerKind !== "entity" || !via?.single)
+        throw new Error(`${name} is read off another through ${def.inheritsVia}, no single role from its type to it`);
+    }
+  }
 
   /**
    * A kind's values kind-wide off its owners' written values (`rows`, each as text): each field's value, with the

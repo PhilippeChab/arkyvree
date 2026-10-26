@@ -75,7 +75,8 @@ export interface EntityWrite {
 /**
  * A field: its owner (an entity of a type, a ruleset, a character), its value's kind, whether it's a set (`multiple`),
  * how sibling copies merge it, and the role an entity follows to read it off another when it has none (`inheritsVia`:
- * an item's template).
+ * an item's template). The registry keeps its owner, kind and set-ness, which its rows are checked against; the engine
+ * alone reads its merge and inheritance (`DeclaredFields`).
  */
 export interface FieldDef {
   field: string;
@@ -90,7 +91,8 @@ export interface FieldDef {
 /**
  * A link role, from a type to another: whether an entity holds one (`single`), what deleting its target or its via does
  * (`onDelete`, `viaOnDelete`: delete the linking entity, unlink, or refuse), the type of the pool it's taken through
- * (`viaType`), and how sibling copies merge it.
+ * (`viaType`), and how sibling copies merge it, which the engine alone reads (`DeclaredFields`,
+ * `StorageEngine.viewSchema`): the registry keeps the rest, which its links are checked against.
  */
 export interface LinkRoleDef {
   fromType: string;
@@ -129,7 +131,10 @@ export interface StorageDeclaration {
   registries: StorageRegistries;
 }
 
-/** What the registries hold of a module: its entity types, link roles, fields, roles, steps and the types items are. */
+/**
+ * What a module declares of its entity types, link roles, fields, roles, steps and the types items are: the registries'
+ * rows, past a field's and a role's merge and a field's inheritance, which the engine alone reads.
+ */
 export interface StorageRegistries {
   characterRoles: CharacterRoleDef[];
   entityTypes: EntityTypeDef[];

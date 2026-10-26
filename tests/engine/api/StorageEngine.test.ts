@@ -1,7 +1,25 @@
 import { describe, expect, test } from "bun:test";
 
+import Modules from "@/engine/api/Modules.ts";
 import StorageEngine from "@/engine/api/StorageEngine.ts";
-import type { FieldValue, StoredEntity, StoredFieldValue, StoredLink } from "@/engine/core/module/index.ts";
+import type {
+  FieldValue,
+  RulesetModule,
+  StorageRegistries,
+  StoredEntity,
+  StoredFieldValue,
+  StoredLink,
+} from "@/engine/core/module/index.ts";
+import type { BaseRules } from "@/shared/enums.ts";
+
+/** Every registered module, its registries' declarations changed by `change`. */
+function modulesWith(change: (registries: StorageRegistries) => void): [BaseRules, RulesetModule][] {
+  return Modules.all().map(([baseRules, module]) => {
+    const registries = structuredClone(module.storage.registries);
+    change(registries);
+    return [baseRules, { ...module, storage: { ...module.storage, registries } }];
+  });
+}
 
 /** A stored entity of a kind (`type`), holding these fields' values (`fields`) and links (`links`). */
 function storedEntity(type: string, fields: StoredFieldValue[], links: StoredLink[]): StoredEntity {
@@ -168,5 +186,28 @@ describe("A module's storage", () => {
       const refusing = linkRoles.filter((def) => def.toType === toType && def.onDelete === "refuse");
       for (const role of storage.refusingRoles(toType)) expect(refusing.some((def) => def.role === role)).toBe(true);
     }
+  });
+
+  test("refuses a merge or an inheritance it can't read, as the registries' checks did", () => {
+    expect(() => new StorageEngine(Modules.all())).not.toThrow();
+    const unionOfOne = modulesWith((registries) => {
+      registries.fieldDefs.find((def) => !def.multiple)!.merge = "union";
+    });
+    expect(() => new StorageEngine(unionOfOne)).toThrow("holds one value: its sibling copies can't union it");
+    const unionOfSingle = modulesWith((registries) => {
+      registries.linkRoles.find((def) => def.single)!.merge = "union";
+    });
+    expect(() => new StorageEngine(unionOfSingle)).toThrow("is single: its sibling copies can't union it");
+    const inherited = StorageEngine.shared()
+      .registries()
+      .fieldDefs.find((def) => def.inheritsVia !== null)!;
+    const throughMany = modulesWith((registries) => {
+      for (const role of registries.linkRoles) if (role.role === inherited.inheritsVia) role.single = false;
+    });
+    expect(() => new StorageEngine(throughMany)).toThrow(`is read off another through ${inherited.inheritsVia}`);
+    const notAnEntity = modulesWith((registries) => {
+      registries.fieldDefs.find((def) => def.ownerKind !== "entity")!.inheritsVia = inherited.inheritsVia;
+    });
+    expect(() => new StorageEngine(notAnEntity)).toThrow(`is read off another through ${inherited.inheritsVia}`);
   });
 });

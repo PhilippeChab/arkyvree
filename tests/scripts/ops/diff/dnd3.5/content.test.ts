@@ -79,8 +79,9 @@ const FIXTURES: Record<string, string> = {
                            ) limit 1`,
   // A role a class level's grant can take, and a grant
   "rules.entity_links": `insert into rules.link_role_kinds (role, from_type, single) values ('alsoGrants', 'class_levels', false);
-                         insert into rules.link_roles (role, from_type, to_type, via_type, single, on_delete, via_on_delete, merge)
-                         values ('alsoGrants', 'class_levels', 'feats', 'aptitudes', false, 'unlink', 'unlink', 'winner');
+                         insert into rules.link_roles
+                           (role, from_type, to_type, via_type, single, on_delete, via_on_delete)
+                         values ('alsoGrants', 'class_levels', 'feats', 'aptitudes', false, 'unlink', 'unlink');
                          insert into rules.entity_links (from_id, from_type, role, single, to_id, to_type, via_id, via_type)
                          select l.id, 'class_levels', 'grants', false, f.id, 'feats', a.id, 'aptitudes'
                            from rules.entities l join rules.rulesets r on r.id = l.ruleset_id
@@ -90,9 +91,9 @@ const FIXTURES: Record<string, string> = {
                             select 1 from rules.entity_links x where x.from_id = l.id and x.role = 'grants' and x.to_id = f.id
                           ) limit 1`,
   // A ruleset's field of every kind (none is seeded, and only sets of texts are declared), the set's value the newest
-  "rules.ruleset_fields": `insert into rules.field_defs (owner_kind, owner_type, field, value_kind, multiple, merge)
-                           values ('ruleset', 'rulesets', 'TEST_NUMBER', 'number', false, 'winner'),
-                                  ('ruleset', 'rulesets', 'TEST_FLAG', 'flag', false, 'winner');
+  "rules.ruleset_fields": `insert into rules.field_defs (owner_kind, owner_type, field, value_kind, multiple)
+                           values ('ruleset', 'rulesets', 'TEST_NUMBER', 'number', false),
+                                  ('ruleset', 'rulesets', 'TEST_FLAG', 'flag', false);
                            insert into rules.ruleset_fields (ruleset_id, field, value_kind, multiple, text_value, number_value, flag_value, created_at)
                            select r.id, f.field, f.value_kind, f.multiple, f.text_value, f.number_value, f.flag_value, f.created_at
                              from (select id from rules.rulesets where system order by name limit 1) r,

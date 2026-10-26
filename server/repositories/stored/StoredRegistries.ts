@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, type SQL, sql } from "drizzle-orm";
+import { and, eq, type SQL, sql } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
@@ -119,32 +119,11 @@ function registriesOf({ modules, registries }: DeclaredRegistries): Registry[] {
  * type, field, link role or step is a code change only. A declaration that changed rewrites the rows that carry it (a
  * field that becomes a set, a role that becomes single: their foreign keys cascade), and the database refuses one its
  * rows can't take. A row no module declares any more goes, unless rows still use it: then the sync is refused, naming
- * it. Two modules can't declare one name: `StorageEngine` refuses it before anything is written.
+ * it. Two modules can't declare one name: `StorageEngine` refuses it before anything is written. They keep what the
+ * rows are checked against, never what the engine alone reads of a declaration: how sibling copies merge a field or a
+ * link, the role an entity reads a field off another through.
  */
 export default class StoredRegistries {
-  /**
-   * Lets go of the roles that fields no longer inherit through, before the roles are written: a role that stops being
-   * single would otherwise be refused while a field still inherits through it.
-   */
-  private static async releaseInheritances(db: Db, { registries }: DeclaredRegistries) {
-    const kept = new Set(registries.fieldDefs.map((def) => keyOf([def.ownerType, def.field, def.inheritsVia])));
-    const inheriting = await db
-      .select({
-        field: fieldDefsInRules.field,
-        inheritsVia: fieldDefsInRules.inheritsVia,
-        ownerType: fieldDefsInRules.ownerType,
-      })
-      .from(fieldDefsInRules)
-      .where(isNotNull(fieldDefsInRules.inheritsVia));
-    for (const { field, inheritsVia, ownerType } of inheriting) {
-      if (kept.has(keyOf([ownerType, field, inheritsVia]))) continue;
-      await db
-        .update(fieldDefsInRules)
-        .set({ inheritsVia: null })
-        .where(and(eq(fieldDefsInRules.ownerType, ownerType), eq(fieldDefsInRules.field, field)));
-    }
-  }
-
   /** Removes what no module declares any more, refusing, by its name, a row that rows still use. */
   private static async removeUndeclared(db: Db, declared: DeclaredRegistries) {
     for (const { columns, declared: keys, name, order, table } of registriesOf(declared)) {
@@ -197,8 +176,6 @@ export default class StoredRegistries {
         ownerKind: def.ownerKind,
         valueKind: def.valueKind,
         multiple: def.multiple,
-        merge: def.merge,
-        inheritsVia: def.inheritsVia,
       };
       await db
         .insert(fieldDefsInRules)
@@ -223,7 +200,7 @@ export default class StoredRegistries {
         });
     }
     for (const def of registries.linkRoles) {
-      const values = { viaType: def.viaType, onDelete: def.onDelete, viaOnDelete: def.viaOnDelete, merge: def.merge };
+      const values = { viaType: def.viaType, onDelete: def.onDelete, viaOnDelete: def.viaOnDelete };
       await db
         .insert(linkRolesInRules)
         .values({ role: def.role, fromType: def.fromType, toType: def.toType, single: def.single, ...values })
@@ -278,7 +255,6 @@ export default class StoredRegistries {
     await db.transaction(async (tx) => {
       await tx.execute(sql`SELECT set_config('arkyvree.registry_sync', 'on', true)`);
       await StoredRegistries.writeEntityTypes(tx, declared);
-      await StoredRegistries.releaseInheritances(tx, declared);
       await StoredRegistries.writeLinkRoles(tx, declared);
       await StoredRegistries.writeFields(tx, declared);
       await StoredRegistries.writeOwnersRoles(tx, declared);

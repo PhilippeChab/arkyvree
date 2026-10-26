@@ -603,6 +603,13 @@
       "when": 1792958747478,
       "tag": "0085_advancement-activities",
       "breakpoints": true
+    },
+    {
+      "idx": 86,
+      "version": "7",
+      "when": 1792987444324,
+      "tag": "0086_registry-declarations",
+      "breakpoints": true
     }
   ]
 }
