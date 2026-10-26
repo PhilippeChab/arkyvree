@@ -2,7 +2,7 @@ import type { CharacterDataLoader } from "@/engine/core/character/index.ts";
 import type { CharacterPicks, StoredAdvancement, StoredPick } from "@/engine/core/module/index.ts";
 import type { RulesetData, ViewLink } from "@/engine/core/view/index.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
-import type { CharacterLevels, HeldSource, SkillPick } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
+import type { HeldSource, LoadedLevels, SkillPick } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import SpellsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellsComponent.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Feat, Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
@@ -54,9 +54,9 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
      * The feats: picked and granted (a grant of a feat that doesn't stack, the character holds already, left out), in
      * the order the character took their levels; and the room the grants make, by pool.
      */
-    private buildFeats(picks: CharacterPicks, rulesetData: RulesetData, { characterLevels }: CharacterLevels) {
+    private buildFeats(picks: CharacterPicks, rulesetData: RulesetData, { advancements }: LoadedLevels) {
       const dnd35 = Dnd35View.of(rulesetData);
-      const picked = pickedAt(picks.feats, characterLevels, (pick) => dnd35.featsById.get(pick.entityId!)).map(
+      const picked = pickedAt(picks.feats, advancements, (pick) => dnd35.featsById.get(pick.entityId!)).map(
         ({ advancementId, entity, pick, trackId }): HeldSource<Feat> => ({
           advancementId,
           entity,
@@ -66,7 +66,7 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
         }),
       );
       const granted = grantedAt(
-        characterLevels,
+        advancements,
         "feats",
         (classLevelId) => dnd35.grantedFeatsOf(classLevelId),
         (grant) => rulesetData.storedById("feats").get(grant.toId),
@@ -86,7 +86,7 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
       // Apply feat modifiers in character-level order so later selections win for `set` targets (e.g.
       // bonded.familiar.race): picks and grants are gathered by kind, not by level, and a level a level-up replaces
       // keeps its place.
-      const levelPosition = new Map(characterLevels.map((level) => [level.id, level.position]));
+      const levelPosition = new Map(advancements.map((level) => [level.id, level.position]));
       const feats = [...picked, ...keptGrants].sort(
         (a, b) => (levelPosition.get(a.advancementId!) ?? 0) - (levelPosition.get(b.advancementId!) ?? 0),
       );
@@ -98,7 +98,7 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
      * composed link's: the ruleset merges the books' copies of a spell and of a list, so a stored pair (Complete
      * Divine's Bane on Complete Warrior's copy of the favored soul's list) may have no link row of its own.
      */
-    private buildSpells(picks: CharacterPicks, rulesetData: RulesetData, { characterLevels }: CharacterLevels) {
+    private buildSpells(picks: CharacterPicks, rulesetData: RulesetData, { advancements }: LoadedLevels) {
       const dnd35 = Dnd35View.of(rulesetData);
       const held = (source: HeldSource<Spell>) => ({
         ...source,
@@ -107,12 +107,12 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
         spellLevel: dnd35.listLinksOf(source.entity.id).find((link) => link.toId === source.viaId)?.tier ?? null,
         viaId: source.viaId!,
       });
-      const picked = pickedAt(picks.spells, characterLevels, (pick) => dnd35.spellsById.get(pick.entityId!)).map(
+      const picked = pickedAt(picks.spells, advancements, (pick) => dnd35.spellsById.get(pick.entityId!)).map(
         ({ advancementId, entity, pick, trackId }) =>
           held({ advancementId, entity, step: "spells", trackId, viaId: pick.viaId! }),
       );
       const granted = grantedAt(
-        characterLevels,
+        advancements,
         "spells",
         (classLevelId) => dnd35.grantedSpellsOf(classLevelId),
         (grant) => rulesetData.storedById("spells").get(grant.toId),
@@ -124,9 +124,9 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
      * The character's skill points, feats and spells: what its levels pick and their class levels grant, as the view
      * composes them; and the room the grants make in each pool (a free spell's none), by the pool's id.
      */
-    protected buildPicks(picks: CharacterPicks, rulesetData: RulesetData, levels: CharacterLevels) {
+    protected buildPicks(picks: CharacterPicks, rulesetData: RulesetData, levels: LoadedLevels) {
       const { skillsById } = Dnd35View.of(rulesetData);
-      const skills = pickedAt(picks.skills, levels.characterLevels, (pick) => skillsById.get(pick.entityId!)).map(
+      const skills = pickedAt(picks.skills, levels.advancements, (pick) => skillsById.get(pick.entityId!)).map(
         ({ advancementId, entity, pick, trackId }): SkillPick => ({
           advancementId,
           amount: pick.amount!,
@@ -146,11 +146,11 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
      * The character's levels (its advancements, as the view reads them) in the order it took them, their class levels
      * (their tracks), and the hit points each rolled (its `hp` pick).
      */
-    protected sortLevels(advancements: StoredAdvancement[], picks: CharacterPicks): CharacterLevels {
-      const characterLevels = advancements.toSorted((a, b) => a.position - b.position);
+    protected sortLevels(stored: StoredAdvancement[], picks: CharacterPicks): LoadedLevels {
+      const advancements = stored.toSorted((a, b) => a.position - b.position);
       return {
-        characterLevels,
-        classLevelIds: characterLevels.map((level) => level.trackId!),
+        advancements,
+        classLevelIds: advancements.map((level) => level.trackId!),
         hitPoints: new Map(picks.hp.map((pick) => [pick.advancementId, pick.amount!])),
       };
     }

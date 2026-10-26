@@ -13,6 +13,14 @@ import { CharacterInventory, CharacterLinks, Characters, Entities, Picks } from 
 import { readCharacterInput, readChildInputs } from "@/server/services/characters/index.ts";
 import { createAdvancement, writeChildren } from "@/server/services/characters/levels/index.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { type SeedContext } from "./seedContext.ts";
 
@@ -138,12 +146,12 @@ export async function createCharacter(
     name: data.name,
     description: data.description,
     fields: {
-      CHARACTER_XP: data.xp,
-      CHARACTER_ALIGNMENT: data.alignment,
-      CHARACTER_AGE: data.age,
-      CHARACTER_GENDER: data.gender,
-      CHARACTER_HEIGHT: data.height,
-      CHARACTER_WEIGHT: data.weight,
+      [CHARACTER_XP]: data.xp,
+      [CHARACTER_ALIGNMENT]: data.alignment,
+      [CHARACTER_AGE]: data.age,
+      [CHARACTER_GENDER]: data.gender,
+      [CHARACTER_HEIGHT]: data.height,
+      [CHARACTER_WEIGHT]: data.weight,
     },
     links: { race: ctx.raceMap.pc[data.raceName] },
   });

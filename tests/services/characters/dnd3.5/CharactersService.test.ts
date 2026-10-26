@@ -4,7 +4,6 @@ import { and, eq } from "drizzle-orm";
 import { isValidElement } from "react";
 
 import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
-import CharacterValues from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import type { Race } from "@/engine/rulesets/dnd3.5/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
@@ -31,7 +30,7 @@ import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { backdateLastChange, findLinks } from "@/tests/support/characters.ts";
 import { addRulesetContributor } from "@/tests/support/contributors.ts";
-import { createCharacterAs, valuesOf } from "@/tests/support/dnd3.5/characters.ts";
+import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, findKlassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestAttachment } from "@/tests/support/files.ts";
 import { queuedPdfJobs } from "@/tests/support/jobs.ts";
@@ -43,7 +42,17 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
-import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_DEITY,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+  RACE_BASE_SPEED,
+  RACE_SIZE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const page = { limit: 100, page: 1 };
 
@@ -87,13 +96,29 @@ describe("CharactersService", () => {
       } as const;
       const scores = { [abilityMap["Strength"]]: 18, [abilityMap["Dexterity"]]: 14 };
       const paladin = await createCharacterAs(session, { ...details, abilities: scores });
-      expect(valuesOf(paladin)).toMatchObject({ ...details, userId: user.id });
+      expect(paladin).toMatchObject({
+        name: details.name,
+        description: details.description,
+        notes: details.notes,
+        userId: user.id,
+        fields: {
+          [CHARACTER_XP]: details.xp,
+          [CHARACTER_ALIGNMENT]: details.alignment,
+          [CHARACTER_AGE]: details.age,
+          [CHARACTER_GENDER]: details.gender,
+          [CHARACTER_HEIGHT]: details.height,
+          [CHARACTER_WEIGHT]: details.weight,
+          [CHARACTER_DEITY]: details.deity,
+        },
+      });
 
       const abilities = Object.fromEntries((await findLinks("score", paladin.id)).map((a) => [a.entityId, a.amount]));
       expect(Object.keys(abilities)).toHaveLength(6);
       expect(abilities).toMatchObject({ ...scores, [abilityMap["Wisdom"]]: 10 });
 
-      expect(valuesOf(await createCharacterAs(session))).toMatchObject({ deity: null, description: null, notes: null });
+      const plain = await createCharacterAs(session);
+      expect(plain).toMatchObject({ description: null, notes: null });
+      expect(plain.fields).not.toHaveProperty(CHARACTER_DEITY);
     });
 
     test("has no limit on how many characters a user keeps", async () => {
@@ -115,15 +140,17 @@ describe("CharactersService", () => {
       const { user: player, session: playerSession } = await createTestUser();
       const [campaign] = await Campaigns.create(db, { name: "Test Campaign", rulesetId: ruleset.id });
       await Players.create(db, { userId: player.id, campaignId: campaign.id, role: "Player Character" });
-      expect(valuesOf(await createCharacterAs(playerSession, onPrivate))).toMatchObject({
-        ...onPrivate,
+      expect(await createCharacterAs(playerSession, onPrivate)).toMatchObject({
+        rulesetId: ruleset.id,
+        links: { race: race.id },
         userId: player.id,
       });
 
       const { user: contributor, session: contributorSession } = await createTestUser();
       await addRulesetContributor(ruleset.id, contributor, owner.id);
-      expect(valuesOf(await createCharacterAs(contributorSession, onPrivate))).toMatchObject({
-        ...onPrivate,
+      expect(await createCharacterAs(contributorSession, onPrivate)).toMatchObject({
+        rulesetId: ruleset.id,
+        links: { race: race.id },
         userId: contributor.id,
       });
 
@@ -145,9 +172,9 @@ describe("CharactersService", () => {
         await createTestRuleset(user.id, { rulesetId: grandparent.id, ancestorRulesetIds: [grandparent.id] }),
         await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id, grandparent.id] }),
       ]) {
-        expect(valuesOf(await createCharacterAs(session, { rulesetId: fork.id, raceId: race.id }))).toMatchObject({
+        expect(await createCharacterAs(session, { rulesetId: fork.id, raceId: race.id })).toMatchObject({
           rulesetId: fork.id,
-          raceId: race.id,
+          links: { race: race.id },
         });
       }
 
@@ -209,16 +236,18 @@ describe("CharactersService", () => {
 
       const fields = { age: 35, experience: 5000, alignment: "Chaotic Good", description: "Updated" };
       expect(
-        valuesOf(await CharactersService.updateCharacter(session, created.id, { fields, notes: "Updated notes" })),
+        await CharactersService.updateCharacter(session, created.id, { fields, notes: "Updated notes" }),
       ).toMatchObject({
-        age: 35,
-        xp: 5000,
-        alignment: "Chaotic Good",
         description: "Updated",
         notes: "Updated notes",
         id: created.id,
-        deity: "Old Deity",
         name: created.name,
+        fields: {
+          [CHARACTER_AGE]: 35,
+          [CHARACTER_XP]: 5000,
+          [CHARACTER_ALIGNMENT]: "Chaotic Good",
+          [CHARACTER_DEITY]: "Old Deity",
+        },
       });
 
       expect(
@@ -456,7 +485,8 @@ describe("CharactersService", () => {
           parentCharacterId: character.id,
           kind: "familiar",
           name: "Whiskers",
-          ...CharacterValues.write({ raceId: raceMap.pc["Human"], xp: 0, alignment: "True Neutral", gender: "Male" }),
+          fields: { [CHARACTER_ALIGNMENT]: "True Neutral", [CHARACTER_GENDER]: "Male", [CHARACTER_XP]: 0 },
+          links: { race: raceMap.pc["Human"] },
         });
 
         const portraits = [

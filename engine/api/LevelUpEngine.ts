@@ -35,8 +35,8 @@ export default class LevelUpEngine extends CharacterHandle {
   }
 
   /** A saved level as an edit's plan opens it: each step's payload as the level saved it. */
-  describeSavedPlan(...[characterLevelId]: Args<"describeSavedPlan">) {
-    return this.module.levelUp.describeSavedPlan(this.view, this.input, characterLevelId);
+  describeSavedPlan(...[advancementId]: Args<"describeSavedPlan">) {
+    return this.module.levelUp.describeSavedPlan(this.view, this.input, advancementId);
   }
 
   /**
@@ -62,16 +62,16 @@ export default class LevelUpEngine extends CharacterHandle {
   }
 
   /**
-   * A plan's edit of the character's saved level `characterLevelId` (`request`, read by an edit's steps, each id the
+   * A plan's edit of the character's saved level `advancementId` (`request`, read by an edit's steps, each id the
    * view's): what it writes, checked, and what the children become with it.
    */
-  planLevelEdit(children: CharacterInput[], characterLevelId: string, request: LevelPlanRequest, force: boolean) {
-    const plan = { ...request, editedLevelId: characterLevelId };
+  planLevelEdit(children: CharacterInput[], advancementId: string, request: LevelPlanRequest, force: boolean) {
+    const plan = { ...request, editedLevelId: advancementId };
     return this.module.levelUp.planLevelEdit(
       this.view,
       this.input,
       this.resolveChildren(children),
-      characterLevelId,
+      advancementId,
       this.requests.resolveSave(this.stepsOf(plan), plan),
       force,
     );

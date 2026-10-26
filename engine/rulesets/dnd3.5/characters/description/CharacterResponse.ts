@@ -1,10 +1,8 @@
 import type { SheetStat } from "@/engine/core/module/index.ts";
-import CharacterValues from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import type { Character, Modifier, Requirement } from "@/shared/relations.ts";
 import { formatSigned } from "@/shared/text.ts";
-import { ITEM_COST_GP, ITEM_TYPE, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import CombatSheet from "./CombatSheet.ts";
 import SheetBlocks from "./SheetBlocks.ts";
@@ -141,7 +139,6 @@ export default class CharacterResponse {
       kind: record.kind,
       parentCharacterId: record.parentCharacterId,
       name: record.name,
-      raceId: CharacterValues.read(record).raceId,
       rulesetId: record.rulesetId,
       rulesetName: ruleset.name,
       baseRules: ruleset.baseRules,
@@ -180,16 +177,17 @@ export default class CharacterResponse {
     };
   }
 
-  /** The inventory as a flat list of entries, each with its item's fields and where it's worn (`slotLabel`). */
+  /**
+   * The inventory as a flat list of entries, each with its item's own fields, by field (`fields`), and where it's worn
+   * (`slotLabel`).
+   */
   static equipmentOf(built: DetailedCharacter) {
     return built.components.inventory.getFlatInventory().map((entry) => ({
       id: entry.id,
       itemId: entry.itemId,
       name: entry.item.name,
-      type: entry.item.fields[ITEM_TYPE] ?? null,
       description: entry.item.description,
-      weight: entry.item.fields[ITEM_WEIGHT] ?? null,
-      costGp: entry.item.fields[ITEM_COST_GP] ?? null,
+      fields: entry.item.fields,
       quantity: entry.quantity,
       equipped: entry.equipped,
       location: entry.location,
@@ -212,7 +210,6 @@ export default class CharacterResponse {
       kind: sheet.kind,
       parentCharacterId: sheet.parentCharacterId,
       name: sheet.name,
-      raceId: sheet.raceId,
       rulesetId: sheet.rulesetId,
       rulesetName: sheet.rulesetName,
       baseRules: sheet.baseRules,

@@ -8,12 +8,13 @@ import { CharacterAdvancements, CharacterInventory, Characters } from "@/server/
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
 import { findLinks } from "@/tests/support/characters.ts";
-import { buildAs, valuesOf } from "@/tests/support/dnd3.5/characters.ts";
+import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { type PcgenCharacter, readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { CHARACTER_XP } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A new user's import of a PCGen character into the seeded ruleset: the user, and what the import answered. */
 async function importAsNewUser(name: PcgenCharacter) {
@@ -27,7 +28,7 @@ describe("Imports", () => {
   test("creates the character a PCGen file holds, as the engine plans it, a valid one", async () => {
     const { imported, user } = await importAsNewUser("brannoc");
     const { character } = imported;
-    expect(valuesOf(character)).toMatchObject({ name: "Brannoc Vale", userId: user.id, xp: 29500 });
+    expect(character).toMatchObject({ name: "Brannoc Vale", userId: user.id, fields: { [CHARACTER_XP]: 29500 } });
 
     const levels = await CharacterAdvancements.findMany(db, { characterId: character.id });
     expect(levels).toHaveLength(8);

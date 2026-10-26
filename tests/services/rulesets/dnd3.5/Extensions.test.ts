@@ -325,8 +325,8 @@ async function levelPicking(userId: string, rulesetId: string, type: EntityType,
 }
 
 /** A level's picks of a type, each by the entity it names and the list it's from. */
-async function picksOf(type: EntityType, characterLevelId: string) {
-  return (await findPicks(type, [characterLevelId])).map(({ entityId, viaId }) => ({ entityId, aptitudeId: viaId }));
+async function picksOf(type: EntityType, advancementId: string) {
+  return (await findPicks(type, [advancementId])).map(({ entityId, viaId }) => ({ entityId, aptitudeId: viaId }));
 }
 
 /** The seeded base, its Complete Warrior extension, and a new user's fork of the base. */

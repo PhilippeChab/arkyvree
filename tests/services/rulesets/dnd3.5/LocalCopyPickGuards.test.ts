@@ -1,6 +1,5 @@
 import { afterEach, expect, test } from "bun:test";
 
-import CharacterValues from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import type { Language, Race } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
@@ -13,6 +12,12 @@ import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
   ITEM_COST_GP,
   ITEM_SLOT,
   ITEM_TYPE,
@@ -35,15 +40,15 @@ async function setup() {
     userId: session.userId,
     rulesetId: fork.id,
     name: "Pick Guard",
-    ...CharacterValues.write({
-      age: 25,
-      alignment: "True Neutral",
-      gender: "Male",
-      height: "6'0",
-      raceId: human.id,
-      weight: "180 lbs",
-      xp: 0,
-    }),
+    fields: {
+      [CHARACTER_AGE]: 25,
+      [CHARACTER_ALIGNMENT]: "True Neutral",
+      [CHARACTER_GENDER]: "Male",
+      [CHARACTER_HEIGHT]: "6'0",
+      [CHARACTER_WEIGHT]: "180 lbs",
+      [CHARACTER_XP]: 0,
+    },
+    links: { race: human.id },
   });
   return { session, fork, baseId, human, character };
 }

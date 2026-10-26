@@ -1,65 +1,59 @@
 import type { ValueKind } from "@/engine/core/module/index.ts";
-import type { Character, CharacterFieldValue } from "@/shared/relations.ts";
+import type { Character } from "@/shared/relations.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_DEITY,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 import type { Alignment, Gender } from "@/vocabulary/dnd3.5/identity.ts";
 
 /**
- * A 3.5 character's own values, as its row stores them: its identity and its experience, each in a field of its own
- * (none: null), and its race, its `race` link.
+ * A 3.5 character's own fields, by field, as its row stores them (`character.fields`): its identity and its experience,
+ * a field it holds none of absent.
  */
-export interface Dnd35CharacterValues {
-  age: number | null;
-  alignment: Alignment;
-  deity: string | null;
-  gender: Gender;
-  height: string | null;
-  raceId: string;
-  weight: string | null;
-  xp: number;
+export interface Dnd35CharacterFields {
+  [CHARACTER_AGE]?: number;
+  [CHARACTER_ALIGNMENT]: Alignment;
+  [CHARACTER_DEITY]?: string;
+  [CHARACTER_GENDER]: Gender;
+  [CHARACTER_HEIGHT]?: string;
+  [CHARACTER_WEIGHT]?: string;
+  [CHARACTER_XP]: number;
 }
 
+/** What a write of a 3.5 character's own fields stores, by field: each one it gives (null: cleared). */
+export type Dnd35CharacterFieldsWrite = { [F in keyof Dnd35CharacterFields]?: Dnd35CharacterFields[F] | null };
+
 /**
- * The field each of a 3.5 character's values is stored in (`character.fields`), its race aside, and the kind of value
- * it holds: what its field definitions are (`Dnd35FieldDefs`).
+ * The fields a 3.5 character holds of its own (`character.fields`), each with the kind of value it holds: what its
+ * field definitions are (`Dnd35FieldDefs`).
  */
 export const CHARACTER_FIELDS = {
-  age: { field: "CHARACTER_AGE", kind: "number" },
-  alignment: { field: "CHARACTER_ALIGNMENT", kind: "text" },
-  deity: { field: "CHARACTER_DEITY", kind: "text" },
-  gender: { field: "CHARACTER_GENDER", kind: "text" },
-  height: { field: "CHARACTER_HEIGHT", kind: "text" },
-  weight: { field: "CHARACTER_WEIGHT", kind: "text" },
-  xp: { field: "CHARACTER_XP", kind: "number" },
-} as const satisfies Record<Exclude<keyof Dnd35CharacterValues, "raceId">, { field: string; kind: ValueKind }>;
+  [CHARACTER_AGE]: { kind: "number" },
+  [CHARACTER_ALIGNMENT]: { kind: "text" },
+  [CHARACTER_DEITY]: { kind: "text" },
+  [CHARACTER_GENDER]: { kind: "text" },
+  [CHARACTER_HEIGHT]: { kind: "text" },
+  [CHARACTER_WEIGHT]: { kind: "text" },
+  [CHARACTER_XP]: { kind: "number" },
+} as const satisfies Record<keyof Dnd35CharacterFields, { kind: ValueKind }>;
 
 /** The role of a 3.5 character's link to its race, a single one (`character.links`). */
 export const RACE_ROLE = "race";
 
-/** A 3.5 character's own values, read off its row as stored and written back as its fields and its race link. */
+/** A 3.5 character's own values, read off its row as stored: its fields by field, and its race by its link's role. */
 export default class CharacterValues {
-  /** A character's own values (`record`'s fields and single links, as stored): a field it holds none of reads null. */
-  static read({ fields, links }: Pick<Character, "fields" | "links">): Dnd35CharacterValues {
-    const value = (key: keyof typeof CHARACTER_FIELDS) => fields[CHARACTER_FIELDS[key].field] ?? null;
-    return {
-      age: value("age") as number | null,
-      alignment: value("alignment") as Alignment,
-      deity: value("deity") as string | null,
-      gender: value("gender") as Gender,
-      height: value("height") as string | null,
-      raceId: links[RACE_ROLE],
-      weight: value("weight") as string | null,
-      xp: value("xp") as number,
-    };
+  /** A character's own fields (`fields`, as stored), each typed as its field holds it: one it holds none of absent. */
+  static fieldsOf({ fields }: Pick<Character, "fields">): Dnd35CharacterFields {
+    return fields as unknown as Dnd35CharacterFields;
   }
 
-  /**
-   * What a write of a character's own values stores (`values`, those it gives): each one's field (null: cleared), and
-   * its race's link.
-   */
-  static write({ raceId, ...values }: Partial<Dnd35CharacterValues>) {
-    const fields: Record<string, CharacterFieldValue | null> = {};
-    for (const [key, value] of Object.entries(values))
-      if (value !== undefined) fields[CHARACTER_FIELDS[key as keyof typeof CHARACTER_FIELDS].field] = value;
-    const links: Record<string, string> = raceId === undefined ? {} : { [RACE_ROLE]: raceId };
-    return { fields, links };
+  /** A character's race (`links`, its single links as stored): the entity its `race` link names. */
+  static raceOf({ links }: Pick<Character, "links">): string {
+    return links[RACE_ROLE];
   }
 }

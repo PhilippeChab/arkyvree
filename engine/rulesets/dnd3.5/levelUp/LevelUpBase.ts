@@ -141,9 +141,9 @@ export default abstract class LevelUpBase<C> {
     return klassLevel;
   }
 
-  /** A saved character level's class level (its advancement's track) and class, in the composed ruleset, or a 404. */
-  protected getSavedKlassLevel(characterLevel: { trackId: string | null }) {
-    const klassLevel = characterLevel.trackId ? this.dnd35.klassLevelsById.get(characterLevel.trackId) : undefined;
+  /** A saved level's class level (its advancement's track) and class, in the composed ruleset, or a 404. */
+  protected getSavedKlassLevel(advancement: { trackId: string | null }) {
+    const klassLevel = advancement.trackId ? this.dnd35.klassLevelsById.get(advancement.trackId) : undefined;
     if (!klassLevel) throw new RulesError("not-found", "Class level not found");
 
     const klass = this.dnd35.klassesById.get(klassLevel.ownerId);
@@ -153,14 +153,13 @@ export default abstract class LevelUpBase<C> {
   }
 
   /**
-   * The picks saved level `characterLevelId` holds, by step, as the character's rows hold them: its hit points, its
+   * The picks saved level `advancementId` holds, by step, as the character's rows hold them: its hit points, its
    * ability increases, its skill ranks, and its feats and spells, each in its pool; none for a level it hasn't saved (a
    * level-up's).
    */
-  protected getSavedPicks(characterLevelId: string | undefined): SavedLevelPicks {
+  protected getSavedPicks(advancementId: string | undefined): SavedLevelPicks {
     const { picks } = this.character.rows;
-    const atLevel = (step: keyof SavedLevelPicks) =>
-      picks[step].filter((pick) => pick.advancementId === characterLevelId);
+    const atLevel = (step: keyof SavedLevelPicks) => picks[step].filter((pick) => pick.advancementId === advancementId);
     return {
       hp: atLevel("hp"),
       abilities: atLevel("abilities"),

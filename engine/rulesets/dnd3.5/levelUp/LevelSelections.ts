@@ -31,15 +31,15 @@ export default class LevelSelections extends LevelUpBase<DetailedCharacter> {
   }
 
   /**
-   * The character's saved level `characterLevelId`: its hit points, its ability increases (its `abilities` picks), its
+   * The character's saved level `advancementId`: its hit points, its ability increases (its `abilities` picks), its
    * skill points, its feats by pool and its spells by pool. Refused when the character has no such level, or the view
    * no class level of it. Its increases are none where its rules give it none now (its ruleset moved them): its edit
    * opens without them, which a save could never keep, and writes them away.
    */
-  describeLevel(characterLevelId: string) {
-    const level = this.character.rows.advancements.find((saved) => saved.id === characterLevelId);
+  describeLevel(advancementId: string) {
+    const level = this.character.rows.advancements.find((saved) => saved.id === advancementId);
     if (!level) throw new RulesError("not-found", "Character level not found");
-    const picks = this.getSavedPicks(characterLevelId);
+    const picks = this.getSavedPicks(advancementId);
     this.getSavedKlassLevel(level);
     // The levels in the order the character took them: the level's index is its total level less one
     const increased =

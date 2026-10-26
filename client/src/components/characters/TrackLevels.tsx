@@ -25,7 +25,7 @@ interface TrackLevelsProps {
 
 /** An advancement the sheet opens in Edit Level: its own row's id. */
 export interface EditingLevel {
-  characterLevelId: string;
+  advancementId: string;
 }
 
 /** A track of a sheet's summary: 3.5's class, with the character's levels in it. */
@@ -89,7 +89,7 @@ export function TrackLevels({ track, trackLink, onAddLevel, onEditLevel }: Track
                     <RowAction
                       icon={EditIcon}
                       label={advancement.edit}
-                      onClick={popover.closeMenuAnd(() => onEditLevel({ characterLevelId: advancement.id }))}
+                      onClick={popover.closeMenuAnd(() => onEditLevel({ advancementId: advancement.id }))}
                     />
                   </RowActions>
                 )}

@@ -113,7 +113,7 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
           ...spell,
           // Its DC's ability, as a loaded spell's (`CustomizesEntities.withDcAbilities`): its class's bonus spell ability
           abilityDcName: klassBonusSpellAbilityMap.get(firstLevel.klassLevel.ownerId) ?? null,
-          advancementId: firstLevel.characterLevel.id,
+          advancementId: firstLevel.advancement.id,
           free: true,
           given: false,
           modifiers: [],

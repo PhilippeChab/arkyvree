@@ -10,16 +10,6 @@ import type { Feat, KlassLevel, Race, Skill, Spell } from "@/engine/rulesets/dnd
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /**
- * The character's levels (its advancements), in the order it took them, the hit points each rolled (by its id), and
- * their class levels' ids (their tracks).
- */
-export interface CharacterLevels {
-  characterLevels: StoredAdvancement[];
-  classLevelIds: string[];
-  hitPoints: Map<string, number>;
-}
-
-/**
  * A feat or a spell the character holds (`entity`), with its customizations: where it comes from (`HeldSource`), and
  * what the build makes of it. One the character holds without a level (`virtual`: a modifier's grant, a bonded
  * creature's stat block) has no advancement, track or grant, nor a pool but a spell's. One a modifier of the
@@ -44,6 +34,16 @@ export interface HeldSource<E> {
   step: "feats" | "spells";
   trackId?: string;
   viaId?: string;
+}
+
+/**
+ * The character's levels (its advancements), in the order it took them, the hit points each rolled (by its id), and
+ * their class levels' ids (their tracks).
+ */
+export interface LoadedLevels {
+  advancements: StoredAdvancement[];
+  classLevelIds: string[];
+  hitPoints: Map<string, number>;
 }
 
 /** A skill a level spends points on (`amount`, its `skills` pick's), at its advancement, whose track is its class level. */

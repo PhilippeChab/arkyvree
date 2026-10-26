@@ -2,9 +2,18 @@ import { z } from "zod";
 
 import type { FieldsBlock, FieldsPlan, FieldsRequest, SheetField } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_DEITY,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/vocabulary/dnd3.5/identity.ts";
 
-import CharacterValues from "./CharacterValues.ts";
+import type { Dnd35CharacterFieldsWrite } from "./CharacterValues.ts";
 
 /** A 3.5 character's identity, as its sheet reads it: who it is, its beliefs, its experience, and its notes. */
 interface SheetIdentity {
@@ -146,17 +155,15 @@ export default class IdentityFields {
       request,
       ["fields"],
     );
-    return {
-      fields: CharacterValues.write({
-        ...(age !== undefined && { age }),
-        ...(alignment && { alignment }),
-        ...(deity !== undefined && { deity }),
-        ...(experience !== undefined && { xp: experience }),
-        ...(gender && { gender }),
-        ...(height !== undefined && { height: height || null }),
-        ...(weight !== undefined && { weight: weight || null }),
-      }).fields,
-      own: { ...(description !== undefined && { description }) },
+    const fields: Dnd35CharacterFieldsWrite = {
+      ...(age !== undefined && { [CHARACTER_AGE]: age }),
+      ...(alignment && { [CHARACTER_ALIGNMENT]: alignment }),
+      ...(deity !== undefined && { [CHARACTER_DEITY]: deity }),
+      ...(experience !== undefined && { [CHARACTER_XP]: experience }),
+      ...(gender && { [CHARACTER_GENDER]: gender }),
+      ...(height !== undefined && { [CHARACTER_HEIGHT]: height || null }),
+      ...(weight !== undefined && { [CHARACTER_WEIGHT]: weight || null }),
     };
+    return { fields, own: { ...(description !== undefined && { description }) } };
   }
 }

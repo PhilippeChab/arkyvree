@@ -17,7 +17,6 @@ import type { Character } from "@/shared/relations.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 import CharacterCards from "./CharacterCards.ts";
-import CharacterValues from "./CharacterValues.ts";
 import CharacterDescription from "./description/CharacterDescription.ts";
 import IdentityFields from "./IdentityFields.ts";
 import InventoryEntries from "./inventory/InventoryEntries.ts";
@@ -27,9 +26,9 @@ import CharacterSheet from "./sheet/CharacterSheet.tsx";
 
 /**
  * The 3.5 characters, as the module answers the server of them: their sheets, as the API answers them, as a member who
- * reads one partly reads it, and printed; the languages they speak and may pick (their `languages` link); where an
- * item goes and what equipping one checks, and how a new one's ability scores are set (their `abilities` link) and the
- * races it can pick (its `raceId`), a player character's alone. The characters part reads the private notes as the
+ * reads one partly reads it, and printed; the languages they speak and may pick (their `speaks` links); where an
+ * item goes and what equipping one checks, and how a new one's ability scores are set (their `score` links) and the
+ * races it can pick (its `race` link), a player character's alone. The characters part reads the private notes as the
  * viewer does, and checks an item's ruleset and charges, a language's, and the scores' bounds.
  */
 export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
@@ -46,7 +45,7 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
 
   /** A character's card: its race and its classes at their highest level. */
   protected override describeFullCard(view: RulesetView, character: Character, advancements: StoredAdvancement[]) {
-    return CharacterCards.describe(Dnd35View.of(view.rulesetData), CharacterValues.read(character), advancements);
+    return CharacterCards.describe(Dnd35View.of(view.rulesetData), character, advancements);
   }
 
   /** An inventory entry beside its row: where its item can go, and where it's worn. */

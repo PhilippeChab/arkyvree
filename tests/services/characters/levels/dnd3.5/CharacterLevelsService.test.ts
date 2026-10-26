@@ -1383,10 +1383,8 @@ describe("LevelsService", () => {
         return { loserId, name: Dnd35View.of(rulesetData).spellsById.get(loserId)!.name };
       });
       const characterId = await createSeedCharacter(ctx, "wizard", { rulesetId: fork.id });
-      const [characterLevelId] = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
-      await Picks.createMany(db, [
-        { advancementId: characterLevelId, step: "spells", entityId: merged.loserId, viaId: wizardSpells },
-      ]);
+      const [advancementId] = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
+      await Picks.createMany(db, [{ advancementId, step: "spells", entityId: merged.loserId, viaId: wizardSpells }]);
 
       expect(await spellNames(characterId, 2)).not.toContain(merged.name);
     });

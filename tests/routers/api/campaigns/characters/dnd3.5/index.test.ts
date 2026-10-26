@@ -220,7 +220,6 @@ describe("campaigns characters", () => {
       "modifiers",
       "name",
       "parentCharacterId",
-      "raceId",
       "requirements",
       "rulesetId",
       "rulesetName",

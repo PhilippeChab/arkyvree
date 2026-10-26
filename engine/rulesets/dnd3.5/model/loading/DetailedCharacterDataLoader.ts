@@ -37,12 +37,12 @@ export interface LoadedCharacterData extends LoadedCharacter {
    * amount.
    */
   abilityPicks: StoredPick[];
+  /** Its levels: its advancements, in the order it took them. */
+  advancements: StoredAdvancement[];
   /** Its class levels' base bonuses to the saves: their `baseBonus` links. */
   baseBonusLinks: readonly ViewLink[];
   /** The character's own row: who it is (`IdentityComponent`). */
   character: Character;
-  /** Its levels: its advancements, in the order it took them. */
-  characterLevels: StoredAdvancement[];
   classLevelFields: Map<string, { bab: number; skills: number }>;
   /** Its classes' class skills: their `classSkill` links. */
   classSkillLinks: readonly ViewLink[];
@@ -113,7 +113,7 @@ export default class DetailedCharacterDataLoader extends include(
     const { rulesetData } = view;
     const dnd35 = Dnd35View.of(rulesetData);
     // The character's race, from the view: racesById resolves a stored id (RulesetComposition)
-    const race = dnd35.racesById.get(CharacterValues.read(this.character).raceId);
+    const race = dnd35.racesById.get(CharacterValues.raceOf(this.character));
     if (!race) throw new Error("Race not found");
 
     const abilityLookup = new Map(dnd35.abilities.map((a) => [a.id, a.name]));
@@ -131,10 +131,10 @@ export default class DetailedCharacterDataLoader extends include(
     const dcAbilities = { klassBonusSpellAbilityMap: classFields.klassBonusSpellAbilityMap, klassLevels };
     return {
       scoreLinks: rows.links.score,
-      abilityPicks: this.readAbilityPicks(rows.picks.abilities, levels.characterLevels, LevelRules.of(view)),
+      abilityPicks: this.readAbilityPicks(rows.picks.abilities, levels.advancements, LevelRules.of(view)),
       race: this.toCustomizedRace(race, rulesetData),
       languages,
-      characterLevels: levels.characterLevels,
+      advancements: levels.advancements,
       levelHitPoints: levels.hitPoints,
       classIds,
       klassLevels,
@@ -179,12 +179,12 @@ export default class DetailedCharacterDataLoader extends include(
 
   /**
    * The ability increases (`increases`, its `abilities` picks, as the view resolves them) of the character's levels
-   * (`characterLevels`, in order) that take one by its ruleset's Settings (`levelRules`): one its Settings since moved
+   * (`advancements`, in order) that take one by its ruleset's Settings (`levelRules`): one its Settings since moved
    * off its level counts for nothing, as its level's edit opens it without it (`LevelSelections.describeLevel`).
    */
-  private readAbilityPicks(increases: StoredPick[], characterLevels: StoredAdvancement[], levelRules: LevelRules) {
+  private readAbilityPicks(increases: StoredPick[], advancements: StoredAdvancement[], levelRules: LevelRules) {
     const taking = new Set(
-      characterLevels.filter((_, before) => levelRules.isAbilityIncreaseLevel(before)).map(({ id }) => id),
+      advancements.filter((_, before) => levelRules.isAbilityIncreaseLevel(before)).map(({ id }) => id),
     );
     return increases.filter(({ advancementId }) => taking.has(advancementId));
   }

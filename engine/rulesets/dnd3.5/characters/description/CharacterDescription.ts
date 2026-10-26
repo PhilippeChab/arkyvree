@@ -73,7 +73,6 @@ export default class CharacterDescription {
       kind: response.kind,
       parentCharacterId: response.parentCharacterId,
       name: response.name,
-      raceId: response.raceId,
       rulesetId: response.rulesetId,
       rulesetName: response.rulesetName,
       baseRules: response.baseRules,

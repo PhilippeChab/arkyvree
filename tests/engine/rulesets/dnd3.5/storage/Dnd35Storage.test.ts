@@ -38,7 +38,7 @@ describe("3.5's storage", () => {
     const own = Object.entries(DND35_STORAGE.kinds).flatMap(([ownerType, kind]) =>
       Object.entries(kind.fields ?? {}).map(([field, { kind: valueKind }]) => `${ownerType} ${field} ${valueKind}`),
     );
-    const character = Object.values(CHARACTER_FIELDS).map(({ field, kind }) => `characters ${field} ${kind}`);
+    const character = Object.entries(CHARACTER_FIELDS).map(([field, { kind }]) => `characters ${field} ${kind}`);
     expect(
       defined.filter((def) => !own.includes(def) && !character.includes(def)).map((def) => def.replace(/ \w+$/, "")),
     ).toEqual(vocabulary);

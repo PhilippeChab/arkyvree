@@ -54,7 +54,7 @@ const CANTRIPS = [
 const FIGHTER_SKILLS = ["Climb", "Craft", "Handle Animal", "Intimidate", "Jump", "Ride", "Swim"];
 
 const levels = api.api.characters.levels[":characterId"];
-const level = levels[":characterLevelId"];
+const level = levels[":advancementId"];
 
 /** A sorcerer's grants at its first level, by name: its class features, none free of a pool's room. */
 const SORCERER_GRANTS = ["Spells (Sorcerer)", "Summon Familiar (Sorcerer)", "Weapon and Armor Proficiency (Sorcerer)"];
@@ -167,8 +167,8 @@ async function createCharacter(charisma = 8) {
 }
 
 /** A saved level, its plan read back by kind, with the class level its plan takes. */
-async function readLevel(characterId: string, characterLevelId: string) {
-  const plan = await expectOk(level.plan.$get({ param: { characterId, characterLevelId } }));
+async function readLevel(characterId: string, advancementId: string) {
+  const plan = await expectOk(level.plan.$get({ param: { characterId, advancementId } }));
   const {
     advancements: [advancement],
   } = await expectOk(levels.plan.$post({ param: { characterId }, json: plan }));
@@ -389,7 +389,7 @@ describe("character level plans", () => {
     const [created] = await expectOk(
       levels.$post({ param: { characterId }, json: { steps: { ...fighterPlan(ctx, 1), ...payloadsOf(fighter1) } } }),
     );
-    const param = { characterId, characterLevelId: created.id };
+    const param = { characterId, advancementId: created.id };
     expect(await readLevel(characterId, created.id)).toMatchObject({
       hp: FIGHTER_LEVELS[0].hp,
       klassId: ctx.klassMap.pc["Fighter"],
@@ -787,7 +787,7 @@ describe("character level plans", () => {
     const steps = { ...fighterPlan(ctx, 1), ...payloadsOf(picks(ctx, FIGHTER_LEVELS[0])) };
     await expectStatus(levels.$post({ param: { characterId }, json: { steps: { ...steps, hp: [0] } } }), 400);
     const [created] = await expectOk(levels.$post({ param: { characterId }, json: { steps } }));
-    const param = { characterId, characterLevelId: created.id };
+    const param = { characterId, advancementId: created.id };
     await expectStatus(level.$put({ param, json: { steps } }), 400);
 
     const options = levels.options[":step"];
@@ -811,7 +811,7 @@ describe("character level plans", () => {
       ...payloadsOf(sorcerer1),
     };
     const [created] = await expectOk(levels.$post({ param: { characterId }, json: { steps } }));
-    const param = { characterId, characterLevelId: created.id };
+    const param = { characterId, advancementId: created.id };
     const saved = await expectOk(level.plan.$get({ param }));
     expect(saved).toMatchObject({ editedLevelId: created.id, steps: { hp: [SORCERER_1.hp], abilities: [[]] } });
     const savedSteps = saved.steps as Record<string, { id?: string; points?: number; tier?: string }[]>;
@@ -833,6 +833,6 @@ describe("character level plans", () => {
     await expectOk(level.$put({ param, json: { steps: saved.steps } }));
     expect(await readLevel(characterId, created.id)).toEqual(before);
     expect(await expectOk(level.plan.$get({ param }))).toEqual(saved);
-    await expectStatus(level.plan.$get({ param: { characterId, characterLevelId: NIL_UUID } }), 404);
+    await expectStatus(level.plan.$get({ param: { characterId, advancementId: NIL_UUID } }), 404);
   });
 });

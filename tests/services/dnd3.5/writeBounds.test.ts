@@ -20,7 +20,7 @@ import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { findLinks } from "@/tests/support/characters.ts";
 import { runWhileLocked } from "@/tests/support/database.ts";
-import { createCharacterAs, createTestCharacter, postCharacter, valuesOf } from "@/tests/support/dnd3.5/characters.ts";
+import { createCharacterAs, createTestCharacter, postCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { findPlainItem } from "@/tests/support/dnd3.5/items.ts";
 import {
   createSeedCharacter,
@@ -37,6 +37,10 @@ import { findSeededCharacter, getSeedCtx, NIL_UUID } from "@/tests/support/seed.
 import { makeSession } from "@/tests/support/users.ts";
 import { LOCATION_OPTIONS } from "@/vocabulary/dnd3.5/equipment.ts";
 import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_XP,
   CLASS_HD,
   ITEM_COST_GP,
   ITEM_WEIGHT,
@@ -293,8 +297,11 @@ describe("a character's identity", () => {
   test("refuses a new character's negative experience, or an age under 1", async () => {
     expect(createCharacterAs(session, { xp: -1 })).rejects.toMatchObject(invalidAt("fields.xp"));
     expect(createCharacterAs(session, { age: 0 })).rejects.toMatchObject(invalidAt("fields.age"));
-    expect(valuesOf(await createCharacterAs(session, { xp: 0, age: 1 }))).toMatchObject({ xp: 0, age: 1 });
-    expect(valuesOf(await createCharacterAs(session, { age: null }))).toMatchObject({ age: null });
+    expect((await createCharacterAs(session, { xp: 0, age: 1 })).fields).toMatchObject({
+      [CHARACTER_XP]: 0,
+      [CHARACTER_AGE]: 1,
+    });
+    expect((await createCharacterAs(session, { age: null })).fields).not.toHaveProperty(CHARACTER_AGE);
   });
 
   test("refuses a new character without an alignment, a gender or a race, or with one not among its options", async () => {
@@ -334,12 +341,13 @@ describe("a character's identity", () => {
       expect(CharactersService.updateCharacter(session, id, { fields })).rejects.toMatchObject(invalidAt(category));
     // An alignment or a gender left unset keeps its value: the character always has one
     const fields = { experience: 0, age: null, alignment: null, gender: null };
-    expect(valuesOf(await CharactersService.updateCharacter(session, id, { fields }))).toMatchObject({
-      xp: 0,
-      age: null,
-      alignment: "Lawful Good",
-      gender: "Female",
+    const edited = await CharactersService.updateCharacter(session, id, { fields });
+    expect(edited.fields).toMatchObject({
+      [CHARACTER_XP]: 0,
+      [CHARACTER_ALIGNMENT]: "Lawful Good",
+      [CHARACTER_GENDER]: "Female",
     });
+    expect(edited.fields).not.toHaveProperty(CHARACTER_AGE);
   });
 
   test("refuses an ability score past 1 to 100, on a new character and an edit", async () => {
@@ -360,7 +368,7 @@ describe("a character's identity", () => {
     expect(await findLinks("score", id)).toContainEqual(expect.objectContaining({ entityId: strength, amount: 100 }));
   });
 
-  test("holds an import's columns to the rules: no negative experience, no age under 1, its options, a race", async () => {
+  test("holds an import's fields to the rules: no negative experience, no age under 1, its options, a race", async () => {
     const { rulesetId } = await getSeedCtx();
     const text = (await readPcgenFile("brannoc"))
       .replace("EXPERIENCE:29500", "EXPERIENCE:-5")
@@ -368,7 +376,12 @@ describe("a character's identity", () => {
       .replace("ALIGN:LN", "ALIGN:XX")
       .replace("GENDER:Male", "GENDER:Unknown");
     const { character } = await CharactersService.importCharacter(session, rulesetId, text);
-    expect(valuesOf(character)).toMatchObject({ xp: 0, age: null, alignment: "True Neutral", gender: "Other" });
+    expect(character.fields).toMatchObject({
+      [CHARACTER_XP]: 0,
+      [CHARACTER_ALIGNMENT]: "True Neutral",
+      [CHARACTER_GENDER]: "Other",
+    });
+    expect(character.fields).not.toHaveProperty(CHARACTER_AGE);
     expect(character.links.race).toBeString();
     const raceless = text.replace("RACE:Human", "RACE:Warforged");
     expect(CharactersService.importCharacter(session, rulesetId, raceless)).rejects.toMatchObject({

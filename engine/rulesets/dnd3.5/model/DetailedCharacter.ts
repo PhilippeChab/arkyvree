@@ -63,16 +63,16 @@ export default class DetailedCharacter extends include(
    */
   meetsWithNextLevel(klassName: string, klassLevel: KlassLevel, requirementGroups: Requirement[][]): boolean {
     const now = new Date().toISOString();
-    const characterLevel = {
+    const advancement = {
       id: crypto.randomUUID(),
       characterId: this.character.id,
       trackId: klassLevel.id,
       createdAt: now,
       updatedAt: now,
-      position: (this.data.characterLevels.at(-1)?.position ?? 0) + 1,
+      position: (this.data.advancements.at(-1)?.position ?? 0) + 1,
     };
     // The class's level and the character's (`identity.meta.level`, counted from the classes) take it
-    this.components.classes.addProjectedLevel(klassName, klassLevel, characterLevel);
+    this.components.classes.addProjectedLevel(klassName, klassLevel, advancement);
     const met = this.areRequirementsMet(requirementGroups);
     this.components.classes.removeProjectedLevel(klassName);
     return met;

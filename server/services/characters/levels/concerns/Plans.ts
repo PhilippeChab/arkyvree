@@ -38,9 +38,9 @@ function optionOf(option: {
 export function Plans<B extends Constructor>(Base: B) {
   abstract class WithPlans extends Base {
     /** A saved level as an edit's plan opens it: each step's payload as the level saved it. */
-    async getLevelPlan(session: Session, characterId: string, characterLevelId: string) {
+    async getLevelPlan(session: Session, characterId: string, advancementId: string) {
       return await withEditableCharacter(db, session, characterId, (scope, character) =>
-        Engine.for(scope).character(character).levelUp().describeSavedPlan(characterLevelId),
+        Engine.for(scope).character(character).levelUp().describeSavedPlan(advancementId),
       );
     }
 

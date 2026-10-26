@@ -21,7 +21,6 @@ import { charactersInCharacter, modifiersInCustomization, requirementsInCustomiz
 import type { FieldValue } from "@/engine/core/module/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
-import { CHARACTER_FIELDS } from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import CharacterResponse from "@/engine/rulesets/dnd3.5/characters/description/CharacterResponse.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import type { Aptitude, Feat, Klass, Race, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
@@ -63,6 +62,9 @@ import {
   ARMOR_MAX_DEX,
   ARMOR_PROFICIENCY,
   ARMOR_TYPE,
+  CHARACTER_AGE,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
   DAMAGE_TYPE,
   FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
   FEAT_STACKABLE,
@@ -159,7 +161,7 @@ function spellUses(detailed: Detailed, aptitude: string, levels: number[]) {
 
 /** A character's fields, with no age, height or weight. */
 function unsetPhysiology({ fields }: Character) {
-  const unset: string[] = [CHARACTER_FIELDS.age.field, CHARACTER_FIELDS.height.field, CHARACTER_FIELDS.weight.field];
+  const unset: string[] = [CHARACTER_AGE, CHARACTER_HEIGHT, CHARACTER_WEIGHT];
   return Object.fromEntries(Object.entries(fields).filter(([field]) => !unset.includes(field)));
 }
 

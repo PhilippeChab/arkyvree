@@ -1,5 +1,7 @@
 import type { CharacterCard } from "@/engine/core/module/index.ts";
+import type { Character } from "@/shared/relations.ts";
 
+import CharacterValues from "./CharacterValues.ts";
 import ClassLevels from "./ClassLevels.ts";
 
 /** A ruleset's view as a card reads it: the names of its races and classes, and its classes' levels. */
@@ -12,11 +14,16 @@ interface CardData {
 /** A 3.5 character's card, as a list of characters shows it. */
 export default class CharacterCards {
   /**
-   * The card of a character (`character`, with its levels, `levels`: its advancements, each in a class level, its
-   * track), named as its ruleset's view names its race and classes, a copied or renamed one by its own name: its race's
-   * chip, which a partly seen character shows, then each class at the highest level the character has in it.
+   * The card of a character (`character`, its single links as stored, its race's among them; with its levels, `levels`:
+   * its advancements, each in a class level, its track), named as its ruleset's view names its race and classes, a
+   * copied or renamed one by its own name: its race's chip, which a partly seen character shows, then each class at the
+   * highest level the character has in it.
    */
-  static describe(data: CardData, character: { raceId: string }, levels: { trackId: string | null }[]): CharacterCard {
+  static describe(
+    data: CardData,
+    character: Pick<Character, "links">,
+    levels: { trackId: string | null }[],
+  ): CharacterCard {
     const levelByKlassName = new Map<string, number>();
     for (const level of levels) {
       const klassLevel = level.trackId === null ? undefined : data.klassLevelsById.get(level.trackId);
@@ -26,7 +33,7 @@ export default class CharacterCards {
         levelByKlassName.set(klassName, klassLevel.position);
     }
     const classLevels = [...levelByKlassName].map(([klass, level]) => ({ klass, level }));
-    const race = data.racesById.get(character.raceId)?.name ?? "Unknown";
+    const race = data.racesById.get(CharacterValues.raceOf(character))?.name ?? "Unknown";
     return {
       chips: [
         { label: race, partial: true, tone: "secondary" },
