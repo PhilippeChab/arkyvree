@@ -57,7 +57,6 @@ export const activitiesInAccount = account.table(
   {
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
@@ -102,7 +101,6 @@ export const rulesetsInRules = rules.table(
   {
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
@@ -262,7 +260,6 @@ export const entitiesInRules = rules.table(
     partition: text().notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
   },
   (table) => [
     index("entities_campaign_idx")
@@ -347,16 +344,13 @@ export const advancementsInCharacter = character.table(
     trackType: text("track_type"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { withTimezone: true, mode: "string" }),
   },
   (table) => [
-    uniqueIndex("advancements_character_position_idx")
-      .using(
-        "btree",
-        table.characterId.asc().nullsLast().op("int4_ops"),
-        table.position.asc().nullsLast().op("int4_ops"),
-      )
-      .where(sql`(deleted_at IS NULL)`),
+    uniqueIndex("advancements_character_position_idx").using(
+      "btree",
+      table.characterId.asc().nullsLast().op("uuid_ops"),
+      table.position.asc().nullsLast().op("int4_ops"),
+    ),
     uniqueIndex("advancements_character_track_idx").using(
       "btree",
       table.characterId.asc().nullsLast().op("uuid_ops"),
@@ -591,7 +585,6 @@ export const contributorsInCharacter = character.table(
   {
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
@@ -616,10 +609,10 @@ export const contributorsInCharacter = character.table(
     ),
     uniqueIndex("character_contributors_character_user_unique")
       .using("btree", table.characterId.asc().nullsLast(), table.userId.asc().nullsLast())
-      .where(sql`status IN ('Pending', 'Active') AND deleted_at IS NULL`),
+      .where(sql`status IN ('Pending', 'Active')`),
     uniqueIndex("character_contributors_character_email_unique")
       .using("btree", table.characterId.asc().nullsLast(), table.email.asc().nullsLast())
-      .where(sql`user_id IS NULL AND status IN ('Pending', 'Active') AND deleted_at IS NULL`),
+      .where(sql`user_id IS NULL AND status IN ('Pending', 'Active')`),
     foreignKey({
       columns: [table.characterId],
       foreignColumns: [charactersInCharacter.id],
@@ -645,7 +638,6 @@ export const contributorsInRules = rules.table(
   {
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
@@ -670,10 +662,10 @@ export const contributorsInRules = rules.table(
     ),
     uniqueIndex("contributors_ruleset_user_unique")
       .using("btree", table.rulesetId.asc().nullsLast(), table.userId.asc().nullsLast())
-      .where(sql`status IN ('Pending', 'Active') AND deleted_at IS NULL`),
+      .where(sql`status IN ('Pending', 'Active')`),
     uniqueIndex("contributors_ruleset_email_unique")
       .using("btree", table.rulesetId.asc().nullsLast(), table.email.asc().nullsLast())
-      .where(sql`user_id IS NULL AND status IN ('Pending', 'Active') AND deleted_at IS NULL`),
+      .where(sql`user_id IS NULL AND status IN ('Pending', 'Active')`),
     foreignKey({
       columns: [table.rulesetId],
       foreignColumns: [rulesetsInRules.id],
@@ -1105,7 +1097,6 @@ export const inventoryInCharacter = character.table(
   {
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
@@ -1239,7 +1230,6 @@ export const linksInCharacter = character.table(
     entityId: uuid("entity_id").notNull(),
     entityType: text("entity_type").notNull(),
     amount: integer(),
-    ordinal: smallint().default(0).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
   },
@@ -1267,13 +1257,7 @@ export const linksInCharacter = character.table(
       ],
       name: "links_role_entity_type_single_fkey",
     }).onUpdate("cascade"),
-    unique("links_character_id_role_entity_id_ordinal_key").on(
-      table.characterId,
-      table.role,
-      table.entityId,
-      table.ordinal,
-    ),
-    check("links_ordinal_check", sql`ordinal >= 0`),
+    unique("links_character_id_role_entity_id_key").on(table.characterId, table.role, table.entityId),
   ],
 );
 
@@ -1282,7 +1266,6 @@ export const modifiersInCustomization = customization.table(
   {
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()
@@ -1407,7 +1390,6 @@ export const playerCharactersInCampaign = campaign.table(
   {
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     playerId: uuid("player_id").notNull(),
     characterId: uuid("character_id").notNull(),
     visibility: text().default("Private").notNull(),
@@ -1418,9 +1400,7 @@ export const playerCharactersInCampaign = campaign.table(
       table.playerId.asc().nullsLast(),
       table.characterId.asc().nullsLast(),
     ),
-    uniqueIndex("player_characters_character_id_active_idx")
-      .using("btree", table.characterId.asc().nullsLast())
-      .where(sql`(deleted_at IS NULL)`),
+    uniqueIndex("player_characters_character_id_active_idx").using("btree", table.characterId.asc().nullsLast()),
     foreignKey({
       columns: [table.playerId],
       foreignColumns: [playersInCampaign.id],
@@ -1443,7 +1423,6 @@ export const requirementsInCustomization = customization.table(
   {
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     id: uuid()
       .default(sql`public.gen_random_uuid()`)
       .primaryKey()

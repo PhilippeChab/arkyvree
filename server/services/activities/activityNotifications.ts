@@ -201,7 +201,7 @@ async function findRecipients(
       return [(await Contributors.findOne(db, { id: targetId }))?.userId];
     case "rulesetOwner": {
       const rulesetId = readId(data.rulesetId) ?? (await Contributors.findOne(db, { id: targetId }))?.rulesetId;
-      return [rulesetId && (await Rulesets.findOne(db, { id: rulesetId }, Visibility.All))?.userId];
+      return [rulesetId && (await Rulesets.findOne(db, { id: rulesetId }))?.userId];
     }
     case "rulesetStakeholders":
       return changed ? await findRulesetStakeholders(db, changed) : [];

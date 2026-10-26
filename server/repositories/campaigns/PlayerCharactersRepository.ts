@@ -31,8 +31,8 @@ class PlayerCharactersRepository extends include(
   }
 
   /**
-   * Whether the character is linked in a live campaign: the campaign not archived, the link not removed, its player not
-   * archived. `CharactersPolicy.canHardDelete` reads it, so a character an archived campaign orphaned can be deleted.
+   * Whether the character is linked in a live campaign: the campaign not archived, its player not archived.
+   * `CharactersPolicy.canHardDelete` reads it, so a character an archived campaign orphaned can be deleted.
    */
   async exists(db: Db, where: { campaignArchived: false; characterId: string }): Promise<boolean> {
     const rows = await db
@@ -43,7 +43,6 @@ class PlayerCharactersRepository extends include(
       .where(
         and(
           eq(this.table.characterId, where.characterId),
-          isNull(this.table.deletedAt),
           isNull(playersInCampaign.deletedAt),
           isNull(campaignsInCampaign.deletedAt),
         ),
@@ -74,7 +73,6 @@ class PlayerCharactersRepository extends include(
                 .from(playersInCampaign)
                 .where(and(eq(playersInCampaign.campaignId, where.campaignId), isNull(playersInCampaign.deletedAt))),
             ),
-          isNull(this.table.deletedAt),
         ],
       ),
     });
@@ -119,7 +117,7 @@ class PlayerCharactersRepository extends include(
               "playerId" in where && eq(this.table.playerId, where.playerId),
               "characterId" in where && eq(this.table.characterId, where.characterId),
             ],
-            [isNull(this.table.deletedAt), searchCondition, visibilityCondition],
+            [searchCondition, visibilityCondition],
           ),
           with: {
             charactersInCharacter: true,
@@ -140,13 +138,7 @@ class PlayerCharactersRepository extends include(
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.playerId, where.playerId),
-          eq(this.table.characterId, where.characterId),
-          isNull(this.table.deletedAt),
-        ),
-      )
+      .where(and(eq(this.table.playerId, where.playerId), eq(this.table.characterId, where.characterId)))
       .returning();
   }
 }

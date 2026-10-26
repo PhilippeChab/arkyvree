@@ -137,7 +137,6 @@ function requiring(
     ...check,
     chainingOperator: null,
     createdAt: now,
-    deletedAt: null,
     updatedAt: now,
   };
   return [[requirement]];

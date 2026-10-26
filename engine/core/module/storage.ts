@@ -27,7 +27,6 @@ export interface CharacterRoleDef {
 export interface EntityRecord {
   campaignId: string | null;
   createdAt: string;
-  deletedAt: string | null;
   description: string | null;
   fields: Readonly<Record<string, FieldValue>>;
   id: string;
@@ -59,7 +58,6 @@ export interface EntityTypeDef {
 export interface EntityWrite {
   campaignId?: string | null;
   createdAt?: string;
-  deletedAt?: string | null;
   description?: string | null;
   fields?: Readonly<Record<string, FieldValue | null>>;
   id?: string;
@@ -152,7 +150,6 @@ export interface StorageRegistries {
 export interface StoredAdvancement {
   characterId: string;
   createdAt: string;
-  deletedAt: string | null;
   id: string;
   position: number;
   trackId: string | null;
@@ -191,7 +188,6 @@ export interface StoredCharacterLink {
 export interface StoredEntity {
   campaignId: string | null;
   createdAt: string;
-  deletedAt: string | null;
   description: string | null;
   fields: StoredFieldValue[];
   id: string;

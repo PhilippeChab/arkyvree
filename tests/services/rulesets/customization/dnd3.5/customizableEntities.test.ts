@@ -21,7 +21,6 @@ function modifierOn(sourceId: string, sourceType: string): Modifier {
     operator: "add",
     createdAt: now,
     updatedAt: now,
-    deletedAt: null,
   };
 }
 function requirementOn(entityId: string, entityType: string): Requirement {
@@ -37,7 +36,6 @@ function requirementOn(entityId: string, entityType: string): Requirement {
     chainingOperator: null,
     createdAt: now,
     updatedAt: now,
-    deletedAt: null,
   };
 }
 

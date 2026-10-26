@@ -11,7 +11,7 @@ export function CreationRights<B extends Constructor<RulesetRoles>>(Base: B) {
     }
 
     canCreateCharacter() {
-      if (this.entity.kind === "extension" || this.entity.status === "Archived" || this.entity.deletedAt)
+      if (this.entity.kind === "extension" || this.entity.status === "Archived")
         throw new UnprocessableEntityError("Choose an active playable ruleset");
 
       if (!this.isPublic && !this.isOwner && !this.isContributor && !this.isCampaignPlayer)

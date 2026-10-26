@@ -1456,9 +1456,7 @@ describe("an extension's content in a fork", () => {
 
     await EntitiesService.deleteEntity(session, draft.id, "feats", buckler.id);
     expect(await featsNamed(draft.id, "Improved Buckler Defense")).toEqual([]);
-    expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: buckler.id })).toMatchObject({
-      deletedAt: null,
-    });
+    expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: buckler.id })).toMatchObject({ id: buckler.id });
   });
 
   test("keeps its names: a new feat can't take one, even once the fork copied it", async () => {

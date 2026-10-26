@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { and, eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import { entitiesInRules } from "@/drizzle/schema.ts";
 import Field from "@/engine/core/fields/Field.ts";
@@ -41,7 +41,7 @@ describe("An item's fields", () => {
     const itemIds = await db
       .select({ id: entitiesInRules.id })
       .from(entitiesInRules)
-      .where(and(eq(entitiesInRules.type, "items"), isNull(entitiesInRules.deletedAt)));
+      .where(eq(entitiesInRules.type, "items"));
     const ids = itemIds.map(({ id }) => id);
     const sources = new Map(
       (await Entities.findMany<Item>(db, { entityType: "items", ids })).map((item) => [

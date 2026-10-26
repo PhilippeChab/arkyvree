@@ -1,4 +1,4 @@
-import { and, type Column, eq, exists, inArray, isNull, type SQL, sql } from "drizzle-orm";
+import { and, type Column, eq, exists, inArray, type SQL, sql } from "drizzle-orm";
 import { alias, type PgColumn, union, unionAll } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
@@ -138,7 +138,6 @@ class EntityReferencesRepository {
                   eq(twin.entityId, to),
                   eq(twin.characterId, linksInCharacter.characterId),
                   eq(twin.role, linksInCharacter.role),
-                  eq(twin.ordinal, linksInCharacter.ordinal),
                 ),
               ),
           ),
@@ -234,14 +233,7 @@ class EntityReferencesRepository {
         .from(entityLinksInRules)
         .innerJoin(from, eq(from.id, entityLinksInRules.fromId))
         .leftJoin(owner, eq(owner.id, from.ownerId))
-        .where(
-          and(
-            inArray(column, where.entityIds),
-            eq(from.rulesetId, where.rulesetId),
-            isNull(from.deletedAt),
-            isNull(owner.deletedAt),
-          ),
-        );
+        .where(and(inArray(column, where.entityIds), eq(from.rulesetId, where.rulesetId)));
     const ruleset = db
       .select({
         entityType: sql<RulesetEntityType>`'rulesets'`.as("entity_type"),

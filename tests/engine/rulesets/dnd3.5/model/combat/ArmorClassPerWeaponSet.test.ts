@@ -47,7 +47,6 @@ function atLeast(target: string, value: number): Requirement[][] {
     valueType: "number",
     chainingOperator: null,
     createdAt: now,
-    deletedAt: null,
     updatedAt: now,
   };
   return [[requirement]];

@@ -8,7 +8,7 @@ import { ACTIVE_ADVANCEMENTS, ACTIVE_CHARACTERS, query } from "./queries.ts";
 export async function printCharacterData(characters: Character[]) {
   const [counts] = await query<{ inventory: string; levels: string }>(sql`SELECT
        (SELECT count(*) FROM character.advancements WHERE id IN ${ACTIVE_ADVANCEMENTS})::text AS levels,
-       (SELECT count(*) FROM character.inventory WHERE character_id IN ${ACTIVE_CHARACTERS} AND deleted_at IS NULL)::text AS inventory`);
+       (SELECT count(*) FROM character.inventory WHERE character_id IN ${ACTIVE_CHARACTERS})::text AS inventory`);
   const picks = await query<{ count: string; step: string }>(
     sql`SELECT step, count(*)::text AS count FROM character.advancement_picks
         WHERE advancement_id IN ${ACTIVE_ADVANCEMENTS} GROUP BY step ORDER BY step`,

@@ -21,11 +21,9 @@ export function Archives<B extends Constructor>(Base: B) {
         if (!existingCharacter || !PLAYER_KINDS.includes(existingCharacter.kind))
           throw new NotFoundError("Character not found");
 
-        // Archive flips deletedAt on the character row only — level/inventory/
-        // language children stay live. They're unreachable once the parent is
-        // hidden from the list, and keeping them live makes archive/unarchive
-        // symmetric: the unarchive un-cascade below is a no-op for characters
-        // archived this way, and still repairs legacy cascade-archived rows.
+        // Archive sets deletedAt on the character's row and on its child characters' (3.5's bonded creatures), and
+        // unarchive clears both. Its own rows (its levels and their picks, its links, its inventory) have no archive:
+        // they stay as they are, out of reach while the character is hidden.
         const rows = await Characters.archive(tx, { id: characterId });
         const archivedCharacter = rows[0];
 

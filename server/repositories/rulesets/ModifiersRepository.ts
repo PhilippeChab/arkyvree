@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
@@ -31,7 +31,7 @@ class ModifiersRepository extends CustomizationRepository<typeof modifiersInCust
     return await db.query.modifiersInCustomization.findMany({
       where: this.branchWhere(
         [inArray(this.table.sourceId, where.sourceIds)],
-        ["sourceType" in where && eq(this.table.sourceType, where.sourceType), isNull(this.table.deletedAt)],
+        ["sourceType" in where && eq(this.table.sourceType, where.sourceType)],
       ),
       orderBy: [this.orderBy(this.table.createdAt), this.orderBy(this.table.target), this.orderBy(this.table.id)],
     });
@@ -39,7 +39,7 @@ class ModifiersRepository extends CustomizationRepository<typeof modifiersInCust
 
   async findOne(db: Db, where: { id: string }) {
     return await db.query.modifiersInCustomization.findFirst({
-      where: and(eq(this.table.id, where.id), isNull(this.table.deletedAt)),
+      where: eq(this.table.id, where.id),
     });
   }
 }

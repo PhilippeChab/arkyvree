@@ -20,14 +20,7 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
     return await db
       .update(this.table)
       .set({ userId, updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.email, email),
-          eq(this.table.status, "Pending"),
-          isNull(this.table.userId),
-          isNull(this.table.deletedAt),
-        ),
-      )
+      .where(and(eq(this.table.email, email), eq(this.table.status, "Pending"), isNull(this.table.userId)))
       .returning();
   }
 
@@ -55,11 +48,7 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
 
   async findMany(db: Db, where: { rulesetId: string; status: ContributorStatus }) {
     return await db.query.contributorsInRules.findMany({
-      where: this.where([
-        eq(this.table.rulesetId, where.rulesetId),
-        eq(this.table.status, where.status),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.where([eq(this.table.rulesetId, where.rulesetId), eq(this.table.status, where.status)]),
     });
   }
 
@@ -80,7 +69,6 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
         [
           "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
           "status" in where && eq(this.table.status, where.status),
-          isNull(this.table.deletedAt),
         ],
       ),
     });
@@ -90,11 +78,7 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
   // scoping by userId so a stranger can't probe other people's invite ids.
   async findOneWithRuleset(db: Db, where: { id: string; userId: string }) {
     return await db.query.contributorsInRules.findFirst({
-      where: this.where([
-        eq(this.table.id, where.id),
-        eq(this.table.userId, where.userId),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.where([eq(this.table.id, where.id), eq(this.table.userId, where.userId)]),
       with: {
         rulesetsInRule: {
           columns: { id: true, name: true, status: true },
@@ -132,7 +116,6 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
       .where(
         and(
           eq(this.table.rulesetId, where.rulesetId),
-          isNull(this.table.deletedAt),
           not(eq(this.table.status, "Revoked")),
           not(eq(this.table.status, "Rejected")),
           searchCondition,
@@ -157,7 +140,6 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
         eq(this.table.userId, where.userId),
         eq(this.table.rulesetId, where.rulesetId),
         eq(this.table.status, "Active"),
-        isNull(this.table.deletedAt),
       ]),
     });
 
@@ -168,7 +150,7 @@ class ContributorsRepository extends include(BaseRepository<typeof contributorsI
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .where(eq(this.table.id, where.id))
       .returning();
   }
 }

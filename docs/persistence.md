@@ -2,7 +2,7 @@
 
 Two row-removal primitives:
 
-- `repo.archive(...)` — `UPDATE … SET deletedAt = now()`. Default queries filter via `Visibility.UnarchivedOnly`. Only the tables that archive have a `deletedAt` column, and only their repositories define `archive`: on the others it doesn't exist, so a call is a type error.
+- `repo.archive(...)` — `UPDATE … SET deletedAt = now()`. Default queries filter via `Visibility.UnarchivedOnly`. Only the tables that archive have a `deletedAt` column: characters, campaigns, players, invites, users, sessions, email verifications, password resets, OAuth accounts, starred rulesets and ruleset extensions, whose repositories set it. A ruleset's archive is its status instead: `Rulesets.archive` sets it `Archived`, which its listings and checks read. Only those repositories define `archive`: on the others it doesn't exist, so a call is a type error.
 - `repo.delete(...)` — real `db.delete(this.table)`. Hard delete; FK CASCADE fires. Implemented per-repo where used.
 
 This doc categorizes every table by which primitive its services use, and what's load-bearing vs convention. It opens with how a ruleset's and a character's data is stored: the generic tables, which every module's data shares.
@@ -13,8 +13,8 @@ A ruleset's entities and a character's build are stored in tables no game names 
 
 - **Entities:** `rules.entities`: an entity's type, scope (its ruleset, its campaign), name and description, its partition (a name is unique within it: a class's or a race's kind), and, for an entity another owns (a class level), its owner and its position (its level).
 - **Fields:** `rules.entity_fields`, one typed value a row (`text_value`, `number_value` or `flag_value`, as its field's `value_kind` says), a set one row per value by ordinal (a key, not an order). A ruleset's settings are `rules.ruleset_fields`, a character's `character.fields`. A missing row is no value.
-- **Links:** `rules.entity_links`: an entity's link of a role to another (a feat listed in an aptitude, a class level's grant through a pool, a save's key ability), with a tier, an amount and whether it's free, in its from-entity's order (`ordinal`). A ruleset's are `rules.ruleset_links`, a character's `character.links` (its race, its scores, its languages).
-- **Advancement:** a character's levels are `character.advancements`, each in a track (its class level), and their picks `character.advancement_picks`, by step (its hit points, its feats through their pools, its skills' ranks).
+- **Links:** `rules.entity_links`: an entity's link of a role to another (a feat listed in an aptitude, a class level's grant through a pool, a save's key ability), with a tier, an amount and whether it's free, in its from-entity's order (`ordinal`). A ruleset's are `rules.ruleset_links`, a character's `character.links` (its race, its scores, its languages: one a role and an entity, in no order of their own).
+- **Advancement:** a character's levels are `character.advancements`, each in a track (its class level) at its position, unique among its character's, and their picks `character.advancement_picks`, by step (its hit points, its feats through their pools, its skills' ranks).
 - **Registries:** what the modules declare, each row's foreign keys check it against: `rules.modules` (a ruleset's base rules), `entity_types`, `field_defs`, `link_roles` and `link_role_kinds`, `ruleset_roles`, `character.character_roles`, `steps` and `item_types`. Every migrate writes them from the modules' declarations (`StoredRegistries.reconcile`, run by `scripts/db/migrate.ts` and the test databases' reset), so a module's new type, field, role or step is a code change only: it adds what's new, updates what changed (a field that becomes a set, a role that becomes single: the foreign keys cascade into the rows that carry it, and the database refuses a change its rows can't take), and removes what no module declares any more, refusing, by its name, a row that rows still use. Its rewrites leave characters' last change alone (`arkyvree.registry_sync`). They hold what the rows are checked against, never what the engine alone reads of a declaration: how sibling copies merge a field or a link (`FieldDef.merge`, `LinkRoleDef.merge`) and the role an entity reads a field off another through (`FieldDef.inheritsVia`, an item's template), which the engine reads from the modules' declarations and checks as it reads them (`StorageEngine`). `tests/database/dnd3.5/registries.test.ts` checks they hold what the modules declare, and what a sync does.
 
 How the server reads them: one generic repository a table, which reads the stored rows as they are and hands them to the engine, which reads them by its modules' declarations (`Engine.storage()`, `engine/api/StorageEngine.ts`). No repository names a kind (`server/repositories/stored/`):
@@ -40,7 +40,7 @@ Rows whose disappearance leaves no observable history a user would expect to fin
 | Character state | `CharacterAdvancements`, `Picks`, `CharacterInventory`, `CharacterLinks` |
 | Internal forking metadata | `EntitySnapshots` |
 | Ruleset entities, every kind's | `Entities` |
-| Status-driven lifecycle | `Contributors` (Pending/Active/Rejected/Revoked enum) |
+| Status-driven lifecycle | `Contributors`, a ruleset's and a character's (Pending/Active/Rejected/Revoked enum: a revoked one stays, by its status) |
 
 A read-only kind's entities (3.5's abilities) are seeded and never deleted: its rules refuse their writes (`RulesetEntity.readOnly`).
 
@@ -151,7 +151,7 @@ A stackable feat taken twice is two picks, not a count: the picks may be in two 
 
 ### Campaign-membership rows (`Players`, `Invites`, `PlayerCharacters`)
 
-Both primitives, picked by entry point:
+A character's seat in a campaign (`PlayerCharacters`) has no archive: it's hard-deleted with its player's removal, and an archived player's seats stay, out of reach with the player. `Players` and `Invites` take both primitives, picked by entry point:
 
 - **GM removes a single player from a campaign** → hard-delete (`CampaignPlayersService.removePlayer`). Intentional removal, no preservation needed.
 - **User account deletion** → archive (`AccountService.deleteAccount`, each repository's `archive({ userId })`). The whole `deleteAccount` flow takes a "hide, don't destroy" approach to leave the user row's dependent state intact; membership rows go along.

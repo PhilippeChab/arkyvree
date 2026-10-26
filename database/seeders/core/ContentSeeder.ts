@@ -1,4 +1,4 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 import type { CorePackageDefinition } from "@/content/core/builders/packages/types.ts";
 import type { Db } from "@/drizzle/database.ts";
@@ -52,19 +52,16 @@ export abstract class ContentSeeder<Core = unknown, Book = unknown> extends incl
     return id;
   }
 
-  /** The ids of a seeded ruleset's unarchived entities of a type, by name, in one query. */
+  /** The ids of a seeded ruleset's entities of a type, by name, in one query. */
   protected static async namesOf(db: Db, rulesetId: string, type: string) {
     return SeederState.idsByName(
       (await db
         .select({ id: entitiesInRules.id, name: entitiesInRules.name })
         .from(entitiesInRules)
-        .where(
-          and(
-            eq(entitiesInRules.type, type),
-            eq(entitiesInRules.rulesetId, rulesetId),
-            isNull(entitiesInRules.deletedAt),
-          ),
-        )) as { id: string; name: string }[],
+        .where(and(eq(entitiesInRules.type, type), eq(entitiesInRules.rulesetId, rulesetId)))) as {
+        id: string;
+        name: string;
+      }[],
     );
   }
 

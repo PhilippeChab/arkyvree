@@ -5,7 +5,7 @@ import { contributorsInRules } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import { Contributors, Notifications, Rulesets, Users, Visibility } from "@/server/repositories/index.ts";
+import { Contributors, Notifications, Rulesets, Users } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
@@ -34,7 +34,7 @@ class ContributorsService {
     const contributor = await Contributors.findOne(tx, { id: contributorId });
     if (!contributor) throw new NotFoundError("Contributor not found");
 
-    const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId }, Visibility.All);
+    const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId });
     if (!ruleset) throw new NotFoundError("Ruleset not found");
 
     const policy = await RulesetsPolicy.for(tx, session, ruleset);
@@ -58,7 +58,7 @@ class ContributorsService {
     return await withTransaction(async (tx) => {
       const contributor = await this.getPendingInviteFor(tx, session, contributorId);
 
-      const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId }, Visibility.All);
+      const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId });
       if (!ruleset) throw new NotFoundError("Ruleset not found");
 
       if (ruleset.status === "Archived") throw new ConflictError("This ruleset has been archived");
@@ -77,7 +77,7 @@ class ContributorsService {
     },
     pagination: { limit: number; page: number },
   ) {
-    const ruleset = await Rulesets.findOne(db, { id: rulesetId }, Visibility.All);
+    const ruleset = await Rulesets.findOne(db, { id: rulesetId });
     if (!ruleset) throw new NotFoundError("Ruleset not found");
 
     (await RulesetsPolicy.for(db, session, ruleset)).canReadContributors();
@@ -105,7 +105,7 @@ class ContributorsService {
 
   async inviteContributor(session: Session, rulesetId: string, email: string, role: ContributorRole) {
     const { contributor, emailData } = await withTransaction(async (tx) => {
-      const ruleset = await Rulesets.findOne(tx, { id: rulesetId }, Visibility.All);
+      const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
       if (!ruleset) throw new NotFoundError("Ruleset not found");
 
       const policy = await RulesetsPolicy.for(tx, session, ruleset);
@@ -195,7 +195,7 @@ class ContributorsService {
 
   async leaveRuleset(session: Session, rulesetId: string) {
     return await withTransaction(async (tx) => {
-      const ruleset = await Rulesets.findOne(tx, { id: rulesetId }, Visibility.All);
+      const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
       if (!ruleset) throw new NotFoundError("Ruleset not found");
 
       const role = await Contributors.findRole(tx, {

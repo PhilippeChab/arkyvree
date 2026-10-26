@@ -133,8 +133,7 @@ describe("CampaignCharactersService", () => {
       ];
       for (const { id } of [kept, unlinked, archived]) await link(user.id, campaign.id, id);
       await db
-        .update(playerCharactersInCampaign)
-        .set({ deletedAt: new Date().toISOString() })
+        .delete(playerCharactersInCampaign)
         .where(
           and(
             eq(playerCharactersInCampaign.playerId, player.id),

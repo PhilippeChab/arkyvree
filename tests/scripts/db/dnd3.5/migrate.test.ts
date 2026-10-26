@@ -8,6 +8,7 @@ import { sql } from "drizzle-orm";
 import { Engine } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
+import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { findSeededCharacter, getSeedCtx } from "@/tests/support/seed.ts";
 
 /** A migration's statements, as drizzle splits them. */
@@ -53,6 +54,95 @@ async function addRegistryColumns() {
     `);
 }
 
+/**
+ * The columns 0088 drops, as the migrations before made them, none of them written: the archive columns of rulesets,
+ * entities, advancements, inventory entries, a character's and a ruleset's contributors, campaign seats, modifiers,
+ * requirements and activities (and the indexes that left an archived row out), and a character's links' ordinal, in their unique
+ * key. What the migrations before 0088 ran on.
+ */
+async function addUnwrittenColumns() {
+  await db.execute(sql`
+    ALTER TABLE rules.entities ADD COLUMN deleted_at timestamptz;
+    ALTER TABLE character.advancements ADD COLUMN deleted_at timestamptz;
+    ALTER TABLE character.inventory ADD COLUMN deleted_at timestamptz;
+    ALTER TABLE customization.modifiers ADD COLUMN deleted_at timestamptz;
+    ALTER TABLE customization.requirements ADD COLUMN deleted_at timestamptz;
+    CREATE INDEX requirements_entity_id_entity_type_idx ON customization.requirements (entity_id, entity_type)
+      WHERE deleted_at IS NULL;
+    ALTER TABLE campaign.player_characters ADD COLUMN deleted_at timestamptz;
+    DROP INDEX campaign.player_characters_character_id_active_idx;
+    CREATE UNIQUE INDEX player_characters_character_id_active_idx ON campaign.player_characters (character_id)
+      WHERE deleted_at IS NULL;
+    CREATE INDEX player_characters_character_id_idx ON campaign.player_characters (character_id) WHERE deleted_at IS NULL;
+    CREATE INDEX player_characters_player_id_idx ON campaign.player_characters (player_id) WHERE deleted_at IS NULL;
+    ALTER TABLE character.character_contributors ADD COLUMN deleted_at timestamptz;
+    DROP INDEX character.character_contributors_character_user_unique;
+    DROP INDEX character.character_contributors_character_email_unique;
+    CREATE UNIQUE INDEX character_contributors_character_user_unique ON character.character_contributors
+      (character_id, user_id) WHERE status IN ('Pending', 'Active') AND deleted_at IS NULL;
+    CREATE UNIQUE INDEX character_contributors_character_email_unique ON character.character_contributors
+      (character_id, email) WHERE user_id IS NULL AND status IN ('Pending', 'Active') AND deleted_at IS NULL;
+    ALTER TABLE rules.contributors ADD COLUMN deleted_at timestamptz;
+    DROP INDEX rules.contributors_ruleset_user_unique;
+    DROP INDEX rules.contributors_ruleset_email_unique;
+    CREATE UNIQUE INDEX contributors_ruleset_user_unique ON rules.contributors
+      (ruleset_id, user_id) WHERE status IN ('Pending', 'Active') AND deleted_at IS NULL;
+    CREATE UNIQUE INDEX contributors_ruleset_email_unique ON rules.contributors
+      (ruleset_id, email) WHERE user_id IS NULL AND status IN ('Pending', 'Active') AND deleted_at IS NULL;
+    ALTER TABLE rules.rulesets ADD COLUMN deleted_at timestamptz;
+    DROP INDEX rules.rulesets_user_id_status_idx;
+    DROP INDEX rules.rulesets_status_idx;
+    CREATE INDEX rulesets_user_id_status_idx ON rules.rulesets (user_id, status) WHERE deleted_at IS NULL;
+    CREATE INDEX rulesets_status_idx ON rules.rulesets (status) WHERE deleted_at IS NULL;
+    ALTER TABLE account.activities ADD COLUMN deleted_at timestamptz;
+    DROP INDEX account.activities_user_id_created_at_idx;
+    CREATE INDEX activities_user_id_created_at_idx ON account.activities (user_id, created_at DESC)
+      WHERE deleted_at IS NULL;
+    DROP INDEX character.advancements_character_position_idx;
+    CREATE UNIQUE INDEX advancements_character_position_idx ON character.advancements (character_id, position)
+      WHERE deleted_at IS NULL;
+    ALTER TABLE character.links ADD COLUMN ordinal smallint NOT NULL DEFAULT 0 CHECK (ordinal >= 0);
+    ALTER TABLE character.links DROP CONSTRAINT links_character_id_role_entity_id_key;
+    ALTER TABLE character.links ADD CONSTRAINT links_character_id_role_entity_id_ordinal_key
+      UNIQUE (character_id, role, entity_id, ordinal);
+  `);
+}
+
+/**
+ * The ids of a character's rows that 0088's deletes reach (`characterId`, and its children): the characters, their
+ * advancements and their picks, their inventory entries, links, fields and contributors.
+ */
+async function findCharacterRows(characterId: string) {
+  const { rows } = await db.execute<{ id: string }>(sql`
+    WITH held AS (SELECT id FROM character.characters WHERE id = ${characterId} OR parent_character_id = ${characterId})
+    SELECT id::text FROM held
+    UNION ALL SELECT a.id::text FROM character.advancements a WHERE a.character_id IN (SELECT id FROM held)
+    UNION ALL SELECT p.id::text FROM character.advancement_picks p
+      JOIN character.advancements a ON a.id = p.advancement_id WHERE a.character_id IN (SELECT id FROM held)
+    UNION ALL SELECT i.id::text FROM character.inventory i WHERE i.character_id IN (SELECT id FROM held)
+    UNION ALL SELECT l.id::text FROM character.links l WHERE l.character_id IN (SELECT id FROM held)
+    UNION ALL SELECT f.character_id || ':' || f.field FROM character.fields f WHERE f.character_id IN (SELECT id FROM held)
+    UNION ALL SELECT k.id::text FROM character.character_contributors k WHERE k.character_id IN (SELECT id FROM held)
+    ORDER BY 1
+  `);
+  return rows.map(({ id }) => id);
+}
+
+/** A seeded character that holds levels with picks, inventory, links and fields: its id. */
+async function findHeldCharacter() {
+  const { rows } = await db.execute<{ id: string }>(sql`
+    SELECT c.id FROM character.characters c
+    WHERE c.parent_character_id IS NULL
+      AND EXISTS (SELECT 1 FROM character.advancements a
+        JOIN character.advancement_picks p ON p.advancement_id = a.id WHERE a.character_id = c.id)
+      AND EXISTS (SELECT 1 FROM character.inventory i WHERE i.character_id = c.id)
+      AND EXISTS (SELECT 1 FROM character.links l WHERE l.character_id = c.id)
+      AND EXISTS (SELECT 1 FROM character.fields f WHERE f.character_id = c.id)
+    ORDER BY c.id LIMIT 1
+  `);
+  return rows[0]!.id;
+}
+
 /** The registries' columns 0086 keeps, each row as one line, and every character's last change: what it leaves. */
 async function keptRows() {
   const { rows } = await db.execute<{ line: string }>(sql`
@@ -60,6 +150,36 @@ async function keptRows() {
     FROM rules.field_defs
     UNION ALL SELECT 'role ' || role || ' ' || from_type || ' ' || to_type || ' ' || coalesce(via_type, '-') || ' '
       || single || ' ' || on_delete || ' ' || via_on_delete FROM rules.link_roles
+    UNION ALL SELECT 'character ' || id || ' ' || last_changed_at::text FROM character.characters
+    ORDER BY line
+  `);
+  return rows.map((row) => row.line);
+}
+
+/**
+ * The rows of the tables 0088 drops a column of, each as one line (every entity, advancement, pick, inventory entry,
+ * contributor, campaign seat, modifier, requirement, activity, ruleset and character link, as its other columns hold it), and
+ * every character's last change: what it leaves.
+ */
+async function unwrittenRows() {
+  const { rows } = await db.execute<{ line: string }>(sql`
+    SELECT 'entity ' || id || ' ' || type || ' ' || coalesce(name, '-') || ' ' || updated_at::text AS line
+    FROM rules.entities
+    UNION ALL SELECT 'advancement ' || id || ' ' || character_id || ' ' || position || ' ' || updated_at::text
+    FROM character.advancements
+    UNION ALL SELECT 'pick ' || id || ' ' || advancement_id || ' ' || step FROM character.advancement_picks
+    UNION ALL SELECT 'entry ' || id || ' ' || character_id || ' ' || item_id || ' ' || quantity FROM character.inventory
+    UNION ALL SELECT 'contributor ' || id || ' ' || character_id || ' ' || email || ' ' || status
+    FROM character.character_contributors
+    UNION ALL SELECT 'seat ' || player_id || ' ' || character_id || ' ' || visibility FROM campaign.player_characters
+    UNION ALL SELECT 'modifier ' || id || ' ' || source_id || ' ' || target || ' ' || value FROM customization.modifiers
+    UNION ALL SELECT 'requirement ' || id || ' ' || entity_id || ' ' || level FROM customization.requirements
+    UNION ALL SELECT 'rulesetContributor ' || id || ' ' || ruleset_id || ' ' || email || ' ' || status
+    FROM rules.contributors
+    UNION ALL SELECT 'activity ' || id || ' ' || user_id || ' ' || type FROM account.activities
+    UNION ALL SELECT 'ruleset ' || id || ' ' || name || ' ' || status || ' ' || updated_at::text FROM rules.rulesets
+    UNION ALL SELECT 'link ' || id || ' ' || character_id || ' ' || role || ' ' || entity_id || ' '
+      || coalesce(amount::text, '-') FROM character.links
     UNION ALL SELECT 'character ' || id || ' ' || last_changed_at::text FROM character.characters
     ORDER BY line
   `);
@@ -335,5 +455,139 @@ describe("0087_player-kind", () => {
       )
       .catch((error: unknown) => error);
     expect(refused).toMatchObject({ cause: { code: "23502", column: "kind" } });
+  });
+});
+
+describe("0088_unwritten-columns", () => {
+  test("drops the archive columns nothing set and the links' ordinal, keys what they keyed without them, and changes no row", async () => {
+    await addUnwrittenColumns();
+    const before = await unwrittenRows();
+
+    for (const statement of statementsOf("0088_unwritten-columns.sql")) await db.execute(sql.raw(statement));
+
+    const { rows: columns } = await db.execute<{ name: string }>(sql`
+      SELECT table_schema || '.' || table_name || '.' || column_name AS name FROM information_schema.columns
+      WHERE (table_schema, table_name, column_name) IN
+        (('rules', 'entities', 'deleted_at'), ('character', 'advancements', 'deleted_at'),
+         ('character', 'inventory', 'deleted_at'), ('character', 'character_contributors', 'deleted_at'),
+         ('campaign', 'player_characters', 'deleted_at'), ('customization', 'modifiers', 'deleted_at'),
+         ('customization', 'requirements', 'deleted_at'), ('rules', 'contributors', 'deleted_at'),
+         ('account', 'activities', 'deleted_at'), ('rules', 'rulesets', 'deleted_at'), ('character', 'links', 'ordinal'))
+    `);
+    expect(columns).toEqual([]);
+    const { rows: keys } = await db.execute<{ key: string }>(sql`
+      SELECT indexdef AS key FROM pg_indexes
+      WHERE indexname IN ('advancements_character_position_idx', 'player_characters_character_id_active_idx',
+        'character_contributors_character_user_unique', 'character_contributors_character_email_unique',
+        'player_characters_character_id_idx', 'player_characters_player_id_idx', 'requirements_entity_id_entity_type_idx',
+        'contributors_ruleset_user_unique', 'contributors_ruleset_email_unique', 'activities_user_id_created_at_idx',
+        'rulesets_user_id_status_idx', 'rulesets_status_idx')
+      UNION ALL SELECT conname || ' ' || pg_get_constraintdef(oid) FROM pg_constraint
+      WHERE conrelid = 'character.links'::regclass AND contype = 'u'
+    `);
+    // In code-point order, which no database collation varies
+    expect(keys.map(({ key }) => key).toSorted()).toEqual([
+      "CREATE INDEX activities_user_id_created_at_idx ON account.activities USING btree (user_id, created_at DESC)",
+      "CREATE INDEX rulesets_status_idx ON rules.rulesets USING btree (status)",
+      "CREATE INDEX rulesets_user_id_status_idx ON rules.rulesets USING btree (user_id, status)",
+      'CREATE UNIQUE INDEX advancements_character_position_idx ON "character".advancements USING btree (character_id, "position")',
+      "CREATE UNIQUE INDEX character_contributors_character_email_unique ON \"character\".character_contributors USING btree (character_id, email) WHERE ((user_id IS NULL) AND (status = ANY (ARRAY['Pending'::text, 'Active'::text])))",
+      "CREATE UNIQUE INDEX character_contributors_character_user_unique ON \"character\".character_contributors USING btree (character_id, user_id) WHERE (status = ANY (ARRAY['Pending'::text, 'Active'::text]))",
+      "CREATE UNIQUE INDEX contributors_ruleset_email_unique ON rules.contributors USING btree (ruleset_id, email) WHERE ((user_id IS NULL) AND (status = ANY (ARRAY['Pending'::text, 'Active'::text])))",
+      "CREATE UNIQUE INDEX contributors_ruleset_user_unique ON rules.contributors USING btree (ruleset_id, user_id) WHERE (status = ANY (ARRAY['Pending'::text, 'Active'::text]))",
+      "CREATE UNIQUE INDEX player_characters_character_id_active_idx ON campaign.player_characters USING btree (character_id)",
+      "links_character_id_role_entity_id_key UNIQUE (character_id, role, entity_id)",
+    ]);
+    expect(await unwrittenRows()).toEqual(before);
+  });
+
+  test("deletes a character the archive before 0080 archived with its advancements and what goes with it, and stray archived rows", async () => {
+    await addUnwrittenColumns();
+    const archived = await findHeldCharacter();
+    await db.execute(sql`UPDATE character.characters SET deleted_at = now() WHERE id = ${archived}`);
+    const held = await findCharacterRows(archived);
+    // A live character's stray archived campaign seat and contributor, which every reader left out
+    const { rows: others } = await db.execute<{ id: string }>(sql`
+      SELECT id FROM character.characters WHERE id <> ${archived} AND parent_character_id IS NULL ORDER BY id LIMIT 1
+    `);
+    const { player } = await createTestCampaign(SEED_USER_ID);
+    await db.execute(sql`
+      INSERT INTO campaign.player_characters (player_id, character_id, deleted_at) VALUES (${player.id}, ${others[0]!.id}, now())
+    `);
+    const { rows: contributors } = await db.execute<{ id: string }>(sql`
+      INSERT INTO character.character_contributors (character_id, email, invited_by, status, deleted_at)
+      VALUES (${others[0]!.id}, 'stray@example.com', ${SEED_USER_ID}, 'Revoked', now()) RETURNING id
+    `);
+    const { rows: strays } = await db.execute<{ id: string }>(sql`
+      WITH ruleset_contributor AS (
+        INSERT INTO rules.contributors (ruleset_id, email, invited_by, status, deleted_at)
+        SELECT id, 'stray@example.com', ${SEED_USER_ID}, 'Revoked', now() FROM rules.rulesets ORDER BY id LIMIT 1
+        RETURNING id
+      ), activity AS (
+        INSERT INTO account.activities (user_id, type, target_id, target_table, deleted_at)
+        VALUES (${SEED_USER_ID}, 'createItem', ${others[0]!.id}, 'items', now()) RETURNING id
+      )
+      SELECT id FROM ruleset_contributor UNION ALL SELECT id FROM activity
+    `);
+    const before = await unwrittenRows();
+    await db.execute(sql`UPDATE character.advancements SET deleted_at = now() WHERE character_id = ${archived}`);
+    await db.execute(sql`UPDATE character.inventory SET deleted_at = now() WHERE character_id = ${archived}`);
+
+    for (const statement of statementsOf("0088_unwritten-columns.sql")) await db.execute(sql.raw(statement));
+
+    // The character and every row of it, its levels' picks among them, are gone, and so are the live character's stray
+    // archived rows; every other row stays as it was
+    expect(await findCharacterRows(archived)).toEqual([]);
+    expect(held.length).toBeGreaterThan(5);
+    const gone = new Set([...held, player.id, contributors[0]!.id, ...strays.map(({ id }) => id)]);
+    expect(
+      before.filter(
+        (line) =>
+          line.startsWith(`seat ${player.id}`) || [contributors[0]!, ...strays].some(({ id }) => line.includes(id)),
+      ),
+    ).toHaveLength(4);
+    expect(await unwrittenRows()).toEqual(before.filter((line) => !gone.has(line.split(" ")[1]!)));
+  });
+
+  test("leaves a character archived since 0080, its advancements live, as it is", async () => {
+    await addUnwrittenColumns();
+    const archived = await findHeldCharacter();
+    await db.execute(sql`UPDATE character.characters SET deleted_at = now() WHERE id = ${archived}`);
+    const held = await findCharacterRows(archived);
+    const before = await unwrittenRows();
+
+    for (const statement of statementsOf("0088_unwritten-columns.sql")) await db.execute(sql.raw(statement));
+
+    expect(await findCharacterRows(archived)).toEqual(held);
+    expect(await unwrittenRows()).toEqual(before);
+    const { rows } = await db.execute<{ archived: boolean }>(sql`
+      SELECT deleted_at IS NOT NULL AS archived FROM character.characters WHERE id = ${archived}
+    `);
+    expect(rows).toEqual([{ archived: true }]);
+  });
+
+  test("refuses an archived ruleset, entity, modifier or requirement, which rulesets and characters may hold", async () => {
+    await addUnwrittenColumns();
+    await db.execute(
+      sql`UPDATE rules.entities SET deleted_at = now() WHERE id = (SELECT id FROM rules.entities LIMIT 1)`,
+    );
+    await db.execute(
+      sql`UPDATE customization.modifiers SET deleted_at = now() WHERE id = (SELECT id FROM customization.modifiers LIMIT 1)`,
+    );
+    await db.execute(
+      sql`UPDATE rules.rulesets SET deleted_at = now() WHERE id = (SELECT id FROM rules.rulesets LIMIT 1)`,
+    );
+
+    const refused = await db
+      .transaction(async (tx) => {
+        for (const statement of statementsOf("0088_unwritten-columns.sql")) await tx.execute(sql.raw(statement));
+      })
+      .catch((error: unknown) => error);
+    expect(refused).toMatchObject({
+      cause: {
+        message:
+          "Archived rows, which rulesets and characters may hold: rules.entities, customization.modifiers, rules.rulesets",
+      },
+    });
   });
 });

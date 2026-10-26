@@ -9,13 +9,12 @@ import StoredCharacters from "@/server/repositories/stored/StoredCharacters.ts";
 import type { CharacterInventory } from "@/shared/relations.ts";
 
 /** An inventory entry as a write gives it: its item, where it's held, its groups, its charges. */
-type InventoryValues = Partial<Omit<CharacterInventory, "createdAt" | "deletedAt" | "updatedAt">>;
+type InventoryValues = Partial<Omit<CharacterInventory, "createdAt" | "updatedAt">>;
 
 /** An entry's columns: its own, its location as the module's value, and its groups. */
 const COLUMNS = {
   createdAt: inventoryInCharacter.createdAt,
   updatedAt: inventoryInCharacter.updatedAt,
-  deletedAt: inventoryInCharacter.deletedAt,
   id: inventoryInCharacter.id,
   characterId: inventoryInCharacter.characterId,
   itemId: inventoryInCharacter.itemId,
