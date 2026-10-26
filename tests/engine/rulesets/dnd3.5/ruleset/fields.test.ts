@@ -5,10 +5,10 @@ import { OwnerValues } from "@/engine/core/fields/index.ts";
 import { Engine } from "@/engine/index.ts";
 import { RULESET_FIELDS } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
 import { db } from "@/server/database/index.ts";
-import { Fields } from "@/server/repositories/index.ts";
+import { RulesetSettings } from "@/server/repositories/index.ts";
+import { findFormValues, heldValues, listValues, writtenValues } from "@/tests/support/ownerValues.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
-import { findStoredValues, listStoredValues, storedValues } from "@/tests/support/storedValues.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { RULESET_ABILITY_INCREASES, RULESET_FEAT_ADVANCEMENT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -23,7 +23,7 @@ describe("A ruleset's own fields", () => {
     expect(RULESET_FIELDS.read(OwnerValues.NONE)).toEqual({ ...CORE, skillPointAbilityId: null });
     expect(
       RULESET_FIELDS.read(
-        storedValues(
+        heldValues(
           [
             ["SOMETHING_ELSE", 1],
             ["skillPointAbility", "wisdom"],
@@ -48,9 +48,8 @@ describe("A ruleset's own fields", () => {
   });
 
   test("are kept in a value per field with a value, a progression's its frequency's and one per level more", () => {
-    const written = (values: Partial<typeof RULESET_FIELDS.defaults>) =>
-      OwnerValues.written(RULESET_FIELDS.write(values));
-    expect(written({ skillPointAbilityId: null })).toEqual(OwnerValues.NONE);
+    const written = (values: Partial<typeof RULESET_FIELDS.defaults>) => writtenValues(RULESET_FIELDS.write(values));
+    expect(written({ skillPointAbilityId: null })).toEqual({ fields: {}, links: {} });
     expect(written({ skillPointAbilityId: "intelligence" })).toEqual({
       fields: {},
       links: { skillPointAbility: "intelligence" },
@@ -65,31 +64,33 @@ describe("A ruleset's own fields", () => {
     const ruleset = await createTestRuleset(null);
     const intelligence = (await getSeedCtx()).abilityMap["Intelligence"];
     const progression = { featAdvancement: { every: 2, extra: [{ amount: 1, level: 3 }] } };
-    await Fields.update(db, [{ id: ruleset.id, type: "rulesets", values: RULESET_FIELDS.write(progression) }]);
+    await RulesetSettings.update(db, [{ id: ruleset.id, write: RULESET_FIELDS.write(progression) }]);
 
     const partial = Engine.forRules(DND35_BASE_RULES).toFieldsWrite("rulesets", { skillPointAbilityId: intelligence });
     expect(partial).toEqual({ fields: {}, links: { skillPointAbility: intelligence } });
-    await Fields.update(db, [{ id: ruleset.id, type: "rulesets", values: partial }]);
-    expect(RULESET_FIELDS.read(await findStoredValues("rulesets", ruleset.id))).toEqual({
+    await RulesetSettings.update(db, [{ id: ruleset.id, write: partial }]);
+    expect(RULESET_FIELDS.read(await findFormValues("rulesets", ruleset.id))).toEqual({
       ...CORE,
       ...progression,
       skillPointAbilityId: intelligence,
     });
   });
 
-  test("of every seeded ruleset rebuild its stored values", async () => {
+  test("of every seeded ruleset rebuild its Settings", async () => {
     const rulesets = await db.select({ id: rulesetsInRules.id }).from(rulesetsInRules);
-    const values = await Fields.findMany(db, { ownerIds: rulesets.map(({ id }) => id), ownerType: "rulesets" });
-    const held = [...values.values()].filter((stored) => listStoredValues(stored).length > 0);
+    const storage = Engine.storage();
+    const held = (await RulesetSettings.findMany(db, { ids: rulesets.map(({ id }) => id) }))
+      .map((ruleset) => storage.settingsOf(ruleset))
+      .filter((stored) => listValues(stored).length > 0);
     expect(held.length).toBeGreaterThan(0);
     for (const stored of held) {
       // A field the ruleset holds no value of reads as its default, which it doesn't store
-      const { fields, links } = OwnerValues.written(RULESET_FIELDS.write(RULESET_FIELDS.read(stored)));
+      const { fields, links } = writtenValues(RULESET_FIELDS.write(RULESET_FIELDS.read(stored)));
       const rebuilt = {
         fields: Object.fromEntries(Object.entries(fields).filter(([field]) => field in stored.fields)),
         links: Object.fromEntries(Object.entries(links).filter(([role]) => role in stored.links)),
       };
-      expect(listStoredValues(rebuilt)).toEqual(listStoredValues(stored));
+      expect(listValues(rebuilt)).toEqual(listValues(stored));
     }
   });
 });

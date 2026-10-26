@@ -1,0 +1,122 @@
+import { eq, inArray, sql } from "drizzle-orm";
+
+import type { Db } from "@/drizzle/database.ts";
+import { rulesetFieldsInRules, rulesetLinksInRules } from "@/drizzle/schema.ts";
+import { Engine, type FieldsWrite, type FieldValue, type StoredRuleset } from "@/engine/index.ts";
+
+import { toFieldRows } from "./toFieldRows.ts";
+
+/** A ruleset's write of its Settings: its id, and what it replaces. */
+export interface SettingsUpdate {
+  id: string;
+  write: FieldsWrite;
+}
+
+/** A field's rows' value, typed by the column that holds it: a text, a number or a flag. */
+const FIELD_VALUE = sql<FieldValue>`coalesce(to_json(${rulesetFieldsInRules.textValue}), to_json(${rulesetFieldsInRules.numberValue}), to_json(${rulesetFieldsInRules.flagValue}))`;
+
+/** The owner type of a ruleset's Settings' fields, as its module declares them. */
+const RULESETS = "rulesets";
+
+/** The pairs of rulesets' ids and the fields or roles a write names (`named`), as a query's rows: `(id, name)`. */
+function unnest(named: { id: string; name: string }[]) {
+  return sql`select * from unnest(${sql.param(named.map((one) => one.id))}::uuid[], ${sql.param(named.map((one) => one.name))}::text[])`;
+}
+
+/**
+ * A ruleset's own Settings, as the generic tables store them: its fields (`rules.ruleset_fields`, a set's one a row)
+ * and its single links (`ruleset_links`: 3.5's skill point ability), read as stored (`findMany`), each a field's value in
+ * its column by its declaration, written as an entity's fields are (`toFieldRows`), and copied onto a fork
+ * (`createCopy`).
+ */
+class StoredSettings {
+  /**
+   * Copies a ruleset's Settings as they're stored (`fromId`'s) onto another (`toId`, a fork that holds none): its
+   * fields' values and its links, the entities they name as they are (the fork's view resolves them). One insert of
+   * each table's rows, selected in the order of its insertable columns (its generated `value_key` aside), made now.
+   */
+  async createCopy(db: Db, where: { fromId: string; toId: string }) {
+    const fields = rulesetFieldsInRules;
+    await db
+      .insert(fields)
+      .select(
+        sql`select ${where.toId}::uuid, ${fields.ownerType}, ${fields.field}, ${fields.ordinal}, ${fields.valueKind}, ${fields.multiple}, ${fields.textValue}, ${fields.numberValue}, ${fields.flagValue}, now(), now() from ${fields} where ${eq(fields.rulesetId, where.fromId)}`,
+      );
+    const links = rulesetLinksInRules;
+    await db
+      .insert(links)
+      .select(
+        sql`select ${where.toId}::uuid, ${links.role}, ${links.toId}, ${links.toType}, now(), now() from ${links} where ${eq(links.rulesetId, where.fromId)}`,
+      );
+  }
+
+  /** Rulesets' own Settings as stored (`ids`): their fields' values and their links; one that holds none, left out. */
+  async findMany(db: Db, where: { ids: string[] }): Promise<StoredRuleset[]> {
+    if (where.ids.length === 0) return [];
+    const fields = await db
+      .select({
+        rulesetId: rulesetFieldsInRules.rulesetId,
+        field: rulesetFieldsInRules.field,
+        ordinal: rulesetFieldsInRules.ordinal,
+        value: FIELD_VALUE,
+        createdAt: rulesetFieldsInRules.createdAt,
+        updatedAt: rulesetFieldsInRules.updatedAt,
+      })
+      .from(rulesetFieldsInRules)
+      .where(inArray(rulesetFieldsInRules.rulesetId, where.ids));
+    const links = await db
+      .select({
+        rulesetId: rulesetLinksInRules.rulesetId,
+        role: rulesetLinksInRules.role,
+        toId: rulesetLinksInRules.toId,
+        createdAt: rulesetLinksInRules.createdAt,
+        updatedAt: rulesetLinksInRules.updatedAt,
+      })
+      .from(rulesetLinksInRules)
+      .where(inArray(rulesetLinksInRules.rulesetId, where.ids));
+    return where.ids
+      .map((id) => ({
+        id,
+        fields: fields.filter((field) => field.rulesetId === id).map(({ rulesetId: _, ...field }) => field),
+        links: links.filter((link) => link.rulesetId === id).map(({ rulesetId: _, ...link }) => link),
+      }))
+      .filter((ruleset) => ruleset.fields.length > 0 || ruleset.links.length > 0);
+  }
+
+  /**
+   * Writes rulesets' Settings (`writes`, each a ruleset's): each field and link role a write names replaced by its
+   * values (in their order, a set's ordinals 0 to n-1) and the entity it names, none for `[]` or null; what it doesn't
+   * name stays. A value is written in its field's column by its declaration, refused when it isn't of its kind.
+   */
+  async update(db: Db, writes: SettingsUpdate[]) {
+    const roles = Engine.storage().registries().rulesetRoles;
+    const fields = writes.flatMap(({ id, write }) => Object.keys(write.fields).map((name) => ({ id, name })));
+    const links = writes.flatMap(({ id, write }) => Object.keys(write.links).map((name) => ({ id, name })));
+    const fieldRows = writes.flatMap(({ id, write }) =>
+      Object.entries(write.fields).flatMap(([field, values]) =>
+        toFieldRows(RULESETS, field, values).map((row) => ({ rulesetId: id, ...row })),
+      ),
+    );
+    const linkRows = writes.flatMap(({ id, write }) =>
+      Object.entries(write.links).flatMap(([role, toId]) => {
+        const def = roles.find((held) => held.role === role);
+        if (!def) throw new Error(`No module declares the ruleset role ${role}`);
+        return toId === null ? [] : [{ rulesetId: id, role, toId, toType: def.toType }];
+      }),
+    );
+    if (fields.length > 0) {
+      await db
+        .delete(rulesetFieldsInRules)
+        .where(sql`(${rulesetFieldsInRules.rulesetId}, ${rulesetFieldsInRules.field}) in (${unnest(fields)})`);
+    }
+    if (links.length > 0) {
+      await db
+        .delete(rulesetLinksInRules)
+        .where(sql`(${rulesetLinksInRules.rulesetId}, ${rulesetLinksInRules.role}) in (${unnest(links)})`);
+    }
+    if (fieldRows.length > 0) await db.insert(rulesetFieldsInRules).values(fieldRows);
+    if (linkRows.length > 0) await db.insert(rulesetLinksInRules).values(linkRows);
+  }
+}
+
+export default StoredSettings;

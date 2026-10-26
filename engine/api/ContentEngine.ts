@@ -15,8 +15,8 @@ export default class ContentEngine<F> {
   }
 
   /**
-   * An entity's fields as the write of the stored values that keep them: what a seeder writes for them, a field left
-   * out not named, which the entity keeps.
+   * An entity's fields as their write, by stored field (and a reference's single link, by role): what a seeder writes
+   * for them, a field left out not named, which the entity keeps.
    */
   toFieldsWrite<K extends keyof F>(entityType: K, fields: PartialFieldValues<Extract<F[K], Fields>>) {
     return this.content.toFieldsWrite(entityType, fields);

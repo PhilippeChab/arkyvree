@@ -87,7 +87,7 @@ export default class SpellEntity extends ListedEntity<
     RulesError.parse(SPELL_LEVEL.optional(), level, ["level"]);
     const listed = aptitudeId !== undefined || level != null;
     return {
-      describe: <T extends Pick<EntityRecord, "id" | "links">>(rows: T[]) => this.describeListed(rows),
+      describe: <T extends Pick<EntityRecord, "fields" | "id" | "links">>(rows: T[]) => this.describeListed(rows),
       filters: { ids: listed ? Dnd35View.of(this.rulesetData).listSpellIds({ aptitudeId, level }) : undefined },
     };
   }
@@ -104,17 +104,16 @@ export default class SpellEntity extends ListedEntity<
   }
 
   /**
-   * What saving a spell writes (`spell`: the one edited): the fields its form gives, over those it keeps, and the feats
-   * of its grouping (a spell's school: its Spell Focus) when it comes to one. A form that gives none of its fields keeps
-   * those it has.
+   * What saving a spell writes beside its row (`spell`: the one edited): the feats of its grouping (a spell's school:
+   * its Spell Focus) when it comes to one, by the fields its form gives over those it keeps. A form that gives none of
+   * its fields makes none.
    */
-  protected override writesOf(body: SpellBody, given: Partial<SpellFieldValues>, spell?: Spell): EntityWrites {
+  protected override writesOf(_body: SpellBody, given: Partial<SpellFieldValues>, spell?: Spell): EntityWrites {
     const fields = this.formFields(given, spell);
     if (!fields) return {};
     const grouping = getGrouping(fields);
     const before = spell && getGrouping(this.fieldsOf(spell));
     return {
-      ...super.writesOf(body, given, spell),
       made: grouping !== null && grouping !== before ? this.spellFocus.make(grouping) : [],
     };
   }

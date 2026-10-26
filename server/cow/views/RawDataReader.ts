@@ -1,6 +1,6 @@
 import { Engine, type RulesetRawData } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, Fields, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
+import { Entities, Modifiers, Requirements, Rulesets, RulesetSettings } from "@/server/repositories/index.ts";
 
 /**
  * A ruleset's own rows (a campaign's, with one), none of its ancestors', which the cache keeps one entry of per ruleset
@@ -23,7 +23,7 @@ export default class RawDataReader {
       .filter((entity) => entity.ownerId === null || held.has(entity.ownerId))
       .map((entity) => entity.id);
     const [rulesets, modifiers] = await Promise.all([
-      Fields.findRulesets(db, { ids: [rulesetId] }),
+      RulesetSettings.findMany(db, { ids: [rulesetId] }),
       Modifiers.findMany(db, { sourceIds: ids }),
     ]);
     // Requirements last: a modifier's are keyed on it

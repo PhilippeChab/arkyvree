@@ -1,5 +1,6 @@
 import type { CowData } from "@/engine/core/cow/index.ts";
 import { OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
+import type { OwnerFields } from "@/engine/core/module/index.ts";
 import type { Modifier, Requirement, Ruleset } from "@/shared/relations.ts";
 
 import type { InventoryItem, NamedLink, ViewEntity, ViewKinds, ViewLink } from "./rows.ts";
@@ -31,10 +32,10 @@ export interface RulesetLists {
   linksOf(entityId: string): readonly ViewLink[];
   modifiers: Modifier[];
   requirements: Requirement[];
+  /** Each ruleset's of its chain own Settings (its fields and its links), by its id: one that holds none left out */
+  settings: ReadonlyMap<string, StoredValues>;
   /** The entities a link with a tier points at (a spell list at a level) */
   tieredIds: Set<string>;
-  /** Each owner's stored values (an entity's, a ruleset's own Settings), by its id: a sibling loser's in its winner's */
-  values: ReadonlyMap<string, StoredValues>;
 }
 
 /** A ruleset as a character's build reads it: its row, and its view, composed by copy-on-write. */
@@ -90,7 +91,7 @@ export default class RulesetData {
     this.modifiers = lists.modifiers;
     this.requirements = lists.requirements;
     this.tieredIds = lists.tieredIds;
-    this.values = lists.values;
+    this.settings = lists.settings;
     this.cow = cow;
   }
 
@@ -124,8 +125,8 @@ export default class RulesetData {
 
   private readonly requirements: Requirement[];
 
-  /** Each owner's stored values, by its id. */
-  private readonly values: ReadonlyMap<string, StoredValues>;
+  /** Each ruleset's of its chain own Settings, by its id. */
+  private readonly settings: ReadonlyMap<string, StoredValues>;
 
   /**
    * The ruleset's copy-on-write state: the id Maps resolve through it on their own; ids as stored (a character's, a
@@ -180,15 +181,6 @@ export default class RulesetData {
     return this.cow.resolve(id);
   }
 
-  /** An entity's customizations, as the view composes them: its modifiers, its stored values and its requirements. */
-  customizationsOf(entityId: string) {
-    return {
-      modifiers: this.modifiersBySource.get(entityId) ?? [],
-      requirements: this.requirementsByEntity.get(entityId) ?? [],
-      values: this.valuesOf(entityId),
-    };
-  }
-
   /**
    * What a ruleset's module derives of the view (an instance of `kind`, built from the view): built the first time it's
    * read, then kept with the view, as its indices are. A 3.5 character's spell lists, which every build and listing reads.
@@ -241,18 +233,6 @@ export default class RulesetData {
   inheritedFrom(type: string, entity: Pick<ViewEntity, "links">): string | undefined {
     const inherits = this.kinds[type]?.inherits;
     return inherits && entity.links[inherits.role];
-  }
-
-  /**
-   * An entity's stored values (`entity`, of `type`), those it reads off another included (`ViewKind.inherits`: an item's
-   * template's): each such field of the other's it holds none of, the other's first, then its own. Its own alone for a
-   * kind that reads none, or an entity that names none.
-   */
-  inheritedValuesOf(type: string, entity: Pick<ViewEntity, "id" | "links">): StoredValues {
-    const own = this.valuesOf(entity.id);
-    const baseId = this.inheritedFrom(type, entity);
-    if (baseId === undefined) return own;
-    return OwnerValues.inherit(own, this.valuesOf(baseId), this.kinds[type].inherits!.fields);
   }
 
   /** The kinds a character's inventory holds (`ViewKind.inventory`: 3.5's items), in their declared order. */
@@ -370,14 +350,14 @@ export default class RulesetData {
   }
 
   /**
-   * A ruleset's own stored values (its Settings), as its chain holds them: each field's and each link's of the nearest
-   * ruleset that holds it, the ruleset's own first, then its source chain's in order.
+   * A ruleset's own Settings, as its chain holds them: each field's and each link's of the nearest ruleset that holds
+   * it, the ruleset's own first, then its source chain's in order.
    */
   rulesetValuesOf(rulesetId: string): StoredValues {
-    const fields: Record<string, StoredValues["fields"][string]> = {};
-    const links: Record<string, string> = {};
+    const fields: Record<string, OwnerFields[string]> = {};
+    const links: Partial<Record<string, string>> = {};
     for (const id of [rulesetId, ...this.cow.sourceChain]) {
-      const held = this.values.get(id);
+      const held = this.settings.get(id);
       if (!held) continue;
       for (const [field, values] of Object.entries(held.fields)) fields[field] ??= values;
       for (const [role, toId] of Object.entries(held.links)) links[role] ??= toId;
@@ -413,10 +393,15 @@ export default class RulesetData {
   }
 
   /**
-   * An owner's stored values (an entity's, a ruleset's Settings), by its id (a stored one its copy's or its winner's,
-   * which holds a sibling loser's merged in): none for one that holds none.
+   * An entity (`entity`, of `type`) with the fields it reads off another when it holds none (`ViewKind.inherits`: an
+   * item's, its template's): each such field of the other's it holds none of, the other's first, then its own. As it is
+   * for a kind that reads none, or an entity that names none.
    */
-  valuesOf(id: string): StoredValues {
-    return this.values.get(this.cow.resolve(id)) ?? OwnerValues.NONE;
+  withInheritedFields<T extends Pick<ViewEntity, "fields" | "links">>(type: string, entity: T): T {
+    const baseId = this.inheritedFrom(type, entity);
+    const base =
+      baseId === undefined ? undefined : (this.find(type as keyof ViewKinds, baseId) as ViewEntity | undefined);
+    if (!base) return entity;
+    return { ...entity, fields: OwnerValues.inherit(entity.fields, base.fields, this.kinds[type].inherits!.fields) };
   }
 }

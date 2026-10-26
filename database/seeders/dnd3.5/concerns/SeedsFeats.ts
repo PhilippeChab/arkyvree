@@ -20,6 +20,7 @@ export function SeedsFeats<B extends Constructor<Dnd35ContentSeeder>>(Base: B) {
           name: f.name,
           description: f.description,
           fields: {
+            ...Engine.forRules(DND35_BASE_RULES).toFieldsWrite("feats", f.fields ?? {}).fields,
             [FEAT_STACKABLE]: f.stackable ?? false,
             [FEAT_SELECTABLE]: f.selectable ?? true,
             [FEAT_GENERATED]: f.generated ?? false,
@@ -40,13 +41,6 @@ export function SeedsFeats<B extends Constructor<Dnd35ContentSeeder>>(Base: B) {
       await this.insertAll(
         requirementsInCustomization,
         feats.flatMap((f) => this.requirementRows(ids[f.name], "feats", f.requirements)),
-      );
-      await this.writeFields(
-        feats.map((f) => ({
-          id: ids[f.name],
-          type: "feats",
-          values: Engine.forRules(DND35_BASE_RULES).toFieldsWrite("feats", f.fields ?? {}),
-        })),
       );
 
       await this.insertModifiers(

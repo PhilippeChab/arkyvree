@@ -7,43 +7,38 @@ import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 /** Seeding skills: the skills with their fields, and the ability their points come from, a field of the ruleset's. */
 export function SeedsSkills<B extends Constructor<BaseSeeder>>(Base: B) {
   abstract class SeedingSkills extends Base {
-    /** Intelligence, as the one ability skill points come from: a field of the ruleset's. */
+    /** Intelligence, as the one ability skill points come from: a link of the ruleset's Settings. */
     async seedSkillPointAbility() {
-      await this.writeFields([
+      await this.writeSettings([
         {
           id: this.ctx.rulesetId,
-          type: "rulesets",
-          values: Engine.forRules(DND35_BASE_RULES).toFieldsWrite("rulesets", {
+          write: Engine.forRules(DND35_BASE_RULES).toFieldsWrite("rulesets", {
             skillPointAbilityId: this.ctx.abilityMap["Intelligence"],
           }),
         },
       ]);
     }
 
-    /** The skills, each with its ability, and their fields. */
+    /** The skills, each with its ability and its fields. */
     async seedSkills(skills: SkillSeed[]) {
       Object.assign(
         this.ctx.skillMap,
         await this.insertEntities(
           "skills",
-          skills.map(({ name, description, ability }) => ({
-            rulesetId: this.ctx.rulesetId,
-            name,
-            description,
-            links: { keyAbility: this.ctx.abilityMap[ability] },
-          })),
+          skills.map(
+            ({ name, description, ability, impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining }) => ({
+              rulesetId: this.ctx.rulesetId,
+              name,
+              description,
+              fields: Engine.forRules(DND35_BASE_RULES).toFieldsWrite("skills", {
+                impactedByWeight: impactedByWeight ?? false,
+                checkPenaltyMultiplier: checkPenaltyMultiplier ?? 1,
+                usableWithoutTraining: usableWithoutTraining ?? false,
+              }).fields,
+              links: { keyAbility: this.ctx.abilityMap[ability] },
+            }),
+          ),
         ),
-      );
-      await this.writeFields(
-        skills.map(({ name, impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining }) => ({
-          id: this.ctx.skillMap[name],
-          type: "skills",
-          values: Engine.forRules(DND35_BASE_RULES).toFieldsWrite("skills", {
-            impactedByWeight: impactedByWeight ?? false,
-            checkPenaltyMultiplier: checkPenaltyMultiplier ?? 1,
-            usableWithoutTraining: usableWithoutTraining ?? false,
-          }),
-        })),
       );
     }
   }

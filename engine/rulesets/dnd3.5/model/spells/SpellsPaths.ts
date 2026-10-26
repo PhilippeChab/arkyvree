@@ -11,6 +11,8 @@ import { deriveNameLabels, deriveSegmentLabels, isLeafOfKind, type TargetPath } 
 import { capitalize, stripSeparators } from "@/shared/text.ts";
 import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
 
+import SpellsComponent from "./SpellsComponent.ts";
+
 const NAVIGATABLE_SPELL_DC_PATHS = [
   { path: "dc.misc", description: "Other bonuses to spell DC", type: "number" as const },
   { path: "dc.total", description: "Final DC for this spell", type: "number" as const, requirementOnly: true },
@@ -50,11 +52,11 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
   }
 
   /**
-   * Each spell's paths (`spells`, each with the fields it holds and the lists it's on, its `listedIn` links): its fields',
-   * and its `known` path on each list it's on at a level, but the lists a feat brings.
+   * Each spell's paths (`spells`, each with the fields its entry lists, `listedFields`, and the lists it's on, its
+   * `listedIn` links): its fields', and its `known` path on each list it's on at a level, but the lists a feat brings.
    */
   static generateSpellPaths(
-    spells: (Spell & { fields: string[]; lists: readonly Pick<ViewLink, "tier" | "toId">[] })[],
+    spells: (Spell & { listedFields: string[]; lists: readonly Pick<ViewLink, "tier" | "toId">[] })[],
     spellSlugByAptitudeId: Map<string, string>,
     featListIds: Set<string>,
     kind: "modifier" | "requirement",
@@ -65,7 +67,7 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
     for (const spell of spells) {
       const normalizedSpellName = stripSeparators(spell.name);
 
-      for (const field of spell.fields) {
+      for (const field of spell.listedFields) {
         paths.push({
           path: `spells.${normalizedSpellName}.fields.${field}`,
           category: "spells",
@@ -154,7 +156,7 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
     const spellValues = rulesetData.kindValues("spells");
     const spellsWithFields = dnd35.spells.map((spell) => ({
       ...spell,
-      fields: Object.keys(rulesetData.valuesOf(spell.id).fields),
+      listedFields: Object.keys(SpellsComponent.listedFieldsOf(spell)),
       lists: dnd35.listLinksOf(spell.id),
     }));
     return [
@@ -190,8 +192,8 @@ export default class SpellsPaths implements PathCategory<Dnd35Components> {
   }
   /**
    * The ruleset's spells, labeled by their names; and, where no other label names them, each list's possession slug
-   * ("wizard" for Wizard Spells, which a spell's `known` path names), its spells' fields and their values (a
-   * number names a spell level, never a value).
+   * ("wizard" for Wizard Spells, which a spell's `known` path names), the fields its spells' values are read
+   * kind-wide by (`kindWide`: those their entries list) and their values (a number names a spell level, never a value).
    */
   labelNames(rulesetData: RulesetData) {
     const dnd35 = Dnd35View.of(rulesetData);

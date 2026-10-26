@@ -9,7 +9,7 @@ import { RULESET_FIELDS } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
 
 import BookPaths from "./BookPaths.ts";
 
-/** The fields of the entities the seeders write as their stored values, by entity. */
+/** The fields of the entities the seeders write, by entity. */
 export interface SeededFields {
   classes: typeof CLASS_FIELDS.fields;
   feats: typeof FEAT_FIELDS.fields;
@@ -23,10 +23,10 @@ export interface SeededFields {
 
 /**
  * The 3.5 module's content, as the seeders and the codegen ask of it: what a book's modifiers and requirements can
- * target, and the codecs that keep an entity's fields in its stored values.
+ * target, and the codecs that write an entity's fields by stored field.
  */
 export default class Dnd35Content extends ContentPart<SeededFields> {
-  /** The codecs of the fields the seeders write as stored values, by entity. */
+  /** The codecs of the fields the seeders write, by entity. */
   protected override readonly codecs = {
     classes: CLASS_FIELDS,
     feats: FEAT_FIELDS,

@@ -3,21 +3,18 @@
  * named plan, by type, without ids it doesn't have yet: its row as stored, its links, what it writes beside it.
  */
 
-import type { FieldsWrite } from "@/engine/core/fields/index.ts";
 import type { EntityRecord, EntityWrite, FieldValue } from "@/engine/core/module/storage.ts";
 import type { NamedLink, ViewLink } from "@/engine/core/view/index.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /**
- * What a create or an edit writes of an entity: its row (`row`: its own columns, its own fields and its single links, as
- * stored), its links of the roles it sets many of (`links`, each set replacing the entity's of its role and kind; a
- * role it leaves out: kept), what it writes beside its row, and the fields the entity keeps once written (`F`), and
- * what the action answers once written (`describe`: its record, `row`, with its own links as stored, `links`, as a
- * read describes it).
+ * What a create or an edit writes of an entity: its row (`row`: its own columns, the fields and the single links it
+ * sets, as stored), its links of the roles it sets many of (`links`, each set replacing the entity's of its role and
+ * kind; a role it leaves out: kept), what it writes beside its row, and what the action answers once written
+ * (`describe`: its record, `row`, with its own links as stored, `links`, as a read describes it).
  */
-interface EntitySave<F> {
-  describe: (row: EntityRecord, links: readonly ViewLink[]) => SavedEntity<F>;
-  fields: F;
+interface EntitySave {
+  describe: (row: EntityRecord, links: readonly ViewLink[]) => SavedEntity;
   links?: LinkSet[];
   row: EntityWrite;
   writes?: EntityWrites;
@@ -26,8 +23,11 @@ interface EntitySave<F> {
 /** A requirement a plan sets on an entity: what it asks of the character. */
 type RequirementWrite = Pick<Requirement, "level" | "operator" | "target" | "value" | "valueType">;
 
-/** What a save answers: the entity's record once written, its single links named as a read names them, and its fields. */
-type SavedEntity<F> = Omit<EntityRecord, "links"> & F & { links: NamedLink[] };
+/**
+ * What a save answers: the entity's record once written, its fields as a read answers them (each as its kind reads it,
+ * by its stored field, an item's template's it holds none of among them), its single links named as a read names them.
+ */
+type SavedEntity = Omit<EntityRecord, "fields" | "links"> & { fields: Record<string, unknown>; links: NamedLink[] };
 
 /**
  * The entities made from the one a plan writes, which the plan reaches (a template's copies): what the server reads
@@ -49,7 +49,7 @@ export interface EntityCopiesPlan {
 }
 
 /** What an entity's create writes, and whose customizations the new entity copies (`copyCustomizationsFrom`). */
-export interface EntityCreatePlan<F = object> extends EntitySave<F> {
+export interface EntityCreatePlan extends EntitySave {
   copyCustomizationsFrom?: string;
 }
 
@@ -68,7 +68,7 @@ export interface EntityDeletePlan<E = { id: string; name: string }> {
  * activity compares (`changes`: the entity's values and the form's, by the form's keys: its name, its description, its
  * columns), and the copies that may refuse it.
  */
-export interface EntityEditPlan<F = object, E = { id: string; name: string }> extends EntitySave<F> {
+export interface EntityEditPlan<E = { id: string; name: string }> extends EntitySave {
   changes: { after: Record<string, unknown>; before: Record<string, unknown> };
   copies?: EntityCopies;
   entity: E;
@@ -96,12 +96,10 @@ export interface EntityRemoval {
 }
 
 /**
- * What an entity's form writes beside its row, as its ruleset's rules say: its stored values its fields are kept in
- * (`fields`, each field and link role it names replaced; none: those it has stay), a requirement on it, and the
- * entities it makes and removes with it (`made`, `removed`). The server writes each by its type.
+ * What an entity's form writes beside its row, as its ruleset's rules say: a requirement on it, and the entities it
+ * makes and removes with it (`made`, `removed`). The server writes each by its type.
  */
 export interface EntityWrites {
-  fields?: FieldsWrite;
   made?: MadeEntity[];
   removed?: EntityRemoval[];
   requirement?: RequirementWrite;
@@ -154,11 +152,11 @@ export interface LinkWrite {
 }
 
 /**
- * An entity a plan makes with the one it writes, in the same ruleset: its type (`type`), its row (`EntityWrite`), its
- * stored values (`fields`), its links (`links`, by role), and its modifiers and requirements.
+ * An entity a plan makes with the one it writes, in the same ruleset: its type (`type`), its row (`EntityWrite`: its
+ * fields and its single links among it), its links of the roles it holds many of (`links`, by role), and its
+ * modifiers and requirements.
  */
 export interface MadeEntity {
-  fields: FieldsWrite;
   links: LinkSet[];
   modifiers: Pick<Modifier, "operator" | "target" | "value" | "valueType">[];
   requirements: RequirementWrite[];
@@ -167,7 +165,7 @@ export interface MadeEntity {
 }
 
 /** What an owned entity's create writes past an entity's: its owner, and what its activity records. */
-export interface OwnedCreatePlan<F = object> extends EntityCreatePlan<F> {
+export interface OwnedCreatePlan extends EntityCreatePlan {
   activity: Record<string, unknown>;
   owner: PlanOwner;
 }
@@ -179,7 +177,7 @@ export interface OwnedDeletePlan<E = { id: string; name: string }> extends Entit
 }
 
 /** What an owned entity's edit writes past an entity's: its owner, and what its activity records. */
-export interface OwnedEditPlan<F = object, E = { id: string; name: string }> extends EntityEditPlan<F, E> {
+export interface OwnedEditPlan<E = { id: string; name: string }> extends EntityEditPlan<E> {
   activity: Record<string, unknown>;
   owner: PlanOwner;
 }
@@ -202,7 +200,7 @@ export interface ProgressionPlan {
   gone: { owned: string; owner: string };
   owned: {
     added: { operator: string; target: string; value: string; valueType: "number" }[];
-    edit?: OwnedEditPlan<object, { id: string }>;
+    edit?: OwnedEditPlan<{ id: string }>;
     entity: { id: string };
     position: number;
     removedIds: string[];

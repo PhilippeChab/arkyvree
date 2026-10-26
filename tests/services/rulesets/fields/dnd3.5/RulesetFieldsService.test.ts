@@ -9,7 +9,13 @@ describe("RulesetFieldsService", () => {
   test("gives each entity type's form its fields, and the ruleset's Settings', as the ruleset declares them", async () => {
     const { rulesetId } = await getSeedCtx();
     const fields = await RulesetFieldsService.getFields(rulesetId);
-    expect(Object.keys(fields).toSorted()).toEqual(Engine.storage().fieldOwners().toSorted());
+    // A language's form shows none: its type is a column of its form
+    expect(Object.keys(fields).toSorted()).toEqual(
+      Engine.storage()
+        .fieldOwners()
+        .filter((type) => type !== "languages")
+        .toSorted(),
+    );
 
     expect(fields.spells.map((field) => field.key)).toEqual([
       "school",

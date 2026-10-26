@@ -121,9 +121,7 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
             aptitudeId: viaId,
             level,
             dc: this.components.spells.getSpell(entity.name)?.dc?.[aptitudeSlug]?.total ?? null,
-            fields: formatFieldValues(SpellsComponent.textsOf(this.rulesetData, entity.id), (field) =>
-              SPELL_FIELDS.optionsOf(field),
-            ),
+            fields: formatFieldValues(SpellsComponent.textsOf(entity), (field) => SPELL_FIELDS.optionsOf(field)),
           },
         ];
       });

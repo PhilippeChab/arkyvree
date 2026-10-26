@@ -15,8 +15,8 @@ import { storedGroups } from "./groups.ts";
 type EntityDescription = ReturnType<EntityKinds[keyof EntityKinds]["describe"]>;
 
 /**
- * A ruleset's item, as the add dialog lists it: its name and description, and its own fields, its cost and weight
- * among them (at its block's `itemFields`).
+ * A ruleset's item, as the add dialog lists it: its name and description, and its fields, its cost and weight among
+ * them (at its block's `itemFields`: its template's when it holds none).
  */
 export interface RulesetItem {
   description: string | null;

@@ -10,8 +10,8 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { pickFeat } from "@/tests/support/dnd3.5/levels.ts";
 import { findLists } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { writeFieldValues } from "@/tests/support/ownerValues.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
-import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { CLASS_HD, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -123,7 +123,7 @@ describe("EntitiesService: feats", () => {
     } = await createTestUserAndRuleset(APTITUDES);
     for (const name of ["Focus: Axe", "Focus: Sword"]) {
       const feat = await EntitiesService.createEntity(session, ruleset.id, "feats", { name, aptitudeIds: [combat] });
-      await writeStoredValues("feats", feat.id, [[FEAT_FAMILY, "Focus"]]);
+      await writeFieldValues("feats", feat.id, [[FEAT_FAMILY, "Focus"]]);
     }
     await EntitiesService.createEntity(session, ruleset.id, "feats", { name: "Cleave", aptitudeIds: [combat] });
     await EntitiesService.createEntity(session, ruleset.id, "feats", { name: "Alertness", aptitudeIds: [general] });

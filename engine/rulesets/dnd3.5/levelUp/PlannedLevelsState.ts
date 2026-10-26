@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { OwnerValues } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { ViewLink } from "@/engine/core/view/index.ts";
 import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
@@ -65,7 +66,9 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
   private computeSkillPointBasesPerLevel(character: DetailedCharacter, klassLevelIds: string[]): number[] {
     const { skills } = character.components;
     return klassLevelIds.map((klassLevelId) =>
-      skills.getLevelPointsPerLevel(CLASS_LEVEL_FIELDS.read(this.rulesetData.valuesOf(klassLevelId)).skills),
+      skills.getLevelPointsPerLevel(
+        CLASS_LEVEL_FIELDS.read(this.rulesetData.find("class_levels", klassLevelId) ?? OwnerValues.NONE).skills,
+      ),
     );
   }
 

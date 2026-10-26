@@ -1,5 +1,5 @@
 /**
- * 3.5's kinds' entities, as the view holds them (`ViewEntity`: as stored, their own fields and single links typed),
+ * 3.5's kinds' entities, as the view holds them (`ViewEntity`: as stored, their fields and single links typed),
  * which it declares into the view's registry (`ViewKinds`). Its entities' links of a role they hold many of are the
  * view's (`ViewLink`, by role: a feat's `listedIn`, a class level's `grants`); a character's rows are as stored (its
  * fields and single links, its links by role, its advancements and their picks by step), its own values read as

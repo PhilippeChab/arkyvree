@@ -41,9 +41,7 @@ export default class SpellPicker extends LevelPicker {
     if (aptitude?.name !== "Wizard Spells") return [];
 
     const prohibitedSchools = new Set(
-      this.character
-        .getHeldFeats()
-        .flatMap(({ entity }) => FEAT_FIELDS.read(this.rulesetData.valuesOf(entity.id)).prohibitedSchools),
+      this.character.getHeldFeats().flatMap(({ entity }) => FEAT_FIELDS.read(entity).prohibitedSchools),
     );
     // The spells of each school, by the view's kind-wide values
     const spellIdsBySchool = new Map(

@@ -43,8 +43,8 @@ export interface EntityTables {
 export interface OwnedEntities {
   describe(id: string): unknown;
   describeAll(): unknown;
-  planCreate(form: EntityForm): OwnedCreatePlan<object>;
+  planCreate(form: EntityForm): OwnedCreatePlan;
   planDelete(id: string): OwnedDeletePlan<{ id: string }>;
-  planEdit(id: string, form: EntityForm): OwnedEditPlan<object, { id: string }>;
+  planEdit(id: string, form: EntityForm): OwnedEditPlan<{ id: string }>;
   readonly type: string;
 }

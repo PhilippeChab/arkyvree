@@ -7,8 +7,8 @@ import { OwnerValues } from "@/engine/core/fields/index.ts";
 import type { FieldValue } from "@/engine/core/module/index.ts";
 import { SKILL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/skills/fields.ts";
 import { db } from "@/server/database/index.ts";
-import { Fields } from "@/server/repositories/index.ts";
-import { listStoredValues, storedValues } from "@/tests/support/storedValues.ts";
+import { Entities } from "@/server/repositories/index.ts";
+import { heldValues, listValues, writtenValues } from "@/tests/support/ownerValues.ts";
 import {
   SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,
@@ -20,7 +20,7 @@ describe("A skill's fields", () => {
     expect(SKILL_FIELDS.read(OwnerValues.NONE)).toEqual(SKILL_FIELDS.defaults);
     expect(
       SKILL_FIELDS.read(
-        storedValues([
+        heldValues([
           [SKILL_IMPACTED_BY_WEIGHT, true],
           [SKILL_CHECK_PENALTY_MULTIPLIER, 2],
           [SKILL_USABLE_WITHOUT_TRAINING, true],
@@ -34,7 +34,7 @@ describe("A skill's fields", () => {
     // On a skill armor weighs on: any other keeps 1
     const multiplierOf = (...values: FieldValue[]) =>
       SKILL_FIELDS.read(
-        storedValues([
+        heldValues([
           [SKILL_IMPACTED_BY_WEIGHT, true],
           ...values.map((value): [string, FieldValue] => [SKILL_CHECK_PENALTY_MULTIPLIER, value]),
         ]),
@@ -44,19 +44,20 @@ describe("A skill's fields", () => {
     expect(multiplierOf("none")).toBe(1);
   });
 
-  test("of every seeded skill rebuild its stored values", async () => {
+  test("of every seeded skill rebuild its fields", async () => {
     const skills = await db
       .select({ id: entitiesInRules.id })
       .from(entitiesInRules)
       .where(eq(entitiesInRules.type, "skills"));
-    const values = await Fields.findMany(db, { ownerIds: skills.map(({ id }) => id), ownerType: "skills" });
-    const held = [...values].filter(([, stored]) => Object.keys(stored.fields).length > 0);
+    const held = (await Entities.findMany(db, { entityType: "skills", ids: skills.map(({ id }) => id) })).filter(
+      (skill) => Object.keys(skill.fields).length > 0,
+    );
     expect(held.length).toBeGreaterThan(20);
 
     const mismatches = held.filter(
-      ([, stored]) =>
-        listStoredValues(OwnerValues.written(SKILL_FIELDS.write(SKILL_FIELDS.read(stored)))).join("|") !==
-        listStoredValues(stored).join("|"),
+      ({ fields }) =>
+        listValues(writtenValues(SKILL_FIELDS.write(SKILL_FIELDS.read({ fields, links: {} })))).join("|") !==
+        listValues({ fields, links: {} }).join("|"),
     );
     expect(mismatches).toEqual([]);
   });

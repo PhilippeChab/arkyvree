@@ -16,7 +16,7 @@ import type { Modifier, Requirement } from "@/shared/relations.ts";
 export type Kind = keyof ViewKinds;
 
 /** No module's fields: a made-up module's owners hold values of fields none declares, in no order but their own. */
-export const NO_FIELDS = new DeclaredFields({}, { fieldDefs: [], linkRoles: [] });
+export const NO_FIELDS = new DeclaredFields({}, []);
 
 /**
  * A made-up module's declaration: owners and the entities they own, by `ownerId`; and listed entities, whose links to
@@ -80,16 +80,28 @@ export function linkOf(fromId: string, role: string, toId: string, toType = "tar
 }
 
 /**
- * A ruleset's own rows of the made-up module: its kinds', its entities' links (`links`, each from an entity of its
- * kind), and a modifier, a field's value and a requirement on each owned entity of `customized`.
+ * A ruleset's own rows of the made-up module: its kinds' (each holding no field nor single link but those it's given),
+ * its entities' links (`links`, each from an entity of its kind), and a modifier, a field's value and a requirement on
+ * each owned entity of `customized`.
  */
 export function rawRows(
   entities: Record<string, Record<string, unknown>[]>,
   links: { links: ViewLink[]; type: string }[] = [],
   customized: string[] = [],
 ): RulesetRawData {
+  const valued = new Set(customized);
+  const rows = Object.fromEntries(
+    Object.entries(entities).map(([type, held]) => [
+      type,
+      held.map((row) => {
+        // Every entity holds its fields and its single links, none by default
+        const entity = { fields: {}, links: {}, ...row };
+        return valued.has(row.id as string) ? { ...entity, fields: { ...entity.fields, T: "v" } } : entity;
+      }),
+    ]),
+  );
   return {
-    entities: entities as RulesetRawData["entities"],
+    entities: rows as RulesetRawData["entities"],
     kindValues: new Map(),
     links: new Map(links.map((held) => [held.links[0].fromId, held])),
     modifiers: customized.map((sourceId) => ({ id: `m-${sourceId}`, sourceId, sourceType: "owned" }) as Modifier),
@@ -97,6 +109,5 @@ export function rawRows(
       (entityId) => ({ id: `r-${entityId}`, entityId, entityType: "owned", level: "1" }) as Requirement,
     ),
     tieredIds: new Set(),
-    values: new Map([["owned", new Map(customized.map((id) => [id, { fields: { T: ["v"] }, links: {} }]))]]),
   };
 }

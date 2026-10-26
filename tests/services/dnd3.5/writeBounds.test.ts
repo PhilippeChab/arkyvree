@@ -166,6 +166,7 @@ describe("a ruleset's entities", () => {
     expect(created.fields).toMatchObject({ [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 });
     const edits: [string, Record<string, unknown>][] = [
       ["baseSpeed", { baseSpeed: 0 }],
+      ["baseSpeed", { baseSpeed: Number.MAX_SAFE_INTEGER + 1 }],
       ["baseSpeed", { baseSpeed: null }],
       ["size", { size: null }],
       ["size", { size: "" }],
@@ -185,7 +186,7 @@ describe("a ruleset's entities", () => {
     ).toMatchObject({ fields: { [RACE_SIZE]: "Tiny", [RACE_BASE_SPEED]: 1 } });
   });
 
-  test("refuses an item's weight or cost past its numeric(…, 2) columns' range, and keeps them to two decimals", async () => {
+  test("refuses an item's weight or cost below none or past what it holds exactly, and keeps them to two decimals", async () => {
     const { session: owner, ruleset } = await createTestUserAndRuleset();
     for (const key of ["weight", "costGp"]) {
       expect(
@@ -202,23 +203,24 @@ describe("a ruleset's entities", () => {
         EntitiesService.duplicateEntity(owner, ruleset.id, "items", gem.id, { name: "Other Gem", [key]: -1 }),
       ).rejects.toMatchObject(invalidAt(key));
     }
-    // Past numeric(6, 2) and numeric(10, 2): a weight of 10,000 lbs, a cost of 100,000,000 gp
-    expect(
-      EntitiesService.updateEntity(owner, ruleset.id, "items", gem.id, { name: "Gem", weight: 10_000 }),
-    ).rejects.toMatchObject(invalidAt("weight"));
-    expect(
-      EntitiesService.updateEntity(owner, ruleset.id, "items", gem.id, { name: "Gem", costGp: 100_000_000 }),
-    ).rejects.toMatchObject(invalidAt("costGp"));
+    // Every number field holds what it keeps exactly, to its places, and no more: none past it is stored rounded off
+    for (const key of ["weight", "costGp"]) {
+      for (const value of [1e21, 1e300, Number("12345678901234567.89")]) {
+        expect(
+          EntitiesService.updateEntity(owner, ruleset.id, "items", gem.id, { name: "Gem", [key]: value }),
+        ).rejects.toMatchObject(invalidAt(key));
+      }
+    }
     await EntitiesService.updateEntity(owner, ruleset.id, "items", gem.id, {
       name: "Gem",
-      weight: 9_999.99,
-      costGp: 99_999_999.99,
+      weight: 10_000,
+      costGp: 90_071_992_547_409.9,
     });
     expect((await EntitiesService.getEntity(ruleset.id, "items", gem.id)).fields).toMatchObject({
-      [ITEM_WEIGHT]: 9_999.99,
-      [ITEM_COST_GP]: 99_999_999.99,
+      [ITEM_WEIGHT]: 10_000,
+      [ITEM_COST_GP]: 90_071_992_547_409.9,
     });
-    // A third decimal is rounded off as it's written, half away from zero, as the numeric(…, 2) columns did
+    // A third decimal is rounded off as it's written, half away from zero: their fields' scale
     await EntitiesService.updateEntity(owner, ruleset.id, "items", gem.id, {
       name: "Gem",
       weight: 0.125,
@@ -294,9 +296,14 @@ describe("a ruleset's entities", () => {
 });
 
 describe("a character's identity", () => {
-  test("refuses a new character's negative experience, or an age under 1", async () => {
+  test("refuses a new character's negative experience, an age under 1, or either past what it holds exactly", async () => {
     expect(createCharacterAs(session, { xp: -1 })).rejects.toMatchObject(invalidAt("fields.xp"));
     expect(createCharacterAs(session, { age: 0 })).rejects.toMatchObject(invalidAt("fields.age"));
+    expect(createCharacterAs(session, { xp: 1e300 })).rejects.toMatchObject(invalidAt("fields.xp"));
+    expect(createCharacterAs(session, { age: 1e21 })).rejects.toMatchObject(invalidAt("fields.age"));
+    expect((await createCharacterAs(session, { xp: Number.MAX_SAFE_INTEGER })).fields).toMatchObject({
+      [CHARACTER_XP]: Number.MAX_SAFE_INTEGER,
+    });
     expect((await createCharacterAs(session, { xp: 0, age: 1 })).fields).toMatchObject({
       [CHARACTER_XP]: 0,
       [CHARACTER_AGE]: 1,
@@ -329,10 +336,12 @@ describe("a character's identity", () => {
     expect(await refused.text()).toContain("A new character's Race is required");
   });
 
-  test("refuses an edit's negative experience, an age under 1, an alignment or a gender not among their options", async () => {
+  test("refuses an edit's negative experience, an age under 1, either past what it holds exactly, an alignment or a gender not among their options", async () => {
     const { id } = await createCharacterAs(session, { alignment: "Lawful Good", gender: "Female" });
     const edits: [string, FieldsRequest][] = [
       ["fields.experience", { experience: -1 }],
+      ["fields.experience", { experience: 1e21 }],
+      ["fields.age", { age: Number.MAX_SAFE_INTEGER + 1 }],
       ["fields.age", { age: 0 }],
       ["fields.alignment", { alignment: "Lawful Stupid" }],
       ["fields.gender", { gender: "Unknown" }],

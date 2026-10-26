@@ -3,28 +3,27 @@
  * (`RulesetComposition`) and a copy of the winner writes (`EntityCopy`), the same both ways: the engine's, which both
  * ask. Each rule takes the winner's own rows and each sibling's, in the order its `CowData` pairs them (`getSiblings`),
  * and returns the siblings' rows the winner takes, in that order. A modifier, a value of a set or a link of a role that
- * merges (`mergeLinks`: a 3.5 feat's pool) whose key the winner or an earlier sibling has is left out. A single value is
- * the winner's, else the first sibling's that holds it (its field's `fallback`), whose stores keep one value of it; a
- * ruleset's (`winner`) the winner's alone. An owner's stored values merge field by field (`mergeValues`), into the
- * winner's whole. Requirements merge as trees (`RequirementTree`), whose top-level rows are AND'd: merging the winner
- * with N siblings is `AND(winner, sibling 1, …)`, each sibling's tree kept as it is, appended at the top level. A
+ * merges (`mergeLinks`: a 3.5 feat's pool) whose key the winner or an earlier sibling has is left out. An entity's
+ * fields and single links merge field by field and role by role (`mergeValues`), each by its declaration: a set's
+ * values the winner lacks (`union`), a single value the winner's, else the first sibling's that holds one
+ * (`fallback`), or the winner's alone (`winner`). Requirements merge as trees (`RequirementTree`), whose top-level
+ * rows are AND'd: merging the winner with N siblings is `AND(winner, sibling 1, …)`, each sibling's tree kept as it is, appended at the top level. A
  * sibling's group gets a fresh top-level number, its rows renumbered under it; a sibling's top-level condition keeps
  * its level (suffixed `-2`, `-3`… when the winner has it), unless the winner already holds the same condition.
  */
 
-import type { DeclaredFields, StoredValues } from "@/engine/core/fields/index.ts";
-import type { FieldValue } from "@/engine/core/module/index.ts";
+import { type DeclaredFields, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
+import type { FieldValue, OwnerFields } from "@/engine/core/module/index.ts";
 import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 type ModifierKey = Pick<Modifier, "target" | "value" | "operator" | "valueType">;
 
-/** An entity's customizations: its modifiers, with their requirements apart, its requirements and its stored values. */
+/** An entity's customizations: its modifiers, with their requirements apart, and its requirements. */
 export interface EntityCustomizations {
   modifierRequirements: Requirement[];
   modifiers: Modifier[];
   requirements: Requirement[];
-  values: StoredValues;
 }
 
 /** The merge of sibling copies' customizations and links into their winner's, one rule per kind. */
@@ -63,17 +62,14 @@ export default class SiblingMerge {
   }
 
   /**
-   * What a copy of a sibling winner (of `ownerType`) takes of its siblings' customizations (`siblings`, in the order its
-   * `CowData` pairs them) beside its own (`own`, which the copy holds): their modifiers, each with its requirements, and
-   * their requirements, merged as the view merges them, a requirement onto the copy (`targetEntityId`); and its stored
-   * values whole, theirs merged in by each field's and link's declared merge (`declared`, `mergeValues`).
+   * What a copy of a sibling winner takes of its siblings' customizations (`siblings`, in the order its `CowData` pairs
+   * them) beside its own (`own`, which the copy holds): their modifiers, each with its requirements, and their
+   * requirements, merged as the view merges them, a requirement onto the copy (`targetEntityId`).
    */
   static mergeCustomizations(
     own: EntityCustomizations,
     siblings: EntityCustomizations[],
     targetEntityId: string,
-    ownerType: string,
-    declared: DeclaredFields,
   ): EntityCustomizations {
     const modifiers = SiblingMerge.mergeModifiers(
       own.modifiers,
@@ -90,12 +86,6 @@ export default class SiblingMerge {
         siblings.map((customizations) => customizations.requirements),
         targetEntityId,
       ),
-      values: SiblingMerge.mergeValues(
-        own.values,
-        siblings.map((customizations) => customizations.values),
-        ownerType,
-        declared,
-      ).values,
     };
   }
 
@@ -162,10 +152,10 @@ export default class SiblingMerge {
   }
 
   /**
-   * An owner's stored values (`own`, of `ownerType`) with its siblings' merged in (`siblings`, in the order its
-   * `CowData` pairs them), each field and link by its declared merge (`declared`): a set's (`union`) values it lacks,
-   * by value, in its declared order; a single value's (`fallback`) its own, else the first sibling's that holds it; one
-   * the winner's alone holds (`winner`) its own. Its fields in their declared order, and what each sibling gave
+   * An entity's fields and single links (`own`, of `ownerType`) with its siblings' merged in (`siblings`, in the order
+   * its `CowData` pairs them), each field and link by its declared merge (`declared`): a set's (`union`) values it
+   * lacks, by value, in its declared order; a single value's (`fallback`) its own, else the first sibling's that holds
+   * it; one the winner's alone holds (`winner`) its own. Its fields in their declared order, and what each sibling gave
    * (`taken`, in their order).
    */
   static mergeValues(
@@ -174,22 +164,28 @@ export default class SiblingMerge {
     ownerType: string,
     declared: DeclaredFields,
   ): { taken: StoredValues[]; values: StoredValues } {
-    const fields: Record<string, readonly FieldValue[]> = { ...own.fields };
-    const links: Record<string, string> = { ...own.links };
+    const fields: Record<string, OwnerFields[string]> = { ...own.fields };
+    const links: Partial<Record<string, string>> = { ...own.links };
     const taken = siblings.map((sibling) => {
-      const given: { fields: Record<string, FieldValue[]>; links: Record<string, string> } = { fields: {}, links: {} };
+      const given: { fields: Record<string, OwnerFields[string]>; links: Record<string, string> } = {
+        fields: {},
+        links: {},
+      };
       for (const [field, values] of Object.entries(sibling.fields)) {
         const merge = declared.mergeOf(ownerType, field);
-        if (merge === "fallback" && !(field in fields)) fields[field] = given.fields[field] = [...values];
+        if (merge === "fallback" && !(field in fields)) fields[field] = given.fields[field] = values;
         if (merge !== "union") continue;
-        const held = new Set((fields[field] ?? []).map(String));
-        const added = values.filter((value) => !held.has(String(value)));
+        const kept = OwnerValues.valuesOf(fields, field);
+        const held = new Set(kept.map(String));
+        const added: FieldValue[] = OwnerValues.valuesOf(sibling.fields, field).filter(
+          (value) => !held.has(String(value)),
+        );
         if (added.length === 0) continue;
         given.fields[field] = added;
-        fields[field] = declared.orderValues(field, [...(fields[field] ?? []), ...added]);
+        fields[field] = declared.orderValues(field, [...kept, ...added]);
       }
       for (const [role, toId] of Object.entries(sibling.links)) {
-        if (declared.roleMergeOf(ownerType, role) === "winner" || role in links) continue;
+        if (toId === undefined || declared.roleMergeOf(ownerType, role) !== "fallback" || role in links) continue;
         links[role] = given.links[role] = toId;
       }
       return given;

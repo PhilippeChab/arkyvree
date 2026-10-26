@@ -1,5 +1,6 @@
 /** What equipping an item checks: the slot takes it, its hands can wield it, and the character meets its requirements. */
 
+import { OwnerValues } from "@/engine/core/fields/index.ts";
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
@@ -195,11 +196,11 @@ export default class Equipping {
     return null;
   }
 
-  /** The weapon fields of an item, its own merged with its template's. */
+  /** The weapon fields of an item, its own over its template's. */
   private weaponFields(itemId: string) {
     const { rulesetData } = this.view;
-    const item = Dnd35View.of(rulesetData).itemsById.get(itemId) ?? { id: itemId, links: {} };
-    return ITEM_FIELDS.read(rulesetData.inheritedValuesOf("items", item)).weapon;
+    const item = Dnd35View.of(rulesetData).itemsById.get(itemId);
+    return ITEM_FIELDS.read(item ? rulesetData.withInheritedFields("items", item) : OwnerValues.NONE).weapon;
   }
 
   /**

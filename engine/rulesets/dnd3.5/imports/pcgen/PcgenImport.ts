@@ -1,3 +1,4 @@
+import { Decimals } from "@/engine/core/fields/index.ts";
 import { ImportReport } from "@/engine/core/imports/index.ts";
 import type { CharacterInput, ImportedRow, ImportOwner, ImportPlan, ScorePlan } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
@@ -7,7 +8,7 @@ import Dnd35Characters from "@/engine/rulesets/dnd3.5/characters/Dnd35Characters
 import type { ImportedCharacter } from "@/engine/rulesets/dnd3.5/imports/imported.ts";
 import { DND35_STORAGE } from "@/engine/rulesets/dnd3.5/storage/Dnd35Storage.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import { MAX_CHARACTER_NAME_LENGTH, MAX_CHARACTER_NUMBER } from "@/shared/characters.ts";
+import { MAX_CHARACTER_NAME_LENGTH } from "@/shared/characters.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import {
   CHARACTER_AGE,
@@ -71,12 +72,16 @@ export default class PcgenImport {
 
   private readonly report: ImportReport;
 
-  /** A whole number of the file's within what the app keeps (`max`), which the report says when it's past it. */
-  private bounded(what: string, value: number, max: number) {
+  /**
+   * A whole number of the file's within what a field holds exactly (`Decimals.largest`), which the report says when
+   * it's past it.
+   */
+  private bounded(what: string, value: number) {
     const rounded = Math.round(value);
-    if (rounded <= max) return rounded;
-    this.report.issue(`${what} ${rounded} is past the largest the app keeps: ${max} kept`);
-    return max;
+    const largest = Decimals.largest();
+    if (rounded <= largest) return rounded;
+    this.report.issue(`${what} ${rounded} is past the largest the app keeps: ${largest} kept`);
+    return largest;
   }
 
   /**
@@ -189,14 +194,13 @@ export default class PcgenImport {
     return {
       description: biography.description.join("\n\n") || null,
       fields: {
-        [CHARACTER_AGE]:
-          identity.age && identity.age >= 1 ? this.bounded("Age", identity.age, MAX_CHARACTER_NUMBER) : null,
+        [CHARACTER_AGE]: identity.age && identity.age >= 1 ? this.bounded("Age", identity.age) : null,
         [CHARACTER_ALIGNMENT]: alignment ?? "True Neutral",
         [CHARACTER_DEITY]: identity.deity ?? null,
         [CHARACTER_GENDER]: gender ?? "Other",
         [CHARACTER_HEIGHT]: identity.height ? PcgenImport.feetOf(identity.height) : null,
         [CHARACTER_WEIGHT]: identity.weight ? `${identity.weight} lb.` : null,
-        [CHARACTER_XP]: Math.max(0, this.bounded("Experience", identity.xp, MAX_CHARACTER_NUMBER)),
+        [CHARACTER_XP]: Math.max(0, this.bounded("Experience", identity.xp)),
       },
       kind: PLAYER_CHARACTER_KIND,
       links: { [RACE_ROLE]: race.id },

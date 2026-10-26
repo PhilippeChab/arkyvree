@@ -21,19 +21,16 @@ export function SeedsRaces<B extends Constructor<Dnd35ContentSeeder>>(Base: B) {
           name: race.name,
           description: race.description,
           partition: race.kind ?? kind,
-          fields: { [RACE_SIZE]: race.size, [RACE_BASE_SPEED]: race.baseSpeed },
+          fields: {
+            ...Engine.forRules(DND35_BASE_RULES).toFieldsWrite("races", race.fields ?? {}).fields,
+            [RACE_SIZE]: race.size,
+            [RACE_BASE_SPEED]: race.baseSpeed,
+          },
         })),
       );
       await this.insertAll(
         modifiersInCustomization,
         races.flatMap((race) => this.modifierRows(ids[race.name], "races", race.modifiers)),
-      );
-      await this.writeFields(
-        races.map((race) => ({
-          id: ids[race.name],
-          type: "races",
-          values: Engine.forRules(DND35_BASE_RULES).toFieldsWrite("races", race.fields ?? {}),
-        })),
       );
     }
   }

@@ -4,11 +4,14 @@
  * its links (`rules.entity_links`, by role); a ruleset's settings (`rules.ruleset_fields`, `ruleset_links`); a
  * character's fields and links (`character.fields`, `links`) and its advancements and their picks
  * (`character.advancements`, `advancement_picks`). The registries those rows are checked against (`rules.entity_types`,
- * `field_defs`, `link_roles`, …) hold what each module declares here. Every row is read and written as stored: an
- * entity as its own columns, its own fields by field and its single links by role (`EntityRecord`, `EntityWrite`), its
- * links of a role many of which it holds (a feat's pools, a class level's grants) as links, by role, and a character's
- * rows as its fields by field, its links by role, its advancements' picks by step.
+ * `field_defs`, `link_roles`, …) hold what each module declares here, its fields as its vocabulary declares them
+ * (`RulesetModule.fields`). Every row is read and written as stored: an entity as its own columns, its fields by field
+ * and its single links by role (`EntityRecord`, `EntityWrite`), its links of a role many of which it holds (a feat's
+ * pools, a class level's grants) as links, by role, and a character's rows as its fields by field, its links by role,
+ * its advancements' picks by step.
  */
+
+import type { Merge } from "@/shared/customization/fields.ts";
 
 /** A character's link of a role, to an entity of a type: whether it holds one, and what deleting it does. */
 export interface CharacterRoleDef {
@@ -19,16 +22,15 @@ export interface CharacterRoleDef {
 }
 
 /**
- * An entity as the server reads and writes it: its own columns (`rules.entities`), its own fields' values by field
- * (`fields`: those its kind holds of its own, `StoredKind.fields`), typed as stored (a number a number), and its single
- * links' targets by role (`links`, but those its fields read, which its stored values hold). Timestamps are Postgres's
- * text.
+ * An entity as the server reads and writes it: its own columns (`rules.entities`), every field it holds, by field
+ * (`fields`, `OwnerFields`: a single field's value, a set's values, typed as stored, a number a number), and its single
+ * links' targets by role (`links`). Timestamps are Postgres's text.
  */
 export interface EntityRecord {
   campaignId: string | null;
   createdAt: string;
   description: string | null;
-  fields: Readonly<Record<string, FieldValue>>;
+  fields: OwnerFields;
   id: string;
   links: Readonly<Record<string, string>>;
   name: string | null;
@@ -51,17 +53,19 @@ export interface EntityTypeDef {
 }
 
 /**
- * What a write of an entity stores (a create's, an edit's): the own columns it gives, and each own field's value and
- * each single link's target it sets, by field and by role (null clears one). A create leaves out what its kind
- * defaults (`StoredKind.fields`, `partition`), and an owned entity takes its owner's ruleset and campaign.
+ * What a write of an entity stores (a create's, an edit's): the own columns it gives, each field's values and each
+ * single link's target it sets, by field and by role, in place of what the entity held of them (`FieldWrite`: as a
+ * record holds them, which a copy writes as it reads them; null clears a link). A field always written (`write:
+ * "always"`) a write leaves out of a new entity, or clears, holds its default, and a create leaves out its partition for
+ * its kind's (`StoredKind.partition`); an owned entity takes its owner's ruleset and campaign.
  */
 export interface EntityWrite {
   campaignId?: string | null;
   createdAt?: string;
   description?: string | null;
-  fields?: Readonly<Record<string, FieldValue | null>>;
+  fields?: Readonly<Record<string, FieldWrite>>;
   id?: string;
-  links?: Readonly<Record<string, string | null>>;
+  links?: Readonly<Partial<Record<string, string | null>>>;
   name?: string;
   ownerId?: string;
   partition?: string;
@@ -71,15 +75,13 @@ export interface EntityWrite {
 }
 
 /**
- * A field: its owner (an entity of a type, a ruleset, a character), its value's kind, whether it's a set (`multiple`),
- * how sibling copies merge it, and the role an entity follows to read it off another when it has none (`inheritsVia`:
- * an item's template). The registry keeps its owner, kind and set-ness, which its rows are checked against; the engine
- * alone reads its merge and inheritance (`DeclaredFields`).
+ * A field's registry row (`rules.field_defs`): its owner (an entity of a type, a ruleset, a character), its value's
+ * kind, and whether it's a set (`multiple`), which its rows are checked against. What else its declaration says (its
+ * default, its scale, how sibling copies merge it, the role its entity reads it off another through) the engine alone
+ * reads, off the module's fields (`DeclaredFields`).
  */
 export interface FieldDef {
   field: string;
-  inheritsVia: string | null;
-  merge: Merge;
   multiple: boolean;
   ownerKind: "character" | "entity" | "ruleset";
   ownerType: string;
@@ -122,7 +124,7 @@ export interface StepDef {
   viaType: string | null;
 }
 
-/** How a module stores its data: its registries' rows, its kinds' own fields and defaults, and its character's. */
+/** How a module stores its data: its registries' rows, its kinds' and its character's. */
 export interface StorageDeclaration {
   character: StoredCharacter;
   kinds: Record<string, StoredKind>;
@@ -131,7 +133,7 @@ export interface StorageDeclaration {
 
 /**
  * What a module declares of its entity types, link roles, fields, roles, steps and the types items are: the registries'
- * rows, past a field's and a role's merge and a field's inheritance, which the engine alone reads.
+ * rows, past a role's merge, which the engine alone reads.
  */
 export interface StorageRegistries {
   characterRoles: CharacterRoleDef[];
@@ -211,8 +213,8 @@ export interface StoredFieldValue {
 }
 
 /**
- * An entity kind, past what the registries hold of it: whether a user customizes its entities, the links its page edits,
- * how its namesakes pair, its own fields and what a new entity defaults, and what makes one a template.
+ * An entity kind, past what the registries and its fields' declarations hold of it: whether a user customizes its
+ * entities, the links its page edits, how its namesakes pair, a new entity's partition, and what makes one a template.
  */
 export interface StoredKind {
   /**
@@ -226,13 +228,6 @@ export interface StoredKind {
    */
   editedLinks?: string;
   /**
-   * The fields its entities hold of their own, past those its module's fields declare (which their stored values
-   * keep): each a single value of its kind, its entity's own on every read (`EntityRecord.fields`: 3.5's class's
-   * `CLASS_HD`), and the winning copy's of siblings; one with a `default` is written with it when a new entity's write
-   * leaves it out, and a number with a `scale` is written kept to that many places (3.5's item's weight and cost)
-   */
-  fields?: Readonly<Record<string, { default?: FieldValue; kind: ValueKind; scale?: number }>>;
-  /**
    * How its entities of one name in a ruleset's chain pair: always, a name its identity (`identity`: 3.5's pools), or,
    * when no copy pairs them, as a book's reprint (`reprints`: 3.5's feats and spells); none, never (a race or a class
    * of one name in two books is more likely two things)
@@ -241,7 +236,7 @@ export interface StoredKind {
   /** The partition a new entity's write takes when it gives none (3.5's class's and race's, `pc`): none, the empty one */
   partition?: string;
   /**
-   * The flag of its own fields that makes one of its entities a template others are made from (3.5's item's
+   * The flag among its fields that makes one of its entities a template others are made from (3.5's item's
    * `ITEM_IS_TEMPLATE`), whose requirements its copies take as their template's (`RulesetData.templateRequirements`)
    */
   template?: string;
@@ -284,10 +279,16 @@ export interface StoredRuleset {
 export type FieldValue = boolean | number | string;
 
 /**
- * How sibling copies of an entity merge a field or a link: the winning copy's value or none (`winner`), the winning
- * copy's else the first sibling's (`fallback`), or every sibling's (`union`, a set's).
+ * A field's values as a write sets them: as a record holds them (a single field's value, a set's values), several of a
+ * set's too, or none (null, no value), which clears it.
  */
-export type Merge = "fallback" | "union" | "winner";
+export type FieldWrite = FieldValue | readonly FieldValue[] | null;
+
+/**
+ * An owner's fields as stored (an entity's, a ruleset's Settings), by field: a single field's value, a set's values in
+ * its declared order (`DeclaredFields.orderValues`). A field it holds no value of is left out.
+ */
+export type OwnerFields = Readonly<Record<string, FieldValue | readonly FieldValue[]>>;
 
 /** Where a value is held: a field's typed column. */
 export type ValueKind = "flag" | "number" | "text";

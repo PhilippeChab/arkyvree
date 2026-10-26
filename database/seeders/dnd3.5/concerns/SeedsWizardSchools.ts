@@ -1,8 +1,9 @@
 import { classSpells, specialistSpells } from "@/content/dnd3.5/builders/aptitudes/names.ts";
 import type { WizardSchoolSeed } from "@/content/dnd3.5/builders/wizardSchools/types.ts";
-import { EntityLinks, Fields } from "@/database/seeders/core/SeederState.ts";
+import { EntityLinks } from "@/database/seeders/core/SeederState.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import type { SpellcastingClass } from "@/database/seeders/dnd3.5/spellTable.ts";
+import type { EntityRecord } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -37,12 +38,13 @@ export function SeedsWizardSchools<B extends Constructor<BaseSeeder>>(Base: B) {
         role: "listedIn",
         toIds: [wizardSpells],
       });
-      const values = await Fields.findMany(this.db, {
-        ownerIds: listed.map((link) => link.fromId),
-        ownerType: "spells",
-      });
+      const records = await this.entityRecords<Pick<EntityRecord, "fields" | "id">>(
+        "spells",
+        listed.map((link) => link.fromId),
+      );
+      const schoolOf = new Map(records.map((spell) => [spell.id, spell.fields[SPELL_SCHOOL]]));
       const spells = listed.flatMap(({ fromId, tier }) => {
-        const [school] = values.get(fromId)?.fields[SPELL_SCHOOL] ?? [];
+        const school = schoolOf.get(fromId);
         return school === undefined ? [] : [{ spellId: fromId, level: tier, school: String(school) }];
       });
       await this.insertListings(

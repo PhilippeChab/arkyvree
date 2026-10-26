@@ -25,7 +25,8 @@ const ID = z.string().uuid();
 /**
  * An entity's columns as a form gives them, read by their descriptions (its rules'), for a new entity or an edit:
  * - a column takes its input's values (a reference an id, a choice one of its options, a number a whole one in its
- *   bounds, a decimal one kept to two places), several for a multiple one;
+ *   bounds, a decimal one kept to two places), several for a multiple one, a number or a decimal within what it holds
+ *   exactly (`Decimals.largest`);
  * - none clears a nullable one (an empty text or select is none), and refuses any other;
  * - a new entity's form gives a required one, or its default fills it in, and a required list of links one link at
  *   least; an edit leaves those it doesn't give as they are.
@@ -109,8 +110,8 @@ export default class FormColumns {
           required: false,
           schema: z
             .number()
-            .min(column.min ?? Number.NEGATIVE_INFINITY)
-            .max(column.max ?? Number.POSITIVE_INFINITY)
+            .min(Math.max(column.min ?? -Decimals.largest(2), -Decimals.largest(2)))
+            .max(Math.min(column.max ?? Decimals.largest(2), Decimals.largest(2)))
             .transform((value) => Decimals.toPlaces(value, 2)),
         };
       case "flag":
@@ -137,13 +138,15 @@ export default class FormColumns {
           schema: FormColumns.links(z.array(ID), column.required, creating),
         };
       case "number": {
+        // A whole number, which holds exactly what's a safe integer: `int` refuses any past it, a maximum past it aside
         const whole = z.number().int();
         const atLeast = column.min === undefined ? whole : whole.min(column.min);
+        const { max } = column;
         return {
           default: column.default ?? undefined,
           nullable: column.default === null,
           required: column.default !== null,
-          schema: column.max === undefined ? atLeast : atLeast.max(column.max),
+          schema: max === undefined || max >= Decimals.largest() ? atLeast : atLeast.max(max),
         };
       }
       case "ref":

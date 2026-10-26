@@ -1,8 +1,10 @@
-import type { FormField } from "@/engine/core/fields/index.ts";
+import { Field, type FormField } from "@/engine/core/fields/index.ts";
 import type { ListDescription } from "@/engine/core/module/index.ts";
 import { LOCATION_OPTIONS } from "@/vocabulary/dnd3.5/equipment.ts";
 import { ITEM_COST_GP, ITEM_IS_TEMPLATE, ITEM_SLOT, ITEM_TYPE, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { ITEM_TYPES, TEMPLATE_ITEM_TYPES } from "@/vocabulary/dnd3.5/itemTemplates.ts";
+
+import { ITEM_FIELDS } from "./fields.ts";
 
 /** A template's form shows it while its item is one: whether it's one isn't a column its form changes. */
 const AS_TEMPLATE = { path: "isTemplate", values: [true] };
@@ -11,9 +13,9 @@ const AS_TEMPLATE = { path: "isTemplate", values: [true] };
 const OF_TEMPLATE_TYPE = { path: "type", values: TEMPLATE_ITEM_TYPES };
 
 /**
- * A 3.5 item's columns, as its form shows them beside its name and description: its cost and its weight, its type (a
- * template's one a template can be of), and its slot, or, for a type a template can be of, its template (whose type
- * sets its slot: `ItemPlacement.slotOfType`).
+ * A 3.5 item's columns, as its form shows them beside its name and description: its cost and its weight (each within
+ * its field's bounds, and what it holds exactly: `Field.boundsOf`), its type (a template's one a template can be of),
+ * and its slot, or, for a type a template can be of, its template (whose type sets its slot: `ItemPlacement.slotOfType`).
  */
 export const ITEM_COLUMNS: FormField[] = [
   {
@@ -22,8 +24,8 @@ export const ITEM_COLUMNS: FormField[] = [
     input: "decimal",
     key: "costGp",
     label: "Cost",
-    max: 99_999_999.99,
-    min: 0,
+    max: Field.boundsOf(ITEM_FIELDS.fields.cost).max,
+    min: ITEM_FIELDS.fields.cost.min,
     unit: "gp",
   },
   {
@@ -32,8 +34,8 @@ export const ITEM_COLUMNS: FormField[] = [
     input: "decimal",
     key: "weight",
     label: "Weight",
-    max: 9_999.99,
-    min: 0,
+    max: Field.boundsOf(ITEM_FIELDS.fields.weight).max,
+    min: ITEM_FIELDS.fields.weight.min,
     unit: "lbs",
   },
   {

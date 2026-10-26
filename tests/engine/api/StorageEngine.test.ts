@@ -2,23 +2,34 @@ import { describe, expect, test } from "bun:test";
 
 import Modules from "@/engine/api/Modules.ts";
 import StorageEngine from "@/engine/api/StorageEngine.ts";
+import { Field, type Fields, type StoredLeaf } from "@/engine/core/fields/index.ts";
 import type {
   FieldValue,
-  Merge,
   RulesetModule,
   StorageRegistries,
   StoredEntity,
   StoredFieldValue,
   StoredLink,
 } from "@/engine/core/module/index.ts";
+import type { Merge } from "@/shared/customization/fields.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
-/** Every registered module, its registries' declarations changed by `change`. */
-function modulesWith(change: (registries: StorageRegistries) => void): [BaseRules, RulesetModule][] {
+/** The first stored field of `fields` (each owner type's) that `find` picks, its declaration to change in place. */
+function leafOf(fields: Record<string, Fields>, find: (leaf: StoredLeaf) => boolean): Record<string, unknown> {
+  return Object.values(fields)
+    .flatMap((owned) => Field.storedLeavesOf(owned))
+    .find(find) as unknown as Record<string, unknown>;
+}
+
+/** Every registered module, its registries' and its fields' declarations changed by `change`. */
+function modulesWith(
+  change: (registries: StorageRegistries, fields: Record<string, Fields>) => void,
+): [BaseRules, RulesetModule][] {
   return Modules.all().map(([baseRules, module]) => {
     const registries = structuredClone(module.storage.registries);
-    change(registries);
-    return [baseRules, { ...module, storage: { ...module.storage, registries } }];
+    const fields = structuredClone(module.fields) as Record<string, Fields>;
+    change(registries, fields);
+    return [baseRules, { ...module, fields, storage: { ...module.storage, registries } }];
   });
 }
 
@@ -58,9 +69,9 @@ function storedLink(role: string, toType: string, toId: string, createdAt: strin
   };
 }
 
-/** A stored value of a field, its first. */
-function storedValue(field: string, value: FieldValue): StoredFieldValue {
-  return { createdAt: "2026-01-01 00:00:00+00", field, ordinal: 0, updatedAt: "2026-01-01 00:00:00+00", value };
+/** A stored value of a field, its `ordinal`th. */
+function storedValue(field: string, value: FieldValue, ordinal = 0): StoredFieldValue {
+  return { createdAt: "2026-01-01 00:00:00+00", field, ordinal, updatedAt: "2026-01-01 00:00:00+00", value };
 }
 
 describe("A module's storage", () => {
@@ -92,70 +103,106 @@ describe("A module's storage", () => {
   test("reads the kinds a user customizes and the types whose entities hold fields into the view's kinds", () => {
     const storage = StorageEngine.shared();
     const { fieldDefs } = storage.registries();
-    // A field owner's fields aren't all its kind's own, and every customizable kind's are a kind's
-    const own = new Set(
-      storage.registries().entityTypes.flatMap(({ type }) => Object.keys(storage.kind(type).fields ?? {})),
-    );
-    expect(own.size).toBeGreaterThan(0);
-    for (const type of storage.fieldOwners())
-      expect(fieldDefs.some((def) => def.ownerType === type && !own.has(def.field))).toBe(true);
+    // Every field owner's fields are in the registries, as its module declares them
+    for (const type of storage.fieldOwners()) expect(fieldDefs.some((def) => def.ownerType === type)).toBe(true);
     for (const { customizable, fields, type } of storage.viewSchema().kinds) {
       expect(customizable).toBe(!!storage.kind(type).customizable);
       expect(fields).toBe(storage.fieldOwners().includes(type));
     }
   });
 
-  test("reads an entity's record: its own fields' values and its single links, not its stored values", () => {
+  test("reads an entity's record: every field it holds, in their declared order, and its single links", () => {
     const storage = StorageEngine.shared();
-    const { entityTypes, fieldDefs, linkRoles } = storage.registries();
-    const ownOf = (type: string) => storage.kind(type).fields ?? {};
-    const { type } = entityTypes.find(
-      (def) =>
-        Object.keys(ownOf(def.type)).length > 0 &&
-        fieldDefs.some((field) => field.ownerType === def.type && !(field.field in ownOf(def.type))),
-    )!;
-    const [ownField] = Object.keys(ownOf(type));
-    const declared = fieldDefs.find((def) => def.ownerType === type && !(def.field in ownOf(type)))!;
-    const single = linkRoles.find(
-      (def) => def.fromType === type && def.single && storage.recordReads().roles.includes(def.role),
-    );
+    const { fieldDefs, linkRoles } = storage.registries();
+    const set = fieldDefs.find((def) => def.ownerKind === "entity" && def.multiple && def.valueKind === "text")!;
+    const { ownerType: type } = set;
+    const single = fieldDefs.find((def) => def.ownerType === type && !def.multiple)!;
+    const singleRole = linkRoles.find((def) => def.fromType === type && def.single);
     const many = linkRoles.find((def) => def.fromType === type && !def.single);
     const record = storage.recordOf(
       storedEntity(
         type,
-        [storedValue(ownField, 2), storedValue(declared.field, "held")],
         [
-          ...(single ? [storedLink(single.role, single.toType, "s", "2026-01-01 00:00:00+00", 0)] : []),
+          storedValue(set.field, "zz", 0),
+          storedValue(set.field, "aa", 1),
+          storedValue(single.field, single.valueKind === "number" ? 2 : single.valueKind === "flag" || "held"),
+        ],
+        [
+          ...(singleRole ? [storedLink(singleRole.role, singleRole.toType, "s", "2026-01-01 00:00:00+00", 0)] : []),
           ...(many ? [storedLink(many.role, many.toType, "m", "2026-01-01 00:00:00+00", 0)] : []),
         ],
       ),
     );
     expect(record).toMatchObject({ id: "e", name: "E", type, partition: "" });
-    expect(record.fields).toEqual({ [ownField]: 2 });
-    expect(record.links).toEqual(single ? { [single.role]: "s" } : {});
-    expect(storage.recordReads().fields).toContain(ownField);
-    expect(storage.recordReads().fields).not.toContain(declared.field);
+    const declared = storage.declaredFields();
+    expect(record.fields).toEqual({
+      [set.field]: declared.orderValues(set.field, ["zz", "aa"]),
+      [single.field]: single.valueKind === "number" ? 2 : single.valueKind === "flag" || "held",
+    });
+    expect(Object.keys(record.fields)).toEqual(
+      [set.field, single.field].toSorted((a, b) => declared.compareFields(a, b)),
+    );
+    expect(record.links).toEqual(singleRole ? { [singleRole.role]: "s" } : {});
   });
 
-  test("writes a new entity with its kind's own fields' defaults and its partition", () => {
+  test("stores a number field's value kept to its places, refusing one it doesn't hold exactly, a character's too", () => {
+    const storage = StorageEngine.shared();
+    const { fieldDefs } = storage.registries();
+    const scaled = fieldDefs.find(
+      (def) => def.valueKind === "number" && storage.declaredFields().scaleOf(def.ownerType, def.field) === 2,
+    )!;
+    const whole = fieldDefs.find((def) => def.ownerType === "characters" && def.valueKind === "number")!;
+    expect(storage.storedNumber(scaled.ownerType, scaled.field, 1.005)).toBe("1.01");
+    expect(storage.storedNumber(scaled.ownerType, scaled.field, 90_071_992_547_409.9)).toBe("90071992547409.9");
+    expect(storage.storedNumber(whole.ownerType, whole.field, Number.MAX_SAFE_INTEGER)).toBe("9007199254740991");
+    for (const value of [Number("12345678901234567.89"), 1e21, 1e300, Number.NaN]) {
+      expect(() => storage.storedNumber(scaled.ownerType, scaled.field, value)).toThrow(
+        "holds a number it keeps exactly",
+      );
+    }
+    for (const value of [Number.MAX_SAFE_INTEGER + 2, -1e300]) {
+      expect(() => storage.storedNumber(whole.ownerType, whole.field, value)).toThrow(
+        "holds a number it keeps exactly",
+      );
+    }
+  });
+
+  test("reads kind-wide only the fields declared so, of a kind that declares any", () => {
+    const storage = StorageEngine.shared();
+    const declared = storage.declaredFields();
+    const { fieldDefs } = storage.registries();
+    const owner = fieldDefs.find(
+      (def) => def.ownerKind === "entity" && declared.kindWideFields(def.ownerType).size > 0,
+    )!.ownerType;
+    const [wide] = declared.kindWideFields(owner);
+    const own = fieldDefs.find(
+      (def) => def.ownerType === owner && !def.multiple && !declared.kindWideFields(owner).has(def.field),
+    )!;
+    const none = fieldDefs.find(
+      (def) => def.ownerKind === "entity" && declared.kindWideFields(def.ownerType).size === 0,
+    )!;
+    const value = (def: { valueKind: string }) => (def.valueKind === "number" ? 1 : def.valueKind === "flag" || "x");
+    const wideDef = fieldDefs.find((def) => def.ownerType === owner && def.field === wide)!;
+    const values = storage.kindValues([
+      { ...storedEntity(owner, [storedValue(wide, value(wideDef)), storedValue(own.field, value(own))], []), id: "a" },
+      { ...storedEntity(none.ownerType, [storedValue(none.field, value(none))], []), id: "b" },
+    ]);
+    expect([...values.keys()]).toEqual([owner]);
+    expect(values.get(owner)).toEqual([{ entityIds: ["a"], field: wide, value: String(value(wideDef)) }]);
+  });
+
+  test("writes a new entity with its fields always written's defaults and its partition", () => {
     const storage = StorageEngine.shared();
     const { entityTypes } = storage.registries();
     for (const { type } of entityTypes) {
-      const kind = storage.kind(type);
       const { fields, partition } = storage.defaultsOf(type);
-      expect(partition).toBe(kind.partition ?? "");
-      expect(fields).toEqual(
-        Object.fromEntries(
-          Object.entries(kind.fields ?? {}).flatMap(([field, own]) =>
-            own.default === undefined ? [] : [[field, own.default]],
-          ),
-        ),
-      );
+      expect(partition).toBe(storage.kind(type).partition ?? "");
+      expect(fields).toEqual(storage.declaredFields().writtenDefaults(type));
     }
     expect(entityTypes.some(({ type }) => Object.keys(storage.defaultsOf(type).fields).length > 0)).toBe(true);
   });
 
-  test("reads an entity's links of the roles it holds many of, in their order, as a view holds them", () => {
+  test("reads an entity's links as a view holds them: in the order they were made, then by ordinal and target", () => {
     const storage = StorageEngine.shared();
     const { linkRoles } = storage.registries();
     const many = linkRoles.find((def) => !def.single)!;
@@ -166,13 +213,13 @@ describe("A module's storage", () => {
       storedLink(many.role, many.toType, "a", "2026-01-01 00:00:00+00", 1),
       ...(single ? [storedLink(single.role, single.toType, "d", "2026-01-01 00:00:00+00", 0)] : []),
     ];
-    const read = storage.viewLinksOf({ id: "e", links, type: many.fromType });
+    const read = storage.viewLinksOf({ id: "e", links });
     expect(read.map(({ fromId, role, toId }) => [fromId, role, toId])).toEqual([
+      ...(single ? [["e", single.role, "d"]] : []),
       ["e", many.role, "a"],
       ["e", many.role, "c"],
       ["e", many.role, "b"],
     ]);
-    expect(storage.viewLinksOf({ id: "e", links, type: "none" })).toEqual([]);
   });
 
   test("names the roles an entity's page edits, and those whose links refuse their target's delete", () => {
@@ -188,30 +235,30 @@ describe("A module's storage", () => {
     }
   });
 
-  test("refuses a merge or an inheritance it can't read, as the registries' checks did", () => {
+  test("refuses a merge or an inheritance it can't read", () => {
     expect(() => new StorageEngine(Modules.all())).not.toThrow();
     const unknownMerge = modulesWith((registries) => {
       registries.linkRoles[0].merge = "average" as Merge;
     });
     expect(() => new StorageEngine(unknownMerge)).toThrow("merges by average, no rule the engine has");
-    const unionOfOne = modulesWith((registries) => {
-      registries.fieldDefs.find((def) => !def.multiple)!.merge = "union";
+    const unionOfOne = modulesWith((_, fields) => {
+      leafOf(fields, (leaf) => !Field.storedKindOf(leaf).multiple).merge = "union";
     });
     expect(() => new StorageEngine(unionOfOne)).toThrow("holds one value: its sibling copies can't union it");
     const unionOfSingle = modulesWith((registries) => {
       registries.linkRoles.find((def) => def.single)!.merge = "union";
     });
-    expect(() => new StorageEngine(unionOfSingle)).toThrow("is single: its sibling copies can't union it");
-    const inherited = StorageEngine.shared()
-      .registries()
-      .fieldDefs.find((def) => def.inheritsVia !== null)!;
+    expect(() => new StorageEngine(unionOfSingle)).toThrow("holds one value: its sibling copies can't union it");
+    const inherits = Object.values(Modules.all()[0][1].fields)
+      .flatMap((owned) => Field.storedLeavesOf(owned))
+      .find((leaf) => leaf.inherits)!.inherits!;
     const throughMany = modulesWith((registries) => {
-      for (const role of registries.linkRoles) if (role.role === inherited.inheritsVia) role.single = false;
+      for (const role of registries.linkRoles) if (role.role === inherits) role.single = false;
     });
-    expect(() => new StorageEngine(throughMany)).toThrow(`is read off another through ${inherited.inheritsVia}`);
-    const notAnEntity = modulesWith((registries) => {
-      registries.fieldDefs.find((def) => def.ownerKind !== "entity")!.inheritsVia = inherited.inheritsVia;
+    expect(() => new StorageEngine(throughMany)).toThrow(`is read off another through ${inherits}`);
+    const notAnEntity = modulesWith((_, fields) => {
+      leafOf({ rulesets: fields.rulesets! }, () => true).inherits = inherits;
     });
-    expect(() => new StorageEngine(notAnEntity)).toThrow(`is read off another through ${inherited.inheritsVia}`);
+    expect(() => new StorageEngine(notAnEntity)).toThrow(`is read off another through ${inherits}`);
   });
 });

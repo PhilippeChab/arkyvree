@@ -4,6 +4,11 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import {
+  SKILL_CHECK_PENALTY_MULTIPLIER,
+  SKILL_IMPACTED_BY_WEIGHT,
+  SKILL_USABLE_WITHOUT_TRAINING,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const kinds = api.api.rulesets[":id"].entities[":entityType"];
 const entity = kinds[":entityId"];
@@ -18,9 +23,15 @@ describe("rulesets entities: skills", () => {
     const fields = { impactedByWeight: false, checkPenaltyMultiplier: 1, usableWithoutTraining: true };
     const created = await expectOk(kinds.$post({ param: { id, entityType }, json: { ...columns, fields } }));
     const { primaryAbilityId, ...own } = columns;
+    // Its fields answered by the stored field that keeps each
+    const answered = (values: typeof fields) => ({
+      [SKILL_IMPACTED_BY_WEIGHT]: values.impactedByWeight,
+      [SKILL_CHECK_PENALTY_MULTIPLIER]: values.checkPenaltyMultiplier,
+      [SKILL_USABLE_WITHOUT_TRAINING]: values.usableWithoutTraining,
+    });
     expect(created).toMatchObject({
       ...own,
-      ...fields,
+      fields: answered(fields),
       links: [{ role: "keyAbility", toId: primaryAbilityId, toName: "Intelligence" }],
     });
     const param = { id, entityType, entityId: created.id };
@@ -33,7 +44,7 @@ describe("rulesets entities: skills", () => {
     const updatedFields = { ...fields, impactedByWeight: true };
     expect(await expectOk(entity.$put({ param, json: { ...update, fields: updatedFields } }))).toMatchObject({
       name: update.name,
-      ...updatedFields,
+      fields: answered(updatedFields),
       links: [{ role: "keyAbility", toId: update.primaryAbilityId, toName: "Wisdom" }],
     });
 

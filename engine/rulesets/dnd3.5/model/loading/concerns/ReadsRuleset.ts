@@ -1,4 +1,5 @@
 import type { CharacterDataLoader } from "@/engine/core/character/index.ts";
+import { OwnerValues } from "@/engine/core/fields/index.ts";
 import type { CharacterRows } from "@/engine/core/module/index.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import { CLASS_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
@@ -10,7 +11,7 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { CasterType } from "@/vocabulary/dnd3.5/classes.ts";
 
-/** What a character's load reads of its ruleset's view: its rows, its fields and the 3.5 meaning of its stored values. */
+/** What a character's load reads of its ruleset's view: its rows, their fields and their 3.5 meaning. */
 export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCharacterData>>>(Base: B) {
   abstract class ReadingRuleset extends Base {
     /**
@@ -37,7 +38,9 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
       const klassBonusSpellAbilityMap = new Map<string, string>();
       const klassCasterTypeMap = new Map<string, CasterType>();
       for (const classId of classIds) {
-        const { bonusSpellAbilityId, casterType } = CLASS_FIELDS.read(rulesetData.valuesOf(classId));
+        const { bonusSpellAbilityId, casterType } = CLASS_FIELDS.read(
+          rulesetData.find("classes", classId) ?? OwnerValues.NONE,
+        );
         const abilityName = bonusSpellAbilityId ? abilityLookup.get(bonusSpellAbilityId) : undefined;
         if (abilityName) klassBonusSpellAbilityMap.set(classId, abilityName);
         if (casterType) klassCasterTypeMap.set(classId, casterType);
@@ -46,13 +49,11 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
     }
 
     /**
-     * The D&D 3.5 reading of the view's stored values: the fields of each of the ruleset's skills, and the ruleset's
-     * Settings: the skill-point ability, and the feats and ability increases its levels give (`LevelRules`).
+     * The D&D 3.5 reading of the view's values: the fields of each of the ruleset's skills, and the ruleset's Settings:
+     * the skill-point ability, and the feats and ability increases its levels give (`LevelRules`).
      */
     protected readRulesetValues({ ruleset, rulesetData }: RulesetView, resolveId: (id: string) => string) {
-      const skillFields = new Map(
-        rulesetData.rows("skills").map((skill) => [skill.id, SKILL_FIELDS.read(rulesetData.valuesOf(skill.id))]),
-      );
+      const skillFields = new Map(rulesetData.rows("skills").map((skill) => [skill.id, SKILL_FIELDS.read(skill)]));
 
       // Each setting is the nearest ruleset of the chain's that holds it: the fork's own once it saves one, its
       // source's until then

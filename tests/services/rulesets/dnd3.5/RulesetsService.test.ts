@@ -43,9 +43,9 @@ import { insertRows } from "@/tests/support/database.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestKlassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { addClassSkills, addLists, findLists } from "@/tests/support/dnd3.5/links.ts";
+import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
 import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
-import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import {
   CLASS_HD,
@@ -253,7 +253,7 @@ describe("RulesetsService", () => {
         name: "Intelligence",
         rulesetId: parent.id,
       });
-      await writeStoredValues("rulesets", parent.id, [], { skillPointAbility: intelligence.id });
+      await writeFieldValues("rulesets", parent.id, [], { skillPointAbility: intelligence.id });
 
       const created = await fork(session, parent, { name: "My Fork", private: true });
       expect(created).toMatchObject({
@@ -276,7 +276,7 @@ describe("RulesetsService", () => {
         links: [{ role: "listedIn", toId: aptitude.id }],
       });
       // Ruleset-wide settings are copied as they are.
-      expect(await findStoredValues("rulesets", created.id)).toEqual({
+      expect(await findFormValues("rulesets", created.id)).toEqual({
         fields: {},
         links: { skillPointAbility: intelligence.id },
       });
@@ -327,13 +327,13 @@ describe("RulesetsService", () => {
       const { user, session } = await createTestUser();
       const ruleset = await createTestRuleset(user.id, { status: "Published" });
       const { feat, race } = await addPlayableContent(ruleset.id);
-      await writeStoredValues("feats", feat.id, [[FEAT_FAMILY, "combat"]]);
+      await writeFieldValues("feats", feat.id, [[FEAT_FAMILY, "combat"]]);
       await createTestCampaign(user.id, ruleset.id);
       await createTestCharacter(user.id, { rulesetId: ruleset.id, raceId: race.id });
 
       expect(await RulesetsService.archiveRuleset(session, ruleset.id)).toMatchObject({ status: "Archived" });
       expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toMatchObject({ id: feat.id });
-      expect(await findStoredValues("feats", feat.id)).toEqual({ fields: { [FEAT_FAMILY]: ["combat"] }, links: {} });
+      expect(await findFormValues("feats", feat.id)).toEqual({ fields: { [FEAT_FAMILY]: ["combat"] }, links: {} });
 
       expect(await RulesetsService.unarchiveRuleset(session, ruleset.id)).toMatchObject({ status: "Draft" });
     });
@@ -557,7 +557,7 @@ describe("RulesetsService", () => {
           valueType: "number",
           operator: "add",
         });
-        await writeStoredValues("feats", copy.id, [[FEAT_FAMILY, "combat"]]);
+        await writeFieldValues("feats", copy.id, [[FEAT_FAMILY, "combat"]]);
         await Requirements.create(db, { entityId: copy.id, entityType: "feats", level: "1", chainingOperator: "and" });
 
         await RulesetChangesService.revertOverride(session, fork.id, "feats", modified.id);
@@ -568,7 +568,7 @@ describe("RulesetsService", () => {
           description: null,
         });
         expect(await Modifiers.findMany(db, { sourceIds: [copy.id], sourceType: "feats" })).toEqual([]);
-        expect(await findStoredValues("feats", copy.id)).toEqual({ fields: {}, links: {} });
+        expect(await findFormValues("feats", copy.id)).toEqual({ fields: {}, links: {} });
         expect(await Requirements.findMany(db, { entityIds: [copy.id], entityType: "feats" })).toEqual([]);
         expect(await findLists(db, [copy.id])).toEqual([]);
       });

@@ -1,5 +1,4 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
-import type { StoredValues } from "@/engine/core/fields/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { SPELL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/spells/fields.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
@@ -53,13 +52,7 @@ export default class SpellGroupingsComponent extends CharacterComponent<LoadedCh
     this.seedEmptyGroupings([...groupingValues]);
 
     const { spellSlugByAptitudeId } = SpellLists.of(rulesetData);
-    for (const spell of spells) {
-      this.registerSpell(
-        spell,
-        spellSlugByAptitudeId.get(spell.viaId) ?? spell.viaId,
-        rulesetData.valuesOf(spell.entity.id),
-      );
-    }
+    for (const spell of spells) this.registerSpell(spell, spellSlugByAptitudeId.get(spell.viaId) ?? spell.viaId);
   }
 
   /**
@@ -88,13 +81,12 @@ export default class SpellGroupingsComponent extends CharacterComponent<LoadedCh
 
   /**
    * A spell's DC as one class casts it (`aptitudeSlug`, its list's): its level on that class's list and that class's
-   * casting ability, its school and descriptors read off its stored values (`values`). The spell's other classes keep
-   * theirs. Its school and descriptor groupings hold it, and so do its DCs (`getDcs`).
+   * casting ability, its school and descriptors read off its fields. The spell's other classes keep theirs. Its school
+   * and descriptor groupings hold it, and so do its DCs (`getDcs`).
    */
   registerSpell(
     { abilityDcName, entity, spellLevel }: Pick<HeldSpell, "abilityDcName" | "entity" | "spellLevel">,
     aptitudeSlug: string,
-    values: StoredValues,
   ): SpellDc | null {
     if (spellLevel == null || abilityDcName == null) return null;
 
@@ -116,7 +108,7 @@ export default class SpellGroupingsComponent extends CharacterComponent<LoadedCh
 
     const normalizedSpellName = stripSeparators(entity.name);
     // A spell is grouped under its school and each of its descriptors
-    const { descriptors, school } = SPELL_FIELDS.read(values);
+    const { descriptors, school } = SPELL_FIELDS.read(entity);
     for (const value of school === null ? descriptors : [school, ...descriptors]) {
       const grouping = stripSeparators(value);
       if (!grouping) continue;

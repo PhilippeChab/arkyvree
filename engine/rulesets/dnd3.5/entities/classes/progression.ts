@@ -3,6 +3,7 @@ import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatS
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import { formatSigned } from "@/shared/text.ts";
 import { BAB_PROGRESSIONS, MAX_CLASS_LEVEL, SAVE_PROGRESSIONS } from "@/vocabulary/dnd3.5/classes.ts";
+import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import ProgressionLabels from "./ProgressionLabels.ts";
@@ -87,6 +88,7 @@ export const PROGRESSION: ProgressionDescription = {
   ],
   tracks: [
     {
+      field: CLASS_LEVEL_BAB,
       key: "bab",
       label: "Base Attack Bonus",
       // A full base attack bonus's at the last level: one never outruns its level
@@ -122,6 +124,7 @@ export const PROGRESSION: ProgressionDescription = {
       source: "amounts",
     },
     {
+      field: CLASS_LEVEL_SKILL_POINTS,
       key: "skills",
       label: "Skill Points",
       max: RULESET_LIMITS.tableCount,

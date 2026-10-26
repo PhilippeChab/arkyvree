@@ -1,6 +1,5 @@
 import { expect, test } from "bun:test";
 
-import type { StoredValues } from "@/engine/core/fields/index.ts";
 import type { FieldValue } from "@/engine/core/module/index.ts";
 import type { Aptitude, Feat } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
@@ -16,13 +15,13 @@ import { expectRefusedWith } from "@/tests/support/api.ts";
 import { measure } from "@/tests/support/database.ts";
 import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { addLists } from "@/tests/support/dnd3.5/links.ts";
+import { findFormValues, type HeldValues, viewValuesOf, writeFieldValues } from "@/tests/support/ownerValues.ts";
 import {
   copyEntity,
   createSeededTestRuleset,
   type Described,
   invalidateTestRulesets,
 } from "@/tests/support/rulesets.ts";
-import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { FEAT_FAMILY, FEAT_WEAPON_FINESSE, SPELL_SUBSCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -312,8 +311,8 @@ test("installing another extension preserves the local override and exposes unre
   const { session, host, winnerId, loser, loserRulesetId, rulesetIds } = await setup("feats", "snapshot");
   // A family of the losing copy's own: a set, which a winner's view unions with its siblings'
   const family = "New Extension";
-  await writeStoredValues("feats", loser.id, [[FEAT_FAMILY, family]]);
-  const holds = ({ fields }: StoredValues) => (fields[FEAT_FAMILY] ?? []).includes(family);
+  await writeFieldValues("feats", loser.id, [[FEAT_FAMILY, family]]);
+  const holds = ({ fields }: HeldValues) => (fields[FEAT_FAMILY] ?? []).includes(family);
   invalidateTestRulesets(...rulesetIds);
   await RulesetExtensionsService.unsubscribeExtension(session, host.id, loserRulesetId);
   const local = await EntitiesService.updateEntity(session, host.id, "feats", winnerId, {
@@ -326,13 +325,13 @@ test("installing another extension preserves the local override and exposes unre
   });
   await RulesetExtensionsService.subscribeExtension(session, host.id, [loserRulesetId]);
   await withRulesetScope(db, host.id, async ({ rulesetData }) => {
-    expect(holds(rulesetData.valuesOf(local.id))).toBe(false);
+    expect(holds(viewValuesOf(rulesetData, local.id))).toBe(false);
     expect(Dnd35View.of(rulesetData).featsById.has(unrelated.id)).toBe(true);
     expect(rulesetData.canonicalize(loser.id)).toBe(local.id);
   });
   await RulesetChangesService.revertOverride(session, host.id, "feats", winnerId);
   await withRulesetScope(db, host.id, async ({ rulesetData }) => {
-    expect(holds(rulesetData.valuesOf(winnerId))).toBe(true);
+    expect(holds(viewValuesOf(rulesetData, winnerId))).toBe(true);
   });
 });
 
@@ -343,7 +342,7 @@ for (const entityType of ["feats", "spells"] as const) {
       const precedence = PRECEDENCE[entityType];
       for (const [index, { copy }] of extensions.entries()) {
         if (index === 0) continue;
-        await writeStoredValues(entityType, copy.id, [[precedence.type, precedence.valueOf(index)]]);
+        await writeFieldValues(entityType, copy.id, [[precedence.type, precedence.valueOf(index)]]);
         const [modifier] = await Modifiers.create(db, {
           ...STRENGTH_BONUS,
           sourceId: copy.id,
@@ -370,11 +369,11 @@ for (const entityType of ["feats", "spells"] as const) {
         invalidateTestRulesets(fork.id, ...rulesetIds);
         const winnerId = extensions[0].copy.id;
         const visible = await withRulesetScope(db, fork.id, async ({ rulesetData }) => ({
-          value: rulesetData.valuesOf(winnerId).fields[precedence.type]![0],
+          value: viewValuesOf(rulesetData, winnerId).fields[precedence.type]![0],
           modifier: rulesetData.modifiersBySource.get(winnerId)!.find((m) => m.target === STRENGTH_BONUS.target)!,
         }));
         expect(visible.value).toBe(precedence.valueOf(order[1]));
-        const sourceValues = () => findStoredValues(entityType, extensions[order[1]].copy.id);
+        const sourceValues = () => findFormValues(entityType, extensions[order[1]].copy.id);
         const shownValues = await sourceValues();
         const sourceRequirements = await Requirements.findMany(db, {
           entityIds: [visible.modifier.id],
@@ -399,7 +398,7 @@ for (const entityType of ["feats", "spells"] as const) {
         );
         // The entity copied with its modifier holds the value the view showed, its source's left as it was
         const { sourceId: copyId } = (await Modifiers.findOne(db, { id: added.resolvedEntityId }))!;
-        expect((await findStoredValues(entityType, copyId)).fields[precedence.type]).toEqual([visible.value]);
+        expect((await findFormValues(entityType, copyId)).fields[precedence.type]).toEqual([visible.value]);
         expect(await sourceValues()).toEqual(shownValues);
       }
     });

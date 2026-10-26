@@ -1,20 +1,16 @@
 import type { Db } from "@/drizzle/database.ts";
-import type { EntityCustomizations, StoredValues } from "@/engine/index.ts";
-import { CUSTOMIZABLE_TYPES, Fields, Modifiers, Requirements } from "@/server/repositories/index.ts";
+import type { EntityCustomizations } from "@/engine/index.ts";
+import { CUSTOMIZABLE_TYPES, Modifiers, Requirements } from "@/server/repositories/index.ts";
 
 /**
- * An entity's customizations (its modifiers, each with its requirements, its requirements and its stored values), read
- * and copied onto other entities: a copy's (`EntityCopy`), and a duplicate's (an item's, its variants', a modifier's).
+ * An entity's customizations (its modifiers, each with its requirements, and its requirements), read and copied onto
+ * other entities: a copy's (`EntityCopy`), and a duplicate's (an item's, its variants', a modifier's).
  */
 export default class CustomizationCopies {
-  /**
-   * Each entity's customizations, by its id: the rows grouped by the entity they belong to, a modifier's by its source,
-   * and its stored values (`values`, by its id).
-   */
+  /** Each entity's customizations, by its id: the rows grouped by the entity they belong to, a modifier's by its source. */
   private static group(
     entityIds: string[],
     modifiers: EntityCustomizations["modifiers"],
-    values: ReadonlyMap<string, StoredValues>,
     requirements: EntityCustomizations["requirements"],
     modifierRequirements: EntityCustomizations["modifierRequirements"],
   ): Map<string, EntityCustomizations> {
@@ -22,8 +18,7 @@ export default class CustomizationCopies {
     for (const m of modifiers) modifierToEntity.set(m.id, m.sourceId);
 
     const map = new Map<string, EntityCustomizations>();
-    for (const id of entityIds)
-      map.set(id, { modifiers: [], requirements: [], modifierRequirements: [], values: values.get(id)! });
+    for (const id of entityIds) map.set(id, { modifiers: [], requirements: [], modifierRequirements: [] });
 
     for (const m of modifiers) map.get(m.sourceId)?.modifiers.push(m);
     for (const r of requirements) map.get(r.entityId)?.requirements.push(r);
@@ -91,7 +86,7 @@ export default class CustomizationCopies {
     const orphan = sourceCust.modifierRequirements.find((r) => !sourceModifierIds.has(r.entityId));
     if (orphan) throw new Error(`Modifier requirement ${orphan.id} belongs to a modifier outside the copied set`);
 
-    const { modifiers, requirements, modifierRequirements, values } = sourceCust;
+    const { modifiers, requirements, modifierRequirements } = sourceCust;
     const newModifiers = await CustomizationCopies.copyRows(
       tx,
       Modifiers,
@@ -99,11 +94,6 @@ export default class CustomizationCopies {
       targetEntityIds,
       (_, targetId) => ({ sourceId: targetId }),
       copiedIds,
-    );
-    // Stored values are copied as values, which no row's id names: each field and link they hold replaced
-    await Fields.update(
-      tx,
-      targetEntityIds.map((id) => ({ id, type: entityType, values })),
     );
     await CustomizationCopies.copyRows(
       tx,
@@ -128,8 +118,8 @@ export default class CustomizationCopies {
   }
 
   /**
-   * The customizations of `entityIds` (of `entityType`), by entity, read by their stored ids: their stored values and
-   * requirements, and, for a type modifiers have (`sourceType`), their modifiers with each one's requirements.
+   * The customizations of `entityIds` (of `entityType`), by entity, read by their stored ids: their requirements, and,
+   * for a type modifiers have (`sourceType`), their modifiers with each one's requirements.
    */
   static async read(
     tx: Db,
@@ -138,7 +128,6 @@ export default class CustomizationCopies {
     sourceType?: string,
   ): Promise<Map<string, EntityCustomizations>> {
     const modifiers = sourceType ? await Modifiers.findMany(tx, { sourceIds: entityIds, sourceType }) : [];
-    const values = await Fields.findMany(tx, { ownerIds: entityIds, ownerType: entityType });
     const requirements = await Requirements.findMany(tx, { entityIds, entityType });
 
     const modifierRequirements = await Requirements.findMany(tx, {
@@ -146,6 +135,6 @@ export default class CustomizationCopies {
       entityType: "modifiers",
     });
 
-    return CustomizationCopies.group(entityIds, modifiers, values, requirements, modifierRequirements);
+    return CustomizationCopies.group(entityIds, modifiers, requirements, modifierRequirements);
   }
 }

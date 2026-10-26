@@ -61,6 +61,7 @@ import {
 } from "@/tests/support/dnd3.5/levels.ts";
 import { addClassSkills, addGrants, addListings, addLists } from "@/tests/support/dnd3.5/links.ts";
 import { getPlanAnswer, getStepOptions, stepAnswerOf } from "@/tests/support/levels.ts";
+import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
 import {
   copyEntity,
   createSeededTestRuleset,
@@ -69,7 +70,6 @@ import {
   invalidateSeededRuleset,
 } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
-import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 import {
   CLASS_HD,
@@ -268,7 +268,7 @@ async function setupRuleset({ fork = false } = {}) {
   const klassLevels = [];
   for (let level = 1; level <= 5; level++) {
     const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: level });
-    await writeStoredValues("class_levels", klassLevel.id, [
+    await writeFieldValues("class_levels", klassLevel.id, [
       [CLASS_LEVEL_BAB, level],
       [CLASS_LEVEL_SKILL_POINTS, 2 + Math.floor(level / 2)],
     ]);
@@ -1153,7 +1153,7 @@ describe("LevelsService", () => {
         { target: "feats.martialweaponproficiencylongsword.possessed", value: "true", operator: "set" },
         { target: "feats.weaponfocuslongsword.possessed", value: "true", operator: "set" },
       ]);
-      expect((await findStoredValues("feats", longsword)).fields[FEAT_FAMILY].toSorted()).toEqual([
+      expect((await findFormValues("feats", longsword)).fields[FEAT_FAMILY].toSorted()).toEqual([
         "Martial Weapon Proficiency",
         "Weapon Focus",
       ]);

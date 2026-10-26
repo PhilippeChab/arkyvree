@@ -9,10 +9,13 @@ import { SPELL_SAVE_EFFECT } from "@/vocabulary/dnd3.5/fields/index.ts";
  * A saving throw as its save (its `resistedBy` link) and effect (its `SPELL_SAVE_EFFECT`): "Will negates" is Will,
  * "negates". Text that names no save is all effect.
  */
-function parseSavingThrow(savingThrow: string | undefined, saveMap: Record<string, string>) {
-  if (!savingThrow || savingThrow === "None") return {};
+function parseSavingThrow(
+  savingThrow: string | undefined,
+  saveMap: Record<string, string>,
+): { fields: Record<string, string>; links: Record<string, string | null> } {
+  if (!savingThrow || savingThrow === "None") return { fields: {}, links: {} };
   const match = savingThrow.match(/^(Will|Reflex|Fortitude)\s+(.+)$/);
-  if (!match) return { fields: { [SPELL_SAVE_EFFECT]: savingThrow } };
+  if (!match) return { fields: { [SPELL_SAVE_EFFECT]: savingThrow }, links: {} };
   return { fields: { [SPELL_SAVE_EFFECT]: match[2] }, links: { resistedBy: saveMap[match[1]] ?? null } };
 }
 
@@ -28,12 +31,19 @@ export function SeedsSpells<B extends Constructor<BaseSeeder>>(Base: B) {
 
       const ids = await this.insertEntities(
         "spells",
-        spells.map((spell) => ({
-          rulesetId: this.ctx.rulesetId,
-          name: spell.name,
-          description: spell.description,
-          ...parseSavingThrow(spell.savingThrow, this.ctx.saveMap),
-        })),
+        spells.map((spell) => {
+          const save = parseSavingThrow(spell.savingThrow, this.ctx.saveMap);
+          return {
+            rulesetId: this.ctx.rulesetId,
+            name: spell.name,
+            description: spell.description,
+            fields: {
+              ...Engine.forRules(DND35_BASE_RULES).toFieldsWrite("spells", spell.fields).fields,
+              ...save.fields,
+            },
+            links: save.links,
+          };
+        }),
       );
       Object.assign(this.ctx.spellMap, ids);
 
@@ -49,13 +59,6 @@ export function SeedsSpells<B extends Constructor<BaseSeeder>>(Base: B) {
       await this.insertListings(
         "spells",
         this.uniqueBy(links, (l) => `${l.entityId}:${l.aptitudeId}`),
-      );
-      await this.writeFields(
-        spells.map((spell) => ({
-          id: ids[spell.name],
-          type: "spells",
-          values: Engine.forRules(DND35_BASE_RULES).toFieldsWrite("spells", spell.fields),
-        })),
       );
     }
   }

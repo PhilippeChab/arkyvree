@@ -4,9 +4,8 @@ import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { Engine, type EntityFieldValues } from "@/engine/index.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { Activities } from "@/server/repositories/index.ts";
+import { Activities, RulesetSettings } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** A ruleset's Settings: its own fields (3.5's skill points' ability), as its chain composes them, and their save. */
@@ -21,7 +20,7 @@ class RulesetSettingsService {
 
   /**
    * A save of the ruleset's Settings (`body.fields`, those it changes), by who may edit its content: checked by its
-   * rules, written as the ruleset's own stored values, which its chain's give way to, and recorded as the ruleset's
+   * rules, written as the ruleset's own fields and links, which its chain's give way to, and recorded as the ruleset's
    * own update is. Answers the Settings it keeps, as `getSettings` does.
    */
   async updateSettings(session: Session, rulesetId: string, body: { fields?: EntityFieldValues }) {
@@ -31,8 +30,8 @@ class RulesetSettingsService {
           const { ruleset } = scope;
           (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
 
-          const { fields, writes } = Engine.for(scope).planSettings(body);
-          await writeEntityWrites(tx, scope, { entityId: ruleset.id, entityType: "rulesets" }, writes);
+          const { fields, write } = Engine.for(scope).planSettings(body);
+          await RulesetSettings.update(tx, [{ id: ruleset.id, write }]);
           await Activities.create(tx, {
             userId: session.userId,
             targetId: ruleset.id,

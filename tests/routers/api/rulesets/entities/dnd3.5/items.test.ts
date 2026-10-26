@@ -63,7 +63,7 @@ describe("rulesets entities: items", () => {
       }),
     );
     expect(cleared.links).toEqual([]);
-    expect([ITEM_WEIGHT, ITEM_COST_GP].filter((field) => field in cleared.fields)).toEqual([]);
+    expect([cleared.fields[ITEM_WEIGHT], cleared.fields[ITEM_COST_GP]]).toEqual([null, null]);
 
     // A slot's none is "Other": worn nowhere in particular
     const hat = await expectOk(kinds.$post({ param: { id, entityType }, json: { name: "Test Hat", slot: "Head" } }));

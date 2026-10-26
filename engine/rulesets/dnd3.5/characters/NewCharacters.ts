@@ -30,7 +30,7 @@ type MethodData = (typeof CREATION_METHODS)[number];
 /**
  * Each field a new character's form sends (`CHARACTER_FORM`'s), by its key: its experience a whole number from 0, its
  * alignment and gender among their options, all three required; its age a whole number from 1, and its texts, each
- * optional (null or empty: none).
+ * optional (null or empty: none). A whole number is a safe integer (`int`), which a field holds exactly.
  */
 const NEW_FIELDS = z
   .object({

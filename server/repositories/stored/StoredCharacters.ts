@@ -22,19 +22,21 @@ export interface CharacterValuesWrite {
  * field's kind and each role's entity type as the modules declare them.
  */
 export default class StoredCharacters {
-  /** A field's value as its column holds it, refused when it isn't of its declared kind. */
+  /**
+   * A field's value as its column holds it, refused when it isn't of its declared kind, or a number its field doesn't
+   * hold exactly (`StorageEngine.storedNumber`).
+   */
   private static columnsOf(field: string, value: CharacterFieldValue) {
-    const def = Engine.storage().field("characters", field);
+    const storage = Engine.storage();
+    const def = storage.field("characters", field);
     if (!def) throw new Error(`No module declares the character field ${field}`);
-    if (def.valueKind === "number" && (typeof value !== "number" || !Number.isFinite(value)))
-      throw new Error(`The character field ${field} holds a number, not ${String(value)}`);
     if (def.valueKind === "text" && typeof value !== "string")
       throw new Error(`The character field ${field} holds a text, not ${String(value)}`);
     return {
       valueKind: def.valueKind,
       multiple: false,
       textValue: def.valueKind === "text" ? String(value) : null,
-      numberValue: def.valueKind === "number" ? String(value) : null,
+      numberValue: def.valueKind === "number" ? storage.storedNumber("characters", field, value) : null,
     };
   }
 

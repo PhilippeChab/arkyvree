@@ -10,6 +10,7 @@ import { expectRefusedWith } from "@/tests/support/api.ts";
 import { readClassTable } from "@/tests/support/dnd3.5/classTables.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type Body = Parameters<typeof EntitiesService.updateProgression>[4];
 
@@ -51,15 +52,19 @@ describe("EntitiesService: a class's progression", () => {
     expect(saved.entityId).not.toBe(klass.id);
     // The copy's levels it wrote
     expect(saved.ownedIds.toSorted()).toEqual([1, 2, 20].map((level) => levels.get(level)!.id).toSorted());
-    expect([1, 2, 20].map((level) => [levels.get(level)!.bab, levels.get(level)!.skills])).toEqual([
+    const babAndSkills = (level: { fields: Readonly<Record<string, unknown>> }) => [
+      level.fields[CLASS_LEVEL_BAB],
+      level.fields[CLASS_LEVEL_SKILL_POINTS],
+    ];
+    expect([1, 2, 20].map((level) => babAndSkills(levels.get(level)!))).toEqual([
       [1, 6],
       [2, 6],
       [20, 6],
     ]);
     // Another level, and the ancestor's class, stay as they were
-    expect(levels.get(3)!).toMatchObject({ bab: 2, skills: 4 });
+    expect(babAndSkills(levels.get(3)!)).toEqual([2, 4]);
     const ancestor = await EntitiesService.getOwnedEntities(fork.ancestorRulesetIds[0], "classes", klass.id);
-    expect(ancestor.find((level) => level.position === 1)).toMatchObject({ bab: 0, skills: 4 });
+    expect(babAndSkills(ancestor.find((level) => level.position === 1)!)).toEqual([0, 4]);
   });
 
   test("writes a level's saves and granted feats as its own form does", async () => {

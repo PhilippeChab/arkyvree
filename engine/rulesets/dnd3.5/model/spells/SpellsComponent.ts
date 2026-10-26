@@ -1,4 +1,6 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
+import { Field, OwnerValues } from "@/engine/core/fields/index.ts";
+import type { OwnerFields } from "@/engine/core/module/index.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import { SPELL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/spells/fields.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
@@ -41,6 +43,14 @@ type SpellGroupEntry = Record<string, Record<string, { dc: SpellDc }>>;
 type SpellGroupsNamespace = Record<string, SpellGroupEntry>;
 
 /**
+ * The fields a spell's entry lists: those its values are read kind-wide by (`kindWide`), every one but what a save
+ * against it does, which its entry shows with its save.
+ */
+const LISTED: ReadonlySet<string> = new Set(
+  Field.storedLeavesOf(SPELL_FIELDS.fields).flatMap((leaf) => (leaf.kindWide ? [leaf.field] : [])),
+);
+
+/**
  * A character's spells: each one's entry, with its fields' values, its known flag on each list it's on and its DC as
  * each class casts it, and its schools' and descriptors' groupings under `groups`, the spell groupings' DCs.
  */
@@ -49,16 +59,27 @@ export default class SpellsComponent extends CharacterComponent<LoadedCharacterD
     super();
   }
 
+  /**
+   * A spell's fields its entry lists (`spell`, as the view has it), by field, in their declared order: those read
+   * kind-wide (`LISTED`, every one but what a save against it does, which its entry shows with its save:
+   * `saveEffect`); what its paths name too.
+   */
+  static listedFieldsOf(spell: Pick<Spell, "fields">): OwnerFields {
+    return Object.fromEntries(Object.entries(spell.fields).filter(([field]) => LISTED.has(field)));
+  }
+
   /** The name of the save a spell's targets make, none without one. */
   static saveNameOf(spell: Pick<Spell, "links">, rulesetData: RulesetData): string | null {
     const saveId = spell.links.resistedBy;
     return saveId ? (Dnd35View.of(rulesetData).savesById.get(saveId)?.name ?? null) : null;
   }
 
-  /** A spell's stored values (`spellId`'s, the view's) as text, by field, in their declared order: what its entry holds. */
-  static textsOf(rulesetData: RulesetData, spellId: string): Record<string, string[]> {
-    const { fields } = rulesetData.valuesOf(spellId);
-    return Object.fromEntries(Object.entries(fields).map(([field, values]) => [field, values.map(String)]));
+  /** A spell's fields its entry lists (`listedFieldsOf`), as text: what its entry holds. */
+  static textsOf(spell: Pick<Spell, "fields">): Record<string, string[]> {
+    const fields = SpellsComponent.listedFieldsOf(spell);
+    return Object.fromEntries(
+      Object.keys(fields).map((field) => [field, OwnerValues.valuesOf(fields, field).map(String)]),
+    );
   }
 
   /**
@@ -99,10 +120,7 @@ export default class SpellsComponent extends CharacterComponent<LoadedCharacterD
    */
   override initialize({ spells }: Pick<LoadedCharacterData, "spells">, { rulesetData }: RulesetView) {
     const dnd35 = Dnd35View.of(rulesetData);
-    this.addSpellEntries(
-      spells.map(({ entity }) => entity),
-      rulesetData,
-    );
+    this.addSpellEntries(spells.map(({ entity }) => entity));
 
     // Build spell known data nested under each spell entry: spell → aptitude → { known }, but on the lists a feat brings
     const { featListIds, spellSlugByAptitudeId } = SpellLists.of(rulesetData);
@@ -175,10 +193,10 @@ export default class SpellsComponent extends CharacterComponent<LoadedCharacterD
     }
   }
 
-  /** Each spell's entry (`spells`), with its fields' values as text, off the view's stored values. */
-  addSpellEntries(spells: Spell[], rulesetData: RulesetData) {
+  /** Each spell's entry (`spells`, as the view has them), with its fields' values as text. */
+  addSpellEntries(spells: Spell[]) {
     for (const spell of spells) {
-      const fields = SpellsComponent.textsOf(rulesetData, spell.id);
+      const fields = SpellsComponent.textsOf(spell);
 
       // A spell already listed keeps what's on its entry: its known flags and its DCs by class
       const slug = stripSeparators(spell.name);

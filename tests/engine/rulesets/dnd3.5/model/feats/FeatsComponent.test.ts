@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import { OwnerValues } from "@/engine/core/fields/index.ts";
 import FeatGroupingsComponent from "@/engine/rulesets/dnd3.5/model/feats/FeatGroupingsComponent.ts";
 import FeatsComponent from "@/engine/rulesets/dnd3.5/model/feats/FeatsComponent.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
@@ -17,7 +18,7 @@ describe("FeatsComponent.injectGroupings", () => {
     const named = (name: string) => Dnd35View.of(rulesetData).feats.find((feat) => feat.name === name)!;
     const generic = named("Martial Weapon Proficiency");
     const rapier = named("Martial Weapon Proficiency: Rapier");
-    const family = (rulesetData.valuesOf(rapier.id).fields[FEAT_FAMILY] ?? []).map(String);
+    const family = OwnerValues.valuesOf(rapier.fields, FEAT_FAMILY).map(String);
     const feats = new FeatsComponent();
     // The character holds the rapier's
     feats.initialize({ feats: [FeatsComponent.toVirtualFeat(rapier, false, rulesetData)] }, { ruleset, rulesetData });

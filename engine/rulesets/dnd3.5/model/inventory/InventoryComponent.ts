@@ -1,4 +1,5 @@
 import { CharacterComponent, type InventoryEntry } from "@/engine/core/character/index.ts";
+import { OwnerValues } from "@/engine/core/fields/index.ts";
 import { ITEM_FIELDS, type ItemFieldValues } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import InventorySlots from "@/engine/rulesets/dnd3.5/rules/InventorySlots.ts";
@@ -51,11 +52,12 @@ export default class InventoryComponent extends CharacterComponent<LoadedCharact
       const slot = InventorySlots.getSlot(entry.item.fields[ITEM_TYPE] ?? null, entry.location);
       if (!slot) continue;
 
+      const { fields: held } = entry.item;
       const fields = Object.fromEntries(
-        Object.entries(entry.item.values.fields).map(([field, values]) => [field, values.map(String).join(", ")]),
+        Object.keys(held).map((field) => [field, OwnerValues.valuesOf(held, field).map(String).join(", ")]),
       );
 
-      this.equipped.push({ entry, fields: ITEM_FIELDS.read(entry.item.values) });
+      this.equipped.push({ entry, fields: ITEM_FIELDS.read(entry.item) });
       if (entry.item.fields[ITEM_TYPE] === "Weapon") {
         // Weapons go into each weapon set that holds them
         const slotKey = slot as "mainhand" | "offhand" | "twohanded";

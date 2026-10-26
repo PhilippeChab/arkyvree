@@ -1,10 +1,21 @@
 /**
- * The D&D 3.5 entities' fields: each entity type's, in the order a stat block shows them (and its form its fields),
- * each declared once, as data the engine builds its kind's codec from (`FieldCodec`, `engine/core/fields/`, whose
- * `FieldSpec` is a declaration's shape): its name, the stored field that keeps it (a reference's, the role of its
- * owner's link), its label and what it's for, its kind, its closed list of values or the entity its value names, its
- * default and bounds, when it counts (`when`) and where its form shows it (`shownIn`). The engine reads them through
- * the 3.5 module's fields too: the order a ruleset's view keeps every entity's values in (`DeclaredFields`).
+ * The D&D 3.5 entities' fields: each entity type's, and a ruleset's Settings', in the order a stat block shows them
+ * (and its form its fields), each declared once, as data the engine stores and reads them by (its kind's codec,
+ * `FieldCodec`, and its storage, `Engine.storage()`; `FieldSpec` is a declaration's shape): its name, the stored field
+ * that keeps it (a reference's, the role of its owner's single link), its label and what it's for, its kind, its closed
+ * list of values or the entity its value names, its default, scale and bounds, how sibling copies merge it, the role
+ * its entity reads it off another through (an item's, its template's), when it counts (`when`) and where its form
+ * shows it (`shownIn`, `form`). A field merges by what its value is:
+ * - a set (a list, a progression) holds every copy's values (`union`);
+ * - a value that reads apart from the others falls back to a sibling's when the winning copy holds none (`fallback`);
+ * - a value its entity is read by, with its others, is the winning copy's alone (`winner`), so no stat line mixes two
+ *   copies' readings: a class's hit die, a feat's flags, an item's type, slot, cost and weight and whether it's a
+ *   template, a language's type, a race's size and speed, a spell's save effect (beside its save, its `resistedBy`
+ *   link, which merges so too); and a ruleset's Settings, which are the nearest ruleset's of its chain, whole.
+ *
+ * A field whose values name groupings across its kind (`kindWide`: a weapon's type, a feat's family, a spell's school)
+ * is read kind-wide, as the target paths label them: an item's, a feat's and a spell's but those its rules or its form's
+ * columns set (an item's type, slot, cost, weight and template flag, a feat's flags, a spell's save effect).
  */
 
 import {
@@ -23,7 +34,10 @@ import {
   MAX_GENERAL_FEATS_PER_LEVEL,
   MAX_TABLE_COUNT,
 } from "@/vocabulary/dnd3.5/classes.ts";
+import { LOCATION_OPTIONS } from "@/vocabulary/dnd3.5/equipment.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
+import { ITEM_TYPES } from "@/vocabulary/dnd3.5/itemTemplates.ts";
+import { SIZE_OPTIONS } from "@/vocabulary/dnd3.5/sizes.ts";
 import { SPELL_COMPONENTS, SPELL_DESCRIPTORS, SPELL_SCHOOLS, SPELL_SUBSCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
 import {
   DAMAGE_TYPES,
@@ -34,24 +48,33 @@ import {
 } from "@/vocabulary/dnd3.5/weapons.ts";
 
 import { ARMOR_AC_BONUS, ARMOR_CHECK_PENALTY, ARMOR_MAX_DEX, ARMOR_PROFICIENCY, ARMOR_TYPE } from "./armor.ts";
-import { CLASS_CASTER_TYPE } from "./class.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "./class.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "./classLevel.ts";
 import {
   FEAT_FAMILY,
+  FEAT_GENERATED,
   FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
+  FEAT_SELECTABLE,
+  FEAT_STACKABLE,
   FEAT_WEAPON_FINESSE,
   WIZARD_PROHIBITED_SCHOOL,
 } from "./feat.ts";
 import {
   DAMAGE_TYPE,
+  ITEM_COST_GP,
   ITEM_HAS_CHARGES,
+  ITEM_IS_TEMPLATE,
   ITEM_MADE_OF,
   ITEM_MASTERWORK,
+  ITEM_SLOT,
   ITEM_SPELL_FAILURE,
+  ITEM_TYPE,
+  ITEM_WEIGHT,
   MAGIC_AURA,
   MAGIC_CASTER_LEVEL,
 } from "./item.ts";
-import { RACE_QUADRUPED, RACE_SPEED_IGNORES_ENCUMBRANCE } from "./race.ts";
+import { LANGUAGE_TYPE } from "./language.ts";
+import { RACE_BASE_SPEED, RACE_QUADRUPED, RACE_SIZE, RACE_SPEED_IGNORES_ENCUMBRANCE } from "./race.ts";
 import { RULESET_ABILITY_INCREASES, RULESET_FEAT_ADVANCEMENT } from "./ruleset.ts";
 import { SHIELD_AC_BONUS, SHIELD_PROFICIENCY, SHIELD_TYPE } from "./shield.ts";
 import { SKILL_CHECK_PENALTY_MULTIPLIER, SKILL_IMPACTED_BY_WEIGHT, SKILL_USABLE_WITHOUT_TRAINING } from "./skill.ts";
@@ -64,6 +87,7 @@ import {
   SPELL_EFFECT,
   SPELL_RANGE_TYPE,
   SPELL_RESISTANCE,
+  SPELL_SAVE_EFFECT,
   SPELL_SCHOOL,
   SPELL_SUBSCHOOL,
   SPELL_TARGET,
@@ -88,8 +112,16 @@ import {
   WEAPON_TYPE,
 } from "./weapon.ts";
 
-/** A class's fields: the ability its bonus spells and spell DCs come from, and its caster type. */
+/** A class's fields: its hit die, the ability its bonus spells and spell DCs come from, and its caster type. */
 const CLASS_FIELDS = {
+  hitDie: {
+    description: "The die each of the class's levels rolls for hit points",
+    form: "column",
+    kind: "number",
+    label: "Hit Die",
+    field: CLASS_HD,
+    merge: "winner",
+  },
   bonusSpellAbilityId: {
     description: "Ability score used for bonus spells per day",
     kind: "ref",
@@ -102,6 +134,7 @@ const CLASS_FIELDS = {
     kind: "choice",
     label: "Caster Type",
     field: CLASS_CASTER_TYPE,
+    merge: "fallback",
     values: CASTER_TYPES,
   },
 } as const;
@@ -120,6 +153,7 @@ const CLASS_LEVEL_FIELDS = {
     max: MAX_CLASS_LEVEL,
     min: 0,
     field: CLASS_LEVEL_BAB,
+    merge: "fallback",
     write: "always",
   },
   skills: {
@@ -130,40 +164,78 @@ const CLASS_LEVEL_FIELDS = {
     max: MAX_TABLE_COUNT,
     min: 0,
     field: CLASS_LEVEL_SKILL_POINTS,
+    merge: "fallback",
     write: "always",
   },
 } as const;
 
 /**
- * A feat's fields: the families it's in (a feat can be in two), the weapon rules it changes, and the schools it forbids
- * (a specialist wizard's).
+ * A feat's fields: whether a character takes it more than once, whether a level up picks it, whether its ruleset made
+ * it (each always written, which its rules set: no form shows them), the families it's in (a feat can be in two), the
+ * weapon rules it changes, and the schools it forbids (a specialist wizard's).
  */
 const FEAT_FIELDS = {
+  stackable: {
+    description: "Whether a character can take the feat more than once",
+    form: "hidden",
+    kind: "flag",
+    label: "Stackable",
+    field: FEAT_STACKABLE,
+    merge: "winner",
+    write: "always",
+  },
+  selectable: {
+    default: true,
+    description: "Whether a level up picks the feat (false: it's only granted)",
+    form: "hidden",
+    kind: "flag",
+    label: "Selectable",
+    field: FEAT_SELECTABLE,
+    merge: "winner",
+    write: "always",
+  },
+  generated: {
+    description: "Whether its ruleset generated the feat (Skill Focus in a skill)",
+    form: "hidden",
+    kind: "flag",
+    label: "Generated",
+    field: FEAT_GENERATED,
+    merge: "winner",
+    write: "always",
+  },
   families: {
     description: "Feat family grouping (Weapon Focus, Spell Focus, etc.)",
     kind: "list",
+    kindWide: true,
     label: "Families",
     field: FEAT_FAMILY,
+    merge: "union",
     values: FEAT_FAMILIES,
   },
   weaponFinesse: {
     description: "Whether the feat lets its owner attack with Dexterity with a finessable weapon (Weapon Finesse)",
     kind: "flag",
+    kindWide: true,
     label: "Weapon Finesse",
     field: FEAT_WEAPON_FINESSE,
+    merge: "fallback",
   },
   oversizedTwoWeaponFighting: {
     description:
       "Whether the feat makes a one-handed off-hand weapon count as light in two-weapon fighting (Oversized Two-Weapon Fighting)",
     kind: "flag",
+    kindWide: true,
     label: "Oversized Two-Weapon Fighting",
     field: FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
+    merge: "fallback",
   },
   prohibitedSchools: {
     description: "School of magic prohibited by wizard specialization",
     kind: "list",
+    kindWide: true,
     label: "Prohibited Schools",
     field: WIZARD_PROHIBITED_SCHOOL,
+    merge: "union",
   },
 } as const;
 
@@ -171,136 +243,244 @@ const FEAT_FIELDS = {
 const WORN = ["armor", "shield"] as const;
 
 /**
- * An item's fields, as stored: each none (or empty) without its row, a flag telling a `"false"` row from none
- * (`absent: null`). Its form shows a weapon's, an armor's and a shield's fields for an item of that type, in its
- * section: an armor's or a shield's max Dex bonus, check penalty and spell failure too, which both keep alike.
+ * An item's fields, as stored: its cost and weight (each to the hundredth, none below 0), its type, its slot (`"Other"`
+ * for none) and whether it's a template, which its form's columns show; then its type's and its make's, each none (or
+ * empty) without its row, a flag telling a `"false"` row from none (`absent: null`). An item made from a template reads
+ * each of them but its type, slot and template flag off its template when it holds none (`inherits`, its `madeFrom`
+ * link). Its form shows a weapon's, an armor's and a shield's fields for an item of that type, in its section: an
+ * armor's or a shield's max Dex bonus, check penalty and spell failure too, which both keep alike.
  */
 const ITEM_FIELDS = {
+  cost: {
+    description: "What it costs, in gold pieces",
+    form: "column",
+    kind: "number",
+    label: "Cost",
+    min: 0,
+    scale: 2,
+    field: ITEM_COST_GP,
+    inherits: "madeFrom",
+    merge: "winner",
+  },
+  weight: {
+    description: "What it weighs, in pounds",
+    form: "column",
+    kind: "number",
+    label: "Weight",
+    min: 0,
+    scale: 2,
+    field: ITEM_WEIGHT,
+    inherits: "madeFrom",
+    merge: "winner",
+  },
+  type: {
+    description: "What kind of item it is",
+    form: "column",
+    kind: "text",
+    label: "Item Type",
+    field: ITEM_TYPE,
+    merge: "winner",
+    values: ITEM_TYPES,
+  },
+  slot: {
+    default: "Other",
+    description: "Where it's worn or held",
+    form: "column",
+    kind: "text",
+    label: "Slot",
+    field: ITEM_SLOT,
+    merge: "winner",
+    values: LOCATION_OPTIONS,
+    write: "always",
+  },
+  template: {
+    description: "Whether it's a template others are made from",
+    form: "column",
+    kind: "flag",
+    label: "Template",
+    field: ITEM_IS_TEMPLATE,
+    merge: "winner",
+    write: "always",
+  },
   weapon: {
     fields: {
       type: {
         description: "Base weapon type for feat/modifier targeting (e.g. Longsword, Shortsword)",
         kind: "text",
+        kindWide: true,
         label: "Base Weapon",
         field: WEAPON_TYPE,
+        inherits: "madeFrom",
+        merge: "fallback",
         values: WEAPON_TYPE_NAMES,
       },
       proficiency: {
         description: "Weapon proficiency classification (Simple, Martial, Exotic)",
         kind: "text",
+        kindWide: true,
         label: "Proficiency",
         field: WEAPON_PROFICIENCY,
+        inherits: "madeFrom",
+        merge: "fallback",
         values: WEAPON_PROFICIENCIES,
       },
       family: {
         description: "Weapon family grouping (Sword, Axe, Bow, etc.)",
         kind: "text",
+        kindWide: true,
         label: "Family",
         field: WEAPON_FAMILY,
+        inherits: "madeFrom",
+        merge: "fallback",
         values: WEAPON_FAMILIES,
       },
       size: {
         description:
           "The weapon's effort, as the table gives it for a Medium wielder: Tiny or Small light, Medium one-handed, Large two-handed",
         kind: "text",
+        kindWide: true,
         label: "Size",
         field: WEAPON_SIZE,
+        inherits: "madeFrom",
+        merge: "fallback",
       },
       baseDamage: {
         description: "Base damage dice for weapons",
         kind: "text",
+        kindWide: true,
         label: "Damage",
         placeholder: 'e.g., "1d8"',
         field: WEAPON_BASE_DAMAGE,
+        inherits: "madeFrom",
+        merge: "fallback",
       },
       doubleDamage: {
         description: "A double weapon's other end's damage dice: in two hands, it fights as two weapons",
         kind: "text",
+        kindWide: true,
         label: "Other End's Damage",
         placeholder: 'e.g., "1d6"',
         field: WEAPON_DOUBLE_DAMAGE,
+        inherits: "madeFrom",
+        merge: "fallback",
       },
       damageTypes: {
         description: "Type of damage dealt",
         kind: "list",
+        kindWide: true,
         label: "Damage Types",
         field: DAMAGE_TYPE,
+        inherits: "madeFrom",
+        merge: "union",
         values: DAMAGE_TYPES,
       },
       criticalRange: {
         description: "Critical threat count (1 = 20, 2 = 19-20, 3 = 18-20, etc.)",
         kind: "number",
+        kindWide: true,
         label: "Critical Range",
         field: WEAPON_CRITICAL_RANGE,
+        inherits: "madeFrom",
+        merge: "fallback",
       },
       criticalMultiplier: {
         description: "Critical hit damage multiplier",
         kind: "number",
+        kindWide: true,
         label: "Critical Multiplier",
         field: WEAPON_CRITICAL_MULTIPLIER,
+        inherits: "madeFrom",
+        merge: "fallback",
       },
       strengthDamage: {
         description: "Strength to damage: Slot (the hand's share; default), Rating (bows: up to Mighty), None",
         kind: "text",
+        kindWide: true,
         label: "Strength to Damage",
         field: WEAPON_STRENGTH_DAMAGE,
+        inherits: "madeFrom",
+        merge: "fallback",
         values: STRENGTH_DAMAGE_RULES,
       },
       mighty: {
         description:
           "A composite bow's Strength rating: the most Strength bonus it adds to damage; below it, -2 to attack",
         kind: "number",
+        kindWide: true,
         label: "Mighty Rating",
         field: WEAPON_MIGHTY,
+        inherits: "madeFrom",
+        merge: "fallback",
       },
       ranged: {
         absent: null,
         description:
           "Whether it's a ranged weapon (thrown or projectile, not used in melee): its attacks use Dexterity",
         kind: "flag",
+        kindWide: true,
         label: "Ranged",
         field: WEAPON_RANGED,
+        inherits: "madeFrom",
+        merge: "fallback",
       },
       range: {
         description: "Range increment in feet: a ranged weapon's, or a thrown melee weapon's (0 or absent = none)",
         kind: "number",
+        kindWide: true,
         label: "Range Increment (ft.)",
         field: WEAPON_RANGE,
+        inherits: "madeFrom",
+        merge: "fallback",
       },
       maxRangeIncrements: {
         description:
           "How many range increments it reaches: 10 for a projectile weapon (a bow, a crossbow, a sling), 1 for a net (absent = 5)",
         kind: "number",
+        kindWide: true,
         label: "Range Increments",
         field: WEAPON_MAX_RANGE_INCREMENTS,
+        inherits: "madeFrom",
+        merge: "fallback",
       },
       reach: {
         description: "Melee reach in feet (0 or absent = 5 ft.)",
         kind: "number",
+        kindWide: true,
         label: "Reach (ft.)",
         field: WEAPON_REACH,
+        inherits: "madeFrom",
+        merge: "fallback",
       },
       finessable: {
         absent: null,
         description: "Whether a feat with FEAT_WEAPON_FINESSE (Weapon Finesse) lets this weapon attack with Dexterity",
         kind: "flag",
+        kindWide: true,
         label: "Finessable",
         field: WEAPON_FINESSABLE,
+        inherits: "madeFrom",
+        merge: "fallback",
       },
       oneHandTraining: {
         absent: null,
         description:
           "Whether it's too large for one hand without training (a bastard sword): there, only its proficiency lets it be used",
         kind: "flag",
+        kindWide: true,
         label: "One-Hand Training",
         field: WEAPON_ONE_HAND_TRAINING,
+        inherits: "madeFrom",
+        merge: "fallback",
       },
       oneHandedPenalty: {
         description:
           "Penalty to attack in one hand, when it takes two to load: a crossbow's (-2 light, -4 heavy; absent = none)",
         kind: "number",
+        kindWide: true,
         label: "One-Handed Penalty",
         field: WEAPON_ONE_HANDED_PENALTY,
+        inherits: "madeFrom",
+        merge: "fallback",
       },
     },
     kind: "group",
@@ -312,22 +492,31 @@ const ITEM_FIELDS = {
       type: {
         description: "Base armor type for feat/modifier targeting (e.g. Leather Armor, Full Plate)",
         kind: "text",
+        kindWide: true,
         label: "Base Armor",
         field: ARMOR_TYPE,
+        inherits: "madeFrom",
+        merge: "fallback",
         values: ARMOR_TYPE_NAMES,
       },
       proficiency: {
         description: "Armor proficiency classification (Light, Medium, Heavy)",
         kind: "text",
+        kindWide: true,
         label: "Proficiency",
         field: ARMOR_PROFICIENCY,
+        inherits: "madeFrom",
+        merge: "fallback",
         values: ARMOR_PROFICIENCIES,
       },
       acBonus: {
         description: "Armor class bonus from armor",
         kind: "number",
+        kindWide: true,
         label: "Armor Bonus",
         field: ARMOR_AC_BONUS,
+        inherits: "madeFrom",
+        merge: "fallback",
       },
     },
     kind: "group",
@@ -339,22 +528,31 @@ const ITEM_FIELDS = {
       type: {
         description: "Base shield type for feat/modifier targeting (e.g. Buckler, Tower Shield)",
         kind: "text",
+        kindWide: true,
         label: "Base Shield",
         field: SHIELD_TYPE,
+        inherits: "madeFrom",
+        merge: "fallback",
         values: SHIELD_TYPE_NAMES,
       },
       proficiency: {
         description: "Shield proficiency classification (Light, Heavy, Tower)",
         kind: "text",
+        kindWide: true,
         label: "Proficiency",
         field: SHIELD_PROFICIENCY,
+        inherits: "madeFrom",
+        merge: "fallback",
         values: SHIELD_PROFICIENCIES,
       },
       acBonus: {
         description: "Armor class bonus from shield",
         kind: "number",
+        kindWide: true,
         label: "Shield Bonus",
         field: SHIELD_AC_BONUS,
+        inherits: "madeFrom",
+        merge: "fallback",
       },
     },
     kind: "group",
@@ -365,74 +563,133 @@ const ITEM_FIELDS = {
   maxDex: {
     description: "Maximum dexterity bonus allowed",
     kind: "number",
+    kindWide: true,
     label: "Max Dex Bonus",
     shownIn: WORN,
     field: ARMOR_MAX_DEX,
+    inherits: "madeFrom",
+    merge: "fallback",
   },
   /** An armor's or a shield's. */
   checkPenalty: {
     description: "Penalty to Str/Dex-based skill checks",
     kind: "number",
+    kindWide: true,
     label: "Armor Check Penalty",
     shownIn: WORN,
     field: ARMOR_CHECK_PENALTY,
+    inherits: "madeFrom",
+    merge: "fallback",
   },
   spellFailure: {
     description: "Arcane spell failure chance percentage",
     kind: "number",
+    kindWide: true,
     label: "Arcane Spell Failure (%)",
     shownIn: WORN,
     field: ITEM_SPELL_FAILURE,
+    inherits: "madeFrom",
+    merge: "fallback",
   },
   masterwork: {
     absent: null,
     description: "Whether this item is masterwork quality (reduces armor check penalty by 1)",
     kind: "flag",
+    kindWide: true,
     label: "Masterwork",
     field: ITEM_MASTERWORK,
+    inherits: "madeFrom",
+    merge: "fallback",
   },
   madeOf: {
     description: "Material composition",
     kind: "text",
+    kindWide: true,
     label: "Material",
     field: ITEM_MADE_OF,
+    inherits: "madeFrom",
+    merge: "fallback",
     values: ["Adamantine", "Mithral", "Cold Iron", "Silver", "Darkwood"],
   },
   /** The charges it comes with, none for an item without charges. */
   charges: {
     description: "Default number of charges for this item",
     kind: "number",
+    kindWide: true,
     label: "Charges",
     field: ITEM_HAS_CHARGES,
+    inherits: "madeFrom",
+    merge: "fallback",
   },
   magicCasterLevel: {
     description: "Caster level required to create this magic item",
     kind: "number",
+    kindWide: true,
     label: "Caster Level",
     field: MAGIC_CASTER_LEVEL,
+    inherits: "madeFrom",
+    merge: "fallback",
   },
   magicAuras: {
     description: "Magic aura strength and school (e.g. Moderate transmutation)",
     kind: "list",
+    kindWide: true,
     label: "Auras",
     field: MAGIC_AURA,
+    inherits: "madeFrom",
+    merge: "union",
   },
 } as const;
 
-/** A race's fields: whether armor and load leave its speed, and whether it walks on four legs. */
+/** A language's fields: its type, which its form's column shows. */
+const LANGUAGE_FIELDS = {
+  type: {
+    description: "What kind of language it is (spoken, written, secret)",
+    form: "column",
+    kind: "text",
+    label: "Type",
+    field: LANGUAGE_TYPE,
+    merge: "winner",
+  },
+} as const;
+
+/**
+ * A race's fields: its members' size and base speed, which its form's columns show, whether armor and load leave its
+ * speed, and whether it walks on four legs.
+ */
 const RACE_FIELDS = {
+  size: {
+    description: "Its members' size",
+    form: "column",
+    kind: "text",
+    label: "Size",
+    field: RACE_SIZE,
+    merge: "winner",
+    values: SIZE_OPTIONS,
+  },
+  baseSpeed: {
+    description: "How far its members move a round, in feet",
+    form: "column",
+    kind: "number",
+    label: "Base Speed",
+    min: 1,
+    field: RACE_BASE_SPEED,
+    merge: "winner",
+  },
   speedIgnoresEncumbrance: {
     description:
       "Whether the race keeps its speed in medium or heavy armor and under a medium or heavy load (the dwarf)",
     kind: "flag",
     label: "Speed Ignores Encumbrance",
     field: RACE_SPEED_IGNORES_ENCUMBRANCE,
+    merge: "fallback",
   },
   quadruped: {
     description: "Whether the race walks on four legs, which carries more: x1 1/2 when Medium, x3 when Large (SRD)",
     kind: "flag",
     label: "Quadruped",
     field: RACE_QUADRUPED,
+    merge: "fallback",
   },
 } as const;
 
@@ -460,6 +717,7 @@ const RULESET_FIELDS = {
     levels: MAX_CHARACTER_LEVEL,
     max: MAX_GENERAL_FEATS_PER_LEVEL,
     field: RULESET_FEAT_ADVANCEMENT,
+    merge: "winner",
   },
   abilityIncreases: {
     default: { every: ABILITY_INCREASE_LEVEL_INTERVAL, extra: [] },
@@ -471,6 +729,7 @@ const RULESET_FIELDS = {
     // One at most: a level's increase raises one ability, which the level-up wizard picks
     max: 1,
     field: RULESET_ABILITY_INCREASES,
+    merge: "winner",
   },
 } as const;
 
@@ -485,6 +744,7 @@ const SKILL_FIELDS = {
     kind: "flag",
     label: "Impacted by Weight",
     field: SKILL_IMPACTED_BY_WEIGHT,
+    merge: "fallback",
   },
   checkPenaltyMultiplier: {
     default: 1,
@@ -493,6 +753,7 @@ const SKILL_FIELDS = {
     label: "Armor Check Penalty Multiplier",
     min: 1,
     field: SKILL_CHECK_PENALTY_MULTIPLIER,
+    merge: "fallback",
     when: { field: "impactedByWeight", values: [true] },
   },
   usableWithoutTraining: {
@@ -500,93 +761,127 @@ const SKILL_FIELDS = {
     kind: "flag",
     label: "Usable Without Training",
     field: SKILL_USABLE_WITHOUT_TRAINING,
+    merge: "fallback",
   },
 } as const;
 
-/** A spell's fields, in the order a 3.5 stat block shows them: its school, components, range… */
+/**
+ * A spell's fields, in the order a 3.5 stat block shows them: its school, components, range… and what a successful
+ * save does, which its form's column shows beside its save.
+ */
 const SPELL_FIELDS = {
   school: {
     description: "Spell school (Abjuration, Conjuration, etc.)",
     kind: "text",
+    kindWide: true,
     label: "School",
     field: SPELL_SCHOOL,
+    merge: "fallback",
     values: SPELL_SCHOOLS,
   },
   subschool: {
     description: "Spell subschool (Calling, Charm, Creation, etc.)",
     kind: "text",
+    kindWide: true,
     label: "Subschool",
     field: SPELL_SUBSCHOOL,
+    merge: "fallback",
     values: SPELL_SUBSCHOOLS,
   },
   descriptors: {
     description: "Spell descriptor (Fire, Cold, Mind-Affecting, etc.)",
     kind: "list",
+    kindWide: true,
     label: "Descriptors",
     field: SPELL_DESCRIPTOR,
+    merge: "union",
     values: SPELL_DESCRIPTORS,
   },
   components: {
     description: "Required component (Verbal, Somatic, Material, Focus, Divine Focus, XP Cost)",
     kind: "list",
+    kindWide: true,
     label: "Components",
     field: SPELL_COMPONENT,
+    merge: "union",
     values: SPELL_COMPONENTS,
   },
   castingTime: {
     description: 'Time to cast (e.g., "1 standard action", "1 round")',
     kind: "text",
+    kindWide: true,
     label: "Casting Time",
     placeholder: 'e.g., "1 standard action"',
     field: SPELL_CASTING_TIME,
+    merge: "fallback",
   },
   rangeType: {
     description: 'Range, as its book writes it (e.g., "Touch", "Close (25 ft. + 5 ft./2 levels)", "60 ft.")',
     kind: "text",
+    kindWide: true,
     label: "Range",
     placeholder: 'e.g., "Close (25 ft. + 5 ft./2 levels)"',
     field: SPELL_RANGE_TYPE,
+    merge: "fallback",
   },
   target: {
     description: 'Valid targets (e.g., "One creature", "You")',
     kind: "text",
+    kindWide: true,
     label: "Target",
     placeholder: 'e.g., "One creature"',
     field: SPELL_TARGET,
+    merge: "fallback",
   },
   effect: {
     description: 'What the spell brings into being (e.g., "One summoned creature", "Ray")',
     kind: "text",
+    kindWide: true,
     label: "Effect",
     placeholder: 'e.g., "One summoned creature"',
     field: SPELL_EFFECT,
+    merge: "fallback",
   },
   areaOfEffect: {
     description: 'Area of effect (e.g., "20-ft. radius", "Cone")',
     kind: "text",
+    kindWide: true,
     label: "Area of Effect",
     placeholder: 'e.g., "20-ft. radius"',
     field: SPELL_AREA_OF_EFFECT,
+    merge: "fallback",
   },
   duration: {
     description: 'Duration description (e.g., "1 round/level", "Instantaneous")',
     kind: "text",
+    kindWide: true,
     label: "Duration",
     placeholder: 'e.g., "1 round/level"',
     field: SPELL_DURATION,
+    merge: "fallback",
   },
   spellResistance: {
     description: 'Whether spell resistance applies, as its book writes it (e.g., "Yes", "No", "Yes (harmless)")',
     kind: "text",
+    kindWide: true,
     label: "Spell Resistance",
     placeholder: 'e.g., "Yes (harmless)"',
     field: SPELL_RESISTANCE,
+    merge: "fallback",
+  },
+  saveEffect: {
+    description: "What a successful save does",
+    form: "column",
+    kind: "text",
+    label: "Save Effect",
+    field: SPELL_SAVE_EFFECT,
+    merge: "winner",
   },
 } as const;
 
 /**
- * Each entity type's fields, by name, in the order its stat block shows them (and its form its fields): the one
- * declaration of each, which the engine's codecs are built from.
+ * Each entity type's fields, and a ruleset's Settings' (`rulesets`), by name, in the order its stat block shows them
+ * (and its form its fields): the one declaration of each, which the engine's codecs and its storage are built from.
  */
 export const ENTITY_FIELDS = {
   feats: FEAT_FIELDS,
@@ -595,6 +890,7 @@ export const ENTITY_FIELDS = {
   class_levels: CLASS_LEVEL_FIELDS,
   spells: SPELL_FIELDS,
   races: RACE_FIELDS,
+  languages: LANGUAGE_FIELDS,
   rulesets: RULESET_FIELDS,
   skills: SKILL_FIELDS,
 } as const;

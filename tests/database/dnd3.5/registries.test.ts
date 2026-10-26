@@ -184,8 +184,6 @@ describe("The registry sync, which every migrate runs", () => {
       field: "FEAT_SYNC_TEST",
       valueKind: "text",
       multiple: false,
-      merge: "fallback",
-      inheritsVia: null,
     });
     await StoredRegistries.reconcile(db, withField);
     expect(await countOf(sql`SELECT count(*) AS n FROM rules.field_defs WHERE field = 'FEAT_SYNC_TEST'`)).toBe(1);

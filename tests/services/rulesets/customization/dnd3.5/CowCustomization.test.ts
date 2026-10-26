@@ -15,8 +15,8 @@ import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
+import { writeFieldValues } from "@/tests/support/ownerValues.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
-import { writeStoredValues } from "@/tests/support/storedValues.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { CLASS_CASTER_TYPE, CLASS_HD, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -110,7 +110,7 @@ async function setup() {
     target: "abilities.strength.misc",
     value: "15",
   });
-  await writeStoredValues("feats", feat.id, [[FEAT_FAMILY, "combat"]]);
+  await writeFieldValues("feats", feat.id, [[FEAT_FAMILY, "combat"]]);
   await Requirements.create(db, {
     ...requirement,
     entityId: feat.id,
@@ -139,7 +139,7 @@ async function setup() {
       operator: "add",
     });
   }
-  await writeStoredValues("classes", klass.id, [[CLASS_CASTER_TYPE, "Arcane"]]);
+  await writeFieldValues("classes", klass.id, [[CLASS_CASTER_TYPE, "Arcane"]]);
   await Requirements.create(db, {
     ...requirement,
     entityId: klass.id,

@@ -13,6 +13,7 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { EntityLinks, Rulesets } from "@/server/repositories/index.ts";
+import { viewValuesOf } from "@/tests/support/ownerValues.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -95,14 +96,17 @@ describe("the view's links by role — parity with the stored links", () => {
     );
   });
 
-  test("kindValues indexes every (field, value) pair of every kind's entities' stored values", () => {
-    // The kind-wide index must hold every value of each entity of each kind the view holds, and none more — verify by
-    // reconstructing the expected mapping from each entity's stored values and comparing to the kind-wide one.
+  test("kindValues indexes every (field, value) pair of every kind's entities' fields read kind-wide", () => {
+    // The kind-wide index must hold every value of each entity of each kind the view holds of a field its kind reads
+    // kind-wide (`kindWide`), and none more — verify by reconstructing the expected mapping from each entity's fields
+    // and comparing to the kind-wide one.
+    const declared = StorageEngine.shared().declaredFields();
     let total = 0;
     for (const type of KINDS) {
       const expected = new Map<string, Set<string>>();
       for (const { id } of rulesetData.rows(type) as { id: string }[]) {
-        for (const [field, values] of Object.entries(rulesetData.valuesOf(id).fields)) {
+        for (const [field, values] of Object.entries(viewValuesOf(rulesetData, id).fields)) {
+          if (!declared.kindWideFields(type).has(field)) continue;
           for (const value of values) {
             const key = `${field}:${String(value)}`;
             expected.set(key, (expected.get(key) ?? new Set<string>()).add(id));
@@ -115,9 +119,10 @@ describe("the view's links by role — parity with the stored links", () => {
       );
       expect(actual).toEqual(expected);
     }
-    // Every kind holding values among them: its classes', levels', skills' and races' too
-    for (const type of ["classes", "class_levels", "feats", "items", "races", "skills", "spells"])
-      expect(rulesetData.kindValues(type).length).toBeGreaterThan(0);
+    // The kinds whose values name groupings hold them (a feat's family, an item's weapon type, a spell's school), and
+    // no other's
+    for (const type of ["feats", "items", "spells"]) expect(rulesetData.kindValues(type).length).toBeGreaterThan(0);
+    for (const type of ["classes", "class_levels", "races", "skills"]) expect(rulesetData.kindValues(type)).toEqual([]);
     expect(total).toBeGreaterThan(0);
 
     // And: looking up a known D&D 3.5 value returns the expected spells.

@@ -1,5 +1,6 @@
 import type { FormField } from "@/engine/core/fields/index.ts";
 import type { ListDescription } from "@/engine/core/module/index.ts";
+import { SKILL_USABLE_WITHOUT_TRAINING } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A 3.5 skill's columns, as its form shows them beside its name and description: the ability it's checked with. */
 export const SKILL_COLUMNS: FormField[] = [
@@ -26,6 +27,13 @@ export const SKILL_LIST: ListDescription = {
       role: "keyAbility",
       share: 15,
     },
-    { key: "usableWithoutTraining", label: "Trained Only", reads: "flag", share: 15, yesWhen: false },
+    {
+      field: SKILL_USABLE_WITHOUT_TRAINING,
+      key: "usableWithoutTraining",
+      label: "Trained Only",
+      reads: "flag",
+      share: 15,
+      yesWhen: false,
+    },
   ],
 };

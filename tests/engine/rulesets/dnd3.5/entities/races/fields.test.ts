@@ -2,20 +2,32 @@ import { describe, expect, test } from "bun:test";
 
 import { OwnerValues } from "@/engine/core/fields/index.ts";
 import { RACE_FIELDS } from "@/engine/rulesets/dnd3.5/entities/races/fields.ts";
-import { storedValues } from "@/tests/support/storedValues.ts";
-import { RACE_QUADRUPED, RACE_SPEED_IGNORES_ENCUMBRANCE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { heldValues } from "@/tests/support/ownerValues.ts";
+import {
+  RACE_BASE_SPEED,
+  RACE_QUADRUPED,
+  RACE_SIZE,
+  RACE_SPEED_IGNORES_ENCUMBRANCE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 describe("A race's fields", () => {
-  test("are each true when its value says so, and false without it", () => {
-    expect(RACE_FIELDS.read(OwnerValues.NONE)).toEqual({ quadruped: false, speedIgnoresEncumbrance: false });
+  test("are its size and speed as stored, and each flag true when its value says so, and false without it", () => {
+    expect(RACE_FIELDS.read(OwnerValues.NONE)).toEqual({
+      baseSpeed: null,
+      quadruped: false,
+      size: null,
+      speedIgnoresEncumbrance: false,
+    });
     expect(
       RACE_FIELDS.read(
-        storedValues([
+        heldValues([
+          [RACE_SIZE, "Small"],
+          [RACE_BASE_SPEED, 20],
           [RACE_QUADRUPED, true],
           [RACE_SPEED_IGNORES_ENCUMBRANCE, false],
           ["SOMETHING_ELSE", true],
         ]),
       ),
-    ).toEqual({ quadruped: true, speedIgnoresEncumbrance: false });
+    ).toEqual({ baseSpeed: 20, quadruped: true, size: "Small", speedIgnoresEncumbrance: false });
   });
 });

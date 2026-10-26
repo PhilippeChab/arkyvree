@@ -1,11 +1,13 @@
+import type { FieldsWrite } from "@/engine/core/fields/index.ts";
 import type { EntityRemoval, MadeEntity } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { FEAT_GENERATED } from "@/vocabulary/dnd3.5/fields/index.ts";
 
-/** A feat a plan makes with an entity: its name and description, its customizations. */
-export type GeneratedFeat = Pick<MadeEntity, "fields" | "modifiers" | "requirements"> & {
+/** A feat a plan makes with an entity: its name and description, its fields, its customizations. */
+export type GeneratedFeat = Pick<MadeEntity, "modifiers" | "requirements"> & {
   description: string;
+  fields: FieldsWrite;
   name: string;
 };
 
@@ -41,11 +43,15 @@ export default abstract class GeneratedFeats {
     const aptitudeId = dnd35.aptitudeIdBySlug.get(this.poolSlug);
     if (!aptitudeId || dnd35.feats.some((feat) => feat.name === feats[0]?.name)) return [];
     return feats.map(({ description, fields, modifiers, name: featName, requirements }) => ({
-      fields,
       links: [{ links: [{ toId: aptitudeId }], role: "listedIn", toType: "aptitudes" }],
       modifiers,
       requirements,
-      row: { description, fields: { [FEAT_GENERATED]: true }, name: featName },
+      row: {
+        description,
+        fields: { ...fields.fields, [FEAT_GENERATED]: true },
+        links: fields.links,
+        name: featName,
+      },
       type: "feats",
     }));
   }

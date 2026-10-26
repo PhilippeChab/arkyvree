@@ -109,7 +109,10 @@ export function ClassProgressionSection({ rulesetId, classId, className, classTy
   const progressionRules = rules?.progression;
   const grantsRules = progressionRules?.grants;
   const trackRules = progressionRules?.tracks ?? [];
-  const fieldKeys = trackRules.filter((track) => track.source === "field").map((track) => track.key);
+  const fieldTracks = trackRules.flatMap(({ field, key, source }) =>
+    source === "field" && field ? [{ field, key }] : [],
+  );
+  const fieldKeys = fieldTracks.map((track) => track.key);
   const { followCopy, queryKeysToInvalidate, tag } = useClassCopy(rulesetId, classType, classId);
 
   const query = levelsQuery(rulesetId, classType, classId);
@@ -120,7 +123,7 @@ export function ClassProgressionSection({ rulesetId, classId, className, classTy
     classTableQuery(rulesetId, classType, classId, grantsRules?.table),
   );
   const savedRows = (levelRows ?? []).toSorted(byLevel);
-  const levels = savedRows.map((row) => readLevel(row, levelColumns));
+  const levels = savedRows.map((row) => readLevel(row, levelColumns, fieldTracks));
   const savedFeatures = describeFeatureRows(levels);
   // Its pools, and the picks a granted entity gives in them, at the keys its rules say
   const answer: Record<string, unknown> | undefined = progression;

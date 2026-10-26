@@ -60,13 +60,12 @@ export default class SkillEntity extends RulesetEntity<
   }
 
   /**
-   * What saving a skill writes (`skill`: the one edited): the fields its form gives, and its Skill Focus, made with it
-   * and renamed with it.
+   * What saving a skill writes beside its row (`skill`: the one edited): its Skill Focus, made with it and renamed with
+   * it.
    */
-  protected override writesOf(body: SkillBody, given: Partial<SkillFieldValues>, skill?: Skill): EntityWrites {
+  protected override writesOf(body: SkillBody, _given: Partial<SkillFieldValues>, skill?: Skill): EntityWrites {
     const renamed = skill?.name !== body.name;
     return {
-      ...super.writesOf(body, given, skill),
       made: renamed ? this.skillFocus.make(body.name) : [],
       removed: skill && renamed ? this.skillFocus.remove(skill.name) : [],
     };

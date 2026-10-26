@@ -1,8 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
+import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import { Activities, CharacterInventory, EntitySnapshots } from "@/server/repositories/index.ts";
+import { Activities, CharacterInventory, Entities, EntitySnapshots } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
@@ -21,7 +22,7 @@ import {
   ITEM_WEIGHT,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
-/** The stored values `customize` gives an item: what it's made of, which it reads as its field. */
+/** The field `customize` gives an item: what it's made of. */
 const COLD_IRON = { fields: { [ITEM_MADE_OF]: ["Cold Iron"] }, links: {} };
 
 const copiedCustomizations = {
@@ -31,12 +32,16 @@ const copiedCustomizations = {
 };
 const noCustomizations = { modifiers: [], values: [], requirements: [] };
 
-/** A weapon template with a field and a requirement, which its instances read, and a modifier, which they don't. */
-async function createTemplate(session: Session, rulesetId: string) {
+/**
+ * A weapon template with a field and a requirement, which its instances read, and a modifier, which they don't; and
+ * the weight and cost `columns` give it.
+ */
+async function createTemplate(session: Session, rulesetId: string, columns: { costGp?: number; weight?: number } = {}) {
   const template = await EntitiesService.createEntity(session, rulesetId, "items", {
     name: "Sword Template",
     type: "Weapon",
     isTemplate: true,
+    ...columns,
   });
   await customize("items", template.id, { values: COLD_IRON });
   return template;
@@ -60,9 +65,8 @@ async function expectTemplateInstance(rulesetId: string, itemId: string, templat
   expect(await customizationsOf(itemId)).toEqual(noCustomizations);
   const view = await EntitiesService.getEntity(rulesetId, "items", itemId);
   expect(view).toMatchObject({
-    fields: { [ITEM_IS_TEMPLATE]: false },
+    fields: { [ITEM_IS_TEMPLATE]: false, [ITEM_MADE_OF]: "Cold Iron" },
     links: [{ role: "madeFrom", toId: templateId }],
-    madeOf: "Cold Iron",
     requirements: [{ target: "combat.bab" }],
     modifiers: [],
   });
@@ -71,7 +75,7 @@ async function expectTemplateInstance(rulesetId: string, itemId: string, templat
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts,
 // and templates' own rules in ItemTemplates.test.ts.
 describe("EntitiesService: items", () => {
-  test("stores weight and cost to the hundredth, and nothing when they're left out", async () => {
+  test("stores weight and cost to the hundredth, and none when they're left out", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     const scroll = await EntitiesService.createEntity(session, ruleset.id, "items", {
       name: "Scroll",
@@ -84,7 +88,7 @@ describe("EntitiesService: items", () => {
         .fields,
     ).toMatchObject({ [ITEM_WEIGHT]: 0, [ITEM_COST_GP]: 0 });
     const { fields: rock } = await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Rock" });
-    expect([rock[ITEM_WEIGHT], rock[ITEM_COST_GP]]).toEqual([undefined, undefined]);
+    expect([rock[ITEM_WEIGHT], rock[ITEM_COST_GP]]).toEqual([null, null]);
 
     expect(
       await EntitiesService.updateEntity(session, ruleset.id, "items", scroll.id, {
@@ -117,8 +121,11 @@ describe("EntitiesService: items", () => {
       weight: null,
       costGp: null,
     });
-    expect(cleared.fields).toEqual({ [ITEM_IS_TEMPLATE]: false, [ITEM_SLOT]: "Other" });
-    expect((await EntitiesService.getEntity(ruleset.id, "items", hat.id)).fields).toEqual({
+    const none = { [ITEM_IS_TEMPLATE]: false, [ITEM_SLOT]: "Other", [ITEM_WEIGHT]: null, [ITEM_COST_GP]: null };
+    expect(cleared.fields).toMatchObject(none);
+    expect((await EntitiesService.getEntity(ruleset.id, "items", hat.id)).fields).toMatchObject(none);
+    // Its record holds no weight nor cost, and its slot's default
+    expect((await Entities.findOne<Item>(db, { entityType: "items", id: hat.id }))!.fields).toEqual({
       [ITEM_IS_TEMPLATE]: false,
       [ITEM_SLOT]: "Other",
     });
@@ -147,7 +154,10 @@ describe("EntitiesService: items", () => {
       ).links,
     ).toEqual([]);
     // Its template's fields went with it
-    expect(await EntitiesService.getEntity(ruleset.id, "items", sword.id)).toMatchObject({ links: [], madeOf: null });
+    expect(await EntitiesService.getEntity(ruleset.id, "items", sword.id)).toMatchObject({
+      links: [],
+      fields: { [ITEM_MADE_OF]: null },
+    });
   });
 
   test("describes where a character carrying it can place it", async () => {
@@ -214,6 +224,26 @@ describe("EntitiesService: items", () => {
         type: "Weapon",
       });
       await expectTemplateInstance(ruleset.id, copy.id, template.id);
+    });
+
+    test("of an instance, keeps every field it holds of its own, its weight and cost over its template's", async () => {
+      const { session, ruleset } = await createTestUserAndRuleset();
+      const template = await createTemplate(session, ruleset.id, { weight: 4, costGp: 15 });
+      const instance = await EntitiesService.createEntity(session, ruleset.id, "items", {
+        name: "Heavy Sword",
+        type: "Weapon",
+        sourceItemId: template.id,
+        weight: 5,
+        costGp: 20,
+      });
+
+      const copy = await EntitiesService.duplicateEntity(session, ruleset.id, "items", instance.id, {
+        name: "Heavy Sword Copy",
+        type: "Weapon",
+      });
+      const own = { [ITEM_WEIGHT]: 5, [ITEM_COST_GP]: 20 };
+      expect(copy.fields).toMatchObject(own);
+      expect((await Entities.findOne<Item>(db, { entityType: "items", id: copy.id }))!.fields).toMatchObject(own);
     });
 
     test("doesn't find a source outside the ruleset", async () => {
@@ -294,6 +324,30 @@ describe("EntitiesService: items", () => {
       ]);
       await expectTemplateInstance(ruleset.id, ofTemplate.id, template.id);
       await expectTemplateInstance(ruleset.id, ofInstance.id, template.id);
+    });
+
+    test("of a template hold none of its weight or cost, and read them as it changes them", async () => {
+      const { session, ruleset } = await createTestUserAndRuleset();
+      const template = await createTemplate(session, ruleset.id, { weight: 4, costGp: 15 });
+      const [variant] = await EntitiesService.createVariants(session, ruleset.id, "items", template.id, [
+        { name: "Sword +1" },
+      ]);
+      // Its record holds neither: it reads its template's
+      expect(Object.keys(variant.fields)).not.toContainValues([ITEM_WEIGHT, ITEM_COST_GP]);
+      expect((await EntitiesService.getEntity(ruleset.id, "items", variant.id)).fields).toMatchObject({
+        [ITEM_WEIGHT]: 4,
+        [ITEM_COST_GP]: 15,
+      });
+
+      await EntitiesService.updateEntity(session, ruleset.id, "items", template.id, {
+        name: "Sword Template",
+        weight: 6,
+        costGp: 30,
+      });
+      expect((await EntitiesService.getEntity(ruleset.id, "items", variant.id)).fields).toMatchObject({
+        [ITEM_WEIGHT]: 6,
+        [ITEM_COST_GP]: 30,
+      });
     });
 
     test("can come from an item the ruleset inherits", async () => {

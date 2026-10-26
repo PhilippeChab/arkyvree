@@ -18,8 +18,8 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { addClassSkills, addGrants } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
-import { findStoredValues } from "@/tests/support/storedValues.ts";
+import { findFormValues } from "@/tests/support/ownerValues.ts";
+import { createTestRuleset, type Described } from "@/tests/support/rulesets.ts";
 import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
@@ -51,9 +51,11 @@ describe("EntitiesService: classes", () => {
   test("exposes the ability a class's bonus spells come from", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     const fighter = await EntitiesService.createEntity(session, ruleset.id, "classes", { name: "Fighter" });
-    expect(await EntitiesService.getEntity(ruleset.id, "classes", fighter.id)).toMatchObject({
-      bonusSpellAbilityId: null,
-    });
+    const bonusSpellAbilityOf = async (id: string) =>
+      (await EntitiesService.getEntity<Described<"classes">>(ruleset.id, "classes", id)).links
+        .filter((link) => link.role === "bonusSpellAbility")
+        .map((link) => link.toId);
+    expect(await bonusSpellAbilityOf(fighter.id)).toEqual([]);
 
     const wizard = await EntitiesService.createEntity(session, ruleset.id, "classes", { name: "Wizard", hd: 4 });
     const [intelligence] = await Entities.create<RulesetAbility>(db, "abilities", {
@@ -67,10 +69,8 @@ describe("EntitiesService: classes", () => {
       name: "Wizard",
       fields: { bonusSpellAbilityId: intelligence.id },
     });
-    expect(await EntitiesService.getEntity(ruleset.id, "classes", wizard.id)).toMatchObject({
-      bonusSpellAbilityId: intelligence.id,
-    });
-    expect(await findStoredValues("classes", wizard.id)).toEqual({
+    expect(await bonusSpellAbilityOf(wizard.id)).toEqual([intelligence.id]);
+    expect(await findFormValues("classes", wizard.id)).toEqual({
       fields: {},
       links: { bonusSpellAbility: intelligence.id },
     });

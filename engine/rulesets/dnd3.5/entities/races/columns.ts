@@ -1,7 +1,9 @@
-import type { FormField } from "@/engine/core/fields/index.ts";
+import { Field, type FormField } from "@/engine/core/fields/index.ts";
 import type { ListDescription } from "@/engine/core/module/index.ts";
 import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { SIZE_OPTIONS } from "@/vocabulary/dnd3.5/sizes.ts";
+
+import { RACE_FIELDS } from "./fields.ts";
 
 /** A 3.5 race's columns, as its form shows them beside its name and description: its size and its base speed. */
 export const RACE_COLUMNS: FormField[] = [
@@ -23,7 +25,8 @@ export const RACE_COLUMNS: FormField[] = [
     input: "number",
     key: "baseSpeed",
     label: "Base Speed",
-    min: 1,
+    max: Field.boundsOf(RACE_FIELDS.fields.baseSpeed).max,
+    min: RACE_FIELDS.fields.baseSpeed.min,
     unit: "feet",
   },
 ];

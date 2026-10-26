@@ -1,9 +1,9 @@
 import { eq } from "drizzle-orm";
 
 import { inventoryInCharacter } from "@/drizzle/schema.ts";
-import { Engine, type EntityWrite, type FieldValue, type ViewKinds } from "@/engine/index.ts";
+import type { EntityWrite, FieldValue, ViewKinds } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import { CharacterInventory, Entities, fetchEveryPage, Fields } from "@/server/repositories/index.ts";
+import { CharacterInventory, Entities, fetchEveryPage } from "@/server/repositories/index.ts";
 import type { Character } from "@/shared/relations.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
@@ -38,24 +38,17 @@ export async function carry(character: Pick<Character, "id">, carried: Carried[]
 }
 
 /**
- * A new item of the seeded ruleset (or `values.rulesetId`), with these stored fields' values (`fields`, a value each,
- * by field: the kind's own written with it, the others after). Its ruleset's cached rules are dropped, so what it reads
- * next sees the item.
+ * A new item of the seeded ruleset (or `values.rulesetId`), with these fields' values (`fields`, a value each, by
+ * field), written with it. Its ruleset's cached rules are dropped, so what it reads next sees the item.
  */
 export async function createTestItem(values: EntityWrite = {}, fields: Record<string, FieldValue> = {}) {
   const rulesetId = values.rulesetId ?? (await getSeedCtx()).rulesetId;
-  const own = Engine.storage().kind("items").fields ?? {};
-  const entries = Object.entries(fields);
   const [item] = await Entities.create<Item>(db, "items", {
     name: `Test Item ${uniqueId()}`,
     ...values,
-    fields: { ...values.fields, ...Object.fromEntries(entries.filter(([field]) => field in own)) },
+    fields: { ...values.fields, ...fields },
     rulesetId,
   });
-  const written = Object.fromEntries(
-    entries.filter(([field]) => !(field in own)).map(([field, value]) => [field, [value]]),
-  );
-  await Fields.update(db, [{ id: item.id, type: "items", values: { fields: written, links: {} } }]);
   invalidateSeededRuleset(rulesetId);
   return item;
 }

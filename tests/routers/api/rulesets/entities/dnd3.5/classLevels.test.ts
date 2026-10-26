@@ -8,6 +8,7 @@ import { Entities } from "@/server/repositories/index.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const klass = api.api.rulesets[":id"].entities[":entityType"][":entityId"];
 const levels = klass.owned;
@@ -40,7 +41,10 @@ describe("rulesets class levels", () => {
     const created = await expectOk(
       levels.$post({ param: classParam(id, classId), json: { level: 1, fields: { bab: 1, skills: 4 } } }),
     );
-    expect(created).toMatchObject({ position: 1, bab: 1, skills: 4 });
+    expect(created).toMatchObject({
+      position: 1,
+      fields: { [CLASS_LEVEL_BAB]: 1, [CLASS_LEVEL_SKILL_POINTS]: 4 },
+    });
     const param = { ...classParam(id, classId), ownedId: created.id };
 
     const byId = await expectOk(
@@ -55,8 +59,7 @@ describe("rulesets class levels", () => {
     const { updatedAt } = created;
     expect(await expectOk(level.$put({ param, json: { fields: { bab: 3, skills: 6 }, updatedAt } }))).toMatchObject({
       position: 1,
-      bab: 3,
-      skills: 6,
+      fields: { [CLASS_LEVEL_BAB]: 3, [CLASS_LEVEL_SKILL_POINTS]: 6 },
     });
     // An edit started from the level before that one is stale
     await expectStatus(level.$put({ param, json: { fields: { bab: 4 }, updatedAt } }), 409);

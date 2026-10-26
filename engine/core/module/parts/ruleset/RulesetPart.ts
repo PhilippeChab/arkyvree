@@ -1,5 +1,4 @@
-import type { EntityFieldValues, FieldCodec, FormField, LeafSpec } from "@/engine/core/fields/index.ts";
-import type { EntityWrites } from "@/engine/core/module/parts/entities/index.ts";
+import type { EntityFieldValues, FieldCodec, FieldsWrite, FormField, LeafSpec } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
@@ -11,13 +10,13 @@ const ENGINE_WORDS: Readonly<Record<string, RulesWord>> = { modifiers: { many: "
 
 /**
  * What a ruleset answers of a ruleset as a whole, past its entities: what it needs to be published, its own fields, its
- * Settings (`fields`, which its stored values hold), as its chain composes them and as their save writes them, and what
- * every ruleset of its base rules shares (`rules`).
+ * Settings (`fields`, which its own fields and links hold), as its chain composes them and as their save writes them,
+ * and what every ruleset of its base rules shares (`rules`).
  */
 export default abstract class RulesetPart {
   /**
-   * The ruleset's own fields, its Settings, which its stored values hold (3.5's: the skill points' ability), each a
-   * value of its own: none is a group.
+   * The ruleset's own fields, its Settings, which its own fields and links hold (3.5's: the skill points' ability, a
+   * link), each a value of its own: none is a group.
    */
   protected abstract readonly fields: FieldCodec<Readonly<Record<string, LeafSpec>>>;
 
@@ -28,8 +27,8 @@ export default abstract class RulesetPart {
   protected abstract findMissingContent(view: RulesetView): string[];
 
   /**
-   * The ruleset's Settings, read off its chain's own stored values, the fork's first (a fork holds a copy of its
-   * source's until it saves its own): a reference the id the view keys its entity by.
+   * The ruleset's Settings, read off its chain's own, the fork's first (a fork holds a copy of its source's until it
+   * saves its own): a reference the id the view keys its entity by.
    */
   private settingsOf(view: RulesetView) {
     const { ruleset, rulesetData } = view;
@@ -68,12 +67,12 @@ export default abstract class RulesetPart {
   /**
    * A save of the ruleset's Settings (`body.fields`, those it changes): read as an entity's fields are, against the
    * ruleset's declarations (refused as invalid otherwise), over those it has. The values it keeps once written, and
-   * the ruleset's own stored values that keep them.
+   * the write of the ruleset's own fields and links that keep them.
    */
   planSettings(
     view: RulesetView,
     body: { fields?: EntityFieldValues },
-  ): { fields: EntityFieldValues; writes: EntityWrites } {
+  ): { fields: EntityFieldValues; write: FieldsWrite } {
     const kept = this.settingsOf(view);
     const ids = new RequestIds(view.rulesetData, "this ruleset");
     const given = this.fields.parse(body.fields, {
@@ -81,6 +80,6 @@ export default abstract class RulesetPart {
       resolve: (type, id) => ids.resolve(type, id),
     });
     const fields = this.fields.merge(kept, given);
-    return { fields, writes: { fields: this.fields.write(fields) } };
+    return { fields, write: this.fields.write(fields) };
   }
 }

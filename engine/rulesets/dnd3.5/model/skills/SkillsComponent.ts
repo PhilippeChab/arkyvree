@@ -90,7 +90,7 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
   private skillPointClassLevelFields: Map<string, { bab: number; skills: number }> = new Map();
 
   /**
-   * Each of the ruleset's skills, with the fields its stored values hold (`skillFields`) and the ranks the character's class
+   * Each of the ruleset's skills, with its fields (`skillFields`) and the ranks the character's class
    * levels put in it; and the skill points' budget, from the ruleset's skill point ability (`skillPointAbilityId`) and
    * each class level's points (`classLevelFields`).
    */

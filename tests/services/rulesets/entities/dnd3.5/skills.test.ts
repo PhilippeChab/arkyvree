@@ -9,6 +9,11 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { addClassSkills } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import {
+  SKILL_CHECK_PENALTY_MULTIPLIER,
+  SKILL_IMPACTED_BY_WEIGHT,
+  SKILL_USABLE_WITHOUT_TRAINING,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A skill as it reads: its columns, and its fields beside them. */
 interface SkillValues {
@@ -23,11 +28,16 @@ interface SkillValues {
 type SkillBody = Parameters<typeof EntitiesService.createEntity>[3];
 
 /**
- * What a write of a skill (`values`, as it reads) answers, as a read does: its ability (named `abilityName`) its
- * `keyAbility` link.
+ * What a write of a skill (`values`, as it reads) answers, as a read does: its fields by stored field, its ability
+ * (named `abilityName`) its `keyAbility` link.
  */
-function answerOf({ primaryAbilityId, ...values }: SkillValues, abilityName: string) {
-  return { ...values, links: [{ role: "keyAbility", toId: primaryAbilityId, toName: abilityName }] };
+function answerOf({ description, name, primaryAbilityId, ...values }: SkillValues, abilityName: string) {
+  return {
+    description,
+    fields: fieldsOf(values),
+    links: [{ role: "keyAbility", toId: primaryAbilityId, toName: abilityName }],
+    name,
+  };
 }
 
 /** A skill's body (`values`, as it reads): its columns, and its fields under `fields`. */
@@ -38,6 +48,19 @@ function bodyOf({
   ...columns
 }: SkillValues): SkillBody {
   return { ...columns, fields: { checkPenaltyMultiplier, impactedByWeight, usableWithoutTraining } };
+}
+
+/** A skill's fields (`values`, as it reads), as its answer holds them: by the stored field that keeps each. */
+function fieldsOf(values: Partial<SkillValues>) {
+  return {
+    ...(values.impactedByWeight !== undefined && { [SKILL_IMPACTED_BY_WEIGHT]: values.impactedByWeight }),
+    ...(values.checkPenaltyMultiplier !== undefined && {
+      [SKILL_CHECK_PENALTY_MULTIPLIER]: values.checkPenaltyMultiplier,
+    }),
+    ...(values.usableWithoutTraining !== undefined && {
+      [SKILL_USABLE_WITHOUT_TRAINING]: values.usableWithoutTraining,
+    }),
+  };
 }
 
 /**
@@ -108,8 +131,8 @@ describe("EntitiesService: skills", () => {
 
     const { items } = await EntitiesService.getEntities(ruleset.id, "skills", {}, { limit: 10, page: 1 });
     expect(items).toMatchObject([
-      { name: "Climb", impactedByWeight: true, usableWithoutTraining: true },
-      { name: "Spellcraft", impactedByWeight: false, usableWithoutTraining: false },
+      { name: "Climb", fields: fieldsOf({ impactedByWeight: true, usableWithoutTraining: true }) },
+      { name: "Spellcraft", fields: fieldsOf({ impactedByWeight: false, usableWithoutTraining: false }) },
     ]);
   });
 
@@ -121,16 +144,20 @@ describe("EntitiesService: skills", () => {
       "skills",
       body({ name: "Swim", checkPenaltyMultiplier: 2 }),
     );
-    expect(swim).toMatchObject({ impactedByWeight: true, checkPenaltyMultiplier: 2 });
+    expect(swim).toMatchObject({ fields: fieldsOf({ impactedByWeight: true, checkPenaltyMultiplier: 2 }) });
     const listed = async () =>
       (await EntitiesService.getEntities(ruleset.id, "skills", {}, { limit: 10, page: 1 })).items[0];
-    expect(await listed()).toMatchObject({ name: "Swim", impactedByWeight: true, checkPenaltyMultiplier: 2 });
+    expect(await listed()).toMatchObject({
+      name: "Swim",
+      fields: fieldsOf({ impactedByWeight: true, checkPenaltyMultiplier: 2 }),
+    });
 
     // The save answers the flags as stored: a multiplier counts only while armor weighs on the skill.
     const unweighed = body({ name: "Swim", impactedByWeight: false, checkPenaltyMultiplier: 3 });
     const updated = await EntitiesService.updateEntity(session, ruleset.id, "skills", swim.id, unweighed);
-    expect(updated).toMatchObject({ impactedByWeight: false, checkPenaltyMultiplier: 1 });
-    expect(await listed()).toMatchObject({ impactedByWeight: false, checkPenaltyMultiplier: 1 });
+    const unweighedFields = fieldsOf({ impactedByWeight: false, checkPenaltyMultiplier: 1 });
+    expect(updated).toMatchObject({ fields: unweighedFields });
+    expect(await listed()).toMatchObject({ fields: unweighedFields });
   });
 
   test("updates every field, and the cached list shows the change", async () => {
@@ -156,7 +183,7 @@ describe("EntitiesService: skills", () => {
     );
     const after = await EntitiesService.getEntities(ruleset.id, "skills", {}, { limit: 10, page: 1 });
     expect(after.items).toMatchObject([
-      { id: created.id, name: "Jump", impactedByWeight: true, usableWithoutTraining: false },
+      { id: created.id, name: "Jump", fields: fieldsOf({ impactedByWeight: true, usableWithoutTraining: false }) },
     ]);
   });
 

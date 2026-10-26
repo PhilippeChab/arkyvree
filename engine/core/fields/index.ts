@@ -1,7 +1,7 @@
 export { default as Decimals } from "./Decimals.ts";
 export { default as DeclaredFields } from "./DeclaredFields.ts";
 export { default as Field } from "./Field.ts";
-export type { Fields, FieldValues, LeafSpec, NoFields } from "./Field.ts";
+export type { Fields, FieldValues, LeafSpec, NoFields, StoredLeaf } from "./Field.ts";
 export { default as FieldCodec } from "./FieldCodec.ts";
 export type { FormContext } from "./FieldForms.ts";
 export { default as FormColumns } from "./FormColumns.ts";

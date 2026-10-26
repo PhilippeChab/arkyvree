@@ -1,4 +1,5 @@
 import { DND35_RULESET_NAME } from "@/content/dnd3.5/rulesetNames.ts";
+import { OwnerValues } from "@/engine/core/fields/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
@@ -48,10 +49,12 @@ export async function seededRows(rulesetName = DND35_RULESET_NAME) {
       rows.klassLevels.find((l) => l.ownerId === named(rows.klasses, klass).id && l.position === level)!,
     modifiersOf: (sourceId: string) => rows.modifiers.filter((m) => m.sourceId === sourceId),
     requirementsOf: (entityId: string) => rows.requirements.filter((r) => r.entityId === entityId),
-    /** An entity's values of a field, as text (none without the field): the stored values the seed wrote. */
+    /** An entity's values of a field, as text (none without the field): the values the seed wrote. */
     textsOf: (entityId: string, field: string) => {
-      const values = [...raw.values.values()].find((owners) => owners.has(entityId))?.get(entityId);
-      return (values?.fields[field] ?? []).map(String);
+      const entity = Object.values(raw.entities)
+        .flat()
+        .find(({ id }) => id === entityId);
+      return entity ? OwnerValues.valuesOf(entity.fields, field).map(String) : [];
     },
   };
 }

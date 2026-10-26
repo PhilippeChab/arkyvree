@@ -8,14 +8,14 @@ import type { Constructor } from "@/lib/mixins.ts";
 export function SeedsItems<B extends Constructor<SeederState>>(Base: B) {
   abstract class SeedingItems extends Base {
     /**
-     * An item's seeded fields (those its ruleset declares an item's) as the write of its stored values: its module's
+     * An item's seeded fields (those its ruleset declares an item's) as their write, by stored field: its module's
      * content's codec's (`Engine.forRules(baseRules).toFieldsWrite`).
      */
     protected abstract itemFieldsWrite(fields: object): FieldsWrite;
 
     /**
-     * What an item's seed writes of it (`item`): its own fields and its link to its template (`templateId`), whether
-     * it's a template, as its module stores them.
+     * What an item's seed writes of it (`item`): its cost, weight, type and slot, whether it's a template, and its link
+     * to its template (`templateId`), as its module stores them.
      */
     protected abstract itemWrite(
       item: ItemSeed<object>,
@@ -35,19 +35,20 @@ export function SeedsItems<B extends Constructor<SeederState>>(Base: B) {
       if (items.length === 0) return {};
       const ids = await this.insertEntities(
         type,
-        items.map((item) => ({
-          rulesetId: this.ctx.rulesetId,
-          name: item.name,
-          description: item.description,
-          ...this.itemWrite(item, {
+        items.map((item) => {
+          const write = this.itemWrite(item, {
             isTemplate: options.isTemplate ?? false,
             templateId: item.sourceItem ? options.templateMap?.[item.sourceItem] : undefined,
-          }),
-        })),
-      );
-
-      await this.writeFields(
-        items.map((item) => ({ id: ids[item.name], type, values: this.itemFieldsWrite(item.fields ?? {}) })),
+          });
+          const fields = this.itemFieldsWrite(item.fields ?? {});
+          return {
+            rulesetId: this.ctx.rulesetId,
+            name: item.name,
+            description: item.description,
+            fields: { ...write.fields, ...fields.fields },
+            links: { ...write.links, ...fields.links },
+          };
+        }),
       );
       await this.insertAll(
         requirementsInCustomization,

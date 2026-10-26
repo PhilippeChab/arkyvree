@@ -11,7 +11,7 @@ import {
   SectionContent,
 } from "@/client/src/components/common/index.ts";
 import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
-import { EntityFields, withEntityFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { EntityFields, withSavedFields } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { rulesetSettingsQuery } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionProps.ts";
 import { useEntityFields, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
@@ -39,7 +39,7 @@ export function SettingsSection({ ruleset }: RulesetSectionProps) {
   const settingsQuery = rulesetSettingsQuery(ruleset.id);
   const { data: settings, error } = useQuery(settingsQuery);
   const { fields } = useEntityFields(ruleset.id, "rulesets");
-  const toFormValues = (saved: Settings) => withEntityFields(EMPTY_SETTINGS, fields, saved.fields);
+  const toFormValues = (saved: Settings) => withSavedFields(EMPTY_SETTINGS, fields, saved.fields);
   const { form, save } = useEntityForm({
     empty: EMPTY_SETTINGS,
     values: settings && toFormValues(settings),

@@ -8,39 +8,21 @@ import { Entities, Requirements } from "@/server/repositories/index.ts";
 import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
 import { measure } from "@/tests/support/database.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
-import { findStoredValues, writeStoredValues } from "@/tests/support/storedValues.ts";
 import { makeSession } from "@/tests/support/users.ts";
-import { SPELL_DURATION, SPELL_SCHOOL, SPELL_SUBSCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Writes that write nothing but what's given. */
 function writesOf(writes: Partial<EntityWrites>): EntityWrites {
   return { ...writes };
 }
 
-/** A spell of a fork of its own, with a field its writes don't name. */
+/** A spell of a fork of its own. */
 async function createSpell() {
   const ruleset = await createSeededTestRuleset(makeSession().userId);
   const [spell] = await Entities.create<Spell>(db, "spells", { name: "Probe Spell", rulesetId: ruleset.id });
-  await writeStoredValues("spells", spell.id, [
-    [SPELL_DURATION, "1 round"],
-    [SPELL_SCHOOL, "Evocation"],
-  ]);
   return { entity: { entityId: spell.id, entityType: "spells" } as const, rulesetId: ruleset.id };
 }
 
 describe("An entity's writes", () => {
-  test("keep its fields in its stored values: those they name are replaced, its others stay", async () => {
-    const { entity, rulesetId } = await createSpell();
-    const fields = { fields: { [SPELL_SCHOOL]: ["Conjuration"], [SPELL_SUBSCHOOL]: [] }, links: {} };
-
-    await withRulesetScope(db, rulesetId, async (scope) => writeEntityWrites(db, scope, entity, writesOf({ fields })));
-
-    expect(await findStoredValues("spells", entity.entityId)).toEqual({
-      fields: { [SPELL_SCHOOL]: ["Conjuration"], [SPELL_DURATION]: ["1 round"] },
-      links: {},
-    });
-  });
-
   test("set the requirement they plan on the entity", async () => {
     const { entity, rulesetId } = await createSpell();
     const requirement = {

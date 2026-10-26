@@ -28,13 +28,10 @@ export interface RulesetRawData {
   modifiers: Modifier[];
   /** Every requirement row in this ruleset, including those attached to modifiers. */
   requirements: Requirement[];
+  /** Its own Settings (its fields and its links), by its id: none for a campaign's rows, or a ruleset that holds none */
+  settings?: { rulesetId: string; values: StoredValues };
   /** Of its entities, those a link with a tier points at, from any ruleset's entity (a spell list at a level) */
   tieredIds: Set<string>;
-  /**
-   * Each owner's stored values (its entities', its own Settings), by its type then its id: one that holds none is left
-   * out
-   */
-  values: ReadonlyMap<string, ReadonlyMap<string, StoredValues>>;
 }
 
 /**
@@ -65,14 +62,14 @@ export interface ViewSchema {
 
 /**
  * A ruleset's view: its own rows and its source chain's (`chain`, the ruleset's first), composed by its copy-on-write
- * data. The copies' and siblings' exclusions apply, a sibling loser's customizations merge into its winner's, references
- * resolve to the winners, and every id-keyed map takes a stored id. An owned kind's rows follow their owners', and an
- * entity's links are composed the first time they're read (`composeLinks`). Built on every read
- * (`RulesetViews.getData`).
+ * data. The copies' and siblings' exclusions apply, a sibling loser's fields, single links and customizations merge
+ * into its winner's, references resolve to the winners, and every id-keyed map takes a stored id. An owned kind's rows
+ * follow their owners', and an entity's links are composed the first time they're read (`composeLinks`). Built on every
+ * read (`RulesetViews.getData`).
  */
 export default class RulesetComposition {
   /**
-   * `declared`: the fields its modules declare, which order its owners' values and merge a sibling's into its
+   * `declared`: the fields its modules declare, which order its entities' values and merge a sibling's into its
    * winner's; `schema`: what its modules declare of its kinds and links; `labels`: what its module calls an entity of
    * each kind.
    */
@@ -109,13 +106,15 @@ export default class RulesetComposition {
   /**
    * Each kind's rows, an owner's before the kinds it owns: an owned kind's rows whose owner the view shows (a copied
    * class's levels are overridden by its copy's, paired by `CowDataBuilder`, and a sibling loser's owner leaves its
-   * own out), and the visible ids another kind reads. Answers too the owned entities the view leaves out, whose
-   * customizations go with them.
+   * own out), each winner with its sibling losers' fields and single links merged in (`mergeSiblings`), and the visible
+   * ids another kind reads. Answers too the owned entities the view leaves out, whose customizations go with them, and
+   * what each sibling loser gave its winner (`taken`, by the loser).
    */
   private composeEntities() {
     const visibleIds = new Map<string, Set<string>>();
     const entities = new Map<string, ViewEntity[]>();
     const leftOut = new Set<string>();
+    const taken = new Map<string, StoredValues>();
     for (const { ownerType, tracked, type } of this.schema.kinds) {
       let rows: ViewEntity[];
       if (ownerType) {
@@ -132,9 +131,9 @@ export default class RulesetComposition {
         rows = this.composeRows((raw) => raw.entities[type] ?? []);
       }
       if (tracked) visibleIds.set(type, new Set(rows.map((row) => row.id)));
-      entities.set(type, this.cow.resolveLinks(rows));
+      entities.set(type, this.cow.resolveLinks(this.mergeSiblings(type, rows, leftOut, taken)));
     }
-    return { entities, leftOut };
+    return { entities, leftOut, taken };
   }
 
   /**
@@ -156,7 +155,7 @@ export default class RulesetComposition {
           if (this.cow.isOverridden(id) || leftOut.has(id)) continue;
           const winnerId = this.cow.getWinner(id);
           if (winnerId === undefined) held.entityIds.push(id);
-          else if (taken.get(id)?.fields[field]?.some((given) => String(given) === value))
+          else if (OwnerValues.valuesOf(taken.get(id)?.fields ?? {}, field).some((given) => String(given) === value))
             held.entityIds.push(winnerId);
         }
       }
@@ -216,9 +215,8 @@ export default class RulesetComposition {
     // A row is left out when a copy overrides it or it's a sibling loser. A loser's customizations merge into its winner
     // (the customization steps below skip only the overridden ones), and every stored id resolves to the winner.
     // An owned entity whose owner the view leaves out is left out with its customizations: none, mostly
-    const { entities, leftOut } = this.composeEntities();
+    const { entities, leftOut, taken } = this.composeEntities();
     const { modifiers, excludedModifierIds } = this.composeModifiers(leftOut);
-    const { taken, values } = this.composeValues(leftOut);
     return {
       entities,
       kindValuesOf: (type: string) => this.composeKindValues(type, leftOut, taken),
@@ -226,7 +224,9 @@ export default class RulesetComposition {
       tieredIds: this.composeTieredIds(),
       modifiers,
       requirements: this.composeRequirements(leftOut, excludedModifierIds),
-      values,
+      settings: new Map(
+        this.chain.flatMap(({ settings }) => (settings ? [[settings.rulesetId, settings.values]] : [])),
+      ),
     };
   }
 
@@ -289,43 +289,6 @@ export default class RulesetComposition {
   }
 
   /**
-   * Each owner's stored values across the chain, the fork's first, by its id, each the raw ruleset's own, as it's kept: a
-   * copied entity's and an owned entity's the view leaves out are left out, and a sibling loser's merge into its
-   * winner's, each field and link by its declared merge (`SiblingMerge.mergeValues`). A ruleset's own always stay: a
-   * ruleset is never overridden. Answers too what each loser gave its winner (`taken`, by the loser).
-   */
-  private composeValues(leftOut: ReadonlySet<string>) {
-    const values = new Map<string, StoredValues>();
-    const groups = new Map<string, { losers: Map<string, StoredValues>; own?: StoredValues; type: string }>();
-    const groupOf = (winnerId: string, type: string) =>
-      groups.get(winnerId) ?? groups.set(winnerId, { losers: new Map(), type }).get(winnerId)!;
-    const merging = this.cow.siblingIds.size > 0;
-    for (const raw of this.chain) {
-      for (const [type, owners] of raw.values) {
-        for (const [id, stored] of owners) {
-          if (this.cow.isOverridden(id) || leftOut.has(id)) continue;
-          const winnerId = merging ? this.cow.getWinner(id) : undefined;
-          if (winnerId !== undefined) {
-            groupOf(winnerId, type).losers.set(id, stored);
-            continue;
-          }
-          if (merging && this.cow.hasSiblings(id)) groupOf(id, type).own ??= stored;
-          if (!values.has(id)) values.set(id, stored);
-        }
-      }
-    }
-    const taken = new Map<string, StoredValues>();
-    for (const [winnerId, { losers, own, type }] of groups) {
-      const loserIds = this.cow.getSiblings(winnerId);
-      const siblings = loserIds.map((loserId) => losers.get(loserId) ?? OwnerValues.NONE);
-      const merged = SiblingMerge.mergeValues(own ?? OwnerValues.NONE, siblings, type, this.declared);
-      values.set(winnerId, merged.values);
-      for (const [index, loserId] of loserIds.entries()) taken.set(loserId, merged.taken[index]);
-    }
-    return { taken, values };
-  }
-
-  /**
    * An entity's links as its ruleset holds them (`entityId`, as stored), and its kind: none for one that holds none.
    * An entity is one ruleset's of the chain.
    */
@@ -335,6 +298,33 @@ export default class RulesetComposition {
       if (held) return held;
     }
     return undefined;
+  }
+
+  /**
+   * A kind's rows (`rows`, of `type`, as the view shows them), each winner of sibling copies with its losers' fields and
+   * single links merged in (`SiblingMerge.mergeValues`, by each field's and role's declared merge, which `EntityCopy`
+   * writes the same way): but a loser a copy overrides or the view leaves out (`leftOut`: an owned one), which gives
+   * none. What each loser gave its winner goes in `taken`, by the loser.
+   */
+  private mergeSiblings(
+    type: string,
+    rows: ViewEntity[],
+    leftOut: ReadonlySet<string>,
+    taken: Map<string, StoredValues>,
+  ): ViewEntity[] {
+    if (this.cow.siblingIds.size === 0) return rows;
+    const stored = new Map(this.chain.flatMap((raw) => (raw.entities[type] ?? []).map((row) => [row.id, row])));
+    return rows.map((row) => {
+      if (!this.cow.hasSiblings(row.id)) return row;
+      const loserIds = this.cow.getSiblings(row.id);
+      const siblings = loserIds.map((loserId) => {
+        const loser = stored.get(loserId);
+        return loser && !this.cow.isOverridden(loserId) && !leftOut.has(loserId) ? loser : OwnerValues.NONE;
+      });
+      const merged = SiblingMerge.mergeValues(row, siblings, type, this.declared);
+      for (const [index, loserId] of loserIds.entries()) taken.set(loserId, merged.taken[index]);
+      return { ...row, ...merged.values };
+    });
   }
 
   build(): RulesetData {

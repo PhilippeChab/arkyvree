@@ -1,11 +1,10 @@
-import { Decimals, DeclaredFields, type Fields, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
+import { Decimals, DeclaredFields, Field, type Fields, type StoredValues } from "@/engine/core/fields/index.ts";
 import type {
   CharacterRoleDef,
   EntityRecord,
   FieldDef,
   FieldValue,
   LinkRoleDef,
-  Merge,
   RulesetModule,
   StepDef,
   StorageRegistries,
@@ -14,6 +13,7 @@ import type {
   StoredRuleset,
 } from "@/engine/core/module/index.ts";
 import type { KindValue, ViewLink, ViewSchema } from "@/engine/core/view/index.ts";
+import type { Merge } from "@/shared/customization/fields.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 import Modules from "./Modules.ts";
@@ -40,10 +40,11 @@ function mergeRecords<T>(modules: [BaseRules, RulesetModule][], pick: (module: R
 
 /**
  * How every registered module stores its data in the generic tables, which the server reads and writes them by: each
- * kind (`kind`: its own fields, its defaults), what an entity's record reads of its fields and links (`recordReads`), an
- * entity's links as a view holds them (`viewLinksOf`), a player character's kind (`playerKinds`), each field and link
- * role (`field`, `role`), and the registries' rows (`registries`). Names are global: two modules declaring one kind,
- * field or role is refused, as the registries' keys refuse it.
+ * kind (`kind`, what a new entity defaults: `defaultsOf`), an entity's record off its stored rows (`recordOf`: every
+ * field it holds, `fieldsOf`, and its single links), an entity's links as a view holds them (`viewLinksOf`), a number as
+ * its field keeps it (`storedNumber`), a player character's kind (`playerKinds`), each field and link role (`field`,
+ * `role`), and the registries' rows (`registries`). Names are global: two modules declaring one kind, field or role is
+ * refused, as the registries' keys refuse it.
  */
 export default class StorageEngine {
   constructor(modules: [BaseRules, RulesetModule][]) {
@@ -61,42 +62,50 @@ export default class StorageEngine {
       steps: registries.flatMap((registry) => registry.steps),
       itemTypes: registries.flatMap((registry) => registry.itemTypes),
     };
-    StorageEngine.checkDeclarations(this.merged);
+    StorageEngine.checkDeclarations(this.fields, this.merged);
+    this.singleRoles = new Map(
+      this.merged.entityTypes.map(({ type }) => [
+        type,
+        new Set(this.merged.linkRoles.filter((def) => def.fromType === type && def.single).map((def) => def.role)),
+      ]),
+    );
   }
 
   /** Every module's storage, merged once: the modules never change. */
   private static instance: StorageEngine | undefined;
 
   /**
-   * Refuses a field or a link role whose merge or inheritance the engine can't read: a merge it has no rule for, a union
-   * of what isn't a set (a single field's values, a single link), or a field read off another but an entity's, or
-   * through a role that isn't single from its type to its type (an item's template).
+   * Refuses a field or a link role whose merge or inheritance the engine can't read (`fields`, each owner type's, as
+   * its module declares them): a merge it has no rule for, a union of what isn't a set (a single field's values, a
+   * single link), or a field read off another but an entity's, or through a role that isn't single from its type to its
+   * type (an item's template).
    */
-  private static checkDeclarations({ fieldDefs, linkRoles }: StorageRegistries) {
-    for (const { merge, name } of [
-      ...linkRoles.map((role) => ({ merge: role.merge, name: `The link role ${role.role} from ${role.fromType}` })),
-      ...fieldDefs.map((def) => ({ merge: def.merge, name: `The field ${def.field} of ${def.ownerType}` })),
-    ])
-      if (!MERGES.includes(merge)) throw new Error(`${name} merges by ${String(merge)}, no rule the engine has`);
-
+  private static checkDeclarations(
+    fields: Readonly<Record<string, Fields>>,
+    { entityTypes, linkRoles }: StorageRegistries,
+  ) {
     for (const role of linkRoles) {
-      if (role.single && role.merge === "union") {
-        throw new Error(
-          `The link role ${role.role} from ${role.fromType} is single: its sibling copies can't union it`,
+      const name = `The link role ${role.role} from ${role.fromType}`;
+      StorageEngine.checkMerge(name, role.merge, !role.single);
+    }
+    for (const [ownerType, owned] of Object.entries(fields)) {
+      for (const leaf of Field.storedLeavesOf(owned)) {
+        const name = `The field ${leaf.field} of ${ownerType}`;
+        StorageEngine.checkMerge(name, leaf.merge, Field.storedKindOf(leaf).multiple);
+        if (leaf.inherits === undefined) continue;
+        const via = linkRoles.find(
+          (role) => role.role === leaf.inherits && role.fromType === ownerType && role.toType === ownerType,
         );
+        if (!entityTypes.some((def) => def.type === ownerType) || !via?.single)
+          throw new Error(`${name} is read off another through ${leaf.inherits}, no single role from its type to it`);
       }
     }
-    for (const def of fieldDefs) {
-      const name = `The field ${def.field} of ${def.ownerType}`;
-      if (!def.multiple && def.merge === "union")
-        throw new Error(`${name} holds one value: its sibling copies can't union it`);
-      if (def.inheritsVia === null) continue;
-      const via = linkRoles.find(
-        (role) => role.role === def.inheritsVia && role.fromType === def.ownerType && role.toType === def.ownerType,
-      );
-      if (def.ownerKind !== "entity" || !via?.single)
-        throw new Error(`${name} is read off another through ${def.inheritsVia}, no single role from its type to it`);
-    }
+  }
+
+  /** Refuses a merge (`name`'s) the engine has no rule for, or a union of what isn't a set (`set`). */
+  private static checkMerge(name: string, merge: Merge, set: boolean) {
+    if (!MERGES.includes(merge)) throw new Error(`${name} merges by ${String(merge)}, no rule the engine has`);
+    if (!set && merge === "union") throw new Error(`${name} holds one value: its sibling copies can't union it`);
   }
 
   /**
@@ -139,45 +148,14 @@ export default class StorageEngine {
   /** Each module's player character's kind. */
   private readonly playerKindList: readonly string[];
 
-  /** The single links each type's record reads, by its type, once read (`recordRoles`). */
-  private readonly recordRolesByType = new Map<string, readonly string[]>();
+  /** The roles of each type's single links, which its record holds, by its type. */
+  private readonly singleRoles: ReadonlyMap<string, ReadonlySet<string>>;
 
   /** The fields every module declares, as views keep their values, once read (`declaredFields`). */
   private declared?: DeclaredFields;
 
-  /** Every kind's own fields, once read (`ownFieldNames`). */
-  private ownFields?: Set<string>;
-
-  /** What an entity's record reads of its fields and links, every kind's, once read (`recordReads`). */
-  private reads?: { fields: string[]; roles: string[] };
-
   /** What every module declares of a view's kinds and links, once read (`viewSchema`). */
   private schema?: ViewSchema;
-
-  /** The roles of the links a view holds of an entity, by its type, once read (`viewLinksOf`). */
-  private viewRoles?: Map<string, Set<string>>;
-
-  /** The fields every kind holds of its own (`StoredKind.fields`), which its entities' records read: no stored value. */
-  private ownFieldNames(): Set<string> {
-    this.ownFields ??= new Set(Object.values(this.kinds).flatMap((kind) => Object.keys(kind.fields ?? {})));
-    return this.ownFields;
-  }
-
-  /**
-   * The single links of a type (`type`) its record reads, by role: each its role's, but those its fields read, which
-   * its stored values hold.
-   */
-  private recordRoles(type: string): readonly string[] {
-    let roles = this.recordRolesByType.get(type);
-    if (!roles) {
-      const read = this.declaredFields().fieldRoles(type);
-      roles = this.merged.linkRoles
-        .filter((def) => def.fromType === type && def.single && !read.includes(def.role))
-        .map((def) => def.role);
-      this.recordRolesByType.set(type, roles);
-    }
-    return roles;
-  }
 
   /** A character's link role (3.5's `race`, `score`, `speaks`): the type of its entities, and whether it holds one. */
   characterRole(role: string): CharacterRoleDef {
@@ -193,24 +171,16 @@ export default class StorageEngine {
 
   /** The fields every module declares, as a ruleset's view keeps their values (`DeclaredFields`): built once. */
   declaredFields(): DeclaredFields {
-    this.declared ??= new DeclaredFields(this.fields, this.merged);
+    this.declared ??= new DeclaredFields(this.fields, this.merged.linkRoles);
     return this.declared;
   }
 
   /**
-   * What a new entity of a kind (`type`) is written with where its write gives none: its own fields' defaults, and its
-   * partition.
+   * What a new entity of a kind (`type`) is written with where its write gives none: the defaults of its fields always
+   * written (`DeclaredFields.writtenDefaults`, which a write that clears one writes too), and its partition.
    */
   defaultsOf(type: string): { fields: Record<string, FieldValue>; partition: string } {
-    const kind = this.kind(type);
-    return {
-      fields: Object.fromEntries(
-        Object.entries(kind.fields ?? {}).flatMap(([field, { default: value }]) =>
-          value === undefined ? [] : [[field, value]],
-        ),
-      ),
-      partition: kind.partition ?? "",
-    };
+    return { fields: this.declaredFields().writtenDefaults(type), partition: this.kind(type).partition ?? "" };
   }
 
   /**
@@ -235,19 +205,46 @@ export default class StorageEngine {
   }
 
   /**
-   * The types whose owners hold fields past their kind's own, which their form shows and their save writes, as
-   * their modules declare them: kinds' (3.5's feats, items, spells, races, classes, class levels and skills) and the
-   * rulesets' (their settings).
+   * The types whose owners hold fields, as their modules declare them: kinds' (3.5's feats, items, spells, races,
+   * classes, class levels, skills and languages) and the rulesets' (their Settings).
    */
   fieldOwners(): string[] {
     return Object.keys(this.fields);
   }
 
-  /** An entity kind, by its type (`feats`): its own fields, its defaults, how its entities pair. */
+  /**
+   * An owner's fields as a view holds them (of `ownerType`, off its rows' values: `values`, each a field's and its value,
+   * a set's in their stored order): a single field's value, a set's in its declared order, its fields in theirs
+   * (`DeclaredFields`).
+   */
+  fieldsOf(ownerType: string, values: readonly (readonly [field: string, value: FieldValue])[]) {
+    const rows = values.map(([field, value], ordinal) => ({ field, ordinal, value }));
+    return this.declaredFields().fieldsOf(ownerType, rows);
+  }
+
+  /** An entity kind, by its type (`feats`): its partition's default, how its entities pair, what makes a template. */
   kind(type: string): StoredKind {
     const kind = this.kinds[type];
     if (!kind) throw new Error(`No module stores the kind ${type}`);
     return kind;
+  }
+
+  /**
+   * Each kind's values kind-wide, of a ruleset's own entities (`entities`, as stored), by its type: each value of each
+   * field it reads kind-wide (`DeclaredFields.kindWideFields`), with the entities that hold it, in the order those values
+   * were written. None for a kind that reads none.
+   */
+  kindValues(entities: readonly StoredEntity[]): Map<string, KindValue[]> {
+    const declared = this.declaredFields();
+    const written = new Map<string, { createdAt: string; field: string; ownerId: string; value: string }[]>();
+    for (const entity of entities) {
+      const kindWide = declared.kindWideFields(entity.type);
+      if (kindWide.size === 0) continue;
+      const rows = written.get(entity.type) ?? written.set(entity.type, []).get(entity.type)!;
+      for (const { createdAt, field, value } of entity.fields)
+        if (kindWide.has(field)) rows.push({ createdAt, field, ownerId: entity.id, value: String(value) });
+    }
+    return new Map([...written].map(([type, rows]) => [type, StorageEngine.kindValuesOf(rows)]));
   }
 
   /** The base rules of every registered module: what a ruleset's `base_rules` may name (`rules.modules`). */
@@ -284,34 +281,17 @@ export default class StorageEngine {
   }
 
   /**
-   * A stored entity as its record (`EntityRecord`): its own columns, its own fields' values by field, and its single
-   * links' targets by role, but those its fields read.
+   * A stored entity as its record (`EntityRecord`): its own columns, every field it holds (`fieldsOf`), and its single
+   * links' targets by role.
    */
   recordOf(entity: StoredEntity): EntityRecord {
     const { fields, links, ...own } = entity;
-    const kind = this.kind(entity.type);
-    const roles = this.recordRoles(entity.type);
+    const roles = this.singleRoles.get(entity.type);
     return {
       ...own,
-      fields: Object.fromEntries(
-        fields.flatMap(({ field, ordinal, value }) => (ordinal === 0 && kind.fields?.[field] ? [[field, value]] : [])),
-      ),
-      links: Object.fromEntries(links.flatMap(({ role, toId }) => (roles.includes(role) ? [[role, toId]] : []))),
+      fields: this.declaredFields().fieldsOf(entity.type, fields),
+      links: Object.fromEntries(links.flatMap(({ role, toId }) => (roles?.has(role) ? [[role, toId]] : []))),
     };
-  }
-
-  /**
-   * What an entity's record reads of its fields and links, every kind's (`EntityRecord`): its own fields
-   * (`StoredKind.fields`, their single value, ordinal 0), and the roles of its single links but those its fields read.
-   * A read of records alone reads no more (an owner's stored values, `valuesOf`'s; its links of a role it holds many
-   * of, `viewLinksOf`'s).
-   */
-  recordReads(): { fields: string[]; roles: string[] } {
-    this.reads ??= {
-      fields: [...this.ownFieldNames()],
-      roles: [...new Set(this.merged.entityTypes.flatMap(({ type }) => this.recordRoles(type)))],
-    };
-    return this.reads;
   }
 
   /**
@@ -342,6 +322,17 @@ export default class StorageEngine {
     return found;
   }
 
+  /**
+   * A ruleset's own Settings as its view holds them (`ruleset`, as stored): its fields (`fieldsOf`), and its links'
+   * targets by role (3.5's skill point ability).
+   */
+  settingsOf(ruleset: StoredRuleset): StoredValues {
+    return {
+      fields: this.declaredFields().fieldsOf("rulesets", ruleset.fields),
+      links: Object.fromEntries(ruleset.links.map(({ role, toId }) => [role, toId])),
+    };
+  }
+
   /** An advancement's step. */
   step(step: string): StepDef {
     const found = this.merged.steps.find((def) => def.step === step);
@@ -350,102 +341,24 @@ export default class StorageEngine {
   }
 
   /**
-   * A number an entity of a kind (`type`) holds of a field, as it's stored: refused unless it's a finite number, and
-   * kept to the places its kind's own field says (`scale`), whatever writes it (a form, a seed, a copy, an import).
+   * A number an owner of a type (`type`, an entity type, `rulesets` or `characters`) holds of a field, as it's stored:
+   * refused unless it's a finite number its field holds exactly (`Decimals.holds`, to its places), and kept to the
+   * places its field's declaration says (`scale`), whatever writes it (a form, a seed, a copy, an import).
    */
   storedNumber(type: string, field: string, value: unknown): string {
-    if (typeof value !== "number" || !Number.isFinite(value))
-      throw new Error(`The field ${field} of ${type} holds a number, not ${String(value)}`);
-    const scale = this.kinds[type]?.fields?.[field]?.scale;
+    const scale = this.declaredFields().scaleOf(type, field);
+    if (typeof value !== "number" || !Number.isFinite(value) || !Decimals.holds(value, scale))
+      throw new Error(`The field ${field} of ${type} holds a number it keeps exactly, not ${String(value)}`);
     return String(scale === undefined ? value : Decimals.toPlaces(value, scale));
   }
 
   /**
-   * An owner's stored values (of `type`), off its fields but its kind's own (`fields`) and its links (`links`):
-   * each field's values, a set's in its declared order, its fields in theirs, and the links its type's fields read, by
-   * role. None (`OwnerValues.NONE`) when it holds none.
-   */
-  storedValuesOf(
-    type: string,
-    fields: readonly { field: string; value: FieldValue }[],
-    links: readonly { role: string; toId: string }[],
-  ): StoredValues {
-    const declared = this.declaredFields();
-    const roles = declared.fieldRoles(type);
-    if (fields.length === 0 && (roles.length === 0 || links.length === 0)) return OwnerValues.NONE;
-    const byField = new Map<string, FieldValue[]>();
-    for (const { field, value } of fields) {
-      const held = byField.get(field);
-      if (held) held.push(value);
-      else byField.set(field, [value]);
-    }
-    const stored: StoredValues = {
-      fields: Object.fromEntries(
-        [...byField.keys()]
-          .toSorted((a, b) => declared.compareFields(a, b))
-          .map((field) => {
-            const values = byField.get(field)!;
-            return [field, values.length > 1 ? declared.orderValues(field, values) : values];
-          }),
-      ),
-      links: Object.fromEntries(
-        roles.flatMap((role) => {
-          const link = links.find((held) => held.role === role);
-          return link ? [[role, link.toId]] : [];
-        }),
-      ),
-    };
-    return Object.keys(stored.fields).length > 0 || Object.keys(stored.links).length > 0 ? stored : OwnerValues.NONE;
-  }
-
-  /**
-   * The stored values of a ruleset's own owners (`owners`: its entities, and itself for its Settings), as its view
-   * composes them: each owner's, by its type then its id (`values`), its fields but its kind's own (a ruleset's all of
-   * them), each set's values and the fields themselves in their declared order (`DeclaredFields`), and the
-   * links its kind's fields read, by role; an owner that holds none is left out. And each kind's values kind-wide
-   * (`kindValues`), each with the entities that hold it, in the order those values were written.
-   */
-  valuesOf(owners: { entities: StoredEntity[]; ruleset?: StoredRuleset }): {
-    kindValues: Map<string, KindValue[]>;
-    values: Map<string, Map<string, StoredValues>>;
-  } {
-    const ownFields = this.ownFieldNames();
-    const values = new Map<string, Map<string, StoredValues>>();
-    const written = new Map<string, { createdAt: string; field: string; ownerId: string; value: string }[]>();
-    for (const entity of owners.entities) {
-      const fields = entity.fields.filter((field) => !ownFields.has(field.field));
-      const stored = this.storedValuesOf(entity.type, fields, entity.links);
-      if (stored !== OwnerValues.NONE)
-        (values.get(entity.type) ?? values.set(entity.type, new Map()).get(entity.type)!).set(entity.id, stored);
-      const rows = written.get(entity.type) ?? written.set(entity.type, []).get(entity.type)!;
-      for (const { createdAt, field, value } of fields)
-        rows.push({ createdAt, field, ownerId: entity.id, value: String(value) });
-    }
-    const { ruleset } = owners;
-    const settings = ruleset && this.storedValuesOf("rulesets", ruleset.fields, ruleset.links);
-    if (settings && settings !== OwnerValues.NONE) values.set("rulesets", new Map([[ruleset.id, settings]]));
-    const kindValues = new Map([...written].map(([type, rows]) => [type, StorageEngine.kindValuesOf(rows)]));
-    return { kindValues, values };
-  }
-
-  /**
    * An entity's links (`entity`, as stored: a feat's pools, a class level's grants, an item's template), as a view holds
-   * them, in their order: as they were made, then by their ordinal and their target. Those its fields read are its
-   * stored values' (`storedValuesOf`).
+   * them, in their order: as they were made, then by their ordinal and their target.
    */
-  viewLinksOf(entity: Pick<StoredEntity, "id" | "links" | "type">): ViewLink[] {
-    this.viewRoles ??= new Map(
-      this.merged.entityTypes.map(({ type }) => {
-        const read = this.declaredFields().fieldRoles(type);
-        const roles = this.merged.linkRoles.filter((def) => def.fromType === type && !read.includes(def.role));
-        return [type, new Set(roles.map((def) => def.role))];
-      }),
-    );
-    const roles = this.viewRoles.get(entity.type);
-    if (!roles) return [];
+  viewLinksOf(entity: Pick<StoredEntity, "id" | "links">): ViewLink[] {
     return entity.links
-      .filter((link) => roles.has(link.role))
-      .sort((a, b) => compareText(a.createdAt, b.createdAt) || a.ordinal - b.ordinal || compareText(a.toId, b.toId))
+      .toSorted((a, b) => compareText(a.createdAt, b.createdAt) || a.ordinal - b.ordinal || compareText(a.toId, b.toId))
       .map(({ amount, free, id, ordinal, role, tier, toId, toType, viaId }) => ({
         id,
         role,

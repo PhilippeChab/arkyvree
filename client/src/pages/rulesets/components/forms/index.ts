@@ -7,6 +7,7 @@ export {
   ownFieldOf,
   poolsOf,
   withEntityFields,
+  withSavedFields,
 } from "./entityFields.ts";
 export { EntityColumns, EntityFields } from "./EntityFields.tsx";
 export { type EntityFormData, toEntityBody, toEntityForm } from "./entityForm.ts";
