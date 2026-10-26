@@ -17,7 +17,7 @@ describe("rulesets entities: items", () => {
     const created = await expectOk(
       kinds.$post({
         param: { id, entityType },
-        json: { name: "Test Item", description: "An item", weight: 2.5, costGp: 150 },
+        json: { name: "Test Item", description: "An item", fields: { [ITEM_WEIGHT]: 2.5, [ITEM_COST_GP]: 150 } },
       }),
     );
     // Its weight and cost are its own fields, numbers
@@ -30,7 +30,10 @@ describe("rulesets entities: items", () => {
     expect(list.items.map((i) => i.id)).toContain(created.id);
 
     const updated = await expectOk(
-      entity.$put({ param, json: { name: "Renamed Item", description: "Updated", weight: 3.2, costGp: 200 } }),
+      entity.$put({
+        param,
+        json: { name: "Renamed Item", description: "Updated", fields: { [ITEM_WEIGHT]: 3.2, [ITEM_COST_GP]: 200 } },
+      }),
     );
     expect(updated).toMatchObject({
       name: "Renamed Item",
@@ -47,29 +50,42 @@ describe("rulesets entities: items", () => {
     const template = await expectOk(
       kinds.$post({
         param: { id, entityType },
-        json: { name: "Test Blade Template", type: "Weapon", isTemplate: true },
+        json: { name: "Test Blade Template", fields: { [ITEM_TYPE]: "Weapon", [ITEM_IS_TEMPLATE]: true } },
       }),
     );
     const blade = await expectOk(
       kinds.$post({
         param: { id, entityType },
-        json: { name: "Test Blade", type: "Weapon", sourceItemId: template.id, weight: 4, costGp: 15 },
+        json: {
+          name: "Test Blade",
+          fields: { [ITEM_TYPE]: "Weapon", [ITEM_WEIGHT]: 4, [ITEM_COST_GP]: 15 },
+          links: { madeFrom: template.id },
+        },
       }),
     );
     const cleared = await expectOk(
       entity.$put({
         param: { id, entityType, entityId: blade.id },
-        json: { name: "Test Blade", type: "Weapon", sourceItemId: null, weight: null, costGp: null },
+        json: {
+          name: "Test Blade",
+          fields: { [ITEM_TYPE]: "Weapon", [ITEM_WEIGHT]: null, [ITEM_COST_GP]: null },
+          links: { madeFrom: null },
+        },
       }),
     );
     expect(cleared.links).toEqual([]);
     expect([cleared.fields[ITEM_WEIGHT], cleared.fields[ITEM_COST_GP]]).toEqual([null, null]);
 
     // A slot's none is "Other": worn nowhere in particular
-    const hat = await expectOk(kinds.$post({ param: { id, entityType }, json: { name: "Test Hat", slot: "Head" } }));
+    const hat = await expectOk(
+      kinds.$post({ param: { id, entityType }, json: { name: "Test Hat", fields: { [ITEM_SLOT]: "Head" } } }),
+    );
     expect(
       await expectOk(
-        entity.$put({ param: { id, entityType, entityId: hat.id }, json: { name: "Test Hat", slot: null } }),
+        entity.$put({
+          param: { id, entityType, entityId: hat.id },
+          json: { name: "Test Hat", fields: { [ITEM_SLOT]: null } },
+        }),
       ),
     ).toMatchObject({ fields: { [ITEM_SLOT]: "Other" } });
   });
@@ -79,20 +95,23 @@ describe("rulesets entities: items", () => {
     const template = await expectOk(
       kinds.$post({
         param: { id, entityType },
-        json: { name: "Test Plate Template", type: "Armor", isTemplate: true },
+        json: { name: "Test Plate Template", fields: { [ITEM_TYPE]: "Armor", [ITEM_IS_TEMPLATE]: true } },
       }),
     );
     const plate = await expectOk(
       kinds.$post({
         param: { id, entityType },
-        json: { name: "Test Plate", type: "Armor", sourceItemId: template.id },
+        json: { name: "Test Plate", fields: { [ITEM_TYPE]: "Armor" }, links: { madeFrom: template.id } },
       }),
     );
     expect(plate).toMatchObject({ fields: { [ITEM_TYPE]: "Armor", [ITEM_SLOT]: "Torso" } });
     // An edit that leaves its type out keeps it: an armor is worn on the torso, whatever slot the form gives
     expect(
       await expectOk(
-        entity.$put({ param: { id, entityType, entityId: plate.id }, json: { name: "Test Plate", slot: "Head" } }),
+        entity.$put({
+          param: { id, entityType, entityId: plate.id },
+          json: { name: "Test Plate", fields: { [ITEM_SLOT]: "Head" } },
+        }),
       ),
     ).toMatchObject({ fields: { [ITEM_TYPE]: "Armor", [ITEM_SLOT]: "Torso" } });
   });
@@ -112,12 +131,15 @@ describe("rulesets entities: items", () => {
   test("duplicates an item under a new name", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const source = await expectOk(
-      kinds.$post({ param: { id, entityType }, json: { name: "Duplicate Source", weight: 1, costGp: 5 } }),
+      kinds.$post({
+        param: { id, entityType },
+        json: { name: "Duplicate Source", fields: { [ITEM_WEIGHT]: 1, [ITEM_COST_GP]: 5 } },
+      }),
     );
     const copy = await expectOk(
       entity.duplicate.$post({
         param: { id, entityType, entityId: source.id },
-        json: { name: "Duplicate Copy", weight: 1, costGp: 5 },
+        json: { name: "Duplicate Copy", fields: { [ITEM_WEIGHT]: 1, [ITEM_COST_GP]: 5 } },
       }),
     );
     expect(copy).toMatchObject({ name: "Duplicate Copy", fields: { [ITEM_WEIGHT]: 1, [ITEM_COST_GP]: 5 } });
@@ -127,7 +149,10 @@ describe("rulesets entities: items", () => {
   test("bulk-creates variants that copy the source's cost and weight", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const source = await expectOk(
-      kinds.$post({ param: { id, entityType }, json: { name: "Bulk Source", costGp: 25, weight: 0.1 } }),
+      kinds.$post({
+        param: { id, entityType },
+        json: { name: "Bulk Source", fields: { [ITEM_COST_GP]: 25, [ITEM_WEIGHT]: 0.1 } },
+      }),
     );
     const created = await expectOk(
       entity.variants.$post({
@@ -185,14 +210,14 @@ describe("rulesets entities: items", () => {
     await expectOk(
       other.api.api.rulesets[":id"].entities[":entityType"].$post({
         param: { id: fork.id, entityType },
-        json: { name: "Secret Homebrew Blade", type: "Weapon", sourceItemId: sword.id },
+        json: { name: "Secret Homebrew Blade", fields: { [ITEM_TYPE]: "Weapon" }, links: { madeFrom: sword.id } },
       }),
     );
     const authorItem = author.api.api.rulesets[":id"].entities[":entityType"][":entityId"];
     const local = await expectOk(
       authorItem.$put({
         param: { id, entityType, entityId: sword.id },
-        json: { name: sword.name, type: "Weapon", description: "Ours" },
+        json: { name: sword.name, fields: { [ITEM_TYPE]: "Weapon" }, description: "Ours" },
       }),
     );
     const param = { id, entityType, entityId: local.id };
@@ -202,7 +227,10 @@ describe("rulesets entities: items", () => {
     await expectOk(
       other.api.api.rulesets[":id"].subscribe.$post({ param: { id: fork.id }, json: { extensionIds: [id] } }),
     );
-    const refused = await expectStatus(authorItem.$put({ param, json: { name: sword.name, type: "Armor" } }), 422);
+    const refused = await expectStatus(
+      authorItem.$put({ param, json: { name: sword.name, fields: { [ITEM_TYPE]: "Armor" } } }),
+      422,
+    );
     expect(await refused.json()).toMatchObject({
       message: `Can't change the Weapon template "Bastard Sword" to Armor while items are made from it: 1 in rulesets built on this one`,
     });
@@ -212,7 +240,9 @@ describe("rulesets entities: items", () => {
     await expectOk(
       other.api.api.rulesets[":id"].unsubscribe.$post({ param: { id: fork.id }, json: { extensionId: id } }),
     );
-    expect(await expectOk(authorItem.$put({ param, json: { name: sword.name, type: "Armor" } }))).toMatchObject({
+    expect(
+      await expectOk(authorItem.$put({ param, json: { name: sword.name, fields: { [ITEM_TYPE]: "Armor" } } })),
+    ).toMatchObject({
       fields: { [ITEM_TYPE]: "Armor" },
     });
     await expectOk(authorItem.$delete({ param }));
@@ -228,7 +258,13 @@ describe("rulesets entities: items", () => {
 
   test("rejects an item without a name or with a non-numeric weight or cost", async () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    for (const json of [{ name: "" }, { name: "Item", weight: "heavy" }, { name: "Item", costGp: "cheap" }])
+    for (const json of [
+      { name: "" },
+      { name: "Item", fields: { [ITEM_WEIGHT]: "heavy" } },
+      { name: "Item", fields: { [ITEM_COST_GP]: "cheap" } },
+      // Its cost by the old table's column, which no body takes
+      { name: "Item", costGp: 1 },
+    ])
       await expectStatus(kinds.$post({ param: { id, entityType }, json: json as never }), 400);
   });
 

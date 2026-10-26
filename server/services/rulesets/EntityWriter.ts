@@ -214,7 +214,7 @@ export default class EntityWriter {
           const [row] = rows;
           await this.recordActivity(tx, session, "update", targetId, {
             entityName: body.name,
-            // The columns its plan writes, by its form's keys, never the body, whose other keys it doesn't
+            // The columns its plan writes, by the stored field or the role that keeps each, never the body's other parts
             changedFields: getChangedFields(planned.changes.before, planned.changes.after),
           });
           return planned.describe(row, await EntityLinks.findOwn(tx, targetId)) as ReturnType<P["describe"]>;

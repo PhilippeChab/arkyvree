@@ -14,12 +14,12 @@ describe("rulesets entities: saves", () => {
     const { abilityMap } = await getSeedCtx();
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
 
-    const json = { name: "Test Save", description: "A test save", abilityId: abilityMap["Constitution"] };
+    const json = { name: "Test Save", description: "A test save", links: { keyAbility: abilityMap["Constitution"] } };
     const created = await expectOk(kinds.$post({ param: { id, entityType }, json }));
     expect(created).toMatchObject({
       name: json.name,
       description: json.description,
-      links: [{ role: "keyAbility", toId: json.abilityId, toName: "Constitution" }],
+      links: [{ role: "keyAbility", toId: abilityMap["Constitution"], toName: "Constitution" }],
     });
     const param = { id, entityType, entityId: created.id };
 
@@ -27,11 +27,11 @@ describe("rulesets entities: saves", () => {
     const list = await expectOk(kinds.$get({ param: { id, entityType }, query: { search: "Test Save" } }));
     expect(list.items.map((s) => s.id)).toContain(created.id);
 
-    const update = { name: "Renamed Save", description: "Updated", abilityId: abilityMap["Wisdom"] };
+    const update = { name: "Renamed Save", description: "Updated", links: { keyAbility: abilityMap["Wisdom"] } };
     expect(await expectOk(entity.$put({ param, json: update }))).toMatchObject({
       name: update.name,
       description: update.description,
-      links: [{ role: "keyAbility", toId: update.abilityId, toName: "Wisdom" }],
+      links: [{ role: "keyAbility", toId: abilityMap["Wisdom"], toName: "Wisdom" }],
     });
 
     await expectOk(entity.$delete({ param }));
@@ -48,9 +48,11 @@ describe("rulesets entities: saves", () => {
     const { abilityMap } = await getSeedCtx();
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     for (const json of [
-      { abilityId: abilityMap["Wisdom"] },
+      { links: { keyAbility: abilityMap["Wisdom"] } },
       { name: "No ability" },
-      { name: "Bad ability", abilityId: "not-a-uuid" },
+      { name: "Bad ability", links: { keyAbility: "not-a-uuid" } },
+      // Its ability by the old table's column, which no body takes
+      { name: "Old ability", abilityId: abilityMap["Wisdom"] },
     ])
       await expectStatus(kinds.$post({ param: { id, entityType }, json: json as never }), 400);
   });
@@ -60,7 +62,10 @@ describe("rulesets entities: saves", () => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     await expectStatus(kinds.$get({ param: { id: NIL_UUID, entityType }, query: {} }), 404);
     const param = { id, entityType, entityId: NIL_UUID };
-    await expectStatus(entity.$put({ param, json: { name: "Missing", abilityId: abilityMap["Wisdom"] } }), 404);
+    await expectStatus(
+      entity.$put({ param, json: { name: "Missing", links: { keyAbility: abilityMap["Wisdom"] } } }),
+      404,
+    );
     await expectStatus(entity.$delete({ param }), 404);
   });
 });

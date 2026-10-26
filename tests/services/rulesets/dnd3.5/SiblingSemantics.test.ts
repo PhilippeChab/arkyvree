@@ -192,7 +192,7 @@ for (const [chainingOperator, reverseOrder] of [
     const before = evaluate([await read()]);
     await EntitiesService.updateEntity(session, host.id, "feats", copies[0], {
       name: "Toughness",
-      fields: { families: ["Luck"] },
+      fields: { [FEAT_FAMILY]: ["Luck"] },
     });
     const after = evaluate([await read()]);
     invalidateTestRulesets(...rulesetIds);

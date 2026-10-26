@@ -40,14 +40,9 @@ function answerOf({ description, name, primaryAbilityId, ...values }: SkillValue
   };
 }
 
-/** A skill's body (`values`, as it reads): its columns, and its fields under `fields`. */
-function bodyOf({
-  checkPenaltyMultiplier,
-  impactedByWeight,
-  usableWithoutTraining,
-  ...columns
-}: SkillValues): SkillBody {
-  return { ...columns, fields: { checkPenaltyMultiplier, impactedByWeight, usableWithoutTraining } };
+/** A skill's body (`values`, as it reads): its fields by stored field, its ability its `keyAbility` link. */
+function bodyOf({ description, name, primaryAbilityId, ...values }: SkillValues): SkillBody {
+  return { description, fields: fieldsOf(values), links: { keyAbility: primaryAbilityId }, name };
 }
 
 /** A skill's fields (`values`, as it reads), as its answer holds them: by the stored field that keeps each. */
@@ -108,9 +103,12 @@ describe("EntitiesService: skills", () => {
       changedFields: [{ field: "name", from: "Climb", to: "Climbing" }],
     });
     expect(
-      EntitiesService.updateEntity(session, ruleset.id, "skills", climb.id, { name: "Climb", primaryAbilityId: "" }),
+      EntitiesService.updateEntity(session, ruleset.id, "skills", climb.id, {
+        name: "Climb",
+        links: { keyAbility: "" },
+      }),
     ).rejects.toMatchObject({
-      issues: [{ category: "primaryAbilityId" }],
+      issues: [{ category: "links.keyAbility" }],
     });
   });
 

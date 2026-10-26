@@ -35,7 +35,7 @@ import { isOneOf } from "@/shared/isOneOf.ts";
 
 import { AmountsInput } from "./AmountsInput.tsx";
 import type { ColumnContext } from "./columnContext.ts";
-import { choiceOptions, isFieldShown, noneLabel, valueAt } from "./entityFields.ts";
+import { choiceOptions, isFieldShown, noneLabel, placeOf, valueAt } from "./entityFields.ts";
 import { GrantsInput } from "./GrantsInput.tsx";
 import { LeveledLinksInput } from "./LeveledLinksInput.tsx";
 import { LinksInput } from "./LinksInput.tsx";
@@ -77,9 +77,8 @@ interface FieldsGridProps<T extends FieldValues> extends FieldsShowing<T> {
 }
 
 /**
- * What every field of a form shares: the form, where their values go in it (`prefix`: `fields.` for its declared
- * fields, none for its columns), how they show, what its columns read of the entity, and the ruleset whose entities
- * they name.
+ * What every field of a form shares: the form, how they show, what its columns read of the entity, and the ruleset
+ * whose entities they name. Each goes in the form where its save sends it (`placeOf`).
  */
 interface FieldsShowing<T extends FieldValues> {
   columns: 1 | 2;
@@ -88,9 +87,8 @@ interface FieldsShowing<T extends FieldValues> {
   entityType: string;
   form: UseFormReturn<T>;
   help: boolean;
-  /** What a choice's change does besides (`useTemplateReset`: a type's empties its template) */
-  onChoiceChange?: (key: string, value: unknown) => void;
-  prefix: string;
+  /** What a choice's change does besides, by its stored field (`useTemplateReset`: a type's empties its template) */
+  onChoiceChange?: (field: string, value: unknown) => void;
   rulesetId: string;
 }
 
@@ -172,9 +170,9 @@ function FieldInput<T extends FieldValues>({ field, ...props }: FieldInputProps<
       </Stack>
     );
   }
-  const name = formPath<T>(`${props.prefix}${field.key}`);
+  const name = formPath<T>(placeOf(field));
   const helperText = help ? field.help : undefined;
-  const locked = props.context.locked?.includes(field.key) ?? false;
+  const locked = props.context.locked?.includes(field.field ?? field.role ?? "") ?? false;
   switch (field.input) {
     case "flag":
       return field.nullable ? (
@@ -236,7 +234,7 @@ function FieldInput<T extends FieldValues>({ field, ...props }: FieldInputProps<
           emptyLabel={field.required ? undefined : noneLabel(field.options)}
           helperText={helperText}
           disabled={locked}
-          onChange={props.onChoiceChange && ((value) => props.onChoiceChange?.(field.key, value))}
+          onChange={props.onChoiceChange && ((value) => props.onChoiceChange?.(field.field ?? "", value))}
         />
       );
     case "text":
@@ -254,9 +252,9 @@ function FieldInput<T extends FieldValues>({ field, ...props }: FieldInputProps<
   );
 }
 
-/** Where a declared field's value goes in its form: under its fields (a progression's, which only fields are). */
-function fieldPath<T extends FieldValues>(key: string): FieldPath<T> {
-  return formPath<T>(`fields.${key}`);
+/** A field's own key among a grid's: where its form holds it, a group's its label. */
+function fieldKey(field: EntityField) {
+  return field.input === "group" ? field.label : placeOf(field);
 }
 
 /** Fields in their grid, each where its width puts it, those whose condition the form doesn't meet left out. */
@@ -272,24 +270,24 @@ function FieldsGrid<T extends FieldValues>({ fields, ...props }: FieldsGridProps
           sx={[WIDE_FIELD_SX, { flexWrap: "wrap" }]}
         >
           {switches.map((field) => (
-            <GridField key={field.key} {...props} field={field} />
+            <GridField key={fieldKey(field)} {...props} field={field} />
           ))}
         </Stack>
       )}
       {fields
         .filter((field) => !isSwitch(field))
         .map((field, index) => (
-          // A key two fields share, each shown on its own conditions (an item's type, a template's or not), keeps them
-          // apart by their place, which never changes
-          <GridField key={`${field.key}:${index}`} {...props} field={field} />
+          // A place two fields share, each shown on its own conditions (an item's type, a template's or not), keeps them
+          // apart by their order, which never changes
+          <GridField key={`${fieldKey(field)}:${index}`} {...props} field={field} />
         ))}
     </Box>
   );
 }
 
 /** A three-state flag, bound to its form's field: its select, handed the field's value, change and ref. */
-function FlagField<T extends FieldValues>({ field, form, help, prefix }: FieldInputProps<T, FlagField>) {
-  const { field: bound } = useController({ control: form.control, name: formPath<T>(`${prefix}${field.key}`) });
+function FlagField<T extends FieldValues>({ field, form, help }: FieldInputProps<T, FlagField>) {
+  const { field: bound } = useController({ control: form.control, name: formPath<T>(placeOf(field)) });
   const readOnly = useReadOnlyFields();
   return (
     <FlagSelect
@@ -339,7 +337,7 @@ function FlagSelect({ field, help, inputRef, onChange, readOnly, value }: FlagSe
   );
 }
 
-/** A path of a form's values, which the fields' declarations name as text (`fields.weapon.type`, `type`). */
+/** A path of a form's values, which the fields' declarations name as text (`fields.WEAPON_TYPE`, `links.madeFrom`). */
 function formPath<T extends FieldValues>(path: string): FieldPath<T> {
   return path as FieldPath<T>;
 }
@@ -383,13 +381,9 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
   const helpId = useId();
   const readOnly = useReadOnlyFields();
   const { control } = form;
-  const {
-    fields: rows,
-    append,
-    remove,
-  } = useFieldArray({ control, name: `fields.${field.key}.extra` as ArrayPath<T> });
-  const every: unknown = useWatch({ control, name: fieldPath<T>(`${field.key}.every`) });
-  const watched: unknown = useWatch({ control, name: fieldPath<T>(`${field.key}.extra`) });
+  const { fields: rows, append, remove } = useFieldArray({ control, name: `${placeOf(field)}.extra` as ArrayPath<T> });
+  const every: unknown = useWatch({ control, name: formPath<T>(`${placeOf(field)}.every`) });
+  const watched: unknown = useWatch({ control, name: formPath<T>(`${placeOf(field)}.extra`) });
   const extra: ProgressionExtra[] = Array.isArray(watched) ? watched : [];
   // One at most a level: each listed level gives one, which its frequency mustn't give already
   const givesOne = field.max === 1;
@@ -408,7 +402,7 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
   const levelsListed = extra.map(({ level }) => level).join(",");
   const { isSubmitted } = form.formState;
   const { trigger } = form;
-  const extraPath = fieldPath<T>(`${field.key}.extra`);
+  const extraPath = formPath<T>(`${placeOf(field)}.extra`);
   useEffect(() => {
     if (isSubmitted) void trigger(extraPath);
   }, [every, extraPath, isSubmitted, levelsListed, trigger]);
@@ -426,7 +420,7 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
         <Box sx={PROGRESSION_WIDTH_SX}>
           <FormTextField
             control={control}
-            name={fieldPath<T>(`${field.key}.every`)}
+            name={formPath<T>(`${placeOf(field)}.every`)}
             rules={wholeNumberRules(0, "Frequency is required", field.levels)}
             number
             label="Every N Levels"
@@ -444,7 +438,7 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
             <Box key={row.id} sx={[PROGRESSION_ROW_SX, PROGRESSION_WIDTH_SX]}>
               <FormTextField
                 control={control}
-                name={fieldPath<T>(`${field.key}.extra.${index}.level`)}
+                name={formPath<T>(`${placeOf(field)}.extra.${index}.level`)}
                 rules={wholeNumberRules(1, "Level is required", field.levels, [
                   (level) => issueAt(index, "level", level),
                 ])}
@@ -458,7 +452,7 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
               ) : (
                 <FormTextField
                   control={control}
-                  name={fieldPath<T>(`${field.key}.extra.${index}.amount`)}
+                  name={formPath<T>(`${placeOf(field)}.extra.${index}.amount`)}
                   rules={wholeNumberRules(1, "Amount is required", field.max, [
                     (amount) => issueAt(index, "amount", amount),
                   ])}
@@ -500,19 +494,12 @@ function ProgressionInput<T extends FieldValues>({ field, form, help }: FieldInp
 }
 
 /** An entity of the ruleset, by its id: a select of the list its kind names (`list`), none too unless it's required. */
-function ReferenceSelect<T extends FieldValues>({
-  field,
-  form,
-  help,
-  prefix,
-  rulesetId,
-  list,
-}: ReferenceSelectProps<T>) {
+function ReferenceSelect<T extends FieldValues>({ field, form, help, rulesetId, list }: ReferenceSelectProps<T>) {
   const { data: entities, error } = useQuery(rulesetOptionsQuery(list, rulesetId));
   return (
     <SelectField
       control={form.control}
-      name={formPath<T>(`${prefix}${field.key}`)}
+      name={formPath<T>(placeOf(field))}
       label={field.label}
       rules={field.required ? requiredRules(`${field.label} is required`) : undefined}
       options={(entities ?? []).map((entity) => ({ value: entity.id, label: entity.name }))}
@@ -535,8 +522,8 @@ function ShownField<T extends FieldValues>({ paths, ...props }: ShownFieldProps<
 }
 
 /** Several values, as chips: a closed list's options (and those the saved form holds), or free ones. */
-function ValuesInput<T extends FieldValues>({ field, form, help, prefix }: FieldInputProps<T, ValuesField>) {
-  const name = formPath<T>(`${prefix}${field.key}`);
+function ValuesInput<T extends FieldValues>({ field, form, help }: FieldInputProps<T, ValuesField>) {
+  const name = formPath<T>(placeOf(field));
   const readOnly = useReadOnlyFields();
   const {
     field: { ref, value, onChange, ...bound },
@@ -602,7 +589,6 @@ export function EntityColumns<T extends FieldValues>({
       form={form}
       help={false}
       onChoiceChange={onChoiceChange}
-      prefix=""
       rulesetId={rulesetId}
     />
   );
@@ -611,7 +597,8 @@ export function EntityColumns<T extends FieldValues>({
 /**
  * An entity's fields, as its ruleset declares them (`useEntityFields`): each its input, one a row (two side by side,
  * `columns`), a group's under its label, a field on a condition while the form meets it, read-only under
- * `ReadOnlyFields`. Bound to the form's `fields`, which its save sends as they are.
+ * `ReadOnlyFields`. Bound where its save sends each as it is: its form's `fields`, by stored field (a reference among
+ * its `links`, by role).
  */
 export function EntityFields<T extends FieldValues>({
   columns = 1,
@@ -631,7 +618,6 @@ export function EntityFields<T extends FieldValues>({
       fields={fields}
       form={form}
       help={help}
-      prefix="fields."
       rulesetId={rulesetId}
     />
   );

@@ -66,8 +66,21 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
   pdfFailed: (_actor, d) => `PDF generation failed for ${d.characterName || "your character"}`,
 };
 
-/** A field that points to another entity by its id (`primaryAbilityId`, `sourceItemId`): its name, then "Id". */
-const REFERENCE_FIELD = /^(\w+)Id$/;
+/**
+ * The form columns of an activity's entity type (`entityType`), as the base rules its ruleset follows describe them
+ * (`rules`): when it doesn't say (an older activity's), every base rules', the first's column of a field or a role
+ * winning; none for another type.
+ */
+function columnsOf(
+  d: Record<string, unknown>,
+  entityType: string | undefined,
+  rules: RulesDescriptions | undefined,
+): readonly Column[] {
+  if (!rules || !entityType) return [];
+  const baseRules = oneOf(d.baseRules, BASE_RULES_OPTIONS);
+  if (baseRules) return rules[baseRules].columns[entityType] ?? [];
+  return Object.values(rules).flatMap((described) => described.columns[entityType] ?? []);
+}
 
 /**
  * A ruleset entity's create, update or delete, named in its ruleset's word ("Ann created spell Fireball"): the entity
@@ -83,16 +96,19 @@ function contentChange(type: string, actor: string, d: Record<string, unknown>, 
 }
 
 /**
- * A changed field as an activity says it: named and read as its entity's column (`columns`, its rules': "Hit Die set to
- * d8", "Cost: 15.00 gp → 20.00 gp"), else by its key.
+ * A changed field as an activity says it, which records it where it's stored (a stored field, a link's role): named and
+ * read as its entity's column (`columns`, its rules': "Hit Die set to d8", "Cost: 15.00 gp → 20.00 gp"), else by its
+ * name ("Name", "Description").
  */
 function formatChange(change: ChangedField, columns: readonly Column[]): string {
-  // An entity a field points to is recorded by its id, which says nothing to a reader: only that it changed
-  const reference = REFERENCE_FIELD.exec(change.field)?.[1];
-  if (reference) return `${formatSegment(reference)} updated`;
-
-  const column = columns.find((own) => own.key === change.field);
-  const label = column?.label ?? formatSegment(change.field);
+  const column = columns.find(
+    (own) => own.input !== "group" && (own.field ?? own.role) !== undefined && (own.field ?? own.role) === change.field,
+  );
+  // A stored field its columns don't show, by its name ("SPELL_SCHOOL" → "Spell School"), else as a path says it
+  const label =
+    column?.label ?? (/^[A-Z0-9_]+$/.test(change.field) ? formatFieldName(change.field) : formatSegment(change.field));
+  // An entity a link names is recorded by its id, which says nothing to a reader: only that it changed
+  if (column?.input === "ref" || column?.input === "template") return `${label} updated`;
   if (change.from == null && change.to == null) return `${label} updated`;
 
   const shown = (value: string) => (column && readColumn(column, value)) ?? value;
@@ -179,10 +195,9 @@ function wordsOf(d: Record<string, unknown>, rules: RulesDescriptions | undefine
 export function formatActivityDetails(type: string, data: unknown, rules?: RulesDescriptions): string | null {
   const d = payload(data);
   const parts: string[] = [];
-  const baseRules = oneOf(d.baseRules, BASE_RULES_OPTIONS);
-  // The columns of the entity its type names, its own alone: another entity's field of the same key reads its own way
+  // The columns of the entity its type names, its own alone: another entity's field of the same name reads its own way
   const entityType = entityTypeOfActivityName(ENTITY_ACTIVITY.exec(type)?.[2] ?? "", wordsOf(d, rules));
-  const columns = (entityType && baseRules && rules?.[baseRules].columns[entityType]) || [];
+  const columns = columnsOf(d, entityType, rules);
 
   if (Array.isArray(d.changedFields))
     for (const change of d.changedFields.filter(isChangedField)) parts.push(formatChange(change, columns));

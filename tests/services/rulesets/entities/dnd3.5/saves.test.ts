@@ -27,7 +27,7 @@ describe("EntitiesService: saves", () => {
     const save = await EntitiesService.createEntity(session, ruleset.id, "saves", {
       name: "Fortitude",
       description: "Physical resistance",
-      abilityId: constitution.id,
+      links: { keyAbility: constitution.id },
     });
     expect(save).toMatchObject({
       name: "Fortitude",
@@ -38,7 +38,7 @@ describe("EntitiesService: saves", () => {
     const updated = await EntitiesService.updateEntity(session, ruleset.id, "saves", save.id, {
       name: "Will",
       description: "Mental resistance",
-      abilityId: wisdom.id,
+      links: { keyAbility: wisdom.id },
     });
     expect(updated).toMatchObject({
       name: "Will",
@@ -51,7 +51,7 @@ describe("EntitiesService: saves", () => {
     const { session, ruleset, constitution } = await setup();
     const save = await EntitiesService.createEntity(session, ruleset.id, "saves", {
       name: "Fortitude",
-      abilityId: constitution.id,
+      links: { keyAbility: constitution.id },
     });
     const [klass] = await Entities.create<Klass>(db, "classes", {
       name: "Saving Class",

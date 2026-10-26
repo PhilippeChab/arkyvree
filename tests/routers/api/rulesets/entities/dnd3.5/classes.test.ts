@@ -18,7 +18,7 @@ describe("rulesets entities: classes", () => {
     const created = await expectOk(
       kinds.$post({
         param: { id, entityType },
-        json: { name: "Test Class", description: "A test class", hd: 10 },
+        json: { name: "Test Class", description: "A test class", fields: { [CLASS_HD]: 10 } },
       }),
     );
     expect(created).toMatchObject({ name: "Test Class", description: "A test class", fields: { [CLASS_HD]: 10 } });
@@ -33,7 +33,7 @@ describe("rulesets entities: classes", () => {
     expect(list.items.map((c) => c.id)).toContain(created.id);
 
     const updated = await expectOk(
-      entity.$put({ param, json: { name: "Renamed Class", description: "Updated", hd: 12 } }),
+      entity.$put({ param, json: { name: "Renamed Class", description: "Updated", fields: { [CLASS_HD]: 12 } } }),
     );
     expect(updated).toMatchObject({ name: "Renamed Class", description: "Updated", fields: { [CLASS_HD]: 12 } });
 
@@ -65,7 +65,7 @@ describe("rulesets entities: classes", () => {
     await expectStatus(kinds.$get({ param: { id: NIL_UUID, entityType }, query: {} }), 404);
     const param = { id, entityType, entityId: NIL_UUID };
     await expectStatus(entity.$get({ param }), 404);
-    await expectStatus(entity.$put({ param, json: { name: "Missing", hd: 8 } }), 404);
+    await expectStatus(entity.$put({ param, json: { name: "Missing", fields: { [CLASS_HD]: 8 } } }), 404);
     await expectStatus(entity.$delete({ param }), 404);
   });
 });

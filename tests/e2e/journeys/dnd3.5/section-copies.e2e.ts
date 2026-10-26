@@ -4,6 +4,7 @@ import { test } from "@/tests/e2e/fixtures.ts";
 import { apiResponse, uniqueName } from "@/tests/e2e/support/page.ts";
 import { forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
 import { signIn } from "@/tests/e2e/support/signIn.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 // What a kind's section does past listing, as its rules describe it, through the routes by kind: the feats' families
 // grouped and expanded, then ungrouped; an item duplicated from its row, then its variants made
@@ -20,13 +21,13 @@ test.describe("A fork's sections", () => {
     // A family's row counts its variants, and lists them as it expands
     const family = page.getByRole("row", { name: /^Greater Weapon Focus\b.*\d+ variants$/ });
     await expect(family).toBeVisible();
-    const variants = apiResponse(page, "GET", new RegExp(`/api/rulesets/${forkId}/entities/feats\\?.*family=`));
+    const variants = apiResponse(page, "GET", new RegExp(`/api/rulesets/${forkId}/entities/feats\\?.*${FEAT_FAMILY}=`));
     await family.click();
     await variants;
     await expect(page.getByRole("row", { name: /Greater Weapon Focus: Longsword/ })).toBeVisible();
 
     // Ungrouped, each feat is its own row, ten to a page, its pools beside it: no family's row is left
-    const flat = apiResponse(page, "GET", new RegExp(`/api/rulesets/${forkId}/entities/feats\\?(?!.*family=)`));
+    const flat = apiResponse(page, "GET", new RegExp(`/api/rulesets/${forkId}/entities/feats\\?(?!.*${FEAT_FAMILY}=)`));
     await page.getByRole("button", { name: "Group Families" }).click();
     await flat;
     await expect(page).toHaveURL(/[?&]grouped=false/);

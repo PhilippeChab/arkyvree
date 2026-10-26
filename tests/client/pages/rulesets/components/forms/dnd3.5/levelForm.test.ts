@@ -3,7 +3,6 @@ import { describe, expect, test } from "bun:test";
 import {
   emptyLevel,
   type LevelColumns,
-  levelKeysOf,
   nextLevel,
   readLevel,
   withAllAmounts,
@@ -16,35 +15,52 @@ const COLUMNS: LevelColumns = {
   grants: CLASS_LEVEL_COLUMNS.find((column) => column.input === "grants"),
 } as LevelColumns;
 
-const FORTITUDE = { saveId: "fortitude", base: 2 };
+/** A save's base bonus, as a level's form holds it and its save sends it: its `baseBonus` link's. */
+const FORTITUDE = { toId: "fortitude", amount: 2 };
 
-/** Where a 3.5 class level's form holds them: its `saves` at `saveId` and `base`, its `feats`. */
-const KEYS = levelKeysOf(COLUMNS);
-
-/** A class level as its route reads it, its saves' bases among it. */
-function level(number: number, saves: { base: number; saveId: string }[]) {
-  return readLevel({ id: `l${number}`, position: number, updatedAt: "", bab: number, skills: 4, saves }, COLUMNS);
+/** A class level as its route reads it, its saves' bases among it, by their links' role. */
+function level(number: number, baseBonus: { amount: number; toId: string }[]) {
+  return readLevel({ id: `l${number}`, position: number, updatedAt: "", baseBonus }, COLUMNS);
 }
 
 describe("a class level's form", () => {
   // Its create dialog opens on the class's next level
   test("starts one above the class's highest level, from its saves (its fields: `withEntityFields`)", () => {
-    const levels = [level(2, [{ ...FORTITUDE, base: 3 }]), level(1, [FORTITUDE])];
-    expect(nextLevel(levels, KEYS)).toEqual({ level: 3, saves: [{ ...FORTITUDE, base: 3 }], feats: [] });
+    const levels = [level(2, [{ ...FORTITUDE, amount: 3 }]), level(1, [FORTITUDE])];
+    expect(nextLevel(levels, COLUMNS)).toEqual({
+      position: 3,
+      links: { baseBonus: [{ ...FORTITUDE, amount: 3 }], grants: [] },
+    });
   });
 
   test("starts from the first level's empty form for a class without one, or while its levels load", () => {
-    expect([nextLevel([], KEYS), nextLevel(undefined, KEYS)]).toEqual([emptyLevel(KEYS), emptyLevel(KEYS)]);
-    expect(emptyLevel(KEYS)).toEqual({ level: 1, saves: [], feats: [] });
+    expect([nextLevel([], COLUMNS), nextLevel(undefined, COLUMNS)]).toEqual([emptyLevel(COLUMNS), emptyLevel(COLUMNS)]);
+    expect(emptyLevel(COLUMNS)).toEqual({ position: 1, links: { baseBonus: [], grants: [] } });
+  });
+
+  test("reads a level's grants and amounts at their links' roles", () => {
+    const read = readLevel(
+      {
+        id: "l1",
+        position: 1,
+        updatedAt: "",
+        baseBonus: [FORTITUDE],
+        grants: [{ id: "dodge", name: "Dodge", description: null, viaId: "general", viaName: "General", free: true }],
+      },
+      COLUMNS,
+    );
+    expect(read.amounts).toEqual([{ entityId: "fortitude", amount: 2 }]);
+    expect(read.grants).toEqual([
+      { entityId: "dodge", name: "Dodge", description: null, viaId: "general", viaName: "General", free: true },
+    ]);
   });
 
   test("sends every ruleset save, 0 when unset, and its own until they load", () => {
     const saves = [FORTITUDE];
-    const amounts = KEYS.amounts!;
-    expect(withAllAmounts([{ id: "fortitude" }, { id: "will" }], saves, amounts)).toEqual([
+    expect(withAllAmounts([{ id: "fortitude" }, { id: "will" }], saves)).toEqual([
       FORTITUDE,
-      { saveId: "will", base: 0 },
+      { toId: "will", amount: 0 },
     ]);
-    expect(withAllAmounts(undefined, saves, amounts)).toBe(saves);
+    expect(withAllAmounts(undefined, saves)).toBe(saves);
   });
 });

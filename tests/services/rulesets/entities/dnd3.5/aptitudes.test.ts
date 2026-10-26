@@ -13,7 +13,7 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { addGrants } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
-import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { CLASS_HD, CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * The links that name the aptitude: as the list a feat or a spell is in (their target), or the pool a grant is through
@@ -79,11 +79,11 @@ describe("EntitiesService: aptitudes", () => {
     });
     await EntitiesService.createEntity(session, ruleset.id, "feats", {
       name: "Linked Feat",
-      aptitudeIds: [featAptitude.id],
+      links: { listedIn: [{ toId: featAptitude.id }] },
     });
     await EntitiesService.createEntity(session, ruleset.id, "spells", {
       name: "Linked Spell",
-      aptitudes: [{ id: spellAptitude.id }],
+      links: { listedIn: [{ toId: spellAptitude.id }] },
     });
 
     const [feat] = await Entities.create<Feat>(db, "feats", { name: "Granted Feat", rulesetId: ruleset.id });
@@ -96,9 +96,9 @@ describe("EntitiesService: aptitudes", () => {
     // Written past the services, after the creates read the ruleset's view
     RulesetViews.invalidate(ruleset.id);
     const level = await EntitiesService.createOwnedEntity(session, ruleset.id, "classes", klass.id, {
-      level: 1,
-      fields: { bab: 1, skills: 2 },
-      feats: [{ featId: feat.id, aptitudeId: featAptitude.id }],
+      fields: { [CLASS_LEVEL_BAB]: 1, [CLASS_LEVEL_SKILL_POINTS]: 2 },
+      links: { grants: [{ toId: feat.id, viaId: featAptitude.id }] },
+      position: 1,
     });
     await addGrants(db, level.id, "spells", [{ toId: spell.id, aptitudeId: spellAptitude.id }]);
 
@@ -119,11 +119,11 @@ describe("EntitiesService: aptitudes", () => {
     });
     const feat = await EntitiesService.createEntity(session, ruleset.id, "feats", {
       name: "Picked Feat",
-      aptitudeIds: [featAptitude.id],
+      links: { listedIn: [{ toId: featAptitude.id }] },
     });
     const spell = await EntitiesService.createEntity(session, ruleset.id, "spells", {
       name: "Picked Spell",
-      aptitudes: [{ id: spellAptitude.id }],
+      links: { listedIn: [{ toId: spellAptitude.id }] },
     });
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     const { klassLevel } = await createTestKlassLevel(ruleset.id);

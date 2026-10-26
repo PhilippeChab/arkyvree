@@ -22,19 +22,47 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
-import { FEAT_FAMILY, FEAT_GENERATED, WEAPON_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  FEAT_FAMILY,
+  FEAT_GENERATED,
+  ITEM_TYPE,
+  SKILL_CHECK_PENALTY_MULTIPLIER,
+  SKILL_IMPACTED_BY_WEIGHT,
+  SKILL_USABLE_WITHOUT_TRAINING,
+  SPELL_AREA_OF_EFFECT,
+  SPELL_CASTING_TIME,
+  SPELL_COMPONENT,
+  SPELL_DESCRIPTOR,
+  SPELL_DURATION,
+  SPELL_RANGE_TYPE,
+  SPELL_RESISTANCE,
+  SPELL_SCHOOL,
+  SPELL_SUBSCHOOL,
+  SPELL_TARGET,
+  WEAPON_TYPE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 function skill(abilityId: string, name: string, fields: Record<string, unknown> = {}) {
   return {
     name,
     description: "",
-    primaryAbilityId: abilityId,
-    fields: { impactedByWeight: true, checkPenaltyMultiplier: 1, usableWithoutTraining: true, ...fields },
+    links: { keyAbility: abilityId },
+    fields: {
+      [SKILL_IMPACTED_BY_WEIGHT]: true,
+      [SKILL_CHECK_PENALTY_MULTIPLIER]: 1,
+      [SKILL_USABLE_WITHOUT_TRAINING]: true,
+      ...fields,
+    },
   };
 }
 
 function spell(aptitudeId: string, name: string, school?: string, fields: Record<string, unknown> = {}) {
-  return { name, description: "", aptitudes: [{ id: aptitudeId }], fields: { school, ...fields } };
+  return {
+    name,
+    description: "",
+    links: { listedIn: [{ toId: aptitudeId }] },
+    fields: { [SPELL_SCHOOL]: school, ...fields },
+  };
 }
 
 /** A ruleset of its own with Strength, a spell list and, unless left out, the General aptitude generated feats go in. */
@@ -104,8 +132,12 @@ async function seededForkWithClimb() {
   }))!;
   const climbBody = {
     name: "Climb",
-    primaryAbilityId: climb.links.keyAbility,
-    fields: { impactedByWeight: true, checkPenaltyMultiplier: 1, usableWithoutTraining: true },
+    links: { keyAbility: climb.links.keyAbility },
+    fields: {
+      [SKILL_IMPACTED_BY_WEIGHT]: true,
+      [SKILL_CHECK_PENALTY_MULTIPLIER]: 1,
+      [SKILL_USABLE_WITHOUT_TRAINING]: true,
+    },
   };
   return { session, fork, climb, climbBody, feat: await findFeat(climb.rulesetId, "Skill Focus: Climb") };
 }
@@ -123,15 +155,15 @@ describe("Spell Focus", () => {
       "every field, several descriptors and components",
       "Evocation",
       {
-        subschool: "Creation",
-        descriptors: ["Fire", "Light"],
-        castingTime: "1 standard action",
-        rangeType: "Long",
-        target: "One creature",
-        areaOfEffect: "20-ft. radius",
-        duration: "Instantaneous",
-        spellResistance: "Yes",
-        components: ["Verbal", "Somatic", "Material"],
+        [SPELL_SUBSCHOOL]: "Creation",
+        [SPELL_DESCRIPTOR]: ["Fire", "Light"],
+        [SPELL_CASTING_TIME]: "1 standard action",
+        [SPELL_RANGE_TYPE]: "Long",
+        [SPELL_TARGET]: "One creature",
+        [SPELL_AREA_OF_EFFECT]: "20-ft. radius",
+        [SPELL_DURATION]: "Instantaneous",
+        [SPELL_RESISTANCE]: "Yes",
+        [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       },
       [
         "SPELL_AREA_OF_EFFECT: 20-ft. radius",
@@ -196,14 +228,14 @@ describe("Spell Focus", () => {
       session,
       ruleset.id,
       "spells",
-      spell(spells.id, "Evolving Spell", "Evocation", { castingTime: "1 standard action" }),
+      spell(spells.id, "Evolving Spell", "Evocation", { [SPELL_CASTING_TIME]: "1 standard action" }),
     );
     await EntitiesService.updateEntity(
       session,
       ruleset.id,
       "spells",
       created.id,
-      spell(spells.id, "Evolving Spell", "Conjuration", { castingTime: "1 full round" }),
+      spell(spells.id, "Evolving Spell", "Conjuration", { [SPELL_CASTING_TIME]: "1 full round" }),
     );
 
     expect(await spellFields(created.id)).toEqual(["SPELL_CASTING_TIME: 1 full round", "SPELL_SCHOOL: Conjuration"]);
@@ -483,7 +515,7 @@ describe("generated feats", () => {
       session,
       fork.id,
       "skills",
-      skill(climb.links.keyAbility!, "New Skill", { impactedByWeight: false }),
+      skill(climb.links.keyAbility!, "New Skill", { [SKILL_IMPACTED_BY_WEIGHT]: false }),
     );
     const generated = await findFeat(fork.id, "Skill Focus: New Skill");
     expect(
@@ -506,7 +538,7 @@ describe("generated feats", () => {
     await EntitiesService.deleteEntity(session, fork.id, "feats", longsword.id);
     const made = await EntitiesService.createEntity(session, fork.id, "feats", {
       name: "Weapon Focus: Longsword",
-      aptitudeIds: [(await getSeedCtx()).aptMap["General"]],
+      links: { listedIn: [{ toId: (await getSeedCtx()).aptMap["General"] }] },
     });
     expect(made.fields[FEAT_GENERATED]).toBe(true);
   });
@@ -515,7 +547,7 @@ describe("generated feats", () => {
     const { session, fork } = await forkWithExtensions();
     const own = await EntitiesService.createEntity(session, fork.id, "feats", {
       name: "Weapon Focus: Homebrew",
-      aptitudeIds: [(await getSeedCtx()).aptMap["General"]],
+      links: { listedIn: [{ toId: (await getSeedCtx()).aptMap["General"] }] },
     });
     expect(
       await EntitiesService.updateEntity(session, fork.id, "feats", own.id, { name: "Homebrew Focus" }),
@@ -585,7 +617,7 @@ describe("generated feats", () => {
     const { session, fork } = await seededFork();
     const weapon = await EntitiesService.createEntity(session, fork.id, "items", {
       name: "Unique Weapon",
-      type: "Weapon",
+      fields: { [ITEM_TYPE]: "Weapon" },
     });
     // A weapon type of its own, outside the catalog an item's fields offer
     await writeFieldValues("items", weapon.id, [[WEAPON_TYPE, "Unique Weapon"]]);

@@ -2,16 +2,17 @@ import type { FormField } from "@/engine/core/fields/index.ts";
 import type { CharacterForm } from "@/engine/core/module/parts/characters/index.ts";
 
 /**
- * How a kind's row copies an entity (an item's): a duplicate, whose form keeps the columns it can't change (`locked`:
- * an item's type, slot and template), and variants, the most at once (`most`), each its own name and description. A
- * copy names the template it's from in its `source` column: a template's own, its `template` column (`key`, held at
- * its own flag `field`) true, or the entity's own template; a copy is never a template itself.
+ * How a kind's row copies an entity (an item's): a duplicate, whose form keeps the columns it can't change (`locked`,
+ * each by the stored field or the role that keeps it: an item's type, slot and template), and variants, the most at
+ * once (`most`), each its own name and description. A copy names the template it's from in its `source` link, by its
+ * role: a template's own, its own flag (`template.field`) true, or the entity's own template; a copy is never a template
+ * itself.
  */
 export interface EntityCopiesDescription {
   locked: string[];
   most: number;
   source: string;
-  template: { field: string; key: string };
+  template: { field: string };
 }
 
 /**
@@ -25,8 +26,9 @@ export interface EntityCopiesDescription {
  * one's form says what each of its fields is for (`fieldHelp`: a class's), whether its form shows two fields side by
  * side in a wide dialog (`wideForm`: `fluid`, an item's; `fixed`, its height kept as its fields change, a spell's), the
  * pools its list narrows by (`pools`), the entities its page links one to (`links`: a class's skills), whether its list
- * narrows by a tier (`levels`: a spell's, by its level, `RulesDescription.tiers`), whether its list groups an entity's
- * variants under their family (`families`: a feat's), how its row copies one (`copies`: an item's), and when its name
+ * narrows by a tier (`levels`: a spell's, by its level, `RulesDescription.tiers`, its query's `tier`), the field its list
+ * groups an entity's variants under their family by (`families`: a feat's, its query's filter of that field), how its
+ * row copies one (`copies`: an item's), and when its name
  * can't change (`lockedName`: while its own flag `field` holds, a generated feat's, its form saying why, `reason`). Its
  * word is its rules' (`RulesDescription.words`), and its URL's segment the app's (`getUrlSegment`: `classes`). Not the
  * kinds a race or a class is for (`entityKinds`).
@@ -34,7 +36,7 @@ export interface EntityCopiesDescription {
 export interface EntityKindDescription {
   copies?: EntityCopiesDescription;
   empty?: string;
-  families?: boolean;
+  families?: { field: string };
   fieldHelp?: boolean;
   help?: string;
   icon: string;
@@ -65,21 +67,21 @@ export interface EntityLinksDescription {
 
 /**
  * The pools a kind's list narrows by, one at a time: their kind (`type`: 3.5's `aptitudes`), those of them its entities
- * are picked in (`scope`, which its list's picker searches: a feat's `feats`, a spell's `spells`), the key its list's
- * query takes one by (`key`: `aptitudeId`), and the URL's (`param`: `aptitude`).
+ * are picked in (`scope`, which its list's picker searches: a feat's `feats`, a spell's `spells`), the role of its
+ * entities' links to them, which its list's query takes one by (`role`: `listedIn`), and the URL's key (`param`:
+ * `aptitude`).
  */
 export interface EntityPoolsDescription {
-  key: string;
   param: string;
+  role: string;
   scope: string;
   type: string;
 }
 
 /**
- * A column of an entity's own value in its type's list, between its name and its description: its key (where its value
- * is in a listed entity, a declared field's, `usableWithoutTraining`; or what it shows of it, `template`), where it's
- * stored when it's its entity's own (`field`: among its `fields`, `ITEM_COST_GP`; `role`: its link of the role among its
- * `links`), its label, its share of the list's width (percent), where a phone shows it (`slot`), and how its value reads
+ * A column of an entity's own value in its type's list, between its name and its description, by where it's stored
+ * (one of the two), which names it in its table too (the client's `listColumnId`): its own field (`field`: among its `fields`, `ITEM_COST_GP`) or its
+ * links of a role (`role`: among its `links`, a skill's `keyAbility`, a feat's `listedIn`), its label, its share of the list's width (percent), where a phone shows it (`slot`), and how its value reads
  * (`reads`):
  * - `chip`: a chip of its label (`labels`, by value: a hit die's 10 is "d10"), else of the value;
  * - `muted`: its text, quiet;
@@ -94,7 +96,6 @@ export interface EntityPoolsDescription {
  */
 export interface ListColumn {
   field?: string;
-  key: string;
   label: string;
   labels?: Readonly<Record<string, string>>;
   reads: "chip" | "decimal" | "flag" | "muted" | "number" | "pools" | "reference" | "template" | "text";

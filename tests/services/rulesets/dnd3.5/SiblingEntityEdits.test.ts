@@ -16,7 +16,15 @@ import {
   invalidateTestRulesets,
 } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
-import { CLASS_CASTER_TYPE, DAMAGE_TYPE, RACE_QUADRUPED } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  CLASS_CASTER_TYPE,
+  CLASS_LEVEL_BAB,
+  CLASS_LEVEL_SKILL_POINTS,
+  DAMAGE_TYPE,
+  RACE_BASE_SPEED,
+  RACE_QUADRUPED,
+  RACE_SIZE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type EntityType = "races" | "classes" | "items";
 
@@ -111,8 +119,7 @@ for (const entityType of ["races", "classes", "items"] as const) {
       await EntitiesService.updateEntity(session, host.id, "races", source.id, {
         name: source.name,
         description: "edited description",
-        size: "Medium",
-        baseSpeed: 30,
+        fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
       });
     } else if (entityType === "classes") {
       await EntitiesService.updateEntity(session, host.id, "classes", source.id, {
@@ -150,12 +157,12 @@ for (const action of ["add skill", "remove skill", "create level", "update level
       await EntitiesService.removeEntityLink(session, host.id, "classes", source.id, assignedSkill);
     } else if (action === "create level") {
       await EntitiesService.createOwnedEntity(session, host.id, "classes", source.id, {
-        level: 20,
-        fields: { bab: 20, skills: 2 },
+        fields: { [CLASS_LEVEL_BAB]: 20, [CLASS_LEVEL_SKILL_POINTS]: 2 },
+        position: 20,
       });
     } else if (action === "update level") {
       await EntitiesService.updateOwnedEntity(session, host.id, "classes", source.id, levelId, {
-        fields: { skills: 3 },
+        fields: { [CLASS_LEVEL_SKILL_POINTS]: 3 },
       });
     } else {
       await EntitiesService.deleteOwnedEntity(session, host.id, "classes", source.id, levelId);

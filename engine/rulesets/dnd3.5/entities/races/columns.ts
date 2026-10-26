@@ -12,7 +12,6 @@ export const RACE_COLUMNS: FormField[] = [
     field: RACE_SIZE,
     help: "Its members' size",
     input: "choice",
-    key: "size",
     label: "Size",
     multiple: false,
     options: SIZE_OPTIONS,
@@ -23,7 +22,6 @@ export const RACE_COLUMNS: FormField[] = [
     field: RACE_BASE_SPEED,
     help: "How far its members move a round",
     input: "number",
-    key: "baseSpeed",
     label: "Base Speed",
     max: Field.boundsOf(RACE_FIELDS.fields.baseSpeed).max,
     min: RACE_FIELDS.fields.baseSpeed.min,
@@ -35,7 +33,7 @@ export const RACE_COLUMNS: FormField[] = [
 export const RACE_LIST: ListDescription = {
   nameShare: 15,
   columns: [
-    { field: RACE_SIZE, key: "size", label: "Size", reads: "chip", share: 10 },
-    { field: RACE_BASE_SPEED, key: "baseSpeed", label: "Speed", reads: "number", share: 10, unit: "ft" },
+    { field: RACE_SIZE, label: "Size", reads: "chip", share: 10 },
+    { field: RACE_BASE_SPEED, label: "Speed", reads: "number", share: 10, unit: "ft" },
   ],
 };

@@ -5,8 +5,8 @@ import type {
   EntityTables,
   OwnedEntities,
 } from "@/engine/core/entities/index.ts";
-import type { EntityFieldValues, FormField } from "@/engine/core/fields/index.ts";
-import type { CharacterInput } from "@/engine/core/module/index.ts";
+import type { FormField } from "@/engine/core/fields/index.ts";
+import type { CharacterInput, SettingsForm } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
@@ -155,8 +155,11 @@ export default class RulesetEngine {
     return this.part(type, "owned", ownerId) as Extract<PartOf<EntityKinds[K], "owned">, OwnedEntities>;
   }
 
-  /** A save of the ruleset's Settings (`body.fields`): checked, the values it keeps, and the fields and links it writes. */
-  planSettings(body: { fields?: EntityFieldValues }) {
+  /**
+   * A save of the ruleset's Settings (`body`: its fields and its links, by stored field and by role): checked, the
+   * Settings it keeps, and the fields and links it writes.
+   */
+  planSettings(body: SettingsForm) {
     return this.module.ruleset.planSettings(this.view, body);
   }
 

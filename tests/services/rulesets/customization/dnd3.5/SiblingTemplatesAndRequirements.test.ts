@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 
 import type { OwnerFields } from "@/engine/core/module/index.ts";
-import type { FieldValue } from "@/engine/index.ts";
+import type { EntityFieldValues, FieldValue } from "@/engine/index.ts";
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
 import { type Feat, type Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
@@ -88,26 +88,25 @@ async function setup(
 }
 
 test.each([
-  [0, { baseDamage: "2d6" }, [WEAPON_BASE_DAMAGE, "2d6"]],
-  [1, { criticalRange: 3 }, [WEAPON_CRITICAL_RANGE, 3]],
+  [0, { [WEAPON_BASE_DAMAGE]: "2d6" }, [WEAPON_BASE_DAMAGE, "2d6"]],
+  [1, { [WEAPON_CRITICAL_RANGE]: 3 }, [WEAPON_CRITICAL_RANGE, 3]],
 ])("derived item can override template field from extension %i", async (_, override, row) => {
   const { session, host, source, copies } = await setup("items");
   const item = await EntitiesService.duplicateEntity(session, host.id, "items", source.id, {
     name: "Audit Derived Item",
-    type: "Weapon",
+    fields: { [ITEM_TYPE]: "Weapon" },
   });
   const copiesValues = () => Promise.all(copies.map((id) => findFormValues("items", id)));
   const templateValues = await copiesValues();
   // Its template's fields, each extension's copy's own, as the view merges them
   const read = await EntitiesService.getEntity<Described<"items">>(host.id, "items", item.id);
   expect(read.fields).toMatchObject({ [WEAPON_BASE_DAMAGE]: "1d6", [WEAPON_CRITICAL_RANGE]: 2 });
-  // Its weapon's fields as its form holds them, off those it answers with a value
+  // Its fields as its form holds them, off those it answers with a value
   const held = Object.fromEntries(Object.entries(read.fields).filter(([, value]) => value !== null));
-  const { weapon } = ITEM_FIELDS.read({ fields: held as OwnerFields, links: {} });
+  const form = ITEM_FIELDS.toForm(ITEM_FIELDS.read({ fields: held as OwnerFields, links: {} }));
   await EntitiesService.updateEntity(session, host.id, "items", item.id, {
     name: item.name,
-    type: "Weapon",
-    fields: { weapon: { ...weapon, ...override } },
+    fields: { ...(form.fields as EntityFieldValues), ...override, [ITEM_TYPE]: "Weapon" },
   });
   expect(await copiesValues()).toEqual(templateValues);
   // The item stores only the field it overrides, and reads the other off its template

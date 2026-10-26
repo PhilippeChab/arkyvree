@@ -247,7 +247,7 @@ describe("RulesetsService", () => {
       const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", { name: "General", rulesetId: parent.id });
       const feat = await EntitiesService.createEntity({ ...session, userId: owner.id }, parent.id, "feats", {
         name: "Toughness",
-        aptitudeIds: [aptitude.id],
+        links: { listedIn: [{ toId: aptitude.id }] },
       });
       const [intelligence] = await Entities.create<RulesetAbility>(db, "abilities", {
         name: "Intelligence",

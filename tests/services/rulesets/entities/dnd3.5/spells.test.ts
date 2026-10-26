@@ -44,8 +44,8 @@ describe("EntitiesService: spells", () => {
     } = await createTestUserAndRuleset(APTITUDES);
     const spell = await EntitiesService.createEntity(session, ruleset.id, "spells", {
       name: "Hold Person",
-      saveEffect: "negates",
-      aptitudes: [{ id: wizard }],
+      fields: { [SPELL_SAVE_EFFECT]: "negates" },
+      links: { listedIn: [{ toId: wizard }] },
     });
     expect(
       await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, { name: "Hold Person" }),
@@ -56,7 +56,7 @@ describe("EntitiesService: spells", () => {
       (
         await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, {
           name: "Hold Person",
-          saveEffect: "",
+          fields: { [SPELL_SAVE_EFFECT]: "" },
         })
       ).fields,
     ).toMatchObject({ [SPELL_SAVE_EFFECT]: null });
@@ -71,18 +71,19 @@ describe("EntitiesService: spells", () => {
     } = await createTestUserAndRuleset(APTITUDES);
     const spell = await EntitiesService.createEntity(session, ruleset.id, "spells", {
       name: "Shield",
-      aptitudes: [{ id: wizard }],
+      links: { listedIn: [{ toId: wizard }] },
     });
     // A form's empty save effect is none, as the spell's is; the feat's mark and the ruleset aren't a form's to write
-    await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, {
+    const form = {
       name: "Shield",
-      saveEffect: "",
+      fields: { [SPELL_SAVE_EFFECT]: "" },
       generated: true,
       rulesetId: "00000000-0000-0000-0000-000000000000",
-    });
+    };
+    await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, form);
     await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, {
       name: "Shield",
-      saveEffect: "negates",
+      fields: { [SPELL_SAVE_EFFECT]: "negates" },
     });
     const { items } = await Activities.findPage(
       db,
@@ -94,7 +95,7 @@ describe("EntitiesService: spells", () => {
       updates.map((activity) => activity.data).sort((a, b) => JSON.stringify(a).length - JSON.stringify(b).length),
     ).toEqual([
       expect.objectContaining({ changedFields: [] }),
-      expect.objectContaining({ changedFields: [{ field: "saveEffect", to: "negates" }] }),
+      expect.objectContaining({ changedFields: [{ field: SPELL_SAVE_EFFECT, to: "negates" }] }),
     ]);
   });
 
@@ -107,7 +108,7 @@ describe("EntitiesService: spells", () => {
       } = await createTestUserAndRuleset(APTITUDES);
       const spell = await EntitiesService.createEntity(session, ruleset.id, "spells", {
         name: "Fireball",
-        aptitudes: [{ id: wizard, level: 3 }, { id: cleric }],
+        links: { listedIn: [{ toId: wizard, tier: 3 }, { toId: cleric }] },
       });
       expect(await linkedAptitudes(spell.id)).toEqual(
         sorted([
@@ -118,7 +119,7 @@ describe("EntitiesService: spells", () => {
 
       await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, {
         name: "Fireball",
-        aptitudes: [{ id: druid, level: 4 }],
+        links: { listedIn: [{ toId: druid, tier: 4 }] },
       });
       expect(await linkedAptitudes(spell.id)).toEqual([{ aptitudeId: druid, level: 4 }]);
 
@@ -128,7 +129,10 @@ describe("EntitiesService: spells", () => {
       });
       expect(await linkedAptitudes(spell.id)).toEqual([{ aptitudeId: druid, level: 4 }]);
 
-      await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, { name: "Fireball", aptitudes: [] });
+      await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, {
+        name: "Fireball",
+        links: { listedIn: [] },
+      });
       expect(await linkedAptitudes(spell.id)).toEqual([]);
     });
 
@@ -140,18 +144,20 @@ describe("EntitiesService: spells", () => {
       const [wizard, specialist] = [aptMap["Wizard Spells"], aptMap["Evocation Specialist Spells"]];
       const wizardOnly = await EntitiesService.createEntity(session, fork.id, "spells", {
         name: "Test Bolt",
-        fields: { school: "Evocation" },
-        aptitudes: [{ id: wizard, level: 3 }],
+        fields: { [SPELL_SCHOOL]: "Evocation" },
+        links: { listedIn: [{ toId: wizard, tier: 3 }] },
       });
       expect(await linkedAptitudes(wizardOnly.id)).toEqual([{ aptitudeId: wizard, level: 3 }]);
 
       const both = await EntitiesService.createEntity(session, fork.id, "spells", {
         name: "Test Blast",
-        fields: { school: "Evocation" },
-        aptitudes: [
-          { id: wizard, level: 3 },
-          { id: specialist, level: 3 },
-        ],
+        fields: { [SPELL_SCHOOL]: "Evocation" },
+        links: {
+          listedIn: [
+            { toId: wizard, tier: 3 },
+            { toId: specialist, tier: 3 },
+          ],
+        },
       });
       expect(await linkedAptitudes(both.id)).toEqual(
         sorted([
@@ -164,7 +170,7 @@ describe("EntitiesService: spells", () => {
     test("refuses a new spell without an aptitude", async () => {
       const { session, ruleset } = await createTestUserAndRuleset(APTITUDES);
       await expectRefusedWith(
-        EntitiesService.createEntity(session, ruleset.id, "spells", { name: "Orphan Spell", aptitudes: [] }),
+        EntitiesService.createEntity(session, ruleset.id, "spells", { name: "Orphan Spell", links: { listedIn: [] } }),
         400,
       );
     });
@@ -175,20 +181,26 @@ describe("EntitiesService: spells", () => {
         ruleset,
         aptitudeIds: [wizard, feats],
       } = await createTestUserAndRuleset(APTITUDES);
-      await EntitiesService.createEntity(session, ruleset.id, "feats", { name: "Power Attack", aptitudeIds: [feats] });
+      await EntitiesService.createEntity(session, ruleset.id, "feats", {
+        name: "Power Attack",
+        links: { listedIn: [{ toId: feats }] },
+      });
       await expectRefusedWith(
-        EntitiesService.createEntity(session, ruleset.id, "spells", { name: "Feat Spell", aptitudes: [{ id: feats }] }),
+        EntitiesService.createEntity(session, ruleset.id, "spells", {
+          name: "Feat Spell",
+          links: { listedIn: [{ toId: feats }] },
+        }),
         409,
       );
 
       const spell = await EntitiesService.createEntity(session, ruleset.id, "spells", {
         name: "Wizard Spell",
-        aptitudes: [{ id: wizard }],
+        links: { listedIn: [{ toId: wizard }] },
       });
       await expectRefusedWith(
         EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, {
           name: "Wizard Spell",
-          aptitudes: [{ id: feats }],
+          links: { listedIn: [{ toId: feats }] },
         }),
         409,
       );
@@ -203,7 +215,7 @@ describe("EntitiesService: spells", () => {
       } = await createTestUserAndRuleset(APTITUDES);
       const source = await EntitiesService.createEntity(session, parent.id, "spells", {
         name: "Fireball",
-        aptitudes: [{ id: wizard, level: 3 }],
+        links: { listedIn: [{ toId: wizard, tier: 3 }] },
       });
       const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
       expect((await EntitiesService.getEntity(fork.id, "spells", source.id)).links).toMatchObject([
@@ -212,7 +224,7 @@ describe("EntitiesService: spells", () => {
 
       const copy = await EntitiesService.updateEntity(session, fork.id, "spells", source.id, {
         name: "Fireball",
-        aptitudes: [{ id: cleric, level: 2 }],
+        links: { listedIn: [{ toId: cleric, tier: 2 }] },
       });
       expect(await linkedAptitudes(copy.id)).toEqual([{ aptitudeId: cleric, level: 2 }]);
       expect(await linkedAptitudes(source.id)).toEqual([{ aptitudeId: wizard, level: 3 }]);
@@ -228,8 +240,8 @@ describe("EntitiesService: spells", () => {
     } = await createTestUserAndRuleset(APTITUDES);
     const spell = await EntitiesService.createEntity(session, ruleset.id, "spells", {
       name: "Fireball",
-      aptitudes: [{ id: wizard }],
-      fields: { school: "Evocation", castingTime: "1 round" },
+      fields: { [SPELL_SCHOOL]: "Evocation", [SPELL_CASTING_TIME]: "1 round" },
+      links: { listedIn: [{ toId: wizard }] },
     });
     await writeFieldValues("spells", spell.id, [[SPELL_DESCRIPTOR, "Fire"]]);
     // A value a user added, written past the services, after the create read the ruleset's view
@@ -237,7 +249,7 @@ describe("EntitiesService: spells", () => {
 
     await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, {
       name: "Fireball",
-      fields: { school: "Conjuration" },
+      fields: { [SPELL_SCHOOL]: "Conjuration" },
     });
 
     expect((await findFormValues("spells", spell.id)).fields).toEqual({
@@ -255,7 +267,7 @@ describe("EntitiesService: spells", () => {
     } = await createTestUserAndRuleset(APTITUDES);
     const spell = await EntitiesService.createEntity(session, ruleset.id, "spells", {
       name: "Doomed Spell",
-      aptitudes: [{ id: wizard }],
+      links: { listedIn: [{ toId: wizard }] },
     });
     const { klassLevel } = await createTestKlassLevel(ruleset.id);
     await addGrants(db, klassLevel.id, "spells", [{ toId: spell.id, aptitudeId: wizard }]);
@@ -276,7 +288,7 @@ describe("EntitiesService: spells", () => {
     } = await createTestUserAndRuleset(APTITUDES);
     const spell = await EntitiesService.createEntity(session, extension.id, "spells", {
       name: "Extension Spell",
-      aptitudes: [{ id: wizard }],
+      links: { listedIn: [{ toId: wizard }] },
     });
     const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
 

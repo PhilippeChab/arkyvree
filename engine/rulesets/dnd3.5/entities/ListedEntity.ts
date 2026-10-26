@@ -1,6 +1,6 @@
-import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
+import { CustomizationPageEntity, type FormBody } from "@/engine/core/entities/index.ts";
 import type { Fields } from "@/engine/core/fields/index.ts";
-import type { EntityRecord, LinkSet } from "@/engine/core/module/index.ts";
+import type { EntityRecord } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { ViewLink } from "@/engine/core/view/index.ts";
 
@@ -11,10 +11,8 @@ import type { ViewLink } from "@/engine/core/view/index.ts";
  */
 export default abstract class ListedEntity<
   K extends "feats" | "spells",
-  Body extends object,
-  Columns extends object,
   S extends Fields,
-> extends CustomizationPageEntity<K, Body, Columns, S> {
+> extends CustomizationPageEntity<K, S> {
   /** Of a saved entity's own links, those its answer names: all of them, as its page shows them (`describe`). */
   protected override savedLinks(_row: Pick<EntityRecord, "links">, links: readonly ViewLink[]): readonly ViewLink[] {
     return links;
@@ -39,9 +37,10 @@ export default abstract class ListedEntity<
     return this.describeRows(rows).map((row) => ({ ...row, links: this.linksIn(row.id) }));
   }
 
-  /** The lists a form links an entity to (`lists`: each its list, and its level on it), as its `listedIn` links. */
-  protected listedIn(lists: { tier?: number | null; toId: string }[]): LinkSet[] {
-    return [{ links: lists, role: "listedIn", toType: "aptitudes" }];
+  /** The lists a form links an entity to (its `listedIn` links: each its list, and its tier on it), none left out. */
+  protected listsOf(body: FormBody): { tier?: number | null; toId: string }[] | undefined {
+    const lists = body.links.listedIn;
+    return Array.isArray(lists) ? (lists as { tier?: number | null; toId: string }[]) : undefined;
   }
 
   /** Refuses linking an entity to a list the other kind uses (`taken`): the ruleset's own and its chain's. */

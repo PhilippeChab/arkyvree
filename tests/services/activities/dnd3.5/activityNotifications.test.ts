@@ -15,7 +15,7 @@ import { addRulesetContributor } from "@/tests/support/contributors.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
-import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { CLASS_HD, CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type User = Awaited<ReturnType<typeof createTestUser>>;
 
@@ -169,11 +169,11 @@ describe("activity notifications", () => {
     const feat = await EntitiesService.createEntity(author.session, ruleset.id, "feats", {
       name: "Notified Feat",
       description: "",
-      aptitudeIds: [aptitude.id],
+      links: { listedIn: [{ toId: aptitude.id }] },
     });
     await EntitiesService.updateEntity(author.session, ruleset.id, "feats", feat.id, {
       name: "Notified Feat",
-      fields: { families: ["Luck"] },
+      fields: { [FEAT_FAMILY]: ["Luck"] },
     });
     await EntitiesService.deleteEntity(author.session, ruleset.id, "feats", feat.id);
 
@@ -249,14 +249,14 @@ describe("activity notifications", () => {
       fields: { [CLASS_HD]: 10 },
     });
     const level = await EntitiesService.createOwnedEntity(author.session, rulesetId, "classes", fighter.id, {
-      level: 1,
-      fields: { bab: 1, skills: 2 },
+      fields: { [CLASS_LEVEL_BAB]: 1, [CLASS_LEVEL_SKILL_POINTS]: 2 },
+      position: 1,
     });
     await EntitiesService.updateOwnedEntity(author.session, rulesetId, "classes", fighter.id, level.id, {
-      fields: { bab: 1, skills: 4 },
+      fields: { [CLASS_LEVEL_BAB]: 1, [CLASS_LEVEL_SKILL_POINTS]: 4 },
     });
     await EntitiesService.updateProgression(author.session, rulesetId, "classes", fighter.id, {
-      levels: [{ levelId: level.id, fields: { bab: 1, skills: 6 } }],
+      levels: [{ levelId: level.id, fields: { [CLASS_LEVEL_BAB]: 1, [CLASS_LEVEL_SKILL_POINTS]: 6 } }],
     });
     await EntitiesService.deleteOwnedEntity(author.session, rulesetId, "classes", fighter.id, level.id);
 
@@ -291,11 +291,11 @@ describe("activity notifications", () => {
     const feat = await EntitiesService.createEntity(author.session, ruleset.id, "feats", {
       name: "Worded Feat",
       description: "",
-      aptitudeIds: [aptitude.id],
+      links: { listedIn: [{ toId: aptitude.id }] },
     });
     await EntitiesService.updateEntity(author.session, ruleset.id, "feats", feat.id, {
       name: "Worded Feat",
-      fields: { families: ["Luck"] },
+      fields: { [FEAT_FAMILY]: ["Luck"] },
     });
     const [ability] = await Entities.create<RulesetAbility>(db, "abilities", {
       name: "Strength",
@@ -338,7 +338,7 @@ describe("activity notifications", () => {
     await EntitiesService.createEntity(owner.session, ruleset.id, "feats", {
       name: "Unnoticed Feat",
       description: "",
-      aptitudeIds: [aptitude.id],
+      links: { listedIn: [{ toId: aptitude.id }] },
     });
     expect(await inbox(owner)).toEqual([]);
   });

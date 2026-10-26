@@ -7,6 +7,7 @@ import { buildEntityTypeSchema } from "@/server/routers/api/schemaBuilders.ts";
 import {
   entityBody,
   entityFields,
+  entityLinks,
   entityOrderBy,
   idParam,
   limit,
@@ -33,10 +34,16 @@ const kindEntityBody = entityBody;
 const linkParams = entityParams.extend({ targetId: z.string().uuid() });
 
 /**
- * An owned entity's body, its create's and its update's: its fields and when it was last read (an update's), and every
- * other key as it is, which its owner's kind's rules read (a class level's number, its saves, the feats it grants).
+ * An owned entity's body, its create's and its update's, as it stores it: its fields by stored field, its links by role
+ * (a class level's saves' base bonuses, the feats it grants), its place among its owner's (`position`, a new one's: a
+ * class level's number), which its owner's kind's rules read, and when it was last read (an update's). No other key.
  */
-const ownedBody = z.looseObject({ fields: entityFields.optional(), updatedAt: z.string().optional() });
+const ownedBody = z.strictObject({
+  fields: entityFields.optional(),
+  links: entityLinks.optional(),
+  position: z.number().optional(),
+  updatedAt: z.string().optional(),
+});
 
 /** A route's owned entity by its id alone: its owner's kind's params, and its id. */
 const ownedByIdParams = kindParams.extend({ ownedId: z.string().uuid() });
@@ -49,7 +56,8 @@ const tableParams = entityParams.extend({ table: z.string() });
 
 /**
  * Every ruleset entity kind's routes, by its URL segment (`/rulesets/:id/entities/races`), each answered by its kind's
- * rules: its list, with its kind's filters past the shared ones (`kind`, `aptitudeId`…, which its rules read), its
+ * rules: its list, with its kind's filters past the shared ones (each by the field, the role or the partition it
+ * filters: `partition`, `listedIn`…, which its rules read), its
  * page, its create, update and delete, and its kind's actions (its groups, its templates, a duplicate, variants), and
  * an entity's parts its kind may have: the entities it owns (a class's levels, and one by its id alone), the links it
  * edits (a class's skills), its progression and its tables.

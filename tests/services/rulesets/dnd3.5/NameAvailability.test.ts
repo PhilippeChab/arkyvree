@@ -48,7 +48,10 @@ const RENAMED_KINDS: Record<"aptitudes" | "feats" | "items" | "spells", RenamedK
         name: "General",
         rulesetId: baseId,
       }))!;
-      return await EntitiesService.createEntity(session, forkId, "feats", { name, aptitudeIds: [general.id] });
+      return await EntitiesService.createEntity(session, forkId, "feats", {
+        name,
+        links: { listedIn: [{ toId: general.id }] },
+      });
     },
     rename: (session, forkId, id, name) => EntitiesService.updateEntity(session, forkId, "feats", id, { name }),
     taken: async () => "Toughness",
@@ -67,7 +70,7 @@ const RENAMED_KINDS: Record<"aptitudes" | "feats" | "items" | "spells", RenamedK
       }))!;
       return await EntitiesService.createEntity(session, forkId, "spells", {
         name,
-        aptitudes: [{ id: wizard.id, level: 1 }],
+        links: { listedIn: [{ toId: wizard.id, tier: 1 }] },
       });
     },
     rename: (session, forkId, id, name) => EntitiesService.updateEntity(session, forkId, "spells", id, { name }),
@@ -118,7 +121,7 @@ test("creating a feat with a renamed override's original name keeps the override
 
   const created = await EntitiesService.createEntity(session, fork.id, "feats", {
     name: "Alertness",
-    aptitudeIds: [general.id],
+    links: { listedIn: [{ toId: general.id }] },
   });
 
   const snapshot = await EntitySnapshots.findOne(db, { sourceEntityId: source.id, rulesetId: fork.id });
@@ -136,10 +139,12 @@ test("bulk item variants with a renamed override's original name keep the overri
   const renamed = await EntitiesService.updateEntity(session, fork.id, "items", source.id, {
     name: `${source.name} (Local)`,
     description: source.description,
-    type: source.fields[ITEM_TYPE],
-    slot: source.fields[ITEM_SLOT],
-    weight: source.fields[ITEM_WEIGHT],
-    costGp: source.fields[ITEM_COST_GP],
+    fields: {
+      [ITEM_TYPE]: source.fields[ITEM_TYPE],
+      [ITEM_SLOT]: source.fields[ITEM_SLOT],
+      [ITEM_WEIGHT]: source.fields[ITEM_WEIGHT],
+      [ITEM_COST_GP]: source.fields[ITEM_COST_GP],
+    },
   });
 
   const [created] = await EntitiesService.createVariants(session, fork.id, "items", renamed.id, [
@@ -167,7 +172,7 @@ test("the original name of a renamed extension copy is available", async () => {
 
   const created = await EntitiesService.createEntity(session, fork.id, "feats", {
     name: "Toughness",
-    aptitudeIds: [general.id],
+    links: { listedIn: [{ toId: general.id }] },
   });
 
   const snapshot = await EntitySnapshots.findOne(db, {
@@ -188,7 +193,10 @@ test("the original name of a renamed extension copy is available", async () => {
 test("a visible inherited feat still blocks its name", async () => {
   const { session, fork, general } = await setup();
   expect(
-    EntitiesService.createEntity(session, fork.id, "feats", { name: "Alertness", aptitudeIds: [general.id] }),
+    EntitiesService.createEntity(session, fork.id, "feats", {
+      name: "Alertness",
+      links: { listedIn: [{ toId: general.id }] },
+    }),
   ).rejects.toThrow("Name already exists in the source chain");
 });
 
@@ -249,7 +257,7 @@ test("an edit keeping its entity's name, or giving an inherited one's copy its s
   // Names compare as written: a case-only change is a name of its own
   const own = await EntitiesService.createEntity(session, fork.id, "feats", {
     name: "Probe Feat",
-    aptitudeIds: [general.id],
+    links: { listedIn: [{ toId: general.id }] },
   });
   expect(await EntitiesService.updateEntity(session, fork.id, "feats", own.id, { name: "probe feat" })).toMatchObject({
     name: "probe feat",
@@ -287,7 +295,7 @@ test("restoring a renamed copy whose source's name the fork has given another fe
   const copy = await EntitiesService.updateEntity(session, fork.id, "feats", source.id, { name: "Alertness (Local)" });
   const own = await EntitiesService.createEntity(session, fork.id, "feats", {
     name: "Alertness",
-    aptitudeIds: [general.id],
+    links: { listedIn: [{ toId: general.id }] },
   });
 
   expect(RulesetChangesService.revertOverride(session, fork.id, "feats", source.id)).rejects.toThrow(
@@ -309,7 +317,7 @@ test("restoring a deleted feat whose name a renamed one has taken since is refus
   await EntitiesService.deleteEntity(session, fork.id, "feats", source.id);
   const own = await EntitiesService.createEntity(session, fork.id, "feats", {
     name: "Probe Feat",
-    aptitudeIds: [general.id],
+    links: { listedIn: [{ toId: general.id }] },
   });
   await EntitiesService.updateEntity(session, fork.id, "feats", own.id, { name: "Dodge" });
 
@@ -339,7 +347,7 @@ test("subscribing to an extension with an entity of a renamed copy's name is ref
   const extension = await createSeededTestRuleset(session.userId);
   await EntitiesService.createEntity(session, extension.id, "feats", {
     name: "Probe Ext Feat",
-    aptitudeIds: [general.id],
+    links: { listedIn: [{ toId: general.id }] },
   });
   await publishExtension(extension.id);
   await EntitiesService.updateEntity(session, host.id, "feats", (await baseFeat("Alertness")).id, {
@@ -370,7 +378,7 @@ test("unsubscribing from an extension whose copy of a core feat the fork renamed
   await EntitiesService.updateEntity(session, fork.id, "feats", bookCopy.id as string, { name: "Dodge (Local)" });
   const own = await EntitiesService.createEntity(session, fork.id, "feats", {
     name: "Dodge",
-    aptitudeIds: [general.id],
+    links: { listedIn: [{ toId: general.id }] },
   });
 
   expect(RulesetExtensionsService.unsubscribeExtension(session, fork.id, extension.id)).rejects.toThrow(

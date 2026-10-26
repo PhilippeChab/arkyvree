@@ -1352,7 +1352,7 @@ describe("an extension's content in a fork", () => {
         await EntitiesService.getEntities<Described<"spells">>(
           draft.id,
           "spells",
-          { aptitudeId: aptitude.id },
+          { listedIn: aptitude.id },
           { limit: 1000, page: 1 },
         )
       ).items.map((spell) => spell.name);
@@ -1369,7 +1369,7 @@ describe("an extension's content in a fork", () => {
     const listed = await EntitiesService.getEntities<Described<"spells">>(
       draft.id,
       "spells",
-      { aptitudeId: list.id, search },
+      { listedIn: list.id, search },
       firstPage,
     );
     expect(listed.items.map((spell) => spell.name)).toContain(search);
@@ -1392,7 +1392,7 @@ describe("an extension's content in a fork", () => {
       rulesetId: warrior.id,
     }))!;
     const search = "Combat Casting";
-    const where = { aptitudeId: list.id, search };
+    const where = { listedIn: list.id, search };
     expect(
       (await EntitiesService.getEntities<Described<"feats">>(draft.id, "feats", where, firstPage)).items.map(
         (feat) => feat.name,
@@ -1465,7 +1465,10 @@ describe("an extension's content in a fork", () => {
     const { aptMap } = await getSeedCtx();
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
     const create = (name: string) =>
-      EntitiesService.createEntity(session, draft.id, "feats", { name, aptitudeIds: [aptMap["General"]] });
+      EntitiesService.createEntity(session, draft.id, "feats", {
+        name,
+        links: { listedIn: [{ toId: aptMap["General"] }] },
+      });
 
     await expectRefusedWith(create("Monkey Grip"), 409);
     await EntitiesService.updateEntity(session, draft.id, "feats", (await warriorFeat("Monkey Grip")).id, {
@@ -1485,7 +1488,7 @@ describe("an extension's content in a fork", () => {
     const deathDomain = await EntitiesService.getEntities<Described<"spells">>(
       draft.id,
       "spells",
-      { aptitudeId: aptMap["Death Domain Spells"] },
+      { listedIn: aptMap["Death Domain Spells"] },
       firstPage,
     );
     expect(deathDomain.items.map((p) => p.name)).toEqual(
@@ -1648,7 +1651,7 @@ describe("an extension's entity of a name its subscriber's own has", () => {
     const author = await createTestUser();
     const { session, draft } = await setupFork();
     const book = await createExtension(author.user.id);
-    const general = { aptitudeIds: [(await getSeedCtx()).aptMap["General"]] };
+    const general = { links: { listedIn: [{ toId: (await getSeedCtx()).aptMap["General"] }] } };
     const later = await EntitiesService.createEntity(author.session, book.id, "feats", {
       name: "Probe Book Feat",
       ...general,
@@ -1690,7 +1693,7 @@ describe("an extension's entity of a name its subscriber's own has", () => {
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [book.id]);
     const own = await EntitiesService.createEntity(session, draft.id, "feats", {
       name: "Homebrew Feat",
-      aptitudeIds: [general],
+      links: { listedIn: [{ toId: general }] },
     });
     await Modifiers.create(db, { ...STRENGTH_BONUS, sourceType: "feats", sourceId: own.id });
     // The book's, added since: on a list of the book's and on the general feats, a class of the book's granting it

@@ -20,17 +20,14 @@ interface ListValueProps {
 type ListColumn = NonNullable<RulesDescription["lists"][string]>["columns"][number];
 
 /**
- * An entity's value in a column: its own field's (`field`, among its `fields`), the target of its link of the column's
- * role (`role`, among its `links`), else its value at the column's key.
+ * An entity's value in a column: its own field's (`field`, among its `fields`), else the target of its link of the
+ * column's role (`role`, among its `links`).
  */
 function columnValueOf(entity: object, column: ListColumn): unknown {
   if (column.field) return ownFieldOf(entity, column.field);
-  if (column.role && column.reads === "reference") {
-    const links = valueOf(entity, "links");
-    const link = Array.isArray(links) ? links.find((held) => isRecord(held) && held.role === column.role) : undefined;
-    return isRecord(link) ? link.toId : undefined;
-  }
-  return valueOf(entity, column.key);
+  const links = valueOf(entity, "links");
+  const link = Array.isArray(links) ? links.find((held) => isRecord(held) && held.role === column.role) : undefined;
+  return isRecord(link) ? link.toId : undefined;
 }
 
 /** An entity's value at a key, none where it has none. */
@@ -89,7 +86,7 @@ export function ListValue({ column, entity, names }: ListValueProps) {
       return <EmptyValue />;
     }
     case "pools": {
-      const links = valueOf(entity, column.key);
+      const links = valueOf(entity, "links");
       return <LinkChipsCell links={Array.isArray(links) ? links : undefined} role={column.role} />;
     }
   }

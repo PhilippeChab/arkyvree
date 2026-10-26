@@ -3,6 +3,7 @@ import { useQueries } from "@tanstack/react-query";
 import type { TableColumn } from "@/client/src/components/common/index.ts";
 import { useRulesetRules } from "@/client/src/hooks/index.ts";
 import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
+import { listColumnId } from "@/client/src/pages/rulesets/components/index.ts";
 
 /**
  * An entity type's list on its ruleset's page, as its rules describe it (`lists`): its table's columns (its name's,
@@ -27,7 +28,12 @@ export function useEntityList(rulesetId: string, entityType: string) {
   const own = list?.columns ?? [];
   const columns: TableColumn[] = [
     { key: "name", label: "Name", width: `${nameShare}%` },
-    ...own.map(({ key, label, share, slot }) => ({ key, label, width: `${share}%`, slot })),
+    ...own.map((column) => ({
+      key: listColumnId(column),
+      label: column.label,
+      width: `${column.share}%`,
+      slot: column.slot,
+    })),
     {
       key: "description",
       label: "Description",

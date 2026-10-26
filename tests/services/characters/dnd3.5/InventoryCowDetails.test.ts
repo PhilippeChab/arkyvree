@@ -57,9 +57,7 @@ describe("COW inventory item details", () => {
       const updated = await EntitiesService.updateEntity(session, ruleset.id, "items", item.id, {
         name: "Forked war mace",
         description: "A renamed mace in this fork.",
-        type: "Weapon",
-        weight: 12,
-        costGp: 30,
+        fields: { [ITEM_TYPE]: "Weapon", [ITEM_WEIGHT]: 12, [ITEM_COST_GP]: 30 },
       });
       expect(updated.id).not.toBe(item.id);
 
@@ -94,7 +92,7 @@ describe("COW inventory item details", () => {
     const updated = await EntitiesService.updateEntity(session, ruleset.id, "items", item.id, {
       name: "Campaign war mace",
       description: "Campaign-specific equipment description.",
-      type: "Weapon",
+      fields: { [ITEM_TYPE]: "Weapon" },
     });
     const detailedCharacter = await buildAs(DetailedCharacter, character);
 

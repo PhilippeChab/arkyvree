@@ -638,6 +638,13 @@
       "when": 1793040847338,
       "tag": "0090_empty-texts",
       "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1793042245271,
+      "tag": "0091_stored-name-activities",
+      "breakpoints": true
     }
   ]
 }

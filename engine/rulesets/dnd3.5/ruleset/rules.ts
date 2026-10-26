@@ -12,14 +12,23 @@ import { SAVE_COLUMNS, SAVE_LIST } from "@/engine/rulesets/dnd3.5/entities/saves
 import { SKILL_COLUMNS, SKILL_LIST } from "@/engine/rulesets/dnd3.5/entities/skills/columns.ts";
 import { SPELL_COLUMNS, SPELL_LIST } from "@/engine/rulesets/dnd3.5/entities/spells/columns.ts";
 import { BONDED_KINDS, PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
-import { FEAT_GENERATED, ITEM_IS_TEMPLATE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  FEAT_FAMILY,
+  FEAT_GENERATED,
+  ITEM_IS_TEMPLATE,
+  ITEM_SLOT,
+  ITEM_TYPE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 import { MAX_ITEM_VARIANTS } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
-/** The pools a feats' or a spells' list narrows by: its aptitudes, one at a time, by their id (`?aptitude=`). */
+/**
+ * The pools a feats' or a spells' list narrows by: its aptitudes, one at a time, by their id (`?aptitude=`), its
+ * entities' `listedIn` links'.
+ */
 const APTITUDE_POOLS: Omit<EntityPoolsDescription, "scope"> = {
-  key: "aptitudeId",
   param: "aptitude",
+  role: "listedIn",
   type: "aptitudes",
 };
 
@@ -61,7 +70,7 @@ export const RULES: RulesDeclaration = {
     { icon: "translate", opens: "page", type: "languages" },
     { icon: "psychology", opens: "page", type: "skills" },
     {
-      families: true,
+      families: { field: FEAT_FAMILY },
       icon: "spoke",
       lockedName: { field: FEAT_GENERATED, reason: "A generated feat keeps its name" },
       opens: "customization",
@@ -78,10 +87,10 @@ export const RULES: RulesDeclaration = {
     },
     {
       copies: {
-        locked: ["slot", "sourceItemId", "type"],
+        locked: [ITEM_SLOT, "madeFrom", ITEM_TYPE],
         most: MAX_ITEM_VARIANTS,
-        source: "sourceItemId",
-        template: { field: ITEM_IS_TEMPLATE, key: "isTemplate" },
+        source: "madeFrom",
+        template: { field: ITEM_IS_TEMPLATE },
       },
       icon: "construction",
       opens: "customization",

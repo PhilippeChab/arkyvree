@@ -76,8 +76,8 @@ async function createSecretBlade(templateId: string, extensionIds: string[] = []
   const ruleset = await createSeededTestRuleset(user.id);
   await EntitiesService.createEntity(session, ruleset.id, "items", {
     name: "Secret Homebrew Blade",
-    type: "Weapon",
-    sourceItemId: templateId,
+    fields: { [ITEM_TYPE]: "Weapon" },
+    links: { madeFrom: templateId },
   });
   if (extensionIds.length > 0) await RulesetExtensionsService.subscribeExtension(session, ruleset.id, extensionIds);
 }
@@ -96,8 +96,8 @@ async function setup(values: { private?: boolean } = {}) {
     const { id, fields } = await template(name);
     return EntitiesService.createEntity<Described<"items">>(session, ruleset.id, "items", {
       name: `My ${name}`,
-      type: fields[ITEM_TYPE],
-      sourceItemId: id,
+      fields: { [ITEM_TYPE]: fields[ITEM_TYPE] as string },
+      links: { madeFrom: id },
     });
   };
   return { session, ruleset, template, instance };
@@ -179,15 +179,13 @@ describe("Item templates", () => {
       // Its form shows the template's, which a save sends back as they are: still none of its own
       await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
         name: sword.name,
-        weight: 4,
-        costGp: 15,
+        fields: { [ITEM_WEIGHT]: 4, [ITEM_COST_GP]: 15 },
       });
       expect(await stored()).not.toHaveProperty(ITEM_WEIGHT);
       expect(await stored()).not.toHaveProperty(ITEM_COST_GP);
       const saved = await EntitiesService.updateEntity<Described<"items">>(session, ruleset.id, "items", sword.id, {
         name: sword.name,
-        weight: 5,
-        costGp: 15,
+        fields: { [ITEM_WEIGHT]: 5, [ITEM_COST_GP]: 15 },
       });
       expect(saved.fields).toMatchObject({ [ITEM_WEIGHT]: 5, [ITEM_COST_GP]: 15 });
       expect(await stored()).toMatchObject({ [ITEM_WEIGHT]: 5 });
@@ -246,7 +244,7 @@ describe("Item templates", () => {
     const { session, ruleset } = await setup();
     const item = await EntitiesService.createEntity(session, ruleset.id, "items", {
       name: "Custom Item",
-      type: "Weapon",
+      fields: { [ITEM_TYPE]: "Weapon" },
     });
     expect(await EntitiesService.getEntity<Described<"items">>(ruleset.id, "items", item.id)).toMatchObject({
       requirements: [],
@@ -259,7 +257,7 @@ describe("Item templates", () => {
     const mace = await template("Heavy Mace");
     const copy = await EntitiesService.duplicateEntity<Described<"items">>(session, ruleset.id, "items", mace.id, {
       name: "Custom weapon",
-      type: "Weapon",
+      fields: { [ITEM_TYPE]: "Weapon" },
     });
     expect(columnsOf(copy)).toMatchObject({ isTemplate: false, sourceItemId: mace.id });
 
@@ -268,7 +266,7 @@ describe("Item templates", () => {
       columnsOf(
         await EntitiesService.updateEntity(session, ruleset.id, "items", copy.id, {
           name: copy.name,
-          sourceItemId: sword.id,
+          links: { madeFrom: sword.id },
         }),
       ),
     ).toMatchObject({ isTemplate: false, sourceItemId: sword.id });
@@ -285,12 +283,12 @@ describe("Item templates", () => {
       name: sword.name,
       description: "Ours",
     });
-    const instance = { name: "My Longsword", type: "Weapon", sourceItemId: sword.id };
+    const instance = { name: "My Longsword", fields: { [ITEM_TYPE]: "Weapon" }, links: { madeFrom: sword.id } };
     expect(columnsOf(await EntitiesService.createEntity(session, ruleset.id, "items", instance))).toMatchObject({
       sourceItemId: copy.id,
     });
 
-    const lacking = { ...instance, name: "No Longsword", sourceItemId: NIL_UUID };
+    const lacking = { ...instance, name: "No Longsword", links: { madeFrom: NIL_UUID } };
     expect(EntitiesService.createEntity(session, ruleset.id, "items", lacking)).rejects.toMatchObject({
       message: `Item ${NIL_UUID} does not belong to this ruleset`,
       refusal: "invalid",
@@ -308,8 +306,7 @@ describe("Item templates", () => {
     // Its stored template is the original, which its view reads as the fork's copy: neither its edit's
     await EntitiesService.updateEntity(session, ruleset.id, "items", mine.id, {
       name: mine.name,
-      type: "Weapon",
-      weight: 5,
+      fields: { [ITEM_TYPE]: "Weapon", [ITEM_WEIGHT]: 5 },
     });
     const { items } = await Activities.findPage(
       db,
@@ -317,7 +314,7 @@ describe("Item templates", () => {
       { limit: 10, page: 1 },
     );
     const edit = items.find((activity) => activity.targetId === mine.id && activity.type === "updateItem");
-    expect(edit?.data).toMatchObject({ changedFields: [{ field: "weight", to: "5" }] });
+    expect(edit?.data).toMatchObject({ changedFields: [{ field: ITEM_WEIGHT, to: "5" }] });
   });
 
   describe("have no template of their own", () => {
@@ -327,9 +324,8 @@ describe("Item templates", () => {
       await expectRefusedWith(
         EntitiesService.createEntity(session, ruleset.id, "items", {
           name: "Invalid template",
-          type: "Weapon",
-          isTemplate: true,
-          sourceItemId: mace.id,
+          fields: { [ITEM_TYPE]: "Weapon", [ITEM_IS_TEMPLATE]: true },
+          links: { madeFrom: mace.id },
         }),
         422,
       );
@@ -341,8 +337,7 @@ describe("Item templates", () => {
         columnsOf(
           await EntitiesService.createEntity(session, ruleset.id, "items", {
             name: "Custom weapon template",
-            type: "Weapon",
-            isTemplate: true,
+            fields: { [ITEM_TYPE]: "Weapon", [ITEM_IS_TEMPLATE]: true },
           }),
         ),
       ).toMatchObject({ isTemplate: true, sourceItemId: null });
@@ -352,7 +347,10 @@ describe("Item templates", () => {
       const { session, ruleset, template } = await setup();
       const mace = await template("Heavy Mace");
       expect(
-        EntitiesService.updateEntity(session, ruleset.id, "items", mace.id, { name: mace.name, sourceItemId: mace.id }),
+        EntitiesService.updateEntity(session, ruleset.id, "items", mace.id, {
+          name: mace.name,
+          links: { madeFrom: mace.id },
+        }),
       ).rejects.toThrow("Template items cannot have a source item");
       expect(await EntitySnapshots.findOne(db, { rulesetId: ruleset.id, sourceEntityId: mace.id })).toBeUndefined();
     });
@@ -368,8 +366,8 @@ describe("Item templates", () => {
       await expectRefusedWith(
         EntitiesService.updateEntity(session, ruleset.id, "items", local.id, {
           name: local.name,
-          isTemplate: false,
-          sourceItemId: sword.id,
+          fields: { [ITEM_IS_TEMPLATE]: false },
+          links: { madeFrom: sword.id },
         }),
         422,
       );
@@ -408,8 +406,8 @@ describe("Item templates", () => {
       await expectRefusedWith(
         EntitiesService.createEntity(session, ruleset.id, "items", {
           name: "Mismatched",
-          type,
-          sourceItemId: sword.id,
+          fields: { [ITEM_TYPE]: type },
+          links: { madeFrom: sword.id },
         }),
         422,
       );
@@ -424,8 +422,8 @@ describe("Item templates", () => {
       await expectRefusedWith(
         EntitiesService.createEntity(session, ruleset.id, "items", {
           name: "From a copy",
-          type: "Weapon",
-          sourceItemId: sword.id,
+          fields: { [ITEM_TYPE]: "Weapon" },
+          links: { madeFrom: sword.id },
         }),
         422,
       );
@@ -437,15 +435,15 @@ describe("Item templates", () => {
       await expectRefusedWith(
         EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
           name: sword.name,
-          type: "Wondrous Item",
+          fields: { [ITEM_TYPE]: "Wondrous Item" },
         }),
         422,
       );
       await expectRefusedWith(
         EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
           name: sword.name,
-          type: "Wondrous Item",
-          sourceItemId: columnsOf(sword)!.sourceItemId,
+          fields: { [ITEM_TYPE]: "Wondrous Item" },
+          links: { madeFrom: columnsOf(sword)!.sourceItemId },
         }),
         422,
       );
@@ -461,7 +459,7 @@ describe("Item templates", () => {
       await expectRefusedWith(
         EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
           name: sword.name,
-          sourceItemId: mail.id,
+          links: { madeFrom: mail.id },
         }),
         422,
       );
@@ -478,8 +476,8 @@ describe("Item templates", () => {
         columnsOf(
           await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
             name: sword.name,
-            type: "Armor",
-            sourceItemId: mail.id,
+            fields: { [ITEM_TYPE]: "Armor" },
+            links: { madeFrom: mail.id },
           }),
         ),
       ).toMatchObject({ type: "Armor", sourceItemId: mail.id });
@@ -487,8 +485,8 @@ describe("Item templates", () => {
         columnsOf(
           await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
             name: sword.name,
-            type: "Ring",
-            sourceItemId: null,
+            fields: { [ITEM_TYPE]: "Ring" },
+            links: { madeFrom: null },
           }),
         ),
       ).toMatchObject({ type: "Ring", sourceItemId: null });
@@ -500,7 +498,7 @@ describe("Item templates", () => {
       const { session, ruleset, template, instance } = await setup();
       await instance("Club");
       const club = await template("Club");
-      const edit = { name: club.name, type: "Armor" };
+      const edit = { name: club.name, fields: { [ITEM_TYPE]: "Armor" } };
       expect(EntitiesService.updateEntity(session, ruleset.id, "items", club.id, edit)).rejects.toThrow(
         `Can't change the Weapon template "Club" to Armor while items are made from it: "My Club"`,
       );
@@ -512,7 +510,10 @@ describe("Item templates", () => {
       const { session, ruleset, template } = await setup();
       const sword = await template("Longsword");
       expect(
-        EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, { name: sword.name, type: "Shield" }),
+        EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
+          name: sword.name,
+          fields: { [ITEM_TYPE]: "Shield" },
+        }),
       ).rejects.toThrow(
         /^Can't change the Weapon template "Longsword" to Shield while items are made from it: ".+" and \d+ more$/,
       );
@@ -528,7 +529,10 @@ describe("Item templates", () => {
       });
       expect(local.id).not.toBe(club.id);
       await expectRefusedWith(
-        EntitiesService.updateEntity(session, ruleset.id, "items", local.id, { name: local.name, type: "Armor" }),
+        EntitiesService.updateEntity(session, ruleset.id, "items", local.id, {
+          name: local.name,
+          fields: { [ITEM_TYPE]: "Armor" },
+        }),
         422,
       );
       expect(storedColumnsOf(await Entities.findOne<Item>(db, { entityType: "items", id: local.id }))).toMatchObject({
@@ -548,7 +552,7 @@ describe("Item templates", () => {
         columnsOf(
           await EntitiesService.updateEntity(session, ruleset.id, "items", local.id, {
             name: local.name,
-            type: "Armor",
+            fields: { [ITEM_TYPE]: "Armor" },
           }),
         ),
       ).toMatchObject({ type: "Armor" });
@@ -564,14 +568,14 @@ describe("Item templates", () => {
       await RulesetsService.publishRuleset(session, ruleset.id, { kind: "extension" });
       // Made from the original, which the subscriber's view reads as the extension's copy
       await createSecretBlade(sword.id, [ruleset.id]);
-      const edit = { name: local.name, type: "Armor" };
+      const edit = { name: local.name, fields: { [ITEM_TYPE]: "Armor" } };
       const refusal = `Can't change the Weapon template "Bastard Sword" to Armor while items are made from it`;
       expect(EntitiesService.updateEntity(session, ruleset.id, "items", local.id, edit)).rejects.toMatchObject({
         message: `${refusal}: 1 in rulesets built on this one`,
         refusal: "unprocessable",
       });
 
-      const blade = { name: "Public Blade", type: "Weapon", sourceItemId: local.id };
+      const blade = { name: "Public Blade", fields: { [ITEM_TYPE]: "Weapon" }, links: { madeFrom: local.id } };
       await EntitiesService.createEntity(session, ruleset.id, "items", blade);
       expect(EntitiesService.updateEntity(session, ruleset.id, "items", local.id, edit)).rejects.toMatchObject({
         message: `${refusal}: "Public Blade", and 1 in rulesets built on this one`,
@@ -588,7 +592,7 @@ describe("Item templates", () => {
         columnsOf(
           await EntitiesService.updateEntity(session, ruleset.id, "items", club.id, {
             name: club.name,
-            type: "Shield",
+            fields: { [ITEM_TYPE]: "Shield" },
           }),
         ),
       ).toMatchObject({ isTemplate: true, type: "Shield", slot: "Off Hand" });
@@ -598,8 +602,7 @@ describe("Item templates", () => {
       const { session, ruleset } = await setup();
       const old = await EntitiesService.createEntity(session, ruleset.id, "items", {
         name: "Old",
-        type: "Weapon",
-        isTemplate: true,
+        fields: { [ITEM_TYPE]: "Weapon", [ITEM_IS_TEMPLATE]: true },
       });
       await Entities.create<Item>(db, "items", {
         rulesetId: ruleset.id,
@@ -610,7 +613,10 @@ describe("Item templates", () => {
       RulesetViews.invalidate(ruleset.id);
       expect(
         columnsOf(
-          await EntitiesService.updateEntity(session, ruleset.id, "items", old.id, { name: old.name, type: "Armor" }),
+          await EntitiesService.updateEntity(session, ruleset.id, "items", old.id, {
+            name: old.name,
+            fields: { [ITEM_TYPE]: "Armor" },
+          }),
         ),
       ).toMatchObject({ type: "Armor" });
     });
@@ -623,10 +629,16 @@ describe("Item templates", () => {
     ])("refused as %s when created", async (_what, type) => {
       const { session, ruleset } = await setup();
       expect(
-        EntitiesService.createEntity(session, ruleset.id, "items", { name: "Odd Template", type, isTemplate: true }),
+        EntitiesService.createEntity(session, ruleset.id, "items", {
+          name: "Odd Template",
+          fields: { [ITEM_TYPE]: type, [ITEM_IS_TEMPLATE]: true },
+        }),
       ).rejects.toThrow(`Item type ${type ?? "None"} can't be a template: only Weapon, Armor, Shield can`);
       await expectRefusedWith(
-        EntitiesService.createEntity(session, ruleset.id, "items", { name: "Odd Template", type, isTemplate: true }),
+        EntitiesService.createEntity(session, ruleset.id, "items", {
+          name: "Odd Template",
+          fields: { [ITEM_TYPE]: type, [ITEM_IS_TEMPLATE]: true },
+        }),
         422,
       );
       expect(
@@ -638,11 +650,17 @@ describe("Item templates", () => {
       const { session, ruleset, template } = await setup();
       const club = await template("Club");
       await expectRefusedWith(
-        EntitiesService.updateEntity(session, ruleset.id, "items", club.id, { name: club.name, type: "Wondrous Item" }),
+        EntitiesService.updateEntity(session, ruleset.id, "items", club.id, {
+          name: club.name,
+          fields: { [ITEM_TYPE]: "Wondrous Item" },
+        }),
         422,
       );
       await expectRefusedWith(
-        EntitiesService.updateEntity(session, ruleset.id, "items", club.id, { name: club.name, type: null }),
+        EntitiesService.updateEntity(session, ruleset.id, "items", club.id, {
+          name: club.name,
+          fields: { [ITEM_TYPE]: null },
+        }),
         422,
       );
     });
@@ -658,7 +676,7 @@ describe("Item templates", () => {
         columnsOf(
           await EntitiesService.updateEntity(session, ruleset.id, "items", ring.id, {
             name: ring.name,
-            type: "Ring",
+            fields: { [ITEM_TYPE]: "Ring" },
             description: "Still a ring",
           }),
         ),
@@ -667,7 +685,7 @@ describe("Item templates", () => {
         columnsOf(
           await EntitiesService.updateEntity(session, ruleset.id, "items", ring.id, {
             name: ring.name,
-            type: "Weapon",
+            fields: { [ITEM_TYPE]: "Weapon" },
           }),
         ),
       ).toMatchObject({ type: "Weapon" });
@@ -679,8 +697,7 @@ describe("Item templates", () => {
     const mace = await template("Heavy Mace");
     const edited = await EntitiesService.updateEntity<Described<"items">>(session, ruleset.id, "items", mace.id, {
       name: mace.name,
-      type: "Weapon",
-      weight: 10,
+      fields: { [ITEM_TYPE]: "Weapon", [ITEM_WEIGHT]: 10 },
       description: "Heavier homebrew mace",
     });
 
@@ -705,8 +722,7 @@ describe("Item templates", () => {
 
     const unused = await EntitiesService.createEntity(session, ruleset.id, "items", {
       name: "Custom Template",
-      type: "Armor",
-      isTemplate: true,
+      fields: { [ITEM_TYPE]: "Armor", [ITEM_IS_TEMPLATE]: true },
     });
     expect((await EntitiesService.deleteEntity(session, ruleset.id, "items", unused.id)).id).toBe(unused.id);
   });

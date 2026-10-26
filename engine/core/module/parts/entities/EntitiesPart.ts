@@ -3,7 +3,7 @@ import type { Fields } from "@/engine/core/fields/index.ts";
 import type { RulesetView, StandaloneKind, ViewKinds } from "@/engine/core/view/index.ts";
 
 /** A kind's rules, of its type (`K`): its `RulesetEntity`, whatever form its saves take. */
-type Kind<K extends keyof ViewKinds> = RulesetEntity<K, object, object, Fields>;
+type Kind<K extends keyof ViewKinds> = RulesetEntity<K, Fields>;
 
 /**
  * The entity kinds a ruleset answers of, by their types, those no entity owns: each its type's `RulesetEntity`, whose

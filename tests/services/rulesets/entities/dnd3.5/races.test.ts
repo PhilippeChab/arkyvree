@@ -9,7 +9,11 @@ import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
-const elf = { name: "Elf", description: "Graceful and long-lived", size: "Medium" as const, baseSpeed: 30 };
+const elf = {
+  name: "Elf",
+  description: "Graceful and long-lived",
+  fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
+};
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
 describe("EntitiesService: races", () => {
@@ -19,12 +23,11 @@ describe("EntitiesService: races", () => {
     expect(created).toMatchObject({
       name: elf.name,
       description: elf.description,
-      fields: { [RACE_SIZE]: elf.size, [RACE_BASE_SPEED]: elf.baseSpeed },
+      fields: elf.fields,
     });
     const updated = await EntitiesService.updateEntity(session, ruleset.id, "races", created.id, {
       ...elf,
-      size: "Large",
-      baseSpeed: 40,
+      fields: { [RACE_SIZE]: "Large", [RACE_BASE_SPEED]: 40 },
     });
     expect(updated).toMatchObject({ fields: { [RACE_SIZE]: "Large", [RACE_BASE_SPEED]: 40 } });
   });

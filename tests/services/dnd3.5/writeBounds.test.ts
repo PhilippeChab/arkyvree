@@ -54,9 +54,31 @@ const lockPool = createTestPool();
 
 const session = makeSession();
 
+/** Issues in their places' order. */
+function byCategory(a: { category: string }, b: { category: string }) {
+  return a.category.localeCompare(b.category);
+}
+
 /** A refusal of a form's value by the rules, as a route's validation refuses it: invalid, naming its key. */
 function invalidAt(category: string) {
   return { refusal: "invalid", issues: [expect.objectContaining({ category })] };
+}
+
+/** A refusal of what a form gives that its kind doesn't take: invalid, each issue its place and its message. */
+function refusal(...issues: [string, string][]) {
+  return {
+    refusal: "invalid",
+    issues: issues.map(([category, message]) => ({ category, message })).toSorted(byCategory),
+  };
+}
+
+/** What a call (`call`) is refused with: its refusal and its issues, by their places. */
+async function refusalOf(call: Promise<unknown>) {
+  const error = (await call.then(
+    () => undefined,
+    (refused: unknown) => refused,
+  )) as { issues?: { category: string; message: string }[]; refusal?: string } | undefined;
+  return { refusal: error?.refusal, issues: (error?.issues ?? []).toSorted(byCategory) };
 }
 
 /** A new user's empty ruleset, with an ability and a save of it, which its classes' levels give a base bonus to. */
@@ -68,8 +90,14 @@ async function rulesetWithSave() {
     description: "Agility",
     rulesetId,
   });
-  const save = await EntitiesService.createEntity(owner, rulesetId, "saves", { name: "Reflex", abilityId: ability.id });
-  const klass = await EntitiesService.createEntity(owner, rulesetId, "classes", { name: "Rogue", hd: 6 });
+  const save = await EntitiesService.createEntity(owner, rulesetId, "saves", {
+    name: "Reflex",
+    links: { keyAbility: ability.id },
+  });
+  const klass = await EntitiesService.createEntity(owner, rulesetId, "classes", {
+    name: "Rogue",
+    fields: { [CLASS_HD]: 6 },
+  });
   return { abilityId: ability.id, klassId: klass.id, owner, rulesetId, saveId: save.id };
 }
 
@@ -78,39 +106,55 @@ afterAll(() => lockPool.end());
 describe("a ruleset's entities", () => {
   test("refuses a hit die of 7, on a new class and an edit, and an edit that clears it", async () => {
     const { session: owner, ruleset } = await createTestUserAndRuleset();
-    const refusal = invalidAt("hd");
+    const refusal = invalidAt(`fields.${CLASS_HD}`);
     expect(
-      EntitiesService.createEntity(owner, ruleset.id, "classes", { name: "Commoner", hd: 7 }),
+      EntitiesService.createEntity(owner, ruleset.id, "classes", { name: "Commoner", fields: { [CLASS_HD]: 7 } }),
     ).rejects.toMatchObject(refusal);
-    const fighter = await EntitiesService.createEntity(owner, ruleset.id, "classes", { name: "Fighter", hd: 12 });
+    const fighter = await EntitiesService.createEntity(owner, ruleset.id, "classes", {
+      name: "Fighter",
+      fields: { [CLASS_HD]: 12 },
+    });
     expect(fighter.fields[CLASS_HD]).toBe(12);
     expect(
-      EntitiesService.updateEntity(owner, ruleset.id, "classes", fighter.id, { name: "Fighter", hd: 7 }),
+      EntitiesService.updateEntity(owner, ruleset.id, "classes", fighter.id, {
+        name: "Fighter",
+        fields: { [CLASS_HD]: 7 },
+      }),
     ).rejects.toMatchObject(refusal);
     expect(
-      EntitiesService.updateEntity(owner, ruleset.id, "classes", fighter.id, { name: "Fighter", hd: null }),
+      EntitiesService.updateEntity(owner, ruleset.id, "classes", fighter.id, {
+        name: "Fighter",
+        fields: { [CLASS_HD]: null },
+      }),
     ).rejects.toMatchObject(refusal);
     expect(
-      (await EntitiesService.updateEntity(owner, ruleset.id, "classes", fighter.id, { name: "Fighter", hd: 4 })).fields[
-        CLASS_HD
-      ],
+      (
+        await EntitiesService.updateEntity(owner, ruleset.id, "classes", fighter.id, {
+          name: "Fighter",
+          fields: { [CLASS_HD]: 4 },
+        })
+      ).fields[CLASS_HD],
     ).toBe(4);
   });
 
   test("refuses a class level of 0, 21 or 1.5, and one without its number", async () => {
     const { klassId, owner, rulesetId } = await rulesetWithSave();
     for (const level of [0, 21, 1.5]) {
-      expect(EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, { level })).rejects.toMatchObject(
-        invalidAt("level"),
-      );
+      expect(
+        EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, { position: level }),
+      ).rejects.toMatchObject(invalidAt("position"));
     }
     expect(EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, {})).rejects.toMatchObject(
-      invalidAt("level"),
+      invalidAt("position"),
     );
-    expect(await EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, { level: 20 })).toMatchObject({
+    expect(
+      await EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, { position: 20 }),
+    ).toMatchObject({
       position: 20,
     });
-    expect(await EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, { level: 1 })).toMatchObject({
+    expect(
+      await EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, { position: 1 }),
+    ).toMatchObject({
       position: 1,
     });
   });
@@ -120,101 +164,114 @@ describe("a ruleset's entities", () => {
     for (const base of [-1, 13]) {
       expect(
         EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, {
-          level: 1,
-          saves: [{ base, saveId }],
+          links: { baseBonus: [{ amount: base, toId: saveId }] },
+          position: 1,
         }),
-      ).rejects.toMatchObject(invalidAt("saves.0.base"));
+      ).rejects.toMatchObject(invalidAt("links.baseBonus.0.amount"));
     }
     const level = await EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, {
-      level: 1,
-      saves: [{ base: 12, saveId }],
+      links: { baseBonus: [{ amount: 12, toId: saveId }] },
+      position: 1,
     });
     expect(await EntitiesService.getOwnedEntityWithOwner(rulesetId, "classes", level.id)).toMatchObject({
-      saves: [{ base: 12, saveId }],
+      baseBonus: [{ amount: 12, toId: saveId }],
     });
     for (const base of [-1, 13]) {
       expect(
         EntitiesService.updateOwnedEntity(owner, rulesetId, "classes", klassId, level.id, {
-          saves: [{ base, saveId }],
+          links: { baseBonus: [{ amount: base, toId: saveId }] },
         }),
-      ).rejects.toMatchObject(invalidAt("saves.0.base"));
+      ).rejects.toMatchObject(invalidAt("links.baseBonus.0.amount"));
       expect(
         EntitiesService.updateProgression(owner, rulesetId, "classes", klassId, {
-          levels: [{ levelId: level.id, saves: [{ base, saveId }] }],
+          levels: [{ levelId: level.id, links: { baseBonus: [{ amount: base, toId: saveId }] } }],
         }),
-      ).rejects.toMatchObject(invalidAt("saves.0.base"));
+      ).rejects.toMatchObject(invalidAt("links.baseBonus.0.amount"));
     }
     await EntitiesService.updateProgression(owner, rulesetId, "classes", klassId, {
-      levels: [{ levelId: level.id, saves: [{ base: 0, saveId }] }],
+      levels: [{ levelId: level.id, links: { baseBonus: [{ amount: 0, toId: saveId }] } }],
     });
     expect(await EntitiesService.getOwnedEntityWithOwner(rulesetId, "classes", level.id)).toMatchObject({
-      saves: [{ base: 0, saveId }],
+      baseBonus: [{ amount: 0, toId: saveId }],
     });
   });
 
   test("refuses a race's base speed of 0, a size not among its options, and an edit that clears either", async () => {
     const { session: owner, ruleset } = await createTestUserAndRuleset();
-    const elf = { name: "Elf", size: "Medium", baseSpeed: 30 };
-    expect(EntitiesService.createEntity(owner, ruleset.id, "races", { ...elf, baseSpeed: 0 })).rejects.toMatchObject(
-      invalidAt("baseSpeed"),
-    );
+    const elf = { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 };
     expect(
-      EntitiesService.createEntity(owner, ruleset.id, "races", { ...elf, size: "Gigantic" }),
-    ).rejects.toMatchObject(invalidAt("size"));
+      EntitiesService.createEntity(owner, ruleset.id, "races", {
+        name: "Elf",
+        fields: { ...elf, [RACE_BASE_SPEED]: 0 },
+      }),
+    ).rejects.toMatchObject(invalidAt(`fields.${RACE_BASE_SPEED}`));
+    expect(
+      EntitiesService.createEntity(owner, ruleset.id, "races", {
+        name: "Elf",
+        fields: { ...elf, [RACE_SIZE]: "Gigantic" },
+      }),
+    ).rejects.toMatchObject(invalidAt(`fields.${RACE_SIZE}`));
     // A new race left without them takes their defaults: a medium one, of 30 feet
     const created = await EntitiesService.createEntity(owner, ruleset.id, "races", { name: "Elf" });
     expect(created.fields).toMatchObject({ [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 });
-    const edits: [string, Record<string, unknown>][] = [
-      ["baseSpeed", { baseSpeed: 0 }],
-      ["baseSpeed", { baseSpeed: Number.MAX_SAFE_INTEGER + 1 }],
-      ["baseSpeed", { baseSpeed: null }],
-      ["size", { size: null }],
-      ["size", { size: "" }],
-      ["size", { size: "Gigantic" }],
+    const edits: [string, unknown][] = [
+      [RACE_BASE_SPEED, 0],
+      [RACE_BASE_SPEED, Number.MAX_SAFE_INTEGER + 1],
+      [RACE_BASE_SPEED, null],
+      [RACE_SIZE, null],
+      [RACE_SIZE, ""],
+      [RACE_SIZE, "Gigantic"],
     ];
-    for (const [key, edit] of edits) {
+    for (const [field, value] of edits) {
       expect(
-        EntitiesService.updateEntity(owner, ruleset.id, "races", created.id, { ...elf, ...edit }),
-      ).rejects.toMatchObject(invalidAt(key));
+        EntitiesService.updateEntity(owner, ruleset.id, "races", created.id, {
+          name: "Elf",
+          fields: { ...elf, [field]: value as never },
+        }),
+      ).rejects.toMatchObject(invalidAt(`fields.${field}`));
     }
     expect(
       await EntitiesService.updateEntity(owner, ruleset.id, "races", created.id, {
-        ...elf,
-        size: "Tiny",
-        baseSpeed: 1,
+        name: "Elf",
+        fields: { [RACE_SIZE]: "Tiny", [RACE_BASE_SPEED]: 1 },
       }),
     ).toMatchObject({ fields: { [RACE_SIZE]: "Tiny", [RACE_BASE_SPEED]: 1 } });
   });
 
   test("refuses an item's weight or cost below none or past what it holds exactly, and keeps them to two decimals", async () => {
     const { session: owner, ruleset } = await createTestUserAndRuleset();
-    for (const key of ["weight", "costGp"]) {
+    for (const key of [ITEM_WEIGHT, ITEM_COST_GP]) {
       expect(
-        EntitiesService.createEntity(owner, ruleset.id, "items", { name: "Gem", [key]: -0.01 }),
-      ).rejects.toMatchObject(invalidAt(key));
+        EntitiesService.createEntity(owner, ruleset.id, "items", { name: "Gem", fields: { [key]: -0.01 } }),
+      ).rejects.toMatchObject(invalidAt(`fields.${key}`));
     }
-    const gem = await EntitiesService.createEntity(owner, ruleset.id, "items", { name: "Gem", weight: 0, costGp: 0 });
+    const gem = await EntitiesService.createEntity(owner, ruleset.id, "items", {
+      name: "Gem",
+      fields: { [ITEM_WEIGHT]: 0, [ITEM_COST_GP]: 0 },
+    });
     expect(gem.fields).toMatchObject({ [ITEM_WEIGHT]: 0, [ITEM_COST_GP]: 0 });
-    for (const key of ["weight", "costGp"]) {
+    for (const key of [ITEM_WEIGHT, ITEM_COST_GP]) {
       expect(
-        EntitiesService.updateEntity(owner, ruleset.id, "items", gem.id, { name: "Gem", [key]: -1 }),
-      ).rejects.toMatchObject(invalidAt(key));
+        EntitiesService.updateEntity(owner, ruleset.id, "items", gem.id, { name: "Gem", fields: { [key]: -1 } }),
+      ).rejects.toMatchObject(invalidAt(`fields.${key}`));
       expect(
-        EntitiesService.duplicateEntity(owner, ruleset.id, "items", gem.id, { name: "Other Gem", [key]: -1 }),
-      ).rejects.toMatchObject(invalidAt(key));
+        EntitiesService.duplicateEntity(owner, ruleset.id, "items", gem.id, {
+          name: "Other Gem",
+          fields: { [key]: -1 },
+        }),
+      ).rejects.toMatchObject(invalidAt(`fields.${key}`));
     }
     // Every number field holds what it keeps exactly, to its places, and no more: none past it is stored rounded off
-    for (const key of ["weight", "costGp"]) {
+    for (const key of [ITEM_WEIGHT, ITEM_COST_GP]) {
       for (const value of [1e21, 1e300, Number("12345678901234567.89")]) {
         expect(
-          EntitiesService.updateEntity(owner, ruleset.id, "items", gem.id, { name: "Gem", [key]: value }),
-        ).rejects.toMatchObject(invalidAt(key));
+          EntitiesService.updateEntity(owner, ruleset.id, "items", gem.id, { name: "Gem", fields: { [key]: value } }),
+        ).rejects.toMatchObject(invalidAt(`fields.${key}`));
       }
     }
     await EntitiesService.updateEntity(owner, ruleset.id, "items", gem.id, {
       name: "Gem",
-      weight: 10_000,
-      costGp: 90_071_992_547_409.9,
+      fields: { [ITEM_WEIGHT]: 10_000, [ITEM_COST_GP]: 90_071_992_547_409.9 },
     });
     expect((await EntitiesService.getEntity(ruleset.id, "items", gem.id)).fields).toMatchObject({
       [ITEM_WEIGHT]: 10_000,
@@ -223,8 +280,7 @@ describe("a ruleset's entities", () => {
     // A third decimal is rounded off as it's written, half away from zero: their fields' scale
     await EntitiesService.updateEntity(owner, ruleset.id, "items", gem.id, {
       name: "Gem",
-      weight: 0.125,
-      costGp: 1.005,
+      fields: { [ITEM_WEIGHT]: 0.125, [ITEM_COST_GP]: 1.005 },
     });
     expect((await EntitiesService.getEntity(ruleset.id, "items", gem.id)).fields).toMatchObject({
       [ITEM_WEIGHT]: 0.13,
@@ -241,27 +297,30 @@ describe("a ruleset's entities", () => {
   test("refuses a save or a skill without its key ability", async () => {
     const { abilityId, owner, rulesetId, saveId } = await rulesetWithSave();
     expect(EntitiesService.createEntity(owner, rulesetId, "saves", { name: "Will" })).rejects.toMatchObject(
-      invalidAt("abilityId"),
+      invalidAt("links.keyAbility"),
     );
     expect(
-      EntitiesService.updateEntity(owner, rulesetId, "saves", saveId, { name: "Reflex", abilityId: null }),
-    ).rejects.toMatchObject(invalidAt("abilityId"));
+      EntitiesService.updateEntity(owner, rulesetId, "saves", saveId, { name: "Reflex", links: { keyAbility: null } }),
+    ).rejects.toMatchObject(invalidAt("links.keyAbility"));
     expect(EntitiesService.createEntity(owner, rulesetId, "skills", { name: "Tumble" })).rejects.toMatchObject(
-      invalidAt("primaryAbilityId"),
+      invalidAt("links.keyAbility"),
     );
     const tumble = await EntitiesService.createEntity(owner, rulesetId, "skills", {
       name: "Tumble",
-      primaryAbilityId: abilityId,
+      links: { keyAbility: abilityId },
     });
     expect(tumble.links).toMatchObject([{ role: "keyAbility", toId: abilityId }]);
     expect(
-      EntitiesService.updateEntity(owner, rulesetId, "skills", tumble.id, { name: "Tumble", primaryAbilityId: "" }),
-    ).rejects.toMatchObject(invalidAt("primaryAbilityId"));
+      EntitiesService.updateEntity(owner, rulesetId, "skills", tumble.id, {
+        name: "Tumble",
+        links: { keyAbility: "" },
+      }),
+    ).rejects.toMatchObject(invalidAt("links.keyAbility"));
     // One the ruleset hasn't is refused too
     expect(
       EntitiesService.updateEntity(owner, rulesetId, "skills", tumble.id, {
         name: "Tumble",
-        primaryAbilityId: NIL_UUID,
+        links: { keyAbility: NIL_UUID },
       }),
     ).rejects.toThrow(`Ability ${NIL_UUID} does not belong to this ruleset`);
   });
@@ -271,10 +330,16 @@ describe("a ruleset's entities", () => {
     const common = await EntitiesService.createEntity(owner, ruleset.id, "languages", { name: "Common" });
     expect(common.fields).toEqual({ [LANGUAGE_TYPE]: null });
     expect(
-      EntitiesService.updateEntity(owner, ruleset.id, "languages", common.id, { name: "Common", type: null }),
-    ).rejects.toMatchObject(invalidAt("type"));
+      EntitiesService.updateEntity(owner, ruleset.id, "languages", common.id, {
+        name: "Common",
+        fields: { [LANGUAGE_TYPE]: null },
+      }),
+    ).rejects.toMatchObject(invalidAt(`fields.${LANGUAGE_TYPE}`));
     expect(
-      await EntitiesService.updateEntity(owner, ruleset.id, "languages", common.id, { name: "Common", type: "Spoken" }),
+      await EntitiesService.updateEntity(owner, ruleset.id, "languages", common.id, {
+        name: "Common",
+        fields: { [LANGUAGE_TYPE]: "Spoken" },
+      }),
     ).toMatchObject({ fields: { [LANGUAGE_TYPE]: "Spoken" } });
   });
 
@@ -292,6 +357,138 @@ describe("a ruleset's entities", () => {
     expect(EntitiesService.createEntity(owner, ruleset.id, "abilities", form)).rejects.toThrow("No create");
     expect(EntitiesService.updateEntity(owner, ruleset.id, "abilities", ability.id, form)).rejects.toThrow("No update");
     expect(EntitiesService.deleteEntity(owner, ruleset.id, "abilities", ability.id)).rejects.toThrow("No delete");
+  });
+});
+
+describe("a ruleset's entity's form", () => {
+  test("of a class's progression refuses a key it doesn't take, at any depth, and changes nothing", async () => {
+    const { klassId, owner, rulesetId, saveId } = await rulesetWithSave();
+    const level = await EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, {
+      links: { baseBonus: [{ amount: 2, toId: saveId }] },
+      position: 1,
+    });
+    // A level's old shape, its saves by key
+    expect(
+      await refusalOf(
+        EntitiesService.updateProgression(owner, rulesetId, "classes", klassId, {
+          levels: [{ levelId: level.id, saves: [{ saveId, base: 5 }] }],
+        } as never),
+      ),
+    ).toEqual(refusal(["levels.0", 'Unrecognized key: "saves"']));
+    expect(
+      await refusalOf(
+        EntitiesService.updateProgression(owner, rulesetId, "classes", klassId, {
+          pools: [{ aptitudeId: saveId, id: saveId, picks: [{ count: 1, levelId: level.id, tier: 1 }] }],
+          bab: [],
+        } as never),
+      ),
+    ).toEqual(
+      refusal(
+        ["json", 'Unrecognized key: "bab"'],
+        ["pools.0", 'Unrecognized key: "aptitudeId"'],
+        ["pools.0.picks.0", 'Unrecognized key: "tier"'],
+      ),
+    );
+    expect(
+      await refusalOf(
+        EntitiesService.updateProgression(owner, rulesetId, "classes", klassId, {
+          spells: { known: [], extra: [] },
+        } as never),
+      ),
+    ).toEqual(refusal(["spells", 'Unrecognized key: "extra"']));
+    expect(await EntitiesService.getOwnedEntityWithOwner(rulesetId, "classes", level.id)).toMatchObject({
+      baseBonus: [{ amount: 2, toId: saveId }],
+    });
+  });
+
+  test("of a kind that holds no fields refuses any field or role past its columns, as any kind's does", async () => {
+    const { abilityId, owner, rulesetId, saveId } = await rulesetWithSave();
+    const given = { fields: { [ITEM_COST_GP]: 5 }, links: { foo: abilityId } };
+    const refused = refusal(
+      [`fields.${ITEM_COST_GP}`, "Not a field of this entity"],
+      ["links.foo", "Not a field of this entity"],
+    );
+    expect(
+      await refusalOf(
+        EntitiesService.createEntity(owner, rulesetId, "saves", {
+          name: "Will",
+          ...given,
+          links: { ...given.links, keyAbility: abilityId },
+        }),
+      ),
+    ).toEqual(refused);
+    expect(
+      await refusalOf(EntitiesService.createEntity(owner, rulesetId, "aptitudes", { name: "Pool", ...given })),
+    ).toEqual(refused);
+    expect(
+      await refusalOf(EntitiesService.createEntity(owner, rulesetId, "mechanics", { name: "Rule", ...given })),
+    ).toEqual(refused);
+    expect(
+      await refusalOf(
+        EntitiesService.updateEntity(owner, rulesetId, "saves", saveId, {
+          name: "Reflex",
+          fields: { [ITEM_COST_GP]: 5 },
+        }),
+      ),
+    ).toEqual(refusal([`fields.${ITEM_COST_GP}`, "Not a field of this entity"]));
+    // Its columns it takes, and nothing else
+    expect(
+      await EntitiesService.updateEntity(owner, rulesetId, "saves", saveId, {
+        name: "Reflex",
+        links: { keyAbility: abilityId },
+      }),
+    ).toMatchObject({ name: "Reflex" });
+  });
+
+  test("refuses a link's entry with a key its column doesn't take", async () => {
+    const { klassId, owner, rulesetId, saveId } = await rulesetWithSave();
+    const { session, ruleset, aptitudeIds } = await createTestUserAndRuleset(["General"]);
+    const [general] = aptitudeIds;
+    expect(
+      await refusalOf(
+        EntitiesService.createEntity(session, ruleset.id, "feats", {
+          name: "Dodge",
+          links: { listedIn: [{ amount: 1, tier: 1, toId: general, viaId: general }] },
+        }),
+      ),
+    ).toEqual(refusal(["links.listedIn.0", 'Unrecognized keys: "amount", "tier", "viaId"']));
+    expect(
+      await refusalOf(
+        EntitiesService.createOwnedEntity(owner, rulesetId, "classes", klassId, {
+          links: { baseBonus: [{ amount: 2, tier: 1, toId: saveId }] },
+          position: 1,
+        }),
+      ),
+    ).toEqual(refusal(["links.baseBonus.0", 'Unrecognized key: "tier"']));
+  });
+
+  test("of a class level refuses a feat it grants twice, as a save it gives twice", async () => {
+    const { session, ruleset, aptitudeIds } = await createTestUserAndRuleset(["General"]);
+    const [general] = aptitudeIds;
+    const feat = await EntitiesService.createEntity(session, ruleset.id, "feats", {
+      name: "Power Attack",
+      links: { listedIn: [{ toId: general }] },
+    });
+    const klass = await EntitiesService.createEntity(session, ruleset.id, "classes", {
+      name: "Fighter",
+      fields: { [CLASS_HD]: 10 },
+    });
+    const grant = { toId: feat.id, viaId: general };
+    expect(
+      EntitiesService.createOwnedEntity(session, ruleset.id, "classes", klass.id, {
+        links: { grants: [grant, { ...grant, free: false }] },
+        position: 1,
+      }),
+    ).rejects.toMatchObject({ refusal: "invalid", message: `Feat ${feat.id} is given more than once` });
+    const level = await EntitiesService.createOwnedEntity(session, ruleset.id, "classes", klass.id, {
+      links: { grants: [grant] },
+      position: 1,
+    });
+    expect(
+      EntitiesService.updateOwnedEntity(session, ruleset.id, "classes", klass.id, level.id, {
+        links: { grants: [grant, grant] },
+      }),
+    ).rejects.toMatchObject({ refusal: "invalid", message: `Feat ${feat.id} is given more than once` });
   });
 });
 

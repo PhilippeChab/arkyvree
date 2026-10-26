@@ -31,9 +31,11 @@ import {
   toEntityBody,
   toEntityForm,
   withEntityFields,
+  withTemplateFlag,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import {
   DescriptionCell,
+  listColumnId,
   ListValue,
   PoolAutocomplete,
   RulesetSectionTable,
@@ -97,12 +99,11 @@ function duplicateForm(
   fields: readonly EntityField[] | undefined,
 ): EntityFormData {
   const held = toEntityForm<EntityFormData>(columns, entity);
-  const source = ownFieldOf(entity, copies.template.field) === true ? entity.id : (held[copies.source] ?? "");
+  const source = ownFieldOf(entity, copies.template.field) === true ? entity.id : (held.links?.[copies.source] ?? "");
   const form = {
-    ...held,
+    ...withTemplateFlag(held, copies, false),
     name: `${entity.name} (Copy)`,
-    [copies.source]: source,
-    [copies.template.key]: false,
+    links: { ...held.links, [copies.source]: source },
   };
   return withEntityFields(form, fields, entity);
 }
@@ -163,7 +164,7 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
     sectionName: segment,
     label: one,
     createDefaults: withEntityFields(
-      { ...toEntityForm<EntityFormData>(formColumns), ...(kind.copies && { [kind.copies.template.key]: false }) },
+      withTemplateFlag(toEntityForm<EntityFormData>(formColumns), kind.copies, false),
       fields,
     ),
     createFn: async (data) =>
@@ -217,7 +218,7 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
       case "description":
         return <DescriptionCell text={entity.description} />;
       default: {
-        const column = list?.columns.find((own) => own.key === columnKey);
+        const column = list?.columns.find((own) => listColumnId(own) === columnKey);
         return column && <ListValue column={column} entity={entity} names={names} />;
       }
     }

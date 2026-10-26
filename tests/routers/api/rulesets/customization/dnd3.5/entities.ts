@@ -3,6 +3,12 @@ import { api, expectOk } from "@/tests/support/api.ts";
 import { postAptitude } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
+import {
+  CLASS_LEVEL_BAB,
+  CLASS_LEVEL_SKILL_POINTS,
+  RACE_BASE_SPEED,
+  RACE_SIZE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A seeded fork of the seeded user's with a new feat to customize: the fork's `id`, and the feat's as `entityId`. */
 export async function createCustomizableFeat() {
@@ -23,13 +29,13 @@ export async function createEntity(rulesetId: string, entityType: string): Promi
     case "feats":
     case "spells": {
       const aptitude = await postAptitude(rulesetId);
-      const pool = entityType === "feats" ? { aptitudeIds: [aptitude.id] } : { aptitudes: [{ id: aptitude.id }] };
-      return (await expectOk(kinds.$post({ param: { id, entityType }, json: { name, ...pool } }))).id;
+      const links = { listedIn: [{ toId: aptitude.id }] };
+      return (await expectOk(kinds.$post({ param: { id, entityType }, json: { name, links } }))).id;
     }
     case "items":
       return (await expectOk(kinds.$post({ param: { id, entityType }, json: { name } }))).id;
     case "races": {
-      const json = { name, size: "Medium", baseSpeed: 30 };
+      const json = { name, fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 } };
       return (await expectOk(kinds.$post({ param: { id, entityType }, json }))).id;
     }
     case "classes":
@@ -39,7 +45,7 @@ export async function createEntity(rulesetId: string, entityType: string): Promi
       const level = await expectOk(
         ruleset.entities[":entityType"][":entityId"].owned.$post({
           param: { id: rulesetId, entityType: "classes", entityId: klass.id },
-          json: { level: 1, fields: { bab: 1, skills: 4 } },
+          json: { fields: { [CLASS_LEVEL_BAB]: 1, [CLASS_LEVEL_SKILL_POINTS]: 4 }, position: 1 },
         }),
       );
       return level.id;

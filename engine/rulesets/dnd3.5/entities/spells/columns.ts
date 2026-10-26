@@ -13,7 +13,6 @@ export const SPELL_COLUMNS: FormField[] = [
   {
     help: "The save it allows",
     input: "ref",
-    key: "saveId",
     label: "Saving Throw",
     references: "saves",
     required: false,
@@ -23,7 +22,6 @@ export const SPELL_COLUMNS: FormField[] = [
     field: SPELL_SAVE_EFFECT,
     help: "What a successful save does",
     input: "text",
-    key: "saveEffect",
     label: "Save Effect",
     multiple: false,
     nullable: true,
@@ -32,7 +30,6 @@ export const SPELL_COLUMNS: FormField[] = [
   {
     help: "The spell lists it's on, each at its spell level",
     input: "leveledLinks",
-    key: "aptitudes",
     label: "Aptitudes",
     max: RULESET_LIMITS.spellLevel,
     min: 0,
@@ -45,5 +42,5 @@ export const SPELL_COLUMNS: FormField[] = [
 /** A 3.5 spell's list: its name, its spell lists, its description. */
 export const SPELL_LIST: ListDescription = {
   nameShare: 25,
-  columns: [{ key: "links", label: "Aptitudes", reads: "pools", role: "listedIn", share: 15, slot: "inline" }],
+  columns: [{ label: "Aptitudes", reads: "pools", role: "listedIn", share: 15, slot: "inline" }],
 };

@@ -1,9 +1,46 @@
 import { describe, expect, test } from "bun:test";
 
+import type { FormField } from "@/engine/core/fields/index.ts";
 import { Engine } from "@/engine/index.ts";
 import { RulesetFieldsService } from "@/server/services/rulesets/fields/index.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
+import {
+  ARMOR_AC_BONUS,
+  ARMOR_CHECK_PENALTY,
+  ARMOR_MAX_DEX,
+  ARMOR_PROFICIENCY,
+  ARMOR_TYPE,
+  CLASS_CASTER_TYPE,
+  CLASS_LEVEL_BAB,
+  CLASS_LEVEL_SKILL_POINTS,
+  ITEM_SPELL_FAILURE,
+  RULESET_ABILITY_INCREASES,
+  RULESET_FEAT_ADVANCEMENT,
+  SHIELD_AC_BONUS,
+  SHIELD_PROFICIENCY,
+  SHIELD_TYPE,
+  SKILL_CHECK_PENALTY_MULTIPLIER,
+  SKILL_IMPACTED_BY_WEIGHT,
+  SPELL_AREA_OF_EFFECT,
+  SPELL_CASTING_TIME,
+  SPELL_COMPONENT,
+  SPELL_DESCRIPTOR,
+  SPELL_DURATION,
+  SPELL_EFFECT,
+  SPELL_RANGE_TYPE,
+  SPELL_RESISTANCE,
+  SPELL_SCHOOL,
+  SPELL_SUBSCHOOL,
+  SPELL_TARGET,
+  WEAPON_FINESSABLE,
+  WEAPON_PROFICIENCY,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 import { SPELL_COMPONENTS, SPELL_SCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
+
+/** Where a form's field sends its value: its stored field, a reference its link's role; a group, its label. */
+function placeOf(field: FormField) {
+  return field.input === "group" ? field.label : (field.field ?? field.role);
+}
 
 describe("RulesetFieldsService", () => {
   test("gives each entity type's form its fields, and the ruleset's Settings', as the ruleset declares them", async () => {
@@ -17,22 +54,24 @@ describe("RulesetFieldsService", () => {
         .toSorted(),
     );
 
-    expect(fields.spells.map((field) => field.key)).toEqual([
-      "school",
-      "subschool",
-      "descriptors",
-      "components",
-      "castingTime",
-      "rangeType",
-      "target",
-      "effect",
-      "areaOfEffect",
-      "duration",
-      "spellResistance",
+    expect(fields.spells.map(placeOf)).toEqual([
+      SPELL_SCHOOL,
+      SPELL_SUBSCHOOL,
+      SPELL_DESCRIPTOR,
+      SPELL_COMPONENT,
+      SPELL_CASTING_TIME,
+      SPELL_RANGE_TYPE,
+      SPELL_TARGET,
+      SPELL_EFFECT,
+      SPELL_AREA_OF_EFFECT,
+      SPELL_DURATION,
+      SPELL_RESISTANCE,
     ]);
+    // Each by its stored field alone, which a form sends it by
+    expect(fields.spells.every((field) => !("key" in field))).toBe(true);
     expect(fields.spells).toContainEqual(
       expect.objectContaining({
-        key: "school",
+        field: SPELL_SCHOOL,
         label: "School",
         input: "choice",
         multiple: false,
@@ -40,34 +79,46 @@ describe("RulesetFieldsService", () => {
       }),
     );
     expect(fields.spells).toContainEqual(
-      expect.objectContaining({ key: "components", input: "choice", multiple: true, options: SPELL_COMPONENTS }),
+      expect.objectContaining({ field: SPELL_COMPONENT, input: "choice", multiple: true, options: SPELL_COMPONENTS }),
     );
     expect(fields.spells).toContainEqual(
       expect.objectContaining({
-        key: "castingTime",
+        field: SPELL_CASTING_TIME,
         input: "text",
         multiple: false,
         placeholder: 'e.g., "1 standard action"',
       }),
     );
     expect(fields.classes).toEqual([
-      expect.objectContaining({ key: "bonusSpellAbilityId", input: "ref", references: "abilities", required: false }),
-      expect.objectContaining({ key: "casterType", input: "choice", options: ["Arcane", "Divine"] }),
+      expect.objectContaining({ role: "bonusSpellAbility", input: "ref", references: "abilities", required: false }),
+      expect.objectContaining({ field: CLASS_CASTER_TYPE, input: "choice", options: ["Arcane", "Divine"] }),
     ]);
     expect(fields.class_levels).toEqual([
-      expect.objectContaining({ key: "bab", label: "Base Attack Bonus", input: "number", default: 0, min: 0 }),
-      expect.objectContaining({ key: "skills", label: "Skill Points", input: "number", default: 0, min: 0 }),
+      expect.objectContaining({
+        field: CLASS_LEVEL_BAB,
+        label: "Base Attack Bonus",
+        input: "number",
+        default: 0,
+        min: 0,
+      }),
+      expect.objectContaining({
+        field: CLASS_LEVEL_SKILL_POINTS,
+        label: "Skill Points",
+        input: "number",
+        default: 0,
+        min: 0,
+      }),
     ]);
     expect(fields.skills).toContainEqual(
       expect.objectContaining({
-        key: "checkPenaltyMultiplier",
-        shownWhen: [{ path: "fields.impactedByWeight", values: [true] }],
+        field: SKILL_CHECK_PENALTY_MULTIPLIER,
+        shownWhen: [{ path: `fields.${SKILL_IMPACTED_BY_WEIGHT}`, values: [true] }],
       }),
     );
     expect(fields.rulesets).toEqual([
-      expect.objectContaining({ key: "skillPointAbilityId", input: "ref", references: "abilities", required: true }),
-      expect.objectContaining({ key: "featAdvancement", input: "progression", levels: 20, max: 10 }),
-      expect.objectContaining({ key: "abilityIncreases", input: "progression", levels: 20, max: 1 }),
+      expect.objectContaining({ role: "skillPointAbility", input: "ref", references: "abilities", required: true }),
+      expect.objectContaining({ field: RULESET_FEAT_ADVANCEMENT, input: "progression", levels: 20, max: 10 }),
+      expect.objectContaining({ field: RULESET_ABILITY_INCREASES, input: "progression", levels: 20, max: 1 }),
     ]);
   });
 
@@ -82,30 +133,27 @@ describe("RulesetFieldsService", () => {
       ["Armor", ["Armor"]],
       ["Shield", ["Shield"]],
     ]);
-    const weapon = items.find((field) => field.key === "weapon");
+    const weapon = items.find((field) => placeOf(field) === "Weapon");
     expect(weapon).toMatchObject({
       fields: expect.arrayContaining([
         expect.objectContaining({
-          key: "weapon.proficiency",
+          field: WEAPON_PROFICIENCY,
           input: "choice",
           options: ["Simple", "Martial", "Exotic"],
         }),
-        expect.objectContaining({ key: "weapon.finessable", input: "flag", nullable: true }),
+        expect.objectContaining({ field: WEAPON_FINESSABLE, input: "flag", nullable: true }),
       ]),
     });
     // The stats an armor and a shield both keep, held by the item itself: in each one's section, after its own
-    expect(items.find((field) => field.key === "maxDex")).toBeUndefined();
-    for (const section of ["armor", "shield"]) {
-      const group = items.find((field) => field.key === section);
-      const keys = group?.input === "group" ? group.fields.map((field) => field.key) : [];
-      expect(keys).toEqual([
-        `${section}.type`,
-        `${section}.proficiency`,
-        `${section}.acBonus`,
-        "maxDex",
-        "checkPenalty",
-        "spellFailure",
-      ]);
+    expect(items.find((field) => placeOf(field) === ARMOR_MAX_DEX)).toBeUndefined();
+    const own = {
+      Armor: [ARMOR_TYPE, ARMOR_PROFICIENCY, ARMOR_AC_BONUS],
+      Shield: [SHIELD_TYPE, SHIELD_PROFICIENCY, SHIELD_AC_BONUS],
+    };
+    for (const [section, fieldsOf] of Object.entries(own)) {
+      const group = items.find((field) => placeOf(field) === section);
+      const places = group?.input === "group" ? group.fields.map(placeOf) : [];
+      expect(places).toEqual([...fieldsOf, ARMOR_MAX_DEX, ARMOR_CHECK_PENALTY, ITEM_SPELL_FAILURE]);
     }
   });
 });

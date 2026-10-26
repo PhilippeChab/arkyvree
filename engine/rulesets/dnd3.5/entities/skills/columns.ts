@@ -7,7 +7,6 @@ export const SKILL_COLUMNS: FormField[] = [
   {
     help: "The ability its checks add",
     input: "ref",
-    key: "primaryAbilityId",
     label: "Primary Ability",
     references: "abilities",
     required: true,
@@ -20,7 +19,6 @@ export const SKILL_LIST: ListDescription = {
   nameShare: 25,
   columns: [
     {
-      key: "primaryAbilityId",
       label: "Primary Ability",
       reads: "reference",
       references: "abilities",
@@ -29,7 +27,6 @@ export const SKILL_LIST: ListDescription = {
     },
     {
       field: SKILL_USABLE_WITHOUT_TRAINING,
-      key: "usableWithoutTraining",
       label: "Trained Only",
       reads: "flag",
       share: 15,

@@ -8,12 +8,17 @@ import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQue
 
 import type { ColumnInputProps } from "./columnContext.ts";
 
+/** A link as its form holds it and its save sends it: the entity it's to (`toId`). */
+interface Link {
+  toId: string;
+}
+
 /** Links to a list's entities, with no level of their own. */
 type LinksField = Extract<EntityField, { input: "links" }>;
 
 /**
- * Links to a list's entities (a feat's feat pools): the entities of its kind it links to, picked by name, held by their
- * ids, sorted by name. A new entity needs one when it's `required`.
+ * Links to a list's entities (a feat's feat pools): the entities of its kind it links to, picked by name, held as its
+ * save sends them (`{ toId }`), sorted by name. A new entity needs one when it's `required`.
  */
 export function LinksInput<T extends FieldValues>({
   context,
@@ -28,7 +33,7 @@ export function LinksInput<T extends FieldValues>({
     name,
     rules: field.required !== undefined && context.newEntity ? requiredRules(field.required) : undefined,
   });
-  const ids: string[] = Array.isArray(bound.value) ? bound.value : [];
+  const links: Link[] = Array.isArray(bound.value) ? bound.value : [];
   return (
     <EntitiesAutocomplete
       rulesetId={rulesetId}
@@ -36,10 +41,10 @@ export function LinksInput<T extends FieldValues>({
       label={field.label}
       inputRef={bound.ref}
       error={fieldState.error}
-      value={linked.resolve(ids)}
+      value={linked.resolve(links.map((link) => link.toId))}
       onChange={(selected) => {
         linked.remember(selected);
-        bound.onChange([...selected].sort(byName).map((entity) => entity.id));
+        bound.onChange([...selected].sort(byName).map((entity): Link => ({ toId: entity.id })));
       }}
     />
   );

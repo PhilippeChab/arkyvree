@@ -485,7 +485,7 @@ const ITEM_FIELDS = {
     },
     kind: "group",
     label: "Weapon",
-    when: { column: "type", values: ["Weapon"] },
+    when: { column: ITEM_TYPE, values: ["Weapon"] },
   },
   armor: {
     fields: {
@@ -521,7 +521,7 @@ const ITEM_FIELDS = {
     },
     kind: "group",
     label: "Armor",
-    when: { column: "type", values: ["Armor"] },
+    when: { column: ITEM_TYPE, values: ["Armor"] },
   },
   shield: {
     fields: {
@@ -557,7 +557,7 @@ const ITEM_FIELDS = {
     },
     kind: "group",
     label: "Shield",
-    when: { column: "type", values: ["Shield"] },
+    when: { column: ITEM_TYPE, values: ["Shield"] },
   },
   /** An armor's, or a tower shield's. */
   maxDex: {

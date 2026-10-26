@@ -23,7 +23,8 @@ const EMPTY_AS_NONE: ReadonlySet<FormField["input"]> = new Set(["choice", "ref",
 const ID = z.string().uuid();
 
 /**
- * An entity's columns as a form gives them, read by their descriptions (its rules'), for a new entity or an edit:
+ * An entity's columns as a form gives them, each where it stores it (a field's among its fields, a link's among its
+ * links, by role), read by their descriptions (its rules'), for a new entity or an edit:
  * - a column takes its input's values (a reference an id, a choice one of its options, a number a whole one in its
  *   bounds, a decimal one kept to two places), several for a multiple one, a number or a decimal within what it holds
  *   exactly (`Decimals.largest`);
@@ -31,11 +32,11 @@ const ID = z.string().uuid();
  * - a new entity's form gives a required one, or its default fills it in, and a required list of links one link at
  *   least; an edit leaves those it doesn't give as they are.
  *
- * Columns that share a key (an item's type, a template's of its own options) take what any of them takes, required
- * when every one is: choices as one, of all their options, which a refusal names.
+ * Columns that share a stored field (an item's type, a template's of its own options) take what any of them takes,
+ * required when every one is: choices as one, of all their options, which a refusal names.
  */
 export default class FormColumns {
-  /** Columns that share a key, as one where they're all single choices (an item's type): every option of theirs. */
+  /** Columns that share a stored field, as one where they're all single choices (an item's type): every option of theirs. */
   private static joinChoices(shared: FormField[]): FormField[] {
     const choices = shared.filter((column): column is ChoiceFormField => column.input === "choice" && !column.multiple);
     if (shared.length < 2 || choices.length < shared.length) return shared;
@@ -50,7 +51,7 @@ export default class FormColumns {
     ];
   }
 
-  /** A key's columns' values as one: what any of them takes, nullable when one is, required when every one is. */
+  /** A stored field's columns' values as one: what any of them takes, nullable when one is, required when every one is. */
   private static keySchema(values: ColumnValue[]): z.ZodType {
     const [first, ...rest] = values.map((value) => value.schema);
     const taken = rest.length > 0 ? z.union([first, ...rest]) : first;
@@ -91,7 +92,7 @@ export default class FormColumns {
         return {
           nullable: false,
           required: false,
-          schema: z.array(z.object({ [column.amountKey]: amount, [column.entityKey]: ID })),
+          schema: z.array(z.strictObject({ amount, toId: ID })),
         };
       }
       case "choice": {
@@ -120,11 +121,11 @@ export default class FormColumns {
         return {
           nullable: false,
           required: false,
-          schema: z.array(z.object({ [column.viaKey]: ID, [column.entityKey]: ID, free: z.boolean().optional() })),
+          schema: z.array(z.strictObject({ free: z.boolean().optional(), toId: ID, viaId: ID })),
         };
       case "leveledLinks": {
         const level = z.number().int().min(column.min).max(column.max);
-        const links = z.array(z.object({ id: ID, level: level.optional() }));
+        const links = z.array(z.strictObject({ tier: level.optional(), toId: ID }));
         return {
           nullable: false,
           required: column.required !== undefined,
@@ -135,7 +136,7 @@ export default class FormColumns {
         return {
           nullable: false,
           required: column.required !== undefined,
-          schema: FormColumns.links(z.array(ID), column.required, creating),
+          schema: FormColumns.links(z.array(z.strictObject({ toId: ID })), column.required, creating),
         };
       case "number": {
         // A whole number, which holds exactly what's a safe integer: `int` refuses any past it, a maximum past it aside
@@ -162,22 +163,29 @@ export default class FormColumns {
         };
       case "group":
       case "progression":
-        throw new Error(`A column takes no ${column.input} input: ${column.key}`);
+        throw new Error(`A column takes no ${column.input} input: ${column.label}`);
     }
   }
 
-  /** The columns' schema (`columns`: their descriptions), a new entity's form's (`creating`) or an edit's. */
-  static schema(columns: readonly FormField[], creating: boolean) {
-    const byKey = Map.groupBy(columns, (column) => column.key);
-    return z.object(
+  /**
+   * The columns' shapes (`columns`: their descriptions), a new entity's form's (`creating`) or an edit's, where its form
+   * sends them: a field's by its stored field (`fields`), a link's by its role (`links`).
+   */
+  static shapes(columns: readonly FormField[], creating: boolean): { fields: z.ZodRawShape; links: z.ZodRawShape } {
+    const shapesOf = (described: FormField[], placeOf: (column: FormField) => string | undefined) =>
       Object.fromEntries(
-        [...byKey].map(([key, shared]) => [
-          key,
+        [...Map.groupBy(described, (column) => placeOf(column) ?? "")].map(([place, shared]) => [
+          place,
           FormColumns.keySchema(
             FormColumns.joinChoices(shared).map((column) => FormColumns.valueGiven(column, creating)),
           ),
         ]),
-      ),
-    );
+      );
+    const fields = columns.filter((column) => column.input !== "group" && column.field !== undefined);
+    const links = columns.filter((column) => column.input !== "group" && column.field === undefined);
+    return {
+      fields: shapesOf(fields, (column) => (column.input === "group" ? undefined : column.field)),
+      links: shapesOf(links, (column) => (column.input === "group" ? undefined : column.role)),
+    };
   }
 }
