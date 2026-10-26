@@ -8,8 +8,8 @@ import { db } from "@/server/database/index.ts";
 import { CharacterInventory, CharacterLinks, Characters, Entities } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
+import { findPlainItem } from "@/tests/support/dnd3.5/items.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
-import { findPlainItem } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import {

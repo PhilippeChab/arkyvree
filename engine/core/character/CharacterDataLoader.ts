@@ -1,6 +1,6 @@
 import type { StoredValues } from "@/engine/core/fields/index.ts";
 import type { CharacterRows } from "@/engine/core/module/index.ts";
-import type { RulesetData, RulesetView, ViewKinds } from "@/engine/core/view/index.ts";
+import type { InventoryItem, RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import type { Character, CharacterInventory, Modifier, Requirement } from "@/shared/relations.ts";
 
 /**
@@ -36,7 +36,7 @@ export interface ModifierSource {
  * its own), its requirements as its template splits them, and its modifiers when it's equipped.
  */
 export type InventoryEntry = CharacterInventory & {
-  item: ViewKinds["items"] & {
+  item: InventoryItem & {
     modifiers: Modifier[];
     /** The base item's requirements: its template's, or its own when it is one */
     proficiency: Requirement[];
@@ -109,7 +109,7 @@ export default abstract class CharacterDataLoader<D extends LoadedCharacter, P e
    */
   private loadInventory(rows: CharacterRows, rulesetData: RulesetData): InventoryEntry[] {
     return rulesetData.entriesWithItems(rows.inventory).map(({ entry, item }) => {
-      const { own, template } = rulesetData.itemRequirements(item);
+      const { own, template } = rulesetData.templateRequirements(item.type, item);
       return {
         ...entry,
         item: {
@@ -117,7 +117,7 @@ export default abstract class CharacterDataLoader<D extends LoadedCharacter, P e
           modifiers: entry.equipped ? (rulesetData.modifiersBySource.get(item.id) ?? []) : [],
           proficiency: template,
           requirements: own,
-          values: rulesetData.inheritedValuesOf("items", item),
+          values: rulesetData.inheritedValuesOf(item.type, item),
         },
       };
     });
@@ -133,7 +133,9 @@ export default abstract class CharacterDataLoader<D extends LoadedCharacter, P e
     return this.loadOwn(view, parts, {
       campaign: rows.campaign,
       inventory,
-      itemModifiers: new Map(modifiers.filter((m) => m.sourceType === "items").map((m) => [m.id, m.sourceId])),
+      itemModifiers: new Map(
+        modifiers.filter((m) => rulesetData.isInventoryType(m.sourceType)).map((m) => [m.id, m.sourceId]),
+      ),
       modifiers,
       player: rows.player,
       requirementGroups,

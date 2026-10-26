@@ -10,6 +10,7 @@ import { CharacterInventoryService } from "@/server/services/characters/inventor
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
 import { backdateLastChange } from "@/tests/support/characters.ts";
+import { findPlainItem } from "@/tests/support/dnd3.5/items.ts";
 import {
   createSeedCharacter,
   createWizardWithFamiliar,
@@ -17,7 +18,7 @@ import {
   levelUp,
 } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { createTestAttachment } from "@/tests/support/files.ts";
-import { findPlainItem, getSeedCtx } from "@/tests/support/seed.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 const session = makeSession();

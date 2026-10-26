@@ -26,6 +26,11 @@ import type {
 import type { SizeType } from "@/vocabulary/dnd3.5/sizes.ts";
 
 declare module "@/engine/core/view/rows.ts" {
+  /** 3.5's kind a character's inventory holds: its items. */
+  interface InventoryKinds {
+    items: Item;
+  }
+
   /** 3.5's owned kind: a class's levels. */
   interface OwnedKinds {
     class_levels: KlassLevel;

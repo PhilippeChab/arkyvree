@@ -20,9 +20,14 @@ export interface ColumnContext {
   templateName?: string | null;
 }
 
-/** What a column's input takes: its description, where its value goes (`name`), its form, and what it reads. */
+/**
+ * What a column's input takes: its description, where its value goes (`name`), its form, the entity type it edits, and
+ * what it reads.
+ */
 export interface ColumnInputProps<T extends FieldValues, F> {
   context: ColumnContext;
+  /** The entity type the form edits, whose templates a template column offers (an item's, other items) */
+  entityType: string;
   field: F;
   form: UseFormReturn<T>;
   help: boolean;

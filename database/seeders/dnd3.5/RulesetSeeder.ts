@@ -41,10 +41,13 @@ export class RulesetSeeder extends include(
     for (const klass of core.classes) await this.seedClass(klass);
 
     // The templates first, a magic one among them (elven chain): the other items are made from them
-    const templates = await this.seedItems([...core.templateItems, ...core.items.filter((item) => item.isTemplate)], {
-      isTemplate: true,
-    });
+    const templates = await this.seedItems(
+      "items",
+      [...core.templateItems, ...core.items.filter((item) => item.isTemplate)],
+      { isTemplate: true },
+    );
     await this.seedItems(
+      "items",
       core.items.filter((item) => !item.isTemplate),
       { templateMap: templates },
     );

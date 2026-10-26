@@ -2,14 +2,21 @@ import { describe, expect, test } from "bun:test";
 
 import { DeclaredFields } from "@/engine/core/fields/index.ts";
 import type { FieldDef, LinkRoleDef } from "@/engine/core/module/index.ts";
+import type { StandaloneKind } from "@/engine/core/view/index.ts";
 
-/** What a made-up module's field definitions share: an entity's text set, read off none. */
+/**
+ * What a made-up module's field definitions share: an entity's text set, read off none.
+ *
+ * The made-up kind a reference names: one no module declares, typed as the view's registry types a kind.
+ */
+const GIZMOS = "gizmos" as string as StandaloneKind;
+
 const SET = { inheritsVia: null, merge: "union", multiple: true, ownerKind: "entity", valueKind: "text" } as const;
 
 /** Three owner types' fields: a group's among them, a choice, a closed list, a flag, a free text, a number and a link. */
 const DECLARED = new DeclaredFields(
   {
-    items: {
+    gizmos: {
       tool: {
         fields: {
           damage: { description: "Its dice", field: "DAMAGE", kind: "text", label: "Damage", placeholder: "1d8" },
@@ -27,7 +34,7 @@ const DECLARED = new DeclaredFields(
         description: "Its patron",
         kind: "ref",
         label: "Patron",
-        references: "items",
+        references: GIZMOS,
         role: "patron",
       },
     },
@@ -37,8 +44,8 @@ const DECLARED = new DeclaredFields(
   },
   {
     fieldDefs: [
-      { ...SET, field: "FAMILY", inheritsVia: "madeFrom", ownerType: "items" },
-      { ...SET, field: "MW", inheritsVia: "madeFrom", merge: "fallback", multiple: false, ownerType: "items" },
+      { ...SET, field: "FAMILY", inheritsVia: "madeFrom", ownerType: "gizmos" },
+      { ...SET, field: "MW", inheritsVia: "madeFrom", merge: "fallback", multiple: false, ownerType: "gizmos" },
       { ...SET, field: "FOCUS", merge: "winner", multiple: false, ownerType: "tracks" },
     ] satisfies FieldDef[],
     linkRoles: [{ fromType: "tracks", merge: "winner", role: "patron" } as LinkRoleDef],
@@ -68,22 +75,22 @@ describe("The fields a module declares", () => {
 
   test("name the roles of the links an owner type's fields read", () => {
     expect(DECLARED.fieldRoles("tracks")).toEqual(["patron"]);
-    expect(DECLARED.fieldRoles("items")).toEqual([]);
+    expect(DECLARED.fieldRoles("gizmos")).toEqual([]);
   });
 
   test("merge as their definitions and roles say: a set's union and a single link's fallback for one none defines", () => {
-    expect(["FAMILY", "MW", "DAMAGE"].map((field) => DECLARED.mergeOf("items", field))).toEqual([
+    expect(["FAMILY", "MW", "DAMAGE"].map((field) => DECLARED.mergeOf("gizmos", field))).toEqual([
       "union",
       "fallback",
       "union",
     ]);
     expect(DECLARED.mergeOf("tracks", "FOCUS")).toBe("winner");
     expect(DECLARED.roleMergeOf("tracks", "patron")).toBe("winner");
-    expect(DECLARED.roleMergeOf("items", "patron")).toBe("fallback");
+    expect(DECLARED.roleMergeOf("gizmos", "patron")).toBe("fallback");
   });
 
   test("give the fields an owner type reads off another, by the role of its link to it", () => {
-    expect(DECLARED.inheritance("items")).toEqual({ fields: new Set(["FAMILY", "MW"]), role: "madeFrom" });
+    expect(DECLARED.inheritance("gizmos")).toEqual({ fields: new Set(["FAMILY", "MW"]), role: "madeFrom" });
     expect(DECLARED.inheritance("tracks")).toBeUndefined();
   });
 });

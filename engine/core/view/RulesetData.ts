@@ -2,7 +2,7 @@ import type { CowData } from "@/engine/core/cow/index.ts";
 import { OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
 import type { Modifier, Requirement, Ruleset } from "@/shared/relations.ts";
 
-import type { NamedLink, ViewEntity, ViewKinds, ViewLink } from "./rows.ts";
+import type { InventoryItem, NamedLink, ViewEntity, ViewKinds, ViewLink } from "./rows.ts";
 
 /** Each index a ruleset's view builds on first read, and keeps. */
 interface Indices {
@@ -46,13 +46,15 @@ export interface RulesetView {
 /**
  * What a ruleset's view knows of a kind past its entities, as its module declares it: whether a user customizes its
  * entities (`customizable`), whether they hold fields of their own (`fields`), the fields they read off another entity
- * when they hold none and the role of their link to it (`inherits`: an item's template's), and the flag of its own
- * that makes one of its entities a template others are made from (`template`: 3.5's item's).
+ * when they hold none and the role of their link to it (`inherits`: an item's template's), whether a character's
+ * inventory holds its entities (`inventory`: 3.5's items), and the flag of its own that makes one of its entities a
+ * template others are made from (`template`: 3.5's item's).
  */
 export interface ViewKind {
   customizable: boolean;
   fields: boolean;
   inherits?: { fields: ReadonlySet<string>; role: string };
+  inventory?: true;
   template?: string;
 }
 
@@ -201,13 +203,13 @@ export default class RulesetData {
 
   /**
    * Inventory entries (`entries`, each naming its item: a stored id is its copy's or its winner's), each with the item
-   * the view shows for it. The view holds every item an entry names, as it does every pick's entity: deleting an item,
-   * reverting it or unsubscribing from its book is refused while an entry holds it. An entry it doesn't is left out, as
-   * a pick is.
+   * the view shows for it (`findItem`). The view holds every item an entry names, as it does every pick's entity:
+   * deleting an item, reverting it or unsubscribing from its book is refused while an entry holds it. An entry it
+   * doesn't is left out, as a pick is.
    */
-  entriesWithItems<E extends { itemId: string }>(entries: E[]): { entry: E; item: ViewKinds["items"] }[] {
+  entriesWithItems<E extends { itemId: string }>(entries: E[]): { entry: E; item: InventoryItem }[] {
     return entries.flatMap((entry) => {
-      const item = this.byId("items").get(entry.itemId);
+      const item = this.findItem(entry.itemId);
       return item ? [{ entry, item }] : [];
     });
   }
@@ -218,6 +220,18 @@ export default class RulesetData {
    */
   find<K extends keyof ViewKinds>(type: K, id: string): ViewKinds[K] | undefined {
     return this.byId(type).get(id);
+  }
+
+  /**
+   * The entity of a kind a character's inventory holds (`inventoryTypes`) an id names in the view (a stored id its copy
+   * or winner): the ruleset's own, or inherited.
+   */
+  findItem(id: string): InventoryItem | undefined {
+    for (const type of this.inventoryTypes()) {
+      const item = this.indexOf(type).resolved.get(id);
+      if (item) return item as InventoryItem;
+    }
+    return undefined;
   }
 
   /**
@@ -241,9 +255,19 @@ export default class RulesetData {
     return OwnerValues.inherit(own, this.valuesOf(baseId), this.kinds[type].inherits!.fields);
   }
 
+  /** The kinds a character's inventory holds (`ViewKind.inventory`: 3.5's items), in their declared order. */
+  inventoryTypes(): string[] {
+    return Object.keys(this.kinds).filter((type) => this.isInventoryType(type));
+  }
+
   /** Whether a user customizes a kind's entities (`type`): their modifiers and requirements. */
   isCustomizable(type: string): boolean {
     return this.kinds[type]?.customizable ?? false;
+  }
+
+  /** Whether a character's inventory holds a kind's entities (`type`, `ViewKind.inventory`: 3.5's items). */
+  isInventoryType(type: string): boolean {
+    return this.kinds[type]?.inventory ?? false;
   }
 
   /**
@@ -253,19 +277,6 @@ export default class RulesetData {
   isTemplate(type: string, entity: Pick<ViewEntity, "fields">): boolean {
     const flag = this.kinds[type]?.template;
     return flag !== undefined && entity.fields[flag] === true;
-  }
-
-  /**
-   * An item's requirements, as its template splits them: its template's (`template`: its own when it's a template),
-   * and its own on top of them (`own`: none on a template, all of a plain item's).
-   */
-  itemRequirements(item: Pick<ViewEntity, "fields" | "id" | "links">) {
-    const { requirementsByEntity } = this;
-    const own = requirementsByEntity.get(item.id) ?? [];
-    if (this.isTemplate("items", item)) return { own: [], template: own };
-    const templateId = this.inheritedFrom("items", item);
-    const template = templateId ? (requirementsByEntity.get(templateId) ?? []) : [];
-    return { own, template };
   }
 
   /**
@@ -385,6 +396,20 @@ export default class RulesetData {
   /** Whether a kind's entities (`type`) hold fields of their own, which their form shows and their save writes. */
   takesFields(type: string): boolean {
     return this.kinds[type]?.fields ?? false;
+  }
+
+  /**
+   * An entity's requirements (`entity`, of `type`), as its template splits them (`ViewKind.template`, and the entity it
+   * reads its fields off, `inheritedFrom`: an item's): its template's (`template`: its own when it's one), and its own on
+   * top of them (`own`: none on a template, all of an entity made from none).
+   */
+  templateRequirements(type: string, entity: Pick<ViewEntity, "fields" | "id" | "links">) {
+    const { requirementsByEntity } = this;
+    const own = requirementsByEntity.get(entity.id) ?? [];
+    if (this.isTemplate(type, entity)) return { own: [], template: own };
+    const templateId = this.inheritedFrom(type, entity);
+    const template = templateId ? (requirementsByEntity.get(templateId) ?? []) : [];
+    return { own, template };
   }
 
   /**

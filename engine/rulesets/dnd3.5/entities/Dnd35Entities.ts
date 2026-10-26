@@ -1,4 +1,3 @@
-import { MechanicEntity } from "@/engine/core/entities/index.ts";
 import { EntitiesPart } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
@@ -8,6 +7,7 @@ import ClassEntity from "./classes/ClassEntity.ts";
 import FeatEntity from "./feats/FeatEntity.ts";
 import ItemEntity from "./items/ItemEntity.ts";
 import LanguageEntity from "./languages/LanguageEntity.ts";
+import MechanicEntity from "./mechanics/MechanicEntity.ts";
 import RaceEntity from "./races/RaceEntity.ts";
 import SaveEntity from "./saves/SaveEntity.ts";
 import SkillEntity from "./skills/SkillEntity.ts";

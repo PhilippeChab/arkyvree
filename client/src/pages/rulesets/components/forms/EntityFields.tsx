@@ -47,6 +47,8 @@ interface EntityColumnsProps<T extends FieldValues> {
   /** Its rules' (`useEntityColumns`) */
   columns: readonly EntityField[];
   context?: ColumnContext;
+  /** The entity type whose columns they are, whose templates a template column offers */
+  entityType: string;
   form: UseFormReturn<T>;
   placement: "after" | "before";
   rulesetId: string;
@@ -82,6 +84,8 @@ interface FieldsGridProps<T extends FieldValues> extends FieldsShowing<T> {
 interface FieldsShowing<T extends FieldValues> {
   columns: 1 | 2;
   context: ColumnContext;
+  /** The entity type the form edits (`rulesets`: the ruleset's Settings), whose templates a template column offers */
+  entityType: string;
   form: UseFormReturn<T>;
   help: boolean;
   /** What a choice's change does besides (`useTemplateReset`: a type's empties its template) */
@@ -581,17 +585,19 @@ function ValuesInput<T extends FieldValues>({ field, form, help, prefix }: Field
 export function EntityColumns<T extends FieldValues>({
   columns,
   context = NO_CONTEXT,
+  entityType,
   form,
   placement,
   rulesetId,
 }: EntityColumnsProps<T>) {
-  const { onChoiceChange } = useTemplateReset(form, rulesetId, columns, context);
+  const { onChoiceChange } = useTemplateReset(form, rulesetId, entityType, columns, context);
   const placed = columns.filter((column) => isOneOf(column.input, LINK_INPUTS) === (placement === "after"));
   if (placed.length === 0) return null;
   return (
     <FieldsGrid
       columns={1}
       context={context}
+      entityType={entityType}
       fields={placed}
       form={form}
       help={false}
@@ -621,6 +627,7 @@ export function EntityFields<T extends FieldValues>({
     <FieldsGrid
       columns={columns}
       context={NO_CONTEXT}
+      entityType={entityType}
       fields={fields}
       form={form}
       help={help}

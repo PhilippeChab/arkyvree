@@ -7,7 +7,7 @@ import type { EntityFilters } from "@/engine/core/module/parts/entities/index.ts
 import type { OpenedPicker } from "@/engine/core/module/pickers.ts";
 import type { EntityRecord, StorageDeclaration, StoredAdvancement } from "@/engine/core/module/storage.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import { RequestIds, type RulesetView, type ViewKinds } from "@/engine/core/view/index.ts";
+import { type InventoryItem, RequestIds, type RulesetView, type ViewKinds } from "@/engine/core/view/index.ts";
 import type { Character as CharacterRecord } from "@/shared/relations.ts";
 
 import type {
@@ -137,7 +137,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
    */
   protected abstract describeInventoryEntry(
     entry: HeldInventoryEntry,
-    item: ViewKinds["items"],
+    item: InventoryItem,
     values: StoredValues,
   ): D["inventoryEntry"];
 
@@ -315,8 +315,8 @@ export default abstract class CharactersPart<D extends Descriptions> {
   ): DescribedInventoryEntry<T, D["inventoryEntry"], D["inventoryItemFields"]>[] {
     const { rulesetData } = view;
     return rulesetData.entriesWithItems(entries).map(({ entry, item }) => {
-      const values = rulesetData.inheritedValuesOf("items", item);
-      const { own: requirements, template: proficiency } = rulesetData.itemRequirements(item);
+      const values = rulesetData.inheritedValuesOf(item.type, item);
+      const { own: requirements, template: proficiency } = rulesetData.templateRequirements(item.type, item);
       return {
         ...entry,
         ...this.describeInventoryEntry(entry, item, values),
@@ -395,7 +395,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
   ): InventoryEntryPlan {
     const { request } = change;
     const placed: PlacementChange =
-      "itemId" in change ? { item: CharactersPart.idsOf(view).find("items", change.itemId), request } : change;
+      "itemId" in change ? { item: CharactersPart.idsOf(view).findItem(change.itemId), request } : change;
     CharactersPart.checkCharges(request.totalCharges, request.remainingCharges);
     return {
       ...this.planPlacement(view, character, placed, force),

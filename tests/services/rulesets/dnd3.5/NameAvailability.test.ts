@@ -10,13 +10,13 @@ import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
+import { findPlainItem } from "@/tests/support/dnd3.5/items.ts";
 import {
   copyEntity,
   createSeededTestRuleset,
   createSeededTestRulesetWithExtensions,
   createTestRuleset,
 } from "@/tests/support/rulesets.ts";
-import { findPlainItem } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import {
   ITEM_COST_GP,

@@ -242,7 +242,7 @@ export interface StoredKind {
   partition?: string;
   /**
    * The flag of its own fields that makes one of its entities a template others are made from (3.5's item's
-   * `ITEM_IS_TEMPLATE`), whose requirements its copies take as their template's (`RulesetData.itemRequirements`)
+   * `ITEM_IS_TEMPLATE`), whose requirements its copies take as their template's (`RulesetData.templateRequirements`)
    */
   template?: string;
 }

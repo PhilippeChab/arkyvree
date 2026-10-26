@@ -56,6 +56,7 @@ import { expectRefusedWith } from "@/tests/support/api.ts";
 import { findLinks } from "@/tests/support/characters.ts";
 import { buildAs, createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
+import { findPlainItem } from "@/tests/support/dnd3.5/items.ts";
 import { levelUpPlan } from "@/tests/support/dnd3.5/levelPlans.ts";
 import {
   addCharacterLevel,
@@ -83,7 +84,7 @@ import {
   editRuleset,
   invalidateSeededRuleset,
 } from "@/tests/support/rulesets.ts";
-import { findPlainItem, findSeededRuleset, getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
+import { findSeededRuleset, getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import {
   CLASS_HD,

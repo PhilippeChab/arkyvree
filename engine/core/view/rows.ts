@@ -7,6 +7,13 @@
 
 import type { EntityRecord, FieldValue } from "@/engine/core/module/index.ts";
 
+/**
+ * The kinds of the view a character's inventory holds, by type (3.5's items), as its module declares them
+ * (`StorageRegistries.itemTypes`): every registered module declares its own into it, which an inventory entry's item is
+ * typed by.
+ */
+export interface InventoryKinds {}
+
 /** A link as an entity's answer carries it: the view's (`ViewLink`), with its target's name (`toName`). */
 export interface NamedLink extends ViewLink {
   toName: string;
@@ -44,6 +51,9 @@ export interface ViewLink {
   toType: string;
   viaId: string | null;
 }
+
+/** An entity a character's inventory holds, as the view holds it: of one of the kinds its modules declare it holds. */
+export type InventoryItem = InventoryKinds[keyof InventoryKinds];
 
 /** The kinds of the view an entity of another kind owns (3.5's class levels). */
 export type OwnedKind = keyof OwnedKinds;

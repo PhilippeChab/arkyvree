@@ -6,13 +6,17 @@
  *   a race, an alignment, a language, a bonded creature, hit points, a saving throw… The engine's core, its entry, the
  *   server, the shared code, the client and the scripts speak of entities, kinds, fields, links, tracks, steps and
  *   pools, which a module names. Every identifier, string, regular expression, JSX text and file path is read word by
- *   word (`klassLevelId` is `klass`, `level`, `id`; `"klass_levels"` is `klass`, `levels`). A comment may name them, as
- *   an example of what a module declares.
+ *   word (`klassLevelId` is `klass`, `level`, `id`; `"klass_levels"` is `klass`, `levels`), and a whole string that is a
+ *   kind's stored name and an English word alone (`"items"`, `"mechanics"`), which the core reads from what a module
+ *   declares. A comment may name them, as an example of what a module declares.
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
 
 import { isInRepo, repoPath, rootOf, rulesetsOf } from "./paths.mjs";
+
+/** The operators that compare a value with another: a stored name compared is a kind. */
+const COMPARISONS = new Set(["===", "!==", "==", "!="]);
 
 /** The nouns 3.5 names its things by, each a word of a name (`klassLevelId`'s `klass`). */
 const NOUNS = new Set([
@@ -91,6 +95,16 @@ const PHRASES = [
   ["saving", "throws"],
 ];
 
+/**
+ * The names 3.5's kinds are stored and routed by that are English words alone (`"items"`, `"mechanics"`), as a whole
+ * string where it can only be a kind (`isStoredName`): compared (`type === "items"`, `case "items":`), handed to a
+ * call (`byId("items")`, `types.includes("items")`), a property's value or a list's element (`{ type: "items" }`),
+ * a whole template (`` `items` ``), a record's key (`Record<"items", …>`) or a kind registry's (`ViewKinds["items"]`).
+ * Never a name, a property's key, a computed member, an `in` test or another type's key (a page's `items`:
+ * `page.items`, `{ "items": 1 }`, `page["items"]`, `"items" in page`, `Pick<Page, "items">`, `keyof Page`).
+ */
+const STORED_NAMES = new Set(["items", "mechanics"]);
+
 /** The names 3.5's kinds are stored and routed by, as a whole string or name */
 const WHOLE_NAMES = new Set(["classes", "saves"]);
 
@@ -111,6 +125,16 @@ function createRulesetNouns(context) {
       message:
         `"${noun}" is 3.5's noun (\`${named}\`): outside a ruleset's folders, the code speaks of entities, kinds, ` +
         "fields, links, tracks, steps and pools, which a module names.",
+    });
+  };
+  const reportStored = (node, name) => {
+    if (reported.has(node.start)) return;
+    reported.add(node.start);
+    context.report({
+      node,
+      message:
+        `"${name}" is 3.5's kind, as it's stored: outside a ruleset's folders, the code reads a kind from what a ` +
+        "module declares (its storage, its view's kinds).",
     });
   };
   return {
@@ -136,16 +160,34 @@ function createRulesetNouns(context) {
       report(node, node.value);
     },
     Literal(node) {
-      if (typeof node.value === "string") report(node, node.value);
-      else if (node.regex) report(node, node.regex.pattern);
+      if (typeof node.value !== "string") {
+        if (node.regex) report(node, node.regex.pattern);
+      } else if (isStoredName(node)) {
+        reportStored(node, node.value);
+      } else {
+        report(node, node.value);
+      }
     },
     PrivateIdentifier(node) {
       report(node, node.name);
     },
     TemplateElement(node) {
-      report(node, node.value.cooked ?? node.value.raw);
+      const text = node.value.cooked ?? node.value.raw;
+      if (STORED_NAMES.has(text) && node.parent.quasis.length === 1) reportStored(node, text);
+      else report(node, text);
     },
   };
+}
+
+/** Whether a literal type (`type`) keys a record (`Record<"items", …>`) or indexes a kind registry (`…Kinds["items"]`). */
+function isKindKey(type) {
+  const { parent } = type;
+  if (parent?.type === "TSIndexedAccessType" && parent.indexType === type) {
+    const { objectType } = parent;
+    return objectType.type === "TSTypeReference" && (objectType.typeName?.name ?? "").endsWith("Kinds");
+  }
+  const reference = parent?.type === "TSTypeParameterInstantiation" ? parent.parent : undefined;
+  return reference?.type === "TSTypeReference" && reference.typeName?.name === "Record" && parent.params[0] === type;
 }
 
 /** Whether a file is a ruleset's, in one of its folders, or the lint's own, its word lists and their tests. */
@@ -155,6 +197,32 @@ function isRulesets(file, rulesets) {
     file.startsWith("lint/") ||
     file.startsWith("tests/lint/")
   );
+}
+
+/**
+ * Whether a string literal is one of 3.5's kinds' stored names (`STORED_NAMES`) where it can only name a kind: compared,
+ * a call's argument, a property's value, a list's element, a switch's case, a record's key or a kind registry's.
+ */
+function isStoredName(node) {
+  if (!STORED_NAMES.has(node.value)) return false;
+  const { parent } = node;
+  switch (parent?.type) {
+    case "ArrayExpression":
+      return true;
+    case "BinaryExpression":
+      return COMPARISONS.has(parent.operator);
+    case "CallExpression":
+    case "NewExpression":
+      return parent.arguments.includes(node);
+    case "Property":
+      return parent.value === node;
+    case "SwitchCase":
+      return parent.test === node;
+    case "TSLiteralType":
+      return isKindKey(parent);
+    default:
+      return false;
+  }
 }
 
 /** The 3.5 noun a name holds, read word by word, if any. */

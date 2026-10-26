@@ -108,7 +108,7 @@ export default class Equipping {
    */
   private checkItemRequirements(item: EquippedEntry["item"]) {
     if (item.fields[ITEM_TYPE] === "Weapon") return;
-    const { own: requirements, template: proficiency } = this.view.rulesetData.itemRequirements(item);
+    const { own: requirements, template: proficiency } = this.view.rulesetData.templateRequirements("items", item);
     if (proficiency.length === 0 && requirements.length === 0) return;
 
     // Two entities' requirements, each its own group: their levels each start at "1"
@@ -153,7 +153,7 @@ export default class Equipping {
     if (item.fields[ITEM_TYPE] !== "Weapon" || !ItemPlacement.isHand(location) || location === "Two Handed") return;
     if (this.weaponFields(item.id).oneHandTraining !== true) return;
 
-    const { template: proficiency } = rulesetData.itemRequirements(item);
+    const { template: proficiency } = rulesetData.templateRequirements("items", item);
     if (proficiency.length === 0) return;
 
     if (!this.character.areRequirementsMet([proficiency], { sourceId: null })) {

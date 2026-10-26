@@ -1,6 +1,6 @@
 import RulesError from "@/engine/core/RulesError.ts";
 
-import type { ViewKinds } from "./rows.ts";
+import type { InventoryItem, ViewKinds } from "./rows.ts";
 import type RulesetData from "./RulesetData.ts";
 
 /**
@@ -34,6 +34,20 @@ export default class RequestIds {
     if (!entity)
       throw new RulesError("invalid", `${this.rulesetData.labelOf(type)} ${id} does not belong to ${this.owner}`);
     return entity;
+  }
+
+  /**
+   * The entity of a kind a character's inventory holds the view shows for `id` (`RulesetData.findItem`): refused, naming
+   * it by its kinds' word ("Item <id> does not belong to …"), when it shows none.
+   */
+  findItem(id: string): InventoryItem {
+    const item = this.rulesetData.findItem(id);
+    if (item) return item;
+    const label = this.rulesetData
+      .inventoryTypes()
+      .map((type) => this.rulesetData.labelOf(type))
+      .join(" or ");
+    throw new RulesError("invalid", `${label} ${id} does not belong to ${this.owner}`);
   }
 
   /** The id the view keys the entity of `type` named `id` by: refused, naming it, when it shows none. */

@@ -12,9 +12,9 @@ import { CharacterInventoryService } from "@/server/services/characters/inventor
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
-import { createTestItem } from "@/tests/support/items.ts";
+import { createTestItem, findPlainItem } from "@/tests/support/dnd3.5/items.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
-import { findPlainItem, findSeededCharacter, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { findSeededCharacter, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 import type { ItemLocation } from "@/vocabulary/dnd3.5/equipment.ts";
 import {

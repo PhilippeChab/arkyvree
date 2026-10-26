@@ -11,7 +11,7 @@ import { db } from "@/server/database/index.ts";
 import { CharacterAdvancements, Characters, Entities, Visibility } from "@/server/repositories/index.ts";
 import { readCharacterInput, readChildInputs } from "@/server/services/characters/characterInputs.ts";
 import { BASE_RULES_OPTIONS, type BaseRules } from "@/shared/enums.ts";
-import { createTestItem } from "@/tests/support/items.ts";
+import { createTestItem } from "@/tests/support/dnd3.5/items.ts";
 import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { LANGUAGE_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 

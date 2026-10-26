@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { CowData } from "@/engine/core/cow/index.ts";
 import { DeclaredFields, type StoredValues } from "@/engine/core/fields/index.ts";
 import type { FieldDef, LinkRoleDef } from "@/engine/core/module/index.ts";
-import { RulesetComposition } from "@/engine/core/view/index.ts";
+import { RulesetComposition, type StandaloneKind } from "@/engine/core/view/index.ts";
 import {
   composeView,
   idsOf,
@@ -23,6 +23,9 @@ const SINGLE = {
   ownerType: "owners",
 } as const;
 
+/** The made-up module's kind its owners' ally is of, typed as the view's registry types a kind. */
+const TARGETS = "targets" as string as StandaloneKind;
+
 /** The made-up owners' fields: a set in its closed list's order, two single values, and a link a field reads. */
 const OWNER_FIELDS = new DeclaredFields(
   {
@@ -30,7 +33,7 @@ const OWNER_FIELDS = new DeclaredFields(
       set: { description: "Its set", field: "SET", kind: "list", label: "Set", values: ["c", "b", "a"] },
       one: { description: "Its one", field: "ONE", kind: "text", label: "One" },
       extra: { description: "Its extra", field: "EXTRA", kind: "text", label: "Extra" },
-      ally: { description: "Its ally", kind: "ref", label: "Ally", references: "items", role: "ally" },
+      ally: { description: "Its ally", kind: "ref", label: "Ally", references: TARGETS, role: "ally" },
     },
   },
   {

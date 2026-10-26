@@ -8,10 +8,10 @@ import { CharacterInventory, Entities } from "@/server/repositories/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
+import { findPlainItem } from "@/tests/support/dnd3.5/items.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { linkedId, linksOf } from "@/tests/support/entityLinks.ts";
 import { copyEntity, createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
-import { findPlainItem } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 const PAGE = { limit: 200, page: 1 };

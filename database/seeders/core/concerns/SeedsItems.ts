@@ -23,16 +23,18 @@ export function SeedsItems<B extends Constructor<SeederState>>(Base: B) {
     ): EntityWrite;
 
     /**
-     * Seeds items with their fields, requirements and modifiers, as templates or made from the templates `templateMap`
-     * has by name. Returns their ids by name.
+     * Seeds items of a kind a character's inventory holds (`type`, its ruleset seeder's: one its module's storage
+     * declares an item type) with their fields, requirements and modifiers, as templates or made from the templates
+     * `templateMap` has by name. Returns their ids by name.
      */
     async seedItems(
+      type: string,
       items: ItemSeed<object>[],
       options: { isTemplate?: boolean; templateMap?: Record<string, string> } = {},
     ) {
       if (items.length === 0) return {};
       const ids = await this.insertEntities(
-        "items",
+        type,
         items.map((item) => ({
           rulesetId: this.ctx.rulesetId,
           name: item.name,
@@ -45,15 +47,15 @@ export function SeedsItems<B extends Constructor<SeederState>>(Base: B) {
       );
 
       await this.writeFields(
-        items.map((item) => ({ id: ids[item.name], type: "items", values: this.itemFieldsWrite(item.fields ?? {}) })),
+        items.map((item) => ({ id: ids[item.name], type, values: this.itemFieldsWrite(item.fields ?? {}) })),
       );
       await this.insertAll(
         requirementsInCustomization,
-        items.flatMap((item) => this.requirementRows(ids[item.name], "items", item.requirements)),
+        items.flatMap((item) => this.requirementRows(ids[item.name], type, item.requirements)),
       );
       await this.insertAll(
         modifiersInCustomization,
-        items.flatMap((item) => this.modifierRows(ids[item.name], "items", item.modifiers)),
+        items.flatMap((item) => this.modifierRows(ids[item.name], type, item.modifiers)),
       );
       return ids;
     }
