@@ -4,6 +4,7 @@ import Modules from "@/engine/api/Modules.ts";
 import StorageEngine from "@/engine/api/StorageEngine.ts";
 import type {
   FieldValue,
+  Merge,
   RulesetModule,
   StorageRegistries,
   StoredEntity,
@@ -190,6 +191,10 @@ describe("A module's storage", () => {
 
   test("refuses a merge or an inheritance it can't read, as the registries' checks did", () => {
     expect(() => new StorageEngine(Modules.all())).not.toThrow();
+    const unknownMerge = modulesWith((registries) => {
+      registries.linkRoles[0].merge = "average" as Merge;
+    });
+    expect(() => new StorageEngine(unknownMerge)).toThrow("merges by average, no rule the engine has");
     const unionOfOne = modulesWith((registries) => {
       registries.fieldDefs.find((def) => !def.multiple)!.merge = "union";
     });

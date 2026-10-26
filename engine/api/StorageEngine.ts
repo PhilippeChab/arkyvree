@@ -5,6 +5,7 @@ import type {
   FieldDef,
   FieldValue,
   LinkRoleDef,
+  Merge,
   RulesetModule,
   StepDef,
   StorageRegistries,
@@ -16,6 +17,9 @@ import type { KindValue, ViewLink, ViewSchema } from "@/engine/core/view/index.t
 import type { BaseRules } from "@/shared/enums.ts";
 
 import Modules from "./Modules.ts";
+
+/** The merges the engine composes sibling copies by (`SiblingMerge`). */
+const MERGES: readonly Merge[] = ["fallback", "union", "winner"];
 
 /** How two texts sort by their characters' codes, as the database's collation (C) orders text. */
 function compareText(a: string, b: string) {
@@ -64,11 +68,17 @@ export default class StorageEngine {
   private static instance: StorageEngine | undefined;
 
   /**
-   * Refuses a field or a link role whose merge or inheritance the engine can't read: a union of what isn't a set (a
-   * single field's values, a single link), or a field read off another but an entity's, or through a role that isn't
-   * single from its type to its type (an item's template).
+   * Refuses a field or a link role whose merge or inheritance the engine can't read: a merge it has no rule for, a union
+   * of what isn't a set (a single field's values, a single link), or a field read off another but an entity's, or
+   * through a role that isn't single from its type to its type (an item's template).
    */
   private static checkDeclarations({ fieldDefs, linkRoles }: StorageRegistries) {
+    for (const { merge, name } of [
+      ...linkRoles.map((role) => ({ merge: role.merge, name: `The link role ${role.role} from ${role.fromType}` })),
+      ...fieldDefs.map((def) => ({ merge: def.merge, name: `The field ${def.field} of ${def.ownerType}` })),
+    ])
+      if (!MERGES.includes(merge)) throw new Error(`${name} merges by ${String(merge)}, no rule the engine has`);
+
     for (const role of linkRoles) {
       if (role.single && role.merge === "union") {
         throw new Error(
