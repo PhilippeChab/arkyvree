@@ -6,9 +6,13 @@
  *   a race, an alignment, a language, a bonded creature, hit points, a saving throw… The engine's core, its entry, the
  *   server, the shared code, the client and the scripts speak of entities, kinds, fields, links, tracks, steps and
  *   pools, which a module names. Every identifier, string, regular expression, JSX text and file path is read word by
- *   word (`klassLevelId` is `klass`, `level`, `id`; `"klass_levels"` is `klass`, `levels`), and a whole string that is a
- *   kind's stored name and an English word alone (`"items"`, `"mechanics"`), which the core reads from what a module
- *   declares. A comment may name them, as an example of what a module declares.
+ *   word (`spellLevelId` is `spell`, `level`, `id`; `"class_levels"` is the phrase `class`, `levels`), and a whole
+ *   string that is a kind's stored name and an English word alone (`"items"`, `"mechanics"`), which the core reads from
+ *   what a module declares. A comment may name them, as an example of what a module declares.
+ * - `klass-names`: `klass` spells 3.5's class where `class` is a reserved word, and nowhere else: its types (`Klass`,
+ *   `KlassLevel`) and a value that is one (`klass`). Every other name says `class` (`classId`, `classLevelId`,
+ *   `classLevelsByClass`, `getSavedClassLevel`), and so does a file's name. A string is data (a stored row a migration
+ *   reads), a comment may name it, and so may an import another module's export it renames (`KlassView as View`).
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -18,7 +22,7 @@ import { isInRepo, repoPath, rootOf, rulesetsOf } from "./paths.mjs";
 /** The operators that compare a value with another: a stored name compared is a kind. */
 const COMPARISONS = new Set(["===", "!==", "==", "!="]);
 
-/** The nouns 3.5 names its things by, each a word of a name (`klassLevelId`'s `klass`). */
+/** The nouns 3.5 names its things by, each a word of a name (`spellLevelId`'s `spell`). */
 const NOUNS = new Set([
   "abilities",
   "ability",
@@ -43,7 +47,6 @@ const NOUNS = new Set([
   "hitpoints",
   "hp",
   "klass",
-  "klasses",
   "language",
   "languages",
   "multiclass",
@@ -95,6 +98,9 @@ const PHRASES = [
   ["saving", "throws"],
 ];
 
+/** The names `klass` may be: 3.5's types, and a value that is one, where `class` is a reserved word. */
+const RESERVED_SPELLINGS = new Set(["Klass", "KlassLevel", "klass"]);
+
 /**
  * The names 3.5's kinds are stored and routed by that are English words alone (`"items"`, `"mechanics"`), as a whole
  * string where it can only be a kind (`isStoredName`): compared (`type === "items"`, `case "items":`), handed to a
@@ -107,6 +113,42 @@ const STORED_NAMES = new Set(["items", "mechanics"]);
 
 /** The names 3.5's kinds are stored and routed by, as a whole string or name */
 const WHOLE_NAMES = new Set(["classes", "saves"]);
+
+/** `klass-names`: a name spelled `klass` is one of 3.5's types, or a value that is one. */
+function createReservedSpellings(context) {
+  if (!isInRepo(context.filename)) return {};
+  // A name read twice at one place (an import's imported and local name, a shorthand property) is reported once
+  const reported = new Set();
+  const report = (node, name) => {
+    if (!/klass/i.test(name) || RESERVED_SPELLINGS.has(name) || reported.has(node.start)) return;
+    reported.add(node.start);
+    context.report({
+      node,
+      message:
+        `\`${name}\` spells 3.5's class \`klass\`, which only its types (\`Klass\`, \`KlassLevel\`) and a value that is ` +
+        "one (`klass`) do, where `class` is a reserved word: every other name says `class`.",
+    });
+  };
+  return {
+    Program(node) {
+      const file = repoPath(context.filename);
+      if (/klass/i.test(file))
+        context.report({ node, message: `The file's path (${file}) spells \`klass\`: a file's name says \`class\`.` });
+    },
+    Identifier(node) {
+      // Another module's export, renamed as it's imported: its local name is the file's own
+      const { parent } = node;
+      if (parent.type === "ImportSpecifier" && parent.imported === node && parent.local.name !== node.name) return;
+      report(node, node.name);
+    },
+    JSXIdentifier(node) {
+      report(node, node.name);
+    },
+    PrivateIdentifier(node) {
+      report(node, node.name);
+    },
+  };
+}
 
 function createRulesetNouns(context) {
   if (!isInRepo(context.filename)) return {};
@@ -239,8 +281,8 @@ function nounOf(name) {
 }
 
 /**
- * A name's words, lowercase: by its case (`klassLevelId`, `KLASS_HD`), its digits (`feat2`) and what separates them
- * (`klass_levels`).
+ * A name's words, lowercase: by its case (`spellLevelId`, `CLASS_HD`), its digits (`feat2`) and what separates them
+ * (`class_levels`).
  */
 function wordsOf(name) {
   return name
@@ -253,5 +295,6 @@ function wordsOf(name) {
 }
 
 export default {
+  "klass-names": { meta: { type: "problem" }, create: createReservedSpellings },
   "ruleset-nouns": { meta: { type: "problem" }, create: createRulesetNouns },
 };

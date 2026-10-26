@@ -26,42 +26,42 @@ class SpellcastingComponent extends include(SpellcastingState, BonusCasterLevels
   override finalize(
     {
       feats,
-      klassBonusSpellAbilityMap,
-      klassLevels,
+      classBonusSpellAbilityMap,
+      classLevels,
       spells,
-    }: Pick<LoadedCharacterData, "feats" | "klassBonusSpellAbilityMap" | "klassLevels" | "spells">,
+    }: Pick<LoadedCharacterData, "feats" | "classBonusSpellAbilityMap" | "classLevels" | "spells">,
     { rulesetData }: RulesetView,
     character: BuiltCharacter,
   ) {
     const spellLists = SpellLists.of(rulesetData);
     const isGateMet = (modifier: Modifier, metTargets?: string[]) =>
       this.isGateMet(character, rulesetData, modifier, metTargets);
-    this.readBonusCasterLevels(rulesetData, klassLevels, feats, Dnd35View.of(rulesetData).klasses);
+    this.readBonusCasterLevels(rulesetData, classLevels, feats, Dnd35View.of(rulesetData).classes);
     this.applyBonusCasterLevels(character, feats, spellLists.featListIds, isGateMet);
-    this.applyBonusSpells(klassBonusSpellAbilityMap);
+    this.applyBonusSpells(classBonusSpellAbilityMap);
     // The modifiers applied once the bonus caster levels' have: what the lists the character knows read
     const { appliedModifiers } = character.modifierEvaluator.getModifiers();
     this.collectAptitudeSpells(rulesetData, spells, appliedModifiers);
-    this.enrichAllKnownSpells(rulesetData, spells, klassBonusSpellAbilityMap, appliedModifiers);
+    this.enrichAllKnownSpells(rulesetData, spells, classBonusSpellAbilityMap, appliedModifiers);
     this.buildSpellTags(feats, spellLists.featListIds);
   }
 
-  /** Each class's spell lists, off the ruleset's levels' slots, and its caster type (`klassCasterTypeMap`). */
+  /** Each class's spell lists, off the ruleset's levels' slots, and its caster type (`classCasterTypeMap`). */
   override initialize(
-    { klassCasterTypeMap }: Pick<LoadedCharacterData, "klassCasterTypeMap">,
+    { classCasterTypeMap }: Pick<LoadedCharacterData, "classCasterTypeMap">,
     { rulesetData }: RulesetView,
   ) {
-    this.classListsByKlassId = SpellLists.of(rulesetData).classListsByKlass;
-    this.casterTypeByKlassId = klassCasterTypeMap;
+    this.classListsByClassId = SpellLists.of(rulesetData).classListsByClass;
+    this.casterTypeByClassId = classCasterTypeMap;
   }
 
   /** The bonus spells a class's spellcasting ability gives: each spell level its modifier reaches adds uses. */
-  private applyBonusSpells(klassBonusSpellAbilityMap: Map<string, string>) {
+  private applyBonusSpells(classBonusSpellAbilityMap: Map<string, string>) {
     const characterClasses = this.classes.getCharacterClasses();
     const aptitudes = this.aptitudes.getAptitudes();
 
-    for (const [className, klassData] of Object.entries(characterClasses)) {
-      const abilityName = klassBonusSpellAbilityMap.get(klassData.klass.id);
+    for (const [className, classData] of Object.entries(characterClasses)) {
+      const abilityName = classBonusSpellAbilityMap.get(classData.klass.id);
       if (!abilityName) continue;
 
       const abilityMod = this.abilities.getAbilityModifier(abilityName);

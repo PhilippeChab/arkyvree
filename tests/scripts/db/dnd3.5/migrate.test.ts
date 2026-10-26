@@ -389,7 +389,7 @@ describe("0082_fields", () => {
 
 describe("0084_link-activities", () => {
   test("names a class's skill's role in what activities and notifications recorded, and nothing else", async () => {
-    const classId = (await getSeedCtx()).klassMap.pc["Fighter"];
+    const classId = (await getSeedCtx()).classMap.pc["Fighter"];
     // What an activity and a notification recorded of each change to a class's skills, and of others
     const recorded = [
       ["class_skills", "addClassSkill", '{"skillId":"s","entityName":"Fighter","skillName":"Climb"}'],
@@ -746,7 +746,7 @@ describe("0090_empty-texts", () => {
 
 describe("0091_stored-name-activities", () => {
   test("names an update's changed columns by their stored field or role, in the order an update records them, and nothing else", async () => {
-    const targetId = (await getSeedCtx()).klassMap.pc["Fighter"];
+    const targetId = (await getSeedCtx()).classMap.pc["Fighter"];
     // What an activity and a notification recorded of each kind's update, as its form's keys named them, and of others
     const recorded = [
       [

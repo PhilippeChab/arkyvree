@@ -40,7 +40,7 @@ export default class LevelSelections extends LevelUpBase<DetailedCharacter> {
     const level = this.character.rows.advancements.find((saved) => saved.id === advancementId);
     if (!level) throw new RulesError("not-found", "Character level not found");
     const picks = this.getSavedPicks(advancementId);
-    this.getSavedKlassLevel(level);
+    this.getSavedClassLevel(level);
     // The levels in the order the character took them: the level's index is its total level less one
     const increased =
       this.rules.getAbilityIncreaseTotal(this.view, this.character.rows.advancements.indexOf(level)) > 0;

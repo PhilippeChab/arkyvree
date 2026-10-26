@@ -34,7 +34,7 @@ export interface CheckedCharacter extends HoldingCharacter {
 /**
  * A character's levels saved, from its rows: a level-up's levels, or a saved level's edit, checked in one order, over
  * what the level-up rules compute (`LevelUpRules`):
- * - a level-up's planned levels are the ruleset's classes' (`getPlannedKlassLevels`), and its selections linked to
+ * - a level-up's planned levels are the ruleset's classes' (`getPlannedClassLevels`), and its selections linked to
  *   their pools, before its picks are spread over its levels (`distributePicks`): each is the view's, by the id the view
  *   keys it by, as the request entered (`LevelRequests`);
  * - each level isn't saved already (a level-up's), and raises its abilities by what the rules give it;
@@ -92,25 +92,25 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
    */
   private planSaved({ levels, picks }: LevelUpRequest) {
     const { rows } = this.character;
-    const klassLevelEntries = this.rules.getPlannedKlassLevels(this.view, this.character, levels);
+    const classLevelEntries = this.rules.getPlannedClassLevels(this.view, this.character, levels);
     // Every selection is linked to its pool before a character is built with it
     this.checks.checkLinks(picks.feats, picks.spells);
-    const distributed = this.rules.distributePicks(this.view, this.character, klassLevelEntries, picks);
+    const distributed = this.rules.distributePicks(this.view, this.character, classLevelEntries, picks);
 
     // Each level sees the saved ones and those planned before it
     const otherLevels: { trackId: string | null }[] = [...rows.advancements];
     const planned: PlannedLevel[] = [];
-    for (const [i, { klass, klassLevel }] of klassLevelEntries.entries()) {
+    for (const [i, { klass, classLevel }] of classLevelEntries.entries()) {
       const { hp, abilityIncreases } = levels[i];
       const levelPicks = distributed[i];
       // A refusal names the character's level it's about, after its saved levels and those planned before it
       const label = `Level ${rows.advancements.length + i + 1}: `;
-      if (otherLevels.some((other) => other.trackId === klassLevel.id))
+      if (otherLevels.some((other) => other.trackId === classLevel.id))
         throw new RulesError("invalid", `${label}This level has already been finalized`);
       this.checks.checkAbilityIncreases(rows.advancements.length + i, abilityIncreases, label);
       this.checks.checkLevel({ klass, hp, ...levelPicks });
-      planned.push({ abilityIncreases, classLevelId: klassLevel.id, hp, picks: levelPicks });
-      otherLevels.push({ trackId: klassLevel.id });
+      planned.push({ abilityIncreases, classLevelId: classLevel.id, hp, picks: levelPicks });
+      otherLevels.push({ trackId: classLevel.id });
     }
     // A pick the character holds with every planned level, a later one too, the plan picks before, or the plan's other
     // picks give, is refused
@@ -188,14 +188,14 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     const { abilityIncreases, hp } = edit;
     const level = rows.advancements.find((saved) => saved.id === advancementId);
     if (!level) throw new RulesError("not-found", "Character level not found");
-    const { klassLevel, klass } = this.getSavedKlassLevel(level);
+    const { classLevel, klass } = this.getSavedClassLevel(level);
     // The levels in the order the character took them: the edited level's index is its total level less one
     this.checks.checkAbilityIncreases(rows.advancements.indexOf(level), abilityIncreases);
     this.checks.checkLevel({ klass, ...edit });
     // A new pick the character holds already (at another level, granted, by a modifier, or given by the level's other
     // picks) is refused, the level's saved picks stay, a repeat saved before too
     const holding = this.buildOnce((picks) =>
-      this.build(this.projectEditedLevel(level, klassLevel.id, { ...edit, ...picks })),
+      this.build(this.projectEditedLevel(level, classLevel.id, { ...edit, ...picks })),
     );
     this.checks.checkPicksNotHeld(edit, holding, this.getSavedPicks(advancementId));
 
@@ -204,7 +204,7 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     const { valid, issues } = edited.validate();
     if (!valid && !force) {
       // The issues the level answers for: built without the level and every later one, then with it alone
-      const { before, withLevel } = this.projectLevelContribution(advancementId, klassLevel.id, edit);
+      const { before, withLevel } = this.projectLevelContribution(advancementId, classLevel.id, edit);
       RulesError.refuseIssues(this.rules.findEditedLevelIssues(issues, this.build(before), this.build(withLevel)));
     }
     return {

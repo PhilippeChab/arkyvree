@@ -35,11 +35,11 @@ export default class LevelUpPlan extends PlannedLevelsState {
    */
   spreadSkillPoints({ abilityIncreases = [], classLevelIds = [], skillPoints = {} }: PlannedSoFar) {
     if (Object.keys(skillPoints).length === 0) return [];
-    const klassLevelEntries = classLevelIds.map((classLevelId, i) => ({
-      ...this.getSavedKlassLevel({ trackId: classLevelId }),
+    const classLevelEntries = classLevelIds.map((classLevelId, i) => ({
+      ...this.getSavedClassLevel({ trackId: classLevelId }),
       abilityIncreases: abilityIncreases[i] ?? [],
     }));
-    const distributed = this.distributePicks(klassLevelEntries, { feats: {}, spells: {}, skills: skillPoints });
+    const distributed = this.distributePicks(classLevelEntries, { feats: {}, spells: {}, skills: skillPoints });
     return distributed.map((levelPicks) => this.toPickPlans(levelPicks));
   }
 }

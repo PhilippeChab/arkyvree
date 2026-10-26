@@ -35,9 +35,9 @@ export default class ImportedLevelGains extends PlannedLevelsState {
    */
   buildWith(entry: PlannedClassLevel, skills: Record<string, number>, feats: PickPlan[]): DetailedCharacter {
     const projection = new CharacterProjection(this.character);
-    const { abilityIncreases, klassLevel } = entry;
+    const { abilityIncreases, classLevel } = entry;
     const ranks = Object.entries(skills).map(([entityId, amount]) => ({ step: "skills", entityId, amount }));
-    projection.pick(projection.addLevel(klassLevel.id, { abilityIncreases, hp: LevelRules.UNROLLED_LEVEL_HP }), [
+    projection.pick(projection.addLevel(classLevel.id, { abilityIncreases, hp: LevelRules.UNROLLED_LEVEL_HP }), [
       ...feats,
       ...ranks,
     ]);

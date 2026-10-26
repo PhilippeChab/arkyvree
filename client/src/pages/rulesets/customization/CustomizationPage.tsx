@@ -87,7 +87,7 @@ function CustomizationView({
   const entityKey = QUERY_KEYS.rulesets.entity(rulesetId, type, entityId);
   // An owned entity's owner (a class level's class): its tabs (its levels, its tables, its progression) read what the
   // owned entity's page changes
-  const ownerQueryKey = data.holder === "owned" ? QUERY_KEYS.rulesets.classDetail(rulesetId, data.ownerId) : undefined;
+  const ownerQueryKey = data.holder === "owned" ? QUERY_KEYS.rulesets.ownerDetail(rulesetId, data.ownerId) : undefined;
   const customizedKeys = ownerQueryKey ? [entityKey, ownerQueryKey] : [entityKey];
 
   // A copy-on-write moves the page to the copy; `copiedFrom` keeps the source on screen while the copy loads

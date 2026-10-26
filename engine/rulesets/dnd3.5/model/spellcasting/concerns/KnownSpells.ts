@@ -29,16 +29,16 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
         if (list === undefined) continue;
         const aptitude = aptitudes[list];
         if (!aptitude || !aptitudeSpellAptitudeIds.has(aptitude.id) || aptitudeIdToClassName.has(aptitude.id)) continue;
-        // Find which class owns this klass level
-        for (const [className, klassData] of Object.entries(classes)) {
-          if (klassData.levels.some((level) => level.klassLevel.id === modifier.sourceId)) {
+        // Find which class owns this class level
+        for (const [className, classData] of Object.entries(classes)) {
+          if (classData.levels.some((level) => level.classLevel.id === modifier.sourceId)) {
             aptitudeIdToClassName.set(aptitude.id, className);
             break;
           }
         }
-        // Fallback: check bonus klass levels from caster level advancement
+        // Fallback: check bonus class levels from caster level advancement
         if (!aptitudeIdToClassName.has(aptitude.id)) {
-          const bonusClassName = this.bonusKlassLevelClassMap.get(modifier.sourceId);
+          const bonusClassName = this.bonusClassLevelClassMap.get(modifier.sourceId);
           if (bonusClassName) aptitudeIdToClassName.set(aptitude.id, bonusClassName);
         }
       }
@@ -93,7 +93,7 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
     private newKnownSpells(
       spells: HeldSpell[],
       appliedModifiers: Modifier[],
-      klassBonusSpellAbilityMap: Map<string, string>,
+      classBonusSpellAbilityMap: Map<string, string>,
     ): HeldSpell[] {
       const aptitudeIdToClassName = this.aptitudeClassNames(appliedModifiers);
       const classes = this.classes.getClasses();
@@ -105,21 +105,21 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
       const knownOn = new Set(spells.map(({ entity, viaId }) => `${entity.id}:${viaId}`));
       const newSpells: HeldSpell[] = [];
       const give = (spell: (typeof this.allAptitudeSpells)[number], className: string, aptitudeId: string) => {
-        const klassData = classes[className];
-        if (!klassData || klassData.levels.length === 0 || knownOn.has(`${spell.entity.id}:${aptitudeId}`)) return;
-        const firstLevel = klassData.levels[0];
+        const classData = classes[className];
+        if (!classData || classData.levels.length === 0 || knownOn.has(`${spell.entity.id}:${aptitudeId}`)) return;
+        const firstLevel = classData.levels[0];
         // Known at its class's first level, taking no room in its list
         const known: HeldSpell = {
           ...spell,
           // Its DC's ability, as a loaded spell's (`CustomizesEntities.withDcAbilities`): its class's bonus spell ability
-          abilityDcName: klassBonusSpellAbilityMap.get(firstLevel.klassLevel.ownerId) ?? null,
+          abilityDcName: classBonusSpellAbilityMap.get(firstLevel.classLevel.ownerId) ?? null,
           advancementId: firstLevel.advancement.id,
           free: true,
           given: false,
           modifiers: [],
           requirements: [],
           step: "spells",
-          trackId: firstLevel.klassLevel.id,
+          trackId: firstLevel.classLevel.id,
           viaId: aptitudeId,
           virtual: false,
         };
@@ -234,11 +234,11 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
     protected enrichAllKnownSpells(
       rulesetData: RulesetData,
       spells: HeldSpell[],
-      klassBonusSpellAbilityMap: Map<string, string>,
+      classBonusSpellAbilityMap: Map<string, string>,
       appliedModifiers: Modifier[],
     ) {
       if (this.allAptitudeSpells.length === 0) return;
-      const newSpells = this.newKnownSpells(spells, appliedModifiers, klassBonusSpellAbilityMap);
+      const newSpells = this.newKnownSpells(spells, appliedModifiers, classBonusSpellAbilityMap);
       if (newSpells.length > 0) this.registerKnownSpells(rulesetData, newSpells);
     }
 

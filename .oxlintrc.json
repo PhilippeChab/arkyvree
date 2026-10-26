@@ -204,6 +204,9 @@
     // No file outside a ruleset's folders names one of its nouns: the core, the server and the client speak of
     // entities, kinds, fields, links, tracks, steps and pools (lint/nouns.mjs).
     "arkyvree/ruleset-nouns": "error",
+    // `klass` names 3.5's types alone (`Klass`, `KlassLevel`) and a value that is one: every other name says `class`
+    // (lint/nouns.mjs).
+    "arkyvree/klass-names": "error",
     "arkyvree/entity-type-labels": "error",
     "arkyvree/dialog-mounts": "error",
     "arkyvree/menus": "error",

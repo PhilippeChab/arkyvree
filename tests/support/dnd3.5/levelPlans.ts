@@ -12,8 +12,8 @@ type Payload = LevelPlanRequest["steps"][string];
 /** A level a level-up plans: its class, its level in it, its hit points and its ability increases. */
 export interface PlannedClassLevel {
   abilityIncreases?: { abilityId: string; amount: number }[];
+  classId: string;
   hp: number;
-  klassId: string;
   level: number;
 }
 
@@ -58,7 +58,7 @@ function picksOf({ feats = {}, spells = {}, skills = {} }: PlanPicks) {
 
 /** An edit's plan of its level: its hit points, its ability increases and its picks. */
 export function levelEditPlan(
-  { abilityIncreases, hp }: Omit<PlannedClassLevel, "klassId" | "level">,
+  { abilityIncreases, hp }: Omit<PlannedClassLevel, "classId" | "level">,
   picks: PlanPicks = {},
 ): LevelPlanRequest {
   return { steps: { hp: [hp], abilities: [chosenOf(abilityIncreases)], ...picksOf(picks) } };
@@ -68,7 +68,7 @@ export function levelEditPlan(
 export function levelUpPlan(levels: PlannedClassLevel[], picks: PlanPicks = {}): LevelPlanRequest {
   return {
     steps: {
-      "class-plan": levels.map(({ klassId, level }) => ({ position: level, track: klassId })),
+      "class-plan": levels.map(({ classId, level }) => ({ position: level, track: classId })),
       hp: levels.map(({ hp }) => hp),
       abilities: levels.map(({ abilityIncreases }) => chosenOf(abilityIncreases)),
       ...picksOf(picks),

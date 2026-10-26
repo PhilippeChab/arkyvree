@@ -20,21 +20,21 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
     private withDcAbilities(
       spells: Omit<HeldSpell, "abilityDcName">[],
       {
-        klassBonusSpellAbilityMap,
-        klassLevels,
-      }: { klassBonusSpellAbilityMap: Map<string, string>; klassLevels: KlassLevel[] },
+        classBonusSpellAbilityMap,
+        classLevels,
+      }: { classBonusSpellAbilityMap: Map<string, string>; classLevels: KlassLevel[] },
     ): HeldSpell[] {
-      const classIdByLevelId = new Map(klassLevels.map((level) => [level.id, level.ownerId]));
+      const classIdByLevelId = new Map(classLevels.map((level) => [level.id, level.ownerId]));
       return spells.map((spell) => {
         const classId = spell.trackId === undefined ? undefined : classIdByLevelId.get(spell.trackId);
-        const abilityDcName = classId === undefined ? undefined : klassBonusSpellAbilityMap.get(classId);
+        const abilityDcName = classId === undefined ? undefined : classBonusSpellAbilityMap.get(classId);
         return { ...spell, abilityDcName: abilityDcName ?? null };
       });
     }
 
     /** Class levels' modifiers and requirements, and each level's bab and skill points. */
-    protected toCustomizedKlassLevels(klassLevelsRaw: KlassLevel[], rulesetData: RulesetData) {
-      const klassLevels: CustomizedClassLevel[] = klassLevelsRaw
+    protected toCustomizedClassLevels(classLevelsRaw: KlassLevel[], rulesetData: RulesetData) {
+      const classLevels: CustomizedClassLevel[] = classLevelsRaw
         .map((level) => ({
           ...level,
           modifiers: rulesetData.modifiersBySource.get(level.id) ?? [],
@@ -42,8 +42,8 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
         }))
         .sort((a, b) => a.position - b.position);
 
-      const classLevelFields = new Map(klassLevels.map((level) => [level.id, CLASS_LEVEL_FIELDS.read(level)]));
-      return { klassLevels, classLevelFields };
+      const classLevelFields = new Map(classLevels.map((level) => [level.id, CLASS_LEVEL_FIELDS.read(level)]));
+      return { classLevels, classLevelFields };
     }
 
     /** The race with its fields read (once, here), its modifiers and requirements. */
@@ -80,7 +80,7 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
     protected toHeldSpells(
       spells: (HeldSource<Spell> & Pick<HeldSpell, "free" | "saveName" | "spellLevel" | "viaId">)[],
       rulesetData: RulesetData,
-      dcAbilities: { klassBonusSpellAbilityMap: Map<string, string>; klassLevels: KlassLevel[] },
+      dcAbilities: { classBonusSpellAbilityMap: Map<string, string>; classLevels: KlassLevel[] },
     ): HeldSpell[] {
       const customized = spells.map((spell) => ({
         ...spell,

@@ -4,13 +4,13 @@ import CharacterCards from "@/engine/rulesets/dnd3.5/characters/CharacterCards.t
 
 /** A ruleset's view as a card reads it, 3.5's: an Elf, and the first three levels of Fighter and of Rogue. */
 const DATA = {
-  klassesById: new Map([
+  classesById: new Map([
     ["fighter", { name: "Fighter" }],
     ["rogue", { name: "Rogue" }],
   ]),
-  klassLevelsById: new Map(
-    ["fighter", "rogue"].flatMap((klassId) =>
-      [1, 2, 3].map((level) => [`${klassId}-${level}`, { ownerId: klassId, position: level }] as const),
+  classLevelsById: new Map(
+    ["fighter", "rogue"].flatMap((classId) =>
+      [1, 2, 3].map((level) => [`${classId}-${level}`, { ownerId: classId, position: level }] as const),
     ),
   ),
   racesById: new Map([["elf", { name: "Elf" }]]),

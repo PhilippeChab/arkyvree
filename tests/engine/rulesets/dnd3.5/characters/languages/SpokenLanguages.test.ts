@@ -10,7 +10,7 @@ import { readCharacterInput } from "@/server/services/characters/characterInputs
 import type { Character } from "@/shared/relations.ts";
 import { findLinks } from "@/tests/support/characters.ts";
 import { createCharacterAs, sheetOf } from "@/tests/support/dnd3.5/characters.ts";
-import { addCharacterLevel, createTestKlassLevel, findKlassLevel, pickFeat } from "@/tests/support/dnd3.5/levels.ts";
+import { addCharacterLevel, createTestClassLevel, findClassLevel, pickFeat } from "@/tests/support/dnd3.5/levels.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -161,7 +161,7 @@ describe("A character's languages", () => {
   });
 
   test("never take a secret language, which only a modifier grants: a druid's Druidic", async () => {
-    const { klassMap } = await getSeedCtx();
+    const { classMap } = await getSeedCtx();
     const human = await newCharacter("Human", { Intelligence: 14 });
     expect(namesOf((await describeLanguages(human)).options)).not.toContain("Druidic");
     expect(planLanguages(human, ["Druidic"])).rejects.toMatchObject({
@@ -170,15 +170,15 @@ describe("A character's languages", () => {
     });
 
     // A druid's first level grants it, which no pick stores
-    await addCharacterLevel(human.id, (await findKlassLevel(klassMap.pc["Druid"], 1))!.id);
+    await addCharacterLevel(human.id, (await findClassLevel(classMap.pc["Druid"], 1))!.id);
     expect(namesOf((await describeLanguages(human)).automatic)).toEqual(["Common", "Druidic"]);
     expect(await planLanguages(human, ["Druidic", "Sylvan"])).toEqual(["Sylvan"]);
   });
 
   test("take a pick of any kind but a secret one per Speak Language rank", async () => {
-    const { klassMap, skillMap } = await getSeedCtx();
+    const { classMap, skillMap } = await getSeedCtx();
     const bard = await newCharacter("Human");
-    const level = await findKlassLevel(klassMap.pc["Bard"], 1);
+    const level = await findClassLevel(classMap.pc["Bard"], 1);
     await addCharacterLevel(bard.id, level!.id, { skills: { [skillMap["Speak Language"]]: 2 } });
 
     // Its Intelligence of 10 gives none: both are its ranks'
@@ -192,9 +192,9 @@ describe("A character's languages", () => {
 
   test("take one more pick per extra pick a class level's modifier adds", async () => {
     const fork = await createSeededTestRuleset(SEED_USER_ID);
-    const { klassLevel } = await createTestKlassLevel(fork.id);
+    const { classLevel } = await createTestClassLevel(fork.id);
     await Modifiers.create(db, {
-      sourceId: klassLevel.id,
+      sourceId: classLevel.id,
       sourceType: "class_levels",
       target: "languages.extrapicks",
       operator: "add",
@@ -204,7 +204,7 @@ describe("A character's languages", () => {
     RulesetViews.invalidate(fork.id);
     const human = await newCharacter("Human", {}, fork.id);
     expect(await roomOf(human)).toBe(0);
-    await addCharacterLevel(human.id, klassLevel.id);
+    await addCharacterLevel(human.id, classLevel.id);
 
     expect(await roomOf(human)).toBe(1);
     expect(await planLanguages(human, ["Aquan"])).toEqual(["Aquan"]);

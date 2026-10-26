@@ -63,10 +63,10 @@ describe("ActivitiesService.getActivityUrl", () => {
       raceMap,
       skillMap,
       aptMap,
-      klassMap,
+      classMap,
       abilityMap,
     } = await getSeedCtx();
-    const fighter = klassMap.pc["Fighter"];
+    const fighter = classMap.pc["Fighter"];
     const [mechanic] = await Entities.create<Mechanic>(db, "mechanics", { name: "Linked Mechanic", rulesetId: r });
     const [level] = await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [fighter] });
     for (const [table, id, url] of [
@@ -87,10 +87,10 @@ describe("ActivitiesService.getActivityUrl", () => {
   });
 
   test("links a customization to its entity's customization page, on its tab", async () => {
-    const { rulesetId: r, featMap, klassMap } = await getSeedCtx();
+    const { rulesetId: r, featMap, classMap } = await getSeedCtx();
     const [clericLevel] = await Entities.findMany<KlassLevel>(db, {
       entityType: "class_levels",
-      ownerIds: [klassMap.pc["Cleric"]],
+      ownerIds: [classMap.pc["Cleric"]],
     });
     const [featModifier] = await Modifiers.findMany(db, {
       sourceIds: [featMap["Toughness"]],
@@ -121,8 +121,8 @@ describe("ActivitiesService.getActivityUrl", () => {
   });
 
   test("links a class's customizations to its class page's tab, and a modifier's requirements to the modifier's page", async () => {
-    const { rulesetId: r, featMap, klassMap } = await getSeedCtx();
-    const fighter = klassMap.pc["Fighter"];
+    const { rulesetId: r, featMap, classMap } = await getSeedCtx();
+    const fighter = classMap.pc["Fighter"];
     const [featModifier] = await Modifiers.findMany(db, { sourceIds: [featMap["Toughness"]], sourceType: "feats" });
     const [classModifier] = await Modifiers.create(db, {
       sourceId: fighter,
@@ -265,8 +265,8 @@ describe("ActivitiesService.getActivityUrl", () => {
   });
 
   test("links nothing for a role no entity edits link by link, whose changes no activity records", async () => {
-    const { featMap, klassMap } = await getSeedCtx();
-    const fighter = klassMap.pc["Fighter"];
+    const { featMap, classMap } = await getSeedCtx();
+    const fighter = classMap.pc["Fighter"];
     const [level] = await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [fighter] });
     for (const [table, id] of [
       ["listedIn", featMap["Toughness"]],

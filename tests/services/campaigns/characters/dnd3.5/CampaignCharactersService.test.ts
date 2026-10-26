@@ -12,7 +12,7 @@ import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
 import { measure } from "@/tests/support/database.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
-import { findKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
@@ -30,8 +30,8 @@ function list(userId: string, campaignId: string, pagination = { limit: 10, page
 async function addLevels(characterId: string, levels: [string, number][]) {
   const ctx = await getSeedCtx();
   for (const [klass, level] of levels) {
-    const klassLevel = (await findKlassLevel(ctx.klassMap.pc[klass], level))!;
-    await createAdvancement(db, characterId, { trackId: klassLevel.id, picks: [{ step: "hp", amount: 8 }] });
+    const classLevel = (await findClassLevel(ctx.classMap.pc[klass], level))!;
+    await createAdvancement(db, characterId, { trackId: classLevel.id, picks: [{ step: "hp", amount: 8 }] });
   }
 }
 

@@ -382,7 +382,7 @@ describe("an inherited skill's Skill Focus", () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: fork.id });
       // Its first fighter level's General feats, a family's one match named as its feat
-      const plan = levelUpPlan([{ klassId: ctx.klassMap.pc.Fighter, level: 1, hp: 10 }]);
+      const plan = levelUpPlan([{ classId: ctx.classMap.pc.Fighter, level: 1, hp: 10 }]);
       const available = await getStepOptions(
         session,
         characterId,

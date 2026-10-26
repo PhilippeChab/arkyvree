@@ -25,10 +25,10 @@ export default class ClassesPaths implements PathCategory<Dnd35Components> {
     return `classes.${stripSeparators(className)}.bonuscasterlevel`;
   }
 
-  static generateClassPaths(klasses: Klass[], kind: "modifier" | "requirement"): TargetPath[] {
+  static generateClassPaths(classes: Klass[], kind: "modifier" | "requirement"): TargetPath[] {
     const paths: TargetPath[] = [];
 
-    for (const klass of klasses) {
+    for (const klass of classes) {
       const normalizedClassName = stripSeparators(klass.name);
 
       for (const subPath of CLASS_PATHS) {
@@ -62,7 +62,7 @@ export default class ClassesPaths implements PathCategory<Dnd35Components> {
   readonly name = "classes";
 
   generate(rulesetData: RulesetData, kind: "modifier" | "requirement"): TargetPath[] {
-    return ClassesPaths.generateClassPaths(Dnd35View.of(rulesetData).klasses, kind);
+    return ClassesPaths.generateClassPaths(Dnd35View.of(rulesetData).classes, kind);
   }
 
   getSegmentLabels(): Record<string, string> {
@@ -71,6 +71,6 @@ export default class ClassesPaths implements PathCategory<Dnd35Components> {
 
   /** The ruleset's classes, labeled by their names. */
   labelNames(rulesetData: RulesetData) {
-    return { names: deriveNameLabels(Dnd35View.of(rulesetData).klasses.map(({ name }) => name)) };
+    return { names: deriveNameLabels(Dnd35View.of(rulesetData).classes.map(({ name }) => name)) };
   }
 }

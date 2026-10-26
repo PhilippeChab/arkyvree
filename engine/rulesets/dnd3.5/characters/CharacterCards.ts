@@ -6,8 +6,8 @@ import ClassLevels from "./ClassLevels.ts";
 
 /** A ruleset's view as a card reads it: the names of its races and classes, and its classes' levels. */
 interface CardData {
-  klassesById: ReadonlyMap<string, { name: string }>;
-  klassLevelsById: ReadonlyMap<string, { ownerId: string; position: number }>;
+  classesById: ReadonlyMap<string, { name: string }>;
+  classLevelsById: ReadonlyMap<string, { ownerId: string; position: number }>;
   racesById: ReadonlyMap<string, { name: string }>;
 }
 
@@ -24,15 +24,15 @@ export default class CharacterCards {
     character: Pick<Character, "links">,
     levels: { trackId: string | null }[],
   ): CharacterCard {
-    const levelByKlassName = new Map<string, number>();
+    const levelByClassName = new Map<string, number>();
     for (const level of levels) {
-      const klassLevel = level.trackId === null ? undefined : data.klassLevelsById.get(level.trackId);
-      if (!klassLevel) continue;
-      const klassName = data.klassesById.get(klassLevel.ownerId)?.name || "Unknown";
-      if (klassLevel.position > (levelByKlassName.get(klassName) || 0))
-        levelByKlassName.set(klassName, klassLevel.position);
+      const classLevel = level.trackId === null ? undefined : data.classLevelsById.get(level.trackId);
+      if (!classLevel) continue;
+      const className = data.classesById.get(classLevel.ownerId)?.name || "Unknown";
+      if (classLevel.position > (levelByClassName.get(className) || 0))
+        levelByClassName.set(className, classLevel.position);
     }
-    const classLevels = [...levelByKlassName].map(([klass, level]) => ({ klass, level }));
+    const classLevels = [...levelByClassName].map(([klass, level]) => ({ klass, level }));
     const race = data.racesById.get(CharacterValues.raceOf(character))?.name ?? "Unknown";
     return {
       chips: [

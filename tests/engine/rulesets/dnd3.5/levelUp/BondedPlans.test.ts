@@ -9,7 +9,7 @@ import { db } from "@/server/database/index.ts";
 import { CharacterAdvancements, Characters, Rulesets } from "@/server/repositories/index.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { createDruidWithCompanion, createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
-import { findKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
 /** The refusal `plan` throws. */
@@ -42,7 +42,7 @@ describe("planBondedCreature", () => {
     const { bonded, ctx, master, record, view } = await masterOf(() => createDruidWithCompanion(3));
     expect(new BondedPlans(view).planBondedCreature(master, record, "animalcompanion", bonded)).toEqual({
       keptId: bonded.id,
-      levels: { hitDice: 3, klassId: ctx.klassMap.animalcompanion["Animal Companion"] },
+      levels: { hitDice: 3, classId: ctx.classMap.animalcompanion["Animal Companion"] },
     });
   });
 
@@ -99,8 +99,8 @@ describe("planBondedCreature", () => {
       refusalOf(() =>
         new BondedPlans({
           abilities: view.abilities,
-          klasses: view.klasses,
-          klassLevelsByKlass: view.klassLevelsByKlass,
+          classes: view.classes,
+          classLevelsByClass: view.classLevelsByClass,
           races: withoutCompanions(view.races),
         }).planBondedCreature(master, record, "animalcompanion", undefined),
       ),
@@ -109,8 +109,8 @@ describe("planBondedCreature", () => {
       refusalOf(() =>
         new BondedPlans({
           abilities: view.abilities,
-          klasses: withoutCompanions(view.klasses),
-          klassLevelsByKlass: view.klassLevelsByKlass,
+          classes: withoutCompanions(view.classes),
+          classLevelsByClass: view.classLevelsByClass,
           races: view.races,
         }).planBondedCreature(master, record, "animalcompanion", undefined),
       ),
@@ -121,18 +121,18 @@ describe("planBondedCreature", () => {
 describe("planBondedLevels", () => {
   test("takes the class's next levels up to the hit dice, or loses the creature's last ones", async () => {
     const { bonded, ctx, view } = await masterOf(() => createDruidWithCompanion(3));
-    const klassId = ctx.klassMap.animalcompanion["Animal Companion"];
+    const classId = ctx.classMap.animalcompanion["Animal Companion"];
     const levels = await CharacterAdvancements.findMany(db, { characterId: bonded.id });
-    const klassLevelIds = [(await findKlassLevel(klassId, 4))!.id, (await findKlassLevel(klassId, 5))!.id];
-    expect(new BondedPlans(view).planBondedLevels(levels, { hitDice: 5, klassId })).toEqual({
-      added: klassLevelIds.map((trackId) => ({ trackId, picks: [{ step: "hp", amount: 1 }] })),
+    const classLevelIds = [(await findClassLevel(classId, 4))!.id, (await findClassLevel(classId, 5))!.id];
+    expect(new BondedPlans(view).planBondedLevels(levels, { hitDice: 5, classId })).toEqual({
+      added: classLevelIds.map((trackId) => ({ trackId, picks: [{ step: "hp", amount: 1 }] })),
       removedIds: [],
     });
-    expect(new BondedPlans(view).planBondedLevels(levels, { hitDice: 3, klassId })).toEqual({
+    expect(new BondedPlans(view).planBondedLevels(levels, { hitDice: 3, classId })).toEqual({
       added: [],
       removedIds: [],
     });
-    expect(new BondedPlans(view).planBondedLevels(levels, { hitDice: 1, klassId })).toEqual({
+    expect(new BondedPlans(view).planBondedLevels(levels, { hitDice: 1, classId })).toEqual({
       added: [],
       removedIds: levels.slice(1).map((level) => level.id),
     });
@@ -140,7 +140,7 @@ describe("planBondedLevels", () => {
 
   test("refuses a level the class doesn't have", async () => {
     const { view } = await masterOf(() => createDruidWithCompanion(1));
-    expect(refusalOf(() => new BondedPlans(view).planBondedLevels([], { hitDice: 1, klassId: NIL_UUID }))).toEqual({
+    expect(refusalOf(() => new BondedPlans(view).planBondedLevels([], { hitDice: 1, classId: NIL_UUID }))).toEqual({
       message: "Bonded class is missing level 1 — content seed incomplete",
       refusal: "invalid",
     });

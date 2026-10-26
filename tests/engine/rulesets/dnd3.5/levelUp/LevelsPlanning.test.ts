@@ -13,16 +13,16 @@ import { makeSession } from "@/tests/support/users.ts";
 const session = makeSession();
 
 /** The levels a fighter with `saved` levels plans, `levels`, refused as the engine refuses them: its message. */
-async function refusalOf(saved: number, levels: Omit<PlannedClassLevel, "klassId">[]) {
+async function refusalOf(saved: number, levels: Omit<PlannedClassLevel, "classId">[]) {
   const ctx = await getSeedCtx();
   const characterId = await createSeedCharacter(ctx, "fighter", { xp: 10000 });
   await addFighterLevels(session, ctx, characterId, saved);
   const record = (await Characters.findOne(db, { id: characterId }))!;
   const input = await readCharacterInput(db, record);
-  const klassId = ctx.klassMap.pc["Fighter"];
+  const classId = ctx.classMap.pc["Fighter"];
   return await withRulesetScope(db, record.rulesetId, async (scope) => {
     const levelUp = Engine.for(scope).character(input).levelUp();
-    const request = levelUpPlan(levels.map((level) => ({ ...level, klassId })));
+    const request = levelUpPlan(levels.map((level) => ({ ...level, classId })));
     try {
       levelUp.planLevelUp([], request, true);
     } catch (error) {

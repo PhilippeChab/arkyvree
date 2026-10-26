@@ -27,9 +27,9 @@ import type PcgenNames from "./PcgenNames.ts";
 
 /** A level of the file, matched to the view's class level, its hit points within its hit die. */
 interface MatchedLevel {
+  classLevel: KlassLevel;
   hp: number;
   klass: Klass;
-  klassLevel: KlassLevel;
   level: ImportedLevel;
 }
 
@@ -75,7 +75,7 @@ export default class LevelsImport {
    */
   private describeLevel(index: number, level: MatchedLevel, picks: PickPlan[]) {
     const { abilitiesById, featsById, spellsById } = this.dnd35;
-    const parts = [`${level.klass.name} ${level.klassLevel.position}`, `${level.hp} hit points`];
+    const parts = [`${level.klass.name} ${level.classLevel.position}`, `${level.hp} hit points`];
     for (const { amount, entityId, step } of picks) {
       if (step === "abilities") parts.push(`${abilitiesById.get(entityId!)?.name} ${formatSigned(amount!)}`);
       else parts.push((step === "feats" ? featsById : spellsById).get(entityId!)?.name ?? entityId!);
@@ -129,14 +129,15 @@ export default class LevelsImport {
     const levelsLeft = LevelRules.countLevelsLeft(0);
     for (const level of this.imported.levels) {
       const klass = this.names.findClass(level.className);
-      const klassLevel = klass && this.dnd35.klassLevelByKlassAndLevel.get(`${klass.id}:${level.classLevel}`);
+      // The view's class level the file's level names: its class's, at its number there (`level.classLevel`)
+      const matchedLevel = klass && this.dnd35.classLevelByClassAndLevel.get(`${klass.id}:${level.classLevel}`);
       // A class's levels come one after another: its next is one past those taken
       const taken = matched.filter((other) => other.klass.id === klass?.id).length;
       if (this.stop && matched.length === this.stop.count) {
         this.skipFrom(level, this.stop.reason);
         break;
       }
-      if (!klass || !klassLevel || level.classLevel !== taken + 1 || matched.length >= levelsLeft) {
+      if (!klass || !matchedLevel || level.classLevel !== taken + 1 || matched.length >= levelsLeft) {
         const reason = !klass
           ? `${level.className} isn't a class of the ruleset`
           : `${level.className} ${level.classLevel} can't be taken there`;
@@ -150,7 +151,7 @@ export default class LevelsImport {
           `Level ${matched.length + 1}: ${level.hp} hit points outside a d${klass.fields[CLASS_HD]}: ${hp} kept`,
         );
       }
-      matched.push({ hp, klass, klassLevel, level });
+      matched.push({ hp, klass, classLevel: matchedLevel, level });
     }
     return matched;
   }
@@ -182,7 +183,7 @@ export default class LevelsImport {
   private matchSpells(): MatchedSpell[] {
     const { dnd35 } = this;
     const { aptitudeIdBySlug } = dnd35;
-    const classLists = SpellLists.of(this.view.rulesetData).classListsByKlass;
+    const classLists = SpellLists.of(this.view.rulesetData).classListsByClass;
     return this.imported.spells.flatMap((spell) => {
       const found = this.names.findSpells(spell.name);
       if (found.length === 0) {
@@ -324,7 +325,7 @@ export default class LevelsImport {
     let issuesBefore = new Set<string>();
     for (const [index, level] of levels.entries()) {
       const abilityIncreases = increases[index] ?? [];
-      const entry: PlannedClassLevel = { abilityIncreases, klass: level.klass, klassLevel: level.klassLevel };
+      const entry: PlannedClassLevel = { abilityIncreases, klass: level.klass, classLevel: level.classLevel };
       const levelGains = new ImportedLevelGains(this.view, leveling.character, this.levelUp);
       const gains = levelGains.describeGains(entry);
       // Its ranks first: a feat that requires them is taken at the level that buys them
@@ -346,7 +347,7 @@ export default class LevelsImport {
       for (const { entityId, viaId } of featPicks) (feats[viaId!] ??= []).push(entityId!);
       const spells: Record<string, string[]> = {};
       for (const { entityId, viaId } of spellPicks) (spells[viaId!] ??= []).push(entityId!);
-      const request = { abilityIncreases, hp: level.hp, klassId: level.klass.id, level: level.klassLevel.position };
+      const request = { abilityIncreases, hp: level.hp, classId: level.klass.id, level: level.classLevel.position };
       const planned = this.planLevel(leveling, request, { feats, spells, skills });
       // Refused even forced: the import is planned again without it, its increases out of the starting scores
       if ("refusal" in planned)

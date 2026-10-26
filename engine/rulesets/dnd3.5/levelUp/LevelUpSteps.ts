@@ -25,15 +25,15 @@ export default class LevelUpSteps extends LevelUpState {
    * its class level.
    */
   private buildPicked(step: LevelQuery) {
-    const klassLevel = this.readKlassLevel(step);
+    const classLevel = this.readClassLevel(step);
     const projected = this.readStep(step);
     const fitted = this.fitPicks(
       step.picks ?? {},
-      (picks) => this.build(this.projectStep(klassLevel.id, projected, picks)),
+      (picks) => this.build(this.projectStep(classLevel.id, projected, picks)),
       this.getSavedPicks(projected.editedLevel?.id),
     );
     const pools = fitted.character.components.aptitudes.getLevelUpPools(this.dnd35, this.countOwnPicks(fitted.picks));
-    return { klassLevel, picks: fitted.picks, pools };
+    return { classLevel, picks: fitted.picks, pools };
   }
 
   /**
@@ -64,8 +64,8 @@ export default class LevelUpSteps extends LevelUpState {
    * feats picked at it (`step.picks`), what of them fits (`fitted`), and its grants.
    */
   private describeFeatStep(step: LevelQuery) {
-    const { klassLevel, picks, pools } = this.buildPicked(step);
-    return { ...this.featStep(pools, [klassLevel.id]), fitted: picks.feats };
+    const { classLevel, picks, pools } = this.buildPicked(step);
+    return { ...this.featStep(pools, [classLevel.id]), fitted: picks.feats };
   }
 
   /**
@@ -75,12 +75,12 @@ export default class LevelUpSteps extends LevelUpState {
    */
   private describeSkillStep(step: LevelQuery) {
     const dnd35 = this.dnd35;
-    const klassLevel = this.readKlassLevel(step);
-    const projection = this.projectStep(klassLevel.id, this.readStep(step));
+    const classLevel = this.readClassLevel(step);
+    const projection = this.projectStep(classLevel.id, this.readStep(step));
     const character = this.build(projection);
     // A skill's class status is any of the character's classes' (its max rank, `isClassSkill`) and the leveled class's
     // (its cost, `isCurrentClassSkill`)
-    const classSkillIds = this.getClassSkillIds(dnd35.classSkillsOf(klassLevel.ownerId));
+    const classSkillIds = this.getClassSkillIds(dnd35.classSkillsOf(classLevel.ownerId));
     const levels = {
       perLevelClassSkillIds: [dnd35.skills.filter(({ id }) => classSkillIds.has(id)).map(({ id }) => id)],
       perLevelSkillPoints: [this.getSkillPointsToSpend(character)],
@@ -94,8 +94,8 @@ export default class LevelUpSteps extends LevelUpState {
    * spells picked at it (`step.picks`), what of them fits (`fitted`), and its grants.
    */
   private describeSpellStep(step: LevelQuery) {
-    const { klassLevel, picks, pools } = this.buildPicked(step);
-    return { ...this.spellStep(pools, [klassLevel.id]), fitted: picks.spells };
+    const { classLevel, picks, pools } = this.buildPicked(step);
+    return { ...this.spellStep(pools, [classLevel.id]), fitted: picks.spells };
   }
 
   /**
@@ -114,9 +114,9 @@ export default class LevelUpSteps extends LevelUpState {
   }
 
   /** The class level the step's level is: refused when the step names no class or level, or the class has no such level. */
-  private readKlassLevel({ klassId, level }: LevelQuery) {
-    if (!klassId || level === undefined) throw new RulesError("invalid", "The step's class and level are required");
-    return this.getKlassLevel(klassId, level);
+  private readClassLevel({ classId, level }: LevelQuery) {
+    if (!classId || level === undefined) throw new RulesError("invalid", "The step's class and level are required");
+    return this.getClassLevel(classId, level);
   }
 
   /** The step's projection, the edited level's place read off the character's levels: refused when it has no such level. */

@@ -8,7 +8,7 @@ import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const kinds = api.api.rulesets[":id"].entities[":entityType"];
 const entity = kinds[":entityId"];
-/** A class's URL segment: the schema calls it a klass */
+/** A class's URL segment */
 const entityType = "classes" as const;
 
 describe("rulesets entities: classes", () => {

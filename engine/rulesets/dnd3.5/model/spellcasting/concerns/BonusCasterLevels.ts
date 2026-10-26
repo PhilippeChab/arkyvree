@@ -16,45 +16,45 @@ import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 /** Caster levels another class adds to a spellcasting class (a prestige class's +1 caster level), and the domain and school slots they bring. */
 export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base: B) {
   abstract class WithBonusCasterLevels extends Base {
-    /** Attributes each bonus klass level to the class level that granted it ("Mystic Theurge Level 3"). */
+    /** Attributes each bonus class level to the class level that granted it ("Mystic Theurge Level 3"). */
     private attributeBonusLevels(
-      bonusKlassLevels: KlassLevel[],
-      klassLevels: CustomizedClassLevel[],
+      bonusClassLevels: KlassLevel[],
+      classLevels: CustomizedClassLevel[],
       feats: HeldFeat[],
-      rulesetKlasses: Klass[],
+      rulesetClasses: Klass[],
     ) {
-      const rulesetKlassById = new Map(rulesetKlasses.map((k) => [k.id, k]));
-      const bonusLevelsByKlassId = Map.groupBy(bonusKlassLevels, (kl) => kl.ownerId);
+      const rulesetClassById = new Map(rulesetClasses.map((k) => [k.id, k]));
+      const bonusLevelsByClassId = Map.groupBy(bonusClassLevels, (kl) => kl.ownerId);
 
-      for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
-        if (klassData.bonuscasterlevel <= 0) continue;
+      for (const [className, classData] of Object.entries(this.classes.getCharacterClasses())) {
+        if (classData.bonuscasterlevel <= 0) continue;
 
         const target = ClassesPaths.bonusCasterLevel(className);
-        const grantingLevels = this.grantingLevels(target, klassLevels, feats, rulesetKlassById);
-        const receivingBonusLevels = (bonusLevelsByKlassId.get(klassData.klass.id) ?? []).toSorted(
+        const grantingLevels = this.grantingLevels(target, classLevels, feats, rulesetClassById);
+        const receivingBonusLevels = (bonusLevelsByClassId.get(classData.klass.id) ?? []).toSorted(
           (a, b) => a.position - b.position,
         );
         for (let i = 0; i < receivingBonusLevels.length && i < grantingLevels.length; i++) {
-          this.bonusKlassLevelAttribution.set(
+          this.bonusClassLevelAttribution.set(
             receivingBonusLevels[i].id,
-            `${grantingLevels[i].klassName} Level ${grantingLevels[i].level}`,
+            `${grantingLevels[i].className} Level ${grantingLevels[i].level}`,
           );
         }
       }
     }
 
     /**
-     * The klass levels each class's bonus caster levels reach past its own level, up to its caster level
-     * (`casterLevelOf`), as `klassId:level`, with the class's name.
+     * The class levels each class's bonus caster levels reach past its own level, up to its caster level
+     * (`casterLevelOf`), as `classId:level`, with the class's name.
      */
     private bonusLevelClassNames() {
       const classNameByLevel = new Map<string, string>();
-      for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
-        if (klassData.bonuscasterlevel <= 0) continue;
+      for (const [className, classData] of Object.entries(this.classes.getCharacterClasses())) {
+        if (classData.bonuscasterlevel <= 0) continue;
 
-        const casterLevel = this.casterLevelOf(klassData);
-        for (let level = klassData.level + 1; level <= casterLevel; level++)
-          classNameByLevel.set(`${klassData.klass.id}:${level}`, className);
+        const casterLevel = this.casterLevelOf(classData);
+        for (let level = classData.level + 1; level <= casterLevel; level++)
+          classNameByLevel.set(`${classData.klass.id}:${level}`, className);
       }
       return classNameByLevel;
     }
@@ -90,22 +90,22 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
      */
     private grantingLevels(
       target: string,
-      klassLevels: CustomizedClassLevel[],
+      classLevels: CustomizedClassLevel[],
       feats: HeldFeat[],
-      rulesetKlassById: Map<string, Klass>,
+      rulesetClassById: Map<string, Klass>,
     ) {
       const featsWithTargetMod = feats.filter((f) =>
         f.modifiers.some((m) => m.target === target && m.operator === "add"),
       );
 
-      const grantingLevels: Array<{ klassName: string; level: number }> = [];
-      for (const kl of klassLevels) {
+      const grantingLevels: Array<{ className: string; level: number }> = [];
+      for (const kl of classLevels) {
         if (kl.modifiers.some((m) => m.target === target && m.operator === "add")) continue;
         for (const feat of featsWithTargetMod) {
           if (feat.trackId !== kl.id) continue;
-          const klass = rulesetKlassById.get(kl.ownerId);
+          const klass = rulesetClassById.get(kl.ownerId);
           grantingLevels.push({
-            klassName: klass?.name ?? "Unknown",
+            className: klass?.name ?? "Unknown",
             level: kl.position,
           });
         }
@@ -143,7 +143,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       featListIds: Set<string>,
       isGateMet: (modifier: Modifier, metTargets?: string[]) => boolean,
     ) {
-      const aptitudeModifiers = this.bonusKlassLevelModifiers.filter(
+      const aptitudeModifiers = this.bonusClassLevelModifiers.filter(
         (m) => AptitudesPaths.isAptitudeTarget(m.target) && isGateMet(m),
       );
 
@@ -156,26 +156,26 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
     /** The class levels the character's bonus caster levels reach, read off the view, and whose level gave each. */
     protected readBonusCasterLevels(
       rulesetData: RulesetData,
-      klassLevels: CustomizedClassLevel[],
+      classLevels: CustomizedClassLevel[],
       feats: HeldFeat[],
-      rulesetKlasses: Klass[],
+      rulesetClasses: Klass[],
     ) {
       const classNameByLevel = this.bonusLevelClassNames();
-      const bonusKlassLevels = [...classNameByLevel.keys()].flatMap(
-        (key) => Dnd35View.of(rulesetData).klassLevelByKlassAndLevel.get(key) ?? [],
+      const bonusClassLevels = [...classNameByLevel.keys()].flatMap(
+        (key) => Dnd35View.of(rulesetData).classLevelByClassAndLevel.get(key) ?? [],
       );
-      if (bonusKlassLevels.length === 0) return;
+      if (bonusClassLevels.length === 0) return;
 
-      this.bonusKlassLevelModifiers = bonusKlassLevels.flatMap((kl) =>
+      this.bonusClassLevelModifiers = bonusClassLevels.flatMap((kl) =>
         (rulesetData.modifiersBySource.get(kl.id) ?? []).filter((m) => m.sourceType === "class_levels"),
       );
-      // Store bonus klass levels for source resolution in diagnostics
-      this.bonusKlassLevels = bonusKlassLevels;
-      for (const kl of bonusKlassLevels) {
+      // Store bonus class levels for source resolution in diagnostics
+      this.bonusClassLevels = bonusClassLevels;
+      for (const kl of bonusClassLevels) {
         const className = classNameByLevel.get(`${kl.ownerId}:${kl.position}`);
-        if (className) this.bonusKlassLevelClassMap.set(kl.id, className);
+        if (className) this.bonusClassLevelClassMap.set(kl.id, className);
       }
-      this.attributeBonusLevels(bonusKlassLevels, klassLevels, feats, rulesetKlasses);
+      this.attributeBonusLevels(bonusClassLevels, classLevels, feats, rulesetClasses);
     }
 
     /**
@@ -228,16 +228,16 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       }
     }
 
-    getBonusKlassLevelAttribution() {
-      return this.bonusKlassLevelAttribution;
+    getBonusClassLevelAttribution() {
+      return this.bonusClassLevelAttribution;
     }
 
-    getBonusKlassLevelModifiers() {
-      return this.bonusKlassLevelModifiers;
+    getBonusClassLevelModifiers() {
+      return this.bonusClassLevelModifiers;
     }
 
-    getBonusKlassLevels() {
-      return this.bonusKlassLevels;
+    getBonusClassLevels() {
+      return this.bonusClassLevels;
     }
   }
   return WithBonusCasterLevels;

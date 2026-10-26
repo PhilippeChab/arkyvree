@@ -21,9 +21,9 @@ interface Indices {
   aptitudeIdBySlug: Map<string, string>;
   aptitudeIdsWithFeats: Set<string>;
   aptitudeIdsWithSpells: Set<string>;
+  classLevelByClassAndLevel: Map<string, KlassLevel>;
+  classLevelsByClass: Map<string, KlassLevel[]>;
   featIdBySlug: Map<string, string>;
-  klassLevelByKlassAndLevel: Map<string, KlassLevel>;
-  klassLevelsByKlass: Map<string, KlassLevel[]>;
   languageIdBySlug: Map<string, string>;
   spellIdsBySlug: Map<string, string[]>;
 }
@@ -111,14 +111,47 @@ export default class Dnd35View {
     return this.rulesetData.byId("aptitudes");
   }
 
-  /** A class level's base bonuses to the saves (`klassLevelId`): its `baseBonus` links, each its save and its amount. */
-  baseBonusesOf(klassLevelId: string): readonly ViewLink[] {
-    return this.rulesetData.linksOf(klassLevelId, "baseBonus", "saves");
+  /** A class level's base bonuses to the saves (`classLevelId`): its `baseBonus` links, each its save and its amount. */
+  baseBonusesOf(classLevelId: string): readonly ViewLink[] {
+    return this.rulesetData.linksOf(classLevelId, "baseBonus", "saves");
   }
 
-  /** A class's class skills (`klassId`): its `classSkill` links, by their skills' names, as the books list them. */
-  classSkillsOf(klassId: string): readonly ViewLink[] {
-    return this.linksByName(klassId, "classSkill", "skills", this.rulesetData.storedById("skills"));
+  get classes(): Klass[] {
+    return this.rulesetData.rows("classes");
+  }
+
+  get classesById(): Map<string, Klass> {
+    return this.rulesetData.byId("classes");
+  }
+
+  /** Key: `${ownerId}:${position}`, a level's class and its number, the class's id resolved. */
+  get classLevelByClassAndLevel(): Map<string, KlassLevel> {
+    return (this.built.classLevelByClassAndLevel ??= this.rulesetData.resolvingCompositeKeys(
+      new Map(this.classLevels.map((kl) => [`${kl.ownerId}:${kl.position}`, kl])),
+    ));
+  }
+
+  get classLevels(): KlassLevel[] {
+    return this.rulesetData.rows("class_levels");
+  }
+
+  /** A class's id → its levels (their owner), sorted by their number (`position`): the last is the class's highest. */
+  get classLevelsByClass(): Map<string, KlassLevel[]> {
+    return (this.built.classLevelsByClass ??= this.rulesetData.resolvingIds(
+      Map.groupBy(
+        this.classLevels.toSorted((a, b) => a.position - b.position),
+        (kl) => kl.ownerId,
+      ),
+    ));
+  }
+
+  get classLevelsById(): Map<string, KlassLevel> {
+    return this.rulesetData.byId("class_levels");
+  }
+
+  /** A class's class skills (`classId`): its `classSkill` links, by their skills' names, as the books list them. */
+  classSkillsOf(classId: string): readonly ViewLink[] {
+    return this.linksByName(classId, "classSkill", "skills", this.rulesetData.storedById("skills"));
   }
 
   /** `stripSeparators(feat.name)` → featId, the first match winning: the "set feats.<slug>.possessed" modifier scan. */
@@ -135,19 +168,19 @@ export default class Dnd35View {
   }
 
   /**
-   * The feats a class level grants (`klassLevelId`): its `grants` links to feats, each its feat and its pool (`viaId`)
+   * The feats a class level grants (`classLevelId`): its `grants` links to feats, each its feat and its pool (`viaId`)
    * and whether it's free, by their feats' names, as the books list them.
    */
-  grantedFeatsOf(klassLevelId: string): readonly ViewLink[] {
-    return this.linksByName(klassLevelId, "grants", "feats", this.rulesetData.storedById("feats"));
+  grantedFeatsOf(classLevelId: string): readonly ViewLink[] {
+    return this.linksByName(classLevelId, "grants", "feats", this.rulesetData.storedById("feats"));
   }
 
   /**
-   * The spells a class level grants (`klassLevelId`): its `grants` links to spells, each its spell and its list
+   * The spells a class level grants (`classLevelId`): its `grants` links to spells, each its spell and its list
    * (`viaId`) and whether it's free, by their spells' names.
    */
-  grantedSpellsOf(klassLevelId: string): readonly ViewLink[] {
-    return this.linksByName(klassLevelId, "grants", "spells", this.rulesetData.storedById("spells"));
+  grantedSpellsOf(classLevelId: string): readonly ViewLink[] {
+    return this.linksByName(classLevelId, "grants", "spells", this.rulesetData.storedById("spells"));
   }
 
   get items(): Item[] {
@@ -156,39 +189,6 @@ export default class Dnd35View {
 
   get itemsById(): Map<string, Item> {
     return this.rulesetData.byId("items");
-  }
-
-  get klasses(): Klass[] {
-    return this.rulesetData.rows("classes");
-  }
-
-  get klassesById(): Map<string, Klass> {
-    return this.rulesetData.byId("classes");
-  }
-
-  /** Key: `${ownerId}:${position}`, a level's class and its number, the class's id resolved. */
-  get klassLevelByKlassAndLevel(): Map<string, KlassLevel> {
-    return (this.built.klassLevelByKlassAndLevel ??= this.rulesetData.resolvingCompositeKeys(
-      new Map(this.klassLevels.map((kl) => [`${kl.ownerId}:${kl.position}`, kl])),
-    ));
-  }
-
-  get klassLevels(): KlassLevel[] {
-    return this.rulesetData.rows("class_levels");
-  }
-
-  get klassLevelsById(): Map<string, KlassLevel> {
-    return this.rulesetData.byId("class_levels");
-  }
-
-  /** A class's id → its levels (their owner), sorted by their number (`position`): the last is the class's highest. */
-  get klassLevelsByKlass(): Map<string, KlassLevel[]> {
-    return (this.built.klassLevelsByKlass ??= this.rulesetData.resolvingIds(
-      Map.groupBy(
-        this.klassLevels.toSorted((a, b) => a.position - b.position),
-        (kl) => kl.ownerId,
-      ),
-    ));
   }
 
   /**

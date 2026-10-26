@@ -76,8 +76,8 @@ describe("SpellGroups", () => {
         },
         classes: {
           getCharacterClasses: () => ({
-            cleric: { levels: [{ klassLevel: { position: 1 }, spells: [burningHands("cleric")] }] },
-            wizard: { levels: [{ klassLevel: { position: 1 }, spells: [burningHands("wizard")] }] },
+            cleric: { levels: [{ classLevel: { position: 1 }, spells: [burningHands("cleric")] }] },
+            wizard: { levels: [{ classLevel: { position: 1 }, spells: [burningHands("wizard")] }] },
           }),
         },
         spells: { getFlatSpells: () => ({}) },
@@ -144,7 +144,7 @@ describe("SpellGroups", () => {
             fighter: {
               levels: [
                 {
-                  klassLevel: { position: 1 },
+                  classLevel: { position: 1 },
                   spells: [{ entity: { id: "endure", name: "Endure Elements" }, spellLevel: 1, viaId: "sun" }],
                 },
               ],

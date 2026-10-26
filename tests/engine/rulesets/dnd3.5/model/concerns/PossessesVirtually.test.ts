@@ -9,7 +9,7 @@ import { db } from "@/server/database/index.ts";
 import { Characters, Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
-import { addCharacterLevel, findKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { addCharacterLevel, findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx } from "@/tests/support/seed.ts";
 import {
@@ -305,7 +305,7 @@ describe("A grant", () => {
       }))!;
       for (let level = 1; level <= 6; level++) {
         const picks = level === 1 ? { feats: { [bond.id]: [catlord.id] } } : {};
-        await addCharacterLevel(characterId, (await findKlassLevel(animalLord.id, level))!.id, picks);
+        await addCharacterLevel(characterId, (await findClassLevel(animalLord.id, level))!.id, picks);
       }
       const { feats } = (await build(characterId)).components;
 

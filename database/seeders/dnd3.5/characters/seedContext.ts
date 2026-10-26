@@ -10,16 +10,16 @@ import { entitiesInRules } from "@/drizzle/schema.ts";
 
 /** The seeded core rules' ids by name: its seed context, and the languages, races, classes and items characters name. */
 export type SeedContext = Dnd35SeedContext & {
+  /** Class id by kind, then name. Use `classMap.pc["Fighter"]`, `classMap.familiar["Familiar"]`. */
+  classMap: Record<string, Record<string, string>>;
   itemMap: Record<string, string>;
-  /** Klass id by kind, then name. Use `klassMap.pc["Fighter"]`, `klassMap.familiar["Familiar"]`. */
-  klassMap: Record<string, Record<string, string>>;
   langMap: Record<string, string>;
   /** Race id by kind, then name. Use `raceMap.pc["Human"]`, `raceMap.familiar["Owl"]`. */
   raceMap: Record<string, Record<string, string>>;
 };
 
 /**
- * Group kinded rows (races, klasses) by kind, then by name. Callers spell out
+ * Group kinded rows (races, classes) by kind, then by name. Callers spell out
  * which kind they want (`ctx.raceMap.pc["Human"]`, `ctx.raceMap.familiar["Owl"]`)
  * so name collisions between e.g. familiar-kind and animalcompanion-kind rows
  * resolve unambiguously at the call site.
@@ -48,13 +48,13 @@ export async function getSeedContext(db: Db): Promise<SeedContext> {
     }[];
   const langs = await named("languages");
   const races = await named("races");
-  const klasses = await named("classes");
+  const classes = await named("classes");
   const items = await named("items");
   return {
     ...names,
     langMap: SeederState.idsByName(langs),
     raceMap: buildKindMap(races),
-    klassMap: buildKindMap(klasses),
+    classMap: buildKindMap(classes),
     itemMap: SeederState.idsByName(items),
   };
 }

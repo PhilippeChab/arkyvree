@@ -27,9 +27,9 @@ async function forkWithClass(name: string) {
   return { session, fork, klass, levelId: (level: number) => levels.find((l) => l.position === level)!.id };
 }
 
-/** A save of `klassId`'s progression in the fork, and the class's levels, spells and pools once written. */
-async function save(session: ReturnType<typeof makeSession>, rulesetId: string, klassId: string, body: Body) {
-  const saved = await EntitiesService.updateProgression(session, rulesetId, "classes", klassId, body);
+/** A save of `classId`'s progression in the fork, and the class's levels, spells and pools once written. */
+async function save(session: ReturnType<typeof makeSession>, rulesetId: string, classId: string, body: Body) {
+  const saved = await EntitiesService.updateProgression(session, rulesetId, "classes", classId, body);
   const byLevel = <T extends { position: number }>(rows: T[]) => new Map(rows.map((row) => [row.position, row]));
   return {
     saved,

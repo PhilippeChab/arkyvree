@@ -64,9 +64,9 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
 
     /** The character's race, classes, skills, feats and spells, which its source chain must hold. */
     protected override listEntityRows() {
-      const { race, klasses, skills, feats, spells } = this.data;
+      const { race, classes, skills, feats, spells } = this.data;
       const entities = <E>(held: { entity: E }[]) => held.map(({ entity }) => entity);
-      return { races: [race], klasses, skills: entities(skills), feats: entities(feats), spells: entities(spells) };
+      return { races: [race], classes, skills: entities(skills), feats: entities(feats), spells: entities(spells) };
     }
 
     /**
@@ -84,25 +84,25 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
         case "spells":
           return idx.spellsById.get(entityId)?.name;
         case "classes":
-          return idx.rulesetKlassesById.get(entityId)?.name;
+          return idx.rulesetClassesById.get(entityId)?.name;
         case "modifiers": {
           // A modifier of a level the bonus caster levels reach, which the spellcasting applies, not the build
-          const mod = this.components.spellcasting.getBonusKlassLevelModifiers().find((m) => m.id === entityId);
+          const mod = this.components.spellcasting.getBonusClassLevelModifiers().find((m) => m.id === entityId);
           if (mod) return this.resolveEntityName(mod.sourceId, mod.sourceType);
 
           break;
         }
         case "class_levels": {
-          const kl = idx.klassLevelsById.get(entityId);
+          const kl = idx.classLevelsById.get(entityId);
           if (kl) {
-            const klass = idx.rulesetKlassesById.get(kl.ownerId);
+            const klass = idx.rulesetClassesById.get(kl.ownerId);
             return klass ? `${klass.name} Level ${kl.position}` : `Level ${kl.position}`;
           }
-          const attribution = this.components.spellcasting.getBonusKlassLevelAttribution().get(entityId);
+          const attribution = this.components.spellcasting.getBonusClassLevelAttribution().get(entityId);
           if (attribution) return attribution;
-          const bonusKl = this.components.spellcasting.getBonusKlassLevels().find((k) => k.id === entityId);
+          const bonusKl = this.components.spellcasting.getBonusClassLevels().find((k) => k.id === entityId);
           if (bonusKl) {
-            const klass = idx.rulesetKlassesById.get(bonusKl.ownerId);
+            const klass = idx.rulesetClassesById.get(bonusKl.ownerId);
             return klass ? `${klass.name} Level ${bonusKl.position} (bonus)` : `Level ${bonusKl.position} (bonus)`;
           }
           break;
@@ -123,10 +123,10 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       for (const { entity } of this.data.feats) featsById.set(entity.id, entity);
       const spellsById = new Map<string, Spell>();
       for (const { entity } of this.data.spells) spellsById.set(entity.id, entity);
-      const klassLevelsById = new Map<string, CustomizedClassLevel>();
-      for (const kl of this.data.klassLevels) klassLevelsById.set(kl.id, kl);
-      const rulesetKlassesById = new Map<string, Klass>();
-      for (const k of Dnd35View.of(this.rulesetData).klasses) rulesetKlassesById.set(k.id, k);
+      const classLevelsById = new Map<string, CustomizedClassLevel>();
+      for (const kl of this.data.classLevels) classLevelsById.set(kl.id, kl);
+      const rulesetClassesById = new Map<string, Klass>();
+      for (const k of Dnd35View.of(this.rulesetData).classes) rulesetClassesById.set(k.id, k);
 
       // Flat modifier.id → owning entity index. Built once by iterating every
       // entity that owns modifiers so resolveModifierSourceName becomes O(1).
@@ -140,8 +140,8 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       if (this.data.race.modifiers)
         for (const m of this.data.race.modifiers) modifierOwner.set(m.id, { name: this.data.race.name, type: "races" });
 
-      for (const kl of this.data.klassLevels) {
-        const klass = rulesetKlassesById.get(kl.ownerId);
+      for (const kl of this.data.classLevels) {
+        const klass = rulesetClassesById.get(kl.ownerId);
         const label = klass ? `${klass.name} Level ${kl.position}` : `Level ${kl.position}`;
         for (const m of kl.modifiers) modifierOwner.set(m.id, { name: label, type: "class_levels" });
       }
@@ -151,8 +151,8 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       this.diagnosticsIndex = {
         featsById,
         spellsById,
-        klassLevelsById,
-        rulesetKlassesById,
+        classLevelsById,
+        rulesetClassesById,
         modifierOwner,
       };
       return this.diagnosticsIndex;

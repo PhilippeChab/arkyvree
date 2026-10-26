@@ -97,7 +97,7 @@ interface SpellRowTag {
  */
 interface SpellSheet {
   aptitudes: Record<string, { id: string; name: string }>;
-  classes: Record<string, { levels?: { klassLevel?: { position: number } | null; spells?: LevelSpell[] }[] }>;
+  classes: Record<string, { levels?: { classLevel?: { position: number } | null; spells?: LevelSpell[] }[] }>;
   /** Each list a feat brings, by its id: its spells' ids by the spell level it has each at (none on a domain slot). */
   featListSpells: Map<string, Map<number, Set<string>>>;
   spells: Record<
@@ -241,7 +241,7 @@ export default class SpellGroups {
     for (const klass of Object.values(sheet.classes)) {
       for (const level of klass.levels || []) {
         for (const { entity: spell, saveName, spellLevel, viaId } of level.spells || []) {
-          const group = groupOf(viaId, spellLevel ?? level.klassLevel?.position ?? 0);
+          const group = groupOf(viaId, spellLevel ?? level.classLevel?.position ?? 0);
           const spellData = sheet.spells[stripSeparators(spell.name)];
           const fields = spellData?.fields ?? {};
           const tags = SpellGroups.tagsFor(sheet, spell.id, viaId);

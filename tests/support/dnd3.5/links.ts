@@ -6,13 +6,13 @@
 import type { Db } from "@/drizzle/database.ts";
 import { EntityLinks } from "@/server/repositories/index.ts";
 
-/** A class level's base bonuses to saves (`klassLevelId`, `bonuses`): its `baseBonus` links. */
-export async function addBaseBonuses(db: Db, klassLevelId: string, bonuses: { base: number; saveId: string }[]) {
+/** A class level's base bonuses to saves (`classLevelId`, `bonuses`): its `baseBonus` links. */
+export async function addBaseBonuses(db: Db, classLevelId: string, bonuses: { base: number; saveId: string }[]) {
   return await EntityLinks.createMany(
     db,
     bonuses.map(({ base, saveId }) => ({
       role: "baseBonus",
-      fromId: klassLevelId,
+      fromId: classLevelId,
       fromType: "class_levels",
       toId: saveId,
       toType: "saves",
@@ -21,18 +21,18 @@ export async function addBaseBonuses(db: Db, klassLevelId: string, bonuses: { ba
   );
 }
 
-/** A class's skills (`klassId`, `skillIds`): its `classSkill` links. */
-export async function addClassSkills(db: Db, klassId: string, skillIds: string[]) {
+/** A class's skills (`classId`, `skillIds`): its `classSkill` links. */
+export async function addClassSkills(db: Db, classId: string, skillIds: string[]) {
   return await EntityLinks.createMany(
     db,
-    skillIds.map((toId) => ({ role: "classSkill", fromId: klassId, fromType: "classes", toId, toType: "skills" })),
+    skillIds.map((toId) => ({ role: "classSkill", fromId: classId, fromType: "classes", toId, toType: "skills" })),
   );
 }
 
 /** A class level's grants of feats or spells (`toType`), each through its pool, free when it says. */
 export async function addGrants(
   db: Db,
-  klassLevelId: string,
+  classLevelId: string,
   toType: "feats" | "spells",
   grants: { aptitudeId: string; free?: boolean; toId: string }[],
 ) {
@@ -40,7 +40,7 @@ export async function addGrants(
     db,
     grants.map(({ aptitudeId, free = false, toId }) => ({
       role: "grants",
-      fromId: klassLevelId,
+      fromId: classLevelId,
       fromType: "class_levels",
       toId,
       toType,
@@ -83,9 +83,9 @@ export async function addLists(
   );
 }
 
-/** The grants of class levels (`klassLevelIds`) as stored, of feats or spells (`toType`) when it says. */
-export async function findGrants(db: Db, klassLevelIds: string[], toType?: "feats" | "spells") {
-  const grants = await EntityLinks.findMany(db, { fromIds: klassLevelIds, role: "grants" });
+/** The grants of class levels (`classLevelIds`) as stored, of feats or spells (`toType`) when it says. */
+export async function findGrants(db: Db, classLevelIds: string[], toType?: "feats" | "spells") {
+  const grants = await EntityLinks.findMany(db, { fromIds: classLevelIds, role: "grants" });
   return toType ? grants.filter((grant) => grant.toType === toType) : grants;
 }
 

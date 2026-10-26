@@ -14,8 +14,8 @@ import { CHARACTER_ALIGNMENT, CHARACTER_GENDER, CHARACTER_XP } from "@/vocabular
 
 /** The levels a bonded creature has: its class's first `hitDice`. */
 interface BondedLevels {
+  classId: string;
   hitDice: number;
-  klassId: string;
 }
 
 /**
@@ -67,7 +67,7 @@ function buildCreature(
 
 /** What a master's bonded creatures become as its levels make them. */
 export default class BondedPlans {
-  constructor(private readonly view: Pick<Dnd35View, "abilities" | "klasses" | "klassLevelsByKlass" | "races">) {}
+  constructor(private readonly view: Pick<Dnd35View, "abilities" | "classes" | "classLevelsByClass" | "races">) {}
 
   /**
    * What the master's creature of `kind` becomes, from the one it has (`existing`): refused when the ruleset lacks the
@@ -86,11 +86,11 @@ export default class BondedPlans {
     const race = view.races.find((r) => r.name === raceName && r.partition === kind);
     if (!race) throw new RulesError("invalid", `Bonded ${kind} race "${raceName}" not found in ruleset`);
     const { className } = BONDED_KIND_BY_SLUG[kind];
-    const klass = view.klasses.find((k) => k.name === className && k.partition === kind);
+    const klass = view.classes.find((k) => k.name === className && k.partition === kind);
     if (!klass) throw new RulesError("invalid", `${className} class not found in ruleset — content seed missing`);
     // Each grant feat adds to bonded.<kind>.level by a template (a druid's `{{ [classes.druid.level] }}`, a ranger's
     // `{{ floor([classes.ranger.level] / 2) }}`): a class that gives a creature needs only a feat with its template
-    const levels = { hitDice: Math.max(1, master.components.bonded.getBondedLevel(kind)), klassId: klass.id };
+    const levels = { hitDice: Math.max(1, master.components.bonded.getBondedLevel(kind)), classId: klass.id };
     if (existing && existing.links[RACE_ROLE] === race.id) return { keptId: existing.id, levels };
     return { created: buildCreature(record, kind, race, view.abilities), levels, removedId: existing?.id };
   }
@@ -100,16 +100,16 @@ export default class BondedPlans {
    * first `hitDice`: its next ones, refused when the class lacks one, or its last ones. A level stores 1 hit point:
    * the creature's build gives it its hit points, from its master's or its hit dice.
    */
-  planBondedLevels(levels: { id: string }[], { hitDice, klassId }: BondedLevels): ChildLevelsPlan {
-    const klassLevelByLevel = new Map(
-      (this.view.klassLevelsByKlass.get(klassId) ?? []).map((klassLevel) => [klassLevel.position, klassLevel]),
+  planBondedLevels(levels: { id: string }[], { hitDice, classId }: BondedLevels): ChildLevelsPlan {
+    const classLevelByLevel = new Map(
+      (this.view.classLevelsByClass.get(classId) ?? []).map((classLevel) => [classLevel.position, classLevel]),
     );
     const added: ChildLevelsPlan["added"] = [];
     for (let level = levels.length + 1; level <= hitDice; level++) {
-      const klassLevel = klassLevelByLevel.get(level);
-      if (!klassLevel)
+      const classLevel = classLevelByLevel.get(level);
+      if (!classLevel)
         throw new RulesError("invalid", `Bonded class is missing level ${level} — content seed incomplete`);
-      added.push({ trackId: klassLevel.id, picks: [{ step: "hp", amount: 1 }] });
+      added.push({ trackId: classLevel.id, picks: [{ step: "hp", amount: 1 }] });
     }
     return { added, removedIds: levels.slice(hitDice).map((level) => level.id) };
   }

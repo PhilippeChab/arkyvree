@@ -6,7 +6,7 @@ import { ConflictError } from "@/server/errors/index.ts";
 import { Activities, Entities, EntityLinks } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
-import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { addCharacterLevel, createTestClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { addClassSkills } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import {
@@ -199,8 +199,8 @@ describe("EntitiesService: skills", () => {
     const { user, session, ruleset, body } = await setup();
     const skill = await EntitiesService.createEntity(session, ruleset.id, "skills", body());
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
-    const { klassLevel } = await createTestKlassLevel(ruleset.id);
-    await addCharacterLevel(character.id, klassLevel.id, { skills: { [skill.id]: 1 } });
+    const { classLevel } = await createTestClassLevel(ruleset.id);
+    await addCharacterLevel(character.id, classLevel.id, { skills: { [skill.id]: 1 } });
 
     expect(EntitiesService.deleteEntity(session, ruleset.id, "skills", skill.id)).rejects.toThrow(ConflictError);
   });

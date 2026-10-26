@@ -36,7 +36,7 @@ import {
   WIZARD_1,
 } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { levelEditPlan, levelUpPlan } from "@/tests/support/dnd3.5/levelPlans.ts";
-import { addOneLevel, findKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { addOneLevel, findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { queuedPdfJobs } from "@/tests/support/jobs.ts";
 import { getPlanAnswer, getStepOptions } from "@/tests/support/levels.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
@@ -149,7 +149,7 @@ describe("Bonded creatures", () => {
     const companionLevels = async () =>
       (await CharacterAdvancements.findMany(db, { characterId: bonded.id })).map((level) => level.trackId);
     const companionClassLevel = async (level: number) =>
-      (await findKlassLevel(ctx.klassMap.animalcompanion["Animal Companion"], level))!.id;
+      (await findClassLevel(ctx.classMap.animalcompanion["Animal Companion"], level))!.id;
     await CharacterLevelsService.removeLevel(owner, masterId);
     // Its third level goes, though the test's one transaction made all three at one creation time
     expect(await companionLevels()).toEqual([await companionClassLevel(1), await companionClassLevel(2)]);
@@ -259,7 +259,7 @@ describe("CharactersService with bonded creatures", () => {
       }),
     ).rejects.toMatchObject({ refusal: "invalid" });
     const wizardId = await createSeedCharacter(ctx, "wizard");
-    expect(addOneLevel(owner, wizardId, ctx.klassMap.familiar["Familiar"], 1, 4, null)).rejects.toThrow(
+    expect(addOneLevel(owner, wizardId, ctx.classMap.familiar["Familiar"], 1, 4, null)).rejects.toThrow(
       "Level 1: Class is not valid for a player character",
     );
   });
@@ -329,9 +329,9 @@ describe("CharactersService with bonded creatures", () => {
     [
       "count the feat slots of",
       async (id: string) =>
-        getPlanAnswer(owner, id, levelUpPlan([{ klassId: (await getSeedCtx()).klassMap.pc.Wizard, level: 2, hp: 4 }])),
+        getPlanAnswer(owner, id, levelUpPlan([{ classId: (await getSeedCtx()).classMap.pc.Wizard, level: 2, hp: 4 }])),
     ],
-    ["level up", async (id: string) => addOneLevel(owner, id, (await getSeedCtx()).klassMap.pc.Wizard, 2, 4, null)],
+    ["level up", async (id: string) => addOneLevel(owner, id, (await getSeedCtx()).classMap.pc.Wizard, 2, 4, null)],
     ["remove a level from", (id: string) => CharacterLevelsService.removeLevel(owner, id)],
     ["set the ability scores of", (id: string) => CharactersService.updateScores(owner, id, "score", {})],
     ["list the inventory of", (id: string) => CharacterInventoryService.getInventory(owner, id)],

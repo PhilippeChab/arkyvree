@@ -113,34 +113,34 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
 
     // Collect all class skill IDs + mark subtypes as innate
     // (e.g., "Craft (Armorsmithing)" is innate if "Craft" is a class skill)
-    const allKlassSkillNames = new Set<string>();
-    const allKlassSkillIds = Object.values(classes).flatMap((klass) => klass.classSkillLinks.map((link) => link.toId));
-    for (const skillId of allKlassSkillIds) {
+    const allClassSkillNames = new Set<string>();
+    const allClassSkillIds = Object.values(classes).flatMap((klass) => klass.classSkillLinks.map((link) => link.toId));
+    for (const skillId of allClassSkillIds) {
       this.innateSkillIds.add(skillId);
       const name = skillNameById.get(skillId);
-      if (name) allKlassSkillNames.add(name);
+      if (name) allClassSkillNames.add(name);
     }
     // Also mark subtypes of class skills as innate.
     for (const skill of rulesetSkills) {
       if (this.innateSkillIds.has(skill.id)) continue;
-      if (SkillRules.isSubtypeOf(skill.name, allKlassSkillNames)) this.innateSkillIds.add(skill.id);
+      if (SkillRules.isSubtypeOf(skill.name, allClassSkillNames)) this.innateSkillIds.add(skill.id);
     }
 
     // Convert stored points to actual ranks per class-level.
     // Points spent on a class skill (for that class) convert 1:1.
     // Points spent on a cross-class skill convert at 0.5 ranks per point.
     for (const klass of Object.values(classes)) {
-      const klassSkillIds = new Set(klass.classSkillLinks.map((link) => link.toId));
-      const klassSkillNames = new Set(
+      const classSkillIds = new Set(klass.classSkillLinks.map((link) => link.toId));
+      const classSkillNames = new Set(
         klass.classSkillLinks.map((link) => skillNameById.get(link.toId)).filter((n): n is string => !!n),
       );
 
       for (const level of klass.levels) {
         for (const { amount, entity } of level.skills) {
-          const isClassSkillById = klassSkillIds.has(entity.id);
-          const isClassSkillByName = !isClassSkillById && SkillRules.isSubtypeOf(entity.name, klassSkillNames);
-          const isClassSkillForKlass = isClassSkillById || isClassSkillByName;
-          const ranksGained = SkillRules.ranksFor(amount, isClassSkillForKlass);
+          const isClassSkillById = classSkillIds.has(entity.id);
+          const isClassSkillByName = !isClassSkillById && SkillRules.isSubtypeOf(entity.name, classSkillNames);
+          const isClassSkillForClass = isClassSkillById || isClassSkillByName;
+          const ranksGained = SkillRules.ranksFor(amount, isClassSkillForClass);
           const current = this.rankBySkillId.get(entity.id) ?? 0;
           this.rankBySkillId.set(entity.id, current + ranksGained);
         }
@@ -289,7 +289,7 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
       .sort((a, b) => a.advancement.position - b.advancement.position);
     return {
       pointsPerLevel: levels.map((level) =>
-        this.getLevelPointsPerLevel(this.skillPointClassLevelFields.get(level.klassLevel.id)?.skills ?? 0),
+        this.getLevelPointsPerLevel(this.skillPointClassLevelFields.get(level.classLevel.id)?.skills ?? 0),
       ),
       bonusPerLevel: this.skillBudget.perlevel,
     };

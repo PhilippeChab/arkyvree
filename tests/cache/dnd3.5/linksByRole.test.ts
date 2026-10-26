@@ -51,11 +51,11 @@ describe("the view's links by role — parity with the stored links", () => {
 
   test("a class level's granted feats are its stored grants links to feats, by their feats' names", async () => {
     const dnd35 = Dnd35View.of(rulesetData);
-    const klassLevel = dnd35.klassLevelByKlassAndLevel.get(`${ctx.klassMap.pc["Fighter"]}:1`);
-    expect(klassLevel).toBeDefined();
+    const classLevel = dnd35.classLevelByClassAndLevel.get(`${ctx.classMap.pc["Fighter"]}:1`);
+    expect(classLevel).toBeDefined();
 
-    const fromCache = dnd35.grantedFeatsOf(klassLevel!.id);
-    const stored = await EntityLinks.findMany(db, { fromIds: [klassLevel!.id], role: "grants" });
+    const fromCache = dnd35.grantedFeatsOf(classLevel!.id);
+    const stored = await EntityLinks.findMany(db, { fromIds: [classLevel!.id], role: "grants" });
     expect(fromCache.length).toBeGreaterThan(0);
     expect(partsOf(fromCache)).toEqual(partsOf(stored.filter((link) => link.toType === "feats")));
     const names = fromCache.map((link) => dnd35.featsById.get(link.toId)!.name);
@@ -64,9 +64,9 @@ describe("the view's links by role — parity with the stored links", () => {
 
   test("a class level's granted spells are its stored grants links to spells", async () => {
     const dnd35 = Dnd35View.of(rulesetData);
-    for (const klassLevel of dnd35.klassLevels) {
-      const stored = await EntityLinks.findMany(db, { fromIds: [klassLevel.id], role: "grants" });
-      expect(partsOf(dnd35.grantedSpellsOf(klassLevel.id))).toEqual(
+    for (const classLevel of dnd35.classLevels) {
+      const stored = await EntityLinks.findMany(db, { fromIds: [classLevel.id], role: "grants" });
+      expect(partsOf(dnd35.grantedSpellsOf(classLevel.id))).toEqual(
         partsOf(stored.filter((link) => link.toType === "spells")),
       );
     }
@@ -74,7 +74,7 @@ describe("the view's links by role — parity with the stored links", () => {
 
   test("a class's skills are its stored classSkill links, by their skills' names", async () => {
     const dnd35 = Dnd35View.of(rulesetData);
-    const fighterId = ctx.klassMap.pc["Fighter"];
+    const fighterId = ctx.classMap.pc["Fighter"];
 
     const fromCache = dnd35.classSkillsOf(fighterId);
     expect(fromCache.length).toBeGreaterThan(0);
@@ -88,11 +88,11 @@ describe("the view's links by role — parity with the stored links", () => {
 
   test("a class level's base bonuses are its stored baseBonus links, each with its amount", async () => {
     const dnd35 = Dnd35View.of(rulesetData);
-    const klassLevel = dnd35.klassLevelByKlassAndLevel.get(`${ctx.klassMap.pc["Fighter"]}:1`)!;
-    const fromCache = dnd35.baseBonusesOf(klassLevel.id);
+    const classLevel = dnd35.classLevelByClassAndLevel.get(`${ctx.classMap.pc["Fighter"]}:1`)!;
+    const fromCache = dnd35.baseBonusesOf(classLevel.id);
     expect(fromCache.map((link) => link.amount).toSorted()).toEqual([0, 0, 2]);
     expect(partsOf(fromCache)).toEqual(
-      partsOf(await EntityLinks.findMany(db, { fromIds: [klassLevel.id], role: "baseBonus" })),
+      partsOf(await EntityLinks.findMany(db, { fromIds: [classLevel.id], role: "baseBonus" })),
     );
   });
 

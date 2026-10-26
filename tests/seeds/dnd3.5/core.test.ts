@@ -116,12 +116,12 @@ describe("The seeded core rules", () => {
 
   test("grant the druid Druidic at its first level, the one secret language, and no class any other", async () => {
     const rows = await seededRows();
-    expect(grantedLanguages(rows, rows.klassLevel("Druid", 1).id)).toEqual([grant("druidic")]);
-    const levelIds = new Set(rows.klassLevels.map(({ id }) => id));
+    expect(grantedLanguages(rows, rows.classLevel("Druid", 1).id)).toEqual([grant("druidic")]);
+    const levelIds = new Set(rows.classLevels.map(({ id }) => id));
     const granting = rows.modifiers.filter(
       ({ sourceId, target }) => levelIds.has(sourceId) && target?.startsWith("languages."),
     );
-    expect(granting.map(({ sourceId }) => sourceId)).toEqual([rows.klassLevel("Druid", 1).id]);
+    expect(granting.map(({ sourceId }) => sourceId)).toEqual([rows.classLevel("Druid", 1).id]);
     expect(
       rows.languages.filter(({ fields }) => fields[LANGUAGE_TYPE] === SECRET_LANGUAGE_TYPE).map(({ name }) => name),
     ).toEqual(["Druidic"]);
@@ -271,7 +271,7 @@ describe("The seeded core rules", () => {
     test("a cleric picks two at the first level", async () => {
       const rows = await seededRows();
       const picks = rows
-        .modifiersOf(rows.klassLevel("Cleric", 1).id)
+        .modifiersOf(rows.classLevel("Cleric", 1).id)
         .filter((m) => m.target === "aptitudes.clericdomain.allowed");
       expect(picks).toMatchObject([{ operator: "add", value: "2" }]);
     });

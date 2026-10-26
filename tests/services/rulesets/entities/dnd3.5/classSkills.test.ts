@@ -41,8 +41,8 @@ async function setup() {
   return { user, session, ruleset, fighter, rogue, climb, swim };
 }
 
-async function skillIdsOf(rulesetId: string, klassId: string) {
-  return (await EntitiesService.getEntityLinks(rulesetId, "classes", klassId)).map((link) => link.toId).sort();
+async function skillIdsOf(rulesetId: string, classId: string) {
+  return (await EntitiesService.getEntityLinks(rulesetId, "classes", classId)).map((link) => link.toId).sort();
 }
 
 // Adding, listing and removing a class skill, and refusing one the class has, are covered in the class skills router test.
@@ -114,9 +114,9 @@ describe("EntitiesService: a class's skills", () => {
   test("refuses to remove a class skill while a character has a level in the class", async () => {
     const { user, session, ruleset, fighter, climb } = await setup();
     await EntitiesService.addEntityLink(session, ruleset.id, "classes", fighter.id, climb.id);
-    const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: fighter.id, position: 1 });
+    const [classLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: fighter.id, position: 1 });
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
-    await addCharacterLevel(character.id, klassLevel.id);
+    await addCharacterLevel(character.id, classLevel.id);
 
     expect(EntitiesService.removeEntityLink(session, ruleset.id, "classes", fighter.id, climb.id)).rejects.toThrow(
       ConflictError,

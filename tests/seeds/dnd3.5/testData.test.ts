@@ -66,9 +66,9 @@ function seeded(
 /** What the seed wrote of a character. */
 async function written(character: Character) {
   const ctx = await getSeedCtx();
-  const [races, klasses, abilities, languages, skills, feats, aptitudes, spells, items] = [
+  const [races, classes, abilities, languages, skills, feats, aptitudes, spells, items] = [
     ctx.raceMap.pc,
-    ctx.klassMap.pc,
+    ctx.classMap.pc,
     ctx.abilityMap,
     ctx.langMap,
     ctx.skillMap,
@@ -80,11 +80,11 @@ async function written(character: Character) {
   const levels = await CharacterAdvancements.findMany(db, { characterId: character.id });
   const levelNames: Record<string, string> = {};
   for (const level of levels) {
-    const klassLevel = (await Entities.findOne<KlassLevel>(db, {
+    const classLevel = (await Entities.findOne<KlassLevel>(db, {
       entityType: "class_levels",
       id: level.trackId!,
     }))!;
-    levelNames[level.id] = `${klasses[klassLevel.ownerId]} ${klassLevel.position}`;
+    levelNames[level.id] = `${classes[classLevel.ownerId]} ${classLevel.position}`;
   }
   const levelIds = levels.map(({ id }) => id);
   return {

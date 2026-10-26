@@ -249,7 +249,7 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
       const baseAttackBonusFromClasses = Object.values(classes).reduce((acc, klass) => {
         const lastLevel = klass.levels.at(-1);
         if (!lastLevel) return acc;
-        return acc + (classLevelFields.get(lastLevel.klassLevel.id)?.bab ?? 0);
+        return acc + (classLevelFields.get(lastLevel.classLevel.id)?.bab ?? 0);
       }, 0);
 
       this.combat.bab = baseAttackBonusFromClasses;

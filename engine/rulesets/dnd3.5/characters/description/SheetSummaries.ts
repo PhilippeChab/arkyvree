@@ -6,7 +6,7 @@ type SheetClasses = Record<
   string,
   {
     klass: { id: string; name: string };
-    levels: { advancement: { id: string }; klassLevel: { position: number } }[];
+    levels: { advancement: { id: string }; classLevel: { position: number } }[];
   }
 >;
 
@@ -41,10 +41,10 @@ export default class SheetSummaries {
           name: klass.name,
           label,
           words: { open: `${label} Levels`, levels: `${klass.name} Levels`, add: `Add ${klass.name} Level` },
-          advancements: levels.map(({ advancement, klassLevel }) => ({
+          advancements: levels.map(({ advancement, classLevel }) => ({
             id: advancement.id,
-            label: `Level ${klassLevel.position}`,
-            edit: `Edit ${klass.name} Level ${klassLevel.position}`,
+            label: `Level ${classLevel.position}`,
+            edit: `Edit ${klass.name} Level ${classLevel.position}`,
           })),
         };
       }),

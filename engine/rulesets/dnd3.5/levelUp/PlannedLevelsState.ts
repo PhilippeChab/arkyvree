@@ -25,9 +25,9 @@ import type { LevelPicks, LevelRequest } from "./requests.ts";
  */
 export interface PlannedLevels {
   character: DetailedCharacter;
+  classLevelEntries: PlannedClassLevel[];
   /** Each planned level's granted feats the view shows: its class level's `grants` links to feats */
   grantedFeatRecords: ViewLink[][];
-  klassLevelEntries: PlannedClassLevel[];
   saved: DetailedCharacter;
   savedLevelCount: number;
 }
@@ -63,11 +63,11 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
    * Each planned level's points per level before the minimum, in the batch's order: its class's and the skill point
    * ability's modifier.
    */
-  private computeSkillPointBasesPerLevel(character: DetailedCharacter, klassLevelIds: string[]): number[] {
+  private computeSkillPointBasesPerLevel(character: DetailedCharacter, classLevelIds: string[]): number[] {
     const { skills } = character.components;
-    return klassLevelIds.map((klassLevelId) =>
+    return classLevelIds.map((classLevelId) =>
       skills.getLevelPointsPerLevel(
-        CLASS_LEVEL_FIELDS.read(this.rulesetData.find("class_levels", klassLevelId) ?? OwnerValues.NONE).skills,
+        CLASS_LEVEL_FIELDS.read(this.rulesetData.find("class_levels", classLevelId) ?? OwnerValues.NONE).skills,
       ),
     );
   }
@@ -93,20 +93,20 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
   }
 
   /**
-   * The planned levels (`klassLevelEntries`), built from the character's rows: the character with them (each with its
+   * The planned levels (`classLevelEntries`), built from the character's rows: the character with them (each with its
    * ability increase), and as saved.
    */
-  protected buildPlannedLevels(klassLevelEntries: PlannedClassLevel[]): PlannedLevels {
+  protected buildPlannedLevels(classLevelEntries: PlannedClassLevel[]): PlannedLevels {
     const projection = new CharacterProjection(this.character);
-    for (const { abilityIncreases, klassLevel } of klassLevelEntries)
-      projection.addLevel(klassLevel.id, { abilityIncreases, hp: LevelRules.UNROLLED_LEVEL_HP });
+    for (const { abilityIncreases, classLevel } of classLevelEntries)
+      projection.addLevel(classLevel.id, { abilityIncreases, hp: LevelRules.UNROLLED_LEVEL_HP });
     return {
-      grantedFeatRecords: klassLevelEntries.map(({ klassLevel }) =>
-        this.dnd35.grantedFeatsOf(klassLevel.id).filter((grant) => this.dnd35.featsById.has(grant.toId)),
+      grantedFeatRecords: classLevelEntries.map(({ classLevel }) =>
+        this.dnd35.grantedFeatsOf(classLevel.id).filter((grant) => this.dnd35.featsById.has(grant.toId)),
       ),
       character: this.build(projection),
       savedLevelCount: this.character.rows.advancements.length,
-      klassLevelEntries,
+      classLevelEntries,
       saved: this.build(),
     };
   }
@@ -118,8 +118,8 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
   protected buildWithPicks(planned: PlannedLevels, picks: PoolPicks, gains: LevelGains) {
     const distributed = this.distributePlannedPicks(planned, { ...picks, skills: {} }, gains);
     const projection = new CharacterProjection(this.character);
-    for (const [i, { abilityIncreases, klassLevel }] of planned.klassLevelEntries.entries()) {
-      const level = projection.addLevel(klassLevel.id, { abilityIncreases, hp: LevelRules.UNROLLED_LEVEL_HP });
+    for (const [i, { abilityIncreases, classLevel }] of planned.classLevelEntries.entries()) {
+      const level = projection.addLevel(classLevel.id, { abilityIncreases, hp: LevelRules.UNROLLED_LEVEL_HP });
       projection.pick(level, this.toPickPlans(distributed[i]));
     }
     return this.build(projection);
@@ -130,11 +130,11 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
    * level's skill points, class skills and pool slots.
    */
   protected computeLevelGains(planned: PlannedLevels) {
-    const { grantedFeatRecords, character, savedLevelCount, klassLevelEntries, saved } = planned;
-    const klassLevelIds = klassLevelEntries.map(({ klassLevel }) => klassLevel.id);
+    const { grantedFeatRecords, character, savedLevelCount, classLevelEntries, saved } = planned;
+    const classLevelIds = classLevelEntries.map(({ classLevel }) => classLevel.id);
     const pools = character.components.aptitudes.getLevelUpPools(this.dnd35);
     const slots = this.planAptitudeSlots(
-      klassLevelIds,
+      classLevelIds,
       grantedFeatRecords,
       Object.keys(pools.featPools),
       Object.keys(pools.spellPools),
@@ -143,9 +143,9 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
     );
     return {
       ...slots,
-      classSkills: this.getPlannedClassSkills(klassLevelEntries.map(({ klass }) => klass.id)),
-      klassLevelIds,
-      perLevelSkillPoints: this.computeSkillPointsPerLevel(character, klassLevelIds, savedLevelCount),
+      classSkills: this.getPlannedClassSkills(classLevelEntries.map(({ klass }) => klass.id)),
+      classLevelIds,
+      perLevelSkillPoints: this.computeSkillPointsPerLevel(character, classLevelIds, savedLevelCount),
       pools,
     };
   }
@@ -153,11 +153,11 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
   /** Each planned level's skill points, in the batch's order: the first counts four times over on a new character. */
   protected computeSkillPointsPerLevel(
     character: DetailedCharacter,
-    klassLevelIds: string[],
+    classLevelIds: string[],
     savedLevelCount: number,
   ): number[] {
     const { bonusPerLevel } = character.components.skills.getSkillPointBases();
-    return this.computeSkillPointBasesPerLevel(character, klassLevelIds).map((points, i) =>
+    return this.computeSkillPointBasesPerLevel(character, classLevelIds).map((points, i) =>
       SkillRules.levelPoints(points, bonusPerLevel, savedLevelCount === 0 && i === 0),
     );
   }
@@ -177,17 +177,17 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
   }
 
   /**
-   * The class skills of planned levels, from their classes (`klassIds`, one per level): each level's, in the ruleset's
+   * The class skills of planned levels, from their classes (`classIds`, one per level): each level's, in the ruleset's
    * skill order (what a rank costs at that level), and every planned class's together (the rank cap).
    */
-  protected getPlannedClassSkills(klassIds: string[]) {
+  protected getPlannedClassSkills(classIds: string[]) {
     const { skills } = this.dnd35;
-    const recordsOf = (klassId: string) => this.dnd35.classSkillsOf(klassId);
-    const perLevel = klassIds.map((klassId) => {
-      const ids = this.getClassSkillIds(recordsOf(klassId));
+    const recordsOf = (classId: string) => this.dnd35.classSkillsOf(classId);
+    const perLevel = classIds.map((classId) => {
+      const ids = this.getClassSkillIds(recordsOf(classId));
       return skills.filter((skill) => ids.has(skill.id)).map((skill) => skill.id);
     });
-    const merged = this.getClassSkillIds([...new Set(klassIds)].flatMap(recordsOf));
+    const merged = this.getClassSkillIds([...new Set(classIds)].flatMap(recordsOf));
     return { perLevel, merged };
   }
 
@@ -196,22 +196,22 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
    * ruleset or its source chain. Refused past the rules' bounds (a class's last level, and a character's, counting the
    * levels it has), and when a class isn't the view's or a player character's, or hasn't that level.
    */
-  getPlannedKlassLevels(levels: Omit<LevelRequest, "hp">[]): PlannedClassLevel[] {
+  getPlannedClassLevels(levels: Omit<LevelRequest, "hp">[]): PlannedClassLevel[] {
     // No character past its last level: the planned levels come after those it has
     const levelsLeft = LevelRules.countLevelsLeft(this.character.rows.advancements.length);
     const message = `A character can't go past level ${RULESET_LIMITS.characterLevel}: ${levelsLeft} level(s) left`;
     RulesError.parse(z.array(PLANNED_LEVEL).max(levelsLeft, message), levels, ["levels"]);
-    return levels.map(({ klassId, level, abilityIncreases }, i) => {
-      const klass = this.dnd35.klassesById.get(klassId);
+    return levels.map(({ classId, level, abilityIncreases }, i) => {
+      const klass = this.dnd35.classesById.get(classId);
       if (!klass) throw new RulesError("invalid", `Level ${i + 1}: Class does not belong to the character's ruleset`);
 
       if (klass.partition !== PLAYER_CHARACTER_KIND)
         throw new RulesError("invalid", `Level ${i + 1}: Class is not valid for a player character`);
 
-      const klassLevel = this.dnd35.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
-      if (!klassLevel) throw new RulesError("not-found", `Level ${i + 1}: Class level not found`);
+      const classLevel = this.dnd35.classLevelByClassAndLevel.get(`${classId}:${level}`);
+      if (!classLevel) throw new RulesError("not-found", `Level ${i + 1}: Class level not found`);
 
-      return { klass, klassLevel, abilityIncreases };
+      return { klass, classLevel, abilityIncreases };
     });
   }
 }

@@ -32,7 +32,7 @@ export default class SpellLists {
   private readonly built: {
     aptitudeIdBySpellSlug?: Map<string, string>;
     classListIds?: Set<string>;
-    classListsByKlass?: Map<string, Set<string>>;
+    classListsByClass?: Map<string, Set<string>>;
     featListIds?: Set<string>;
     featListSpells?: Map<string, Map<number, Set<string>>>;
     leveledAptitudeIds?: Set<string>;
@@ -53,10 +53,10 @@ export default class SpellLists {
     return (this.built.aptitudeIdBySpellSlug = aptitudeIdBySpellSlug);
   }
 
-  /** The spell lists the ruleset's class levels give slots in, by aptitude id: each a class's own (`classListsByKlass`). */
+  /** The spell lists the ruleset's class levels give slots in, by aptitude id: each a class's own (`classListsByClass`). */
   get classListIds(): Set<string> {
     return (this.built.classListIds ??= new Set(
-      [...this.classListsByKlass.values()].flatMap((lists) =>
+      [...this.classListsByClass.values()].flatMap((lists) =>
         [...lists].flatMap((list) => this.dnd35.aptitudeIdBySlug.get(list) ?? []),
       ),
     ));
@@ -67,21 +67,21 @@ export default class SpellLists {
    * character has taken yet included (a paladin's before his fourth), each with spells on it or none yet (a divine
    * crusader's: her domain's join it).
    */
-  get classListsByKlass(): Map<string, Set<string>> {
-    if (this.built.classListsByKlass) return this.built.classListsByKlass;
-    const { klassLevels } = this.dnd35;
+  get classListsByClass(): Map<string, Set<string>> {
+    if (this.built.classListsByClass) return this.built.classListsByClass;
+    const { classLevels } = this.dnd35;
     const { modifiersBySource } = this.rulesetData;
-    const classListsByKlass = new Map<string, Set<string>>();
-    for (const klassLevel of klassLevels.toSorted((a, b) => a.position - b.position)) {
-      for (const modifier of modifiersBySource.get(klassLevel.id) ?? []) {
+    const classListsByClass = new Map<string, Set<string>>();
+    for (const classLevel of classLevels.toSorted((a, b) => a.position - b.position)) {
+      for (const modifier of modifiersBySource.get(classLevel.id) ?? []) {
         const list = AptitudeTargets.parseSpellLevel(modifier.target)?.list;
         if (list === undefined) continue;
-        const lists = classListsByKlass.get(klassLevel.ownerId) ?? new Set<string>();
+        const lists = classListsByClass.get(classLevel.ownerId) ?? new Set<string>();
         lists.add(list);
-        classListsByKlass.set(klassLevel.ownerId, lists);
+        classListsByClass.set(classLevel.ownerId, lists);
       }
     }
-    return (this.built.classListsByKlass = classListsByKlass);
+    return (this.built.classListsByClass = classListsByClass);
   }
 
   /**

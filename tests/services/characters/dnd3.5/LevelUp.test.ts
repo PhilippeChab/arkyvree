@@ -29,7 +29,7 @@ import {
   type PlanPicks,
   savedPicksOf,
 } from "@/tests/support/dnd3.5/levelPlans.ts";
-import { addCharacterLevel, findKlassLevel, findPicks, increasesOf } from "@/tests/support/dnd3.5/levels.ts";
+import { addCharacterLevel, findClassLevel, findPicks, increasesOf } from "@/tests/support/dnd3.5/levels.ts";
 import { addLists } from "@/tests/support/dnd3.5/links.ts";
 import { getPlanAnswer, getStepOptions, stepAnswerOf } from "@/tests/support/levels.ts";
 import { copyEntity, createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
@@ -75,7 +75,7 @@ function finalizeBatch(
   force = false,
 ) {
   const batch = levels.map(([klass, level, hp, ability]) => ({
-    klassId: ctx.klassMap.pc[klass],
+    classId: ctx.classMap.pc[klass],
     level,
     hp,
     abilityIncreases: increasesOf(ability && ctx.abilityMap[ability]),
@@ -112,7 +112,7 @@ function warClericFirst(general: string[], first: "General" | "War Domain Weapon
 async function createFighterAt(ctx: SeedContext, count: number) {
   const characterId = await createSeedCharacter(ctx);
   for (let level = 1; level <= count; level++)
-    await addCharacterLevel(characterId, (await findKlassLevel(ctx.klassMap.pc["Fighter"], level))!.id);
+    await addCharacterLevel(characterId, (await findClassLevel(ctx.classMap.pc["Fighter"], level))!.id);
   return characterId;
 }
 
@@ -157,7 +157,7 @@ async function eligible(
     Array.from({ length: level }, (_, i) => ({
       abilityIncreases: increasesOf(options.increases?.[i]),
       hp: 10,
-      klassId: ctx.klassMap.pc["Fighter"],
+      classId: ctx.classMap.pc["Fighter"],
       level: i + 1,
     })),
     { feats: { [general]: (options.pendingPicks ?? []).map((name) => ctx.featMap[name]) } },
@@ -192,7 +192,7 @@ async function offeredFeats(
   picked: Pick<PlanPicks, "feats" | "spells"> = {},
 ) {
   const ctx = await getSeedCtx();
-  const plan = levelUpPlan([{ klassId: ctx.klassMap.pc[klass], level, hp: 1 }], picked);
+  const plan = levelUpPlan([{ classId: ctx.classMap.pc[klass], level, hp: 1 }], picked);
   const at = { pool: ctx.aptMap[aptitude] };
   const options = await getStepOptions(session, characterId, "feats", plan, at, { limit: 20, search });
   if (!options.grouped) throw new Error("Expected the feats grouped");
@@ -222,7 +222,7 @@ async function offeredSpells(
   spells: PlanPicks["spells"] = {},
 ) {
   const ctx = await getSeedCtx();
-  const plan = levelUpPlan([{ klassId: ctx.klassMap.pc[klass], level, hp: 1 }], { spells });
+  const plan = levelUpPlan([{ classId: ctx.classMap.pc[klass], level, hp: 1 }], { spells });
   const at = { pool: ctx.aptMap[aptitude] };
   const { items } = await getStepOptions(session, characterId, "spells", plan, at, { limit: 20, search });
   return items.map(({ name }) => name);
@@ -247,7 +247,7 @@ async function preview(
   const planned = levels.map(([klass, level], i) => ({
     abilityIncreases: increasesOf(abilities[i]),
     hp: 1,
-    klassId: ctx.klassMap.pc[klass],
+    classId: ctx.classMap.pc[klass],
     level,
   }));
   return await getPlanAnswer(session, characterId, levelUpPlan(planned, picks(ctx, plan)));
@@ -708,7 +708,7 @@ describe("a pick a level takes twice", () => {
       [ctx.aptMap["General"]]: [toughness.id, ctx.featMap["Power Attack"]],
       [ctx.aptMap["Fighter Bonus Feat"]]: [toughness.id],
     };
-    const levels = [{ klassId: ctx.klassMap.pc["Fighter"], level: 1, hp: 10, abilityIncreases: [] }];
+    const levels = [{ classId: ctx.classMap.pc["Fighter"], level: 1, hp: 10, abilityIncreases: [] }];
     const [level] = await CharacterLevelsService.addLevels(
       session,
       characterId,
@@ -787,7 +787,7 @@ describe("previewing a level-up", () => {
     const result = await preview(ctx, characterId, fighter(4));
 
     expect(result.advancements).toMatchObject(
-      fighter(4).map(([, level]) => ({ position: level, track: { id: ctx.klassMap.pc["Fighter"], name: "Fighter" } })),
+      fighter(4).map(([, level]) => ({ position: level, track: { id: ctx.classMap.pc["Fighter"], name: "Fighter" } })),
     );
     // A d10's: 1 to 10, 5 on average, which the HP step reads
     expect(stepAnswerOf(result, "hp", "value").advancements).toEqual(
@@ -901,7 +901,7 @@ describe("previewing a level-up", () => {
   test("marks a multiclass plan's class skills as the character's classes make them, a single class's as its own", async () => {
     const ctx = await getSeedCtx();
     const characterId = await createSeedCharacter(ctx);
-    await addCharacterLevel(characterId, (await findKlassLevel(ctx.klassMap.pc["Fighter"], 1))!.id);
+    await addCharacterLevel(characterId, (await findClassLevel(ctx.classMap.pc["Fighter"], 1))!.id);
     const ride = async (plan: [string, number][]) =>
       stepAnswerOf(await preview(ctx, characterId, plan), "skills", "spend").rows.find(
         (s) => s.id === ctx.skillMap["Ride"],
@@ -960,12 +960,12 @@ describe("previewing a level-up", () => {
   });
   test("gives a spell level the character knows all of no slot from a later level's add", async () => {
     const ctx = await getSeedCtx();
-    const cleric = ctx.klassMap.pc["Cleric"];
+    const cleric = ctx.classMap.pc["Cleric"];
     const characterId = await createSeedCharacter(ctx);
     // A saved cleric level: she knows all her 1st-level spells
-    await addCharacterLevel(characterId, (await findKlassLevel(cleric, 1))!.id);
+    await addCharacterLevel(characterId, (await findClassLevel(cleric, 1))!.id);
     await Modifiers.create(db, {
-      sourceId: (await findKlassLevel(cleric, 2))!.id,
+      sourceId: (await findClassLevel(cleric, 2))!.id,
       sourceType: "class_levels",
       target: "aptitudes.clericspells.1.allowed",
       operator: "add",
@@ -1159,7 +1159,7 @@ describe("a spell known once in its class list", () => {
     const first = await levelUp(session, ctx, characterId, "Sorcerer", 1, SORCERER_1);
     // A second level that knows Light again, saved before the rule: written straight to the database
     const { skills } = picks(ctx, SORCERER_2);
-    const second = await addCharacterLevel(characterId, (await findKlassLevel(ctx.klassMap.pc["Sorcerer"], 2))!.id, {
+    const second = await addCharacterLevel(characterId, (await findClassLevel(ctx.classMap.pc["Sorcerer"], 2))!.id, {
       spells: { [sorcererSpells]: [light] },
       skills,
     });
@@ -1433,7 +1433,7 @@ describe("a pick the level's other picks give", () => {
     // A cleric level that picks the longsword's proficiency, which its war weapon gives: written straight to the database
     const characterId = await createSeedCharacter(ctx, "cleric");
     const { feats, skills } = picks(ctx, warClericFirst(["Toughness", proficiency]));
-    const level = await addCharacterLevel(characterId, (await findKlassLevel(ctx.klassMap.pc["Cleric"], 1))!.id, {
+    const level = await addCharacterLevel(characterId, (await findClassLevel(ctx.classMap.pc["Cleric"], 1))!.id, {
       feats,
       skills,
     });
@@ -1457,7 +1457,7 @@ describe("a pick the level's other picks give", () => {
     const spellPicks = (names: string[]) => ({ [sorcererSpells]: names.map((name) => ctx.spellMap[name]) });
     // A sorcerer level that picks Light, which its Detect Magic makes known: written straight to the database
     const { feats, spells, skills } = picks(ctx, SORCERER_1);
-    const level = await addCharacterLevel(characterId, (await findKlassLevel(ctx.klassMap.pc["Sorcerer"], 1))!.id, {
+    const level = await addCharacterLevel(characterId, (await findClassLevel(ctx.classMap.pc["Sorcerer"], 1))!.id, {
       feats,
       spells: { [sorcererSpells]: spells[sorcererSpells] },
       skills,
@@ -1562,7 +1562,7 @@ describe("a pick sent by the id of what the fork copied", () => {
     // A level that picks it by both ids
     const bothIds = { [ctx.aptMap["General"]]: [ctx.featMap[name], copy.id] };
     const otherId = await createSeedCharacter(ctx, "fighter", { rulesetId: fork.id });
-    const levels = [{ klassId: ctx.klassMap.pc["Fighter"], level: 1, hp: 10, abilityIncreases: [] }];
+    const levels = [{ classId: ctx.classMap.pc["Fighter"], level: 1, hp: 10, abilityIncreases: [] }];
     const twice = { message: `Non-stackable feat "${name}" cannot be picked more than once`, refusal: "invalid" };
     const levelUpBoth = CharacterLevelsService.addLevels(
       session,
@@ -1730,7 +1730,7 @@ describe("re-saving a level", () => {
             [1, 2, 3, 4].map((level) => ({
               abilityIncreases: level === 4 ? increases : [],
               hp: 6,
-              klassId: ctx.klassMap.pc["Fighter"],
+              classId: ctx.classMap.pc["Fighter"],
               level,
             })),
           ),

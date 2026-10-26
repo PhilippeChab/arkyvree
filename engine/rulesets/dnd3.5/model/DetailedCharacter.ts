@@ -58,23 +58,23 @@ export default class DetailedCharacter extends include(
   }
 
   /**
-   * Whether the character meets requirement groups with one more level of class `klassName` (`klassLevel`, after its
+   * Whether the character meets requirement groups with one more level of class `className` (`classLevel`, after its
    * last level), in that class and in its total level: what a class's next level asks of it, without building it again.
    */
-  meetsWithNextLevel(klassName: string, klassLevel: KlassLevel, requirementGroups: Requirement[][]): boolean {
+  meetsWithNextLevel(className: string, classLevel: KlassLevel, requirementGroups: Requirement[][]): boolean {
     const now = new Date().toISOString();
     const advancement = {
       id: crypto.randomUUID(),
       characterId: this.character.id,
-      trackId: klassLevel.id,
+      trackId: classLevel.id,
       createdAt: now,
       updatedAt: now,
       position: (this.data.advancements.at(-1)?.position ?? 0) + 1,
     };
     // The class's level and the character's (`identity.meta.level`, counted from the classes) take it
-    this.components.classes.addProjectedLevel(klassName, klassLevel, advancement);
+    this.components.classes.addProjectedLevel(className, classLevel, advancement);
     const met = this.areRequirementsMet(requirementGroups);
-    this.components.classes.removeProjectedLevel(klassName);
+    this.components.classes.removeProjectedLevel(className);
     return met;
   }
 }
