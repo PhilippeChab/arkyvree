@@ -49,6 +49,11 @@ export const usersInAccount = account.table(
     uniqueIndex("users_email").using("btree", table.emailAddress.asc().nullsLast()),
     uniqueIndex("users_username").using("btree", table.username.asc().nullsLast()),
     index("users_expires_at_idx").using("btree", table.expiresAt.asc().nullsLast()),
+    index("users_search_trgm_idx").using(
+      "gin",
+      table.username.asc().nullsLast().op("gin_trgm_ops"),
+      table.emailAddress.asc().nullsLast().op("gin_trgm_ops"),
+    ),
   ],
 );
 
@@ -73,8 +78,11 @@ export const activitiesInAccount = account.table(
       table.targetId.asc().nullsLast(),
       table.targetTable.asc().nullsLast(),
     ),
-    index("activities_type").using("btree", table.type.asc().nullsLast()),
-    index("activities_user_id").using("btree", table.userId.asc().nullsLast()),
+    index("activities_user_id_created_at_idx").using(
+      "btree",
+      table.userId.asc().nullsLast(),
+      table.createdAt.desc().nullsFirst(),
+    ),
     index("activities_created_at_idx").using("btree", table.createdAt.asc().nullsLast()),
     foreignKey({
       columns: [table.userId],
@@ -125,11 +133,14 @@ export const rulesetsInRules = rules.table(
       name: "rulesets_base_rules_fkey",
     }),
     uniqueIndex("rulesets_name_unique_idx").using("btree", table.name.asc().nullsLast()),
-    index("rulesets_user_id_private_idx").using(
-      "btree",
-      table.userId.asc().nullsLast(),
-      table.private.asc().nullsLast(),
+    index("rulesets_user_id_status_idx").using("btree", table.userId.asc().nullsLast(), table.status.asc().nullsLast()),
+    index("rulesets_status_idx").using("btree", table.status.asc().nullsLast()),
+    index("rulesets_search_trgm_idx").using(
+      "gin",
+      table.name.asc().nullsLast().op("gin_trgm_ops"),
+      table.description.asc().nullsLast().op("gin_trgm_ops"),
     ),
+    index("rulesets_ruleset_id_idx").using("btree", table.rulesetId.asc().nullsLast()),
     foreignKey({
       columns: [table.rulesetId],
       foreignColumns: [table.id],
@@ -180,6 +191,14 @@ export const charactersInCharacter = character.table(
       foreignColumns: [table.id],
       name: "characters_parent_character_id_fkey",
     }).onDelete("cascade"),
+    // By its keys, archived characters too: the archived list and the deletes that cascade through them read them
+    index("characters_user_id_idx").using("btree", table.userId.asc().nullsLast()),
+    index("characters_ruleset_id_idx").using("btree", table.rulesetId.asc().nullsLast()),
+    index("characters_search_trgm_idx").using(
+      "gin",
+      table.name.asc().nullsLast().op("gin_trgm_ops"),
+      table.description.asc().nullsLast().op("gin_trgm_ops"),
+    ),
     index("characters_parent_character_id_idx")
       .using("btree", table.parentCharacterId.asc().nullsLast())
       .where(sql`(parent_character_id IS NOT NULL)`),
@@ -214,6 +233,11 @@ export const campaignsInCampaign = campaign.table(
       "btree",
       table.rulesetId.asc().nullsLast(),
       table.name.asc().nullsLast().op("text_pattern_ops"),
+    ),
+    index("campaigns_search_trgm_idx").using(
+      "gin",
+      table.name.asc().nullsLast().op("gin_trgm_ops"),
+      table.description.asc().nullsLast().op("gin_trgm_ops"),
     ),
     foreignKey({
       columns: [table.rulesetId],
@@ -263,16 +287,16 @@ export const entitiesInRules = rules.table(
   },
   (table) => [
     index("entities_campaign_idx")
-      .using("btree", table.campaignId.asc().nullsLast().op("uuid_ops"))
+      .using("btree", table.campaignId.asc().nullsLast())
       .where(sql`(campaign_id IS NOT NULL)`),
     uniqueIndex("entities_owner_position_unique_idx")
-      .using("btree", table.ownerId.asc().nullsLast().op("uuid_ops"), table.position.asc().nullsLast().op("int4_ops"))
+      .using("btree", table.ownerId.asc().nullsLast(), table.position.asc().nullsLast())
       .where(sql`(owner_id IS NOT NULL)`),
     index("entities_ruleset_type_campaign_idx").using(
       "btree",
-      table.rulesetId.asc().nullsLast().op("uuid_ops"),
-      table.type.asc().nullsLast().op("uuid_ops"),
-      table.campaignId.asc().nullsLast().op("text_ops"),
+      table.rulesetId.asc().nullsLast(),
+      table.type.asc().nullsLast(),
+      table.campaignId.asc().nullsLast(),
     ),
     index("entities_search_idx").using(
       "gin",
@@ -282,20 +306,20 @@ export const entitiesInRules = rules.table(
     uniqueIndex("entities_with_campaign_unique_idx")
       .using(
         "btree",
-        table.rulesetId.asc().nullsLast().op("text_ops"),
-        table.campaignId.asc().nullsLast().op("uuid_ops"),
-        table.type.asc().nullsLast().op("uuid_ops"),
-        table.partition.asc().nullsLast().op("uuid_ops"),
-        table.name.asc().nullsLast().op("uuid_ops"),
+        table.rulesetId.asc().nullsLast(),
+        table.campaignId.asc().nullsLast(),
+        table.type.asc().nullsLast(),
+        table.partition.asc().nullsLast(),
+        table.name.asc().nullsLast(),
       )
       .where(sql`((campaign_id IS NOT NULL) AND (name IS NOT NULL))`),
     uniqueIndex("entities_without_campaign_unique_idx")
       .using(
         "btree",
-        table.rulesetId.asc().nullsLast().op("text_ops"),
-        table.type.asc().nullsLast().op("uuid_ops"),
-        table.partition.asc().nullsLast().op("uuid_ops"),
-        table.name.asc().nullsLast().op("uuid_ops"),
+        table.rulesetId.asc().nullsLast(),
+        table.type.asc().nullsLast(),
+        table.partition.asc().nullsLast(),
+        table.name.asc().nullsLast(),
       )
       .where(sql`((campaign_id IS NULL) AND (name IS NOT NULL))`),
     foreignKey({
@@ -303,13 +327,14 @@ export const entitiesInRules = rules.table(
       foreignColumns: [campaignsInCampaign.id],
       name: "entities_campaign_id_fkey",
     }).onDelete("cascade"),
+    // The database's is MATCH FULL, which drizzle's `foreignKey` doesn't declare
     foreignKey({
       columns: [table.ownerId, table.ownerType],
       foreignColumns: [table.id, table.type],
       name: "entities_owner_id_owner_type_fkey",
     }).onDelete("cascade"),
     foreignKey({
-      columns: [table.rulesetId, table.campaignKey, table.ownerId],
+      columns: [table.ownerId, table.rulesetId, table.campaignKey],
       foreignColumns: [table.id, table.rulesetId, table.campaignKey],
       name: "entities_owner_id_ruleset_id_campaign_key_fkey",
     }).onDelete("cascade"),
@@ -348,22 +373,23 @@ export const advancementsInCharacter = character.table(
   (table) => [
     uniqueIndex("advancements_character_position_idx").using(
       "btree",
-      table.characterId.asc().nullsLast().op("uuid_ops"),
-      table.position.asc().nullsLast().op("int4_ops"),
+      table.characterId.asc().nullsLast(),
+      table.position.asc().nullsLast(),
     ),
     uniqueIndex("advancements_character_track_idx").using(
       "btree",
-      table.characterId.asc().nullsLast().op("uuid_ops"),
-      table.trackId.asc().nullsLast().op("uuid_ops"),
+      table.characterId.asc().nullsLast(),
+      table.trackId.asc().nullsLast(),
     ),
     index("advancements_track_idx")
-      .using("btree", table.trackId.asc().nullsLast().op("uuid_ops"))
+      .using("btree", table.trackId.asc().nullsLast())
       .where(sql`(track_id IS NOT NULL)`),
     foreignKey({
       columns: [table.characterId],
       foreignColumns: [charactersInCharacter.id],
       name: "advancements_character_id_fkey",
     }).onDelete("cascade"),
+    // The database's is MATCH FULL DEFERRABLE INITIALLY DEFERRED, which drizzle's `foreignKey` doesn't declare
     foreignKey({
       columns: [table.trackId, table.trackType],
       foreignColumns: [entitiesInRules.id, entitiesInRules.type],
@@ -428,26 +454,27 @@ export const advancementPicksInCharacter = character.table(
   },
   (table) => [
     index("advancement_picks_entity_idx")
-      .using("btree", table.entityId.asc().nullsLast().op("uuid_ops"))
+      .using("btree", table.entityId.asc().nullsLast())
       .where(sql`(entity_id IS NOT NULL)`),
     index("advancement_picks_parent_idx")
-      .using("btree", table.parentPickId.asc().nullsLast().op("uuid_ops"))
+      .using("btree", table.parentPickId.asc().nullsLast())
       .where(sql`(parent_pick_id IS NOT NULL)`),
     uniqueIndex("advancement_picks_unique_idx").using(
       "btree",
-      table.advancementId.asc().nullsLast().op("uuid_ops"),
-      table.step.asc().nullsLast().op("uuid_ops"),
-      table.entityKey.asc().nullsLast().op("uuid_ops"),
-      table.ordinal.asc().nullsLast().op("uuid_ops"),
+      table.advancementId.asc().nullsLast(),
+      table.step.asc().nullsLast(),
+      table.entityKey.asc().nullsLast(),
+      table.ordinal.asc().nullsLast(),
     ),
     index("advancement_picks_via_idx")
-      .using("btree", table.viaId.asc().nullsLast().op("uuid_ops"))
+      .using("btree", table.viaId.asc().nullsLast())
       .where(sql`(via_id IS NOT NULL)`),
     foreignKey({
       columns: [table.advancementId],
       foreignColumns: [advancementsInCharacter.id],
       name: "advancement_picks_advancement_id_fkey",
     }).onDelete("cascade"),
+    // The database's is MATCH FULL DEFERRABLE INITIALLY DEFERRED, which drizzle's `foreignKey` doesn't declare
     foreignKey({
       columns: [table.entityId, table.entityType],
       foreignColumns: [entitiesInRules.id, entitiesInRules.type],
@@ -478,6 +505,7 @@ export const advancementPicksInCharacter = character.table(
       foreignColumns: [stepsInCharacter.step, stepsInCharacter.viaType],
       name: "advancement_picks_step_via_type_fkey",
     }),
+    // The database's is MATCH FULL DEFERRABLE INITIALLY DEFERRED, which drizzle's `foreignKey` doesn't declare
     foreignKey({
       columns: [table.viaId, table.viaType],
       foreignColumns: [entitiesInRules.id, entitiesInRules.type],
@@ -537,11 +565,6 @@ export const attachmentsInStorage = storage.table(
       table.recordType.asc().nullsLast(),
       table.recordId.asc().nullsLast(),
       table.name.asc().nullsLast(),
-    ),
-    index("attachments_record_idx").using(
-      "btree",
-      table.recordType.asc().nullsLast(),
-      table.recordId.asc().nullsLast(),
     ),
     index("attachments_blob_id_idx").using("btree", table.blobId.asc().nullsLast()),
     foreignKey({
@@ -623,6 +646,7 @@ export const contributorsInCharacter = character.table(
       foreignColumns: [usersInAccount.id],
       name: "character_contributors_user_id_fk",
     }).onDelete("cascade"),
+    index("character_contributors_invited_by_idx").using("btree", table.invitedBy.asc().nullsLast()),
     foreignKey({
       columns: [table.invitedBy],
       foreignColumns: [usersInAccount.id],
@@ -660,6 +684,7 @@ export const contributorsInRules = rules.table(
       table.userId.asc().nullsLast(),
       table.status.asc().nullsLast(),
     ),
+    index("contributors_email_trgm_idx").using("gin", table.email.asc().nullsLast().op("gin_trgm_ops")),
     uniqueIndex("contributors_ruleset_user_unique")
       .using("btree", table.rulesetId.asc().nullsLast(), table.userId.asc().nullsLast())
       .where(sql`status IN ('Pending', 'Active')`),
@@ -676,6 +701,7 @@ export const contributorsInRules = rules.table(
       foreignColumns: [usersInAccount.id],
       name: "contributors_user_id_fk",
     }).onDelete("cascade"),
+    index("contributors_invited_by_idx").using("btree", table.invitedBy.asc().nullsLast()),
     foreignKey({
       columns: [table.invitedBy],
       foreignColumns: [usersInAccount.id],
@@ -772,19 +798,10 @@ export const entityFieldsInRules = rules.table(
   },
   (table) => [
     uniqueIndex("entity_fields_set_value_idx")
-      .using(
-        "btree",
-        table.entityId.asc().nullsLast().op("text_ops"),
-        table.field.asc().nullsLast().op("text_ops"),
-        table.valueKey.asc().nullsLast().op("text_ops"),
-      )
+      .using("btree", table.entityId.asc().nullsLast(), table.field.asc().nullsLast(), table.valueKey.asc().nullsLast())
       .where(sql`multiple`),
-    index("entity_fields_field_idx").using(
-      "btree",
-      table.field.asc().nullsLast().op("text_ops"),
-      table.entityId.asc().nullsLast().op("uuid_ops"),
-    ),
-    index("entity_fields_text_idx").using("hash", table.textValue.asc().nullsLast().op("text_ops")),
+    index("entity_fields_field_idx").using("btree", table.field.asc().nullsLast(), table.entityId.asc().nullsLast()),
+    index("entity_fields_text_idx").using("hash", table.textValue.asc().nullsLast()),
     foreignKey({
       columns: [table.entityId, table.entityType],
       foreignColumns: [entitiesInRules.id, entitiesInRules.type],
@@ -901,15 +918,11 @@ export const entityLinksInRules = rules.table(
   },
   (table) => [
     uniqueIndex("entity_links_single_idx")
-      .using("btree", table.fromId.asc().nullsLast().op("uuid_ops"), table.role.asc().nullsLast().op("text_ops"))
+      .using("btree", table.fromId.asc().nullsLast(), table.role.asc().nullsLast())
       .where(sql`single`),
-    index("entity_links_to_idx").using(
-      "btree",
-      table.toId.asc().nullsLast().op("text_ops"),
-      table.role.asc().nullsLast().op("text_ops"),
-    ),
+    index("entity_links_to_idx").using("btree", table.toId.asc().nullsLast(), table.role.asc().nullsLast()),
     index("entity_links_via_idx")
-      .using("btree", table.viaId.asc().nullsLast().op("uuid_ops"))
+      .using("btree", table.viaId.asc().nullsLast())
       .where(sql`(via_id IS NOT NULL)`),
     foreignKey({
       columns: [table.fromId, table.fromType],
@@ -917,7 +930,7 @@ export const entityLinksInRules = rules.table(
       name: "entity_links_from_id_from_type_fkey",
     }).onDelete("cascade"),
     foreignKey({
-      columns: [table.fromType, table.role, table.toType, table.hasVia],
+      columns: [table.role, table.fromType, table.toType, table.hasVia],
       foreignColumns: [
         linkRolesInRules.role,
         linkRolesInRules.fromType,
@@ -927,7 +940,7 @@ export const entityLinksInRules = rules.table(
       name: "entity_links_role_from_type_to_type_has_via_fkey",
     }),
     foreignKey({
-      columns: [table.fromType, table.role, table.single, table.toType],
+      columns: [table.role, table.fromType, table.toType, table.single],
       foreignColumns: [
         linkRolesInRules.role,
         linkRolesInRules.fromType,
@@ -937,7 +950,7 @@ export const entityLinksInRules = rules.table(
       name: "entity_links_role_from_type_to_type_single_fkey",
     }).onUpdate("cascade"),
     foreignKey({
-      columns: [table.fromType, table.role, table.toType, table.viaType],
+      columns: [table.role, table.fromType, table.toType, table.viaType],
       foreignColumns: [
         linkRolesInRules.role,
         linkRolesInRules.fromType,
@@ -946,11 +959,13 @@ export const entityLinksInRules = rules.table(
       ],
       name: "entity_links_role_from_type_to_type_via_type_fkey",
     }).onUpdate("cascade"),
+    // The database's is DEFERRABLE INITIALLY DEFERRED, which drizzle's `foreignKey` doesn't declare
     foreignKey({
       columns: [table.toId, table.toType],
       foreignColumns: [entitiesInRules.id, entitiesInRules.type],
       name: "entity_links_to_id_to_type_fkey",
     }),
+    // The database's is MATCH FULL DEFERRABLE INITIALLY DEFERRED, which drizzle's `foreignKey` doesn't declare
     foreignKey({
       columns: [table.viaId, table.viaType],
       foreignColumns: [entitiesInRules.id, entitiesInRules.type],
@@ -975,18 +990,8 @@ export const entitySnapshotsInRules = rules.table(
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
-    index("entity_snapshots_ruleset_id_entity_type").using(
-      "btree",
-      table.rulesetId.asc().nullsLast(),
-      table.entityType.asc().nullsLast(),
-    ),
-    index("entity_snapshots_ruleset_type_source").using(
-      "btree",
-      table.rulesetId.asc().nullsLast(),
-      table.entityType.asc().nullsLast(),
-      table.sourceEntityId.asc().nullsLast(),
-    ),
     unique("entity_snapshots_ruleset_type_source_unique").on(table.rulesetId, table.entityType, table.sourceEntityId),
+    index("entity_snapshots_source_entity_id_idx").using("btree", table.sourceEntityId.asc().nullsLast()),
     foreignKey({
       columns: [table.rulesetId],
       foreignColumns: [rulesetsInRules.id],
@@ -1043,9 +1048,9 @@ export const fieldsInCharacter = character.table(
     uniqueIndex("fields_set_value_idx")
       .using(
         "btree",
-        table.characterId.asc().nullsLast().op("text_ops"),
-        table.field.asc().nullsLast().op("text_ops"),
-        table.valueKey.asc().nullsLast().op("text_ops"),
+        table.characterId.asc().nullsLast(),
+        table.field.asc().nullsLast(),
+        table.valueKey.asc().nullsLast(),
       )
       .where(sql`multiple`),
     foreignKey({
@@ -1119,6 +1124,7 @@ export const inventoryInCharacter = character.table(
       foreignColumns: [charactersInCharacter.id],
       name: "inventory_character_id_fkey",
     }).onDelete("cascade"),
+    // The database's is DEFERRABLE INITIALLY DEFERRED, which drizzle's `foreignKey` doesn't declare
     foreignKey({
       columns: [table.itemId, table.itemType],
       foreignColumns: [entitiesInRules.id, entitiesInRules.type],
@@ -1158,8 +1164,13 @@ export const playersInCampaign = campaign.table(
     role: role().notNull(),
   },
   (table) => [
-    index("players_campaign_id").using("btree", table.campaignId.asc().nullsLast()),
-    index("players_user_id").using("btree", table.userId.asc().nullsLast()),
+    // By its keys, archived seats too: the archived lists and the deletes that cascade through them read them
+    index("players_campaign_id_idx").using("btree", table.campaignId.asc().nullsLast()),
+    index("players_user_id_campaign_id_idx").using(
+      "btree",
+      table.userId.asc().nullsLast(),
+      table.campaignId.asc().nullsLast(),
+    ),
     foreignKey({
       columns: [table.userId],
       foreignColumns: [usersInAccount.id],
@@ -1189,18 +1200,12 @@ export const invitesInCampaign = campaign.table(
     status: text().default("Pending").notNull(),
   },
   (table) => [
-    index("invites_email_status_idx").using("btree", table.email.asc().nullsLast(), table.status.asc().nullsLast()),
-    index("invites_player_id_status_idx").using(
-      "btree",
-      table.playerId.asc().nullsLast(),
-      table.status.asc().nullsLast(),
-    ),
-    index("invites_user_id_player_id_status_idx").using(
-      "btree",
-      table.userId.asc().nullsLast(),
-      table.playerId.asc().nullsLast(),
-      table.status.asc().nullsLast(),
-    ),
+    // A live invite by its email; by its keys, archived invites too, which a seat's delete and the deletes that cascade
+    // through them read
+    index("invites_email_status_idx")
+      .using("btree", table.email.asc().nullsLast(), table.status.asc().nullsLast())
+      .where(sql`(deleted_at IS NULL)`),
+    index("invites_player_id_idx").using("btree", table.playerId.asc().nullsLast()),
     index("invites_user_id_status_idx").using("btree", table.userId.asc().nullsLast(), table.status.asc().nullsLast()),
     foreignKey({
       columns: [table.playerId],
@@ -1234,22 +1239,23 @@ export const linksInCharacter = character.table(
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
   },
   (table) => [
-    index("links_entity_idx").using("btree", table.entityId.asc().nullsLast().op("uuid_ops")),
+    index("links_entity_idx").using("btree", table.entityId.asc().nullsLast()),
     uniqueIndex("links_single_idx")
-      .using("btree", table.characterId.asc().nullsLast().op("text_ops"), table.role.asc().nullsLast().op("text_ops"))
+      .using("btree", table.characterId.asc().nullsLast(), table.role.asc().nullsLast())
       .where(sql`single`),
     foreignKey({
       columns: [table.characterId],
       foreignColumns: [charactersInCharacter.id],
       name: "links_character_id_fkey",
     }).onDelete("cascade"),
+    // The database's is DEFERRABLE INITIALLY DEFERRED, which drizzle's `foreignKey` doesn't declare
     foreignKey({
       columns: [table.entityId, table.entityType],
       foreignColumns: [entitiesInRules.id, entitiesInRules.type],
       name: "links_entity_id_entity_type_fkey",
     }),
     foreignKey({
-      columns: [table.role, table.single, table.entityType],
+      columns: [table.role, table.entityType, table.single],
       foreignColumns: [
         characterRolesInCharacter.role,
         characterRolesInCharacter.entityType,
@@ -1320,6 +1326,7 @@ export const notificationsInAccount = account.table(
       foreignColumns: [usersInAccount.id],
       name: "notifications_recipient_id_fkey",
     }).onDelete("cascade"),
+    index("notifications_actor_id_idx").using("btree", table.actorId.asc().nullsLast()),
     foreignKey({
       columns: [table.actorId],
       foreignColumns: [usersInAccount.id],
@@ -1437,8 +1444,6 @@ export const requirementsInCustomization = customization.table(
     chainingOperator: text("chaining_operator"),
   },
   (table) => [
-    index("requirements_entity_id_idx").using("btree", table.entityId.asc().nullsLast()),
-    index("requirements_entity_type_idx").using("btree", table.entityType.asc().nullsLast()),
     unique("requirements_entity_id_entity_type_level_key").on(table.entityId, table.entityType, table.level),
     check(
       "requirements_value_type_check",
@@ -1470,6 +1475,7 @@ export const rulesetExtensionsInRules = rules.table(
       foreignColumns: [rulesetsInRules.id],
       name: "ruleset_extensions_ruleset_id_fkey",
     }).onDelete("cascade"),
+    index("ruleset_extensions_extension_id_idx").using("btree", table.extensionId.asc().nullsLast()),
     foreignKey({
       columns: [table.extensionId],
       foreignColumns: [rulesetsInRules.id],
@@ -1501,9 +1507,9 @@ export const rulesetFieldsInRules = rules.table(
     uniqueIndex("ruleset_fields_set_value_idx")
       .using(
         "btree",
-        table.rulesetId.asc().nullsLast().op("text_ops"),
-        table.field.asc().nullsLast().op("text_ops"),
-        table.valueKey.asc().nullsLast().op("text_ops"),
+        table.rulesetId.asc().nullsLast(),
+        table.field.asc().nullsLast(),
+        table.valueKey.asc().nullsLast(),
       )
       .where(sql`multiple`),
     foreignKey({
@@ -1565,7 +1571,7 @@ export const rulesetLinksInRules = rules.table(
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
   },
   (table) => [
-    index("ruleset_links_to_idx").using("btree", table.toId.asc().nullsLast().op("uuid_ops")),
+    index("ruleset_links_to_idx").using("btree", table.toId.asc().nullsLast()),
     foreignKey({
       columns: [table.role, table.toType],
       foreignColumns: [rulesetRolesInRules.role, rulesetRolesInRules.toType],
@@ -1576,6 +1582,7 @@ export const rulesetLinksInRules = rules.table(
       foreignColumns: [rulesetsInRules.id],
       name: "ruleset_links_ruleset_id_fkey",
     }).onDelete("cascade"),
+    // The database's is DEFERRABLE INITIALLY DEFERRED, which drizzle's `foreignKey` doesn't declare
     foreignKey({
       columns: [table.toId, table.toType],
       foreignColumns: [entitiesInRules.id, entitiesInRules.type],
@@ -1619,12 +1626,12 @@ export const starredRulesetsInAccount = account.table(
     rulesetId: uuid("ruleset_id").notNull(),
   },
   (table) => [
-    index("starred_rulesets_user_id").using("btree", table.userId.asc().nullsLast()),
     foreignKey({
       columns: [table.userId],
       foreignColumns: [usersInAccount.id],
       name: "starred_rulesets_user_id_fkey",
     }).onDelete("cascade"),
+    index("starred_rulesets_ruleset_id_idx").using("btree", table.rulesetId.asc().nullsLast()),
     foreignKey({
       columns: [table.rulesetId],
       foreignColumns: [rulesetsInRules.id],
