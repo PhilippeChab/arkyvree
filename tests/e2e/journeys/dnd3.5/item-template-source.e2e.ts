@@ -48,7 +48,7 @@ for (const width of [375, 1280]) {
       expect(saveResponse.ok()).toBe(true);
       const edited: EditedItem = await saveResponse.json();
       expect(edited.fields[ITEM_IS_TEMPLATE]).toBe(true);
-      expect(edited.links).toEqual({});
+      expect(edited.links).toEqual([]);
       expect(edited.description).toBe("Homebrew heavy mace template");
 
       await page.reload();
@@ -64,7 +64,9 @@ for (const width of [375, 1280]) {
       expect(duplicateResponse.ok()).toBe(true);
       const copy: DuplicatedItem = await duplicateResponse.json();
       expect(copy.fields[ITEM_IS_TEMPLATE]).toBe(false);
-      expect(copy.links).toEqual({ madeFrom: edited.id });
+      expect(copy.links).toEqual([
+        expect.objectContaining({ role: "madeFrom", toId: edited.id, toName: "Heavy Mace" }),
+      ]);
 
       await page.goto(`/rulesets/${forkId}/items/${copy.id}/customization`);
       await expect(page.locator('input[name="name"]')).toHaveValue("Heavy Mace +3");
