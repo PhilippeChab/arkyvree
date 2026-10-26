@@ -6,6 +6,7 @@
 - Import a character from a PCGen file
 - D&D 3.5: edit a class's whole progression at once
 - D&D 3.5: an item made from a template takes its weight and cost when it has none of its own
+- The activity feed names every change an update makes, the entries a list gains and loses included
 
 ## 0.6.0 — 2026-10-12
 

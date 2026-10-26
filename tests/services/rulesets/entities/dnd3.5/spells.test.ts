@@ -95,7 +95,7 @@ describe("EntitiesService: spells", () => {
       updates.map((activity) => activity.data).sort((a, b) => JSON.stringify(a).length - JSON.stringify(b).length),
     ).toEqual([
       expect.objectContaining({ changedFields: [] }),
-      expect.objectContaining({ changedFields: [{ field: SPELL_SAVE_EFFECT, to: "negates" }] }),
+      expect.objectContaining({ changedFields: [{ field: SPELL_SAVE_EFFECT, label: "Save Effect", to: "negates" }] }),
     ]);
   });
 

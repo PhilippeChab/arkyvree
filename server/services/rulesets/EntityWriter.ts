@@ -18,7 +18,7 @@ import {
 import { withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { CUSTOMIZABLE_TYPES, Entities, EntityLinks, type RulesetEntityType } from "@/server/repositories/index.ts";
-import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
+import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { getActivityName } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -214,8 +214,8 @@ export default class EntityWriter {
           const [row] = rows;
           await this.recordActivity(tx, session, "update", targetId, {
             entityName: body.name,
-            // The columns its plan writes, by the stored field or the role that keeps each, never the body's other parts
-            changedFields: getChangedFields(planned.changes.before, planned.changes.after),
+            // What its plan writes another value of, as its rules label it
+            changedFields: planned.changes,
           });
           return planned.describe(row, await EntityLinks.findOwn(tx, targetId)) as ReturnType<P["describe"]>;
         }),

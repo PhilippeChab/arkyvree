@@ -56,12 +56,11 @@ export interface EntityKindDescription {
  * The entities an entity's page links it to, one at a time, by a role of its links (`/links`: a class's skills), on a
  * tab of their own: their kind (`type`: 3.5's `skills`), the role of its links (`role`: `classSkill`, which names their
  * activities: `addClassSkill`), each answered with the entity it's from (`fromId`, a copy's where an edit of an
- * inherited one copied it), its target (`toId`) and its target's name (`toName`), and where an activity of one holds
- * the linked entity's name (`targetName`: `skillName`).
+ * inherited one copied it), its target (`toId`) and its target's name (`toName`), which an activity of one records as
+ * every link's does (`toId`, `toName`).
  */
 export interface EntityLinksDescription {
   role: string;
-  targetName: string;
   type: string;
 }
 

@@ -123,7 +123,7 @@ export function Owned<B extends Constructor>(Base: B) {
     /**
      * An owned entity's edit (`ownedId`, of `ownerId`) off its form: the owner copied when it's inherited, the row the
      * entity resolves to touched, refused when stale (`updatedAt`: a copy's never is, its token is its source's), and
-     * what its form writes beside it and its links.
+     * what its form writes beside it and its links, its activity recording what it changes (`changedFields`).
      */
     async updateOwnedEntity(
       session: Session,
@@ -159,7 +159,7 @@ export function Owned<B extends Constructor>(Base: B) {
               targetId,
               targetType: owned.type,
               type: `update${getActivityName(owned.type)}`,
-              data: plan.activity,
+              data: { ...plan.activity, changedFields: plan.changes },
             });
 
             return rows[0] as unknown as ReturnType<typeof owned.find>;
