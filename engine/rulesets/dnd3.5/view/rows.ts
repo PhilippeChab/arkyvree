@@ -31,7 +31,7 @@ declare module "@/engine/core/view/rows.ts" {
     class_levels: KlassLevel;
   }
 
-  /** 3.5's kinds' entities, by table. */
+  /** 3.5's kinds' entities, by type. */
   interface ViewKinds {
     abilities: RulesetAbility;
     aptitudes: Aptitude;

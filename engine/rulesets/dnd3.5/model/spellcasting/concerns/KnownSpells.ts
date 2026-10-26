@@ -195,8 +195,8 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
       const { perAptitudeLevels, unleveledAptitudeIds } = this.knownAptitudeLevels(appliedModifiers);
       if (perAptitudeLevels.size === 0 && unleveledAptitudeIds.size === 0) return;
 
-      // Iterate the composed spells once, emitting one row per matching
-      // (spell, aptitude) link — mirrors the old SQL join shape.
+      // Iterate the composed spells once, emitting one row per matching (spell, aptitude) link: a spell on two of the
+      // lists the character knows is known on each
       const allAptitudeSpells: Array<
         Spell & { aptitudeId: string; saveName: string | null; spellLevel: number | null }
       > = [];

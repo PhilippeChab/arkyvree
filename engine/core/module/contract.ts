@@ -29,7 +29,7 @@ export interface Descriptions {
 /**
  * A base rules' module: the parts the engine's handles ask what its rules answer, each an abstract class of
  * `engine/core/module/parts/` a ruleset extends (the compiler lists what a part lacks), its paths and fields, and its
- * storage. `D` is what it describes in its own shape, `E` its entity kinds by table, `F` the fields its content
+ * storage. `D` is what it describes in its own shape, `E` its entity kinds by type, `F` the fields its content
  * seeds, by entity.
  */
 export interface RulesetModule<

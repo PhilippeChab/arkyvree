@@ -1,6 +1,6 @@
 /**
  * What an entity kind's `plan*` operations answer: what the server writes of an entity's create, edit or delete, each a
- * named plan, by table, without ids it doesn't have yet: its row as stored, its links, what it writes beside it.
+ * named plan, by type, without ids it doesn't have yet: its row as stored, its links, what it writes beside it.
  */
 
 import type { FieldsWrite } from "@/engine/core/fields/index.ts";
@@ -86,7 +86,7 @@ export interface EntityFilters {
 }
 
 /**
- * An entity a plan removes with the one it writes (`type`, its table, and its `id`): refused (`inUse`) while a
+ * An entity a plan removes with the one it writes (`type`, its kind, and its `id`): refused (`inUse`) while a
  * character of the ruleset picked it.
  */
 export interface EntityRemoval {
@@ -98,7 +98,7 @@ export interface EntityRemoval {
 /**
  * What an entity's form writes beside its row, as its ruleset's rules say: its stored values its fields are kept in
  * (`fields`, each field and link role it names replaced; none: those it has stay), a requirement on it, and the
- * entities it makes and removes with it (`made`, `removed`). The server writes each by its table.
+ * entities it makes and removes with it (`made`, `removed`). The server writes each by its type.
  */
 export interface EntityWrites {
   fields?: FieldsWrite;
@@ -154,7 +154,7 @@ export interface LinkWrite {
 }
 
 /**
- * An entity a plan makes with the one it writes, in the same ruleset: its table (`type`), its row (`EntityWrite`), its
+ * An entity a plan makes with the one it writes, in the same ruleset: its type (`type`), its row (`EntityWrite`), its
  * stored values (`fields`), its links (`links`, by role), and its modifiers and requirements.
  */
 export interface MadeEntity {

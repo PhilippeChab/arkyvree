@@ -29,6 +29,8 @@ describe("rules", () => {
     // Its pages' help, in its own terms
     expect(Object.keys(dnd35.help)).toEqual(["modifiers", "requirements", "settings", "templateExamples"]);
     expect(dnd35.help.templateExamples).toContain("[abilities.charisma.modifier]");
+    // The programs its rulesets import characters from, which the import's dialog names
+    expect(dnd35.importers).toEqual(["PCGen"]);
     // Every kind has its word and its list
     for (const { type } of dnd35.kinds) {
       expect(dnd35.words[type]).toBeDefined();

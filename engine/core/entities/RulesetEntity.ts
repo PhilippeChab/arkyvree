@@ -49,7 +49,7 @@ export type EntityAction = "create" | "delete" | "duplicate" | "groups" | "templ
 const COPY_ACTIONS: readonly EntityAction[] = ["duplicate", "templates", "variants"];
 
 /**
- * A ruleset's entity kind (its table, `type`), as its rules answer the server of it in a ruleset's view. Every kind
+ * A ruleset's entity kind (its type, `type`), as its rules answer the server of it in a ruleset's view. Every kind
  * takes the same steps, and adds its rules to the ones they name:
  * - an entity found by its id (`find`) and described (`describe`): as stored (its own columns, its own fields, its
  *   single links each with its target's name), with the fields its stored values hold (`fields`), as its form shows them
@@ -122,7 +122,7 @@ export default abstract class RulesetEntity<
    */
   readonly takesAfterAncestor: boolean = false;
 
-  /** The kind's table. */
+  /** The kind's type. */
   abstract readonly type: K;
 
   /**

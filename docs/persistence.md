@@ -2,7 +2,7 @@
 
 Two row-removal primitives:
 
-- `repo.archive(...)` — `UPDATE … SET deletedAt = now()`. Default queries filter via `Visibility.UnarchivedOnly`. Every table has a `deletedAt` column, but only the repositories of tables that archive define `archive`: on the others it doesn't exist, so a call is a type error.
+- `repo.archive(...)` — `UPDATE … SET deletedAt = now()`. Default queries filter via `Visibility.UnarchivedOnly`. Only the tables that archive have a `deletedAt` column, and only their repositories define `archive`: on the others it doesn't exist, so a call is a type error.
 - `repo.delete(...)` — real `db.delete(this.table)`. Hard delete; FK CASCADE fires. Implemented per-repo where used.
 
 This doc categorizes every table by which primitive its services use, and what's load-bearing vs convention. It opens with how a ruleset's and a character's data is stored: the generic tables, which every module's data shares.
@@ -27,7 +27,7 @@ How the server reads them: one generic repository a table, which reads the store
 
 What deleting an entity does to what names it is each role's or step's rule, on every path (a service's delete, an owner's or a ruleset's cascade, a purge): a trigger on `rules.entities` (`apply_delete_rules`) deletes what a role deletes with it (a save with its key ability) and unlinks what a role unlinks; a role that refuses leaves its link, which the deferred foreign key refuses at commit. Every reference that doesn't own its row is `DEFERRABLE INITIALLY DEFERRED`, and an optional pair (an id and its type) is `MATCH FULL`. drizzle-kit records neither: `tests/database/dnd3.5/registries.test.ts` checks the database keeps them, and `drizzle/schema.ts`'s hand fixes are listed there (its `bytea` type, a ruleset's base rules typed as the modules').
 
-A rule the database checked of 3.5's columns (a hit die's values, a score's bounds, an alignment's) is the 3.5 module's now, which refuses what breaks it before a write.
+A rule of a module's values (3.5's hit die's values, a score's bounds, an alignment's) is the module's, which refuses what breaks it before a write: the generic tables check a value's kind, not a game's rules.
 
 ## Hard-delete
 
@@ -42,7 +42,7 @@ Rows whose disappearance leaves no observable history a user would expect to fin
 | Ruleset entities, every kind's | `Entities` |
 | Status-driven lifecycle | `Contributors` (Pending/Active/Rejected/Revoked enum) |
 
-`Abilities` are seeded and never deleted: their service reads them alone.
+A read-only kind's entities (3.5's abilities) are seeded and never deleted: its rules refuse their writes (`RulesetEntity.readOnly`).
 
 Repos in this category have no `archive`, so future code can't mistakenly soft-archive into dead state: the call wouldn't compile.
 
@@ -57,7 +57,7 @@ User-initiated deletion of a ruleset entity in a draft hard-deletes the row. Its
 
 Generated Skill Focus cleanup copies an inherited feat locally before deleting the copy. Its retained COW snapshot is a tombstone: the obsolete feat is hidden from the edited fork’s listings and level-up choices while the ancestor and sibling forks remain unchanged. Locally generated feats are deleted directly. Cleanup refuses to hide a feat already selected by a character in the edited ruleset or a subscribing descendant, including picks stored under an ancestor ID after the feat has been customized locally.
 
-Skill renames delete the old generated feat with its modifiers (and modifier requirements), requirements, fields, and junctions before generating its replacement. Generated feat names cannot be edited directly. Group membership does not own the group's feats: removing a spell or weapon does not delete the school's or weapon type's feats. Ordinary override restoration remains an explicit per-entity action; this adds no automatic restoration or dependency metadata.
+Skill renames delete the old generated feat with its modifiers (and modifier requirements), requirements, fields, and links before generating its replacement. Generated feat names cannot be edited directly. Group membership does not own the group's feats: removing a spell or weapon does not delete the school's or weapon type's feats. Ordinary override restoration remains an explicit per-entity action; this adds no automatic restoration or dependency metadata.
 
 ## Archive — load-bearing
 
@@ -173,7 +173,7 @@ Restoring an override reverts one copy the same way, characters' picks included 
 
 ## Decision rule for new code
 
-1. Is the table a junction, recomputed-on-edit state, customization, character-side state, ruleset entity, or auth-cleanup row? → **hard-delete** (no `archive`).
+1. Is the table a link table, recomputed-on-edit state, customization, character-side state, ruleset entity, or auth-cleanup row? → **hard-delete** (no `archive`).
 2. Does the table have status-driven lifecycle (Contributors-style enum)? → **hard-delete** (no `archive`).
 3. Is it Characters / Campaigns / Rulesets? → **archive** (recoverable user content).
 4. Is it the `Users` table (real users)? → **archive** (FK CASCADE avoidance).

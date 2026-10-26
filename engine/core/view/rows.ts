@@ -13,14 +13,14 @@ export interface NamedLink extends ViewLink {
 }
 
 /**
- * The kinds of the view an entity of another kind owns, by table (3.5's class levels, a class's): every registered
+ * The kinds of the view an entity of another kind owns, by type (3.5's class levels, a class's): every registered
  * module declares its own into it. An owned kind has no rules of its own in its module's contract, its owner's
  * answering for it, and no field names one.
  */
 export interface OwnedKinds {}
 
 /**
- * Each kind's entity as the view holds it, by its table (a `ViewEntity`, its own fields and single links typed): every
+ * Each kind's entity as the view holds it, by its type (a `ViewEntity`, its own fields and single links typed): every
  * registered module declares its own kinds' into it (`declare module`), which `RulesetData.rows`, `byId` and `find`
  * answer.
  */

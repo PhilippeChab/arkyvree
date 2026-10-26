@@ -157,7 +157,7 @@ export default abstract class CharacterBase<
   protected abstract isLateModifier(modifier: Modifier): boolean;
 
   /**
-   * The rows the character has of its ruleset's entities (its race, its classes…), by table, in the order its issues
+   * The rows the character has of its ruleset's entities (its race, its classes…), by type, in the order its issues
    * list them: each from a ruleset of its source chain (`findSourceIssues`), as its items are.
    */
   protected abstract listEntityRows(): Record<string, readonly EntityRow[]>;

@@ -1,7 +1,10 @@
 import type { RulesDescription, RulesetModule, StorageDeclaration } from "@/engine/core/module/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
-/** The engine asked of what every base rules' rulesets share, before any ruleset: their words, kinds and license. */
+/**
+ * The engine asked of what every base rules' rulesets share, before any ruleset: their words, kinds, license and the
+ * programs they import characters from.
+ */
 export default class RulesEngine {
   constructor(private readonly modules: [BaseRules, RulesetModule][]) {}
 
@@ -22,7 +25,11 @@ export default class RulesEngine {
     return Object.fromEntries(
       this.modules.map(([baseRules, module]) => [
         baseRules,
-        { ...module.ruleset.describeRules(), customizationPages: RulesEngine.customizationPagesOf(module.storage) },
+        {
+          ...module.ruleset.describeRules(),
+          customizationPages: RulesEngine.customizationPagesOf(module.storage),
+          importers: module.imports.describeImporters().programs,
+        },
       ]),
     ) as Record<BaseRules, RulesDescription>;
   }

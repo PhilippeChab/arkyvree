@@ -13,8 +13,9 @@ import {
   useRulesetPickerOptions,
 } from "@/client/src/components/rulesets/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useFormWith } from "@/client/src/hooks/index.ts";
+import { useFormWith, useRules } from "@/client/src/hooks/index.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
+import type { RulesDescriptions } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { requiredRules } from "@/client/src/lib/validation.ts";
 import type { CharacterImport, ImportFileDescription } from "@/client/src/pages/characters/characterQueries.ts";
@@ -66,6 +67,15 @@ const FILE_RULES = {
     return file.error ?? true;
   },
 };
+
+/**
+ * The programs the app imports characters from, as every base rules' imports name them (`RulesDescription.importers`):
+ * " (PCGen's)", none until the rules load.
+ */
+function describePrograms(all: RulesDescriptions | undefined) {
+  const programs = [...new Set(Object.values(all ?? {}).flatMap((rules) => rules.importers))];
+  return programs.length > 0 ? ` (${programs.map((program) => `${program}'s`).join(" or ")})` : "";
+}
 
 /** What a file is, in a line: the program that saved it and its version, the file's format, its character's rules. */
 function describeSource(source: NonNullable<ImportFileDescription["source"]>) {
@@ -161,6 +171,7 @@ export function ImportCharacterDialog({ open, onClose, onExited, onImported }: I
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const rulesetOptions = useRulesetPickerOptions("character", open);
+  const { all: rules } = useRules();
   const { preselected } = rulesetOptions;
   // The base rules whose rulesets import the file the app last read, kept while another is read: none before one, or
   // for a file none imports (which its own error blocks), which every ruleset is offered for
@@ -217,8 +228,8 @@ export function ImportCharacterDialog({ open, onClose, onExited, onImported }: I
       onExited={onExited}
     >
       <DialogContentText>
-        Pick a character file another program saved (PCGen&apos;s): the app reads which program saved it, its version
-        and its rules, then offers the rulesets that import it.
+        {`Pick a character file another program saved${describePrograms(rules)}: the app reads which program saved it, ` +
+          "its version and its rules, then offers the rulesets that import it."}
       </DialogContentText>
       <ImportFileField control={control} onDescribed={handleDescribed} />
       <BaseRulesetAlert ruleset={selectedRuleset} />

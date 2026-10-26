@@ -66,7 +66,8 @@ const NOUNS = new Set([
 
 /**
  * The nouns 3.5 names by two words, whose first or second is English alone: a save's (`saveId`, `rulesetSaves`, not
- * `onSave`), hit points, a class level's string as the code stored it (`"classes"`, `"class_levels"`).
+ * `onSave`), hit points, a class level's string as the code stored it (`"classes"`, `"class_levels"`); and the program
+ * its imports read, whose name its case splits (`PCGen` is `pc`, `gen`).
  */
 const PHRASES = [
   ["base", "save"],
@@ -77,6 +78,7 @@ const PHRASES = [
   ["hit", "points"],
   ["level", "save"],
   ["level", "saves"],
+  ["pc", "gen"],
   ["ruleset", "save"],
   ["ruleset", "saves"],
   ["save", "bonus"],

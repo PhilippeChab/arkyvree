@@ -115,7 +115,7 @@ From `server/cow/views/` (the scopes) and `server/cow/` (the copies):
 | `EntityRevert.revert`                   | Revert a fork's copy to its source: what names the copy (the fork's rows, its subscribers', their characters' picks) repointed, then the copy and its snapshot deleted. A restore's, and an unsubscribe's for each copy of the extension's entities. |
 | `EntityEdit.lock`                       | Lock an already-local owner, by its stored id, before deleting its customizations: a not found when it's gone.                                                                  |
 
-The entity an id names in the composed view (the ruleset's own, or inherited through its source chain) is the engine's to find: `Engine.for(scope).entities(type).find(id)` (`describe()`, with its customizations), refused as not found otherwise (a 404). A service binds the engine to its scope and reads of its view only the copy-on-write data (`rulesetData.cow`; `arkyvree/opaque-view`). The engine's operations canonicalize an id (pre-COW → post-COW, `rulesetData.canonicalize(id)`), and read sibling merging (aptitude links, modifiers, field values, requirements) pre-baked into `rulesetData` by the compose step: they only read `rulesetData.byId(type)`, `rulesetData.modifiersBySource`, a module's derived view (3.5's `Dnd35View.of(rulesetData).featsById`), etc. — never merge siblings themselves.
+The entity an id names in the composed view (the ruleset's own, or inherited through its source chain) is the engine's to find: `Engine.for(scope).entities(type).find(id)` (`describe()`, with its customizations), refused as not found otherwise (a 404). A service binds the engine to its scope and reads of its view only the copy-on-write data (`rulesetData.cow`; `arkyvree/opaque-view`). The engine's operations canonicalize an id (pre-COW → post-COW, `rulesetData.canonicalize(id)`), and read sibling merging (merged links, modifiers, field values, requirements) pre-baked into `rulesetData` by the compose step: they only read `rulesetData.byId(type)`, `rulesetData.modifiersBySource`, a module's derived view (3.5's `Dnd35View.of(rulesetData).featsById`), etc. — never merge siblings themselves.
 
 From `server/cow/index.ts`: `RulesetViews`, the class that holds the cache (`RulesetViews.ts`). The view a read gets, `RulesetData` (`engine/core/view/`), is the engine's: `engine/index.ts` exports its type and composes it (`Engine.copyOnWrite().buildView`).
 
@@ -424,7 +424,7 @@ sequenceDiagram
     RS-->>Svc: RulesetData
 
     Svc->>Svc: level = Engine.for(scope).entities(type).find(...)
-    Svc->>Svc: autoGrantedSpells = Dnd35View.of(rulesetData).klassLevelSpellsWithSpellsByKlassLevel.get(...)
+    Svc->>Svc: grants = rulesetData.linksOf(level.id, "grants")
 
     Svc->>Repo: CharacterAdvancements.findMany(db, {characterId})
     Repo->>Dedup: miss
@@ -478,7 +478,6 @@ A new kind of write takes an existing verb (`updateStatus`, not `setStatus`). A 
 - `engine/core/character/CharacterBase.ts` — `build(rows, view, master)` reads nothing: the ruleset's data loader assembles the character's data from the rows and the view
 - `server/timing.ts` — hit/miss counters surfaced in request logs
 - `tests/cow/views/dnd3.5/RulesetViews.test.ts` — compose + invalidation + pinning semantics + COW-fork resolving maps
-- `tests/cache/dnd3.5/joinMaps.test.ts` — accessor-map parity with replaced repo queries
 - `tests/cache/dnd3.5/requestCache.test.ts` — dedup semantics + tx bypass + post-mutation invalidation
 - `tests/services/characters/levels/dnd3.5/CharacterLevelsService.test.ts` — COW fork regression (wizard prohibited-school feat COW'd)
 

@@ -13,10 +13,10 @@ import SaveEntity from "./saves/SaveEntity.ts";
 import SkillEntity from "./skills/SkillEntity.ts";
 import SpellEntity from "./spells/SpellEntity.ts";
 
-/** The 3.5 entity kinds' rules, by table. */
+/** The 3.5 entity kinds' rules, by type. */
 export type Dnd35EntityKinds = { [K in keyof typeof ENTITY_KINDS]: InstanceType<(typeof ENTITY_KINDS)[K]> };
 
-/** Each entity kind's rules, by its table. */
+/** Each entity kind's rules, by its type. */
 const ENTITY_KINDS = {
   abilities: AbilityEntity,
   aptitudes: AptitudeEntity,
@@ -37,7 +37,7 @@ const ENTITY_KINDS = {
  * skills and table, through the classes' kind, bound to the class).
  */
 export default class Dnd35Entities extends EntitiesPart<Dnd35EntityKinds> {
-  /** An entity kind's rules (`type`, its table), bound to a ruleset's view. */
+  /** An entity kind's rules (`type`), bound to a ruleset's view. */
   override of<K extends keyof Dnd35EntityKinds>(view: RulesetView, type: K): Dnd35EntityKinds[K] {
     return new ENTITY_KINDS[type](view) as Dnd35EntityKinds[K];
   }

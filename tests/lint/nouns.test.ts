@@ -20,6 +20,7 @@ describe("a ruleset's nouns", () => {
           "engine/core/fresh/imported.ts": 'import { Aptitude } from "./x.ts";\nexport const x = Aptitude;\n',
           "engine/core/fresh/Feats.ts": "export const kinds = 1;\n",
           "client/src/fresh/text.tsx": "export const t = <p>Pick a spell</p>;\n",
+          "client/src/fresh/program.tsx": "export const t = <p>A file PCGen saved</p>;\n",
           "server/fresh/template.ts": "export const t = (id: string) => `/powers/${id}`;\n",
           // The engine's own words, and English's
           "engine/core/fresh/generic.ts": "export const track = (pool: string, step: string) => `${pool}:${step}`;\n",
@@ -34,6 +35,7 @@ describe("a ruleset's nouns", () => {
         ["ruleset-nouns"],
       ),
     ).toEqual([
+      "ruleset-nouns client/src/fresh/program.tsx",
       "ruleset-nouns client/src/fresh/text.tsx",
       "ruleset-nouns engine/core/fresh/Feats.ts",
       "ruleset-nouns engine/core/fresh/imported.ts",
