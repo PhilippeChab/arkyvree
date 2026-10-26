@@ -5,6 +5,7 @@
 
 import type { EntityRecord, EntityWrite, FieldValue } from "@/engine/core/module/storage.ts";
 import type { NamedLink, ViewLink } from "@/engine/core/view/index.ts";
+import type { ActivityChange } from "@/shared/activity.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /**
@@ -65,11 +66,12 @@ export interface EntityDeletePlan<E = { id: string; name: string }> {
 
 /**
  * What an entity's edit writes: the entity as the view has it (`E`), its new row and what goes beside it, what its
- * activity compares (`changes`: the entity's values and the form's, by the form's keys: its name, its description, its
- * columns), and the copies that may refuse it.
+ * activity records it changes (`changes`, in its form's order: its name, its description, each field and single link it
+ * writes another value of, each list of links it sets, its entries added and removed), and the copies that may refuse
+ * it.
  */
 export interface EntityEditPlan<E = { id: string; name: string }> extends EntitySave {
-  changes: { after: Record<string, unknown>; before: Record<string, unknown> };
+  changes: ActivityChange[];
   copies?: EntityCopies;
   entity: E;
 }

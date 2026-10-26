@@ -36,6 +36,8 @@ import {
   type ViewLink,
 } from "@/engine/core/view/index.ts";
 
+import EntityChanges from "./EntityChanges.ts";
+
 /**
  * A form as its kind reads it, where it stores it: its name and its description, its columns' and its own fields by the
  * stored field that keeps each (`fields`), its columns' links by role (`links`: a single link's target, a list of links'
@@ -134,6 +136,12 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
   protected readonly readOnly: boolean = false;
 
   /**
+   * The kind of the pools a role's links are taken through, by role (`viaId`: 3.5's class level's granted feats', its
+   * aptitudes), which its edit's activity names them by: none.
+   */
+  protected readonly viaTypes: Readonly<Record<string, string>> = {};
+
+  /**
    * The kind of the entities it owns (`owned(ownerId)`: a class's levels'), none for a kind that owns none: what a
    * delete of one reads before it finds their owner.
    */
@@ -147,27 +155,6 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
 
   /** The kind's type. */
   abstract readonly type: K;
-
-  /**
-   * What an edit's activity compares (`columns`, its form's, and `entity`, the one edited): their values by where
-   * they're stored (its name, its description, its fields by stored field, its single links by role), in its form's
-   * order (its columns' as described, then its own), the entity's at the form's places (none: null).
-   */
-  private changesOf(
-    columns: FormColumnValues,
-    entity: Pick<EntityRecord, "description" | "name"> & Pick<ViewEntity, "fields" | "links">,
-  ) {
-    const described = this.columns.flatMap((column) => placeOf(column)?.at ?? []);
-    const order = (keys: string[]) => [...new Set([...described.filter((key) => keys.includes(key)), ...keys])];
-    const after: Record<string, unknown> = { name: columns.name, description: columns.description };
-    const before: Record<string, unknown> = { name: entity.name, description: entity.description };
-    for (const key of order([...Object.keys(columns.fields), ...Object.keys(columns.links)])) {
-      const isField = Object.hasOwn(columns.fields, key);
-      after[key] = isField ? columns.fields[key] : columns.links[key];
-      before[key] = (isField ? entity.fields[key] : entity.links[key]) ?? null;
-    }
-    return { after, before };
-  }
 
   /** The stored fields and the roles a form's columns and its own fields take, which its codec doesn't read. */
   private get formPlaces(): { fields: Set<string>; links: Set<string> } {
@@ -203,16 +190,10 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
    * its save answers once written (`describe`: its record, its fields as a read gives them, the links a read describes
    * of it named, `savedLinks`).
    */
-  private planWrite(
-    body: FormBody,
-    given: PartialFieldValues<S>,
-    entity?: ViewKinds[K],
-  ): EntityCreatePlan & { columns: FormColumnValues } {
-    const columns = this.columnsOf(body, entity);
-    const row = this.storedOf(columns);
+  private planWrite(body: FormBody, given: PartialFieldValues<S>, entity?: ViewKinds[K]): EntityCreatePlan {
+    const row = this.storedOf(this.columnsOf(body, entity));
     const written = this.fieldsWrite(body, given, entity);
     return {
-      columns,
       describe: (saved, links) => ({
         ...saved,
         fields: this.fields.readByField(this.rulesetData.withInheritedFields(this.type, saved)),
@@ -581,8 +562,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
     const form: FormBody = { ...body, links: this.resolveIds(body) };
     const given = this.readFields(sent);
     this.checkForm(form);
-    const { columns: _, ...plan } = this.planWrite(form, given);
-    return plan;
+    return this.planWrite(form, given);
   }
 
   /** Deleting an entity (`id`): the entity as the view has it, and what its delete writes with it. */
@@ -600,8 +580,9 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
 
   /**
    * An entity's edit (`id`): the entity as the view has it, its new row off its form (an edit leaves the columns and the
-   * fields it doesn't give as they are), what it writes beside it, and what its activity compares (`changes`: the
-   * entity's values and the form's columns, by where they're stored: `changesOf`).
+   * fields it doesn't give as they are), what it writes beside it, and what its activity records it changes
+   * (`changes`: each field, single link and list of links it writes another value of, labeled as declared,
+   * `EntityChanges`).
    */
   planEdit(id: string, sent: EntityForm): EntityEditPlan<ViewKinds[K]> {
     this.checkAction("update");
@@ -610,8 +591,10 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
     const form: FormBody = { ...body, links: this.resolveIds(body) };
     const given = this.readFields(sent, entity);
     this.checkForm(form, entity);
-    const { columns, ...plan } = this.planWrite(form, given, entity);
-    return { ...plan, changes: this.changesOf(columns, entity), entity };
+    const plan = this.planWrite(form, given, entity);
+    const places = EntityChanges.placesOf(this.columns, this.fields.fields, Object.keys(this.ownFields));
+    const changes = new EntityChanges(this.rulesetData, this.type, this.fields, places, this.viaTypes);
+    return { ...plan, changes: changes.compare(entity, plan.row, plan.links), entity };
   }
 
   /** Copies of an entity (`sourceId`), each its own name and description: none, unless its kind makes copies. */

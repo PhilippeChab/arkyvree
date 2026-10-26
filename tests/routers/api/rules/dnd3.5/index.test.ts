@@ -155,7 +155,7 @@ describe("rules", () => {
       ["items", "fluid"],
     ]);
     // A class's page links it to its class skills, by the role their activities are named for
-    expect(kind("classes")?.links).toEqual({ role: "classSkill", targetName: "skillName", type: "skills" });
+    expect(kind("classes")?.links).toEqual({ role: "classSkill", type: "skills" });
     expect(kind("feats")?.lockedName).toEqual({ field: FEAT_GENERATED, reason: "A generated feat keeps its name" });
     // A pool's links column reads an entity read's links of its role, and a form sends them by it
     expect(dnd35.columns.feats?.find((column) => column.input === "links")).toMatchObject({ role: "listedIn" });

@@ -228,12 +228,13 @@ describe("activity notifications", () => {
     const { items } = await Activities.findPage(db, { userId: author.user.id }, { limit: 10, page: 1 });
     const recorded = new Map(items.map((activity) => [activity.type, JSON.stringify(activity.data)]));
     expect(Object.fromEntries(recorded)).toEqual({
-      addClassSkill: JSON.stringify({ skillId: climb.id, entityName: "Fighter", skillName: "Climb", baseRules }),
+      // Its skill as every link's activity records its target
+      addClassSkill: JSON.stringify({ toId: climb.id, entityName: "Fighter", toName: "Climb", baseRules }),
       removeClassSkill: JSON.stringify({
-        skillId: climb.id,
+        toId: climb.id,
         rulesetId,
         entityName: "Fighter",
-        skillName: "Climb",
+        toName: "Climb",
         baseRules,
       }),
     });
@@ -271,7 +272,12 @@ describe("activity notifications", () => {
     const recorded = new Map(items.map((activity) => [activity.type, JSON.stringify(activity.data)]));
     expect(Object.fromEntries(recorded)).toEqual({
       createClassLevel: JSON.stringify({ entityName: "Fighter", level: 1, baseRules }),
-      updateClassLevel: JSON.stringify({ entityName: "Fighter", level: 1, baseRules }),
+      updateClassLevel: JSON.stringify({
+        entityName: "Fighter",
+        level: 1,
+        changedFields: [{ field: CLASS_LEVEL_SKILL_POINTS, label: "Skill Points", from: "2", to: "4" }],
+        baseRules,
+      }),
       updateClassProgression: JSON.stringify({ entityName: "Fighter", levels: 1, baseRules }),
       deleteClassLevel: JSON.stringify({ rulesetId, entityName: "Fighter", level: 1, baseRules }),
     });

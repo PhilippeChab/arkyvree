@@ -259,7 +259,7 @@ describe("An activity", () => {
       formatNotificationMessage("updateClassLevel", { actorName: "Ann" }, RULES),
       formatNotificationMessage("deleteClassLevel", dnd35, RULES),
       formatNotificationMessage("updateClassProgression", dnd35, RULES),
-      formatNotificationMessage("addClassSkill", { ...dnd35, skillName: "Climb" }, RULES),
+      formatNotificationMessage("addClassSkill", { ...dnd35, toName: "Climb" }, RULES),
       formatNotificationMessage("removeClassSkill", { actorName: "Ann" }, RULES),
     ]).toEqual([
       "Ann added a level to Fighter",
@@ -291,7 +291,7 @@ describe("An activity", () => {
             { field: "name", from: "A", to: "B" },
             { field: ITEM_COST_GP, from: "15", to: "20" },
             { field: ITEM_SLOT, from: "Neck" },
-            { field: RACE_BASE_SPEED },
+            { field: "WEAPON_BASE_DAMAGE" },
             { field: "madeFrom", to: "00000000-0000-0000-0000-000000000000" },
             { bad: true },
           ],
@@ -299,7 +299,9 @@ describe("An activity", () => {
         },
         RULES,
       ),
-    ).toBe("Name: A → B\nCost: 15.00 gp → 20.00 gp\nSlot cleared\nRace Base Speed updated\nTemplate updated\nLevel 3");
+    ).toBe(
+      "Name: A → B\nCost: 15.00 gp → 20.00 gp\nSlot cleared\nWeapon Base Damage updated\nTemplate updated\nLevel 3",
+    );
     // A field reads as its own entity's column, by the stored field or the role that keeps it, never another's: a
     // class's hit die, a language's type, a skill's ability by its link's role, which says only that it changed
     const baseRules = "Dungeons & Dragons: 3.5";
@@ -332,6 +334,63 @@ describe("An activity", () => {
     ]);
   });
 
+  test("details each change by the label it records: a field, a single link by its target's name, a list's entries", () => {
+    const baseRules = "Dungeons & Dragons: 3.5";
+    const changedFields = [
+      { field: "SPELL_SCHOOL", label: "School", from: "Evocation", to: "Abjuration" },
+      { field: "SPELL_DESCRIPTOR", label: "Descriptors", to: "Fire, Light" },
+      { field: "WEAPON_FINESSABLE", label: "Finessable", from: "false", to: "true" },
+      { field: "resistedBy", label: "Saving Throw", from: "Fortitude", to: "Will" },
+      { field: ITEM_COST_GP, label: "Cost", from: "15", to: "20" },
+      { field: "description", label: "Description" },
+      {
+        role: "listedIn",
+        label: "Aptitudes",
+        added: [{ toId: "a", toName: "Wizard", tier: 3 }],
+        removed: [{ toId: "b", toName: "Sorcerer", tier: 0 }],
+      },
+      {
+        role: "grants",
+        label: "Feats",
+        added: [{ toId: "c", toName: "Power Attack", viaName: "Fighter Bonus Feats", free: true }],
+        removed: [],
+      },
+      { role: "baseBonus", label: "Saves", added: [{ toId: "d", toName: "Fortitude", amount: 2 }], removed: [] },
+      { role: "listedIn", label: "Aptitudes", added: [], removed: [{ toId: "e", toName: "General" }] },
+      { role: "broken", label: "Broken", added: "nothing", removed: [] },
+    ];
+    expect(formatActivityDetails("updateItem", { baseRules, changedFields }, RULES)?.split("\n")).toEqual([
+      "School: Evocation → Abjuration",
+      "Descriptors set to Fire, Light",
+      "Finessable: No → Yes",
+      "Saving Throw: Fortitude → Will",
+      // A column's reading still applies to a labeled change
+      "Cost: 15.00 gp → 20.00 gp",
+      "Description updated",
+      "Aptitudes: added Wizard (Level 3); removed Sorcerer (Cantrips)",
+      "Feats: added Power Attack (Fighter Bonus Feats, free)",
+      "Saves: added Fortitude (+2)",
+      "Aptitudes: removed General",
+    ]);
+    // A class level's update names what it changed under its level
+    expect(
+      formatActivityDetails(
+        "updateClassLevel",
+        {
+          baseRules,
+          entityName: "Fighter",
+          level: 2,
+          changedFields: [{ field: "CLASS_LEVEL_SKILL_POINTS", label: "Skill Points", from: "2", to: "4" }],
+        },
+        RULES,
+      ),
+    ).toBe("Skill Points: 2 → 4\nLevel 2");
+    // A link's target, by the key every link's activity records it at
+    expect(
+      formatActivityDetails("addClassSkill", { baseRules, entityName: "Fighter", toId: "s", toName: "Climb" }, RULES),
+    ).toBe("Climb");
+  });
+
   test("details an older activity's changes, which names no base rules, by every base rules' columns", () => {
     // As 0090 rewrote what an item's, a race's and a spell's update recorded before its activity named its base rules
     const changedFields = [
@@ -351,6 +410,9 @@ describe("An activity", () => {
     expect(formatActivityDetails("updateRace", speed, RULES)).toBe("Base Speed: 30 → 20");
     const save = { changedFields: [{ field: "resistedBy", to: "00000000-0000-0000-0000-000000000000" }] };
     expect(formatActivityDetails("updateSpell", save, RULES)).toBe("Saving Throw updated");
+    // A stored field no column shows and no label names reads as its name in words, never as its constant
+    const template = { changedFields: [{ field: "ITEM_IS_TEMPLATE", from: "false", to: "true" }] };
+    expect(formatActivityDetails("updateRace", template, RULES)).toBe("Item Is Template: No → Yes");
   });
 
   test("happened a while ago, in the unit that reads best", () => {

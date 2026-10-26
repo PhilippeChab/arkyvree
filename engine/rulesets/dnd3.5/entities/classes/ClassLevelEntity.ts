@@ -43,6 +43,9 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
 
   protected override readonly label = "Class level";
 
+  /** The pools its granted feats are taken through, which its edit's activity names them by: aptitudes. */
+  protected override readonly viaTypes = { grants: "aptitudes" };
+
   override readonly type = "class-levels";
 
   /**

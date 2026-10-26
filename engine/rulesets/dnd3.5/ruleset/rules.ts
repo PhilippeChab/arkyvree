@@ -106,7 +106,7 @@ export const RULES: RulesDeclaration = {
     {
       fieldHelp: true,
       icon: "accessibility",
-      links: { role: CLASS_SKILL_LINKS.role, targetName: CLASS_SKILL_LINKS.targetName, type: "skills" },
+      links: { role: CLASS_SKILL_LINKS.role, type: "skills" },
       opens: "progression",
       partitioned: true,
       type: "classes",

@@ -24,15 +24,16 @@ export default class ClassSkills {
 
   /**
    * Assigning a skill to the class: the class as the view has it, its `classSkill` link (its skill: a copy's for its
-   * source's id), and what its activity records.
-   * Refused when the skill isn't the ruleset's (as invalid, naming it: the request's), or the class has it already.
+   * source's id), and what its activity records: the class's name, and the skill as every link's names it (`toId`,
+   * `toName`). Refused when the skill isn't the ruleset's (as invalid, naming it: the request's), or the class has it
+   * already.
    */
   planAdd(skillId: string) {
     const skill = new RequestIds(this.view.rulesetData, "this ruleset").find("skills", skillId);
     if (this.dnd35.classSkillsOf(this.klass.id).some((link) => link.toId === skill.id))
       throw new RulesError("conflict", "Skill is already assigned to this class");
     return {
-      activity: { skillId: skill.id, entityName: this.klass.name, [CLASS_SKILL_LINKS.targetName]: skill.name },
+      activity: { toId: skill.id, entityName: this.klass.name, toName: skill.name },
       link: { role: CLASS_SKILL_LINKS.role, toId: skill.id, toType: "skills" },
       owner: this.klass,
     };
@@ -40,7 +41,7 @@ export default class ClassSkills {
 
   /**
    * Removing a skill from the class: the class as the view has it, the role and the skill of its `classSkill` link, and
-   * what its activity records. Refused when the class doesn't have the skill.
+   * what its activity records, as `planAdd`'s does. Refused when the class doesn't have the skill.
    */
   planRemove(skillId: string) {
     const { rulesetData } = this.view;
@@ -50,10 +51,10 @@ export default class ClassSkills {
     const skill = dnd35.skillsById.get(skillId);
     return {
       activity: {
-        skillId: link.toId,
+        toId: link.toId,
         rulesetId: this.view.ruleset.id,
         entityName: this.klass.name,
-        [CLASS_SKILL_LINKS.targetName]: skill?.name,
+        toName: skill?.name,
       },
       owner: this.klass,
       role: link.role,

@@ -1050,3 +1050,62 @@ describe("0093_unused-pick-columns", () => {
     });
   });
 });
+
+describe("0094_link-activity-keys", () => {
+  test("names a link's target in its activities and notifications as every link does, and nothing else", async () => {
+    const targetId = (await getSeedCtx()).classMap.pc["Fighter"];
+    // What an activity and a notification recorded of a class skill's add and remove, under the old keys, and others
+    const recorded = [
+      [
+        "addClassSkill",
+        '{"skillId":"s","entityName":"Fighter","skillName":"Climb","baseRules":"B"}',
+        '{"toId":"s","entityName":"Fighter","toName":"Climb","baseRules":"B"}',
+      ],
+      [
+        "removeClassSkill",
+        '{"skillId" : "s","rulesetId":"r","entityName":"Fighter","skillName":"Knowledge (\\"skillId\\": x)"}',
+        // Written as the app writes an object: no space between a key and its value
+        '{"toId":"s","rulesetId":"r","entityName":"Fighter","toName":"Knowledge (\\"skillId\\": x)"}',
+      ],
+      // A key nested in a value stays, before the data's own key or after it
+      [
+        "addClassSkill",
+        '{"entityName":"Fighter","extra":{"skillId":"n","skillName":"Nested"},"skillId":"s","skillName":"Climb"}',
+        '{"entityName":"Fighter","extra":{"skillId":"n","skillName":"Nested"},"toId":"s","toName":"Climb"}',
+      ],
+      ["addClassSkill", '{"toId":"s","entityName":"Fighter","toName":"Climb"}', null],
+      ["updateClass", '{"entityName":"skillName","changedFields":[{"field":"skillId"}]}', null],
+      ["createClass", '{"skillId":"s"}', null],
+      ["addClassSkill", null, null],
+    ];
+    const activityIds: string[] = [];
+    const notificationIds: string[] = [];
+    for (const [type, data] of recorded) {
+      const { rows: activity } = await db.execute<{ id: string }>(sql`
+        INSERT INTO account.activities (user_id, target_id, target_type, type, data)
+        VALUES (${SEED_USER_ID}, ${targetId}, 'classes', ${type}, ${data}) RETURNING id
+      `);
+      activityIds.push(activity[0]!.id);
+      const { rows: notification } = await db.execute<{ id: string }>(sql`
+        INSERT INTO account.notifications (recipient_id, actor_id, activity_id, type, target_id, target_type, data)
+        VALUES (${SEED_USER_ID}, ${SEED_USER_ID}, ${activity[0]!.id}, ${type}, ${targetId}, 'classes', ${data})
+        RETURNING id
+      `);
+      notificationIds.push(notification[0]!.id);
+    }
+
+    for (const statement of statementsOf("0094_link-activity-keys.sql")) await db.execute(sql.raw(statement));
+
+    const expected = recorded.map(([type, data, renamed]) => ({ type, data: renamed ?? data }));
+    for (const [table, ids] of [
+      ["account.activities", activityIds],
+      ["account.notifications", notificationIds],
+    ] as const) {
+      const { rows } = await db.execute(sql`
+        SELECT type, data::text AS data FROM ${sql.raw(table)}
+        WHERE id = ANY (${`{${ids.join(",")}}`}::uuid[]) ORDER BY array_position(${`{${ids.join(",")}}`}::uuid[], id)
+      `);
+      expect({ table, rows }).toEqual({ table, rows: expected });
+    }
+  });
+});
