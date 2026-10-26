@@ -249,10 +249,6 @@ export default class Dnd35View {
     return this.rulesetData.rows("mechanics");
   }
 
-  get mechanicsById(): Map<string, Mechanic> {
-    return this.rulesetData.byId("mechanics");
-  }
-
   get races(): Race[] {
     return this.rulesetData.rows("races");
   }

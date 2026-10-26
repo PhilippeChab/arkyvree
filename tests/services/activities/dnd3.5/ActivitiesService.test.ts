@@ -25,7 +25,7 @@ function resolve(targetType: string, targetId: string, session: Session = makeSe
 
 async function resolveAll(targets: string[][]) {
   const urls = [];
-  for (const [table, id] of targets) urls.push(await resolve(table, id));
+  for (const [targetType, id] of targets) urls.push(await resolve(targetType, id));
   return urls;
 }
 
@@ -69,7 +69,7 @@ describe("ActivitiesService.getActivityUrl", () => {
     const fighter = classMap.pc["Fighter"];
     const [mechanic] = await Entities.create<Mechanic>(db, "mechanics", { name: "Linked Mechanic", rulesetId: r });
     const [level] = await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [fighter] });
-    for (const [table, id, url] of [
+    for (const [targetType, id, url] of [
       ["feats", featMap["Toughness"], `/rulesets/${r}/feats/${featMap["Toughness"]}/customization`],
       ["spells", spellMap["Magic Missile"], `/rulesets/${r}/spells/${spellMap["Magic Missile"]}/customization`],
       ["items", itemMap["Longsword"], `/rulesets/${r}/items/${itemMap["Longsword"]}/customization`],
@@ -83,7 +83,7 @@ describe("ActivitiesService.getActivityUrl", () => {
       // A class skill's activity targets the class.
       ["classSkill", fighter, `/rulesets/${r}/classes/${fighter}/skills`],
     ])
-      expect({ table, url: await resolve(table, id) }).toEqual({ table, url });
+      expect({ targetType, url: await resolve(targetType, id) }).toEqual({ targetType, url });
   });
 
   test("links a customization to its entity's customization page, on its tab", async () => {
@@ -219,7 +219,7 @@ describe("ActivitiesService.getActivityUrl", () => {
         return { contributorId: contributor.id, page: `/characters/${character.id}` };
       },
     ],
-  ] as const)("links a %s contributor", (entityType, table, invitePage, create) => {
+  ] as const)("links a %s contributor", (entityType, targetType, invitePage, create) => {
     test.each([
       ["a pending invitee to their invite", "Pending", "invitee", "invite"],
       ["an active contributor to its page", "Active", "invitee", "page"],
@@ -228,7 +228,7 @@ describe("ActivitiesService.getActivityUrl", () => {
       const [owner, invitee] = [await createTestUser(), await createTestUser()];
       const { contributorId, page } = await create(owner.user.id, invitee.user.id, status);
       const session = viewer === "owner" ? owner.session : invitee.session;
-      expect(await resolve(table, contributorId, session)).toBe(
+      expect(await resolve(targetType, contributorId, session)).toBe(
         target === "invite" ? `${invitePage}/${contributorId}` : page,
       );
     });
@@ -236,12 +236,12 @@ describe("ActivitiesService.getActivityUrl", () => {
     test("to no page once the invitee's access is gone", async () => {
       const [owner, invitee] = [await createTestUser(), await createTestUser()];
       const { contributorId } = await create(owner.user.id, invitee.user.id, "Rejected");
-      expect(await resolve(table, contributorId, invitee.session)).toEqual({ noAccess: true, entityType });
+      expect(await resolve(targetType, contributorId, invitee.session)).toEqual({ noAccess: true, entityType });
     });
   });
 
   test("links nothing for a missing target or a type without pages", async () => {
-    for (const table of [
+    for (const targetType of [
       // A character or campaign deleted for good
       "rulesets",
       "characters",
@@ -261,17 +261,17 @@ describe("ActivitiesService.getActivityUrl", () => {
       "entity-fields",
       "notifications",
     ])
-      expect({ table, url: await resolve(table, NIL_UUID) }).toEqual({ table, url: null });
+      expect({ targetType, url: await resolve(targetType, NIL_UUID) }).toEqual({ targetType, url: null });
   });
 
   test("links nothing for a role no entity edits link by link, whose changes no activity records", async () => {
     const { featMap, classMap } = await getSeedCtx();
     const fighter = classMap.pc["Fighter"];
     const [level] = await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [fighter] });
-    for (const [table, id] of [
+    for (const [targetType, id] of [
       ["listedIn", featMap["Toughness"]],
       ["grants", level.id],
     ])
-      expect({ table, url: await resolve(table, id) }).toEqual({ table, url: null });
+      expect({ targetType, url: await resolve(targetType, id) }).toEqual({ targetType, url: null });
   });
 });

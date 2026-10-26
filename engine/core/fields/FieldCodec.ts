@@ -37,7 +37,6 @@ export default class FieldCodec<S extends Fields> {
       Object.entries(fields).filter(([, field]) => !("form" in field && field.form)),
     ) as Fields;
     this.formNames = Object.keys(this.formFields) as (keyof S & string)[];
-    this.formStored = new Set(Field.storedLeavesOf(this.formFields).map((leaf) => leaf.field));
     this.leaves = new Map(Field.storedLeavesOf(fields).map((leaf) => [leaf.field, leaf]));
   }
 
@@ -215,9 +214,6 @@ export default class FieldCodec<S extends Fields> {
 
   /** The spec's own names of the fields its form shows (its declarations' keys, never their stored fields), in its order. */
   readonly formNames: (keyof S & string)[];
-
-  /** The stored fields that keep those its form shows among its own. */
-  readonly formStored: ReadonlySet<string>;
 
   /**
    * The values as a write of their owner's fields and links: every field and link role of the fields they give (a

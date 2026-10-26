@@ -31,9 +31,9 @@ export interface CopiedEntity {
 }
 
 /**
- * COW trigger: one copy of an inherited entity into a fork (`EntityCopy.create`), with all its customizations and
- * relationships, its sibling copies' data merged in, and the entity_snapshot record. Each copy is its own instance,
- * which records the customizations it copied.
+ * COW trigger: one copy of an inherited entity into a fork (`EntityCopy.create`), with all its customizations, its
+ * links and the entities it owns, its sibling copies' data merged in, and the entity_snapshot record. Each copy is its
+ * own instance, which records the customizations it copied.
  */
 export default class EntityCopy {
   private constructor(entityType: RulesetEntityType, entityId: string, ruleset: RulesetSources) {
@@ -126,7 +126,7 @@ export default class EntityCopy {
     if (!parentEntity) throw new Error(`Parent entity not found: ${this.entityType}/${this.entityId}`);
 
     // The ruleset's copy-on-write data, as the transaction sees it, its own copies included: what the copy's references
-    // (its row's, its relationships') are remapped by
+    // (its row's, its links' and its owned entities') are remapped by
     const cow = await CowDataReader.read(tx, this.ruleset);
     const siblingIds = cow.getSiblings(this.entityId);
 
@@ -150,7 +150,7 @@ export default class EntityCopy {
     const cust = customizations.get(this.entityId)!;
     await CustomizationCopies.copy(tx, newEntity.id, this.entityType, cust, this.copiedIds);
 
-    // 4. Copy relationships (aptitudes, class levels, etc.), remapped as the row was
+    // 4. Copy its links of the roles it holds many of and the entities it owns, remapped as the row was
     await this.copyRelationships(tx, newEntity.id, cow);
 
     // 4b. Merge sibling data when multiple extensions COW the same base entity

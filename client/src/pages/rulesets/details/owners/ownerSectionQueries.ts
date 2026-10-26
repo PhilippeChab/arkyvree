@@ -19,9 +19,6 @@ type OwnerTable = InferResponseType<(typeof ownerApi)["tables"][":table"]["$get"
 /** The table of an owner whose rows hold a key (`K`): the feat pools', its lists' (`name`). */
 type TableWith<K extends string> = Extract<OwnerTable, Record<K, unknown>[]>;
 
-/** An owner's level as its Progression tab lists it */
-export type LevelRow = InferResponseType<(typeof ownerApi)["owned"]["$get"], 200>[number];
-
 /**
  * An owner's link to an entity, of the role its kind's `links` describe, as its tab reads it: the owner it's from
  * (`fromId`, a copy's where an edit of an inherited one copied it), the entity it's to (`toId`) and that entity's name
@@ -36,9 +33,6 @@ export type OwnerDetail = EntityRow;
 
 /** A list an owner's levels count on (3.5's spell lists), as its table of them gives it: its own first. */
 export type OwnerList = TableWith<"name">[number];
-
-/** What an owner's Progression and tables' tabs read beside its levels and tables: its pools' picks, its list. */
-export type OwnerProgression = InferResponseType<(typeof ownerApi)["progression"]["$get"], 200>;
 
 /**
  * A save of an owner's progression: its levels' forms, its pools' picks, its spell tables' totals, as its rules read
