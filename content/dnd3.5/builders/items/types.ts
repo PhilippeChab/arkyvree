@@ -1,9 +1,10 @@
 import type { ItemSeed } from "@/content/core/builders/items/types.ts";
 import type { PartialFieldValues } from "@/shared/customization/fields.ts";
+import type { ItemLocation } from "@/vocabulary/dnd3.5/equipment.ts";
 import type { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
-/** A 3.5 item: an item (`ItemSeed`) with the fields 3.5 declares an item's. */
-export type Dnd35ItemSeed = ItemSeed<ItemFields>;
+/** A 3.5 item: an item (`ItemSeed`) with the fields 3.5 declares an item's, in one of its locations. */
+export type Dnd35ItemSeed = ItemSeed<ItemFields, ItemLocation>;
 
 /**
  * An item's fields a seed gives: some of those 3.5 declares an item's (`ENTITY_FIELDS.items`), a weapon's, an armor's

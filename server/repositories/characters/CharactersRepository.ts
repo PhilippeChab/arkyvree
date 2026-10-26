@@ -10,6 +10,8 @@ import { Searches } from "@/server/repositories/concerns/Searches.ts";
 import StoredCharacters, { type CharacterValuesWrite } from "@/server/repositories/stored/StoredCharacters.ts";
 import type { Character } from "@/shared/relations.ts";
 
+import { PLAYER_KINDS } from "./playerKinds.ts";
+
 /** A character's row as a write gives it: its own columns, and its fields' values and single links' entities it sets. */
 type CharacterValues = Partial<typeof charactersInCharacter.$inferInsert> & CharacterValuesWrite;
 
@@ -54,7 +56,7 @@ class CharactersRepository extends include(
       db,
       this.where([
         eq(charactersInCharacter.id, where.id),
-        eq(charactersInCharacter.kind, "pc"),
+        inArray(charactersInCharacter.kind, [...PLAYER_KINDS]),
         or(eq(charactersInCharacter.userId, where.userId), this.contributesTo(db, where.userId))!,
         this.visibility(visibility),
       ]),
@@ -113,14 +115,14 @@ class CharactersRepository extends include(
         and(
           isNull(charactersInCharacter.deletedAt),
           eq(charactersInCharacter.userId, where.userId),
-          eq(charactersInCharacter.kind, "pc"),
+          inArray(charactersInCharacter.kind, [...PLAYER_KINDS]),
         ),
       );
     return result.count;
   }
 
   /** Writes a new character: its row, its fields' values and its single links. */
-  async create(db: Db, values: CharacterValues & Pick<Character, "name" | "rulesetId" | "userId">) {
+  async create(db: Db, values: CharacterValues & Pick<Character, "kind" | "name" | "rulesetId" | "userId">) {
     const { fields, links, ...own } = values;
     const [created] = await db.insert(this.table).values(own).returning({ id: this.table.id });
     await StoredCharacters.write(db, [created.id], { fields, links });
@@ -191,7 +193,7 @@ class CharactersRepository extends include(
         [
           "userId" in where && eq(this.table.userId, where.userId),
           "kind" in where && eq(this.table.kind, where.kind),
-          isUserFacing && eq(this.table.kind, "pc"),
+          isUserFacing && inArray(this.table.kind, [...PLAYER_KINDS]),
           this.visibility(visibility),
         ],
       ),
@@ -244,7 +246,14 @@ class CharactersRepository extends include(
           >`CASE WHEN ${this.table.userId} = ${where.userId} THEN 'owner' ELSE 'contributor' END`,
         })
         .from(this.table)
-        .where(this.where([accessCondition!, eq(this.table.kind, "pc"), this.visibility(visibility), searchConditions]))
+        .where(
+          this.where([
+            accessCondition!,
+            inArray(this.table.kind, [...PLAYER_KINDS]),
+            this.visibility(visibility),
+            searchConditions,
+          ]),
+        )
         .orderBy(...this.pageOrder(this.orderBy(this.table[orderBy], orderDir)))
         .limit(limit)
         .offset(offset);
@@ -273,7 +282,7 @@ class CharactersRepository extends include(
           and(
             eq(charactersInCharacter.userId, where.userId),
             eq(charactersInCharacter.rulesetId, where.rulesetId),
-            eq(charactersInCharacter.kind, "pc"),
+            inArray(charactersInCharacter.kind, [...PLAYER_KINDS]),
             isNull(charactersInCharacter.deletedAt),
             isNull(playerCharactersInCampaign.characterId), // NOT linked
             this.search(where.search, [charactersInCharacter.name]) || undefined,

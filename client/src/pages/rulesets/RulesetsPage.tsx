@@ -105,13 +105,15 @@ export default function RulesetsPage() {
                   // The page opens on its rules' first tab, with "Local Changes" on for extensions.
                   const prefetch = () => {
                     void queryClient.prefetchQuery(rulesetDetailQuery(ruleset.id));
-                    const first = allRules?.[ruleset.baseRules].kinds[0];
+                    const rules = allRules?.[ruleset.baseRules];
+                    const first = rules?.kinds[0];
                     if (!first) return;
                     void prefetchSection(
                       queryClient,
                       ruleset.id,
                       getUrlSegment(first.type),
                       first,
+                      rules.entityKinds.at(0)?.value,
                       ruleset.kind === "extension",
                     );
                   };

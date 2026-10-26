@@ -12,6 +12,7 @@ import { NotFoundError } from "@/server/errors/index.ts";
 import { CharacterInventory, CharacterLinks, Characters, Entities, Picks } from "@/server/repositories/index.ts";
 import { readCharacterInput, readChildInputs } from "@/server/services/characters/index.ts";
 import { createAdvancement, writeChildren } from "@/server/services/characters/levels/index.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 import { type SeedContext } from "./seedContext.ts";
 
@@ -131,6 +132,7 @@ export async function createCharacter(
   },
 ) {
   const [character] = await Characters.create(db, {
+    kind: PLAYER_CHARACTER_KIND,
     userId: SEED_USER_ID,
     rulesetId: data.rulesetId ?? ctx.rulesetId,
     name: data.name,

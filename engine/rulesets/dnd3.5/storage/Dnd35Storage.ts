@@ -1,4 +1,5 @@
 import type { StorageDeclaration } from "@/engine/core/module/index.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import {
   CLASS_HD,
   FEAT_GENERATED,
@@ -49,7 +50,7 @@ const KINDS: StorageDeclaration["kinds"] = {
     customizable: true,
     editedLinks: "classSkill",
     fields: { [CLASS_HD]: { kind: "number" } },
-    partition: "pc",
+    partition: PLAYER_CHARACTER_KIND,
   },
   class_levels: { customizable: true },
   languages: { fields: { [LANGUAGE_TYPE]: { kind: "text" } } },
@@ -58,7 +59,7 @@ const KINDS: StorageDeclaration["kinds"] = {
   races: {
     customizable: true,
     fields: { [RACE_SIZE]: { kind: "text" }, [RACE_BASE_SPEED]: { kind: "number" } },
-    partition: "pc",
+    partition: PLAYER_CHARACTER_KIND,
   },
   saves: {},
   skills: {},
@@ -74,7 +75,7 @@ const KINDS: StorageDeclaration["kinds"] = {
  */
 export const DND35_STORAGE: StorageDeclaration = {
   kinds: KINDS,
-  character: { scoredRoles: ["score"] },
+  character: { playerKind: PLAYER_CHARACTER_KIND, scoredRoles: ["score"] },
   registries: {
     entityTypes: [
       ...[

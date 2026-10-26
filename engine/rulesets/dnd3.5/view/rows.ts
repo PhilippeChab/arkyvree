@@ -7,7 +7,7 @@
  */
 
 import type { ViewEntity } from "@/engine/core/view/index.ts";
-import type { ItemLocation, SizeType } from "@/shared/enums.ts";
+import type { ItemLocation } from "@/vocabulary/dnd3.5/equipment.ts";
 import type {
   CLASS_HD,
   FEAT_GENERATED,
@@ -23,6 +23,7 @@ import type {
   RACE_SIZE,
   SPELL_SAVE_EFFECT,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
+import type { SizeType } from "@/vocabulary/dnd3.5/sizes.ts";
 
 declare module "@/engine/core/view/rows.ts" {
   /** 3.5's owned kind: a class's levels. */

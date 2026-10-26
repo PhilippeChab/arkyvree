@@ -5,7 +5,6 @@
  */
 
 import type { ViewKinds } from "@/engine/core/view/index.ts";
-import type { ItemLocation } from "@/shared/enums.ts";
 
 import type { InventoryEntryPlan } from "./plans.ts";
 
@@ -33,7 +32,7 @@ export interface NewCharacterRequest extends StartRequest {
 export interface PlacementQuery {
   entryId: string | null;
   groups: number[];
-  location: ItemLocation;
+  location: string;
 }
 
 /** A printed sheet's request: whether it adds the diagnostics page, and the character's portrait. */

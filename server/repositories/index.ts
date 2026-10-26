@@ -1,5 +1,6 @@
 export { SESSION_TTL_SECONDS } from "./accounts/sessionTtl.ts";
 export { Visibility, visibilityMap } from "./BaseRepository.ts";
+export { PLAYER_KINDS } from "./characters/playerKinds.ts";
 export { fetchEveryPage, paginateItems } from "./concerns/Paginates.ts";
 export {
   Activities,

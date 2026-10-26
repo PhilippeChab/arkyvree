@@ -1,5 +1,6 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 import { PCGEN_FEATS, PCGEN_ITEMS } from "./names.ts";
 
@@ -80,7 +81,9 @@ export default class PcgenNames {
     const cached = this.compares.get(list);
     if (cached) return cached;
     const entities: Named[] = Dnd35View.of(this.rulesetData)[list];
-    const players = PLAYER_LISTS.has(list) ? entities.filter((entity) => entity.partition === "pc") : entities;
+    const players = PLAYER_LISTS.has(list)
+      ? entities.filter((entity) => entity.partition === PLAYER_CHARACTER_KIND)
+      : entities;
     const compared = players.map((entity) => ({ compared: PcgenNames.compared(entity.name), entity }));
     this.compares.set(list, compared);
     return compared;

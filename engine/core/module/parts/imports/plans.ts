@@ -59,11 +59,11 @@ export interface ImportSource {
 }
 
 /**
- * A new character's row, as an import fills it: its name, notes and own columns, its fields' values (null: none) and
- * its single links' entities, by role (3.5's race).
+ * A new character's row, as an import fills it: its kind (its module's player character's), its name, notes and own
+ * columns, its fields' values (null: none) and its single links' entities, by role (3.5's race).
  */
 export type ImportedRow = CharacterOwnValues &
-  Pick<Character, "name" | "notes" | "privateNotes"> & {
+  Pick<Character, "kind" | "name" | "notes" | "privateNotes"> & {
     fields: Record<string, CharacterFieldValue | null>;
     links: Record<string, string>;
   };

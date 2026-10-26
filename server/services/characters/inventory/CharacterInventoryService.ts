@@ -8,7 +8,6 @@ import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/err
 import { Activities, CharacterInventory, Visibility } from "@/server/repositories/index.ts";
 import { readCharacterInput } from "@/server/services/characters/characterInputs.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
-import type { ItemLocation } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class CharacterInventoryService {
@@ -18,7 +17,7 @@ class CharacterInventoryService {
     itemId: string,
     quantity: number,
     equipped: boolean,
-    location: ItemLocation | null,
+    location: string | null,
     totalCharges: number | null,
     remainingCharges: number | null,
     groups: number[],
@@ -65,7 +64,7 @@ class CharacterInventoryService {
     session: Session,
     characterId: string,
     entryId: string | null,
-    location: ItemLocation,
+    location: string,
     groups: number[],
   ) {
     const characterRecord = await getEditableCharacter(db, session, characterId);
@@ -104,7 +103,7 @@ class CharacterInventoryService {
     entryId: string,
     quantity: number,
     equipped: boolean,
-    location: ItemLocation | null,
+    location: string | null,
     totalCharges: number | null,
     remainingCharges: number | null,
     groups: number[],

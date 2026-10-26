@@ -339,6 +339,7 @@ export default function RulesetDetailsPage() {
                   id,
                   key,
                   tabConfig.find((tab) => tab.key === key)?.kind ?? null,
+                  rules?.entityKinds.at(0)?.value,
                   isExtension,
                 )
               }

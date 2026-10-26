@@ -11,6 +11,7 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Requirement } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 /**
  * The class picker for the character, from its rows and what the level-up wizard plans so far: a player character's
@@ -32,7 +33,7 @@ export default class ClassPicker
   }
 
   /** What the picker offers: a player character's classes (their partition, `pc`). */
-  override readonly filters = { partitions: ["pc"] };
+  override readonly filters = { partitions: [PLAYER_CHARACTER_KIND] };
 
   /** Its options are classes, each a track. */
   readonly tracks = true;

@@ -2,7 +2,7 @@ import type { Db } from "@/drizzle/database.ts";
 import type { CharacterInput } from "@/engine/index.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Characters, Visibility } from "@/server/repositories/index.ts";
+import { Characters, PLAYER_KINDS, Visibility } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { readCharacterInput } from "./characterInputs.ts";
@@ -12,10 +12,10 @@ import { readCharacterInput } from "./characterInputs.ts";
  * (3.5's bonded creature) whose parent they may edit; null otherwise.
  */
 export async function findEditableCharacterOrChild(tx: Db, characterId: string, userId: string) {
-  const pc = await Characters.findOne(tx, { id: characterId, editorId: userId });
-  if (pc) return pc;
+  const editable = await Characters.findOne(tx, { id: characterId, editorId: userId });
+  if (editable) return editable;
   const child = await Characters.findOne(tx, { id: characterId });
-  if (!child || child.kind === "pc" || !child.parentCharacterId) return null;
+  if (!child || PLAYER_KINDS.includes(child.kind) || !child.parentCharacterId) return null;
   const parent = await Characters.findOne(tx, {
     id: child.parentCharacterId,
     editorId: userId,

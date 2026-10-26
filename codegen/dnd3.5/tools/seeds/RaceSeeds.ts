@@ -3,7 +3,7 @@
 import { type RaceReference } from "@/codegen/dnd3.5/tools/types/races.ts";
 import { grantLanguage } from "@/content/dnd3.5/builders/languages/knowledge.ts";
 import type { RaceSeed } from "@/content/dnd3.5/builders/races/types.ts";
-import { SIZE_OPTIONS } from "@/shared/enums.ts";
+import { SIZE_OPTIONS } from "@/vocabulary/dnd3.5/sizes.ts";
 
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
 

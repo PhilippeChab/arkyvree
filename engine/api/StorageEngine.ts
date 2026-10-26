@@ -8,7 +8,6 @@ import type {
   RulesetModule,
   StepDef,
   StorageRegistries,
-  StoredCharacter,
   StoredEntity,
   StoredKind,
   StoredRuleset,
@@ -38,18 +37,16 @@ function mergeRecords<T>(modules: [BaseRules, RulesetModule][], pick: (module: R
 /**
  * How every registered module stores its data in the generic tables, which the server reads and writes them by: each
  * kind (`kind`: its own fields, its defaults), what an entity's record reads of its fields and links (`recordReads`), an
- * entity's links as a view holds them (`viewLinksOf`), a character's (`character`), each field and link role (`field`,
- * `role`), and the registries' rows (`registries`). Names are global: two modules declaring one kind, field or role is
- * refused, as the registries' keys refuse it.
+ * entity's links as a view holds them (`viewLinksOf`), a player character's kind (`playerKinds`), each field and link
+ * role (`field`, `role`), and the registries' rows (`registries`). Names are global: two modules declaring one kind,
+ * field or role is refused, as the registries' keys refuse it.
  */
 export default class StorageEngine {
   constructor(modules: [BaseRules, RulesetModule][]) {
     this.baseRules = modules.map(([baseRules]) => baseRules);
     this.kinds = mergeRecords(modules, (module) => module.storage.kinds);
     this.fields = mergeRecords(modules, (module) => module.fields);
-    this.characterDeclaration = {
-      scoredRoles: modules.flatMap(([, module]) => module.storage.character.scoredRoles),
-    };
+    this.playerKindList = modules.map(([, module]) => module.storage.character.playerKind);
     const registries = modules.map(([, module]) => module.storage.registries);
     this.merged = {
       entityTypes: registries.flatMap((registry) => registry.entityTypes),
@@ -122,14 +119,15 @@ export default class StorageEngine {
 
   private readonly baseRules: BaseRules[];
 
-  private readonly characterDeclaration: StoredCharacter;
-
   /** Every module's owners' fields, by owner type. */
   private readonly fields: Record<string, Fields>;
 
   private readonly kinds: Record<string, StoredKind>;
 
   private readonly merged: StorageRegistries;
+
+  /** Each module's player character's kind. */
+  private readonly playerKindList: readonly string[];
 
   /** The single links each type's record reads, by its type, once read (`recordRoles`). */
   private readonly recordRolesByType = new Map<string, readonly string[]>();
@@ -169,11 +167,6 @@ export default class StorageEngine {
       this.recordRolesByType.set(type, roles);
     }
     return roles;
-  }
-
-  /** A character's data, as every module stores it past its registries: the roles of its links that hold an amount. */
-  character(): StoredCharacter {
-    return this.characterDeclaration;
   }
 
   /** A character's link role (3.5's `race`, `score`, `speaks`): the type of its entities, and whether it holds one. */
@@ -270,6 +263,14 @@ export default class StorageEngine {
   /** The kinds that own another (3.5's classes, their levels'), in the order their owned kinds are declared. */
   ownerKinds(): string[] {
     return [...new Set(this.merged.entityTypes.flatMap((def) => (def.ownerType ? [def.ownerType] : [])))];
+  }
+
+  /**
+   * Every module's player character's kind (3.5's `pc`): what a user's lists, shares and campaigns hold, a character of
+   * any other kind being another's child.
+   */
+  playerKinds(): readonly string[] {
+    return this.playerKindList;
   }
 
   /**

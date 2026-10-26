@@ -1,5 +1,3 @@
-import { type ItemLocation, LOCATION_OPTIONS } from "@/shared/enums.ts";
-
 import type { InventoryEntry, RulesetItem, RulesetItemDetail } from "./equipmentQueries.ts";
 import { shownGroup, storedGroups } from "./groups.ts";
 
@@ -7,7 +5,8 @@ import { shownGroup, storedGroups } from "./groups.ts";
 export interface InventoryFormData {
   /** The groups it's held in (3.5's weapon sets a hand holds it in), as shown, from 1 (see `shownGroup`). */
   groups: number[];
-  location: ItemLocation | "none";
+  /** Where it's held: one of the locations its item's placement offers, or not equipped (`"none"`) */
+  location: string;
   quantity: number;
   remainingCharges: number;
   selectedItem: RulesetItem | null;
@@ -28,9 +27,6 @@ export const EMPTY_INVENTORY_FORM: InventoryFormData = {
   totalCharges: 0,
   remainingCharges: 0,
 };
-
-/** A slot, or not equipped. */
-export const LOCATION_CHOICES = [...LOCATION_OPTIONS, "none"] as const;
 
 /**
  * The groups (3.5's weapon sets) the form offers a held item, as shown, from 1: those the character's inventory holds

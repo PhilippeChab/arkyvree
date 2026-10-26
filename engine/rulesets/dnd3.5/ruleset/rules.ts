@@ -11,7 +11,7 @@ import { RACE_COLUMNS, RACE_LIST } from "@/engine/rulesets/dnd3.5/entities/races
 import { SAVE_COLUMNS, SAVE_LIST } from "@/engine/rulesets/dnd3.5/entities/saves/columns.ts";
 import { SKILL_COLUMNS, SKILL_LIST } from "@/engine/rulesets/dnd3.5/entities/skills/columns.ts";
 import { SPELL_COLUMNS, SPELL_LIST } from "@/engine/rulesets/dnd3.5/entities/spells/columns.ts";
-import { BONDED_KINDS } from "@/vocabulary/dnd3.5/bondedKinds.ts";
+import { BONDED_KINDS, PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import { FEAT_GENERATED, ITEM_IS_TEMPLATE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { MAX_ITEM_VARIANTS } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
@@ -43,7 +43,7 @@ export const RULES: RulesDeclaration = {
     skills: SKILL_COLUMNS,
   },
   entityKinds: [
-    { label: "Player Character", value: "pc" },
+    { label: "Player Character", value: PLAYER_CHARACTER_KIND },
     ...BONDED_KINDS.map((kind) => ({ label: kind.label, value: kind.slug })),
   ],
   help: {

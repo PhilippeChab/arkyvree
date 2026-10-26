@@ -7,6 +7,7 @@ import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluato
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import type { Requirement } from "@/shared/relations.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 /**
  * The race picker of a new character of what its form says (`identity`: its form's `alignment` and `gender`, when
@@ -35,7 +36,7 @@ export default class RacePicker extends Picker<EntityRecord> {
   private readonly targetPaths = new Dnd35TargetPaths();
 
   /** What the picker offers: a player character's races (their partition, `pc`). */
-  override readonly filters = { partitions: ["pc"] };
+  override readonly filters = { partitions: [PLAYER_CHARACTER_KIND] };
 
   /** No tree: the form has no character to word it for. */
   protected override describeFailed() {

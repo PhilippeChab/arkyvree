@@ -160,11 +160,17 @@ export interface StoredAdvancement {
 }
 
 /**
- * A character's data past what the registries hold of it: which of its link roles hold an amount (`scoredRoles`: its
- * scores, 3.5's `score`), the others of a role it holds many of being picked (3.5's `speaks`). Its own values are its
- * fields (`field_defs` of owner type `characters`) and its single links (`character_roles`: 3.5's `race`).
+ * A character's data past what the registries hold of it: the kind of a player character (`playerKind`, 3.5's `pc`),
+ * and which of its link roles hold an amount (`scoredRoles`: its scores, 3.5's `score`), the others of a role it holds
+ * many of being picked (3.5's `speaks`). Its own values are its fields (`field_defs` of owner type `characters`) and
+ * its single links (`character_roles`: 3.5's `race`).
  */
 export interface StoredCharacter {
+  /**
+   * The kind a new character is (`characters.kind`): a player character's, which its user lists, shares and links to a
+   * campaign; a character of another kind is another's child (3.5's bonded creatures), which follows its parent
+   */
+  playerKind: string;
   scoredRoles: string[];
 }
 

@@ -14,6 +14,7 @@ import RacePicker from "@/engine/rulesets/dnd3.5/pickers/RacePicker.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Race } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Character } from "@/shared/relations.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 import CharacterCards from "./CharacterCards.ts";
 import CharacterValues from "./CharacterValues.ts";
@@ -34,7 +35,8 @@ import CharacterSheet from "./sheet/CharacterSheet.tsx";
 export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   /** A new character's race: a player character's (of kind `pc`), not a monster's or a bonded creature's. */
   protected override checkCreationPick(_role: string, race: Race) {
-    if (race.partition !== "pc") throw new RulesError("invalid", "Race is not valid for a player character");
+    if (race.partition !== PLAYER_CHARACTER_KIND)
+      throw new RulesError("invalid", "Race is not valid for a player character");
   }
 
   /** A character's sheet as the API answers it, with its bonded creatures', or a creature's. */

@@ -29,7 +29,6 @@ import {
 } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText, loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { formatAmount } from "@/client/src/lib/formatNumeric.ts";
-import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { invalidateCharacter, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { requiredRules } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -39,7 +38,6 @@ import {
   EMPTY_INVENTORY_FORM,
   groupChoices,
   type InventoryFormData,
-  LOCATION_CHOICES,
   pickedLocation,
   placementPayload,
 } from "./equipment.ts";
@@ -239,7 +237,7 @@ export function InventorySection({ block, characterId, rulesetId, readOnly, load
   const handleEditItem = (entry: InventoryEntry) => {
     editForm.reset({
       quantity: entry.quantity ?? 1,
-      location: oneOf(entry.location, LOCATION_CHOICES, "none"),
+      location: entry.location ?? "none",
       groups: entry.groups.length > 0 ? entry.groups.map(shownGroup) : [shownGroup(0)],
       totalCharges: entry.totalCharges ?? 0,
       remainingCharges: entry.remainingCharges ?? 0,

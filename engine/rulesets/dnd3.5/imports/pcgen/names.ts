@@ -4,7 +4,7 @@
  * "Sword (Bastard)" is "Bastard Sword", "Rope (Hempen/50 Ft.)" is "Rope, hempen (50 ft.)").
  */
 
-import type { ItemLocation } from "@/shared/enums.ts";
+import type { ItemLocation } from "@/vocabulary/dnd3.5/equipment.ts";
 import type { Alignment } from "@/vocabulary/dnd3.5/identity.ts";
 
 /** The ability a PCGen stat key names. */

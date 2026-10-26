@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
 import type { EntityFieldValues } from "@/engine/core/fields/index.ts";
-import type { SizeType } from "@/shared/enums.ts";
+import type { SizeType } from "@/vocabulary/dnd3.5/sizes.ts";
 
 import { RACE_COLUMNS } from "./columns.ts";
 import { RACE_FIELDS } from "./fields.ts";

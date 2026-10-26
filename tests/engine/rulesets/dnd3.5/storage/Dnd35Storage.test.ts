@@ -4,6 +4,7 @@ import StorageEngine from "@/engine/api/StorageEngine.ts";
 import { Field } from "@/engine/core/fields/index.ts";
 import { CHARACTER_FIELDS } from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import { DND35_STORAGE } from "@/engine/rulesets/dnd3.5/storage/Dnd35Storage.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 describe("3.5's storage", () => {
@@ -16,6 +17,14 @@ describe("3.5's storage", () => {
   test("holds fields past their columns in its customizable kinds, its skills and its rulesets", () => {
     expect(StorageEngine.shared().fieldOwners().toSorted()).toEqual([
       ...["class_levels", "classes", "feats", "items", "races", "rulesets", "skills", "spells"],
+    ]);
+  });
+
+  test("declares its player character's kind, which a new race or class is for", () => {
+    expect(StorageEngine.shared().playerKinds()).toEqual([PLAYER_CHARACTER_KIND]);
+    expect([DND35_STORAGE.kinds.races.partition, DND35_STORAGE.kinds.classes.partition]).toEqual([
+      PLAYER_CHARACTER_KIND,
+      PLAYER_CHARACTER_KIND,
     ]);
   });
 

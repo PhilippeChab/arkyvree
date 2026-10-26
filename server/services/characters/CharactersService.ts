@@ -70,6 +70,7 @@ class CharactersService extends include(Object, Archives, Imports) {
 
           const [newCharacter] = await Characters.create(tx, {
             ...plan.own,
+            kind: plan.kind,
             fields: plan.fields,
             links: plan.links,
             userId: session.userId,

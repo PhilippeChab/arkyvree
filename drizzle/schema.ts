@@ -157,7 +157,7 @@ export const charactersInCharacter = character.table(
       .notNull(),
     userId: uuid("user_id").notNull(),
     rulesetId: uuid("ruleset_id").notNull(),
-    kind: text().notNull().default("pc"),
+    kind: text().notNull(),
     parentCharacterId: uuid("parent_character_id"),
     name: text().notNull(),
     description: text(),

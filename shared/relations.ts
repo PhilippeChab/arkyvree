@@ -18,7 +18,7 @@ import type {
   usersInAccount,
 } from "@/drizzle/schema.ts";
 
-import type { BaseRules, ItemLocation } from "./enums.ts";
+import type { BaseRules } from "./enums.ts";
 
 export type Campaign = typeof campaignsInCampaign.$inferSelect;
 /**
@@ -34,7 +34,7 @@ export type Character = typeof charactersInCharacter.$inferSelect & {
 export type CharacterFieldValue = number | string;
 /** An inventory entry: an item a character holds, where, in which groups (3.5's weapon sets), and its charges. */
 export type CharacterInventory = Omit<typeof inventoryInCharacter.$inferSelect, "itemType" | "location"> & {
-  location: ItemLocation | null;
+  location: string | null;
 };
 export type Invite = typeof invitesInCampaign.$inferSelect;
 export type Modifier = typeof modifiersInCustomization.$inferSelect;

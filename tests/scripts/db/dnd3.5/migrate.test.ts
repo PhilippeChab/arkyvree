@@ -310,3 +310,30 @@ describe("0086_registry-declarations", () => {
     expect(await keptRows()).toEqual(before);
   });
 });
+
+describe("0087_player-kind", () => {
+  test("leaves a character's kind to its module's create, and changes no character", async () => {
+    await db.execute(sql`ALTER TABLE character.characters ALTER COLUMN kind SET DEFAULT 'pc'`);
+    const before = await keptRows();
+
+    for (const statement of statementsOf("0087_player-kind.sql")) await db.execute(sql.raw(statement));
+
+    const { rows: columns } = await db.execute<{ fallback: string | null }>(sql`
+      SELECT column_default AS fallback FROM information_schema.columns
+      WHERE table_schema = 'character' AND table_name = 'characters' AND column_name = 'kind'
+    `);
+    expect(columns).toEqual([{ fallback: null }]);
+    expect(await keptRows()).toEqual(before);
+    const { rulesetId } = await getSeedCtx();
+    const refused = await db
+      .transaction(
+        async (tx) =>
+          await tx.execute(sql`
+            INSERT INTO character.characters (user_id, ruleset_id, name)
+            VALUES (${SEED_USER_ID}, ${rulesetId}, 'Kindless')
+          `),
+      )
+      .catch((error: unknown) => error);
+    expect(refused).toMatchObject({ cause: { code: "23502", column: "kind" } });
+  });
+});

@@ -1,6 +1,6 @@
 import type { FormField } from "@/engine/core/fields/index.ts";
 import type { ListDescription } from "@/engine/core/module/index.ts";
-import { LOCATION_OPTIONS } from "@/shared/enums.ts";
+import { LOCATION_OPTIONS } from "@/vocabulary/dnd3.5/equipment.ts";
 import { ITEM_COST_GP, ITEM_IS_TEMPLATE, ITEM_SLOT, ITEM_TYPE, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { ITEM_TYPES, TEMPLATE_ITEM_TYPES } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 

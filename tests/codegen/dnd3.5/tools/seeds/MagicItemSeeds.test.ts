@@ -4,7 +4,7 @@ import { join } from "node:path";
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import Library from "@/codegen/dnd3.5/tools/seeds/Library.ts";
 import type { ReferenceType } from "@/codegen/dnd3.5/tools/types/reference.ts";
-import { LOCATION_OPTIONS } from "@/shared/enums.ts";
+import { LOCATION_OPTIONS } from "@/vocabulary/dnd3.5/equipment.ts";
 
 /** A magic item reference's seeds, as its book makes them. */
 function magicItemsOf(reference: ReturnType<typeof stored<"magicItem">>) {

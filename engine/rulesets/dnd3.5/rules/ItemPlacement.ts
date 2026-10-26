@@ -2,10 +2,16 @@
 
 import type { StoredValues } from "@/engine/core/fields/index.ts";
 import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
-import { type ItemLocation, LOCATION_OPTIONS, SIZE_OPTIONS } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
-import { HAND_LOCATIONS, type HandLocation, ITEM_TYPE_LOCATIONS } from "@/vocabulary/dnd3.5/equipment.ts";
+import {
+  HAND_LOCATIONS,
+  type HandLocation,
+  ITEM_TYPE_LOCATIONS,
+  type ItemLocation,
+  LOCATION_OPTIONS,
+} from "@/vocabulary/dnd3.5/equipment.ts";
 import { ITEM_HAS_CHARGES, ITEM_SLOT, ITEM_TYPE, WEAPON_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { SIZE_OPTIONS } from "@/vocabulary/dnd3.5/sizes.ts";
 
 /** An inventory entry, as where it's worn reads it. */
 interface HeldEntry {

@@ -356,12 +356,13 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * What a new character stores: what it starts with (`planStart`), and its fields' values and own columns
-   * (`planNewFields`). Refused as its start is, or when a field is.
+   * What a new character stores: what it starts with (`planStart`), its kind (its module's player character's,
+   * `StoredCharacter.playerKind`), and its fields' values and own columns (`planNewFields`). Refused as its start is,
+   * or when a field is.
    */
   planCreate(view: RulesetView, request: NewCharacterRequest): NewCharacterPlan {
     const { fields, ...start } = request;
-    return { ...this.planStart(view, start), ...this.planNewFields(fields) };
+    return { ...this.planStart(view, start), ...this.planNewFields(fields), kind: this.storage.character.playerKind };
   }
 
   /**

@@ -8,7 +8,6 @@ import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import type { EntityKinds } from "@/engine/index.ts";
-import type { ItemLocation } from "@/shared/enums.ts";
 
 import { storedGroups } from "./groups.ts";
 
@@ -48,12 +47,7 @@ export function characterInventoryQuery(characterId: string) {
  * character's items, the entry edited (`entryId`) aside: the warning an inventory dialog shows, or null. Skipped while
  * no slot is picked.
  */
-export function inventoryPlacementQuery(
-  characterId: string,
-  location: ItemLocation | "none",
-  groups: number[],
-  entryId?: string,
-) {
+export function inventoryPlacementQuery(characterId: string, location: string, groups: number[], entryId?: string) {
   const query = { entryId, location, groups: storedGroups(groups).join(",") };
   return queryOptions({
     queryKey: QUERY_KEYS.characters.inventoryPlacement(characterId, query),

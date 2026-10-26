@@ -4,7 +4,6 @@ import { inventoryInCharacter } from "@/drizzle/schema.ts";
 import { Engine, type EntityWrite, type FieldValue, type ViewKinds } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterInventory, Entities, Fields } from "@/server/repositories/index.ts";
-import type { ItemLocation } from "@/shared/enums.ts";
 import type { Character } from "@/shared/relations.ts";
 
 import { invalidateSeededRuleset } from "./rulesets.ts";
@@ -18,7 +17,7 @@ export interface Carried {
   equipped?: boolean;
   groups?: number[];
   item: string;
-  location?: ItemLocation;
+  location?: string;
   quantity?: number;
 }
 

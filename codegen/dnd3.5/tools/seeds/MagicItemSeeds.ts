@@ -3,7 +3,7 @@
 import { type MagicItemCategory, type MagicItemReference } from "@/codegen/dnd3.5/tools/types/magicItems.ts";
 import { armorFields, withOwnFields } from "@/content/dnd3.5/builders/items/fields.ts";
 import type { Dnd35ItemSeed, ItemFields } from "@/content/dnd3.5/builders/items/types.ts";
-import { LOCATION_OPTIONS } from "@/shared/enums.ts";
+import { LOCATION_OPTIONS } from "@/vocabulary/dnd3.5/equipment.ts";
 
 import { ItemSeeds } from "./ItemSeeds.ts";
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
