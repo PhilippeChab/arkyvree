@@ -157,6 +157,41 @@ async function keptRows() {
 }
 
 /**
+ * The indexes 0089 drops, rebuilds or creates, as the migrations before left them: the btrees another index covers (a
+ * user's starred rulesets, a ruleset's snapshots, a record's attachments), the archived tables' indexes by a foreign
+ * key, which left an archived row out, and none on the foreign keys whose deletes no index served. What the migrations
+ * before 0089 ran on.
+ */
+async function restoreIndexesBefore0089() {
+  await db.execute(sql`
+    CREATE INDEX starred_rulesets_user_id ON account.starred_rulesets (user_id);
+    CREATE INDEX entity_snapshots_ruleset_id_entity_type ON rules.entity_snapshots (ruleset_id, entity_type);
+    CREATE INDEX entity_snapshots_ruleset_type_source ON rules.entity_snapshots
+      (ruleset_id, entity_type, source_entity_id);
+    CREATE INDEX attachments_record_idx ON storage.attachments (record_type, record_id);
+    DROP INDEX character.characters_user_id_idx;
+    CREATE INDEX characters_user_id_idx ON character.characters (user_id) WHERE deleted_at IS NULL;
+    DROP INDEX character.characters_ruleset_id_idx;
+    CREATE INDEX characters_ruleset_id_idx ON character.characters (ruleset_id) WHERE deleted_at IS NULL;
+    DROP INDEX campaign.players_campaign_id_idx;
+    CREATE INDEX players_campaign_id_idx ON campaign.players (campaign_id) WHERE deleted_at IS NULL;
+    DROP INDEX campaign.players_user_id_campaign_id_idx;
+    CREATE INDEX players_user_id_campaign_id_idx ON campaign.players (user_id, campaign_id) WHERE deleted_at IS NULL;
+    DROP INDEX campaign.invites_player_id_idx;
+    CREATE INDEX invites_player_id_idx ON campaign.invites (player_id) WHERE deleted_at IS NULL;
+    DROP INDEX campaign.invites_user_id_status_idx;
+    CREATE INDEX invites_user_id_status_idx ON campaign.invites (user_id, status) WHERE deleted_at IS NULL;
+    DROP INDEX account.starred_rulesets_ruleset_id_idx;
+    DROP INDEX account.notifications_actor_id_idx;
+    DROP INDEX character.character_contributors_invited_by_idx;
+    DROP INDEX rules.contributors_invited_by_idx;
+    DROP INDEX rules.rulesets_ruleset_id_idx;
+    DROP INDEX rules.ruleset_extensions_extension_id_idx;
+    DROP INDEX rules.entity_snapshots_source_entity_id_idx;
+  `);
+}
+
+/**
  * The rows of the tables 0088 drops a column of, each as one line (every entity, advancement, pick, inventory entry,
  * contributor, campaign seat, modifier, requirement, activity, ruleset and character link, as its other columns hold it), and
  * every character's last change: what it leaves.
@@ -589,5 +624,53 @@ describe("0088_unwritten-columns", () => {
           "Archived rows, which rulesets and characters may hold: rules.entities, customization.modifiers, rules.rulesets",
       },
     });
+  });
+});
+
+describe("0089_index-declarations", () => {
+  test("drops the indexes others cover, keys the archived tables' foreign keys over every row, indexes the unserved ones, and changes no row", async () => {
+    await restoreIndexesBefore0089();
+    const before = await keptRows();
+
+    for (const statement of statementsOf("0089_index-declarations.sql")) await db.execute(sql.raw(statement));
+
+    const { rows: indexes } = await db.execute<{ index: string }>(sql`
+      SELECT indexdef AS index FROM pg_indexes
+      WHERE (schemaname, tablename) IN (('account', 'starred_rulesets'), ('rules', 'entity_snapshots'),
+        ('storage', 'attachments'), ('character', 'characters'), ('campaign', 'players'), ('campaign', 'invites'))
+        OR indexname IN ('notifications_actor_id_idx', 'character_contributors_invited_by_idx',
+          'contributors_invited_by_idx', 'rulesets_ruleset_id_idx', 'ruleset_extensions_extension_id_idx')
+    `);
+    // In code-point order, which no database collation varies
+    expect(indexes.map(({ index }) => index).toSorted()).toEqual([
+      "CREATE INDEX attachments_blob_id_idx ON storage.attachments USING btree (blob_id)",
+      'CREATE INDEX character_contributors_invited_by_idx ON "character".character_contributors USING btree (invited_by)',
+      'CREATE INDEX characters_parent_character_id_idx ON "character".characters USING btree (parent_character_id) WHERE (parent_character_id IS NOT NULL)',
+      'CREATE INDEX characters_ruleset_id_idx ON "character".characters USING btree (ruleset_id)',
+      'CREATE INDEX characters_search_trgm_idx ON "character".characters USING gin (name gin_trgm_ops, description gin_trgm_ops)',
+      'CREATE INDEX characters_user_id_idx ON "character".characters USING btree (user_id)',
+      "CREATE INDEX contributors_invited_by_idx ON rules.contributors USING btree (invited_by)",
+      "CREATE INDEX entity_snapshots_source_entity_id_idx ON rules.entity_snapshots USING btree (source_entity_id)",
+      "CREATE INDEX invites_email_status_idx ON campaign.invites USING btree (email, status) WHERE (deleted_at IS NULL)",
+      "CREATE INDEX invites_player_id_idx ON campaign.invites USING btree (player_id)",
+      "CREATE INDEX invites_user_id_status_idx ON campaign.invites USING btree (user_id, status)",
+      "CREATE INDEX notifications_actor_id_idx ON account.notifications USING btree (actor_id)",
+      "CREATE INDEX players_campaign_id_idx ON campaign.players USING btree (campaign_id)",
+      "CREATE INDEX players_user_id_campaign_id_idx ON campaign.players USING btree (user_id, campaign_id)",
+      "CREATE INDEX ruleset_extensions_extension_id_idx ON rules.ruleset_extensions USING btree (extension_id)",
+      "CREATE INDEX rulesets_ruleset_id_idx ON rules.rulesets USING btree (ruleset_id)",
+      "CREATE INDEX starred_rulesets_ruleset_id_idx ON account.starred_rulesets USING btree (ruleset_id)",
+      "CREATE UNIQUE INDEX attachments_pkey ON storage.attachments USING btree (id)",
+      "CREATE UNIQUE INDEX attachments_record_name_unique_idx ON storage.attachments USING btree (record_type, record_id, name)",
+      'CREATE UNIQUE INDEX characters_one_live_child_per_kind_idx ON "character".characters USING btree (parent_character_id, kind) WHERE ((deleted_at IS NULL) AND (parent_character_id IS NOT NULL))',
+      'CREATE UNIQUE INDEX characters_pkey ON "character".characters USING btree (id)',
+      'CREATE UNIQUE INDEX characters_share_token_unique_idx ON "character".characters USING btree (share_token) WHERE (share_token IS NOT NULL)',
+      "CREATE UNIQUE INDEX entity_snapshots_pkey ON rules.entity_snapshots USING btree (id)",
+      "CREATE UNIQUE INDEX entity_snapshots_ruleset_type_source_unique ON rules.entity_snapshots USING btree (ruleset_id, entity_type, source_entity_id)",
+      "CREATE UNIQUE INDEX invites_pkey ON campaign.invites USING btree (id)",
+      "CREATE UNIQUE INDEX players_pkey ON campaign.players USING btree (id)",
+      "CREATE UNIQUE INDEX starred_rulesets_pkey ON account.starred_rulesets USING btree (user_id, ruleset_id)",
+    ]);
+    expect(await keptRows()).toEqual(before);
   });
 });
