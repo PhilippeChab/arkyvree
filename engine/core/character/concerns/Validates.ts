@@ -105,7 +105,7 @@ export function Validates<
       const { unmetRequirementGroups, invalidRequirements } = this.requirementEvaluator.getRequirements();
       for (const group of unmetRequirementGroups) {
         if (group.every((r) => r.entityType === "modifiers")) continue;
-        if (group.every((r) => r.entityType === "items")) continue;
+        if (group.every((r) => this.rulesetData.isInventoryType(r.entityType))) continue;
         issues.push(this.unmetRequirementIssue(group, group.find((r) => r.entityType !== "modifiers") ?? group[0]));
       }
       for (const invalid of invalidRequirements) issues.push(this.invalidRequirementIssue(invalid));

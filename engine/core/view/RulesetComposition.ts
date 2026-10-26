@@ -46,13 +46,15 @@ export interface ViewSchema {
   /**
    * Each kind, an owner before the kinds it owns; `tracked`: its visible ids read by another kind's; `customizable`:
    * whether a user customizes its entities; `fields`: whether they hold fields of their own; `inherits`: the fields
-   * they read off another entity when they hold none, and the role of their link to it; `ownerType`: an owned kind's
-   * owner's kind; `template`: the flag of its own that makes an entity a template others are made from
+   * they read off another entity when they hold none, and the role of their link to it; `inventory`: whether a
+   * character's inventory holds its entities (`StorageRegistries.itemTypes`); `ownerType`: an owned kind's owner's
+   * kind; `template`: the flag of its own that makes an entity a template others are made from
    */
   kinds: {
     customizable: boolean;
     fields: boolean;
     inherits?: { fields: ReadonlySet<string>; role: string };
+    inventory?: true;
     ownerType?: string;
     template?: string;
     tracked: boolean;
@@ -337,9 +339,15 @@ export default class RulesetComposition {
 
   build(): RulesetData {
     const kinds = Object.fromEntries(
-      this.schema.kinds.map(({ customizable, fields, inherits, template, type }) => [
+      this.schema.kinds.map(({ customizable, fields, inherits, inventory, template, type }) => [
         type,
-        { customizable, fields, ...(inherits && { inherits }), ...(template && { template }) },
+        {
+          customizable,
+          fields,
+          ...(inherits && { inherits }),
+          ...(inventory && { inventory }),
+          ...(template && { template }),
+        },
       ]),
     );
     return new RulesetData(this.composeLists(), this.cow, this.labels, kinds);

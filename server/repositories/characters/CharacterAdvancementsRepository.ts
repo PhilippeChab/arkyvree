@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, type SQL, sql } from "drizzle-orm";
+import { eq, inArray, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { advancementsInCharacter } from "@/drizzle/schema.ts";
@@ -20,7 +20,6 @@ class CharacterAdvancementsRepository extends BaseRepository<typeof advancements
     return {
       characterId: advancementsInCharacter.characterId,
       createdAt: advancementsInCharacter.createdAt,
-      deletedAt: advancementsInCharacter.deletedAt,
       id: advancementsInCharacter.id,
       position: advancementsInCharacter.position,
       trackId: advancementsInCharacter.trackId,
@@ -46,7 +45,7 @@ class CharacterAdvancementsRepository extends BaseRepository<typeof advancements
   async create(db: Db, values: { characterId: string; trackId: string }): Promise<StoredAdvancement[]> {
     const nextPosition = sql<number>`(
       SELECT coalesce(max(${this.table.position}), 0) + 1 FROM ${this.table}
-      WHERE ${this.table.characterId} = ${values.characterId} AND ${this.table.deletedAt} IS NULL
+      WHERE ${this.table.characterId} = ${values.characterId}
     )`;
     return await db
       .insert(this.table)
@@ -69,30 +68,27 @@ class CharacterAdvancementsRepository extends BaseRepository<typeof advancements
     if ("characterIds" in where && where.characterIds.length === 0) return [];
     return await this.rows(
       db,
-      this.branchWhere(
-        [
-          "characterId" in where && eq(this.table.characterId, where.characterId),
-          "characterIds" in where && inArray(this.table.characterId, where.characterIds),
-        ],
-        [isNull(this.table.deletedAt)],
-      ),
+      this.branchWhere([
+        "characterId" in where && eq(this.table.characterId, where.characterId),
+        "characterIds" in where && inArray(this.table.characterId, where.characterIds),
+      ]),
     );
   }
 
   async findOne(db: Db, where: { id: string }) {
-    const [row] = await this.rows(db, and(eq(this.table.id, where.id), isNull(this.table.deletedAt)));
+    const [row] = await this.rows(db, eq(this.table.id, where.id));
     return row;
   }
 
   /**
-   * Marks a live advancement edited (its `updatedAt`), as an edit of its picks changes it: it keeps its track (its
+   * Marks an advancement edited (its `updatedAt`), as an edit of its picks changes it: it keeps its track (its
    * class level). Answers it, or nothing.
    */
   async update(db: Db, where: { id: string }) {
     return await db
       .update(this.table)
       .set({ updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .where(eq(this.table.id, where.id))
       .returning(CharacterAdvancementsRepository.buildColumns());
   }
 }

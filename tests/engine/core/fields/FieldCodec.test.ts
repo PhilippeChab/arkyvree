@@ -3,7 +3,11 @@ import { describe, expect, test } from "bun:test";
 import { FieldCodec, type FormContext, OwnerValues } from "@/engine/core/fields/index.ts";
 import type { FieldValue } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import type { StandaloneKind } from "@/engine/core/view/index.ts";
 import { storedValues } from "@/tests/support/storedValues.ts";
+
+/** The made-up kind a reference names: one no module declares, typed as the view's registry types a kind. */
+const GIZMOS = "gizmos" as string as StandaloneKind;
 
 /**
  * Fields of every kind, as a vocabulary declares them: their labels, the closed lists, a reference to an item, a
@@ -43,7 +47,7 @@ const FIELDS = {
     description: "Who owns it",
     kind: "ref",
     label: "Owner",
-    references: "items",
+    references: GIZMOS,
     role: "owner",
   },
 } as const;
@@ -53,7 +57,7 @@ const CODEC = new FieldCodec(FIELDS, { storesWhen: (fields) => fields.title !== 
 /** What a form's fields are read with: ids the view resolves by prefixing them. */
 const CONTEXT: FormContext = {
   resolve: (_type, id) => {
-    if (id === "unknown") throw new RulesError("invalid", `Item ${id} does not belong to this ruleset`);
+    if (id === "unknown") throw new RulesError("invalid", `Gizmo ${id} does not belong to this ruleset`);
     return `view-${id}`;
   },
 };
@@ -269,7 +273,7 @@ describe("A field codec", () => {
     expect(fields[3]).toMatchObject({ default: 1, min: 1, shownWhen: [{ path: "fields.flag", values: [true] }] });
     expect(fields[4]).toMatchObject({ multiple: true, options: ["x", "y"] });
     expect(fields[5]).toMatchObject({ options: ["Arcane", "Divine"] });
-    expect(fields[6]).toMatchObject({ references: "items", required: false });
+    expect(fields[6]).toMatchObject({ references: GIZMOS, required: false });
     expect(fields[7]).toMatchObject({
       label: "Group",
       shownWhen: [{ path: "type", values: ["Tool"] }],

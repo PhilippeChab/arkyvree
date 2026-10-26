@@ -1,4 +1,3 @@
-import { MechanicEntity } from "@/engine/core/entities/index.ts";
 import { EntitiesPart } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
@@ -8,15 +7,16 @@ import ClassEntity from "./classes/ClassEntity.ts";
 import FeatEntity from "./feats/FeatEntity.ts";
 import ItemEntity from "./items/ItemEntity.ts";
 import LanguageEntity from "./languages/LanguageEntity.ts";
+import MechanicEntity from "./mechanics/MechanicEntity.ts";
 import RaceEntity from "./races/RaceEntity.ts";
 import SaveEntity from "./saves/SaveEntity.ts";
 import SkillEntity from "./skills/SkillEntity.ts";
 import SpellEntity from "./spells/SpellEntity.ts";
 
-/** The 3.5 entity kinds' rules, by table. */
+/** The 3.5 entity kinds' rules, by type. */
 export type Dnd35EntityKinds = { [K in keyof typeof ENTITY_KINDS]: InstanceType<(typeof ENTITY_KINDS)[K]> };
 
-/** Each entity kind's rules, by its table. */
+/** Each entity kind's rules, by its type. */
 const ENTITY_KINDS = {
   abilities: AbilityEntity,
   aptitudes: AptitudeEntity,
@@ -37,7 +37,7 @@ const ENTITY_KINDS = {
  * skills and table, through the classes' kind, bound to the class).
  */
 export default class Dnd35Entities extends EntitiesPart<Dnd35EntityKinds> {
-  /** An entity kind's rules (`type`, its table), bound to a ruleset's view. */
+  /** An entity kind's rules (`type`), bound to a ruleset's view. */
   override of<K extends keyof Dnd35EntityKinds>(view: RulesetView, type: K): Dnd35EntityKinds[K] {
     return new ENTITY_KINDS[type](view) as Dnd35EntityKinds[K];
   }

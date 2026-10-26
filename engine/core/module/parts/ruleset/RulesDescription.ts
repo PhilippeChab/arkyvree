@@ -240,6 +240,11 @@ export interface RulesDescription {
    */
   help: { modifiers: string; requirements: string; settings: string; templateExamples: string };
   /**
+   * The programs whose files its rulesets import a character from, in the order its importers try them (3.5's PCGen),
+   * as its imports declare them: what the import's dialog names before a file is picked
+   */
+  importers: string[];
+  /**
    * The entity kinds its rulesets hold (races, feats), in the order their ruleset's page shows them as its tabs; not
    * the kinds a race or a class is for (`entityKinds`)
    */
@@ -271,5 +276,5 @@ export interface RulesWord {
   one: string;
 }
 
-/** What a module's rules describe of themselves: all but what the engine reads off its storage. */
-export type RulesDeclaration = Omit<RulesDescription, "customizationPages">;
+/** What a module's rules describe of themselves: all but what the engine reads off its storage and its imports. */
+export type RulesDeclaration = Omit<RulesDescription, "customizationPages" | "importers">;

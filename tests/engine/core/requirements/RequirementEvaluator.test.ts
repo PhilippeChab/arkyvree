@@ -35,7 +35,6 @@ function requirement(values: Partial<Requirement> = {}): Requirement {
     value: "true",
     valueType: "boolean",
     chainingOperator: null,
-    deletedAt: null,
     createdAt: now,
     updatedAt: now,
     ...values,

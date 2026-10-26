@@ -11,6 +11,9 @@ import type { EntityKinds } from "@/engine/index.ts";
 
 import { storedGroups } from "./groups.ts";
 
+/** What an entity read answers, any kind's, as the engine describes it. */
+type EntityDescription = ReturnType<EntityKinds[keyof EntityKinds]["describe"]>;
+
 /**
  * A ruleset's item, as the add dialog lists it: its name and description, and its own fields, its cost and weight
  * among them (at its block's `itemFields`).
@@ -29,10 +32,10 @@ export type InventoryEntry = InferResponseType<
 >[number];
 
 /**
- * A ruleset item's details, which the add dialog places a picked item by (`placement`): an item's read, as the engine
- * describes the items kind.
+ * A ruleset item's details, which the add dialog places a picked item by (`placement`): the read of an entity of the
+ * kind the inventory holds (its block's `entityType`), whose description says how it's placed.
  */
-export type RulesetItemDetail = Pick<ReturnType<EntityKinds["items"]["describe"]>, "placement">;
+export type RulesetItemDetail = Pick<Extract<EntityDescription, { placement: unknown }>, "placement">;
 
 /** The items a character carries, with where each is placed. */
 export function characterInventoryQuery(characterId: string) {

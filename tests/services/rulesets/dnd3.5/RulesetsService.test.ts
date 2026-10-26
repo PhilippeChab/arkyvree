@@ -332,7 +332,7 @@ describe("RulesetsService", () => {
       await createTestCharacter(user.id, { rulesetId: ruleset.id, raceId: race.id });
 
       expect(await RulesetsService.archiveRuleset(session, ruleset.id)).toMatchObject({ status: "Archived" });
-      expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toMatchObject({ deletedAt: null });
+      expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toMatchObject({ id: feat.id });
       expect(await findStoredValues("feats", feat.id)).toEqual({ fields: { [FEAT_FAMILY]: ["combat"] }, links: {} });
 
       expect(await RulesetsService.unarchiveRuleset(session, ruleset.id)).toMatchObject({ status: "Draft" });

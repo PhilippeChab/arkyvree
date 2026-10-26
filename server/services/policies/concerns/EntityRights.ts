@@ -6,25 +6,19 @@ import type RulesetRoles from "@/server/services/policies/RulesetRoles.ts";
 export function EntityRights<B extends Constructor<RulesetRoles>>(Base: B) {
   abstract class WithEntityRights extends Base {
     /**
-     * `inUse` means: deleting this entity would orphan a character pick on the
-     * current ruleset, any descendant fork, or any host ruleset that subscribes
-     * to this one as an extension. Nothing else.
+     * `inUse` means: deleting this entity would orphan a character's row naming it (a link, a level's track, a pick, an
+     * inventory entry) on the current ruleset, any descendant fork, or any host ruleset that subscribes to this one as
+     * an extension (`EntityReferences.exists`). Nothing else.
      *
-     * Don't include class-side links (a class level's grants, a class's skills, etc.)
-     * — class definitions are author-owned content; if the author deletes a feat
-     * their class grants, the FK cascade wipes the grant and the author can fix
-     * it. Class-granted feats that a character actually picked are recorded on
-     * the character (level_feats_in_character.feat_id), so the character-side
-     * check covers that case.
+     * Don't include an entity's links (a class level's grants, a class's skills, etc.): ruleset content is
+     * author-owned; if the author deletes an entity another links to, its role's delete rule unlinks or deletes the
+     * link (`apply_delete_rules`), or refuses the delete, and the author can fix it. An entity a link gives a character
+     * that the character actually picked is its pick, so the character-side check covers that case.
      *
-     * The Character* repos' in-use exists takes { <entity>Id, rulesetId } and
-     * internally joins on rulesets to also count characters whose host ruleset
-     * either descends from this ruleset (ancestor_ruleset_ids array overlap)
-     * or subscribes to it as an extension (extension_ruleset_ids array overlap).
-     * Don't include characters from sibling/parent rulesets — they're unrelated.
+     * Characters on sibling or parent rulesets don't count: they're unrelated.
      *
-     * Deletion is allowed on both Draft and Published rulesets — the inUse
-     * check + COW tombstones already protect subscribers and characters.
+     * Deletion is allowed on both Draft and Published rulesets — the inUse check + COW tombstones already protect
+     * subscribers and characters.
      */
     canDeleteEntity({ inUse = false }: { inUse?: boolean } = {}) {
       this.canUpdateEntity();

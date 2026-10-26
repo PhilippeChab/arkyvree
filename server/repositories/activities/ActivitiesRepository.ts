@@ -1,4 +1,4 @@
-import { eq, gte, type InferInsertModel, isNull, lt } from "drizzle-orm";
+import { eq, gte, type InferInsertModel, lt } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { activitiesInAccount } from "@/drizzle/schema.ts";
@@ -52,7 +52,6 @@ class ActivitiesRepository extends include(BaseRepository<typeof activitiesInAcc
       "type" in where && !!where.type && eq(this.table.type, where.type),
       searchConditions,
       gte(this.table.createdAt, threeMonthsAgo.toISOString()),
-      isNull(this.table.deletedAt),
     ]);
 
     const orderByClause = this.orderBy(this.table[orderBy], orderDir);

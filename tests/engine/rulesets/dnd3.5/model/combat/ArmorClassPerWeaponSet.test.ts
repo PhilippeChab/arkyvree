@@ -7,7 +7,7 @@ import { Modifiers, Requirements } from "@/server/repositories/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
 import { buildAs, sheetOf } from "@/tests/support/dnd3.5/characters.ts";
 import { createRaceModifier } from "@/tests/support/dnd3.5/customizations.ts";
-import { type Carried, carry, createTestItem } from "@/tests/support/items.ts";
+import { type Carried, carry, createTestItem } from "@/tests/support/dnd3.5/items.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, getSeedCtx } from "@/tests/support/seed.ts";
 import { ITEM_SLOT, ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -47,7 +47,6 @@ function atLeast(target: string, value: number): Requirement[][] {
     valueType: "number",
     chainingOperator: null,
     createdAt: now,
-    deletedAt: null,
     updatedAt: now,
   };
   return [[requirement]];

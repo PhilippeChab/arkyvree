@@ -1,7 +1,7 @@
 /**
  * Validates every active character:
- *  1. Reference integrity — every entity a character names is live
- *  2. Junction validity  — a pick through a pool names an entity the pool lists
+ *  1. Reference scope    — every entity a character names is of its ruleset chain
+ *  2. Pool listings      — a pick through a pool names an entity the pool lists
  *  3. Due choices       — on the levels its ruleset gives one (3.5's ability increases), and only there
  *  4. Build integrity    — DetailedCharacter.build() + validate()
  *
@@ -18,7 +18,7 @@ import type { Character } from "@/shared/relations.ts";
 import { checkBuilds } from "./validateCharacters/builds.ts";
 import { printCharacterData } from "./validateCharacters/characterData.ts";
 import { checkDueChoices } from "./validateCharacters/dueChoices.ts";
-import { checkJunctions } from "./validateCharacters/junctions.ts";
+import { checkPools } from "./validateCharacters/pools.ts";
 import { checkReferences } from "./validateCharacters/references.ts";
 
 async function main() {
@@ -35,7 +35,7 @@ async function main() {
 
   const totalIssues =
     (await checkReferences()) +
-    (await checkJunctions()) +
+    (await checkPools()) +
     (await checkDueChoices(characters)) +
     (await checkBuilds(characters));
   console.log(

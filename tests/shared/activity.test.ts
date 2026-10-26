@@ -12,8 +12,8 @@ test("an activity about an account, a session or a linked sign-in has no page to
 
 test("an entity type's activities name it by its table's singular, in PascalCase", () => {
   expect(
-    ["perks", "compasses", "compass_points", "stories", "traces", "gadgets", "mechanics"].map((type) =>
+    ["perks", "compasses", "compass_points", "stories", "traces", "gadgets", "schematics"].map((type) =>
       getActivityName(type),
     ),
-  ).toEqual(["Perk", "Compass", "CompassPoint", "Story", "Trace", "Gadget", "Mechanic"]);
+  ).toEqual(["Perk", "Compass", "CompassPoint", "Story", "Trace", "Gadget", "Schematic"]);
 });

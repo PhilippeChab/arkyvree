@@ -50,7 +50,6 @@ function rulesetOf(overrides: Partial<Ruleset> = {}): Ruleset {
     rulesetId: "base-id",
     createdAt: now,
     updatedAt: now,
-    deletedAt: null,
     ancestorRulesetIds: ["base-id"],
     extensionRulesetIds: [],
     ...overrides,

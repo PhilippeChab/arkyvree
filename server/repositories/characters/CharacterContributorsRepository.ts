@@ -22,14 +22,7 @@ class CharacterContributorsRepository extends include(
     return await db
       .update(this.table)
       .set({ userId, updatedAt: new Date().toISOString() })
-      .where(
-        and(
-          eq(this.table.email, email),
-          eq(this.table.status, "Pending"),
-          isNull(this.table.userId),
-          isNull(this.table.deletedAt),
-        ),
-      )
+      .where(and(eq(this.table.email, email), eq(this.table.status, "Pending"), isNull(this.table.userId)))
       .returning();
   }
 
@@ -63,7 +56,6 @@ class CharacterContributorsRepository extends include(
         inArray(this.table.characterId, where.characterIds),
         eq(this.table.userId, where.userId),
         eq(this.table.status, where.status),
-        isNull(this.table.deletedAt),
       ]),
     });
   }
@@ -85,7 +77,6 @@ class CharacterContributorsRepository extends include(
         [
           "characterId" in where && eq(this.table.characterId, where.characterId),
           "status" in where && eq(this.table.status, where.status),
-          isNull(this.table.deletedAt),
         ],
       ),
     });
@@ -95,11 +86,7 @@ class CharacterContributorsRepository extends include(
   // scoping by userId so a stranger can't probe other people's invite ids.
   async findOneWithCharacter(db: Db, where: { id: string; userId: string }) {
     return await db.query.contributorsInCharacter.findFirst({
-      where: this.where([
-        eq(this.table.id, where.id),
-        eq(this.table.userId, where.userId),
-        isNull(this.table.deletedAt),
-      ]),
+      where: this.where([eq(this.table.id, where.id), eq(this.table.userId, where.userId)]),
       with: {
         charactersInCharacter: {
           columns: { id: true, name: true, deletedAt: true },
@@ -137,7 +124,6 @@ class CharacterContributorsRepository extends include(
       .where(
         and(
           eq(this.table.characterId, where.characterId),
-          isNull(this.table.deletedAt),
           not(eq(this.table.status, "Revoked")),
           not(eq(this.table.status, "Rejected")),
           searchCondition,
@@ -162,7 +148,6 @@ class CharacterContributorsRepository extends include(
         eq(this.table.userId, where.userId),
         eq(this.table.characterId, where.characterId),
         eq(this.table.status, "Active"),
-        isNull(this.table.deletedAt),
       ]),
     });
 
@@ -173,7 +158,7 @@ class CharacterContributorsRepository extends include(
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .where(eq(this.table.id, where.id))
       .returning();
   }
 }

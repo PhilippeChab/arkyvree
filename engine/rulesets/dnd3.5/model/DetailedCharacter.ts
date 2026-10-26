@@ -69,7 +69,6 @@ export default class DetailedCharacter extends include(
       trackId: klassLevel.id,
       createdAt: now,
       updatedAt: now,
-      deletedAt: null,
       position: (this.data.characterLevels.at(-1)?.position ?? 0) + 1,
     };
     // The class's level and the character's (`identity.meta.level`, counted from the classes) take it

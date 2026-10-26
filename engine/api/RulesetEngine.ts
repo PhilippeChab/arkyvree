@@ -123,7 +123,7 @@ export default class RulesetEngine {
   }
 
   /**
-   * An entity kind of the ruleset (`type`, its table): one found by its id and described, a page of its rows opened
+   * An entity kind of the ruleset (`type`): one found by its id and described, a page of its rows opened
    * (`openList`), and what saving or deleting one writes, by its kind's rules. Opened for an action it may have none of
    * (`action`: an ability's create, a race's templates), refused as not found when it has none.
    */

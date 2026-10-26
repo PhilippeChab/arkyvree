@@ -5,7 +5,7 @@ import type { BaseRules } from "@/shared/enums.ts";
 /** What a module describes in its own shapes. */
 type DescriptionsOf<M> = M extends RulesetModule<infer D, infer _E, infer _F> ? D : never;
 
-/** A module's entity kinds, by table. */
+/** A module's entity kinds, by type. */
 type EntityKindsOf<M> = M extends RulesetModule<infer _D, infer E, infer _F> ? E : never;
 
 /** The fields a module's content seeds, by entity. */
@@ -23,10 +23,10 @@ type Registered<B extends BaseRules> = (typeof MODULES)[B & keyof typeof MODULES
  */
 export type Accepted<F> = [F] extends [(...args: infer A) => unknown] ? A : never;
 
-/** Each entity kind's rules, by its table, any registered module's: what `Engine.for(scope).entities(type)` hands out. */
+/** Each entity kind's rules, by its type, any registered module's: what `Engine.for(scope).entities(type)` hands out. */
 export type EntityKinds = EntityKindsOf<Registered<BaseRules>>;
 
-/** An entity kind, by its table: what `Engine.for(scope).entities(type)` takes. */
+/** An entity kind, by its type: what `Engine.for(scope).entities(type)` takes. */
 export type EntityType = keyof EntityKinds;
 
 /** The module a handle bound to a ruleset's view asks: its base rules' (the view's), any of them. */

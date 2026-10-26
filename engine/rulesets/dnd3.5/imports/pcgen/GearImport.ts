@@ -127,7 +127,6 @@ export default class GearImport {
       ...entry,
       characterId: character.record.id,
       createdAt: now,
-      deletedAt: null,
       id: crypto.randomUUID(),
       updatedAt: now,
     };

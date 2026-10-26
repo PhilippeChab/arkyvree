@@ -172,7 +172,7 @@ class ActivitiesService {
     switch (targetTable) {
       // Top-level records link to their page, archived or not, until they're deleted
       case "rulesets":
-        return (await Rulesets.findOne(db, { id: targetId }, Visibility.All)) ? `/rulesets/${targetId}` : null;
+        return (await Rulesets.findOne(db, { id: targetId })) ? `/rulesets/${targetId}` : null;
       case "characters":
       // Character sub-entities: targetId is the characterId
       case "advancements":

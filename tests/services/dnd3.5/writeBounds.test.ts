@@ -21,6 +21,7 @@ import { api, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { findLinks } from "@/tests/support/characters.ts";
 import { runWhileLocked } from "@/tests/support/database.ts";
 import { createCharacterAs, createTestCharacter, postCharacter, valuesOf } from "@/tests/support/dnd3.5/characters.ts";
+import { findPlainItem } from "@/tests/support/dnd3.5/items.ts";
 import {
   createSeedCharacter,
   createWizardWithFamiliar,
@@ -32,7 +33,7 @@ import { levelEditPlan, levelUpPlan } from "@/tests/support/dnd3.5/levelPlans.ts
 import { findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
-import { findPlainItem, findSeededCharacter, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { findSeededCharacter, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { LOCATION_OPTIONS } from "@/vocabulary/dnd3.5/equipment.ts";
 import {

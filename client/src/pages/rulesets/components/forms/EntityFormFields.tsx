@@ -32,9 +32,23 @@ export function EntityFormFields<T extends FieldValues>({
   const { columns } = useEntityColumns(rulesetId, entityType);
   return (
     <>
-      <EntityColumns columns={columns} context={context} form={form} placement="before" rulesetId={rulesetId} />
+      <EntityColumns
+        columns={columns}
+        context={context}
+        entityType={entityType}
+        form={form}
+        placement="before"
+        rulesetId={rulesetId}
+      />
       <EntityFields columns={layout} entityType={entityType} form={form} help={help} rulesetId={rulesetId} />
-      <EntityColumns columns={columns} context={context} form={form} placement="after" rulesetId={rulesetId} />
+      <EntityColumns
+        columns={columns}
+        context={context}
+        entityType={entityType}
+        form={form}
+        placement="after"
+        rulesetId={rulesetId}
+      />
     </>
   );
 }

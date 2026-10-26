@@ -41,14 +41,17 @@ export function entityOptionsQuery(
   });
 }
 
-/** The ruleset's templates of an item type (its weapons, armors or shields an item can be based on). */
-export function itemTemplatesQuery(rulesetId: string, type: string) {
+/**
+ * The ruleset's templates of a kind (`entityType`) of a type (`type`: the weapons, armors or shields an item can be
+ * based on).
+ */
+export function templatesQuery(rulesetId: string, entityType: string, type: string) {
   return queryOptions({
-    queryKey: QUERY_KEYS.rulesets.itemTemplates(rulesetId, type),
+    queryKey: QUERY_KEYS.rulesets.templates(rulesetId, entityType, type),
     queryFn: () =>
       parseResponse(
         rpc.api.rulesets[":id"].entities[":entityType"].templates.$get({
-          param: { id: rulesetId, entityType: entitySegment("items") },
+          param: { id: rulesetId, entityType: entitySegment(entityType) },
           query: { type },
         }),
       ),

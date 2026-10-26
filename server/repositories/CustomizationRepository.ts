@@ -1,4 +1,4 @@
-import { eq, type InferInsertModel, isNull } from "drizzle-orm";
+import { eq, type InferInsertModel } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import type { modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
@@ -34,13 +34,7 @@ abstract class CustomizationRepository<T extends CustomizationTable> extends Cus
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        this.where([
-          eq(this.table.id, where.id),
-          isNull(this.table.deletedAt),
-          this.casUpdatedAt(where.expectedUpdatedAt),
-        ]),
-      )
+      .where(this.where([eq(this.table.id, where.id), this.casUpdatedAt(where.expectedUpdatedAt)]))
       .returning();
   }
 }

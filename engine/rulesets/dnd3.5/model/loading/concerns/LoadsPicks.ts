@@ -113,7 +113,8 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
       const allFeats: HeldFeat[] = [...pickedFeats, ...dedupedGivenFeats];
 
       // Apply feat modifiers in character-level order so later selections win for `set` targets (e.g.
-      // bonded.familiar.race): SQL joins don't preserve pick order, and a level a level-up replaces keeps its place.
+      // bonded.familiar.race): picks and grants are gathered by kind, not by level, and a level a level-up replaces
+      // keeps its place.
       const levelPosition = new Map(characterLevels.map((level) => [level.id, level.position]));
       allFeats.sort(
         (a, b) => (levelPosition.get(a.characterLevelId) ?? 0) - (levelPosition.get(b.characterLevelId) ?? 0),

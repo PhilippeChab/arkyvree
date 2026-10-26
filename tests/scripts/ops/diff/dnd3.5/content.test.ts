@@ -56,7 +56,7 @@ const FIXTURES: Record<string, string> = {
   // A mechanic, nothing points at, whose type can change; a class with its 20th level alone, a level to move
   "rules.entities": `with ruleset as (
                        select k.ruleset_id as id from rules.entities k join rules.rulesets r on r.id = k.ruleset_id
-                        where r.system and k.type = 'classes' and k.deleted_at is null
+                        where r.system and k.type = 'classes'
                           and not exists (select 1 from rules.entities l where l.owner_id = k.id and l.position = 20)
                         limit 1
                      ), mechanic as (
@@ -73,7 +73,7 @@ const FIXTURES: Record<string, string> = {
   "rules.entity_fields": `insert into rules.entity_fields (entity_id, entity_type, field, value_kind, multiple, text_value)
                           select e.id, 'feats', 'WIZARD_PROHIBITED_SCHOOL', 'text', true, 'Necromancy'
                             from rules.entities e join rules.rulesets r on r.id = e.ruleset_id
-                           where r.system and e.type = 'feats' and e.deleted_at is null and not exists (
+                           where r.system and e.type = 'feats' and not exists (
                              select 1 from rules.entity_fields f
                               where f.entity_id = e.id and f.field in ('WIZARD_PROHIBITED_SCHOOL', 'FEAT_FAMILY')
                            ) limit 1`,
@@ -109,7 +109,7 @@ const FIXTURES: Record<string, string> = {
 const SCOPES: Record<string, { from: string; ruleset: string }> = {
   "rules.rulesets": { from: "rules.rulesets t where t.system", ruleset: "t.id" },
   "rules.entities": {
-    from: "rules.entities t join rules.rulesets r on r.id = t.ruleset_id where r.system and t.deleted_at is null",
+    from: "rules.entities t join rules.rulesets r on r.id = t.ruleset_id where r.system",
     ruleset: "t.ruleset_id",
   },
   // A row of an entity's (`o`), through the column that names it
@@ -123,7 +123,7 @@ const SCOPES: Record<string, { from: string; ruleset: string }> = {
       table,
       {
         from: `${table} t join rules.entities o on o.id = t.${column} and ${owner}
-               join rules.rulesets r on r.id = o.ruleset_id where r.system and o.deleted_at is null`,
+               join rules.rulesets r on r.id = o.ruleset_id where r.system`,
         ruleset: "o.ruleset_id",
       },
     ]),

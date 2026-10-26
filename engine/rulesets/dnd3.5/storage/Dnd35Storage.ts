@@ -69,8 +69,8 @@ const KINDS: StorageDeclaration["kinds"] = {
  * How 3.5 stores its data in the generic tables: its kinds (`KINDS`: their own fields, a save's ability its
  * `keyAbility` link), its characters' (its links of the `score` role hold an amount; its identity is its `CHARACTER_*`
  * fields, its race a `race` link, a level an advancement, its feats `feats` picks), and its registries' rows, which
- * migration 0080 wrote (`tests/database/dnd3.5/registries.test.ts` checks the database holds them): its link roles
- * among them, by which its entities' links are read (an item's template is its `madeFrom` link, a feat's pools its
+ * every migrate writes (`StoredRegistries.reconcile`; `tests/database/dnd3.5/registries.test.ts` checks the database
+ * holds them): its link roles among them, by which its entities' links are read (an item's template is its `madeFrom` link, a feat's pools its
  * `listedIn` links, a class's skills its `classSkill` links).
  */
 export const DND35_STORAGE: StorageDeclaration = {

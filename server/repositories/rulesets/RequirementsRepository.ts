@@ -1,4 +1,4 @@
-import { eq, inArray, isNull } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
@@ -31,7 +31,7 @@ class RequirementsRepository extends CustomizationRepository<typeof requirements
     return await db.query.requirementsInCustomization.findMany({
       where: this.branchWhere(
         [inArray(this.table.entityId, where.entityIds)],
-        ["entityType" in where && eq(this.table.entityType, where.entityType), isNull(this.table.deletedAt)],
+        ["entityType" in where && eq(this.table.entityType, where.entityType)],
       ),
       orderBy: [this.orderBy(this.table.createdAt), this.orderBy(this.table.entityId), this.orderBy(this.table.level)],
     });
@@ -44,7 +44,6 @@ class RequirementsRepository extends CustomizationRepository<typeof requirements
         [
           "entityId" in where && eq(this.table.entityId, where.entityId),
           "entityType" in where && eq(this.table.entityType, where.entityType),
-          isNull(this.table.deletedAt),
         ],
       ),
     });

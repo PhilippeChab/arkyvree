@@ -64,7 +64,6 @@ export default class CharacterProjection {
       trackId,
       position: replacing ? replacing.position : this.nextPosition++,
       ...this.stamps(),
-      deletedAt: null,
     };
     this.advancements.push(level);
     return level;

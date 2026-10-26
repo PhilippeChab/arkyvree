@@ -40,8 +40,8 @@ const OWNERS = `,
     select e.id, e.type as t, k.key as name
       from rules.entities e
       join entity_keys k on k.id = e.id
-     where e.ruleset_id = $1 and e.deleted_at is null
-    union all select id, 'rulesets', 'rulesets ' || name from rules.rulesets where id = $1 and deleted_at is null
+     where e.ruleset_id = $1
+    union all select id, 'rulesets', 'rulesets ' || name from rules.rulesets where id = $1
   )`;
 
 /** Why a registry isn't compared. */
@@ -104,7 +104,7 @@ async function pullEntities(query: Query, rulesetId: string): Promise<Identified
      select e.id, k.key, e.type, e.name, e.description, e.partition, e.position, e.owner_type
        from rules.entities e
        join entity_keys k on k.id = e.id
-      where e.ruleset_id = $1 and e.deleted_at is null`,
+      where e.ruleset_id = $1`,
     [rulesetId],
   );
   return rows.map(({ id, key, ...row }) => ({ bk: key, id, row }));
@@ -119,7 +119,7 @@ async function pullEntityFields(query: Query, rulesetId: string): Promise<Identi
          from rules.entity_fields f
          join rules.entities e on e.id = f.entity_id
          join entity_keys k on k.id = e.id
-        where e.ruleset_id = $1 and e.deleted_at is null
+        where e.ruleset_id = $1
         group by k.key, f.field`,
       [rulesetId],
     ),
@@ -152,7 +152,7 @@ async function pullEntityLinks(query: Query, rulesetId: string): Promise<Identif
        join rules.rulesets tr on tr.id = t.ruleset_id
        join entity_keys tk on tk.id = l.to_id
        left join entity_keys vk on vk.id = l.via_id
-      where f.ruleset_id = $1 and f.deleted_at is null and tr.system`,
+      where f.ruleset_id = $1 and tr.system`,
     [rulesetId],
   );
   return rows.map(({ amount, free, from_key, id, ordinal, role, tier, to_key, via_key }) => ({
@@ -169,8 +169,7 @@ async function pullModifiers(query: Query, rulesetId: string): Promise<Identifie
       `${ENTITY_KEYS}${OWNERS}
        select o.name as source_name, m.target, m.operator, m.value, m.value_type
          from customization.modifiers m
-         join owners o on o.id = m.source_id and o.t = m.source_type
-        where m.deleted_at is null`,
+         join owners o on o.id = m.source_id and o.t = m.source_type`,
       [rulesetId],
     ),
     (r) => `${r.source_name} | ${r.target} ${r.operator} ${r.value} (${r.value_type})`,
@@ -194,14 +193,13 @@ async function pullRequirements(query: Query, rulesetId: string): Promise<Identi
          select m.id, ('modifier on ' || o.name || ' ' || m.target) as label
            from customization.modifiers m
            join owners o on o.id = m.source_id and o.t = m.source_type
-          where m.deleted_at is null
        )
        select coalesce(o.name, sm.label) as entity_name,
               r.level, r.target, r.operator, r.value, r.value_type, r.chaining_operator
          from customization.requirements r
          left join owners o on o.id = r.entity_id and o.t = r.entity_type
          left join scoped_modifiers sm on sm.id = r.entity_id and r.entity_type = 'modifiers'
-        where r.deleted_at is null and (o.id is not null or sm.id is not null)`,
+        where o.id is not null or sm.id is not null`,
       [rulesetId],
     ),
     (r) =>
@@ -279,7 +277,7 @@ async function pullSnapshots(query: Query, rulesetId: string): Promise<Identifie
 /** The system rulesets (the base rulesets and the published extensions), which seeds write, by name and base rules. */
 async function systemRulesets(query: Query) {
   const rows = await query<{ base_rules: string; id: string; name: string }>(
-    `select id, name, base_rules from rules.rulesets where user_id is null and system = true and deleted_at is null`,
+    `select id, name, base_rules from rules.rulesets where user_id is null and system = true`,
   );
   return new Map(rows.map((r) => [`${r.name}|${r.base_rules}`, r]));
 }

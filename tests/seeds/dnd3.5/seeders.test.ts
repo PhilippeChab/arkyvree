@@ -458,8 +458,9 @@ describe("Seeding", () => {
   test("seeds items as templates, and the items made from them", async () => {
     const seeder = await freshSeeder();
     const ctx = seeder.ctx;
-    expect(await seeder.seedItems([])).toEqual({});
+    expect(await seeder.seedItems("items", [])).toEqual({});
     const templates = await seeder.seedItems(
+      "items",
       [
         item("Test Blade", {
           type: "Weapon",
@@ -471,6 +472,7 @@ describe("Seeding", () => {
       { isTemplate: true },
     );
     const made = await seeder.seedItems(
+      "items",
       [
         item("Test Flaming Blade", {
           sourceItem: "Test Blade",

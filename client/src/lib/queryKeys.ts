@@ -29,11 +29,11 @@ export const QUERY_KEYS = {
     /** Every scored link's creation of the ruleset (`characterCreation`'s). */
     creations: (id: string) => ["rulesets", "detail", id, "creation"] as const,
     /**
-     * The templates of an item type (the weapons, armors or shields an item can be based on). Nested under the Items
-     * section key so an item's write refreshes them too.
+     * The templates of a kind (`kind`) of a type (`type`: the weapons, armors or shields an item can be based on).
+     * Nested under the kind's section key so a write of one of its entities refreshes them too.
      */
-    itemTemplates: (id: string, type: string) => ["rulesets", "detail", id, "items", "templates", type] as const,
-    /** One item's details, as a character's add dialog reads them; nested like `itemTemplates`. */
+    templates: (id: string, kind: string, type: string) => ["rulesets", "detail", id, kind, "templates", type] as const,
+    /** One item's details, as a character's add dialog reads them; nested like `templates`. */
     item: (id: string, kind: string, itemId: string) => ["rulesets", "detail", id, kind, "item", itemId] as const,
     classDetail: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId] as const,
     classLinks: (id: string, classId: string, segment: string) =>

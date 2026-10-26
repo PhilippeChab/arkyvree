@@ -5,7 +5,7 @@
  * is its `Descriptions` (`contract.ts`).
  */
 
-import type { ViewKinds } from "@/engine/core/view/index.ts";
+import type { InventoryItem } from "@/engine/core/view/index.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 import type { SheetBlock } from "./blocks.ts";
@@ -190,8 +190,8 @@ export type CreationSection = { title: string } & (
  */
 export type DescribedInventoryEntry<T, X = unknown, F = unknown> = T &
   X & {
-    item: Omit<ViewKinds["items"], "fields"> & {
-      fields: F & ViewKinds["items"]["fields"];
+    item: Omit<InventoryItem, "fields"> & {
+      fields: F & InventoryItem["fields"];
       modifiers: Modifier[];
       requirements: Requirement[];
     };

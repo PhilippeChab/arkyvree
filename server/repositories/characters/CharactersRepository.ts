@@ -40,7 +40,6 @@ class CharactersRepository extends include(
             eq(contributorsInCharacter.characterId, charactersInCharacter.id),
             eq(contributorsInCharacter.userId, userId),
             eq(contributorsInCharacter.status, "Active"),
-            isNull(contributorsInCharacter.deletedAt),
           ),
         ),
     );
@@ -271,13 +270,7 @@ class CharactersRepository extends include(
       const results = await db
         .select(StoredCharacters.buildColumns())
         .from(charactersInCharacter)
-        .leftJoin(
-          playerCharactersInCampaign,
-          and(
-            eq(playerCharactersInCampaign.characterId, charactersInCharacter.id),
-            isNull(playerCharactersInCampaign.deletedAt),
-          ),
-        )
+        .leftJoin(playerCharactersInCampaign, eq(playerCharactersInCampaign.characterId, charactersInCharacter.id))
         .where(
           and(
             eq(charactersInCharacter.userId, where.userId),

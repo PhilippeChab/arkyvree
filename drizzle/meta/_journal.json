@@ -617,6 +617,13 @@
       "when": 1792988536880,
       "tag": "0087_player-kind",
       "breakpoints": true
+    },
+    {
+      "idx": 88,
+      "version": "7",
+      "when": 1793011302630,
+      "tag": "0088_unwritten-columns",
+      "breakpoints": true
     }
   ]
 }

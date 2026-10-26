@@ -81,7 +81,7 @@ export default abstract class CharacterBase<
       const met = scopes.filter((scope) => this.areRequirementsMet(gates, { scope }));
       return met.map((scope) => ({ scope, sourceId: modifier.sourceId }));
     }
-    if (modifier.sourceType !== "items" || !this.targetPaths.readsSource(modifier.target))
+    if (!this.rulesetData.isInventoryType(modifier.sourceType) || !this.targetPaths.readsSource(modifier.target))
       return [{ sourceId: modifier.sourceId }];
     const gates = this.gatesOf(modifier);
     if (gates.length === 0) return [{ sourceId: modifier.sourceId }];
@@ -127,7 +127,7 @@ export default abstract class CharacterBase<
    */
   protected groupContextsOf = (group: Requirement[]): PathContext[] => {
     const [owner] = group;
-    if (owner?.entityType === "items") return [{ sourceId: owner.entityId }];
+    if (owner && this.rulesetData.isInventoryType(owner.entityType)) return [{ sourceId: owner.entityId }];
     if (owner?.entityType !== "modifiers") return [{}];
     const sourceId = this.data.itemModifiers.get(owner.entityId);
     const scopes = this.modifierScopes.get(owner.entityId) ?? [];
@@ -157,7 +157,7 @@ export default abstract class CharacterBase<
   protected abstract isLateModifier(modifier: Modifier): boolean;
 
   /**
-   * The rows the character has of its ruleset's entities (its race, its classes…), by table, in the order its issues
+   * The rows the character has of its ruleset's entities (its race, its classes…), by type, in the order its issues
    * list them: each from a ruleset of its source chain (`findSourceIssues`), as its items are.
    */
   protected abstract listEntityRows(): Record<string, readonly EntityRow[]>;
@@ -284,7 +284,7 @@ export default abstract class CharacterBase<
     this.itemNames = new Map();
     for (const { item } of this.data.inventory) {
       this.itemNames.set(item.id, item.name);
-      const templateId = this.rulesetData.inheritedFrom("items", item);
+      const templateId = this.rulesetData.inheritedFrom(item.type, item);
       if (templateId) this.itemNames.set(templateId, item.name);
     }
     return this.itemNames;
@@ -439,7 +439,7 @@ export default abstract class CharacterBase<
    */
   resolveEntityName(entityId: string, entityType: string): string | undefined {
     if (entityType === "characters") return this.character.id === entityId ? this.character.name : undefined;
-    if (entityType === "items") return this.namesOfItems().get(entityId);
+    if (this.rulesetData.isInventoryType(entityType)) return this.namesOfItems().get(entityId);
     const modifier = entityType === "modifiers" ? this.data.modifiers.find((m) => m.id === entityId) : undefined;
     if (modifier) return this.resolveEntityName(modifier.sourceId, modifier.sourceType);
     return this.nameEntity(entityId, entityType);

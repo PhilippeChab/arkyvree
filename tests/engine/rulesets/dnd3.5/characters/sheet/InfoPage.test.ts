@@ -11,7 +11,7 @@ import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterLinks, Entities } from "@/server/repositories/index.ts";
 import { buildAs, createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
-import { carry } from "@/tests/support/items.ts";
+import { carry } from "@/tests/support/dnd3.5/items.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, getSeedCtx } from "@/tests/support/seed.ts";
 

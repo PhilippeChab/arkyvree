@@ -10,13 +10,16 @@ import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { ColumnContext } from "./columnContext.ts";
 import { ownFieldValues } from "./entityFields.ts";
 
-/** An item's template, a column a form's templates are of a type of. */
+/** An entity's template (an item's), a column a form's templates are of a type of. */
 type TemplateField = Extract<EntityField, { input: "template" }>;
 
-/** A template as the server holds it now (`templateId`, of `rulesetId`'s items), whose values a new item drops. */
-function fetchTemplate(queryClient: QueryClient, rulesetId: string, templateId: string) {
+/**
+ * A template as the server holds it now (`templateId`, of `rulesetId`'s entities of `entityType`), whose values a new
+ * entity drops.
+ */
+function fetchTemplate(queryClient: QueryClient, rulesetId: string, entityType: string, templateId: string) {
   return queryClient.fetchQuery({
-    ...customizationEntityQuery(rulesetId, { type: "items" }, templateId),
+    ...customizationEntityQuery(rulesetId, { type: entityType }, templateId),
     staleTime: NO_TIME,
   });
 }
@@ -35,12 +38,13 @@ function formPath<T extends FieldValues>(path: string): FieldPath<T> {
 export function useTemplateReset<T extends FieldValues>(
   form: UseFormReturn<T>,
   rulesetId: string,
+  entityType: string,
   columns: readonly EntityField[],
   context: ColumnContext,
 ) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
-  const { fields } = useEntityFields(rulesetId, "items");
+  const { fields } = useEntityFields(rulesetId, entityType);
   const template = columns.find((column): column is TemplateField => column.input === "template");
   if (!template) return { onChoiceChange: undefined };
   const onChoiceChange = (key: string) => {
@@ -51,7 +55,7 @@ export function useTemplateReset<T extends FieldValues>(
     if (!context.newEntity || typeof templateId !== "string" || !templateId || !fields) return;
     const noneSince = () => !form.getValues(templatePath);
     const fieldsPath = formPath<T>("fields");
-    fetchTemplate(queryClient, rulesetId, templateId).then(
+    fetchTemplate(queryClient, rulesetId, entityType, templateId).then(
       ({ entity }) => {
         if (!noneSince()) return;
         form.setValue(fieldsPath, ownFieldValues(fields, form.getValues(fieldsPath), entity) as never, {

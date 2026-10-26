@@ -22,7 +22,7 @@ import {
   starredRulesetsInAccount,
 } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
-import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
+import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
 import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
@@ -57,30 +57,23 @@ class RulesetsRepository extends include(
 
   /** What a listing scope keeps (the starred scope, its join aside). */
   private scopeConditions(db: Db, session: Session, scope: RulesetScope | undefined): (SQL | undefined)[] {
-    const notDeleted = isNull(rulesetsInRules.deletedAt);
     const notArchived = not(eq(rulesetsInRules.status, "Archived"));
 
     switch (scope) {
       case "starred":
-        return [notDeleted, notArchived];
+        return [notArchived];
       case "base":
-        return [isNull(rulesetsInRules.userId), isNull(rulesetsInRules.rulesetId), notDeleted, notArchived];
+        return [isNull(rulesetsInRules.userId), isNull(rulesetsInRules.rulesetId), notArchived];
       case "forked":
-        return [
-          eq(rulesetsInRules.userId, session.userId),
-          isNotNull(rulesetsInRules.rulesetId),
-          notDeleted,
-          notArchived,
-        ];
+        return [eq(rulesetsInRules.userId, session.userId), isNotNull(rulesetsInRules.rulesetId), notArchived];
       case "createdByMe":
-        return [this.userOwnsOrContributes(db, session.userId), notDeleted, notArchived];
+        return [this.userOwnsOrContributes(db, session.userId), notArchived];
       case "contributedTo":
-        return [this.userIsActiveContributor(db, session.userId), notDeleted, notArchived];
+        return [this.userIsActiveContributor(db, session.userId), notArchived];
       case "createdByMePrivate":
-        return [eq(rulesetsInRules.userId, session.userId), eq(rulesetsInRules.private, true), notDeleted, notArchived];
+        return [eq(rulesetsInRules.userId, session.userId), eq(rulesetsInRules.private, true), notArchived];
       case "published":
         return [
-          notDeleted,
           notArchived,
           or(
             and(eq(rulesetsInRules.private, false), eq(rulesetsInRules.status, "Published")),
@@ -90,27 +83,24 @@ class RulesetsRepository extends include(
           eq(rulesetsInRules.kind, "ruleset"),
         ];
       case "campaignAccessible":
-        return [notDeleted, notArchived, this.userPlaysInCampaign(db, session.userId)];
+        return [notArchived, this.userPlaysInCampaign(db, session.userId)];
       case "myDrafts":
-        return [eq(rulesetsInRules.status, "Draft"), notDeleted, this.userOwnsOrContributes(db, session.userId)];
+        return [eq(rulesetsInRules.status, "Draft"), this.userOwnsOrContributes(db, session.userId)];
       case "extensions":
         return [
           eq(rulesetsInRules.kind, "extension"),
           eq(rulesetsInRules.status, "Published"),
-          notDeleted,
           notArchived,
           or(isNull(rulesetsInRules.userId), eq(rulesetsInRules.private, false)),
         ];
       case "systems":
         return [
-          notDeleted,
           notArchived,
           isNull(rulesetsInRules.userId),
           or(isNull(rulesetsInRules.rulesetId), eq(rulesetsInRules.status, "Published")),
         ];
       case "community":
         return [
-          notDeleted,
           notArchived,
           isNotNull(rulesetsInRules.userId),
           eq(rulesetsInRules.status, "Published"),
@@ -118,10 +108,9 @@ class RulesetsRepository extends include(
           eq(rulesetsInRules.kind, "ruleset"),
         ];
       case "archived":
-        return [eq(rulesetsInRules.userId, session.userId), notDeleted, eq(rulesetsInRules.status, "Archived")];
+        return [eq(rulesetsInRules.userId, session.userId), eq(rulesetsInRules.status, "Archived")];
       default:
         return [
-          notDeleted,
           notArchived,
           or(
             eq(rulesetsInRules.userId, session.userId),
@@ -143,7 +132,6 @@ class RulesetsRepository extends include(
             eq(contributorsInRules.userId, userId),
             eq(contributorsInRules.rulesetId, rulesetsInRules.id),
             eq(contributorsInRules.status, "Active"),
-            isNull(contributorsInRules.deletedAt),
           ),
         ),
     );
@@ -188,7 +176,6 @@ class RulesetsRepository extends include(
             id: rulesetsInRules.id,
             createdAt: rulesetsInRules.createdAt,
             updatedAt: rulesetsInRules.updatedAt,
-            deletedAt: rulesetsInRules.deletedAt,
             name: rulesetsInRules.name,
             rulesetId: rulesetsInRules.rulesetId,
             description: rulesetsInRules.description,
@@ -221,7 +208,7 @@ class RulesetsRepository extends include(
     return await db
       .update(this.table)
       .set({ status: "Archived", updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .where(eq(this.table.id, where.id))
       .returning();
   }
 
@@ -231,7 +218,6 @@ class RulesetsRepository extends include(
       .from(rulesetsInRules)
       .where(
         and(
-          isNull(rulesetsInRules.deletedAt),
           not(eq(rulesetsInRules.status, "Archived")),
           or(
             eq(rulesetsInRules.userId, where.userId),
@@ -257,12 +243,7 @@ class RulesetsRepository extends include(
     const [row] = await db
       .select({ exists: sql<boolean>`true` })
       .from(this.table)
-      .where(
-        and(
-          sql`${this.table.extensionRulesetIds} @> ARRAY[${where.extensionRulesetId}]::uuid[]`,
-          isNull(this.table.deletedAt),
-        ),
-      )
+      .where(sql`${this.table.extensionRulesetIds} @> ARRAY[${where.extensionRulesetId}]::uuid[]`)
       .limit(1);
     return !!row;
   }
@@ -271,25 +252,22 @@ class RulesetsRepository extends include(
   async findMany(db: Db, where: { ids: string[] } | { extensionRulesetId: string } | { system: true }) {
     if ("ids" in where && where.ids.length === 0) return [];
     return await db.query.rulesetsInRules.findMany({
-      where: this.branchWhere(
-        [
-          "ids" in where && inArray(this.table.id, where.ids),
-          "extensionRulesetId" in where &&
-            sql`${this.table.extensionRulesetIds} @> ARRAY[${where.extensionRulesetId}]::uuid[]`,
-          "system" in where && eq(this.table.system, where.system),
-        ],
-        [isNull(this.table.deletedAt)],
-      ),
+      where: this.branchWhere([
+        "ids" in where && inArray(this.table.id, where.ids),
+        "extensionRulesetId" in where &&
+          sql`${this.table.extensionRulesetIds} @> ARRAY[${where.extensionRulesetId}]::uuid[]`,
+        "system" in where && eq(this.table.system, where.system),
+      ]),
       orderBy: [this.orderBy(this.table.createdAt), this.orderBy(this.table.id)],
     });
   }
 
-  async findOne(db: Db, where: { id: string } | { name: string }, visibility: Visibility = Visibility.UnarchivedOnly) {
+  async findOne(db: Db, where: { id: string } | { name: string }) {
     return await db.query.rulesetsInRules.findFirst({
-      where: this.branchWhere(
-        ["id" in where && eq(this.table.id, where.id), "name" in where && eq(this.table.name, where.name)],
-        [this.visibility(visibility)],
-      ),
+      where: this.branchWhere([
+        "id" in where && eq(this.table.id, where.id),
+        "name" in where && eq(this.table.name, where.name),
+      ]),
     });
   }
 
@@ -337,7 +315,7 @@ class RulesetsRepository extends include(
     return await db
       .update(this.table)
       .set({ userId: null, updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
+      .where(eq(this.table.userId, where.userId))
       .returning();
   }
 
@@ -345,7 +323,7 @@ class RulesetsRepository extends include(
     return await db
       .update(this.table)
       .set({ status: "Published", updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .where(eq(this.table.id, where.id))
       .returning();
   }
 
@@ -353,7 +331,7 @@ class RulesetsRepository extends include(
     return await db
       .update(this.table)
       .set({ status: "Draft", updatedAt: new Date().toISOString() })
-      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt), eq(this.table.status, "Archived")))
+      .where(and(eq(this.table.id, where.id), eq(this.table.status, "Archived")))
       .returning();
   }
 
@@ -365,13 +343,7 @@ class RulesetsRepository extends include(
     return await db
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
-      .where(
-        this.where([
-          eq(this.table.id, where.id),
-          isNull(this.table.deletedAt),
-          this.casUpdatedAt(where.expectedUpdatedAt),
-        ]),
-      )
+      .where(this.where([eq(this.table.id, where.id), this.casUpdatedAt(where.expectedUpdatedAt)]))
       .returning();
   }
 }

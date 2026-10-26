@@ -3,11 +3,11 @@ import { eq } from "drizzle-orm";
 import { inventoryInCharacter } from "@/drizzle/schema.ts";
 import { Engine, type EntityWrite, type FieldValue, type ViewKinds } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
-import { CharacterInventory, Entities, Fields } from "@/server/repositories/index.ts";
+import { CharacterInventory, Entities, fetchEveryPage, Fields } from "@/server/repositories/index.ts";
 import type { Character } from "@/shared/relations.ts";
-
-import { invalidateSeededRuleset } from "./rulesets.ts";
-import { getSeedCtx, uniqueId } from "./seed.ts";
+import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
+import { ITEM_IS_TEMPLATE, ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** An item, as the view registers it. */
 type Item = ViewKinds["items"];
@@ -57,5 +57,19 @@ export async function createTestItem(values: EntityWrite = {}, fields: Record<st
   );
   await Fields.update(db, [{ id: item.id, type: "items", values: { fields: written, links: {} } }]);
   invalidateSeededRuleset(rulesetId);
+  return item;
+}
+
+/** An item of the ruleset's own that is neither a template nor a variant: one of type "Other". */
+export async function findPlainItem(rulesetId: string) {
+  const items = await fetchEveryPage((pagination) =>
+    Entities.findPage<Item>(
+      db,
+      { entityType: "items", rulesetId, childOnly: true, fields: { [ITEM_IS_TEMPLATE]: false } },
+      pagination,
+    ),
+  );
+  const item = items.find((candidate) => !candidate.links.madeFrom && candidate.fields[ITEM_TYPE] === "Other");
+  if (!item) throw new Error(`The ruleset ${rulesetId} has no plain item`);
   return item;
 }

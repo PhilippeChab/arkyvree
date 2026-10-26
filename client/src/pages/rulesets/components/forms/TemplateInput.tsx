@@ -7,22 +7,22 @@ import { NO_TIME } from "@/client/src/lib/durations.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { itemTemplatesQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
+import { templatesQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
 
 import type { ColumnInputProps } from "./columnContext.ts";
 import { emptyFieldValues, toFieldValues } from "./entityFields.ts";
 import { templateOptions } from "./templateOptions.ts";
 
-/** The template an item is made from. */
+/** The template an entity is made from (an item's). */
 type TemplateField = Extract<EntityField, { input: "template" }>;
 
 /**
- * A template as the server holds it now (`templateId`, of `rulesetId`'s items): a cached one may be older, and a save
- * keeps of its fields those that differ from the template's at that time.
+ * A template as the server holds it now (`templateId`, of `rulesetId`'s entities of `entityType`): a cached one may be
+ * older, and a save keeps of its fields those that differ from the template's at that time.
  */
-function fetchTemplate(queryClient: QueryClient, rulesetId: string, templateId: string) {
+function fetchTemplate(queryClient: QueryClient, rulesetId: string, entityType: string, templateId: string) {
   return queryClient.fetchQuery({
-    ...customizationEntityQuery(rulesetId, { type: "items" }, templateId),
+    ...customizationEntityQuery(rulesetId, { type: entityType }, templateId),
     staleTime: NO_TIME,
   });
 }
@@ -40,6 +40,7 @@ function formPath<T extends FieldValues>(path: string): FieldPath<T> {
  */
 export function TemplateInput<T extends FieldValues>({
   context,
+  entityType,
   field,
   form,
   name,
@@ -49,8 +50,8 @@ export function TemplateInput<T extends FieldValues>({
   const snackbar = useSnackbar();
   const type: unknown = useWatch({ control: form.control, name: formPath<T>(field.typeKey) });
   const held: unknown = useWatch({ control: form.control, name });
-  const { data: templates, isLoading, error } = useQuery(itemTemplatesQuery(rulesetId, String(type)));
-  const { fields } = useEntityFields(rulesetId, "items");
+  const { data: templates, isLoading, error } = useQuery(templatesQuery(rulesetId, entityType, String(type)));
+  const { fields } = useEntityFields(rulesetId, entityType);
 
   const handleTemplateChange = (templateId: unknown) => {
     if (!fields) return;
@@ -58,7 +59,7 @@ export function TemplateInput<T extends FieldValues>({
     form.setValue(fieldsPath, emptyFieldValues(fields) as never, { shouldDirty: true });
     if (typeof templateId !== "string" || !templateId) return;
     const stillPicked = () => form.getValues(name) === templateId;
-    fetchTemplate(queryClient, rulesetId, templateId).then(
+    fetchTemplate(queryClient, rulesetId, entityType, templateId).then(
       ({ entity }) => {
         if (stillPicked()) form.setValue(fieldsPath, toFieldValues(fields, entity) as never, { shouldDirty: true });
       },

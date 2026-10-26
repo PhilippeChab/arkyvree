@@ -9,8 +9,8 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
+import { createTestItem } from "@/tests/support/dnd3.5/items.ts";
 import { planImportOf, readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.ts";
-import { createTestItem } from "@/tests/support/items.ts";
 import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 

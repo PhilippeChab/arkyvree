@@ -28,7 +28,6 @@ function speaking(language: string): Requirement[][] {
         valueType: "boolean",
         chainingOperator: null,
         createdAt: now,
-        deletedAt: null,
         updatedAt: now,
       },
     ],

@@ -422,8 +422,7 @@ describe("CharactersService", () => {
         skills: (await findPicks("skills", [level.id])).length,
         feats: (await findPicks("feats", [level.id])).length,
         languages: (await findLinks("speaks", character.id)).length,
-        inventory: (await CharacterInventory.findMany(db, { characterId: character.id })).filter((i) => !i.deletedAt)
-          .length,
+        inventory: (await CharacterInventory.findMany(db, { characterId: character.id })).length,
       });
       const all = { levels: 1, skills: 1, feats: 1, languages: 1, inventory: 1 };
 
@@ -494,8 +493,7 @@ describe("CharactersService", () => {
           await PlayerCharacters.create(db, { playerId: player.id, characterId: character.id });
           if (situation === "removed from the campaign") {
             await db
-              .update(playerCharactersInCampaign)
-              .set({ deletedAt: new Date().toISOString() })
+              .delete(playerCharactersInCampaign)
               .where(
                 and(
                   eq(playerCharactersInCampaign.playerId, player.id),

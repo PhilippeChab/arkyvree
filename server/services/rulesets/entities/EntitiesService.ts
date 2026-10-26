@@ -17,7 +17,7 @@ import type { EntityRow, ListWhere, Pagination } from "./rows.ts";
 export const ENTITY_TYPES: readonly RulesetEntityType[] = RULESET_ENTITY_TYPES;
 
 /**
- * A ruleset's entities by their kind (`type`, its table), whatever it is, as its kind's rules answer them
+ * A ruleset's entities by their kind (`type`), whatever it is, as its kind's rules answer them
  * (`Engine.for(scope).entities(type)`): its list, read by the filters its rules take, and its groups, its page, and
  * what its form writes (`EntityWriter`), checked against the copies a plan reaches. An action a kind has none of (an
  * ability's create, a race's templates) its rules refuse as not found. Its copies (`Copies`: its templates, variants),

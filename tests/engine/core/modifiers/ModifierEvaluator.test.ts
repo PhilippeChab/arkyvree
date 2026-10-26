@@ -32,7 +32,6 @@ function modifier(values: Partial<Modifier> = {}): Modifier {
     operator: "add",
     value: "1",
     valueType: "number",
-    deletedAt: null,
     createdAt: now,
     updatedAt: now,
     ...values,
