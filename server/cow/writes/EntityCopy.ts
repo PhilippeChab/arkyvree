@@ -150,7 +150,7 @@ export default class EntityCopy {
     const cust = customizations.get(this.entityId)!;
     await CustomizationCopies.copy(tx, newEntity.id, this.entityType, cust, this.copiedIds);
 
-    // 4. Copy relationships (aptitudes, klass levels, etc.), remapped as the row was
+    // 4. Copy relationships (aptitudes, class levels, etc.), remapped as the row was
     await this.copyRelationships(tx, newEntity.id, cow);
 
     // 4b. Merge sibling data when multiple extensions COW the same base entity

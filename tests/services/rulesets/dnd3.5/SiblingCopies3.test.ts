@@ -7,7 +7,7 @@ import { expect, test } from "bun:test";
 
 import {
   compareCopies,
-  findKlassIds,
+  findClassIds,
   findSiblingWinnerIds,
   findStaleClassCopies,
   partOf,
@@ -24,7 +24,7 @@ test("a sibling winner's copy holds what the view showed of it, for a third of t
 
 test("a copied class's levels store the lists that stand for their granted feats' and spells' lists, for a third of the classes", async () => {
   const fork = await createSeededTestRulesetWithExtensions(makeSession().userId);
-  const klassIds = partOf(await findKlassIds(fork), 3, 3);
-  expect(klassIds.length).toBeGreaterThan(50 / 3);
-  expect(await findStaleClassCopies(fork, klassIds)).toEqual([]);
+  const classIds = partOf(await findClassIds(fork), 3, 3);
+  expect(classIds.length).toBeGreaterThan(50 / 3);
+  expect(await findStaleClassCopies(fork, classIds)).toEqual([]);
 }, 600_000);

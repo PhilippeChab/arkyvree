@@ -50,7 +50,7 @@ export default class ClassPicker
     const left = LevelRules.countLevelsLeft(this.input.rows.advancements.length);
     return (klass: EntityRecord) => {
       const next = this.nextLevelOf(klass)!;
-      const last = this.dnd35.klassLevelsByKlass.get(klass.id)?.at(-1)?.position ?? next.position;
+      const last = this.dnd35.classLevelsByClass.get(klass.id)?.at(-1)?.position ?? next.position;
       return { track: { last, left, next: next.position } };
     };
   }
@@ -61,8 +61,8 @@ export default class ClassPicker
   }
 
   /** The classes the character can take another level of. */
-  protected override offer(klasses: EntityRecord[]) {
-    return klasses.filter((klass) => this.nextLevelOf(klass));
+  protected override offer(classes: EntityRecord[]) {
+    return classes.filter((klass) => this.nextLevelOf(klass));
   }
 
   /** Highest next level first, then by name. */
@@ -106,16 +106,16 @@ export default class ClassPicker
   /** The class's next level for the character: after its highest in the class. */
   private nextLevelOf(klass: EntityRecord): KlassLevel | undefined {
     this.maxLevels ??= this.readMaxLevels();
-    return this.dnd35.klassLevelByKlassAndLevel.get(`${klass.id}:${(this.maxLevels.get(klass.id) || 0) + 1}`);
+    return this.dnd35.classLevelByClassAndLevel.get(`${klass.id}:${(this.maxLevels.get(klass.id) || 0) + 1}`);
   }
 
   /** The character's highest level in each class it has levels of, by the class's id. */
   private readMaxLevels() {
     const maxLevels = new Map<string, number>();
     for (const level of this.input.rows.advancements) {
-      const klassLevel = level.trackId === null ? undefined : this.dnd35.klassLevelsById.get(level.trackId);
-      if (klassLevel)
-        maxLevels.set(klassLevel.ownerId, Math.max(maxLevels.get(klassLevel.ownerId) ?? 0, klassLevel.position));
+      const classLevel = level.trackId === null ? undefined : this.dnd35.classLevelsById.get(level.trackId);
+      if (classLevel)
+        maxLevels.set(classLevel.ownerId, Math.max(maxLevels.get(classLevel.ownerId) ?? 0, classLevel.position));
     }
     return maxLevels;
   }

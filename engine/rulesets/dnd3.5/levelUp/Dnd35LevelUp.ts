@@ -165,12 +165,12 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions> impleme
    * Each planned level's class and class level: within the rules' bounds (a class's last level, a character's), a
    * player character's class of the view, and one of its levels.
    */
-  getPlannedKlassLevels(
+  getPlannedClassLevels(
     view: RulesetView,
     character: CharacterInput,
-    ...args: Parameters<LevelUpPlan["getPlannedKlassLevels"]>
+    ...args: Parameters<LevelUpPlan["getPlannedClassLevels"]>
   ) {
-    return new LevelUpPlan(view, character, this).getPlannedKlassLevels(...args);
+    return new LevelUpPlan(view, character, this).getPlannedClassLevels(...args);
   }
 
   /** The hit points a level gains: 1 to its class's hit die, the die's average rounded up between. */

@@ -21,13 +21,13 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
      */
     protected readCachedRows(rows: CharacterRows, rulesetData: RulesetData, classLevelIds: string[]) {
       const dnd35 = Dnd35View.of(rulesetData);
-      const klassLevelsRaw = classLevelIds.flatMap((id) => dnd35.klassLevelsById.get(id) ?? []);
-      const classIds = [...new Set(klassLevelsRaw.map((level) => level.ownerId))];
+      const classLevelsRaw = classLevelIds.flatMap((id) => dnd35.classLevelsById.get(id) ?? []);
+      const classIds = [...new Set(classLevelsRaw.map((level) => level.ownerId))];
       return {
         languages: rows.links.speaks.flatMap((link) => dnd35.languagesById.get(link.entityId) ?? []),
-        klassLevelsRaw,
+        classLevelsRaw,
         baseBonusLinks: classLevelIds.flatMap((id) => dnd35.baseBonusesOf(id)),
-        klasses: classIds.flatMap((id) => dnd35.klassesById.get(id) ?? []),
+        classes: classIds.flatMap((id) => dnd35.classesById.get(id) ?? []),
         classSkillLinks: classIds.flatMap((id) => dnd35.classSkillsOf(id)),
         classIds,
       };
@@ -35,17 +35,17 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
 
     /** Each class's fields: its bonus spell ability, by the ability's name, and its caster type. */
     protected readClassFields(classIds: string[], rulesetData: RulesetData, abilityLookup: Map<string, string>) {
-      const klassBonusSpellAbilityMap = new Map<string, string>();
-      const klassCasterTypeMap = new Map<string, CasterType>();
+      const classBonusSpellAbilityMap = new Map<string, string>();
+      const classCasterTypeMap = new Map<string, CasterType>();
       for (const classId of classIds) {
         const { bonusSpellAbilityId, casterType } = CLASS_FIELDS.read(
           rulesetData.find("classes", classId) ?? OwnerValues.NONE,
         );
         const abilityName = bonusSpellAbilityId ? abilityLookup.get(bonusSpellAbilityId) : undefined;
-        if (abilityName) klassBonusSpellAbilityMap.set(classId, abilityName);
-        if (casterType) klassCasterTypeMap.set(classId, casterType);
+        if (abilityName) classBonusSpellAbilityMap.set(classId, abilityName);
+        if (casterType) classCasterTypeMap.set(classId, casterType);
       }
-      return { klassBonusSpellAbilityMap, klassCasterTypeMap };
+      return { classBonusSpellAbilityMap, classCasterTypeMap };
     }
 
     /**

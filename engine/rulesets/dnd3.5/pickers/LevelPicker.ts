@@ -26,13 +26,13 @@ export default abstract class LevelPicker<Details extends object = object> exten
     protected readonly query: PickQuery,
   ) {
     super(view, input, Dnd35CharacterBuilder);
-    const klassLevel = Dnd35View.of(this.rulesetData).klassLevelByKlassAndLevel.get(`${query.klassId}:${query.level}`);
-    if (!klassLevel) throw new RulesError("not-found", "Class level not found");
-    this.klassLevel = klassLevel;
+    const classLevel = Dnd35View.of(this.rulesetData).classLevelByClassAndLevel.get(`${query.classId}:${query.level}`);
+    if (!classLevel) throw new RulesError("not-found", "Class level not found");
+    this.classLevel = classLevel;
   }
 
   /** The class level picked at. */
-  protected readonly klassLevel: KlassLevel;
+  protected readonly classLevel: KlassLevel;
 
   /** The character holding what the picker leaves out, once built. */
   private heldBy?: DetailedCharacter;
@@ -47,7 +47,7 @@ export default abstract class LevelPicker<Details extends object = object> exten
     if (editedLevelId) projection.dropLevelsFrom(editedLevelId);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
     projection.addLevels(planned.classLevelIds ?? [], { abilityIncreases: planned.abilityIncreases, hp });
-    projection.pick(projection.addLevel(this.klassLevel.id, { abilityIncreases, hp }), planned.picks ?? []);
+    projection.pick(projection.addLevel(this.classLevel.id, { abilityIncreases, hp }), planned.picks ?? []);
     return projection.input;
   }
 
@@ -62,7 +62,7 @@ export default abstract class LevelPicker<Details extends object = object> exten
     const hp = LevelRules.UNROLLED_LEVEL_HP;
     const replacing = this.input.rows.advancements.find((level) => level.id === editedLevelId);
     projection.addLevels(planned.classLevelIds ?? [], { abilityIncreases: planned.abilityIncreases, hp });
-    projection.pick(projection.addLevel(this.klassLevel.id, { abilityIncreases, hp, replacing }), planned.picks ?? []);
+    projection.pick(projection.addLevel(this.classLevel.id, { abilityIncreases, hp, replacing }), planned.picks ?? []);
     projection.addLevels(laterClassLevelIds, { hp });
     return projection;
   }

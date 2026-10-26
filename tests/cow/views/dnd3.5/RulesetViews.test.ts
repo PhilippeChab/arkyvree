@@ -15,7 +15,7 @@ import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
-import { findKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { writeFieldValues } from "@/tests/support/ownerValues.ts";
 import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
@@ -100,13 +100,13 @@ describe("RulesetViews", () => {
     expect(dnd35.skills.length).toBeGreaterThan(0);
     expect(dnd35.feats.length).toBeGreaterThan(0);
     expect(dnd35.aptitudes.length).toBeGreaterThan(0);
-    expect(dnd35.klasses.length).toBeGreaterThan(0);
+    expect(dnd35.classes.length).toBeGreaterThan(0);
     expect(dnd35.races.length).toBeGreaterThan(0);
     expect(dnd35.languages.length).toBeGreaterThan(0);
     expect(dnd35.items.length).toBeGreaterThan(0);
-    expect(dnd35.klassLevels.length).toBeGreaterThan(0);
-    expect(dnd35.klasses.flatMap((klass) => dnd35.classSkillsOf(klass.id)).length).toBeGreaterThan(0);
-    expect(dnd35.klassLevels.flatMap((level) => dnd35.baseBonusesOf(level.id)).length).toBeGreaterThan(0);
+    expect(dnd35.classLevels.length).toBeGreaterThan(0);
+    expect(dnd35.classes.flatMap((klass) => dnd35.classSkillsOf(klass.id)).length).toBeGreaterThan(0);
+    expect(dnd35.classLevels.flatMap((level) => dnd35.baseBonusesOf(level.id)).length).toBeGreaterThan(0);
     expect(dnd35.leveledAptitudeIds).toBeInstanceOf(Set);
     // Customization rows exposed via pre-built Maps (per-entity / per-source indices).
     expect(rulesetData.kindValues("spells").length).toBeGreaterThan(0);
@@ -136,7 +136,7 @@ describe("RulesetViews", () => {
     expect(secondView.abilities.length).toBe(firstView.abilities.length);
     expect(secondView.feats.length).toBe(firstView.feats.length);
     expect(secondView.skills.length).toBe(firstView.skills.length);
-    expect(secondView.klasses.length).toBe(firstView.klasses.length);
+    expect(secondView.classes.length).toBe(firstView.classes.length);
     expect(second.kindValues("spells")).toEqual(first.kindValues("spells"));
     expect(second.modifiersBySource.size).toBe(first.modifiersBySource.size);
     expect(second.requirementsByEntity.size).toBe(first.requirementsByEntity.size);
@@ -223,7 +223,7 @@ describe("RulesetViews", () => {
     expect(ruleset2View.skills.length).toBe(dnd35.skills.length);
     expect(ruleset2View.feats.length).toBe(dnd35.feats.length);
     expect(ruleset2View.aptitudes.length).toBe(dnd35.aptitudes.length);
-    expect(ruleset2View.klasses.length).toBe(dnd35.klasses.length);
+    expect(ruleset2View.classes.length).toBe(dnd35.classes.length);
   });
 
   test("invalidateAll clears all cached data including pinned entries", async () => {
@@ -263,9 +263,9 @@ describe("RulesetViews", () => {
     expect(saveNames).toContain("Will");
 
     // Verify the classes include the standard ones
-    const klassNames = dnd35.klasses.map((k) => k.name);
-    expect(klassNames).toContain("Fighter");
-    expect(klassNames).toContain("Wizard");
+    const classNames = dnd35.classes.map((k) => k.name);
+    expect(classNames).toContain("Fighter");
+    expect(classNames).toContain("Wizard");
 
     // Verify the ruleset-level skill point ability link points at Intelligence.
     expect(rulesetData.rulesetValuesOf(ruleset.id).links.skillPointAbility).toBe(c.abilityMap["Intelligence"]);
@@ -313,7 +313,7 @@ describe("RulesetViews", () => {
       // Fresh fork has no own entities — compose should show exactly what seed has.
       expect(forkView.feats.length).toBe(seedView.feats.length);
       expect(forkView.skills.length).toBe(seedView.skills.length);
-      expect(forkView.klasses.length).toBe(seedView.klasses.length);
+      expect(forkView.classes.length).toBe(seedView.classes.length);
       expect(forkView.abilities.length).toBe(seedView.abilities.length);
       expect(forkView.aptitudes.length).toBe(seedView.aptitudes.length);
       // Fork inherits all customizations via compose: every entity's fields, of every kind, and the Settings
@@ -327,12 +327,12 @@ describe("RulesetViews", () => {
       expect(forkData.rulesetValuesOf(fork.id)).toEqual(seedData.rulesetValuesOf(seed.id));
       expect(forkData.modifiersBySource.size).toBe(seedData.modifiersBySource.size);
       expect(forkData.requirementsByEntity.size).toBe(seedData.requirementsByEntity.size);
-      // Fork also inherits races, languages, items, and klass-level data.
+      // Fork also inherits races, languages, items, and class-level data.
       expect(forkView.races.length).toBe(seedView.races.length);
       expect(forkView.languages.length).toBe(seedView.languages.length);
       expect(forkView.items.length).toBe(seedView.items.length);
-      expect(forkView.klassLevels.length).toBe(seedView.klassLevels.length);
-      const saves = (view: Dnd35View) => view.klassLevels.flatMap((level) => view.baseBonusesOf(level.id));
+      expect(forkView.classLevels.length).toBe(seedView.classLevels.length);
+      const saves = (view: Dnd35View) => view.classLevels.flatMap((level) => view.baseBonusesOf(level.id));
       expect(saves(forkView)).toEqual(saves(seedView));
     });
 
@@ -368,10 +368,10 @@ describe("RulesetViews", () => {
       const seedData = await RulesetViews.getData(seed);
       const seedView = Dnd35View.of(seedData);
 
-      for (const klass of seedView.klasses)
+      for (const klass of seedView.classes)
         for (const link of seedView.classSkillsOf(klass.id)) expect(link.fromId).toBe(klass.id);
 
-      for (const level of seedView.klassLevels)
+      for (const level of seedView.classLevels)
         for (const link of seedView.baseBonusesOf(level.id)) expect(link.fromId).toBe(level.id);
     });
 
@@ -757,12 +757,12 @@ describe("RulesetViews", () => {
 
       const view = await RulesetViews.getData(fork);
       const dnd35 = Dnd35View.of(view);
-      expect(dnd35.klasses.filter((klass) => klass.name === name).map((klass) => klass.id)).toEqual([ownClass.id]);
+      expect(dnd35.classes.filter((klass) => klass.name === name).map((klass) => klass.id)).toEqual([ownClass.id]);
       expect(view.cow.resolve(bookFirst.id)).toBe(ownFirst.id);
-      expect(dnd35.klassLevels.filter((level) => level.ownerId === ownClass.id).map((level) => level.id)).toEqual([
+      expect(dnd35.classLevels.filter((level) => level.ownerId === ownClass.id).map((level) => level.id)).toEqual([
         ownFirst.id,
       ]);
-      expect(dnd35.klassLevels.find((level) => level.id === bookSecond.id)).toBeUndefined();
+      expect(dnd35.classLevels.find((level) => level.id === bookSecond.id)).toBeUndefined();
     });
 
     test("a core class's levels pair through a book's copy of it with the fork's class of its name", async () => {
@@ -775,7 +775,7 @@ describe("RulesetViews", () => {
         name: "Cleric",
         rulesetId: seed.id,
       }))!;
-      const coreFirst = (await findKlassLevel(coreCleric.id, 1))!;
+      const coreFirst = (await findClassLevel(coreCleric.id, 1))!;
       await copyEntity(db, "classes", coreCleric.id, book);
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,
@@ -791,7 +791,7 @@ describe("RulesetViews", () => {
 
       const view = await RulesetViews.getData(fork);
       expect(view.cow.resolve(coreFirst.id)).toBe(ownFirst.id);
-      expect(Dnd35View.of(view).klassLevelsById.get(coreFirst.id)?.id).toBe(ownFirst.id);
+      expect(Dnd35View.of(view).classLevelsById.get(coreFirst.id)?.id).toBe(ownFirst.id);
     });
 
     test("a campaign's entity of its name hides none of a book's", async () => {

@@ -28,8 +28,8 @@ describe("The seeded extensions", () => {
     const feat = rows.feat(name);
     expect(feat.lists.map((link) => link.aptitudeId)).toContain(rows.aptitude(`${klass} Class Feature`).id);
     expect(
-      rows.klassLevelFeats
-        .filter((grant) => grant.fromId === rows.klassLevel(klass, level).id)
+      rows.classLevelFeats
+        .filter((grant) => grant.fromId === rows.classLevel(klass, level).id)
         .map((grant) => grant.toId),
     ).toContain(feat.id);
   });
@@ -39,8 +39,8 @@ describe("The seeded extensions", () => {
     [DND35_COMPLETE_ARCANE_NAME, "Mage of the Arcane Order", [3, 6]],
   ] as const)("%s: the %s's levels %p each add a language to pick", async (ruleset, klass, levels) => {
     const rows = await seededRows(ruleset);
-    const { id } = rows.klasses.find((row) => row.name === klass)!;
-    const picking = rows.klassLevels
+    const { id } = rows.classes.find((row) => row.name === klass)!;
+    const picking = rows.classLevels
       .filter((level) => level.ownerId === id)
       .filter((level) =>
         rows
@@ -287,7 +287,7 @@ describe("The seeded extensions", () => {
     );
     // Picked at her first level
     expect(
-      divine.modifiersOf(divine.klassLevel("Divine Crusader", 1).id).map((m) => `${m.target} ${m.operator} ${m.value}`),
+      divine.modifiersOf(divine.classLevel("Divine Crusader", 1).id).map((m) => `${m.target} ${m.operator} ${m.value}`),
     ).toContain("aptitudes.divinecrusaderdomain.allowed add 1");
   });
 
@@ -358,8 +358,8 @@ describe("The seeded extensions", () => {
           ...divine.modifiersOf(feature.id).map((m) => `${m.target} ${m.operator} ${m.value}`),
         ],
         levels: Array.from({ length: 10 }, (_, index) => index + 1).filter((level) =>
-          divine.klassLevelFeats.some(
-            (grant) => grant.fromId === divine.klassLevel("Geomancer", level).id && grant.toId === feature.id,
+          divine.classLevelFeats.some(
+            (grant) => grant.fromId === divine.classLevel("Geomancer", level).id && grant.toId === feature.id,
           ),
         ),
         // Ten drifts, each taken once, open from the stage's first level

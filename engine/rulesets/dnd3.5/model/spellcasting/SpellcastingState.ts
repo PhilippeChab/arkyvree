@@ -77,20 +77,20 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
    */
   protected allAptitudeSpells: Pick<HeldSpell, "entity" | "saveName" | "spellLevel" | "viaId">[] = [];
 
-  /** Maps bonus klass level ID → granting source name (e.g. "Stormlord Level 1") */
-  protected bonusKlassLevelAttribution = new Map<string, string>();
+  /** Maps bonus class level ID → granting source name (e.g. "Stormlord Level 1") */
+  protected bonusClassLevelAttribution = new Map<string, string>();
 
-  protected bonusKlassLevelClassMap = new Map<string, string>();
+  protected bonusClassLevelClassMap = new Map<string, string>();
 
-  protected bonusKlassLevelModifiers: Modifier[] = [];
+  protected bonusClassLevelModifiers: Modifier[] = [];
 
-  protected bonusKlassLevels: KlassLevel[] = [];
+  protected bonusClassLevels: KlassLevel[] = [];
 
   /** Each class's caster type, by its id: a class casting neither has none. */
-  protected casterTypeByKlassId = new Map<string, CasterType>();
+  protected casterTypeByClassId = new Map<string, CasterType>();
 
   /** Each class's spell lists, by its id (`initialize`). */
-  protected classListsByKlassId = new Map<string, Set<string>>();
+  protected classListsByClassId = new Map<string, Set<string>>();
 
   protected spellAptitudeLinks: { aptitudeId: string; spellId: string }[] = [];
 
@@ -106,10 +106,10 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
    */
   private highestCasterLevel(casterType?: CasterType): number {
     let highest = 0;
-    for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
-      const classCasterType = this.casterTypeByKlassId.get(klassData.klass.id);
+    for (const [className, classData] of Object.entries(this.classes.getCharacterClasses())) {
+      const classCasterType = this.casterTypeByClassId.get(classData.klass.id);
       if (!classCasterType || (casterType && classCasterType !== casterType)) continue;
-      if (this.highestSlotLevel(className) >= 0) highest = Math.max(highest, this.casterLevelOf(klassData));
+      if (this.highestSlotLevel(className) >= 0) highest = Math.max(highest, this.casterLevelOf(classData));
     }
     return highest;
   }
@@ -135,8 +135,8 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
   /** The highest spell level any of the classes of a caster type has slots at, in any of its lists: 0 for cantrips alone. */
   private highestSpellLevel(casterType: CasterType): number {
     let highest = 0;
-    for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
-      if (this.casterTypeByKlassId.get(klassData.klass.id) === casterType)
+    for (const [className, classData] of Object.entries(this.classes.getCharacterClasses())) {
+      if (this.casterTypeByClassId.get(classData.klass.id) === casterType)
         highest = Math.max(highest, this.highestSlotLevel(className));
     }
     return highest;
@@ -166,8 +166,8 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
   /** The class of each of the character's class levels, by the class level's id. */
   protected classNameByClassLevelId() {
     const classNames = new Map<string, string>();
-    for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses()))
-      for (const level of klassData.levels) classNames.set(level.klassLevel.id, className);
+    for (const [className, classData] of Object.entries(this.classes.getCharacterClasses()))
+      for (const level of classData.levels) classNames.set(level.classLevel.id, className);
 
     return classNames;
   }
@@ -183,11 +183,11 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
     const classNameByClassLevelId = this.classNameByClassLevelId();
     const classOf = (modifier: Modifier) => {
       if (modifier.sourceType === "class_levels")
-        return classNameByClassLevelId.get(modifier.sourceId) ?? this.bonusKlassLevelClassMap.get(modifier.sourceId);
+        return classNameByClassLevelId.get(modifier.sourceId) ?? this.bonusClassLevelClassMap.get(modifier.sourceId);
 
       if (modifier.sourceType !== "feats") return undefined;
-      return classes.find(([, klassData]) =>
-        klassData.levels.some((level) => level.feats.some(({ entity }) => entity.id === modifier.sourceId)),
+      return classes.find(([, classData]) =>
+        classData.levels.some((level) => level.feats.some(({ entity }) => entity.id === modifier.sourceId)),
       )?.[0];
     };
 
@@ -210,7 +210,7 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
    * None for a class without slots.
    */
   protected spellListsOf(className: string): string[] {
-    const klassId = this.classes.getCharacterClasses()[className]?.klass.id;
-    return [...((klassId && this.classListsByKlassId.get(klassId)) || [])];
+    const classId = this.classes.getCharacterClasses()[className]?.klass.id;
+    return [...((classId && this.classListsByClassId.get(classId)) || [])];
   }
 }

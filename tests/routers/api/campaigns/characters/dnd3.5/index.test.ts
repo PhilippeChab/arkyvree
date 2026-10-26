@@ -11,7 +11,7 @@ import { notesOf } from "@/tests/support/characters.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
 import { postCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
-import { addCharacterLevel, findKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { addCharacterLevel, findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { queuedPdfJobs, silentJobHelpers } from "@/tests/support/jobs.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
@@ -63,7 +63,7 @@ async function memberSheetOf(client: Client, campaignId: string, characterId: st
 
 /** The seeded user's character with a description, notes, private notes, a deity, an alignment, a language and a level. */
 async function postFilledCharacter() {
-  const { abilityMap, klassMap, langMap } = await getSeedCtx();
+  const { abilityMap, classMap, langMap } = await getSeedCtx();
   const { deity, description, notes, privateNotes } = SECRETS;
   // Intelligence 12: a human's bonus language, of any kind
   const abilities = Object.fromEntries(
@@ -76,7 +76,7 @@ async function postFilledCharacter() {
       json: { privateNotes, links: { speaks: [langMap["Draconic"]] } },
     }),
   );
-  await addCharacterLevel(id, (await findKlassLevel(klassMap.pc["Fighter"], 1))!.id);
+  await addCharacterLevel(id, (await findClassLevel(classMap.pc["Fighter"], 1))!.id);
   return id;
 }
 

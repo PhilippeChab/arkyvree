@@ -33,7 +33,7 @@ describe("CustomizedEntity", () => {
       name: "Test Class",
       fields: { [CLASS_HD]: 10 },
     });
-    const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: 1 });
+    const [classLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: 1 });
     const [modifier] = await Modifiers.create(db, {
       sourceId: feat.id,
       sourceType: "feats",
@@ -49,7 +49,7 @@ describe("CustomizedEntity", () => {
       [spell.id, "spells"],
       [race.id, "races"],
       [klass.id, "classes"],
-      [klassLevel.id, "class_levels"],
+      [classLevel.id, "class_levels"],
       [modifier.id, "modifiers"],
     ];
     const names = await withRulesetScope(db, rulesetId, async (scope) =>

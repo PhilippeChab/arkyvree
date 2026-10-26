@@ -4,7 +4,7 @@ import { ClassPage } from "@/codegen/dnd3.5/tools/scraper/pages/class/ClassPage.
 import { fixture, scraped, stored, urlOf } from "@/tests/support/dnd3.5/scrapedPages.ts";
 
 /** A committed class reference, as the scraper stored it. */
-function klassOf(book: string, page: string) {
+function classOf(book: string, page: string) {
   return stored(`${book}/classes/${page}.json`, "class");
 }
 
@@ -21,7 +21,7 @@ describe("A class's page", () => {
     ["shadowmind", "complete-adventurer"],
     ["vigilante", "complete-adventurer"],
   ])("reads the class %s as its reference stores it", (page, book) => {
-    const klass = klassOf(book, page);
+    const klass = classOf(book, page);
     // The saved page is the one the reference was scraped from
     expect(urlOf(`class-${page}`)).toBe(klass._meta.sourceUrl);
     expect(scraped(new ClassPage(fixture(`class-${page}`)).read())).toEqual(klass.raw);
@@ -38,7 +38,7 @@ describe("A class's page", () => {
     expect(new ClassPage(html).read().languages).toBe(
       "A druid's bonus language options include Sylvan. A druid also knows Druidic, a secret language known only to druids.",
     );
-    expect(klassOf("srd", "cleric").raw.languages).toStartWith("A cleric's bonus language options include Celestial");
+    expect(classOf("srd", "cleric").raw.languages).toStartWith("A cleric's bonus language options include Celestial");
   });
 
   test("reads no languages when its Class Features section gives none", () => {

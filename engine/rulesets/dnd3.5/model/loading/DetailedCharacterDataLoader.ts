@@ -43,7 +43,11 @@ export interface LoadedCharacterData extends LoadedCharacter {
   baseBonusLinks: readonly ViewLink[];
   /** The character's own row: who it is (`IdentityComponent`). */
   character: Character;
+  classBonusSpellAbilityMap: Map<string, string>;
+  classCasterTypeMap: Map<string, CasterType>;
+  classes: Klass[];
   classLevelFields: Map<string, { bab: number; skills: number }>;
+  classLevels: CustomizedClassLevel[];
   /** Its classes' class skills: their `classSkill` links. */
   classSkillLinks: readonly ViewLink[];
   /**
@@ -53,10 +57,6 @@ export interface LoadedCharacterData extends LoadedCharacter {
   feats: HeldFeat[];
   /** The room its class levels' grants make in each pool, by the pool's id: a feat's, and a spell's but a free one. */
   grantCountsByPool: Record<string, number>;
-  klassBonusSpellAbilityMap: Map<string, string>;
-  klassCasterTypeMap: Map<string, CasterType>;
-  klasses: Klass[];
-  klassLevels: CustomizedClassLevel[];
   /** The languages it picked, as its rows store them. */
   languages: Language[];
   /** The hit points each of its levels rolled, by its advancement's id. */
@@ -118,7 +118,7 @@ export default class DetailedCharacterDataLoader extends include(
 
     const abilityLookup = new Map(dnd35.abilities.map((a) => [a.id, a.name]));
     const levels = this.sortLevels(rows.advancements, rows.picks);
-    const { languages, klassLevelsRaw, baseBonusLinks, klasses, classSkillLinks, classIds } = this.readCachedRows(
+    const { languages, classLevelsRaw, baseBonusLinks, classes, classSkillLinks, classIds } = this.readCachedRows(
       rows,
       rulesetData,
       levels.classLevelIds,
@@ -126,9 +126,9 @@ export default class DetailedCharacterDataLoader extends include(
     const { feats, grantCountsByPool, skills, spells } = this.buildPicks(rows.picks, rulesetData, levels);
 
     // Each entity's customizations: per-entity lookups resolve via the cache's pre-built Maps
-    const { klassLevels, classLevelFields } = this.toCustomizedKlassLevels(klassLevelsRaw, rulesetData);
+    const { classLevels, classLevelFields } = this.toCustomizedClassLevels(classLevelsRaw, rulesetData);
     const classFields = this.readClassFields(classIds, rulesetData, abilityLookup);
-    const dcAbilities = { klassBonusSpellAbilityMap: classFields.klassBonusSpellAbilityMap, klassLevels };
+    const dcAbilities = { classBonusSpellAbilityMap: classFields.classBonusSpellAbilityMap, classLevels };
     return {
       scoreLinks: rows.links.score,
       abilityPicks: this.readAbilityPicks(rows.picks.abilities, levels.advancements, LevelRules.of(view)),
@@ -137,10 +137,10 @@ export default class DetailedCharacterDataLoader extends include(
       advancements: levels.advancements,
       levelHitPoints: levels.hitPoints,
       classIds,
-      klassLevels,
+      classLevels,
       classSkillLinks,
       baseBonusLinks,
-      klasses,
+      classes,
       feats: this.toHeldFeats(feats, rulesetData),
       skills,
       spells: this.toHeldSpells(spells, rulesetData, dcAbilities),
@@ -158,14 +158,14 @@ export default class DetailedCharacterDataLoader extends include(
    * join the build as it applies (`PossessesVirtually`).
    */
   protected override sourcesOf(
-    { feats, classIds, klassLevels, spells, race }: LoadedParts,
+    { feats, classIds, classLevels, spells, race }: LoadedParts,
     items: ModifierSource[],
     { rulesetData }: RulesetView,
   ): ModifierSource[] {
     return [
       race,
       ...items,
-      ...klassLevels,
+      ...classLevels,
       ...classIds.map((classId) => ({
         modifiers: rulesetData.modifiersBySource.get(classId) ?? [],
         requirements: rulesetData.requirementsByEntity.get(classId) ?? [],

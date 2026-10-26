@@ -6,7 +6,7 @@ import { Activities, EntityLinks } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
-import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { addCharacterLevel, createTestClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { addGrants, findLists } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
@@ -269,8 +269,8 @@ describe("EntitiesService: spells", () => {
       name: "Doomed Spell",
       links: { listedIn: [{ toId: wizard }] },
     });
-    const { klassLevel } = await createTestKlassLevel(ruleset.id);
-    await addGrants(db, klassLevel.id, "spells", [{ toId: spell.id, aptitudeId: wizard }]);
+    const { classLevel } = await createTestClassLevel(ruleset.id);
+    await addGrants(db, classLevel.id, "spells", [{ toId: spell.id, aptitudeId: wizard }]);
 
     await EntitiesService.deleteEntity(session, ruleset.id, "spells", spell.id);
 
@@ -293,8 +293,8 @@ describe("EntitiesService: spells", () => {
     const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
 
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
-    const { klassLevel } = await createTestKlassLevel(host.id);
-    await addCharacterLevel(character.id, klassLevel.id, { spells: { [wizard]: [spell.id] } });
+    const { classLevel } = await createTestClassLevel(host.id);
+    await addCharacterLevel(character.id, classLevel.id, { spells: { [wizard]: [spell.id] } });
 
     await expectRefusedWith(EntitiesService.deleteEntity(session, extension.id, "spells", spell.id), 409);
   });

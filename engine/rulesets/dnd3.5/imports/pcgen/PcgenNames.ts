@@ -15,10 +15,10 @@ interface Named {
 type Compared = { compared: string; entity: Named }[];
 
 /** The view's lists an import finds entities in. */
-type List = "feats" | "items" | "klasses" | "languages" | "races" | "skills" | "spells";
+type List = "feats" | "items" | "classes" | "languages" | "races" | "skills" | "spells";
 
 /** The lists an import finds a player's entity in alone: a race or a class a creature takes isn't a character's. */
-const PLAYER_LISTS = new Set<List>(["klasses", "races"]);
+const PLAYER_LISTS = new Set<List>(["classes", "races"]);
 
 /**
  * The view's entities found by the names PCGen gives them, in the picked ruleset (a custom ruleset's own classes and
@@ -129,8 +129,8 @@ export default class PcgenNames {
 
   /** The class PCGen names `name`, a player's. */
   findClass(name: string) {
-    const found = this.findFirst("klasses", [name]);
-    return found && Dnd35View.of(this.rulesetData).klassesById.get(found.id);
+    const found = this.findFirst("classes", [name]);
+    return found && Dnd35View.of(this.rulesetData).classesById.get(found.id);
   }
 
   /**

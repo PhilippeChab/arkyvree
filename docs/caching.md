@@ -30,7 +30,7 @@ return await withRulesetScopes(db, rulesetIds, async (views) => {
 Inside the scope:
 
 - `ruleset` — the ruleset row (non-null; throws `NotFoundError` if missing).
-- `rulesetData` — the composed cache: `byId(type)`, `rows(type)`, `linksOf(id, role)`, `withInheritedFields(type, entity)`, etc., and what a module derives of it (3.5's `Dnd35View.of(rulesetData)`: `klassLevelByKlassAndLevel`…). Also `rulesetData.cow` exposes the underlying `CowData` (its `sourceChain`, `siblingIds`, and what an id resolves to: `resolve`, `isOverridden`, `isHidden`, `getWinner`) for lineage checks.
+- `rulesetData` — the composed cache: `byId(type)`, `rows(type)`, `linksOf(id, role)`, `withInheritedFields(type, entity)`, etc., and what a module derives of it (3.5's `Dnd35View.of(rulesetData)`: `classLevelByClassAndLevel`…). Also `rulesetData.cow` exposes the underlying `CowData` (its `sourceChain`, `siblingIds`, and what an id resolves to: `resolve`, `isOverridden`, `isHidden`, `getWinner`) for lineage checks.
 
 Nothing else: a repository read inside the scope returns rows as stored, and a query takes the ids it's given. What a read needs of copy-on-write it asks `rulesetData.cow` for, explicitly ([below](#cow-transparency)): a list's filters (`listFilters`), an entity's equivalent ids for a query on stored rows (`getEquivalentIds`), the id a stored one stands for (`resolve`). Rows that reach the engine are read as the view does there.
 
@@ -246,9 +246,9 @@ The view's own, by kind (`RulesetData`, `engine/core/view/RulesetData.ts`):
 
 | Index | Holds |
 | --- | --- |
-| `featsById`, `spellsById`, `skillsById`, `aptitudesById`, `abilitiesById`, `savesById`, `klassesById`, `racesById`, `languagesById`, `itemsById`, `mechanicsById`, `klassLevelsById` | Each of its kinds' entities by id: the view's `byId(type)` |
-| `klassLevelByKlassAndLevel` (key `${ownerId}:${position}`) | A class's level, by its class and its number |
-| `klassLevelsByKlass` | A class's levels, by their number (`position`): the last its highest |
+| `featsById`, `spellsById`, `skillsById`, `aptitudesById`, `abilitiesById`, `savesById`, `classesById`, `racesById`, `languagesById`, `itemsById`, `mechanicsById`, `classLevelsById` | Each of its kinds' entities by id: the view's `byId(type)` |
+| `classLevelByClassAndLevel` (key `${ownerId}:${position}`) | A class's level, by its class and its number |
+| `classLevelsByClass` | A class's levels, by their number (`position`): the last its highest |
 | `grantedFeatsOf(id)`, `grantedSpellsOf(id)` | A class level's `grants` links to feats and to spells, by their entities' names |
 | `classSkillsOf(id)` | A class's `classSkill` links, by their skills' names |
 | `baseBonusesOf(id)` | A class level's `baseBonus` links to the saves, each with its amount |

@@ -239,7 +239,7 @@ export default class ClassProgression {
 
   /** The class's levels, as the view has them, by their number. */
   private get classLevels(): KlassLevel[] {
-    return (this.dnd35.klassLevelsByKlass.get(this.klass.id) ?? []).toSorted((a, b) => a.position - b.position);
+    return (this.dnd35.classLevelsByClass.get(this.klass.id) ?? []).toSorted((a, b) => a.position - b.position);
   }
 
   /** The view's 3.5 lists and indices. */

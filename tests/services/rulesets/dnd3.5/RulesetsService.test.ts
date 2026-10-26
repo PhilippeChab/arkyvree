@@ -41,7 +41,7 @@ import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { addRulesetContributor } from "@/tests/support/contributors.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
-import { addCharacterLevel, createTestKlassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
+import { addCharacterLevel, createTestClassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { addClassSkills, addLists, findLists } from "@/tests/support/dnd3.5/links.ts";
 import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
 import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
@@ -620,8 +620,8 @@ describe("RulesetsService", () => {
         const { user, session, fork, aptitude, modified, untouched } = await setupChanges();
         const copy = await copyEntity(db, "feats", modified.id, fork);
         const character = await createTestCharacter(user.id, { rulesetId: fork.id });
-        const { klassLevel } = await createTestKlassLevel(fork.id);
-        const level = await addCharacterLevel(character.id, klassLevel.id, {
+        const { classLevel } = await createTestClassLevel(fork.id);
+        const level = await addCharacterLevel(character.id, classLevel.id, {
           feats: { [aptitude.id]: [copy.id] },
         });
 

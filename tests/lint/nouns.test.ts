@@ -10,7 +10,7 @@ describe("a ruleset's nouns", () => {
     expect(
       await lintRepo(
         {
-          "engine/core/fresh/name.ts": "export const klassLevelId = 1;\n",
+          "engine/core/fresh/name.ts": "export const classLevelId = 1;\n",
           "engine/core/fresh/string.ts": 'export const type = "klass_levels";\n',
           "engine/core/fresh/stored.ts": 'export const type = "classes";\n',
           "engine/core/fresh/save.ts": "export const read = (row: { saveId: string }) => row.saveId;\n",
@@ -50,7 +50,7 @@ describe("a ruleset's nouns", () => {
           "client/src/fresh/css.tsx": 'export const c = <div className="class" />;\n',
           "engine/core/fresh/comment.ts": "// A class level's feats, as 3.5 names them\nexport const rows = 1;\n",
           // A ruleset's folders name them
-          "engine/rulesets/dnd3.5/fresh/Feats.ts": "export const klassLevelId = 1;\n",
+          "engine/rulesets/dnd3.5/fresh/Feats.ts": "export const classLevelId = 1;\n",
           "content/dnd3.5/fresh/powers.ts": 'export const type = "powers";\n',
         },
         ["ruleset-nouns"],
@@ -79,6 +79,48 @@ describe("a ruleset's nouns", () => {
       "ruleset-nouns engine/core/fresh/value.ts",
       "ruleset-nouns server/fresh/held.ts",
       "ruleset-nouns server/fresh/template.ts",
+    ]);
+  });
+
+  test("spell `klass` in its types and a value that is one alone, where `class` is a reserved word", async () => {
+    expect(
+      await lintRepo(
+        {
+          "engine/rulesets/dnd3.5/fresh/id.ts": "export const klassId = 1;\n",
+          "engine/rulesets/dnd3.5/fresh/level.ts":
+            "export const read = (row: { klassLevel: number }) => row.klassLevel;\n",
+          "engine/rulesets/dnd3.5/fresh/method.ts":
+            "export class Plans {\n  getSavedKlassLevel() {\n    return 1;\n  }\n}\n",
+          "engine/rulesets/dnd3.5/fresh/private.ts": "export class Plans {\n  #klasses = [];\n}\n",
+          "client/src/fresh/jsx.tsx": "const KlassPage = () => null;\nexport const t = <KlassPage />;\n",
+          "engine/rulesets/dnd3.5/fresh/klassLevels.ts": "export const levels = 1;\n",
+          // An import's name: once where it's the file's own, never where it renames another module's export
+          "engine/rulesets/dnd3.5/fresh/imported.ts":
+            'import { KlassView } from "some-lib";\nexport const v = KlassView;\n',
+          "engine/rulesets/dnd3.5/fresh/renamed.ts":
+            'import { KlassThing as Thing, KlassOther as KlassMine } from "some-lib";\nexport const t = [Thing, KlassMine];\n',
+          // Its types, a value that is one, a string (a stored row a migration reads) and a comment
+          "engine/rulesets/dnd3.5/fresh/types.ts":
+            "interface Klass { id: string }\ninterface KlassLevel { id: string }\nexport const idOf = (klass: Klass, level: KlassLevel) => klass.id + level.id;\n",
+          "engine/rulesets/dnd3.5/fresh/stored.ts": 'export const type = "klass_levels";\n',
+          "engine/rulesets/dnd3.5/fresh/comment.ts":
+            "// A class level, which the code once named `klassLevel`\nexport const classLevelId = 1;\n",
+        },
+        ["klass-names"],
+      ),
+    ).toEqual([
+      "klass-names client/src/fresh/jsx.tsx",
+      "klass-names client/src/fresh/jsx.tsx",
+      "klass-names engine/rulesets/dnd3.5/fresh/id.ts",
+      "klass-names engine/rulesets/dnd3.5/fresh/imported.ts",
+      "klass-names engine/rulesets/dnd3.5/fresh/imported.ts",
+      "klass-names engine/rulesets/dnd3.5/fresh/klassLevels.ts",
+      "klass-names engine/rulesets/dnd3.5/fresh/level.ts",
+      "klass-names engine/rulesets/dnd3.5/fresh/level.ts",
+      "klass-names engine/rulesets/dnd3.5/fresh/method.ts",
+      "klass-names engine/rulesets/dnd3.5/fresh/private.ts",
+      "klass-names engine/rulesets/dnd3.5/fresh/renamed.ts",
+      "klass-names engine/rulesets/dnd3.5/fresh/renamed.ts",
     ]);
   });
 });

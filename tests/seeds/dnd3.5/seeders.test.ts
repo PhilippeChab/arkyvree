@@ -304,7 +304,7 @@ describe("Seeding", () => {
       const ctx = seeder.ctx;
       await seeder.seedAptitudes(["Test Class Feature", "Test Bonus Feat"]);
       await seeder.seedFeats(feats("Test Evasion", "Test Proficiency", "Test Bonus"));
-      const { klassId, levelIds } = await seeder.seedClass(
+      const { classId, levelIds } = await seeder.seedClass(
         klass("Test Mage", {
           description: "A mage",
           fields: { [CLASS_HD]: 6, [CLASS_CASTER_TYPE]: "Arcane" },
@@ -338,7 +338,7 @@ describe("Seeding", () => {
         }),
       );
 
-      const [row] = await rowsOf<Klass>("classes", { id: klassId });
+      const [row] = await rowsOf<Klass>("classes", { id: classId });
       expect(row).toMatchObject({
         rulesetId: ctx.rulesetId,
         name: "Test Mage",
@@ -346,14 +346,14 @@ describe("Seeding", () => {
         fields: { [CLASS_HD]: 6 },
         partition: "pc",
       });
-      expect(await describeCustomizations(klassId)).toEqual({
+      expect(await describeCustomizations(classId)).toEqual({
         requirements: [],
         modifiers: [],
         fields: [`bonusSpellAbility ${ctx.abilityMap["Charisma"]}`, `${CLASS_CASTER_TYPE} Arcane`].sort(),
       });
       const skills = namesOf(ctx.skillMap);
       expect(
-        (await EntityLinks.findMany(db, { fromIds: [klassId], role: "classSkill" })).map((s) => skills[s.toId]).sort(),
+        (await EntityLinks.findMany(db, { fromIds: [classId], role: "classSkill" })).map((s) => skills[s.toId]).sort(),
       ).toEqual(["Climb", "Spot"]);
 
       const slot = (spellLevel: number, kind: string, operator: string, value: number) =>
@@ -411,7 +411,7 @@ describe("Seeding", () => {
     test("that knows every spell it casts can prepare any at each spell level it opens, from the first when it has no cantrips", async () => {
       const seeder = await freshSeeder({ named: true });
       const ctx = seeder.ctx;
-      const { klassId, levelIds } = await seeder.seedClass(
+      const { classId, levelIds } = await seeder.seedClass(
         klass("Test Healer", {
           levels: 3,
           bab: "good",
@@ -419,8 +419,8 @@ describe("Seeding", () => {
           spells: { slug: "testhealerspells", perDay: [[1], [2], [2, 1]], knowAll: true, noCantrips: true },
         }),
       );
-      expect((await rowsOf<Klass>("classes", { id: klassId }))[0].partition).toBe("npc");
-      expect(await describeCustomizations(klassId)).toEqual({ requirements: [], modifiers: [], fields: [] });
+      expect((await rowsOf<Klass>("classes", { id: classId }))[0].partition).toBe("npc");
+      expect(await describeCustomizations(classId)).toEqual({ requirements: [], modifiers: [], fields: [] });
       const levels = await levelsOf(ctx, levelIds);
       expect(levels.map(({ level, fields, modifiers }) => ({ level, fields, modifiers }))).toEqual([
         {

@@ -45,8 +45,8 @@ export async function seededRows(rulesetName = DND35_RULESET_NAME) {
     rulesetId: ruleset.id,
     feat: (name: string) => named(rows.feats, name),
     aptitude: (name: string) => named(rows.aptitudes, name),
-    klassLevel: (klass: string, level: number) =>
-      rows.klassLevels.find((l) => l.ownerId === named(rows.klasses, klass).id && l.position === level)!,
+    classLevel: (klass: string, level: number) =>
+      rows.classLevels.find((l) => l.ownerId === named(rows.classes, klass).id && l.position === level)!,
     modifiersOf: (sourceId: string) => rows.modifiers.filter((m) => m.sourceId === sourceId),
     requirementsOf: (entityId: string) => rows.requirements.filter((r) => r.entityId === entityId),
     /** An entity's values of a field, as text (none without the field): the values the seed wrote. */

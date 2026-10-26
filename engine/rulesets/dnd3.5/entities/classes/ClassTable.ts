@@ -22,7 +22,7 @@ function getLevelModifiers(rulesetData: RulesetData, levels: { id: string }[]) {
  * others by level; none when they give none.
  */
 function getSpellListIds(rulesetData: RulesetData, klass: Klass): string[] {
-  const lists = [...(SpellLists.of(rulesetData).classListsByKlass.get(klass.id) ?? [])];
+  const lists = [...(SpellLists.of(rulesetData).classListsByClass.get(klass.id) ?? [])];
   // A class casting from one of several lists (a pious templar's own, or its blackguard one) opens on its own
   const own = `${stripSeparators(klass.name)}spells`;
   const { aptitudeIdBySlug } = Dnd35View.of(rulesetData);
@@ -43,7 +43,7 @@ export default class ClassTable {
 
   /** The class's levels, as the view has them. */
   private get levels() {
-    return Dnd35View.of(this.view.rulesetData).klassLevelsByKlass.get(this.klass.id) ?? [];
+    return Dnd35View.of(this.view.rulesetData).classLevelsByClass.get(this.klass.id) ?? [];
   }
 
   /**

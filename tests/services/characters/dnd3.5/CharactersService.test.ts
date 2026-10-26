@@ -31,7 +31,7 @@ import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { backdateLastChange, findLinks } from "@/tests/support/characters.ts";
 import { addRulesetContributor } from "@/tests/support/contributors.ts";
 import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
-import { addCharacterLevel, findKlassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
+import { addCharacterLevel, findClassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestAttachment } from "@/tests/support/files.ts";
 import { queuedPdfJobs } from "@/tests/support/jobs.ts";
 import {
@@ -61,8 +61,8 @@ function ids(rows: { id: string }[]) {
 }
 
 async function fighterLevel() {
-  const { klassMap } = await getSeedCtx();
-  return (await findKlassLevel(klassMap.pc["Fighter"], 1))!;
+  const { classMap } = await getSeedCtx();
+  return (await findClassLevel(classMap.pc["Fighter"], 1))!;
 }
 
 /** Another user's private ruleset, with a race. */

@@ -54,7 +54,7 @@ export interface LevelUpRules<C> {
    * Each planned level's class and class level, with its ability increases (`levels`), the ruleset's: refused when a
    * class or a class level isn't, or the levels go past its bounds.
    */
-  getPlannedKlassLevels(
+  getPlannedClassLevels(
     view: RulesetView,
     input: CharacterInput,
     levels: Omit<LevelRequest, "hp">[],
@@ -73,8 +73,8 @@ export interface LevelUpRules<C> {
 /** A level a level-up plans: its class and class level, and its ability increases (its `abilities` picks). */
 export interface PlannedClassLevel {
   abilityIncreases: PickPlan[];
+  classLevel: KlassLevel;
   klass: Klass;
-  klassLevel: KlassLevel;
 }
 
 /** A saved level's picks, by its steps: its hit points, ability increases, skill ranks, feats and spells. */
@@ -135,21 +135,21 @@ export default abstract class LevelUpBase<C> {
   }
 
   /** The class's level `level`, in the composed ruleset, or a 404. */
-  protected getKlassLevel(klassId: string, level: number) {
-    const klassLevel = this.dnd35.klassLevelByKlassAndLevel.get(`${klassId}:${level}`);
-    if (!klassLevel) throw new RulesError("not-found", "Class level not found");
-    return klassLevel;
+  protected getClassLevel(classId: string, level: number) {
+    const classLevel = this.dnd35.classLevelByClassAndLevel.get(`${classId}:${level}`);
+    if (!classLevel) throw new RulesError("not-found", "Class level not found");
+    return classLevel;
   }
 
   /** A saved level's class level (its advancement's track) and class, in the composed ruleset, or a 404. */
-  protected getSavedKlassLevel(advancement: { trackId: string | null }) {
-    const klassLevel = advancement.trackId ? this.dnd35.klassLevelsById.get(advancement.trackId) : undefined;
-    if (!klassLevel) throw new RulesError("not-found", "Class level not found");
+  protected getSavedClassLevel(advancement: { trackId: string | null }) {
+    const classLevel = advancement.trackId ? this.dnd35.classLevelsById.get(advancement.trackId) : undefined;
+    if (!classLevel) throw new RulesError("not-found", "Class level not found");
 
-    const klass = this.dnd35.klassesById.get(klassLevel.ownerId);
+    const klass = this.dnd35.classesById.get(classLevel.ownerId);
     if (!klass) throw new RulesError("not-found", "Class not found");
 
-    return { klassLevel, klass };
+    return { classLevel, klass };
   }
 
   /**

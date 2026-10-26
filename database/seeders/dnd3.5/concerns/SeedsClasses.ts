@@ -178,11 +178,11 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
     }
 
     /** Its class skills: its `classSkill` links. */
-    private async insertSkills(def: ClassSeed, klassId: string) {
+    private async insertSkills(def: ClassSeed, classId: string) {
       await this.insertLinks(
         def.classSkills.map((name) => ({
           role: "classSkill",
-          fromId: klassId,
+          fromId: classId,
           fromType: "classes",
           toId: this.idOf(this.ctx.skillMap, name, `${def.name}'s class skill`),
           toType: "skills",
@@ -195,7 +195,7 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
      * and what it takes to reach each. The class's skills and feats must be seeded.
      */
     async seedClass(def: ClassSeed) {
-      const [klassId] = await this.insertRows("classes", [
+      const [classId] = await this.insertRows("classes", [
         {
           rulesetId: this.ctx.rulesetId,
           name: def.name,
@@ -205,13 +205,13 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
           partition: def.partition ?? PLAYER_CHARACTER_KIND,
         },
       ]);
-      const klass = { id: klassId };
+      const klass = { id: classId };
       const numbers = Array.from({ length: def.levels }, (_, i) => i + 1);
       // Each level with its base attack and its skill points
       const levelRowIds = await this.insertRows(
         "class_levels",
         numbers.map((level) => ({
-          ownerId: klassId,
+          ownerId: classId,
           position: level,
           fields: { [CLASS_LEVEL_BAB]: babAt(def.bab, level), [CLASS_LEVEL_SKILL_POINTS]: def.skillPoints },
         })),
@@ -224,7 +224,7 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
       await this.insertLevelRequirements(def, levels, levelIds);
       await this.insertSkills(def, klass.id);
       await this.insertGrantedFeats(def, levelIds);
-      return { klassId: klass.id, levelIds };
+      return { classId: klass.id, levelIds };
     }
   }
   return SeedingClasses;

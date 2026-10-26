@@ -16,7 +16,7 @@ import { ModifiersService } from "@/server/services/rulesets/customization/modif
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
-import { createTestKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { createTestClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { addLists } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { createSeededTestRuleset, readTargetPaths } from "@/tests/support/rulesets.ts";
@@ -39,8 +39,8 @@ async function setup() {
     rulesetId,
     fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
   });
-  const { klassLevel } = await createTestKlassLevel(rulesetId);
-  const owners = { feats: feat.id, items: item.id, spells: spell.id, races: race.id, class_levels: klassLevel.id };
+  const { classLevel } = await createTestClassLevel(rulesetId);
+  const owners = { feats: feat.id, items: item.id, spells: spell.id, races: race.id, class_levels: classLevel.id };
   return { session, rulesetId, feat, item, owners };
 }
 

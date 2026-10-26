@@ -146,7 +146,7 @@ for (const action of ["add skill", "remove skill", "create level", "update level
         assignedSkill: assigned[0].toId,
         otherSkill: Dnd35View.of(rulesetData).skills.find((skill) => !assigned.some((link) => link.toId === skill.id))!
           .id,
-        levelId: [...Dnd35View.of(rulesetData).klassLevelsById.values()].find(
+        levelId: [...Dnd35View.of(rulesetData).classLevelsById.values()].find(
           (level) => level.ownerId === id && level.position === 1,
         )!.id,
       };

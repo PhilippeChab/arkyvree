@@ -158,7 +158,7 @@ class CampaignCharactersService {
         .map((char) => char.id),
     );
 
-    // Resolve race / klass names via each character's composed ruleset cache
+    // Resolve race / class names via each character's composed ruleset cache
     // so COW'd or renamed entities render their post-COW names.
     return await withRulesetScopes(
       db,

@@ -33,11 +33,11 @@ type LevelBody = Parameters<typeof EntitiesService.createOwnedEntity>[4];
 function createLevel(
   session: Session,
   rulesetId: string,
-  klassId: string,
+  classId: string,
   level: number,
   body: Partial<LevelBody> = {},
 ) {
-  return EntitiesService.createOwnedEntity(session, rulesetId, "classes", klassId, {
+  return EntitiesService.createOwnedEntity(session, rulesetId, "classes", classId, {
     fields: { [CLASS_LEVEL_BAB]: level, [CLASS_LEVEL_SKILL_POINTS]: 4 },
     position: level,
     ...body,

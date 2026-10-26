@@ -115,9 +115,9 @@ describe("rulesets", () => {
   });
 
   test("restores an overridden class through its URL segment, classes", async () => {
-    const { klassMap } = await getSeedCtx();
+    const { classMap } = await getSeedCtx();
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
-    const entityId = klassMap.pc["Fighter"];
+    const entityId = classMap.pc["Fighter"];
     await expectOk(
       ruleset.entities[":entityType"][":entityId"].$put({
         param: { id, entityType: "classes", entityId },

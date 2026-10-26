@@ -290,7 +290,7 @@ export function levelUp(
   return addOneLevel(
     session,
     characterId,
-    ctx.klassMap.pc[klass],
+    ctx.classMap.pc[klass],
     level,
     plan.hp,
     plan.ability ? ctx.abilityMap[plan.ability] : null,

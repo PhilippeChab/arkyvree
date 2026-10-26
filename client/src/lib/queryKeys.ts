@@ -35,15 +35,15 @@ export const QUERY_KEYS = {
     templates: (id: string, kind: string, type: string) => ["rulesets", "detail", id, kind, "templates", type] as const,
     /** One item's details, as a character's add dialog reads them; nested like `templates`. */
     item: (id: string, kind: string, itemId: string) => ["rulesets", "detail", id, kind, "item", itemId] as const,
-    classDetail: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId] as const,
-    classLinks: (id: string, classId: string, segment: string) =>
-      ["rulesets", "detail", id, "class", classId, segment] as const,
-    classTable: (id: string, classId: string, table: string) =>
-      ["rulesets", "detail", id, "class", classId, "table", table] as const,
-    /** A class's levels, the entities it owns, nested in the class its saves refresh. */
-    levels: (id: string, classId: string) => ["rulesets", "detail", id, "class", classId, "levels"] as const,
-    classProgression: (id: string, classId: string) =>
-      ["rulesets", "detail", id, "class", classId, "progression"] as const,
+    ownerDetail: (id: string, ownerId: string) => ["rulesets", "detail", id, "owner", ownerId] as const,
+    ownerLinks: (id: string, ownerId: string, segment: string) =>
+      ["rulesets", "detail", id, "owner", ownerId, segment] as const,
+    ownerTable: (id: string, ownerId: string, table: string) =>
+      ["rulesets", "detail", id, "owner", ownerId, "table", table] as const,
+    /** A progression owner's levels, the entities it owns, nested in the owner its saves refresh. */
+    levels: (id: string, ownerId: string) => ["rulesets", "detail", id, "owner", ownerId, "levels"] as const,
+    ownerProgression: (id: string, ownerId: string) =>
+      ["rulesets", "detail", id, "owner", ownerId, "progression"] as const,
     sectionGrouped: (id: string, section: string) => ["rulesets", "detail", id, section, "grouped"] as const,
     familyVariants: (id: string, section: string, family: string, childOnly: boolean) =>
       ["rulesets", "detail", id, section, "family", family, childOnly] as const,

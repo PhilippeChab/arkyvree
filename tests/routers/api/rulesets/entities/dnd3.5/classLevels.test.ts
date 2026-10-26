@@ -98,26 +98,26 @@ describe("rulesets class levels", () => {
   });
 
   test("reads a class's spells per day, spells known, feat pools and spell lists", async () => {
-    const { klassMap } = await getSeedCtx();
+    const { classMap } = await getSeedCtx();
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
 
     const read = async (classId: string, name: string) =>
       (await expectOk(table.$get({ param: { ...classParam(id, classId), table: name } }))) as Record<string, unknown>[];
     const firstLevel = (rows: Record<string, unknown>[]) => rows.find((l) => l.position === 1);
 
-    expect(firstLevel(await read(klassMap.pc["Wizard"], "spells"))).toMatchObject({ spellsPerDay: { 0: 3, 1: 1 } });
-    expect(firstLevel(await read(klassMap.pc["Sorcerer"], "spells-known"))).toMatchObject({
+    expect(firstLevel(await read(classMap.pc["Wizard"], "spells"))).toMatchObject({ spellsPerDay: { 0: 3, 1: 1 } });
+    expect(firstLevel(await read(classMap.pc["Sorcerer"], "spells-known"))).toMatchObject({
       spellsKnown: { 0: 4, 1: 2 },
     });
-    expect(firstLevel(await read(klassMap.pc["Fighter"], "feat-pools"))).toMatchObject({
+    expect(firstLevel(await read(classMap.pc["Fighter"], "feat-pools"))).toMatchObject({
       featPools: { "Fighter Bonus Feat": 1 },
     });
 
-    const lists = await read(klassMap.pc["Wizard"], "spell-lists");
+    const lists = await read(classMap.pc["Wizard"], "spell-lists");
     expect(lists.map((list) => list.name)).toEqual(["Wizard Spells"]);
 
     // A class whose levels give slots in no list has none
-    expect(await read(klassMap.pc["Fighter"], "spell-lists")).toEqual([]);
+    expect(await read(classMap.pc["Fighter"], "spell-lists")).toEqual([]);
   });
 
   test("lists every spell list a class casts from, its own first: the Pious Templar's and its blackguard one", async () => {

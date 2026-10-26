@@ -19,11 +19,11 @@ export function increasesOf(abilityId: string | null | undefined) {
  * Gives a character a level in a class level (1 hit point), with these picks (its feats and spells by pool, its skills'
  * ranks), straight in the database: no level-up rule applies.
  */
-export async function addCharacterLevel(characterId: string, klassLevelId: string, picks: Partial<LevelPicks> = {}) {
+export async function addCharacterLevel(characterId: string, classLevelId: string, picks: Partial<LevelPicks> = {}) {
   const pooled = (step: string, byPool: Record<string, string[]> = {}) =>
     Object.entries(byPool).flatMap(([viaId, ids]) => ids.map((entityId) => ({ step, entityId, viaId })));
   return await createAdvancement(db, characterId, {
-    trackId: klassLevelId,
+    trackId: classLevelId,
     picks: [
       { step: "hp", amount: 1 },
       ...pooled("feats", picks.feats),
@@ -34,14 +34,14 @@ export async function addCharacterLevel(characterId: string, klassLevelId: strin
 }
 
 /**
- * Adds a level of class `klassId` to a character, as Add Level saves it: at `level` in its class, with these hit points
+ * Adds a level of class `classId` to a character, as Add Level saves it: at `level` in its class, with these hit points
  * and picks, raising `abilityId` by 1 (`increasesOf`), or no ability. Unless `force`d, the engine refuses what the
  * character with it fails.
  */
 export async function addOneLevel(
   session: Session,
   characterId: string,
-  klassId: string,
+  classId: string,
   level: number,
   hp: number,
   abilityId: string | null,
@@ -50,7 +50,7 @@ export async function addOneLevel(
   spells: Record<string, string[]> = {},
   force = false,
 ) {
-  const plan = levelUpPlan([{ klassId, level, hp, abilityIncreases: increasesOf(abilityId) }], {
+  const plan = levelUpPlan([{ classId, level, hp, abilityIncreases: increasesOf(abilityId) }], {
     skills,
     feats,
     spells,
@@ -60,20 +60,20 @@ export async function addOneLevel(
 }
 
 /** A new class of the ruleset, with its first level. */
-export async function createTestKlassLevel(rulesetId: string) {
+export async function createTestClassLevel(rulesetId: string) {
   const [klass] = await Entities.create<Klass>(db, "classes", {
     name: `Test Class ${uniqueId()}`,
     rulesetId,
     fields: { [CLASS_HD]: 8 },
   });
-  const [klassLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: 1 });
-  return { klass, klassLevel };
+  const [classLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: 1 });
+  return { klass, classLevel };
 }
 
 /** A class's level `level`. */
-export async function findKlassLevel(klassId: string, level: number) {
-  return (await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [klassId] })).find(
-    (klassLevel) => klassLevel.position === level,
+export async function findClassLevel(classId: string, level: number) {
+  return (await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [classId] })).find(
+    (classLevel) => classLevel.position === level,
   );
 }
 
@@ -88,7 +88,7 @@ export async function findPicks(step: string, advancementIds: string[]) {
 /** A character of `userId`'s on `rulesetId`, who picked the feat at their first level. */
 export async function pickFeat(userId: string, rulesetId: string, featId: string, aptitudeId: string) {
   const character = await createTestCharacter(userId, { rulesetId });
-  const { klassLevel } = await createTestKlassLevel(rulesetId);
-  await addCharacterLevel(character.id, klassLevel.id, { feats: { [aptitudeId]: [featId] } });
+  const { classLevel } = await createTestClassLevel(rulesetId);
+  await addCharacterLevel(character.id, classLevel.id, { feats: { [aptitudeId]: [featId] } });
   return character;
 }

@@ -31,10 +31,10 @@ async function readAptitudeIds(tx: Db, type: RulesetEntityType, copyId: string) 
     return (await EntityLinks.findMany(tx, { fromIds: [copyId], role: "listedIn" })).map((link) => link.toId);
 
   if (type !== "classes") return [];
-  const klassLevelIds = (
+  const classLevelIds = (
     await Entities.findMany<KlassLevel>(tx, { entityType: "class_levels", ownerIds: [copyId] })
   ).map((level) => level.id);
-  return (await EntityLinks.findMany(tx, { fromIds: klassLevelIds, role: "grants" })).flatMap(
+  return (await EntityLinks.findMany(tx, { fromIds: classLevelIds, role: "grants" })).flatMap(
     (link) => link.viaId ?? [],
   );
 }
@@ -125,7 +125,7 @@ export async function compareCopies(fork: Fork, winnerIds: string[]) {
 }
 
 /** The classes of the fork's view, sorted: what a copy of each stores, the sweeps check (`findStaleClassCopies`). */
-export async function findKlassIds(fork: Fork) {
+export async function findClassIds(fork: Fork) {
   const view = await RulesetViews.getData(fork);
   return [...new Set(view.rows("classes").map((klass) => klass.id))].sort();
 }
@@ -140,13 +140,13 @@ export async function findSiblingWinnerIds(fork: Fork) {
  * Copies each class into the ruleset, in a transaction rolled back: the classes whose copy's levels store a list a
  * losing copy stands for, by name, with those lists.
  */
-export async function findStaleClassCopies(fork: Fork, klassIds: string[]) {
+export async function findStaleClassCopies(fork: Fork, classIds: string[]) {
   const view = await RulesetViews.getData(fork);
   const stale: string[] = [];
-  for (const klassId of klassIds) {
-    await withCopy(fork, "classes", klassId, async (tx, after, copyId) => {
+  for (const classId of classIds) {
+    await withCopy(fork, "classes", classId, async (tx, after, copyId) => {
       const ids = await findStaleAptitudeIds(tx, after, "classes", copyId);
-      if (ids.length > 0) stale.push(`${view.find("classes", klassId)?.name}: ${ids}`);
+      if (ids.length > 0) stale.push(`${view.find("classes", classId)?.name}: ${ids}`);
     });
   }
   return stale;

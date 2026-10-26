@@ -69,11 +69,11 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
     }
 
     /**
-     * A planned level's slot deltas: its klass level's modifiers, the modifiers of the feats granted there (its
+     * A planned level's slot deltas: its class level's modifiers, the modifiers of the feats granted there (its
      * `grants` links' targets), and the general feats it gives (`generalFeats`, its ruleset's Settings').
      */
     private levelDeltas(
-      klassLevelId: string,
+      classLevelId: string,
       autoFeatRecords: readonly { toId: string }[],
       generalFeats: number,
       featSlots: FeatSlots,
@@ -84,7 +84,7 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
       const { modifiersBySource } = this.rulesetData;
       const add = (modifiers: Modifier[]) => this.addModifierDeltas(deltas, modifiers, featSlots, spellSlots);
 
-      add(modifiersBySource.get(klassLevelId) ?? []);
+      add(modifiersBySource.get(classLevelId) ?? []);
       for (const grant of autoFeatRecords) add(modifiersBySource.get(grant.toId) ?? []);
 
       const generalAptId = aptitudeIdBySlug.get(LevelRules.GENERAL_FEATS_APTITUDE_SLUG);
@@ -94,12 +94,12 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
     }
 
     /**
-     * Each planned level's slots (`klassLevelIds`, with the feats each grants, after the character's
+     * Each planned level's slots (`classLevelIds`, with the feats each grants, after the character's
      * `savedLevelCount` levels) in the character's feat and spell pools. `baselineAptitudes` are the character's
      * aptitudes as its sheet has them: a pool's counts, and a spell pool's spell levels by number.
      */
     protected planAptitudeSlots(
-      klassLevelIds: string[],
+      classLevelIds: string[],
       grantedFeatRecords: (readonly { toId: string }[])[],
       featPoolIds: string[],
       spellPoolIds: string[],
@@ -115,9 +115,9 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
       const allKnown = this.allKnownLevels(baselineAptitudes);
       const levelRules = LevelRules.of(this.view);
 
-      for (let i = 0; i < klassLevelIds.length; i++) {
+      for (let i = 0; i < classLevelIds.length; i++) {
         const deltas = this.levelDeltas(
-          klassLevelIds[i],
+          classLevelIds[i],
           grantedFeatRecords[i] ?? [],
           levelRules.countGeneralFeatsAfter(savedLevelCount + i),
           perLevelFeatSlots,

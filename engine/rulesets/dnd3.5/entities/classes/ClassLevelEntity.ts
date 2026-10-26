@@ -196,7 +196,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
    * attacks a round (`babLabel`: "+6/+1").
    */
   describeAll() {
-    const levels = this.dnd35.klassLevelsByKlass.get(this.klass.id) ?? [];
+    const levels = this.dnd35.classLevelsByClass.get(this.klass.id) ?? [];
     return this.describeRows(levels).map((level, index) => ({
       ...level,
       ...this.detailsOf(level),

@@ -59,30 +59,30 @@ export default class ClassEntity extends RulesetEntity<"classes", typeof CLASS_F
    * its class: an inherited one's level is inherited too. Refused when the view has no such level.
    */
   describeOwned(levelId: string) {
-    const level = Dnd35View.of(this.rulesetData).klassLevelsById.get(levelId);
+    const level = Dnd35View.of(this.rulesetData).classLevelsById.get(levelId);
     if (!level) throw new RulesError("not-found", "Class level not found in this ruleset");
     const klass = this.find(level.ownerId);
     return { ...this.owned(klass.id).describe(level.id), name: klass.name, rulesetId: klass.rulesetId };
   }
 
   /**
-   * A class's class skills (`klassId`): described, and what adding or removing one takes. Refused without the class.
+   * A class's class skills (`classId`): described, and what adding or removing one takes. Refused without the class.
    */
-  links(klassId: string) {
-    return new ClassSkills(this.view, this.find(klassId));
+  links(classId: string) {
+    return new ClassSkills(this.view, this.find(classId));
   }
 
-  /** A class's levels (`klassId`): described, and what saving or deleting one writes. Refused without the class. */
-  owned(klassId: string) {
-    return new ClassLevelEntity(this.view, this.find(klassId));
+  /** A class's levels (`classId`): described, and what saving or deleting one writes. Refused without the class. */
+  owned(classId: string) {
+    return new ClassLevelEntity(this.view, this.find(classId));
   }
 
   /**
-   * A class's progression (`klassId`): what its Progression and Spells tabs read beside its levels and table, and what
+   * A class's progression (`classId`): what its Progression and Spells tabs read beside its levels and table, and what
    * one save of them writes. Refused without the class.
    */
-  progression(klassId: string) {
-    const klass = this.find(klassId);
+  progression(classId: string) {
+    const klass = this.find(classId);
     return new ClassProgression(
       this.view,
       klass,
@@ -91,8 +91,8 @@ export default class ClassEntity extends RulesetEntity<"classes", typeof CLASS_F
     );
   }
 
-  /** A class's table (`klassId`): its feat pools, spell lists and spells by level. Refused without the class. */
-  tables(klassId: string) {
-    return new ClassTable(this.view, this.find(klassId));
+  /** A class's table (`classId`): its feat pools, spell lists and spells by level. Refused without the class. */
+  tables(classId: string) {
+    return new ClassTable(this.view, this.find(classId));
   }
 }

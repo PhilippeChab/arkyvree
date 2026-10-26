@@ -162,11 +162,11 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
    */
   private describeLevelEdit({ editedLevelId, levels, picks }: ReadPlan & { editedLevelId: string }): LevelPlanAnswer {
     const [level] = levels;
-    const { klass, klassLevel } = this.getSavedKlassLevel(this.findLevel(editedLevelId));
+    const { klass, classLevel } = this.getSavedClassLevel(this.findLevel(editedLevelId));
     const query = {
       abilityIncreases: level.abilityIncreases,
       editedLevelId,
-      klassId: klass.id,
+      classId: klass.id,
       level: level.level,
       picks,
     };
@@ -181,7 +181,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
       ...Object.fromEntries(Object.keys(pool.levels ?? {}).map((tier) => [tier, 0])),
     });
     return {
-      advancements: [{ id: klassLevel.id, position: klassLevel.position, track: { id: klass.id, name: klass.name } }],
+      advancements: [{ id: classLevel.id, position: classLevel.position, track: { id: klass.id, name: klass.name } }],
       steps: {
         [STEP.hp.name]: {
           mechanic: "value",
@@ -216,9 +216,9 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
     const { attributes, feats, levelDetails, nextPickLevels, perLevelSkillPoints, spells, skills } = preview;
     return {
       advancements: levelDetails.map((detail) => ({
-        id: detail.klassLevelId,
+        id: detail.classLevelId,
         position: detail.level,
-        track: { id: detail.klassId, name: detail.klassName },
+        track: { id: detail.classId, name: detail.className },
       })),
       steps: {
         [STEP.plan.name]: { mechanic: "plan" },
@@ -310,8 +310,8 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
   }
 
   /** The plan's levels' class levels' ids, each a class's level, refused when one isn't. */
-  private plannedClassLevelIds(levels: Pick<LevelRequest, "klassId" | "level">[]) {
-    return levels.map(({ klassId, level }) => this.getKlassLevel(klassId, level).id);
+  private plannedClassLevelIds(levels: Pick<LevelRequest, "classId" | "level">[]) {
+    return levels.map(({ classId, level }) => this.getClassLevel(classId, level).id);
   }
 
   /**
@@ -322,9 +322,9 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
   private readPlan(request: LevelPlanRequest, needsHp: boolean): ReadPlan {
     const values = Payloads.readStep(request, STEP.hp);
     const choices = Payloads.readStep(request, STEP.abilities);
-    const tracks: Pick<LevelRequest, "klassId" | "level">[] = request.editedLevelId
+    const tracks: Pick<LevelRequest, "classId" | "level">[] = request.editedLevelId
       ? [this.trackOf(request.editedLevelId)]
-      : Payloads.readStep(request, STEP.plan).map(({ position, track }) => ({ klassId: track, level: position }));
+      : Payloads.readStep(request, STEP.plan).map(({ position, track }) => ({ classId: track, level: position }));
     const levels = tracks.map((track, i) => {
       const hp = values[i];
       if (hp === undefined && needsHp) {
@@ -404,8 +404,8 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
 
   /** The class and level of the character's saved level `advancementId`, which an edit keeps. */
   private trackOf(advancementId: string) {
-    const { klass, klassLevel } = this.getSavedKlassLevel(this.findLevel(advancementId));
-    return { klassId: klass.id, level: klassLevel.position };
+    const { klass, classLevel } = this.getSavedClassLevel(this.findLevel(advancementId));
+    return { classId: klass.id, level: classLevel.position };
   }
 
   /**
@@ -505,7 +505,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
       abilityIncreases: level.abilityIncreases,
       aptitudeId: query.pool,
       ...(plan.editedLevelId && { editedLevelId: plan.editedLevelId }),
-      klassId: level.klassId,
+      classId: level.classId,
       laterClassLevelIds: plan.editedLevelId ? [] : this.plannedClassLevelIds(plan.levels.slice(index + 1)),
       level: level.level,
       planned: {

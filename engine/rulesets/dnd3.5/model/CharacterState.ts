@@ -23,10 +23,10 @@ export default abstract class CharacterState extends CharacterBase<Dnd35Componen
   // being immutable after `build()` returns. If any
   // future code mutates those post-build, invalidate this field first.
   protected diagnosticsIndex?: {
+    classLevelsById: Map<string, CustomizedClassLevel>;
     featsById: Map<string, Feat>;
-    klassLevelsById: Map<string, CustomizedClassLevel>;
     modifierOwner: Map<string, { name: string; type: string }>;
-    rulesetKlassesById: Map<string, Klass>;
+    rulesetClassesById: Map<string, Klass>;
     spellsById: Map<string, Spell>;
   };
 

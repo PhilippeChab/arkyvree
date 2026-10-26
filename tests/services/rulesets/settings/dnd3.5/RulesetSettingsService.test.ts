@@ -135,8 +135,8 @@ describe("RulesetSettingsService", () => {
     // The fighter is the seed user's, whose level-up it is
     const { characterId } = await buildFighter(fork.id);
     // Its next level, the second, as Add Level plans it
-    const { klassMap } = await getSeedCtx();
-    const second = levelUpPlan([{ klassId: klassMap.pc["Fighter"], level: 2, hp: 10 }]);
+    const { classMap } = await getSeedCtx();
+    const second = levelUpPlan([{ classId: classMap.pc["Fighter"], level: 2, hp: 10 }]);
     const abilityStep = async () =>
       stepAnswerOf(await getPlanAnswer(makeSession(), characterId, second), "abilities", "choose");
     expect(await abilityStep()).toMatchObject({ advancements: [] });

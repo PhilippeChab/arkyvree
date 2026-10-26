@@ -44,9 +44,9 @@ import {
   TierFilter,
 } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { classDetailQuery } from "@/client/src/pages/rulesets/details/classes/classSectionQueries.ts";
-import { getClassTabs } from "@/client/src/pages/rulesets/details/classes/classTabs.ts";
 import { entityQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
+import { ownerDetailQuery } from "@/client/src/pages/rulesets/details/owners/ownerSectionQueries.ts";
+import { getOwnerTabs } from "@/client/src/pages/rulesets/details/owners/ownerTabs.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionProps.ts";
 import { entitiesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
@@ -203,9 +203,9 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
     if (customization) {
       void queryClient.prefetchQuery(customizationEntityQuery(ruleset.id, customization, entity.id));
     } else if (kind.opens === "progression") {
-      void queryClient.prefetchQuery(classDetailQuery(ruleset.id, kind.type, entity.id));
+      void queryClient.prefetchQuery(ownerDetailQuery(ruleset.id, kind.type, entity.id));
       // And the tab its page opens on, its first
-      void getClassTabs(rules)[0].prefetch?.(queryClient, ruleset.id, entity.id);
+      void getOwnerTabs(rules)[0].prefetch?.(queryClient, ruleset.id, entity.id);
     } else {
       void queryClient.prefetchQuery(entityQuery(ruleset.id, kind.type, entity.id));
     }

@@ -95,7 +95,7 @@ export function LevelEditor({
     followCopy,
     storeSaved: refetchSaved,
     // Its owner's tabs, its levels' table among them, read the level
-    listKey: QUERY_KEYS.rulesets.classDetail(rulesetId, ownerId),
+    listKey: QUERY_KEYS.rulesets.ownerDetail(rulesetId, ownerId),
     label: `${word.charAt(0)}${word.slice(1).toLowerCase()}`,
     saveFn: (data: LevelFormData, updatedAt: string | undefined) =>
       parseResponse(

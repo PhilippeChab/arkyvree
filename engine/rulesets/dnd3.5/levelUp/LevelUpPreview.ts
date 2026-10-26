@@ -17,30 +17,30 @@ export default class LevelUpPreview extends PlannedLevelsState {
    * pools, as a save would take them, and say what fits (`fitted`) and each pool's room for them.
    */
   private buildLevelUpPreview(planned: PlannedLevels, picks: Partial<LevelPicks>) {
-    const { character, savedLevelCount, klassLevelEntries } = planned;
+    const { character, savedLevelCount, classLevelEntries } = planned;
     const gains = this.computeLevelGains(planned);
-    const { classSkills, klassLevelIds, perLevelSkillPoints } = gains;
+    const { classSkills, classLevelIds, perLevelSkillPoints } = gains;
     const levels = { perLevelClassSkillIds: classSkills.perLevel, perLevelSkillPoints, savedLevelCount };
     const fitted = this.fitPicks(picks, (poolPicks) => this.buildWithPicks(planned, poolPicks, gains));
     const pools = fitted.character.components.aptitudes.getLevelUpPools(this.dnd35, this.countOwnPicks(fitted.picks));
     return {
       skills: this.skillStep(character, classSkills.merged, levels, picks.skills ?? {}),
-      feats: { ...this.featStep(pools, klassLevelIds), fitted: fitted.picks.feats },
-      spells: { ...this.spellStep(pools, klassLevelIds), fitted: fitted.picks.spells },
+      feats: { ...this.featStep(pools, classLevelIds), fitted: fitted.picks.feats },
+      spells: { ...this.spellStep(pools, classLevelIds), fitted: fitted.picks.spells },
       attributes: {
-        abilityIncreaseLevels: this.getAbilityIncreaseLevels(savedLevelCount, klassLevelEntries.length),
+        abilityIncreaseLevels: this.getAbilityIncreaseLevels(savedLevelCount, classLevelEntries.length),
         attributes: character.components.abilities.getAbilitiesWithIds(),
         // Every planned level raises its abilities as its save checks them: the step's Next waits for it
-        picked: klassLevelEntries.every(({ abilityIncreases }, i) =>
+        picked: classLevelEntries.every(({ abilityIncreases }, i) =>
           this.checks.areAbilityIncreasesPicked(savedLevelCount + i, abilityIncreases),
         ),
       },
       // Per-level data for HP step, review, and auto-assignment
-      levelDetails: klassLevelEntries.map(({ klass, klassLevel }, i) => ({
-        klassId: klass.id,
-        klassName: klass.name,
-        klassLevelId: klassLevel.id,
-        level: klassLevel.position,
+      levelDetails: classLevelEntries.map(({ klass, classLevel }, i) => ({
+        classId: klass.id,
+        className: klass.name,
+        classLevelId: classLevel.id,
+        level: classLevel.position,
         hd: klass.fields[CLASS_HD],
         hitPoints: this.rules.hitPointsOf(klass.fields[CLASS_HD]),
         skillPoints: perLevelSkillPoints[i],
@@ -103,6 +103,6 @@ export default class LevelUpPreview extends PlannedLevelsState {
     const increased = levels.map((level, i) =>
       levelRules.isAbilityIncreaseLevel(savedLevelCount + i) ? level : { ...level, abilityIncreases: [] },
     );
-    return this.buildLevelUpPreview(this.buildPlannedLevels(this.getPlannedKlassLevels(increased)), picks);
+    return this.buildLevelUpPreview(this.buildPlannedLevels(this.getPlannedClassLevels(increased)), picks);
   }
 }

@@ -10,7 +10,7 @@ import { ConflictError } from "@/server/errors/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
-import { addCharacterLevel, createTestKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { addCharacterLevel, createTestClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { addGrants } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { CLASS_HD, CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -126,8 +126,8 @@ describe("EntitiesService: aptitudes", () => {
       links: { listedIn: [{ toId: spellAptitude.id }] },
     });
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
-    const { klassLevel } = await createTestKlassLevel(ruleset.id);
-    await addCharacterLevel(character.id, klassLevel.id, {
+    const { classLevel } = await createTestClassLevel(ruleset.id);
+    await addCharacterLevel(character.id, classLevel.id, {
       feats: { [featAptitude.id]: [feat.id] },
       spells: { [spellAptitude.id]: [spell.id] },
     });

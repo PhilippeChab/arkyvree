@@ -48,10 +48,10 @@ import { insertRows, measure } from "@/tests/support/database.ts";
 import { buildAs, createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createRaceModifier } from "@/tests/support/dnd3.5/customizations.ts";
 import { type Carried, carry, createTestItem } from "@/tests/support/dnd3.5/items.ts";
-import { addCharacterLevel, createTestKlassLevel, findKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { addCharacterLevel, createTestClassLevel, findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { addListings, addLists } from "@/tests/support/dnd3.5/links.ts";
 import { writeFieldValues, writeValues } from "@/tests/support/ownerValues.ts";
-import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset, createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import type { ItemLocation } from "@/vocabulary/dnd3.5/equipment.ts";
@@ -471,7 +471,7 @@ async function setupWeaponTrick(intelligence: number) {
     name: "Loremaster Secret",
     rulesetId: dmg.id,
   }))!;
-  await addCharacterLevel(characterId, (await findKlassLevel(loremaster.id, 1))!.id, {
+  await addCharacterLevel(characterId, (await findClassLevel(loremaster.id, 1))!.id, {
     feats: { [secret.id]: [weaponTrick.id] },
   });
   const character = (await Characters.findOne(db, { id: characterId }))!;
@@ -1763,7 +1763,7 @@ describe("DetailedCharacter", () => {
         );
         await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
         for (let level = 1; level <= duelistLevels; level++)
-          await addCharacterLevel(characterId, (await findKlassLevel(duelist.id, level))!.id);
+          await addCharacterLevel(characterId, (await findClassLevel(duelist.id, level))!.id);
 
         // Gated on the armor and the shield, its set's
         return weaponSet(await build((await Characters.findOne(db, { id: characterId }))!)).ac.dodge;
@@ -1787,7 +1787,7 @@ describe("DetailedCharacter", () => {
       );
       await addClassLevels(db, ctx, characterId, "Fighter", [1], [10]);
       for (let level = 1; level <= 2; level++)
-        await addCharacterLevel(characterId, (await findKlassLevel(duelist.id, level))!.id);
+        await addCharacterLevel(characterId, (await findClassLevel(duelist.id, level))!.id);
       const character = (await Characters.findOne(db, { id: characterId }))!;
       await carry(character, [
         { item: "Rapier", location: "Main Hand", groups: [0] },
@@ -2025,7 +2025,7 @@ describe("DetailedCharacter", () => {
           rulesetId: (await findSeededRuleset(book)).id,
         }))!;
         for (let level = 1; level <= levels; level++)
-          await addCharacterLevel(characterId, (await findKlassLevel(klass.id, level))!.id);
+          await addCharacterLevel(characterId, (await findClassLevel(klass.id, level))!.id);
 
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
         const { ac } = weaponSet(detailed);
@@ -2266,6 +2266,27 @@ describe("DetailedCharacter", () => {
     });
   });
 
+  describe("its source chain", () => {
+    test("names a class from outside it by its kind: its stored type, and its label", async () => {
+      const fork = await createSeededTestRuleset(SEED_USER_ID);
+      const { klass, classLevel } = await createTestClassLevel(fork.id);
+      const character = await createTestCharacter(SEED_USER_ID, { rulesetId: fork.id });
+      await addCharacterLevel(character.id, classLevel.id);
+      const detailed = await build(character);
+      // The fork out of the chain its rows are checked against: the class it holds is from outside it
+      (detailed as unknown as { data: { validRulesetIds: Set<string> } }).data.validRulesetIds.delete(fork.id);
+
+      expect(detailed.validate().issues.filter((issue) => issue.category === "integrity")).toEqual([
+        {
+          category: "integrity",
+          message: `${klass.name} (Class) belongs to a ruleset not in this character's source chain`,
+          entityName: klass.name,
+          entityType: "classes",
+        },
+      ]);
+    });
+  });
+
   describe("feats", () => {
     test("count a level's general feats toward General, and report them when the ruleset has none", async () => {
       const ruleset = await createTestRuleset(SEED_USER_ID);
@@ -2274,9 +2295,9 @@ describe("DetailedCharacter", () => {
         rulesetId: ruleset.id,
         fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
       });
-      const { klassLevel } = await createTestKlassLevel(ruleset.id);
+      const { classLevel } = await createTestClassLevel(ruleset.id);
       const character = await createTestCharacter(SEED_USER_ID, { rulesetId: ruleset.id, raceId: race.id });
-      await addCharacterLevel(character.id, klassLevel.id);
+      await addCharacterLevel(character.id, classLevel.id);
 
       const integrityIssues = (detailed: Detailed) =>
         detailed.validate().issues.filter((i) => i.category === "integrity");
@@ -2337,8 +2358,8 @@ describe("DetailedCharacter", () => {
     test("don't count a proficiency two classes grant twice", async () => {
       // A barbarian level grants the fighter's proficiency feats again.
       const bjorn = await findSeededCharacter("Bjorn Ironhand");
-      const { klassMap } = await getSeedCtx();
-      await addCharacterLevel(bjorn.id, (await findKlassLevel(klassMap.pc["Barbarian"], 1))!.id);
+      const { classMap } = await getSeedCtx();
+      await addCharacterLevel(bjorn.id, (await findClassLevel(classMap.pc["Barbarian"], 1))!.id);
       const detailed = await build(bjorn);
 
       const general = detailed.components.aptitudes.getAptitudes()["general"];
@@ -2439,7 +2460,7 @@ describe("DetailedCharacter", () => {
           name: `${option} (Archmage High Arcana)`,
           rulesetId: dmgId,
         }))!;
-        await addCharacterLevel(characterId, (await findKlassLevel(archmage.id, index + 1))!.id, {
+        await addCharacterLevel(characterId, (await findClassLevel(archmage.id, index + 1))!.id, {
           feats: { [highArcana.id]: [feat.id] },
         });
       }
@@ -2499,7 +2520,7 @@ describe("DetailedCharacter", () => {
         rulesetId: adventurerId,
       }))!;
       for (let level = 1; level <= 6; level++)
-        await addCharacterLevel(characterId, (await findKlassLevel(spellthief.id, level))!.id);
+        await addCharacterLevel(characterId, (await findClassLevel(spellthief.id, level))!.id);
 
       // Spellthief 6: one 1st-level spell a day, three known
       const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
@@ -2526,7 +2547,7 @@ describe("DetailedCharacter", () => {
 
       // A pious templar 3 who meets the class's prerequisites, Wis 16, with `bonus` caster levels: her slots, bonus spells
       // and caster level go to the list she picked, none to the other
-      const templar = divine.klasses.find((klass) => klass.name === "Pious Templar")!;
+      const templar = divine.classes.find((klass) => klass.name === "Pious Templar")!;
       const sheetWith = async (list: string, bonus = 0) => {
         const characterId = await seedHuman(
           `${list} Templar`,
@@ -2555,10 +2576,10 @@ describe("DetailedCharacter", () => {
         }
         const pick = { featId: listFeat(list).id, aptitudeId: divine.aptitude("Pious Templar Spell List").id };
         for (let level = 1; level <= 3; level++) {
-          const klassLevel = (await findKlassLevel(templar.id, level))!;
+          const classLevel = (await findClassLevel(templar.id, level))!;
           await addCharacterLevel(
             characterId,
-            klassLevel.id,
+            classLevel.id,
             level === 1 ? { feats: { [pick.aptitudeId]: [pick.featId] } } : {},
           );
         }
@@ -2761,8 +2782,8 @@ describe("DetailedCharacter", () => {
             })
           )?.id ?? ctx.aptMap["Bonus Divine Caster Level"];
         for (let level = 1; level <= 5; level++) {
-          const klassLevel = (await findKlassLevel(stormlord.id, level))!;
-          await addCharacterLevel(characterId, klassLevel.id, { feats: { [bonusLevel]: [advance] } });
+          const classLevel = (await findClassLevel(stormlord.id, level))!;
+          await addCharacterLevel(characterId, classLevel.id, { feats: { [bonusLevel]: [advance] } });
         }
 
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
@@ -2894,8 +2915,8 @@ describe("DetailedCharacter", () => {
             })
           )?.id ?? ctx.aptMap["Bonus Divine Caster Level"];
         for (let level = 1; level <= 5; level++) {
-          const klassLevel = (await findKlassLevel(stormlord.id, level))!;
-          await addCharacterLevel(characterId, klassLevel.id, { feats: { [bonusLevel]: [advance] } });
+          const classLevel = (await findClassLevel(stormlord.id, level))!;
+          await addCharacterLevel(characterId, classLevel.id, { feats: { [bonusLevel]: [advance] } });
         }
 
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
@@ -2915,7 +2936,7 @@ describe("DetailedCharacter", () => {
       test("make a divine crusader's list the spells of the domain she picks, cast with her own slots", async () => {
         // Charisma 16: a bonus spell at each of the first three levels
         const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
-        const crusader = divine.klasses.find((klass) => klass.name === "Divine Crusader")!;
+        const crusader = divine.classes.find((klass) => klass.name === "Divine Crusader")!;
         const fire = {
           featId: divine.feat("Fire Domain (Divine Crusader)").id,
           aptitudeId: divine.aptitude("Divine Crusader Domain").id,
@@ -2924,10 +2945,10 @@ describe("DetailedCharacter", () => {
           const scores = { ...WIZARD_SCORES, Charisma: 16 };
           const characterId = await divineCharacter(`Crusader ${levels}`, scores, CRUSADER_PREREQUISITES);
           for (let level = 1; level <= levels; level++) {
-            const klassLevel = (await findKlassLevel(crusader.id, level))!;
+            const classLevel = (await findClassLevel(crusader.id, level))!;
             await addCharacterLevel(
               characterId,
-              klassLevel.id,
+              classLevel.id,
               level === 1 ? { feats: { [fire.aptitudeId]: [fire.featId] } } : {},
             );
           }
@@ -2983,9 +3004,9 @@ describe("DetailedCharacter", () => {
         }))!;
         for (let level = 1; level <= 3; level++) {
           const picks = { feats: { [ctx.aptMap["Cleric Domain"]]: [ctx.featMap["Fire Domain"]] } };
-          await addCharacterLevel(characterId, (await findKlassLevel(cleric.id, level))!.id, level === 1 ? picks : {});
+          await addCharacterLevel(characterId, (await findClassLevel(cleric.id, level))!.id, level === 1 ? picks : {});
         }
-        const crusader = divine.klasses.find((klass) => klass.name === "Divine Crusader")!;
+        const crusader = divine.classes.find((klass) => klass.name === "Divine Crusader")!;
         const fire = {
           featId: divine.feat("Fire Domain (Divine Crusader)").id,
           aptitudeId: divine.aptitude("Divine Crusader Domain").id,
@@ -2993,7 +3014,7 @@ describe("DetailedCharacter", () => {
         for (let level = 1; level <= 4; level++) {
           await addCharacterLevel(
             characterId,
-            (await findKlassLevel(crusader.id, level))!.id,
+            (await findClassLevel(crusader.id, level))!.id,
             level === 1 ? { feats: { [fire.aptitudeId]: [fire.featId] } } : {},
           );
         }
@@ -3115,7 +3136,7 @@ describe("DetailedCharacter", () => {
           name: "Cleric",
           rulesetId: ctx.rulesetId,
         }))!;
-        await addCharacterLevel(characterId, (await findKlassLevel(cleric.id, 1))!.id, {
+        await addCharacterLevel(characterId, (await findClassLevel(cleric.id, 1))!.id, {
           feats: { [ctx.aptMap["Cleric Domain"]]: [ctx.featMap["Fire Domain"]] },
         });
         await addCharacterLevel(characterId, levelIds[1]);
@@ -3142,7 +3163,7 @@ describe("DetailedCharacter", () => {
           name: "Fighter",
           rulesetId: ctx.rulesetId,
         }))!;
-        await addCharacterLevel(characterId, (await findKlassLevel(fighter.id, 1))!.id, {
+        await addCharacterLevel(characterId, (await findClassLevel(fighter.id, 1))!.id, {
           feats: { [ctx.aptMap["Cleric Domain"]]: [ctx.featMap["Sun Domain"]] },
         });
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
@@ -3181,7 +3202,7 @@ describe("DetailedCharacter", () => {
           name: "Wizard",
           rulesetId: ctx.rulesetId,
         }))!;
-        await addCharacterLevel(characterId, (await findKlassLevel(wizard.id, 1))!.id, {
+        await addCharacterLevel(characterId, (await findClassLevel(wizard.id, 1))!.id, {
           feats: { [ctx.aptMap["General"]]: [reserve.id] },
         });
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
@@ -3221,7 +3242,7 @@ describe("DetailedCharacter", () => {
           aptitudeId: ctx.aptMap["Bonus Arcane Caster Level"],
         };
         for (let level = 1; level <= 3; level++) {
-          await addCharacterLevel(characterId, (await findKlassLevel(loremaster.id, level))!.id, {
+          await addCharacterLevel(characterId, (await findClassLevel(loremaster.id, level))!.id, {
             feats: { [advance.aptitudeId]: [advance.featId] },
           });
         }
@@ -3302,7 +3323,7 @@ describe("DetailedCharacter", () => {
           name: "Cleric",
           rulesetId: ctx.rulesetId,
         }))!;
-        const cleric = (await findKlassLevel(clericClass.id, 1))!;
+        const cleric = (await findClassLevel(clericClass.id, 1))!;
         await addCharacterLevel(characterId, cleric.id, {
           feats: { [clericDomain]: [sun.id, moonDomain.id] },
         });
@@ -3602,7 +3623,7 @@ describe("DetailedCharacter", () => {
           name: "Thaumaturgist",
           rulesetId: (await findSeededRuleset(DND35_DMG_NAME)).id,
         }))!;
-        const firstLevel = (await findKlassLevel(thaumaturgist.id, 1))!;
+        const firstLevel = (await findClassLevel(thaumaturgist.id, 1))!;
 
         const record = (await Characters.findOne(db, { id: characterId }))!;
         const detailed = await buildAs(DetailedCharacter, record, {
@@ -3644,7 +3665,7 @@ describe("DetailedCharacter", () => {
           aptitudeId: aptMap["Bonus Divine Caster Level"],
         };
         for (let level = 1; level <= 2; level++) {
-          await addCharacterLevel(characterId, (await findKlassLevel(stormlord.id, level))!.id, {
+          await addCharacterLevel(characterId, (await findClassLevel(stormlord.id, level))!.id, {
             feats: { [advance.aptitudeId]: [advance.featId] },
           });
         }
@@ -3872,10 +3893,10 @@ describe("DetailedCharacter", () => {
         ).components.abilities.getAbilities().strength;
         return { misc, total };
       };
-      await addCharacterLevel(characterId, (await findKlassLevel(dragonDisciple.id, 1))!.id);
+      await addCharacterLevel(characterId, (await findClassLevel(dragonDisciple.id, 1))!.id);
       expect(await strength()).toEqual({ misc: 0, total: 12 });
       // The second level's +2 Strength
-      await addCharacterLevel(characterId, (await findKlassLevel(dragonDisciple.id, 2))!.id);
+      await addCharacterLevel(characterId, (await findClassLevel(dragonDisciple.id, 2))!.id);
       expect(await strength()).toEqual({ misc: 2, total: 14 });
     });
 
@@ -3883,7 +3904,7 @@ describe("DetailedCharacter", () => {
       const ctx = await getSeedCtx();
       const [lyraBefore, bjornBefore] = [await buildSeeded("Lyra Shadowstep"), await buildSeeded("Bjorn Ironhand")];
       await Modifiers.create(db, {
-        sourceId: ctx.klassMap.pc["Rogue"],
+        sourceId: ctx.classMap.pc["Rogue"],
         sourceType: "classes",
         target: "abilities.dexterity.misc",
         value: "1",
@@ -3898,7 +3919,7 @@ describe("DetailedCharacter", () => {
 
     test("check its requirements, unmet ones keeping its modifiers off", async () => {
       const ctx = await getSeedCtx();
-      const rogue = ctx.klassMap.pc["Rogue"];
+      const rogue = ctx.classMap.pc["Rogue"];
       const lyraBefore = await buildSeeded("Lyra Shadowstep");
       await Modifiers.create(db, {
         sourceId: rogue,
@@ -3957,7 +3978,7 @@ describe("DetailedCharacter", () => {
         name: "Assassin",
         rulesetId: (await findSeededRuleset(DND35_DMG_NAME)).id,
       }))!;
-      await addCharacterLevel(characterId, (await findKlassLevel(assassin.id, 1))!.id);
+      await addCharacterLevel(characterId, (await findClassLevel(assassin.id, 1))!.id);
       const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
       expect(detailed.areRequirementsMet(requiring("feats.sneakattack.count", exactly(3)))).toBe(true);
       // Each class's alone is less

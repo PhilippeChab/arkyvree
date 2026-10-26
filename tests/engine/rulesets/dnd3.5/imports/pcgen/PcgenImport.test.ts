@@ -50,14 +50,14 @@ function totalPoints(levels: Awaited<ReturnType<typeof nameLevels>>) {
 async function nameLevels(plan: Awaited<ReturnType<typeof planImportOf>>) {
   const dnd35 = Dnd35View.of(await seededData());
   return plan.advancements.map((advancement) => {
-    const klassLevel = dnd35.klassLevelsById.get(advancement.trackId)!;
+    const classLevel = dnd35.classLevelsById.get(advancement.trackId)!;
     return {
       hp: picksOf(advancement, "hp")[0].amount,
       increases: picksOf(advancement, "abilities").map(
         ({ amount, entityId }) => `${dnd35.abilitiesById.get(entityId!)?.name} +${amount}`,
       ),
       feats: picksOf(advancement, "feats").map(({ entityId }) => dnd35.featsById.get(entityId!)?.name),
-      klass: `${dnd35.klassesById.get(klassLevel.ownerId)?.name} ${klassLevel.position}`,
+      klass: `${dnd35.classesById.get(classLevel.ownerId)?.name} ${classLevel.position}`,
       skills: Object.fromEntries(
         picksOf(advancement, "skills").map(({ amount, entityId }): [string, number] => [
           dnd35.skillsById.get(entityId!)?.name ?? entityId!,

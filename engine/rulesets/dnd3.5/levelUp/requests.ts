@@ -16,15 +16,15 @@ export interface LevelPicks {
 }
 
 /**
- * The level a module's step or picker answers for, read from a plan: class `klassId`'s `level` (a step that reads the
+ * The level a module's step or picker answers for, read from a plan: class `classId`'s `level` (a step that reads the
  * level's class refuses to answer without them) and its ability increases, after the levels the plan takes before it
  * (`planned`), or in the place of the saved level it edits (`editedLevelId`), and what the plan picked at it so far
  * (`picks`), which a step says what it comes to.
  */
 export interface LevelQuery {
   abilityIncreases?: PickPlan[];
+  classId?: string;
   editedLevelId?: string;
-  klassId?: string;
   level?: number;
   picks?: Partial<LevelPicks>;
   planned?: PlannedSoFar;
@@ -33,8 +33,8 @@ export interface LevelQuery {
 /** A level a level-up writes, as a module reads it from a plan: its class's level, hit points and ability increases. */
 export interface LevelRequest {
   abilityIncreases: PickPlan[];
+  classId: string;
   hp: number;
-  klassId: string;
   level: number;
 }
 
@@ -74,7 +74,7 @@ export type LevelEditRequest = LevelPicks & { abilityIncreases: PickPlan[]; hp: 
  */
 export type PickQuery = LevelQuery & {
   aptitudeId: string;
-  klassId: string;
+  classId: string;
   laterClassLevelIds?: string[];
   level: number;
 };

@@ -34,7 +34,7 @@ import { Entities, Modifiers, Users } from "@/server/repositories/index.ts";
 import { AuthenticationService } from "@/server/services/authentication/index.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { customize, STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
-import { createTestKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { createTestClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { findFormValues } from "@/tests/support/ownerValues.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
@@ -88,7 +88,7 @@ async function createOwner(type: OwnerType, userId: string, rulesetId: string): 
     case "items":
       return (await Entities.create<Item>(db, "items", { name, rulesetId }))[0].id;
     case "class_levels":
-      return (await createTestKlassLevel(rulesetId)).klassLevel.id;
+      return (await createTestClassLevel(rulesetId)).classLevel.id;
     case "classes":
       return (await Entities.create<Klass>(db, "classes", { name, rulesetId, fields: { [CLASS_HD]: 8 } }))[0].id;
     case "languages":
@@ -171,8 +171,8 @@ describe("customization cleanup", () => {
 
   test("deletes a class's levels' customizations with the class", async () => {
     const { ruleset } = await createTestUserAndRuleset();
-    const { klass, klassLevel } = await createTestKlassLevel(ruleset.id);
-    await customize("class_levels", klassLevel.id);
+    const { klass, classLevel } = await createTestClassLevel(ruleset.id);
+    await customize("class_levels", classLevel.id);
 
     // The class's levels go through their foreign key's cascade
     await db.execute(sql`DELETE FROM ${entitiesInRules} WHERE id = ${klass.id}`);
@@ -183,10 +183,10 @@ describe("customization cleanup", () => {
     const { user } = await AuthenticationService.startDemo();
     // The fork comes with a copy of the seeded ruleset's Settings
     const fork = await createSeededTestRuleset(user.id);
-    const { klassLevel } = await createTestKlassLevel(fork.id);
+    const { classLevel } = await createTestClassLevel(fork.id);
     const character = await createTestCharacter(user.id, { rulesetId: fork.id });
     await customize("feats", await createOwner("feats", user.id, fork.id));
-    await customize("class_levels", klassLevel.id);
+    await customize("class_levels", classLevel.id);
     await customizeOwner("characters", character.id);
     expect(await findFormValues("rulesets", fork.id)).not.toEqual({ fields: {}, links: {} });
 
