@@ -40,17 +40,8 @@ export class RulesetSeeder extends include(
     await this.seedFeats(core.feats);
     for (const klass of core.classes) await this.seedClass(klass);
 
-    // The templates first, a magic one among them (elven chain): the other items are made from them
-    const templates = await this.seedItems(
-      "items",
-      [...core.templateItems, ...core.items.filter((item) => item.isTemplate)],
-      { isTemplate: true },
-    );
-    await this.seedItems(
-      "items",
-      core.items.filter((item) => !item.isTemplate),
-      { templateMap: templates },
-    );
+    // The items others are made from, and the others, which name them
+    await this.seedItems("items", [...core.templateItems, ...core.items]);
 
     await this.seedSpells(core.spells);
     await this.seedWizardSchools(core.wizardSchools, findSpellcastingClass(core.classes, "Wizard"));
@@ -78,7 +69,7 @@ export class RulesetSeeder extends include(
   async seedBond(bond: BondContent) {
     await this.seedAptitudes(bond.aptitudes);
     await this.seedFeats(bond.feats);
-    await this.seedRaces(bond.races, bond.kind);
+    await this.seedRaces(bond.races);
     await this.seedClass(bond.klass);
   }
 

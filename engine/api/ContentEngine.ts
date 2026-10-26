@@ -1,24 +1,11 @@
-import type { Fields } from "@/engine/core/fields/index.ts";
 import type { ContentPart } from "@/engine/core/module/index.ts";
-import type { PartialFieldValues } from "@/shared/customization/fields.ts";
 
-/**
- * The engine bound to a base rules' content, which the seeders and the codegen ask before any ruleset has a view: its
- * module's own, so what it seeds is its own fields (`F`, by entity).
- */
-export default class ContentEngine<F> {
-  constructor(private readonly content: ContentPart<F>) {}
+/** The engine bound to a base rules' content, which the seeders and the codegen ask before any ruleset has a view. */
+export default class ContentEngine {
+  constructor(private readonly content: ContentPart) {}
 
   /** The paths a book's content can target: what the codegen checks a book's modifiers and requirements against. */
-  listBookTargetPaths(...args: Parameters<ContentPart<F>["listBookTargetPaths"]>) {
+  listBookTargetPaths(...args: Parameters<ContentPart["listBookTargetPaths"]>) {
     return this.content.listBookTargetPaths(...args);
-  }
-
-  /**
-   * An entity's fields as their write, by stored field (and a reference's single link, by role): what a seeder writes
-   * for them, a field left out not named, which the entity keeps.
-   */
-  toFieldsWrite<K extends keyof F>(entityType: K, fields: PartialFieldValues<Extract<F[K], Fields>>) {
-    return this.content.toFieldsWrite(entityType, fields);
   }
 }

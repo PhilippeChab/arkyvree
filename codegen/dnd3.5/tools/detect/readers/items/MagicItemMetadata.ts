@@ -49,18 +49,18 @@ function inferSlot(name: string, category: MagicItemCategory): string {
 
 /**
  * Parse all variant prices from metadata text.
- * Returns a map: variant tag → price string, or null if no variants.
+ * Returns a map: variant tag → price in gold pieces, or null if no variants.
  */
-function parseAllVariantPrices(metadataText: string): Map<string, string> | null {
+function parseAllVariantPrices(metadataText: string): Map<string, number> | null {
   const variantPattern = /([\d,]+)\s*gp\s*\(([^)]+)\)/g;
-  const variants = new Map<string, string>();
+  const variants = new Map<string, number>();
   let match: RegExpExecArray | null;
   while ((match = variantPattern.exec(metadataText)) !== null) {
     // Strip category prefix and normalize to match cleaned variant names from the parser
     let tag = match[2].trim().replace(/^(?:ring|armor|shield|weapon)\s+/i, "");
     if (tag && !tag.startsWith("+")) tag = tag.replace(/\b\w/g, (c) => c.toUpperCase());
 
-    variants.set(tag, match[1].replace(/,/g, ""));
+    variants.set(tag, Number(match[1].replace(/,/g, "")));
   }
   return variants.size > 1 ? variants : null;
 }
@@ -78,26 +78,26 @@ function parseCasterLevel(metadataText: string): number | undefined {
   return match ? parseInt(match[1], 10) : undefined;
 }
 
-function parseMetadataPrice(metadataText: string): string {
+function parseMetadataPrice(metadataText: string): number {
   // For variant items, the metadata may have multiple prices — we extract the first one
   const match = metadataText.match(/Price\s+([\d,]+)\s*gp/i);
   if (match) return readCost(`${match[1]} gp`);
-  return "0";
+  return 0;
 }
 
-function parseMetadataWeight(metadataText: string): string {
+function parseMetadataWeight(metadataText: string): number {
   const match = metadataText.match(/Weight\s+([\d.]+)\s*lb/i);
   if (match) return readWeight(`${match[1]} lb.`);
-  return "0";
+  return 0;
 }
 
 /**
  * The price of a magic item, the variant's when its metadata prices several ("2,000 gp (ring +1)", which the parser
  * appended to the item's name: "Protection +1"), the longest tag the name ends with.
  */
-function variantPrice(entry: MagicItemReference["raw"][number]): string {
+function variantPrice(entry: MagicItemReference["raw"][number]): number {
   const variants = parseAllVariantPrices(entry.metadataText);
-  const sortedVariants = [...(variants ?? new Map<string, string>()).entries()].sort(
+  const sortedVariants = [...(variants ?? new Map<string, number>()).entries()].sort(
     (a, b) => b[0].length - a[0].length,
   );
   const price = sortedVariants.find(([tag]) => entry.name.endsWith(tag))?.[1];

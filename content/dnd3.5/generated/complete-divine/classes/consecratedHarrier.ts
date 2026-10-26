@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const CONSECRATED_HARRIER: ClassSeed = {
   name: "Consecrated Harrier",
   description:
     "A consecrated harrier serves as a sanctioned hunter on behalf of her faith or religious institution, tracking down designated enemies.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10, [CLASS_CASTER_TYPE]: "Divine" },
   levels: 10,
   skillPoints: 4,
   bab: "good",
@@ -56,8 +57,7 @@ export const CONSECRATED_HARRIER: ClassSeed = {
     [10, "Blessing of Scripture (Consecrated Harrier)"],
     [10, "Faultless Hunt (Consecrated Harrier)"],
   ],
-  bonusSpellAbility: "Wisdom",
-  casterType: "Divine",
+  links: { bonusSpellAbility: "Wisdom" },
   spells: {
     slug: "consecratedharrierspells",
     perDay: [[0], [1], [1, 0], [1, 1], [1, 1, 0], [1, 1, 1], [2, 1, 1, 0], [2, 1, 1, 1], [2, 2, 1, 1], [2, 2, 2, 1]],

@@ -16,6 +16,8 @@ const GIZMOS = "gizmos" as string as StandaloneKind;
 const FIELDS = {
   title: {
     description: "Its title",
+    // Without a title, the entity keeps none of the fields its form shows
+    keepsForm: true,
     kind: "text",
     label: "Title",
     placeholder: 'e.g., "A"',
@@ -75,7 +77,7 @@ const FIELDS = {
   },
 } as const;
 
-const CODEC = new FieldCodec(FIELDS, { storesWhen: (fields) => fields.title !== null });
+const CODEC = new FieldCodec(FIELDS);
 
 /** What a form's fields are read with: ids the view resolves by prefixing them. */
 const CONTEXT: FormContext = {

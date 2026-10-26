@@ -6,11 +6,12 @@
  */
 
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const SWASHBUCKLER: ClassSeed = {
   name: "Swashbuckler",
   description: "The swashbuckler represents the ideal of boldness and flair in combat.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 20,
   skillPoints: 4,
   bab: "good",

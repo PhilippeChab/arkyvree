@@ -1,9 +1,13 @@
-/** A skill: its name, what it does, its key ability, and whether armor weighs on it or it can be used untrained. */
+import type { StoredFieldValues } from "@/shared/customization/fields.ts";
+import type { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
+
+/**
+ * A skill: its name, what it does, its fields as stored (whether armor weighs on it, how many times over, whether it
+ * can be used untrained: none is false, once), and its key ability (its `keyAbility` link), by its name.
+ */
 export interface SkillSeed {
-  ability: string;
-  checkPenaltyMultiplier?: number;
   description: string;
-  impactedByWeight?: boolean;
+  fields?: StoredFieldValues<typeof ENTITY_FIELDS.skills>;
+  links: { keyAbility: string };
   name: string;
-  usableWithoutTraining?: boolean;
 }

@@ -7,11 +7,12 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const SUEL_ARCANAMACH: ClassSeed = {
   name: "Suel Arcanamach",
   description: "Arcanamach formerly served as elite guards and agents for powerful wizards.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8, [CLASS_CASTER_TYPE]: "Arcane" },
   levels: 10,
   skillPoints: 4,
   bab: "medium",
@@ -61,8 +62,7 @@ export const SUEL_ARCANAMACH: ClassSeed = {
     [10, "Dispelling Strike (Suel Arcanamach)"],
     [10, "Ignore Spell Failure Chance (Suel Arcanamach)"],
   ],
-  bonusSpellAbility: "Charisma",
-  casterType: "Arcane",
+  links: { bonusSpellAbility: "Charisma" },
   spells: {
     slug: "suelarcanamachspells",
     perDay: [

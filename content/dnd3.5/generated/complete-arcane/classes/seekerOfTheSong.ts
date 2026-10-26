@@ -7,11 +7,12 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const SEEKER_OF_THE_SONG: ClassSeed = {
   name: "Seeker of the Song",
   description: "Seekers of the song wield the power of music in ways that amaze even the most skilled bards.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 10,
   skillPoints: 4,
   bab: "poor",

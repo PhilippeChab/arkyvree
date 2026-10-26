@@ -7,12 +7,13 @@
 
 import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const INVISIBLE_BLADE: ClassSeed = {
   name: "Invisible Blade",
   description:
     "Invisible blades are lethal combatants who specialize in fighting with daggers and similar small bladed weapons.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 5,
   skillPoints: 4,
   bab: "good",

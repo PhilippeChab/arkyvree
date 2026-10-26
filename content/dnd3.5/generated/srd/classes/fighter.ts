@@ -6,12 +6,13 @@
  */
 
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const FIGHTER: ClassSeed = {
   name: "Fighter",
   description:
     "Fighters encompass a wide range of martial archetypes - from noble knights and conquering warlords to hardened sellswords, royal champions, seasoned infantry, and ruthless brigand leaders. They may serve as valiant protectors of the helpless, merciless raiders, or bold fortune-seekers. Among their ranks are some of the most honorable individuals in the realm, ready to lay down their lives for a just cause, while others are utterly ruthless, willing to kill for coin or mere amusement. Outside of adventuring, fighters often work as soldiers, sentries, personal guards, arena champions, or muscle for criminal organizations. A fighter on the road might refer to themselves as a warrior, hired blade, enforcer, or simply an adventurer. For most fighters, perilous quests, raids, and hazardous missions are simply their livelihood. Some serve patrons who provide steady pay, while others operate more like treasure hunters, accepting enormous risks in pursuit of a major payoff. Certain fighters take a more altruistic path, employing their battle prowess to shield vulnerable folk who cannot protect themselves. Regardless of what first drew them to the profession, fighters frequently come to live for the excitement of battle and exploration. No other class matches the fighter's overall combat versatility. Fighters possess training with every standard weapon and all forms of armor. Beyond their general martial competence, each fighter cultivates their own areas of expertise. One fighter might excel with particular weapons, while another may have drilled extensively in specific tactical maneuvers. As fighters accumulate experience, they gain increasing opportunities to hone their combat techniques. Their dedication to martial discipline allows them to master even the most demanding fighting methods with relative speed.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 20,
   skillPoints: 2,
   bab: "good",

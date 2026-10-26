@@ -20,14 +20,19 @@ import {
   CLASS_HD,
   CLASS_LEVEL_BAB,
   CLASS_LEVEL_SKILL_POINTS,
+  FEAT_FAMILY,
   FEAT_SELECTABLE,
   FEAT_STACKABLE,
+  ITEM_COST_GP,
   ITEM_IS_TEMPLATE,
   ITEM_SLOT,
+  ITEM_TYPE,
+  ITEM_WEIGHT,
   RACE_BASE_SPEED,
   RACE_SIZE,
   SPELL_SAVE_EFFECT,
   SPELL_SCHOOL,
+  WEAPON_BASE_DAMAGE,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { describeCustomizations, freshExtensionSeeder, freshSeeder, namesOf } from "./freshSeed.ts";
@@ -70,14 +75,12 @@ function gatedSlots(list: string, classTarget: string) {
   }).flat();
 }
 
-function item(name: string, fields: Partial<Dnd35ItemSeed> = {}): Dnd35ItemSeed {
+function item(name: string, seed: Partial<Dnd35ItemSeed> = {}): Dnd35ItemSeed {
   return {
     name,
     description: "",
-    weight: "1",
-    costGp: "1",
-    type: "Gear",
-    ...fields,
+    ...seed,
+    fields: { [ITEM_WEIGHT]: 1, [ITEM_COST_GP]: 1, [ITEM_TYPE]: "Gear", ...seed.fields },
   };
 }
 
@@ -85,7 +88,7 @@ function klass(name: string, fields: Partial<ClassSeed> = {}): ClassSeed {
   return {
     name,
     description: "",
-    hd: 8,
+    fields: { [CLASS_HD]: 8 },
     levels: 1,
     skillPoints: 2,
     bab: "poor",
@@ -100,13 +103,12 @@ function levelFields(bab: number, skillPoints: number) {
   return [`${CLASS_LEVEL_BAB} ${bab}`, `${CLASS_LEVEL_SKILL_POINTS} ${skillPoints}`];
 }
 
-function race(name: string, fields: Partial<RaceSeed> = {}): RaceSeed {
+function race(name: string, seed: Partial<RaceSeed> = {}): RaceSeed {
   return {
     name,
     description: "",
-    size: "Medium",
-    baseSpeed: 30,
-    ...fields,
+    ...seed,
+    fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30, ...seed.fields },
   };
 }
 
@@ -247,9 +249,14 @@ describe("Seeding", () => {
               requirements: [r.or(r.eq(feat("Mobility")), r.gte("combat.bab", 6))],
             },
           ],
-          fields: { families: ["Dodge"] },
+          fields: { [FEAT_FAMILY]: ["Dodge"] },
         },
-        { name: "Test Toughness", description: "", aptitudes: [], stackable: true, selectable: false },
+        {
+          name: "Test Toughness",
+          description: "",
+          aptitudes: [],
+          fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
+        },
       ]);
 
       const rows = await rowsOf<Feat>("feats", { rulesetId: ctx.rulesetId });
@@ -300,7 +307,8 @@ describe("Seeding", () => {
       const { klassId, levelIds } = await seeder.seedClass(
         klass("Test Mage", {
           description: "A mage",
-          hd: 6,
+          fields: { [CLASS_HD]: 6, [CLASS_CASTER_TYPE]: "Arcane" },
+          links: { bonusSpellAbility: "Charisma" },
           levels: 3,
           skillPoints: 4,
           bab: "medium",
@@ -313,8 +321,6 @@ describe("Seeding", () => {
           freeFeats: [[3, "Test Bonus", "Test Bonus Feat"]],
           aptitudePicks: [{ levels: [1, 3], target: "aptitudes.testbonusfeat.allowed" }],
           modifiers: [{ level: 2, target: "combat.ac.misc", operator: "add", value: "1", valueType: "number" }],
-          bonusSpellAbility: "Charisma",
-          casterType: "Arcane",
           spells: {
             slug: "testmagespells",
             perDay: [
@@ -409,7 +415,7 @@ describe("Seeding", () => {
         klass("Test Healer", {
           levels: 3,
           bab: "good",
-          kind: "npc",
+          partition: "npc",
           spells: { slug: "testhealerspells", perDay: [[1], [2], [2, 1]], knowAll: true, noCantrips: true },
         }),
       );
@@ -455,36 +461,29 @@ describe("Seeding", () => {
     });
   });
 
-  test("seeds items as templates, and the items made from them", async () => {
+  test("seeds items as stored, each made from the template its link names, wherever it stands among them", async () => {
     const seeder = await freshSeeder();
     const ctx = seeder.ctx;
     expect(await seeder.seedItems("items", [])).toEqual({});
-    const templates = await seeder.seedItems(
-      "items",
-      [
-        item("Test Blade", {
-          type: "Weapon",
-          slot: "Main Hand",
-          fields: { weapon: { baseDamage: "1d8" } },
-          requirements: [r.eq(feat("Martial Weapon Proficiency"))],
-        }),
-      ],
-      { isTemplate: true },
-    );
-    const made = await seeder.seedItems(
-      "items",
-      [
-        item("Test Flaming Blade", {
-          sourceItem: "Test Blade",
-          slot: "Main Hand",
-          modifiers: [{ target: "weapon.tohit.misc", operator: "add", value: "1", valueType: "number" }],
-        }),
-        item("Test Rope"),
-      ],
-      { templateMap: templates },
-    );
+    const ids = await seeder.seedItems("items", [
+      item("Test Flaming Blade", {
+        fields: { [ITEM_TYPE]: "Weapon", [ITEM_SLOT]: "Main Hand" },
+        links: { madeFrom: "Test Blade" },
+        modifiers: [{ target: "weapon.tohit.misc", operator: "add", value: "1", valueType: "number" }],
+      }),
+      item("Test Blade", {
+        fields: {
+          [ITEM_TYPE]: "Weapon",
+          [ITEM_SLOT]: "Main Hand",
+          [ITEM_IS_TEMPLATE]: true,
+          [WEAPON_BASE_DAMAGE]: "1d8",
+        },
+        requirements: [r.eq(feat("Martial Weapon Proficiency"))],
+      }),
+      item("Test Rope"),
+    ]);
 
-    const names = namesOf({ ...templates, ...made });
+    const names = namesOf(ids);
     const rows = await rowsOf<Item>("items", { rulesetId: ctx.rulesetId });
     expect(
       rows
@@ -500,16 +499,51 @@ describe("Seeding", () => {
       { name: "Test Flaming Blade", isTemplate: false, slot: "Main Hand", source: "Test Blade" },
       { name: "Test Rope", isTemplate: false, slot: "Other", source: null },
     ]);
-    expect(await describeCustomizations(templates["Test Blade"])).toEqual({
+    expect(await describeCustomizations(ids["Test Blade"])).toEqual({
       requirements: ["1 feats.martialweaponproficiency.possessed equal true"],
       modifiers: [],
       fields: ["WEAPON_BASE_DAMAGE 1d8"],
     });
-    expect(await describeCustomizations(made["Test Flaming Blade"])).toEqual({
+    expect(await describeCustomizations(ids["Test Flaming Blade"])).toEqual({
       requirements: [],
       modifiers: ["weapon.tohit.misc add 1 number"],
       fields: [],
     });
+  });
+
+  test("refuses an item made from one it doesn't seed, from one that isn't a template or a template of another type, and a template made from any", () => {
+    const seed = async (...items: Dnd35ItemSeed[]) => await (await freshSeeder()).seedItems("items", items);
+    const blade = item("Test Blade", { fields: { [ITEM_TYPE]: "Weapon", [ITEM_IS_TEMPLATE]: true } });
+    expect(seed(item("Test Lost", { links: { madeFrom: "Test Nothing" } }))).rejects.toThrow(
+      `Test Lost's madeFrom: "Test Nothing" isn't seeded`,
+    );
+    expect(seed(item("Test Rope"), item("Test Knot", { links: { madeFrom: "Test Rope" } }))).rejects.toThrow(
+      `Test Knot's madeFrom: "Test Rope" isn't a template`,
+    );
+    expect(seed(blade, item("Test Gear", { links: { madeFrom: "Test Blade" } }))).rejects.toThrow(
+      `Test Gear: item type Gear can't be based on the Weapon template "Test Blade"`,
+    );
+    const copy = item("Test Copy", { fields: { [ITEM_TYPE]: "Weapon", [ITEM_IS_TEMPLATE]: true } });
+    expect(seed(blade, { ...copy, links: { madeFrom: "Test Blade" } })).rejects.toThrow(
+      "Test Copy: a template item can't be made from another (its madeFrom)",
+    );
+  });
+
+  test("refuses a name its ruleset doesn't seed: a save's or a skill's ability, a class's, a spell's save", async () => {
+    const seeder = await freshSeeder();
+    const nothing = "Test Nothing";
+    expect(seeder.seedSaves([{ name: "Test Save", description: "", links: { keyAbility: nothing } }])).rejects.toThrow(
+      `Test Save's key ability: "${nothing}" isn't seeded`,
+    );
+    expect(
+      seeder.seedSkills([{ name: "Test Skill", description: "", links: { keyAbility: nothing } }]),
+    ).rejects.toThrow(`Test Skill's key ability: "${nothing}" isn't seeded`);
+    expect(seeder.seedClass(klass("Test Class", { links: { bonusSpellAbility: nothing } }))).rejects.toThrow(
+      `Test Class's bonusSpellAbility: "${nothing}" isn't seeded`,
+    );
+    expect(seeder.seedSpells([spell("Test Bolt", 1, { links: { resistedBy: nothing } })])).rejects.toThrow(
+      `Test Bolt's save: "${nothing}" isn't seeded`,
+    );
   });
 
   test("seeds spells with their saving throw, once in each spell list the ruleset has, and adds them to more", async () => {
@@ -520,12 +554,17 @@ describe("Seeding", () => {
       spell("Test Bolt", 3, {
         aptitudes: ["Test Arcane Spells", "Test Divine Spells", "Test Unknown Spells"],
         aptitudeLevels: { "Test Divine Spells": 4 },
-        savingThrow: "Reflex half",
-        fields: { school: "Evocation" },
+        fields: { [SPELL_SCHOOL]: "Evocation", [SPELL_SAVE_EFFECT]: "half" },
+        links: { resistedBy: "Reflex" },
       }),
-      spell("Test Charm", 1, { aptitudes: ["Test Arcane Spells", "Test Arcane Spells"], savingThrow: "Will negates" }),
-      spell("Test Ward", 0, { savingThrow: "None" }),
-      spell("Test Wish", 9, { savingThrow: "See text" }),
+      spell("Test Charm", 1, {
+        aptitudes: ["Test Arcane Spells", "Test Arcane Spells"],
+        fields: { [SPELL_SAVE_EFFECT]: "negates" },
+        links: { resistedBy: "Will" },
+      }),
+      // A saving throw of None: no save, nor its effect
+      spell("Test Ward", 0),
+      spell("Test Wish", 9, { fields: { [SPELL_SAVE_EFFECT]: "See text" } }),
       spell("Test Light", 0),
     ]);
 
@@ -565,15 +604,15 @@ describe("Seeding", () => {
     ]);
   });
 
-  test("seeds races of their own kind, else of the kind given, else a character's", async () => {
+  test("seeds races as stored, each in its partition, else a character's", async () => {
     const seeder = await freshSeeder();
     const ctx = seeder.ctx;
     const dexterity = { target: "abilities.dexterity.score", operator: "add", value: "2", valueType: "number" };
-    await seeder.seedRaces([race("Test Elf", { modifiers: [dexterity] })]);
-    await seeder.seedRaces(
-      [race("Test Hawk", { size: "Tiny", baseSpeed: 10 }), race("Test Steed", { size: "Large", kind: "mount" })],
-      "familiar",
-    );
+    await seeder.seedRaces([
+      race("Test Elf", { modifiers: [dexterity] }),
+      race("Test Hawk", { fields: { [RACE_SIZE]: "Tiny", [RACE_BASE_SPEED]: 10 }, partition: "familiar" }),
+      race("Test Steed", { fields: { [RACE_SIZE]: "Large" }, partition: "mount" }),
+    ]);
 
     const rows = await rowsOf<Race>("races", { rulesetId: ctx.rulesetId });
     expect(
@@ -646,10 +685,10 @@ describe("Seeding", () => {
     ]);
     await seeder.seedFeats([{ name: "Evocation Specialist", description: "", aptitudes: ["Wizard Specialization"] }]);
     await seeder.seedSpells([
-      spell("Test Bolt", 3, { aptitudes: ["Wizard Spells"], fields: { school: "Evocation" } }),
-      spell("Test Flame", 2, { fields: { school: "Evocation" } }),
-      spell("Test Mirror", 2, { aptitudes: ["Wizard Spells"], fields: { school: "Illusion" } }),
-      spell("Test Detect", 0, { aptitudes: ["Wizard Spells"], fields: { school: "Universal" } }),
+      spell("Test Bolt", 3, { aptitudes: ["Wizard Spells"], fields: { [SPELL_SCHOOL]: "Evocation" } }),
+      spell("Test Flame", 2, { fields: { [SPELL_SCHOOL]: "Evocation" } }),
+      spell("Test Mirror", 2, { aptitudes: ["Wizard Spells"], fields: { [SPELL_SCHOOL]: "Illusion" } }),
+      spell("Test Detect", 0, { aptitudes: ["Wizard Spells"], fields: { [SPELL_SCHOOL]: "Universal" } }),
     ]);
     await seeder.seedWizardSchools(
       [
@@ -675,19 +714,20 @@ describe("Seeding", () => {
     });
   });
 
-  test("seeds a bonded creature: its aptitudes, feats, races and class, all of its kind", async () => {
+  test("seeds a bonded creature: its aptitudes, feats, races and class, each in its partition", async () => {
     const seeder = await freshSeeder({ named: true });
     const ctx = seeder.ctx;
     await seeder.seedBond({
-      kind: "familiar",
       aptitudes: ["Test Familiar Feature"],
       feats: [{ name: "Test Alertness", description: "", aptitudes: ["Test Familiar Feature"] }],
-      races: [race("Test Cat", { size: "Tiny" })],
-      klass: klass("Test Familiar", {
-        kind: "familiar",
-        classFeatureAptitude: "Test Familiar Feature",
-        classFeatures: [[1, "Test Alertness"]],
-      }),
+      races: [{ ...race("Test Cat", { fields: { [RACE_SIZE]: "Tiny" } }), partition: "familiar" }],
+      klass: {
+        ...klass("Test Familiar", {
+          classFeatureAptitude: "Test Familiar Feature",
+          classFeatures: [[1, "Test Alertness"]],
+        }),
+        partition: "familiar",
+      },
     });
 
     expect(await aptitudesOfFeat(ctx, ctx.featMap["Test Alertness"])).toEqual(["Test Familiar Feature"]);
@@ -721,7 +761,7 @@ describe("Seeding", () => {
           modifiers: [
             { target: "combat.ac.misc", operator: "add", value: "1", valueType: "number", requirements: [dodge] },
           ],
-          fields: { families: ["Test"] },
+          fields: { [FEAT_FAMILY]: ["Test"] },
         },
         { name: "Test Single", description: "", aptitudes: ["General"], requirements: [r.gte("combat.bab", 1)] },
         { name: "Test Open", description: "", aptitudes: ["General"] },
@@ -812,8 +852,7 @@ describe("Seeding", () => {
       await coreSeeder.seedSpells([
         spell("Test Bolt", 3, {
           aptitudes: ["Wizard Spells", "Test Source"],
-          savingThrow: "See text",
-          fields: { school: "Evocation" },
+          fields: { [SPELL_SCHOOL]: "Evocation", [SPELL_SAVE_EFFECT]: "See text" },
         }),
         spell("Test Ward", 1, { aptitudes: ["Cleric Spells"] }),
         spell("Test Light", 0, { aptitudes: ["Cleric Spells"] }),

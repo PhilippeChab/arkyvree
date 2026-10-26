@@ -7,12 +7,13 @@
 
 import { eqStr, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const BARD: ClassSeed = {
   name: "Bard",
   description:
     "Traveling performers and lore-keepers who weave arcane magic through music, poetry, and oral tradition. Bards blend artistic talent with supernatural power, drawing on a broad base of knowledge picked up during their wanderings. Their versatility allows them to fill many roles: inspiring allies in battle, unraveling ancient mysteries, and charming both friends and foes with their performances.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6, [CLASS_CASTER_TYPE]: "Arcane" },
   levels: 20,
   skillPoints: 6,
   bab: "medium",
@@ -83,8 +84,7 @@ export const BARD: ClassSeed = {
     [18, "Mass Suggestion (Bard)"],
     [20, "Inspire Courage (Bard)"],
   ],
-  bonusSpellAbility: "Charisma",
-  casterType: "Arcane",
+  links: { bonusSpellAbility: "Charisma" },
   spells: {
     slug: "bardspells",
     perDay: [

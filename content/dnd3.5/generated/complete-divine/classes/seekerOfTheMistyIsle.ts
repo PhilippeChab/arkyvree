@@ -7,12 +7,13 @@
 
 import { eqStr, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const SEEKER_OF_THE_MISTY_ISLE: ClassSeed = {
   name: "Seeker of the Misty Isle",
   description:
     "These devoted elven questers dedicate themselves to finding the lost elves rumored to dwell on the legendary Misty Isle.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 10,
   skillPoints: 6,
   bab: "medium",

@@ -8,11 +8,12 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const WILD_PLAINS_OUTRIDER: ClassSeed = {
   name: "Wild Plains Outrider",
   description: "Wild plains outriders work tirelessly to keep the plains as safe as such remote places can be.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 3,
   skillPoints: 4,
   bab: "good",

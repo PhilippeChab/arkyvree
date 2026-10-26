@@ -5,11 +5,16 @@ import type { InheritedSpellList } from "@/codegen/dnd3.5/tools/types/classes.ts
 import { type SpellReference } from "@/codegen/dnd3.5/tools/types/spells.ts";
 import type { LeveledSpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
 import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
+import { SPELL_SAVE_EFFECT } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { SAVE_NAMES } from "@/vocabulary/dnd3.5/saves.ts";
 
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
 
 /** A spell of a reference, as scraped. */
 type RawSpell = SpellReference["raw"][number];
+
+/** A saving throw that opens on a save's name ("Will negates"): the save, and the rest, what a successful one does. */
+const SAVING_THROW = new RegExp(`^(${SAVE_NAMES.join("|")})\\s+(.+)$`);
 
 /**
  * A spell reference's seeds (`seeds`), sorted by level, then name: each on its classes' lists (the library's class
@@ -19,6 +24,19 @@ type RawSpell = SpellReference["raw"][number];
  * book's copies.
  */
 export class SpellSeeds extends ReferenceSeeds<SpellReference> {
+  /**
+   * A saving throw as what a successful save does (its `SPELL_SAVE_EFFECT`) and the save it is (its `resistedBy` link,
+   * by the save's name, one of the vocabulary's: `SAVE_NAMES`): "Will negates" is Will, "negates". Text that opens on
+   * no save's name ("See text", "Luck negates") is all effect, with no link, so a seed never names a save the seeder
+   * would refuse; "None" is neither. Two saves ("Will negates; Fortitude half") are the first's, the rest its effect.
+   */
+  static readSavingThrow(savingThrow: string): Pick<LeveledSpellSeed, "fields" | "links"> {
+    if (!savingThrow || savingThrow === "None") return { fields: {} };
+    const match = savingThrow.match(SAVING_THROW);
+    if (!match) return { fields: { [SPELL_SAVE_EFFECT]: savingThrow } };
+    return { fields: { [SPELL_SAVE_EFFECT]: match[2] }, links: { resistedBy: match[1] } };
+  }
+
   /**
    * A spell's aptitudes (its classes' spell lists, by the name its level line gives each, `classSpellLists`, and the
    * lists other books' classes inherit, `othersInherited`), its level on each, and its lowest level: on a list it's on
@@ -78,6 +96,7 @@ export class SpellSeeds extends ReferenceSeeds<SpellReference> {
       for (const entry of this.ref.raw) {
         const { aptitudes, aptitudeLevels, minLevel } = this.levels(entry, othersInherited, classSpellLists);
         const { fields, savingThrow } = this.ref.detected[entry.name];
+        const save = SpellSeeds.readSavingThrow(savingThrow);
         // Only include aptitudeLevels when not all aptitudes share the same level
         const hasVaryingLevels = Object.values(aptitudeLevels).some((l) => l !== minLevel);
         const seed: LeveledSpellSeed = {
@@ -85,8 +104,8 @@ export class SpellSeeds extends ReferenceSeeds<SpellReference> {
           description: normalizeDescription(this.ref.mapping[entry.name].description),
           aptitudes: [...aptitudes].sort(),
           ...(hasVaryingLevels ? { aptitudeLevels } : {}),
-          savingThrow,
-          fields,
+          fields: { ...fields, ...save.fields },
+          ...(save.links && { links: save.links }),
           level: minLevel,
         };
 

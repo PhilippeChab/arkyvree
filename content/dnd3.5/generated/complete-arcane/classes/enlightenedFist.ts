@@ -7,11 +7,12 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const ENLIGHTENED_FIST: ClassSeed = {
   name: "Enlightened Fist",
   description: "Enlightened fists master the use of touch spells, creating new forms of combat with their fists.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 10,
   skillPoints: 4,
   bab: "medium",

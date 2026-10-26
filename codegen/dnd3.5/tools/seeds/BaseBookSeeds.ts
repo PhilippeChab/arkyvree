@@ -91,7 +91,7 @@ export class BaseBookSeeds {
   }
 
   /** The weight of each weapon, armor and shield the book's items seed, by name: what an item made from one weighs. */
-  baseItemWeights(): Record<string, string> {
+  baseItemWeights(): Record<string, number> {
     const ref = this.reference("item");
     return ref ? this.items(ref).weights() : {};
   }

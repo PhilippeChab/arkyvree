@@ -7,12 +7,13 @@
 
 import { eq } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const MASTER_OF_MANY_FORMS: ClassSeed = {
   name: "Master of Many Forms",
   description:
     "A master of many forms has no shape that she calls her own. Instead, she occupies whatever body is most expedient for her at the time. While others base their identities largely on their external forms, a master of many forms actually comes closer to her true self through her transformations. Of necessity, her sense of self is based not on her outward form, but on her soul, which is truly the only constant about her. It is the inner strength of that soul that enables her to take on any shape and remain herself within. The path of the master of many forms is ideal for a spellcaster of any race who has experienced shapechanging and yearns for more of it. Such a character can be a great force for either good or ill in the world. An evil master of many forms in particular poses a terrible threat, for she can appear anywhere, in any body. The same opponents may face her again and again, in one shape after another, never realizing that they are actually facing a single enemy.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 10,
   skillPoints: 4,
   bab: "medium",

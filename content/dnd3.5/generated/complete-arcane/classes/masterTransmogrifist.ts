@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const MASTER_TRANSMOGRIFIST: ClassSeed = {
   name: "Master Transmogrifist",
   description:
     "The master transmogrifist is a sorcerer or wizard who has chosen to specialize in spells that change his form.",
-  hd: 4,
+  fields: { [CLASS_HD]: 4 },
   levels: 10,
   skillPoints: 2,
   bab: "poor",

@@ -7,12 +7,13 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const NIGHTSONG_INFILTRATOR: ClassSeed = {
   name: "Nightsong Infiltrator",
   description:
     "An expert at breaking into ?secure' areas, a nightsong in?ltrator is the perfect thief and the perfect spy. Whether she is there to steal gold, information, jewels, or secrets, an in?ltrator of the Nightsong Guild is trained to do her job quickly and ef?ciently. She practices extensively with locks and traps, focusing on doing her job under pressure and in unfavorable conditions. For example, nightsong in?ltrators train extensively in climbing, since they often have to scale walls and reach high windows. They have little time to work on combat training and relegate such concerns to their companions, the nightsong enforcers. Rogues most frequently and most easily become nightsong in?ltrators. Bards, urban rangers, and intelligent ?ghters can make good members of the class as well. Rarer, but possible, are spellcasting nightsong in?ltrators who use spells to get in and out of places. Woe to those wishing to protect their valuables from a Nightsong Guild member who can become invisible, walk through walls, or teleport. Members of the Nightsong Guild rarely work alone. Usually they operate in teams, often in pairings of a nightsong in?ltrator and a nightsong enforcer. (For a PC nightsong in?ltrator, the other team member can be an adventuring ally.) When working as part of a team, a nightsong in?ltrator works best as the advance scout and point person, while the other team members take care of threats that she is unable to deal with (guards, mostly).",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 10,
   skillPoints: 8,
   bab: "medium",

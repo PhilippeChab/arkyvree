@@ -7,12 +7,13 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const DUELIST: ClassSeed = {
   name: "Duelist",
   description:
     "A duelist is an agile and cunning combatant who specializes in delivering accurate strikes using light weaponry.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 10,
   skillPoints: 4,
   bab: "good",

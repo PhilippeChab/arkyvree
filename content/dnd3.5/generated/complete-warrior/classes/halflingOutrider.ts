@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const HALFLING_OUTRIDER: ClassSeed = {
   name: "Halfling Outrider",
   description:
     "Halfling outriders serve as skilled mounted sentinels, dedicated to alerting and safeguarding their communities against approaching threats.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 10,
   skillPoints: 4,
   bab: "good",

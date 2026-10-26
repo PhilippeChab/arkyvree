@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const TATTOOED_MONK: ClassSeed = {
   name: "Tattooed Monk",
   description:
     "Some monastic traditions grant their members supernatural and spell-like abilities through the application of magical tattoos inscribed upon their bodies. These monks adopt ascetic practices such as shaving their heads and speaking in enigmatic sayings, and many wander the land seeking spiritual growth by confronting and overcoming worldly temptations.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 10,
   skillPoints: 4,
   bab: "medium",

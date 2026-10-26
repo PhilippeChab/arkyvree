@@ -72,6 +72,7 @@ import {
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 import {
+  CHARACTER_ALIGNMENT,
   CLASS_HD,
   CLASS_LEVEL_BAB,
   CLASS_LEVEL_SKILL_POINTS,
@@ -191,7 +192,7 @@ async function setupCandidate(missing: { bab?: boolean; feat?: string; skill?: s
 
   const characterId = await createSeedCharacter(ctx, "fighter", {
     xp: 36000,
-    alignment: "Chaotic Evil",
+    fields: { [CHARACTER_ALIGNMENT]: "Chaotic Evil" },
     rulesetId: fork.id,
   });
   const fighterLevels = missing.bab ? [1, 2, 3, 4, 5] : [1, 2, 3, 4, 5, 6];
@@ -819,7 +820,9 @@ describe("LevelsService", () => {
 
       // The seeded barbarian's class features are all picked for them.
       const ctx = await getSeedCtx();
-      const barbarian = await createSeedCharacter(ctx, "fighter", { alignment: "Chaotic Neutral" });
+      const barbarian = await createSeedCharacter(ctx, "fighter", {
+        fields: { [CHARACTER_ALIGNMENT]: "Chaotic Neutral" },
+      });
       expect(
         await featGroups(
           session,

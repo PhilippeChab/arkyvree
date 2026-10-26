@@ -22,7 +22,7 @@
       "modifiers": []
     },
     "Oversized Two-Weapon Fighting": {
-      "fields": { "oversizedTwoWeaponFighting": true }
+      "fields": { "FEAT_OVERSIZED_TWO_WEAPON_FIGHTING": true }
     }
   },
   "raw": [

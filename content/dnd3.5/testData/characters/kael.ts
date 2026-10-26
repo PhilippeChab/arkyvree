@@ -1,15 +1,25 @@
 import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Dwarf Fighter 3/Barbarian 1 — Skills: Fighter (2*4+2+2)=12, Barbarian (4)=4 → 16 */
 export default {
-  raceName: "Dwarf",
   name: "Kael Stormborn",
-  xp: 6000,
-  alignment: "Neutral Good",
-  age: 55,
-  gender: "Male",
-  height: "135",
-  weight: "85",
+  links: { race: "Dwarf" },
+  fields: {
+    [CHARACTER_XP]: 6000,
+    [CHARACTER_ALIGNMENT]: "Neutral Good",
+    [CHARACTER_AGE]: 55,
+    [CHARACTER_GENDER]: "Male",
+    [CHARACTER_HEIGHT]: "135",
+    [CHARACTER_WEIGHT]: "85",
+  },
   description:
     "A stout dwarven warrior who trained with the mountain guard before discovering a berserker rage deep within. Kael wields a battleaxe passed down from his clan's founder.",
   abilities: { Strength: 16, Dexterity: 13, Constitution: 16, Intelligence: 10, Wisdom: 12, Charisma: 8 },

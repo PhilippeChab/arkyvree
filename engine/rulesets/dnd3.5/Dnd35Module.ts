@@ -2,7 +2,7 @@ import type { RulesetModule } from "@/engine/core/module/index.ts";
 import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import Dnd35Characters from "./characters/Dnd35Characters.ts";
-import Dnd35Content, { type SeededFields } from "./content/Dnd35Content.ts";
+import Dnd35Content from "./content/Dnd35Content.ts";
 import type { Dnd35Descriptions } from "./descriptions.ts";
 import Dnd35TargetPaths from "./Dnd35TargetPaths.ts";
 import Dnd35Entities, { type Dnd35EntityKinds } from "./entities/Dnd35Entities.ts";
@@ -18,7 +18,7 @@ export default class Dnd35Module {
    * The 3.5 rules as a ruleset module: its characters and their sheets, its entities, the programs it imports
    * characters from, its level-ups, what a ruleset needs to be played, its paths and fields, and how its data is stored.
    */
-  static create(): RulesetModule<Dnd35Descriptions, Dnd35EntityKinds, SeededFields> {
+  static create(): RulesetModule<Dnd35Descriptions, Dnd35EntityKinds> {
     return {
       characters: new Dnd35Characters(DND35_STORAGE),
       content: new Dnd35Content(),

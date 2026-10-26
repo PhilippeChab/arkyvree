@@ -7,12 +7,13 @@
 
 import { eqStr, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const KNIGHT_OF_THE_CHALICE: ClassSeed = {
   name: "Knight of the Chalice",
   description:
     "The knight of the Chalice belongs to a prestigious order of holy warriors dedicated to combating demons and other fiends from the lower planes.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10, [CLASS_CASTER_TYPE]: "Divine" },
   levels: 10,
   skillPoints: 2,
   bab: "good",
@@ -49,8 +50,7 @@ export const KNIGHT_OF_THE_CHALICE: ClassSeed = {
     [9, "Fiendslaying (Knight of the Chalice)"],
     [10, "Holy Aura (Knight of the Chalice)"],
   ],
-  bonusSpellAbility: "Wisdom",
-  casterType: "Divine",
+  links: { bonusSpellAbility: "Wisdom" },
   spells: {
     slug: "knightofthechalicespells",
     perDay: [[0], [1], [1, 0], [1, 1], [1, 1, 0], [1, 1, 1], [2, 1, 1, 0], [2, 1, 1, 1], [2, 2, 1, 1], [2, 2, 2, 1]],

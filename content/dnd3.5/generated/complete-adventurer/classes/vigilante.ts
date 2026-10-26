@@ -7,11 +7,12 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const VIGILANTE: ClassSeed = {
   name: "Vigilante",
   description: "The vigilante combines magical and mundane investigative techniques to assess a crime scene.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8, [CLASS_CASTER_TYPE]: "Arcane" },
   levels: 10,
   skillPoints: 6,
   bab: "medium",
@@ -69,8 +70,7 @@ export const VIGILANTE: ClassSeed = {
     [9, "Mettle (Vigilante)"],
     [10, "Smite the Guilty (Vigilante)"],
   ],
-  bonusSpellAbility: "Charisma",
-  casterType: "Arcane",
+  links: { bonusSpellAbility: "Charisma" },
   spells: {
     slug: "vigilantespells",
     perDay: [[0], [1], [2, 0], [3, 1], [3, 2, 0], [3, 3, 1], [3, 3, 2, 0], [3, 3, 3, 1], [3, 3, 3, 2], [3, 3, 3, 3]],

@@ -7,12 +7,13 @@
 
 import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const LOREMASTER: ClassSeed = {
   name: "Loremaster",
   description:
     "Loremasters are arcane or divine casters devoted to the pursuit of knowledge, prizing hidden wisdom and obscure lore above material wealth.",
-  hd: 4,
+  fields: { [CLASS_HD]: 4 },
   levels: 10,
   skillPoints: 4,
   bab: "poor",

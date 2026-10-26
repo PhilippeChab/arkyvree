@@ -1,15 +1,25 @@
 import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Half-Elf Bard 3 — Skills: (6+2)*4 + (6+2)*2 = 48 */
 export default {
-  raceName: "Half-Elf",
   name: "Melody Silverveil",
-  xp: 3000,
-  alignment: "Chaotic Good",
-  age: 28,
-  gender: "Female",
-  height: "168",
-  weight: "58",
+  links: { race: "Half-Elf" },
+  fields: {
+    [CHARACTER_XP]: 3000,
+    [CHARACTER_ALIGNMENT]: "Chaotic Good",
+    [CHARACTER_AGE]: 28,
+    [CHARACTER_GENDER]: "Female",
+    [CHARACTER_HEIGHT]: "168",
+    [CHARACTER_WEIGHT]: "58",
+  },
   description:
     "A half-elven bard whose honeyed voice can charm a dragon or rally an army. Melody travels from court to tavern, collecting stories and songs — and occasionally picking up secrets she shouldn't know.",
   abilities: { Strength: 10, Dexterity: 14, Constitution: 12, Intelligence: 14, Wisdom: 10, Charisma: 16 },

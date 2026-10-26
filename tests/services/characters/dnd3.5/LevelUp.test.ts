@@ -356,7 +356,7 @@ describe("finalizing several levels at once", () => {
       build: "fighter",
       values: {
         xp: 3000,
-        raceName: "Elf",
+        race: "Elf",
         languages: ["Common", "Elven"],
         abilities: { Strength: 10, Dexterity: 16, Constitution: 12, Intelligence: 14 },
       },
@@ -380,7 +380,7 @@ describe("finalizing several levels at once", () => {
       // Specializing opens the prohibited schools in the same level.
       name: "a wizard's first level, specialized with two prohibited schools",
       build: "wizard",
-      values: { raceName: "Human", languages: ["Common"], abilities: { Intelligence: 16, Constitution: 14 } },
+      values: { race: "Human", languages: ["Common"], abilities: { Intelligence: 16, Constitution: 14 } },
       levels: levelsOf("Wizard", [4]),
       plan: {
         skills: {
@@ -400,7 +400,7 @@ describe("finalizing several levels at once", () => {
       build: "wizard",
       values: {
         xp: 3000,
-        raceName: "Human",
+        race: "Human",
         languages: ["Common"],
         abilities: { Strength: 10, Constitution: 14, Intelligence: 16, Charisma: 8 },
       },
@@ -933,7 +933,7 @@ describe("previewing a level-up", () => {
     expect(await nextGeneral(human, 4, ["Power Attack"])).toBe(0);
     expect(await nextGeneral(human, 4, ["Power Attack", "Great Fortitude"])).toBe(2);
     // An elf's first level's alone: once it's taken, a pick goes on the last level
-    const elf = await createSeedCharacter(ctx, "fighter", { raceName: "Elf", languages: ["Common", "Elven"] });
+    const elf = await createSeedCharacter(ctx, "fighter", { race: "Elf", languages: ["Common", "Elven"] });
     expect(await nextGeneral(elf, 2, [])).toBe(0);
     expect(await nextGeneral(elf, 2, ["Power Attack"])).toBe(1);
   });
@@ -1653,7 +1653,7 @@ describe("re-saving a level", () => {
     // Regression: only granted feats' pools were checked, so a specialization's prohibited schools could be left empty.
     const ctx = await getSeedCtx();
     const characterId = await createSeedCharacter(ctx, "wizard", {
-      raceName: "Human",
+      race: "Human",
       languages: ["Common"],
       abilities: { Intelligence: 16, Constitution: 14 },
     });

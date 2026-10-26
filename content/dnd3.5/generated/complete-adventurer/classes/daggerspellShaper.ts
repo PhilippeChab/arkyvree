@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const DAGGERSPELL_SHAPER: ClassSeed = {
   name: "Daggerspell Shaper",
   description:
     "Daggerspell shapers see the precise martial powers of their twin-dagger style and their magic as an extension of one powerful philosophy. The shapers seek truth in all things, believing that you can separate right from wrong and nature from corruption with the clean slice of a blade. Although never numerous, shapers are respected as judges, warriors, and defenders of the weak. Daggerspell shapers are closely related to the other half of their guild, the daggerspell mages. Both preserve the work of good folk and balance the concerns of civilized communities against the sanctity of nature, but where a daggerspell mage is wild and impulsive, a shaper is quiet and calculating. The two halves of the Daggerspell Guardians organization work together amicably, but they have decidedly different approaches to most problems. Almost every daggerspell shaper begins her career as a druid, taking a level or two of rogue or scout after a few successful adventures. These individuals are drawn to the exotic ?ghting style and balanced ideals of the guild. Although most daggerspell shapers are primarily spellcasters, some have more complicated multiclass pathways that include ranger or barbarian levels. These shapers follow all the precepts of the guild, but they are more likely to defend nature with the steel of their daggers than with their spells.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 10,
   skillPoints: 6,
   bab: "medium",

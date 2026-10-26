@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const PURPLE_DRAGON_KNIGHT: ClassSeed = {
   name: "Purple Dragon Knight",
   description:
     "Purple Dragon knights hone exceptional talents for commanding and coordinating military forces in the field.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 5,
   skillPoints: 2,
   bab: "good",

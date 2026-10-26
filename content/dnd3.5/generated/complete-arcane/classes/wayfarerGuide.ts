@@ -7,11 +7,12 @@
 
 import { gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const WAYFARER_GUIDE: ClassSeed = {
   name: "Wayfarer Guide",
   description: "The wayfarer guide focues on honing her skill at instantaneous magical transportation.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 3,
   skillPoints: 2,
   bab: "poor",

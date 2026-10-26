@@ -1,8 +1,6 @@
 import type { SkillSeed } from "@/content/dnd3.5/builders/skills/types.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
-import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 /** Seeding skills: the skills with their fields, and the ability their points come from, a field of the ruleset's. */
 export function SeedsSkills<B extends Constructor<BaseSeeder>>(Base: B) {
@@ -12,9 +10,7 @@ export function SeedsSkills<B extends Constructor<BaseSeeder>>(Base: B) {
       await this.writeSettings([
         {
           id: this.ctx.rulesetId,
-          write: Engine.forRules(DND35_BASE_RULES).toFieldsWrite("rulesets", {
-            skillPointAbilityId: this.ctx.abilityMap["Intelligence"],
-          }),
+          write: { fields: {}, links: { skillPointAbility: this.ctx.abilityMap["Intelligence"] } },
         },
       ]);
     }
@@ -25,19 +21,13 @@ export function SeedsSkills<B extends Constructor<BaseSeeder>>(Base: B) {
         this.ctx.skillMap,
         await this.insertEntities(
           "skills",
-          skills.map(
-            ({ name, description, ability, impactedByWeight, checkPenaltyMultiplier, usableWithoutTraining }) => ({
-              rulesetId: this.ctx.rulesetId,
-              name,
-              description,
-              fields: Engine.forRules(DND35_BASE_RULES).toFieldsWrite("skills", {
-                impactedByWeight: impactedByWeight ?? false,
-                checkPenaltyMultiplier: checkPenaltyMultiplier ?? 1,
-                usableWithoutTraining: usableWithoutTraining ?? false,
-              }).fields,
-              links: { keyAbility: this.ctx.abilityMap[ability] },
-            }),
-          ),
+          skills.map(({ name, description, fields, links }) => ({
+            rulesetId: this.ctx.rulesetId,
+            name,
+            description,
+            fields,
+            links: { keyAbility: this.idOf(this.ctx.abilityMap, links.keyAbility, `${name}'s key ability`) },
+          })),
         ),
       );
     }

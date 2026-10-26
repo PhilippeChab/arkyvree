@@ -1,4 +1,6 @@
 import { GeneratedCode, type ImportTable } from "@/codegen/core/code/GeneratedCode.ts";
+import type { Fields } from "@/shared/customization/fields.ts";
+import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A content type a 3.5 generated file declares its values with. */
 export type DeclaredType = keyof typeof DECLARED_TYPES;
@@ -19,9 +21,18 @@ const DECLARED_TYPES = {
 };
 
 /**
+ * The stored fields of 3.5's entities, in the order their kinds declare them (`ENTITY_FIELDS`, a stat block's): what a
+ * seed's fields are written in, each by its constant, the vocabulary's.
+ */
+const FIELD_ORDER = Object.values(ENTITY_FIELDS as Readonly<Record<string, Fields>>)
+  .flatMap((fields) => Object.values(fields))
+  .flatMap((spec) => (spec.kind === "group" ? Object.values(spec.fields) : [spec]))
+  .flatMap((spec) => ("field" in spec ? [spec.field] : []));
+
+/**
  * Where each name a generated file's code can use comes from, in the order its imports list them: the requirement
- * and item builders a feat template or an item is written with, and the weapons, skills and schools a template is made
- * over (the vocabulary's).
+ * and item builders a feat template or an item is written with, the weapons, skills and schools a template is made
+ * over, and the stored fields a seed's fields are written by (the vocabulary's).
  */
 const IMPORT_TABLE: ImportTable = [
   ["@/content/core/builders/customization/requirements.ts", ["and", "eq", "eqNum", "eqStr", "gte", "or"]],
@@ -47,15 +58,27 @@ const IMPORT_TABLE: ImportTable = [
   ],
   ["@/vocabulary/dnd3.5/skills.ts", ["SKILLS_WITH_CHECKS"]],
   ["@/vocabulary/dnd3.5/spells.ts", ["MAGIC_SCHOOLS"]],
+  ["@/vocabulary/dnd3.5/fields/index.ts", FIELD_ORDER],
   ["@/shared/text.ts", ["stripSeparators"]],
 ];
 
 /**
- * A 3.5 generated file's code's core, which its concerns (`concerns/`, a kind of seed each) build on: a generated file's
- * code (`GeneratedCode`), with where the 3.5 content types and the names its code uses come from.
+ * A 3.5 generated file's code's core, which its concerns (`concerns/`, a kind of seed each) build on: a generated
+ * file's code (`GeneratedCode`), with where the 3.5 content types and the names its code uses come from, and the order
+ * a seed's fields are written in.
  */
 export class BaseCodeFile extends GeneratedCode<DeclaredType> {
   protected override readonly declaredTypes = DECLARED_TYPES;
 
   protected override readonly importTable = IMPORT_TABLE;
+
+  /**
+   * A seed's fields as stored written as code (`storedFields`), in the order their kinds declare them, `spread` (a
+   * builder's call that gives the others) after them.
+   */
+  seedFields(fields: Readonly<Record<string, unknown>>, spread?: string): string {
+    const rank = (field: string) => FIELD_ORDER.indexOf(field);
+    const sorted = Object.entries(fields).toSorted(([a], [b]) => rank(a) - rank(b));
+    return this.storedFields(Object.fromEntries(sorted), spread);
+  }
 }

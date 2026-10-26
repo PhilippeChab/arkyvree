@@ -7,11 +7,12 @@
 
 import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const EFFIGY_MASTER: ClassSeed = {
   name: "Effigy Master",
   description: "The effigy master is an expert in the imitation of true life.",
-  hd: 4,
+  fields: { [CLASS_HD]: 4 },
   levels: 5,
   skillPoints: 2,
   bab: "poor",

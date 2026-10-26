@@ -4,6 +4,7 @@ import type { FeatReference } from "@/codegen/dnd3.5/tools/types/feats.ts";
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { GrantText } from "./GrantText.ts";
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
@@ -98,15 +99,21 @@ export class FeatSeeds extends ReferenceSeeds<FeatReference> {
         feats.push({
           name,
           description: normalizeDescription(mapped.description ?? entry.benefit),
-          ...(mapped.stackable ? { stackable: true } : {}),
-          ...(mapped.selectable === false ? { selectable: false } : {}),
           aptitudes: mapped.aptitudes ?? [],
           requirements: this.book.familyChecks(mapped.requirements ?? []),
           modifiers: [
             ...(mapped.modifiers ?? []),
             ...new GrantText(name, mapped.description ?? entry.benefit ?? "").companionModifiers(),
           ],
-          ...(mapped.fields ? { fields: mapped.fields } : {}),
+          ...(mapped.fields || mapped.stackable || mapped.selectable === false
+            ? {
+                fields: {
+                  ...(mapped.stackable ? { [FEAT_STACKABLE]: true } : {}),
+                  ...(mapped.selectable === false ? { [FEAT_SELECTABLE]: false } : {}),
+                  ...mapped.fields,
+                },
+              }
+            : {}),
         });
       }
       return byType;

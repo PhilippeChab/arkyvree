@@ -2,8 +2,10 @@ import { describe, expect, test } from "bun:test";
 
 import References from "@/codegen/dnd3.5/tools/references/References.ts";
 import Library from "@/codegen/dnd3.5/tools/seeds/Library.ts";
+import { SpellSeeds } from "@/codegen/dnd3.5/tools/seeds/SpellSeeds.ts";
 import type { LeveledSpellSeed } from "@/content/dnd3.5/builders/spells/types.ts";
 import { CORE_BOOK } from "@/vocabulary/dnd3.5/books.ts";
+import { SPELL_SAVE_EFFECT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A spell's level on each of its lists. */
 function levelsOf(spell: LeveledSpellSeed) {
@@ -60,5 +62,35 @@ describe("A spell's lists", () => {
       level: 3,
       aptitudeLevels: { "Assassin Spells": 2, "Bard Spells": 3, "Wizard Spells": 3 },
     });
+  });
+});
+
+describe("A spell's saving throw", () => {
+  test("is what a successful save does and the save it is, by its name, when its text opens on one", () => {
+    const read = SpellSeeds.readSavingThrow;
+    expect(read("Reflex half")).toEqual({ fields: { [SPELL_SAVE_EFFECT]: "half" }, links: { resistedBy: "Reflex" } });
+    expect(read("Will negates")).toEqual({ fields: { [SPELL_SAVE_EFFECT]: "negates" }, links: { resistedBy: "Will" } });
+    expect(read("Will negates (harmless)")).toEqual({
+      fields: { [SPELL_SAVE_EFFECT]: "negates (harmless)" },
+      links: { resistedBy: "Will" },
+    });
+    expect(read("Fortitude partial; see text")).toEqual({
+      fields: { [SPELL_SAVE_EFFECT]: "partial; see text" },
+      links: { resistedBy: "Fortitude" },
+    });
+    // Two saves are the first's, the rest what it does
+    expect(read("Will negates or Fortitude negates; see text")).toEqual({
+      fields: { [SPELL_SAVE_EFFECT]: "negates or Fortitude negates; see text" },
+      links: { resistedBy: "Will" },
+    });
+  });
+
+  test("is all effect when its text names no save, a word no save is named too, and nothing when it's None", () => {
+    const read = SpellSeeds.readSavingThrow;
+    expect(read("None")).toEqual({ fields: {} });
+    expect(read("")).toEqual({ fields: {} });
+    expect(read("See text")).toEqual({ fields: { [SPELL_SAVE_EFFECT]: "See text" } });
+    // No link to a save the seeder would refuse
+    expect(read("Luck negates")).toEqual({ fields: { [SPELL_SAVE_EFFECT]: "Luck negates" } });
   });
 });

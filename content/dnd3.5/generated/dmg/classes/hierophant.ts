@@ -7,12 +7,13 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const HIEROPHANT: ClassSeed = {
   name: "Hierophant",
   description:
     "A divine caster who has attained great standing with their deity unlocks extraordinary magical powers and capabilities far beyond those available to ordinary followers.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 5,
   skillPoints: 2,
   bab: "poor",

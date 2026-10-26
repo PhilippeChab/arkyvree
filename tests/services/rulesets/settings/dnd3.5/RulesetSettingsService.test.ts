@@ -17,6 +17,14 @@ import { findFormValues } from "@/tests/support/ownerValues.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The core rules' feats: one every 3 levels, and one more at the first. */
 const CORE_FEATS = { every: 3, extra: [{ amount: 1, level: 1 }] };
@@ -35,18 +43,20 @@ async function buildFighter(rulesetId: string, levels = 1) {
   const ctx = await getSeedCtx();
   const scores = { Strength: 10, Dexterity: 10, Constitution: 10, Intelligence: 10, Wisdom: 18, Charisma: 10 };
   const characterId = await createCharacter(db, ctx, {
-    raceName: "Human",
     name: "Wise Fighter",
-    xp: 0,
-    alignment: "Neutral Good",
-    age: 30,
-    gender: "Male",
-    height: "180",
-    weight: "80",
     description: "Test",
     abilities: scores,
     languages: ["Common"],
     rulesetId,
+    links: { race: "Human" },
+    fields: {
+      [CHARACTER_XP]: 0,
+      [CHARACTER_ALIGNMENT]: "Neutral Good",
+      [CHARACTER_AGE]: 30,
+      [CHARACTER_GENDER]: "Male",
+      [CHARACTER_HEIGHT]: "180",
+      [CHARACTER_WEIGHT]: "80",
+    },
   });
   const numbers = Array.from({ length: levels }, (_, i) => i + 1);
   const levelIds = await addClassLevels(

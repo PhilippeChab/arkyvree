@@ -7,12 +7,13 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const DIVINE_CRUSADER: ClassSeed = {
   name: "Divine Crusader",
   description:
     "A divine crusader is a holy warrior wholly devoted to a single deity, channeling that god's power through unwavering faith and martial prowess.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8, [CLASS_CASTER_TYPE]: "Divine" },
   levels: 10,
   skillPoints: 2,
   bab: "medium",
@@ -41,8 +42,7 @@ export const DIVINE_CRUSADER: ClassSeed = {
     [9, "Resistance to Acid and Electricity 10 (Divine Crusader)"],
     [10, "Perfect Self (Divine Crusader)"],
   ],
-  bonusSpellAbility: "Charisma",
-  casterType: "Divine",
+  links: { bonusSpellAbility: "Charisma" },
   spells: {
     slug: "divinecrusaderspells",
     perDay: [

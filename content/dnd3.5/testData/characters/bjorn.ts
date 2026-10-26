@@ -1,15 +1,25 @@
 import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Human Fighter 5 — Skills, INT 12 (+1 mod, +1 human): (2+1+1)*4 + (2+1+1)*4 = 32 */
 export default {
-  raceName: "Human",
   name: "Bjorn Ironhand",
-  xp: 10000,
-  alignment: "Lawful Good",
-  age: 25,
-  gender: "Male",
-  height: "185",
-  weight: "90",
+  links: { race: "Human" },
+  fields: {
+    [CHARACTER_XP]: 10000,
+    [CHARACTER_ALIGNMENT]: "Lawful Good",
+    [CHARACTER_AGE]: 25,
+    [CHARACTER_GENDER]: "Male",
+    [CHARACTER_HEIGHT]: "185",
+    [CHARACTER_WEIGHT]: "90",
+  },
   description:
     "Bjorn is a battle-hardened warrior from the northern tribes. His muscular frame and numerous scars tell of his experiences in combat. He carries his family's ancestral greataxe and wears a bear pelt over his armor.",
   abilities: { Strength: 18, Dexterity: 14, Constitution: 16, Intelligence: 12, Wisdom: 10, Charisma: 8 },

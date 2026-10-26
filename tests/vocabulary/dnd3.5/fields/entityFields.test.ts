@@ -6,9 +6,9 @@ import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/entityFields.ts";
 /**
  * The keys each kind of field declares: what a codec reads of it, and no other (a misspelled key reads as none). A
  * stored field's own: how sibling copies merge it, the role it's read off another through, where its form shows it,
- * whether its values are read kind-wide.
+ * whether its values are read kind-wide, whether its owner keeps its form's fields only while it holds a value of it.
  */
-const STORED = ["field", "form", "inherits", "kindWide", "merge"] as const;
+const STORED = ["field", "form", "inherits", "keepsForm", "kindWide", "merge"] as const;
 const KEYS: { [K in FieldSpec["kind"]]: readonly (keyof Extract<FieldSpec, { kind: K }>)[] } = {
   choice: [...STORED, "description", "kind", "label", "shownIn", "values", "when"],
   flag: [...STORED, "absent", "default", "description", "kind", "label", "shownIn", "when", "write"],
@@ -22,7 +22,8 @@ const KEYS: { [K in FieldSpec["kind"]]: readonly (keyof Extract<FieldSpec, { kin
 
 /**
  * What's wrong with the fields at a level (`fields`, under `path`), a group's too: a key its kind doesn't declare, a
- * condition on no field at its level, a section that's no group at its level.
+ * condition on no field at its level, a section that's no group at its level, a group's field that would keep its
+ * form's fields (`keepsForm`, which only a field of the top level does: `Field.keepersOf`).
  */
 function findIssues(fields: Fields, path: string): string[] {
   const groups = Object.keys(fields).filter((name) => fields[name]?.kind === "group");
@@ -31,6 +32,7 @@ function findIssues(fields: Fields, path: string): string[] {
       .filter((key) => !(KEYS[field.kind] as readonly string[]).includes(key))
       .map((key) => `${path}${name}: ${key}`),
     ...(field.when && "field" in field.when && !(field.when.field in fields) ? [`${path}${name}: when`] : []),
+    ...(path && "keepsForm" in field ? [`${path}${name}: keepsForm in a group`] : []),
     ...(field.shownIn ?? []).filter((group) => !groups.includes(group)).map((group) => `${path}${name}: ${group}`),
     ...(field.kind === "group" ? findIssues(field.fields, `${path}${name}.`) : []),
   ]);

@@ -2,19 +2,19 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
+import { FEAT_FAMILY, FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const SORCERER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Spells (Sorcerer)",
     description:
       "A sorcerer draws upon arcane magic - the same tradition used by bards and wizards - primarily selecting from the sorcerer/wizard spell list. Unlike wizards or clerics, a sorcerer can cast any spell in their repertoire spontaneously, without needing to prepare it beforehand. To learn or cast a given spell, the sorcerer's Charisma score must be at least 10 + the spell's level (for example, Charisma 10 for 0-level spells, Charisma 11 for 1st-level spells, and so on). The saving throw DC against a sorcerer's spell equals 10 + the spell level + the sorcerer's Charisma modifier. As with other spellcasting classes, a sorcerer has a limited number of spell slots per day for each spell level, determined by the class table. A high Charisma score grants additional bonus spell slots per day. A sorcerer's spell repertoire is highly restricted. At 1st level, a sorcerer knows four 0-level spells (cantrips) and two 1st-level spells chosen by the player. With each new sorcerer level gained, the character learns one or more additional spells as shown in the class table. (The total number of spells known is fixed by the class table and is not modified by Charisma.) Newly learned spells may be standard selections from the sorcerer/wizard spell list or uncommon spells the sorcerer has encountered through study. For instance, a sorcerer who has examined a scroll or spellbook containing a rare sorcerer/wizard spell not on the standard list may choose that spell when gaining a level, as long as it is of an appropriate spell level. However, this does not allow the sorcerer to learn spells any faster than normal. Starting at 4th level, and again at every even-numbered level thereafter (6th, 8th, and so on), a sorcerer may exchange one known spell for a different spell of the same level. The replacement spell must be at least two spell levels lower than the highest-level sorcerer spell the character can cast. For example, at 4th level a sorcerer could swap a single 0-level spell (which is two levels below 2nd, the highest level available at that point) for a different 0-level spell. At 6th level, the sorcerer could trade a 0-level or 1st-level spell (since 3rd-level spells are now accessible) for another spell of the same level. Only one spell may be exchanged per level, and the decision must be made at the same time new spells known are selected. A sorcerer never needs to prepare spells ahead of time. Any known spell can be cast at any moment, provided the sorcerer still has unused spell slots of the appropriate level for that day.",
-    selectable: false,
     aptitudes: ["Sorcerer Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Summon Familiar (Sorcerer)",
     description: "",
-    selectable: false,
     aptitudes: ["Sorcerer Class Feature"],
     modifiers: [
       { target: "aptitudes.familiarbond.allowed", operator: "add", value: "1", valueType: "number" },
@@ -25,25 +25,25 @@ export const SORCERER_CLASS_FEATS: FeatSeed[] = [
         valueType: "number",
       },
     ],
-    fields: { families: ["Summon Familiar"] },
+    fields: { [FEAT_SELECTABLE]: false, [FEAT_FAMILY]: ["Summon Familiar"] },
   },
   {
     name: "Weapon and Armor Proficiency (Sorcerer)",
     description:
       "A sorcerer is trained in the use of all simple weapons but has no proficiency with any armor or shield. Wearing any type of armor disrupts the somatic gestures required for a sorcerer's arcane casting, potentially causing spells with somatic components to fail.",
-    selectable: false,
     aptitudes: ["Sorcerer Class Feature"],
     modifiers: [
       { target: "feats.simpleweaponproficiency.possessed", operator: "set", value: "true", valueType: "boolean" },
     ],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Advance Sorcerer Spellcasting",
     description:
       "Your effective Sorcerer caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Sorcerer.",
-    stackable: true,
     aptitudes: ["Bonus Arcane Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.sorcerer.level", 1)],
     modifiers: [{ target: "classes.sorcerer.bonuscasterlevel", operator: "add", value: "1", valueType: "number" }],
+    fields: { [FEAT_STACKABLE]: true },
   },
 ];

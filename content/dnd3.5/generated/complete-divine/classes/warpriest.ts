@@ -7,11 +7,12 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const WARPRIEST: ClassSeed = {
   name: "Warpriest",
   description: "Warpriests are battle-hardened divine spellcasters who desire peace yet stand ever ready for combat.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 10,
   skillPoints: 2,
   bab: "good",

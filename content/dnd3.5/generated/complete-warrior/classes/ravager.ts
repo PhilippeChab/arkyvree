@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const RAVAGER: ClassSeed = {
   name: "Ravager",
   description:
     "A ravager is a devoted servant of a god of slaughter, dedicated wholly to spreading carnage and destruction in that deity's name.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 10,
   skillPoints: 2,
   bab: "good",

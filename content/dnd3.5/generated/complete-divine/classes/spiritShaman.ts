@@ -6,12 +6,13 @@
  */
 
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const SPIRIT_SHAMAN: ClassSeed = {
   name: "Spirit Shaman",
   description:
     "Through negotiation and communion with spirits of the living world, the spirit shaman channels potent divine magic and wields authority over the forces of nature.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8, [CLASS_CASTER_TYPE]: "Divine" },
   levels: 20,
   skillPoints: 4,
   bab: "medium",
@@ -56,8 +57,7 @@ export const SPIRIT_SHAMAN: ClassSeed = {
     [20, "Spirit Form (Spirit Shaman)"],
     [20, "Spirit Who Walks (Spirit Shaman)"],
   ],
-  bonusSpellAbility: "Wisdom",
-  casterType: "Divine",
+  links: { bonusSpellAbility: "Wisdom" },
   spells: {
     slug: "spiritshamanspells",
     perDay: [

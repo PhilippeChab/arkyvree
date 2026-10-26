@@ -7,12 +7,13 @@
 
 import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const SPELLWARP_SNIPER: ClassSeed = {
   name: "Spellwarp Sniper",
   description:
     "The spellwarp sniper contorts spells, changing area effects into rays that deliver precise, devastating attacks.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 5,
   skillPoints: 4,
   bab: "medium",

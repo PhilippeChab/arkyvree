@@ -2,52 +2,48 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
+import { FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const GEOMANCER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Drift 1 (Geomancer)",
     description:
       "As the geomancer advances, his body gradually transforms to reflect his bond with the natural world. At every geomancer level, select one drift from the stage corresponding to that level.",
-    stackable: true,
-    selectable: false,
     aptitudes: ["Geomancer Class Feature"],
     modifiers: [{ target: "aptitudes.geomancerdrift1.allowed", operator: "add", value: "1", valueType: "number" }],
+    fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
   },
   {
     name: "Drift 2 (Geomancer)",
     description:
       "At 3rd and 4th level, the geomancer selects a drift from stage 2, open to him once he has two drifts from stage 1. Each drift of stage 2 gives him a permanent extraordinary ability.",
-    stackable: true,
-    selectable: false,
     aptitudes: ["Geomancer Class Feature"],
     modifiers: [{ target: "aptitudes.geomancerdrift2.allowed", operator: "add", value: "1", valueType: "number" }],
+    fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
   },
   {
     name: "Drift 3 (Geomancer)",
     description:
       "At 5th and 6th level, the geomancer selects a drift from stage 3, open to him once he has two drifts from stage 2. Each drift of stage 3 gives him a permanent extraordinary ability. A natural attack adds the geomancer's Strength bonus on its damage, but for poison or acid. Its damage is a Medium geomancer's: for a Small or Large one, 1d3 becomes 1d2 or 1d4, 1d4 becomes 1d3 or 1d6, 1d6 becomes 1d4 or 1d8, 1d8 becomes 1d6 or 2d6, and 2d4 becomes 1d6 or 2d6.",
-    stackable: true,
-    selectable: false,
     aptitudes: ["Geomancer Class Feature"],
     modifiers: [{ target: "aptitudes.geomancerdrift3.allowed", operator: "add", value: "1", valueType: "number" }],
+    fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
   },
   {
     name: "Drift 4 (Geomancer)",
     description:
       "At 7th and 8th level, the geomancer selects a drift from stage 4, open to him once he has two drifts from stage 3. Each drift of stage 4 gives him a permanent extraordinary ability. A natural attack adds the geomancer's Strength bonus on its damage, but for poison or acid. Its damage is a Medium geomancer's: for a Small or Large one, 1d3 becomes 1d2 or 1d4, 1d4 becomes 1d3 or 1d6, 1d6 becomes 1d4 or 1d8, 1d8 becomes 1d6 or 2d6, and 2d4 becomes 1d6 or 2d6.",
-    stackable: true,
-    selectable: false,
     aptitudes: ["Geomancer Class Feature"],
     modifiers: [{ target: "aptitudes.geomancerdrift4.allowed", operator: "add", value: "1", valueType: "number" }],
+    fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
   },
   {
     name: "Drift 5 (Geomancer)",
     description:
       "At 9th and 10th level, the geomancer selects a drift from stage 5, open to him once he has two drifts from stage 4. Each drift of stage 5 gives him a permanent extraordinary ability. A natural attack adds the geomancer's Strength bonus on its damage, but for poison or acid. Its damage is a Medium geomancer's: for a Small or Large one, 1d3 becomes 1d2 or 1d4, 1d4 becomes 1d3 or 1d6, 1d6 becomes 1d4 or 1d8, 1d8 becomes 1d6 or 2d6, and 2d4 becomes 1d6 or 2d6.",
-    stackable: true,
-    selectable: false,
     aptitudes: ["Geomancer Class Feature"],
     modifiers: [{ target: "aptitudes.geomancerdrift5.allowed", operator: "add", value: "1", valueType: "number" }],
+    fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
   },
   {
     name: "Drift: Ant's Stinger (Geomancer Drift 4)",
@@ -377,139 +373,138 @@ export const GEOMANCER_CLASS_FEATS: FeatSeed[] = [
     name: "Ley Lines (Geomancer)",
     description:
       "Beginning at 2nd level, the geomancer forges a mystical link to a particular kind of terrain. Select one terrain type from the following: aquatic, desert, forest, hills, marsh, mountains, or plains. While in that terrain, the geomancer's effective caster level for all spells is increased by +1. At 6th level and once more at 10th level, the geomancer may either pick an additional terrain to gain the +1 caster level bonus, or raise his effective caster level in a terrain he has already chosen by a further +1.",
-    stackable: true,
-    selectable: false,
     aptitudes: ["Geomancer Class Feature"],
     modifiers: [{ target: "aptitudes.geomancerleylines.allowed", operator: "add", value: "1", valueType: "number" }],
+    fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
   },
   {
     name: "Ley Lines: Aquatic (Geomancer Ley Lines)",
     description:
       "While in aquatic terrain, the geomancer's effective caster level for all spells increases by +1. Choosing aquatic terrain again, at 6th or 10th level, raises it by a further +1.",
-    stackable: true,
     aptitudes: ["Geomancer Ley Lines"],
     requirements: [gte("classes.geomancer.level", 2)],
+    fields: { [FEAT_STACKABLE]: true },
   },
   {
     name: "Ley Lines: Desert (Geomancer Ley Lines)",
     description:
       "While in desert terrain, the geomancer's effective caster level for all spells increases by +1. Choosing desert terrain again, at 6th or 10th level, raises it by a further +1.",
-    stackable: true,
     aptitudes: ["Geomancer Ley Lines"],
     requirements: [gte("classes.geomancer.level", 2)],
+    fields: { [FEAT_STACKABLE]: true },
   },
   {
     name: "Ley Lines: Forest (Geomancer Ley Lines)",
     description:
       "While in forest terrain, the geomancer's effective caster level for all spells increases by +1. Choosing forest terrain again, at 6th or 10th level, raises it by a further +1.",
-    stackable: true,
     aptitudes: ["Geomancer Ley Lines"],
     requirements: [gte("classes.geomancer.level", 2)],
+    fields: { [FEAT_STACKABLE]: true },
   },
   {
     name: "Ley Lines: Hills (Geomancer Ley Lines)",
     description:
       "While in hills terrain, the geomancer's effective caster level for all spells increases by +1. Choosing hills terrain again, at 6th or 10th level, raises it by a further +1.",
-    stackable: true,
     aptitudes: ["Geomancer Ley Lines"],
     requirements: [gte("classes.geomancer.level", 2)],
+    fields: { [FEAT_STACKABLE]: true },
   },
   {
     name: "Ley Lines: Marsh (Geomancer Ley Lines)",
     description:
       "While in marsh terrain, the geomancer's effective caster level for all spells increases by +1. Choosing marsh terrain again, at 6th or 10th level, raises it by a further +1.",
-    stackable: true,
     aptitudes: ["Geomancer Ley Lines"],
     requirements: [gte("classes.geomancer.level", 2)],
+    fields: { [FEAT_STACKABLE]: true },
   },
   {
     name: "Ley Lines: Mountains (Geomancer Ley Lines)",
     description:
       "While in mountains terrain, the geomancer's effective caster level for all spells increases by +1. Choosing mountains terrain again, at 6th or 10th level, raises it by a further +1.",
-    stackable: true,
     aptitudes: ["Geomancer Ley Lines"],
     requirements: [gte("classes.geomancer.level", 2)],
+    fields: { [FEAT_STACKABLE]: true },
   },
   {
     name: "Ley Lines: Plains (Geomancer Ley Lines)",
     description:
       "While in plains terrain, the geomancer's effective caster level for all spells increases by +1. Choosing plains terrain again, at 6th or 10th level, raises it by a further +1.",
-    stackable: true,
     aptitudes: ["Geomancer Ley Lines"],
     requirements: [gte("classes.geomancer.level", 2)],
+    fields: { [FEAT_STACKABLE]: true },
   },
   {
     name: "Spell Versatility 0 (Geomancer)",
     description:
       "Starting at 1st level, the geomancer gains the ability to merge his arcane and divine magical traditions. He continues to learn and prepare spells normally for each of his spellcasting classes. However, when casting spells, he may freely combine spellcasting parameters from any of his classes to achieve the best possible outcome for any spell whose level does not exceed his current spell versatility score. For instance, a 4th-level geomancer can cast his 3rd-level or lower arcane spells without incurring arcane spell failure from worn armor. (The druid's prohibition on metal armor still applies to druid/geomancers, as this restriction arises from a spiritual commitment rather than a mechanical limitation.) The geomancer may apply his Wisdom modifier to determine the save DC of arcane spells, or use his Charisma or Intelligence modifier (whichever normally governs his arcane casting) for the save DC of divine spells. When a spell calls for either an arcane material component or a divine focus, the geomancer may substitute one for the other. A cleric/geomancer who also possesses levels in wizard, sorcerer, or bard may spontaneously convert any prepared arcane or divine spell (other than a domain spell) of a suitable level into a cure or inflict spell of equal or lower level, provided he is able to cast that cure or inflict spell as a cleric.",
-    selectable: false,
     aptitudes: ["Geomancer Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Spell Versatility 1 (Geomancer)",
     description: "",
-    selectable: false,
     aptitudes: ["Geomancer Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Spell Versatility 2 (Geomancer)",
     description: "",
-    selectable: false,
     aptitudes: ["Geomancer Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Spell Versatility 3 (Geomancer)",
     description: "",
-    selectable: false,
     aptitudes: ["Geomancer Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Spell Versatility 4 (Geomancer)",
     description: "",
-    selectable: false,
     aptitudes: ["Geomancer Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Spell Versatility 5 (Geomancer)",
     description: "",
-    selectable: false,
     aptitudes: ["Geomancer Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Spell Versatility 6 (Geomancer)",
     description: "",
-    selectable: false,
     aptitudes: ["Geomancer Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Spell Versatility 7 (Geomancer)",
     description: "",
-    selectable: false,
     aptitudes: ["Geomancer Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Spell Versatility 8 (Geomancer)",
     description: "",
-    selectable: false,
     aptitudes: ["Geomancer Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Spell Versatility 9 (Geomancer)",
     description: "",
-    selectable: false,
     aptitudes: ["Geomancer Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Spells per Day/Spells Known (Geomancer)",
     description:
       "With each geomancer level gained, the character receives additional spells per day (and spells known, where relevant) as though he had also advanced one level in a spellcasting class he belonged to before entering this prestige class. He does not, however, receive any other benefits that class would normally grant (such as additional wild shape forms, metamagic feats, item creation feats, or similar abilities). Because the character must have had multiple spellcasting classes prior to becoming a geomancer, the player chooses which class receives the spellcasting advancement at each new geomancer level.",
-    selectable: false,
     aptitudes: ["Geomancer Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Weapon and Armor Proficiency (Geomancer)",
     description: "Geomancers do not gain any additional weapon or armor proficiencies.",
-    selectable: false,
     aptitudes: ["Geomancer Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
 ];

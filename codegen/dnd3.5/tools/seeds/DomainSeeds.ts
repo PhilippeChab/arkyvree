@@ -8,6 +8,7 @@ import type { ModifierSeed } from "@/content/core/builders/customization/types.t
 import type { DomainSeed } from "@/content/dnd3.5/builders/domains/types.ts";
 import { grantFeat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
+import { FEAT_FAMILY, FEAT_GENERATED } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { ALL_WEAPONS, EXOTIC_WEAPONS, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 import { ReferenceSeeds } from "./ReferenceSeeds.ts";
@@ -69,10 +70,9 @@ export class DomainSeeds extends ReferenceSeeds<DomainReference> {
           results.push({
             name: `${pool.namePrefix}: ${item}`,
             description,
-            generated: true,
+            fields: { [FEAT_GENERATED]: true, ...(pool.grants.length > 0 ? { [FEAT_FAMILY]: [...pool.grants] } : {}) },
             aptitudes: [pool.aptitude],
             modifiers,
-            ...(pool.grants.length > 0 ? { fields: { families: [...pool.grants] } } : {}),
           });
         }
       }

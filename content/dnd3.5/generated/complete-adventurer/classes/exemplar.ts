@@ -8,12 +8,13 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const EXEMPLAR: ClassSeed = {
   name: "Exemplar",
   description:
     "An exemplar is someone who believes that most individuals and creatures possess a wellspring of untapped talent and capability, and that the multiverse would be a better place if only they would all try to live up to their potential. To her mind, the best way to encourage this behavior in others is to exemplify it herself. An exemplar focuses her energy on improving the skills she possesses until she is able to perform them with ?uidity, grace, and art. She believes that even the simplest action (such as climbing a tree or building a chair) can be done with such skill and ?air as to inspire awe and stimulate a desire for self-betterment. No matter what area a particular exemplar excels in, be it walking a tightrope, deciphering forgotten languages, or remembering the names of every arch?end in the Abyss, she performs it with passion and joy. Bards are the characters most likely to become exemplars, but wizards, rogues, rangers, and druids sometimes choose this path as well. All of these classes have a fair number of people who believe that their actions can be viewed as art, and like most artists they want to inspire others with their abilities. Clerics, paladins, and monks also choose this prestige class on rare occasions, but their dedication to promoting a philosophy or a higher power sometimes con?icts with the exemplar's belief that the best way to inspire others is simply to be a good role model.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 10,
   skillPoints: 8,
   bab: "medium",

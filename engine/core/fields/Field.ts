@@ -1,4 +1,4 @@
-import type { ValueKind } from "@/engine/core/module/index.ts";
+import type { FieldValue, ValueKind } from "@/engine/core/module/index.ts";
 import type { StandaloneKind } from "@/engine/core/view/index.ts";
 import type {
   Fields as DeclaredFields,
@@ -10,6 +10,18 @@ import type {
 import { isOneOf } from "@/shared/isOneOf.ts";
 
 import Decimals from "./Decimals.ts";
+
+/**
+ * What a field's write rule reads of it (`Field.writtenValues`): its kind, a stored leaf's or, for a field no spec
+ * declares (a character's), its stored value's, and what a leaf adds: its default, whether it tells a false flag from
+ * none (`absent`), whether it's always written (`write`).
+ */
+export interface WrittenKind {
+  absent?: null;
+  default?: unknown;
+  kind: StoredLeaf["kind"];
+  write?: "always";
+}
 
 /**
  * An entity's fields, by name, in the order its form shows them, as `shared/customization/fields.ts` declares them: each
@@ -68,6 +80,16 @@ export default class Field {
     return isOneOf(values[when.field], when.values);
   }
 
+  /**
+   * The fields at a spec's level that keep the fields its form shows (`keepsForm`: a spell's school), by name: a
+   * group's own aren't read, so every writer reads the same ones (the codec by name, the write path by stored field).
+   */
+  static keepersOf(fields: Fields): [string, StoredLeaf][] {
+    return Object.entries(fields).flatMap(([key, field]): [string, StoredLeaf][] =>
+      field.kind !== "group" && field.kind !== "ref" && field.keepsForm ? [[key, field]] : [],
+    );
+  }
+
   /** The fields that hold a value of their own, a group's too, in the spec's order. */
   static leavesOf(fields: Fields): LeafSpec[] {
     return Object.values(fields).flatMap((field) => (field.kind === "group" ? Field.leavesOf(field.fields) : [field]));
@@ -98,5 +120,33 @@ export default class Field {
   /** The leaves its owner's fields keep, a group's too, in the spec's order: a reference's value is a link's. */
   static storedLeavesOf(fields: Fields): StoredLeaf[] {
     return Field.leavesOf(fields).flatMap((leaf) => (leaf.kind === "ref" ? [] : [leaf]));
+  }
+
+  /**
+   * What a leaf's value stores, as every write stores it, a seed's, a form's or an import's (`value`: a value of its
+   * kind, a set's values, as stored; none or null, nothing): a set's values each once; a flag's when it's true, or when
+   * the leaf tells a false one from none (`absent: null`) or is always written (`write`); a number unless it's its
+   * default, or always; a text unless it's empty, its default then when always written; a choice's unless it's empty.
+   * Several values of a single leaf are what they are: the write path refuses them. A field no spec declares (a
+   * character's) is written by its stored kind alone (`WrittenKind`): no false flag, no empty text.
+   */
+  static writtenValues(leaf: WrittenKind, value: unknown): FieldValue[] {
+    if (value === undefined || value === null) return [];
+    const values = (Array.isArray(value) ? value : [value]) as FieldValue[];
+    if (leaf.kind === "list" || leaf.kind === "progression") return [...new Set(values)];
+    if (values.length !== 1) return values;
+    const [one] = values;
+    switch (leaf.kind) {
+      case "flag":
+        return leaf.absent === null || leaf.write === "always" || one === true ? [one] : [];
+      case "number":
+        return leaf.write === "always" || one !== leaf.default ? [one] : [];
+      case "text": {
+        const text = one === "" && leaf.write === "always" ? leaf.default : one;
+        return text === "" || text === undefined ? [] : [text as FieldValue];
+      }
+      default:
+        return one === "" ? [] : [one];
+    }
   }
 }

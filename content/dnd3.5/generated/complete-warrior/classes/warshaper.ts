@@ -7,12 +7,13 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const WARSHAPER: ClassSeed = {
   name: "Warshaper",
   description:
     "A warshaper develops and reshapes her own body, growing custom natural weaponry and defenses tailored to whatever challenge she faces.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 5,
   skillPoints: 2,
   bab: "medium",

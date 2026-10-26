@@ -3,6 +3,7 @@
  * spends its points on, and the masters whose picks bond them a familiar, a companion or a mount.
  */
 
+import type { CharacterFields } from "@/content/dnd3.5/builders/characters/types.ts";
 import { createCharacter } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import { type SeedContext } from "@/database/seeders/dnd3.5/characters/seedContext.ts";
 import { db } from "@/server/database/index.ts";
@@ -10,10 +11,21 @@ import { Characters } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { addOneLevel } from "./levels.ts";
 
-type CharacterValues = Omit<Parameters<typeof createCharacter>[2], "name" | "xp" | "description">;
+/** A seeded character's own values: who it is but its name, its description and its experience, which tests give. */
+type CharacterValues = Omit<Parameters<typeof createCharacter>[2], "description" | "fields" | "name"> & {
+  fields: Omit<CharacterFields, typeof CHARACTER_XP>;
+};
 
 /** A level's picks by name, with its hit points and ability increase. */
 export interface LevelPlan {
@@ -49,74 +61,88 @@ const PALADIN_1: LevelPlan = {
 export const BUILDS = {
   /** Human, INT 12: (2 + 1 + 1) skill points a fighter level, ×4 at the first. */
   fighter: {
-    raceName: "Human",
-    alignment: "Neutral Good",
-    age: 25,
-    gender: "Male",
-    height: "180",
-    weight: "80",
+    links: { race: "Human" },
+    fields: {
+      [CHARACTER_ALIGNMENT]: "Neutral Good",
+      [CHARACTER_AGE]: 25,
+      [CHARACTER_GENDER]: "Male",
+      [CHARACTER_HEIGHT]: "180",
+      [CHARACTER_WEIGHT]: "80",
+    },
     languages: ["Common"],
     abilities: { Strength: 16, Dexterity: 14, Constitution: 14, Intelligence: 12, Wisdom: 10, Charisma: 8 },
   },
   sorcerer: {
-    raceName: "Human",
-    alignment: "Chaotic Good",
-    age: 25,
-    gender: "Male",
-    height: "170",
-    weight: "70",
+    links: { race: "Human" },
+    fields: {
+      [CHARACTER_ALIGNMENT]: "Chaotic Good",
+      [CHARACTER_AGE]: 25,
+      [CHARACTER_GENDER]: "Male",
+      [CHARACTER_HEIGHT]: "170",
+      [CHARACTER_WEIGHT]: "70",
+    },
     languages: ["Common"],
     abilities: { Strength: 8, Dexterity: 14, Constitution: 14, Intelligence: 12, Wisdom: 10, Charisma: 16 },
   },
   /** Elf, INT 18: (2 + 4) skill points a wizard level, ×4 at the first. */
   wizard: {
-    raceName: "Elf",
-    alignment: "Neutral Good",
-    age: 130,
-    gender: "Female",
-    height: "170",
-    weight: "48",
+    links: { race: "Elf" },
+    fields: {
+      [CHARACTER_ALIGNMENT]: "Neutral Good",
+      [CHARACTER_AGE]: 130,
+      [CHARACTER_GENDER]: "Female",
+      [CHARACTER_HEIGHT]: "170",
+      [CHARACTER_WEIGHT]: "48",
+    },
     languages: ["Common", "Elven"],
     abilities: { Strength: 8, Dexterity: 14, Constitution: 12, Intelligence: 18, Wisdom: 12, Charisma: 10 },
   },
   cleric: {
-    raceName: "Human",
-    alignment: "Neutral Good",
-    age: 30,
-    gender: "Male",
-    height: "180",
-    weight: "80",
+    links: { race: "Human" },
+    fields: {
+      [CHARACTER_ALIGNMENT]: "Neutral Good",
+      [CHARACTER_AGE]: 30,
+      [CHARACTER_GENDER]: "Male",
+      [CHARACTER_HEIGHT]: "180",
+      [CHARACTER_WEIGHT]: "80",
+    },
     languages: ["Common"],
     abilities: { Strength: 14, Dexterity: 10, Constitution: 14, Intelligence: 12, Wisdom: 16, Charisma: 12 },
   },
   druid: {
-    raceName: "Human",
-    alignment: "True Neutral",
-    age: 30,
-    gender: "Female",
-    height: "170",
-    weight: "65",
+    links: { race: "Human" },
+    fields: {
+      [CHARACTER_ALIGNMENT]: "True Neutral",
+      [CHARACTER_AGE]: 30,
+      [CHARACTER_GENDER]: "Female",
+      [CHARACTER_HEIGHT]: "170",
+      [CHARACTER_WEIGHT]: "65",
+    },
     languages: ["Common", "Druidic"],
     abilities: { Strength: 12, Dexterity: 12, Constitution: 14, Intelligence: 10, Wisdom: 16, Charisma: 10 },
   },
   paladin: {
-    raceName: "Human",
-    alignment: "Lawful Good",
-    age: 30,
-    gender: "Male",
-    height: "180",
-    weight: "80",
+    links: { race: "Human" },
+    fields: {
+      [CHARACTER_ALIGNMENT]: "Lawful Good",
+      [CHARACTER_AGE]: 30,
+      [CHARACTER_GENDER]: "Male",
+      [CHARACTER_HEIGHT]: "180",
+      [CHARACTER_WEIGHT]: "80",
+    },
     languages: ["Common"],
     abilities: { Strength: 16, Dexterity: 10, Constitution: 14, Intelligence: 10, Wisdom: 12, Charisma: 14 },
   },
   /** A dwarf barbarian/fighter, INT 10. */
   dwarf: {
-    raceName: "Dwarf",
-    alignment: "Neutral Good",
-    age: 60,
-    gender: "Male",
-    height: "140",
-    weight: "85",
+    links: { race: "Dwarf" },
+    fields: {
+      [CHARACTER_ALIGNMENT]: "Neutral Good",
+      [CHARACTER_AGE]: 60,
+      [CHARACTER_GENDER]: "Male",
+      [CHARACTER_HEIGHT]: "140",
+      [CHARACTER_WEIGHT]: "85",
+    },
     languages: ["Common", "Dwarven"],
     abilities: { Strength: 16, Dexterity: 13, Constitution: 16, Intelligence: 10, Wisdom: 12, Charisma: 8 },
   },
@@ -300,23 +326,34 @@ export async function addFighterLevels(session: Session, ctx: SeedContext, chara
     await levelUp(session, ctx, characterId, "Fighter", index + 1, plan);
 }
 
-/** A new character of the seeded user on the seeded ruleset (or `rulesetId`), built as `build` with these changes. */
+/**
+ * A new character of the seeded user on the seeded ruleset (or `rulesetId`), built as `build` with these changes: its
+ * race (by name), some of its fields, its experience and some of its scores.
+ */
 export async function createSeedCharacter(
   ctx: SeedContext,
   build: keyof typeof BUILDS = "fighter",
   {
     xp = 0,
     abilities = {},
+    fields = {},
+    race,
     ...values
-  }: Partial<Omit<CharacterValues, "abilities">> & { abilities?: Record<string, number>; xp?: number } = {},
+  }: Partial<Omit<CharacterValues, "abilities" | "fields" | "links">> & {
+    abilities?: Record<string, number>;
+    fields?: Partial<CharacterFields>;
+    race?: string;
+    xp?: number;
+  } = {},
 ) {
   const base = BUILDS[build];
   return await createCharacter(db, ctx, {
     ...base,
     ...values,
+    links: { race: race ?? base.links.race },
+    fields: { ...base.fields, ...fields, [CHARACTER_XP]: xp },
     abilities: { ...base.abilities, ...abilities },
     name: `Test ${build} ${uniqueId()}`,
-    xp,
     description: "Test",
   });
 }

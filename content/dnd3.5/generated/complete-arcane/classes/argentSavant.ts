@@ -7,12 +7,13 @@
 
 import { gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const ARGENT_SAVANT: ClassSeed = {
   name: "Argent Savant",
   description:
     "The argent savant regards spells that evoke or apply magical force as the noblest and most fascinating spells at her disposal.",
-  hd: 4,
+  fields: { [CLASS_HD]: 4 },
   levels: 5,
   skillPoints: 2,
   bab: "poor",

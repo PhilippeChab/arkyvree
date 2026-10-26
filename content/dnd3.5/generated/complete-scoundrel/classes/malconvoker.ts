@@ -7,11 +7,12 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const MALCONVOKER: ClassSeed = {
   name: "Malconvoker",
   description: "Daring summoners known as malconvokers bargain with their lives.",
-  hd: 4,
+  fields: { [CLASS_HD]: 4 },
   levels: 9,
   skillPoints: 2,
   bab: "poor",

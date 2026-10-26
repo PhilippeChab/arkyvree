@@ -1,15 +1,25 @@
 import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Half-Elf Ranger 3 — Skills: (6+1)*4 + (6+1) + (6+1) = 42 */
 export default {
-  raceName: "Half-Elf",
   name: "Fenn Ashwalker",
-  xp: 3000,
-  alignment: "Neutral Good",
-  age: 32,
-  gender: "Male",
-  height: "178",
-  weight: "72",
+  links: { race: "Half-Elf" },
+  fields: {
+    [CHARACTER_XP]: 3000,
+    [CHARACTER_ALIGNMENT]: "Neutral Good",
+    [CHARACTER_AGE]: 32,
+    [CHARACTER_GENDER]: "Male",
+    [CHARACTER_HEIGHT]: "178",
+    [CHARACTER_WEIGHT]: "72",
+  },
   description:
     "A half-elven ranger who patrols the borderlands between civilization and the deep forest. Fenn inherited his mother's keen elven senses and his father's stubborn human resolve. He tracks goblins and worse through the wilderness, protecting scattered hamlets that have no other guardian.",
   abilities: { Strength: 14, Dexterity: 16, Constitution: 12, Intelligence: 12, Wisdom: 14, Charisma: 10 },

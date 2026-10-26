@@ -12,6 +12,14 @@ import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, findKlassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx } from "@/tests/support/seed.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A gate a test puts on a grant: its target, read as a requirement reads it. */
 type Gate = Pick<Requirement, "operator" | "target" | "value" | "valueType">;
@@ -60,18 +68,20 @@ async function seedHuman(
   const ctx = await getSeedCtx();
   const abilities = Object.fromEntries(Object.keys(ctx.abilityMap).map((ability) => [ability, 10]));
   return await createCharacter(db, ctx, {
-    raceName: "Human",
     name,
-    xp: 0,
-    alignment: values.alignment ?? "True Neutral",
-    age: 30,
-    gender: "Male",
-    height: "180",
-    weight: "80",
     description: "Test",
     abilities,
     languages: ["Common"],
     rulesetId: values.rulesetId,
+    links: { race: "Human" },
+    fields: {
+      [CHARACTER_XP]: 0,
+      [CHARACTER_ALIGNMENT]: values.alignment ?? "True Neutral",
+      [CHARACTER_AGE]: 30,
+      [CHARACTER_GENDER]: "Male",
+      [CHARACTER_HEIGHT]: "180",
+      [CHARACTER_WEIGHT]: "80",
+    },
   });
 }
 

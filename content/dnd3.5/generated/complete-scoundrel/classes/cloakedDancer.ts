@@ -7,12 +7,13 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const CLOAKED_DANCER: ClassSeed = {
   name: "Cloaked Dancer",
   description:
     "The cloaked dancer dances into the hearts and minds of her audience, beguiling those around her with boundless charm and careful dance moves, leaving her victims in a state of ecstasy even as she kills them.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 5,
   skillPoints: 6,
   bab: "medium",

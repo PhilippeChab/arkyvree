@@ -772,6 +772,7 @@ const SKILL_FIELDS = {
 const SPELL_FIELDS = {
   school: {
     description: "Spell school (Abjuration, Conjuration, etc.)",
+    keepsForm: true,
     kind: "text",
     kindWide: true,
     label: "School",

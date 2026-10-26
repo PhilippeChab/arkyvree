@@ -7,12 +7,13 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const BEASTMASTER: ClassSeed = {
   name: "Beastmaster",
   description:
     "A beastmaster feels more at home among the animals of nature than fellow sentient beings. Over time, these wanderers befriend a wide variety of animals, from mighty dire lions to tiny weasels. Eventually, a beastmaster takes on aspects of her animal companions, becoming almost as much animal as humanoid. Druids and rangers are the most common beastmasters, thanks to those characters' natural link with the animal world. Some barbarians, ?ghters, or scouts also become beastmasters, particularly those with a strong af?nity for nature (such as elves or hal?ings). Characters of other classes rarely pursue this path. NPC beastmasters are typically loners, relying on their animal companions for friendship on their travels. Good-aligned beastmasters might use their powers to right injustices, even allying themselves with rural villages for a time. Evil-aligned beastmasters are often openly hostile to civilization, becoming reclusive xenophobes.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 10,
   skillPoints: 4,
   bab: "good",

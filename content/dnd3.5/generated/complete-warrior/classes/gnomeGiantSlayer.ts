@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const GNOME_GIANT_SLAYER: ClassSeed = {
   name: "Gnome Giant-slayer",
   description:
     "A gnome giant-slayer combines nimbleness, martial skill, and cunning tactics to overcome larger opponents.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 10,
   skillPoints: 2,
   bab: "good",

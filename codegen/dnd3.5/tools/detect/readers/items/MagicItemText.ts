@@ -6,12 +6,19 @@
 import type { MagicItemCategory } from "@/codegen/dnd3.5/tools/types/magicItems.ts";
 import type { ItemFields } from "@/content/dnd3.5/builders/items/types.ts";
 import { capitalize } from "@/shared/text.ts";
+import {
+  ARMOR_CHECK_PENALTY,
+  ARMOR_MAX_DEX,
+  ARMOR_PROFICIENCY,
+  ITEM_MASTERWORK,
+  ITEM_SPELL_FAILURE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** What a specific armor's or shield's text says of itself, over its base's: its stats, weight and enhancement. */
 interface ArmorStats {
   enhancement?: number;
   fields: ItemFields;
-  weight?: string;
+  weight?: number;
 }
 
 /** A specific weapon's enhancement bonus, on its attack rolls and on its damage rolls. */
@@ -162,12 +169,15 @@ const ENHANCEMENTS: [RegExp, (bonus: number) => WeaponEnhancement][] = [
 const STATS: [RegExp, (match: RegExpMatchArray) => ItemFields][] = [
   [
     /arcane spell failure chance of (\d+)%|(\d+)% arcane spell failure chance/,
-    (m) => ({ spellFailure: Number(m[1] ?? m[2]) }),
+    (m) => ({ [ITEM_SPELL_FAILURE]: Number(m[1] ?? m[2]) }),
   ],
-  [/maximum Dexterity bonus of \+(\d+)/, (m) => ({ maxDex: Number(m[1]) })],
-  [/armor check penalty of [-–](\d+)|[-–](\d+) armor check penalty/, (m) => ({ checkPenalty: -Number(m[1] ?? m[2]) })],
-  [/no armor check penalty/, () => ({ checkPenalty: 0 })],
-  [/considered (light|medium|heavy) armor/, (m) => ({ armor: { proficiency: capitalize(m[1]) } })],
+  [/maximum Dexterity bonus of \+(\d+)/, (m) => ({ [ARMOR_MAX_DEX]: Number(m[1]) })],
+  [
+    /armor check penalty of [-–](\d+)|[-–](\d+) armor check penalty/,
+    (m) => ({ [ARMOR_CHECK_PENALTY]: -Number(m[1] ?? m[2]) }),
+  ],
+  [/no armor check penalty/, () => ({ [ARMOR_CHECK_PENALTY]: 0 })],
+  [/considered (light|medium|heavy) armor/, (m) => ({ [ARMOR_PROFICIENCY]: capitalize(m[1]) })],
 ];
 
 /**
@@ -192,11 +202,11 @@ export class MagicItemText {
     const enhancementMatch = ENHANCEMENT.map((pattern) => this.text.match(pattern)).find(Boolean);
     const enhancement = enhancementMatch ? Number(enhancementMatch[1]) : undefined;
     const masterwork = enhancement !== undefined || /\b(?:adamantine|masterwork)\b/i.test(this.text);
-    if (masterwork && fields.checkPenalty === undefined) fields.masterwork = true;
+    if (masterwork && fields[ARMOR_CHECK_PENALTY] === undefined) fields[ITEM_MASTERWORK] = true;
 
     const weightMatch = this.text.match(/weighs (\d+)(½)? pounds/);
-    const weight = weightMatch ? `${weightMatch[1]}${weightMatch[2] ? ".5" : ""}` : undefined;
-    return { fields, ...(weight && { weight }), ...(enhancement && { enhancement }) };
+    const weight = weightMatch ? Number(weightMatch[1]) + (weightMatch[2] ? 0.5 : 0) : undefined;
+    return { fields, ...(weight !== undefined && { weight }), ...(enhancement && { enhancement }) };
   }
 
   /** The base item a specific weapon, armor or shield is made from: the one its description names, else its name. */

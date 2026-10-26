@@ -1,15 +1,25 @@
 import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Human Cleric 3 — Skills: (2+1+1)*4 + (2+1+1)*2 = 24 */
 export default {
-  raceName: "Human",
   name: "Theron Lightbringer",
-  xp: 3000,
-  alignment: "Lawful Good",
-  age: 35,
-  gender: "Male",
-  height: "183",
-  weight: "85",
+  links: { race: "Human" },
+  fields: {
+    [CHARACTER_XP]: 3000,
+    [CHARACTER_ALIGNMENT]: "Lawful Good",
+    [CHARACTER_AGE]: 35,
+    [CHARACTER_GENDER]: "Male",
+    [CHARACTER_HEIGHT]: "183",
+    [CHARACTER_WEIGHT]: "85",
+  },
   description:
     "A devout cleric of Pelor, Theron travels the land healing the sick and smiting the undead. His unwavering faith radiates through his warm smile and the golden symbol he wears.",
   abilities: { Strength: 14, Dexterity: 10, Constitution: 14, Intelligence: 12, Wisdom: 16, Charisma: 12 },

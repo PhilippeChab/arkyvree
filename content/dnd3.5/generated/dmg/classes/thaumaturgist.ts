@@ -7,12 +7,13 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const THAUMATURGIST: ClassSeed = {
   name: "Thaumaturgist",
   description:
     "This prestige class specializes in using divine magic to reach across planar boundaries, summoning and bargaining with extraplanar beings to serve the caster's purposes.",
-  hd: 4,
+  fields: { [CLASS_HD]: 4 },
   levels: 5,
   skillPoints: 2,
   bab: "poor",

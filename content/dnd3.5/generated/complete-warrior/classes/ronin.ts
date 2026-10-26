@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const RONIN: ClassSeed = {
   name: "Ronin",
   description:
     "A ronin is a wandering warrior who has lost or abandoned his lord, yet still holds on to fragments of his previous way of life.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 10,
   skillPoints: 2,
   bab: "good",

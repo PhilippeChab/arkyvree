@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const KNIGHT_PROTECTOR: ClassSeed = {
   name: "Knight Protector",
   description:
     "Knight protectors are warriors who have sworn themselves to upholding the traditions of chivalric honor, striving to keep those noble ideals alive in a world that threatens to abandon them.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 10,
   skillPoints: 2,
   bab: "good",

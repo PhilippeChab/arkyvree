@@ -10,10 +10,11 @@ import { normalizeDescription } from "@/codegen/dnd3.5/tools/text/scrapedText.ts
 import { type ClassReference } from "@/codegen/dnd3.5/tools/types/classes.ts";
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { grantFeat } from "@/content/dnd3.5/builders/feats/possession.ts";
-import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
+import type { FeatFields, FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { FAVORED_ENEMY_FAMILY } from "@/vocabulary/dnd3.5/feats.ts";
+import { FEAT_FAMILY, FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * The creature type of each feature granting a locked favored enemy ("Favored Enemy (Giant)"), by its mapping's key
@@ -46,7 +47,7 @@ function perLevelFeatSeeds(
     return {
       name: insertOrdinalInName(name, expansion.ordinal),
       description,
-      selectable: false,
+      fields: { [FEAT_SELECTABLE]: false },
       aptitudes,
       ...(feature.modifiers?.length
         ? {
@@ -115,19 +116,20 @@ export function OwnFeats<B extends Constructor<BaseClassSeeds>>(Base: B) {
         ];
         const isAutoGranted = feature.level != null && !feature.aptitude;
         const families = lockedType ? [FAVORED_ENEMY_FAMILY] : findClassFeatFamilies(name);
+        const fields: FeatFields = {
+          ...(feature.stackable || lockedType ? { [FEAT_STACKABLE]: true } : {}),
+          ...(!feature.selectable && (feature.selectable === false || isAutoGranted || lockedType)
+            ? { [FEAT_SELECTABLE]: false }
+            : {}),
+          ...(families.length > 0 ? { [FEAT_FAMILY]: families } : {}),
+        };
         feats.push({
           name,
           description,
-          ...(feature.stackable || lockedType ? { stackable: true } : {}),
-          ...(feature.selectable
-            ? { selectable: true }
-            : feature.selectable === false || isAutoGranted || lockedType
-              ? { selectable: false }
-              : {}),
           aptitudes,
           ...(modifiers.length > 0 ? { modifiers } : {}),
           ...(requirements.length > 0 ? { requirements } : {}),
-          ...(families.length > 0 ? { fields: { families } } : {}),
+          ...(Object.keys(fields).length > 0 ? { fields } : {}),
         });
       }
 

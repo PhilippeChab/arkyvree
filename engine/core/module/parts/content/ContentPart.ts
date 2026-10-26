@@ -1,16 +1,11 @@
-import type { FieldCodec, Fields, FieldsWrite } from "@/engine/core/fields/index.ts";
-import type { PartialFieldValues } from "@/shared/customization/fields.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 
 /**
  * What a ruleset answers its content's seeders and codegen, before any ruleset has a view: the paths a book's
- * modifiers and requirements may name, and an entity's fields as their write, by stored field (`F`, the fields it
- * seeds, by entity, each written by its codec).
+ * modifiers and requirements may name. Its content's seeds give their fields as stored, which the seeders write as
+ * they are.
  */
-export default abstract class ContentPart<F> {
-  /** The codecs of the fields its content seeds, by entity: what writes an entity's fields by stored field. */
-  protected abstract readonly codecs: { [K in keyof F]: FieldCodec<Extract<F[K], Fields>> };
-
+export default abstract class ContentPart {
   /**
    * The target paths a book's generated content may name, from the names it seeds (`names`, by kind: 3.5's abilities',
    * saves' and skills').
@@ -19,13 +14,4 @@ export default abstract class ContentPart<F> {
     names: Partial<Record<string, string[]>>,
     kind: "modifier" | "requirement",
   ): TargetPath[];
-
-  /**
-   * An entity's fields as their write, by stored field: what a seeder writes for those its seed gives
-   * (a group's some of its own, the group then written whole: its others cleared). A field it leaves out isn't named, so
-   * the entity keeps what it has of it, or reads its default (a ruleset's progression: the core rules').
-   */
-  toFieldsWrite<K extends keyof F>(entityType: K, fields: PartialFieldValues<Extract<F[K], Fields>>): FieldsWrite {
-    return this.codecs[entityType].write(fields);
-  }
 }

@@ -28,7 +28,7 @@ export interface MagicItemReference {
       baseItem?: string;
       casterLevel?: number;
       category: MagicItemCategory;
-      costGp: string;
+      costGp: number;
       /** Invalid paths that failed validation — bugs to fix */
       errors?: string[];
       itemType: string;
@@ -36,7 +36,7 @@ export interface MagicItemReference {
       slot: string;
       unresolvedModifiers?: string[];
       variant?: string;
-      weight: string;
+      weight: number;
     }
   >;
 
@@ -49,14 +49,14 @@ export interface MagicItemReference {
     string,
     {
       baseItem?: string;
-      costGp: string;
+      costGp: number;
       description: string;
       fields: NonNullable<Dnd35ItemSeed["fields"]>;
       modifiers: Modifier[];
       skip?: boolean;
       slot?: string;
       template?: boolean;
-      weight?: string;
+      weight?: number;
     }
   >;
 

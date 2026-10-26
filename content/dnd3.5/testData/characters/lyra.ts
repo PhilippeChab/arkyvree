@@ -1,15 +1,25 @@
 import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Elf Rogue 3 — Skills: (8+2)*4 + (8+2)*2 = 60 */
 export default {
-  raceName: "Elf",
   name: "Lyra Shadowstep",
-  xp: 3000,
-  alignment: "Chaotic Neutral",
-  age: 120,
-  gender: "Female",
-  height: "165",
-  weight: "50",
+  links: { race: "Elf" },
+  fields: {
+    [CHARACTER_XP]: 3000,
+    [CHARACTER_ALIGNMENT]: "Chaotic Neutral",
+    [CHARACTER_AGE]: 120,
+    [CHARACTER_GENDER]: "Female",
+    [CHARACTER_HEIGHT]: "165",
+    [CHARACTER_WEIGHT]: "50",
+  },
   description:
     "A lithe elven rogue who slips through shadows like water. Lyra grew up in the back alleys of a port city, learning to survive by wit and nimble fingers.",
   abilities: { Strength: 10, Dexterity: 18, Constitution: 12, Intelligence: 14, Wisdom: 12, Charisma: 10 },

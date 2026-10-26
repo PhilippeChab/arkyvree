@@ -7,12 +7,13 @@
 
 import { eqStr, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const MAESTER: ClassSeed = {
   name: "Maester",
   description:
     "Maesters are the master crafters of the gnome world, combining technical and magical expertise to create incredible marvels. They specialize in the creation of magic items, bending all their skill and ability toward the construction of items that are their art and livelihood. Maesters are usually wizards, although sorcerers occasionally take up the class. Some bards also have been known to become maesters, but typically not until they have spent a number of years adventuring.",
-  hd: 4,
+  fields: { [CLASS_HD]: 4 },
   levels: 5,
   skillPoints: 4,
   bab: "poor",

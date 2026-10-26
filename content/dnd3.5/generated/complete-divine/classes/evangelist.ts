@@ -7,12 +7,13 @@
 
 import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const EVANGELIST: ClassSeed = {
   name: "Evangelist",
   description:
     "Wandering preachers devoted to a specific god, pantheon, or religious philosophy, evangelists journey across the land spreading the word of their faith.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 5,
   skillPoints: 6,
   bab: "medium",

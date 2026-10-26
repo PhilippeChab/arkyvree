@@ -7,12 +7,13 @@
 
 import { eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const ARCANE_TRICKSTER: ClassSeed = {
   name: "Arcane Trickster",
   description:
     "Arcane tricksters blend arcane spellcasting ability with a knack for subterfuge, thievery, or general roguish behavior.",
-  hd: 4,
+  fields: { [CLASS_HD]: 4 },
   levels: 10,
   skillPoints: 4,
   bab: "poor",

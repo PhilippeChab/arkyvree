@@ -1,15 +1,25 @@
 import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Human Monk 3 — Skills: (4+0+1)*4 + (4+0+1)*2 = 30 */
 export default {
-  raceName: "Human",
   name: "Zen Whitepetal",
-  xp: 3000,
-  alignment: "Lawful Neutral",
-  age: 28,
-  gender: "Male",
-  height: "175",
-  weight: "68",
+  links: { race: "Human" },
+  fields: {
+    [CHARACTER_XP]: 3000,
+    [CHARACTER_ALIGNMENT]: "Lawful Neutral",
+    [CHARACTER_AGE]: 28,
+    [CHARACTER_GENDER]: "Male",
+    [CHARACTER_HEIGHT]: "175",
+    [CHARACTER_WEIGHT]: "68",
+  },
   description:
     "A disciplined monk from the Monastery of the Falling Leaf. Zen seeks inner perfection through rigorous training and meditation, channeling his ki into devastating strikes.",
   abilities: { Strength: 14, Dexterity: 16, Constitution: 12, Intelligence: 10, Wisdom: 16, Charisma: 8 },

@@ -1,6 +1,6 @@
-/** A save: its name, what it resists, and the ability it adds. */
+/** A save: its name, what it resists, and the ability it adds (its `keyAbility` link), by its name. */
 export interface SaveSeed {
-  ability: string;
   description: string;
+  links: { keyAbility: string };
   name: string;
 }

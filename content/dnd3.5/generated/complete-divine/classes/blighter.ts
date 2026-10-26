@@ -7,11 +7,12 @@
 
 import { eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_CASTER_TYPE, CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const BLIGHTER: ClassSeed = {
   name: "Blighter",
   description: "Blighters are agents of decay and ruin, leaving devastation in their wake wherever they go.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8, [CLASS_CASTER_TYPE]: "Divine" },
   levels: 10,
   skillPoints: 4,
   bab: "medium",
@@ -63,8 +64,7 @@ export const BLIGHTER: ClassSeed = {
     [10, "Plague (Blighter)"],
     [10, "Undead Wild Shape (Blighter)"],
   ],
-  bonusSpellAbility: "Wisdom",
-  casterType: "Divine",
+  links: { bonusSpellAbility: "Wisdom" },
   spells: {
     slug: "blighterspells",
     perDay: [

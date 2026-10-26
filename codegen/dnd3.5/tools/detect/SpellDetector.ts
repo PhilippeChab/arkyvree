@@ -4,6 +4,19 @@ import type { StoredReference } from "@/codegen/dnd3.5/tools/types/reference.ts"
 import { type SpellReference } from "@/codegen/dnd3.5/tools/types/spells.ts";
 import type { SpellFields } from "@/content/dnd3.5/builders/spells/types.ts";
 import { capitalize } from "@/shared/text.ts";
+import {
+  SPELL_AREA_OF_EFFECT,
+  SPELL_CASTING_TIME,
+  SPELL_COMPONENT,
+  SPELL_DESCRIPTOR,
+  SPELL_DURATION,
+  SPELL_EFFECT,
+  SPELL_RANGE_TYPE,
+  SPELL_RESISTANCE,
+  SPELL_SCHOOL,
+  SPELL_SUBSCHOOL,
+  SPELL_TARGET,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 import { SPELL_SUBSCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import { BaseDetector, type Resolved } from "./BaseDetector.ts";
@@ -155,27 +168,28 @@ function simplifyRange(range: string): string {
 }
 
 /**
- * A spell's fields: its school, subschool and descriptors, components, casting time, range, target, effect and area,
- * duration and spell resistance, in the order its stat block gives them. A field its source leaves empty (a range, a
- * target, a duration…) gives none.
+ * A spell's fields as stored: its school, subschool and descriptors, components, casting time, range, target, effect
+ * and area, duration and spell resistance, in the order its stat block gives them, a list's values each once. A field
+ * its source leaves empty (a range, a target, a duration…) gives none.
  */
 function spellFields(entry: RawSpell): SpellFields {
-  const descriptors = entry.descriptors.map(normalizeDescriptor);
+  const descriptors = [...new Set(entry.descriptors.map(normalizeDescriptor))];
   const range = simplifyRange(normalizeSpellText(entry.range));
   const duration = normalizeSpellText(entry.duration);
-  return {
-    school: entry.school,
-    ...(entry.subschool ? { subschool: normalizeSubschool(entry.subschool) } : {}),
-    ...(descriptors.length > 0 ? { descriptors } : {}),
-    components: expandComponents(entry.components),
-    castingTime: normalizeSpellText(entry.castingTime || "1 standard action"),
-    ...(range ? { rangeType: range } : {}),
-    ...(entry.target ? { target: normalizeSpellText(entry.target) } : {}),
-    ...(entry.effect ? { effect: normalizeSpellText(entry.effect) } : {}),
-    ...(entry.area ? { areaOfEffect: normalizeSpellText(entry.area) } : {}),
-    ...(duration ? { duration } : {}),
-    spellResistance: normalizeSpellResistance(normalizeSpellText(entry.spellResistance || "No")),
+  const fields: SpellFields = {
+    [SPELL_SCHOOL]: entry.school,
+    ...(entry.subschool ? { [SPELL_SUBSCHOOL]: normalizeSubschool(entry.subschool) } : {}),
+    ...(descriptors.length > 0 ? { [SPELL_DESCRIPTOR]: descriptors } : {}),
+    [SPELL_COMPONENT]: [...new Set(expandComponents(entry.components))],
+    [SPELL_CASTING_TIME]: normalizeSpellText(entry.castingTime || "1 standard action"),
+    ...(range ? { [SPELL_RANGE_TYPE]: range } : {}),
+    ...(entry.target ? { [SPELL_TARGET]: normalizeSpellText(entry.target) } : {}),
+    ...(entry.effect ? { [SPELL_EFFECT]: normalizeSpellText(entry.effect) } : {}),
+    ...(entry.area ? { [SPELL_AREA_OF_EFFECT]: normalizeSpellText(entry.area) } : {}),
+    ...(duration ? { [SPELL_DURATION]: duration } : {}),
+    [SPELL_RESISTANCE]: normalizeSpellResistance(normalizeSpellText(entry.spellResistance || "No")),
   };
+  return Object.fromEntries(Object.entries(fields).filter(([, value]) => value.length > 0));
 }
 
 /**

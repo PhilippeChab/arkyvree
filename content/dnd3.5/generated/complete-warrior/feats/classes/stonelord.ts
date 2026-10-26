@@ -2,6 +2,7 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
+import { FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const STONELORD_CLASS_FEATS: FeatSeed[] = [
   {
@@ -29,8 +30,8 @@ export const STONELORD_CLASS_FEATS: FeatSeed[] = [
     name: "Earth's Blood (Stonelord)",
     description:
       "Once daily, a stonelord can spend a standard action to mend her injuries by applying a handful of mud. She recovers hit points equal to 1d8 plus her stonelord class level.",
-    selectable: false,
     aptitudes: ["Stonelord Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Earth's Endurance (Stonelord Stone Power)",
@@ -57,8 +58,8 @@ export const STONELORD_CLASS_FEATS: FeatSeed[] = [
     name: "Earthquake (Stonelord)",
     description:
       "Upon reaching 9th level, a stonelord can produce an earthquake effect once per day, with a caster level equal to her stonelord class level.",
-    selectable: false,
     aptitudes: ["Stonelord Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Gravity (Stonelord Stone Power)",
@@ -70,31 +71,30 @@ export const STONELORD_CLASS_FEATS: FeatSeed[] = [
     name: "Meld Into Stone (Stonelord)",
     description:
       "Starting at 5th level, a stonelord can merge her body into stone a number of times per day equal to her class level, using a meld into stone effect with a caster level equal to her stonelord class level.",
-    selectable: false,
     aptitudes: ["Stonelord Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Stone Power (Stonelord)",
     description:
       "At each even-numbered class level, a stonelord selects one stone power from the available options. Each stone power may only be chosen once. Unless stated otherwise, the stonelord's class level serves as the caster level for these abilities (save DCs are based on Constitution). Activating a stone power requires a standard action unless its entry specifies otherwise. Earthgrip (Sp): Once daily, the stonelord can target any ground-touching creature with a hold monster effect. Flying or waterborne creatures are immune to this ability. Earth Magic (Su): Once daily, the stonelord can treat one spell she casts as maximized (per the Maximize Spell feat) without changing its effective level. The spell's level cannot exceed her stonelord class level. This is a free action. Earth's Endurance (Sp): Once daily, the stonelord enhances her Constitution with a bonus equivalent to bear's endurance for 1 hour. Earth's Strength (Sp): Once daily, the stonelord enhances her Strength with a bonus equivalent to bull's strength for 1 hour. Earth Power (Su): Once daily, all of the stonelord's melee attacks in a single round gain +2 to hit and inflict an extra 2d6 damage. This is a free action. Earth Shadows (Su): A number of times per day equal to her class level, the stonelord conjures an illusory Medium earth elemental in a flanking position beside her opponent for 1 round, granting her flanking bonuses (+2 to hit, plus sneak attack if available) against that foe. This is a free action. Gravity (Sp): Once daily, the stonelord can produce a slow effect as the spell. Stoneskin (Sp): Once daily, the stonelord can grant herself the benefit of stoneskin with a caster level equal to her class level. She must supply the normal material component. Summon Earth Elemental (Sp): Once daily, the stonelord can call forth an earth elemental as though using summon monster. The elemental's size scales with class level: Small at 1st-3rd, Medium at 4th-6th, Large at 7th-9th, and Huge at 10th.",
-    stackable: true,
-    selectable: false,
     aptitudes: ["Stonelord Class Feature"],
     modifiers: [{ target: "aptitudes.stonelordstonepower.allowed", operator: "add", value: "1", valueType: "number" }],
+    fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
   },
   {
     name: "Stone Shape (Stonelord)",
     description:
       "Beginning at 3rd level, a stonelord can reshape stone once per day using a stone shape effect, with a caster level equal to her stonelord class level.",
-    selectable: false,
     aptitudes: ["Stonelord Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Stone Tell (Stonelord)",
     description:
       "Starting at 7th level, a stonelord can commune with stone once per day as though using stone tell, with a caster level equal to her stonelord class level.",
-    selectable: false,
     aptitudes: ["Stonelord Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Stoneskin (Stonelord Stone Power)",
@@ -113,7 +113,7 @@ export const STONELORD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Weapon and Armor Proficiency (Stonelord)",
     description: "This prestige class does not grant proficiency with any weapons or armor.",
-    selectable: false,
     aptitudes: ["Stonelord Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
 ];

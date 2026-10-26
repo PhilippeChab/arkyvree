@@ -7,12 +7,13 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const GREEN_STAR_ADEPT: ClassSeed = {
   name: "Green Star Adept",
   description:
     "A Green Star adept is the master of the strange and powerful magic derived from Alhazarde's glittering green starmetal.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 10,
   skillPoints: 2,
   bab: "poor",

@@ -7,12 +7,13 @@
 
 import { eqStr, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const SHINING_BLADE_OF_HEIRONEOUS: ClassSeed = {
   name: "Shining Blade of Heironeous",
   description:
     "A shining blade of Heironeous belongs to a knightly order devoted to excellence in close-quarters combat.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 10,
   skillPoints: 2,
   bab: "good",

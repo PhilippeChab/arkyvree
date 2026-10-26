@@ -10,7 +10,16 @@ import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { type Carried, carry, createTestItem } from "@/tests/support/dnd3.5/items.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, getSeedCtx } from "@/tests/support/seed.ts";
-import { ITEM_SLOT, ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+  ITEM_SLOT,
+  ITEM_TYPE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** What a modifier a test makes does: its target, operator and value. */
 type Effect = Pick<Modifier, "operator" | "target" | "value" | "valueType">;
@@ -53,17 +62,19 @@ async function seedHuman(name: string, className: string, carried: Carried[]) {
   const ctx = await getSeedCtx();
   const abilities = Object.fromEntries(Object.keys(ctx.abilityMap).map((ability) => [ability, 10]));
   const characterId = await createCharacter(db, ctx, {
-    raceName: "Human",
     name,
-    xp: 0,
-    alignment: "True Neutral",
-    age: 30,
-    gender: "Male",
-    height: "180",
-    weight: "80",
     description: "Test",
     abilities: { ...abilities, Dexterity: 16 },
     languages: ["Common"],
+    links: { race: "Human" },
+    fields: {
+      [CHARACTER_XP]: 0,
+      [CHARACTER_ALIGNMENT]: "True Neutral",
+      [CHARACTER_AGE]: 30,
+      [CHARACTER_GENDER]: "Male",
+      [CHARACTER_HEIGHT]: "180",
+      [CHARACTER_WEIGHT]: "80",
+    },
   });
   await addClassLevels(db, ctx, characterId, className, [1], [6]);
   await carry({ id: characterId }, carried);

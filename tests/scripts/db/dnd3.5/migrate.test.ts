@@ -121,6 +121,24 @@ async function addUnwrittenColumns() {
 }
 
 /**
+ * Every field row 0090 reads (an entity's, a ruleset's, a character's), each as one line (its owner, its field, its
+ * ordinal and its text, quoted), and every character's last change: what it leaves.
+ */
+async function fieldRows() {
+  const { rows } = await db.execute<{ line: string }>(sql`
+    SELECT 'entity ' || entity_id || ' ' || field || ' ' || ordinal || ' ' || coalesce(quote_literal(text_value), '-')
+      AS line FROM rules.entity_fields
+    UNION ALL SELECT 'ruleset ' || ruleset_id || ' ' || field || ' ' || ordinal || ' '
+      || coalesce(quote_literal(text_value), '-') FROM rules.ruleset_fields
+    UNION ALL SELECT 'character ' || character_id || ' ' || field || ' ' || ordinal || ' '
+      || coalesce(quote_literal(text_value), '-') FROM "character".fields
+    UNION ALL SELECT 'changed ' || id || ' ' || last_changed_at::text FROM character.characters
+    ORDER BY line
+  `);
+  return rows.map((row) => row.line);
+}
+
+/**
  * The ids of a character's rows that 0088's deletes reach (`characterId`, and its children): the characters, their
  * advancements and their picks, their inventory entries, links, fields and contributors.
  */
@@ -684,5 +702,44 @@ describe("0089_index-declarations", () => {
       "CREATE UNIQUE INDEX starred_rulesets_pkey ON account.starred_rulesets USING btree (user_id, ruleset_id)",
     ]);
     expect(await keptRows()).toEqual(before);
+  });
+});
+
+describe("0090_empty-texts", () => {
+  test("deletes an empty text a field holds one of, gives an empty slot its default, and changes nothing else", async () => {
+    const { id: characterId } = await findSeededCharacter("Bjorn Ironhand");
+    const { rows: picked } = await db.execute<{ item: string; spell: string }>(sql`
+      SELECT (SELECT entity_id FROM rules.entity_fields WHERE field = 'ITEM_TYPE' ORDER BY entity_id LIMIT 1) AS item,
+        (SELECT entity_id FROM rules.entity_fields WHERE field = 'SPELL_DESCRIPTOR' ORDER BY entity_id LIMIT 1) AS spell
+    `);
+    const { item, spell } = picked[0]!;
+    await db.execute(sql`SELECT set_config('arkyvree.registry_sync', 'on', true)`);
+    await db.execute(sql`
+      INSERT INTO "character".fields (character_id, field, value_kind, multiple, text_value)
+      VALUES (${characterId}, 'CHARACTER_DEITY', 'text', false, '')
+    `);
+    await db.execute(sql`
+      UPDATE rules.entity_fields SET text_value = '' WHERE entity_id = ${item} AND field IN ('ITEM_TYPE', 'ITEM_SLOT')
+    `);
+    await db.execute(sql`
+      UPDATE rules.entity_fields SET text_value = ''
+      WHERE entity_id = ${spell} AND field = 'SPELL_DESCRIPTOR' AND ordinal = 0
+    `);
+    await db.execute(sql`SELECT set_config('arkyvree.registry_sync', 'off', true)`);
+    const before = await fieldRows();
+
+    for (const statement of statementsOf("0090_empty-texts.sql")) await db.execute(sql.raw(statement));
+
+    expect(await fieldRows()).toEqual(
+      before.flatMap((line) => {
+        if (line === `character ${characterId} CHARACTER_DEITY 0 ''`) return [];
+        if (line === `entity ${item} ITEM_TYPE 0 ''`) return [];
+        if (line === `entity ${item} ITEM_SLOT 0 ''`) return [`entity ${item} ITEM_SLOT 0 'Other'`];
+        return [line];
+      }),
+    );
+    // The list's empty text, which the rule keeps, stays
+    expect(before).toContain(`entity ${spell} SPELL_DESCRIPTOR 0 ''`);
+    expect(before.filter((line) => line.endsWith(" ''"))).toHaveLength(4);
   });
 });

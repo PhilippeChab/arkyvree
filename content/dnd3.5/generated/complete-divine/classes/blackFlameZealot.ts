@@ -7,12 +7,13 @@
 
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const BLACK_FLAME_ZEALOT: ClassSeed = {
   name: "Black Flame Zealot",
   description:
     "Practitioners of dark sacred rituals, black flame zealots combine stealth, divine spellcasting, and fanatical devotion to eliminate those who have offended their deity.",
-  hd: 6,
+  fields: { [CLASS_HD]: 6 },
   levels: 10,
   skillPoints: 4,
   bab: "medium",

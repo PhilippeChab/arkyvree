@@ -7,12 +7,13 @@
 
 import { eq, gte } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const REAPING_MAULER: ClassSeed = {
   name: "Reaping Mauler",
   description:
     "Reaping maulers specialize in brutal unarmed grappling techniques, excelling at breaking bones, wrenching limbs, and overpowering foes in close-quarters combat.",
-  hd: 10,
+  fields: { [CLASS_HD]: 10 },
   levels: 5,
   skillPoints: 2,
   bab: "good",

@@ -2,6 +2,7 @@
 
 import { eq, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
+import { FEAT_OVERSIZED_TWO_WEAPON_FIGHTING, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const BARDIC_FEATS: FeatSeed[] = [
   {
@@ -76,7 +77,7 @@ export const FIGHTER_FEATS: FeatSeed[] = [
       "When wielding a one-handed weapon in your off hand, you take penalties for fighting with two weapons as if you were wielding a light weapon in your off hand.",
     aptitudes: ["General", "Fighter Bonus Feat"],
     requirements: [gte("abilities.strength.total", 13), eq("feats.twoweaponfighting.possessed")],
-    fields: { oversizedTwoWeaponFighting: true },
+    fields: { [FEAT_OVERSIZED_TWO_WEAPON_FIGHTING]: true },
   },
   {
     name: "Power Throw",
@@ -216,9 +217,9 @@ export const GENERAL_FEATS: FeatSeed[] = [
   {
     name: "Extra Music",
     description: "You can use your bardic music four extra times per day.",
-    stackable: true,
     aptitudes: ["General"],
     requirements: [eq("feats.bardicmusic.*.possessed")],
+    fields: { [FEAT_STACKABLE]: true },
   },
   {
     name: "Extraordinary Concentration",
@@ -317,8 +318,8 @@ export const GENERAL_FEATS: FeatSeed[] = [
     name: "Open Minded",
     description:
       "You immediately gain 5 skill points. Spend these skill points as normal. You cannot exceed the normal maximum ranks for your level in any skill.",
-    stackable: true,
     aptitudes: ["General", "Exemplar Bonus Feat"],
+    fields: { [FEAT_STACKABLE]: true },
   },
   {
     name: "Quick Reconnoiter",

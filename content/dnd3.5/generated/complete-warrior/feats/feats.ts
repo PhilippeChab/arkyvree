@@ -3,6 +3,7 @@
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import { feat } from "@/content/dnd3.5/builders/feats/possession.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
+import { FEAT_FAMILY, FEAT_GENERATED, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { ALL_WEAPONS } from "@/vocabulary/dnd3.5/weapons.ts";
 
 export const DIVINE_FEATS: FeatSeed[] = [
@@ -386,31 +387,31 @@ export const GENERAL_FEATS: FeatSeed[] = [
   {
     name: "Extend Rage",
     description: "Every use of your rage or frenzy ability lasts 5 additional rounds beyond its normal duration.",
-    stackable: true,
     aptitudes: ["General"],
     requirements: [or(eq("feats.rage.*.possessed"), eq("feats.frenzyfrenziedberserker.possessed"))],
+    fields: { [FEAT_STACKABLE]: true },
   },
   {
     name: "Extra Rage",
     description: "You can rage or enter a frenzy two additional times per day.",
-    stackable: true,
     aptitudes: ["General"],
     requirements: [or(eq("feats.rage.*.possessed"), eq("feats.frenzyfrenziedberserker.possessed"))],
+    fields: { [FEAT_STACKABLE]: true },
   },
   {
     name: "Extra Smiting",
     description:
       "You gain two additional smite attempts per day, applicable to whichever smite ability you possess (such as a paladin's smite evil or similar class features).",
-    stackable: true,
     aptitudes: ["General"],
     requirements: [gte("combat.bab", 4), or(eq("feats.smite.*.possessed"), eq("feats.destructiondomain.possessed"))],
+    fields: { [FEAT_STACKABLE]: true },
   },
   {
     name: "Extra Stunning",
     description: "You gain three additional stunning attacks per day.",
-    stackable: true,
     aptitudes: ["General"],
     requirements: [gte("combat.bab", 2), eq("feats.stunningfist.possessed")],
+    fields: { [FEAT_STACKABLE]: true },
   },
   {
     name: "Eyes in the Back of Your Head",
@@ -627,10 +628,9 @@ export const GENERAL_FEATS: FeatSeed[] = [
 export const POWER_CRITICAL_FEATS: FeatSeed[] = ALL_WEAPONS.map((w) => ({
   name: `Power Critical: ${w}`,
   description: `With your ${w}, you gain a +4 bonus on rolls to confirm critical threats.`,
-  generated: true,
   aptitudes: ["General", "Fighter Bonus Feat"],
   requirements: [gte("combat.bab", 4), eq(feat(`Weapon Focus: ${w}`))],
-  fields: { families: ["Power Critical"] },
+  fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Power Critical"] },
 }));
 
 export const STYLE_FEATS: FeatSeed[] = [

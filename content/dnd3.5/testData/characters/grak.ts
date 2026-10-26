@@ -1,15 +1,25 @@
 import type { CharacterSeed } from "@/content/dnd3.5/builders/characters/types.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Half-Orc Barbarian 3 — Skills: Intelligence 8, 6 with his race's −2: (4-2)*4 + (4-2)*2 = 12 */
 export default {
-  raceName: "Half-Orc",
   name: "Grak Thunderfist",
-  xp: 3000,
-  alignment: "Chaotic Neutral",
-  age: 18,
-  gender: "Male",
-  height: "195",
-  weight: "120",
+  links: { race: "Half-Orc" },
+  fields: {
+    [CHARACTER_XP]: 3000,
+    [CHARACTER_ALIGNMENT]: "Chaotic Neutral",
+    [CHARACTER_AGE]: 18,
+    [CHARACTER_GENDER]: "Male",
+    [CHARACTER_HEIGHT]: "195",
+    [CHARACTER_WEIGHT]: "120",
+  },
   description:
     "A towering half-orc from the Shattered Peaks, Grak channels his rage into devastating power on the battlefield. His tribal tattoos glow faintly when his fury rises.",
   abilities: { Strength: 18, Dexterity: 12, Constitution: 16, Intelligence: 8, Wisdom: 10, Charisma: 6 },

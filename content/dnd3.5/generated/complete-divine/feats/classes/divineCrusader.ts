@@ -2,77 +2,78 @@
 
 import { gte } from "@/content/core/builders/customization/requirements.ts";
 import type { FeatSeed } from "@/content/dnd3.5/builders/feats/types.ts";
+import { FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const DIVINE_CRUSADER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Aura (Divine Crusader)",
     description:
       "The strength of a divine crusader's alignment aura equals her divine crusader level combined with levels from any other classes that also produce an alignment aura (for example, cleric or paladin levels).",
-    selectable: false,
     aptitudes: ["Divine Crusader Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Darkvision (Divine Crusader)",
     description:
       "At 7th level, a divine crusader acquires darkvision with a 60-foot range. If she already possesses darkvision, its range extends by an additional 30 feet.",
-    selectable: false,
     aptitudes: ["Divine Crusader Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Perfect Self (Divine Crusader)",
     description:
       "Upon reaching 10th level, the divine crusader undergoes a fundamental transformation into a planar being. Her creature type becomes outsider (native). Despite this change, she can still be raised, reincarnated, or resurrected like any other living creature, and she continues to be native to the Material Plane. She also gains damage reduction 10/magic.",
-    selectable: false,
     aptitudes: ["Divine Crusader Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Resistance to Acid 5 (Divine Crusader)",
     description: "",
-    selectable: false,
     aptitudes: ["Divine Crusader Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Resistance to Acid and Electricity 10 (Divine Crusader)",
     description: "",
-    selectable: false,
     aptitudes: ["Divine Crusader Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Resistance to Electricity 5 (Divine Crusader)",
     description: "",
-    selectable: false,
     aptitudes: ["Divine Crusader Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Spells per Day (Divine Crusader)",
     description:
       "The divine crusader is a divine spellcaster whose spell selection is limited to a single chosen domain. In practice, her entire class spell list consists of just nine spells (one at each spell level). Preparing or casting a spell requires a Charisma score of at least 10 + the spell's level. The save DC for her spells is 10 + spell level + her Charisma modifier, and she receives bonus spells for a high Charisma. She prepares and casts spells in the same manner as a cleric, with the exception that she cannot spontaneously convert prepared spells into cure or inflict spells. Electricity Resistance (Ex): Starting at 3rd level, the divine crusader gains electricity resistance 5. This improves to electricity resistance 10 at 9th level.",
-    selectable: false,
     aptitudes: ["Divine Crusader Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Weapon Specialization (Divine Crusader)",
     description:
       "At 5th level, the divine crusader receives Weapon Specialization with her deity's favored weapon as a bonus feat. Acid Resistance (Ex): Beginning at 6th level, the divine crusader gains acid resistance 5. At 9th level, this increases to acid resistance 10.",
-    selectable: false,
     aptitudes: ["Divine Crusader Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Weapon and Armor Proficiency (Divine Crusader)",
     description: "This class does not grant proficiency with any weapons or armor.",
-    selectable: false,
     aptitudes: ["Divine Crusader Class Feature"],
+    fields: { [FEAT_SELECTABLE]: false },
   },
   {
     name: "Advance Divine Crusader Spellcasting",
     description:
       "Your effective Divine Crusader caster level increases by 1, granting additional spell slots and spells per day as if you had gained a level in Divine Crusader.",
-    stackable: true,
     aptitudes: ["Bonus Divine Caster Level", "Bonus Caster Level"],
     requirements: [gte("classes.divinecrusader.level", 1)],
     modifiers: [
       { target: "classes.divinecrusader.bonuscasterlevel", operator: "add", value: "1", valueType: "number" },
     ],
+    fields: { [FEAT_STACKABLE]: true },
   },
   {
     name: "Air Domain (Divine Crusader)",

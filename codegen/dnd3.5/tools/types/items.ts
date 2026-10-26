@@ -1,11 +1,14 @@
 import type { Overrides, ScrapedMeta } from "./reference.ts";
 
-/** An item as the seeds make it: its cost and weight, its override's or else as detected, and its override's description. */
+/**
+ * An item as the seeds make it: its cost in gold pieces and its weight in pounds, its override's or else as detected,
+ * and its override's description.
+ */
 interface ItemMapping {
-  costGp: string;
+  costGp: number;
   description?: string;
   skip?: boolean;
-  weight: string;
+  weight: number;
 }
 
 export interface ArmorRow {
@@ -34,10 +37,10 @@ export interface GoodsRow {
 }
 
 export interface ItemFields {
-  costGp?: string;
+  costGp?: number;
   description?: string;
   skip?: boolean;
-  weight?: string;
+  weight?: number;
 }
 
 export interface ItemReference {
@@ -47,29 +50,29 @@ export interface ItemReference {
     armor: Record<
       string,
       {
-        costGp: string;
+        costGp: number;
         generatorName: string | null;
         proficiencyCategory: string;
         type: "Armor" | "Shield";
-        weight: string;
+        weight: number;
       }
     >;
     goods: Record<
       string,
       {
         category: string;
-        costGp: string;
-        weight: string;
+        costGp: number;
+        weight: number;
       }
     >;
     unresolved: string[];
     weapons: Record<
       string,
       {
-        costGp: string;
+        costGp: number;
         generatorName: string | null;
         proficiency: string;
-        weight: string;
+        weight: number;
       }
     >;
   };

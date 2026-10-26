@@ -3,13 +3,10 @@ import { Dnd35Module } from "@/engine/rulesets/dnd3.5/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 /** What a module describes in its own shapes. */
-type DescriptionsOf<M> = M extends RulesetModule<infer D, infer _E, infer _F> ? D : never;
+type DescriptionsOf<M> = M extends RulesetModule<infer D, infer _E> ? D : never;
 
 /** A module's entity kinds, by type. */
-type EntityKindsOf<M> = M extends RulesetModule<infer _D, infer E, infer _F> ? E : never;
-
-/** The fields a module's content seeds, by entity. */
-type FieldsOf<M> = M extends RulesetModule<infer _D, infer _E, infer F> ? F : never;
+type EntityKindsOf<M> = M extends RulesetModule<infer _D, infer E> ? E : never;
 
 /**
  * The module registered for base rules (`B`), by its own types: read by the rows `MODULES` has, so a row it lacks breaks
@@ -33,15 +30,10 @@ export type EntityType = keyof EntityKinds;
 export type Module = ModuleOf<BaseRules>;
 
 /**
- * A base rules' module (`B`), as the contract's parts (`RulesetModule`) over what it describes, its entity kinds and
- * its seeded fields: its own for one base rules (`Engine.forRules(baseRules)`), any registered module's for all of them
- * (`Module`).
+ * A base rules' module (`B`), as the contract's parts (`RulesetModule`) over what it describes and its entity kinds:
+ * its own for one base rules (`Engine.forRules(baseRules)`), any registered module's for all of them (`Module`).
  */
-export type ModuleOf<B extends BaseRules> = RulesetModule<
-  DescriptionsOf<Registered<B>>,
-  EntityKindsOf<Registered<B>>,
-  FieldsOf<Registered<B>>
->;
+export type ModuleOf<B extends BaseRules> = RulesetModule<DescriptionsOf<Registered<B>>, EntityKindsOf<Registered<B>>>;
 
 /** A module's method's arguments after those a handle binds (`Lead`: the view, and the character or class it's for). */
 export type Rest<F, Lead extends unknown[]> = F extends (...args: [...Lead, ...infer R]) => unknown ? R : never;

@@ -17,13 +17,6 @@ export function WritesClasses<B extends Constructor<BaseCodeFile>>(Base: B) {
       this.lines.push(`  ],`);
     }
 
-    /** The class's spellcasting: its bonus spells' ability and its caster type. */
-    private writeCasting(seed: ClassSeed) {
-      const { bonusSpellAbility, casterType } = seed;
-      if (bonusSpellAbility) this.lines.push(`  bonusSpellAbility: ${this.quote(bonusSpellAbility)},`);
-      if (casterType) this.lines.push(`  casterType: ${this.quote(casterType)},`);
-    }
-
     /** The class's features by level, its proficiencies, and the feats it gives. */
     private writeFeatures(seed: ClassSeed) {
       const { classFeatures, freeFeats, proficiencies } = seed;
@@ -39,6 +32,12 @@ export function WritesClasses<B extends Constructor<BaseCodeFile>>(Base: B) {
           this.lines.push(`    [${level}, ${this.quote(feat)}, ${this.quote(apt)}],`);
         this.lines.push(`  ],`);
       }
+    }
+
+    /** The class's single links: the ability its bonus spells come from (`bonusSpellAbility`), by its name. */
+    private writeLinks(seed: ClassSeed) {
+      const bonusSpellAbility = seed.links?.bonusSpellAbility;
+      if (bonusSpellAbility) this.lines.push(`  links: { bonusSpellAbility: ${this.quote(bonusSpellAbility)} },`);
     }
 
     /** The class's modifiers, each at its level, with the requirements that gate it. */
@@ -79,13 +78,17 @@ export function WritesClasses<B extends Constructor<BaseCodeFile>>(Base: B) {
       this.lines.push(`  },`);
     }
 
-    /** The class's opening fields: its name and description, hit die, levels, skills, BAB, saves and requirements. */
+    /**
+     * The class's opening fields: its name and description, its fields as stored (its hit die, its caster type),
+     * levels, skills, BAB, saves and requirements.
+     */
     private writeSummary(seed: ClassSeed) {
-      const { bab, classSkills, description, hd, levels, name, requirements, saves, skillPoints } = seed;
+      const { bab, classSkills, description, fields, levels, name, requirements, saves, skillPoints } = seed;
       this.lines.push(`export const ${BookLayout.classFile(name).list}: ClassSeed = {`);
       this.lines.push(`  name: ${this.quote(name)},`);
       this.lines.push(`  description: ${this.quote(description)},`);
-      this.lines.push(`  hd: ${hd}, levels: ${levels}, skillPoints: ${skillPoints},`);
+      this.lines.push(`  fields: ${this.seedFields(fields)},`);
+      this.lines.push(`  levels: ${levels}, skillPoints: ${skillPoints},`);
       this.lines.push(`  bab: ${this.quote(bab)},`);
       this.lines.push(
         `  saves: { fortitude: ${this.quote(saves.fortitude)}, reflex: ${this.quote(saves.reflex)}, will: ${this.quote(saves.will)} },`,
@@ -112,7 +115,7 @@ export function WritesClasses<B extends Constructor<BaseCodeFile>>(Base: B) {
       }
       if (classFeatureAptitude) this.lines.push(`  classFeatureAptitude: ${this.quote(classFeatureAptitude)},`);
       this.writeFeatures(seed);
-      this.writeCasting(seed);
+      this.writeLinks(seed);
       this.writeSpells(seed);
       this.writeModifiers(seed);
       this.writeAptitudePicks(seed);

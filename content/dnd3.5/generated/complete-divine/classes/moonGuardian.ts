@@ -7,12 +7,13 @@
 
 import { eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 export const MOON_GUARDIAN: ClassSeed = {
   name: "Moon Guardian",
   description:
     "When an evil lycanthrope transmits the curse of lycanthropy to a victim, the afflicted individual must either seek a swift cure or gradually fall under the savage, malevolent influence of their bestial side. However, good or neutral divine spellcasters who maintain powerful bonds with their patron deities or chosen divine forces can sometimes leverage those spiritual connections to resist the descent into evil. Those who manage this feat become known as moon guardians.",
-  hd: 8,
+  fields: { [CLASS_HD]: 8 },
   levels: 5,
   skillPoints: 2,
   bab: "good",

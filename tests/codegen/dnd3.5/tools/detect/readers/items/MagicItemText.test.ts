@@ -1,6 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
 import { MagicItemText } from "@/codegen/dnd3.5/tools/detect/readers/items/MagicItemText.ts";
+import {
+  ARMOR_CHECK_PENALTY,
+  ARMOR_MAX_DEX,
+  ARMOR_PROFICIENCY,
+  ITEM_MASTERWORK,
+  ITEM_SPELL_FAILURE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** What a specific armor's or shield's text gives of its stats. */
 function armorStats(text: string) {
@@ -19,20 +26,20 @@ describe("A specific armor's text", () => {
         "The armor has an arcane spell failure chance of 20%, a maximum Dexterity bonus of +4, and an armor check penalty of -2. It is considered light armor and weighs 20 pounds.",
       ),
     ).toEqual({
-      fields: { spellFailure: 20, maxDex: 4, checkPenalty: -2, armor: { proficiency: "Light" } },
-      weight: "20",
+      fields: { [ITEM_SPELL_FAILURE]: 20, [ARMOR_MAX_DEX]: 4, [ARMOR_CHECK_PENALTY]: -2, [ARMOR_PROFICIENCY]: "Light" },
+      weight: 20,
     });
     expect(
       armorStats("It has a 5% arcane spell failure chance and no armor check penalty. It weighs 2½ pounds."),
     ).toEqual({
-      fields: { spellFailure: 5, checkPenalty: 0 },
-      weight: "2.5",
+      fields: { [ITEM_SPELL_FAILURE]: 5, [ARMOR_CHECK_PENALTY]: 0 },
+      weight: 2.5,
     });
   });
 
   test("gives its enhancement bonus, magic armor being masterwork unless its check penalty is given", () => {
     expect(armorStats("Ten 100-gp gems adorn this +3 banded mail.")).toEqual({
-      fields: { masterwork: true },
+      fields: { [ITEM_MASTERWORK]: true },
       enhancement: 3,
     });
     // A bonus to something else first, and a spine's enhancement after the shield's
@@ -46,11 +53,13 @@ describe("A specific armor's text", () => {
       enhancement: 3,
     });
     expect(armorStats("This +2 hide armor is made from rhinoceros hide. It has a -1 armor check penalty.")).toEqual({
-      fields: { checkPenalty: -1 },
+      fields: { [ARMOR_CHECK_PENALTY]: -1 },
       enhancement: 2,
     });
     // Adamantine armor is masterwork, magic or not; darkwood says it has no enhancement bonus
-    expect(armorStats("This nonmagical breastplate is made of adamantine.")).toEqual({ fields: { masterwork: true } });
+    expect(armorStats("This nonmagical breastplate is made of adamantine.")).toEqual({
+      fields: { [ITEM_MASTERWORK]: true },
+    });
     expect(armorStats("It has no enhancement bonus, but its construction material makes it lighter.")).toEqual({
       fields: {},
     });
