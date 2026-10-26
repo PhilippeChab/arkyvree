@@ -1,6 +1,3 @@
-import { getTableName } from "drizzle-orm";
-
-import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { CustomizationEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -9,6 +6,7 @@ import { Requirements } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { checkCustomizedEntity } from "@/server/services/rulesets/customization/customizableEntities.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** A requirement's body: a condition (`target`, its operator and value) or a group of conditions (`chainingOperator`). */
@@ -55,7 +53,7 @@ class RequirementsService {
           await createActivityWithNotifications(tx, {
             userId: session.userId,
             targetId: requirement.id,
-            targetTable: getTableName(requirementsInCustomization),
+            targetType: TARGET_TYPES.requirements,
             type: "createRequirement",
             data: { entityName: entity.name, entityType, ...conditionOf(row) },
           });
@@ -101,7 +99,7 @@ class RequirementsService {
           await createActivityWithNotifications(tx, {
             userId: session.userId,
             targetId: deletedRequirement.id,
-            targetTable: getTableName(requirementsInCustomization),
+            targetType: TARGET_TYPES.requirements,
             type: "deleteRequirement",
             data: { rulesetId, entityName: entity.name, entityType, ...conditionOf(requirement) },
           });
@@ -160,7 +158,7 @@ class RequirementsService {
           await createActivityWithNotifications(tx, {
             userId: session.userId,
             targetId: updatedRequirement.id,
-            targetTable: getTableName(requirementsInCustomization),
+            targetType: TARGET_TYPES.requirements,
             type: "updateRequirement",
             data: { entityName: entity.name, entityType, ...conditionOf(row) },
           });

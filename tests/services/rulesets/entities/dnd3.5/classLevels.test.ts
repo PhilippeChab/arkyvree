@@ -50,7 +50,7 @@ function levelFields(bab: number, skills: number) {
 }
 
 function modifier(sourceId: string, target: string, value: string) {
-  return { sourceId, sourceType: "class_levels", target, value, valueType: "number", operator: "add" } as const;
+  return { sourceId, sourceType: "class-levels", target, value, valueType: "number", operator: "add" } as const;
 }
 
 async function createSave(rulesetId: string, name: string) {
@@ -244,7 +244,7 @@ describe("EntitiesService: a class's levels", () => {
         fields: { [CLASS_LEVEL_BAB]: 3 },
       }),
     ).toMatchObject({ fields: levelFields(3, 4) });
-    const { fields } = await findFormValues("class_levels", level.id);
+    const { fields } = await findFormValues("class-levels", level.id);
     expect(Object.keys(fields).sort()).toEqual([CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS]);
   });
 
@@ -438,12 +438,12 @@ describe("EntitiesService: a class's levels", () => {
 
       await EntitiesService.deleteOwnedEntity(session, ruleset.id, "classes", klass.id, level.id);
 
-      expect(await Entities.findOne<KlassLevel>(db, { entityType: "class_levels", id: level.id })).toBeUndefined();
+      expect(await Entities.findOne<KlassLevel>(db, { entityType: "class-levels", id: level.id })).toBeUndefined();
       expect(await EntityLinks.findMany(db, { fromIds: [level.id] })).toEqual([]);
 
-      expect(await Modifiers.findMany(db, { sourceIds: [level.id], sourceType: "class_levels" })).toEqual([]);
-      expect(await Requirements.findMany(db, { entityIds: [level.id], entityType: "class_levels" })).toEqual([]);
-      expect(await findFormValues("class_levels", level.id)).toEqual({ fields: {}, links: {} });
+      expect(await Modifiers.findMany(db, { sourceIds: [level.id], sourceType: "class-levels" })).toEqual([]);
+      expect(await Requirements.findMany(db, { entityIds: [level.id], entityType: "class-levels" })).toEqual([]);
+      expect(await findFormValues("class-levels", level.id)).toEqual({ fields: {}, links: {} });
     });
 
     test("is refused while a character has taken it", async () => {
@@ -492,7 +492,7 @@ describe("EntitiesService: a class's levels", () => {
       });
       expect(created.ownerId).toBe(snapshot!.forkedEntityId);
       expect(
-        (await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [klass.id] })).map(
+        (await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [klass.id] })).map(
           (l) => l.position,
         ),
       ).toEqual([1]);

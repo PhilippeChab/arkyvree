@@ -222,6 +222,49 @@ async function restoreIndexesBefore0089() {
 }
 
 /**
+ * The rows and columns 0092 renames, as the migrations before left them: its statements run backwards, each type back to
+ * its old spelling (`class-levels` to `class_levels`) and `target_type` back to `target_table`, its registry sync off
+ * again (the seeded database records no activity, whose targets a test writes as they were). What the migrations
+ * before 0092 ran on.
+ */
+async function restoreTypesBefore0092() {
+  const swapped = new Map([
+    ["class-levels", "class_levels"],
+    ["class_levels", "class-levels"],
+    ["target_table", "target_type"],
+    ["target_type", "target_table"],
+  ]);
+  for (const statement of statementsOf("0092_stored-type-forms.sql")) {
+    const backwards = statement.replace(/class-levels|class_levels|target_t(?:abl|yp)e/g, (word) => swapped.get(word)!);
+    await db.execute(sql.raw(backwards));
+  }
+  await db.execute(sql`SELECT set_config('arkyvree.registry_sync', 'off', true)`);
+}
+
+/**
+ * Every row of the tables 0092 reads, each table's as one digest of its rows' text, sorted (`renamed`: as 0092 would
+ * leave them, each `class_levels` read as `class-levels`).
+ */
+async function typedRows(renamed: boolean) {
+  const { rows: tables } = await db.execute<{ name: string }>(sql`
+    SELECT table_schema || '.' || table_name AS name FROM information_schema.tables
+    WHERE table_schema IN ('account', 'campaign', 'character', 'customization', 'rules', 'storage')
+      AND table_type = 'BASE TABLE'
+    ORDER BY name
+  `);
+  const digests: Record<string, string> = {};
+  for (const { name } of tables) {
+    const row = renamed ? sql`replace(t::text, 'class_levels', 'class-levels')` : sql`t::text`;
+    const { rows } = await db.execute<{ digest: string }>(sql`
+      SELECT count(*) || ' ' || coalesce(md5(string_agg(${row}, E'\n' ORDER BY ${row})), '-') AS digest
+      FROM ${sql.raw(name)} t
+    `);
+    digests[name] = rows[0]!.digest;
+  }
+  return digests;
+}
+
+/**
  * The rows of the tables 0088 drops a column of, each as one line (every entity, advancement, pick, inventory entry,
  * contributor, campaign seat, modifier, requirement, activity, ruleset and character link, as its other columns hold it), and
  * every character's last change: what it leaves.
@@ -253,6 +296,7 @@ async function unwrittenRows() {
 
 describe("0081_spells-and-classes", () => {
   test("runs in the transaction of the rows before it, and renames what customizations and activities recorded", async () => {
+    await restoreTypesBefore0092();
     await addRegistryColumns();
     const { id: characterId } = await findSeededCharacter("Bjorn Ironhand");
     // A row whose deferred checks are pending, as 0080's are when drizzle runs 0081 in the same transaction
@@ -305,6 +349,7 @@ describe("0081_spells-and-classes", () => {
 
 describe("0082_fields", () => {
   test("names a spell's fields in what customizations, activities and notifications recorded, and nothing else", async () => {
+    await restoreTypesBefore0092();
     const { rows: spells } = await db.execute<{ id: string }>(
       sql`SELECT id FROM rules.entities WHERE type = 'spells' LIMIT 1`,
     );
@@ -389,6 +434,7 @@ describe("0082_fields", () => {
 
 describe("0084_link-activities", () => {
   test("names a class's skill's role in what activities and notifications recorded, and nothing else", async () => {
+    await restoreTypesBefore0092();
     const classId = (await getSeedCtx()).classMap.pc["Fighter"];
     // What an activity and a notification recorded of each change to a class's skills, and of others
     const recorded = [
@@ -432,6 +478,7 @@ describe("0084_link-activities", () => {
 
 describe("0085_advancement-activities", () => {
   test("names the advancements' table in what activities and notifications recorded of a level, and nothing else", async () => {
+    await restoreTypesBefore0092();
     const { id: characterId } = await findSeededCharacter("Bjorn Ironhand");
     // What an activity and a notification recorded of each change to a character's levels, and of others
     const recorded = [
@@ -567,6 +614,7 @@ describe("0088_unwritten-columns", () => {
   });
 
   test("deletes a character the archive before 0080 archived with its advancements and what goes with it, and stray archived rows", async () => {
+    await restoreTypesBefore0092();
     await addUnwrittenColumns();
     const archived = await findHeldCharacter();
     await db.execute(sql`UPDATE character.characters SET deleted_at = now() WHERE id = ${archived}`);
@@ -746,6 +794,7 @@ describe("0090_empty-texts", () => {
 
 describe("0091_stored-name-activities", () => {
   test("names an update's changed columns by their stored field or role, in the order an update records them, and nothing else", async () => {
+    await restoreTypesBefore0092();
     const targetId = (await getSeedCtx()).classMap.pc["Fighter"];
     // What an activity and a notification recorded of each kind's update, as its form's keys named them, and of others
     const recorded = [
@@ -844,5 +893,90 @@ describe("0091_stored-name-activities", () => {
       `);
       expect({ table, rows }).toEqual({ table, rows: expected });
     }
+  });
+});
+
+describe("0092_stored-type-forms", () => {
+  test("stores each type and target as its URL names it and renames the target's column, and changes nothing else", async () => {
+    await restoreTypesBefore0092();
+    const { rows: levels } = await db.execute<{ id: string }>(sql`
+      SELECT id FROM rules.entities WHERE type = 'class_levels' ORDER BY id LIMIT 1
+    `);
+    const levelId = levels[0]!.id;
+    // What activities and notifications recorded of a class level and of its customizations, of the targets that are no
+    // entity's (an entity's field's, before 0082), and of others
+    const recorded = [
+      ["class_levels", "createClassLevel", '{"entityName":"Fighter","level":1}'],
+      ["player_characters", "linkCharacter", '{"visibility":"Public"}'],
+      ["character_contributors", "inviteCharacterContributor", '{"characterName":"Hero"}'],
+      ["oauth_accounts", "linkGoogleAccount", null],
+      [
+        "entity_fields",
+        "updateField",
+        '{"entityName":"Fighter 1","entityType":"class_levels","field":"CLASS_LEVEL_BAB"}',
+      ],
+      [
+        "modifiers",
+        "createModifier",
+        '{"entityName":"Fighter 1","entityType" : "class_levels","target":"abilities.str"}',
+      ],
+      ["requirements", "deleteRequirement", '{"entityType":"classes","entityName":"class_levels"}'],
+      ["classes", "updateClass", null],
+    ];
+    for (const [table, type, data] of recorded) {
+      const { rows: activity } = await db.execute<{ id: string }>(sql`
+        INSERT INTO account.activities (user_id, target_id, target_table, type, data)
+        VALUES (${SEED_USER_ID}, ${levelId}, ${table}, ${type}, ${data}) RETURNING id
+      `);
+      await db.execute(sql`
+        INSERT INTO account.notifications (recipient_id, actor_id, activity_id, type, target_id, target_table, data)
+        VALUES (${SEED_USER_ID}, ${SEED_USER_ID}, ${activity[0]!.id}, ${type}, ${levelId}, ${table}, ${data})
+      `);
+    }
+    const before = await typedRows(true);
+    expect(before["rules.entities"]).not.toEqual((await typedRows(false))["rules.entities"]);
+
+    for (const statement of statementsOf("0092_stored-type-forms.sql")) await db.execute(sql.raw(statement));
+
+    // Every row as it was, but each type's new spelling: an entity name or another key holding the old word too
+    const after = await typedRows(false);
+    const { rows: named } = await db.execute<{ data: string }>(sql`
+      SELECT data::text AS data FROM account.activities WHERE target_id = ${levelId} AND type = 'deleteRequirement'
+    `);
+    expect(named).toEqual([{ data: '{"entityType":"classes","entityName":"class_levels"}' }]);
+    const differing = Object.keys(before).filter((table) => before[table] !== after[table]);
+    expect(differing).toEqual(["account.activities", "account.notifications"]);
+    const { rows } = await db.execute(sql`
+      SELECT target_type, type, data::text AS data FROM account.activities WHERE target_id = ${levelId}
+      UNION ALL SELECT target_type, type, data::text FROM account.notifications WHERE target_id = ${levelId}
+      ORDER BY type, target_type
+    `);
+    const expected = [
+      ["classes", "updateClass", null],
+      ["class-levels", "createClassLevel", '{"entityName":"Fighter","level":1}'],
+      ["player-characters", "linkCharacter", '{"visibility":"Public"}'],
+      ["character-contributors", "inviteCharacterContributor", '{"characterName":"Hero"}'],
+      ["oauth-accounts", "linkGoogleAccount", null],
+      [
+        "entity-fields",
+        "updateField",
+        '{"entityName":"Fighter 1","entityType":"class-levels","field":"CLASS_LEVEL_BAB"}',
+      ],
+      [
+        "modifiers",
+        "createModifier",
+        '{"entityName":"Fighter 1","entityType" : "class-levels","target":"abilities.str"}',
+      ],
+      ["requirements", "deleteRequirement", '{"entityType":"classes","entityName":"class_levels"}'],
+    ].flatMap(([target_type, type, data]) => [
+      { target_type, type, data },
+      { target_type, type, data },
+    ]);
+    expect(rows).toEqual(expected.toSorted((a, b) => a.type!.localeCompare(b.type!)));
+    const { rows: types } = await db.execute<{ type: string }>(sql`SELECT type FROM rules.entity_types`);
+    const declared = Engine.storage()
+      .registries()
+      .entityTypes.map(({ type }) => type);
+    expect(types.map(({ type }) => type).toSorted()).toEqual(declared.toSorted());
   });
 });

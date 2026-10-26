@@ -19,7 +19,6 @@ import {
   useRules,
   useRulesetPermissions,
 } from "@/client/src/hooks/index.ts";
-import { entitySegment } from "@/client/src/lib/entityRequests.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesDescription, type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -35,7 +34,6 @@ import {
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { formatOperator } from "@/shared/customization/operators.ts";
-import { getEntityTypeOfSegment, getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { modifiersQuery, requirementsQuery } from "./customizationSectionQueries.ts";
 import { type EditableEntity, isEditable, renderEditor } from "./editors/index.ts";
@@ -223,7 +221,7 @@ function describe(
         title: `${data.entity.name} Level ${data.entity.position}`,
         pageTitle: `${data.entity.name} Level ${data.entity.position}`,
         // Its owner's page, which opens on its base rules' first tab
-        backPath: `/rulesets/${rulesetId}/${getUrlSegment(data.owner)}/${data.ownerId}`,
+        backPath: `/rulesets/${rulesetId}/${data.owner}/${data.ownerId}`,
       };
     default:
       return { title: data.entity.name, pageTitle: data.entity.name };
@@ -244,7 +242,7 @@ function modifierSourcePath(
   if (sourceType === "modifiers" || pages.has(sourceType))
     return `/rulesets/${rulesetId}/${buildCustomizationPath(sourceType, sourceId)}`;
   if (!rules?.kinds.some((kind) => kind.type === sourceType)) return undefined;
-  return `/rulesets/${rulesetId}/${getUrlSegment(sourceType)}/${sourceId}/modifiers`;
+  return `/rulesets/${rulesetId}/${sourceType}/${sourceId}/modifiers`;
 }
 
 /** An entity's customization tabs, their help its rules' (`rules`); a modifier can only carry requirements. */
@@ -260,7 +258,7 @@ async function deleteEntityFn(data: EditableEntity, id: string, entityId: string
       api.entities[":entityType"][":entityId"].owned[":ownedId"].$delete({
         param: {
           id,
-          entityType: entitySegment(getUrlSegment(data.owner)),
+          entityType: data.owner,
           entityId: data.ownerId,
           ownedId: entityId,
         },
@@ -271,7 +269,7 @@ async function deleteEntityFn(data: EditableEntity, id: string, entityId: string
   // A kind's entity, through the routes by kind
   await parseResponse(
     api.entities[":entityType"][":entityId"].$delete({
-      param: { id, entityType: entitySegment(getUrlSegment(data.type)), entityId },
+      param: { id, entityType: data.type, entityId },
     }),
   );
 }
@@ -290,10 +288,7 @@ export default function CustomizationPage() {
   }>();
   const location = useLocation();
   const pages = useCustomizationPages();
-  // Its URL names a type by its segment, never by the type's own name ("class-levels", not "class_levels")
-  const named = entityType && getEntityTypeOfSegment(entityType);
-  const pageType = named && getUrlSegment(named) === entityType ? named : undefined;
-  const page = pageType === "modifiers" ? MODIFIER_PAGE : pageType ? pages.get(pageType) : undefined;
+  const page = entityType === "modifiers" ? MODIFIER_PAGE : entityType ? pages.get(entityType) : undefined;
   const validType = page?.type;
 
   const { copiedFrom } = entityPageState(location.state);

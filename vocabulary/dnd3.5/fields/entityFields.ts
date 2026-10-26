@@ -888,7 +888,7 @@ export const ENTITY_FIELDS = {
   feats: FEAT_FIELDS,
   items: ITEM_FIELDS,
   classes: CLASS_FIELDS,
-  class_levels: CLASS_LEVEL_FIELDS,
+  "class-levels": CLASS_LEVEL_FIELDS,
   spells: SPELL_FIELDS,
   races: RACE_FIELDS,
   languages: LANGUAGE_FIELDS,

@@ -179,7 +179,7 @@ describe("EntitiesService: feats", () => {
 
     expect(await linkedAptitudeIds(feat.id)).toEqual([]);
     // A grant's feat is its link's to-entity
-    expect(await EntityLinks.findMany(db, { fromType: "class_levels", role: "grants", toIds: [feat.id] })).toEqual([]);
+    expect(await EntityLinks.findMany(db, { fromType: "class-levels", role: "grants", toIds: [feat.id] })).toEqual([]);
   });
 
   describe("deleting a feat characters picked", () => {

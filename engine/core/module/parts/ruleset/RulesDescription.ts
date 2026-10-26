@@ -30,7 +30,7 @@ export interface EntityCopiesDescription {
  * groups an entity's variants under their family by (`families`: a feat's, its query's filter of that field), how its
  * row copies one (`copies`: an item's), and when its name
  * can't change (`lockedName`: while its own flag `field` holds, a generated feat's, its form saying why, `reason`). Its
- * word is its rules' (`RulesDescription.words`), and its URL's segment the app's (`getUrlSegment`: `classes`). Not the
+ * word is its rules' (`RulesDescription.words`), and its URL's segment its type (`classes`, `class-levels`). Not the
  * kinds a race or a class is for (`entityKinds`).
  */
 export interface EntityKindDescription {
@@ -266,7 +266,7 @@ export interface RulesDescription {
    */
   tiers: { label: string; level: number }[];
   /**
-   * Its word for every entity type, by type (3.5's "Class Level" for `class_levels`), the engine's own types'
+   * Its word for every entity type, by type (3.5's "Class Level" for `class-levels`), the engine's own types'
    * (`modifiers`) included: every name the app gives an entity's type
    */
   words: Partial<Record<string, RulesWord>>;

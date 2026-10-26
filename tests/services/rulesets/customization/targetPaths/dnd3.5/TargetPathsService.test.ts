@@ -325,7 +325,7 @@ describe("TargetPathsService", () => {
     expect(await pathOf("modifier", "aptitudes.firedomainspells.joinsclasslist")).toMatchObject({
       valueType: "boolean",
       operators: ["set"],
-      allowedEntityTypes: ["feats", "class_levels"],
+      allowedEntityTypes: ["feats", "class-levels"],
     });
     expect((await pathOf("requirement", "aptitudes.firedomainspells.joinsclasslist"))?.operators).toEqual([
       "equal",
@@ -357,7 +357,7 @@ describe("TargetPathsService", () => {
   });
 
   test("offers aptitude uses and picks only to the entities that grant them", async () => {
-    for (const entityType of ["class_levels", "feats", "races", undefined])
+    for (const entityType of ["class-levels", "feats", "races", undefined])
       expect((await pathsTaken("modifier", entityType)).some(isAptitudeGrant)).toBe(true);
 
     for (const entityType of ["items", "spells"]) {

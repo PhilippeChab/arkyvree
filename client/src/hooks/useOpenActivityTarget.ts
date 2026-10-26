@@ -18,8 +18,8 @@ export function useOpenActivityTarget() {
   const snackbar = useSnackbar();
   const queryClient = useQueryClient();
 
-  return (targetTable: string, targetId: string) => {
-    queryClient.fetchQuery({ ...activityTargetQuery(targetTable, targetId), staleTime: NO_TIME }).then(
+  return (targetType: string, targetId: string) => {
+    queryClient.fetchQuery({ ...activityTargetQuery(targetType, targetId), staleTime: NO_TIME }).then(
       ({ url }) => navigate(url),
       // A 403 says why ("You no longer have access to this character"), a 404 that there's no page to open, the entity
       // gone or its page too (a deleted class's levels); any other failure (the server's, the network's) is an error of

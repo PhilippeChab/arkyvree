@@ -3,7 +3,7 @@ import { parseResponse } from "hono/client";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState, useFormWith } from "@/client/src/hooks/index.ts";
-import { type EntityRow, entitySegment } from "@/client/src/lib/entityRequests.ts";
+import type { EntityRow } from "@/client/src/lib/entityRequests.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { invalidateRulesetEdit } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
@@ -13,7 +13,6 @@ import {
   variantRow,
 } from "@/client/src/pages/rulesets/details/sections/entityVariants.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 /**
  * A kind's entity's variants (`type`'s: an item's), as its row's Create Variants opens their dialog on it (`openOn`):
@@ -24,20 +23,19 @@ export function useEntityVariants(rulesetId: string, type: string) {
   const snackbar = useSnackbar();
   const dialog = useDialogState<EntityRow>();
   const form = useFormWith<EntityVariantsFormValues>({ variants: [] });
-  const segment = getUrlSegment(type);
 
   const mutation = useMutation({
     mutationFn: async ({ entityId, variants }: { entityId: string; variants: VariantRow[] }) =>
       parseResponse(
         rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].variants.$post({
-          param: { id: rulesetId, entityType: entitySegment(segment), entityId },
+          param: { id: rulesetId, entityType: type, entityId },
           json: { variants },
         }),
       ),
     onSuccess: (_, { variants }) => {
       snackbar.success(`${formatCount(variants.length, "variant")} created`);
       dialog.close();
-      void invalidateRulesetEdit(queryClient, rulesetId, [QUERY_KEYS.rulesets.section(rulesetId, segment)]);
+      void invalidateRulesetEdit(queryClient, rulesetId, [QUERY_KEYS.rulesets.section(rulesetId, type)]);
     },
     onError: (error) => {
       snackbar.error(error, "Failed to create variants");

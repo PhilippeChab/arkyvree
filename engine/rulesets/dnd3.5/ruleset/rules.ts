@@ -43,7 +43,7 @@ export const RULES: RulesDeclaration = {
   columns: {
     feats: FEAT_COLUMNS,
     items: ITEM_COLUMNS,
-    class_levels: CLASS_LEVEL_COLUMNS,
+    "class-levels": CLASS_LEVEL_COLUMNS,
     classes: CLASS_COLUMNS,
     languages: LANGUAGE_COLUMNS,
     spells: SPELL_COLUMNS,
@@ -147,7 +147,7 @@ export const RULES: RulesDeclaration = {
     aptitudes: { many: "Aptitudes", one: "Aptitude" },
     feats: { many: "Feats", one: "Feat" },
     items: { many: "Items", one: "Item" },
-    class_levels: { many: "Class Levels", one: "Class Level" },
+    "class-levels": { many: "Class Levels", one: "Class Level" },
     classes: { many: "Classes", one: "Class" },
     languages: { many: "Languages", one: "Language" },
     mechanics: { many: "Mechanics", one: "Mechanic" },

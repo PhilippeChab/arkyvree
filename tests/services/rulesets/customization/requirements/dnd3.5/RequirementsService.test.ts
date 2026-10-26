@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import type { Feat, Race } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
 import { Entities, Requirements } from "@/server/repositories/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
@@ -75,9 +75,7 @@ describe("RequirementsService", () => {
         entityType: "feats",
         entityId: feat.id,
       });
-      expect(await activityTypes(session.userId, requirementsInCustomization, created.id)).toEqual([
-        "createRequirement",
-      ]);
+      expect(await activityTypes(session.userId, TARGET_TYPES.requirements, created.id)).toEqual(["createRequirement"]);
     });
 
     test("creates a target requirement, its value type inferred from the path", async () => {
@@ -132,9 +130,7 @@ describe("RequirementsService", () => {
         value: null,
         operator: null,
       });
-      expect(await activityTypes(session.userId, requirementsInCustomization, created.id)).toContain(
-        "updateRequirement",
-      );
+      expect(await activityTypes(session.userId, TARGET_TYPES.requirements, created.id)).toContain("updateRequirement");
     });
 
     test("changes a target requirement's target and value, inferring the new value type", async () => {
@@ -194,7 +190,7 @@ describe("RequirementsService", () => {
           (await RequirementsService.deleteRequirement(session, rulesetId, entityType, entityId, created.id)).id,
         ).toBe(created.id);
         expect(await Requirements.findOne(db, { id: created.id })).toBeUndefined();
-        expect(await activityTypes(session.userId, requirementsInCustomization, created.id)).toEqual([
+        expect(await activityTypes(session.userId, TARGET_TYPES.requirements, created.id)).toEqual([
           "createRequirement",
           "deleteRequirement",
         ]);

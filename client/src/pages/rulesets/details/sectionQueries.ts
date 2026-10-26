@@ -7,7 +7,7 @@
 import { infiniteQueryOptions, type QueryClient, type QueryKey, skipToken } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 
-import { entitySegment, givenParams, readEntitiesFn } from "@/client/src/lib/entityRequests.ts";
+import { givenParams, readEntitiesFn } from "@/client/src/lib/entityRequests.ts";
 import { nextPage } from "@/client/src/lib/pageItems.ts";
 import type { Direction, EntityKindDescription } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -17,7 +17,6 @@ import {
   type EntitySortField,
 } from "@/client/src/pages/rulesets/hooks/useEntityFilters.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { rulesetFieldsQuery, rulesetSettingsQuery } from "./rulesetQueries.ts";
 
@@ -59,7 +58,7 @@ export type RulesetSection = string;
 /** The key of a kind's list: its tab's, and each filter its kind narrows it by. */
 function entityListKey(rulesetId: string, kind: EntityListKind, filters: EntityFilters) {
   return [
-    ...sectionKey(rulesetId, getUrlSegment(kind.type), filters),
+    ...sectionKey(rulesetId, kind.type, filters),
     ...(kind.partitioned ? [filters.kind, filters.orderBy, filters.orderDir] : []),
     ...(kind.pools ? [filters.pool] : []),
     ...(kind.levels ? [filters.level] : []),
@@ -116,9 +115,8 @@ export function entityFamilyQuery(
   family: string | null,
   childOnly: boolean,
 ) {
-  const segment = getUrlSegment(type);
   return infiniteQueryOptions({
-    queryKey: QUERY_KEYS.rulesets.familyVariants(rulesetId, segment, family ?? "", childOnly),
+    queryKey: QUERY_KEYS.rulesets.familyVariants(rulesetId, type, family ?? "", childOnly),
     queryFn: family
       ? ({ pageParam }) =>
           readEntitiesFn(rulesetId, type, {
@@ -142,10 +140,9 @@ export function entityGroupsQuery(
   kind: Pick<EntityListKind, "pools" | "type">,
   filters: PoolFilters,
 ) {
-  const segment = getUrlSegment(kind.type);
   return infiniteQueryOptions({
     queryKey: [
-      ...QUERY_KEYS.rulesets.sectionGrouped(rulesetId, segment),
+      ...QUERY_KEYS.rulesets.sectionGrouped(rulesetId, kind.type),
       filters.search,
       filters.childOnly,
       filters.pool,
@@ -153,7 +150,7 @@ export function entityGroupsQuery(
     queryFn: ({ pageParam }) =>
       parseResponse(
         rpc.api.rulesets[":id"].entities[":entityType"].grouped.$get({
-          param: { id: rulesetId, entityType: entitySegment(segment) },
+          param: { id: rulesetId, entityType: kind.type },
           query: givenParams({
             ...pageSearchParams(pageParam, filters),
             ...(kind.pools && { [kind.pools.role]: filters.pool }),

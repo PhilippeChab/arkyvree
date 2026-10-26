@@ -36,7 +36,6 @@ import { rpc } from "@/client/src/services/rpc.ts";
 import { DURATION } from "@/client/src/theme/animations.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import type { BaseRules } from "@/shared/enums.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 interface LocalChangesDialogProps {
   /** The ruleset's base rules, whose words name the entity types */
@@ -63,7 +62,7 @@ function getEntityUrl(rulesetId: string, change: Change, pages: ReadonlyMap<stri
   const { entityType, entityId } = change;
   return pages.has(entityType)
     ? `/rulesets/${rulesetId}/${buildCustomizationPath(entityType, entityId)}`
-    : `/rulesets/${rulesetId}/${getUrlSegment(entityType)}/${entityId}`;
+    : `/rulesets/${rulesetId}/${entityType}/${entityId}`;
 }
 
 export function LocalChangesDialog({ open, onClose, rulesetId, baseRules, canEdit }: LocalChangesDialogProps) {
@@ -85,9 +84,7 @@ export function LocalChangesDialog({ open, onClose, rulesetId, baseRules, canEdi
 
   const restoreMutation = useMutation({
     mutationFn: async ({ entityType, sourceEntityId }: Pick<RestorableChange, "entityType" | "sourceEntityId">) =>
-      parseResponse(
-        restoreApi.$post({ param: { id: rulesetId, entityType: getUrlSegment(entityType), entityId: sourceEntityId } }),
-      ),
+      parseResponse(restoreApi.$post({ param: { id: rulesetId, entityType, entityId: sourceEntityId } })),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.detail(rulesetId) });
       snackbar.success("Change restored");

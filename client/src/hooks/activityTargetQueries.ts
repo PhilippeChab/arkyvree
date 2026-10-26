@@ -7,10 +7,10 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 /** Where an activity's or a notification's target is now: the server resolves its page as it's opened. */
-export function activityTargetQuery(targetTable: string, targetId: string) {
+export function activityTargetQuery(targetType: string, targetId: string) {
   return queryOptions({
-    queryKey: QUERY_KEYS.activities.target(targetTable, targetId),
+    queryKey: QUERY_KEYS.activities.target(targetType, targetId),
     queryFn: () =>
-      parseResponse(rpc.api.activities.resolve[":targetTable"][":targetId"].$get({ param: { targetTable, targetId } })),
+      parseResponse(rpc.api.activities.resolve[":targetType"][":targetId"].$get({ param: { targetType, targetId } })),
   });
 }

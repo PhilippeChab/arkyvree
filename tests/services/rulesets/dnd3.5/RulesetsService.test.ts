@@ -584,14 +584,14 @@ describe("RulesetsService", () => {
       test("deletes a copied class's levels and class skills", async () => {
         const { session, parent, fork } = await setupChanges();
         const { klass, skill } = await addPlayableContent(parent.id);
-        await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: 1 });
+        await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
         await addClassSkills(db, klass.id, [skill.id]);
         const copy = await copyEntity(db, "classes", klass.id, fork);
 
         await RulesetChangesService.revertOverride(session, fork.id, "classes", klass.id);
 
         expect(
-          await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [copy.id as string] }),
+          await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [copy.id as string] }),
         ).toEqual([]);
         expect(await EntityLinks.findMany(db, { fromIds: [copy.id as string], role: "classSkill" })).toEqual([]);
       });

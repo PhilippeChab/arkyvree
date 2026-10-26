@@ -114,7 +114,7 @@ describe("EntitiesService: a class's skills", () => {
   test("refuses to remove a class skill while a character has a level in the class", async () => {
     const { user, session, ruleset, fighter, climb } = await setup();
     await EntitiesService.addEntityLink(session, ruleset.id, "classes", fighter.id, climb.id);
-    const [classLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: fighter.id, position: 1 });
+    const [classLevel] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: fighter.id, position: 1 });
     const character = await createTestCharacter(user.id, { rulesetId: ruleset.id });
     await addCharacterLevel(character.id, classLevel.id);
 

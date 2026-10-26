@@ -14,7 +14,7 @@ export type ClassLevelFieldValues = FieldValues<typeof CLASS_LEVEL_FIELDS.fields
 export const CLASS_FIELDS = new FieldCodec(ENTITY_FIELDS.classes);
 
 /**
- * A class level's fields, as the vocabulary declares them (`ENTITY_FIELDS.class_levels`): a
+ * A class level's fields, as the vocabulary declares them (`ENTITY_FIELDS["class-levels"]`): a
  * familiar's levels give none, since it uses its master's.
  */
-export const CLASS_LEVEL_FIELDS = new FieldCodec(ENTITY_FIELDS.class_levels);
+export const CLASS_LEVEL_FIELDS = new FieldCodec(ENTITY_FIELDS["class-levels"]);

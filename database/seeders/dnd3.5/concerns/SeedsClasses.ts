@@ -98,7 +98,7 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
       const granted = (level: number, feat: string, aptitude: string, what: string) => ({
         role: "grants",
         fromId: levelIds[level],
-        fromType: "class_levels",
+        fromType: "class-levels",
         toId: this.idOf(this.ctx.featMap, feat, `${def.name}'s ${what}`),
         toType: "feats",
         viaId: this.idOf(this.ctx.aptMap, aptitude, `${def.name}'s ${what}`),
@@ -132,7 +132,7 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
           : []),
       ];
       await this.insertModifiers(
-        "class_levels",
+        "class-levels",
         levels.flatMap(({ id, level }) =>
           [
             ...levelModifiers.filter((m) => m.level === level),
@@ -150,11 +150,11 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
           .filter(({ level }) => level >= 2)
           .map(({ id, level }) => ({
             entityId: id,
-            entityType: "class_levels",
+            entityType: "class-levels",
             level: "1",
             ...gt(`classes.${classSlug}.level`, level - 1),
           })),
-        ...this.requirementRows(levelIds[1], "class_levels", def.requirements),
+        ...this.requirementRows(levelIds[1], "class-levels", def.requirements),
       ]);
     }
 
@@ -163,7 +163,7 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
       const base = (fromId: string, save: string, amount: number) => ({
         role: "baseBonus",
         fromId,
-        fromType: "class_levels",
+        fromType: "class-levels",
         toId: this.ctx.saveMap[save],
         toType: "saves",
         amount,
@@ -209,7 +209,7 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
       const numbers = Array.from({ length: def.levels }, (_, i) => i + 1);
       // Each level with its base attack and its skill points
       const levelRowIds = await this.insertRows(
-        "class_levels",
+        "class-levels",
         numbers.map((level) => ({
           ownerId: classId,
           position: level,

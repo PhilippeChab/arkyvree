@@ -1,7 +1,4 @@
-import { getTableName } from "drizzle-orm";
-
 import type { Db } from "@/drizzle/database.ts";
-import { contributorsInCharacter } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
@@ -15,6 +12,7 @@ import {
 } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class CharacterContributorsService {
@@ -34,7 +32,7 @@ class CharacterContributorsService {
     await createActivityWithNotifications(tx, {
       userId: session.userId,
       targetId: updated.id,
-      targetTable: getTableName(contributorsInCharacter),
+      targetType: TARGET_TYPES.characterContributors,
       type: status === "Active" ? "acceptCharacterContributorInvite" : "rejectCharacterContributorInvite",
       data: { contributorId: contributor.id, characterId: contributor.characterId, characterName },
     });
@@ -151,7 +149,7 @@ class CharacterContributorsService {
       await createActivityWithNotifications(tx, {
         userId: session.userId,
         targetId: contributor.id,
-        targetTable: getTableName(contributorsInCharacter),
+        targetType: TARGET_TYPES.characterContributors,
         type: "inviteCharacterContributor",
         data: { email, characterId, characterName: character.name },
       });
@@ -203,7 +201,7 @@ class CharacterContributorsService {
       await createActivityWithNotifications(tx, {
         userId: session.userId,
         targetId: updated.id,
-        targetTable: getTableName(contributorsInCharacter),
+        targetType: TARGET_TYPES.characterContributors,
         type: "leaveCharacter",
         data: { characterId, characterName: character.name },
       });
@@ -242,7 +240,7 @@ class CharacterContributorsService {
       await createActivityWithNotifications(tx, {
         userId: session.userId,
         targetId: updated.id,
-        targetTable: getTableName(contributorsInCharacter),
+        targetType: TARGET_TYPES.characterContributors,
         type: "revokeCharacterContributor",
         data: { contributorId, prevStatus, characterId: contributor.characterId, characterName: character.name },
       });

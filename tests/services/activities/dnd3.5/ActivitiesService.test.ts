@@ -19,8 +19,8 @@ import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
-function resolve(targetTable: string, targetId: string, session: Session = makeSession()) {
-  return ActivitiesService.getActivityUrl(session, targetTable, targetId);
+function resolve(targetType: string, targetId: string, session: Session = makeSession()) {
+  return ActivitiesService.getActivityUrl(session, targetType, targetId);
 }
 
 async function resolveAll(targets: string[][]) {
@@ -42,7 +42,7 @@ describe("ActivitiesService.getActivityUrl", () => {
         ["campaigns", campaign.id],
         ["users", user.id],
         ["sessions", NIL_UUID],
-        ["oauth_accounts", NIL_UUID],
+        ["oauth-accounts", NIL_UUID],
       ]),
     ).toEqual([
       `/rulesets/${ruleset.id}`,
@@ -68,7 +68,7 @@ describe("ActivitiesService.getActivityUrl", () => {
     } = await getSeedCtx();
     const fighter = classMap.pc["Fighter"];
     const [mechanic] = await Entities.create<Mechanic>(db, "mechanics", { name: "Linked Mechanic", rulesetId: r });
-    const [level] = await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [fighter] });
+    const [level] = await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [fighter] });
     for (const [table, id, url] of [
       ["feats", featMap["Toughness"], `/rulesets/${r}/feats/${featMap["Toughness"]}/customization`],
       ["spells", spellMap["Magic Missile"], `/rulesets/${r}/spells/${spellMap["Magic Missile"]}/customization`],
@@ -79,7 +79,7 @@ describe("ActivitiesService.getActivityUrl", () => {
       ["abilities", abilityMap["Strength"], `/rulesets/${r}/abilities/${abilityMap["Strength"]}`],
       ["mechanics", mechanic.id, `/rulesets/${r}/mechanics/${mechanic.id}`],
       ["classes", fighter, `/rulesets/${r}/classes/${fighter}`],
-      ["class_levels", level.id, `/rulesets/${r}/classes/${fighter}`],
+      ["class-levels", level.id, `/rulesets/${r}/classes/${fighter}`],
       // A class skill's activity targets the class.
       ["classSkill", fighter, `/rulesets/${r}/classes/${fighter}/skills`],
     ])
@@ -89,7 +89,7 @@ describe("ActivitiesService.getActivityUrl", () => {
   test("links a customization to its entity's customization page, on its tab", async () => {
     const { rulesetId: r, featMap, classMap } = await getSeedCtx();
     const [clericLevel] = await Entities.findMany<KlassLevel>(db, {
-      entityType: "class_levels",
+      entityType: "class-levels",
       ownerIds: [classMap.pc["Cleric"]],
     });
     const [featModifier] = await Modifiers.findMany(db, {
@@ -98,7 +98,7 @@ describe("ActivitiesService.getActivityUrl", () => {
     });
     const [levelModifier] = await Modifiers.create(db, {
       sourceId: clericLevel.id,
-      sourceType: "class_levels",
+      sourceType: "class-levels",
       target: "combat.bab",
       value: "1",
       valueType: "number",
@@ -173,7 +173,7 @@ describe("ActivitiesService.getActivityUrl", () => {
         ["advancements", character.id],
         ["players", player.id],
         ["invites", invite.id],
-        ["player_characters", character.id],
+        ["player-characters", character.id],
       ]),
     ).toEqual([
       `/characters/${character.id}`,
@@ -204,7 +204,7 @@ describe("ActivitiesService.getActivityUrl", () => {
     ],
     [
       "character",
-      "character_contributors",
+      "character-contributors",
       "/character-contributor-invite",
       async (ownerId: string, userId: string, status: string) => {
         const character = await createTestCharacter(ownerId);
@@ -240,7 +240,7 @@ describe("ActivitiesService.getActivityUrl", () => {
     });
   });
 
-  test("links nothing for a missing entity or a table without pages", async () => {
+  test("links nothing for a missing target or a type without pages", async () => {
     for (const table of [
       // A character or campaign deleted for good
       "rulesets",
@@ -249,16 +249,16 @@ describe("ActivitiesService.getActivityUrl", () => {
       "advancements",
       "campaigns",
       "feats",
-      "class_levels",
+      "class-levels",
       "classSkill",
       "players",
       "invites",
-      "player_characters",
+      "player-characters",
       "contributors",
-      "character_contributors",
+      "character-contributors",
       "modifiers",
       "requirements",
-      "entity_fields",
+      "entity-fields",
       "notifications",
     ])
       expect({ table, url: await resolve(table, NIL_UUID) }).toEqual({ table, url: null });
@@ -267,7 +267,7 @@ describe("ActivitiesService.getActivityUrl", () => {
   test("links nothing for a role no entity edits link by link, whose changes no activity records", async () => {
     const { featMap, classMap } = await getSeedCtx();
     const fighter = classMap.pc["Fighter"];
-    const [level] = await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [fighter] });
+    const [level] = await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [fighter] });
     for (const [table, id] of [
       ["listedIn", featMap["Toughness"]],
       ["grants", level.id],

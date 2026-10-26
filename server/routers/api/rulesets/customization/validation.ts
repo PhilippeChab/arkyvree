@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-import { buildEntityTypeSchema } from "@/server/routers/api/schemaBuilders.ts";
 import { CUSTOMIZED_TYPES } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { CHAINING_OPERATORS, MODIFIER_OPERATORS, REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
 
@@ -12,14 +11,14 @@ export const chainingOperator = z.string().refine((value) => chainingOperators.h
 /** A customization route's entity: the ruleset (`id`), and the entity by its type and id. */
 export const entityParams = z.object({
   id: z.string().uuid(),
-  entityType: buildEntityTypeSchema(CUSTOMIZED_TYPES),
+  entityType: z.enum(CUSTOMIZED_TYPES),
   entityId: z.string().uuid(),
 });
 export const modifierOperator = z.string().refine((value) => modifierOperators.has(value), "Invalid modifier operator");
 
 /** As `entityParams`, for the customizations a modifier can own too (its requirements). */
 export const ownerParams = entityParams.extend({
-  entityType: buildEntityTypeSchema([...CUSTOMIZED_TYPES, "modifiers"]),
+  entityType: z.enum([...CUSTOMIZED_TYPES, "modifiers"]),
 });
 
 /** Keep RPC input types as strings, matching the existing form schemas. */

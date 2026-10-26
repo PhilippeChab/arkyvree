@@ -268,8 +268,8 @@ async function setupRuleset({ fork = false } = {}) {
   });
   const classLevels = [];
   for (let level = 1; level <= 5; level++) {
-    const [classLevel] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: level });
-    await writeFieldValues("class_levels", classLevel.id, [
+    const [classLevel] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: level });
+    await writeFieldValues("class-levels", classLevel.id, [
       [CLASS_LEVEL_BAB, level],
       [CLASS_LEVEL_SKILL_POINTS, 2 + Math.floor(level / 2)],
     ]);
@@ -426,10 +426,10 @@ describe("LevelsService", () => {
         rulesetId: fork.id,
         fields: { [CLASS_HD]: 10 },
       });
-      const [level] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: 1 });
+      const [level] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
       await Requirements.create(db, {
         entityId: level.id,
-        entityType: "class_levels",
+        entityType: "class-levels",
         level: "1",
         target: "feats.weaponfocus.*.possessed",
         operator: "equal",
@@ -456,11 +456,11 @@ describe("LevelsService", () => {
         rulesetId: fork.id,
         fields: { [CLASS_HD]: 10 },
       });
-      const [level] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: klass.id, position: 1 });
+      const [level] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
       // The class requires Power Attack, its first level a base attack bonus of +1, which a fighter 1 has
       for (const [entityId, entityType, target, operator, value, valueType] of [
         [klass.id, "classes", "feats.powerattack.possessed", "equal", "true", "boolean"],
-        [level.id, "class_levels", "combat.bab", "greater_than_or_equal", "1", "number"],
+        [level.id, "class-levels", "combat.bab", "greater_than_or_equal", "1", "number"],
       ])
         await Requirements.create(db, { entityId, entityType, level: "1", target, operator, value, valueType });
 
@@ -1313,7 +1313,7 @@ describe("LevelsService", () => {
       const fork = await createSeededTestRuleset(SEED_USER_ID);
       const sorcerer = await copyEntity(db, "classes", ctx.classMap.pc["Sorcerer"], fork);
       const second = (
-        await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [sorcerer.id] })
+        await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [sorcerer.id] })
       ).find(({ position }) => position === 2)!;
       const [sorcererSpells, resistance] = [ctx.aptMap["Sorcerer Spells"], ctx.spellMap["Resistance"]];
       await addGrants(db, second.id, "spells", [{ toId: resistance, aptitudeId: sorcererSpells }]);

@@ -1,7 +1,6 @@
 import { Navigate, useLocation, useParams } from "react-router-dom";
 
 import { useRules } from "@/client/src/hooks/index.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import EntityDetailsPage from "./entities/EntityDetailsPage.tsx";
 import ProgressionOwnerPage from "./owners/ProgressionOwnerPage.tsx";
@@ -25,10 +24,8 @@ export default function KindEntityPage() {
   }>();
   const location = useLocation();
   const { all } = useRules();
-  const rules = Object.values(all ?? {}).find((each) =>
-    each.kinds.some((kind) => getUrlSegment(kind.type) === section),
-  );
-  const kind = rules?.kinds.find((each) => getUrlSegment(each.type) === section);
+  const rules = Object.values(all ?? {}).find((each) => each.kinds.some((kind) => kind.type === section));
+  const kind = rules?.kinds.find((each) => each.type === section);
   if (rules && kind?.opens === "progression") return <ProgressionOwnerPage ownerType={kind.type} rules={rules} />;
   if (tab !== undefined)
     return <Navigate to={`/rulesets/${id}/${section}/${entityId}${location.search}`} replace state={location.state} />;

@@ -10,7 +10,7 @@ export const KIND_LABELS: Record<keyof ViewKinds | "characters" | "modifiers", s
   characters: "Character",
   feats: "Feat",
   items: "Item",
-  class_levels: "Class level",
+  "class-levels": "Class level",
   classes: "Class",
   languages: "Language",
   mechanics: "Mechanic",

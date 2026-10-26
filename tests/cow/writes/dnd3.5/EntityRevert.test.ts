@@ -211,9 +211,9 @@ describe("reverting a fork's copy", () => {
     const { user, session, fork, ctx } = await setup();
     const fighter = ctx.classMap.pc.Fighter;
     const copy = await copyEntity(db, "classes", fighter, fork);
-    const [copyLevel] = await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [copy.id] });
+    const [copyLevel] = await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [copy.id] });
     const [sourceLevel] = (
-      await Entities.findMany<KlassLevel>(db, { entityType: "class_levels", ownerIds: [fighter] })
+      await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [fighter] })
     ).filter((level) => level.position === copyLevel.position);
     const character = await createTestCharacter(user.id, { rulesetId: fork.id });
     const level = await addCharacterLevel(character.id, copyLevel.id);
@@ -234,9 +234,9 @@ describe("reverting a fork's copy", () => {
       rulesetId: parent.id,
       fields: { [CLASS_HD]: 8 },
     });
-    await Entities.create<KlassLevel>(db, "class_levels", { ownerId: source.id, position: 1 });
+    await Entities.create<KlassLevel>(db, "class-levels", { ownerId: source.id, position: 1 });
     const copy = await copyEntity(db, "classes", source.id, fork);
-    const [added] = await Entities.create<KlassLevel>(db, "class_levels", { ownerId: copy.id, position: 2 });
+    const [added] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: copy.id, position: 2 });
     const character = await createTestCharacter(user.id, { rulesetId: fork.id });
     await addCharacterLevel(character.id, added.id);
 

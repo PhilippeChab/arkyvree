@@ -20,10 +20,10 @@ import {
   Visibility,
 } from "@/server/repositories/index.ts";
 import { isNavigableTarget } from "@/shared/activity.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Session } from "@/shared/relations.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 /** Where an activity links to: a page, nowhere (null), or a record the user no longer has access to. */
 type ActivityUrl = string | null | { entityType: "ruleset" | "character"; noAccess: true };
@@ -33,7 +33,7 @@ type ActivityUrl = string | null | { entityType: "ruleset" | "character"; noAcce
  * requirements) when given, else its first.
  */
 function entityPageUrl(rulesetId: string, entityType: string, entityId: string, section?: string) {
-  return `/rulesets/${rulesetId}/${getUrlSegment(entityType)}/${entityId}${section ? `/${section}` : ""}`;
+  return `/rulesets/${rulesetId}/${entityType}/${entityId}${section ? `/${section}` : ""}`;
 }
 
 /**
@@ -124,26 +124,26 @@ class ActivitiesService {
    * owner's on the tab of its targets (a class's skills, whose activity targets the class); any other entity's, its
    * customization page when it has one, else its own.
    */
-  private async resolveRulesEntity(targetTable: string, targetId: string): Promise<string | null> {
-    const ownerType = OWNED_TYPES.get(targetTable as OwnedKind);
+  private async resolveRulesEntity(targetType: string, targetId: string): Promise<string | null> {
+    const ownerType = OWNED_TYPES.get(targetType as OwnedKind);
     if (ownerType) {
-      const [owned] = await Entities.findPositions(db, { entityType: targetTable, ids: [targetId] });
+      const [owned] = await Entities.findPositions(db, { entityType: targetType, ids: [targetId] });
       return owned ? await this.ownerPageUrl(ownerType, owned.ownerId) : null;
     }
-    const edited = EDITED_LINKS.get(targetTable);
-    if (edited) return await this.ownerPageUrl(edited.from, targetId, getUrlSegment(edited.to));
-    return await this.resolveRulesSubEntity(targetTable, targetId);
+    const edited = EDITED_LINKS.get(targetType);
+    if (edited) return await this.ownerPageUrl(edited.from, targetId, edited.to);
+    return await this.resolveRulesSubEntity(targetType, targetId);
   }
 
   /** A ruleset entity's page, any type's: its customization page when it has one, else its own. */
-  private async resolveRulesSubEntity(targetTable: string, targetId: string): Promise<string | null> {
-    if (!isOneOf(targetTable, RULESET_ENTITY_TYPES)) return null;
-    const entity = await Entities.findOne(db, { entityType: targetTable, id: targetId });
+  private async resolveRulesSubEntity(targetType: string, targetId: string): Promise<string | null> {
+    if (!isOneOf(targetType, RULESET_ENTITY_TYPES)) return null;
+    const entity = await Entities.findOne(db, { entityType: targetType, id: targetId });
     if (!entity) return null;
 
-    return hasCustomizationPage(targetTable)
-      ? `/rulesets/${entity.rulesetId}/${buildCustomizationPath(targetTable, targetId)}`
-      : `/rulesets/${entity.rulesetId}/${getUrlSegment(targetTable)}/${targetId}`;
+    return hasCustomizationPage(targetType)
+      ? `/rulesets/${entity.rulesetId}/${buildCustomizationPath(targetType, targetId)}`
+      : `/rulesets/${entity.rulesetId}/${targetType}/${targetId}`;
   }
 
   async getActivities(
@@ -152,7 +152,7 @@ class ActivitiesService {
       orderBy?: "createdAt" | "type";
       orderDir?: "asc" | "desc";
       search?: string;
-      targetTable?: string;
+      targetType?: string;
       type?: string;
     },
     pagination: { limit: number; page: number },
@@ -167,40 +167,40 @@ class ActivitiesService {
     );
   }
 
-  async getActivityUrl(session: Session, targetTable: string, targetId: string): Promise<ActivityUrl> {
-    if (!isNavigableTarget(targetTable)) return null;
-    switch (targetTable) {
+  async getActivityUrl(session: Session, targetType: string, targetId: string): Promise<ActivityUrl> {
+    if (!isNavigableTarget(targetType)) return null;
+    switch (targetType) {
       // Top-level records link to their page, archived or not, until they're deleted
-      case "rulesets":
+      case TARGET_TYPES.rulesets:
         return (await Rulesets.findOne(db, { id: targetId })) ? `/rulesets/${targetId}` : null;
-      case "characters":
+      case TARGET_TYPES.characters:
       // Character sub-entities: targetId is the characterId
-      case "advancements":
-      case "inventory":
+      case TARGET_TYPES.advancements:
+      case TARGET_TYPES.inventory:
         return (await Characters.findOne(db, { id: targetId }, Visibility.All)) ? `/characters/${targetId}` : null;
-      case "campaigns":
+      case TARGET_TYPES.campaigns:
         return (await Campaigns.findOne(db, { id: targetId }, Visibility.All)) ? `/campaigns/${targetId}` : null;
 
       // Campaign sub-entities
-      case "players":
+      case TARGET_TYPES.players:
         return await this.playerCampaignUrl(targetId);
       // targetId is the characterId; a character is linked to one campaign at a time.
-      case "player_characters": {
+      case TARGET_TYPES.playerCharacters: {
         const link = await PlayerCharacters.findOne(db, { characterId: targetId });
         return link ? await this.playerCampaignUrl(link.playerId, `/characters/${targetId}`) : null;
       }
-      case "invites": {
+      case TARGET_TYPES.invites: {
         const invite = await Invites.findOne(db, { id: targetId });
         return invite ? await this.playerCampaignUrl(invite.playerId) : null;
       }
 
-      case "contributors": {
+      case TARGET_TYPES.contributors: {
         const contributor = await Contributors.findOne(db, { id: targetId });
         if (!contributor) return null;
         const inviteUrl = `/ruleset-contributor-invite/${targetId}`;
         return this.contributorUrl(session, contributor, "ruleset", inviteUrl, `/rulesets/${contributor.rulesetId}`);
       }
-      case "character_contributors": {
+      case TARGET_TYPES.characterContributors: {
         const contributor = await CharacterContributors.findOne(db, { id: targetId });
         if (!contributor) return null;
         const inviteUrl = `/character-contributor-invite/${targetId}`;
@@ -209,13 +209,13 @@ class ActivitiesService {
       }
 
       // Customization entities
-      case "modifiers": {
+      case TARGET_TYPES.modifiers: {
         const modifier = await Modifiers.findOne(db, { id: targetId });
         return modifier
           ? await this.resolveCustomizationUrl(modifier.sourceId, modifier.sourceType, "modifiers")
           : null;
       }
-      case "requirements": {
+      case TARGET_TYPES.requirements: {
         const requirement = await Requirements.findOne(db, { id: targetId });
         return requirement
           ? await this.resolveCustomizationUrl(requirement.entityId, requirement.entityType, "requirements")
@@ -223,7 +223,7 @@ class ActivitiesService {
       }
       // Rules sub-entities (entity has rulesetId)
       default:
-        return await this.resolveRulesEntity(targetTable, targetId);
+        return await this.resolveRulesEntity(targetType, targetId);
     }
   }
 }

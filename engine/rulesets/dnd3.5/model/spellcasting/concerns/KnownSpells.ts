@@ -24,7 +24,7 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
       const aptitudeSpellAptitudeIds = new Set(this.allAptitudeSpells.map((spell) => spell.viaId));
 
       for (const modifier of appliedModifiers) {
-        if (modifier.sourceType !== "class_levels") continue;
+        if (modifier.sourceType !== "class-levels") continue;
         const list = AptitudeTargets.parseList(modifier.target);
         if (list === undefined) continue;
         const aptitude = aptitudes[list];

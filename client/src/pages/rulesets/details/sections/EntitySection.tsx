@@ -18,7 +18,7 @@ import {
   useRulesetPermissions,
   useSearchParam,
 } from "@/client/src/hooks/index.ts";
-import { type EntityRow, entitySegment } from "@/client/src/lib/entityRequests.ts";
+import type { EntityRow } from "@/client/src/lib/entityRequests.ts";
 import { oneOf } from "@/client/src/lib/oneOf.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import type { EntityKindDescription } from "@/client/src/lib/queries.ts";
@@ -63,7 +63,6 @@ import {
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath } from "@/shared/customization/entities.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { EntityGroupsTable } from "./EntityGroupsTable.tsx";
 import { EntityVariantsDialog } from "./EntityVariantsDialog.tsx";
@@ -111,7 +110,7 @@ function duplicateForm(
 /** Where an entity's row opens: its customization page, or its own page (a class's, on its progression). */
 function entityPath(kind: EntityKindDescription, id: string, pages: ReadonlyMap<string, CustomizationPage>) {
   const customization = customizationPageOf(kind, pages);
-  return customization ? buildCustomizationPath(customization.type, id) : `${getUrlSegment(kind.type)}/${id}`;
+  return customization ? buildCustomizationPath(customization.type, id) : `${kind.type}/${id}`;
 }
 
 /**
@@ -129,7 +128,6 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   const one = entityTypeLabel(kind.type, rules?.words);
   const many = entityTypeLabel(kind.type, rules?.words, true);
-  const segment = getUrlSegment(kind.type);
 
   // A partitioned list narrows by what its race or class is for and sorts; any other searches alone, but a read-only
   // one, which has no search bar to clear the URL's. A kind's pool and level narrow it too, where its kind takes them.
@@ -161,7 +159,7 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
     EntityFormData
   >({
     rulesetId: ruleset.id,
-    sectionName: segment,
+    sectionName: kind.type,
     label: one,
     createDefaults: withEntityFields(
       withTemplateFlag(toEntityForm<EntityFormData>(formColumns), kind.copies, false),
@@ -170,14 +168,14 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
     createFn: async (data) =>
       parseResponse(
         rpc.api.rulesets[":id"].entities[":entityType"].$post({
-          param: { id: ruleset.id, entityType: entitySegment(segment) },
+          param: { id: ruleset.id, entityType: kind.type },
           json: toBody(data),
         }),
       ),
     duplicateFn: async (entityId, data) =>
       parseResponse(
         rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].duplicate.$post({
-          param: { id: ruleset.id, entityType: entitySegment(segment), entityId },
+          param: { id: ruleset.id, entityType: kind.type, entityId },
           json: toBody(data),
         }),
       ),

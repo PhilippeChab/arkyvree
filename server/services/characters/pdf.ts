@@ -1,10 +1,8 @@
-import { getTableName } from "drizzle-orm";
-
-import { charactersInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { addJob, db, withTransaction } from "@/server/database/index.ts";
 import { pingWorker } from "@/server/queue.ts";
 import { Activities, Campaigns, Characters, PlayerCharacters, Visibility } from "@/server/repositories/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Character, Session } from "@/shared/relations.ts";
 
 import { findEditableCharacterOrChild } from "./editableCharacter.ts";
@@ -14,8 +12,8 @@ import { findEditableCharacterOrChild } from "./editableCharacter.ts";
  * character page, or for an export requested from a campaign the campaign
  * character page (a Game Master can't open the character page itself).
  */
-export function getCharacterPdfTargetTable(campaignId?: string) {
-  return getTableName(campaignId ? playerCharactersInCampaign : charactersInCharacter);
+export function getCharacterPdfTargetType(campaignId?: string) {
+  return campaignId ? TARGET_TYPES.playerCharacters : TARGET_TYPES.characters;
 }
 
 /**
@@ -39,7 +37,7 @@ export async function enqueueCharacterPdf(
     await Activities.create(tx, {
       userId: session.userId,
       targetId: characterRecord.id,
-      targetTable: getCharacterPdfTargetTable(campaignId),
+      targetType: getCharacterPdfTargetType(campaignId),
       type: "generatePdf",
     });
   });

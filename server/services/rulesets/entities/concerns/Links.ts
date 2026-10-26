@@ -42,7 +42,7 @@ export function Links<B extends Constructor>(Base: B) {
             await createActivityWithNotifications(tx, {
               userId: session.userId,
               targetId: fromId,
-              targetTable: plan.link.role,
+              targetType: plan.link.role,
               type: `add${getActivityName(plan.link.role)}`,
               data: plan.activity,
             });
@@ -88,7 +88,7 @@ export function Links<B extends Constructor>(Base: B) {
             await createActivityWithNotifications(tx, {
               userId: session.userId,
               targetId: fromId,
-              targetTable: plan.role,
+              targetType: plan.role,
               type: `remove${getActivityName(plan.role)}`,
               data: plan.activity,
             });

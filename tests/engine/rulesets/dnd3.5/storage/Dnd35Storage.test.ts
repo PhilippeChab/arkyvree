@@ -10,13 +10,13 @@ import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 describe("3.5's storage", () => {
   test("declares its feats, items, spells, races, classes and their levels customizable", () => {
     expect(StorageEngine.shared().customizableKinds().toSorted()).toEqual([
-      ...["class_levels", "classes", "feats", "items", "races", "spells"],
+      ...["class-levels", "classes", "feats", "items", "races", "spells"],
     ]);
   });
 
   test("holds fields in its customizable kinds, its skills, its languages and its rulesets", () => {
     expect(StorageEngine.shared().fieldOwners().toSorted()).toEqual([
-      ...["class_levels", "classes", "feats", "items", "languages", "races", "rulesets", "skills", "spells"],
+      ...["class-levels", "classes", "feats", "items", "languages", "races", "rulesets", "skills", "spells"],
     ]);
   });
 

@@ -93,7 +93,7 @@ describe("RulesetFieldsService", () => {
       expect.objectContaining({ role: "bonusSpellAbility", input: "ref", references: "abilities", required: false }),
       expect.objectContaining({ field: CLASS_CASTER_TYPE, input: "choice", options: ["Arcane", "Divine"] }),
     ]);
-    expect(fields.class_levels).toEqual([
+    expect(fields["class-levels"]).toEqual([
       expect.objectContaining({
         field: CLASS_LEVEL_BAB,
         label: "Base Attack Bonus",

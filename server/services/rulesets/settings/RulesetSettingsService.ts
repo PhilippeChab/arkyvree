@@ -1,11 +1,9 @@
-import { getTableName } from "drizzle-orm";
-
-import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { Engine, type SettingsForm } from "@/engine/index.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { Activities, RulesetSettings } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** A ruleset's Settings: its own fields (3.5's skill points' ability), as its chain composes them, and their save. */
@@ -38,7 +36,7 @@ class RulesetSettingsService {
           await Activities.create(tx, {
             userId: session.userId,
             targetId: ruleset.id,
-            targetTable: getTableName(rulesetsInRules),
+            targetType: TARGET_TYPES.rulesets,
             type: "updateRulesetSettings",
             data: { entityName: ruleset.name },
           });

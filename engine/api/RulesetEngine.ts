@@ -10,7 +10,6 @@ import type { CharacterInput, SettingsForm } from "@/engine/core/module/index.ts
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import CharacterEngine from "./CharacterEngine.ts";
 import CharactersEngine from "./CharactersEngine.ts";
@@ -62,8 +61,7 @@ export default class RulesetEngine {
   private part<K extends EntityType, P extends EntityPart>(type: K, part: P, id: string): PartOf<EntityKinds[K], P> {
     const kind = this.entities(type) as unknown as Partial<Record<P, (id: string) => PartOf<EntityKinds[K], P>>>;
     const method = kind[part];
-    if (typeof method !== "function")
-      throw new RulesError("not-found", `No ${PART_WORDS[part]} for ${getUrlSegment(type)}`);
+    if (typeof method !== "function") throw new RulesError("not-found", `No ${PART_WORDS[part]} for ${type}`);
     return method.call(kind, id);
   }
 

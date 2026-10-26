@@ -1,7 +1,7 @@
-import { getTableName, type InferSelectModel } from "drizzle-orm";
+import type { InferSelectModel } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { sessionsInAccount, type usersInAccount } from "@/drizzle/schema.ts";
+import type { usersInAccount } from "@/drizzle/schema.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { ConflictError, InternalError } from "@/server/errors/index.ts";
 import {
@@ -15,6 +15,7 @@ import {
   Users,
   Visibility,
 } from "@/server/repositories/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 
 /** The user as a response carries it: whether a password is set, never its digest. */
 export function toSafeUser(user: InferSelectModel<typeof usersInAccount>) {
@@ -38,7 +39,7 @@ export async function openSession(
   await Activities.create(tx, {
     userId: user.id,
     targetId: session.id,
-    targetTable: getTableName(sessionsInAccount),
+    targetType: TARGET_TYPES.sessions,
     type,
     data,
   });

@@ -1,13 +1,11 @@
-import { getTableName } from "drizzle-orm";
-
 import type { Db } from "@/drizzle/database.ts";
-import { contributorsInRules } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Contributors, Notifications, Rulesets, Users } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -22,7 +20,7 @@ class ContributorsService {
     await createActivityWithNotifications(tx, {
       userId: session.userId,
       targetId: updated.id,
-      targetTable: getTableName(contributorsInRules),
+      targetType: TARGET_TYPES.contributors,
       type: status === "Active" ? "acceptContributorInvite" : "rejectContributorInvite",
       data: { contributorId },
     });
@@ -157,7 +155,7 @@ class ContributorsService {
       await createActivityWithNotifications(tx, {
         userId: session.userId,
         targetId: contributor.id,
-        targetTable: getTableName(contributorsInRules),
+        targetType: TARGET_TYPES.contributors,
         type: "inviteContributor",
         data: { email, role, rulesetId, rulesetName: ruleset.name },
       });
@@ -217,7 +215,7 @@ class ContributorsService {
       await createActivityWithNotifications(tx, {
         userId: session.userId,
         targetId: updated.id,
-        targetTable: getTableName(contributorsInRules),
+        targetType: TARGET_TYPES.contributors,
         type: "leaveRuleset",
         data: { rulesetId },
       });
@@ -250,7 +248,7 @@ class ContributorsService {
       await createActivityWithNotifications(tx, {
         userId: session.userId,
         targetId: updated.id,
-        targetTable: getTableName(contributorsInRules),
+        targetType: TARGET_TYPES.contributors,
         type: "revokeContributor",
         // Its notification names the ruleset it no longer contributes to
         data: { contributorId, prevStatus, rulesetName: ruleset.name },
@@ -276,7 +274,7 @@ class ContributorsService {
       await createActivityWithNotifications(tx, {
         userId: session.userId,
         targetId: updated.id,
-        targetTable: getTableName(contributorsInRules),
+        targetType: TARGET_TYPES.contributors,
         type: "updateContributorRole",
         data: { contributorId, role },
       });

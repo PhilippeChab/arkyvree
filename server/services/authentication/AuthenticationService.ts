@@ -1,6 +1,3 @@
-import { getTableName } from "drizzle-orm";
-
-import { sessionsInAccount, usersInAccount } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import {
@@ -19,6 +16,7 @@ import {
   Users,
   Visibility,
 } from "@/server/repositories/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { openSession, purgeDemoSessionUser, signInAsGoogleAccount, toSafeUser } from "./accounts.ts";
@@ -123,7 +121,7 @@ class AuthenticationService {
       await Activities.create(tx, {
         userId: user.id,
         targetId: user.id,
-        targetTable: getTableName(usersInAccount),
+        targetType: TARGET_TYPES.users,
         type: "resetPassword",
       });
 
@@ -181,7 +179,7 @@ class AuthenticationService {
       await Activities.create(tx, {
         userId: archivedSession.userId,
         targetId: archivedSession.id,
-        targetTable: getTableName(sessionsInAccount),
+        targetType: TARGET_TYPES.sessions,
         type: "signOut",
       });
     });

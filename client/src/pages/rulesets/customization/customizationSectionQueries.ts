@@ -5,17 +5,13 @@ import { parseResponse } from "hono/client";
 
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 const customizationApi = rpc.api.rulesets[":id"].customization[":entityType"][":entityId"];
 
 export function modifiersQuery(rulesetId: string, entityType: string, entityId: string) {
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.customization(rulesetId, entityType, entityId, "modifiers"),
-    queryFn: () =>
-      parseResponse(
-        customizationApi.modifiers.$get({ param: { id: rulesetId, entityType: getUrlSegment(entityType), entityId } }),
-      ),
+    queryFn: () => parseResponse(customizationApi.modifiers.$get({ param: { id: rulesetId, entityType, entityId } })),
   });
 }
 
@@ -25,7 +21,7 @@ export function requirementsQuery(rulesetId: string, entityType: string, entityI
     queryFn: () =>
       parseResponse(
         customizationApi.requirements.$get({
-          param: { id: rulesetId, entityType: getUrlSegment(entityType), entityId },
+          param: { id: rulesetId, entityType, entityId },
         }),
       ),
   });

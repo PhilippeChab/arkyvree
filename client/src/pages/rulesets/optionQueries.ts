@@ -7,11 +7,10 @@
 import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
-import { entitySegment, readEntitiesFn } from "@/client/src/lib/entityRequests.ts";
+import { readEntitiesFn } from "@/client/src/lib/entityRequests.ts";
 import { nextPage } from "@/client/src/lib/pageItems.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 /**
  * A picker's entities of a kind (`type`), searched on the server, `limit` a page: those of a scope where its kind takes
@@ -25,7 +24,7 @@ export function entityOptionsQuery(
   { limit, scope }: { limit: number; scope?: string },
 ) {
   return infiniteQueryOptions({
-    queryKey: [...QUERY_KEYS.rulesets.sectionSearch(rulesetId, getUrlSegment(type ?? ""), search, scope), limit],
+    queryKey: [...QUERY_KEYS.rulesets.sectionSearch(rulesetId, type ?? "", search, scope), limit],
     queryFn:
       type === undefined
         ? skipToken
@@ -51,7 +50,7 @@ export function templatesQuery(rulesetId: string, entityType: string, type: stri
     queryFn: () =>
       parseResponse(
         rpc.api.rulesets[":id"].entities[":entityType"].templates.$get({
-          param: { id: rulesetId, entityType: entitySegment(entityType) },
+          param: { id: rulesetId, entityType },
           query: { type },
         }),
       ),

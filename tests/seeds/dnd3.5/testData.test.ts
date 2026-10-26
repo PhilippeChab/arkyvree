@@ -81,7 +81,7 @@ async function written(character: Character) {
   const levelNames: Record<string, string> = {};
   for (const level of levels) {
     const classLevel = (await Entities.findOne<KlassLevel>(db, {
-      entityType: "class_levels",
+      entityType: "class-levels",
       id: level.trackId!,
     }))!;
     levelNames[level.id] = `${classes[classLevel.ownerId]} ${classLevel.position}`;

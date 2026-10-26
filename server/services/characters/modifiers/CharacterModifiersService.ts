@@ -1,12 +1,10 @@
-import { getTableName } from "drizzle-orm";
-
-import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Activities, Modifiers } from "@/server/repositories/index.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class CharacterModifiersService {
@@ -41,7 +39,7 @@ class CharacterModifiersService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: modifier.id,
-        targetTable: getTableName(modifiersInCustomization),
+        targetType: TARGET_TYPES.modifiers,
         type: "createCharacterModifier",
         data: { characterName: character.name, target, value, operator },
       });
@@ -64,7 +62,7 @@ class CharacterModifiersService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: modifierId,
-        targetTable: getTableName(modifiersInCustomization),
+        targetType: TARGET_TYPES.modifiers,
         type: "deleteCharacterModifier",
         data: {
           characterName: character.name,
@@ -113,7 +111,7 @@ class CharacterModifiersService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: modifierId,
-        targetTable: getTableName(modifiersInCustomization),
+        targetType: TARGET_TYPES.modifiers,
         type: "updateCharacterModifier",
         data: { characterName: character.name, target, value, operator },
       });

@@ -64,7 +64,7 @@ export function Copies<B extends Constructor>(Base: B) {
               await createActivityWithNotifications(tx, {
                 userId: session.userId,
                 targetId: copy.id,
-                targetTable: type,
+                targetType: type,
                 type: `create${getActivityName(type)}`,
                 data: { entityName: copy.name },
               });

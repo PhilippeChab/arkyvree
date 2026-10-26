@@ -1,6 +1,3 @@
-import { getTableName } from "drizzle-orm";
-
-import { charactersInCharacter } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -9,6 +6,7 @@ import { NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Characters, PLAYER_KINDS, Visibility } from "@/server/repositories/index.ts";
 import { getSlotUrl } from "@/server/services/attachments/index.ts";
 import { readCharacterInput, readChildInputs } from "@/server/services/characters/characterInputs.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class CharacterSharingService {
@@ -44,7 +42,7 @@ class CharacterSharingService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: characterId,
-        targetTable: getTableName(charactersInCharacter),
+        targetType: TARGET_TYPES.characters,
         type: "generateShareToken",
       });
 
@@ -80,7 +78,7 @@ class CharacterSharingService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: characterId,
-        targetTable: getTableName(charactersInCharacter),
+        targetType: TARGET_TYPES.characters,
         type: "revokeShareToken",
       });
 

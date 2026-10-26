@@ -1,10 +1,8 @@
-import { getTableName } from "drizzle-orm";
-
-import { oauthAccountsInAccount } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, InternalError } from "@/server/errors/index.ts";
 import { Activities, OauthAccounts, Users } from "@/server/repositories/index.ts";
 import { verifyGoogleIdToken } from "@/server/services/authentication/google.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { linkGoogleAccountTo } from "./linkGoogleAccountTo.ts";
@@ -38,7 +36,7 @@ class LinkedAccountsService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: oauthAccount.id,
-        targetTable: getTableName(oauthAccountsInAccount),
+        targetType: TARGET_TYPES.oauthAccounts,
         type: "unlinkOauth",
       });
 

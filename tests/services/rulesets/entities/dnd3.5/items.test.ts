@@ -300,7 +300,7 @@ describe("EntitiesService: items", () => {
       // Each a new item's activity
       const { items } = await Activities.findPage(
         db,
-        { userId: session.userId, targetTable: "items" },
+        { userId: session.userId, targetType: "items" },
         { limit: 10, page: 1 },
       );
       expect(variants.map((variant) => items.find((activity) => activity.targetId === variant.id))).toMatchObject([

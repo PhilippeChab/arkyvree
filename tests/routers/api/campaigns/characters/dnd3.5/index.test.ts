@@ -353,8 +353,8 @@ describe("campaigns characters", () => {
           and(eq(t.userId, member.user.id), eq(t.targetId, characterId), eq(t.type, "generatePdf")),
       });
       const resolved = await expectOk(
-        member.api.api.activities.resolve[":targetTable"][":targetId"].$get({
-          param: { targetTable: activity!.targetTable, targetId: characterId },
+        member.api.api.activities.resolve[":targetType"][":targetId"].$get({
+          param: { targetType: activity!.targetType, targetId: characterId },
         }),
       );
       expect(resolved.url).toBe(`/campaigns/${campaignId}/characters/${characterId}`);
@@ -376,7 +376,7 @@ describe("campaigns characters", () => {
       const notification = await db.query.notificationsInAccount.findFirst({
         where: (t, { and, eq }) => and(eq(t.recipientId, member.user.id), eq(t.targetId, characterId)),
       });
-      expect(notification).toMatchObject({ type: "pdfFailed", targetTable: "player_characters" });
+      expect(notification).toMatchObject({ type: "pdfFailed", targetType: "player-characters" });
       expect(
         await db.query.exportsInAccount.findFirst({ where: (t, { eq }) => eq(t.userId, member.user.id) }),
       ).toBeUndefined();

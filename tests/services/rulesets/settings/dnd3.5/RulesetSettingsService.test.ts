@@ -1,13 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
 import { addClassLevels, createCharacter } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
-import { rulesetsInRules } from "@/drizzle/schema.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
 import { Characters, Picks } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { RulesetSettingsService } from "@/server/services/rulesets/settings/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { levelEditPlan, levelUpPlan, savedPicksOf } from "@/tests/support/dnd3.5/levelPlans.ts";
@@ -124,7 +124,7 @@ describe("RulesetSettingsService", () => {
     expect(await RulesetSettingsService.getSettings(fork.rulesetId!)).toMatchObject({
       links: { skillPointAbility: abilityMap["Intelligence"] },
     });
-    expect(await activityTypes(session.userId, rulesetsInRules, fork.id)).toEqual(["updateRulesetSettings"]);
+    expect(await activityTypes(session.userId, TARGET_TYPES.rulesets, fork.id)).toEqual(["updateRulesetSettings"]);
   });
 
   test("give every character of the fork its feats and ability increases at the levels it says, whatever its class", async () => {

@@ -13,7 +13,7 @@ import { rpc } from "@/client/src/services/rpc.ts";
 
 /** What an owner's progression's save is of: its kind, its levels' kind, and their words. */
 interface ProgressionSaveOf {
-  /** Its levels' kind (3.5's `class_levels`), whose pages it refreshes */
+  /** Its levels' kind (3.5's `class-levels`), whose pages it refreshes */
   levelType: string;
   /** The owner's kind (3.5's `classes`), whose routes it's sent through */
   ownerType: string;

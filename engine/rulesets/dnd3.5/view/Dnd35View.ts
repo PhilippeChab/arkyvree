@@ -132,7 +132,7 @@ export default class Dnd35View {
   }
 
   get classLevels(): KlassLevel[] {
-    return this.rulesetData.rows("class_levels");
+    return this.rulesetData.rows("class-levels");
   }
 
   /** A class's id → its levels (their owner), sorted by their number (`position`): the last is the class's highest. */
@@ -146,7 +146,7 @@ export default class Dnd35View {
   }
 
   get classLevelsById(): Map<string, KlassLevel> {
-    return this.rulesetData.byId("class_levels");
+    return this.rulesetData.byId("class-levels");
   }
 
   /** A class's class skills (`classId`): its `classSkill` links, by their skills' names, as the books list them. */

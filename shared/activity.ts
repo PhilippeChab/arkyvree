@@ -1,3 +1,5 @@
+import { TARGET_TYPES } from "./activityTargets.ts";
+
 /** One field an update changed, as an activity records it; long text fields carry no values. */
 export interface ChangedField {
   field: string;
@@ -8,8 +10,8 @@ export interface ChangedField {
 /** An invite's notification type. */
 export type InviteNotificationType = (typeof INVITE_NOTIFICATION_TYPES)[number];
 
-/** The tables whose activities have no page to open: an account's, a session's, a linked sign-in's. */
-const NON_NAVIGABLE_TABLES: readonly string[] = ["oauth_accounts", "sessions", "users"];
+/** The target types whose activities have no page to open: an account's, a session's, a linked sign-in's. */
+const NON_NAVIGABLE_TYPES: readonly string[] = [TARGET_TYPES.oauthAccounts, TARGET_TYPES.sessions, TARGET_TYPES.users];
 
 /**
  * The notification types that are invites: answered in place with Accept / Reject, wherever a notification shows, and
@@ -22,17 +24,18 @@ export const INVITE_NOTIFICATION_TYPES = [
 ] as const;
 
 /**
- * The name an entity type's activities give it (`createPerk`, `updateOwnerLevel`): its table's singular, in
- * PascalCase. A client reads the type back from it (`entityTypeOfActivityName`) to name it in its ruleset's words.
+ * The name an entity type's activities give it (`createPerk`, `updateOwnerLevel`): the type's singular, its words
+ * (`owner-levels`) in PascalCase. A client reads the type back from it (`entityTypeOfActivityName`) to name it in its
+ * ruleset's words.
  */
 export function getActivityName(entityType: string) {
   const singular = entityType.replace(/(?:(ss|x|ch|sh)es|ies|s)$/, (ending, kept?: string) =>
     ending === "ies" ? "y" : (kept ?? ""),
   );
-  return singular.replace(/(?:^|_)([a-z])/g, (_, letter: string) => letter.toUpperCase());
+  return singular.replace(/(?:^|-)([a-z])/g, (_, letter: string) => letter.toUpperCase());
 }
 
 /** Whether an activity's or a notification's target has a page to open, which the server resolves as it's opened. */
-export function isNavigableTarget(targetTable: string) {
-  return !NON_NAVIGABLE_TABLES.includes(targetTable);
+export function isNavigableTarget(targetType: string) {
+  return !NON_NAVIGABLE_TYPES.includes(targetType);
 }

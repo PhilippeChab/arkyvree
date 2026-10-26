@@ -33,14 +33,14 @@ declare module "@/engine/core/view/rows.ts" {
 
   /** 3.5's owned kind: a class's levels. */
   interface OwnedKinds {
-    class_levels: KlassLevel;
+    "class-levels": KlassLevel;
   }
 
   /** 3.5's kinds' entities, by type. */
   interface ViewKinds {
     abilities: RulesetAbility;
     aptitudes: Aptitude;
-    class_levels: KlassLevel;
+    "class-levels": KlassLevel;
     classes: Klass;
     feats: Feat;
     items: Item;

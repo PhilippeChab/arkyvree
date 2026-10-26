@@ -87,7 +87,7 @@ describe("EntitiesService: spells", () => {
     });
     const { items } = await Activities.findPage(
       db,
-      { userId: session.userId, targetTable: "spells" },
+      { userId: session.userId, targetType: "spells" },
       { limit: 10, page: 1 },
     );
     const updates = items.filter((activity) => activity.type === "updateSpell");
@@ -276,7 +276,7 @@ describe("EntitiesService: spells", () => {
 
     expect(await linkedAptitudes(spell.id)).toEqual([]);
     // A grant's spell is its link's to-entity
-    expect(await EntityLinks.findMany(db, { fromType: "class_levels", role: "grants", toIds: [spell.id] })).toEqual([]);
+    expect(await EntityLinks.findMany(db, { fromType: "class-levels", role: "grants", toIds: [spell.id] })).toEqual([]);
   });
 
   test("refuses to delete a spell a character picked, even through a ruleset using it as an extension", async () => {

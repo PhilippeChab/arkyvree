@@ -24,7 +24,7 @@ type NotificationData = Record<string, string | undefined>;
 type NotificationItem = InferResponseType<typeof rpc.api.notifications.$get, 200>["items"][number];
 
 /** Fields the actions use; the bell's unread-summary items carry them too. */
-type NotificationLike = Pick<NotificationItem, "id" | "type" | "targetTable" | "targetId" | "data" | "readAt">;
+type NotificationLike = Pick<NotificationItem, "id" | "type" | "targetType" | "targetId" | "data" | "readAt">;
 
 /**
  * Each invite's notification (`INVITE_NOTIFICATION_TYPES`), answered in place with Accept / Reject (`useAnswerInvite`):
@@ -95,7 +95,7 @@ export function useNotificationActions() {
    * target, or at least mark it read. Invites use their buttons instead.
    */
   const isOpenable = (n: NotificationLike) =>
-    !isActionable(n) && (isDownloadable(n) || isNavigableTarget(n.targetTable) || !n.readAt);
+    !isActionable(n) && (isDownloadable(n) || isNavigableTarget(n.targetType) || !n.readAt);
 
   // The export is gone: past its lifetime (a 404), or one its notification doesn't name
   const exportExpired = () => snackbar.warning("This export expired: generate a new one");
@@ -128,7 +128,7 @@ export function useNotificationActions() {
       return;
     }
     if (!n.readAt) markRead.mutate(n.id);
-    if (isNavigableTarget(n.targetTable)) openTarget(n.targetTable, n.targetId);
+    if (isNavigableTarget(n.targetType)) openTarget(n.targetType, n.targetId);
   };
 
   const accept = (n: NotificationLike, onAccepted: (path: string) => void = navigate) => {

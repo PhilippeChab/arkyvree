@@ -4,10 +4,7 @@
  * the engine plans, with what the character's children (3.5's bonded creatures) become.
  */
 
-import { getTableName } from "drizzle-orm";
-
 import type { Db } from "@/drizzle/database.ts";
-import { advancementsInCharacter } from "@/drizzle/schema.ts";
 import { type CharacterInput, Engine, type LevelPlanRequest, type LevelUpEngine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
@@ -15,6 +12,7 @@ import { withTransaction } from "@/server/database/index.ts";
 import { Activities, CharacterAdvancements, Characters } from "@/server/repositories/index.ts";
 import { readCharacterInput, readChildInputs } from "@/server/services/characters/characterInputs.ts";
 import { getEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { createAdvancement, updateAdvancement } from "./advancementWrites.ts";
@@ -46,7 +44,7 @@ class CharacterLevelsService extends include(Object, Plans) {
         await Activities.create(tx, {
           userId: session.userId,
           targetId: characterId,
-          targetTable: getTableName(advancementsInCharacter),
+          targetType: TARGET_TYPES.advancements,
           type: "editLevel",
         });
 
@@ -89,7 +87,7 @@ class CharacterLevelsService extends include(Object, Plans) {
         await Activities.create(tx, {
           userId: session.userId,
           targetId: characterId,
-          targetTable: getTableName(advancementsInCharacter),
+          targetType: TARGET_TYPES.advancements,
           type: "addLevel",
           data: { count: plan.advancements.length },
         });
@@ -129,7 +127,7 @@ class CharacterLevelsService extends include(Object, Plans) {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: characterId,
-        targetTable: getTableName(advancementsInCharacter),
+        targetType: TARGET_TYPES.advancements,
         type: "removeLevel",
       });
 

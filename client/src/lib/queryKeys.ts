@@ -1,5 +1,4 @@
 import type { InviteKind } from "@/client/src/components/invites/index.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 export const QUERY_KEYS = {
   auth: {
@@ -64,7 +63,7 @@ export const QUERY_KEYS = {
      * Every entity of a kind of the ruleset (its abilities, its saves), for pickers and columns: nested under its
      * kind's section key, so invalidating the section refreshes the pickers too.
      */
-    options: (id: string, type: string) => ["rulesets", "detail", id, getUrlSegment(type), "options"] as const,
+    options: (id: string, type: string) => ["rulesets", "detail", id, type, "options"] as const,
     /** The fields each entity's form shows, and the ruleset's Settings', as the ruleset declares them. */
     fields: (id: string) => ["rulesets", "detail", id, "fields"] as const,
     /** The ruleset's Settings: its own fields' values. */
@@ -143,7 +142,7 @@ export const QUERY_KEYS = {
     all: ["activities"] as const,
     list: (filters?: Record<string, unknown>) => ["activities", "list", filters] as const,
     /** Where an activity's or a notification's target is now, resolved as it's opened. */
-    target: (targetTable: string, targetId: string) => ["activities", "target", targetTable, targetId] as const,
+    target: (targetType: string, targetId: string) => ["activities", "target", targetType, targetId] as const,
   },
   notifications: {
     all: ["notifications"] as const,

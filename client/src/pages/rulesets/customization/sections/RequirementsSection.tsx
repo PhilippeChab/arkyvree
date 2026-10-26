@@ -42,7 +42,6 @@ import RequirementTree, {
   isChaining,
   type RequirementNode,
 } from "@/shared/customization/RequirementTree.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 interface RequirementsSectionProps {
   entityId: string;
@@ -95,7 +94,7 @@ export function RequirementsSection({
   restorable,
 }: RequirementsSectionProps) {
   const { tag, followCopies } = followCopiesOf(entityId, followCopy);
-  const entityParam = { id: ruleset.id, entityType: getUrlSegment(entityType), entityId };
+  const entityParam = { id: ruleset.id, entityType, entityId };
 
   // Parent level for contextual "Add Child" (null = root)
   const [createParentLevel, setCreateParentLevel] = useState<string | null>(null);

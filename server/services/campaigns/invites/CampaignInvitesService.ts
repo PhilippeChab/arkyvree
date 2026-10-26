@@ -1,12 +1,10 @@
-import { getTableName } from "drizzle-orm";
-
 import type { Db } from "@/drizzle/database.ts";
-import { invitesInCampaign } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, Invites, Notifications, Players, Visibility } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
 
 class CampaignInvitesService {
@@ -20,7 +18,7 @@ class CampaignInvitesService {
     await createActivityWithNotifications(tx, {
       userId: session.userId,
       targetId: updatedInvite.id,
-      targetTable: getTableName(invitesInCampaign),
+      targetType: TARGET_TYPES.invites,
       type: status === "Accepted" ? "acceptCampaignInvite" : "rejectCampaignInvite",
       data: { inviteId: invite.id },
     });
@@ -113,7 +111,7 @@ class CampaignInvitesService {
       await createActivityWithNotifications(tx, {
         userId: session.userId,
         targetId: updatedInvite.id,
-        targetTable: getTableName(invitesInCampaign),
+        targetType: TARGET_TYPES.invites,
         type: "revokeCampaignInvite",
         data: { inviteId },
       });

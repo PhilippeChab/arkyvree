@@ -22,6 +22,7 @@ import {
   Visibility,
 } from "@/server/repositories/index.ts";
 import { noteNotified } from "@/server/websockets/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import type { Ruleset } from "@/shared/relations.ts";
@@ -32,10 +33,10 @@ interface ChangedRuleset {
   row: Ruleset | undefined;
 }
 
-/** A row of a ruleset's content, by its table: an entity, or what belongs to one (a class level, a customization). */
+/** A row of a ruleset's content, by its type: an entity, or what belongs to one (a class level, a customization). */
 interface ContentRow {
   id: string;
-  table: string;
+  type: string;
 }
 
 type ActivityValues = InferInsertModel<typeof activitiesInAccount>;
@@ -54,22 +55,22 @@ type Recipient =
   | "rulesetStakeholders";
 
 /**
- * The customizations of a ruleset's content, by their table, and the row each belongs to: a customization's entity (a
+ * The customizations of a ruleset's content, by their type, and the row each belongs to: a customization's entity (a
  * requirement's may be a modifier).
  */
 const CUSTOMIZATION_OWNERS = new Map<string, (db: Db, id: string) => Promise<ContentRow | undefined>>([
   [
-    "modifiers",
+    TARGET_TYPES.modifiers,
     async (db, id) => {
       const modifier = await Modifiers.findOne(db, { id });
-      return modifier && { id: modifier.sourceId, table: modifier.sourceType };
+      return modifier && { id: modifier.sourceId, type: modifier.sourceType };
     },
   ],
   [
-    "requirements",
+    TARGET_TYPES.requirements,
     async (db, id) => {
       const requirement = await Requirements.findOne(db, { id });
-      return requirement && { id: requirement.entityId, table: requirement.entityType };
+      return requirement && { id: requirement.entityId, type: requirement.entityType };
     },
   ],
 ]);
@@ -95,13 +96,13 @@ const RECIPIENTS = new Map<string, Recipient>([
   ["updateContributorRole", "rulesetContributor"],
 ]);
 
-/** Whether a table holds a ruleset's content, whose every change its stakeholders hear of. */
-function isContentTable(table: string) {
+/** Whether a type is of a ruleset's content, whose every change its stakeholders hear of. */
+function isContentType(type: string) {
   return (
-    isOneOf(table, RULESET_ENTITY_TYPES) ||
-    OWNED_TYPES.has(table as OwnedKind) ||
-    EDITED_LINKS.has(table) ||
-    CUSTOMIZATION_OWNERS.has(table)
+    isOneOf(type, RULESET_ENTITY_TYPES) ||
+    OWNED_TYPES.has(type as OwnedKind) ||
+    EDITED_LINKS.has(type) ||
+    CUSTOMIZATION_OWNERS.has(type)
   );
 }
 
@@ -116,10 +117,10 @@ function readId(value: unknown) {
  */
 async function findChangedRuleset(
   db: Db,
-  { targetId, targetTable }: ActivityValues,
+  { targetId, targetType }: ActivityValues,
   data: Record<string, unknown>,
 ): Promise<ChangedRuleset | undefined> {
-  const id = readId(data.rulesetId) ?? (await findContentRuleset(db, { id: targetId, table: targetTable }));
+  const id = readId(data.rulesetId) ?? (await findContentRuleset(db, { id: targetId, type: targetType }));
   return id ? { id, row: await Rulesets.findOne(db, { id }) } : undefined;
 }
 
@@ -127,21 +128,21 @@ async function findChangedRuleset(
  * The row a row of a ruleset's content beside its entities belongs to: an owned entity's owner (a class level's class),
  * an edited link's owner (a class's skills' activity targets the class), a customization's entity.
  */
-async function findContentOwner(db: Db, { id, table }: ContentRow): Promise<ContentRow | undefined> {
-  const ownerType = OWNED_TYPES.get(table as OwnedKind);
+async function findContentOwner(db: Db, { id, type }: ContentRow): Promise<ContentRow | undefined> {
+  const ownerType = OWNED_TYPES.get(type as OwnedKind);
   if (ownerType) {
-    const [owned] = await Entities.findPositions(db, { entityType: table, ids: [id] });
-    return owned && { id: owned.ownerId, table: ownerType };
+    const [owned] = await Entities.findPositions(db, { entityType: type, ids: [id] });
+    return owned && { id: owned.ownerId, type: ownerType };
   }
-  const edited = EDITED_LINKS.get(table);
-  if (edited) return { id, table: edited.from };
-  return await CUSTOMIZATION_OWNERS.get(table)?.(db, id);
+  const edited = EDITED_LINKS.get(type);
+  if (edited) return { id, type: edited.from };
+  return await CUSTOMIZATION_OWNERS.get(type)?.(db, id);
 }
 
 /** The ruleset a row of its content is in: an entity's own, or that of the row it belongs to. */
-async function findContentRuleset(db: Db, { id, table }: ContentRow): Promise<string | undefined> {
-  if (isOneOf(table, RULESET_ENTITY_TYPES)) return (await Entities.findOne(db, { entityType: table, id }))?.rulesetId;
-  const owner = await findContentOwner(db, { id, table });
+async function findContentRuleset(db: Db, { id, type }: ContentRow): Promise<string | undefined> {
+  if (isOneOf(type, RULESET_ENTITY_TYPES)) return (await Entities.findOne(db, { entityType: type, id }))?.rulesetId;
+  const owner = await findContentOwner(db, { id, type });
   return owner && (await findContentRuleset(db, owner));
 }
 
@@ -165,7 +166,7 @@ async function findRecipientIds(
   changed: ChangedRuleset | undefined,
 ) {
   const recipient =
-    RECIPIENTS.get(activity.type) ?? (isContentTable(activity.targetTable) ? "rulesetStakeholders" : undefined);
+    RECIPIENTS.get(activity.type) ?? (isContentType(activity.targetType) ? "rulesetStakeholders" : undefined);
   const userIds = recipient ? await findRecipients(db, recipient, activity, data, changed) : [];
   const recipientIds = new Set<string>();
   for (const userId of userIds) if (userId && userId !== activity.userId) recipientIds.add(userId);
@@ -221,7 +222,7 @@ async function findRulesetStakeholders(db: Db, { id, row }: ChangedRuleset) {
  */
 export async function createActivityWithNotifications(tx: Db, values: ActivityValues) {
   const given = isRecord(values.data) ? values.data : {};
-  const changed = isContentTable(values.targetTable) ? await findChangedRuleset(tx, values, given) : undefined;
+  const changed = isContentType(values.targetType) ? await findChangedRuleset(tx, values, given) : undefined;
   const data = changed?.row ? { ...given, baseRules: changed.row.baseRules } : given;
   const [activity] = await Activities.create(tx, changed?.row ? { ...values, data } : values);
   const recipientIds = await findRecipientIds(tx, values, data, changed);
@@ -229,7 +230,7 @@ export async function createActivityWithNotifications(tx: Db, values: ActivityVa
 
   const actor = await Users.findOne(tx, { id: values.userId });
   const actorName = actor?.username ?? actor?.emailAddress ?? "Unknown";
-  const { targetId, targetTable, type, userId: actorId } = values;
+  const { targetId, targetType, type, userId: actorId } = values;
   await Notifications.createMany(
     tx,
     recipientIds.map((recipientId) => ({
@@ -238,7 +239,7 @@ export async function createActivityWithNotifications(tx: Db, values: ActivityVa
       activityId: activity.id,
       type,
       targetId,
-      targetTable,
+      targetType,
       data: { ...data, actorName },
     })),
   );

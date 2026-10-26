@@ -1,6 +1,5 @@
 import { parseResponse } from "hono/client";
 
-import { entitySegment } from "@/client/src/lib/entityRequests.ts";
 import type { RulesDescription } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
@@ -24,7 +23,6 @@ import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.
 import type { OwnedEntity } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { useAllAmounts, useEntityFields, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import type { EditorProps } from "./renderEditor.tsx";
 
@@ -102,7 +100,7 @@ export function LevelEditor({
         rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].owned[":ownedId"].$put({
           param: {
             id: rulesetId,
-            entityType: entitySegment(getUrlSegment(owner)),
+            entityType: owner,
             entityId: ownerId,
             ownedId: entityId,
           },

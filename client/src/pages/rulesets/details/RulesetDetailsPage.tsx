@@ -46,7 +46,6 @@ import { type EntityKindDescription, type RulesDescription, rulesetDetailQuery }
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { RulesetFactChips, RulesetStarButton } from "@/client/src/pages/rulesets/components/index.ts";
 import { useRulesetOperations } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import {
   ArchiveRulesetDialog,
@@ -74,7 +73,7 @@ function rulesetTabs(rules: RulesDescription | undefined): TabConfig[] {
   const kinds: TabConfig[] = (rules?.kinds ?? []).map((kind) => {
     const label = entityTypeLabel(kind.type, rules?.words, true);
     return {
-      key: getUrlSegment(kind.type),
+      key: kind.type,
       label: kind.help ? <HelpLabel label={label} help={kind.help} /> : label,
       icon: kindIcon(kind.icon),
       kind,

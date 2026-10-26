@@ -13,7 +13,7 @@ export async function addBaseBonuses(db: Db, classLevelId: string, bonuses: { ba
     bonuses.map(({ base, saveId }) => ({
       role: "baseBonus",
       fromId: classLevelId,
-      fromType: "class_levels",
+      fromType: "class-levels",
       toId: saveId,
       toType: "saves",
       amount: base,
@@ -41,7 +41,7 @@ export async function addGrants(
     grants.map(({ aptitudeId, free = false, toId }) => ({
       role: "grants",
       fromId: classLevelId,
-      fromType: "class_levels",
+      fromType: "class-levels",
       toId,
       toType,
       viaId: aptitudeId,

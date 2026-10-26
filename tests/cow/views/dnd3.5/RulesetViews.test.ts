@@ -739,7 +739,7 @@ describe("RulesetViews", () => {
       const [bookClass] = await Entities.createMany<Klass>(db, "classes", [
         { name, rulesetId: book.id, fields: { [CLASS_HD]: 8 } },
       ]);
-      const [bookFirst, bookSecond] = await Entities.createMany<KlassLevel>(db, "class_levels", [
+      const [bookFirst, bookSecond] = await Entities.createMany<KlassLevel>(db, "class-levels", [
         { ownerId: bookClass.id, position: 1 },
         { ownerId: bookClass.id, position: 2 },
       ]);
@@ -751,7 +751,7 @@ describe("RulesetViews", () => {
       const [ownClass] = await Entities.createMany<Klass>(db, "classes", [
         { name, rulesetId: fork.id, fields: { [CLASS_HD]: 10 } },
       ]);
-      const [ownFirst] = await Entities.createMany<KlassLevel>(db, "class_levels", [
+      const [ownFirst] = await Entities.createMany<KlassLevel>(db, "class-levels", [
         { ownerId: ownClass.id, position: 1 },
       ]);
 
@@ -785,7 +785,7 @@ describe("RulesetViews", () => {
       const [ownClass] = await Entities.createMany<Klass>(db, "classes", [
         { name: "Cleric", rulesetId: fork.id, fields: { [CLASS_HD]: 8 } },
       ]);
-      const [ownFirst] = await Entities.createMany<KlassLevel>(db, "class_levels", [
+      const [ownFirst] = await Entities.createMany<KlassLevel>(db, "class-levels", [
         { ownerId: ownClass.id, position: 1 },
       ]);
 

@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import { charactersInCharacter } from "@/drizzle/schema.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
 import { CharacterAdvancements, CharacterInventory, Characters } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
 import { findLinks } from "@/tests/support/characters.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
@@ -44,7 +44,7 @@ describe("Imports", () => {
     const built = await buildAs(DetailedCharacter, (await Characters.findOne(db, { id: character.id }))!);
     expect(built.validate()).toEqual({ issues: [], valid: true });
 
-    expect(await activityTypes(user.id, charactersInCharacter, character.id)).toEqual(["createCharacter"]);
+    expect(await activityTypes(user.id, TARGET_TYPES.characters, character.id)).toEqual(["createCharacter"]);
   });
 
   test("writes the spells a sorcerer chose on her levels, which pass every check a level-up runs", async () => {

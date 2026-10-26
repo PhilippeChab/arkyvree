@@ -122,7 +122,7 @@ describe("the view's links by role — parity with the stored links", () => {
     // The kinds whose values name groupings hold them (a feat's family, an item's weapon type, a spell's school), and
     // no other's
     for (const type of ["feats", "items", "spells"]) expect(rulesetData.kindValues(type).length).toBeGreaterThan(0);
-    for (const type of ["classes", "class_levels", "races", "skills"]) expect(rulesetData.kindValues(type)).toEqual([]);
+    for (const type of ["classes", "class-levels", "races", "skills"]) expect(rulesetData.kindValues(type)).toEqual([]);
     expect(total).toBeGreaterThan(0);
 
     // And: looking up a known D&D 3.5 value returns the expected spells.

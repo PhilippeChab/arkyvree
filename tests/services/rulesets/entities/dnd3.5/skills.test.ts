@@ -96,7 +96,7 @@ describe("EntitiesService: skills", () => {
     // Its activity records what it changed, never what it left out
     const { items } = await Activities.findPage(
       db,
-      { userId: session.userId, targetTable: "skills" },
+      { userId: session.userId, targetType: "skills" },
       { limit: 10, page: 1 },
     );
     expect(items.find((activity) => activity.type === "updateSkill")?.data).toMatchObject({

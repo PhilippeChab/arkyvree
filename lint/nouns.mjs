@@ -6,7 +6,7 @@
  *   a race, an alignment, a language, a bonded creature, hit points, a saving throw… The engine's core, its entry, the
  *   server, the shared code, the client and the scripts speak of entities, kinds, fields, links, tracks, steps and
  *   pools, which a module names. Every identifier, string, regular expression, JSX text and file path is read word by
- *   word (`spellLevelId` is `spell`, `level`, `id`; `"class_levels"` is the phrase `class`, `levels`), and a whole
+ *   word (`spellLevelId` is `spell`, `level`, `id`; `"class-levels"` is the phrase `class`, `levels`), and a whole
  *   string that is a kind's stored name and an English word alone (`"items"`, `"mechanics"`), which the core reads from
  *   what a module declares. A comment may name them, as an example of what a module declares.
  * - `klass-names`: `klass` spells 3.5's class where `class` is a reserved word, and nowhere else: its types (`Klass`,
@@ -73,7 +73,7 @@ const NOUNS = new Set([
 
 /**
  * The nouns 3.5 names by two words, whose first or second is English alone: a save's (`saveId`, `rulesetSaves`, not
- * `onSave`), hit points, a class level's string as the code stored it (`"classes"`, `"class_levels"`); and the program
+ * `onSave`), hit points, a class level's string as the code stored it (`"classes"`, `"class-levels"`); and the program
  * its imports read, whose name its case splits (`PCGen` is `pc`, `gen`).
  */
 const PHRASES = [
@@ -282,7 +282,7 @@ function nounOf(name) {
 
 /**
  * A name's words, lowercase: by its case (`spellLevelId`, `CLASS_HD`), its digits (`feat2`) and what separates them
- * (`class_levels`).
+ * (`class-levels`).
  */
 function wordsOf(name) {
   return name

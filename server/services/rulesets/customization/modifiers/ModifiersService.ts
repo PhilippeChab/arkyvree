@@ -1,6 +1,3 @@
-import { getTableName } from "drizzle-orm";
-
-import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import { Engine } from "@/engine/index.ts";
 import { CustomizationCopies, CustomizationEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -9,6 +6,7 @@ import { CUSTOMIZABLE_TYPES, Modifiers } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { checkCustomizedEntity } from "@/server/services/rulesets/customization/customizableEntities.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** The kinds a user customizes, which the customization routes take (3.5's feats, spells, classes, their levels…). */
@@ -51,7 +49,7 @@ class ModifiersService {
           await createActivityWithNotifications(tx, {
             userId: session.userId,
             targetId: modifier.id,
-            targetTable: getTableName(modifiersInCustomization),
+            targetType: TARGET_TYPES.modifiers,
             type: "createModifier",
             data: { entityName: entity.name, entityType, target: row.target, value: row.value, operator: row.operator },
           });
@@ -100,7 +98,7 @@ class ModifiersService {
           await createActivityWithNotifications(tx, {
             userId: session.userId,
             targetId: deletedModifier.id,
-            targetTable: getTableName(modifiersInCustomization),
+            targetType: TARGET_TYPES.modifiers,
             type: "deleteModifier",
             data: {
               rulesetId,
@@ -188,7 +186,7 @@ class ModifiersService {
           await createActivityWithNotifications(tx, {
             userId: session.userId,
             targetId: updatedModifier.id,
-            targetTable: getTableName(modifiersInCustomization),
+            targetType: TARGET_TYPES.modifiers,
             type: "updateModifier",
             data: { entityName: entity.name, entityType, target: row.target, value: row.value, operator: row.operator },
           });

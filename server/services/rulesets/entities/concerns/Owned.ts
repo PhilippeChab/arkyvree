@@ -49,7 +49,7 @@ export function Owned<B extends Constructor>(Base: B) {
             await createActivityWithNotifications(tx, {
               userId: session.userId,
               targetId: row.id,
-              targetTable: owned.type,
+              targetType: owned.type,
               type: `create${getActivityName(owned.type)}`,
               data: plan.activity,
             });
@@ -96,7 +96,7 @@ export function Owned<B extends Constructor>(Base: B) {
             await createActivityWithNotifications(tx, {
               userId: session.userId,
               targetId: row.id,
-              targetTable: owned.type,
+              targetType: owned.type,
               type: `delete${getActivityName(owned.type)}`,
               data: plan.activity,
             });
@@ -157,7 +157,7 @@ export function Owned<B extends Constructor>(Base: B) {
             await createActivityWithNotifications(tx, {
               userId: session.userId,
               targetId,
-              targetTable: owned.type,
+              targetType: owned.type,
               type: `update${getActivityName(owned.type)}`,
               data: plan.activity,
             });

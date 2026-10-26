@@ -1,7 +1,4 @@
-import { getTableName } from "drizzle-orm";
-
 import type { Db } from "@/drizzle/database.ts";
-import { charactersInCharacter } from "@/drizzle/schema.ts";
 import {
   type CreationPickQuery,
   Engine,
@@ -24,6 +21,7 @@ import {
   visibilityMap,
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { describeCharacterCards } from "./characterCards.ts";
@@ -86,7 +84,7 @@ class CharactersService extends include(Object, Archives, Imports) {
           await Activities.create(tx, {
             userId: session.userId,
             targetId: newCharacter.id,
-            targetTable: getTableName(charactersInCharacter),
+            targetType: TARGET_TYPES.characters,
             type: "createCharacter",
           });
 
@@ -286,7 +284,7 @@ class CharactersService extends include(Object, Archives, Imports) {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: characterId,
-        targetTable: getTableName(charactersInCharacter),
+        targetType: TARGET_TYPES.characters,
         type: "updateCharacter",
       });
 
@@ -311,7 +309,7 @@ class CharactersService extends include(Object, Archives, Imports) {
         await Activities.create(tx, {
           userId: session.userId,
           targetId: characterId,
-          targetTable: getTableName(charactersInCharacter),
+          targetType: TARGET_TYPES.characters,
           type: "updateCharacter",
         });
       });
@@ -335,7 +333,7 @@ class CharactersService extends include(Object, Archives, Imports) {
         await Activities.create(tx, {
           userId: session.userId,
           targetId: characterId,
-          targetTable: getTableName(charactersInCharacter),
+          targetType: TARGET_TYPES.characters,
           type: "updateCharacter",
         });
       });

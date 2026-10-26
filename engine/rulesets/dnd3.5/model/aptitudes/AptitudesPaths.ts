@@ -9,7 +9,7 @@ import { deriveNameLabels, deriveSegmentLabels, type TargetPath } from "@/shared
 import { stripSeparators } from "@/shared/text.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
-const ALLOWED_ENTITY_TYPES = ["feats", "class_levels", "races"];
+const ALLOWED_ENTITY_TYPES = ["feats", "class-levels", "races"];
 const NAVIGATABLE_PATHS = [
   {
     path: "uses",
@@ -58,7 +58,7 @@ export const JOINS_CLASS_LIST = {
   path: "joinsclasslist",
   label: "Joins Class List",
   description: "Whether its spells join the list of the class whose level gave it",
-  allowedEntityTypes: ["feats", "class_levels"],
+  allowedEntityTypes: ["feats", "class-levels"],
 };
 
 /** The aptitudes' target paths: each aptitude's uses and slots. */

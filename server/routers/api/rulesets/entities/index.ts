@@ -3,7 +3,6 @@ import { z } from "zod";
 
 import type { ProgressionForm } from "@/engine/index.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
-import { buildEntityTypeSchema } from "@/server/routers/api/schemaBuilders.ts";
 import {
   entityBody,
   entityFields,
@@ -17,9 +16,10 @@ import {
 import { EntitiesService, ENTITY_TYPES } from "@/server/services/rulesets/entities/index.ts";
 
 /**
- * A route's entity kind: the ruleset (`id`), and the kind by its URL segment (`classes`), which it hands as its type.
+ * A route's entity kind: the ruleset (`id`), and the kind by its type (`classes`, `class-levels`), which a client sends
+ * as text (it reads the types off its rules) and the route refuses unless a kind has it.
  */
-const kindParams = idParam.extend({ entityType: buildEntityTypeSchema(ENTITY_TYPES) });
+const kindParams = idParam.extend({ entityType: z.string().pipe(z.enum(ENTITY_TYPES)) });
 
 /** A route's entity: its kind's params, and its id. */
 const entityParams = kindParams.extend({ entityId: z.string().uuid() });

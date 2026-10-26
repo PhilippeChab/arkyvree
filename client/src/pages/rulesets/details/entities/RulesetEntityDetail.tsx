@@ -21,7 +21,6 @@ import {
   useEntityPageBack,
   useRestorableDelete,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { getEntityTypeOfSegment } from "@/shared/urlSegments.ts";
 
 interface EntityBase {
   description?: string | null;
@@ -139,7 +138,7 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
 }: RulesetEntityDetailProps<TEntity, TForm, TKey>) {
   const location = useLocation();
   // Read here, so its form is made off them, once they're known (`loaded`)
-  const { columns, loaded: columnsLoaded } = useEntityColumns(rulesetId, getEntityTypeOfSegment(section));
+  const { columns, loaded: columnsLoaded } = useEntityColumns(rulesetId, section);
   const editing = editingOf?.(columns);
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
   const { rules } = useRules(ruleset?.baseRules);

@@ -1,7 +1,4 @@
-import { getTableName } from "drizzle-orm";
-
 import type { Db } from "@/drizzle/database.ts";
-import { invitesInCampaign, playersInCampaign } from "@/drizzle/schema.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
@@ -16,6 +13,7 @@ import {
 } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
 import type { Invite, Player, Session } from "@/shared/relations.ts";
 
@@ -99,7 +97,7 @@ class CampaignPlayersService {
     await createActivityWithNotifications(tx, {
       userId: session.userId,
       targetId: invite.id,
-      targetTable: getTableName(invitesInCampaign),
+      targetType: TARGET_TYPES.invites,
       type: "createCampaignInvite",
       data: {
         email,
@@ -141,7 +139,7 @@ class CampaignPlayersService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: player.id,
-        targetTable: getTableName(playersInCampaign),
+        targetType: TARGET_TYPES.players,
         type: "addCampaignPlayer",
         data: { userId: player.userId, role: player.role },
       });
@@ -203,7 +201,7 @@ class CampaignPlayersService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: removedPlayer.id,
-        targetTable: getTableName(playersInCampaign),
+        targetType: TARGET_TYPES.players,
         type: "removeCampaignPlayer",
         data: { userId: removedPlayer.userId, role: removedPlayer.role },
       });
@@ -250,7 +248,7 @@ class CampaignPlayersService {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: updatedPlayer.id,
-        targetTable: getTableName(playersInCampaign),
+        targetType: TARGET_TYPES.players,
         type: "updateCampaignPlayer",
         data: { userId: updatedPlayer.userId, role: updatedPlayer.role },
       });

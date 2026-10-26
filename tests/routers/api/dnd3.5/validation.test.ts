@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
 import { toJson } from "@/server/errors/index.ts";
-import { buildEntityTypeSchema } from "@/server/routers/api/schemaBuilders.ts";
 import { sanitizedEmail, sanitizedText } from "@/server/routers/api/validation.ts";
 import { application } from "@/server/routers/application.ts";
 import { api, expectOk, expectStatus, SEED_SESSION_ID } from "@/tests/support/api.ts";
@@ -106,17 +105,5 @@ describe("Text from a request", () => {
     expect(sanitizedEmail.parse("  Elara@Example.COM ")).toBe("elara@example.com");
     expect(sanitizedText.min(3).safeParse("  ab  ").success).toBe(false);
     expect(sanitizedText.min(3).parse("  abc  ")).toBe("abc");
-  });
-});
-
-describe("An entity type in a URL", () => {
-  test("is its segment, read back as the type, and never the type's own spelling where the segment differs", () => {
-    const entityType = buildEntityTypeSchema(["class_levels", "classes", "feats"] as const);
-    expect(["class-levels", "classes", "feats"].map((segment) => entityType.parse(segment))).toEqual([
-      "class_levels",
-      "classes",
-      "feats",
-    ]);
-    expect(entityType.safeParse("class_levels").success).toBe(false);
   });
 });

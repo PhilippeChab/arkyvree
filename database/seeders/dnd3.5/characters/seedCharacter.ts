@@ -66,7 +66,7 @@ export async function addClassLevels(
   const classId = idOf(ctx.classMap.pc, className, "A character's class");
   const levelIds: string[] = [];
 
-  const classLevels = await Entities.findPositions(db, { entityType: "class_levels", ownerIds: [classId] });
+  const classLevels = await Entities.findPositions(db, { entityType: "class-levels", ownerIds: [classId] });
   for (let i = 0; i < levels.length; i++) {
     const classLevel = classLevels.find((owned) => owned.position === levels[i])!;
     const advancement = await createAdvancement(db, characterId, {

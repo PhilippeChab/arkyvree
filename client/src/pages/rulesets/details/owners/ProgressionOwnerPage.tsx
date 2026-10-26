@@ -5,7 +5,6 @@ import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom"
 
 import { ConfirmDialog, ReadOnlyFields, SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
 import { useLeaveGuard, usePageTitle, useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
-import { entitySegment } from "@/client/src/lib/entityRequests.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesDescription, type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -29,7 +28,6 @@ import {
 import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { useOwnerDraftsStore } from "@/client/src/stores/ownerDraftsStore.ts";
-import { getUrlSegment } from "@/shared/urlSegments.ts";
 
 import { OwnerDetails } from "./components/index.ts";
 import { type OwnerDetail, ownerDetailQuery } from "./ownerSectionQueries.ts";
@@ -68,8 +66,7 @@ function OwnerView({ back, ownerId, ownerType, ruleset, rulesetId, section, word
   const queryClient = useQueryClient();
   // A save of an inherited owner copies it, and the page follows the copy: its details' saves, here (its form's, and
   // what its base rules' card saves in place); its tabs' through theirs (`useOwnerCopy`)
-  const segment = getUrlSegment(ownerType);
-  const copy = useCopyOnWrite(rulesetId, ownerId, (id) => `${segment}/${id}`);
+  const copy = useCopyOnWrite(rulesetId, ownerId, (id) => `${ownerType}/${id}`);
 
   const { data: ownerData, isLoading, error } = useQuery(ownerDetailQuery(rulesetId, ownerType, ownerId));
 
@@ -79,7 +76,7 @@ function OwnerView({ back, ownerId, ownerType, ruleset, rulesetId, section, word
     (state) => state.ownerId === ownerId && Object.values(state.drafts).some((draft) => draft.changed),
   );
   const discardDrafts = useOwnerDraftsStore((state) => state.discard);
-  const ownerPath = `/rulesets/${rulesetId}/${segment}/${ownerId}`;
+  const ownerPath = `/rulesets/${rulesetId}/${ownerType}/${ownerId}`;
   const leave = useLeaveGuard(
     unsaved,
     (next) =>
@@ -117,11 +114,11 @@ function OwnerView({ back, ownerId, ownerType, ruleset, rulesetId, section, word
     rulesetId,
     entityId: ownerId,
     label: word,
-    listKey: QUERY_KEYS.rulesets.section(rulesetId, segment),
+    listKey: QUERY_KEYS.rulesets.section(rulesetId, ownerType),
     saveFn: (data: EntityFormData, updatedAt: string | undefined) =>
       parseResponse(
         rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].$put({
-          param: { id: rulesetId, entityType: entitySegment(segment), entityId: ownerId },
+          param: { id: rulesetId, entityType: ownerType, entityId: ownerId },
           json: { ...toEntityBody<EntityFormData, EntityFormData>(ownerColumns, data), updatedAt },
         }),
       ),
@@ -130,7 +127,7 @@ function OwnerView({ back, ownerId, ownerType, ruleset, rulesetId, section, word
       const savedKey = ownerDetailQuery(rulesetId, ownerType, saved.id).queryKey;
       // The PUT returns the owner row with its fields: keep showing what the owner's response adds to it until the
       // refetch brings the saved owner's own; unless the page has left that owner while the save was in flight
-      if (ownerData && isStillOpen(`/rulesets/${rulesetId}/${segment}/${sourceId}`))
+      if (ownerData && isStillOpen(`/rulesets/${rulesetId}/${ownerType}/${sourceId}`))
         queryClient.setQueryData(savedKey, { ...ownerData, ...saved });
       void queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
     },
@@ -160,10 +157,10 @@ function OwnerView({ back, ownerId, ownerType, ruleset, rulesetId, section, word
                 deleteFn: () =>
                   parseResponse(
                     rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].$delete({
-                      param: { id: rulesetId, entityType: entitySegment(segment), entityId: ownerId },
+                      param: { id: rulesetId, entityType: ownerType, entityId: ownerId },
                     }),
                   ),
-                listKeys: [QUERY_KEYS.rulesets.section(rulesetId, segment)],
+                listKeys: [QUERY_KEYS.rulesets.section(rulesetId, ownerType)],
                 // With its tabs
                 entityKey: ownerDetailQuery(rulesetId, ownerType, ownerId).queryKey,
                 restorable,
@@ -245,7 +242,7 @@ export default function ProgressionOwnerPage({ ownerType, rules: kindRules }: Pr
   const word = entityTypeLabel(ownerType, kindRules.words);
   const { data: ruleset, isLoading, error } = useQuery(rulesetDetailQuery(rulesetId));
   const { rules } = useRules(ruleset?.baseRules);
-  const back = useEntityPageBack(location.state, `/rulesets/${rulesetId}/${getUrlSegment(ownerType)}`, rules?.words);
+  const back = useEntityPageBack(location.state, `/rulesets/${rulesetId}/${ownerType}`, rules?.words);
   // The owner loads alongside its ruleset, which its page waits for: its forms and its tabs are its base rules'
   useQuery(ownerDetailQuery(rulesetId, ownerType, ownerId));
 

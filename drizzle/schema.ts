@@ -68,15 +68,15 @@ export const activitiesInAccount = account.table(
       .notNull(),
     userId: uuid("user_id").notNull(),
     targetId: uuid("target_id").notNull(),
-    targetTable: text("target_table").notNull(),
+    targetType: text("target_type").notNull(),
     type: text().notNull(),
     data: json(),
   },
   (table) => [
-    index("activities_target_id_target_table").using(
+    index("activities_target_id_target_type").using(
       "btree",
       table.targetId.asc().nullsLast(),
-      table.targetTable.asc().nullsLast(),
+      table.targetType.asc().nullsLast(),
     ),
     index("activities_user_id_created_at_idx").using(
       "btree",
@@ -1306,7 +1306,7 @@ export const notificationsInAccount = account.table(
     activityId: uuid("activity_id"),
     type: text().notNull(),
     targetId: uuid("target_id").notNull(),
-    targetTable: text("target_table").notNull(),
+    targetType: text("target_type").notNull(),
     data: json(),
     readAt: timestamp("read_at", { mode: "string", withTimezone: true }),
   },
