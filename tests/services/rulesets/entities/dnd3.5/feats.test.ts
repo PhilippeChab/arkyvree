@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import type { Aptitude, Klass } from "@/engine/rulesets/dnd3.5/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Characters, Entities, EntityLinks, EntitySnapshots } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
@@ -154,6 +155,8 @@ describe("EntitiesService: feats", () => {
       rulesetId: ruleset.id,
       fields: { [CLASS_HD]: 10 },
     });
+    // Written past the services, after the feat's create read the ruleset's view
+    RulesetViews.invalidate(ruleset.id);
     await EntitiesService.createOwnedEntity(session, ruleset.id, "classes", klass.id, {
       level: 1,
       fields: { bab: 1, skills: 2 },

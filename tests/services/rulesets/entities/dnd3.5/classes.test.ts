@@ -9,6 +9,7 @@ import type {
   Skill,
   Spell,
 } from "@/engine/rulesets/dnd3.5/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Entities, EntityLinks, Modifiers, Requirements } from "@/server/repositories/index.ts";
@@ -60,6 +61,8 @@ describe("EntitiesService: classes", () => {
       description: "Intelligence",
       rulesetId: ruleset.id,
     });
+    // Written past the services, after the wizard's create read the ruleset's view
+    RulesetViews.invalidate(ruleset.id);
     await EntitiesService.updateEntity(session, ruleset.id, "classes", wizard.id, {
       name: "Wizard",
       fields: { bonusSpellAbilityId: intelligence.id },

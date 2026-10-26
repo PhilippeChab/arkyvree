@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import type { Aptitude, Klass, RulesetAbility, Skill } from "@/engine/rulesets/dnd3.5/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Activities, Characters, Entities, Notifications, Players, Rulesets } from "@/server/repositories/index.ts";
 import { CampaignInvitesService } from "@/server/services/campaigns/invites/index.ts";
@@ -311,6 +312,8 @@ describe("activity notifications", () => {
       rulesetId: ruleset.id,
       links: { keyAbility: ability.id },
     });
+    // Written past the services, after the feat's update read the ruleset's view
+    RulesetViews.invalidate(ruleset.id);
     await EntitiesService.addEntityLink(author.session, ruleset.id, "classes", fighter.id, climb.id);
     await EntitiesService.deleteEntity(author.session, ruleset.id, "feats", feat.id);
 

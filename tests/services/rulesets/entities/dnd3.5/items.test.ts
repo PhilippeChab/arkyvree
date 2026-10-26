@@ -136,7 +136,7 @@ describe("EntitiesService: items", () => {
     expect(
       (await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, { name: "Sword", type: "Weapon" }))
         .links,
-    ).toEqual({ madeFrom: template.id });
+    ).toMatchObject([{ role: "madeFrom", toId: template.id, toName: template.name }]);
     expect(
       (
         await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
@@ -145,7 +145,7 @@ describe("EntitiesService: items", () => {
           sourceItemId: null,
         })
       ).links,
-    ).toEqual({});
+    ).toEqual([]);
     // Its template's fields went with it
     expect(await EntitiesService.getEntity(ruleset.id, "items", sword.id)).toMatchObject({ links: [], madeOf: null });
   });

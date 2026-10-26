@@ -62,7 +62,7 @@ describe("rulesets entities: items", () => {
         json: { name: "Test Blade", type: "Weapon", sourceItemId: null, weight: null, costGp: null },
       }),
     );
-    expect(cleared.links).toEqual({});
+    expect(cleared.links).toEqual([]);
     expect([ITEM_WEIGHT, ITEM_COST_GP].filter((field) => field in cleared.fields)).toEqual([]);
 
     // A slot's none is "Other": worn nowhere in particular

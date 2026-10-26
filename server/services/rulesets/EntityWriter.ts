@@ -16,7 +16,7 @@ import {
   withRulesetScope,
 } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
-import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { CUSTOMIZABLE_TYPES, Entities, EntityLinks, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications, getChangedFields } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
@@ -105,14 +105,14 @@ export default class EntityWriter {
   /**
    * A new entity in the ruleset (`name`, which must be free in its view), as its rules plan it (`plan`, given the
    * ancestor whose deleted copy's tombstone the new entity takes over, and the transaction to read what the plan needs):
-   * the row written, with the fields the plan keeps.
+   * what its plan answers once written (`describe`: the row, with its links as stored).
    */
   async create<P extends EntityCreatePlan>(
     session: Session,
     rulesetId: string,
     name: string,
     plan: (scope: RulesetScope, reads: { tombstoneAncestorId: string | null; tx: Db }) => P | Promise<P>,
-  ): Promise<Row & P["fields"]> {
+  ): Promise<ReturnType<P["describe"]>> {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
@@ -132,7 +132,7 @@ export default class EntityWriter {
           await this.writeBeside(tx, scope, row.id, planned.writes);
 
           await this.recordActivity(tx, session, "create", row.id, { entityName: row.name });
-          return { ...row, ...planned.fields };
+          return planned.describe(row, await EntityLinks.findOwn(tx, row.id)) as ReturnType<P["describe"]>;
         }),
     );
     RulesetViews.invalidate(rulesetId);
@@ -179,14 +179,14 @@ export default class EntityWriter {
    * An entity's update, as its rules plan it (`plan`, given the transaction to read what the plan needs) from its form
    * (`body`): a new name kept free in its view, as a create's is, the row the view's entity resolves to (the ruleset's
    * own, or its copy, made on its first edit) updated, refused when stale (`body.updatedAt`, a copy's never is), its
-   * list links replaced, and what the plan writes beside it. The row written, with the fields the plan keeps.
+   * list links replaced, and what the plan writes beside it. What its plan answers once written (`describe`).
    */
   async update<P extends EntityEditPlan<object, PlannedEntity>>(
     session: Session,
     rulesetId: string,
     body: { name: string; updatedAt?: string },
     plan: (scope: RulesetScope, reads: { tx: Db }) => P | Promise<P>,
-  ): Promise<Row & P["fields"]> {
+  ): Promise<ReturnType<P["describe"]>> {
     const result = await withTransaction(
       async (tx) =>
         await withRulesetScope(tx, rulesetId, async (scope) => {
@@ -205,6 +205,8 @@ export default class EntityWriter {
           const expectedUpdatedAt = copied ? undefined : body.updatedAt;
           const rows = await Entities.update<Row>(tx, this.type, planned.row, { id: targetId, expectedUpdatedAt });
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+          // A row deleted since the view was read: no token to call it stale by
+          if (rows.length === 0) throw new NotFoundError(`${getActivityName(this.type)} not found`);
 
           await setLinks(tx, { entityId: targetId, entityType: this.type }, planned.links);
           await this.writeBeside(tx, scope, targetId, planned.writes);
@@ -215,7 +217,7 @@ export default class EntityWriter {
             // The columns its plan writes, by its form's keys, never the body, whose other keys it doesn't
             changedFields: getChangedFields(planned.changes.before, planned.changes.after),
           });
-          return { ...row, ...planned.fields };
+          return planned.describe(row, await EntityLinks.findOwn(tx, targetId)) as ReturnType<P["describe"]>;
         }),
     );
     RulesetViews.invalidate(rulesetId);

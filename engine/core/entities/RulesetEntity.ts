@@ -32,6 +32,7 @@ import {
   type RulesetView,
   type ViewEntity,
   type ViewKinds,
+  type ViewLink,
 } from "@/engine/core/view/index.ts";
 import { getUrlSegment } from "@/shared/urlSegments.ts";
 
@@ -142,7 +143,10 @@ export default abstract class RulesetEntity<
     return new Map([...described, ...Object.entries(this.storedAt)]);
   }
 
-  /** What a form writes, and the fields the entity keeps (`fields`, which a create or an edit answers with its row). */
+  /**
+   * What a form writes, the fields the entity keeps (`fields`), and what its save answers once written (`describe`: its
+   * record, the links a read describes of it named, `savedLinks`, and the fields it keeps).
+   */
   private planWrite(
     body: Body,
     given: Partial<FieldValues<S>>,
@@ -151,7 +155,18 @@ export default abstract class RulesetEntity<
     const columns = this.columnsOf(body, entity);
     const writes = this.writesOf(body, given, entity);
     const fields = this.fields.read(this.writtenValues(columns, writes?.fields, entity));
-    return { columns, fields, links: this.linksOf(body), row: this.storedOf(columns), writes };
+    return {
+      columns,
+      describe: (row, links) => ({
+        ...row,
+        links: this.rulesetData.nameLinks(this.savedLinks(row, links)),
+        ...fields,
+      }),
+      fields,
+      links: this.linksOf(body),
+      row: this.storedOf(columns),
+      writes,
+    };
   }
 
   /**
@@ -331,6 +346,14 @@ export default abstract class RulesetEntity<
   /** The ruleset's view, as its rules read it. */
   protected get rulesetData(): RulesetData {
     return this.view.rulesetData;
+  }
+
+  /**
+   * Of a saved entity's own links (`links`, as stored), those its answer names, as a read describes its record
+   * (`describeRows`): its single links.
+   */
+  protected savedLinks(row: Pick<EntityRecord, "links">, links: readonly ViewLink[]): readonly ViewLink[] {
+    return links.filter((link) => link.role in row.links);
   }
 
   /**

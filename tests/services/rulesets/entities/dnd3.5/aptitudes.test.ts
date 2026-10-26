@@ -4,6 +4,7 @@ import { eq, or } from "drizzle-orm";
 
 import { entityLinksInRules } from "@/drizzle/schema.ts";
 import type { Feat, Klass, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
@@ -92,6 +93,8 @@ describe("EntitiesService: aptitudes", () => {
       rulesetId: ruleset.id,
       fields: { [CLASS_HD]: 10 },
     });
+    // Written past the services, after the creates read the ruleset's view
+    RulesetViews.invalidate(ruleset.id);
     const level = await EntitiesService.createOwnedEntity(session, ruleset.id, "classes", klass.id, {
       level: 1,
       fields: { bab: 1, skills: 2 },

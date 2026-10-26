@@ -322,7 +322,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
             multiple: false,
             valueKind: kind,
             textValue: kind === "text" ? String(value) : null,
-            numberValue: kind === "number" ? String(value) : null,
+            numberValue: kind === "number" ? storage.storedNumber(entityType, field, value) : null,
             flagValue: kind === "flag" ? value === true : null,
           });
         }

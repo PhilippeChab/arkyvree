@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import Decimals from "./Decimals.ts";
 import type { ChoiceFormField, FormField } from "./FormField.ts";
 
 /** What a column's input takes: its value, whether none clears it, and whether a new entity's form gives it. */
@@ -20,19 +21,6 @@ const EMPTY_AS_NONE: ReadonlySet<FormField["input"]> = new Set(["choice", "ref",
 
 /** An entity's id. */
 const ID = z.string().uuid();
-
-/**
- * A decimal kept to two places, half away from zero, as its shortest text reads it (`1.005` is `1.01`), written out
- * whatever its size (never in exponent form: `1e-7` is `0`).
- */
-function toHundredths(value: number): number {
-  const text = Math.abs(value).toLocaleString("en-US", { maximumFractionDigits: 20, useGrouping: false });
-  const [whole, fraction = ""] = text.split(".");
-  let hundredths = BigInt(whole + fraction.padEnd(2, "0").slice(0, 2));
-  if ((fraction[2] ?? "0") >= "5") hundredths += 1n;
-  const rounded = Number(`${hundredths / 100n}.${String(hundredths % 100n).padStart(2, "0")}`);
-  return value < 0 && rounded !== 0 ? -rounded : rounded;
-}
 
 /**
  * An entity's columns as a form gives them, read by their descriptions (its rules'), for a new entity or an edit:
@@ -123,7 +111,7 @@ export default class FormColumns {
             .number()
             .min(column.min ?? Number.NEGATIVE_INFINITY)
             .max(column.max ?? Number.POSITIVE_INFINITY)
-            .transform(toHundredths),
+            .transform((value) => Decimals.toPlaces(value, 2)),
         };
       case "flag":
         return { nullable: column.nullable, required: !column.nullable, schema: z.boolean() };

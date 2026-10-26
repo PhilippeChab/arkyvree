@@ -37,8 +37,8 @@ const KINDS: StorageDeclaration["kinds"] = {
   items: {
     customizable: true,
     fields: {
-      [ITEM_WEIGHT]: { kind: "number" },
-      [ITEM_COST_GP]: { kind: "number" },
+      [ITEM_WEIGHT]: { kind: "number", scale: 2 },
+      [ITEM_COST_GP]: { kind: "number", scale: 2 },
       [ITEM_TYPE]: { kind: "text" },
       [ITEM_SLOT]: { kind: "text", default: "Other" },
       [ITEM_IS_TEMPLATE]: { kind: "flag", default: false },

@@ -245,7 +245,7 @@ describe("a ruleset's entities", () => {
       name: "Tumble",
       primaryAbilityId: abilityId,
     });
-    expect(tumble.links).toEqual({ keyAbility: abilityId });
+    expect(tumble.links).toMatchObject([{ role: "keyAbility", toId: abilityId }]);
     expect(
       EntitiesService.updateEntity(owner, rulesetId, "skills", tumble.id, { name: "Tumble", primaryAbilityId: "" }),
     ).rejects.toMatchObject(invalidAt("primaryAbilityId"));

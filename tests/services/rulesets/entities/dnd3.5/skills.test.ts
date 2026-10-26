@@ -22,9 +22,12 @@ interface SkillValues {
 
 type SkillBody = Parameters<typeof EntitiesService.createEntity>[3];
 
-/** What a write of a skill (`values`, as it reads) answers: its ability its `keyAbility` link. */
-function answerOf({ primaryAbilityId, ...values }: SkillValues) {
-  return { ...values, links: { keyAbility: primaryAbilityId } };
+/**
+ * What a write of a skill (`values`, as it reads) answers, as a read does: its ability (named `abilityName`) its
+ * `keyAbility` link.
+ */
+function answerOf({ primaryAbilityId, ...values }: SkillValues, abilityName: string) {
+  return { ...values, links: [{ role: "keyAbility", toId: primaryAbilityId, toName: abilityName }] };
 }
 
 /** A skill's body (`values`, as it reads): its columns, and its fields under `fields`. */
@@ -70,7 +73,7 @@ describe("EntitiesService: skills", () => {
       await EntitiesService.updateEntity(session, ruleset.id, "skills", climb.id, { name: "Climbing" }),
     ).toMatchObject({
       name: "Climbing",
-      links: { keyAbility: abilityMap.Strength },
+      links: [{ role: "keyAbility", toId: abilityMap.Strength, toName: "Strength" }],
     });
     // Its activity records what it changed, never what it left out
     const { items } = await Activities.findPage(
@@ -96,9 +99,11 @@ describe("EntitiesService: skills", () => {
       impactedByWeight: false,
       usableWithoutTraining: false,
     });
-    expect(await EntitiesService.createEntity(session, ruleset.id, "skills", body())).toMatchObject(answerOf(values()));
+    expect(await EntitiesService.createEntity(session, ruleset.id, "skills", body())).toMatchObject(
+      answerOf(values(), "Strength"),
+    );
     expect(await EntitiesService.createEntity(session, ruleset.id, "skills", bodyOf(spellcraft))).toMatchObject(
-      answerOf(spellcraft),
+      answerOf(spellcraft, "Intelligence"),
     );
 
     const { items } = await EntitiesService.getEntities(ruleset.id, "skills", {}, { limit: 10, page: 1 });
@@ -147,7 +152,7 @@ describe("EntitiesService: skills", () => {
       usableWithoutTraining: false,
     });
     expect(await EntitiesService.updateEntity(session, ruleset.id, "skills", created.id, bodyOf(update))).toMatchObject(
-      answerOf(update),
+      answerOf(update, "Dexterity"),
     );
     const after = await EntitiesService.getEntities(ruleset.id, "skills", {}, { limit: 10, page: 1 });
     expect(after.items).toMatchObject([

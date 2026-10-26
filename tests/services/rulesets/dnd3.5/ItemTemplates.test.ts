@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { type EntityRecord } from "@/engine/index.ts";
 import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Activities, Entities, EntitySnapshots } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
@@ -21,22 +22,32 @@ import {
   WEAPON_BASE_DAMAGE,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
+/** An item as a save or a read answers it, as its form's columns read it: its template its `madeFrom` link's. */
+function columnsOf(answer: Described<"items">) {
+  return formColumnsOf(answer, answer.links.find((link) => link.role === "madeFrom")?.toId ?? null);
+}
+
 /**
- * An item's record (none for none) as its form's columns read it: its own columns, whether it's a template, the
- * template it's made from (null for none), its type, its slot and its weight.
+ * An item as its form's columns read it, off its own columns and fields (`item`) and the template it's made from
+ * (`sourceItemId`, null for none): its own columns, whether it's a template, its template, its type, its slot and its
+ * weight.
  */
-function columnsOf(record: object | undefined) {
-  if (!record) return record;
-  const item = record as Pick<EntityRecord, "description" | "fields" | "links" | "name">;
+function formColumnsOf(item: Pick<EntityRecord, "description" | "fields" | "name">, sourceItemId: string | null) {
   return {
     name: item.name,
     description: item.description,
     isTemplate: item.fields[ITEM_IS_TEMPLATE],
-    sourceItemId: item.links.madeFrom ?? null,
+    sourceItemId,
     type: item.fields[ITEM_TYPE] ?? null,
     slot: item.fields[ITEM_SLOT] ?? null,
     weight: item.fields[ITEM_WEIGHT] ?? null,
   };
+}
+
+/** An item's record as stored (none for none), as its form's columns read it: its template its `madeFrom` link. */
+function storedColumnsOf(record: Item | undefined) {
+  if (!record) return record;
+  return formColumnsOf(record, record.links.madeFrom ?? null);
 }
 
 /**
@@ -66,7 +77,7 @@ async function setup(values: { private?: boolean } = {}) {
   /** A regular item made from a template. */
   const instance = async (name: string) => {
     const { id, fields } = await template(name);
-    return EntitiesService.createEntity(session, ruleset.id, "items", {
+    return EntitiesService.createEntity<Described<"items">>(session, ruleset.id, "items", {
       name: `My ${name}`,
       type: fields[ITEM_TYPE],
       sourceItemId: id,
@@ -130,6 +141,8 @@ describe("Item templates", () => {
       await writeStoredValues("items", sword.id, [[ITEM_MADE_OF, "Adamantine"]]);
       await writeStoredValues("items", (await template("Longsword")).id, [[WEAPON_BASE_DAMAGE, "2d6"]]);
       invalidateSeededRuleset(ruleset.rulesetId!);
+      // The instance's own value, written past the services, after its create read the fork's view
+      RulesetViews.invalidate(ruleset.id);
 
       expect(await EntitiesService.getEntity<Described<"items">>(ruleset.id, "items", sword.id)).toMatchObject({
         weapon: { baseDamage: "2d6" },
@@ -165,7 +178,7 @@ describe("Item templates", () => {
   test("an instance can switch templates", async () => {
     const { session, ruleset, template } = await setup();
     const mace = await template("Heavy Mace");
-    const copy = await EntitiesService.duplicateEntity(session, ruleset.id, "items", mace.id, {
+    const copy = await EntitiesService.duplicateEntity<Described<"items">>(session, ruleset.id, "items", mace.id, {
       name: "Custom weapon",
       type: "Weapon",
     });
@@ -281,7 +294,7 @@ describe("Item templates", () => {
         }),
         422,
       );
-      expect(columnsOf(await Entities.findOne<Item>(db, { entityType: "items", id: local.id }))).toMatchObject({
+      expect(storedColumnsOf(await Entities.findOne<Item>(db, { entityType: "items", id: local.id }))).toMatchObject({
         isTemplate: true,
         sourceItemId: null,
       });
@@ -292,6 +305,7 @@ describe("Item templates", () => {
       const mace = await template("Heavy Mace");
       const local = await EntitiesService.updateEntity(session, ruleset.id, "items", mace.id, { name: mace.name });
       await Entities.update<Item>(db, "items", { links: { madeFrom: local.id } }, { id: local.id });
+      RulesetViews.invalidate(ruleset.id);
 
       expect(
         columnsOf(
@@ -356,7 +370,7 @@ describe("Item templates", () => {
         }),
         422,
       );
-      expect(columnsOf(await Entities.findOne<Item>(db, { entityType: "items", id: sword.id }))).toMatchObject({
+      expect(storedColumnsOf(await Entities.findOne<Item>(db, { entityType: "items", id: sword.id }))).toMatchObject({
         type: "Weapon",
       });
     });
@@ -372,7 +386,7 @@ describe("Item templates", () => {
         }),
         422,
       );
-      expect(columnsOf(await Entities.findOne<Item>(db, { entityType: "items", id: sword.id }))).toMatchObject({
+      expect(storedColumnsOf(await Entities.findOne<Item>(db, { entityType: "items", id: sword.id }))).toMatchObject({
         sourceItemId: columnsOf(sword)!.sourceItemId,
       });
     });
@@ -438,7 +452,7 @@ describe("Item templates", () => {
         EntitiesService.updateEntity(session, ruleset.id, "items", local.id, { name: local.name, type: "Armor" }),
         422,
       );
-      expect(columnsOf(await Entities.findOne<Item>(db, { entityType: "items", id: local.id }))).toMatchObject({
+      expect(storedColumnsOf(await Entities.findOne<Item>(db, { entityType: "items", id: local.id }))).toMatchObject({
         type: "Weapon",
       });
     });
@@ -483,7 +497,7 @@ describe("Item templates", () => {
       expect(EntitiesService.updateEntity(session, ruleset.id, "items", local.id, edit)).rejects.toMatchObject({
         message: `${refusal}: "Public Blade", and 1 in rulesets built on this one`,
       });
-      expect(columnsOf(await Entities.findOne<Item>(db, { entityType: "items", id: local.id }))).toMatchObject({
+      expect(storedColumnsOf(await Entities.findOne<Item>(db, { entityType: "items", id: local.id }))).toMatchObject({
         type: "Weapon",
       });
     });
@@ -514,6 +528,7 @@ describe("Item templates", () => {
         fields: { [ITEM_TYPE]: "Armor" },
         links: { madeFrom: old.id },
       });
+      RulesetViews.invalidate(ruleset.id);
       expect(
         columnsOf(
           await EntitiesService.updateEntity(session, ruleset.id, "items", old.id, { name: old.name, type: "Armor" }),
@@ -583,7 +598,7 @@ describe("Item templates", () => {
   test("an inherited one is edited into a local copy, leaving the original", async () => {
     const { session, ruleset, template } = await setup();
     const mace = await template("Heavy Mace");
-    const edited = await EntitiesService.updateEntity(session, ruleset.id, "items", mace.id, {
+    const edited = await EntitiesService.updateEntity<Described<"items">>(session, ruleset.id, "items", mace.id, {
       name: mace.name,
       type: "Weapon",
       weight: 10,

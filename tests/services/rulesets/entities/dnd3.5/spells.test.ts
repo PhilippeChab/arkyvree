@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Activities, EntityLinks } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
@@ -230,6 +231,8 @@ describe("EntitiesService: spells", () => {
       fields: { school: "Evocation", castingTime: "1 round" },
     });
     await writeStoredValues("spells", spell.id, [[SPELL_DESCRIPTOR, "Fire"]]);
+    // A value a user added, written past the services, after the create read the ruleset's view
+    RulesetViews.invalidate(ruleset.id);
 
     await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, {
       name: "Fireball",

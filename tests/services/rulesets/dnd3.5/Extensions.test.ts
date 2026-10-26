@@ -1598,6 +1598,8 @@ describe("two extensions overriding the same base entity", () => {
     const [trial] = await EntitySnapshots.findMany(db, { rulesetId: draft.id });
     await Entities.delete<Feat>(db, { entityType: "feats", id: trial.forkedEntityId });
     await EntitySnapshots.delete(db, { sourceEntityId: trial.sourceEntityId, rulesetId: draft.id });
+    // Undone past the services, so the fork's view, which the edit's answer read, drops the trial copy
+    RulesetViews.invalidate(draft.id);
     const loser = contributions.find((c) => c.copyId !== trial.sourceEntityId)!;
     const either = ["abilities.constitution.total", "abilities.intelligence.total"];
     await Requirements.create(db, { entityId: loser.copyId, entityType: "feats", level: "5", chainingOperator: "or" });
@@ -1707,7 +1709,9 @@ describe("an extension's entity of a name its subscriber's own has", () => {
     });
     const { klassLevel } = await createTestKlassLevel(book.id);
     await addGrants(db, klassLevel.id, "feats", [{ toId: bookFeat.id, aptitudeId: bookList.id }]);
+    // Both rulesets' rows were written past their services, the fork's modifier among them
     RulesetViews.invalidate(book.id);
+    RulesetViews.invalidate(draft.id);
     // A pick of the book's, as one made while both showed is stored
     const character = await createCharacterOn(user.id, draft.id);
     const { klassLevel: ownLevel } = await createTestKlassLevel(draft.id);

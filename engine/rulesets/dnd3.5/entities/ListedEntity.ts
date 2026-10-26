@@ -2,6 +2,7 @@ import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
 import type { Fields } from "@/engine/core/fields/index.ts";
 import type { EntityRecord, LinkSet } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import type { ViewLink } from "@/engine/core/view/index.ts";
 
 /**
  * A kind a ruleset lists (a feat in a pool, a spell on a spell list: their `listedIn` links). A list holds feats or
@@ -14,6 +15,11 @@ export default abstract class ListedEntity<
   Columns extends object,
   S extends Fields,
 > extends CustomizationPageEntity<K, Body, Columns, S> {
+  /** Of a saved entity's own links, those its answer names: all of them, as its page shows them (`describe`). */
+  protected override savedLinks(_row: Pick<EntityRecord, "links">, links: readonly ViewLink[]): readonly ViewLink[] {
+    return links;
+  }
+
   /** An entity as its page shows it, with all its links (`links`). */
   override describe(id: string) {
     const entity = super.describe(id);

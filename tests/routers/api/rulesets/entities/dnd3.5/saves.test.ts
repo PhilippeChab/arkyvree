@@ -19,7 +19,7 @@ describe("rulesets entities: saves", () => {
     expect(created).toMatchObject({
       name: json.name,
       description: json.description,
-      links: { keyAbility: json.abilityId },
+      links: [{ role: "keyAbility", toId: json.abilityId, toName: "Constitution" }],
     });
     const param = { id, entityType, entityId: created.id };
 
@@ -31,7 +31,7 @@ describe("rulesets entities: saves", () => {
     expect(await expectOk(entity.$put({ param, json: update }))).toMatchObject({
       name: update.name,
       description: update.description,
-      links: { keyAbility: update.abilityId },
+      links: [{ role: "keyAbility", toId: update.abilityId, toName: "Wisdom" }],
     });
 
     await expectOk(entity.$delete({ param }));

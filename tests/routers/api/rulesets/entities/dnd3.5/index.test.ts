@@ -49,18 +49,26 @@ async function setup() {
 describe("rulesets entities by kind", () => {
   test("creates, reads, lists, updates and deletes an entity of every kind but the read-only abilities", async () => {
     const { id, ability, featPool, spellList } = await setup();
-    // Each kind by its URL segment, a new one's form (its columns, as its rules describe them), and what its record
-    // keeps: its own fields, its single links
+    // Each kind by its URL segment, a new one's form (its columns, as its rules describe them), and what its answer
+    // keeps, as a read describes it: its own fields, its links
     const forms: [Segment, Record<string, unknown>, Record<string, unknown>][] = [
       ["races", { size: "Small", baseSpeed: 20 }, { fields: { [RACE_SIZE]: "Small", [RACE_BASE_SPEED]: 20 } }],
       ["languages", { type: "Spoken" }, { fields: { [LANGUAGE_TYPE]: "Spoken" } }],
-      ["skills", { primaryAbilityId: ability.id }, { links: { keyAbility: ability.id } }],
+      [
+        "skills",
+        { primaryAbilityId: ability.id },
+        { links: [{ role: "keyAbility", toId: ability.id, toName: ability.name }] },
+      ],
       ["feats", { aptitudeIds: [featPool.id] }, { fields: { [FEAT_GENERATED]: false } }],
-      ["spells", { aptitudes: [{ id: spellList.id, level: 1 }], saveEffect: "" }, { fields: {}, links: {} }],
+      [
+        "spells",
+        { aptitudes: [{ id: spellList.id, level: 1 }], saveEffect: "" },
+        { fields: {}, links: [{ role: "listedIn", toId: spellList.id, toName: spellList.name, tier: 1 }] },
+      ],
       ["items", { costGp: 5 }, { fields: { [ITEM_COST_GP]: 5 } }],
       ["aptitudes", {}, {}],
       ["classes", { hd: 10 }, { fields: { [CLASS_HD]: 10 } }],
-      ["saves", { abilityId: ability.id }, { links: { keyAbility: ability.id } }],
+      ["saves", { abilityId: ability.id }, { links: [{ role: "keyAbility", toId: ability.id, toName: ability.name }] }],
       ["mechanics", {}, {}],
     ];
     for (const [entityType, columns, kept] of forms) {
@@ -187,7 +195,7 @@ describe("rulesets entities by kind", () => {
     expect(copy).toMatchObject({
       name: "Test Buckler",
       fields: { [ITEM_IS_TEMPLATE]: false },
-      links: { madeFrom: shield.id },
+      links: [{ role: "madeFrom", toId: shield.id, toName: shield.name }],
     });
     await expectOk(
       entity.variants.$post({

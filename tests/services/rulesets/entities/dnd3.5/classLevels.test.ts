@@ -59,6 +59,8 @@ async function createSave(rulesetId: string, name: string) {
     rulesetId,
     links: { keyAbility: ability.id },
   });
+  // Written past the services, which drop the ruleset's view on a save
+  RulesetViews.invalidate(rulesetId);
   return save;
 }
 
@@ -70,6 +72,8 @@ async function setup() {
     name: "Fighter Bonus Feat",
     rulesetId: ruleset.id,
   });
+  // Written past the services, after the class's create read the ruleset's view
+  RulesetViews.invalidate(ruleset.id);
   return { user, session, ruleset, klass, aptitude, poolTarget: `aptitudes.${stripSeparators(aptitude.name)}.allowed` };
 }
 

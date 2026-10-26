@@ -5,15 +5,18 @@
 
 import type { FieldsWrite } from "@/engine/core/fields/index.ts";
 import type { EntityRecord, EntityWrite, FieldValue } from "@/engine/core/module/storage.ts";
+import type { NamedLink, ViewLink } from "@/engine/core/view/index.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /**
  * What a create or an edit writes of an entity: its row (`row`: its own columns, its own fields and its single links, as
  * stored), its links of the roles it sets many of (`links`, each set replacing the entity's of its role and kind; a
- * role it leaves out: kept), what it writes beside its row, and the fields the entity keeps once written (`F`, which the
- * action answers with its row).
+ * role it leaves out: kept), what it writes beside its row, and the fields the entity keeps once written (`F`), and
+ * what the action answers once written (`describe`: its record, `row`, with its own links as stored, `links`, as a
+ * read describes it).
  */
 interface EntitySave<F> {
+  describe: (row: EntityRecord, links: readonly ViewLink[]) => SavedEntity<F>;
   fields: F;
   links?: LinkSet[];
   row: EntityWrite;
@@ -22,6 +25,9 @@ interface EntitySave<F> {
 
 /** A requirement a plan sets on an entity: what it asks of the character. */
 type RequirementWrite = Pick<Requirement, "level" | "operator" | "target" | "value" | "valueType">;
+
+/** What a save answers: the entity's record once written, its single links named as a read names them, and its fields. */
+type SavedEntity<F> = Omit<EntityRecord, "links"> & F & { links: NamedLink[] };
 
 /**
  * The entities made from the one a plan writes, which the plan reaches (a template's copies): what the server reads

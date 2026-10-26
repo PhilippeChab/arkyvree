@@ -1,4 +1,4 @@
-import { DeclaredFields, type Fields, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
+import { Decimals, DeclaredFields, type Fields, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
 import type {
   CharacterRoleDef,
   EntityRecord,
@@ -309,6 +309,17 @@ export default class StorageEngine {
     const found = this.merged.steps.find((def) => def.step === step);
     if (!found) throw new Error(`No module declares the step ${step}`);
     return found;
+  }
+
+  /**
+   * A number an entity of a kind (`type`) holds of a field, as it's stored: refused unless it's a finite number, and
+   * kept to the places its kind's own field says (`scale`), whatever writes it (a form, a seed, a copy, an import).
+   */
+  storedNumber(type: string, field: string, value: unknown): string {
+    if (typeof value !== "number" || !Number.isFinite(value))
+      throw new Error(`The field ${field} of ${type} holds a number, not ${String(value)}`);
+    const scale = this.kinds[type]?.fields?.[field]?.scale;
+    return String(scale === undefined ? value : Decimals.toPlaces(value, scale));
   }
 
   /**

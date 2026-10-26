@@ -222,9 +222,9 @@ export interface StoredKind {
    * The fields its entities hold of their own, past those its module's fields declare (which their stored values
    * keep): each a single value of its kind, its entity's own on every read (`EntityRecord.fields`: 3.5's class's
    * `CLASS_HD`), and the winning copy's of siblings; one with a `default` is written with it when a new entity's write
-   * leaves it out
+   * leaves it out, and a number with a `scale` is written kept to that many places (3.5's item's weight and cost)
    */
-  fields?: Readonly<Record<string, { default?: FieldValue; kind: ValueKind }>>;
+  fields?: Readonly<Record<string, { default?: FieldValue; kind: ValueKind; scale?: number }>>;
   /**
    * How its entities of one name in a ruleset's chain pair: always, a name its identity (`identity`: 3.5's pools), or,
    * when no copy pairs them, as a book's reprint (`reprints`: 3.5's feats and spells); none, never (a race or a class

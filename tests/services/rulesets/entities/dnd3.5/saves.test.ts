@@ -32,7 +32,7 @@ describe("EntitiesService: saves", () => {
     expect(save).toMatchObject({
       name: "Fortitude",
       description: "Physical resistance",
-      links: { keyAbility: constitution.id },
+      links: [{ role: "keyAbility", toId: constitution.id, toName: constitution.name }],
     });
 
     const updated = await EntitiesService.updateEntity(session, ruleset.id, "saves", save.id, {
@@ -40,7 +40,11 @@ describe("EntitiesService: saves", () => {
       description: "Mental resistance",
       abilityId: wisdom.id,
     });
-    expect(updated).toMatchObject({ name: "Will", description: "Mental resistance", links: { keyAbility: wisdom.id } });
+    expect(updated).toMatchObject({
+      name: "Will",
+      description: "Mental resistance",
+      links: [{ role: "keyAbility", toId: wisdom.id, toName: wisdom.name }],
+    });
   });
 
   test("refuses to delete a save that class levels grant", async () => {
