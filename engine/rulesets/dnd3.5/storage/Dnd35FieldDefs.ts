@@ -54,7 +54,7 @@ function ownFieldsOf(kinds: StorageDeclaration["kinds"]): [ownerType: string, fi
         valueKind,
       ]),
     ),
-    ...Object.values(CHARACTER_FIELDS).map(({ field, kind }): [string, string, ValueKind] => [
+    ...Object.entries(CHARACTER_FIELDS).map(([field, { kind }]): [string, string, ValueKind] => [
       "characters",
       field,
       kind,

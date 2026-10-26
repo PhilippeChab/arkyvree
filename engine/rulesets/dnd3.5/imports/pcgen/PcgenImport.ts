@@ -2,13 +2,22 @@ import { ImportReport } from "@/engine/core/imports/index.ts";
 import type { CharacterInput, ImportedRow, ImportOwner, ImportPlan, ScorePlan } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import CharacterValues, { RACE_ROLE } from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
+import { type Dnd35CharacterFieldsWrite, RACE_ROLE } from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import Dnd35Characters from "@/engine/rulesets/dnd3.5/characters/Dnd35Characters.ts";
 import type { ImportedCharacter } from "@/engine/rulesets/dnd3.5/imports/imported.ts";
 import { DND35_STORAGE } from "@/engine/rulesets/dnd3.5/storage/Dnd35Storage.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { MAX_CHARACTER_NAME_LENGTH, MAX_CHARACTER_NUMBER } from "@/shared/characters.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_DEITY,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 import { type Gender, GENDER_OPTIONS } from "@/vocabulary/dnd3.5/identity.ts";
 
 import GearImport from "./GearImport.ts";
@@ -17,8 +26,12 @@ import { PCGEN_ALIGNMENTS } from "./names.ts";
 import PcgenNames from "./PcgenNames.ts";
 import ScoresImport from "./ScoresImport.ts";
 
-/** The row a 3.5 import fills: its name, notes and description, each of its fields' values, and its race. */
-type FilledRow = ImportedRow & Required<Pick<ImportedRow, "description">> & { raceId: string };
+/** The row a 3.5 import fills: its name, notes and description, each of its fields' values, and its race's link. */
+type FilledRow = ImportedRow &
+  Required<Pick<ImportedRow, "description">> & {
+    fields: Dnd35CharacterFieldsWrite;
+    links: { [RACE_ROLE]: string };
+  };
 
 /** The inches in a foot, which a height PCGen writes in inches is said in. */
 const INCHES_PER_FOOT = 12;
@@ -84,7 +97,7 @@ export default class PcgenImport {
    * The character's rows before its levels: its row, under the id it's created with and its owner's, its ability scores,
    * and nothing else yet. What its levels, languages and gear are planned against, and its bonded creatures take after.
    */
-  private newInput({ fields, raceId: _raceId, ...row }: FilledRow, abilities: ScorePlan[]): CharacterInput {
+  private newInput({ fields, ...row }: FilledRow, abilities: ScorePlan[]): CharacterInput {
     const now = new Date().toISOString();
     const stamps = { createdAt: now, deletedAt: null, updatedAt: now };
     const { characterId: id, userId } = this.owner;
@@ -173,24 +186,23 @@ export default class PcgenImport {
       this.report.skip(identity.gender.line, `${identity.gender.value} isn't a gender of the app's: Other kept`);
     this.report.import(`Name: ${name}`);
     this.report.import(`Race: ${race.name}`);
-    const values = CharacterValues.write({
-      age: identity.age && identity.age >= 1 ? this.bounded("Age", identity.age, MAX_CHARACTER_NUMBER) : null,
-      alignment: alignment ?? "True Neutral",
-      deity: identity.deity ?? null,
-      gender: gender ?? "Other",
-      height: identity.height ? PcgenImport.feetOf(identity.height) : null,
-      raceId: race.id,
-      weight: identity.weight ? `${identity.weight} lb.` : null,
-      xp: Math.max(0, this.bounded("Experience", identity.xp, MAX_CHARACTER_NUMBER)),
-    });
     return {
       description: biography.description.join("\n\n") || null,
-      ...values,
+      fields: {
+        [CHARACTER_AGE]:
+          identity.age && identity.age >= 1 ? this.bounded("Age", identity.age, MAX_CHARACTER_NUMBER) : null,
+        [CHARACTER_ALIGNMENT]: alignment ?? "True Neutral",
+        [CHARACTER_DEITY]: identity.deity ?? null,
+        [CHARACTER_GENDER]: gender ?? "Other",
+        [CHARACTER_HEIGHT]: identity.height ? PcgenImport.feetOf(identity.height) : null,
+        [CHARACTER_WEIGHT]: identity.weight ? `${identity.weight} lb.` : null,
+        [CHARACTER_XP]: Math.max(0, this.bounded("Experience", identity.xp, MAX_CHARACTER_NUMBER)),
+      },
       kind: PLAYER_CHARACTER_KIND,
+      links: { [RACE_ROLE]: race.id },
       name,
       notes: biography.notes.join("\n") || null,
       privateNotes: biography.privateNotes.join("\n\n") || null,
-      raceId: race.id,
     };
   }
 
@@ -202,12 +214,12 @@ export default class PcgenImport {
    */
   plan(): { plan: ImportPlan } | { refused: LevelStop } {
     for (const { line, reason } of this.imported.unread) this.report.skip(line, reason);
-    const { raceId, ...row } = this.readRow();
+    const row = this.readRow();
     const levelsImport = new LevelsImport(this.view, this.imported, this.names, this.report, this.stop);
     const scores = new ScoresImport(this.view, this.imported, this.report).planScores(levelsImport.levelCount);
-    const start = { picks: { [RACE_ROLE]: raceId }, scores: { score: scores.starting } };
+    const start = { picks: { [RACE_ROLE]: row.links[RACE_ROLE] }, scores: { score: scores.starting } };
     const { score: abilities } = this.characters.planStart(this.view, start).scores;
-    const leveled = levelsImport.planLevels(this.newInput({ ...row, raceId }, abilities), scores.increases);
+    const leveled = levelsImport.planLevels(this.newInput(row, abilities), scores.increases);
     if ("refused" in leveled) return leveled;
     const languageIds = this.planLanguages(leveled.character);
     const inventory = new GearImport(this.view, this.names, this.report).planInventory(

@@ -145,12 +145,12 @@ class CharacterLevelsService extends include(Object, Plans) {
   async updatePlannedLevel(
     session: Session,
     characterId: string,
-    characterLevelId: string,
+    advancementId: string,
     request: LevelPlanRequest,
     force: boolean = false,
   ) {
     return await this.editLevel(session, characterId, (levelUp, children) =>
-      levelUp.planLevelEdit(children, characterLevelId, request, force),
+      levelUp.planLevelEdit(children, advancementId, request, force),
     );
   }
 }

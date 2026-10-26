@@ -100,6 +100,9 @@ const ATTACK_COLUMNS: SheetColumn[] = [
   { key: "type", label: "Type", width: "16%", align: "center", slot: "inline", hideEmpty: true },
 ];
 
+/** The fields of an item its equipment's rows read its cost and its weight off, which its add dialog shows them by. */
+const INVENTORY_ITEM_FIELDS = { cost: ITEM_COST_GP, weight: ITEM_WEIGHT } as const;
+
 /** What the equipment's table, its add, edit and remove dialogs, their fields and their toasts say. */
 const INVENTORY_WORDS: InventoryWords = {
   add: "Add Item",
@@ -293,7 +296,7 @@ export default class SheetBlocks {
       title: "Equipment & Inventory",
       empty: "No equipment",
       entityType: "items",
-      itemFields: { cost: ITEM_COST_GP, weight: ITEM_WEIGHT },
+      itemFields: INVENTORY_ITEM_FIELDS,
       rows: equipment.map((entry) => ({
         key: entry.id,
         id: entry.itemId,
@@ -301,8 +304,8 @@ export default class SheetBlocks {
         description: entry.description,
         slot: entry.slotLabel,
         quantity: entry.quantity,
-        weight: entry.weight,
-        cost: entry.costGp,
+        weight: entry.fields[INVENTORY_ITEM_FIELDS.weight] ?? null,
+        cost: entry.fields[INVENTORY_ITEM_FIELDS.cost] ?? null,
         held: entry.equipped,
         ...(entry.totalCharges != null && {
           charges: { remaining: entry.remainingCharges, total: entry.totalCharges },

@@ -28,7 +28,7 @@ class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoint
   }: Pick<LoadedCharacterData, "classLevelFields" | "levelHitPoints" | "race">) {
     const classes = this.classes.getClasses();
     const levels = Object.values(classes).reduce((acc, klass) => {
-      for (const level of klass.levels) acc.push(level.characterLevel);
+      for (const level of klass.levels) acc.push(level.advancement);
 
       return acc;
     }, [] as StoredAdvancement[]);

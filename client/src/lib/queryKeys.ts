@@ -111,8 +111,8 @@ export const QUERY_KEYS = {
       all: (characterId: string) => ["characters", "levelUp", characterId] as const,
       plan: (characterId: string, body: Record<string, unknown>) =>
         ["characters", "levelUp", characterId, "plan", body] as const,
-      savedPlan: (characterId: string, characterLevelId: string) =>
-        ["characters", "levelUp", characterId, "savedPlan", characterLevelId] as const,
+      savedPlan: (characterId: string, advancementId: string) =>
+        ["characters", "levelUp", characterId, "savedPlan", advancementId] as const,
       stepOptions: (characterId: string, step: string, query: Record<string, unknown>) =>
         ["characters", "levelUp", characterId, "stepOptions", step, query] as const,
       steps: (characterId: string, query?: Record<string, unknown>) =>

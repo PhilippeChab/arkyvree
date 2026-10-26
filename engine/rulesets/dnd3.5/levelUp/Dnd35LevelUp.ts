@@ -40,8 +40,8 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions> impleme
   }
 
   /** A saved level as an edit's plan opens it: each step's payload as the level saved it. */
-  override describeSavedPlan(view: RulesetView, character: CharacterInput, characterLevelId: string) {
-    return new LevelPlans(view, character, this).describeSavedPlan(characterLevelId);
+  override describeSavedPlan(view: RulesetView, character: CharacterInput, advancementId: string) {
+    return new LevelPlans(view, character, this).describeSavedPlan(advancementId);
   }
 
   /**
@@ -77,19 +77,19 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions> impleme
   }
 
   /**
-   * A plan's edit of saved level `characterLevelId`, read as its save writes it (the level's hit points, ability
+   * A plan's edit of saved level `advancementId`, read as its save writes it (the level's hit points, ability
    * increases and picks): what it writes, checked unless `force`d, and what the bonded creatures become with it.
    */
   override planLevelEdit(
     view: RulesetView,
     character: CharacterInput,
     bonded: CharacterInput[],
-    characterLevelId: string,
+    advancementId: string,
     request: LevelPlanRequest,
     force: boolean,
   ) {
     const edit = new LevelPlans(view, character, this).readEdit(request);
-    return new LevelsPlanning(view, character, this).planEdit(bonded, characterLevelId, edit, force);
+    return new LevelsPlanning(view, character, this).planEdit(bonded, advancementId, edit, force);
   }
 
   /**

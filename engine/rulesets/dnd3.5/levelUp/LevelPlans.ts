@@ -246,9 +246,9 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
     };
   }
 
-  /** The character's saved level `characterLevelId`: refused when it has none. */
-  private findLevel(characterLevelId: string) {
-    const level = this.character.rows.advancements.find((saved) => saved.id === characterLevelId);
+  /** The character's saved level `advancementId`: refused when it has none. */
+  private findLevel(advancementId: string) {
+    const level = this.character.rows.advancements.find((saved) => saved.id === advancementId);
     if (!level) throw new RulesError("not-found", "Character level not found");
     return level;
   }
@@ -402,9 +402,9 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
     };
   }
 
-  /** The class and level of the character's saved level `characterLevelId`, which an edit keeps. */
-  private trackOf(characterLevelId: string) {
-    const { klass, klassLevel } = this.getSavedKlassLevel(this.findLevel(characterLevelId));
+  /** The class and level of the character's saved level `advancementId`, which an edit keeps. */
+  private trackOf(advancementId: string) {
+    const { klass, klassLevel } = this.getSavedKlassLevel(this.findLevel(advancementId));
     return { klassId: klass.id, level: klassLevel.position };
   }
 
@@ -421,16 +421,16 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
   }
 
   /**
-   * The character's saved level `characterLevelId` as an edit's plan opens it: each step's payload as the level saved
+   * The character's saved level `advancementId` as an edit's plan opens it: each step's payload as the level saved
    * it (its hit points, its ability increases where its rules still give one, its skills' points, its feats and its
    * spells, each in its pool, a spell at its spell level). A pool's picks come in its saved rows' order, by name: a
    * save keeps no pick order, so a pool its rules shrank since drops its last by name, as Edit Level's always has.
    * Refused when the character has no such level.
    */
-  describeSavedPlan(characterLevelId: string): LevelPlanRequest {
-    const saved = new LevelSelections(this.view, this.character, this.rules).describeLevel(characterLevelId);
+  describeSavedPlan(advancementId: string): LevelPlanRequest {
+    const saved = new LevelSelections(this.view, this.character, this.rules).describeLevel(advancementId);
     return {
-      editedLevelId: characterLevelId,
+      editedLevelId: advancementId,
       steps: {
         [STEP.hp.name]: [saved.hp],
         [STEP.abilities.name]: [

@@ -20,7 +20,7 @@ interface ClassesData {
     klass: Klass;
     level: number;
     levels: {
-      characterLevel: StoredAdvancement;
+      advancement: StoredAdvancement;
       feats: HeldFeat[];
       klassLevel: CustomizedClassLevel;
       skills: SkillPick[];
@@ -36,7 +36,7 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
   /** Each class the character has levels in, its levels sorted with their picks, and the ruleset's others at level 0. */
   override initialize(
     {
-      characterLevels,
+      advancements,
       classSkillLinks,
       feats,
       klasses,
@@ -45,7 +45,7 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
       skills,
     }: Pick<
       LoadedCharacterData,
-      "characterLevels" | "classSkillLinks" | "feats" | "klasses" | "klassLevels" | "spells" | "skills"
+      "advancements" | "classSkillLinks" | "feats" | "klasses" | "klassLevels" | "spells" | "skills"
     >,
     { rulesetData }: RulesetView,
   ) {
@@ -57,8 +57,8 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
     const skillsByLevel = Map.groupBy(skills, (skill) => skill.advancementId);
     const spellsByLevel = Map.groupBy(spells, (spell) => spell.advancementId);
 
-    for (const characterLevel of characterLevels) {
-      const klassLevel = klassLevelsById.get(characterLevel.trackId!);
+    for (const advancement of advancements) {
+      const klassLevel = klassLevelsById.get(advancement.trackId!);
       if (!klassLevel) throw new Error("Class level not found");
 
       const klass = klassesById.get(klassLevel.ownerId);
@@ -77,10 +77,10 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
 
       this.classes[klassName].levels.push({
         klassLevel,
-        characterLevel,
-        feats: featsByLevel.get(characterLevel.id) ?? [],
-        skills: skillsByLevel.get(characterLevel.id) ?? [],
-        spells: spellsByLevel.get(characterLevel.id) ?? [],
+        advancement,
+        feats: featsByLevel.get(advancement.id) ?? [],
+        skills: skillsByLevel.get(advancement.id) ?? [],
+        spells: spellsByLevel.get(advancement.id) ?? [],
       });
     }
 
@@ -104,13 +104,13 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
     }
   }
 
-  addProjectedLevel(klassName: string, klassLevel: KlassLevel, characterLevel: StoredAdvancement): void {
+  addProjectedLevel(klassName: string, klassLevel: KlassLevel, advancement: StoredAdvancement): void {
     const entry = this.classes[klassName];
     if (!entry) return;
 
     entry.levels.push({
       klassLevel: { ...klassLevel, modifiers: [], requirements: [] },
-      characterLevel,
+      advancement,
       feats: [],
       skills: [],
       spells: [],

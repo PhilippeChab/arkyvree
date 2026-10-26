@@ -20,10 +20,10 @@ export default abstract class LevelUpPart<D extends Descriptions> {
   abstract describePlan(view: RulesetView, character: CharacterInput, request: LevelPlanRequest): LevelPlanAnswer;
 
   /**
-   * The character's saved level `characterLevelId` as an edit's plan opens it: each step's payload as the level saved
+   * The character's saved level `advancementId` as an edit's plan opens it: each step's payload as the level saved
    * it. Refused when the character has no such level.
    */
-  abstract describeSavedPlan(view: RulesetView, character: CharacterInput, characterLevelId: string): LevelPlanRequest;
+  abstract describeSavedPlan(view: RulesetView, character: CharacterInput, advancementId: string): LevelPlanRequest;
 
   /**
    * A level's steps, in the wizard's order, each its mechanic's (an edit's, `edited`, without the step that plans the
@@ -46,14 +46,14 @@ export default abstract class LevelUpPart<D extends Descriptions> {
   abstract planChildren(view: RulesetView, character: CharacterInput, children: CharacterInput[]): ChildrenPlan;
 
   /**
-   * A plan's edit (`request`) of the character's saved level `characterLevelId`: what it writes, checked unless
+   * A plan's edit (`request`) of the character's saved level `advancementId`: what it writes, checked unless
    * `force`d, and what the children become with it.
    */
   abstract planLevelEdit(
     view: RulesetView,
     character: CharacterInput,
     children: CharacterInput[],
-    characterLevelId: string,
+    advancementId: string,
     request: LevelPlanRequest,
     force: boolean,
   ): LevelEditPlan;

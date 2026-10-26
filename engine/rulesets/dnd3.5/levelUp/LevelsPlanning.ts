@@ -129,13 +129,13 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
    * row.
    */
   private projectEditedLevel(
-    characterLevel: { id: string; position: number },
+    advancement: { id: string; position: number },
     classLevelId: string,
     edit: LevelEditRequest,
   ) {
     const projection = new CharacterProjection(this.character);
     const { abilityIncreases, hp } = edit;
-    const level = projection.addLevel(classLevelId, { abilityIncreases, hp, replacing: characterLevel });
+    const level = projection.addLevel(classLevelId, { abilityIncreases, hp, replacing: advancement });
     projection.pick(level, this.toPickPlans(edit));
     return projection;
   }
@@ -146,11 +146,11 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
    * can raise a pool (a class level's grant, a feat it picks), so `withLevel` takes its grants and its picks, at the
    * hit points a level counts before they're rolled.
    */
-  private projectLevelContribution(characterLevelId: string, classLevelId: string, picks: LevelPicks) {
+  private projectLevelContribution(advancementId: string, classLevelId: string, picks: LevelPicks) {
     const before = new CharacterProjection(this.character);
-    before.dropLevelsFrom(characterLevelId);
+    before.dropLevelsFrom(advancementId);
     const withLevel = new CharacterProjection(this.character);
-    withLevel.dropLevelsFrom(characterLevelId);
+    withLevel.dropLevelsFrom(advancementId);
     withLevel.pick(withLevel.addLevel(classLevelId, { hp: this.rules.unrolledLevelHp }), this.toPickPlans(picks));
     return { before, withLevel };
   }
@@ -177,16 +177,16 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
   }
 
   /**
-   * The edit of saved level `characterLevelId`, with the character's bonded creatures' rows (`bonded`): the level as
+   * The edit of saved level `advancementId`, with the character's bonded creatures' rows (`bonded`): the level as
    * saved, its new hit points, ability increases and picks, checked, its picks refused when they pick a feat that
    * doesn't stack the character has already or a spell it knows in its pool already, the level's other picks' gifts
    * too (but the level's own saved picks), or overfill a pool (forced or not), and refused with the issues it answers
    * for unless `force`d; and what its bonded creatures become with it.
    */
-  planEdit(bonded: CharacterInput[], characterLevelId: string, edit: LevelEditRequest, force: boolean): LevelEditPlan {
+  planEdit(bonded: CharacterInput[], advancementId: string, edit: LevelEditRequest, force: boolean): LevelEditPlan {
     const { rows } = this.character;
     const { abilityIncreases, hp } = edit;
-    const level = rows.advancements.find((saved) => saved.id === characterLevelId);
+    const level = rows.advancements.find((saved) => saved.id === advancementId);
     if (!level) throw new RulesError("not-found", "Character level not found");
     const { klassLevel, klass } = this.getSavedKlassLevel(level);
     // The levels in the order the character took them: the edited level's index is its total level less one
@@ -197,14 +197,14 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     const holding = this.buildOnce((picks) =>
       this.build(this.projectEditedLevel(level, klassLevel.id, { ...edit, ...picks })),
     );
-    this.checks.checkPicksNotHeld(edit, holding, this.getSavedPicks(characterLevelId));
+    this.checks.checkPicksNotHeld(edit, holding, this.getSavedPicks(advancementId));
 
     const edited = holding(edit);
     this.refuseOverfull(edited, edit);
     const { valid, issues } = edited.validate();
     if (!valid && !force) {
       // The issues the level answers for: built without the level and every later one, then with it alone
-      const { before, withLevel } = this.projectLevelContribution(characterLevelId, klassLevel.id, edit);
+      const { before, withLevel } = this.projectLevelContribution(advancementId, klassLevel.id, edit);
       RulesError.refuseIssues(this.rules.findEditedLevelIssues(issues, this.build(before), this.build(withLevel)));
     }
     return {

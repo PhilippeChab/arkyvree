@@ -87,7 +87,7 @@ function formOfSaved(steps: readonly LevelStep[], saved: PlanRequest, answer: Pl
  */
 export function useEditLevelWizard({ open, onClose, characterId, editingLevel }: UseEditLevelWizardParams) {
   const snackbar = useSnackbar();
-  const editedLevelId = editingLevel.characterLevelId;
+  const editedLevelId = editingLevel.advancementId;
   const wizard = useLevelWizard({ answerable: true, characterId, editedLevelId, open, slots: EDITED_SLOTS });
   const { form, handleSaveError, refreshAfterSave, step, stepsError } = wizard;
 
@@ -107,8 +107,8 @@ export function useEditLevelWizard({ open, onClose, characterId, editingLevel }:
   const saveMutation = useMutation({
     mutationFn: async ({ force }: { force: boolean }) =>
       parseResponse(
-        rpc.api.characters.levels[":characterId"][":characterLevelId"].$put({
-          param: { characterId, characterLevelId: editedLevelId },
+        rpc.api.characters.levels[":characterId"][":advancementId"].$put({
+          param: { characterId, advancementId: editedLevelId },
           json: { steps: wizard.saveRequest().steps, force },
         }),
       ),

@@ -385,7 +385,7 @@ describe("conventions", () => {
             "  if (!ids.length) return [];\n  return await Feats.findMany(db, { ids });",
           ),
           "server/services/block.ts": reading(
-            "  if (ids.length > 0) {\n    await Feats.findPicks(db, { characterLevelIds: ids });\n  }",
+            "  if (ids.length > 0) {\n    await Feats.findPicks(db, { advancementIds: ids });\n  }",
           ),
           "server/services/plain.ts": reading("  return await Feats.findMany(db, { ids });"),
           "server/services/write.ts": reading(

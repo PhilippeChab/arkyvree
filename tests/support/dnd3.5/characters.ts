@@ -2,7 +2,7 @@ import type { InferRequestType } from "hono/client";
 
 import type { Db } from "@/drizzle/database.ts";
 import { CharacterInputs, type FieldsRequest } from "@/engine/core/module/index.ts";
-import CharacterValues, { RACE_ROLE } from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
+import { RACE_ROLE } from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import CharacterResponse from "@/engine/rulesets/dnd3.5/characters/description/CharacterResponse.ts";
 import CharacterProjection from "@/engine/rulesets/dnd3.5/levelUp/CharacterProjection.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
@@ -15,6 +15,14 @@ import type { Character, Session } from "@/shared/relations.ts";
 import { api, expectOk } from "@/tests/support/api.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 import type { Alignment, Gender } from "@/vocabulary/dnd3.5/identity.ts";
 
 /** A new character's fields, past those every character has, as the seeded ruleset's form sends them (3.5's). */
@@ -65,11 +73,6 @@ function splitFields<T extends NewFields & { fields?: FieldsRequest }>(values: T
 function splitStart<T extends NewStart>(values: T, start: Required<NewStart>) {
   const { abilities = start.abilities, raceId = start.raceId, ...rest } = values;
   return { picks: { [RACE_ROLE]: raceId }, scores: { score: abilities }, rest };
-}
-
-/** A character's row with its own values past its columns, as 3.5 reads them off its fields and its race link. */
-export function valuesOf(character: Character) {
-  return { ...character, ...CharacterValues.read(character) };
 }
 
 /**
@@ -150,15 +153,15 @@ export async function createTestCharacter(
     rulesetId: ctx.rulesetId,
     name: `Test Character ${uniqueId()}`,
     ...values,
-    ...CharacterValues.write({
-      age: 25,
-      alignment: "Neutral Good",
-      gender: "Male",
-      height: "180",
-      raceId: raceId ?? ctx.raceMap.pc["Human"],
-      weight: "75",
-      xp,
-    }),
+    fields: {
+      [CHARACTER_AGE]: 25,
+      [CHARACTER_ALIGNMENT]: "Neutral Good",
+      [CHARACTER_GENDER]: "Male",
+      [CHARACTER_HEIGHT]: "180",
+      [CHARACTER_WEIGHT]: "75",
+      [CHARACTER_XP]: xp,
+    },
+    links: { [RACE_ROLE]: raceId ?? ctx.raceMap.pc["Human"] },
   });
   return character;
 }

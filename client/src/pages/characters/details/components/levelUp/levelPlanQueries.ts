@@ -89,13 +89,13 @@ export function levelStepsQuery(characterId: string, editedLevelId?: string) {
 }
 
 /** A saved level as an edit's plan opens it: each step's payload as the level saved it. */
-export function savedPlanQuery(characterId: string, characterLevelId: string) {
+export function savedPlanQuery(characterId: string, advancementId: string) {
   return queryOptions({
-    queryKey: QUERY_KEYS.characters.levelUp.savedPlan(characterId, characterLevelId),
+    queryKey: QUERY_KEYS.characters.levelUp.savedPlan(characterId, advancementId),
     queryFn: () =>
       parseResponse(
-        rpc.api.characters.levels[":characterId"][":characterLevelId"].plan.$get({
-          param: { characterId, characterLevelId },
+        rpc.api.characters.levels[":characterId"][":advancementId"].plan.$get({
+          param: { characterId, advancementId },
         }),
       ),
   });

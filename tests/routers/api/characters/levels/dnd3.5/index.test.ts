@@ -33,7 +33,7 @@ type StepAnswer = PlanAnswer["steps"][string];
 type StepOptions = InferResponseType<(typeof options)["$post"], 200>;
 
 const levels = api.api.characters.levels[":characterId"];
-const level = levels[":characterLevelId"];
+const level = levels[":advancementId"];
 const options = levels.options[":step"];
 
 /** Saves one level of class `klassId`, at `levelNumber` in it, with these picks, returning the raw response. */
@@ -117,8 +117,8 @@ async function planOk(characterId: string, plan: PlanRequest) {
 }
 
 /** A saved level, its plan read back by kind, with the level it edits and the class level its plan takes. */
-async function readLevel(characterId: string, characterLevelId: string) {
-  const plan = await expectOk(level.plan.$get({ param: { characterId, characterLevelId } }));
+async function readLevel(characterId: string, advancementId: string) {
+  const plan = await expectOk(level.plan.$get({ param: { characterId, advancementId } }));
   const {
     advancements: [advancement],
   } = await planOk(characterId, plan);
@@ -376,7 +376,7 @@ describe("character levels", () => {
       const { characterId, ctx } = await createCharacter();
       const created = await addLevelOk(characterId, ctx.klassMap.pc["Fighter"], 1, 8, fighter1(ctx));
       const response = await level.$put({
-        param: { characterId, characterLevelId: created.id },
+        param: { characterId, advancementId: created.id },
         json: levelEditPlan({ hp: 11 }, fighter1(ctx)),
       });
       await expectStatus(response, 400);
@@ -406,7 +406,7 @@ describe("character levels", () => {
         expect(saved.feats[general]).toEqual([toughness, toughness]);
       }
       const created = await addLevelOk(characterId, ctx.klassMap.pc["Fighter"], 1, 8, levelPicks);
-      const param = { characterId, characterLevelId: created.id };
+      const param = { characterId, advancementId: created.id };
       await expectOk(level.$put({ param, json: levelEditPlan({ hp: 8 }, { ...levelPicks, feats }) }));
       expect((await readLevel(characterId, created.id)).feats[general]).toEqual([toughness, toughness]);
     });
@@ -432,7 +432,7 @@ describe("character levels", () => {
       const skills = { ...fighter1(ctx).skills, [ctx.skillMap["Climb"]]: 2, [ctx.skillMap["Handle Animal"]]: 2 };
       await expectOk(
         level.$put({
-          param: { characterId, characterLevelId: first.id },
+          param: { characterId, advancementId: first.id },
           json: levelEditPlan({ hp: 7 }, { ...fighter1(ctx), skills }),
         }),
       );
@@ -488,8 +488,8 @@ describe("character levels", () => {
       };
       const second = await addLevelOk(characterId, rangerId, 2, 7, secondPicks);
 
-      const combatStyle = async (characterLevelId: string) => {
-        const plan = await planOk(characterId, { editedLevelId: characterLevelId, steps: {} });
+      const combatStyle = async (advancementId: string) => {
+        const plan = await planOk(characterId, { editedLevelId: advancementId, steps: {} });
         return poolNamed(stepOf(plan, "feats", "pick"), "Ranger Combat Style (2nd)")?.available ?? 0;
       };
       expect(await combatStyle(second.id)).toBeGreaterThan(0);
@@ -497,7 +497,7 @@ describe("character levels", () => {
 
       await expectOk(
         level.$put({
-          param: { characterId, characterLevelId: second.id },
+          param: { characterId, advancementId: second.id },
           json: levelEditPlan({ hp: 5 }, secondPicks),
         }),
       );
@@ -539,12 +539,8 @@ describe("character levels", () => {
       expect(created).toHaveLength(3);
       const [l1, l2, l3] = created;
 
-      const pools = async (characterLevelId: string) => {
-        const feats = stepOf(
-          await planOk(characterId, { editedLevelId: characterLevelId, steps: {} }),
-          "feats",
-          "pick",
-        );
+      const pools = async (advancementId: string) => {
+        const feats = stepOf(await planOk(characterId, { editedLevelId: advancementId, steps: {} }), "feats", "pick");
         return { general: poolNamed(feats, "General"), bonus: poolNamed(feats, "Fighter Bonus Feat") };
       };
       // Level 1 holds Power Attack, Cleave and Improved Initiative; level 2 Dodge; level 3 Toughness.
@@ -563,7 +559,7 @@ describe("character levels", () => {
 
       await expectOk(
         level.$put({
-          param: { characterId, characterLevelId: l2.id },
+          param: { characterId, advancementId: l2.id },
           json: levelEditPlan(
             { hp: 4 },
             {
@@ -618,14 +614,14 @@ describe("character levels", () => {
     const { characterId, ctx } = await createCharacter();
     const guest = guestApi.api.characters.levels[":characterId"];
     const plan = levelUpPlan([{ klassId: ctx.klassMap.pc["Fighter"], level: 1, hp: 8 }]);
-    const characterLevel = { characterId, characterLevelId: NIL_UUID };
+    const characterLevel = { characterId, advancementId: NIL_UUID };
     const responses = await Promise.all([
       guest.steps.$get({ param: { characterId }, query: {} }),
       guest.plan.$post({ param: { characterId }, json: plan }),
       guest.options[":step"].$post({ param: { characterId, step: "class-plan" }, query: {}, json: { plan } }),
       guest.$post({ param: { characterId }, json: plan }),
-      guest[":characterLevelId"].plan.$get({ param: characterLevel }),
-      guest[":characterLevelId"].$put({ param: characterLevel, json: levelEditPlan({ hp: 5 }) }),
+      guest[":advancementId"].plan.$get({ param: characterLevel }),
+      guest[":advancementId"].$put({ param: characterLevel, json: levelEditPlan({ hp: 5 }) }),
       guest.$delete({ param: { characterId } }),
     ]);
     for (const response of responses) await expectStatus(response, 401);
@@ -646,7 +642,7 @@ describe("character levels", () => {
     );
     await expectStatus(addLevel(NIL_UUID, klassId, 1, 8, {}), 404);
     await expectStatus(levels.$delete({ param: missing }), 404);
-    const characterLevel = { characterId, characterLevelId: NIL_UUID };
+    const characterLevel = { characterId, advancementId: NIL_UUID };
     await expectStatus(level.plan.$get({ param: characterLevel }), 404);
     await expectStatus(level.$put({ param: characterLevel, json: levelEditPlan({ hp: 5 }) }), 404);
   });

@@ -286,7 +286,7 @@ export default class SkillsComponent extends CharacterComponent<LoadedCharacterD
   getSkillPointBases(): { bonusPerLevel: number; pointsPerLevel: number[] } {
     const levels = Object.values(this.classes.getClasses())
       .flatMap((klass) => klass.levels)
-      .sort((a, b) => a.characterLevel.position - b.characterLevel.position);
+      .sort((a, b) => a.advancement.position - b.advancement.position);
     return {
       pointsPerLevel: levels.map((level) =>
         this.getLevelPointsPerLevel(this.skillPointClassLevelFields.get(level.klassLevel.id)?.skills ?? 0),

@@ -353,7 +353,7 @@ describe("characters", () => {
             name: "Wizard",
             label: "Wizard 1",
             words: { open: "Wizard 1 Levels", levels: "Wizard Levels", add: "Add Wizard Level" },
-            advancements: [{ id: wizard.levels[0].characterLevel.id, label: "Level 1", edit: "Edit Wizard Level 1" }],
+            advancements: [{ id: wizard.levels[0].advancement.id, label: "Level 1", edit: "Edit Wizard Level 1" }],
           },
         ],
         words: LEVEL_WORDS,
