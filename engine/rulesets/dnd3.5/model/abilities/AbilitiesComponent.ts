@@ -1,6 +1,8 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import AbilityRules from "@/engine/rulesets/dnd3.5/rules/AbilityRules.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 interface AbilitiesData {
@@ -26,19 +28,23 @@ export default class AbilitiesComponent extends CharacterComponent<LoadedCharact
   /** What the character's race makes of each ability's misc, by the ability's slug: its permanent score keeps it. */
   private raceAdjustments: Readonly<Record<string, number>> = {};
 
-  /** Each of the character's scores, with what its levels' ability increases add. */
-  override initialize({
-    abilityIncreases,
-    characterAbilityScores,
-  }: Pick<LoadedCharacterData, "abilityIncreases" | "characterAbilityScores">) {
-    // Initialize abilities from the character's ability scores
-    for (const { abilityId, name, score } of characterAbilityScores) {
+  /**
+   * Each of the character's scores (its `score` links), its ability named as the view names it, with what its levels'
+   * ability increases (their `abilities` picks) add.
+   */
+  override initialize(
+    { abilityPicks, scoreLinks }: Pick<LoadedCharacterData, "abilityPicks" | "scoreLinks">,
+    { rulesetData }: RulesetView,
+  ) {
+    const { abilitiesById } = Dnd35View.of(rulesetData);
+    for (const { amount, entityId } of scoreLinks) {
+      const name = abilitiesById.get(entityId)?.name ?? "Unknown";
       const normalizedName = stripSeparators(name);
-      this.abilityNames.set(abilityId, { name, normalizedName });
+      this.abilityNames.set(entityId, { name, normalizedName });
 
       // The total and the modifier are computed from the parts when read, so they follow every change to them
       this.abilities[normalizedName] = {
-        base: score,
+        base: amount!,
         level: 0,
         misc: 0,
         get total() {
@@ -50,10 +56,9 @@ export default class AbilitiesComponent extends CharacterComponent<LoadedCharact
       };
     }
 
-    // Apply the levels' ability increases
-    for (const { abilityId, amount } of abilityIncreases) {
-      const normalizedName = this.abilityNames.get(abilityId)?.normalizedName;
-      if (normalizedName && this.abilities[normalizedName]) this.abilities[normalizedName].level += amount;
+    for (const { amount, entityId } of abilityPicks) {
+      const normalizedName = this.abilityNames.get(entityId!)?.normalizedName;
+      if (normalizedName && this.abilities[normalizedName]) this.abilities[normalizedName].level += amount!;
     }
   }
 

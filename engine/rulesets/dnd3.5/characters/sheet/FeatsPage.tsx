@@ -20,7 +20,9 @@ function FeatsPage({ detailedCharacter }: { detailedCharacter: DetailedCharacter
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Feats & Abilities</Text>
         {(() => {
-          const allFeats = Object.values(classData).flatMap((klass) => klass.levels.flatMap((level) => level.feats));
+          const allFeats = Object.values(classData).flatMap((klass) =>
+            klass.levels.flatMap((level) => level.feats.map(({ entity }) => entity)),
+          );
 
           const groupedFeats = allFeats.reduce(
             (acc, feat) => {

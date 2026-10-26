@@ -33,10 +33,10 @@ export default class LevelUpPlan extends PlannedLevelsState {
    * ranks, as a save writes them, which the class picker projects. Refused when a planned level isn't one of the view's
    * class levels.
    */
-  spreadSkillPoints({ abilityIncreases = [], klassLevelIds = [], skillPoints = {} }: PlannedSoFar) {
+  spreadSkillPoints({ abilityIncreases = [], classLevelIds = [], skillPoints = {} }: PlannedSoFar) {
     if (Object.keys(skillPoints).length === 0) return [];
-    const klassLevelEntries = klassLevelIds.map((klassLevelId, i) => ({
-      ...this.getSavedKlassLevel({ trackId: klassLevelId }),
+    const klassLevelEntries = classLevelIds.map((classLevelId, i) => ({
+      ...this.getSavedKlassLevel({ trackId: classLevelId }),
       abilityIncreases: abilityIncreases[i] ?? [],
     }));
     const distributed = this.distributePicks(klassLevelEntries, { feats: {}, spells: {}, skills: skillPoints });

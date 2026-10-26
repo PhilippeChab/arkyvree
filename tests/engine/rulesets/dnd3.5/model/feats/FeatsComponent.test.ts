@@ -20,7 +20,7 @@ describe("FeatsComponent.injectGroupings", () => {
     const family = (rulesetData.valuesOf(rapier.id).fields[FEAT_FAMILY] ?? []).map(String);
     const feats = new FeatsComponent();
     // The character holds the rapier's
-    feats.initialize({ feats: [FeatsComponent.toVirtualFeat(rapier, rulesetData)] }, { ruleset, rulesetData });
+    feats.initialize({ feats: [FeatsComponent.toVirtualFeat(rapier, false, rulesetData)] }, { ruleset, rulesetData });
     const groupings = new FeatGroupingsComponent(feats);
     // The feat in its own family too, as a ruleset could tag it
     for (const feat of [generic, rapier]) groupings.registerFeat(feat, family);

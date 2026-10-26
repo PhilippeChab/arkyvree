@@ -53,7 +53,7 @@ describe("A fork's own description of an inherited", () => {
     const descriptions = new Map(
       levels
         .flatMap((level) => [...level.feats, ...level.spells, ...level.skills])
-        .map((entity) => [entity.name, entity.description]),
+        .map(({ entity }) => [entity.name, entity.description]),
     );
     expect(descriptions.get(name)).toBe(description);
   });
@@ -85,6 +85,6 @@ test("A fork's own saving throw of an inherited spell is on the sheet", async ()
   const spell = Object.values(character.components.classes.getCharacterClasses())
     .flatMap((k) => k.levels)
     .flatMap((level) => level.spells)
-    .find((p) => p.name === name);
-  expect(spell).toMatchObject({ saveName: "Will", fields: { [SPELL_SAVE_EFFECT]: "negates" } });
+    .find((p) => p.entity.name === name);
+  expect(spell).toMatchObject({ entity: { fields: { [SPELL_SAVE_EFFECT]: "negates" } }, saveName: "Will" });
 });

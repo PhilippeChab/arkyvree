@@ -1,14 +1,12 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
 import type { StoredAdvancement } from "@/engine/core/module/index.ts";
 import type { RulesetView, ViewLink } from "@/engine/core/view/index.ts";
-import type {
-  LoadedCharacterData,
-  SkillWithRank,
-} from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
+import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import type {
   CustomizedClassLevel,
-  CustomizedFeat,
-  CustomizedSpell,
+  HeldFeat,
+  HeldSpell,
+  SkillPick,
 } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
@@ -17,16 +15,16 @@ import { stripSeparators } from "@/shared/text.ts";
 interface ClassesData {
   [key: string]: {
     bonuscasterlevel: number;
-    klass: Klass;
     /** Its class skills: its `classSkill` links */
-    klassSkills: ViewLink[];
+    classSkillLinks: ViewLink[];
+    klass: Klass;
     level: number;
     levels: {
       characterLevel: StoredAdvancement;
-      feats: CustomizedFeat[];
+      feats: HeldFeat[];
       klassLevel: CustomizedClassLevel;
-      skills: SkillWithRank[];
-      spells: CustomizedSpell[];
+      skills: SkillPick[];
+      spells: HeldSpell[];
     }[];
   };
 }
@@ -39,47 +37,25 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
   override initialize(
     {
       characterLevels,
+      classSkillLinks,
       feats,
       klasses,
       klassLevels,
-      klassSkills,
       spells,
       skills,
     }: Pick<
       LoadedCharacterData,
-      "characterLevels" | "feats" | "klasses" | "klassLevels" | "klassSkills" | "spells" | "skills"
+      "characterLevels" | "classSkillLinks" | "feats" | "klasses" | "klassLevels" | "spells" | "skills"
     >,
     { rulesetData }: RulesetView,
   ) {
-    // Build per-level lookup indices once (replaces 4 .filter() scans per character level).
-    const klassLevelsById = new Map<string, (typeof klassLevels)[number]>();
-    for (const kl of klassLevels) klassLevelsById.set(kl.id, kl);
-    const klassesById = new Map<string, Klass>();
-    for (const k of klasses) klassesById.set(k.id, k);
-    const klassSkillsByKlass = new Map<string, ViewLink[]>();
-    for (const link of klassSkills) {
-      const group = klassSkillsByKlass.get(link.fromId);
-      if (group) group.push(link);
-      else klassSkillsByKlass.set(link.fromId, [link]);
-    }
-    const featsByCharacterLevelId = new Map<string, typeof feats>();
-    for (const f of feats) {
-      const group = featsByCharacterLevelId.get(f.characterLevelId);
-      if (group) group.push(f);
-      else featsByCharacterLevelId.set(f.characterLevelId, [f]);
-    }
-    const skillsByCharacterLevelId = new Map<string, typeof skills>();
-    for (const s of skills) {
-      const group = skillsByCharacterLevelId.get(s.characterLevelId);
-      if (group) group.push(s);
-      else skillsByCharacterLevelId.set(s.characterLevelId, [s]);
-    }
-    const spellsByCharacterLevelId = new Map<string, typeof spells>();
-    for (const p of spells) {
-      const group = spellsByCharacterLevelId.get(p.characterLevelId);
-      if (group) group.push(p);
-      else spellsByCharacterLevelId.set(p.characterLevelId, [p]);
-    }
+    const klassLevelsById = new Map(klassLevels.map((level) => [level.id, level]));
+    const klassesById = new Map(klasses.map((klass) => [klass.id, klass]));
+    const classSkillLinksByClass = Map.groupBy(classSkillLinks, (link) => link.fromId);
+    // What each level holds, by its advancement: the picks and grants the character loaded are all at a level
+    const featsByLevel = Map.groupBy(feats, (feat) => feat.advancementId);
+    const skillsByLevel = Map.groupBy(skills, (skill) => skill.advancementId);
+    const spellsByLevel = Map.groupBy(spells, (spell) => spell.advancementId);
 
     for (const characterLevel of characterLevels) {
       const klassLevel = klassLevelsById.get(characterLevel.trackId!);
@@ -92,7 +68,7 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
       if (!this.classes[klassName]) {
         this.classes[klassName] = {
           klass,
-          klassSkills: klassSkillsByKlass.get(klass.id) ?? [],
+          classSkillLinks: classSkillLinksByClass.get(klass.id) ?? [],
           levels: [],
           level: 0,
           bonuscasterlevel: 0,
@@ -102,9 +78,9 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
       this.classes[klassName].levels.push({
         klassLevel,
         characterLevel,
-        feats: featsByCharacterLevelId.get(characterLevel.id) ?? [],
-        skills: skillsByCharacterLevelId.get(characterLevel.id) ?? [],
-        spells: spellsByCharacterLevelId.get(characterLevel.id) ?? [],
+        feats: featsByLevel.get(characterLevel.id) ?? [],
+        skills: skillsByLevel.get(characterLevel.id) ?? [],
+        spells: spellsByLevel.get(characterLevel.id) ?? [],
       });
     }
 
@@ -119,7 +95,7 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
       if (!this.classes[klassName]) {
         this.classes[klassName] = {
           klass,
-          klassSkills: [],
+          classSkillLinks: [],
           levels: [],
           level: 0,
           bonuscasterlevel: 0,

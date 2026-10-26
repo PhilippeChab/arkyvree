@@ -56,16 +56,16 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
         ?.map((id) => dnd35.spellsById.get(id))
         .find((row) => row && dnd35.listLinksOf(row.id).some((link) => link.toId === aptitudeId));
       if (!spellRow || aptitudeId === undefined) return [];
-      const held = this.data.spells.filter((spell) => spell.id === spellRow.id && spell.aptitudeId === aptitudeId);
+      const held = this.data.spells.filter((spell) => spell.entity.id === spellRow.id && spell.viaId === aptitudeId);
       for (const spell of held) spell.given = true;
       if (held.length > 0) return [];
 
       const abilityDcName =
-        this.data.spells.findLast((spell) => !spell.virtual && spell.aptitudeId === aptitudeId && spell.abilityDcName)
+        this.data.spells.findLast((spell) => !spell.virtual && spell.viaId === aptitudeId && spell.abilityDcName)
           ?.abilityDcName ?? null;
       const spell = SpellsComponent.toVirtualSpell(spellRow, aptitudeId, abilityDcName, this.rulesetData);
       if (!spell) return [];
-      const joined = this.data.spells.some(({ id }) => id === spellRow.id);
+      const joined = this.data.spells.some(({ entity }) => entity.id === spellRow.id);
       this.data.spells.push(spell);
       this.components.spellcasting.registerKnownSpells(this.rulesetData, [spell]);
       return joined ? [] : spell.modifiers;
@@ -79,12 +79,12 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
      * its own prerequisites don't gate it, what grants it does.
      */
     protected possessFeat(featId: string, given: boolean): Modifier[] {
-      const held = this.data.feats.filter((feat) => feat.id === featId);
+      const held = this.data.feats.filter((feat) => feat.entity.id === featId);
       if (given) for (const feat of held) feat.given = true;
       const featRow = this.dnd35.featsById.get(featId);
       if (held.length > 0 || !featRow) return [];
       this.components.feats.grant(featRow.name);
-      const feat = { ...FeatsComponent.toVirtualFeat(featRow, this.rulesetData), given };
+      const feat = FeatsComponent.toVirtualFeat(featRow, given, this.rulesetData);
       this.data.feats.push(feat);
       return feat.modifiers;
     }
@@ -93,7 +93,12 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
     getVirtualFeats() {
       return this.data.feats
         .filter((feat) => feat.virtual)
-        .map((feat) => ({ id: feat.id, name: feat.name, description: feat.description, fields: feat.fields }));
+        .map(({ entity }) => ({
+          id: entity.id,
+          name: entity.name,
+          description: entity.description,
+          fields: entity.fields,
+        }));
     }
 
     /**
@@ -103,21 +108,20 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
      */
     getVirtualSpells() {
       const { spellSlugByAptitudeId } = SpellLists.of(this.rulesetData);
-      return this.data.spells.flatMap((spell) => {
-        const level = spell.spellLevel;
-        if (!spell.virtual || level == null) return [];
-        const aptitudeSlug = spellSlugByAptitudeId.get(spell.aptitudeId) ?? spell.aptitudeId;
+      return this.data.spells.flatMap(({ entity, saveName, spellLevel: level, viaId, virtual }) => {
+        if (!virtual || level == null) return [];
+        const aptitudeSlug = spellSlugByAptitudeId.get(viaId) ?? viaId;
         return [
           {
-            id: spell.id,
-            name: spell.name,
-            description: spell.description,
-            saveName: spell.saveName,
-            saveEffect: spell.fields[SPELL_SAVE_EFFECT] ?? null,
-            aptitudeId: spell.aptitudeId,
+            id: entity.id,
+            name: entity.name,
+            description: entity.description,
+            saveName,
+            saveEffect: entity.fields[SPELL_SAVE_EFFECT] ?? null,
+            aptitudeId: viaId,
             level,
-            dc: this.components.spells.getSpell(spell.name)?.dc?.[aptitudeSlug]?.total ?? null,
-            fields: formatFieldValues(SpellsComponent.textsOf(this.rulesetData, spell.id), (field) =>
+            dc: this.components.spells.getSpell(entity.name)?.dc?.[aptitudeSlug]?.total ?? null,
+            fields: formatFieldValues(SpellsComponent.textsOf(this.rulesetData, entity.id), (field) =>
               SPELL_FIELDS.optionsOf(field),
             ),
           },

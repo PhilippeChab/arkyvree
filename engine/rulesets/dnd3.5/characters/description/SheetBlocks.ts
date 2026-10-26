@@ -40,7 +40,7 @@ interface SheetAbility {
  */
 interface SheetParts {
   abilities: (SheetAbility & { abilityId: string })[];
-  classes: Record<string, { levels: { feats: SheetFeat[] }[] }>;
+  classes: Record<string, { levels: { feats: { entity: SheetFeat }[] }[] }>;
   combat: ReturnType<typeof CombatSheet.describe>;
   equipment: ReturnType<typeof CharacterResponse.equipmentOf>;
   identity: Parameters<typeof IdentityFields.describe>[0];
@@ -250,7 +250,8 @@ export default class SheetBlocks {
    */
   private static feats(classes: SheetParts["classes"], virtualFeats: SheetFeat[]): EntriesBlock {
     const byName = new Map<string, SheetFeat[]>();
-    for (const feat of Object.values(classes).flatMap((klass) => klass.levels.flatMap((level) => level.feats))) {
+    const levels = Object.values(classes).flatMap((klass) => klass.levels);
+    for (const { entity: feat } of levels.flatMap((level) => level.feats)) {
       const held = byName.get(feat.name);
       if (held) held.push(feat);
       else byName.set(feat.name, [feat]);

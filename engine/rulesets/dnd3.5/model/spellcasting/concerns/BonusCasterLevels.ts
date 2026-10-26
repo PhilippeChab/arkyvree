@@ -1,23 +1,17 @@
 import type { BuiltCharacter } from "@/engine/core/character/index.ts";
-import type { StoredAdvancement } from "@/engine/core/module/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import AptitudesPaths from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesPaths.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import ClassesPaths from "@/engine/rulesets/dnd3.5/model/classes/ClassesPaths.ts";
-import type { CustomizedClassLevel, CustomizedFeat } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
+import type { CustomizedClassLevel, HeldFeat } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import type SpellcastingState from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier } from "@/shared/relations.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
-
-/** A character level's key in the index of the class levels the character took. */
-function levelKey(characterLevelId: string, klassLevelId: string) {
-  return `${characterLevelId}:${klassLevelId}`;
-}
 
 /** Caster levels another class adds to a spellcasting class (a prestige class's +1 caster level), and the domain and school slots they bring. */
 export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base: B) {
@@ -26,21 +20,17 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
     private attributeBonusLevels(
       bonusKlassLevels: KlassLevel[],
       klassLevels: CustomizedClassLevel[],
-      feats: CustomizedFeat[],
-      characterLevels: StoredAdvancement[],
+      feats: HeldFeat[],
       rulesetKlasses: Klass[],
     ) {
-      // Pre-built indices so the attribution is O(classes × feats)
-      // instead of O(classes × klassLevels × feats × characterLevels).
       const rulesetKlassById = new Map(rulesetKlasses.map((k) => [k.id, k]));
-      const takenAt = new Set(characterLevels.map((cl) => levelKey(cl.id, cl.trackId!)));
       const bonusLevelsByKlassId = Map.groupBy(bonusKlassLevels, (kl) => kl.ownerId);
 
       for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses())) {
         if (klassData.bonuscasterlevel <= 0) continue;
 
         const target = ClassesPaths.bonusCasterLevel(className);
-        const grantingLevels = this.grantingLevels(target, klassLevels, feats, takenAt, rulesetKlassById);
+        const grantingLevels = this.grantingLevels(target, klassLevels, feats, rulesetKlassById);
         const receivingBonusLevels = (bonusLevelsByKlassId.get(klassData.klass.id) ?? []).toSorted(
           (a, b) => a.position - b.position,
         );
@@ -73,19 +63,20 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
      * Each list a feat brings that it gives slots in (`featListIds`: a cleric's domain, a specialist wizard's school):
      * the class whose level gave the feat, and the feat's modifiers on the list's slots. A list stays with the first feat.
      */
-    private featListSlots(feats: CustomizedFeat[], featListIds: Set<string>) {
+    private featListSlots(feats: HeldFeat[], featListIds: Set<string>) {
       const aptitudes = this.aptitudes.getAptitudes();
-      const classNameByKlassLevelId = this.classNameByKlassLevelId();
+      const classNameByClassLevelId = this.classNameByClassLevelId();
       const slotsByList = new Map<string, { className: string; featId: string; modifiers: Modifier[] }>();
       for (const feat of feats) {
-        const className = classNameByKlassLevelId.get(feat.klassLevelId);
+        // A feat held without a level (a modifier's) is of no class
+        const className = feat.trackId === undefined ? undefined : classNameByClassLevelId.get(feat.trackId);
         if (!className) continue;
         for (const modifier of feat.modifiers) {
           const list = AptitudeTargets.parseSpellLevel(modifier.target)?.list;
           const listId = list === undefined ? undefined : aptitudes[list]?.id;
           if (list === undefined || !listId || !featListIds.has(listId)) continue;
-          const slots = slotsByList.get(list) ?? { className, featId: feat.id, modifiers: [] };
-          if (slots.featId !== feat.id) continue;
+          const slots = slotsByList.get(list) ?? { className, featId: feat.entity.id, modifiers: [] };
+          if (slots.featId !== feat.entity.id) continue;
           slots.modifiers.push(modifier);
           slotsByList.set(list, slots);
         }
@@ -94,25 +85,24 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
     }
 
     /**
-     * The class levels that granted the bonus caster levels `target` adds to, in level order: each level a feat adding
-     * to it was taken at, but for a class level that adds to it itself.
+     * The class levels that granted the bonus caster levels `target` adds to, in level order: each class level a feat
+     * adding to it is held at (picked or granted there), but for a class level that adds to it itself.
      */
     private grantingLevels(
       target: string,
       klassLevels: CustomizedClassLevel[],
-      feats: CustomizedFeat[],
-      takenAt: Set<string>,
+      feats: HeldFeat[],
       rulesetKlassById: Map<string, Klass>,
     ) {
-      const featsWithTargetMod = feats.filter(
-        (f) => f.characterLevelId && f.modifiers.some((m) => m.target === target && m.operator === "add"),
+      const featsWithTargetMod = feats.filter((f) =>
+        f.modifiers.some((m) => m.target === target && m.operator === "add"),
       );
 
       const grantingLevels: Array<{ klassName: string; level: number }> = [];
       for (const kl of klassLevels) {
         if (kl.modifiers.some((m) => m.target === target && m.operator === "add")) continue;
         for (const feat of featsWithTargetMod) {
-          if (!takenAt.has(levelKey(feat.characterLevelId, kl.id))) continue;
+          if (feat.trackId !== kl.id) continue;
           const klass = rulesetKlassById.get(kl.ownerId);
           grantingLevels.push({
             klassName: klass?.name ?? "Unknown",
@@ -149,7 +139,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
      */
     protected applyBonusCasterLevels(
       character: BuiltCharacter,
-      feats: CustomizedFeat[],
+      feats: HeldFeat[],
       featListIds: Set<string>,
       isGateMet: (modifier: Modifier, metTargets?: string[]) => boolean,
     ) {
@@ -167,8 +157,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
     protected readBonusCasterLevels(
       rulesetData: RulesetData,
       klassLevels: CustomizedClassLevel[],
-      feats: CustomizedFeat[],
-      characterLevels: StoredAdvancement[],
+      feats: HeldFeat[],
       rulesetKlasses: Klass[],
     ) {
       const classNameByLevel = this.bonusLevelClassNames();
@@ -186,7 +175,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
         const className = classNameByLevel.get(`${kl.ownerId}:${kl.position}`);
         if (className) this.bonusKlassLevelClassMap.set(kl.id, className);
       }
-      this.attributeBonusLevels(bonusKlassLevels, klassLevels, feats, characterLevels, rulesetKlasses);
+      this.attributeBonusLevels(bonusKlassLevels, klassLevels, feats, rulesetKlasses);
     }
 
     /**
@@ -196,7 +185,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
      * feat's modifiers open their levels by the class's own level alone.
      */
     protected syncFeatListSlots(
-      feats: CustomizedFeat[],
+      feats: HeldFeat[],
       featListIds: Set<string>,
       isGateMet: (modifier: Modifier, metTargets?: string[]) => boolean,
     ) {

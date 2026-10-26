@@ -26,11 +26,11 @@ export default class SpellPicker extends LevelPicker {
   /** What the picker offers and leaves out (`filters`). */
   private buildFilters({ aptitudeId, planned = {}, spellLevel }: SpellPickQuery) {
     // Every level the character has and plans, the one it's taking too, whose grants it holds in their pools
-    const known = this.holder.getHeldSpells().filter((spell) => spell.aptitudeId === aptitudeId);
+    const known = this.holder.getHeldSpells().filter((spell) => spell.viaId === aptitudeId);
     const excludeIds = [
-      ...known.map((spell) => spell.id),
+      ...known.map(({ entity }) => entity.id),
       ...this.getProhibitedSpellIds(aptitudeId),
-      ...(planned.spellPicks ?? []).map((pick) => pick.spellId),
+      ...(planned.picks ?? []).flatMap(({ entityId, step }) => (step === "spells" ? [entityId!] : [])),
     ];
     return { ids: Dnd35View.of(this.rulesetData).listSpellIds({ aptitudeId, level: spellLevel }), excludeIds };
   }
@@ -43,7 +43,7 @@ export default class SpellPicker extends LevelPicker {
     const prohibitedSchools = new Set(
       this.character
         .getHeldFeats()
-        .flatMap((feat) => FEAT_FIELDS.read(this.rulesetData.valuesOf(feat.id)).prohibitedSchools),
+        .flatMap(({ entity }) => FEAT_FIELDS.read(this.rulesetData.valuesOf(entity.id)).prohibitedSchools),
     );
     // The spells of each school, by the view's kind-wide values
     const spellIdsBySchool = new Map(

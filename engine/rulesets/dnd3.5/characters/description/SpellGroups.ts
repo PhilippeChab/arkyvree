@@ -26,15 +26,20 @@ interface GivenSpell {
   saveName: string | null;
 }
 
-/** A spell a class level picked or granted: what a save against it does among its own fields. */
+/**
+ * A spell a level holds (picked, granted, or known by its list): the spell, what a save against it does among its own
+ * fields, and its pool and spell level there.
+ */
 interface LevelSpell {
-  aptitudeId: string;
-  description?: string | null;
-  fields?: Readonly<{ [SPELL_SAVE_EFFECT]?: string }>;
-  id: string;
-  name: string;
+  entity: {
+    description?: string | null;
+    fields?: Readonly<{ [SPELL_SAVE_EFFECT]?: string }>;
+    id: string;
+    name: string;
+  };
   saveName?: string | null;
   spellLevel?: number | null;
+  viaId: string;
 }
 
 /**
@@ -235,11 +240,11 @@ export default class SpellGroups {
 
     for (const klass of Object.values(sheet.classes)) {
       for (const level of klass.levels || []) {
-        for (const spell of level.spells || []) {
-          const group = groupOf(spell.aptitudeId, spell.spellLevel ?? level.klassLevel?.position ?? 0);
+        for (const { entity: spell, saveName, spellLevel, viaId } of level.spells || []) {
+          const group = groupOf(viaId, spellLevel ?? level.klassLevel?.position ?? 0);
           const spellData = sheet.spells[stripSeparators(spell.name)];
           const fields = spellData?.fields ?? {};
-          const tags = SpellGroups.tagsFor(sheet, spell.id, spell.aptitudeId);
+          const tags = SpellGroups.tagsFor(sheet, spell.id, viaId);
           const existing = group.spells.find((row) => row.name === spell.name);
           if (existing) {
             const added = tags?.filter((tag) => !existing.tags?.some((had) => had.name === tag.name)) ?? [];
@@ -250,7 +255,7 @@ export default class SpellGroups {
             id: spell.id,
             name: spell.name,
             school: fields[SPELL_SCHOOL] || "—",
-            save: SpellGroups.saveOf(spell.saveName, spell.fields?.[SPELL_SAVE_EFFECT]),
+            save: SpellGroups.saveOf(saveName, spell.fields?.[SPELL_SAVE_EFFECT]),
             dc: spellData?.dc?.[SpellLists.toSpellPossessionSlug(group.aptitudeName)]?.total ?? null,
             description: spellData?.spell?.description || spell.description || "",
             details: SpellGroups.detailsOf(fields),

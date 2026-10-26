@@ -1,8 +1,8 @@
+import type { PickPlan } from "@/engine/core/module/index.ts";
 import CharacterProjection from "@/engine/rulesets/dnd3.5/levelUp/CharacterProjection.ts";
 import type { PlannedClassLevel } from "@/engine/rulesets/dnd3.5/levelUp/LevelUpBase.ts";
 import PicksDistribution from "@/engine/rulesets/dnd3.5/levelUp/PicksDistribution.ts";
 import PlannedLevelsState from "@/engine/rulesets/dnd3.5/levelUp/PlannedLevelsState.ts";
-import type { FeatPick } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
@@ -29,15 +29,16 @@ export interface LevelGains {
  */
 export default class ImportedLevelGains extends PlannedLevelsState {
   /**
-   * The character with the level (`entry`), its skill points (`skills`, by skill id) and these feats (`feats`, each in
-   * its pool) picked at it: a feat whose requirement the level's ranks meet is taken there, as a level-up takes it.
+   * The character with the level (`entry`), its skill points (`skills`, by skill id) and these feats (`feats`, its
+   * `feats` picks, each in its pool) picked at it: a feat whose requirement the level's ranks meet is taken there, as a
+   * level-up takes it.
    */
-  buildWith(entry: PlannedClassLevel, skills: Record<string, number>, feats: FeatPick[]): DetailedCharacter {
+  buildWith(entry: PlannedClassLevel, skills: Record<string, number>, feats: PickPlan[]): DetailedCharacter {
     const projection = new CharacterProjection(this.character);
     const { abilityIncreases, klassLevel } = entry;
     const ranks = Object.entries(skills).map(([entityId, amount]) => ({ step: "skills", entityId, amount }));
     projection.pick(projection.addLevel(klassLevel.id, { abilityIncreases, hp: LevelRules.UNROLLED_LEVEL_HP }), [
-      ...CharacterProjection.picksOf({ featPicks: feats }),
+      ...feats,
       ...ranks,
     ]);
     return this.build(projection);

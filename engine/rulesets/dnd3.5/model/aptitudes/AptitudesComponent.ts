@@ -117,34 +117,25 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
    * allows, from the class levels' feats and spells and the general feats, and what the character spent on it.
    */
   override initialize(
-    {
-      klassLevelFeatCountsByAptitudeId,
-      klassLevelSpellCountsByAptitudeId,
-    }: Pick<LoadedCharacterData, "klassLevelFeatCountsByAptitudeId" | "klassLevelSpellCountsByAptitudeId">,
+    { grantCountsByPool }: Pick<LoadedCharacterData, "grantCountsByPool">,
     { rulesetData }: RulesetView,
   ) {
     this.buildEntries(Dnd35View.of(rulesetData).aptitudes, SpellLists.of(rulesetData).leveledAptitudeIds);
     const aptitudeById: AptitudesById = new Map(
       Object.values(this.aptitudes).map((aptitude) => [aptitude.id, aptitude]),
     );
-    this.applyAllowances(aptitudeById, klassLevelFeatCountsByAptitudeId, klassLevelSpellCountsByAptitudeId);
+    this.applyAllowances(aptitudeById, grantCountsByPool);
     this.applySpent(aptitudeById, this.countSpent());
   }
 
   /**
-   * What each aptitude allows: the feats and the (non-free) spells the class levels grant through it, and the general
-   * feats its total level gives (`countGeneralFeats`).
+   * What each aptitude allows: the feats and the (non-free) spells the class levels grant through it (`grantCounts`,
+   * by its id), and the general feats its total level gives (`countGeneralFeats`).
    */
-  private applyAllowances(
-    aptitudeById: AptitudesById,
-    klassLevelFeatCountsByAptitudeId: Record<string, number>,
-    klassLevelSpellCountsByAptitudeId: Record<string, number>,
-  ) {
-    for (const counts of [klassLevelFeatCountsByAptitudeId, klassLevelSpellCountsByAptitudeId]) {
-      for (const [aptitudeId, count] of Object.entries(counts)) {
-        const aptitude = aptitudeById.get(aptitudeId);
-        if (aptitude) aptitude.allowed += count;
-      }
+  private applyAllowances(aptitudeById: AptitudesById, grantCounts: Record<string, number>) {
+    for (const [aptitudeId, count] of Object.entries(grantCounts)) {
+      const aptitude = aptitudeById.get(aptitudeId);
+      if (aptitude) aptitude.allowed += count;
     }
 
     const generalFeats = this.countGeneralFeats(this.identity.getIdentity().meta.level);
@@ -209,17 +200,16 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
 
     for (const klass of Object.values(this.classes.getClasses())) {
       for (const level of klass.levels) {
-        for (const feat of level.feats)
-          spentByAptitudeId[feat.aptitudeId] = (spentByAptitudeId[feat.aptitudeId] || 0) + 1;
+        // A level's feats are all in a pool: picked, or granted
+        for (const { viaId } of level.feats) spentByAptitudeId[viaId!] = (spentByAptitudeId[viaId!] || 0) + 1;
 
-        for (const spell of level.spells) {
-          if (spell.free) continue;
-          if (spell.spellLevel != null) {
-            spentByAptitudeIdAndLevel[spell.aptitudeId] ??= {};
-            spentByAptitudeIdAndLevel[spell.aptitudeId][spell.spellLevel] =
-              (spentByAptitudeIdAndLevel[spell.aptitudeId][spell.spellLevel] || 0) + 1;
+        for (const { free, spellLevel, viaId } of level.spells) {
+          if (free) continue;
+          if (spellLevel != null) {
+            spentByAptitudeIdAndLevel[viaId] ??= {};
+            spentByAptitudeIdAndLevel[viaId][spellLevel] = (spentByAptitudeIdAndLevel[viaId][spellLevel] || 0) + 1;
           } else {
-            spentByAptitudeId[spell.aptitudeId] = (spentByAptitudeId[spell.aptitudeId] || 0) + 1;
+            spentByAptitudeId[viaId] = (spentByAptitudeId[viaId] || 0) + 1;
           }
         }
       }

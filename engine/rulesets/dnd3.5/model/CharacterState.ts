@@ -1,12 +1,12 @@
 import { CharacterBase } from "@/engine/core/character/index.ts";
-import type { Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Feat, Klass, Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
 import { type Dnd35Components } from "./CharacterComponents.ts";
 import FeatsPaths from "./feats/FeatsPaths.ts";
 import LanguagesPaths from "./languages/LanguagesPaths.ts";
 import type { LoadedCharacterData } from "./loading/DetailedCharacterDataLoader.ts";
-import type { CustomizedClassLevel, CustomizedFeat, CustomizedSpell } from "./loading/loadedEntities.ts";
+import type { CustomizedClassLevel } from "./loading/loadedEntities.ts";
 import SpellsPaths from "./spells/SpellsPaths.ts";
 
 /**
@@ -23,11 +23,11 @@ export default abstract class CharacterState extends CharacterBase<Dnd35Componen
   // being immutable after `build()` returns. If any
   // future code mutates those post-build, invalidate this field first.
   protected diagnosticsIndex?: {
-    featsById: Map<string, CustomizedFeat>;
+    featsById: Map<string, Feat>;
     klassLevelsById: Map<string, CustomizedClassLevel>;
     modifierOwner: Map<string, { name: string; type: string }>;
     rulesetKlassesById: Map<string, Klass>;
-    spellsById: Map<string, CustomizedSpell>;
+    spellsById: Map<string, Spell>;
   };
 
   /**

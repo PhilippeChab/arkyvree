@@ -98,7 +98,7 @@ function partsWith(
 ) {
   return {
     abilities: [],
-    classes: { fighter: { levels: levelFeats.map((feats) => ({ feats })) } },
+    classes: { fighter: { levels: levelFeats.map((feats) => ({ feats: feats.map((entity) => ({ entity })) })) } },
     combat: CombatSheet.describe({
       getCombat: () => ({
         ac: {},

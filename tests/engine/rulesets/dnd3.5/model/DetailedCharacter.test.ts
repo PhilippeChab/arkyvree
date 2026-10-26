@@ -660,7 +660,7 @@ describe("DetailedCharacter", () => {
     test("lists a level's skills, then its picked and its granted feats, each by name", async () => {
       const zen = (await buildSeeded("Zen Whitepetal")).components.classes.getCharacterClasses();
       const [first] = zen["monk"].levels;
-      const names = (rows: { name: string }[]) => rows.map((row) => row.name);
+      const names = (held: { entity: { name: string } }[]) => held.map(({ entity }) => entity.name);
       expect(names(first.skills)).toEqual(["Balance", "Jump", "Listen", "Spot", "Tumble"]);
       expect(names(first.feats)).toEqual([
         "Dodge",
@@ -2351,8 +2351,8 @@ describe("DetailedCharacter", () => {
       expect(general.available).toBe(general.allowed - general.spent);
       const nonStacking = Object.values(detailed.components.classes.getCharacterClasses())
         .flatMap((klass) => klass.levels.flatMap((level) => level.feats))
-        .filter((f) => !f.fields[FEAT_STACKABLE])
-        .map((f) => f.id);
+        .filter((f) => !f.entity.fields[FEAT_STACKABLE])
+        .map((f) => f.entity.id);
       expect(new Set(nonStacking).size).toBe(nonStacking.length);
     });
 
@@ -2710,10 +2710,10 @@ describe("DetailedCharacter", () => {
         const clericSpells = theron.components.classes
           .getCharacterClasses()
           ["cleric"].levels.flatMap((level) => level.spells);
-        const heatMetal = clericSpells.find((p) => p.name === "Heat Metal")!;
-        expect(heatMetal.aptitudeId).toBe(theron.components.aptitudes.getAptitudes()["clericspells"].id);
-        expect(theron.getSpellTags()[heatMetal.id]).toContain("Sun Domain");
-        expect(allSpells(theron).map((p) => p.name)).not.toContain("Fire Shield");
+        const heatMetal = clericSpells.find((p) => p.entity.name === "Heat Metal")!;
+        expect(heatMetal.viaId).toBe(theron.components.aptitudes.getAptitudes()["clericspells"].id);
+        expect(theron.getSpellTags()[heatMetal.entity.id]).toContain("Sun Domain");
+        expect(allSpells(theron).map((p) => p.entity.name)).not.toContain("Fire Shield");
       });
 
       test("open with bonus caster levels", async () => {
@@ -2784,8 +2784,8 @@ describe("DetailedCharacter", () => {
         expect(spellUses(detailed, "domainspells", [1, 2, 3, 4, 5, 6, 7])).toEqual([1, 1, 1, 1, 1, 1, 0]);
         const tags = detailed.getSpellTags();
         const weather = allSpells(detailed)
-          .filter((p) => tags[p.id]?.includes("Weather Domain"))
-          .map((p) => p.name);
+          .filter((p) => tags[p.entity.id]?.includes("Weather Domain"))
+          .map((p) => p.entity.name);
         expect(weather).toEqual(expect.arrayContaining(["Binding Winds", "Cloudwalkers"]));
       });
 
@@ -2941,8 +2941,8 @@ describe("DetailedCharacter", () => {
           return {
             uses: spellUses(detailed, "divinecrusaderspells", [1, 2, 3, 4, 5, 6, 7, 8, 9]),
             known: allSpells(detailed)
-              .filter((spell) => spell.aptitudeId === list)
-              .map((spell) => spell.name)
+              .filter((spell) => spell.viaId === list)
+              .map((spell) => spell.entity.name)
               .sort(),
             divine: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].find((n) =>
               detailed.areRequirementsMet(requiring("spellcasting.divine", exactly(n))),
@@ -3006,8 +3006,8 @@ describe("DetailedCharacter", () => {
         const aptitudes = detailed.components.aptitudes.getAptitudes();
         const onList = (list: string) =>
           allSpells(detailed)
-            .filter((spell) => spell.aptitudeId === aptitudes[list].id)
-            .map((spell) => spell.name);
+            .filter((spell) => spell.viaId === aptitudes[list].id)
+            .map((spell) => spell.entity.name);
         // Produce Flame and Wall of Fire are neither cleric spells nor first-level ones: the domain's on each list
         expect(onList("clericspells")).toEqual(expect.arrayContaining(["Burning Hands", "Produce Flame"]));
         expect(onList("clericspells")).not.toContain("Wall of Fire");
@@ -3076,8 +3076,8 @@ describe("DetailedCharacter", () => {
           const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
           const list = detailed.components.aptitudes.getAptitudes()["testraiderspells"].id;
           return allSpells(detailed)
-            .filter((spell) => spell.aptitudeId === list)
-            .map((spell) => spell.name)
+            .filter((spell) => spell.viaId === list)
+            .map((spell) => spell.entity.name)
             .sort();
         };
         // The Luck domain's first-level spell from its second level; its second-level one never: the class casts none
@@ -3128,8 +3128,8 @@ describe("DetailedCharacter", () => {
         const aptitudes = detailed.components.aptitudes.getAptitudes();
         const onList = (list: string) =>
           allSpells(detailed)
-            .filter((spell) => spell.aptitudeId === aptitudes[list].id)
-            .map((spell) => spell.name);
+            .filter((spell) => spell.viaId === aptitudes[list].id)
+            .map((spell) => spell.entity.name);
         // The fire domain's first-level spell on both lists, its second on neither: both classes cast the first level only
         for (const list of ["clericspells", "testsunpriestspells"]) {
           expect(onList(list)).toContain("Burning Hands");
@@ -3156,8 +3156,8 @@ describe("DetailedCharacter", () => {
         expect(spellLevel(detailed, "domainspells", 1)).toMatchObject({ allowed: 0, uses: 0 });
         expect(
           allSpells(detailed)
-            .filter((spell) => spell.aptitudeId === sunDomainSpells)
-            .map((spell) => spell.name),
+            .filter((spell) => spell.viaId === sunDomainSpells)
+            .map((spell) => spell.entity.name),
         ).toEqual(["Endure Elements"]);
       });
 
@@ -3314,8 +3314,8 @@ describe("DetailedCharacter", () => {
         const detailed = await build((await Characters.findOne(db, { id: characterId }))!);
         const clericSpells = detailed.components.aptitudes.getAptitudes()["clericspells"].id;
         const onClericList = allSpells(detailed)
-          .filter((spell) => spell.aptitudeId === clericSpells)
-          .map((spell) => spell.name);
+          .filter((spell) => spell.viaId === clericSpells)
+          .map((spell) => spell.entity.name);
         expect(onClericList).toContain("Dawn Hymn");
         expect(onClericList).not.toContain("Dusk Hymn");
 
@@ -3344,7 +3344,7 @@ describe("DetailedCharacter", () => {
         const detailed = await setupWeaponTrick(20);
         const loremasterFeats = detailed.components.classes
           .getCharacterClasses()
-          ["loremaster"].levels.flatMap((level) => level.feats.map((f) => f.name));
+          ["loremaster"].levels.flatMap((level) => level.feats.map((f) => f.entity.name));
         expect(loremasterFeats.filter((name) => name.startsWith("Secret")).sort()).toEqual([
           "Secret (Loremaster)",
           "Secret: Weapon Trick (Loremaster Secret)",
@@ -3372,7 +3372,7 @@ describe("DetailedCharacter", () => {
 
         const elara = await buildSeeded("Elara Starweaver");
         const tags = elara.getSpellTags();
-        const byName = Object.fromEntries(allSpells(elara).map((p) => [p.name, tags[p.id] ?? []]));
+        const byName = Object.fromEntries(allSpells(elara).map((p) => [p.entity.name, tags[p.entity.id] ?? []]));
         expect(byName["Magic Missile"]).toContain("Evocation Specialist");
         expect(byName["Burning Hands"]).toContain("Evocation Specialist");
         expect(byName["Web"]).not.toContain("Evocation Specialist");
@@ -3501,8 +3501,8 @@ describe("DetailedCharacter", () => {
 
         const listsKnowing = detailed
           .getHeldSpells()
-          .filter((spell) => spell.name === "Light")
-          .map((spell) => spell.aptitudeId);
+          .filter((spell) => spell.entity.name === "Light")
+          .map((spell) => spell.viaId);
         expect(listsKnowing.sort()).toEqual([ctx.aptMap["Sorcerer Spells"], ctx.aptMap["Wizard Spells"]].sort());
         const cantrips = (list: string) =>
           CharacterResponse.buildSheet(record, detailed)

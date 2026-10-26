@@ -7,7 +7,7 @@ import type { Character } from "@/shared/relations.ts";
 
 import CharacterProjection from "./CharacterProjection.ts";
 import type { OverfullPool } from "./PicksDistribution.ts";
-import type { AbilityIncrease, LevelPicks, LevelRequest } from "./requests.ts";
+import type { LevelPicks, LevelRequest } from "./requests.ts";
 import SelectionChecks from "./SelectionChecks.ts";
 
 /** The hit points a level of a class gains, as its hit die bounds them: the least, the most, and the average. */
@@ -70,9 +70,9 @@ export interface LevelUpRules<C> {
   readonly unrolledLevelHp: number;
 }
 
-/** A level a level-up plans: its class and class level, and its ability increases. */
+/** A level a level-up plans: its class and class level, and its ability increases (its `abilities` picks). */
 export interface PlannedClassLevel {
-  abilityIncreases: AbilityIncrease[];
+  abilityIncreases: PickPlan[];
   klass: Klass;
   klassLevel: KlassLevel;
 }

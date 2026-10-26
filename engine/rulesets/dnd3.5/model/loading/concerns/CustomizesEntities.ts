@@ -5,13 +5,12 @@ import { RACE_FIELDS } from "@/engine/rulesets/dnd3.5/entities/races/fields.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import type {
   CustomizedClassLevel,
-  CustomizedFeat,
   CustomizedRace,
-  CustomizedSpell,
   HeldFeat,
+  HeldSource,
   HeldSpell,
 } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
-import type { KlassLevel, Race } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Feat, KlassLevel, Race, Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** The customizations a character's entities carry, from the view: their modifiers and requirements. */
@@ -19,32 +18,18 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
   abstract class CustomizingEntities extends Base {
     /** Each spell with the ability its DC comes from: its class level's class's bonus spell ability. */
     private withDcAbilities(
-      spells: Omit<CustomizedSpell, "abilityDcName">[],
+      spells: Omit<HeldSpell, "abilityDcName">[],
       {
         klassBonusSpellAbilityMap,
         klassLevels,
       }: { klassBonusSpellAbilityMap: Map<string, string>; klassLevels: KlassLevel[] },
-    ): CustomizedSpell[] {
-      const klassIdByLevelId = new Map(klassLevels.map((level) => [level.id, level.ownerId]));
+    ): HeldSpell[] {
+      const classIdByLevelId = new Map(klassLevels.map((level) => [level.id, level.ownerId]));
       return spells.map((spell) => {
-        const klassId = klassIdByLevelId.get(spell.klassLevelId);
-        const abilityDcName = klassId === undefined ? undefined : klassBonusSpellAbilityMap.get(klassId);
+        const classId = spell.trackId === undefined ? undefined : classIdByLevelId.get(spell.trackId);
+        const abilityDcName = classId === undefined ? undefined : klassBonusSpellAbilityMap.get(classId);
         return { ...spell, abilityDcName: abilityDcName ?? null };
       });
-    }
-
-    /**
-     * The feats the character's levels pick and its class levels grant, with their modifiers and requirements: the
-     * compose step pre-merges siblings into these buckets. One a modifier gives too is `given` once its grant applies,
-     * and one it doesn't hold is added then (`PossessesVirtually`).
-     */
-    protected toCustomizedFeats(allFeats: HeldFeat[], rulesetData: RulesetData): CustomizedFeat[] {
-      return allFeats.map((feat) => ({
-        ...feat,
-        given: false,
-        modifiers: rulesetData.modifiersBySource.get(feat.id) ?? [],
-        requirements: rulesetData.requirementsByEntity.get(feat.id) ?? [],
-      }));
     }
 
     /** Class levels' modifiers and requirements, and each level's bab and skill points. */
@@ -74,23 +59,39 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
     }
 
     /**
+     * The feats the character's levels pick and its class levels grant, with their modifiers and requirements: the
+     * compose step pre-merges siblings into these buckets. One a modifier gives too is `given` once its grant applies,
+     * and one it doesn't hold is added then (`PossessesVirtually`).
+     */
+    protected toHeldFeats(feats: HeldSource<Feat>[], rulesetData: RulesetData): HeldFeat[] {
+      return feats.map((feat) => ({
+        ...feat,
+        given: false,
+        modifiers: rulesetData.modifiersBySource.get(feat.entity.id) ?? [],
+        requirements: rulesetData.requirementsByEntity.get(feat.entity.id) ?? [],
+        virtual: false,
+      }));
+    }
+
+    /**
      * The spells the character's levels pick and its class levels grant, each in its pool, with their modifiers and
      * requirements (the compose step pre-merges siblings) and the ability their DC comes from. One a modifier makes
      * known on its list too is `given` there once its grant applies, and one its list doesn't know is added then
      * (`PossessesVirtually`).
      */
-    protected toCustomizedSpells(
-      allSpells: HeldSpell[],
+    protected toHeldSpells(
+      spells: (HeldSource<Spell> & Pick<HeldSpell, "free" | "saveName" | "spellLevel" | "viaId">)[],
       rulesetData: RulesetData,
       dcAbilities: { klassBonusSpellAbilityMap: Map<string, string>; klassLevels: KlassLevel[] },
-    ): CustomizedSpell[] {
-      const spells = allSpells.map((spell) => ({
+    ): HeldSpell[] {
+      const customized = spells.map((spell) => ({
         ...spell,
         given: false,
-        modifiers: rulesetData.modifiersBySource.get(spell.id) ?? [],
-        requirements: rulesetData.requirementsByEntity.get(spell.id) ?? [],
+        modifiers: rulesetData.modifiersBySource.get(spell.entity.id) ?? [],
+        requirements: rulesetData.requirementsByEntity.get(spell.entity.id) ?? [],
+        virtual: false,
       }));
-      return this.withDcAbilities(spells, dcAbilities);
+      return this.withDcAbilities(customized, dcAbilities);
     }
   }
 

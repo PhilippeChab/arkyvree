@@ -2,7 +2,7 @@ import { CharacterComponent } from "@/engine/core/character/index.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import { SPELL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/spells/fields.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
-import type { CustomizedSpell } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
+import type { HeldSpell } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
@@ -62,32 +62,31 @@ export default class SpellsComponent extends CharacterComponent<LoadedCharacterD
   }
 
   /**
-   * A spell the character knows on a list (`aptitudeId`) without a pick, a modifier's grant: at its level there, its DC
-   * from `abilityDcName`, with its customizations. None when the spell isn't on the list.
+   * A spell the character knows on a list (`aptitudeId`) without a pick, a modifier's grant: at no level, at its spell
+   * level on the list, its DC from `abilityDcName`, with its customizations. None when the spell isn't on the list.
    */
   static toVirtualSpell(
-    spellRow: Spell,
+    spell: Spell,
     aptitudeId: string,
     abilityDcName: string | null,
     rulesetData: RulesetData,
-  ): CustomizedSpell | undefined {
+  ): HeldSpell | undefined {
     const link = Dnd35View.of(rulesetData)
-      .listLinksOf(spellRow.id)
+      .listLinksOf(spell.id)
       .find((list) => list.toId === aptitudeId);
     if (!link) return undefined;
     return {
-      ...spellRow,
       abilityDcName,
-      klassLevelId: "",
-      characterLevelId: "",
-      aptitudeId,
-      virtual: true,
+      entity: spell,
       free: true,
       given: true,
-      saveName: SpellsComponent.saveNameOf(spellRow, rulesetData),
+      modifiers: rulesetData.modifiersBySource.get(spell.id) ?? [],
+      requirements: rulesetData.requirementsByEntity.get(spell.id) ?? [],
+      saveName: SpellsComponent.saveNameOf(spell, rulesetData),
       spellLevel: link.tier,
-      modifiers: rulesetData.modifiersBySource.get(spellRow.id) ?? [],
-      requirements: rulesetData.requirementsByEntity.get(spellRow.id) ?? [],
+      step: "spells",
+      viaId: aptitudeId,
+      virtual: true,
     };
   }
 
@@ -100,7 +99,10 @@ export default class SpellsComponent extends CharacterComponent<LoadedCharacterD
    */
   override initialize({ spells }: Pick<LoadedCharacterData, "spells">, { rulesetData }: RulesetView) {
     const dnd35 = Dnd35View.of(rulesetData);
-    this.addSpellEntries(spells, rulesetData);
+    this.addSpellEntries(
+      spells.map(({ entity }) => entity),
+      rulesetData,
+    );
 
     // Build spell known data nested under each spell entry: spell → aptitude → { known }, but on the lists a feat brings
     const { featListIds, spellSlugByAptitudeId } = SpellLists.of(rulesetData);
@@ -120,11 +122,11 @@ export default class SpellsComponent extends CharacterComponent<LoadedCharacterD
     }
 
     // Mark known from character's actual spells
-    for (const spell of spells) {
-      const aptSlug = aptitudeIdToSlug.get(spell.aptitudeId);
+    for (const { entity, viaId } of spells) {
+      const aptSlug = aptitudeIdToSlug.get(viaId);
       if (!aptSlug) continue;
 
-      const spellEntry = this.spells[stripSeparators(spell.name)] as Record<string, { known: boolean }> | undefined;
+      const spellEntry = this.spells[stripSeparators(entity.name)] as Record<string, { known: boolean }> | undefined;
       if (spellEntry?.[aptSlug]) spellEntry[aptSlug].known = true;
     }
 

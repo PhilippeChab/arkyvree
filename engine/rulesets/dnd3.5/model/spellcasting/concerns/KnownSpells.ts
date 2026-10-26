@@ -1,12 +1,11 @@
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
-import type { CustomizedFeat, CustomizedSpell } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
+import type { HeldFeat, HeldSpell } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import type SpellcastingState from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
 import SpellsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellsComponent.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier } from "@/shared/relations.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
@@ -22,7 +21,7 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
       const aptitudeIdToClassName = new Map<string, string>();
       const classes = this.classes.getClasses();
       const aptitudes = this.aptitudes.getAptitudes();
-      const aptitudeSpellAptitudeIds = new Set(this.allAptitudeSpells.map((p) => p.aptitudeId));
+      const aptitudeSpellAptitudeIds = new Set(this.allAptitudeSpells.map((spell) => spell.viaId));
 
       for (const modifier of appliedModifiers) {
         if (modifier.sourceType !== "class_levels") continue;
@@ -92,10 +91,10 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
      * cleric spells in his spellbook, at the cleric's DC.
      */
     private newKnownSpells(
-      spells: CustomizedSpell[],
+      spells: HeldSpell[],
       appliedModifiers: Modifier[],
       klassBonusSpellAbilityMap: Map<string, string>,
-    ): CustomizedSpell[] {
+    ): HeldSpell[] {
       const aptitudeIdToClassName = this.aptitudeClassNames(appliedModifiers);
       const classes = this.classes.getClasses();
       const aptitudes = this.aptitudes.getAptitudes();
@@ -103,32 +102,36 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
       const joining = this.joiningClassNames(appliedModifiers);
 
       // Each spell the character knows already on its list (picked, granted, or made known by a modifier), by both
-      const knownOn = new Set(spells.map((p) => `${p.id}:${p.aptitudeId}`));
-      const newSpells: CustomizedSpell[] = [];
+      const knownOn = new Set(spells.map(({ entity, viaId }) => `${entity.id}:${viaId}`));
+      const newSpells: HeldSpell[] = [];
       const give = (spell: (typeof this.allAptitudeSpells)[number], className: string, aptitudeId: string) => {
         const klassData = classes[className];
-        if (!klassData || klassData.levels.length === 0 || knownOn.has(`${spell.id}:${aptitudeId}`)) return;
+        if (!klassData || klassData.levels.length === 0 || knownOn.has(`${spell.entity.id}:${aptitudeId}`)) return;
         const firstLevel = klassData.levels[0];
-        const enrichedSpell: CustomizedSpell = {
+        // Known at its class's first level, taking no room in its list
+        const known: HeldSpell = {
           ...spell,
           // Its DC's ability, as a loaded spell's (`CustomizesEntities.withDcAbilities`): its class's bonus spell ability
           abilityDcName: klassBonusSpellAbilityMap.get(firstLevel.klassLevel.ownerId) ?? null,
-          aptitudeId,
-          klassLevelId: firstLevel.klassLevel.id,
-          characterLevelId: firstLevel.characterLevel.id,
+          advancementId: firstLevel.characterLevel.id,
           free: true,
+          given: false,
           modifiers: [],
           requirements: [],
+          step: "spells",
+          trackId: firstLevel.klassLevel.id,
+          viaId: aptitudeId,
+          virtual: false,
         };
-        firstLevel.spells.push(enrichedSpell);
-        newSpells.push(enrichedSpell);
+        firstLevel.spells.push(known);
+        newSpells.push(known);
       };
 
       for (const spell of this.allAptitudeSpells) {
-        const className = aptitudeIdToClassName.get(spell.aptitudeId);
-        if (className) give(spell, className, spell.aptitudeId);
+        const className = aptitudeIdToClassName.get(spell.viaId);
+        if (className) give(spell, className, spell.viaId);
 
-        const list = aptitudeKeyById.get(spell.aptitudeId);
+        const list = aptitudeKeyById.get(spell.viaId);
         const joiningClassNames = [...((list !== undefined && joining.get(list)) || [])];
         let joined = false;
         for (const joiningClassName of joiningClassNames) {
@@ -143,7 +146,7 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
           joiningClassNames.length > 0 &&
           (ownLevel as AptitudeLevelData | undefined)?.allowed === ALLOWED_ALL
         )
-          give(spell, joiningClassNames[0], spell.aptitudeId);
+          give(spell, joiningClassNames[0], spell.viaId);
       }
       return newSpells;
     }
@@ -153,12 +156,13 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
      * to its class's list) with the feat's name: a cleric's domain spells "Fire Domain", a specialist wizard's school
      * spells "Evocation Specialist". A tag shows on that list and on the lists of the class whose level gave the feat.
      */
-    protected buildSpellTags(feats: CustomizedFeat[], featListIds: Set<string>) {
+    protected buildSpellTags(feats: HeldFeat[], featListIds: Set<string>) {
       const aptitudes = this.aptitudes.getAptitudes();
-      const classNameByKlassLevelId = this.classNameByKlassLevelId();
+      const classNameByClassLevelId = this.classNameByClassLevelId();
       const tagsByAptitudeId = new Map<string, string[]>();
       for (const feat of feats) {
-        const className = classNameByKlassLevelId.get(feat.klassLevelId);
+        // A feat held at a level is of that level's class: one held without a level (a modifier's) is of none
+        const className = feat.trackId === undefined ? undefined : classNameByClassLevelId.get(feat.trackId);
         const classListIds = className
           ? this.spellListsOf(className).flatMap((key) => (aptitudes[key] ? [aptitudes[key].id] : []))
           : [];
@@ -168,12 +172,12 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
           if (!aptitude || !featListIds.has(aptitude.id)) continue;
           const joinsClassList = feat.modifiers.some((modifier) => AptitudeTargets.parseJoin(modifier.target) === list);
           // A feat opening several lists shows its tag on each of them
-          const tagged = this.spellTagLists[feat.name] ?? { aptitudeIds: classListIds, joinsClassList: false };
-          this.spellTagLists[feat.name] = {
+          const tagged = this.spellTagLists[feat.entity.name] ?? { aptitudeIds: classListIds, joinsClassList: false };
+          this.spellTagLists[feat.entity.name] = {
             aptitudeIds: [...new Set([aptitude.id, ...tagged.aptitudeIds])],
             joinsClassList: tagged.joinsClassList || joinsClassList,
           };
-          tagsByAptitudeId.set(aptitude.id, [...(tagsByAptitudeId.get(aptitude.id) ?? []), feat.name]);
+          tagsByAptitudeId.set(aptitude.id, [...(tagsByAptitudeId.get(aptitude.id) ?? []), feat.entity.name]);
         }
       }
       if (tagsByAptitudeId.size === 0) return;
@@ -190,16 +194,14 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
      * The spells of the lists the character knows every spell of (or a level of), off the view, and the lists each is
      * on.
      */
-    protected collectAptitudeSpells(rulesetData: RulesetData, spells: CustomizedSpell[], appliedModifiers: Modifier[]) {
+    protected collectAptitudeSpells(rulesetData: RulesetData, spells: HeldSpell[], appliedModifiers: Modifier[]) {
       const dnd35 = Dnd35View.of(rulesetData);
       const { perAptitudeLevels, unleveledAptitudeIds } = this.knownAptitudeLevels(appliedModifiers);
       if (perAptitudeLevels.size === 0 && unleveledAptitudeIds.size === 0) return;
 
       // Iterate the composed spells once, emitting one row per matching (spell, aptitude) link: a spell on two of the
       // lists the character knows is known on each
-      const allAptitudeSpells: Array<
-        Spell & { aptitudeId: string; saveName: string | null; spellLevel: number | null }
-      > = [];
+      const allAptitudeSpells: typeof this.allAptitudeSpells = [];
       for (const spell of dnd35.spells) {
         const saveName = SpellsComponent.saveNameOf(spell, rulesetData);
         for (const link of dnd35.listLinksOf(spell.id)) {
@@ -207,12 +209,7 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
           const isLeveled = leveledSet !== undefined && link.tier !== null && leveledSet.has(link.tier);
           const isUnleveled = unleveledAptitudeIds.has(link.toId);
           if (!isLeveled && !isUnleveled) continue;
-          allAptitudeSpells.push({
-            ...spell,
-            aptitudeId: link.toId,
-            spellLevel: link.tier,
-            saveName,
-          });
+          allAptitudeSpells.push({ entity: spell, saveName, spellLevel: link.tier, viaId: link.toId });
         }
       }
 
@@ -220,9 +217,9 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
       if (this.allAptitudeSpells.length === 0) return;
 
       // The spell→aptitude link table from the cache
-      const aptitudeSpellIds = new Set(this.allAptitudeSpells.map((p) => p.id));
+      const aptitudeSpellIds = new Set(this.allAptitudeSpells.map(({ entity }) => entity.id));
 
-      const allSpellIdSet = new Set<string>([...spells.map((p) => p.id), ...aptitudeSpellIds]);
+      const allSpellIdSet = new Set<string>([...spells.map(({ entity }) => entity.id), ...aptitudeSpellIds]);
       const spellAptitudeLinks: { aptitudeId: string; spellId: string }[] = [];
       for (const id of allSpellIdSet) {
         const p = dnd35.spellsById.get(id);
@@ -236,7 +233,7 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
     /** The spells the character's lists make it know, added to its spells with their DCs. */
     protected enrichAllKnownSpells(
       rulesetData: RulesetData,
-      spells: CustomizedSpell[],
+      spells: HeldSpell[],
       klassBonusSpellAbilityMap: Map<string, string>,
       appliedModifiers: Modifier[],
     ) {
@@ -258,18 +255,21 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
      * grouped with their DC ability. Those its lists make it know as it finishes, and a spell a modifier's grant makes
      * known as it applies (`PossessesVirtually`).
      */
-    registerKnownSpells(rulesetData: RulesetData, newSpells: CustomizedSpell[]) {
+    registerKnownSpells(rulesetData: RulesetData, newSpells: HeldSpell[]) {
       const { spellSlugByAptitudeId } = SpellLists.of(rulesetData);
-      this.spells.addSpellEntries(newSpells, rulesetData);
+      this.spells.addSpellEntries(
+        newSpells.map(({ entity }) => entity),
+        rulesetData,
+      );
       for (const spell of newSpells) {
-        const list = Dnd35View.of(rulesetData).aptitudesById.get(spell.aptitudeId);
+        const list = Dnd35View.of(rulesetData).aptitudesById.get(spell.viaId);
         // Mark as known in spell map
         if (list) {
-          const entry = this.spells.getSpellEntry(spell.name, list.name);
+          const entry = this.spells.getSpellEntry(spell.entity.name, list.name);
           if (entry) entry.known = true;
         }
-        const aptitudeSlug = spellSlugByAptitudeId.get(spell.aptitudeId) ?? spell.aptitudeId;
-        this.spellGroupings.registerSpell({ ...spell, aptitudeSlug }, rulesetData.valuesOf(spell.id));
+        const aptitudeSlug = spellSlugByAptitudeId.get(spell.viaId) ?? spell.viaId;
+        this.spellGroupings.registerSpell(spell, aptitudeSlug, rulesetData.valuesOf(spell.entity.id));
       }
       this.spells.readGroupings();
     }

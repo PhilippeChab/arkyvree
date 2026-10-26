@@ -11,14 +11,14 @@ import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 import CharacterProjection from "./CharacterProjection.ts";
 import LevelUpBase from "./LevelUpBase.ts";
 import PicksDistribution from "./PicksDistribution.ts";
-import type { AbilityIncrease, LevelEditRequest, LevelPicks, LevelUpRequest } from "./requests.ts";
+import type { LevelEditRequest, LevelPicks, LevelUpRequest } from "./requests.ts";
 import type { HoldingCharacter } from "./SelectionChecks.ts";
 
-/** A planned level checked: its class level, hit points, ability increases and picks. */
+/** A planned level checked: its class level, hit points, ability increases (its `abilities` picks) and picks. */
 interface PlannedLevel {
-  abilityIncreases: AbilityIncrease[];
+  abilityIncreases: PickPlan[];
+  classLevelId: string;
   hp: number;
-  klassLevelId: string;
   picks: LevelPicks;
 }
 
@@ -51,8 +51,8 @@ export interface CheckedCharacter extends HoldingCharacter {
 export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpBase<C> {
   /** What planned levels write: each its advancement in its class level, and its picks. */
   private advancementsOf(planned: PlannedLevel[]): AdvancementPlan[] {
-    return planned.map(({ abilityIncreases, hp, klassLevelId, picks }) => ({
-      trackId: klassLevelId,
+    return planned.map(({ abilityIncreases, classLevelId, hp, picks }) => ({
+      trackId: classLevelId,
       picks: this.savedPicksOf(hp, abilityIncreases, picks),
     }));
   }
@@ -109,7 +109,7 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
         throw new RulesError("invalid", `${label}This level has already been finalized`);
       this.checks.checkAbilityIncreases(rows.advancements.length + i, abilityIncreases, label);
       this.checks.checkLevel({ klass, hp, ...levelPicks });
-      planned.push({ abilityIncreases, hp, klassLevelId: klassLevel.id, picks: levelPicks });
+      planned.push({ abilityIncreases, classLevelId: klassLevel.id, hp, picks: levelPicks });
       otherLevels.push({ trackId: klassLevel.id });
     }
     // A pick the character holds with every planned level, a later one too, the plan picks before, or the plan's other
@@ -130,12 +130,12 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
    */
   private projectEditedLevel(
     characterLevel: { id: string; position: number },
-    klassLevelId: string,
+    classLevelId: string,
     edit: LevelEditRequest,
   ) {
     const projection = new CharacterProjection(this.character);
     const { abilityIncreases, hp } = edit;
-    const level = projection.addLevel(klassLevelId, { abilityIncreases, hp, replacing: characterLevel });
+    const level = projection.addLevel(classLevelId, { abilityIncreases, hp, replacing: characterLevel });
     projection.pick(level, this.toPickPlans(edit));
     return projection;
   }
@@ -146,12 +146,12 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
    * can raise a pool (a class level's grant, a feat it picks), so `withLevel` takes its grants and its picks, at the
    * hit points a level counts before they're rolled.
    */
-  private projectLevelContribution(characterLevelId: string, klassLevelId: string, picks: LevelPicks) {
+  private projectLevelContribution(characterLevelId: string, classLevelId: string, picks: LevelPicks) {
     const before = new CharacterProjection(this.character);
     before.dropLevelsFrom(characterLevelId);
     const withLevel = new CharacterProjection(this.character);
     withLevel.dropLevelsFrom(characterLevelId);
-    withLevel.pick(withLevel.addLevel(klassLevelId, { hp: this.rules.unrolledLevelHp }), this.toPickPlans(picks));
+    withLevel.pick(withLevel.addLevel(classLevelId, { hp: this.rules.unrolledLevelHp }), this.toPickPlans(picks));
     return { before, withLevel };
   }
 
@@ -161,8 +161,8 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
    */
   private projectLevelRequests(planned: PlannedLevel[]) {
     const projection = new CharacterProjection(this.character);
-    for (const { abilityIncreases, hp, klassLevelId, picks } of planned)
-      projection.pick(projection.addLevel(klassLevelId, { abilityIncreases, hp }), this.toPickPlans(picks));
+    for (const { abilityIncreases, classLevelId, hp, picks } of planned)
+      projection.pick(projection.addLevel(classLevelId, { abilityIncreases, hp }), this.toPickPlans(picks));
     return projection;
   }
 
@@ -172,12 +172,8 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
   }
 
   /** What a level's save writes under its advancement: its hit points, its ability increases, and its picks. */
-  private savedPicksOf(hp: number, abilityIncreases: AbilityIncrease[], picks: LevelPicks): PickPlan[] {
-    return [
-      { step: "hp", amount: hp },
-      ...abilityIncreases.map(({ abilityId, amount }) => ({ step: "abilities", entityId: abilityId, amount })),
-      ...this.toPickPlans(picks),
-    ];
+  private savedPicksOf(hp: number, abilityIncreases: PickPlan[], picks: LevelPicks): PickPlan[] {
+    return [{ step: "hp", amount: hp }, ...abilityIncreases, ...this.toPickPlans(picks)];
   }
 
   /**

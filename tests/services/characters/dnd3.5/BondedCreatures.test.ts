@@ -104,7 +104,7 @@ describe("Bonded creatures", () => {
       expect(await CharacterAdvancements.findMany(db, { characterId: bonded.id })).toHaveLength(levels);
       const sheet = await CharactersService.getCharacter(owner, masterId);
       const bondFeat = Object.values((await sheetOf(masterId)).classes)
-        .flatMap((klass) => klass.levels.flatMap((level) => level.feats))
+        .flatMap((klass) => klass.levels.flatMap((level) => level.feats.map(({ entity }) => entity)))
         .find((feat) => feat.name === bond);
       expect(bondFeat).toBeDefined();
       // In the details of the feat that bonds it

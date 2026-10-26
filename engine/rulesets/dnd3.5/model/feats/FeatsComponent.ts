@@ -1,7 +1,7 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
-import type { CustomizedFeat } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
+import type { HeldFeat } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Feat } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
@@ -28,16 +28,18 @@ function isFeatEntry(entry: FeatEntry | FeatGroupEntry | undefined): entry is Fe
  * family's feats under its name (`injectGroupings`, by the feat groupings).
  */
 export default class FeatsComponent extends CharacterComponent<LoadedCharacterData> {
-  /** A feat the character has without a pick, from a modifier or a bonded creature's stat block: no level picked it. */
-  static toVirtualFeat(featRow: Feat, rulesetData: RulesetData): CustomizedFeat {
+  /**
+   * A feat the character has without a pick (`given` when a modifier gives it, not a bonded creature's stat block): no
+   * level holds it, in no pool.
+   */
+  static toVirtualFeat(feat: Feat, given: boolean, rulesetData: RulesetData): HeldFeat {
     return {
-      ...featRow,
-      klassLevelId: "",
-      characterLevelId: "",
-      aptitudeId: "",
+      entity: feat,
+      given,
+      modifiers: rulesetData.modifiersBySource.get(feat.id) ?? [],
+      requirements: rulesetData.requirementsByEntity.get(feat.id) ?? [],
+      step: "feats",
       virtual: true,
-      modifiers: rulesetData.modifiersBySource.get(featRow.id) ?? [],
-      requirements: rulesetData.requirementsByEntity.get(featRow.id) ?? [],
     };
   }
 
@@ -46,8 +48,8 @@ export default class FeatsComponent extends CharacterComponent<LoadedCharacterDa
   /** An entry for each of the ruleset's feats: possessed, and counted, as many times as the character has it. */
   override initialize({ feats }: Pick<LoadedCharacterData, "feats">, { rulesetData }: RulesetView) {
     const possessedCounts = new Map<string, number>();
-    for (const feat of feats) {
-      const name = stripSeparators(feat.name);
+    for (const { entity } of feats) {
+      const name = stripSeparators(entity.name);
       possessedCounts.set(name, (possessedCounts.get(name) ?? 0) + 1);
     }
 

@@ -5,9 +5,10 @@ import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/mo
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd3.5/model/classes/ClassesComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
+import type { HeldSpell } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import type SpellGroupingsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellGroupingsComponent.ts";
 import type SpellsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellsComponent.ts";
-import type { KlassLevel, Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Modifier } from "@/shared/relations.ts";
 import { type CasterType, MAX_CLASS_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
@@ -70,13 +71,11 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
     };
   })();
 
-  protected allAptitudeSpells: Array<
-    Spell & {
-      aptitudeId: string;
-      saveName: string | null;
-      spellLevel: number | null;
-    }
-  > = [];
+  /**
+   * The spells of the lists the character knows every spell of (or a level of), each on its list (`viaId`), at its
+   * spell level there (`collectAptitudeSpells`).
+   */
+  protected allAptitudeSpells: Pick<HeldSpell, "entity" | "saveName" | "spellLevel" | "viaId">[] = [];
 
   /** Maps bonus klass level ID → granting source name (e.g. "Stormlord Level 1") */
   protected bonusKlassLevelAttribution = new Map<string, string>();
@@ -164,8 +163,8 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
     });
   }
 
-  /** The class of each of the character's class levels. */
-  protected classNameByKlassLevelId() {
+  /** The class of each of the character's class levels, by the class level's id. */
+  protected classNameByClassLevelId() {
     const classNames = new Map<string, string>();
     for (const [className, klassData] of Object.entries(this.classes.getCharacterClasses()))
       for (const level of klassData.levels) classNames.set(level.klassLevel.id, className);
@@ -181,14 +180,14 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
   protected joiningClassNames(appliedModifiers: Modifier[]) {
     const aptitudes = this.aptitudes.getAptitudes() as Record<string, { joinsclasslist?: boolean }>;
     const classes = Object.entries(this.classes.getClasses());
-    const classNameByKlassLevelId = this.classNameByKlassLevelId();
+    const classNameByClassLevelId = this.classNameByClassLevelId();
     const classOf = (modifier: Modifier) => {
       if (modifier.sourceType === "class_levels")
-        return classNameByKlassLevelId.get(modifier.sourceId) ?? this.bonusKlassLevelClassMap.get(modifier.sourceId);
+        return classNameByClassLevelId.get(modifier.sourceId) ?? this.bonusKlassLevelClassMap.get(modifier.sourceId);
 
       if (modifier.sourceType !== "feats") return undefined;
       return classes.find(([, klassData]) =>
-        klassData.levels.some((level) => level.feats.some((feat) => feat.id === modifier.sourceId)),
+        klassData.levels.some((level) => level.feats.some(({ entity }) => entity.id === modifier.sourceId)),
       )?.[0];
     };
 
