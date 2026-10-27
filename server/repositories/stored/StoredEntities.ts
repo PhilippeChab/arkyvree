@@ -563,7 +563,9 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
 
   /**
    * A picker's page of a kind's entities (a list's, as the ruleset composes it), a group's entities as one row (a
-   * feat's family): the groups an entity is in are given (`groups`), and one in none is a row of its own.
+   * feat's family): the groups an entity is in are given (`groups`), and one in none is a row of its own. Each row is
+   * its group's entity (its smallest id), its name (an entity's alone, its group's), its group, how many it holds, and
+   * its text.
    */
   async findOptionGroupPage(
     db: Db,
@@ -576,13 +578,12 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     const groupName = sql<string | null>`member."group"`;
     const rows = await db
       .select({
-        displayName:
-          sql<string>`CASE WHEN count(*) = 1 THEN min(${entitiesInRules.name}) ELSE coalesce(min(${groupName}), min(${entitiesInRules.name})) END`.as(
-            "display_name",
-          ),
+        name: sql<string>`CASE WHEN count(*) = 1 THEN min(${entitiesInRules.name}) ELSE coalesce(min(${groupName}), min(${entitiesInRules.name})) END`.as(
+          "option_name",
+        ),
         group: sql<string | null>`min(${groupName})`.as("group"),
-        variantCount: count().as("variant_count"),
-        representativeId: sql<string>`min(${entitiesInRules.id}::text)`.as("representative_id"),
+        count: count().as("option_count"),
+        id: sql<string>`min(${entitiesInRules.id}::text)`.as("option_id"),
         description: sql<string>`min(${entitiesInRules.description})`.as("description"),
       })
       .from(entitiesInRules)

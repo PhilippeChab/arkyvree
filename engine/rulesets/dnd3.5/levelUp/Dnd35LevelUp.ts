@@ -2,11 +2,11 @@ import {
   type CharacterInput,
   type LevelPlanRequest,
   LevelUpPart,
+  type OpenedStepPicker,
   type StepPickerQuery,
 } from "@/engine/core/module/index.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import type { Dnd35Descriptions } from "@/engine/rulesets/dnd3.5/descriptions.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
 import ClassPicker from "@/engine/rulesets/dnd3.5/pickers/ClassPicker.ts";
@@ -30,7 +30,7 @@ import LevelUpPlan from "./LevelUpPlan.ts";
  * removal write, checked in order (`LevelsPlanning`), and the bonded creatures the levels make; and the rules its flows
  * read (`LevelUpRules`).
  */
-export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions> implements LevelUpRules<DetailedCharacter> {
+export default class Dnd35LevelUp extends LevelUpPart implements LevelUpRules<DetailedCharacter> {
   /** The hit points a level counts before they're rolled. */
   readonly unrolledLevelHp = LevelRules.UNROLLED_LEVEL_HP;
 
@@ -53,21 +53,32 @@ export default class Dnd35LevelUp extends LevelUpPart<Dnd35Descriptions> impleme
   }
 
   /**
-   * Step `step`'s picker over the plan: the class picker (the class plan's), or a feat or spell pool's at the level its
-   * next pick lands on.
+   * Step `step`'s picker over the plan: the class picker (the class plan's), reading classes as tracks, or a feat or
+   * spell pool's at the level its next pick lands on, reading the pool's spells, its feats grouped by family, or a
+   * family's feats when the query names one.
    */
-  override openStepPicker(view: RulesetView, character: CharacterInput, step: string, query: StepPickerQuery) {
+  override openStepPicker(
+    view: RulesetView,
+    character: CharacterInput,
+    step: string,
+    query: StepPickerQuery,
+  ): OpenedStepPicker {
     const read = new LevelPlans(view, character, this).readStepPicker(step, query);
     switch (read.kind) {
-      case "feats":
-        return { kind: read.kind, picker: new FeatPicker(view, character, read.query) };
+      case "feats": {
+        const picker = new FeatPicker(view, character, read.query);
+        // A family's feats when the query names one, else the pool's feats grouped by family
+        return read.query.family === undefined
+          ? { kind: read.kind, read: "groups", picker }
+          : { kind: read.kind, read: "options", picker };
+      }
       case "classes": {
         // Its skill points spread over the planned levels as the save spreads them
         const plan = new LevelUpPlan(view, character, this);
-        return { kind: read.kind, picker: new ClassPicker(view, character, read.planned, plan) };
+        return { kind: read.kind, read: "tracks", picker: new ClassPicker(view, character, read.planned, plan) };
       }
       case "spells":
-        return { kind: read.kind, picker: new SpellPicker(view, character, read.query) };
+        return { kind: read.kind, read: "options", picker: new SpellPicker(view, character, read.query) };
     }
   }
 

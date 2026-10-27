@@ -1,4 +1,4 @@
-import type { CharacterInput, EntityFilters, EntityRecord, OpenedTrackPicker } from "@/engine/core/module/index.ts";
+import type { CharacterInput, EntityRecord, OptionRow, PickerOption, StepOption } from "@/engine/core/module/index.ts";
 import { CharacterPicker } from "@/engine/core/pickers/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import CharacterProjection from "@/engine/rulesets/dnd3.5/levelUp/CharacterProjection.ts";
@@ -13,16 +13,16 @@ import type { Requirement } from "@/shared/relations.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
+/** What the class picker adds of a class: its place on its track, as a step's option holds it. */
+type TrackDetails = Required<Pick<StepOption, "track">>;
+
 /**
  * The class picker for the character, from its rows and what the level-up wizard plans so far: a player character's
  * classes (`filters`), each the character can take another level of offered with that level, its class's last, and the
  * levels the character has left, and checked with that level added; highest next level first, then by name. The skill
  * points spent so far go on the planned levels as a save would spread them (`plan`).
  */
-export default class ClassPicker
-  extends CharacterPicker<DetailedCharacter, EntityRecord, { track: { last: number; left: number; next: number } }>
-  implements OpenedTrackPicker<EntityFilters, EntityRecord>
-{
+export default class ClassPicker extends CharacterPicker<DetailedCharacter, EntityRecord, TrackDetails> {
   constructor(
     view: RulesetView,
     input: CharacterInput,
@@ -34,9 +34,6 @@ export default class ClassPicker
 
   /** What the picker offers: a player character's classes (their partition, `pc`). */
   override readonly filters = { partitions: [PLAYER_CHARACTER_KIND] };
-
-  /** Its options are classes, each a track. */
-  readonly tracks = true;
 
   /** The character's highest level in each class it has levels of, by the class's id, once read. */
   private maxLevels?: Map<string, number>;
@@ -96,6 +93,11 @@ export default class ClassPicker
     return [klass.id, this.nextLevelOf(klass)!.id]
       .map((id) => this.rulesetData.requirementsByEntity.get(id) ?? [])
       .filter((requirements) => requirements.length > 0);
+  }
+
+  /** A class as the step's option: with its place on its track. */
+  protected override stepOptionOf(option: PickerOption<OptionRow, TrackDetails>) {
+    return { ...super.stepOptionOf(option), track: option.track };
   }
 
   /** The view's 3.5 lists and indices. */
