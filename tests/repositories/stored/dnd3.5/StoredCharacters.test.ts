@@ -10,7 +10,7 @@ import { db } from "@/server/database/index.ts";
 import { Characters, Visibility } from "@/server/repositories/index.ts";
 import StoredCharacters from "@/server/repositories/stored/StoredCharacters.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
-import { CHARACTER_FLAG_AND_SET, modulesWithCharacterFlagAndSet } from "@/tests/support/modules.ts";
+import { CHARACTER_FLAG_AND_SET, modulesWithCharacterFlagAndSet, modulesWithSecond } from "@/tests/support/modules.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import {
@@ -116,6 +116,36 @@ describe("A character's fields", () => {
 
     const character = await Characters.findOne(db, { id }, Visibility.All);
     expect(character?.fields).toMatchObject({ TEST_RETIRED: false, TEST_TITLES: ["Dame", "Sir"] });
+  });
+
+  test("writes a new character's fields always written as its own module declares them, not another's", async () => {
+    const { id } = await createTestCharacter(SEED_USER_ID);
+    await registerFlagAndSet();
+    // Another module's characters declare the flag, always written: a new 3.5 character holds none of it
+    const beside = new StorageEngine(modulesWithSecond({ characters: CHARACTER_FLAG_AND_SET }));
+    await StoredCharacters.write(db, [id], {}, true, beside);
+    expect(await findFieldRows(id, "TEST_RETIRED")).toEqual([]);
+    expect(await findFieldRows(id, CHARACTER_XP)).not.toEqual([]);
+    // Nor does a write of it, which its module doesn't declare
+    const named = await db
+      .transaction((tx) =>
+        StoredCharacters.write(
+          tx,
+          [id],
+          { fields: { TEST_RETIRED: true, TEST_TITLES: ["  Sir ", ""] } },
+          false,
+          beside,
+        ),
+      )
+      .catch((error: unknown) => error);
+    expect(named).toBeInstanceOf(Error);
+    expect((named as Error).message).toContain("declares no field TEST_RETIRED of characters");
+    expect(await findFieldRows(id, "TEST_TITLES")).toEqual([]);
+    // Its own module's do: it holds its default
+    await StoredCharacters.write(db, [id], {}, true, new StorageEngine(modulesWithCharacterFlagAndSet()));
+    expect(await findFieldRows(id, "TEST_RETIRED")).toEqual([
+      { ordinal: 0, value_kind: "flag", multiple: false, text_value: null, flag_value: false },
+    ]);
   });
 
   test("writes and reads a flag and a set its module declares, each row as the table's checks take it", async () => {

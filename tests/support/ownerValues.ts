@@ -9,6 +9,7 @@ import type { FieldValue } from "@/engine/core/module/index.ts";
 import type { RulesetData, ViewKinds } from "@/engine/core/view/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, RulesetSettings } from "@/server/repositories/index.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** An owner's values as a test holds them: each field's values in their stored order, and its links by role. */
@@ -109,7 +110,7 @@ export async function writeFieldValues(
  */
 export async function writeValues(type: string, id: string, write: FieldsWrite) {
   if (type === "rulesets") {
-    await RulesetSettings.update(db, [{ id, write }]);
+    await RulesetSettings.update(db, [{ id, baseRules: DND35_BASE_RULES, write }]);
     return;
   }
   const [entity] = await Entities.findStored(db, { ids: [id] });

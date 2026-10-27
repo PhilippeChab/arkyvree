@@ -1,7 +1,13 @@
-import { and, getTableColumns, inArray, type SQL, sql } from "drizzle-orm";
+import { and, eq, getTableColumns, inArray, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { charactersInCharacter, entitiesInRules, fieldsInCharacter, linksInCharacter } from "@/drizzle/schema.ts";
+import {
+  charactersInCharacter,
+  entitiesInRules,
+  fieldsInCharacter,
+  linksInCharacter,
+  rulesetsInRules,
+} from "@/drizzle/schema.ts";
 import { Engine, type FieldValue, type FieldWrite, type StorageEngine } from "@/engine/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
@@ -23,10 +29,48 @@ const FIELD_JSON = sql`coalesce(to_json(${fieldsInCharacter.textValue}), to_json
  * A character's row as the generic tables store it: its own columns (`character.characters`), its fields' values by
  * field (`character.fields`: 3.5's alignment, XP; a set's one a row) and its single links' entities by role
  * (`character.links`: its race), read in one query (`buildColumns`, then `toCharacter`: its fields as its module
- * declares them, as an entity's are), and written as given (`write`): its fields as every owner's are
- * (`Engine.storage().writtenFields`, `toFieldRows`), each role's entity type as the modules declare it.
+ * declares them, as an entity's are), and written as given (`write`): its fields as every owner's are, as its own
+ * module declares them (`Engine.storage().writtenFields`, `toFieldRows`), each role's entity type as the modules
+ * declare it.
  */
 export default class StoredCharacters {
+  /**
+   * Writes the fields of characters (`ids`) a write gives (`fields`), as their module declares them (`storage`, by
+   * their ruleset's base rules): each value set replacing what they held of it, a new character's (`creating`) with its
+   * module's fields always written.
+   */
+  private static async writeFields(
+    db: Db,
+    ids: string[],
+    fields: Record<string, FieldWrite>,
+    creating: boolean,
+    storage: StorageEngine,
+  ) {
+    const owner = storage.characterOwnerType;
+    const modules = await db
+      .select({ id: charactersInCharacter.id, baseRules: rulesetsInRules.baseRules })
+      .from(charactersInCharacter)
+      .innerJoin(rulesetsInRules, eq(rulesetsInRules.id, charactersInCharacter.rulesetId))
+      .where(inArray(charactersInCharacter.id, ids));
+    for (const [baseRules, characters] of Map.groupBy(modules, (row) => row.baseRules)) {
+      const stored = Object.entries(storage.writtenFields(owner, fields, creating, baseRules));
+      if (stored.length === 0) continue;
+      const rows = stored.flatMap(([field, values]) => toFieldRows(owner, field, values, storage));
+      const characterIds = characters.map((character) => character.id);
+      await db.delete(fieldsInCharacter).where(
+        and(
+          inArray(fieldsInCharacter.characterId, characterIds),
+          inArray(
+            fieldsInCharacter.field,
+            stored.map(([field]) => field),
+          ),
+        ),
+      );
+      const written = characterIds.flatMap((characterId) => rows.map((row) => ({ characterId, ...row })));
+      if (written.length > 0) await db.insert(fieldsInCharacter).values(written);
+    }
+  }
+
   /**
    * The columns a character's read selects: its own, its fields' values (each a field and its value, typed by its
    * column, a set's in their stored order), which `toCharacter` reads, and its single links' entities.
@@ -65,8 +109,8 @@ export default class StoredCharacters {
    * Writes the fields and single links of characters (`ids`) a write gives: each value set (null, none) replacing what
    * they held of it, a field's as every owner's is stored (`Engine.storage().writtenFields`: an empty text, none; one
    * always written, its default when it holds none: a new character's it leaves out too, `creating`), in its field's
-   * column by its declaration (`toFieldRows`), as the modules declare them (`storage`, every registered module's
-   * unless a test gives its own).
+   * column by its declaration (`toFieldRows`), as its own module declares them (`writeFields`; `storage`, every
+   * registered module's unless a test gives its own).
    */
   static async write(
     db: Db,
@@ -95,20 +139,7 @@ export default class StoredCharacters {
       });
       if (written.length > 0) await db.insert(linksInCharacter).values(written);
     }
-    const owner = storage.characterOwnerType;
-    const stored = Object.entries(storage.writtenFields(owner, fields, creating));
-    if (stored.length === 0) return;
-    const rows = stored.flatMap(([field, values]) => toFieldRows(owner, field, values, storage));
-    await db.delete(fieldsInCharacter).where(
-      and(
-        inArray(fieldsInCharacter.characterId, ids),
-        inArray(
-          fieldsInCharacter.field,
-          stored.map(([field]) => field),
-        ),
-      ),
-    );
-    const written = ids.flatMap((characterId) => rows.map((row) => ({ characterId, ...row })));
-    if (written.length > 0) await db.insert(fieldsInCharacter).values(written);
+    if (creating || Object.keys(fields).length > 0)
+      await StoredCharacters.writeFields(db, ids, fields, creating, storage);
   }
 }
