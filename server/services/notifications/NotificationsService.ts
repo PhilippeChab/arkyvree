@@ -1,6 +1,6 @@
 import { db, withTransaction } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Notifications } from "@/server/repositories/index.ts";
+import { Notifications, type Pagination } from "@/server/repositories/index.ts";
 import { INVITE_NOTIFICATION_TYPES } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -12,7 +12,7 @@ class NotificationsService {
       search?: string;
       unreadOnly?: boolean;
     },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     return await Notifications.findPage(db, { recipientId: session.userId, ...where }, pagination);
   }

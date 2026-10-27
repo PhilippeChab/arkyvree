@@ -6,7 +6,7 @@ import { Engine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
-import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
+import { Paginates, type Pagination } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 import StoredCharacters, { type CharacterValuesWrite } from "@/server/repositories/stored/StoredCharacters.ts";
 import type { Character } from "@/shared/relations.ts";
@@ -215,7 +215,7 @@ class CharactersRepository extends include(
       userId: string;
       visibility?: Visibility;
     },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     const {
       visibility = Visibility.UnarchivedOnly,
@@ -263,7 +263,7 @@ class CharactersRepository extends include(
   async findUnlinkedPage(
     db: Db,
     where: { rulesetId: string; search?: string; userId: string },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     return await this.withPagination(pagination, async ({ limit, offset }) => {
       const results = await db

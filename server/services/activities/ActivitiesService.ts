@@ -9,6 +9,7 @@ import {
   Entities,
   Invites,
   Modifiers,
+  type Pagination,
   PlayerCharacters,
   Players,
   Requirements,
@@ -154,7 +155,7 @@ class ActivitiesService {
       targetType?: string;
       type?: string;
     },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     return await Activities.findPage(
       db,

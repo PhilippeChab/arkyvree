@@ -6,6 +6,7 @@ import {
   Activities,
   Campaigns,
   Invites,
+  type Pagination,
   PlayerCharacters,
   Players,
   Users,
@@ -157,7 +158,7 @@ class CampaignPlayersService {
     session: Session,
     campaignId: string,
     where: { orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
     if (!campaign) throw new NotFoundError("Campaign not found");

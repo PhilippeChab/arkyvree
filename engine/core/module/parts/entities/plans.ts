@@ -12,10 +12,11 @@ import type { Modifier, Requirement } from "@/shared/relations.ts";
  * What a create or an edit writes of an entity: its row (`row`: its own columns, the fields and the single links it
  * sets, as stored), its links of the roles it sets many of (`links`, each set replacing the entity's of its role and
  * kind; a role it leaves out: kept), what it writes beside its row, and what the action answers once written
- * (`describe`: its record, `row`, with its own links as stored, `links`, as a read describes it).
+ * (`describe`: its record, `row`, with its own links as stored, `links`, as a read describes it, its columns as the
+ * record's type has them).
  */
 interface EntitySave {
-  describe: (row: EntityRecord, links: readonly ViewLink[]) => SavedEntity;
+  describe: <R extends EntityRecord>(row: R, links: readonly ViewLink[]) => SavedEntity<R>;
   links?: LinkSet[];
   row: EntityWrite;
   writes?: EntityWrites;
@@ -25,10 +26,14 @@ interface EntitySave {
 type RequirementWrite = Pick<Requirement, "level" | "operator" | "target" | "value" | "valueType">;
 
 /**
- * What a save answers: the entity's record once written, its fields as a read answers them (each as its kind reads it,
- * by its stored field, an item's template's it holds none of among them), its single links named as a read names them.
+ * What a save answers: the entity's record once written (`R`), its fields as a read answers them (each as its kind
+ * reads it, by its stored field, an item's template's it holds none of among them), its single links named as a read
+ * names them.
  */
-type SavedEntity = Omit<EntityRecord, "fields" | "links"> & { fields: Record<string, unknown>; links: NamedLink[] };
+type SavedEntity<R extends EntityRecord> = Omit<R, "fields" | "links"> & {
+  fields: Record<string, unknown>;
+  links: NamedLink[];
+};
 
 /**
  * The entities made from the one a plan writes, which the plan reaches (a template's copies): what the server reads

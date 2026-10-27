@@ -6,7 +6,7 @@ import { include } from "@/lib/mixins.ts";
 import type { ContributorRole, ContributorStatus } from "@/shared/enums.ts";
 
 import BaseRepository from "./BaseRepository.ts";
-import { Paginates } from "./concerns/Paginates.ts";
+import { Paginates, type Pagination } from "./concerns/Paginates.ts";
 import { Searches } from "./concerns/Searches.ts";
 
 /** A contribution, as its table (`T`) stores it. */
@@ -88,7 +88,7 @@ abstract class ContributionRepository<
   async findPage(
     db: Db,
     where: Parent<P> & { orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     const { search, orderBy = "createdAt", orderDir = "desc" } = where;
     const { limit, offset } = this.paginate(pagination);

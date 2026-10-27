@@ -1,7 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
-import { Campaigns, Invites, Players, Visibility } from "@/server/repositories/index.ts";
+import { Campaigns, Invites, type Pagination, Players, Visibility } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { getPendingInvite, saveInviteAnswer } from "@/server/services/invites/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
@@ -58,7 +58,7 @@ class CampaignInvitesService {
     session: Session,
     campaignId: string,
     where: { orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
     if (!campaign) throw new NotFoundError("Campaign not found");

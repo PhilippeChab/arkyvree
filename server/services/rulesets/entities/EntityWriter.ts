@@ -241,7 +241,7 @@ export default class EntityWriter {
     rulesetId: string,
     name: string,
     plan: (scope: RulesetScope, reads: { tombstoneAncestorId: string | null; tx: Db }) => P | Promise<P>,
-  ): Promise<ReturnType<P["describe"]>> {
+  ) {
     return await EntityWriter.inScope(rulesetId, async (tx, scope) => {
       const { ruleset, rulesetData } = scope;
       this.open(scope);
@@ -259,7 +259,7 @@ export default class EntityWriter {
       await EntityWriter.setParts(tx, scope, written, planned, false);
 
       await EntityWriter.recordActivity(tx, session, "create", this.type, row.id, { entityName: row.name });
-      return planned.describe(row, await EntityLinks.findOwn(tx, row.id)) as ReturnType<P["describe"]>;
+      return planned.describe(row, await EntityLinks.findOwn(tx, row.id));
     });
   }
 
@@ -361,7 +361,7 @@ export default class EntityWriter {
     rulesetId: string,
     body: { name: string; updatedAt?: string },
     plan: (scope: RulesetScope, reads: { tx: Db }) => P | Promise<P>,
-  ): Promise<ReturnType<P["describe"]>> {
+  ) {
     return await EntityWriter.inScope(rulesetId, async (tx, scope) => {
       const { ruleset, rulesetData } = scope;
       this.open(scope);
@@ -378,7 +378,7 @@ export default class EntityWriter {
         // What its plan writes another value of, as its rules label it
         changedFields: planned.changes,
       });
-      return planned.describe(row, await EntityLinks.findOwn(tx, target.id)) as ReturnType<P["describe"]>;
+      return planned.describe(row, await EntityLinks.findOwn(tx, target.id));
     });
   }
 

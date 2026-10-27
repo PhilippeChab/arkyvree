@@ -19,7 +19,7 @@ import { addCharacterLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { addClassSkills, addGrants } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { findFormValues } from "@/tests/support/ownerValues.ts";
-import { createTestRuleset, type Described } from "@/tests/support/rulesets.ts";
+import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { CLASS_HD, CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
@@ -56,7 +56,7 @@ describe("EntitiesService: classes", () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     const fighter = await EntitiesService.createEntity(session, ruleset.id, "classes", { name: "Fighter" });
     const bonusSpellAbilityOf = async (id: string) =>
-      (await EntitiesService.getEntity<Described<"classes">>(ruleset.id, "classes", id)).links
+      (await EntitiesService.getEntity(ruleset.id, "classes", id)).links
         .filter((link) => link.role === "bonusSpellAbility")
         .map((link) => link.toId);
     expect(await bonusSpellAbilityOf(fighter.id)).toEqual([]);

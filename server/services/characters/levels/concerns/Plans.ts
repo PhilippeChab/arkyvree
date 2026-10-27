@@ -8,15 +8,9 @@ import {
 } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities } from "@/server/repositories/index.ts";
+import { Entities, type Pagination } from "@/server/repositories/index.ts";
 import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
-
-/** Which page of a step's options to read: how many a page holds, and its number. */
-interface Pagination {
-  limit: number;
-  page: number;
-}
 
 /** An option described by its picker, as a step's option: its entity, and whether the character may take it. */
 function optionOf(option: {
