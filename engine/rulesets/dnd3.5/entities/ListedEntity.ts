@@ -13,6 +13,9 @@ export default abstract class ListedEntity<
   K extends "feats" | "spells",
   S extends Fields,
 > extends CustomizationPageEntity<K, S> {
+  /** Its pools: the aptitudes its `listedIn` links name (a feat's feat pools, a spell's lists), by `?aptitude=`. */
+  protected static override readonly pools = { param: "aptitude", role: "listedIn" };
+
   /** Of a saved entity's own links, those its answer names: all of them, as its page shows them (`describe`). */
   protected override savedLinks(_row: Pick<EntityRecord, "links">, links: readonly ViewLink[]): readonly ViewLink[] {
     return links;

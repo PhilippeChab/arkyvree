@@ -1,7 +1,6 @@
 import { NAMED_LIST } from "@/engine/core/entities/index.ts";
-import type { EntityPoolsDescription, RulesDeclaration } from "@/engine/core/module/index.ts";
+import type { RulesDeclaration } from "@/engine/core/module/index.ts";
 import { CHARACTER_FORM } from "@/engine/rulesets/dnd3.5/characters/form.ts";
-import { CLASS_SKILL_LINKS } from "@/engine/rulesets/dnd3.5/entities/classes/classSkillLinks.ts";
 import { CLASS_LIST } from "@/engine/rulesets/dnd3.5/entities/classes/lists.ts";
 import { PROGRESSION } from "@/engine/rulesets/dnd3.5/entities/classes/progression.ts";
 import { FEAT_LIST } from "@/engine/rulesets/dnd3.5/entities/feats/lists.ts";
@@ -12,25 +11,9 @@ import { SAVE_LIST } from "@/engine/rulesets/dnd3.5/entities/saves/lists.ts";
 import { SKILL_LIST } from "@/engine/rulesets/dnd3.5/entities/skills/lists.ts";
 import { SPELL_LIST } from "@/engine/rulesets/dnd3.5/entities/spells/lists.ts";
 import { BONDED_KINDS, PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
-import {
-  FEAT_FAMILY,
-  FEAT_GENERATED,
-  ITEM_IS_TEMPLATE,
-  ITEM_SLOT,
-  ITEM_TYPE,
-} from "@/vocabulary/dnd3.5/fields/index.ts";
+import { ITEM_SLOT, ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { MAX_ITEM_VARIANTS } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
-
-/**
- * The pools a feats' or a spells' list narrows by: its aptitudes, one at a time, by their id (`?aptitude=`), its
- * entities' `listedIn` links'.
- */
-const APTITUDE_POOLS: Omit<EntityPoolsDescription, "scope"> = {
-  param: "aptitude",
-  role: "listedIn",
-  type: "aptitudes",
-};
 
 /**
  * What every 3.5 ruleset shares: its entity kinds, in its page's order, and their words, its
@@ -55,59 +38,30 @@ export const RULES: RulesDeclaration = {
       "[abilities.charisma.modifier], floor([classes.ranger.level] / 2), max(0, [classes.beastmaster.level] + 3)",
   },
   kinds: [
-    { icon: "face", opens: "customization", partitioned: true, type: "races" },
-    { icon: "translate", opens: "page", type: "languages" },
-    { icon: "psychology", opens: "page", type: "skills" },
+    { icon: "face", type: "races" },
+    { icon: "translate", type: "languages" },
+    { icon: "psychology", type: "skills" },
+    { icon: "spoke", type: "feats" },
+    { icon: "bolt", type: "spells", wideForm: "fixed" },
     {
-      families: { field: FEAT_FAMILY },
-      icon: "spoke",
-      lockedName: { field: FEAT_GENERATED, reason: "A generated feat keeps its name" },
-      opens: "customization",
-      pools: { ...APTITUDE_POOLS, scope: "feats" },
-      type: "feats",
-    },
-    {
-      icon: "bolt",
-      levels: true,
-      opens: "customization",
-      pools: { ...APTITUDE_POOLS, scope: "spells" },
-      type: "spells",
-      wideForm: "fixed",
-    },
-    {
-      copies: {
-        locked: [ITEM_SLOT, "madeFrom", ITEM_TYPE],
-        most: MAX_ITEM_VARIANTS,
-        source: "madeFrom",
-        template: { field: ITEM_IS_TEMPLATE },
-      },
+      copies: { locked: [ITEM_SLOT, "madeFrom", ITEM_TYPE], most: MAX_ITEM_VARIANTS },
       icon: "construction",
-      opens: "customization",
       type: "items",
       wideForm: "fluid",
     },
     {
       help: "Pools of choosable options at certain class levels (e.g., Fighter Bonus Feats, Rogue Special Abilities).",
       icon: "stars",
-      opens: "page",
       type: "aptitudes",
     },
-    {
-      fieldHelp: true,
-      icon: "accessibility",
-      links: { role: CLASS_SKILL_LINKS.role, type: "skills" },
-      opens: "progression",
-      partitioned: true,
-      type: "classes",
-    },
-    { empty: "No saving throws available for this ruleset.", icon: "shield", opens: "page", type: "saves" },
-    { icon: "fitness", opens: "page", readOnly: true, type: "abilities" },
+    { fieldHelp: true, icon: "accessibility", type: "classes" },
+    { empty: "No saving throws available for this ruleset.", icon: "shield", type: "saves" },
+    { icon: "fitness", type: "abilities" },
     {
       empty: "No mechanics documented for this ruleset.",
       help: "Free-form rule entries for base game mechanics the app doesn't enforce (e.g., trip, disarm, grapple). Use them to document or override situational rules for your table.",
       icon: "gavel",
       longDescription: true,
-      opens: "page",
       type: "mechanics",
     },
   ],

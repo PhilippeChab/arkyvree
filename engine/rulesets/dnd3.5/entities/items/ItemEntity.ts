@@ -42,7 +42,10 @@ const VARIANTS = z.array(z.unknown()).max(RULESET_LIMITS.itemVariants);
  */
 export default class ItemEntity extends CustomizationPageEntity<"items", typeof ITEM_FIELDS.fields> {
   /** Its templates, a duplicate, variants. */
-  protected override readonly copies = true;
+  protected static override readonly copies = true;
+
+  /** Its list's filters: templates, or the items that aren't (its template flag). */
+  protected static override readonly listFilters = { [ITEM_IS_TEMPLATE]: z.stringbool() };
 
   /**
    * Its cost, weight, type, slot and template, whether it's one, its armor's, its shield's and its weapon's, its
@@ -51,9 +54,6 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
   protected override readonly fields = ITEM_FIELDS;
 
   protected override readonly label = "Item";
-
-  /** Its list's filters: templates, or the items that aren't (its template flag). */
-  protected override readonly listFilters = { [ITEM_IS_TEMPLATE]: z.stringbool() };
 
   override readonly type = "items";
 

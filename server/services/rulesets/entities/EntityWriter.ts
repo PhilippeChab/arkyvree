@@ -329,7 +329,8 @@ export default class EntityWriter {
 
   /**
    * An owned entity's delete (`ownedId`), as its owner's rules plan it (`plan`): refused while it's in use
-   * (`EntityUses.refusesDelete`, by the owned kind its owner's declares, `ownedType`, before the access and the plan),
+   * (`EntityUses.refusesDelete`, by the kinds its owner's kind owns, as its storage declares them,
+   * `StorageEngine.ownedKinds`, before the access and the plan),
    * its owner copied when it's inherited (the delete would otherwise remove the source ruleset's row), what its plan
    * writes with it, and its row deleted, with its links and customizations. Answers the deleted row.
    */
@@ -337,15 +338,16 @@ export default class EntityWriter {
     session: Session,
     rulesetId: string,
     ownedId: string,
-    reads: { ownedType: (scope: RulesetScope) => string | undefined; plan: (scope: RulesetScope) => OwnedPlanned<P> },
+    plan: (scope: RulesetScope) => OwnedPlanned<P>,
   ): Promise<Row> {
     return await EntityWriter.inScope(session, rulesetId, async (tx, scope, policy) => {
       const { ruleset, rulesetData } = scope;
-      const ownedType = reads.ownedType(scope);
       const uses = new EntityUses(ruleset, rulesetData.cow);
-      const inUse = ownedType ? await uses.refusesDelete(tx, ownedType as ReferencedType, ownedId) : false;
+      let inUse = false;
+      for (const ownedType of Engine.storage().ownedKinds(this.type))
+        inUse ||= await uses.refusesDelete(tx, ownedType as ReferencedType, ownedId);
       policy.canDeleteEntity({ inUse });
-      const { plan: planned, type } = reads.plan(scope);
+      const { plan: planned, type } = plan(scope);
 
       const target = await new EntityEdit(ruleset, rulesetData.cow).cowOwned(tx, type, this.type, planned.entity.id);
       const written = { entityId: target.id, entityType: type };

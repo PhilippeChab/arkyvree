@@ -1,4 +1,4 @@
-import type { RulesetEntity } from "@/engine/core/entities/index.ts";
+import type { KindCapabilities, RulesetEntity } from "@/engine/core/entities/index.ts";
 import type { Fields } from "@/engine/core/fields/index.ts";
 import type { RulesetView, StandaloneKind, ViewKinds } from "@/engine/core/view/index.ts";
 
@@ -11,8 +11,14 @@ type Kind<K extends keyof ViewKinds> = RulesetEntity<K, Fields>;
  */
 export type EntityKindsContract = { [K in StandaloneKind]: Kind<K> };
 
-/** What a ruleset answers of its entities: each kind's rules (`E`), bound to a ruleset's view. */
+/**
+ * What a ruleset answers of its entities: each kind's rules (`E`), bound to a ruleset's view, and what each can do
+ * before any view.
+ */
 export default abstract class EntitiesPart<E extends EntityKindsContract> {
+  /** What a kind (`type`) can do, as its rules' class declares it (`RulesetEntity.describeCapabilities`). */
+  abstract capabilitiesOf(type: keyof E): KindCapabilities;
+
   /** A kind's rules (`type`), bound to a ruleset's view. */
   abstract of<K extends keyof E>(view: RulesetView, type: K): E[K];
 }

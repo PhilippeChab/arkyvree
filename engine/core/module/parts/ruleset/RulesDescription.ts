@@ -1,5 +1,6 @@
 import type { FormField } from "@/engine/core/fields/index.ts";
 import type { CharacterForm } from "@/engine/core/module/parts/characters/index.ts";
+import type { StandaloneKind } from "@/engine/core/view/index.ts";
 
 /**
  * How a kind's row copies an entity (an item's): a duplicate, whose form keeps the fields it can't change (`locked`,
@@ -13,6 +14,23 @@ export interface EntityCopiesDescription {
   most: number;
   source: string;
   template: { field: string };
+}
+
+/**
+ * What a module's rules declare of an entity kind its rulesets hold (`EntityKindDescription`): how its page presents
+ * it, its type (`type`), its icon, its tab's help, its empty list's words, its form's room and help, and its copies'
+ * words (`copies`: a duplicate's locked fields, the most variants at once, of a kind that makes copies). What it can do
+ * the engine reads off its rules' class and its storage.
+ */
+export interface EntityKindDeclaration {
+  copies?: Pick<EntityCopiesDescription, "locked" | "most">;
+  empty?: string;
+  fieldHelp?: boolean;
+  help?: string;
+  icon: string;
+  longDescription?: boolean;
+  type: StandaloneKind;
+  wideForm?: "fixed" | "fluid";
 }
 
 /**
@@ -214,6 +232,18 @@ export interface ProgressionTrack {
 }
 
 /**
+ * What a module's rules describe of themselves: all but what the engine reads off its storage, its fields'
+ * declarations and its imports, and of its kinds their presentation alone (`EntityKindDeclaration`), what each can do
+ * being its rules' class's and its storage's.
+ */
+export interface RulesDeclaration extends Omit<
+  RulesDescription,
+  "customizationPages" | "fields" | "importers" | "kinds"
+> {
+  kinds: EntityKindDeclaration[];
+}
+
+/**
  * What a base rules' rulesets share, past any ruleset's view: what the app calls their entities, the fields their
  * forms show, the kinds a race or a class is for, how a class progresses, a listed entity's tiers, and the license a
  * system ruleset's content is under. The client reads it once, for every base rules, and holds none of it.
@@ -278,9 +308,3 @@ export interface RulesWord {
   many: string;
   one: string;
 }
-
-/**
- * What a module's rules describe of themselves: all but what the engine reads off its storage, its fields'
- * declarations and its imports.
- */
-export type RulesDeclaration = Omit<RulesDescription, "customizationPages" | "fields" | "importers">;

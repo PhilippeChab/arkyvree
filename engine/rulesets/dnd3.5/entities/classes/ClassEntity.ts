@@ -17,16 +17,13 @@ import { CLASS_FIELDS } from "./fields.ts";
  * it: its levels, its class skills, its table.
  */
 export default class ClassEntity extends RulesetEntity<"classes", typeof CLASS_FIELDS.fields> {
+  /** Its list's filters: the kind it's for, its partition (the player classes', or the others'). */
+  protected static override readonly listFilters = { partition: z.string() };
+
   /** Its hit die, the ability its bonus spells use, and the spells it casts. */
   protected override readonly fields = CLASS_FIELDS;
 
   protected override readonly label = "Class";
-
-  /** Its list's filters: the kind it's for, its partition (the player classes', or the others'). */
-  protected override readonly listFilters = { partition: z.string() };
-
-  /** Its levels' kind, which it owns. */
-  override readonly ownedType = "class-levels";
 
   override readonly type = "classes";
 

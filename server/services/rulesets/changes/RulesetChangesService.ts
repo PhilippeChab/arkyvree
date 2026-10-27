@@ -1,3 +1,4 @@
+import { Engine } from "@/engine/index.ts";
 import { CowDataReader, EntityNames, EntityRevert, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
@@ -9,10 +10,7 @@ import {
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
-import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Session } from "@/shared/relations.ts";
-
-import { RESTORABLE_ENTITY_TYPES } from "./restorableEntityTypes.ts";
 
 class RulesetChangesService {
   async getChanges(session: Session, rulesetId: string) {
@@ -36,6 +34,7 @@ class RulesetChangesService {
       | { entityId: string; entityType: RulesetEntityType; name: string; status: "added" };
 
     const changes: ChangeRow[] = [];
+    const restorable = Engine.rules().restorableKinds();
 
     // Walk every entity type so we can emit "added" rows for locally-owned
     // entities that aren't tracked by any snapshot, alongside the snapshot-
@@ -61,7 +60,7 @@ class RulesetChangesService {
       }
 
       // A read-only kind (3.5's abilities) has no snapshots: no route edits it.
-      if (typeSnapshots.length === 0 || !isOneOf(entityType, RESTORABLE_ENTITY_TYPES)) continue;
+      if (typeSnapshots.length === 0 || !restorable.includes(entityType)) continue;
 
       // Tombstones (COW hard-deleted) need the source entity's name as a fallback.
       const sourceIds = typeSnapshots.map((s) => s.sourceEntityId);

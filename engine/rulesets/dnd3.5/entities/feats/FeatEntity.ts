@@ -6,11 +6,9 @@ import type { FormBody } from "@/engine/core/entities/index.ts";
 import type { EntityForm } from "@/engine/core/fields/index.ts";
 import type { EntityRecord } from "@/engine/core/module/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
-import RulesError from "@/engine/core/RulesError.ts";
 import ListedEntity from "@/engine/rulesets/dnd3.5/entities/ListedEntity.ts";
 import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { Feat } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { FEAT_FAMILY, FEAT_GENERATED } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { FEAT_FIELDS } from "./fields.ts";
@@ -24,29 +22,27 @@ export interface PoolModifier {
 
 /** A feat as the ruleset has it: described with its customizations, listed by pool or family, saved by its rules. */
 export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS.fields> {
+  /** Its families: its family field, its groups a pool's families (the pool its `listedIn` links name). */
+  protected static override readonly families = { field: FEAT_FAMILY, groupFilters: { listedIn: z.string().uuid() } };
+
+  /**
+   * A generated feat keeps its name, which names its option (`Weapon Focus: Longsword`) and which checks and generators
+   * find it by.
+   */
+  protected static override readonly lockedName = { field: FEAT_GENERATED, reason: "A generated feat keeps its name" };
+
   /** Its feat pools, its flags, its families, the weapon rules it changes, the schools it forbids. */
   protected override readonly fields = FEAT_FIELDS;
 
-  /** Its groups' filters: a pool's families (the pool its `listedIn` links name). */
-  protected override readonly groupFilters = { listedIn: z.string().uuid() };
-
   protected override readonly label = "Feat";
-
-  /** Its list's filters: a pool's feats (the pool its `listedIn` links name), a family's (its family field). */
-  protected override readonly listFilters = { [FEAT_FAMILY]: z.string(), listedIn: z.string().uuid() };
 
   /** A new feat standing in for a generated ancestor is generated. */
   override readonly takesAfterAncestor = true;
 
   override readonly type = "feats";
 
-  /**
-   * Refuses renaming a generated feat (its name names its option, `Weapon Focus: Longsword`,
-   * which checks and generators find it by), and a feat linked to a pool the view's spells use.
-   */
-  protected override checkForm(body: FormBody, _given: object, feat?: Feat) {
-    if (feat && body.name !== feat.name && feat.fields[FEAT_GENERATED])
-      throw new RulesError("invalid", "Generated feats cannot be renamed");
+  /** Refuses a feat linked to a pool the view's spells use. */
+  protected override checkForm(body: FormBody) {
     const message = "Cannot link feat to aptitude(s) already used for spells";
     const listIds = (this.listsOf(body) ?? []).map((list) => list.toId);
     this.refuseLists(listIds, this.dnd35.aptitudeIdsWithSpells, message);
