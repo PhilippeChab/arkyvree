@@ -182,10 +182,10 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
       }
       if (tagsByAptitudeId.size === 0) return;
 
-      for (const link of this.spellAptitudeLinks) {
-        for (const tag of tagsByAptitudeId.get(link.aptitudeId) ?? []) {
-          if (!this.spellTags[link.spellId]) this.spellTags[link.spellId] = [];
-          this.spellTags[link.spellId].push(tag);
+      for (const [spellId, listIds] of this.listIdsBySpell) {
+        for (const tag of listIds.flatMap((listId) => tagsByAptitudeId.get(listId) ?? [])) {
+          if (!this.spellTags[spellId]) this.spellTags[spellId] = [];
+          this.spellTags[spellId].push(tag);
         }
       }
     }
@@ -216,18 +216,19 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
       this.allAptitudeSpells = allAptitudeSpells;
       if (this.allAptitudeSpells.length === 0) return;
 
-      // The spell→aptitude link table from the cache
+      // The lists each spell is on, as the view composes them
       const aptitudeSpellIds = new Set(this.allAptitudeSpells.map(({ entity }) => entity.id));
-
       const allSpellIdSet = new Set<string>([...spells.map(({ entity }) => entity.id), ...aptitudeSpellIds]);
-      const spellAptitudeLinks: { aptitudeId: string; spellId: string }[] = [];
+      const listIdsBySpell = new Map<string, string[]>();
       for (const id of allSpellIdSet) {
-        const p = dnd35.spellsById.get(id);
-        if (!p) continue;
-        for (const link of dnd35.listLinksOf(p.id)) spellAptitudeLinks.push({ spellId: p.id, aptitudeId: link.toId });
+        const spell = dnd35.spellsById.get(id);
+        if (!spell) continue;
+        listIdsBySpell.set(
+          spell.id,
+          dnd35.listLinksOf(spell.id).map((link) => link.toId),
+        );
       }
-
-      this.spellAptitudeLinks = spellAptitudeLinks;
+      this.listIdsBySpell = listIdsBySpell;
     }
 
     /** The spells the character's lists make it know, added to its spells with their DCs. */
