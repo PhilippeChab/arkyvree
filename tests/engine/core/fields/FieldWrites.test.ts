@@ -7,7 +7,7 @@ const DEFAULTS = { TRAINED: [true], SECRET: [false], RANK: ["Novice"], COST: [1]
 
 /**
  * Two owner types' fields: a talent's, each kind always written, a flag with a default and one without, a text and a
- * number with theirs, and a free text; a badge's, none always written.
+ * number with theirs, a free text, and a choice, which no declaration writes always; a badge's, none always written.
  */
 const WRITES = new FieldWrites({
   talents: {
@@ -48,6 +48,14 @@ const WRITES = new FieldWrites({
       write: "always",
     },
     motto: { description: "Its motto", field: "MOTTO", kind: "text", label: "Motto", merge: "winner" },
+    school: {
+      description: "Its school",
+      field: "SCHOOL",
+      kind: "choice",
+      label: "School",
+      merge: "winner",
+      values: ["Abjuration", "Evocation"],
+    },
   },
   badges: {
     shiny: { description: "Whether it shines", field: "SHINY", kind: "flag", label: "Shiny", merge: "winner" },
@@ -74,6 +82,9 @@ describe("A write of an owner's fields", () => {
         MOTTO: [],
       });
       expect(WRITES.written("talents", { RANK: "" }, creating).RANK).toEqual(["Novice"]);
+      // A choice is never always written (`ChoiceSpec` declares no `write`): an empty one clears it, as a text's would
+      expect(WRITES.written("talents", { SCHOOL: "" }, creating)).toMatchObject({ SCHOOL: [] });
+      expect(WRITES.written("talents", { SCHOOL: "Evocation" }, creating)).toMatchObject({ SCHOOL: ["Evocation"] });
     }
     // A false flag and a default number it writes, always written, as they are
     expect(WRITES.written("talents", { TRAINED: false, COST: 1 }, false)).toEqual({ TRAINED: [false], COST: [1] });

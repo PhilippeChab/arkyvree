@@ -278,10 +278,10 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
    * Writes entities' fields and single links (`writes`: each entity's ids and what it sets, by field and by role), in
    * batches, each field as every write stores it, a seed's, a form's or an import's (`Engine.storage().writtenFields`:
    * a set's values once, no false flag, default number or empty text, the default of one always written that holds no
-   * value, none whose condition doesn't hold), each value
-   * in its field's column by its declaration (`toFieldRows`), a set's in its order, and each link to its role's kind:
-   * replacing what they held of each it names when `replacing` (an update's; a new entity holds none). None (no value,
-   * null) writes none. A copy's fields (`copied`: its source's rows, as they're stored) are written as they are.
+   * value, none whose condition doesn't hold), each value in its field's column by its declaration (`toFieldRows`), a
+   * set's in its order, and each link to its role's kind: replacing what they held of each it names when `replacing`
+   * (an update's; a new entity holds none). None (no value, null) writes none. A copy's fields (`copied`: its source's
+   * rows, as they're stored) are written as they are.
    */
   private async writeParts(
     db: Db,

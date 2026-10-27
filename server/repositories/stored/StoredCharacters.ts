@@ -2,7 +2,7 @@ import { and, getTableColumns, inArray, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { charactersInCharacter, entitiesInRules, fieldsInCharacter, linksInCharacter } from "@/drizzle/schema.ts";
-import { Engine, type FieldValue, type FieldWrite } from "@/engine/index.ts";
+import { Engine, type FieldValue, type FieldWrite, type StorageEngine } from "@/engine/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
 import { toFieldRows } from "./toFieldRows.ts";
@@ -15,9 +15,6 @@ export interface CharacterValuesWrite {
   /** The entity of each single link it sets, by role (3.5's `race`), null to clear it */
   links?: Record<string, string | null>;
 }
-
-/** The owner type of a character's fields, as the modules declare them (`RulesetModule.characterFields`). */
-const CHARACTERS = "characters";
 
 /** A field's value as JSON, typed by the column that holds it: a text, a number or a flag. */
 const FIELD_JSON = sql`coalesce(to_json(${fieldsInCharacter.textValue}), to_json(${fieldsInCharacter.numberValue}), to_json(${fieldsInCharacter.flagValue}))`;
@@ -54,21 +51,30 @@ export default class StoredCharacters {
 
   /**
    * A character's row as read (`row`, its columns `buildColumns` selects): its fields' values by field, as its module
-   * declares them (`Engine.storage().fieldsOf`: a single field's value, a set's values in their declared order).
+   * declares them (`storage`, every registered module's unless a test gives its own: `fieldsOf`, a single field's
+   * value, a set's values in their declared order).
    */
   static toCharacter<R extends { fields: [string, FieldValue][] }>(
     row: R,
+    storage: StorageEngine = Engine.storage(),
   ): Omit<R, "fields"> & Pick<Character, "fields"> {
-    return { ...row, fields: Engine.storage().fieldsOf(CHARACTERS, row.fields) };
+    return { ...row, fields: storage.fieldsOf(storage.characterOwnerType, row.fields) };
   }
 
   /**
    * Writes the fields and single links of characters (`ids`) a write gives: each value set (null, none) replacing what
    * they held of it, a field's as every owner's is stored (`Engine.storage().writtenFields`: an empty text, none; one
    * always written, its default when it holds none: a new character's it leaves out too, `creating`), in its field's
-   * column by its declaration (`toFieldRows`).
+   * column by its declaration (`toFieldRows`), as the modules declare them (`storage`, every registered module's
+   * unless a test gives its own).
    */
-  static async write(db: Db, ids: string[], { fields = {}, links = {} }: CharacterValuesWrite, creating = false) {
+  static async write(
+    db: Db,
+    ids: string[],
+    { fields = {}, links = {} }: CharacterValuesWrite,
+    creating = false,
+    storage: StorageEngine = Engine.storage(),
+  ) {
     if (ids.length === 0) return;
     const roles = Object.keys(links);
     if (roles.length > 0) {
@@ -77,7 +83,7 @@ export default class StoredCharacters {
         .where(and(inArray(linksInCharacter.characterId, ids), inArray(linksInCharacter.role, roles)));
       const written = Object.entries(links).flatMap(([role, entityId]) => {
         if (entityId === null) return [];
-        const def = Engine.storage().characterRole(role);
+        const def = storage.characterRole(role);
         if (!def.single) throw new Error(`The character role ${role} isn't a single link`);
         return ids.map((characterId) => ({
           characterId,
@@ -89,9 +95,10 @@ export default class StoredCharacters {
       });
       if (written.length > 0) await db.insert(linksInCharacter).values(written);
     }
-    const stored = Object.entries(Engine.storage().writtenFields(CHARACTERS, fields, creating));
+    const owner = storage.characterOwnerType;
+    const stored = Object.entries(storage.writtenFields(owner, fields, creating));
     if (stored.length === 0) return;
-    const rows = stored.flatMap(([field, values]) => toFieldRows(CHARACTERS, field, values));
+    const rows = stored.flatMap(([field, values]) => toFieldRows(owner, field, values, storage));
     await db.delete(fieldsInCharacter).where(
       and(
         inArray(fieldsInCharacter.characterId, ids),

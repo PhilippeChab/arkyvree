@@ -28,9 +28,6 @@ import type { BaseRules } from "@/shared/enums.ts";
 
 import Modules, { type EntityType } from "./Modules.ts";
 
-/** The owner type of a character's fields, which each module declares (`RulesetModule.characterFields`). */
-const CHARACTERS = "characters";
-
 /** The merges the engine composes sibling copies by (`SiblingMerge`). */
 const MERGES: readonly Merge[] = ["fallback", "union", "winner"];
 
@@ -66,7 +63,10 @@ export default class StorageEngine {
   constructor(modules: [BaseRules, RulesetModule][]) {
     this.baseRules = modules.map(([baseRules]) => baseRules);
     this.kinds = mergeRecords(modules, (module) => module.storage.kinds);
-    this.fields = mergeRecords(modules, (module) => ({ ...module.fields, [CHARACTERS]: module.characterFields }));
+    this.fields = mergeRecords(modules, (module) => ({
+      ...module.fields,
+      [this.characterOwnerType]: module.characterFields,
+    }));
     this.playerKindList = modules.map(([, module]) => module.storage.character.playerKind);
     this.customizable = Object.keys(this.kinds)
       .filter((type) => this.kinds[type].customizable)
@@ -203,6 +203,9 @@ export default class StorageEngine {
 
   /** The kinds no other owns, in their declarations' order (`standaloneKinds`). */
   private readonly standalone: readonly EntityType[];
+
+  /** The owner type of a character's fields, which each module declares (`RulesetModule.characterFields`). */
+  readonly characterOwnerType = "characters";
 
   /** The fields every module declares, as views keep their values, once read (`declaredFields`). */
   private declared?: DeclaredFields;
