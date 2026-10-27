@@ -330,20 +330,23 @@ describe("CharactersService", () => {
       const character = await createCharacterAs(session, { rulesetId: fork.id, abilities });
       const spoken = async () => (await findLinks("speaks", character.id)).map(({ entityId }) => entityId);
 
-      await CharactersService.updateLinkPicks(session, character.id, "speaks", [ctx.langMap["Draconic"]]);
+      const speak = (languageIds: string[]) =>
+        CharactersService.updateCharacter(session, character.id, { links: { speaks: languageIds } });
+
+      await speak([ctx.langMap["Draconic"]]);
       expect(await spoken()).toEqual([draconic.id]);
       // Common is the human's own: what it speaks without a pick isn't stored
       const languageIds = [ctx.langMap["Common"], ctx.langMap["Draconic"], ctx.langMap["Elven"]];
-      await CharactersService.updateCharacter(session, character.id, { links: { speaks: languageIds } });
+      await speak(languageIds);
       expect((await spoken()).toSorted()).toEqual([draconic.id, ctx.langMap["Elven"]].toSorted());
 
       // Its source's id and its copy's name one language
       const both = [ctx.langMap["Draconic"], draconic.id];
-      expect(CharactersService.updateLinkPicks(session, character.id, "speaks", both)).rejects.toMatchObject({
+      expect(speak(both)).rejects.toMatchObject({
         message: `Language ${draconic.id} is given more than once`,
         refusal: "invalid",
       });
-      expect(CharactersService.updateLinkPicks(session, character.id, "speaks", [NIL_UUID])).rejects.toMatchObject({
+      expect(speak([NIL_UUID])).rejects.toMatchObject({
         message: `Language ${NIL_UUID} does not belong to the character's ruleset`,
         refusal: "invalid",
       });

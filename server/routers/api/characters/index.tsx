@@ -222,18 +222,6 @@ export default new Hono()
     },
   )
   .put(
-    "/:id/links/:role",
-    validate("param", roleParams),
-    validate("json", z.object({ entityIds: z.array(z.string().uuid()) })),
-    async (c) => {
-      const { id, role } = c.req.valid("param");
-      const { entityIds } = c.req.valid("json");
-
-      await CharactersService.updateLinkPicks(c.var.requestSession, id, role, entityIds);
-      return c.json({ success: true }, 200);
-    },
-  )
-  .put(
     "/:id/scores/:role",
     validate("param", roleParams),
     validate("json", z.record(z.string().uuid(), score)),

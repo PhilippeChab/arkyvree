@@ -441,7 +441,7 @@ describe("characters", () => {
       const { langMap } = await getSeedCtx();
       const { id } = await postCharacter({ abilities: await scoresWith("Intelligence", 14) });
       const put = (languageIds: string[]) =>
-        character.links[":role"].$put({ param: { id, role: "speaks" }, json: { entityIds: languageIds } });
+        character.$put({ param: { id }, json: { links: { speaks: languageIds } } });
 
       // A human speaks Common, which its race grants, and picks a language per point of Intelligence bonus: two
       await expectOk(put([langMap["Draconic"], langMap["Elven"]]));
@@ -456,7 +456,7 @@ describe("characters", () => {
       const { langMap } = await getSeedCtx();
       const { id } = await postCharacter({ abilities: await scoresWith("Intelligence", 12) });
       const put = (languageIds: string[]) =>
-        character.links[":role"].$put({ param: { id, role: "speaks" }, json: { entityIds: languageIds } });
+        character.$put({ param: { id }, json: { links: { speaks: languageIds } } });
 
       expect(await (await expectStatus(put([langMap["Draconic"], langMap["Elven"]]), 400)).text()).toContain("Elven");
       expect(await (await expectStatus(put([langMap["Druidic"]]), 400)).text()).toContain("Druidic");
@@ -487,10 +487,7 @@ describe("characters", () => {
 
     test("rejects a language the ruleset doesn't have", async () => {
       const { id } = await postCharacter();
-      await expectStatus(
-        character.links[":role"].$put({ param: { id, role: "speaks" }, json: { entityIds: [NIL_UUID] } }),
-        400,
-      );
+      await expectStatus(character.$put({ param: { id }, json: { links: { speaks: [NIL_UUID] } } }), 400);
       await expectStatus(
         character.links[":role"].$get({ param: { id, role: "speaks" }, query: { entityIds: NIL_UUID } }),
         400,
@@ -507,33 +504,36 @@ describe("characters", () => {
       const { id } = await postCharacter({ rulesetId: fork.id });
 
       const put = (languageIds: string[]) =>
-        character.links[":role"].$put({ param: { id, role: "speaks" }, json: { entityIds: languageIds } });
+        character.$put({ param: { id }, json: { links: { speaks: languageIds } } });
       await expectStatus(put([langMap["Draconic"]]), 400);
       await expectStatus(put([langMap["Common"], langMap["Common"]]), 400);
       await expectOk(put([langMap["Common"]]));
     });
 
-    test("answers a bonded creature's languages, as its master's editor reads them", async () => {
+    test("answers and saves a bonded creature's languages, as its master's editor edits them", async () => {
       const { bonded } = await createWizardWithFamiliar();
       const languages = await expectOk(
         character.links[":role"].$get({ param: { id: bonded.id, role: "speaks" }, query: {} }),
       );
       // A cat speaks nothing its race grants, and its Intelligence gives it no pick
       expect(languages).toEqual({ automatic: [], options: [], picks: [] });
+      await expectOk(character.$put({ param: { id: bonded.id }, json: { links: { speaks: [] } } }));
     });
 
-    test("answers another user's character's languages as not found", async () => {
+    test("answers another user's character's languages as not found, their edit too", async () => {
+      const { langMap } = await getSeedCtx();
       const { id } = await postCharacter();
       const { api: otherApi } = await createSignedInUser();
       const other = otherApi.api.characters[":id"];
       await expectStatus(other.links[":role"].$get({ param: { id, role: "speaks" }, query: {} }), 404);
+      await expectStatus(other.$put({ param: { id }, json: { links: { speaks: [langMap["Draconic"]] } } }), 404);
+      expect(await languageNames(id)).toEqual(["Common"]);
     });
 
     test("answers a role that's no picked link of the character's as not found, its scores' edit too", async () => {
       const { id } = await postCharacter();
       for (const role of ["score", "race", "unknown", "constructor"]) {
         await expectStatus(character.links[":role"].$get({ param: { id, role }, query: {} }), 404);
-        await expectStatus(character.links[":role"].$put({ param: { id, role }, json: { entityIds: [] } }), 404);
         await expectStatus(character.$put({ param: { id }, json: { links: { [role]: [] } } }), 404);
       }
       for (const role of ["speaks", "race", "unknown", "constructor"])
