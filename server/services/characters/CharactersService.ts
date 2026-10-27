@@ -105,9 +105,8 @@ class CharactersService extends include(Object, Archives, Imports) {
    * child's, which its parent's editors read.
    */
   async getCharacter(session: Session, characterId: string) {
-    const record = await Characters.findOne(db, { id: characterId }, Visibility.All);
+    const record = await findEditableCharacterOrChild(db, characterId, session.userId, Visibility.All);
     if (!record) throw new NotFoundError("Character not found");
-    await getEditableCharacter(db, session, record.parentCharacterId ?? record.id, Visibility.All);
 
     return await withRulesetScope(db, record.rulesetId, async (scope) => {
       const character = await readCharacterInput(db, record);

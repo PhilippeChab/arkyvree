@@ -82,7 +82,7 @@ The character-creation wizard combines `published + campaignAccessible` (and his
 | `canManageContributors` | **owner only** |
 | `canReadContributors` | owner, active contributor |
 
-**Editing and archiving aren't policy methods.** `getEditableCharacter(db, session, characterId)` (`server/services/characters/editableCharacter.ts`, over `Characters.findOne(db, { id, editorId })`) returns the character iff the session user can edit it (owner OR active contributor), or a 404, and the write services call it as their first guard so the rest of the function can assume edit rights. Archiving looks the character up by its owner (`Characters.findOne(db, { id, userId })`): anyone else gets a 404. Reading a character in a campaign is gated by the link's visibility (`link.visibility`); creating one, by the ruleset access check below.
+**Editing and archiving aren't policy methods.** `getEditableCharacter(db, session, characterId)` (`server/services/characters/editableCharacter.ts`, over `Characters.findOne(db, { id, editorId })`) returns the character iff the session user can edit it (owner OR active contributor), or a 404, and the write services call it as their first guard so the rest of the function can assume edit rights. A child (3.5's bonded creature) is edited through its parent, a player character by its own editors alone: `findEditableCharacterOrChild(db, characterId, userId, visibility)` (same module) is that one lookup, which the character's edit, its picks' picker and its PDF export ask unarchived, its sheet (`getCharacter`) with `Visibility.All`, so an archived character's, or an archived master's creature's, stays readable, and its portrait's `isOwner` too (below). Archiving looks the character up by its owner (`Characters.findOne(db, { id, userId })`): anyone else gets a 404. Reading a character in a campaign is gated by the link's visibility (`link.visibility`); creating one, by the ruleset access check below.
 
 **Character creation against a ruleset** — `CharactersService.createCharacter` calls `RulesetsPolicy.canCreateCharacter` (through `RulesetsPolicy.for`), and `CampaignsService` calls `canCreateCampaign`, which applies the same rule. A deleted ruleset is a 404 (`Ruleset not found`) before the policy runs; an extension or an archived ruleset is refused (`UnprocessableEntityError "Choose an active playable ruleset"`). Otherwise the ruleset must be one of:
 
@@ -122,7 +122,7 @@ Attachments (avatars, character portraits) don't go through a `BasePolicy` subcl
 | Record type | Write (`isOwner`) | Read (`isReader`) |
 |---|---|---|
 | `User` (avatar) | `session.userId === recordId` | any authenticated session |
-| `Character` (portrait) | a player character's **owner only**; a bonded character's: whoever can edit its master (owner or contributor) | any authenticated session |
+| `Character` (portrait) | a player character's **owner only**; a bonded character's: whoever can edit its master (owner or contributor). Both through `findEditableCharacterOrChild`, unarchived, then owner-only for a player character | any authenticated session |
 
 Note the divergence: a character's active contributor **can edit the character** (`getEditableCharacter`) but **cannot upload or replace its portrait** — a player character's portrait writes are owner-only. If that's not the desired behavior, change `Character`'s `isOwner` in `ATTACHABLE_TYPES` to also accept active contributors.
 
