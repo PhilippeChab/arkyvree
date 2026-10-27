@@ -1,13 +1,12 @@
 import { createHmac, randomUUID } from "node:crypto";
 
 import type { Db } from "@/drizzle/database.ts";
-import { Engine } from "@/engine/index.ts";
 import { compareInConstantTime } from "@/server/constantTime.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { readEnv } from "@/server/environment.ts";
 import { BadRequestError, ConflictError, ForbiddenError, InternalError, NotFoundError } from "@/server/errors/index.ts";
-import { Attachments, Blobs } from "@/server/repositories/index.ts";
-import { findEditableCharacterOrChild } from "@/server/services/characters/index.ts";
+import { Attachments, Blobs, Characters } from "@/server/repositories/index.ts";
+import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import ObjectStorage from "@/server/storage/ObjectStorage.ts";
 import { ALLOWED_IMAGE_TYPES, ATTACHMENT_SLOTS, MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -53,9 +52,9 @@ const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
     ATTACHMENT_SLOTS.portrait.recordType,
     {
       isOwner: async (session, recordId) => {
-        const character = await findEditableCharacterOrChild(db, recordId, session.userId);
+        const character = await Characters.findOne(db, { id: recordId });
         // A player character's is its owner's alone; a child's (3.5's bonded creature), whoever edits its parent
-        return !!character && (!Engine.storage().isPlayerKind(character.kind) || character.userId === session.userId);
+        return !!character && (await CharactersPolicy.for(db, session, character)).isPortraitEditable();
       },
       policy: imagePolicy,
       names: [ATTACHMENT_SLOTS.portrait.name],

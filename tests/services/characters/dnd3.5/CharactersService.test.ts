@@ -28,8 +28,9 @@ import { CharacterSharingService } from "@/server/services/characters/sharing/in
 import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { backdateLastChange, findLinks } from "@/tests/support/characters.ts";
-import { addRulesetContributor } from "@/tests/support/contributors.ts";
+import { addCharacterContributor, addRulesetContributor } from "@/tests/support/contributors.ts";
 import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
+import { createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { addCharacterLevel, findClassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestAttachment } from "@/tests/support/files.ts";
 import { queuedPdfJobs } from "@/tests/support/jobs.ts";
@@ -349,6 +350,58 @@ describe("CharactersService", () => {
         message: `Language ${NIL_UUID} does not belong to the character's ruleset`,
         refusal: "invalid",
       });
+    });
+
+    test("answers what its reader may do with it, as its policy decides: its owner, a contributor, a bonded creature's", async () => {
+      const { masterId, bonded } = await createWizardWithFamiliar();
+      const owner = makeSession();
+      const { user, session: contributor } = await createTestUser("contributor");
+      await addCharacterContributor(masterId, user, SEED_USER_ID);
+      const permissionsOf = async (session: Session, id: string) =>
+        (await CharactersService.getCharacter(session, id)).permissions;
+      const NONE = {
+        canArchive: false,
+        canEdit: false,
+        canEditPortrait: false,
+        canInviteContributors: false,
+        canLeave: false,
+        canManageContributors: false,
+        canReadContributors: false,
+        canShare: false,
+      };
+
+      const ownerRights = {
+        ...NONE,
+        canArchive: true,
+        canEdit: true,
+        canEditPortrait: true,
+        canInviteContributors: true,
+        canManageContributors: true,
+        canReadContributors: true,
+        canShare: true,
+      };
+      expect(await permissionsOf(owner, masterId)).toEqual(ownerRights);
+      const contributorRights = { ...NONE, canEdit: true, canLeave: true, canReadContributors: true };
+      expect(await permissionsOf(contributor, masterId)).toEqual(contributorRights);
+      // A bonded creature is its master's editors' to edit, its portrait too, and nothing more
+      const childRights = { ...NONE, canEdit: true, canEditPortrait: true };
+      expect(await permissionsOf(owner, bonded.id)).toEqual(childRights);
+      expect(await permissionsOf(contributor, bonded.id)).toEqual(childRights);
+
+      // Archived, it's read-only: its owner may bring it back or delete it, a contributor may still leave it
+      await CharactersService.archiveCharacter(owner, masterId);
+      expect(await permissionsOf(owner, masterId)).toEqual({
+        ...NONE,
+        canArchive: true,
+        canManageContributors: true,
+        canReadContributors: true,
+      });
+      expect(await permissionsOf(contributor, masterId)).toEqual({
+        ...NONE,
+        canLeave: true,
+        canReadContributors: true,
+      });
+      expect(await permissionsOf(owner, bonded.id)).toEqual(NONE);
     });
 
     test("refuses a missing character, and another user's", async () => {

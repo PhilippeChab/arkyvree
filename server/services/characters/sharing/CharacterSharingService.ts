@@ -6,6 +6,7 @@ import { Activities, Characters, Visibility } from "@/server/repositories/index.
 import { getSlotUrl } from "@/server/services/attachments/index.ts";
 import { readCharacterInput, readChildInputs } from "@/server/services/characters/characterInputs.ts";
 import { renderCharacterSheet } from "@/server/services/characters/printedSheet.ts";
+import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -21,12 +22,10 @@ class CharacterSharingService {
 
   async generateShareToken(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
-      const characterRecord = await Characters.findOne(tx, {
-        id: characterId,
-        userId: session.userId,
-      });
-
+      const characterRecord = await Characters.findOne(tx, { id: characterId });
       if (!characterRecord) throw new NotFoundError("Character not found");
+
+      (await CharactersPolicy.for(tx, session, characterRecord)).canShare();
 
       const shareToken = crypto.randomUUID();
       const [updated] = await Characters.update(tx, { shareToken }, { id: characterId });
@@ -58,12 +57,10 @@ class CharacterSharingService {
 
   async revokeShareToken(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
-      const characterRecord = await Characters.findOne(tx, {
-        id: characterId,
-        userId: session.userId,
-      });
-
+      const characterRecord = await Characters.findOne(tx, { id: characterId });
       if (!characterRecord) throw new NotFoundError("Character not found");
+
+      (await CharactersPolicy.for(tx, session, characterRecord)).canShare();
 
       const [updated] = await Characters.update(tx, { shareToken: null }, { id: characterId });
 
