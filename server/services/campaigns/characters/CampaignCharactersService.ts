@@ -4,7 +4,6 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import {
   Activities,
-  Campaigns,
   CharacterAdvancements,
   CharacterContributors,
   Characters,
@@ -13,6 +12,7 @@ import {
   Players,
   Visibility,
 } from "@/server/repositories/index.ts";
+import { getReadableCampaign } from "@/server/services/campaigns/readableCampaign.ts";
 import {
   describeCharacterCards,
   enqueueCharacterPdf,
@@ -20,7 +20,6 @@ import {
   readCharacterInput,
   readChildInputs,
 } from "@/server/services/characters/index.ts";
-import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { CharacterVisibility } from "@/shared/campaigns.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -35,18 +34,6 @@ class CampaignCharactersService {
     return visibility === "Partial" && !viewer.isOwner && !viewer.isGM && !viewer.canEdit;
   }
 
-  /**
-   * The session's policy on the campaign and its player row there: a 404 when there's no such campaign, a 403 when
-   * they aren't in it.
-   */
-  private async getMember(session: Session, campaignId: string) {
-    const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
-    if (!campaign) throw new NotFoundError("Campaign not found");
-
-    const policy = await CampaignsPolicy.for(db, session, campaign);
-    return { member: policy.canRead(), policy };
-  }
-
   async enqueuePdf(session: Session, campaignId: string, characterId: string) {
     // Not found for every refusal, as for the character's own export.
     const character = await findExportableCharacter(session.userId, characterId, campaignId);
@@ -56,7 +43,7 @@ class CampaignCharactersService {
   }
 
   async getCharacter(session: Session, campaignId: string, characterId: string) {
-    const { member, policy } = await this.getMember(session, campaignId);
+    const { member, policy } = await getReadableCampaign(db, session, campaignId);
 
     const link = await PlayerCharacters.findOne(db, { characterId, campaignId });
     if (!link) throw new NotFoundError("Character not found in this campaign");
@@ -102,7 +89,7 @@ class CampaignCharactersService {
     where: { orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
     pagination: Pagination,
   ) {
-    const { member, policy } = await this.getMember(session, campaignId);
+    const { member, policy } = await getReadableCampaign(db, session, campaignId);
 
     const isGM = policy.isGameMaster();
 
@@ -209,10 +196,8 @@ class CampaignCharactersService {
     where: { search?: string },
     pagination: Pagination,
   ) {
-    const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
-    if (!campaign) throw new NotFoundError("Campaign not found");
-
-    (await CampaignsPolicy.for(db, session, campaign)).canLinkCharacter();
+    const { campaign, policy } = await getReadableCampaign(db, session, campaignId);
+    policy.canLinkCharacter();
 
     return await Characters.findUnlinkedPage(
       db,
@@ -223,10 +208,8 @@ class CampaignCharactersService {
 
   async linkCharacter(session: Session, campaignId: string, characterId: string, visibility: CharacterVisibility) {
     return await withTransaction(async (tx) => {
-      const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
-      if (!campaign) throw new NotFoundError("Campaign not found");
-
-      const player = (await CampaignsPolicy.for(tx, session, campaign)).canLinkCharacter();
+      const { campaign, policy } = await getReadableCampaign(tx, session, campaignId);
+      const player = policy.canLinkCharacter();
 
       const character = await Characters.findOne(tx, { id: characterId, userId: session.userId });
       if (!character) throw new NotFoundError("Character not found");
@@ -270,13 +253,8 @@ class CampaignCharactersService {
     visibility: CharacterVisibility,
   ) {
     return await withTransaction(async (tx) => {
-      const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
-      if (!campaign) throw new NotFoundError("Campaign not found");
-
-      const policy = await CampaignsPolicy.for(tx, session, campaign);
+      const { member: player, policy } = await getReadableCampaign(tx, session, campaignId);
       policy.canModify();
-
-      const player = policy.canRead();
 
       const link = await PlayerCharacters.findOne(tx, { characterId });
       if (!link || link.playerId !== player.id)

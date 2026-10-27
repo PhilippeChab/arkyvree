@@ -8,19 +8,17 @@ import {
   Visibility,
   visibilityMap,
 } from "@/server/repositories/index.ts";
-import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { getReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
+import { getReadableCampaign } from "./readableCampaign.ts";
+
 class CampaignsService {
   async archiveCampaign(session: Session, id: string) {
     return await withTransaction(async (tx) => {
-      const existingCampaign = await Campaigns.findOne(tx, { id });
-
-      if (!existingCampaign) throw new NotFoundError("Campaign not found");
-
-      (await CampaignsPolicy.for(tx, session, existingCampaign)).canDelete();
+      const { policy } = await getReadableCampaign(tx, session, id, Visibility.UnarchivedOnly);
+      policy.canDelete();
 
       // Archive flips deletedAt on the campaign row alone: its players, invites and player-character links stay live,
       // and unarchiving flips that row back (0096 restored the players a campaign archived before then had archived
@@ -82,14 +80,14 @@ class CampaignsService {
   }
 
   async getCampaign(session: Session, id: string) {
+    const { member } = await getReadableCampaign(db, session, id);
+
     const rows = await Campaigns.findOneWithPlayerCount(db, { id });
     const campaign = rows[0];
 
     if (!campaign) throw new NotFoundError("Campaign not found");
 
-    const player = (await CampaignsPolicy.for(db, session, campaign)).canRead();
-
-    return { ...campaign, currentUserRole: player.role };
+    return { ...campaign, currentUserRole: member.role };
   }
 
   async getCampaigns(
@@ -112,11 +110,8 @@ class CampaignsService {
 
   async hardDeleteCampaign(session: Session, id: string) {
     return await withTransaction(async (tx) => {
-      const existingCampaign = await Campaigns.findOne(tx, { id }, Visibility.ArchivedOnly);
-
-      if (!existingCampaign) throw new NotFoundError("Campaign not found");
-
-      (await CampaignsPolicy.for(tx, session, existingCampaign)).canHardDelete();
+      const { policy } = await getReadableCampaign(tx, session, id, Visibility.ArchivedOnly);
+      policy.canHardDelete();
 
       // Campaigns aren't an Attachable record type, so no polymorphic cleanup
       // is needed — every FK to campaigns.id cascades on delete.
@@ -135,11 +130,8 @@ class CampaignsService {
 
   async unarchiveCampaign(session: Session, id: string) {
     return await withTransaction(async (tx) => {
-      const existingCampaign = await Campaigns.findOne(tx, { id }, Visibility.ArchivedOnly);
-
-      if (!existingCampaign) throw new NotFoundError("Campaign not found");
-
-      (await CampaignsPolicy.for(tx, session, existingCampaign)).canDelete();
+      const { policy } = await getReadableCampaign(tx, session, id, Visibility.ArchivedOnly);
+      policy.canDelete();
 
       const rows = await Campaigns.unarchive(tx, { id });
       const unarchivedCampaign = rows[0];
@@ -166,11 +158,8 @@ class CampaignsService {
     },
   ) {
     return await withTransaction(async (tx) => {
-      const existingCampaign = await Campaigns.findOne(tx, { id });
-
-      if (!existingCampaign) throw new NotFoundError("Campaign not found");
-
-      (await CampaignsPolicy.for(tx, session, existingCampaign)).canUpdate();
+      const { policy } = await getReadableCampaign(tx, session, id, Visibility.UnarchivedOnly);
+      policy.canUpdate();
 
       const rows = await Campaigns.update(tx, body, { id });
       const updatedCampaign = rows[0];

@@ -152,13 +152,12 @@ describe("CampaignsService", () => {
       });
     });
 
-    test("is for the Game Master only", async () => {
+    test("is for the Game Master only, and answers a non-member as a missing campaign", async () => {
       const { campaign, player, stranger } = await setup();
-      for (const session of [player, stranger]) {
-        expect(CampaignsService.updateCampaign(session, campaign.id, { name: "Hacked" })).rejects.toThrow(
-          ForbiddenError,
-        );
-      }
+      expect(CampaignsService.updateCampaign(player, campaign.id, { name: "Hacked" })).rejects.toThrow(ForbiddenError);
+      expect(CampaignsService.updateCampaign(stranger, campaign.id, { name: "Hacked" })).rejects.toThrow(
+        "Campaign not found",
+      );
       expect(CampaignsService.updateCampaign(stranger, NIL_UUID, { name: "Missing" })).rejects.toThrow(NotFoundError);
     });
   });
@@ -176,14 +175,14 @@ describe("CampaignsService", () => {
       expect(active.items.map((c) => c.id)).toEqual([campaign.id]);
     });
 
-    test("is for the Game Master only", async () => {
+    test("is for the Game Master only, and answers a non-member as a missing campaign", async () => {
       const { gm, campaign, player, stranger } = await setup();
-      for (const session of [player, stranger])
-        expect(CampaignsService.archiveCampaign(session, campaign.id)).rejects.toThrow(ForbiddenError);
+      expect(CampaignsService.archiveCampaign(player, campaign.id)).rejects.toThrow(ForbiddenError);
+      expect(CampaignsService.archiveCampaign(stranger, campaign.id)).rejects.toThrow("Campaign not found");
 
       await CampaignsService.archiveCampaign(gm, campaign.id);
-      for (const session of [player, stranger])
-        expect(CampaignsService.unarchiveCampaign(session, campaign.id)).rejects.toThrow(ForbiddenError);
+      expect(CampaignsService.unarchiveCampaign(player, campaign.id)).rejects.toThrow(ForbiddenError);
+      expect(CampaignsService.unarchiveCampaign(stranger, campaign.id)).rejects.toThrow("Campaign not found");
 
       expect(CampaignsService.archiveCampaign(gm, NIL_UUID)).rejects.toThrow(NotFoundError);
       expect(CampaignsService.unarchiveCampaign(gm, NIL_UUID)).rejects.toThrow(NotFoundError);
