@@ -43,23 +43,23 @@ export default class EntityEdit {
   /**
    * The row a write to the entity the view shows for an id changes (`entityId`, of `entityType`), resolved through the
    * view: the ruleset's own, locked, or the copy of an inherited one; an owned entity's on its owner's (`cowOwned`).
-   * Refused as not found when the view shows none, or shows one from outside the source chain.
+   * Refused as not found, saying what the write calls it (`notFound`: a customization's source, an entity), when the
+   * view shows none, or shows one from outside the source chain.
    */
-  async cowById(tx: Db, entityType: string, entityId: string): Promise<EditTarget> {
+  async cowById(tx: Db, entityType: string, entityId: string, notFound: string): Promise<EditTarget> {
     const ownerType = Engine.storage().ownerOf(entityType);
     if (ownerType) return await this.cowOwned(tx, entityType, ownerType as RulesetEntityType, entityId);
 
     const type = entityType as RulesetEntityType;
     // The entity the view shows for the id: the ruleset's copy of it, or the winner of its siblings
     const entity = await Entities.findOne(tx, { entityType: type, id: this.cow.resolve(entityId) });
-    if (!entity) throw new NotFoundError("Customization source not found in this ruleset");
+    if (!entity) throw new NotFoundError(notFound);
 
     if (entity.rulesetId === this.ruleset.id) {
       await EntityEdit.lock(tx, entity.id);
       return own(entity.id);
     }
-    if (!this.cow.sourceChain.includes(entity.rulesetId))
-      throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
+    if (!this.cow.sourceChain.includes(entity.rulesetId)) throw new NotFoundError(notFound); // Not from source chain
 
     const copy = await EntityCopy.create(tx, type, entity.id, this.ruleset);
     return { id: copy.entity.id, copied: true, copiedIds: copy.copiedIds };

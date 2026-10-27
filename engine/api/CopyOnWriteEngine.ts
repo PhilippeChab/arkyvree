@@ -60,18 +60,16 @@ export default class CopyOnWriteEngine {
   /**
    * A ruleset's own rows as its view composes them, off its stored rows (`stored`): each kind's entities by its type,
    * each its record (`StorageEngine.recordOf`: its own columns, its fields, its single links), an owned kind's by
-   * position and owner, and only those whose owner it holds; each entity's links (`StorageEngine.viewLinksOf`); each
+   * position and owner; each entity's links (`StorageEngine.viewLinksOf`); each
    * kind's values kind-wide (`StorageEngine.kindValues`), its own Settings (`StorageEngine.settingsOf`), its modifiers
    * and requirements.
    */
   buildRawData(stored: StoredRulesetRows): RulesetRawData {
     const storage = StorageEngine.shared();
     const types = storage.registries().entityTypes;
-    const ids = new Set(stored.entities.map((entity) => entity.id));
-    const live = stored.entities.filter((entity) => entity.ownerId === null || ids.has(entity.ownerId));
     const entities: RulesetRawData["entities"] = {};
     for (const { ownerType, type } of types) {
-      const ofType = live.filter((entity) => entity.type === type);
+      const ofType = stored.entities.filter((entity) => entity.type === type);
       if (ownerType) {
         ofType.sort(
           (a, b) => a.position! - b.position! || (a.ownerId! < b.ownerId! ? -1 : a.ownerId! > b.ownerId! ? 1 : 0),
@@ -80,14 +78,14 @@ export default class CopyOnWriteEngine {
       entities[type] = ofType.map((entity) => storage.recordOf(entity) as ViewEntity);
     }
     const links = new Map<string, { links: ViewLink[]; type: string }>();
-    for (const entity of live) {
+    for (const entity of stored.entities) {
       const held = storage.viewLinksOf(entity);
       if (held.length > 0) links.set(entity.id, { links: held, type: entity.type });
     }
     const { ruleset } = stored;
     return {
       entities,
-      kindValues: storage.kindValues(live),
+      kindValues: storage.kindValues(stored.entities),
       links,
       tieredIds: stored.tieredIds,
       modifiers: stored.modifiers,

@@ -1,13 +1,8 @@
 /** A list's cards of characters from several rulesets, each described in its own ruleset's view. */
 
-import { type CharacterCard, Engine, type StoredAdvancement } from "@/engine/index.ts";
+import { Engine, type StoredAdvancement } from "@/engine/index.ts";
 import type { RulesetScope } from "@/server/cow/index.ts";
 import type { Character } from "@/shared/relations.ts";
-
-/** What a list shows of a character whose ruleset it didn't read (an archived one's): an unknown race's chip alone. */
-const UNREAD_CARD = {
-  chips: [{ label: "Unknown", partial: true, tone: "secondary" }],
-} satisfies CharacterCard;
 
 /**
  * The cards of a list of characters (each with its ruleset's view among `views`, `withRulesetScopes`', and its
@@ -27,7 +22,9 @@ export function describeCharacterCards(
       const own = byCharacter.get(character.id) ?? [];
       return [
         character.id,
-        view ? Engine.for(view).characters().describeCard(character, own, partialIds.has(character.id)) : UNREAD_CARD,
+        view
+          ? Engine.for(view).characters().describeCard(character, own, partialIds.has(character.id))
+          : Engine.UNREAD_CARD,
       ];
     }),
   );

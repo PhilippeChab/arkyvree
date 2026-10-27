@@ -41,6 +41,17 @@ describe("EntityWriter.setParts: what a save writes past an entity's row", () =>
     expect(stored).toEqual([expect.objectContaining({ ...entity, ...requirement })]);
   });
 
+  test("refuses removing an entity the ruleset doesn't have as that entity, not found", async () => {
+    const { entity, rulesetId } = await createSpell();
+    const removed = [{ id: crypto.randomUUID(), inUse: "In use", type: "spells" }];
+
+    expect(
+      withRulesetScope(db, rulesetId, async (scope) =>
+        EntityWriter.setParts(db, scope, entity, { writes: writesOf({ removed }) }, true),
+      ),
+    ).rejects.toMatchObject({ message: "Spell not found", name: "NotFoundError" });
+  });
+
   test("writes nothing beside the row when its plan sets nothing", async () => {
     const { entity, rulesetId } = await createSpell();
     await withRulesetScope(db, rulesetId, async (scope) => {

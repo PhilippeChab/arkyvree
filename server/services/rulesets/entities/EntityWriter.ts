@@ -172,7 +172,8 @@ export default class EntityWriter {
     if (await new EntityUses(ruleset, rulesetData.cow).isPicked(tx, type, removal.id))
       throw new ConflictError(removal.inUse);
 
-    const target = await new EntityEdit(ruleset, rulesetData.cow).cowById(tx, type, removal.id);
+    const notFound = `${getActivityName(type)} not found`;
+    const target = await new EntityEdit(ruleset, rulesetData.cow).cowById(tx, type, removal.id, notFound);
     await Entities.delete(tx, { entityType: type, id: target.id });
   }
 

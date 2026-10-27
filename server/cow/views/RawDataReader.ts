@@ -17,11 +17,7 @@ export default class RawDataReader {
       Entities.findTieredIds(db, scope),
       campaignId ? Promise.resolve(null) : Rulesets.findOne(db, { id: rulesetId }),
     ]);
-    // An owned entity whose owner is archived isn't the ruleset's: a class's levels go with it
-    const held = new Set(entities.map((entity) => entity.id));
-    const ids = entities
-      .filter((entity) => entity.ownerId === null || held.has(entity.ownerId))
-      .map((entity) => entity.id);
+    const ids = entities.map((entity) => entity.id);
     const [rulesets, modifiers] = await Promise.all([
       RulesetSettings.findMany(db, { ids: [rulesetId] }),
       Modifiers.findMany(db, { sourceIds: ids }),

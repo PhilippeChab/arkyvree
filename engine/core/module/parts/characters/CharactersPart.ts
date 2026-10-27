@@ -63,6 +63,12 @@ export default abstract class CharactersPart<D extends Descriptions> {
   /** The module's storage, whose character's roles name the kinds this part's requests name. */
   constructor(private readonly storage: StorageDeclaration) {}
 
+  /**
+   * The card of a character whose ruleset a list didn't read (an archived ruleset's), which no ruleset describes: a chip
+   * saying it's unknown alone, which a partly seen character shows too.
+   */
+  static readonly UNREAD_CARD: CharacterCard = { chips: [{ label: "Unknown", partial: true, tone: "secondary" }] };
+
   /** An amount of a scored link's, by entity id: each a whole number within its bounds. */
   private static boundedScores({ max, min }: ScoreBounds) {
     return z.record(z.string(), z.number().int().min(min).max(max));
