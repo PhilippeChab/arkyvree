@@ -171,7 +171,7 @@ class ModifiersService {
             modifierId,
           );
 
-          const expectedUpdatedAt = customization.id === modifierId ? updatedAt : undefined;
+          const expectedUpdatedAt = customization.expected(updatedAt);
           const rows = await Modifiers.update(tx, row, { id: customization.id, expectedUpdatedAt });
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 

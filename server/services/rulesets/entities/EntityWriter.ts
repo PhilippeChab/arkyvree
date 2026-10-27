@@ -196,7 +196,7 @@ export default class EntityWriter {
     target: EditTarget,
     updatedAt: string | undefined,
   ): Promise<Row> {
-    const expectedUpdatedAt = target.copied ? undefined : updatedAt;
+    const expectedUpdatedAt = target.expected(updatedAt);
     const rows = await Entities.update<Row>(tx, type, row, { id: target.id, expectedUpdatedAt });
     if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
     // A row deleted since the view was read: no token to call it stale by

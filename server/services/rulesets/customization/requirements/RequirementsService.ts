@@ -164,7 +164,7 @@ class RequirementsService {
             requirementId,
           );
 
-          const expectedUpdatedAt = customization.id === requirementId ? body.updatedAt : undefined;
+          const expectedUpdatedAt = customization.expected(body.updatedAt);
           await this.refuseTakenLevel(tx, entityType, resolvedEntityId, row.level, {
             id: customization.id,
             expectedUpdatedAt,

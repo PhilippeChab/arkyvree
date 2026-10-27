@@ -15,8 +15,8 @@ const CUSTOMIZATION_REPOS = {
  * The row a write to a ruleset's entity changes (`id`), as copy-on-write resolved the entity the write named
  * (`namedId`): the ruleset's own, or the copy of an inherited one this call made (`EntityEdit`), with the ids of what it
  * copied with it, by their sources' (`copiedIds`: its owned entities' and its customizations'). What a write needs of a
- * copy it asks the target: the entities it owns by their places (`findOwned`), a customization's row
- * (`customization`, several at once: `resolveCustomizations`).
+ * copy it asks the target: the token to check the row by (`expected`), the entities it owns by their places
+ * (`findOwned`), a customization's row (`customization`, several at once: `resolveCustomizations`).
  */
 export default class EditTarget {
   constructor(
@@ -28,6 +28,14 @@ export default class EditTarget {
   /** Whether this call copied the row: an inherited entity's first edit. */
   get copied(): boolean {
     return this.copiedIds !== undefined;
+  }
+
+  /**
+   * The token a write checks the row by: the client's (`updatedAt`), or none on a copy this call made, whose token was
+   * its source's.
+   */
+  expected(updatedAt: string | undefined): string | undefined {
+    return this.copied ? undefined : updatedAt;
   }
 
   /**

@@ -46,8 +46,8 @@ export function Progressions<B extends Constructor>(Base: B) {
     /**
      * Writes each owned entity a progression's save changes on the target owner's of its place on its track (a copy's
      * own, once the owner was copied: `EditTarget.findOwned`): its `updatedAt` moved, refused when stale (`tokens`: the
-     * entity the client read; a copy's take no check), its form's edit, and its modifiers, those it drops (their
-     * copies', on a copy: refused as not found when one is gone since the view was read,
+     * entity the client read; a copy's take no check, `EditTarget.expected`), its form's edit, and its modifiers, those
+     * it drops (their copies', on a copy: refused as not found when one is gone since the view was read,
      * `EditTarget.resolveCustomizations`) and those it adds. Answers the entities it wrote, by their ids.
      */
     private async writeOwned(
@@ -66,7 +66,7 @@ export function Progressions<B extends Constructor>(Base: B) {
         const ownedId = idByPosition.get(owned.position);
         if (!ownedId) throw new NotFoundError(plan.gone.owned);
 
-        const expectedUpdatedAt = target.copied ? undefined : tokens.get(owned.entity.id);
+        const expectedUpdatedAt = target.expected(tokens.get(owned.entity.id));
         const [row] = await Entities.update(tx, ownedType, owned.edit?.row ?? {}, { id: ownedId, expectedUpdatedAt });
         if (!row) throw new ConflictError(STALE_ENTITY_MESSAGE);
         writtenIds.push(ownedId);

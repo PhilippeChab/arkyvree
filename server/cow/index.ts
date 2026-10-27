@@ -5,7 +5,7 @@
  *   its target paths, and the view composed from them), what it reads them with (`CowDataReader`, `RawDataReader`), and
  *   the scope a service reads a view in (`withRulesetScope`).
  * - Its write side (`writes/`): the row a write to an entity changes, an owned one's on its owner's (`EntityEdit`), and
- *   what a write asks of it: its owned entities and its customizations' rows (`EditTarget`); the row a
+ *   what a write asks of it: a copy's token, its owned entities and its customizations' rows (`EditTarget`); the row a
  *   change to a customization writes (`CustomizationEdit`), the names an entity may take (`EntityNames`), what keeps an
  *   entity in use across the rulesets built on it (`EntityUses`), the copy of an inherited entity (`EntityCopy`) and its
  *   revert to the source (`EntityRevert`), and an entity's customizations read and copied (`CustomizationCopies`).
