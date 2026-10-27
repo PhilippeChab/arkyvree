@@ -11,8 +11,20 @@ describe("exports", () => {
     const response = await api.api.exports[":id"].download.$get({ param: { id } });
     expect(response.status).toBe(200);
     expect(response.headers.get("Content-Type")).toBe("application/pdf");
-    expect(response.headers.get("Content-Disposition")).toBe('attachment; filename="test-sheet.pdf"');
+    expect(response.headers.get("Content-Disposition")).toBe("attachment; filename*=UTF-8''test-sheet.pdf");
     expect(await response.text()).toBe("fake pdf content");
+  });
+
+  test("downloads an export whatever its name's characters", async () => {
+    const { user, api } = await createSignedInUser("exporter");
+    const { id } = await createExport(user.id, undefined, "龍 O'Hara (2)-sheet.pdf");
+
+    const response = await api.api.exports[":id"].download.$get({ param: { id } });
+    expect(response.status).toBe(200);
+    // A header holds Latin-1 alone: the name goes percent-encoded as UTF-8
+    expect(response.headers.get("Content-Disposition")).toBe(
+      "attachment; filename*=UTF-8''%E9%BE%8D%20O%27Hara%20%282%29-sheet.pdf",
+    );
   });
 
   test("returns 404 for another user's export", async () => {

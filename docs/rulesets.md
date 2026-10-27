@@ -816,11 +816,11 @@ engine/rulesets/
                                            the view; kindLabels: what its refusals call each kind)
 ```
 
-In the server: what reads the rows an operation takes (`server/services/characters/characterInputs.ts`: `readCharacterInput`, `readChildInputs`), and what writes what an operation plans (`server/services/rulesets/entities/EntityWriter.ts`: `setParts`; `characters/newCharacterWrites.ts`: `createNewCharacter`, a new character's row and its links by role, which a create, an import, a level's child and the seeders write by; `levels/childWrites.ts`: `writeChildren`). The PDF job (`server/jobs/generatePdf.ts`) and the shared PDF route render the document `character(input).describeSheet` answers. The server names no ruleset and builds no character: it reads, asks the engine and writes. Each of its actions asks the engine one operation, which answers it whole (`arkyvree/one-engine-op`): a plan carries what it answers once written, a picker or a list its filters, a description all its page shows. It binds the engine to the view as its scope gives it (`Engine.for(scope)`), reading of it only the copy-on-write data (`rulesetData.cow`: the source chain its reads filter by, what `EntityNames` and `CustomizationEdit` check and write by; `arkyvree/opaque-view`).
+In the server: what reads the rows an operation takes (`server/services/characters/characterInputs.ts`: `readCharacterInput`, `readChildInputs`), and what writes what an operation plans (`server/services/rulesets/entities/EntityWriter.ts`: `setParts`; `characters/newCharacterWrites.ts`: `createNewCharacter`, a new character's row and its links by role, which a create, an import, a level's child and the seeders write by; `levels/childWrites.ts`: `writeChildren`). The PDF job (`server/jobs/generatePdf.ts`) and the shared PDF route render a character's printed sheet through one path, `renderCharacterSheet` (`characters/printedSheet.ts`): the document `character(input).describeSheet` answers, rendered, capped at 10 MB and named after the character. The server names no ruleset and builds no character: it reads, asks the engine and writes. Each of its actions asks the engine one operation, which answers it whole (`arkyvree/one-engine-op`): a plan carries what it answers once written, a picker or a list its filters, a description all its page shows. It binds the engine to the view as its scope gives it (`Engine.for(scope)`), reading of it only the copy-on-write data (`rulesetData.cow`: the source chain its reads filter by, what `EntityNames` and `CustomizationEdit` check and write by; `arkyvree/opaque-view`).
 
 ```
 server/
-├── jobs/generatePdf.ts                    (renders the printed sheet the engine describes)
+├── jobs/generatePdf.ts                    (stores the printed sheet renderCharacterSheet renders as an export)
 ├── services/
 │   ├── characters/
 │   │   ├── characterInputs.ts             (a character's rows, read in its ruleset's scope: what the engine builds it from)
@@ -828,6 +828,8 @@ server/
 │   │   ├── inventory/CharacterInventoryService.ts
 │   │   ├── modifiers/CharacterModifiersService.ts
 │   │   ├── newCharacterWrites.ts          (createNewCharacter: a new character's plan written, its row then its links)
+│   │   ├── printedSheet.ts                (renderCharacterSheet: the printed sheet the engine describes, rendered,
+│   │   │                                  capped and named, for the PDF job and a share link alike)
 │   │   └── levels/                        ← the level flows: they read, ask the engine's level-up and write
 │   │       ├── CharacterLevelsService.ts  (a save, an edit, a removal: levelUp().planLevelUp, planLevelEdit,
 │   │       │                              planRemoval, each with what the character's children become)
