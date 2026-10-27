@@ -8,13 +8,16 @@
  * values the winner lacks (`union`), a single value the winner's, else the first sibling's that holds one
  * (`fallback`), or the winner's alone (`winner`). Requirements merge as trees (`RequirementTree`), whose top-level
  * rows are AND'd: merging the winner with N siblings is `AND(winner, sibling 1, …)`, each sibling's tree kept as it is, appended at the top level. A
- * sibling's group gets a fresh top-level number, its rows renumbered under it; a sibling's top-level condition keeps
- * its level (suffixed `-2`, `-3`… when the winner has it), unless the winner already holds the same condition.
+ * sibling's top-level row (one whose parent level none of its rows holds, a row under a missing one too), a condition
+ * or a group, keeps its level while no level held so far (the winner's, the rows placed before it) shares its first
+ * segment, else takes a fresh top-level number past every one held; a group's rows are renumbered under it. So a row
+ * never meets another, and no tree changes its meaning: none is adopted by a group, nor left under a condition. A
+ * sibling's top-level condition the winner already holds is left out.
  */
 
 import { type DeclaredFields, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
 import type { FieldValue, OwnerFields } from "@/engine/core/module/index.ts";
-import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
+import RequirementTree, { getNextLevel, type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 type ModifierKey = Pick<Modifier, "target" | "value" | "operator" | "valueType">;
@@ -34,9 +37,20 @@ export default class SiblingMerge {
   }
 
   /**
+   * The level a sibling's top-level row (`level`) takes beside the levels held (`usedLevels`): its own while none of
+   * them shares its first segment, else the next top-level one past them all. Under a level held, a group would adopt
+   * it; over one, it would take the rows under that level from their tree.
+   */
+  private static placeRoot(level: string, usedLevels: ReadonlySet<string>): string {
+    const segment = level.split(".")[0];
+    const held = [...usedLevels];
+    return held.some((used) => used.split(".")[0] === segment) ? getNextLevel(held, null) : level;
+  }
+
+  /**
    * A tree's rows under a given level, on the winner, keeping each row's identity: the copying caller allocates new IDs
    * and records the source-to-copy mapping. Children are renumbered `level.1`, `level.2`… whatever their original
-   * numbers, so the result is collision-free as long as the caller picks a level nothing else holds.
+   * numbers, so the result is collision-free as long as the caller picks a level nothing else holds, at it or under it.
    */
   private static serializeNode(node: RequirementNode<Requirement>, level: string, entityId: string): Requirement[] {
     const rows: Requirement[] = [{ ...node.requirement, entityId, level }];
@@ -123,24 +137,13 @@ export default class SiblingMerge {
         .map((node) => SiblingMerge.conditionKey(node.requirement)),
     );
     const usedLevels = new Set(own.map((r) => r.level));
-    let maxTopInt = 0;
-    for (const r of own) if (/^\d+$/.test(r.level)) maxTopInt = Math.max(maxTopInt, Number(r.level));
 
     const merged: Requirement[] = [];
     for (const requirements of siblings) {
       for (const node of RequirementTree.fromRows(requirements).roots) {
         const isGroup = !!node.requirement.chainingOperator;
         if (!isGroup && standaloneKeys.has(SiblingMerge.conditionKey(node.requirement))) continue;
-        let level: string;
-        if (isGroup) {
-          do level = String(++maxTopInt);
-          while (usedLevels.has(level));
-        } else {
-          const originalLevel = node.requirement.level;
-          level = originalLevel;
-          let suffix = 2;
-          while (usedLevels.has(level)) level = `${originalLevel}-${suffix++}`;
-        }
+        const level = SiblingMerge.placeRoot(node.requirement.level, usedLevels);
         for (const row of SiblingMerge.serializeNode(node, level, entityId)) {
           usedLevels.add(row.level);
           merged.push(row);

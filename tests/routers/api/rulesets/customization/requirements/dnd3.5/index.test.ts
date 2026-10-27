@@ -54,6 +54,21 @@ describe("rulesets customization requirements", () => {
     });
   });
 
+  test("answers 409 for a level the entity already has, created or moved onto", async () => {
+    const { id, entityId } = await createCustomizableFeat();
+    const param = { id, entityType: "feats" as const, entityId };
+    await expectOk(requirements.$post({ param, json: charisma13 }));
+    const conflict = await expectStatus(requirements.$post({ param, json: { ...charisma13, value: "15" } }), 409);
+    expect(await conflict.json()).toMatchObject({
+      error: "ConflictError",
+      message: "A requirement at this level already exists",
+    });
+
+    const second = await expectOk(requirements.$post({ param, json: { ...charisma13, level: "2" } }));
+    await expectStatus(requirement.$put({ param: { ...param, requirementId: second.id }, json: charisma13 }), 409);
+    expect((await expectOk(requirements.$get({ param }))).map((r) => r.level).sort()).toEqual(["1", "2"]);
+  });
+
   test.each([...Engine.storage().customizableKinds()])("adds a requirement to %s", async (entityType) => {
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const entityId = await createEntity(id, entityType);

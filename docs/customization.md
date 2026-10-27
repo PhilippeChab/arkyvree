@@ -49,6 +49,7 @@ Requirements use a dotted level numbering system for hierarchy:
 - Root conditions: `"1"`, `"2"`, `"3"`
 - Chain node: `"1"` with `chainingOperator: "or"` — children are `"1.1"`, `"1.2"`, etc.
 - This enables OR/AND groups: a chain node groups its children under one logical operator
+- An entity holds one requirement per level (`requirements_entity_id_entity_type_level_key`): a requirement created at a level its entity already holds, or edited onto one, is refused with a 409, on the copy an inherited entity's save makes too (`RequirementsService`; an edit started from a stale version is told so first)
 
 ### Requirement Builder Helpers
 

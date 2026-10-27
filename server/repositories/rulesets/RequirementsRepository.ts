@@ -37,13 +37,20 @@ class RequirementsRepository extends CustomizationRepository<typeof requirements
     });
   }
 
-  async findOne(db: Db, where: { id: string } | { entityId: string; entityType: string; id: string }) {
+  async findOne(
+    db: Db,
+    where:
+      | { entityId: string; entityType: string; id: string }
+      | { entityId: string; entityType: string; level: string }
+      | { expectedUpdatedAt?: string; id: string },
+  ) {
     return await db.query.requirementsInCustomization.findFirst({
       where: this.branchWhere(
-        [eq(this.table.id, where.id)],
+        ["id" in where && eq(this.table.id, where.id), "level" in where && eq(this.table.level, where.level)],
         [
           "entityId" in where && eq(this.table.entityId, where.entityId),
           "entityType" in where && eq(this.table.entityType, where.entityType),
+          "expectedUpdatedAt" in where && this.casUpdatedAt(where.expectedUpdatedAt),
         ],
       ),
     });

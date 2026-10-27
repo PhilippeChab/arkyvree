@@ -1,3 +1,4 @@
+import type { Db } from "@/drizzle/database.ts";
 import { Engine } from "@/engine/index.ts";
 import { CustomizationEdit, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -26,6 +27,25 @@ function conditionOf(requirement: { operator?: string | null; target?: string | 
 }
 
 class RequirementsService {
+  /**
+   * Refuses a requirement at a level its entity (`entityId`, as stored: a copy's once copied) holds another one at: the
+   * database keeps one per level. An edit (`edited`: the requirement it moves, and the version it started from) keeps
+   * its own level, and one started from a stale version is told so first, its refresh showing the level taken.
+   */
+  private async refuseTakenLevel(
+    tx: Db,
+    entityType: string,
+    entityId: string,
+    level: string,
+    edited?: { expectedUpdatedAt?: string; id: string },
+  ) {
+    const taken = await Requirements.findOne(tx, { entityId, entityType, level });
+    if (!taken || taken.id === edited?.id) return;
+    if (edited?.expectedUpdatedAt && !(await Requirements.exists(tx, edited)))
+      throw new ConflictError(STALE_ENTITY_MESSAGE);
+    throw new ConflictError("A requirement at this level already exists");
+  }
+
   async createRequirement(
     session: Session,
     rulesetId: string,
@@ -44,6 +64,7 @@ class RequirementsService {
 
           const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const resolvedEntityId = await edit.cowOwner(tx, entityType, entity.id);
+          await this.refuseTakenLevel(tx, entityType, resolvedEntityId, row.level);
 
           const rows = await Requirements.create(tx, { entityId: resolvedEntityId, entityType, ...row });
           const requirement = rows[0];
@@ -144,6 +165,11 @@ class RequirementsService {
           );
 
           const expectedUpdatedAt = resolvedRequirementId === requirementId ? body.updatedAt : undefined;
+          await this.refuseTakenLevel(tx, entityType, resolvedEntityId, row.level, {
+            id: resolvedRequirementId,
+            expectedUpdatedAt,
+          });
+
           const rows = await Requirements.update(tx, row, { id: resolvedRequirementId, expectedUpdatedAt });
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 

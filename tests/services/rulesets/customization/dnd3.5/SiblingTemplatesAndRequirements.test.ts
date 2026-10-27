@@ -297,3 +297,43 @@ test("a sibling standalone and chain keep distinct levels on display and first c
   expect(after.find((r) => r.level === "2")?.chainingOperator).toBe("or");
   expect(after.find((r) => r.level === "2.1")?.value).toBe("15");
 });
+
+test("a sibling's group goes past a row under a missing level, on display and first copy", async () => {
+  const { session, host, source } = await setup("feats", async (entityId, index) => {
+    const owner = { entityId, entityType: "feats" };
+    const atLeast = (target: string, value: string) => ({
+      target: `abilities.${target}.total`,
+      operator: "greater_than_or_equal",
+      value,
+      valueType: "number",
+    });
+    await Requirements.createMany(
+      db,
+      index === 0
+        ? [
+            { ...owner, ...atLeast("strength", "13"), level: "1" },
+            { ...owner, ...atLeast("dexterity", "13"), level: "2" },
+          ]
+        : [
+            // A row under a missing level, as deleting its group leaves it
+            { ...owner, ...atLeast("strength", "15"), level: "3.1" },
+            { ...owner, level: "4", chainingOperator: "or" },
+            { ...owner, ...atLeast("dexterity", "15"), level: "4.1" },
+          ],
+    );
+  });
+  const levelsOf = async () =>
+    (await RequirementsService.getRequirements(await ownerSessionOf(host.id), host.id, "feats", source.id))
+      .map((r) => r.level)
+      .sort();
+  expect(await levelsOf()).toEqual(["1", "2", "3.1", "4", "4.1"]);
+  const before = await RequirementsService.getRequirements(await ownerSessionOf(host.id), host.id, "feats", source.id);
+  const target = before.find((r) => r.level === "4.1")!;
+  await RequirementsService.updateRequirement(session, host.id, "feats", source.id, target.id, {
+    level: target.level,
+    target: target.target!,
+    operator: "greater_than_or_equal",
+    value: "17",
+  });
+  expect(await levelsOf()).toEqual(["1", "2", "3.1", "4", "4.1"]);
+});
