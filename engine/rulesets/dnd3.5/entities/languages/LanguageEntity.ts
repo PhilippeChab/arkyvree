@@ -7,7 +7,5 @@ export default class LanguageEntity extends RulesetEntity<"languages", typeof LA
   /** Its type. */
   protected override readonly fields = LANGUAGE_FIELDS;
 
-  protected override readonly label = "Language";
-
   override readonly type = "languages";
 }

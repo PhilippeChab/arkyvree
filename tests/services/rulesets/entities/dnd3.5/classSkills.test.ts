@@ -107,10 +107,13 @@ describe("EntitiesService: a class's skills", () => {
       message: `Skill ${other.climb.id} does not belong to this ruleset`,
       refusal: "invalid",
     });
-    await expectRefusedWith(
+    // A skill the class doesn't have, named in the rules' words
+    expect(
       EntitiesService.removeEntityLink(session, ruleset.id, "classes", fighter.id, climb.id),
-      404,
-    );
+    ).rejects.toMatchObject({
+      message: "Skill is not assigned to this class",
+      refusal: "not-found",
+    });
     await expectRefusedWith(
       EntitiesService.removeEntityLink(session, ruleset.id, "classes", other.fighter.id, climb.id),
       404,

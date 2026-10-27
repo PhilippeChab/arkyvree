@@ -6,7 +6,5 @@ export default class MechanicEntity extends RulesetEntity<"mechanics"> {
   /** None of its own. */
   protected override readonly fields = FieldCodec.NONE;
 
-  protected override readonly label = "Mechanic";
-
   override readonly type = "mechanics";
 }

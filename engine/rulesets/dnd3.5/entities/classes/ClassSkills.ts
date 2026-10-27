@@ -47,7 +47,10 @@ export default class ClassSkills {
     const { rulesetData } = this.view;
     const dnd35 = Dnd35View.of(rulesetData);
     const link = dnd35.classSkillsOf(this.klass.id).find((held) => held.toId === skillId);
-    if (!link) throw new RulesError("not-found", "Skill is not assigned to this class");
+    if (!link) {
+      const [skill, klass] = [rulesetData.labelOf("skills"), rulesetData.labelOf("classes").toLowerCase()];
+      throw new RulesError("not-found", `${skill} is not assigned to this ${klass}`);
+    }
     const skill = dnd35.skillsById.get(skillId);
     return {
       activity: {

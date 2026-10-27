@@ -33,8 +33,6 @@ export default class SpellEntity extends ListedEntity<"spells", typeof SPELL_FIE
   /** Its spell lists at their levels, its school, components, range…, its saving throw and what a save does. */
   protected override readonly fields = SPELL_FIELDS;
 
-  protected override readonly label = "Spell";
-
   override readonly type = "spells";
 
   /**

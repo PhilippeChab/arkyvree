@@ -1,4 +1,4 @@
-import { Field, type Fields, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
+import { Field, type Fields, FieldWrites, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
 import type { EntityWrite, LinkSet, LinkWrite } from "@/engine/core/module/index.ts";
 import type { RulesetData, ViewEntity, ViewKinds } from "@/engine/core/view/index.ts";
 import type { ActivityChange, ChangedField, ChangedLink, ChangedLinks } from "@/shared/activity.ts";
@@ -55,10 +55,10 @@ const ENTRY_COLUMNS: Readonly<Record<string, readonly EntryColumn[]>> = {
 /**
  * What an entity's edit changes, as its activity records it (`ActivityChange`): its name, its description, then each
  * place its kind's fields declare (`placesOf`: its fields, its single links, its lists of links), each labeled as
- * declared. A field is compared as its kind's codec reads it before and after the edit's row, an item's template's
- * among them, its text recorded; a single link by its target, recorded by name; a list of links the edit sets by its
- * entries, those it adds and removes, each named, with the columns its role's entries carry (the pool it's through, by
- * name).
+ * declared. A field is compared as its kind's codec reads it before and after the edit's row as the write path stores
+ * it (`FieldWrites`), an item's template's among them, its text recorded; a single link by its target, recorded by
+ * name; a list of links the edit sets by its entries, those it adds and removes, each named, with the columns its
+ * role's entries carry (the pool it's through, by name).
  */
 export default class EntityChanges {
   constructor(
@@ -67,6 +67,7 @@ export default class EntityChanges {
     private readonly codec: ChangedFields,
   ) {
     this.places = EntityChanges.placesOf(codec.fields);
+    this.writes = new FieldWrites({ [type]: codec.fields });
   }
 
   /** A key identifying an entry of a list of links: its target and its own columns, ids resolved as the view's. */
@@ -125,6 +126,12 @@ export default class EntityChanges {
 
   /** The places it compares, in their order (`placesOf`). */
   private readonly places: readonly Place[];
+
+  /**
+   * What the write path stores of a write of its kind's fields (`FieldWrites`): its codec's fields are its module's
+   * declaration of them, which the write path's own (`Engine.storage().writtenFields`) is built of too.
+   */
+  private readonly writes: FieldWrites;
 
   /** A stored field's change: its text as its codec reads it, else as stored, before and after; none when the same. */
   private changeOfField(
@@ -207,8 +214,9 @@ export default class EntityChanges {
   }
 
   /**
-   * An entity's values with an edit's row over them (`row`: each field it writes replacing the entity's, none clearing
-   * it; each single link it sets, null clearing it), read as the view reads them, an inherited template's among them.
+   * An entity's values with an edit's row over them (`row`: each field it writes, as the write path stores it,
+   * replacing the entity's, none clearing it; each single link it sets, null clearing it), read as the view reads
+   * them, an inherited template's among them.
    */
   private readAfter(entity: Compared, row: EntityWrite): ReadValues {
     const over = (
@@ -223,7 +231,7 @@ export default class EntityChanges {
         Object.entries(values).filter(([, value]) => value !== null && !(Array.isArray(value) && value.length === 0)),
       );
     };
-    const fields = over(entity.fields, row.fields ?? {});
+    const fields = over(entity.fields, this.writes.written(this.type, row.fields ?? {}, false));
     const links = over(entity.links, row.links ?? {});
     return this.readOf({ fields, links } as Pick<ViewEntity, "fields" | "links">);
   }

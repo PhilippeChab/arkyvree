@@ -202,12 +202,11 @@ export interface PlanOwner {
 /**
  * One save of an owner's progression (a class's levels at once): the owner as the view has it, the kind it owns
  * (`ownedType`), each owned entity it changes, by its place on the owner's track (`position`), with its edit and the
- * modifiers it adds and removes, what its activity records, and what refuses it when what it writes is gone.
+ * modifiers it adds and removes, and what its activity records. What refuses it when what it writes is gone since the
+ * view was read is the server's, named in the rules' words (`Engine.rules().labelOf`).
  */
 export interface ProgressionPlan {
   activity: Record<string, unknown>;
-  /** What refuses the save when the owner or an owned entity it writes is gone since the view was read */
-  gone: { owned: string; owner: string };
   owned: {
     added: { operator: string; target: string; value: string; valueType: "number" }[];
     edit?: OwnedEditPlan<{ id: string }>;

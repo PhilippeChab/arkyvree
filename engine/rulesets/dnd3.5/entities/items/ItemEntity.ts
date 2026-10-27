@@ -53,8 +53,6 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
    */
   protected override readonly fields = ITEM_FIELDS;
 
-  protected override readonly label = "Item";
-
   override readonly type = "items";
 
   /** Refuses a template's form (`checkTemplate`), or an item's based on a template (`checkTemplateOf`). */

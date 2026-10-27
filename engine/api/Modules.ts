@@ -40,9 +40,11 @@ export type Rest<F, Lead extends unknown[]> = F extends (...args: [...Lead, ...i
 
 /**
  * Each base rules' module, built once: a module keeps no state (its parts are fieldless, its paths' factory makes new
- * paths on each call, and its fields are its vocabulary's declarations, which nothing changes). One the database's enum gains
- * has to be written here, or `Modules.of` doesn't compile, and each is checked against the contract part by part there
- * (`ModuleOf`: `RulesetModule`, each part an abstract class of `core/module/parts/`).
+ * paths on each call, and its fields are its vocabulary's declarations, which nothing changes). Each base rules of
+ * `BASE_RULES_OPTIONS` (`shared/enums.ts`) has its row here, or `Modules.of` doesn't compile, and each module is
+ * checked against the contract part by part there (`ModuleOf`: `RulesetModule`, each part an abstract class of
+ * `core/module/parts/`). Every migrate writes the modules registered here into `rules.modules`, which a ruleset's
+ * `base_rules` names by its foreign key (`StoredRegistries`).
  */
 const MODULES = {
   "Dungeons & Dragons: 3.5": Dnd35Module.create(),

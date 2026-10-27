@@ -20,9 +20,14 @@ import {
   useRulesetPermissions,
 } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
-import { type RulesDescription, type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
+import {
+  type RulesDescription,
+  type RulesetDetail,
+  rulesetDetailQuery,
+  type RulesWords,
+} from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
+import { entityTypeLabel, positionWordOf } from "@/client/src/lib/rulesetLabels.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
 import { entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
 import {
@@ -75,7 +80,7 @@ function CustomizationView({
   const { rules } = useRules(ruleset.baseRules);
   const pages = useCustomizationPages();
   const label = entityTypeLabel(type, rules?.words);
-  const { title, pageTitle, subtitle, backPath } = describe(data, rulesetId, (sourceType, sourceId) =>
+  const { title, pageTitle, subtitle, backPath } = describe(data, rulesetId, rules?.words, (sourceType, sourceId) =>
     modifierSourcePath(rulesetId, sourceType, sourceId, pages, rules),
   );
   // Where it was opened from, else what holds it (a class's level, an entity's modifier), else its list
@@ -189,10 +194,13 @@ function deletedHolder(data: CustomizationEntity) {
   return { id: data.holder === "owned" ? data.ownerId : data.entity.id, rulesetId: data.entity.rulesetId };
 }
 
-/** What surrounds the editor: the header and where Back goes. */
+/**
+ * What surrounds the editor: the header (an owned entity's by its position, in its rules' `words`) and where Back goes.
+ */
 function describe(
   data: CustomizationEntity,
   rulesetId: string,
+  words: RulesWords | undefined,
   sourcePath: (sourceType: string, sourceId: string) => string | undefined,
 ): {
   backPath?: string;
@@ -217,13 +225,15 @@ function describe(
         backPath: sourcePath(modifier.sourceType, modifier.sourceId),
       };
     }
-    case "owned":
+    case "owned": {
+      const title = `${data.entity.name} ${positionWordOf(data.type, words)} ${data.entity.position}`;
       return {
-        title: `${data.entity.name} Level ${data.entity.position}`,
-        pageTitle: `${data.entity.name} Level ${data.entity.position}`,
+        title,
+        pageTitle: title,
         // Its owner's page, which opens on its base rules' first tab
         backPath: `/rulesets/${rulesetId}/${data.owner}/${data.ownerId}`,
       };
+    }
     default:
       return { title: data.entity.name, pageTitle: data.entity.name };
   }

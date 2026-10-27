@@ -1,13 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
 import type { Aptitude, Klass, RulesetSave } from "@/engine/rulesets/dnd3.5/index.ts";
-import { RulesetViews } from "@/server/cow/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import { Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { readClassTable } from "@/tests/support/dnd3.5/classTables.ts";
+import { createTestClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { linksOf } from "@/tests/support/entityLinks.ts";
 import { createSeededTestRuleset, invalidateSeededRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -389,6 +390,25 @@ describe("EntitiesService: a class's progression", () => {
     expect(
       await Entities.findOne<Klass>(db, { entityType: "classes", name: "Wizard", rulesetId: fork.id }),
     ).toBeUndefined();
+  });
+
+  test("refuses a save whose class or level is gone since the view was read, each named in the rules' word", async () => {
+    const session = makeSession();
+    const fork = await createSeededTestRuleset(session.userId);
+    const level = await createTestClassLevel(fork.id);
+    const other = await createTestClassLevel(fork.id);
+    const change = (levelId: string) => ({ levels: [{ levelId, fields: { [CLASS_LEVEL_SKILL_POINTS]: 6 } }] });
+    // The view is read; then another write deletes the level, and the other class
+    await withRulesetScope(db, fork.id, async () => undefined);
+    await Entities.delete(db, { entityType: "class-levels", id: level.classLevel.id });
+    await Entities.delete(db, { entityType: "classes", id: other.klass.id });
+
+    expect(
+      EntitiesService.updateProgression(session, fork.id, "classes", level.klass.id, change(level.classLevel.id)),
+    ).rejects.toMatchObject({ message: "Class level no longer exists; refresh the class", name: "NotFoundError" });
+    expect(
+      EntitiesService.updateProgression(session, fork.id, "classes", other.klass.id, change(other.classLevel.id)),
+    ).rejects.toMatchObject({ message: "Class no longer exists; refresh the class", name: "NotFoundError" });
   });
 
   test("refuses a body that isn't a save, as its rules read it, writing nothing", async () => {
