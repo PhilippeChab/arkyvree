@@ -255,8 +255,15 @@ describe("A module's storage", () => {
     expect(second.writtenFields(settings, { TEST_HOUSE_RULES: true }, false, secondRules)).toEqual({
       TEST_HOUSE_RULES: [true],
     });
+    // One without its module's base rules, of no registered module, or naming another module's field: refused
     expect(() => second.writtenFields(characters, {}, true)).toThrow(
-      "A write of the fields of characters takes a registered module's base rules",
+      "A write of the fields of characters takes its module's base rules",
+    );
+    expect(() => second.writtenFields(characters, {}, true, "third" as BaseRules)).toThrow(
+      "third is no registered module's base rules",
+    );
+    expect(() => second.writtenFields(characters, { TEST_RETIRED: true }, false, first)).toThrow(
+      `${first} declares no field TEST_RETIRED of characters`,
     );
   });
 

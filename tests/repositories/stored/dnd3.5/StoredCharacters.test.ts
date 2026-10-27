@@ -126,6 +126,21 @@ describe("A character's fields", () => {
     await StoredCharacters.write(db, [id], {}, true, beside);
     expect(await findFieldRows(id, "TEST_RETIRED")).toEqual([]);
     expect(await findFieldRows(id, CHARACTER_XP)).not.toEqual([]);
+    // Nor does a write of it, which its module doesn't declare
+    const named = await db
+      .transaction((tx) =>
+        StoredCharacters.write(
+          tx,
+          [id],
+          { fields: { TEST_RETIRED: true, TEST_TITLES: ["  Sir ", ""] } },
+          false,
+          beside,
+        ),
+      )
+      .catch((error: unknown) => error);
+    expect(named).toBeInstanceOf(Error);
+    expect((named as Error).message).toContain("declares no field TEST_RETIRED of characters");
+    expect(await findFieldRows(id, "TEST_TITLES")).toEqual([]);
     // Its own module's do: it holds its default
     await StoredCharacters.write(db, [id], {}, true, new StorageEngine(modulesWithCharacterFlagAndSet()));
     expect(await findFieldRows(id, "TEST_RETIRED")).toEqual([

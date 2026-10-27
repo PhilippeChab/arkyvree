@@ -282,6 +282,27 @@ export default class StorageEngine {
     });
   }
 
+  /**
+   * What writes a character's or a ruleset's Settings' fields (`fields`, of `ownerType`, which every module declares):
+   * its own module's (`baseRules`), refusing a field it doesn't declare of them (another module's).
+   */
+  private ownWrites(ownerType: string, fields: Readonly<Record<string, FieldWrite>>, baseRules: BaseRules | undefined) {
+    if (!baseRules) throw new Error(`A write of the fields of ${ownerType} takes its module's base rules`);
+    const owners = this.owned.get(baseRules);
+    const writes = this.writesOf(baseRules);
+    if (!owners || !writes) throw new Error(`${baseRules} is no registered module's base rules`);
+    const declared = new Set(Field.storedLeavesOf(owners[ownerType] ?? {}).map((leaf) => leaf.field));
+    for (const field of Object.keys(fields))
+      if (!declared.has(field)) throw new Error(`${baseRules} declares no field ${field} of ${ownerType}`);
+    return writes;
+  }
+
+  /** What writes a module's owners' fields (`FieldWrites`, of its own declarations), by its base rules. */
+  private writesOf(baseRules: BaseRules): FieldWrites | undefined {
+    this.writes ??= new Map([...this.owned].map(([module, owners]) => [module, new FieldWrites(owners)]));
+    return this.writes.get(baseRules);
+  }
+
   /** A character's link role (3.5's `race`, `score`, `speaks`): the type of its entities, and whether it holds one. */
   characterRole(role: string): CharacterRoleDef {
     const found = this.merged.characterRoles.find((def) => def.role === role);
@@ -572,7 +593,8 @@ export default class StorageEngine {
    * `characterOwnerType`) stores, by field, whoever writes it (a seed, a form's save, an import), so the same values store
    * the same rows (`FieldWrites`): a new owner's (`creating`) or an existing one's. It takes the fields of the module
    * that declares them: an entity type's, the one module that stores it; a character's or a ruleset's Settings', which
-   * every module declares, its own (`baseRules`, its ruleset's), so a new one holds its own module's defaults alone.
+   * every module declares, its own (`baseRules`, its ruleset's, `ownWrites`), so a new one holds its own module's
+   * defaults alone, and a field another module declares is refused.
    */
   writtenFields(
     ownerType: string,
@@ -580,12 +602,9 @@ export default class StorageEngine {
     creating: boolean,
     baseRules?: BaseRules,
   ) {
-    this.writes ??= new Map([...this.owned].map(([module, owners]) => [module, new FieldWrites(owners)]));
-    const shared = ownerType === this.characterOwnerType || ownerType === this.settingsOwnerType;
-    const module = shared ? baseRules : [...this.owned].find(([, owners]) => ownerType in owners)?.[0];
-    const writes = module && this.writes.get(module);
-    if (shared && !writes)
-      throw new Error(`A write of the fields of ${ownerType} takes a registered module's base rules, not ${module}`);
-    return (writes ?? new FieldWrites({})).written(ownerType, fields, creating);
+    if (ownerType === this.characterOwnerType || ownerType === this.settingsOwnerType)
+      return this.ownWrites(ownerType, fields, baseRules).written(ownerType, fields, creating);
+    const module = [...this.owned].find(([, owners]) => ownerType in owners)?.[0];
+    return ((module && this.writesOf(module)) ?? new FieldWrites({})).written(ownerType, fields, creating);
   }
 }
