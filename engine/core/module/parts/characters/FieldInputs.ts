@@ -13,8 +13,8 @@ type InputSpec = ChoiceSpec | NumberSpec | TextSpec;
  * A character's own fields (its module's `characterFields`) as its forms take them: each one's input, which its sheet's
  * `fields` block and a new character's form describe alike, by its declaration, and what its create and its edit take
  * of those its forms never leave at none (`Field.isRequired`, as an entity's form reads them). A character's forms take
- * them otherwise than an entity's in two ways, each said here: its create gives each (`parseNew`), and its edit keeps a
- * select it sends unset (`sentOf`).
+ * them otherwise than an entity's in two ways, each said here, both kept so their answers stay as they were: its
+ * create gives each (`parseNew`), and its edit keeps a select it sends unset (`sentOf`).
  */
 export default class FieldInputs {
   /**
@@ -29,6 +29,16 @@ export default class FieldInputs {
     if (field.values) return { key, kind: "select", label, options: [...field.values], ...required };
     const placeholder = field.kind === "text" ? field.placeholder : undefined;
     return { key, kind: "text", label, ...(placeholder !== undefined && { placeholder }) };
+  }
+
+  /**
+   * The inputs of a character's fields (`fields`) its forms show (`inputOf`): its numbers, choices and texts, in their
+   * order. A field of another kind (a flag, a list) has none, so its forms neither show nor require it.
+   */
+  private static inputsOf(fields: Fields): FieldInput[] {
+    return Field.storedLeavesOf(fields).flatMap((leaf) =>
+      leaf.kind === "choice" || leaf.kind === "number" || leaf.kind === "text" ? [FieldInputs.inputOf(leaf)] : [],
+    );
   }
 
   /**
@@ -48,15 +58,16 @@ export default class FieldInputs {
 
   /**
    * A new character's fields (`given`, by the stored field that keeps each) as its codec reads them (`parse`), refused
-   * as invalid with every field of `fields` its forms never leave at none that it leaves out (`<Label> is required`),
-   * together with what the codec refuses. An entity's create takes such a field's default when it gives none, its form
-   * starting at it; a new character's form starts its selects unset, for its player to pick (3.5's alignment and
-   * gender, which narrow its race), so its create gives each.
+   * as invalid with every input of `fields` its forms mark required that it leaves out (`<Label> is required`),
+   * together with what the codec refuses. An entity's create takes such a field's default when it gives none; a
+   * character's refuses it, its experience as its alignment, as it always has: what its create answers stays the same.
    */
   static parseNew<T>(fields: Fields, given: FieldsRequest, parse: (given: FieldsRequest) => T): T {
-    const missing = Field.storedLeavesOf(fields)
-      .filter((leaf) => Field.isRequired(leaf) && given[leaf.field] === undefined)
-      .map((leaf) => ({ category: `fields.${leaf.field}`, message: `${leaf.label} is required` }));
+    const missing = FieldInputs.inputsOf(fields).flatMap((input) =>
+      "required" in input && input.required && given[input.key] === undefined
+        ? [{ category: `fields.${input.key}`, message: input.required }]
+        : [],
+    );
     try {
       const values = parse(given);
       if (missing.length === 0) return values;
@@ -69,14 +80,13 @@ export default class FieldInputs {
 
   /**
    * What an edit of a character's fields (`given`, by the stored field that keeps each) sends its codec: each, but a
-   * select of `fields` its forms never leave at none that it sends unset (null), which it leaves as it is, since its
-   * sheet shows a value off its options unset, and sends it so. A number sent unset, its codec refuses.
+   * select of `fields` its forms mark required that it sends unset (null), which it leaves as it is, as it always has
+   * for the API's callers (its sheet sends none: it says the select is required). A number sent unset, its codec
+   * refuses.
    */
   static sentOf(fields: Fields, given: FieldsRequest): FieldsRequest {
     const kept = new Set(
-      Field.storedLeavesOf(fields).flatMap((leaf) =>
-        (leaf.kind === "choice" || leaf.kind === "text") && leaf.values && Field.isRequired(leaf) ? [leaf.field] : [],
-      ),
+      FieldInputs.inputsOf(fields).flatMap((input) => (input.kind === "select" && input.required ? [input.key] : [])),
     );
     return Object.fromEntries(Object.entries(given).filter(([field, value]) => value !== null || !kept.has(field)));
   }

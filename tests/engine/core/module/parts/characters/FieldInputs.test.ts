@@ -107,6 +107,16 @@ describe("FieldInputs", () => {
     );
   });
 
+  test("never requires a field its forms show no input of: a flag", () => {
+    const flagged = {
+      ...FIELDS,
+      marked: { description: "Whether it's marked", kind: "flag", label: "Marked", field: "MARKED", merge: "winner" },
+    } as const;
+    const parse = (given: Record<string, unknown>) => given;
+    expect(FieldInputs.parseNew(flagged, { MOOD: "Calm", TALLY: 0 }, parse)).toEqual({ MOOD: "Calm", TALLY: 0 });
+    expect(FieldInputs.sentOf(flagged, { MARKED: null })).toEqual({ MARKED: null });
+  });
+
   test("sends an edit's fields but a select its forms never leave at none, sent unset", () => {
     expect(FieldInputs.sentOf(FIELDS, { MOOD: null, TONE: null, TALLY: null, SPAN: null, MOTTO: "" })).toEqual({
       TONE: null,

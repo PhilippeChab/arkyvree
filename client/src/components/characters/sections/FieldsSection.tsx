@@ -18,10 +18,10 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
-import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
+import { wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import { type FieldsFormData, sentFieldsOf, toFieldsForm } from "./fieldsForm.ts";
+import { type FieldsFormData, selectRulesOf, sentFieldsOf, toFieldsForm } from "./fieldsForm.ts";
 import { characterLinkQuery, type LinkedEntity, type LinkRoom } from "./linkQueries.ts";
 import { NotesField, PrivateNotesField } from "./NotesFields.tsx";
 import type { BlockOf, SheetField } from "./sheetBlocks.ts";
@@ -105,7 +105,7 @@ function FieldInput({ control, field, readOnly }: FieldInputProps) {
           control={control}
           name={field.key}
           label={field.label}
-          rules={field.required ? requiredRules(field.required) : undefined}
+          rules={selectRulesOf(field)}
           options={field.options}
           size="small"
           readOnly={readOnly}

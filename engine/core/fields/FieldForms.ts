@@ -85,7 +85,7 @@ export default class FieldForms {
     };
     switch (field.kind) {
       case "flag":
-        return [{ ...base, input: "flag", nullable: field.absent === null }];
+        return [{ ...base, input: "flag", nullable: !Field.isRequired(field) }];
       case "number":
         return [FieldForms.describeNumber(base, field)];
       case "progression":

@@ -1,5 +1,7 @@
 /** A `fields` block's form: its values as the form holds them, from the block, and as its edit sends them. */
 
+import { requiredRules } from "@/client/src/lib/validation.ts";
+
 import type { BlockOf, SheetField } from "./sheetBlocks.ts";
 
 /**
@@ -18,6 +20,14 @@ export function formValueOf(field: SheetField) {
   if (field.kind === "number") return field.value ?? Number.NaN;
   if (field.kind === "select") return field.value ?? "";
   return field.value;
+}
+
+/**
+ * What a select checks before its edit is sent: a value, when it's required. One whose value is off its options holds
+ * none, so its edit waits for a pick, and sends nothing until then.
+ */
+export function selectRulesOf(field: Extract<SheetField, { kind: "select" }>) {
+  return field.required ? requiredRules(field.required) : undefined;
 }
 
 /**

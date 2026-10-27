@@ -16,6 +16,8 @@ describe("Field", () => {
       [{ ...BASE, kind: "flag", absent: null }, false],
       [{ ...BASE, kind: "number", default: 0 }, true],
       [{ ...BASE, kind: "number" }, false],
+      [{ ...BASE, kind: "number", default: 8, values: [6, 8] }, true],
+      [{ ...BASE, kind: "number", values: [6, 8] }, false],
       [{ ...BASE, kind: "text", default: "A", required: true, values: ["A"] }, true],
       [{ ...BASE, kind: "text", default: "A" }, false],
       [{ ...BASE, kind: "choice", required: true, values: ["A"] }, true],

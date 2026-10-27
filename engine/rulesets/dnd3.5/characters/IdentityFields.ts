@@ -41,8 +41,8 @@ const OWN_REQUEST = z.object({ description: z.string().optional() });
  * on a line, its age, gender, height and weight on the next, its description under them, the languages it speaks, and
  * its notes; a partly seen character's race and physical traits alone. Each field is keyed by the stored field that
  * keeps it, labeled and bounded as it's declared (`CHARACTER_FIELDS`), as a new character's form shows it
- * (`FieldInputs`). And what an edit of its fields writes, read by
- * the character's codec as an entity's form is (`FieldCodec.parse`).
+ * (`FieldInputs`). And what an edit of its fields writes, read by the character's codec as an entity's form is
+ * (`FieldCodec.parse`).
  */
 export default class IdentityFields {
   /** The identity's fields' values (`identity`, as its sheet reads it), by their names. */
