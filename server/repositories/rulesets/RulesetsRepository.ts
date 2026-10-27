@@ -55,7 +55,10 @@ class RulesetsRepository extends include(
     super(rulesetsInRules);
   }
 
-  /** What a listing scope keeps (the starred scope, its join aside). */
+  /**
+   * What a listing scope keeps (the starred scope, its join aside); no scope, the list as it opens, which `count`
+   * totals.
+   */
   private scopeConditions(db: Db, session: Session, scope: RulesetScope | undefined): (SQL | undefined)[] {
     const notArchived = not(eq(rulesetsInRules.status, "Archived"));
 
@@ -212,25 +215,12 @@ class RulesetsRepository extends include(
       .returning();
   }
 
-  async count(db: Db, where: { userId: string }) {
+  /** How many rulesets the user's list holds as it opens (`findPage` with no scope): the total of its pages. */
+  async count(db: Db, session: Session) {
     const [result] = await db
       .select({ count: count() })
       .from(rulesetsInRules)
-      .where(
-        and(
-          not(eq(rulesetsInRules.status, "Archived")),
-          or(
-            eq(rulesetsInRules.userId, where.userId),
-            and(
-              isNull(rulesetsInRules.userId),
-              isNull(rulesetsInRules.rulesetId),
-              eq(rulesetsInRules.status, "Published"),
-            ),
-            this.userIsActiveContributor(db, where.userId),
-          ),
-        ),
-      );
-
+      .where(and(...this.scopeConditions(db, session, undefined)));
     return result.count;
   }
 

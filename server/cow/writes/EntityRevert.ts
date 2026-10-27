@@ -4,6 +4,7 @@ import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Entities, EntityReferences, EntitySnapshots, type RulesetEntityType } from "@/server/repositories/index.ts";
 
 import type EntityNames from "./EntityNames.ts";
+import { findOwnedPairs } from "./ownedPairs.ts";
 
 /**
  * A fork's copy of an inherited entity reverted to its source (`EntityRevert.revert`): `EntityCopy`'s inverse. What
@@ -23,17 +24,14 @@ export default class EntityRevert {
    * took one the source doesn't have.
    */
   private static async repointOwned(tx: Db, ownedType: OwnedKind, copyId: string, sourceId: string, rulesetId: string) {
-    const positionsOf = (ownerId: string) => Entities.findPositions(tx, { entityType: ownedType, ownerIds: [ownerId] });
-    const sourcePositions = new Map((await positionsOf(sourceId)).map((owned) => [owned.position, owned.id]));
-    const copyPositions = await positionsOf(copyId);
-    const unpaired = copyPositions.filter((owned) => !sourcePositions.has(owned.position)).map((owned) => owned.id);
+    const pairs = await findOwnedPairs(tx, ownedType, new Map([[copyId, sourceId]]));
+    const unpaired = [...pairs].filter(([, sourceOwnedId]) => !sourceOwnedId).map(([id]) => id);
     if (await EntityReferences.exists(tx, { entityType: ownedType, ids: unpaired, rulesetId }))
       throw new ConflictError("Cannot restore: characters took levels its parent's class doesn't have");
 
-    for (const owned of copyPositions) {
-      const sourceOwnedId = sourcePositions.get(owned.position);
+    for (const [ownedId, sourceOwnedId] of pairs) {
       if (!sourceOwnedId) continue;
-      await EntityReferences.update(tx, { entityId: sourceOwnedId }, { entityType: ownedType, entityId: owned.id });
+      await EntityReferences.update(tx, { entityId: sourceOwnedId }, { entityType: ownedType, entityId: ownedId });
     }
   }
 

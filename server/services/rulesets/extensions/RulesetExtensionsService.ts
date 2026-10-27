@@ -56,13 +56,11 @@ class RulesetExtensionsService {
       // The host can't subscribe to anything if it's already being used as an
       // extension by someone else — adding extensions to it would create
       // transitive deps for those subscribers.
-      if (childRuleset.userId !== null) {
-        const subscribers = await Rulesets.findMany(tx, { extensionRulesetId: id });
-        if (subscribers.length > 0) {
-          throw new UnprocessableEntityError(
-            "Cannot subscribe to extensions while this ruleset is being used as an extension",
-          );
-        }
+      const subscribers = await Rulesets.findMany(tx, { extensionRulesetId: id });
+      if (subscribers.length > 0) {
+        throw new UnprocessableEntityError(
+          "Cannot subscribe to extensions while this ruleset is being used as an extension",
+        );
       }
 
       // 2. Validate each extension
