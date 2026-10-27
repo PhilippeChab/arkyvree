@@ -93,7 +93,7 @@ describe("EntityWriter: an entity deleted since the view was read", () => {
 });
 
 describe("EntityWriter.createMany: several rows of one plan", () => {
-  test("writes each row as a create does: its name kept free, its links, what its plan writes beside it, its activity", async () => {
+  test("writes each row as a create does: its name kept free, once in the list, its links, its requirement, its activity", async () => {
     const session = makeSession();
     const ruleset = await createSeededTestRuleset(session.userId);
     const general = (await Entities.findOne<Aptitude>(db, {
@@ -125,5 +125,13 @@ describe("EntityWriter.createMany: several rows of one plan", () => {
       new EntityWriter("feats").createMany(session, ruleset.id, () => ({ rows: [{ name: "Probe Feat Two" }] })),
       409,
     );
+    const twice = { rows: [{ name: "Probe Feat Three" }, { name: "Probe Feat Three" }] };
+    await expectRefusedWith(
+      new EntityWriter("feats").createMany(session, ruleset.id, () => twice),
+      409,
+    );
+    expect(
+      await Entities.findOne(db, { entityType: "feats", name: "Probe Feat Three", rulesetId: ruleset.id }),
+    ).toBeUndefined();
   });
 });

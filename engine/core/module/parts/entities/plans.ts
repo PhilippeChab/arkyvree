@@ -48,11 +48,13 @@ export interface EntityCopies {
 /**
  * What copies of an entity write (an item's variants): each copy's row (`EntityWrite`), whose customizations they copy
  * (`copyCustomizationsFrom`), and what each writes past its row, as a create's plan does: its links of the roles it
- * holds many of (`links`), and what it writes beside its row (`writes`).
+ * holds many of (`links`), and a requirement on it (`writes`). Only what each copy writes of its own: an entity made or
+ * removed with one would be made twice, or removed again, with the next.
  */
-export interface EntityCopiesPlan extends Pick<EntitySave, "links" | "writes"> {
+export interface EntityCopiesPlan extends Pick<EntitySave, "links"> {
   copyCustomizationsFrom?: string;
   rows: EntityWrite[];
+  writes?: Pick<EntityWrites, "requirement">;
 }
 
 /** What an entity's create writes, and whose customizations the new entity copies (`copyCustomizationsFrom`). */

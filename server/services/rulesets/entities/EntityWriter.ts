@@ -317,9 +317,9 @@ export default class EntityWriter {
 
   /**
    * New entities in the ruleset, several rows of one plan (`plan`: an entity's copies, its variants), each written as
-   * a create writes its own (`create`): its name kept free in its view (all of them in one read), taking over the
-   * tombstone of a deleted ancestor of its name, the customizations its plan copies, its links and what its plan writes
-   * beside it, and its activity. Answers the rows written, in the plan's order.
+   * a create writes its own (`create`): its name kept free in its view (all of them in one read, a name given twice
+   * refused), taking over the tombstone of a deleted ancestor of its name, the customizations its plan copies, its
+   * links and the requirement its plan sets on it, and its activity. Answers the rows written, in the plan's order.
    */
   async createMany<P extends EntityCopiesPlan>(
     session: Session,
@@ -332,14 +332,14 @@ export default class EntityWriter {
       policy.canUpdateEntity();
       const planned = plan(scope);
 
+      const given = planned.rows.flatMap((row) => row.name ?? []);
+      if (new Set(given).size !== given.length) throw new ConflictError("A name is given twice in the list");
       const names = new EntityNames(ruleset, rulesetData.cow);
-      const tombstones = await names.assertNamesAvailable(
-        tx,
-        this.type,
-        planned.rows.flatMap((row) => row.name ?? []),
-      );
+      const tombstones = await names.assertNamesAvailable(tx, this.type, given);
       const rows = planned.rows.map((row) => ({ row, tombstoneAncestorId: row.name && tombstones.get(row.name) }));
-      return await this.writeNew(tx, session, scope, rows, planned);
+      // What each row writes beside it: its requirement alone, whatever else the plan carries
+      const parts = { ...planned, writes: { requirement: planned.writes?.requirement } };
+      return await this.writeNew(tx, session, scope, rows, parts);
     });
   }
 
