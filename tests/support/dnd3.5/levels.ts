@@ -10,9 +10,12 @@ import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { createTestCharacter } from "./characters.ts";
 import { levelUpPlan } from "./levelPlans.ts";
 
-/** A level's ability increases as 3.5 gives them: `abilityId` raised by 1, or none. */
+/**
+ * A level's ability increases as 3.5 gives them, as their picks hold them: `abilityId` raised by 1 (its pick's
+ * `entityId` and `amount`), or none.
+ */
 export function increasesOf(abilityId: string | null | undefined) {
-  return abilityId ? [{ abilityId, amount: 1 }] : [];
+  return abilityId ? [{ entityId: abilityId, amount: 1 }] : [];
 }
 
 /**

@@ -9,9 +9,12 @@ import type { LevelPlanRequest } from "@/engine/index.ts";
 /** An answer's payload of `step`, as the save sends it. */
 type Payload = LevelPlanRequest["steps"][string];
 
-/** A level a level-up plans: its class, its level in it, its hit points and its ability increases. */
+/**
+ * A level a level-up plans: its class, its level in it, its hit points and its ability increases (each as its pick
+ * holds it: the ability, `entityId`, and what it's raised by, `amount`).
+ */
 export interface PlannedClassLevel {
-  abilityIncreases?: { abilityId: string; amount: number }[];
+  abilityIncreases?: { amount: number; entityId: string }[];
   classId: string;
   hp: number;
   level: number;
@@ -24,9 +27,12 @@ export interface PlanPicks {
   spells?: Record<string, string[]>;
 }
 
-/** A saved level's plan, read by kind: its hit points, its ability increases, and its picks. */
+/**
+ * A saved level's plan, read by kind: its hit points, its ability increases (each as its pick holds it: `entityId`,
+ * `amount`), and its picks.
+ */
 export interface SavedPicks {
-  abilityIncreases: { abilityId: string; amount: number }[];
+  abilityIncreases: { amount: number; entityId: string }[];
   feats: Record<string, string[]>;
   hp: number | undefined;
   skills: Record<string, number>;
@@ -42,7 +48,7 @@ function byPool(payload: Payload | undefined) {
 
 /** A level's ability increases as a `choose` payload's options. */
 function chosenOf(increases: PlannedClassLevel["abilityIncreases"] = []) {
-  return increases.map(({ abilityId, amount }) => ({ amount, id: abilityId }));
+  return increases.map(({ amount, entityId }) => ({ amount, id: entityId }));
 }
 
 /** The picks as the skills, feats and spells steps' payloads: each pool's picks in it, in order. */
@@ -82,7 +88,7 @@ export function savedPicksOf(plan: LevelPlanRequest): SavedPicks {
   const [chosen = []] = (plan.steps.abilities ?? []) as { amount: number; id: string }[][];
   const spent = (plan.steps.skills ?? []) as { id: string; points: number }[];
   return {
-    abilityIncreases: chosen.map(({ amount, id }) => ({ abilityId: id, amount })),
+    abilityIncreases: chosen.map(({ amount, id }) => ({ amount, entityId: id })),
     feats: byPool(plan.steps.feats),
     hp,
     spells: byPool(plan.steps.spells),

@@ -471,9 +471,7 @@ describe("finalizing several levels at once", () => {
     const increases = await findPicks("abilities", levelIds);
     expect(
       created.map((l) =>
-        increases
-          .filter((row) => row.advancementId === l.id)
-          .map(({ amount, entityId }) => ({ abilityId: entityId, amount })),
+        increases.filter((row) => row.advancementId === l.id).map(({ amount, entityId }) => ({ entityId, amount })),
       ),
     ).toEqual(levels.map(([, , , ability]) => increasesOf(ability && ctx.abilityMap[ability])));
   });
@@ -1736,25 +1734,25 @@ describe("re-saving a level", () => {
           ),
           true,
         );
-      expect(save([{ abilityId: strength, amount: 2 }])).rejects.toThrow(
+      expect(save([{ entityId: strength, amount: 2 }])).rejects.toThrow(
         "Level 4: Ability increases must add up to 1 at this level",
       );
       expect(
         save([
-          { abilityId: strength, amount: 1 },
-          { abilityId: dexterity, amount: 1 },
+          { entityId: strength, amount: 1 },
+          { entityId: dexterity, amount: 1 },
         ]),
       ).rejects.toThrow("Level 4: Ability increases must add up to 1 at this level");
       expect(
         save([
-          { abilityId: strength, amount: 1 },
-          { abilityId: strength, amount: 1 },
+          { entityId: strength, amount: 1 },
+          { entityId: strength, amount: 1 },
         ]),
       ).rejects.toThrow("Level 4: An ability is increased twice at this level");
 
-      const saved = await save([{ abilityId: strength, amount: 1 }]);
+      const saved = await save([{ entityId: strength, amount: 1 }]);
       const level = await savedLevel(characterId, saved[3].id);
-      expect(level.abilityIncreases).toEqual([{ abilityId: strength, amount: 1 }]);
+      expect(level.abilityIncreases).toEqual([{ entityId: strength, amount: 1 }]);
     });
   });
 });

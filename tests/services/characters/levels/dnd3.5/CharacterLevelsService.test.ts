@@ -536,7 +536,7 @@ describe("LevelsService", () => {
     // One at a time: the test's transaction has a single connection
     const picked = [];
     for (const amounts of [[1], [2], [1, 1]]) {
-      const abilityIncreases = amounts.map((amount, i) => ({ abilityId: abilities[i].id, amount }));
+      const abilityIncreases = amounts.map((amount, i) => ({ entityId: abilities[i].id, amount }));
       picked.push((await abilityStep(4, abilityIncreases)).chosen);
     }
     // One ability raised by 1, as 3.5's fourth level takes, and the save checks
