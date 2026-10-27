@@ -19,6 +19,7 @@ import {
   createSeededTestRuleset,
   createSeededTestRulesetWithExtensions,
   createTestRuleset,
+  ownerSessionOf,
 } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
@@ -86,7 +87,13 @@ async function bareRuleset({ general = true } = {}) {
 
 /** The names of the ruleset's feats, or of those matching `search`. */
 async function featNames(rulesetId: string, search?: string) {
-  const { items } = await EntitiesService.getEntities(rulesetId, "feats", { search }, { limit: 100, page: 1 });
+  const { items } = await EntitiesService.getEntities(
+    await ownerSessionOf(rulesetId),
+    rulesetId,
+    "feats",
+    { search },
+    { limit: 100, page: 1 },
+  );
   return items
     .map((feat) => feat.name)
     .filter((name) => !search || name === search)

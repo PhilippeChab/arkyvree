@@ -6,6 +6,7 @@ import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { EntityLinks, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { getActivityName } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -54,8 +55,10 @@ export function Links<B extends Constructor>(Base: B) {
     }
 
     /** The links an entity edits (`ownerId`), each with its target. */
-    async getEntityLinks(rulesetId: string, type: RulesetEntityType, ownerId: string) {
-      return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).links(type, ownerId).describe());
+    async getEntityLinks(session: Session, rulesetId: string, type: RulesetEntityType, ownerId: string) {
+      return await withReadableRuleset(db, session, rulesetId, async (scope) =>
+        Engine.for(scope).links(type, ownerId).describe(),
+      );
     }
 
     /**

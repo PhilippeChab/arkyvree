@@ -11,7 +11,7 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { findPlainItem } from "@/tests/support/dnd3.5/items.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { linkedId, linksOf } from "@/tests/support/entityLinks.ts";
-import { copyEntity, createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createSeededTestRuleset, createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 const PAGE = { limit: 200, page: 1 };
@@ -57,14 +57,20 @@ test("a page's inherited rows name an entity the fork copied by its copy", async
   const constitution = await copyEntity(db, "abilities", fortitude.links.keyAbility!, fork);
   RulesetViews.invalidateAll();
 
-  const saves = await EntitiesService.getEntities(fork.id, "saves", {}, PAGE);
+  const saves = await EntitiesService.getEntities(await ownerSessionOf(fork.id), fork.id, "saves", {}, PAGE);
   expect(
     linkedId(
       saves.items.find((save) => save.id === fortitude.id),
       "keyAbility",
     ),
   ).toBe(constitution.id);
-  const skills = await EntitiesService.getEntities(fork.id, "skills", { search: "Concentration" }, PAGE);
+  const skills = await EntitiesService.getEntities(
+    await ownerSessionOf(fork.id),
+    fork.id,
+    "skills",
+    { search: "Concentration" },
+    PAGE,
+  );
   expect(skills.items.map((skill) => linkedId(skill, "keyAbility"))).toEqual([constitution.id]);
 });
 
@@ -77,14 +83,26 @@ test("a fork's own feats and spells, listed alone, name a list the fork copied b
   });
 
   for (const childOnly of [false, true]) {
-    const feats = await EntitiesService.getEntities(fork.id, "feats", { childOnly }, PAGE);
+    const feats = await EntitiesService.getEntities(
+      await ownerSessionOf(fork.id),
+      fork.id,
+      "feats",
+      { childOnly },
+      PAGE,
+    );
     expect(
       linksOf(
         feats.items.find((row) => row.id === feat.id),
         "listedIn",
       ),
     ).toMatchObject([{ role: "listedIn", toId: poolCopy.id, toName: "Copied Pool" }]);
-    const spells = await EntitiesService.getEntities(fork.id, "spells", { childOnly }, PAGE);
+    const spells = await EntitiesService.getEntities(
+      await ownerSessionOf(fork.id),
+      fork.id,
+      "spells",
+      { childOnly },
+      PAGE,
+    );
     expect(
       linksOf(
         spells.items.find((row) => row.id === spell.id),
@@ -101,10 +119,10 @@ test("a spell names its save by the view's id, and carries no stored save row", 
     links: { keyAbility: ability.id },
   });
 
-  const listed = (await EntitiesService.getEntities(fork.id, "spells", {}, PAGE)).items.find(
-    (row) => row.id === spell.id,
-  )!;
-  const page = await EntitiesService.getEntity(fork.id, "spells", spell.id);
+  const listed = (
+    await EntitiesService.getEntities(await ownerSessionOf(fork.id), fork.id, "spells", {}, PAGE)
+  ).items.find((row) => row.id === spell.id)!;
+  const page = await EntitiesService.getEntity(await ownerSessionOf(fork.id), fork.id, "spells", spell.id);
   for (const read of [listed, page]) {
     expect(linkedId(read, "resistedBy")).toBe(saveCopy.id);
     expect(read).not.toHaveProperty("savesInRule");

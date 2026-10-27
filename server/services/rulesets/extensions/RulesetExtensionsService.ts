@@ -12,6 +12,7 @@ import {
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -33,9 +34,8 @@ class RulesetExtensionsService {
     return false;
   }
 
-  async getExtensions(_session: Session, id: string) {
-    const ruleset = await Rulesets.findOne(db, { id });
-    if (!ruleset) throw new NotFoundError("Ruleset not found");
+  async getExtensions(session: Session, id: string) {
+    await getReadableRuleset(db, session, id);
 
     const subscribed = await RulesetExtensions.findMany(db, { rulesetId: id });
 

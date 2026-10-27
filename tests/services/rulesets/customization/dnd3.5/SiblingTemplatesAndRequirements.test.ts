@@ -17,6 +17,7 @@ import {
   createSeededTestRuleset,
   invalidateSeededRuleset,
   invalidateTestRulesets,
+  ownerSessionOf,
 } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import {
@@ -98,7 +99,7 @@ test.each([
   const copiesValues = () => Promise.all(copies.map((id) => findFormValues("items", id)));
   const templateValues = await copiesValues();
   // Its template's fields, each extension's copy's own, as the view merges them
-  const read = await EntitiesService.getEntity(host.id, "items", item.id);
+  const read = await EntitiesService.getEntity(await ownerSessionOf(host.id), host.id, "items", item.id);
   expect(read.fields).toMatchObject({ [WEAPON_BASE_DAMAGE]: "1d6", [WEAPON_CRITICAL_RANGE]: 2 });
   // Its fields as its form holds them, off those it answers with a value
   const held = Object.fromEntries(Object.entries(read.fields).filter(([, value]) => value !== null));
@@ -111,7 +112,9 @@ test.each([
   // The item stores only the field it overrides, and reads the other off its template
   const own = await findFormValues("items", item.id);
   expect(Object.entries(own.fields).flatMap(([field, values]) => values.map((value) => [field, value]))).toEqual([row]);
-  expect((await EntitiesService.getEntity(host.id, "items", item.id)).fields).toMatchObject({
+  expect(
+    (await EntitiesService.getEntity(await ownerSessionOf(host.id), host.id, "items", item.id)).fields,
+  ).toMatchObject({
     ...read.fields,
     [row[0] as string]: row[1],
   });
@@ -120,7 +123,12 @@ test.each([
 for (const action of ["update", "delete"] as const) {
   test(`visible sibling requirement can be ${action}d before first COW`, async () => {
     const { session, host, source } = await setup("feats");
-    const visible = await RequirementsService.getRequirements(host.id, "feats", source.id);
+    const visible = await RequirementsService.getRequirements(
+      await ownerSessionOf(host.id),
+      host.id,
+      "feats",
+      source.id,
+    );
     const requirement = visible.find((r) => r.target === "abilities.strength.total")!;
     expect(requirement).toBeDefined();
     if (action === "update") {
@@ -170,7 +178,12 @@ for (const action of ["update leaf", "delete leaf", "update chain"] as const) {
       );
     });
     const originals = await Requirements.findMany(db, { entityIds: copies, entityType: "feats" });
-    const visible = await RequirementsService.getRequirements(host.id, "feats", copies[0]);
+    const visible = await RequirementsService.getRequirements(
+      await ownerSessionOf(host.id),
+      host.id,
+      "feats",
+      copies[0],
+    );
     expect(visible.map((r) => r.level).sort()).toEqual(["1", "2", "2.1", "2.2", "2.2.1", "2.2.2", "2.3"]);
     const target = visible.find((r) => r.level === (action === "update chain" ? "2" : "2.2.1"))!;
     const original = originals.find((r) => r.id === target.id)!;
@@ -201,7 +214,12 @@ for (const action of ["update leaf", "delete leaf", "update chain"] as const) {
       );
     for (const cold of [false, true]) {
       if (cold) invalidateTestRulesets(...rulesetIds);
-      const after = await RequirementsService.getRequirements(host.id, "feats", copies[0]);
+      const after = await RequirementsService.getRequirements(
+        await ownerSessionOf(host.id),
+        host.id,
+        "feats",
+        copies[0],
+      );
       expect(shape(after)).toEqual(shape(expected));
       expect(after.some((r) => originals.some((source) => source.id === r.id))).toBe(false);
     }
@@ -234,7 +252,7 @@ test("three-extension requirement merge preserves chains and rejects a duplicate
     3,
   );
   const [hidden] = await Requirements.findMany(db, { entityIds: [copies[1]], entityType: "feats" });
-  const before = await RequirementsService.getRequirements(host.id, "feats", source.id);
+  const before = await RequirementsService.getRequirements(await ownerSessionOf(host.id), host.id, "feats", source.id);
   expect(before.map((r) => r.level).sort()).toEqual(["1", "2", "2.1", "2.2"]);
   await expectRefusedWith(RequirementsService.deleteRequirement(session, host.id, "feats", source.id, hidden.id), 404);
   const siblingLeaf = before.find((r) => r.level === "2.2")!;
@@ -244,7 +262,7 @@ test("three-extension requirement merge preserves chains and rejects a duplicate
     operator: "greater_than_or_equal",
     value: "15",
   });
-  const after = await RequirementsService.getRequirements(host.id, "feats", source.id);
+  const after = await RequirementsService.getRequirements(await ownerSessionOf(host.id), host.id, "feats", source.id);
   expect(after.find((r) => r.level === "2.2")?.value).toBe("15");
   expect(after.find((r) => r.level === "1")?.value).toBe("13");
 });
@@ -265,7 +283,7 @@ test("a sibling standalone and chain keep distinct levels on display and first c
       { ...owner, ...leaf, target: "abilities.dexterity.total", level: "2.1" },
     ]);
   });
-  const before = await RequirementsService.getRequirements(host.id, "feats", source.id);
+  const before = await RequirementsService.getRequirements(await ownerSessionOf(host.id), host.id, "feats", source.id);
   expect(before.map((r) => r.level).sort()).toEqual(["1", "2", "2.1"]);
   const target = before.find((r) => r.level === "2.1")!;
   await RequirementsService.updateRequirement(session, host.id, "feats", source.id, target.id, {
@@ -274,7 +292,7 @@ test("a sibling standalone and chain keep distinct levels on display and first c
     operator: "greater_than_or_equal",
     value: "15",
   });
-  const after = await RequirementsService.getRequirements(host.id, "feats", source.id);
+  const after = await RequirementsService.getRequirements(await ownerSessionOf(host.id), host.id, "feats", source.id);
   expect(after.map((r) => r.level).sort()).toEqual(["1", "2", "2.1"]);
   expect(after.find((r) => r.level === "2")?.chainingOperator).toBe("or");
   expect(after.find((r) => r.level === "2.1")?.value).toBe("15");

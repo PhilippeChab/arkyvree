@@ -5,6 +5,7 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { Entities, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { getActivityName } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -92,8 +93,8 @@ export function Copies<B extends Constructor>(Base: B) {
      * The entities of a type others are made from (`templateType`: an item's templates of a type), by name: each as
      * stored (its own columns, every field it holds, its single links), named.
      */
-    async getTemplates(rulesetId: string, type: RulesetEntityType, templateType?: string) {
-      return await withRulesetScope(db, rulesetId, async (scope) => {
+    async getTemplates(session: Session, rulesetId: string, type: RulesetEntityType, templateType?: string) {
+      return await withReadableRuleset(db, session, rulesetId, async (scope) => {
         const { rulesetData } = scope;
         const { filters } = Engine.for(scope).entities(type).openTemplates(templateType);
         return await Entities.findList<EntityRecord & { name: string }>(db, {

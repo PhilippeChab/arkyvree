@@ -3,6 +3,7 @@ import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { Activities, RulesetSettings } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -12,8 +13,8 @@ class RulesetSettingsService {
    * The ruleset's Settings (its fields by stored field, its links by role, as its form sends them): its own, or those
    * its chain holds, the fork's first.
    */
-  async getSettings(rulesetId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => ({
+  async getSettings(session: Session, rulesetId: string) {
+    return await withReadableRuleset(db, session, rulesetId, async (scope) => ({
       id: rulesetId,
       ...Engine.for(scope).describeSettings(),
     }));

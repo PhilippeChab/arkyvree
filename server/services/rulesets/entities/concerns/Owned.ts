@@ -1,9 +1,9 @@
 import { Engine, type EntityForm } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import type { RulesetEntityType } from "@/server/repositories/index.ts";
 import EntityWriter from "@/server/services/rulesets/entities/EntityWriter.ts";
+import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /**
@@ -47,15 +47,17 @@ export function Owned<B extends Constructor>(Base: B) {
     }
 
     /** The entities an owner owns (`ownerId`), each with its details. */
-    async getOwnedEntities(rulesetId: string, type: RulesetEntityType, ownerId: string) {
-      return await withRulesetScope(db, rulesetId, async (scope) =>
+    async getOwnedEntities(session: Session, rulesetId: string, type: RulesetEntityType, ownerId: string) {
+      return await withReadableRuleset(db, session, rulesetId, async (scope) =>
         Engine.for(scope).owned(type, ownerId).describeAll(),
       );
     }
 
     /** An owned entity by its id alone (`ownedId`), with its owner's name, as its page shows it. */
-    async getOwnedEntityWithOwner(rulesetId: string, type: RulesetEntityType, ownedId: string) {
-      return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).describeOwned(type, ownedId));
+    async getOwnedEntityWithOwner(session: Session, rulesetId: string, type: RulesetEntityType, ownedId: string) {
+      return await withReadableRuleset(db, session, rulesetId, async (scope) =>
+        Engine.for(scope).describeOwned(type, ownedId),
+      );
     }
 
     /** An owned entity's edit (`ownedId`, of `ownerId`) off its form (`EntityWriter.updateOwned`). */

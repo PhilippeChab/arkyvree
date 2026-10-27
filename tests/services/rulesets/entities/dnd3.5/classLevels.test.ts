@@ -24,7 +24,7 @@ import { addCharacterLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { addGrants } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { findFormValues } from "@/tests/support/ownerValues.ts";
-import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, NIL_UUID } from "@/tests/support/seed.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -111,7 +111,9 @@ describe("EntitiesService: a class's levels", () => {
         },
       });
 
-      expect(await EntitiesService.getOwnedEntities(ruleset.id, "classes", klass.id)).toMatchObject([
+      expect(
+        await EntitiesService.getOwnedEntities(await ownerSessionOf(ruleset.id), ruleset.id, "classes", klass.id),
+      ).toMatchObject([
         {
           position: 1,
           fields: levelFields(1, 4),
@@ -208,7 +210,9 @@ describe("EntitiesService: a class's levels", () => {
       }
 
       expect(
-        (await EntitiesService.getOwnedEntities(ruleset.id, "classes", klass.id)).map((level) => level.babLabel),
+        (await EntitiesService.getOwnedEntities(await ownerSessionOf(ruleset.id), ruleset.id, "classes", klass.id)).map(
+          (level) => level.babLabel,
+        ),
       ).toEqual(["+0", "+6/+1", "+11/+6/+1"]);
     });
 
@@ -301,7 +305,9 @@ describe("EntitiesService: a class's levels", () => {
       modifiers: [{ target: "combat.bab" }],
       requirements: [{ target: "classes.testclass.level", value: "1" }],
     };
-    expect(await EntitiesService.getOwnedEntityWithOwner(ruleset.id, "classes", level.id)).toMatchObject({
+    expect(
+      await EntitiesService.getOwnedEntityWithOwner(await ownerSessionOf(ruleset.id), ruleset.id, "classes", level.id),
+    ).toMatchObject({
       ...detail,
       name: "Test Class",
     });
@@ -475,10 +481,20 @@ describe("EntitiesService: a class's levels", () => {
         "delete for a missing class",
         () => EntitiesService.deleteOwnedEntity(session, ruleset.id, "classes", NIL_UUID, level.id),
       ],
-      ["read a missing level", () => EntitiesService.getOwnedEntityWithOwner(ruleset.id, "classes", NIL_UUID)],
+      [
+        "read a missing level",
+        async () =>
+          EntitiesService.getOwnedEntityWithOwner(await ownerSessionOf(ruleset.id), ruleset.id, "classes", NIL_UUID),
+      ],
       [
         "read by id through another ruleset",
-        () => EntitiesService.getOwnedEntityWithOwner(other.ruleset.id, "classes", level.id),
+        async () =>
+          EntitiesService.getOwnedEntityWithOwner(
+            await ownerSessionOf(other.ruleset.id),
+            other.ruleset.id,
+            "classes",
+            level.id,
+          ),
       ],
       ["feat pools of a missing ruleset", () => readClassTable(NIL_UUID, klass.id, "feat-pools")],
       ["feat pools of a missing class", () => readClassTable(ruleset.id, NIL_UUID, "feat-pools")],
@@ -538,14 +554,28 @@ describe("EntitiesService: a class's levels", () => {
   describe("in a fork", () => {
     test("reads the inherited class's levels", async () => {
       const { parent, fork, klass, inheritedLevel } = await setupFork();
-      expect(await EntitiesService.getOwnedEntities(fork.id, "classes", klass.id)).toMatchObject([
-        { id: inheritedLevel.id, position: 1, fields: { [CLASS_LEVEL_BAB]: 1 } },
-      ]);
-      expect(await EntitiesService.getOwnedEntityWithOwner(fork.id, "classes", inheritedLevel.id)).toMatchObject({
+      expect(
+        await EntitiesService.getOwnedEntities(await ownerSessionOf(fork.id), fork.id, "classes", klass.id),
+      ).toMatchObject([{ id: inheritedLevel.id, position: 1, fields: { [CLASS_LEVEL_BAB]: 1 } }]);
+      expect(
+        await EntitiesService.getOwnedEntityWithOwner(
+          await ownerSessionOf(fork.id),
+          fork.id,
+          "classes",
+          inheritedLevel.id,
+        ),
+      ).toMatchObject({
         id: inheritedLevel.id,
       });
       // Held by the parent, as its class is: a delete of it in the fork can be undone
-      expect(await EntitiesService.getOwnedEntityWithOwner(fork.id, "classes", inheritedLevel.id)).toMatchObject({
+      expect(
+        await EntitiesService.getOwnedEntityWithOwner(
+          await ownerSessionOf(fork.id),
+          fork.id,
+          "classes",
+          inheritedLevel.id,
+        ),
+      ).toMatchObject({
         id: inheritedLevel.id,
         name: klass.name,
         rulesetId: parent.id,
@@ -584,10 +614,12 @@ describe("EntitiesService: a class's levels", () => {
 
       await EntitiesService.deleteOwnedEntity(session, fork.id, "classes", klass.id, inheritedLevel.id);
       expect(await RulesetViews.getRawData(parent.id)).toBe(parentRows);
-      expect(await EntitiesService.getOwnedEntities(fork.id, "classes", klass.id)).toEqual([]);
-      expect(await EntitiesService.getOwnedEntities(parent.id, "classes", klass.id)).toMatchObject([
-        { id: inheritedLevel.id, fields: levelFields(1, 4) },
-      ]);
+      expect(
+        await EntitiesService.getOwnedEntities(await ownerSessionOf(fork.id), fork.id, "classes", klass.id),
+      ).toEqual([]);
+      expect(
+        await EntitiesService.getOwnedEntities(await ownerSessionOf(parent.id), parent.id, "classes", klass.id),
+      ).toMatchObject([{ id: inheritedLevel.id, fields: levelFields(1, 4) }]);
     });
 
     test("doesn't find a class of an unrelated ruleset", async () => {

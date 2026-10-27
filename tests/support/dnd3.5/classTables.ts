@@ -1,5 +1,6 @@
 import type ClassTable from "@/engine/rulesets/dnd3.5/entities/classes/ClassTable.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
+import { ownerSessionOf } from "@/tests/support/rulesets.ts";
 
 /** A class's tables, by the name its route reads one by, each as its rules describe it. */
 interface ClassTables {
@@ -11,5 +12,11 @@ interface ClassTables {
 
 /** One of a class's tables (`table`), as its tab reads it: the service answers any of them. */
 export async function readClassTable<T extends keyof ClassTables>(rulesetId: string, classId: string, table: T) {
-  return (await EntitiesService.getEntityTable(rulesetId, "classes", classId, table)) as ClassTables[T];
+  return (await EntitiesService.getEntityTable(
+    await ownerSessionOf(rulesetId),
+    rulesetId,
+    "classes",
+    classId,
+    table,
+  )) as ClassTables[T];
 }

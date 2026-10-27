@@ -32,7 +32,7 @@ async function resolveAll(targets: string[][]) {
 describe("ActivitiesService.getActivityUrl", () => {
   test("links rulesets, characters and campaigns to their page, archived or not, and accounts nowhere", async () => {
     const { user } = await createTestUser();
-    const ruleset = await createTestRuleset(user.id);
+    const ruleset = await createTestRuleset(user.id, { private: false });
     const character = await createTestCharacter(user.id, { deletedAt: new Date().toISOString() });
     const { campaign } = await createTestCampaign(user.id);
     expect(
@@ -52,6 +52,13 @@ describe("ActivitiesService.getActivityUrl", () => {
       null,
       null,
     ]);
+  });
+
+  test("links a private ruleset to its page for who may read it, and nowhere for anyone else", async () => {
+    const { user, session } = await createTestUser();
+    const ruleset = await createTestRuleset(user.id);
+    expect(await resolve("rulesets", ruleset.id, session)).toBe(`/rulesets/${ruleset.id}`);
+    expect(await resolve("rulesets", ruleset.id)).toBeNull();
   });
 
   test("links a ruleset's entities to their page, or their customization when they have one", async () => {

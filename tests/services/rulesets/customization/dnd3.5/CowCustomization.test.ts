@@ -22,7 +22,7 @@ import { CLASS_CASTER_TYPE, CLASS_HD, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fi
 
 interface Kind {
   create: (session: Session, rulesetId: string, ownerType: string, ownerId: string) => Promise<Written>;
-  list: (rulesetId: string, ownerType: string, ownerId: string) => Promise<Row[]>;
+  list: (session: Session, rulesetId: string, ownerType: string, ownerId: string) => Promise<Row[]>;
   remove: (session: Session, rulesetId: string, ownerType: string, ownerId: string, id: string) => Promise<Written>;
   rowsOf: (ownerType: string, ownerId: string) => Promise<Row[]>;
   update: (session: Session, rulesetId: string, ownerType: string, ownerId: string, id: string) => Promise<Written>;
@@ -213,7 +213,7 @@ describe.each(["modifiers", "requirements"])("the %s of a feat the fork already 
     const copyId = (await EntitySnapshots.findOne(db, { sourceEntityId: feat.id, rulesetId: fork.id }))!.forkedEntityId;
     const [copied] = await kind.rowsOf("feats", copyId);
 
-    expect((await kind.list(fork.id, "feats", feat.id)).map((r) => r.id)).toEqual([copied.id]);
+    expect((await kind.list(session, fork.id, "feats", feat.id)).map((r) => r.id)).toEqual([copied.id]);
     expect(await kind.update(session, fork.id, "feats", feat.id, copied.id)).toMatchObject({
       id: copied.id,
       resolvedEntityId: copyId,

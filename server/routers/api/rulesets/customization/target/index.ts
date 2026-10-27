@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { validate } from "@/server/middlewares/index.ts";
+import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 import { TargetPathsService } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 
-export default new Hono()
+export default new Hono<SessionContext>()
   /**
    * POST /api/rulesets/:id/customization/target/paths/completions
    * Get paginated completion suggestions for a partial path
@@ -31,6 +31,7 @@ export default new Hono()
       const { partialPath, position, kind, entityType, search, flat, limit, page } = c.req.valid("json");
       return c.json(
         await TargetPathsService.getCompletions(
+          c.var.requestSession,
           rulesetId,
           partialPath,
           position,
@@ -63,6 +64,9 @@ export default new Hono()
     async (c) => {
       const { id: rulesetId } = c.req.valid("param");
       const { path, kind, entityType } = c.req.valid("json");
-      return c.json(await TargetPathsService.validatePath(rulesetId, path, kind, entityType), 200);
+      return c.json(
+        await TargetPathsService.validatePath(c.var.requestSession, rulesetId, path, kind, entityType),
+        200,
+      );
     },
   );

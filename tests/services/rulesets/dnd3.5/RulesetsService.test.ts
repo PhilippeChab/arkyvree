@@ -44,7 +44,7 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestClassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { addClassSkills, addLists, findLists } from "@/tests/support/dnd3.5/links.ts";
 import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
-import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import {
@@ -326,7 +326,9 @@ describe("RulesetsService", () => {
         (await Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: created.id }, firstPage)).items,
       ).toEqual([]);
       expect(await EntitySnapshots.findMany(db, { rulesetId: created.id })).toEqual([]);
-      expect(await EntitiesService.getEntity(created.id, "feats", feat.id)).toMatchObject({
+      expect(
+        await EntitiesService.getEntity(await ownerSessionOf(created.id), created.id, "feats", feat.id),
+      ).toMatchObject({
         id: feat.id,
         links: [{ role: "listedIn", toId: aptitude.id }],
       });
@@ -593,8 +595,9 @@ describe("RulesetsService", () => {
       );
       expect(RulesetChangesService.getChanges(session, NIL_UUID)).rejects.toThrow(NotFoundError);
 
+      // A private fork isn't revealed to a stranger: its changes answer as an unknown ruleset's
       const { fork } = await setupChanges({ private: true });
-      expect(RulesetChangesService.getChanges(session, fork.id)).rejects.toThrow(ForbiddenError);
+      expect(RulesetChangesService.getChanges(session, fork.id)).rejects.toThrow(NotFoundError);
     });
 
     describe("reverting", () => {
@@ -618,7 +621,9 @@ describe("RulesetsService", () => {
         await RulesetChangesService.revertOverride(session, fork.id, "feats", modified.id);
 
         expect(await RulesetChangesService.getChanges(session, fork.id)).toEqual([]);
-        expect(await EntitiesService.getEntity(fork.id, "feats", modified.id)).toMatchObject({
+        expect(
+          await EntitiesService.getEntity(await ownerSessionOf(fork.id), fork.id, "feats", modified.id),
+        ).toMatchObject({
           id: modified.id,
           description: null,
         });
@@ -633,7 +638,9 @@ describe("RulesetsService", () => {
         await EntitiesService.deleteEntity(session, fork.id, "feats", deleted.id);
         await RulesetChangesService.revertOverride(session, fork.id, "feats", deleted.id);
         expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toEqual([]);
-        expect(await EntitiesService.getEntity(fork.id, "feats", deleted.id)).toMatchObject({ id: deleted.id });
+        expect(
+          await EntitiesService.getEntity(await ownerSessionOf(fork.id), fork.id, "feats", deleted.id),
+        ).toMatchObject({ id: deleted.id });
       });
 
       test("deletes a copied class's levels and class skills", async () => {

@@ -12,6 +12,7 @@ import {
   saveInviteAnswer,
 } from "@/server/services/invites/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -65,10 +66,8 @@ class ContributorsService {
     },
     pagination: Pagination,
   ) {
-    const ruleset = await Rulesets.findOne(db, { id: rulesetId });
-    if (!ruleset) throw new NotFoundError("Ruleset not found");
-
-    (await RulesetsPolicy.for(db, session, ruleset)).canReadContributors();
+    const { policy, ruleset } = await getReadableRuleset(db, session, rulesetId);
+    policy.canReadContributors();
 
     const paginated = await Contributors.findPage(db, { rulesetId, ...where }, pagination);
     const ownerUser = ruleset.userId ? await Users.findOne(db, { id: ruleset.userId }) : undefined;

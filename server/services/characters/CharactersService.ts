@@ -22,6 +22,7 @@ import {
   visibilityMap,
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { withReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -171,8 +172,8 @@ class CharactersService extends include(Object, Archives, Imports) {
    * How a new character of a ruleset (`rulesetId`) sets its scores of a scored link's role (`role`), as its rules answer
    * it.
    */
-  async getCreation(rulesetId: string, role: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) =>
+  async getCreation(session: Session, rulesetId: string, role: string) {
+    return await withReadableRuleset(db, session, rulesetId, async (scope) =>
       Engine.for(scope).characters().describeCreation(role),
     );
   }
@@ -182,13 +183,14 @@ class CharactersService extends include(Object, Archives, Imports) {
    * says so far narrows them (`formData`), a page of them, each checked.
    */
   async getCreationOptions(
+    session: Session,
     rulesetId: string,
     role: string,
     formData: CreationPickQuery,
     where: { search?: string },
     pagination: Pagination,
   ) {
-    return await withRulesetScope(db, rulesetId, async (scope) => {
+    return await withReadableRuleset(db, session, rulesetId, async (scope) => {
       const picker = Engine.for(scope).characters().openCreationPicker(role, formData);
       // Each option as an entity's row: its columns past those every kind's has are its kind's
       const result = await Entities.findPage<EntityRecord>(

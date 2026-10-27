@@ -14,7 +14,7 @@ const requirementParams = ownerParams.extend({ requirementId: z.string().uuid() 
 export default new Hono<SessionContext>()
   .get("/:id/customization/:entityType/:entityId/requirements", validate("param", ownerParams), async (c) => {
     const { id, entityType, entityId } = c.req.valid("param");
-    return c.json(await RequirementsService.getRequirements(id, entityType, entityId), 200);
+    return c.json(await RequirementsService.getRequirements(c.var.requestSession, id, entityType, entityId), 200);
   })
   .post(
     "/:id/customization/:entityType/:entityId/requirements",

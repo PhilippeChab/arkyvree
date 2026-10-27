@@ -10,7 +10,7 @@ import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A new user's empty ruleset with two classes and two skills. */
@@ -42,7 +42,9 @@ async function setup() {
 }
 
 async function skillIdsOf(rulesetId: string, classId: string) {
-  return (await EntitiesService.getEntityLinks(rulesetId, "classes", classId)).map((link) => link.toId).sort();
+  return (await EntitiesService.getEntityLinks(await ownerSessionOf(rulesetId), rulesetId, "classes", classId))
+    .map((link) => link.toId)
+    .sort();
 }
 
 // Adding, listing and removing a class skill, and refusing one the class has, are covered in the class skills router test.
@@ -89,7 +91,10 @@ describe("EntitiesService: a class's skills", () => {
   test("doesn't find a class or skill of another ruleset, nor a skill the class doesn't have", async () => {
     const { session, ruleset, fighter, climb } = await setup();
     const other = await setup();
-    await expectRefusedWith(EntitiesService.getEntityLinks(ruleset.id, "classes", other.fighter.id), 404);
+    await expectRefusedWith(
+      EntitiesService.getEntityLinks(await ownerSessionOf(ruleset.id), ruleset.id, "classes", other.fighter.id),
+      404,
+    );
     await expectRefusedWith(
       EntitiesService.addEntityLink(session, ruleset.id, "classes", other.fighter.id, climb.id),
       404,

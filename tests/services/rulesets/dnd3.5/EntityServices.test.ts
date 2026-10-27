@@ -18,7 +18,7 @@ import { findCustomizations } from "@/tests/support/customizations.ts";
 import { customize } from "@/tests/support/dnd3.5/customizations.ts";
 import { findLists } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
-import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import {
   LANGUAGE_TYPE,
@@ -90,8 +90,9 @@ const SERVICES: Record<string, Service> = Object.fromEntries(
   Object.entries(BODIES).map(([kind, body]) => {
     const type = kind as RulesetEntityType;
     const service: Service = {
-      list: (rulesetId, search) => EntitiesService.getEntities(rulesetId, type, { search }, firstPage),
-      get: (rulesetId, id) => EntitiesService.getEntity(rulesetId, type, id),
+      list: async (rulesetId, search) =>
+        EntitiesService.getEntities(await ownerSessionOf(rulesetId), rulesetId, type, { search }, firstPage),
+      get: async (rulesetId, id) => EntitiesService.getEntity(await ownerSessionOf(rulesetId), rulesetId, type, id),
       create: (session, rulesetId, name, refs) =>
         EntitiesService.createEntity(session, rulesetId, type, { name, ...body(refs) }),
       update: (session, rulesetId, id, name, refs, updatedAt) =>

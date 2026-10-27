@@ -19,7 +19,7 @@ import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { addLists } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
-import { createSeededTestRuleset, readTargetPaths } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset, ownerSessionOf, readTargetPaths } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -57,10 +57,18 @@ describe("ModifiersService", () => {
         valueType: "number",
       });
 
-      expect(await ModifiersService.getModifiers(rulesetId, entityType, entityId)).toMatchObject([
-        { id: created.id, targetLabels: { strength: "Strength" } },
-      ]);
-      expect(await ModifiersService.getModifier(rulesetId, entityType, entityId, created.id)).toMatchObject({
+      expect(
+        await ModifiersService.getModifiers(await ownerSessionOf(rulesetId), rulesetId, entityType, entityId),
+      ).toMatchObject([{ id: created.id, targetLabels: { strength: "Strength" } }]);
+      expect(
+        await ModifiersService.getModifier(
+          await ownerSessionOf(rulesetId),
+          rulesetId,
+          entityType,
+          entityId,
+          created.id,
+        ),
+      ).toMatchObject({
         id: created.id,
         requirements: [],
       });
@@ -70,7 +78,9 @@ describe("ModifiersService", () => {
         await ModifiersService.updateModifier(session, rulesetId, entityType, entityId, created.id, update),
       ).toMatchObject(update);
       await ModifiersService.deleteModifier(session, rulesetId, entityType, entityId, created.id);
-      expect(await ModifiersService.getModifiers(rulesetId, entityType, entityId)).toEqual([]);
+      expect(
+        await ModifiersService.getModifiers(await ownerSessionOf(rulesetId), rulesetId, entityType, entityId),
+      ).toEqual([]);
     }
   });
 
@@ -97,10 +107,11 @@ describe("ModifiersService", () => {
     const { session, rulesetId, feat } = await setup();
     for (const value of ["2", "3"])
       await ModifiersService.createModifier(session, rulesetId, "feats", feat.id, { ...strengthBonus, value });
-    expect((await ModifiersService.getModifiers(rulesetId, "feats", feat.id)).map((m) => m.value).sort()).toEqual([
-      "2",
-      "3",
-    ]);
+    expect(
+      (await ModifiersService.getModifiers(await ownerSessionOf(rulesetId), rulesetId, "feats", feat.id))
+        .map((m) => m.value)
+        .sort(),
+    ).toEqual(["2", "3"]);
   });
 
   test("stores a number as the sheet reads it, a template as written", async () => {
@@ -178,9 +189,18 @@ describe("ModifiersService", () => {
     const { session: other } = await createTestUserAndRuleset();
     const created = await ModifiersService.createModifier(session, rulesetId, "feats", feat.id, strengthBonus);
 
-    await expectRefusedWith(ModifiersService.getModifiers(NIL_UUID, "feats", feat.id), 404);
-    await expectRefusedWith(ModifiersService.getModifiers(rulesetId, "feats", NIL_UUID), 404);
-    await expectRefusedWith(ModifiersService.getModifier(rulesetId, "feats", feat.id, NIL_UUID), 404);
+    await expectRefusedWith(
+      ModifiersService.getModifiers(await ownerSessionOf(NIL_UUID), NIL_UUID, "feats", feat.id),
+      404,
+    );
+    await expectRefusedWith(
+      ModifiersService.getModifiers(await ownerSessionOf(rulesetId), rulesetId, "feats", NIL_UUID),
+      404,
+    );
+    await expectRefusedWith(
+      ModifiersService.getModifier(await ownerSessionOf(rulesetId), rulesetId, "feats", feat.id, NIL_UUID),
+      404,
+    );
     await expectRefusedWith(ModifiersService.createModifier(session, rulesetId, "feats", NIL_UUID, strengthBonus), 404);
     expect(ModifiersService.createModifier(other, rulesetId, "feats", feat.id, strengthBonus)).rejects.toThrow(
       ForbiddenError,

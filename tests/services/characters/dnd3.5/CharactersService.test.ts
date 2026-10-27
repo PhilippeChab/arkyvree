@@ -39,6 +39,7 @@ import {
   createSeededTestRuleset,
   createTestRuleset,
   invalidateSeededRuleset,
+  ownerSessionOf,
 } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
@@ -588,7 +589,14 @@ describe("CharactersService", () => {
   describe("races a new character can take", () => {
     test("are all eligible on the seeded ruleset", async () => {
       const { rulesetId } = await getSeedCtx();
-      const { items, page: pageNumber } = await CharactersService.getCreationOptions(rulesetId, "race", {}, {}, page);
+      const { items, page: pageNumber } = await CharactersService.getCreationOptions(
+        await ownerSessionOf(rulesetId),
+        rulesetId,
+        "race",
+        {},
+        {},
+        page,
+      );
       expect(pageNumber).toBe(1);
       expect(items.map((r) => r.name)).toEqual(expect.arrayContaining(["Human", "Elf", "Dwarf"]));
       expect(items.filter((r) => !r.eligible)).toEqual([]);
@@ -615,9 +623,9 @@ describe("CharactersService", () => {
       });
       invalidateSeededRuleset(rulesetId);
       const eligible = async (form: Record<string, string>) =>
-        (await CharactersService.getCreationOptions(rulesetId, "race", form, {}, page)).items.find(
-          (r) => r.id === race.id,
-        )!.eligible;
+        (
+          await CharactersService.getCreationOptions(await ownerSessionOf(rulesetId), rulesetId, "race", form, {}, page)
+        ).items.find((r) => r.id === race.id)!.eligible;
 
       expect(await eligible({ [field]: allowed })).toBe(true);
       expect(await eligible({ [field]: other })).toBe(false);
@@ -640,9 +648,9 @@ describe("CharactersService", () => {
       ]);
       invalidateSeededRuleset(rulesetId);
       const eligible = async (form: Record<string, string>) =>
-        (await CharactersService.getCreationOptions(rulesetId, "race", form, {}, page)).items.find(
-          (r) => r.id === race.id,
-        )!.eligible;
+        (
+          await CharactersService.getCreationOptions(await ownerSessionOf(rulesetId), rulesetId, "race", form, {}, page)
+        ).items.find((r) => r.id === race.id)!.eligible;
 
       expect(await eligible({})).toBe(true);
       // The alignment it doesn't say may meet the group, whatever the gender

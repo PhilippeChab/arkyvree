@@ -153,8 +153,9 @@ describe("ContributorsService", () => {
 
       expect((await list(ownerSession)).items.map((c) => c.email)).toEqual([user.emailAddress]);
       expect((await list(viewer)).items).toHaveLength(1);
+      // A private ruleset isn't revealed to a stranger: its list answers as an unknown ruleset's
       const { session: stranger } = await createTestUser("stranger");
-      expect(list(stranger)).rejects.toThrow(ForbiddenError);
+      expect(list(stranger)).rejects.toThrow(NotFoundError);
     });
   });
 

@@ -9,6 +9,7 @@ import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -31,7 +32,9 @@ describe("RequirementsService", () => {
   describe("getRequirements", () => {
     test("lists a feat's or a race's requirements, a whole and/or tree", async () => {
       const { session, rulesetId, feat, race } = await setup();
-      expect(await RequirementsService.getRequirements(rulesetId, "feats", feat.id)).toEqual([]);
+      expect(
+        await RequirementsService.getRequirements(await ownerSessionOf(rulesetId), rulesetId, "feats", feat.id),
+      ).toEqual([]);
 
       const tree = [
         chain,
@@ -41,7 +44,12 @@ describe("RequirementsService", () => {
         { level: "1.2.2", target: "combat.weaponsets.*.ac.total", value: "15", operator: "greater_than_or_equal" },
       ];
       for (const body of tree) await RequirementsService.createRequirement(session, rulesetId, "feats", feat.id, body);
-      const listed = await RequirementsService.getRequirements(rulesetId, "feats", feat.id);
+      const listed = await RequirementsService.getRequirements(
+        await ownerSessionOf(rulesetId),
+        rulesetId,
+        "feats",
+        feat.id,
+      );
       expect(listed.map((r) => [r.level, r.chainingOperator]).sort()).toEqual([
         ["1", "and"],
         ["1.1", null],
@@ -51,15 +59,21 @@ describe("RequirementsService", () => {
       ]);
 
       await RequirementsService.createRequirement(session, rulesetId, "races", race.id, chain);
-      expect(await RequirementsService.getRequirements(rulesetId, "races", race.id)).toMatchObject([
-        { entityType: "races", entityId: race.id },
-      ]);
+      expect(
+        await RequirementsService.getRequirements(await ownerSessionOf(rulesetId), rulesetId, "races", race.id),
+      ).toMatchObject([{ entityType: "races", entityId: race.id }]);
     });
 
     test("throws NotFoundError for a missing ruleset or entity", async () => {
       const { rulesetId, feat } = await setup();
-      await expectRefusedWith(RequirementsService.getRequirements(NIL_UUID, "feats", feat.id), 404);
-      await expectRefusedWith(RequirementsService.getRequirements(rulesetId, "feats", NIL_UUID), 404);
+      await expectRefusedWith(
+        RequirementsService.getRequirements(await ownerSessionOf(NIL_UUID), NIL_UUID, "feats", feat.id),
+        404,
+      );
+      await expectRefusedWith(
+        RequirementsService.getRequirements(await ownerSessionOf(rulesetId), rulesetId, "feats", NIL_UUID),
+        404,
+      );
     });
   });
 

@@ -10,7 +10,7 @@ import { addCharacterLevel, createTestClassLevel } from "@/tests/support/dnd3.5/
 import { addGrants, findLists } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
-import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset, createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import {
@@ -218,9 +218,9 @@ describe("EntitiesService: spells", () => {
         links: { listedIn: [{ toId: wizard, tier: 3 }] },
       });
       const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
-      expect((await EntitiesService.getEntity(fork.id, "spells", source.id)).links).toMatchObject([
-        { toId: wizard, tier: 3 },
-      ]);
+      expect(
+        (await EntitiesService.getEntity(await ownerSessionOf(fork.id), fork.id, "spells", source.id)).links,
+      ).toMatchObject([{ toId: wizard, tier: 3 }]);
 
       const copy = await EntitiesService.updateEntity(session, fork.id, "spells", source.id, {
         name: "Fireball",

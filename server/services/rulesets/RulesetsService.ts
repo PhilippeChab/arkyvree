@@ -24,6 +24,7 @@ import type { Session } from "@/shared/relations.ts";
 import { Archives } from "./concerns/Archives.ts";
 import { Publishes } from "./concerns/Publishes.ts";
 import { Stars } from "./concerns/Stars.ts";
+import { getReadableRuleset } from "./readableRuleset.ts";
 
 /** Whether a policy's check (`check`) lets the session act: refused (forbidden, or not now) is no. */
 function allows(check: () => unknown): boolean {
@@ -110,13 +111,11 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
   }
 
   async getRuleset(session: Session, id: string) {
-    const ruleset = await Rulesets.findOne(db, { id });
-    if (!ruleset) throw new NotFoundError("Ruleset not found");
+    const { policy, ruleset } = await getReadableRuleset(db, session, id);
 
-    const [star, starCount, policy, isUsedAsExtension] = await Promise.all([
+    const [star, starCount, isUsedAsExtension] = await Promise.all([
       StarredRulesets.findOne(db, { userId: session.userId, rulesetId: id }),
       StarredRulesets.count(db, { rulesetId: id }),
-      RulesetsPolicy.for(db, session, ruleset),
       Rulesets.exists(db, { extensionRulesetId: id }),
     ]);
 

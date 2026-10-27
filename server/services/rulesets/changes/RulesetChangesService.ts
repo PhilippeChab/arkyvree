@@ -9,6 +9,7 @@ import {
   Rulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -16,10 +17,8 @@ import { RESTORABLE_ENTITY_TYPES } from "./restorableEntityTypes.ts";
 
 class RulesetChangesService {
   async getChanges(session: Session, rulesetId: string) {
-    const ruleset = await Rulesets.findOne(db, { id: rulesetId });
-    if (!ruleset) throw new NotFoundError("Ruleset not found");
-
-    (await RulesetsPolicy.for(db, session, ruleset)).canViewChanges();
+    const { policy, ruleset } = await getReadableRuleset(db, session, rulesetId);
+    policy.canViewChanges();
 
     if (!ruleset.rulesetId) throw new BadRequestError("Only forked rulesets have local changes");
 

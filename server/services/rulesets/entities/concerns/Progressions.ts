@@ -8,6 +8,7 @@ import { Entities, Modifiers, type RulesetEntityType } from "@/server/repositori
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import EntityWriter from "@/server/services/rulesets/entities/EntityWriter.ts";
+import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { getActivityName } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -97,8 +98,8 @@ export function Progressions<B extends Constructor>(Base: B) {
     }
 
     /** What an entity's progression tabs read beside its owned entities and tables (`ownerId`). */
-    async getProgression(rulesetId: string, type: RulesetEntityType, ownerId: string) {
-      return await withRulesetScope(db, rulesetId, async (scope) =>
+    async getProgression(session: Session, rulesetId: string, type: RulesetEntityType, ownerId: string) {
+      return await withReadableRuleset(db, session, rulesetId, async (scope) =>
         Engine.for(scope).progression(type, ownerId).describe(),
       );
     }

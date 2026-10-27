@@ -11,14 +11,17 @@ const ownerModifierParams = ownerParams.extend({ modifierId: z.string().uuid() }
 export default new Hono<SessionContext>()
   .get("/:id/customization/:entityType/:entityId/modifiers", validate("param", entityParams), async (c) => {
     const { id, entityType, entityId } = c.req.valid("param");
-    return c.json(await ModifiersService.getModifiers(id, entityType, entityId), 200);
+    return c.json(await ModifiersService.getModifiers(c.var.requestSession, id, entityType, entityId), 200);
   })
   .get(
     "/:id/customization/:entityType/:entityId/modifiers/:modifierId",
     validate("param", ownerModifierParams),
     async (c) => {
       const { id, entityType, entityId, modifierId } = c.req.valid("param");
-      return c.json(await ModifiersService.getModifier(id, entityType, entityId, modifierId), 200);
+      return c.json(
+        await ModifiersService.getModifier(c.var.requestSession, id, entityType, entityId, modifierId),
+        200,
+      );
     },
   )
   .post(

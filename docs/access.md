@@ -21,7 +21,7 @@ A user can hold multiple roles for the same entity (e.g. owner of a ruleset they
 
 ## Rulesets — `RulesetsPolicy`
 
-`RulesetsPolicy.for(tx, session, ruleset)` loads the session's contributor role (`contributorsInRules`), and, on a ruleset that isn't public, whether it plays in a campaign on it (what lets it create there).
+`RulesetsPolicy.for(tx, session, ruleset)` loads the session's contributor role (`contributorsInRules`), on a ruleset that isn't public, whether it plays in a campaign on it (what lets it create there and read it), and, on a private ruleset it has no other standing on, whether it edits a character built on it (`Characters.exists(db, { editorId, rulesetId })`: owns one, or actively contributes to one, archived or not; what lets it read it).
 
 | Method | Allowed actors | Notes |
 |---|---|---|
@@ -34,11 +34,12 @@ A user can hold multiple roles for the same entity (e.g. owner of a ruleset they
 | `canUnsubscribeExtension({ inUse })` | **owner only** | adds the in-use guard on top of `canSubscribeExtension` |
 | `canManageContributors` | owner, **Admin** | invite / revoke / role-change |
 | `canManageAdminContributors` | **owner only** | narrowing of the above for touching `Admin`-tier rows |
+| `canRead` | public rulesets: anyone; private: owner, any active contributor, a player (any role) in a live campaign on it, the owner or an active contributor of a character built on it | reads the ruleset and what's under it by its id. Throws `NotFoundError "Ruleset not found"`, the 404 an unknown ruleset gets, so a private ruleset's existence isn't revealed. `isReadable` answers the same yes or no |
 | `canReadContributors` | owner, any contributor | lists the contributors |
 | `canUnarchive` | **owner only** | Archived → Draft |
 | `canViewChanges` | public rulesets: anyone; private: owner + any contributor | overrides metadata |
 
-Reading and listing rulesets is enforced by the `findPage` scopes, not the policy. Rulesets are never hard-deleted: they're archived (`canUpdate`).
+Listing rulesets is enforced by the `findPage` scopes, not the policy. Reading one by its id, and what's under it (its entities, owned entities, groups, templates, tables, progression, links, modifiers, requirements, target paths, Settings, extensions, changes, contributors, a new character's creation picks, an activity's link to it), goes through `canRead`: the services start with `getReadableRuleset` or `withReadableRuleset` (`server/services/rulesets/readableRuleset.ts`), which look the ruleset up and ask it. `canViewChanges` and `canReadContributors` narrow it further. A write keeps its own check, which answers a stranger on a private ruleset 403 as before. A ruleset read as another's ancestor or extension, through that ruleset's view, isn't read by its id: its readers are that ruleset's. A character's reads (its sheet, its level-up, its inventory, its PDF) are gated by the character, not its ruleset. Rulesets are never hard-deleted: they're archived (`canUpdate`).
 
 **What a refusal names.** A check on a change to a ruleset reads what the change reaches: the ruleset's view, and the rulesets built on it (`buildLineageCondition`: a fork of it, an extension's subscribers), which may be other users' private rulesets. What it finds in those it never names: the in-use check answers yes or no (`canDeleteEntity({ inUse })`), and a template's type change names an item its ruleset's view shows and counts those of the rulesets built on it (`ItemEntity.planEdit`). What no change of the ruleset reaches (another fork's items, made from the original or its own copy) isn't read at all.
 
@@ -165,7 +166,7 @@ Anything that *throws* on the basis of ownership is a permission gate and belong
 
 | Policy | Service callers |
 |---|---|
-| `RulesetsPolicy` | `RulesetsService`, `RulesetExtensionsService` (subscribe / unsubscribe), `RulesetChangesService`, the entity services under `server/services/rulesets/` and `ContributorsService` (rulesets), through `RulesetsPolicy.for`. `CampaignsService` / `CharactersService` call `canCreateCampaign` / `canCreateCharacter` on the chosen ruleset |
+| `RulesetsPolicy` | `RulesetsService`, `RulesetExtensionsService` (subscribe / unsubscribe), `RulesetChangesService`, the entity services under `server/services/rulesets/` and `ContributorsService` (rulesets), through `RulesetsPolicy.for`. `CampaignsService` / `CharactersService` call `canCreateCampaign` / `canCreateCharacter` on the chosen ruleset. Every read of a ruleset by its id asks `canRead` through `getReadableRuleset` / `withReadableRuleset` (`CharactersService`'s creation reads among them), and `ActivitiesService` asks `isReadable` before it links to one |
 | `CharactersPolicy` | `CharacterContributorsService`. Most other character writes use `getEditableCharacter` instead and skip the policy class — same effective rule, fewer object instantiations |
 | `CampaignsPolicy` | `CampaignsService`, `CampaignPlayersService`, campaigns sub-services |
 | `AttachmentsService` registry | not a `BasePolicy` — uses its `ATTACHABLE_TYPES` config map. Currently registered: `User` (avatar), `Character` (portrait) |

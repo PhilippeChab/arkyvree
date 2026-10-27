@@ -9,6 +9,7 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { addClassSkills } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { ownerSessionOf } from "@/tests/support/rulesets.ts";
 import {
   SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,
@@ -127,7 +128,13 @@ describe("EntitiesService: skills", () => {
       answerOf(spellcraft, "Intelligence"),
     );
 
-    const { items } = await EntitiesService.getEntities(ruleset.id, "skills", {}, { limit: 10, page: 1 });
+    const { items } = await EntitiesService.getEntities(
+      await ownerSessionOf(ruleset.id),
+      ruleset.id,
+      "skills",
+      {},
+      { limit: 10, page: 1 },
+    );
     expect(items).toMatchObject([
       { name: "Climb", fields: fieldsOf({ impactedByWeight: true, usableWithoutTraining: true }) },
       { name: "Spellcraft", fields: fieldsOf({ impactedByWeight: false, usableWithoutTraining: false }) },
@@ -144,7 +151,15 @@ describe("EntitiesService: skills", () => {
     );
     expect(swim).toMatchObject({ fields: fieldsOf({ impactedByWeight: true, checkPenaltyMultiplier: 2 }) });
     const listed = async () =>
-      (await EntitiesService.getEntities(ruleset.id, "skills", {}, { limit: 10, page: 1 })).items[0];
+      (
+        await EntitiesService.getEntities(
+          await ownerSessionOf(ruleset.id),
+          ruleset.id,
+          "skills",
+          {},
+          { limit: 10, page: 1 },
+        )
+      ).items[0];
     expect(await listed()).toMatchObject({
       name: "Swim",
       fields: fieldsOf({ impactedByWeight: true, checkPenaltyMultiplier: 2 }),
@@ -167,7 +182,13 @@ describe("EntitiesService: skills", () => {
       body({ impactedByWeight: false }),
     );
     // Read the list once so the ruleset's cache holds the old values.
-    await EntitiesService.getEntities(ruleset.id, "skills", {}, { limit: 10, page: 1 });
+    await EntitiesService.getEntities(
+      await ownerSessionOf(ruleset.id),
+      ruleset.id,
+      "skills",
+      {},
+      { limit: 10, page: 1 },
+    );
 
     const update = values({
       name: "Jump",
@@ -179,7 +200,13 @@ describe("EntitiesService: skills", () => {
     expect(await EntitiesService.updateEntity(session, ruleset.id, "skills", created.id, bodyOf(update))).toMatchObject(
       answerOf(update, "Dexterity"),
     );
-    const after = await EntitiesService.getEntities(ruleset.id, "skills", {}, { limit: 10, page: 1 });
+    const after = await EntitiesService.getEntities(
+      await ownerSessionOf(ruleset.id),
+      ruleset.id,
+      "skills",
+      {},
+      { limit: 10, page: 1 },
+    );
     expect(after.items).toMatchObject([
       { id: created.id, name: "Jump", fields: fieldsOf({ impactedByWeight: true, usableWithoutTraining: false }) },
     ]);

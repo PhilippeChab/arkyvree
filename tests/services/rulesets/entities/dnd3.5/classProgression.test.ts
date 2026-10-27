@@ -9,7 +9,7 @@ import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { readClassTable } from "@/tests/support/dnd3.5/classTables.ts";
 import { linksOf } from "@/tests/support/entityLinks.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -24,7 +24,7 @@ async function forkWithClass(name: string) {
     name,
     rulesetId: fork.ancestorRulesetIds[0],
   }))!;
-  const levels = await EntitiesService.getOwnedEntities(fork.id, "classes", klass.id);
+  const levels = await EntitiesService.getOwnedEntities(await ownerSessionOf(fork.id), fork.id, "classes", klass.id);
   return { session, fork, klass, levelId: (level: number) => levels.find((l) => l.position === level)!.id };
 }
 
@@ -34,10 +34,17 @@ async function save(session: ReturnType<typeof makeSession>, rulesetId: string, 
   const byLevel = <T extends { position: number }>(rows: T[]) => new Map(rows.map((row) => [row.position, row]));
   return {
     saved,
-    levels: byLevel(await EntitiesService.getOwnedEntities(rulesetId, "classes", saved.entityId)),
+    levels: byLevel(
+      await EntitiesService.getOwnedEntities(await ownerSessionOf(rulesetId), rulesetId, "classes", saved.entityId),
+    ),
     perDay: byLevel(await readClassTable(rulesetId, saved.entityId, "spells")),
     known: byLevel(await readClassTable(rulesetId, saved.entityId, "spells-known")),
-    progression: await EntitiesService.getProgression(rulesetId, "classes", saved.entityId),
+    progression: await EntitiesService.getProgression(
+      await ownerSessionOf(rulesetId),
+      rulesetId,
+      "classes",
+      saved.entityId,
+    ),
   };
 }
 
@@ -67,7 +74,12 @@ describe("EntitiesService: a class's progression", () => {
     ]);
     // Another level, and the ancestor's class, stay as they were
     expect(babAndSkills(levels.get(3)!)).toEqual([2, 4]);
-    const ancestor = await EntitiesService.getOwnedEntities(fork.ancestorRulesetIds[0], "classes", klass.id);
+    const ancestor = await EntitiesService.getOwnedEntities(
+      await ownerSessionOf(fork.ancestorRulesetIds[0]),
+      fork.ancestorRulesetIds[0],
+      "classes",
+      klass.id,
+    );
     expect(babAndSkills(ancestor.find((level) => level.position === 1)!)).toEqual([0, 4]);
   });
 
@@ -78,7 +90,7 @@ describe("EntitiesService: a class's progression", () => {
       name: "Fortitude",
       rulesetId: fork.ancestorRulesetIds[0],
     }))!;
-    const before = await EntitiesService.getOwnedEntities(fork.id, "classes", klass.id);
+    const before = await EntitiesService.getOwnedEntities(await ownerSessionOf(fork.id), fork.id, "classes", klass.id);
     const first = before.find((level) => level.position === 1)!;
     const baseBonus = linksOf(first, "baseBonus").map(({ amount, toId }) => ({
       toId,
@@ -173,9 +185,9 @@ describe("EntitiesService: a class's progression", () => {
     const { saved } = await save(session, fork.id, klass.id, {
       levels: [{ levelId: levelId(1), fields: { [CLASS_LEVEL_BAB]: 0, [CLASS_LEVEL_SKILL_POINTS]: 4 } }],
     });
-    const first = (await EntitiesService.getOwnedEntities(fork.id, "classes", saved.entityId)).find(
-      (level) => level.position === 1,
-    )!;
+    const first = (
+      await EntitiesService.getOwnedEntities(await ownerSessionOf(fork.id), fork.id, "classes", saved.entityId)
+    ).find((level) => level.position === 1)!;
     const [gated] = await Modifiers.create(db, {
       sourceId: first.id,
       sourceType: "class-levels",
@@ -212,7 +224,8 @@ describe("EntitiesService: a class's progression", () => {
 
   test("refuses a spell list's picks as a pool's", async () => {
     const { session, fork, klass, levelId } = await forkWithClass("Sorcerer");
-    const list = (await EntitiesService.getProgression(fork.id, "classes", klass.id)).spellList!;
+    const list = (await EntitiesService.getProgression(await ownerSessionOf(fork.id), fork.id, "classes", klass.id))
+      .spellList!;
 
     await expectRefusedWith(
       EntitiesService.updateProgression(session, fork.id, "classes", klass.id, {
@@ -224,17 +237,22 @@ describe("EntitiesService: a class's progression", () => {
 
   test("reads the picks a feature gives in its pool where it's granted", async () => {
     const { fork, klass } = await forkWithClass("Fighter");
-    const levels = await EntitiesService.getOwnedEntities(fork.id, "classes", klass.id);
+    const levels = await EntitiesService.getOwnedEntities(await ownerSessionOf(fork.id), fork.id, "classes", klass.id);
     const bonusFeat = linksOf(levels[0], "grants").find((feat) => feat.toName === "Bonus Feat (Fighter)")!;
 
-    const { featPicks } = await EntitiesService.getProgression(fork.id, "classes", klass.id);
+    const { featPicks } = await EntitiesService.getProgression(
+      await ownerSessionOf(fork.id),
+      fork.id,
+      "classes",
+      klass.id,
+    );
 
     expect(featPicks[bonusFeat.toId]).toEqual({ "Fighter Bonus Feat": 1 });
   });
 
   test("moves a pool's picks between levels, and reads them back", async () => {
     const { session, fork, klass, levelId } = await forkWithClass("Wizard");
-    const before = await EntitiesService.getProgression(fork.id, "classes", klass.id);
+    const before = await EntitiesService.getProgression(await ownerSessionOf(fork.id), fork.id, "classes", klass.id);
     const pool = before.pools.find((p) => p.name === "Wizard Specialization")!;
     expect(pool.picks).toEqual({ [levelId(1)]: 1 });
 
@@ -250,7 +268,12 @@ describe("EntitiesService: a class's progression", () => {
       ],
     });
 
-    const copied = await EntitiesService.getOwnedEntities(fork.id, "classes", saved.entityId);
+    const copied = await EntitiesService.getOwnedEntities(
+      await ownerSessionOf(fork.id),
+      fork.id,
+      "classes",
+      saved.entityId,
+    );
     const third = copied.find((level) => level.position === 3)!.id;
     const picks = progression.pools.find((p) => p.name === "Wizard Specialization")!.picks;
     expect(Object.entries(picks).filter(([, count]) => count > 0)).toEqual([[third, 2]]);
@@ -263,7 +286,7 @@ describe("EntitiesService: a class's progression", () => {
       levels: [{ levelId: levelId(1), fields: { [CLASS_LEVEL_BAB]: 1, [CLASS_LEVEL_SKILL_POINTS]: 4 } }],
     });
     const own = (await Entities.findOne<Klass>(db, { entityType: "classes", id: saved.entityId }))!;
-    const ownLevels = await EntitiesService.getOwnedEntities(fork.id, "classes", own.id);
+    const ownLevels = await EntitiesService.getOwnedEntities(await ownerSessionOf(fork.id), fork.id, "classes", own.id);
     const first = ownLevels.find((level) => level.position === 1)!.id;
 
     const change = { levels: [{ levelId: first, fields: { [CLASS_LEVEL_BAB]: 1, [CLASS_LEVEL_SKILL_POINTS]: 6 } }] };
@@ -290,7 +313,9 @@ describe("EntitiesService: a class's progression", () => {
       }),
       400,
     );
-    expect((await EntitiesService.getEntity(fork.id, "classes", own.id)).updatedAt).toBe(saved.updatedAt);
+    expect((await EntitiesService.getEntity(await ownerSessionOf(fork.id), fork.id, "classes", own.id)).updatedAt).toBe(
+      saved.updatedAt,
+    );
   });
 
   test("refuses a body that isn't a save, as its rules read it, writing nothing", async () => {
@@ -305,7 +330,9 @@ describe("EntitiesService: a class's progression", () => {
       const refused = EntitiesService.updateProgression(session, fork.id, "classes", klass.id, body as never);
       await expectRefusedWith(refused, 400);
     }
-    expect((await EntitiesService.getEntity(fork.id, "classes", klass.id)).updatedAt).toBe(klass.updatedAt);
+    expect(
+      (await EntitiesService.getEntity(await ownerSessionOf(fork.id), fork.id, "classes", klass.id)).updatedAt,
+    ).toBe(klass.updatedAt);
   });
 
   test("writes nothing for a save that changes nothing, not even a copy of an inherited class", async () => {

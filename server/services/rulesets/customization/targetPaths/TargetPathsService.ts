@@ -1,8 +1,10 @@
 import { Engine } from "@/engine/index.ts";
-import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { paginateItems } from "@/server/repositories/index.ts";
+import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";
+import type { Session } from "@/shared/relations.ts";
 
 class TargetPathsService {
   /**
@@ -10,6 +12,7 @@ class TargetPathsService {
    * Uses cached paths+labels so subsequent calls are instant.
    */
   async getCompletions(
+    session: Session,
     rulesetId: string,
     partialPath: string,
     position: number,
@@ -20,7 +23,7 @@ class TargetPathsService {
     page: number = 1,
     flat: boolean = false,
   ) {
-    return await withRulesetScope(db, rulesetId, async (scope) => {
+    return await withReadableRuleset(db, session, rulesetId, async (scope) => {
       const catalog = await RulesetViews.getTargetPaths(scope.ruleset, kind);
       const completions = Engine.for(scope)
         .targetPaths()
@@ -33,8 +36,14 @@ class TargetPathsService {
    * Validate a target path like a language server, among the paths an entity type takes (`entityType`, every path
    * without one). A valid path's result carries its definition: what it takes.
    */
-  async validatePath(rulesetId: string, path: string, kind: TargetPathKind = "modifier", entityType?: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) =>
+  async validatePath(
+    session: Session,
+    rulesetId: string,
+    path: string,
+    kind: TargetPathKind = "modifier",
+    entityType?: string,
+  ) {
+    return await withReadableRuleset(db, session, rulesetId, async (scope) =>
       Engine.for(scope)
         .targetPaths()
         .validate(await RulesetViews.getTargetPaths(scope.ruleset, kind), path, entityType),

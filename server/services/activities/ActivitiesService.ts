@@ -13,6 +13,7 @@ import {
   Rulesets,
   Visibility,
 } from "@/server/repositories/index.ts";
+import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { isNavigableTarget } from "@/shared/activity.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import { buildEntityPagePath, hasCustomizationPage } from "@/shared/customization/entities.ts";
@@ -84,6 +85,16 @@ class ActivitiesService {
     return buildEntityPagePath(rulesetId, page.type, page.id, storage.customizationPages(), edited?.to);
   }
 
+  /**
+   * A ruleset's page, or null when it's gone or the session may not read it (`RulesetsPolicy.isReadable`): a private
+   * ruleset's existence isn't revealed.
+   */
+  private async rulesetUrl(session: Session, rulesetId: string) {
+    const ruleset = await Rulesets.findOne(db, { id: rulesetId });
+    if (!ruleset || !(await RulesetsPolicy.for(db, session, ruleset)).isReadable()) return null;
+    return `/rulesets/${rulesetId}`;
+  }
+
   async getActivities(
     session: Session,
     where: {
@@ -110,7 +121,7 @@ class ActivitiesService {
     switch (targetType) {
       // Top-level records link to their page, archived or not, until they're deleted
       case TARGET_TYPES.rulesets:
-        return (await Rulesets.findOne(db, { id: targetId })) ? `/rulesets/${targetId}` : null;
+        return await this.rulesetUrl(session, targetId);
       case TARGET_TYPES.characters:
       // Character sub-entities: targetId is the characterId
       case TARGET_TYPES.advancements:
