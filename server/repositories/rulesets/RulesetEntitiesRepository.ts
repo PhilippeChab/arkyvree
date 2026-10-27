@@ -7,8 +7,8 @@ import { entitiesInRules, entitySnapshotsInRules } from "@/drizzle/schema.ts";
 import { RULESET_ENTITY_TYPES, type RulesetEntityType } from "./entityTypes.ts";
 
 /**
- * The rows `findNames` reads: a ruleset's own, those with these ids, or the rows of these rulesets themselves (not a
- * campaign's), of these names when it's given them.
+ * The rows `findNames` reads: a ruleset's own, those with these ids, or the rows of these rulesets, of these names when
+ * it's given them.
  */
 type NamesWhere = { rulesetId: string } | { ids: string[] } | { names?: string[]; rulesetIds: string[] };
 
@@ -28,7 +28,6 @@ class RulesetEntitiesRepository {
       return and(
         inArray(entitiesInRules.rulesetId, where.rulesetIds),
         where.names && inArray(entitiesInRules.name, where.names),
-        isNull(entitiesInRules.campaignId),
       );
     }
     if ("ids" in where) return inArray(entitiesInRules.id, where.ids);
@@ -51,7 +50,7 @@ class RulesetEntitiesRepository {
 
   /**
    * The rulesets' own entities of these types, by id and name, each with its type and ruleset: rows of the
-   * ruleset itself, not a campaign's, and not a copy-on-write copy (a copy pairs with its source by its snapshot).
+   * ruleset itself, not a copy-on-write copy (a copy pairs with its source by its snapshot).
    */
   async findNativeNames(db: Db, where: { entityTypes: string[]; rulesetIds: string[] }) {
     if (where.rulesetIds.length === 0) return [];
@@ -73,7 +72,6 @@ class RulesetEntitiesRepository {
           inArray(entitiesInRules.type, where.entityTypes),
           inArray(entitiesInRules.rulesetId, where.rulesetIds),
           isNull(entitySnapshotsInRules.id),
-          isNull(entitiesInRules.campaignId),
         ),
       )
       .orderBy(entitiesInRules.type, entitiesInRules.name, entitiesInRules.id);
@@ -81,13 +79,13 @@ class RulesetEntitiesRepository {
 
   /**
    * The entities of every type, by id and name, each with its type and ruleset, of a ruleset (`rulesetId`) and of
-   * these rulesets (`rulesetIds`, its extensions) whose name the ruleset has and one of these has too: its own rows, not
-   * a campaign's, copies included (a copy shows under its own name).
+   * these rulesets (`rulesetIds`, its extensions) whose name the ruleset has and one of these has too: its own rows,
+   * copies included (a copy shows under its own name).
    */
   async findOwnNamesakes(db: Db, where: { rulesetId: string; rulesetIds: string[] }) {
     if (where.rulesetIds.length === 0) return [];
     const namesake = alias(entitiesInRules, "namesake");
-    // An entity of the same type and name, not a campaign's, in one of `rulesetIds`
+    // An entity of the same type and name in one of `rulesetIds`
     const namedIn = (rulesetIds: string[]) =>
       exists(
         db
@@ -98,7 +96,6 @@ class RulesetEntitiesRepository {
               eq(namesake.type, entitiesInRules.type),
               eq(namesake.name, entitiesInRules.name),
               inArray(namesake.rulesetId, rulesetIds),
-              isNull(namesake.campaignId),
             ),
           ),
       );
@@ -110,7 +107,6 @@ class RulesetEntitiesRepository {
         and(
           inArray(entitiesInRules.type, RULESET_ENTITY_TYPES),
           inArray(entitiesInRules.rulesetId, [where.rulesetId, ...where.rulesetIds]),
-          isNull(entitiesInRules.campaignId),
           namedIn([where.rulesetId]),
           namedIn(where.rulesetIds),
         ),

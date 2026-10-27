@@ -9,11 +9,6 @@ import type { Ruleset } from "@/shared/relations.ts";
 import CowDataReader from "./CowDataReader.ts";
 import RawDataReader from "./RawDataReader.ts";
 
-/** A ruleset's own rows' key: a campaign's are its own. */
-function getRawDataKey(rulesetId: string, campaignId?: string): string {
-  return campaignId ? `${rulesetId}:${campaignId}` : rulesetId;
-}
-
 /**
  * The rulesets' cache: what a ruleset's view is built from, read once and kept for every reader, and what the engine
  * lists of a view. Per ruleset, it keeps its copy-on-write data (`CowDataReader`), its own rows (`RawDataReader`, a
@@ -68,20 +63,15 @@ class RulesetViews {
   }
 
   /** A ruleset's view: its own rows and its source chain's, composed by its copy-on-write data. */
-  async getData(ruleset: RulesetSources & { baseRules: BaseRules }, campaignId?: string): Promise<RulesetData> {
+  async getData(ruleset: RulesetSources & { baseRules: BaseRules }): Promise<RulesetData> {
     const cowData = await this.getCowData(ruleset);
-    const chain = await Promise.all([
-      this.getRawData(ruleset.id, campaignId),
-      ...cowData.sourceChain.map((id) => this.getRawData(id)),
-    ]);
+    const chain = await Promise.all([ruleset.id, ...cowData.sourceChain].map((id) => this.getRawData(id)));
     return Engine.copyOnWrite().buildView(ruleset, chain, cowData);
   }
 
-  /** A ruleset's own rows (a campaign's, with one), none of its ancestors': pinned when it's a system ruleset. */
-  async getRawData(rulesetId: string, campaignId?: string): Promise<RulesetRawData> {
-    return this.rawData.getOrFetch(getRawDataKey(rulesetId, campaignId), [rulesetId], () =>
-      RawDataReader.read(rulesetId, campaignId),
-    );
+  /** A ruleset's own rows, none of its ancestors': pinned when it's a system ruleset. */
+  async getRawData(rulesetId: string): Promise<RulesetRawData> {
+    return this.rawData.getOrFetch(rulesetId, [rulesetId], () => RawDataReader.read(rulesetId));
   }
 
   /** A ruleset's target paths of a kind, and its template paths: what a modifier's or a requirement's check reads. */

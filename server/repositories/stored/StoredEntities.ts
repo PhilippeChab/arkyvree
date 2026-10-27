@@ -1,4 +1,4 @@
-import { and, count, eq, inArray, isNull, notInArray, or, type SQL, sql } from "drizzle-orm";
+import { and, count, eq, inArray, notInArray, or, type SQL, sql } from "drizzle-orm";
 import type { PgInsertValue } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
@@ -45,14 +45,13 @@ interface PageBounds {
 
 /**
  * A list of a kind's entities (`entityType`): a ruleset's own, its source chain's (less what a later ruleset copied,
- * and the `hiddenIds` its copy-on-write data gives), a campaign's; those of `ids`, of the values of their fields, the
+ * and the `hiddenIds` its copy-on-write data gives); those of `ids`, of the values of their fields, the
  * targets of their single links and their partition (`EntityFilters`: an item's template flag, a feat's family, a
  * race's `pc`), the targets of the links of a role from a kind (`linkedBy`: an aptitude a feat is listed in); searched,
  * in an order.
  */
 export interface EntityListWhere extends EntityFilters {
   ancestorRulesetIds?: string[];
-  campaignId?: string;
   childOnly?: boolean;
   entityType: string;
   hiddenIds?: string[];
@@ -74,7 +73,6 @@ const OWN_COLUMNS = {
   id: entitiesInRules.id,
   type: entitiesInRules.type,
   rulesetId: entitiesInRules.rulesetId,
-  campaignId: entitiesInRules.campaignId,
   name: entitiesInRules.name,
   description: entitiesInRules.description,
   ownerId: entitiesInRules.ownerId,
@@ -150,13 +148,13 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   }
 
   /**
-   * A kind's entities in a ruleset's list: its own (a campaign's too, with one), and its source chain's (each less what
+   * A kind's entities in a ruleset's list: its own, and its source chain's (each less what
    * a later ruleset copied, and the hidden ids its copy-on-write data gives: a book's copy that lost to another book's,
    * a book's entity the ruleset's own of its name shadows).
    */
   private buildRulesetCondition(db: Db, where: Omit<EntityListWhere, "search">): SQL {
     const { ancestorRulesetIds = [], childOnly, entityType, hiddenIds } = where;
-    const childOwned = and(eq(entitiesInRules.rulesetId, where.rulesetId), isNull(entitiesInRules.campaignId))!;
+    const childOwned = eq(entitiesInRules.rulesetId, where.rulesetId);
     if (childOnly) return childOwned;
     const inheritedClauses = ancestorRulesetIds.map((ancestorId, i) => {
       const overriddenBy = [where.rulesetId, ...ancestorRulesetIds.slice(0, i)];
@@ -172,17 +170,10 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
             ),
           ),
       );
-      return and(eq(entitiesInRules.rulesetId, ancestorId), isNull(entitiesInRules.campaignId), copied);
+      return and(eq(entitiesInRules.rulesetId, ancestorId), copied);
     });
     const hidden = hiddenIds && hiddenIds.length > 0 ? notInArray(entitiesInRules.id, hiddenIds) : undefined;
     const inherited = inheritedClauses.length > 0 ? and(or(...inheritedClauses), hidden) : undefined;
-    if (where.campaignId) {
-      const campaignOwned = and(
-        eq(entitiesInRules.rulesetId, where.rulesetId),
-        eq(entitiesInRules.campaignId, where.campaignId),
-      );
-      return or(childOwned, inherited, campaignOwned)!;
-    }
     return inherited ? or(childOwned, inherited)! : childOwned;
   }
 
@@ -354,7 +345,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   /**
    * Writes a kind's new entities (`writes`), each an entity, its fields (one always written it leaves out, or clears,
    * its default: `writtenFields`) and its single links, its partition its kind's default when it gives none. An owned
-   * entity takes its owner's ruleset and campaign. Their fields are stored as every write stores them, but a copy's
+   * entity takes its owner's ruleset. Their fields are stored as every write stores them, but a copy's
    * (`copied`: copy-on-write's of another entity, its source's rows as they're stored), which keeps them as they are.
    * Answers their ids, in order.
    */
@@ -362,15 +353,11 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     if (writes.length === 0) return [];
     const storage = Engine.storage();
     const ownerType = storage.registries().entityTypes.find((def) => def.type === entityType)?.ownerType ?? null;
-    const owners = new Map<string, { campaignId: string | null; rulesetId: string }>();
+    const owners = new Map<string, { rulesetId: string }>();
     const ownerIds = [...new Set(writes.flatMap((write) => (write.ownerId ? [write.ownerId] : [])))];
     if (ownerIds.length > 0) {
       const found = await db
-        .select({
-          id: entitiesInRules.id,
-          rulesetId: entitiesInRules.rulesetId,
-          campaignId: entitiesInRules.campaignId,
-        })
+        .select({ id: entitiesInRules.id, rulesetId: entitiesInRules.rulesetId })
         .from(entitiesInRules)
         .where(inArray(entitiesInRules.id, ownerIds));
       for (const row of found) owners.set(row.id, row);
@@ -382,7 +369,6 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
         id: write.id,
         type: entityType,
         rulesetId: owner?.rulesetId ?? write.rulesetId!,
-        campaignId: owner ? owner.campaignId : (write.campaignId ?? null),
         name: ownerType ? null : write.name!,
         description: ownerType ? null : (write.description ?? null),
         ownerId: write.ownerId ?? null,
@@ -510,7 +496,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
 
   /**
    * Entities of a kind by id, by name; those its owners own (`ownerIds`: a class's levels, by position); or those
-   * of rulesets as their views show them (`rulesetIds`): none of a campaign's.
+   * of rulesets as their views show them (`rulesetIds`).
    */
   async findMany<R extends Pick<EntityRecord, "id"> = EntityRecord>(
     db: Db,
@@ -528,8 +514,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
         [
           "ids" in where && inArray(entitiesInRules.id, where.ids),
           "ownerIds" in where && inArray(entitiesInRules.ownerId, where.ownerIds),
-          "rulesetIds" in where &&
-            and(inArray(entitiesInRules.rulesetId, where.rulesetIds), isNull(entitiesInRules.campaignId))!,
+          "rulesetIds" in where && inArray(entitiesInRules.rulesetId, where.rulesetIds),
         ],
         [eq(entitiesInRules.type, where.entityType)],
       ),
@@ -682,13 +667,10 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   }
 
   /**
-   * Entities as stored, each with its fields and links: by id (`ids`, in no order), or a ruleset's own, every kind's (a
-   * campaign's too, with one), none of its sources', by name then id.
+   * Entities as stored, each with its fields and links: by id (`ids`, in no order), or a ruleset's own, every kind's,
+   * none of its sources', by name then id.
    */
-  async findStored(
-    db: Db,
-    where: { campaignId?: string; rulesetId: string } | { ids: string[] },
-  ): Promise<StoredEntity[]> {
+  async findStored(db: Db, where: { rulesetId: string } | { ids: string[] }): Promise<StoredEntity[]> {
     if ("ids" in where && where.ids.length === 0) return [];
     if ("ids" in where)
       return await this.readStored(db, inArray(entitiesInRules.id, where.ids), [this.orderBy(entitiesInRules.id)]);
@@ -701,10 +683,10 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   }
 
   /**
-   * The ids of a ruleset's own entities (a campaign's too, with one) that a link with a tier points at, from any
-   * ruleset's entity (a spell list's spell at a level).
+   * The ids of a ruleset's own entities that a link with a tier points at, from any ruleset's entity (a spell list's
+   * spell at a level).
    */
-  async findTieredIds(db: Db, where: { campaignId?: string; rulesetId: string }): Promise<Set<string>> {
+  async findTieredIds(db: Db, where: { rulesetId: string }): Promise<Set<string>> {
     const own = db
       .select({ id: entitiesInRules.id })
       .from(entitiesInRules)
@@ -738,13 +720,12 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     write: EntityWrite,
     where: { expectedUpdatedAt?: string; id: string },
   ): Promise<R[]> {
-    const { name, description, campaignId, partition, position } = write;
+    const { name, description, partition, position } = write;
     const updated = await db
       .update(entitiesInRules)
       .set({
         ...(name !== undefined && { name }),
         ...(description !== undefined && { description }),
-        ...(campaignId !== undefined && { campaignId }),
         ...(partition !== undefined && { partition }),
         ...(position !== undefined && { position }),
         updatedAt: write.updatedAt ?? new Date().toISOString(),

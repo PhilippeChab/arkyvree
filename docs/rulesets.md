@@ -221,12 +221,12 @@ A fork's own entity wins over an extension's of its name, of every kind
 (`CowDataBuilder`'s own namesakes pass, over `RulesetEntities.findOwnNamesakes`: the
 fork's entities and its extensions' of a name both have; `CowData.isShadowed`). Not
 over its base's, whose entity an unsubscribe would show again is refused instead
-(above), and a campaign's entity wins over none. The checks above read the fork's
-view, but an extension's entities show in every subscriber's: its author may add or
-rename one to a name a subscriber's own entity has, which no check of the author's
-reads, and which the author is never refused for, so nothing of another user's
-ruleset reaches them. The subscriber's view then shows its own entity, and the
-book's of its name is overridden by it, as a local copy overrides what it copied:
+(above). The checks above read the fork's view, but an extension's entities show in
+every subscriber's: its author may add or rename one to a name a subscriber's own
+entity has, which no check of the author's reads, and which the author is never
+refused for, so nothing of another user's ruleset reaches them. The subscriber's
+view then shows its own entity, and the book's of its name is overridden by it, as a
+local copy overrides what it copied:
 
 - the book's entity's own rows go with it, never merged into the fork's: its
   customizations and its links to lists (a homebrew feat and a book's of one name

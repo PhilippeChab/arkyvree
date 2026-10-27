@@ -11,7 +11,7 @@ This doc categorizes every table by which primitive its services use, and what's
 
 A ruleset's entities and a character's build are stored in tables no game names (migration `drizzle/0080_generic-tables.sql`). What a module's data is, each module declares (`RulesetModule.storage`, `StorageDeclaration`: 3.5's `engine/rulesets/dnd3.5/storage/Dnd35Storage.ts`), and the server reads and writes the tables by those declarations (`Engine.storage()`), holding no game's mapping.
 
-- **Entities:** `rules.entities`: an entity's type, scope (its ruleset, its campaign), name and description, its partition (a name is unique within it: a class's or a race's kind), and, for an entity another owns (a class level), its owner and its position (its level).
+- **Entities:** `rules.entities`: an entity's type, its ruleset, name and description, its partition (a name is unique within it: a class's or a race's kind), and, for an entity another owns (a class level), its owner and its position (its level).
 - **Fields:** `rules.entity_fields`, one typed value a row (`text_value`, `number_value` or `flag_value`, as its field's `value_kind` says), a set one row per value by ordinal (a key, not an order). A ruleset's settings are `rules.ruleset_fields`, a character's `character.fields`. A missing row is no value.
 - **Links:** `rules.entity_links`: an entity's link of a role to another (a feat listed in an aptitude, a class level's grant through a pool, a save's key ability), with a tier, an amount and whether it's free, in its from-entity's order (`ordinal`). A ruleset's are `rules.ruleset_links`, a character's `character.links` (its race, its scores, its languages: one a role and an entity, in no order of their own).
 - **Advancement:** a character's levels are `character.advancements`, each an entry on a track (`entry_id`: its class level, an entry on its class's track, which a character takes once) at its position, unique among its character's, and their picks `character.advancement_picks`, by step (its hit points, its feats through their pools, its skills' ranks).
@@ -71,7 +71,7 @@ Archiving preserves content for later restoration.
 
 - `Characters` and `Campaigns` have a hard-delete path on **archived rows**:
   - `DELETE /api/characters/:id/permanent` — owner only, must be archived, must not be linked to a campaign that is itself active (an archived campaign no longer "uses" the character). Its bonded children go through FK CASCADE, and the database deletes every deleted character's attachments and modifiers (see *Polymorphic rows* below).
-  - `DELETE /api/campaigns/:id/permanent` — GM only, must be archived. Every FK to `campaigns.id` is `ON DELETE CASCADE`, so the row delete wipes membership rows (`players`, `invites`, `player_characters`) **and** every campaign-scoped ruleset entity (its `rules.entities` rows, whatever their type: a class with its levels, their fields and their links) in one shot.
+  - `DELETE /api/campaigns/:id/permanent` — GM only, must be archived. Every FK to `campaigns.id` is `ON DELETE CASCADE`, so the row delete wipes its membership rows (`players`, `invites`, `player_characters`) in one shot.
   - Both endpoints enforce ownership and archive-state checks through `CharactersPolicy.canHardDelete` / `CampaignsPolicy.canHardDelete`.
 - `Rulesets` has no hard-delete path. Archive is the only terminal state.
 
