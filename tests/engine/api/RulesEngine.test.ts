@@ -4,7 +4,8 @@ import Modules from "@/engine/api/Modules.ts";
 import RulesEngine from "@/engine/api/RulesEngine.ts";
 import StorageEngine from "@/engine/api/StorageEngine.ts";
 import type { KindCapabilities } from "@/engine/core/entities/index.ts";
-import type { EntityKindDeclaration, RulesetModule } from "@/engine/core/module/index.ts";
+import type { FormField, GroupFormField } from "@/engine/core/fields/index.ts";
+import type { EntityKindDeclaration, RulesDeclaration, RulesetModule } from "@/engine/core/module/index.ts";
 import type { StandaloneKind } from "@/engine/core/view/index.ts";
 import { Engine, type EntityAction, type EntityKinds, RulesError } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
@@ -36,6 +37,11 @@ function accepts(call: () => unknown): boolean {
   }
 }
 
+/** A form's fields with a value of their own, a group's too: what a list's column or a class table's track reads. */
+function inputsOf(fields: readonly FormField[] | undefined): Exclude<FormField, GroupFormField>[] {
+  return (fields ?? []).flatMap((field) => (field.input === "group" ? inputsOf(field.fields) : [field]));
+}
+
 /**
  * Every registered module's kinds no other owns, as its storage declares them, each with what its rules' class says it
  * can do (`capabilitiesOf`): what a kind's description and actions are held to, from the class's side.
@@ -50,14 +56,14 @@ function readClassKinds(): ClassKind[] {
   );
 }
 
-/** A registered module whose rules declare its kinds as `kinds` says, and whose entities answer as `entities` says. */
-function withKinds(
+/** A registered module whose rules are as `change` makes them, and whose entities answer as `entities` says. */
+function withRules(
   module: RulesetModule,
-  kinds: (declared: EntityKindDeclaration[]) => EntityKindDeclaration[],
+  change: (declared: RulesDeclaration) => RulesDeclaration,
   entities: Partial<RulesetModule["entities"]> = {},
 ): RulesetModule {
   const rules = module.ruleset.describeRules();
-  const ruleset = { describeRules: () => ({ ...rules, kinds: kinds(rules.kinds) }) };
+  const ruleset = { describeRules: () => change(rules) };
   return {
     ...module,
     entities: Object.assign(Object.create(module.entities) as RulesetModule["entities"], entities),
@@ -170,14 +176,90 @@ describe("The rules' engine", () => {
     const build = (broken: RulesetModule) => () => new RulesEngine([[baseRules, broken]], storage);
     const plain = readClassKinds().find(({ capabilities }) => !capabilities.copies)!;
     const unknown = { icon: "help", type: "unknown-kind" as StandaloneKind };
-    expect(build(withKinds(module, (kinds) => [...kinds, unknown]))).toThrow("No entity kind unknown-kind");
+    const withKinds = (kinds: (declared: EntityKindDeclaration[]) => EntityKindDeclaration[]) =>
+      withRules(module, (rules) => ({ ...rules, kinds: kinds(rules.kinds) }));
+    expect(build(withKinds((kinds) => [...kinds, unknown]))).toThrow("No entity kind unknown-kind");
     const worded = (kinds: EntityKindDeclaration[]) =>
       kinds.map((kind) => (kind.type === plain.type ? { ...kind, copies: { locked: [], most: 1 } } : kind));
-    expect(build(withKinds(module, worded))).toThrow(`${plain.type} make no copies`);
+    expect(build(withKinds(worded))).toThrow(`${plain.type} make no copies`);
     const capabilitiesOf = (type: StandaloneKind) => ({
       ...module.entities.capabilitiesOf(type),
       lockedName: { field: "noSuchField", reason: "Locked" },
     });
-    expect(build(withKinds(module, (kinds) => kinds, { capabilitiesOf }))).toThrow("noSuchField");
+    expect(build(withRules(module, (rules) => rules, { capabilitiesOf }))).toThrow("noSuchField");
+  });
+
+  // A list and a form read one declaration: what a column says of its value is its field's form's
+  test("describes each list's column with what its field's form says of its value", () => {
+    const columns = Object.values(Engine.rules().describeAll()).flatMap((rules) =>
+      Object.entries(rules.lists).flatMap(([type, list]) =>
+        (list?.columns ?? []).flatMap((column) => {
+          const input = inputsOf(rules.fields[type]).find((field) =>
+            column.field === undefined ? !field.field && field.role === column.role : field.field === column.field,
+          );
+          return input ? [{ column, input, type }] : [];
+        }),
+      ),
+    );
+    // The registered modules list some field a form shows: with none, this test would check nothing
+    expect(columns.length).toBeGreaterThan(0);
+    for (const { column, input, type } of columns) {
+      const at = column.field ?? column.role;
+      const labels = input.input === "choice" ? input.labels : undefined;
+      expect({ type, at, labels: column.labels, references: column.references, unit: column.unit }).toEqual({
+        type,
+        at,
+        labels:
+          labels && input.input === "choice"
+            ? Object.fromEntries(input.options.map((option, index) => [option, labels[index]]))
+            : undefined,
+        references: input.input === "ref" ? input.references : undefined,
+        unit: "unit" in input ? input.unit : undefined,
+      });
+    }
+  });
+
+  // A class's table and its level's form read one declaration: a track's label and bounds are its field's form's
+  test("describes each class table's track with its level's field's label and bounds", () => {
+    const tracks = Object.values(Engine.rules().describeAll()).flatMap((rules) => {
+      const owner = rules.kinds.find((kind) => kind.opens === "progression");
+      const levels = rules.customizationPages.find((page) => owner && page.owner === owner.type);
+      const inputs = inputsOf(rules.fields[levels?.type ?? ""]);
+      return rules.progression.tracks.map((track) => ({
+        input: inputs.find((field) =>
+          track.source === "field" ? field.field === track.field : field.input === "amounts",
+        ),
+        track,
+      }));
+    });
+    expect(tracks.length).toBeGreaterThan(0);
+    for (const { input, track } of tracks) {
+      const declared = input && "min" in input ? { label: input.label, max: input.max, min: input.min } : { input };
+      expect({ key: track.key, ...declared }).toEqual({
+        key: track.key,
+        label: track.label,
+        max: track.max,
+        min: track.min,
+      });
+    }
+  });
+
+  test("refuses, as it's built, a module whose list or class table names a field its levels or kind don't declare", () => {
+    const [[baseRules, module]] = Modules.all();
+    const build = (change: (rules: RulesDeclaration) => RulesDeclaration) => () =>
+      new RulesEngine([[baseRules, withRules(module, change)]], StorageEngine.shared());
+    const [type] = Object.keys(module.ruleset.describeRules().lists);
+    const column = { field: "noSuchField", reads: "text" as const, share: 10 };
+    expect(
+      build((rules) => ({ ...rules, lists: { ...rules.lists, [type]: { columns: [column], nameShare: 20 } } })),
+    ).toThrow(`${type} list a column of their fields noSuchField`);
+    const unknown = (rules: RulesDeclaration) => ({
+      ...rules,
+      progression: {
+        ...rules.progression,
+        tracks: [{ field: "noSuchField", key: "unknown", presets: [], source: "field" as const }],
+      },
+    });
+    expect(build(unknown)).toThrow("declare no one field with bounds for the track unknown");
   });
 });
