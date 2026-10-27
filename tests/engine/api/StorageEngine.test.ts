@@ -3,16 +3,49 @@ import { describe, expect, test } from "bun:test";
 import Modules from "@/engine/api/Modules.ts";
 import StorageEngine from "@/engine/api/StorageEngine.ts";
 import { Field, type Fields, type StoredLeaf } from "@/engine/core/fields/index.ts";
-import type { FieldValue, StoredEntity, StoredFieldValue, StoredLink } from "@/engine/core/module/index.ts";
+import type {
+  FieldValue,
+  RulesetModule,
+  StoredEntity,
+  StoredFieldValue,
+  StoredLink,
+} from "@/engine/core/module/index.ts";
 import { Engine } from "@/engine/index.ts";
 import type { Merge } from "@/shared/customization/fields.ts";
-import { modulesWith, modulesWithCharacterFlagAndSet } from "@/tests/support/modules.ts";
+import type { BaseRules } from "@/shared/enums.ts";
+import { CHARACTER_FLAG_AND_SET, modulesWith, modulesWithCharacterFlagAndSet } from "@/tests/support/modules.ts";
+
+/** A flag a made-up module declares on its rulesets' Settings, which no registered module's do. */
+const SETTINGS_FLAG = {
+  houseRules: {
+    description: "Whether its house rules apply",
+    field: "TEST_HOUSE_RULES",
+    kind: "flag",
+    label: "House Rules",
+    merge: "winner",
+  },
+} as const;
 
 /** The first stored field of `fields` (each owner type's) that `find` picks, its declaration to change in place. */
 function leafOf(fields: Record<string, Fields>, find: (leaf: StoredLeaf) => boolean): Record<string, unknown> {
   return Object.values(fields)
     .flatMap((owned) => Field.storedLeavesOf(owned))
     .find(find) as unknown as Record<string, unknown>;
+}
+
+/**
+ * A made-up module registered beside every other, the first's but for its storage and its fields: it stores no kind,
+ * role or step of its own, and declares these fields alone (`fields`, by owner type: its characters', its Settings').
+ */
+function secondModule(fields: Record<string, Fields>): [BaseRules, RulesetModule] {
+  const [[, first]] = Modules.all();
+  const { [StorageEngine.shared().characterOwnerType]: characterFields = {}, ...owners } = fields;
+  const registries = { characterRoles: [], entityTypes: [], itemTypes: [], linkRoles: [], rulesetRoles: [], steps: [] };
+  const character = { playerKind: "second-pc", scoredRoles: [] };
+  return [
+    "second" as BaseRules,
+    { ...first, characterFields, fields: owners, storage: { character, kinds: {}, registries } },
+  ];
 }
 
 /** A stored entity of a kind (`type`), holding these fields' values (`fields`) and links (`links`). */
@@ -208,6 +241,50 @@ describe("A module's storage", () => {
       (values as FieldValue[]).map((value) => [field, value] as const),
     );
     expect(storage.fieldsOf("characters", rows)).toMatchObject({ TEST_RETIRED: false, TEST_TITLES: ["Sir", "Lord"] });
+  });
+
+  test("registers a second module beside the first, its fields of the owner types every module's share derived as theirs", () => {
+    const storage = StorageEngine.shared();
+    const { characterOwnerType: characters, settingsOwnerType: settings } = storage;
+    // One with no fields of its own
+    expect(new StorageEngine([...Modules.all(), secondModule({})]).registries().fieldDefs).toEqual(
+      storage.registries().fieldDefs,
+    );
+    // One whose characters and Settings declare fields of their own: their rows beside the first's
+    const second = new StorageEngine([
+      ...Modules.all(),
+      secondModule({ [characters]: CHARACTER_FLAG_AND_SET, [settings]: SETTINGS_FLAG }),
+    ]);
+    const { fieldDefs } = second.registries();
+    expect(fieldDefs).toEqual(expect.arrayContaining(storage.registries().fieldDefs));
+    expect(fieldDefs.filter((def) => def.field.startsWith("TEST_"))).toEqual([
+      { ownerKind: "ruleset", ownerType: settings, field: "TEST_HOUSE_RULES", valueKind: "flag", multiple: false },
+      { ownerKind: "character", ownerType: characters, field: "TEST_RETIRED", valueKind: "flag", multiple: false },
+      { ownerKind: "character", ownerType: characters, field: "TEST_TITLES", valueKind: "text", multiple: true },
+    ]);
+    expect(second.writtenFields(settings, { TEST_HOUSE_RULES: true }, false)).toEqual({ TEST_HOUSE_RULES: [true] });
+  });
+
+  test("refuses a field two modules declare of one owner type, or one of no owner the registries hold", () => {
+    const [[, first]] = Modules.all();
+    const { characterOwnerType: characters, settingsOwnerType: settings } = StorageEngine.shared();
+    for (const [ownerType, owned] of [
+      [characters, first.characterFields],
+      [settings, first.fields[settings]],
+    ] as const) {
+      // A field a row stores (not a reference, which a link keeps)
+      const name = Object.keys(owned).find((key) => Field.storedLeavesOf({ [key]: owned[key] }).length > 0)!;
+      expect(
+        () => new StorageEngine([...Modules.all(), secondModule({ [ownerType]: { [name]: owned[name] } })]),
+      ).toThrow(`second declares the field ${name} of ${ownerType}, which another module declares`);
+      // Another name, but the field that stores the first's
+      expect(
+        () => new StorageEngine([...Modules.all(), secondModule({ [ownerType]: { other: owned[name] } })]),
+      ).toThrow(`Two fields of ${ownerType} are stored in one`);
+    }
+    expect(() => new StorageEngine([...Modules.all(), secondModule({ heroes: SETTINGS_FLAG })])).toThrow(
+      "The fields of heroes are no entity type's, ruleset's or character's",
+    );
   });
 
   test("reads an entity's links as a view holds them: in the order they were made, then by ordinal and target", () => {

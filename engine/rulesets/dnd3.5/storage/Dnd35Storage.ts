@@ -2,8 +2,6 @@ import type { LinkRoleDef, StorageDeclaration } from "@/engine/core/module/index
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import { ITEM_IS_TEMPLATE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
-import Dnd35FieldDefs from "./Dnd35FieldDefs.ts";
-
 /**
  * 3.5's kinds, past their fields (which its vocabulary declares, `ENTITY_FIELDS`): what a new class or race is for by
  * default (`pc`), which kinds a user customizes and how their namesakes pair, and what makes an item a template.
@@ -51,8 +49,8 @@ export const LINK_ROLES = [
  * How 3.5 stores its data in the generic tables: its kinds (`KINDS`), its characters' (its links of the `score` role
  * hold an amount; its identity is its `CHARACTER_*` fields, its race a `race` link, a level an advancement, its feats
  * `feats` picks), and its registries' rows, which every migrate writes (`StoredRegistries.reconcile`;
- * `tests/database/dnd3.5/registries.test.ts` checks the database holds them): its fields (`Dnd35FieldDefs`, off its
- * vocabulary's declarations), and its link roles, by which its entities' links are read (an item's template is its
+ * `tests/database/dnd3.5/registries.test.ts` checks the database holds them; its fields' the engine derives from its
+ * vocabulary's declarations): its link roles, by which its entities' links are read (an item's template is its
  * `madeFrom` link, a class's bonus spell ability its `bonusSpellAbility` link, a feat's pools its `listedIn` links, a
  * class's skills its `classSkill` links); a ruleset's skill point ability is its `skillPointAbility` link.
  */
@@ -77,7 +75,6 @@ export const DND35_STORAGE: StorageDeclaration = {
       { type: "class-levels", ownerType: "classes" },
     ],
     linkRoles: [...LINK_ROLES],
-    fieldDefs: Dnd35FieldDefs.build(),
     rulesetRoles: [{ role: "skillPointAbility", toType: "abilities", onDelete: "unlink" }],
     characterRoles: [
       { role: "race", entityType: "races", single: true, onDelete: "refuse" },

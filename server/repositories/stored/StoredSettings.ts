@@ -15,9 +15,6 @@ export interface SettingsUpdate {
 /** A field's rows' value, typed by the column that holds it: a text, a number or a flag. */
 const FIELD_VALUE = sql<FieldValue>`coalesce(to_json(${rulesetFieldsInRules.textValue}), to_json(${rulesetFieldsInRules.numberValue}), to_json(${rulesetFieldsInRules.flagValue}))`;
 
-/** The owner type of a ruleset's Settings' fields, as its module declares them. */
-const RULESETS = "rulesets";
-
 /** The pairs of rulesets' ids and the fields or roles a write names (`named`), as a query's rows: `(id, name)`. */
 function unnest(named: { id: string; name: string }[]) {
   return sql`select * from unnest(${sql.param(named.map((one) => one.id))}::uuid[], ${sql.param(named.map((one) => one.name))}::text[])`;
@@ -90,12 +87,13 @@ class StoredSettings {
    * by its declaration, refused when it isn't of its kind.
    */
   async update(db: Db, writes: SettingsUpdate[]) {
-    const roles = Engine.storage().registries().rulesetRoles;
+    const storage = Engine.storage();
+    const roles = storage.registries().rulesetRoles;
     const fields = writes.flatMap(({ id, write }) => Object.keys(write.fields).map((name) => ({ id, name })));
     const links = writes.flatMap(({ id, write }) => Object.keys(write.links).map((name) => ({ id, name })));
     const fieldRows = writes.flatMap(({ id, write }) =>
-      Object.entries(Engine.storage().writtenFields(RULESETS, write.fields, false)).flatMap(([field, values]) =>
-        toFieldRows(RULESETS, field, values).map((row) => ({ rulesetId: id, ...row })),
+      Object.entries(storage.writtenFields(storage.settingsOwnerType, write.fields, false)).flatMap(([field, values]) =>
+        toFieldRows(storage.settingsOwnerType, field, values).map((row) => ({ rulesetId: id, ...row })),
       ),
     );
     const linkRows = writes.flatMap(({ id, write }) =>
