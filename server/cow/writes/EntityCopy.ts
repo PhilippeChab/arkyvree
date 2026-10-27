@@ -45,21 +45,12 @@ export default class EntityCopy {
 
   /**
    * A link as a copy of its entity holds it (`link`, from an entity of a kind, `type`): from the copy (`fromId`), the
-   * entities it names resolved (`resolve`: to what stands for them), its other parts kept; a new link, no id of its own.
+   * entities it names resolved (`cow`: to what stands for them, `CowData.resolveLink`), its other parts kept; a new
+   * link, no id of its own.
    */
-  private static copyOf(link: ViewLink, fromId: string, type: string, resolve: (id: string) => string): NewLink {
-    const { amount, free, role, tier, toId, toType, viaId } = link;
-    return {
-      fromId,
-      fromType: type,
-      role,
-      toId: resolve(toId),
-      toType,
-      viaId: viaId === null ? null : resolve(viaId),
-      tier,
-      amount,
-      free,
-    };
+  private static copyOf(link: ViewLink, fromId: string, type: string, cow: CowData): NewLink {
+    const { amount, free, role, tier, toId, toType, viaId } = cow.resolveLink(link);
+    return { fromId, fromType: type, role, toId, toType, viaId, tier, amount, free };
   }
 
   /**
@@ -139,14 +130,12 @@ export default class EntityCopy {
     // the child ruleset, each link to the entity the ruleset shows in its target's place (a race's parent, an item's
     // template, a spell's save)
     const merged = await this.mergeValues(tx, parentEntity, siblingIds);
-    const [{ campaignId, description, fields, links, name, partition }] = cow.resolveLinks([
-      { ...parentEntity, ...merged },
-    ]);
+    const [{ description, fields, links, name, partition }] = cow.resolveLinks([{ ...parentEntity, ...merged }]);
     // Its rows as they're stored, its source's: a copy keeps them as they are
     const [newEntity] = await Entities.create(
       tx,
       entityType,
-      { rulesetId: childRulesetId, campaignId, name: name!, description, partition, fields, links },
+      { rulesetId: childRulesetId, name: name!, description, partition, fields, links },
       true,
     );
 
@@ -176,11 +165,11 @@ export default class EntityCopy {
    * Copies the links of the roles they hold many of from entities of a kind (`ids`: each one's copy, by its id) onto
    * their copies, in their order.
    */
-  private async copyLinks(tx: Db, type: string, ids: ReadonlyMap<string, string>, resolve: (id: string) => string) {
+  private async copyLinks(tx: Db, type: string, ids: ReadonlyMap<string, string>, cow: CowData) {
     const links = await EntityLinks.findMany(tx, { fromIds: [...ids.keys()] });
     await EntityLinks.createMany(
       tx,
-      links.map((link) => EntityCopy.copyOf(link, ids.get(link.fromId)!, type, resolve)),
+      links.map((link) => EntityCopy.copyOf(link, ids.get(link.fromId)!, type, cow)),
     );
   }
 
@@ -191,8 +180,7 @@ export default class EntityCopy {
    * at the canonical winner, never at a stale loser.
    */
   private async copyLinksAndOwned(tx: Db, targetEntityId: string, cow: CowData) {
-    const resolve = (id: string) => cow.resolve(id);
-    await this.copyLinks(tx, this.entityType, new Map([[this.entityId, targetEntityId]]), resolve);
+    await this.copyLinks(tx, this.entityType, new Map([[this.entityId, targetEntityId]]), cow);
     for (const type of Engine.storage().ownedKinds(this.entityType)) {
       const owned = await Entities.findMany(tx, { entityType: type, ownerIds: [this.entityId] });
       if (owned.length === 0) continue;
@@ -216,7 +204,7 @@ export default class EntityCopy {
         const own = customizations.get(id);
         if (own) await CustomizationCopies.copy(tx, copyId, type, own, this.copiedIds);
       }
-      await this.copyLinks(tx, type, ids, resolve);
+      await this.copyLinks(tx, type, ids, cow);
     }
   }
 
@@ -236,7 +224,7 @@ export default class EntityCopy {
     );
     await EntityLinks.createMany(
       tx,
-      links.map((link) => EntityCopy.copyOf(link, targetEntityId, this.entityType, resolve)),
+      links.map((link) => EntityCopy.copyOf(link, targetEntityId, this.entityType, cow)),
     );
   }
 

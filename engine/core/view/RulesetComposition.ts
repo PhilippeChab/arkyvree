@@ -29,7 +29,7 @@ export interface RulesetRawData {
   modifiers: Modifier[];
   /** Every requirement row in this ruleset, including those attached to modifiers. */
   requirements: Requirement[];
-  /** Its own Settings (its fields and its links), by its id: none for a campaign's rows, or a ruleset that holds none */
+  /** Its own Settings (its fields and its links), by its id: none for a ruleset that holds none */
   settings?: { rulesetId: string; values: StoredValues };
   /** Of its entities, those a link with a tier points at, from any ruleset's entity (a spell list at a level) */
   tieredIds: Set<string>;
@@ -198,13 +198,13 @@ export default class RulesetComposition {
     const targets = new Set<string>();
     const composed: ViewLink[] = [];
     for (const link of links) {
-      const toId = resolve(link.toId);
+      const resolved = this.cow.resolveLink(link);
       if (merges(link)) {
-        const key = `${link.role} ${link.toType} ${toId}`;
+        const key = `${link.role} ${link.toType} ${resolved.toId}`;
         if (targets.has(key)) continue;
         targets.add(key);
       }
-      composed.push({ ...link, fromId: entityId, toId, viaId: link.viaId === null ? null : resolve(link.viaId) });
+      composed.push({ ...resolved, fromId: entityId });
     }
     return composed;
   }

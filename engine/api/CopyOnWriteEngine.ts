@@ -30,7 +30,7 @@ export interface StoredRulesetRows {
   /** Every modifier whose source is one of its entities, every requirement of them or of those modifiers */
   modifiers: Modifier[];
   requirements: Requirement[];
-  /** Its own settings, none for a campaign's rows */
+  /** Its own settings, none when it holds none */
   ruleset?: StoredRuleset;
   /** Of its entities, those a link with a tier points at, from any ruleset's entity (a spell list's at a level) */
   tieredIds: Set<string>;

@@ -5,20 +5,11 @@ import { z } from "zod";
 import type { FormBody } from "@/engine/core/entities/index.ts";
 import type { EntityForm } from "@/engine/core/fields/index.ts";
 import type { EntityRecord } from "@/engine/core/module/index.ts";
-import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import ListedEntity from "@/engine/rulesets/dnd3.5/entities/ListedEntity.ts";
-import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { FEAT_FAMILY, FEAT_GENERATED } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { FEAT_FIELDS } from "./fields.ts";
-
-/** A slot a feat's modifier adds to (or sets on) a pool. */
-export interface PoolModifier {
-  aptitudeId: string;
-  operator: string;
-  value: number;
-}
 
 /** A feat as the ruleset has it: described with its customizations, listed by pool or family, saved by its rules. */
 export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS.fields> {
@@ -89,26 +80,6 @@ export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS
   /** A pool's feats' ids (`aptitudeId`), as the ruleset composes them: every feat's (`undefined`) without one. */
   private poolFeatIds(aptitudeId: string | undefined) {
     return aptitudeId === undefined ? undefined : this.dnd35.listFeatIds(aptitudeId);
-  }
-
-  /** The pools these feats' modifiers add slots to (`aptitudes.<slug>.allowed`), by feat id. */
-  describePoolModifiers(featIds: string[]) {
-    const { aptitudeIdBySlug } = this.dnd35;
-    const { modifiersBySource } = this.rulesetData;
-    const byFeat = new Map<string, PoolModifier[]>();
-    for (const featId of featIds) {
-      for (const modifier of modifiersBySource.get(featId) ?? []) {
-        if (modifier.sourceType !== "feats") continue;
-        const pool = AptitudeTargets.parsePool(modifier.target);
-        const aptitudeId = pool === undefined ? undefined : aptitudeIdBySlug.get(pool);
-        const value = LiteralValue.parse(modifier.value, "number");
-        if (!aptitudeId || typeof value !== "number") continue;
-        const modifiers = byFeat.get(modifier.sourceId) ?? [];
-        modifiers.push({ aptitudeId, value, operator: modifier.operator });
-        byFeat.set(modifier.sourceId, modifiers);
-      }
-    }
-    return byFeat;
   }
 
   /**

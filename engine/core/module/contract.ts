@@ -12,15 +12,14 @@ import type { StorageDeclaration } from "./storage.ts";
 /**
  * What a ruleset describes in its own shape, which the server hands to the client as it is: what its creation picker
  * adds to an option (`creationOption`), a character's sheet (as the API answers it past its row's columns, which the
- * characters part writes, its private notes where every ruleset's holds them; printed), what an inventory entry shows
- * beside its row, and a level step's picker (`stepPicker`) by the kind it reads a page of.
+ * characters part writes, its private notes where every ruleset's holds them; printed), and what an inventory entry
+ * shows beside its row.
  */
 export interface Descriptions {
   creationOption: object;
   inventoryEntry: object;
   sheet: RulesetSheet;
   sheetDocument: unknown;
-  stepPicker: { kind: string };
 }
 
 /**
@@ -53,7 +52,7 @@ export interface RulesetModule<
   /** What the ruleset answers of a character imported from another program's file: which importers it offers */
   imports: ImportsPart;
   /** What the ruleset answers a character's level-up, from the rows the server reads */
-  levelUp: LevelUpPart<D>;
+  levelUp: LevelUpPart;
   /** What the ruleset answers of a ruleset as a whole, past its entities: what it needs to be published */
   ruleset: RulesetPart;
   /** How its rulesets' and characters' data is stored in the generic tables, and what their registries hold of it */

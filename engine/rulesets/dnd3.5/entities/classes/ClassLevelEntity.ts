@@ -79,7 +79,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     return super.nameLinks(links).map((link) => {
       const feat = link.role === "grants" && link.toType === "feats" ? dnd35.featsById.get(link.toId) : undefined;
       if (!feat) return link;
-      const viaId = link.viaId === null ? undefined : this.rulesetData.canonicalize(link.viaId);
+      const viaId = link.viaId ?? undefined;
       const listed = viaId !== undefined && dnd35.listLinksOf(feat.id).some((list) => list.toId === viaId);
       const pool = listed ? dnd35.aptitudesById.get(viaId) : undefined;
       return { ...link, toDescription: feat.description, viaName: pool?.name ?? null };

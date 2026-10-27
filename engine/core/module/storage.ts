@@ -27,7 +27,6 @@ export interface CharacterRoleDef {
  * links' targets by role (`links`). Timestamps are Postgres's text.
  */
 export interface EntityRecord {
-  campaignId: string | null;
   createdAt: string;
   description: string | null;
   fields: OwnerFields;
@@ -57,10 +56,9 @@ export interface EntityTypeDef {
  * single link's target it sets, by field and by role, in place of what the entity held of them (`FieldWrite`: as a
  * record holds them, which a copy writes as it reads them; null clears a link). A field always written (`write:
  * "always"`) a write leaves out of a new entity, or clears, holds its default, and a create leaves out its partition for
- * its kind's (`StoredKind.partition`); an owned entity takes its owner's ruleset and campaign.
+ * its kind's (`StoredKind.partition`); an owned entity takes its owner's ruleset.
  */
 export interface EntityWrite {
-  campaignId?: string | null;
   createdAt?: string;
   description?: string | null;
   fields?: Readonly<Record<string, FieldWrite>>;
@@ -192,7 +190,6 @@ export interface StoredCharacterLink {
  * is read from (`Engine.copyOnWrite().buildRawData`). Timestamps are Postgres's text.
  */
 export interface StoredEntity {
-  campaignId: string | null;
   createdAt: string;
   description: string | null;
   fields: StoredFieldValue[];

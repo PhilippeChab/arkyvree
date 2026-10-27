@@ -114,7 +114,8 @@ export interface KindWord extends RulesWord {
  * - `reference`: the name of the entity of the ruleset it names (`references`: its kind, `abilities`), its link's
  *   target;
  * - `flag`: a warning's "Yes" while it's `yesWhen` ("Trained Only" while a skill isn't usable untrained), "No" else;
- * - `template`: an item's template's name, or "Template" for a template itself (its `field` set);
+ * - `template`: the name of the template a copy is made from (an item's), its link of its kind's `copies.source` role's
+ *   target (`toName`), or "Template" for a template itself (its `field` set);
  * - `pools`: the pools it's picked in, as chips by name (its links of a `role`: a spell's `listedIn` links, each its
  *   pool's name at `toName`);
  * - `text`: its text, as it is (a language's type).

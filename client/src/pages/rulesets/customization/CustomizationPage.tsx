@@ -100,7 +100,7 @@ function CustomizationView({
   const { restorable, error: changesError } = useRestorableDelete(ruleset, deletedHolder(data));
 
   // A save answers the entity's row, its fields and its links, not all its page reads (its customizations, an item's
-  // template's name, a level's class's name): refetch the entity
+  // placement, a level's class's name): refetch the entity
   const refetchSaved = (saved: { id: string }) =>
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.entity(rulesetId, type, saved.id) });
 

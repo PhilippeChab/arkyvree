@@ -13,6 +13,7 @@ export { requestLogger } from "./requestLogger.ts";
 export {
   deleteSessionCookie,
   findRequestSession,
+  findSignedIn,
   getSessionCookie,
   SESSION_COOKIE_NAME,
   default as sessionMiddleware,

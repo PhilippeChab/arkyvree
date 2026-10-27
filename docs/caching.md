@@ -145,7 +145,7 @@ Used by the copy flows, `RulesetExtensionsService`, `RulesetChangesService` (rev
 
 ### What's in it
 
-One tier: per-ruleset **raw** entities, keyed by `rulesetId[:campaignId]`. The composed view (what services actually consume) is built fresh on each call from these raw entries.
+One tier: per-ruleset **raw** entities, keyed by `rulesetId`. The composed view (what services actually consume) is built fresh on each call from these raw entries.
 
 ```ts
 interface RulesetRawData {
@@ -208,7 +208,7 @@ flowchart LR
     Note[Forks that inherit from X<br/>re-compose on next read] -.->|tracked source-chain<br/>dependencies| CR
 ```
 
-`RulesetViews.invalidate(id)` clears that ruleset's raw entries (including campaign variants), plus COW and target-path entries whose source chain contains it. Unrelated cached entries and in-flight reads remain reusable. `DependentCache` records source-chain IDs alongside each bounded cache entry and pending read; invalidation requires no database lookup and scans at most 200 cached entries per tier plus active reads.
+`RulesetViews.invalidate(id)` clears that ruleset's raw entry, plus COW and target-path entries whose source chain contains it. Unrelated cached entries and in-flight reads remain reusable. `DependentCache` records source-chain IDs alongside each bounded cache entry and pending read; invalidation requires no database lookup and scans at most 200 cached entries per tier plus active reads.
 
 Three calls:
 

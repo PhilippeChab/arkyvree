@@ -233,7 +233,7 @@ describe("Item templates", () => {
     });
   });
 
-  test("list their instances with the template's name", async () => {
+  test("list their instances with the template's name, their link's", async () => {
     const { ruleset, instance } = await setup();
     const sword = await instance("Longsword");
     const { items } = await EntitiesService.getEntities(
@@ -243,7 +243,9 @@ describe("Item templates", () => {
       { search: sword.name },
       { limit: 10, page: 1 },
     );
-    expect(items.find((item) => item.id === sword.id)).toMatchObject({ templateName: "Longsword" });
+    const listed = items.find((item) => item.id === sword.id);
+    expect(listed?.links).toContainEqual(expect.objectContaining({ role: "madeFrom", toName: "Longsword" }));
+    expect(listed).not.toHaveProperty("templateName");
   });
 
   test("an item without a template has no fields its form shows or requirements of its own", async () => {
@@ -303,6 +305,19 @@ describe("Item templates", () => {
       message: `Item ${NIL_UUID} does not belong to this ruleset`,
       refusal: "invalid",
     });
+  });
+
+  test("an instance's edit answers the template its fork copied after it was made as the copy, as its page does", async () => {
+    const { session, ruleset, template, instance } = await setup();
+    const sword = await template("Longsword");
+    const mine = await instance("Longsword");
+    const copy = await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, { name: "Our Longsword" });
+    // Its stored template is the original, which its view reads as the fork's copy
+    const edited = await EntitiesService.updateEntity(session, ruleset.id, "items", mine.id, { name: "My Blade" });
+    const page = await EntitiesService.getEntity(session, ruleset.id, "items", mine.id);
+    const madeFrom = (answer: { links: { role: string }[] }) => answer.links.filter((link) => link.role === "madeFrom");
+    expect(madeFrom(edited)).toEqual([expect.objectContaining({ toId: copy.id, toName: "Our Longsword" })]);
+    expect(madeFrom(edited)).toEqual(madeFrom(page));
   });
 
   test("an instance's edit records no template change when its fork copies the template it was made from", async () => {
