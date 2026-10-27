@@ -450,7 +450,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
     for (const { bounds, role } of scored)
       RulesError.parse(CharactersPart.boundedScores(bounds), request.scores[role] ?? {}, [role]);
     const ids = CharactersPart.idsOf(view);
-    const links: Record<string, string> = {};
+    const singles: Record<string, string> = {};
     for (const { entityType, role } of this.singleRoles()) {
       const picked = request.picks[role];
       const kind = entityType as keyof ViewKinds;
@@ -458,13 +458,13 @@ export default abstract class CharactersPart<D extends Descriptions> {
         throw new RulesError("invalid", `A new character's ${view.rulesetData.labelOf(kind)} is required`);
       const entity = ids.find(kind, picked);
       this.checkCreationPick(role, entity);
-      links[role] = (entity as { id: string }).id;
+      singles[role] = (entity as { id: string }).id;
     }
     const scores = scored.map(({ bounds, kind, role }) => {
       const given = ids.resolveKeys(kind, request.scores[role] ?? {});
       const rows = view.rulesetData.rows(kind) as { id: string }[];
       return [role, rows.map(({ id }) => ({ entityId: id, amount: given.get(id) ?? bounds.start }))];
     });
-    return { links: Object.fromEntries(scores), row: { links } };
+    return { links: Object.fromEntries(scores), row: { links: singles } };
   }
 }

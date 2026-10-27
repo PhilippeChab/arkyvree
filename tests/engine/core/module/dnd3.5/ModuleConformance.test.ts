@@ -238,7 +238,9 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
       const characters = Engine.for(scope).characters();
       const start = { picks: { race: record.links.race }, scores: {} };
       const plan = characters.planCreate({ ...start, fields });
-      const written = [...Object.values(plan.row.fields), plan.row.description];
+      // Its fields' values, and every own column its rules' fields write (its row past its kind and single links)
+      const { fields: values, kind: _kind, links: _links, ...own } = plan.row;
+      const written = [...Object.values(values), ...Object.values(own)];
       for (const value of Object.values(fields)) expect(written).toContain(value);
       // A field its form doesn't require can be left out
       expect(() => characters.planCreate({ ...start, fields: required })).not.toThrow();

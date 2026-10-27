@@ -49,10 +49,11 @@ export interface LinkPlan {
 
 /**
  * What a new character stores, whichever plan makes it (its form's create, an import, a level's child: 3.5's bonded
- * creature): its row (`row`) and its links of each role it holds many of, by role (`links`: 3.5's ability scores, its
- * languages), which the server writes in that order.
+ * creature): its row (`row`, a `NewCharacterRow` and what else of it its plan gives; part of one in its start's plan,
+ * `StartPlan`) and its links of each role it holds many of, by role (`links`: 3.5's ability scores, its languages),
+ * which the server writes in that order.
  */
-export interface NewCharacterPlan<R extends NewCharacterRow = NewCharacterRow> {
+export interface NewCharacterPlan<R extends Partial<NewCharacterRow> = NewCharacterRow> {
   links: Record<string, LinkPlan[]>;
   row: R;
 }
@@ -79,13 +80,12 @@ export interface ScoresPlan {
 }
 
 /**
- * What a new character starts with, as a `NewCharacterPlan` has it: its row's entity of each of its single links its
+ * What a new character starts with, a part of its `NewCharacterPlan`: its row's entity of each of its single links its
  * creation picks (`row.links`, by role: 3.5's race), and each scored link's amounts (`links`, by role: 3.5's ability
  * scores), one for each entity of its kind.
  */
-export interface StartPlan {
+export interface StartPlan extends NewCharacterPlan<Pick<NewCharacterRow, "links">> {
   links: Record<string, ScorePlan[]>;
-  row: Pick<NewCharacterRow, "links">;
 }
 
 /** The own columns of a character's row its rules' fields write (3.5's description), each it sets. */
