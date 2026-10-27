@@ -9,9 +9,9 @@ import type { Session } from "@/shared/relations.ts";
 import { readCharacterInput } from "./characterInputs.ts";
 
 /**
- * The character `characterId` if the user may edit it (`CharactersPolicy.isEditable`: they own it or actively contribute
- * to it, and it isn't archived), or if it's a child (3.5's bonded creature) whose parent they may edit; null otherwise.
- * A player character is edited by its own editors alone, never through a parent.
+ * The character `characterId` if the user may edit it (`CharactersPolicy.isEditable`, while neither it nor a child's
+ * parent is archived): a player character they own or actively contribute to, or a child (3.5's bonded creature) of
+ * one; null otherwise. A player character is edited by its own editors alone, never through a parent.
  */
 export async function findEditableCharacterOrChild(db: Db, characterId: string, userId: string) {
   const character = await Characters.findOne(db, { id: characterId });
@@ -20,8 +20,9 @@ export async function findEditableCharacterOrChild(db: Db, characterId: string, 
 }
 
 /**
- * The character the session's user may edit (they own it or contribute to it), or a 404. `Visibility.All` finds an
- * archived one too, whose sheet stays readable.
+ * The player character whose own rows the session's user may edit (`CharactersPolicy.isEditor`: they own it or
+ * contribute to it), or a 404: a child's are its parent's. It's looked up unarchived; `Visibility.All` finds an archived
+ * one too, whose sheet stays readable.
  */
 export async function getEditableCharacter(
   db: Db,
@@ -29,8 +30,9 @@ export async function getEditableCharacter(
   characterId: string,
   visibility: Visibility = Visibility.UnarchivedOnly,
 ) {
-  const character = await Characters.findOne(db, { id: characterId, editorId: session.userId }, visibility);
-  if (!character) throw new NotFoundError("Character not found");
+  const character = await Characters.findOne(db, { id: characterId }, visibility);
+  if (!character || !(await CharactersPolicy.for(db, session, character)).isEditor())
+    throw new NotFoundError("Character not found");
   return character;
 }
 

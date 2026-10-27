@@ -87,7 +87,7 @@ export default function CharacterDetailsPage() {
     canInviteContributors,
     canLeave,
     canManageContributors,
-    canRemoveContributors,
+    canReadContributors,
     canShare,
   } = useCharacterPermissions(character);
 
@@ -198,7 +198,7 @@ export default function CharacterDetailsPage() {
                         onClick={menu.closeMenuAnd(() => unarchiveMutation.mutate())}
                       />
                     ),
-                    canManageContributors && (
+                    canReadContributors && (
                       <ActionMenuItem
                         key="contributors"
                         icon={ContributorsIcon}
@@ -248,7 +248,7 @@ export default function CharacterDetailsPage() {
                         onClick={menu.closeMenuAnd(() => pdfExport.mutate())}
                       />
                     ),
-                    canManageContributors && (
+                    canReadContributors && (
                       <ActionMenuItem
                         key="contributors"
                         icon={ContributorsIcon}
@@ -323,7 +323,7 @@ export default function CharacterDetailsPage() {
             onClose={() => setContributorsOpen(false)}
             canInvite={canInviteContributors}
             canLeave={canLeave}
-            canRemove={canRemoveContributors ? () => true : undefined}
+            canRemove={canManageContributors ? () => true : undefined}
           />
 
           <CharacterModifiersDialog

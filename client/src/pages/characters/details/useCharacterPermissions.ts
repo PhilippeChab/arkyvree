@@ -30,10 +30,10 @@ export function useCharacterPermissions(
     canEditPortrait: !!permissions?.canEditPortrait,
     canInviteContributors: !!permissions?.canInviteContributors,
     canLeave: !!permissions?.canLeave,
-    /** See its contributors. */
-    canManageContributors: !!permissions?.canReadContributors && !isDemo,
     /** Remove a contributor. */
-    canRemoveContributors: !!permissions?.canManageContributors,
+    canManageContributors: !!permissions?.canManageContributors,
+    /** See its contributors. */
+    canReadContributors: !!permissions?.canReadContributors && !isDemo,
     canShare: !!permissions?.canShare && !isDemo,
   };
 }

@@ -9,6 +9,7 @@ import BasePolicy from "./BasePolicy.ts";
 /** The session's standing on a character beyond owning it (`CharactersPolicy`'s flags of the same names). */
 export interface CharacterStanding {
   isActiveContributor?: boolean;
+  isParentArchived?: boolean;
   isParentEditor?: boolean;
 }
 
@@ -16,16 +17,18 @@ export default class CharactersPolicy extends BasePolicy<Character> {
   constructor(
     session: Pick<Session, "userId">,
     entity: Character,
-    { isActiveContributor = false, isParentEditor = false }: CharacterStanding = {},
+    { isActiveContributor = false, isParentArchived = false, isParentEditor = false }: CharacterStanding = {},
   ) {
     super(session, entity);
     this.isActiveContributor = isActiveContributor;
+    this.isParentArchived = isParentArchived;
     this.isParentEditor = isParentEditor;
   }
 
   /**
    * The session's policy on `character`: a player character's contributor's rights come from their active role on it,
-   * and a child's (3.5's bonded creature) from the session's on its parent, a player character, archived or not.
+   * and a child's (3.5's bonded creature) from the session's on its parent, a player character, archived or not (an
+   * archived parent's child is read-only, as the parent is).
    */
   static async for(db: Db, session: Pick<Session, "userId">, character: Character): Promise<CharactersPolicy> {
     if (!Engine.storage().isPlayerKind(character.kind)) {
@@ -35,8 +38,8 @@ export default class CharactersPolicy extends BasePolicy<Character> {
       const isParentEditor =
         !!parent &&
         Engine.storage().isPlayerKind(parent.kind) &&
-        (await CharactersPolicy.for(db, session, parent)).isReadable();
-      return new CharactersPolicy(session, character, { isParentEditor });
+        (await CharactersPolicy.for(db, session, parent)).isEditor();
+      return new CharactersPolicy(session, character, { isParentArchived: !!parent?.deletedAt, isParentEditor });
     }
 
     const role =
@@ -45,6 +48,9 @@ export default class CharactersPolicy extends BasePolicy<Character> {
         : await CharacterContributors.findRole(db, { userId: session.userId, characterId: character.id });
     return new CharactersPolicy(session, character, { isActiveContributor: role !== undefined });
   }
+
+  /** The child's parent is archived: looked up only for a child. */
+  private readonly isParentArchived: boolean;
 
   /** Edits the child's parent (owns it, or actively contributes to it): looked up only for a child. */
   private readonly isParentEditor: boolean;
@@ -123,11 +129,12 @@ export default class CharactersPolicy extends BasePolicy<Character> {
     return true;
   }
 
-  /** Reading its contributors, and leaving them: its readers (`canRead`), of a player character, which has them. */
+  /**
+   * Reading its contributors, and leaving them: a player character's editors (`isEditor`), as a child has none. Anyone
+   * else gets the 404 an unknown character gets.
+   */
   canReadContributors() {
-    this.canRead();
-
-    if (!this.isPlayerCharacter) throw new NotFoundError("Character not found");
+    if (!this.isEditor()) throw new NotFoundError("Character not found");
 
     return true;
   }
@@ -144,9 +151,21 @@ export default class CharactersPolicy extends BasePolicy<Character> {
     return true;
   }
 
-  /** Whether the session may edit the character: its readers (`isReadable`), while it isn't archived. */
+  /**
+   * Whether the session may edit the character: its readers (`isReadable`), while neither it nor a child's parent is
+   * archived.
+   */
   isEditable() {
-    return this.isReadable() && !this.entity.deletedAt;
+    return this.isReadable() && !this.entity.deletedAt && !this.isParentArchived;
+  }
+
+  /**
+   * Whether the session edits a player character itself, its own rows (its levels, scores, inventory, modifiers)
+   * included, archived or not: its owner or an active contributor. A child's are its parent's: it has no editor of its
+   * own.
+   */
+  isEditor() {
+    return this.isPlayerCharacter && (this.isOwner || this.isActiveContributor);
   }
 
   /**
@@ -162,8 +181,6 @@ export default class CharactersPolicy extends BasePolicy<Character> {
    * (its editors), and a child's parent's.
    */
   isReadable() {
-    if (!this.isPlayerCharacter) return this.isParentEditor;
-
-    return this.isOwner || this.isActiveContributor;
+    return this.isPlayerCharacter ? this.isEditor() : this.isParentEditor;
   }
 }

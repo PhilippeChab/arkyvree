@@ -44,24 +44,6 @@ class CharactersRepository extends include(
     );
   }
 
-  /** A character the user may edit: theirs, or one they contribute to. */
-  private async findEditable(
-    db: Db,
-    where: { id: string; userId: string },
-    visibility: Visibility = Visibility.UnarchivedOnly,
-  ) {
-    const [row] = await this.rows(
-      db,
-      this.where([
-        eq(charactersInCharacter.id, where.id),
-        inArray(charactersInCharacter.kind, [...Engine.storage().playerKinds()]),
-        or(eq(charactersInCharacter.userId, where.userId), this.contributesTo(db, where.userId))!,
-        this.visibility(visibility),
-      ]),
-    );
-    return row;
-  }
-
   /** The characters a condition picks, each with its stored columns, in `order`, a page of them if `page` says. */
   private async rows(
     db: Db,
@@ -188,8 +170,8 @@ class CharactersRepository extends include(
   }
 
   /**
-   * A character by id; its owner's (`{ id, userId }`), or one the user may edit (`{ id, editorId }`: theirs, or one
-   * they actively contribute to); by share token; or a character's child (3.5's bonded creature).
+   * A character by id, or its owner's (`{ id, userId }`); by share token; or a character's child (3.5's bonded
+   * creature). Who may edit one is its policy's (`CharactersPolicy`).
    */
   async findOne(
     db: Db,
@@ -197,11 +179,9 @@ class CharactersRepository extends include(
       | { id: string }
       | { id: string; userId: string }
       | { shareToken: string }
-      | { kind: string; parentCharacterId: string }
-      | { editorId: string; id: string },
+      | { kind: string; parentCharacterId: string },
     visibility: Visibility = Visibility.UnarchivedOnly,
   ) {
-    if ("editorId" in where) return await this.findEditable(db, { id: where.id, userId: where.editorId }, visibility);
     const isUserFacing = "userId" in where || "shareToken" in where;
     const [row] = await this.rows(
       db,

@@ -110,6 +110,31 @@ describe("CharactersPolicy", () => {
     expect(new CharactersPolicy(owner, archived).isPortraitEditable()).toBe(false);
   });
 
+  test("a live child under an archived parent is read-only, as its parent is", async () => {
+    const { character, owner, user } = await setup();
+    // Archiving the parent archives its children: a live one under it is left as if it hadn't been
+    await Characters.archive(db, { id: character.id });
+    const child = await createChild(user.id, character.id);
+
+    const policy = await CharactersPolicy.for(db, owner, child);
+    expect(policy.isReadable()).toBe(true);
+    expect(policy.isEditable()).toBe(false);
+    expect(policy.isPortraitEditable()).toBe(false);
+  });
+
+  test("isEditor: a player character's owner and active contributors, archived or not; a child has none", async () => {
+    const { character, owner, other } = await setup();
+    expect(new CharactersPolicy(owner, character).isEditor()).toBe(true);
+    expect(new CharactersPolicy(other, character, { isActiveContributor: true }).isEditor()).toBe(true);
+    expect(new CharactersPolicy(other, character).isEditor()).toBe(false);
+
+    const child = await createChild(character.userId, character.id);
+    expect(new CharactersPolicy(owner, child, { isParentEditor: true }).isEditor()).toBe(false);
+
+    const [archived] = await Characters.archive(db, { id: character.id });
+    expect(new CharactersPolicy(owner, archived).isEditor()).toBe(true);
+  });
+
   test("canHardDelete: the owner, once archived and out of any active campaign", async () => {
     const { character, owner, other } = await setup();
     expect(() => new CharactersPolicy(owner, character).canHardDelete({ inActiveCampaign: false })).toThrow(
