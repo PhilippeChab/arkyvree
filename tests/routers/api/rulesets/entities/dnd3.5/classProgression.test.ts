@@ -75,10 +75,11 @@ describe("rulesets class progression", () => {
   test("reads a body by its rules once the access check and the class's lookup pass", async () => {
     const { param } = await setup();
     const json = { levels: "all" } as never;
+    // A private fork isn't revealed to a stranger
     const { api: other } = await createSignedInUser();
     await expectStatus(
       other.api.rulesets[":id"].entities[":entityType"][":entityId"].progression.$put({ param, json }),
-      403,
+      404,
     );
     await expectStatus(progression.$put({ param: { ...param, entityId: NIL_UUID }, json }), 404);
   });

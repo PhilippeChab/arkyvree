@@ -27,14 +27,14 @@ class ActivitiesService {
   /**
    * A contributor's link: its invitee goes to the invite while it's pending and has lost access once it's revoked or
    * rejected (signalled, so the caller can say so instead of 404'ing); anyone else, an active contributor or the
-   * owner, goes to what it contributes to.
+   * owner, goes to what it contributes to (`entityUrl`: none when they may not read it).
    */
   private contributorUrl(
     session: Session,
     contributor: { status: string; userId: string | null },
     entityType: "ruleset" | "character",
     inviteUrl: string,
-    entityUrl: string,
+    entityUrl: string | null,
   ): ActivityUrl {
     if (contributor.userId === session.userId) {
       if (contributor.status === "Pending") return inviteUrl;
@@ -56,6 +56,7 @@ class ActivitiesService {
    * owner outside a ruleset (a character's own modifiers).
    */
   private async resolveCustomizationUrl(
+    session: Session,
     entityId: string,
     entityType: string,
     section: "modifiers" | "requirements",
@@ -64,7 +65,8 @@ class ActivitiesService {
     const pages = storage.customizationPages();
     if (!storage.ownerKinds().includes(entityType) && !hasCustomizationPage(entityType, pages)) return null;
     const rulesetId = await findContentRuleset(db, { id: entityId, type: entityType });
-    return rulesetId ? buildEntityPagePath(rulesetId, entityType, entityId, pages, section) : null;
+    if (!rulesetId || !(await this.rulesetUrl(session, rulesetId))) return null;
+    return buildEntityPagePath(rulesetId, entityType, entityId, pages, section);
   }
 
   /**
@@ -72,7 +74,7 @@ class ActivitiesService {
    * owner's on the tab of its targets (a class's skills, whose activity targets the class); any other entity's, its
    * customization page when it has one, else its own.
    */
-  private async resolveRulesEntity(targetType: string, targetId: string): Promise<string | null> {
+  private async resolveRulesEntity(session: Session, targetType: string, targetId: string): Promise<string | null> {
     const storage = Engine.storage();
     const target = { id: targetId, type: targetType };
     const edited = storage.editedLinks().get(targetType);
@@ -80,13 +82,13 @@ class ActivitiesService {
     // its links has a customization page (3.5's classes: their customizations are their page's tabs)
     const page = storage.ownerOf(targetType) || edited ? await findContentOwner(db, target) : target;
     const rulesetId = page && (await findContentRuleset(db, page));
-    if (!page || !rulesetId) return null;
+    if (!page || !rulesetId || !(await this.rulesetUrl(session, rulesetId))) return null;
     return buildEntityPagePath(rulesetId, page.type, page.id, storage.customizationPages(), edited?.to);
   }
 
   /**
    * A ruleset's page, or null when it's gone or the session may not read it (`findReadableRuleset`): a private
-   * ruleset's existence isn't revealed.
+   * ruleset's existence isn't revealed, nor its content's, whose links ask it too.
    */
   private async rulesetUrl(session: Session, rulesetId: string) {
     return (await findReadableRuleset(db, session, rulesetId)) ? `/rulesets/${rulesetId}` : null;
@@ -144,7 +146,8 @@ class ActivitiesService {
         const contributor = await Contributors.findOne(db, { id: targetId });
         if (!contributor) return null;
         const inviteUrl = `/ruleset-contributor-invite/${targetId}`;
-        return this.contributorUrl(session, contributor, "ruleset", inviteUrl, `/rulesets/${contributor.rulesetId}`);
+        const rulesetUrl = await this.rulesetUrl(session, contributor.rulesetId);
+        return this.contributorUrl(session, contributor, "ruleset", inviteUrl, rulesetUrl);
       }
       case TARGET_TYPES.characterContributors: {
         const contributor = await CharacterContributors.findOne(db, { id: targetId });
@@ -159,11 +162,11 @@ class ActivitiesService {
       case TARGET_TYPES.requirements: {
         // What it belongs to, as the walk to its ruleset reads it: none for a modifier of a modifier
         const owner = await findContentOwner(db, { id: targetId, type: targetType });
-        return owner ? await this.resolveCustomizationUrl(owner.id, owner.type, targetType) : null;
+        return owner ? await this.resolveCustomizationUrl(session, owner.id, owner.type, targetType) : null;
       }
       // Rules sub-entities (entity has rulesetId)
       default:
-        return await this.resolveRulesEntity(targetType, targetId);
+        return await this.resolveRulesEntity(session, targetType, targetId);
     }
   }
 }

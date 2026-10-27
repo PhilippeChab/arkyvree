@@ -21,7 +21,6 @@ import {
   Visibility,
   visibilityMap,
 } from "@/server/repositories/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -63,8 +62,8 @@ class CharactersService extends include(Object, Archives, Imports) {
   ) {
     return await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, characterData.rulesetId, async (scope) => {
-          (await RulesetsPolicy.for(tx, session, scope.ruleset)).canCreateCharacter();
+        await withReadableRuleset(tx, session, characterData.rulesetId, async (scope, policy) => {
+          policy.canCreateCharacter();
           const { fields, picks, scores } = characterData;
           const plan = Engine.for(scope).characters().planCreate({ fields, picks, scores });
 

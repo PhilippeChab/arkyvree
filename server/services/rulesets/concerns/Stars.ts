@@ -1,7 +1,8 @@
 import type { Constructor } from "@/lib/mixins.ts";
 import { withTransaction } from "@/server/database/index.ts";
-import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
-import { Rulesets, StarredRulesets } from "@/server/repositories/index.ts";
+import { ForbiddenError } from "@/server/errors/index.ts";
+import { StarredRulesets } from "@/server/repositories/index.ts";
+import { getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import type { Ruleset, Session } from "@/shared/relations.ts";
 
 /** Starring a ruleset: a bookmark on a base or an extension. */
@@ -19,8 +20,7 @@ export function Stars<B extends Constructor>(Base: B) {
 
     async starRuleset(session: Session, rulesetId: string) {
       return await withTransaction(async (tx) => {
-        const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
-        if (!ruleset) throw new NotFoundError("Ruleset not found");
+        const { ruleset } = await getReadableRuleset(tx, session, rulesetId);
 
         if (!this.isStarrable(ruleset)) throw new ForbiddenError("Only base rulesets and extensions can be starred");
 

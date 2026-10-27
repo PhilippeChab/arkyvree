@@ -1,8 +1,8 @@
 import type { Constructor } from "@/lib/mixins.ts";
 import { withTransaction } from "@/server/database/index.ts";
-import { InternalError, NotFoundError } from "@/server/errors/index.ts";
+import { InternalError } from "@/server/errors/index.ts";
 import { Activities, Rulesets } from "@/server/repositories/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -14,10 +14,8 @@ export function Archives<B extends Constructor>(Base: B) {
   abstract class Archiving extends Base {
     async archiveRuleset(session: Session, id: string) {
       return await withTransaction(async (tx) => {
-        const ruleset = await Rulesets.findOne(tx, { id });
-        if (!ruleset) throw new NotFoundError("Ruleset not found");
-
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUpdate();
+        const { policy } = await getReadableRuleset(tx, session, id);
+        policy.canUpdate();
 
         // Archive only flips status='Archived'. Entities and overrides stay
         // live so any character or campaign still pointing here keeps
@@ -41,10 +39,8 @@ export function Archives<B extends Constructor>(Base: B) {
 
     async unarchiveRuleset(session: Session, id: string) {
       return await withTransaction(async (tx) => {
-        const ruleset = await Rulesets.findOne(tx, { id });
-        if (!ruleset) throw new NotFoundError("Ruleset not found");
-
-        (await RulesetsPolicy.for(tx, session, ruleset)).canUnarchive();
+        const { policy } = await getReadableRuleset(tx, session, id);
+        policy.canUnarchive();
 
         const rows = await Rulesets.unarchive(tx, { id });
         const unarchivedRuleset = rows[0];

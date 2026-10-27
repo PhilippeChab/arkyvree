@@ -72,8 +72,9 @@ describe("ContributorsService", () => {
     test("refuses strangers, the owner's own email, a second invite and an archived ruleset", async () => {
       const { owner, ownerSession, ruleset } = await setup();
       const { session: stranger } = await createTestUser("stranger");
+      // A private ruleset isn't revealed to a stranger
       expect(ContributorsService.inviteContributor(stranger, ruleset.id, "test@example.com", "Editor")).rejects.toThrow(
-        ForbiddenError,
+        NotFoundError,
       );
       expect(
         ContributorsService.inviteContributor(ownerSession, ruleset.id, owner.emailAddress, "Editor"),

@@ -1,7 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
 import { include } from "@/lib/mixins.ts";
 import { ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
-import { Characters, Contributors, Players } from "@/server/repositories/index.ts";
+import { Characters, Contributors, Players, Visibility } from "@/server/repositories/index.ts";
 import type { Ruleset, Session } from "@/shared/relations.ts";
 
 import { ContributorRights } from "./concerns/ContributorRights.ts";
@@ -12,10 +12,10 @@ import RulesetRoles, { isPublicRuleset } from "./RulesetRoles.ts";
 
 class RulesetsPolicy extends include(RulesetRoles, ContributorRights, CreationRights, EntityRights, ExtensionRights) {
   /**
-   * The session's policy on `ruleset`: a contributor's rights come from their active role on it, a player's in a
-   * campaign on it from their seat, which matters only on a ruleset that isn't public, and a character's editor's from
-   * a character built on it, which matters only on a private ruleset they have no other standing on (it lets them read
-   * it).
+   * The session's policy on `ruleset`: a contributor's rights come from their active role on it, a campaign member's
+   * from their seat in a campaign on it (any seat to read it, a live one in a live campaign to create on it), which
+   * matters only on a ruleset that isn't public, and a character's editor's from a character built on it, which
+   * matters only on a private ruleset they have no other standing on (it lets them read it).
    */
   static async for(db: Db, session: Session, ruleset: Ruleset) {
     const isOwner = ruleset.userId === session.userId;
@@ -23,18 +23,17 @@ class RulesetsPolicy extends include(RulesetRoles, ContributorRights, CreationRi
       ruleset.userId && !isOwner
         ? await Contributors.findRole(db, { userId: session.userId, rulesetId: ruleset.id })
         : undefined;
-    const isCampaignPlayer =
-      !isOwner &&
-      role === undefined &&
-      !isPublicRuleset(ruleset) &&
-      (await Players.exists(db, { userId: session.userId, rulesetId: ruleset.id }));
+    const seat = { userId: session.userId, rulesetId: ruleset.id };
+    const isCampaignMember =
+      !isOwner && role === undefined && !isPublicRuleset(ruleset) && (await Players.exists(db, seat, Visibility.All));
+    const isCampaignPlayer = isCampaignMember && (await Players.exists(db, seat));
     const isCharacterEditor =
       !isOwner &&
       role === undefined &&
-      !isCampaignPlayer &&
+      !isCampaignMember &&
       ruleset.private &&
       (await Characters.exists(db, { editorId: session.userId, rulesetId: ruleset.id }));
-    return new RulesetsPolicy(session, ruleset, role, isCampaignPlayer, isCharacterEditor);
+    return new RulesetsPolicy(session, ruleset, role, isCampaignPlayer, isCampaignMember, isCharacterEditor);
   }
 
   canFork() {
@@ -108,12 +107,12 @@ class RulesetsPolicy extends include(RulesetRoles, ContributorRights, CreationRi
 
   /**
    * Whether the session may read the ruleset: anyone, one that isn't private; a private one, its owner, an active
-   * contributor, a player in a live campaign on it, and an editor of a character built on it.
+   * contributor, a member of a campaign on it (archived or not), and an editor of a character built on it.
    */
   isReadable() {
     if (!this.entity.private) return true;
 
-    return this.isOwner || this.isContributor || this.isCampaignPlayer || this.isCharacterEditor;
+    return this.isOwner || this.isContributor || this.isCampaignMember || this.isCharacterEditor;
   }
 }
 

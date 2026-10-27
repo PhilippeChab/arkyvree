@@ -401,14 +401,15 @@ describe("RulesetsService", () => {
       const ruleset = await createTestRuleset(user.id);
       const base = await createTestRuleset(null, { private: false, status: "Published" });
 
-      expect(RulesetsService.archiveRuleset(other, ruleset.id)).rejects.toThrow(ForbiddenError);
+      // Another user's private ruleset isn't revealed to them
+      expect(RulesetsService.archiveRuleset(other, ruleset.id)).rejects.toThrow(NotFoundError);
       expect(RulesetsService.archiveRuleset(session, base.id)).rejects.toThrow(ForbiddenError);
       expect(RulesetsService.archiveRuleset(session, NIL_UUID)).rejects.toThrow(NotFoundError);
       expect(RulesetsService.unarchiveRuleset(session, ruleset.id)).rejects.toThrow(ForbiddenError);
       expect(RulesetsService.unarchiveRuleset(session, base.id)).rejects.toThrow(ForbiddenError);
       expect(RulesetsService.unarchiveRuleset(session, NIL_UUID)).rejects.toThrow(NotFoundError);
       await RulesetsService.archiveRuleset(session, ruleset.id);
-      expect(RulesetsService.unarchiveRuleset(other, ruleset.id)).rejects.toThrow(ForbiddenError);
+      expect(RulesetsService.unarchiveRuleset(other, ruleset.id)).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -468,10 +469,10 @@ describe("RulesetsService", () => {
       const draft = await createTestRuleset(user.id);
       await addPlayableContent(draft.id);
 
-      expect(RulesetsService.publishRuleset(other, draft.id)).rejects.toThrow(ForbiddenError);
-      expect(RulesetsService.publishRuleset(session, (await createTestRuleset(null)).id)).rejects.toThrow(
-        ForbiddenError,
-      );
+      // Another user's private ruleset isn't revealed to them
+      expect(RulesetsService.publishRuleset(other, draft.id)).rejects.toThrow(NotFoundError);
+      const base = await createTestRuleset(null, { private: false });
+      expect(RulesetsService.publishRuleset(session, base.id)).rejects.toThrow(ForbiddenError);
       expect(
         RulesetsService.publishRuleset(session, (await createTestRuleset(user.id, { status: "Published" })).id),
       ).rejects.toThrow(UnprocessableEntityError);
@@ -517,12 +518,14 @@ describe("RulesetsService", () => {
       const { user, session } = await createTestUser();
       const { session: other } = await createTestUser();
       const body = { name: "Updated", description: "Updated" };
+      // Another user's private ruleset isn't revealed to them; a public one is refused
       expect(RulesetsService.updateRuleset(other, (await createTestRuleset(user.id)).id, body)).rejects.toThrow(
-        ForbiddenError,
+        NotFoundError,
       );
-      expect(RulesetsService.updateRuleset(session, (await createTestRuleset(null)).id, body)).rejects.toThrow(
-        ForbiddenError,
-      );
+      const shared = await createTestRuleset(user.id, { private: false });
+      expect(RulesetsService.updateRuleset(other, shared.id, body)).rejects.toThrow(ForbiddenError);
+      const base = await createTestRuleset(null, { private: false });
+      expect(RulesetsService.updateRuleset(session, base.id, body)).rejects.toThrow(ForbiddenError);
       expect(
         RulesetsService.updateRuleset(session, (await createTestRuleset(user.id, { status: "Archived" })).id, body),
       ).rejects.toThrow(UnprocessableEntityError);

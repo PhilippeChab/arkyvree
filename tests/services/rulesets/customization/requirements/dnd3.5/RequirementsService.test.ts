@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import type { Feat, Race } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
-import { ForbiddenError } from "@/server/errors/index.ts";
+import { NotFoundError } from "@/server/errors/index.ts";
 import { Entities, Requirements } from "@/server/repositories/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
@@ -123,7 +123,7 @@ describe("RequirementsService", () => {
       await expectRefusedWith(RequirementsService.createRequirement(session, NIL_UUID, "feats", feat.id, chain), 404);
       await expectRefusedWith(RequirementsService.createRequirement(session, rulesetId, "feats", NIL_UUID, chain), 404);
       expect(RequirementsService.createRequirement(other, rulesetId, "feats", feat.id, chain)).rejects.toThrow(
-        ForbiddenError,
+        NotFoundError,
       );
     });
   });
@@ -188,7 +188,7 @@ describe("RequirementsService", () => {
       );
       expect(
         RequirementsService.updateRequirement(other, rulesetId, "feats", feat.id, created.id, update),
-      ).rejects.toThrow(ForbiddenError);
+      ).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -230,7 +230,7 @@ describe("RequirementsService", () => {
         404,
       );
       expect(RequirementsService.deleteRequirement(other, rulesetId, "feats", feat.id, created.id)).rejects.toThrow(
-        ForbiddenError,
+        NotFoundError,
       );
     });
   });

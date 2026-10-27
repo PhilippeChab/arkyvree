@@ -33,16 +33,17 @@ export async function getReadableRuleset(db: Db, session: Session, rulesetId: st
 }
 
 /**
- * Runs `fn` in the scope of the ruleset `rulesetId` (`withRulesetScope`), if the session may read it
- * (`getReadableRuleset`): a read of what's under a ruleset by its id. A write checks its own rights instead, and a
- * character's reads its character's.
+ * Runs `fn` in the scope of the ruleset `rulesetId` (`withRulesetScope`), with the session's policy on it, if the
+ * session may read it (`getReadableRuleset`): what a read or a write of what's under a ruleset by its id runs in, so
+ * whoever may not read it gets the 404 an unknown ruleset gets before any other check. A write checks its own rights on
+ * the policy; a character's reads its character's.
  */
 export async function withReadableRuleset<T>(
   db: Db,
   session: Session,
   rulesetId: string,
-  fn: (scope: RulesetScope) => Promise<T>,
+  fn: (scope: RulesetScope, policy: RulesetsPolicy) => Promise<T>,
 ): Promise<T> {
-  await getReadableRuleset(db, session, rulesetId);
-  return await withRulesetScope(db, rulesetId, fn);
+  const { policy } = await getReadableRuleset(db, session, rulesetId);
+  return await withRulesetScope(db, rulesetId, async (scope) => await fn(scope, policy));
 }

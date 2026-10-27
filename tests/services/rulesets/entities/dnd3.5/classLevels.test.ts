@@ -12,7 +12,7 @@ import type {
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { ConflictError, ForbiddenError, toJson } from "@/server/errors/index.ts";
+import { ConflictError, NotFoundError, toJson } from "@/server/errors/index.ts";
 import { Entities, EntityLinks, EntitySnapshots, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -183,18 +183,26 @@ describe("EntitiesService: a class's levels", () => {
         { role: "baseBonus", toId: fortitude.id, toName: "Fortitude", amount: 2 },
       ];
       expect(created.links).toMatchObject(links);
-      expect((await EntitiesService.getOwnedEntityWithOwner(ruleset.id, "classes", created.id)).links).toMatchObject(
-        links,
-      );
+      expect(
+        (
+          await EntitiesService.getOwnedEntityWithOwner(
+            await ownerSessionOf(ruleset.id),
+            ruleset.id,
+            "classes",
+            created.id,
+          )
+        ).links,
+      ).toMatchObject(links);
 
       const edited = await EntitiesService.updateOwnedEntity(session, ruleset.id, "classes", klass.id, created.id, {
         links: { baseBonus: [{ toId: fortitude.id, amount: 3 }] },
       });
       const editedLinks = links.map((link) => (link.role === "baseBonus" ? { ...link, amount: 3 } : link));
       expect(edited.links).toMatchObject(editedLinks);
-      expect((await EntitiesService.getOwnedEntities(ruleset.id, "classes", klass.id))[0].links).toMatchObject(
-        editedLinks,
-      );
+      expect(
+        (await EntitiesService.getOwnedEntities(await ownerSessionOf(ruleset.id), ruleset.id, "classes", klass.id))[0]
+          .links,
+      ).toMatchObject(editedLinks);
     });
 
     test("writes each level's base attack bonus as the sheet does: its attacks a round", async () => {
@@ -449,7 +457,8 @@ describe("EntitiesService: a class's levels", () => {
       // Its access checked before its class is looked up
       () => EntitiesService.deleteOwnedEntity(other, ruleset.id, "classes", NIL_UUID, level.id),
     ])
-      expect(change()).rejects.toThrow(ForbiddenError);
+      // A private ruleset isn't revealed to a stranger
+      expect(change()).rejects.toThrow(NotFoundError);
   });
 
   test("doesn't find a missing ruleset, class or level, nor a level through another ruleset", async () => {

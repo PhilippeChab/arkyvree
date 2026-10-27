@@ -5,11 +5,11 @@ import {
   Campaigns,
   type Pagination,
   Players,
-  Rulesets,
   Visibility,
   visibilityMap,
 } from "@/server/repositories/index.ts";
-import { CampaignsPolicy, RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { CampaignsPolicy } from "@/server/services/policies/index.ts";
+import { getReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -53,9 +53,8 @@ class CampaignsService {
     },
   ) {
     return await withTransaction(async (tx) => {
-      const ruleset = await Rulesets.findOne(tx, { id: body.rulesetId });
-      if (!ruleset) throw new NotFoundError("Ruleset not found");
-      (await RulesetsPolicy.for(tx, session, ruleset)).canCreateCampaign();
+      const { policy } = await getReadableRuleset(tx, session, body.rulesetId);
+      policy.canCreateCampaign();
 
       const campaignRows = await Campaigns.create(tx, body);
 

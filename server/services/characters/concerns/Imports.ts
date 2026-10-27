@@ -1,10 +1,9 @@
 import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { withRulesetScope } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { Activities, CharacterInventory, CharacterLinks, Characters } from "@/server/repositories/index.ts";
 import { createAdvancement, writeChildren } from "@/server/services/characters/levels/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { withReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -31,8 +30,8 @@ export function Imports<B extends Constructor>(Base: B) {
     async importCharacter(session: Session, rulesetId: string, text: string) {
       return await withTransaction(
         async (tx) =>
-          await withRulesetScope(tx, rulesetId, async (scope) => {
-            (await RulesetsPolicy.for(tx, session, scope.ruleset)).canCreateCharacter();
+          await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
+            policy.canCreateCharacter();
             const characterId = crypto.randomUUID();
             const plan = Engine.for(scope).characters().planImport(text, { characterId, userId: session.userId });
             const [character] = await Characters.create(tx, {

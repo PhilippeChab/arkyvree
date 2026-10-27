@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
-import { ForbiddenError } from "@/server/errors/index.ts";
+import { NotFoundError } from "@/server/errors/index.ts";
 import { Activities, CharacterInventory, Entities, EntitySnapshots } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -413,9 +413,10 @@ describe("EntitiesService: items", () => {
       const { session, ruleset } = await createTestUserAndRuleset();
       const source = await EntitiesService.createEntity(session, ruleset.id, "items", { name: "Scroll" });
       const { session: other } = await createTestUserAndRuleset();
+      // A private ruleset isn't revealed to a stranger
       expect(
         EntitiesService.createVariants(other, ruleset.id, "items", source.id, [{ name: "Stolen Scroll" }]),
-      ).rejects.toThrow(ForbiddenError);
+      ).rejects.toThrow(NotFoundError);
     });
 
     test("are refused all together when a name repeats or is taken", async () => {

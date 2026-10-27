@@ -11,8 +11,7 @@ import {
   RulesetExtensions,
   Rulesets,
 } from "@/server/repositories/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
+import { findReadableRuleset, getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -51,10 +50,8 @@ class RulesetExtensionsService {
   async subscribeExtension(session: Session, id: string, extensionIds: string[]) {
     const result = await withTransaction(async (tx) => {
       // 1. Validate ruleset
-      const childRuleset = await Rulesets.findOne(tx, { id });
-      if (!childRuleset) throw new NotFoundError("Ruleset not found");
-
-      (await RulesetsPolicy.for(tx, session, childRuleset)).canSubscribeExtension();
+      const { policy, ruleset: childRuleset } = await getReadableRuleset(tx, session, id);
+      policy.canSubscribeExtension();
 
       // The host can't subscribe to anything if it's already being used as an
       // extension by someone else — adding extensions to it would create
@@ -73,7 +70,8 @@ class RulesetExtensionsService {
       for (const extensionId of extensionIds) {
         if (extensionId === id) throw new UnprocessableEntityError("Cannot subscribe to itself");
 
-        const extension = await Rulesets.findOne(tx, { id: extensionId });
+        // One the session may not read is refused as an unknown one is: a private ruleset's existence isn't revealed
+        const extension = (await findReadableRuleset(tx, session, extensionId))?.ruleset;
         if (!extension) throw new NotFoundError("Extension not found");
 
         if (extension.kind !== "extension")
@@ -129,10 +127,7 @@ class RulesetExtensionsService {
   async unsubscribeExtension(session: Session, id: string, extensionId: string) {
     const result = await withTransaction(async (tx) => {
       // 1. Validate
-      const ruleset = await Rulesets.findOne(tx, { id });
-      if (!ruleset) throw new NotFoundError("Ruleset not found");
-
-      const policy = await RulesetsPolicy.for(tx, session, ruleset);
+      const { policy, ruleset } = await getReadableRuleset(tx, session, id);
       policy.canUnsubscribeExtension();
 
       if (!ruleset.extensionRulesetIds.includes(extensionId))

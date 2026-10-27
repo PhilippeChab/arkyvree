@@ -86,19 +86,28 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
     return await db.delete(this.table).where(eq(this.table.id, where.id));
   }
 
-  /** Whether the user plays in a live campaign on the ruleset: what lets a member create on a private ruleset. */
-  async exists(db: Db, where: { rulesetId: string; userId: string }) {
+  /**
+   * Whether the user has a seat in a campaign on the ruleset: a live seat in a live campaign by default, what lets a
+   * member create on a private ruleset; any seat still stored, in a campaign archived or not (`Visibility.All`), what
+   * lets them read it. A removed player's seat is deleted, so they have none.
+   */
+  async exists(
+    db: Db,
+    where: { rulesetId: string; userId: string },
+    visibility: Visibility.All | Visibility.UnarchivedOnly = Visibility.UnarchivedOnly,
+  ) {
+    const live = visibility === Visibility.UnarchivedOnly;
     const [row] = await db
       .select({ one: sql`1` })
       .from(this.table)
       .innerJoin(campaignsInCampaign, eq(this.table.campaignId, campaignsInCampaign.id))
       .where(
-        and(
+        this.where([
           eq(this.table.userId, where.userId),
-          isNull(this.table.deletedAt),
-          isNull(campaignsInCampaign.deletedAt),
           eq(campaignsInCampaign.rulesetId, where.rulesetId),
-        ),
+          live && isNull(this.table.deletedAt),
+          live && isNull(campaignsInCampaign.deletedAt),
+        ]),
       )
       .limit(1);
     return Boolean(row);

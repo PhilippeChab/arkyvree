@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import type { Klass, KlassLevel, RulesetAbility, Skill } from "@/engine/rulesets/dnd3.5/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { ConflictError, ForbiddenError } from "@/server/errors/index.ts";
+import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Entities, EntityLinks, EntitySnapshots } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
@@ -80,11 +80,12 @@ describe("EntitiesService: a class's skills", () => {
   test("refuses changes from anyone but the owner", async () => {
     const { ruleset, fighter, climb } = await setup();
     const { session: other } = await createTestUserAndRuleset();
+    // A private ruleset isn't revealed to a stranger
     expect(EntitiesService.addEntityLink(other, ruleset.id, "classes", fighter.id, climb.id)).rejects.toThrow(
-      ForbiddenError,
+      NotFoundError,
     );
     expect(EntitiesService.removeEntityLink(other, ruleset.id, "classes", fighter.id, climb.id)).rejects.toThrow(
-      ForbiddenError,
+      NotFoundError,
     );
   });
 

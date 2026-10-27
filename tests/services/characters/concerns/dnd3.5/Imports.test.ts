@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
-import { ForbiddenError } from "@/server/errors/index.ts";
+import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { CharacterAdvancements, CharacterInventory, Characters } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
@@ -73,7 +73,10 @@ describe("Imports", () => {
     const ruleset = await createTestRuleset(owner.id);
     const { session } = await createTestUser();
     const text = await readPcgenFile("brannoc");
-    expect(CharactersService.importCharacter(session, ruleset.id, text)).rejects.toThrow(ForbiddenError);
+    // A private ruleset isn't revealed to a stranger; a public draft they read, they may not import into
+    expect(CharactersService.importCharacter(session, ruleset.id, text)).rejects.toThrow(NotFoundError);
+    const draft = await createTestRuleset(owner.id, { private: false });
+    expect(CharactersService.importCharacter(session, draft.id, text)).rejects.toThrow(ForbiddenError);
   });
 
   test("answers what a file is before a ruleset is picked: its program, version, format and rules", async () => {

@@ -9,7 +9,7 @@ import {
   type Spell,
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
-import { ForbiddenError } from "@/server/errors/index.ts";
+import { NotFoundError } from "@/server/errors/index.ts";
 import { Entities, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
@@ -203,7 +203,7 @@ describe("ModifiersService", () => {
     );
     await expectRefusedWith(ModifiersService.createModifier(session, rulesetId, "feats", NIL_UUID, strengthBonus), 404);
     expect(ModifiersService.createModifier(other, rulesetId, "feats", feat.id, strengthBonus)).rejects.toThrow(
-      ForbiddenError,
+      NotFoundError,
     );
     for (const change of [
       (s = session, entityId = feat.id, id = created.id) =>
@@ -215,7 +215,7 @@ describe("ModifiersService", () => {
     ]) {
       await expectRefusedWith(change(session, feat.id, NIL_UUID), 404);
       await expectRefusedWith(change(session, item.id), 404);
-      expect(change(other)).rejects.toThrow(ForbiddenError);
+      expect(change(other)).rejects.toThrow(NotFoundError);
     }
   });
 

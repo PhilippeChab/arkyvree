@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { addClassLevels, createCharacter } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
-import { ForbiddenError } from "@/server/errors/index.ts";
+import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Characters, Picks } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { RulesetSettingsService } from "@/server/services/rulesets/settings/index.ts";
@@ -263,7 +263,8 @@ describe("RulesetSettingsService", () => {
     const { fork, abilityMap } = await setup();
     const { session: other } = await createTestUser();
     const links = { skillPointAbility: abilityMap["Wisdom"] };
-    expect(RulesetSettingsService.updateSettings(other, fork.id, { links })).rejects.toThrow(ForbiddenError);
+    // A private fork isn't revealed to a stranger
+    expect(RulesetSettingsService.updateSettings(other, fork.id, { links })).rejects.toThrow(NotFoundError);
     const { session } = await setup();
     expect(RulesetSettingsService.updateSettings(session, fork.rulesetId!, { links })).rejects.toThrow(ForbiddenError);
   });

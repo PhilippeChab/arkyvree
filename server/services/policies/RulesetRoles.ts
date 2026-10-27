@@ -9,8 +9,8 @@ export function isPublicRuleset(ruleset: Ruleset) {
 }
 
 /**
- * Who the session is on a ruleset: its owner, a contributor with a role, a player in a campaign on it, or an editor of a
- * character built on it. What every ruleset check reads.
+ * Who the session is on a ruleset: its owner, a contributor with a role, a player in a campaign on it (a member of one,
+ * archived or not), or an editor of a character built on it. What every ruleset check reads.
  */
 export default abstract class RulesetRoles extends BasePolicy<Ruleset> {
   constructor(
@@ -18,15 +18,26 @@ export default abstract class RulesetRoles extends BasePolicy<Ruleset> {
     entity: Ruleset,
     contributorRole?: ContributorRole,
     isCampaignPlayer = false,
+    isCampaignMember = isCampaignPlayer,
     isCharacterEditor = false,
   ) {
     super(session, entity);
     this.contributorRole = contributorRole;
+    this.isCampaignMember = isCampaignMember;
     this.isCampaignPlayer = isCampaignPlayer;
     this.isCharacterEditor = isCharacterEditor;
   }
 
-  /** Plays in a campaign on the ruleset: looked up only for a ruleset that isn't public, where it lets them in. */
+  /**
+   * Has a seat in a campaign on the ruleset, archived or not, the campaign archived or not (who may read the campaign):
+   * looked up only for a ruleset that isn't public, where it lets them read it.
+   */
+  protected readonly isCampaignMember: boolean;
+
+  /**
+   * Plays in a live campaign on the ruleset, from a live seat: looked up only for a ruleset that isn't public, where it
+   * lets them create on it.
+   */
   protected readonly isCampaignPlayer: boolean;
 
   /**

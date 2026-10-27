@@ -11,8 +11,7 @@ import {
   getPendingInvite,
   saveInviteAnswer,
 } from "@/server/services/invites/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
+import { findReadableRuleset, getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -30,15 +29,16 @@ class ContributorsService {
     });
   }
 
-  /** A contributor the session's user may manage, with its ruleset and the policy that allowed it. */
+  /**
+   * A contributor the session's user may manage, with its ruleset and the policy that allowed it. A contributor to a
+   * ruleset the session may not read is refused as an unknown one is: a private ruleset's existence isn't revealed.
+   */
   private async getManagedContributor(tx: Db, session: Session, contributorId: string) {
     const contributor = await Contributors.findOne(tx, { id: contributorId });
-    if (!contributor) throw new NotFoundError("Contributor not found");
+    const readable = contributor && (await findReadableRuleset(tx, session, contributor.rulesetId));
+    if (!contributor || !readable) throw new NotFoundError("Contributor not found");
 
-    const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId });
-    if (!ruleset) throw new NotFoundError("Ruleset not found");
-
-    const policy = await RulesetsPolicy.for(tx, session, ruleset);
+    const { policy, ruleset } = readable;
     policy.canManageContributors();
     return { contributor, ruleset, policy };
   }
@@ -89,10 +89,7 @@ class ContributorsService {
 
   async inviteContributor(session: Session, rulesetId: string, email: string, role: ContributorRole) {
     const { contributor, emailData } = await withTransaction(async (tx) => {
-      const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
-      if (!ruleset) throw new NotFoundError("Ruleset not found");
-
-      const policy = await RulesetsPolicy.for(tx, session, ruleset);
+      const { policy, ruleset } = await getReadableRuleset(tx, session, rulesetId);
       policy.canInviteContributors();
 
       if (role === "Admin") policy.canManageAdminContributors();
@@ -154,8 +151,7 @@ class ContributorsService {
 
   async leaveRuleset(session: Session, rulesetId: string) {
     return await withTransaction(async (tx) => {
-      const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
-      if (!ruleset) throw new NotFoundError("Ruleset not found");
+      await getReadableRuleset(tx, session, rulesetId);
 
       const role = await Contributors.findRole(tx, {
         userId: session.userId,

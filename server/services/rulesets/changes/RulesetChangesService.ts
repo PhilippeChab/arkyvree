@@ -1,6 +1,6 @@
 import { CowDataReader, EntityNames, EntityRevert, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { BadRequestError, NotFoundError } from "@/server/errors/index.ts";
+import { BadRequestError } from "@/server/errors/index.ts";
 import {
   EntitySnapshots,
   RULESET_ENTITY_TYPES,
@@ -8,7 +8,6 @@ import {
   type RulesetEntityType,
   Rulesets,
 } from "@/server/repositories/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -107,10 +106,8 @@ class RulesetChangesService {
    */
   async revertOverride(session: Session, rulesetId: string, entityType: RulesetEntityType, entityId: string) {
     const subscribers = await withTransaction(async (tx) => {
-      const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
-      if (!ruleset) throw new NotFoundError("Ruleset not found");
-
-      (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+      const { policy, ruleset } = await getReadableRuleset(tx, session, rulesetId);
+      policy.canUpdateEntity();
 
       // The parent's entity shows again: under a name its view shows no other entity of
       const names = new EntityNames(ruleset, await CowDataReader.read(tx, ruleset));

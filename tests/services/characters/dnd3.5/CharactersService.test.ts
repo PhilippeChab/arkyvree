@@ -155,8 +155,19 @@ describe("CharactersService", () => {
         userId: contributor.id,
       });
 
+      // A member of an archived campaign reads the ruleset, but creates only in a live one
+      const { user: former, session: formerSession } = await createTestUser();
+      const [archived] = await Campaigns.create(db, {
+        name: "Archived Campaign",
+        rulesetId: ruleset.id,
+        deletedAt: new Date().toISOString(),
+      });
+      await Players.create(db, { userId: former.id, campaignId: archived.id, role: "Player Character" });
+      expect(createCharacterAs(formerSession, onPrivate)).rejects.toThrow(ForbiddenError);
+
+      // A stranger isn't told the private ruleset exists
       const { session: stranger } = await createTestUser();
-      expect(createCharacterAs(stranger, onPrivate)).rejects.toThrow(ForbiddenError);
+      expect(createCharacterAs(stranger, onPrivate)).rejects.toThrow(NotFoundError);
       expect(createCharacterAs(stranger, { rulesetId: NIL_UUID })).rejects.toThrow(NotFoundError);
     });
 
