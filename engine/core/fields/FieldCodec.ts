@@ -50,7 +50,6 @@ export default class FieldCodec<S extends Fields> {
     ) as Fields;
     const valued = formFields.filter(([, field]) => field.kind !== "links");
     this.formNames = valued.map(([key]) => key) as (keyof FieldValues<S> & string)[];
-    this.keptNames = new Set(valued.filter(([, field]) => Field.isKept(field)).map(([key]) => key));
     this.leaves = new Map(Field.storedLeavesOf(fields).map((leaf) => [leaf.field, leaf]));
   }
 
@@ -205,10 +204,9 @@ export default class FieldCodec<S extends Fields> {
     }
   }
 
-  /** The fields' values into a write, in the spec's order: a field not given writes none, nor one that doesn't count. */
+  /** The fields' values into a write, in the spec's order: a field not given writes none. */
   private static writeFields(fields: Fields, values: Record<string, unknown>, write: WriteRecord) {
-    const counted = FieldCodec.applyConditions(fields, values);
-    for (const [key, field] of Object.entries(fields)) FieldCodec.writeField(field, counted[key], write);
+    for (const [key, field] of Object.entries(fields)) FieldCodec.writeField(field, values[key], write);
   }
 
   /** A field's value without a row: a flag's none when it tells its absence apart, false without a default. */
@@ -233,12 +231,6 @@ export default class FieldCodec<S extends Fields> {
   /** The fields its form takes: all but one its rules alone set (`form: "hidden"`). */
   private readonly formFields: Fields;
 
-  /**
-   * The names of the fields its form shows among its others, below its name (`Field.isKept`), which a keeper keeps
-   * (`keepsForm`).
-   */
-  private readonly keptNames: ReadonlySet<string>;
-
   /** The fields' leaves its owner's fields keep (a reference's and a list of links' are links'), by stored field. */
   private readonly leaves: ReadonlyMap<string, StoredLeaf>;
 
@@ -256,9 +248,7 @@ export default class FieldCodec<S extends Fields> {
 
   /**
    * The values as a write of their owner's fields and links: every field and link role of the fields they give (a
-   * group's all), each a value's own, of its kind (a number's a number, a flag's a flag); none of those its form shows
-   * below its name when the entity keeps none of them (a field it holds no value of that keeps them, `keepsForm`: a
-   * spell's school).
+   * group's all), each a value's own, of its kind (a number's a number, a flag's a flag).
    */
   private writeOf(values: FieldValues<S> | WrittenValues<S>): WriteRecord {
     const write: WriteRecord = { fields: {}, links: {} };
@@ -267,9 +257,7 @@ export default class FieldCodec<S extends Fields> {
       if (leaf.kind === "ref") write.links[leaf.role] = null;
       else if (leaf.kind !== "links") write.fields[leaf.field] = [];
     }
-    const kept = Field.keepersOf(this.fields).every(([key]) => !!(values as Record<string, unknown>)[key]);
-    const written = kept ? this.fields : Object.fromEntries(given.filter(([key]) => !this.keptNames.has(key)));
-    FieldCodec.writeFields(written, values as Record<string, unknown>, write);
+    FieldCodec.writeFields(this.fields, values as Record<string, unknown>, write);
     return write;
   }
 
@@ -388,9 +376,10 @@ export default class FieldCodec<S extends Fields> {
 
   /**
    * The values as a write of their owner's fields and links: every field and link role of the fields they give, each
-   * replaced by its value's (none for one its form shows when the entity keeps none of them, `keepsForm`, or for a
-   * value that writes none); a field they leave out isn't named, so its owner keeps it. A form's save gives every field
-   * it shows: it names them.
+   * replaced by its value's (none for a value that writes none); a field they leave out isn't named, so its owner keeps
+   * it. A form's save gives every field it shows: it names them. What the write path stores of it applies the rules
+   * past each value's own (`FieldWrites`): a field whose condition doesn't hold at its default, none of those its form
+   * shows without a value of one that keeps them (`keepsForm`).
    */
   write(values: WrittenValues<S>): FieldsWrite {
     return this.writeOf(values);

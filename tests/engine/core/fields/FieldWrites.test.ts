@@ -6,6 +6,41 @@ import { FieldWrites } from "@/engine/core/fields/index.ts";
 const DEFAULTS = { TRAINED: [true], SECRET: [false], RANK: ["Novice"], COST: [1] };
 
 /**
+ * A gadget's fields: a title that keeps those its form shows among its others (a motto, a group's level, the flag and
+ * the count), its weight beside its name, and a count that counts only while the flag is on.
+ */
+const RULED = new FieldWrites({
+  gadgets: {
+    title: { description: "Its title", field: "TITLE", keepsForm: true, kind: "text", label: "Title", merge: "winner" },
+    weight: {
+      description: "Its weight",
+      field: "WEIGHT",
+      kind: "number",
+      label: "Weight",
+      merge: "winner",
+      placement: "beside-name",
+    },
+    motto: { description: "Its motto", field: "MOTTO", kind: "text", label: "Motto", merge: "winner" },
+    on: { description: "Whether it's on", field: "ON", kind: "flag", label: "On", merge: "winner" },
+    count: {
+      default: 1,
+      description: "How many",
+      field: "COUNT",
+      kind: "number",
+      label: "Count",
+      merge: "winner",
+      min: 1,
+      when: { field: "on", values: [true] },
+    },
+    group: {
+      fields: { level: { description: "Its level", field: "LEVEL", kind: "number", label: "Level", merge: "winner" } },
+      kind: "group",
+      label: "Group",
+    },
+  },
+});
+
+/**
  * Two owner types' fields: a talent's, each kind always written, a flag with a default and one without, a text and a
  * number with theirs, a free text, and a choice, which no declaration writes always; a badge's, none always written.
  */
@@ -93,5 +128,35 @@ describe("A write of an owner's fields", () => {
   test("writes no default of an owner type none of whose fields is always written", () => {
     expect(WRITES.written("badges", {}, true)).toEqual({});
     expect(WRITES.written("badges", { SHINY: false }, true)).toEqual({ SHINY: [] });
+  });
+});
+
+describe("A write of an owner's fields on their rules", () => {
+  test("stores a field whose condition doesn't hold at its default, and one the write doesn't name as it is", () => {
+    for (const creating of [true, false]) {
+      expect(RULED.written("gadgets", { TITLE: "A", ON: false, COUNT: 3 }, creating)).toEqual({
+        TITLE: ["A"],
+        ON: [],
+        COUNT: [],
+      });
+      expect(RULED.written("gadgets", { TITLE: "A", ON: true, COUNT: 3 }, creating).COUNT).toEqual([3]);
+    }
+    // A new owner's flag the write doesn't name is off; an existing one's, unknown, leaves its count as given
+    expect(RULED.written("gadgets", { TITLE: "A", COUNT: 3 }, true).COUNT).toEqual([]);
+    expect(RULED.written("gadgets", { TITLE: "A", COUNT: 3 }, false).COUNT).toEqual([3]);
+  });
+
+  test("stores none of the fields its form shows among its others without a value of the one that keeps them", () => {
+    const given = { MOTTO: "Onward", LEVEL: 2, WEIGHT: 5, ON: true, COUNT: 3 };
+    const kept = { MOTTO: ["Onward"], LEVEL: [2], WEIGHT: [5], ON: [true], COUNT: [3] };
+    // Its weight, beside its name, it keeps all the same
+    const cleared = { MOTTO: [], LEVEL: [], WEIGHT: [5], ON: [], COUNT: [] };
+    for (const creating of [true, false]) {
+      expect(RULED.written("gadgets", { ...given, TITLE: "" }, creating)).toEqual({ ...cleared, TITLE: [] });
+      expect(RULED.written("gadgets", { ...given, TITLE: "A" }, creating)).toEqual({ ...kept, TITLE: ["A"] });
+    }
+    // A new owner holds no title the write doesn't name; an existing one keeps its own, and the fields it keeps
+    expect(RULED.written("gadgets", given, true)).toEqual(cleared);
+    expect(RULED.written("gadgets", given, false)).toEqual(kept);
   });
 });

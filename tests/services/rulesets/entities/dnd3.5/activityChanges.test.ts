@@ -14,10 +14,13 @@ import {
   ITEM_COST_GP,
   ITEM_TYPE,
   RACE_QUADRUPED,
+  SKILL_CHECK_PENALTY_MULTIPLIER,
+  SKILL_IMPACTED_BY_WEIGHT,
   SKILL_USABLE_WITHOUT_TRAINING,
   SPELL_DESCRIPTOR,
   SPELL_SAVE_EFFECT,
   SPELL_SCHOOL,
+  SPELL_TARGET,
   WEAPON_BASE_DAMAGE,
   WEAPON_FINESSABLE,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -91,6 +94,28 @@ describe("An update's activity", () => {
       { field: SPELL_SCHOOL, label: "School", from: "Evocation", to: "Abjuration" },
       // A list's values, in their declared order
       { field: SPELL_DESCRIPTOR, label: "Descriptors", to: "Fire, Force" },
+    ]);
+  });
+
+  test("of a spell that loses its school records the fields its form shows cleared, as stored", async () => {
+    const { aptitudes, rulesetId, session } = await setup();
+    const fields = { [SPELL_DESCRIPTOR]: ["Fire"], [SPELL_TARGET]: "You", [SPELL_SAVE_EFFECT]: "negates" };
+    const spell = await EntitiesService.createEntity(session, rulesetId, "spells", {
+      name: "Burn",
+      fields: { ...fields, [SPELL_SCHOOL]: "Evocation" },
+      links: { listedIn: [{ toId: aptitudes.Wizard, tier: 1 }] },
+    });
+    await EntitiesService.updateEntity(session, rulesetId, "spells", spell.id, {
+      name: "Burn",
+      fields: { ...fields, [SPELL_SCHOOL]: "" },
+    });
+
+    // Without a school it keeps none of the fields its form shows among its others, which its form gives all the
+    // same; its save effect, beside its name, it keeps
+    expect(await changesOf(session.userId, spell.id)).toEqual([
+      { field: SPELL_SCHOOL, label: "School", from: "Evocation" },
+      { field: SPELL_DESCRIPTOR, label: "Descriptors", from: "Fire" },
+      { field: SPELL_TARGET, label: "Target", from: "You" },
     ]);
   });
 
@@ -190,6 +215,24 @@ describe("An update's activity", () => {
         removed: [],
       },
       { field: CLASS_LEVEL_SKILL_POINTS, label: "Skill Points", from: "2", to: "4" },
+    ]);
+  });
+
+  test("of a skill armor stops weighing on records its multiplier at its default, as stored", async () => {
+    const { abilities, rulesetId, session } = await setup();
+    const swim = await EntitiesService.createEntity(session, rulesetId, "skills", {
+      name: "Swim",
+      fields: { [SKILL_IMPACTED_BY_WEIGHT]: true, [SKILL_CHECK_PENALTY_MULTIPLIER]: 2 },
+      links: { keyAbility: abilities.Strength },
+    });
+    await EntitiesService.updateEntity(session, rulesetId, "skills", swim.id, {
+      name: "Swim",
+      fields: { [SKILL_IMPACTED_BY_WEIGHT]: false, [SKILL_CHECK_PENALTY_MULTIPLIER]: 2 },
+    });
+
+    expect(await changesOf(session.userId, swim.id)).toEqual([
+      { field: SKILL_IMPACTED_BY_WEIGHT, label: "Impacted by Weight", from: "true", to: "false" },
+      { field: SKILL_CHECK_PENALTY_MULTIPLIER, label: "Armor Check Penalty Multiplier", from: "2", to: "1" },
     ]);
   });
 

@@ -30,7 +30,8 @@ interface OwnerRules {
  * each value as its leaf stores it (`Field.writtenValues`), one always written that holds no value its default (a new
  * owner's it leaves out, or one it clears: an item's slot, a feat's selectable flag, a character's alignment), one
  * whose condition doesn't hold as its default would (a skill's armor check multiplier, while armor weighs on it), and
- * none of those its form shows when it holds no value of one that keeps them (`keepsForm`).
+ * none of those its form shows when it holds no value of one that keeps them (`keepsForm`). It alone applies a
+ * condition and a keeper to a write: a codec writes the values it's given (`FieldCodec.write`).
  */
 export default class FieldWrites {
   /** `fields`: each owner type's, as its module declares them. */
@@ -72,7 +73,7 @@ export default class FieldWrites {
       conditions: FieldWrites.conditionsOf(owned),
       defaults: FieldWrites.defaultsOf(owned),
       keptFields: new Set(Field.storedLeavesOf(shown).map((leaf) => leaf.field)),
-      keepers: Field.keepersOf(owned).map(([, leaf]) => leaf),
+      keepers: Field.keepersOf(owned),
     };
   }
 

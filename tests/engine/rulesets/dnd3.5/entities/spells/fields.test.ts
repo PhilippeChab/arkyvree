@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 
 import { entitiesInRules } from "@/drizzle/schema.ts";
 import { OwnerValues } from "@/engine/core/fields/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { SPELL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/spells/fields.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
@@ -11,6 +12,7 @@ import { heldValues, listValues, writtenValues } from "@/tests/support/ownerValu
 import {
   SPELL_COMPONENT,
   SPELL_DESCRIPTOR,
+  SPELL_DURATION,
   SPELL_SAVE_EFFECT,
   SPELL_SCHOOL,
   SPELL_TARGET,
@@ -42,12 +44,17 @@ describe("A spell's fields", () => {
 
   test("are kept in a value per field with a value, none for an empty one, and none its form shows without a school", () => {
     const written = (values: typeof SPELL_FIELDS.defaults) => writtenValues(SPELL_FIELDS.write(values));
-    expect(written({ ...SPELL_FIELDS.defaults, duration: "1 round", target: "You" })).toEqual({
-      fields: {},
-      links: {},
-    });
+    // What its write path stores of the fields its codec writes (`writtenFields`), those it holds a value of
+    const stored = (values: typeof SPELL_FIELDS.defaults) => {
+      const fields = Engine.storage().writtenFields("spells", SPELL_FIELDS.write(values).fields, true);
+      return Object.fromEntries(Object.entries(fields).filter(([, held]) => Array.isArray(held) && held.length > 0));
+    };
+    // Without a school, none of the fields its form shows
+    const unschooled = { ...SPELL_FIELDS.defaults, duration: "1 round", target: "You" };
+    expect(written(unschooled).fields).toEqual({ [SPELL_DURATION]: ["1 round"], [SPELL_TARGET]: ["You"] });
+    expect(stored(unschooled)).toEqual({});
     // What a save against it does, a column of its own, kept all the same
-    expect(written({ ...SPELL_FIELDS.defaults, saveEffect: "negates" }).fields).toEqual({
+    expect(stored({ ...SPELL_FIELDS.defaults, saveEffect: "negates" })).toEqual({
       [SPELL_SAVE_EFFECT]: ["negates"],
     });
     expect(
