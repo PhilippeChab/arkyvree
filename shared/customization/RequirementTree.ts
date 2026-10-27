@@ -20,8 +20,8 @@ export interface RequirementRow {
 const NUMERIC = /^\d+$/;
 
 /**
- * Level order: segment by segment, a number as a number (`"1.9"` before `"1.10"`), anything else as text (`"1-2"`, a
- * level the sibling merge renames), a level before the ones under it.
+ * Level order: segment by segment, a number as a number (`"1.9"` before `"1.10"`), anything else as text (`"1-2"`: a
+ * level is any text a save gives), a level before the ones under it.
  */
 export function compareLevels(a: string, b: string): number {
   const left = a.split(".");

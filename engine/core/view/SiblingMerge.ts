@@ -8,10 +8,11 @@
  * values the winner lacks (`union`), a single value the winner's, else the first sibling's that holds one
  * (`fallback`), or the winner's alone (`winner`). Requirements merge as trees (`RequirementTree`), whose top-level
  * rows are AND'd: merging the winner with N siblings is `AND(winner, sibling 1, …)`, each sibling's tree kept as it is, appended at the top level. A
- * sibling's group gets a fresh top-level number, past every level the rows hold (a row under a missing one, which the
- * tree reads as a top-level row, counting for it: the group neither meets nor adopts it), its rows renumbered under it;
- * a sibling's top-level condition keeps its level (suffixed `-2`, `-3`… when the winner has it), unless the winner
- * already holds the same condition.
+ * sibling's top-level row (one whose parent level none of its rows holds, a row under a missing one too), a condition
+ * or a group, keeps its level while no level held so far (the winner's, the rows placed before it) shares its first
+ * segment, else takes a fresh top-level number past every one held; a group's rows are renumbered under it. So a row
+ * never meets another, and no tree changes its meaning: none is adopted by a group, nor left under a condition. A
+ * sibling's top-level condition the winner already holds is left out.
  */
 
 import { type DeclaredFields, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
@@ -33,6 +34,17 @@ export default class SiblingMerge {
   /** A top-level condition's identity: two with the same one are the same condition. */
   private static conditionKey(requirement: Requirement): string {
     return `${requirement.target}|${requirement.operator}|${requirement.value}`;
+  }
+
+  /**
+   * The level a sibling's top-level row (`level`) takes beside the levels held (`usedLevels`): its own while none of
+   * them shares its first segment, else the next top-level one past them all. Under a level held, a group would adopt
+   * it; over one, it would take the rows under that level from their tree.
+   */
+  private static placeRoot(level: string, usedLevels: ReadonlySet<string>): string {
+    const segment = level.split(".")[0];
+    const held = [...usedLevels];
+    return held.some((used) => used.split(".")[0] === segment) ? getNextLevel(held, null) : level;
   }
 
   /**
@@ -131,16 +143,7 @@ export default class SiblingMerge {
       for (const node of RequirementTree.fromRows(requirements).roots) {
         const isGroup = !!node.requirement.chainingOperator;
         if (!isGroup && standaloneKeys.has(SiblingMerge.conditionKey(node.requirement))) continue;
-        let level: string;
-        // A group's rows go under a top level past every one held, so none of them meets a row already there
-        if (isGroup) {
-          level = getNextLevel([...usedLevels], null);
-        } else {
-          const originalLevel = node.requirement.level;
-          level = originalLevel;
-          let suffix = 2;
-          while (usedLevels.has(level)) level = `${originalLevel}-${suffix++}`;
-        }
+        const level = SiblingMerge.placeRoot(node.requirement.level, usedLevels);
         for (const row of SiblingMerge.serializeNode(node, level, entityId)) {
           usedLevels.add(row.level);
           merged.push(row);

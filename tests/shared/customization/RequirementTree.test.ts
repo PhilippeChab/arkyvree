@@ -44,7 +44,7 @@ describe("getNextLevel", () => {
     expect(getNextLevel(["1", "1.2.1"], "1")).toBe("1.3");
   });
 
-  test("passes over a level that isn't a number (one the sibling merge renames)", () => {
+  test("passes over a level that isn't a number, any text a save gives", () => {
     expect(getNextLevel(["1", "1-2"], null)).toBe("2");
   });
 });
