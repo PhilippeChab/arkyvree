@@ -3,6 +3,13 @@ import type { Ruleset, Session } from "@/shared/relations.ts";
 
 import BasePolicy from "./BasePolicy.ts";
 
+/** The session's standing on a ruleset beyond a contributor's role (`RulesetRoles`'s flags of the same names). */
+export interface RulesetStanding {
+  isCampaignMember?: boolean;
+  isCampaignPlayer?: boolean;
+  isCharacterEditor?: boolean;
+}
+
 /** Whether anyone may use `ruleset`: published, and not private. */
 export function isPublicRuleset(ruleset: Ruleset) {
   return !ruleset.private && ruleset.status === "Published";
@@ -17,9 +24,7 @@ export default abstract class RulesetRoles extends BasePolicy<Ruleset> {
     session: Pick<Session, "userId">,
     entity: Ruleset,
     contributorRole?: ContributorRole,
-    isCampaignPlayer = false,
-    isCampaignMember = isCampaignPlayer,
-    isCharacterEditor = false,
+    { isCampaignPlayer = false, isCampaignMember = isCampaignPlayer, isCharacterEditor = false }: RulesetStanding = {},
   ) {
     super(session, entity);
     this.contributorRole = contributorRole;

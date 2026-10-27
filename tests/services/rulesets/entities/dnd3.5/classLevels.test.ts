@@ -12,7 +12,7 @@ import type {
 } from "@/engine/rulesets/dnd3.5/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { ConflictError, NotFoundError, toJson } from "@/server/errors/index.ts";
+import { ConflictError, toJson } from "@/server/errors/index.ts";
 import { Entities, EntityLinks, EntitySnapshots, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -457,8 +457,8 @@ describe("EntitiesService: a class's levels", () => {
       // Its access checked before its class is looked up
       () => EntitiesService.deleteOwnedEntity(other, ruleset.id, "classes", NIL_UUID, level.id),
     ])
-      // A private ruleset isn't revealed to a stranger
-      expect(change()).rejects.toThrow(NotFoundError);
+      // A private ruleset isn't revealed to a stranger, its own 404 before its class's
+      expect(change()).rejects.toThrow("Ruleset not found");
   });
 
   test("doesn't find a missing ruleset, class or level, nor a level through another ruleset", async () => {

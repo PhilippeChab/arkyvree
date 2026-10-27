@@ -140,12 +140,12 @@ describe("RulesetsPolicy", () => {
     expect(policyOf("Stranger").isReadable()).toBe(false);
 
     const stranger = makeSession(OTHER);
-    expect(new RulesetsPolicy(stranger, rulesetOf(), undefined, true).canRead()).toBe(true);
+    expect(new RulesetsPolicy(stranger, rulesetOf(), undefined, { isCampaignPlayer: true }).canRead()).toBe(true);
     // A member of a campaign archived or not reads it, and creates on it only from a live seat in a live campaign
-    const member = new RulesetsPolicy(stranger, rulesetOf(), undefined, false, true);
+    const member = new RulesetsPolicy(stranger, rulesetOf(), undefined, { isCampaignMember: true });
     expect(member.canRead()).toBe(true);
     expect(() => member.canCreateCharacter()).toThrow(ForbiddenError);
-    expect(new RulesetsPolicy(stranger, rulesetOf(), undefined, false, false, true).canRead()).toBe(true);
+    expect(new RulesetsPolicy(stranger, rulesetOf(), undefined, { isCharacterEditor: true }).canRead()).toBe(true);
   });
 
   test("canViewChanges: anyone on a public ruleset, the owner and contributors on a private one", () => {

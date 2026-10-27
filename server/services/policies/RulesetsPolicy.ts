@@ -1,7 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
 import { include } from "@/lib/mixins.ts";
 import { ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
-import { Characters, Contributors, Players, Visibility } from "@/server/repositories/index.ts";
+import { Characters, Contributors, Players } from "@/server/repositories/index.ts";
 import type { Ruleset, Session } from "@/shared/relations.ts";
 
 import { ContributorRights } from "./concerns/ContributorRights.ts";
@@ -23,17 +23,21 @@ class RulesetsPolicy extends include(RulesetRoles, ContributorRights, CreationRi
       ruleset.userId && !isOwner
         ? await Contributors.findRole(db, { userId: session.userId, rulesetId: ruleset.id })
         : undefined;
-    const seat = { userId: session.userId, rulesetId: ruleset.id };
-    const isCampaignMember =
-      !isOwner && role === undefined && !isPublicRuleset(ruleset) && (await Players.exists(db, seat, Visibility.All));
-    const isCampaignPlayer = isCampaignMember && (await Players.exists(db, seat));
+    const seat =
+      !isOwner && role === undefined && !isPublicRuleset(ruleset)
+        ? await Players.findSeat(db, { userId: session.userId, rulesetId: ruleset.id })
+        : undefined;
     const isCharacterEditor =
       !isOwner &&
       role === undefined &&
-      !isCampaignMember &&
+      !seat &&
       ruleset.private &&
       (await Characters.exists(db, { editorId: session.userId, rulesetId: ruleset.id }));
-    return new RulesetsPolicy(session, ruleset, role, isCampaignPlayer, isCampaignMember, isCharacterEditor);
+    return new RulesetsPolicy(session, ruleset, role, {
+      isCampaignMember: Boolean(seat),
+      isCampaignPlayer: seat?.live ?? false,
+      isCharacterEditor,
+    });
   }
 
   canFork() {
