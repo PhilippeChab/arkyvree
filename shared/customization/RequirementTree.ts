@@ -21,14 +21,16 @@ const NUMERIC = /^\d+$/;
 
 /**
  * Level order: segment by segment, a number as a number (`"1.9"` before `"1.10"`), anything else as text (`"1-2"`: a
- * level is any text a save gives), a level before the ones under it.
+ * level is any text a save gives), numbers of one value by their text (`"01"` before `"1"`), so no two levels tie and an
+ * order never rests on the rows' own; a level before the ones under it.
  */
 export function compareLevels(a: string, b: string): number {
   const left = a.split(".");
   const right = b.split(".");
   for (let i = 0; i < Math.min(left.length, right.length); i++) {
     if (left[i] === right[i]) continue;
-    if (NUMERIC.test(left[i]) && NUMERIC.test(right[i])) return Number(left[i]) - Number(right[i]);
+    const numeric = NUMERIC.test(left[i]) && NUMERIC.test(right[i]) ? Number(left[i]) - Number(right[i]) : 0;
+    if (numeric !== 0) return numeric;
     return left[i] < right[i] ? -1 : 1;
   }
   return left.length - right.length;

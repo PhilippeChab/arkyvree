@@ -24,6 +24,12 @@ describe("compareLevels", () => {
     const levels = ["10", "1.10", "1-2", "2", "1.9", "1", "1.2.1", "1.2"];
     expect(levels.sort(compareLevels)).toEqual(["1", "1.2", "1.2.1", "1.9", "1.10", "1-2", "2", "10"]);
   });
+
+  test("orders numbers of one value by their text, so no two levels tie", () => {
+    expect(compareLevels("01", "1")).toBeLessThan(0);
+    expect(compareLevels("1", "01")).toBeGreaterThan(0);
+    expect(["1.1", "00", "01.1", "0"].sort(compareLevels)).toEqual(["0", "00", "01.1", "1.1"]);
+  });
 });
 
 describe("getNextLevel", () => {
