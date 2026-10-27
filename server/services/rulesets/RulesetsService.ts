@@ -1,10 +1,15 @@
 import { include } from "@/lib/mixins.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { ConflictError, ForbiddenError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import {
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  STALE_ENTITY_MESSAGE,
+  UnprocessableEntityError,
+} from "@/server/errors/index.ts";
 import {
   Activities,
-  Contributors,
   RulesetExtensions,
   Rulesets,
   RulesetSettings,
@@ -19,7 +24,35 @@ import { Archives } from "./concerns/Archives.ts";
 import { Publishes } from "./concerns/Publishes.ts";
 import { Stars } from "./concerns/Stars.ts";
 
+/** Whether a policy's check (`check`) lets the session act: refused (forbidden, or not now) is no. */
+function allows(check: () => unknown): boolean {
+  try {
+    check();
+    return true;
+  } catch (error) {
+    if (error instanceof ForbiddenError || error instanceof UnprocessableEntityError || error instanceof ConflictError)
+      return false;
+    throw error;
+  }
+}
+
 class RulesetsService extends include(Object, Archives, Publishes, Stars) {
+  /**
+   * What the session may do with a ruleset, as its policy decides each (`policy`), so a page offers what the server
+   * allows: edit its entities, edit the ruleset itself, invite and manage contributors, and publish it. It may leave
+   * it while it contributes to it (`contributorRole`: an active role, its owner's never looked up).
+   */
+  private permissionsOf(policy: RulesetsPolicy) {
+    return {
+      canEditEntities: allows(() => policy.canUpdateEntity()),
+      canEditRuleset: allows(() => policy.canUpdate()),
+      canInviteContributors: allows(() => policy.canInviteContributors()),
+      canLeave: policy.contributorRole !== undefined,
+      canManageContributors: allows(() => policy.canManageContributors()),
+      canPublish: allows(() => policy.canPublish()),
+    };
+  }
+
   async forkRuleset(session: Session, id: string, body: { description?: string; name: string; private: boolean }) {
     const result = await withTransaction(async (tx) => {
       // 1. Verify source ruleset exists and is published
@@ -79,12 +112,10 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
     const ruleset = await Rulesets.findOne(db, { id });
     if (!ruleset) throw new NotFoundError("Ruleset not found");
 
-    const [star, starCount, contributorRole, isUsedAsExtension] = await Promise.all([
+    const [star, starCount, policy, isUsedAsExtension] = await Promise.all([
       StarredRulesets.findOne(db, { userId: session.userId, rulesetId: id }),
       StarredRulesets.count(db, { rulesetId: id }),
-      ruleset.userId && ruleset.userId !== session.userId
-        ? Contributors.findRole(db, { userId: session.userId, rulesetId: id })
-        : undefined,
+      RulesetsPolicy.for(db, session, ruleset),
       Rulesets.exists(db, { extensionRulesetId: id }),
     ]);
 
@@ -96,9 +127,10 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       isStarred: !!star,
       starCount,
       // A response says none with null: JSON leaves an undefined key out
-      contributorRole: contributorRole ?? null,
+      contributorRole: policy.contributorRole ?? null,
       isStarrable: this.isStarrable(ruleset),
       isUsedAsExtension,
+      permissions: this.permissionsOf(policy),
     };
   }
 

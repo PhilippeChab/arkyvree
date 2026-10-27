@@ -235,6 +235,61 @@ describe("RulesetsService", () => {
     expect(RulesetsService.getRuleset(session, NIL_UUID)).rejects.toThrow(NotFoundError);
   });
 
+  describe("answers what the reader may do, as the policy decides it", () => {
+    const NONE = {
+      canEditEntities: false,
+      canEditRuleset: false,
+      canInviteContributors: false,
+      canLeave: false,
+      canManageContributors: false,
+      canPublish: false,
+    };
+
+    test("its owner edits everything, and publishes a draft alone", async () => {
+      const { user, session } = await createTestUser();
+      const draft = await createTestRuleset(user.id, { status: "Draft" });
+      const published = await createTestRuleset(user.id, { status: "Published" });
+      const all = {
+        canEditEntities: true,
+        canEditRuleset: true,
+        canInviteContributors: true,
+        canLeave: false,
+        canManageContributors: true,
+      };
+
+      expect((await RulesetsService.getRuleset(session, draft.id)).permissions).toEqual({ ...all, canPublish: true });
+      expect((await RulesetsService.getRuleset(session, published.id)).permissions).toEqual({
+        ...all,
+        canPublish: false,
+      });
+    });
+
+    test("an Editor edits its entities and may leave; a stranger does nothing", async () => {
+      const { user: owner } = await createTestUser();
+      const { user: editor, session } = await createTestUser();
+      const { session: stranger } = await createTestUser();
+      const ruleset = await createTestRuleset(owner.id, { private: false, status: "Published" });
+      await addRulesetContributor(ruleset.id, editor, owner.id, "Editor");
+
+      expect((await RulesetsService.getRuleset(session, ruleset.id)).permissions).toEqual({
+        ...NONE,
+        canEditEntities: true,
+        canLeave: true,
+      });
+      expect((await RulesetsService.getRuleset(stranger, ruleset.id)).permissions).toEqual(NONE);
+    });
+
+    test("an archived ruleset is read-only: contributors are still managed, never invited", async () => {
+      const { user, session } = await createTestUser();
+      const ruleset = await createTestRuleset(user.id, { status: "Archived" });
+
+      expect((await RulesetsService.getRuleset(session, ruleset.id)).permissions).toEqual({
+        ...NONE,
+        canManageContributors: true,
+      });
+    });
+  });
+
   describe("forking", () => {
     test("makes the user a ruleset that inherits the parent's content without copying it", async () => {
       const { user: owner } = await createTestUser();

@@ -107,9 +107,7 @@ class ContributorsService {
       if (!ruleset) throw new NotFoundError("Ruleset not found");
 
       const policy = await RulesetsPolicy.for(tx, session, ruleset);
-      policy.canManageContributors();
-
-      if (ruleset.status === "Archived") throw new ConflictError("Cannot invite a contributor to an archived ruleset");
+      policy.canInviteContributors();
 
       if (role === "Admin") policy.canManageAdminContributors();
 

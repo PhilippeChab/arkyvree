@@ -231,7 +231,7 @@ export default function RulesetDetailsPage() {
             label="Edit"
             onClick={menu.closeMenuAnd(() => handleEdit(ruleset))}
           />,
-          canPublish && ruleset.status === "Draft" && (
+          canPublish && (
             <ActionMenuItem
               key="publish"
               icon={PublishIcon}

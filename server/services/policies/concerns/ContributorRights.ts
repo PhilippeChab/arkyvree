@@ -1,10 +1,20 @@
 import type { Constructor } from "@/lib/mixins.ts";
-import { ForbiddenError } from "@/server/errors/index.ts";
+import { ConflictError, ForbiddenError } from "@/server/errors/index.ts";
 import type RulesetRoles from "@/server/services/policies/RulesetRoles.ts";
 
 /** Who may see and manage a ruleset's contributors. */
 export function ContributorRights<B extends Constructor<RulesetRoles>>(Base: B) {
   abstract class WithContributorRights extends Base {
+    /** Inviting a contributor: managing them (`canManageContributors`), on a ruleset that isn't archived. */
+    canInviteContributors() {
+      this.canManageContributors();
+
+      if (this.entity.status === "Archived")
+        throw new ConflictError("Cannot invite a contributor to an archived ruleset");
+
+      return true;
+    }
+
     /**
      * Owner-only narrowing of canManageContributors: invite/assign/revoke/change
      * role on an Admin contributor. An Admin contributor can manage other

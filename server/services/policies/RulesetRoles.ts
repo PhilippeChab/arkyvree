@@ -24,10 +24,11 @@ export default abstract class RulesetRoles extends BasePolicy<Ruleset> {
     this.isCampaignPlayer = isCampaignPlayer;
   }
 
-  protected readonly contributorRole: ContributorRole | undefined;
-
   /** Plays in a campaign on the ruleset: looked up only for a ruleset that isn't public, where it lets them in. */
   protected readonly isCampaignPlayer: boolean;
+
+  /** The session's active contributor role on the ruleset: none for its owner or anyone else. */
+  readonly contributorRole: ContributorRole | undefined;
 
   protected get isAdminContributor() {
     return this.contributorRole === "Admin";

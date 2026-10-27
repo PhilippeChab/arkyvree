@@ -116,6 +116,12 @@ describe("RulesetsPolicy", () => {
     expect(() => policyOf("Admin").canUnsubscribeExtension()).toThrow(ForbiddenError);
   });
 
+  test("canInviteContributors: who manages contributors, on a ruleset that isn't archived", () => {
+    expectOnly(["Owner", "Admin"], (p) => p.canInviteContributors(), ForbiddenError);
+    expect(() => policyOf("Owner", { userId: null }).canInviteContributors()).toThrow(ForbiddenError);
+    expect(() => policyOf("Owner", { status: "Archived" }).canInviteContributors()).toThrow(ConflictError);
+  });
+
   test("canManageContributors: the owner and Admins; Admin contributors themselves only by the owner", () => {
     expectOnly(["Owner", "Admin"], (p) => p.canManageContributors(), ForbiddenError);
     expect(() => policyOf("Owner", { userId: null }).canManageContributors()).toThrow(ForbiddenError);
