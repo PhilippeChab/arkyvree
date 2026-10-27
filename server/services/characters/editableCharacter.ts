@@ -8,19 +8,23 @@ import type { Session } from "@/shared/relations.ts";
 import { readCharacterInput } from "./characterInputs.ts";
 
 /**
- * The character `characterId` if the user may edit it (`userId`: they own it or contribute to it), or if it's a child
- * (3.5's bonded creature) whose parent they may edit; null otherwise.
+ * The character `characterId` if the user may edit it (`userId`: they own it or actively contribute to it), or if it's a
+ * child (3.5's bonded creature) whose parent they may edit; null otherwise. A player character is edited by its own
+ * editors alone, never through a parent. `Visibility.All` finds an archived one too, and an archived parent's child,
+ * whose sheets stay readable.
  */
-export async function findEditableCharacterOrChild(tx: Db, characterId: string, userId: string) {
-  const editable = await Characters.findOne(tx, { id: characterId, editorId: userId });
-  if (editable) return editable;
-  const child = await Characters.findOne(tx, { id: characterId });
-  if (!child || Engine.storage().isPlayerKind(child.kind) || !child.parentCharacterId) return null;
-  const parent = await Characters.findOne(tx, {
-    id: child.parentCharacterId,
-    editorId: userId,
-  });
-  return parent ? child : null;
+export async function findEditableCharacterOrChild(
+  db: Db,
+  characterId: string,
+  userId: string,
+  visibility: Visibility = Visibility.UnarchivedOnly,
+) {
+  const character = await Characters.findOne(db, { id: characterId }, visibility);
+  if (!character) return null;
+  const parentId = Engine.storage().isPlayerKind(character.kind) ? undefined : character.parentCharacterId;
+  // A child through its parent; `editorId` finds a player character alone, so a child with no parent has no editor
+  const editable = await Characters.findOne(db, { id: parentId ?? character.id, editorId: userId }, visibility);
+  return editable ? character : null;
 }
 
 /**
