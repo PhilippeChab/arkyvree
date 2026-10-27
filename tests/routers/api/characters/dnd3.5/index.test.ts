@@ -738,7 +738,14 @@ describe("characters", () => {
 
   test("rejects a character without a name or fields, or with a field its form refuses", async () => {
     const ctx = await getSeedCtx();
-    const fields = { xp: 0, alignment: "True Neutral", age: 25, gender: "Male", height: "5'10\"", weight: "170 lbs" };
+    const fields = {
+      CHARACTER_XP: 0,
+      CHARACTER_ALIGNMENT: "True Neutral",
+      CHARACTER_AGE: 25,
+      CHARACTER_GENDER: "Male",
+      CHARACTER_HEIGHT: "5'10\"",
+      CHARACTER_WEIGHT: "170 lbs",
+    };
     const valid = {
       rulesetId: ctx.rulesetId,
       picks: { race: ctx.raceMap.pc["Human"] },
@@ -746,14 +753,16 @@ describe("characters", () => {
       scores: {},
       fields,
     };
-    const { alignment: _alignment, ...withoutAlignment } = fields;
+    const { CHARACTER_ALIGNMENT: _alignment, ...withoutAlignment } = fields;
     for (const json of [
       { fields },
       { ...valid, fields: undefined },
-      { ...valid, fields: { ...fields, alignment: "Invalid Alignment" } },
-      { ...valid, fields: { ...fields, gender: "InvalidGender" } },
-      { ...valid, fields: { ...fields, xp: -1 } },
-      { ...valid, fields: { ...fields, age: 0 } },
+      { ...valid, fields: { ...fields, CHARACTER_ALIGNMENT: "Invalid Alignment" } },
+      { ...valid, fields: { ...fields, CHARACTER_GENDER: "InvalidGender" } },
+      { ...valid, fields: { ...fields, CHARACTER_XP: -1 } },
+      { ...valid, fields: { ...fields, CHARACTER_AGE: 0 } },
+      // The old keys, which name no field
+      { ...valid, fields: { ...fields, xp: 0 } },
       { ...valid, fields: withoutAlignment },
       { ...valid, fields: { ...fields, strength: 18 } },
     ])

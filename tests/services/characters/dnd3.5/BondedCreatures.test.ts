@@ -249,12 +249,12 @@ describe("CharactersService with bonded creatures", () => {
         scores: {},
         name: "Cat PC",
         fields: {
-          xp: 0,
-          alignment: "True Neutral",
-          age: 1,
-          gender: "Other",
-          height: "0.3 m",
-          weight: "5 kg",
+          CHARACTER_XP: 0,
+          CHARACTER_ALIGNMENT: "True Neutral",
+          CHARACTER_AGE: 1,
+          CHARACTER_GENDER: "Other",
+          CHARACTER_HEIGHT: "0.3 m",
+          CHARACTER_WEIGHT: "5 kg",
         },
       }),
     ).rejects.toMatchObject({ refusal: "invalid" });

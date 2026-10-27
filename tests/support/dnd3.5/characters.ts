@@ -18,6 +18,7 @@ import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import {
   CHARACTER_AGE,
   CHARACTER_ALIGNMENT,
+  CHARACTER_FIELDS,
   CHARACTER_GENDER,
   CHARACTER_HEIGHT,
   CHARACTER_WEIGHT,
@@ -25,7 +26,10 @@ import {
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 import type { Alignment, Gender } from "@/vocabulary/dnd3.5/identity.ts";
 
-/** A new character's fields, past those every character has, as the seeded ruleset's form sends them (3.5's). */
+/**
+ * A new character's fields, past those every character has, by their names among 3.5's declarations
+ * (`CHARACTER_FIELDS`), which its form sends by their stored fields, and its description.
+ */
 interface NewFields {
   age?: number | null;
   alignment?: Alignment;
@@ -53,16 +57,25 @@ interface NewStart {
 const NEW_FIELDS = { age: 25, alignment: "True Neutral", gender: "Male", height: "180", weight: "80", xp: 0 };
 
 /**
- * A new character's request split: its fields (3.5's form's, by their keys: a True Neutral man of 25, 180 tall and 80
- * heavy, with no experience, unless given), sent under `fields`, and the rest as it is.
+ * A new character's request split: its fields (3.5's form's, by the stored field that keeps each: a True Neutral man of
+ * 25, 180 tall and 80 heavy, with no experience, unless given; its description), sent under `fields` with those it
+ * sends as they are (`fields`), and the rest as it is.
  */
 function splitFields<T extends NewFields & { fields?: FieldsRequest }>(values: T) {
   const { age, alignment, deity, description, fields, gender, height, weight, xp, ...rest } = values;
-  const given = { age, alignment, deity, description, gender, height, weight, xp };
+  const given = { age, alignment, deity, gender, height, weight, xp };
+  const named = {
+    ...NEW_FIELDS,
+    ...Object.fromEntries(Object.entries(given).filter(([, value]) => value !== undefined)),
+  };
+  const stored = Object.entries(named).map(([name, value]) => [
+    CHARACTER_FIELDS[name as keyof typeof CHARACTER_FIELDS].field,
+    value,
+  ]);
   return {
     fields: {
-      ...NEW_FIELDS,
-      ...Object.fromEntries(Object.entries(given).filter(([, value]) => value !== undefined)),
+      ...Object.fromEntries(stored),
+      ...(description !== undefined && { description }),
       ...fields,
     } as FieldsRequest,
     rest,

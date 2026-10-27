@@ -515,10 +515,10 @@ describe("a ruleset's entity's form", () => {
 
 describe("a character's identity", () => {
   test("refuses a new character's negative experience, an age under 1, or either past what it holds exactly", async () => {
-    expect(createCharacterAs(session, { xp: -1 })).rejects.toMatchObject(invalidAt("fields.xp"));
-    expect(createCharacterAs(session, { age: 0 })).rejects.toMatchObject(invalidAt("fields.age"));
-    expect(createCharacterAs(session, { xp: 1e300 })).rejects.toMatchObject(invalidAt("fields.xp"));
-    expect(createCharacterAs(session, { age: 1e21 })).rejects.toMatchObject(invalidAt("fields.age"));
+    expect(createCharacterAs(session, { xp: -1 })).rejects.toMatchObject(invalidAt(`fields.${CHARACTER_XP}`));
+    expect(createCharacterAs(session, { age: 0 })).rejects.toMatchObject(invalidAt(`fields.${CHARACTER_AGE}`));
+    expect(createCharacterAs(session, { xp: 1e300 })).rejects.toMatchObject(invalidAt(`fields.${CHARACTER_XP}`));
+    expect(createCharacterAs(session, { age: 1e21 })).rejects.toMatchObject(invalidAt(`fields.${CHARACTER_AGE}`));
     expect((await createCharacterAs(session, { xp: Number.MAX_SAFE_INTEGER })).fields).toMatchObject({
       [CHARACTER_XP]: Number.MAX_SAFE_INTEGER,
     });
@@ -533,22 +533,28 @@ describe("a character's identity", () => {
     const { abilityMap, raceMap, rulesetId } = await getSeedCtx();
     const create = (fields: FieldsRequest, raceId = raceMap.pc["Human"]) =>
       CharactersService.createCharacter(session, {
-        fields: { xp: 0, ...fields },
+        fields: { [CHARACTER_XP]: 0, ...fields },
         name: "Nameless",
         picks: { race: raceId },
         scores: {},
         rulesetId,
       });
-    expect(create({ gender: "Male" })).rejects.toMatchObject(invalidAt("fields.alignment"));
-    expect(create({ alignment: "Lawful Good" })).rejects.toMatchObject(invalidAt("fields.gender"));
-    expect(create({ alignment: "Lawful Stupid", gender: "Male" })).rejects.toMatchObject(invalidAt("fields.alignment"));
-    expect(create({ alignment: "Lawful Good", gender: "Unknown" })).rejects.toMatchObject(invalidAt("fields.gender"));
-    expect(create({ alignment: "Lawful Good", gender: "Male" }, NIL_UUID)).rejects.toThrow(
+    expect(create({ [CHARACTER_GENDER]: "Male" })).rejects.toMatchObject(invalidAt(`fields.${CHARACTER_ALIGNMENT}`));
+    expect(create({ [CHARACTER_ALIGNMENT]: "Lawful Good" })).rejects.toMatchObject(
+      invalidAt(`fields.${CHARACTER_GENDER}`),
+    );
+    expect(create({ [CHARACTER_ALIGNMENT]: "Lawful Stupid", [CHARACTER_GENDER]: "Male" })).rejects.toMatchObject(
+      invalidAt(`fields.${CHARACTER_ALIGNMENT}`),
+    );
+    expect(create({ [CHARACTER_ALIGNMENT]: "Lawful Good", [CHARACTER_GENDER]: "Unknown" })).rejects.toMatchObject(
+      invalidAt(`fields.${CHARACTER_GENDER}`),
+    );
+    expect(create({ [CHARACTER_ALIGNMENT]: "Lawful Good", [CHARACTER_GENDER]: "Male" }, NIL_UUID)).rejects.toThrow(
       `Race ${NIL_UUID} does not belong to the character's ruleset`,
     );
     // Its creation requires its race: a request that picks none is refused
     const abilities = Object.fromEntries(Object.values(abilityMap).map((id) => [id, 10]));
-    const fields = { xp: 0, alignment: "Lawful Good", gender: "Male" };
+    const fields = { [CHARACTER_XP]: 0, [CHARACTER_ALIGNMENT]: "Lawful Good", [CHARACTER_GENDER]: "Male" };
     const json = { fields, name: "Nameless", picks: {}, rulesetId, scores: { score: abilities } };
     const refused = await expectStatus(api.api.characters.$post({ json }), 400);
     expect(await refused.text()).toContain("A new character's Race is required");

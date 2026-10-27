@@ -89,7 +89,7 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
     return IdentityFields.plan(...args);
   }
 
-  /** What a new character's fields write: its alignment, gender and experience, and its optional details. */
+  /** What a new character's fields write: its alignment, gender and experience, and its optional details, as declared. */
   protected override planNewFields(...args: Parameters<typeof NewCharacters.planFields>) {
     return NewCharacters.planFields(...args);
   }

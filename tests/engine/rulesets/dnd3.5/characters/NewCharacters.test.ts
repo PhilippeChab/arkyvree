@@ -1,12 +1,31 @@
 import { describe, expect, test } from "bun:test";
 
+import type { FieldsRequest } from "@/engine/core/module/index.ts";
 import NewCharacters from "@/engine/rulesets/dnd3.5/characters/NewCharacters.ts";
 import AbilityRules from "@/engine/rulesets/dnd3.5/rules/AbilityRules.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_DEITY,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A ruleset's view as a new character's form reads it: its abilities, as their rows came in. */
 const DATA = {
   abilities: ["Sanity", "Wisdom", "Force Points", "Strength"].map((name) => ({ id: `${name} id`, name })),
 };
+
+/** What a new character's fields (`fields`, as its form sends them) write, in the seeded ruleset's view. */
+async function planOf(fields: FieldsRequest) {
+  const { rulesetId } = await getSeedCtx();
+  return await withRulesetScope(db, rulesetId, async (scope) => NewCharacters.planFields(scope, fields));
+}
 
 describe("A new 3.5 character's creation", () => {
   test("lists the ruleset's abilities in the order a sheet lists them: the books' first, then the others by name", () => {
@@ -47,45 +66,89 @@ describe("A new 3.5 character's creation", () => {
       expect(modifiers[score]).toBe(AbilityRules.computeModifier(score));
   });
 
-  test("writes a new character's fields as their values, an empty or a missing optional one left out", () => {
+  test("writes a new character's fields as their values, by their stored fields, an empty or a missing optional one left out", async () => {
     expect(
-      NewCharacters.planFields({
-        xp: 0,
-        alignment: "Lawful Good",
-        gender: "Female",
-        age: null,
-        height: "",
-        weight: "60",
-        deity: null,
+      await planOf({
+        [CHARACTER_XP]: 0,
+        [CHARACTER_ALIGNMENT]: "Lawful Good",
+        [CHARACTER_GENDER]: "Female",
+        [CHARACTER_AGE]: null,
+        [CHARACTER_HEIGHT]: "",
+        [CHARACTER_WEIGHT]: "60",
+        [CHARACTER_DEITY]: null,
         description: "Tall",
       }),
     ).toEqual({
       fields: {
-        CHARACTER_ALIGNMENT: "Lawful Good",
-        CHARACTER_GENDER: "Female",
-        CHARACTER_XP: 0,
-        CHARACTER_WEIGHT: "60",
+        [CHARACTER_ALIGNMENT]: "Lawful Good",
+        [CHARACTER_GENDER]: "Female",
+        [CHARACTER_XP]: 0,
+        [CHARACTER_WEIGHT]: "60",
       },
       own: { description: "Tall" },
     });
-    expect(NewCharacters.planFields({ xp: 300, alignment: "True Neutral", gender: "Male", age: 30 })).toEqual({
-      fields: { CHARACTER_ALIGNMENT: "True Neutral", CHARACTER_GENDER: "Male", CHARACTER_XP: 300, CHARACTER_AGE: 30 },
-      own: {},
+    const fields = {
+      [CHARACTER_XP]: 300,
+      [CHARACTER_ALIGNMENT]: "True Neutral",
+      [CHARACTER_GENDER]: "Male",
+      [CHARACTER_AGE]: 30,
+    };
+    expect(await planOf(fields)).toEqual({ fields, own: {} });
+  });
+
+  test("refuses a field it always holds missing or unset, a value its field doesn't take, or a field it hasn't, under its key", async () => {
+    const fields = { [CHARACTER_XP]: 0, [CHARACTER_ALIGNMENT]: "Lawful Good", [CHARACTER_GENDER]: "Female" };
+    const { [CHARACTER_XP]: _xp, ...withoutXp } = fields;
+    const refused: [string, FieldsRequest][] = [
+      [CHARACTER_XP, withoutXp],
+      [CHARACTER_ALIGNMENT, { ...fields, [CHARACTER_ALIGNMENT]: "" }],
+      [CHARACTER_GENDER, { ...fields, [CHARACTER_GENDER]: null }],
+      [CHARACTER_XP, { ...fields, [CHARACTER_XP]: -1 }],
+      [CHARACTER_AGE, { ...fields, [CHARACTER_AGE]: 0 }],
+      [CHARACTER_ALIGNMENT, { ...fields, [CHARACTER_ALIGNMENT]: "Lawful Awesome" }],
+      ["strength", { ...fields, strength: 18 }],
+      ["xp", { ...fields, xp: 0 }],
+    ];
+    for (const [field, sent] of refused)
+      expect(planOf(sent)).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: `fields.${field}` }] });
+    expect(planOf({})).rejects.toMatchObject({
+      issues: [
+        { category: `fields.${CHARACTER_ALIGNMENT}`, message: "Alignment is required" },
+        { category: `fields.${CHARACTER_XP}`, message: "Experience Points is required" },
+        { category: `fields.${CHARACTER_GENDER}`, message: "Gender is required" },
+      ],
     });
   });
 
-  test("refuses a required field missing or unset, a value its field doesn't take, or a field its form hasn't", () => {
-    const fields = { xp: 0, alignment: "Lawful Good", gender: "Female" };
-    const { xp: _xp, ...withoutXp } = fields;
-    for (const sent of [
-      withoutXp,
-      { ...fields, alignment: "" },
-      { ...fields, gender: null },
-      { ...fields, xp: -1 },
-      { ...fields, age: 0 },
-      { ...fields, alignment: "Lawful Awesome" },
-      { ...fields, strength: 18 },
-    ])
-      expect(() => NewCharacters.planFields(sent)).toThrow(expect.objectContaining({ refusal: "invalid" }));
+  test("lays out its form's fields as they're declared, by their stored fields", () => {
+    expect(NewCharacters.describeField("xp")).toEqual({
+      key: CHARACTER_XP,
+      kind: "number",
+      label: "Experience Points",
+      min: 0,
+      required: "Experience Points is required",
+      start: 0,
+    });
+    expect(NewCharacters.describeField("alignment", { narrows: true })).toMatchObject({
+      key: CHARACTER_ALIGNMENT,
+      kind: "select",
+      label: "Alignment",
+      narrows: true,
+      required: "Alignment is required",
+    });
+    expect(NewCharacters.describeField("age", { stepped: true })).toEqual({
+      key: CHARACTER_AGE,
+      kind: "number",
+      label: "Age",
+      min: 1,
+      stepped: true,
+    });
+    expect(NewCharacters.describeField("height")).toEqual({
+      key: CHARACTER_HEIGHT,
+      kind: "text",
+      label: "Height",
+      placeholder: "e.g., 5 feet 8 inches",
+    });
+    expect(NewCharacters.describeField("deity")).toEqual({ key: CHARACTER_DEITY, kind: "text", label: "Deity" });
   });
 });

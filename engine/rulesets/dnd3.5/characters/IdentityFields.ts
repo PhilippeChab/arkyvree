@@ -3,7 +3,7 @@ import { z } from "zod";
 import { Field } from "@/engine/core/fields/index.ts";
 import type { CharacterInput, FieldsBlock, FieldsPlan, FieldsRequest, SheetField } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import { CHARACTER_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import CharacterValues from "./CharacterValues.ts";
@@ -158,15 +158,7 @@ export default class IdentityFields {
     const sent = Object.fromEntries(
       Object.entries(given).filter(([field, value]) => value !== null || !UNCLEARED.has(field)),
     );
-    const ids = new RequestIds(view.rulesetData, "the character's ruleset");
-    const { values } = CharacterValues.fields.parse(
-      { fields: sent },
-      {
-        kept: CharacterValues.fieldsOf(character.record),
-        resolve: (type, id) => ids.resolve(type, id),
-        resolveAll: (type, entityIds) => ids.resolveAll(type, entityIds),
-      },
-    );
+    const values = CharacterValues.parseForm(view, sent, CharacterValues.fieldsOf(character.record));
     return {
       fields: CharacterValues.writeOf(values),
       own: { ...(own.description !== undefined && { description: own.description }) },

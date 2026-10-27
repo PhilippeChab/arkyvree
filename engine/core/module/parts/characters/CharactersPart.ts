@@ -197,9 +197,10 @@ export default abstract class CharactersPart<D extends Descriptions> {
 
   /**
    * What a new character's fields (`fields`, its form's, by their keys) write: their values and own columns, each
-   * checked, refused when one its form requires is missing or a value is one its field doesn't take.
+   * checked (an entity one names, as `view` reads it), refused when one its form requires is missing or a value is one
+   * its field doesn't take.
    */
-  protected abstract planNewFields(fields: FieldsRequest): Pick<NewCharacterPlan, "fields" | "own">;
+  protected abstract planNewFields(view: RulesetView, fields: FieldsRequest): Pick<NewCharacterPlan, "fields" | "own">;
 
   /**
    * Where an inventory entry's add or edit (`change`) holds its item: whether it's equipped, where, and its groups
@@ -360,7 +361,11 @@ export default abstract class CharactersPart<D extends Descriptions> {
    */
   planCreate(view: RulesetView, request: NewCharacterRequest): NewCharacterPlan {
     const { fields, ...start } = request;
-    return { ...this.planStart(view, start), ...this.planNewFields(fields), kind: this.storage.character.playerKind };
+    return {
+      ...this.planStart(view, start),
+      ...this.planNewFields(view, fields),
+      kind: this.storage.character.playerKind,
+    };
   }
 
   /**

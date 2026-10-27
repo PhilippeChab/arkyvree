@@ -4,6 +4,7 @@ import { parseResponse } from "hono/client";
 import { apiOf } from "@/tests/e2e/support/api.ts";
 import { selectOption } from "@/tests/e2e/support/page.ts";
 import { coreRulesetId } from "@/tests/e2e/support/rulesets.ts";
+import { CHARACTER_ALIGNMENT, CHARACTER_GENDER, CHARACTER_XP } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * Gives the character its first level, of `klass`, through the API as Add Level saves it: its class planned, its hit
@@ -59,10 +60,11 @@ export async function createCharacter(page: Page, name: string, scores: Record<s
         rulesetId,
         picks: { race: human.id },
         name,
+        // Its fields by the stored field that keeps each, as the create dialog sends them
         fields: {
-          xp: 0,
-          alignment: "True Neutral",
-          gender: "Other",
+          [CHARACTER_XP]: 0,
+          [CHARACTER_ALIGNMENT]: "True Neutral",
+          [CHARACTER_GENDER]: "Other",
         },
         scores: {
           score: Object.fromEntries(abilities.items.map((ability) => [ability.id, scores[ability.name] ?? 10])),

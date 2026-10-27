@@ -21,7 +21,8 @@ import {
  * its age, gender, height and weight. Its alignment, gender and experience it always holds (always written: an edit
  * never clears them), each with the default a new one takes without it (an import's: True Neutral, Other, 0), its
  * alignment and gender among their options, its experience a whole number from 0; its age a whole number from 1, or
- * none; its deity, height and weight texts, or none.
+ * none; its deity, height and weight texts, or none. What a new character's form must give are those it always holds
+ * (`write: "always"`), which an import defaults.
  */
 export const CHARACTER_FIELDS = {
   alignment: {
@@ -75,6 +76,7 @@ export const CHARACTER_FIELDS = {
     description: "The character's height, as its player writes it",
     kind: "text",
     label: "Height",
+    placeholder: "e.g., 5 feet 8 inches",
     field: CHARACTER_HEIGHT,
     merge: "winner",
   },
@@ -82,6 +84,7 @@ export const CHARACTER_FIELDS = {
     description: "The character's weight, as its player writes it",
     kind: "text",
     label: "Weight",
+    placeholder: "e.g., 150 lbs, 68kg",
     field: CHARACTER_WEIGHT,
     merge: "winner",
   },

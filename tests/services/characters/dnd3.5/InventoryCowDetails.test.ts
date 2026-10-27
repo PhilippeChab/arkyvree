@@ -30,12 +30,12 @@ async function setup() {
     scores: {},
     name: "Inventory override regression",
     fields: {
-      xp: 0,
-      alignment: "Lawful Good",
-      age: 25,
-      gender: "Male",
-      height: "180 cm",
-      weight: "80 kg",
+      CHARACTER_XP: 0,
+      CHARACTER_ALIGNMENT: "Lawful Good",
+      CHARACTER_AGE: 25,
+      CHARACTER_GENDER: "Male",
+      CHARACTER_HEIGHT: "180 cm",
+      CHARACTER_WEIGHT: "80 kg",
     },
   });
   await CharacterInventoryService.addItem(session, character.id, item.id, 2, true, "Main Hand", null, null, [0]);

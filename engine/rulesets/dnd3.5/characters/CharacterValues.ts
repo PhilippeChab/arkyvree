@@ -1,4 +1,5 @@
-import { FieldCodec, type FieldValues } from "@/engine/core/fields/index.ts";
+import { FieldCodec, type FieldValues, type PartialFieldValues } from "@/engine/core/fields/index.ts";
+import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
 import type { Character, CharacterFieldValue } from "@/shared/relations.ts";
 import { CHARACTER_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -22,6 +23,29 @@ export default class CharacterValues {
   /** A character's own fields (`fields`, as stored), each read by its declaration: its default when it holds none. */
   static fieldsOf({ fields }: Pick<Character, "fields">): Dnd35CharacterFields {
     return CharacterValues.fields.read({ fields, links: {} });
+  }
+
+  /**
+   * A form's fields (`fields`, by the stored field that keeps each: a new character's, or an edit's of one that keeps
+   * `kept`), read by their codec as an entity's form is (`FieldCodec.parse`): those it gives, by name, each of its
+   * field's shape; refused as invalid, by field, otherwise, a key that's no field of a character's too.
+   */
+  static parseForm(
+    view: RulesetView,
+    fields: Record<string, unknown>,
+    kept?: Dnd35CharacterFields,
+  ): PartialFieldValues<typeof CHARACTER_FIELDS> {
+    const ids = new RequestIds(view.rulesetData, "the character's ruleset");
+    const { values } = CharacterValues.fields.parse(
+      { fields },
+      {
+        creating: !kept,
+        kept,
+        resolve: (type, id) => ids.resolve(type, id),
+        resolveAll: (type, entityIds) => ids.resolveAll(type, entityIds),
+      },
+    );
+    return values;
   }
 
   /** A character's race (`links`, its single links as stored): the entity its `race` link names. */
