@@ -41,7 +41,11 @@ async function createAdjustingRace(adjustment: { operator: string; target: strin
 async function createOfRace(raceId: string, scores: Record<string, number> = {}, rulesetId?: string) {
   const { abilityMap } = await getSeedCtx();
   const abilities = Object.fromEntries(Object.entries(abilityMap).map(([name, id]) => [id, scores[name] ?? 10]));
-  return await createCharacterAs(makeSession(), { raceId, abilities, ...(rulesetId && { rulesetId }) });
+  return await createCharacterAs(makeSession(), {
+    links: { race: raceId },
+    abilities,
+    ...(rulesetId && { rulesetId }),
+  });
 }
 
 /** What the character speaks and may pick, with its picks `picks` (by name), as the engine answers it. */

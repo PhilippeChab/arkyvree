@@ -94,7 +94,7 @@ test("editing a shared aptitude preserves references from both extensions", asyn
   const { session, host, rulesetIds } = await setup(async (rulesetId, _baseId, index) => {
     const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", { rulesetId, name: "Audit Shared Pool" });
     const [feat] = await Entities.create<Feat>(db, "feats", { rulesetId, name: `Audit Pool Feat ${index}` });
-    await addLists(db, "feats", feat.id, [{ aptitudeId: aptitude.id }]);
+    await addLists(db, "feats", feat.id, [{ toId: aptitude.id }]);
     aptitudeIds.push(aptitude.id);
     featIds.push(feat.id);
   });
@@ -254,7 +254,7 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
         rulesetId: baseId,
         name: "Cleric Spells",
       }))!;
-      await addLists(db, "spells", spellCopy.id, [{ aptitudeId: clericSpells.id, level: 3 + index }]);
+      await addLists(db, "spells", spellCopy.id, [{ toId: clericSpells.id, tier: 3 + index }]);
     },
     false,
     3,

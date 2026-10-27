@@ -383,7 +383,7 @@ describe("EntitiesService: a class's levels", () => {
       await Modifiers.create(db, { ...modifier(bonusFeat.id, poolTarget, "1"), sourceType: "feats" });
       for (const level of [1, 2]) {
         const created = await createLevel(session, ruleset.id, klass.id, level);
-        await addGrants(db, created.id, "feats", [{ toId: bonusFeat.id, aptitudeId: aptitude.id, free: true }]);
+        await addGrants(db, created.id, "feats", [{ toId: bonusFeat.id, viaId: aptitude.id, free: true }]);
       }
 
       expect((await readClassTable(ruleset.id, klass.id, "feat-pools")).map((l) => l.featPools)).toEqual([
@@ -531,7 +531,8 @@ describe("EntitiesService: a class's levels", () => {
       const level = await createLevel(session, ruleset.id, klass.id, 2, {
         links: { grants: [{ toId: feat.id, viaId: aptitude.id }], baseBonus: [{ toId: save.id, amount: 2 }] },
       });
-      await addGrants(db, level.id, "spells", [{ toId: spell.id, aptitudeId: aptitude.id }]);
+      // A spell grant, which no form writes, as its storage declares it: the delete removes it
+      await addGrants(db, level.id, "spells", [{ toId: spell.id, viaId: aptitude.id }]);
       await Modifiers.create(db, modifier(level.id, "combat.bab", "1"));
 
       await EntitiesService.deleteOwnedEntity(session, ruleset.id, "classes", klass.id, level.id);

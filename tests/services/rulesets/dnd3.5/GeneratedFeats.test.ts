@@ -100,14 +100,17 @@ async function featNames(rulesetId: string, search?: string) {
     .sort();
 }
 
-/** What a feat is made of, ids aside: its description, its fields, its modifiers and its requirements. */
+/**
+ * What a feat is made of, ids aside: its description, whether it's generated (its stored field), its form's fields, its
+ * modifiers and its requirements.
+ */
 async function featShape(featId: string) {
   const feat = (await Entities.findOne<Feat>(db, { entityType: "feats", id: featId }))!;
   const strip = <T extends object>(rows: T[]) =>
     rows.map((row) => Object.fromEntries(Object.entries(row).filter(([key]) => !/(^id$|Id$|At$)/.test(key))));
   return {
     description: feat.description,
-    generated: feat.fields[FEAT_GENERATED],
+    fields: { [FEAT_GENERATED]: feat.fields[FEAT_GENERATED] },
     values: await findFormValues("feats", featId),
     modifiers: strip(await Modifiers.findMany(db, { sourceIds: [featId], sourceType: "feats" })),
     requirements: strip(await Requirements.findMany(db, { entityIds: [featId], entityType: "feats" })),

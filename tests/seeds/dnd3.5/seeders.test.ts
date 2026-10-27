@@ -266,13 +266,22 @@ describe("Seeding", () => {
             named: ctx.featMap[name] === id,
             name,
             description,
-            stackable: fields[FEAT_STACKABLE],
-            selectable: fields[FEAT_SELECTABLE],
+            fields: { [FEAT_STACKABLE]: fields[FEAT_STACKABLE], [FEAT_SELECTABLE]: fields[FEAT_SELECTABLE] },
           }))
           .sort((a, b) => a.name.localeCompare(b.name)),
       ).toEqual([
-        { named: true, name: "Test Dodge", description: "Dodge", stackable: false, selectable: true },
-        { named: true, name: "Test Toughness", description: "", stackable: true, selectable: false },
+        {
+          named: true,
+          name: "Test Dodge",
+          description: "Dodge",
+          fields: { [FEAT_STACKABLE]: false, [FEAT_SELECTABLE]: true },
+        },
+        {
+          named: true,
+          name: "Test Toughness",
+          description: "",
+          fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
+        },
       ]);
       expect(await aptitudesOfFeat(ctx, ctx.featMap["Test Dodge"])).toEqual(["Fighter Bonus Feat", "General"]);
       expect(await describeCustomizations(ctx.featMap["Test Dodge"])).toEqual({
@@ -489,15 +498,19 @@ describe("Seeding", () => {
       rows
         .map(({ name, fields, links }) => ({
           name,
-          isTemplate: fields[ITEM_IS_TEMPLATE],
-          slot: fields[ITEM_SLOT],
-          source: links.madeFrom ? names[links.madeFrom] : null,
+          fields: { [ITEM_IS_TEMPLATE]: fields[ITEM_IS_TEMPLATE], [ITEM_SLOT]: fields[ITEM_SLOT] },
+          // Its template by name, as the seed names it
+          links: { madeFrom: links.madeFrom ? names[links.madeFrom] : null },
         }))
         .sort((a, b) => a.name.localeCompare(b.name)),
     ).toEqual([
-      { name: "Test Blade", isTemplate: true, slot: "Main Hand", source: null },
-      { name: "Test Flaming Blade", isTemplate: false, slot: "Main Hand", source: "Test Blade" },
-      { name: "Test Rope", isTemplate: false, slot: "Other", source: null },
+      { name: "Test Blade", fields: { [ITEM_IS_TEMPLATE]: true, [ITEM_SLOT]: "Main Hand" }, links: { madeFrom: null } },
+      {
+        name: "Test Flaming Blade",
+        fields: { [ITEM_IS_TEMPLATE]: false, [ITEM_SLOT]: "Main Hand" },
+        links: { madeFrom: "Test Blade" },
+      },
+      { name: "Test Rope", fields: { [ITEM_IS_TEMPLATE]: false, [ITEM_SLOT]: "Other" }, links: { madeFrom: null } },
     ]);
     expect(await describeCustomizations(ids["Test Blade"])).toEqual({
       requirements: ["1 feats.martialweaponproficiency.possessed equal true"],
@@ -575,16 +588,17 @@ describe("Seeding", () => {
         .map(({ id, name, fields, links }) => ({
           named: ctx.spellMap[name] === id,
           name,
-          save: links.resistedBy ? saves[links.resistedBy] : null,
-          saveEffect: fields[SPELL_SAVE_EFFECT] ?? null,
+          fields: { [SPELL_SAVE_EFFECT]: fields[SPELL_SAVE_EFFECT] ?? null },
+          // Its save by name, as the seed names it
+          links: { resistedBy: links.resistedBy ? saves[links.resistedBy] : null },
         }))
         .sort((a, b) => a.name.localeCompare(b.name)),
     ).toEqual([
-      { named: true, name: "Test Bolt", save: "Reflex", saveEffect: "half" },
-      { named: true, name: "Test Charm", save: "Will", saveEffect: "negates" },
-      { named: true, name: "Test Light", save: null, saveEffect: null },
-      { named: true, name: "Test Ward", save: null, saveEffect: null },
-      { named: true, name: "Test Wish", save: null, saveEffect: "See text" },
+      { named: true, name: "Test Bolt", fields: { [SPELL_SAVE_EFFECT]: "half" }, links: { resistedBy: "Reflex" } },
+      { named: true, name: "Test Charm", fields: { [SPELL_SAVE_EFFECT]: "negates" }, links: { resistedBy: "Will" } },
+      { named: true, name: "Test Light", fields: { [SPELL_SAVE_EFFECT]: null }, links: { resistedBy: null } },
+      { named: true, name: "Test Ward", fields: { [SPELL_SAVE_EFFECT]: null }, links: { resistedBy: null } },
+      { named: true, name: "Test Wish", fields: { [SPELL_SAVE_EFFECT]: "See text" }, links: { resistedBy: null } },
     ]);
     expect(await spellListsOf(ctx, ctx.spellMap["Test Bolt"])).toEqual([
       "Test Arcane Spells 3",
@@ -619,15 +633,14 @@ describe("Seeding", () => {
       rows
         .map(({ name, fields, partition }) => ({
           name,
-          size: fields[RACE_SIZE],
-          baseSpeed: fields[RACE_BASE_SPEED],
-          kind: partition,
+          fields: { [RACE_SIZE]: fields[RACE_SIZE], [RACE_BASE_SPEED]: fields[RACE_BASE_SPEED] },
+          partition,
         }))
         .sort((a, b) => a.name.localeCompare(b.name)),
     ).toEqual([
-      { name: "Test Elf", size: "Medium", baseSpeed: 30, kind: "pc" },
-      { name: "Test Hawk", size: "Tiny", baseSpeed: 10, kind: "familiar" },
-      { name: "Test Steed", size: "Large", baseSpeed: 30, kind: "mount" },
+      { name: "Test Elf", fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 }, partition: "pc" },
+      { name: "Test Hawk", fields: { [RACE_SIZE]: "Tiny", [RACE_BASE_SPEED]: 10 }, partition: "familiar" },
+      { name: "Test Steed", fields: { [RACE_SIZE]: "Large", [RACE_BASE_SPEED]: 30 }, partition: "mount" },
     ]);
     expect((await describeCustomizations(rows.find((row) => row.name === "Test Elf")!.id)).modifiers).toEqual([
       "abilities.dexterity.score add 2 number",

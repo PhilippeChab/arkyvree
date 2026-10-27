@@ -14,7 +14,7 @@ describe("checkReferences", () => {
     const { user } = await createTestUser();
     const elsewhere = await createTestRuleset(user.id);
     const [race] = await Entities.create<Race>(db, "races", { name: "Stray Race", rulesetId: elsewhere.id });
-    await createTestCharacter(user.id, { raceId: race.id });
+    await createTestCharacter(user.id, { links: { race: race.id } });
 
     expect(await checkReferences()).toBe(before + 1);
   });

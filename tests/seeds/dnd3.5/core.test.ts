@@ -182,14 +182,14 @@ describe("The seeded core rules", () => {
       expect(rows.feats.filter((feat) => feat.name.endsWith(" Domain")).length).toBe(ALL_DOMAINS.length);
       for (const domain of ALL_DOMAINS) {
         const feat = rows.feat(`${domain.name} Domain`);
-        expect(feat.lists.map((link) => link.aptitudeId)).toEqual([clericDomain.id]);
+        expect(feat.listedIn.map((link) => link.toId)).toEqual([clericDomain.id]);
         expect(rows.requirementsOf(feat.id)).toEqual([]);
 
         const spellList = rows.aptitude(`${domain.name} Domain Spells`);
         const spells = rows.spells.flatMap((spell) =>
-          spell.lists
-            .filter((link) => link.aptitudeId === spellList.id)
-            .map((link) => `${link.level} ${spell.name.toLowerCase()}`),
+          spell.listedIn
+            .filter((link) => link.toId === spellList.id)
+            .map((link) => `${link.tier} ${spell.name.toLowerCase()}`),
         );
         expect({ domain: domain.name, spells: spells.sort() }).toEqual({
           domain: domain.name,
@@ -312,10 +312,10 @@ describe("The seeded core rules", () => {
         const family = rows.textsOf(feat.id, FEAT_FAMILY);
         expect({
           name,
-          stackable: feat.fields[FEAT_STACKABLE],
-          aptitudes: feat.lists.map((link) => link.aptitudeId),
+          fields: { [FEAT_STACKABLE]: feat.fields[FEAT_STACKABLE] },
+          listedIn: feat.listedIn.map((link) => link.toId),
           family,
-        }).toEqual({ name, stackable: false, aptitudes: [aptitude.id], family: ["Favored Enemy"] });
+        }).toEqual({ name, fields: { [FEAT_STACKABLE]: false }, listedIn: [aptitude.id], family: ["Favored Enemy"] });
       }
     });
 

@@ -193,7 +193,7 @@ describe("character levels", () => {
       const abilities = Object.fromEntries(
         Object.entries(ctx.abilityMap).map(([name, id]) => [id, name === "Intelligence" ? 12 : 14]),
       );
-      const character = await postCharacter({ raceId: ctx.raceMap.pc["Half-Orc"], abilities });
+      const character = await postCharacter({ links: { race: ctx.raceMap.pc["Half-Orc"] }, abilities });
       const fighter = ctx.classMap.pc["Fighter"];
       // INT 12, 10 (+0) with the half-orc's -2: (2 + 0) x 4
       const plan = await planOk(character.id, { steps: { "class-plan": [{ track: fighter, position: 1 }] } });

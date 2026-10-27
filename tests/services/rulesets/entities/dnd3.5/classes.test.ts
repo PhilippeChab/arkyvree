@@ -112,7 +112,8 @@ describe("EntitiesService: classes", () => {
       links: { grants: [{ toId: feat.id, viaId: aptitude.id }], baseBonus: [{ toId: save.id, amount: 2 }] },
       position: 1,
     });
-    await addGrants(db, level.id, "spells", [{ toId: spell.id, aptitudeId: aptitude.id }]);
+    // A spell grant, which no form writes, as its storage declares it: the delete removes it
+    await addGrants(db, level.id, "spells", [{ toId: spell.id, viaId: aptitude.id }]);
     await Modifiers.create(db, {
       sourceId: level.id,
       sourceType: "class-levels",

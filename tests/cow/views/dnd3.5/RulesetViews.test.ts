@@ -332,13 +332,13 @@ describe("RulesetViews", () => {
       expect(saves(forkView)).toEqual(saves(seedView));
     });
 
-    test("items cache includes templates AND non-template catalog items (no isTemplate filter)", async () => {
+    test("items cache includes templates AND non-template catalog items (no ITEM_IS_TEMPLATE filter)", async () => {
       const seed = await getRuleset();
       const seedData = await RulesetViews.getData(seed);
       const seedView = Dnd35View.of(seedData);
 
-      // The seed should have BOTH templates (isTemplate=true) and concrete catalog
-      // items (isTemplate=false) — e.g., weapons/armor archetypes + magic items.
+      // The seed should have BOTH templates (ITEM_IS_TEMPLATE true) and concrete catalog
+      // items (ITEM_IS_TEMPLATE false) — e.g., weapons/armor archetypes + magic items.
       const templates = seedView.items.filter((i) => i.fields[ITEM_IS_TEMPLATE]);
       const nonTemplates = seedView.items.filter((i) => !i.fields[ITEM_IS_TEMPLATE]);
       expect(templates.length).toBeGreaterThan(0);

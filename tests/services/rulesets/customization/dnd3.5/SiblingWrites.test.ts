@@ -110,7 +110,7 @@ for (const entityType of ["feats", "spells"] as const) {
         name: "Sibling aptitude fixture",
         rulesetId: loserRulesetId,
       });
-      await addLists(db, entityType, loser.id, [{ aptitudeId: aptitude.id }]);
+      await addLists(db, entityType, loser.id, [{ toId: aptitude.id }]);
 
       invalidateTestRulesets(...rulesetIds);
       const local = await ModifiersService.createModifier(session, host.id, entityType, winnerId, STRENGTH_BONUS);

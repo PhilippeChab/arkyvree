@@ -182,8 +182,8 @@ describe("RulesetSettingsService", () => {
     const { session, fork, abilityMap } = await setup();
     const { characterId, levelIds } = await buildFighter(fork.id, 4);
     const fourth = levelIds[3];
-    const strength = { abilityId: abilityMap["Strength"], amount: 1 };
-    await Picks.createMany(db, [{ advancementId: fourth, step: "abilities", entityId: strength.abilityId, amount: 1 }]);
+    const strength = { entityId: abilityMap["Strength"], amount: 1 };
+    await Picks.createMany(db, [{ advancementId: fourth, step: "abilities", ...strength }]);
     // The seed user's fighter, whose edit opens its level and saves it, its unspent skill points and bonus feat aside
     const seedUser = makeSession();
     const edit = (increases: (typeof strength)[]) =>
@@ -212,7 +212,7 @@ describe("RulesetSettingsService", () => {
     });
     expect(await savedLevel()).toMatchObject({ abilityIncreases: [] });
     expect(await strengthScore()).toBe(10);
-    for (const increases of [[strength], [{ ...strength, abilityId: abilityMap["Dexterity"] }]])
+    for (const increases of [[strength], [{ ...strength, entityId: abilityMap["Dexterity"] }]])
       expect(edit(increases)).rejects.toMatchObject({ message: "Ability increase is not available at this level" });
     await edit([]);
     expect(await findPicks("abilities", [fourth])).toEqual([]);

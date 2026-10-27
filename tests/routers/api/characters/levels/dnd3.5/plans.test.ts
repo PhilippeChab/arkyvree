@@ -761,7 +761,7 @@ describe("character level plans", () => {
     await expectStatus(levels.$post({ param: { characterId }, json: { steps: unanswered } }), 400);
     const [created] = await expectOk(levels.$post({ param: { characterId }, json: { steps: fourth } }));
     expect(await readLevel(characterId, created.id)).toMatchObject({
-      abilityIncreases: [{ abilityId: ctx.abilityMap["Strength"], amount: 1 }],
+      abilityIncreases: [{ entityId: ctx.abilityMap["Strength"], amount: 1 }],
       classId: fighter,
       level: 4,
     });

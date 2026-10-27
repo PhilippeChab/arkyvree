@@ -677,7 +677,7 @@ describe("a character's levels", () => {
       await levelUp(session, ctx, characterId, "Fighter", index + 1, plan);
     const fourth = FIGHTER_LEVELS[3];
     const strength = ctx.abilityMap["Strength"];
-    const at = (amount: number) => [{ abilityId: strength, amount }];
+    const at = (amount: number) => [{ entityId: strength, amount }];
     const plan = (amount: number) =>
       levelUpPlan(
         [{ classId: ctx.classMap.pc["Fighter"], level: 4, hp: 8, abilityIncreases: at(amount) }],

@@ -281,9 +281,10 @@ async function setupFighter() {
   const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
   const first = await levelUp(session, ctx, characterId, "Fighter", 1, FIGHTER_LEVELS[0]);
   await levelUp(session, ctx, characterId, "Fighter", 2, FIGHTER_LEVELS[1]);
-  const resave = (plan: Partial<LevelPlan> & { abilityId?: string | null }, force = false) => {
+  // The level's picks past the first fighter level's, and the ability its increase pick raises (`entityId`), if any
+  const resave = (plan: Partial<LevelPlan> & { entityId?: string | null }, force = false) => {
     const picked = picks(ctx, { ...FIGHTER_LEVELS[0], ...plan });
-    const edit = levelEditPlan({ hp: 10, abilityIncreases: increasesOf(plan.abilityId) }, picked);
+    const edit = levelEditPlan({ hp: 10, abilityIncreases: increasesOf(plan.entityId) }, picked);
     return CharacterLevelsService.updatePlannedLevel(session, characterId, first.id, edit, force);
   };
   return { ctx, characterId, first, resave };
@@ -471,9 +472,7 @@ describe("finalizing several levels at once", () => {
     const increases = await findPicks("abilities", levelIds);
     expect(
       created.map((l) =>
-        increases
-          .filter((row) => row.advancementId === l.id)
-          .map(({ amount, entityId }) => ({ abilityId: entityId, amount })),
+        increases.filter((row) => row.advancementId === l.id).map(({ amount, entityId }) => ({ entityId, amount })),
       ),
     ).toEqual(levels.map(([, , , ability]) => increasesOf(ability && ctx.abilityMap[ability])));
   });
@@ -698,7 +697,7 @@ describe("a pick a level takes twice", () => {
     // A fork whose Toughness is a fighter's bonus feat too
     const fork = await createSeededTestRuleset(SEED_USER_ID);
     const toughness = await copyEntity(db, "feats", ctx.featMap["Toughness"], fork);
-    await addLists(db, "feats", toughness.id, [{ aptitudeId: ctx.aptMap["Fighter Bonus Feat"] }]);
+    await addLists(db, "feats", toughness.id, [{ toId: ctx.aptMap["Fighter Bonus Feat"] }]);
     RulesetViews.invalidate(fork.id);
     const characterId = await createSeedCharacter(ctx);
     await Characters.update(db, { rulesetId: fork.id }, { id: characterId });
@@ -1699,7 +1698,7 @@ describe("re-saving a level", () => {
     test("is refused at a level that doesn't grant one, even forced", async () => {
       const { ctx, resave } = await setupFighter();
       for (const force of [false, true]) {
-        expect(resave({ abilityId: ctx.abilityMap["Strength"] }, force)).rejects.toThrow(
+        expect(resave({ entityId: ctx.abilityMap["Strength"] }, force)).rejects.toThrow(
           "Ability increase is not available at this level",
         );
       }
@@ -1711,10 +1710,10 @@ describe("re-saving a level", () => {
         { advancementId: first.id, step: "abilities", entityId: ctx.abilityMap["Strength"], amount: 1 },
       ]);
       // The edit dialog sends the stored increase back.
-      expect(resave({ abilityId: ctx.abilityMap["Strength"] })).rejects.toThrow(
+      expect(resave({ entityId: ctx.abilityMap["Strength"] })).rejects.toThrow(
         "Ability increase is not available at this level",
       );
-      await resave({ abilityId: null });
+      await resave({ entityId: null });
       expect(await findPicks("abilities", [first.id])).toEqual([]);
     });
 
@@ -1736,25 +1735,25 @@ describe("re-saving a level", () => {
           ),
           true,
         );
-      expect(save([{ abilityId: strength, amount: 2 }])).rejects.toThrow(
+      expect(save([{ entityId: strength, amount: 2 }])).rejects.toThrow(
         "Level 4: Ability increases must add up to 1 at this level",
       );
       expect(
         save([
-          { abilityId: strength, amount: 1 },
-          { abilityId: dexterity, amount: 1 },
+          { entityId: strength, amount: 1 },
+          { entityId: dexterity, amount: 1 },
         ]),
       ).rejects.toThrow("Level 4: Ability increases must add up to 1 at this level");
       expect(
         save([
-          { abilityId: strength, amount: 1 },
-          { abilityId: strength, amount: 1 },
+          { entityId: strength, amount: 1 },
+          { entityId: strength, amount: 1 },
         ]),
       ).rejects.toThrow("Level 4: An ability is increased twice at this level");
 
-      const saved = await save([{ abilityId: strength, amount: 1 }]);
+      const saved = await save([{ entityId: strength, amount: 1 }]);
       const level = await savedLevel(characterId, saved[3].id);
-      expect(level.abilityIncreases).toEqual([{ abilityId: strength, amount: 1 }]);
+      expect(level.abilityIncreases).toEqual([{ entityId: strength, amount: 1 }]);
     });
   });
 });

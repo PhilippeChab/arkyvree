@@ -23,14 +23,14 @@ import {
 /** The aptitudes of the test's ruleset. */
 const APTITUDES = ["Wizard", "Cleric", "Druid"];
 
-function sorted(links: { aptitudeId: string; level: number | null }[]) {
-  return [...links].sort((a, b) => a.aptitudeId.localeCompare(b.aptitudeId));
+/** A spell's `listedIn` links (`links`), each its list and its level there, by their list. */
+function sorted(links: { tier: number | null; toId: string }[]) {
+  return [...links].sort((a, b) => a.toId.localeCompare(b.toId));
 }
 
-async function linkedAptitudes(spellId: string) {
-  return (await findLists(db, [spellId]))
-    .map(({ tier, toId }) => ({ aptitudeId: toId, level: tier }))
-    .sort((a, b) => a.aptitudeId.localeCompare(b.aptitudeId));
+/** A spell's lists as stored (`spellId`'s `listedIn` links): each its list (`toId`) and its level there (`tier`). */
+async function listingsOf(spellId: string) {
+  return sorted((await findLists(db, [spellId])).map(({ tier, toId }) => ({ toId, tier })));
 }
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts,
@@ -110,10 +110,10 @@ describe("EntitiesService: spells", () => {
         name: "Fireball",
         links: { listedIn: [{ toId: wizard, tier: 3 }, { toId: cleric }] },
       });
-      expect(await linkedAptitudes(spell.id)).toEqual(
+      expect(await listingsOf(spell.id)).toEqual(
         sorted([
-          { aptitudeId: wizard, level: 3 },
-          { aptitudeId: cleric, level: null },
+          { toId: wizard, tier: 3 },
+          { toId: cleric, tier: null },
         ]),
       );
 
@@ -121,19 +121,19 @@ describe("EntitiesService: spells", () => {
         name: "Fireball",
         links: { listedIn: [{ toId: druid, tier: 4 }] },
       });
-      expect(await linkedAptitudes(spell.id)).toEqual([{ aptitudeId: druid, level: 4 }]);
+      expect(await listingsOf(spell.id)).toEqual([{ toId: druid, tier: 4 }]);
 
       await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, {
         name: "Fireball",
         description: "Renamed only",
       });
-      expect(await linkedAptitudes(spell.id)).toEqual([{ aptitudeId: druid, level: 4 }]);
+      expect(await listingsOf(spell.id)).toEqual([{ toId: druid, tier: 4 }]);
 
       await EntitiesService.updateEntity(session, ruleset.id, "spells", spell.id, {
         name: "Fireball",
         links: { listedIn: [] },
       });
-      expect(await linkedAptitudes(spell.id)).toEqual([]);
+      expect(await listingsOf(spell.id)).toEqual([]);
     });
 
     test("links a spell to the lists it names only: a school's specialist list as a domain's", async () => {
@@ -147,7 +147,7 @@ describe("EntitiesService: spells", () => {
         fields: { [SPELL_SCHOOL]: "Evocation" },
         links: { listedIn: [{ toId: wizard, tier: 3 }] },
       });
-      expect(await linkedAptitudes(wizardOnly.id)).toEqual([{ aptitudeId: wizard, level: 3 }]);
+      expect(await listingsOf(wizardOnly.id)).toEqual([{ toId: wizard, tier: 3 }]);
 
       const both = await EntitiesService.createEntity(session, fork.id, "spells", {
         name: "Test Blast",
@@ -159,10 +159,10 @@ describe("EntitiesService: spells", () => {
           ],
         },
       });
-      expect(await linkedAptitudes(both.id)).toEqual(
+      expect(await listingsOf(both.id)).toEqual(
         sorted([
-          { aptitudeId: wizard, level: 3 },
-          { aptitudeId: specialist, level: 3 },
+          { toId: wizard, tier: 3 },
+          { toId: specialist, tier: 3 },
         ]),
       );
     });
@@ -226,8 +226,8 @@ describe("EntitiesService: spells", () => {
         name: "Fireball",
         links: { listedIn: [{ toId: cleric, tier: 2 }] },
       });
-      expect(await linkedAptitudes(copy.id)).toEqual([{ aptitudeId: cleric, level: 2 }]);
-      expect(await linkedAptitudes(source.id)).toEqual([{ aptitudeId: wizard, level: 3 }]);
+      expect(await listingsOf(copy.id)).toEqual([{ toId: cleric, tier: 2 }]);
+      expect(await listingsOf(source.id)).toEqual([{ toId: wizard, tier: 3 }]);
     });
   });
 
@@ -270,11 +270,12 @@ describe("EntitiesService: spells", () => {
       links: { listedIn: [{ toId: wizard }] },
     });
     const { classLevel } = await createTestClassLevel(ruleset.id);
-    await addGrants(db, classLevel.id, "spells", [{ toId: spell.id, aptitudeId: wizard }]);
+    // A spell grant, which no form writes, as its storage declares it: the delete unlinks it
+    await addGrants(db, classLevel.id, "spells", [{ toId: spell.id, viaId: wizard }]);
 
     await EntitiesService.deleteEntity(session, ruleset.id, "spells", spell.id);
 
-    expect(await linkedAptitudes(spell.id)).toEqual([]);
+    expect(await listingsOf(spell.id)).toEqual([]);
     // A grant's spell is its link's to-entity
     expect(await EntityLinks.findMany(db, { fromType: "class-levels", role: "grants", toIds: [spell.id] })).toEqual([]);
   });

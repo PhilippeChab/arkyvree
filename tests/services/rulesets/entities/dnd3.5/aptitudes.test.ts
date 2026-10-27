@@ -100,7 +100,8 @@ describe("EntitiesService: aptitudes", () => {
       links: { grants: [{ toId: feat.id, viaId: featAptitude.id }] },
       position: 1,
     });
-    await addGrants(db, level.id, "spells", [{ toId: spell.id, aptitudeId: spellAptitude.id }]);
+    // A spell grant, which no form writes, as its storage declares it: the delete unlinks it
+    await addGrants(db, level.id, "spells", [{ toId: spell.id, viaId: spellAptitude.id }]);
 
     await EntitiesService.deleteEntity(session, ruleset.id, "aptitudes", featAptitude.id);
     await EntitiesService.deleteEntity(session, ruleset.id, "aptitudes", spellAptitude.id);

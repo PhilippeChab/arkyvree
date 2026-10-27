@@ -115,7 +115,7 @@ async function setupChanges(values: { private?: boolean } = {}) {
     "feats",
     ["Power Attack", "Cleave", "Dodge"].map((name) => ({ name, rulesetId: parent.id })),
   );
-  await addLists(db, "feats", modified.id, [{ aptitudeId: aptitude.id }]);
+  await addLists(db, "feats", modified.id, [{ toId: aptitude.id }]);
   const forked = await fork(session, parent, values);
   return { user, session, owner, parent, fork: forked, aptitude, modified, deleted, untouched };
 }
@@ -386,7 +386,7 @@ describe("RulesetsService", () => {
       const { feat, race } = await addPlayableContent(ruleset.id);
       await writeFieldValues("feats", feat.id, [[FEAT_FAMILY, "combat"]]);
       await createTestCampaign(user.id, ruleset.id);
-      await createTestCharacter(user.id, { rulesetId: ruleset.id, raceId: race.id });
+      await createTestCharacter(user.id, { rulesetId: ruleset.id, links: { race: race.id } });
 
       expect(await RulesetsService.archiveRuleset(session, ruleset.id)).toMatchObject({ status: "Archived" });
       expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toMatchObject({ id: feat.id });
