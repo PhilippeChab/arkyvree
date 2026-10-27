@@ -21,7 +21,7 @@ A user can hold multiple roles for the same entity (e.g. owner of a ruleset they
 
 ## Rulesets — `RulesetsPolicy`
 
-`RulesetsPolicy.for(tx, session, ruleset)` loads the session's contributor role (`contributorsInRules`); on a ruleset that isn't public, whether it has a seat in a campaign on it (`Players.exists(db, { userId, rulesetId }, Visibility.All)`: any seat still stored, an archived one too, in a campaign archived or not, who may read the campaign, `CampaignsPolicy.canRead`; what lets it read the ruleset) and, if so, whether that seat is live in a live campaign (`Players.exists(db, { userId, rulesetId })`: what lets it create there); and, on a private ruleset it has no other standing on, whether it edits a character built on it (`Characters.exists(db, { editorId, rulesetId })`: owns one, or actively contributes to one, archived or not; what lets it read it). A removed player's seat is deleted, so it gives nothing.
+`RulesetsPolicy.for(tx, session, ruleset)` loads the session's contributor role (`contributorsInRules`); on a ruleset that isn't public, whether it has a live seat in a campaign on it, and whether one is in a live campaign (`Players.findSeat(db, { userId, rulesetId })`: a seat in a campaign archived or not, who may read the campaign, `CampaignsPolicy.canRead`, lets it read the ruleset; one in a live campaign lets it create there); and, on a private ruleset it has no other standing on, whether it edits a character built on it (`Characters.exists(db, { editorId, rulesetId })`: owns one, or actively contributes to one, archived or not; what lets it read it). A removed player's seat is deleted, and a seat is archived only with its user's account, which no session signs in to, so neither gives anything.
 
 | Method | Allowed actors | Notes |
 |---|---|---|
@@ -98,14 +98,14 @@ Campaign character responses leave the private notes out of the identity's block
 
 ## Campaigns — `CampaignsPolicy`
 
-`CampaignsPolicy.for(tx, session, campaign)` loads the session's player row (`playersInCampaign`), an archived one too. The PDF worker, which has no session, builds one for the export's user and asks `isGameMaster()`.
+`CampaignsPolicy.for(tx, session, campaign)` loads the session's live player row (`playersInCampaign`), in a campaign archived or not: archiving a campaign leaves its seats alone, and a seat is archived only with its user's account, which no session signs in to (0096 restored the seats a campaign archived before then had archived with it). The PDF worker, which has no session, builds one for the export's user and asks `isGameMaster()`.
 
 | Method | Allowed actors |
 |---|---|
 | `canRead` | any member, Player or Game Master, of the campaign archived or not: returns their player row. Reading a campaign, its players, invites and characters starts with it (an unknown campaign is a 404 first) |
-| `canSeeCharacter` | a member, on a character linked to the campaign; a **Private** one its linking player and the Game Master alone (`isGameMasterByRole`), refused to the others as a 404, as a character not linked is |
-| `canUpdate` | **Game Master only**, by an active player row (`isGameMaster`) |
-| `canDelete` | **Game Master only** (archive), an archived player row too (`isGameMasterByRole`) |
+| `canSeeCharacter` | a member, on a character linked to the campaign; a **Private** one its linking player and the Game Master alone (`isGameMaster`), refused to the others as a 404, as a character not linked is |
+| `canUpdate` | **Game Master only** (`isGameMaster`) |
+| `canDelete` | **Game Master only** (archive and unarchive) |
 | `canHardDelete` | **Game Master only**, must be archived. See [persistence.md](./persistence.md#recoverable-user-content) |
 | `canModify` | anyone the other checks allow, on a campaign that isn't archived (archived campaigns are read-only; a Game Master can still revoke an invite) |
 

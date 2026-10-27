@@ -661,7 +661,7 @@ describe("a private ruleset's reads by its id", () => {
     expect(await readStatuses(reader.api, ruleset.id)).toEqual(HIDDEN);
   });
 
-  test("a member of a campaign on it reads it, archived or not, but not a removed player", async () => {
+  test("a member of a campaign on it reads it, archived or not, but not a removed player or an archived seat", async () => {
     const { ruleset, reader } = await setup();
     const archivedCampaign = await createSignedInUser("archived-campaign");
     const archivedSeat = await createSignedInUser("archived-seat");
@@ -673,7 +673,8 @@ describe("a private ruleset's reads by its id", () => {
 
     expect(await readStatuses(reader.api, ruleset.id)).toEqual(READ);
     expect(await readStatuses(archivedCampaign.api, ruleset.id)).toEqual(READ);
-    expect(await readStatuses(archivedSeat.api, ruleset.id)).toEqual(READ);
+    // A seat is archived only with its user's account: it gives nothing, as a removed player's
+    expect(await readStatuses(archivedSeat.api, ruleset.id)).toEqual(HIDDEN);
     expect(await readStatuses(removed.api, ruleset.id)).toEqual(HIDDEN);
   });
 

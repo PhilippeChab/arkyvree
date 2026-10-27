@@ -63,7 +63,7 @@ class CampaignCharactersService {
     policy.canSeeCharacter(link);
 
     const isOwner = link.playerId === member.id;
-    const isGM = policy.isGameMasterByRole();
+    const isGM = policy.isGameMaster();
 
     // Full character build for all visible cases (Public, Partial, owner, GM)
     const character = await Characters.findOne(db, { id: characterId });
@@ -104,10 +104,10 @@ class CampaignCharactersService {
   ) {
     const { member, policy } = await this.getMember(session, campaignId);
 
-    const isGM = policy.isGameMasterByRole();
+    const isGM = policy.isGameMaster();
 
-    // Get all players in this campaign (include archived for archived campaigns)
-    const campaignPlayers = await Players.findMany(db, { campaignId }, Visibility.All);
+    // Get all players in this campaign
+    const campaignPlayers = await Players.findMany(db, { campaignId });
     const playerIds = campaignPlayers.map((p) => p.id);
 
     if (playerIds.length === 0) return { items: [], page: 1, nextPage: undefined };

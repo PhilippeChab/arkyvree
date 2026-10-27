@@ -34,7 +34,7 @@ export default abstract class RulesetRoles extends BasePolicy<Ruleset> {
   }
 
   /**
-   * Has a seat in a campaign on the ruleset, archived or not, the campaign archived or not (who may read the campaign):
+   * Has a live seat in a campaign on the ruleset, the campaign archived or not (who may read the campaign):
    * looked up only for a ruleset that isn't public, where it lets them read it.
    */
   protected readonly isCampaignMember: boolean;

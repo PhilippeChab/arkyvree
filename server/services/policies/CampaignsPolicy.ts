@@ -1,6 +1,6 @@
 import type { Db } from "@/drizzle/database.ts";
 import { ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
-import { Players, Visibility } from "@/server/repositories/index.ts";
+import { Players } from "@/server/repositories/index.ts";
 import type { Campaign, Player, Session } from "@/shared/relations.ts";
 
 import BasePolicy from "./BasePolicy.ts";
@@ -21,25 +21,25 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
   }
 
   /**
-   * The session's policy on `campaign`: its rights come from its player row, an archived one too (a campaign archived
-   * before archiving left its players alone archived them with it). The PDF worker passes the export's user.
+   * The session's policy on `campaign`: its rights come from its live player row, an archived campaign's too (archiving
+   * a campaign leaves its seats alone; a seat is archived only with its user's account). The PDF worker passes the
+   * export's user.
    */
   static async for(db: Db, session: Pick<Session, "userId">, campaign: PolicyCampaign) {
-    const player = await Players.findOne(db, { userId: session.userId, campaignId: campaign.id }, Visibility.All);
+    const player = await Players.findOne(db, { userId: session.userId, campaignId: campaign.id });
     return new CampaignsPolicy(session, campaign, player ?? null);
   }
 
   private readonly player: Player | null;
 
   canDelete() {
-    if (!this.isGameMasterByRole()) throw new ForbiddenError("Only the Game Master can manage this campaign");
+    if (!this.isGameMaster()) throw new ForbiddenError("Only the Game Master can manage this campaign");
 
     return true;
   }
 
   canHardDelete() {
-    if (!this.isGameMasterByRole())
-      throw new ForbiddenError("Only the Game Master can permanently delete this campaign");
+    if (!this.isGameMaster()) throw new ForbiddenError("Only the Game Master can permanently delete this campaign");
 
     if (!this.entity.deletedAt)
       throw new UnprocessableEntityError("Only archived campaigns can be permanently deleted");
@@ -65,7 +65,7 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
    */
   canSeeCharacter(link: CharacterLink) {
     const player = this.canRead();
-    if (link.visibility === "Private" && link.playerId !== player.id && !this.isGameMasterByRole())
+    if (link.visibility === "Private" && link.playerId !== player.id && !this.isGameMaster())
       throw new NotFoundError("Character not found in this campaign");
 
     return true;
@@ -77,16 +77,8 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
     return true;
   }
 
-  /** Whether the session is the campaign's Game Master, by an active player row: what acting as one takes. */
+  /** Whether the session's player row is the campaign's Game Master's. */
   isGameMaster() {
-    return this.isGameMasterByRole() && !this.player?.deletedAt;
-  }
-
-  /**
-   * Whether the session's player row is the campaign's Game Master's, an archived one too (a campaign archived before
-   * archiving left its players alone archived them with it): what reading and archiving the campaign go by, as `canRead`.
-   */
-  isGameMasterByRole() {
     return this.player?.role === "Game Master";
   }
 }

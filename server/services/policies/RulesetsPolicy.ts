@@ -13,7 +13,7 @@ import RulesetRoles, { isPublicRuleset } from "./RulesetRoles.ts";
 class RulesetsPolicy extends include(RulesetRoles, ContributorRights, CreationRights, EntityRights, ExtensionRights) {
   /**
    * The session's policy on `ruleset`: a contributor's rights come from their active role on it, a campaign member's
-   * from their seat in a campaign on it (any seat to read it, a live one in a live campaign to create on it), which
+   * from their live seat in a campaign on it (in any campaign to read it, in a live one to create on it), which
    * matters only on a ruleset that isn't public, and a character's editor's from a character built on it, which
    * matters only on a private ruleset they have no other standing on (it lets them read it).
    */
