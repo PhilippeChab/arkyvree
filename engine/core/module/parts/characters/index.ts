@@ -33,6 +33,7 @@ export type {
   CreationSection,
   DescribedInventoryEntry,
   DescribedLink,
+  DescribedSheet,
   HeldInventoryEntry,
   LinkRoom,
   NotedSheet,

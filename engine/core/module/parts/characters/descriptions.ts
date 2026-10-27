@@ -253,6 +253,12 @@ export type DescribedInventoryEntry<T, X = unknown> = T &
   };
 
 /**
+ * A character's sheet as the API answers it, whatever its ruleset (`S`, its ruleset's sheet): its row's columns, then
+ * its ruleset's sheet's declared keys alone (`RulesetSheet`).
+ */
+export type DescribedSheet<S extends RulesetSheet> = CharacterColumns & Pick<S, keyof RulesetSheet>;
+
+/**
  * An inventory entry, as where it's held reads it: whether it's equipped, where, and its groups (3.5's weapon sets).
  */
 export type HeldInventoryEntry = Pick<InventoryEntryPlan, "equipped" | "groups" | "location">;

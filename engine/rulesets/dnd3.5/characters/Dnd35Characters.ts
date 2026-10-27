@@ -36,6 +36,11 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
       throw new RulesError("invalid", "Race is not valid for a player character");
   }
 
+  /** A character's printed sheet: the PDF document the server renders. */
+  protected override describeDocument(...args: Parameters<typeof CharacterSheet.describeSheet>) {
+    return CharacterSheet.describeSheet(...args);
+  }
+
   /** A character's sheet as the API answers it, with its bonded creatures', or a creature's. */
   protected override describeFull(...args: Parameters<typeof CharacterDescription.describeFull>) {
     return CharacterDescription.describeFull(...args);
@@ -102,10 +107,5 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
   /** Why a location can't take one more item of the character's, if it can't: what the inventory dialogs warn of. */
   override describePlacement(...args: Parameters<typeof InventoryEntries.describePlacement>) {
     return InventoryEntries.describePlacement(...args);
-  }
-
-  /** A character's printed sheet: the PDF document the server renders. */
-  override describeSheet(...args: Parameters<typeof CharacterSheet.describeSheet>) {
-    return CharacterSheet.describeSheet(...args);
   }
 }

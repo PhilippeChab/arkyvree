@@ -65,10 +65,8 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
     const sheet = await withRulesetScope(db, characterRecord.rulesetId, async (scope) =>
       Engine.for(scope)
         .character(await readCharacterInput(db, characterRecord))
-        .describeSheet({
-          diagnostics: !isProduction(),
-          portraitUrl,
-        }),
+        // Its exporters read its private notes: its editors, and its campaign's Game Master
+        .describeSheet({ diagnostics: !isProduction(), portraitUrl }, "show"),
     );
 
     const pdfBlob = await pdf(sheet).toBlob();
