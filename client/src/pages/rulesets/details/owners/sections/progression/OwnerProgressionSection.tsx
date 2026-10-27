@@ -188,7 +188,7 @@ export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerTy
       : [{ key: rules.key, label: rules.label, rules }],
   );
   const valuesOf = (read: (level: LevelRead) => number) =>
-    levels.map((level) => ({ level: level.level, levelId: level.id, value: read(level) }));
+    levels.map((level) => ({ level: level.position, levelId: level.id, value: read(level) }));
 
   const features = withAddedFeatures(savedFeatures, draft.edits).map((row) => ({
     ...row,
@@ -217,7 +217,7 @@ export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerTy
   for (const row of features) {
     const saved = savedFeatures.find((s) => s.key === row.key)?.levelIds ?? [];
     const granted = (id: string) => Number(row.levelIds.includes(id)) - Number(saved.includes(id));
-    for (const [name, picks] of Object.entries(picksOf(row.entityId))) addChanges(name, (id) => granted(id) * picks);
+    for (const [name, picks] of Object.entries(picksOf(row.toId))) addChanges(name, (id) => granted(id) * picks);
   }
   const poolNames = [
     ...new Set([
@@ -297,7 +297,7 @@ export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerTy
   };
 
   const descriptionByEntity = new Map(
-    levels.flatMap((level) => level.grants.map((grant) => [grant.entityId, grant.description])),
+    levels.flatMap((level) => level.grants.map((grant) => [grant.toId, grant.toDescription])),
   );
   const featuresAt = (levelId: string) => features.filter((row) => row.levelIds.includes(levelId));
   const columns = [
@@ -309,7 +309,7 @@ export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerTy
   ];
 
   const renderCell = (level: LevelRead, columnKey: string) => {
-    if (columnKey === "level") return <ValueChip label={level.level} color="primary" />;
+    if (columnKey === "level") return <ValueChip label={level.position} color="primary" />;
     if (columnKey.startsWith("pool:")) {
       const name = columnKey.slice(5);
       const saved = poolTotalsAt(level.id)?.[name];
@@ -330,7 +330,7 @@ export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerTy
             <Tooltip
               describeChild
               key={row.key}
-              title={descriptionByEntity.get(row.entityId) || row.viaName || ""}
+              title={descriptionByEntity.get(row.toId) || row.viaName || ""}
               placement="top"
               enterDelay={300}
               slotProps={{ tooltip: { sx: { maxWidth: 400 } } }}

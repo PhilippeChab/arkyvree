@@ -10,7 +10,7 @@ import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQue
 import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
-const EVASION = { id: "evasion", viaId: "features", name: "Evasion" };
+const EVASION = { toId: "evasion", viaId: "features", toName: "Evasion" };
 
 /** A 3.5 class level's lists of links, as its rules describe them: its saves' bases and its granted feats. */
 const LISTS: LevelLists = levelListsOf(CLASS_LEVEL_FIELDS.describe() as unknown as EntityField[]);
@@ -22,17 +22,26 @@ const TRACKS = [
 ];
 
 /**
- * A class level as its query reads it: its base attack bonus and skill points among its fields, a save's base and its
- * granted feats.
+ * A class level as its query reads it: its base attack bonus and skill points among its fields, and its links: a
+ * save's base and its granted feats.
  */
-function level(id: string, number: number, grants: { id: string; name: string; viaId: string }[] = []) {
+function level(id: string, number: number, grants: { toId: string; toName: string; viaId: string }[] = []) {
   const row = {
     id,
     position: number,
     updatedAt: "",
     fields: { [CLASS_LEVEL_BAB]: number, [CLASS_LEVEL_SKILL_POINTS]: 4 },
-    baseBonus: [{ toId: "fort", amount: 2 }],
-    grants: grants.map((grant) => ({ ...grant, description: null, viaName: "Class Features", free: false })),
+    links: [
+      ...grants.map((grant) => ({
+        ...grant,
+        role: "grants",
+        toType: "feats",
+        toDescription: null,
+        viaName: "Class Features",
+        free: false,
+      })),
+      { role: "baseBonus", toType: "saves", toId: "fort", toName: "Fortitude", amount: 2 },
+    ],
   };
   return readLevel(row, LISTS, TRACKS);
 }
@@ -46,10 +55,10 @@ describe("A Progression tab's save", () => {
   test("lists a class's features with the levels it grants each at", () => {
     expect(describeFeatureRows(twoLevels())).toEqual([
       {
-        entityId: "evasion",
         key: "evasion-features",
         levelIds: ["l2"],
         name: "Evasion",
+        toId: "evasion",
         viaId: "features",
         viaName: "Class Features",
       },

@@ -8,6 +8,7 @@ import { Entities, Modifiers, Requirements } from "@/server/repositories/index.t
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { readClassTable } from "@/tests/support/dnd3.5/classTables.ts";
+import { linksOf } from "@/tests/support/entityLinks.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -79,21 +80,24 @@ describe("EntitiesService: a class's progression", () => {
     }))!;
     const before = await EntitiesService.getOwnedEntities(fork.id, "classes", klass.id);
     const first = before.find((level) => level.position === 1)!;
-    const baseBonus = first.baseBonus.map((s) => (s.toId === fortitude.id ? { ...s, amount: 0 } : s));
-    const grants = first.grants.slice(1).map(({ id, viaId }) => ({ toId: id, viaId }));
+    const baseBonus = linksOf(first, "baseBonus").map(({ amount, toId }) => ({
+      toId,
+      amount: toId === fortitude.id ? 0 : (amount ?? 0),
+    }));
+    const kept = linksOf(first, "grants").slice(1);
+    const grants = kept.map(({ toId, viaId }) => ({ toId, viaId: viaId! }));
 
     const { levels } = await save(session, fork.id, klass.id, {
       levels: [{ levelId: levelId(1), links: { baseBonus, grants } }],
     });
 
     const level = levels.get(1)!;
-    expect(level.baseBonus.find((s) => s.toId === fortitude.id)?.amount).toBe(0);
-    expect(level.grants.map((feat) => feat.name).toSorted()).toEqual(
-      first.grants
-        .slice(1)
-        .map((f) => f.name)
+    expect(linksOf(level, "baseBonus").find((s) => s.toId === fortitude.id)?.amount).toBe(0);
+    expect(
+      linksOf(level, "grants")
+        .map((feat) => feat.toName)
         .toSorted(),
-    );
+    ).toEqual(kept.map((feat) => feat.toName).toSorted());
   });
 
   test("gives a wizard one more 3rd-level spell a day at 9th, every other level keeping its totals", async () => {
@@ -221,11 +225,11 @@ describe("EntitiesService: a class's progression", () => {
   test("reads the picks a feature gives in its pool where it's granted", async () => {
     const { fork, klass } = await forkWithClass("Fighter");
     const levels = await EntitiesService.getOwnedEntities(fork.id, "classes", klass.id);
-    const bonusFeat = levels[0].grants.find((feat) => feat.name === "Bonus Feat (Fighter)")!;
+    const bonusFeat = linksOf(levels[0], "grants").find((feat) => feat.toName === "Bonus Feat (Fighter)")!;
 
     const { featPicks } = await EntitiesService.getProgression(fork.id, "classes", klass.id);
 
-    expect(featPicks[bonusFeat.id]).toEqual({ "Fighter Bonus Feat": 1 });
+    expect(featPicks[bonusFeat.toId]).toEqual({ "Fighter Bonus Feat": 1 });
   });
 
   test("moves a pool's picks between levels, and reads them back", async () => {

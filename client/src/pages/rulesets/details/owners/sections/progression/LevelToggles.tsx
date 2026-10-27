@@ -3,8 +3,8 @@ import { Box, ButtonBase } from "@mui/material";
 interface LevelTogglesProps {
   /** What the toggles grant, which each one's label names ("Evasion at level 2") */
   label: string;
-  /** The owner's levels, by their number */
-  levels: readonly { id: string; level: number }[];
+  /** The owner's levels, each its number (`position`) */
+  levels: readonly { id: string; position: number }[];
   /** A level's toggle was clicked */
   onToggle: (levelId: string) => void;
   /** Read-only: nothing to click */
@@ -27,7 +27,7 @@ export function LevelToggles({ label, levels, onToggle, readOnly, saved, value }
         gap: 0.5,
       }}
     >
-      {levels.map(({ id, level }) => {
+      {levels.map(({ id, position }) => {
         const count = value(id);
         const changed = count !== saved(id);
         return (
@@ -35,7 +35,7 @@ export function LevelToggles({ label, levels, onToggle, readOnly, saved, value }
             key={id}
             disabled={readOnly}
             aria-pressed={count > 0}
-            aria-label={`Level ${level}: ${label}${count > 1 ? `, ${count} Picks` : ""}`}
+            aria-label={`Level ${position}: ${label}${count > 1 ? `, ${count} Picks` : ""}`}
             onClick={() => onToggle(id)}
             sx={{
               fontSize: "0.72rem",
@@ -52,7 +52,7 @@ export function LevelToggles({ label, levels, onToggle, readOnly, saved, value }
               outlineOffset: 1,
             }}
           >
-            {count > 1 ? `${level}×${count}` : level}
+            {count > 1 ? `${position}×${count}` : position}
           </ButtonBase>
         );
       })}

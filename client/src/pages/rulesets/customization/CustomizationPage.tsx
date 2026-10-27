@@ -94,7 +94,8 @@ function CustomizationView({
   // What this page deletes, the entity or what it holds, comes back with the entity when it's inherited
   const { restorable, error: changesError } = useRestorableDelete(ruleset, deletedHolder(data));
 
-  // Save responses lack relations (aptitudes, level feats): refetch the entity
+  // A save answers the entity's row, its fields and its links, not all its page reads (its customizations, an item's
+  // template's name, a level's class's name): refetch the entity
   const refetchSaved = (saved: { id: string }) =>
     queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.entity(rulesetId, type, saved.id) });
 

@@ -266,13 +266,13 @@ export default class EntityWriter {
   /**
    * A new entity an entity owns, as its owner's rules plan it (`plan`: the plan and the owned entity's type): its owner
    * copied when it's inherited (the new row would otherwise be the source ruleset's), its row, its links and what its
-   * form writes beside it. Answers its row.
+   * form writes beside it. What its plan answers once written (`describe`: the row, with its links as stored).
    */
   async createOwned<P extends OwnedPlan<EntityCreatePlan & { owner: PlannedEntity }>>(
     session: Session,
     rulesetId: string,
     plan: (scope: RulesetScope) => OwnedPlanned<P>,
-  ): Promise<Row> {
+  ): Promise<ReturnType<P["describe"]>> {
     return await EntityWriter.inScope(rulesetId, async (tx, scope) => {
       const { ruleset, rulesetData } = scope;
       (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
@@ -283,7 +283,7 @@ export default class EntityWriter {
       await EntityWriter.setParts(tx, scope, { entityId: row.id, entityType: type }, planned, false);
 
       await EntityWriter.recordActivity(tx, session, "create", type, row.id, planned.activity);
-      return row;
+      return planned.describe(row, await EntityLinks.findOwn(tx, row.id)) as ReturnType<P["describe"]>;
     });
   }
 
@@ -385,14 +385,15 @@ export default class EntityWriter {
   /**
    * An owned entity's edit, as its owner's rules plan it (`plan`) off its form: its owner copied when it's inherited,
    * the row the entity resolves to updated (`updateRow`, by the client's token, `updatedAt`), its links and what its
-   * form writes beside it, its activity recording what it changes (`changedFields`). Answers its row.
+   * form writes beside it, its activity recording what it changes (`changedFields`). What its plan answers once written
+   * (`describe`).
    */
   async updateOwned<P extends OwnedPlan<EntityEditPlan<{ id: string }>>>(
     session: Session,
     rulesetId: string,
     updatedAt: string | undefined,
     plan: (scope: RulesetScope) => OwnedPlanned<P>,
-  ): Promise<Row> {
+  ): Promise<ReturnType<P["describe"]>> {
     return await EntityWriter.inScope(rulesetId, async (tx, scope) => {
       const { ruleset, rulesetData } = scope;
       (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
@@ -406,7 +407,7 @@ export default class EntityWriter {
         ...planned.activity,
         changedFields: planned.changes,
       });
-      return row;
+      return planned.describe(row, await EntityLinks.findOwn(tx, target.id)) as ReturnType<P["describe"]>;
     });
   }
 }

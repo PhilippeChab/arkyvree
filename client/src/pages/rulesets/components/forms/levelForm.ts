@@ -1,33 +1,33 @@
 /**
- * An owned kind's level (3.5's class level), by its rules' fields: what its read gives of it (`readLevel`: its row,
- * its fields' values its tracks read, the entities it grants through its `grants` list, its amounts through its
- * `amounts` list, each at its list's role), and its form, its create's and its edit's body, which writes them among its
- * links, by those roles, its number its `position`.
+ * An owned kind's level (3.5's class level), by its rules' fields: what its read gives of it (`readLevel`: its row, its
+ * number, its fields' values its tracks read, its links of its `grants` and its `amounts` lists, each at its list's
+ * role), and its form (`toLevelForm`), its create's and its edit's body, which writes them among its links, by those
+ * roles, its number its `position`.
  */
 
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
-import type { EntityFieldValues } from "./entityFields.ts";
+import { type EntityFieldValues, toWholeValues } from "./entityFields.ts";
 
-/** A level's amount of an entity (3.5's base of a save): the entity, and its value. */
-export interface Amount {
-  amount: number;
-  entityId: string;
-}
-
-/** A level's amount as its form holds it and its save sends it: the entity (`toId`), and its value. */
+/**
+ * A level's amount of an entity (3.5's base of a save), as its read gives it among its links and its form holds it
+ * and its save sends it: the entity (`toId`), and its value.
+ */
 export interface AmountRow {
   amount: number;
   toId: string;
 }
 
-/** A level's grant (3.5's feat): the entity, its name and description, the one it's through, whether it's free. */
-export interface Grant {
-  description: string | null;
-  entityId: string;
+/**
+ * A level's grant (3.5's feat) as its read gives it among its links: the entity (`toId`), its name (`toName`) and its
+ * description (`toDescription`), the one it's through (`viaId`) and its name (`viaName`), and whether it's free.
+ */
+export interface GrantLink {
   free: boolean;
-  name: string;
+  toDescription: string | null;
+  toId: string;
+  toName: string;
   viaId: string;
   viaName: string | null;
 }
@@ -58,23 +58,23 @@ export interface LevelLists {
 }
 
 /**
- * A level as its route reads it: its row, its number, its amounts and its grants, by its lists, and its fields'
- * values its Progression tab's tracks read (`values`, by their tracks' keys).
+ * A level as its route reads it: its row, its number (`position`), its amounts and its grants, its links of its
+ * lists, and its fields' values its Progression tab's tracks read (`values`, by their tracks' keys).
  */
 export interface LevelRead {
-  amounts: Amount[];
-  grants: Grant[];
+  amounts: AmountRow[];
+  grants: GrantLink[];
   id: string;
-  level: number;
+  position: number;
   row: Record<string, unknown>;
   updatedAt: string;
   values: Record<string, unknown>;
 }
 
-/** The records of a list a row holds at a key, none where it holds none. */
-function recordsAt(row: Record<string, unknown>, key: string | undefined): Record<string, unknown>[] {
-  const value = key === undefined ? undefined : row[key];
-  return Array.isArray(value) ? value.filter(isRecord) : [];
+/** A row's links of a list (`list`: its role's, to its kind, `references`), none where it holds none. */
+function linksAt(row: Record<string, unknown>, list: { references: string; role: string } | undefined) {
+  if (!list || !Array.isArray(row.links)) return [];
+  return row.links.filter(isRecord).filter((link) => link.role === list.role && link.toType === list.references);
 }
 
 /** A record's text at a key, none where it holds none. */
@@ -106,22 +106,23 @@ export function levelListsOf(fields: readonly EntityField[] | undefined): LevelL
  */
 export function nextLevel(levels: readonly LevelRead[] | undefined, lists: LevelLists): LevelFormData {
   if (!levels?.length) return emptyLevel(lists);
-  const highest = levels.reduce((top, level) => (level.level > top.level ? level : top));
+  const highest = levels.reduce((top, level) => (level.position > top.position ? level : top));
   const { amounts, grants } = lists;
   return {
-    position: highest.level + 1,
+    position: highest.position + 1,
     links: {
-      ...(amounts && { [amounts.role]: highest.amounts.map(toAmountRow) }),
+      ...(amounts && { [amounts.role]: highest.amounts.map((amount) => ({ ...amount })) }),
       ...(grants && { [grants.role]: [] }),
     },
   };
 }
 
 /**
- * A level as its route reads it (`row`: its number its `position` on its class's track), its amounts and its grants at
- * its lists' roles (`lists`): a grant its entity's row, the one it's through and its name beside it (`viaId`,
- * `viaName`), and whether it's free; an amount its entity (`toId`) and its `amount`; and the values of its fields its
- * tracks read (`tracks`: each a stored field, by its track's key).
+ * A level as its route reads it (`row`: its number its `position` on its class's track), its amounts and its grants
+ * among its links, at its lists' roles (`lists`): an amount its entity (`toId`) and its `amount`; a grant its entity
+ * and its name and description (`toName`, `toDescription`), the one it's through and its name (`viaId`, `viaName`),
+ * and whether it's free; and the values of its fields its tracks read (`tracks`: each a stored field, by its track's
+ * key).
  */
 export function readLevel(
   row: { id: string; position: number; updatedAt: string } & Record<string, unknown>,
@@ -129,20 +130,20 @@ export function readLevel(
   tracks: readonly { field: string; key: string }[] = [],
 ): LevelRead {
   return {
-    amounts: recordsAt(row, amounts?.role).map((record): Amount => ({
-      amount: typeof record.amount === "number" ? record.amount : 0,
-      entityId: textAt(record, "toId") ?? "",
+    amounts: linksAt(row, amounts).map((link): AmountRow => ({
+      amount: typeof link.amount === "number" ? link.amount : 0,
+      toId: textAt(link, "toId") ?? "",
     })),
-    grants: recordsAt(row, grants?.role).map((record): Grant => ({
-      description: textAt(record, "description"),
-      entityId: textAt(record, "id") ?? "",
-      free: record.free === true,
-      name: textAt(record, "name") ?? "",
-      viaId: textAt(record, "viaId") ?? "",
-      viaName: textAt(record, "viaName"),
+    grants: linksAt(row, grants).map((link): GrantLink => ({
+      free: link.free === true,
+      toDescription: textAt(link, "toDescription"),
+      toId: textAt(link, "toId") ?? "",
+      toName: textAt(link, "toName") ?? "",
+      viaId: textAt(link, "viaId") ?? "",
+      viaName: textAt(link, "viaName"),
     })),
     id: row.id,
-    level: row.position,
+    position: row.position,
     row,
     updatedAt: row.updatedAt,
     values: Object.fromEntries(
@@ -151,9 +152,12 @@ export function readLevel(
   };
 }
 
-/** An amount as a level's form and body hold it: its entity (`toId`) and its value. */
-export function toAmountRow(amount: Amount): AmountRow {
-  return { toId: amount.entityId, amount: amount.amount };
+/**
+ * A level's form off its read (`level`): its number (its `position`), and its lists of links as its rules describe them
+ * (`fields`), its amounts and its grants, read off its links (`toWholeValues`).
+ */
+export function toLevelForm(fields: readonly EntityField[], level: { position: number }): LevelFormData {
+  return { position: level.position, ...toWholeValues(fields, level) } as LevelFormData;
 }
 
 /**
@@ -166,6 +170,6 @@ export function withAllAmounts(entities: readonly { id: string }[] | undefined, 
   const own = Array.isArray(rows) ? rows.filter(isRecord) : [];
   return entities.map((entity) => {
     const amount = own.find((row) => row.toId === entity.id)?.amount;
-    return toAmountRow({ amount: typeof amount === "number" ? amount : 0, entityId: entity.id });
+    return { toId: entity.id, amount: typeof amount === "number" ? amount : 0 };
   });
 }

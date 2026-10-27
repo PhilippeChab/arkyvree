@@ -1,6 +1,6 @@
-/** Identifies a grant: its entity (`entityId`), which can be granted through several (`viaId`), and the one it's through. */
-export function grantKey(entityId: string, viaId: string) {
-  return `${entityId}-${viaId}`;
+/** Identifies a grant: its entity (`toId`), which can be granted through several (`viaId`), and the one it's through. */
+export function grantKey(toId: string, viaId: string) {
+  return `${toId}-${viaId}`;
 }
 
 /** A grant's label, which orders a grants input's: its entity's name and the one it's through's (a feat's pool). */

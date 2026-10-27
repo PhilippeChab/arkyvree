@@ -18,7 +18,10 @@ export interface EditorProps<T> {
   locked: boolean;
   /** The form's record identity (useFormSync's `key`). */
   recordKey: string;
-  /** Refetches the saved entity, which its save's response holds without its relations (aptitudes, a level's feats) */
+  /**
+   * Refetches the saved entity, whose save answers its row, its fields and its links, not all its page reads (its
+   * customizations, an item's template's name, a level's class's name)
+   */
   refetchSaved: (saved: { id: string }) => Promise<unknown>;
   rulesetId: string;
 }

@@ -31,8 +31,8 @@ export interface EntitySaveOptions<TForm extends FieldValues, TSaved> {
   sendsAllFields?: (data: TForm, baseline: TForm | undefined) => boolean;
   /**
    * The saved row into the cache, before the page follows a copy: seeds its query with it, or refetches it where the
-   * save's response lacks what the page shows (a feat's aptitudes, a level's feats). The save stays pending until what
-   * it returns resolves.
+   * save's response lacks what the page reads (a customization page's entity's customizations). The save stays pending
+   * until what it returns resolves.
    */
   storeSaved: (saved: TSaved, sourceId: string) => Promise<unknown> | void;
   sync: FormSync<TForm>;

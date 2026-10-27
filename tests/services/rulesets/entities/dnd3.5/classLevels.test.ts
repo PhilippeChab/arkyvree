@@ -115,11 +115,84 @@ describe("EntitiesService: a class's levels", () => {
         {
           position: 1,
           fields: levelFields(1, 4),
-          grants: [{ id: feat.id, viaId: aptitude.id, viaName: aptitude.name, free: false }],
+          links: [
+            {
+              role: "grants",
+              toId: feat.id,
+              toName: "Cleave",
+              toDescription: null,
+              viaId: aptitude.id,
+              viaName: aptitude.name,
+              free: false,
+            },
+            { role: "baseBonus", toId: fortitude.id, toName: "Fortitude", amount: 2 },
+          ],
+        },
+        { position: 2, fields: { [CLASS_LEVEL_BAB]: 2 }, links: [] },
+      ]);
+    });
+
+    test("answers a level's links alike in its create, its edit and its read", async () => {
+      const { session, ruleset, klass, aptitude } = await setup();
+      const ids = new Map<string, string>();
+      for (const name of ["Dodge", "Cleave"]) {
+        const feat = await EntitiesService.createEntity(session, ruleset.id, "feats", {
+          name,
+          description: `${name}'s benefit`,
+          links: { listedIn: [{ toId: aptitude.id }] },
+        });
+        ids.set(name, feat.id);
+      }
+      const idOf = (name: string) => ids.get(name)!;
+      const fortitude = await createSave(ruleset.id, "Fortitude");
+      // A pool that doesn't list the feat granted through it: the grant names none
+      const [other] = await Entities.create<Aptitude>(db, "aptitudes", { name: "Other Pool", rulesetId: ruleset.id });
+      RulesetViews.invalidate(ruleset.id);
+
+      const created = await createLevel(session, ruleset.id, klass.id, 1, {
+        links: {
+          grants: [
+            { toId: idOf("Dodge"), viaId: aptitude.id },
+            { toId: idOf("Cleave"), viaId: other.id, free: false },
+          ],
           baseBonus: [{ toId: fortitude.id, amount: 2 }],
         },
-        { position: 2, fields: { [CLASS_LEVEL_BAB]: 2 }, grants: [], baseBonus: [] },
-      ]);
+      });
+      // The feats it grants by their names, each its pool's name where the pool lists it, and its saves' base bonuses
+      const links = [
+        {
+          role: "grants",
+          toId: idOf("Cleave"),
+          toName: "Cleave",
+          toDescription: "Cleave's benefit",
+          viaId: other.id,
+          viaName: null,
+          free: false,
+        },
+        {
+          role: "grants",
+          toId: idOf("Dodge"),
+          toName: "Dodge",
+          toDescription: "Dodge's benefit",
+          viaId: aptitude.id,
+          viaName: aptitude.name,
+          free: true,
+        },
+        { role: "baseBonus", toId: fortitude.id, toName: "Fortitude", amount: 2 },
+      ];
+      expect(created.links).toMatchObject(links);
+      expect((await EntitiesService.getOwnedEntityWithOwner(ruleset.id, "classes", created.id)).links).toMatchObject(
+        links,
+      );
+
+      const edited = await EntitiesService.updateOwnedEntity(session, ruleset.id, "classes", klass.id, created.id, {
+        links: { baseBonus: [{ toId: fortitude.id, amount: 3 }] },
+      });
+      const editedLinks = links.map((link) => (link.role === "baseBonus" ? { ...link, amount: 3 } : link));
+      expect(edited.links).toMatchObject(editedLinks);
+      expect((await EntitiesService.getOwnedEntities(ruleset.id, "classes", klass.id))[0].links).toMatchObject(
+        editedLinks,
+      );
     });
 
     test("writes each level's base attack bonus as the sheet does: its attacks a round", async () => {
