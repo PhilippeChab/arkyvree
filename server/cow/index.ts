@@ -16,7 +16,7 @@ export { type RulesetScope, withRulesetScope, withRulesetScopes } from "./views/
 export { default as CustomizationCopies } from "./writes/CustomizationCopies.ts";
 export { default as CustomizationEdit } from "./writes/CustomizationEdit.ts";
 export { default as EntityCopy } from "./writes/EntityCopy.ts";
-export { type EditTarget, default as EntityEdit } from "./writes/EntityEdit.ts";
+export { type EditTarget, default as EntityEdit, type NotFoundMessages } from "./writes/EntityEdit.ts";
 export { default as EntityNames } from "./writes/EntityNames.ts";
 export { default as EntityRevert } from "./writes/EntityRevert.ts";
 export { default as EntityUses } from "./writes/EntityUses.ts";

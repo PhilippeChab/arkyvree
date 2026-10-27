@@ -3,7 +3,7 @@ import { type CowData, Engine, type RulesetSources } from "@/engine/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Modifiers, Requirements } from "@/server/repositories/index.ts";
 
-import EntityEdit from "./EntityEdit.ts";
+import EntityEdit, { type NotFoundMessages } from "./EntityEdit.ts";
 
 /**
  * The row a customization of an entity changes (`cowOwner`), and what its copy copied when this call copied it: a
@@ -22,8 +22,14 @@ const CUSTOMIZATION_REPOS = {
   modifier: Modifiers,
 } as const;
 
-/** What a change refuses a customization's source with: an entity the view doesn't show, or no customizable one. */
-const SOURCE_NOT_FOUND = "Customization source not found in this ruleset";
+/**
+ * What a change refuses a customization's source with: an entity the view doesn't show, or no customizable one
+ * (`missing`), and one deleted since the view was read, or a customization (`gone`).
+ */
+const SOURCE_NOT_FOUND = {
+  gone: "Customization source no longer exists; refresh the entity",
+  missing: "Customization source not found in this ruleset",
+} satisfies NotFoundMessages;
 
 /**
  * The row a customization (a modifier, a requirement) of a ruleset's entity changes, made in its scope
@@ -44,7 +50,7 @@ export default class CustomizationEdit {
    * one, an owned entity's on its owner's copy).
    */
   private async cowEntityOwner(tx: Db, entityType: string, entityId: string): Promise<Owner> {
-    if (!Engine.storage().customizableKinds().includes(entityType)) throw new NotFoundError(SOURCE_NOT_FOUND);
+    if (!Engine.storage().customizableKinds().includes(entityType)) throw new NotFoundError(SOURCE_NOT_FOUND.missing);
     const target = await new EntityEdit(this.ruleset, this.cow).cowById(tx, entityType, entityId, SOURCE_NOT_FOUND);
     return target.copied ? { id: target.id, copiedIds: target.copiedIds } : { id: target.id };
   }
@@ -53,7 +59,7 @@ export default class CustomizationEdit {
   private async cowModifierOwner(tx: Db, modifierId: string): Promise<Owner> {
     // The stored row, its source as stored: an ancestor's modifier names the ancestor's entity
     const modifier = await Modifiers.findOne(tx, { id: modifierId });
-    if (!modifier || modifier.sourceType === "modifiers") throw new NotFoundError(SOURCE_NOT_FOUND);
+    if (!modifier || modifier.sourceType === "modifiers") throw new NotFoundError(SOURCE_NOT_FOUND.missing);
 
     const owner = await this.cowEntityOwner(tx, modifier.sourceType, modifier.sourceId);
     const id = await this.resolveExistingCustomization(tx, modifier.sourceId, owner, "modifier", modifier.id);
@@ -87,7 +93,7 @@ export default class CustomizationEdit {
       resolvedCustomizationId === customizationId &&
       !(await CUSTOMIZATION_REPOS[kind].exists(tx, { id: customizationId }))
     )
-      throw new NotFoundError("Customization source no longer exists; refresh the entity");
+      throw new NotFoundError(SOURCE_NOT_FOUND.gone);
 
     return resolvedCustomizationId;
   }
