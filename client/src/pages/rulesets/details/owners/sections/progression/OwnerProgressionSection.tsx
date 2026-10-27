@@ -14,7 +14,7 @@ import {
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { LevelsIcon } from "@/client/src/components/icons/index.ts";
-import { useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { useCustomizationPages, useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
@@ -41,7 +41,7 @@ import { byLevel } from "@/client/src/pages/rulesets/details/owners/sections/byL
 import { useOwnerCopy } from "@/client/src/pages/rulesets/details/owners/sections/useOwnerCopy.ts";
 import { useEntityFields, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { buildCustomizationPath } from "@/shared/customization/entities.ts";
+import { buildEntityPagePath } from "@/shared/customization/entities.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
 import { CHANGED_CELL_SX } from "./changedCell.ts";
@@ -89,7 +89,8 @@ function readPool(pool: unknown): PoolRow[] {
  * their grants and amounts at their lists' roles.
  */
 export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerType, ruleset }: OwnerSectionProps) {
-  const openEntity = useOpenEntity(rulesetId);
+  const openEntity = useOpenEntity();
+  const pages = useCustomizationPages();
   const queryClient = useQueryClient();
   const { rules } = useRules(ruleset.baseRules);
   const levelPage = levelPageOf(rules);
@@ -373,7 +374,7 @@ export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerTy
         data={levelRows ? levels : undefined}
         isLoading={isLoading}
         columns={columns}
-        onRowClick={(level) => openEntity(buildCustomizationPath(levelType, level.id))}
+        onRowClick={(level) => openEntity(buildEntityPagePath(rulesetId, levelType, level.id, pages))}
         onRowPrefetch={(level) =>
           void queryClient.prefetchQuery(customizationEntityQuery(rulesetId, levelPage, level.id))
         }

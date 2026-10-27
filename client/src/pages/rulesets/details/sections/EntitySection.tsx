@@ -61,7 +61,7 @@ import {
   useTierFilter,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { buildCustomizationPath } from "@/shared/customization/entities.ts";
+import { buildEntityPagePath } from "@/shared/customization/entities.ts";
 
 import { EntityGroupsTable } from "./EntityGroupsTable.tsx";
 import { EntityVariantsDialog } from "./EntityVariantsDialog.tsx";
@@ -105,21 +105,16 @@ function duplicateForm(
   return withEntityFields(form, fields, entity);
 }
 
-/** Where an entity's row opens: its customization page, or its own page (a class's, on its progression). */
-function entityPath(kind: EntityKindDescription, id: string, pages: ReadonlyMap<string, CustomizationPage>) {
-  const customization = customizationPageOf(kind, pages);
-  return customization ? buildCustomizationPath(customization.type, id) : `${kind.type}/${id}`;
-}
-
 /**
  * Any entity kind's tab (`kind`), as its rules describe it: its list's columns (`lists`), named in its words, narrowed
  * by what a race or a class is for and sorted where its kind is partitioned, by a pool and a tier where its kind is,
  * its variants grouped under their family where its kind groups them (a toggle undoes it), its rows' copies where its
  * kind copies (a duplicate, variants), and a new one's form, unless its kind is read-only (an ability's: no search, no
- * create). Each row opens what its kind opens (`opens`).
+ * create). Each row opens its entity's page (`buildEntityPagePath`): its customization page where its kind has one
+ * (`useCustomizationPages`), else its own (a class's, its progression).
  */
 export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: EntitySectionProps) {
-  const openEntity = useOpenEntity(ruleset.id);
+  const openEntity = useOpenEntity();
   const queryClient = useQueryClient();
   const { rules } = useRules(ruleset.baseRules);
   const pages = useCustomizationPages();
@@ -176,7 +171,7 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
           json: toBody(data),
         }),
       ),
-    onCreateSuccess: (created) => openEntity(entityPath(kind, created.id, pages)),
+    onCreateSuccess: (created) => openEntity(buildEntityPagePath(ruleset.id, kind.type, created.id, pages)),
   });
   const variants = useEntityVariants(ruleset.id, kind.type);
   const { copies } = kind;
@@ -190,7 +185,7 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
   const entities = pageItems(data);
 
   const handleRowClick = (entity: { id: string }) => {
-    openEntity(entityPath(kind, entity.id, pages));
+    openEntity(buildEntityPagePath(ruleset.id, kind.type, entity.id, pages));
   };
 
   const handleRowPrefetch = (entity: { id: string }) => {

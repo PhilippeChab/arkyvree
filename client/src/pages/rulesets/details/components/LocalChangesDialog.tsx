@@ -34,7 +34,7 @@ import { rulesetChangesQuery } from "@/client/src/pages/rulesets/details/ruleset
 import type { EntityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { DURATION } from "@/client/src/theme/animations.ts";
-import { buildCustomizationPath } from "@/shared/customization/entities.ts";
+import { buildEntityPagePath } from "@/shared/customization/entities.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 interface LocalChangesDialogProps {
@@ -59,10 +59,7 @@ const restoreApi = rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].
 /** A change's entity's page (`pages`, the kinds whose customizations have a page of their own): none once it's deleted. */
 function getEntityUrl(rulesetId: string, change: Change, pages: ReadonlyMap<string, unknown>): string | undefined {
   if (change.status === "deleted") return undefined;
-  const { entityType, entityId } = change;
-  return pages.has(entityType)
-    ? `/rulesets/${rulesetId}/${buildCustomizationPath(entityType, entityId)}`
-    : `/rulesets/${rulesetId}/${entityType}/${entityId}`;
+  return buildEntityPagePath(rulesetId, change.entityType, change.entityId, pages);
 }
 
 export function LocalChangesDialog({ open, onClose, rulesetId, baseRules, canEdit }: LocalChangesDialogProps) {

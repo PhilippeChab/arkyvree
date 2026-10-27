@@ -11,6 +11,7 @@ import type {
   StoredFieldValue,
   StoredLink,
 } from "@/engine/core/module/index.ts";
+import { Engine } from "@/engine/index.ts";
 import type { Merge } from "@/shared/customization/fields.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
@@ -240,6 +241,24 @@ describe("A module's storage", () => {
     expect(storage.customizableKinds()).toBe(storage.customizableKinds());
     for (const type of types) expect(storage.isIdentityKind(type)).toBe(storage.kind(type).namesakes === "identity");
     expect(types.some((type) => storage.isIdentityKind(type))).toBe(true);
+  });
+
+  test("answers the kinds whose customizations have a page of their own, as the rules describe them", () => {
+    const storage = StorageEngine.shared();
+    const pages = storage.customizationPages();
+    expect(pages).toBe(storage.customizationPages());
+    // A customizable kind's, but one that owns another's, whose customizations are its page's tabs; an owned kind's names
+    // its owner
+    for (const type of storage.registries().entityTypes.map((def) => def.type)) {
+      const customized = storage.customizableKinds().includes(type) && !storage.ownerKinds().includes(type);
+      expect({ type, page: pages.get(type) }).toEqual({
+        type,
+        page: customized ? { type, ...(storage.ownerOf(type) && { owner: storage.ownerOf(type) }) } : undefined,
+      });
+    }
+    // Every base rules' rules describe the same pages, a kind being one module's
+    const described = Object.values(Engine.rules().describeAll()).flatMap((rules) => rules.customizationPages);
+    expect(described).toEqual([...pages.values()]);
   });
 
   test("answers each owned kind's owner, and the kinds no other owns, in their declarations' order", () => {

@@ -13,8 +13,10 @@ import type {
   FieldValue,
   FieldWrite,
   LinkRoleDef,
+  RulesDescription,
   RulesetModule,
   StepDef,
+  StorageDeclaration,
   StorageRegistries,
   StoredEntity,
   StoredKind,
@@ -51,10 +53,11 @@ function mergeRecords<T>(modules: [BaseRules, RulesetModule][], pick: (module: R
  * kind (`kind`, what a new entity defaults: `defaultsOf`), an entity's record off its stored rows (`recordOf`: every
  * field it holds, `fieldsOf`, and its single links), an entity's links as a view holds them (`viewLinksOf`), a number as
  * its field keeps it (`storedNumber`), a player character's kind (`playerKinds`, `isPlayerKind`), the kinds a user
- * customizes (`customizableKinds`), the links an entity's page edits (`editedLinks`), the kinds a name is the identity
- * of (`isIdentityKind`), an owned kind's owner (`ownerOf`) and the kinds no other owns (`standaloneKinds`), each field
- * and link role (`field`, `role`), and the registries' rows (`registries`). Names are global: two modules declaring one
- * kind, field or role is refused, as the registries' keys refuse it.
+ * customizes (`customizableKinds`) and those whose customizations have a page of their own (`customizationPages`), the
+ * links an entity's page edits (`editedLinks`), the kinds a name is the identity of (`isIdentityKind`), an owned kind's
+ * owner (`ownerOf`) and the kinds no other owns (`standaloneKinds`), each field and link role (`field`, `role`), and
+ * the registries' rows (`registries`). Names are global: two modules declaring one kind, field or role is refused, as
+ * the registries' keys refuse it.
  */
 export default class StorageEngine {
   constructor(modules: [BaseRules, RulesetModule][]) {
@@ -150,6 +153,21 @@ export default class StorageEngine {
     return [...byValue.values()];
   }
 
+  /**
+   * The kinds a storage declares customizable (`storage`: a module's, or every module's merged) whose customizations
+   * have a page of their own: all but a kind that owns another, whose customizations are its page's tabs (a class's).
+   * An owned kind's names the kind that owns it (`owner`: a class level's class).
+   */
+  static customizationPagesOf({
+    kinds,
+    registries,
+  }: Pick<StorageDeclaration, "kinds" | "registries">): RulesDescription["customizationPages"] {
+    const owners = new Set(registries.entityTypes.map((def) => def.ownerType));
+    return registries.entityTypes
+      .filter(({ type }) => kinds[type].customizable && !owners.has(type))
+      .map(({ ownerType, type }) => ({ type, ...(ownerType && { owner: ownerType }) }));
+  }
+
   /** Every registered module's storage, merged: one instance, built on its first read. */
   static shared(): StorageEngine {
     StorageEngine.instance ??= new StorageEngine(Modules.all());
@@ -189,6 +207,9 @@ export default class StorageEngine {
   /** The roles whose links an entity's page edits, and the kinds they're from and to, once read (`editedLinks`). */
   private edited?: ReadonlyMap<string, { from: string; to: string }>;
 
+  /** The kinds whose customizations have a page of their own, by type, once read (`customizationPages`). */
+  private pages?: ReadonlyMap<string, RulesDescription["customizationPages"][number]>;
+
   /** What every module declares of a view's kinds and links, once read (`viewSchema`). */
   private schema?: ViewSchema;
 
@@ -208,6 +229,21 @@ export default class StorageEngine {
    */
   customizableKinds(): readonly string[] {
     return this.customizable;
+  }
+
+  /**
+   * The kinds whose customizations have a page of their own (`customizationPagesOf`, of every module's storage: 3.5's
+   * feats, items, spells, races and class levels), by type: what an activity's link opens, as the client's rules
+   * describe them (`RulesDescription.customizationPages`).
+   */
+  customizationPages(): ReadonlyMap<string, RulesDescription["customizationPages"][number]> {
+    this.pages ??= new Map(
+      StorageEngine.customizationPagesOf({ kinds: this.kinds, registries: this.merged }).map((page) => [
+        page.type,
+        page,
+      ]),
+    );
+    return this.pages;
   }
 
   /** The fields every module declares, as a ruleset's view keeps their values (`DeclaredFields`): built once. */

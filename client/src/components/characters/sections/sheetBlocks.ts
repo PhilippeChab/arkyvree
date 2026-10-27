@@ -1,5 +1,5 @@
 import type { CharacterDetail } from "@/client/src/lib/queries.ts";
-import { buildCustomizationPath } from "@/shared/customization/entities.ts";
+import { buildEntityPagePath } from "@/shared/customization/entities.ts";
 
 /** A sheet's block of a kind. */
 export type BlockOf<K extends SheetBlock["kind"]> = Extract<SheetBlock, { kind: K }>;
@@ -45,7 +45,7 @@ export function entityPagePath(
   pages: ReadonlyMap<string, unknown>,
 ) {
   if (!rulesetId || !id || !pages.has(entityType)) return undefined;
-  return `/rulesets/${rulesetId}/${buildCustomizationPath(entityType, id)}`;
+  return buildEntityPagePath(rulesetId, entityType, id, pages);
 }
 
 /** The block a sheet opens with: its first `fields` block (3.5's identity), over its others, if it has one. */

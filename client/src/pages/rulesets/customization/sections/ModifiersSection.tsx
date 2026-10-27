@@ -20,7 +20,7 @@ import {
   ModifierValueCell,
 } from "@/client/src/components/customization/index.ts";
 import { ModifiersIcon } from "@/client/src/components/icons/index.ts";
-import { useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { useCustomizationPages, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { formatDate } from "@/client/src/lib/formatDate.ts";
 import { type RulesetDetail } from "@/client/src/lib/queries.ts";
 import { EntityDeleteDialog, RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
@@ -29,7 +29,7 @@ import { customizationEntityQuery, MODIFIER_PAGE } from "@/client/src/pages/rule
 import { followCopiesOf } from "@/client/src/pages/rulesets/followCopies.ts";
 import { useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { buildCustomizationPath } from "@/shared/customization/entities.ts";
+import { buildEntityPagePath } from "@/shared/customization/entities.ts";
 
 interface ModifiersSectionProps {
   entityId: string;
@@ -67,7 +67,8 @@ export function ModifiersSection({
   followCopy,
   restorable,
 }: ModifiersSectionProps) {
-  const openEntity = useOpenEntity(ruleset.id);
+  const openEntity = useOpenEntity();
+  const pages = useCustomizationPages();
 
   const { tag, followCopies } = followCopiesOf(entityId, followCopy);
   const entityParam = { id: ruleset.id, entityType, entityId };
@@ -134,7 +135,7 @@ export function ModifiersSection({
   const queryClient = useQueryClient();
 
   const handleRowClick = (modifier: Modifier) => {
-    openEntity(`${buildCustomizationPath("modifiers", modifier.id)}/requirements`);
+    openEntity(buildEntityPagePath(ruleset.id, "modifiers", modifier.id, pages, "requirements"));
   };
 
   const handleRowPrefetch = (modifier: Modifier) => {

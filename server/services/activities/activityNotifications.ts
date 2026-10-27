@@ -2,39 +2,28 @@ import type { InferInsertModel } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import type { activitiesInAccount } from "@/drizzle/schema.ts";
-import { Engine } from "@/engine/index.ts";
 import {
   Activities,
   CharacterContributors,
   Characters,
   Contributors,
-  Entities,
   Invites,
-  Modifiers,
   Notifications,
   Players,
-  Requirements,
-  RULESET_ENTITY_TYPES,
   Rulesets,
   Users,
   Visibility,
 } from "@/server/repositories/index.ts";
 import { noteNotified } from "@/server/websockets/index.ts";
-import { TARGET_TYPES } from "@/shared/activityTargets.ts";
-import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import type { Ruleset } from "@/shared/relations.ts";
+
+import { findContentRuleset, isContentType } from "./contentRuleset.ts";
 
 /** The ruleset a change to its content is in: its id, and its row while it's unarchived. */
 interface ChangedRuleset {
   id: string;
   row: Ruleset | undefined;
-}
-
-/** A row of a ruleset's content, by its type: an entity, or what belongs to one (a class level, a customization). */
-interface ContentRow {
-  id: string;
-  type: string;
 }
 
 type ActivityValues = InferInsertModel<typeof activitiesInAccount>;
@@ -51,27 +40,6 @@ type Recipient =
   | "rulesetContributor"
   | "rulesetOwner"
   | "rulesetStakeholders";
-
-/**
- * The customizations of a ruleset's content, by their type, and the row each belongs to: a customization's entity (a
- * requirement's may be a modifier).
- */
-const CUSTOMIZATION_OWNERS = new Map<string, (db: Db, id: string) => Promise<ContentRow | undefined>>([
-  [
-    TARGET_TYPES.modifiers,
-    async (db, id) => {
-      const modifier = await Modifiers.findOne(db, { id });
-      return modifier && { id: modifier.sourceId, type: modifier.sourceType };
-    },
-  ],
-  [
-    TARGET_TYPES.requirements,
-    async (db, id) => {
-      const requirement = await Requirements.findOne(db, { id });
-      return requirement && { id: requirement.entityId, type: requirement.entityType };
-    },
-  ],
-]);
 
 /**
  * Who hears of an activity on an invite or a contributor, by its type. A revocation reaches a contributor who was
@@ -94,16 +62,6 @@ const RECIPIENTS = new Map<string, Recipient>([
   ["updateContributorRole", "rulesetContributor"],
 ]);
 
-/** Whether a type is of a ruleset's content, whose every change its stakeholders hear of. */
-function isContentType(type: string) {
-  return (
-    isOneOf(type, RULESET_ENTITY_TYPES) ||
-    Engine.storage().ownerOf(type) !== undefined ||
-    Engine.storage().editedLinks().has(type) ||
-    CUSTOMIZATION_OWNERS.has(type)
-  );
-}
-
 /** An id an activity's data holds (`invitedUserId`, `rulesetId`), when it holds one. */
 function readId(value: unknown) {
   return typeof value === "string" ? value : undefined;
@@ -120,28 +78,6 @@ async function findChangedRuleset(
 ): Promise<ChangedRuleset | undefined> {
   const id = readId(data.rulesetId) ?? (await findContentRuleset(db, { id: targetId, type: targetType }));
   return id ? { id, row: await Rulesets.findOne(db, { id }) } : undefined;
-}
-
-/**
- * The row a row of a ruleset's content beside its entities belongs to: an owned entity's owner (a class level's class),
- * an edited link's owner (a class's skills' activity targets the class), a customization's entity.
- */
-async function findContentOwner(db: Db, { id, type }: ContentRow): Promise<ContentRow | undefined> {
-  const ownerType = Engine.storage().ownerOf(type);
-  if (ownerType) {
-    const [owned] = await Entities.findPositions(db, { entityType: type, ids: [id] });
-    return owned && { id: owned.ownerId, type: ownerType };
-  }
-  const edited = Engine.storage().editedLinks().get(type);
-  if (edited) return { id, type: edited.from };
-  return await CUSTOMIZATION_OWNERS.get(type)?.(db, id);
-}
-
-/** The ruleset a row of its content is in: an entity's own, or that of the row it belongs to. */
-async function findContentRuleset(db: Db, { id, type }: ContentRow): Promise<string | undefined> {
-  if (isOneOf(type, RULESET_ENTITY_TYPES)) return (await Entities.findOne(db, { entityType: type, id }))?.rulesetId;
-  const owner = await findContentOwner(db, { id, type });
-  return owner && (await findContentRuleset(db, owner));
 }
 
 /** The Game Masters of the campaign an invite (`inviteId`) is to. */
