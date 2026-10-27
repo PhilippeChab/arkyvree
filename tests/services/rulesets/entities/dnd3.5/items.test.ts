@@ -160,6 +160,30 @@ describe("EntitiesService: items", () => {
     });
   });
 
+  test("reads its new template's weight and cost when an edit moves it to another template", async () => {
+    const { session, ruleset } = await createTestUserAndRuleset();
+    const light = await createTemplate(session, ruleset.id, { [ITEM_WEIGHT]: 4, [ITEM_COST_GP]: 15 });
+    const heavy = await EntitiesService.createEntity(session, ruleset.id, "items", {
+      name: "Greatsword Template",
+      fields: { [ITEM_TYPE]: "Weapon", [ITEM_IS_TEMPLATE]: true, [ITEM_WEIGHT]: 8, [ITEM_COST_GP]: 50 },
+    });
+    const sword = await EntitiesService.createEntity(session, ruleset.id, "items", {
+      name: "Sword",
+      fields: { [ITEM_TYPE]: "Weapon" },
+      links: { madeFrom: light.id },
+    });
+
+    await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
+      name: "Sword",
+      links: { madeFrom: heavy.id },
+    });
+    // Its old template's values weren't kept as its own
+    expect((await EntitiesService.getEntity(ruleset.id, "items", sword.id)).fields).toMatchObject({
+      [ITEM_WEIGHT]: 8,
+      [ITEM_COST_GP]: 50,
+    });
+  });
+
   test("describes where a character carrying it can place it", async () => {
     const { session, ruleset } = await createTestUserAndRuleset();
     const sword = await EntitiesService.createEntity(session, ruleset.id, "items", {
