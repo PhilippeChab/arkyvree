@@ -232,14 +232,16 @@ export default class Dnd35View {
     return this.rulesetData.linksOf(entityId, "listedIn");
   }
 
-  /** The ids of the ruleset's spells on a list, at a level when one is given (on any list when none is). */
-  listSpellIds(where: { aptitudeId?: string; level?: number }): string[] {
-    const listId = where.aptitudeId === undefined ? undefined : this.rulesetData.canonicalize(where.aptitudeId);
+  /**
+   * The ids of the ruleset's spells on a list, as their `listedIn` links name it (`toId`, on any list when none is), at
+   * a level when one is given (`tier`).
+   */
+  listSpellIds(where: { tier?: number; toId?: string }): string[] {
+    const listId = where.toId === undefined ? undefined : this.rulesetData.canonicalize(where.toId);
     return this.spells
       .filter((spell) =>
         this.listLinksOf(spell.id).some(
-          (link) =>
-            (listId === undefined || link.toId === listId) && (where.level == null || link.tier === where.level),
+          (link) => (listId === undefined || link.toId === listId) && (where.tier == null || link.tier === where.tier),
         ),
       )
       .map((spell) => spell.id);

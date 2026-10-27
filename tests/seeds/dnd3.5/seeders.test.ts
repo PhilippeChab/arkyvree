@@ -608,9 +608,9 @@ describe("Seeding", () => {
     expect((await describeCustomizations(ctx.spellMap["Test Bolt"])).fields).toEqual([`${SPELL_SCHOOL} Evocation`]);
 
     await seeder.linkSpell(ctx.spellMap["Test Charm"], [
-      { aptitudeId: ctx.aptMap["Test Arcane Spells"], level: 5 },
-      { aptitudeId: ctx.aptMap["Test Divine Spells"], level: 2 },
-      { aptitudeId: ctx.aptMap["Test Divine Spells"], level: 7 },
+      { toId: ctx.aptMap["Test Arcane Spells"], tier: 5 },
+      { toId: ctx.aptMap["Test Divine Spells"], tier: 2 },
+      { toId: ctx.aptMap["Test Divine Spells"], tier: 7 },
     ]);
     expect(await spellListsOf(ctx, ctx.spellMap["Test Charm"])).toEqual([
       "Test Arcane Spells 1",

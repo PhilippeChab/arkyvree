@@ -792,7 +792,7 @@ describe("unsubscribing from an extension", () => {
         { toId: wizard.id, tier: 3 },
       ]),
     );
-    expect(afterView.listSpellIds({ aptitudeId: dmgAssassin.id })).toContain(spell.id);
+    expect(afterView.listSpellIds({ toId: dmgAssassin.id })).toContain(spell.id);
     expect(await findGrants(db, [classLevel.id], "spells")).toMatchObject([{ toId: spell.id, viaId: dmgAssassin.id }]);
   });
 
@@ -814,7 +814,7 @@ describe("unsubscribing from an extension", () => {
     expect(links.filter((link) => !afterView.aptitudesById.has(link.toId))).toEqual([]);
     const assassin = [...afterView.aptitudesById.values()].find((list) => list.name === "Assassin Spells")!;
     expect(assassin.rulesetId).not.toBe(warrior.id);
-    expect(afterView.listSpellIds({ aptitudeId: assassin.id })).toContain(copyId);
+    expect(afterView.listSpellIds({ toId: assassin.id })).toContain(copyId);
   });
 
   test("refuses to leave a link to a list no other book has, naming it, and changes nothing", async () => {

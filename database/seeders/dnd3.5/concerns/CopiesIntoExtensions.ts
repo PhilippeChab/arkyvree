@@ -37,7 +37,7 @@ export function CopiesIntoExtensions<B extends Constructor<BaseSeeder>>(Base: B)
       const kept = new Map<string, SpellLink[]>();
       for (const { fromId, tier, toId } of links) {
         if (!/^(\w[\w ]*) Spells$/.test(names.get(toId) ?? "")) continue;
-        kept.set(fromId, [...(kept.get(fromId) ?? []), { aptitudeId: toId, level: tier }]);
+        kept.set(fromId, [...(kept.get(fromId) ?? []), { toId, tier }]);
       }
       return kept;
     }
@@ -108,7 +108,7 @@ export function CopiesIntoExtensions<B extends Constructor<BaseSeeder>>(Base: B)
           "feats",
           entry.aptitudes
             .filter((aptitude) => this.ctx.aptMap[aptitude])
-            .map((aptitude) => ({ entityId: copyId, aptitudeId: this.ctx.aptMap[aptitude] })),
+            .map((aptitude) => ({ fromId: copyId, toId: this.ctx.aptMap[aptitude] })),
         );
       }
     }
@@ -123,7 +123,7 @@ export function CopiesIntoExtensions<B extends Constructor<BaseSeeder>>(Base: B)
       for (const entry of entries) {
         const links = entry.aptitudes
           .filter(({ aptitude }) => this.ctx.aptMap[aptitude])
-          .map(({ aptitude, level }) => ({ aptitudeId: this.ctx.aptMap[aptitude], level }));
+          .map(({ aptitude, level }) => ({ toId: this.ctx.aptMap[aptitude], tier: level }));
         bySpell.set(entry.spell, [...(bySpell.get(entry.spell) ?? []), ...links]);
       }
       const spells = [...bySpell].map(([spell, links]) => ({

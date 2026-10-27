@@ -91,21 +91,21 @@ export abstract class Dnd35ContentSeeder extends ContentSeeder<CoreContent, Book
   }
 
   /**
-   * Inserts feats' or spells' links to the aptitudes they're listed in (`type`, `listings`: each its entity, its
-   * aptitude and, a spell's, its level there): their `listedIn` links.
+   * Inserts feats' or spells' links to the aptitudes they're listed in (`type`, `listings`: each its `listedIn` link,
+   * from its entity, `fromId`, to its aptitude, `toId`, and, a spell's, at its level there, `tier`).
    */
   protected async insertListings(
     type: "feats" | "spells",
-    listings: { aptitudeId: string; entityId: string; level?: number | null }[],
+    listings: { fromId: string; tier?: number | null; toId: string }[],
   ) {
     await this.insertLinks(
-      listings.map(({ aptitudeId, entityId, level }) => ({
+      listings.map(({ fromId, tier, toId }) => ({
         role: "listedIn",
-        fromId: entityId,
+        fromId,
         fromType: type,
-        toId: aptitudeId,
+        toId,
         toType: "aptitudes",
-        tier: level ?? null,
+        tier: tier ?? null,
       })),
     );
   }

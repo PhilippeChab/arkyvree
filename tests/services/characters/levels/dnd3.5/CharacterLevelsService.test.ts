@@ -1410,7 +1410,7 @@ describe("LevelsService", () => {
       const fork = await createSeededTestRulesetWithExtensions(SEED_USER_ID);
       const wizardSpells = ctx.aptMap["Wizard Spells"];
       const merged = await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
-        const listed = new Set(Dnd35View.of(rulesetData).listSpellIds({ aptitudeId: wizardSpells, level: 1 }));
+        const listed = new Set(Dnd35View.of(rulesetData).listSpellIds({ toId: wizardSpells, tier: 1 }));
         const loserId = [...rulesetData.cow.siblingIds].find(
           (id) => rulesetData.cow.resolve(id) !== id && listed.has(rulesetData.cow.resolve(id)),
         )!;
