@@ -1,5 +1,5 @@
 import { include } from "@/lib/mixins.ts";
-import { RulesetViews } from "@/server/cow/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
@@ -181,7 +181,14 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
 
       if (!ruleset.private && body.private) throw new ForbiddenError("Cannot make a public ruleset private");
 
-      if (body.kind === "extension" && ruleset.kind !== "extension") this.assertCanBeExtension(ruleset);
+      const { kind } = body;
+      if (kind && kind !== ruleset.kind) {
+        // A published ruleset becomes what publishing it as `kind` would make it; a draft's content is checked when
+        // it's published
+        if (ruleset.status === "Published")
+          await withRulesetScope(tx, id, async (scope) => this.checkKind(scope, kind));
+        else if (kind === "extension") this.assertCanBeExtension(ruleset);
+      }
 
       const { updatedAt, ...columns } = body;
       const rows = await Rulesets.update(tx, columns, { id, expectedUpdatedAt: updatedAt });

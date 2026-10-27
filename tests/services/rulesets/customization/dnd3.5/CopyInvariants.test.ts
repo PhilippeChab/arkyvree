@@ -36,7 +36,7 @@ async function setup() {
       valueType: "number",
     },
   ]);
-  const customizations = (await CustomizationCopies.read(db, [source.id], "feats", "feats")).get(source.id)!;
+  const customizations = (await CustomizationCopies.read(db, [source.id], "feats")).get(source.id)!;
   return { source, targets, modifier, customizations };
 }
 

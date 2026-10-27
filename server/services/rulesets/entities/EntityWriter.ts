@@ -253,8 +253,7 @@ export default class EntityWriter {
 
   /** The entity's customizations, copied onto the new ones (`entities`) from `sourceId`'s. */
   private async copyCustomizations(tx: Db, entities: Row[], sourceId: string) {
-    const sourceType = Engine.storage().customizableKinds().includes(this.type) ? this.type : undefined;
-    const customizations = (await CustomizationCopies.read(tx, [sourceId], this.type, sourceType)).get(sourceId);
+    const customizations = (await CustomizationCopies.read(tx, [sourceId], this.type)).get(sourceId);
     if (!customizations) return;
     await CustomizationCopies.copyToMany(
       tx,
