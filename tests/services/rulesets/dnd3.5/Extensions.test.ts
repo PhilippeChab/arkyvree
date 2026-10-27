@@ -377,7 +377,8 @@ async function setupSiblings(entityType: EntityType) {
     });
     contributions.push({
       copyId,
-      aptitudeId: aptitude.id,
+      // The list its copy is on: its `listedIn` link's
+      toId: aptitude.id,
       requirement: `abilities.${ability}.total`,
       modifier: `abilities.${ability}.misc`,
     });
@@ -404,12 +405,11 @@ async function warriorEntity(type: EntityType, name: string) {
   return entity!.id;
 }
 
-/** A seeded Complete Warrior feat, with the list it's picked through (`listedIn`, its first `listedIn` link's). */
+/** A seeded Complete Warrior feat, with the lists it's picked through: its `listedIn` links (`{ toId }`). */
 async function warriorFeat(name: string) {
   const extension = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
   const feat = (await Entities.findOne<Feat>(db, { entityType: "feats", name, rulesetId: extension.id }))!;
-  const [link] = await findLists(db, [feat.id]);
-  return { ...feat, listedIn: link.toId };
+  return { ...feat, listedIn: (await findLists(db, [feat.id])).map(({ toId }) => ({ toId })) };
 }
 
 describe("subscribing to an extension", () => {
@@ -777,6 +777,7 @@ describe("unsubscribing from an extension", () => {
       { toId: wizard.id, tier: 3 },
     ]);
     const { classLevel } = await createTestClassLevel(draft.id);
+    // A spell grant, which no form writes, as its storage declares it: the unsubscribe repoints it
     await addGrants(db, classLevel.id, "spells", [{ toId: spell.id, viaId: warriorAssassin.id }]);
     RulesetViews.invalidate(draft.id);
 
@@ -1055,7 +1056,7 @@ describe("unsubscribing from an extension", () => {
     // A character of the fork who picked nothing from the extension doesn't count.
     await createTestCharacter(user.id, { rulesetId: draft.id });
 
-    const direct = await pickFeat(user.id, draft.id, monkeyGrip.id, monkeyGrip.listedIn);
+    const direct = await pickFeat(user.id, draft.id, monkeyGrip.id, monkeyGrip.listedIn[0].toId);
     await Characters.archive(db, { id: direct.id });
     expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id)).rejects.toThrow(
       ConflictError,
@@ -1066,7 +1067,7 @@ describe("unsubscribing from an extension", () => {
       name: "Shock Trooper",
       description: "Mine",
     });
-    await pickFeat(user.id, draft.id, copy.id, trooper.listedIn);
+    await pickFeat(user.id, draft.id, copy.id, trooper.listedIn[0].toId);
     expect(RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id)).rejects.toThrow(
       ConflictError,
     );
@@ -1578,10 +1579,10 @@ describe("two extensions overriding the same base entity", () => {
 
     test("shows one, merging both extensions' aptitudes, requirements and modifiers without repeats", async () => {
       const { draft, baseId, contributions } = await setupSiblings(entityType);
-      const aptitudeIds = contributions.map((c) => c.aptitudeId);
+      const listIds = contributions.map((c) => c.toId);
 
       const detail = await entity.get(draft.id, baseId);
-      expect(detail.links.map((l) => l.toId)).toEqual(expect.arrayContaining(aptitudeIds));
+      expect(detail.links.map((l) => l.toId)).toEqual(expect.arrayContaining(listIds));
       expect(unique(detail.links.map((l) => l.toId))).toBe(true);
       expect(detail.requirements.map((r) => r.target)).toEqual(
         expect.arrayContaining(contributions.map((c) => c.requirement)),
@@ -1592,7 +1593,7 @@ describe("two extensions overriding the same base entity", () => {
 
       const listed = (await entity.list(draft.id, entity.name)).filter((row) => row.name === entity.name);
       expect(listed).toHaveLength(1);
-      expect(listed[0].links.map((l) => l.toId)).toEqual(expect.arrayContaining(aptitudeIds));
+      expect(listed[0].links.map((l) => l.toId)).toEqual(expect.arrayContaining(listIds));
 
       const requirements = await RequirementsService.getRequirements(
         await ownerSessionOf(draft.id),
@@ -1623,7 +1624,7 @@ describe("two extensions overriding the same base entity", () => {
       const copyId = snapshot.forkedEntityId;
 
       expect((await entity.links(copyId)).map((l) => l.toId)).toEqual(
-        expect.arrayContaining(contributions.map((c) => c.aptitudeId)),
+        expect.arrayContaining(contributions.map((c) => c.toId)),
       );
       expect((await Requirements.findMany(db, { entityIds: [copyId], entityType })).map((r) => r.target)).toEqual(
         expect.arrayContaining(contributions.map((c) => c.requirement)),

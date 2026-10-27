@@ -270,6 +270,7 @@ describe("EntitiesService: spells", () => {
       links: { listedIn: [{ toId: wizard }] },
     });
     const { classLevel } = await createTestClassLevel(ruleset.id);
+    // A spell grant, which no form writes, as its storage declares it: the delete unlinks it
     await addGrants(db, classLevel.id, "spells", [{ toId: spell.id, viaId: wizard }]);
 
     await EntitiesService.deleteEntity(session, ruleset.id, "spells", spell.id);

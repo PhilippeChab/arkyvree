@@ -281,9 +281,10 @@ async function setupFighter() {
   const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
   const first = await levelUp(session, ctx, characterId, "Fighter", 1, FIGHTER_LEVELS[0]);
   await levelUp(session, ctx, characterId, "Fighter", 2, FIGHTER_LEVELS[1]);
-  const resave = (plan: Partial<LevelPlan> & { abilityId?: string | null }, force = false) => {
+  // The level's picks past the first fighter level's, and the ability its increase pick raises (`entityId`), if any
+  const resave = (plan: Partial<LevelPlan> & { entityId?: string | null }, force = false) => {
     const picked = picks(ctx, { ...FIGHTER_LEVELS[0], ...plan });
-    const edit = levelEditPlan({ hp: 10, abilityIncreases: increasesOf(plan.abilityId) }, picked);
+    const edit = levelEditPlan({ hp: 10, abilityIncreases: increasesOf(plan.entityId) }, picked);
     return CharacterLevelsService.updatePlannedLevel(session, characterId, first.id, edit, force);
   };
   return { ctx, characterId, first, resave };
@@ -1697,7 +1698,7 @@ describe("re-saving a level", () => {
     test("is refused at a level that doesn't grant one, even forced", async () => {
       const { ctx, resave } = await setupFighter();
       for (const force of [false, true]) {
-        expect(resave({ abilityId: ctx.abilityMap["Strength"] }, force)).rejects.toThrow(
+        expect(resave({ entityId: ctx.abilityMap["Strength"] }, force)).rejects.toThrow(
           "Ability increase is not available at this level",
         );
       }
@@ -1709,10 +1710,10 @@ describe("re-saving a level", () => {
         { advancementId: first.id, step: "abilities", entityId: ctx.abilityMap["Strength"], amount: 1 },
       ]);
       // The edit dialog sends the stored increase back.
-      expect(resave({ abilityId: ctx.abilityMap["Strength"] })).rejects.toThrow(
+      expect(resave({ entityId: ctx.abilityMap["Strength"] })).rejects.toThrow(
         "Ability increase is not available at this level",
       );
-      await resave({ abilityId: null });
+      await resave({ entityId: null });
       expect(await findPicks("abilities", [first.id])).toEqual([]);
     });
 

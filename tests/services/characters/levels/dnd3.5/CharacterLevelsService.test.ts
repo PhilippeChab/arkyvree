@@ -1223,6 +1223,7 @@ describe("LevelsService", () => {
   describe("spell slots and the spells of a pool", () => {
     test("list a class level's granted spells, and leave them and those the character has out of the picks", async () => {
       const { session, character, klass, classLevels, spellAptitude, spells } = await setupRuleset();
+      // A spell grant, which no form writes, as its storage declares it: the level-up reads it
       await addGrants(db, classLevels[1].id, "spells", [{ toId: spells["Rage"].id, viaId: spellAptitude.id }]);
       await addCharacterLevel(character.id, classLevels[0].id, {
         spells: { [spellAptitude.id]: [spells["Sneak Attack"].id] },
@@ -1238,6 +1239,33 @@ describe("LevelsService", () => {
       ]);
     });
 
+    test("list a class level's granted spells free as their grants say, and count only a non-free one in its pool", async () => {
+      const { session, character, klass, classLevels, spellAptitude, spells } = await setupRuleset();
+      // Spell grants, which no form writes, as their storage declares them: the level-up and the character read them
+      await addGrants(db, classLevels[1].id, "spells", [
+        { toId: spells["Rage"].id, viaId: spellAptitude.id },
+        { toId: spells["Uncanny Dodge"].id, viaId: spellAptitude.id, free: false },
+      ]);
+      await addCharacterLevel(character.id, classLevels[0].id);
+
+      const plan = levelUpPlan([planned(klass.id, 2)]);
+      const { granted } = stepAnswerOf(await getPlanAnswer(session, character.id, plan), "spells", "pick");
+      expect(granted.map(({ free, id }) => ({ free, id }))).toEqual(
+        expect.arrayContaining([
+          { free: true, id: spells["Rage"].id },
+          { free: false, id: spells["Uncanny Dodge"].id },
+        ]),
+      );
+
+      await addCharacterLevel(character.id, classLevels[1].id);
+      const detailed = await buildAs(DetailedCharacter, (await Characters.findOne(db, { id: character.id }))!);
+      const pool = Object.values(detailed.components.aptitudes.getAptitudes()).find(
+        (aptitude) => aptitude.id === spellAptitude.id,
+      );
+      // The free grant makes no room in the pool; the other one does
+      expect(pool?.allowed).toBe(1);
+    });
+
     test("leave a spell the level's class level grants out of its own pool only, as once the level is saved", async () => {
       // Each pool is a list of its own: a spell known in one is offered in another that lists it
       const { session, parent, character, klass, classLevels, spellAptitude, spells } = await setupRuleset();
@@ -1246,6 +1274,7 @@ describe("LevelsService", () => {
         rulesetId: parent.id,
       });
       await addLists(db, "spells", spells["Rage"].id, [{ toId: otherAptitude.id }]);
+      // A spell grant, which no form writes, as its storage declares it: the level-up reads it
       await addGrants(db, classLevels[1].id, "spells", [{ toId: spells["Rage"].id, viaId: spellAptitude.id }]);
       await addCharacterLevel(character.id, classLevels[0].id);
       const offered = async (aptitudeId: string, level: number) =>
@@ -1316,6 +1345,7 @@ describe("LevelsService", () => {
         await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [sorcerer.id] })
       ).find(({ position }) => position === 2)!;
       const [sorcererSpells, resistance] = [ctx.aptMap["Sorcerer Spells"], ctx.spellMap["Resistance"]];
+      // A spell grant, which no form writes, as its storage declares it: the level-up reads it
       await addGrants(db, second.id, "spells", [{ toId: resistance, viaId: sorcererSpells }]);
       RulesetViews.invalidate(fork.id);
       const characterId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000, rulesetId: fork.id });
@@ -1358,6 +1388,7 @@ describe("LevelsService", () => {
       const { session, ruleset, character, klass, classLevels, spellAptitude, spells } = await setupRuleset({
         fork: true,
       });
+      // A spell grant, which no form writes, as its storage declares it: the level-up reads it
       await addGrants(db, classLevels[0].id, "spells", [{ toId: spells["Rage"].id, viaId: spellAptitude.id }]);
       await addCharacterLevel(character.id, classLevels[0].id, {
         spells: { [spellAptitude.id]: [spells["Sneak Attack"].id] },

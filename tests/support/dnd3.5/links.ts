@@ -31,7 +31,10 @@ export async function addClassSkills(db: Db, classId: string, skillIds: string[]
 
 /**
  * A class level's grants of feats or spells (`toType`): each its feat or spell (`toId`), through its pool (`viaId`),
- * free when it says (`free`).
+ * free unless it says (`free`), as a class level's form and the seeder write them. Only a spell grant's `free` is read:
+ * a free one makes no room in its pool and has its requirements unchecked. No form nor seed writes a spell grant: the
+ * storage declares the role (`Dnd35Storage`), which the view, copy-on-write, deletes and level-ups read, and the tests
+ * that write one test those.
  */
 export async function addGrants(
   db: Db,
@@ -41,7 +44,7 @@ export async function addGrants(
 ) {
   return await EntityLinks.createMany(
     db,
-    grants.map(({ free = false, toId, viaId }) => ({
+    grants.map(({ free = true, toId, viaId }) => ({
       role: "grants",
       fromId: classLevelId,
       fromType: "class-levels",

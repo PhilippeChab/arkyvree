@@ -16,20 +16,15 @@ import {
   SKILL_USABLE_WITHOUT_TRAINING,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
-/** A skill's body: its name and description, its fields by stored field, and its ability its `keyAbility` link. */
-interface SkillBody {
-  description?: string | null;
-  fields: Record<string, boolean | number>;
-  links: { keyAbility: string };
-  name: string;
-}
+/** A skill's body, as the service takes it: its name and description, its fields by stored field, its links by role. */
+type SkillBody = Parameters<typeof EntitiesService.createEntity>[3];
 
 /**
  * What a write of a skill (`body`) answers, as a read does: its fields by stored field, its ability (named
  * `abilityName`) its `keyAbility` link.
  */
 function answerOf({ description, fields, links, name }: SkillBody, abilityName: string) {
-  return { description, fields, links: [{ role: "keyAbility", toId: links.keyAbility, toName: abilityName }], name };
+  return { description, fields, links: [{ role: "keyAbility", toId: links?.keyAbility, toName: abilityName }], name };
 }
 
 /**

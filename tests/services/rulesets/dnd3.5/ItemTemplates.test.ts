@@ -46,7 +46,7 @@ import {
  * An item as its record holds it (`EntityRecord`), off its own columns and fields (`item`) and its template
  * (`madeFrom`): its own columns, its fields by stored field, and its template its `madeFrom` link (null for none).
  */
-function formRecordOf(
+function recordFrom(
   item: Pick<EntityRecord, "description" | "name"> & { fields: Readonly<Record<string, unknown>> },
   madeFrom: string | undefined,
 ) {
@@ -55,13 +55,13 @@ function formRecordOf(
 
 /** An item as a save or a read describes it (`answer`), as its record holds it: its template its `madeFrom` link's. */
 function recordOf(answer: Pick<Described<"items">, "description" | "fields" | "links" | "name">) {
-  return formRecordOf(answer, answer.links.find((link) => link.role === "madeFrom")?.toId);
+  return recordFrom(answer, answer.links.find((link) => link.role === "madeFrom")?.toId);
 }
 
 /** An item's record as stored (none for none), its template null for none. */
 function storedRecordOf(record: Item | undefined) {
   if (!record) return record;
-  return formRecordOf(record, record.links.madeFrom);
+  return recordFrom(record, record.links.madeFrom);
 }
 
 /**

@@ -73,6 +73,7 @@ describe("reverting a fork's copy", () => {
     await addLists(db, "spells", spell.id, [{ toId: copy.id, tier: 1 }]);
     const { classLevel } = await createTestClassLevel(fork.id);
     await addGrants(db, classLevel.id, "feats", [{ toId: feat.id, viaId: copy.id }]);
+    // A spell grant, which no form writes, as its storage declares it: the revert repoints it
     await addGrants(db, classLevel.id, "spells", [{ toId: spell.id, viaId: copy.id }]);
     const character = await createTestCharacter(user.id, { rulesetId: fork.id });
     const level = await addCharacterLevel(character.id, classLevel.id, {
@@ -105,6 +106,7 @@ describe("reverting a fork's copy", () => {
     const spell = await copyEntity(db, "spells", spellId, fork);
     const { classLevel } = await createTestClassLevel(fork.id);
     await addGrants(db, classLevel.id, "feats", [{ toId: feat.id, viaId: ctx.aptMap.General }]);
+    // A spell grant, which no form writes, as its storage declares it: the revert repoints it
     await addGrants(db, classLevel.id, "spells", [{ toId: spell.id, viaId: ctx.aptMap.General }]);
 
     await RulesetChangesService.revertOverride(session, fork.id, "feats", dodge);

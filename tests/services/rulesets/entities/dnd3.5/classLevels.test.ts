@@ -531,6 +531,7 @@ describe("EntitiesService: a class's levels", () => {
       const level = await createLevel(session, ruleset.id, klass.id, 2, {
         links: { grants: [{ toId: feat.id, viaId: aptitude.id }], baseBonus: [{ toId: save.id, amount: 2 }] },
       });
+      // A spell grant, which no form writes, as its storage declares it: the delete removes it
       await addGrants(db, level.id, "spells", [{ toId: spell.id, viaId: aptitude.id }]);
       await Modifiers.create(db, modifier(level.id, "combat.bab", "1"));
 
