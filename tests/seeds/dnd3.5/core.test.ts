@@ -312,10 +312,10 @@ describe("The seeded core rules", () => {
         const family = rows.textsOf(feat.id, FEAT_FAMILY);
         expect({
           name,
-          stackable: feat.fields[FEAT_STACKABLE],
-          aptitudes: feat.listedIn.map((link) => link.toId),
+          fields: { [FEAT_STACKABLE]: feat.fields[FEAT_STACKABLE] },
+          listedIn: feat.listedIn.map((link) => link.toId),
           family,
-        }).toEqual({ name, stackable: false, aptitudes: [aptitude.id], family: ["Favored Enemy"] });
+        }).toEqual({ name, fields: { [FEAT_STACKABLE]: false }, listedIn: [aptitude.id], family: ["Favored Enemy"] });
       }
     });
 
