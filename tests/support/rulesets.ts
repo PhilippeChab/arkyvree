@@ -1,15 +1,15 @@
-import { eq, type InferInsertModel } from "drizzle-orm";
+import type { InferInsertModel } from "drizzle-orm";
 
 import { DND35_CORE_PACKAGE } from "@/content/dnd3.5/packages/core.ts";
 import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
 import type { Db } from "@/drizzle/database.ts";
-import { rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
+import type { rulesetsInRules } from "@/drizzle/schema.ts";
 import type { CowData, RulesetSources } from "@/engine/core/cow/index.ts";
 import type { EntityKinds } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { EntityCopy, RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { type RulesetEntityType, Rulesets, RulesetSettings } from "@/server/repositories/index.ts";
+import { type RulesetEntityType, RulesetExtensions, Rulesets, RulesetSettings } from "@/server/repositories/index.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
@@ -105,36 +105,37 @@ export async function createSeededTestRuleset(
   return ruleset;
 }
 
-/** A seeded fork that also uses every extension shipped with the seeded base ruleset. */
+/** A seeded fork that also uses every extension shipped with the seeded base ruleset, in the order they were seeded. */
 export async function createSeededTestRulesetWithExtensions(userId: string) {
   const fork = await createSeededTestRuleset(userId);
-  const links = await db
-    .select({ id: rulesetExtensionsInRules.extensionId })
-    .from(rulesetExtensionsInRules)
-    .where(eq(rulesetExtensionsInRules.rulesetId, fork.rulesetId!));
-  const [ruleset] = await Rulesets.update(db, { extensionRulesetIds: links.map((link) => link.id) }, { id: fork.id });
+  const extensionIds = (await Rulesets.findMany(db, { system: true }))
+    .filter((ruleset) => ruleset.kind === "extension" && ruleset.rulesetId === fork.rulesetId)
+    .map((extension) => extension.id);
+  const ruleset = await subscribeTestRuleset(fork.id, extensionIds);
   RulesetViews.invalidate(fork.id);
   return ruleset;
 }
 
 /**
  * An empty private draft ruleset owned by `userId` (`null` for a system ruleset), of the base rules the seeded content
- * is written for (3.5's), unless `values` names others. Pass `rulesetId` and `ancestorRulesetIds` to make it a fork.
- * For one that already has the seeded content, use `createSeededTestRuleset`.
+ * is written for (3.5's), unless `values` names others. Pass `rulesetId` and `ancestorRulesetIds` to make it a fork,
+ * and `extensionRulesetIds` the extensions it subscribes to, in their order. For one that already has the seeded
+ * content, use `createSeededTestRuleset`.
  */
 export async function createTestRuleset(
   userId: string | null,
-  values: Partial<InferInsertModel<typeof rulesetsInRules>> = {},
+  values: Partial<InferInsertModel<typeof rulesetsInRules>> & { extensionRulesetIds?: string[] } = {},
 ) {
+  const { extensionRulesetIds = [], ...columns } = values;
   const [ruleset] = await Rulesets.create(db, {
     name: `Test Ruleset ${uniqueId()}`,
     description: "Test ruleset description",
     private: true,
     baseRules: DND35_BASE_RULES,
     userId,
-    ...values,
+    ...columns,
   });
-  return ruleset;
+  return extensionRulesetIds.length > 0 ? await subscribeTestRuleset(ruleset.id, extensionRulesetIds) : ruleset;
 }
 
 /**
@@ -157,4 +158,13 @@ export async function ownerSessionOf(rulesetId: string) {
 /** A ruleset's target paths of a kind, by its id, as the cache keeps them (`RulesetViews.getTargetPaths`). */
 export async function readTargetPaths(rulesetId: string, kind: TargetPathKind) {
   return await RulesetViews.getTargetPaths((await Rulesets.findOne(db, { id: rulesetId }))!, kind);
+}
+
+/**
+ * Subscribes a ruleset to extensions (`extensionIds`), after those it subscribes to, as its rows alone, none of a
+ * subscribe's checks: the ruleset as it reads then.
+ */
+export async function subscribeTestRuleset(rulesetId: string, extensionIds: string[]) {
+  await RulesetExtensions.upsert(db, { rulesetId, extensionIds });
+  return (await Rulesets.findOne(db, { id: rulesetId }))!;
 }

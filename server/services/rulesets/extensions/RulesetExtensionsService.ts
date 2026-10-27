@@ -96,17 +96,11 @@ class RulesetExtensionsService {
       const names = new EntityNames(childRuleset, await CowDataReader.read(tx, childRuleset));
       await names.assertExtensionNamesAvailable(tx, newExtensionIds);
 
-      // 3. Append all to extensionRulesetIds
-      await Rulesets.update(
-        tx,
-        { extensionRulesetIds: [...childRuleset.extensionRulesetIds, ...newExtensionIds] },
-        { id },
-      );
+      // 3. The ruleset changes now, and subscribes to them after those it subscribes to, in their order
+      await Rulesets.update(tx, {}, { id });
+      await RulesetExtensions.upsert(tx, { rulesetId: id, extensionIds: newExtensionIds });
 
-      // 4. Upsert metadata rows
-      for (const extensionId of newExtensionIds) await RulesetExtensions.upsert(tx, { rulesetId: id, extensionId });
-
-      // 5. Log activity
+      // 4. Log activity
       await Activities.create(tx, {
         userId: session.userId,
         targetId: id,
@@ -162,17 +156,11 @@ class RulesetExtensionsService {
       for (const snap of extensionSnapshots)
         await EntityRevert.revert(tx, snap.entityType as RulesetEntityType, snap.sourceEntityId, id);
 
-      // 3. Remove extensionId from array
-      await Rulesets.update(
-        tx,
-        { extensionRulesetIds: ruleset.extensionRulesetIds.filter((eid) => eid !== extensionId) },
-        { id },
-      );
-
-      // 4. Soft-delete metadata row
+      // 3. The ruleset changes now, and subscribes to the extension no more: its row is archived
+      await Rulesets.update(tx, {}, { id });
       await RulesetExtensions.archive(tx, { rulesetId: id, extensionId });
 
-      // 5. Log activity
+      // 4. Log activity
       await Activities.create(tx, {
         userId: session.userId,
         targetId: id,

@@ -680,6 +680,13 @@
       "when": 1793065441714,
       "tag": "0096_campaign-seats",
       "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "7",
+      "when": 1793072641714,
+      "tag": "0098_extensions-store",
+      "breakpoints": true
     }
   ]
 }

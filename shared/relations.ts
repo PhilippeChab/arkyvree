@@ -43,7 +43,13 @@ export type Invite = typeof invitesInCampaign.$inferSelect;
 export type Modifier = typeof modifiersInCustomization.$inferSelect;
 export type Player = typeof playersInCampaign.$inferSelect;
 export type Requirement = typeof requirementsInCustomization.$inferSelect;
-/** A ruleset's row: its base rules, a registered module's. */
-export type Ruleset = Omit<typeof rulesetsInRules.$inferSelect, "baseRules"> & { baseRules: BaseRules };
+/**
+ * A ruleset's row: its base rules, a registered module's, and the extensions it subscribes to, in their order (its
+ * `ruleset_extensions` rows').
+ */
+export type Ruleset = Omit<typeof rulesetsInRules.$inferSelect, "baseRules"> & {
+  baseRules: BaseRules;
+  extensionRulesetIds: string[];
+};
 export type Session = typeof sessionsInAccount.$inferSelect;
 export type User = typeof usersInAccount.$inferSelect;

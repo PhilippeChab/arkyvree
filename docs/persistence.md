@@ -103,7 +103,7 @@ These tables archive specifically because re-creating the same row should restor
 | Table | Why archive | Restore mechanism |
 |---|---|---|
 | `StarredRulesets` | Star → unstar → re-star should preserve any per-row metadata | `upsert` (un-archives the existing row) |
-| `RulesetExtensions` | Subscribe → unsubscribe → re-subscribe should be idempotent on the metadata row | `upsert` clears `deletedAt` on conflict |
+| `RulesetExtensions` | Subscribe → unsubscribe → re-subscribe should be idempotent on the subscription's row, which keeps when it was first made | `upsert` clears `deletedAt` on conflict, and places the row last |
 | `OauthAccounts` | Mirrors the `Users`-archive pattern: account-deletion archives the user, dependent rows tag along | `archive({ userId })` paired with the `Users.archive` flow |
 
 These are intentionally archived. Don't flip them — the restore-by-recreate behavior is load-bearing.

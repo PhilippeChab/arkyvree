@@ -27,7 +27,7 @@ Base Ruleset (D&D 3.5)           ← system-owned, userId: null, no parent
 |---|---|
 | `rulesetId` | Parent ruleset (null for base rulesets) |
 | `ancestorRulesetIds` | `[parentId]` — only base rulesets can be forked, so the chain has at most one entry |
-| `extensionRulesetIds` | Subscribed extension IDs (appended on subscribe, removed on unsubscribe) |
+| `extensionRulesetIds` | Subscribed extension IDs, in subscription order: not a column, but the ruleset's live `ruleset_extensions` rows, by their `ordinal`, which every read and write of the row answers (`RulesetsRepository`). A subscribe adds rows after the last, an unsubscribe archives its row |
 | `status` | `Draft`, `Published`, or `Archived` |
 | `kind` | `ruleset` (default; playable) or `extension` (subscribable add-on). The character-creation picker shows only `kind = 'ruleset'`; the subscribe-extension picker shows only `kind = 'extension'`. Author chooses at publish time and can change later via the edit dialog, under the same checks (`Publishes.checkKind`): setting `kind = 'extension'` requires the row to be a fork (`rulesetId IS NOT NULL`) and to have no own extensions (`extensionRulesetIds = []`); setting a published ruleset's `kind = 'ruleset'`, the content a playable ruleset needs (below) |
 
@@ -38,7 +38,7 @@ Base Ruleset (D&D 3.5)           ← system-owned, userId: null, no parent
 Creates a child copy of a published ruleset. No entities are duplicated — the child inherits everything via the source chain.
 
 - Builds `ancestorRulesetIds = [parentId]` — `canFork` rejects forking a fork, so the parent is always a base
-- Copies `extensionRulesetIds` and extension metadata rows
+- Subscribes the child to the parent's extensions, in their order (`ruleset_extensions` rows)
 - Child starts as `Draft`
 
 ### Publishing
@@ -398,8 +398,7 @@ The validators that set `kind = 'extension'` enforce: must be a fork, must not s
 
 1. Validates: ruleset is a fork, not archived, user is owner, extension is `kind = 'extension'` + published + shares the same base + (if user-owned) public + the host's own `kind` is `'ruleset'`
 2. Checks not already subscribed (`extensionRulesetIds.includes`), and that its view would show no name more often than once and than it does now (`EntityNames.assertExtensionNamesAvailable`, see [Names of entities](#names-of-entities)): the names of the new extensions' entities, their copies included, counted in the view as it is and as it would be, read with its `CowData` once subscribed, so what that view pairs (an extension's copy of an inherited entity, two books' entities of a kind a book reprints (`namesakes: "reprints"`: 3.5's feats and spells), pools of a name (`namesakes: "identity"`), whoever holds them, the host's own too) counts once. An extension's entity of a name the host's own entity has counts, though the view would show the host's alone: the host is told of the clash
-3. Appends `extensionId` to `extensionRulesetIds` array
-4. Creates tracking row in `ruleset_extensions` (UI metadata: name, `updateAvailable` flag)
+3. Writes a `ruleset_extensions` row for each, after the host's last (`ordinal`), live again if an unsubscribe archived it: what the source chain and the extensions page read (name, `updateAvailable` flag), and touches the host's `updatedAt`
 
 No entities are copied. They become visible immediately via the source chain.
 
@@ -411,14 +410,12 @@ No entities are copied. They become visible immediately via the source chain.
 4. **In-use check** (`isExtensionInUseByHost`) — blocks with `ConflictError` if a character on the host picked what leaves the view (`EntityReferences.exists`, every type's picks, a class's by its levels), directly or through the host's copy of it: the pick would dangle. A pick of what something stands in place of doesn't count: step 5 points it there. The check also counts a ruleset built on the host, which has none: fork-of-fork is blocked at policy time, and a host isn't an extension
 5. **Repoints what the host keeps** (`repointDepartingReferences`): a host row naming what leaves the view (a link to a list no other book has, an item's template, a class's or a race's parent, a spell's save, a save's or a skill's ability, a class's skill or its levels' saves, granted feats and spells: `EntityReferences.findMany`, the copies' own rows aside, which go with them) refuses the unsubscribe with a `ConflictError` naming them, before anything changes. Then every row of the host and of its characters naming what something stands in place of names that instead (`EntityReferences.findIds`, then `update` given the host): a feat's or a spell's link to the extension's list, a class's grant, a character's pick of a core feat the extension overrides (stored by the copy's id, as a level-up writes the id its view shows: `RequestIds`), the list it's picked from, its level in a class the extension overrides, its race, an item it carries. A row that would then repeat another by its table's primary key goes, as a revert's does. The extension's own rows, and its other subscribers', keep naming its entities
 6. **Reverts the host's copies** (`EntityRevert`, as a restore does: see [Restoring an override](#restoring-an-override)), which deletes them and their snapshots. What names a copy names the extension's entity before the copy goes. By then, only another of the copies names one: step 5 moved the host's own rows and its characters' picks, or refused. So a copy naming another never blocks the other's delete, whatever order the copies go in: an item's copy naming its template's copy (a `madeFrom` link, whose role refuses the delete), a class level's save (`baseBonus`, refuses too). Nor is a subrace's or a subclass's copy deleted with its parent's (`subraceOf`, `subclassOf`, whose roles delete) before its own turn. The host's edit of the extension's copy of a core entity goes too, as its edits of the extension's content do: what named it names what stands in its place, the core entity
-7. Removes `extensionId` from the array
-8. Soft-deletes the tracking row
+7. Archives the extension's `ruleset_extensions` row, and touches the host's `updatedAt`
 
 ### Fork Inheritance
 
 When a ruleset with extensions is forked, the child inherits:
-- `extensionRulesetIds` — copied as-is
-- `ruleset_extensions` metadata rows — duplicated for the child
+- its extensions — a `ruleset_extensions` row for each, in the parent's order
 
 The child can subscribe to and unsubscribe from extensions independently of the parent.
 
