@@ -1,6 +1,7 @@
-import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import { createHmac, randomUUID } from "node:crypto";
 
 import type { Db } from "@/drizzle/database.ts";
+import { compareInConstantTime } from "@/server/constantTime.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { readEnv } from "@/server/environment.ts";
 import { BadRequestError, ConflictError, ForbiddenError, InternalError, NotFoundError } from "@/server/errors/index.ts";
@@ -123,10 +124,7 @@ class AttachmentsService {
     const [data, sig] = token.split(".");
     if (!data || !sig) throw new BadRequestError("Invalid signed id");
     const expected = createHmac("sha256", this.getSigningSecret()).update(data).digest("base64url");
-    const sigBuf = Buffer.from(sig);
-    const expectedBuf = Buffer.from(expected);
-    if (sigBuf.length !== expectedBuf.length || !timingSafeEqual(sigBuf, expectedBuf))
-      throw new BadRequestError("Invalid signed id");
+    if (!compareInConstantTime(sig, expected)) throw new BadRequestError("Invalid signed id");
 
     let payload: SignedTokenPayload;
     try {

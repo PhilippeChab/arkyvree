@@ -1,12 +1,5 @@
-import { timingSafeEqual } from "node:crypto";
-
+import { compareInConstantTime } from "./constantTime.ts";
 import { isTest } from "./environment.ts";
-
-/** Whether two digests are the same, compared in constant time. */
-function sameDigest(a: string, b: string): boolean {
-  const [left, right] = [Buffer.from(a), Buffer.from(b)];
-  return left.length === right.length && timingSafeEqual(left, right);
-}
 
 /** A text's SHA-256 digest in hex: how passwords were stored before argon2id. */
 async function sha256(text: string): Promise<string> {
@@ -26,6 +19,6 @@ export async function verifyPassword(
 ): Promise<{ needsRehash: boolean; verified: boolean }> {
   if (digest.startsWith("$argon2"))
     return { verified: await Bun.password.verify(password, digest), needsRehash: false };
-  const verified = sameDigest(await sha256(password), digest);
+  const verified = compareInConstantTime(await sha256(password), digest);
   return { verified, needsRehash: verified };
 }

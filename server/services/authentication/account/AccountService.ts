@@ -20,7 +20,7 @@ import {
 } from "@/server/repositories/index.ts";
 import { purgeAttachmentsForRecords } from "@/server/services/attachments/index.ts";
 import { toSafeUser } from "@/server/services/authentication/accounts.ts";
-import { compareInConstantTime, generateVerificationCode } from "@/server/services/authentication/codes.ts";
+import { createCode, hasRecentCode, verifyCode } from "@/server/services/authentication/codes.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -101,18 +101,12 @@ class AccountService {
 
       if (!user.pendingEmailAddress) throw new BadRequestError("No pending email change");
 
-      const existing = await EmailVerifications.findOne(tx, { userId: user.id });
-      if (existing) {
-        const elapsed = Date.now() - new Date(existing.createdAt).getTime();
-        if (elapsed < 5 * 60 * 1000) throw new BadRequestError("Please wait before requesting a new code");
-      }
+      // Too soon for another code: a signed-in user is told so, as their account is no secret to them (a signed-out
+      // resend answers as an unknown email does).
+      if (await hasRecentCode(tx, EmailVerifications, user.id))
+        throw new BadRequestError("Please wait before requesting a new code");
 
-      await EmailVerifications.archive(tx, { userId: user.id });
-
-      const code = generateVerificationCode();
-      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-      await EmailVerifications.create(tx, { userId: user.id, code, expiresAt });
-
+      const code = await createCode(tx, EmailVerifications, user.id);
       return { code, pendingEmailAddress: user.pendingEmailAddress };
     });
 
@@ -208,16 +202,8 @@ class AccountService {
       const updatedUser = rows[0];
       if (!updatedUser) throw new InternalError("Failed to update profile");
 
-      let emailChangeCode: string | null = null;
-
-      // If email is changing, create verification code
-      if (newEmailAddress) {
-        await EmailVerifications.archive(tx, { userId: user.id });
-
-        emailChangeCode = generateVerificationCode();
-        const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-        await EmailVerifications.create(tx, { userId: user.id, code: emailChangeCode, expiresAt });
-      }
+      // A new email takes a code of its own, however soon after the last one: that one was for another address.
+      const emailChangeCode = newEmailAddress ? await createCode(tx, EmailVerifications, user.id) : null;
 
       await Activities.create(tx, {
         userId: session.userId,
@@ -248,12 +234,14 @@ class AccountService {
 
       if (!user.pendingEmailAddress) throw new BadRequestError("No pending email change");
 
-      const verification = await EmailVerifications.findOne(tx, { userId: user.id });
-      if (!verification) throw new UnauthorizedError("Invalid code");
-
-      if (!compareInConstantTime(verification.code, code)) throw new UnauthorizedError("Invalid code");
-
-      if (new Date(verification.expiresAt) < new Date()) throw new UnauthorizedError("Verification code expired");
+      const verification = await verifyCode(
+        tx,
+        EmailVerifications,
+        user.id,
+        code,
+        "Invalid code",
+        "Verification code expired",
+      );
 
       // Re-check uniqueness — someone else may have claimed this email
       const existingUser = await Users.findOne(tx, { emailAddress: user.pendingEmailAddress });
