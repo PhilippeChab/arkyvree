@@ -9,11 +9,32 @@ import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { readClassTable } from "@/tests/support/dnd3.5/classTables.ts";
 import { linksOf } from "@/tests/support/entityLinks.ts";
-import { createSeededTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset, invalidateSeededRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type Body = Parameters<typeof EntitiesService.updateProgression>[4];
+
+/** A save moving a class's Wizard Specialization pick (`poolId`) from a level (`from`) to another (`to`). */
+function movePick(poolId: string, from: string, to: string): Body {
+  return {
+    pools: [
+      {
+        id: poolId,
+        picks: [
+          { levelId: from, count: 0 },
+          { levelId: to, count: 1 },
+        ],
+      },
+    ],
+  };
+}
+
+/** The modifier a class's level (`levelId`) gives its Wizard Specialization pick by, as stored. */
+async function findSpecializationPick(levelId: string) {
+  const modifiers = await Modifiers.findMany(db, { sourceIds: [levelId], sourceType: "class-levels" });
+  return modifiers.find((modifier) => modifier.target.startsWith("aptitudes.wizardspecialization."));
+}
 
 /** The seed user's fork of the seeded ruleset, and its inherited class of this name, with its levels by number. */
 async function forkWithClass(name: string) {
@@ -316,6 +337,58 @@ describe("EntitiesService: a class's progression", () => {
     expect((await EntitiesService.getEntity(await ownerSessionOf(fork.id), fork.id, "classes", own.id)).updatedAt).toBe(
       saved.updatedAt,
     );
+  });
+
+  test("refuses a save dropping a modifier deleted since the view was read as not found, on its own class", async () => {
+    const { session, fork, klass, levelId } = await forkWithClass("Wizard");
+    const { saved } = await save(session, fork.id, klass.id, {
+      levels: [{ levelId: levelId(1), fields: { [CLASS_LEVEL_BAB]: 0, [CLASS_LEVEL_SKILL_POINTS]: 4 } }],
+    });
+    const own = await EntitiesService.getOwnedEntities(
+      await ownerSessionOf(fork.id),
+      fork.id,
+      "classes",
+      saved.entityId,
+    );
+    const [first, third] = [1, 3].map((level) => own.find((l) => l.position === level)!.id);
+    // The view read, then the pick its save moves deleted
+    const { pools } = await EntitiesService.getProgression(
+      await ownerSessionOf(fork.id),
+      fork.id,
+      "classes",
+      saved.entityId,
+    );
+    const pool = pools.find((p) => p.name === "Wizard Specialization")!;
+    await Modifiers.delete(db, { id: (await findSpecializationPick(first))!.id });
+
+    await expectRefusedWith(
+      EntitiesService.updateProgression(session, fork.id, "classes", saved.entityId, movePick(pool.id, first, third)),
+      404,
+    );
+    expect(await findSpecializationPick(third)).toBeUndefined();
+  });
+
+  test("refuses a save dropping a modifier deleted since the view was read as not found, on an inherited class's copy", async () => {
+    const { session, fork, klass, levelId } = await forkWithClass("Wizard");
+    const { pools } = await EntitiesService.getProgression(await ownerSessionOf(fork.id), fork.id, "classes", klass.id);
+    const pool = pools.find((p) => p.name === "Wizard Specialization")!;
+    // Its source's pick deleted since the view was read: the copy the save makes holds none of it
+    await Modifiers.delete(db, { id: (await findSpecializationPick(levelId(1)))!.id });
+
+    await expectRefusedWith(
+      EntitiesService.updateProgression(
+        session,
+        fork.id,
+        "classes",
+        klass.id,
+        movePick(pool.id, levelId(1), levelId(3)),
+      ),
+      404,
+    );
+    invalidateSeededRuleset(fork.ancestorRulesetIds[0]);
+    expect(
+      await Entities.findOne<Klass>(db, { entityType: "classes", name: "Wizard", rulesetId: fork.id }),
+    ).toBeUndefined();
   });
 
   test("refuses a body that isn't a save, as its rules read it, writing nothing", async () => {

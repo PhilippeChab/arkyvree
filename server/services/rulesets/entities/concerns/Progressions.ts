@@ -1,7 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
 import { Engine, type ProgressionForm, type ProgressionPlan } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { EntityEdit, type RulesetScope, RulesetViews } from "@/server/cow/index.ts";
+import { type EditTarget, EntityEdit, type RulesetScope, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Entities, Modifiers, type RulesetEntityType } from "@/server/repositories/index.ts";
@@ -11,16 +11,9 @@ import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.
 import { getActivityName } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
 
-/**
- * The entity row a progression's save writes: the ruleset's own, or the copy of an inherited one, and what it copied.
- */
+/** The entity row a progression's save writes (`EntityEdit`'s target), and its token. */
 interface TargetOwner {
-  /**
-   * The entity was copied: its owned entities' modifiers are their sources' copies, by their sources' ids (`copiedIds`)
-   */
-  copied: boolean;
-  copiedIds: ReadonlyMap<string, string>;
-  id: string;
+  target: EditTarget;
   updatedAt: string;
 }
 
@@ -47,29 +40,25 @@ export function Progressions<B extends Constructor>(Base: B) {
       if (!target.copied) await EntityEdit.lock(tx, target.id, gone.owner);
       const row = await Entities.findOne(tx, { entityType: type, id: target.id });
       if (!row) throw new NotFoundError(gone.owner);
-      return { copied: target.copied, copiedIds: target.copiedIds, id: target.id, updatedAt: row.updatedAt };
+      return { target, updatedAt: row.updatedAt };
     }
 
     /**
      * Writes each owned entity a progression's save changes on the target owner's of its place on its track (a copy's
-     * own, once the owner was copied): its `updatedAt` moved, refused when stale (`tokens`: the entity the client read;
-     * a copy's take no check), its form's edit, and its modifiers, those it drops (their copies', on a copy: refused
-     * when one is gone since) and those it adds. Answers the entities it wrote, by their ids.
+     * own, once the owner was copied: `EditTarget.findOwned`): its `updatedAt` moved, refused when stale (`tokens`: the
+     * entity the client read; a copy's take no check), its form's edit, and its modifiers, those it drops (their
+     * copies', on a copy: refused as not found when one is gone since the view was read,
+     * `EditTarget.resolveCustomizations`) and those it adds. Answers the entities it wrote, by their ids.
      */
     private async writeOwned(
       tx: Db,
       scope: RulesetScope,
-      target: TargetOwner,
+      target: EditTarget,
       plan: ProgressionPlan,
       tokens: ReadonlyMap<string, string>,
     ) {
       const { ownedType } = plan;
-      const idByPosition = new Map(
-        (await Entities.findPositions(tx, { entityType: ownedType, ownerIds: [target.id] })).map((owned) => [
-          owned.position,
-          owned.id,
-        ]),
-      );
+      const idByPosition = await target.findOwned(tx, ownedType);
       const removedIds: string[] = [];
       const added: Parameters<typeof Modifiers.createMany>[1] = [];
       const writtenIds: string[] = [];
@@ -89,9 +78,8 @@ export function Progressions<B extends Constructor>(Base: B) {
       }
 
       // The owned entities' modifiers at once: those dropped (their copies', on a copy), then those added
-      const ids = removedIds.flatMap((id) => (target.copied ? (target.copiedIds.get(id) ?? []) : [id]));
-      const removed = ids.length > 0 ? await Modifiers.delete(tx, { ids }) : [];
-      if (removed.length !== removedIds.length) throw new ConflictError(STALE_ENTITY_MESSAGE);
+      const ids = await target.resolveCustomizations(tx, "modifier", removedIds);
+      if (ids.length > 0) await Modifiers.delete(tx, { ids });
       if (added.length > 0) await Modifiers.createMany(tx, added);
       return writtenIds;
     }
@@ -126,7 +114,7 @@ export function Progressions<B extends Constructor>(Base: B) {
             const unchanged = { entityId: plan.owner.id, ownedIds: [] as string[], updatedAt: plan.owner.updatedAt };
             if (plan.owned.length === 0) return unchanged;
 
-            const target = await this.targetOwner(tx, scope, type, plan);
+            const { target, updatedAt } = await this.targetOwner(tx, scope, type, plan);
             const ownedIds = await this.writeOwned(tx, scope, target, plan, tokens);
 
             await createActivityWithNotifications(tx, {
@@ -137,7 +125,7 @@ export function Progressions<B extends Constructor>(Base: B) {
               data: plan.activity,
             });
 
-            return { entityId: target.id, ownedIds, updatedAt: target.updatedAt };
+            return { entityId: target.id, ownedIds, updatedAt };
           }),
       );
       RulesetViews.invalidate(rulesetId);

@@ -441,7 +441,8 @@ lock before removing child rows. Requirements on modifiers lock the modifier's
 owner; class levels lock their class. After waiting, sources are checked again so a
 deleted modifier or level cannot receive a new customization, and the modifier
 or requirement being edited is re-read so one deleted meanwhile is reported as
-missing (404) for both kinds. Ordinary reads
+missing (404) for both kinds, and so is a modifier a class's progression save
+drops (`EditTarget.resolveCustomizations`). Ordinary reads
 do not take these locks, and different owners can be edited independently.
 
 First COW copies retain the fork/source advisory lock and hold a shared row lock

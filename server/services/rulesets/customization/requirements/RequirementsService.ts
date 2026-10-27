@@ -103,7 +103,7 @@ class RequirementsService {
             .planDelete(requirementId);
 
           const edit = new CustomizationEdit(ruleset, rulesetData.cow);
-          const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await edit.cowCustomization(
+          const { customization, resolvedEntityId } = await edit.cowCustomization(
             tx,
             entityType,
             entity.id,
@@ -111,7 +111,7 @@ class RequirementsService {
             requirementId,
           );
 
-          const rows = await Requirements.delete(tx, { id: resolvedRequirementId });
+          const rows = await Requirements.delete(tx, { id: customization.id });
           const deletedRequirement = rows[0];
 
           await createActivityWithNotifications(tx, {
@@ -156,7 +156,7 @@ class RequirementsService {
 
           // COW the owning entity if this requirement is inherited
           const edit = new CustomizationEdit(ruleset, rulesetData.cow);
-          const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await edit.cowCustomization(
+          const { customization, resolvedEntityId } = await edit.cowCustomization(
             tx,
             entityType,
             entity.id,
@@ -164,13 +164,13 @@ class RequirementsService {
             requirementId,
           );
 
-          const expectedUpdatedAt = resolvedRequirementId === requirementId ? body.updatedAt : undefined;
+          const expectedUpdatedAt = customization.id === requirementId ? body.updatedAt : undefined;
           await this.refuseTakenLevel(tx, entityType, resolvedEntityId, row.level, {
-            id: resolvedRequirementId,
+            id: customization.id,
             expectedUpdatedAt,
           });
 
-          const rows = await Requirements.update(tx, row, { id: resolvedRequirementId, expectedUpdatedAt });
+          const rows = await Requirements.update(tx, row, { id: customization.id, expectedUpdatedAt });
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
           const updatedRequirement = rows[0];

@@ -1,0 +1,70 @@
+import type { Db } from "@/drizzle/database.ts";
+import { NotFoundError } from "@/server/errors/index.ts";
+import { Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
+
+/** A customization's kind, which its rows are read by. */
+export type CustomizationKind = keyof typeof CUSTOMIZATION_REPOS;
+
+/** Each customization kind's repository: what a change to an entity's customization reads its rows through. */
+const CUSTOMIZATION_REPOS = {
+  requirement: Requirements,
+  modifier: Modifiers,
+} as const;
+
+/**
+ * The row a write to a ruleset's entity changes (`id`), as copy-on-write resolved the entity the write named
+ * (`namedId`): the ruleset's own, or the copy of an inherited one this call made (`EntityEdit`), with the ids of what it
+ * copied with it, by their sources' (`copiedIds`: its owned entities' and its customizations'). What a write needs of a
+ * copy it asks the target: the entities it owns by their places (`findOwned`), a customization's row
+ * (`customization`, several at once: `resolveCustomizations`).
+ */
+export default class EditTarget {
+  constructor(
+    readonly id: string,
+    private readonly namedId: string,
+    readonly copiedIds?: ReadonlyMap<string, string>,
+  ) {}
+
+  /** Whether this call copied the row: an inherited entity's first edit. */
+  get copied(): boolean {
+    return this.copiedIds !== undefined;
+  }
+
+  /**
+   * The row a customization of the entity (`customizationId`, of `kind`) changes, as a target of its own: its copy
+   * when this call copied the entity, or itself, which must still exist (`resolveCustomizations`).
+   */
+  async customization(tx: Db, kind: CustomizationKind, customizationId: string): Promise<EditTarget> {
+    const [id] = await this.resolveCustomizations(tx, kind, [customizationId]);
+    return new EditTarget(id, customizationId, this.copiedIds);
+  }
+
+  /**
+   * The entities of a type the row owns (`entityType`: a class's levels), each id by its place on its owner's track:
+   * a copy's are its source's copies, place for place.
+   */
+  async findOwned(tx: Db, entityType: string): Promise<ReadonlyMap<number, string>> {
+    const owned = await Entities.findPositions(tx, { entityType, ownerIds: [this.id] });
+    return new Map(owned.map(({ id, position }) => [position, id]));
+  }
+
+  /**
+   * The rows customizations of the entity, or of what it owns (`customizationIds`, of `kind`, as the view shows them),
+   * change, in their order: their copies, by the ids this call recorded as it copied the entity (equal values aren't
+   * unique), or themselves, which must still exist. Refused as not found when one was deleted since the view was read,
+   * or when the write named the entity by another row's id.
+   */
+  async resolveCustomizations(tx: Db, kind: CustomizationKind, customizationIds: string[]): Promise<string[]> {
+    if (this.id !== this.namedId) {
+      return customizationIds.map((customizationId) => {
+        const copiedId = this.copiedIds?.get(customizationId);
+        if (!copiedId) throw new NotFoundError(`Copied ${kind} not found`);
+        return copiedId;
+      });
+    }
+    if ((await CUSTOMIZATION_REPOS[kind].count(tx, { ids: customizationIds })) !== new Set(customizationIds).size)
+      throw new NotFoundError("Customization source no longer exists; refresh the entity");
+
+    return customizationIds;
+  }
+}

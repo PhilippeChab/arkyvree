@@ -1,4 +1,4 @@
-import { eq, type InferInsertModel } from "drizzle-orm";
+import { eq, inArray, type InferInsertModel } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import type { modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
@@ -15,11 +15,17 @@ const CustomizationBase = include(BaseRepository, ChecksExistence, GuardsStaleEd
 
 /**
  * A customization's repository (a modifier's, a requirement's): the writes every customization's service
- * makes the same way, on its own table. Each reads its own way, and deletes its own (a modifier takes its requirements).
+ * makes the same way, on its own table, and how many of the rows it's given exist. Each reads its own way, and deletes its own (a modifier takes its requirements).
  */
 abstract class CustomizationRepository<T extends CustomizationTable> extends CustomizationBase<T> {
   // Through the concerns, `table` reads as `Table & T`: its own type is T.
   declare protected readonly table: T;
+
+  /** How many of the rows `ids` names exist. */
+  async count(db: Db, where: { ids: string[] }) {
+    if (where.ids.length === 0) return 0;
+    return await db.$count(this.table, inArray(this.table.id, where.ids));
+  }
 
   async create(db: Db, values: InferInsertModel<T>) {
     return await db.insert(this.table).values(values).returning();

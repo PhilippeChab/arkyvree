@@ -3,18 +3,8 @@ import { type CowData, Engine, type RulesetSources } from "@/engine/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Entities, type RulesetEntityType } from "@/server/repositories/index.ts";
 
+import EditTarget from "./EditTarget.ts";
 import EntityCopy from "./EntityCopy.ts";
-
-/**
- * The row a write to a ruleset's entity changes, and whether it's a copy this call made: a copy takes no stale-edit
- * check (the client's `updatedAt` is its source's), and what its owned entities' and customizations' ids became
- * (`copiedIds`, by their source's).
- */
-export interface EditTarget {
-  copied: boolean;
-  copiedIds: ReadonlyMap<string, string>;
-  id: string;
-}
 
 /**
  * What a write refuses an entity it can't find with, in its own words (an entity's, a customization's source): one the
@@ -24,11 +14,6 @@ export interface EditTarget {
 export interface NotFoundMessages {
   gone: string;
   missing: string;
-}
-
-/** What a write that copied nothing targets: the ruleset's own row. */
-function own(id: string): EditTarget {
-  return { id, copied: false, copiedIds: new Map() };
 }
 
 /**
@@ -53,6 +38,15 @@ export default class EntityEdit {
   }
 
   /**
+   * The copy of an inherited entity (`entityId`, of `entityType`), made on its first edit, as the target of a write that
+   * named it `namedId`: with what it copied.
+   */
+  private async copy(tx: Db, entityType: RulesetEntityType, entityId: string, namedId: string): Promise<EditTarget> {
+    const copy = await EntityCopy.create(tx, entityType, entityId, this.ruleset);
+    return new EditTarget(copy.entity.id, namedId, copy.copiedIds);
+  }
+
+  /**
    * The row a write to the entity the view shows for an id changes (`entityId`, of `entityType`), resolved through the
    * view: the ruleset's own, locked, or the copy of an inherited one; an owned entity's on its owner's (`cowOwned`).
    * Refused as not found, in the write's words (`notFound`: a customization's source's, an entity's), when the view
@@ -69,13 +63,12 @@ export default class EntityEdit {
 
     if (entity.rulesetId === this.ruleset.id) {
       await EntityEdit.lock(tx, entity.id, notFound.gone);
-      return own(entity.id);
+      return new EditTarget(entity.id, entityId);
     }
     // Not from the source chain
     if (!this.cow.sourceChain.includes(entity.rulesetId)) throw new NotFoundError(notFound.missing);
 
-    const copy = await EntityCopy.create(tx, type, entity.id, this.ruleset);
-    return { id: copy.entity.id, copied: true, copiedIds: copy.copiedIds };
+    return await this.copy(tx, type, entity.id, entityId);
   }
 
   /**
@@ -103,18 +96,17 @@ export default class EntityEdit {
       await EntityEdit.lock(tx, owner.id, notFound.gone);
       if (!(await Entities.findOne(tx, { entityType, id: owned.id }))) throw new NotFoundError(notFound.gone);
 
-      return own(owned.id);
+      return new EditTarget(owned.id, ownedId);
     }
     // Not from the source chain
     if (!this.cow.sourceChain.includes(ownerRulesetId)) throw new NotFoundError(notFound.missing);
 
     // Copy the owner (it copies what it owns), and find the owned entity's copy by its position: owned entities aren't
     // snapshotted one by one
-    const copy = await EntityCopy.create(tx, ownerType, owner.id, this.ruleset);
-    const copies = await Entities.findPositions(tx, { entityType, ownerIds: [copy.entity.id] });
-    const ownedCopy = copies.find((candidate) => candidate.position === owned.position);
-    if (!ownedCopy) throw new NotFoundError("Copied owned entity not found");
-    return { id: ownedCopy.id, copied: true, copiedIds: copy.copiedIds };
+    const copy = await this.copy(tx, ownerType, owner.id, owner.id);
+    const ownedCopyId = (await copy.findOwned(tx, entityType)).get(owned.position);
+    if (!ownedCopyId) throw new NotFoundError("Copied owned entity not found");
+    return new EditTarget(ownedCopyId, ownedId, copy.copiedIds);
   }
 
   /**
@@ -142,8 +134,7 @@ export default class EntityEdit {
     entityType: RulesetEntityType,
     entity: { id: string; rulesetId: string },
   ): Promise<EditTarget> {
-    if (entity.rulesetId === this.ruleset.id) return own(entity.id);
-    const copy = await EntityCopy.create(tx, entityType, entity.id, this.ruleset);
-    return { id: copy.entity.id, copied: true, copiedIds: copy.copiedIds };
+    if (entity.rulesetId === this.ruleset.id) return new EditTarget(entity.id, entity.id);
+    return await this.copy(tx, entityType, entity.id, entity.id);
   }
 }
