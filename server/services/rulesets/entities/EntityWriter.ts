@@ -272,7 +272,7 @@ export default class EntityWriter {
     session: Session,
     rulesetId: string,
     plan: (scope: RulesetScope) => OwnedPlanned<P>,
-  ): Promise<ReturnType<P["describe"]>> {
+  ) {
     return await EntityWriter.inScope(rulesetId, async (tx, scope) => {
       const { ruleset, rulesetData } = scope;
       (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
@@ -283,7 +283,7 @@ export default class EntityWriter {
       await EntityWriter.setParts(tx, scope, { entityId: row.id, entityType: type }, planned, false);
 
       await EntityWriter.recordActivity(tx, session, "create", type, row.id, planned.activity);
-      return planned.describe(row, await EntityLinks.findOwn(tx, row.id)) as ReturnType<P["describe"]>;
+      return planned.describe(row, await EntityLinks.findOwn(tx, row.id));
     });
   }
 
@@ -393,7 +393,7 @@ export default class EntityWriter {
     rulesetId: string,
     updatedAt: string | undefined,
     plan: (scope: RulesetScope) => OwnedPlanned<P>,
-  ): Promise<ReturnType<P["describe"]>> {
+  ) {
     return await EntityWriter.inScope(rulesetId, async (tx, scope) => {
       const { ruleset, rulesetData } = scope;
       (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
@@ -407,7 +407,7 @@ export default class EntityWriter {
         ...planned.activity,
         changedFields: planned.changes,
       });
-      return planned.describe(row, await EntityLinks.findOwn(tx, target.id)) as ReturnType<P["describe"]>;
+      return planned.describe(row, await EntityLinks.findOwn(tx, target.id));
     });
   }
 }
