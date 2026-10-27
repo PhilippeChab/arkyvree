@@ -9,7 +9,7 @@ import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tes
 import { postCampaign } from "@/tests/support/campaigns.ts";
 import { notesOf } from "@/tests/support/characters.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
-import { postCharacter } from "@/tests/support/dnd3.5/characters.ts";
+import { createTestCharacter, postCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { addCharacterLevel, findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { queuedPdfJobs, silentJobHelpers } from "@/tests/support/jobs.ts";
@@ -162,6 +162,20 @@ describe("campaigns characters", () => {
     expect(await response.json()).toMatchObject({
       message: "Only characters built on the campaign's ruleset can be linked",
     });
+  });
+
+  test("answers a non-member's link as it answers an unknown campaign, an archived campaign's too", async () => {
+    const { campaignId } = await setup();
+    const outsider = await createSignedInUser("outsider");
+    const characterId = (await createTestCharacter(outsider.user.id)).id;
+    const theirs = outsider.api.api.campaigns[":id"].characters;
+    const linkTo = (id: string) => expectStatus(theirs.$post({ param: { id }, json: { characterId } }), 404);
+
+    const unknown = await (await linkTo(NIL_UUID)).text();
+    expect(await (await linkTo(campaignId)).text()).toBe(unknown);
+    await expectOk(api.api.campaigns[":id"].$delete({ param: { id: campaignId } }));
+    expect(await (await linkTo(campaignId)).text()).toBe(unknown);
+    expect(await PlayerCharacters.findOne(db, { characterId })).toBeUndefined();
   });
 
   test("refuses to link the same character twice", async () => {

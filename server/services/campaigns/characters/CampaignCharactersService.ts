@@ -212,7 +212,7 @@ class CampaignCharactersService {
     const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
     if (!campaign) throw new NotFoundError("Campaign not found");
 
-    (await CampaignsPolicy.for(db, session, campaign)).canListLinkableCharacters();
+    (await CampaignsPolicy.for(db, session, campaign)).canLinkCharacter();
 
     return await Characters.findUnlinkedPage(
       db,
@@ -226,13 +226,7 @@ class CampaignCharactersService {
       const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
       if (!campaign) throw new NotFoundError("Campaign not found");
 
-      (await CampaignsPolicy.for(tx, session, campaign)).canModify();
-
-      const player = await Players.findOne(tx, {
-        campaignId,
-        userId: session.userId,
-      });
-      if (!player) throw new NotFoundError("Player not found in this campaign");
+      const player = (await CampaignsPolicy.for(tx, session, campaign)).canLinkCharacter();
 
       const character = await Characters.findOne(tx, { id: characterId, userId: session.userId });
       if (!character) throw new NotFoundError("Character not found");

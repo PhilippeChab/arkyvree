@@ -48,11 +48,11 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
   }
 
   /**
-   * Listing the characters the session could link to the campaign: what linking one takes, its seat in a campaign that
-   * isn't archived (`canModify`). Whoever may not read the campaign gets the 404 an unknown campaign gets, so neither its
-   * existence nor its ruleset shows.
+   * Linking a character to the campaign, and listing those the session could link: its seat (returned), in a campaign
+   * that isn't archived (`canModify`). Whoever has no seat gets the 404 an unknown campaign gets, so these two answer a
+   * non-member neither the campaign's existence nor its ruleset (the campaign's other reads still answer them 403).
    */
-  canListLinkableCharacters() {
+  canLinkCharacter() {
     if (!this.player) throw new NotFoundError("Campaign not found");
     this.canModify();
     return this.player;

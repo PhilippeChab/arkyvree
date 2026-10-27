@@ -66,12 +66,18 @@ describe("CampaignCharactersService", () => {
       },
     );
 
-    test("refuses a non-member", async () => {
+    test("refuses a non-member as it refuses an unknown campaign", async () => {
       const { user } = await createTestUser();
       const { campaign } = await createTestCampaign(user.id);
       const { user: other } = await createTestUser();
       const character = await createTestCharacter(other.id);
-      expect(link(other.id, campaign.id, character.id)).rejects.toThrow(NotFoundError);
+
+      const refusals = [];
+      for (const campaignId of [campaign.id, NIL_UUID])
+        refusals.push(await link(other.id, campaignId, character.id).catch((error: unknown) => error));
+      expect(refusals[0]).toBeInstanceOf(NotFoundError);
+      expect(refusals[0]).toEqual(refusals[1]);
+      expect(refusals[0]).toMatchObject({ message: "Campaign not found" });
     });
 
     test("links a character to one campaign, once", async () => {
