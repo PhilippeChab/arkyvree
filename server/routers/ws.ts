@@ -1,8 +1,7 @@
 import { Hono } from "hono";
 import { upgradeWebSocket } from "hono/bun";
 
-import { UnauthorizedError } from "@/server/errors/index.ts";
-import { findRequestSession, getSessionCookie } from "@/server/middlewares/index.ts";
+import { findSignedIn, getSessionCookie } from "@/server/middlewares/index.ts";
 import { BUILD_ID, Connections } from "@/server/websockets/index.ts";
 
 export default new Hono().get(
@@ -13,10 +12,7 @@ export default new Hono().get(
     return {
       async onOpen(_event, ws) {
         // The session a request takes, refused as a request's is (an expired demo user's among them)
-        const signedIn = await findRequestSession(getSessionCookie(c)).catch((error: unknown) => {
-          if (error instanceof UnauthorizedError) return null;
-          throw error;
-        });
+        const signedIn = await findSignedIn(getSessionCookie(c));
         if (!signedIn) {
           ws.close(4001, "Unauthorized");
           return;

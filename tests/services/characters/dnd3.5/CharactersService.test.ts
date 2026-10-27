@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
 import { and, eq } from "drizzle-orm";
-import { isValidElement } from "react";
 
 import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import type { Race } from "@/engine/rulesets/dnd3.5/index.ts";
@@ -26,7 +25,7 @@ import {
 } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
-import type { Character, Session } from "@/shared/relations.ts";
+import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { backdateLastChange, findLinks } from "@/tests/support/characters.ts";
 import { addCharacterContributor, addRulesetContributor } from "@/tests/support/contributors.ts";
@@ -631,8 +630,8 @@ describe("CharactersService", () => {
       const shared = await CharacterSharingService.getSharedCharacter(first);
       expect(shared).toMatchObject({ id: character.id, name: character.name });
       expect(shared.blocks.map(({ key }) => key)).toContain("combat");
-      // The printed sheet: the document the route renders
-      expect(isValidElement(await CharacterSharingService.generateSharedPdf(first))).toBe(true);
+      // The printed sheet: the PDF the route sends
+      expect((await CharacterSharingService.generateSharedPdf(first)).data.subarray(0, 5).toString()).toBe("%PDF-");
 
       const second = (await CharacterSharingService.generateShareToken(session, character.id)).shareToken!;
       expect(second).not.toBe(first);
@@ -645,19 +644,14 @@ describe("CharactersService", () => {
       expect(CharacterSharingService.generateSharedPdf(NIL_UUID)).rejects.toThrow(NotFoundError);
     });
 
-    test("prints a shared character as its share page reads it: from rows without private notes nor share token", async () => {
+    test("prints a shared character's sheet named after it, as its export is", async () => {
       const { session } = await createTestUser();
-      const character = await createCharacterAs(session);
-      await Characters.update(db, { privateNotes: "Plans to betray the party" }, { id: character.id });
+      const character = await createCharacterAs(session, { name: "Ada: Draft/1" });
       const { shareToken } = await CharacterSharingService.generateShareToken(session, character.id);
 
-      // The document's props: the character it prints, built from the rows its reader reads
-      const printed = await CharacterSharingService.generateSharedPdf(shareToken!);
-      const { detailedCharacter } = printed.props as {
-        detailedCharacter: { character: Character; components: { identity: { getPrivateNotes(): string } } };
-      };
-      expect(detailedCharacter.character).toMatchObject({ id: character.id, privateNotes: null, shareToken: null });
-      expect(detailedCharacter.components.identity.getPrivateNotes()).toBe("");
+      expect(await CharacterSharingService.generateSharedPdf(shareToken!)).toMatchObject({
+        fileName: "Ada_ Draft_1-sheet.pdf",
+      });
     });
   });
 

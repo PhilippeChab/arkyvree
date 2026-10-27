@@ -114,12 +114,12 @@ function GroupRow({
             <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
               <ExpandArrow open={isExpanded} />
               <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {row.displayName}
+                {row.name}
               </Typography>
             </Stack>
           </DataCell>
           <DataCell slot="trailing">
-            <CountChip label={formatCount(row.variantCount, "variant")} />
+            <CountChip label={formatCount(row.count, "variant")} />
           </DataCell>
         </DataRow>
         {isExpanded && variantQuery.isLoading && (
@@ -173,12 +173,12 @@ function GroupRow({
   // A row of one entity opens it
   return (
     <DataRow
-      {...clickableProps(() => onRowClick({ id: row.representativeId }))}
-      {...prefetchProps({ id: row.representativeId })}
+      {...clickableProps(() => onRowClick({ id: row.id }))}
+      {...prefetchProps({ id: row.id })}
       sx={[CLICKABLE_ROW_SX, fadeInUpSx(animationIndex, animationOffset)]}
     >
       <DataCell slot="primary">
-        <Typography variant="body2">{row.displayName}</Typography>
+        <Typography variant="body2">{row.name}</Typography>
       </DataCell>
       <DataCell slot="hidden">
         <EmptyValue />
@@ -215,10 +215,10 @@ export function EntityGroupsTable({
     >
       <DataTable framed columns={GROUPED_COLUMNS} containerSx={TABLE_CONTAINER_SX} minWidth={TABLE_MIN_WIDTH}>
         {groups.items.map((row, index) => {
-          const family = row.variantCount > 1 ? row.group : null;
+          const family = row.count > 1 ? row.group : null;
           return (
             <GroupRow
-              key={row.group ?? row.representativeId}
+              key={row.group ?? row.id}
               row={row}
               rulesetId={rulesetId}
               entityType={kind.type}

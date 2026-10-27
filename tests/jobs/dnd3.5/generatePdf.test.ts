@@ -23,15 +23,15 @@ describe("generatePdf", () => {
     async (name) => {
       const character = await findSeededCharacter(name);
       await generatePdfTask(
-        { userId: SEED_USER_ID, characterId: character.id, characterName: `${name}: Draft/1` },
+        { userId: SEED_USER_ID, characterId: character.id, characterName: `${name} (renamed since)` },
         silentJobHelpers,
       );
 
       const [ready] = await notificationsOf(SEED_USER_ID, "pdfReady");
       expect(ready).toMatchObject({ targetType: "exports", data: { characterId: character.id } });
       const pdf = await Exports.findOne(db, { id: ready.targetId, userId: SEED_USER_ID });
-      // A file name keeps no path separator or colon.
-      expect(pdf).toMatchObject({ type: "pdf", mimeType: "application/pdf", fileName: `${name}_ Draft_1-sheet.pdf` });
+      // Named after the character it prints, as a shared sheet is, not by the name it was queued under
+      expect(pdf).toMatchObject({ type: "pdf", mimeType: "application/pdf", fileName: `${name}-sheet.pdf` });
       expect(Buffer.from(pdf!.data).subarray(0, 5).toString()).toBe("%PDF-");
       expect(new Date(pdf!.expiresAt).getTime()).toBeGreaterThan(Date.now());
     },

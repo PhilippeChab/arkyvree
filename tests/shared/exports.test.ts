@@ -11,5 +11,7 @@ describe("a sheet's file name", () => {
   test("names a character without a name, and cuts a long name short", () => {
     expect(formatSheetFileName("")).toBe("character-sheet.pdf");
     expect(formatSheetFileName("a".repeat(300))).toBe(`${"a".repeat(200)}-sheet.pdf`);
+    // An emoji is two UTF-16 units: the cut keeps it whole, or leaves it out
+    expect(formatSheetFileName(`${"a".repeat(199)}😀 rest`)).toBe(`${"a".repeat(199)}😀-sheet.pdf`);
   });
 });
