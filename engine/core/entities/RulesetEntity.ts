@@ -211,16 +211,23 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
   /**
    * What a form writes (its row: its name and its description, `storedOf`, and its fields and single links,
    * `fieldsWrite`), and what its save answers once written (`describe`: its record, its fields as a read gives them,
-   * the links a read describes of it named, `savedLinks`, `nameLinks`).
+   * the links a read describes of it named, `savedLinks`, `nameLinks`, each naming its targets by the ids the view
+   * keys them by, a copy's where the ruleset copied one after the link was written).
    */
   private planWrite(body: FormBody, given: PartialFieldValues<S>, entity?: ViewKinds[K]): EntityCreatePlan {
     const row = this.storedOf(body);
     const written = this.fieldsWrite(body, given, entity);
+    const { cow } = this.rulesetData;
+    const resolve = (link: ViewLink): ViewLink => ({
+      ...link,
+      toId: cow.resolve(link.toId),
+      viaId: link.viaId === null ? null : cow.resolve(link.viaId),
+    });
     return {
       describe: (saved, links) => ({
         ...saved,
         fields: this.fields.readByField(this.rulesetData.withInheritedFields(this.type, saved)),
-        links: this.nameLinks(this.savedLinks(saved, links)),
+        links: this.nameLinks(this.savedLinks(saved, links.map(resolve))),
       }),
       links: this.linksOf(body),
       row: written ? { ...row, fields: written.fields, links: written.links } : row,

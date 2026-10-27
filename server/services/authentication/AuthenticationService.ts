@@ -17,7 +17,7 @@ import {
   Visibility,
 } from "@/server/repositories/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { Session, User } from "@/shared/relations.ts";
 
 import { openSession, purgeDemoSessionUser, signInAsGoogleAccount, toSafeUser } from "./accounts.ts";
 import { createCode, hasRecentCode, verifyCode } from "./codes.ts";
@@ -190,19 +190,15 @@ class AuthenticationService {
     return { user };
   }
 
-  // Returns an existing valid demo session if `existingSessionId` is one;
-  // otherwise mints a fresh demo user + session. Cleanup of expired demo
-  // users happens out-of-band via the runCleanup cron task.
-  async startDemo(existingSessionId?: string) {
-    if (existingSessionId) {
-      const session = await Sessions.findOne(db, { id: existingSessionId });
-      if (session && new Date(session.expiresAt) >= new Date()) {
-        const user = await Users.findOne(db, { id: session.userId });
-        if (user && !user.expiresAt) throw new BadRequestError("Already signed in");
-
-        if (user?.expiresAt && new Date(user.expiresAt) >= new Date())
-          return { session, user: toSafeUser(user), reused: true as const };
-      }
+  /**
+   * The demo of a browser `signedIn` (`findRequestSession`'s answer, null when it's signed out): its own demo session
+   * when it's in one, refused when it's a real user's, else a fresh demo user and session. Expired demo users are the
+   * runCleanup cron task's to delete.
+   */
+  async startDemo(signedIn: { session: Session; user: User } | null = null) {
+    if (signedIn) {
+      if (!signedIn.user.expiresAt) throw new BadRequestError("Already signed in");
+      return { session: signedIn.session, user: toSafeUser(signedIn.user), reused: true as const };
     }
 
     return await withTransaction(async (tx) => {

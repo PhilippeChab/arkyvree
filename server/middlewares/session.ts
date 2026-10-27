@@ -62,6 +62,14 @@ export async function findRequestSession(sessionId: string | undefined): Promise
   return { session, user };
 }
 
+/** `findRequestSession`'s answer, or null where it refuses: for a route that also serves a signed-out visitor. */
+export async function findSignedIn(sessionId: string | undefined) {
+  return await findRequestSession(sessionId).catch((error: unknown) => {
+    if (error instanceof UnauthorizedError) return null;
+    throw error;
+  });
+}
+
 export default createMiddleware<SessionContext>(async (c, next) => {
   const { session, user } = await findRequestSession(getSessionCookie(c));
 
