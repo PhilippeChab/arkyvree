@@ -136,6 +136,31 @@ describe("EntitiesService: spells", () => {
       expect(await listingsOf(spell.id)).toEqual([]);
     });
 
+    test("an edit answers a list its fork copied after the spell was listed on it as the copy, as its page does", async () => {
+      const {
+        user,
+        session,
+        ruleset: parent,
+        aptitudeIds: [wizard],
+      } = await createTestUserAndRuleset(APTITUDES);
+      const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+      const spell = await EntitiesService.createEntity(session, fork.id, "spells", {
+        name: "Zap",
+        links: { listedIn: [{ toId: wizard, tier: 1 }] },
+      });
+      const copy = await EntitiesService.updateEntity(session, fork.id, "aptitudes", wizard, { name: "Mage" });
+
+      // Its stored list is the original, which its view reads as the fork's copy
+      const edited = await EntitiesService.updateEntity(session, fork.id, "spells", spell.id, {
+        name: "Zap",
+        description: "Renamed list",
+      });
+      expect(edited.links).toEqual([
+        expect.objectContaining({ role: "listedIn", toId: copy.id, toName: "Mage", tier: 1 }),
+      ]);
+      expect(edited.links).toEqual((await EntitiesService.getEntity(session, fork.id, "spells", spell.id)).links);
+    });
+
     test("links a spell to the lists it names only: a school's specialist list as a domain's", async () => {
       // A new evocation spell on the wizard's list is on the evocation specialist's only when it names it
       const { user, session } = await createTestUser();
