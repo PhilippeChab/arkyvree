@@ -112,7 +112,8 @@ export default class EntityEdit {
     // snapshotted one by one
     const copy = await this.copy(tx, ownerType, owner.id, owner.id, notFound.gone);
     const ownedCopyId = (await copy.findOwned(tx, entityType)).get(owned.position);
-    if (!ownedCopyId) throw new NotFoundError("Copied owned entity not found");
+    // Another write copied the owner and deleted this one since the view was read
+    if (!ownedCopyId) throw new NotFoundError(notFound.gone);
     return new EditTarget(ownedCopyId, ownedId, copy.copiedIds);
   }
 

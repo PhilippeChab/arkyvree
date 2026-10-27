@@ -21,7 +21,8 @@ export const GONE_CUSTOMIZATION = "Customization source no longer exists; refres
  * The row a write to a ruleset's entity changes (`id`), as copy-on-write resolved the entity the write named
  * (`namedId`): the ruleset's own, or the copy of an inherited one (`EntityEdit`). A copy this call made holds the ids of
  * what it copied with it, by their sources' (`copiedIds`: its owned entities' and its customizations'); a copy another
- * write made since this one's view was read holds none, and is checked as the ruleset's own. What a write needs of a
+ * write made since this one's view was read holds none, and its token is checked as the ruleset's own row's: stale when
+ * the copy's row changed since its source's the client read. What a write needs of a
  * copy it asks the target: the token to check the row by (`expected`), the entities it owns by their places
  * (`findOwned`), a customization's row (`customization`, several at once: `resolveCustomizations`).
  */
@@ -39,7 +40,9 @@ export default class EditTarget {
 
   /**
    * The token a write checks the row by: the client's (`updatedAt`), or none on a copy this call made, whose token was
-   * its source's. A copy another write made is checked: the client's token, its source's, is stale on it.
+   * its source's. A copy another write made is checked by it: the client's token is its source's, stale when the
+   * copy's row changed since (an entity's copy, stamped as it's made, always; an owned entity's copy, which keeps its
+   * source's times, once it's written).
    */
   expected(updatedAt: string | undefined): string | undefined {
     return this.copied ? undefined : updatedAt;
