@@ -1,5 +1,4 @@
 import type { Db } from "@/drizzle/database.ts";
-import { Engine } from "@/engine/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
@@ -59,7 +58,7 @@ class CharacterContributorsService {
     pagination: Pagination,
   ) {
     const character = await Characters.findOne(db, { id: characterId }, Visibility.All);
-    if (!character || !Engine.storage().isPlayerKind(character.kind)) throw new NotFoundError("Character not found");
+    if (!character) throw new NotFoundError("Character not found");
 
     (await CharactersPolicy.for(db, session, character)).canReadContributors();
 
@@ -84,11 +83,9 @@ class CharacterContributorsService {
   async inviteContributor(session: Session, characterId: string, email: string) {
     const { contributor, emailData } = await withTransaction(async (tx) => {
       const character = await Characters.findOne(tx, { id: characterId }, Visibility.All);
-      if (!character || !Engine.storage().isPlayerKind(character.kind)) throw new NotFoundError("Character not found");
+      if (!character) throw new NotFoundError("Character not found");
 
-      (await CharactersPolicy.for(tx, session, character)).canManageContributors();
-
-      if (character.deletedAt) throw new ConflictError("Cannot invite a contributor to an archived character");
+      (await CharactersPolicy.for(tx, session, character)).canInviteContributors();
 
       const user = await Users.findOne(tx, { emailAddress: email });
 
@@ -145,7 +142,9 @@ class CharacterContributorsService {
   async leaveCharacter(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
       const character = await Characters.findOne(tx, { id: characterId }, Visibility.All);
-      if (!character || !Engine.storage().isPlayerKind(character.kind)) throw new NotFoundError("Character not found");
+      if (!character) throw new NotFoundError("Character not found");
+
+      (await CharactersPolicy.for(tx, session, character)).canReadContributors();
 
       const contributor = await CharacterContributors.findOne(tx, {
         characterId,
@@ -182,12 +181,13 @@ class CharacterContributorsService {
   async revokeContributor(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
       const contributor = await CharacterContributors.findOne(tx, { id: contributorId });
-      if (!contributor) throw new NotFoundError("Contributor not found");
+      const character = contributor && (await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All));
+      const policy = character && (await CharactersPolicy.for(tx, session, character));
+      // A contributor of a character the session may not read is refused as an unknown one is: the character's
+      // existence isn't revealed
+      if (!contributor || !character || !policy?.isReadable()) throw new NotFoundError("Contributor not found");
 
-      const character = await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All);
-      if (!character) throw new NotFoundError("Character not found");
-
-      (await CharactersPolicy.for(tx, session, character)).canManageContributors();
+      policy.canManageContributors();
 
       if (contributor.status !== "Active" && contributor.status !== "Pending")
         throw new ConflictError("Contributor is not active or pending");

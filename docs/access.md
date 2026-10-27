@@ -1,6 +1,6 @@
 # Access & Authorization
 
-This is the source of truth for who can do what across the app. Every gated mutation goes through one of the policy classes under `server/services/policies/` — services call them, policies throw `ForbiddenError` / `UnprocessableEntityError` / `ConflictError` (and `NotFoundError` where a refusal mustn't reveal the row: `RulesetsPolicy.canRead`, `CampaignsPolicy.canRead`, `CampaignsPolicy.canSeeCharacter`), the throw propagates.
+This is the source of truth for who can do what across the app. Every gated mutation goes through one of the policy classes under `server/services/policies/` — services call them, policies throw `ForbiddenError` / `UnprocessableEntityError` / `ConflictError` (and `NotFoundError` where a refusal mustn't reveal the row: `RulesetsPolicy.canRead`, `CampaignsPolicy.canRead`, `CampaignsPolicy.canSeeCharacter`, `CharactersPolicy.canRead`), the throw propagates.
 
 If you're adding a new mutation, find the matching row below and call the same policy method. If your case isn't covered, extend the policy — don't write inline `userId === session.userId` checks (see "Identity vs. policy" at the bottom).
 
@@ -75,15 +75,25 @@ The character-creation wizard combines `published + campaignAccessible` (and his
 
 ## Characters — `CharactersPolicy`
 
-`CharactersPolicy.for(tx, session, character)` loads whether the session is an active contributor (`contributorsInCharacter`, status `Active`, not deleted). The schema has a `role` column (`Admin | Editor | Viewer`) for parity with ruleset contributors, but `CharacterContributorsService.inviteContributor` always creates rows as `Editor` and `CharactersPolicy` ignores the role — every active contributor has the same effective grant. The column is reserved for future tiering.
+`CharactersPolicy.for(tx, session, character)` loads, for a player character, whether the session is an active contributor (`contributorsInCharacter`, status `Active`, not deleted), and for a child (3.5's bonded creature) whether it edits its parent, a player character archived or not (the parent's own policy's `isEditor`), and whether that parent is archived: a child is its parent's editors', a player character its own editors' alone. The schema has a `role` column (`Admin | Editor | Viewer`) for parity with ruleset contributors, but `CharacterContributorsService.inviteContributor` always creates rows as `Editor` and `CharactersPolicy` ignores the role — every active contributor has the same effective grant. The column is reserved for future tiering.
 
 | Method | Allowed actors |
 |---|---|
-| `canHardDelete({ inActiveCampaign })` | **owner only**, must be archived, must not be linked to an *active* campaign (links to archived campaigns don't block): the service looks the link up. Throws `ConflictError` on active-campaign link. See [persistence.md](./persistence.md#recoverable-user-content) |
-| `canManageContributors` | **owner only** |
-| `canReadContributors` | owner, active contributor |
+| `canRead` | a player character's owner and active contributors (its editors), a child's parent's, archived or not: the character's sheet (`CharactersService.getCharacter`). Anyone else gets `NotFoundError "Character not found"`, the 404 an unknown character gets. `isReadable` answers the same yes or no |
+| `isEditable` | its readers, while neither it nor a child's parent is archived: its sheet's edit, its picks' picker and its PDF export, through `findEditableCharacterOrChild` |
+| `isEditor` | a player character's owner and active contributors, archived or not (a child has none: its own rows are its parent's): its own rows' reads and writes (its levels, scores, inventory, modifiers), through `getEditableCharacter` |
+| `isPortraitEditable` | `isEditable`, and a player character's **owner only** (a child's, any of its parent's editors): its portrait's `isOwner` (below) |
+| `canArchive` | **owner only**, of a player character, archived or not: archive and unarchive. Anyone else, its contributors too, gets the 404 an unknown character gets |
+| `canHardDelete({ inActiveCampaign })` | `canArchive`, must be archived, must not be linked to an *active* campaign (links to archived campaigns don't block): the service looks the link up. Throws `ConflictError` on active-campaign link. See [persistence.md](./persistence.md#recoverable-user-content) |
+| `canShare` | `canArchive`'s owner, while it isn't archived: creating and revoking its share token |
+| `canLink` | `canArchive`'s owner: linking it to a campaign (`CampaignCharactersService.linkCharacter`, after the campaign's own `canLinkCharacter`) |
+| `canReadContributors` | its editors (`isEditor`): listing its contributors, and leaving them (`leaveCharacter`, then an identity match on the session's active row). Anyone else gets the 404 an unknown character gets |
+| `canManageContributors` | `canReadContributors`, then **owner only** (a contributor gets `ForbiddenError`): revoking a contributor |
+| `canInviteContributors` | `canManageContributors`, on a character that isn't archived (`ConflictError`) |
 
-**Editing and archiving aren't policy methods.** `getEditableCharacter(db, session, characterId)` (`server/services/characters/editableCharacter.ts`, over `Characters.findOne(db, { id, editorId })`) returns the character iff the session user can edit it (owner OR active contributor), or a 404, and the write services call it as their first guard so the rest of the function can assume edit rights. A child (3.5's bonded creature) is edited through its parent, a player character by its own editors alone: `findEditableCharacterOrChild(db, characterId, userId, visibility)` (same module) is that one lookup, which the character's edit, its picks' picker and its PDF export ask unarchived, its sheet (`getCharacter`) with `Visibility.All`, so an archived character's, or an archived master's creature's, stays readable, and its portrait's `isOwner` too (below). Archiving looks the character up by its owner (`Characters.findOne(db, { id, userId })`): anyone else gets a 404. Reading a character in a campaign is gated by the link's visibility (`link.visibility`); creating one, by the ruleset access check below.
+Whoever may not read a character gets the answer an unknown id gets on its contributors, the same status and body: its list, an invite and a leave (`Character not found`), and a revoke of one of its contributors (`Contributor not found`, as an unknown contributor). `CharactersService.getCharacter` answers what its reader may do with it, as `permissions`, each from the policy (a check through `isAllowed`, `server/services/policies/isAllowed.ts`, as `RulesetsService.getRuleset` does): `canArchive`, `canEdit` (`isEditable`), `canEditPortrait` (`isPortraitEditable`), `canInviteContributors`, `canLeave` (an active contributor), `canManageContributors`, `canReadContributors` and `canShare`. The client's `useCharacterPermissions` reads them, and decides only what a demo user is spared.
+
+**A player character's own rows are edited through `getEditableCharacter`.** `getEditableCharacter(db, session, characterId, visibility)` (`server/services/characters/editableCharacter.ts`) looks the character up (unarchived, or archived too with `Visibility.All`, for its inventory's read) and returns it iff its policy's `isEditor` holds (owner OR active contributor of a player character), or a 404, and the services that write its levels, scores, inventory and modifiers call it as their first guard so the rest of the function can assume edit rights; a child's own rows are refused, its levels being its parent's. `findEditableCharacterOrChild(db, characterId, userId)` (same module) looks the character up unarchived and asks its policy's `isEditable`, a child through its parent. Who edits a character is decided there alone: the repositories' `editorId` filter is a list's (`Characters.exists(db, { editorId, rulesetId })`, which `RulesetsPolicy` asks), never one character's. Reading a character in a campaign is gated by the link's visibility (`link.visibility`); creating one, by the ruleset access check below.
 
 **Character creation against a ruleset** — `CharactersService.createCharacter` calls `RulesetsPolicy.canCreateCharacter` (through `withReadableRuleset`), and `CampaignsService` calls `canCreateCampaign` (through `getReadableRuleset`), which applies the same rule. A deleted ruleset, or one the session may not read (`canRead`), is a 404 (`Ruleset not found`) before the policy runs; an extension or an archived ruleset is refused (`UnprocessableEntityError "Choose an active playable ruleset"`). Otherwise the ruleset must be one of:
 
@@ -127,9 +137,9 @@ Attachments (avatars, character portraits) don't go through a `BasePolicy` subcl
 | Record type | Write (`isOwner`) | Read |
 |---|---|---|
 | `User` (avatar) | `session.userId === recordId` | any authenticated session |
-| `Character` (portrait) | a player character's **owner only**; a bonded character's: whoever can edit its master (owner or contributor). Both through `findEditableCharacterOrChild`, unarchived, then owner-only for a player character | any authenticated session |
+| `Character` (portrait) | a player character's **owner only**; a bonded character's: whoever can edit its master (owner or contributor). Both unarchived, through `CharactersPolicy.isPortraitEditable` | any authenticated session |
 
-Note the divergence: a character's active contributor **can edit the character** (`getEditableCharacter`) but **cannot upload or replace its portrait** — a player character's portrait writes are owner-only. If that's not the desired behavior, change `Character`'s `isOwner` in `ATTACHABLE_TYPES` to also accept active contributors.
+Note the divergence: a character's active contributor **can edit the character** (`getEditableCharacter`) but **cannot upload or replace its portrait** — a player character's portrait writes are owner-only. If that's not the desired behavior, change `CharactersPolicy.isPortraitEditable` to also accept active contributors: the character page offers what it answers.
 
 Reads are intentionally permissive, with no check of their own, since avatar/portrait URLs add no exposure beyond pages that are already gated: a record type that needs one adds its read checker to `ATTACHABLE_TYPES`.
 
@@ -161,7 +171,7 @@ There are still a few inline `entity.userId === session.userId` checks in servic
 - The invite services' `acceptInvite`: "is this invite addressed to me?"
 - OAuth-link checks: "did I just link this account to myself?"
 - Self-removal predicates: `isSelfRemoval = player.userId === session.userId` branches behavior, doesn't gate it.
-- Boolean predicates an attachable record registers: the `isOwner(session, recordId)` of `ATTACHABLE_TYPES`' entries (`AttachmentsService.ts`), an avatar's `session.userId === recordId`, a portrait's `character.userId === session.userId`.
+- Boolean predicates an attachable record registers: the `isOwner(session, recordId)` of `ATTACHABLE_TYPES`' entries (`AttachmentsService.ts`), an avatar's `session.userId === recordId` (a portrait's asks `CharactersPolicy.isPortraitEditable`).
 
 Anything that *throws* on the basis of ownership is a permission gate and belongs in a policy. The "Permission Checks (Policy vs. Identity)" section of [AGENTS.md](../AGENTS.md) is the canonical guidance.
 
@@ -170,7 +180,7 @@ Anything that *throws* on the basis of ownership is a permission gate and belong
 | Policy | Service callers |
 |---|---|
 | `RulesetsPolicy` | `RulesetsService`, `RulesetExtensionsService` (subscribe / unsubscribe), `RulesetChangesService`, the entity services under `server/services/rulesets/` and `ContributorsService` (rulesets), through `RulesetsPolicy.for`. `CampaignsService` / `CharactersService` call `canCreateCampaign` / `canCreateCharacter` on the chosen ruleset. Every read of a ruleset by its id asks `canRead` through `getReadableRuleset` / `withReadableRuleset` (`CharactersService`'s creation reads among them), and so does every write of one, before its own check; `ActivitiesService` asks `isReadable` through `findReadableRuleset` before it links to one or to what's in it |
-| `CharactersPolicy` | `CharacterContributorsService`. Most other character writes use `getEditableCharacter` instead and skip the policy class — same effective rule, fewer object instantiations |
+| `CharactersPolicy` | `CharactersService` (its sheet's `canRead` and `permissions`, the `Archives` concern), `CharacterSharingService`, `CharacterContributorsService`, `CampaignCharactersService.linkCharacter`, `findEditableCharacterOrChild`, `getEditableCharacter` (a player character's own rows: its levels, scores, inventory and modifiers) and the portrait's `isOwner` |
 | `CampaignsPolicy` | `CampaignsService`, `CampaignPlayersService`, campaigns sub-services, through `getReadableCampaign`, which asks `canRead` first; `CampaignInvitesService.revokeInvite` (by its invite's slot), `ActivitiesService` and the PDF export (`findExportableCharacter`) ask `isReadable` through `findReadableCampaign` |
 | `AttachmentsService` registry | not a `BasePolicy` — uses its `ATTACHABLE_TYPES` config map. Currently registered: `User` (avatar), `Character` (portrait) |
 
