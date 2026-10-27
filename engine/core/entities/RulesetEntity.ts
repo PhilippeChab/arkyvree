@@ -218,16 +218,16 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
     const row = this.storedOf(body);
     const written = this.fieldsWrite(body, given, entity);
     const { cow } = this.rulesetData;
-    const resolve = (link: ViewLink): ViewLink => ({
-      ...link,
-      toId: cow.resolve(link.toId),
-      viaId: link.viaId === null ? null : cow.resolve(link.viaId),
-    });
     return {
       describe: (saved, links) => ({
         ...saved,
         fields: this.fields.readByField(this.rulesetData.withInheritedFields(this.type, saved)),
-        links: this.nameLinks(this.savedLinks(saved, links.map(resolve))),
+        links: this.nameLinks(
+          this.savedLinks(
+            saved,
+            links.map((link) => cow.resolveLink(link)),
+          ),
+        ),
       }),
       links: this.linksOf(body),
       row: written ? { ...row, fields: written.fields, links: written.links } : row,

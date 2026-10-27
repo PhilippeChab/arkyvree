@@ -205,6 +205,29 @@ describe("EntitiesService: a class's levels", () => {
       ).toMatchObject(editedLinks);
     });
 
+    test("answers a grant whose feat and pool its fork copied after the class as the copies, in its edit as in its read", async () => {
+      const { session, fork, klass, aptitude, inheritedLevel } = await setupFork();
+      const feat = await EntitiesService.createEntity(session, fork.id, "feats", {
+        name: "Dodge",
+        links: { listedIn: [{ toId: aptitude.id }] },
+      });
+      // The fork copies the class (and its level) first, while its grant names the inherited pool
+      const level = await EntitiesService.updateOwnedEntity(session, fork.id, "classes", klass.id, inheritedLevel.id, {
+        links: { grants: [{ toId: feat.id, viaId: aptitude.id }] },
+      });
+      const pool = await EntitiesService.updateEntity(session, fork.id, "aptitudes", aptitude.id, { name: "Our Pool" });
+
+      // Its stored grant names the original pool, which its view reads as the fork's copy
+      const edited = await EntitiesService.updateOwnedEntity(session, fork.id, "classes", klass.id, level.id, {
+        fields: { [CLASS_LEVEL_SKILL_POINTS]: 6 },
+      });
+      const read = await EntitiesService.getOwnedEntityWithOwner(session, fork.id, "classes", level.id);
+      expect(edited.links).toEqual([
+        expect.objectContaining({ toId: feat.id, viaId: pool.id, toName: "Dodge", viaName: "Our Pool" }),
+      ]);
+      expect(edited.links).toEqual(read.links);
+    });
+
     test("writes each level's base attack bonus as the sheet does: its attacks a round", async () => {
       const { session, ruleset, klass } = await setup();
       for (const [level, bab] of [

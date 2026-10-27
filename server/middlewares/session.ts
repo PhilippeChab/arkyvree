@@ -46,7 +46,8 @@ export function setSessionCookie(c: Context, sessionId: string) {
 
 /**
  * The session a request's cookie (`sessionId`, `getSessionCookie`'s) signs in, and its user: refused when there's none,
- * or when the session or its user (a demo's) has expired. What every signed-in request and the websocket take.
+ * or when the session or its user (a demo's) has expired. What every signed-in request takes; a route that also serves a
+ * signed-out visitor (the websocket, a demo's start) takes `findSignedIn`.
  */
 export async function findRequestSession(sessionId: string | undefined): Promise<{ session: Session; user: User }> {
   if (!sessionId) throw new UnauthorizedError("Invalid session");
