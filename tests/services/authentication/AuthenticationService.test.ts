@@ -113,15 +113,17 @@ describe("AuthenticationService", () => {
     test("refuses a wrong or expired code", async () => {
       const account = credentials();
       const { user } = await AuthenticationService.signUp(account.emailAddress, account.password);
-      expect(AuthenticationService.verifyEmail(account.emailAddress, "000000")).rejects.toThrow(UnauthorizedError);
+      expect(AuthenticationService.verifyEmail(account.emailAddress, "000000")).rejects.toEqual(
+        new UnauthorizedError("Invalid email or code"),
+      );
 
       const verification = (await EmailVerifications.findOne(db, { userId: user.id }))!;
       await db
         .update(emailVerificationsInAccount)
         .set({ expiresAt: ago(1000) })
         .where(eq(emailVerificationsInAccount.id, verification.id));
-      expect(AuthenticationService.verifyEmail(account.emailAddress, verification.code)).rejects.toThrow(
-        UnauthorizedError,
+      expect(AuthenticationService.verifyEmail(account.emailAddress, verification.code)).rejects.toEqual(
+        new UnauthorizedError("Verification code expired"),
       );
     });
 
@@ -129,6 +131,10 @@ describe("AuthenticationService", () => {
       const account = credentials();
       const { user } = await AuthenticationService.signUp(account.emailAddress, account.password);
       const old = (await EmailVerifications.findOne(db, { userId: user.id }))!;
+      // Too soon: answered as any other resend, and the code stays.
+      expect(await AuthenticationService.resendVerification(account.emailAddress)).toEqual({ success: true });
+      expect((await EmailVerifications.findOne(db, { userId: user.id }))!.id).toBe(old.id);
+
       await db
         .update(emailVerificationsInAccount)
         .set({ createdAt: ago(6 * 60 * 1000) })
@@ -138,6 +144,7 @@ describe("AuthenticationService", () => {
       const fresh = (await EmailVerifications.findOne(db, { userId: user.id }))!;
       expect(fresh.id).not.toBe(old.id);
       expect(fresh.code).toHaveLength(8);
+      expect(await EmailVerifications.findOne(db, { id: old.id })).toBeUndefined();
 
       expect(await AuthenticationService.resendVerification("nonexistent@example.com")).toEqual({
         success: true,
@@ -319,6 +326,19 @@ describe("AuthenticationService", () => {
       });
     });
 
+    test("sends a new email a code of its own at once, archiving the last one's", async () => {
+      const { session, user, account } = await signUpAndVerify();
+      await AccountService.updateProfile(session, undefined, `first-${account.emailAddress}`);
+      const first = (await EmailVerifications.findOne(db, { userId: user.id }))!;
+
+      const second = `second-${account.emailAddress}`;
+      await AccountService.updateProfile(session, undefined, second);
+      const code = await findVerificationCode(user.id);
+      expect(code).not.toBe(first.code);
+      expect(await EmailVerifications.findOne(db, { id: first.id })).toBeUndefined();
+      expect(await AccountService.verifyEmailChange(session, code)).toMatchObject({ emailAddress: second });
+    });
+
     test("refuses an email or a username another account uses", async () => {
       const { account: taken } = await signUpAndVerify();
       const { session: first } = await signUpAndVerify();
@@ -334,7 +354,9 @@ describe("AuthenticationService", () => {
 
       const contested = `contested-${uniqueId()}@example.com`;
       await AccountService.updateProfile(session, undefined, contested);
-      expect(AccountService.verifyEmailChange(session, "000000")).rejects.toThrow(UnauthorizedError);
+      expect(AccountService.verifyEmailChange(session, "000000")).rejects.toEqual(
+        new UnauthorizedError("Invalid code"),
+      );
       const verification = (await EmailVerifications.findOne(db, { userId: user.id }))!;
 
       const otherAccount = credentials();
@@ -350,15 +372,19 @@ describe("AuthenticationService", () => {
         .update(emailVerificationsInAccount)
         .set({ expiresAt: ago(1000) })
         .where(eq(emailVerificationsInAccount.id, verification.id));
-      expect(AccountService.verifyEmailChange(session, verification.code)).rejects.toThrow(UnauthorizedError);
+      expect(AccountService.verifyEmailChange(session, verification.code)).rejects.toEqual(
+        new UnauthorizedError("Verification code expired"),
+      );
       expect((await Users.findOne(db, { id: user.id }))!.emailAddress).toBe(account.emailAddress);
     });
 
     test("resends a pending email's code after five minutes, and cancels the change", async () => {
       const { session, user, account } = await signUpAndVerify();
-      expect(AccountService.resendEmailChange(session)).rejects.toThrow(BadRequestError);
+      expect(AccountService.resendEmailChange(session)).rejects.toEqual(new BadRequestError("No pending email change"));
       await AccountService.updateProfile(session, undefined, `new-${account.emailAddress}`);
-      expect(AccountService.resendEmailChange(session)).rejects.toThrow(BadRequestError);
+      expect(AccountService.resendEmailChange(session)).rejects.toEqual(
+        new BadRequestError("Please wait before requesting a new code"),
+      );
 
       const old = (await EmailVerifications.findOne(db, { userId: user.id }))!;
       await db
@@ -413,6 +439,14 @@ describe("AuthenticationService", () => {
         expect(await AuthenticationService.forgotPassword("nonexistent@example.com")).toEqual({
           success: true,
         });
+
+        await db
+          .update(passwordResetsInAccount)
+          .set({ createdAt: ago(6 * 60 * 1000) })
+          .where(eq(passwordResetsInAccount.id, reset.id));
+        await AuthenticationService.forgotPassword(account.emailAddress);
+        expect((await PasswordResets.findOne(db, { userId: user.id }))!.id).not.toBe(reset.id);
+        expect(await PasswordResets.findOne(db, { id: reset.id })).toBeUndefined();
       });
 
       test("is reset with the code, signing out every session of the user's and nobody else's", async () => {
@@ -424,7 +458,7 @@ describe("AuthenticationService", () => {
         const resetWith = (code: string) =>
           AuthenticationService.resetPassword(account.emailAddress, code, "replacement1234");
 
-        expect(resetWith("000000")).rejects.toThrow(UnauthorizedError);
+        expect(resetWith("000000")).rejects.toEqual(new UnauthorizedError("Invalid email or code"));
         expect(await resetWith(reset.code)).toEqual({ success: true });
 
         for (const { id } of [session, second]) expect(await Sessions.findOne(db, { id })).toBeUndefined();
@@ -442,7 +476,7 @@ describe("AuthenticationService", () => {
           .where(eq(passwordResetsInAccount.id, reset.id));
         expect(
           AuthenticationService.resetPassword(account.emailAddress, reset.code, "newpassword1234"),
-        ).rejects.toThrow(UnauthorizedError);
+        ).rejects.toEqual(new UnauthorizedError("Reset code expired"));
       });
     });
   });

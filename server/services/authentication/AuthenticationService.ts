@@ -20,7 +20,7 @@ import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { openSession, purgeDemoSessionUser, signInAsGoogleAccount, toSafeUser } from "./accounts.ts";
-import { compareInConstantTime, generateVerificationCode } from "./codes.ts";
+import { createCode, hasRecentCode, verifyCode } from "./codes.ts";
 import { verifyGoogleIdToken } from "./google.ts";
 
 const DEMO_TTL_MS = 60 * 60 * 1000;
@@ -33,19 +33,10 @@ class AuthenticationService {
       const user = await Users.findOne(tx, { emailAddress });
       if (!user) return { code: null };
 
-      const existing = await PasswordResets.findOne(tx, { userId: user.id });
-      if (existing) {
-        const elapsed = Date.now() - new Date(existing.createdAt).getTime();
-        if (elapsed < 5 * 60 * 1000) return { code: null };
-      }
+      // Too soon for another code: answered as an unknown email is, so the answer tells nothing of the account.
+      if (await hasRecentCode(tx, PasswordResets, user.id)) return { code: null };
 
-      await PasswordResets.archive(tx, { userId: user.id });
-
-      const code = generateVerificationCode();
-      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-      await PasswordResets.create(tx, { userId: user.id, code, expiresAt });
-
-      return { code };
+      return { code: await createCode(tx, PasswordResets, user.id) };
     });
 
     if (code) {
@@ -74,19 +65,10 @@ class AuthenticationService {
 
       if (user.emailVerifiedAt) return { code: null };
 
-      const existing = await EmailVerifications.findOne(tx, { userId: user.id });
-      if (existing) {
-        const elapsed = Date.now() - new Date(existing.createdAt).getTime();
-        if (elapsed < 5 * 60 * 1000) return { code: null };
-      }
+      // Too soon for another code: answered as an unknown email is, so the answer tells nothing of the account.
+      if (await hasRecentCode(tx, EmailVerifications, user.id)) return { code: null };
 
-      await EmailVerifications.archive(tx, { userId: user.id });
-
-      const code = generateVerificationCode();
-      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-      await EmailVerifications.create(tx, { userId: user.id, code, expiresAt });
-
-      return { code };
+      return { code: await createCode(tx, EmailVerifications, user.id) };
     });
 
     if (code) {
@@ -106,12 +88,7 @@ class AuthenticationService {
       const user = await Users.findOne(tx, { emailAddress });
       if (!user) throw new UnauthorizedError("Invalid email or code");
 
-      const reset = await PasswordResets.findOne(tx, { userId: user.id });
-      if (!reset) throw new UnauthorizedError("Invalid email or code");
-
-      if (!compareInConstantTime(reset.code, code)) throw new UnauthorizedError("Invalid email or code");
-
-      if (new Date(reset.expiresAt) < new Date()) throw new UnauthorizedError("Reset code expired");
+      const reset = await verifyCode(tx, PasswordResets, user.id, code, "Invalid email or code", "Reset code expired");
 
       const newHash = await hashPassword(newPassword);
       await Users.update(tx, { passwordDigest: newHash }, { id: user.id });
@@ -197,9 +174,8 @@ class AuthenticationService {
       const user = rows[0];
       if (!user) throw new InternalError("Could not create user");
 
-      const code = generateVerificationCode();
-      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-      await EmailVerifications.create(tx, { userId: user.id, code, expiresAt });
+      // A new user holds no code yet: creating theirs archives none, and none is recent enough to wait on.
+      const code = await createCode(tx, EmailVerifications, user.id);
 
       return { user, code };
     });
@@ -253,12 +229,14 @@ class AuthenticationService {
 
       if (user.emailVerifiedAt) throw new BadRequestError("Email already verified");
 
-      const verification = await EmailVerifications.findOne(tx, { userId: user.id });
-      if (!verification) throw new UnauthorizedError("Invalid email or code");
-
-      if (!compareInConstantTime(verification.code, code)) throw new UnauthorizedError("Invalid email or code");
-
-      if (new Date(verification.expiresAt) < new Date()) throw new UnauthorizedError("Verification code expired");
+      const verification = await verifyCode(
+        tx,
+        EmailVerifications,
+        user.id,
+        code,
+        "Invalid email or code",
+        "Verification code expired",
+      );
 
       await Users.update(tx, { emailVerifiedAt: new Date().toISOString() }, { id: user.id });
       await EmailVerifications.archive(tx, { id: verification.id });
