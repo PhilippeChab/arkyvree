@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 
 import { playersInCampaign } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
+import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, Invites, Players, Users } from "@/server/repositories/index.ts";
 import { CampaignInvitesService } from "@/server/services/campaigns/invites/index.ts";
 import { createTestCampaign, inviteToSlot } from "@/tests/support/campaigns.ts";
@@ -128,11 +128,11 @@ describe("CampaignInvitesService", () => {
       expect(page2.items).toHaveLength(1);
     });
 
-    test("refuses non-members and throws NotFoundError for a missing campaign", async () => {
+    test("answers a non-member as it answers a missing campaign", async () => {
       const { campaign } = await setup();
       const { session: stranger } = await createTestUser();
       expect(CampaignInvitesService.getInvites(stranger, campaign.id, {}, { limit: 10, page: 1 })).rejects.toThrow(
-        ForbiddenError,
+        "Campaign not found",
       );
       expect(CampaignInvitesService.getInvites(stranger, NIL_UUID, {}, { limit: 10, page: 1 })).rejects.toThrow(
         NotFoundError,
@@ -200,6 +200,23 @@ describe("CampaignInvitesService", () => {
         .set({ deletedAt: new Date().toISOString() })
         .where(eq(playersInCampaign.id, slot.id));
       expect(CampaignInvitesService.revokeInvite(gmSession, invite.id)).rejects.toThrow(NotFoundError);
+    });
+
+    test("is the Game Master's, and answers whoever may not read the campaign as a missing invite", async () => {
+      const { campaign, invitee, invite } = await setup();
+      const { user: member, session: memberSession } = await createTestUser();
+      await Players.create(db, { campaignId: campaign.id, userId: member.id, role: "Player Character" });
+      const { session: stranger } = await createTestUser();
+
+      expect(CampaignInvitesService.revokeInvite(memberSession, invite.id)).rejects.toThrow(
+        "Only the Game Master can edit this campaign",
+      );
+      for (const session of [stranger, invitee.session]) {
+        const hidden = await CampaignInvitesService.revokeInvite(session, invite.id).catch((error: unknown) => error);
+        const unknown = await CampaignInvitesService.revokeInvite(session, NIL_UUID).catch((error: unknown) => error);
+        expect(hidden).toBeInstanceOf(NotFoundError);
+        expect(hidden).toEqual(unknown);
+      }
     });
   });
 

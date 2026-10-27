@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 
 import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
+import { NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, Characters, Players } from "@/server/repositories/index.ts";
 import { AccountService } from "@/server/services/authentication/account/index.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
@@ -256,11 +256,11 @@ describe("CampaignCharactersService", () => {
       ]);
     });
 
-    test("refuses a non-member, and an unknown campaign is a 404", async () => {
+    test("answers a non-member as it answers an unknown campaign, a 404", async () => {
       const { rulesetId } = await getSeedCtx();
       const { user } = await createTestUser();
       const [campaign] = await Campaigns.create(db, { name: "Empty Campaign", rulesetId });
-      expect(list(user.id, campaign.id)).rejects.toThrow(ForbiddenError);
+      expect(list(user.id, campaign.id)).rejects.toThrow("Campaign not found");
       expect(list(user.id, NIL_UUID)).rejects.toThrow("Campaign not found");
     });
   });
@@ -321,7 +321,7 @@ describe("CampaignCharactersService", () => {
       expect(result).toMatchObject({ canEdit: true, isOwner: false, isPartial: false });
     });
 
-    test("refuses a non-member, and throws NotFoundError for a character outside the campaign", async () => {
+    test("answers a non-member as an unknown campaign, and throws NotFoundError for a character outside it", async () => {
       const { user } = await createTestUser();
       const { campaign } = await createTestCampaign(user.id);
       const linked = await createTestCharacter(user.id);
@@ -329,7 +329,7 @@ describe("CampaignCharactersService", () => {
       const { user: stranger } = await createTestUser();
 
       expect(CampaignCharactersService.getCharacter(makeSession(stranger.id), campaign.id, linked.id)).rejects.toThrow(
-        ForbiddenError,
+        "Campaign not found",
       );
       const unlinked = await createTestCharacter(user.id);
       expect(CampaignCharactersService.getCharacter(makeSession(user.id), campaign.id, unlinked.id)).rejects.toThrow(

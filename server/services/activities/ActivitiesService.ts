@@ -2,7 +2,6 @@ import { Engine } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Activities,
-  Campaigns,
   CharacterContributors,
   Characters,
   Contributors,
@@ -12,11 +11,12 @@ import {
   Players,
   Visibility,
 } from "@/server/repositories/index.ts";
+import { findReadableCampaign } from "@/server/services/campaigns/index.ts";
 import { findReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { isNavigableTarget } from "@/shared/activity.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import { buildEntityPagePath, hasCustomizationPage } from "@/shared/customization/entities.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { Invite, Session } from "@/shared/relations.ts";
 
 import { findContentOwner, findContentRuleset } from "./contentRuleset.ts";
 
@@ -43,11 +43,27 @@ class ActivitiesService {
     return entityUrl;
   }
 
-  /** The page of a player's campaign (`path` under it), or null when the player is gone. */
-  private async playerCampaignUrl(playerId: string, path = "") {
+  /**
+   * A campaign's page (`path` under it), or null when it's gone or the session may not read it (`findReadableCampaign`):
+   * a campaign's existence isn't revealed to whoever isn't in it, nor its players', invites' and characters'.
+   */
+  private async campaignUrl(session: Session, campaignId: string, path = "") {
+    return (await findReadableCampaign(db, session, campaignId)) ? `/campaigns/${campaignId}${path}` : null;
+  }
+
+  /**
+   * A campaign invite's link: its invitee goes to the invite while it's pending, to answer it there; anyone else to its
+   * campaign's page (`campaignUrl`).
+   */
+  private async inviteUrl(session: Session, invite: Invite) {
+    if (invite.userId === session.userId && invite.status === "Pending") return `/campaign-invite/${invite.id}`;
+    return await this.playerCampaignUrl(session, invite.playerId);
+  }
+
+  /** The page of a player's campaign (`path` under it), or null when the player is gone (`campaignUrl`). */
+  private async playerCampaignUrl(session: Session, playerId: string, path = "") {
     const player = await Players.findOne(db, { id: playerId });
-    if (!player) return null;
-    return `/campaigns/${player.campaignId}${path}`;
+    return player ? await this.campaignUrl(session, player.campaignId, path) : null;
   }
 
   /**
@@ -127,19 +143,19 @@ class ActivitiesService {
       case TARGET_TYPES.inventory:
         return (await Characters.findOne(db, { id: targetId }, Visibility.All)) ? `/characters/${targetId}` : null;
       case TARGET_TYPES.campaigns:
-        return (await Campaigns.findOne(db, { id: targetId }, Visibility.All)) ? `/campaigns/${targetId}` : null;
+        return await this.campaignUrl(session, targetId);
 
       // Campaign sub-entities
       case TARGET_TYPES.players:
-        return await this.playerCampaignUrl(targetId);
+        return await this.playerCampaignUrl(session, targetId);
       // targetId is the characterId; a character is linked to one campaign at a time.
       case TARGET_TYPES.playerCharacters: {
         const link = await PlayerCharacters.findOne(db, { characterId: targetId });
-        return link ? await this.playerCampaignUrl(link.playerId, `/characters/${targetId}`) : null;
+        return link ? await this.playerCampaignUrl(session, link.playerId, `/characters/${targetId}`) : null;
       }
       case TARGET_TYPES.invites: {
         const invite = await Invites.findOne(db, { id: targetId });
-        return invite ? await this.playerCampaignUrl(invite.playerId) : null;
+        return invite ? await this.inviteUrl(session, invite) : null;
       }
 
       case TARGET_TYPES.contributors: {

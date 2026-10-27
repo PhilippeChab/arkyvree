@@ -4,7 +4,6 @@ import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import {
   Activities,
-  Campaigns,
   Invites,
   type Pagination,
   PlayerCharacters,
@@ -13,8 +12,8 @@ import {
   Visibility,
 } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { getReadableCampaign } from "@/server/services/campaigns/readableCampaign.ts";
 import { getInviteNames } from "@/server/services/invites/index.ts";
-import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
 import type { Invite, Player, Session } from "@/shared/relations.ts";
@@ -52,10 +51,7 @@ class CampaignPlayersService {
 
   /** Core invite creation logic — must be called within a transaction. */
   private async createInviteInTransaction(tx: Db, session: Session, player: Player, email: string) {
-    const campaign = await Campaigns.findOne(tx, { id: player.campaignId }, Visibility.All);
-    if (!campaign) throw new NotFoundError("Campaign not found");
-
-    const policy = await CampaignsPolicy.for(tx, session, campaign);
+    const { campaign, policy } = await getReadableCampaign(tx, session, player.campaignId);
     policy.canModify();
     policy.canUpdate();
 
@@ -126,10 +122,7 @@ class CampaignPlayersService {
     let emailData: InviteEmailData | null = null;
 
     const { player, invite } = await withTransaction(async (tx) => {
-      const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
-      if (!campaign) throw new NotFoundError("Campaign not found");
-
-      const policy = await CampaignsPolicy.for(tx, session, campaign);
+      const { policy } = await getReadableCampaign(tx, session, campaignId);
       policy.canModify();
       policy.canUpdate();
 
@@ -167,20 +160,14 @@ class CampaignPlayersService {
     where: { orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
     pagination: Pagination,
   ) {
-    const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
-    if (!campaign) throw new NotFoundError("Campaign not found");
-
-    (await CampaignsPolicy.for(db, session, campaign)).canRead();
+    await getReadableCampaign(db, session, campaignId);
 
     return await Players.findPage(db, { campaignId, ...where }, pagination, Visibility.All);
   }
 
   async removePlayer(session: Session, campaignId: string, playerId: string) {
     return await withTransaction(async (tx) => {
-      const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
-      if (!campaign) throw new NotFoundError("Campaign not found");
-
-      const policy = await CampaignsPolicy.for(tx, session, campaign);
+      const { policy } = await getReadableCampaign(tx, session, campaignId);
       policy.canModify();
 
       const player = await Players.findOne(tx, { id: playerId });
@@ -213,10 +200,7 @@ class CampaignPlayersService {
     let emailData: InviteEmailData | null = null;
 
     const { updatedPlayer, invite } = await withTransaction(async (tx) => {
-      const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
-      if (!campaign) throw new NotFoundError("Campaign not found");
-
-      const policy = await CampaignsPolicy.for(tx, session, campaign);
+      const { policy } = await getReadableCampaign(tx, session, campaignId);
       policy.canModify();
       policy.canUpdate();
 

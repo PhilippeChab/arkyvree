@@ -3,6 +3,7 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, Invites, type Pagination, Players, Visibility } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { getReadableCampaign } from "@/server/services/campaigns/readableCampaign.ts";
 import { getPendingInvite, saveInviteAnswer } from "@/server/services/invites/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
@@ -60,10 +61,7 @@ class CampaignInvitesService {
     where: { orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
     pagination: Pagination,
   ) {
-    const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
-    if (!campaign) throw new NotFoundError("Campaign not found");
-
-    (await CampaignsPolicy.for(db, session, campaign)).canRead();
+    await getReadableCampaign(db, session, campaignId);
 
     return await Invites.findPage(db, { campaignId, ...where }, pagination);
   }
@@ -82,7 +80,10 @@ class CampaignInvitesService {
 
       const campaign = await this.getInviteCampaign(tx, invite);
 
-      (await CampaignsPolicy.for(tx, session, campaign)).canUpdate();
+      // Whoever may not read its campaign gets the answer an unknown invite gets
+      const policy = await CampaignsPolicy.for(tx, session, campaign);
+      if (!policy.isReadable()) throw new NotFoundError("Invite not found");
+      policy.canUpdate();
 
       if (invite.status !== "Pending") throw new ConflictError("Only pending invites can be revoked");
 

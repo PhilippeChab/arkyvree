@@ -89,11 +89,15 @@ describe("CampaignPlayersService", () => {
       expect(players.filter((player) => player.isLastGameMaster).map((player) => player.id)).toEqual([gmPlayer.id]);
     });
 
-    test("refuses non-members and throws NotFoundError for a missing campaign", async () => {
+    test("answers a non-member as it answers a missing campaign", async () => {
       const { campaign } = await setup();
       const { session: stranger } = await createTestUser();
-      expect(CampaignPlayersService.getPlayers(stranger, campaign.id, {}, firstPage)).rejects.toThrow(ForbiddenError);
-      expect(CampaignPlayersService.getPlayers(stranger, NIL_UUID, {}, firstPage)).rejects.toThrow(NotFoundError);
+      expect(CampaignPlayersService.getPlayers(stranger, campaign.id, {}, firstPage)).rejects.toThrow(
+        "Campaign not found",
+      );
+      expect(CampaignPlayersService.getPlayers(stranger, NIL_UUID, {}, firstPage)).rejects.toThrow(
+        "Campaign not found",
+      );
     });
   });
 
@@ -121,8 +125,13 @@ describe("CampaignPlayersService", () => {
     test("is for the Game Master of a live campaign", async () => {
       const { session, campaign } = await setup();
       const { session: stranger } = await createTestUser();
-      expect(CampaignPlayersService.addPlayer(stranger, campaign.id, "Player Character")).rejects.toThrow(
+      const { user: member, session: memberSession } = await createTestUser();
+      await Players.create(db, { campaignId: campaign.id, userId: member.id, role: "Player Character" });
+      expect(CampaignPlayersService.addPlayer(memberSession, campaign.id, "Player Character")).rejects.toThrow(
         ForbiddenError,
+      );
+      expect(CampaignPlayersService.addPlayer(stranger, campaign.id, "Player Character")).rejects.toThrow(
+        "Campaign not found",
       );
       expect(CampaignPlayersService.addPlayer(session, NIL_UUID, "Player Character")).rejects.toThrow(NotFoundError);
       await Campaigns.archive(db, { id: campaign.id });
@@ -190,7 +199,7 @@ describe("CampaignPlayersService", () => {
       const { session: stranger } = await createTestUser();
 
       expect(CampaignPlayersService.updatePlayer(stranger, campaign.id, player.id, "Game Master")).rejects.toThrow(
-        ForbiddenError,
+        "Campaign not found",
       );
       expect(CampaignPlayersService.updatePlayer(session, NIL_UUID, player.id, "Game Master")).rejects.toThrow(
         NotFoundError,
@@ -247,7 +256,12 @@ describe("CampaignPlayersService", () => {
       const { player } = await CampaignPlayersService.addPlayer(session, campaign.id, "Player Character");
       const { session: stranger } = await createTestUser();
 
-      expect(CampaignPlayersService.removePlayer(stranger, campaign.id, player.id)).rejects.toThrow(ForbiddenError);
+      expect(CampaignPlayersService.removePlayer(stranger, campaign.id, player.id)).rejects.toThrow(
+        "Campaign not found",
+      );
+      expect(CampaignPlayersService.removePlayer(stranger, campaign.id, NIL_UUID)).rejects.toThrow(
+        "Campaign not found",
+      );
       expect(CampaignPlayersService.removePlayer(session, NIL_UUID, player.id)).rejects.toThrow(NotFoundError);
       expect(CampaignPlayersService.removePlayer(session, campaign.id, NIL_UUID)).rejects.toThrow(NotFoundError);
       expect(CampaignPlayersService.removePlayer(session, other.id, player.id)).rejects.toThrow(NotFoundError);

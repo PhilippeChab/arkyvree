@@ -48,14 +48,13 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
   }
 
   /**
-   * Linking a character to the campaign, and listing those the session could link: its seat (returned), in a campaign
-   * that isn't archived (`canModify`). Whoever has no seat gets the 404 an unknown campaign gets, so these two answer a
-   * non-member neither the campaign's existence nor its ruleset (the campaign's other reads still answer them 403).
+   * Linking a character to the campaign, and listing those the session could link: its seat (returned, `canRead`), in a
+   * campaign that isn't archived (`canModify`).
    */
   canLinkCharacter() {
-    if (!this.player) throw new NotFoundError("Campaign not found");
+    const player = this.canRead();
     this.canModify();
-    return this.player;
+    return player;
   }
 
   /** An archived campaign is read-only. */
@@ -64,9 +63,13 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
     return true;
   }
 
-  /** The session's player row in the campaign, an archived campaign's too, or a 403: what reading a campaign takes. */
+  /**
+   * The session's player row in the campaign, an archived campaign's too (`isReadable`): what every request that names
+   * the campaign by its id asks first. Anyone else gets the 404 an unknown campaign gets, so the campaign's existence
+   * isn't revealed.
+   */
   canRead() {
-    if (!this.player) throw new ForbiddenError("You are not a member of this campaign");
+    if (!this.player) throw new NotFoundError("Campaign not found");
     return this.player;
   }
 
@@ -91,5 +94,10 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
   /** Whether the session's player row is the campaign's Game Master's. */
   isGameMaster() {
     return this.player?.role === "Game Master";
+  }
+
+  /** Whether the session may read the campaign: it holds a live seat in it, Player or Game Master. */
+  isReadable() {
+    return this.player !== null;
   }
 }

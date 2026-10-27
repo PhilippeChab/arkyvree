@@ -3,11 +3,13 @@ import { describe, expect, test } from "bun:test";
 import { type Feat, type KlassLevel, type Mechanic } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
+  Campaigns,
   CharacterContributors,
   Contributors,
   Entities,
   Invites,
   Modifiers,
+  Players,
   Requirements,
 } from "@/server/repositories/index.ts";
 import { ActivitiesService } from "@/server/services/activities/index.ts";
@@ -23,27 +25,31 @@ function resolve(targetType: string, targetId: string, session: Session = makeSe
   return ActivitiesService.getActivityUrl(session, targetType, targetId);
 }
 
-async function resolveAll(targets: string[][]) {
+async function resolveAll(targets: string[][], session?: Session) {
   const urls = [];
-  for (const [targetType, id] of targets) urls.push(await resolve(targetType, id));
+  for (const [targetType, id] of targets) urls.push(await resolve(targetType, id, session));
   return urls;
 }
 
 describe("ActivitiesService.getActivityUrl", () => {
   test("links rulesets, characters and campaigns to their page, archived or not, and accounts nowhere", async () => {
-    const { user } = await createTestUser();
+    const { user, session } = await createTestUser();
     const ruleset = await createTestRuleset(user.id, { private: false });
     const character = await createTestCharacter(user.id, { deletedAt: new Date().toISOString() });
     const { campaign } = await createTestCampaign(user.id);
+    await Campaigns.archive(db, { id: campaign.id });
     expect(
-      await resolveAll([
-        ["rulesets", ruleset.id],
-        ["characters", character.id],
-        ["campaigns", campaign.id],
-        ["users", user.id],
-        ["sessions", NIL_UUID],
-        ["oauth-accounts", NIL_UUID],
-      ]),
+      await resolveAll(
+        [
+          ["rulesets", ruleset.id],
+          ["characters", character.id],
+          ["campaigns", campaign.id],
+          ["users", user.id],
+          ["sessions", NIL_UUID],
+          ["oauth-accounts", NIL_UUID],
+        ],
+        session,
+      ),
     ).toEqual([
       `/rulesets/${ruleset.id}`,
       `/characters/${character.id}`,
@@ -238,13 +244,16 @@ describe("ActivitiesService.getActivityUrl", () => {
     const [invite] = await Invites.create(db, { playerId: player.id, email: "invited@example.com" });
 
     expect(
-      await resolveAll([
-        ["inventory", character.id],
-        ["advancements", character.id],
-        ["players", player.id],
-        ["invites", invite.id],
-        ["player-characters", character.id],
-      ]),
+      await resolveAll(
+        [
+          ["inventory", character.id],
+          ["advancements", character.id],
+          ["players", player.id],
+          ["invites", invite.id],
+          ["player-characters", character.id],
+        ],
+        session,
+      ),
     ).toEqual([
       `/characters/${character.id}`,
       `/characters/${character.id}`,
@@ -252,6 +261,41 @@ describe("ActivitiesService.getActivityUrl", () => {
       `/campaigns/${campaign.id}`,
       `/campaigns/${campaign.id}/characters/${character.id}`,
     ]);
+  });
+
+  test("links a campaign, its players, invites and characters nowhere for who isn't in it", async () => {
+    const { user, session } = await createTestUser();
+    const { campaign, player } = await createTestCampaign(user.id);
+    const character = await createTestCharacter(user.id);
+    await CampaignCharactersService.linkCharacter(session, campaign.id, character.id, "Public");
+    const [invite] = await Invites.create(db, { playerId: player.id, email: "invited@example.com" });
+    const { user: removed, session: removedSession } = await createTestUser();
+    const [seat] = await Players.create(db, { campaignId: campaign.id, userId: removed.id, role: "Player Character" });
+    await Players.delete(db, { id: seat.id });
+    const targets = [
+      ["campaigns", campaign.id],
+      ["players", player.id],
+      ["invites", invite.id],
+      ["player-characters", character.id],
+    ];
+
+    expect(await resolveAll(targets, (await createTestUser()).session)).toEqual([null, null, null, null]);
+    expect(await resolveAll(targets, removedSession)).toEqual([null, null, null, null]);
+  });
+
+  test("links a campaign invite's pending invitee to the invite, and once they've answered to the campaign they may read", async () => {
+    const [gm, invitee] = [await createTestUser(), await createTestUser()];
+    const { campaign } = await createTestCampaign(gm.user.id);
+    const [slot] = await Players.create(db, { campaignId: campaign.id, role: "Player Character" });
+    const [invite] = await Invites.create(db, { playerId: slot.id, userId: invitee.user.id, email: "i@example.com" });
+
+    expect(await resolve("invites", invite.id, invitee.session)).toBe(`/campaign-invite/${invite.id}`);
+    expect(await resolve("invites", invite.id, gm.session)).toBe(`/campaigns/${campaign.id}`);
+    await Invites.update(db, { status: "Rejected" }, { id: invite.id });
+    expect(await resolve("invites", invite.id, invitee.session)).toBeNull();
+    await Invites.update(db, { status: "Accepted" }, { id: invite.id });
+    await Players.update(db, { userId: invitee.user.id }, { id: slot.id });
+    expect(await resolve("invites", invite.id, invitee.session)).toBe(`/campaigns/${campaign.id}`);
   });
 
   describe.each([

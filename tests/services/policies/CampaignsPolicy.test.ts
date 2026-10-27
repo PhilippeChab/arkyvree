@@ -40,11 +40,14 @@ describe("CampaignsPolicy", () => {
     }
   });
 
-  test("canRead: the session's player row, a 403 for an outsider", async () => {
+  test("canRead: the session's player row, the 404 an unknown campaign gets for an outsider", async () => {
     const { policy } = await policyFor("Player Character");
     expect(policy.canRead().role).toBe("Player Character");
+    expect(policy.isReadable()).toBe(true);
     const { policy: outsider } = await policyFor(null);
-    expect(() => outsider.canRead()).toThrow("You are not a member of this campaign");
+    expect(() => outsider.canRead()).toThrow(NotFoundError);
+    expect(() => outsider.canRead()).toThrow("Campaign not found");
+    expect(outsider.isReadable()).toBe(false);
   });
 
   test("canLinkCharacter: a member's seat, a 404 for an outsider, a 403 on an archived campaign", async () => {
@@ -70,7 +73,7 @@ describe("CampaignsPolicy", () => {
 
     for (const visibility of ["Public", "Partial", "Private"]) {
       expect(gameMaster.canSeeCharacter({ playerId: NIL_UUID, visibility })).toBe(true);
-      expect(() => outsider.canSeeCharacter({ playerId: NIL_UUID, visibility })).toThrow(ForbiddenError);
+      expect(() => outsider.canSeeCharacter({ playerId: NIL_UUID, visibility })).toThrow("Campaign not found");
     }
     expect(player.canSeeCharacter(ownLink)).toBe(true);
     expect(player.canSeeCharacter({ playerId: NIL_UUID, visibility: "Partial" })).toBe(true);
@@ -101,7 +104,8 @@ describe("CampaignsPolicy", () => {
     await Users.archive(db, { id: session.userId });
     const policy = await CampaignsPolicy.for(db, session, campaign);
     expect(policy.isGameMaster()).toBe(false);
-    expect(() => policy.canRead()).toThrow(ForbiddenError);
+    expect(() => policy.canRead()).toThrow(NotFoundError);
+    expect(policy.isReadable()).toBe(false);
     expect(() => policy.canDelete()).toThrow(ForbiddenError);
   });
 
