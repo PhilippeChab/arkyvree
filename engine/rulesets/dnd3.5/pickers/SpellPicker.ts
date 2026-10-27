@@ -32,7 +32,7 @@ export default class SpellPicker extends LevelPicker {
       ...this.getProhibitedSpellIds(aptitudeId),
       ...(planned.picks ?? []).flatMap(({ entityId, step }) => (step === "spells" ? [entityId!] : [])),
     ];
-    return { ids: Dnd35View.of(this.rulesetData).listSpellIds({ aptitudeId, level: spellLevel }), excludeIds };
+    return { ids: Dnd35View.of(this.rulesetData).listSpellIds({ toId: aptitudeId, tier: spellLevel }), excludeIds };
   }
 
   /** The wizard's spells of the schools its specialization prohibits: none for another pool. */

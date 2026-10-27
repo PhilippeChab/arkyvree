@@ -76,15 +76,12 @@ describe("a character's last change", () => {
     await expectMoved(characterId, () => CharacterInventoryService.removeItem(session, characterId, entry.id));
   });
 
-  test("moves with an ability score and the languages", async () => {
+  test("moves with an ability score", async () => {
     const ctx = await getSeedCtx();
     const characterId = await createSeedCharacter(ctx);
 
     await expectMoved(characterId, () =>
       CharactersService.updateScores(session, characterId, "score", { [ctx.abilityMap["Strength"]]: 17 }),
-    );
-    await expectMoved(characterId, () =>
-      CharactersService.updateLinkPicks(session, characterId, "speaks", [ctx.langMap["Draconic"]]),
     );
   });
 
@@ -100,14 +97,16 @@ describe("a character's last change", () => {
     await expectMoved(characterId, () => createTestAttachment("portrait", characterId));
   });
 
-  test("moves with the character's own details, as its updatedAt does", async () => {
+  test("moves with the character's own details and its languages, as its updatedAt does", async () => {
     const ctx = await getSeedCtx();
     const characterId = await createSeedCharacter(ctx);
-    await backdateLastChange(characterId);
+    const edits = [{ notes: "Edited" }, { links: { speaks: [ctx.langMap["Draconic"]] } }];
 
-    await CharactersService.updateCharacter(session, characterId, { notes: "Edited" });
-
-    expect((await datesOf(characterId)).lastChangedAt).toBe(await transactionStart());
+    for (const edit of edits) {
+      await backdateLastChange(characterId);
+      await CharactersService.updateCharacter(session, characterId, edit);
+      expect((await datesOf(characterId)).lastChangedAt).toBe(await transactionStart());
+    }
   });
 
   test("moves its master's with a bonded creature's change: the list shows the master, its sheet", async () => {

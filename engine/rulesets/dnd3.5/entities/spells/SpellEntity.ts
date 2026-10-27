@@ -66,7 +66,7 @@ export default class SpellEntity extends ListedEntity<"spells", typeof SPELL_FIE
     return {
       describe: <T extends Pick<EntityRecord, "fields" | "id" | "links">>(rows: T[]) => this.describeListed(rows),
       filters: {
-        ids: listed ? Dnd35View.of(this.rulesetData).listSpellIds({ aptitudeId: listedIn, level: tier }) : undefined,
+        ids: listed ? Dnd35View.of(this.rulesetData).listSpellIds({ toId: listedIn, tier }) : undefined,
       },
     };
   }

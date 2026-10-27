@@ -4,12 +4,12 @@ import type { RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Characters, Entities } from "@/server/repositories/index.ts";
+import { Characters, Entities, Players } from "@/server/repositories/index.ts";
 import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { postCampaign } from "@/tests/support/campaigns.ts";
 import { notesOf } from "@/tests/support/characters.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
-import { postCharacter, sheetOf } from "@/tests/support/dnd3.5/characters.ts";
+import { createTestCharacter, postCharacter, sheetOf } from "@/tests/support/dnd3.5/characters.ts";
 import { createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
@@ -126,7 +126,7 @@ describe("characters", () => {
     );
   });
 
-  test("lists the characters not linked to a campaign yet", async () => {
+  test("lists the Game Master's characters not linked to a campaign yet", async () => {
     const campaign = await postCampaign();
     const created = await postCharacter();
     const unlinked = await expectOk(
@@ -141,6 +141,31 @@ describe("characters", () => {
       characters.unlinked[":campaignId"].$get({ param: { campaignId: campaign.id }, query: {} }),
     );
     expect(after.items.map((c) => c.id)).not.toContain(created.id);
+  });
+
+  test("lists a player's own characters they could link to the campaign", async () => {
+    const campaign = await postCampaign();
+    const gmCharacter = await postCharacter();
+    const player = await createSignedInUser("player");
+    await Players.create(db, { userId: player.user.id, campaignId: campaign.id, role: "Player Character" });
+    const own = await createTestCharacter(player.user.id);
+
+    const linkable = await expectOk(
+      player.api.api.characters.unlinked[":campaignId"].$get({ param: { campaignId: campaign.id }, query: {} }),
+    );
+    expect(linkable.items.map((c) => c.id)).toEqual([own.id]);
+    expect(linkable.items.map((c) => c.id)).not.toContain(gmCharacter.id);
+  });
+
+  test("answers a campaign's linkable characters to a non-member as it answers an unknown campaign", async () => {
+    const campaign = await postCampaign();
+    const outsider = await createSignedInUser("outsider");
+    await createTestCharacter(outsider.user.id);
+    const linkable = outsider.api.api.characters.unlinked[":campaignId"];
+
+    const hidden = await expectStatus(linkable.$get({ param: { campaignId: campaign.id }, query: {} }), 404);
+    const unknown = await expectStatus(linkable.$get({ param: { campaignId: NIL_UUID }, query: {} }), 404);
+    expect(await hidden.text()).toBe(await unknown.text());
   });
 
   test("archives, unarchives and permanently deletes a character", async () => {
@@ -441,7 +466,7 @@ describe("characters", () => {
       const { langMap } = await getSeedCtx();
       const { id } = await postCharacter({ abilities: await scoresWith("Intelligence", 14) });
       const put = (languageIds: string[]) =>
-        character.links[":role"].$put({ param: { id, role: "speaks" }, json: { entityIds: languageIds } });
+        character.$put({ param: { id }, json: { links: { speaks: languageIds } } });
 
       // A human speaks Common, which its race grants, and picks a language per point of Intelligence bonus: two
       await expectOk(put([langMap["Draconic"], langMap["Elven"]]));
@@ -456,7 +481,7 @@ describe("characters", () => {
       const { langMap } = await getSeedCtx();
       const { id } = await postCharacter({ abilities: await scoresWith("Intelligence", 12) });
       const put = (languageIds: string[]) =>
-        character.links[":role"].$put({ param: { id, role: "speaks" }, json: { entityIds: languageIds } });
+        character.$put({ param: { id }, json: { links: { speaks: languageIds } } });
 
       expect(await (await expectStatus(put([langMap["Draconic"], langMap["Elven"]]), 400)).text()).toContain("Elven");
       expect(await (await expectStatus(put([langMap["Druidic"]]), 400)).text()).toContain("Druidic");
@@ -487,10 +512,7 @@ describe("characters", () => {
 
     test("rejects a language the ruleset doesn't have", async () => {
       const { id } = await postCharacter();
-      await expectStatus(
-        character.links[":role"].$put({ param: { id, role: "speaks" }, json: { entityIds: [NIL_UUID] } }),
-        400,
-      );
+      await expectStatus(character.$put({ param: { id }, json: { links: { speaks: [NIL_UUID] } } }), 400);
       await expectStatus(
         character.links[":role"].$get({ param: { id, role: "speaks" }, query: { entityIds: NIL_UUID } }),
         400,
@@ -507,33 +529,36 @@ describe("characters", () => {
       const { id } = await postCharacter({ rulesetId: fork.id });
 
       const put = (languageIds: string[]) =>
-        character.links[":role"].$put({ param: { id, role: "speaks" }, json: { entityIds: languageIds } });
+        character.$put({ param: { id }, json: { links: { speaks: languageIds } } });
       await expectStatus(put([langMap["Draconic"]]), 400);
       await expectStatus(put([langMap["Common"], langMap["Common"]]), 400);
       await expectOk(put([langMap["Common"]]));
     });
 
-    test("answers a bonded creature's languages, as its master's editor reads them", async () => {
+    test("answers and saves a bonded creature's languages, as its master's editor edits them", async () => {
       const { bonded } = await createWizardWithFamiliar();
       const languages = await expectOk(
         character.links[":role"].$get({ param: { id: bonded.id, role: "speaks" }, query: {} }),
       );
       // A cat speaks nothing its race grants, and its Intelligence gives it no pick
       expect(languages).toEqual({ automatic: [], options: [], picks: [] });
+      await expectOk(character.$put({ param: { id: bonded.id }, json: { links: { speaks: [] } } }));
     });
 
-    test("answers another user's character's languages as not found", async () => {
+    test("answers another user's character's languages as not found, their edit too", async () => {
+      const { langMap } = await getSeedCtx();
       const { id } = await postCharacter();
       const { api: otherApi } = await createSignedInUser();
       const other = otherApi.api.characters[":id"];
       await expectStatus(other.links[":role"].$get({ param: { id, role: "speaks" }, query: {} }), 404);
+      await expectStatus(other.$put({ param: { id }, json: { links: { speaks: [langMap["Draconic"]] } } }), 404);
+      expect(await languageNames(id)).toEqual(["Common"]);
     });
 
     test("answers a role that's no picked link of the character's as not found, its scores' edit too", async () => {
       const { id } = await postCharacter();
       for (const role of ["score", "race", "unknown", "constructor"]) {
         await expectStatus(character.links[":role"].$get({ param: { id, role }, query: {} }), 404);
-        await expectStatus(character.links[":role"].$put({ param: { id, role }, json: { entityIds: [] } }), 404);
         await expectStatus(character.$put({ param: { id }, json: { links: { [role]: [] } } }), 404);
       }
       for (const role of ["speaks", "race", "unknown", "constructor"])

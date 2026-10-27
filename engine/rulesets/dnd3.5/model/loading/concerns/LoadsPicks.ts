@@ -11,7 +11,7 @@ import { FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * What each saved level's class level grants (`grants`, its `grants` links of step `step`'s kind, by class level),
- * each with the entity it grants (`entityOf`: one the view leaves out, an archived feat or spell, is left out), held at
+ * each with the entity it grants (`entityOf`: one the view leaves out, a deleted feat or spell, is left out), held at
  * the level it's granted at, in the grant's pool. The class level is the one the view stands for the level's stored
  * one, which the character's input resolved: on a fork that copied the class after the level was saved, the stored id
  * still names the source's class level, and its copy's grants are the ones the view keys.

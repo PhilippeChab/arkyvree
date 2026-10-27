@@ -47,6 +47,21 @@ describe("CampaignsPolicy", () => {
     expect(() => outsider.canRead()).toThrow("You are not a member of this campaign");
   });
 
+  test("canLinkCharacter: a member's seat, a 404 for an outsider, a 403 on an archived campaign", async () => {
+    for (const role of ["Player Character", "Game Master"] as const) {
+      const { policy } = await policyFor(role);
+      expect(policy.canLinkCharacter().role).toBe(role);
+    }
+    const { policy: outsider } = await policyFor(null);
+    expect(() => outsider.canLinkCharacter()).toThrow(NotFoundError);
+    expect(() => outsider.canLinkCharacter()).toThrow("Campaign not found");
+
+    const { campaign, session } = await policyFor("Player Character");
+    const [archived] = await Campaigns.archive(db, { id: campaign.id });
+    const policy = await CampaignsPolicy.for(db, session, archived);
+    expect(() => policy.canLinkCharacter()).toThrow("Cannot modify an archived campaign");
+  });
+
   test("canSeeCharacter: a member sees a linked character, a Private one only its player and the Game Master", async () => {
     const { policy: gameMaster } = await policyFor("Game Master");
     const { policy: player } = await policyFor("Player Character");

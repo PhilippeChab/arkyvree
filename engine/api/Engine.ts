@@ -1,3 +1,4 @@
+import { CharactersPart } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
@@ -17,6 +18,9 @@ import StorageEngine from "./StorageEngine.ts";
  * answers is the engine's to know.
  */
 export default class Engine {
+  /** The card of a character whose ruleset a list didn't read (an archived ruleset's): the core's, no ruleset's. */
+  static readonly UNREAD_CARD = CharactersPart.UNREAD_CARD;
+
   /** The copy-on-write the cache builds a ruleset's view with, and its writes copy an entity by. */
   static copyOnWrite() {
     return new CopyOnWriteEngine();

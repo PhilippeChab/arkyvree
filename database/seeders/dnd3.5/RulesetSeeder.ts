@@ -107,12 +107,12 @@ export class RulesetSeeder extends include(
           console.warn(`[domain seed] Domain spell not found in DB: "${spell.name}" (${domainFeat(d.name)})`);
           continue;
         }
-        links.push({ entityId: spellId, aptitudeId: this.ctx.aptMap[domainSpells(d.name)], level: spell.level });
+        links.push({ fromId: spellId, toId: this.ctx.aptMap[domainSpells(d.name)], tier: spell.level });
       }
     }
     await this.insertListings(
       "spells",
-      this.uniqueBy(links, (l) => `${l.entityId}:${l.aptitudeId}`),
+      this.uniqueBy(links, (l) => `${l.fromId}:${l.toId}`),
     );
   }
 }
