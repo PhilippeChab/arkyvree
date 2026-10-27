@@ -1,6 +1,6 @@
 {
-  "id": "5431ae0e-0a58-4015-aeb1-37d11b4c4fe2",
-  "prevId": "2cfd1786-06c4-4f26-b968-d53efa751edd",
+  "id": "1123ec6f-f156-4021-8a66-ae7cc0f14cff",
+  "prevId": "cfb6d6c9-960a-4584-a454-7879360134a1",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -1908,22 +1908,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "campaign_id": {
-          "name": "campaign_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "campaign_key": {
-          "name": "campaign_key",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": false,
-          "generated": {
-            "as": "COALESCE(campaign_id, '00000000-0000-0000-0000-000000000000'::uuid)",
-            "type": "stored"
-          }
-        },
         "type": {
           "name": "type",
           "type": "text",
@@ -1992,18 +1976,36 @@
         }
       },
       "indexes": {
-        "entities_campaign_idx": {
-          "name": "entities_campaign_idx",
+        "entities_name_unique_idx": {
+          "name": "entities_name_unique_idx",
           "columns": [
             {
-              "expression": "campaign_id",
+              "expression": "ruleset_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "partition",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "name",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             }
           ],
-          "isUnique": false,
-          "where": "(campaign_id IS NOT NULL)",
+          "isUnique": true,
+          "where": "(name IS NOT NULL)",
           "concurrently": false,
           "method": "btree",
           "with": {}
@@ -2030,8 +2032,8 @@
           "method": "btree",
           "with": {}
         },
-        "entities_ruleset_type_campaign_idx": {
-          "name": "entities_ruleset_type_campaign_idx",
+        "entities_ruleset_type_idx": {
+          "name": "entities_ruleset_type_idx",
           "columns": [
             {
               "expression": "ruleset_id",
@@ -2041,12 +2043,6 @@
             },
             {
               "expression": "type",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "campaign_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2079,97 +2075,9 @@
           "concurrently": false,
           "method": "gin",
           "with": {}
-        },
-        "entities_with_campaign_unique_idx": {
-          "name": "entities_with_campaign_unique_idx",
-          "columns": [
-            {
-              "expression": "ruleset_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "campaign_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "type",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "partition",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "name",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "((campaign_id IS NOT NULL) AND (name IS NOT NULL))",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "entities_without_campaign_unique_idx": {
-          "name": "entities_without_campaign_unique_idx",
-          "columns": [
-            {
-              "expression": "ruleset_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "type",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "partition",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "name",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": true,
-          "where": "((campaign_id IS NULL) AND (name IS NOT NULL))",
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
-        "entities_campaign_id_fkey": {
-          "name": "entities_campaign_id_fkey",
-          "tableFrom": "entities",
-          "tableTo": "campaigns",
-          "schemaTo": "campaign",
-          "columnsFrom": [
-            "campaign_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
         "entities_owner_id_owner_type_fkey": {
           "name": "entities_owner_id_owner_type_fkey",
           "tableFrom": "entities",
@@ -2186,20 +2094,18 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "entities_owner_id_ruleset_id_campaign_key_fkey": {
-          "name": "entities_owner_id_ruleset_id_campaign_key_fkey",
+        "entities_owner_id_ruleset_id_fkey": {
+          "name": "entities_owner_id_ruleset_id_fkey",
           "tableFrom": "entities",
           "tableTo": "entities",
           "schemaTo": "rules",
           "columnsFrom": [
             "owner_id",
-            "ruleset_id",
-            "campaign_key"
+            "ruleset_id"
           ],
           "columnsTo": [
             "id",
-            "ruleset_id",
-            "campaign_key"
+            "ruleset_id"
           ],
           "onDelete": "cascade",
           "onUpdate": "no action"
@@ -2261,13 +2167,12 @@
             "type"
           ]
         },
-        "entities_id_ruleset_id_campaign_key_key": {
-          "name": "entities_id_ruleset_id_campaign_key_key",
+        "entities_id_ruleset_id_key": {
+          "name": "entities_id_ruleset_id_key",
           "nullsNotDistinct": false,
           "columns": [
             "id",
-            "ruleset_id",
-            "campaign_key"
+            "ruleset_id"
           ]
         }
       },

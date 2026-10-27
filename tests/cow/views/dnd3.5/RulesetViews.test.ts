@@ -13,7 +13,6 @@ import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import { Entities, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
-import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { insertRows } from "@/tests/support/database.ts";
 import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
@@ -265,34 +264,6 @@ describe("RulesetViews", () => {
 
     // Verify the ruleset-level skill point ability link points at Intelligence.
     expect(rulesetData.rulesetValuesOf(ruleset.id).links.skillPointAbility).toBe(c.abilityMap["Intelligence"]);
-  });
-
-  test("campaign-scoped raw cache is independent from base raw cache", async () => {
-    const ruleset = await getRuleset();
-
-    const fakeCampaignId = crypto.randomUUID();
-
-    const baseRaw = await RulesetViews.getRawData(ruleset.id);
-    const campaignRaw = await RulesetViews.getRawData(ruleset.id, fakeCampaignId);
-
-    // Different cache entries (keys differ by campaignId suffix)
-    expect(campaignRaw).not.toBe(baseRaw);
-    // Same entity counts for a non-existent campaign — no campaign-specific entities
-    expect(campaignRaw.entities.abilities.length).toBe(baseRaw.entities.abilities.length);
-  });
-
-  test("invalidate clears campaign-scoped raw entries too", async () => {
-    const ruleset = await getRuleset();
-
-    const fakeCampaignId = crypto.randomUUID();
-    const campaignRaw = await RulesetViews.getRawData(ruleset.id, fakeCampaignId);
-
-    RulesetViews.invalidate(ruleset.id);
-
-    const campaignRaw2 = await RulesetViews.getRawData(ruleset.id, fakeCampaignId);
-
-    // Different reference — campaign-scoped raw entry was invalidated
-    expect(campaignRaw2).not.toBe(campaignRaw);
   });
 
   // Fork lifecycle: create/edit/delete entities and verify compose + cache
@@ -789,27 +760,6 @@ describe("RulesetViews", () => {
       expect(view.cow.resolve(coreFirst.id)).toBe(ownFirst.id);
       expect(Dnd35View.of(view).classLevelsById.get(coreFirst.id)?.id).toBe(ownFirst.id);
     });
-
-    test("a campaign's entity of its name hides none of a book's", async () => {
-      const seed = await getRuleset();
-      const book = await createBook(seed.id);
-      const name = `Homebrew Feat ${uniqueId()}`;
-      const [bookFeat] = await Entities.createMany<Feat>(db, "feats", [{ name, rulesetId: book.id }]);
-      const fork = await createTestRuleset(SEED_USER_ID, {
-        rulesetId: seed.id,
-        ancestorRulesetIds: [seed.id],
-        extensionRulesetIds: [book.id],
-      });
-      const { campaign } = await createTestCampaign(SEED_USER_ID, fork.id);
-      await Entities.createMany<Feat>(db, "feats", [{ name, rulesetId: fork.id, campaignId: campaign.id }]);
-
-      const view = await RulesetViews.getData(fork);
-      expect(
-        Dnd35View.of(view)
-          .feats.filter((feat) => feat.name === name)
-          .map((feat) => feat.id),
-      ).toEqual([bookFeat.id]);
-    });
   });
 
   describe("lists of one name", () => {
@@ -833,27 +783,6 @@ describe("RulesetViews", () => {
           .map((list) => list.id),
       ).toEqual([copy.id]);
       expect(view.cow.resolve(firstList.id)).toBe(copy.id);
-    });
-
-    test("a campaign's list takes no book's list's place in its ruleset's view", async () => {
-      const seed = await getRuleset();
-      const book = await createBook(seed.id);
-      const name = `Shared Spells ${uniqueId()}`;
-      const [bookList] = await Entities.createMany<Aptitude>(db, "aptitudes", [{ name, rulesetId: book.id }]);
-      const fork = await createTestRuleset(SEED_USER_ID, {
-        rulesetId: seed.id,
-        ancestorRulesetIds: [seed.id],
-        extensionRulesetIds: [book.id],
-      });
-      const { campaign } = await createTestCampaign(SEED_USER_ID, fork.id);
-      await Entities.createMany<Aptitude>(db, "aptitudes", [{ name, rulesetId: fork.id, campaignId: campaign.id }]);
-
-      const view = await RulesetViews.getData(fork);
-      expect(
-        Dnd35View.of(view)
-          .aptitudes.filter((list) => list.name === name)
-          .map((list) => list.id),
-      ).toEqual([bookList.id]);
     });
   });
 });

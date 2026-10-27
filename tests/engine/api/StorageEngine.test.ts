@@ -35,7 +35,6 @@ function leafOf(fields: Record<string, Fields>, find: (leaf: StoredLeaf) => bool
 /** A stored entity of a kind (`type`), holding these fields' values (`fields`) and links (`links`). */
 function storedEntity(type: string, fields: StoredFieldValue[], links: StoredLink[]): StoredEntity {
   return {
-    campaignId: null,
     createdAt: "2026-01-01 00:00:00+00",
     description: null,
     fields,

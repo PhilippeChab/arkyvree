@@ -211,41 +211,6 @@ export const charactersInCharacter = character.table(
   ],
 );
 
-export const campaign = pgSchema("campaign");
-
-export const campaignsInCampaign = campaign.table(
-  "campaigns",
-  {
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
-    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
-    id: uuid()
-      .default(sql`public.gen_random_uuid()`)
-      .primaryKey()
-      .notNull(),
-    rulesetId: uuid("ruleset_id").notNull(),
-    name: text().notNull(),
-    description: text(),
-  },
-  (table) => [
-    index("campaigns_ruleset_id_name_idx").using(
-      "btree",
-      table.rulesetId.asc().nullsLast(),
-      table.name.asc().nullsLast().op("text_pattern_ops"),
-    ),
-    index("campaigns_search_trgm_idx").using(
-      "gin",
-      table.name.asc().nullsLast().op("gin_trgm_ops"),
-      table.description.asc().nullsLast().op("gin_trgm_ops"),
-    ),
-    foreignKey({
-      columns: [table.rulesetId],
-      foreignColumns: [rulesetsInRules.id],
-      name: "campaigns_ruleset_id_fkey",
-    }).onDelete("cascade"),
-  ],
-);
-
 export const entityTypesInRules = rules.table(
   "entity_types",
   {
@@ -269,10 +234,6 @@ export const entitiesInRules = rules.table(
   {
     id: uuid().defaultRandom().primaryKey().notNull(),
     rulesetId: uuid("ruleset_id").notNull(),
-    campaignId: uuid("campaign_id"),
-    campaignKey: uuid("campaign_key").generatedAlwaysAs(
-      sql`COALESCE(campaign_id, '00000000-0000-0000-0000-000000000000'::uuid)`,
-    ),
     type: text().notNull(),
     name: text(),
     description: text(),
@@ -285,47 +246,24 @@ export const entitiesInRules = rules.table(
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
   },
   (table) => [
-    index("entities_campaign_idx")
-      .using("btree", table.campaignId.asc().nullsLast())
-      .where(sql`(campaign_id IS NOT NULL)`),
+    uniqueIndex("entities_name_unique_idx")
+      .using(
+        "btree",
+        table.rulesetId.asc().nullsLast(),
+        table.type.asc().nullsLast(),
+        table.partition.asc().nullsLast(),
+        table.name.asc().nullsLast(),
+      )
+      .where(sql`(name IS NOT NULL)`),
     uniqueIndex("entities_owner_position_unique_idx")
       .using("btree", table.ownerId.asc().nullsLast(), table.position.asc().nullsLast())
       .where(sql`(owner_id IS NOT NULL)`),
-    index("entities_ruleset_type_campaign_idx").using(
-      "btree",
-      table.rulesetId.asc().nullsLast(),
-      table.type.asc().nullsLast(),
-      table.campaignId.asc().nullsLast(),
-    ),
+    index("entities_ruleset_type_idx").using("btree", table.rulesetId.asc().nullsLast(), table.type.asc().nullsLast()),
     index("entities_search_idx").using(
       "gin",
       table.name.asc().nullsLast().op("gin_trgm_ops"),
       table.description.asc().nullsLast().op("gin_trgm_ops"),
     ),
-    uniqueIndex("entities_with_campaign_unique_idx")
-      .using(
-        "btree",
-        table.rulesetId.asc().nullsLast(),
-        table.campaignId.asc().nullsLast(),
-        table.type.asc().nullsLast(),
-        table.partition.asc().nullsLast(),
-        table.name.asc().nullsLast(),
-      )
-      .where(sql`((campaign_id IS NOT NULL) AND (name IS NOT NULL))`),
-    uniqueIndex("entities_without_campaign_unique_idx")
-      .using(
-        "btree",
-        table.rulesetId.asc().nullsLast(),
-        table.type.asc().nullsLast(),
-        table.partition.asc().nullsLast(),
-        table.name.asc().nullsLast(),
-      )
-      .where(sql`((campaign_id IS NULL) AND (name IS NOT NULL))`),
-    foreignKey({
-      columns: [table.campaignId],
-      foreignColumns: [campaignsInCampaign.id],
-      name: "entities_campaign_id_fkey",
-    }).onDelete("cascade"),
     // The database's is MATCH FULL, which drizzle's `foreignKey` doesn't declare
     foreignKey({
       columns: [table.ownerId, table.ownerType],
@@ -333,9 +271,9 @@ export const entitiesInRules = rules.table(
       name: "entities_owner_id_owner_type_fkey",
     }).onDelete("cascade"),
     foreignKey({
-      columns: [table.ownerId, table.rulesetId, table.campaignKey],
-      foreignColumns: [table.id, table.rulesetId, table.campaignKey],
-      name: "entities_owner_id_ruleset_id_campaign_key_fkey",
+      columns: [table.ownerId, table.rulesetId],
+      foreignColumns: [table.id, table.rulesetId],
+      name: "entities_owner_id_ruleset_id_fkey",
     }).onDelete("cascade"),
     foreignKey({
       columns: [table.rulesetId],
@@ -353,7 +291,7 @@ export const entitiesInRules = rules.table(
       name: "entities_type_owner_type_fkey",
     }),
     unique("entities_id_type_key").on(table.id, table.type),
-    unique("entities_id_ruleset_id_campaign_key_key").on(table.id, table.rulesetId, table.campaignKey),
+    unique("entities_id_ruleset_id_key").on(table.id, table.rulesetId),
     check("entities_check", sql`(name IS NOT NULL) OR ((owner_id IS NOT NULL) AND ("position" IS NOT NULL))`),
   ],
 );
@@ -560,6 +498,41 @@ export const attachmentsInStorage = storage.table(
       columns: [table.blobId],
       foreignColumns: [blobsInStorage.id],
       name: "attachments_blob_id_fkey",
+    }).onDelete("cascade"),
+  ],
+);
+
+export const campaign = pgSchema("campaign");
+
+export const campaignsInCampaign = campaign.table(
+  "campaigns",
+  {
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
+    id: uuid()
+      .default(sql`public.gen_random_uuid()`)
+      .primaryKey()
+      .notNull(),
+    rulesetId: uuid("ruleset_id").notNull(),
+    name: text().notNull(),
+    description: text(),
+  },
+  (table) => [
+    index("campaigns_ruleset_id_name_idx").using(
+      "btree",
+      table.rulesetId.asc().nullsLast(),
+      table.name.asc().nullsLast().op("text_pattern_ops"),
+    ),
+    index("campaigns_search_trgm_idx").using(
+      "gin",
+      table.name.asc().nullsLast().op("gin_trgm_ops"),
+      table.description.asc().nullsLast().op("gin_trgm_ops"),
+    ),
+    foreignKey({
+      columns: [table.rulesetId],
+      foreignColumns: [rulesetsInRules.id],
+      name: "campaigns_ruleset_id_fkey",
     }).onDelete("cascade"),
   ],
 );

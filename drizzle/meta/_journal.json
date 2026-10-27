@@ -682,6 +682,13 @@
       "breakpoints": true
     },
     {
+      "idx": 97,
+      "version": "7",
+      "when": 1793069041714,
+      "tag": "0097_entity-campaign-scope",
+      "breakpoints": true
+    },
+    {
       "idx": 98,
       "version": "7",
       "when": 1793072641714,

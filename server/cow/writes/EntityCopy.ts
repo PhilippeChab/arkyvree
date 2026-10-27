@@ -130,14 +130,12 @@ export default class EntityCopy {
     // the child ruleset, each link to the entity the ruleset shows in its target's place (a race's parent, an item's
     // template, a spell's save)
     const merged = await this.mergeValues(tx, parentEntity, siblingIds);
-    const [{ campaignId, description, fields, links, name, partition }] = cow.resolveLinks([
-      { ...parentEntity, ...merged },
-    ]);
+    const [{ description, fields, links, name, partition }] = cow.resolveLinks([{ ...parentEntity, ...merged }]);
     // Its rows as they're stored, its source's: a copy keeps them as they are
     const [newEntity] = await Entities.create(
       tx,
       entityType,
-      { rulesetId: childRulesetId, campaignId, name: name!, description, partition, fields, links },
+      { rulesetId: childRulesetId, name: name!, description, partition, fields, links },
       true,
     );
 
