@@ -13,13 +13,11 @@ import requirements from "./customization/requirements/index.ts";
 import targetRouter from "./customization/target/index.ts";
 import entities from "./entities/index.ts";
 import extensions from "./extensions/index.ts";
-import fields from "./fields/index.ts";
 import settings from "./settings/index.ts";
 
 export default new Hono()
   .use(sessionMiddleware)
   .route("/", contributorsRouter)
-  .route("/", fields)
   .route("/", settings)
   .route("/", modifiers)
   .route("/", requirements)

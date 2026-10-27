@@ -64,8 +64,6 @@ export const QUERY_KEYS = {
      * kind's section key, so invalidating the section refreshes the pickers too.
      */
     options: (id: string, type: string) => ["rulesets", "detail", id, type, "options"] as const,
-    /** The fields each entity's form shows, and the ruleset's Settings', as the ruleset declares them. */
-    fields: (id: string) => ["rulesets", "detail", id, "fields"] as const,
     /** The ruleset's Settings: its own fields' values. */
     settings: (id: string) => ["rulesets", "detail", id, "settings"] as const,
   },

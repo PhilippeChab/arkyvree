@@ -24,8 +24,8 @@ import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import type { EntityKindDescription } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import {
-  type ColumnContext,
   type EntityFormData,
+  type FieldContext,
   ownFieldOf,
   RulesetEntityFormFields,
   toEntityBody,
@@ -51,7 +51,6 @@ import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQue
 import type { RulesetSectionProps } from "@/client/src/pages/rulesets/details/sectionProps.ts";
 import { entitiesQuery } from "@/client/src/pages/rulesets/details/sectionQueries.ts";
 import {
-  useEntityColumns,
   useEntityFields,
   useEntityFilters,
   useEntityList,
@@ -73,7 +72,7 @@ interface EntitySectionProps extends RulesetSectionProps {
 }
 
 /** A new entity's form, which sends every field and needs what a new one needs (a feat's pool). */
-const NEW_ENTITY: ColumnContext = { newEntity: true };
+const NEW_ENTITY: FieldContext = { newEntity: true };
 
 /**
  * The customization page a kind's row opens (`pages`, the kinds whose customizations have one), if it opens one: a kind
@@ -87,17 +86,16 @@ function customizationPageOf(kind: EntityKindDescription, pages: ReadonlyMap<str
 }
 
 /**
- * An entity's copy (`copies`: its kind's), as its duplicate's dialog opens on it: its columns (`columns`, its rules')
- * and its fields (`fields`, its ruleset's), named a copy, from the template it's from (the entity's own where it's a
- * template, else the entity's own template), never a template itself.
+ * An entity's copy (`copies`: its kind's), as its duplicate's dialog opens on it: its fields (`fields`, its rules'),
+ * named a copy, from the template it's from (the entity's own where it's a template, else the entity's own template),
+ * never a template itself.
  */
 function duplicateForm(
   entity: EntityRow,
   copies: NonNullable<EntityKindDescription["copies"]>,
-  columns: readonly EntityField[],
   fields: readonly EntityField[] | undefined,
 ): EntityFormData {
-  const held = toEntityForm<EntityFormData>(columns, entity);
+  const held = toEntityForm<EntityFormData>(fields ?? [], entity);
   const source = ownFieldOf(entity, copies.template.field) === true ? entity.id : (held.links?.[copies.source] ?? "");
   const form = {
     ...withTemplateFlag(held, copies, false),
@@ -151,9 +149,8 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
   const grouped = !!kind.families && oneOf(groupedParam, ["true", "false"], "true") === "true";
 
   const { fields } = useEntityFields(ruleset.id, kind.type);
-  const { columns: formColumns } = useEntityColumns(ruleset.id, kind.type);
   const { columns, error: listError, list, names } = useEntityList(ruleset.id, kind.type);
-  const toBody = (data: EntityFormData) => toEntityBody<EntityFormData, EntityFormData>(formColumns, data);
+  const toBody = (data: EntityFormData) => toEntityBody<EntityFormData, EntityFormData>(fields ?? [], data);
   const { createForm, createDialogProps, duplicateSource, handleCreate, handleDuplicate } = useRulesetSection<
     EntityRow,
     EntityFormData
@@ -162,7 +159,7 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
     sectionName: kind.type,
     label: one,
     createDefaults: withEntityFields(
-      withTemplateFlag(toEntityForm<EntityFormData>(formColumns), kind.copies, false),
+      withTemplateFlag(toEntityForm<EntityFormData>(fields ?? []), kind.copies, false),
       fields,
     ),
     createFn: async (data) =>
@@ -307,9 +304,7 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
               isLoading={isLoading}
               columns={columns}
               canEdit={canEdit}
-              onDuplicate={
-                copies && ((entity) => handleDuplicate(entity, duplicateForm(entity, copies, formColumns, fields)))
-              }
+              onDuplicate={copies && ((entity) => handleDuplicate(entity, duplicateForm(entity, copies, fields)))}
               onCreateVariants={copies && variants.openOn}
               onRowClick={handleRowClick}
               onRowPrefetch={handleRowPrefetch}

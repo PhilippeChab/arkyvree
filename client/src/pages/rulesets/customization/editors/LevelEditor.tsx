@@ -5,14 +5,14 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import {
   emptyLevel,
-  EntityFormFields,
+  EntityFields,
   type Grant,
   grantKey,
   grantLabel,
-  type LevelColumns,
-  levelColumnsOf,
   type LevelFormData,
   type LevelLinks,
+  type LevelLists,
+  levelListsOf,
   type LevelRead,
   readLevel,
   sortGrants,
@@ -21,7 +21,7 @@ import {
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
 import type { OwnedEntity } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { useAllAmounts, useEntityFields, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useAllAmounts, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import type { EditorProps } from "./renderEditor.tsx";
@@ -40,10 +40,10 @@ function labelOf(grant: Grant) {
 }
 
 /**
- * A level's form off its read (`level`): its number, and its amounts and grants among its links, at its columns' roles
- * (`columns`).
+ * A level's form off its read (`level`): its number, and its amounts and grants among its links, at its lists' roles
+ * (`lists`).
  */
-function toLevelForm(level: LevelRead, { amounts, grants }: LevelColumns): LevelFormData {
+function toLevelForm(level: LevelRead, { amounts, grants }: LevelLists): LevelFormData {
   return {
     position: level.level,
     links: {
@@ -57,7 +57,7 @@ function toLevelForm(level: LevelRead, { amounts, grants }: LevelColumns): Level
 
 /**
  * An owned level's details on its customization page (3.5's class level's), as its rules describe its kind (`type`):
- * its declared fields, and its amounts and grants among its links, at its columns' roles, saved through its owner's
+ * its fields, and its amounts and grants among its links, at its lists' roles, saved through its owner's
  * routes, every amount sent (`useAllAmounts`).
  */
 export function LevelEditor({
@@ -74,16 +74,16 @@ export function LevelEditor({
   followCopy,
   refetchSaved,
 }: LevelEditorProps) {
-  const columns = levelColumnsOf(rules, type);
-  const level = readLevel(entity, columns);
-  const { amounts, grants } = columns;
+  const fields = rules?.fields[type];
+  const lists = levelListsOf(fields);
+  const level = readLevel(entity, lists);
+  const { amounts, grants } = lists;
   const word = entityTypeLabel(type, rules?.words);
-  const { fields } = useEntityFields(rulesetId, type);
-  const { withAll } = useAllAmounts(rulesetId, columns.amounts);
+  const { withAll } = useAllAmounts(rulesetId, lists.amounts);
   const { form, save } = useEntityForm({
-    empty: emptyLevel(columns),
-    values: withEntityFields(toLevelForm(level, columns), fields, entity),
-    columns: rules?.columns[type],
+    empty: emptyLevel(lists),
+    values: withEntityFields(toLevelForm(level, lists), fields, entity),
+    fields,
     formKey: recordKey,
     adoptKey,
     updatedAt: entity.updatedAt,
@@ -122,7 +122,7 @@ export function LevelEditor({
       title={`${word} Details`}
       form={{
         fields: (
-          <EntityFormFields
+          <EntityFields
             form={form}
             entityType={type}
             rulesetId={rulesetId}

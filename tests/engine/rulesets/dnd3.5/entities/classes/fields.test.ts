@@ -11,8 +11,8 @@ import {
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 describe("A class's fields", () => {
-  test("are null without their values, and their values with them: the bonus spell ability its link's", () => {
-    expect(CLASS_FIELDS.read(OwnerValues.NONE)).toEqual({ bonusSpellAbilityId: null, casterType: null, hitDie: null });
+  test("are their defaults without their values (a hit die's d8), and their values with them: the bonus spell ability its link's", () => {
+    expect(CLASS_FIELDS.read(OwnerValues.NONE)).toEqual({ bonusSpellAbility: null, casterType: null, hitDie: 8 });
     expect(
       CLASS_FIELDS.read(
         heldValues(
@@ -24,7 +24,7 @@ describe("A class's fields", () => {
           { bonusSpellAbility: "wisdom-id" },
         ),
       ),
-    ).toEqual({ bonusSpellAbilityId: "wisdom-id", casterType: "Divine", hitDie: 8 });
+    ).toEqual({ bonusSpellAbility: "wisdom-id", casterType: "Divine", hitDie: 8 });
   });
 
   test("take a caster type only as one the engine casts by", () => {
@@ -43,19 +43,20 @@ describe("A class's fields", () => {
   });
 
   test("are kept as the class's fields, its bonus spell ability its link, which read back as the fields", () => {
-    expect(CLASS_FIELDS.write({ bonusSpellAbilityId: null, casterType: null, hitDie: null })).toEqual({
-      fields: { [CLASS_HD]: [], [CLASS_CASTER_TYPE]: [] },
+    // Its hit die always written, its default as any other
+    expect(CLASS_FIELDS.write({ bonusSpellAbility: null, casterType: null, hitDie: 8 })).toEqual({
+      fields: { [CLASS_HD]: [8], [CLASS_CASTER_TYPE]: [] },
       links: { bonusSpellAbility: null },
     });
-    const values = { bonusSpellAbilityId: "wisdom-id", casterType: "Divine", hitDie: 6 } as const;
+    const values = { bonusSpellAbility: "wisdom-id", casterType: "Divine", hitDie: 6 } as const;
     const written = writtenValues(CLASS_FIELDS.write(values));
     expect(written).toEqual({
       fields: { [CLASS_HD]: [6], [CLASS_CASTER_TYPE]: ["Divine"] },
       links: { bonusSpellAbility: "wisdom-id" },
     });
     expect(CLASS_FIELDS.read(written)).toEqual(values);
-    // Its form writes its caster type and its bonus spell ability; its hit die is a column of its own
-    expect(CLASS_FIELDS.formNames).toEqual(["bonusSpellAbilityId", "casterType"]);
+    // Its form writes them all: its hit die beside its name, its bonus spell ability and its caster type
+    expect(CLASS_FIELDS.formNames).toEqual(["hitDie", "bonusSpellAbility", "casterType"]);
   });
 });
 

@@ -1,17 +1,14 @@
 /**
- * An owned kind's level (3.5's class level), by its rules' columns: what its read gives of it (`readLevel`: its row,
- * its fields' values its tracks read, the entities it grants through its `grants` column, its amounts through its
- * `amounts` column, each list at its column's role), and its form, its create's and its edit's body, which writes them
- * among its links, by those roles, its number its `position`.
+ * An owned kind's level (3.5's class level), by its rules' fields: what its read gives of it (`readLevel`: its row,
+ * its fields' values its tracks read, the entities it grants through its `grants` list, its amounts through its
+ * `amounts` list, each at its list's role), and its form, its create's and its edit's body, which writes them among its
+ * links, by those roles, its number its `position`.
  */
 
-import type { RulesDescription } from "@/client/src/lib/queries.ts";
+import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
 import type { EntityFieldValues } from "./entityFields.ts";
-
-/** A column of a kind's form, as its rules describe it. */
-type LevelColumn = NonNullable<RulesDescription["columns"][string]>[number];
 
 /** A level's amount of an entity (3.5's base of a save): the entity, and its value. */
 export interface Amount {
@@ -41,12 +38,6 @@ export interface GrantRow {
   viaId: string;
 }
 
-/** A level kind's columns read past its fields: its amounts' and its grants'. */
-export interface LevelColumns {
-  amounts?: Extract<LevelColumn, { input: "amounts" }>;
-  grants?: Extract<LevelColumn, { input: "grants" }>;
-}
-
 /** A level's form: its number (`position`), its declared fields, and its amounts and grants among its links. */
 export interface LevelFormData {
   [key: string]: unknown;
@@ -60,8 +51,14 @@ export interface LevelLinks {
   [role: string]: AmountRow[] | GrantRow[] | undefined;
 }
 
+/** A level kind's lists of links read past its other fields: its amounts' and its grants'. */
+export interface LevelLists {
+  amounts?: Extract<EntityField, { input: "amounts" }>;
+  grants?: Extract<EntityField, { input: "grants" }>;
+}
+
 /**
- * A level as its route reads it: its row, its number, its amounts and its grants, by its columns, and its fields'
+ * A level as its route reads it: its row, its number, its amounts and its grants, by its lists, and its fields'
  * values its Progression tab's tracks read (`values`, by their tracks' keys).
  */
 export interface LevelRead {
@@ -86,20 +83,19 @@ function textAt(record: Record<string, unknown>, key: string): string | null {
   return typeof value === "string" ? value : null;
 }
 
-/** A level's empty form (`columns`, its rules'): the first, which has no amount and grants nothing. */
-export function emptyLevel({ amounts, grants }: LevelColumns): LevelFormData {
+/** A level's empty form (`lists`, its rules'): the first, which has no amount and grants nothing. */
+export function emptyLevel({ amounts, grants }: LevelLists): LevelFormData {
   return {
     position: 1,
     links: { ...(amounts && { [amounts.role]: [] }), ...(grants && { [grants.role]: [] }) },
   };
 }
 
-/** A level kind's columns (`type`: 3.5's `class-levels`) read past its fields. */
-export function levelColumnsOf(rules: RulesDescription | undefined, type: string): LevelColumns {
-  const columns = rules?.columns[type] ?? [];
+/** A level kind's lists of links (`fields`, its rules': 3.5's class level's), read past its other fields. */
+export function levelListsOf(fields: readonly EntityField[] | undefined): LevelLists {
   return {
-    amounts: columns.find((column) => column.input === "amounts"),
-    grants: columns.find((column) => column.input === "grants"),
+    amounts: fields?.find((field) => field.input === "amounts"),
+    grants: fields?.find((field) => field.input === "grants"),
   };
 }
 
@@ -108,10 +104,10 @@ export function levelColumnsOf(rules: RulesDescription | undefined, type: string
  * whose amounts it starts; a class without levels starts from the first's empty form. Its declared fields start from
  * the highest's too (the class levels' section's `withEntityFields`).
  */
-export function nextLevel(levels: readonly LevelRead[] | undefined, columns: LevelColumns): LevelFormData {
-  if (!levels?.length) return emptyLevel(columns);
+export function nextLevel(levels: readonly LevelRead[] | undefined, lists: LevelLists): LevelFormData {
+  if (!levels?.length) return emptyLevel(lists);
   const highest = levels.reduce((top, level) => (level.level > top.level ? level : top));
-  const { amounts, grants } = columns;
+  const { amounts, grants } = lists;
   return {
     position: highest.level + 1,
     links: {
@@ -123,13 +119,13 @@ export function nextLevel(levels: readonly LevelRead[] | undefined, columns: Lev
 
 /**
  * A level as its route reads it (`row`: its number its `position` on its class's track), its amounts and its grants at
- * its columns' roles (`columns`): a grant its entity's row, the one it's through and its name beside it (`viaId`,
+ * its lists' roles (`lists`): a grant its entity's row, the one it's through and its name beside it (`viaId`,
  * `viaName`), and whether it's free; an amount its entity (`toId`) and its `amount`; and the values of its fields its
  * tracks read (`tracks`: each a stored field, by its track's key).
  */
 export function readLevel(
   row: { id: string; position: number; updatedAt: string } & Record<string, unknown>,
-  { amounts, grants }: LevelColumns,
+  { amounts, grants }: LevelLists,
   tracks: readonly { field: string; key: string }[] = [],
 ): LevelRead {
   return {

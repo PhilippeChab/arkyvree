@@ -70,7 +70,7 @@ const COUNTS = z.object({
 /** A form's fields, an object of them by stored field, which their codec reads. */
 const FIELDS = z.custom<EntityFieldValues>((value) => isRecord(value), "Expected an object of the entity's fields");
 
-/** A form's links, an object of them by role, which its columns read. */
+/** A form's links, an object of them by role, which its fields read. */
 const LINKS = z.custom<EntityLinkValues>((value) => isRecord(value), "Expected an object of the entity's links");
 
 /**

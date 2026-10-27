@@ -1,11 +1,13 @@
 /**
  * The D&D 3.5 entities' fields: each entity type's, and a ruleset's Settings', in the order a stat block shows them
- * (and its form its fields), each declared once, as data the engine stores and reads them by (its kind's codec,
- * `FieldCodec`, and its storage, `Engine.storage()`; `FieldSpec` is a declaration's shape): its name, the stored field
- * that keeps it (a reference's, the role of its owner's single link), its label and what it's for, its kind, its closed
- * list of values or the entity its value names, its default, scale and bounds, how sibling copies merge it, the role
- * its entity reads it off another through (an item's, its template's), when it counts (`when`) and where its form
- * shows it (`shownIn`, `form`). A field merges by what its value is:
+ * (and its form its fields), each declared once, as data the engine stores, reads and takes from a form by (its kind's
+ * codec, `FieldCodec`, and its storage, `Engine.storage()`; `FieldSpec` is a declaration's shape): its name, the stored
+ * field that keeps it (a link's, the role of its owner's links: a reference's single link, a list of links its form
+ * edits), its label and what it's for, its kind, its closed list of values or the entity its value names, its default,
+ * scale and bounds, whether a form must give it (`required`), how sibling copies merge it, the role its entity reads it
+ * off another through (an item's, its template's), when it counts (`when`), and how its form shows it: where
+ * (`placement`, `shownIn`), on what (`shownWhen`), in its unit, by its values' labels, or not at all (`form`). A field
+ * merges by what its value is:
  * - a set (a list, a progression) holds every copy's values (`union`);
  * - a value that reads apart from the others falls back to a sibling's when the winning copy holds none (`fallback`);
  * - a value its entity is read by, with its others, is the winning copy's alone (`winner`), so no stat line mixes two
@@ -14,8 +16,9 @@
  *   link, which merges so too); and a ruleset's Settings, which are the nearest ruleset's of its chain, whole.
  *
  * A field whose values name groupings across its kind (`kindWide`: a weapon's type, a feat's family, a spell's school)
- * is read kind-wide, as the target paths label them: an item's, a feat's and a spell's but those its rules or its form's
- * columns set (an item's type, slot, cost, weight and template flag, a feat's flags, a spell's save effect).
+ * is read kind-wide, as the target paths label them: an item's, a feat's and a spell's but those its rules set or its
+ * form shows beside its name (an item's type, slot, cost, weight and template flag, a feat's flags, a spell's save
+ * effect).
  */
 
 import {
@@ -27,18 +30,28 @@ import {
 import {
   ABILITY_INCREASE_LEVEL_INTERVAL,
   CASTER_TYPES,
+  DEFAULT_HIT_DIE,
   FIRST_LEVEL_GENERAL_FEATS,
   GENERAL_FEAT_LEVEL_INTERVAL,
+  HIT_DIE_LABELS,
+  HIT_DIE_VALUES,
   MAX_CHARACTER_LEVEL,
   MAX_CLASS_LEVEL,
   MAX_GENERAL_FEATS_PER_LEVEL,
+  MAX_SAVE_BASE,
   MAX_TABLE_COUNT,
 } from "@/vocabulary/dnd3.5/classes.ts";
 import { LOCATION_OPTIONS } from "@/vocabulary/dnd3.5/equipment.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
-import { ITEM_TYPES } from "@/vocabulary/dnd3.5/itemTemplates.ts";
+import { ITEM_TYPES, TEMPLATE_ITEM_TYPES } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 import { SIZE_OPTIONS } from "@/vocabulary/dnd3.5/sizes.ts";
-import { SPELL_COMPONENTS, SPELL_DESCRIPTORS, SPELL_SCHOOLS, SPELL_SUBSCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
+import {
+  MAX_SPELL_LEVEL,
+  SPELL_COMPONENTS,
+  SPELL_DESCRIPTORS,
+  SPELL_SCHOOLS,
+  SPELL_SUBSCHOOLS,
+} from "@/vocabulary/dnd3.5/spells.ts";
 import {
   DAMAGE_TYPES,
   STRENGTH_DAMAGE_RULES,
@@ -112,17 +125,30 @@ import {
   WEAPON_TYPE,
 } from "./weapon.ts";
 
-/** A class's fields: its hit die, the ability its bonus spells and spell DCs come from, and its caster type. */
+/** What a new feat's or spell's form says of its empty list of pools, which it refuses. */
+const APTITUDES_REQUIRED = "At least one aptitude must be selected";
+
+/** A template's form: whether it's one isn't a field its form changes. */
+const AS_TEMPLATE = { field: ITEM_IS_TEMPLATE, values: [true] } as const;
+
+/**
+ * A class's fields: its hit die (one of the dice, beside its name; a new class's `DEFAULT_HIT_DIE` when its form gives
+ * none), the ability its bonus spells and spell DCs come from, and its caster type.
+ */
 const CLASS_FIELDS = {
   hitDie: {
+    default: DEFAULT_HIT_DIE,
     description: "The die each of the class's levels rolls for hit points",
-    form: "column",
     kind: "number",
     label: "Hit Die",
+    labels: HIT_DIE_LABELS,
+    placement: "beside-name",
     field: CLASS_HD,
     merge: "winner",
+    values: HIT_DIE_VALUES,
+    write: "always",
   },
-  bonusSpellAbilityId: {
+  bonusSpellAbility: {
     description: "Ability score used for bonus spells per day",
     kind: "ref",
     label: "Bonus Spell Ability",
@@ -140,10 +166,30 @@ const CLASS_FIELDS = {
 } as const;
 
 /**
- * A class level's fields: its base attack bonus and its skill points, in their bounds, 0 without their rows, both always
- * written.
+ * A class level's fields: its base bonus to each of the ruleset's saves (its `baseBonus` links) and the feats it grants,
+ * each through the pool it's taken for (its `grants` links), then its base attack bonus and its skill points, in their
+ * bounds, 0 without their rows, both always written.
  */
 const CLASS_LEVEL_FIELDS = {
+  baseBonus: {
+    description: "The base bonus the level gives each save",
+    entries: "amount",
+    kind: "links",
+    label: "Saves",
+    max: MAX_SAVE_BASE,
+    min: 0,
+    references: "saves",
+    role: "baseBonus",
+  },
+  grants: {
+    description: "Select feats with aptitudes granted at this level",
+    entries: "grant",
+    kind: "links",
+    label: "Feats",
+    references: "feats",
+    role: "grants",
+    via: "aptitudes",
+  },
   bab: {
     default: 0,
     description: "Base attack bonus at this class level",
@@ -170,11 +216,21 @@ const CLASS_LEVEL_FIELDS = {
 } as const;
 
 /**
- * A feat's fields: whether a character takes it more than once, whether a level up picks it, whether its ruleset made
- * it (each always written, which its rules set: no form shows them), the families it's in (a feat can be in two), the
- * weapon rules it changes, and the schools it forbids (a specialist wizard's).
+ * A feat's fields: the pools it's picked in (its `listedIn` links beside its name, a new one needs one), whether a
+ * character takes it more than once, whether a level up picks it, whether its ruleset made it (each always written,
+ * which its rules set: no form shows them), the families it's in (a feat can be in two), the weapon rules it changes,
+ * and the schools it forbids (a specialist wizard's).
  */
 const FEAT_FIELDS = {
+  listedIn: {
+    description: "The feat pools it's picked in",
+    kind: "links",
+    label: "Aptitudes",
+    placement: "beside-name",
+    references: "aptitudes",
+    required: APTITUDES_REQUIRED,
+    role: "listedIn",
+  },
   stackable: {
     description: "Whether a character can take the feat more than once",
     form: "hidden",
@@ -239,45 +295,59 @@ const FEAT_FIELDS = {
   },
 } as const;
 
+/** While an item is of a type a template can be of: a weapon, an armor or a shield. */
+const OF_TEMPLATE_TYPE = { field: ITEM_TYPE, values: TEMPLATE_ITEM_TYPES } as const;
+
 /** The groups of an armor's and a shield's fields, which show a stat both have among their own. */
 const WORN = ["armor", "shield"] as const;
 
 /**
- * An item's fields, as stored: its cost and weight (each to the hundredth, none below 0), its type, its slot (`"Other"`
- * for none) and whether it's a template, which its form's columns show; then its type's and its make's, each none (or
- * empty) without its row, a flag telling a `"false"` row from none (`absent: null`). An item made from a template reads
- * each of them but its type, slot and template flag off its template when it holds none (`inherits`, its `madeFrom`
- * link). Its form shows a weapon's, an armor's and a shield's fields for an item of that type, in its section: an
- * armor's or a shield's max Dex bonus, check penalty and spell failure too, which both keep alike.
+ * An item's fields, as stored: its cost and weight (each to the hundredth, none below 0), its type (a template's one a
+ * template can be of), and its slot (`"Other"` for none), or, for a type a template can be of, its template (its
+ * `madeFrom` link, whose type sets its slot), which its form shows beside its name, and whether it's a template, which
+ * its page gives its form; then its type's and its make's, each none (or empty) without its row, a flag telling a
+ * `"false"` row from none (`absent: null`). An item made from a template reads each of them but its type, slot and
+ * template flag off its template when it holds none (`inherits`, its `madeFrom` link). Its form shows a weapon's, an
+ * armor's and a shield's fields for an item of that type, in its section: an armor's or a shield's max Dex bonus, check
+ * penalty and spell failure too, which both keep alike.
  */
 const ITEM_FIELDS = {
   cost: {
     description: "What it costs, in gold pieces",
-    form: "column",
     kind: "number",
     label: "Cost",
     min: 0,
+    placement: "beside-name",
     scale: 2,
+    unit: "gp",
     field: ITEM_COST_GP,
     inherits: "madeFrom",
     merge: "winner",
   },
   weight: {
     description: "What it weighs, in pounds",
-    form: "column",
     kind: "number",
     label: "Weight",
     min: 0,
+    placement: "beside-name",
     scale: 2,
+    unit: "lbs",
     field: ITEM_WEIGHT,
     inherits: "madeFrom",
     merge: "winner",
   },
   type: {
     description: "What kind of item it is",
-    form: "column",
     kind: "text",
     label: "Item Type",
+    narrowed: {
+      description: "What kind of item its copies are",
+      required: true,
+      shownWhen: [AS_TEMPLATE],
+      values: TEMPLATE_ITEM_TYPES,
+    },
+    placement: "beside-name",
+    shownWhen: [{ ...AS_TEMPLATE, except: true }],
     field: ITEM_TYPE,
     merge: "winner",
     values: ITEM_TYPES,
@@ -285,17 +355,28 @@ const ITEM_FIELDS = {
   slot: {
     default: "Other",
     description: "Where it's worn or held",
-    form: "column",
     kind: "text",
     label: "Slot",
+    placement: "beside-name",
+    shownWhen: [{ ...OF_TEMPLATE_TYPE, except: true }],
     field: ITEM_SLOT,
     merge: "winner",
     values: LOCATION_OPTIONS,
     write: "always",
   },
+  madeFrom: {
+    description: "The template of its type it's made from, whose fields it starts from",
+    kind: "ref",
+    label: "Template",
+    placement: "beside-name",
+    references: "items",
+    role: "madeFrom",
+    shownWhen: [OF_TEMPLATE_TYPE, { ...AS_TEMPLATE, except: true }],
+    typeField: ITEM_TYPE,
+  },
   template: {
     description: "Whether it's a template others are made from",
-    form: "column",
+    form: "unshown",
     kind: "flag",
     label: "Template",
     field: ITEM_IS_TEMPLATE,
@@ -485,7 +566,7 @@ const ITEM_FIELDS = {
     },
     kind: "group",
     label: "Weapon",
-    when: { column: ITEM_TYPE, values: ["Weapon"] },
+    shownWhen: [{ field: ITEM_TYPE, values: ["Weapon"] }],
   },
   armor: {
     fields: {
@@ -521,7 +602,7 @@ const ITEM_FIELDS = {
     },
     kind: "group",
     label: "Armor",
-    when: { column: ITEM_TYPE, values: ["Armor"] },
+    shownWhen: [{ field: ITEM_TYPE, values: ["Armor"] }],
   },
   shield: {
     fields: {
@@ -557,7 +638,7 @@ const ITEM_FIELDS = {
     },
     kind: "group",
     label: "Shield",
-    when: { column: ITEM_TYPE, values: ["Shield"] },
+    shownWhen: [{ field: ITEM_TYPE, values: ["Shield"] }],
   },
   /** An armor's, or a tower shield's. */
   maxDex: {
@@ -641,40 +722,47 @@ const ITEM_FIELDS = {
   },
 } as const;
 
-/** A language's fields: its type, which its form's column shows. */
+/** A language's fields: its type, which its form shows beside its name. */
 const LANGUAGE_FIELDS = {
   type: {
     description: "What kind of language it is (spoken, written, secret)",
-    form: "column",
     kind: "text",
     label: "Type",
+    placeholder: "e.g., Spoken, Written, Sign, Secret",
+    placement: "beside-name",
     field: LANGUAGE_TYPE,
     merge: "winner",
   },
 } as const;
 
 /**
- * A race's fields: its members' size and base speed, which its form's columns show, whether armor and load leave its
- * speed, and whether it walks on four legs.
+ * A race's fields: its members' size and base speed (Medium and 30 feet for a new race whose form gives none), which
+ * its form shows beside its name, whether armor and load leave its speed, and whether it walks on four legs.
  */
 const RACE_FIELDS = {
   size: {
+    default: "Medium",
     description: "Its members' size",
-    form: "column",
     kind: "text",
     label: "Size",
+    placement: "beside-name",
+    required: true,
     field: RACE_SIZE,
     merge: "winner",
     values: SIZE_OPTIONS,
+    write: "always",
   },
   baseSpeed: {
+    default: 30,
     description: "How far its members move a round, in feet",
-    form: "column",
     kind: "number",
     label: "Base Speed",
     min: 1,
+    placement: "beside-name",
+    unit: "feet",
     field: RACE_BASE_SPEED,
     merge: "winner",
+    write: "always",
   },
   speedIgnoresEncumbrance: {
     description:
@@ -700,7 +788,7 @@ const RACE_FIELDS = {
  * without a row.
  */
 const RULESET_FIELDS = {
-  skillPointAbilityId: {
+  skillPointAbility: {
     description: "The ability whose modifier a character adds to the skill points each of its levels gives",
     kind: "ref",
     label: "Skill Point Ability",
@@ -733,12 +821,34 @@ const RULESET_FIELDS = {
   },
 } as const;
 
+/** A save's fields: the ability its bonus comes from (its `keyAbility` link), which its form shows beside its name. */
+const SAVE_FIELDS = {
+  keyAbility: {
+    description: "The ability its bonus comes from",
+    kind: "ref",
+    label: "Linked Ability",
+    placement: "beside-name",
+    references: "abilities",
+    required: true,
+    role: "keyAbility",
+  },
+} as const;
+
 /**
- * A skill's fields: whether armor weighs on it, how many times over, and whether it's usable untrained. Without their
- * rows, armor doesn't weigh on it and it needs training. The multiplier only counts on a skill armor weighs on: any
- * other keeps 1.
+ * A skill's fields: the ability its checks add (its `keyAbility` link, beside its name), whether armor weighs on it,
+ * how many times over, and whether it's usable untrained. Without their rows, armor doesn't weigh on it and it needs
+ * training. The multiplier only counts on a skill armor weighs on: any other keeps 1.
  */
 const SKILL_FIELDS = {
+  keyAbility: {
+    description: "The ability its checks add",
+    kind: "ref",
+    label: "Primary Ability",
+    placement: "beside-name",
+    references: "abilities",
+    required: true,
+    role: "keyAbility",
+  },
   impactedByWeight: {
     description: "Whether the skill is impacted by armor check penalty",
     kind: "flag",
@@ -766,10 +876,22 @@ const SKILL_FIELDS = {
 } as const;
 
 /**
- * A spell's fields, in the order a 3.5 stat block shows them: its school, components, range… and what a successful
- * save does, which its form's column shows beside its save.
+ * A spell's fields: its spell lists, each at its spell level (its `listedIn` links, a new one needs one), then, in the
+ * order a 3.5 stat block shows them, its school, components, range…, and the save it allows (its `resistedBy` link)
+ * and what a successful save does, which its form shows beside its name.
  */
 const SPELL_FIELDS = {
+  listedIn: {
+    description: "The spell lists it's on, each at its spell level",
+    entries: "tier",
+    kind: "links",
+    label: "Aptitudes",
+    max: MAX_SPELL_LEVEL,
+    min: 0,
+    references: "aptitudes",
+    required: APTITUDES_REQUIRED,
+    role: "listedIn",
+  },
   school: {
     description: "Spell school (Abjuration, Conjuration, etc.)",
     keepsForm: true,
@@ -870,11 +992,20 @@ const SPELL_FIELDS = {
     field: SPELL_RESISTANCE,
     merge: "fallback",
   },
+  resistedBy: {
+    description: "The save it allows",
+    kind: "ref",
+    label: "Saving Throw",
+    placement: "beside-name",
+    references: "saves",
+    role: "resistedBy",
+  },
   saveEffect: {
     description: "What a successful save does",
-    form: "column",
     kind: "text",
     label: "Save Effect",
+    placeholder: 'e.g., "negates", "half", "partial"',
+    placement: "beside-name",
     field: SPELL_SAVE_EFFECT,
     merge: "winner",
   },
@@ -893,5 +1024,6 @@ export const ENTITY_FIELDS = {
   races: RACE_FIELDS,
   languages: LANGUAGE_FIELDS,
   rulesets: RULESET_FIELDS,
+  saves: SAVE_FIELDS,
   skills: SKILL_FIELDS,
 } as const;

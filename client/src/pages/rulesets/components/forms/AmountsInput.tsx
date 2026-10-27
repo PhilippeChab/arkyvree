@@ -9,7 +9,7 @@ import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { readNumberInput, wholeNumberError } from "@/client/src/lib/validation.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 
-import type { ColumnInputProps } from "./columnContext.ts";
+import type { EntityInputProps } from "./fieldContext.ts";
 
 /** An amount given an entity, as its input holds it and its save sends it: the entity's id (`toId`) and the amount. */
 interface Amount {
@@ -30,7 +30,7 @@ export function AmountsInput<T extends FieldValues>({
   form,
   name,
   rulesetId,
-}: ColumnInputProps<T, AmountsField>) {
+}: EntityInputProps<T, AmountsField>) {
   const amountError = (amount: number) => wholeNumberError(amount, field.min, field.max);
   const { data: rulesetEntities, error: entitiesError } = useQuery(rulesetOptionsQuery(field.references, rulesetId));
   const { rules } = useRulesetRules(rulesetId);

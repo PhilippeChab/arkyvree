@@ -49,6 +49,16 @@ describe("The 3.5 fields", () => {
     ]);
   });
 
+  test("merge every single link as the winning copy's alone, a class's bonus spell ability as its others", () => {
+    const singles = StorageEngine.shared()
+      .registries()
+      .linkRoles.filter(({ single }) => single);
+    expect(singles.map(({ fromType, role }) => DECLARED.roleMergeOf(fromType, role))).toEqual(
+      singles.map(() => "winner"),
+    );
+    expect(DECLARED.roleMergeOf("classes", "bonusSpellAbility")).toBe("winner");
+  });
+
   test("give a weapon's damage types in the rules' order: an urgrosh's Slashing, Piercing", () => {
     expect(DECLARED.orderValues(DAMAGE_TYPE, ["Piercing", "Slashing"])).toEqual(["Slashing", "Piercing"]);
   });
@@ -56,7 +66,7 @@ describe("The 3.5 fields", () => {
   test("leave out the spell's fields no data holds: its level and saving throw, its material and duration type", () => {
     const dropped = ["SPELL_LEVEL", "SPELL_SAVING_THROW", "SPELL_MATERIAL", "SPELL_DURATION_TYPE"];
     const declared = Object.values(ENTITY_FIELDS).flatMap((fields) =>
-      Field.leavesOf(fields).flatMap((leaf) => (leaf.kind === "ref" ? [] : [leaf.field])),
+      Field.storedLeavesOf(fields).map((leaf) => leaf.field),
     );
     expect(dropped.filter((field) => declared.includes(field))).toEqual([]);
   });

@@ -324,12 +324,12 @@ export default function CustomizationPage() {
     ...customizationEntityQuery(rulesetId, page, entityId),
     placeholderData: keepCopySource,
   });
-  // Load the editors' pickers alongside the entity: a kind is one module's, so its columns are known before its ruleset
+  // Load the editors' pickers alongside the entity: a kind is one module's, so its fields are known before its ruleset
   const { canEditEntities } = useRulesetPermissions(ruleset);
   const pageRules = Object.values(all ?? {}).find((each) =>
     each.customizationPages.some((it) => it.type === validType),
   );
-  useFormOptions(rulesetId, pageRules?.columns[validType ?? ""], canEditEntities);
+  useFormOptions(rulesetId, pageRules?.fields[validType ?? ""], canEditEntities);
 
   const tabs = validType ? tabsFor(validType, rules) : [];
   const currentTab = tabs.find((tab) => tab.key === section)?.key;

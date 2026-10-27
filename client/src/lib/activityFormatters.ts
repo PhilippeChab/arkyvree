@@ -11,8 +11,8 @@ import { oneOf } from "./oneOf.ts";
 import type { RulesDescription, RulesDescriptions, RulesWords } from "./queries.ts";
 import { entityTypeLabel, entityTypeOfActivityName, getActivityLabelOverrides } from "./rulesetLabels.ts";
 
-/** An entity's column, as its rules describe its form's. */
-type Column = NonNullable<RulesDescription["columns"][string]>[number];
+/** A field of an entity's form that holds a value, as its rules describe it: any but a group. */
+type ValueField = Exclude<NonNullable<RulesDescription["fields"][string]>[number], { input: "group" }>;
 
 /** A ruleset entity's change, as its notification says it: its verb, by the type's (`createFeat`) */
 const CONTENT_CHANGES: Record<string, string> = { create: "created", delete: "deleted", update: "updated" };
@@ -71,22 +71,6 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
 };
 
 /**
- * The form columns of an activity's entity type (`entityType`), as the base rules its ruleset follows describe them
- * (`rules`): when it doesn't say (an older activity's), every base rules', the first's column of a field or a role
- * winning; none for another type.
- */
-function columnsOf(
-  d: Record<string, unknown>,
-  entityType: string | undefined,
-  rules: RulesDescriptions | undefined,
-): readonly Column[] {
-  if (!rules || !entityType) return [];
-  const baseRules = oneOf(d.baseRules, BASE_RULES_OPTIONS);
-  if (baseRules) return rules[baseRules].columns[entityType] ?? [];
-  return Object.values(rules).flatMap((described) => described.columns[entityType] ?? []);
-}
-
-/**
  * A ruleset entity's create, update or delete, named in its ruleset's word ("Ann created spell Fireball"): the entity
  * its type names (`createClass`), by its rules' words (`entityTypeOfActivityName`).
  */
@@ -100,24 +84,42 @@ function contentChange(type: string, actor: string, d: Record<string, unknown>, 
 }
 
 /**
- * A changed value as an activity says it, which records it where it's stored (a stored field, a single link's role):
- * labeled as it records its declaration's label ("School", "Saving Throw"), else (an older one's) as its entity's column
- * (`columns`, its rules') or by its name in words ("Name", "Item Is Template"); its values read as its column reads them ("Hit Die:
- * d8 → d10", "Cost: 15.00 gp → 20.00 gp"), a flag's as "Yes" or "No", a single link's by the name it records.
+ * The fields of an activity's entity type (`entityType`) that hold a value, a group's among them, as the base rules its
+ * ruleset follows describe them (`rules`): when it doesn't say (an older activity's), every base rules', the first's
+ * field of a stored field or a role winning; none for another type.
  */
-function formatChange(change: ChangedField, columns: readonly Column[]): string {
-  const column = columns.find(
-    (own) => own.input !== "group" && (own.field ?? own.role) !== undefined && (own.field ?? own.role) === change.field,
-  );
+function fieldsOf(
+  d: Record<string, unknown>,
+  entityType: string | undefined,
+  rules: RulesDescriptions | undefined,
+): readonly ValueField[] {
+  if (!rules || !entityType) return [];
+  const baseRules = oneOf(d.baseRules, BASE_RULES_OPTIONS);
+  const described = baseRules
+    ? (rules[baseRules].fields[entityType] ?? [])
+    : Object.values(rules).flatMap((each) => each.fields[entityType] ?? []);
+  const leaves = (fields: typeof described): ValueField[] =>
+    fields.flatMap((field) => (field.input === "group" ? leaves(field.fields) : [field]));
+  return leaves(described);
+}
+
+/**
+ * A changed value as an activity says it, which records it where it's stored (a stored field, a single link's role):
+ * labeled as it records its declaration's label ("School", "Saving Throw"), else (an older one's) as its entity's field
+ * (`fields`, its rules') or by its name in words ("Name", "Item Is Template"); its values read as its field's input reads
+ * them ("Hit Die: d8 → d10", "Cost: 15.00 gp → 20.00 gp"), a flag's as "Yes" or "No", a single link's by the name it
+ * records.
+ */
+function formatChange(change: ChangedField, fields: readonly ValueField[]): string {
+  const field = fields.find((own) => (own.field ?? own.role) !== undefined && (own.field ?? own.role) === change.field);
   // A stored field none labels, by its name in words ("ITEM_IS_TEMPLATE" → "Item Is Template"), else as a key reads
   const words = /^[A-Z0-9_]+$/.test(change.field) ? formatFieldName(change.field) : formatSegment(change.field);
-  const label = change.label ?? column?.label ?? words;
+  const label = change.label ?? field?.label ?? words;
   // An older one recorded a link's target by its id, which says nothing to a reader: only that it changed
-  if (change.label === undefined && (column?.input === "ref" || column?.input === "template"))
-    return `${label} updated`;
+  if (change.label === undefined && (field?.input === "ref" || field?.input === "template")) return `${label} updated`;
   if (change.from == null && change.to == null) return `${label} updated`;
 
-  const shown = (value: string) => (column && readColumn(column, value)) ?? FLAG_WORDS[value] ?? value;
+  const shown = (value: string) => (field && readValue(field, value)) ?? FLAG_WORDS[value] ?? value;
   if (change.from && change.to) return `${label}: ${shown(change.from)} → ${shown(change.to)}`;
 
   if (change.to) return `${label} set to ${shown(change.to)}`;
@@ -141,7 +143,7 @@ function formatLinkEntry(link: ChangedLink, tiers: RulesDescription["tiers"]): s
 }
 
 /**
- * A list of links' change as an activity says it, labeled as its role's column ("Aptitudes: added Fighter Bonus Feats;
+ * A list of links' change as an activity says it, labeled as its role's field ("Aptitudes: added Fighter Bonus Feats;
  * removed Wizard Bonus Feats"), each entry by its target's name with its own columns (`formatLinkEntry`).
  */
 function formatLinksChange(change: ChangedLinks, tiers: RulesDescription["tiers"]): string {
@@ -208,17 +210,17 @@ function payload(data: unknown): Record<string, unknown> {
 }
 
 /**
- * A column's value as its form reads it (`value`, as an activity records it): a choice's label ("d8"), a decimal in its
+ * A field's value as its input reads it (`value`, as an activity records it): a choice's label ("d8"), a decimal in its
  * unit ("15.00 gp"); none for one that reads as it is.
  */
-function readColumn(column: Column, value: string): string | null {
-  if (column.input === "choice") {
-    const index = column.options.findIndex((option) => String(option) === value);
-    return index >= 0 ? (column.labels?.[index] ?? null) : null;
+function readValue(field: ValueField, value: string): string | null {
+  if (field.input === "choice") {
+    const index = field.options.findIndex((option) => String(option) === value);
+    return index >= 0 ? (field.labels?.[index] ?? null) : null;
   }
-  if (column.input !== "decimal") return null;
+  if (field.input !== "decimal") return null;
   const decimal = formatDecimal(value);
-  return decimal === null ? null : `${decimal}${column.unit ? ` ${column.unit}` : ""}`;
+  return decimal === null ? null : `${decimal}${field.unit ? ` ${field.unit}` : ""}`;
 }
 
 /**
@@ -245,19 +247,19 @@ function wordsOf(d: Record<string, unknown>, rules: RulesDescriptions | undefine
 
 /**
  * What an activity of `type` changed: its fields and its single links, each by its declaration's label (an older one's
- * as the columns of the entity it names, `rules`: every base rules'), its lists of links' entries added and removed,
+ * as the fields of the entity it names, `rules`: every base rules'), each value as its field's input reads it, its lists of links' entries added and removed,
  * its level, a link's target (`toName`), its modifier's or requirement's change, its field's value.
  */
 export function formatActivityDetails(type: string, data: unknown, rules?: RulesDescriptions): string | null {
   const d = payload(data);
   const parts: string[] = [];
-  // The columns of the entity its type names, its own alone: another entity's field of the same name reads its own way
+  // The fields of the entity its type names, its own alone: another entity's field of the same name reads its own way
   const entityType = entityTypeOfActivityName(ENTITY_ACTIVITY.exec(type)?.[2] ?? "", wordsOf(d, rules));
-  const columns = columnsOf(d, entityType, rules);
+  const fields = fieldsOf(d, entityType, rules);
 
   const changes: unknown[] = Array.isArray(d.changedFields) ? d.changedFields : [];
   for (const change of changes) {
-    if (isChangedField(change)) parts.push(formatChange(change, columns));
+    if (isChangedField(change)) parts.push(formatChange(change, fields));
     else if (isChangedLinks(change)) parts.push(formatLinksChange(change, tiersOf(d, rules)));
   }
 

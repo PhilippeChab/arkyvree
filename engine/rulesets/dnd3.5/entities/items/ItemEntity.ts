@@ -2,14 +2,8 @@
 
 import { z } from "zod";
 
-import { CustomizationPageEntity, type FormBody, type FormColumnValues } from "@/engine/core/entities/index.ts";
-import {
-  type EntityForm,
-  Field,
-  type FieldsWrite,
-  OwnerValues,
-  type PartialFieldValues,
-} from "@/engine/core/fields/index.ts";
+import { CustomizationPageEntity, type FormBody } from "@/engine/core/entities/index.ts";
+import { type EntityForm, type FieldsWrite, OwnerValues, type PartialFieldValues } from "@/engine/core/fields/index.ts";
 import type { EntityRecord, EntityWrite } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
@@ -21,7 +15,6 @@ import type { ItemLocation } from "@/vocabulary/dnd3.5/equipment.ts";
 import { ITEM_IS_TEMPLATE, ITEM_SLOT, ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { TEMPLATE_ITEM_TYPES } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 
-import { ITEM_COLUMNS } from "./columns.ts";
 import { ITEM_FIELDS } from "./fields.ts";
 
 /** A variant of an item, as its form sends it. */
@@ -30,18 +23,11 @@ interface VariantBody {
   name: string;
 }
 
+/** The fields of an item's form, read: those it gives. */
+type ItemGiven = PartialFieldValues<typeof ITEM_FIELDS.fields>;
+
 /** A slot as a form gives it: a location, none (null), or left out. */
 type SlotGiven = ItemLocation | null | undefined;
-
-/**
- * The columns an item reads off its template where it holds none of its own (its cost, its weight), by the stored field
- * that keeps each.
- */
-const INHERITED_COLUMNS: ReadonlySet<string> = new Set(
-  Field.storedLeavesOf(ITEM_FIELDS.fields).flatMap((leaf) =>
-    leaf.inherits && leaf.form === "column" ? [leaf.field] : [],
-  ),
-);
 
 /** A type an item can be based on a template of: a weapon's, an armor's or a shield's. */
 const TEMPLATE_TYPE = z.enum(TEMPLATE_ITEM_TYPES);
@@ -55,13 +41,13 @@ const VARIANTS = z.array(z.unknown()).max(RULESET_LIMITS.itemVariants);
  * source, never one's copy.
  */
 export default class ItemEntity extends CustomizationPageEntity<"items", typeof ITEM_FIELDS.fields> {
-  /** Its cost, weight, type, slot and template. */
-  protected override readonly columns = ITEM_COLUMNS;
-
   /** Its templates, a duplicate, variants. */
   protected override readonly copies = true;
 
-  /** Its armor's, its shield's and its weapon's, its charges, its make. */
+  /**
+   * Its cost, weight, type, slot and template, whether it's one, its armor's, its shield's and its weapon's, its
+   * charges, its make.
+   */
   protected override readonly fields = ITEM_FIELDS;
 
   protected override readonly label = "Item";
@@ -69,64 +55,59 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
   /** Its list's filters: templates, or the items that aren't (its template flag). */
   protected override readonly listFilters = { [ITEM_IS_TEMPLATE]: z.stringbool() };
 
-  /** Whether a new item is a template, its own flag (an edit's is its own: its form doesn't change it). */
-  protected override readonly ownFields = { [ITEM_IS_TEMPLATE]: z.boolean().optional() };
-
   override readonly type = "items";
 
   /** Refuses a template's form (`checkTemplate`), or an item's based on a template (`checkTemplateOf`). */
-  protected override checkForm(body: FormBody, item?: Item) {
-    if (item ? item.fields[ITEM_IS_TEMPLATE] : body.fields[ITEM_IS_TEMPLATE]) this.checkTemplate(body, item);
-    else this.checkTemplateOf(body, item);
+  protected override checkForm(_body: FormBody, given: ItemGiven, item?: Item) {
+    if (item ? item.fields[ITEM_IS_TEMPLATE] : given.template) this.checkTemplate(given, item);
+    else this.checkTemplateOf(given, item);
   }
 
   /**
-   * A form's columns: its slot always one (`"Other"` for none, a template's type's its own), a new item's template, and
-   * whether it's one; an edited template keeps no source.
-   */
-  protected override columnsOf(body: FormBody, item?: Item): FormColumnValues {
-    const columns = super.columnsOf(body, item);
-    // An edit's type is the one it keeps when it gives none, which sets the slot of a template's type
-    const slot = this.slotOf({ slot: body.fields[ITEM_SLOT] as SlotGiven, type: this.typeOf(body, item) });
-    const madeFrom = this.madeFromOf(body);
-    if (item) {
-      // Whether it's a template is its own: an edit leaves it as it is
-      const { [ITEM_IS_TEMPLATE]: _, ...fields } = columns.fields;
-      const links = { madeFrom: item.fields[ITEM_IS_TEMPLATE] ? null : madeFrom };
-      return { ...columns, fields: { ...fields, [ITEM_SLOT]: slot }, links };
-    }
-    const template = (body.fields[ITEM_IS_TEMPLATE] as boolean | undefined) ?? false;
-    return {
-      ...columns,
-      fields: { ...columns.fields, [ITEM_SLOT]: slot, [ITEM_IS_TEMPLATE]: template },
-      links: { madeFrom },
-    };
-  }
-
-  /**
-   * The fields saving an item writes (`item`: the one edited): the fields its form gives, over those it shows (its own
-   * over its template's), as its own: those its template's don't hold (`toOverrides`), so it keeps reading the rest off
-   * its template (the one its form saves it with); and none of a column it reads off its template that its form gives
-   * the template's value of (its cost, its weight, as its form shows them). None when the form gives neither.
+   * The fields saving an item writes (`item`: the one edited; `keptFrom`, the one whose values it keeps, it or a
+   * duplicate's source): the fields its form gives, over those it keeps (its own over the template it's saved with,
+   * `formFields`), as its own: those it reads off its template that its template's don't hold (`toOverrides`), so it
+   * keeps reading the rest off its template. None when the form gives none; but an edited template keeps no source,
+   * which its save clears where it holds one (an old self-reference).
    */
   protected override fieldsWrite(
-    body: FormBody,
-    given: PartialFieldValues<typeof ITEM_FIELDS.fields>,
+    _body: FormBody,
+    given: ItemGiven,
     item?: Item,
+    keptFrom: Item | undefined = item,
   ): FieldsWrite | undefined {
-    const templateId = this.templateIdOf(body, item);
+    const fields = this.formFields(given, item, keptFrom);
+    const templateId = this.templateIdOf(given, item);
     const template = templateId ? this.templateValuesOf(templateId) : OwnerValues.NONE;
-    // A column its form gives its template's value of: none of its own
-    const inherited = [...INHERITED_COLUMNS].filter(
-      (field) => templateId && body.fields[field] !== undefined && body.fields[field] === template.fields[field],
-    );
-    const fields = this.formFields(given, item);
-    if (!fields && inherited.length === 0) return undefined;
-    const write = fields ? this.fields.toOverrides(fields, this.fields.read(template)) : { fields: {}, links: {} };
-    return {
-      fields: { ...write.fields, ...Object.fromEntries(inherited.map((field) => [field, []])) },
-      links: write.links,
+    const write = fields && this.fields.toOverrides(fields, this.fields.read(template));
+    if (!item?.fields[ITEM_IS_TEMPLATE] || !item.links.madeFrom) return write;
+    return { fields: write?.fields ?? {}, links: { ...write?.links, madeFrom: null } };
+  }
+
+  /**
+   * The fields a form writes (none when it gives none), over those the item keeps (`item`: the one edited; `keptFrom`,
+   * the one whose values it keeps, it or a duplicate's source: its own over the template it's saved with, one it moves
+   * to among them; a new one's defaults): its slot always one (`"Other"` for none, a template's type's its own),
+   * whether it's a template a new item's alone (an edit leaves it as it is), and an edited template no source.
+   */
+  protected override formFields(given: ItemGiven, item?: Item, keptFrom: Item | undefined = item) {
+    if (this.fields.formNames.every((key) => given[key] === undefined)) return undefined;
+    // An edit's type is the one it keeps when it gives none, which sets the slot of a template's type; an empty slot
+    // is none, as an empty type is
+    const slotGiven = given.slot === undefined ? undefined : ((given.slot || null) as SlotGiven);
+    const slot = this.slotOf({ slot: slotGiven, type: this.typeOf(given, item) });
+    const values = {
+      ...given,
+      ...(slot !== undefined && { slot }),
+      ...(item && { template: undefined }),
+      ...(item?.fields[ITEM_IS_TEMPLATE] && { madeFrom: null }),
     };
+    if (!keptFrom) return super.formFields(values);
+    const madeFrom = this.templateIdOf(given, item) ?? undefined;
+    return this.fields.merge(
+      this.fieldsOf({ fields: keptFrom.fields, links: { ...keptFrom.links, madeFrom } }),
+      values,
+    );
   }
 
   /** A page of the ruleset's items, each with its template's name. */
@@ -192,20 +173,24 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
    * A duplicate of an item (`sourceItemId`), from its form: it points at the same template, isn't one itself, and takes
    * its source's customizations unless its source is a template, whose copies read the template's
    * (`copyCustomizationsFrom`). It keeps the fields its form gives, over every field its source holds of its own (its
-   * weight and cost among them); a template's none: its copies read them off it.
+   * weight and cost among them: `fieldsWrite`, over the source's values); a template's none: its copies read them off
+   * it.
    */
   override planDuplicate(sourceItemId: string, body: EntityForm) {
     const source = this.findSource(sourceItemId);
-    const plan = this.planCreate({
+    const form = {
       ...body,
       fields: { ...body.fields, [ITEM_IS_TEMPLATE]: false },
       links: { ...body.links, madeFrom: this.templateOf(source) ?? null },
-    });
+    };
+    const plan = this.planCreate(form);
     if (source.fields[ITEM_IS_TEMPLATE]) return plan;
+    const { body: read, given } = this.readForm(form);
+    const written = this.fieldsWrite(read, given, undefined, source);
     return {
       ...plan,
       copyCustomizationsFrom: source.id,
-      row: { ...plan.row, fields: { ...source.fields, ...plan.row.fields } },
+      row: { ...plan.row, fields: { ...source.fields, ...plan.row.fields, ...written?.fields } },
     };
   }
 
@@ -219,7 +204,7 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
   override planEdit(itemId: string, form: EntityForm) {
     const plan = super.planEdit(itemId, form);
     const { entity: item } = plan;
-    const type = this.typeOf(this.formOf(form, item), item);
+    const type = this.typeOf(this.readForm(form, item).given, item);
     const copies =
       item.fields[ITEM_IS_TEMPLATE] && type !== (item.fields[ITEM_TYPE] ?? null)
         ? {
@@ -275,9 +260,9 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
    * Refuses a template made from another item (a template is its copies' source, never one's copy), or of a type no
    * item can be based on a template of: a new one's, or the one an edit changes it to (one it keeps stays).
    */
-  private checkTemplate(body: FormBody, template?: Item) {
-    if (this.madeFromOf(body)) throw new RulesError("unprocessable", "Template items cannot have a source item");
-    const type = this.typeOf(body, template);
+  private checkTemplate(given: ItemGiven, template?: Item) {
+    if (given.madeFrom) throw new RulesError("unprocessable", "Template items cannot have a source item");
+    const type = this.typeOf(given, template);
     if ((!template || type !== (template.fields[ITEM_TYPE] ?? null)) && !isOneOf(type, TEMPLATE_ITEM_TYPES)) {
       throw new RulesError(
         "unprocessable",
@@ -290,14 +275,14 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
    * Refuses an item based on anything but a template of its type (the one its form gives, or the one it keeps), which
    * it would read its fields and requirements off: a weapon's, an armor's or a shield's.
    */
-  private checkTemplateOf(body: FormBody, item?: Item) {
-    const templateId = this.templateIdOf(body, item);
+  private checkTemplateOf(given: ItemGiven, item?: Item) {
+    const templateId = this.templateIdOf(given, item);
     if (!templateId) return;
 
     const template = this.rulesetData.find("items", templateId);
     if (!template?.fields[ITEM_IS_TEMPLATE])
       throw new RulesError("unprocessable", "Source item is not a template of this ruleset");
-    const type = this.typeOf(body, item);
+    const type = this.typeOf(given, item);
     const templateType = template.fields[ITEM_TYPE] ?? null;
     if (templateType !== type || !isOneOf(type, TEMPLATE_ITEM_TYPES)) {
       throw new RulesError(
@@ -334,11 +319,6 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
     ].join(", and ");
   }
 
-  /** The template a form gives (its `madeFrom` link: null none), none when it leaves it out. */
-  private madeFromOf(body: Pick<FormBody, "links">) {
-    return body.links.madeFrom as string | null | undefined;
-  }
-
   /**
    * An item's slot: the one its type sets (an armor's the torso, a shield's the off hand), or the one its form gives,
    * `"Other"` for none (null: an item worn nowhere in particular).
@@ -351,10 +331,9 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
    * The template a form saves an item with: none for an edited template, which keeps no source, or the form's (null:
    * none), or the one the edited item keeps.
    */
-  private templateIdOf(body: Pick<FormBody, "links">, item?: Item) {
+  private templateIdOf(given: ItemGiven, item?: Item) {
     if (item?.fields[ITEM_IS_TEMPLATE]) return null;
-    const madeFrom = this.madeFromOf(body);
-    return madeFrom === undefined ? (item?.links.madeFrom ?? null) : madeFrom;
+    return given.madeFrom === undefined ? (item?.links.madeFrom ?? null) : given.madeFrom;
   }
 
   /**
@@ -376,9 +355,9 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
     return this.rulesetData.find("items", templateId) ?? OwnerValues.NONE;
   }
 
-  /** The type a form saves an item with: the form's (null: none), or the one the edited item keeps. */
-  private typeOf(body: Pick<FormBody, "fields">, item?: Item) {
-    const type = body.fields[ITEM_TYPE] as string | null | undefined;
-    return type === undefined ? (item?.fields[ITEM_TYPE] ?? null) : type;
+  /** The type a form saves an item with: the form's (null or empty: none), or the one the edited item keeps. */
+  private typeOf(given: ItemGiven, item?: Item): string | null {
+    if (given.type === undefined) return item?.fields[ITEM_TYPE] ?? null;
+    return given.type || null;
   }
 }

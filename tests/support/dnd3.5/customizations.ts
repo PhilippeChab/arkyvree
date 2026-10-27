@@ -26,12 +26,13 @@ export const STRENGTH_BONUS = {
 } as const;
 
 /**
- * A write of a text field `type`'s form writes (not a column's nor a hidden one): a value a test sets ("doomed"), or
- * none when the type keeps no such field (an ability, a save, a character).
+ * A write of a text field `type`'s form shows among its others (not one beside its name nor one it doesn't show,
+ * `Field.isKept`): a value a test sets ("doomed"), or none when the type keeps no such field (an ability, a save, a
+ * language, a character).
  */
 function textValues(type: string): FieldsWrite | null {
   const spec = ENTITY_FIELDS[type as keyof typeof ENTITY_FIELDS];
-  const leaf = spec && Field.storedLeavesOf(spec).find((stored) => stored.kind === "text" && !stored.form);
+  const leaf = spec && Field.storedLeavesOf(spec).find((stored) => stored.kind === "text" && Field.isKept(stored));
   return leaf ? { fields: { [leaf.field]: ["doomed"] }, links: {} } : null;
 }
 

@@ -1,8 +1,8 @@
 /**
- * An entity's columns and fields as its rules describe them (the API's `columns` and `fields`), as a form holds them,
- * where its save sends them (`placeOf`): a field's value by the stored field that keeps it, among its form's `fields`,
- * a link's by its role, among its form's `links`. Their values empty, an entity's, as a save sends them, the options a
- * choice offers, and when one shows.
+ * An entity's fields as its rules describe them (the API's rules' `fields`), as a form holds them, where its save sends
+ * them (`placeOf`): a field's value by the stored field that keeps it, among its form's `fields`, a link's by its role,
+ * among its form's `links`. Where its form shows each (`formSectionsOf`), their values empty, an entity's, as a save
+ * sends them, the options a choice offers, and when one shows.
  */
 
 import type { InferRequestType } from "hono/client";
@@ -23,7 +23,7 @@ type FormValue = boolean | number | string | string[] | null | ProgressionValue 
 /** The values a form holds: any, its fields and its links among them. */
 type FormValues = Partial<FormParts> & Record<string, unknown>;
 
-/** A column of an entity's links of a role: a feat's feat pools, a spell's spell lists each at its tier, its save. */
+/** A field of an entity's links of a role: a feat's feat pools, a spell's spell lists each at its tier, its save. */
 type LinksField = Extract<EntityField, { input: "leveledLinks" | "links" | "ref" | "template" }>;
 
 /** What levels give of something, as a progression's field holds it: a frequency, and more at the levels it names. */
@@ -49,32 +49,8 @@ export type EntityFieldValues = NonNullable<
 /** An entity a link of an entity read names, as its server sends it: its id and its name. */
 export type LinkedEntity = Pick<EntityRow, "id" | "name">;
 
-/** The columns that hold a value, each place once (`firstAtPlace`). */
-function columnsByPlace(columns: readonly EntityField[]): ValueField[] {
-  return firstAtPlace(columns.filter((column): column is ValueField => column.input !== "group"));
-}
-
-/**
- * A column's or a field's value as an entity read holds it: its stored field's (`field`, among its `fields`), its
- * single link's of its role (a reference's or a template's: the linked entity's id), a list of its links of its role
- * (among its `links`: each its linked entity, `toId`, at its tier where the column takes one, in their names' order),
- * or, a list the read gives by its role (a level's grants and amounts), each entry as a form sends it.
- */
-function columnValueOf(column: ValueField, entity: unknown): unknown {
-  if (column.field) return ownFieldOf(entity, column.field);
-  if (column.input === "ref" || column.input === "template") return linksOf(column, entity)[0]?.linked.id;
-  if (column.input === "links" || column.input === "leveledLinks") {
-    const links = linksOf(column, entity).sort((a, b) => byName(a.linked, b.linked));
-    if (column.input === "links") return links.map(({ linked }) => ({ toId: linked.id }));
-    return links.map(({ linked, tier }) =>
-      typeof tier === "number" ? { toId: linked.id, tier } : { toId: linked.id },
-    );
-  }
-  const listed = column.role === undefined ? undefined : valueAt(entity, column.role);
-  if (column.input !== "grants" || !Array.isArray(listed)) return listed;
-  // A grant a read gives whole, its entity's row and the one it's through
-  return listed.filter(isRecord).map((grant) => ({ toId: grant.id, viaId: grant.viaId }));
-}
+/** The inputs of a list of links, which a form shows after its other fields: a feat's pools, a level's feats. */
+const LIST_INPUTS = ["amounts", "grants", "leveledLinks", "links"] as const;
 
 /**
  * A field's value in an empty form: false (none, for a three-state flag), a number's default, a progression's own copy
@@ -148,6 +124,28 @@ function formValueOf(field: ValueField, value: unknown): FormValue {
   }
 }
 
+/**
+ * A field's value as an entity read holds it: its stored field's (`field`, among its `fields`), its single link's of
+ * its role (a reference's or a template's: the linked entity's id), a list of its links of its role (among its
+ * `links`: each its linked entity, `toId`, at its tier where the field takes one, in their names' order), or, a list
+ * the read gives by its role (a level's grants and amounts), each entry as a form sends it.
+ */
+function heldValueOf(field: ValueField, entity: unknown): unknown {
+  if (field.field) return ownFieldOf(entity, field.field);
+  if (field.input === "ref" || field.input === "template") return linksOf(field, entity)[0]?.linked.id;
+  if (field.input === "links" || field.input === "leveledLinks") {
+    const links = linksOf(field, entity).sort((a, b) => byName(a.linked, b.linked));
+    if (field.input === "links") return links.map(({ linked }) => ({ toId: linked.id }));
+    return links.map(({ linked, tier }) =>
+      typeof tier === "number" ? { toId: linked.id, tier } : { toId: linked.id },
+    );
+  }
+  const listed = field.role === undefined ? undefined : valueAt(entity, field.role);
+  if (field.input !== "grants" || !Array.isArray(listed)) return listed;
+  // A grant a read gives whole, its entity's row and the one it's through
+  return listed.filter(isRecord).map((grant) => ({ toId: grant.id, viaId: grant.viaId }));
+}
+
 /** Whether a value is a progression's: a frequency, and the levels it gives more at, each its level and its amount. */
 function isProgression(value: unknown): value is ProgressionValue {
   return (
@@ -159,13 +157,13 @@ function isProgression(value: unknown): value is ProgressionValue {
 }
 
 /**
- * An entity read's links of a links column (its `role`'s, among its `links`), each its linked entity (its `toId` and
+ * An entity read's links of a field of links (its `role`'s, among its `links`), each its linked entity (its `toId` and
  * `toName`) and its tier, as its server sends them.
  */
-function linksOf(column: LinksField, entity: unknown) {
+function linksOf(field: LinksField, entity: unknown) {
   const links = valueAt(entity, "links");
   return (Array.isArray(links) ? links : []).flatMap((link) =>
-    isRecord(link) && link.role === column.role && typeof link.toId === "string" && typeof link.toName === "string"
+    isRecord(link) && link.role === field.role && typeof link.toId === "string" && typeof link.toName === "string"
       ? [{ linked: { id: link.toId, name: link.toName }, tier: link.tier }]
       : [],
   );
@@ -188,15 +186,18 @@ function partsOf(entries: [string, unknown][]): FormParts {
   return parts;
 }
 
-/** A column's value as its save sends it (`value`, as its form holds it), none (null) for an empty optional one. */
-function sentValueOf(column: ValueField, value: unknown): unknown {
-  switch (column.input) {
+/**
+ * A value as its save sends it whole (`value`, as its form holds it, of a field `wholeFieldsOf` gives): a decimal's
+ * number, none (null) for an empty optional one.
+ */
+function sentValueOf(field: ValueField, value: unknown): unknown {
+  switch (field.input) {
     case "decimal":
       return parseDecimal(value);
     case "choice":
-      return !column.multiple && !column.required && value === "" ? null : value;
+      return !field.multiple && !field.required && value === "" ? null : value;
     case "ref":
-      return !column.required && value === "" ? null : value;
+      return !field.required && value === "" ? null : value;
     case "template":
       return value === "" ? null : value;
     default:
@@ -204,10 +205,17 @@ function sentValueOf(column: ValueField, value: unknown): unknown {
   }
 }
 
-/** The fields that hold a value, a group's among them, each place once: one shown in several groups too. */
+/**
+ * The fields that hold a value, a group's among them, each place once (`firstAtPlace`): one shown in several groups
+ * too, and one its form shows on other conditions as another input (an item template's type).
+ */
 function valueFieldsOf(fields: readonly EntityField[]): ValueField[] {
-  const leaves = fields.flatMap((field) => (field.input === "group" ? valueFieldsOf(field.fields) : [field]));
-  return [...new Map(leaves.map((leaf) => [placeOf(leaf), leaf])).values()];
+  return firstAtPlace(fields.flatMap((field) => (field.input === "group" ? valueFieldsOf(field.fields) : [field])));
+}
+
+/** The fields a form sends whole (`wholeFieldsOf`) that hold a value, each place once (`firstAtPlace`). */
+function wholeByPlace(fields: readonly EntityField[]): ValueField[] {
+  return firstAtPlace(wholeFieldsOf(fields).filter((field): field is ValueField => field.input !== "group"));
 }
 
 /** A form's values (`values`) with others at their places (`parts`): its fields and its links over its own. */
@@ -220,12 +228,12 @@ function withParts<V extends FormValues>(values: V, parts: FormParts): V {
 }
 
 /**
- * A form's values as an edit sends them: of its fields and its links, its columns' (`columns`, sent whole) and those it
- * changed from what the form is based on (`baseline`'s). The others stay as the entity keeps them, a value its ruleset
- * no longer lists too.
+ * A form's values as an edit sends them: of its fields and its links, those it sends whole (`wholeFieldsOf`, of
+ * `fields`) and those it changed from what the form is based on (`baseline`'s). The others stay as the entity keeps
+ * them, a value its ruleset no longer lists too.
  */
-export function changedValues<V extends FormValues>(values: V, baseline: unknown, columns: readonly EntityField[]): V {
-  const sent = new Set(columnsByPlace(columns).map(placeOf));
+export function changedValues<V extends FormValues>(values: V, baseline: unknown, fields: readonly EntityField[]): V {
+  const sent = new Set(wholeByPlace(fields).map(placeOf));
   const changed = (part: keyof FormParts) => {
     const held = values[part];
     if (!held) return held;
@@ -253,6 +261,16 @@ export function emptyFieldValues(fields: readonly EntityField[]): FormParts {
 }
 
 /**
+ * A form's fields by where it shows them (`fields`, its rules'): those beside its name and description (a hit die, an
+ * item's cost, type and template), its others, and its lists of links after them (a feat's pools, a level's saves).
+ */
+export function formSectionsOf(fields: readonly EntityField[]) {
+  const beside = fields.filter((field) => field.input !== "group" && field.placement === "beside-name");
+  const lists = fields.filter((field) => !beside.includes(field) && isOneOf(field.input, LIST_INPUTS));
+  return { beside, body: fields.filter((field) => !beside.includes(field) && !lists.includes(field)), lists };
+}
+
+/**
  * Whether a field shows, each of its conditions' values read off the form (`watched`, at their paths, in their
  * order): while every one is among its values, or, one `except`, isn't.
  */
@@ -263,11 +281,11 @@ export function isFieldShown(field: EntityField, watched: readonly unknown[]) {
 }
 
 /**
- * The entities an entity read links its links columns to (their roles' links), which its form shows by name, each
- * column's in name order.
+ * The entities an entity read links its fields of links to (their roles' links), which its form shows by name, each
+ * field's in name order.
  */
-export function linkedEntities(columns: readonly EntityField[], entity: unknown): LinkedEntity[] {
-  return columns.flatMap((column) => poolsOf([column], entity).sort(byName));
+export function linkedEntities(fields: readonly EntityField[], entity: unknown): LinkedEntity[] {
+  return fields.flatMap((field) => poolsOf([field], entity).sort(byName));
 }
 
 /** The first choice of a select for none: "None", or "Default" when "None" is one of its values. */
@@ -289,7 +307,7 @@ export function ownFieldValues(fields: readonly EntityField[], values: unknown, 
   return partsOf(
     valueFieldsOf(fields).map((field) => {
       const value = formValueOf(field, valueAt(values, placeOf(field)));
-      const same = JSON.stringify(value) === JSON.stringify(formValueOf(field, columnValueOf(field, base)));
+      const same = JSON.stringify(value) === JSON.stringify(formValueOf(field, heldValueOf(field, base)));
       return [placeOf(field), same ? emptyValueOf(field) : value];
     }),
   );
@@ -304,14 +322,12 @@ export function placeOf(field: ValueField): string {
 }
 
 /**
- * The pools an entity read is linked to through its pools' columns (their roles' links), as its server lists them: a
+ * The pools an entity read is linked to through its fields of pools (their roles' links), as its server lists them: a
  * feat's feat pools, each a choice its pickers offer it in.
  */
-export function poolsOf(columns: readonly EntityField[], entity: unknown): LinkedEntity[] {
-  return columns.flatMap((column) =>
-    column.input === "links" || column.input === "leveledLinks"
-      ? linksOf(column, entity).map(({ linked }) => linked)
-      : [],
+export function poolsOf(fields: readonly EntityField[], entity: unknown): LinkedEntity[] {
+  return fields.flatMap((field) =>
+    field.input === "links" || field.input === "leveledLinks" ? linksOf(field, entity).map(({ linked }) => linked) : [],
   );
 }
 
@@ -324,48 +340,49 @@ export function setFormParts<T extends FieldValues>(form: Pick<UseFormReturn<T>,
 }
 
 /**
- * A form's values (`values`) as its save sends them, its columns' (`columns`, its rules') each as its body takes it: a
- * decimal its number, an optional choice, reference or template null for none, and a column its form hides (every
- * column of its place: an item's slot, its type a template's) null, which its save reads as none.
- */
-export function toColumnsBody<V extends FormValues>(columns: readonly EntityField[], values: V): V {
-  const shown = (column: EntityField) =>
-    isFieldShown(
-      column,
-      (column.shownWhen ?? []).map((condition) => valueAt(values, condition.path)),
-    );
-  const visible = new Set(
-    columns.filter((column): column is ValueField => column.input !== "group" && shown(column)).map(placeOf),
-  );
-  const sent = columnsByPlace(columns).map((column): [string, unknown] => {
-    const place = placeOf(column);
-    return [place, visible.has(place) ? sentValueOf(column, valueAt(values, place)) : null];
-  });
-  return withParts(values, partsOf(sent));
-}
-
-/**
- * An entity's columns, as its form holds them (`columns`, its rules'): a new one's empty values (`entity` none), else
- * those its description holds (a decimal as its text, "15.00"; one a column must hold but doesn't offer, its default;
- * its lists of links off its read's links of their roles: a feat's pools, a spell's lists each at its tier), each at
- * its place.
- */
-export function toColumnValues(columns: readonly EntityField[], entity?: unknown): FormParts {
-  return partsOf(
-    columnsByPlace(columns).map((column) => [
-      placeOf(column),
-      entity === undefined ? emptyValueOf(column) : formValueOf(column, columnValueOf(column, entity)),
-    ]),
-  );
-}
-
-/**
  * An entity's fields as its form holds them, off its description (`entity`, which holds each at its stored field, a
  * reference at its link's role), each at its place.
  */
 export function toFieldValues(fields: readonly EntityField[], entity: unknown): FormParts {
   return partsOf(
-    valueFieldsOf(fields).map((field) => [placeOf(field), formValueOf(field, columnValueOf(field, entity))]),
+    valueFieldsOf(fields).map((field) => [placeOf(field), formValueOf(field, heldValueOf(field, entity))]),
+  );
+}
+
+/**
+ * A form's values (`values`) as its save sends them, those it sends whole (`wholeFieldsOf`, of `fields`) each as its
+ * body takes it: a decimal its number, an optional choice, reference or template null for none, and one its form hides
+ * (every one of its place: an item's slot, its type a template's) null, which its save reads as none.
+ */
+export function toWholeBody<V extends FormValues>(fields: readonly EntityField[], values: V): V {
+  const whole = wholeFieldsOf(fields);
+  const shown = (field: EntityField) =>
+    isFieldShown(
+      field,
+      (field.shownWhen ?? []).map((condition) => valueAt(values, condition.path)),
+    );
+  const visible = new Set(
+    whole.filter((field): field is ValueField => field.input !== "group" && shown(field)).map(placeOf),
+  );
+  const sent = wholeByPlace(fields).map((field): [string, unknown] => {
+    const place = placeOf(field);
+    return [place, visible.has(place) ? sentValueOf(field, valueAt(values, place)) : null];
+  });
+  return withParts(values, partsOf(sent));
+}
+
+/**
+ * An entity's fields its form sends whole (`wholeFieldsOf`, of `fields`), as its form holds them: a new one's empty
+ * values (`entity` none), else those its description holds (a decimal as its text, "15.00"; one that must hold a value
+ * but doesn't offer it, its default; its lists of links off its read's links of their roles: a feat's pools, a spell's
+ * lists each at its tier), each at its place.
+ */
+export function toWholeValues(fields: readonly EntityField[], entity?: unknown): FormParts {
+  return partsOf(
+    wholeByPlace(fields).map((field) => [
+      placeOf(field),
+      entity === undefined ? emptyValueOf(field) : formValueOf(field, heldValueOf(field, entity)),
+    ]),
   );
 }
 
@@ -380,8 +397,19 @@ export function valueAt(values: unknown, path: string): unknown {
 }
 
 /**
- * A form's values (`values`) with an entity's fields as its ruleset declares them (`fields`), at their places: those
- * its description holds (`entity`), or, for a new entity, their empty values; its own until the fields load.
+ * The fields a form sends whole (`fields`, its rules'): those beside its name, which decide each other (an item's type
+ * its slot and its template), and its lists of links, each of which replaces its role's.
+ */
+export function wholeFieldsOf(fields: readonly EntityField[]): EntityField[] {
+  const { beside, lists } = formSectionsOf(fields);
+  return [...beside, ...lists];
+}
+
+/**
+ * A form's values (`values`) with an entity's fields as its rules describe them (`fields`), at their places: those its
+ * description holds (`entity`), or, for a new entity, their empty values; its own until the fields load. Those it sends
+ * whole (`wholeFieldsOf`: beside its name, its lists) stay the form's own, which it makes of them itself (`toEntityForm`,
+ * a level's lists): a duplicate's template, a new level's grants none of its highest's.
  */
 export function withEntityFields<V extends FormValues>(
   values: V,
@@ -389,7 +417,8 @@ export function withEntityFields<V extends FormValues>(
   entity?: unknown,
 ): V {
   if (!fields) return withParts(values, { fields: {}, links: {} });
-  return withParts(values, entity === undefined ? emptyFieldValues(fields) : toFieldValues(fields, entity));
+  const { body } = formSectionsOf(fields);
+  return withParts(values, entity === undefined ? emptyFieldValues(body) : toFieldValues(body, entity));
 }
 
 /**

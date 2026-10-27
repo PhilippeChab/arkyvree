@@ -19,8 +19,8 @@ import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import {
-  levelColumnsOf,
   type LevelFormData,
+  levelListsOf,
   type LevelRead,
   nextLevel,
   readLevel,
@@ -86,7 +86,7 @@ function readPool(pool: unknown): PoolRow[] {
  * features at once, which opens a level's page from its row; its progression, each track a preset to follow or its
  * levels to set; and its features and pools by level (3.5's feat pools; shown read-only to who can't edit). What it
  * changes waits for its save bar, which writes it all at once. Its levels are its rules' owner kind's owned kind's,
- * their grants and amounts at their columns' roles.
+ * their grants and amounts at their lists' roles.
  */
 export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerType, ruleset }: OwnerSectionProps) {
   const openEntity = useOpenEntity(rulesetId);
@@ -94,13 +94,13 @@ export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerTy
   const { rules } = useRules(ruleset.baseRules);
   const levelPage = levelPageOf(rules);
   const levelType = levelPage?.type ?? "";
-  const levelColumns = levelColumnsOf(rules, levelType);
-  const amountsType = levelColumns.amounts?.references ?? "";
+  const levelLists = levelListsOf(rules?.fields[levelType]);
+  const amountsType = levelLists.amounts?.references ?? "";
   const owner = entityTypeLabel(levelPage?.owner ?? "", rules?.words).toLowerCase();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   // A level's amounts' entities, the ruleset's (3.5's saves); none read where its levels have no amounts
   const { data: amountEntities, error: amountsError } = useQuery(
-    rulesetOptionsQuery(amountsType, levelColumns.amounts && rulesetId),
+    rulesetOptionsQuery(amountsType, levelLists.amounts && rulesetId),
   );
   // Its tracks, a level's fields and its amounts, and what its levels grant, as its rules describe them
   const progressionRules = rules?.progression;
@@ -114,12 +114,12 @@ export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerTy
   const query = levelsQuery(rulesetId, ownerType, ownerId);
   const { data: levelRows, isLoading, isFetching, error } = useQuery(query);
   const { data: progression, error: progressionError } = useQuery(ownerProgressionQuery(rulesetId, ownerType, ownerId));
-  // Its pools' totals, at the table its rules say; none read where its levels grant none past their columns
+  // Its pools' totals, at the table its rules say; none read where its levels grant none past their lists
   const { data: poolTotals, error: poolsError } = useQuery(
     ownerTableQuery(rulesetId, ownerType, ownerId, grantsRules?.table),
   );
   const savedRows = (levelRows ?? []).toSorted(byLevel);
-  const levels = savedRows.map((row) => readLevel(row, levelColumns, fieldTracks));
+  const levels = savedRows.map((row) => readLevel(row, levelLists, fieldTracks));
   const savedFeatures = describeFeatureRows(levels);
   // Its pools, and the picks a granted entity gives in them, at the keys its rules say
   const answer: Record<string, unknown> | undefined = progression;
@@ -138,7 +138,7 @@ export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerTy
   const draft = useProgressionDraft(ownerId, levels, !isFetching, (edits) => {
     const body = buildProgressionBody(
       levels,
-      levelColumns,
+      levelLists,
       fieldTracks,
       amountEntities?.map(({ id }) => id),
       savedFeatures,
@@ -163,7 +163,7 @@ export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerTy
   // A message's word for a level ("Class level")
   const levelWord = entityTypeLabel(levelType, rules?.words);
   const { createDialogProps, handleCreate } = useRulesetSection({
-    createDefaults: withEntityFields(nextLevel(levels, levelColumns), levelFields, savedRows.at(-1)),
+    createDefaults: withEntityFields(nextLevel(levels, levelLists), levelFields, savedRows.at(-1)),
     rulesetId,
     label: `${levelWord.charAt(0)}${levelWord.slice(1).toLowerCase()}`,
     query,
@@ -228,7 +228,7 @@ export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerTy
 
   const body = buildProgressionBody(
     levels,
-    levelColumns,
+    levelLists,
     fieldTracks,
     amountEntities?.map(({ id }) => id),
     savedFeatures,
@@ -436,13 +436,13 @@ export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerTy
       {levels.length > 0 &&
         progression &&
         grantsRules &&
-        levelColumns.grants &&
+        levelLists.grants &&
         (features.length > 0 || pools.length > 0 || canEdit) && (
           <OwnerFeaturesCard
             grants={grantsRules}
             granted={{
-              many: entityTypeLabel(levelColumns.grants?.references ?? "", rules?.words, true),
-              type: levelColumns.grants?.references ?? "",
+              many: entityTypeLabel(levelLists.grants?.references ?? "", rules?.words, true),
+              type: levelLists.grants?.references ?? "",
             }}
             words={rules?.words}
             rulesetId={rulesetId}
@@ -473,7 +473,7 @@ export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerTy
         {...createDialogProps}
         rulesetId={rulesetId}
         baseRules={ruleset.baseRules}
-        columns={levelColumns}
+        lists={levelLists}
         levelType={levelType}
       />
     </Stack>

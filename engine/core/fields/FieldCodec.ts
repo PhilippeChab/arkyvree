@@ -1,4 +1,4 @@
-import type { FieldValue } from "@/engine/core/module/index.ts";
+import type { FieldValue, LinkSet } from "@/engine/core/module/index.ts";
 import type { NumberSpec, ProgressionSpec } from "@/shared/customization/fields.ts";
 import { copyProgression, countRoomAt, type ProgressionValue } from "@/shared/customization/progression.ts";
 
@@ -6,12 +6,12 @@ import Field, {
   type Fields,
   type FieldSpec,
   type FieldValues,
-  type LeafSpec,
   type NoFields,
   type PartialFieldValues,
+  type StoredLeaf,
 } from "./Field.ts";
 import FieldForms, { type FormContext } from "./FieldForms.ts";
-import type { FormField } from "./FormField.ts";
+import type { EntityLinkEntry, FormField } from "./FormField.ts";
 import OwnerValues, { type FieldsWrite, type StoredValues } from "./OwnerValues.ts";
 
 /** A write being built: each field's values and each link role's entity, by name. */
@@ -24,19 +24,33 @@ interface WriteRecord {
 type WrittenValues<S extends Fields> = Partial<FieldValues<S>>;
 
 /**
+ * A form as a save takes it (`FieldCodec.parse`): the fields' values it gives, by the spec's names (`values`), and the
+ * lists of links it sets, each of its role, every entity the view's (`lists`).
+ */
+export interface ParsedForm<S extends Fields> {
+  lists: LinkSet[];
+  values: PartialFieldValues<S>;
+}
+
+/**
  * An entity's fields, read and written by one spec (`fields`, as its ruleset's vocabulary declares them: `FieldSpec`):
  * their defaults, the stored fields and link roles that keep them, an owner's values read into values (`read`), values
  * written back as what a save writes of its fields and links (all of them, or those another's don't hold:
- * `toOverrides`), and those its form shows (`formNames`: not a column's, nor one its rules alone set): an edit's merged
- * over what's kept, a form's read as a save takes them (`parse`), and described as a form shows them (`describe`).
+ * `toOverrides`), and those its form takes (`formNames`: all but those its rules alone set, `form: "hidden"`): an
+ * edit's merged over what's kept, a form's read as a save takes them (`parse`, its lists of links with them), and
+ * described as a form shows them (`describe`: all but those it shows no input of, `form: "unshown"`).
  */
 export default class FieldCodec<S extends Fields> {
   constructor(readonly fields: S) {
     this.defaults = FieldCodec.defaultsOf(fields) as FieldValues<S>;
-    this.formFields = Object.fromEntries(
-      Object.entries(fields).filter(([, field]) => !("form" in field && field.form)),
+    const formFields = Object.entries(fields).filter(([, field]) => !("form" in field && field.form === "hidden"));
+    this.formFields = Object.fromEntries(formFields) as Fields;
+    this.shownFields = Object.fromEntries(
+      formFields.filter(([, field]) => !("form" in field && field.form === "unshown")),
     ) as Fields;
-    this.formNames = Object.keys(this.formFields) as (keyof S & string)[];
+    const valued = formFields.filter(([, field]) => field.kind !== "links");
+    this.formNames = valued.map(([key]) => key) as (keyof FieldValues<S> & string)[];
+    this.keptNames = new Set(valued.filter(([, field]) => Field.isKept(field)).map(([key]) => key));
     this.leaves = new Map(Field.storedLeavesOf(fields).map((leaf) => [leaf.field, leaf]));
   }
 
@@ -55,19 +69,23 @@ export default class FieldCodec<S extends Fields> {
 
   /**
    * The fields' values (`values`, by name, a group's under its own), by the stored field that keeps each, in the spec's
-   * order: a reference's aside, which its owner's single link keeps.
+   * order: a link's aside (a reference's, a list of links'), which its owner's links keep.
    */
   private static byStoredField(fields: Fields, values: Record<string, unknown>, out: Record<string, unknown>) {
     for (const [key, field] of Object.entries(fields)) {
       if (field.kind === "group") FieldCodec.byStoredField(field.fields, values[key] as Record<string, unknown>, out);
-      else if (field.kind !== "ref") out[field.field] = values[key];
+      else if (!Field.isLinked(field)) out[field.field] = values[key];
     }
     return out;
   }
 
-  /** Each field's value without a row. */
+  /** Each field's value without a row: none of a list of links, whose values are its links'. */
   private static defaultsOf(fields: Fields): Record<string, unknown> {
-    return Object.fromEntries(Object.entries(fields).map(([key, field]) => [key, FieldCodec.defaultOf(field)]));
+    return Object.fromEntries(
+      Object.entries(fields).flatMap(([key, field]) =>
+        field.kind === "links" ? [] : [[key, FieldCodec.defaultOf(field)]],
+      ),
+    );
   }
 
   /**
@@ -77,6 +95,7 @@ export default class FieldCodec<S extends Fields> {
   private static readField(field: FieldSpec, stored: StoredValues): unknown {
     if (field.kind === "group") return FieldCodec.readFields(field.fields, stored);
     if (field.kind === "ref") return stored.links[field.role] ?? null;
+    if (field.kind === "links") return undefined;
     const values = OwnerValues.valuesOf(stored.fields, field.field);
     if (values.length === 0) return FieldCodec.defaultOf(field);
     switch (field.kind) {
@@ -97,10 +116,15 @@ export default class FieldCodec<S extends Fields> {
     }
   }
 
-  /** The fields' values off an owner's fields and single links as stored, each that doesn't count at its default. */
+  /**
+   * The fields' values off an owner's fields and single links as stored, each that doesn't count at its default: none
+   * of a list of links, whose values are its links'.
+   */
   private static readFields(fields: Fields, stored: StoredValues): Record<string, unknown> {
     const values = Object.fromEntries(
-      Object.entries(fields).map(([key, field]) => [key, FieldCodec.readField(field, stored)]),
+      Object.entries(fields).flatMap(([key, field]) =>
+        field.kind === "links" ? [] : [[key, FieldCodec.readField(field, stored)]],
+      ),
     );
     return FieldCodec.applyConditions(fields, values);
   }
@@ -154,11 +178,14 @@ export default class FieldCodec<S extends Fields> {
   /**
    * A field's value into a write (`write`): its field's values, as every write stores them (`Field.writtenValues`: none
    * for no value, an empty text, a default number, a false flag, unless always written; a list's each once), a
-   * progression's as its rows, or a reference's link's entity (none for no value). A field without a value writes none.
+   * progression's as its rows, or a reference's link's entity (none for no value). A field without a value writes none,
+   * and a list of links none of its own: its links are set apart (`ParsedForm.lists`).
    */
   private static writeField(field: FieldSpec, value: unknown, write: WriteRecord) {
     if (value === undefined || value === null) return;
     switch (field.kind) {
+      case "links":
+        return;
       case "group":
         FieldCodec.writeFields(field.fields, value as Record<string, unknown>, write);
         return;
@@ -203,42 +230,56 @@ export default class FieldCodec<S extends Fields> {
     }
   }
 
-  /** The fields its form shows among its own: none a column shows, nor one its rules alone set (`StoredLeafBase.form`). */
+  /** The fields its form takes: all but one its rules alone set (`form: "hidden"`). */
   private readonly formFields: Fields;
 
-  /** The fields' leaves its owner's fields keep (a reference's is a link's), by the field that keeps each. */
-  private readonly leaves: ReadonlyMap<string, LeafSpec>;
+  /**
+   * The names of the fields its form shows among its others, below its name (`Field.isKept`), which a keeper keeps
+   * (`keepsForm`).
+   */
+  private readonly keptNames: ReadonlySet<string>;
+
+  /** The fields' leaves its owner's fields keep (a reference's and a list of links' are links'), by stored field. */
+  private readonly leaves: ReadonlyMap<string, StoredLeaf>;
+
+  /** The fields its form shows an input of: those it takes, but one its page gives (`form: "unshown"`). */
+  private readonly shownFields: Fields;
 
   /** Each field's value without a row. */
   readonly defaults: FieldValues<S>;
 
-  /** The spec's own names of the fields its form shows (its declarations' keys, never their stored fields), in its order. */
-  readonly formNames: (keyof S & string)[];
+  /**
+   * The spec's own names of the fields its form takes that hold a value (its declarations' keys, never their stored
+   * fields; not a list of links), in its order.
+   */
+  readonly formNames: (keyof FieldValues<S> & string)[];
 
   /**
    * The values as a write of their owner's fields and links: every field and link role of the fields they give (a
-   * group's all), each a value's own, of its kind (a number's a number, a flag's a flag); those its form shows none of
-   * when the entity keeps none of them (a field it holds no value of that keeps them, `keepsForm`: a spell's school).
+   * group's all), each a value's own, of its kind (a number's a number, a flag's a flag); none of those its form shows
+   * below its name when the entity keeps none of them (a field it holds no value of that keeps them, `keepsForm`: a
+   * spell's school).
    */
-  private writeOf(values: WrittenValues<S>): WriteRecord {
+  private writeOf(values: FieldValues<S> | WrittenValues<S>): WriteRecord {
     const write: WriteRecord = { fields: {}, links: {} };
-    const given = Object.entries(this.fields).filter(([key]) => values[key] !== undefined);
+    const given = Object.entries(this.fields).filter(([key]) => (values as Record<string, unknown>)[key] !== undefined);
     for (const leaf of Field.leavesOf(Object.fromEntries(given))) {
       if (leaf.kind === "ref") write.links[leaf.role] = null;
-      else write.fields[leaf.field] = [];
+      else if (leaf.kind !== "links") write.fields[leaf.field] = [];
     }
-    const kept = Field.keepersOf(this.fields).every(([key]) => !!values[key as keyof S]);
-    const written = kept ? this.fields : Object.fromEntries(given.filter(([key]) => !(key in this.formFields)));
+    const kept = Field.keepersOf(this.fields).every(([key]) => !!(values as Record<string, unknown>)[key]);
+    const written = kept ? this.fields : Object.fromEntries(given.filter(([key]) => !this.keptNames.has(key)));
     FieldCodec.writeFields(written, values as Record<string, unknown>, write);
     return write;
   }
 
   /**
-   * The fields as the entity's form shows them, labeled and explained as they're declared, in their order: its own
-   * fields before its groups', each with the stored field that keeps it, a reference with its link's role.
+   * The fields as the entity's form shows them, labeled and explained as they're declared, in their order: those beside
+   * its name, its own fields, then its groups', each with the stored field that keeps it, a link with its role (a
+   * reference's, a list of links').
    */
   describe(): FormField[] {
-    return FieldForms.describe(this.formFields);
+    return FieldForms.describe(this.shownFields);
   }
 
   /**
@@ -250,7 +291,7 @@ export default class FieldCodec<S extends Fields> {
     for (const key of this.formNames) {
       const value = given[key];
       // A group's fields it gives over those kept
-      const group = this.fields[key].kind === "group";
+      const group = this.fields[key as keyof S].kind === "group";
       if (value === undefined) {
         merged[key] = kept[key];
       } else {
@@ -272,15 +313,23 @@ export default class FieldCodec<S extends Fields> {
   }
 
   /**
-   * A form's fields and links (`given`: its fields by the stored field that keeps each, its references by their links'
-   * roles), as a save takes them, by the spec's names: those it gives, each of its field's shape, a field a condition
-   * leaves out dropped, a reference resolved (`FieldForms.parse`); refused as invalid otherwise.
+   * A form's fields and links (`given`: its fields by the stored field that keeps each, its links by role, a
+   * reference's and a list of links'), as a save takes them: those it gives, each of its field's shape, a new entity's
+   * those it needs (`context.creating`), a field a condition leaves out dropped, every entity it names resolved
+   * (`FieldForms.parse`); refused as invalid otherwise. Its fields' values by the spec's names, and the lists of links
+   * it sets, each of its role, to entities of its kind.
    */
-  parse(given: { fields?: unknown; links?: unknown }, context: FormContext): PartialFieldValues<S> {
-    return FieldForms.parse(this.formFields, given, {
-      ...context,
-      kept: context.kept ?? this.defaults,
-    }) as PartialFieldValues<S>;
+  parse(given: { fields?: unknown; links?: unknown }, context: FormContext): ParsedForm<S> {
+    const parsed = FieldForms.parse(this.formFields, given, { ...context, kept: context.kept ?? this.defaults });
+    const lists: LinkSet[] = [];
+    const values: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(parsed)) {
+      const field = this.fields[key];
+      if (field.kind === "links")
+        lists.push({ links: value as EntityLinkEntry[], role: field.role, toType: field.references });
+      else values[key] = value;
+    }
+    return { lists, values: values as PartialFieldValues<S> };
   }
 
   /** The fields' values off an owner's values (`stored`: its fields, and its single links its references read). */
@@ -298,9 +347,10 @@ export default class FieldCodec<S extends Fields> {
 
   /** The values, each reference the id `resolve` gives for the one it holds (the view's: a copy's for its source's). */
   resolveReferences(values: FieldValues<S>, resolve: (id: string) => string): FieldValues<S> {
+    const held = values as Record<string, unknown>;
     const references = Object.entries(this.fields)
-      .filter(([key, field]) => field.kind === "ref" && typeof values[key] === "string")
-      .map(([key]) => [key, resolve(values[key] as string)]);
+      .filter(([key, field]) => field.kind === "ref" && typeof held[key] === "string")
+      .map(([key]) => [key, resolve(held[key] as string)]);
     return { ...values, ...Object.fromEntries(references) };
   }
 
@@ -314,7 +364,7 @@ export default class FieldCodec<S extends Fields> {
       for (const [key, field] of Object.entries(fields)) {
         if (field.kind === "group") place(field.fields, level[key] as Record<string, unknown>);
         else if (field.kind === "ref") form.links[field.role] = level[key];
-        else form.fields[field.field] = level[key];
+        else if (field.kind !== "links") form.fields[field.field] = level[key];
       }
     };
     place(this.formFields, values);
@@ -322,16 +372,17 @@ export default class FieldCodec<S extends Fields> {
   }
 
   /**
-   * The values as a write of their owner's fields and links, but each field and link the base's (`base`: an item's
-   * template's) hold alike, which it clears: what an entity read over another keeps of its own.
+   * The values as a write of their owner's fields and links, but each field it reads off the base when it holds none
+   * (`inherits`) that the base's (`base`: an item's template's) holds alike, which it clears: what an entity read over
+   * another keeps of its own.
    */
   toOverrides(values: WrittenValues<S>, base: FieldValues<S>): FieldsWrite {
     const write = this.writeOf(values);
     const baseWrite = this.writeOf(base);
-    for (const [field, written] of Object.entries(write.fields))
-      if (FieldCodec.sameValues(written, baseWrite.fields[field])) write.fields[field] = [];
-    for (const [role, toId] of Object.entries(write.links))
-      if (toId === baseWrite.links[role]) write.links[role] = null;
+    for (const [field, written] of Object.entries(write.fields)) {
+      if (this.leaves.get(field)?.inherits && FieldCodec.sameValues(written, baseWrite.fields[field]))
+        write.fields[field] = [];
+    }
     return write;
   }
 

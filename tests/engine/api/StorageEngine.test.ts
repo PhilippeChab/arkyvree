@@ -103,8 +103,11 @@ describe("A module's storage", () => {
   test("reads the kinds a user customizes and the types whose entities hold fields into the view's kinds", () => {
     const storage = StorageEngine.shared();
     const { fieldDefs } = storage.registries();
-    // Every field owner's fields are in the registries, as its module declares them
-    for (const type of storage.fieldOwners()) expect(fieldDefs.some((def) => def.ownerType === type)).toBe(true);
+    // Every stored field of an entity or a ruleset is its owner's, as its module declares them (an owner may hold links
+    // alone: a save, its ability)
+    const owners = storage.fieldOwners();
+    for (const def of fieldDefs.filter(({ ownerKind }) => ownerKind !== "character"))
+      expect(owners).toContain(def.ownerType);
     for (const { customizable, fields, type } of storage.viewSchema().kinds) {
       expect(customizable).toBe(!!storage.kind(type).customizable);
       expect(fields).toBe(storage.fieldOwners().includes(type));

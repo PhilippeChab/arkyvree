@@ -10,7 +10,7 @@ import { EntitiesAutocomplete } from "@/client/src/pages/rulesets/components/Ent
 import { useEntityLookup } from "@/client/src/pages/rulesets/components/useEntityLookup.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 
-import type { ColumnInputProps } from "./columnContext.ts";
+import type { EntityInputProps } from "./fieldContext.ts";
 
 /**
  * A link and its tier, as the form holds it and its save sends it (`{ toId, tier }`): no `tier` key for none, so
@@ -41,7 +41,7 @@ export function LeveledLinksInput<T extends FieldValues>({
   form,
   name,
   rulesetId,
-}: ColumnInputProps<T, LeveledLinksField>) {
+}: EntityInputProps<T, LeveledLinksField>) {
   const levelError = (level: number | undefined) =>
     level === undefined ? undefined : wholeNumberError(level, field.min, field.max);
   const linked = useEntityLookup(context.knownLinks ?? []);

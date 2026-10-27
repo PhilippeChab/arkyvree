@@ -16,7 +16,7 @@ import {
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import {
   useCopyOnWrite,
-  useEntityColumns,
+  useEntityFields,
   useEntityForm,
   useEntityPageBack,
   useRestorableDelete,
@@ -47,11 +47,11 @@ interface EntityEditing<TEntity, TForm extends FieldValues> {
 
 interface RulesetEntityDetailProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> {
   /**
-   * Its form, its save and its delete, off its kind's columns (its rules', which the page looks up with its ruleset, so
+   * Its form, its save and its delete, off its kind's fields (its rules', which the page looks up with its ruleset, so
    * a form never holds an entity read without them); none for an entity no one edits (an ability), which shows its
    * description.
    */
-  editing?: (columns: readonly EntityField[]) => EntityEditing<TEntity, TForm>;
+  editing?: (fields: readonly EntityField[]) => EntityEditing<TEntity, TForm>;
   entityId: string;
   /** Singular display name, e.g. "Language". */
   label: string;
@@ -69,6 +69,9 @@ type FormDetailsProps<TEntity extends EntityBase, TForm extends FieldValues, TKe
   editing: EntityEditing<TEntity, TForm>;
   entity: TEntity;
 };
+
+/** No fields: its kind's while its rules load. */
+const NO_FIELDS: readonly EntityField[] = [];
 
 /**
  * The entity's details: its form, following the entity, which saves it; a viewer under `ReadOnlyFields` reads it.
@@ -138,8 +141,8 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
 }: RulesetEntityDetailProps<TEntity, TForm, TKey>) {
   const location = useLocation();
   // Read here, so its form is made off them, once they're known (`loaded`)
-  const { columns, loaded: columnsLoaded } = useEntityColumns(rulesetId, section);
-  const editing = editingOf?.(columns);
+  const { fields } = useEntityFields(rulesetId, section);
+  const editing = editingOf?.(fields ?? NO_FIELDS);
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
   const { rules } = useRules(ruleset?.baseRules);
   const back = useEntityPageBack(location.state, `/rulesets/${rulesetId}/${section}`, rules?.words);
@@ -182,9 +185,9 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
       }
       isLoading={isRulesetLoading || isEntityLoading}
     >
-      {/* Its form waits for its columns, its rules', which its ruleset's base rules pick */}
+      {/* Its form waits for its fields, its rules', which its ruleset's base rules pick */}
       {entity &&
-        columnsLoaded &&
+        !!fields &&
         (editing ? (
           <ReadOnlyFields readOnly={!canEdit}>
             <FormDetails

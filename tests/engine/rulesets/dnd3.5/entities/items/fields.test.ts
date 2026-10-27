@@ -42,9 +42,7 @@ describe("An item's fields", () => {
         item,
       ]),
     );
-    const declared = new Set(
-      Field.leavesOf(ITEM_FIELDS.fields).flatMap((leaf) => (leaf.kind === "ref" ? [] : [leaf.field])),
-    );
+    const declared = new Set(Field.storedLeavesOf(ITEM_FIELDS.fields).map((leaf) => leaf.field));
     const held = [...items.values()];
     expect(held.every((item) => Object.keys(item.fields).every((field) => declared.has(field)))).toBe(true);
     expect(held.filter((item) => Object.keys(item.fields).length > 2).length).toBeGreaterThan(400);

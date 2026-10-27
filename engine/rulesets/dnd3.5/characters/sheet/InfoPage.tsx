@@ -89,7 +89,7 @@ function InfoPage({
             </View>
             <View style={styles.headerRow}>
               <Text style={styles.headerLabel}>Size:</Text>
-              <Text style={styles.headerValue}>{identityData.physiology.race?.fields[RACE_SIZE] || "Medium"}</Text>
+              <Text style={styles.headerValue}>{identityData.physiology.race.fields[RACE_SIZE]}</Text>
             </View>
             <View style={styles.headerRow}>
               <Text style={styles.headerLabel}>Weight:</Text>

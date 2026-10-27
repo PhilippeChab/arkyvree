@@ -13,13 +13,13 @@ interface Condition {
 
 /**
  * An owner type's rules for a write past each leaf's own: the leaves that count on another's value, the stored fields
- * its form shows (those its kind's columns or rules don't), and the leaves without a value of which it keeps none of
- * them (`keepsForm`: a spell's school).
+ * its form shows among its others, below its name (`Field.isKept`), and the leaves without a value of which it keeps
+ * none of them (`keepsForm`: a spell's school).
  */
 interface OwnerRules {
   conditions: Condition[];
-  formFields: ReadonlySet<string>;
   keepers: StoredLeaf[];
+  keptFields: ReadonlySet<string>;
 }
 
 /**
@@ -45,17 +45,17 @@ export default class FieldWrites {
     return Object.values(fields).flatMap((field): Condition[] => {
       if (field.kind === "group") return FieldWrites.conditionsOf(field.fields);
       const on = field.when && "field" in field.when ? fields[field.when.field] : undefined;
-      if (field.kind === "ref" || !on || on.kind === "group" || on.kind === "ref") return [];
+      if (Field.isLinked(field) || !on || on.kind === "group" || Field.isLinked(on)) return [];
       return [{ leaf: field, on, values: (field.when as { values: readonly (boolean | string)[] }).values }];
     });
   }
 
   /** An owner type's rules for a write (`owned`, its fields). */
   private static rulesOf(owned: Fields): OwnerRules {
-    const shown = Object.fromEntries(Object.entries(owned).filter(([, field]) => !("form" in field && field.form)));
+    const shown = Object.fromEntries(Object.entries(owned).filter(([, field]) => Field.isKept(field)));
     return {
       conditions: FieldWrites.conditionsOf(owned),
-      formFields: new Set(Field.storedLeavesOf(shown).map((leaf) => leaf.field)),
+      keptFields: new Set(Field.storedLeavesOf(shown).map((leaf) => leaf.field)),
       keepers: Field.keepersOf(owned).map(([, leaf]) => leaf),
     };
   }
@@ -98,7 +98,7 @@ export default class FieldWrites {
     }
     const kept = rules.keepers.map((keeper) => this.heldValue(keeper, written, creating));
     if (kept.some((held) => held !== undefined && !held.value))
-      for (const field of Object.keys(written)) if (rules.formFields.has(field)) written[field] = [];
+      for (const field of Object.keys(written)) if (rules.keptFields.has(field)) written[field] = [];
 
     return written;
   }

@@ -50,7 +50,7 @@ const DECLARED = new DeclaredFields(
       cost: {
         description: "Its cost",
         field: "COST",
-        form: "column",
+        placement: "beside-name",
         kind: "number",
         label: "Cost",
         merge: "winner",

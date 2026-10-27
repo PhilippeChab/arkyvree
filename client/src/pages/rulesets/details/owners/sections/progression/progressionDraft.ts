@@ -1,10 +1,10 @@
 /**
  * What an owner's Progression tab changes before its save: its tracks' values (a level's fields its rules set, its
  * amounts: 3.5's saves), its features' levels and its pools' picks, by level id, over the owner as saved; and the save
- * they make, each level's fields by stored field and its amounts and grants among its links, at its columns' roles.
+ * they make, each level's fields by stored field and its amounts and grants among its links, at its lists' roles.
  */
 
-import type { LevelColumns, LevelRead } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import type { LevelLists, LevelRead } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import type { OwnerProgressionBody } from "@/client/src/pages/rulesets/details/owners/ownerSectionQueries.ts";
 
 /** A feature the owner grants (3.5's feat, through a feat pool), and the levels it grants it at, by their ids. */
@@ -58,12 +58,12 @@ export function amountTrackKey(entityId: string): TrackKey {
 /**
  * The save a tab's edits make (`edits`, over the owner's `levels`, `features` and `pools` as saved): each level's
  * fields its tracks set (`fieldTracks`: each its stored field, by its track's key), and its amounts and grants among
- * its links, at its columns' roles (`columns`), of the ruleset's entities its amounts are of (`amountIds`: 3.5's
+ * its links, at its lists' roles (`lists`), of the ruleset's entities its amounts are of (`amountIds`: 3.5's
  * saves; none while they load, the level's own then, never an empty list); each pool's picks by the pool's `id`.
  */
 export function buildProgressionBody(
   levels: readonly LevelRead[],
-  columns: LevelColumns,
+  lists: LevelLists,
   fieldTracks: readonly { field: string; key: string }[],
   amountIds: readonly string[] | undefined,
   features: readonly FeatureRow[],
@@ -93,7 +93,7 @@ export function buildProgressionBody(
       features.filter((row) => row.levelIds.includes(level.id)).map((row) => row.key),
     );
     if (!tracksChanged && !grantsChanged) return [];
-    const { amounts, grants } = columns;
+    const { amounts, grants } = lists;
     return [
       {
         levelId: level.id,
@@ -118,7 +118,7 @@ export function buildProgressionBody(
     const picks = Object.entries(edits.pools[pool.id] ?? {})
       .filter(([levelId, count]) => savedLevelIds.has(levelId) && count !== (pool.picks[levelId] ?? 0))
       .map(([levelId, count]) => ({ levelId, count }));
-    return picks.length > 0 && columns.grants ? [{ id: pool.id, picks }] : [];
+    return picks.length > 0 && lists.grants ? [{ id: pool.id, picks }] : [];
   });
   return {
     ...(levelEdits.length > 0 && { levels: levelEdits }),

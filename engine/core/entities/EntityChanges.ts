@@ -1,4 +1,4 @@
-import { Field, type Fields, type FormField, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
+import { Field, type Fields, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
 import type { EntityWrite, LinkSet, LinkWrite } from "@/engine/core/module/index.ts";
 import type { RulesetData, ViewEntity, ViewKinds } from "@/engine/core/view/index.ts";
 import type { ActivityChange, ChangedField, ChangedLink, ChangedLinks } from "@/shared/activity.ts";
@@ -37,41 +37,37 @@ type EntryColumn = "amount" | "free" | "tier" | "viaId";
 
 /**
  * A place an edit's activity compares, labeled: a stored field (`fields`), a single link's role (`links`, to an entity
- * of `references`, the kind's own for none: a template's), or the role of a list of links (`lists`, its column's
- * `input`).
+ * of `references`), or the role of a list of links (`lists`, what its entries carry, `entries`, and the kind of the
+ * pools they're through, `via`).
  */
 type Place =
   | { at: string; label: string; part: "fields"; values?: readonly string[] | null }
-  | { at: string; label: string; part: "links"; references?: string }
-  | { at: string; input: string; label: string; part: "lists" };
+  | { at: string; label: string; part: "links"; references: string }
+  | { at: string; entries?: string; label: string; part: "lists"; via?: string };
 
-/** The columns a list's entries carry, by its column's input: a pool and whether it's free, a tier, an amount. */
+/** The columns a list's entries carry, by what they carry: a pool and whether it's free, a tier, an amount. */
 const ENTRY_COLUMNS: Readonly<Record<string, readonly EntryColumn[]>> = {
-  amounts: ["amount"],
-  grants: ["viaId", "free"],
-  leveledLinks: ["tier"],
-  links: [],
+  amount: ["amount"],
+  grant: ["viaId", "free"],
+  tier: ["tier"],
 };
 
-/** The inputs of a column that holds many links of its role. */
-const LIST_INPUTS = new Set(Object.keys(ENTRY_COLUMNS));
-
 /**
- * What an entity's edit changes, as its activity records it (`ActivityChange`), in its form's order: its name, its
- * description, then each place its kind's form and fields hold (`placesOf`: its columns as described, its declared
- * fields and references, its own fields), each labeled as declared. A field is compared as its kind's codec reads it
- * before and after the edit's row, an item's template's among them, its text recorded; a single link by its target,
- * recorded by name; a list of links the edit sets by its entries, those it adds and removes, each named, with the
- * columns its role's entries carry (the pool it's through, by name: `viaTypes`, the pools' kind by role).
+ * What an entity's edit changes, as its activity records it (`ActivityChange`): its name, its description, then each
+ * place its kind's fields declare (`placesOf`: its fields, its single links, its lists of links), each labeled as
+ * declared. A field is compared as its kind's codec reads it before and after the edit's row, an item's template's
+ * among them, its text recorded; a single link by its target, recorded by name; a list of links the edit sets by its
+ * entries, those it adds and removes, each named, with the columns its role's entries carry (the pool it's through, by
+ * name).
  */
 export default class EntityChanges {
   constructor(
     private readonly rulesetData: RulesetData,
     private readonly type: string,
     private readonly codec: ChangedFields,
-    private readonly places: readonly Place[],
-    private readonly viaTypes: Readonly<Record<string, string>>,
-  ) {}
+  ) {
+    this.places = EntityChanges.placesOf(codec.fields);
+  }
 
   /** A key identifying an entry of a list of links: its target and its own columns, ids resolved as the view's. */
   private static keyOf(
@@ -79,13 +75,6 @@ export default class EntityChanges {
     columns: readonly EntryColumn[],
   ) {
     return JSON.stringify([link.toId, ...columns.map((column) => link[column] ?? null)]);
-  }
-
-  /** A form's columns, flattened out of their groups, in their order. */
-  private static leafColumnsOf(columns: readonly FormField[]): Exclude<FormField, { input: "group" }>[] {
-    return columns.flatMap((column) =>
-      column.input === "group" ? EntityChanges.leafColumnsOf(column.fields) : [column],
-    );
   }
 
   /** The entries of `entries` none of `others` matches by key, each matched once: those a list lost or gained. */
@@ -119,42 +108,23 @@ export default class EntityChanges {
   }
 
   /**
-   * The places an edit's activity compares, in its form's order, each labeled: its columns' (`columns`, as described:
-   * a field, a single link, a list of links), then its declared fields and references (`fields`, by their labels), then
-   * its own fields past them (`own`, by their stored fields). A field both declare is labeled as declared.
+   * The places an edit's activity compares (`fields`, a kind's declarations), each labeled as declared: those its form
+   * shows beside its name first, then the others, in their declared order (a group's among them).
    */
-  static placesOf(columns: readonly FormField[], fields: Fields, own: readonly string[]): Place[] {
+  static placesOf(fields: Fields): Place[] {
     const leaves = Field.leavesOf(fields);
-    const places = new Map<string, Place>();
-    const add = (place: Place) => {
-      const key = `${place.part === "fields" ? "fields" : "links"}:${place.at}`;
-      if (!places.has(key)) places.set(key, place);
-    };
-    const declared = (at: string) => leaves.find((leaf) => (leaf.kind === "ref" ? leaf.role : leaf.field) === at);
-    for (const column of EntityChanges.leafColumnsOf(columns)) {
-      const leaf = declared(column.field ?? column.role ?? "");
-      const label = leaf?.label ?? column.label;
-      const values = leaf && leaf.kind !== "ref" ? Field.closedValuesOf(leaf) : null;
-      if (column.field !== undefined) {
-        add({ at: column.field, label, part: "fields", values });
-      } else if (column.role !== undefined && LIST_INPUTS.has(column.input)) {
-        add({ at: column.role, input: column.input, label, part: "lists" });
-      } else if (column.role !== undefined && (column.input === "ref" || column.input === "template")) {
-        add({
-          at: column.role,
-          label,
-          part: "links",
-          references: "references" in column ? column.references : undefined,
-        });
-      }
-    }
-    for (const leaf of leaves) {
-      if (leaf.kind === "ref") add({ at: leaf.role, label: leaf.label, part: "links", references: leaf.references });
-      else add({ at: leaf.field, label: leaf.label, part: "fields", values: Field.closedValuesOf(leaf) });
-    }
-    for (const field of own) add({ at: field, label: declared(field)?.label ?? field, part: "fields" });
-    return [...places.values()];
+    return [...leaves.filter((leaf) => leaf.placement), ...leaves.filter((leaf) => !leaf.placement)].map(
+      (leaf): Place => {
+        const { label } = leaf;
+        if (leaf.kind === "ref") return { at: leaf.role, label, part: "links", references: leaf.references };
+        if (leaf.kind === "links") return { at: leaf.role, entries: leaf.entries, label, part: "lists", via: leaf.via };
+        return { at: leaf.field, label, part: "fields", values: Field.closedValuesOf(leaf) };
+      },
+    );
   }
+
+  /** The places it compares, in their order (`placesOf`). */
+  private readonly places: readonly Place[];
 
   /** A stored field's change: its text as its codec reads it, else as stored, before and after; none when the same. */
   private changeOfField(
@@ -183,27 +153,26 @@ export default class EntityChanges {
     };
     const [was, is] = [targetOf(before), targetOf(after)];
     if (was === is) return undefined;
-    const references = place.references ?? this.type;
     return {
       field: place.at,
       label: place.label,
-      from: was && this.nameOf(references, was),
-      to: is && this.nameOf(references, is),
+      from: was && this.nameOf(place.references, was),
+      to: is && this.nameOf(place.references, is),
     };
   }
 
   /**
    * A list of links' change (`set`, what the edit writes of its role, over the entity's `entityId`): its entries it
-   * adds and those it removes, each with the columns its role's entries carry (`input`, its column's); none when the
-   * same.
+   * adds and those it removes, each with the columns its role's entries carry (`entries`, the pools' kind `via`); none
+   * when the same.
    */
   private changeOfList(
     entityId: string,
     set: LinkSet,
-    place: { input: string; label: string },
+    place: { entries?: string; label: string; via?: string },
   ): ChangedLinks | undefined {
-    const columns = ENTRY_COLUMNS[place.input] ?? [];
-    const keyed = (link: Omit<LinkWrite, "role" | "toType">) => this.keyedEntryOf(set, link, columns);
+    const columns = (place.entries && ENTRY_COLUMNS[place.entries]) || [];
+    const keyed = (link: Omit<LinkWrite, "role" | "toType">) => this.keyedEntryOf(set, link, columns, place.via);
     const before = this.rulesetData.linksOf(entityId, set.role, set.toType).map(keyed);
     const after = set.links.map(keyed);
     const added = EntityChanges.missingFrom(after, before);
@@ -217,6 +186,7 @@ export default class EntityChanges {
     set: LinkSet,
     link: Omit<LinkWrite, "role" | "toType">,
     columns: readonly EntryColumn[],
+    viaType: string | undefined,
   ): KeyedEntry {
     const { cow } = this.rulesetData;
     const toId = cow.resolve(link.toId);
@@ -224,12 +194,8 @@ export default class EntityChanges {
     const values = { amount: link.amount ?? null, free: link.free ?? false, tier: link.tier ?? null, toId, viaId };
     const entry: ChangedLink = { toId, toName: this.nameOf(set.toType, toId) ?? "" };
     for (const column of columns) {
-      if (column === "viaId") {
-        const viaType = this.viaTypes[set.role];
-        entry.viaName = viaId && viaType ? (this.nameOf(viaType, viaId) ?? null) : null;
-      } else {
-        Object.assign(entry, { [column]: values[column] });
-      }
+      if (column === "viaId") entry.viaName = viaId && viaType ? (this.nameOf(viaType, viaId) ?? null) : null;
+      else Object.assign(entry, { [column]: values[column] });
     }
     return { entry, key: EntityChanges.keyOf(values, columns) };
   }
@@ -270,8 +236,8 @@ export default class EntityChanges {
 
   /**
    * What an edit changes of an entity (`entity`, as the view has it): its row's (`row`: its name, its description, its
-   * fields and its single links) and its lists of links' (`sets`, those it sets), in its form's order. A list it sets
-   * that no column describes comes last, labeled by its role.
+   * fields and its single links) and its lists of links' (`sets`, those it sets), in its places' order. A list it sets
+   * that no field declares comes last, labeled by its role.
    */
   compare(entity: Compared, row: EntityWrite, sets: readonly LinkSet[] = []): ActivityChange[] {
     const changes: (ActivityChange | undefined)[] = [];
@@ -294,7 +260,7 @@ export default class EntityChanges {
     }
     const listed = new Set(this.places.flatMap((place) => (place.part === "lists" ? [place.at] : [])));
     for (const set of sets.filter((each) => !listed.has(each.role)))
-      changes.push(this.changeOfList(entity.id, set, { input: "links", label: set.role }));
+      changes.push(this.changeOfList(entity.id, set, { label: set.role }));
     return changes.filter((change) => change !== undefined);
   }
 }

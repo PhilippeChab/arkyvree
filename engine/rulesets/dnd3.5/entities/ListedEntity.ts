@@ -37,10 +37,12 @@ export default abstract class ListedEntity<
     return this.describeRows(rows).map((row) => ({ ...row, links: this.linksIn(row.id) }));
   }
 
-  /** The lists a form links an entity to (its `listedIn` links: each its list, and its tier on it), none left out. */
+  /**
+   * The lists a form links an entity to (its `listedIn` links: each its list, and its tier on it), none when it leaves
+   * them out.
+   */
   protected listsOf(body: FormBody): { tier?: number | null; toId: string }[] | undefined {
-    const lists = body.links.listedIn;
-    return Array.isArray(lists) ? (lists as { tier?: number | null; toId: string }[]) : undefined;
+    return body.lists.find((set) => set.role === "listedIn")?.links;
   }
 
   /** Refuses linking an entity to a list the other kind uses (`taken`): the ruleset's own and its chain's. */

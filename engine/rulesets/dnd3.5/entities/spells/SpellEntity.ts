@@ -12,7 +12,6 @@ import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
-import { SPELL_COLUMNS } from "./columns.ts";
 import { SPELL_FIELDS } from "./fields.ts";
 
 /** A spell's level: 0 to the rules' last. */
@@ -28,10 +27,7 @@ export default class SpellEntity extends ListedEntity<"spells", typeof SPELL_FIE
   /** The Spell Focus feats a spell's school brings. */
   private readonly spellFocus = new SpellFocusFeats(this.view);
 
-  /** Its saving throw, what a save does, and its spell lists at their levels. */
-  protected override readonly columns = SPELL_COLUMNS;
-
-  /** A spell's school, components, range… */
+  /** Its spell lists at their levels, its school, components, range…, its saving throw and what a save does. */
   protected override readonly fields = SPELL_FIELDS;
 
   protected override readonly label = "Spell";
@@ -42,7 +38,7 @@ export default class SpellEntity extends ListedEntity<"spells", typeof SPELL_FIE
   override readonly type = "spells";
 
   /**
-   * Refuses a spell linked to a pool the view's feats use (its columns refuse a new one without a pool, and a pool's
+   * Refuses a spell linked to a pool the view's feats use (its fields refuse a new one without a pool, and a pool's
    * spell level past the rules' bounds).
    */
   protected override checkForm(body: FormBody) {
@@ -53,12 +49,9 @@ export default class SpellEntity extends ListedEntity<"spells", typeof SPELL_FIE
 
   /** The pools a form links the spell to, each at its spell level, none without one (none: an edit's kept). */
   protected override linksOf(body: FormBody) {
-    const lists = this.listsOf(body);
-    return (
-      lists && [
-        { links: lists.map(({ tier, toId }) => ({ tier: tier ?? null, toId })), role: "listedIn", toType: "aptitudes" },
-      ]
-    );
+    return super
+      .linksOf(body)
+      ?.map((set) => ({ ...set, links: set.links.map(({ tier, toId }) => ({ tier: tier ?? null, toId })) }));
   }
 
   /**

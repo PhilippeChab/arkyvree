@@ -299,10 +299,8 @@ describe("An activity", () => {
         },
         RULES,
       ),
-    ).toBe(
-      "Name: A → B\nCost: 15.00 gp → 20.00 gp\nSlot cleared\nWeapon Base Damage updated\nTemplate updated\nLevel 3",
-    );
-    // A field reads as its own entity's column, by the stored field or the role that keeps it, never another's: a
+    ).toBe("Name: A → B\nCost: 15.00 gp → 20.00 gp\nSlot cleared\nDamage updated\nTemplate updated\nLevel 3");
+    // A field reads as its own entity's field, by the stored field or the role that keeps it, never another's: a
     // class's hit die, a language's type, a skill's ability by its link's role, which says only that it changed
     const baseRules = "Dungeons & Dragons: 3.5";
     expect(

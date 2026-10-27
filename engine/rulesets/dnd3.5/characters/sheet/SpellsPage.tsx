@@ -1,5 +1,6 @@
 import { Page, Text, View } from "@react-pdf/renderer";
 
+import { Field } from "@/engine/core/fields/index.ts";
 import SpellGroups from "@/engine/rulesets/dnd3.5/characters/description/SpellGroups.ts";
 import { SPELL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/spells/fields.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
@@ -42,10 +43,10 @@ const SPELL_FIELD_ABBR: Record<string, string> = {
 
 /** Each spell field's label, as it's declared. */
 const SPELL_FIELD_LABELS = new Map<string, string>(
-  Object.values(SPELL_FIELDS.fields).map((field) => [field.field, field.label]),
+  Field.storedLeavesOf(SPELL_FIELDS.fields).map((field) => [field.field, field.label]),
 );
 /** The spell fields in a 3.5 stat block's order (the order they're declared in); the others follow by name. */
-const SPELL_FIELD_ORDER: string[] = Object.values(SPELL_FIELDS.fields).map((field) => field.field);
+const SPELL_FIELD_ORDER: string[] = Field.storedLeavesOf(SPELL_FIELDS.fields).map((field) => field.field);
 
 const SPELL_FIELD_ORDER_INDEX = new Map(SPELL_FIELD_ORDER.map((k, i) => [k, i]));
 

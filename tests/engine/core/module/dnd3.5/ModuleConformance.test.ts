@@ -200,10 +200,10 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
   });
 
   test("says why a new entity's required list of links is refused, in words of its own", () => {
-    const columns = Object.values(Engine.rules().describeAll()[rules].columns).flatMap((kind) => kind ?? []);
-    const required = columns.flatMap((column) =>
-      (column.input === "links" || column.input === "leveledLinks") && column.required !== undefined
-        ? [column.required]
+    const fields = Object.values(Engine.rules().describeAll()[rules].fields).flatMap((kind) => kind ?? []);
+    const required = fields.flatMap((field) =>
+      (field.input === "links" || field.input === "leveledLinks") && field.required !== undefined
+        ? [field.required]
         : [],
     );
     for (const words of required) expect(words.trim()).not.toBe("");

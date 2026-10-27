@@ -27,7 +27,7 @@ describe("A skill's fields", () => {
           ["SOMETHING_ELSE", 1],
         ]),
       ),
-    ).toEqual({ impactedByWeight: true, checkPenaltyMultiplier: 2, usableWithoutTraining: true });
+    ).toEqual({ keyAbility: null, impactedByWeight: true, checkPenaltyMultiplier: 2, usableWithoutTraining: true });
   });
 
   test("take the multiplier from the first value of a positive number", () => {

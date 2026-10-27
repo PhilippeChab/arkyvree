@@ -25,13 +25,13 @@ const KINDS: StorageDeclaration["kinds"] = {
 
 /**
  * 3.5's link roles, each with how its sibling copies merge it: a feat's or a spell's lists hold every copy's
- * (`union`), a class's bonus spell ability is the winning copy's else a sibling's (`fallback`), and every other single
- * link (with the fields it's read by: an item's template, a spell's save with its save effect) and a link of a role the
- * winning copy holds many of (a class's skills, a class level's grants and base bonuses) is the winning copy's alone
- * (`winner`). A link through a pool goes with its pool (`viaOnDelete`).
+ * (`union`), and every single link (with the fields it's read by: an item's template, a spell's save with its save
+ * effect, a class's bonus spell ability) and a link of a role the winning copy holds many of (a class's skills, a class
+ * level's grants and base bonuses) is the winning copy's alone (`winner`). A link through a pool goes with its pool
+ * (`viaOnDelete`). Its single roles type the view's entities' (`SingleRolesOf`).
  */
 // oxfmt-ignore
-const LINK_ROLES: LinkRoleDef[] = [
+export const LINK_ROLES = [
   { role: "subraceOf", fromType: "races", toType: "races", viaType: null, single: true, onDelete: "delete", viaOnDelete: "refuse", merge: "winner" },
   { role: "subclassOf", fromType: "classes", toType: "classes", viaType: null, single: true, onDelete: "delete", viaOnDelete: "refuse", merge: "winner" },
   { role: "madeFrom", fromType: "items", toType: "items", viaType: null, single: true, onDelete: "refuse", viaOnDelete: "refuse", merge: "winner" },
@@ -44,8 +44,8 @@ const LINK_ROLES: LinkRoleDef[] = [
   { role: "keyAbility", fromType: "saves", toType: "abilities", viaType: null, single: true, onDelete: "delete", viaOnDelete: "refuse", merge: "winner" },
   { role: "keyAbility", fromType: "skills", toType: "abilities", viaType: null, single: true, onDelete: "delete", viaOnDelete: "refuse", merge: "winner" },
   { role: "resistedBy", fromType: "spells", toType: "saves", viaType: null, single: true, onDelete: "unlink", viaOnDelete: "refuse", merge: "winner" },
-  { role: "bonusSpellAbility", fromType: "classes", toType: "abilities", viaType: null, single: true, onDelete: "unlink", viaOnDelete: "refuse", merge: "fallback" },
-];
+  { role: "bonusSpellAbility", fromType: "classes", toType: "abilities", viaType: null, single: true, onDelete: "unlink", viaOnDelete: "refuse", merge: "winner" },
+] as const satisfies readonly LinkRoleDef[];
 
 /**
  * How 3.5 stores its data in the generic tables: its kinds (`KINDS`), its characters' (its links of the `score` role
@@ -76,7 +76,7 @@ export const DND35_STORAGE: StorageDeclaration = {
       ].map((type) => ({ type, ownerType: null })),
       { type: "class-levels", ownerType: "classes" },
     ],
-    linkRoles: LINK_ROLES,
+    linkRoles: [...LINK_ROLES],
     fieldDefs: Dnd35FieldDefs.build(),
     rulesetRoles: [{ role: "skillPointAbility", toType: "abilities", onDelete: "unlink" }],
     characterRoles: [

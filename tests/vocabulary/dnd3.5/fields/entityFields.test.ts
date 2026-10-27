@@ -4,20 +4,25 @@ import Field, { type Fields, type FieldSpec } from "@/engine/core/fields/Field.t
 import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/entityFields.ts";
 
 /**
- * The keys each kind of field declares: what a codec reads of it, and no other (a misspelled key reads as none). A
- * stored field's own: how sibling copies merge it, the role it's read off another through, where its form shows it,
- * whether its values are read kind-wide, whether its owner keeps its form's fields only while it holds a value of it.
+ * The keys each kind of field declares: what a codec reads of it, and no other (a misspelled key reads as none). What
+ * every field's form reads of it: where it shows it, on which of its values. A leaf's: its label and what it's for, and
+ * where its form places it. A stored field's own: how sibling copies merge it, the role it's read off another through,
+ * whether its form takes it, whether its values are read kind-wide, whether its owner keeps its form's fields only
+ * while it holds a value of it.
  */
-const STORED = ["field", "form", "inherits", "keepsForm", "kindWide", "merge"] as const;
+const SHOWN = ["kind", "shownIn", "shownWhen", "when"] as const;
+const LEAF = [...SHOWN, "description", "label", "placement"] as const;
+const STORED = [...LEAF, "field", "form", "inherits", "keepsForm", "kindWide", "merge"] as const;
 const KEYS: { [K in FieldSpec["kind"]]: readonly (keyof Extract<FieldSpec, { kind: K }>)[] } = {
-  choice: [...STORED, "description", "kind", "label", "shownIn", "values", "when"],
-  flag: [...STORED, "absent", "default", "description", "kind", "label", "shownIn", "when", "write"],
-  group: ["fields", "kind", "label", "shownIn", "when"],
-  list: [...STORED, "description", "kind", "label", "placeholder", "shownIn", "values", "when"],
-  number: [...STORED, "default", "description", "kind", "label", "max", "min", "scale", "shownIn", "when", "write"],
-  progression: [...STORED, "default", "description", "kind", "label", "levels", "max", "shownIn", "when"],
-  ref: ["description", "kind", "label", "references", "required", "role", "shownIn", "when"],
-  text: [...STORED, "default", "description", "kind", "label", "placeholder", "shownIn", "values", "when", "write"],
+  choice: [...STORED, "required", "values"],
+  flag: [...STORED, "absent", "default", "write"],
+  group: [...SHOWN, "fields", "label"],
+  links: [...LEAF, "entries", "max", "min", "references", "required", "role", "via"],
+  list: [...STORED, "placeholder", "values"],
+  number: [...STORED, "default", "labels", "max", "min", "scale", "unit", "values", "write"],
+  progression: [...STORED, "default", "levels", "max"],
+  ref: [...LEAF, "references", "required", "role", "typeField"],
+  text: [...STORED, "default", "narrowed", "placeholder", "required", "values", "write"],
 };
 
 /**
@@ -41,7 +46,7 @@ function findIssues(fields: Fields, path: string): string[] {
 describe("The 3.5 entities' fields", () => {
   test("declare each stored field once, across every entity type, each with its merge", () => {
     const fields = Object.values(ENTITY_FIELDS).flatMap((owned) =>
-      Field.leavesOf(owned).flatMap((leaf) => (leaf.kind === "ref" ? [] : [leaf.field])),
+      Field.storedLeavesOf(owned).map((leaf) => leaf.field),
     );
     expect(fields.filter((field, index) => fields.indexOf(field) !== index)).toEqual([]);
     const leaves = Object.values(ENTITY_FIELDS).flatMap((owned) => Field.storedLeavesOf(owned));

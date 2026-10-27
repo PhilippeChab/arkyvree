@@ -6,7 +6,7 @@ import { EntitiesAutocomplete } from "@/client/src/pages/rulesets/components/Ent
 import { useEntityLookup } from "@/client/src/pages/rulesets/components/useEntityLookup.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 
-import type { ColumnInputProps } from "./columnContext.ts";
+import type { EntityInputProps } from "./fieldContext.ts";
 
 /** A link as its form holds it and its save sends it: the entity it's to (`toId`). */
 interface Link {
@@ -26,7 +26,7 @@ export function LinksInput<T extends FieldValues>({
   form,
   name,
   rulesetId,
-}: ColumnInputProps<T, LinksField>) {
+}: EntityInputProps<T, LinksField>) {
   const linked = useEntityLookup(context.knownLinks ?? []);
   const { field: bound, fieldState } = useController({
     control: form.control,
