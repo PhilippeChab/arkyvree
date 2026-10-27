@@ -138,15 +138,16 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * A character's rows as its reader reads them, and its parent's: never its share token (whether a reader reads it is
-   * the server's access decision), nor its private notes for a reader who doesn't read them (`notes`). What a ruleset
-   * describes a character from, so no ruleset's description can show either.
+   * A character's rows as its reader reads them (`reading`), and its parent's: never its share token (whether a reader
+   * reads it is the server's access decision), nor its private notes for a reader who doesn't read them, nor its
+   * description for one who sees it partly. What a ruleset describes a character from, so no ruleset's description can
+   * show them.
    */
-  private static readAs(input: CharacterInput, notes: PrivateNotes): CharacterInput {
+  private static readAs(input: CharacterInput, reading: MemberReading): CharacterInput {
     return {
       ...input,
-      ...(input.parent && { parent: CharactersPart.readAs(input.parent, notes) }),
-      record: CharactersPart.rowAs(input.record, notes),
+      ...(input.parent && { parent: CharactersPart.readAs(input.parent, reading) }),
+      record: CharactersPart.rowAs(input.record, reading),
     };
   }
 
@@ -163,11 +164,16 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * A character's row as its reader reads it (`readAs`): never its share token, nor its private notes for a reader who
-   * doesn't read them (`notes`).
+   * A character's row as its reader reads it (`readAs`, `reading`): never its share token, nor its private notes for a
+   * reader who doesn't read them, nor its description for one who sees it partly.
    */
-  private static rowAs(record: CharacterRecord, notes: PrivateNotes): CharacterRecord {
-    return { ...record, shareToken: null, ...(notes === "hide" && { privateNotes: null }) };
+  private static rowAs(record: CharacterRecord, reading: MemberReading): CharacterRecord {
+    return {
+      ...record,
+      shareToken: null,
+      ...(reading !== "show" && { privateNotes: null }),
+      ...(reading === "partial" && { description: null }),
+    };
   }
 
   /**
@@ -213,8 +219,8 @@ export default abstract class CharactersPart<D extends Descriptions> {
 
   /**
    * What the ruleset shows on a character's card (`character`, its row without its private notes nor its share token,
-   * with its advancements, `advancements`) past its row's columns, as a list of characters shows it to a reader who sees
-   * all of it: its chips, named as its ruleset's view names what they show, a copied or renamed one by its own name.
+   * nor its description for a reader who sees it partly; with its advancements, `advancements`) past its row's columns:
+   * its chips, named as its ruleset's view names what they show, a copied or renamed one by its own name.
    */
   protected abstract describeFullCard(
     view: RulesetView,
@@ -247,8 +253,8 @@ export default abstract class CharactersPart<D extends Descriptions> {
 
   /**
    * What a campaign member who reads a character partly reads of its ruleset's sheet (`character`, its rows without its
-   * private notes nor its share token): its identity's block as such a reader reads it (who it is and what it looks
-   * like), and its summary. What the characters part keeps of them is an allowlist (`PartialSheets`).
+   * private notes, its share token nor its description): its identity's block as such a reader reads it (who it is and
+   * what it looks like), and its summary. What the characters part keeps of them is an allowlist (`PartialSheets`).
    */
   protected abstract describePartial(view: RulesetView, character: CharacterInput): PartialReading;
 
@@ -357,8 +363,8 @@ export default abstract class CharactersPart<D extends Descriptions> {
   /**
    * The card of a character (`character`, with its advancements, `advancements`), as a list of characters shows it: its
    * row's id, name and description, and its ruleset's chips (`describeFullCard`, from its row without its private
-   * notes nor its share token), each its declared keys alone. A partly seen one's (`partial`) has no description, and
-   * the chips its ruleset marks as its partial reading's alone.
+   * notes nor its share token), each its declared keys alone. A partly seen one's (`partial`) has no description, its
+   * ruleset's chips described from its row without it, and those its ruleset marks as its partial reading's alone.
    */
   describeCard(
     view: RulesetView,
@@ -366,8 +372,9 @@ export default abstract class CharactersPart<D extends Descriptions> {
     advancements: StoredAdvancement[],
     partial: boolean,
   ): CharacterCard {
-    // A card shows no notes nor share token: its ruleset describes the row without them
-    const { chips } = this.describeFullCard(view, CharactersPart.rowAs(character, "hide"), advancements);
+    // Its ruleset describes a row without notes nor share token, and a partly seen one's without its description
+    const row = CharactersPart.rowAs(character, partial ? "partial" : "hide");
+    const { chips } = this.describeFullCard(view, row, advancements);
     return CharactersPart.cardOf(character, chips, partial);
   }
 
@@ -383,8 +390,8 @@ export default abstract class CharactersPart<D extends Descriptions> {
    * A character as a campaign member reads it (`reading`): its sheet, its private notes shown or left out, or partly
    * (`PartialSheet`), an allowlist built from its shapes' declared keys (`PartialSheets`): its row's columns, no
    * requirements, modifiers nor issues, and of what its ruleset describes of it from its rows without its private
-   * notes, its share token nor its children (`describePartial`), its summary with no tracks and its identity's block
-   * alone, without its picked links nor its notes.
+   * notes, its share token, its description nor its children (`describePartial`), its summary with no tracks and its
+   * identity's block alone, without its picked links nor its notes.
    */
   describeForMember(
     view: RulesetView,
@@ -393,7 +400,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
     reading: MemberReading,
   ): DescribedSheet<D["sheet"]> | PartialSheet {
     if (reading !== "partial") return this.describe(view, character, children, reading);
-    const described = this.describePartial(view, CharactersPart.readAs(character, "hide"));
+    const described = this.describePartial(view, CharactersPart.readAs(character, "partial"));
     return PartialSheets.describe(CharactersPart.columnsOf(view, character.record), described);
   }
 

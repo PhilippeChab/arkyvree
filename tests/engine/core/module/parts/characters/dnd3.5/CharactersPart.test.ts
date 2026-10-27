@@ -62,7 +62,7 @@ const VIEW = { ruleset: { baseRules: DND35_BASE_RULES, name: "Rules", rulesetId:
 
 /**
  * An identity block that shows too much, from the rows it's given (`record`): its race with a key of its own, a field
- * echoing the rows' share token and private notes, its picked links, its notes and a key of its own.
+ * echoing the rows' share token, private notes and description, its picked links, its notes and a key of its own.
  */
 function identityOf(record: Character) {
   return {
@@ -74,7 +74,14 @@ function identityOf(record: Character) {
     failed: "Failed",
     lines: [
       [{ key: "race", kind: "text", label: "Race", value: "Elf", fixed: true, build: LEAKS.build }],
-      [{ key: "echo", kind: "text", label: "Echo", value: `${record.shareToken}|${record.privateNotes}` }],
+      [
+        {
+          key: "echo",
+          kind: "text",
+          label: "Echo",
+          value: `${record.shareToken}|${record.privateNotes}|${record.description}`,
+        },
+      ],
     ],
     fields: [],
     links: [{ label: "Languages", none: "", picked: [{ id: "draconic", name: LEAKS.language }], role: "speaks" }],
@@ -87,7 +94,7 @@ function identityOf(record: Character) {
  * A ruleset that describes too much of a character: a sheet that answers a share token, another owner, notes and a
  * block of its build; a partial reading with its build in its summary, its identity's links and notes, and keys of its
  * own; a card with a description of its own and chips with keys of their own, one that isn't its partial reading's, and
- * one echoing the rows' share token and private notes; a printed sheet of the rows it's given. What the core keeps of
+ * one echoing the rows' share token, private notes and description; a printed sheet of the rows it's given. What the core keeps of
  * them is its own.
  */
 class OversharingCharacters extends Dnd35Characters {
@@ -112,7 +119,7 @@ class OversharingCharacters extends Dnd35Characters {
     return {
       chips: [
         {
-          label: `${character.shareToken}|${character.privateNotes}`,
+          label: `${character.shareToken}|${character.privateNotes}|${character.description}`,
           partial: true,
           tone: "secondary" as const,
           build: LEAKS.build,
@@ -141,15 +148,25 @@ describe("The characters part, whatever its ruleset describes", () => {
   const characters = new OversharingCharacters(DND35_STORAGE);
 
   test("answers a card's row's columns and its chips' declared keys alone, from a row with no notes nor share token, a partly seen one's partial chips and no description", () => {
-    const echo = { label: "null|null", partial: true, tone: "secondary" as const };
+    const echo = { partial: true, tone: "secondary" as const };
     const partial = characters.describeCard(VIEW, CHARACTER.record, [], true);
     const whole = characters.describeCard(VIEW, CHARACTER.record, [], false);
-    expect(partial).toEqual({ id: "character", name: "Aria", description: null, chips: [echo] });
+    expect(partial).toEqual({
+      id: "character",
+      name: "Aria",
+      description: null,
+      chips: [{ label: "null|null|null", ...echo }],
+    });
+    // A partly seen character's ruleset describes its chips from a row without its description: none can carry it
+    expect(JSON.stringify(partial)).not.toContain(DESCRIPTION);
     expect(whole).toEqual({
       id: "character",
       name: "Aria",
       description: DESCRIPTION,
-      chips: [echo, { label: "Fighter 1", partial: false, tone: "primary" }],
+      chips: [
+        { label: `null|null|${DESCRIPTION}`, ...echo },
+        { label: "Fighter 1", partial: false, tone: "primary" },
+      ],
     });
     for (const card of [partial, whole]) {
       expect(Object.keys(card)).toEqual(["id", "name", "description", "chips"]);
@@ -207,13 +224,13 @@ describe("The characters part, whatever its ruleset describes", () => {
           failed: "Failed",
           lines: [
             [{ key: "race", kind: "text", label: "Race", value: "Elf", fixed: true }],
-            [{ key: "echo", kind: "text", label: "Echo", value: "null|null" }],
+            [{ key: "echo", kind: "text", label: "Echo", value: "null|null|null" }],
           ],
           fields: [],
         },
       ],
     });
-    for (const secret of [...Object.values(SECRETS), ...Object.values(LEAKS)])
+    for (const secret of [...Object.values(SECRETS), ...Object.values(LEAKS), DESCRIPTION])
       expect(JSON.stringify(sheet)).not.toContain(secret);
   });
 
