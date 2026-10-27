@@ -20,8 +20,8 @@ export function Publishes<B extends Constructor>(Base: B) {
     }
 
     /**
-     * Refuses the ruleset in `scope` being published as `kind`, as publishing it or an edit of a published one's kind
-     * makes it: an extension must be a fork that subscribes to none (`assertCanBeExtension`), and a playable ruleset's
+     * Refuses publishing the ruleset in `scope` as `kind`, which the publish and an edit of a published ruleset's kind
+     * both ask: an extension must be a fork that subscribes to none (`assertCanBeExtension`), and a playable ruleset's
      * view must give what its rules make a character of (`checkPublishable`).
      */
     protected checkKind(scope: RulesetScope, kind: RulesetKind) {
