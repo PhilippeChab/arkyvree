@@ -14,8 +14,9 @@ type CustomizationTable = typeof modifiersInCustomization | typeof requirementsI
 const CustomizationBase = include(BaseRepository, ChecksExistence, GuardsStaleEdits);
 
 /**
- * A customization's repository (a modifier's, a requirement's): the writes every customization's service
- * makes the same way, on its own table, and how many of the rows it's given exist. Each reads its own way, and deletes its own (a modifier takes its requirements).
+ * A customization's repository (a modifier's, a requirement's): the writes every customization's service makes the
+ * same way, on its own table, and how many of the rows it's given exist. Each reads its own way, and deletes its own (a
+ * modifier takes its requirements).
  */
 abstract class CustomizationRepository<T extends CustomizationTable> extends CustomizationBase<T> {
   // Through the concerns, `table` reads as `Table & T`: its own type is T.
