@@ -67,7 +67,7 @@ export default abstract class CharacterPicker<
    * A page's options (`rows`, as the server read them) as a level step's, each its entity, whether the character may
    * take it, and what it lacks when not.
    */
-  describeOptions<R extends Row & OptionRow>(rows: R[]): StepOption[] {
+  describeOptions(rows: (Row & OptionRow)[]): StepOption[] {
     return this.describe(rows).map((option) => this.stepOptionOf(option));
   }
 }

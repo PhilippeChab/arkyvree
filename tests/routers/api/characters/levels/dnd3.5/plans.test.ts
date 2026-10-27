@@ -345,6 +345,15 @@ describe("character level plans", () => {
     expect(memberIds).toHaveLength(family.count);
     expect(new Set(memberIds).size).toBe(family.count);
     expect(memberIds).toContain(family.id);
+    // A group that names no family opens none: the pool's groups
+    const unnamed = await expectOk(
+      options.$post({
+        param: { characterId, step: "feats" },
+        query: { search: "Weapon Focus" },
+        json: { ...json, group: "" },
+      }),
+    );
+    expect(unnamed).toEqual(focus);
     // Each row a step's option or group alone: nothing else of the row its picker read (a class's fields, a feat's pools)
     const optionKeys = ["description", "eligible", "id", "name", "requirementTree"];
     expect([...optionKeys, "track"]).toEqual(expect.arrayContaining(keysOf(classes.items)));
@@ -365,6 +374,7 @@ describe("character level plans", () => {
     const cantripIds = optionsOf(cantrips, false).items.map(({ id }) => id);
     expect(optionsOf(cantrips, false).items.map(({ name }) => name)).toEqual(CANTRIPS);
     expect(cantripIds).toEqual(CANTRIPS.map((name) => sorcerer.ctx.spellMap[name]));
+    expect(optionKeys).toEqual(expect.arrayContaining(keysOf(cantrips.items)));
     // Its first-level spells, at tier 1: no cantrip among them
     const firsts = await expectOk(
       options.$post({

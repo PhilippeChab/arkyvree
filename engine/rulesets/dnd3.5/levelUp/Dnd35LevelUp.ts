@@ -68,9 +68,9 @@ export default class Dnd35LevelUp extends LevelUpPart implements LevelUpRules<De
       case "feats": {
         const picker = new FeatPicker(view, character, read.query);
         // A family's feats when the query names one, else the pool's feats grouped by family
-        return read.query.family === undefined
-          ? { kind: read.kind, read: "groups", picker }
-          : { kind: read.kind, read: "options", picker };
+        return read.query.family
+          ? { kind: read.kind, read: "options", picker }
+          : { kind: read.kind, read: "groups", picker };
       }
       case "classes": {
         // Its skill points spread over the planned levels as the save spreads them

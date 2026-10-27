@@ -127,10 +127,9 @@ describe("rulesets entities by kind", () => {
     expect(ids(await list("feats", { listedIn: pool.id, [FEAT_FAMILY]: FEAT_FAMILIES[0] }))).toEqual([focus.id]);
     const groups = (query: Record<string, string>) =>
       expectOk(grouped.$get({ param: { id, entityType: "feats" }, query: { listedIn: pool.id, ...query } }));
-    const representatives = (page: { items: { representativeId: string }[] }) =>
-      page.items.map((group) => group.representativeId).sort();
-    expect(representatives(await groups({}))).toEqual([focus.id, plain.id].sort());
-    expect(representatives(await groups({ search: "Test Focus" }))).toEqual([focus.id]);
+    // Each group by its smallest id, which stands for it
+    expect(ids(await groups({}))).toEqual([focus.id, plain.id].sort());
+    expect(ids(await groups({ search: "Test Focus" }))).toEqual([focus.id]);
 
     // A spell list's spells of one level: none of another's
     const zero = ids(await list("spells", { listedIn: spellList.id, tier: "0" }));

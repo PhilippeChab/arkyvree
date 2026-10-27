@@ -88,6 +88,20 @@ const OWN_COLUMNS = {
 const WRITE_BATCH = 2000;
 
 /**
+ * A page of groups' columns, a kind's entities grouped by a value (`value`: a feat's family), an entity holding none a
+ * group alone: the group's name (`name`, as its read names it), its value (`group`), how many it holds (`count`), and
+ * its smallest id (`id`), which stands for it.
+ */
+function groupColumns(value: SQL<string | null>, name: SQL<string>) {
+  return {
+    count: count().as("group_count"),
+    group: sql<string | null>`min(${value})`.as("group"),
+    id: sql<string>`min(${entitiesInRules.id}::text)`.as("group_id"),
+    name: name.as("group_name"),
+  };
+}
+
+/**
  * Every module's ruleset entities, as the generic tables store them (`rules.entities`, its fields in `entity_fields`,
  * its links in `entity_links`): read and written by kind (`entityType`), each as its record (`EntityRecord`: its own
  * columns, every field it holds by field, as its module declares it, `Engine.storage().fieldsOf`, its single links by
@@ -435,7 +449,8 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
 
   /**
    * A ruleset's list of a kind grouped by a field's value (`groupField`: a feat's family), a group a value or an entity
-   * holding none: its name (its value, or the entity's), its value (`group`), how many it holds, and one of them.
+   * holding none: its name (its value, or the entity's), its value (`group`), how many it holds, and its smallest id
+   * (`groupColumns`).
    */
   async findGroupPage(
     db: Db,
@@ -448,12 +463,12 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     const { limit, offset } = this.paginate(pagination);
     const group = entityFieldsInRules;
     const rows = await db
-      .select({
-        displayName: sql<string>`coalesce(min(${group.textValue}), min(${entitiesInRules.name}))`.as("display_name"),
-        group: sql<string | null>`min(${group.textValue})`.as("group"),
-        variantCount: count().as("variant_count"),
-        representativeId: sql<string>`min(${entitiesInRules.id}::text)`.as("representative_id"),
-      })
+      .select(
+        groupColumns(
+          sql`${group.textValue}`,
+          sql<string>`coalesce(min(${group.textValue}), min(${entitiesInRules.name}))`,
+        ),
+      )
       .from(entitiesInRules)
       .leftJoin(group, and(eq(group.entityId, entitiesInRules.id), eq(group.field, where.groupField)))
       .where(
@@ -564,8 +579,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   /**
    * A picker's page of a kind's entities (a list's, as the ruleset composes it), a group's entities as one row (a
    * feat's family): the groups an entity is in are given (`groups`), and one in none is a row of its own. Each row is
-   * its group's entity (its smallest id), its name (an entity's alone, its group's), its group, how many it holds, and
-   * its text.
+   * its group's columns (`groupColumns`: its name an entity's alone, its group's), and its text.
    */
   async findOptionGroupPage(
     db: Db,
@@ -578,12 +592,10 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     const groupName = sql<string | null>`member."group"`;
     const rows = await db
       .select({
-        name: sql<string>`CASE WHEN count(*) = 1 THEN min(${entitiesInRules.name}) ELSE coalesce(min(${groupName}), min(${entitiesInRules.name})) END`.as(
-          "option_name",
+        ...groupColumns(
+          groupName,
+          sql<string>`CASE WHEN count(*) = 1 THEN min(${entitiesInRules.name}) ELSE coalesce(min(${groupName}), min(${entitiesInRules.name})) END`,
         ),
-        group: sql<string | null>`min(${groupName})`.as("group"),
-        count: count().as("option_count"),
-        id: sql<string>`min(${entitiesInRules.id}::text)`.as("option_id"),
         description: sql<string>`min(${entitiesInRules.description})`.as("description"),
       })
       .from(entitiesInRules)
