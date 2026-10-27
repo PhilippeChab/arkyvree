@@ -1,10 +1,4 @@
-import {
-  Field,
-  FieldCodec,
-  type FieldValues,
-  type PartialFieldValues,
-  type StoredLeaf,
-} from "@/engine/core/fields/index.ts";
+import { FieldCodec, type FieldValues, type PartialFieldValues } from "@/engine/core/fields/index.ts";
 import type { FieldWrite } from "@/engine/core/module/index.ts";
 import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
 import type { Character } from "@/shared/relations.ts";
@@ -27,30 +21,9 @@ export default class CharacterValues {
   /** A 3.5 character's fields, as the vocabulary declares them (`CHARACTER_FIELDS`). */
   static readonly fields = new FieldCodec(CHARACTER_FIELDS);
 
-  /**
-   * The fields a character always holds, by their declarations (always written, `write: "always"`: its alignment, its
-   * gender and its experience): those a new character's form must give, and its forms mark required.
-   */
-  static readonly held: readonly StoredLeaf[] = Field.storedLeavesOf(CHARACTER_FIELDS).filter(
-    (leaf) => "write" in leaf && leaf.write === "always",
-  );
-
-  /**
-   * The stored fields a form never leaves at none, by their declarations (`required`: its alignment and its gender,
-   * selects of their options), which an edit that sends one unset (null) leaves as it is.
-   */
-  static readonly keptUnset: ReadonlySet<string> = new Set(
-    Field.storedLeavesOf(CHARACTER_FIELDS).flatMap((leaf) => ("required" in leaf && leaf.required ? [leaf.field] : [])),
-  );
-
   /** A character's own fields (`fields`, as stored), each read by its declaration: its default when it holds none. */
   static fieldsOf({ fields }: Pick<Character, "fields">): Dnd35CharacterFields {
     return CharacterValues.fields.read({ fields, links: {} });
-  }
-
-  /** Whether a character always holds a field (`field`, the stored field that keeps it: `held`). */
-  static isHeld(field: string): boolean {
-    return CharacterValues.held.some((leaf) => leaf.field === field);
   }
 
   /**

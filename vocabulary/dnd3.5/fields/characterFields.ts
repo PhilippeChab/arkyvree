@@ -18,12 +18,13 @@ import {
 
 /**
  * A 3.5 character's fields, by name, in the order its sheet shows them: its alignment, its experience and its deity,
- * then its age, gender, height and weight. Its alignment, gender and experience it always holds (`write: "always"`): a
- * new character's form must give them, its forms mark them required, an edit never clears them, and an import takes
- * their defaults (True Neutral, Other, 0) when its file has none. Its alignment and gender, among their options, a form
- * never leaves at none (`required`): an edit that sends one unset leaves it as it is (its experience sent unset, it
- * refuses). Its experience is a whole number from 0; its age a whole number from 1, or none; its deity, height and
- * weight texts, or none.
+ * then its age, gender, height and weight. Its alignment and gender, among their options (`required`), and its
+ * experience, with a default, its forms never leave at none, as an entity's (`Field.isRequired`): they mark them
+ * required, and a new character gives them (`FieldInputs`). An edit that sends its alignment or its gender unset
+ * leaves it as it is; its experience sent unset, it refuses. The three are always written (`write: "always"`): a
+ * character holds them, and an import takes their defaults (True Neutral, Other, 0) when its file has none. Its
+ * experience is a whole number from 0; its age a whole number from 1, or none; its deity, height and weight texts, or
+ * none.
  */
 export const CHARACTER_FIELDS = {
   alignment: {

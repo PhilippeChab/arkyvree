@@ -18,7 +18,7 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormSync, useFormWith } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { invalidateCharacter, invalidateCharacterListings } from "@/client/src/lib/queries.ts";
-import { wholeNumberRules } from "@/client/src/lib/validation.ts";
+import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { type FieldsFormData, sentFieldsOf, toFieldsForm } from "./fieldsForm.ts";
@@ -105,6 +105,7 @@ function FieldInput({ control, field, readOnly }: FieldInputProps) {
           control={control}
           name={field.key}
           label={field.label}
+          rules={field.required ? requiredRules(field.required) : undefined}
           options={field.options}
           size="small"
           readOnly={readOnly}
@@ -116,6 +117,7 @@ function FieldInput({ control, field, readOnly }: FieldInputProps) {
           control={control}
           name={field.key}
           label={field.label}
+          placeholder={field.placeholder}
           size="small"
           variant="outlined"
           // A fixed field is its rules' own: the sheet shows it

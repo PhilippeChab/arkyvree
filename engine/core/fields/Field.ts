@@ -105,6 +105,26 @@ export default class Field {
   }
 
   /**
+   * Whether a form never leaves a leaf at none (null), as it's declared: a flag that tells no absence apart, a number
+   * with a default, a reference, a choice or a text `required`. Every form reads it so, an entity's (`FieldForms`) and
+   * a character's (`FieldInputs`). A list, a list of links and a progression have no none: an empty list is theirs.
+   */
+  static isRequired(leaf: LeafSpec): boolean {
+    switch (leaf.kind) {
+      case "flag":
+        return leaf.absent !== null;
+      case "number":
+        return leaf.default !== undefined;
+      case "choice":
+      case "ref":
+      case "text":
+        return leaf.required === true;
+      default:
+        return false;
+    }
+  }
+
+  /**
    * The fields at a spec's level that keep the fields its form shows (`keepsForm`: a spell's school), by name: a
    * group's own aren't read, so every writer reads the same ones (the codec by name, the write path by stored field).
    */

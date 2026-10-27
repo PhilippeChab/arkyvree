@@ -273,6 +273,19 @@ export interface TableBlock extends BlockHead {
 }
 
 /**
+ * A character's own field (its module's `characterFields`) as its forms show it alike, its sheet's `fields` block and a
+ * new character's form (`FieldInputs`), keyed by the stored field that keeps it and labeled as it's declared: a whole
+ * number at least `min`, one of a select's options, or a line of text (`placeholder`: an example of one). `required`:
+ * what's said without one, of one its forms never leave at none (`Field.isRequired`: a select `required`, a number
+ * with a default).
+ */
+export type FieldInput = { key: string; label: string } & (
+  | { kind: "number"; min: number; required?: string }
+  | { kind: "select"; options: string[]; required?: string }
+  | { kind: "text"; placeholder?: string }
+);
+
+/**
  * An entry of a pool's tier: its id, its cells by the block's columns' keys, its tags (each its name and tone), and its
  * details, shown under it once opened: label/value lines, and its description.
  */
@@ -295,13 +308,13 @@ export type SheetBlock =
 
 /**
  * A field of a `fields` block, by its kind (its key a plain name, none of those its block's form keeps for itself:
- * `notes`, `privateNotes`, `links`): a line of text (`fixed`: never edited, its value the rules' own: a 3.5 character's
- * race), a whole number at least `min` (`required`: what its edit says without one; else it may be cleared), one of a
- * select's options (none: not set), or several lines of text (`placeholder`: what it says empty).
+ * `notes`, `privateNotes`, `links`): a character's own field's input (`FieldInput`) holding its value (none: a number
+ * it holds none of, which its edit may clear unless it's `required`; a select it holds none of the options of), a line
+ * of text the rules give (`fixed`: never edited, a 3.5 character's race), or several lines of text (`placeholder`: what
+ * it says empty).
  */
-export type SheetField = { key: string; label: string } & (
-  | { fixed?: boolean; kind: "text"; value: string }
-  | { kind: "number"; min: number; required?: string; value: number | null }
-  | { kind: "select"; options: string[]; value: string | null }
-  | { kind: "textarea"; placeholder: string; value: string }
-);
+export type SheetField =
+  | (Extract<FieldInput, { kind: "number" }> & { value: number | null })
+  | (Extract<FieldInput, { kind: "select" }> & { value: string | null })
+  | (Extract<FieldInput, { kind: "text" }> & { fixed?: boolean; value: string })
+  | { key: string; kind: "textarea"; label: string; placeholder: string; value: string };

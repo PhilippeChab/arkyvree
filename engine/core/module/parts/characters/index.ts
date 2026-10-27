@@ -1,5 +1,6 @@
 export type {
   EntriesBlock,
+  FieldInput,
   FieldsBlock,
   InventoryBlock,
   InventoryRow,
@@ -47,6 +48,7 @@ export type {
   SheetStat,
   SheetSummary,
 } from "./descriptions.ts";
+export { default as FieldInputs } from "./FieldInputs.ts";
 export type {
   CharacterEditPlan,
   CharacterOwnValues,
