@@ -12,8 +12,8 @@ import SpellGroups from "./SpellGroups.ts";
 
 /**
  * A built character's sheet: every part of it, which its blocks, its summary and its creatures' subsheets are built
- * from (`buildSheet`); and what the API answers of it (`toResponse`): its row's columns, its ruleset, what its
- * modifiers and requirements did and its validation, its summary and its blocks.
+ * from (`buildSheet`); and what the API answers of it past its row's columns, which the characters part writes
+ * (`toResponse`): what its modifiers and requirements did and its validation, its summary and its blocks.
  */
 export default class CharacterResponse {
   /** The abilities, each with the parts its box lists beside its base (`parts`: its levels' increases, its misc). */
@@ -104,21 +104,24 @@ export default class CharacterResponse {
     );
   }
 
-  /** A bonded creature's sheet (`record`, built from its rows: `built`), with its feats: what its subsheet reads. */
+  /**
+   * A bonded creature's sheet (`record`, built from its rows: `built`), with its id, its name and its feats: what its
+   * subsheet reads.
+   */
   static buildBondedSheet(record: Character, built: DetailedCharacter) {
     return {
-      ...CharacterResponse.buildSheet(record, built),
+      ...CharacterResponse.buildSheet(built),
+      id: record.id,
+      name: record.name,
       feats: built.components.feats.getFeats(),
     };
   }
 
   /**
-   * A character's sheet (`record`, built from its rows: `built`): its row's columns, its ruleset, and each part of its
-   * sheet, with what its modifiers and requirements did and its validation; and its summary and its blocks, built from
-   * them.
+   * A character's sheet (built from its rows: `built`): each part of it, with what its modifiers and requirements did
+   * and its validation; and its summary and its blocks, built from them.
    */
-  static buildSheet(record: Character, built: DetailedCharacter) {
-    const ruleset = built.getRuleset();
+  static buildSheet(built: DetailedCharacter) {
     const validation = built.validate();
     const requirements = CharacterResponse.enrichedRequirementsOf(built);
     const modifiers = CharacterResponse.enrichedModifiersOf(built);
@@ -134,18 +137,6 @@ export default class CharacterResponse {
     const spellsPerDay = SpellGroups.describePerDay(built);
 
     return {
-      id: record.id,
-      userId: record.userId,
-      kind: record.kind,
-      parentCharacterId: record.parentCharacterId,
-      name: record.name,
-      rulesetId: record.rulesetId,
-      rulesetName: ruleset.name,
-      baseRules: ruleset.baseRules,
-      isCustomRuleset: !!ruleset.rulesetId,
-      deletedAt: record.deletedAt,
-      updatedAt: record.updatedAt,
-      shareToken: record.shareToken ?? null,
       identity,
       skillBudget: built.components.skills.getSkillBudget(),
       abilities,
@@ -200,23 +191,12 @@ export default class CharacterResponse {
   }
 
   /**
-   * A sheet as the API answers it: its row's columns, its ruleset, what its modifiers and requirements did and its
-   * validation, its summary and its blocks; none of its parts as 3.5 holds them, which its blocks show.
+   * A sheet as the API answers it past its row's columns, which the characters part writes: what its modifiers and
+   * requirements did and its validation, its summary and its blocks; none of its parts as 3.5 holds them, which its
+   * blocks show.
    */
   static toResponse(sheet: ReturnType<typeof CharacterResponse.buildSheet>) {
     return {
-      id: sheet.id,
-      userId: sheet.userId,
-      kind: sheet.kind,
-      parentCharacterId: sheet.parentCharacterId,
-      name: sheet.name,
-      rulesetId: sheet.rulesetId,
-      rulesetName: sheet.rulesetName,
-      baseRules: sheet.baseRules,
-      isCustomRuleset: sheet.isCustomRuleset,
-      deletedAt: sheet.deletedAt,
-      updatedAt: sheet.updatedAt,
-      shareToken: sheet.shareToken,
       requirements: sheet.requirements,
       modifiers: sheet.modifiers,
       validation: sheet.validation,

@@ -10,15 +10,22 @@ import { type InventoryItem, RequestIds, type RulesetView, type ViewKinds } from
 import type { Character as CharacterRecord } from "@/shared/relations.ts";
 
 import type {
+  CardChip,
   CharacterCard,
+  CharacterColumns,
   DescribedInventoryEntry,
+  DescribedSheet,
   HeldInventoryEntry,
   LinkRoom,
   NotedSheet,
+  PartialReading,
+  PartialSheet,
   PlacementDescription,
+  RulesetSheet,
   ScoreBounds,
   ScoresCreation,
 } from "./descriptions.ts";
+import PartialSheets from "./PartialSheets.ts";
 import type {
   CharacterEditPlan,
   FieldsPlan,
@@ -50,14 +57,15 @@ import type {
  * rules leave them), and an inventory entry's add or edit. Its descriptions are the ruleset's own (`D`). What reads the
  * schema's rows alone is every ruleset's: what a character takes from its ruleset, its links by role (a role its
  * module stores with an amount is scored, `StoredCharacter.scoredRoles`; another it holds many of, picked; a single
- * one, a creation pick), its inventory. So
- * are the checks that guard a character's privacy and integrity, which no ruleset can skip: a reader reads the private
- * notes the reading gives them, a partly seen character's card and summary name none of its build, an entity a request
- * names is one its ruleset's view shows (a pick's, a link's, an item: `RequestIds`, which reads a source's id as its
- * copy's), an entry's charges agree, and a score is within its link's bounds. Their operations are this part's, over
- * hooks for what a ruleset describes or checks its own way (`describeFull`, `describePartial`, `describeFullCard`,
- * `planPlacement`, a scored link's creation, `describeScores`, a creation pick's own check and picker,
- * `checkCreationPick` and `openPicker`, and a picked link's room and fit: `describeLinkRoom`, `fitLinks`).
+ * one, a creation pick), its inventory and a sheet's row's columns (`CharacterColumns`). So are the checks that guard a
+ * character's privacy and integrity, which no ruleset can skip: a reader reads the private notes the reading gives
+ * them, a sheet answers no share token (whether a reader reads it is the server's access decision), a partly seen
+ * character's card names none of its build and its partial reading is an allowlist (`PartialSheet`), an entity a
+ * request names is one its ruleset's view shows (a pick's, a link's, an item: `RequestIds`, which reads a source's id
+ * as its copy's), an entry's charges agree, and a score is within its link's bounds. Their operations are this part's,
+ * over hooks for what a ruleset describes or checks its own way (`describeFull`, `describePartial`, `describeDocument`,
+ * `describeFullCard`, `planPlacement`, a scored link's creation, `describeScores`, a creation pick's own check and
+ * picker, `checkCreationPick` and `openPicker`, and a picked link's room and fit: `describeLinkRoom`, `fitLinks`).
  */
 export default abstract class CharactersPart<D extends Descriptions> {
   /** The module's storage, whose character's roles name the kinds this part's requests name. */
@@ -83,9 +91,49 @@ export default abstract class CharactersPart<D extends Descriptions> {
       throw new RulesError("invalid", "Remaining charges cannot exceed total charges");
   }
 
+  /** A card's chip, its declared keys alone (`CardChip`), in their order: nothing a ruleset adds to it. */
+  private static chipOf({ label, partial, tone }: CardChip): CardChip {
+    return { label, partial, tone };
+  }
+
+  /**
+   * The columns a character's sheet opens with (`CharacterColumns`): its row's own (`record`) and its ruleset's (as
+   * `view` reads it), and no share token, which the server writes for who may read it.
+   */
+  private static columnsOf(view: RulesetView, record: CharacterRecord): CharacterColumns {
+    const { ruleset } = view;
+    return {
+      id: record.id,
+      userId: record.userId,
+      kind: record.kind,
+      parentCharacterId: record.parentCharacterId,
+      name: record.name,
+      rulesetId: record.rulesetId,
+      rulesetName: ruleset.name,
+      baseRules: ruleset.baseRules,
+      isCustomRuleset: !!ruleset.rulesetId,
+      deletedAt: record.deletedAt,
+      updatedAt: record.updatedAt,
+      shareToken: null,
+    };
+  }
+
   /** The entities a request about a character names, as its ruleset's view reads them. */
   private static idsOf(view: RulesetView) {
     return new RequestIds(view.rulesetData, "the character's ruleset");
+  }
+
+  /**
+   * A character's rows as its reader reads them, and its parent's: never its share token (whether a reader reads it is
+   * the server's access decision), nor its private notes for a reader who doesn't read them (`notes`). What a ruleset
+   * describes a character from, so no ruleset's description can show either.
+   */
+  private static readAs(input: CharacterInput, notes: PrivateNotes): CharacterInput {
+    return {
+      ...input,
+      ...(input.parent && { parent: CharactersPart.readAs(input.parent, notes) }),
+      record: CharactersPart.rowAs(input.record, notes),
+    };
   }
 
   /**
@@ -101,15 +149,20 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * A character's rows without its private notes, nor its parent's: what a reader who doesn't read them is described
-   * from, so no ruleset's description can show them.
+   * A character's row as its reader reads it (`readAs`): never its share token, nor its private notes for a reader who
+   * doesn't read them (`notes`).
    */
-  private static withoutNotes(input: CharacterInput): CharacterInput {
-    return {
-      ...input,
-      ...(input.parent && { parent: CharactersPart.withoutNotes(input.parent) }),
-      record: { ...input.record, privateNotes: null },
-    };
+  private static rowAs(record: CharacterRecord, notes: PrivateNotes): CharacterRecord {
+    return { ...record, shareToken: null, ...(notes === "hide" && { privateNotes: null }) };
+  }
+
+  /**
+   * A ruleset's sheet as the API answers it past its row's columns: its declared keys alone (`RulesetSheet`), in their
+   * order, so no key a ruleset adds (a row's column among them) reaches its reader.
+   */
+  private static sheetOf<S extends RulesetSheet>(sheet: S): Pick<S, keyof RulesetSheet> {
+    const { blocks, modifiers, requirements, summary, validation } = sheet;
+    return { requirements, modifiers, validation, summary, blocks };
   }
 
   /**
@@ -119,16 +172,26 @@ export default abstract class CharactersPart<D extends Descriptions> {
   protected abstract checkCreationPick(role: string, entity: unknown): void;
 
   /**
-   * A character's sheet as the API answers it (`NotedSheet`), its private notes as its rows have them (none when its
-   * reader doesn't read them): a character's, its children (`children`) as its blocks show them; or a child's, from its
-   * parent's (`parent`).
+   * The printed sheet of a character (`character`, its rows as its reader reads them: no share token, its private notes
+   * only for a reader who reads them): the document the server renders.
+   */
+  protected abstract describeDocument(
+    view: RulesetView,
+    character: CharacterInput,
+    request: SheetRequest,
+  ): D["sheetDocument"];
+
+  /**
+   * A character's sheet as the API answers it past its row's columns (`RulesetSheet`), its private notes as its rows
+   * have them (none when its reader doesn't read them), and no share token: a character's, its children (`children`)
+   * as its blocks show them; or a child's, from its parent's (`parent`).
    */
   protected abstract describeFull(view: RulesetView, character: CharacterInput, children: CharacterInput[]): D["sheet"];
 
   /**
-   * The card of a character (`character`, with its advancements, `advancements`), as a list of characters shows it to
-   * a reader who sees all of it, named as its ruleset's view names what it shows, a copied or renamed one by its own
-   * name.
+   * The card of a character (`character`, its row without its private notes nor its share token, with its
+   * advancements, `advancements`), as a list of characters shows it to a reader who sees all of it, named as its
+   * ruleset's view names what it shows, a copied or renamed one by its own name.
    */
   protected abstract describeFullCard(
     view: RulesetView,
@@ -160,10 +223,11 @@ export default abstract class CharactersPart<D extends Descriptions> {
   ): LinkRoom;
 
   /**
-   * What a campaign member who reads a character partly reads of it (`character`, its rows without its private notes):
-   * who it is and what it looks like, without its children.
+   * What a campaign member who reads a character partly reads of its ruleset's sheet (`character`, its rows without its
+   * private notes nor its share token): its identity's block as such a reader reads it (who it is and what it looks
+   * like), and its summary. What the characters part keeps of them is an allowlist (`PartialSheets`).
    */
-  protected abstract describePartial(view: RulesetView, character: CharacterInput): D["partialSheet"];
+  protected abstract describePartial(view: RulesetView, character: CharacterInput): PartialReading;
 
   /**
    * How a new character's scores of a scored link's role (`role`) are set, as its form offers it (3.5's abilities, the
@@ -227,9 +291,6 @@ export default abstract class CharactersPart<D extends Descriptions> {
    */
   abstract describePlacement(view: RulesetView, character: CharacterInput, query: PlacementQuery): PlacementDescription;
 
-  /** A character's printed sheet: the document the server renders. */
-  abstract describeSheet(view: RulesetView, character: CharacterInput, request: SheetRequest): D["sheetDocument"];
-
   /**
    * A role of the module's characters' links it holds many of (`role`), scored (with an amount) or picked, and its
    * entities' kind: refused as not found for any other.
@@ -252,25 +313,28 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * A character's sheet as the API answers it (`describeFull`): a character's, its children (`children`) among its
-   * blocks, or a child's, from its parent's; its private notes shown or left out (`notes`). A viewer who doesn't read
-   * them reads none: the ruleset describes rows without them, and the sheet's `fields` blocks hold none (`NotedSheet`).
+   * A character's sheet as the API answers it (`DescribedSheet`): its row's columns (`CharacterColumns`, no share token
+   * among them), then its ruleset's sheet's declared keys (`describeFull`, a `RulesetSheet`): a character's, its
+   * children (`children`) among its blocks, or a child's, from its parent's; its private notes shown or left out
+   * (`notes`). The ruleset describes rows without its share token, and without its private notes for a viewer who
+   * doesn't read them, whose sheet's `fields` blocks hold none (`NotedSheet`).
    */
   describe(
     view: RulesetView,
     character: CharacterInput,
     children: CharacterInput[],
     notes: PrivateNotes = "show",
-  ): D["sheet"] {
-    if (notes === "show") return this.describeFull(view, character, children);
-    const withoutNotes = children.map((input) => CharactersPart.withoutNotes(input));
-    const sheet = this.describeFull(view, CharactersPart.withoutNotes(character), withoutNotes);
-    return CharactersPart.redactNotes(sheet);
+  ): DescribedSheet<D["sheet"]> {
+    const read = (input: CharacterInput) => CharactersPart.readAs(input, notes);
+    const sheet = this.describeFull(view, read(character), children.map(read));
+    const shown = notes === "show" ? sheet : CharactersPart.redactNotes(sheet);
+    return { ...CharactersPart.columnsOf(view, character.record), ...CharactersPart.sheetOf(shown) };
   }
 
   /**
-   * The card of a character (`character`, with its advancements, `advancements`), as a list of characters shows it: a
-   * partly seen one's (`partial`) holds the chips its ruleset marks as its partial reading's alone.
+   * The card of a character (`character`, with its advancements, `advancements`), as a list of characters shows it
+   * (`describeFullCard`, from its row without its private notes nor its share token): each chip its declared keys
+   * alone, and a partly seen one's (`partial`) the chips its ruleset marks as its partial reading's alone.
    */
   describeCard(
     view: RulesetView,
@@ -278,9 +342,10 @@ export default abstract class CharactersPart<D extends Descriptions> {
     advancements: StoredAdvancement[],
     partial: boolean,
   ): CharacterCard {
-    const card = this.describeFullCard(view, character, advancements);
-    if (!partial) return card;
-    return { chips: card.chips.filter((chip) => chip.partial) };
+    // A card shows no notes nor share token: its ruleset describes the row without them
+    const { chips } = this.describeFullCard(view, CharactersPart.rowAs(character, "hide"), advancements);
+    const shown = partial ? chips.filter((chip) => chip.partial) : chips;
+    return { chips: shown.map((chip) => CharactersPart.chipOf(chip)) };
   }
 
   /**
@@ -292,20 +357,21 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * A character as a campaign member reads it (`reading`): partly, from its rows without its private notes nor its
-   * children (`describePartial`), its summary with no tracks, or its sheet, its private notes shown or left out.
+   * A character as a campaign member reads it (`reading`): its sheet, its private notes shown or left out, or partly
+   * (`PartialSheet`), an allowlist built from its shapes' declared keys (`PartialSheets`): its row's columns, no
+   * requirements, modifiers nor issues, and of what its ruleset describes of it from its rows without its private
+   * notes, its share token nor its children (`describePartial`), its summary with no tracks and its identity's block
+   * alone, without its picked links nor its notes.
    */
   describeForMember(
     view: RulesetView,
     character: CharacterInput,
     children: CharacterInput[],
     reading: MemberReading,
-  ): D["partialSheet"] | D["sheet"] {
-    if (reading === "partial") {
-      const sheet = this.describePartial(view, CharactersPart.withoutNotes(character));
-      return { ...sheet, summary: { ...sheet.summary, tracks: [] } };
-    }
-    return this.describe(view, character, children, reading);
+  ): DescribedSheet<D["sheet"]> | PartialSheet {
+    if (reading !== "partial") return this.describe(view, character, children, reading);
+    const described = this.describePartial(view, CharactersPart.readAs(character, "hide"));
+    return PartialSheets.describe(CharactersPart.columnsOf(view, character.record), described);
   }
 
   /**
@@ -343,6 +409,14 @@ export default abstract class CharactersPart<D extends Descriptions> {
   describeLinkPicks(view: RulesetView, character: CharacterInput, role: string, entityIds: string[]): LinkRoom {
     const picks = CharactersPart.idsOf(view).resolveAll(this.roleOf(role, false).kind, entityIds);
     return this.describeLinkRoom(view, character, role, picks);
+  }
+
+  /**
+   * A character's printed sheet: the document the server renders (`describeDocument`), from its rows as its reader
+   * reads them, its private notes shown or left out (`notes`), and never its share token.
+   */
+  describeSheet(view: RulesetView, character: CharacterInput, request: SheetRequest, notes: PrivateNotes) {
+    return this.describeDocument(view, CharactersPart.readAs(character, notes), request);
   }
 
   /**

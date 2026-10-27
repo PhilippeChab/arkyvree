@@ -18,7 +18,6 @@ type DetailsOf<P> = P extends Picker<infer _Row, infer Details> ? Details : neve
 export interface Dnd35Descriptions {
   creationOption: DetailsOf<RacePicker>;
   inventoryEntry: ReturnType<typeof InventoryEntries.describeInventoryEntry>;
-  partialSheet: ReturnType<typeof CharacterDescription.describePartial>;
   sheet: ReturnType<typeof CharacterDescription.describeFull>;
   sheetDocument: ReturnType<typeof CharacterSheet.describeSheet>;
   stepPicker:

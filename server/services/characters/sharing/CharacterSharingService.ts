@@ -10,6 +10,7 @@ import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class CharacterSharingService {
+  /** A shared character's printed sheet, read as its share page is: without its private notes. */
   async generateSharedPdf(shareToken: string) {
     const characterRecord = await Characters.findOne(db, { shareToken });
 
@@ -19,10 +20,7 @@ class CharacterSharingService {
     return await withRulesetScope(db, characterRecord.rulesetId, async (scope) =>
       Engine.for(scope)
         .character(await readCharacterInput(db, characterRecord))
-        .describeSheet({
-          diagnostics: !isProduction(),
-          portraitUrl,
-        }),
+        .describeSheet({ diagnostics: !isProduction(), portraitUrl }, "hide"),
     );
   }
 
@@ -49,6 +47,7 @@ class CharacterSharingService {
     });
   }
 
+  /** A shared character's sheet, without its private notes: its token is the one its reader sent. */
   async getSharedCharacter(shareToken: string) {
     const characterRecord = await Characters.findOne(db, { shareToken });
 
@@ -58,7 +57,7 @@ class CharacterSharingService {
     return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
       const character = await readCharacterInput(db, characterRecord);
       const children = await readChildInputs(db, character, Visibility.All);
-      return { ...Engine.for(scope).character(character).describe(children, "hide"), portraitUrl };
+      return { ...Engine.for(scope).character(character).describe(children, "hide"), shareToken, portraitUrl };
     });
   }
 

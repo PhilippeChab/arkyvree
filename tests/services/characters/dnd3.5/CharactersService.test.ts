@@ -26,7 +26,7 @@ import {
 } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { Character, Session } from "@/shared/relations.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { backdateLastChange, findLinks } from "@/tests/support/characters.ts";
 import { addRulesetContributor } from "@/tests/support/contributors.ts";
@@ -590,6 +590,21 @@ describe("CharactersService", () => {
       for (const token of [first, second, NIL_UUID])
         expect(CharacterSharingService.getSharedCharacter(token)).rejects.toThrow(NotFoundError);
       expect(CharacterSharingService.generateSharedPdf(NIL_UUID)).rejects.toThrow(NotFoundError);
+    });
+
+    test("prints a shared character as its share page reads it: from rows without private notes nor share token", async () => {
+      const { session } = await createTestUser();
+      const character = await createCharacterAs(session);
+      await Characters.update(db, { privateNotes: "Plans to betray the party" }, { id: character.id });
+      const { shareToken } = await CharacterSharingService.generateShareToken(session, character.id);
+
+      // The document's props: the character it prints, built from the rows its reader reads
+      const printed = await CharacterSharingService.generateSharedPdf(shareToken!);
+      const { detailedCharacter } = printed.props as {
+        detailedCharacter: { character: Character; components: { identity: { getPrivateNotes(): string } } };
+      };
+      expect(detailedCharacter.character).toMatchObject({ id: character.id, privateNotes: null, shareToken: null });
+      expect(detailedCharacter.components.identity.getPrivateNotes()).toBe("");
     });
   });
 
