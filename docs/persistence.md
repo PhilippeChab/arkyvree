@@ -71,7 +71,7 @@ Archiving preserves content for later restoration.
 
 - `Characters` and `Campaigns` have a hard-delete path on **archived rows**:
   - `DELETE /api/characters/:id/permanent` — owner only, must be archived, must not be linked to a campaign that is itself active (an archived campaign no longer "uses" the character). Its bonded children go through FK CASCADE, and the database deletes every deleted character's attachments and modifiers (see *Polymorphic rows* below).
-  - `DELETE /api/campaigns/:id/permanent` — GM only, must be archived. Every FK to `campaigns.id` is `ON DELETE CASCADE`, so the row delete wipes its membership rows (`players`, `invites`, `player_characters`) in one shot.
+  - `DELETE /api/campaigns/:id/permanent` — GM only, must be archived. Its seats (`players`) reference it `ON DELETE CASCADE`, and their `invites` and `player_characters` reference the seats the same way, so the row delete wipes its membership rows in one shot.
   - Both endpoints enforce ownership and archive-state checks through `CharactersPolicy.canHardDelete` / `CampaignsPolicy.canHardDelete`.
 - `Rulesets` has no hard-delete path. Archive is the only terminal state.
 
