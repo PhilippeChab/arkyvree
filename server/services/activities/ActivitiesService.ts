@@ -7,11 +7,9 @@ import {
   Characters,
   Contributors,
   Invites,
-  Modifiers,
   type Pagination,
   PlayerCharacters,
   Players,
-  Requirements,
   Rulesets,
   Visibility,
 } from "@/server/repositories/index.ts";
@@ -78,7 +76,8 @@ class ActivitiesService {
     const storage = Engine.storage();
     const target = { id: targetId, type: targetType };
     const edited = storage.editedLinks().get(targetType);
-    // An owned entity and an edited link show on their owner's page
+    // An owned entity and an edited link show on their owner's own page, as long as no kind that owns another or edits
+    // its links has a customization page (3.5's classes: their customizations are their page's tabs)
     const page = storage.ownerOf(targetType) || edited ? await findContentOwner(db, target) : target;
     const rulesetId = page && (await findContentRuleset(db, page));
     if (!page || !rulesetId) return null;
@@ -148,17 +147,11 @@ class ActivitiesService {
       }
 
       // Customization entities
-      case TARGET_TYPES.modifiers: {
-        const modifier = await Modifiers.findOne(db, { id: targetId });
-        return modifier
-          ? await this.resolveCustomizationUrl(modifier.sourceId, modifier.sourceType, "modifiers")
-          : null;
-      }
+      case TARGET_TYPES.modifiers:
       case TARGET_TYPES.requirements: {
-        const requirement = await Requirements.findOne(db, { id: targetId });
-        return requirement
-          ? await this.resolveCustomizationUrl(requirement.entityId, requirement.entityType, "requirements")
-          : null;
+        // What it belongs to, as the walk to its ruleset reads it: none for a modifier of a modifier
+        const owner = await findContentOwner(db, { id: targetId, type: targetType });
+        return owner ? await this.resolveCustomizationUrl(owner.id, owner.type, targetType) : null;
       }
       // Rules sub-entities (entity has rulesetId)
       default:

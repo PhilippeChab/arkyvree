@@ -110,7 +110,8 @@ function duplicateForm(
  * by what a race or a class is for and sorted where its kind is partitioned, by a pool and a tier where its kind is,
  * its variants grouped under their family where its kind groups them (a toggle undoes it), its rows' copies where its
  * kind copies (a duplicate, variants), and a new one's form, unless its kind is read-only (an ability's: no search, no
- * create). Each row opens what its kind opens (`opens`).
+ * create). Each row opens its entity's page (`buildEntityPagePath`): its customization page where its kind has one
+ * (`useCustomizationPages`), else its own (a class's, its progression).
  */
 export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: EntitySectionProps) {
   const openEntity = useOpenEntity();

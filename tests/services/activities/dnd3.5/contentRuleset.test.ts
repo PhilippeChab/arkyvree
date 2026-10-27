@@ -63,17 +63,19 @@ describe("the walk from a ruleset's content to its ruleset", () => {
     }
   });
 
-  test("reaches no ruleset from a modifier of a modifier, a character's own modifier or a row that's gone", async () => {
+  test("reaches no ruleset from a modifier of a modifier or its requirement, a character's own modifier or a row that's gone", async () => {
     const { featMap } = await getSeedCtx();
     const { user } = await createTestUser();
     const character = await createTestCharacter(user.id);
     const featModifier = await createModifier("feats", featMap["Toughness"]);
     // A modifier is an entity's, never another modifier's: a row saying so belongs to none
     const modifierModifier = await createModifier("modifiers", featModifier.id);
+    const modifierRequirement = await createRequirement("modifiers", modifierModifier.id);
     const characterModifier = await createModifier("characters", character.id);
 
     for (const [type, id] of [
       ["modifiers", modifierModifier.id],
+      ["requirements", modifierRequirement.id],
       ["modifiers", characterModifier.id],
       ["feats", NIL_UUID],
       ["class-levels", NIL_UUID],

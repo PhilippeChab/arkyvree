@@ -160,6 +160,36 @@ describe("ActivitiesService.getActivityUrl", () => {
     ]);
   });
 
+  test("links nowhere a modifier of a modifier, or a requirement of one, as its notifications reach no ruleset", async () => {
+    const { featMap } = await getSeedCtx();
+    const [featModifier] = await Modifiers.findMany(db, { sourceIds: [featMap["Toughness"]], sourceType: "feats" });
+    // A modifier is an entity's, never another modifier's: a row saying so belongs to none
+    const [modifierModifier] = await Modifiers.create(db, {
+      sourceId: featModifier.id,
+      sourceType: "modifiers",
+      target: "combat.bab",
+      value: "1",
+      valueType: "number",
+      operator: "add",
+    });
+    const [requirement] = await Requirements.create(db, {
+      entityId: modifierModifier.id,
+      entityType: "modifiers",
+      level: "1",
+      target: "abilities.strength.misc",
+      value: "13",
+      valueType: "number",
+      operator: "greater_than_or_equal",
+    });
+
+    expect(
+      await resolveAll([
+        ["modifiers", modifierModifier.id],
+        ["requirements", requirement.id],
+      ]),
+    ).toEqual([null, null]);
+  });
+
   test("links a character's inventory and levels to the character, and a campaign's players, invites and characters to the campaign", async () => {
     const { user, session } = await createTestUser();
     const { campaign, player } = await createTestCampaign(user.id);
