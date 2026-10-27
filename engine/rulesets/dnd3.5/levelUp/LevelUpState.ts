@@ -1,9 +1,9 @@
 import type { ViewLink } from "@/engine/core/view/index.ts";
 import type { OwnPicks } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import FeatRules from "@/engine/rulesets/dnd3.5/rules/FeatRules.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
 import { include } from "@/lib/mixins.ts";
-import { FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { SpendsSkillPoints } from "./concerns/SpendsSkillPoints.ts";
 import LevelUpBase, { type SavedLevelPicks } from "./LevelUpBase.ts";
@@ -59,8 +59,9 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
    * knows a spell once (a save refuses either picked twice at a level).
    */
   private keepTakenPicks({ feats = {}, spells = {} }: Partial<PoolPicks>): PoolPicks {
+    const rules = new FeatRules(this.rulesetData);
     return {
-      feats: this.dropRepeats(feats, (id) => this.dnd35.featsById.get(id)?.fields[FEAT_STACKABLE] === true),
+      feats: this.dropRepeats(feats, (id) => rules.isStackable(id)),
       spells: this.dropRepeats(spells, () => false),
     };
   }

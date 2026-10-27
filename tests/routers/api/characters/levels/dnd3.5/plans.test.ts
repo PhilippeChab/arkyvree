@@ -758,6 +758,25 @@ describe("character level plans", () => {
     expect(await cleave([])).toBe(false);
   });
 
+  test("leaves out of a pool's picker a feat the plan picked that doesn't stack, and keeps one that stacks", async () => {
+    const { characterId, ctx } = await createCharacter();
+    const general = ctx.aptMap["General"];
+    const picked = [ctx.featMap["Power Attack"], ctx.featMap["Toughness"]].map((id) => ({ id, pool: general }));
+    const offered = async (search: string, feats: typeof picked) => {
+      const answer = await expectOk(
+        levels.options[":step"].$post({
+          param: { characterId, step: "feats" },
+          query: { search },
+          json: { plan: { steps: { ...fighterPlan(ctx, 1), feats } }, pool: general },
+        }),
+      );
+      return optionsOf(answer, true).items.map(({ name }) => name);
+    };
+    expect(await offered("Power Attack", [])).toContain("Power Attack");
+    expect(await offered("Power Attack", picked)).not.toContain("Power Attack");
+    expect(await offered("Toughness", picked)).toContain("Toughness");
+  });
+
   test("saves a level's increase, refuses an unanswered step, and an unmet requirement unless forced", async () => {
     const { characterId, ctx } = await createCharacter();
     const fighter = ctx.classMap.pc["Fighter"];

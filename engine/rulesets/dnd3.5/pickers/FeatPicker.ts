@@ -8,8 +8,9 @@ import type {
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import FeatEntity from "@/engine/rulesets/dnd3.5/entities/feats/FeatEntity.ts";
 import type { FeatPickQuery } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
+import FeatRules from "@/engine/rulesets/dnd3.5/rules/FeatRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import { FEAT_FAMILY, FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { FEAT_FAMILY, FEAT_SELECTABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import LevelPicker from "./LevelPicker.ts";
 
@@ -22,14 +23,13 @@ import LevelPicker from "./LevelPicker.ts";
 export default class FeatPicker extends LevelPicker {
   constructor(view: RulesetView, input: CharacterInput, query: FeatPickQuery) {
     super(view, input, query);
+    const heldIds = new Set(this.holder.getHeldFeats().map(({ entity }) => entity.id));
+    const rules = new FeatRules(this.rulesetData);
     const offered = {
       // A feat a character picks is a selectable one
       fields: { [FEAT_SELECTABLE]: true },
       ids: Dnd35View.of(this.rulesetData).listFeatIds(query.aptitudeId),
-      excludeIds: this.holder
-        .getHeldFeats()
-        .filter(({ entity }) => !entity.fields[FEAT_STACKABLE])
-        .map(({ entity }) => entity.id),
+      excludeIds: [...heldIds].filter((featId) => !rules.canTake(featId, heldIds)),
     };
     this.filters = { ...offered, fields: { ...offered.fields, ...(query.family && { [FEAT_FAMILY]: query.family }) } };
     this.groupFilters = { ...offered, groups: this.feats.groupByFamily(offered.ids) };

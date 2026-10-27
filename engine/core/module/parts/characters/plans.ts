@@ -80,11 +80,11 @@ export interface ScoresPlan {
 }
 
 /**
- * What a new character starts with, a part of its `NewCharacterPlan`: its row's entity of each of its single links its
- * creation picks (`row.links`, by role: 3.5's race), and each scored link's amounts (`links`, by role: 3.5's ability
- * scores), one for each entity of its kind.
+ * What a new character starts with, a part of its `NewCharacterPlan`: its row's kind (`row.kind`, its module's player
+ * character's) and entity of each of its single links its creation picks (`row.links`, by role: 3.5's race), and each
+ * scored link's amounts (`links`, by role: 3.5's ability scores), one for each entity of its kind.
  */
-export interface StartPlan extends NewCharacterPlan<Pick<NewCharacterRow, "links">> {
+export interface StartPlan extends NewCharacterPlan<Pick<NewCharacterRow, "kind" | "links">> {
   links: Record<string, ScorePlan[]>;
 }
 

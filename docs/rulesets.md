@@ -769,7 +769,7 @@ engine/rulesets/
     ├── levelUp/                           ← the module's `levelUp`: Dnd35LevelUp, on core's LevelUpPart, plans a
     │                                      level-up, an edit, a removal and the bonded creatures over its flows,
     │                                      and gives the rules they read (LevelUpRules: buildCharacter,
-    │                                      getAbilityIncreaseTotal, hitPointsOf, unrolledLevelHp,
+    │                                      getAbilityIncreaseTotal, hitPointsOf,
     │                                      planBondedCreatures, BondedPlans; and the save's hooks, the issues an
     │                                      edited level answers for, findEditedLevelIssues). LevelUpBase: what
     │                                      every flow reads, the view, the character's rows (its advancements and
@@ -802,10 +802,10 @@ engine/rulesets/
     │                                      checking a new character's form)
     ├── content/                           ← the module's `content`: Dnd35Content, what the seeders and the codegen
     │                                      ask: BookPaths, and the codecs of the fields they seed
-    ├── rules/                             (the rules several sides read: AbilityRules, LevelRules, SkillRules,
-    │                                      ItemPlacement and InventorySlots: where an item goes and an entry's
-    │                                      slot, SpellLists: the view's spell lists, and WeaponRuleFeats: its feats
-    │                                      that change a weapon rule, each derived once with it
+    ├── rules/                             (the rules several sides read: AbilityRules, FeatRules, LevelRules,
+    │                                      SkillRules, ItemPlacement and InventorySlots: where an item goes and
+    │                                      an entry's slot, SpellLists: the view's spell lists, and WeaponRuleFeats:
+    │                                      its feats that change a weapon rule, each derived once with it
     │                                      (`RulesetData.derive`), BondedRaceData: a bonded creature's stat block;
     │                                      over the books' numbers in vocabulary/dnd3.5/)
     └── view/                              (rows: its kinds' rows, declared into the view's registries, and a
@@ -1014,7 +1014,7 @@ export default class SkillEntity extends RulesetEntity<"skills", SkillBody, Skil
 }
 ```
 
-A small rule several of a ruleset's modules share is the ruleset's own (`rules/AbilityRules.ts`: a score's modifier; `rules/LevelRules.ts`: `isAbilityIncreaseLevel`, `countGeneralFeats`, off the ruleset's Settings, `LevelRules.of(view)`; `rules/SkillRules.ts`: a level's skill points, a rank's cost, a skill's most ranks, how points spread over levels, a skill's subtypes; `rules/ItemPlacement.ts` and `rules/InventorySlots.ts`: where an item goes, an entry's slot; `rules/SpellLists.ts`: the view's spell lists; `rules/BondedRaceData.ts`: a bonded creature's stat block), which they import: it's no part of the contract. The numbers and tables a rule reads are the books' facts, its vocabulary's (`vocabulary/dnd3.5/`: the core rules' feat and ability increase intervals in `classes.ts`, which the Settings default to, the skill costs and caps in `skills.ts`, `combat.ts`, `sizes.ts`, `carrying.ts`, the bonded creatures' stat blocks in `bondedCreatures.ts`): a rule is a function over them, and a constant the engine keeps is its own machinery (a path's spec, a codec, a message, a placeholder such as `LevelRules.UNROLLED_LEVEL_HP`).
+A small rule several of a ruleset's modules share is the ruleset's own (`rules/AbilityRules.ts`: a score's modifier; `rules/FeatRules.ts`: which feats stack, and which a character can take again; `rules/LevelRules.ts`: `isAbilityIncreaseLevel`, `countGeneralFeats`, off the ruleset's Settings, `LevelRules.of(view)`; `rules/SkillRules.ts`: a level's skill points, a rank's cost, a skill's most ranks, how points spread over levels, a skill's subtypes; `rules/ItemPlacement.ts` and `rules/InventorySlots.ts`: where an item goes, an entry's slot; `rules/SpellLists.ts`: the view's spell lists; `rules/BondedRaceData.ts`: a bonded creature's stat block), which they import: it's no part of the contract. The numbers and tables a rule reads are the books' facts, its vocabulary's (`vocabulary/dnd3.5/`: the core rules' feat and ability increase intervals in `classes.ts`, which the Settings default to, the skill costs and caps in `skills.ts`, `combat.ts`, `sizes.ts`, `carrying.ts`, the bonded creatures' stat blocks in `bondedCreatures.ts`): a rule is a function over them, and a constant the engine keeps is its own machinery (a path's spec, a codec, a message, a placeholder such as `LevelRules.UNROLLED_LEVEL_HP`).
 
 A bound the client and the API check too is a constant of the ruleset's vocabulary, which the engine and the content read instead of writing the number, and the client as the engine describes it: `MAX_SPELL_LEVEL` (`vocabulary/dnd3.5/spells.ts`) for the aptitudes' spell levels, the spellcasting and the spell forms, `MAX_CLASS_LEVEL` (`vocabulary/dnd3.5/classes.ts`) for the class-level forms and the bonus caster levels, `MAX_ABILITY_SCORE` (`vocabulary/dnd3.5/abilities.ts`) for a new character's ability scores and the sheet's, and `MAX_ITEM_VARIANTS` (`vocabulary/dnd3.5/itemTemplates.ts`) for the variants form, which reads it as its rules describe it (the item kind's `copies.most`). The module's operations check them (`RULESET_LIMITS`, `limits.ts`: a new class level's number and its saves' bases, a spell's levels, a character's ability scores, the variants an item's form makes, and a level-up's planned levels, each within its class's last level and all within a character's, the levels it has counted, `MAX_CHARACTER_LEVEL`, `vocabulary/dnd3.5/classes.ts`: the class picker's options say how many levels the character has left, and Add Level's class plan adds none past them).
 

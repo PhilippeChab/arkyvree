@@ -62,8 +62,8 @@ export interface ImportSource {
 }
 
 /**
- * A new character's row, as an import fills it (`NewCharacterRow`): its kind (its module's player character's), its own
- * columns, its fields' values (null: none) and its single links' entities, by role (3.5's race), with its name and
- * notes.
+ * A new character's row, as an import fills it (`NewCharacterRow`): its kind (its module's player character's, as its
+ * start plans it, `CharactersPart.planStart`), its own columns, its fields' values (null: none) and its single links'
+ * entities, by role (3.5's race), with its name and notes.
  */
 export type ImportedRow = NewCharacterRow & Pick<Character, "name" | "notes" | "privateNotes">;

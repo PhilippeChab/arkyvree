@@ -9,7 +9,6 @@ import type { ImportedCharacter } from "@/engine/rulesets/dnd3.5/imports/importe
 import { DND35_STORAGE } from "@/engine/rulesets/dnd3.5/storage/Dnd35Storage.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { MAX_CHARACTER_NAME_LENGTH } from "@/shared/characters.ts";
-import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import { CHARACTER_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 import type { Gender } from "@/vocabulary/dnd3.5/identity.ts";
 
@@ -169,7 +168,7 @@ export default class PcgenImport {
    * alignment and gender (their declared defaults when the file's isn't one, which the report says), its fields in
    * their declared bounds, and the rest of who it is.
    */
-  private readRow(): FilledRow {
+  private readRow(): Omit<FilledRow, "kind"> {
     const { identity, biography } = this.imported;
     const { age, alignment: alignments, gender: genders, xp } = CHARACTER_FIELDS;
     const race = this.findRace();
@@ -203,7 +202,6 @@ export default class PcgenImport {
         weight: identity.weight ? `${identity.weight} lb.` : null,
         xp: Math.max(xp.min, this.bounded("Experience", identity.xp)),
       }),
-      kind: PLAYER_CHARACTER_KIND,
       links: { [RACE_ROLE]: race.id },
       name,
       notes: biography.notes.join("\n") || null,
@@ -219,11 +217,16 @@ export default class PcgenImport {
    */
   plan(): { plan: ImportPlan } | { refused: LevelStop } {
     for (const { line, reason } of this.imported.unread) this.report.skip(line, reason);
-    const row = this.readRow();
+    const read = this.readRow();
     const levelsImport = new LevelsImport(this.view, this.imported, this.names, this.report, this.stop);
     const scores = new ScoresImport(this.view, this.imported, this.report).planScores(levelsImport.levelCount);
-    const start = { picks: { [RACE_ROLE]: row.links[RACE_ROLE] }, scores: { score: scores.starting } };
-    const { score: abilities } = this.characters.planStart(this.view, start).links;
+    const start = { picks: { [RACE_ROLE]: read.links[RACE_ROLE] }, scores: { score: scores.starting } };
+    // It starts as a new character does: its kind, and its scores
+    const {
+      links: { score: abilities },
+      row: { kind },
+    } = this.characters.planStart(this.view, start);
+    const row = { ...read, kind };
     const leveled = levelsImport.planLevels(this.newInput(row, abilities), scores.increases);
     if ("refused" in leveled) return leveled;
     const languageIds = this.planLanguages(leveled.character);

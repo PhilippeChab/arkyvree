@@ -3,9 +3,8 @@ import type { PickPlan } from "@/engine/core/module/index.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { PlannedClassLevel } from "@/engine/rulesets/dnd3.5/levelUp/LevelUpBase.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import FeatRules from "@/engine/rulesets/dnd3.5/rules/FeatRules.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
-import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import { FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import type ImportedLevelGains from "./ImportedLevelGains.ts";
 import type { LevelGains } from "./ImportedLevelGains.ts";
@@ -87,8 +86,8 @@ export default class PicksPlacement {
 
   /** Whether the character (`character`) can take the feat: it meets its requirements, and holds it not unless it stacks. */
   private canTake(character: DetailedCharacter, feat: MatchedFeat) {
-    const stackable = Dnd35View.of(this.rulesetData).featsById.get(feat.entityId)?.fields[FEAT_STACKABLE] === true;
-    if (!stackable && character.getHeldFeats().some(({ entity }) => entity.id === feat.entityId)) return false;
+    const heldIds = new Set(character.getHeldFeats().map(({ entity }) => entity.id));
+    if (!new FeatRules(this.rulesetData).canTake(feat.entityId, heldIds)) return false;
     const requirements = this.rulesetData.requirementsByEntity.get(feat.entityId) ?? [];
     return requirements.length === 0 || character.areRequirementsMet([requirements]);
   }

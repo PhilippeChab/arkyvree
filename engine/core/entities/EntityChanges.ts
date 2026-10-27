@@ -1,4 +1,11 @@
-import { Field, type Fields, FieldWrites, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
+import {
+  DeclaredFields,
+  Field,
+  type Fields,
+  FieldWrites,
+  OwnerValues,
+  type StoredValues,
+} from "@/engine/core/fields/index.ts";
 import type { EntityWrite, LinkSet, LinkWrite } from "@/engine/core/module/index.ts";
 import type { RulesetData, ViewEntity, ViewKinds } from "@/engine/core/view/index.ts";
 import type { ActivityChange, ChangedField, ChangedLink, ChangedLinks } from "@/shared/activity.ts";
@@ -41,7 +48,7 @@ type EntryColumn = "amount" | "free" | "tier" | "viaId";
  * pools they're through, `via`).
  */
 type Place =
-  | { at: string; label: string; part: "fields"; values?: readonly string[] | null }
+  | { at: string; label: string; part: "fields" }
   | { at: string; label: string; part: "links"; references: string }
   | { at: string; entries?: string; label: string; part: "lists"; via?: string };
 
@@ -66,6 +73,7 @@ export default class EntityChanges {
     private readonly type: string,
     private readonly codec: ChangedFields,
   ) {
+    this.declared = new DeclaredFields({ [type]: codec.fields }, []);
     this.places = EntityChanges.placesOf(codec.fields);
     this.writes = new FieldWrites({ [type]: codec.fields });
   }
@@ -91,19 +99,11 @@ export default class EntityChanges {
 
   /**
    * A value as an activity records it: none for none (an empty text, an empty list), a list's values joined by ", " in
-   * the order the view keeps them (`values`, its field's closed list's, then by text), a flag's and a number's as text,
-   * anything else as JSON.
+   * their order, a flag's and a number's as text, anything else as JSON.
    */
-  private static textOf(value: unknown, values?: readonly string[] | null): string | undefined {
+  private static textOf(value: unknown): string | undefined {
     if (value === null || value === undefined || value === "") return undefined;
-    if (Array.isArray(value)) {
-      const rank = (text: string) => {
-        const index = values?.indexOf(text) ?? -1;
-        return index < 0 ? Number.MAX_SAFE_INTEGER : index;
-      };
-      const texts = value.map(String).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
-      return texts.length > 0 ? texts.join(", ") : undefined;
-    }
+    if (Array.isArray(value)) return value.length > 0 ? value.map(String).join(", ") : undefined;
     if (typeof value === "object") return JSON.stringify(value);
     return String(value as boolean | number | string);
   }
@@ -119,10 +119,13 @@ export default class EntityChanges {
         const { label } = leaf;
         if (leaf.kind === "ref") return { at: leaf.role, label, part: "links", references: leaf.references };
         if (leaf.kind === "links") return { at: leaf.role, entries: leaf.entries, label, part: "lists", via: leaf.via };
-        return { at: leaf.field, label, part: "fields", values: Field.closedValuesOf(leaf) };
+        return { at: leaf.field, label, part: "fields" };
       },
     );
   }
+
+  /** Its kind's fields as a view keeps their values (`DeclaredFields`): a set's values in their declared order. */
+  private readonly declared: DeclaredFields;
 
   /** The places it compares, in their order (`placesOf`). */
   private readonly places: readonly Place[];
@@ -139,11 +142,10 @@ export default class EntityChanges {
     before: ReadValues,
     after: ReadValues,
   ): ChangedField | undefined {
-    const textAt = ({ read, stored }: ReadValues) =>
-      EntityChanges.textOf(
-        Object.hasOwn(read, place.at) ? read[place.at] : OwnerValues.valuesOf(stored.fields, place.at),
-        place.values,
-      );
+    const textAt = ({ read, stored }: ReadValues) => {
+      const value = Object.hasOwn(read, place.at) ? read[place.at] : OwnerValues.valuesOf(stored.fields, place.at);
+      return EntityChanges.textOf(Array.isArray(value) ? this.declared.orderValues(place.at, value) : value);
+    };
     const [from, to] = [textAt(before), textAt(after)];
     return from === to ? undefined : { field: place.at, label: place.label, from, to };
   }

@@ -465,15 +465,15 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * What a new character stores: what it starts with (`planStart`: its single links, and its scored links' amounts),
-   * and its row's kind (its module's player character's, `StoredCharacter.playerKind`), fields' values and own columns
-   * (`planNewFields`). Refused as its start is, or when a field is.
+   * What a new character stores: what it starts with (`planStart`: its kind, its single links, and its scored links'
+   * amounts), and its row's fields' values and own columns (`planNewFields`). Refused as its start is, or when a field
+   * is.
    */
   planCreate(view: RulesetView, request: NewCharacterRequest): NewCharacterPlan {
     const { fields, ...start } = request;
     const { links, row } = this.planStart(view, start);
     const { fields: written, own } = this.planNewFields(view, fields);
-    return { links, row: { ...own, ...row, fields: written, kind: this.storage.character.playerKind } };
+    return { links, row: { ...own, ...row, fields: written } };
   }
 
   /**
@@ -540,11 +540,12 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * What a new character starts with, as its form or its import gives it: the entity of each of its single links
-   * (`picks`, by role: 3.5's race), and an amount for each entity of each scored role's kind, the one given (`scores`,
-   * by role, then entity id) or the one an unset entity starts at (`describeScores`), each by the id the view keys it
-   * by. Refused when an amount is past its role's bounds, a pick or a scored entity isn't one of the ruleset's, two
-   * amounts name one entity, or a pick is one its ruleset's rules refuse (`checkCreationPick`).
+   * What a new character starts with, as its form or its import gives it: its kind (its module's player character's,
+   * `StoredCharacter.playerKind`), the entity of each of its single links (`picks`, by role: 3.5's race), and an amount
+   * for each entity of each scored role's kind, the one given (`scores`, by role, then entity id) or the one an unset
+   * entity starts at (`describeScores`), each by the id the view keys it by. Refused when an amount is past its role's
+   * bounds, a pick or a scored entity isn't one of the ruleset's, two amounts name one entity, or a pick is one its
+   * ruleset's rules refuse (`checkCreationPick`).
    */
   planStart(view: RulesetView, request: StartRequest): StartPlan {
     const scored = this.scoredRoles().map((scoredRole) => ({
@@ -569,6 +570,6 @@ export default abstract class CharactersPart<D extends Descriptions> {
       const rows = view.rulesetData.rows(kind) as { id: string }[];
       return [role, rows.map(({ id }) => ({ entityId: id, amount: given.get(id) ?? bounds.start }))];
     });
-    return { links: Object.fromEntries(scores), row: { links: singles } };
+    return { links: Object.fromEntries(scores), row: { kind: this.storage.character.playerKind, links: singles } };
   }
 }

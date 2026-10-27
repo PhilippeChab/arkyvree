@@ -13,6 +13,7 @@ import { createTestItem } from "@/tests/support/dnd3.5/items.ts";
 import { planImportOf, readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.ts";
 import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 /** An advancement's picks of a step. */
 function picksOf({ picks }: AdvancementPlan, step: string) {
@@ -194,6 +195,10 @@ describe("A PCGen fighter / rogue", () => {
       plan.inventory.find((entry) => dataView.itemsById.get(entry.itemId)?.name === "Rations, trail (per day)")
         ?.quantity,
     ).toBe(5);
+  });
+
+  test("is a player character, the kind a new character starts as", async () => {
+    expect((await planImportOf(await readPcgenFile("brannoc"))).row.kind).toBe(PLAYER_CHARACTER_KIND);
   });
 
   test("reports what it imported, and every line it couldn't match: magic gear to make, an item the ruleset hasn't", async () => {
