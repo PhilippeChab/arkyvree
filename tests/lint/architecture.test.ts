@@ -90,6 +90,22 @@ describe("architecture rules", () => {
             `export function g(x: T) {\n  return [flow(x), ${describe}];\n}\n`,
           // The routers and copy-on-write's views aren't actions
           "server/cow/views/h.ts": engine + `export function h(x: T) {\n  ${plan};\n  return ${describe};\n}\n`,
+          // What the modules declare is no operation, read through a module's function or the action's own
+          "server/services/n/kinds.ts":
+            engine + "export function isOwned(x: string) {\n  return Engine.storage().ownerOf(x) !== undefined;\n}\n",
+          "server/services/o.ts":
+            engine +
+            'import { isOwned } from "./n/kinds.ts";\n' +
+            "export function o(x: T) {\n  const storage = Engine.storage();\n" +
+            `  return [isOwned(x), storage.isPlayerKind(x), Engine.storage().editedLinks().get(x), ${plan}];\n}\n`,
+          // A module's function that asks the engine through the entry imported under another name
+          "server/services/p/aliased.ts":
+            'import { Engine as E, type T } from "@/engine/index.ts";\n' +
+            "export function p(x: T) {\n  return E.for(x).skills().planCreate(x);\n}\n",
+          "server/services/q.ts":
+            engine +
+            'import { p } from "./p/aliased.ts";\n' +
+            `export function q(x: T) {\n  return [p(x), ${describe}];\n}\n`,
           // Another service, and a plan's own answer (`plan.describe(row)`), which isn't another operation
           "server/services/l/LService.ts":
             engine + `class LService {\n  m(x: T) {\n    return ${plan};\n  }\n}\nexport default new LService();\n`,
@@ -109,6 +125,7 @@ describe("architecture rules", () => {
       "one-engine-op server/services/d.ts",
       "one-engine-op server/services/g.ts",
       "one-engine-op server/services/m.ts",
+      "one-engine-op server/services/q.ts",
     ]);
   });
 

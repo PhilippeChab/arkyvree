@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import type { ProgressionForm } from "@/engine/index.ts";
+import { Engine, type ProgressionForm } from "@/engine/index.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import {
   entityBody,
@@ -13,13 +13,13 @@ import {
   orderDirAsc,
   page,
 } from "@/server/routers/api/validation.ts";
-import { EntitiesService, ENTITY_TYPES } from "@/server/services/rulesets/entities/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 
 /**
  * A route's entity kind: the ruleset (`id`), and the kind by its type (`classes`, `class-levels`), which a client sends
  * as text (it reads the types off its rules) and the route refuses unless a kind has it.
  */
-const kindParams = idParam.extend({ entityType: z.string().pipe(z.enum(ENTITY_TYPES)) });
+const kindParams = idParam.extend({ entityType: z.string().pipe(z.enum(Engine.storage().standaloneKinds())) });
 
 /** A route's entity: its kind's params, and its id. */
 const entityParams = kindParams.extend({ entityId: z.string().uuid() });

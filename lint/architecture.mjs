@@ -24,7 +24,8 @@
  * - `one-engine-op`: a service's or a job's action (a method, a function) asks the engine one operation, which answers
  *   it whole: what it plans, it describes, and what it checks, it refuses. A second one is a rule the server composes.
  *   An operation is a verb-named method reached through `Engine`'s handles (`Engine.for(scope).skills().planCreate`);
- *   a noun-named one hands out a handle (`character(input)`, `skills()`).
+ *   a noun-named one hands out a handle (`character(input)`, `skills()`). What the modules declare is none
+ *   (`Engine.storage().isPlayerKind(kind)`).
  * - `opaque-view`: the server holds a ruleset's view only as the scope it hands the engine's operations: of its
  *   `rulesetData`, it reads the copy-on-write data alone (`rulesetData.cow`), which its writes go by. Copy-on-write's
  *   views build the view (`server/cow/views/`).
@@ -86,6 +87,11 @@ const CLIENT_COMPONENTS = "client/src/components/";
  * runner and the dev and test seeds reach a ruleset's content and seeder.
  */
 const CONTENT_REGISTRY = "database/packages/registry.ts";
+/**
+ * The engine's entry's handles whose answers are what the modules declare, no operation over the data an action read:
+ * the storage's (`Engine.storage().isPlayerKind(kind)`, `ownerOf(type)`).
+ */
+const ENGINE_DECLARATIONS = new Set(["storage"]);
 /** The engine's entry's own methods, which hand out its handles. */
 const ENGINE_ENTRIES = new Set(["copyOnWrite", "for", "forRules"]);
 
@@ -314,7 +320,8 @@ function actionOf(node) {
 
 /**
  * Whether a module of the server's actions asks the engine when its function `name` runs: the module that declares it
- * (an index's re-export followed) imports an operation from `engine/index.ts`.
+ * (an index's re-export followed) imports `Engine` from `engine/index.ts`, and reaches it past what the modules declare
+ * (`ENGINE_DECLARATIONS`).
  */
 function asksEngine(target, name) {
   const source = readSource(target);
@@ -329,7 +336,12 @@ function asksEngine(target, name) {
     ),
   );
   if (reExport) return asksEngine(targetOf(target, reExport[2]), name);
-  return /import \{[^}]*(?<!type )\bEngine\b[^}]*\} from "@\/engine\/index\.ts"/.test(source);
+  const entry = source.match(/import \{[^}]*(?<!type )\bEngine\b(?:\s+as\s+(\w+))?[^}]*\} from "@\/engine\/index\.ts"/);
+  if (!entry) return false;
+  // Past its import, the entry under the name it's imported as, but where it reads what the modules declare
+  // (`Engine.storage()`)
+  const declarations = [...ENGINE_DECLARATIONS].join("|");
+  return new RegExp(`\\b${entry[1] ?? "Engine"}\\b(?!\\.(?:${declarations})\\()`).test(source.replace(entry[0], ""));
 }
 
 function createEngineFrontDoor(context) {
@@ -797,11 +809,13 @@ function isNamedBy(target, pattern) {
 
 /**
  * Whether a call on the engine reached by `path` is an operation: its method named for a verb (`planLanguages`,
- * `planCreate`), past the entry's own (`Engine.copyOnWrite()`); a noun's hands out a handle (`character`, `skills`).
+ * `planCreate`), past the entry's own (`Engine.copyOnWrite()`); a noun's hands out a handle (`character`, `skills`). What
+ * the modules declare (`ENGINE_DECLARATIONS`: `Engine.storage().isPlayerKind(kind)`) is no operation.
  */
 function isOperation(path) {
   const method = path.at(-1);
-  return method !== undefined && !ENGINE_ENTRIES.has(method) && isVerbName(method);
+  if (method === undefined || ENGINE_DECLARATIONS.has(path[0])) return false;
+  return !ENGINE_ENTRIES.has(method) && isVerbName(method);
 }
 
 /**

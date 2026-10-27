@@ -1,7 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
-import type { CowData, OwnedKind, RulesetSources } from "@/engine/index.ts";
+import { type CowData, Engine, type RulesetSources } from "@/engine/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Entities, OWNED_TYPES, type RulesetEntityType } from "@/server/repositories/index.ts";
+import { Entities, type RulesetEntityType } from "@/server/repositories/index.ts";
 
 import EntityCopy from "./EntityCopy.ts";
 
@@ -46,8 +46,8 @@ export default class EntityEdit {
    * Refused as not found when the view shows none, or shows one from outside the source chain.
    */
   async cowById(tx: Db, entityType: string, entityId: string): Promise<EditTarget> {
-    const ownerType = OWNED_TYPES.get(entityType as OwnedKind);
-    if (ownerType) return await this.cowOwned(tx, entityType, ownerType, entityId);
+    const ownerType = Engine.storage().ownerOf(entityType);
+    if (ownerType) return await this.cowOwned(tx, entityType, ownerType as RulesetEntityType, entityId);
 
     const type = entityType as RulesetEntityType;
     // The entity the view shows for the id: the ruleset's copy of it, or the winner of its siblings

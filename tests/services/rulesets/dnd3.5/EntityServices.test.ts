@@ -5,11 +5,12 @@
 
 import { describe, expect, test } from "bun:test";
 
+import { Engine } from "@/engine/index.ts";
 import type { RulesetAbility, RulesetSave, Skill } from "@/engine/rulesets/dnd3.5/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError } from "@/server/errors/index.ts";
-import { CUSTOMIZABLE_TYPES, Entities, Requirements, type RulesetEntityType } from "@/server/repositories/index.ts";
+import { Entities, Requirements, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
@@ -339,7 +340,7 @@ test("refuses a form naming one list twice: by its source's id and its copy's", 
 // Mechanics can't be customized, so nothing can point at them.
 describe.each(ENTITY_TYPES.filter((type) => type !== "mechanics"))("customized %s", (entityType) => {
   const service = SERVICES[entityType];
-  const ownsModifiers = CUSTOMIZABLE_TYPES.includes(entityType);
+  const ownsModifiers = Engine.storage().customizableKinds().includes(entityType);
 
   const none = { modifiers: 0, modifierRequirements: 0, requirements: 0, values: 0 };
   const one = { modifiers: Number(ownsModifiers), modifierRequirements: Number(ownsModifiers), requirements: 1 };

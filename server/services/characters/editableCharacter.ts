@@ -1,8 +1,8 @@
 import type { Db } from "@/drizzle/database.ts";
-import type { CharacterInput } from "@/engine/index.ts";
+import { type CharacterInput, Engine } from "@/engine/index.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Characters, PLAYER_KINDS, Visibility } from "@/server/repositories/index.ts";
+import { Characters, Visibility } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { readCharacterInput } from "./characterInputs.ts";
@@ -15,7 +15,7 @@ export async function findEditableCharacterOrChild(tx: Db, characterId: string, 
   const editable = await Characters.findOne(tx, { id: characterId, editorId: userId });
   if (editable) return editable;
   const child = await Characters.findOne(tx, { id: characterId });
-  if (!child || PLAYER_KINDS.includes(child.kind) || !child.parentCharacterId) return null;
+  if (!child || Engine.storage().isPlayerKind(child.kind) || !child.parentCharacterId) return null;
   const parent = await Characters.findOne(tx, {
     id: child.parentCharacterId,
     editorId: userId,

@@ -1,13 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
-import type { OwnedKind } from "@/engine/index.ts";
+import { Engine, type OwnedKind } from "@/engine/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import {
-  Entities,
-  EntityReferences,
-  EntitySnapshots,
-  OWNED_TYPES,
-  type RulesetEntityType,
-} from "@/server/repositories/index.ts";
+import { Entities, EntityReferences, EntitySnapshots, type RulesetEntityType } from "@/server/repositories/index.ts";
 
 import type EntityNames from "./EntityNames.ts";
 
@@ -64,8 +58,8 @@ export default class EntityRevert {
     const copyId = snapshot.forkedEntityId;
     await Entities.lock(tx, { id: copyId });
     await names?.assertRestoreAvailable(tx, entityType, sourceEntityId, copyId);
-    for (const [ownedType, ownerType] of OWNED_TYPES)
-      if (ownerType === entityType) await EntityRevert.repointOwned(tx, ownedType, copyId, sourceEntityId, rulesetId);
+    for (const ownedType of Engine.storage().ownedKinds(entityType))
+      await EntityRevert.repointOwned(tx, ownedType as OwnedKind, copyId, sourceEntityId, rulesetId);
     await EntityReferences.update(tx, { entityId: sourceEntityId }, { entityType, entityId: copyId });
     await EntitySnapshots.update(tx, { sourceEntityId }, { sourceEntityId: copyId });
     // The database deletes its own rows with it, and its customizations

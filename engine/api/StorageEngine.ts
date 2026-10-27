@@ -24,7 +24,7 @@ import type { KindValue, ViewLink, ViewSchema } from "@/engine/core/view/index.t
 import type { Merge } from "@/shared/customization/fields.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
-import Modules from "./Modules.ts";
+import Modules, { type EntityType } from "./Modules.ts";
 
 /** The merges the engine composes sibling copies by (`SiblingMerge`). */
 const MERGES: readonly Merge[] = ["fallback", "union", "winner"];
@@ -50,9 +50,11 @@ function mergeRecords<T>(modules: [BaseRules, RulesetModule][], pick: (module: R
  * How every registered module stores its data in the generic tables, which the server reads and writes them by: each
  * kind (`kind`, what a new entity defaults: `defaultsOf`), an entity's record off its stored rows (`recordOf`: every
  * field it holds, `fieldsOf`, and its single links), an entity's links as a view holds them (`viewLinksOf`), a number as
- * its field keeps it (`storedNumber`), a player character's kind (`playerKinds`), each field and link role (`field`,
- * `role`), and the registries' rows (`registries`). Names are global: two modules declaring one kind, field or role is
- * refused, as the registries' keys refuse it.
+ * its field keeps it (`storedNumber`), a player character's kind (`playerKinds`, `isPlayerKind`), the kinds a user
+ * customizes (`customizableKinds`), the links an entity's page edits (`editedLinks`), the kinds a name is the identity
+ * of (`isIdentityKind`), an owned kind's owner (`ownerOf`) and the kinds no other owns (`standaloneKinds`), each field
+ * and link role (`field`, `role`), and the registries' rows (`registries`). Names are global: two modules declaring one
+ * kind, field or role is refused, as the registries' keys refuse it.
  */
 export default class StorageEngine {
   constructor(modules: [BaseRules, RulesetModule][]) {
@@ -60,6 +62,10 @@ export default class StorageEngine {
     this.kinds = mergeRecords(modules, (module) => module.storage.kinds);
     this.fields = mergeRecords(modules, (module) => module.fields);
     this.playerKindList = modules.map(([, module]) => module.storage.character.playerKind);
+    this.customizable = Object.keys(this.kinds)
+      .filter((type) => this.kinds[type].customizable)
+      .toSorted((a, b) => a.localeCompare(b));
+    this.identityKinds = new Set(this.namesakeKinds("identity"));
     const registries = modules.map(([, module]) => module.storage.registries);
     this.merged = {
       entityTypes: registries.flatMap((registry) => registry.entityTypes),
@@ -71,6 +77,12 @@ export default class StorageEngine {
       itemTypes: registries.flatMap((registry) => registry.itemTypes),
     };
     StorageEngine.checkDeclarations(this.fields, this.merged);
+    this.standalone = this.merged.entityTypes.flatMap((def) =>
+      def.ownerType === null ? [def.type as EntityType] : [],
+    );
+    this.owners = new Map(
+      this.merged.entityTypes.flatMap(({ ownerType, type }) => (ownerType ? [[type, ownerType]] : [])),
+    );
     this.singleRoles = new Map(
       this.merged.entityTypes.map(({ type }) => [
         type,
@@ -146,12 +158,21 @@ export default class StorageEngine {
 
   private readonly baseRules: BaseRules[];
 
+  /** The kinds a user customizes, by type (`customizableKinds`). */
+  private readonly customizable: readonly string[];
+
   /** Every module's owners' fields, by owner type. */
   private readonly fields: Record<string, Fields>;
+
+  /** The kinds a name is the identity of (`isIdentityKind`). */
+  private readonly identityKinds: ReadonlySet<string>;
 
   private readonly kinds: Record<string, StoredKind>;
 
   private readonly merged: StorageRegistries;
+
+  /** Each kind another owns, by its type, and the kind that owns it, in their declarations' order (`ownerOf`). */
+  private readonly owners: ReadonlyMap<string, string>;
 
   /** Each module's player character's kind. */
   private readonly playerKindList: readonly string[];
@@ -159,8 +180,14 @@ export default class StorageEngine {
   /** The roles of each type's single links, which its record holds, by its type. */
   private readonly singleRoles: ReadonlyMap<string, ReadonlySet<string>>;
 
+  /** The kinds no other owns, in their declarations' order (`standaloneKinds`). */
+  private readonly standalone: readonly EntityType[];
+
   /** The fields every module declares, as views keep their values, once read (`declaredFields`). */
   private declared?: DeclaredFields;
+
+  /** The roles whose links an entity's page edits, and the kinds they're from and to, once read (`editedLinks`). */
+  private edited?: ReadonlyMap<string, { from: string; to: string }>;
 
   /** What every module declares of a view's kinds and links, once read (`viewSchema`). */
   private schema?: ViewSchema;
@@ -175,9 +202,12 @@ export default class StorageEngine {
     return found;
   }
 
-  /** The kinds a user customizes (`StoredKind.customizable`: 3.5's feats, items, spells, races, classes and levels). */
-  customizableKinds(): string[] {
-    return Object.keys(this.kinds).filter((type) => this.kinds[type].customizable);
+  /**
+   * The kinds a user customizes (`StoredKind.customizable`: 3.5's class levels, classes, feats, items, races and
+   * spells), by type: the order a refusal of another lists them in.
+   */
+  customizableKinds(): readonly string[] {
+    return this.customizable;
   }
 
   /** The fields every module declares, as a ruleset's view keeps their values (`DeclaredFields`): built once. */
@@ -198,8 +228,8 @@ export default class StorageEngine {
    * The roles whose links an entity's page edits one at a time (`StoredKind.editedLinks`: 3.5's class's skills), each
    * with the kinds its links are from and to: what names their activities.
    */
-  editedLinks(): Map<string, { from: string; to: string }> {
-    return new Map(
+  editedLinks(): ReadonlyMap<string, { from: string; to: string }> {
+    this.edited ??= new Map(
       Object.entries(this.kinds).flatMap(([type, kind]) => {
         if (!kind.editedLinks) return [];
         const role = kind.editedLinks;
@@ -208,6 +238,7 @@ export default class StorageEngine {
         return [[role, { from: type, to: def.toType }]];
       }),
     );
+    return this.edited;
   }
 
   /** A field of an owner's type (an entity type, `rulesets` or `characters`), if a module declares it. */
@@ -231,6 +262,16 @@ export default class StorageEngine {
   fieldsOf(ownerType: string, values: readonly (readonly [field: string, value: FieldValue])[]) {
     const rows = values.map(([field, value], ordinal) => ({ field, ordinal, value }));
     return this.declaredFields().fieldsOf(ownerType, rows);
+  }
+
+  /** Whether a kind's name is its identity (`StoredKind.namesakes`: 3.5's pools), its namesakes in a chain pairing. */
+  isIdentityKind(type: string): boolean {
+    return this.identityKinds.has(type);
+  }
+
+  /** Whether a character's kind is a player character's (`playerKinds`), not another's child (3.5's bonded creatures). */
+  isPlayerKind(kind: string): boolean {
+    return this.playerKindList.includes(kind);
   }
 
   /** An entity kind, by its type (`feats`): its partition's default, how its entities pair, what makes a template. */
@@ -281,6 +322,11 @@ export default class StorageEngine {
   /** The kinds that own another (3.5's classes, their levels'), in the order their owned kinds are declared. */
   ownerKinds(): string[] {
     return [...new Set(this.merged.entityTypes.flatMap((def) => (def.ownerType ? [def.ownerType] : [])))];
+  }
+
+  /** The kind that owns a kind (`type`: a class level's class), none for a kind no other owns. */
+  ownerOf(type: string): string | undefined {
+    return this.owners.get(type);
   }
 
   /**
@@ -342,6 +388,14 @@ export default class StorageEngine {
       fields: this.declaredFields().fieldsOf("rulesets", ruleset.fields),
       links: Object.fromEntries(ruleset.links.map(({ role, toId }) => [role, toId])),
     };
+  }
+
+  /**
+   * The kinds no other owns (`StandaloneKind`: the types of a ruleset's entities, 3.5's classes but not their levels),
+   * in their declarations' order: what the routes by kind take.
+   */
+  standaloneKinds(): readonly EntityType[] {
+    return this.standalone;
   }
 
   /** An advancement's step. */

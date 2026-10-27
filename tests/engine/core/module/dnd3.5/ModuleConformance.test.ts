@@ -196,7 +196,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
       .describeAll()
       [rules].kinds.flatMap(({ links, type }) => (links ? [[links.role, { from: type, to: links.type }]] : []));
     expect(described.length).toBeGreaterThan(0);
-    expect(new Map(described as [string, { from: string; to: string }][])).toEqual(edited);
+    expect(edited).toEqual(new Map(described as [string, { from: string; to: string }][]));
   });
 
   test("says why a new entity's required list of links is refused, in words of its own", () => {

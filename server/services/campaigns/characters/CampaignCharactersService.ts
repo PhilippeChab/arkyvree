@@ -8,7 +8,6 @@ import {
   CharacterAdvancements,
   CharacterContributors,
   Characters,
-  PLAYER_KINDS,
   PlayerCharacters,
   Players,
   Visibility,
@@ -213,9 +212,6 @@ class CampaignCharactersService {
 
       const character = await Characters.findOne(tx, { id: characterId, userId: session.userId });
       if (!character) throw new NotFoundError("Character not found");
-
-      if (!PLAYER_KINDS.includes(character.kind))
-        throw new BadRequestError("Only player characters can be linked to a campaign");
 
       // The campaign's exact ruleset: not a fork of it, nor its parent.
       if (character.rulesetId !== campaign.rulesetId)

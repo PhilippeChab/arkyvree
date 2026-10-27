@@ -1,11 +1,12 @@
 import { createHmac, randomUUID } from "node:crypto";
 
 import type { Db } from "@/drizzle/database.ts";
+import { Engine } from "@/engine/index.ts";
 import { compareInConstantTime } from "@/server/constantTime.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { readEnv } from "@/server/environment.ts";
 import { BadRequestError, ConflictError, ForbiddenError, InternalError, NotFoundError } from "@/server/errors/index.ts";
-import { Attachments, Blobs, Characters, PLAYER_KINDS } from "@/server/repositories/index.ts";
+import { Attachments, Blobs, Characters } from "@/server/repositories/index.ts";
 import ObjectStorage from "@/server/storage/ObjectStorage.ts";
 import { ALLOWED_IMAGE_TYPES, ATTACHMENT_SLOTS, MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -55,7 +56,7 @@ const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
       isOwner: async (session, recordId) => {
         const character = await Characters.findOne(db, { id: recordId });
         if (!character) return false;
-        if (PLAYER_KINDS.includes(character.kind)) return character.userId === session.userId;
+        if (Engine.storage().isPlayerKind(character.kind)) return character.userId === session.userId;
         // Bonded children flow permission through the master (owner or active contributor).
         if (!character.parentCharacterId) return false;
         const master = await Characters.findOne(db, {
