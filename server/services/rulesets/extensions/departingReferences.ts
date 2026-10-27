@@ -11,14 +11,12 @@
  */
 
 import type { Db } from "@/drizzle/database.ts";
-import type { RulesetSources } from "@/engine/index.ts";
+import { Engine, type OwnedKind, type RulesetSources } from "@/engine/index.ts";
 import { CowDataReader } from "@/server/cow/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
   Entities,
   EntityReferences,
-  IDENTITY_TYPES,
-  OWNED_TYPES,
   type ReferencedType,
   RULESET_ENTITY_TYPES,
   RulesetEntities,
@@ -56,7 +54,7 @@ async function findLostReferences(tx: Db, rulesetId: string, departures: Departu
     for (const entity of await RulesetEntities.findNames(tx, type, { ids })) names.set(entity.id, entity.name);
   }
   return references.map((reference) =>
-    IDENTITY_TYPES.has(typeOf.get(reference.targetId)!)
+    Engine.storage().isIdentityKind(typeOf.get(reference.targetId)!)
       ? `${names.get(reference.targetId)}, a list no other book of this ruleset has`
       : `${reference.name}, which uses ${names.get(reference.targetId)}`,
   );
@@ -123,8 +121,11 @@ export async function findDepartures(
     const live = new Set((await RulesetEntities.findNames(tx, type, { ids: shown })).map((entity) => entity.id));
     departures.set(type, new Map(ids.map((id) => [id, candidates.get(id)!.find((other) => live.has(other))])));
   }
-  for (const [ownedType, ownerType] of OWNED_TYPES)
+  const storage = Engine.storage();
+  for (const ownedType of storage.ownedTypes() as OwnedKind[]) {
+    const ownerType = storage.ownerOf(ownedType) as RulesetEntityType;
     departures.set(ownedType, await findOwnedFallbacks(tx, ownedType, departures.get(ownerType)!));
+  }
   return departures;
 }
 

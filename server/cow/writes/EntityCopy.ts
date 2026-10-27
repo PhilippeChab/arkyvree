@@ -11,7 +11,6 @@ import {
 import CowDataReader from "@/server/cow/views/CowDataReader.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import {
-  CUSTOMIZABLE_TYPES,
   Entities,
   EntityLinks,
   EntitySnapshots,
@@ -40,7 +39,7 @@ export default class EntityCopy {
     this.entityType = entityType;
     this.entityId = entityId;
     this.ruleset = ruleset;
-    this.sourceType = CUSTOMIZABLE_TYPES.includes(entityType) ? entityType : undefined;
+    this.sourceType = Engine.storage().customizableKinds().includes(entityType) ? entityType : undefined;
   }
 
   /**
@@ -188,8 +187,7 @@ export default class EntityCopy {
   private async copyRelationships(tx: Db, targetEntityId: string, cow: CowData) {
     const resolve = (id: string) => cow.resolve(id);
     await this.copyLinks(tx, this.entityType, new Map([[this.entityId, targetEntityId]]), resolve);
-    for (const { ownerType, type } of Engine.storage().registries().entityTypes) {
-      if (ownerType !== this.entityType) continue;
+    for (const type of Engine.storage().ownedKinds(this.entityType)) {
       const owned = await Entities.findMany(tx, { entityType: type, ownerIds: [this.entityId] });
       if (owned.length === 0) continue;
       // Each its position, its fields and its single links (each to what stands for its target), and its times
@@ -207,7 +205,7 @@ export default class EntityCopy {
         true,
       );
       const ids = new Map(owned.map((row, index) => [row.id, copies[index].id]));
-      const customizable = CUSTOMIZABLE_TYPES.includes(type) ? type : undefined;
+      const customizable = Engine.storage().customizableKinds().includes(type) ? type : undefined;
       const customizations = await CustomizationCopies.read(tx, [...ids.keys()], type, customizable);
       for (const [id, copyId] of ids) {
         const own = customizations.get(id);

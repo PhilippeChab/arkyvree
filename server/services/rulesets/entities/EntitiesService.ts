@@ -3,7 +3,7 @@ import { Engine, type EntityAction, type EntityCopies } from "@/engine/index.ts"
 import { include } from "@/lib/mixins.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, RULESET_ENTITY_TYPES, type RulesetEntityType } from "@/server/repositories/index.ts";
+import { Entities, type RulesetEntityType } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { Copies } from "./concerns/Copies.ts";
@@ -12,9 +12,6 @@ import { Owned } from "./concerns/Owned.ts";
 import { Progressions } from "./concerns/Progressions.ts";
 import EntityWriter, { type EntityBody } from "./EntityWriter.ts";
 import type { EntityRow, ListWhere, Pagination } from "./rows.ts";
-
-/** Every entity kind's type, which the routes by kind take. */
-export const ENTITY_TYPES: readonly RulesetEntityType[] = RULESET_ENTITY_TYPES;
 
 /**
  * A ruleset's entities by their kind (`type`), whatever it is, as its kind's rules answer them

@@ -1,15 +1,9 @@
 import type { Db } from "@/drizzle/database.ts";
+import { Engine } from "@/engine/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import {
-  CharacterContributors,
-  Characters,
-  Notifications,
-  PLAYER_KINDS,
-  Users,
-  Visibility,
-} from "@/server/repositories/index.ts";
+import { CharacterContributors, Characters, Notifications, Users, Visibility } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
@@ -75,7 +69,7 @@ class CharacterContributorsService {
     pagination: { limit: number; page: number },
   ) {
     const character = await Characters.findOne(db, { id: characterId }, Visibility.All);
-    if (!character || !PLAYER_KINDS.includes(character.kind)) throw new NotFoundError("Character not found");
+    if (!character || !Engine.storage().isPlayerKind(character.kind)) throw new NotFoundError("Character not found");
 
     (await CharactersPolicy.for(db, session, character)).canReadContributors();
 
@@ -103,7 +97,7 @@ class CharacterContributorsService {
   async inviteContributor(session: Session, characterId: string, email: string) {
     const { contributor, emailData } = await withTransaction(async (tx) => {
       const character = await Characters.findOne(tx, { id: characterId }, Visibility.All);
-      if (!character || !PLAYER_KINDS.includes(character.kind)) throw new NotFoundError("Character not found");
+      if (!character || !Engine.storage().isPlayerKind(character.kind)) throw new NotFoundError("Character not found");
 
       (await CharactersPolicy.for(tx, session, character)).canManageContributors();
 
@@ -186,7 +180,7 @@ class CharacterContributorsService {
   async leaveCharacter(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
       const character = await Characters.findOne(tx, { id: characterId }, Visibility.All);
-      if (!character || !PLAYER_KINDS.includes(character.kind)) throw new NotFoundError("Character not found");
+      if (!character || !Engine.storage().isPlayerKind(character.kind)) throw new NotFoundError("Character not found");
 
       const contributor = await CharacterContributors.findOne(tx, {
         characterId,

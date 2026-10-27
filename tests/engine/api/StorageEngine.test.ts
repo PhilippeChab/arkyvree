@@ -225,9 +225,39 @@ describe("A module's storage", () => {
     ]);
   });
 
+  test("answers a player character's kind, the kinds a user customizes and those a name is the identity of", () => {
+    const storage = StorageEngine.shared();
+    const types = storage.registries().entityTypes.map(({ type }) => type);
+    expect(storage.playerKinds().length).toBeGreaterThan(0);
+    for (const kind of storage.playerKinds()) {
+      expect(storage.isPlayerKind(kind)).toBe(true);
+      expect(storage.isPlayerKind(`${kind}-child`)).toBe(false);
+    }
+    // By type, as a refusal of another kind lists them
+    expect(storage.customizableKinds()).toEqual(
+      types.filter((type) => storage.kind(type).customizable).toSorted((a, b) => a.localeCompare(b)),
+    );
+    expect(storage.customizableKinds()).toBe(storage.customizableKinds());
+    for (const type of types) expect(storage.isIdentityKind(type)).toBe(storage.kind(type).namesakes === "identity");
+    expect(types.some((type) => storage.isIdentityKind(type))).toBe(true);
+  });
+
+  test("answers each owned kind's owner, and the kinds no other owns, in their declarations' order", () => {
+    const storage = StorageEngine.shared();
+    const { entityTypes } = storage.registries();
+    for (const { ownerType, type } of entityTypes) expect(storage.ownerOf(type)).toBe(ownerType ?? undefined);
+    expect(storage.standaloneKinds() as readonly string[]).toEqual(
+      entityTypes.filter((def) => !def.ownerType).map(({ type }) => type),
+    );
+    expect(storage.standaloneKinds()).toBe(storage.standaloneKinds());
+    for (const type of storage.ownedTypes()) expect(storage.ownedKinds(storage.ownerOf(type)!)).toContain(type);
+    expect(storage.ownedTypes().length).toBeGreaterThan(0);
+  });
+
   test("names the roles an entity's page edits, and those whose links refuse their target's delete", () => {
     const storage = StorageEngine.shared();
     const { linkRoles } = storage.registries();
+    expect(storage.editedLinks()).toBe(storage.editedLinks());
     for (const [role, { from, to }] of storage.editedLinks()) {
       expect(storage.kind(from).editedLinks).toBe(role);
       expect(storage.role(role, from, to).single).toBe(false);

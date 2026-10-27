@@ -2,6 +2,7 @@ import { and, count, eq, exists, inArray, isNull, not, or, type SQL, sql } from 
 
 import type { Db } from "@/drizzle/database.ts";
 import { charactersInCharacter, contributorsInCharacter, playerCharactersInCampaign } from "@/drizzle/schema.ts";
+import { Engine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
@@ -9,8 +10,6 @@ import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 import StoredCharacters, { type CharacterValuesWrite } from "@/server/repositories/stored/StoredCharacters.ts";
 import type { Character } from "@/shared/relations.ts";
-
-import { PLAYER_KINDS } from "./playerKinds.ts";
 
 /** A character's row as a write gives it: its own columns, and its fields' values and single links' entities it sets. */
 type CharacterValues = Partial<typeof charactersInCharacter.$inferInsert> & CharacterValuesWrite;
@@ -55,7 +54,7 @@ class CharactersRepository extends include(
       db,
       this.where([
         eq(charactersInCharacter.id, where.id),
-        inArray(charactersInCharacter.kind, [...PLAYER_KINDS]),
+        inArray(charactersInCharacter.kind, [...Engine.storage().playerKinds()]),
         or(eq(charactersInCharacter.userId, where.userId), this.contributesTo(db, where.userId))!,
         this.visibility(visibility),
       ]),
@@ -114,7 +113,7 @@ class CharactersRepository extends include(
         and(
           isNull(charactersInCharacter.deletedAt),
           eq(charactersInCharacter.userId, where.userId),
-          inArray(charactersInCharacter.kind, [...PLAYER_KINDS]),
+          inArray(charactersInCharacter.kind, [...Engine.storage().playerKinds()]),
         ),
       );
     return result.count;
@@ -192,7 +191,7 @@ class CharactersRepository extends include(
         [
           "userId" in where && eq(this.table.userId, where.userId),
           "kind" in where && eq(this.table.kind, where.kind),
-          isUserFacing && inArray(this.table.kind, [...PLAYER_KINDS]),
+          isUserFacing && inArray(this.table.kind, [...Engine.storage().playerKinds()]),
           this.visibility(visibility),
         ],
       ),
@@ -248,7 +247,7 @@ class CharactersRepository extends include(
         .where(
           this.where([
             accessCondition!,
-            inArray(this.table.kind, [...PLAYER_KINDS]),
+            inArray(this.table.kind, [...Engine.storage().playerKinds()]),
             this.visibility(visibility),
             searchConditions,
           ]),
@@ -275,7 +274,7 @@ class CharactersRepository extends include(
           and(
             eq(charactersInCharacter.userId, where.userId),
             eq(charactersInCharacter.rulesetId, where.rulesetId),
-            inArray(charactersInCharacter.kind, [...PLAYER_KINDS]),
+            inArray(charactersInCharacter.kind, [...Engine.storage().playerKinds()]),
             isNull(charactersInCharacter.deletedAt),
             isNull(playerCharactersInCampaign.characterId), // NOT linked
             this.search(where.search, [charactersInCharacter.name]) || undefined,

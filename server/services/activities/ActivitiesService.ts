@@ -1,4 +1,4 @@
-import type { OwnedKind } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Activities,
@@ -6,12 +6,9 @@ import {
   CharacterContributors,
   Characters,
   Contributors,
-  CUSTOMIZABLE_TYPES,
-  EDITED_LINKS,
   Entities,
   Invites,
   Modifiers,
-  OWNED_TYPES,
   PlayerCharacters,
   Players,
   Requirements,
@@ -42,7 +39,8 @@ function entityPageUrl(rulesetId: string, entityType: string, entityId: string, 
  */
 function hasCustomizationPage(entityType: string) {
   if (entityType === "modifiers") return true;
-  return CUSTOMIZABLE_TYPES.includes(entityType) && !isOneOf(entityType, [...OWNED_TYPES.values()]);
+  const storage = Engine.storage();
+  return storage.customizableKinds().includes(entityType) && !storage.ownerKinds().includes(entityType);
 }
 
 class ActivitiesService {
@@ -87,7 +85,7 @@ class ActivitiesService {
       if (!modifier || modifier.sourceType === "modifiers") return null;
       return await this.ownerRulesetId(modifier.sourceId, modifier.sourceType);
     }
-    const ownerType = OWNED_TYPES.get(entityType as OwnedKind);
+    const ownerType = Engine.storage().ownerOf(entityType);
     if (ownerType) {
       const [owned] = await Entities.findPositions(db, { entityType, ids: [entityId] });
       return owned ? await this.ownerRulesetId(owned.ownerId, ownerType) : null;
@@ -114,7 +112,8 @@ class ActivitiesService {
   ): Promise<string | null> {
     const rulesetId = await this.ownerRulesetId(entityId, entityType);
     if (!rulesetId) return null;
-    if (isOneOf(entityType, [...OWNED_TYPES.values()])) return entityPageUrl(rulesetId, entityType, entityId, section);
+    if (Engine.storage().ownerKinds().includes(entityType))
+      return entityPageUrl(rulesetId, entityType, entityId, section);
     if (!hasCustomizationPage(entityType)) return null;
     return `/rulesets/${rulesetId}/${buildCustomizationPath(entityType, entityId)}${section ? `/${section}` : ""}`;
   }
@@ -125,12 +124,12 @@ class ActivitiesService {
    * customization page when it has one, else its own.
    */
   private async resolveRulesEntity(targetType: string, targetId: string): Promise<string | null> {
-    const ownerType = OWNED_TYPES.get(targetType as OwnedKind);
+    const ownerType = Engine.storage().ownerOf(targetType);
     if (ownerType) {
       const [owned] = await Entities.findPositions(db, { entityType: targetType, ids: [targetId] });
       return owned ? await this.ownerPageUrl(ownerType, owned.ownerId) : null;
     }
-    const edited = EDITED_LINKS.get(targetType);
+    const edited = Engine.storage().editedLinks().get(targetType);
     if (edited) return await this.ownerPageUrl(edited.from, targetId, edited.to);
     return await this.resolveRulesSubEntity(targetType, targetId);
   }

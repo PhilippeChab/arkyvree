@@ -90,6 +90,14 @@ describe("architecture rules", () => {
             `export function g(x: T) {\n  return [flow(x), ${describe}];\n}\n`,
           // The routers and copy-on-write's views aren't actions
           "server/cow/views/h.ts": engine + `export function h(x: T) {\n  ${plan};\n  return ${describe};\n}\n`,
+          // What the modules declare is no operation, read through a module's function or the action's own
+          "server/services/n/kinds.ts":
+            engine + "export function isOwned(x: string) {\n  return Engine.storage().ownerOf(x) !== undefined;\n}\n",
+          "server/services/o.ts":
+            engine +
+            'import { isOwned } from "./n/kinds.ts";\n' +
+            "export function o(x: T) {\n  const storage = Engine.storage();\n" +
+            `  return [isOwned(x), storage.isPlayerKind(x), Engine.storage().editedLinks().get(x), ${plan}];\n}\n`,
           // Another service, and a plan's own answer (`plan.describe(row)`), which isn't another operation
           "server/services/l/LService.ts":
             engine + `class LService {\n  m(x: T) {\n    return ${plan};\n  }\n}\nexport default new LService();\n`,

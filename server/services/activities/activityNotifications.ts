@@ -2,18 +2,16 @@ import type { InferInsertModel } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import type { activitiesInAccount } from "@/drizzle/schema.ts";
-import type { OwnedKind } from "@/engine/index.ts";
+import { Engine } from "@/engine/index.ts";
 import {
   Activities,
   CharacterContributors,
   Characters,
   Contributors,
-  EDITED_LINKS,
   Entities,
   Invites,
   Modifiers,
   Notifications,
-  OWNED_TYPES,
   Players,
   Requirements,
   RULESET_ENTITY_TYPES,
@@ -100,8 +98,8 @@ const RECIPIENTS = new Map<string, Recipient>([
 function isContentType(type: string) {
   return (
     isOneOf(type, RULESET_ENTITY_TYPES) ||
-    OWNED_TYPES.has(type as OwnedKind) ||
-    EDITED_LINKS.has(type) ||
+    Engine.storage().ownerOf(type) !== undefined ||
+    Engine.storage().editedLinks().has(type) ||
     CUSTOMIZATION_OWNERS.has(type)
   );
 }
@@ -129,12 +127,12 @@ async function findChangedRuleset(
  * an edited link's owner (a class's skills' activity targets the class), a customization's entity.
  */
 async function findContentOwner(db: Db, { id, type }: ContentRow): Promise<ContentRow | undefined> {
-  const ownerType = OWNED_TYPES.get(type as OwnedKind);
+  const ownerType = Engine.storage().ownerOf(type);
   if (ownerType) {
     const [owned] = await Entities.findPositions(db, { entityType: type, ids: [id] });
     return owned && { id: owned.ownerId, type: ownerType };
   }
-  const edited = EDITED_LINKS.get(type);
+  const edited = Engine.storage().editedLinks().get(type);
   if (edited) return { id, type: edited.from };
   return await CUSTOMIZATION_OWNERS.get(type)?.(db, id);
 }

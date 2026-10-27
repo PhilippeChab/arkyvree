@@ -1,14 +1,15 @@
 import type { Db } from "@/drizzle/database.ts";
-import type {
-  EntityCreatePlan,
-  EntityDeletePlan,
-  EntityEditPlan,
-  EntityForm,
-  EntityRecord,
-  EntityRemoval,
-  EntityWrites,
-  LinkSet,
-  MadeEntity,
+import {
+  Engine,
+  type EntityCreatePlan,
+  type EntityDeletePlan,
+  type EntityEditPlan,
+  type EntityForm,
+  type EntityRecord,
+  type EntityRemoval,
+  type EntityWrites,
+  type LinkSet,
+  type MadeEntity,
 } from "@/engine/index.ts";
 import {
   CustomizationCopies,
@@ -23,7 +24,6 @@ import {
 import { withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
-  CUSTOMIZABLE_TYPES,
   Entities,
   EntityLinks,
   Modifiers,
@@ -226,7 +226,7 @@ export default class EntityWriter {
 
   /** The entity's customizations, copied onto the new one (`entityId`) from `sourceId`'s. */
   private async copyCustomizations(tx: Db, entityId: string, sourceId: string) {
-    const sourceType = CUSTOMIZABLE_TYPES.includes(this.type) ? this.type : undefined;
+    const sourceType = Engine.storage().customizableKinds().includes(this.type) ? this.type : undefined;
     const customizations = (await CustomizationCopies.read(tx, [sourceId], this.type, sourceType)).get(sourceId);
     if (customizations) await CustomizationCopies.copy(tx, entityId, this.type, customizations);
   }

@@ -2,15 +2,12 @@ import { Engine } from "@/engine/index.ts";
 import { CustomizationCopies, CustomizationEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
-import { CUSTOMIZABLE_TYPES, Modifiers } from "@/server/repositories/index.ts";
+import { Modifiers } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { checkCustomizedEntity } from "@/server/services/rulesets/customization/customizableEntities.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
-
-/** The kinds a user customizes, which the customization routes take (3.5's feats, spells, classes, their levels…). */
-export const CUSTOMIZED_TYPES: readonly string[] = CUSTOMIZABLE_TYPES;
 
 class ModifiersService {
   /**
