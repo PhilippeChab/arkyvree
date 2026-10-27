@@ -3,6 +3,7 @@ import {
   count,
   eq,
   exists,
+  getTableColumns,
   inArray,
   type InferInsertModel,
   isNotNull,
@@ -18,6 +19,7 @@ import {
   campaignsInCampaign,
   contributorsInRules,
   playersInCampaign,
+  rulesetExtensionsInRules,
   rulesetsInRules,
   starredRulesetsInAccount,
 } from "@/drizzle/schema.ts";
@@ -28,6 +30,8 @@ import { Paginates, type Pagination } from "@/server/repositories/concerns/Pagin
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
+
+import { buildSubscribersCondition } from "./rulesetLineage.ts";
 
 /** The listings a user can ask for. */
 type RulesetScope =
@@ -44,6 +48,24 @@ type RulesetScope =
   | "extensions"
   | "systems"
   | "contributedTo";
+
+/** A ruleset's live `ruleset_extensions` rows (`rulesetsInRules`' row's): the extensions it subscribes to. */
+const SUBSCRIBED = and(
+  eq(rulesetExtensionsInRules.rulesetId, rulesetsInRules.id),
+  isNull(rulesetExtensionsInRules.deletedAt),
+);
+
+/**
+ * A ruleset's row as every read and write of it answers it: its columns, and the extensions it subscribes to
+ * (`extensionRulesetIds`), in their order, which its view composes them in.
+ */
+const RULESET_COLUMNS = {
+  ...getTableColumns(rulesetsInRules),
+  extensionRulesetIds: sql<string[]>`ARRAY(
+    SELECT ${rulesetExtensionsInRules.extensionId} FROM ${rulesetExtensionsInRules}
+    WHERE ${SUBSCRIBED} ORDER BY ${rulesetExtensionsInRules.ordinal}
+  )`,
+};
 
 class RulesetsRepository extends include(
   BaseRepository<typeof rulesetsInRules>,
@@ -175,22 +197,7 @@ class RulesetsRepository extends include(
       pagination,
       async (paginate) =>
         await db
-          .select({
-            id: rulesetsInRules.id,
-            createdAt: rulesetsInRules.createdAt,
-            updatedAt: rulesetsInRules.updatedAt,
-            name: rulesetsInRules.name,
-            rulesetId: rulesetsInRules.rulesetId,
-            description: rulesetsInRules.description,
-            userId: rulesetsInRules.userId,
-            system: rulesetsInRules.system,
-            private: rulesetsInRules.private,
-            status: rulesetsInRules.status,
-            kind: rulesetsInRules.kind,
-            baseRules: rulesetsInRules.baseRules,
-            ancestorRulesetIds: rulesetsInRules.ancestorRulesetIds,
-            extensionRulesetIds: rulesetsInRules.extensionRulesetIds,
-          })
+          .select(RULESET_COLUMNS)
           .from(rulesetsInRules)
           .innerJoin(
             starredRulesetsInAccount,
@@ -212,7 +219,7 @@ class RulesetsRepository extends include(
       .update(this.table)
       .set({ status: "Archived", updatedAt: new Date().toISOString() })
       .where(eq(this.table.id, where.id))
-      .returning();
+      .returning(RULESET_COLUMNS);
   }
 
   /** How many rulesets the user's list holds as it opens (`findPage` with no scope): the total of its pages. */
@@ -225,7 +232,7 @@ class RulesetsRepository extends include(
   }
 
   async create(db: Db, values: InferInsertModel<typeof rulesetsInRules>) {
-    return await db.insert(this.table).values(values).returning();
+    return await db.insert(this.table).values(values).returning(RULESET_COLUMNS);
   }
 
   /** Whether a ruleset subscribes to the extension. */
@@ -233,7 +240,7 @@ class RulesetsRepository extends include(
     const [row] = await db
       .select({ exists: sql<boolean>`true` })
       .from(this.table)
-      .where(sql`${this.table.extensionRulesetIds} @> ARRAY[${where.extensionRulesetId}]::uuid[]`)
+      .where(buildSubscribersCondition(where.extensionRulesetId))
       .limit(1);
     return !!row;
   }
@@ -241,24 +248,31 @@ class RulesetsRepository extends include(
   /** Rulesets by id, those subscribing to an extension (`extensionRulesetId`), or the system's own (`system`). */
   async findMany(db: Db, where: { ids: string[] } | { extensionRulesetId: string } | { system: true }) {
     if ("ids" in where && where.ids.length === 0) return [];
-    return await db.query.rulesetsInRules.findMany({
-      where: this.branchWhere([
-        "ids" in where && inArray(this.table.id, where.ids),
-        "extensionRulesetId" in where &&
-          sql`${this.table.extensionRulesetIds} @> ARRAY[${where.extensionRulesetId}]::uuid[]`,
-        "system" in where && eq(this.table.system, where.system),
-      ]),
-      orderBy: [this.orderBy(this.table.createdAt), this.orderBy(this.table.id)],
-    });
+    return await db
+      .select(RULESET_COLUMNS)
+      .from(this.table)
+      .where(
+        this.branchWhere([
+          "ids" in where && inArray(this.table.id, where.ids),
+          "extensionRulesetId" in where && buildSubscribersCondition(where.extensionRulesetId),
+          "system" in where && eq(this.table.system, where.system),
+        ]),
+      )
+      .orderBy(this.orderBy(this.table.createdAt), this.orderBy(this.table.id));
   }
 
   async findOne(db: Db, where: { id: string } | { name: string }) {
-    return await db.query.rulesetsInRules.findFirst({
-      where: this.branchWhere([
-        "id" in where && eq(this.table.id, where.id),
-        "name" in where && eq(this.table.name, where.name),
-      ]),
-    });
+    const [row] = await db
+      .select(RULESET_COLUMNS)
+      .from(this.table)
+      .where(
+        this.branchWhere([
+          "id" in where && eq(this.table.id, where.id),
+          "name" in where && eq(this.table.name, where.name),
+        ]),
+      )
+      .limit(1);
+    return row;
   }
 
   async findPage(
@@ -291,7 +305,7 @@ class RulesetsRepository extends include(
       pagination,
       async (paginate) =>
         await db
-          .select()
+          .select(RULESET_COLUMNS)
           .from(rulesetsInRules)
           .where(condition)
           .orderBy(...this.pageOrder(order))
@@ -306,7 +320,7 @@ class RulesetsRepository extends include(
       .update(this.table)
       .set({ userId: null, updatedAt: new Date().toISOString() })
       .where(eq(this.table.userId, where.userId))
-      .returning();
+      .returning(RULESET_COLUMNS);
   }
 
   async publish(db: Db, where: { id: string }) {
@@ -314,7 +328,7 @@ class RulesetsRepository extends include(
       .update(this.table)
       .set({ status: "Published", updatedAt: new Date().toISOString() })
       .where(eq(this.table.id, where.id))
-      .returning();
+      .returning(RULESET_COLUMNS);
   }
 
   async unarchive(db: Db, where: { id: string }) {
@@ -322,7 +336,7 @@ class RulesetsRepository extends include(
       .update(this.table)
       .set({ status: "Draft", updatedAt: new Date().toISOString() })
       .where(and(eq(this.table.id, where.id), eq(this.table.status, "Archived")))
-      .returning();
+      .returning(RULESET_COLUMNS);
   }
 
   async update(
@@ -334,7 +348,7 @@ class RulesetsRepository extends include(
       .update(this.table)
       .set({ ...values, updatedAt: new Date().toISOString() })
       .where(this.where([eq(this.table.id, where.id), this.casUpdatedAt(where.expectedUpdatedAt)]))
-      .returning();
+      .returning(RULESET_COLUMNS);
   }
 }
 

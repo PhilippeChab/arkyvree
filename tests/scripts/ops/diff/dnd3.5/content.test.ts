@@ -101,6 +101,10 @@ const FIXTURES: Record<string, string> = {
                                           ('TEST_NUMBER', 'number', false, null, 3, null, now()),
                                           ('TEST_FLAG', 'flag', false, null, null, true, now()))
                                   as f (field, value_kind, multiple, text_value, number_value, flag_value, created_at)`,
+  // A system ruleset's extension, which none subscribes to: a base's, of an extension forked from it
+  "rules.ruleset_extensions": `insert into rules.ruleset_extensions (ruleset_id, extension_id, ordinal)
+                               select b.id, e.id, 0 from rules.rulesets b join rules.rulesets e on e.ruleset_id = b.id
+                                where b.system and e.system limit 1`,
   // A role a ruleset's link can take
   "rules.ruleset_links": `insert into rules.ruleset_roles (role, to_type, on_delete) values ('spellAbility', 'abilities', 'unlink')`,
 };

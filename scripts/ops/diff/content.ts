@@ -48,7 +48,7 @@ const OWNERS = `,
 const REGISTRY = "a registry: what the modules declare, which every migration syncs from the code";
 
 /** A ruleset's lists of other rulesets, compared by their names. */
-const RULESET_LISTS = ["ancestor_ruleset_ids", "extension_ruleset_ids"];
+const RULESET_LISTS = ["ancestor_ruleset_ids"];
 
 /** Why a field's ordinal isn't compared. */
 const SET_ORDINAL = "a set's values are compared as a set: an ordinal keys a value, it orders none";
@@ -207,16 +207,16 @@ async function pullRequirements(query: Query, rulesetId: string): Promise<Identi
   );
 }
 
-/** The rulesets the ruleset extends with, by name. */
+/** The rulesets the ruleset extends with, by name, each at its place in their order. */
 async function pullRulesetExtensions(query: Query, rulesetId: string): Promise<IdentifiedRow[]> {
   return keyed(
-    await query<{ extension: string }>(
-      `select e.name as extension
+    await query<{ extension: string; ordinal: number }>(
+      `select e.name as extension, x.ordinal
          from rules.ruleset_extensions x join rules.rulesets e on e.id = x.extension_id
         where x.ruleset_id = $1 and x.deleted_at is null`,
       [rulesetId],
     ),
-    (r) => `extends with ${r.extension}`,
+    (r) => `extends with ${r.extension} at ${r.ordinal}`,
   );
 }
 
@@ -243,7 +243,7 @@ async function pullRulesetLinks(query: Query, rulesetId: string): Promise<Identi
   );
 }
 
-/** The ruleset's own row, the rulesets it lists (its ancestors, its extensions) by name. */
+/** The ruleset's own row, the rulesets it lists (its ancestors) by name. */
 async function pullRulesetRow(query: Query, rulesetId: string): Promise<IdentifiedRow[]> {
   const rows = await query(`select * from rules.rulesets where id = $1`, [rulesetId]);
   const names = new Map(

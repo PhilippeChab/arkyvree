@@ -13,7 +13,6 @@ import {
   Entities,
   EntityLinks,
   EntitySnapshots,
-  Rulesets,
 } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { findLinks } from "@/tests/support/characters.ts";
@@ -28,7 +27,12 @@ import {
   findGrants,
   findLists,
 } from "@/tests/support/dnd3.5/links.ts";
-import { copyEntity, createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
+import {
+  copyEntity,
+  createSeededTestRuleset,
+  createTestRuleset,
+  subscribeTestRuleset,
+} from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { CLASS_HD, RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -43,7 +47,7 @@ async function createExtensionAndHost(userId: string, coreId: string) {
     status: "Published",
   });
   const fork = await createSeededTestRuleset(userId);
-  const [host] = await Rulesets.update(db, { extensionRulesetIds: [extension.id] }, { id: fork.id });
+  const host = await subscribeTestRuleset(fork.id, [extension.id]);
   return { extension, host };
 }
 

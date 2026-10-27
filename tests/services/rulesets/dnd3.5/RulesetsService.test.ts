@@ -1,9 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
-import type { InferInsertModel } from "drizzle-orm";
-
 import { DND35_COMPLETE_WARRIOR_NAME } from "@/content/dnd3.5/rulesetNames.ts";
-import { type rulesetsInRules, starredRulesetsInAccount } from "@/drizzle/schema.ts";
+import { starredRulesetsInAccount } from "@/drizzle/schema.ts";
 import {
   type Aptitude,
   type Feat,
@@ -55,7 +53,7 @@ import {
   RACE_SIZE,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
-type RulesetValues = Partial<InferInsertModel<typeof rulesetsInRules>>;
+type RulesetValues = NonNullable<Parameters<typeof createTestRuleset>[1]>;
 const firstPage = { limit: 100, page: 1 };
 
 /** A fork of `parent` for `session`'s user. */

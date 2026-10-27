@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 
 import type { CorePackageDefinition } from "@/content/core/builders/packages/types.ts";
 import type { Db } from "@/drizzle/database.ts";
-import { entitiesInRules, rulesetExtensionsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
+import { entitiesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
@@ -29,7 +29,10 @@ type SeederOf<S, C extends SeedContext> = (new (db: Db, ctx: C) => S) & {
  * (`database/packages/registry.ts`) hands it.
  */
 export abstract class ContentSeeder<Core = unknown, Book = unknown> extends include(SeederState, SeedsItems) {
-  /** Creates a published system ruleset of `baseRules`, its core rules or an extension of `baseId`, and returns its id. */
+  /**
+   * Creates a published system ruleset of `baseRules`, its core rules or an extension of `baseId` (which a fork
+   * subscribes to: the base itself subscribes to none), and returns its id.
+   */
   private static async createSystemRuleset(
     db: Db,
     baseRules: BaseRules,
@@ -48,7 +51,6 @@ export abstract class ContentSeeder<Core = unknown, Book = unknown> extends incl
           : { kind: "ruleset" as const }),
       })
       .returning({ id: rulesetsInRules.id });
-    if (baseId) await db.insert(rulesetExtensionsInRules).values({ rulesetId: baseId, extensionId: id });
     return id;
   }
 

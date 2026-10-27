@@ -12,7 +12,10 @@ export const ACTIVE_ADVANCEMENTS = sql`(SELECT id FROM character.advancements WH
  * The rulesets a character's (`c`) ruleset reads entities from: its own, its extensions and the rulesets it's forked
  * from (`CowSources.buildSourceChain`), as an array.
  */
-export const CHAIN = sql`(SELECT ARRAY[r.id] || r.extension_ruleset_ids || r.ancestor_ruleset_ids FROM rules.rulesets r WHERE r.id = c.ruleset_id)`;
+export const CHAIN = sql`(SELECT ARRAY[r.id] || ARRAY(
+    SELECT x.extension_id FROM rules.ruleset_extensions x WHERE x.ruleset_id = r.id AND x.deleted_at IS NULL
+    ORDER BY x.ordinal
+  ) || r.ancestor_ruleset_ids FROM rules.rulesets r WHERE r.id = c.ruleset_id)`;
 
 export async function query<T extends Record<string, unknown>>(statement: SQL) {
   return (await db.execute<T>(statement)).rows;
