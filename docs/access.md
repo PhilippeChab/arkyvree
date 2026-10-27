@@ -108,6 +108,7 @@ Campaign character responses leave the private notes out of the identity's block
 | `canDelete` | **Game Master only** (archive and unarchive) |
 | `canHardDelete` | **Game Master only**, must be archived. See [persistence.md](./persistence.md#recoverable-user-content) |
 | `canModify` | anyone the other checks allow, on a campaign that isn't archived (archived campaigns are read-only; a Game Master can still revoke an invite) |
+| `canListLinkableCharacters` | any member, Player or Game Master, of a campaign that isn't archived: what linking a character takes (a seat, and `canModify`), so the link dialog lists only what linking accepts (`GET /characters/unlinked/:campaignId`, `CampaignCharactersService.getLinkableCharacters`: the session's own player characters on the campaign's ruleset, in no campaign yet). Whoever may not read the campaign gets the 404 an unknown campaign gets, the same status and body, so neither its existence nor its ruleset shows |
 
 **Campaign character visibility** is *not* a CAS-protected surface — only the linking player can change visibility on their own character (`updateCharacterVisibility` throws `ForbiddenError "You do not own this character in this campaign"` for everyone else, including the GM: an identity match on the link's player). This is single-user contention by design.
 

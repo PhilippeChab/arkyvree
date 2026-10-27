@@ -4,12 +4,12 @@ import type { RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Characters, Entities } from "@/server/repositories/index.ts";
+import { Characters, Entities, Players } from "@/server/repositories/index.ts";
 import { api, createSignedInUser, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { postCampaign } from "@/tests/support/campaigns.ts";
 import { notesOf } from "@/tests/support/characters.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
-import { postCharacter, sheetOf } from "@/tests/support/dnd3.5/characters.ts";
+import { createTestCharacter, postCharacter, sheetOf } from "@/tests/support/dnd3.5/characters.ts";
 import { createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
@@ -126,7 +126,7 @@ describe("characters", () => {
     );
   });
 
-  test("lists the characters not linked to a campaign yet", async () => {
+  test("lists the Game Master's characters not linked to a campaign yet", async () => {
     const campaign = await postCampaign();
     const created = await postCharacter();
     const unlinked = await expectOk(
@@ -141,6 +141,31 @@ describe("characters", () => {
       characters.unlinked[":campaignId"].$get({ param: { campaignId: campaign.id }, query: {} }),
     );
     expect(after.items.map((c) => c.id)).not.toContain(created.id);
+  });
+
+  test("lists a player's own characters they could link to the campaign", async () => {
+    const campaign = await postCampaign();
+    const gmCharacter = await postCharacter();
+    const player = await createSignedInUser("player");
+    await Players.create(db, { userId: player.user.id, campaignId: campaign.id, role: "Player Character" });
+    const own = await createTestCharacter(player.user.id);
+
+    const linkable = await expectOk(
+      player.api.api.characters.unlinked[":campaignId"].$get({ param: { campaignId: campaign.id }, query: {} }),
+    );
+    expect(linkable.items.map((c) => c.id)).toEqual([own.id]);
+    expect(linkable.items.map((c) => c.id)).not.toContain(gmCharacter.id);
+  });
+
+  test("answers a campaign's linkable characters to a non-member as it answers an unknown campaign", async () => {
+    const campaign = await postCampaign();
+    const outsider = await createSignedInUser("outsider");
+    await createTestCharacter(outsider.user.id);
+    const linkable = outsider.api.api.characters.unlinked[":campaignId"];
+
+    const hidden = await expectStatus(linkable.$get({ param: { campaignId: campaign.id }, query: {} }), 404);
+    const unknown = await expectStatus(linkable.$get({ param: { campaignId: NIL_UUID }, query: {} }), 404);
+    expect(await hidden.text()).toBe(await unknown.text());
   });
 
   test("archives, unarchives and permanently deletes a character", async () => {

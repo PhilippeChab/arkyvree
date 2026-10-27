@@ -12,7 +12,6 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
   Activities,
-  Campaigns,
   CharacterAdvancements,
   CharacterLinks,
   Characters,
@@ -221,22 +220,6 @@ class CharactersService extends include(Object, Archives, Imports) {
       Engine.for(scope)
         .character(await readCharacterInput(db, record))
         .describeLinkPicks(role, entityIds),
-    );
-  }
-
-  async getUnlinkedCharacters(
-    session: Session,
-    campaignId: string,
-    where: { search?: string },
-    pagination: Pagination,
-  ) {
-    const campaign = await Campaigns.findOne(db, { id: campaignId });
-    if (!campaign) throw new NotFoundError("Campaign not found");
-
-    return await Characters.findUnlinkedPage(
-      db,
-      { userId: session.userId, rulesetId: campaign.rulesetId, search: where.search },
-      pagination,
     );
   }
 
