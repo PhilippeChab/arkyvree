@@ -202,14 +202,17 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
     const message = `A character can't go past level ${RULESET_LIMITS.characterLevel}: ${levelsLeft} level(s) left`;
     RulesError.parse(z.array(PLANNED_LEVEL).max(levelsLeft, message), levels, ["levels"]);
     return levels.map(({ classId, level, abilityIncreases }, i) => {
+      // A refusal names the character's level it's about, and a class in its rules' word
+      const about = `Level ${i + 1}: `;
+      const word = this.rulesetData.labelOf("classes");
       const klass = this.dnd35.classesById.get(classId);
-      if (!klass) throw new RulesError("invalid", `Level ${i + 1}: Class does not belong to the character's ruleset`);
+      if (!klass) throw new RulesError("invalid", `${about}${word} does not belong to the character's ruleset`);
 
       if (klass.partition !== PLAYER_CHARACTER_KIND)
-        throw new RulesError("invalid", `Level ${i + 1}: Class is not valid for a player character`);
+        throw new RulesError("invalid", `${about}${word} is not valid for a player character`);
 
       const classLevel = this.dnd35.classLevelByClassAndLevel.get(`${classId}:${level}`);
-      if (!classLevel) throw new RulesError("not-found", `Level ${i + 1}: Class level not found`);
+      if (!classLevel) throw this.rulesetData.notFound("class-levels", { about });
 
       return { klass, classLevel, abilityIncreases };
     });

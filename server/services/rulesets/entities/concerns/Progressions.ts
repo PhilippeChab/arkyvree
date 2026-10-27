@@ -9,12 +9,27 @@ import { createActivityWithNotifications } from "@/server/services/activities/in
 import EntityWriter from "@/server/services/rulesets/entities/EntityWriter.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { getActivityName } from "@/shared/activity.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** The entity row a progression's save writes (`EntityEdit`'s target), and its token. */
 interface TargetOwner {
   target: EditTarget;
   updatedAt: string;
+}
+
+/**
+ * What refuses a progression's save when what it writes is gone since the view was read: its owner (of `type`) or an
+ * owned entity (of `ownedType`), each named in its rules' word, as `EntityWriter.getNotFound` names an entity: "Class
+ * level no longer exists; refresh the class".
+ */
+function describeGone({ baseRules }: { baseRules: BaseRules }, type: string, ownedType: string) {
+  const rules = Engine.rules();
+  const refresh = `refresh the ${rules.labelOf(baseRules, type).toLowerCase()}`;
+  return {
+    owned: `${rules.labelOf(baseRules, ownedType)} no longer exists; ${refresh}`,
+    owner: `${rules.labelOf(baseRules, type)} no longer exists; ${refresh}`,
+  };
 }
 
 /**
@@ -28,18 +43,19 @@ export function Progressions<B extends Constructor>(Base: B) {
      * The entity row a progression's save writes (`owner`, of `type`, as the view has it): the ruleset's own, locked,
      * its owned entities' writes waiting on other saves of it (its own columns aren't written, nor its token moved: its
      * owned entities' tokens check the save), or the copy of an inherited one, with its owned entities and their
-     * customizations.
+     * customizations. Refused as not found (`gone`) when it's gone since the view was read.
      */
     private async targetOwner(
       tx: Db,
       scope: RulesetScope,
       type: RulesetEntityType,
-      { gone, owner }: Pick<ProgressionPlan, "gone" | "owner">,
+      owner: ProgressionPlan["owner"],
+      gone: string,
     ): Promise<TargetOwner> {
-      const target = await new EntityEdit(scope.ruleset, scope.rulesetData.cow).cowToEdit(tx, type, owner, gone.owner);
-      if (!target.copied) await EntityEdit.lock(tx, target.id, gone.owner);
+      const target = await new EntityEdit(scope.ruleset, scope.rulesetData.cow).cowToEdit(tx, type, owner, gone);
+      if (!target.copied) await EntityEdit.lock(tx, target.id, gone);
       const row = await Entities.findOne(tx, { entityType: type, id: target.id });
-      if (!row) throw new NotFoundError(gone.owner);
+      if (!row) throw new NotFoundError(gone);
       return { target, updatedAt: row.updatedAt };
     }
 
@@ -48,14 +64,15 @@ export function Progressions<B extends Constructor>(Base: B) {
      * own, once the owner was copied: `EditTarget.findOwned`): its `updatedAt` moved, refused when stale (`tokens`: the
      * entity the client read; a copy's take no check, `EditTarget.expected`), its form's edit, and its modifiers, those
      * it drops (their copies', on a copy: refused as not found when one is gone since the view was read,
-     * `EditTarget.resolveCustomizations`) and those it adds. Answers the entities it wrote, by their ids.
+     * `EditTarget.resolveCustomizations`) and those it adds; refused as not found (`gone`) when the owner's copy lacks
+     * one. Answers the entities it wrote, by their ids.
      */
     private async writeOwned(
       tx: Db,
       scope: RulesetScope,
       target: EditTarget,
       plan: ProgressionPlan,
-      tokens: ReadonlyMap<string, string>,
+      { gone, tokens }: { gone: string; tokens: ReadonlyMap<string, string> },
     ) {
       const { ownedType } = plan;
       const idByPosition = await target.findOwned(tx, ownedType);
@@ -64,7 +81,7 @@ export function Progressions<B extends Constructor>(Base: B) {
       const writtenIds: string[] = [];
       for (const owned of plan.owned) {
         const ownedId = idByPosition.get(owned.position);
-        if (!ownedId) throw new NotFoundError(plan.gone.owned);
+        if (!ownedId) throw new NotFoundError(gone);
 
         const expectedUpdatedAt = target.expected(tokens.get(owned.entity.id));
         const [row] = await Entities.update(tx, ownedType, owned.edit?.row ?? {}, { id: ownedId, expectedUpdatedAt });
@@ -114,8 +131,9 @@ export function Progressions<B extends Constructor>(Base: B) {
             const unchanged = { entityId: plan.owner.id, ownedIds: [] as string[], updatedAt: plan.owner.updatedAt };
             if (plan.owned.length === 0) return unchanged;
 
-            const { target, updatedAt } = await this.targetOwner(tx, scope, type, plan);
-            const ownedIds = await this.writeOwned(tx, scope, target, plan, tokens);
+            const gone = describeGone(scope.ruleset, type, plan.ownedType);
+            const { target, updatedAt } = await this.targetOwner(tx, scope, type, plan.owner, gone.owner);
+            const ownedIds = await this.writeOwned(tx, scope, target, plan, { gone: gone.owned, tokens });
 
             await createActivityWithNotifications(tx, {
               userId: session.userId,

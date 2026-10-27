@@ -36,7 +36,7 @@ export function Links<B extends Constructor>(Base: B) {
             policy.canUpdateEntity();
             const plan = Engine.for(scope).links(type, ownerId).planAdd(targetId);
 
-            const { gone } = EntityWriter.getNotFound(type);
+            const { gone } = EntityWriter.getNotFound(ruleset, type);
             const { id: fromId } = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, type, plan.owner, gone);
             const [link] = await EntityLinks.createMany(tx, [{ ...plan.link, fromId, fromType: type }]);
 
@@ -83,7 +83,7 @@ export function Links<B extends Constructor>(Base: B) {
             policy.canDeleteEntity({ inUse });
             const plan = Engine.for(scope).links(type, ownerId).planRemove(targetId);
 
-            const { gone } = EntityWriter.getNotFound(type);
+            const { gone } = EntityWriter.getNotFound(ruleset, type);
             const { id: fromId } = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, type, plan.owner, gone);
             const [link] = await EntityLinks.delete(tx, { fromId, role: plan.role, toId: plan.toId });
             // Another removal took it since the view was read

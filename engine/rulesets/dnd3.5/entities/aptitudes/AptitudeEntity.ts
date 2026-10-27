@@ -17,8 +17,6 @@ export default class AptitudeEntity extends RulesetEntity<"aptitudes"> {
   /** None of its own. */
   protected override readonly fields = FieldCodec.NONE;
 
-  protected override readonly label = "Aptitude";
-
   override readonly type = "aptitudes";
 
   /** Refuses deleting an aptitude the rules count on by name. */

@@ -70,9 +70,16 @@ describe("rules", () => {
   test("answers what every base rules' rulesets share, to anyone: words, kinds, levels, lists, progression, level wizard, a new character's form and license", async () => {
     const rules = await expectOk(guestApi.api.rules.$get());
     const dnd35 = rules["Dungeons & Dragons: 3.5"];
-    // Its word for every type, the engine's own (modifiers) with its own
+    // Its word for every type, the engine's own (characters, modifiers) with its own, an owned type's naming its
+    // entity's position
     expect(dnd35.words.spells).toEqual({ many: "Spells", one: "Spell" });
     expect(dnd35.words.classes).toEqual({ many: "Classes", one: "Class" });
+    expect(dnd35.words["class-levels"]).toEqual({
+      many: "Class Levels",
+      one: "Class Level",
+      position: { many: "Levels", one: "Level" },
+    });
+    expect(dnd35.words.characters).toEqual({ many: "Characters", one: "Character" });
     expect(dnd35.words.modifiers).toEqual({ many: "Modifiers", one: "Modifier" });
     // Its kinds, in its page's order: each its picture, and its tab's help where it has one
     expect(dnd35.kinds.map(({ type }) => type)).toEqual([

@@ -7,6 +7,8 @@ interface LevelTogglesProps {
   levels: readonly { id: string; position: number }[];
   /** A level's toggle was clicked */
   onToggle: (levelId: string) => void;
+  /** Its rules' word for a level's position along its owner, which names one ("Level", "Level 3") */
+  positionWord: string;
   /** Read-only: nothing to click */
   readOnly?: boolean;
   /** What a level holds as saved: a changed toggle is outlined */
@@ -16,7 +18,7 @@ interface LevelTogglesProps {
 }
 
 /** One toggle a level, filled where something is granted, outlined where the tab changed it before its save. */
-export function LevelToggles({ label, levels, onToggle, readOnly, saved, value }: LevelTogglesProps) {
+export function LevelToggles({ label, levels, onToggle, positionWord, readOnly, saved, value }: LevelTogglesProps) {
   return (
     <Box
       role="group"
@@ -35,7 +37,7 @@ export function LevelToggles({ label, levels, onToggle, readOnly, saved, value }
             key={id}
             disabled={readOnly}
             aria-pressed={count > 0}
-            aria-label={`Level ${position}: ${label}${count > 1 ? `, ${count} Picks` : ""}`}
+            aria-label={`${positionWord} ${position}: ${label}${count > 1 ? `, ${count} Picks` : ""}`}
             onClick={() => onToggle(id)}
             sx={{
               fontSize: "0.72rem",

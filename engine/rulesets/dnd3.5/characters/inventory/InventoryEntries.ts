@@ -82,7 +82,7 @@ export default class InventoryEntries {
         "item" in change
           ? { id: null, item: change.item }
           : { id: change.entry.id, item: Dnd35View.of(view.rulesetData).itemsById.get(change.entry.itemId) };
-      if (!entry.item) throw new RulesError("not-found", "Item not found");
+      if (!entry.item) throw view.rulesetData.notFound("items");
       new Equipping(view, character).checkEquip({ id: entry.id, item: entry.item }, location, weaponSets, force);
     }
     return InventoryEntries.placementOf(request);

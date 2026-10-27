@@ -2,6 +2,7 @@
 
 import { CowData } from "@/engine/core/cow/index.ts";
 import { DeclaredFields } from "@/engine/core/fields/index.ts";
+import type { RulesDescription } from "@/engine/core/module/index.ts";
 import {
   RulesetComposition,
   type RulesetData,
@@ -14,6 +15,12 @@ import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /** A kind of the made-up module a test composes a view of, by its name. */
 export type Kind = keyof ViewKinds;
+
+/** A made-up module's words: its owners', and its owned entities', which name one by its position ("Rung 2"). */
+const WORDS: RulesDescription["words"] = {
+  owned: { many: "Owned Steps", one: "Owned Step", position: { many: "Rungs", one: "Rung" } },
+  owners: { many: "Owners", one: "Owner" },
+};
 
 /** No module's fields: a made-up module's owners hold values of fields none declares, in no order but their own. */
 export const NO_FIELDS = new DeclaredFields({}, []);
@@ -39,7 +46,8 @@ export const VIEW_SCHEMA: ViewSchema = {
 
 /**
  * The view of the made-up module a chain composes (`chain`, its own first), by its copy-on-write data's overrides,
- * aliases and siblings, and the fields it declares (`declared`, none by default): its owners labeled "Owner".
+ * aliases and siblings, and the fields it declares (`declared`, none by default): its owners and the entities they own
+ * named in its words (`WORDS`).
  */
 export function composeView(
   chain: RulesetRawData[],
@@ -54,7 +62,7 @@ export function composeView(
     new Map(siblings),
     new Set(),
   );
-  return new RulesetComposition(chain, cow, declared, VIEW_SCHEMA, { owners: "Owner" }).build();
+  return new RulesetComposition(chain, cow, declared, VIEW_SCHEMA, WORDS).build();
 }
 
 /** A kind's rows' ids, as a view lists them. */

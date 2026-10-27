@@ -116,9 +116,16 @@ describe("A ruleset's view's reads", () => {
     expect(view.linksOf("missing", "any")).toEqual([]);
   });
 
-  test("name a type by its module's label, or by itself for one it labels none of", () => {
+  test("name a type by its rules' word, in a sentence's case, or by itself for one they have no word for", () => {
     expect(view.labelOf("owners")).toBe("Owner");
-    expect(view.labelOf("owned")).toBe("owned");
+    expect(view.labelOf("owned")).toBe("Owned step");
+    expect(view.labelOf("nothing")).toBe("nothing");
+  });
+
+  test("name an owned entity by its position in its rules' word for it, else in its type's word", () => {
+    expect(view.positionNameOf("owned", 2)).toBe("Rung 2");
+    expect(view.positionNameOf("owners", 2)).toBe("Owner 2");
+    expect(view.positionNameOf("nothing", 2)).toBe("nothing 2");
   });
 
   test("keep what a module derives of the view, built once", () => {

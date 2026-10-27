@@ -1,6 +1,5 @@
 import type { CharacterInput } from "@/engine/core/module/index.ts";
 import { CharacterPicker } from "@/engine/core/pickers/index.ts";
-import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import CharacterProjection from "@/engine/rulesets/dnd3.5/levelUp/CharacterProjection.ts";
 import type { PickQuery } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
@@ -27,7 +26,7 @@ export default abstract class LevelPicker<Details extends object = object> exten
   ) {
     super(view, input, Dnd35CharacterBuilder);
     const classLevel = Dnd35View.of(this.rulesetData).classLevelByClassAndLevel.get(`${query.classId}:${query.level}`);
-    if (!classLevel) throw new RulesError("not-found", "Class level not found");
+    if (!classLevel) throw this.rulesetData.notFound("class-levels");
     this.classLevel = classLevel;
   }
 

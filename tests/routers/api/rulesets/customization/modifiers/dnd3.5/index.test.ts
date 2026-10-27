@@ -155,11 +155,14 @@ describe("rulesets customization modifiers", () => {
     await expectStatus(modifiers.$get({ param: { id: NIL_UUID, entityType: "feats", entityId } }), 404);
     await expectStatus(modifiers.$get({ param: { id, entityType: "feats", entityId: NIL_UUID } }), 404);
     const param = { id, entityType: "feats" as const, entityId, modifierId: NIL_UUID };
-    await expectStatus(modifier.$get({ param }), 404);
-    await expectStatus(
-      modifier.$put({ param, json: { target: "abilities.wisdom.misc", value: "1", operator: "add" } }),
-      404,
-    );
+    // A missing modifier named in the engine's word for it
+    expect(await (await expectStatus(modifier.$get({ param }), 404)).json()).toMatchObject({
+      message: "Modifier not found",
+    });
+    const update = modifier.$put({ param, json: { target: "abilities.wisdom.misc", value: "1", operator: "add" } });
+    expect(await (await expectStatus(update, 404)).json()).toMatchObject({
+      message: "Modifier not found for this entity",
+    });
     await expectStatus(modifier.$delete({ param }), 404);
   });
 });

@@ -1,5 +1,6 @@
 import type { CowData } from "@/engine/core/cow/index.ts";
 import { type DeclaredFields, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
+import type { RulesDescription } from "@/engine/core/module/index.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 import type { ViewEntity, ViewLink } from "./rows.ts";
@@ -69,17 +70,16 @@ export interface ViewSchema {
 export default class RulesetComposition {
   /**
    * `declared`: the fields its modules declare, which order its entities' values and merge a sibling's into its
-   * winner's; `schema`: what its modules declare of its kinds and links; `labels`: what its module calls an entity of
-   * each kind.
+   * winner's; `schema`: what its modules declare of its kinds and links; `words`: its rules' word for each type.
    */
   constructor(
     chain: RulesetRawData[],
     cow: CowData,
     declared: DeclaredFields,
     schema: ViewSchema,
-    labels: Readonly<Record<string, string>>,
+    words: RulesDescription["words"],
   ) {
-    this.labels = labels;
+    this.words = words;
     this.chain = chain;
     this.cow = cow;
     this.declared = declared;
@@ -94,13 +94,13 @@ export default class RulesetComposition {
   /** The fields its modules declare: their order, and how sibling copies merge them */
   private readonly declared: DeclaredFields;
 
-  /** What the ruleset's module calls an entity of each kind, which its view answers */
-  private readonly labels: Readonly<Record<string, string>>;
-
   private readonly schema: ViewSchema;
 
   /** The links whose sibling copies' merge into their winner's, each by its kind, its role and its target's kind. */
   private readonly unionLinks: ReadonlySet<string>;
+
+  /** Its rules' word for each type, which its view names a type by */
+  private readonly words: RulesDescription["words"];
 
   /**
    * Each kind's rows, an owner's before the kinds it owns: an owned kind's rows whose owner the view shows (a copied
@@ -338,6 +338,6 @@ export default class RulesetComposition {
         },
       ]),
     );
-    return new RulesetData(this.composeLists(), this.cow, this.labels, kinds);
+    return new RulesetData(this.composeLists(), this.cow, this.words, kinds);
   }
 }

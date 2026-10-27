@@ -8,6 +8,7 @@ import type {
   RulesDescription,
   RulesetModule,
 } from "@/engine/core/module/index.ts";
+import { RulesetData } from "@/engine/core/view/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 import Modules, { type EntityType } from "./Modules.ts";
@@ -18,7 +19,8 @@ import StorageEngine from "./StorageEngine.ts";
  * and the programs they import characters from, and the kinds a fork restores. What a kind can do is its rules' class's
  * (`KindCapabilities`) and its storage's (`StorageEngine`), which its description reads past its declaration's words.
  * Every module's kinds are described once as it's built (`shared`, as the server loads), so a declaration its rules or
- * its storage contradict fails then, not on a request.
+ * its storage contradict fails then, not on a request. It never takes a ruleset's view or scope, only base rules and
+ * types, which is why `arkyvree/one-engine-op` counts none of its answers as an operation.
  */
 export default class RulesEngine {
   constructor(
@@ -159,6 +161,14 @@ export default class RulesEngine {
     return Object.fromEntries(
       this.modules.map(([baseRules, module]) => [baseRules, this.describeModule(module)]),
     ) as Record<BaseRules, RulesDescription>;
+  }
+
+  /**
+   * What a base rules' refusals call an entity of a type (`type`), in its rules' word, as its rulesets' views do
+   * (`RulesetData.labelOf`): "Class level". What the server's own refusals of an entity name it by.
+   */
+  labelOf(baseRules: BaseRules, type: string): string {
+    return RulesetData.labelIn(Modules.of(baseRules).ruleset.describeRules().words, type);
   }
 
   /**

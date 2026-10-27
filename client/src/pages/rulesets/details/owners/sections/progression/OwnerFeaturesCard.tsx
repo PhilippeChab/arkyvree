@@ -30,6 +30,8 @@ interface OwnerFeaturesCardProps {
   onPoolPick: (poolId: string, levelId: string, count: number) => void;
   /** The pools the owner's levels give picks in, with the picks the tab holds for each */
   pools: readonly PoolRow[];
+  /** Its rules' word for a level's position along its owner, which names one ("Level", "Level 3") */
+  positionWord: string;
   readOnly: boolean;
   rulesetId: string;
   /** The features as saved, whose levels a changed toggle is outlined against */
@@ -76,6 +78,7 @@ export function OwnerFeaturesCard({
   onFeatureLevels,
   onPoolPick,
   pools,
+  positionWord,
   readOnly,
   rulesetId,
   savedFeatures,
@@ -135,6 +138,7 @@ export function OwnerFeaturesCard({
               <LevelToggles
                 label={row.name}
                 levels={levels}
+                positionWord={positionWord}
                 readOnly={readOnly}
                 value={(levelId) => (row.levelIds.includes(levelId) ? 1 : 0)}
                 saved={(levelId) =>
@@ -157,6 +161,7 @@ export function OwnerFeaturesCard({
               <LevelToggles
                 label={pool.name}
                 levels={levels}
+                positionWord={positionWord}
                 readOnly={readOnly}
                 value={(levelId) => pool.picks[levelId] ?? 0}
                 saved={(levelId) => savedPicks(pool.id, levelId)}

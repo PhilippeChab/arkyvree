@@ -9,7 +9,5 @@ export default class AbilityEntity extends RulesetEntity<"abilities"> {
   /** None of its own. */
   protected override readonly fields = FieldCodec.NONE;
 
-  protected override readonly label = "Ability";
-
   override readonly type = "abilities";
 }

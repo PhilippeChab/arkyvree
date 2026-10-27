@@ -7,6 +7,7 @@ import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTa
 import ClassesPaths from "@/engine/rulesets/dnd3.5/model/classes/ClassesPaths.ts";
 import type { CustomizedClassLevel, HeldFeat } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import type SpellcastingState from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
+import { LEVEL_WORD } from "@/engine/rulesets/dnd3.5/ruleset/rules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
@@ -37,7 +38,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
         for (let i = 0; i < receivingBonusLevels.length && i < grantingLevels.length; i++) {
           this.bonusClassLevelAttribution.set(
             receivingBonusLevels[i].id,
-            `${grantingLevels[i].className} Level ${grantingLevels[i].level}`,
+            `${grantingLevels[i].className} ${LEVEL_WORD.one} ${grantingLevels[i].level}`,
           );
         }
       }

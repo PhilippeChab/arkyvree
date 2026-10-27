@@ -23,7 +23,7 @@ import {
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import type { ProgressionCounts, RulesDescription } from "@/client/src/lib/queries.ts";
-import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
+import { entityTypeLabel, positionWordOf } from "@/client/src/lib/rulesetLabels.ts";
 import { levelPageOf } from "@/client/src/pages/rulesets/details/owners/ownerKind.ts";
 import {
   type OwnerProgressionBody,
@@ -104,11 +104,12 @@ function OwnerTables({ rulesetId, ownerId, ownerName, ownerType, ruleset, counts
   const levels = (reads[0]?.data ?? [])
     .toSorted(byLevel)
     .map(({ id, position, updatedAt }) => ({ id, level: position, updatedAt }));
-  // Its rules' word for the owner ("Class")
+  // Its rules' word for the owner ("Class"), and the kind of its levels
   const word = entityTypeLabel(ownerType, rules.words);
+  const levelType = levelPageOf(rules)?.type ?? "";
   const save = useProgressionSave(rulesetId, ownerId, {
     ownerType,
-    levelType: levelPageOf(rules)?.type ?? "",
+    levelType,
     what: many,
     word,
   });
@@ -285,7 +286,7 @@ function OwnerTables({ rulesetId, ownerId, ownerName, ownerType, ruleset, counts
           <TablePasteBox
             table={shown}
             levels={levels}
-            levelWord={entityTypeLabel(levelPageOf(rules)?.type ?? "", rules.words).toLowerCase()}
+            levelWord={entityTypeLabel(levelType, rules.words).toLowerCase()}
             changesOf={(cells) => draft.changesOf(table, cells)}
             onCancel={() => setPasting(false)}
             onApply={(cells) => {
@@ -297,6 +298,7 @@ function OwnerTables({ rulesetId, ownerId, ownerName, ownerType, ruleset, counts
         <TableGrid
           table={shown}
           levels={levels}
+          positionWord={positionWordOf(levelType, rules.words)}
           readOnly={!editable}
           value={(levelId, column) => draft.cellOf(table, levelId, column)}
           saved={(levelId, column) => draft.savedCell(table, levelId, column)}

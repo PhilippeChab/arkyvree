@@ -17,7 +17,7 @@ interface RequirementBody {
 
 /** An entity's requirements: as its page lists them, and what their saves store, checked against their paths. */
 export default class RequirementEdits extends CustomizationEdits<Requirement> {
-  protected override readonly label = "Requirement";
+  protected override readonly type = "requirements";
 
   /** The entity's requirements of its type: its own, and its siblings' (the view composes them, OR-chain-aware). */
   protected override rowsOf(entityId: string) {
