@@ -13,6 +13,7 @@ import {
   Visibility,
 } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { getInviteNames } from "@/server/services/invites/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
@@ -109,15 +110,9 @@ class CampaignPlayersService {
       },
     });
 
-    const inviterUser = await Users.findOne(tx, { id: session.userId });
+    const names = await getInviteNames(tx, session, user, email);
 
-    return {
-      invite,
-      campaignName: campaign.name,
-      inviteeName: user?.username || email.split("@")[0],
-      inviterName: inviterUser?.username || inviterUser?.emailAddress.split("@")[0] || "Someone",
-      email,
-    };
+    return { invite, campaignName: campaign.name, ...names, email };
   }
 
   async addPlayer(session: Session, campaignId: string, role: CampaignRole, email?: string) {

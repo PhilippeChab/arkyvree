@@ -3,24 +3,24 @@ import { Engine } from "@/engine/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import {
-  CharacterContributors,
-  Characters,
-  Notifications,
-  type Pagination,
-  Users,
-  Visibility,
-} from "@/server/repositories/index.ts";
+import { CharacterContributors, Characters, type Pagination, Users, Visibility } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { toPublicUser } from "@/server/services/authentication/index.ts";
+import {
+  checkNewContributor,
+  getInviteNames,
+  getPendingInvite,
+  saveInviteAnswer,
+} from "@/server/services/invites/index.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
+/** What an invite the session's user can't answer, or see, is refused with: it doesn't reveal whether it exists. */
+const INVITE_NOT_FOUND = "Contributor invite not found";
+
 class CharacterContributorsService {
-  /**
-   * The invitee's answer: the invite's status, its notification read,
-   * and the activity its character's owner is told of.
-   */
+  /** The invitee's answer, which its character's owner is told of. */
   private async answerInvite(
     tx: Db,
     session: Session,
@@ -28,33 +28,16 @@ class CharacterContributorsService {
     characterName: string | undefined,
     status: "Active" | "Rejected",
   ) {
-    const [updated] = await CharacterContributors.update(tx, { status }, { id: contributor.id });
-    await Notifications.markRead(tx, { recipientId: session.userId, targetId: contributor.id });
-    await createActivityWithNotifications(tx, {
-      userId: session.userId,
-      targetId: updated.id,
+    return await saveInviteAnswer(tx, session, CharacterContributors, contributor.id, status, {
       targetType: TARGET_TYPES.characterContributors,
       type: status === "Active" ? "acceptCharacterContributorInvite" : "rejectCharacterContributorInvite",
       data: { contributorId: contributor.id, characterId: contributor.characterId, characterName },
     });
-    return updated;
-  }
-
-  /**
-   * The pending invite addressed to the session's user. Anyone else's is a 404: it doesn't reveal the invite exists.
-   */
-  private async getPendingInviteFor(tx: Db, session: Session, contributorId: string) {
-    const contributor = await CharacterContributors.findOne(tx, { id: contributorId });
-    if (!contributor || contributor.userId !== session.userId) throw new NotFoundError("Contributor invite not found");
-
-    if (contributor.status !== "Pending") throw new ConflictError("Invite is no longer pending");
-
-    return contributor;
   }
 
   async acceptInvite(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const contributor = await this.getPendingInviteFor(tx, session, contributorId);
+      const contributor = await getPendingInvite(tx, session, CharacterContributors, contributorId, INVITE_NOT_FOUND);
 
       const character = await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All);
       if (!character) throw new NotFoundError("Character not found");
@@ -82,10 +65,7 @@ class CharacterContributorsService {
 
     const paginated = await CharacterContributors.findPage(db, { characterId, ...where }, pagination);
     const ownerUser = await Users.findOne(db, { id: character.userId });
-    const owner = ownerUser
-      ? { id: ownerUser.id, username: ownerUser.username, emailAddress: ownerUser.emailAddress }
-      : null;
-    return { ...paginated, owner };
+    return { ...paginated, owner: ownerUser ? toPublicUser(ownerUser) : null };
   }
 
   // Single invite for the current user, any status. Used by the invite-accept
@@ -96,7 +76,7 @@ class CharacterContributorsService {
       id: contributorId,
       userId: session.userId,
     });
-    if (!invite) throw new NotFoundError("Contributor invite not found");
+    if (!invite) throw new NotFoundError(INVITE_NOT_FOUND);
 
     return invite;
   }
@@ -115,28 +95,7 @@ class CharacterContributorsService {
       if (user && user.id === character.userId)
         throw new ConflictError("Cannot invite the character owner as a contributor");
 
-      if (user) {
-        const existing = await CharacterContributors.findOne(tx, {
-          characterId,
-          userId: user.id,
-          status: "Active",
-        });
-        if (existing) throw new ConflictError("User is already a contributor");
-
-        const pending = await CharacterContributors.findOne(tx, {
-          characterId,
-          userId: user.id,
-          status: "Pending",
-        });
-        if (pending) throw new ConflictError("User already has a pending invite");
-      } else {
-        const pending = await CharacterContributors.findOne(tx, {
-          characterId,
-          email,
-          status: "Pending",
-        });
-        if (pending) throw new ConflictError("This email already has a pending invite");
-      }
+      await checkNewContributor(tx, CharacterContributors, { characterId }, user, email);
 
       const rows = await CharacterContributors.create(tx, {
         characterId,
@@ -155,14 +114,13 @@ class CharacterContributorsService {
         data: { email, characterId, characterName: character.name },
       });
 
-      const inviterUser = await Users.findOne(tx, { id: session.userId });
+      const names = await getInviteNames(tx, session, user, email);
 
       return {
         contributor,
         emailData: {
           email,
-          inviteeName: user?.username || email.split("@")[0],
-          inviterName: inviterUser?.username || inviterUser?.emailAddress.split("@")[0] || "Someone",
+          ...names,
           characterName: character.name,
           contributorId: contributor.id,
         },
@@ -213,7 +171,7 @@ class CharacterContributorsService {
 
   async rejectInvite(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const contributor = await this.getPendingInviteFor(tx, session, contributorId);
+      const contributor = await getPendingInvite(tx, session, CharacterContributors, contributorId, INVITE_NOT_FOUND);
 
       const character = await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All);
 

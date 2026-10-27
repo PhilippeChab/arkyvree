@@ -17,6 +17,11 @@ import {
 } from "@/server/repositories/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 
+/** A user as another's page shows them: their public columns (an owner, an invitee), never the rest of their account. */
+export function toPublicUser(user: Pick<InferSelectModel<typeof usersInAccount>, "emailAddress" | "id" | "username">) {
+  return { id: user.id, username: user.username, emailAddress: user.emailAddress };
+}
+
 /** The user as a response carries it: whether a password is set, never its digest. */
 export function toSafeUser(user: InferSelectModel<typeof usersInAccount>) {
   const { passwordDigest, ...safeUser } = user;
