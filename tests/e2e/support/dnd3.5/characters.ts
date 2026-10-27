@@ -4,7 +4,13 @@ import { parseResponse } from "hono/client";
 import { apiOf } from "@/tests/e2e/support/api.ts";
 import { selectOption } from "@/tests/e2e/support/page.ts";
 import { coreRulesetId } from "@/tests/e2e/support/rulesets.ts";
-import { CHARACTER_ALIGNMENT, CHARACTER_GENDER, CHARACTER_XP } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  CHARACTER_ALIGNMENT,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * Gives the character its first level, of `klass`, through the API as Add Level saves it: its class planned, its hit
@@ -93,8 +99,8 @@ export async function fillNewCharacter(page: Page, name: string) {
   await selectOption(page, "Ruleset", "Core SRD 3.5");
   await races;
   await selectOption(page, "Race");
-  await dialog.locator('input[name="height"]').fill("5 feet 8 inches");
-  await dialog.locator('input[name="weight"]').fill("150 lbs");
+  await dialog.locator(`input[name="${CHARACTER_HEIGHT}"]`).fill("5 feet 8 inches");
+  await dialog.locator(`input[name="${CHARACTER_WEIGHT}"]`).fill("150 lbs");
   await expect(dialog.getByText("Strength", { exact: true })).toBeVisible({ timeout: 10_000 });
   // Scores start empty under 4d6 Drop Lowest.
   await dialog.getByRole("button", { name: /^Roll All$/ }).click();

@@ -31,14 +31,6 @@ type FieldName = keyof typeof CHARACTER_FIELDS;
 const OWN_REQUEST = z.object({ description: z.string().optional() });
 
 /**
- * The stored fields an identity edit never leaves at none (`required`: its alignment and its gender, selects of their
- * options), which an edit that sends one unset (null) leaves as it is: the character always holds one.
- */
-const UNCLEARED = new Set(
-  Field.storedLeavesOf(CHARACTER_FIELDS).flatMap((leaf) => ("required" in leaf && leaf.required ? [leaf.field] : [])),
-);
-
-/**
  * A 3.5 character's identity as its sheet's `fields` block: its race (its creation's), alignment, experience and deity
  * on a line, its age, gender, height and weight on the next, its description under them, the languages it speaks, and
  * its notes; a partly seen character's race and physical traits alone. Each field is keyed by the stored field that
@@ -48,7 +40,7 @@ const UNCLEARED = new Set(
 export default class IdentityFields {
   /**
    * A character's field (`name`'s) as its block shows it, holding `value` (the identity's, as its sheet reads it): a
-   * number at least its least (one with a default, required: its edit never clears it), a select of its values (one
+   * number at least its least (one it always holds required, `CharacterValues.held`), a select of its values (one
    * they don't hold reads as not set), or a text.
    */
   private static sheetFieldOf(name: FieldName, value: unknown): SheetField {
@@ -61,7 +53,7 @@ export default class IdentityFields {
         kind: "number",
         label,
         min: Field.boundsOf(declared).min,
-        ...(fallback !== undefined && { required: `${label} is required` }),
+        ...(CharacterValues.isHeld(key) && { required: `${label} is required` }),
         value: typeof value === "number" ? value : (fallback ?? null),
       };
     }
@@ -149,14 +141,14 @@ export default class IdentityFields {
    * What an edit of a character's (`character`) identity (`request`: its fields by the stored field that keeps each,
    * and its description) writes, each checked by the character's codec as an entity's form is (`FieldCodec.parse`):
    * refused, by field, when it names a field the character hasn't, or a value its field doesn't take. A field it
-   * leaves out is kept, and so is one it never leaves at none that it sends unset (`UNCLEARED`); one it clears
-   * (null, an empty text), none.
+   * leaves out is kept, and so is one a form never leaves at none that it sends unset (`CharacterValues.keptUnset`:
+   * its alignment, its gender); one it clears (null, an empty text), none. Its experience sent unset is refused.
    */
   static plan(view: RulesetView, character: CharacterInput, request: FieldsRequest): FieldsPlan {
     const { description, ...given } = request;
     const own = RulesError.parse(OWN_REQUEST, { description }, ["fields"]);
     const sent = Object.fromEntries(
-      Object.entries(given).filter(([field, value]) => value !== null || !UNCLEARED.has(field)),
+      Object.entries(given).filter(([field, value]) => value !== null || !CharacterValues.keptUnset.has(field)),
     );
     const values = CharacterValues.parseForm(view, sent, CharacterValues.fieldsOf(character.record));
     return {

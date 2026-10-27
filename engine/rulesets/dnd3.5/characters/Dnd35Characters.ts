@@ -84,12 +84,12 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
     return new RacePicker(view, query);
   }
 
-  /** What an edit of a character's identity writes: its fields, each checked by their declarations, and its description. */
+  /** What an edit of a character's identity writes: its fields, each checked as declared, and its description. */
   protected override planFields(...args: Parameters<typeof IdentityFields.plan>) {
     return IdentityFields.plan(...args);
   }
 
-  /** What a new character's fields write: its alignment, gender and experience, and its optional details, as declared. */
+  /** What a new character's fields write, as declared: its alignment, gender and experience, and its other details. */
   protected override planNewFields(...args: Parameters<typeof NewCharacters.planFields>) {
     return NewCharacters.planFields(...args);
   }

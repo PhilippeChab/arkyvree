@@ -35,7 +35,7 @@ const IDENTITY = {
   },
 };
 
-/** What an edit of a new Lawful Good woman's identity (`fields`, as its sheet sends them) writes, as the engine plans it. */
+/** What an edit of a new Lawful Good woman's identity (`fields`, as its sheet sends them) writes, as planned. */
 async function planOf(fields: FieldsRequest) {
   const record: Character = await createCharacterAs(makeSession(), { alignment: "Lawful Good", gender: "Female" });
   return await withRulesetScope(db, record.rulesetId, async (scope) =>

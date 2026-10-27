@@ -118,6 +118,15 @@ describe("A new 3.5 character's creation", () => {
         { category: `fields.${CHARACTER_GENDER}`, message: "Gender is required" },
       ],
     });
+    // A missing field and a key that's no field, refused together
+    expect(
+      planOf({ [CHARACTER_ALIGNMENT]: "Lawful Good", [CHARACTER_GENDER]: "Female", strength: 18 }),
+    ).rejects.toMatchObject({
+      issues: [
+        { category: `fields.${CHARACTER_XP}`, message: "Experience Points is required" },
+        { category: "fields.strength", message: "Not a field of this entity" },
+      ],
+    });
   });
 
   test("lays out its form's fields as they're declared, by their stored fields", () => {

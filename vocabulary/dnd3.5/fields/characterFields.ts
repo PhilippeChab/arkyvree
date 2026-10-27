@@ -17,12 +17,13 @@ import {
 } from "./character.ts";
 
 /**
- * A 3.5 character's fields, by name, in the order its sheet shows them: its alignment, its experience and its deity, then
- * its age, gender, height and weight. Its alignment, gender and experience it always holds (always written: an edit
- * never clears them), each with the default a new one takes without it (an import's: True Neutral, Other, 0), its
- * alignment and gender among their options, its experience a whole number from 0; its age a whole number from 1, or
- * none; its deity, height and weight texts, or none. What a new character's form must give are those it always holds
- * (`write: "always"`), which an import defaults.
+ * A 3.5 character's fields, by name, in the order its sheet shows them: its alignment, its experience and its deity,
+ * then its age, gender, height and weight. Its alignment, gender and experience it always holds (`write: "always"`): a
+ * new character's form must give them, its forms mark them required, an edit never clears them, and an import takes
+ * their defaults (True Neutral, Other, 0) when its file has none. Its alignment and gender, among their options, a form
+ * never leaves at none (`required`): an edit that sends one unset leaves it as it is (its experience sent unset, it
+ * refuses). Its experience is a whole number from 0; its age a whole number from 1, or none; its deity, height and
+ * weight texts, or none.
  */
 export const CHARACTER_FIELDS = {
   alignment: {

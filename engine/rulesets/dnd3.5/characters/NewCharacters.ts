@@ -29,12 +29,6 @@ type FieldName = keyof typeof CHARACTER_FIELDS;
 /** A 3.5 creation method, as its data writes it. */
 type MethodData = (typeof CREATION_METHODS)[number];
 
-/**
- * The fields a new character's form must give: those a character always holds (always written: its alignment, its
- * gender and its experience), each a field of its form its create refuses to leave out.
- */
-const HELD = Field.storedLeavesOf(CHARACTER_FIELDS).filter((leaf) => "write" in leaf && leaf.write === "always");
-
 /** The row's own column a new character's form sends among its fields, by its key: its description, a text or none. */
 const OWN_REQUEST = z.object({ description: z.string().nullable().optional() });
 
@@ -48,6 +42,25 @@ export default class NewCharacters {
     if (method.kind !== "pointBuy") return method;
     const priced = Object.keys(method.costs).map(Number);
     return { ...method, max: Math.max(...priced), min: Math.min(...priced) };
+  }
+
+  /**
+   * A new character's fields (`given`, by the stored field that keeps each) as the character's codec reads them
+   * (`CharacterValues.parseForm`), each it always holds given: refused as invalid otherwise, every field it leaves out
+   * that it always holds (`<Label> is required`) with what the codec refuses.
+   */
+  private static parseGiven(view: RulesetView, given: FieldsRequest) {
+    const missing = CharacterValues.held
+      .filter((leaf) => given[leaf.field] === undefined)
+      .map((leaf) => ({ category: `fields.${leaf.field}`, message: `${leaf.label} is required` }));
+    try {
+      const values = CharacterValues.parseForm(view, given);
+      if (missing.length === 0) return values;
+    } catch (error) {
+      if (!(error instanceof RulesError) || missing.length === 0) throw error;
+      throw new RulesError("invalid", error.message, [...missing, ...(error.issues ?? [])]);
+    }
+    throw new RulesError("invalid", "Request validation failed", missing);
   }
 
   /**
@@ -74,14 +87,14 @@ export default class NewCharacters {
 
   /**
    * A character's field (`name`'s) as a new character's form shows it, keyed by its stored field, labeled and bounded
-   * as it's declared (`CHARACTER_FIELDS`): one it always holds required, a number starting at its default, a text with
-   * its example; `shown`, what its form adds: a select that narrows its creation picks (`narrows`), a number whose
-   * input's arrows stop at its least (`stepped`).
+   * as it's declared (`CHARACTER_FIELDS`): one it always holds required (`CharacterValues.held`), a number starting at
+   * its default, a text with its example; `shown`, what its form adds: a select that narrows its creation picks
+   * (`narrows`), a number whose input's arrows stop at its least (`stepped`).
    */
   static describeField(name: FieldName, shown: { narrows?: true; stepped?: true } = {}): CreationField {
     const declared = CHARACTER_FIELDS[name];
     const { field: key, label } = declared;
-    const required = "write" in declared ? { required: `${label} is required` } : {};
+    const required = CharacterValues.isHeld(key) ? { required: `${label} is required` } : {};
     if (declared.kind === "number") {
       const start = "default" in declared ? { start: declared.default } : {};
       const { min } = Field.boundsOf(declared);
@@ -104,21 +117,13 @@ export default class NewCharacters {
   /**
    * What a new character's fields (`fields`, its form's, by the stored field that keeps each, and its description)
    * write, each read by the character's codec as an entity's form is (`CharacterValues.parseForm`): refused when one it
-   * always holds is missing (`HELD`), one names a field the character hasn't, or holds a value its field doesn't take.
-   * One left empty writes nothing: no value, no description.
+   * always holds is missing (`CharacterValues.held`), one names a field the character hasn't, or holds a value its
+   * field doesn't take, each refused together. One left empty writes nothing: no value, no description.
    */
   static planFields(view: RulesetView, fields: FieldsRequest): Pick<NewCharacterPlan, "fields" | "own"> {
     const { description, ...given } = fields;
     const own = RulesError.parse(OWN_REQUEST, { description }, ["fields"]);
-    const missing = HELD.filter((leaf) => given[leaf.field] === undefined);
-    if (missing.length > 0) {
-      const issues = missing.map((leaf) => ({
-        category: `fields.${leaf.field}`,
-        message: `${leaf.label} is required`,
-      }));
-      throw new RulesError("invalid", "Request validation failed", issues);
-    }
-    const written = CharacterValues.writeOf(CharacterValues.parseForm(view, given));
+    const written = CharacterValues.writeOf(NewCharacters.parseGiven(view, given));
     const values = Object.fromEntries(Object.entries(written).filter(([, value]) => value !== null));
     return { fields: values, own: { ...(own.description && { description: own.description }) } };
   }

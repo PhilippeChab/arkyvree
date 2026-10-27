@@ -9,6 +9,12 @@ import { fillStrengthModifier } from "@/tests/e2e/support/dnd3.5/rulesets.ts";
 import { apiResponse, filterList, openActionsMenu, selectOption, uniqueName } from "@/tests/e2e/support/page.ts";
 import { forkCoreRuleset } from "@/tests/e2e/support/rulesets.ts";
 import { openContext, signedInPage, signIn } from "@/tests/e2e/support/signIn.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_DEITY,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Renames the character whose sheet is open, in place: clicking its name edits it. */
 async function renameInPlace(page: Page, name: string, newName: string) {
@@ -50,8 +56,8 @@ test.describe("Characters", () => {
     await expect(page).not.toHaveURL(/\/characters\/[a-f0-9-]+/);
 
     await selectOption(page, "Race");
-    await dialog.locator('input[name="height"]').fill("5 feet 8 inches");
-    await dialog.locator('input[name="weight"]').fill("150 lbs");
+    await dialog.locator(`input[name="${CHARACTER_HEIGHT}"]`).fill("5 feet 8 inches");
+    await dialog.locator(`input[name="${CHARACTER_WEIGHT}"]`).fill("150 lbs");
     await dialog.getByRole("button", { name: /^Roll All$/ }).click();
     await selectOption(page, "Alignment");
     await selectOption(page, "Gender");
@@ -100,7 +106,7 @@ test.describe("Characters", () => {
     const dialog = page.getByRole("dialog", { name: "Create New Character" });
 
     await expect(dialog.getByRole("combobox", { name: "Ruleset" })).toHaveValue(rulesetName, { timeout: 10_000 });
-    await expect(dialog.locator('input[name="age"]')).toHaveValue("");
+    await expect(dialog.locator(`input[name="${CHARACTER_AGE}"]`)).toHaveValue("");
   });
 
   test("a ruleset picked before the user's own is known stays picked", async ({ page, user }) => {
@@ -212,8 +218,8 @@ test.describe("Characters", () => {
     };
 
     await selectOption(page, "Alignment", "Chaotic Good");
-    await page.locator('input[name="deity"]').fill("Olidammara");
-    await page.locator('input[name="age"]').fill("27");
+    await page.locator(`input[name="${CHARACTER_DEITY}"]`).fill("Olidammara");
+    await page.locator(`input[name="${CHARACTER_AGE}"]`).fill("27");
     const privateNotes = page.getByRole("textbox", { name: "Private Notes" });
     await privateNotes.fill("Owes the thieves' guild");
     // Aquan: an exotic language no race knows from the start. Druidic, a secret one, isn't offered: once the rules'
@@ -239,8 +245,8 @@ test.describe("Characters", () => {
     await expect(page.locator('text="Alignment"').first().locator("..").getByRole("combobox")).toHaveText(
       "Chaotic Good",
     );
-    await expect(page.locator('input[name="deity"]')).toHaveValue("Olidammara");
-    await expect(page.locator('input[name="age"]')).toHaveValue("27");
+    await expect(page.locator(`input[name="${CHARACTER_DEITY}"]`)).toHaveValue("Olidammara");
+    await expect(page.locator(`input[name="${CHARACTER_AGE}"]`)).toHaveValue("27");
     await expect(privateNotes).toHaveValue("Owes the thieves' guild");
     const aquan = page.locator(".MuiChip-root").filter({ hasText: "Aquan" });
 

@@ -12,8 +12,9 @@ import { CHARACTER_ALIGNMENT, CHARACTER_GENDER } from "@/vocabulary/dnd3.5/field
 
 /**
  * The race picker of a new character of what its form says (`identity`: its form's alignment and gender, by the
- * stored fields that keep them, when given): a player character's races (`filters`), each checked against the form. A requirement on what the form doesn't
- * say counts as met, and the form says no tree of what a race fails: there's no character yet to word it for.
+ * stored fields that keep them, when given): a player character's races (`filters`), each checked against the form. A
+ * requirement on what the form doesn't say counts as met, and the form says no tree of what a race fails: there's no
+ * character yet to word it for.
  */
 export default class RacePicker extends Picker<EntityRecord> {
   constructor(view: RulesetView, identity: CreationPickQuery) {
