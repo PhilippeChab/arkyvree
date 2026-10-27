@@ -27,6 +27,22 @@ here, locally and in cloud sessions.
   link the page from the pull request: `--attach` doesn't work in the cloud. The page is private until it's shared from
   its Share menu.
 
+## Checks
+
+A change's checks follow what its diff touches, not one list for every change:
+
+| The diff touches | Checks |
+|---|---|
+| Any code | `bun run lint`, `bun run format:check`, both type-checks, and the tests of the files it touches (`bun run test:changed`); CI runs the whole suite |
+| Specific routes' answers | those routes' answers before (a `develop` worktree) and after, on copies of one seeded database |
+| The level-up engine | the level-up flows, before and after |
+| Writes, or a migration | the writes it changes, before and after; a migration also runs on a Neon branch of production first |
+| What users see | screenshots of the pages it changes, as **Screenshots** says |
+
+A comparison runs only when its row applies. Every change gets an independent review, scaled to it: a small change's
+reads its diff and runs its tests, a large or risky one's also tries the paths around it. A seeded database is copied
+(`CREATE DATABASE … TEMPLATE …`), not seeded again for each check.
+
 ## Issues and pull requests
 
 - **Issues:** an issue's title starts with its area (`Engine:`, `Client:`, `Server:`, `Codegen:`…), and it's labeled
