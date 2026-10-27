@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import Field, { type Fields, type FieldSpec } from "@/engine/core/fields/Field.ts";
+import { CHARACTER_FIELDS } from "@/vocabulary/dnd3.5/fields/characterFields.ts";
 import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/entityFields.ts";
 
 /**
@@ -59,4 +60,11 @@ describe("The 3.5 entities' fields", () => {
       expect(findIssues(ENTITY_FIELDS[type as keyof typeof ENTITY_FIELDS], "")).toEqual([]);
     },
   );
+
+  test("and a character's, declared alike: their kind's keys alone, a stored field none of the entities' keeps", () => {
+    expect(findIssues(CHARACTER_FIELDS, "")).toEqual([]);
+    const entities = Object.values(ENTITY_FIELDS).flatMap((owned) => Field.storedLeavesOf(owned));
+    const kept = new Set(entities.map((leaf) => leaf.field));
+    expect(Field.storedLeavesOf(CHARACTER_FIELDS).filter((leaf) => kept.has(leaf.field))).toEqual([]);
+  });
 });

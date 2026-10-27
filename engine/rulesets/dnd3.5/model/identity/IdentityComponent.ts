@@ -5,15 +5,6 @@ import type LanguagesComponent from "@/engine/rulesets/dnd3.5/model/languages/La
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import type { CustomizedRace } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import type { Language } from "@/engine/rulesets/dnd3.5/view/rows.ts";
-import {
-  CHARACTER_AGE,
-  CHARACTER_ALIGNMENT,
-  CHARACTER_DEITY,
-  CHARACTER_GENDER,
-  CHARACTER_HEIGHT,
-  CHARACTER_WEIGHT,
-  CHARACTER_XP,
-} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 interface IdentityData {
   background: {
@@ -76,18 +67,18 @@ export default class IdentityComponent extends CharacterComponent<LoadedCharacte
     this.identity.physiology = {
       name: character.name,
       description: character.description || "",
-      age: fields[CHARACTER_AGE],
-      gender: fields[CHARACTER_GENDER],
-      height: fields[CHARACTER_HEIGHT] ?? "",
-      weight: fields[CHARACTER_WEIGHT] ?? "",
+      age: fields.age ?? undefined,
+      gender: fields.gender,
+      height: fields.height ?? "",
+      weight: fields.weight ?? "",
       race,
       get languages() {
         return spoken();
       },
     };
     this.identity.beliefs = {
-      deity: fields[CHARACTER_DEITY] || "",
-      alignment: fields[CHARACTER_ALIGNMENT],
+      deity: fields.deity ?? "",
+      alignment: fields.alignment,
     };
     this.identity.background = {
       notes: character.notes || "",
@@ -101,7 +92,7 @@ export default class IdentityComponent extends CharacterComponent<LoadedCharacte
       set level(value: number) {
         levelBonus = value - levelOfClasses();
       },
-      xp: fields[CHARACTER_XP],
+      xp: fields.xp,
     };
   }
 

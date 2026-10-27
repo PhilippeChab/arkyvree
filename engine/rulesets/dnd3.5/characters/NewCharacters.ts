@@ -6,18 +6,9 @@ import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import AbilityRules from "@/engine/rulesets/dnd3.5/rules/AbilityRules.ts";
 import { MIN_ABILITY_SCORE, STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 import { CREATION_METHODS } from "@/vocabulary/dnd3.5/creation.ts";
-import {
-  CHARACTER_AGE,
-  CHARACTER_ALIGNMENT,
-  CHARACTER_DEITY,
-  CHARACTER_GENDER,
-  CHARACTER_HEIGHT,
-  CHARACTER_WEIGHT,
-  CHARACTER_XP,
-} from "@/vocabulary/dnd3.5/fields/index.ts";
 import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/vocabulary/dnd3.5/identity.ts";
 
-import type { Dnd35CharacterFieldsWrite } from "./CharacterValues.ts";
+import CharacterValues from "./CharacterValues.ts";
 
 /** What a new character's form reads of a ruleset's view: its abilities, each by its id and name. */
 interface CreationData {
@@ -88,15 +79,15 @@ export default class NewCharacters {
     const { age, alignment, deity, description, gender, height, weight, xp } = RulesError.parse(NEW_FIELDS, fields, [
       "fields",
     ]);
-    const values: Dnd35CharacterFieldsWrite = {
-      [CHARACTER_ALIGNMENT]: alignment,
-      [CHARACTER_GENDER]: gender,
-      [CHARACTER_XP]: xp,
-      ...(age && { [CHARACTER_AGE]: age }),
-      ...(deity && { [CHARACTER_DEITY]: deity }),
-      ...(height && { [CHARACTER_HEIGHT]: height }),
-      ...(weight && { [CHARACTER_WEIGHT]: weight }),
-    };
+    const values = CharacterValues.writeOf({
+      alignment,
+      gender,
+      xp,
+      ...(age && { age }),
+      ...(deity && { deity }),
+      ...(height && { height }),
+      ...(weight && { weight }),
+    });
     return { fields: values, own: { ...(description && { description }) } };
   }
 }

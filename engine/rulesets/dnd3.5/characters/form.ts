@@ -5,7 +5,7 @@ import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/vocabulary/dnd3.5/identity.
  * A new 3.5 character's form: its name and experience, its ruleset and race, its alignment and gender (which narrow the
  * races it can pick, and are required); its ability scores; its physical details; and its deity, description and notes,
  * all optional. Its fields are the identity's, each keyed as its create sends it (`NewCharacters.planFields`): its
- * experience as `xp`, which the identity's edit keys `experience`.
+ * experience as `xp`, which the identity's edit sends by its stored field, as every other (`CHARACTER_XP`).
  */
 export const CHARACTER_FORM: CharacterForm = {
   sections: [

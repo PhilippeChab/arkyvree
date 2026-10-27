@@ -557,17 +557,17 @@ describe("a character's identity", () => {
   test("refuses an edit's negative experience, an age under 1, either past what it holds exactly, an alignment or a gender not among their options", async () => {
     const { id } = await createCharacterAs(session, { alignment: "Lawful Good", gender: "Female" });
     const edits: [string, FieldsRequest][] = [
-      ["fields.experience", { experience: -1 }],
-      ["fields.experience", { experience: 1e21 }],
-      ["fields.age", { age: Number.MAX_SAFE_INTEGER + 1 }],
-      ["fields.age", { age: 0 }],
-      ["fields.alignment", { alignment: "Lawful Stupid" }],
-      ["fields.gender", { gender: "Unknown" }],
+      [`fields.${CHARACTER_XP}`, { [CHARACTER_XP]: -1 }],
+      [`fields.${CHARACTER_XP}`, { [CHARACTER_XP]: 1e21 }],
+      [`fields.${CHARACTER_AGE}`, { [CHARACTER_AGE]: Number.MAX_SAFE_INTEGER + 1 }],
+      [`fields.${CHARACTER_AGE}`, { [CHARACTER_AGE]: 0 }],
+      [`fields.${CHARACTER_ALIGNMENT}`, { [CHARACTER_ALIGNMENT]: "Lawful Stupid" }],
+      [`fields.${CHARACTER_GENDER}`, { [CHARACTER_GENDER]: "Unknown" }],
     ];
     for (const [category, fields] of edits)
       expect(CharactersService.updateCharacter(session, id, { fields })).rejects.toMatchObject(invalidAt(category));
     // An alignment or a gender left unset keeps its value: the character always has one
-    const fields = { experience: 0, age: null, alignment: null, gender: null };
+    const fields = { [CHARACTER_XP]: 0, [CHARACTER_AGE]: null, [CHARACTER_ALIGNMENT]: null, [CHARACTER_GENDER]: null };
     const edited = await CharactersService.updateCharacter(session, id, { fields });
     expect(edited.fields).toMatchObject({
       [CHARACTER_XP]: 0,

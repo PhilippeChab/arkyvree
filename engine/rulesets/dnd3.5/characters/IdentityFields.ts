@@ -1,19 +1,12 @@
 import { z } from "zod";
 
-import type { FieldsBlock, FieldsPlan, FieldsRequest, SheetField } from "@/engine/core/module/index.ts";
+import { Field } from "@/engine/core/fields/index.ts";
+import type { CharacterInput, FieldsBlock, FieldsPlan, FieldsRequest, SheetField } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import {
-  CHARACTER_AGE,
-  CHARACTER_ALIGNMENT,
-  CHARACTER_DEITY,
-  CHARACTER_GENDER,
-  CHARACTER_HEIGHT,
-  CHARACTER_WEIGHT,
-  CHARACTER_XP,
-} from "@/vocabulary/dnd3.5/fields/index.ts";
-import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/vocabulary/dnd3.5/identity.ts";
+import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
+import { CHARACTER_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
-import type { Dnd35CharacterFieldsWrite } from "./CharacterValues.ts";
+import CharacterValues from "./CharacterValues.ts";
 
 /** A 3.5 character's identity, as its sheet reads it: who it is, its beliefs, its experience, and its notes. */
 interface SheetIdentity {
@@ -31,35 +24,71 @@ interface SheetIdentity {
   };
 }
 
+/** A field of a 3.5 character's, by its name among its declarations (`CHARACTER_FIELDS`). */
+type FieldName = keyof typeof CHARACTER_FIELDS;
+
+/** The row's own column an identity edit sends among its fields, by its key: its description, a text. */
+const OWN_REQUEST = z.object({ description: z.string().optional() });
+
 /**
- * Each field an identity edit sends, by its key, and how it's read: a select's value is one of its options (null: as it
- * is), an age a whole number from 1 or null (cleared), experience a whole number from 0 (each a safe integer, which
- * a field holds exactly), a height or a weight a text (empty or null: cleared). The race is its
- * creation's, never edited.
+ * The stored fields an identity edit never leaves at none (`required`: its alignment and its gender, selects of their
+ * options), which an edit that sends one unset (null) leaves as it is: the character always holds one.
  */
-const FIELDS_REQUEST = z
-  .object({
-    age: z.number().int().min(1).nullable(),
-    alignment: z.enum(ALIGNMENT_OPTIONS).nullable(),
-    deity: z.string(),
-    description: z.string(),
-    experience: z.number().int().min(0),
-    gender: z.enum(GENDER_OPTIONS).nullable(),
-    height: z.string().nullable(),
-    weight: z.string().nullable(),
-  })
-  .partial()
-  .strict();
+const UNCLEARED = new Set(
+  Field.storedLeavesOf(CHARACTER_FIELDS).flatMap((leaf) => ("required" in leaf && leaf.required ? [leaf.field] : [])),
+);
 
 /**
  * A 3.5 character's identity as its sheet's `fields` block: its race (its creation's), alignment, experience and deity
  * on a line, its age, gender, height and weight on the next, its description under them, the languages it speaks, and
- * its notes; a partly seen character's race and physical traits alone. And what an edit of its fields writes.
+ * its notes; a partly seen character's race and physical traits alone. Each field is keyed by the stored field that
+ * keeps it, labeled and bounded as it's declared (`CHARACTER_FIELDS`). And what an edit of its fields writes, read by
+ * the character's codec as an entity's form is (`FieldCodec.parse`).
  */
 export default class IdentityFields {
-  /** A value the select offers, else none: a value its options don't hold reads as not set. */
-  private static optionOf(value: string, options: readonly string[]) {
-    return options.includes(value) ? value : null;
+  /**
+   * A character's field (`name`'s) as its block shows it, holding `value` (the identity's, as its sheet reads it): a
+   * number at least its least (one with a default, required: its edit never clears it), a select of its values (one
+   * they don't hold reads as not set), or a text.
+   */
+  private static sheetFieldOf(name: FieldName, value: unknown): SheetField {
+    const declared = CHARACTER_FIELDS[name];
+    const { field: key, label } = declared;
+    if (declared.kind === "number") {
+      const fallback: number | undefined = "default" in declared ? declared.default : undefined;
+      return {
+        key,
+        kind: "number",
+        label,
+        min: Field.boundsOf(declared).min,
+        ...(fallback !== undefined && { required: `${label} is required` }),
+        value: typeof value === "number" ? value : (fallback ?? null),
+      };
+    }
+    if ("values" in declared) {
+      const options: readonly string[] = declared.values;
+      return {
+        key,
+        kind: "select",
+        label,
+        options: [...options],
+        value: options.find((option) => option === value) ?? null,
+      };
+    }
+    return { key, kind: "text", label, value: typeof value === "string" ? value : "" };
+  }
+
+  /** The identity's fields' values (`identity`, as its sheet reads it), by their names. */
+  private static valuesOf({ beliefs, meta, physiology }: SheetIdentity): Record<FieldName, unknown> {
+    return {
+      age: physiology.age,
+      alignment: beliefs.alignment,
+      deity: beliefs.deity,
+      gender: physiology.gender,
+      height: physiology.height,
+      weight: physiology.weight,
+      xp: meta.xp,
+    };
   }
 
   /**
@@ -68,7 +97,9 @@ export default class IdentityFields {
    * traits alone.
    */
   static describe(identity: SheetIdentity, partial = false): FieldsBlock {
-    const { background, beliefs, meta, physiology } = identity;
+    const { background, physiology } = identity;
+    const values = IdentityFields.valuesOf(identity);
+    const fieldsOf = (names: FieldName[]) => names.map((name) => IdentityFields.sheetFieldOf(name, values[name]));
     const race: SheetField = {
       key: "race",
       kind: "text",
@@ -76,18 +107,7 @@ export default class IdentityFields {
       value: physiology.race?.name || "",
       fixed: true,
     };
-    const traits: SheetField[] = [
-      { key: "age", kind: "number", label: "Age", min: 1, value: physiology.age ?? null },
-      {
-        key: "gender",
-        kind: "select",
-        label: "Gender",
-        options: [...GENDER_OPTIONS],
-        value: IdentityFields.optionOf(physiology.gender, GENDER_OPTIONS),
-      },
-      { key: "height", kind: "text", label: "Height", value: String(physiology.height || "") },
-      { key: "weight", kind: "text", label: "Weight", value: String(physiology.weight || "") },
-    ];
+    const traits = fieldsOf(["age", "gender", "height", "weight"]);
     const head = {
       kind: "fields",
       key: "identity",
@@ -100,28 +120,7 @@ export default class IdentityFields {
     if (partial) return { ...head, lines: [[race], traits], fields: [] };
     return {
       ...head,
-      lines: [
-        [
-          race,
-          {
-            key: "alignment",
-            kind: "select",
-            label: "Alignment",
-            options: [...ALIGNMENT_OPTIONS],
-            value: IdentityFields.optionOf(beliefs.alignment, ALIGNMENT_OPTIONS),
-          },
-          {
-            key: "experience",
-            kind: "number",
-            label: "Experience Points",
-            min: 0,
-            required: "Experience points are required",
-            value: meta.xp || 0,
-          },
-          { key: "deity", kind: "text", label: "Deity", value: beliefs.deity || "" },
-        ],
-        traits,
-      ],
+      lines: [[race, ...fieldsOf(["alignment", "xp", "deity"])], traits],
       fields: [
         {
           key: "description",
@@ -147,24 +146,30 @@ export default class IdentityFields {
   }
 
   /**
-   * What an edit of the identity's fields (`request`, by their keys) writes, each checked: refused when it names a field
-   * the identity hasn't, or a value its field doesn't take. A select left unset, its value as it is.
+   * What an edit of a character's (`character`) identity (`request`: its fields by the stored field that keeps each,
+   * and its description) writes, each checked by the character's codec as an entity's form is (`FieldCodec.parse`):
+   * refused, by field, when it names a field the character hasn't, or a value its field doesn't take. A field it
+   * leaves out is kept, and so is one it never leaves at none that it sends unset (`UNCLEARED`); one it clears
+   * (null, an empty text), none.
    */
-  static plan(request: FieldsRequest): FieldsPlan {
-    const { age, alignment, deity, description, experience, gender, height, weight } = RulesError.parse(
-      FIELDS_REQUEST,
-      request,
-      ["fields"],
+  static plan(view: RulesetView, character: CharacterInput, request: FieldsRequest): FieldsPlan {
+    const { description, ...given } = request;
+    const own = RulesError.parse(OWN_REQUEST, { description }, ["fields"]);
+    const sent = Object.fromEntries(
+      Object.entries(given).filter(([field, value]) => value !== null || !UNCLEARED.has(field)),
     );
-    const fields: Dnd35CharacterFieldsWrite = {
-      ...(age !== undefined && { [CHARACTER_AGE]: age }),
-      ...(alignment && { [CHARACTER_ALIGNMENT]: alignment }),
-      ...(deity !== undefined && { [CHARACTER_DEITY]: deity }),
-      ...(experience !== undefined && { [CHARACTER_XP]: experience }),
-      ...(gender && { [CHARACTER_GENDER]: gender }),
-      ...(height !== undefined && { [CHARACTER_HEIGHT]: height || null }),
-      ...(weight !== undefined && { [CHARACTER_WEIGHT]: weight || null }),
+    const ids = new RequestIds(view.rulesetData, "the character's ruleset");
+    const { values } = CharacterValues.fields.parse(
+      { fields: sent },
+      {
+        kept: CharacterValues.fieldsOf(character.record),
+        resolve: (type, id) => ids.resolve(type, id),
+        resolveAll: (type, entityIds) => ids.resolveAll(type, entityIds),
+      },
+    );
+    return {
+      fields: CharacterValues.writeOf(values),
+      own: { ...(own.description !== undefined && { description: own.description }) },
     };
-    return { fields, own: { ...(description !== undefined && { description }) } };
   }
 }

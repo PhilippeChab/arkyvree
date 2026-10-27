@@ -60,35 +60,30 @@ describe("characters", () => {
     expect(list.items.map((c) => c.id)).toEqual([created.id]);
     expect((await expectOk(characters.$get({ query: { limit: "1" } }))).items).toHaveLength(1);
 
+    // Its fields, sent and saved by the stored field that keeps each
     const fields = {
-      age: 30,
-      gender: "Female",
-      height: "5'6\"",
-      weight: "130 lbs",
-      experience: 1000,
-      alignment: "Chaotic Good",
+      CHARACTER_AGE: 30,
+      CHARACTER_GENDER: "Female",
+      CHARACTER_HEIGHT: "5'6\"",
+      CHARACTER_WEIGHT: "130 lbs",
+      CHARACTER_XP: 1000,
+      CHARACTER_ALIGNMENT: "Chaotic Good",
     };
-    expect(await expectOk(character.$put({ param: { id: created.id }, json: { fields } }))).toMatchObject({
-      fields: {
-        CHARACTER_AGE: 30,
-        CHARACTER_GENDER: "Female",
-        CHARACTER_HEIGHT: "5'6\"",
-        CHARACTER_WEIGHT: "130 lbs",
-        CHARACTER_XP: 1000,
-        CHARACTER_ALIGNMENT: "Chaotic Good",
-      },
-    });
+    expect(await expectOk(character.$put({ param: { id: created.id }, json: { fields } }))).toMatchObject({ fields });
   });
 
   test("clears a character's age, height and weight with null, and refuses an age below 1", async () => {
     const { id } = await postCharacter({ age: 30, height: "180", weight: "80" });
     const cleared = await expectOk(
-      character.$put({ param: { id }, json: { fields: { age: null, height: null, weight: null } } }),
+      character.$put({
+        param: { id },
+        json: { fields: { CHARACTER_AGE: null, CHARACTER_HEIGHT: null, CHARACTER_WEIGHT: null } },
+      }),
     );
     for (const field of ["CHARACTER_AGE", "CHARACTER_HEIGHT", "CHARACTER_WEIGHT"])
       expect(cleared.fields).not.toHaveProperty(field);
-    await expectStatus(character.$put({ param: { id }, json: { fields: { age: 0 } } }), 400);
-    await expectStatus(character.$put({ param: { id }, json: { fields: { age: 2.5 } } }), 400);
+    await expectStatus(character.$put({ param: { id }, json: { fields: { CHARACTER_AGE: 0 } } }), 400);
+    await expectStatus(character.$put({ param: { id }, json: { fields: { CHARACTER_AGE: 2.5 } } }), 400);
   });
 
   test("lists the races a new character can pick", async () => {
@@ -547,14 +542,14 @@ describe("characters", () => {
   });
 
   describe("fields", () => {
-    test("describes the identity's fields, each by the key its edit sends it, its value as the character has it", async () => {
+    test("describes the identity's fields, each by the stored field its edit sends it by, its value as the character has it", async () => {
       const { id } = await postCharacter({ notes: "Public notes" });
       const { blocks } = await expectOk(character.$get({ param: { id } }));
       const identity = blocks.find((block) => block.key === "identity");
       if (identity?.kind !== "fields") throw new Error("no identity");
       expect(identity.lines.map((line) => line.map(({ key, kind }) => `${key}:${kind}`))).toEqual([
-        ["race:text", "alignment:select", "experience:number", "deity:text"],
-        ["age:number", "gender:select", "height:text", "weight:text"],
+        ["race:text", "CHARACTER_ALIGNMENT:select", "CHARACTER_XP:number", "CHARACTER_DEITY:text"],
+        ["CHARACTER_AGE:number", "CHARACTER_GENDER:select", "CHARACTER_HEIGHT:text", "CHARACTER_WEIGHT:text"],
       ]);
       expect(identity.lines[0][0]).toMatchObject({ value: "Human", fixed: true });
       expect(identity.fields.map(({ key }) => key)).toEqual(["description"]);
@@ -562,26 +557,26 @@ describe("characters", () => {
       expect(identity.links?.map(({ label, role }) => [role, label])).toEqual([["speaks", "Languages"]]);
     });
 
-    test("saves the fields an edit sends by their keys, each as its ruleset writes it", async () => {
+    test("saves the fields an edit sends by their stored fields, each as its ruleset writes it", async () => {
       const { id } = await postCharacter();
       const saved = await expectOk(
         character.$put({
           param: { id },
           json: {
             fields: {
-              alignment: "Chaotic Good",
-              experience: 1200,
-              deity: "Pelor",
-              age: null,
-              gender: null,
-              height: "",
-              weight: "75",
+              CHARACTER_ALIGNMENT: "Chaotic Good",
+              CHARACTER_XP: 1200,
+              CHARACTER_DEITY: "Pelor",
+              CHARACTER_AGE: null,
+              CHARACTER_GENDER: null,
+              CHARACTER_HEIGHT: "",
+              CHARACTER_WEIGHT: "75",
               description: "Tall",
             },
           },
         }),
       );
-      // An age cleared, an empty height cleared, an unset gender left as it is, experience its xp
+      // An age cleared, an empty height cleared, an unset gender left as it is
       expect(saved.fields).toEqual({
         CHARACTER_ALIGNMENT: "Chaotic Good",
         CHARACTER_DEITY: "Pelor",
@@ -594,7 +589,7 @@ describe("characters", () => {
 
     test("leaves a field the edit doesn't send as it is", async () => {
       const { id } = await postCharacter({ age: 30, deity: "Pelor" });
-      const saved = await expectOk(character.$put({ param: { id }, json: { fields: { deity: "Moradin" } } }));
+      const saved = await expectOk(character.$put({ param: { id }, json: { fields: { CHARACTER_DEITY: "Moradin" } } }));
       expect(saved.fields).toMatchObject({
         CHARACTER_DEITY: "Moradin",
         CHARACTER_AGE: 30,
@@ -606,7 +601,7 @@ describe("characters", () => {
     test("clears a text an edit sends empty: no row, read as one never set, its sheet's the same", async () => {
       const { id } = await postCharacter({ deity: "Pelor" });
       const { id: unset } = await postCharacter({});
-      const saved = await expectOk(character.$put({ param: { id }, json: { fields: { deity: "" } } }));
+      const saved = await expectOk(character.$put({ param: { id }, json: { fields: { CHARACTER_DEITY: "" } } }));
       expect(saved.fields).not.toHaveProperty("CHARACTER_DEITY");
       expect((await Characters.findOne(db, { id }))!.fields).not.toHaveProperty("CHARACTER_DEITY");
       expect((await sheetOf(id)).identity.beliefs).toEqual((await sheetOf(unset)).identity.beliefs);
@@ -619,29 +614,33 @@ describe("characters", () => {
       await expectOk(
         character.$put({
           param: { id },
-          json: { fields: { deity: "Pelor" }, links: { speaks: [langMap["Elven"]] } },
+          json: { fields: { CHARACTER_DEITY: "Pelor" }, links: { speaks: [langMap["Elven"]] } },
         }),
       );
       expect(await languageNames(id)).toContain("Elven");
       // A refused field writes nothing: not its other fields, not its languages
       await expectStatus(
-        character.$put({ param: { id }, json: { fields: { deity: "Moradin", age: 0 }, links: { speaks: [] } } }),
+        character.$put({
+          param: { id },
+          json: { fields: { CHARACTER_DEITY: "Moradin", CHARACTER_AGE: 0 }, links: { speaks: [] } },
+        }),
         400,
       );
       expect((await sheetOf(id)).identity.beliefs.deity).toBe("Pelor");
       expect(await languageNames(id)).toContain("Elven");
     });
 
-    test("refuses a field the identity hasn't, its race, or a value its field doesn't take", async () => {
+    test("refuses a field the identity hasn't, its race, an old key, or a value its field doesn't take", async () => {
       const { id } = await postCharacter();
       const refused: Record<string, number | string>[] = [
         { nonsense: "x" },
         { race: "Elf" },
-        { alignment: "Evil-ish" },
-        { experience: -1 },
-        { experience: 2.5 },
-        { age: 0 },
-        { deity: "Pelor", nonsense: "x" },
+        { experience: 1200 },
+        { CHARACTER_ALIGNMENT: "Evil-ish" },
+        { CHARACTER_XP: -1 },
+        { CHARACTER_XP: 2.5 },
+        { CHARACTER_AGE: 0 },
+        { CHARACTER_DEITY: "Pelor", nonsense: "x" },
       ];
       for (const fields of refused) await expectStatus(character.$put({ param: { id }, json: { fields } }), 400);
     });
@@ -786,7 +785,7 @@ describe("characters", () => {
   test("returns 404 for a missing character", async () => {
     const param = { id: NIL_UUID };
     await expectStatus(character.$get({ param }), 404);
-    await expectStatus(character.$put({ param, json: { fields: { age: 30 } } }), 404);
+    await expectStatus(character.$put({ param, json: { fields: { CHARACTER_AGE: 30 } } }), 404);
     await expectStatus(character.$delete({ param }), 404);
     await expectStatus(character.unarchive.$post({ param }), 404);
   });

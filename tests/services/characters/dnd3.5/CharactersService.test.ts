@@ -246,7 +246,12 @@ describe("CharactersService", () => {
       // Built: its combat, not only who it is
       expect(sheet.blocks.map(({ key }) => key)).toContain("combat");
 
-      const fields = { age: 35, experience: 5000, alignment: "Chaotic Good", description: "Updated" };
+      const fields = {
+        [CHARACTER_AGE]: 35,
+        [CHARACTER_XP]: 5000,
+        [CHARACTER_ALIGNMENT]: "Chaotic Good",
+        description: "Updated",
+      };
       expect(
         await CharactersService.updateCharacter(session, created.id, { fields, notes: "Updated notes" }),
       ).toMatchObject({
@@ -263,7 +268,10 @@ describe("CharactersService", () => {
       });
 
       expect(
-        CharactersService.updateCharacter(session, created.id, { fields: { age: 40 }, updatedAt: created.updatedAt }),
+        CharactersService.updateCharacter(session, created.id, {
+          fields: { [CHARACTER_AGE]: 40 },
+          updatedAt: created.updatedAt,
+        }),
       ).rejects.toThrow(ConflictError);
     });
 
@@ -344,7 +352,7 @@ describe("CharactersService", () => {
       await CharacterSharingService.generateShareToken(owner, character.id);
       const calls = (s: Session, id: string) => [
         () => CharactersService.getCharacter(s, id),
-        () => CharactersService.updateCharacter(s, id, { fields: { age: 40 } }),
+        () => CharactersService.updateCharacter(s, id, { fields: { [CHARACTER_AGE]: 40 } }),
         () => CharactersService.enqueuePdf(s, id),
         () => CharactersService.archiveCharacter(s, id),
         () => CharacterSharingService.generateShareToken(s, id),
