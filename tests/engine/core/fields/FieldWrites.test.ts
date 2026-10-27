@@ -1,9 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
-import { FieldWrites } from "@/engine/core/fields/index.ts";
+import { type Fields, FieldWrites } from "@/engine/core/fields/index.ts";
+import type { StandaloneKind } from "@/engine/core/view/index.ts";
 
 /** Each field a talent always writes, holding its default: a flag's own, false without one. */
 const DEFAULTS = { TRAINED: [true], SECRET: [false], RANK: ["Novice"], COST: [1] };
+
+/** The made-up kind a reference names: one no module declares, typed as the view's registry types a kind. */
+const GIZMOS = "gizmos" as string as StandaloneKind;
 
 /**
  * A gadget's fields: a title that keeps those its form shows among its others (a motto, a group's level, the flag and
@@ -158,5 +162,72 @@ describe("A write of an owner's fields on their rules", () => {
     // A new owner holds no title the write doesn't name; an existing one keeps its own, and the fields it keeps
     expect(RULED.written("gadgets", given, true)).toEqual(cleared);
     expect(RULED.written("gadgets", given, false)).toEqual(kept);
+  });
+
+  test("stores a group's fields at their defaults while its condition doesn't hold", () => {
+    const lid = new FieldWrites({
+      gadgets: {
+        lidded: {
+          description: "Whether it has a lid",
+          field: "LIDDED",
+          kind: "flag",
+          label: "Lidded",
+          merge: "winner",
+        },
+        lid: {
+          fields: {
+            height: {
+              description: "Its height",
+              field: "HEIGHT",
+              kind: "number",
+              label: "Height",
+              merge: "winner",
+            },
+          },
+          kind: "group",
+          label: "Lid",
+          when: { field: "lidded", values: [true] },
+        },
+      },
+    });
+    for (const creating of [true, false]) {
+      expect(lid.written("gadgets", { LIDDED: [], HEIGHT: [3] }, creating)).toEqual({ LIDDED: [], HEIGHT: [] });
+      expect(lid.written("gadgets", { LIDDED: [true], HEIGHT: [3] }, creating).HEIGHT).toEqual([3]);
+    }
+  });
+
+  test("refuses, as they're declared, a condition or a keeper's no write of fields applies", () => {
+    const flag = { description: "Whether it's on", field: "ON", kind: "flag", label: "On", merge: "winner" } as const;
+    const ref = { description: "Its case", kind: "ref", label: "Case", references: GIZMOS, role: "case" } as const;
+    const refused = (fields: Fields) => () => new FieldWrites({ gadgets: fields });
+    const when = { field: "on", values: [true] };
+    // A reference, a list of links, or a group holding one, that counts on a condition
+    expect(refused({ on: flag, worn: { ...ref, when } })).toThrow("gadgets's worn counts on on, which no write");
+    expect(refused({ on: flag, cases: { ...ref, kind: "links", when } })).toThrow("which no write applies to a link");
+    expect(refused({ on: flag, lid: { fields: { worn: ref }, kind: "group", label: "Lid", when } })).toThrow(
+      "gadgets's lid counts on on, which no write applies to a link",
+    );
+    // A condition on none of its level's fields, a group or a link
+    const counted = { ...flag, field: "COUNT", when: { field: "worn", values: [true] } };
+    expect(refused({ counted })).toThrow("gadgets's counted counts on worn, no stored field of its level");
+    expect(refused({ counted, worn: ref })).toThrow("no stored field of its level");
+    expect(refused({ counted, worn: { fields: { on: flag }, kind: "group", label: "Worn" } })).toThrow(
+      "no stored field of its level",
+    );
+    // A link among the fields a keeper keeps, its own or a group's
+    const title = {
+      description: "Its title",
+      field: "TITLE",
+      keepsForm: true,
+      kind: "text",
+      label: "Title",
+      merge: "winner",
+    } as const;
+    expect(refused({ title, worn: ref })).toThrow("gadgets keeps a link among the fields its form shows");
+    expect(refused({ title, lid: { fields: { worn: ref }, kind: "group", label: "Lid" } })).toThrow(
+      "gadgets keeps a link among the fields its form shows",
+    );
+    // Beside its name, a keeper doesn't keep it
+    expect(refused({ title, worn: { ...ref, placement: "beside-name" } })).not.toThrow();
   });
 });

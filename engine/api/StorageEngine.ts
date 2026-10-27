@@ -112,6 +112,7 @@ export default class StorageEngine {
       itemTypes: registries.flatMap((registry) => registry.itemTypes),
     };
     StorageEngine.checkDeclarations(this.fields, this.merged);
+    this.writes = new Map([...this.owned].map(([module, owners]) => [module, new FieldWrites(owners)]));
     this.standalone = this.merged.entityTypes.flatMap((def) =>
       def.ownerType === null ? [def.type as EntityType] : [],
     );
@@ -236,6 +237,12 @@ export default class StorageEngine {
   /** The kinds no other owns, in their declarations' order (`standaloneKinds`). */
   private readonly standalone: readonly EntityType[];
 
+  /**
+   * What a write of each module's owners' fields stores, by its base rules (`writtenFields`): built with the modules,
+   * so a rule no write applies is refused as they register (`FieldWrites`).
+   */
+  private readonly writes: ReadonlyMap<BaseRules, FieldWrites>;
+
   /** The owner type of a character's fields, which each module declares (`RulesetModule.characterFields`). */
   readonly characterOwnerType = "characters";
 
@@ -256,9 +263,6 @@ export default class StorageEngine {
 
   /** What every module declares of a view's kinds and links, once read (`viewSchema`). */
   private schema?: ViewSchema;
-
-  /** What a write of each module's owners' fields stores, by its base rules, once read (`writtenFields`). */
-  private writes?: ReadonlyMap<BaseRules, FieldWrites>;
 
   /**
    * The registry rows of every module's fields (`fields`), each stored field of an owner type (but a reference's, which a
@@ -289,18 +293,12 @@ export default class StorageEngine {
   private ownWrites(ownerType: string, fields: Readonly<Record<string, FieldWrite>>, baseRules: BaseRules | undefined) {
     if (!baseRules) throw new Error(`A write of the fields of ${ownerType} takes its module's base rules`);
     const owners = this.owned.get(baseRules);
-    const writes = this.writesOf(baseRules);
+    const writes = this.writes.get(baseRules);
     if (!owners || !writes) throw new Error(`${baseRules} is no registered module's base rules`);
     const declared = new Set(Field.storedLeavesOf(owners[ownerType] ?? {}).map((leaf) => leaf.field));
     for (const field of Object.keys(fields))
       if (!declared.has(field)) throw new Error(`${baseRules} declares no field ${field} of ${ownerType}`);
     return writes;
-  }
-
-  /** What writes a module's owners' fields (`FieldWrites`, of its own declarations), by its base rules. */
-  private writesOf(baseRules: BaseRules): FieldWrites | undefined {
-    this.writes ??= new Map([...this.owned].map(([module, owners]) => [module, new FieldWrites(owners)]));
-    return this.writes.get(baseRules);
   }
 
   /** A character's link role (3.5's `race`, `score`, `speaks`): the type of its entities, and whether it holds one. */
@@ -605,6 +603,6 @@ export default class StorageEngine {
     if (ownerType === this.characterOwnerType || ownerType === this.settingsOwnerType)
       return this.ownWrites(ownerType, fields, baseRules).written(ownerType, fields, creating);
     const module = [...this.owned].find(([, owners]) => ownerType in owners)?.[0];
-    return ((module && this.writesOf(module)) ?? new FieldWrites({})).written(ownerType, fields, creating);
+    return ((module && this.writes.get(module)) ?? new FieldWrites({})).written(ownerType, fields, creating);
   }
 }

@@ -151,7 +151,9 @@ export interface ChoiceSpec extends StoredLeafBase {
 /**
  * When a field counts: while another of the entity's fields (`field`, at the same level) holds one of `values`. The
  * codec reads it and takes it from a form only then, and every write stores it only then (`FieldWrites`), its default
- * otherwise (a skill's armor check multiplier, while armor weighs on it).
+ * otherwise (a skill's armor check multiplier, while armor weighs on it); a group's, each of its fields. The field it
+ * reads is a stored one, neither a group nor a link, and a link (a reference, a list of links, or one in a group)
+ * declares none: a write of fields can't apply it, so it's refused.
  */
 export interface FieldCondition {
   field: string;

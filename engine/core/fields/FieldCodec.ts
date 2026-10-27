@@ -378,8 +378,9 @@ export default class FieldCodec<S extends Fields> {
    * The values as a write of their owner's fields and links: every field and link role of the fields they give, each
    * replaced by its value's (none for a value that writes none); a field they leave out isn't named, so its owner keeps
    * it. A form's save gives every field it shows: it names them. What the write path stores of it applies the rules
-   * past each value's own (`FieldWrites`): a field whose condition doesn't hold at its default, none of those its form
-   * shows without a value of one that keeps them (`keepsForm`).
+   * past each value's own (`FieldWrites`): a field whose condition doesn't hold (its own, or its group's) at its
+   * default, none of those its form shows without a value of one that keeps them (`keepsForm`); a link either would
+   * reach is refused as it's declared.
    */
   write(values: WrittenValues<S>): FieldsWrite {
     return this.writeOf(values);

@@ -127,7 +127,10 @@ export default class EntityChanges {
   /** The places it compares, in their order (`placesOf`). */
   private readonly places: readonly Place[];
 
-  /** What the write path stores of a write of its kind's fields (`FieldWrites`, of their declarations). */
+  /**
+   * What the write path stores of a write of its kind's fields (`FieldWrites`): its codec's fields are its module's
+   * declaration of them, which the write path's own (`Engine.storage().writtenFields`) is built of too.
+   */
   private readonly writes: FieldWrites;
 
   /** A stored field's change: its text as its codec reads it, else as stored, before and after; none when the same. */

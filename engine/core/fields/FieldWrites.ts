@@ -31,7 +31,10 @@ interface OwnerRules {
  * owner's it leaves out, or one it clears: an item's slot, a feat's selectable flag, a character's alignment), one
  * whose condition doesn't hold as its default would (a skill's armor check multiplier, while armor weighs on it), and
  * none of those its form shows when it holds no value of one that keeps them (`keepsForm`). It alone applies a
- * condition and a keeper to a write: a codec writes the values it's given (`FieldCodec.write`).
+ * condition (a group's to each of its fields) and a keeper to a write, a codec writing the values it's given
+ * (`FieldCodec.write`); what it can't apply, which a write of fields can't reach, it refuses as it's declared: a
+ * condition on a reference or a list of links, or on another field that's no stored field of its level, and a link
+ * among the fields a keeper keeps.
  */
 export default class FieldWrites {
   /** `fields`: each owner type's, as its module declares them. */
@@ -41,16 +44,30 @@ export default class FieldWrites {
         Field.storedLeavesOf(owned).map((leaf): [string, StoredLeaf] => [`${ownerType}:${leaf.field}`, leaf]),
       ),
     );
-    this.rules = new Map(Object.entries(fields).map(([ownerType, owned]) => [ownerType, FieldWrites.rulesOf(owned)]));
+    this.rules = new Map(
+      Object.entries(fields).map(([ownerType, owned]) => [ownerType, FieldWrites.rulesOf(ownerType, owned)]),
+    );
   }
 
-  /** The leaves of a level (`fields`, a group's too) that count on another of their level's value. */
-  private static conditionsOf(fields: Fields): Condition[] {
-    return Object.values(fields).flatMap((field): Condition[] => {
-      if (field.kind === "group") return FieldWrites.conditionsOf(field.fields);
-      const on = field.when && "field" in field.when ? fields[field.when.field] : undefined;
-      if (Field.isLinked(field) || !on || on.kind === "group" || Field.isLinked(on)) return [];
-      return [{ leaf: field, on, values: (field.when as { values: readonly (boolean | string)[] }).values }];
+  /**
+   * The leaves of a level (`fields`, of `ownerType`, a group's too) that count on another of their level's value, a
+   * group's condition carried to each of its leaves. A condition no write applies is refused: one on a reference or a
+   * list of links (or a group holding one), whose values are links, or one on another field that's no stored field of
+   * its level (none, a group, a link).
+   */
+  private static conditionsOf(ownerType: string, fields: Fields): Condition[] {
+    return Object.entries(fields).flatMap(([key, field]): Condition[] => {
+      const inner = field.kind === "group" ? FieldWrites.conditionsOf(ownerType, field.fields) : [];
+      if (!field.when) return inner;
+      const on = fields[field.when.field];
+      if (!on || on.kind === "group" || Field.isLinked(on))
+        throw new Error(`${ownerType}'s ${key} counts on ${field.when.field}, no stored field of its level`);
+      const leaves = field.kind === "group" ? Field.leavesOf(field.fields) : [field];
+      const stored = leaves.flatMap((leaf) => (Field.isLinked(leaf) ? [] : [leaf]));
+      if (stored.length < leaves.length)
+        throw new Error(`${ownerType}'s ${key} counts on ${field.when.field}, which no write applies to a link`);
+      const { values } = field.when;
+      return [...inner, ...stored.map((leaf) => ({ leaf, on, values }))];
     });
   }
 
@@ -66,14 +83,20 @@ export default class FieldWrites {
     });
   }
 
-  /** An owner type's rules for a write (`owned`, its fields). */
-  private static rulesOf(owned: Fields): OwnerRules {
+  /**
+   * An owner type's rules for a write (`owned`, the fields of `ownerType`). A link among the fields a keeper keeps is
+   * refused: a write of its fields clears none of its links.
+   */
+  private static rulesOf(ownerType: string, owned: Fields): OwnerRules {
     const shown = Object.fromEntries(Object.entries(owned).filter(([, field]) => Field.isKept(field)));
+    const keepers = Field.keepersOf(owned);
+    if (keepers.length > 0 && Field.leavesOf(shown).some((leaf) => Field.isLinked(leaf)))
+      throw new Error(`${ownerType} keeps a link among the fields its form shows, which no write clears`);
     return {
-      conditions: FieldWrites.conditionsOf(owned),
+      conditions: FieldWrites.conditionsOf(ownerType, owned),
       defaults: FieldWrites.defaultsOf(owned),
       keptFields: new Set(Field.storedLeavesOf(shown).map((leaf) => leaf.field)),
-      keepers: Field.keepersOf(owned),
+      keepers,
     };
   }
 
