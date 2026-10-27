@@ -6,17 +6,14 @@ import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import {
   emptyLevel,
   EntityFields,
-  type Grant,
   grantKey,
   grantLabel,
+  type GrantLink,
   type LevelFormData,
   type LevelLinks,
-  type LevelLists,
   levelListsOf,
-  type LevelRead,
   readLevel,
-  sortGrants,
-  toAmountRow,
+  toLevelForm,
   withEntityFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
@@ -35,30 +32,14 @@ interface LevelEditorProps extends EditorProps<OwnedEntity> {
 }
 
 /** A grant's label, by its entity's name and the one it's through's. */
-function labelOf(grant: Grant) {
-  return grantLabel(grant.name, grant.viaName);
-}
-
-/**
- * A level's form off its read (`level`): its number, and its amounts and grants among its links, at its lists' roles
- * (`lists`).
- */
-function toLevelForm(level: LevelRead, { amounts, grants }: LevelLists): LevelFormData {
-  return {
-    position: level.level,
-    links: {
-      ...(amounts && { [amounts.role]: level.amounts.map(toAmountRow) }),
-      ...(grants && {
-        [grants.role]: sortGrants(level.grants, labelOf).map((grant) => ({ toId: grant.entityId, viaId: grant.viaId })),
-      }),
-    },
-  };
+function labelOf(grant: GrantLink) {
+  return grantLabel(grant.toName, grant.viaName);
 }
 
 /**
  * An owned level's details on its customization page (3.5's class level's), as its rules describe its kind (`type`):
- * its fields, and its amounts and grants among its links, at its lists' roles, saved through its owner's
- * routes, every amount sent (`useAllAmounts`).
+ * its number, its fields, and its amounts and grants among its links, at its lists' roles, each read off its links
+ * (`toLevelForm`), saved through its owner's routes, every amount sent (`useAllAmounts`).
  */
 export function LevelEditor({
   rulesetId,
@@ -82,7 +63,7 @@ export function LevelEditor({
   const { withAll } = useAllAmounts(rulesetId, lists.amounts);
   const { form, save } = useEntityForm({
     empty: emptyLevel(lists),
-    values: withEntityFields(toLevelForm(level, lists), fields, entity),
+    values: withEntityFields(toLevelForm(fields ?? [], entity), fields, entity),
     fields,
     formKey: recordKey,
     adoptKey,
@@ -127,9 +108,7 @@ export function LevelEditor({
             entityType={type}
             rulesetId={rulesetId}
             context={{
-              grantLabels: new Map(
-                level.grants.map((grant) => [grantKey(grant.entityId, grant.viaId), labelOf(grant)]),
-              ),
+              grantLabels: new Map(level.grants.map((grant) => [grantKey(grant.toId, grant.viaId), labelOf(grant)])),
             }}
           />
         ),

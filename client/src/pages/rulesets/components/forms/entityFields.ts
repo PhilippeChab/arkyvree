@@ -17,14 +17,19 @@ import { copyProgression } from "@/shared/customization/progression.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
+import { grantLabel, sortGrants } from "./grants.ts";
+
 /** A value as a form holds it: a field's, or a list of links' entries (a spell's spell lists, a level's saves). */
 type FormValue = boolean | number | string | string[] | null | ProgressionValue | unknown[];
 
 /** The values a form holds: any, its fields and its links among them. */
 type FormValues = Partial<FormParts> & Record<string, unknown>;
 
-/** A field of an entity's links of a role: a feat's feat pools, a spell's spell lists each at its tier, its save. */
-type LinksField = Extract<EntityField, { input: "leveledLinks" | "links" | "ref" | "template" }>;
+/**
+ * A field of an entity's links of a role: a feat's feat pools, a spell's spell lists each at its tier, its save, a
+ * level's saves' amounts and its granted feats.
+ */
+type LinksField = Extract<EntityField, { input: "amounts" | "grants" | "leveledLinks" | "links" | "ref" | "template" }>;
 
 /** What levels give of something, as a progression's field holds it: a frequency, and more at the levels it names. */
 type ProgressionValue = Extract<EntityField, { input: "progression" }>["default"];
@@ -126,9 +131,10 @@ function formValueOf(field: ValueField, value: unknown): FormValue {
 
 /**
  * A field's value as an entity read holds it: its stored field's (`field`, among its `fields`), its single link's of
- * its role (a reference's or a template's: the linked entity's id), a list of its links of its role (among its
- * `links`: each its linked entity, `toId`, at its tier where the field takes one, in their names' order), or, a list
- * the read gives by its role (a level's grants and amounts), each entry as a form sends it.
+ * its role (a reference's or a template's: the linked entity's id), or a list of its links of its role (among its
+ * `links`), each entry as a form sends it: its linked entity, `toId`, at its tier where the field takes one, in their
+ * names' order; an amount's with its `amount` (a level's saves); a grant's through its `viaId`, in its labels' order
+ * (a level's feats).
  */
 function heldValueOf(field: ValueField, entity: unknown): unknown {
   if (field.field) return ownFieldOf(entity, field.field);
@@ -140,10 +146,19 @@ function heldValueOf(field: ValueField, entity: unknown): unknown {
       typeof tier === "number" ? { toId: linked.id, tier } : { toId: linked.id },
     );
   }
-  const listed = field.role === undefined ? undefined : valueAt(entity, field.role);
-  if (field.input !== "grants" || !Array.isArray(listed)) return listed;
-  // A grant a read gives whole, its entity's row and the one it's through
-  return listed.filter(isRecord).map((grant) => ({ toId: grant.id, viaId: grant.viaId }));
+  if (field.input === "amounts") {
+    return linksOf(field, entity).map(({ amount, linked }) => ({
+      toId: linked.id,
+      amount: typeof amount === "number" ? amount : 0,
+    }));
+  }
+  if (field.input !== "grants") return undefined;
+  const grants = linksOf(field, entity).map(({ linked, via }) => ({
+    label: grantLabel(linked.name, via.name),
+    toId: linked.id,
+    viaId: via.id,
+  }));
+  return sortGrants(grants, (grant) => grant.label).map(({ toId, viaId }) => ({ toId, viaId }));
 }
 
 /** Whether a value is a progression's: a frequency, and the levels it gives more at, each its level and its amount. */
@@ -157,14 +172,31 @@ function isProgression(value: unknown): value is ProgressionValue {
 }
 
 /**
- * An entity read's links of a field of links (its `role`'s, among its `links`), each its linked entity (its `toId` and
- * `toName`) and its tier, as its server sends them.
+ * An entity read's links of a field of links (its `role`'s, among its `links`; a list's to its kind, `references`: a
+ * level's grants to feats), each its linked entity (its `toId` and `toName`), its tier and its amount, and the one
+ * it's through (its `viaId` and `viaName`), as its server sends them.
  */
 function linksOf(field: LinksField, entity: unknown) {
   const links = valueAt(entity, "links");
+  const ofKind = (link: Record<string, unknown>) =>
+    (field.input !== "amounts" && field.input !== "grants") || link.toType === field.references;
   return (Array.isArray(links) ? links : []).flatMap((link) =>
-    isRecord(link) && link.role === field.role && typeof link.toId === "string" && typeof link.toName === "string"
-      ? [{ linked: { id: link.toId, name: link.toName }, tier: link.tier }]
+    isRecord(link) &&
+    link.role === field.role &&
+    ofKind(link) &&
+    typeof link.toId === "string" &&
+    typeof link.toName === "string"
+      ? [
+          {
+            amount: link.amount,
+            linked: { id: link.toId, name: link.toName },
+            tier: link.tier,
+            via: {
+              id: typeof link.viaId === "string" ? link.viaId : "",
+              name: typeof link.viaName === "string" ? link.viaName : null,
+            },
+          },
+        ]
       : [],
   );
 }

@@ -38,7 +38,8 @@ interface ShownWhen {
 /**
  * An amount an entity gives each entity of a kind (3.5's class level's base bonus to each of the ruleset's saves), from
  * `min` to `max`: its links of a `role`, each to an entity of its kind (`references`: 3.5's `saves`) with its
- * `amount`, which its form sends as `{ toId, amount }` and an entity read holds by its role.
+ * `amount`, which its form sends as `{ toId, amount }`. An entity read holds them among its `links`, by their `role`
+ * (each its entity, `toId`, its name, `toName`, and its `amount`), which its form reads them from.
  */
 export interface AmountsFormField extends FormFieldBase {
   input: "amounts";
@@ -125,8 +126,9 @@ export interface FlagFormField extends FormFieldBase {
  * The entities an entity grants, each through the entity it's granted for (3.5's class level's feats, each through the
  * pool it's taken for): its links of a `role`, each to an entity of its kind (`references`: 3.5's `feats`) through one
  * of the pools its kind's list reads (`viaId`), and whether it's `free`, which its form sends as
- * `{ toId, viaId, free }`. An entity read gives each grant whole by its role, its entity's own row with the one it's
- * through (`viaId`) and its name (`viaName`).
+ * `{ toId, viaId, free }`. An entity read holds them among its `links`, by their `role` and their kind (each its
+ * entity, `toId`, its name and its description, `toName` and `toDescription`, the one it's through, `viaId`, and its
+ * name, `viaName`, and whether it's free), which its form reads them from.
  */
 export interface GrantsFormField extends FormFieldBase {
   input: "grants";

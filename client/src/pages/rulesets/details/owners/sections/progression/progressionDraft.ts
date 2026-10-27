@@ -7,12 +7,15 @@
 import type { LevelLists, LevelRead } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import type { OwnerProgressionBody } from "@/client/src/pages/rulesets/details/owners/ownerSectionQueries.ts";
 
-/** A feature the owner grants (3.5's feat, through a feat pool), and the levels it grants it at, by their ids. */
+/**
+ * A feature the owner grants (3.5's feat, `toId`, through a feat pool, `viaId`), and the levels it grants it at, by
+ * their ids.
+ */
 export interface FeatureRow {
-  entityId: string;
   key: string;
   levelIds: string[];
   name: string;
+  toId: string;
   viaId: string;
   viaName: string | null;
 }
@@ -81,7 +84,7 @@ export function buildProgressionBody(
     (grantOf(row, level) ?? levels.map((other) => grantOf(row, other)).find(Boolean))?.free ?? true;
   const levelEdits = levels.flatMap((level) => {
     // The ruleset's entities, as a level's form sends their amounts; until they're read, the level's own
-    const levelAmountIds = amountIds ?? level.amounts.map((amount) => amount.entityId);
+    const levelAmountIds = amountIds ?? level.amounts.map((amount) => amount.toId);
     const trackKeys: TrackKey[] = [
       ...fieldTracks.map(({ key }) => key),
       ...levelAmountIds.map((id) => amountTrackKey(id)),
@@ -100,14 +103,11 @@ export function buildProgressionBody(
         fields: Object.fromEntries(fieldTracks.map(({ field, key }) => [field, valueOf(level, key)])),
         links: {
           ...(amounts && {
-            [amounts.role]: levelAmountIds.map((entityId) => ({
-              toId: entityId,
-              amount: valueOf(level, amountTrackKey(entityId)),
-            })),
+            [amounts.role]: levelAmountIds.map((toId) => ({ toId, amount: valueOf(level, amountTrackKey(toId)) })),
           }),
           ...(grants &&
             grantsChanged && {
-              [grants.role]: granted.map((row) => ({ toId: row.entityId, viaId: row.viaId, free: freeOf(row, level) })),
+              [grants.role]: granted.map((row) => ({ toId: row.toId, viaId: row.viaId, free: freeOf(row, level) })),
             }),
         },
       },
@@ -126,9 +126,9 @@ export function buildProgressionBody(
   };
 }
 
-/** A feature's key: its entity, and the one it's granted through (a feat can be granted in several pools). */
-export function describeFeatureKey({ entityId, viaId }: { entityId: string; viaId: string }) {
-  return `${entityId}-${viaId}`;
+/** A feature's key: its entity (`toId`), and the one it's granted through (a feat can be granted in several pools). */
+export function describeFeatureKey({ toId, viaId }: { toId: string; viaId: string }) {
+  return `${toId}-${viaId}`;
 }
 
 /**
@@ -137,14 +137,14 @@ export function describeFeatureKey({ entityId, viaId }: { entityId: string; viaI
  */
 export function describeFeatureRows(levels: readonly LevelRead[]): FeatureRow[] {
   const rows = new Map<string, FeatureRow>();
-  for (const level of levels.toSorted((a, b) => a.level - b.level)) {
+  for (const level of levels.toSorted((a, b) => a.position - b.position)) {
     for (const grant of level.grants) {
       const key = describeFeatureKey(grant);
       const row = rows.get(key) ?? {
-        entityId: grant.entityId,
         key,
         levelIds: [],
-        name: grant.name,
+        name: grant.toName,
+        toId: grant.toId,
         viaId: grant.viaId,
         viaName: grant.viaName,
       };
@@ -163,7 +163,7 @@ export function readEditedTrack(level: LevelRead, key: TrackKey, edits: Progress
 /** A track's value at a level, as saved: 0 for an entity the level has no amount of, or a field with no number. */
 export function readTrack(level: LevelRead, key: TrackKey) {
   if (key.startsWith(AMOUNT_TRACK))
-    return level.amounts.find((amount) => amountTrackKey(amount.entityId) === key)?.amount ?? 0;
+    return level.amounts.find((amount) => amountTrackKey(amount.toId) === key)?.amount ?? 0;
   const value = level.values[key];
   return typeof value === "number" ? value : 0;
 }

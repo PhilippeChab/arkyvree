@@ -16,10 +16,9 @@ export { type EntityFormData, toEntityBody, toEntityForm, withTemplateFlag } fro
 export type { FieldContext } from "./fieldContext.ts";
 export { grantKey, grantLabel, sortGrants } from "./grants.ts";
 export {
-  type Amount,
   type AmountRow,
   emptyLevel,
-  type Grant,
+  type GrantLink,
   type GrantRow,
   type LevelFormData,
   type LevelLinks,
@@ -28,7 +27,7 @@ export {
   type LevelRead,
   nextLevel,
   readLevel,
-  toAmountRow,
+  toLevelForm,
   withAllAmounts,
 } from "./levelForm.ts";
 export { RulesetEntityFormFields } from "./RulesetEntityFormFields.tsx";

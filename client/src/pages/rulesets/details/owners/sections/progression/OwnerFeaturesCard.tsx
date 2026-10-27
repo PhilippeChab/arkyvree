@@ -22,8 +22,8 @@ interface OwnerFeaturesCardProps {
   granted: { many: string; type: string };
   /** What its levels grant, as its rules describe it: its pools' kind and scope, its words */
   grants: ProgressionGrants;
-  /** The owner's levels, by their number */
-  levels: readonly { id: string; level: number }[];
+  /** The owner's levels, each its number (`position`) */
+  levels: readonly { id: string; position: number }[];
   onAddFeature: (row: FeatureRow) => void;
   onAddPool: (pool: PoolRow) => void;
   onFeatureLevels: (row: FeatureRow, levelIds: string[]) => void;
@@ -104,10 +104,10 @@ export function OwnerFeaturesCard({
   const { fields: grantedFields } = useEntityFields(rulesetId, granted.type);
   const entityOptions = entities.flatMap((entity) =>
     poolsOf(grantedFields ?? [], entity).map((pool): FeatureRow => ({
-      entityId: entity.id,
-      key: describeFeatureKey({ entityId: entity.id, viaId: pool.id }),
+      key: describeFeatureKey({ toId: entity.id, viaId: pool.id }),
       levelIds: [],
       name: entity.name,
+      toId: entity.id,
       viaId: pool.id,
       viaName: pool.name,
     })),

@@ -125,7 +125,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
   /**
    * What a form writes (its row: its name and its description, `storedOf`, and its fields and single links,
    * `fieldsWrite`), and what its save answers once written (`describe`: its record, its fields as a read gives them,
-   * the links a read describes of it named, `savedLinks`).
+   * the links a read describes of it named, `savedLinks`, `nameLinks`).
    */
   private planWrite(body: FormBody, given: PartialFieldValues<S>, entity?: ViewKinds[K]): EntityCreatePlan {
     const row = this.storedOf(body);
@@ -134,7 +134,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
       describe: (saved, links) => ({
         ...saved,
         fields: this.fields.readByField(this.rulesetData.withInheritedFields(this.type, saved)),
-        links: this.rulesetData.nameLinks(this.savedLinks(saved, links)),
+        links: this.nameLinks(this.savedLinks(saved, links)),
       }),
       links: this.linksOf(body),
       row: written ? { ...row, fields: written.fields, links: written.links } : row,
@@ -180,8 +180,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
 
   /**
    * Entities as stored (`rows`: records, or the view's), each with its fields as its codec reads them, as the view
-   * composes them (`fieldsHeldBy`), and its single links as the view composes them, each with its target's name
-   * (`links`).
+   * composes them (`fieldsHeldBy`), and its single links as the view composes them, named (`links`, `nameLinks`).
    */
   protected describeRows<T extends Pick<EntityRecord, "fields" | "id" | "links">>(
     rows: T[],
@@ -189,7 +188,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
     return rows.map((row) => ({
       ...row,
       fields: this.fieldsHeldBy(row),
-      links: this.rulesetData.nameLinks(this.rulesetData.linksOf(row.id).filter((link) => link.role in row.links)),
+      links: this.nameLinks(this.rulesetData.linksOf(row.id).filter((link) => link.role in row.links)),
     }));
   }
 
@@ -279,6 +278,14 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
       describe: <T extends Pick<EntityRecord, "fields" | "id" | "links">>(rows: T[]) => this.describeRows(rows),
       filters,
     };
+  }
+
+  /**
+   * An entity's links as its answers carry them (`links`), each with its target's name (`toName`): its kind may name
+   * more of them (a class level's granted feat's pool).
+   */
+  protected nameLinks(links: readonly ViewLink[]): NamedLink[] {
+    return this.rulesetData.nameLinks(links);
   }
 
   /**

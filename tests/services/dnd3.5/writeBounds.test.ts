@@ -174,7 +174,7 @@ describe("a ruleset's entities", () => {
       position: 1,
     });
     expect(await EntitiesService.getOwnedEntityWithOwner(rulesetId, "classes", level.id)).toMatchObject({
-      baseBonus: [{ amount: 12, toId: saveId }],
+      links: [{ role: "baseBonus", amount: 12, toId: saveId }],
     });
     for (const base of [-1, 13]) {
       expect(
@@ -192,7 +192,7 @@ describe("a ruleset's entities", () => {
       levels: [{ levelId: level.id, links: { baseBonus: [{ amount: 0, toId: saveId }] } }],
     });
     expect(await EntitiesService.getOwnedEntityWithOwner(rulesetId, "classes", level.id)).toMatchObject({
-      baseBonus: [{ amount: 0, toId: saveId }],
+      links: [{ role: "baseBonus", amount: 0, toId: saveId }],
     });
   });
 
@@ -407,7 +407,7 @@ describe("a ruleset's entity's form", () => {
       ),
     ).toEqual(refusal(["spells", 'Unrecognized key: "extra"']));
     expect(await EntitiesService.getOwnedEntityWithOwner(rulesetId, "classes", level.id)).toMatchObject({
-      baseBonus: [{ amount: 2, toId: saveId }],
+      links: [{ role: "baseBonus", amount: 2, toId: saveId }],
     });
   });
 
