@@ -39,8 +39,9 @@ A change's checks follow what its diff touches, not one list for every change:
 | Writes, or a migration | the writes it changes, before and after; a migration also runs on a Neon branch of production first |
 | What users see | screenshots of the pages it changes, as **Screenshots** says |
 
-A comparison runs only when its row applies, and an independent review only for a large or risky change. A seeded
-database is copied (`CREATE DATABASE … TEMPLATE …`), not seeded again for each check.
+A comparison runs only when its row applies. Every change gets an independent review, scaled to it: a small change's
+reads its diff and runs its tests, a large or risky one's also tries the paths around it. A seeded database is copied
+(`CREATE DATABASE … TEMPLATE …`), not seeded again for each check.
 
 ## Issues and pull requests
 
