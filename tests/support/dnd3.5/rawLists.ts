@@ -13,25 +13,30 @@ function linkRows(raw: RulesetRawData, type: string, role: string, toType?: stri
 }
 
 /**
- * A ruleset's own rows (`raw`, as the cache keeps them) as 3.5's lists: each kind's, typed, and its links by role: a
- * class's skills, its levels' grants and saves, a feat's pools and a spell's lists.
+ * A ruleset's own rows (`raw`, as the cache keeps them) as 3.5's lists: each kind's, typed, and its links by role
+ * (`linksByRole`): its class levels' base bonuses to the saves (`baseBonus`), its classes' skills (`classSkill`), its
+ * class levels' grants of feats and of spells (`grants`, by the granted kind), and the lists its feats and its spells
+ * are on (`listedIn`, by the listed kind).
  */
 export function rawLists(raw: RulesetRawData) {
   return {
     abilities: kindRows(raw, "abilities"),
     aptitudes: kindRows(raw, "aptitudes"),
-    featPools: linkRows(raw, "feats", "listedIn"),
     feats: kindRows(raw, "feats"),
     items: kindRows(raw, "items"),
     classes: kindRows(raw, "classes"),
     classLevels: kindRows(raw, "class-levels"),
-    classLevelFeats: linkRows(raw, "class-levels", "grants", "feats"),
-    classLevelSpells: linkRows(raw, "class-levels", "grants", "spells"),
-    classLevelSaves: linkRows(raw, "class-levels", "baseBonus"),
-    classSkills: linkRows(raw, "classes", "classSkill"),
     languages: kindRows(raw, "languages"),
+    linksByRole: {
+      baseBonus: linkRows(raw, "class-levels", "baseBonus"),
+      classSkill: linkRows(raw, "classes", "classSkill"),
+      grants: {
+        feats: linkRows(raw, "class-levels", "grants", "feats"),
+        spells: linkRows(raw, "class-levels", "grants", "spells"),
+      },
+      listedIn: { feats: linkRows(raw, "feats", "listedIn"), spells: linkRows(raw, "spells", "listedIn") },
+    },
     mechanics: kindRows(raw, "mechanics"),
-    spellLists: linkRows(raw, "spells", "listedIn"),
     spells: kindRows(raw, "spells"),
     races: kindRows(raw, "races"),
     saves: kindRows(raw, "saves"),

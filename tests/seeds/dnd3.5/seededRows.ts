@@ -13,27 +13,28 @@ export function describeRequirement(r: Requirement) {
 
 /**
  * The rows the seed wrote into a seeded ruleset, which it finds by name: its feats and spells each with its lists
- * (`lists`, its `listedIn` links as the seed wrote them: each list's id, its name, and its level there).
+ * (`listedIn`, its `listedIn` links as the seed wrote them, as a read describes them: each its list, `toId`, the
+ * list's name, `toName`, and its level there, `tier`).
  */
 export async function seededRows(rulesetName = DND35_RULESET_NAME) {
   const ruleset = await Rulesets.findOne(db, { name: rulesetName });
   if (!ruleset) throw new Error(`${rulesetName} isn't seeded`);
   const raw = await RulesetViews.getRawData(ruleset.id);
   const view = await RulesetViews.getData(ruleset);
-  const lists = (entity: { id: string }) =>
+  const listedIn = (entity: { id: string }) =>
     (raw.links.get(entity.id)?.links ?? [])
       .filter((link) => link.role === "listedIn")
       .map((link) => ({
-        aptitudeId: link.toId,
-        level: link.tier,
-        name: view.find("aptitudes", link.toId)?.name ?? "",
+        tier: link.tier,
+        toId: link.toId,
+        toName: view.find("aptitudes", link.toId)?.name ?? "",
       }));
   const listed = rawLists(raw);
   const rows = {
     ...raw,
     ...listed,
-    feats: listed.feats.map((feat) => ({ ...feat, lists: lists(feat) })),
-    spells: listed.spells.map((spell) => ({ ...spell, lists: lists(spell) })),
+    feats: listed.feats.map((feat) => ({ ...feat, listedIn: listedIn(feat) })),
+    spells: listed.spells.map((spell) => ({ ...spell, listedIn: listedIn(spell) })),
   };
   const named = <T extends { name: string }>(list: T[], name: string) => {
     const row = list.find((r) => r.name === name);

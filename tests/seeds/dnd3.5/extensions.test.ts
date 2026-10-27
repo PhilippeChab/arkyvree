@@ -26,9 +26,9 @@ describe("The seeded extensions", () => {
   ])("%s: %s is a class feature a %s gets at level %i", async (ruleset, name, klass, level) => {
     const rows = await seededRows(ruleset);
     const feat = rows.feat(name);
-    expect(feat.lists.map((link) => link.aptitudeId)).toContain(rows.aptitude(`${klass} Class Feature`).id);
+    expect(feat.listedIn.map((link) => link.toId)).toContain(rows.aptitude(`${klass} Class Feature`).id);
     expect(
-      rows.classLevelFeats
+      rows.linksByRole.grants.feats
         .filter((grant) => grant.fromId === rows.classLevel(klass, level).id)
         .map((grant) => grant.toId),
     ).toContain(feat.id);
@@ -83,12 +83,12 @@ describe("The seeded extensions", () => {
         const source = coreSpells.get(sourceEntityId);
         const copy = rows.spells.find((spell) => spell.id === forkedEntityId);
         if (!source || !copy) continue;
-        const copyLists = new Set(copy.lists.map((link) => link.aptitudeId));
+        const copyLists = new Set(copy.listedIn.map((link) => link.toId));
         // A copy with a list of its own was made for a domain.
-        if (![...copyLists].some((id) => !source.lists.some((link) => link.aptitudeId === id))) continue;
+        if (![...copyLists].some((id) => !source.listedIn.some((link) => link.toId === id))) continue;
         copies++;
-        const lost = source.lists.filter((link) => link.name.endsWith("Spells") && !copyLists.has(link.aptitudeId));
-        const names = lost.map((link) => link.name).join(", ");
+        const lost = source.listedIn.filter((link) => link.toName.endsWith("Spells") && !copyLists.has(link.toId));
+        const names = lost.map((link) => link.toName).join(", ");
         if (lost.length > 0) failures.push(`${extension.name}: ${copy.name} lost ${names}`);
       }
     }
@@ -101,7 +101,7 @@ describe("The seeded extensions", () => {
       (s) => s.forkedEntityId === missile.id,
     );
     expect(snapshot?.sourceEntityId).toBe(core.spells.find((spell) => spell.name === "Magic Missile")!.id);
-    expect(missile.lists.map((link) => link.aptitudeId)).toContain(divine.aptitude("Force Domain Spells").id);
+    expect(missile.listedIn.map((link) => link.toId)).toContain(divine.aptitude("Force Domain Spells").id);
   });
 
   test("give the prestige casters that draw on other classes' lists their spells, by their book's rules", async () => {
@@ -111,14 +111,14 @@ describe("The seeded extensions", () => {
       return Object.fromEntries(
         names.map((name) => [
           name,
-          spells.find((spell) => spell.name === name)?.lists.find((link) => link.name === list)?.level,
+          spells.find((spell) => spell.name === name)?.listedIn.find((link) => link.toName === list)?.tier,
         ]),
       );
     };
     // The cleric's
     const core = await seededRows();
     const clericSpells = core.spells.flatMap((spell) =>
-      spell.lists.filter((link) => link.name === "Cleric Spells").map((link) => [spell.name, link.level] as const),
+      spell.listedIn.filter((link) => link.toName === "Cleric Spells").map((link) => [spell.name, link.tier] as const),
     );
     expect(clericSpells.length).toBeGreaterThan(200);
     expect(
@@ -213,15 +213,13 @@ describe("The seeded extensions", () => {
     const adventurer = await seededRows(DND35_COMPLETE_ADVENTURER_NAME);
     const lists = ["Sublime Chord Spells", "Suel Arcanamach Spells", "Spirit Shaman Spells"];
     const fly = adventurer.spells.find((spell) => spell.name === "Fly, Swift")!;
-    const links = fly.lists.filter((link) => lists.includes(link.name));
-    expect(Object.fromEntries(links.map((link) => [link.name, link.level]))).toEqual({
+    const links = fly.listedIn.filter((link) => lists.includes(link.toName));
+    expect(Object.fromEntries(links.map((link) => [link.toName, link.tier]))).toEqual({
       "Sublime Chord Spells": 2,
       "Suel Arcanamach Spells": 2,
       "Spirit Shaman Spells": 3,
     });
-    expect(links.map((link) => link.aptitudeId).sort()).toEqual(
-      lists.map((list) => adventurer.aptitude(list).id).sort(),
-    );
+    expect(links.map((link) => link.toId).sort()).toEqual(lists.map((list) => adventurer.aptitude(list).id).sort());
   });
 
   test("give the exemplar's and the scout's bonus feats every feat their lists name, a family's for each option", async () => {
@@ -229,9 +227,7 @@ describe("The seeded extensions", () => {
     const adventurer = await seededRows(DND35_COMPLETE_ADVENTURER_NAME);
     const choicesOf = (pool: string) => {
       const id = adventurer.aptitude(pool).id;
-      return adventurer.feats
-        .filter((feat) => feat.lists.some((link) => link.aptitudeId === id))
-        .map((feat) => feat.name);
+      return adventurer.feats.filter((feat) => feat.listedIn.some((link) => link.toId === id)).map((feat) => feat.name);
     };
     const familyOf = (family: string) =>
       core.feats.filter((feat) => feat.name.startsWith(`${family}: `)).map((feat) => feat.name);
@@ -264,7 +260,7 @@ describe("The seeded extensions", () => {
     const clericDomain = core.aptitude("Cleric Domain").id;
     const domains = [core, divine].flatMap((rows) =>
       rows.feats
-        .filter((feat) => feat.lists.some((link) => link.aptitudeId === clericDomain))
+        .filter((feat) => feat.listedIn.some((link) => link.toId === clericDomain))
         .map((feat) => [
           `${feat.name} (Divine Crusader)`,
           rows.modifiersOf(feat.id).find((modifier) => modifier.target.endsWith(".joinsclasslist"))?.target,
@@ -273,7 +269,7 @@ describe("The seeded extensions", () => {
     expect(domains.length).toBeGreaterThan(20);
 
     const pool = divine.aptitude("Divine Crusader Domain").id;
-    const choices = divine.feats.filter((feat) => feat.lists.some((link) => link.aptitudeId === pool));
+    const choices = divine.feats.filter((feat) => feat.listedIn.some((link) => link.toId === pool));
     expect(
       Object.fromEntries(
         choices.map((feat) => [
@@ -296,7 +292,7 @@ describe("The seeded extensions", () => {
     const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
     const choicesOf = (rows: typeof arcane, pool: string) => {
       const id = rows.aptitude(pool).id;
-      const choices = rows.feats.filter((feat) => feat.lists.some((link) => link.aptitudeId === id));
+      const choices = rows.feats.filter((feat) => feat.listedIn.some((link) => link.toId === id));
       return Object.fromEntries(
         choices.map((feat) => [
           feat.name,
@@ -350,7 +346,7 @@ describe("The seeded extensions", () => {
     const stages = [1, 2, 3, 4, 5].map((stage) => {
       const feature = divine.feat(`Drift ${stage} (Geomancer)`);
       const pool = divine.aptitude(`Geomancer Drift ${stage}`).id;
-      const options = divine.feats.filter((feat) => feat.lists.some((link) => link.aptitudeId === pool));
+      const options = divine.feats.filter((feat) => feat.listedIn.some((link) => link.toId === pool));
       return {
         // The pick each of its levels opens
         pick: [
@@ -358,7 +354,7 @@ describe("The seeded extensions", () => {
           ...divine.modifiersOf(feature.id).map((m) => `${m.target} ${m.operator} ${m.value}`),
         ],
         levels: Array.from({ length: 10 }, (_, index) => index + 1).filter((level) =>
-          divine.classLevelFeats.some(
+          divine.linksByRole.grants.feats.some(
             (grant) => grant.fromId === divine.classLevel("Geomancer", level).id && grant.toId === feature.id,
           ),
         ),
@@ -403,7 +399,7 @@ describe("The seeded extensions", () => {
     const dmg = await seededRows(DND35_DMG_NAME);
     const choicesOf = (pool: string) => {
       const id = dmg.aptitude(pool).id;
-      const choices = dmg.feats.filter((feat) => feat.lists.some((link) => link.aptitudeId === id));
+      const choices = dmg.feats.filter((feat) => feat.listedIn.some((link) => link.toId === id));
       return Object.fromEntries(
         choices.map((feat) => [feat.name, dmg.requirementsOf(feat.id).map((q) => `${q.target} ${q.value}`)]),
       );

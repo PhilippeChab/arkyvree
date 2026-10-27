@@ -653,7 +653,7 @@ describe("subscribing to an extension", () => {
       // The book's favored soul casts from the fork's list, which offers the spells on the book's
       const divineRows = rawLists(await RulesetViews.getRawData(divine.id));
       const spell = divineRows.spells.find((spell) =>
-        divineRows.spellLists.some(
+        divineRows.linksByRole.listedIn.spells.some(
           (link) => link.fromId === spell.id && link.toId === divineList.id && link.tier === 1,
         ),
       )!;
