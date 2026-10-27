@@ -89,7 +89,7 @@ describe("ModifiersService", () => {
     const { session, rulesetId, feat } = await setup();
     const [list] = await Entities.create<Aptitude>(db, "aptitudes", { name: "Test Light Spells", rulesetId });
     const [spell] = await Entities.create<Spell>(db, "spells", { name: "Test Glow", rulesetId });
-    await addLists(db, "spells", spell.id, [{ aptitudeId: list.id, level: 1 }]);
+    await addLists(db, "spells", spell.id, [{ toId: list.id, tier: 1 }]);
     const knownPath = async () =>
       (await readTargetPaths(rulesetId, "requirement")).paths.some(
         (path) => path.path === "spells.testglow.testlight.known",

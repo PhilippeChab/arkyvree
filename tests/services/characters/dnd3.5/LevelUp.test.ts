@@ -698,7 +698,7 @@ describe("a pick a level takes twice", () => {
     // A fork whose Toughness is a fighter's bonus feat too
     const fork = await createSeededTestRuleset(SEED_USER_ID);
     const toughness = await copyEntity(db, "feats", ctx.featMap["Toughness"], fork);
-    await addLists(db, "feats", toughness.id, [{ aptitudeId: ctx.aptMap["Fighter Bonus Feat"] }]);
+    await addLists(db, "feats", toughness.id, [{ toId: ctx.aptMap["Fighter Bonus Feat"] }]);
     RulesetViews.invalidate(fork.id);
     const characterId = await createSeedCharacter(ctx);
     await Characters.update(db, { rulesetId: fork.id }, { id: characterId });

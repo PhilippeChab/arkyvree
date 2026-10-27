@@ -69,11 +69,11 @@ describe("reverting a fork's copy", () => {
     const general = ctx.aptMap.General;
     const copy = await copyEntity(db, "aptitudes", general, fork);
     const { feat, spell } = await createOwnFeatAndSpell(fork.id);
-    await addLists(db, "feats", feat.id, [{ aptitudeId: copy.id }]);
-    await addLists(db, "spells", spell.id, [{ aptitudeId: copy.id, level: 1 }]);
+    await addLists(db, "feats", feat.id, [{ toId: copy.id }]);
+    await addLists(db, "spells", spell.id, [{ toId: copy.id, tier: 1 }]);
     const { classLevel } = await createTestClassLevel(fork.id);
-    await addGrants(db, classLevel.id, "feats", [{ toId: feat.id, aptitudeId: copy.id }]);
-    await addGrants(db, classLevel.id, "spells", [{ toId: spell.id, aptitudeId: copy.id }]);
+    await addGrants(db, classLevel.id, "feats", [{ toId: feat.id, viaId: copy.id }]);
+    await addGrants(db, classLevel.id, "spells", [{ toId: spell.id, viaId: copy.id }]);
     const character = await createTestCharacter(user.id, { rulesetId: fork.id });
     const level = await addCharacterLevel(character.id, classLevel.id, {
       feats: { [copy.id]: [feat.id] },
@@ -104,8 +104,8 @@ describe("reverting a fork's copy", () => {
     const feat = await copyEntity(db, "feats", dodge, fork);
     const spell = await copyEntity(db, "spells", spellId, fork);
     const { classLevel } = await createTestClassLevel(fork.id);
-    await addGrants(db, classLevel.id, "feats", [{ toId: feat.id, aptitudeId: ctx.aptMap.General }]);
-    await addGrants(db, classLevel.id, "spells", [{ toId: spell.id, aptitudeId: ctx.aptMap.General }]);
+    await addGrants(db, classLevel.id, "feats", [{ toId: feat.id, viaId: ctx.aptMap.General }]);
+    await addGrants(db, classLevel.id, "spells", [{ toId: spell.id, viaId: ctx.aptMap.General }]);
 
     await RulesetChangesService.revertOverride(session, fork.id, "feats", dodge);
     await RulesetChangesService.revertOverride(session, fork.id, "spells", spellId);
@@ -126,7 +126,7 @@ describe("reverting a fork's copy", () => {
       links: { resistedBy: copy.id },
     });
     const { classLevel } = await createTestClassLevel(fork.id);
-    await addBaseBonuses(db, classLevel.id, [{ saveId: copy.id, base: 2 }]);
+    await addBaseBonuses(db, classLevel.id, [{ toId: copy.id, amount: 2 }]);
 
     await RulesetChangesService.revertOverride(session, fork.id, "saves", reflex);
 
@@ -249,7 +249,7 @@ describe("reverting a fork's copy", () => {
     const general = ctx.aptMap.General;
     const copy = await copyEntity(db, "aptitudes", general, fork);
     const { feat } = await createOwnFeatAndSpell(fork.id);
-    await addLists(db, "feats", feat.id, [{ aptitudeId: general }, { aptitudeId: copy.id }]);
+    await addLists(db, "feats", feat.id, [{ toId: general }, { toId: copy.id }]);
 
     await RulesetChangesService.revertOverride(session, fork.id, "aptitudes", general);
 
@@ -265,7 +265,7 @@ describe("reverting a fork's copy", () => {
     const dodgeCopy = await copyEntity(db, "feats", dodge, extension);
     // What the host writes by the ids its view shows: the extension's copies
     const { feat } = await createOwnFeatAndSpell(host.id);
-    await addLists(db, "feats", feat.id, [{ aptitudeId: listCopy.id }]);
+    await addLists(db, "feats", feat.id, [{ toId: listCopy.id }]);
     const hostCopy = await copyEntity(db, "feats", dodgeCopy.id, host);
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
     const { classLevel } = await createTestClassLevel(host.id);

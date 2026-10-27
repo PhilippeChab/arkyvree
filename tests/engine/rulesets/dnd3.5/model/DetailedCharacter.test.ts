@@ -2817,8 +2817,8 @@ describe("DetailedCharacter", () => {
           { name: "Sixth Order Hymn", rulesetId: fork.id },
         ]);
         await addListings(db, "spells", [
-          { entityId: fifth.id, aptitudeId: order.id, level: 5 },
-          { entityId: sixth.id, aptitudeId: order.id, level: 6 },
+          { fromId: fifth.id, toId: order.id, tier: 5 },
+          { fromId: sixth.id, toId: order.id, tier: 6 },
         ]);
         const [orderDomain] = await Entities.createMany<Feat>(db, "feats", [
           { name: "Order Domain", rulesetId: fork.id },
@@ -3051,7 +3051,7 @@ describe("DetailedCharacter", () => {
           { name: "Test Raider Class Feature", rulesetId: ctx.rulesetId },
           { name: "Test Raider Spells", rulesetId: ctx.rulesetId },
         ]);
-        await addLists(db, "spells", ctx.spellMap["Bless"], [{ aptitudeId: raiderSpells.id, level: 1 }]);
+        await addLists(db, "spells", ctx.spellMap["Bless"], [{ toId: raiderSpells.id, tier: 1 }]);
         const [luck] = await Entities.createMany<Feat>(db, "feats", [
           { name: "Test Raider Luck", rulesetId: ctx.rulesetId },
         ]);
@@ -3105,7 +3105,7 @@ describe("DetailedCharacter", () => {
         const [sunPriestSpells] = await Entities.createMany<Aptitude>(db, "aptitudes", [
           { name: "Test Sun Priest Spells", rulesetId: ctx.rulesetId },
         ]);
-        await addLists(db, "spells", ctx.spellMap["Bless"], [{ aptitudeId: sunPriestSpells.id, level: 1 }]);
+        await addLists(db, "spells", ctx.spellMap["Bless"], [{ toId: sunPriestSpells.id, tier: 1 }]);
         const { levelIds } = await new RulesetSeeder(db, ctx).seedClass({
           name: "Test Sun Priest",
           description: "Draws on a domain",
@@ -3181,7 +3181,7 @@ describe("DetailedCharacter", () => {
         const [reserve] = await Entities.createMany<Feat>(db, "feats", [
           { name: "Test Arcane Reserve", rulesetId: fork.id },
         ]);
-        await addLists(db, "feats", reserve.id, [{ aptitudeId: ctx.aptMap["General"] }]);
+        await addLists(db, "feats", reserve.id, [{ toId: ctx.aptMap["General"] }]);
         await insertRows(modifiersInCustomization, [
           {
             sourceId: reserve.id,
@@ -3269,9 +3269,9 @@ describe("DetailedCharacter", () => {
           { name: "Noon Hymn", rulesetId: fork.id },
         ]);
         await addListings(db, "spells", [
-          { entityId: dawn.id, aptitudeId: prayers.id, level: 1 },
-          { entityId: dusk.id, aptitudeId: moon.id, level: 1 },
-          { entityId: noon.id, aptitudeId: litany.id, level: 1 },
+          { fromId: dawn.id, toId: prayers.id, tier: 1 },
+          { fromId: dusk.id, toId: moon.id, tier: 1 },
+          { fromId: noon.id, toId: litany.id, tier: 1 },
         ]);
         const [sun, moonDomain] = await Entities.createMany<Feat>(db, "feats", [
           { name: "Prayers of the Sun", rulesetId: fork.id },
@@ -3279,8 +3279,8 @@ describe("DetailedCharacter", () => {
         ]);
         const clericDomain = ctx.aptMap["Cleric Domain"];
         await addListings(db, "feats", [
-          { entityId: sun.id, aptitudeId: clericDomain },
-          { entityId: moonDomain.id, aptitudeId: clericDomain },
+          { fromId: sun.id, toId: clericDomain },
+          { fromId: moonDomain.id, toId: clericDomain },
         ]);
         const slot = (sourceId: string, list: string) => [
           {

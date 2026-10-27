@@ -115,7 +115,7 @@ async function setupChanges(values: { private?: boolean } = {}) {
     "feats",
     ["Power Attack", "Cleave", "Dodge"].map((name) => ({ name, rulesetId: parent.id })),
   );
-  await addLists(db, "feats", modified.id, [{ aptitudeId: aptitude.id }]);
+  await addLists(db, "feats", modified.id, [{ toId: aptitude.id }]);
   const forked = await fork(session, parent, values);
   return { user, session, owner, parent, fork: forked, aptitude, modified, deleted, untouched };
 }

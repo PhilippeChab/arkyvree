@@ -100,7 +100,7 @@ describe("EntitiesService: aptitudes", () => {
       links: { grants: [{ toId: feat.id, viaId: featAptitude.id }] },
       position: 1,
     });
-    await addGrants(db, level.id, "spells", [{ toId: spell.id, aptitudeId: spellAptitude.id }]);
+    await addGrants(db, level.id, "spells", [{ toId: spell.id, viaId: spellAptitude.id }]);
 
     await EntitiesService.deleteEntity(session, ruleset.id, "aptitudes", featAptitude.id);
     await EntitiesService.deleteEntity(session, ruleset.id, "aptitudes", spellAptitude.id);

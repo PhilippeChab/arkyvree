@@ -6,17 +6,17 @@
 import type { Db } from "@/drizzle/database.ts";
 import { EntityLinks } from "@/server/repositories/index.ts";
 
-/** A class level's base bonuses to saves (`classLevelId`, `bonuses`): its `baseBonus` links. */
-export async function addBaseBonuses(db: Db, classLevelId: string, bonuses: { base: number; saveId: string }[]) {
+/** A class level's base bonuses to saves (`classLevelId`, `bonuses`: each a save, `toId`, and its bonus, `amount`). */
+export async function addBaseBonuses(db: Db, classLevelId: string, bonuses: { amount: number; toId: string }[]) {
   return await EntityLinks.createMany(
     db,
-    bonuses.map(({ base, saveId }) => ({
+    bonuses.map(({ amount, toId }) => ({
       role: "baseBonus",
       fromId: classLevelId,
       fromType: "class-levels",
-      toId: saveId,
+      toId,
       toType: "saves",
-      amount: base,
+      amount,
     })),
   );
 }
@@ -29,57 +29,66 @@ export async function addClassSkills(db: Db, classId: string, skillIds: string[]
   );
 }
 
-/** A class level's grants of feats or spells (`toType`), each through its pool, free when it says. */
+/**
+ * A class level's grants of feats or spells (`toType`): each its feat or spell (`toId`), through its pool (`viaId`),
+ * free when it says (`free`).
+ */
 export async function addGrants(
   db: Db,
   classLevelId: string,
   toType: "feats" | "spells",
-  grants: { aptitudeId: string; free?: boolean; toId: string }[],
+  grants: { free?: boolean; toId: string; viaId: string }[],
 ) {
   return await EntityLinks.createMany(
     db,
-    grants.map(({ aptitudeId, free = false, toId }) => ({
+    grants.map(({ free = false, toId, viaId }) => ({
       role: "grants",
       fromId: classLevelId,
       fromType: "class-levels",
       toId,
       toType,
-      viaId: aptitudeId,
+      viaId,
       free,
     })),
   );
 }
 
-/** Feats' or spells' lists (`type`, `listings`: each its entity's): their `listedIn` links, a spell's at its level. */
+/**
+ * Feats' or spells' lists (`type`, `listings`: each its feat or spell, `fromId`, its list, `toId`, and a spell's level
+ * there, `tier`): their `listedIn` links.
+ */
 export async function addListings(
   db: Db,
   type: "feats" | "spells",
-  listings: { aptitudeId: string; entityId: string; level?: number | null }[],
+  listings: { fromId: string; tier?: number | null; toId: string }[],
 ) {
   return await EntityLinks.createMany(
     db,
-    listings.map(({ aptitudeId, entityId, level }) => ({
+    listings.map(({ fromId, tier, toId }) => ({
       role: "listedIn",
-      fromId: entityId,
+      fromId,
       fromType: type,
-      toId: aptitudeId,
+      toId,
       toType: "aptitudes",
-      tier: level ?? null,
+      tier: tier ?? null,
     })),
   );
 }
 
-/** A feat's or a spell's lists (`type`, `entityId`): its `listedIn` links, a spell's each at its level. */
+/**
+ * A feat's or a spell's lists (`type`, `entityId`, `lists`: each its list, `toId`, and a spell's level there, `tier`):
+ * its `listedIn` links.
+ */
 export async function addLists(
   db: Db,
   type: "feats" | "spells",
   entityId: string,
-  lists: { aptitudeId: string; level?: number | null }[],
+  lists: { tier?: number | null; toId: string }[],
 ) {
   return await addListings(
     db,
     type,
-    lists.map((list) => ({ ...list, entityId })),
+    lists.map((list) => ({ ...list, fromId: entityId })),
   );
 }
 

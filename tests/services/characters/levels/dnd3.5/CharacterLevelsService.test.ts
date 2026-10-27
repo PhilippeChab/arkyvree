@@ -311,12 +311,12 @@ async function setupRuleset({ fork = false } = {}) {
   await addListings(
     db,
     "feats",
-    featList.map((f) => ({ entityId: f.id, aptitudeId: featAptitude.id })),
+    featList.map((f) => ({ fromId: f.id, toId: featAptitude.id })),
   );
   await addListings(
     db,
     "spells",
-    spellList.map((p) => ({ entityId: p.id, aptitudeId: spellAptitude.id })),
+    spellList.map((p) => ({ fromId: p.id, toId: spellAptitude.id })),
   );
 
   const character = await createTestCharacter(user.id, { rulesetId: characterRuleset.id, raceId: race.id });
@@ -659,7 +659,7 @@ describe("LevelsService", () => {
     test("list a class level's granted feats, and leave them out of the picks unless they stack", async () => {
       const { session, character, klass, classLevels, featAptitude, feats } = await setupRuleset();
       await addGrants(db, classLevels[0].id, "feats", [
-        { toId: feats["Power Attack"].id, aptitudeId: featAptitude.id, free: true },
+        { toId: feats["Power Attack"].id, viaId: featAptitude.id, free: true },
       ]);
 
       const plan = levelUpPlan([planned(klass.id, 1)]);
@@ -688,9 +688,9 @@ describe("LevelsService", () => {
       const { session, character, klass, classLevels, featAptitude, generalAptitude, feats, skills } =
         await setupRuleset();
       await addGrants(db, classLevels[0].id, "feats", [
-        { toId: feats["Power Attack"].id, aptitudeId: featAptitude.id, free: false },
+        { toId: feats["Power Attack"].id, viaId: featAptitude.id, free: false },
       ]);
-      await addLists(db, "feats", feats["Dodge"].id, [{ aptitudeId: generalAptitude.id }]);
+      await addLists(db, "feats", feats["Dodge"].id, [{ toId: generalAptitude.id }]);
       await Requirements.create(db, {
         entityId: feats["Dodge"].id,
         entityType: "feats",
@@ -714,7 +714,7 @@ describe("LevelsService", () => {
         fork: true,
       });
       await addGrants(db, classLevels[0].id, "feats", [
-        { toId: feats["Power Attack"].id, aptitudeId: featAptitude.id, free: true },
+        { toId: feats["Power Attack"].id, viaId: featAptitude.id, free: true },
       ]);
       await addOneLevel(session, character.id, klass.id, 1, 8, null, {}, {}, {}, true);
       await EntitiesService.updateEntity(session, ruleset.id, "classes", klass.id, {
@@ -751,7 +751,7 @@ describe("LevelsService", () => {
         fork: true,
       });
       await addGrants(db, classLevels[0].id, "feats", [
-        { toId: feats["Power Attack"].id, aptitudeId: featAptitude.id, free: true },
+        { toId: feats["Power Attack"].id, viaId: featAptitude.id, free: true },
       ]);
       await addCharacterLevel(character.id, classLevels[0].id, {
         feats: { [featAptitude.id]: [feats["Dodge"].id] },
@@ -779,7 +779,7 @@ describe("LevelsService", () => {
       // Deleting an inherited feat in a fork copies it there and deletes the copy: the fork no longer has the feat
       const { session, ruleset, character, classLevels, featAptitude, feats } = await setupRuleset({ fork: true });
       await addGrants(db, classLevels[0].id, "feats", [
-        { toId: feats["Power Attack"].id, aptitudeId: featAptitude.id, free: true },
+        { toId: feats["Power Attack"].id, viaId: featAptitude.id, free: true },
       ]);
       await addCharacterLevel(character.id, classLevels[0].id);
       const held = async () => {
@@ -805,7 +805,7 @@ describe("LevelsService", () => {
         rulesetId: klass.rulesetId,
         fields: { [FEAT_SELECTABLE]: false },
       });
-      await addLists(db, "feats", classFeature.id, [{ aptitudeId: featAptitude.id }]);
+      await addLists(db, "feats", classFeature.id, [{ toId: featAptitude.id }]);
       await addCharacterLevel(character.id, classLevels[0].id, {
         feats: { [featAptitude.id]: [feats["Power Attack"].id, feats["Weapon Focus"].id] },
       });
@@ -839,8 +839,8 @@ describe("LevelsService", () => {
         name: "Shared Aptitude",
         rulesetId: klass.rulesetId,
       });
-      await addLists(db, "feats", feats["Dodge"].id, [{ aptitudeId: shared.id }]);
-      await addLists(db, "spells", spells["Rage"].id, [{ aptitudeId: shared.id }]);
+      await addLists(db, "feats", feats["Dodge"].id, [{ toId: shared.id }]);
+      await addLists(db, "spells", spells["Rage"].id, [{ toId: shared.id }]);
 
       const { pools } = stepAnswerOf(
         await getPlanAnswer(session, character.id, levelUpPlan([planned(klass.id, 1)])),
@@ -1223,7 +1223,7 @@ describe("LevelsService", () => {
   describe("spell slots and the spells of a pool", () => {
     test("list a class level's granted spells, and leave them and those the character has out of the picks", async () => {
       const { session, character, klass, classLevels, spellAptitude, spells } = await setupRuleset();
-      await addGrants(db, classLevels[1].id, "spells", [{ toId: spells["Rage"].id, aptitudeId: spellAptitude.id }]);
+      await addGrants(db, classLevels[1].id, "spells", [{ toId: spells["Rage"].id, viaId: spellAptitude.id }]);
       await addCharacterLevel(character.id, classLevels[0].id, {
         spells: { [spellAptitude.id]: [spells["Sneak Attack"].id] },
       });
@@ -1245,8 +1245,8 @@ describe("LevelsService", () => {
         name: "Other Spell Aptitude",
         rulesetId: parent.id,
       });
-      await addLists(db, "spells", spells["Rage"].id, [{ aptitudeId: otherAptitude.id }]);
-      await addGrants(db, classLevels[1].id, "spells", [{ toId: spells["Rage"].id, aptitudeId: spellAptitude.id }]);
+      await addLists(db, "spells", spells["Rage"].id, [{ toId: otherAptitude.id }]);
+      await addGrants(db, classLevels[1].id, "spells", [{ toId: spells["Rage"].id, viaId: spellAptitude.id }]);
       await addCharacterLevel(character.id, classLevels[0].id);
       const offered = async (aptitudeId: string, level: number) =>
         names(await spellOptions(session, character.id, levelUpPlan([planned(klass.id, level)]), aptitudeId));
@@ -1316,7 +1316,7 @@ describe("LevelsService", () => {
         await Entities.findMany<KlassLevel>(db, { entityType: "class-levels", ownerIds: [sorcerer.id] })
       ).find(({ position }) => position === 2)!;
       const [sorcererSpells, resistance] = [ctx.aptMap["Sorcerer Spells"], ctx.spellMap["Resistance"]];
-      await addGrants(db, second.id, "spells", [{ toId: resistance, aptitudeId: sorcererSpells }]);
+      await addGrants(db, second.id, "spells", [{ toId: resistance, viaId: sorcererSpells }]);
       RulesetViews.invalidate(fork.id);
       const characterId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000, rulesetId: fork.id });
       const cantrips = async (levels: number[]) =>
@@ -1358,7 +1358,7 @@ describe("LevelsService", () => {
       const { session, ruleset, character, klass, classLevels, spellAptitude, spells } = await setupRuleset({
         fork: true,
       });
-      await addGrants(db, classLevels[0].id, "spells", [{ toId: spells["Rage"].id, aptitudeId: spellAptitude.id }]);
+      await addGrants(db, classLevels[0].id, "spells", [{ toId: spells["Rage"].id, viaId: spellAptitude.id }]);
       await addCharacterLevel(character.id, classLevels[0].id, {
         spells: { [spellAptitude.id]: [spells["Sneak Attack"].id] },
       });
