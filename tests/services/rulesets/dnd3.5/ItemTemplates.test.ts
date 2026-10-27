@@ -305,6 +305,19 @@ describe("Item templates", () => {
     });
   });
 
+  test("an instance's edit answers the template its fork copied after it was made as the copy, as its page does", async () => {
+    const { session, ruleset, template, instance } = await setup();
+    const sword = await template("Longsword");
+    const mine = await instance("Longsword");
+    const copy = await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, { name: "Our Longsword" });
+    // Its stored template is the original, which its view reads as the fork's copy
+    const edited = await EntitiesService.updateEntity(session, ruleset.id, "items", mine.id, { name: "My Blade" });
+    const page = await EntitiesService.getEntity(session, ruleset.id, "items", mine.id);
+    const madeFrom = (answer: { links: { role: string }[] }) => answer.links.filter((link) => link.role === "madeFrom");
+    expect(madeFrom(edited)).toEqual([expect.objectContaining({ toId: copy.id, toName: "Our Longsword" })]);
+    expect(madeFrom(edited)).toEqual(madeFrom(page));
+  });
+
   test("an instance's edit records no template change when its fork copies the template it was made from", async () => {
     const { session, ruleset, template, instance } = await setup();
     const sword = await template("Longsword");

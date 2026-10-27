@@ -255,16 +255,21 @@ describe("AuthenticationService", () => {
       expect(demo.session.expiresAt).toBe(demo.user.expiresAt!);
     });
 
-    test("carries on with the demo session it's given, ignores an unknown one, and refuses a real user's", async () => {
+    test("carries on with the demo it's signed in to, and refuses a real user's", async () => {
+      const signedInAs = async ({ session }: { session: Session }) => ({
+        session,
+        user: (await Users.findOne(db, { id: session.userId }))!,
+      });
       const first = await AuthenticationService.startDemo();
-      expect(await AuthenticationService.startDemo(first.session.id)).toMatchObject({
+      expect(await AuthenticationService.startDemo(await signedInAs(first))).toMatchObject({
         reused: true,
         session: { id: first.session.id },
         user: { id: first.user.id },
       });
-      expect(await AuthenticationService.startDemo(NIL_UUID)).toMatchObject({ reused: false });
       // It would replace their cookie with a demo one.
-      expect(AuthenticationService.startDemo((await signUpAndVerify()).session.id)).rejects.toThrow(BadRequestError);
+      expect(AuthenticationService.startDemo(await signedInAs(await signUpAndVerify()))).rejects.toThrow(
+        BadRequestError,
+      );
     });
 
     test("never touches an expired demo user: sweeping them is the cleanup job's", async () => {

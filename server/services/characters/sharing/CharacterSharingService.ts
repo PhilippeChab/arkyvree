@@ -1,28 +1,23 @@
 import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { isProduction } from "@/server/environment.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Characters, Visibility } from "@/server/repositories/index.ts";
 import { getSlotUrl } from "@/server/services/attachments/index.ts";
 import { readCharacterInput, readChildInputs } from "@/server/services/characters/characterInputs.ts";
+import { renderCharacterSheet } from "@/server/services/characters/printedSheet.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class CharacterSharingService {
-  /** A shared character's printed sheet, read as its share page is: without its private notes. */
+  /** A shared character's printed sheet as a PDF file, read as its share page is: without its private notes. */
   async generateSharedPdf(shareToken: string) {
     const characterRecord = await Characters.findOne(db, { shareToken });
 
     if (!characterRecord) throw new NotFoundError("Character not found");
 
-    const portraitUrl = await getSlotUrl("portrait", characterRecord.id);
-    return await withRulesetScope(db, characterRecord.rulesetId, async (scope) =>
-      Engine.for(scope)
-        .character(await readCharacterInput(db, characterRecord))
-        .describeSheet({ diagnostics: !isProduction(), portraitUrl }, "hide"),
-    );
+    return await renderCharacterSheet(characterRecord, "hide");
   }
 
   async generateShareToken(session: Session, characterId: string) {

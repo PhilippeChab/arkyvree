@@ -1,5 +1,5 @@
 import type { CharacterInput } from "@/engine/core/module/CharacterInputs.ts";
-import type { Descriptions } from "@/engine/core/module/contract.ts";
+import type { OpenedStepPicker } from "@/engine/core/module/pickers.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
 import type { LevelPlanAnswer, LevelPlanRequest, LevelSteps, StepPickerQuery } from "./mechanics.ts";
@@ -8,11 +8,11 @@ import type { ChildrenPlan, LevelEditPlan, LevelRemovalPlan, LevelsPlan } from "
 /**
  * What a ruleset answers of a character's levels, from the rows the server reads: a level's steps by their mechanics,
  * the plan's answer and a step's picker over it, a saved level as an edit's plan, and what a save, an edit or a removal
- * writes, with what the character's children (3.5's bonded creatures) become. Its descriptions are the ruleset's own
- * (`D`); its plans are the rows the server writes. A plan the server hands it is read by the level's steps, each id the
- * view's.
+ * writes, with what the character's children (3.5's bonded creatures) become. Its answers are in core's shapes, a
+ * step's options among them; its plans are the rows the server writes. A plan the server hands it is read by the
+ * level's steps, each id the view's.
  */
-export default abstract class LevelUpPart<D extends Descriptions> {
+export default abstract class LevelUpPart {
   /**
    * The plan's answer (`request`): each step's answer in its mechanic's shape, by its name, and the plan's
    * advancements; Add Level's plan, and Edit Level's level in its place (`request.editedLevelId`) alike.
@@ -33,14 +33,14 @@ export default abstract class LevelUpPart<D extends Descriptions> {
 
   /**
    * Step `step`'s picker over the plan (`query`), at the advancement its pick lands on: the kind it reads a page of,
-   * and its picker. Refused for a step that opens none.
+   * the read it takes, and the page it read as the step's options. Refused for a step that opens none.
    */
   abstract openStepPicker(
     view: RulesetView,
     character: CharacterInput,
     step: string,
     query: StepPickerQuery,
-  ): D["stepPicker"];
+  ): OpenedStepPicker;
 
   /** What a character's children (`children`, their rows) become as its saved levels make them. */
   abstract planChildren(view: RulesetView, character: CharacterInput, children: CharacterInput[]): ChildrenPlan;

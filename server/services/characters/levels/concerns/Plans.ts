@@ -1,28 +1,9 @@
-import {
-  Engine,
-  type EntityRecord,
-  type LevelPlanRequest,
-  type StepOption,
-  type StepOptionGroup,
-  type StepPickerQuery,
-} from "@/engine/index.ts";
+import { Engine, type EntityRecord, type LevelPlanRequest, type StepPickerQuery } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, type Pagination } from "@/server/repositories/index.ts";
 import { withEditableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import type { Session } from "@/shared/relations.ts";
-
-/** An option described by its picker, as a step's option: its entity, and whether the character may take it. */
-function optionOf(option: {
-  description: string | null;
-  eligible: boolean;
-  id: string;
-  name: string;
-  requirementTree?: string;
-}): StepOption {
-  const { description, eligible, id, name, requirementTree } = option;
-  return { description, eligible, id, name, ...(requirementTree && { requirementTree }) };
-}
 
 /**
  * The level wizards' plans, by their steps' mechanics: a level's steps, the plan's answer (each step's, Add Level's
@@ -56,10 +37,10 @@ export function Plans<B extends Constructor>(Base: B) {
     }
 
     /**
-     * A page of step `step`'s options over the plan (`query`), searched: the tracks the plan can take next (3.5's
-     * classes), a pool's options (its groups, a group's own when the query names one), each described for the
-     * character with the plan, each a step's option in no game's nouns (`StepOption`, `StepOptionGroup`). Answered
-     * with whether its rows are groups.
+     * A page of step `step`'s options over the plan (`query`), searched, read as its picker says: the tracks the plan
+     * can take next (3.5's classes), a pool's options, or its groups (a group's own options when the query names one),
+     * each described for the character with the plan as a step's option in no game's nouns (`StepOption`,
+     * `StepOptionGroup`). Answered with whether its rows are groups.
      */
     async getStepOptions(
       session: Session,
@@ -71,44 +52,34 @@ export function Plans<B extends Constructor>(Base: B) {
       const { search, ...picker } = query;
       return await withEditableCharacter(db, session, characterId, async (scope, character) => {
         const opened = Engine.for(scope).character(character).levelUp().openStepPicker(step, picker);
-        // A plan's picker reads tracks: its kind's rows in the character's ruleset, those it advanced on first
-        if ("tracks" in opened.picker) {
-          const filters = {
-            entityType: opened.kind,
-            rulesetId: character.record.rulesetId,
-            ...scope.rulesetData.cow.listFilters,
-            orderByAdvancementsOf: characterId,
-            ...opened.picker.filters,
-            search,
-          };
-          const result = await Entities.findPage<EntityRecord & { name: string }>(db, filters, pagination);
-          const items = opened.picker
-            .describe(result.items)
-            .map((row): StepOption => ({ ...optionOf(row), track: row.track }));
-          return { grouped: false as const, items, page: result.page, nextPage: result.nextPage };
+        switch (opened.read) {
+          // Tracks: its kind's rows in the character's ruleset, those it advanced on first
+          case "tracks": {
+            const filters = {
+              entityType: opened.kind,
+              rulesetId: character.record.rulesetId,
+              ...scope.rulesetData.cow.listFilters,
+              orderByAdvancementsOf: characterId,
+              ...opened.picker.filters,
+              search,
+            };
+            const result = await Entities.findPage<EntityRecord & { name: string }>(db, filters, pagination);
+            const items = opened.picker.describeOptions(result.items);
+            return { grouped: false as const, items, page: result.page, nextPage: result.nextPage };
+          }
+          case "groups": {
+            const filters = { entityType: opened.kind, ...opened.picker.groupFilters, search };
+            const result = await Entities.findOptionGroupPage(db, filters, pagination);
+            const items = opened.picker.describeGroups(result.items);
+            return { grouped: true as const, items, page: result.page, nextPage: result.nextPage };
+          }
+          case "options": {
+            const filters = { entityType: opened.kind, ...opened.picker.filters, search };
+            const result = await Entities.findOptionPage(db, filters, pagination);
+            const items = opened.picker.describeOptions(result.items);
+            return { grouped: false as const, items, page: result.page, nextPage: result.nextPage };
+          }
         }
-        // A grouped picker's groups, unless the query names one: its options then, as an ungrouped picker's
-        if ("groupFilters" in opened.picker && picker.group === undefined) {
-          const filters = { ...opened.picker.groupFilters, search };
-          const result = await Entities.findOptionGroupPage(db, { entityType: opened.kind, ...filters }, pagination);
-          const items = opened.picker.describeGroups(result.items).map((row): StepOptionGroup => ({
-            count: row.variantCount,
-            description: row.description,
-            eligible: row.eligible,
-            group: row.group,
-            id: row.representativeId,
-            name: row.displayName,
-            ...(row.requirementTree && { requirementTree: row.requirementTree }),
-          }));
-          return { grouped: true as const, items, page: result.page, nextPage: result.nextPage };
-        }
-        const result = await Entities.findOptionPage(
-          db,
-          { entityType: opened.kind, ...opened.picker.filters, search },
-          pagination,
-        );
-        const items = opened.picker.describe(result.items).map(optionOf);
-        return { grouped: false as const, items, page: result.page, nextPage: result.nextPage };
       });
     }
   }
