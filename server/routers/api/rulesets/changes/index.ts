@@ -1,12 +1,14 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
+import { Engine } from "@/engine/index.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { idParam } from "@/server/routers/api/validation.ts";
-import { RESTORABLE_ENTITY_TYPES, RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
+import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 
+/** An entity a fork restores to its parent's: of a kind its rules write (`Engine.rules().restorableKinds()`). */
 const restorableEntityParams = idParam.extend({
-  entityType: z.enum(RESTORABLE_ENTITY_TYPES),
+  entityType: z.enum(Engine.rules().restorableKinds()),
   entityId: z.string().uuid(),
 });
 

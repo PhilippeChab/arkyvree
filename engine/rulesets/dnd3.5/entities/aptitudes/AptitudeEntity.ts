@@ -11,13 +11,13 @@ import { stripSeparators } from "@/shared/text.ts";
 
 /** What an aptitude's edit may change: the rules count on a pool's name. */
 export default class AptitudeEntity extends RulesetEntity<"aptitudes"> {
+  /** Its list's filters: a kind's pools (`scope`: the feats', the spells' lists). */
+  protected static override readonly listFilters = { scope: z.enum(["feats", "spells"]) };
+
   /** None of its own. */
   protected override readonly fields = FieldCodec.NONE;
 
   protected override readonly label = "Aptitude";
-
-  /** Its list's filters: a kind's pools (`scope`: the feats', the spells' lists). */
-  protected override readonly listFilters = { scope: z.enum(["feats", "spells"]) };
 
   override readonly type = "aptitudes";
 

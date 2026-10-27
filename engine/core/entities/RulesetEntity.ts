@@ -47,6 +47,25 @@ export interface FormBody {
   position?: number;
 }
 
+/**
+ * What a kind can do, as its class declares it, before any view (`RulesetEntity.describeCapabilities`): what its
+ * actions are refused by and its list's query read by, and what its ruleset's page shows of it. Whether it makes copies
+ * of its entities (`copies`), the field its list groups their variants under (`families`), whether its list narrows by
+ * a tier (`levels`) and by the kinds its entities are for (`partitioned`), when an entity's name can't change
+ * (`lockedName`, and why), the pools its list narrows by (`pools`), whether it has a progression (`progression`), and
+ * whether its ruleset never writes one (`readOnly`).
+ */
+export interface KindCapabilities {
+  copies: boolean;
+  families?: { field: string };
+  levels: boolean;
+  lockedName?: { field: string; reason: string };
+  partitioned: boolean;
+  pools?: { param: string; role: string };
+  progression: boolean;
+  readOnly: boolean;
+}
+
 /** An action a kind may have none of: its writes, its groups, its copies. */
 export type EntityAction = "create" | "delete" | "duplicate" | "groups" | "templates" | "update" | "variants";
 
@@ -59,50 +78,102 @@ const COPY_ACTIONS: readonly EntityAction[] = ["duplicate", "templates", "varian
  * - an entity found by its id (`find`) and described (`describe`): as the view composes it (its own columns, its fields
  *   as its codec reads them, by the stored field that keeps each, an item's template's it holds none of among them,
  *   `fieldsHeldBy`; its single links each with its target's name);
- * - a page of its records (`openList`): its query's filters read by their schemas (`listFilters`, each by the field,
+ * - a page of its records (`openList`): its query's filters read by their schemas (`listShape`, each by the field,
  *   the role or the partition it filters), what the server reads it with (`filters`, `listOf`), and its records
- *   described alike; its groups, a kind's that lists by group (`openGroups`: `groupFilters`, `groupsOf`);
+ *   described alike; its groups, a kind's that lists by group (`openGroups`: its families' `groupFilters`, `groupsOf`);
  * - what its form writes (`planCreate`, `planEdit`), its form being where it stores it (its fields by the stored field
  *   that keeps each, its links by role): read by its codec against the ruleset's declarations of them (`readForm`,
  *   `FieldCodec.parse`: its fields, its single links and its lists of links, the entities it names by id as the view
  *   reads them, a copy's for its source's id, refused, naming it, when the view shows none), the form checked
- *   (`checkForm`), its name and its description written where they're stored (`storedOf`), its fields and single links
- *   with them (`fieldsWrite`), the lists of links it sets (`linksOf`), and what it writes beside them (`writesOf`: the
- *   feats it makes);
+ *   (`checkLockedName`, `checkForm`), its name and its description written where they're stored (`storedOf`), its
+ *   fields and single links with them (`fieldsWrite`), the lists of links it sets (`linksOf`), and what it writes
+ *   beside them (`writesOf`: the feats it makes);
  * - what deleting one writes (`planDelete`): checked (`checkDelete`), and what it writes with it (`deleteWritesOf`).
- * An action a kind has none of it refuses as not found (`checkAction`): a read-only kind's writes (`readOnly`: "No
- * create for abilities"), the groups of a kind that lists none, a duplicate, variants and templates of a kind that makes
- * no copies (`copies`: "No templates for races").
+ * What a kind can do its class declares once, in its statics, before any view (`describeCapabilities`, which its
+ * ruleset's page shows): an action it has none of it refuses as not found (`checkAction`): a read-only kind's writes
+ * (`readOnly`: "No create for abilities"), the groups of a kind that lists none (`families`), a duplicate, variants and
+ * templates of a kind that makes no copies (`copies`: "No templates for races"); its list's query takes the filters it
+ * declares (`listFilters`, and those its `families`, `pools`, `levels` and `partitioned` add); and an edit refuses renaming an entity whose name
+ * its kind locks (`lockedName`), in the words its form shows.
  */
 export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends Fields = NoFields> {
   constructor(protected readonly view: RulesetView) {}
 
   /** Whether it makes copies of its entities: their templates, a duplicate, variants (an item's). */
-  protected readonly copies: boolean = false;
+  protected static readonly copies: boolean = false;
+
+  /**
+   * Its families (a feat's): the field its list groups its entities' variants under, which its list's query filters by
+   * too, and the filters of a page of its groups, by query key (a feat's pool). None for a kind that lists no groups.
+   */
+  protected static readonly families?: { field: string; groupFilters: z.ZodRawShape };
+
+  /** Whether its list narrows by a tier, its `tier` filter (a spell's, by its level on a pool): what its list takes. */
+  protected static readonly levels: boolean = false;
+
+  /**
+   * Its list's filters past the shared ones and those its families, pools, tiers and partitions add, each by the field
+   * or the role it filters, and its value's schema: none.
+   */
+  protected static readonly listFilters: z.ZodRawShape = {};
+
+  /**
+   * When an entity's name can't change: while its own flag (`field`) holds (a generated feat's), which an edit refuses
+   * and its form shows, in the same words (`reason`). None: a name always changes.
+   */
+  protected static readonly lockedName?: { field: string; reason: string };
+
+  /**
+   * Whether its list narrows by the kinds its entities are for, its `partition` filter (a race's, a class's): what its
+   * list takes.
+   */
+  protected static readonly partitioned: boolean = false;
+
+  /**
+   * The pools its list narrows by, one at a time (a feat's, a spell's): the role of its entities' links to them, which
+   * its list's query filters by, and the URL's key its page reads one by (`param`). None for a kind without.
+   */
+  protected static readonly pools?: { param: string; role: string };
+
+  /** Whether its ruleset reads it but never writes it (its rules seed it: an ability), which refuses its writes. */
+  protected static readonly readOnly: boolean = false;
+
+  /**
+   * Its list's filters, by query key, each one at a time: its family's field, its pool's role, its tier (`tier`), its
+   * partition (`partition`), then its own (`listFilters`). A query's issues follow their order.
+   */
+  private static listShape(): z.ZodRawShape {
+    return {
+      ...(this.families && { [this.families.field]: z.string() }),
+      ...(this.pools && { [this.pools.role]: z.string().uuid() }),
+      ...(this.levels && { tier: z.coerce.number() }),
+      ...(this.partitioned && { partition: z.string() }),
+      ...this.listFilters,
+    };
+  }
+
+  /**
+   * What the kind can do, as its class declares it (`KindCapabilities`), before any view: what its ruleset's page shows
+   * of it, as its actions are refused and its list's query read.
+   */
+  static describeCapabilities(): KindCapabilities {
+    return {
+      copies: this.copies,
+      ...(this.families && { families: { field: this.families.field } }),
+      levels: this.levels,
+      ...(this.lockedName && { lockedName: this.lockedName }),
+      partitioned: this.partitioned,
+      ...(this.pools && { pools: this.pools }),
+      progression: "progression" in this.prototype,
+      readOnly: this.readOnly,
+    };
+  }
 
   /** The fields its entities hold, as its module declares them: `FieldCodec.NONE`, none. */
   protected abstract readonly fields: FieldCodec<S>;
 
-  /** Its groups' filters, by query key: none, a kind that lists by group alone has them (a feat's pool). */
-  protected readonly groupFilters?: z.ZodRawShape;
-
   /** What a refusal calls one: "Save" in "Save not found in this ruleset". */
   protected abstract readonly label: string;
-
-  /**
-   * Its list's filters past the shared ones, each by the field, the role or the partition it filters (`partition`), and
-   * its value's schema (a race's partition, a feat's pool by its `listedIn` role): none.
-   */
-  protected readonly listFilters: z.ZodRawShape = {};
-
-  /** Whether its ruleset reads it but never writes it (its rules seed it: an ability), which refuses its writes. */
-  protected readonly readOnly: boolean = false;
-
-  /**
-   * The kind of the entities it owns (`owned(ownerId)`: a class's levels'), none for a kind that owns none: what a
-   * delete of one reads before it finds their owner.
-   */
-  readonly ownedType: string | undefined = undefined;
 
   /**
    * Whether a new entity standing in for an ancestor its ruleset deleted takes after the ancestor's stored row (a feat
@@ -112,6 +183,21 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
 
   /** The kind's type. */
   abstract readonly type: K;
+
+  /**
+   * Refuses renaming an entity (`entity`, the one edited) whose name its kind locks while its flag holds
+   * (`lockedName`: a generated feat's), in the words its form shows.
+   */
+  private checkLockedName(body: FormBody, entity: ViewKinds[K]) {
+    const locked = this.kind.lockedName;
+    if (locked && body.name !== entity.name && entity.fields[locked.field])
+      throw new RulesError("invalid", locked.reason);
+  }
+
+  /** The kind's class, whose statics declare what it can do. */
+  private get kind(): typeof RulesetEntity {
+    return this.constructor as typeof RulesetEntity;
+  }
 
   /** The stored fields and the roles its form and its list's query name: its fields', its links'. */
   private get places(): { fields: Set<string>; roles: Set<string> } {
@@ -348,10 +434,10 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
   checkAction(action: EntityAction) {
     const has =
       action === "groups"
-        ? this.groupFilters !== undefined
+        ? this.kind.families !== undefined
         : COPY_ACTIONS.includes(action)
-          ? this.copies
-          : !this.readOnly;
+          ? this.kind.copies
+          : !this.kind.readOnly;
     if (!has) this.refuseAction(action);
   }
 
@@ -371,20 +457,20 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
   }
 
   /**
-   * A page of the kind's groups, as its query asks for it (`given`: its filters, read by `groupFilters`): what the
-   * server reads it with (`groupFilters`). Refused as not found for a kind that lists no groups.
+   * A page of the kind's groups, as its query asks for it (`given`: its filters, read by its families' `groupFilters`):
+   * what the server reads it with (`groupFilters`). Refused as not found for a kind that lists no groups.
    */
   openGroups({ childOnly, ...given }: { childOnly?: boolean } & Record<string, unknown>) {
     this.checkAction("groups");
-    return this.groupsOf({ childOnly, ...this.readFilters(this.groupFilters ?? {}, given) });
+    return this.groupsOf({ childOnly, ...this.readFilters(this.kind.families?.groupFilters ?? {}, given) });
   }
 
   /**
-   * A page of the kind's rows, as its query asks for it (`given`: its filters past the shared ones, read by
-   * `listFilters`): what the server reads it with (`filters`), and its rows described (`listOf`).
+   * A page of the kind's rows, as its query asks for it (`given`: its filters past the shared ones, read by its list's,
+   * `listShape`): what the server reads it with (`filters`), and its rows described (`listOf`).
    */
   openList({ childOnly, ...given }: { childOnly?: boolean } & Record<string, unknown>) {
-    return this.listOf({ childOnly, ...this.readFilters(this.listFilters, given) });
+    return this.listOf({ childOnly, ...this.readFilters(this.kind.listShape(), given) });
   }
 
   /**
@@ -421,13 +507,15 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
 
   /**
    * An entity's edit (`id`): the entity as the view has it, its new row off its form (an edit leaves the fields it
-   * doesn't give as they are), what it writes beside it, and what its activity records it changes (`changes`: each
-   * field, single link and list of links it writes another value of, labeled as declared, `EntityChanges`).
+   * doesn't give as they are, and refuses a new name its kind locks, `lockedName`), what it writes beside it, and what
+   * its activity records it changes (`changes`: each field, single link and list of links it writes another value of,
+   * labeled as declared, `EntityChanges`).
    */
   planEdit(id: string, sent: EntityForm): EntityEditPlan<ViewKinds[K]> {
     this.checkAction("update");
     const entity = this.find(id);
     const { body, given } = this.readForm(sent, entity);
+    this.checkLockedName(body, entity);
     this.checkForm(body, given, entity);
     const plan = this.planWrite(body, given, entity);
     const changes = new EntityChanges(this.rulesetData, this.type, this.fields);

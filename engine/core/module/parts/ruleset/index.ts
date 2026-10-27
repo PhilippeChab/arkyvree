@@ -1,4 +1,5 @@
 export type {
+  EntityKindDeclaration,
   EntityKindDescription,
   EntityLinksDescription,
   EntityPoolsDescription,

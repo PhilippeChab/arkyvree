@@ -36,13 +36,9 @@ export function Owned<B extends Constructor>(Base: B) {
       ownerId: string,
       ownedId: string,
     ) {
-      return await new EntityWriter(type).deleteOwned(session, rulesetId, ownedId, {
-        // The owned kind its owner's declares, which its in-use check reads before the access and the owner itself
-        ownedType: (scope) => Engine.for(scope).entities(type).ownedType,
-        plan: (scope) => {
-          const owned = Engine.for(scope).owned(type, ownerId);
-          return { plan: owned.planDelete(ownedId), type: owned.type };
-        },
+      return await new EntityWriter(type).deleteOwned(session, rulesetId, ownedId, (scope) => {
+        const owned = Engine.for(scope).owned(type, ownerId);
+        return { plan: owned.planDelete(ownedId), type: owned.type };
       });
     }
 

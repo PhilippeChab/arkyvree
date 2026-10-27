@@ -47,9 +47,12 @@ export default class Engine {
     return new ImportsEngine(Modules.all());
   }
 
-  /** The engine asked of what every base rules' rulesets share, before any ruleset: their words, kinds and license. */
+  /**
+   * The engine asked of what every base rules' rulesets share, before any ruleset: their words, kinds and license, and
+   * the kinds a fork restores.
+   */
   static rules() {
-    return new RulesEngine(Modules.all());
+    return RulesEngine.shared();
   }
 
   /** How every module stores its data in the generic tables, which the server reads and writes them by. */

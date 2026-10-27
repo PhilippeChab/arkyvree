@@ -8,16 +8,14 @@ import { RULESET_ENTITY_TYPES } from "@/server/repositories/index.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
 describe("A ruleset's engine", () => {
-  // An owned entity's delete checks what's in use by the kind its owner declares, before it finds the owner
-  test("has each kind declare the kind it owns as its storage stores it, and own entities through `owned` then alone", async () => {
+  // An owned entity's delete checks what's in use by the kinds its owner's storage owns, before it finds the owner
+  test("has each kind own entities through `owned` exactly when its storage stores a kind it owns", async () => {
     const { rulesetId } = await getSeedCtx();
     const storage = StorageEngine.shared();
     await withRulesetScope(db, rulesetId, async (scope) => {
       for (const type of RULESET_ENTITY_TYPES) {
         const kind = Engine.for(scope).entities(type);
-        const ownedKinds = storage.ownedKinds(type);
-        expect({ type, ownedType: kind.ownedType }).toEqual({ type, ownedType: ownedKinds[0] });
-        expect({ type, owns: "owned" in kind }).toEqual({ type, owns: ownedKinds.length > 0 });
+        expect({ type, owns: "owned" in kind }).toEqual({ type, owns: storage.ownedKinds(type).length > 0 });
       }
     });
   });

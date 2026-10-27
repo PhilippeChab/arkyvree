@@ -148,6 +148,7 @@ export {
   type ValueBounds,
 } from "./parts/levelUp/index.ts";
 export {
+  type EntityKindDeclaration,
   type EntityKindDescription,
   type EntityLinksDescription,
   type EntityPoolsDescription,

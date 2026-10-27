@@ -497,7 +497,7 @@ describe("generated feats", () => {
     );
     expect(
       EntitiesService.updateEntity(session, fork.id, "feats", feat.id, { name: "Renamed generated feat" }),
-    ).rejects.toThrow("Generated feats cannot be renamed");
+    ).rejects.toThrow("A generated feat keeps its name");
     expect(await EntitySnapshots.findOne(db, { rulesetId: fork.id, sourceEntityId: feat.id })).toBeUndefined();
 
     const local = await EntitiesService.updateEntity(session, fork.id, "feats", feat.id, {
@@ -506,7 +506,7 @@ describe("generated feats", () => {
     });
     expect(local.description).toBe("Customized description");
     expect(EntitiesService.updateEntity(session, fork.id, "feats", local.id, { name: "Another name" })).rejects.toThrow(
-      "Generated feats cannot be renamed",
+      "A generated feat keeps its name",
     );
     expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toMatchObject({
       name: feat.name,
@@ -530,7 +530,7 @@ describe("generated feats", () => {
     const generated = await findFeat(fork.id, "Skill Focus: New Skill");
     expect(
       EntitiesService.updateEntity(session, fork.id, "feats", generated.id, { name: "Specialist" }),
-    ).rejects.toThrow("Generated feats cannot be renamed");
+    ).rejects.toThrow("A generated feat keeps its name");
 
     const toughness = await findFeat(climb.rulesetId, "Toughness");
     expect(

@@ -24,6 +24,9 @@ function getGrouping(fields: PartialFieldValues<typeof SPELL_FIELDS.fields>) {
 
 /** A spell as the ruleset has it: listed by pool and spell level, saved by its rules with its fields and its feats. */
 export default class SpellEntity extends ListedEntity<"spells", typeof SPELL_FIELDS.fields> {
+  /** Its list narrows by a spell level (its `listedIn` links' `tier`). */
+  protected static override readonly levels = true;
+
   /** The Spell Focus feats a spell's school brings. */
   private readonly spellFocus = new SpellFocusFeats(this.view);
 
@@ -31,9 +34,6 @@ export default class SpellEntity extends ListedEntity<"spells", typeof SPELL_FIE
   protected override readonly fields = SPELL_FIELDS;
 
   protected override readonly label = "Spell";
-
-  /** Its list's filters: a list's spells (the list its `listedIn` links name), at a spell level (their `tier`). */
-  protected override readonly listFilters = { listedIn: z.string().uuid(), tier: z.coerce.number() };
 
   override readonly type = "spells";
 
