@@ -29,7 +29,7 @@ export default abstract class ListedEntity<
    * stands for it), each with its target's name (`toName`): what its answers carry.
    */
   private linksIn(entityId: string) {
-    return this.rulesetData.nameLinks(this.rulesetData.linksOf(entityId));
+    return this.nameLinks(this.rulesetData.linksOf(entityId));
   }
 
   /** Records of a page, described: each with all its links (`links`). */
