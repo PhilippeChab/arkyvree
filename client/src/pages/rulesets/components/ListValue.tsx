@@ -5,7 +5,7 @@ import { formatDecimal } from "@/client/src/lib/formatNumeric.ts";
 import type { RulesDescription } from "@/client/src/lib/queries.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
-import { ownFieldOf } from "./forms/index.ts";
+import { ownFieldOf, ownLinkOf } from "./forms/index.ts";
 import { LinkChipsCell } from "./LinkChipsCell.tsx";
 
 interface ListValueProps {
@@ -14,6 +14,8 @@ interface ListValueProps {
   entity: object;
   /** The names of the entities a reference column names, by id (`useEntityList`'s) */
   names: ReadonlyMap<string, string>;
+  /** The role a copy names its template by, its kind's (`copies.source`: an item's), whose name a template column shows */
+  source?: string;
 }
 
 /** A list's column of an entity's own value, as its rules describe it. */
@@ -25,9 +27,7 @@ type ListColumn = NonNullable<RulesDescription["lists"][string]>["columns"][numb
  */
 function columnValueOf(entity: object, column: ListColumn): unknown {
   if (column.field) return ownFieldOf(entity, column.field);
-  const links = valueOf(entity, "links");
-  const link = Array.isArray(links) ? links.find((held) => isRecord(held) && held.role === column.role) : undefined;
-  return isRecord(link) ? link.toId : undefined;
+  return column.role === undefined ? undefined : ownLinkOf(entity, column.role)?.toId;
 }
 
 /** An entity's value at a key, none where it has none. */
@@ -40,7 +40,7 @@ function valueOf(entity: object, key: string): unknown {
  * text as it is or quiet, a number or a decimal in its unit, the name of the entity it names, a flag's warning, a
  * template, the pools it's picked in; "—" for none.
  */
-export function ListValue({ column, entity, names }: ListValueProps) {
+export function ListValue({ column, entity, names, source }: ListValueProps) {
   const value = columnValueOf(entity, column);
   const unit = column.unit ? ` ${column.unit}` : "";
   switch (column.reads) {
@@ -75,7 +75,7 @@ export function ListValue({ column, entity, names }: ListValueProps) {
       );
     case "template": {
       if (value === true) return <StatusChip label="Template" color="info" />;
-      const templateName = valueOf(entity, "templateName");
+      const templateName = source === undefined ? undefined : ownLinkOf(entity, source)?.toName;
       if (typeof templateName === "string" && templateName) {
         return (
           <Typography variant="body2" sx={{ color: "text.secondary" }}>

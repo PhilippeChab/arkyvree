@@ -233,7 +233,7 @@ describe("Item templates", () => {
     });
   });
 
-  test("list their instances with the template's name", async () => {
+  test("list their instances with the template's name, their link's", async () => {
     const { ruleset, instance } = await setup();
     const sword = await instance("Longsword");
     const { items } = await EntitiesService.getEntities(
@@ -243,7 +243,9 @@ describe("Item templates", () => {
       { search: sword.name },
       { limit: 10, page: 1 },
     );
-    expect(items.find((item) => item.id === sword.id)).toMatchObject({ templateName: "Longsword" });
+    const listed = items.find((item) => item.id === sword.id);
+    expect(listed?.links).toContainEqual(expect.objectContaining({ role: "madeFrom", toName: "Longsword" }));
+    expect(listed).not.toHaveProperty("templateName");
   });
 
   test("an item without a template has no fields its form shows or requirements of its own", async () => {

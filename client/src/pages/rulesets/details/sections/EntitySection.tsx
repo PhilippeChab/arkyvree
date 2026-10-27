@@ -209,7 +209,7 @@ export function EntitySection({ ruleset, childOnly, onChildOnlyChange, kind }: E
         return <DescriptionCell text={entity.description} />;
       default: {
         const column = list?.columns.find((own) => listColumnId(own) === columnKey);
-        return column && <ListValue column={column} entity={entity} names={names} />;
+        return column && <ListValue column={column} entity={entity} names={names} source={copies?.source} />;
       }
     }
   };

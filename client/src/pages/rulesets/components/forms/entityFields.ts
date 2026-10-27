@@ -346,6 +346,16 @@ export function ownFieldValues(fields: readonly EntityField[], values: unknown, 
 }
 
 /**
+ * An entity read's link of a role (`role`, among its `links`: a single link's, its target `toId`, named `toName`): none
+ * where it holds none.
+ */
+export function ownLinkOf(entity: unknown, role: string): Record<string, unknown> | undefined {
+  const links = valueAt(entity, "links");
+  const link = Array.isArray(links) ? links.find((held) => isRecord(held) && held.role === role) : undefined;
+  return isRecord(link) ? link : undefined;
+}
+
+/**
  * Where a form holds a field's value, as its save sends it: its stored field's among its fields (`fields.ITEM_TYPE`),
  * else its link's role's among its links (`links.madeFrom`).
  */

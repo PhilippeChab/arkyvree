@@ -9,6 +9,7 @@ import {
   linkedEntities,
   noneLabel,
   ownFieldValues,
+  ownLinkOf,
   poolsOf,
   toFieldValues,
   toWholeBody,
@@ -307,6 +308,17 @@ describe("an entity's fields beside its name in its form", () => {
     // Its template, its link's of the template's role
     const madeFrom = { role: "madeFrom", toId: "t", toName: "Longsword" };
     expect(toWholeValues(ITEM, { fields: {}, links: [madeFrom] })).toMatchObject({ links: { madeFrom: "t" } });
+  });
+
+  test("name its template off its link of the role its kind's copies name it by, none without one", () => {
+    const { kinds } = Engine.rules().describeAll()["Dungeons & Dragons: 3.5"];
+    const source = kinds.find((kind) => kind.type === "items")?.copies?.source ?? "";
+    expect(source).toBe("madeFrom");
+    const madeFrom = { role: source, toId: "t", toName: "Longsword" };
+    const keyAbility = { role: "keyAbility", toId: "a", toName: "Strength" };
+    expect(ownLinkOf({ fields: {}, links: [keyAbility, madeFrom] }, source)?.toName).toBe("Longsword");
+    expect(ownLinkOf({ fields: {}, links: [keyAbility] }, source)).toBeUndefined();
+    expect(ownLinkOf({ fields: {} }, source)).toBeUndefined();
   });
 
   test("send a decimal's number, none null, and a field beside its name the form hides null", () => {
