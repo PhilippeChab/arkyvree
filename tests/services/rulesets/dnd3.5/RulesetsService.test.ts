@@ -521,6 +521,16 @@ describe("RulesetsService", () => {
       });
     });
 
+    test("switches a draft extension back to a ruleset before its content, which publishing checks", async () => {
+      const { session } = await createTestUser();
+      const draft = await fork(session, await createParent());
+      const update = (kind: "extension" | "ruleset") =>
+        RulesetsService.updateRuleset(session, draft.id, { name: draft.name, description: "", kind });
+      await update("extension");
+      expect(await update("ruleset")).toMatchObject({ kind: "ruleset", status: "Draft" });
+      expect(RulesetsService.publishRuleset(session, draft.id)).rejects.toMatchObject({ refusal: "unprocessable" });
+    });
+
     test("refuses an edit started from a stale copy", async () => {
       const { user, session } = await createTestUser();
       const ruleset = await createTestRuleset(user.id);

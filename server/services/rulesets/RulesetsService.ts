@@ -1,5 +1,5 @@
 import { include } from "@/lib/mixins.ts";
-import { RulesetViews } from "@/server/cow/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import {
   ConflictError,
@@ -23,7 +23,7 @@ import type { Session } from "@/shared/relations.ts";
 import { Archives } from "./concerns/Archives.ts";
 import { Publishes } from "./concerns/Publishes.ts";
 import { Stars } from "./concerns/Stars.ts";
-import { getReadableRuleset, withReadableRuleset } from "./readableRuleset.ts";
+import { getReadableRuleset } from "./readableRuleset.ts";
 
 /** Whether a policy's check (`check`) lets the session act: refused (forbidden, or not now) is no. */
 function allows(check: () => unknown): boolean {
@@ -191,32 +191,38 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
     id: string,
     body: { description: string; kind?: RulesetKind; name: string; private?: boolean; updatedAt?: string },
   ) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withReadableRuleset(tx, session, id, async (scope, policy) => {
-          const { ruleset } = scope;
-          policy.canUpdate();
+    const result = await withTransaction(async (tx) => {
+      // First verify the ruleset exists
+      const { policy, ruleset } = await getReadableRuleset(tx, session, id);
+      policy.canUpdate();
 
-          if (!ruleset.private && body.private) throw new ForbiddenError("Cannot make a public ruleset private");
+      if (!ruleset.private && body.private) throw new ForbiddenError("Cannot make a public ruleset private");
 
-          if (body.kind && body.kind !== ruleset.kind) this.checkKind(scope, body.kind);
+      const { kind } = body;
+      if (kind && kind !== ruleset.kind) {
+        // A published ruleset becomes what publishing it as `kind` would make it; a draft's content is checked when
+        // it's published
+        if (ruleset.status === "Published")
+          await withRulesetScope(tx, id, async (scope) => this.checkKind(scope, kind));
+        else if (kind === "extension") this.assertCanBeExtension(ruleset);
+      }
 
-          const { updatedAt, ...columns } = body;
-          const rows = await Rulesets.update(tx, columns, { id, expectedUpdatedAt: updatedAt });
-          if (updatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+      const { updatedAt, ...columns } = body;
+      const rows = await Rulesets.update(tx, columns, { id, expectedUpdatedAt: updatedAt });
+      if (updatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
-          const updatedRuleset = rows[0];
+      const updatedRuleset = rows[0];
 
-          await Activities.create(tx, {
-            userId: session.userId,
-            targetId: updatedRuleset.id,
-            targetType: TARGET_TYPES.rulesets,
-            type: "updateRuleset",
-          });
+      await Activities.create(tx, {
+        userId: session.userId,
+        targetId: updatedRuleset.id,
+        targetType: TARGET_TYPES.rulesets,
+        type: "updateRuleset",
+      });
 
-          return updatedRuleset;
-        }),
-    );
+      return updatedRuleset;
+    });
+
     RulesetViews.invalidate(id);
     return result;
   }

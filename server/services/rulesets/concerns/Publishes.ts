@@ -7,24 +7,25 @@ import { Activities, Rulesets } from "@/server/repositories/index.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { Ruleset, Session } from "@/shared/relations.ts";
 
 /** Publishing a ruleset: as one to fork, or as an extension. */
 export function Publishes<B extends Constructor>(Base: B) {
   abstract class Publishing extends Base {
+    protected assertCanBeExtension(ruleset: Pick<Ruleset, "rulesetId" | "extensionRulesetIds">) {
+      if (!ruleset.rulesetId) throw new UnprocessableEntityError("Only forks can be published as extensions");
+
+      if (ruleset.extensionRulesetIds.length > 0)
+        throw new UnprocessableEntityError("A ruleset that subscribes to extensions cannot itself be an extension");
+    }
+
     /**
-     * Refuses the ruleset in `scope` becoming `kind`, as publishing it or an edit of its kind makes it: an extension
-     * must be a fork that subscribes to none, and a playable ruleset's view must give what its rules make a character
-     * of (`checkPublishable`).
+     * Refuses the ruleset in `scope` being published as `kind`, as publishing it or an edit of a published one's kind
+     * makes it: an extension must be a fork that subscribes to none (`assertCanBeExtension`), and a playable ruleset's
+     * view must give what its rules make a character of (`checkPublishable`).
      */
     protected checkKind(scope: RulesetScope, kind: RulesetKind) {
-      const { ruleset } = scope;
-      if (kind === "extension") {
-        if (!ruleset.rulesetId) throw new UnprocessableEntityError("Only forks can be published as extensions");
-
-        if (ruleset.extensionRulesetIds.length > 0)
-          throw new UnprocessableEntityError("A ruleset that subscribes to extensions cannot itself be an extension");
-      }
+      if (kind === "extension") this.assertCanBeExtension(scope.ruleset);
       Engine.for(scope).checkPublishable(kind);
     }
 
