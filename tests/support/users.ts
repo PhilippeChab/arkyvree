@@ -1,6 +1,6 @@
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
-import { EmailVerifications, Users } from "@/server/repositories/index.ts";
+import { EmailVerifications, Sessions, Users } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { uniqueId } from "./seed.ts";
@@ -19,6 +19,26 @@ export function makeSession(userId: string = SEED_USER_ID): Session {
     deletedAt: null,
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   };
+}
+
+/**
+ * A new user (a demo's when `expiresAt` is given) and a stored session of theirs (`sessionExpiresAt`, else live): one a
+ * request's cookie signs in. `prefix` starts the username and email.
+ */
+export async function createSignedInUser({
+  expiresAt,
+  prefix = "testuser",
+  sessionExpiresAt,
+}: { expiresAt?: string; prefix?: string; sessionExpiresAt?: string } = {}) {
+  const id = uniqueId();
+  const [user] = await Users.create(db, {
+    username: `${prefix}-${id}`,
+    emailAddress: `${prefix}-${id}@example.com`,
+    password: "password1234",
+    expiresAt,
+  });
+  const [session] = await Sessions.create(db, { userId: user.id, expiresAt: sessionExpiresAt });
+  return { session, user };
 }
 
 /** A new user and a session for them. `prefix` starts the username and email. */

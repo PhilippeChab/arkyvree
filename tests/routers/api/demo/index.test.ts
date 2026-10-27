@@ -18,6 +18,11 @@ describe("demo", () => {
     expect(user.expiresAt).not.toBeNull();
   });
 
+  test("starts a demo for a browser whose cookie holds no session's id", async () => {
+    const response = await apiAs("not-a-session-id").api.demo.start.$post();
+    expect(response.status).toBe(201);
+  });
+
   test("keeps the demo user of a browser that already has one", async () => {
     const { user, api } = await startDemo();
     const again = await api.api.demo.start.$post();
