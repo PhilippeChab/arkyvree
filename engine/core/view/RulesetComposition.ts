@@ -28,7 +28,7 @@ export interface RulesetRawData {
   modifiers: Modifier[];
   /** Every requirement row in this ruleset, including those attached to modifiers. */
   requirements: Requirement[];
-  /** Its own Settings (its fields and its links), by its id: none for a campaign's rows, or a ruleset that holds none */
+  /** Its own Settings (its fields and its links), by its id: none for a ruleset that holds none */
   settings?: { rulesetId: string; values: StoredValues };
   /** Of its entities, those a link with a tier points at, from any ruleset's entity (a spell list at a level) */
   tieredIds: Set<string>;

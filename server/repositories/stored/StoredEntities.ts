@@ -45,10 +45,9 @@ interface PageBounds {
 
 /**
  * A list of a kind's entities (`entityType`): a ruleset's own, its source chain's (less what a later ruleset copied,
- * and the `hiddenIds` its copy-on-write data gives); those of `ids`, of the values of their fields, the
- * targets of their single links and their partition (`EntityFilters`: an item's template flag, a feat's family, a
- * race's `pc`), the targets of the links of a role from a kind (`linkedBy`: an aptitude a feat is listed in); searched,
- * in an order.
+ * and the `hiddenIds` its copy-on-write data gives); those of `ids`, of the values of their fields, the targets of
+ * their single links and their partition (`EntityFilters`: an item's template flag, a feat's family, a race's `pc`),
+ * the targets of the links of a role from a kind (`linkedBy`: an aptitude a feat is listed in); searched, in an order.
  */
 export interface EntityListWhere extends EntityFilters {
   ancestorRulesetIds?: string[];
@@ -162,9 +161,9 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   }
 
   /**
-   * A kind's entities in a ruleset's list: its own, and its source chain's (each less what
-   * a later ruleset copied, and the hidden ids its copy-on-write data gives: a book's copy that lost to another book's,
-   * a book's entity the ruleset's own of its name shadows).
+   * A kind's entities in a ruleset's list: its own, and its source chain's (each less what a later ruleset copied, and
+   * the hidden ids its copy-on-write data gives: a book's copy that lost to another book's, a book's entity the
+   * ruleset's own of its name shadows).
    */
   private buildRulesetCondition(db: Db, where: Omit<EntityListWhere, "search">): SQL {
     const { ancestorRulesetIds = [], childOnly, entityType, hiddenIds } = where;
@@ -359,9 +358,9 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   /**
    * Writes a kind's new entities (`writes`), each an entity, its fields (one always written it leaves out, or clears,
    * its default: `writtenFields`) and its single links, its partition its kind's default when it gives none. An owned
-   * entity takes its owner's ruleset. Their fields are stored as every write stores them, but a copy's
-   * (`copied`: copy-on-write's of another entity, its source's rows as they're stored), which keeps them as they are.
-   * Answers their ids, in order.
+   * entity takes its owner's ruleset. Their fields are stored as every write stores them, but a copy's (`copied`:
+   * copy-on-write's of another entity, its source's rows as they're stored), which keeps them as they are. Answers
+   * their ids, in order.
    */
   async createIds(db: Db, entityType: string, writes: EntityWrite[], copied = false): Promise<string[]> {
     if (writes.length === 0) return [];

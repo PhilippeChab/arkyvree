@@ -33,7 +33,7 @@ export default class RawDataReader {
       ruleset: rulesets[0],
     });
     // Pin a system ruleset's rows (a base's, an extension's) before writing them, so they're never evicted. `system`,
-    // not a missing owner: an orphaned fork mustn't be pinned
+    // not a missing owner: an orphaned fork mustn't be pinned.
     return { data, pinned: !!ruleset?.system };
   }
 }
