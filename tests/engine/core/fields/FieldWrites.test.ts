@@ -1,9 +1,48 @@
 import { describe, expect, test } from "bun:test";
 
-import { FieldWrites } from "@/engine/core/fields/index.ts";
+import { type Fields, FieldWrites } from "@/engine/core/fields/index.ts";
+import type { StandaloneKind } from "@/engine/core/view/index.ts";
 
 /** Each field a talent always writes, holding its default: a flag's own, false without one. */
 const DEFAULTS = { TRAINED: [true], SECRET: [false], RANK: ["Novice"], COST: [1] };
+
+/** The made-up kind a reference names: one no module declares, typed as the view's registry types a kind. */
+const GIZMOS = "gizmos" as string as StandaloneKind;
+
+/**
+ * A gadget's fields: a title that keeps those its form shows among its others (a motto, a group's level, the flag and
+ * the count), its weight beside its name, and a count that counts only while the flag is on.
+ */
+const RULED = new FieldWrites({
+  gadgets: {
+    title: { description: "Its title", field: "TITLE", keepsForm: true, kind: "text", label: "Title", merge: "winner" },
+    weight: {
+      description: "Its weight",
+      field: "WEIGHT",
+      kind: "number",
+      label: "Weight",
+      merge: "winner",
+      placement: "beside-name",
+    },
+    motto: { description: "Its motto", field: "MOTTO", kind: "text", label: "Motto", merge: "winner" },
+    on: { description: "Whether it's on", field: "ON", kind: "flag", label: "On", merge: "winner" },
+    count: {
+      default: 1,
+      description: "How many",
+      field: "COUNT",
+      kind: "number",
+      label: "Count",
+      merge: "winner",
+      min: 1,
+      when: { field: "on", values: [true] },
+    },
+    group: {
+      fields: { level: { description: "Its level", field: "LEVEL", kind: "number", label: "Level", merge: "winner" } },
+      kind: "group",
+      label: "Group",
+    },
+  },
+});
 
 /**
  * Two owner types' fields: a talent's, each kind always written, a flag with a default and one without, a text and a
@@ -93,5 +132,102 @@ describe("A write of an owner's fields", () => {
   test("writes no default of an owner type none of whose fields is always written", () => {
     expect(WRITES.written("badges", {}, true)).toEqual({});
     expect(WRITES.written("badges", { SHINY: false }, true)).toEqual({ SHINY: [] });
+  });
+});
+
+describe("A write of an owner's fields on their rules", () => {
+  test("stores a field whose condition doesn't hold at its default, and one the write doesn't name as it is", () => {
+    for (const creating of [true, false]) {
+      expect(RULED.written("gadgets", { TITLE: "A", ON: false, COUNT: 3 }, creating)).toEqual({
+        TITLE: ["A"],
+        ON: [],
+        COUNT: [],
+      });
+      expect(RULED.written("gadgets", { TITLE: "A", ON: true, COUNT: 3 }, creating).COUNT).toEqual([3]);
+    }
+    // A new owner's flag the write doesn't name is off; an existing one's, unknown, leaves its count as given
+    expect(RULED.written("gadgets", { TITLE: "A", COUNT: 3 }, true).COUNT).toEqual([]);
+    expect(RULED.written("gadgets", { TITLE: "A", COUNT: 3 }, false).COUNT).toEqual([3]);
+  });
+
+  test("stores none of the fields its form shows among its others without a value of the one that keeps them", () => {
+    const given = { MOTTO: "Onward", LEVEL: 2, WEIGHT: 5, ON: true, COUNT: 3 };
+    const kept = { MOTTO: ["Onward"], LEVEL: [2], WEIGHT: [5], ON: [true], COUNT: [3] };
+    // Its weight, beside its name, it keeps all the same
+    const cleared = { MOTTO: [], LEVEL: [], WEIGHT: [5], ON: [], COUNT: [] };
+    for (const creating of [true, false]) {
+      expect(RULED.written("gadgets", { ...given, TITLE: "" }, creating)).toEqual({ ...cleared, TITLE: [] });
+      expect(RULED.written("gadgets", { ...given, TITLE: "A" }, creating)).toEqual({ ...kept, TITLE: ["A"] });
+    }
+    // A new owner holds no title the write doesn't name; an existing one keeps its own, and the fields it keeps
+    expect(RULED.written("gadgets", given, true)).toEqual(cleared);
+    expect(RULED.written("gadgets", given, false)).toEqual(kept);
+  });
+
+  test("stores a group's fields at their defaults while its condition doesn't hold", () => {
+    const lid = new FieldWrites({
+      gadgets: {
+        lidded: {
+          description: "Whether it has a lid",
+          field: "LIDDED",
+          kind: "flag",
+          label: "Lidded",
+          merge: "winner",
+        },
+        lid: {
+          fields: {
+            height: {
+              description: "Its height",
+              field: "HEIGHT",
+              kind: "number",
+              label: "Height",
+              merge: "winner",
+            },
+          },
+          kind: "group",
+          label: "Lid",
+          when: { field: "lidded", values: [true] },
+        },
+      },
+    });
+    for (const creating of [true, false]) {
+      expect(lid.written("gadgets", { LIDDED: [], HEIGHT: [3] }, creating)).toEqual({ LIDDED: [], HEIGHT: [] });
+      expect(lid.written("gadgets", { LIDDED: [true], HEIGHT: [3] }, creating).HEIGHT).toEqual([3]);
+    }
+  });
+
+  test("refuses, as they're declared, a condition or a keeper's no write of fields applies", () => {
+    const flag = { description: "Whether it's on", field: "ON", kind: "flag", label: "On", merge: "winner" } as const;
+    const ref = { description: "Its case", kind: "ref", label: "Case", references: GIZMOS, role: "case" } as const;
+    const refused = (fields: Fields) => () => new FieldWrites({ gadgets: fields });
+    const when = { field: "on", values: [true] };
+    // A reference, a list of links, or a group holding one, that counts on a condition
+    expect(refused({ on: flag, worn: { ...ref, when } })).toThrow("gadgets's worn counts on on, which no write");
+    expect(refused({ on: flag, cases: { ...ref, kind: "links", when } })).toThrow("which no write applies to a link");
+    expect(refused({ on: flag, lid: { fields: { worn: ref }, kind: "group", label: "Lid", when } })).toThrow(
+      "gadgets's lid counts on on, which no write applies to a link",
+    );
+    // A condition on none of its level's fields, a group or a link
+    const counted = { ...flag, field: "COUNT", when: { field: "worn", values: [true] } };
+    expect(refused({ counted })).toThrow("gadgets's counted counts on worn, no stored field of its level");
+    expect(refused({ counted, worn: ref })).toThrow("no stored field of its level");
+    expect(refused({ counted, worn: { fields: { on: flag }, kind: "group", label: "Worn" } })).toThrow(
+      "no stored field of its level",
+    );
+    // A link among the fields a keeper keeps, its own or a group's
+    const title = {
+      description: "Its title",
+      field: "TITLE",
+      keepsForm: true,
+      kind: "text",
+      label: "Title",
+      merge: "winner",
+    } as const;
+    expect(refused({ title, worn: ref })).toThrow("gadgets keeps a link among the fields its form shows");
+    expect(refused({ title, lid: { fields: { worn: ref }, kind: "group", label: "Lid" } })).toThrow(
+      "gadgets keeps a link among the fields its form shows",
+    );
+    // Beside its name, a keeper doesn't keep it
+    expect(refused({ title, worn: { ...ref, placement: "beside-name" } })).not.toThrow();
   });
 });

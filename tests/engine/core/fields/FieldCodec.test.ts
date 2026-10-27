@@ -214,8 +214,13 @@ describe("A field codec", () => {
     expect(CODEC.write({ ...values, title: "" }).fields.TITLE).toEqual([]);
   });
 
-  test("writes nothing when the entity keeps no field, a save's write names every field and link, a part its own", () => {
-    expect(writtenValues(CODEC.write({ ...CODEC.defaults, count: 5 }))).toEqual({ fields: {}, links: {} });
+  test("writes nothing of its defaults, a save's write names every field and link, a part its own", () => {
+    expect(writtenValues(CODEC.write(CODEC.defaults))).toEqual({ fields: {}, links: {} });
+    // The fields its form shows without a title it writes as given: its write path keeps none (`FieldWrites`)
+    expect(writtenValues(CODEC.write({ ...CODEC.defaults, owner: "id-1", school: "Illusion" }))).toEqual({
+      fields: { SCHOOL: ["Illusion"] },
+      links: { owner: "id-1" },
+    });
     expect(CODEC.write({ ...CODEC.defaults, title: "A" })).toEqual({
       fields: { TITLE: ["A"], SCHOOL: [], FLAG: [], LEVEL: [], KNOWN: [], COUNT: [], TAG: [], KIND: [] },
       links: { owner: null },
@@ -228,10 +233,11 @@ describe("A field codec", () => {
     });
   });
 
-  test("reads and writes a field on its condition, and merges an edit's given fields over the kept", () => {
+  test("reads a field on its condition, writes it as given, and merges an edit's given fields over the kept", () => {
     const written = (values: typeof CODEC.defaults) => writtenValues(CODEC.write(values)).fields;
     expect(CODEC.read(heldValues([["COUNT", 3]])).count).toBe(1);
-    expect(written({ ...CODEC.defaults, count: 3, title: "A" })).toEqual({ TITLE: ["A"] });
+    // Its write path stores it at its default while its condition doesn't hold (`FieldWrites`)
+    expect(written({ ...CODEC.defaults, count: 3, title: "A" })).toEqual({ TITLE: ["A"], COUNT: [3] });
     expect(written({ ...CODEC.defaults, count: 3, flag: true, title: "A" })).toEqual({
       TITLE: ["A"],
       FLAG: [true],

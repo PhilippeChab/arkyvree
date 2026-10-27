@@ -105,12 +105,12 @@ export default class Field {
   }
 
   /**
-   * The fields at a spec's level that keep the fields its form shows (`keepsForm`: a spell's school), by name: a
-   * group's own aren't read, so every writer reads the same ones (the codec by name, the write path by stored field).
+   * The fields at a spec's level that keep the fields its form shows (`keepsForm`: a spell's school), which every write
+   * applies (`FieldWrites`): a group's own aren't read.
    */
-  static keepersOf(fields: Fields): [string, StoredLeaf][] {
-    return Object.entries(fields).flatMap(([key, field]): [string, StoredLeaf][] =>
-      field.kind !== "group" && !Field.isLinked(field) && field.keepsForm ? [[key, field]] : [],
+  static keepersOf(fields: Fields): StoredLeaf[] {
+    return Object.values(fields).flatMap((field): StoredLeaf[] =>
+      field.kind !== "group" && !Field.isLinked(field) && field.keepsForm ? [field] : [],
     );
   }
 
