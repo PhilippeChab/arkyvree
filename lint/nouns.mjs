@@ -13,6 +13,11 @@
  *   `KlassLevel`) and a value that is one (`klass`). Every other name says `class` (`classId`, `classLevelId`,
  *   `classLevelsByClass`, `getSavedClassLevel`), and so does a file's name. A string is data (a stored row a migration
  *   reads), a comment may name it, and so may an import another module's export it renames (`KlassView as View`).
+ * - `dropped-names`: the names of the dropped tables' columns and rows that mean nothing today (`characterLevelId`,
+ *   `targetTable`…) come back nowhere, in a ruleset's folders and the tests too, as a name or a key: what they held is
+ *   stored another way (a skill's ability its `keyAbility` link, an item's cost its field). The migrations that drop
+ *   them and their tests keep them, and a name keeps the files where it means something today. And the server and
+ *   `shared/` name no table (`getTableName`): what they name is a kind, or a target type (`TARGET_TYPES`).
  *
  * Plain JS: oxlint loads its plugins without a TypeScript step.
  */
@@ -21,6 +26,40 @@ import { isInRepo, repoPath, rootOf, rulesetsOf } from "./paths.mjs";
 
 /** The operators that compare a value with another: a stored name compared is a kind. */
 const COMPARISONS = new Set(["===", "!==", "==", "!="]);
+
+/** The folders where every dropped name keeps its meaning: the migrations that drop them, and their tests. */
+const DROPPED_HOMES = [/^drizzle\/0/, /^tests\/scripts\/db\//];
+
+/**
+ * The files where a dropped name means something today (`dropped-names`), beside `DROPPED_HOMES`: the codegen's scraped
+ * items, whose cost the books give in gold pieces, and the test that sends an item's old column in a body to see it
+ * refused.
+ */
+const DROPPED_NAME_HOMES = new Map([
+  ["costGp", [/^codegen\//, /^tests\/routers\/api\/rulesets\/entities\/dnd3\.5\/items\.test\.ts$/]],
+]);
+
+/**
+ * The names of the dropped tables' columns and rows that mean nothing today, each with what holds it now, as a name or
+ * a key (`dropped-names`). `saveId`, `raceId` and `isTemplate` aren't: they name a live link or field.
+ */
+const DROPPED_NAMES = new Map([
+  ["characterLevelId", "a character's level is its advancement (`advancementId`)"],
+  ["character_level_id", "a character's level is its advancement (`advancement_id`)"],
+  ["costGp", "an item's cost is its field (`ITEM_COST_GP`)"],
+  ["cost_gp", "an item's cost is its field (`ITEM_COST_GP`)"],
+  ["klassLevelId", "a class level is an entity its class owns (`classLevelId`), and what it grants its links"],
+  ["klass_level_id", "a class level is an entity its class owns (`classLevelId`), and what it grants its links"],
+  ["LevelFeat", "a level's feat is a pick of its advancement (`StoredPick`)"],
+  ["levelFeat", "a level's feat is a pick of its advancement (`StoredPick`)"],
+  ["level_feat", "a level's feat is a pick of its advancement (`StoredPick`)"],
+  ["primaryAbilityId", "a skill's ability is its `keyAbility` link"],
+  ["primary_ability_id", "a skill's ability is its `keyAbility` link"],
+  ["sourceItemId", "an item's template is its `madeFrom` link"],
+  ["source_item_id", "an item's template is its `madeFrom` link"],
+  ["targetTable", "an activity's target is its type (`targetType`), never a table's name"],
+  ["target_table", "an activity's target is its type (`target_type`), never a table's name"],
+]);
 
 /** The nouns 3.5 names its things by, each a word of a name (`spellLevelId`'s `spell`). */
 const NOUNS = new Set([
@@ -111,8 +150,58 @@ const RESERVED_SPELLINGS = new Set(["Klass", "KlassLevel", "klass"]);
  */
 const STORED_NAMES = new Set(["items", "mechanics"]);
 
+/** The folders that name no table (`dropped-names`): the server and the shared code name kinds and target types. */
+const TABLELESS_FOLDERS = [/^server\//, /^shared\//];
+
 /** The names 3.5's kinds are stored and routed by, as a whole string or name */
 const WHOLE_NAMES = new Set(["classes", "saves"]);
+
+/**
+ * `dropped-names`: a dropped table's column or row named where it means nothing today, as a name or a key; and a
+ * table's name read in the server or `shared/` (`getTableName`).
+ */
+function createDroppedNames(context) {
+  if (!isInRepo(context.filename)) return {};
+  const file = repoPath(context.filename);
+  if (DROPPED_HOMES.some((home) => home.test(file))) return {};
+  const tableless = TABLELESS_FOLDERS.some((folder) => folder.test(file));
+  // A name read twice at one place (an import's imported and local name, a shorthand property) is reported once
+  const reported = new Set();
+  const report = (node, name) => {
+    if (reported.has(node.start)) return;
+    if (tableless && name === "getTableName") {
+      reported.add(node.start);
+      context.report({
+        node,
+        message:
+          "The server and `shared/` name no table (`getTableName`): an activity's target is an entity's type or one " +
+          "of `TARGET_TYPES`, in the form a route names a kind.",
+      });
+      return;
+    }
+    const now = DROPPED_NAMES.get(name);
+    if (!now || (DROPPED_NAME_HOMES.get(name) ?? []).some((home) => home.test(file))) return;
+    reported.add(node.start);
+    context.report({
+      node,
+      message: `\`${name}\` is a dropped table's, which means nothing today: ${now}.`,
+    });
+  };
+  return {
+    Identifier(node) {
+      report(node, node.name);
+    },
+    JSXIdentifier(node) {
+      report(node, node.name);
+    },
+    Literal(node) {
+      if (typeof node.value === "string" && isKey(node)) report(node, node.value);
+    },
+    PrivateIdentifier(node) {
+      report(node, node.name);
+    },
+  };
+}
 
 /** `klass-names`: a name spelled `klass` is one of 3.5's types, or a value that is one. */
 function createReservedSpellings(context) {
@@ -221,6 +310,18 @@ function createRulesetNouns(context) {
   };
 }
 
+/** Whether a string literal is a key: an object's (`{ "costGp": 1 }`), a type's or a class's member's. */
+function isKey(node) {
+  const { parent } = node;
+  return (
+    (parent?.type === "Property" ||
+      parent?.type === "TSPropertySignature" ||
+      parent?.type === "PropertyDefinition" ||
+      parent?.type === "MethodDefinition") &&
+    parent.key === node
+  );
+}
+
 /** Whether a literal type (`type`) keys a record (`Record<"items", …>`) or indexes a kind registry (`…Kinds["items"]`). */
 function isKindKey(type) {
   const { parent } = type;
@@ -295,6 +396,7 @@ function wordsOf(name) {
 }
 
 export default {
+  "dropped-names": { meta: { type: "problem" }, create: createDroppedNames },
   "klass-names": { meta: { type: "problem" }, create: createReservedSpellings },
   "ruleset-nouns": { meta: { type: "problem" }, create: createRulesetNouns },
 };

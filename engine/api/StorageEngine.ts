@@ -487,7 +487,6 @@ export default class StorageEngine {
       return owner ? depth(owner) + 1 : 0;
     };
     const tracked = new Set(types.flatMap(({ ownerType }) => (ownerType ? [ownerType] : [])));
-    const fields = new Set(this.fieldOwners());
     const items = new Set(this.merged.itemTypes);
     this.schema = {
       // An owner before the kinds it owns, each in its declared order otherwise
@@ -499,7 +498,6 @@ export default class StorageEngine {
           return {
             type,
             customizable,
-            fields: fields.has(type),
             ...(inherits && { inherits }),
             ...(items.has(type) && { inventory: true as const }),
             ...(ownerType && { ownerType }),

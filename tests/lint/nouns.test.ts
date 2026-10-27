@@ -82,6 +82,64 @@ describe("a ruleset's nouns", () => {
     ]);
   });
 
+  test("leave a dropped table's columns and rows behind, as names and keys, and no table named by the server", async () => {
+    expect(
+      await lintRepo(
+        {
+          // A name, a key, a type's member, a destructured one, a string key, a private one, a JSX attribute: in a
+          // ruleset's folders and the tests too
+          "engine/rulesets/dnd3.5/fresh/name.ts": "export const characterLevelId = 1;\n",
+          "engine/rulesets/dnd3.5/fresh/class.ts": "export const klassLevelId = 1;\n",
+          "engine/rulesets/dnd3.5/fresh/key.ts": "export const row = { sourceItemId: null };\n",
+          "engine/rulesets/dnd3.5/fresh/member.ts": "export interface Skill {\n  primaryAbilityId: string;\n}\n",
+          "tests/fresh/destructured.ts": "export const read = ({ levelFeat }: { levelFeat: number }) => levelFeat;\n",
+          "server/fresh/string.ts": 'export const row = { "target_table": "feats" };\n',
+          "server/fresh/private.ts": 'export class Rows {\n  #targetTable = "";\n}\n',
+          "client/src/fresh/jsx.tsx":
+            "const Cost = (props: { costGp: number }) => props.costGp;\nexport const t = <Cost costGp={1} />;\n",
+          "tests/routers/fresh/items.test.ts": "export const body = { costGp: 1 };\n",
+          // A table's name, imported or read, in the server and shared/
+          "server/fresh/table.ts": 'import { getTableName } from "drizzle-orm";\nexport const name = getTableName;\n',
+          "shared/fresh/table.ts": 'import * as orm from "drizzle-orm";\nexport const name = orm.getTableName;\n',
+          // The migrations that drop them and their tests, a name's own homes (the codegen's scraped cost, the test
+          // that sends the old column to see it refused), a string, a comment, a name that holds one (a level's feats),
+          // the live names, and a script's table name
+          "drizzle/0100_fresh.ts": "export const targetTable = 1;\n",
+          "tests/scripts/db/fresh.test.ts": "export const row = { target_table: 1, costGp: 2 };\n",
+          "codegen/dnd3.5/fresh/items.ts": "export interface Scraped {\n  costGp: number;\n}\n",
+          "tests/routers/api/rulesets/entities/dnd3.5/items.test.ts": "export const body = { costGp: 1 };\n",
+          "engine/core/fresh/string.ts": 'export const column = "costGp";\n',
+          "engine/core/fresh/comment.ts": "// An item's cost was its `costGp` column\nexport const cost = 1;\n",
+          "engine/rulesets/dnd3.5/fresh/plural.ts": "export const levelFeats = [];\n",
+          "engine/rulesets/dnd3.5/fresh/live.ts":
+            "export const read = (row: { isTemplate: boolean; raceId: string; saveId: string }) => row;\n",
+          "scripts/fresh/table.ts": 'import { getTableName } from "drizzle-orm";\nexport const name = getTableName;\n',
+        },
+        ["dropped-names"],
+      ),
+    ).toEqual([
+      // Its type's member, its read and its JSX attribute
+      "dropped-names client/src/fresh/jsx.tsx",
+      "dropped-names client/src/fresh/jsx.tsx",
+      "dropped-names client/src/fresh/jsx.tsx",
+      "dropped-names engine/rulesets/dnd3.5/fresh/class.ts",
+      "dropped-names engine/rulesets/dnd3.5/fresh/key.ts",
+      "dropped-names engine/rulesets/dnd3.5/fresh/member.ts",
+      "dropped-names engine/rulesets/dnd3.5/fresh/name.ts",
+      "dropped-names server/fresh/private.ts",
+      "dropped-names server/fresh/string.ts",
+      // Its import and its read
+      "dropped-names server/fresh/table.ts",
+      "dropped-names server/fresh/table.ts",
+      "dropped-names shared/fresh/table.ts",
+      // Its pattern's, its type's member and its read
+      "dropped-names tests/fresh/destructured.ts",
+      "dropped-names tests/fresh/destructured.ts",
+      "dropped-names tests/fresh/destructured.ts",
+      "dropped-names tests/routers/fresh/items.test.ts",
+    ]);
+  });
+
   test("spell `klass` in its types and a value that is one alone, where `class` is a reserved word", async () => {
     expect(
       await lintRepo(

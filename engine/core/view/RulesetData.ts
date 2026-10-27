@@ -46,14 +46,13 @@ export interface RulesetView {
 
 /**
  * What a ruleset's view knows of a kind past its entities, as its module declares it: whether a user customizes its
- * entities (`customizable`), whether they hold fields of their own (`fields`), the fields they read off another entity
- * when they hold none and the role of their link to it (`inherits`: an item's template's), whether a character's
- * inventory holds its entities (`inventory`: 3.5's items), and the flag of its own that makes one of its entities a
- * template others are made from (`template`: 3.5's item's).
+ * entities (`customizable`), the fields they read off another entity when they hold none and the role of their link
+ * to it (`inherits`: an item's template's), whether a character's inventory holds its entities (`inventory`: 3.5's
+ * items), and the flag of its own that makes one of its entities a template others are made from (`template`: 3.5's
+ * item's).
  */
 export interface ViewKind {
   customizable: boolean;
-  fields: boolean;
   inherits?: { fields: ReadonlySet<string>; role: string };
   inventory?: true;
   template?: string;
@@ -371,11 +370,6 @@ export default class RulesetData {
    */
   storedById<K extends keyof ViewKinds>(type: K): Map<string, ViewKinds[K]> {
     return this.indexOf(type).stored as Map<string, ViewKinds[K]>;
-  }
-
-  /** Whether a kind's entities (`type`) hold fields of their own, which their form shows and their save writes. */
-  takesFields(type: string): boolean {
-    return this.kinds[type]?.fields ?? false;
   }
 
   /**

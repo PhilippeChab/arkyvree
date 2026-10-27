@@ -150,7 +150,7 @@ export default class EntityCopy {
     await CustomizationCopies.copy(tx, newEntity.id, this.entityType, cust, this.copiedIds);
 
     // 4. Copy its links of the roles it holds many of and the entities it owns, remapped as the row was
-    await this.copyRelationships(tx, newEntity.id, cow);
+    await this.copyLinksAndOwned(tx, newEntity.id, cow);
 
     // 4b. Merge sibling data when multiple extensions COW the same base entity
     if (siblingIds.length > 0) await this.mergeSiblings(tx, newEntity.id, cust, siblingIds, cow);
@@ -184,7 +184,7 @@ export default class EntityCopy {
    * names what the copy's CowData resolves it to (true overrides and sibling-loser aliases): a copy's references point
    * at the canonical winner, never at a stale loser.
    */
-  private async copyRelationships(tx: Db, targetEntityId: string, cow: CowData) {
+  private async copyLinksAndOwned(tx: Db, targetEntityId: string, cow: CowData) {
     const resolve = (id: string) => cow.resolve(id);
     await this.copyLinks(tx, this.entityType, new Map([[this.entityId, targetEntityId]]), resolve);
     for (const type of Engine.storage().ownedKinds(this.entityType)) {
@@ -217,7 +217,7 @@ export default class EntityCopy {
 
   /**
    * Merges sibling links of the roles that merge (a feat's or a spell's lists: `copyOnWrite().mergeLinks`), each to the
-   * target that stands for it, as the copy's own (`copyRelationships`): the losers' links, read by their stored ids.
+   * target that stands for it, as the copy's own (`copyLinksAndOwned`): the losers' links, read by their stored ids.
    */
   private async mergeLinks(tx: Db, targetEntityId: string, siblingIds: string[], cow: CowData) {
     const resolve = (id: string) => cow.resolve(id);

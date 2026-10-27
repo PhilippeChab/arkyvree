@@ -207,6 +207,9 @@
     // `klass` names 3.5's types alone (`Klass`, `KlassLevel`) and a value that is one: every other name says `class`
     // (lint/nouns.mjs).
     "arkyvree/klass-names": "error",
+    // The dropped tables' columns and rows that mean nothing today (`characterLevelId`, `targetTable`…) come back as no
+    // name or key, and the server and shared/ name no table, `getTableName` (lint/nouns.mjs).
+    "arkyvree/dropped-names": "error",
     "arkyvree/entity-type-labels": "error",
     "arkyvree/dialog-mounts": "error",
     "arkyvree/menus": "error",
