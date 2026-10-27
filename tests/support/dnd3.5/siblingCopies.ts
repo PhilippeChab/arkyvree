@@ -50,7 +50,8 @@ async function withCopy(
   check: (tx: Db, after: RulesetData, copyId: string) => Promise<void>,
 ) {
   await withTransaction(async (tx) => {
-    const { id: copyId } = await new EntityEdit(fork).cowToEdit(tx, type, { id, rulesetId: "inherited" });
+    const { cow } = await RulesetViews.getData(fork);
+    const { id: copyId } = await new EntityEdit(fork, cow).cowToEdit(tx, type, { id, rulesetId: "inherited" });
     RulesetViews.invalidate(fork.id);
     await check(tx, await RulesetViews.getData(fork), copyId);
     throw new Rollback();

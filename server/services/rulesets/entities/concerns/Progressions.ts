@@ -7,8 +7,7 @@ import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/err
 import { Entities, Modifiers, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { writeEntityWrites } from "@/server/services/rulesets/entityWrites.ts";
-import { setLinks } from "@/server/services/rulesets/linkWrites.ts";
+import EntityWriter from "@/server/services/rulesets/entities/EntityWriter.ts";
 import { getActivityName } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -44,7 +43,7 @@ export function Progressions<B extends Constructor>(Base: B) {
       type: RulesetEntityType,
       { gone, owner }: Pick<ProgressionPlan, "gone" | "owner">,
     ): Promise<TargetOwner> {
-      const target = await new EntityEdit(scope.ruleset).cowToEdit(tx, type, owner);
+      const target = await new EntityEdit(scope.ruleset, scope.rulesetData.cow).cowToEdit(tx, type, owner);
       if (!target.copied) await EntityEdit.lock(tx, target.id);
       const row = await Entities.findOne(tx, { entityType: type, id: target.id });
       if (!row) throw new NotFoundError(gone.owner);
@@ -82,11 +81,8 @@ export function Progressions<B extends Constructor>(Base: B) {
         const [row] = await Entities.update(tx, ownedType, owned.edit?.row ?? {}, { id: ownedId, expectedUpdatedAt });
         if (!row) throw new ConflictError(STALE_ENTITY_MESSAGE);
         writtenIds.push(ownedId);
-        if (owned.edit) {
-          if (owned.edit.writes)
-            await writeEntityWrites(tx, scope, { entityId: ownedId, entityType: ownedType }, owned.edit.writes);
-          await setLinks(tx, { entityId: ownedId, entityType: ownedType }, owned.edit.links);
-        }
+        if (owned.edit)
+          await EntityWriter.setParts(tx, scope, { entityId: ownedId, entityType: ownedType }, owned.edit, true);
 
         removedIds.push(...owned.removedIds);
         added.push(...owned.added.map((modifier) => ({ ...modifier, sourceId: ownedId, sourceType: ownedType })));

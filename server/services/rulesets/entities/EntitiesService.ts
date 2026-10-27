@@ -4,13 +4,13 @@ import { include } from "@/lib/mixins.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, RULESET_ENTITY_TYPES, type RulesetEntityType } from "@/server/repositories/index.ts";
-import EntityWriter, { type EntityBody } from "@/server/services/rulesets/EntityWriter.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { Copies } from "./concerns/Copies.ts";
 import { Links } from "./concerns/Links.ts";
 import { Owned } from "./concerns/Owned.ts";
 import { Progressions } from "./concerns/Progressions.ts";
+import EntityWriter, { type EntityBody } from "./EntityWriter.ts";
 import type { EntityRow, ListWhere, Pagination } from "./rows.ts";
 
 /** Every entity kind's type, which the routes by kind take. */
