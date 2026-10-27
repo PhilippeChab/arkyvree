@@ -2,6 +2,7 @@ import { afterAll, afterEach, expect, test } from "bun:test";
 
 import type { Feat } from "@/engine/rulesets/dnd3.5/index.ts";
 import { EntityEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { GONE_CUSTOMIZATION } from "@/server/cow/writes/EditTarget.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
 import { Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
@@ -11,9 +12,6 @@ import { runWhileLocked } from "@/tests/support/database.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
-
-/** What a lock answers when the entity is gone: the customizations' words, which this file's writes say. */
-const GONE = "Customization source no longer exists; refresh the entity";
 
 const pool = createTestPool();
 
@@ -51,14 +49,14 @@ test("owner mutation waits for a competing transaction and acquires the row afte
   await runWhileLocked(
     pool,
     async (blockerDb) => expect(await Entities.lock(blockerDb, { id: seed.featMap.Toughness })).toBe(true),
-    () => EntityEdit.lock(db, seed.featMap.Toughness, GONE),
+    () => EntityEdit.lock(db, seed.featMap.Toughness, GONE_CUSTOMIZATION),
   );
 });
 
 test("owner locks leave other entities independent and shared copy reads compatible", async () => {
   const seed = await getSeedCtx();
   const otherId = Object.values(seed.featMap).find((id) => id !== seed.featMap.Toughness)!;
-  await EntityEdit.lock(db, seed.featMap.Toughness, GONE);
+  await EntityEdit.lock(db, seed.featMap.Toughness, GONE_CUSTOMIZATION);
   expect(await Entities.lock(db, { id: otherId }, "share")).toBe(true);
   const client = await pool.connect();
   try {
@@ -73,7 +71,7 @@ test("owner locks leave other entities independent and shared copy reads compati
 });
 
 test("a missing owner is rejected before customization writes", async () => {
-  expect(EntityEdit.lock(db, crypto.randomUUID(), GONE)).rejects.toThrow(GONE);
+  expect(EntityEdit.lock(db, crypto.randomUUID(), GONE_CUSTOMIZATION)).rejects.toThrow(GONE_CUSTOMIZATION);
 });
 
 test("every customization kind reports a row removed before the owner lock as missing", async () => {

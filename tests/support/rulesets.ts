@@ -65,8 +65,8 @@ export function invalidateTestRulesets(...rulesetIds: string[]) {
 }
 
 /**
- * Copies an inherited entity into `rulesetId` (`EntityCopy`), on the chain given: what a first edit there copies. The
- * copied row.
+ * Copies an inherited entity into `rulesetId` (`EntityCopy`), on the chain given: what a first edit there copies, its
+ * source refused as not found, by its type, when it's gone. The copied row.
  */
 export async function copyEntity(
   database: Db,
@@ -74,7 +74,7 @@ export async function copyEntity(
   entityId: string,
   ruleset: RulesetSources,
 ) {
-  return (await EntityCopy.create(database, entityType, entityId, ruleset)).entity;
+  return (await EntityCopy.create(database, entityType, entityId, ruleset, `${entityType} not found`)).entity;
 }
 
 /**

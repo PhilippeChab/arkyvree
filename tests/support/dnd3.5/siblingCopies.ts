@@ -51,7 +51,12 @@ async function withCopy(
 ) {
   await withTransaction(async (tx) => {
     const { cow } = await RulesetViews.getData(fork);
-    const { id: copyId } = await new EntityEdit(fork, cow).cowToEdit(tx, type, { id, rulesetId: "inherited" });
+    const { id: copyId } = await new EntityEdit(fork, cow).cowToEdit(
+      tx,
+      type,
+      { id, rulesetId: "inherited" },
+      `${type} not found`,
+    );
     RulesetViews.invalidate(fork.id);
     await check(tx, await RulesetViews.getData(fork), copyId);
     throw new Rollback();

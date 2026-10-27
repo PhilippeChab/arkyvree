@@ -804,7 +804,7 @@ describe("unsubscribing from an extension", () => {
     // Alter Self's copies merge in Complete Warrior's lists, its Assassin Spells the winner of the books' namesakes
     const alterSelf = [...Dnd35View.of(view).spellsById.values()].find((spell) => spell.name === "Alter Self")!;
     const { id: copyId } = await withTransaction(async (tx) =>
-      (await editRuleset(EntityEdit, fork)).cowToEdit(tx, "spells", alterSelf),
+      (await editRuleset(EntityEdit, fork)).cowToEdit(tx, "spells", alterSelf, "Spell not found"),
     );
 
     await RulesetExtensionsService.unsubscribeExtension(session, fork.id, warrior.id);
