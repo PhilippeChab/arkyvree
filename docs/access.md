@@ -166,7 +166,7 @@ Anything that *throws* on the basis of ownership is a permission gate and belong
 
 | Policy | Service callers |
 |---|---|
-| `RulesetsPolicy` | `RulesetsService`, `RulesetExtensionsService` (subscribe / unsubscribe), `RulesetChangesService`, the entity services under `server/services/rulesets/` and `ContributorsService` (rulesets), through `RulesetsPolicy.for`. `CampaignsService` / `CharactersService` call `canCreateCampaign` / `canCreateCharacter` on the chosen ruleset. Every read of a ruleset by its id asks `canRead` through `getReadableRuleset` / `withReadableRuleset` (`CharactersService`'s creation reads among them), and `ActivitiesService` asks `isReadable` before it links to one |
+| `RulesetsPolicy` | `RulesetsService`, `RulesetExtensionsService` (subscribe / unsubscribe), `RulesetChangesService`, the entity services under `server/services/rulesets/` and `ContributorsService` (rulesets), through `RulesetsPolicy.for`. `CampaignsService` / `CharactersService` call `canCreateCampaign` / `canCreateCharacter` on the chosen ruleset. Every read of a ruleset by its id asks `canRead` through `getReadableRuleset` / `withReadableRuleset` (`CharactersService`'s creation reads among them), and `ActivitiesService` asks `isReadable` through `findReadableRuleset` before it links to one |
 | `CharactersPolicy` | `CharacterContributorsService`. Most other character writes use `getEditableCharacter` instead and skip the policy class — same effective rule, fewer object instantiations |
 | `CampaignsPolicy` | `CampaignsService`, `CampaignPlayersService`, campaigns sub-services |
 | `AttachmentsService` registry | not a `BasePolicy` — uses its `ATTACHABLE_TYPES` config map. Currently registered: `User` (avatar), `Character` (portrait) |

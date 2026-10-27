@@ -5,16 +5,31 @@ import { Rulesets } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
+/** The ruleset `rulesetId` and the session's policy on it, or none when it doesn't exist. */
+async function findRulesetPolicy(db: Db, session: Session, rulesetId: string) {
+  const ruleset = await Rulesets.findOne(db, { id: rulesetId });
+  if (!ruleset) return undefined;
+  return { policy: await RulesetsPolicy.for(db, session, ruleset), ruleset };
+}
+
+/**
+ * The ruleset `rulesetId` and the session's policy on it, if the session may read it (`RulesetsPolicy.isReadable`), or
+ * none, as for a ruleset that doesn't exist: what links to a ruleset, rather than reads it, asks.
+ */
+export async function findReadableRuleset(db: Db, session: Session, rulesetId: string) {
+  const found = await findRulesetPolicy(db, session, rulesetId);
+  return found?.policy.isReadable() ? found : undefined;
+}
+
 /**
  * The ruleset `rulesetId` and the session's policy on it, if the session may read it (`RulesetsPolicy.canRead`), or the
  * 404 an unknown ruleset gets: what a read of a ruleset, or of what's under it, by its id starts with.
  */
 export async function getReadableRuleset(db: Db, session: Session, rulesetId: string) {
-  const ruleset = await Rulesets.findOne(db, { id: rulesetId });
-  if (!ruleset) throw new NotFoundError("Ruleset not found");
-  const policy = await RulesetsPolicy.for(db, session, ruleset);
-  policy.canRead();
-  return { policy, ruleset };
+  const found = await findRulesetPolicy(db, session, rulesetId);
+  if (!found) throw new NotFoundError("Ruleset not found");
+  found.policy.canRead();
+  return found;
 }
 
 /**

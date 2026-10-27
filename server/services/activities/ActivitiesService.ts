@@ -10,10 +10,9 @@ import {
   type Pagination,
   PlayerCharacters,
   Players,
-  Rulesets,
   Visibility,
 } from "@/server/repositories/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { findReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { isNavigableTarget } from "@/shared/activity.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import { buildEntityPagePath, hasCustomizationPage } from "@/shared/customization/entities.ts";
@@ -86,13 +85,11 @@ class ActivitiesService {
   }
 
   /**
-   * A ruleset's page, or null when it's gone or the session may not read it (`RulesetsPolicy.isReadable`): a private
+   * A ruleset's page, or null when it's gone or the session may not read it (`findReadableRuleset`): a private
    * ruleset's existence isn't revealed.
    */
   private async rulesetUrl(session: Session, rulesetId: string) {
-    const ruleset = await Rulesets.findOne(db, { id: rulesetId });
-    if (!ruleset || !(await RulesetsPolicy.for(db, session, ruleset)).isReadable()) return null;
-    return `/rulesets/${rulesetId}`;
+    return (await findReadableRuleset(db, session, rulesetId)) ? `/rulesets/${rulesetId}` : null;
   }
 
   async getActivities(
