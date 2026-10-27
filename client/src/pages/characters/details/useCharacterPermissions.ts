@@ -31,8 +31,11 @@ export function useCharacterPermissions(
      * levels are the character's it's under.
      */
     canEditLevels: !isArchived && !isSubsheet,
-    /** Its portrait: contributors edit the sheet, but only the owner changes it. */
-    canEditPortrait: isOwner && !isArchived,
+    /**
+     * Its portrait, as the server holds it (`docs/access.md`): a player character's owner alone (contributors edit the
+     * sheet, not it); a subsheet's, anyone who edits the character it's under.
+     */
+    canEditPortrait: (isOwner || isSubsheet) && !isArchived,
     /** Invite contributors: its owner, while it isn't archived. */
     canInviteContributors: isOwner && !isArchived,
     /** Leave it: a contributor. */
