@@ -20,6 +20,7 @@ import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.
 import type { OwnedEntity } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { useAllAmounts, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
+import { toSentenceCase } from "@/shared/text.ts";
 
 import type { EditorProps } from "./renderEditor.tsx";
 
@@ -75,7 +76,7 @@ export function LevelEditor({
     storeSaved: refetchSaved,
     // Its owner's tabs, its levels' table among them, read the level
     listKey: QUERY_KEYS.rulesets.ownerDetail(rulesetId, ownerId),
-    label: `${word.charAt(0)}${word.slice(1).toLowerCase()}`,
+    label: toSentenceCase(word),
     saveFn: (data: LevelFormData, updatedAt: string | undefined) =>
       parseResponse(
         rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].owned[":ownedId"].$put({

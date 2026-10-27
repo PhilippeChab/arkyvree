@@ -22,3 +22,11 @@ export function stripSeparators(s: string) {
     .replaceAll(/[^a-z0-9]/gi, "")
     .toLowerCase();
 }
+
+/**
+ * A label's words (`s`, in Title Case) as a sentence writes them: its first letter kept, the rest lowercase ("Owned
+ * Step" in "Owned step not found").
+ */
+export function toSentenceCase(s: string) {
+  return s.charAt(0) + s.slice(1).toLowerCase();
+}

@@ -43,6 +43,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import {
   CHARACTER_AGE,
   CHARACTER_ALIGNMENT,
@@ -238,6 +239,14 @@ describe("CharactersService", () => {
       expect(createCharacterAs(session, { ...values, abilities: { [NIL_UUID]: 12 } })).rejects.toMatchObject(
         lacking("Ability"),
       );
+      // A bonded creature's race, named in the rules' word
+      const [bondedRace] = Object.entries(ctx.raceMap).flatMap(([kind, races]) =>
+        kind === PLAYER_CHARACTER_KIND ? [] : Object.values(races ?? {}),
+      );
+      expect(createCharacterAs(session, { ...values, links: { race: bondedRace } })).rejects.toMatchObject({
+        message: "Race is not valid for a player character",
+        refusal: "invalid",
+      });
     });
   });
 

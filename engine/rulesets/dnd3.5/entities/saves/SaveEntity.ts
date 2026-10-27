@@ -7,7 +7,5 @@ export default class SaveEntity extends RulesetEntity<"saves", typeof SAVE_FIELD
   /** The ability its bonus comes from. */
   protected override readonly fields = SAVE_FIELDS;
 
-  protected override readonly label = "Save";
-
   override readonly type = "saves";
 }

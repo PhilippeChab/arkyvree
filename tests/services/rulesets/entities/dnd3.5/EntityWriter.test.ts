@@ -103,7 +103,7 @@ describe("EntityWriter: an entity deleted since the view was read", () => {
 
     expect(
       EntitiesService.deleteOwnedEntity(makeSession(), ruleset.id, "classes", klass.id, classLevel.id),
-    ).rejects.toMatchObject({ message: "ClassLevel not found", name: "NotFoundError" });
+    ).rejects.toMatchObject({ message: "Class level not found", name: "NotFoundError" });
   });
 
   test("refuses an owned entity's edit as that owned entity, not found, when another write copied its owner without it", async () => {
@@ -126,7 +126,7 @@ describe("EntityWriter: an entity deleted since the view was read", () => {
       EntitiesService.updateOwnedEntity(session, fork.id, "classes", klass.id, level.id, {
         fields: { [CLASS_LEVEL_SKILL_POINTS]: 4 },
       }),
-    ).rejects.toMatchObject({ message: "ClassLevel not found", name: "NotFoundError" });
+    ).rejects.toMatchObject({ message: "Class level not found", name: "NotFoundError" });
   });
 
   test("refuses an inherited entity's first edit and delete as that entity, not found, as they copy it", async () => {

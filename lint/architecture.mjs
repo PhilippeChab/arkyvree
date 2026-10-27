@@ -89,9 +89,10 @@ const CLIENT_COMPONENTS = "client/src/components/";
 const CONTENT_REGISTRY = "database/packages/registry.ts";
 /**
  * The engine's entry's handles whose answers are what the modules declare, no operation over the data an action read:
- * the storage's (`Engine.storage().isPlayerKind(kind)`, `ownerOf(type)`).
+ * the storage's (`Engine.storage().isPlayerKind(kind)`, `ownerOf(type)`) and the rules'
+ * (`Engine.rules().restorableKinds()`, `labelOf(baseRules, type)`).
  */
-const ENGINE_DECLARATIONS = new Set(["storage"]);
+const ENGINE_DECLARATIONS = new Set(["rules", "storage"]);
 /** The engine's entry's own methods, which hand out its handles. */
 const ENGINE_ENTRIES = new Set(["copyOnWrite", "for", "forRules"]);
 

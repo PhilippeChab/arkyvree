@@ -13,7 +13,5 @@ export default class RaceEntity extends CustomizationPageEntity<"races", typeof 
   /** Its size and base speed, its body's build: four legs, a speed armor leaves. */
   protected override readonly fields = RACE_FIELDS;
 
-  protected override readonly label = "Race";
-
   override readonly type = "races";
 }

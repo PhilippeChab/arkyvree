@@ -6,7 +6,7 @@ import MemoryCache from "@/server/cache/MemoryCache.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Rulesets } from "@/server/repositories/index.ts";
-import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createSeededTestRuleset, subscribeTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 afterEach(() => {
@@ -20,8 +20,7 @@ test("extension COW invalidates the warm subscriber mapping", async () => {
   const extension = await createSeededTestRuleset(session.userId);
   await Rulesets.update(db, { kind: "extension", status: "Published" }, { id: extension.id });
   const host = await createSeededTestRuleset(session.userId);
-  await Rulesets.update(db, { extensionRulesetIds: [extension.id] }, { id: host.id });
-  const updatedHost = (await Rulesets.findOne(db, { id: host.id }))!;
+  const updatedHost = await subscribeTestRuleset(host.id, [extension.id]);
   const source = (await Entities.findOne<Feat>(db, {
     entityType: "feats",
     rulesetId: extension.ancestorRulesetIds[0],

@@ -3,6 +3,7 @@ export type {
   EntityKindDescription,
   EntityLinksDescription,
   EntityPoolsDescription,
+  KindWord,
   ListColumn,
   ListDescription,
   ProgressionCounts,

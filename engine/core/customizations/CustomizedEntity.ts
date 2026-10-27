@@ -4,9 +4,9 @@ import type { RulesetData, RulesetView, ViewKinds } from "@/engine/core/view/ind
 /** An entity customizations are made on, as the ruleset's view has it: its id there, and the name a history shows. */
 export default class CustomizedEntity {
   /**
-   * The name of an entity customizations can be made on, as its view has it (an owned one by its position, "Level", the
-   * core's word for a position along its owner, a track: a class level by its level; a modifier by what it does), or
-   * none when the view has no such entity, or it isn't one customizations are made on.
+   * The name of an entity customizations can be made on, as its view has it (an owned one by its position along its
+   * owner, in its rules' word: 3.5's class level's "Level 3"; a modifier by what it does), or none when the view has no
+   * such entity, or it isn't one customizations are made on.
    */
   private static nameOf(rulesetData: RulesetData, entityType: string, entityId: string): string | undefined {
     if (entityType === "modifiers") {
@@ -16,7 +16,8 @@ export default class CustomizedEntity {
     if (!rulesetData.isCustomizable(entityType)) return undefined;
     const entity = rulesetData.find(entityType as keyof ViewKinds, entityId);
     if (!entity) return undefined;
-    if (entity.ownerId !== null && entity.position !== null) return `Level ${entity.position}`;
+    if (entity.ownerId !== null && entity.position !== null)
+      return rulesetData.positionNameOf(entityType, entity.position);
     return entity.name ?? undefined;
   }
 

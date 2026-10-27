@@ -116,7 +116,6 @@ export const rulesetsInRules = rules.table(
     name: text().notNull(),
     rulesetId: uuid("ruleset_id"),
     ancestorRulesetIds: uuid("ancestor_ruleset_ids").array().default([]).notNull(),
-    extensionRulesetIds: uuid("extension_ruleset_ids").array().default([]).notNull(),
     description: text().notNull(),
     userId: uuid("user_id"),
     /** True for system-seeded bases and extensions; false for user forks (including orphaned ones). */
@@ -1431,6 +1430,7 @@ export const rulesetExtensionsInRules = rules.table(
     deletedAt: timestamp("deleted_at", { mode: "string", withTimezone: true }),
     rulesetId: uuid("ruleset_id").notNull(),
     extensionId: uuid("extension_id").notNull(),
+    ordinal: integer().notNull(),
   },
   (table) => [
     foreignKey({
@@ -1439,12 +1439,16 @@ export const rulesetExtensionsInRules = rules.table(
       name: "ruleset_extensions_ruleset_id_fkey",
     }).onDelete("cascade"),
     index("ruleset_extensions_extension_id_idx").using("btree", table.extensionId.asc().nullsLast()),
+    uniqueIndex("ruleset_extensions_ruleset_id_ordinal_idx")
+      .using("btree", table.rulesetId.asc().nullsLast(), table.ordinal.asc().nullsLast())
+      .where(sql`(deleted_at IS NULL)`),
     foreignKey({
       columns: [table.extensionId],
       foreignColumns: [rulesetsInRules.id],
       name: "ruleset_extensions_extension_id_fkey",
     }).onDelete("cascade"),
     primaryKey({ columns: [table.rulesetId, table.extensionId], name: "ruleset_extensions_pkey" }),
+    check("ruleset_extensions_ordinal_check", sql`ordinal >= 0`),
   ],
 );
 

@@ -96,14 +96,16 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
           const kl = idx.classLevelsById.get(entityId);
           if (kl) {
             const klass = idx.rulesetClassesById.get(kl.ownerId);
-            return klass ? `${klass.name} Level ${kl.position}` : `Level ${kl.position}`;
+            const position = this.rulesetData.positionNameOf("class-levels", kl.position);
+            return klass ? `${klass.name} ${position}` : position;
           }
           const attribution = this.components.spellcasting.getBonusClassLevelAttribution().get(entityId);
           if (attribution) return attribution;
           const bonusKl = this.components.spellcasting.getBonusClassLevels().find((k) => k.id === entityId);
           if (bonusKl) {
             const klass = idx.rulesetClassesById.get(bonusKl.ownerId);
-            return klass ? `${klass.name} Level ${bonusKl.position} (bonus)` : `Level ${bonusKl.position} (bonus)`;
+            const position = `${this.rulesetData.positionNameOf("class-levels", bonusKl.position)} (bonus)`;
+            return klass ? `${klass.name} ${position}` : position;
           }
           break;
         }
@@ -142,7 +144,8 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
 
       for (const kl of this.data.classLevels) {
         const klass = rulesetClassesById.get(kl.ownerId);
-        const label = klass ? `${klass.name} Level ${kl.position}` : `Level ${kl.position}`;
+        const position = this.rulesetData.positionNameOf("class-levels", kl.position);
+        const label = klass ? `${klass.name} ${position}` : position;
         for (const m of kl.modifiers) modifierOwner.set(m.id, { name: label, type: "class-levels" });
       }
       for (const spell of this.data.spells)

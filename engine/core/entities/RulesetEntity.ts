@@ -172,9 +172,6 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
   /** The fields its entities hold, as its module declares them: `FieldCodec.NONE`, none. */
   protected abstract readonly fields: FieldCodec<S>;
 
-  /** What a refusal calls one: "Save" in "Save not found in this ruleset". */
-  protected abstract readonly label: string;
-
   /**
    * Whether a new entity standing in for an ancestor its ruleset deleted takes after the ancestor's stored row (a feat
    * its mark), which the server then reads for `planCreate`.
@@ -404,6 +401,14 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
     };
   }
 
+  /**
+   * Refuses an entity of a type (`type`: the kind's own, else one it reaches, a class's level) the view doesn't show,
+   * named in its rules' word: "Save not found in this ruleset".
+   */
+  protected refuseMissing(type: string = this.type): never {
+    throw this.rulesetData.notFound(type, { where: "in this ruleset" });
+  }
+
   /** The ruleset's view, as its rules read it. */
   protected get rulesetData(): RulesetData {
     return this.view.rulesetData;
@@ -459,7 +464,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
   /** The entity the view shows for an id: refused when it shows none. */
   find(id: string): ViewKinds[K] {
     const entity = this.rulesetData.find(this.type, id);
-    if (!entity) throw new RulesError("not-found", `${this.label} not found in this ruleset`);
+    if (!entity) this.refuseMissing();
     return entity;
   }
 

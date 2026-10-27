@@ -286,21 +286,23 @@ export default class SelectionChecks {
     this.checkLinks(feats, spells);
   }
 
-  /** Throws when a feat or a spell isn't linked to the pool it's picked under. */
+  /**
+   * Throws when a feat or a spell isn't linked to the pool it's picked under, each named in its rules' word: "Feat is
+   * not linked to the specified aptitude".
+   */
   checkLinks(feats: Record<string, string[]>, spells: Record<string, string[]>) {
-    for (const [aptitudeId, ids] of Object.entries(feats)) {
-      for (const featId of ids) {
-        const links = this.dnd35.featsById.has(featId) ? this.dnd35.listLinksOf(featId) : [];
-        if (!links.some((link) => link.toId === aptitudeId))
-          throw new RulesError("invalid", "Feat is not linked to the specified aptitude");
-      }
-    }
-
-    for (const [aptitudeId, ids] of Object.entries(spells)) {
-      for (const spellId of ids) {
-        const links = this.dnd35.spellsById.has(spellId) ? this.dnd35.listLinksOf(spellId) : [];
-        if (!links.some((link) => link.toId === aptitudeId))
-          throw new RulesError("invalid", "Spell is not linked to the specified aptitude");
+    const { rulesetData } = this.view;
+    const pool = rulesetData.labelOf("aptitudes").toLowerCase();
+    for (const [type, picks, byId] of [
+      ["feats", feats, this.dnd35.featsById],
+      ["spells", spells, this.dnd35.spellsById],
+    ] as const) {
+      for (const [aptitudeId, ids] of Object.entries(picks)) {
+        for (const id of ids) {
+          const links = byId.has(id) ? this.dnd35.listLinksOf(id) : [];
+          if (!links.some((link) => link.toId === aptitudeId))
+            throw new RulesError("invalid", `${rulesetData.labelOf(type)} is not linked to the specified ${pool}`);
+        }
       }
     }
   }

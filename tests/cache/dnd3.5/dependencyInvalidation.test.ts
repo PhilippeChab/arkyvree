@@ -6,7 +6,7 @@ import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Rulesets } from "@/server/repositories/index.ts";
 import { measure } from "@/tests/support/database.ts";
-import { createSeededTestRuleset, readTargetPaths } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset, readTargetPaths, subscribeTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 async function setup() {
@@ -44,7 +44,7 @@ test("target-path service invalidates extension subscribers but retains an unrel
   const session = makeSession();
   const host = await createSeededTestRuleset(session.userId);
   await Rulesets.update(db, { kind: "extension", status: "Published" }, { id: edited.id });
-  await Rulesets.update(db, { extensionRulesetIds: [edited.id] }, { id: host.id });
+  await subscribeTestRuleset(host.id, [edited.id]);
   const [feat] = await Entities.create<Feat>(db, "feats", {
     rulesetId: edited.id,
     name: "Performance Marker",

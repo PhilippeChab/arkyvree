@@ -1,5 +1,6 @@
 import type { SheetSummary } from "@/engine/core/module/index.ts";
 import ClassLevels from "@/engine/rulesets/dnd3.5/characters/ClassLevels.ts";
+import { LEVEL_WORD } from "@/engine/rulesets/dnd3.5/ruleset/rules.ts";
 
 /** A 3.5 character's classes, as its sheet reads them: each its class, and its levels in it, in the order it took them. */
 type SheetClasses = Record<
@@ -21,17 +22,21 @@ export default class SheetSummaries {
    * partly seen character's has none (`{}`).
    */
   static describe(classes: SheetClasses): SheetSummary {
+    // A level's word, as a label ("Level", "Levels") and as a sentence says it ("level")
+    const { many, one } = LEVEL_WORD;
+    const oneLower = one.toLowerCase();
     return {
       separator: ClassLevels.SEPARATOR,
       words: {
-        add: "Add Level",
-        removeLast: "Remove Last Level",
-        removeLastMessage: "Are you sure you want to remove the last level? This action cannot be undone.",
+        add: `Add ${one}`,
+        removeLast: `Remove Last ${one}`,
+        removeLastMessage: `Are you sure you want to remove the last ${oneLower}? This action cannot be undone.`,
+        // The character's own levels, not a class level's position
         deleteMessage:
           "Are you sure you want to permanently delete this character? Its levels, abilities, inventory, attachments " +
           "and customizations go with it. This action cannot be undone.",
-        removed: "Level removed",
-        removeFailed: "Failed to remove level",
+        removed: `${one} removed`,
+        removeFailed: `Failed to remove ${oneLower}`,
       },
       tracks: Object.values(classes).map(({ klass, levels }) => {
         const label = ClassLevels.format(klass.name, levels.length);
@@ -40,11 +45,11 @@ export default class SheetSummaries {
           entityType: "classes",
           name: klass.name,
           label,
-          words: { open: `${label} Levels`, levels: `${klass.name} Levels`, add: `Add ${klass.name} Level` },
+          words: { open: `${label} ${many}`, levels: `${klass.name} ${many}`, add: `Add ${klass.name} ${one}` },
           advancements: levels.map(({ advancement, classLevel }) => ({
             id: advancement.id,
-            label: `Level ${classLevel.position}`,
-            edit: `Edit ${klass.name} Level ${classLevel.position}`,
+            label: `${one} ${classLevel.position}`,
+            edit: `Edit ${klass.name} ${one} ${classLevel.position}`,
           })),
         };
       }),

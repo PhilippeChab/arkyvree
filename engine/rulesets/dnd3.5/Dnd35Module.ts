@@ -10,7 +10,6 @@ import Dnd35Imports from "./imports/Dnd35Imports.ts";
 import Dnd35LevelUp from "./levelUp/Dnd35LevelUp.ts";
 import Dnd35Ruleset from "./ruleset/Dnd35Ruleset.ts";
 import { DND35_STORAGE } from "./storage/Dnd35Storage.ts";
-import { KIND_LABELS } from "./view/kindLabels.ts";
 
 /** The 3.5 ruleset module. */
 export default class Dnd35Module {
@@ -26,7 +25,6 @@ export default class Dnd35Module {
       entities: new Dnd35Entities(),
       fields: ENTITY_FIELDS,
       imports: new Dnd35Imports(),
-      kindLabels: KIND_LABELS,
       levelUp: new Dnd35LevelUp(),
       ruleset: new Dnd35Ruleset(),
       storage: DND35_STORAGE,

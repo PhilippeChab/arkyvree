@@ -195,10 +195,10 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * Refuses a creation pick (`entity`, the one a new character's single link of `role` names) a ruleset's rules don't
-   * let a new character make (3.5's race of a kind that isn't a player character's).
+   * Refuses a creation pick (`entity`, the one a new character's single link of `role` names, in a ruleset's `view`) a
+   * ruleset's rules don't let a new character make (3.5's race of a kind that isn't a player character's).
    */
-  protected abstract checkCreationPick(role: string, entity: unknown): void;
+  protected abstract checkCreationPick(view: RulesetView, role: string, entity: unknown): void;
 
   /**
    * The printed sheet of a character (`character`, its rows as its reader reads them: no share token, its private notes
@@ -561,7 +561,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
       if (picked === undefined)
         throw new RulesError("invalid", `A new character's ${view.rulesetData.labelOf(kind)} is required`);
       const entity = ids.find(kind, picked);
-      this.checkCreationPick(role, entity);
+      this.checkCreationPick(view, role, entity);
       singles[role] = (entity as { id: string }).id;
     }
     const scores = scored.map(({ bounds, kind, role }) => {

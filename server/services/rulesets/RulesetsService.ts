@@ -59,17 +59,13 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
           userId: session.userId,
           rulesetId: id,
           ancestorRulesetIds,
-          extensionRulesetIds: ruleset.extensionRulesetIds,
           baseRules: ruleset.baseRules,
           private: body.private,
         })
       )[0];
 
-      // Copy extension metadata rows
-      if (ruleset.extensionRulesetIds.length > 0) {
-        for (const extId of ruleset.extensionRulesetIds)
-          await RulesetExtensions.upsert(tx, { rulesetId: newRuleset.id, extensionId: extId });
-      }
+      // The fork subscribes to its source's extensions, in their order
+      await RulesetExtensions.upsert(tx, { rulesetId: newRuleset.id, extensionIds: ruleset.extensionRulesetIds });
 
       // 3. Copy the ruleset's Settings as stored (parent entity IDs, which the fork's view resolves at read time)
       await RulesetSettings.createCopy(tx, { fromId: id, toId: newRuleset.id });
@@ -83,7 +79,8 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
         data: { sourceRulesetId: id },
       });
 
-      return newRuleset;
+      // Its row was written before its extensions' rows were, which it answers with
+      return { ...newRuleset, extensionRulesetIds: ruleset.extensionRulesetIds };
     });
 
     RulesetViews.invalidate(result.id);

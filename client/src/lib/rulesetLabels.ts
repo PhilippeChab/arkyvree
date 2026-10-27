@@ -38,3 +38,11 @@ export function getActivityLabelOverrides(words: RulesWords | undefined): Record
     }),
   );
 }
+
+/**
+ * The word for an owned entity's position along its owner (`entityType`'s: 3.5's class level's "Level", in "Level 3"),
+ * as its rules give it (`words`), else its type's own word, as the engine names one (`RulesetData.positionNameOf`).
+ */
+export function positionWordOf(entityType: string, words: RulesWords | undefined): string {
+  return words?.[entityType]?.position?.one ?? entityTypeLabel(entityType, words);
+}

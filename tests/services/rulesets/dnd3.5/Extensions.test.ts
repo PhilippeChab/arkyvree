@@ -435,6 +435,12 @@ describe("subscribing to an extension", () => {
     expect(await RulesetsService.publishRuleset(session, draft.id)).toMatchObject({ status: "Published" });
   });
 
+  test("leaves a system base subscribing to none of the extensions forked from it: its page lists none", async () => {
+    const { session, base } = await setupFork();
+    expect(base.extensionRulesetIds).toEqual([]);
+    expect(await RulesetExtensionsService.getExtensions(session, base.id)).toEqual([]);
+  });
+
   test("adds the extension's feats to the fork's: Complete Warrior brings 514 of its own", async () => {
     const { session, extension, draft } = await setupFork();
     const total = async () => {
@@ -760,6 +766,19 @@ describe("unsubscribing from an extension", () => {
       ).items,
     ).toMatchObject([{ id: monkeyGrip.id, rulesetId: extension.id }]);
     expect(await RulesetExtensions.findMany(db, { rulesetId: draft.id })).toHaveLength(1);
+  });
+
+  test("subscribing again puts the extension last, where the view composes it and the page lists it", async () => {
+    const { session, draft } = await setupFork();
+    const [first, second, third] = [await createExtension(), await createExtension(), await createExtension()];
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [first.id, second.id, third.id]);
+    await RulesetExtensionsService.unsubscribeExtension(session, draft.id, first.id);
+    await RulesetExtensionsService.subscribeExtension(session, draft.id, [first.id]);
+
+    const order = [second.id, third.id, first.id];
+    expect((await Rulesets.findOne(db, { id: draft.id }))!.extensionRulesetIds).toEqual(order);
+    const listed = await RulesetExtensionsService.getExtensions(session, draft.id);
+    expect(listed.map(({ extensionId }) => extensionId)).toEqual(order);
   });
 
   test("repoints the fork's links and class grants from its lists to the lists of their names it keeps", async () => {

@@ -1,5 +1,5 @@
 import { type CharacterInput, type ChildrenPlan, type PickPlan, type StoredPick } from "@/engine/core/module/index.ts";
-import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
+import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
@@ -137,17 +137,17 @@ export default abstract class LevelUpBase<C> {
   /** The class's level `level`, in the composed ruleset, or a 404. */
   protected getClassLevel(classId: string, level: number) {
     const classLevel = this.dnd35.classLevelByClassAndLevel.get(`${classId}:${level}`);
-    if (!classLevel) throw new RulesError("not-found", "Class level not found");
+    if (!classLevel) throw this.rulesetData.notFound("class-levels");
     return classLevel;
   }
 
   /** A saved level's class level (its advancement's entry) and class, in the composed ruleset, or a 404. */
   protected getSavedClassLevel(advancement: { entryId: string | null }) {
     const classLevel = advancement.entryId ? this.dnd35.classLevelsById.get(advancement.entryId) : undefined;
-    if (!classLevel) throw new RulesError("not-found", "Class level not found");
+    if (!classLevel) throw this.rulesetData.notFound("class-levels");
 
     const klass = this.dnd35.classesById.get(classLevel.ownerId);
-    if (!klass) throw new RulesError("not-found", "Class not found");
+    if (!klass) throw this.rulesetData.notFound("classes");
 
     return { classLevel, klass };
   }

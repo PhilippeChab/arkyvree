@@ -128,7 +128,10 @@ describe("rulesets customization requirements", () => {
     await expectStatus(requirements.$get({ param: { id: NIL_UUID, entityType: "feats", entityId } }), 404);
     await expectStatus(requirements.$get({ param: { id, entityType: "feats", entityId: NIL_UUID } }), 404);
     const param = { id, entityType: "feats" as const, entityId, requirementId: NIL_UUID };
-    await expectStatus(requirement.$put({ param, json: charisma13 }), 404);
+    // A missing requirement named in the engine's word for it
+    expect(await (await expectStatus(requirement.$put({ param, json: charisma13 }), 404)).json()).toMatchObject({
+      message: "Requirement not found for this entity",
+    });
     await expectStatus(requirement.$delete({ param }), 404);
   });
 });

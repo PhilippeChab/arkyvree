@@ -25,6 +25,8 @@ interface ProgressionTrackRowProps {
   onCustomChange: (custom: boolean) => void;
   /** Its owner kind's word, as a sentence says it ("class") */
   ownerWord: string;
+  /** Its rules' word for a level's position along its owner, which names one ("Level", "Level 3") */
+  positionWord: string;
   /** The progressions it can follow: none for one number at every level (skill points) */
   presets?: readonly ProgressionPreset[];
   /** Its values as saved, by level */
@@ -71,6 +73,7 @@ export function ProgressionTrackRow({
   onChange,
   onCustomChange: setCustom,
   ownerWord,
+  positionWord,
   presets,
   saved,
   unitLabel,
@@ -224,7 +227,7 @@ export function ProgressionTrackRow({
             <DataRow>
               <DataCell slot="primary">Before</DataCell>
               {changed.map(({ level }) => (
-                <DataCell key={level} slot="inline" align="center" label={`Level ${level}`}>
+                <DataCell key={level} slot="inline" align="center" label={`${positionWord} ${level}`}>
                   {format(saved.find((s) => s.level === level)?.value ?? 0)}
                 </DataCell>
               ))}
@@ -250,6 +253,7 @@ export function ProgressionTrackRow({
           onChange={onChange}
           onClose={() => setCustom(false)}
           ownerWord={ownerWord}
+          positionWord={positionWord}
           baseControl={
             presets && (
               <TextField
