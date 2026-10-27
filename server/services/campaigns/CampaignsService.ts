@@ -1,6 +1,14 @@
 import { db, withTransaction } from "@/server/database/index.ts";
 import { InternalError, NotFoundError } from "@/server/errors/index.ts";
-import { Activities, Campaigns, Players, Rulesets, Visibility, visibilityMap } from "@/server/repositories/index.ts";
+import {
+  Activities,
+  Campaigns,
+  type Pagination,
+  Players,
+  Rulesets,
+  Visibility,
+  visibilityMap,
+} from "@/server/repositories/index.ts";
 import { CampaignsPolicy, RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -96,7 +104,7 @@ class CampaignsService {
       search?: string;
       visibility?: keyof typeof visibilityMap;
     },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     const { visibility, ...filters } = where;
     return await Campaigns.findPage(

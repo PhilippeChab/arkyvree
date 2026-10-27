@@ -10,7 +10,12 @@ import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
-import { createSeededTestRuleset, type Described, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import {
+  createSeededTestRuleset,
+  type Described,
+  describedAs,
+  invalidateSeededRuleset,
+} from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import {
@@ -37,7 +42,7 @@ import {
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** An item as a save or a read answers it, as its form's columns read it: its template its `madeFrom` link's. */
-function columnsOf(answer: Described<"items">) {
+function columnsOf(answer: Pick<Described<"items">, "description" | "fields" | "links" | "name">) {
   return formColumnsOf(answer, answer.links.find((link) => link.role === "madeFrom")?.toId ?? null);
 }
 
@@ -94,7 +99,7 @@ async function setup(values: { private?: boolean } = {}) {
   /** A regular item made from a template. */
   const instance = async (name: string) => {
     const { id, fields } = await template(name);
-    return EntitiesService.createEntity<Described<"items">>(session, ruleset.id, "items", {
+    return EntitiesService.createEntity(session, ruleset.id, "items", {
       name: `My ${name}`,
       fields: { [ITEM_TYPE]: fields[ITEM_TYPE] as string },
       links: { madeFrom: id },
@@ -139,11 +144,7 @@ describe("Item templates", () => {
       ],
     ])("%s fields", async (name, expected) => {
       const { ruleset, instance } = await setup();
-      const { fields } = await EntitiesService.getEntity<Described<"items">>(
-        ruleset.id,
-        "items",
-        (await instance(name)).id,
-      );
+      const { fields } = await EntitiesService.getEntity(ruleset.id, "items", (await instance(name)).id);
       expect(fields).toMatchObject(expected);
     });
 
@@ -160,9 +161,7 @@ describe("Item templates", () => {
         [ITEM_COST_GP]: longsword.fields[ITEM_COST_GP],
       };
       expect(inherited).toEqual({ [ITEM_WEIGHT]: 4, [ITEM_COST_GP]: 15 });
-      expect((await EntitiesService.getEntity<Described<"items">>(ruleset.id, "items", sword.id)).fields).toMatchObject(
-        inherited,
-      );
+      expect((await EntitiesService.getEntity(ruleset.id, "items", sword.id)).fields).toMatchObject(inherited);
       const { items } = await EntitiesService.getEntities(
         ruleset.id,
         "items",
@@ -183,7 +182,7 @@ describe("Item templates", () => {
       });
       expect(await stored()).not.toHaveProperty(ITEM_WEIGHT);
       expect(await stored()).not.toHaveProperty(ITEM_COST_GP);
-      const saved = await EntitiesService.updateEntity<Described<"items">>(session, ruleset.id, "items", sword.id, {
+      const saved = await EntitiesService.updateEntity(session, ruleset.id, "items", sword.id, {
         name: sword.name,
         fields: { [ITEM_WEIGHT]: 5, [ITEM_COST_GP]: 15 },
       });
@@ -202,10 +201,9 @@ describe("Item templates", () => {
       ["Tower Shield", ["feats.towershieldproficiency.possessed"]],
     ])("%s requirements", async (name, expected) => {
       const { ruleset, instance } = await setup();
-      const { requirements } = await EntitiesService.getEntity<Described<"items">>(
-        ruleset.id,
+      const { requirements } = describedAs(
         "items",
-        (await instance(name)).id,
+        await EntitiesService.getEntity(ruleset.id, "items", (await instance(name)).id),
       );
       expect(requirements.map((r) => r.chainingOperator ?? r.target)).toEqual(expected);
     });
@@ -219,12 +217,10 @@ describe("Item templates", () => {
       // The instance's own value, written past the services, after its create read the fork's view
       RulesetViews.invalidate(ruleset.id);
 
-      expect((await EntitiesService.getEntity<Described<"items">>(ruleset.id, "items", sword.id)).fields).toMatchObject(
-        {
-          [WEAPON_BASE_DAMAGE]: "2d6",
-          [ITEM_MADE_OF]: "Adamantine",
-        },
-      );
+      expect((await EntitiesService.getEntity(ruleset.id, "items", sword.id)).fields).toMatchObject({
+        [WEAPON_BASE_DAMAGE]: "2d6",
+        [ITEM_MADE_OF]: "Adamantine",
+      });
     });
   });
 
@@ -237,7 +233,7 @@ describe("Item templates", () => {
       { search: sword.name },
       { limit: 10, page: 1 },
     );
-    expect(items.find((item) => item.id === sword.id)?.templateName).toBe("Longsword");
+    expect(items.find((item) => item.id === sword.id)).toMatchObject({ templateName: "Longsword" });
   });
 
   test("an item without a template has no fields its form shows or requirements of its own", async () => {
@@ -246,7 +242,7 @@ describe("Item templates", () => {
       name: "Custom Item",
       fields: { [ITEM_TYPE]: "Weapon" },
     });
-    expect(await EntitiesService.getEntity<Described<"items">>(ruleset.id, "items", item.id)).toMatchObject({
+    expect(await EntitiesService.getEntity(ruleset.id, "items", item.id)).toMatchObject({
       requirements: [],
     });
     expect(await findFormValues("items", item.id)).toEqual({ fields: {}, links: {} });
@@ -255,7 +251,7 @@ describe("Item templates", () => {
   test("an instance can switch templates", async () => {
     const { session, ruleset, template } = await setup();
     const mace = await template("Heavy Mace");
-    const copy = await EntitiesService.duplicateEntity<Described<"items">>(session, ruleset.id, "items", mace.id, {
+    const copy = await EntitiesService.duplicateEntity(session, ruleset.id, "items", mace.id, {
       name: "Custom weapon",
       fields: { [ITEM_TYPE]: "Weapon" },
     });
@@ -270,7 +266,7 @@ describe("Item templates", () => {
         }),
       ),
     ).toMatchObject({ isTemplate: false, sourceItemId: sword.id });
-    expect((await EntitiesService.getEntity<Described<"items">>(ruleset.id, "items", copy.id)).fields).toMatchObject({
+    expect((await EntitiesService.getEntity(ruleset.id, "items", copy.id)).fields).toMatchObject({
       [WEAPON_TYPE]: "Longsword",
     });
   });
@@ -695,7 +691,7 @@ describe("Item templates", () => {
   test("an inherited one is edited into a local copy, leaving the original", async () => {
     const { session, ruleset, template } = await setup();
     const mace = await template("Heavy Mace");
-    const edited = await EntitiesService.updateEntity<Described<"items">>(session, ruleset.id, "items", mace.id, {
+    const edited = await EntitiesService.updateEntity(session, ruleset.id, "items", mace.id, {
       name: mace.name,
       fields: { [ITEM_TYPE]: "Weapon", [ITEM_WEIGHT]: 10 },
       description: "Heavier homebrew mace",

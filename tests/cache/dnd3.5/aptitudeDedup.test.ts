@@ -14,7 +14,7 @@ import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { EntityLinks } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
-import { createSeededTestRulesetWithExtensions, type Described } from "@/tests/support/rulesets.ts";
+import { createSeededTestRulesetWithExtensions } from "@/tests/support/rulesets.ts";
 
 /** The entities of `type` named `name` (`names`), with their rulesets' names, in the rulesets of `rulesetIds`. */
 async function namedEntities(type: string, names: string[], rulesetIds?: string[]) {
@@ -128,7 +128,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     const { ruleset } = await setup();
     // "Visage of the Deity, Lesser" is a CD spell with "Blackguard Spells" aptitude
     // Both DMG and CD create this aptitude — service should dedup
-    const { items } = await EntitiesService.getEntities<Described<"spells">>(
+    const { items } = await EntitiesService.getEntities(
       ruleset.id,
       "spells",
       { search: "Visage of the Deity, Lesser" },
@@ -151,7 +151,7 @@ describe("aptitude deduplication across sibling extensions", () => {
       [await rulesetIdOf(DND35_COMPLETE_DIVINE_NAME)],
     );
 
-    const spell = await EntitiesService.getEntity<Described<"spells">>(ruleset.id, "spells", seeded.id);
+    const spell = await EntitiesService.getEntity(ruleset.id, "spells", seeded.id);
     const aptNames = spell.links.map((link) => link.toName);
     const uniqueNames = new Set(aptNames);
     expect(aptNames.length).toBe(uniqueNames.size);
@@ -179,7 +179,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     const winningApt = Dnd35View.of(rulesetData).aptitudes.find((a) => a.name === "Blackguard Spells");
     expect(winningApt).toBeDefined();
 
-    const { items } = await EntitiesService.getEntities<Described<"feats">>(
+    const { items } = await EntitiesService.getEntities(
       ruleset.id,
       "feats",
       { listedIn: winningApt!.id },

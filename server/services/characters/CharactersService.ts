@@ -17,6 +17,7 @@ import {
   CharacterLinks,
   Characters,
   Entities,
+  type Pagination,
   Visibility,
   visibilityMap,
 } from "@/server/repositories/index.ts";
@@ -126,7 +127,7 @@ class CharactersService extends include(Object, Archives, Imports) {
       search?: string;
       visibility?: keyof typeof visibilityMap;
     },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     const { visibility, ...filters } = where;
     const result = await Characters.findPage(
@@ -186,7 +187,7 @@ class CharactersService extends include(Object, Archives, Imports) {
     role: string,
     formData: CreationPickQuery,
     where: { search?: string },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     return await withRulesetScope(db, rulesetId, async (scope) => {
       const picker = Engine.for(scope).characters().openCreationPicker(role, formData);
@@ -227,7 +228,7 @@ class CharactersService extends include(Object, Archives, Imports) {
     session: Session,
     campaignId: string,
     where: { search?: string },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     const campaign = await Campaigns.findOne(db, { id: campaignId });
     if (!campaign) throw new NotFoundError("Campaign not found");

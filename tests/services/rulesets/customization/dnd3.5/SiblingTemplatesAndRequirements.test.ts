@@ -15,7 +15,6 @@ import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts
 import {
   copyEntity,
   createSeededTestRuleset,
-  type Described,
   invalidateSeededRuleset,
   invalidateTestRulesets,
 } from "@/tests/support/rulesets.ts";
@@ -99,7 +98,7 @@ test.each([
   const copiesValues = () => Promise.all(copies.map((id) => findFormValues("items", id)));
   const templateValues = await copiesValues();
   // Its template's fields, each extension's copy's own, as the view merges them
-  const read = await EntitiesService.getEntity<Described<"items">>(host.id, "items", item.id);
+  const read = await EntitiesService.getEntity(host.id, "items", item.id);
   expect(read.fields).toMatchObject({ [WEAPON_BASE_DAMAGE]: "1d6", [WEAPON_CRITICAL_RANGE]: 2 });
   // Its fields as its form holds them, off those it answers with a value
   const held = Object.fromEntries(Object.entries(read.fields).filter(([, value]) => value !== null));
@@ -112,7 +111,7 @@ test.each([
   // The item stores only the field it overrides, and reads the other off its template
   const own = await findFormValues("items", item.id);
   expect(Object.entries(own.fields).flatMap(([field, values]) => values.map((value) => [field, value]))).toEqual([row]);
-  expect((await EntitiesService.getEntity<Described<"items">>(host.id, "items", item.id)).fields).toMatchObject({
+  expect((await EntitiesService.getEntity(host.id, "items", item.id)).fields).toMatchObject({
     ...read.fields,
     [row[0] as string]: row[1],
   });

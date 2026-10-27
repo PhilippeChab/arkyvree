@@ -3,7 +3,14 @@ import { Engine } from "@/engine/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import { CharacterContributors, Characters, Notifications, Users, Visibility } from "@/server/repositories/index.ts";
+import {
+  CharacterContributors,
+  Characters,
+  Notifications,
+  type Pagination,
+  Users,
+  Visibility,
+} from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
@@ -66,7 +73,7 @@ class CharacterContributorsService {
       orderDir?: "asc" | "desc";
       search?: string;
     },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     const character = await Characters.findOne(db, { id: characterId }, Visibility.All);
     if (!character || !Engine.storage().isPlayerKind(character.kind)) throw new NotFoundError("Character not found");

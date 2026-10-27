@@ -11,7 +11,7 @@ import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
-import { createSeededTestRuleset, type Described } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { ITEM_COST_GP, ITEM_TYPE, ITEM_WEIGHT, WEAPON_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -75,7 +75,7 @@ describe("COW inventory item details", () => {
       const held = entry.item.fields as OwnerFields;
       const fields = view === "character sheet" ? ITEM_FIELDS.readByField({ fields: held, links: {} }) : held;
       expect(fields[WEAPON_TYPE]).toBe("Heavy Mace");
-      const described = await EntitiesService.getEntity<Described<"items">>(ruleset.id, "items", updated.id);
+      const described = await EntitiesService.getEntity(ruleset.id, "items", updated.id);
       expect(fields).toEqual(described.fields);
 
       // Reading a fork does not rewrite the pick or change the parent item.

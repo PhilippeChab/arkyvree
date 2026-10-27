@@ -1,6 +1,7 @@
 export { SESSION_TTL_SECONDS } from "./accounts/sessionTtl.ts";
 export { Visibility, visibilityMap } from "./BaseRepository.ts";
 export { fetchEveryPage, paginateItems } from "./concerns/Paginates.ts";
+export type { Pagination } from "./concerns/Paginates.ts";
 export {
   Activities,
   Attachments,

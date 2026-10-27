@@ -10,6 +10,7 @@ import {
 } from "@/server/errors/index.ts";
 import {
   Activities,
+  type Pagination,
   RulesetExtensions,
   Rulesets,
   RulesetSettings,
@@ -156,7 +157,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
         | "contributedTo";
       search?: string;
     },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     const rulesets = await Rulesets.findPage(db, session, where, pagination);
 

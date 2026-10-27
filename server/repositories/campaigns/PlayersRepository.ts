@@ -5,7 +5,7 @@ import type { Db } from "@/drizzle/database.ts";
 import { campaignsInCampaign, invitesInCampaign, playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
-import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
+import { Paginates, type Pagination } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 
 /** The columns of a players query's row that its subqueries read. */
@@ -124,7 +124,7 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
   async findPage(
     db: Db,
     where: { campaignId: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
     visibility: Visibility = Visibility.UnarchivedOnly,
   ) {
     const { search, orderBy = "createdAt", orderDir = "asc" } = where;

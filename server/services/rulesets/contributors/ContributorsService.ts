@@ -2,7 +2,7 @@ import type { Db } from "@/drizzle/database.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import { Contributors, Notifications, Rulesets, Users } from "@/server/repositories/index.ts";
+import { Contributors, Notifications, type Pagination, Rulesets, Users } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
@@ -73,7 +73,7 @@ class ContributorsService {
       orderDir?: "asc" | "desc";
       search?: string;
     },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     const ruleset = await Rulesets.findOne(db, { id: rulesetId });
     if (!ruleset) throw new NotFoundError("Ruleset not found");

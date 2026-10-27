@@ -9,8 +9,14 @@ export interface Paginated<T> {
   page: number;
 }
 
+/** A page of a list to read: how many rows a page holds (`limit`), and its number, from 1 (`page`). */
+export interface Pagination {
+  limit: number;
+  page: number;
+}
+
 /** A page of a list held in memory, shaped like the repositories' pages. */
-export function paginateItems<T>(items: T[], pagination: { limit: number; page: number }): Paginated<T> {
+export function paginateItems<T>(items: T[], pagination: Pagination): Paginated<T> {
   const start = (pagination.page - 1) * pagination.limit;
   return {
     items: items.slice(start, start + pagination.limit),
@@ -31,14 +37,14 @@ export function Paginates<B extends Constructor<BaseRepository<Table>>>(Base: B)
       return [...(Array.isArray(keys) ? keys : [keys]), this.orderBy(unique)];
     }
 
-    protected paginate(query: { limit: number; page: number }) {
+    protected paginate(query: Pagination) {
       return {
         limit: query.limit + 1,
         offset: (query.page - 1) * query.limit,
       };
     }
 
-    protected paginated<R>(rows: R[], query: { limit: number; page: number }) {
+    protected paginated<R>(rows: R[], query: Pagination) {
       const limit = query.limit;
 
       return {
@@ -49,7 +55,7 @@ export function Paginates<B extends Constructor<BaseRepository<Table>>>(Base: B)
     }
 
     protected async withPagination<R>(
-      query: { limit: number; page: number },
+      query: Pagination,
       callback: (paginate: { limit: number; offset: number }) => Promise<R[]>,
     ) {
       const rows = await callback(this.paginate(query));
@@ -62,7 +68,7 @@ export function Paginates<B extends Constructor<BaseRepository<Table>>>(Base: B)
 
 /** Every page of a paginated query, together: `fetchEveryPage((pagination) => Entities.findPage(db, filters, pagination))`. */
 export async function fetchEveryPage<R>(
-  fetchPage: (pagination: { limit: number; page: number }) => Promise<Paginated<R>>,
+  fetchPage: (pagination: Pagination) => Promise<Paginated<R>>,
   limit = 1000,
 ): Promise<R[]> {
   const items: R[] = [];

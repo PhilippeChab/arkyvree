@@ -4,7 +4,7 @@ import type { Db } from "@/drizzle/database.ts";
 import { invitesInCampaign, playersInCampaign, usersInAccount } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
-import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
+import { Paginates, type Pagination } from "@/server/repositories/concerns/Paginates.ts";
 
 class InvitesRepository extends include(BaseRepository<typeof invitesInCampaign>, Paginates) {
   constructor() {
@@ -122,7 +122,7 @@ class InvitesRepository extends include(BaseRepository<typeof invitesInCampaign>
   async findPage(
     db: Db,
     where: { campaignId: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     const { search, orderBy = "createdAt", orderDir = "desc" } = where;
     const { limit, offset } = this.paginate(pagination);
