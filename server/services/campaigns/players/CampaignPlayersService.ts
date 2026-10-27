@@ -16,7 +16,7 @@ import { getReadableCampaign } from "@/server/services/campaigns/readableCampaig
 import { getInviteNames } from "@/server/services/invites/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
-import type { Invite, Player, Session } from "@/shared/relations.ts";
+import type { Campaign, Invite, Player, Session } from "@/shared/relations.ts";
 
 interface InviteEmailData {
   campaignName: string;
@@ -49,12 +49,11 @@ class CampaignPlayersService {
       throw new ConflictError(message);
   }
 
-  /** Core invite creation logic — must be called within a transaction. */
-  private async createInviteInTransaction(tx: Db, session: Session, player: Player, email: string) {
-    const { campaign, policy } = await getReadableCampaign(tx, session, player.campaignId);
-    policy.canModify();
-    policy.canUpdate();
-
+  /**
+   * Core invite creation logic — must be called within a transaction, by a caller that checked the session may manage
+   * `campaign` (`getReadableCampaign`, `canModify`, `canUpdate`).
+   */
+  private async createInviteInTransaction(tx: Db, session: Session, campaign: Campaign, player: Player, email: string) {
     // Look up user by email (may not exist)
     const user = await Users.findOne(tx, { emailAddress: email });
 
@@ -122,7 +121,7 @@ class CampaignPlayersService {
     let emailData: InviteEmailData | null = null;
 
     const { player, invite } = await withTransaction(async (tx) => {
-      const { policy } = await getReadableCampaign(tx, session, campaignId);
+      const { campaign, policy } = await getReadableCampaign(tx, session, campaignId);
       policy.canModify();
       policy.canUpdate();
 
@@ -142,7 +141,7 @@ class CampaignPlayersService {
 
       let invite: Invite | null = null;
       if (email) {
-        emailData = await this.createInviteInTransaction(tx, session, player, email);
+        emailData = await this.createInviteInTransaction(tx, session, campaign, player, email);
         invite = emailData.invite;
       }
 
@@ -200,7 +199,7 @@ class CampaignPlayersService {
     let emailData: InviteEmailData | null = null;
 
     const { updatedPlayer, invite } = await withTransaction(async (tx) => {
-      const { policy } = await getReadableCampaign(tx, session, campaignId);
+      const { campaign, policy } = await getReadableCampaign(tx, session, campaignId);
       policy.canModify();
       policy.canUpdate();
 
@@ -220,7 +219,7 @@ class CampaignPlayersService {
         if (player.userId) throw new ConflictError("Player already has a user assigned");
         else if (existingInvite?.status === "Pending") throw new ConflictError("Player already has a pending invite");
 
-        emailData = await this.createInviteInTransaction(tx, session, updatedPlayer, email);
+        emailData = await this.createInviteInTransaction(tx, session, campaign, updatedPlayer, email);
         invite = emailData.invite;
       }
 

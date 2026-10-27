@@ -283,16 +283,17 @@ describe("ActivitiesService.getActivityUrl", () => {
     expect(await resolveAll(targets, removedSession)).toEqual([null, null, null, null]);
   });
 
-  test("links a campaign invite's pending invitee to the invite, and once they've answered to the campaign they may read", async () => {
+  test("links a campaign invite's invitee to the invite until they've accepted it, then to the campaign", async () => {
     const [gm, invitee] = [await createTestUser(), await createTestUser()];
     const { campaign } = await createTestCampaign(gm.user.id);
     const [slot] = await Players.create(db, { campaignId: campaign.id, role: "Player Character" });
     const [invite] = await Invites.create(db, { playerId: slot.id, userId: invitee.user.id, email: "i@example.com" });
 
-    expect(await resolve("invites", invite.id, invitee.session)).toBe(`/campaign-invite/${invite.id}`);
     expect(await resolve("invites", invite.id, gm.session)).toBe(`/campaigns/${campaign.id}`);
-    await Invites.update(db, { status: "Rejected" }, { id: invite.id });
-    expect(await resolve("invites", invite.id, invitee.session)).toBeNull();
+    for (const status of ["Pending", "Rejected", "Revoked"] as const) {
+      await Invites.update(db, { status }, { id: invite.id });
+      expect(await resolve("invites", invite.id, invitee.session)).toBe(`/campaign-invite/${invite.id}`);
+    }
     await Invites.update(db, { status: "Accepted" }, { id: invite.id });
     await Players.update(db, { userId: invitee.user.id }, { id: slot.id });
     expect(await resolve("invites", invite.id, invitee.session)).toBe(`/campaigns/${campaign.id}`);

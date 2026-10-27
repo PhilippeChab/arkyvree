@@ -52,11 +52,11 @@ class ActivitiesService {
   }
 
   /**
-   * A campaign invite's link: its invitee goes to the invite while it's pending, to answer it there; anyone else to its
-   * campaign's page (`campaignUrl`).
+   * A campaign invite's link: its invitee goes to the invite until they've accepted it (its page answers a pending one
+   * and says what became of the others), then to its campaign's page (`campaignUrl`), as anyone else does.
    */
   private async inviteUrl(session: Session, invite: Invite) {
-    if (invite.userId === session.userId && invite.status === "Pending") return `/campaign-invite/${invite.id}`;
+    if (invite.userId === session.userId && invite.status !== "Accepted") return `/campaign-invite/${invite.id}`;
     return await this.playerCampaignUrl(session, invite.playerId);
   }
 

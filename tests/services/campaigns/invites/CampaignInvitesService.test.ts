@@ -1,12 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import { eq } from "drizzle-orm";
-
-import { playersInCampaign } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, Invites, Players, Users } from "@/server/repositories/index.ts";
 import { CampaignInvitesService } from "@/server/services/campaigns/invites/index.ts";
+import { CampaignPlayersService } from "@/server/services/campaigns/players/index.ts";
 import { createTestCampaign, inviteToSlot } from "@/tests/support/campaigns.ts";
 import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
@@ -193,13 +191,26 @@ describe("CampaignInvitesService", () => {
     });
 
     test("throws NotFoundError for a missing invite or a removed slot", async () => {
-      const { gmSession, slot, invite } = await setup();
-      expect(CampaignInvitesService.revokeInvite(gmSession, NIL_UUID)).rejects.toThrow(NotFoundError);
-      await db
-        .update(playersInCampaign)
-        .set({ deletedAt: new Date().toISOString() })
-        .where(eq(playersInCampaign.id, slot.id));
-      expect(CampaignInvitesService.revokeInvite(gmSession, invite.id)).rejects.toThrow(NotFoundError);
+      const { gmSession, campaign, slot, invite } = await setup();
+      expect(CampaignInvitesService.revokeInvite(gmSession, NIL_UUID)).rejects.toThrow("Invite not found");
+      await CampaignPlayersService.removePlayer(gmSession, campaign.id, slot.id);
+      expect(CampaignInvitesService.revokeInvite(gmSession, invite.id)).rejects.toThrow("Invite not found");
+    });
+
+    test("reads a slot archived with its user's account: its Game Master is refused an answered invite, a stranger answered as for a missing one", async () => {
+      const { gmSession, invitee, slot, invite } = await setup();
+      await CampaignInvitesService.rejectInvite(invitee.session, invite.id);
+      // The slot's next user deletes their account, which archives their seats
+      const { user: later } = await createTestUser();
+      await Players.update(db, { userId: later.id }, { id: slot.id });
+      await Players.archive(db, { userId: later.id });
+      const { session: stranger } = await createTestUser();
+
+      expect(CampaignInvitesService.revokeInvite(gmSession, invite.id)).rejects.toThrow(ConflictError);
+      const hidden = await CampaignInvitesService.revokeInvite(stranger, invite.id).catch((error: unknown) => error);
+      const unknown = await CampaignInvitesService.revokeInvite(stranger, NIL_UUID).catch((error: unknown) => error);
+      expect(hidden).toBeInstanceOf(NotFoundError);
+      expect(hidden).toEqual(unknown);
     });
 
     test("is the Game Master's, and answers whoever may not read the campaign as a missing invite", async () => {

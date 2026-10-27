@@ -34,15 +34,6 @@ class CampaignCharactersService {
     return visibility === "Partial" && !viewer.isOwner && !viewer.isGM && !viewer.canEdit;
   }
 
-  /**
-   * The session's policy on the campaign and its player row there, or the 404 an unknown campaign gets, whoever isn't
-   * in it too (`getReadableCampaign`).
-   */
-  private async getMember(session: Session, campaignId: string) {
-    const { member, policy } = await getReadableCampaign(db, session, campaignId);
-    return { member, policy };
-  }
-
   async enqueuePdf(session: Session, campaignId: string, characterId: string) {
     // Not found for every refusal, as for the character's own export.
     const character = await findExportableCharacter(session.userId, characterId, campaignId);
@@ -52,7 +43,7 @@ class CampaignCharactersService {
   }
 
   async getCharacter(session: Session, campaignId: string, characterId: string) {
-    const { member, policy } = await this.getMember(session, campaignId);
+    const { member, policy } = await getReadableCampaign(db, session, campaignId);
 
     const link = await PlayerCharacters.findOne(db, { characterId, campaignId });
     if (!link) throw new NotFoundError("Character not found in this campaign");
@@ -98,7 +89,7 @@ class CampaignCharactersService {
     where: { orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
     pagination: Pagination,
   ) {
-    const { member, policy } = await this.getMember(session, campaignId);
+    const { member, policy } = await getReadableCampaign(db, session, campaignId);
 
     const isGM = policy.isGameMaster();
 

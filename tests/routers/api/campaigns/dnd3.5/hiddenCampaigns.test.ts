@@ -6,7 +6,7 @@ import { type api, createSignedInUser, expectOk } from "@/tests/support/api.ts";
 import { createTestCampaign, postCampaignInvite } from "@/tests/support/campaigns.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
-import { NIL_UUID } from "@/tests/support/seed.ts";
+import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 
 /**
  * What a request under a campaign names: a character its Game Master linked to it (Public), and an empty player slot.
@@ -27,8 +27,8 @@ type SignedIn = Awaited<ReturnType<typeof createSignedInUser>>;
 /** Whether a request acts on a live campaign or on an archived one. */
 type State = "archived" | "live";
 
-const HIDDEN = [404, 404, 404, 404];
-const READ = [200, 200, 200, 200];
+const HIDDEN = ["hidden", "hidden", "hidden", "hidden"];
+const READ = ["read", "read", "read", "read"];
 
 /** Every read a campaign's id gates, by name. */
 const READS: [string, Request][] = [
@@ -69,6 +69,16 @@ const WRITES: [string, Request, number, State][] = [
   [
     "a player's slot added",
     (client, id) => client.api.campaigns[":id"].players.$post({ param: { id }, json: { role: "Player Character" } }),
+    403,
+    "live",
+  ],
+  [
+    "a player's slot added with an invite",
+    (client, id) =>
+      client.api.campaigns[":id"].players.$post({
+        param: { id },
+        json: { role: "Player Character", email: `invitee-${uniqueId()}@example.com` },
+      }),
     403,
     "live",
   ],
@@ -116,12 +126,22 @@ const WRITES: [string, Request, number, State][] = [
   ],
 ];
 
-/** The statuses of the campaign's reads by its id (itself, its players, invites and characters) as `client` asks them. */
-async function readStatuses(client: Client, id: string): Promise<number[]> {
-  const statuses = [];
-  for (const [, read] of READS.slice(0, 4))
-    statuses.push((await read(client, id, { characterId: "", slotId: "" })).status);
-  return statuses;
+/**
+ * How the campaign's reads by its id (itself, its players, invites and characters) answer `client`: `read` (a 200),
+ * `hidden` (the status and body the same read of an unknown id gets), or another status.
+ */
+async function readAnswers(client: Client, id: string): Promise<string[]> {
+  const fixture = { characterId: NIL_UUID, slotId: NIL_UUID };
+  const answers = [];
+  for (const [, read] of READS.slice(0, 4)) {
+    const answer = await read(client, id, fixture);
+    const unknown = await read(client, NIL_UUID, fixture);
+    const body = await answer.json();
+    const hidden =
+      answer.status === 404 && Bun.deepEquals([answer.status, body], [unknown.status, await unknown.json()]);
+    answers.push(answer.status === 200 ? "read" : hidden ? "hidden" : String(answer.status));
+  }
+  return answers;
 }
 
 /** A campaign `gm` runs and `player` plays in, `state`, with a character its Game Master linked and an empty slot. */
@@ -151,8 +171,8 @@ describe("every read a campaign's id gates", () => {
     expect((await read(player.api, id, fixture)).status).toBe(200);
     const hidden = await read(stranger.api, id, fixture);
     const unknown = await read(stranger.api, NIL_UUID, fixture);
+    expect([hidden.status, await hidden.json()]).toEqual([unknown.status, await unknown.json()]);
     expect(hidden.status).toBe(404);
-    expect(await hidden.json()).toEqual(await unknown.json());
   });
 });
 
@@ -191,8 +211,8 @@ describe("a linked character's PDF through the campaign", () => {
 describe("a campaign's reads by its id", () => {
   test("its members read it, archived or not", async () => {
     const { gm, player, id } = await setupRequests("archived");
-    expect(await readStatuses(gm.api, id)).toEqual(READ);
-    expect(await readStatuses(player.api, id)).toEqual(READ);
+    expect(await readAnswers(gm.api, id)).toEqual(READ);
+    expect(await readAnswers(player.api, id)).toEqual(READ);
   });
 
   test("a removed player and a seat archived with its account don't", async () => {
@@ -210,8 +230,8 @@ describe("a campaign's reads by its id", () => {
     await Players.create(db, { campaignId: id, userId: archivedSeat.user.id, role: "Player Character" });
     await Players.archive(db, { userId: archivedSeat.user.id });
 
-    expect(await readStatuses(removed.api, id)).toEqual(HIDDEN);
-    expect(await readStatuses(archivedSeat.api, id)).toEqual(HIDDEN);
+    expect(await readAnswers(removed.api, id)).toEqual(HIDDEN);
+    expect(await readAnswers(archivedSeat.api, id)).toEqual(HIDDEN);
   });
 });
 
@@ -224,12 +244,12 @@ describe("a campaign invite", () => {
 
     const read = await expectOk(invites.$get({ param: { inviteId: invite.id } }));
     expect(read.playersInCampaign.campaignsInCampaign).toMatchObject({ id: campaign.id, name: campaign.name });
-    expect(await readStatuses(invitee.api, campaign.id)).toEqual(HIDDEN);
+    expect(await readAnswers(invitee.api, campaign.id)).toEqual(HIDDEN);
 
     expect(await expectOk(invites.accept.$post({ param: { inviteId: invite.id } }))).toMatchObject({
       campaignId: campaign.id,
     });
-    expect(await readStatuses(invitee.api, campaign.id)).toEqual(READ);
+    expect(await readAnswers(invitee.api, campaign.id)).toEqual(READ);
   });
 
   test("its rejecting invitee reads it still, never the campaign", async () => {
@@ -240,7 +260,7 @@ describe("a campaign invite", () => {
 
     await expectOk(invites.reject.$post({ param: { inviteId: invite.id } }));
     expect(await expectOk(invites.$get({ param: { inviteId: invite.id } }))).toMatchObject({ status: "Rejected" });
-    expect(await readStatuses(invitee.api, campaign.id)).toEqual(HIDDEN);
+    expect(await readAnswers(invitee.api, campaign.id)).toEqual(HIDDEN);
   });
 
   test("its revoke answers whoever may not read the campaign as an unknown invite, and a Player 403", async () => {
