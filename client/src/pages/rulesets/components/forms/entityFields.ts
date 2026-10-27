@@ -26,10 +26,10 @@ type FormValue = boolean | number | string | string[] | null | ProgressionValue 
 type FormValues = Partial<FormParts> & Record<string, unknown>;
 
 /**
- * A field of an entity's links of a role: a feat's feat pools, a spell's spell lists each at its tier, its save, a
- * level's saves' amounts and its granted feats.
+ * A field of an entity's list of links of a role: a feat's feat pools, a spell's spell lists each at its tier, a level's
+ * saves' amounts and its granted feats.
  */
-type LinksField = Extract<EntityField, { input: "amounts" | "grants" | "leveledLinks" | "links" | "ref" | "template" }>;
+type LinksField = Extract<EntityField, { input: "amounts" | "grants" | "leveledLinks" | "links" }>;
 
 /** What levels give of something, as a progression's field holds it: a frequency, and more at the levels it names. */
 type ProgressionValue = Extract<EntityField, { input: "progression" }>["default"];
@@ -138,7 +138,10 @@ function formValueOf(field: ValueField, value: unknown): FormValue {
  */
 function heldValueOf(field: ValueField, entity: unknown): unknown {
   if (field.field) return ownFieldOf(entity, field.field);
-  if (field.input === "ref" || field.input === "template") return linksOf(field, entity)[0]?.linked.id;
+  if (field.input === "ref" || field.input === "template") {
+    const toId = ownLinkOf(entity, field.role)?.toId;
+    return typeof toId === "string" ? toId : undefined;
+  }
   if (field.input === "links" || field.input === "leveledLinks") {
     const links = linksOf(field, entity).sort((a, b) => byName(a.linked, b.linked));
     if (field.input === "links") return links.map(({ linked }) => ({ toId: linked.id }));
