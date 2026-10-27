@@ -9,6 +9,7 @@ import { RulesetSettings } from "@/server/repositories/index.ts";
 import { findFormValues, heldValues, listValues, writtenValues } from "@/tests/support/ownerValues.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { RULESET_ABILITY_INCREASES, RULESET_FEAT_ADVANCEMENT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The core rules' progression: a feat every 3 levels and one more at the first, an ability increase every 4. */
@@ -63,11 +64,13 @@ describe("A ruleset's own fields", () => {
     const ruleset = await createTestRuleset(null);
     const intelligence = (await getSeedCtx()).abilityMap["Intelligence"];
     const progression = { featAdvancement: { every: 2, extra: [{ amount: 1, level: 3 }] } };
-    await RulesetSettings.update(db, [{ id: ruleset.id, write: RULESET_FIELDS.write(progression) }]);
+    await RulesetSettings.update(db, [
+      { id: ruleset.id, baseRules: DND35_BASE_RULES, write: RULESET_FIELDS.write(progression) },
+    ]);
 
     const partial = RULESET_FIELDS.write({ skillPointAbility: intelligence });
     expect(partial).toEqual({ fields: {}, links: { skillPointAbility: intelligence } });
-    await RulesetSettings.update(db, [{ id: ruleset.id, write: partial }]);
+    await RulesetSettings.update(db, [{ id: ruleset.id, baseRules: DND35_BASE_RULES, write: partial }]);
     expect(RULESET_FIELDS.read(await findFormValues("rulesets", ruleset.id))).toEqual({
       ...CORE,
       ...progression,

@@ -11,6 +11,17 @@ import { Searches } from "@/server/repositories/concerns/Searches.ts";
 import StoredCharacters, { type CharacterValuesWrite } from "@/server/repositories/stored/StoredCharacters.ts";
 import type { Character } from "@/shared/relations.ts";
 
+/**
+ * The filters of the user's characters list: those they own or contribute to (`accessRole` keeps one side; default
+ * both), live unless `visibility` says otherwise, matching `search`.
+ */
+interface CharacterListWhere {
+  accessRole?: "owner" | "contributor";
+  search?: string;
+  userId: string;
+  visibility?: Visibility;
+}
+
 /** A character's row as a write gives it: its own columns, and its fields' values and single links' entities it sets. */
 type CharacterValues = Partial<typeof charactersInCharacter.$inferInsert> & CharacterValuesWrite;
 
@@ -42,6 +53,19 @@ class CharactersRepository extends include(
           ),
         ),
     );
+  }
+
+  /** What the user's characters list keeps: its pages and its total share it. */
+  private listCondition(db: Db, where: CharacterListWhere) {
+    const { accessRole, search, userId, visibility = Visibility.UnarchivedOnly } = where;
+    const owns = eq(this.table.userId, userId);
+    const contributes = this.contributesTo(db, userId);
+    return this.where([
+      accessRole === "owner" ? owns : accessRole === "contributor" ? contributes : or(owns, contributes)!,
+      inArray(this.table.kind, [...Engine.storage().playerKinds()]),
+      this.visibility(visibility),
+      this.search(search, [this.table.name, this.table.description]),
+    ]);
   }
 
   /** A character the user may edit: theirs, or one they contribute to. */
@@ -106,17 +130,9 @@ class CharactersRepository extends include(
     );
   }
 
-  async count(db: Db, where: { userId: string }) {
-    const [result] = await db
-      .select({ count: count() })
-      .from(charactersInCharacter)
-      .where(
-        and(
-          isNull(charactersInCharacter.deletedAt),
-          eq(charactersInCharacter.userId, where.userId),
-          inArray(charactersInCharacter.kind, [...Engine.storage().playerKinds()]),
-        ),
-      );
+  /** How many characters the user's list holds with these filters: the total of its pages (`findPage`). */
+  async count(db: Db, where: CharacterListWhere) {
+    const [result] = await db.select({ count: count() }).from(this.table).where(this.listCondition(db, where));
     return result.count;
   }
 
@@ -228,35 +244,10 @@ class CharactersRepository extends include(
    */
   async findPage(
     db: Db,
-    where: {
-      // "owner" → only characters this user owns; "contributor" → only
-      // characters they contribute to. Default (undefined) returns both.
-      accessRole?: "owner" | "contributor";
-      orderBy?: "name" | "createdAt" | "lastChangedAt";
-      orderDir?: "asc" | "desc";
-      search?: string;
-      userId: string;
-      visibility?: Visibility;
-    },
+    where: CharacterListWhere & { orderBy?: "name" | "createdAt" | "lastChangedAt"; orderDir?: "asc" | "desc" },
     pagination: Pagination,
   ) {
-    const {
-      visibility = Visibility.UnarchivedOnly,
-      search,
-      orderBy = "lastChangedAt",
-      orderDir = "desc",
-      accessRole,
-    } = where;
-    const searchConditions = this.search(search, [this.table.name, this.table.description]);
-
-    const ownerCondition = eq(this.table.userId, where.userId);
-    const contributorCondition = this.contributesTo(db, where.userId);
-    const accessCondition =
-      accessRole === "owner"
-        ? ownerCondition
-        : accessRole === "contributor"
-          ? contributorCondition
-          : or(ownerCondition, contributorCondition);
+    const { orderBy = "lastChangedAt", orderDir = "desc" } = where;
 
     return await this.withPagination(pagination, async ({ limit, offset }) => {
       const rows = await db
@@ -267,14 +258,7 @@ class CharactersRepository extends include(
           >`CASE WHEN ${this.table.userId} = ${where.userId} THEN 'owner' ELSE 'contributor' END`,
         })
         .from(this.table)
-        .where(
-          this.where([
-            accessCondition!,
-            inArray(this.table.kind, [...Engine.storage().playerKinds()]),
-            this.visibility(visibility),
-            searchConditions,
-          ]),
-        )
+        .where(this.listCondition(db, where))
         .orderBy(...this.pageOrder(this.orderBy(this.table[orderBy], orderDir)))
         .limit(limit)
         .offset(offset);

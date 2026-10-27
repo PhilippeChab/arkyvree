@@ -8,7 +8,8 @@
  *   what a write asks of it: a copy's token, its owned entities and its customizations' rows (`EditTarget`); the row a
  *   change to a customization writes (`CustomizationEdit`), the names an entity may take (`EntityNames`), what keeps an
  *   entity in use across the rulesets built on it (`EntityUses`), the copy of an inherited entity (`EntityCopy`) and its
- *   revert to the source (`EntityRevert`), and an entity's customizations read and copied (`CustomizationCopies`).
+ *   revert to the source (`EntityRevert`), an entity's customizations read and copied (`CustomizationCopies`), and the
+ *   owned entities of two owners paired by position (`findOwnedPairs`).
  */
 export { default as CowDataReader } from "./views/CowDataReader.ts";
 export { default as RulesetViews } from "./views/RulesetViews.ts";
@@ -21,3 +22,4 @@ export { default as EntityEdit, type NotFoundMessages } from "./writes/EntityEdi
 export { default as EntityNames } from "./writes/EntityNames.ts";
 export { default as EntityRevert } from "./writes/EntityRevert.ts";
 export { default as EntityUses } from "./writes/EntityUses.ts";
+export { findOwnedPairs } from "./writes/ownedPairs.ts";

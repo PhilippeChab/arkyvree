@@ -32,7 +32,7 @@ class RulesetSettingsService {
           policy.canUpdateEntity();
 
           const { write, ...settings } = Engine.for(scope).planSettings(body);
-          await RulesetSettings.update(tx, [{ id: ruleset.id, write }]);
+          await RulesetSettings.update(tx, [{ id: ruleset.id, baseRules: ruleset.baseRules, write }]);
           await Activities.create(tx, {
             userId: session.userId,
             targetId: ruleset.id,
