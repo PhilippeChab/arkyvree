@@ -59,7 +59,7 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
    * knows a spell once (a save refuses either picked twice at a level).
    */
   private keepTakenPicks({ feats = {}, spells = {} }: Partial<PoolPicks>): PoolPicks {
-    const rules = new FeatRules(this.rulesetData);
+    const rules = FeatRules.of(this.rulesetData);
     return {
       feats: this.dropRepeats(feats, (id) => rules.isStackable(id)),
       spells: this.dropRepeats(spells, () => false),

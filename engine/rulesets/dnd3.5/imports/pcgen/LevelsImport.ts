@@ -238,7 +238,7 @@ export default class LevelsImport {
       writes.flatMap(({ picks }) => picks.flatMap(({ entityId, step }) => (step === "feats" ? [entityId!] : []))),
     );
     const held = new Set(character.getHeldFeats().map(({ entity }) => entity.id));
-    const feats = new FeatRules(this.view.rulesetData);
+    const feats = FeatRules.of(this.view.rulesetData);
     for (const feat of placement.leftFeats()) {
       // Two lines the ruleset reads as one feat (a choice it keeps whole): the second isn't another pick
       // A stackable feat's copy no level took is lost as any feat, however many copies the levels took

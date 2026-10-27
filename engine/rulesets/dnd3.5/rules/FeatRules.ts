@@ -3,11 +3,17 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
- * The 3.5 feat rules of a ruleset's view (`rulesetData`): which feats stack, and which a character can take again. A
- * feat that stacks is taken each time it's picked, a row a pick; a character holds one that doesn't once.
+ * The 3.5 feat rules of a ruleset's view (`rulesetData`), derived once and kept with it (`FeatRules.of`): which feats
+ * stack, and which a character can take again. A feat that stacks is taken each time it's picked, a row a pick; a
+ * character holds one that doesn't once.
  */
 export default class FeatRules {
   constructor(private readonly rulesetData: RulesetData) {}
+
+  /** The view's feat rules, derived once with it. */
+  static of(rulesetData: RulesetData): FeatRules {
+    return rulesetData.derive(FeatRules);
+  }
 
   /**
    * Whether a character can take the feat (`featId`) with those it holds already (`heldIds`): one that stacks each

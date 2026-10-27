@@ -84,10 +84,12 @@ export default class PicksPlacement {
   /** The spells not placed yet, in the file's order. */
   private readonly spells: MatchedSpell[];
 
-  /** Whether the character (`character`) can take the feat: it meets its requirements, and holds it not unless it stacks. */
-  private canTake(character: DetailedCharacter, feat: MatchedFeat) {
-    const heldIds = new Set(character.getHeldFeats().map(({ entity }) => entity.id));
-    if (!new FeatRules(this.rulesetData).canTake(feat.entityId, heldIds)) return false;
+  /**
+   * Whether the character (`character`, holding the feats `heldIds`) can take the feat: it meets its requirements, and
+   * holds it not unless it stacks.
+   */
+  private canTake(character: DetailedCharacter, heldIds: ReadonlySet<string>, feat: MatchedFeat) {
+    if (!FeatRules.of(this.rulesetData).canTake(feat.entityId, heldIds)) return false;
     const requirements = this.rulesetData.requirementsByEntity.get(feat.entityId) ?? [];
     return requirements.length === 0 || character.areRequirementsMet([requirements]);
   }
@@ -97,10 +99,11 @@ export default class PicksPlacement {
    * has room (`hinted`), or in any pool of its with room otherwise.
    */
   private findNext(character: DetailedCharacter, room: Map<string, number>, hinted: boolean) {
+    const heldIds = new Set(character.getHeldFeats().map(({ entity }) => entity.id));
     for (const feat of this.feats) {
       const pools = hinted ? [feat.viaId] : feat.poolIds;
       const poolId = pools.find((id) => id !== undefined && (room.get(id) ?? 0) > 0);
-      if (poolId && this.canTake(character, feat)) return { feat, poolId };
+      if (poolId && this.canTake(character, heldIds, feat)) return { feat, poolId };
     }
     return undefined;
   }

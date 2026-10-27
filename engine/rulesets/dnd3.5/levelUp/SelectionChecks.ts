@@ -73,7 +73,7 @@ export default class SelectionChecks {
     private readonly view: RulesetView,
     private readonly rules: Pick<LevelUpRules<unknown>, "getAbilityIncreaseTotal" | "hitPointsOf">,
   ) {
-    this.feats = new FeatRules(view.rulesetData);
+    this.feats = FeatRules.of(view.rulesetData);
   }
 
   /** The feat rules: which feats stack, and which the character can take again. */

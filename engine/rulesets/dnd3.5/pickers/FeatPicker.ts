@@ -24,7 +24,7 @@ export default class FeatPicker extends LevelPicker {
   constructor(view: RulesetView, input: CharacterInput, query: FeatPickQuery) {
     super(view, input, query);
     const heldIds = new Set(this.holder.getHeldFeats().map(({ entity }) => entity.id));
-    const rules = new FeatRules(this.rulesetData);
+    const rules = FeatRules.of(this.rulesetData);
     const offered = {
       // A feat a character picks is a selectable one
       fields: { [FEAT_SELECTABLE]: true },

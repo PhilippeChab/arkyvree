@@ -12,7 +12,7 @@ async function seededRules() {
   const { rulesetId } = await getSeedCtx();
   const data = await RulesetViews.getData((await Rulesets.findOne(db, { id: rulesetId }))!);
   const idOf = (name: string) => Dnd35View.of(data).feats.find((feat) => feat.name === name)!.id;
-  return { idOf, rules: new FeatRules(data) };
+  return { idOf, rules: FeatRules.of(data) };
 }
 
 describe("a feat a character takes", () => {

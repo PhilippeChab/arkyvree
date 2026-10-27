@@ -4,10 +4,10 @@ import type { RulesetData, ViewLink } from "@/engine/core/view/index.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import type { HeldSource, LoadedLevels, SkillPick } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import SpellsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellsComponent.ts";
+import FeatRules from "@/engine/rulesets/dnd3.5/rules/FeatRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Feat, Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * What each saved level's class level grants (`grants`, its `grants` links of step `step`'s kind, by class level),
@@ -72,15 +72,13 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
         (grant) => rulesetData.storedById("feats").get(grant.toId),
       );
 
-      const pickedIds = new Set(picked.filter((feat) => !feat.entity.fields[FEAT_STACKABLE]).map((f) => f.entity.id));
-      const seenGrantedIds = new Set<string>();
+      // A grant is kept as a pick is taken (`FeatRules.canTake`): once, unless it stacks, picked or granted before
+      const rules = FeatRules.of(rulesetData);
+      const held = new Set(picked.map(({ entity }) => entity.id));
       const keptGrants = granted.filter(({ entity }) => {
-        if (!entity.fields[FEAT_STACKABLE]) {
-          if (pickedIds.has(entity.id)) return false;
-          if (seenGrantedIds.has(entity.id)) return false;
-          seenGrantedIds.add(entity.id);
-        }
-        return true;
+        const kept = rules.canTake(entity.id, held);
+        held.add(entity.id);
+        return kept;
       });
 
       // Apply feat modifiers in character-level order so later selections win for `set` targets (e.g.
