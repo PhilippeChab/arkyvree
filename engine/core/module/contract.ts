@@ -1,7 +1,7 @@
 import type { Fields } from "@/engine/core/fields/index.ts";
 import type { TargetPaths } from "@/engine/core/paths/CategoryPaths.ts";
 
-import type { CharactersPart, NotedSheet, SheetSummary } from "./parts/characters/index.ts";
+import type { CharactersPart, RulesetSheet } from "./parts/characters/index.ts";
 import type { ContentPart } from "./parts/content/index.ts";
 import type { EntitiesPart, EntityKindsContract } from "./parts/entities/index.ts";
 import type { ImportsPart } from "./parts/imports/index.ts";
@@ -11,15 +11,14 @@ import type { StorageDeclaration } from "./storage.ts";
 
 /**
  * What a ruleset describes in its own shape, which the server hands to the client as it is: what its creation picker
- * adds to an option (`creationOption`), a character's sheet (as the API answers it, its private notes where every
- * ruleset's holds them; as a member who reads it partly reads it, its summary as every ruleset's holds it; printed),
- * what an inventory entry shows beside its row, and a level step's picker (`stepPicker`) by the kind it reads a page of.
+ * adds to an option (`creationOption`), a character's sheet (as the API answers it past its row's columns, which the
+ * characters part writes, its private notes where every ruleset's holds them; printed), what an inventory entry shows
+ * beside its row, and a level step's picker (`stepPicker`) by the kind it reads a page of.
  */
 export interface Descriptions {
   creationOption: object;
   inventoryEntry: object;
-  partialSheet: { summary: SheetSummary };
-  sheet: NotedSheet;
+  sheet: RulesetSheet;
   sheetDocument: unknown;
   stepPicker: { kind: string };
 }

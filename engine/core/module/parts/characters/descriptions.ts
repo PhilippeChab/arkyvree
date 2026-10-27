@@ -1,14 +1,15 @@
 /**
  * What the characters part's `describe*` operations answer in a shape every ruleset shares: a character's card, a new
  * character's form and how its scores are set, a picked link's room, a scored link's bounds, an inventory entry with
- * its item, a placement's warning, and where a sheet holds its private notes. What a ruleset describes in its own shape
- * is its `Descriptions` (`contract.ts`).
+ * its item, a placement's warning, where a sheet holds its private notes, a sheet's row's columns and a partial
+ * reading's allowlist. What a ruleset describes in its own shape is its `Descriptions` (`contract.ts`).
  */
 
+import type { ValidationResult } from "@/engine/core/character/index.ts";
 import type { InventoryItem } from "@/engine/core/view/index.ts";
-import type { Modifier, Requirement } from "@/shared/relations.ts";
+import type { Character, Modifier, Requirement, Ruleset } from "@/shared/relations.ts";
 
-import type { SheetBlock } from "./blocks.ts";
+import type { FieldsBlock, SheetBlock } from "./blocks.ts";
 import type { InventoryEntryPlan } from "./plans.ts";
 
 /**
@@ -27,6 +28,26 @@ export interface CardChip {
  */
 export interface CharacterCard {
   chips: CardChip[];
+}
+
+/**
+ * What a sheet, as the API answers it, opens with in every ruleset's: its character's row's own columns and its
+ * ruleset's (its name, its base rules, and whether it's a user's own rather than a system one). Its share token is
+ * none (`shareToken`): whether a reader reads it is the server's access decision, which writes it for who may.
+ */
+export interface CharacterColumns {
+  baseRules: Ruleset["baseRules"];
+  deletedAt: Character["deletedAt"];
+  id: string;
+  isCustomRuleset: boolean;
+  kind: Character["kind"];
+  name: string;
+  parentCharacterId: Character["parentCharacterId"];
+  rulesetId: string;
+  rulesetName: string;
+  shareToken: null;
+  updatedAt: Character["updatedAt"];
+  userId: Character["userId"];
 }
 
 /**
@@ -70,9 +91,43 @@ export interface NotedSheet {
   summary: SheetSummary;
 }
 
+/**
+ * What a ruleset describes of a character a campaign member reads partly (`PartialSheet`): its identity's `fields`
+ * block as such a reader reads it (who it is and what it looks like: 3.5's race and physical traits), and its summary,
+ * whose tracks the characters part leaves out.
+ */
+export interface PartialReading {
+  identity: FieldsBlock;
+  summary: SheetSummary;
+}
+
+/**
+ * A character as a campaign member who reads it partly reads it, whatever its ruleset: an allowlist, which the
+ * characters part writes. Its row's columns, no requirements nor modifiers, a valid validation, a summary with no
+ * tracks, and its identity's block alone (`PartialReading`).
+ */
+export interface PartialSheet extends CharacterColumns {
+  blocks: FieldsBlock[];
+  modifiers: Record<string, never>;
+  requirements: Record<string, never>;
+  summary: SheetSummary;
+  validation: ValidationResult;
+}
+
 /** Why a placement can't take one more item, if it can't: what the inventory dialogs warn of, and an add refuses. */
 export interface PlacementDescription {
   warning: string | null;
+}
+
+/**
+ * A ruleset's sheet as the API answers it, past its row's columns (`CharacterColumns`, which the characters part
+ * writes): its blocks and summary (`NotedSheet`), what its modifiers and requirements did, in its ruleset's shape, and
+ * its validation.
+ */
+export interface RulesetSheet extends NotedSheet {
+  modifiers: object;
+  requirements: object;
+  validation: ValidationResult;
 }
 
 /**

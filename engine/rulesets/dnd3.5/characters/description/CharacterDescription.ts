@@ -1,4 +1,4 @@
-import type { CharacterInput } from "@/engine/core/module/index.ts";
+import type { CharacterInput, PartialReading } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import IdentityFields from "@/engine/rulesets/dnd3.5/characters/IdentityFields.ts";
 import BondedPaths from "@/engine/rulesets/dnd3.5/model/bonded/BondedPaths.ts";
@@ -14,8 +14,9 @@ import SheetSummaries from "./SheetSummaries.ts";
 type BondedDescription = ReturnType<typeof CharacterResponse.buildBondedSheet> & { bondFeatId: string | null };
 
 /**
- * A character described from the rows the server read: its sheet, a creature's, or its public part. Its private notes
- * are as its rows have them: the characters part reads them as the viewer does (`CharactersPart.describe`).
+ * A character described from the rows the server read: its sheet, a creature's, or its public part, past its row's
+ * columns, which the characters part writes. Its private notes are as its rows have them: the characters part reads
+ * them as the viewer does (`CharactersPart.describe`).
  */
 export default class CharacterDescription {
   /** The master's feat that bonds its creature of a kind: the one whose modifier sets the creature's race, if one does. */
@@ -47,44 +48,26 @@ export default class CharacterDescription {
   }
 
   /**
-   * A character's sheet, as the API answers it: a player character's, its bonded creatures (`bonded`), each built with
-   * it, in the details of the feats that bond them; or a bonded creature's, from its master's.
+   * A character's sheet, as the API answers it past its row's columns: a player character's, its bonded creatures
+   * (`bonded`), each built with it, in the details of the feats that bond them; or a bonded creature's, from its
+   * master's.
    */
   static describeFull(view: RulesetView, character: CharacterInput, bonded: CharacterInput[]) {
     const built = Dnd35CharacterBuilder.build(view, character);
-    if (character.parent) return CharacterResponse.toResponse(CharacterResponse.buildSheet(character.record, built));
-    const sheet = CharacterResponse.buildSheet(character.record, built);
+    if (character.parent) return CharacterResponse.toResponse(CharacterResponse.buildSheet(built));
+    const sheet = CharacterResponse.buildSheet(built);
     const described = CharacterDescription.describeBonded(view, built, bonded);
     // Each creature in the details of the feat that bonds it
     return CharacterResponse.toResponse({ ...sheet, blocks: SheetBlocks.bond(sheet.blocks, Object.values(described)) });
   }
 
   /**
-   * What a campaign member who only sees a character partly reads of it: who it is, its name and physical traits (race,
-   * age, gender, height, weight, its identity's block alone), and nothing else: no summary's tracks, no diagnostics. An
-   * allowlist: a new key of the response must be considered here.
+   * What a campaign member who only sees a character partly reads of its sheet: who it is, its race and physical traits
+   * (age, gender, height, weight: its identity's block as such a reader reads it), and its summary, with no classes.
+   * The characters part writes the rest of what such a reader reads, an allowlist (`PartialSheet`).
    */
-  static describePartial(view: RulesetView, character: CharacterInput) {
-    const sheet = CharacterResponse.buildSheet(character.record, Dnd35CharacterBuilder.build(view, character));
-    const response = CharacterResponse.toResponse(sheet);
-    return {
-      id: response.id,
-      userId: response.userId,
-      kind: response.kind,
-      parentCharacterId: response.parentCharacterId,
-      name: response.name,
-      rulesetId: response.rulesetId,
-      rulesetName: response.rulesetName,
-      baseRules: response.baseRules,
-      isCustomRuleset: response.isCustomRuleset,
-      deletedAt: response.deletedAt,
-      updatedAt: response.updatedAt,
-      shareToken: null,
-      requirements: {},
-      modifiers: {},
-      validation: { valid: true, issues: [] },
-      summary: SheetSummaries.describe({}),
-      blocks: [IdentityFields.describe(sheet.identity, true)],
-    } satisfies Record<keyof typeof response, unknown>;
+  static describePartial(view: RulesetView, character: CharacterInput): PartialReading {
+    const { identity } = CharacterResponse.buildSheet(Dnd35CharacterBuilder.build(view, character));
+    return { identity: IdentityFields.describe(identity, true), summary: SheetSummaries.describe({}) };
   }
 }

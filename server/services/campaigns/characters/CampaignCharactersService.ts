@@ -92,7 +92,8 @@ class CampaignCharactersService {
       const children = isPartial ? [] : await readChildInputs(db, input, Visibility.All);
       const reading = isPartial ? "partial" : readsPrivateNotes ? "show" : "hide";
       const described = Engine.for(scope).character(input).describeForMember(children, reading);
-      return { ...viewer, ...described, shareToken: canEdit ? described.shareToken : null };
+      // Its share token is its editors' alone: the engine answers none
+      return { ...viewer, ...described, shareToken: canEdit ? character.shareToken : null };
     });
   }
 

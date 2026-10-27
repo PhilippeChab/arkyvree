@@ -61,7 +61,7 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
     return new SpokenLanguages(view, character).describe(picks);
   }
 
-  /** A character as a campaign member who reads it partly reads it: who it is and what it looks like. */
+  /** What a campaign member who reads a character partly reads of its sheet: its identity's block and its summary. */
   protected override describePartial(...args: Parameters<typeof CharacterDescription.describePartial>) {
     return CharacterDescription.describePartial(...args);
   }

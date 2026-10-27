@@ -36,10 +36,10 @@ test("worker familiar HP matches web after customizing an inherited master feat"
   RulesetViews.invalidate(fork.id);
   const familiar = (await Characters.findOne(db, { id: familiarId }))!;
   MemoryCache.setEnabled(true);
-  const webResponse = CharacterResponse.buildSheet(familiar, await buildAs(DetailedCharacterFamiliar, familiar));
+  const webResponse = CharacterResponse.buildSheet(await buildAs(DetailedCharacterFamiliar, familiar));
   RulesetViews.invalidateAll();
   MemoryCache.setEnabled(false);
-  const workerResponse = CharacterResponse.buildSheet(familiar, await buildAs(DetailedCharacterFamiliar, familiar));
+  const workerResponse = CharacterResponse.buildSheet(await buildAs(DetailedCharacterFamiliar, familiar));
   // Master: 4 hit die + 7 Toughness (an elf's Constitution 12 is 10); familiar gets half, rounded down.
   expect(webResponse.combat.hp.total).toBe(5);
   expect(workerResponse.combat.hp).toEqual(webResponse.combat.hp);

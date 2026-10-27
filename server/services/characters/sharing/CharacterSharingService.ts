@@ -49,6 +49,7 @@ class CharacterSharingService {
     });
   }
 
+  /** A shared character's sheet, without its private notes: its token is the one its reader sent. */
   async getSharedCharacter(shareToken: string) {
     const characterRecord = await Characters.findOne(db, { shareToken });
 
@@ -58,7 +59,7 @@ class CharacterSharingService {
     return await withRulesetScope(db, characterRecord.rulesetId, async (scope) => {
       const character = await readCharacterInput(db, characterRecord);
       const children = await readChildInputs(db, character, Visibility.All);
-      return { ...Engine.for(scope).character(character).describe(children, "hide"), portraitUrl };
+      return { ...Engine.for(scope).character(character).describe(children, "hide"), shareToken, portraitUrl };
     });
   }
 

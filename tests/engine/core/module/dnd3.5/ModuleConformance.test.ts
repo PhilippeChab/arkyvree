@@ -100,6 +100,30 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
     expect(read.partial.summary.tracks).toEqual([]);
   });
 
+  test("answers no share token, whatever the reading, and a partial reading as core's allowlist: its identity's block alone", async () => {
+    const seeded = await findSeededCharacter(rules);
+    const shareToken = crypto.randomUUID();
+    const [record] = await Characters.update(db, { shareToken }, { id: seeded.id });
+    const input = await readCharacterInput(db, record);
+    const children = await readChildInputs(db, input, Visibility.All);
+
+    const read = await withRulesetScope(db, record.rulesetId, async (scope) => {
+      const character = Engine.for(scope).character(input);
+      const partial = character.describeForMember(children, "partial");
+      const shown = character.describe(children);
+      return { partial, shown, readings: [partial, shown, character.describe(children, "hide")] };
+    });
+
+    for (const reading of read.readings) {
+      expect(reading.shareToken).toBeNull();
+      expect(JSON.stringify(reading)).not.toContain(shareToken);
+    }
+    expect(Object.keys(read.partial)).toEqual(Object.keys(read.shown));
+    expect(read.partial).toMatchObject({ id: record.id, name: record.name, validation: { valid: true, issues: [] } });
+    expect({ ...read.partial.requirements, ...read.partial.modifiers }).toEqual({});
+    expect(read.partial.blocks.map((block) => block.kind)).toEqual(["fields"]);
+  });
+
   test("asks its summary's confirmations as the client's own ask theirs: what follows, then that it's for good", async () => {
     const seeded = await findSeededCharacter(rules);
     const input = await readCharacterInput(db, seeded);

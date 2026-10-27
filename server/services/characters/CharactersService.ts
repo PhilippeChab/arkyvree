@@ -93,7 +93,7 @@ class CharactersService extends include(Object, Archives, Imports) {
 
   /**
    * A character's sheet, as the API answers it: a player character's with its children's (3.5's bonded creatures), or a
-   * child's, which its parent's editors read.
+   * child's, which its parent's editors read. Its editors alone read it, so it carries its share token.
    */
   async getCharacter(session: Session, characterId: string) {
     const record = await findEditableCharacterOrChild(db, characterId, session.userId, Visibility.All);
@@ -101,9 +101,10 @@ class CharactersService extends include(Object, Archives, Imports) {
 
     return await withRulesetScope(db, record.rulesetId, async (scope) => {
       const character = await readCharacterInput(db, record);
-      return Engine.for(scope)
+      const described = Engine.for(scope)
         .character(character)
         .describe(await readChildInputs(db, character, Visibility.All));
+      return { ...described, shareToken: record.shareToken };
     });
   }
 

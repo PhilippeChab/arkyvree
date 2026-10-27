@@ -25,6 +25,7 @@ export { default as CharactersPart } from "./CharactersPart.ts";
 export type {
   CardChip,
   CharacterCard,
+  CharacterColumns,
   CharacterForm,
   CreationField,
   CreationItem,
@@ -35,7 +36,10 @@ export type {
   HeldInventoryEntry,
   LinkRoom,
   NotedSheet,
+  PartialReading,
+  PartialSheet,
   PlacementDescription,
+  RulesetSheet,
   ScoreBounds,
   ScoresCreation,
   SheetStat,
