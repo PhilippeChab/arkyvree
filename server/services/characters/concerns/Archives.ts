@@ -11,13 +11,11 @@ export function Archives<B extends Constructor>(Base: B) {
   abstract class Archiving extends Base {
     async archiveCharacter(session: Session, characterId: string) {
       return await withTransaction(async (tx) => {
-        const existingCharacter = await Characters.findOne(tx, {
-          id: characterId,
-          userId: session.userId,
-        });
+        const existingCharacter = await Characters.findOne(tx, { id: characterId });
+        if (!existingCharacter) throw new NotFoundError("Character not found");
 
         // Its owner's alone, and a player character's: a child (3.5's bonded creatures) follows its parent
-        if (!existingCharacter) throw new NotFoundError("Character not found");
+        (await CharactersPolicy.for(tx, session, existingCharacter)).canArchive();
 
         // Archive sets deletedAt on the character's row and on its child characters' (3.5's bonded creatures), and
         // unarchive clears both. Its own rows (its levels and their picks, its links, its inventory) have no archive:
@@ -40,13 +38,7 @@ export function Archives<B extends Constructor>(Base: B) {
 
     async hardDeleteCharacter(session: Session, characterId: string) {
       return await withTransaction(async (tx) => {
-        const existingCharacter = await Characters.findOne(
-          tx,
-          { id: characterId, userId: session.userId },
-          Visibility.ArchivedOnly,
-        );
-
-        // Its owner's alone, and a player character's: a child (3.5's bonded creatures) follows its parent
+        const existingCharacter = await Characters.findOne(tx, { id: characterId }, Visibility.ArchivedOnly);
         if (!existingCharacter) throw new NotFoundError("Character not found");
 
         const inActiveCampaign = await PlayerCharacters.exists(tx, { characterId, campaignArchived: false });
@@ -69,17 +61,10 @@ export function Archives<B extends Constructor>(Base: B) {
 
     async unarchiveCharacter(session: Session, characterId: string) {
       return await withTransaction(async (tx) => {
-        const existingCharacter = await Characters.findOne(
-          tx,
-          {
-            id: characterId,
-            userId: session.userId,
-          },
-          Visibility.ArchivedOnly,
-        );
-
-        // Its owner's alone, and a player character's: a child (3.5's bonded creatures) follows its parent
+        const existingCharacter = await Characters.findOne(tx, { id: characterId }, Visibility.ArchivedOnly);
         if (!existingCharacter) throw new NotFoundError("Character not found");
+
+        (await CharactersPolicy.for(tx, session, existingCharacter)).canArchive();
 
         const rows = await Characters.unarchive(tx, { id: characterId });
         const unarchivedCharacter = rows[0];
