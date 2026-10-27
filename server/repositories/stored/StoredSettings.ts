@@ -3,20 +3,19 @@ import { eq, inArray, sql } from "drizzle-orm";
 import type { Db } from "@/drizzle/database.ts";
 import { rulesetFieldsInRules, rulesetLinksInRules } from "@/drizzle/schema.ts";
 import { Engine, type FieldsWrite, type FieldValue, type StoredRuleset } from "@/engine/index.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 import { toFieldRows } from "./toFieldRows.ts";
 
-/** A ruleset's write of its Settings: its id, and what it replaces. */
+/** A ruleset's write of its Settings: its id, its base rules (whose module's fields it takes), and what it replaces. */
 export interface SettingsUpdate {
+  baseRules: BaseRules;
   id: string;
   write: FieldsWrite;
 }
 
 /** A field's rows' value, typed by the column that holds it: a text, a number or a flag. */
 const FIELD_VALUE = sql<FieldValue>`coalesce(to_json(${rulesetFieldsInRules.textValue}), to_json(${rulesetFieldsInRules.numberValue}), to_json(${rulesetFieldsInRules.flagValue}))`;
-
-/** The owner type of a ruleset's Settings' fields, as its module declares them. */
-const RULESETS = "rulesets";
 
 /** The pairs of rulesets' ids and the fields or roles a write names (`named`), as a query's rows: `(id, name)`. */
 function unnest(named: { id: string; name: string }[]) {
@@ -86,18 +85,21 @@ class StoredSettings {
   /**
    * Writes rulesets' Settings (`writes`, each a ruleset's): each field and link role a write names replaced by its
    * values (in their order, a set's ordinals 0 to n-1) and the entity it names, none for `[]` or null; what it doesn't
-   * name stays. A value is written as every write stores it (`Engine.storage().writtenFields`), in its field's column
-   * by its declaration, refused when it isn't of its kind.
+   * name stays. A value is written as every write stores it, as its ruleset's own module declares it
+   * (`Engine.storage().writtenFields`, by its base rules: `SettingsUpdate.baseRules`), in its field's column by its declaration, refused when it
+   * isn't of its kind.
    */
   async update(db: Db, writes: SettingsUpdate[]) {
-    const roles = Engine.storage().registries().rulesetRoles;
+    const storage = Engine.storage();
+    const roles = storage.registries().rulesetRoles;
     const fields = writes.flatMap(({ id, write }) => Object.keys(write.fields).map((name) => ({ id, name })));
     const links = writes.flatMap(({ id, write }) => Object.keys(write.links).map((name) => ({ id, name })));
-    const fieldRows = writes.flatMap(({ id, write }) =>
-      Object.entries(Engine.storage().writtenFields(RULESETS, write.fields, false)).flatMap(([field, values]) =>
-        toFieldRows(RULESETS, field, values).map((row) => ({ rulesetId: id, ...row })),
-      ),
-    );
+    const fieldRows = writes.flatMap(({ baseRules, id, write }) => {
+      const written = storage.writtenFields(storage.settingsOwnerType, write.fields, false, baseRules);
+      return Object.entries(written).flatMap(([field, values]) =>
+        toFieldRows(storage.settingsOwnerType, field, values).map((row) => ({ rulesetId: id, ...row })),
+      );
+    });
     const linkRows = writes.flatMap(({ id, write }) =>
       Object.entries(write.links).flatMap(([role, toId]) => {
         const def = roles.find((held) => held.role === role);

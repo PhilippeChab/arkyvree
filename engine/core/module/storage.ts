@@ -124,16 +124,19 @@ export interface StepDef {
   viaType: string | null;
 }
 
-/** How a module stores its data: its registries' rows, its kinds' and its character's. */
+/**
+ * How a module stores its data: its registries' rows but its fields' (which the engine derives from its fields'
+ * declarations, `RulesetModule.fields` and `characterFields`), its kinds' and its character's.
+ */
 export interface StorageDeclaration {
   character: StoredCharacter;
   kinds: Record<string, StoredKind>;
-  registries: StorageRegistries;
+  registries: Omit<StorageRegistries, "fieldDefs">;
 }
 
 /**
- * What a module declares of its entity types, link roles, fields, roles, steps and the types items are: the registries'
- * rows, past a role's merge, which the engine alone reads.
+ * What the registries hold of every module's entity types, link roles, fields, roles, steps and the types items are:
+ * their rows, past a role's merge, which the engine alone reads.
  */
 export interface StorageRegistries {
   characterRoles: CharacterRoleDef[];

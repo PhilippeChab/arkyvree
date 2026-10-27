@@ -34,7 +34,7 @@ describe("3.5's storage", () => {
   });
 
   test("defines each field once, as its vocabulary declares it of its entities and its characters, its kind and set as stored", () => {
-    const { fieldDefs } = DND35_STORAGE.registries;
+    const { fieldDefs } = StorageEngine.shared().registries();
     const defined = fieldDefs.map(
       ({ field, multiple, ownerType, valueKind }) => `${ownerType} ${field} ${valueKind}${multiple ? "[]" : ""}`,
     );

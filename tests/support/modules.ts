@@ -1,6 +1,7 @@
 import Modules from "@/engine/api/Modules.ts";
-import { Field, type Fields } from "@/engine/core/fields/index.ts";
-import type { RulesetModule, StorageRegistries } from "@/engine/core/module/index.ts";
+import StorageEngine from "@/engine/api/StorageEngine.ts";
+import type { Fields } from "@/engine/core/fields/index.ts";
+import type { RulesetModule, StorageDeclaration } from "@/engine/core/module/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 /**
@@ -31,7 +32,11 @@ export const CHARACTER_FLAG_AND_SET = {
  * a test builds its own storage of (`new StorageEngine(…)`), never the shared one.
  */
 export function modulesWith(
-  change: (registries: StorageRegistries, fields: Record<string, Fields>, characterFields: Fields) => void,
+  change: (
+    registries: StorageDeclaration["registries"],
+    fields: Record<string, Fields>,
+    characterFields: Fields,
+  ) => void,
 ): [BaseRules, RulesetModule][] {
   return Modules.all().map(([baseRules, module]) => {
     const registries = structuredClone(module.storage.registries);
@@ -42,20 +47,22 @@ export function modulesWith(
   });
 }
 
-/**
- * Every registered module, its characters declaring a flag and a set more (`CHARACTER_FLAG_AND_SET`), and its
- * registries their field definitions.
- */
+/** Every registered module, its characters declaring a flag and a set more (`CHARACTER_FLAG_AND_SET`). */
 export function modulesWithCharacterFlagAndSet(): [BaseRules, RulesetModule][] {
-  return modulesWith((registries, _, characterFields) => {
+  return modulesWith((_, __, characterFields) => {
     Object.assign(characterFields, CHARACTER_FLAG_AND_SET);
-    registries.fieldDefs.push(
-      ...Field.storedLeavesOf(CHARACTER_FLAG_AND_SET).map((leaf) => ({
-        ownerKind: "character" as const,
-        ownerType: "characters",
-        field: leaf.field,
-        ...Field.storedKindOf(leaf),
-      })),
-    );
   });
+}
+
+/**
+ * Every registered module, and a made-up one beside them (`second`), the first's but for its storage and its fields: it
+ * stores no kind, role or step of its own, and declares these fields alone (`fields`, by owner type: its characters',
+ * its rulesets' Settings').
+ */
+export function modulesWithSecond(fields: Record<string, Fields>): [BaseRules, RulesetModule][] {
+  const [[, first]] = Modules.all();
+  const { [StorageEngine.shared().characterOwnerType]: characterFields = {}, ...owners } = fields;
+  const registries = { characterRoles: [], entityTypes: [], itemTypes: [], linkRoles: [], rulesetRoles: [], steps: [] };
+  const storage = { character: { playerKind: "second-pc", scoredRoles: [] }, kinds: {}, registries };
+  return [...Modules.all(), ["second" as BaseRules, { ...first, characterFields, fields: owners, storage }]];
 }

@@ -1,6 +1,7 @@
 import type { SkillSeed } from "@/content/dnd3.5/builders/skills/types.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import type { Constructor } from "@/lib/mixins.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 /** Seeding skills: the skills with their fields, and the ability their points come from, a field of the ruleset's. */
 export function SeedsSkills<B extends Constructor<BaseSeeder>>(Base: B) {
@@ -10,6 +11,7 @@ export function SeedsSkills<B extends Constructor<BaseSeeder>>(Base: B) {
       await this.writeSettings([
         {
           id: this.ctx.rulesetId,
+          baseRules: DND35_BASE_RULES,
           write: { fields: {}, links: { skillPointAbility: this.ctx.abilityMap["Intelligence"] } },
         },
       ]);

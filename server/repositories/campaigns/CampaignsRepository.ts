@@ -1,4 +1,4 @@
-import { and, count, eq, type InferInsertModel, isNull, not, sql } from "drizzle-orm";
+import { and, count, countDistinct, eq, type InferInsertModel, isNull, not, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { campaignsInCampaign, playersInCampaign, rulesetsInRules } from "@/drizzle/schema.ts";
@@ -7,9 +7,29 @@ import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository
 import { Paginates, type Pagination } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 
+/**
+ * The filters of the user's campaigns list: those they hold a seat in, live unless `visibility` says otherwise,
+ * matching `search`.
+ */
+interface CampaignListWhere {
+  search?: string;
+  userId: string;
+  visibility?: Visibility;
+}
+
 class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampaign>, Paginates, Searches) {
   constructor() {
     super(campaignsInCampaign);
+  }
+
+  /** What the user's campaigns list keeps, over the campaigns joined to their seats: its pages and total share it. */
+  private listCondition(where: CampaignListWhere) {
+    const { search, userId, visibility = Visibility.UnarchivedOnly } = where;
+    return this.where([
+      eq(playersInCampaign.userId, userId),
+      this.visibility(visibility),
+      this.search(search, [this.table.name, this.table.description]),
+    ]);
   }
 
   async archive(db: Db, where: { id: string }) {
@@ -20,19 +40,13 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
       .returning();
   }
 
-  async count(db: Db, where: { userId: string }) {
+  /** How many campaigns the user's list holds with these filters: the total of its pages (`findPage`). */
+  async count(db: Db, where: CampaignListWhere) {
     const [result] = await db
-      .select({ count: count() })
+      .select({ count: countDistinct(campaignsInCampaign.id) })
       .from(campaignsInCampaign)
       .innerJoin(playersInCampaign, eq(campaignsInCampaign.id, playersInCampaign.campaignId))
-      .where(
-        and(
-          eq(playersInCampaign.userId, where.userId),
-          isNull(campaignsInCampaign.deletedAt),
-          isNull(playersInCampaign.deletedAt),
-        ),
-      );
-
+      .where(this.listCondition(where));
     return result.count;
   }
 
@@ -80,19 +94,11 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
 
   async findPage(
     db: Db,
-    where: {
-      orderBy?: "name" | "createdAt" | "updatedAt";
-      orderDir?: "asc" | "desc";
-      search?: string;
-      userId: string;
-      visibility?: Visibility;
-    },
+    where: CampaignListWhere & { orderBy?: "name" | "createdAt" | "updatedAt"; orderDir?: "asc" | "desc" },
     pagination: Pagination,
   ) {
-    const { visibility = Visibility.UnarchivedOnly, search, orderBy = "createdAt", orderDir = "desc" } = where;
+    const { orderBy = "createdAt", orderDir = "desc" } = where;
     const { limit, offset } = this.paginate(pagination);
-
-    const searchCondition = this.search(search, [this.table.name, this.table.description]);
 
     const playerCountSubquery = db
       .select({ campaignId: playersInCampaign.campaignId, count: count().as("count") })
@@ -115,7 +121,7 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
       .innerJoin(playersInCampaign, eq(campaignsInCampaign.id, playersInCampaign.campaignId))
       .innerJoin(rulesetsInRules, eq(campaignsInCampaign.rulesetId, rulesetsInRules.id))
       .leftJoin(playerCountSubquery, eq(campaignsInCampaign.id, playerCountSubquery.campaignId))
-      .where(this.where([eq(playersInCampaign.userId, where.userId), this.visibility(visibility), searchCondition]))
+      .where(this.listCondition(where))
       .groupBy(
         campaignsInCampaign.id,
         campaignsInCampaign.name,
