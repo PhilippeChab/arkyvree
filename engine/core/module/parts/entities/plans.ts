@@ -46,10 +46,11 @@ export interface EntityCopies {
 }
 
 /**
- * What copies of an entity write (an item's variants): each copy's row (`EntityWrite`), and whose customizations they
- * copy (`copyCustomizationsFrom`).
+ * What copies of an entity write (an item's variants): each copy's row (`EntityWrite`), whose customizations they copy
+ * (`copyCustomizationsFrom`), and what each writes past its row, as a create's plan does: its links of the roles it
+ * holds many of (`links`), and what it writes beside its row (`writes`).
  */
-export interface EntityCopiesPlan {
+export interface EntityCopiesPlan extends Pick<EntitySave, "links" | "writes"> {
   copyCustomizationsFrom?: string;
   rows: EntityWrite[];
 }

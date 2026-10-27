@@ -1,12 +1,14 @@
 import type { Db } from "@/drizzle/database.ts";
 import {
   Engine,
+  type EntityCopiesPlan,
   type EntityCreatePlan,
   type EntityDeletePlan,
   type EntityEditPlan,
   type EntityForm,
   type EntityRecord,
   type EntityRemoval,
+  type EntityWrite,
   type EntityWrites,
   type LinkSet,
   type MadeEntity,
@@ -37,6 +39,12 @@ import type { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { getActivityName } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
+
+/** A new entity's row, and the ancestor whose deleted copy's tombstone it takes over by its name, if any. */
+interface NewRow {
+  row: EntityWrite;
+  tombstoneAncestorId: string | null | undefined;
+}
 
 /** An owned entity's plan, as its owner's rules give it, and the owned entity's type (a class level's). */
 interface OwnedPlanned<P> {
@@ -240,11 +248,46 @@ export default class EntityWriter {
     if (parts.writes) await EntityWriter.writeBeside(tx, scope, entity, parts.writes);
   }
 
-  /** The entity's customizations, copied onto the new one (`entityId`) from `sourceId`'s. */
-  private async copyCustomizations(tx: Db, entityId: string, sourceId: string) {
+  /** The entity's customizations, copied onto the new ones (`entities`) from `sourceId`'s. */
+  private async copyCustomizations(tx: Db, entities: Row[], sourceId: string) {
     const sourceType = Engine.storage().customizableKinds().includes(this.type) ? this.type : undefined;
     const customizations = (await CustomizationCopies.read(tx, [sourceId], this.type, sourceType)).get(sourceId);
-    if (customizations) await CustomizationCopies.copy(tx, entityId, this.type, customizations);
+    if (!customizations) return;
+    await CustomizationCopies.copyToMany(
+      tx,
+      entities.map((entity) => entity.id),
+      this.type,
+      customizations,
+    );
+  }
+
+  /**
+   * New entities of the kind in the scope's ruleset, each its row (`rows`), taking over the tombstone of a deleted copy
+   * of an ancestor of its name, the customizations its plan copies (`copyCustomizationsFrom`), then what its plan writes
+   * past its row (`setParts`) and its activity: every create's steps, in one order. Answers the rows written.
+   */
+  private async writeNew(
+    tx: Db,
+    session: Session,
+    scope: RulesetScope,
+    rows: NewRow[],
+    plan: SavedParts & { copyCustomizationsFrom?: string },
+  ): Promise<Row[]> {
+    const { ruleset, rulesetData } = scope;
+    const names = new EntityNames(ruleset, rulesetData.cow);
+    const written: Row[] = [];
+    for (const { row, tombstoneAncestorId } of rows) {
+      const [entity] = await Entities.create<Row>(tx, this.type, { ...row, rulesetId: ruleset.id });
+      if (tombstoneAncestorId) await names.repointTombstone(tx, this.type, tombstoneAncestorId, entity.id);
+      written.push(entity);
+    }
+    // The customizations they copy, before what the plan writes beside them
+    if (plan.copyCustomizationsFrom) await this.copyCustomizations(tx, written, plan.copyCustomizationsFrom);
+    for (const entity of written) {
+      await EntityWriter.setParts(tx, scope, { entityId: entity.id, entityType: this.type }, plan, false);
+      await EntityWriter.recordActivity(tx, session, "create", this.type, entity.id, { entityName: entity.name });
+    }
+    return written;
   }
 
   /**
@@ -267,15 +310,36 @@ export default class EntityWriter {
       const { tombstoneAncestorId } = await names.assertNameAvailable(tx, this.type, name);
       const planned = await plan(scope, { tombstoneAncestorId, tx });
 
-      const [row] = await Entities.create<Row>(tx, this.type, { ...planned.row, rulesetId });
-      if (tombstoneAncestorId) await names.repointTombstone(tx, this.type, tombstoneAncestorId, row.id);
-      const written = { entityId: row.id, entityType: this.type };
-      // The customizations it copies, before what the plan writes beside it
-      if (planned.copyCustomizationsFrom) await this.copyCustomizations(tx, row.id, planned.copyCustomizationsFrom);
-      await EntityWriter.setParts(tx, scope, written, planned, false);
-
-      await EntityWriter.recordActivity(tx, session, "create", this.type, row.id, { entityName: row.name });
+      const [row] = await this.writeNew(tx, session, scope, [{ row: planned.row, tombstoneAncestorId }], planned);
       return planned.describe(row, await EntityLinks.findOwn(tx, row.id));
+    });
+  }
+
+  /**
+   * New entities in the ruleset, several rows of one plan (`plan`: an entity's copies, its variants), each written as
+   * a create writes its own (`create`): its name kept free in its view (all of them in one read), taking over the
+   * tombstone of a deleted ancestor of its name, the customizations its plan copies, its links and what its plan writes
+   * beside it, and its activity. Answers the rows written, in the plan's order.
+   */
+  async createMany<P extends EntityCopiesPlan>(
+    session: Session,
+    rulesetId: string,
+    plan: (scope: RulesetScope) => P,
+  ): Promise<Row[]> {
+    return await EntityWriter.inScope(session, rulesetId, async (tx, scope, policy) => {
+      const { ruleset, rulesetData } = scope;
+      this.open(scope);
+      policy.canUpdateEntity();
+      const planned = plan(scope);
+
+      const names = new EntityNames(ruleset, rulesetData.cow);
+      const tombstones = await names.assertNamesAvailable(
+        tx,
+        this.type,
+        planned.rows.flatMap((row) => row.name ?? []),
+      );
+      const rows = planned.rows.map((row) => ({ row, tombstoneAncestorId: row.name && tombstones.get(row.name) }));
+      return await this.writeNew(tx, session, scope, rows, planned);
     });
   }
 

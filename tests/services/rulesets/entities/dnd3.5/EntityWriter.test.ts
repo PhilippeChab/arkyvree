@@ -1,16 +1,27 @@
 import { describe, expect, test } from "bun:test";
 
 import type { EntityWrites } from "@/engine/index.ts";
-import type { Spell } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { Aptitude, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, Requirements } from "@/server/repositories/index.ts";
+import { Entities, EntityLinks, Requirements } from "@/server/repositories/index.ts";
 import EntityWriter from "@/server/services/rulesets/entities/EntityWriter.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
+import { activityTypes } from "@/tests/support/activities.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
 import { measure } from "@/tests/support/database.ts";
 import { createTestClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+
+/** A requirement a plan writes beside an entity. */
+const REQUIREMENT = {
+  level: "1",
+  operator: "greater_than",
+  target: "classes.wizard.level",
+  value: "1",
+  valueType: "number",
+} as const;
 
 /** Writes that write nothing but what's given. */
 function writesOf(writes: Partial<EntityWrites>): EntityWrites {
@@ -27,20 +38,13 @@ async function createSpell() {
 describe("EntityWriter.setParts: what a save writes past an entity's row", () => {
   test("sets the requirement its plan writes on the entity", async () => {
     const { entity, rulesetId } = await createSpell();
-    const requirement = {
-      level: "1",
-      operator: "greater_than",
-      target: "classes.wizard.level",
-      value: "1",
-      valueType: "number",
-    } as const;
 
     await withRulesetScope(db, rulesetId, async (scope) =>
-      EntityWriter.setParts(db, scope, entity, { writes: writesOf({ requirement }) }, true),
+      EntityWriter.setParts(db, scope, entity, { writes: writesOf({ requirement: REQUIREMENT }) }, true),
     );
 
     const stored = await Requirements.findMany(db, { entityIds: [entity.entityId] });
-    expect(stored).toEqual([expect.objectContaining({ ...entity, ...requirement })]);
+    expect(stored).toEqual([expect.objectContaining({ ...entity, ...REQUIREMENT })]);
   });
 
   test("refuses removing an entity the ruleset doesn't have as that entity, not found", async () => {
@@ -85,5 +89,41 @@ describe("EntityWriter: an entity deleted since the view was read", () => {
     expect(
       EntitiesService.deleteOwnedEntity(makeSession(), ruleset.id, "classes", klass.id, classLevel.id),
     ).rejects.toMatchObject({ message: "ClassLevel not found", name: "NotFoundError" });
+  });
+});
+
+describe("EntityWriter.createMany: several rows of one plan", () => {
+  test("writes each row as a create does: its name kept free, its links, what its plan writes beside it, its activity", async () => {
+    const session = makeSession();
+    const ruleset = await createSeededTestRuleset(session.userId);
+    const general = (await Entities.findOne<Aptitude>(db, {
+      entityType: "aptitudes",
+      name: "General",
+      rulesetId: ruleset.ancestorRulesetIds[0],
+    }))!;
+    // A feat's pools, a list of links no item's variants carry: what a kind's copies would write past their rows
+    const plan = {
+      rows: [{ name: "Probe Feat One" }, { name: "Probe Feat Two" }],
+      links: [{ role: "listedIn", toType: "aptitudes", links: [{ toId: general.id }] }],
+      writes: writesOf({ requirement: REQUIREMENT }),
+    };
+
+    const written = await new EntityWriter("feats").createMany(session, ruleset.id, () => plan);
+
+    expect(written.map((row) => row.name)).toEqual(["Probe Feat One", "Probe Feat Two"]);
+    for (const row of written) {
+      const entity = { entityId: row.id, entityType: "feats" };
+      expect(await EntityLinks.findOwn(db, row.id)).toEqual([
+        expect.objectContaining({ role: "listedIn", toId: general.id }),
+      ]);
+      expect(await Requirements.findMany(db, { entityIds: [row.id] })).toEqual([
+        expect.objectContaining({ ...entity, ...REQUIREMENT }),
+      ]);
+      expect(await activityTypes(session.userId, "feats", row.id)).toEqual(["createFeat"]);
+    }
+    await expectRefusedWith(
+      new EntityWriter("feats").createMany(session, ruleset.id, () => ({ rows: [{ name: "Probe Feat Two" }] })),
+      409,
+    );
   });
 });

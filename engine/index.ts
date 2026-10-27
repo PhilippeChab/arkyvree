@@ -27,6 +27,7 @@ export type {
   ChildPlan,
   CreationPickQuery,
   EntityCopies,
+  EntityCopiesPlan,
   EntityCreatePlan,
   EntityDeletePlan,
   EntityEditPlan,
