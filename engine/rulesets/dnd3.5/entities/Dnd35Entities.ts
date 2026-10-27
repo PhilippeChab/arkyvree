@@ -1,6 +1,4 @@
-import type { KindCapabilities } from "@/engine/core/entities/index.ts";
 import { EntitiesPart } from "@/engine/core/module/index.ts";
-import type { RulesetView } from "@/engine/core/view/index.ts";
 
 import AbilityEntity from "./abilities/AbilityEntity.ts";
 import AptitudeEntity from "./aptitudes/AptitudeEntity.ts";
@@ -33,18 +31,10 @@ const ENTITY_KINDS = {
 };
 
 /**
- * The 3.5 ruleset's entities, as the module answers the server of them: each kind's rules bound to a ruleset's view
- * (`of`: an entity found and described, a page opened, and what saving or deleting one writes; a class's levels, class
- * skills and table, through the classes' kind, bound to the class), and what each can do (`capabilitiesOf`).
+ * The 3.5 ruleset's entities, as the module answers the server of them: each kind's rules, by its type (`kinds`), bound
+ * to a ruleset's view (an entity found and described, a page opened, and what saving or deleting one writes; a class's
+ * levels, class skills and table, through the classes' kind, bound to the class), and what each can do.
  */
 export default class Dnd35Entities extends EntitiesPart<Dnd35EntityKinds> {
-  /** What an entity kind (`type`) can do, as its class declares it. */
-  override capabilitiesOf(type: keyof Dnd35EntityKinds): KindCapabilities {
-    return ENTITY_KINDS[type].describeCapabilities();
-  }
-
-  /** An entity kind's rules (`type`), bound to a ruleset's view. */
-  override of<K extends keyof Dnd35EntityKinds>(view: RulesetView, type: K): Dnd35EntityKinds[K] {
-    return new ENTITY_KINDS[type](view) as Dnd35EntityKinds[K];
-  }
+  protected override readonly kinds = ENTITY_KINDS;
 }

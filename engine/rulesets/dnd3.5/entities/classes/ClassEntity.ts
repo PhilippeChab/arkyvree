@@ -1,7 +1,5 @@
 /** A class as a ruleset's entity: its fields, what its form stores, and its parts: its levels, skills and table. */
 
-import { z } from "zod";
-
 import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
@@ -17,8 +15,8 @@ import { CLASS_FIELDS } from "./fields.ts";
  * it: its levels, its class skills, its table.
  */
 export default class ClassEntity extends RulesetEntity<"classes", typeof CLASS_FIELDS.fields> {
-  /** Its list's filters: the kind it's for, its partition (the player classes', or the others'). */
-  protected static override readonly listFilters = { partition: z.string() };
+  /** Its list narrows by the kind it's for, its partition (the player classes', or the others'). */
+  protected static override readonly partitioned = true;
 
   /** Its hit die, the ability its bonus spells use, and the spells it casts. */
   protected override readonly fields = CLASS_FIELDS;

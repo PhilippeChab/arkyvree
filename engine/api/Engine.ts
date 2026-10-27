@@ -48,7 +48,7 @@ export default class Engine {
    * the kinds a fork restores.
    */
   static rules() {
-    return new RulesEngine(Modules.all(), StorageEngine.shared());
+    return RulesEngine.shared();
   }
 
   /** How every module stores its data in the generic tables, which the server reads and writes them by. */

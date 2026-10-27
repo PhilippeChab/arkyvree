@@ -93,7 +93,7 @@ const COPY_ACTIONS: readonly EntityAction[] = ["duplicate", "templates", "varian
  * ruleset's page shows): an action it has none of it refuses as not found (`checkAction`): a read-only kind's writes
  * (`readOnly`: "No create for abilities"), the groups of a kind that lists none (`families`), a duplicate, variants and
  * templates of a kind that makes no copies (`copies`: "No templates for races"); its list's query takes the filters it
- * declares (`listFilters`, its family's and its pool's among them); and an edit refuses renaming an entity whose name
+ * declares (`listFilters`, and those its `families`, `pools`, `levels` and `partitioned` add); and an edit refuses renaming an entity whose name
  * its kind locks (`lockedName`), in the words its form shows.
  */
 export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends Fields = NoFields> {
@@ -108,9 +108,12 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
    */
   protected static readonly families?: { field: string; groupFilters: z.ZodRawShape };
 
+  /** Whether its list narrows by a tier, its `tier` filter (a spell's, by its level on a pool): what its list takes. */
+  protected static readonly levels: boolean = false;
+
   /**
-   * Its list's filters past the shared ones and its family's and pool's, each by the field, the role or the partition
-   * it filters (`partition`, the kinds its entities are for; `tier`, a pool's tier), and its value's schema: none.
+   * Its list's filters past the shared ones and those its families, pools, tiers and partitions add, each by the field
+   * or the role it filters, and its value's schema: none.
    */
   protected static readonly listFilters: z.ZodRawShape = {};
 
@@ -119,6 +122,12 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
    * and its form shows, in the same words (`reason`). None: a name always changes.
    */
   protected static readonly lockedName?: { field: string; reason: string };
+
+  /**
+   * Whether its list narrows by the kinds its entities are for, its `partition` filter (a race's, a class's): what its
+   * list takes.
+   */
+  protected static readonly partitioned: boolean = false;
 
   /**
    * The pools its list narrows by, one at a time (a feat's, a spell's): the role of its entities' links to them, which
@@ -130,14 +139,16 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
   protected static readonly readOnly: boolean = false;
 
   /**
-   * Its list's filters, by query key: its own (`listFilters`), its family's field and its pool's role, each one at a
-   * time.
+   * Its list's filters, by query key, each one at a time: its family's field, its pool's role, its tier (`tier`), its
+   * partition (`partition`), then its own (`listFilters`). A query's issues follow their order.
    */
   private static listShape(): z.ZodRawShape {
     return {
-      ...this.listFilters,
       ...(this.families && { [this.families.field]: z.string() }),
       ...(this.pools && { [this.pools.role]: z.string().uuid() }),
+      ...(this.levels && { tier: z.coerce.number() }),
+      ...(this.partitioned && { partition: z.string() }),
+      ...this.listFilters,
     };
   }
 
@@ -146,13 +157,12 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
    * of it, as its actions are refused and its list's query read.
    */
   static describeCapabilities(): KindCapabilities {
-    const shape = this.listShape();
     return {
       copies: this.copies,
       ...(this.families && { families: { field: this.families.field } }),
-      levels: "tier" in shape,
+      levels: this.levels,
       ...(this.lockedName && { lockedName: this.lockedName }),
-      partitioned: "partition" in shape,
+      partitioned: this.partitioned,
       ...(this.pools && { pools: this.pools }),
       progression: "progression" in this.prototype,
       readOnly: this.readOnly,
