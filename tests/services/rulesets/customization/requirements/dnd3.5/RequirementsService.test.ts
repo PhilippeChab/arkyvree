@@ -3,14 +3,16 @@ import { describe, expect, test } from "bun:test";
 import type { Feat, Race } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Entities, Requirements } from "@/server/repositories/index.ts";
+import { Entities, EntitySnapshots, Requirements } from "@/server/repositories/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
+import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
-import { ownerSessionOf } from "@/tests/support/rulesets.ts";
+import { createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const babAtLeast5 = { level: "1", target: "combat.bab", value: "5", operator: "greater_than_or_equal" };
@@ -26,6 +28,23 @@ async function setup() {
     fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
   });
   return { session, rulesetId: ruleset.id, feat, race };
+}
+
+/**
+ * Another user's fork of a published ruleset whose feat has requirements at levels 1 and 2: the fork inherits the feat,
+ * which a customization there copies.
+ */
+async function setupInherited() {
+  const { user: owner } = await createTestUser();
+  const { session } = await createTestUser();
+  const parent = await createTestRuleset(owner.id, { private: false, status: "Published" });
+  const [feat] = await Entities.create<Feat>(db, "feats", { rulesetId: parent.id, name: `Test Feat ${uniqueId()}` });
+  const [first, second] = await Requirements.createMany(
+    db,
+    ["1", "2"].map((level) => ({ ...babAtLeast5, level, valueType: "number", entityId: feat.id, entityType: "feats" })),
+  );
+  const fork = await RulesetsService.forkRuleset(session, parent.id, { name: `Fork ${uniqueId()}`, private: false });
+  return { session, forkId: fork.id, feat, requirementIds: [first.id, second.id] };
 }
 
 describe("RequirementsService", () => {
@@ -117,6 +136,24 @@ describe("RequirementsService", () => {
       });
     });
 
+    test("refuses a level its own feat already has as a conflict", async () => {
+      const { session, rulesetId, feat } = await setup();
+      await RequirementsService.createRequirement(session, rulesetId, "feats", feat.id, babAtLeast5);
+      await expectRefusedWith(RequirementsService.createRequirement(session, rulesetId, "feats", feat.id, chain), 409);
+      expect(await Requirements.findMany(db, { entityIds: [feat.id], entityType: "feats" })).toHaveLength(1);
+    });
+
+    test("refuses a level an inherited feat already has as a conflict, copying nothing", async () => {
+      const { session, forkId, feat } = await setupInherited();
+      await expectRefusedWith(RequirementsService.createRequirement(session, forkId, "feats", feat.id, chain), 409);
+      expect(await EntitySnapshots.findMany(db, { rulesetId: forkId })).toEqual([]);
+      const created = await RequirementsService.createRequirement(session, forkId, "feats", feat.id, {
+        ...chain,
+        level: "3",
+      });
+      expect(created).toMatchObject({ level: "3", entityId: created.resolvedEntityId });
+    });
+
     test("refuses a missing ruleset or entity, and another user", async () => {
       const { session, rulesetId, feat } = await setup();
       const { session: other } = await createTestUserAndRuleset();
@@ -165,6 +202,30 @@ describe("RequirementsService", () => {
       expect(
         RequirementsService.updateRequirement(session, rulesetId, "feats", feat.id, created.id, invalid),
       ).rejects.toMatchObject({ refusal: "invalid" });
+    });
+
+    test("refuses moving a requirement onto a level its own feat already has, and keeps its own level", async () => {
+      const { session, rulesetId, feat } = await setup();
+      await RequirementsService.createRequirement(session, rulesetId, "feats", feat.id, babAtLeast5);
+      const second = { ...babAtLeast5, level: "2" };
+      const created = await RequirementsService.createRequirement(session, rulesetId, "feats", feat.id, second);
+      await expectRefusedWith(
+        RequirementsService.updateRequirement(session, rulesetId, "feats", feat.id, created.id, babAtLeast5),
+        409,
+      );
+      const update = { ...second, value: "6" };
+      expect(
+        await RequirementsService.updateRequirement(session, rulesetId, "feats", feat.id, created.id, update),
+      ).toMatchObject({ id: created.id, level: "2", value: "6" });
+    });
+
+    test("refuses moving an inherited feat's requirement onto a level it already has, copying nothing", async () => {
+      const { session, forkId, feat, requirementIds } = await setupInherited();
+      await expectRefusedWith(
+        RequirementsService.updateRequirement(session, forkId, "feats", feat.id, requirementIds[1], babAtLeast5),
+        409,
+      );
+      expect(await EntitySnapshots.findMany(db, { rulesetId: forkId })).toEqual([]);
     });
 
     test("refuses a missing ruleset or requirement, another entity's requirement and another user", async () => {

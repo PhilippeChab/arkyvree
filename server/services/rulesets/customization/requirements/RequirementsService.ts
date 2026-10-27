@@ -1,3 +1,4 @@
+import type { Db } from "@/drizzle/database.ts";
 import { Engine } from "@/engine/index.ts";
 import { CustomizationEdit, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
@@ -26,6 +27,15 @@ function conditionOf(requirement: { operator?: string | null; target?: string | 
 }
 
 class RequirementsService {
+  /**
+   * Refuses a requirement at a level its entity (`entityId`, as stored: a copy's once copied) holds another one at
+   * (`requirementId`, the one an edit moves): the database keeps one per level.
+   */
+  private async refuseTakenLevel(tx: Db, entityType: string, entityId: string, level: string, requirementId?: string) {
+    const taken = await Requirements.findOne(tx, { entityId, entityType, level });
+    if (taken && taken.id !== requirementId) throw new ConflictError("A requirement at this level already exists");
+  }
+
   async createRequirement(
     session: Session,
     rulesetId: string,
@@ -44,6 +54,7 @@ class RequirementsService {
 
           const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const resolvedEntityId = await edit.cowOwner(tx, entityType, entity.id);
+          await this.refuseTakenLevel(tx, entityType, resolvedEntityId, row.level);
 
           const rows = await Requirements.create(tx, { entityId: resolvedEntityId, entityType, ...row });
           const requirement = rows[0];
@@ -142,6 +153,8 @@ class RequirementsService {
             "requirement",
             requirementId,
           );
+
+          await this.refuseTakenLevel(tx, entityType, resolvedEntityId, row.level, resolvedRequirementId);
 
           const expectedUpdatedAt = resolvedRequirementId === requirementId ? body.updatedAt : undefined;
           const rows = await Requirements.update(tx, row, { id: resolvedRequirementId, expectedUpdatedAt });
