@@ -28,7 +28,7 @@
 - Use `@/` path alias for cross-directory imports, never `../`, and import a module of your own folder (or one under it) directly, `./x.ts` (`arkyvree/no-parent-imports`: `bun run lint --fix` rewrites both). A module is imported once, its types inline (`import { type A, b } from "x"`; `import/no-duplicates`), and MUI from its one entry, `@mui/material` (`no-restricted-imports`)
 - The server reads its environment through `server/environment.ts`, which lists every variable it reads and what for: `readEnv("APP_URL")`, `isProduction()`, `isTest()`, `isDevelopment()` (`NODE_ENV=development` explicitly: it unmasks errors, so it's never assumed; "not production" is `!isProduction()`). Never `process.env` or `Bun.env` elsewhere in the server, the engine or `shared/` (`arkyvree/environment`); a default stays with the code that reads the variable
 - Before finishing a task:
-  - TypeScript passes: `bunx tsgo --noEmit -p .`
+  - TypeScript passes: `bunx tsgo --noEmit -p .`, and for the end-to-end tests `bunx tsgo --noEmit -p tests/e2e`
   - `bun run lint` and `bun run format:check` pass
   - the impacted tests pass: `bun run test:changed`
 - Always use Hono's Infer types instead of recreating types in the frontend

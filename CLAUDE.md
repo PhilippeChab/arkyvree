@@ -33,15 +33,16 @@ A change's checks follow what its diff touches, not one list for every change:
 
 | The diff touches | Checks |
 |---|---|
-| Any code | `bun run lint`, `bun run format:check`, both type-checks, and the tests of the files it touches (`bun run test:changed`); CI runs the whole suite |
+| Any code | AGENTS.md's checks before finishing a task (TypeScript, lint, format, `bun run test:changed`); CI runs the changed tests on a pull request and the whole suite once it's merged |
 | Specific routes' answers | those routes' answers before (a `develop` worktree) and after, on copies of one seeded database |
-| The level-up engine | the level-up flows, before and after |
+| The level-up engine | a level-up's save, edit and removal, before and after, on the tests' characters |
 | Writes, or a migration | the writes it changes, before and after; a migration also runs on a Neon branch of production first |
 | What users see | screenshots of the pages it changes, as **Screenshots** says |
+| Docs alone | the review alone |
 
-A comparison runs only when its row applies. Every change gets an independent review, scaled to it: a small change's
-reads its diff and runs its tests, a large or risky one's also tries the paths around it. A seeded database is copied
-(`CREATE DATABASE … TEMPLATE …`), not seeded again for each check.
+A comparison runs only when its row applies. Every change gets an independent review by another agent, scaled to it:
+for a small change, it reads the diff and runs its tests; for a large or risky one, it also tries the paths around it.
+A seeded database is copied (`scripts/db/clone-database.ts <suffix>`), not seeded again for each check.
 
 ## Issues and pull requests
 
