@@ -1,4 +1,4 @@
-import type { ProgressionDescription } from "@/engine/core/module/index.ts";
+import type { ProgressionDeclaration } from "@/engine/core/module/index.ts";
 import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import { formatSigned } from "@/shared/text.ts";
@@ -17,7 +17,7 @@ const CLASS_LEVELS = Array.from({ length: RULESET_LIMITS.classLevel }, (_, index
  * its features under "Special", and its spells per day and spells known, a column a spell level, Spells Known's
  * "All" carrying down. A class's spell list is the aptitude named for it ("Wizard Spells").
  */
-export const PROGRESSION: ProgressionDescription = {
+export const PROGRESSION: ProgressionDeclaration = {
   counts: {
     body: "spells",
     list: "spellList",
@@ -90,11 +90,7 @@ export const PROGRESSION: ProgressionDescription = {
     {
       field: CLASS_LEVEL_BAB,
       key: "bab",
-      label: "Base Attack Bonus",
-      // A full base attack bonus's at the last level: one never outruns its level
       labels: ProgressionLabels.listLabels(RULESET_LIMITS.classLevel, (bab) => CombatSheet.formatBab(bab)),
-      max: RULESET_LIMITS.classLevel,
-      min: 0,
       presets: [
         { key: "good", label: "Good (full)", progression: BAB_PROGRESSIONS.good },
         { key: "medium", label: "Medium (¾)", progression: BAB_PROGRESSIONS.medium },
@@ -109,10 +105,7 @@ export const PROGRESSION: ProgressionDescription = {
     },
     {
       key: "saves",
-      label: "Saves",
       labels: ProgressionLabels.listLabels(RULESET_LIMITS.saveBase, (base) => formatSigned(base)),
-      max: RULESET_LIMITS.saveBase,
-      min: 0,
       presets: [
         { key: "good", label: "Good", progression: SAVE_PROGRESSIONS.good },
         { key: "poor", label: "Poor", progression: SAVE_PROGRESSIONS.poor },
@@ -126,9 +119,6 @@ export const PROGRESSION: ProgressionDescription = {
     {
       field: CLASS_LEVEL_SKILL_POINTS,
       key: "skills",
-      label: "Skill Points",
-      max: RULESET_LIMITS.tableCount,
-      min: 0,
       presets: [],
       source: "field",
       unitLabel: "Points a Level",
