@@ -206,7 +206,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
    * checked (an entity one names, as `view` reads it), refused when one its form requires is missing or a value is one
    * its field doesn't take.
    */
-  protected abstract planNewFields(view: RulesetView, fields: FieldsRequest): Pick<NewCharacterPlan, "fields" | "own">;
+  protected abstract planNewFields(view: RulesetView, fields: FieldsRequest): FieldsPlan;
 
   /**
    * Where an inventory entry's add or edit (`change`) holds its item: whether it's equipped, where, and its groups
@@ -361,17 +361,15 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * What a new character stores: what it starts with (`planStart`), its kind (its module's player character's,
-   * `StoredCharacter.playerKind`), and its fields' values and own columns (`planNewFields`). Refused as its start is,
-   * or when a field is.
+   * What a new character stores: what it starts with (`planStart`: its single links, and its scored links' amounts),
+   * and its row's kind (its module's player character's, `StoredCharacter.playerKind`), fields' values and own columns
+   * (`planNewFields`). Refused as its start is, or when a field is.
    */
   planCreate(view: RulesetView, request: NewCharacterRequest): NewCharacterPlan {
     const { fields, ...start } = request;
-    return {
-      ...this.planStart(view, start),
-      ...this.planNewFields(view, fields),
-      kind: this.storage.character.playerKind,
-    };
+    const { links, row } = this.planStart(view, start);
+    const { fields: written, own } = this.planNewFields(view, fields);
+    return { links, row: { ...own, ...row, fields: written, kind: this.storage.character.playerKind } };
   }
 
   /**
@@ -452,7 +450,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
     for (const { bounds, role } of scored)
       RulesError.parse(CharactersPart.boundedScores(bounds), request.scores[role] ?? {}, [role]);
     const ids = CharactersPart.idsOf(view);
-    const links: Record<string, string> = {};
+    const singles: Record<string, string> = {};
     for (const { entityType, role } of this.singleRoles()) {
       const picked = request.picks[role];
       const kind = entityType as keyof ViewKinds;
@@ -460,13 +458,13 @@ export default abstract class CharactersPart<D extends Descriptions> {
         throw new RulesError("invalid", `A new character's ${view.rulesetData.labelOf(kind)} is required`);
       const entity = ids.find(kind, picked);
       this.checkCreationPick(role, entity);
-      links[role] = (entity as { id: string }).id;
+      singles[role] = (entity as { id: string }).id;
     }
     const scores = scored.map(({ bounds, kind, role }) => {
       const given = ids.resolveKeys(kind, request.scores[role] ?? {});
       const rows = view.rulesetData.rows(kind) as { id: string }[];
       return [role, rows.map(({ id }) => ({ entityId: id, amount: given.get(id) ?? bounds.start }))];
     });
-    return { links, scores: Object.fromEntries(scores) };
+    return { links: Object.fromEntries(scores), row: { links: singles } };
   }
 }

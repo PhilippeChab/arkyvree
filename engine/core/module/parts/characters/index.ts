@@ -49,6 +49,7 @@ export type {
   LinkPicksPlan,
   LinkPlan,
   NewCharacterPlan,
+  NewCharacterRow,
   ScorePlan,
   ScoresPlan,
   StartPlan,

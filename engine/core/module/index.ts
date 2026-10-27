@@ -39,6 +39,7 @@ export {
   type MemberReading,
   type NewCharacterPlan,
   type NewCharacterRequest,
+  type NewCharacterRow,
   type NotedSheet,
   type PlacementChange,
   type PlacementDescription,

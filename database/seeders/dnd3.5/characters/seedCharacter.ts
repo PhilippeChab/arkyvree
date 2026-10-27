@@ -9,8 +9,8 @@ import { Engine } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { CharacterInventory, CharacterLinks, Characters, Entities, Picks } from "@/server/repositories/index.ts";
-import { readCharacterInput, readChildInputs } from "@/server/services/characters/index.ts";
+import { CharacterInventory, Characters, Entities, Picks } from "@/server/repositories/index.ts";
+import { createNewCharacter, readCharacterInput, readChildInputs } from "@/server/services/characters/index.ts";
 import { createAdvancement, writeChildren } from "@/server/services/characters/levels/index.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
@@ -138,31 +138,26 @@ export async function createCharacter(
     rulesetId?: string;
   },
 ) {
-  const [character] = await Characters.create(db, {
-    kind: PLAYER_CHARACTER_KIND,
-    userId: SEED_USER_ID,
-    rulesetId: data.rulesetId ?? ctx.rulesetId,
-    name: data.name,
-    description: data.description,
-    fields: { ...data.fields },
-    links: { race: idOf(ctx.raceMap.pc, data.links.race, `${data.name}'s race`) },
+  const character = await createNewCharacter(db, {
+    links: {
+      score: Object.entries(data.abilities).map(([name, amount]) => ({
+        entityId: idOf(ctx.abilityMap, name, `${data.name}'s ability`),
+        amount,
+      })),
+      speaks: data.languages.map((language) => ({
+        entityId: idOf(ctx.langMap, language, `${data.name}'s language`),
+      })),
+    },
+    row: {
+      kind: PLAYER_CHARACTER_KIND,
+      userId: SEED_USER_ID,
+      rulesetId: data.rulesetId ?? ctx.rulesetId,
+      name: data.name,
+      description: data.description,
+      fields: { ...data.fields },
+      links: { race: idOf(ctx.raceMap.pc, data.links.race, `${data.name}'s race`) },
+    },
   });
-
-  await CharacterLinks.createMany(
-    db,
-    character.id,
-    "score",
-    Object.entries(data.abilities).map(([name, amount]) => ({
-      entityId: idOf(ctx.abilityMap, name, `${data.name}'s ability`),
-      amount,
-    })),
-  );
-  await CharacterLinks.createMany(
-    db,
-    character.id,
-    "speaks",
-    data.languages.map((language) => ({ entityId: idOf(ctx.langMap, language, `${data.name}'s language`) })),
-  );
 
   return character.id;
 }

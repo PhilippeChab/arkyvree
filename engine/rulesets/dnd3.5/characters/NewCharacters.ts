@@ -4,8 +4,8 @@ import { Field } from "@/engine/core/fields/index.ts";
 import type {
   CreationField,
   CreationMethod,
+  FieldsPlan,
   FieldsRequest,
-  NewCharacterPlan,
   ScoresCreation,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
@@ -120,7 +120,7 @@ export default class NewCharacters {
    * always holds is missing (`CharacterValues.held`), one names a field the character hasn't, or holds a value its
    * field doesn't take, each refused together. One left empty writes nothing: no value, no description.
    */
-  static planFields(view: RulesetView, fields: FieldsRequest): Pick<NewCharacterPlan, "fields" | "own"> {
+  static planFields(view: RulesetView, fields: FieldsRequest): FieldsPlan {
     const { description, ...given } = fields;
     const own = RulesError.parse(OWN_REQUEST, { description }, ["fields"]);
     const written = CharacterValues.writeOf(NewCharacters.parseGiven(view, given));

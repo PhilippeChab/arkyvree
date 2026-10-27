@@ -1,8 +1,9 @@
 import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { withTransaction } from "@/server/database/index.ts";
-import { Activities, CharacterInventory, CharacterLinks, Characters } from "@/server/repositories/index.ts";
+import { Activities, CharacterInventory } from "@/server/repositories/index.ts";
 import { createAdvancement, writeChildren } from "@/server/services/characters/levels/index.ts";
+import { createNewCharacter } from "@/server/services/characters/newCharacterWrites.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -34,14 +35,10 @@ export function Imports<B extends Constructor>(Base: B) {
             policy.canCreateCharacter();
             const characterId = crypto.randomUUID();
             const plan = Engine.for(scope).characters().planImport(text, { characterId, userId: session.userId });
-            const [character] = await Characters.create(tx, {
-              ...plan.character,
-              id: characterId,
-              rulesetId,
-              userId: session.userId,
+            const character = await createNewCharacter(tx, {
+              links: plan.links,
+              row: { ...plan.row, id: characterId, rulesetId, userId: session.userId },
             });
-            for (const [role, links] of Object.entries(plan.links))
-              await CharacterLinks.createMany(tx, characterId, role, links);
             for (const advancement of plan.advancements) await createAdvancement(tx, characterId, advancement);
             await CharacterInventory.createMany(
               tx,
