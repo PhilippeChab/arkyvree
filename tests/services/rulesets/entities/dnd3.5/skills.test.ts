@@ -21,8 +21,8 @@ interface SkillValues {
   checkPenaltyMultiplier: number;
   description?: string | null;
   impactedByWeight: boolean;
+  keyAbilityId: string;
   name: string;
-  primaryAbilityId: string;
   usableWithoutTraining: boolean;
 }
 
@@ -32,18 +32,18 @@ type SkillBody = Parameters<typeof EntitiesService.createEntity>[3];
  * What a write of a skill (`values`, as it reads) answers, as a read does: its fields by stored field, its ability
  * (named `abilityName`) its `keyAbility` link.
  */
-function answerOf({ description, name, primaryAbilityId, ...values }: SkillValues, abilityName: string) {
+function answerOf({ description, name, keyAbilityId, ...values }: SkillValues, abilityName: string) {
   return {
     description,
     fields: fieldsOf(values),
-    links: [{ role: "keyAbility", toId: primaryAbilityId, toName: abilityName }],
+    links: [{ role: "keyAbility", toId: keyAbilityId, toName: abilityName }],
     name,
   };
 }
 
 /** A skill's body (`values`, as it reads): its fields by stored field, its ability its `keyAbility` link. */
-function bodyOf({ description, name, primaryAbilityId, ...values }: SkillValues): SkillBody {
-  return { description, fields: fieldsOf(values), links: { keyAbility: primaryAbilityId }, name };
+function bodyOf({ description, name, keyAbilityId, ...values }: SkillValues): SkillBody {
+  return { description, fields: fieldsOf(values), links: { keyAbility: keyAbilityId }, name };
 }
 
 /** A skill's fields (`values`, as it reads), as its answer holds them: by the stored field that keeps each. */
@@ -73,7 +73,7 @@ async function setup() {
   const values = (overrides: Partial<SkillValues> = {}): SkillValues => ({
     name: "Climb",
     description: "Climbing skill",
-    primaryAbilityId: abilityMap.Strength,
+    keyAbilityId: abilityMap.Strength,
     impactedByWeight: true,
     checkPenaltyMultiplier: 1,
     usableWithoutTraining: true,
@@ -117,7 +117,7 @@ describe("EntitiesService: skills", () => {
     const { session, ruleset, abilityMap, body, values } = await setup();
     const spellcraft = values({
       name: "Spellcraft",
-      primaryAbilityId: abilityMap.Intelligence,
+      keyAbilityId: abilityMap.Intelligence,
       impactedByWeight: false,
       usableWithoutTraining: false,
     });
@@ -193,7 +193,7 @@ describe("EntitiesService: skills", () => {
     const update = values({
       name: "Jump",
       description: "Updated",
-      primaryAbilityId: abilityMap.Dexterity,
+      keyAbilityId: abilityMap.Dexterity,
       impactedByWeight: true,
       usableWithoutTraining: false,
     });

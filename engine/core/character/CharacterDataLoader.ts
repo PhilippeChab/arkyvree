@@ -4,17 +4,14 @@ import type { Character, CharacterInventory, Modifier, Requirement } from "@/sha
 
 /**
  * What a character's build loads of its rows and its ruleset's view (`CharacterDataLoader`), as every ruleset's build
- * reads it: its campaign and player, its inventory, its modifiers and the requirement groups gating them, the item each
- * modifier an item is the source of belongs to, and the rulesets its rows may come from. A ruleset's loaded data adds
- * its own.
+ * reads it: its inventory, its modifiers and the requirement groups gating them, the item each modifier an item is the
+ * source of belongs to, and the rulesets its rows may come from. A ruleset's loaded data adds its own.
  */
 export interface LoadedCharacter {
-  campaign: CharacterRows["campaign"];
   inventory: InventoryEntry[];
   /** The item each modifier an item is the source of belongs to, by the modifier's id. */
   itemModifiers: Map<string, string>;
   modifiers: Modifier[];
-  player: CharacterRows["player"];
   requirementGroups: Requirement[][];
   /** The rulesets the character's rows may come from: its own, and the ones it inherits from. */
   validRulesetIds: Set<string>;
@@ -47,10 +44,10 @@ export type InventoryEntry = CharacterInventory & {
 
 /**
  * A character's data, assembled from its rows and its ruleset's view, reading nothing (`load`): what every ruleset's
- * build reads (`LoadedCharacter`), its campaign and player, its inventory's items as the view composes them, its
- * modifiers in the order they apply with the requirement groups gating them, and the rulesets its rows may come from;
- * then what its ruleset loads (`D`). A ruleset's loader says what its character has of the ruleset's entities
- * (`partsOf`, `P`), which of them its modifiers come from and in what order (`sourcesOf`), and its data (`loadOwn`).
+ * build reads (`LoadedCharacter`), its inventory's items as the view composes them, its modifiers in the order they
+ * apply with the requirement groups gating them, and the rulesets its rows may come from; then what its ruleset loads
+ * (`D`). A ruleset's loader says what its character has of the ruleset's entities (`partsOf`, `P`), which of them its
+ * modifiers come from and in what order (`sourcesOf`), and its data (`loadOwn`).
  */
 export default abstract class CharacterDataLoader<D extends LoadedCharacter, P extends object = object> {
   /** A loader of the data of `character`, the character's own row. */
@@ -130,13 +127,11 @@ export default abstract class CharacterDataLoader<D extends LoadedCharacter, P e
     const sources = this.sourcesOf(parts, this.equippedItems(inventory), view);
     const { modifiers, requirementGroups } = this.collectModifiers(rows, rulesetData, sources);
     return this.loadOwn(view, parts, {
-      campaign: rows.campaign,
       inventory,
       itemModifiers: new Map(
         modifiers.filter((m) => rulesetData.isInventoryType(m.sourceType)).map((m) => [m.id, m.sourceId]),
       ),
       modifiers,
-      player: rows.player,
       requirementGroups,
       validRulesetIds: new Set([this.character.rulesetId, ...rulesetData.cow.sourceChain]),
     });

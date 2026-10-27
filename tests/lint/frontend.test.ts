@@ -469,7 +469,7 @@ describe("frontend rules", () => {
   });
 
   test("a select whose options failed to load says so under its field, its loadError", async () => {
-    const select = '<SelectField control={control} name="sourceItemId" label="Template" options={options} />';
+    const select = '<SelectField control={control} name="madeFromId" label="Template" options={options} />';
     expect(
       await lintRepo(
         {

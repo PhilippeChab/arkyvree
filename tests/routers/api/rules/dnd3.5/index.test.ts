@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
 import type { FormField } from "@/engine/core/fields/index.ts";
-import { Engine } from "@/engine/index.ts";
 import { expectOk, guestApi } from "@/tests/support/api.ts";
 import {
   ARMOR_AC_BONUS,
@@ -277,8 +276,11 @@ describe("rules", () => {
 
   test("answers each type's form's fields, and the ruleset's Settings', as its module declares them, by type", async () => {
     const fields = await fieldsOf();
-    // Every type its module declares fields of: a language's type and a save's ability among them
-    expect(Object.keys(fields)).toEqual(Engine.storage().fieldOwners().toSorted());
+    // Every type its module declares fields of, by name: its customizable kinds, its skills, its saves, its languages
+    // and its rulesets, a language's type and a save's ability among them
+    expect(Object.keys(fields)).toEqual([
+      ...["class-levels", "classes", "feats", "items", "languages", "races", "rulesets", "saves", "skills", "spells"],
+    ]);
     expect(fields.languages).toEqual([
       expect.objectContaining({ field: LANGUAGE_TYPE, input: "text", placement: "beside-name" }),
     ]);

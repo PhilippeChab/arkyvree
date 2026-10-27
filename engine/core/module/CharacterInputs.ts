@@ -1,12 +1,5 @@
 import type { CowData } from "@/engine/core/cow/index.ts";
-import type {
-  Campaign,
-  CharacterInventory,
-  Character as CharacterRecord,
-  Modifier,
-  Player,
-  Requirement,
-} from "@/shared/relations.ts";
+import type { CharacterInventory, Character as CharacterRecord, Modifier, Requirement } from "@/shared/relations.ts";
 
 import type { StoredAdvancement, StoredCharacterLink, StoredPick } from "./storage.ts";
 
@@ -22,19 +15,16 @@ export interface CharacterInput {
 
 /**
  * A character's own rows, which the server reads (`readCharacterInput`) and its module builds the character from: its
- * seat in a campaign, its advancements (its levels) and their picks by step, its links by role (`links`), its
- * inventory, and the modifiers set on the character itself, with their requirements. An inventory entry and a pick are
- * the links they are, whose entities are the view's. Read as stored: the engine resolves their references as they
- * enter it (`CharacterInputs`).
+ * advancements (its levels) and their picks by step, its links by role (`links`), its inventory, and the modifiers set
+ * on the character itself, with their requirements. An inventory entry and a pick are the links they are, whose
+ * entities are the view's. Read as stored: the engine resolves their references as they enter it (`CharacterInputs`).
  */
 export interface CharacterRows {
   advancements: StoredAdvancement[];
-  campaign: Campaign | undefined;
   inventory: CharacterInventory[];
   links: CharacterLinks;
   modifiers: Modifier[];
   picks: CharacterPicks;
-  player: Player | undefined;
   requirements: Requirement[];
 }
 

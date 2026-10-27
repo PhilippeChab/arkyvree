@@ -14,13 +14,12 @@ const SCHEMA: ViewSchema = {
     {
       type: "satchels",
       customizable: true,
-      fields: true,
       inherits: { fields: new Set(["COLOR"]), role: "patternedOn" },
       inventory: true,
       template: "PATTERN",
       tracked: false,
     },
-    { type: "trinkets", customizable: false, fields: false, tracked: false },
+    { type: "trinkets", customizable: false, tracked: false },
   ],
   unionLinks: [],
 };

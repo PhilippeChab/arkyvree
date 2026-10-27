@@ -421,14 +421,6 @@ export default abstract class CharacterBase<
     this.modifierEvaluator.evaluateModifiers(this.builtComponents, lateModifiers, this.requirementEvaluator);
   }
 
-  getCampaign() {
-    return this.data.campaign;
-  }
-
-  getPlayer() {
-    return this.data.player;
-  }
-
   getRuleset() {
     return this.view.ruleset;
   }

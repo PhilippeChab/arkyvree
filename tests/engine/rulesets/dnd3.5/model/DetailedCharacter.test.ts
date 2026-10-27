@@ -610,8 +610,6 @@ describe("DetailedCharacter", () => {
     test("reads a seeded character's identity, abilities and ruleset", async () => {
       const bjorn = await buildSeeded("Bjorn Ironhand");
       expect(bjorn.getRuleset()?.name).toBe(DND35_RULESET_NAME);
-      expect(bjorn.getPlayer()).toBeUndefined();
-      expect(bjorn.getCampaign()).toBeUndefined();
       expect(bjorn.components.identity.getIdentity()).toMatchObject({
         physiology: { name: "Bjorn Ironhand", race: { name: "Human" } },
         beliefs: { alignment: "Lawful Good" },
