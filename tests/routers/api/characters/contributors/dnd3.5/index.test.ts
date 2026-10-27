@@ -62,9 +62,9 @@ describe("character contributors", () => {
       status: "Pending",
     });
 
-    // Before accepting, the invitee isn't a contributor yet.
+    // Before accepting, the invitee isn't a contributor yet: the character is unknown to them
     const contributors = invitee.api.api.characters[":id"].contributors;
-    await expectStatus(contributors.$get({ param: { id }, query: {} }), 403);
+    await expectStatus(contributors.$get({ param: { id }, query: {} }), 404);
     expect(await expectOk(invites[":id"].accept.$post({ param: { id: invite.id } }))).toMatchObject({
       status: "Active",
     });
@@ -83,7 +83,7 @@ describe("character contributors", () => {
     const { id, invitee, invite } = await setup();
     await expectOk(invitee.api.api.characters.contributors.invites[":id"].accept.$post({ param: { id: invite.id } }));
     await expectOk(invitee.api.api.characters[":id"].contributors.leave.$post({ param: { id } }));
-    await expectStatus(invitee.api.api.characters[":id"].contributors.$get({ param: { id }, query: {} }), 403);
+    await expectStatus(invitee.api.api.characters[":id"].contributors.$get({ param: { id }, query: {} }), 404);
 
     const other = await createSignedInUser("removed");
     const second = await expectOk(

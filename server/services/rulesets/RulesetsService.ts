@@ -1,12 +1,7 @@
 import { include } from "@/lib/mixins.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import {
-  ConflictError,
-  ForbiddenError,
-  STALE_ENTITY_MESSAGE,
-  UnprocessableEntityError,
-} from "@/server/errors/index.ts";
+import { ConflictError, ForbiddenError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
   Activities,
   type Pagination,
@@ -15,7 +10,7 @@ import {
   RulesetSettings,
   StarredRulesets,
 } from "@/server/repositories/index.ts";
-import type { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { isAllowed, type RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -25,18 +20,6 @@ import { Publishes } from "./concerns/Publishes.ts";
 import { Stars } from "./concerns/Stars.ts";
 import { getReadableRuleset } from "./readableRuleset.ts";
 
-/** Whether a policy's check (`check`) lets the session act: refused (forbidden, or not now) is no. */
-function allows(check: () => unknown): boolean {
-  try {
-    check();
-    return true;
-  } catch (error) {
-    if (error instanceof ForbiddenError || error instanceof UnprocessableEntityError || error instanceof ConflictError)
-      return false;
-    throw error;
-  }
-}
-
 class RulesetsService extends include(Object, Archives, Publishes, Stars) {
   /**
    * What the session may do with a ruleset, as its policy decides each (`policy`), so a page offers what the server
@@ -45,12 +28,12 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
    */
   private permissionsOf(policy: RulesetsPolicy) {
     return {
-      canEditEntities: allows(() => policy.canUpdateEntity()),
-      canEditRuleset: allows(() => policy.canUpdate()),
-      canInviteContributors: allows(() => policy.canInviteContributors()),
+      canEditEntities: isAllowed(() => policy.canUpdateEntity()),
+      canEditRuleset: isAllowed(() => policy.canUpdate()),
+      canInviteContributors: isAllowed(() => policy.canInviteContributors()),
       canLeave: policy.contributorRole !== undefined,
-      canManageContributors: allows(() => policy.canManageContributors()),
-      canPublish: allows(() => policy.canPublish()),
+      canManageContributors: isAllowed(() => policy.canManageContributors()),
+      canPublish: isAllowed(() => policy.canPublish()),
     };
   }
 

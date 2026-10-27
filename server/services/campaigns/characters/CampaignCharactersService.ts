@@ -20,6 +20,7 @@ import {
   readCharacterInput,
   readChildInputs,
 } from "@/server/services/characters/index.ts";
+import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { CharacterVisibility } from "@/shared/campaigns.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -212,8 +213,10 @@ class CampaignCharactersService {
       const { campaign, policy } = await getReadableCampaign(tx, session, campaignId);
       const player = policy.canLinkCharacter();
 
-      const character = await Characters.findOne(tx, { id: characterId, userId: session.userId });
+      const character = await Characters.findOne(tx, { id: characterId });
       if (!character) throw new NotFoundError("Character not found");
+
+      (await CharactersPolicy.for(tx, session, character)).canLink();
 
       // The campaign's exact ruleset: not a fork of it, nor its parent.
       if (character.rulesetId !== campaign.rulesetId)
