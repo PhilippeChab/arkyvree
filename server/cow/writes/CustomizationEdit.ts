@@ -3,7 +3,7 @@ import { type CowData, Engine, type RulesetSources } from "@/engine/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Modifiers } from "@/server/repositories/index.ts";
 
-import { type CustomizationKind, type default as EditTarget } from "./EditTarget.ts";
+import { type CustomizationKind, type default as EditTarget, GONE_CUSTOMIZATION } from "./EditTarget.ts";
 import EntityEdit, { type NotFoundMessages } from "./EntityEdit.ts";
 
 /**
@@ -11,7 +11,7 @@ import EntityEdit, { type NotFoundMessages } from "./EntityEdit.ts";
  * (`missing`), and one deleted since the view was read, or a customization (`gone`).
  */
 const SOURCE_NOT_FOUND = {
-  gone: "Customization source no longer exists; refresh the entity",
+  gone: GONE_CUSTOMIZATION,
   missing: "Customization source not found in this ruleset",
 } satisfies NotFoundMessages;
 

@@ -12,10 +12,10 @@ const CUSTOMIZATION_REPOS = {
 } as const;
 
 /**
- * What refuses a customization deleted since the view was read, on the ruleset's own entity or on the copy a write
- * made: the user reads it as it is.
+ * What refuses a customization, or its source, deleted since the view was read, on the ruleset's own entity or on the
+ * copy a write made (`CustomizationEdit`'s `gone` too): the user reads it as it is.
  */
-const GONE_CUSTOMIZATION = "Customization source no longer exists; refresh the entity";
+export const GONE_CUSTOMIZATION = "Customization source no longer exists; refresh the entity";
 
 /**
  * The row a write to a ruleset's entity changes (`id`), as copy-on-write resolved the entity the write named
