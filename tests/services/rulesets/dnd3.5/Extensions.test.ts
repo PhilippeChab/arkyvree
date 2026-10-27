@@ -1428,7 +1428,7 @@ describe("an extension's content in a fork", () => {
     expect(
       (
         await EntitiesService.getEntityGroups(await ownerSessionOf(draft.id), draft.id, "feats", where, firstPage)
-      ).items.map((group) => group.displayName),
+      ).items.map((group) => group.name),
     ).toContain(search);
     const offered = await featsOffered(session, character.id, hexblade.id, list.id, search);
     expect(offered.items.map((feat) => feat.name)).toContain(search);

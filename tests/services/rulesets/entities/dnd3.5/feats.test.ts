@@ -199,9 +199,9 @@ describe("EntitiesService: feats", () => {
       { listedIn: combat },
       { limit: 10, page: 1 },
     );
-    expect(grouped.items.map((row) => ({ ...row, variantCount: Number(row.variantCount) }))).toMatchObject([
-      { displayName: "Cleave", group: null, variantCount: 1 },
-      { displayName: "Focus", group: "Focus", variantCount: 2 },
+    expect(grouped.items.map((row) => ({ ...row, count: Number(row.count) }))).toMatchObject([
+      { name: "Cleave", group: null, count: 1 },
+      { name: "Focus", group: "Focus", count: 2 },
     ]);
   });
 
