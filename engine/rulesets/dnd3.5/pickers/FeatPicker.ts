@@ -1,6 +1,12 @@
-import type { CharacterInput, PickFilters, PickGroupFilters } from "@/engine/core/module/index.ts";
+import type {
+  CharacterInput,
+  OptionGroupRow,
+  PickFilters,
+  PickGroupFilters,
+  StepOptionGroup,
+} from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import FeatEntity, { type PoolModifier } from "@/engine/rulesets/dnd3.5/entities/feats/FeatEntity.ts";
+import FeatEntity from "@/engine/rulesets/dnd3.5/entities/feats/FeatEntity.ts";
 import type { FeatPickQuery } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { FEAT_FAMILY, FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -8,23 +14,12 @@ import { FEAT_FAMILY, FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.
 import LevelPicker from "./LevelPicker.ts";
 
 /**
- * What a row of the grouped feat options tells beside its own columns: the pools its modifiers add slots to, whether
- * the character can take it, and the requirements it fails when it can't (a family's row: none until it's opened).
- */
-export interface FeatGroupDetails {
-  aptitudeModifiers: PoolModifier[];
-  eligible: boolean;
-  requirementTree: string | undefined;
-}
-
-/**
  * A feat picker for the character, from its rows: the pool's feats (`filters`, a family's when the query names one;
  * `groupFilters`, grouped by family), but those that don't stack it holds (`holder`: picked or granted at any of its
  * levels, a later one and a planned one too, or made possessed by its modifiers, the feats' and spells' picked so far
- * too), or picked so far; each described with the pools its modifiers add slots to, and a family's row described when
- * the picker opens it (`describeGroups`).
+ * too), or picked so far; a family's row described when the picker opens it (`describeGroups`).
  */
-export default class FeatPicker extends LevelPicker<{ aptitudeModifiers: PoolModifier[] }> {
+export default class FeatPicker extends LevelPicker {
   constructor(view: RulesetView, input: CharacterInput, query: FeatPickQuery) {
     super(view, input, query);
     const offered = {
@@ -40,7 +35,7 @@ export default class FeatPicker extends LevelPicker<{ aptitudeModifiers: PoolMod
     this.groupFilters = { ...offered, groups: this.feats.groupByFamily(offered.ids) };
   }
 
-  /** The feats' rules: the pools a feat's modifiers add slots to. */
+  /** The feats' rules: the families a feat is grouped in. */
   private readonly feats = new FeatEntity(this.view);
 
   /** What the picker offers, a family's feats when the query names one, and what it leaves out. */
@@ -49,34 +44,18 @@ export default class FeatPicker extends LevelPicker<{ aptitudeModifiers: PoolMod
   /** What the picker offers grouped by family: its feats, and the family each of them is grouped in. */
   readonly groupFilters: PickGroupFilters;
 
-  /** The pools each feat's modifiers add slots to. */
-  protected override detailsOf(rows: { id: string }[]) {
-    const pools = this.feats.describePoolModifiers(rows.map((row) => row.id));
-    return (row: { id: string }) => ({ aptitudeModifiers: pools.get(row.id) ?? [] });
-  }
-
-  /** A row of a feat's variants, which the picker opens into them: each variant says whether it's eligible. */
-  private asFamilyRow<T extends object>(row: T): T & FeatGroupDetails {
-    return { ...row, eligible: true, aptitudeModifiers: [], requirementTree: undefined };
-  }
-
   /**
-   * The grouped feat options of a page: a feat without variants described as a flat option is, a family's row
-   * eligible, its variants described when the picker opens it.
+   * A page of the grouped feat options as the step's: a feat without variants described as a flat option is, a
+   * family's row eligible, its variants described when the picker opens it.
    */
-  describeGroups<T extends { representativeId: string; variantCount: number }>(rows: T[]): (T & FeatGroupDetails)[] {
-    const singles = rows.filter((row) => row.variantCount === 1).map((row) => ({ id: row.representativeId }));
-    const described = new Map(this.describe(singles).map((option) => [option.id, option]));
-    return rows.map((row) => {
-      if (row.variantCount !== 1) return this.asFamilyRow(row);
-      const option = described.get(row.representativeId);
+  describeGroups(rows: OptionGroupRow[]): StepOptionGroup[] {
+    const singles = rows.filter((row) => row.count === 1);
+    const described = new Map(this.describeOptions(singles).map((option) => [option.id, option]));
+    return rows.map(({ count, description, group, id, name }) => {
+      const option = count === 1 ? described.get(id) : undefined;
       const eligible = option?.eligible ?? true;
-      return {
-        ...row,
-        eligible,
-        aptitudeModifiers: option?.aptitudeModifiers ?? [],
-        requirementTree: eligible ? undefined : option?.requirementTree,
-      };
+      const requirementTree = eligible ? undefined : option?.requirementTree;
+      return { count, description, eligible, group, id, name, ...(requirementTree && { requirementTree }) };
     });
   }
 }

@@ -1,20 +1,14 @@
-import { pdf } from "@react-pdf/renderer";
 import type { JobHelpers } from "graphile-worker";
 
-import { Engine } from "@/engine/index.ts";
-import { withRulesetScope } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
-import { isProduction } from "@/server/environment.ts";
+import { withTransaction } from "@/server/database/index.ts";
 import { Exports, Notifications } from "@/server/repositories/index.ts";
-import { getSlotUrl } from "@/server/services/attachments/index.ts";
 import {
   findExportableCharacter,
   getCharacterPdfTargetType,
-  readCharacterInput,
+  renderCharacterSheet,
 } from "@/server/services/characters/index.ts";
 import { publishWsEvent } from "@/server/websockets/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
-import { formatSheetFileName } from "@/shared/exports.ts";
 
 interface GeneratePdfPayload {
   /** Set when a Game Master exports a character of their campaign. */
@@ -24,7 +18,6 @@ interface GeneratePdfPayload {
   userId: string;
 }
 
-const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
 /** Tells the user their export failed: a notification, and the event that refreshes it (a failed publish is logged). */
@@ -61,25 +54,8 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
       return;
     }
 
-    const portraitUrl = await getSlotUrl("portrait", characterRecord.id);
-    const sheet = await withRulesetScope(db, characterRecord.rulesetId, async (scope) =>
-      Engine.for(scope)
-        .character(await readCharacterInput(db, characterRecord))
-        // Its exporters read its private notes: its editors, and its campaign's Game Master
-        .describeSheet({ diagnostics: !isProduction(), portraitUrl }, "show"),
-    );
-
-    const pdfBlob = await pdf(sheet).toBlob();
-
-    const arrayBuffer = await pdfBlob.arrayBuffer();
-    if (arrayBuffer.byteLength > MAX_PDF_SIZE_BYTES) {
-      throw new Error(
-        `PDF too large (${Math.round(arrayBuffer.byteLength / 1024 / 1024)}MB), max ${MAX_PDF_SIZE_BYTES / 1024 / 1024}MB`,
-      );
-    }
-    const pdfBuffer = Buffer.from(arrayBuffer);
-
-    const fileName = formatSheetFileName(characterName);
+    // Its exporters read its private notes: its editors, and its campaign's Game Master
+    const { data, fileName } = await renderCharacterSheet(characterRecord, "show");
     const expiresAt = new Date(Date.now() + ONE_HOUR_MS).toISOString();
 
     const exportId = await withTransaction(async (tx) => {
@@ -88,7 +64,7 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
         type: "pdf",
         mimeType: "application/pdf",
         fileName,
-        data: pdfBuffer,
+        data,
         expiresAt,
       });
 

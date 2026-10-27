@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 
 import { sessionMiddleware, validate } from "@/server/middlewares/index.ts";
+import { formatContentDisposition } from "@/server/routers/api/contentDisposition.ts";
 import { idParam } from "@/server/routers/api/validation.ts";
 import { ExportsService } from "@/server/services/exports/index.ts";
 
@@ -12,7 +13,7 @@ export default new Hono().use(sessionMiddleware).get("/:id/download", validate("
   return new Response(new Uint8Array(exportRecord.data), {
     headers: {
       "Content-Type": exportRecord.mimeType,
-      "Content-Disposition": `attachment; filename="${exportRecord.fileName}"`,
+      "Content-Disposition": formatContentDisposition("attachment", exportRecord.fileName),
     },
   });
 });

@@ -8,7 +8,7 @@ import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
-import { uniqueId } from "@/tests/support/seed.ts";
+import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
 /** A new user's character and another user invited to contribute to it; accepted unless `pending`. */
@@ -46,7 +46,7 @@ describe("CharacterContributorsService", () => {
       const { owner, ownerSession, invitee, character } = await setup(true);
       const { session: stranger } = await createTestUser("stranger");
       expect(CharacterContributorsService.inviteContributor(stranger, character.id, "x@example.com")).rejects.toThrow(
-        ForbiddenError,
+        NotFoundError,
       );
       expect(
         CharacterContributorsService.inviteContributor(ownerSession, character.id, owner.emailAddress),
@@ -135,7 +135,50 @@ describe("CharacterContributorsService", () => {
       expect((await list(ownerSession)).items.map((c) => c.email)).toEqual([invitee.emailAddress]);
       expect((await list(inviteeSession)).items).toHaveLength(1);
       const { session: stranger } = await createTestUser("stranger");
-      expect(list(stranger)).rejects.toThrow(ForbiddenError);
+      expect(list(stranger)).rejects.toThrow(NotFoundError);
+    });
+
+    test("answer whoever may not read the character as an unknown id: a stranger, a pending or a revoked invitee", async () => {
+      const { ownerSession, character, invite: active } = await setup();
+      const { user: pendingUser, session: pending } = await createTestUser("pending");
+      await CharacterContributorsService.inviteContributor(ownerSession, character.id, pendingUser.emailAddress);
+      const { user: revokedUser, session: revoked } = await createTestUser("revoked");
+      const revokedInvite = await CharacterContributorsService.inviteContributor(
+        ownerSession,
+        character.id,
+        revokedUser.emailAddress,
+      );
+      await CharacterContributorsService.acceptInvite(revoked, revokedInvite.id);
+      await CharacterContributorsService.revokeContributor(ownerSession, revokedInvite.id);
+      const { session: stranger } = await createTestUser("stranger");
+
+      /** What a call answers: its error's message, or that it went through. */
+      const answerOf = (call: Promise<unknown>) =>
+        call.then(
+          () => "answered",
+          (error: unknown) => (error instanceof NotFoundError ? `404 ${error.message}` : String(error)),
+        );
+      /** What each contributors' request answers `session` on the character (and its active contributor). */
+      const answersOf = async (session: Session, characterId: string, contributorId: string) => [
+        await answerOf(CharacterContributorsService.getContributors(session, characterId, {}, { limit: 10, page: 1 })),
+        await answerOf(CharacterContributorsService.inviteContributor(session, characterId, `x${uniqueId()}@e.com`)),
+        await answerOf(CharacterContributorsService.revokeContributor(session, contributorId)),
+        await answerOf(CharacterContributorsService.leaveCharacter(session, characterId)),
+      ];
+
+      const unknown = await answersOf(stranger, NIL_UUID, NIL_UUID);
+      expect(unknown).toEqual([
+        "404 Character not found",
+        "404 Character not found",
+        "404 Contributor not found",
+        "404 Character not found",
+      ]);
+      for (const session of [stranger, pending, revoked])
+        expect(await answersOf(session, character.id, active.id)).toEqual(unknown);
+      // Its owner reads it: leaving it is refused as not theirs
+      expect(await answerOf(CharacterContributorsService.leaveCharacter(ownerSession, character.id))).toBe(
+        "404 You are not a contributor of this character",
+      );
     });
 
     test("lose edit access when revoked or when they leave", async () => {

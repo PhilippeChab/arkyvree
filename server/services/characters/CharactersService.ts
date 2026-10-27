@@ -20,6 +20,7 @@ import {
   Visibility,
   visibilityMap,
 } from "@/server/repositories/index.ts";
+import { CharactersPolicy, isAllowed } from "@/server/services/policies/index.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -33,6 +34,24 @@ import { createNewCharacter } from "./newCharacterWrites.ts";
 import { enqueueCharacterPdf, findExportableCharacter } from "./pdf.ts";
 
 class CharactersService extends include(Object, Archives, Imports) {
+  /**
+   * What the session may do with a character it reads, as its policy decides each (`policy`), so its page offers what
+   * the server allows: edit it, change its portrait, archive it (and unarchive and delete it for good), share it, read,
+   * invite and manage its contributors. It may leave it while it contributes to it (`isActiveContributor`).
+   */
+  private permissionsOf(policy: CharactersPolicy) {
+    return {
+      canArchive: isAllowed(() => policy.canArchive()),
+      canEdit: policy.isEditable(),
+      canEditPortrait: policy.isPortraitEditable(),
+      canInviteContributors: isAllowed(() => policy.canInviteContributors()),
+      canLeave: policy.isActiveContributor,
+      canManageContributors: isAllowed(() => policy.canManageContributors()),
+      canReadContributors: isAllowed(() => policy.canReadContributors()),
+      canShare: isAllowed(() => policy.canShare()),
+    };
+  }
+
   /** A character's picks of a picked link's role (`role`) as a plan has them: its picks replaced. */
   private async writeLinkPicks(tx: Db, characterId: string, role: string, plan: LinkPicksPlan): Promise<void> {
     await CharacterLinks.delete(tx, { characterId, role });
@@ -93,18 +112,22 @@ class CharactersService extends include(Object, Archives, Imports) {
 
   /**
    * A character's sheet, as the API answers it: a player character's with its children's (3.5's bonded creatures), or a
-   * child's, which its parent's editors read. Its editors alone read it, so it carries its share token.
+   * child's, which its parent's editors read. Its editors alone read it (`canRead`), archived or not, so it carries its
+   * share token, and what they may do with it (`permissions`).
    */
   async getCharacter(session: Session, characterId: string) {
-    const record = await findEditableCharacterOrChild(db, characterId, session.userId, Visibility.All);
+    const record = await Characters.findOne(db, { id: characterId }, Visibility.All);
     if (!record) throw new NotFoundError("Character not found");
+
+    const policy = await CharactersPolicy.for(db, session, record);
+    policy.canRead();
 
     return await withRulesetScope(db, record.rulesetId, async (scope) => {
       const character = await readCharacterInput(db, record);
       const described = Engine.for(scope)
         .character(character)
         .describe(await readChildInputs(db, character, Visibility.All));
-      return { ...described, shareToken: record.shareToken };
+      return { ...described, shareToken: record.shareToken, permissions: this.permissionsOf(policy) };
     });
   }
 

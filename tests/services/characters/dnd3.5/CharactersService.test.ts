@@ -1,7 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
 import { and, eq } from "drizzle-orm";
-import { isValidElement } from "react";
 
 import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import type { Race } from "@/engine/rulesets/dnd3.5/index.ts";
@@ -26,11 +25,12 @@ import {
 } from "@/server/repositories/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
-import type { Character, Session } from "@/shared/relations.ts";
+import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { backdateLastChange, findLinks } from "@/tests/support/characters.ts";
-import { addRulesetContributor } from "@/tests/support/contributors.ts";
+import { addCharacterContributor, addRulesetContributor } from "@/tests/support/contributors.ts";
 import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
+import { createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { addCharacterLevel, findClassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestAttachment } from "@/tests/support/files.ts";
 import { queuedPdfJobs } from "@/tests/support/jobs.ts";
@@ -352,6 +352,58 @@ describe("CharactersService", () => {
       });
     });
 
+    test("answers what its reader may do with it, as its policy decides: its owner, a contributor, a bonded creature's", async () => {
+      const { masterId, bonded } = await createWizardWithFamiliar();
+      const owner = makeSession();
+      const { user, session: contributor } = await createTestUser("contributor");
+      await addCharacterContributor(masterId, user, SEED_USER_ID);
+      const permissionsOf = async (session: Session, id: string) =>
+        (await CharactersService.getCharacter(session, id)).permissions;
+      const NONE = {
+        canArchive: false,
+        canEdit: false,
+        canEditPortrait: false,
+        canInviteContributors: false,
+        canLeave: false,
+        canManageContributors: false,
+        canReadContributors: false,
+        canShare: false,
+      };
+
+      const ownerRights = {
+        ...NONE,
+        canArchive: true,
+        canEdit: true,
+        canEditPortrait: true,
+        canInviteContributors: true,
+        canManageContributors: true,
+        canReadContributors: true,
+        canShare: true,
+      };
+      expect(await permissionsOf(owner, masterId)).toEqual(ownerRights);
+      const contributorRights = { ...NONE, canEdit: true, canLeave: true, canReadContributors: true };
+      expect(await permissionsOf(contributor, masterId)).toEqual(contributorRights);
+      // A bonded creature is its master's editors' to edit, its portrait too, and nothing more
+      const childRights = { ...NONE, canEdit: true, canEditPortrait: true };
+      expect(await permissionsOf(owner, bonded.id)).toEqual(childRights);
+      expect(await permissionsOf(contributor, bonded.id)).toEqual(childRights);
+
+      // Archived, it's read-only: its owner may bring it back or delete it, a contributor may still leave it
+      await CharactersService.archiveCharacter(owner, masterId);
+      expect(await permissionsOf(owner, masterId)).toEqual({
+        ...NONE,
+        canArchive: true,
+        canManageContributors: true,
+        canReadContributors: true,
+      });
+      expect(await permissionsOf(contributor, masterId)).toEqual({
+        ...NONE,
+        canLeave: true,
+        canReadContributors: true,
+      });
+      expect(await permissionsOf(owner, bonded.id)).toEqual(NONE);
+    });
+
     test("refuses a missing character, and another user's", async () => {
       const { session: owner } = await createTestUser();
       const { session: other } = await createTestUser();
@@ -578,8 +630,8 @@ describe("CharactersService", () => {
       const shared = await CharacterSharingService.getSharedCharacter(first);
       expect(shared).toMatchObject({ id: character.id, name: character.name });
       expect(shared.blocks.map(({ key }) => key)).toContain("combat");
-      // The printed sheet: the document the route renders
-      expect(isValidElement(await CharacterSharingService.generateSharedPdf(first))).toBe(true);
+      // The printed sheet: the PDF the route sends
+      expect((await CharacterSharingService.generateSharedPdf(first)).data.subarray(0, 5).toString()).toBe("%PDF-");
 
       const second = (await CharacterSharingService.generateShareToken(session, character.id)).shareToken!;
       expect(second).not.toBe(first);
@@ -592,19 +644,14 @@ describe("CharactersService", () => {
       expect(CharacterSharingService.generateSharedPdf(NIL_UUID)).rejects.toThrow(NotFoundError);
     });
 
-    test("prints a shared character as its share page reads it: from rows without private notes nor share token", async () => {
+    test("prints a shared character's sheet named after it, as its export is", async () => {
       const { session } = await createTestUser();
-      const character = await createCharacterAs(session);
-      await Characters.update(db, { privateNotes: "Plans to betray the party" }, { id: character.id });
+      const character = await createCharacterAs(session, { name: "Ada: Draft/1" });
       const { shareToken } = await CharacterSharingService.generateShareToken(session, character.id);
 
-      // The document's props: the character it prints, built from the rows its reader reads
-      const printed = await CharacterSharingService.generateSharedPdf(shareToken!);
-      const { detailedCharacter } = printed.props as {
-        detailedCharacter: { character: Character; components: { identity: { getPrivateNotes(): string } } };
-      };
-      expect(detailedCharacter.character).toMatchObject({ id: character.id, privateNotes: null, shareToken: null });
-      expect(detailedCharacter.components.identity.getPrivateNotes()).toBe("");
+      expect(await CharacterSharingService.generateSharedPdf(shareToken!)).toMatchObject({
+        fileName: "Ada_ Draft_1-sheet.pdf",
+      });
     });
   });
 
