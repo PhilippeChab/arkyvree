@@ -1,7 +1,7 @@
 import { addJob, db, withTransaction } from "@/server/database/index.ts";
 import { pingWorker } from "@/server/queue.ts";
-import { Activities, Campaigns, Characters, PlayerCharacters, Visibility } from "@/server/repositories/index.ts";
-import { CampaignsPolicy } from "@/server/services/policies/index.ts";
+import { Activities, Characters, PlayerCharacters } from "@/server/repositories/index.ts";
+import { findReadableCampaign } from "@/server/services/campaigns/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Character, Session } from "@/shared/relations.ts";
 
@@ -48,16 +48,17 @@ export async function enqueueCharacterPdf(
 /**
  * The character `userId` may export as a PDF, or null: one they own or
  * contribute to (or a child of such a parent: 3.5's bonded creature). Through
- * `campaignId`, the character must be linked to that campaign, and its Game
- * Master may export it too. Checked when the export is queued and again when
- * the worker runs it, so access revoked in between is honored.
+ * `campaignId`, the character must be linked to that campaign, which they may
+ * read (`findReadableCampaign`: a member), and its Game Master may export it
+ * too. Checked when the export is queued and again when the worker runs it, so
+ * access revoked in between is honored.
  */
 export async function findExportableCharacter(userId: string, characterId: string, campaignId?: string) {
   if (campaignId) {
     if (!(await PlayerCharacters.findOne(db, { characterId, campaignId }))) return null;
-    const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
-    if (campaign && (await CampaignsPolicy.for(db, { userId }, campaign)).isGameMaster())
-      return (await Characters.findOne(db, { id: characterId })) ?? null;
+    const readable = await findReadableCampaign(db, { userId }, campaignId);
+    if (!readable) return null;
+    if (readable.policy.isGameMaster()) return (await Characters.findOne(db, { id: characterId })) ?? null;
   }
   return findEditableCharacterOrChild(db, characterId, userId);
 }

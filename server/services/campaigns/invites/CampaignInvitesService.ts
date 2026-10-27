@@ -3,8 +3,8 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, Invites, type Pagination, Players, Visibility } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { findReadableCampaign, getReadableCampaign } from "@/server/services/campaigns/readableCampaign.ts";
 import { getPendingInvite, saveInviteAnswer } from "@/server/services/invites/index.ts";
-import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
 
@@ -60,10 +60,7 @@ class CampaignInvitesService {
     where: { orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
     pagination: Pagination,
   ) {
-    const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
-    if (!campaign) throw new NotFoundError("Campaign not found");
-
-    (await CampaignsPolicy.for(db, session, campaign)).canRead();
+    await getReadableCampaign(db, session, campaignId);
 
     return await Invites.findPage(db, { campaignId, ...where }, pagination);
   }
@@ -77,12 +74,13 @@ class CampaignInvitesService {
 
   async revokeInvite(session: Session, inviteId: string) {
     return await withTransaction(async (tx) => {
+      // Whoever may not read its campaign gets the answer an unknown invite gets, before any other check: its slot is
+      // read archived or not (a slot is archived with its user's account, its rejected invite left behind)
       const invite = await Invites.findOne(tx, { id: inviteId });
-      if (!invite) throw new NotFoundError("Invite not found");
-
-      const campaign = await this.getInviteCampaign(tx, invite);
-
-      (await CampaignsPolicy.for(tx, session, campaign)).canUpdate();
+      const player = invite && (await Players.findOne(tx, { id: invite.playerId }, Visibility.All));
+      const readable = player && (await findReadableCampaign(tx, session, player.campaignId));
+      if (!invite || !readable) throw new NotFoundError("Invite not found");
+      readable.policy.canUpdate();
 
       if (invite.status !== "Pending") throw new ConflictError("Only pending invites can be revoked");
 
