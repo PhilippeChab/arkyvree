@@ -21,6 +21,7 @@ import type {
   PartialReading,
   PartialSheet,
   PlacementDescription,
+  RulesetCard,
   RulesetSheet,
   ScoreBounds,
   ScoresCreation,
@@ -60,26 +61,39 @@ import type {
  * one, a creation pick), its inventory and a sheet's row's columns (`CharacterColumns`). So are the checks that guard a
  * character's privacy and integrity, which no ruleset can skip: a reader reads the private notes the reading gives
  * them, a sheet answers no share token (whether a reader reads it is the server's access decision), a partly seen
- * character's card names none of its build and its partial reading is an allowlist (`PartialSheet`), an entity a
- * request names is one its ruleset's view shows (a pick's, a link's, an item: `RequestIds`, which reads a source's id
- * as its copy's), an entry's charges agree, and a score is within its link's bounds. Their operations are this part's,
- * over hooks for what a ruleset describes or checks its own way (`describeFull`, `describePartial`, `describeDocument`,
- * `describeFullCard`, `planPlacement`, a scored link's creation, `describeScores`, a creation pick's own check and
- * picker, `checkCreationPick` and `openPicker`, and a picked link's room and fit: `describeLinkRoom`, `fitLinks`).
+ * character's card shows neither its build nor its description and its partial reading is an allowlist
+ * (`PartialSheet`), an entity a request names is one its ruleset's view shows (a pick's, a link's, an item:
+ * `RequestIds`, which reads a source's id as its copy's), an entry's charges agree, and a score is within its link's
+ * bounds. Their operations are this part's, over hooks for what a ruleset describes or checks its own way
+ * (`describeFull`, `describePartial`, `describeDocument`, `describeFullCard`, `planPlacement`, a scored link's
+ * creation, `describeScores`, a creation pick's own check and picker, `checkCreationPick` and `openPicker`, and a
+ * picked link's room and fit: `describeLinkRoom`, `fitLinks`).
  */
 export default abstract class CharactersPart<D extends Descriptions> {
   /** The module's storage, whose character's roles name the kinds this part's requests name. */
   constructor(private readonly storage: StorageDeclaration) {}
 
-  /**
-   * The card of a character whose ruleset a list didn't read (an archived ruleset's), which no ruleset describes: a chip
-   * saying it's unknown alone, which a partly seen character shows too.
-   */
-  static readonly UNREAD_CARD: CharacterCard = { chips: [{ label: "Unknown", partial: true, tone: "secondary" }] };
+  /** The chip of a character whose ruleset a list didn't read, which no ruleset describes: it's unknown. */
+  private static readonly UNKNOWN_CHIP: CardChip = { label: "Unknown", partial: true, tone: "secondary" };
 
   /** An amount of a scored link's, by entity id: each a whole number within its bounds. */
   private static boundedScores({ max, min }: ScoreBounds) {
     return z.record(z.string(), z.number().int().min(min).max(max));
+  }
+
+  /**
+   * A character's card (`CharacterCard`): its row's id and name, and its description and its ruleset's chips (`chips`),
+   * each its declared keys alone; a partly seen one's (`partial`) no description, and the chips its ruleset marks as
+   * its partial reading's alone.
+   */
+  private static cardOf(character: CharacterRecord, chips: CardChip[], partial: boolean): CharacterCard {
+    const shown = partial ? chips.filter((chip) => chip.partial) : chips;
+    return {
+      id: character.id,
+      name: character.name,
+      description: partial ? null : character.description,
+      chips: shown.map((chip) => CharactersPart.chipOf(chip)),
+    };
   }
 
   /** An entry's charges: both set or both null, and no more remaining than total. */
@@ -166,6 +180,15 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
+   * The card of a character whose ruleset a list didn't read (`character`, an archived ruleset's), which no ruleset
+   * describes: its row's columns as any card's, and a chip saying it's unknown alone, which a partly seen character
+   * (`partial`) shows too.
+   */
+  static describeUnreadCard(character: CharacterRecord, partial: boolean): CharacterCard {
+    return CharactersPart.cardOf(character, [CharactersPart.UNKNOWN_CHIP], partial);
+  }
+
+  /**
    * Refuses a creation pick (`entity`, the one a new character's single link of `role` names) a ruleset's rules don't
    * let a new character make (3.5's race of a kind that isn't a player character's).
    */
@@ -189,15 +212,15 @@ export default abstract class CharactersPart<D extends Descriptions> {
   protected abstract describeFull(view: RulesetView, character: CharacterInput, children: CharacterInput[]): D["sheet"];
 
   /**
-   * The card of a character (`character`, its row without its private notes nor its share token, with its
-   * advancements, `advancements`), as a list of characters shows it to a reader who sees all of it, named as its
-   * ruleset's view names what it shows, a copied or renamed one by its own name.
+   * What the ruleset shows on a character's card (`character`, its row without its private notes nor its share token,
+   * with its advancements, `advancements`) past its row's columns, as a list of characters shows it to a reader who sees
+   * all of it: its chips, named as its ruleset's view names what they show, a copied or renamed one by its own name.
    */
   protected abstract describeFullCard(
     view: RulesetView,
     character: CharacterRecord,
     advancements: StoredAdvancement[],
-  ): CharacterCard;
+  ): RulesetCard;
 
   /**
    * What the ruleset shows of an inventory entry (`entry`, of `item`, its fields its template's of those it holds none
@@ -332,9 +355,10 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * The card of a character (`character`, with its advancements, `advancements`), as a list of characters shows it
-   * (`describeFullCard`, from its row without its private notes nor its share token): each chip its declared keys
-   * alone, and a partly seen one's (`partial`) the chips its ruleset marks as its partial reading's alone.
+   * The card of a character (`character`, with its advancements, `advancements`), as a list of characters shows it: its
+   * row's id, name and description, and its ruleset's chips (`describeFullCard`, from its row without its private
+   * notes nor its share token), each its declared keys alone. A partly seen one's (`partial`) has no description, and
+   * the chips its ruleset marks as its partial reading's alone.
    */
   describeCard(
     view: RulesetView,
@@ -344,8 +368,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
   ): CharacterCard {
     // A card shows no notes nor share token: its ruleset describes the row without them
     const { chips } = this.describeFullCard(view, CharactersPart.rowAs(character, "hide"), advancements);
-    const shown = partial ? chips.filter((chip) => chip.partial) : chips;
-    return { chips: shown.map((chip) => CharactersPart.chipOf(chip)) };
+    return CharactersPart.cardOf(character, chips, partial);
   }
 
   /**

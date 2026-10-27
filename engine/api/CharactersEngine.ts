@@ -14,8 +14,8 @@ export default class CharactersEngine {
   ) {}
 
   /**
-   * A character's card, as a list shows it, as its ruleset describes it: its chips; a partly seen one's, those its
-   * ruleset marks as its partial reading's alone.
+   * A character's card, as a list shows it: its id, name and description, and its chips as its ruleset describes them;
+   * a partly seen one's, no description and the chips its ruleset marks as its partial reading's alone.
    */
   describeCard(...args: Args<"describeCard">) {
     return this.module.characters.describeCard(this.view, ...args);

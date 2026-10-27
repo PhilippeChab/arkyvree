@@ -160,22 +160,14 @@ class CampaignCharactersService {
           .map((id) => characterMap.get(id))
           .filter((char): char is NonNullable<typeof char> => char !== undefined);
 
-        // Map to final format, a Partial character's card its partial reading's
+        // Each card as the engine describes it (a Partial character's its partial reading's), with its link's facts
         const enrichedCharacters = orderedCharacters.map((char) => {
           const meta = characterMeta.get(char.id);
-          const isOwn = meta?.playerId === member.id;
-          const isPartial = partialIds.has(char.id);
-
-          const card = cards.get(char.id)!;
-
           return {
-            id: char.id,
-            name: char.name,
-            description: isPartial ? null : char.description,
-            chips: card.chips,
+            ...cards.get(char.id)!,
             visibility: meta?.visibility ?? "Private",
-            isOwn,
-            isPartial,
+            isOwn: meta?.playerId === member.id,
+            isPartial: partialIds.has(char.id),
           };
         });
 

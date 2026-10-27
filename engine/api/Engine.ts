@@ -1,6 +1,7 @@
-import { CharactersPart } from "@/engine/core/module/index.ts";
+import { CharactersPart, type StoredAdvancement } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
+import type { Character } from "@/shared/relations.ts";
 
 import ContentEngine from "./ContentEngine.ts";
 import CopyOnWriteEngine from "./CopyOnWriteEngine.ts";
@@ -14,16 +15,29 @@ import StorageEngine from "./StorageEngine.ts";
  * The engine's entry: what code outside it asks the rules, as the client asks the server through its API. A ruleset's
  * rules answer through a handle bound to its view (`Engine.for(scope)`), and through it to what they're about
  * (`.character(input)`, `.entities(type)`, `.skills()`); a base rules' content before any view (`forRules`); what
- * every base rules' rulesets share (`rules`); and copy-on-write, which builds the view (`copyOnWrite`). Which ruleset
- * answers is the engine's to know.
+ * every base rules' rulesets share (`rules`); a list's card, its ruleset read or not (`describeCard`); and
+ * copy-on-write, which builds the view (`copyOnWrite`). Which ruleset answers is the engine's to know.
  */
 export default class Engine {
-  /** The card of a character whose ruleset a list didn't read (an archived ruleset's): the core's, no ruleset's. */
-  static readonly UNREAD_CARD = CharactersPart.UNREAD_CARD;
-
   /** The copy-on-write the cache builds a ruleset's view with, and its writes copy an entity by. */
   static copyOnWrite() {
     return new CopyOnWriteEngine();
+  }
+
+  /**
+   * A character's card (`character`, with its advancements, `advancements`), as a list shows it, partly seen or not
+   * (`partial`): as its ruleset's view (`view`) describes it (`characters().describeCard`), or the core's for a
+   * character whose ruleset the list didn't read (an archived ruleset's, no `view`), which no ruleset describes.
+   */
+  static describeCard(
+    view: RulesetView | undefined,
+    character: Character,
+    advancements: StoredAdvancement[],
+    partial: boolean,
+  ) {
+    return view
+      ? Engine.for(view).characters().describeCard(character, advancements, partial)
+      : CharactersPart.describeUnreadCard(character, partial);
   }
 
   /** The engine bound to a ruleset's view: its rules, by what they're about. */
