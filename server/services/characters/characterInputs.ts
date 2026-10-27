@@ -1,37 +1,31 @@
 import type { Db } from "@/drizzle/database.ts";
 import type { CharacterInput, CharacterRows } from "@/engine/index.ts";
 import {
-  Campaigns,
   CharacterAdvancements,
   CharacterInventory,
   CharacterLinks,
   Characters,
   Modifiers,
   Picks,
-  PlayerCharacters,
-  Players,
   Requirements,
   Visibility,
 } from "@/server/repositories/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
 /**
- * The character's own rows (`CharacterRows`), read as stored through `database`: its seat in a campaign, its links of
- * each role it holds many of, its inventory, its advancements and their picks by step, and the modifiers set on the
- * character, then their requirements.
+ * The character's own rows (`CharacterRows`), read as stored through `database`: its links of each role it holds many
+ * of, its inventory, its advancements and their picks by step, and the modifiers set on the character, then their
+ * requirements.
  */
 async function readCharacterRows(database: Db, character: Character): Promise<CharacterRows> {
   const characterId = character.id;
-  const playerCharacter = await PlayerCharacters.findOne(database, { characterId });
-  const player = playerCharacter ? await Players.findOne(database, { id: playerCharacter.playerId }) : undefined;
-  const campaign = player ? await Campaigns.findOne(database, { id: player.campaignId }) : undefined;
   const links = await CharacterLinks.findPerRole(database, { characterId });
   const inventory = await CharacterInventory.findMany(database, { characterId });
   const advancements = await CharacterAdvancements.findMany(database, { characterId });
   const picks = await Picks.findPerStep(database, { advancementIds: advancements.map(({ id }) => id) });
   const modifiers = await Modifiers.findMany(database, { sourceIds: [characterId] });
   const requirements = await Requirements.findMany(database, { entityIds: modifiers.map((modifier) => modifier.id) });
-  return { player, campaign, links, inventory, advancements, picks, modifiers, requirements };
+  return { links, inventory, advancements, picks, modifiers, requirements };
 }
 
 /**

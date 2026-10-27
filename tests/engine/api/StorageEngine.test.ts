@@ -101,12 +101,12 @@ describe("A module's storage", () => {
     expect(schema.unionLinks.length).toBeGreaterThan(0);
   });
 
-  test("reads the kinds a user customizes into the view's kinds, and every stored field's owner", () => {
+  test("reads the kinds a user customizes into the view's kinds, and describes every stored field's owner", () => {
     const storage = StorageEngine.shared();
     const { fieldDefs } = storage.registries();
-    // Every stored field of an entity or a ruleset is its owner's, as its module declares them (an owner may hold links
-    // alone: a save, its ability)
-    const owners = storage.fieldOwners();
+    // Every stored field of an entity or a ruleset is its owner's, as its module declares them, whose form the rules
+    // describe (an owner may hold links alone: a save, its ability)
+    const owners = Object.values(Engine.rules().describeAll()).flatMap(({ fields }) => Object.keys(fields));
     for (const def of fieldDefs.filter(({ ownerKind }) => ownerKind !== "character"))
       expect(owners).toContain(def.ownerType);
     for (const { customizable, type } of storage.viewSchema().kinds)

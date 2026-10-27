@@ -120,7 +120,6 @@ export default class PcgenImport {
     };
     const rows = {
       advancements: [],
-      campaign: undefined,
       inventory: [],
       links: {
         score: abilities.map(({ amount, entityId }) => ({
@@ -134,7 +133,6 @@ export default class PcgenImport {
       },
       modifiers: [],
       picks: { hp: [], abilities: [], skills: [], feats: [], spells: [] },
-      player: undefined,
       requirements: [],
     };
     return { record, rows };

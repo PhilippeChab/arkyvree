@@ -283,14 +283,6 @@ export default class StorageEngine {
   }
 
   /**
-   * The types whose owners hold fields, as their modules declare them: kinds' (3.5's feats, items, spells, races,
-   * classes, class levels, skills and languages) and the rulesets' (their Settings).
-   */
-  fieldOwners(): string[] {
-    return Object.keys(this.fields);
-  }
-
-  /**
    * An owner's fields as a view holds them (of `ownerType`, off its rows' values: `values`, each a field's and its value,
    * a set's in their stored order): a single field's value, a set's in its declared order, its fields in theirs
    * (`DeclaredFields`).

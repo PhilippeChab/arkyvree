@@ -98,17 +98,37 @@ describe("a ruleset's nouns", () => {
           "client/src/fresh/jsx.tsx":
             "const Cost = (props: { costGp: number }) => props.costGp;\nexport const t = <Cost costGp={1} />;\n",
           "tests/routers/fresh/items.test.ts": "export const body = { costGp: 1 };\n",
+          // A computed key, a computed read, a class's public member and method, an import and an export, a shorthand,
+          // a method signature's string key and an enum's string member
+          "engine/rulesets/dnd3.5/fresh/computed.ts": 'export const row = { ["costGp"]: 1 };\n',
+          "engine/rulesets/dnd3.5/fresh/read.ts":
+            'export const read = (row: Record<string, number>) => row["costGp"];\n',
+          "engine/rulesets/dnd3.5/fresh/members.ts":
+            "export class Rows {\n  levelFeat = 1;\n\n  targetTable() {\n    return 1;\n  }\n}\n",
+          "engine/rulesets/dnd3.5/fresh/imported.ts":
+            'import { sourceItemId } from "./x.ts";\nexport const id = sourceItemId;\n',
+          "engine/rulesets/dnd3.5/fresh/exported.ts": "const characterLevelId = 1;\nexport { characterLevelId };\n",
+          "engine/rulesets/dnd3.5/fresh/shorthand.ts": "const costGp = 1;\nexport const row = { costGp };\n",
+          "engine/rulesets/dnd3.5/fresh/signature.ts": 'export interface Rows {\n  "sourceItemId"(): void;\n}\n',
+          "engine/rulesets/dnd3.5/fresh/enum.ts": 'export enum Columns {\n  "target_table" = 1,\n}\n',
+          // 3.5's codegen keeps `costGp` alone, and no other folder of the codegen keeps it
+          "codegen/dnd3.5/fresh/name.ts": "export const primaryAbilityId = 1;\n",
+          "codegen/core/fresh/cost.ts": "export const costGp = 1;\n",
           // A table's name, imported or read, in the server and shared/
           "server/fresh/table.ts": 'import { getTableName } from "drizzle-orm";\nexport const name = getTableName;\n',
           "shared/fresh/table.ts": 'import * as orm from "drizzle-orm";\nexport const name = orm.getTableName;\n',
-          // The migrations that drop them and their tests, a name's own homes (the codegen's scraped cost, the test
-          // that sends the old column to see it refused), a string, a comment, a name that holds one (a level's feats),
-          // the live names, and a script's table name
-          "drizzle/0100_fresh.ts": "export const targetTable = 1;\n",
+          "server/fresh/computed.ts": 'import * as orm from "drizzle-orm";\nexport const name = orm["getTableName"];\n',
+          // The migrations' tests, a name's own homes (3.5's codegen's scraped cost, the test that sends the old column
+          // to see it refused), a string, a type's literal, a template's key, an export's string name, a comment, a name
+          // that holds one (a level's feats), the live names, and a script's table name
           "tests/scripts/db/fresh.test.ts": "export const row = { target_table: 1, costGp: 2 };\n",
           "codegen/dnd3.5/fresh/items.ts": "export interface Scraped {\n  costGp: number;\n}\n",
           "tests/routers/api/rulesets/entities/dnd3.5/items.test.ts": "export const body = { costGp: 1 };\n",
           "engine/core/fresh/string.ts": 'export const column = "costGp";\n',
+          "engine/core/fresh/omitted.ts":
+            'import type { Row } from "./x.ts";\nexport type Rest = Omit<Row, "costGp">;\n',
+          "engine/core/fresh/template.ts": "export const row = { [`costGp`]: 1 };\n",
+          "engine/core/fresh/named.ts": 'const cost = 1;\nexport { cost as "costGp" };\n',
           "engine/core/fresh/comment.ts": "// An item's cost was its `costGp` column\nexport const cost = 1;\n",
           "engine/rulesets/dnd3.5/fresh/plural.ts": "export const levelFeats = [];\n",
           "engine/rulesets/dnd3.5/fresh/live.ts":
@@ -122,10 +142,29 @@ describe("a ruleset's nouns", () => {
       "dropped-names client/src/fresh/jsx.tsx",
       "dropped-names client/src/fresh/jsx.tsx",
       "dropped-names client/src/fresh/jsx.tsx",
+      "dropped-names codegen/core/fresh/cost.ts",
+      "dropped-names codegen/dnd3.5/fresh/name.ts",
       "dropped-names engine/rulesets/dnd3.5/fresh/class.ts",
+      "dropped-names engine/rulesets/dnd3.5/fresh/computed.ts",
+      "dropped-names engine/rulesets/dnd3.5/fresh/enum.ts",
+      // Its declaration and its export
+      "dropped-names engine/rulesets/dnd3.5/fresh/exported.ts",
+      "dropped-names engine/rulesets/dnd3.5/fresh/exported.ts",
+      // Its import and its read
+      "dropped-names engine/rulesets/dnd3.5/fresh/imported.ts",
+      "dropped-names engine/rulesets/dnd3.5/fresh/imported.ts",
       "dropped-names engine/rulesets/dnd3.5/fresh/key.ts",
       "dropped-names engine/rulesets/dnd3.5/fresh/member.ts",
+      // Its field and its method
+      "dropped-names engine/rulesets/dnd3.5/fresh/members.ts",
+      "dropped-names engine/rulesets/dnd3.5/fresh/members.ts",
       "dropped-names engine/rulesets/dnd3.5/fresh/name.ts",
+      "dropped-names engine/rulesets/dnd3.5/fresh/read.ts",
+      // Its declaration and its shorthand
+      "dropped-names engine/rulesets/dnd3.5/fresh/shorthand.ts",
+      "dropped-names engine/rulesets/dnd3.5/fresh/shorthand.ts",
+      "dropped-names engine/rulesets/dnd3.5/fresh/signature.ts",
+      "dropped-names server/fresh/computed.ts",
       "dropped-names server/fresh/private.ts",
       "dropped-names server/fresh/string.ts",
       // Its import and its read
