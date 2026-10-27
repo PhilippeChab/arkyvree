@@ -22,18 +22,19 @@ export default class SheetSummaries {
    * partly seen character's has none (`{}`).
    */
   static describe(classes: SheetClasses): SheetSummary {
-    // A level's word, as a label ("Level", "Levels") and as a sentence says it ("level", "levels")
+    // A level's word, as a label ("Level", "Levels") and as a sentence says it ("level")
     const { many, one } = LEVEL_WORD;
-    const [manyLower, oneLower] = [many.toLowerCase(), one.toLowerCase()];
+    const oneLower = one.toLowerCase();
     return {
       separator: ClassLevels.SEPARATOR,
       words: {
         add: `Add ${one}`,
         removeLast: `Remove Last ${one}`,
         removeLastMessage: `Are you sure you want to remove the last ${oneLower}? This action cannot be undone.`,
+        // The character's own levels, not a class level's position
         deleteMessage:
-          `Are you sure you want to permanently delete this character? Its ${manyLower}, abilities, inventory, ` +
-          "attachments and customizations go with it. This action cannot be undone.",
+          "Are you sure you want to permanently delete this character? Its levels, abilities, inventory, attachments " +
+          "and customizations go with it. This action cannot be undone.",
         removed: `${one} removed`,
         removeFailed: `Failed to remove ${oneLower}`,
       },

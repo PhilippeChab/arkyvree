@@ -25,13 +25,10 @@ export interface EntityLinks {
   planRemove(toId: string): LinkRemovePlan;
 }
 
-/**
- * An entity's progression (a class's levels at once): what its tabs read, and what one save of them writes, but what
- * refuses it when what it writes is gone, which the engine names in the rules' words (`ProgressionEngine`).
- */
+/** An entity's progression (a class's levels at once): what its tabs read, and what one save of them writes. */
 export interface EntityProgression {
   describe(): unknown;
-  plan(sent: unknown): Omit<ProgressionPlan, "gone"> & { owner: PlanOwner & { updatedAt: string } };
+  plan(sent: unknown): ProgressionPlan & { owner: PlanOwner & { updatedAt: string } };
 }
 
 /** An entity's tables, by name (a class's spells per day): each described. */

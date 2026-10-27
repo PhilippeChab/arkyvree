@@ -19,7 +19,8 @@ import StorageEngine from "./StorageEngine.ts";
  * and the programs they import characters from, and the kinds a fork restores. What a kind can do is its rules' class's
  * (`KindCapabilities`) and its storage's (`StorageEngine`), which its description reads past its declaration's words.
  * Every module's kinds are described once as it's built (`shared`, as the server loads), so a declaration its rules or
- * its storage contradict fails then, not on a request.
+ * its storage contradict fails then, not on a request. It never takes a ruleset's view or scope, only base rules and
+ * types, which is why `arkyvree/one-engine-op` counts none of its answers as an operation.
  */
 export default class RulesEngine {
   constructor(
