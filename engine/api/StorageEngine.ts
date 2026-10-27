@@ -507,8 +507,9 @@ export default class StorageEngine {
   /**
    * What a write of an owner's fields (`fields`, of `ownerType`: an entity type, `rulesets`, a character's) stores, by
    * field, whoever writes it (a seed, a form's save, an import), so the same values store the same rows
-   * (`FieldWrites`): a new owner's (`creating`) or an existing one's. A character's fields, which no spec declares,
-   * each by its stored kind (`Field.writtenValues`: no empty text, no false flag).
+   * (`FieldWrites`): a new owner's (`creating`) or an existing one's. A character's fields, which no module's `fields`
+   * declare (its module's codec plans them by its own declaration), each by its stored kind (`Field.writtenValues`: no
+   * empty text, no false flag).
    */
   writtenFields(ownerType: string, fields: Readonly<Record<string, FieldWrite>>, creating: boolean) {
     if (!(ownerType in this.fields)) {

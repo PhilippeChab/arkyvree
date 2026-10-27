@@ -13,9 +13,9 @@ import { isOneOf } from "@/shared/isOneOf.ts";
 import Decimals from "./Decimals.ts";
 
 /**
- * What a field's write rule reads of it (`Field.writtenValues`): its kind, a stored leaf's or, for a field no spec
- * declares (a character's), its stored value's, and what a leaf adds: its default, whether it tells a false flag from
- * none (`absent`), whether it's always written (`write`).
+ * What a field's write rule reads of it (`Field.writtenValues`): its kind, a stored leaf's or, for a field no module's
+ * `fields` declare (a character's), its stored value's, and what a leaf adds: its default, whether it tells a false
+ * flag from none (`absent`), whether it's always written (`write`).
  */
 export interface WrittenKind {
   absent?: null;
@@ -163,8 +163,9 @@ export default class Field {
    * kind, a set's values, as stored; none or null, nothing): a set's values each once; a flag's when it's true, or when
    * the leaf tells a false one from none (`absent: null`) or is always written (`write`); a number unless it's its
    * default, or always; a text unless it's empty, its default then when always written; a choice's unless it's empty.
-   * Several values of a single leaf are what they are: the write path refuses them. A field no spec declares (a
-   * character's) is written by its stored kind alone (`WrittenKind`): no false flag, no empty text.
+   * Several values of a single leaf are what they are: the write path refuses them. A field no module's `fields`
+   * declare (a character's, which its module's codec wrote by its own declaration) is written by its stored kind alone
+   * (`WrittenKind`): no false flag, no empty text.
    */
   static writtenValues(leaf: WrittenKind, value: unknown): FieldValue[] {
     if (value === undefined || value === null) return [];

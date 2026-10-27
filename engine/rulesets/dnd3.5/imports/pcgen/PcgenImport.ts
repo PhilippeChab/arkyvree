@@ -3,23 +3,15 @@ import { ImportReport } from "@/engine/core/imports/index.ts";
 import type { CharacterInput, ImportedRow, ImportOwner, ImportPlan, ScorePlan } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import { type Dnd35CharacterFieldsWrite, RACE_ROLE } from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
+import CharacterValues, { RACE_ROLE } from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import Dnd35Characters from "@/engine/rulesets/dnd3.5/characters/Dnd35Characters.ts";
 import type { ImportedCharacter } from "@/engine/rulesets/dnd3.5/imports/imported.ts";
 import { DND35_STORAGE } from "@/engine/rulesets/dnd3.5/storage/Dnd35Storage.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { MAX_CHARACTER_NAME_LENGTH } from "@/shared/characters.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
-import {
-  CHARACTER_AGE,
-  CHARACTER_ALIGNMENT,
-  CHARACTER_DEITY,
-  CHARACTER_GENDER,
-  CHARACTER_HEIGHT,
-  CHARACTER_WEIGHT,
-  CHARACTER_XP,
-} from "@/vocabulary/dnd3.5/fields/index.ts";
-import { type Gender, GENDER_OPTIONS } from "@/vocabulary/dnd3.5/identity.ts";
+import { CHARACTER_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
+import type { Gender } from "@/vocabulary/dnd3.5/identity.ts";
 
 import GearImport from "./GearImport.ts";
 import LevelsImport, { type LevelStop } from "./LevelsImport.ts";
@@ -28,11 +20,7 @@ import PcgenNames from "./PcgenNames.ts";
 import ScoresImport from "./ScoresImport.ts";
 
 /** The row a 3.5 import fills: its name, notes and description, each of its fields' values, and its race's link. */
-type FilledRow = ImportedRow &
-  Required<Pick<ImportedRow, "description">> & {
-    fields: Dnd35CharacterFieldsWrite;
-    links: { [RACE_ROLE]: string };
-  };
+type FilledRow = ImportedRow & Required<Pick<ImportedRow, "description">> & { links: { [RACE_ROLE]: string } };
 
 /** The inches in a foot, which a height PCGen writes in inches is said in. */
 const INCHES_PER_FOOT = 12;
@@ -60,10 +48,15 @@ export default class PcgenImport {
     return `${Math.floor(whole / INCHES_PER_FOOT)}' ${whole % INCHES_PER_FOOT}"`;
   }
 
-  /** A gender as the app keeps it: the file's, its case aside, or its initial's (`M`); none when it's neither. */
+  /**
+   * A gender as the app keeps it, one of its field's values: the file's, its case aside, or its initial's (`M`); none
+   * when it's neither.
+   */
   private static genderOf(value: string): Gender | undefined {
     const wanted = value.trim().toLowerCase();
-    return GENDER_OPTIONS.find((gender) => gender.toLowerCase() === wanted || gender[0].toLowerCase() === wanted);
+    return CHARACTER_FIELDS.gender.values.find(
+      (gender) => gender.toLowerCase() === wanted || gender[0].toLowerCase() === wanted,
+    );
   }
 
   private readonly characters = new Dnd35Characters(DND35_STORAGE);
@@ -173,33 +166,43 @@ export default class PcgenImport {
 
   /**
    * The character's row, as the file has it: its race (refused when the ruleset hasn't it: a character needs one), its
-   * alignment (True Neutral when the file's isn't one, which the report says), and the rest of who it is.
+   * alignment and gender (their declared defaults when the file's isn't one, which the report says), its fields in
+   * their declared bounds, and the rest of who it is.
    */
   private readRow(): FilledRow {
     const { identity, biography } = this.imported;
+    const { age, alignment: alignments, gender: genders, xp } = CHARACTER_FIELDS;
     const race = this.findRace();
     const alignment = identity.alignment && PCGEN_ALIGNMENTS.get(identity.alignment.value);
-    if (identity.alignment && !alignment)
-      this.report.skip(identity.alignment.line, `${identity.alignment.value} isn't an alignment: True Neutral kept`);
+    if (identity.alignment && !alignment) {
+      this.report.skip(
+        identity.alignment.line,
+        `${identity.alignment.value} isn't an alignment: ${alignments.default} kept`,
+      );
+    }
     const named = identity.name?.trim() || "Imported Character";
     const name = named.slice(0, MAX_CHARACTER_NAME_LENGTH);
     if (name !== named) this.report.issue(`The name is past ${MAX_CHARACTER_NAME_LENGTH} characters: cut to them`);
     const gender = identity.gender && PcgenImport.genderOf(identity.gender.value);
-    if (identity.gender?.value && !gender)
-      this.report.skip(identity.gender.line, `${identity.gender.value} isn't a gender of the app's: Other kept`);
+    if (identity.gender?.value && !gender) {
+      this.report.skip(
+        identity.gender.line,
+        `${identity.gender.value} isn't a gender of the app's: ${genders.default} kept`,
+      );
+    }
     this.report.import(`Name: ${name}`);
     this.report.import(`Race: ${race.name}`);
     return {
       description: biography.description.join("\n\n") || null,
-      fields: {
-        [CHARACTER_AGE]: identity.age && identity.age >= 1 ? this.bounded("Age", identity.age) : null,
-        [CHARACTER_ALIGNMENT]: alignment ?? "True Neutral",
-        [CHARACTER_DEITY]: identity.deity ?? null,
-        [CHARACTER_GENDER]: gender ?? "Other",
-        [CHARACTER_HEIGHT]: identity.height ? PcgenImport.feetOf(identity.height) : null,
-        [CHARACTER_WEIGHT]: identity.weight ? `${identity.weight} lb.` : null,
-        [CHARACTER_XP]: Math.max(0, this.bounded("Experience", identity.xp)),
-      },
+      fields: CharacterValues.writeOf({
+        age: identity.age && identity.age >= age.min ? this.bounded("Age", identity.age) : null,
+        alignment: alignment ?? alignments.default,
+        deity: identity.deity ?? null,
+        gender: gender ?? genders.default,
+        height: identity.height ? PcgenImport.feetOf(identity.height) : null,
+        weight: identity.weight ? `${identity.weight} lb.` : null,
+        xp: Math.max(xp.min, this.bounded("Experience", identity.xp)),
+      }),
       kind: PLAYER_CHARACTER_KIND,
       links: { [RACE_ROLE]: race.id },
       name,

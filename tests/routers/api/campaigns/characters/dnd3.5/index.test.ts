@@ -200,10 +200,10 @@ describe("campaigns characters", () => {
     if (partialIdentity?.kind !== "fields") throw new Error("no identity block");
     expect(Object.fromEntries(partialIdentity.lines.flat().map((field) => [field.key, field.value]))).toEqual({
       race: "Human",
-      age: 25,
-      gender: "Male",
-      height: "180",
-      weight: "80",
+      CHARACTER_AGE: 25,
+      CHARACTER_GENDER: "Male",
+      CHARACTER_HEIGHT: "180",
+      CHARACTER_WEIGHT: "80",
     });
     // What it reads, an allowlist: the viewer's rights, the character's columns, its identity's block, no track
     expect(Object.keys(sheet).sort()).toEqual([
@@ -243,7 +243,7 @@ describe("campaigns characters", () => {
     const [identity] = sheet.blocks;
     expect(identity.kind === "fields" && identity.lines.map((line) => line.map(({ key }) => key))).toEqual([
       ["race"],
-      ["age", "gender", "height", "weight"],
+      ["CHARACTER_AGE", "CHARACTER_GENDER", "CHARACTER_HEIGHT", "CHARACTER_WEIGHT"],
     ]);
     expect(identity).not.toHaveProperty("notes");
     expect(identity).not.toHaveProperty("languages");
@@ -272,8 +272,8 @@ describe("campaigns characters", () => {
       if (identity?.kind !== "fields") throw new Error("no identity block");
       const values = Object.fromEntries([...identity.lines.flat(), ...identity.fields].map((f) => [f.key, f.value]));
       expect(values).toMatchObject({
-        alignment: "Chaotic Good",
-        deity: SECRETS.deity,
+        CHARACTER_ALIGNMENT: "Chaotic Good",
+        CHARACTER_DEITY: SECRETS.deity,
         description: SECRETS.description,
       });
       expect(identity.links?.[0].picked.map(({ name }) => name)).toEqual(["Common", "Draconic"]);

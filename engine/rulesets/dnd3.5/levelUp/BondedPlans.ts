@@ -1,16 +1,12 @@
 import type { CharacterInput, ChildLevelsPlan, ChildrenPlan, NewChild } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import CharacterValues, {
-  type Dnd35CharacterFieldsWrite,
-  RACE_ROLE,
-} from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
+import CharacterValues, { RACE_ROLE } from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import BondedRaceData from "@/engine/rulesets/dnd3.5/rules/BondedRaceData.ts";
 import type Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Character } from "@/shared/relations.ts";
 import { STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 import { BONDED_KIND_BY_SLUG, BONDED_KIND_SLUGS, type BondedKind } from "@/vocabulary/dnd3.5/bondedKinds.ts";
-import { CHARACTER_ALIGNMENT, CHARACTER_GENDER, CHARACTER_XP } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The levels a bonded creature has: its class's first `hitDice`. */
 interface BondedLevels {
@@ -55,11 +51,7 @@ function buildCreature(
       parentCharacterId: master.id,
       rulesetId: master.rulesetId,
       userId: master.userId,
-      fields: {
-        [CHARACTER_ALIGNMENT]: own[CHARACTER_ALIGNMENT],
-        [CHARACTER_GENDER]: own[CHARACTER_GENDER],
-        [CHARACTER_XP]: 0,
-      } satisfies Dnd35CharacterFieldsWrite,
+      fields: CharacterValues.writeOf({ alignment: own.alignment, gender: own.gender, xp: 0 }),
       links: { [RACE_ROLE]: race.id },
     },
   };

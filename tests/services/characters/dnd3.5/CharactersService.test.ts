@@ -246,7 +246,12 @@ describe("CharactersService", () => {
       // Built: its combat, not only who it is
       expect(sheet.blocks.map(({ key }) => key)).toContain("combat");
 
-      const fields = { age: 35, experience: 5000, alignment: "Chaotic Good", description: "Updated" };
+      const fields = {
+        [CHARACTER_AGE]: 35,
+        [CHARACTER_XP]: 5000,
+        [CHARACTER_ALIGNMENT]: "Chaotic Good",
+        description: "Updated",
+      };
       expect(
         await CharactersService.updateCharacter(session, created.id, { fields, notes: "Updated notes" }),
       ).toMatchObject({
@@ -263,7 +268,10 @@ describe("CharactersService", () => {
       });
 
       expect(
-        CharactersService.updateCharacter(session, created.id, { fields: { age: 40 }, updatedAt: created.updatedAt }),
+        CharactersService.updateCharacter(session, created.id, {
+          fields: { [CHARACTER_AGE]: 40 },
+          updatedAt: created.updatedAt,
+        }),
       ).rejects.toThrow(ConflictError);
     });
 
@@ -344,7 +352,7 @@ describe("CharactersService", () => {
       await CharacterSharingService.generateShareToken(owner, character.id);
       const calls = (s: Session, id: string) => [
         () => CharactersService.getCharacter(s, id),
-        () => CharactersService.updateCharacter(s, id, { fields: { age: 40 } }),
+        () => CharactersService.updateCharacter(s, id, { fields: { [CHARACTER_AGE]: 40 } }),
         () => CharactersService.enqueuePdf(s, id),
         () => CharactersService.archiveCharacter(s, id),
         () => CharacterSharingService.generateShareToken(s, id),
@@ -614,8 +622,8 @@ describe("CharactersService", () => {
     });
 
     test.each([
-      ["alignment", "identity.beliefs.alignment", "Chaotic Evil", "Lawful Good"],
-      ["gender", "identity.physiology.gender", "Female", "Male"],
+      [CHARACTER_ALIGNMENT, "identity.beliefs.alignment", "Chaotic Evil", "Lawful Good"],
+      [CHARACTER_GENDER, "identity.physiology.gender", "Female", "Male"],
     ] as const)("follow a race's %s requirement, once the form gives one", async (field, target, allowed, other) => {
       const { rulesetId } = await getSeedCtx();
       const [race] = await Entities.create<Race>(db, "races", {
@@ -665,10 +673,10 @@ describe("CharactersService", () => {
 
       expect(await eligible({})).toBe(true);
       // The alignment it doesn't say may meet the group, whatever the gender
-      expect(await eligible({ gender: "Female" })).toBe(true);
-      expect(await eligible({ alignment: "Lawful Good", gender: "Female" })).toBe(true);
-      expect(await eligible({ alignment: "Chaotic Evil", gender: "Male" })).toBe(true);
-      expect(await eligible({ alignment: "Chaotic Evil", gender: "Female" })).toBe(false);
+      expect(await eligible({ [CHARACTER_GENDER]: "Female" })).toBe(true);
+      expect(await eligible({ [CHARACTER_ALIGNMENT]: "Lawful Good", [CHARACTER_GENDER]: "Female" })).toBe(true);
+      expect(await eligible({ [CHARACTER_ALIGNMENT]: "Chaotic Evil", [CHARACTER_GENDER]: "Male" })).toBe(true);
+      expect(await eligible({ [CHARACTER_ALIGNMENT]: "Chaotic Evil", [CHARACTER_GENDER]: "Female" })).toBe(false);
     });
   });
 });

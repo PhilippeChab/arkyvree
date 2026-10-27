@@ -1,5 +1,6 @@
 export * from "./armor.ts";
 export * from "./character.ts";
+export * from "./characterFields.ts";
 export * from "./class.ts";
 export * from "./classLevel.ts";
 export * from "./entityFields.ts";

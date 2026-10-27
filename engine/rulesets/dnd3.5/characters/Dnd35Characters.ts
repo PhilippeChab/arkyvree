@@ -2,7 +2,6 @@ import {
   type CharacterInput,
   CharactersPart,
   type CreationPickQuery,
-  type FieldsRequest,
   type StoredAdvancement,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
@@ -85,12 +84,12 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
     return new RacePicker(view, query);
   }
 
-  /** What an edit of a character's identity writes: its fields, each checked, as its fields' values. */
-  protected override planFields(_view: RulesetView, _character: CharacterInput, request: FieldsRequest) {
-    return IdentityFields.plan(request);
+  /** What an edit of a character's identity writes: its fields, each checked as declared, and its description. */
+  protected override planFields(...args: Parameters<typeof IdentityFields.plan>) {
+    return IdentityFields.plan(...args);
   }
 
-  /** What a new character's fields write: its alignment, gender and experience, and its optional details. */
+  /** What a new character's fields write, as declared: its alignment, gender and experience, and its other details. */
   protected override planNewFields(...args: Parameters<typeof NewCharacters.planFields>) {
     return NewCharacters.planFields(...args);
   }

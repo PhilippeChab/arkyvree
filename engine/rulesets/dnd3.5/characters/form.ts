@@ -1,11 +1,12 @@
 import type { CharacterForm } from "@/engine/core/module/index.ts";
-import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/vocabulary/dnd3.5/identity.ts";
+
+import NewCharacters from "./NewCharacters.ts";
 
 /**
  * A new 3.5 character's form: its name and experience, its ruleset and race, its alignment and gender (which narrow the
  * races it can pick, and are required); its ability scores; its physical details; and its deity, description and notes,
- * all optional. Its fields are the identity's, each keyed as its create sends it (`NewCharacters.planFields`): its
- * experience as `xp`, which the identity's edit keys `experience`.
+ * all optional. Its fields are the character's own, as they're declared (`NewCharacters.describeField`), each keyed by
+ * the stored field its create sends it by (`CHARACTER_XP`), as the identity's edit does; its description is its row's.
  */
 export const CHARACTER_FORM: CharacterForm = {
   sections: [
@@ -13,17 +14,7 @@ export const CHARACTER_FORM: CharacterForm = {
       kind: "fields",
       title: "Basic Information",
       lines: [
-        [
-          { kind: "name", label: "Character Name" },
-          {
-            key: "xp",
-            kind: "number",
-            label: "Experience Points",
-            min: 0,
-            required: "Experience points are required",
-            start: 0,
-          },
-        ],
+        [{ kind: "name", label: "Character Name" }, NewCharacters.describeField("xp")],
         [
           { kind: "ruleset" },
           {
@@ -35,22 +26,8 @@ export const CHARACTER_FORM: CharacterForm = {
           },
         ],
         [
-          {
-            key: "alignment",
-            kind: "select",
-            label: "Alignment",
-            narrows: true,
-            options: [...ALIGNMENT_OPTIONS],
-            required: "Alignment is required",
-          },
-          {
-            key: "gender",
-            kind: "select",
-            label: "Gender",
-            narrows: true,
-            options: [...GENDER_OPTIONS],
-            required: "Gender is required",
-          },
+          NewCharacters.describeField("alignment", { narrows: true }),
+          NewCharacters.describeField("gender", { narrows: true }),
         ],
       ],
     },
@@ -66,9 +43,9 @@ export const CHARACTER_FORM: CharacterForm = {
       title: "Physical Details",
       lines: [
         [
-          { key: "age", kind: "number", label: "Age", min: 1, stepped: true },
-          { key: "height", kind: "text", label: "Height", placeholder: "e.g., 5 feet 8 inches" },
-          { key: "weight", kind: "text", label: "Weight", placeholder: "e.g., 150 lbs, 68kg" },
+          NewCharacters.describeField("age", { stepped: true }),
+          NewCharacters.describeField("height"),
+          NewCharacters.describeField("weight"),
         ],
       ],
     },
@@ -76,7 +53,7 @@ export const CHARACTER_FORM: CharacterForm = {
       kind: "fields",
       title: "Optional Details",
       lines: [
-        [{ key: "deity", kind: "text", label: "Deity" }],
+        [NewCharacters.describeField("deity")],
         [
           {
             key: "description",

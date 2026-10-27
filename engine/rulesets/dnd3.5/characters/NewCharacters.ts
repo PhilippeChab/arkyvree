@@ -1,49 +1,36 @@
 import { z } from "zod";
 
-import type { CreationMethod, FieldsRequest, NewCharacterPlan, ScoresCreation } from "@/engine/core/module/index.ts";
+import { Field } from "@/engine/core/fields/index.ts";
+import type {
+  CreationField,
+  CreationMethod,
+  FieldsRequest,
+  NewCharacterPlan,
+  ScoresCreation,
+} from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import AbilityRules from "@/engine/rulesets/dnd3.5/rules/AbilityRules.ts";
 import { MIN_ABILITY_SCORE, STARTING_ABILITY_SCORE } from "@/vocabulary/dnd3.5/abilities.ts";
 import { CREATION_METHODS } from "@/vocabulary/dnd3.5/creation.ts";
-import {
-  CHARACTER_AGE,
-  CHARACTER_ALIGNMENT,
-  CHARACTER_DEITY,
-  CHARACTER_GENDER,
-  CHARACTER_HEIGHT,
-  CHARACTER_WEIGHT,
-  CHARACTER_XP,
-} from "@/vocabulary/dnd3.5/fields/index.ts";
-import { ALIGNMENT_OPTIONS, GENDER_OPTIONS } from "@/vocabulary/dnd3.5/identity.ts";
+import { CHARACTER_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
-import type { Dnd35CharacterFieldsWrite } from "./CharacterValues.ts";
+import CharacterValues from "./CharacterValues.ts";
 
 /** What a new character's form reads of a ruleset's view: its abilities, each by its id and name. */
 interface CreationData {
   abilities: readonly ScoresCreation["entities"][number][];
 }
 
+/** A field of a 3.5 character's, by its name among its declarations (`CHARACTER_FIELDS`). */
+type FieldName = keyof typeof CHARACTER_FIELDS;
+
 /** A 3.5 creation method, as its data writes it. */
 type MethodData = (typeof CREATION_METHODS)[number];
 
-/**
- * Each field a new character's form sends (`CHARACTER_FORM`'s), by its key: its experience a whole number from 0, its
- * alignment and gender among their options, all three required; its age a whole number from 1, and its texts, each
- * optional (null or empty: none). A whole number is a safe integer (`int`), which a field holds exactly.
- */
-const NEW_FIELDS = z
-  .object({
-    age: z.number().int().min(1).nullable().optional(),
-    alignment: z.enum(ALIGNMENT_OPTIONS),
-    deity: z.string().nullable().optional(),
-    description: z.string().nullable().optional(),
-    gender: z.enum(GENDER_OPTIONS),
-    height: z.string().nullable().optional(),
-    weight: z.string().nullable().optional(),
-    xp: z.number().int().min(0),
-  })
-  .strict();
+/** The row's own column a new character's form sends among its fields, by its key: its description, a text or none. */
+const OWN_REQUEST = z.object({ description: z.string().nullable().optional() });
 
 /**
  * What a new 3.5 character's form offers: how its ability scores are set, their bounds and the one an unset ability
@@ -55,6 +42,25 @@ export default class NewCharacters {
     if (method.kind !== "pointBuy") return method;
     const priced = Object.keys(method.costs).map(Number);
     return { ...method, max: Math.max(...priced), min: Math.min(...priced) };
+  }
+
+  /**
+   * A new character's fields (`given`, by the stored field that keeps each) as the character's codec reads them
+   * (`CharacterValues.parseForm`), each it always holds given: refused as invalid otherwise, every field it leaves out
+   * that it always holds (`<Label> is required`) with what the codec refuses.
+   */
+  private static parseGiven(view: RulesetView, given: FieldsRequest) {
+    const missing = CharacterValues.held
+      .filter((leaf) => given[leaf.field] === undefined)
+      .map((leaf) => ({ category: `fields.${leaf.field}`, message: `${leaf.label} is required` }));
+    try {
+      const values = CharacterValues.parseForm(view, given);
+      if (missing.length === 0) return values;
+    } catch (error) {
+      if (!(error instanceof RulesError) || missing.length === 0) throw error;
+      throw new RulesError("invalid", error.message, [...missing, ...(error.issues ?? [])]);
+    }
+    throw new RulesError("invalid", "Request validation failed", missing);
   }
 
   /**
@@ -80,23 +86,45 @@ export default class NewCharacters {
   }
 
   /**
-   * What a new character's fields (`fields`, its form's, by their keys) write, each checked: refused when one is
-   * missing that's required, names a field the form hasn't, or holds a value its field doesn't take. One left empty
-   * writes nothing: no value, no description.
+   * A character's field (`name`'s) as a new character's form shows it, keyed by its stored field, labeled and bounded
+   * as it's declared (`CHARACTER_FIELDS`): one it always holds required (`CharacterValues.held`), a number starting at
+   * its default, a text with its example; `shown`, what its form adds: a select that narrows its creation picks
+   * (`narrows`), a number whose input's arrows stop at its least (`stepped`).
    */
-  static planFields(fields: FieldsRequest): Pick<NewCharacterPlan, "fields" | "own"> {
-    const { age, alignment, deity, description, gender, height, weight, xp } = RulesError.parse(NEW_FIELDS, fields, [
-      "fields",
-    ]);
-    const values: Dnd35CharacterFieldsWrite = {
-      [CHARACTER_ALIGNMENT]: alignment,
-      [CHARACTER_GENDER]: gender,
-      [CHARACTER_XP]: xp,
-      ...(age && { [CHARACTER_AGE]: age }),
-      ...(deity && { [CHARACTER_DEITY]: deity }),
-      ...(height && { [CHARACTER_HEIGHT]: height }),
-      ...(weight && { [CHARACTER_WEIGHT]: weight }),
-    };
-    return { fields: values, own: { ...(description && { description }) } };
+  static describeField(name: FieldName, shown: { narrows?: true; stepped?: true } = {}): CreationField {
+    const declared = CHARACTER_FIELDS[name];
+    const { field: key, label } = declared;
+    const required = CharacterValues.isHeld(key) ? { required: `${label} is required` } : {};
+    if (declared.kind === "number") {
+      const start = "default" in declared ? { start: declared.default } : {};
+      const { min } = Field.boundsOf(declared);
+      return { key, kind: "number", label, min, ...required, ...start, ...(shown.stepped && { stepped: true }) };
+    }
+    if ("values" in declared) {
+      const options: readonly string[] = declared.values;
+      return {
+        key,
+        kind: "select",
+        label,
+        options: [...options],
+        ...required,
+        ...(shown.narrows && { narrows: true }),
+      };
+    }
+    return { key, kind: "text", label, ...("placeholder" in declared && { placeholder: declared.placeholder }) };
+  }
+
+  /**
+   * What a new character's fields (`fields`, its form's, by the stored field that keeps each, and its description)
+   * write, each read by the character's codec as an entity's form is (`CharacterValues.parseForm`): refused when one it
+   * always holds is missing (`CharacterValues.held`), one names a field the character hasn't, or holds a value its
+   * field doesn't take, each refused together. One left empty writes nothing: no value, no description.
+   */
+  static planFields(view: RulesetView, fields: FieldsRequest): Pick<NewCharacterPlan, "fields" | "own"> {
+    const { description, ...given } = fields;
+    const own = RulesError.parse(OWN_REQUEST, { description }, ["fields"]);
+    const written = CharacterValues.writeOf(NewCharacters.parseGiven(view, given));
+    const values = Object.fromEntries(Object.entries(written).filter(([, value]) => value !== null));
+    return { fields: values, own: { ...(own.description && { description: own.description }) } };
   }
 }
