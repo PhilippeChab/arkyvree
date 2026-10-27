@@ -29,6 +29,7 @@ import { readCharacterInput, readChildInputs } from "./characterInputs.ts";
 import { Archives } from "./concerns/Archives.ts";
 import { Imports } from "./concerns/Imports.ts";
 import { findEditableCharacterOrChild, getEditableCharacter } from "./editableCharacter.ts";
+import { createNewCharacter } from "./newCharacterWrites.ts";
 import { enqueueCharacterPdf, findExportableCharacter } from "./pdf.ts";
 
 class CharactersService extends include(Object, Archives, Imports) {
@@ -63,22 +64,12 @@ class CharactersService extends include(Object, Archives, Imports) {
       async (tx) =>
         await withReadableRuleset(tx, session, characterData.rulesetId, async (scope, policy) => {
           policy.canCreateCharacter();
-          const { fields, picks, scores } = characterData;
-          const plan = Engine.for(scope).characters().planCreate({ fields, picks, scores });
-
-          const [newCharacter] = await Characters.create(tx, {
-            ...plan.own,
-            kind: plan.kind,
-            fields: plan.fields,
-            links: plan.links,
-            userId: session.userId,
-            rulesetId: characterData.rulesetId,
-            name: characterData.name,
-            notes: characterData.notes,
+          const { fields, name, notes, picks, rulesetId, scores } = characterData;
+          const { links, row } = Engine.for(scope).characters().planCreate({ fields, picks, scores });
+          const newCharacter = await createNewCharacter(tx, {
+            links,
+            row: { ...row, name, notes, rulesetId, userId: session.userId },
           });
-
-          for (const [role, links] of Object.entries(plan.scores))
-            await CharacterLinks.createMany(tx, newCharacter.id, role, links);
 
           // Log the activity
           await Activities.create(tx, {

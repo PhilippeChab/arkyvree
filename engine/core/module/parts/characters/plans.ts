@@ -1,8 +1,8 @@
 /**
- * What the characters part's `plan*` operations answer: what the server writes of a character, each a named plan: what
- * a new character starts with (its fields, its single links, its scores), a scored link's edit, a picked link's, an
- * inventory entry's fields. Each names the entities it writes by the ids the ruleset's view keys them by, whichever the
- * request sent (`RequestIds`).
+ * What the characters part's `plan*` operations answer: what the server writes of a character, each a named plan: a
+ * new character (its row, with its fields and single links, and its links of the roles it holds many of), a scored
+ * link's edit, a picked link's, an inventory entry's fields. Each names the entities it writes by the ids the ruleset's
+ * view keys them by, whichever the request sent (`RequestIds`).
  */
 
 import type { FieldWrite } from "@/engine/core/module/storage.ts";
@@ -48,14 +48,24 @@ export interface LinkPlan {
 }
 
 /**
- * What a new character stores: what it starts with (`StartPlan`), its kind (its module's player character's,
- * `StoredCharacter.playerKind`), and its fields' values and own columns its form writes, those its rules require among
- * them.
+ * What a new character stores, whichever plan makes it (its form's create, an import, a level's child: 3.5's bonded
+ * creature): its row (`row`) and its links of each role it holds many of, by role (`links`: 3.5's ability scores, its
+ * languages), which the server writes in that order.
  */
-export interface NewCharacterPlan extends StartPlan {
+export interface NewCharacterPlan<R extends NewCharacterRow = NewCharacterRow> {
+  links: Record<string, LinkPlan[]>;
+  row: R;
+}
+
+/**
+ * A new character's row, as a plan writes it: its kind (its module's player character's, `StoredCharacter.playerKind`,
+ * or a child's), the own columns its rules' fields write, its fields' values by field and the entity of each of its
+ * single links, by role (3.5's race), and whatever else of its row its plan gives (`NewCharacterPlan`'s `R`).
+ */
+export interface NewCharacterRow extends CharacterOwnValues {
   fields: Record<string, FieldWrite>;
   kind: string;
-  own: CharacterOwnValues;
+  links: Record<string, string>;
 }
 
 /** A character's scored link to an entity, as a write stores it: the entity, and its amount. */
@@ -69,12 +79,13 @@ export interface ScoresPlan {
 }
 
 /**
- * What a new character starts with: the entity of each of its single links its creation picks (`links`, by role: 3.5's
- * race), and each scored link's amounts (`scores`, by role: 3.5's ability scores), one for each entity of its kind.
+ * What a new character starts with, as a `NewCharacterPlan` has it: its row's entity of each of its single links its
+ * creation picks (`row.links`, by role: 3.5's race), and each scored link's amounts (`links`, by role: 3.5's ability
+ * scores), one for each entity of its kind.
  */
 export interface StartPlan {
-  links: Record<string, string>;
-  scores: Record<string, ScorePlan[]>;
+  links: Record<string, ScorePlan[]>;
+  row: Pick<NewCharacterRow, "links">;
 }
 
 /** The own columns of a character's row its rules' fields write (3.5's description), each it sets. */

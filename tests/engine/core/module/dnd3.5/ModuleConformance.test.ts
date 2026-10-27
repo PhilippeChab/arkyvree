@@ -186,7 +186,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
         { entityId: abilityId, amount: max },
       ]);
       const start = { picks: { race: record.links.race }, scores: { score: { [abilityId]: min } } };
-      expect(characters.planStart(start).scores.score).toContainEqual({ entityId: abilityId, amount: min });
+      expect(characters.planStart(start).links.score).toContainEqual({ entityId: abilityId, amount: min });
     });
   });
 
@@ -238,7 +238,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
       const characters = Engine.for(scope).characters();
       const start = { picks: { race: record.links.race }, scores: {} };
       const plan = characters.planCreate({ ...start, fields });
-      const written = [...Object.values(plan.fields), ...Object.values(plan.own)];
+      const written = [...Object.values(plan.row.fields), plan.row.description];
       for (const value of Object.values(fields)) expect(written).toContain(value);
       // A field its form doesn't require can be left out
       expect(() => characters.planCreate({ ...start, fields: required })).not.toThrow();

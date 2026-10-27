@@ -1,16 +1,10 @@
 import type { Db } from "@/drizzle/database.ts";
-import type { ChildPlan, NewChild } from "@/engine/index.ts";
-import { CharacterAdvancements, CharacterLinks, Characters } from "@/server/repositories/index.ts";
+import type { ChildPlan } from "@/engine/index.ts";
+import { CharacterAdvancements, Characters } from "@/server/repositories/index.ts";
+import { createNewCharacter } from "@/server/services/characters/newCharacterWrites.ts";
 import type { Character } from "@/shared/relations.ts";
 
 import { createAdvancement } from "./advancementWrites.ts";
-
-/** A new child, its row as the engine plans it, with its links by role (3.5's ability scores). */
-async function createChild(tx: Db, child: NewChild) {
-  const [created] = await Characters.create(tx, child.row);
-  for (const [role, links] of Object.entries(child.links)) await CharacterLinks.createMany(tx, created.id, role, links);
-  return created.id;
-}
 
 /**
  * Writes what a character's children become (`plans`, the engine's: 3.5's bonded creatures): each kind's child removed,
@@ -25,7 +19,7 @@ export async function writeChildren(tx: Db, parent: Character, plans: ChildPlan[
   for (const plan of plans) {
     if (plan.removedId) await Characters.delete(tx, { id: plan.removedId });
     if (!plan.levels) continue;
-    const childId = "created" in plan ? await createChild(tx, plan.created) : plan.keptId;
+    const childId = "created" in plan ? (await createNewCharacter(tx, plan.created)).id : plan.keptId;
     for (const advancement of plan.levels.added) await createAdvancement(tx, childId, advancement);
     for (const id of plan.levels.removedIds) await CharacterAdvancements.delete(tx, { id });
   }

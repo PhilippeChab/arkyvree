@@ -223,7 +223,7 @@ export default class PcgenImport {
     const levelsImport = new LevelsImport(this.view, this.imported, this.names, this.report, this.stop);
     const scores = new ScoresImport(this.view, this.imported, this.report).planScores(levelsImport.levelCount);
     const start = { picks: { [RACE_ROLE]: row.links[RACE_ROLE] }, scores: { score: scores.starting } };
-    const { score: abilities } = this.characters.planStart(this.view, start).scores;
+    const { score: abilities } = this.characters.planStart(this.view, start).links;
     const leveled = levelsImport.planLevels(this.newInput(row, abilities), scores.increases);
     if ("refused" in leveled) return leveled;
     const languageIds = this.planLanguages(leveled.character);
@@ -233,11 +233,11 @@ export default class PcgenImport {
     );
     const plan = {
       advancements: leveled.advancements,
-      character: row,
       children: leveled.children,
       inventory,
       links: { score: abilities, speaks: languageIds.map((entityId) => ({ entityId })) },
       report: this.report.describe(),
+      row,
     };
     return { plan };
   }

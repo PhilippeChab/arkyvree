@@ -5,8 +5,8 @@
  * value step's too, 3.5's hit points).
  */
 
-import type { LinkPlan } from "@/engine/core/module/parts/characters/index.ts";
-import type { FieldWrite, StoredAdvancement } from "@/engine/core/module/storage.ts";
+import type { NewCharacterPlan, NewCharacterRow } from "@/engine/core/module/parts/characters/index.ts";
+import type { StoredAdvancement } from "@/engine/core/module/storage.ts";
 import type { Character } from "@/shared/relations.ts";
 
 /** What a level-up writes of an advancement: its entry (3.5's class level), and its picks under it. */
@@ -46,18 +46,6 @@ export interface LevelsPlan extends ChildrenPlan {
 }
 
 /**
- * A child a plan makes: its character's row, whole (its parent's, of its kind, its fields' values and single links'
- * entities, and what it takes of its parent), and its links of each role it holds many of, by role (3.5's `score`).
- */
-export interface NewChild {
-  links: Record<string, LinkPlan[]>;
-  row: Pick<Character, "kind" | "name" | "parentCharacterId" | "rulesetId" | "userId"> & {
-    fields: Record<string, FieldWrite>;
-    links: Record<string, string>;
-  };
-}
-
-/**
  * A pick an advancement takes (`character.advancement_picks`), of a step its module declares: the entity it picks,
  * through its pool (`viaId`) when its step takes one, and its amount when it holds one (3.5's skill ranks, an ability
  * increase); a value step's holds its amount alone (3.5's hit points).
@@ -80,3 +68,12 @@ export type ChildPlan = { kind: string; removedId?: string } & (
   | { keptId: string; levels: ChildLevelsPlan }
   | { levels: undefined }
 );
+
+/**
+ * A child a plan makes (`NewCharacterPlan`): its character's row, whole (its parent's, of its kind, its fields' values
+ * and single links' entities, and what it takes of its parent), and its links of each role it holds many of, by role
+ * (3.5's `score`).
+ */
+export type NewChild = NewCharacterPlan<
+  NewCharacterRow & Pick<Character, "name" | "parentCharacterId" | "rulesetId" | "userId">
+>;

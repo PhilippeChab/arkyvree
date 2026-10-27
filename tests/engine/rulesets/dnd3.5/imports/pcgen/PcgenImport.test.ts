@@ -197,10 +197,10 @@ describe("A PCGen fighter / rogue", () => {
   });
 
   test("reports what it imported, and every line it couldn't match: magic gear to make, an item the ruleset hasn't", async () => {
-    const { report, character } = await planImportOf(await readPcgenFile("brannoc"));
+    const { report, row } = await planImportOf(await readPcgenFile("brannoc"));
     expect(report.program).toBe("PCGen 6.09.08.RC1");
     expect(report.imported).toContain("Race: Human");
-    expect(character).toMatchObject({
+    expect(row).toMatchObject({
       fields: {
         CHARACTER_ALIGNMENT: "Lawful Neutral",
         CHARACTER_GENDER: "Male",
@@ -289,11 +289,11 @@ describe("What a file holds past what the app keeps", () => {
       .replace("EXPERIENCE:29500", "EXPERIENCE:99999999999999999")
       .replace("CHARACTERNAME:Brannoc Vale", `CHARACTERNAME:${"B".repeat(300)}`)
       .replace("GENDER:Male", "GENDER:Unknown");
-    const { character, report } = await planImportOf(text);
+    const { report, row } = await planImportOf(text);
     // A number field holds what it keeps exactly: the largest safe integer
-    expect(character.fields.CHARACTER_XP).toBe(Number.MAX_SAFE_INTEGER);
-    expect(character.name).toHaveLength(255);
-    expect(character.fields.CHARACTER_GENDER).toBe("Other");
+    expect(row.fields.CHARACTER_XP).toBe(Number.MAX_SAFE_INTEGER);
+    expect(row.name).toHaveLength(255);
+    expect(row.fields.CHARACTER_GENDER).toBe("Other");
     expect(report.issues).toContain(
       "Experience 100000000000000000 is past the largest the app keeps: 9007199254740991 kept",
     );
@@ -301,13 +301,13 @@ describe("What a file holds past what the app keeps", () => {
   });
 
   test("the DM's notes, in the character's private notes", async () => {
-    const { character } = await planImportOf(`${riderFile([])}\nCHARACTERDMNOTES:Secretly a doppelganger`);
-    expect(character).toMatchObject({ notes: null, privateNotes: "Secretly a doppelganger" });
+    const { row } = await planImportOf(`${riderFile([])}\nCHARACTERDMNOTES:Secretly a doppelganger`);
+    expect(row).toMatchObject({ notes: null, privateNotes: "Secretly a doppelganger" });
   });
 
   test("a height in inches with a fraction, in whole feet and inches", async () => {
     const text = (await readPcgenFile("brannoc")).replace("HEIGHT:72", "HEIGHT:71.6");
-    expect((await planImportOf(text)).character.fields.CHARACTER_HEIGHT).toBe(`6' 0"`);
+    expect((await planImportOf(text)).row.fields.CHARACTER_HEIGHT).toBe(`6' 0"`);
   });
 
   test("a feat two lines name is picked once, the second listed", async () => {
@@ -466,7 +466,7 @@ describe("What a file holds past what the app keeps", () => {
 
   test("a gender in another case, or its initial", async () => {
     const text = (await readPcgenFile("brannoc")).replace("GENDER:Male", "GENDER:f");
-    expect((await planImportOf(text)).character.fields.CHARACTER_GENDER).toBe("Female");
+    expect((await planImportOf(text)).row.fields.CHARACTER_GENDER).toBe("Female");
   });
 });
 

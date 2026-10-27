@@ -3,9 +3,12 @@
  * file, and the report of what it imported and couldn't.
  */
 
-import type { CharacterOwnValues, InventoryEntryPlan, LinkPlan } from "@/engine/core/module/parts/characters/index.ts";
+import type {
+  InventoryEntryPlan,
+  NewCharacterPlan,
+  NewCharacterRow,
+} from "@/engine/core/module/parts/characters/index.ts";
 import type { AdvancementPlan, ChildrenPlan } from "@/engine/core/module/parts/levelUp/index.ts";
-import type { FieldWrite } from "@/engine/core/module/storage.ts";
 import type { Character } from "@/shared/relations.ts";
 
 /**
@@ -24,15 +27,14 @@ export interface ImportOwner {
 }
 
 /**
- * What an import writes: a new character's row (its owner and ruleset aside), its advancements as if leveled up one at
- * a time (each its entry and its picks, in order), its links by role (each scored link's amounts, each picked link's
- * picks), its inventory entries, and what its children become; and the report of what it did.
+ * What an import writes: a new character (`NewCharacterPlan`: its row, its owner and ruleset aside, and its links by
+ * role, each scored link's amounts and each picked link's picks), its advancements as if leveled up one at a time (each
+ * its entry and its picks, in order), its inventory entries, and what its children become; and the report of what it
+ * did.
  */
-export interface ImportPlan extends ChildrenPlan {
+export interface ImportPlan extends ChildrenPlan, NewCharacterPlan<ImportedRow> {
   advancements: AdvancementPlan[];
-  character: ImportedRow;
   inventory: (InventoryEntryPlan & { quantity: number })[];
-  links: Record<string, LinkPlan[]>;
   report: ImportReportDescription;
 }
 
@@ -60,11 +62,8 @@ export interface ImportSource {
 }
 
 /**
- * A new character's row, as an import fills it: its kind (its module's player character's), its name, notes and own
- * columns, its fields' values (null: none) and its single links' entities, by role (3.5's race).
+ * A new character's row, as an import fills it (`NewCharacterRow`): its kind (its module's player character's), its own
+ * columns, its fields' values (null: none) and its single links' entities, by role (3.5's race), with its name and
+ * notes.
  */
-export type ImportedRow = CharacterOwnValues &
-  Pick<Character, "kind" | "name" | "notes" | "privateNotes"> & {
-    fields: Record<string, FieldWrite>;
-    links: Record<string, string>;
-  };
+export type ImportedRow = NewCharacterRow & Pick<Character, "name" | "notes" | "privateNotes">;
