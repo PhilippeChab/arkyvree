@@ -12,6 +12,7 @@ import {
 import RulesError from "@/engine/core/RulesError.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
+import { LEVEL_WORD } from "@/engine/rulesets/dnd3.5/ruleset/rules.ts";
 import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
@@ -452,7 +453,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
   /** A 3.5 level's steps, in the wizard's order: an edit's without its class plan. */
   listSteps(edited: boolean): LevelSteps {
     return {
-      advancements: { position: { many: "Levels", one: "Level" }, review: "Class Advancement" },
+      advancements: { position: LEVEL_WORD, review: "Class Advancement" },
       steps: edited ? STEPS.filter((step) => step.mechanic !== "plan") : STEPS,
     };
   }

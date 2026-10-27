@@ -1,6 +1,6 @@
 import type { CowData } from "@/engine/core/cow/index.ts";
 import { OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
-import type { OwnerFields } from "@/engine/core/module/index.ts";
+import type { OwnerFields, RulesDescription } from "@/engine/core/module/index.ts";
 import type { Modifier, Requirement, Ruleset } from "@/shared/relations.ts";
 
 import type { InventoryItem, NamedLink, ViewEntity, ViewKinds, ViewLink } from "./rows.ts";
@@ -73,16 +73,16 @@ function buildById<T extends { id: string }>(list: readonly T[]): Map<string, T>
  */
 export default class RulesetData {
   /**
-   * `labels`: what its module calls an entity of each kind; `kinds`: what its modules declare of each kind past its rows
-   * (`ViewKind`).
+   * `words`: its rules' word for each type, which its refusals and issues name a type by; `kinds`: what its modules
+   * declare of each kind past its rows (`ViewKind`).
    */
   constructor(
     lists: RulesetLists,
     cow: CowData,
-    labels: Readonly<Record<string, string>>,
+    words: RulesDescription["words"],
     kinds: Readonly<Record<string, ViewKind>>,
   ) {
-    this.labels = labels;
+    this.words = words;
     this.kinds = kinds;
     this.entities = lists.entities;
     this.kindValuesOf = (type) => lists.kindValuesOf(type);
@@ -115,8 +115,6 @@ export default class RulesetData {
   /** Each kind's values kind-wide, built on first read: what `kindValues` keeps. */
   private readonly kindValuesOf: (type: string) => KindValue[];
 
-  private readonly labels: Readonly<Record<string, string>>;
-
   /** Each entity's links, by its id (the one the view shows), once read. */
   private readonly linksById = new Map<string, readonly ViewLink[]>();
 
@@ -126,6 +124,9 @@ export default class RulesetData {
 
   /** Each ruleset's of its chain own Settings, by its id. */
   private readonly settings: ReadonlyMap<string, StoredValues>;
+
+  /** Its rules' word for each type */
+  private readonly words: RulesDescription["words"];
 
   /**
    * The ruleset's copy-on-write state: the id Maps resolve through it on their own; ids as stored (a character's, a
@@ -273,11 +274,13 @@ export default class RulesetData {
   }
 
   /**
-   * What the ruleset's module calls an entity of a type (`type`), as a refusal or an issue names it ("Feat <id> does
-   * not belong to this ruleset"): the type itself for one it names none of.
+   * What the ruleset's rules call an entity of a type (`type`), as a refusal or an issue names it, in a sentence's
+   * case, as the client writes a word in a message ("Class level not found in this ruleset", of 3.5's "Class Level";
+   * "Feat <id> does not belong to this ruleset"): the type itself for one they have no word for.
    */
   labelOf(type: string): string {
-    return this.labels[type] ?? type;
+    const one = this.words[type]?.one;
+    return one ? `${one.charAt(0)}${one.slice(1).toLowerCase()}` : type;
   }
 
   /**
@@ -318,6 +321,15 @@ export default class RulesetData {
       const target = this.find(link.toType as keyof ViewKinds, link.toId) as ViewEntity | undefined;
       return target ? [{ ...link, toName: typeof target.name === "string" ? target.name : "" }] : [];
     });
+  }
+
+  /**
+   * An owned entity of a type (`type`) as its position along its owner names it (`position`), in its rules' word (3.5's
+   * class level's "Level 3"): its type's own word for a type they give no position word.
+   */
+  positionNameOf(type: string, position: number): string {
+    const word = this.words[type];
+    return `${word?.position?.one ?? word?.one ?? type} ${position}`;
   }
 
   /** entityId → its requirements (a sibling's merged into its winner's). */

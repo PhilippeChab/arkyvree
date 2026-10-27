@@ -1,5 +1,5 @@
 import { NAMED_LIST } from "@/engine/core/entities/index.ts";
-import type { RulesDeclaration } from "@/engine/core/module/index.ts";
+import type { RulesDeclaration, RulesWord } from "@/engine/core/module/index.ts";
 import { CHARACTER_FORM } from "@/engine/rulesets/dnd3.5/characters/form.ts";
 import { CLASS_LIST } from "@/engine/rulesets/dnd3.5/entities/classes/lists.ts";
 import { PROGRESSION } from "@/engine/rulesets/dnd3.5/entities/classes/progression.ts";
@@ -14,6 +14,9 @@ import { BONDED_KINDS, PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedK
 import { ITEM_SLOT, ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { MAX_ITEM_VARIANTS } from "@/vocabulary/dnd3.5/itemTemplates.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
+
+/** A class level's word for its position along its class ("Level 3"), which its level steps say too. */
+export const LEVEL_WORD: RulesWord = { many: "Levels", one: "Level" };
 
 /**
  * What every 3.5 ruleset shares: its entity kinds, in its page's order, and their words, its
@@ -90,7 +93,7 @@ export const RULES: RulesDeclaration = {
     aptitudes: { many: "Aptitudes", one: "Aptitude" },
     feats: { many: "Feats", one: "Feat" },
     items: { many: "Items", one: "Item" },
-    "class-levels": { many: "Class Levels", one: "Class Level" },
+    "class-levels": { many: "Class Levels", one: "Class Level", position: LEVEL_WORD },
     classes: { many: "Classes", one: "Class" },
     languages: { many: "Languages", one: "Language" },
     mechanics: { many: "Mechanics", one: "Mechanic" },

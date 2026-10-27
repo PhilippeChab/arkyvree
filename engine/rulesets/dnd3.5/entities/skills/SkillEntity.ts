@@ -18,8 +18,6 @@ export default class SkillEntity extends RulesetEntity<"skills", typeof SKILL_FI
   /** The ability its checks add, how armor weighs on it, and whether it's usable untrained. */
   protected override readonly fields = SKILL_FIELDS;
 
-  protected override readonly label = "Skill";
-
   override readonly type = "skills";
 
   /** Refuses the name its budget's path holds (`skills.budget`). */

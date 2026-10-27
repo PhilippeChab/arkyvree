@@ -149,15 +149,21 @@ describe("rulesets class levels", () => {
       await expectStatus(levels.$post({ param: classParam(id, classId), json: json as never }), 400);
   });
 
-  test("returns 404 for a missing ruleset, class or level", async () => {
+  test("returns 404 for a missing ruleset, class or level, a class or a level named in its rules' word", async () => {
     const { id, classId } = await setup();
+    const missing = (word: string) => ({ message: `${word} not found in this ruleset` });
     await expectStatus(levels.$get({ param: classParam(NIL_UUID, classId) }), 404);
-    await expectStatus(levels.$get({ param: classParam(id, NIL_UUID) }), 404);
+    expect(await (await expectStatus(levels.$get({ param: classParam(id, NIL_UUID) }), 404)).json()).toMatchObject(
+      missing("Class"),
+    );
     await expectStatus(table.$get({ param: { ...classParam(id, NIL_UUID), table: "spells" } }), 404);
     const param = { ...classParam(id, classId), ownedId: NIL_UUID };
     const byId = api.api.rulesets[":id"].entities[":entityType"].owned[":ownedId"];
-    await expectStatus(byId.$get({ param: { id, entityType: "classes", ownedId: NIL_UUID } }), 404);
-    await expectStatus(level.$put({ param, json: { fields: { [CLASS_LEVEL_BAB]: 1 } } }), 404);
+    // "Class level", its word "Class Level" in a sentence's case
+    const read = byId.$get({ param: { id, entityType: "classes", ownedId: NIL_UUID } });
+    expect(await (await expectStatus(read, 404)).json()).toMatchObject(missing("Class level"));
+    const update = level.$put({ param, json: { fields: { [CLASS_LEVEL_BAB]: 1 } } });
+    expect(await (await expectStatus(update, 404)).json()).toMatchObject(missing("Class level"));
     await expectStatus(level.$delete({ param }), 404);
   });
 });

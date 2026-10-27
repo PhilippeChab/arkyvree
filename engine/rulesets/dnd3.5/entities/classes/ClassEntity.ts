@@ -1,7 +1,6 @@
 /** A class as a ruleset's entity: its fields, what its form stores, and its parts: its levels, skills and table. */
 
 import { RulesetEntity } from "@/engine/core/entities/index.ts";
-import RulesError from "@/engine/core/RulesError.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 
 import ClassLevelEntity from "./ClassLevelEntity.ts";
@@ -21,8 +20,6 @@ export default class ClassEntity extends RulesetEntity<"classes", typeof CLASS_F
   /** Its hit die, the ability its bonus spells use, and the spells it casts. */
   protected override readonly fields = CLASS_FIELDS;
 
-  protected override readonly label = "Class";
-
   override readonly type = "classes";
 
   /**
@@ -31,7 +28,7 @@ export default class ClassEntity extends RulesetEntity<"classes", typeof CLASS_F
    */
   describeOwned(levelId: string) {
     const level = Dnd35View.of(this.rulesetData).classLevelsById.get(levelId);
-    if (!level) throw new RulesError("not-found", "Class level not found in this ruleset");
+    if (!level) this.refuseMissing("class-levels");
     const klass = this.find(level.ownerId);
     return { ...this.owned(klass.id).describe(level.id), name: klass.name, rulesetId: klass.rulesetId };
   }

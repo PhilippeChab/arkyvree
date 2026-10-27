@@ -10,7 +10,7 @@ import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
 
-import type { RulesDeclaration, RulesWord } from "./RulesDescription.ts";
+import type { KindWord, RulesDeclaration } from "./RulesDescription.ts";
 
 /**
  * A ruleset's Settings as its form holds them and its save sends them: its fields by the stored field that keeps each
@@ -21,8 +21,11 @@ export interface SettingsForm {
   links?: EntityLinkValues;
 }
 
-/** The words of the types the engine itself holds, whatever the rules: a customization's modifier. */
-const ENGINE_WORDS: Readonly<Record<string, RulesWord>> = { modifiers: { many: "Modifiers", one: "Modifier" } };
+/** The words of the types the engine itself holds, whatever the rules: a character, a customization's modifier. */
+const ENGINE_WORDS: Readonly<Record<string, KindWord>> = {
+  characters: { many: "Characters", one: "Character" },
+  modifiers: { many: "Modifiers", one: "Modifier" },
+};
 
 /**
  * What a ruleset answers of a ruleset as a whole, past its entities: what it needs to be published, its own fields, its

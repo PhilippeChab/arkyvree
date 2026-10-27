@@ -47,8 +47,6 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   /** Its saves' base bonuses and the feats it grants, its base attack bonus and its skill points. */
   protected override readonly fields = CLASS_LEVEL_FIELDS;
 
-  protected override readonly label = "Class level";
-
   override readonly type = "class-levels";
 
   /**
@@ -129,7 +127,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   /** One of the class's levels, as the view has it: refused when there's none, or it isn't the class's. */
   override find(levelId: string) {
     const level = super.find(levelId);
-    if (level.ownerId !== this.klass.id) throw new RulesError("not-found", `${this.label} not found in this ruleset`);
+    if (level.ownerId !== this.klass.id) this.refuseMissing();
     return level;
   }
 

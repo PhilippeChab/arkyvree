@@ -101,7 +101,8 @@ export default class CopyOnWriteEngine {
 
   /**
    * A ruleset's view: its own rows and its source chain's (`chain`, its own first, then its chain's in order), composed
-   * by its copy-on-write data (`cow`), with the fields every module declares: each owner's values in their order.
+   * by its copy-on-write data (`cow`), with the fields every module declares (each owner's values in their order) and
+   * its rules' words, which its refusals and issues name a type by.
    */
   buildView(ruleset: { baseRules: BaseRules }, chain: RulesetRawData[], cow: CowData): RulesetData {
     const storage = StorageEngine.shared();
@@ -110,7 +111,7 @@ export default class CopyOnWriteEngine {
       cow,
       storage.declaredFields(),
       storage.viewSchema(),
-      Modules.of(ruleset.baseRules).kindLabels,
+      Modules.of(ruleset.baseRules).ruleset.describeRules().words,
     ).build();
   }
 

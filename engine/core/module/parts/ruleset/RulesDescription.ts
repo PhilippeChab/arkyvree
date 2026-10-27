@@ -96,6 +96,14 @@ export interface EntityPoolsDescription {
 }
 
 /**
+ * An entity type's word ("Feat", "Feats"), and an owned type's word for its entity's position along its owner
+ * (`position`: 3.5's class level's "Level", which names one "Level 3").
+ */
+export interface KindWord extends RulesWord {
+  position?: RulesWord;
+}
+
+/**
  * A column of an entity's own value in its type's list, between its name and its description, by where it's stored
  * (one of the two), which names it in its table too (the client's `listColumnId`): its own field (`field`: among its `fields`, `ITEM_COST_GP`) or its
  * links of a role (`role`: among its `links`, a skill's `keyAbility`, a feat's `listedIn`), its label, its share of the list's width (percent), where a phone shows it (`slot`), and how its value reads
@@ -299,9 +307,10 @@ export interface RulesDescription {
   tiers: { label: string; level: number }[];
   /**
    * Its word for every entity type, by type (3.5's "Class Level" for `class-levels`), the engine's own types'
-   * (`modifiers`) included: every name the app gives an entity's type
+   * (`characters`, `modifiers`) included: every name the app gives an entity's type, in a label's Title Case, which
+   * its refusals and issues write in a sentence's (`RulesetData.labelOf`: "Class level not found in this ruleset")
    */
-  words: Partial<Record<string, RulesWord>>;
+  words: Partial<Record<string, KindWord>>;
 }
 
 /** A word in its singular and its plural ("Spell", "Spells"). */

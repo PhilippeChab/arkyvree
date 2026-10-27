@@ -207,6 +207,8 @@ describe("An entity type", () => {
     expect(entityTypeLabel("classes", DND35_WORDS, true)).toBe("Classes");
     expect(entityTypeLabel("class-levels", DND35_WORDS)).toBe("Class Level");
     expect(entityTypeLabel("modifiers", DND35_WORDS, true)).toBe("Modifiers");
+    // A character's own modifier's source, as the engine's issues name it
+    expect(entityTypeLabel("characters", DND35_WORDS)).toBe("Character");
     // Before the rules load, or for a type with no word, a generic word: never its type as the code names it
     expect(entityTypeLabel("class-levels", undefined)).toBe("Entity");
     expect(entityTypeLabel("widgets", DND35_WORDS, true)).toBe("Entities");

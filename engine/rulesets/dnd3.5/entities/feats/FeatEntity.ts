@@ -34,8 +34,6 @@ export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS
   /** Its feat pools, its flags, its families, the weapon rules it changes, the schools it forbids. */
   protected override readonly fields = FEAT_FIELDS;
 
-  protected override readonly label = "Feat";
-
   /** A new feat standing in for a generated ancestor is generated. */
   override readonly takesAfterAncestor = true;
 

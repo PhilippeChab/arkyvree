@@ -155,6 +155,7 @@ export {
   type EntityKindDescription,
   type EntityLinksDescription,
   type EntityPoolsDescription,
+  type KindWord,
   type ListColumn,
   type ListDescription,
   type ProgressionCounts,
