@@ -102,6 +102,11 @@ function fighterPlan(ctx: SeedContext, count: number) {
   };
 }
 
+/** The keys a page's rows hold, each once, by name. */
+function keysOf(rows: object[]) {
+  return [...new Set(rows.flatMap((row) => Object.keys(row)))].sort();
+}
+
 /** Each pool's next pick of a `pick` step, at any tier and each of `tiers`, on the plan's level `index`. */
 function nextAt(step: PickStep, index: number, tiers: (id: string) => string[] = () => [""]) {
   return Object.fromEntries(
@@ -340,6 +345,20 @@ describe("character level plans", () => {
     expect(memberIds).toHaveLength(family.count);
     expect(new Set(memberIds).size).toBe(family.count);
     expect(memberIds).toContain(family.id);
+    // A group that names no family opens none: the pool's groups
+    const unnamed = await expectOk(
+      options.$post({
+        param: { characterId, step: "feats" },
+        query: { search: "Weapon Focus" },
+        json: { ...json, group: "" },
+      }),
+    );
+    expect(unnamed).toEqual(focus);
+    // Each row a step's option or group alone: nothing else of the row its picker read (a class's fields, a feat's pools)
+    const optionKeys = ["description", "eligible", "id", "name", "requirementTree"];
+    expect([...optionKeys, "track"]).toEqual(expect.arrayContaining(keysOf(classes.items)));
+    expect([...optionKeys, "count", "group"]).toEqual(expect.arrayContaining(keysOf(focus.items)));
+    expect(optionKeys).toEqual(expect.arrayContaining(keysOf(members.items)));
 
     // A sorcerer's cantrips, at tier 0
     const sorcerer = await createCharacter(16);
@@ -355,6 +374,7 @@ describe("character level plans", () => {
     const cantripIds = optionsOf(cantrips, false).items.map(({ id }) => id);
     expect(optionsOf(cantrips, false).items.map(({ name }) => name)).toEqual(CANTRIPS);
     expect(cantripIds).toEqual(CANTRIPS.map((name) => sorcerer.ctx.spellMap[name]));
+    expect(optionKeys).toEqual(expect.arrayContaining(keysOf(cantrips.items)));
     // Its first-level spells, at tier 1: no cantrip among them
     const firsts = await expectOk(
       options.$post({

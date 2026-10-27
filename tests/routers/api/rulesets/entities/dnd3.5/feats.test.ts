@@ -43,8 +43,8 @@ describe("rulesets entities: feats", () => {
     );
     const rows = grouped.items.filter((row) => row.group === "Weapon Focus");
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ displayName: "Weapon Focus" });
-    expect(Number(rows[0].variantCount)).toBeGreaterThan(1);
+    expect(rows[0]).toMatchObject({ name: "Weapon Focus" });
+    expect(Number(rows[0].count)).toBeGreaterThan(1);
   });
 
   test("requires a session", async () => {

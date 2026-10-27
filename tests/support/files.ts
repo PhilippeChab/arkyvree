@@ -4,13 +4,17 @@ import { ATTACHMENT_SLOTS, type AttachmentSlotName } from "@/shared/attachments.
 
 import { uniqueId } from "./seed.ts";
 
-/** A PDF export of `userId`'s, valid for an hour unless `expiresAt` says otherwise. */
-export async function createExport(userId: string, expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString()) {
+/** A PDF export of `userId`'s, valid for an hour unless `expiresAt` says otherwise, named `fileName`. */
+export async function createExport(
+  userId: string,
+  expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+  fileName = "test-sheet.pdf",
+) {
   const [record] = await Exports.create(db, {
     userId,
     type: "pdf",
     mimeType: "application/pdf",
-    fileName: "test-sheet.pdf",
+    fileName,
     data: Buffer.from("fake pdf content"),
     expiresAt,
   });

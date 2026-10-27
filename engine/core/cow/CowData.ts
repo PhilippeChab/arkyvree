@@ -120,6 +120,11 @@ export default class CowData {
     return this.aliases.get(id) ?? id;
   }
 
+  /** A link (`link`, as stored) naming the entities that stand for its target and its pool (a copy, a winner). */
+  resolveLink<T extends { toId: string; viaId: string | null }>(link: T): T {
+    return { ...link, toId: this.resolve(link.toId), viaId: link.viaId === null ? null : this.resolve(link.viaId) };
+  }
+
   /**
    * Entities (`entities`: records, as stored or as a view holds them) with each single link naming the entity that
    * stands for its target (a copy, a winner): the same array when the scope resolves nothing, and the same entity when

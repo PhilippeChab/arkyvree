@@ -198,13 +198,13 @@ export default class RulesetComposition {
     const targets = new Set<string>();
     const composed: ViewLink[] = [];
     for (const link of links) {
-      const toId = resolve(link.toId);
+      const resolved = this.cow.resolveLink(link);
       if (merges(link)) {
-        const key = `${link.role} ${link.toType} ${toId}`;
+        const key = `${link.role} ${link.toType} ${resolved.toId}`;
         if (targets.has(key)) continue;
         targets.add(key);
       }
-      composed.push({ ...link, fromId: entityId, toId, viaId: link.viaId === null ? null : resolve(link.viaId) });
+      composed.push({ ...resolved, fromId: entityId });
     }
     return composed;
   }
