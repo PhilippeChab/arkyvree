@@ -40,6 +40,7 @@ export type {
   PartialReading,
   PartialSheet,
   PlacementDescription,
+  RulesetCard,
   RulesetSheet,
   ScoreBounds,
   ScoresCreation,

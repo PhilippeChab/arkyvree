@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import type { CharacterInput } from "@/engine/core/module/index.ts";
+import { type CharacterInput, CharactersPart } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35Characters from "@/engine/rulesets/dnd3.5/characters/Dnd35Characters.ts";
 import { DND35_STORAGE } from "@/engine/rulesets/dnd3.5/storage/Dnd35Storage.ts";
@@ -19,11 +19,14 @@ const COLUMNS = {
   updatedAt: "2026-01-01T00:00:00Z",
 };
 
+/** What a character's row says of it, which its card shows a reader who sees all of it. */
+const DESCRIPTION = "A sellsword from the north";
+
 /** What a character's rows hold that some of its readers mustn't read: its notes, private notes and share token. */
 const SECRETS = { notes: "Owes the guild a favor", privateNotes: "Plans to betray the party", shareToken: "row-token" };
 
-/** A character as its rows give it: its row, with its secrets, and none of its other rows read here. */
-const CHARACTER = { record: { ...COLUMNS, ...SECRETS } } as unknown as CharacterInput;
+/** A character as its rows give it: its row, its description and secrets among it, and none of its other rows. */
+const CHARACTER = { record: { ...COLUMNS, description: DESCRIPTION, ...SECRETS } } as unknown as CharacterInput;
 
 /** What an oversharing ruleset writes of a character's build, or of a share token, where no reader should find it. */
 const LEAKS = { build: "Fighter 9", language: "Draconic", token: "leaked-token" };
@@ -59,7 +62,7 @@ const VIEW = { ruleset: { baseRules: DND35_BASE_RULES, name: "Rules", rulesetId:
 
 /**
  * An identity block that shows too much, from the rows it's given (`record`): its race with a key of its own, a field
- * echoing the rows' share token and private notes, its picked links, its notes and a key of its own.
+ * echoing the rows' share token, private notes and description, its picked links, its notes and a key of its own.
  */
 function identityOf(record: Character) {
   return {
@@ -71,7 +74,14 @@ function identityOf(record: Character) {
     failed: "Failed",
     lines: [
       [{ key: "race", kind: "text", label: "Race", value: "Elf", fixed: true, build: LEAKS.build }],
-      [{ key: "echo", kind: "text", label: "Echo", value: `${record.shareToken}|${record.privateNotes}` }],
+      [
+        {
+          key: "echo",
+          kind: "text",
+          label: "Echo",
+          value: `${record.shareToken}|${record.privateNotes}|${record.description}`,
+        },
+      ],
     ],
     fields: [],
     links: [{ label: "Languages", none: "", picked: [{ id: "draconic", name: LEAKS.language }], role: "speaks" }],
@@ -83,8 +93,9 @@ function identityOf(record: Character) {
 /**
  * A ruleset that describes too much of a character: a sheet that answers a share token, another owner, notes and a
  * block of its build; a partial reading with its build in its summary, its identity's links and notes, and keys of its
- * own; a card of chips with keys of their own, one that isn't its partial reading's, and one echoing the rows' share
- * token and private notes; a printed sheet of the rows it's given. What the core keeps of them is its own.
+ * own; a card with a description of its own and chips with keys of their own, one that isn't its partial reading's, and
+ * one echoing the rows' share token, private notes and description; a printed sheet of the rows it's given. What the core keeps of
+ * them is its own.
  */
 class OversharingCharacters extends Dnd35Characters {
   protected override describeDocument(_view: RulesetView, character: CharacterInput) {
@@ -108,7 +119,7 @@ class OversharingCharacters extends Dnd35Characters {
     return {
       chips: [
         {
-          label: `${character.shareToken}|${character.privateNotes}`,
+          label: `${character.shareToken}|${character.privateNotes}|${character.description}`,
           partial: true,
           tone: "secondary" as const,
           build: LEAKS.build,
@@ -117,6 +128,7 @@ class OversharingCharacters extends Dnd35Characters {
       ],
       // What the core never shows a partly seen character's reader, whatever its ruleset adds
       levels: [{ klass: "Fighter", level: 1 }],
+      description: LEAKS.build,
     };
   }
 
@@ -135,17 +147,39 @@ class OversharingCharacters extends Dnd35Characters {
 describe("The characters part, whatever its ruleset describes", () => {
   const characters = new OversharingCharacters(DND35_STORAGE);
 
-  test("answers a card's chips' declared keys alone, from a row with no notes nor share token, a partly seen one's partial chips", () => {
-    const echo = { label: "null|null", partial: true, tone: "secondary" as const };
+  test("answers a card's row's columns and its chips' declared keys alone, from a row with no notes nor share token, a partly seen one's partial chips and no description", () => {
+    const echo = { partial: true, tone: "secondary" as const };
     const partial = characters.describeCard(VIEW, CHARACTER.record, [], true);
     const whole = characters.describeCard(VIEW, CHARACTER.record, [], false);
-    expect(partial).toEqual({ chips: [echo] });
-    expect(whole).toEqual({ chips: [echo, { label: "Fighter 1", partial: false, tone: "primary" }] });
+    expect(partial).toEqual({
+      id: "character",
+      name: "Aria",
+      description: null,
+      chips: [{ label: "null|null|null", ...echo }],
+    });
+    // A partly seen character's ruleset describes its chips from a row without its description: none can carry it
+    expect(JSON.stringify(partial)).not.toContain(DESCRIPTION);
+    expect(whole).toEqual({
+      id: "character",
+      name: "Aria",
+      description: DESCRIPTION,
+      chips: [
+        { label: `null|null|${DESCRIPTION}`, ...echo },
+        { label: "Fighter 1", partial: false, tone: "primary" },
+      ],
+    });
     for (const card of [partial, whole]) {
-      expect(Object.keys(card)).toEqual(["chips"]);
+      expect(Object.keys(card)).toEqual(["id", "name", "description", "chips"]);
       for (const chip of card.chips) expect(Object.keys(chip)).toEqual(["label", "partial", "tone"]);
       for (const secret of [...Object.values(SECRETS), LEAKS.build]) expect(JSON.stringify(card)).not.toContain(secret);
     }
+  });
+
+  test("answers an unread ruleset's character's card as any card, its chip unknown, a partly seen one's with no description", () => {
+    const unknown = { label: "Unknown", partial: true, tone: "secondary" as const };
+    const card = { id: "character", name: "Aria", description: DESCRIPTION, chips: [unknown] };
+    expect(CharactersPart.describeUnreadCard(CHARACTER.record, false)).toEqual(card);
+    expect(CharactersPart.describeUnreadCard(CHARACTER.record, true)).toEqual({ ...card, description: null });
   });
 
   test("answers a sheet's row's columns and its declared keys alone, no share token, its private notes as read", () => {
@@ -190,13 +224,13 @@ describe("The characters part, whatever its ruleset describes", () => {
           failed: "Failed",
           lines: [
             [{ key: "race", kind: "text", label: "Race", value: "Elf", fixed: true }],
-            [{ key: "echo", kind: "text", label: "Echo", value: "null|null" }],
+            [{ key: "echo", kind: "text", label: "Echo", value: "null|null|null" }],
           ],
           fields: [],
         },
       ],
     });
-    for (const secret of [...Object.values(SECRETS), ...Object.values(LEAKS)])
+    for (const secret of [...Object.values(SECRETS), ...Object.values(LEAKS), DESCRIPTION])
       expect(JSON.stringify(sheet)).not.toContain(secret);
   });
 

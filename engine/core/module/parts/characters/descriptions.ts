@@ -1,8 +1,9 @@
 /**
- * What the characters part's `describe*` operations answer in a shape every ruleset shares: a character's card, a new
- * character's form and how its scores are set, a picked link's room, a scored link's bounds, an inventory entry with
- * its item, a placement's warning, where a sheet holds its private notes, a sheet's row's columns and a partial
- * reading's allowlist. What a ruleset describes in its own shape is its `Descriptions` (`contract.ts`).
+ * What the characters part's `describe*` operations answer in a shape every ruleset shares: a character's card and its
+ * ruleset's chips on it, a new character's form and how its scores are set, a picked link's room, a scored link's
+ * bounds, an inventory entry with its item, a placement's warning, where a sheet holds its private notes, a sheet's
+ * row's columns and a partial reading's allowlist. What a ruleset describes in its own shape is its `Descriptions`
+ * (`contract.ts`).
  */
 
 import type { ValidationResult } from "@/engine/core/character/index.ts";
@@ -23,11 +24,14 @@ export interface CardChip {
 }
 
 /**
- * A character's card, as a list of characters shows it: its chips, in its ruleset's order (3.5's race, then each class
- * at its highest level).
+ * A character's card, as a list of characters shows it, whatever its ruleset: its row's id, name and description, none
+ * for a reader who sees it partly, and its ruleset's chips (`RulesetCard`), a partly seen one's those its ruleset marks
+ * as its partial reading's alone. The characters part writes it.
  */
-export interface CharacterCard {
-  chips: CardChip[];
+export interface CharacterCard extends RulesetCard {
+  description: Character["description"];
+  id: string;
+  name: string;
 }
 
 /**
@@ -117,6 +121,14 @@ export interface PartialSheet extends CharacterColumns {
 /** Why a placement can't take one more item, if it can't: what the inventory dialogs warn of, and an add refuses. */
 export interface PlacementDescription {
   warning: string | null;
+}
+
+/**
+ * What a ruleset describes of a character's card (`CharacterCard`), past its row's columns, which the characters part
+ * writes: its chips, in its ruleset's order (3.5's race, then each class at its highest level).
+ */
+export interface RulesetCard {
+  chips: CardChip[];
 }
 
 /**

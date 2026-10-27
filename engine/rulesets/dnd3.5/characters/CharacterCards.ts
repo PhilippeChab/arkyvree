@@ -1,4 +1,4 @@
-import type { CharacterCard } from "@/engine/core/module/index.ts";
+import type { RulesetCard } from "@/engine/core/module/index.ts";
 import type { Character } from "@/shared/relations.ts";
 
 import CharacterValues from "./CharacterValues.ts";
@@ -11,19 +11,19 @@ interface CardData {
   racesById: ReadonlyMap<string, { name: string }>;
 }
 
-/** A 3.5 character's card, as a list of characters shows it. */
+/** What 3.5 shows on a character's card, as a list of characters shows it: its chips. */
 export default class CharacterCards {
   /**
-   * The card of a character (`character`, its single links as stored, its race's among them; with its levels, `levels`:
-   * its advancements, each with its entry, a class level), named as its ruleset's view names its race and classes, a
-   * copied or renamed one by its own name: its race's chip, which a partly seen character shows, then each class at the
-   * highest level the character has in it.
+   * The chips on the card of a character (`character`, its single links as stored, its race's among them; with its
+   * levels, `levels`: its advancements, each with its entry, a class level), named as its ruleset's view names its race
+   * and classes, a copied or renamed one by its own name: its race's chip, which a partly seen character shows, then
+   * each class at the highest level the character has in it.
    */
   static describe(
     data: CardData,
     character: Pick<Character, "links">,
     levels: { entryId: string | null }[],
-  ): CharacterCard {
+  ): RulesetCard {
     const levelByClassName = new Map<string, number>();
     for (const level of levels) {
       const classLevel = level.entryId === null ? undefined : data.classLevelsById.get(level.entryId);

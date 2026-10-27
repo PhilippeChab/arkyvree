@@ -161,16 +161,10 @@ class CharactersService extends include(Object, Archives, Imports) {
       async (views) => {
         // The user's own characters: every card whole
         const cards = describeCharacterCards(views, charactersList, advancements, new Set());
-        const enrichedCharacters = charactersList.map((char) => {
-          const { chips } = cards.get(char.id)!;
-          return {
-            id: char.id,
-            name: char.name,
-            description: char.description,
-            chips,
-            accessRole: char.accessRole,
-          };
-        });
+        const enrichedCharacters = charactersList.map((char) => ({
+          ...cards.get(char.id)!,
+          accessRole: char.accessRole,
+        }));
 
         return {
           items: enrichedCharacters,
