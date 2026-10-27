@@ -98,6 +98,14 @@ describe("architecture rules", () => {
             'import { isOwned } from "./n/kinds.ts";\n' +
             "export function o(x: T) {\n  const storage = Engine.storage();\n" +
             `  return [isOwned(x), storage.isPlayerKind(x), Engine.storage().editedLinks().get(x), ${plan}];\n}\n`,
+          // A module's function that asks the engine through the entry imported under another name
+          "server/services/p/aliased.ts":
+            'import { Engine as E, type T } from "@/engine/index.ts";\n' +
+            "export function p(x: T) {\n  return E.for(x).skills().planCreate(x);\n}\n",
+          "server/services/q.ts":
+            engine +
+            'import { p } from "./p/aliased.ts";\n' +
+            `export function q(x: T) {\n  return [p(x), ${describe}];\n}\n`,
           // Another service, and a plan's own answer (`plan.describe(row)`), which isn't another operation
           "server/services/l/LService.ts":
             engine + `class LService {\n  m(x: T) {\n    return ${plan};\n  }\n}\nexport default new LService();\n`,
@@ -117,6 +125,7 @@ describe("architecture rules", () => {
       "one-engine-op server/services/d.ts",
       "one-engine-op server/services/g.ts",
       "one-engine-op server/services/m.ts",
+      "one-engine-op server/services/q.ts",
     ]);
   });
 

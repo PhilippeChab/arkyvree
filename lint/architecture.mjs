@@ -336,11 +336,12 @@ function asksEngine(target, name) {
     ),
   );
   if (reExport) return asksEngine(targetOf(target, reExport[2]), name);
-  const entry = /import \{[^}]*(?<!type )\bEngine\b[^}]*\} from "@\/engine\/index\.ts"/;
-  if (!entry.test(source)) return false;
-  // Past its import, the entry under its name but where it reads what the modules declare (`Engine.storage()`)
+  const entry = source.match(/import \{[^}]*(?<!type )\bEngine\b(?:\s+as\s+(\w+))?[^}]*\} from "@\/engine\/index\.ts"/);
+  if (!entry) return false;
+  // Past its import, the entry under the name it's imported as, but where it reads what the modules declare
+  // (`Engine.storage()`)
   const declarations = [...ENGINE_DECLARATIONS].join("|");
-  return new RegExp(`\\bEngine\\b(?!\\.(?:${declarations})\\()`).test(source.replace(entry, ""));
+  return new RegExp(`\\b${entry[1] ?? "Engine"}\\b(?!\\.(?:${declarations})\\()`).test(source.replace(entry[0], ""));
 }
 
 function createEngineFrontDoor(context) {
