@@ -1,4 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
+import type { OwnedKind } from "@/engine/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
 
 /**
@@ -9,7 +10,7 @@ import { Entities } from "@/server/repositories/index.ts";
  */
 export async function findOwnedPairs(
   tx: Db,
-  ownedType: string,
+  ownedType: OwnedKind,
   owners: ReadonlyMap<string, string | undefined>,
 ): Promise<Map<string, string | undefined>> {
   const pairedIds = [...owners.values()].filter((id) => id !== undefined);
