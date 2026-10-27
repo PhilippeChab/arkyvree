@@ -110,11 +110,11 @@ export default class RulesEngine {
     fields: Fields | undefined,
     declared: ProgressionTrackDeclaration,
   ): ProgressionTrack {
-    const [leaf, ...others] = Field.leavesOf(fields ?? {}).filter((each) =>
-      declared.source === "field"
-        ? !Field.isLinked(each) && each.field === declared.field
-        : each.kind === "links" && each.entries === "amount",
-    );
+    const [leaf, ...others] = Field.leavesOf(fields ?? {}).filter((each) => {
+      if (declared.source === "amounts") return each.kind === "links" && each.entries === "amount";
+      const place = Field.placeOf(each);
+      return place.part === "fields" && place.at === declared.field;
+    });
     const bounded = leaf?.kind === "number" || leaf?.kind === "links" ? leaf : undefined;
     if (!bounded || others.length > 0 || bounded.min === undefined || bounded.max === undefined)
       throw new Error(`${type} declare no one field with bounds for the track ${declared.key}`);

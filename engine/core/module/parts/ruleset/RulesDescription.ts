@@ -107,7 +107,7 @@ export interface KindWord extends RulesWord {
  * A column of an entity's own value in its type's list, between its name and its description, by where it's stored
  * (one of the two), which names it in its table too (the client's `listColumnId`): its own field (`field`: among its
  * `fields`, `ITEM_COST_GP`) or its links of a role (`role`: among its `links`, a skill's `keyAbility`, a feat's
- * `listedIn`), its label (its field's, unless its rules give a shorter one: a race's "Speed"), its share of the list's
+ * `listedIn`), its label (its field's, unless its list names it otherwise: a race's "Speed"), its share of the list's
  * width (percent), where a phone shows it (`slot`), what its field's declaration says of its value, which the engine
  * reads off it (`RulesEngine`: a number's `labels` and `unit`, a reference's kind, `references`), and how its value
  * reads (`reads`):
@@ -137,8 +137,8 @@ export interface ListColumn {
 }
 
 /**
- * A list's column as a module's rules declare it: what's its own alone, its label only where it's shorter than its
- * field's (`label`: a race's speed's "Speed"). The rest its field's declaration says.
+ * A list's column as a module's rules declare it: what's its own alone, its label only where its list names it
+ * otherwise than its field (`label`: shorter, a race's speed's "Speed"; or as its flag reads, a skill's "Trained Only"). The rest its field's declaration says.
  */
 export interface ListColumnDeclaration extends Omit<ListColumn, "label" | "labels" | "references" | "unit"> {
   label?: string;
