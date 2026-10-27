@@ -10,6 +10,7 @@ import { type InventoryItem, RequestIds, type RulesetView, type ViewKinds } from
 import type { Character as CharacterRecord } from "@/shared/relations.ts";
 
 import type {
+  CardChip,
   CharacterCard,
   CharacterColumns,
   DescribedInventoryEntry,
@@ -90,6 +91,11 @@ export default abstract class CharactersPart<D extends Descriptions> {
       throw new RulesError("invalid", "Remaining charges cannot exceed total charges");
   }
 
+  /** A card's chip, its declared keys alone (`CardChip`), in their order: nothing a ruleset adds to it. */
+  private static chipOf({ label, partial, tone }: CardChip): CardChip {
+    return { label, partial, tone };
+  }
+
   /**
    * The columns a character's sheet opens with (`CharacterColumns`): its row's own (`record`) and its ruleset's (as
    * `view` reads it), and no share token, which the server writes for who may read it.
@@ -126,7 +132,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
     return {
       ...input,
       ...(input.parent && { parent: CharactersPart.readAs(input.parent, notes) }),
-      record: { ...input.record, shareToken: null, ...(notes === "hide" && { privateNotes: null }) },
+      record: CharactersPart.rowAs(input.record, notes),
     };
   }
 
@@ -140,6 +146,14 @@ export default abstract class CharactersPart<D extends Descriptions> {
       block.kind === "fields" && block.notes ? { ...block, notes: { notes: block.notes.notes } } : block,
     );
     return { ...sheet, blocks };
+  }
+
+  /**
+   * A character's row as its reader reads it (`readAs`): never its share token, nor its private notes for a reader who
+   * doesn't read them (`notes`).
+   */
+  private static rowAs(record: CharacterRecord, notes: PrivateNotes): CharacterRecord {
+    return { ...record, shareToken: null, ...(notes === "hide" && { privateNotes: null }) };
   }
 
   /**
@@ -175,9 +189,9 @@ export default abstract class CharactersPart<D extends Descriptions> {
   protected abstract describeFull(view: RulesetView, character: CharacterInput, children: CharacterInput[]): D["sheet"];
 
   /**
-   * The card of a character (`character`, with its advancements, `advancements`), as a list of characters shows it to
-   * a reader who sees all of it, named as its ruleset's view names what it shows, a copied or renamed one by its own
-   * name.
+   * The card of a character (`character`, its row without its private notes nor its share token, with its
+   * advancements, `advancements`), as a list of characters shows it to a reader who sees all of it, named as its
+   * ruleset's view names what it shows, a copied or renamed one by its own name.
    */
   protected abstract describeFullCard(
     view: RulesetView,
@@ -318,8 +332,9 @@ export default abstract class CharactersPart<D extends Descriptions> {
   }
 
   /**
-   * The card of a character (`character`, with its advancements, `advancements`), as a list of characters shows it: a
-   * partly seen one's (`partial`) holds the chips its ruleset marks as its partial reading's alone.
+   * The card of a character (`character`, with its advancements, `advancements`), as a list of characters shows it
+   * (`describeFullCard`, from its row without its private notes nor its share token): each chip its declared keys
+   * alone, and a partly seen one's (`partial`) the chips its ruleset marks as its partial reading's alone.
    */
   describeCard(
     view: RulesetView,
@@ -327,9 +342,10 @@ export default abstract class CharactersPart<D extends Descriptions> {
     advancements: StoredAdvancement[],
     partial: boolean,
   ): CharacterCard {
-    const card = this.describeFullCard(view, character, advancements);
-    if (!partial) return card;
-    return { chips: card.chips.filter((chip) => chip.partial) };
+    // A card shows no notes nor share token: its ruleset describes the row without them
+    const { chips } = this.describeFullCard(view, CharactersPart.rowAs(character, "hide"), advancements);
+    const shown = partial ? chips.filter((chip) => chip.partial) : chips;
+    return { chips: shown.map((chip) => CharactersPart.chipOf(chip)) };
   }
 
   /**

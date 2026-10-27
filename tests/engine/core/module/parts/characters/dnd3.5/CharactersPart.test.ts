@@ -54,9 +54,6 @@ const SUMMARY = {
 /** A summary that adds a key of its own, which names the build and a share token. */
 const OVERSHARED_SUMMARY = { ...SUMMARY, classes: LEAKS.build, shareToken: LEAKS.token };
 
-/** A character's row: none of it read here. */
-const RECORD = {} as Character;
-
 /** A ruleset's view: its ruleset, and none of the rest read here. */
 const VIEW = { ruleset: { baseRules: DND35_BASE_RULES, name: "Rules", rulesetId: null } } as unknown as RulesetView;
 
@@ -86,8 +83,8 @@ function identityOf(record: Character) {
 /**
  * A ruleset that describes too much of a character: a sheet that answers a share token, another owner, notes and a
  * block of its build; a partial reading with its build in its summary, its identity's links and notes, and keys of its
- * own; a card with a chip that isn't its partial reading's; a printed sheet of the rows it's given. What the core keeps
- * of them is its own.
+ * own; a card of chips with keys of their own, one that isn't its partial reading's, and one echoing the rows' share
+ * token and private notes; a printed sheet of the rows it's given. What the core keeps of them is its own.
  */
 class OversharingCharacters extends Dnd35Characters {
   protected override describeDocument(_view: RulesetView, character: CharacterInput) {
@@ -107,11 +104,16 @@ class OversharingCharacters extends Dnd35Characters {
     } as unknown as ReturnType<Dnd35Characters["describeFull"]>;
   }
 
-  protected override describeFullCard() {
+  protected override describeFullCard(_view: RulesetView, character: Character) {
     return {
       chips: [
-        { label: "Elf", partial: true, tone: "secondary" as const },
-        { label: "Fighter 1", partial: false, tone: "primary" as const },
+        {
+          label: `${character.shareToken}|${character.privateNotes}`,
+          partial: true,
+          tone: "secondary" as const,
+          build: LEAKS.build,
+        },
+        { label: "Fighter 1", partial: false, tone: "primary" as const, build: LEAKS.build },
       ],
       // What the core never shows a partly seen character's reader, whatever its ruleset adds
       levels: [{ klass: "Fighter", level: 1 }],
@@ -133,11 +135,17 @@ class OversharingCharacters extends Dnd35Characters {
 describe("The characters part, whatever its ruleset describes", () => {
   const characters = new OversharingCharacters(DND35_STORAGE);
 
-  test("keeps a partly seen character's card to its partial chips", () => {
-    expect(characters.describeCard(VIEW, RECORD, [], true)).toEqual({
-      chips: [{ label: "Elf", partial: true, tone: "secondary" }],
-    });
-    expect(characters.describeCard(VIEW, RECORD, [], false).chips).toHaveLength(2);
+  test("answers a card's chips' declared keys alone, from a row with no notes nor share token, a partly seen one's partial chips", () => {
+    const echo = { label: "null|null", partial: true, tone: "secondary" as const };
+    const partial = characters.describeCard(VIEW, CHARACTER.record, [], true);
+    const whole = characters.describeCard(VIEW, CHARACTER.record, [], false);
+    expect(partial).toEqual({ chips: [echo] });
+    expect(whole).toEqual({ chips: [echo, { label: "Fighter 1", partial: false, tone: "primary" }] });
+    for (const card of [partial, whole]) {
+      expect(Object.keys(card)).toEqual(["chips"]);
+      for (const chip of card.chips) expect(Object.keys(chip)).toEqual(["label", "partial", "tone"]);
+      for (const secret of [...Object.values(SECRETS), LEAKS.build]) expect(JSON.stringify(card)).not.toContain(secret);
+    }
   });
 
   test("answers a sheet's row's columns and its declared keys alone, no share token, its private notes as read", () => {

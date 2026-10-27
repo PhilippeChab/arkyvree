@@ -44,6 +44,16 @@ async function findSeededCharacter(rules: BaseRules) {
   return (await Characters.findOne(db, { id: character.id }, Visibility.All))!;
 }
 
+/** Every seeded character of a ruleset of `rules`, its bonded creatures among them. */
+async function findSeededCharacters(rules: BaseRules) {
+  return await db
+    .select({ id: charactersInCharacter.id })
+    .from(charactersInCharacter)
+    .innerJoin(rulesetsInRules, eq(rulesetsInRules.id, charactersInCharacter.rulesetId))
+    .where(and(eq(rulesetsInRules.baseRules, rules), isNull(charactersInCharacter.deletedAt)))
+    .orderBy(asc(charactersInCharacter.createdAt), asc(charactersInCharacter.id));
+}
+
 describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characters' operations", (rules) => {
   test("reads a character's private notes, and each bonded creature's on its own sheet, only to a reader who reads them", async () => {
     const seeded = await findSeededCharacter(rules);
@@ -101,27 +111,42 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
   });
 
   test("answers no share token, whatever the reading, and a partial reading as core's allowlist: its identity's block alone", async () => {
-    const seeded = await findSeededCharacter(rules);
-    const shareToken = crypto.randomUUID();
-    const [record] = await Characters.update(db, { shareToken }, { id: seeded.id });
-    const input = await readCharacterInput(db, record);
-    const children = await readChildInputs(db, input, Visibility.All);
-
-    const read = await withRulesetScope(db, record.rulesetId, async (scope) => {
-      const character = Engine.for(scope).character(input);
-      const partial = character.describeForMember(children, "partial");
-      const shown = character.describe(children);
-      return { partial, shown, readings: [partial, shown, character.describe(children, "hide")] };
-    });
-
-    for (const reading of read.readings) {
-      expect(reading.shareToken).toBeNull();
-      expect(JSON.stringify(reading)).not.toContain(shareToken);
+    const seeded = await findSeededCharacters(rules);
+    const tokens = new Map<string, string>();
+    for (const { id } of seeded) {
+      tokens.set(id, crypto.randomUUID());
+      await Characters.update(db, { privateNotes: `${NOTES} ${id}`, shareToken: tokens.get(id) }, { id });
     }
-    expect(Object.keys(read.partial)).toEqual(Object.keys(read.shown));
-    expect(read.partial).toMatchObject({ id: record.id, name: record.name, validation: { valid: true, issues: [] } });
-    expect({ ...read.partial.requirements, ...read.partial.modifiers }).toEqual({});
-    expect(read.partial.blocks.map((block) => block.kind)).toEqual(["fields"]);
+    const records = await Characters.findMany(db, { ids: seeded.map(({ id }) => id) }, Visibility.All);
+    const levels = await CharacterAdvancements.findMany(db, { characterIds: seeded.map(({ id }) => id) });
+    expect(seeded.length).toBeGreaterThan(0);
+    expect(records).toHaveLength(seeded.length);
+
+    for (const record of records) {
+      const input = await readCharacterInput(db, record);
+      const children = await readChildInputs(db, input, Visibility.All);
+      const read = await withRulesetScope(db, record.rulesetId, async (scope) => {
+        const engine = Engine.for(scope);
+        const character = engine.character(input);
+        const own = levels.filter((level) => level.characterId === record.id);
+        return {
+          cards: [true, false].map((partial) => engine.characters().describeCard(record, own, partial)),
+          partial: character.describeForMember(children, "partial"),
+          shown: character.describe(children),
+          hidden: character.describe(children, "hide"),
+        };
+      });
+
+      for (const reading of [read.partial, read.shown, read.hidden]) expect(reading.shareToken).toBeNull();
+      for (const reading of [read.partial, read.shown, read.hidden, ...read.cards])
+        for (const token of tokens.values()) expect(JSON.stringify(reading)).not.toContain(token);
+      for (const reading of [read.partial, read.hidden, ...read.cards])
+        expect(JSON.stringify(reading)).not.toContain(NOTES);
+      expect(Object.keys(read.partial)).toEqual(Object.keys(read.shown));
+      expect(read.partial).toMatchObject({ id: record.id, name: record.name, validation: { valid: true, issues: [] } });
+      expect({ ...read.partial.requirements, ...read.partial.modifiers }).toEqual({});
+      expect(read.partial.blocks.map((block) => block.kind)).toEqual(["fields"]);
+    }
   });
 
   test("asks its summary's confirmations as the client's own ask theirs: what follows, then that it's for good", async () => {
