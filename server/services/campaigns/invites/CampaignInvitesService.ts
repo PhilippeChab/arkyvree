@@ -1,28 +1,21 @@
 import type { Db } from "@/drizzle/database.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
-import { Campaigns, Invites, Notifications, Players, Visibility } from "@/server/repositories/index.ts";
+import { Campaigns, Invites, Players, Visibility } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { getPendingInvite, saveInviteAnswer } from "@/server/services/invites/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
 
 class CampaignInvitesService {
-  /**
-   * The invitee's answer: the invite's status, its notification read,
-   * and the activity the Game Masters are told of.
-   */
+  /** The invitee's answer, which the Game Masters are told of. */
   private async answerInvite(tx: Db, session: Session, invite: Invite, status: "Accepted" | "Rejected") {
-    const [updatedInvite] = await Invites.update(tx, { status }, { id: invite.id });
-    await Notifications.markRead(tx, { recipientId: session.userId, targetId: invite.id });
-    await createActivityWithNotifications(tx, {
-      userId: session.userId,
-      targetId: updatedInvite.id,
+    return await saveInviteAnswer(tx, session, Invites, invite.id, status, {
       targetType: TARGET_TYPES.invites,
       type: status === "Accepted" ? "acceptCampaignInvite" : "rejectCampaignInvite",
       data: { inviteId: invite.id },
     });
-    return updatedInvite;
   }
 
   /** The campaign of an invite's player slot, archived or not. */
@@ -36,22 +29,10 @@ class CampaignInvitesService {
     return campaign;
   }
 
-  /**
-   * The pending invite addressed to the session's user. Anyone else's is a 404: it doesn't reveal the invite exists.
-   */
-  private async getPendingInviteFor(tx: Db, session: Session, inviteId: string) {
-    const invite = await Invites.findOne(tx, { id: inviteId });
-    if (!invite || invite.userId !== session.userId) throw new NotFoundError("Invite not found");
-
-    if (invite.status !== "Pending") throw new ConflictError("Invite is no longer pending");
-
-    return invite;
-  }
-
   /** Accepts the invite: its answer names the campaign joined, whose data its client refreshes. */
   async acceptInvite(session: Session, inviteId: string) {
     return await withTransaction(async (tx) => {
-      const invite = await this.getPendingInviteFor(tx, session, inviteId);
+      const invite = await getPendingInvite(tx, session, Invites, inviteId, "Invite not found");
       const campaign = await this.getInviteCampaign(tx, invite);
       if (campaign.deletedAt) throw new ForbiddenError("Cannot accept an invite for an archived campaign");
 
@@ -89,7 +70,7 @@ class CampaignInvitesService {
 
   async rejectInvite(session: Session, inviteId: string) {
     return await withTransaction(async (tx) => {
-      const invite = await this.getPendingInviteFor(tx, session, inviteId);
+      const invite = await getPendingInvite(tx, session, Invites, inviteId, "Invite not found");
       return await this.answerInvite(tx, session, invite, "Rejected");
     });
   }

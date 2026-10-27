@@ -2,29 +2,31 @@ import type { Db } from "@/drizzle/database.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
-import { Contributors, Notifications, Rulesets, Users } from "@/server/repositories/index.ts";
+import { Contributors, Rulesets, Users } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { toPublicUser } from "@/server/services/authentication/index.ts";
+import {
+  checkNewContributor,
+  getInviteNames,
+  getPendingInvite,
+  saveInviteAnswer,
+} from "@/server/services/invites/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
+/** What an invite the session's user can't answer, or see, is refused with: it doesn't reveal whether it exists. */
+const INVITE_NOT_FOUND = "Contributor invite not found";
+
 class ContributorsService {
-  /**
-   * The invitee's answer: the invite's status, its notification read,
-   * and the activity its ruleset's managers are told of.
-   */
+  /** The invitee's answer, which its ruleset's managers are told of. */
   private async answerInvite(tx: Db, session: Session, contributorId: string, status: "Active" | "Rejected") {
-    const [updated] = await Contributors.update(tx, { status }, { id: contributorId });
-    await Notifications.markRead(tx, { recipientId: session.userId, targetId: contributorId });
-    await createActivityWithNotifications(tx, {
-      userId: session.userId,
-      targetId: updated.id,
+    return await saveInviteAnswer(tx, session, Contributors, contributorId, status, {
       targetType: TARGET_TYPES.contributors,
       type: status === "Active" ? "acceptContributorInvite" : "rejectContributorInvite",
       data: { contributorId },
     });
-    return updated;
   }
 
   /** A contributor the session's user may manage, with its ruleset and the policy that allowed it. */
@@ -40,21 +42,9 @@ class ContributorsService {
     return { contributor, ruleset, policy };
   }
 
-  /**
-   * The pending invite addressed to the session's user. Anyone else's is a 404: it doesn't reveal the invite exists.
-   */
-  private async getPendingInviteFor(tx: Db, session: Session, contributorId: string) {
-    const contributor = await Contributors.findOne(tx, { id: contributorId });
-    if (!contributor || contributor.userId !== session.userId) throw new NotFoundError("Contributor invite not found");
-
-    if (contributor.status !== "Pending") throw new ConflictError("Invite is no longer pending");
-
-    return contributor;
-  }
-
   async acceptInvite(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const contributor = await this.getPendingInviteFor(tx, session, contributorId);
+      const contributor = await getPendingInvite(tx, session, Contributors, contributorId, INVITE_NOT_FOUND);
 
       const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId });
       if (!ruleset) throw new NotFoundError("Ruleset not found");
@@ -81,11 +71,8 @@ class ContributorsService {
     (await RulesetsPolicy.for(db, session, ruleset)).canReadContributors();
 
     const paginated = await Contributors.findPage(db, { rulesetId, ...where }, pagination);
-    const ownerUser = ruleset.userId ? await Users.findOne(db, { id: ruleset.userId }) : null;
-    const owner = ownerUser
-      ? { id: ownerUser.id, username: ownerUser.username, emailAddress: ownerUser.emailAddress }
-      : null;
-    return { ...paginated, owner };
+    const ownerUser = ruleset.userId ? await Users.findOne(db, { id: ruleset.userId }) : undefined;
+    return { ...paginated, owner: ownerUser ? toPublicUser(ownerUser) : null };
   }
 
   // Single invite for the current user, any status. Used by the invite-accept
@@ -96,7 +83,7 @@ class ContributorsService {
       id: contributorId,
       userId: session.userId,
     });
-    if (!invite) throw new NotFoundError("Contributor invite not found");
+    if (!invite) throw new NotFoundError(INVITE_NOT_FOUND);
 
     return invite;
   }
@@ -117,29 +104,7 @@ class ContributorsService {
       if (user && user.id === ruleset.userId)
         throw new ConflictError("Cannot invite the ruleset owner as a contributor");
 
-      // Check for existing active/pending contributor
-      if (user) {
-        const existing = await Contributors.findOne(tx, {
-          rulesetId,
-          userId: user.id,
-          status: "Active",
-        });
-        if (existing) throw new ConflictError("User is already a contributor");
-
-        const pending = await Contributors.findOne(tx, {
-          rulesetId,
-          userId: user.id,
-          status: "Pending",
-        });
-        if (pending) throw new ConflictError("User already has a pending invite");
-      } else {
-        const pending = await Contributors.findOne(tx, {
-          rulesetId,
-          email,
-          status: "Pending",
-        });
-        if (pending) throw new ConflictError("This email already has a pending invite");
-      }
+      await checkNewContributor(tx, Contributors, { rulesetId }, user, email);
 
       const rows = await Contributors.create(tx, {
         rulesetId,
@@ -158,14 +123,13 @@ class ContributorsService {
         data: { email, role, rulesetId, rulesetName: ruleset.name },
       });
 
-      const inviterUser = await Users.findOne(tx, { id: session.userId });
+      const names = await getInviteNames(tx, session, user, email);
 
       return {
         contributor,
         emailData: {
           email,
-          inviteeName: user?.username || email.split("@")[0],
-          inviterName: inviterUser?.username || inviterUser?.emailAddress.split("@")[0] || "Someone",
+          ...names,
           rulesetName: ruleset.name,
           role,
           contributorId: contributor.id,
@@ -224,7 +188,7 @@ class ContributorsService {
 
   async rejectInvite(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const contributor = await this.getPendingInviteFor(tx, session, contributorId);
+      const contributor = await getPendingInvite(tx, session, Contributors, contributorId, INVITE_NOT_FOUND);
 
       return await this.answerInvite(tx, session, contributor.id, "Rejected");
     });
