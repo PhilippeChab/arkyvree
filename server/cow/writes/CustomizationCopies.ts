@@ -29,6 +29,11 @@ export default class CustomizationCopies {
     return map;
   }
 
+  /** Whether entities of a type have modifiers: a kind a user customizes does (`customizableKinds`), any other doesn't. */
+  private static hasModifiers(entityType: string): boolean {
+    return Engine.storage().customizableKinds().includes(entityType);
+  }
+
   /**
    * Inserts one copy of each row per target in a single batch, target-major, with `owner` repointing each copy. Copies
    * pair with their sources by position, and the first target's copies are recorded in `copiedIds`: equal values do
@@ -79,7 +84,7 @@ export default class CustomizationCopies {
     if (copiedIds && targetEntityIds.length > 1)
       throw new Error("copiedIds maps each source row to one copy; copy to a single target");
 
-    if (!Engine.storage().customizableKinds().includes(entityType) && sourceCust.modifiers.length > 0)
+    if (!CustomizationCopies.hasModifiers(entityType) && sourceCust.modifiers.length > 0)
       throw new Error(`Cannot copy modifiers onto ${entityType}`);
 
     const sourceModifierIds = new Set(sourceCust.modifiers.map((m) => m.id));
@@ -119,15 +124,12 @@ export default class CustomizationCopies {
 
   /**
    * The customizations of `entityIds` (of `entityType`), by entity, read by their stored ids: their requirements, and,
-   * for a type modifiers have (`sourceType`), their modifiers with each one's requirements.
+   * for a type modifiers have (`hasModifiers`), their modifiers with each one's requirements.
    */
-  static async read(
-    tx: Db,
-    entityIds: string[],
-    entityType: string,
-    sourceType?: string,
-  ): Promise<Map<string, EntityCustomizations>> {
-    const modifiers = sourceType ? await Modifiers.findMany(tx, { sourceIds: entityIds, sourceType }) : [];
+  static async read(tx: Db, entityIds: string[], entityType: string): Promise<Map<string, EntityCustomizations>> {
+    const modifiers = CustomizationCopies.hasModifiers(entityType)
+      ? await Modifiers.findMany(tx, { sourceIds: entityIds, sourceType: entityType })
+      : [];
     const requirements = await Requirements.findMany(tx, { entityIds, entityType });
 
     const modifierRequirements = await Requirements.findMany(tx, {

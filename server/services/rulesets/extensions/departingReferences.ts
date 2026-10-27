@@ -12,10 +12,9 @@
 
 import type { Db } from "@/drizzle/database.ts";
 import { Engine, type OwnedKind, type RulesetSources } from "@/engine/index.ts";
-import { CowDataReader } from "@/server/cow/index.ts";
+import { CowDataReader, findOwnedPairs } from "@/server/cow/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
-  Entities,
   EntityReferences,
   type ReferencedType,
   RULESET_ENTITY_TYPES,
@@ -61,28 +60,6 @@ async function findLostReferences(tx: Db, rulesetId: string, departures: Departu
 }
 
 /**
- * The departing owners' owned entities of a kind (`ownedType`: the departing classes' levels), each with the one of its
- * position owned by what stands in its owner's place, as the views pair a copy's (`CowDataBuilder`) and a restore moves
- * a character's (`EntityRevert`): none when that owner has none there, or when nothing stands in its owner's place.
- */
-async function findOwnedFallbacks(tx: Db, ownedType: string, owners: ReadonlyMap<string, string | undefined>) {
-  const fallbackIds = [...owners.values()].filter((id) => id !== undefined);
-  const positions = await Entities.findPositions(tx, {
-    entityType: ownedType,
-    ownerIds: [...owners.keys(), ...fallbackIds],
-  });
-  const ownedOf = Map.groupBy(positions, (owned) => owned.ownerId);
-  const fallbacks = new Map<string, string | undefined>();
-  for (const [ownerId, fallbackId] of owners) {
-    const theirs = new Map(
-      (fallbackId ? (ownedOf.get(fallbackId) ?? []) : []).map((owned) => [owned.position, owned.id]),
-    );
-    for (const owned of ownedOf.get(ownerId) ?? []) fallbacks.set(owned.id, theirs.get(owned.position));
-  }
-  return fallbacks;
-}
-
-/**
  * What leaves `ruleset` with the book (`extensionId`), by entity type: the book's entities and the fork's copies of them
  * (`copies`), and what they own (their classes' levels), each with what the fork's view shows in its place once the book
  * is gone. That is the first of the ids the view now shows it for (`CowData.getEquivalentIds`: the entity a copy stands
@@ -124,7 +101,7 @@ export async function findDepartures(
   const storage = Engine.storage();
   for (const ownedType of storage.ownedTypes() as OwnedKind[]) {
     const ownerType = storage.ownerOf(ownedType) as RulesetEntityType;
-    departures.set(ownedType, await findOwnedFallbacks(tx, ownedType, departures.get(ownerType)!));
+    departures.set(ownedType, await findOwnedPairs(tx, ownedType, departures.get(ownerType)!));
   }
   return departures;
 }

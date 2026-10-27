@@ -41,7 +41,6 @@ export default class EntityCopy {
     this.entityId = entityId;
     this.ruleset = ruleset;
     this.gone = gone;
-    this.sourceType = Engine.storage().customizableKinds().includes(entityType) ? entityType : undefined;
   }
 
   /**
@@ -91,8 +90,6 @@ export default class EntityCopy {
 
   /** The ruleset the copy is made in, and where its inherited entities come from. */
   private readonly ruleset: RulesetSources;
-
-  private readonly sourceType: string | undefined;
 
   /**
    * Copies the entity into the target ruleset, or returns the copy it already has: the child entity, and whether this
@@ -154,7 +151,7 @@ export default class EntityCopy {
     );
 
     // 3. Copy customizations
-    const customizations = await CustomizationCopies.read(tx, [this.entityId], this.entityType, this.sourceType);
+    const customizations = await CustomizationCopies.read(tx, [this.entityId], this.entityType);
     const cust = customizations.get(this.entityId)!;
     await CustomizationCopies.copy(tx, newEntity.id, this.entityType, cust, this.copiedIds);
 
@@ -214,8 +211,7 @@ export default class EntityCopy {
         true,
       );
       const ids = new Map(owned.map((row, index) => [row.id, copies[index].id]));
-      const customizable = Engine.storage().customizableKinds().includes(type) ? type : undefined;
-      const customizations = await CustomizationCopies.read(tx, [...ids.keys()], type, customizable);
+      const customizations = await CustomizationCopies.read(tx, [...ids.keys()], type);
       for (const [id, copyId] of ids) {
         const own = customizations.get(id);
         if (own) await CustomizationCopies.copy(tx, copyId, type, own, this.copiedIds);
@@ -259,7 +255,7 @@ export default class EntityCopy {
     cow: CowData,
   ) {
     // The losers' own rows, by their stored ids
-    const siblingCusts = await CustomizationCopies.read(tx, siblingIds, this.entityType, this.sourceType);
+    const siblingCusts = await CustomizationCopies.read(tx, siblingIds, this.entityType);
     const siblings = siblingIds.flatMap((id) => siblingCusts.get(id) ?? []);
     const merged = Engine.copyOnWrite().mergeCustomizations(own, siblings, targetEntityId);
     await CustomizationCopies.copy(tx, targetEntityId, this.entityType, merged, this.copiedIds);
