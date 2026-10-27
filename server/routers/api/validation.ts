@@ -35,23 +35,6 @@ export const entityLinks = z.custom<EntityLinkValues>(
   "Expected an object of the entity's links",
 );
 
-/**
- * A ruleset entity's form, its create's and its update's, as it stores it: its name, its description (none when it's
- * empty), its fields by stored field and its links by role, which its kind's rules read by their descriptions (its
- * columns, its fields), refusing as invalid what they don't take, and when it was last read (an update's). No other
- * key.
- */
-export const entityBody = z.strictObject({
-  name: z.string().min(1),
-  description: z
-    .string()
-    .optional()
-    .transform((v) => v || null),
-  fields: entityFields.optional(),
-  links: entityLinks.optional(),
-  updatedAt: z.string().optional(),
-});
-
 /** Ruleset entity sorting (name/createdAt/updatedAt, ascending) */
 export const entityOrderBy = z.enum(["name", "createdAt", "updatedAt"]).default("name");
 

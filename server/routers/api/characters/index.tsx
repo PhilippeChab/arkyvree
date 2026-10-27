@@ -10,6 +10,7 @@ import {
   validate,
 } from "@/server/middlewares/index.ts";
 import { characterIdParam, idList, idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
+import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { MAX_CHARACTER_NAME_LENGTH, MAX_IMPORT_FILE_LENGTH } from "@/shared/characters.ts";
 
@@ -103,7 +104,7 @@ export default new Hono()
       );
     },
   )
-  // Get characters not in a campaign
+  // The session's characters it could link to a campaign: in none yet, on its ruleset
   .get(
     "/unlinked/:campaignId",
     validate("param", campaignIdParam),
@@ -119,7 +120,12 @@ export default new Hono()
       const { campaignId } = c.req.valid("param");
       const { search, limit, page } = c.req.valid("query");
       return c.json(
-        await CharactersService.getUnlinkedCharacters(c.var.requestSession, campaignId, { search }, { limit, page }),
+        await CampaignCharactersService.getLinkableCharacters(
+          c.var.requestSession,
+          campaignId,
+          { search },
+          { limit, page },
+        ),
         200,
       );
     },
@@ -219,18 +225,6 @@ export default new Hono()
 
       // Use the service to update character with session for activity logging
       return c.json(await CharactersService.updateCharacter(c.var.requestSession, id, body), 200);
-    },
-  )
-  .put(
-    "/:id/links/:role",
-    validate("param", roleParams),
-    validate("json", z.object({ entityIds: z.array(z.string().uuid()) })),
-    async (c) => {
-      const { id, role } = c.req.valid("param");
-      const { entityIds } = c.req.valid("json");
-
-      await CharactersService.updateLinkPicks(c.var.requestSession, id, role, entityIds);
-      return c.json({ success: true }, 200);
     },
   )
   .put(

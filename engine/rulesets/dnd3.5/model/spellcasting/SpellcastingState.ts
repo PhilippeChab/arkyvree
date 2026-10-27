@@ -92,7 +92,8 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
   /** Each class's spell lists, by its id (`initialize`). */
   protected classListsByClassId = new Map<string, Set<string>>();
 
-  protected spellAptitudeLinks: { aptitudeId: string; spellId: string }[] = [];
+  /** The lists the character's spells and its lists' spells are each on (their `listedIn` links' targets), by spell. */
+  protected listIdsBySpell = new Map<string, string[]>();
 
   /** Where each spell tag shows, by its name. */
   protected spellTagLists: Record<string, SpellTagLists> = {};

@@ -330,20 +330,23 @@ describe("CharactersService", () => {
       const character = await createCharacterAs(session, { rulesetId: fork.id, abilities });
       const spoken = async () => (await findLinks("speaks", character.id)).map(({ entityId }) => entityId);
 
-      await CharactersService.updateLinkPicks(session, character.id, "speaks", [ctx.langMap["Draconic"]]);
+      const speak = (languageIds: string[]) =>
+        CharactersService.updateCharacter(session, character.id, { links: { speaks: languageIds } });
+
+      await speak([ctx.langMap["Draconic"]]);
       expect(await spoken()).toEqual([draconic.id]);
       // Common is the human's own: what it speaks without a pick isn't stored
       const languageIds = [ctx.langMap["Common"], ctx.langMap["Draconic"], ctx.langMap["Elven"]];
-      await CharactersService.updateCharacter(session, character.id, { links: { speaks: languageIds } });
+      await speak(languageIds);
       expect((await spoken()).toSorted()).toEqual([draconic.id, ctx.langMap["Elven"]].toSorted());
 
       // Its source's id and its copy's name one language
       const both = [ctx.langMap["Draconic"], draconic.id];
-      expect(CharactersService.updateLinkPicks(session, character.id, "speaks", both)).rejects.toMatchObject({
+      expect(speak(both)).rejects.toMatchObject({
         message: `Language ${draconic.id} is given more than once`,
         refusal: "invalid",
       });
-      expect(CharactersService.updateLinkPicks(session, character.id, "speaks", [NIL_UUID])).rejects.toMatchObject({
+      expect(speak([NIL_UUID])).rejects.toMatchObject({
         message: `Language ${NIL_UUID} does not belong to the character's ruleset`,
         refusal: "invalid",
       });
@@ -437,25 +440,6 @@ describe("CharactersService", () => {
       expect(await list("active")).toEqual([active.id]);
       expect(await list("archived")).toEqual([archived.id]);
       expect(await list("all")).toEqual([active.id, archived.id].sort());
-    });
-
-    test("lists those not in a campaign yet, a page at a time", async () => {
-      const { session } = await createTestUser();
-      const { campaign, player } = await createTestCampaign(session.userId);
-      const linked = await createCharacterAs(session);
-      await PlayerCharacters.create(db, { playerId: player.id, characterId: linked.id, visibility: "Public" });
-      for (let i = 0; i < 15; i++) await createCharacterAs(session);
-
-      const unlinked = (pageNumber: number) =>
-        CharactersService.getUnlinkedCharacters(session, campaign.id, {}, { limit: 10, page: pageNumber });
-      const [first, second] = [await unlinked(1), await unlinked(2)];
-      expect(first).toMatchObject({ page: 1, nextPage: 2 });
-      expect(first.items).toHaveLength(10);
-      expect(second).toMatchObject({ page: 2, nextPage: undefined });
-      expect(second.items).toHaveLength(5);
-      const listed = [...ids(first.items), ...ids(second.items)];
-      expect(new Set(listed).size).toBe(15);
-      expect(listed).not.toContain(linked.id);
     });
   });
 

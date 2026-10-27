@@ -52,7 +52,7 @@ export function SeedsWizardSchools<B extends Constructor<BaseSeeder>>(Base: B) {
         spells.flatMap(({ spellId, level, school }) => {
           const aptitudeId = this.ctx.aptMap[specialistSpells(school)];
           if (school === "Universal" || !aptitudeId || level === null) return [];
-          return [{ entityId: spellId, aptitudeId, level }];
+          return [{ fromId: spellId, toId: aptitudeId, tier: level }];
         }),
       );
     }

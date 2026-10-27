@@ -14,10 +14,10 @@ interface SpellLinks {
   spellId: string;
 }
 
-/** A spell's link to an aptitude, at its level (a spell list's). */
+/** A spell's link to a list, by role (`listedIn`): the aptitude it's on (`toId`), at its level there (`tier`). */
 export interface SpellLink {
-  aptitudeId: string;
-  level: number | null;
+  tier: number | null;
+  toId: string;
 }
 
 /** Copying inherited feats and spells into the ruleset, and adding spells to aptitudes. */
@@ -37,7 +37,7 @@ export function CopiesOnWrite<B extends Constructor<Dnd35ContentSeeder>>(Base: B
       ]);
       await this.insertListings(
         "feats",
-        (await this.listedIn([featId])).map(({ toId }) => ({ entityId: copyId, aptitudeId: toId })),
+        (await this.listedIn([featId])).map(({ toId }) => ({ fromId: copyId, toId })),
       );
       const copies = new Map([[featId, copyId]]);
       await this.copyCustomizations(copies);
@@ -82,8 +82,8 @@ export function CopiesOnWrite<B extends Constructor<Dnd35ContentSeeder>>(Base: B
         entries.flatMap(({ links, spellId }) => {
           const linked = new Set<string>();
           return [...(kept.get(spellId) ?? []), ...links]
-            .filter(({ aptitudeId }) => !linked.has(aptitudeId) && linked.add(aptitudeId))
-            .map((link) => ({ entityId: copies.get(spellId)!, ...link }));
+            .filter(({ toId }) => !linked.has(toId) && linked.add(toId))
+            .map((link) => ({ fromId: copies.get(spellId)!, ...link }));
         }),
       );
       return copies;
@@ -116,8 +116,8 @@ export function CopiesOnWrite<B extends Constructor<Dnd35ContentSeeder>>(Base: B
           const its = linked.get(spellId) ?? new Set<string>();
           linked.set(spellId, its);
           return links
-            .filter(({ aptitudeId }) => !its.has(aptitudeId) && its.add(aptitudeId))
-            .map((link) => ({ entityId: spellId, ...link }));
+            .filter(({ toId }) => !its.has(toId) && its.add(toId))
+            .map((link) => ({ fromId: spellId, ...link }));
         }),
       );
     }

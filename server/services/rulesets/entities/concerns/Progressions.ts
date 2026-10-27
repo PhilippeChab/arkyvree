@@ -44,7 +44,7 @@ export function Progressions<B extends Constructor>(Base: B) {
       { gone, owner }: Pick<ProgressionPlan, "gone" | "owner">,
     ): Promise<TargetOwner> {
       const target = await new EntityEdit(scope.ruleset, scope.rulesetData.cow).cowToEdit(tx, type, owner);
-      if (!target.copied) await EntityEdit.lock(tx, target.id);
+      if (!target.copied) await EntityEdit.lock(tx, target.id, gone.owner);
       const row = await Entities.findOne(tx, { entityType: type, id: target.id });
       if (!row) throw new NotFoundError(gone.owner);
       return { copied: target.copied, copiedIds: target.copiedIds, id: target.id, updatedAt: row.updatedAt };

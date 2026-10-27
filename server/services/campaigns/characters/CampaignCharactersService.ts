@@ -199,18 +199,34 @@ class CampaignCharactersService {
     );
   }
 
+  /**
+   * The session's characters it could link to the campaign, a page at a time: its own player characters on the
+   * campaign's exact ruleset, in no campaign yet, as `linkCharacter` takes them.
+   */
+  async getLinkableCharacters(
+    session: Session,
+    campaignId: string,
+    where: { search?: string },
+    pagination: Pagination,
+  ) {
+    const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
+    if (!campaign) throw new NotFoundError("Campaign not found");
+
+    (await CampaignsPolicy.for(db, session, campaign)).canLinkCharacter();
+
+    return await Characters.findUnlinkedPage(
+      db,
+      { userId: session.userId, rulesetId: campaign.rulesetId, search: where.search },
+      pagination,
+    );
+  }
+
   async linkCharacter(session: Session, campaignId: string, characterId: string, visibility: CharacterVisibility) {
     return await withTransaction(async (tx) => {
       const campaign = await Campaigns.findOne(tx, { id: campaignId }, Visibility.All);
       if (!campaign) throw new NotFoundError("Campaign not found");
 
-      (await CampaignsPolicy.for(tx, session, campaign)).canModify();
-
-      const player = await Players.findOne(tx, {
-        campaignId,
-        userId: session.userId,
-      });
-      if (!player) throw new NotFoundError("Player not found in this campaign");
+      const player = (await CampaignsPolicy.for(tx, session, campaign)).canLinkCharacter();
 
       const character = await Characters.findOne(tx, { id: characterId, userId: session.userId });
       if (!character) throw new NotFoundError("Character not found");

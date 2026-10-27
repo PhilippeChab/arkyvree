@@ -14,6 +14,7 @@ import { addCharacterContributor } from "@/tests/support/contributors.ts";
 import { measure } from "@/tests/support/database.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
@@ -21,6 +22,10 @@ type Visibility = "Private" | "Public" | "Partial";
 
 function link(userId: string, campaignId: string, characterId: string, visibility: Visibility = "Public") {
   return CampaignCharactersService.linkCharacter(makeSession(userId), campaignId, characterId, visibility);
+}
+
+function linkable(userId: string, campaignId: string, pagination = { limit: 10, page: 1 }) {
+  return CampaignCharactersService.getLinkableCharacters(makeSession(userId), campaignId, {}, pagination);
 }
 
 function list(userId: string, campaignId: string, pagination = { limit: 10, page: 1 }) {
@@ -61,12 +66,18 @@ describe("CampaignCharactersService", () => {
       },
     );
 
-    test("refuses a non-member", async () => {
+    test("refuses a non-member as it refuses an unknown campaign", async () => {
       const { user } = await createTestUser();
       const { campaign } = await createTestCampaign(user.id);
       const { user: other } = await createTestUser();
       const character = await createTestCharacter(other.id);
-      expect(link(other.id, campaign.id, character.id)).rejects.toThrow(NotFoundError);
+
+      const refusals = [];
+      for (const campaignId of [campaign.id, NIL_UUID])
+        refusals.push(await link(other.id, campaignId, character.id).catch((error: unknown) => error));
+      expect(refusals[0]).toBeInstanceOf(NotFoundError);
+      expect(refusals[0]).toEqual(refusals[1]);
+      expect(refusals[0]).toMatchObject({ message: "Campaign not found" });
     });
 
     test("links a character to one campaign, once", async () => {
@@ -327,6 +338,66 @@ describe("CampaignCharactersService", () => {
       expect(CampaignCharactersService.getCharacter(makeSession(user.id), NIL_UUID, linked.id)).rejects.toThrow(
         "Campaign not found",
       );
+    });
+  });
+
+  describe("getLinkableCharacters", () => {
+    test("lists the Game Master's own characters on the campaign's ruleset in no campaign yet, a page at a time", async () => {
+      const { user } = await createTestUser();
+      const { campaign } = await createTestCampaign(user.id);
+      const linked = await createTestCharacter(user.id);
+      await link(user.id, campaign.id, linked.id);
+      const fork = await createSeededTestRuleset(user.id);
+      const elsewhere = await createTestCharacter(user.id, { rulesetId: fork.id });
+      for (let i = 0; i < 15; i++) await createTestCharacter(user.id);
+
+      const [first, second] = [
+        await linkable(user.id, campaign.id),
+        await linkable(user.id, campaign.id, { limit: 10, page: 2 }),
+      ];
+      expect(first).toMatchObject({ page: 1, nextPage: 2 });
+      expect(first.items).toHaveLength(10);
+      expect(second).toMatchObject({ page: 2, nextPage: undefined });
+      expect(second.items).toHaveLength(5);
+      const listed = [...first.items, ...second.items].map(({ id }) => id);
+      expect(new Set(listed).size).toBe(15);
+      expect(listed).not.toContain(linked.id);
+      expect(listed).not.toContain(elsewhere.id);
+    });
+
+    test("lists a player's own characters, not the other members'", async () => {
+      const { user: gm } = await createTestUser("gm");
+      const { campaign } = await createTestCampaign(gm.id);
+      const gmCharacter = await createTestCharacter(gm.id);
+      const { user } = await joinWithCharacter(campaign.id, "Public");
+      const own = await createTestCharacter(user.id);
+
+      expect((await linkable(user.id, campaign.id)).items.map(({ id }) => id)).toEqual([own.id]);
+      expect((await linkable(gm.id, campaign.id)).items.map(({ id }) => id)).toEqual([gmCharacter.id]);
+    });
+
+    test("answers a non-member as it answers an unknown campaign", async () => {
+      const { user: gm } = await createTestUser("gm");
+      const { campaign } = await createTestCampaign(gm.id);
+      const { user } = await createTestUser();
+      await createTestCharacter(user.id);
+
+      const refusals = [];
+      for (const campaignId of [campaign.id, NIL_UUID])
+        refusals.push(await linkable(user.id, campaignId).catch((error: unknown) => error));
+      expect(refusals[0]).toBeInstanceOf(NotFoundError);
+      expect(refusals[0]).toEqual(refusals[1]);
+      expect(refusals[0]).toMatchObject({ message: "Campaign not found" });
+    });
+
+    test("refuses an archived campaign's members, as linking does", async () => {
+      const { user } = await createTestUser();
+      const { campaign } = await createTestCampaign(user.id);
+      const character = await createTestCharacter(user.id);
+      await Campaigns.archive(db, { id: campaign.id });
+
+      expect(linkable(user.id, campaign.id)).rejects.toThrow("Cannot modify an archived campaign");
+      expect(link(user.id, campaign.id, character.id)).rejects.toThrow("Cannot modify an archived campaign");
     });
   });
 });

@@ -12,7 +12,6 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
   Activities,
-  Campaigns,
   CharacterAdvancements,
   CharacterLinks,
   Characters,
@@ -224,22 +223,6 @@ class CharactersService extends include(Object, Archives, Imports) {
     );
   }
 
-  async getUnlinkedCharacters(
-    session: Session,
-    campaignId: string,
-    where: { search?: string },
-    pagination: Pagination,
-  ) {
-    const campaign = await Campaigns.findOne(db, { id: campaignId });
-    if (!campaign) throw new NotFoundError("Campaign not found");
-
-    return await Characters.findUnlinkedPage(
-      db,
-      { userId: session.userId, rulesetId: campaign.rulesetId, search: where.search },
-      pagination,
-    );
-  }
-
   async updateCharacter(
     session: Session,
     characterId: string,
@@ -290,30 +273,6 @@ class CharactersService extends include(Object, Archives, Imports) {
       });
 
       return updatedCharacter;
-    });
-  }
-
-  /**
-   * Replaces a character's picks of a picked link's role (`role`: 3.5's `speaks`), as its ruleset plans them from its rows
-   * (`planLinkPicks`: each the view's entity, a copy's when the ruleset copied one; those its rules give it left out;
-   * refused when the view has none, it's sent twice, or a new pick is past what its rules let it have).
-   */
-  async updateLinkPicks(session: Session, characterId: string, role: string, entityIds: string[]) {
-    return await withTransaction(async (tx) => {
-      const characterRecord = await getEditableCharacter(tx, session, characterId);
-
-      return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
-        const character = await readCharacterInput(tx, characterRecord);
-        const plan = Engine.for(scope).character(character).planLinkPicks(role, entityIds);
-        await this.writeLinkPicks(tx, characterId, role, plan);
-
-        await Activities.create(tx, {
-          userId: session.userId,
-          targetId: characterId,
-          targetType: TARGET_TYPES.characters,
-          type: "updateCharacter",
-        });
-      });
     });
   }
 

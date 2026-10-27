@@ -25,8 +25,8 @@ export function SeedsFeats<B extends Constructor<Dnd35ContentSeeder>>(Base: B) {
         "feats",
         feats.flatMap((f) =>
           f.aptitudes.map((aptitude) => ({
-            entityId: ids[f.name],
-            aptitudeId: this.idOf(this.ctx.aptMap, aptitude, `${f.name}'s aptitude`),
+            fromId: ids[f.name],
+            toId: this.idOf(this.ctx.aptMap, aptitude, `${f.name}'s aptitude`),
           })),
         ),
       );

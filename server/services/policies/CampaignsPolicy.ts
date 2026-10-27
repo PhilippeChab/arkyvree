@@ -47,6 +47,17 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
     return true;
   }
 
+  /**
+   * Linking a character to the campaign, and listing those the session could link: its seat (returned), in a campaign
+   * that isn't archived (`canModify`). Whoever has no seat gets the 404 an unknown campaign gets, so these two answer a
+   * non-member neither the campaign's existence nor its ruleset (the campaign's other reads still answer them 403).
+   */
+  canLinkCharacter() {
+    if (!this.player) throw new NotFoundError("Campaign not found");
+    this.canModify();
+    return this.player;
+  }
+
   /** An archived campaign is read-only. */
   canModify() {
     if (this.entity.deletedAt) throw new ForbiddenError("Cannot modify an archived campaign");

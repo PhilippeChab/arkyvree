@@ -31,14 +31,14 @@ export function SeedsSpells<B extends Constructor<BaseSeeder>>(Base: B) {
         spell.aptitudes
           .filter((aptitude) => this.ctx.aptMap[aptitude])
           .map((aptitude) => ({
-            entityId: ids[spell.name],
-            aptitudeId: this.ctx.aptMap[aptitude],
-            level: spell.aptitudeLevels?.[aptitude] ?? spell.level,
+            fromId: ids[spell.name],
+            toId: this.ctx.aptMap[aptitude],
+            tier: spell.aptitudeLevels?.[aptitude] ?? spell.level,
           })),
       );
       await this.insertListings(
         "spells",
-        this.uniqueBy(links, (l) => `${l.entityId}:${l.aptitudeId}`),
+        this.uniqueBy(links, (l) => `${l.fromId}:${l.toId}`),
       );
     }
   }

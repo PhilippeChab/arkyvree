@@ -4,7 +4,6 @@ import { z } from "zod";
 import { Engine, type ProgressionForm } from "@/engine/index.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import {
-  entityBody,
   entityFields,
   entityLinks,
   entityOrderBy,
@@ -16,6 +15,23 @@ import {
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 
 /**
+ * A ruleset entity's form, its create's, its update's and its duplicate's, as it stores it: its name, its description
+ * (none when it's empty), its fields by stored field and its links by role, which its kind's rules read by their
+ * descriptions (its columns, its fields), refusing as invalid what they don't take, and when it was last read (an
+ * update's). No other key.
+ */
+const entityBody = z.strictObject({
+  name: z.string().min(1),
+  description: z
+    .string()
+    .optional()
+    .transform((v) => v || null),
+  fields: entityFields.optional(),
+  links: entityLinks.optional(),
+  updatedAt: z.string().optional(),
+});
+
+/**
  * A route's entity kind: the ruleset (`id`), and the kind by its type (`classes`, `class-levels`), which a client sends
  * as text (it reads the types off its rules) and the route refuses unless a kind has it.
  */
@@ -23,12 +39,6 @@ const kindParams = idParam.extend({ entityType: z.string().pipe(z.enum(Engine.st
 
 /** A route's entity: its kind's params, and its id. */
 const entityParams = kindParams.extend({ entityId: z.string().uuid() });
-
-/**
- * A kind's entity's body, its create's, its update's and its duplicate's: an entity's (`entityBody`), whose columns its
- * rules read.
- */
-const kindEntityBody = entityBody;
 
 /** A route's link from an entity: its entity's params, and the entity it links to. */
 const linkParams = entityParams.extend({ targetId: z.string().uuid() });
@@ -148,7 +158,7 @@ export default new Hono<SessionContext>()
     const { id, entityType, entityId, table } = c.req.valid("param");
     return c.json(await EntitiesService.getEntityTable(c.var.requestSession, id, entityType, entityId, table), 200);
   })
-  .post("/:id/entities/:entityType", validate("param", kindParams), validate("json", kindEntityBody), async (c) => {
+  .post("/:id/entities/:entityType", validate("param", kindParams), validate("json", entityBody), async (c) => {
     const { id, entityType } = c.req.valid("param");
     const body = c.req.valid("json");
     return c.json(await EntitiesService.createEntity(c.var.requestSession, id, entityType, body), 201);
@@ -156,7 +166,7 @@ export default new Hono<SessionContext>()
   .post(
     "/:id/entities/:entityType/:entityId/duplicate",
     validate("param", entityParams),
-    validate("json", kindEntityBody),
+    validate("json", entityBody),
     async (c) => {
       const { id, entityType, entityId } = c.req.valid("param");
       const body = c.req.valid("json");
@@ -214,7 +224,7 @@ export default new Hono<SessionContext>()
   .put(
     "/:id/entities/:entityType/:entityId",
     validate("param", entityParams),
-    validate("json", kindEntityBody),
+    validate("json", entityBody),
     async (c) => {
       const { id, entityType, entityId } = c.req.valid("param");
       const body = c.req.valid("json");
