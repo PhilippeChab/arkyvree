@@ -5,7 +5,8 @@
  * request sent (`RequestIds`).
  */
 
-import type { Character, CharacterFieldValue } from "@/shared/relations.ts";
+import type { FieldWrite } from "@/engine/core/module/storage.ts";
+import type { Character } from "@/shared/relations.ts";
 
 /** What a character's edit writes: its fields' values and own columns, and each picked link's picks it sends, by role. */
 export interface CharacterEditPlan extends FieldsPlan {
@@ -17,7 +18,7 @@ export interface CharacterEditPlan extends FieldsPlan {
  * clear one, and its row's own columns its rules' fields write (`own`: 3.5's description).
  */
 export interface FieldsPlan {
-  fields: Record<string, CharacterFieldValue | null>;
+  fields: Record<string, FieldWrite>;
   own: CharacterOwnValues;
 }
 
@@ -52,7 +53,7 @@ export interface LinkPlan {
  * them.
  */
 export interface NewCharacterPlan extends StartPlan {
-  fields: Record<string, CharacterFieldValue | null>;
+  fields: Record<string, FieldWrite>;
   kind: string;
   own: CharacterOwnValues;
 }

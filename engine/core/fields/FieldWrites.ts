@@ -12,22 +12,25 @@ interface Condition {
 }
 
 /**
- * An owner type's rules for a write past each leaf's own: the leaves that count on another's value, the stored fields
- * its form shows among its others, below its name (`Field.isKept`), and the leaves without a value of which it keeps
- * none of them (`keepsForm`: a spell's school).
+ * An owner type's rules for a write past each leaf's own: the leaves that count on another's value, the leaves always
+ * written with the value they hold without one (`defaults`), the stored fields its form shows among its others, below
+ * its name (`Field.isKept`), and the leaves without a value of which it keeps none of them (`keepsForm`: a spell's
+ * school).
  */
 interface OwnerRules {
   conditions: Condition[];
+  defaults: [leaf: StoredLeaf, value: FieldValue][];
   keepers: StoredLeaf[];
   keptFields: ReadonlySet<string>;
 }
 
 /**
  * What a write of an owner's fields stores, whoever writes it (a seed, a form's save through its codec, an import), by
- * the fields every module declares (`RulesetModule.fields`), so the same values store the same rows: each value as its
- * leaf stores it (`Field.writtenValues`), one whose condition doesn't hold as its default would (a skill's armor check
- * multiplier, while armor weighs on it), and none of those its form shows when it holds no value of one that keeps
- * them (`keepsForm`).
+ * the fields every module declares (`RulesetModule.fields`, `characterFields`), so the same values store the same rows:
+ * each value as its leaf stores it (`Field.writtenValues`), one always written that holds no value its default (a new
+ * owner's it leaves out, or one it clears: an item's slot, a feat's selectable flag, a character's alignment), one
+ * whose condition doesn't hold as its default would (a skill's armor check multiplier, while armor weighs on it), and
+ * none of those its form shows when it holds no value of one that keeps them (`keepsForm`).
  */
 export default class FieldWrites {
   /** `fields`: each owner type's, as its module declares them. */
@@ -50,11 +53,24 @@ export default class FieldWrites {
     });
   }
 
+  /**
+   * The leaves of an owner type's fields (`owned`) always written (`write: "always"`), each with the value one holds
+   * without a value: its default (a flag's false without one).
+   */
+  private static defaultsOf(owned: Fields): [StoredLeaf, FieldValue][] {
+    return Field.storedLeavesOf(owned).flatMap((leaf): [StoredLeaf, FieldValue][] => {
+      if (!("write" in leaf) || leaf.write !== "always") return [];
+      const value = leaf.kind === "flag" ? (leaf.default ?? false) : leaf.default;
+      return value === undefined ? [] : [[leaf, value]];
+    });
+  }
+
   /** An owner type's rules for a write (`owned`, its fields). */
   private static rulesOf(owned: Fields): OwnerRules {
     const shown = Object.fromEntries(Object.entries(owned).filter(([, field]) => Field.isKept(field)));
     return {
       conditions: FieldWrites.conditionsOf(owned),
+      defaults: FieldWrites.defaultsOf(owned),
       keptFields: new Set(Field.storedLeavesOf(shown).map((leaf) => leaf.field)),
       keepers: Field.keepersOf(owned).map(([, leaf]) => leaf),
     };
@@ -78,9 +94,10 @@ export default class FieldWrites {
 
   /**
    * What a write of an owner's fields (`fields`, of `ownerType`, by field) stores of each it names, by field (none a
-   * write that clears it), a new owner's (`creating`: what the write doesn't name, it holds none of) or an existing
-   * one's (what the write doesn't name, it keeps, which a condition or a keeper the write doesn't name leaves as it
-   * is). A field none declares is left as it is: the write path refuses it.
+   * write that clears it), a new owner's (`creating`: what the write doesn't name, it holds none of, but a field always
+   * written, its default) or an existing one's (what the write doesn't name, it keeps, which a condition or a keeper
+   * the write doesn't name leaves as it is). A field always written that a write clears (null, no value, an empty
+   * text) holds its default. A field none declares is left as it is: the write path refuses it.
    */
   written(ownerType: string, fields: Readonly<Record<string, FieldWrite>>, creating: boolean) {
     const written: Record<string, FieldWrite> = {};
@@ -90,6 +107,10 @@ export default class FieldWrites {
     }
     const rules = this.rules.get(ownerType);
     if (!rules) return written;
+    for (const [leaf, value] of rules.defaults) {
+      const held = written[leaf.field] as FieldValue[] | undefined;
+      if (held ? held.length === 0 : creating) written[leaf.field] = Field.writtenValues(leaf, value);
+    }
     for (const { leaf, on, values } of rules.conditions) {
       if (!(leaf.field in written)) continue;
       const held = this.heldValue(on, written, creating);

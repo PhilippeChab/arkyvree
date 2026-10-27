@@ -5,8 +5,9 @@ import {
   type PartialFieldValues,
   type StoredLeaf,
 } from "@/engine/core/fields/index.ts";
+import type { FieldWrite } from "@/engine/core/module/index.ts";
 import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
-import type { Character, CharacterFieldValue } from "@/shared/relations.ts";
+import type { Character } from "@/shared/relations.ts";
 import { CHARACTER_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
@@ -82,15 +83,11 @@ export default class CharacterValues {
 
   /**
    * What a write of a character's fields (`values`, by name, those it gives) stores, by field: each value as its
-   * declaration writes it (`FieldCodec.write`), null to clear it (none given, or one that writes none: an empty text).
+   * declaration writes it (`FieldCodec.write`: 3.5's fields are single ones), null to clear it (none given, or one that
+   * writes none: an empty text; one always written, its default, as its storage writes it).
    */
-  static writeOf(values: Partial<Dnd35CharacterFields>): Record<string, CharacterFieldValue | null> {
+  static writeOf(values: Partial<Dnd35CharacterFields>): Record<string, FieldWrite> {
     const { fields } = CharacterValues.fields.write(values);
-    return Object.fromEntries(
-      Object.entries(fields).map(([field, [value]]) => {
-        if (typeof value === "boolean") throw new Error(`A character's field ${field} holds no flag`);
-        return [field, value ?? null];
-      }),
-    );
+    return Object.fromEntries(Object.entries(fields).map(([field, [value]]) => [field, value ?? null]));
   }
 }

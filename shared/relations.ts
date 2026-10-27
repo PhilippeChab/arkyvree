@@ -22,16 +22,19 @@ import type { BaseRules } from "./enums.ts";
 
 export type Campaign = typeof campaignsInCampaign.$inferSelect;
 /**
- * A character's row as stored: its own columns, its fields' values by field, each typed as its column holds it (3.5's
- * `CHARACTER_XP`, a number), and the entity of each of its single links by role (3.5's `race`). A mapped type, as a row
- * is plain data any record type takes (an interface isn't).
+ * A character's row as stored: its own columns, its fields' values by field, as its module declares them, each typed as
+ * its column holds it (3.5's `CHARACTER_XP`, a number), and the entity of each of its single links by role (3.5's
+ * `race`). A mapped type, as a row is plain data any record type takes (an interface isn't).
  */
 export type Character = typeof charactersInCharacter.$inferSelect & {
   fields: Record<string, CharacterFieldValue>;
   links: Record<string, string>;
 };
-/** A character's field's value, as its typed column holds it: a text or a number. */
-export type CharacterFieldValue = number | string;
+/**
+ * A character's field's value, as an entity's is held: a single field's, as its typed column holds it (a text, a number
+ * or a flag), or a set's values, in their declared order.
+ */
+export type CharacterFieldValue = boolean | number | string | readonly (boolean | number | string)[];
 /** An inventory entry: an item a character holds, where, in which groups (3.5's weapon sets), and its charges. */
 export type CharacterInventory = Omit<typeof inventoryInCharacter.$inferSelect, "itemType" | "location"> & {
   location: string | null;

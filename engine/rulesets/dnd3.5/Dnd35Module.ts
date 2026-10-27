@@ -1,5 +1,5 @@
 import type { RulesetModule } from "@/engine/core/module/index.ts";
-import { ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { CHARACTER_FIELDS, ENTITY_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import Dnd35Characters from "./characters/Dnd35Characters.ts";
 import Dnd35Content from "./content/Dnd35Content.ts";
@@ -20,6 +20,7 @@ export default class Dnd35Module {
    */
   static create(): RulesetModule<Dnd35Descriptions, Dnd35EntityKinds> {
     return {
+      characterFields: CHARACTER_FIELDS,
       characters: new Dnd35Characters(DND35_STORAGE),
       content: new Dnd35Content(),
       entities: new Dnd35Entities(),

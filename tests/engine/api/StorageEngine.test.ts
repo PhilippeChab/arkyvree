@@ -3,35 +3,16 @@ import { describe, expect, test } from "bun:test";
 import Modules from "@/engine/api/Modules.ts";
 import StorageEngine from "@/engine/api/StorageEngine.ts";
 import { Field, type Fields, type StoredLeaf } from "@/engine/core/fields/index.ts";
-import type {
-  FieldValue,
-  RulesetModule,
-  StorageRegistries,
-  StoredEntity,
-  StoredFieldValue,
-  StoredLink,
-} from "@/engine/core/module/index.ts";
+import type { FieldValue, StoredEntity, StoredFieldValue, StoredLink } from "@/engine/core/module/index.ts";
 import { Engine } from "@/engine/index.ts";
 import type { Merge } from "@/shared/customization/fields.ts";
-import type { BaseRules } from "@/shared/enums.ts";
+import { modulesWith, modulesWithCharacterFlagAndSet } from "@/tests/support/modules.ts";
 
 /** The first stored field of `fields` (each owner type's) that `find` picks, its declaration to change in place. */
 function leafOf(fields: Record<string, Fields>, find: (leaf: StoredLeaf) => boolean): Record<string, unknown> {
   return Object.values(fields)
     .flatMap((owned) => Field.storedLeavesOf(owned))
     .find(find) as unknown as Record<string, unknown>;
-}
-
-/** Every registered module, its registries' and its fields' declarations changed by `change`. */
-function modulesWith(
-  change: (registries: StorageRegistries, fields: Record<string, Fields>) => void,
-): [BaseRules, RulesetModule][] {
-  return Modules.all().map(([baseRules, module]) => {
-    const registries = structuredClone(module.storage.registries);
-    const fields = structuredClone(module.fields) as Record<string, Fields>;
-    change(registries, fields);
-    return [baseRules, { ...module, fields, storage: { ...module.storage, registries } }];
-  });
 }
 
 /** A stored entity of a kind (`type`), holding these fields' values (`fields`) and links (`links`). */
@@ -193,15 +174,40 @@ describe("A module's storage", () => {
     expect(values.get(owner)).toEqual([{ entityIds: ["a"], field: wide, value: String(value(wideDef)) }]);
   });
 
-  test("writes a new entity with its fields always written's defaults and its partition", () => {
+  test("writes a new entity in its kind's partition, with its fields always written's defaults", () => {
     const storage = StorageEngine.shared();
-    const { entityTypes } = storage.registries();
-    for (const { type } of entityTypes) {
-      const { fields, partition } = storage.defaultsOf(type);
-      expect(partition).toBe(storage.kind(type).partition ?? "");
-      expect(fields).toEqual(storage.declaredFields().writtenDefaults(type));
+    const { entityTypes, fieldDefs } = storage.registries();
+    for (const { type } of entityTypes) expect(storage.partitionOf(type)).toBe(storage.kind(type).partition ?? "");
+    // A new owner's write of none of its fields holds those always written, each its default; an existing one's, none
+    const held = (ownerType: string) =>
+      Object.keys(storage.writtenFields(ownerType, {}, true)).every((field) =>
+        fieldDefs.some((def) => def.ownerType === ownerType && def.field === field),
+      );
+    for (const { ownerType } of fieldDefs) {
+      expect(held(ownerType)).toBe(true);
+      expect(storage.writtenFields(ownerType, {}, false)).toEqual({});
     }
-    expect(entityTypes.some(({ type }) => Object.keys(storage.defaultsOf(type).fields).length > 0)).toBe(true);
+    expect(fieldDefs.some(({ ownerType }) => Object.keys(storage.writtenFields(ownerType, {}, true)).length > 0)).toBe(
+      true,
+    );
+  });
+
+  test("writes and reads the flag and the set its module declares on its characters, as an entity's", () => {
+    const storage = new StorageEngine(modulesWithCharacterFlagAndSet());
+    expect(storage.field("characters", "TEST_RETIRED")).toMatchObject({ valueKind: "flag", multiple: false });
+    expect(storage.field("characters", "TEST_TITLES")).toMatchObject({ valueKind: "text", multiple: true });
+    // A new character's flag always written, false when it gives none; its set's values, each once
+    const written = storage.writtenFields("characters", { TEST_TITLES: ["Lord", "Sir", "Lord"] }, true);
+    expect(written).toMatchObject({ TEST_RETIRED: [false], TEST_TITLES: ["Lord", "Sir"] });
+    expect(storage.writtenFields("characters", { TEST_RETIRED: true, TEST_TITLES: null }, false)).toEqual({
+      TEST_RETIRED: [true],
+      TEST_TITLES: [],
+    });
+    // Read off its rows as an entity's are: a flag's value, a set's values in their declared order
+    const rows = Object.entries(written).flatMap(([field, values]) =>
+      (values as FieldValue[]).map((value) => [field, value] as const),
+    );
+    expect(storage.fieldsOf("characters", rows)).toMatchObject({ TEST_RETIRED: false, TEST_TITLES: ["Sir", "Lord"] });
   });
 
   test("reads an entity's links as a view holds them: in the order they were made, then by ordinal and target", () => {

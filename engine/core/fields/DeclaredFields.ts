@@ -17,7 +17,7 @@ interface FieldRow {
  * (`compareFields`: the order they're declared in, one none declares after them, by name), each set's values'
  * (`orderValues`: its closed list's, then by text), an owner's fields as a view holds them (`fieldsOf`), how sibling
  * copies merge each field and single link (`mergeOf`, `roleMergeOf`), those an owner reads off another when it holds
- * none (`inheritance`: an item's, off its template), and what a write keeps of each (`scaleOf`, `writtenDefaults`).
+ * none (`inheritance`: an item's, off its template), and the places a number is kept to (`scaleOf`).
  */
 export default class DeclaredFields {
   /** `fields`: each owner type's, as its module declares them; `linkRoles`: the link roles, each with its merge. */
@@ -190,19 +190,5 @@ export default class DeclaredFields {
   scaleOf(ownerType: string, field: string): number | undefined {
     const leaf = this.leaves.get(`${ownerType}:${field}`);
     return leaf?.kind === "number" ? leaf.scale : undefined;
-  }
-
-  /**
-   * The fields of an owner type always written (`write: "always"`), each with the value a write that leaves it out of
-   * a new owner, or clears it, gives it: its default (a flag's false without one).
-   */
-  writtenDefaults(ownerType: string): Record<string, FieldValue> {
-    return Object.fromEntries(
-      [...this.leaves].flatMap(([key, leaf]): [string, FieldValue][] => {
-        if (!key.startsWith(`${ownerType}:`) || !("write" in leaf) || leaf.write !== "always") return [];
-        const value = leaf.kind === "flag" ? (leaf.default ?? false) : leaf.default;
-        return value === undefined ? [] : [[leaf.field, value]];
-      }),
-    );
   }
 }

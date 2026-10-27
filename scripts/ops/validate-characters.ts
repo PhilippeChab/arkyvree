@@ -22,10 +22,11 @@ import { checkPools } from "./validateCharacters/pools.ts";
 import { checkReferences } from "./validateCharacters/references.ts";
 
 async function main() {
-  const characters: Character[] = await db
+  const rows = await db
     .select(StoredCharacters.buildColumns())
     .from(charactersInCharacter)
     .where(isNull(charactersInCharacter.deletedAt));
+  const characters: Character[] = rows.map((row) => StoredCharacters.toCharacter(row));
   if (characters.length === 0) {
     console.log("No characters to validate.");
     process.exit(0);
