@@ -22,12 +22,9 @@ class CampaignsService {
 
       (await CampaignsPolicy.for(tx, session, existingCampaign)).canDelete();
 
-      // Archive flips deletedAt on the campaign row only — players, invites,
-      // and player-character links stay live. Campaigns.findMany filters
-      // archived campaigns out of list views for everyone, so those rows
-      // are only reachable by direct navigation (bookmarks), which already
-      // loads via Visibility.All. Unarchive below still un-cascades for
-      // legacy campaigns whose players were cascade-archived pre-change.
+      // Archive flips deletedAt on the campaign row alone: its players, invites and player-character links stay live, and
+      // unarchiving flips that row back (0096 restored the players a campaign archived before then had archived with
+      // it). The campaign lists leave it out but under their Archived filter; its pages still read it, read-only.
       const rows = await Campaigns.archive(tx, { id });
       const archivedCampaign = rows[0];
 

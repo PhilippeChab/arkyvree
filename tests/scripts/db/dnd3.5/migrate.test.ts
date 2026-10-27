@@ -8,8 +8,10 @@ import { sql } from "drizzle-orm";
 import { Engine } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
+import { Players } from "@/server/repositories/index.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { findSeededCharacter, getSeedCtx } from "@/tests/support/seed.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 /** A migration's statements, as drizzle splits them. */
 function statementsOf(file: string) {
@@ -148,6 +150,17 @@ async function advancementDefinitions() {
     WHERE conrelid = 'character.advancements'::regclass
   `);
   return rows.map((row) => row.line).toSorted();
+}
+
+/** Archives a user, a campaign or a seat `offset` (an interval) from when 0096's test archives its campaigns. */
+async function archiveAt(
+  table: "account.users" | "campaign.campaigns" | "campaign.players",
+  id: string,
+  offset: string,
+) {
+  await db.execute(sql`
+    UPDATE ${sql.raw(table)} SET deleted_at = '2026-01-01T00:00:00Z'::timestamptz + ${offset}::interval WHERE id = ${id}
+  `);
 }
 
 /**
@@ -303,6 +316,21 @@ async function restoreTypesBefore0092() {
     await db.execute(sql.raw(backwards));
   }
   await db.execute(sql`SELECT set_config('arkyvree.registry_sync', 'off', true)`);
+}
+
+/**
+ * Every campaign and every seat, each as one line, its archive last (`-` when it's live): what 0096 restores a seat's
+ * archive in, and leaves otherwise.
+ */
+async function seatRows() {
+  const { rows } = await db.execute<{ line: string }>(sql`
+    SELECT 'campaign ' || id || ' ' || updated_at::text || ' ' || coalesce(to_json(deleted_at)::text, '-') AS line
+    FROM campaign.campaigns
+    UNION ALL SELECT 'seat ' || id || ' ' || campaign_id || ' ' || coalesce(user_id::text, '-') || ' ' || role || ' '
+      || updated_at::text || ' ' || coalesce(to_json(deleted_at)::text, '-') FROM campaign.players
+    ORDER BY line
+  `);
+  return rows.map((row) => row.line);
 }
 
 /**
@@ -1163,5 +1191,51 @@ describe("0095_advancement-entry", () => {
     expect(await advancementDefinitions()).toEqual(fresh);
     expect(await typedRows(false)).toEqual(before);
     expect((await db.execute(placed)).rows).toEqual(stored);
+  });
+});
+
+describe("0096_campaign-seats", () => {
+  test("restores the seats an archived campaign archived with it, but a deleted account's, and changes nothing else", async () => {
+    const { user: gameMaster } = await createTestUser();
+    const { user: deleted } = await createTestUser();
+    await archiveAt("account.users", deleted.id, "-50 milliseconds");
+    // A campaign archived before archiving left its seats alone: its Game Master's seat and an empty one archived with
+    // it, and a deleted account's seat, archived with it too
+    const { campaign: legacy, player: legacyMaster } = await createTestCampaign(gameMaster.id);
+    const [emptySeat] = await Players.create(db, { campaignId: legacy.id, role: "Player Character" });
+    const [deletedSeat] = await Players.create(db, {
+      userId: deleted.id,
+      campaignId: legacy.id,
+      role: "Player Character",
+    });
+    await archiveAt("campaign.campaigns", legacy.id, "0 seconds");
+    await archiveAt("campaign.players", legacyMaster.id, "4 milliseconds");
+    await archiveAt("campaign.players", emptySeat!.id, "-5 milliseconds");
+    await archiveAt("campaign.players", deletedSeat!.id, "3 milliseconds");
+    // An archived campaign's seats archived well apart from it, and a live campaign's seat of a deleted account
+    const { campaign: apart, player: earlier } = await createTestCampaign(gameMaster.id);
+    const [later] = await Players.create(db, { userId: gameMaster.id, campaignId: apart.id, role: "Game Master" });
+    await archiveAt("campaign.campaigns", apart.id, "0 seconds");
+    await archiveAt("campaign.players", earlier.id, "-1 hour");
+    await archiveAt("campaign.players", later!.id, "2 seconds");
+    const { campaign: live } = await createTestCampaign(gameMaster.id);
+    const [liveSeat] = await Players.create(db, { userId: deleted.id, campaignId: live.id, role: "Player Character" });
+    await archiveAt("campaign.players", liveSeat!.id, "0 seconds");
+    const before = await seatRows();
+
+    for (const statement of statementsOf("0096_campaign-seats.sql")) await db.execute(sql.raw(statement));
+
+    // Only the seats archived with their campaign are live again; every other row stays as it was
+    const restored = new Set([legacyMaster.id, emptySeat!.id]);
+    const kept = new Set([deletedSeat!.id, earlier.id, later!.id, liveSeat!.id]);
+    const archivedOf = (ids: Set<string>) =>
+      before.filter((line) => ids.has(line.split(" ")[1]!) && !line.endsWith(" -")).length;
+    expect([archivedOf(restored), archivedOf(kept)]).toEqual([2, 4]);
+    const expected = before.map((line) => (restored.has(line.split(" ")[1]!) ? line.replace(/ [^ ]+$/, " -") : line));
+    expect(await seatRows()).toEqual(expected);
+
+    // A second run restores nothing more
+    for (const statement of statementsOf("0096_campaign-seats.sql")) await db.execute(sql.raw(statement));
+    expect(await seatRows()).toEqual(expected);
   });
 });

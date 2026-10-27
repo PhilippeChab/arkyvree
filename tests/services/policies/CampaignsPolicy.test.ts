@@ -1,8 +1,5 @@
 import { describe, expect, test } from "bun:test";
 
-import { eq } from "drizzle-orm";
-
-import { playersInCampaign } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Campaigns, Players } from "@/server/repositories/index.ts";
@@ -72,19 +69,23 @@ describe("CampaignsPolicy", () => {
     expect(() => policy.canUpdate()).toThrow(ForbiddenError);
   });
 
-  test("still lets the Game Master archive and read a campaign whose players were archived with it, but not edit it", async () => {
+  test("lets the Game Master of an archived campaign read and unarchive it, but not edit it", async () => {
     const { campaign, session } = await policyFor("Game Master");
     const [archived] = await Campaigns.archive(db, { id: campaign.id });
-    await db
-      .update(playersInCampaign)
-      .set({ deletedAt: new Date().toISOString() })
-      .where(eq(playersInCampaign.campaignId, campaign.id));
     const policy = await CampaignsPolicy.for(db, session, archived);
+    expect(policy.canRead().role).toBe("Game Master");
     expect(policy.canDelete()).toBe(true);
-    expect(policy.isGameMaster()).toBe(false);
-    // Its characters are still read as its Game Master reads them
-    expect(policy.isGameMasterByRole()).toBe(true);
     expect(policy.canSeeCharacter({ playerId: NIL_UUID, visibility: "Private" })).toBe(true);
+    expect(() => policy.canModify()).toThrow(ForbiddenError);
+  });
+
+  test("gives a seat archived with its user's account nothing", async () => {
+    const { campaign, session } = await policyFor("Game Master");
+    await Players.archive(db, { userId: session.userId });
+    const policy = await CampaignsPolicy.for(db, session, campaign);
+    expect(policy.isGameMaster()).toBe(false);
+    expect(() => policy.canRead()).toThrow(ForbiddenError);
+    expect(() => policy.canDelete()).toThrow(ForbiddenError);
   });
 
   test("only deletes an archived campaign permanently", async () => {

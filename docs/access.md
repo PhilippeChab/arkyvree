@@ -98,14 +98,14 @@ Campaign character responses leave the private notes out of the identity's block
 
 ## Campaigns — `CampaignsPolicy`
 
-`CampaignsPolicy.for(tx, session, campaign)` loads the session's player row (`playersInCampaign`), an archived one too. The PDF worker, which has no session, builds one for the export's user and asks `isGameMaster()`.
+`CampaignsPolicy.for(tx, session, campaign)` loads the session's live player row (`playersInCampaign`), in a campaign archived or not: archiving a campaign leaves its seats alone, and a seat is archived only with its user's account, which no session signs in to (0096 restored the seats a campaign archived before then had archived with it). The PDF worker, which has no session, builds one for the export's user and asks `isGameMaster()`.
 
 | Method | Allowed actors |
 |---|---|
 | `canRead` | any member, Player or Game Master, of the campaign archived or not: returns their player row. Reading a campaign, its players, invites and characters starts with it (an unknown campaign is a 404 first) |
-| `canSeeCharacter` | a member, on a character linked to the campaign; a **Private** one its linking player and the Game Master alone (`isGameMasterByRole`), refused to the others as a 404, as a character not linked is |
-| `canUpdate` | **Game Master only**, by an active player row (`isGameMaster`) |
-| `canDelete` | **Game Master only** (archive), an archived player row too (`isGameMasterByRole`) |
+| `canSeeCharacter` | a member, on a character linked to the campaign; a **Private** one its linking player and the Game Master alone (`isGameMaster`), refused to the others as a 404, as a character not linked is |
+| `canUpdate` | **Game Master only** (`isGameMaster`) |
+| `canDelete` | **Game Master only** (archive and unarchive) |
 | `canHardDelete` | **Game Master only**, must be archived. See [persistence.md](./persistence.md#recoverable-user-content) |
 | `canModify` | anyone the other checks allow, on a campaign that isn't archived (archived campaigns are read-only; a Game Master can still revoke an invite) |
 
