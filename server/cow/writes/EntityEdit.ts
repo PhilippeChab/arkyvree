@@ -39,10 +39,17 @@ export default class EntityEdit {
 
   /**
    * The copy of an inherited entity (`entityId`, of `entityType`), made on its first edit, as the target of a write that
-   * named it `namedId`: with what it copied.
+   * named it `namedId`: with what it copied. Refused as not found, in the write's words (`gone`), when the entity was
+   * deleted since the view was read.
    */
-  private async copy(tx: Db, entityType: RulesetEntityType, entityId: string, namedId: string): Promise<EditTarget> {
-    const copy = await EntityCopy.create(tx, entityType, entityId, this.ruleset);
+  private async copy(
+    tx: Db,
+    entityType: RulesetEntityType,
+    entityId: string,
+    namedId: string,
+    gone: string,
+  ): Promise<EditTarget> {
+    const copy = await EntityCopy.create(tx, entityType, entityId, this.ruleset, gone);
     return new EditTarget(copy.entity.id, namedId, copy.copiedIds);
   }
 
@@ -68,7 +75,7 @@ export default class EntityEdit {
     // Not from the source chain
     if (!this.cow.sourceChain.includes(entity.rulesetId)) throw new NotFoundError(notFound.missing);
 
-    return await this.copy(tx, type, entity.id, entityId);
+    return await this.copy(tx, type, entity.id, entityId, notFound.gone);
   }
 
   /**
@@ -103,7 +110,7 @@ export default class EntityEdit {
 
     // Copy the owner (it copies what it owns), and find the owned entity's copy by its position: owned entities aren't
     // snapshotted one by one
-    const copy = await this.copy(tx, ownerType, owner.id, owner.id);
+    const copy = await this.copy(tx, ownerType, owner.id, owner.id, notFound.gone);
     const ownedCopyId = (await copy.findOwned(tx, entityType)).get(owned.position);
     if (!ownedCopyId) throw new NotFoundError("Copied owned entity not found");
     return new EditTarget(ownedCopyId, ownedId, copy.copiedIds);
@@ -120,7 +127,7 @@ export default class EntityEdit {
     entity: { id: string; rulesetId: string },
     gone: string,
   ): Promise<string> {
-    const target = await this.cowToEdit(tx, entityType, entity);
+    const target = await this.cowToEdit(tx, entityType, entity, gone);
     if (!target.copied) await EntityEdit.lock(tx, target.id, gone);
     return target.id;
   }
@@ -128,13 +135,15 @@ export default class EntityEdit {
   /**
    * The row an edit of `entity` (as the engine found it in the view) writes: the ruleset's own entity, or the copy of an
    * inherited one, made on its first edit, with the customizations it copied, by their source's id (`copiedIds`).
+   * Refused as not found, in the edit's words (`gone`), when the inherited entity was deleted since the view was read.
    */
   async cowToEdit(
     tx: Db,
     entityType: RulesetEntityType,
     entity: { id: string; rulesetId: string },
+    gone: string,
   ): Promise<EditTarget> {
     if (entity.rulesetId === this.ruleset.id) return new EditTarget(entity.id, entity.id);
-    return await this.copy(tx, entityType, entity.id, entity.id);
+    return await this.copy(tx, entityType, entity.id, entity.id, gone);
   }
 }

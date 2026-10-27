@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import type { EntityWrites } from "@/engine/index.ts";
-import type { Aptitude, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { Aptitude, Feat, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, EntityLinks, Requirements } from "@/server/repositories/index.ts";
@@ -11,7 +11,7 @@ import { activityTypes } from "@/tests/support/activities.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { measure } from "@/tests/support/database.ts";
 import { createTestClassLevel } from "@/tests/support/dnd3.5/levels.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
 /** A requirement a plan writes beside an entity. */
@@ -33,6 +33,20 @@ async function createSpell() {
   const ruleset = await createSeededTestRuleset(makeSession().userId);
   const [spell] = await Entities.create<Spell>(db, "spells", { name: "Probe Spell", rulesetId: ruleset.id });
   return { entity: { entityId: spell.id, entityType: "spells" } as const, rulesetId: ruleset.id };
+}
+
+/**
+ * A feat a fork inherits from its parent, the fork's view read, then the feat deleted from the parent: what a first
+ * write to it finds as it copies it.
+ */
+async function deleteInheritedFeat() {
+  const session = makeSession();
+  const parent = await createTestRuleset(session.userId);
+  const [feat] = await Entities.create<Feat>(db, "feats", { name: "Probe Inherited Feat", rulesetId: parent.id });
+  const fork = await createTestRuleset(session.userId, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+  await withRulesetScope(db, fork.id, async () => undefined);
+  await Entities.delete(db, { entityType: "feats", id: feat.id });
+  return { session, feat, rulesetId: fork.id };
 }
 
 describe("EntityWriter.setParts: what a save writes past an entity's row", () => {
@@ -89,6 +103,20 @@ describe("EntityWriter: an entity deleted since the view was read", () => {
     expect(
       EntitiesService.deleteOwnedEntity(makeSession(), ruleset.id, "classes", klass.id, classLevel.id),
     ).rejects.toMatchObject({ message: "ClassLevel not found", name: "NotFoundError" });
+  });
+
+  test("refuses an inherited entity's first edit and delete as that entity, not found, as they copy it", async () => {
+    const { session, feat, rulesetId } = await deleteInheritedFeat();
+    const notFound = { message: "Feat not found", name: "NotFoundError" };
+
+    expect(
+      EntitiesService.updateEntity(session, rulesetId, "feats", feat.id, {
+        name: feat.name,
+        description: "Changed",
+        updatedAt: feat.updatedAt,
+      }),
+    ).rejects.toMatchObject(notFound);
+    expect(EntitiesService.deleteEntity(session, rulesetId, "feats", feat.id)).rejects.toMatchObject(notFound);
   });
 });
 

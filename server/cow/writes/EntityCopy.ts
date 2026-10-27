@@ -36,10 +36,11 @@ export interface CopiedEntity {
  * own instance, which records the customizations it copied.
  */
 export default class EntityCopy {
-  private constructor(entityType: RulesetEntityType, entityId: string, ruleset: RulesetSources) {
+  private constructor(entityType: RulesetEntityType, entityId: string, ruleset: RulesetSources, gone: string) {
     this.entityType = entityType;
     this.entityId = entityId;
     this.ruleset = ruleset;
+    this.gone = gone;
     this.sourceType = Engine.storage().customizableKinds().includes(entityType) ? entityType : undefined;
   }
 
@@ -64,15 +65,17 @@ export default class EntityCopy {
 
   /**
    * Copies `entityId` into `ruleset`, or returns the copy it already has (then with no copied ids): the newly created
-   * child entity, and the customizations copied with it, by their sources' ids.
+   * child entity, and the customizations copied with it, by their sources' ids. Refused as not found, in the write's
+   * words (`gone`), when the source was deleted since the write's view was read.
    */
   static async create(
     tx: Db,
     entityType: RulesetEntityType,
     entityId: string,
     ruleset: RulesetSources,
+    gone: string,
   ): Promise<CopiedEntity> {
-    const copy = new EntityCopy(entityType, entityId, ruleset);
+    const copy = new EntityCopy(entityType, entityId, ruleset, gone);
     const { entity, made } = await copy.copy(tx);
     return made ? { entity, copiedIds: copy.copiedIds } : { entity };
   }
@@ -82,6 +85,9 @@ export default class EntityCopy {
   private readonly entityId: string;
 
   private readonly entityType: RulesetEntityType;
+
+  /** What refuses the copy when its source was deleted since the write's view was read, in the write's words. */
+  private readonly gone: string;
 
   /** The ruleset the copy is made in, and where its inherited entities come from. */
   private readonly ruleset: RulesetSources;
@@ -122,8 +128,7 @@ export default class EntityCopy {
     }
 
     // 1. Fetch the parent entity
-    if (!(await Entities.lock(tx, { id: this.entityId }, "share")))
-      throw new NotFoundError("Customization source no longer exists; refresh the entity");
+    if (!(await Entities.lock(tx, { id: this.entityId }, "share"))) throw new NotFoundError(this.gone);
 
     const parentEntity = await Entities.findOne(tx, { entityType, id: this.entityId });
     if (!parentEntity) throw new Error(`Parent entity not found: ${this.entityType}/${this.entityId}`);

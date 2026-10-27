@@ -117,12 +117,6 @@ export default class EntityWriter {
     private readonly open: (scope: RulesetScope) => unknown = () => undefined,
   ) {}
 
-  /** What an entity's write (of `type`) refuses it with when it's missing, or deleted since the view was read. */
-  private static notFoundOf(type: string): NotFoundMessages {
-    const message = `${getActivityName(type)} not found`;
-    return { gone: message, missing: message };
-  }
-
   /**
    * Runs a save in its transaction and its ruleset's scope, with the session's policy on it, if the session may read it
    * (`withReadableRuleset`), the ruleset's views dropping what it changed.
@@ -187,7 +181,7 @@ export default class EntityWriter {
     if (await new EntityUses(ruleset, rulesetData.cow).isPicked(tx, type, removal.id))
       throw new ConflictError(removal.inUse);
 
-    const notFound = EntityWriter.notFoundOf(type);
+    const notFound = EntityWriter.getNotFound(type);
     const target = await new EntityEdit(ruleset, rulesetData.cow).cowById(tx, type, removal.id, notFound);
     await Entities.delete(tx, { entityType: type, id: target.id });
   }
@@ -208,7 +202,7 @@ export default class EntityWriter {
     const rows = await Entities.update<Row>(tx, type, row, { id: target.id, expectedUpdatedAt });
     if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
     // A row deleted since the view was read: no token to call it stale by
-    if (rows.length === 0) throw new NotFoundError(EntityWriter.notFoundOf(type).gone);
+    if (rows.length === 0) throw new NotFoundError(EntityWriter.getNotFound(type).gone);
     return rows[0];
   }
 
@@ -220,6 +214,15 @@ export default class EntityWriter {
     for (const removal of writes.removed ?? []) await EntityWriter.removeEntity(tx, scope, removal);
     if (writes.requirement) await Requirements.create(tx, { ...entity, ...writes.requirement });
     for (const made of writes.made ?? []) await EntityWriter.makeEntity(tx, scope, made);
+  }
+
+  /**
+   * What an entity's write (of `type`) refuses it with when it's missing, or deleted since the view was read: the
+   * entity's words, its first copy's included (`EntityEdit`).
+   */
+  static getNotFound(type: string): NotFoundMessages {
+    const message = `${getActivityName(type)} not found`;
+    return { gone: message, missing: message };
   }
 
   /**
@@ -358,7 +361,8 @@ export default class EntityWriter {
       policy.canUpdateEntity();
       const { plan: planned, type } = plan(scope);
 
-      const owner = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, this.type, planned.owner);
+      const { gone } = EntityWriter.getNotFound(this.type);
+      const owner = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, this.type, planned.owner, gone);
       const [row] = await Entities.create<Row>(tx, type, { ...planned.row, ownerId: owner.id });
       await EntityWriter.setParts(tx, scope, { entityId: row.id, entityType: type }, planned, false);
 
@@ -385,7 +389,7 @@ export default class EntityWriter {
       policy.canDeleteEntity({ inUse });
 
       const planned = await plan(scope, { tx });
-      const { gone } = EntityWriter.notFoundOf(this.type);
+      const { gone } = EntityWriter.getNotFound(this.type);
       const targetId = await new EntityEdit(ruleset, rulesetData.cow).cowToDelete(tx, this.type, planned.entity, gone);
       const written = { entityId: targetId, entityType: this.type };
       if (planned.writes) await EntityWriter.writeBeside(tx, scope, written, planned.writes);
@@ -422,7 +426,7 @@ export default class EntityWriter {
       policy.canDeleteEntity({ inUse });
       const { plan: planned, type } = plan(scope);
 
-      const notFound = EntityWriter.notFoundOf(type);
+      const notFound = EntityWriter.getNotFound(type);
       const edit = new EntityEdit(ruleset, rulesetData.cow);
       const target = await edit.cowOwned(tx, type, this.type, planned.entity.id, notFound);
       const written = { entityId: target.id, entityType: type };
@@ -454,7 +458,8 @@ export default class EntityWriter {
 
       const planned = await plan(scope, { tx });
       await new EntityNames(ruleset, rulesetData.cow).assertRenameAvailable(tx, this.type, planned.entity, body.name);
-      const target = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, this.type, planned.entity);
+      const { gone } = EntityWriter.getNotFound(this.type);
+      const target = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, this.type, planned.entity, gone);
       const row = await EntityWriter.updateRow(tx, this.type, planned.row, target, body.updatedAt);
       await EntityWriter.setParts(tx, scope, { entityId: target.id, entityType: this.type }, planned, true);
 
@@ -484,7 +489,7 @@ export default class EntityWriter {
       policy.canUpdateEntity();
       const { plan: planned, type } = plan(scope);
 
-      const notFound = EntityWriter.notFoundOf(type);
+      const notFound = EntityWriter.getNotFound(type);
       const edit = new EntityEdit(ruleset, rulesetData.cow);
       const target = await edit.cowOwned(tx, type, this.type, planned.entity.id, notFound);
       const row = await EntityWriter.updateRow(tx, type, planned.row, target, updatedAt);
