@@ -46,7 +46,7 @@ export default class Dnd35Characters extends CharactersPart<Dnd35Descriptions> {
     return CharacterDescription.describeFull(...args);
   }
 
-  /** A character's card: its race and its classes at their highest level. */
+  /** A character's card's chips: its race and its classes at their highest level. */
   protected override describeFullCard(view: RulesetView, character: Character, advancements: StoredAdvancement[]) {
     return CharacterCards.describe(Dnd35View.of(view.rulesetData), character, advancements);
   }
