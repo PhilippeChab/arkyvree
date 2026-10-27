@@ -28,6 +28,9 @@ import type { BaseRules } from "@/shared/enums.ts";
 
 import Modules, { type EntityType } from "./Modules.ts";
 
+/** The owner type of a character's fields, which each module declares (`RulesetModule.characterFields`). */
+const CHARACTERS = "characters";
+
 /** The merges the engine composes sibling copies by (`SiblingMerge`). */
 const MERGES: readonly Merge[] = ["fallback", "union", "winner"];
 
@@ -50,7 +53,7 @@ function mergeRecords<T>(modules: [BaseRules, RulesetModule][], pick: (module: R
 
 /**
  * How every registered module stores its data in the generic tables, which the server reads and writes them by: each
- * kind (`kind`, what a new entity defaults: `defaultsOf`), an entity's record off its stored rows (`recordOf`: every
+ * kind (`kind`, a new entity's partition: `partitionOf`), an entity's record off its stored rows (`recordOf`: every
  * field it holds, `fieldsOf`, and its single links), an entity's links as a view holds them (`viewLinksOf`), a number as
  * its field keeps it (`storedNumber`), a player character's kind (`playerKinds`, `isPlayerKind`), the kinds a user
  * customizes (`customizableKinds`) and those whose customizations have a page of their own (`customizationPages`), the
@@ -63,7 +66,7 @@ export default class StorageEngine {
   constructor(modules: [BaseRules, RulesetModule][]) {
     this.baseRules = modules.map(([baseRules]) => baseRules);
     this.kinds = mergeRecords(modules, (module) => module.storage.kinds);
-    this.fields = mergeRecords(modules, (module) => module.fields);
+    this.fields = mergeRecords(modules, (module) => ({ ...module.fields, [CHARACTERS]: module.characterFields }));
     this.playerKindList = modules.map(([, module]) => module.storage.character.playerKind);
     this.customizable = Object.keys(this.kinds)
       .filter((type) => this.kinds[type].customizable)
@@ -179,7 +182,7 @@ export default class StorageEngine {
   /** The kinds a user customizes, by type (`customizableKinds`). */
   private readonly customizable: readonly string[];
 
-  /** Every module's owners' fields, by owner type. */
+  /** Every module's owners' fields, by owner type: its entity types', its rulesets' and its characters'. */
   private readonly fields: Record<string, Fields>;
 
   /** The kinds a name is the identity of (`isIdentityKind`). */
@@ -250,14 +253,6 @@ export default class StorageEngine {
   declaredFields(): DeclaredFields {
     this.declared ??= new DeclaredFields(this.fields, this.merged.linkRoles);
     return this.declared;
-  }
-
-  /**
-   * What a new entity of a kind (`type`) is written with where its write gives none: the defaults of its fields always
-   * written (`DeclaredFields.writtenDefaults`, which a write that clears one writes too), and its partition.
-   */
-  defaultsOf(type: string): { fields: Record<string, FieldValue>; partition: string } {
-    return { fields: this.declaredFields().writtenDefaults(type), partition: this.kind(type).partition ?? "" };
   }
 
   /**
@@ -355,6 +350,11 @@ export default class StorageEngine {
   /** The kind that owns a kind (`type`: a class level's class), none for a kind no other owns. */
   ownerOf(type: string): string | undefined {
     return this.owners.get(type);
+  }
+
+  /** The partition a new entity of a kind (`type`) is written in where its write gives none: its kind's default. */
+  partitionOf(type: string): string {
+    return this.kind(type).partition ?? "";
   }
 
   /**
@@ -505,21 +505,11 @@ export default class StorageEngine {
   }
 
   /**
-   * What a write of an owner's fields (`fields`, of `ownerType`: an entity type, `rulesets`, a character's) stores, by
+   * What a write of an owner's fields (`fields`, of `ownerType`: an entity type, `rulesets`, `characters`) stores, by
    * field, whoever writes it (a seed, a form's save, an import), so the same values store the same rows
-   * (`FieldWrites`): a new owner's (`creating`) or an existing one's. A character's fields, which no module's `fields`
-   * declare (its module's codec plans them by its own declaration), each by its stored kind (`Field.writtenValues`: no
-   * empty text, no false flag).
+   * (`FieldWrites`): a new owner's (`creating`) or an existing one's.
    */
   writtenFields(ownerType: string, fields: Readonly<Record<string, FieldWrite>>, creating: boolean) {
-    if (!(ownerType in this.fields)) {
-      return Object.fromEntries(
-        Object.entries(fields).map(([field, write]) => {
-          const def = this.field(ownerType, field);
-          return [field, def ? Field.writtenValues({ kind: def.valueKind }, write) : write];
-        }),
-      );
-    }
     this.writes ??= new FieldWrites(this.fields);
     return this.writes.written(ownerType, fields, creating);
   }

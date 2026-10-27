@@ -6,8 +6,8 @@
  */
 
 import type { LinkPlan } from "@/engine/core/module/parts/characters/index.ts";
-import type { StoredAdvancement } from "@/engine/core/module/storage.ts";
-import type { Character, CharacterFieldValue } from "@/shared/relations.ts";
+import type { FieldWrite, StoredAdvancement } from "@/engine/core/module/storage.ts";
+import type { Character } from "@/shared/relations.ts";
 
 /** What a level-up writes of an advancement: its entry (3.5's class level), and its picks under it. */
 export interface AdvancementPlan {
@@ -52,7 +52,7 @@ export interface LevelsPlan extends ChildrenPlan {
 export interface NewChild {
   links: Record<string, LinkPlan[]>;
   row: Pick<Character, "kind" | "name" | "parentCharacterId" | "rulesetId" | "userId"> & {
-    fields: Record<string, CharacterFieldValue | null>;
+    fields: Record<string, FieldWrite>;
     links: Record<string, string>;
   };
 }

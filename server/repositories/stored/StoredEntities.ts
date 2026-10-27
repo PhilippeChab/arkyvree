@@ -16,7 +16,6 @@ import {
   type EntityRecord,
   type EntityWrite,
   type FieldValue,
-  type FieldWrite,
   type StoredEntity,
 } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
@@ -93,8 +92,8 @@ const WRITE_BATCH = 2000;
  * its links in `entity_links`): read and written by kind (`entityType`), each as its record (`EntityRecord`: its own
  * columns, every field it holds by field, as its module declares it, `Engine.storage().fieldsOf`, its single links by
  * role), each write as its module plans it (`EntityWrite`: its fields and single links as a record holds them), a new
- * entity's defaults its kind's (`defaultsOf`). A kind's list filters by its fields' values, its links' targets and its
- * partition, which its module's operation names: nothing here is any module's.
+ * entity's partition its kind's (`partitionOf`). A kind's list filters by its fields' values, its links' targets and
+ * its partition, which its module's operation names: nothing here is any module's.
  */
 class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates, Searches)<typeof entitiesInRules> {
   constructor() {
@@ -137,11 +136,6 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
       ...Object.entries(links).map(([role, ids]) => StoredEntities.buildLinkCondition(role, ids)),
       ...(partitions ? [inArray(entitiesInRules.partition, [...partitions])] : []),
     ];
-  }
-
-  /** Whether a field's write (`write`) leaves it holding none: none given, null, or no value. */
-  private static clears(write: FieldWrite | undefined) {
-    return write === undefined || write === null || (Array.isArray(write) && write.length === 0);
   }
 
   /** A picker's conditions: a kind's entities among `ids`, of its values, searched by name, but `excludeIds`. */
@@ -283,7 +277,8 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   /**
    * Writes entities' fields and single links (`writes`: each entity's ids and what it sets, by field and by role), in
    * batches, each field as every write stores it, a seed's, a form's or an import's (`Engine.storage().writtenFields`:
-   * a set's values once, no false flag, default number or empty text, none whose condition doesn't hold), each value
+   * a set's values once, no false flag, default number or empty text, the default of one always written that holds no
+   * value, none whose condition doesn't hold), each value
    * in its field's column by its declaration (`toFieldRows`), a set's in its order, and each link to its role's kind:
    * replacing what they held of each it names when `replacing` (an update's; a new entity holds none). None (no value,
    * null) writes none. A copy's fields (`copied`: its source's rows, as they're stored) are written as they are.
@@ -358,7 +353,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
 
   /**
    * Writes a kind's new entities (`writes`), each an entity, its fields (one always written it leaves out, or clears,
-   * its default: `defaultsOf`) and its single links, its partition its kind's default when it gives none. An owned
+   * its default: `writtenFields`) and its single links, its partition its kind's default when it gives none. An owned
    * entity takes its owner's ruleset and campaign. Their fields are stored as every write stores them, but a copy's
    * (`copied`: copy-on-write's of another entity, its source's rows as they're stored), which keeps them as they are.
    * Answers their ids, in order.
@@ -366,7 +361,6 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   async createIds(db: Db, entityType: string, writes: EntityWrite[], copied = false): Promise<string[]> {
     if (writes.length === 0) return [];
     const storage = Engine.storage();
-    const defaults = storage.defaultsOf(entityType);
     const ownerType = storage.registries().entityTypes.find((def) => def.type === entityType)?.ownerType ?? null;
     const owners = new Map<string, { campaignId: string | null; rulesetId: string }>();
     const ownerIds = [...new Set(writes.flatMap((write) => (write.ownerId ? [write.ownerId] : [])))];
@@ -394,7 +388,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
         ownerId: write.ownerId ?? null,
         ownerType,
         position: write.position ?? null,
-        partition: write.partition ?? defaults.partition,
+        partition: write.partition ?? storage.partitionOf(entityType),
         createdAt: write.createdAt,
         updatedAt: write.updatedAt,
       };
@@ -407,20 +401,10 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
         .returning({ id: entitiesInRules.id });
       ids.push(...inserted.map((row) => row.id));
     }
-    // A field always written that a new entity leaves out, or clears, takes its default
-    const withDefaults = writes.map(({ fields = {}, links }) => ({
-      fields: {
-        ...fields,
-        ...Object.fromEntries(
-          Object.entries(defaults.fields).filter(([field]) => StoredEntities.clears(fields[field])),
-        ),
-      },
-      links,
-    }));
     await this.writeParts(
       db,
       entityType,
-      withDefaults.map((write, index) => ({ ids: [ids[index]], write })),
+      writes.map((write, index) => ({ ids: [ids[index]], write })),
       false,
       copied,
     );
@@ -774,16 +758,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
       )
       .returning({ id: entitiesInRules.id });
     const ids = updated.map((row) => row.id);
-    const defaults = Engine.storage().defaultsOf(entityType).fields;
-    const fields =
-      write.fields &&
-      Object.fromEntries(
-        Object.entries(write.fields).map(([field, value]) => [
-          field,
-          StoredEntities.clears(value) && field in defaults ? defaults[field] : value,
-        ]),
-      );
-    await this.writeParts(db, entityType, [{ ids, write: { fields, links: write.links } }], true);
+    await this.writeParts(db, entityType, [{ ids, write }], true);
     return await this.readRecords<R>(db, ids);
   }
 }

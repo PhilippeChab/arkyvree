@@ -483,9 +483,10 @@ describe("A codec's fields beside its name, and those its form doesn't show", ()
     });
   });
 
-  test("are written always where they say so, their default without a value", () => {
+  test("are written always where they say so, a false flag too; one without a value, none", () => {
+    // Its owner's write gives a field always written that holds no value its default (`FieldWrites`)
     expect(OWNED.write({ generated: false, slot: "", template: false, title: null, weight: null })).toEqual({
-      fields: { WEIGHT: [], GENERATED: [false], TEMPLATE: [false], TITLE: [], SLOT: ["Other"] },
+      fields: { WEIGHT: [], GENERATED: [false], TEMPLATE: [false], TITLE: [], SLOT: [] },
       links: {},
     });
   });

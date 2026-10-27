@@ -74,7 +74,8 @@ class CharactersRepository extends include(
       .from(charactersInCharacter)
       .where(where)
       .orderBy(...order);
-    return page ? await query.limit(page.limit).offset(page.offset) : await query;
+    const rows = page ? await query.limit(page.limit).offset(page.offset) : await query;
+    return rows.map((row) => StoredCharacters.toCharacter(row));
   }
 
   /** Archives a character and its children (`{ id }`), or every character a user owns (`{ userId }`). */
@@ -119,11 +120,14 @@ class CharactersRepository extends include(
     return result.count;
   }
 
-  /** Writes a new character: its row, its fields' values and its single links. */
+  /**
+   * Writes a new character: its row, its fields' values (one always written it gives none of, its default) and its
+   * single links.
+   */
   async create(db: Db, values: CharacterValues & Pick<Character, "kind" | "name" | "rulesetId" | "userId">) {
     const { fields, links, ...own } = values;
     const [created] = await db.insert(this.table).values(own).returning({ id: this.table.id });
-    await StoredCharacters.write(db, [created.id], { fields, links });
+    await StoredCharacters.write(db, [created.id], { fields, links }, true);
     return await this.rows(db, eq(this.table.id, created.id));
   }
 
@@ -274,7 +278,7 @@ class CharactersRepository extends include(
         .orderBy(...this.pageOrder(this.orderBy(this.table[orderBy], orderDir)))
         .limit(limit)
         .offset(offset);
-      return rows;
+      return rows.map((row) => StoredCharacters.toCharacter(row));
     });
   }
 
@@ -303,7 +307,7 @@ class CharactersRepository extends include(
         .limit(limit)
         .offset(offset);
 
-      return results;
+      return results.map((row) => StoredCharacters.toCharacter(row));
     });
   }
 

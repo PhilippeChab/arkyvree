@@ -33,6 +33,12 @@ export interface RulesetModule<
   D extends Descriptions = Descriptions,
   E extends EntityKindsContract = EntityKindsContract,
 > {
+  /**
+   * Its characters' own fields (3.5's identity and experience), in the order its sheet shows them: what they're stored
+   * and read by as its other owners' are (`fields`), under the owner type `characters`. No form of its rules describes
+   * them: its characters' part does
+   */
+  characterFields: Fields;
   /** What the ruleset answers of its characters, from the rows the server reads: their sheets, their links, an item */
   characters: CharactersPart<D>;
   /** What the ruleset answers its content's seeders and codegen: the paths a book can target */

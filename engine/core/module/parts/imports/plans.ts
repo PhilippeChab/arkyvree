@@ -5,7 +5,8 @@
 
 import type { CharacterOwnValues, InventoryEntryPlan, LinkPlan } from "@/engine/core/module/parts/characters/index.ts";
 import type { AdvancementPlan, ChildrenPlan } from "@/engine/core/module/parts/levelUp/index.ts";
-import type { Character, CharacterFieldValue } from "@/shared/relations.ts";
+import type { FieldWrite } from "@/engine/core/module/storage.ts";
+import type { Character } from "@/shared/relations.ts";
 
 /**
  * What an importer makes of a file it recognizes, before any ruleset is picked: the file (`source`), and why the
@@ -64,6 +65,6 @@ export interface ImportSource {
  */
 export type ImportedRow = CharacterOwnValues &
   Pick<Character, "kind" | "name" | "notes" | "privateNotes"> & {
-    fields: Record<string, CharacterFieldValue | null>;
+    fields: Record<string, FieldWrite>;
     links: Record<string, string>;
   };

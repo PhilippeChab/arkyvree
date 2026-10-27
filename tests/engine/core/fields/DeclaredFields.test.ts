@@ -9,7 +9,7 @@ const GIZMOS = "gizmos" as string as StandaloneKind;
 
 /**
  * Three owner types' fields: a group's among them, a choice, a closed list, a flag, a free text, numbers and a link;
- * each with its merge, a gizmo's family and make read off its template, a flag always written.
+ * each with its merge, a gizmo's family and make read off its template, flags always written.
  */
 const DECLARED = new DeclaredFields(
   {
@@ -171,12 +171,9 @@ describe("The fields a module declares", () => {
     ).toThrow("gizmos reads its fields off others through madeFrom and copyOf");
   });
 
-  test("keep a number to its declared places, and write an always written field's default", () => {
+  test("keep a number to its declared places", () => {
     expect(DECLARED.scaleOf("gizmos", "COST")).toBe(2);
     expect(DECLARED.scaleOf("gizmos", "CHARGES")).toBeUndefined();
     expect(DECLARED.scaleOf("tracks", "COST")).toBeUndefined();
-    // A flag's own default, false without one; none of another owner type's
-    expect(DECLARED.writtenDefaults("talents")).toEqual({ TRAINED: true, SECRET: false });
-    expect(DECLARED.writtenDefaults("gizmos")).toEqual({});
   });
 });
