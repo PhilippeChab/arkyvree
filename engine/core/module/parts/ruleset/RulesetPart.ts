@@ -21,10 +21,14 @@ export interface SettingsForm {
   links?: EntityLinkValues;
 }
 
-/** The words of the types the engine itself holds, whatever the rules: a character, a customization's modifier. */
+/**
+ * The words of the types the engine itself holds, whatever the rules: a character, and a customization's modifier and
+ * requirement.
+ */
 const ENGINE_WORDS: Readonly<Record<string, KindWord>> = {
   characters: { many: "Characters", one: "Character" },
   modifiers: { many: "Modifiers", one: "Modifier" },
+  requirements: { many: "Requirements", one: "Requirement" },
 };
 
 /**

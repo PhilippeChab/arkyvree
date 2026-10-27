@@ -23,7 +23,7 @@ import {
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import type { ProgressionCounts, RulesDescription } from "@/client/src/lib/queries.ts";
-import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
+import { entityTypeLabel, positionWordOf } from "@/client/src/lib/rulesetLabels.ts";
 import { levelPageOf } from "@/client/src/pages/rulesets/details/owners/ownerKind.ts";
 import {
   type OwnerProgressionBody,
@@ -297,6 +297,7 @@ function OwnerTables({ rulesetId, ownerId, ownerName, ownerType, ruleset, counts
         <TableGrid
           table={shown}
           levels={levels}
+          positionWord={positionWordOf(levelPageOf(rules)?.type ?? "", rules.words)}
           readOnly={!editable}
           value={(levelId, column) => draft.cellOf(table, levelId, column)}
           saved={(levelId, column) => draft.savedCell(table, levelId, column)}

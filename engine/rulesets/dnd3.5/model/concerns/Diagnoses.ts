@@ -2,6 +2,7 @@ import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type CharacterState from "@/engine/rulesets/dnd3.5/model/CharacterState.ts";
 import type { CustomizedClassLevel } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
+import { LEVEL_WORD } from "@/engine/rulesets/dnd3.5/ruleset/rules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Feat, Klass, Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
@@ -96,14 +97,16 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
           const kl = idx.classLevelsById.get(entityId);
           if (kl) {
             const klass = idx.rulesetClassesById.get(kl.ownerId);
-            return klass ? `${klass.name} Level ${kl.position}` : `Level ${kl.position}`;
+            const position = `${LEVEL_WORD.one} ${kl.position}`;
+            return klass ? `${klass.name} ${position}` : position;
           }
           const attribution = this.components.spellcasting.getBonusClassLevelAttribution().get(entityId);
           if (attribution) return attribution;
           const bonusKl = this.components.spellcasting.getBonusClassLevels().find((k) => k.id === entityId);
           if (bonusKl) {
             const klass = idx.rulesetClassesById.get(bonusKl.ownerId);
-            return klass ? `${klass.name} Level ${bonusKl.position} (bonus)` : `Level ${bonusKl.position} (bonus)`;
+            const position = `${LEVEL_WORD.one} ${bonusKl.position} (bonus)`;
+            return klass ? `${klass.name} ${position}` : position;
           }
           break;
         }
@@ -142,7 +145,8 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
 
       for (const kl of this.data.classLevels) {
         const klass = rulesetClassesById.get(kl.ownerId);
-        const label = klass ? `${klass.name} Level ${kl.position}` : `Level ${kl.position}`;
+        const position = `${LEVEL_WORD.one} ${kl.position}`;
+        const label = klass ? `${klass.name} ${position}` : position;
         for (const m of kl.modifiers) modifierOwner.set(m.id, { name: label, type: "class-levels" });
       }
       for (const spell of this.data.spells)

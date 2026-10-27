@@ -28,7 +28,7 @@ export default class ModifierEdits extends CustomizationEdits<Modifier> {
     return { operator, target, value: LiteralValue.normalize(value, valueType), valueType };
   }
 
-  protected override readonly label = "Modifier";
+  protected override readonly type = "modifiers";
 
   /** The entity's modifiers of its type: its own, and its siblings' (the view composes them into the winner's). */
   protected override rowsOf(entityId: string) {
@@ -44,7 +44,7 @@ export default class ModifierEdits extends CustomizationEdits<Modifier> {
   describe(catalog: TargetPathCatalog, modifierId: string) {
     const { entity } = this;
     const modifier = this.view.rulesetData.modifiersById.get(modifierId);
-    if (!modifier) throw new RulesError("not-found", "Modifier not found");
+    if (!modifier) throw new RulesError("not-found", `${this.label} not found`);
     const sourceName =
       modifier.sourceId === entity.id && modifier.sourceType === this.entityType
         ? entity.name
@@ -70,7 +70,8 @@ export default class ModifierEdits extends CustomizationEdits<Modifier> {
    */
   planCreate(targetPaths: TargetPaths, catalogs: TargetCatalogs, body: ModifierBody, sourceModifierId?: string) {
     const { entity } = this;
-    if (sourceModifierId) this.findOwn(entity.id, sourceModifierId, "Source modifier not found for this entity");
+    if (sourceModifierId)
+      this.findOwn(entity.id, sourceModifierId, `Source ${this.label.toLowerCase()} not found for this entity`);
     return { entity, row: ModifierEdits.rowOf(targetPaths, catalogs, this.entityType, body) };
   }
 

@@ -390,6 +390,15 @@ describe("LevelsService", () => {
     ];
     // One at a time: the test's transaction has a single connection.
     for (const call of notFound) expect((await answerTo(call)).status).toBe(404);
+    // A class or a class level the ruleset lacks named in its rules' word, after the level it's about when it's planned
+    const messageOf = async (call: () => Promise<unknown>) => (await answerTo(call)).body.message;
+    expect(await messageOf(() => getPlanAnswer(session, character.id, past))).toBe("Level 1: Class level not found");
+    expect(await messageOf(() => getStepOptions(session, character.id, "feats", past, { pool: featAptitude.id }))).toBe(
+      "Class level not found",
+    );
+    expect(await messageOf(() => getPlanAnswer(session, character.id, levelUpPlan([planned(NIL_UUID, 1)])))).toBe(
+      "Level 1: Class does not belong to the character's ruleset",
+    );
     // A level past the rules' last class level is refused before it's looked up
     const pastRules = levelUpPlan([planned(klass.id, 999)]);
     for (const call of [

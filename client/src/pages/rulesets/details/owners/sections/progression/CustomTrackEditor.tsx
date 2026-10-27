@@ -19,6 +19,8 @@ interface CustomTrackEditorProps {
   onClose: () => void;
   /** Its owner kind's word, as a sentence says it ("class") */
   ownerWord: string;
+  /** Its rules' word for a level's position along its owner, which names one ("Level", "Level 3") */
+  positionWord: string;
   values: readonly LevelValue[];
 }
 
@@ -51,6 +53,7 @@ export function CustomTrackEditor({
   onChange,
   onClose,
   ownerWord,
+  positionWord,
   values,
 }: CustomTrackEditorProps) {
   // The range's fields as typed, read when it's applied
@@ -133,7 +136,7 @@ export function CustomTrackEditor({
                       setTyping({ levelId, text: typed !== read ? String(typed) : e.target.value });
                       if (typed !== undefined) onChange({ [levelId]: typed });
                     }}
-                    inputProps={{ inputMode: "numeric", "aria-label": `${label}, Level ${level}` }}
+                    inputProps={{ inputMode: "numeric", "aria-label": `${label}, ${positionWord} ${level}` }}
                     sx={{
                       width: "100%",
                       border: 1,

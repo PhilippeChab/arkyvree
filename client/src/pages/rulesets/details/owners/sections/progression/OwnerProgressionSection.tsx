@@ -17,7 +17,7 @@ import { LevelsIcon } from "@/client/src/components/icons/index.ts";
 import { useCustomizationPages, useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
-import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
+import { entityTypeLabel, positionWordOf } from "@/client/src/lib/rulesetLabels.ts";
 import {
   type LevelFormData,
   levelListsOf,
@@ -163,6 +163,8 @@ export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerTy
   const { fields: levelFields } = useEntityFields(rulesetId, levelType);
   // A message's word for a level ("Class level")
   const levelWord = entityTypeLabel(levelType, rules?.words);
+  // A level's position's word, which names one ("Level 3")
+  const positionWord = positionWordOf(levelType, rules?.words);
   const { createDialogProps, handleCreate } = useRulesetSection({
     createDefaults: withEntityFields(nextLevel(levels, levelLists), levelFields, savedRows.at(-1)),
     rulesetId,
@@ -404,6 +406,7 @@ export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerTy
                 min={track.rules.min}
                 unitLabel={track.rules.unitLabel}
                 ownerWord={owner}
+                positionWord={positionWord}
                 custom={customTracks.includes(track.key)}
                 onCustomChange={(open) =>
                   setCustomTracks((current) => [
@@ -446,6 +449,7 @@ export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerTy
               type: levelLists.grants?.references ?? "",
             }}
             words={rules?.words}
+            positionWord={positionWord}
             rulesetId={rulesetId}
             levels={levels}
             readOnly={!canEdit}

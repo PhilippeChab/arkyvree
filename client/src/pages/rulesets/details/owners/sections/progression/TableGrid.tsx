@@ -14,6 +14,8 @@ interface TableGridProps {
   onCells: (cells: PlacedCell[]) => void;
   /** A block was pasted into a cell under an earlier All, which takes nothing */
   onLockedPaste: () => void;
+  /** Its rules' word for a level's position along its owner, which names one ("Level", "Level 3") */
+  positionWord: string;
   readOnly: boolean;
   /** A cell's value as saved: a changed cell is marked against it */
   saved: (levelId: string, column: number) => TableCell;
@@ -45,6 +47,7 @@ export function TableGrid({
   levels,
   onCells,
   onLockedPaste,
+  positionWord,
   readOnly,
   saved,
   table,
@@ -131,7 +134,7 @@ export function TableGrid({
                   onPaste={(e: ClipboardEvent<HTMLInputElement>) => handlePaste(e, row, column)}
                   inputProps={{
                     inputMode: table.all === undefined ? "numeric" : "text",
-                    "aria-label": `${label}, Level ${level}, ${name}`,
+                    "aria-label": `${label}, ${positionWord} ${level}, ${name}`,
                   }}
                   sx={[
                     {

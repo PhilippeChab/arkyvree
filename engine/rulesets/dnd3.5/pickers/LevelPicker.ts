@@ -27,7 +27,7 @@ export default abstract class LevelPicker<Details extends object = object> exten
   ) {
     super(view, input, Dnd35CharacterBuilder);
     const classLevel = Dnd35View.of(this.rulesetData).classLevelByClassAndLevel.get(`${query.classId}:${query.level}`);
-    if (!classLevel) throw new RulesError("not-found", "Class level not found");
+    if (!classLevel) throw new RulesError("not-found", `${this.rulesetData.labelOf("class-levels")} not found`);
     this.classLevel = classLevel;
   }
 

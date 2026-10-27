@@ -137,17 +137,17 @@ export default abstract class LevelUpBase<C> {
   /** The class's level `level`, in the composed ruleset, or a 404. */
   protected getClassLevel(classId: string, level: number) {
     const classLevel = this.dnd35.classLevelByClassAndLevel.get(`${classId}:${level}`);
-    if (!classLevel) throw new RulesError("not-found", "Class level not found");
+    if (!classLevel) this.refuseMissing("class-levels");
     return classLevel;
   }
 
   /** A saved level's class level (its advancement's entry) and class, in the composed ruleset, or a 404. */
   protected getSavedClassLevel(advancement: { entryId: string | null }) {
     const classLevel = advancement.entryId ? this.dnd35.classLevelsById.get(advancement.entryId) : undefined;
-    if (!classLevel) throw new RulesError("not-found", "Class level not found");
+    if (!classLevel) this.refuseMissing("class-levels");
 
     const klass = this.dnd35.classesById.get(classLevel.ownerId);
-    if (!klass) throw new RulesError("not-found", "Class not found");
+    if (!klass) this.refuseMissing("classes");
 
     return { classLevel, klass };
   }
@@ -175,6 +175,14 @@ export default abstract class LevelUpBase<C> {
    */
   protected planBondedOf(master: C, bonded: CharacterInput[]) {
     return this.rules.planBondedCreatures(this.view, master, this.character.record, bonded);
+  }
+
+  /**
+   * Refuses an entity of a type (`type`) the composed ruleset lacks, named in its rules' word, after the level it's
+   * about (`about`: "Level 2: "): "Class level not found".
+   */
+  protected refuseMissing(type: string, about = ""): never {
+    throw new RulesError("not-found", `${about}${this.rulesetData.labelOf(type)} not found`);
   }
 
   protected get rulesetData(): RulesetData {

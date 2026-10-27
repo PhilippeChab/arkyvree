@@ -1,5 +1,6 @@
 import type { SheetSummary } from "@/engine/core/module/index.ts";
 import ClassLevels from "@/engine/rulesets/dnd3.5/characters/ClassLevels.ts";
+import { LEVEL_WORD } from "@/engine/rulesets/dnd3.5/ruleset/rules.ts";
 
 /** A 3.5 character's classes, as its sheet reads them: each its class, and its levels in it, in the order it took them. */
 type SheetClasses = Record<
@@ -43,8 +44,8 @@ export default class SheetSummaries {
           words: { open: `${label} Levels`, levels: `${klass.name} Levels`, add: `Add ${klass.name} Level` },
           advancements: levels.map(({ advancement, classLevel }) => ({
             id: advancement.id,
-            label: `Level ${classLevel.position}`,
-            edit: `Edit ${klass.name} Level ${classLevel.position}`,
+            label: `${LEVEL_WORD.one} ${classLevel.position}`,
+            edit: `Edit ${klass.name} ${LEVEL_WORD.one} ${classLevel.position}`,
           })),
         };
       }),

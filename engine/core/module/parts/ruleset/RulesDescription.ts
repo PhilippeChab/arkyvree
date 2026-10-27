@@ -307,8 +307,9 @@ export interface RulesDescription {
   tiers: { label: string; level: number }[];
   /**
    * Its word for every entity type, by type (3.5's "Class Level" for `class-levels`), the engine's own types'
-   * (`characters`, `modifiers`) included: every name the app gives an entity's type, in a label's Title Case, which
-   * its refusals and issues write in a sentence's (`RulesetData.labelOf`: "Class level not found in this ruleset")
+   * (`characters`, `modifiers`, `requirements`) included: every name the app gives an entity's type, in a label's
+   * Title Case, which its refusals and issues write in a sentence's (`RulesetData.labelOf`: "Class level not found in
+   * this ruleset")
    */
   words: Partial<Record<string, KindWord>>;
 }
