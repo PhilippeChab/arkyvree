@@ -6,6 +6,8 @@ export {
   formSectionsOf,
   linkedEntities,
   ownFieldOf,
+  ownLinkOf,
+  ownLinksOf,
   placeOf,
   poolsOf,
   withEntityFields,
