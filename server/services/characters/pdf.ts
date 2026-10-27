@@ -49,14 +49,16 @@ export async function enqueueCharacterPdf(
  * The character `userId` may export as a PDF, or null: one they own or
  * contribute to (or a child of such a parent: 3.5's bonded creature). Through
  * `campaignId`, the character must be linked to that campaign, and its Game
- * Master may export it too. Checked when the export is queued and again when
- * the worker runs it, so access revoked in between is honored.
+ * Master may export it too: by their role, as reading its page goes, so the Game
+ * Master of a campaign archived with its players still may. Checked when the
+ * export is queued and again when the worker runs it, so access revoked in
+ * between is honored.
  */
 export async function findExportableCharacter(userId: string, characterId: string, campaignId?: string) {
   if (campaignId) {
     if (!(await PlayerCharacters.findOne(db, { characterId, campaignId }))) return null;
     const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
-    if (campaign && (await CampaignsPolicy.for(db, { userId }, campaign)).isGameMaster())
+    if (campaign && (await CampaignsPolicy.for(db, { userId }, campaign)).isGameMasterByRole())
       return (await Characters.findOne(db, { id: characterId })) ?? null;
   }
   return findEditableCharacterOrChild(db, characterId, userId);

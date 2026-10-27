@@ -382,6 +382,17 @@ describe("campaigns characters", () => {
       ).toBeUndefined();
     });
 
+    // A campaign archived before archiving left its players alone archived their rows with it
+    test("lets the Game Master export from a campaign archived with its players, as its page offers", async () => {
+      const { campaignId, characterId, member } = await setupExport("Game Master");
+      await expectOk(member.api.api.campaigns[":id"].$delete({ param: { id: campaignId } }));
+      await Players.update(db, { deletedAt: new Date().toISOString() }, { id: member.player.id });
+      const theirs = member.api.api.campaigns[":id"].characters[":characterId"];
+      const param = { id: campaignId, characterId };
+      expect(await expectOk(theirs.$get({ param }))).toMatchObject({ canDownloadPdf: true });
+      expect((await theirs.pdf.$post({ param })).status).toBe(202);
+    });
+
     test("refuses other players and non-members", async () => {
       const { campaignId, characterId, member } = await setupExport("Player Character");
       const { api: outsider } = await createSignedInUser("outsider");
