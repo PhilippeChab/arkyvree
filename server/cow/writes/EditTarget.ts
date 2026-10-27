@@ -12,6 +12,12 @@ const CUSTOMIZATION_REPOS = {
 } as const;
 
 /**
+ * What refuses a customization deleted since the view was read, on the ruleset's own entity or on the copy a write
+ * made: the user reads it as it is.
+ */
+const GONE_CUSTOMIZATION = "Customization source no longer exists; refresh the entity";
+
+/**
  * The row a write to a ruleset's entity changes (`id`), as copy-on-write resolved the entity the write named
  * (`namedId`): the ruleset's own, or the copy of an inherited one (`EntityEdit`). A copy this call made holds the ids of
  * what it copied with it, by their sources' (`copiedIds`: its owned entities' and its customizations'); a copy another
@@ -71,12 +77,12 @@ export default class EditTarget {
       if (!copiedIds) throw new ConflictError(STALE_ENTITY_MESSAGE);
       return customizationIds.map((customizationId) => {
         const copiedId = copiedIds.get(customizationId);
-        if (!copiedId) throw new NotFoundError(`Copied ${kind} not found`);
+        if (!copiedId) throw new NotFoundError(GONE_CUSTOMIZATION);
         return copiedId;
       });
     }
     if ((await CUSTOMIZATION_REPOS[kind].count(tx, { ids: customizationIds })) !== new Set(customizationIds).size)
-      throw new NotFoundError("Customization source no longer exists; refresh the entity");
+      throw new NotFoundError(GONE_CUSTOMIZATION);
 
     return customizationIds;
   }
