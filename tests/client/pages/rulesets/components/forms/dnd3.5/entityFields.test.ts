@@ -10,6 +10,7 @@ import {
   noneLabel,
   ownFieldValues,
   ownLinkOf,
+  ownLinksOf,
   poolsOf,
   toFieldValues,
   toWholeBody,
@@ -310,7 +311,7 @@ describe("an entity's fields beside its name in its form", () => {
     expect(toWholeValues(ITEM, { fields: {}, links: [madeFrom] })).toMatchObject({ links: { madeFrom: "t" } });
   });
 
-  test("name its template off its link of the role its kind's copies name it by, none without one", () => {
+  test("name its template off its link of the role its kind's copies name it by, none without one, and list a role's links", () => {
     const { kinds } = Engine.rules().describeAll()["Dungeons & Dragons: 3.5"];
     const source = kinds.find((kind) => kind.type === "items")?.copies?.source ?? "";
     expect(source).toBe("madeFrom");
@@ -319,6 +320,11 @@ describe("an entity's fields beside its name in its form", () => {
     expect(ownLinkOf({ fields: {}, links: [keyAbility, madeFrom] }, source)?.toName).toBe("Longsword");
     expect(ownLinkOf({ fields: {}, links: [keyAbility] }, source)).toBeUndefined();
     expect(ownLinkOf({ fields: {} }, source)).toBeUndefined();
+    // A list of links of a role, a spell's spell lists, in the order its server sends them
+    const wizard = { role: "listedIn", toId: "w", toName: "Wizard" };
+    const cleric = { role: "listedIn", toId: "c", toName: "Cleric" };
+    expect(ownLinksOf({ links: [wizard, keyAbility, cleric] }, "listedIn")).toEqual([wizard, cleric]);
+    expect(ownLinksOf({ fields: {} }, "listedIn")).toEqual([]);
   });
 
   test("send a decimal's number, none null, and a field beside its name the form hides null", () => {

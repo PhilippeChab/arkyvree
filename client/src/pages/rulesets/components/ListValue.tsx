@@ -3,7 +3,6 @@ import { Typography } from "@mui/material";
 import { EmptyValue, StatusChip, ValueChip } from "@/client/src/components/common/index.ts";
 import { formatDecimal } from "@/client/src/lib/formatNumeric.ts";
 import type { RulesDescription } from "@/client/src/lib/queries.ts";
-import { isRecord } from "@/shared/isRecord.ts";
 
 import { ownFieldOf, ownLinkOf } from "./forms/index.ts";
 import { LinkChipsCell } from "./LinkChipsCell.tsx";
@@ -28,11 +27,6 @@ type ListColumn = NonNullable<RulesDescription["lists"][string]>["columns"][numb
 function columnValueOf(entity: object, column: ListColumn): unknown {
   if (column.field) return ownFieldOf(entity, column.field);
   return column.role === undefined ? undefined : ownLinkOf(entity, column.role)?.toId;
-}
-
-/** An entity's value at a key, none where it has none. */
-function valueOf(entity: object, key: string): unknown {
-  return isRecord(entity) ? entity[key] : undefined;
 }
 
 /**
@@ -85,9 +79,7 @@ export function ListValue({ column, entity, names, source }: ListValueProps) {
       }
       return <EmptyValue />;
     }
-    case "pools": {
-      const links = valueOf(entity, "links");
-      return <LinkChipsCell links={Array.isArray(links) ? links : undefined} role={column.role} />;
-    }
+    case "pools":
+      return <LinkChipsCell entity={entity} role={column.role} />;
   }
 }

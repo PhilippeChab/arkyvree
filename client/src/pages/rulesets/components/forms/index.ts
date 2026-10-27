@@ -7,6 +7,7 @@ export {
   linkedEntities,
   ownFieldOf,
   ownLinkOf,
+  ownLinksOf,
   placeOf,
   poolsOf,
   withEntityFields,

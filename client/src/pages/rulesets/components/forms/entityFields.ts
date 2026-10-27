@@ -180,15 +180,10 @@ function isProgression(value: unknown): value is ProgressionValue {
  * it's through (its `viaId` and `viaName`), as its server sends them.
  */
 function linksOf(field: LinksField, entity: unknown) {
-  const links = valueAt(entity, "links");
   const ofKind = (link: Record<string, unknown>) =>
     (field.input !== "amounts" && field.input !== "grants") || link.toType === field.references;
-  return (Array.isArray(links) ? links : []).flatMap((link) =>
-    isRecord(link) &&
-    link.role === field.role &&
-    ofKind(link) &&
-    typeof link.toId === "string" &&
-    typeof link.toName === "string"
+  return ownLinksOf(entity, field.role).flatMap((link) =>
+    ofKind(link) && typeof link.toId === "string" && typeof link.toName === "string"
       ? [
           {
             amount: link.amount,
@@ -353,9 +348,16 @@ export function ownFieldValues(fields: readonly EntityField[], values: unknown, 
  * where it holds none.
  */
 export function ownLinkOf(entity: unknown, role: string): Record<string, unknown> | undefined {
+  return ownLinksOf(entity, role)[0];
+}
+
+/**
+ * An entity read's links of a role (`role`, among its `links`), as its server sends them: each its target `toId`,
+ * named `toName`.
+ */
+export function ownLinksOf(entity: unknown, role: string): Record<string, unknown>[] {
   const links = valueAt(entity, "links");
-  const link = Array.isArray(links) ? links.find((held) => isRecord(held) && held.role === role) : undefined;
-  return isRecord(link) ? link : undefined;
+  return (Array.isArray(links) ? links : []).flatMap((link) => (isRecord(link) && link.role === role ? [link] : []));
 }
 
 /**
