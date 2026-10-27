@@ -757,6 +757,18 @@ describe("characters", () => {
       expect(pdf.headers.get("Content-Type")).toBe("application/pdf");
     });
 
+    test("names a shared sheet's PDF after the character, whatever its name's characters", async () => {
+      const { id } = await postCharacter({ name: "Ryū: O'Hara (2)" });
+      const { shareToken } = await expectOk(character.share.$post({ param: { id } }));
+
+      const pdf = await guestApi.api.shared.characters[":shareToken"].pdf.$get({ param: { shareToken: shareToken! } });
+      expect(pdf.status).toBe(200);
+      // "Ryū_ O'Hara (2)-sheet.pdf", its colon replaced: a header holds Latin-1 alone, so it goes percent-encoded
+      expect(pdf.headers.get("Content-Disposition")).toBe(
+        "inline; filename*=UTF-8''Ry%C5%AB_%20O%27Hara%20%282%29-sheet.pdf",
+      );
+    });
+
     test("shares a master's bonded creature without its private notes", async () => {
       const { masterId, bonded } = await createWizardWithFamiliar();
       await expectOk(character.$put({ param: { id: bonded.id }, json: { privateNotes: PRIVATE_NOTES } }));

@@ -4,3 +4,4 @@ export { default as CharactersService } from "./CharactersService.ts";
 export { findEditableCharacterOrChild } from "./editableCharacter.ts";
 export { createNewCharacter } from "./newCharacterWrites.ts";
 export { enqueueCharacterPdf, findExportableCharacter, getCharacterPdfTargetType } from "./pdf.ts";
+export { renderCharacterSheet } from "./printedSheet.ts";
