@@ -6,43 +6,24 @@ import {
   CharacterContributors,
   Characters,
   Contributors,
-  Entities,
   Invites,
   Modifiers,
   type Pagination,
   PlayerCharacters,
   Players,
   Requirements,
-  RULESET_ENTITY_TYPES,
   Rulesets,
   Visibility,
 } from "@/server/repositories/index.ts";
 import { isNavigableTarget } from "@/shared/activity.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
-import { buildCustomizationPath } from "@/shared/customization/entities.ts";
-import { isOneOf } from "@/shared/isOneOf.ts";
+import { buildEntityPagePath, hasCustomizationPage } from "@/shared/customization/entities.ts";
 import type { Session } from "@/shared/relations.ts";
+
+import { findContentOwner, findContentRuleset } from "./contentRuleset.ts";
 
 /** Where an activity links to: a page, nowhere (null), or a record the user no longer has access to. */
 type ActivityUrl = string | null | { entityType: "ruleset" | "character"; noAccess: true };
-
-/**
- * An entity's page (`entityType`, `entityId`: a class's), on its tab of `section` (its skills, modifiers or
- * requirements) when given, else its first.
- */
-function entityPageUrl(rulesetId: string, entityType: string, entityId: string, section?: string) {
-  return `/rulesets/${rulesetId}/${entityType}/${entityId}${section ? `/${section}` : ""}`;
-}
-
-/**
- * Whether a kind's customizations have a page of their own: a customizable kind's, but those of a kind that owns
- * another (a class's), which are tabs of its own page; and a modifier's (its requirements).
- */
-function hasCustomizationPage(entityType: string) {
-  if (entityType === "modifiers") return true;
-  const storage = Engine.storage();
-  return storage.customizableKinds().includes(entityType) && !storage.ownerKinds().includes(entityType);
-}
 
 class ActivitiesService {
   /**
@@ -64,37 +45,6 @@ class ActivitiesService {
     return entityUrl;
   }
 
-  /**
-   * The page of an owner of other entities (`ownerType`, `ownerId`: a class), on the tab of `section` (its skills) when
-   * given, else its first: null when the owner is gone.
-   */
-  private async ownerPageUrl(ownerType: string, ownerId: string, section?: string) {
-    const owner = await Entities.findOne(db, { entityType: ownerType, id: ownerId });
-    if (!owner) return null;
-    return entityPageUrl(String(owner.rulesetId), ownerType, owner.id, section);
-  }
-
-  /**
-   * The ruleset an owner of customizations is of: an entity's own, an owned one's owner's (a class level's class's), a
-   * modifier's source's (a requirement's owner can be a modifier); none for an owner outside a ruleset (a character's own
-   * modifiers).
-   */
-  private async ownerRulesetId(entityId: string, entityType: string): Promise<string | null> {
-    if (entityType === "modifiers") {
-      const modifier = await Modifiers.findOne(db, { id: entityId });
-      // A modifier is an entity's (or a character's), never another modifier's: a row saying so leads nowhere
-      if (!modifier || modifier.sourceType === "modifiers") return null;
-      return await this.ownerRulesetId(modifier.sourceId, modifier.sourceType);
-    }
-    const ownerType = Engine.storage().ownerOf(entityType);
-    if (ownerType) {
-      const [owned] = await Entities.findPositions(db, { entityType, ids: [entityId] });
-      return owned ? await this.ownerRulesetId(owned.ownerId, ownerType) : null;
-    }
-    if (!isOneOf(entityType, RULESET_ENTITY_TYPES)) return null;
-    return (await Entities.findOne(db, { entityType, id: entityId }))?.rulesetId ?? null;
-  }
-
   /** The page of a player's campaign (`path` under it), or null when the player is gone. */
   private async playerCampaignUrl(playerId: string, path = "") {
     const player = await Players.findOne(db, { id: playerId });
@@ -103,20 +53,20 @@ class ActivitiesService {
   }
 
   /**
-   * The page that lists an owner's customizations: its customization page, or the page of a kind that owns another (a
-   * class's), on the tab of `section` (its modifiers' or its requirements'; without one, its details, its first).
+   * The page that lists an owner's customizations (`entityId`, `entityType`), on the tab of `section` (its modifiers'
+   * or its requirements'): its customization page, or the page of a kind that owns another (a class's); none for an
+   * owner outside a ruleset (a character's own modifiers).
    */
   private async resolveCustomizationUrl(
     entityId: string,
     entityType: string,
-    section?: "modifiers" | "requirements",
+    section: "modifiers" | "requirements",
   ): Promise<string | null> {
-    const rulesetId = await this.ownerRulesetId(entityId, entityType);
-    if (!rulesetId) return null;
-    if (Engine.storage().ownerKinds().includes(entityType))
-      return entityPageUrl(rulesetId, entityType, entityId, section);
-    if (!hasCustomizationPage(entityType)) return null;
-    return `/rulesets/${rulesetId}/${buildCustomizationPath(entityType, entityId)}${section ? `/${section}` : ""}`;
+    const storage = Engine.storage();
+    const pages = storage.customizationPages();
+    if (!storage.ownerKinds().includes(entityType) && !hasCustomizationPage(entityType, pages)) return null;
+    const rulesetId = await findContentRuleset(db, { id: entityId, type: entityType });
+    return rulesetId ? buildEntityPagePath(rulesetId, entityType, entityId, pages, section) : null;
   }
 
   /**
@@ -125,25 +75,14 @@ class ActivitiesService {
    * customization page when it has one, else its own.
    */
   private async resolveRulesEntity(targetType: string, targetId: string): Promise<string | null> {
-    const ownerType = Engine.storage().ownerOf(targetType);
-    if (ownerType) {
-      const [owned] = await Entities.findPositions(db, { entityType: targetType, ids: [targetId] });
-      return owned ? await this.ownerPageUrl(ownerType, owned.ownerId) : null;
-    }
-    const edited = Engine.storage().editedLinks().get(targetType);
-    if (edited) return await this.ownerPageUrl(edited.from, targetId, edited.to);
-    return await this.resolveRulesSubEntity(targetType, targetId);
-  }
-
-  /** A ruleset entity's page, any type's: its customization page when it has one, else its own. */
-  private async resolveRulesSubEntity(targetType: string, targetId: string): Promise<string | null> {
-    if (!isOneOf(targetType, RULESET_ENTITY_TYPES)) return null;
-    const entity = await Entities.findOne(db, { entityType: targetType, id: targetId });
-    if (!entity) return null;
-
-    return hasCustomizationPage(targetType)
-      ? `/rulesets/${entity.rulesetId}/${buildCustomizationPath(targetType, targetId)}`
-      : `/rulesets/${entity.rulesetId}/${targetType}/${targetId}`;
+    const storage = Engine.storage();
+    const target = { id: targetId, type: targetType };
+    const edited = storage.editedLinks().get(targetType);
+    // An owned entity and an edited link show on their owner's page
+    const page = storage.ownerOf(targetType) || edited ? await findContentOwner(db, target) : target;
+    const rulesetId = page && (await findContentRuleset(db, page));
+    if (!page || !rulesetId) return null;
+    return buildEntityPagePath(rulesetId, page.type, page.id, storage.customizationPages(), edited?.to);
   }
 
   async getActivities(

@@ -13,7 +13,7 @@ import { kindIconOf } from "@/client/src/pages/rulesets/details/owners/ownerKind
 import { listEntitiesQuery, ownerListsQuery } from "@/client/src/pages/rulesets/details/owners/ownerSectionQueries.ts";
 import type { OwnerSectionProps } from "@/client/src/pages/rulesets/details/owners/ownerTab.ts";
 import { useOpenEntity, useTierFilter } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { buildCustomizationPath } from "@/shared/customization/entities.ts";
+import { buildEntityPagePath } from "@/shared/customization/entities.ts";
 
 /** What an owner's levels count (`counts`), and the words its tab says them in, its rules' (`rules`). */
 interface OwnerListProps extends OwnerSectionProps {
@@ -31,9 +31,10 @@ const COLUMNS: TableColumn[] = [
  * customization page; a picker of its lists where it counts on several, its own first.
  */
 function OwnerList({ rulesetId, ownerId, ownerType, ruleset, counts, rules }: OwnerListProps) {
-  const openEntity = useOpenEntity(ruleset.id);
+  const openEntity = useOpenEntity();
   const queryClient = useQueryClient();
-  const page = useCustomizationPages().get(counts.type);
+  const pages = useCustomizationPages();
+  const page = pages.get(counts.type);
   const { level, setLevel } = useTierFilter(ruleset.baseRules, false);
   const { value: chosenListId, setValue: setChosenListId } = useSearchParam("list");
   const { search, searchBarProps } = useSearchText();
@@ -64,7 +65,7 @@ function OwnerList({ rulesetId, ownerId, ownerType, ruleset, counts, rules }: Ow
   const entities = listId === undefined ? [] : pageItems(data);
 
   const handleRowClick = (entity: EntityRow) => {
-    openEntity(buildCustomizationPath(counts.type, entity.id));
+    openEntity(buildEntityPagePath(ruleset.id, counts.type, entity.id, pages));
   };
 
   const handleRowPrefetch = (entity: EntityRow) => {

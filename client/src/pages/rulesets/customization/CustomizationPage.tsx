@@ -32,7 +32,7 @@ import {
   useRestorableDelete,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { buildCustomizationPath } from "@/shared/customization/entities.ts";
+import { buildCustomizationPath, buildEntityPagePath, hasCustomizationPage } from "@/shared/customization/entities.ts";
 import { formatOperator } from "@/shared/customization/operators.ts";
 
 import { modifiersQuery, requirementsQuery } from "./customizationSectionQueries.ts";
@@ -156,7 +156,7 @@ function CustomizationView({
           // While locked the entry still says where the copy came from: replace it
           // rather than leave more entries to clean up.
           onChange={(key) =>
-            navigate(`/rulesets/${rulesetId}/${buildCustomizationPath(type, entityId)}/${key}`, {
+            navigate(buildEntityPagePath(rulesetId, type, entityId, pages, key), {
               state: location.state,
               replace: locked,
             })
@@ -239,10 +239,9 @@ function modifierSourcePath(
   pages: ReadonlyMap<string, CustomizationPage>,
   rules: RulesDescription | undefined,
 ) {
-  if (sourceType === "modifiers" || pages.has(sourceType))
-    return `/rulesets/${rulesetId}/${buildCustomizationPath(sourceType, sourceId)}`;
+  if (hasCustomizationPage(sourceType, pages)) return buildEntityPagePath(rulesetId, sourceType, sourceId, pages);
   if (!rules?.kinds.some((kind) => kind.type === sourceType)) return undefined;
-  return `/rulesets/${rulesetId}/${sourceType}/${sourceId}/modifiers`;
+  return buildEntityPagePath(rulesetId, sourceType, sourceId, pages, "modifiers");
 }
 
 /** An entity's customization tabs, their help its rules' (`rules`); a modifier can only carry requirements. */
@@ -338,7 +337,7 @@ export default function CustomizationPage() {
   if (validType && entityId && !currentTab) {
     return (
       <Navigate
-        to={`/rulesets/${rulesetId}/${buildCustomizationPath(validType, entityId)}/${tabsFor(validType, rules)[0].key}`}
+        to={buildEntityPagePath(rulesetId, validType, entityId, pages, tabsFor(validType, rules)[0].key)}
         replace
         state={location.state}
       />
