@@ -98,10 +98,6 @@ export default class MemoryCache<T> {
     for (const [key, entry] of this.store) if (matches(entry.value)) this.invalidate(key);
   }
 
-  isPinned(key: string): boolean {
-    return this.pinned.has(key);
-  }
-
   pin(key: string): void {
     this.pinned.add(key);
   }

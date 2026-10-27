@@ -52,9 +52,12 @@ class CharacterModifiersService {
     return withTransaction(async (tx) => {
       const character = await getEditableCharacter(tx, session, characterId);
 
-      const existing = await Modifiers.findOne(tx, { id: modifierId });
-      if (!existing || existing.sourceId !== characterId || existing.sourceType !== "characters")
-        throw new NotFoundError("Modifier not found");
+      const existing = await Modifiers.findOne(tx, {
+        id: modifierId,
+        sourceId: characterId,
+        sourceType: "characters",
+      });
+      if (!existing) throw new NotFoundError("Modifier not found");
 
       const rows = await Modifiers.delete(tx, { ids: [modifierId] });
       const modifier = rows[0];
@@ -96,9 +99,12 @@ class CharacterModifiersService {
     return withTransaction(async (tx) => {
       const character = await getEditableCharacter(tx, session, characterId);
 
-      const existing = await Modifiers.findOne(tx, { id: modifierId });
-      if (!existing || existing.sourceId !== characterId || existing.sourceType !== "characters")
-        throw new NotFoundError("Modifier not found");
+      const existing = await Modifiers.findOne(tx, {
+        id: modifierId,
+        sourceId: characterId,
+        sourceType: "characters",
+      });
+      if (!existing) throw new NotFoundError("Modifier not found");
 
       const row = await this.planModifier(character.rulesetId, body);
 

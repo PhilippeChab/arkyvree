@@ -5,7 +5,6 @@ import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Modifiers } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { checkCustomizedEntity } from "@/server/services/rulesets/customization/customizableEntities.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -77,7 +76,6 @@ class ModifiersService {
           (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
 
           const { entity, modifier } = Engine.for(scope).modifiers(entityType, entityId).planDelete(modifierId);
-          await checkCustomizedEntity(modifier);
 
           const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await edit.cowCustomization(
@@ -161,8 +159,7 @@ class ModifiersService {
           const catalogs = await RulesetViews.getTargetPathCatalogs(scope.ruleset, "modifier");
           const { updatedAt, ...fields } = body;
           const modifiers = Engine.for(scope).modifiers(entityType, entityId);
-          const { entity, modifier, row } = modifiers.planEdit(catalogs, modifierId, fields);
-          await checkCustomizedEntity(modifier);
+          const { entity, row } = modifiers.planEdit(catalogs, modifierId, fields);
 
           // COW the owning entity if this modifier is inherited
           const edit = new CustomizationEdit(ruleset, rulesetData.cow);

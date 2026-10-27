@@ -139,7 +139,7 @@ Used by the copy flows, `RulesetExtensionsService`, `RulesetChangesService` (rev
 - **Source-chain construction**: `Engine.copyOnWrite().buildSourceChain` (the engine's: `CowSources`, `engine/core/cow/CowSources.ts`), shared by the COW data's cache key (`RulesetViews.getCowData`), the target paths' (`RulesetViews.getTargetPaths`, which takes the ruleset's row and derives its chain) and the chain an unsubscribe leaves, whose view says what stands in place of what leaves (`extensions/departingReferences.ts`, through `CowDataReader.read`).
 - **Scope internals** (`withRulesetScope` wiring): `RulesetViews.getData`, which gets its `CowData` (`RulesetViews.getCowData`); `RulesetViews.invalidate*` drop it with the rest.
 - **Record-level remaps** (the engine, on the records it's handed: the view's entities and a picker's options, `CowData.resolveLinks`; a character's, `CharacterInputs`, each reference by name). The entities they name are the view's (`rulesetData.find(type, id)`…), never a joined row's.
-- **Raw-tier test probes** (`tests/cow/views/dnd3.5/RulesetViews.test.ts`): `RulesetViews.getRawData`, `RulesetViews.isRawDataPinned`.
+- **Raw-tier test probes** (`tests/cow/views/dnd3.5/RulesetViews.test.ts`): `RulesetViews.getRawData`, and whether its rows are pinned, `RawDataReader.read`'s `pinned`.
 
 ## Ruleset Cache
 

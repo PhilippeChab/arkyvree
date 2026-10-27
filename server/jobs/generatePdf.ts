@@ -27,8 +27,27 @@ interface GeneratePdfPayload {
 const MAX_PDF_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
+/** Tells the user their export failed: a notification, and the event that refreshes it (a failed publish is logged). */
+async function notifyPdfFailed(payload: GeneratePdfPayload, helpers: JobHelpers) {
+  const { userId, characterId, characterName, campaignId } = payload;
+  await withTransaction((tx) =>
+    Notifications.create(tx, {
+      recipientId: userId,
+      actorId: userId,
+      type: "pdfFailed",
+      targetId: characterId,
+      targetType: getCharacterPdfTargetType(campaignId),
+      data: { characterName },
+    }),
+  );
+  await publishWsEvent(userId, { type: "notifications:updated" }).catch((error) =>
+    helpers.logger.warn(`Failed to publish PDF failure notification: ${error}`),
+  );
+}
+
 export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Promise<void> {
-  const { userId, characterId, characterName, campaignId } = payload as GeneratePdfPayload;
+  const request = payload as GeneratePdfPayload;
+  const { userId, characterId, characterName, campaignId } = request;
 
   helpers.logger.info(`Generating PDF for character ${characterId}`);
 
@@ -38,19 +57,7 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
 
     if (!characterRecord) {
       helpers.logger.warn(`Character ${characterId} not found or not exportable for user ${userId}`);
-      await withTransaction((tx) =>
-        Notifications.create(tx, {
-          recipientId: userId,
-          actorId: userId,
-          type: "pdfFailed",
-          targetId: characterId,
-          targetType: getCharacterPdfTargetType(campaignId),
-          data: { characterName },
-        }),
-      );
-      await publishWsEvent(userId, { type: "notifications:updated" }).catch((err) =>
-        helpers.logger.warn(`Failed to publish PDF failure notification: ${err}`),
-      );
+      await notifyPdfFailed(request, helpers);
       return;
     }
 
@@ -114,17 +121,7 @@ export async function generatePdfTask(payload: unknown, helpers: JobHelpers): Pr
 
     if (helpers.job.attempts >= helpers.job.max_attempts) {
       try {
-        await withTransaction((tx) =>
-          Notifications.create(tx, {
-            recipientId: userId,
-            actorId: userId,
-            type: "pdfFailed",
-            targetId: characterId,
-            targetType: getCharacterPdfTargetType(campaignId),
-            data: { characterName },
-          }),
-        );
-        await publishWsEvent(userId, { type: "notifications:updated" });
+        await notifyPdfFailed(request, helpers);
       } catch {
         // Best-effort failure notification
       }

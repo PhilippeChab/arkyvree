@@ -4,11 +4,11 @@ import { eq } from "drizzle-orm";
 
 import { playersInCampaign } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import { ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Campaigns, Players } from "@/server/repositories/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
-import { getSeedCtx } from "@/tests/support/seed.ts";
+import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
 /** A campaign, and the policy of a new user holding `role` in it (or no seat at all). */
@@ -50,6 +50,21 @@ describe("CampaignsPolicy", () => {
     expect(() => outsider.canRead()).toThrow("You are not a member of this campaign");
   });
 
+  test("canSeeCharacter: a member sees a linked character, a Private one only its player and the Game Master", async () => {
+    const { policy: gameMaster } = await policyFor("Game Master");
+    const { policy: player } = await policyFor("Player Character");
+    const { policy: outsider } = await policyFor(null);
+    const ownLink = { playerId: player.canRead().id, visibility: "Private" };
+
+    for (const visibility of ["Public", "Partial", "Private"]) {
+      expect(gameMaster.canSeeCharacter({ playerId: NIL_UUID, visibility })).toBe(true);
+      expect(() => outsider.canSeeCharacter({ playerId: NIL_UUID, visibility })).toThrow(ForbiddenError);
+    }
+    expect(player.canSeeCharacter(ownLink)).toBe(true);
+    expect(player.canSeeCharacter({ playerId: NIL_UUID, visibility: "Partial" })).toBe(true);
+    expect(() => player.canSeeCharacter({ playerId: NIL_UUID, visibility: "Private" })).toThrow(NotFoundError);
+  });
+
   test("refuses the Game Master of another campaign", async () => {
     const { campaign } = await policyFor(null);
     const { session: otherGameMaster } = await policyFor("Game Master");
@@ -57,7 +72,7 @@ describe("CampaignsPolicy", () => {
     expect(() => policy.canUpdate()).toThrow(ForbiddenError);
   });
 
-  test("still lets the Game Master archive a campaign whose players were archived with it, but not edit it", async () => {
+  test("still lets the Game Master archive and read a campaign whose players were archived with it, but not edit it", async () => {
     const { campaign, session } = await policyFor("Game Master");
     const [archived] = await Campaigns.archive(db, { id: campaign.id });
     await db
@@ -67,6 +82,9 @@ describe("CampaignsPolicy", () => {
     const policy = await CampaignsPolicy.for(db, session, archived);
     expect(policy.canDelete()).toBe(true);
     expect(policy.isGameMaster()).toBe(false);
+    // Its characters are still read as its Game Master reads them
+    expect(policy.isGameMasterByRole()).toBe(true);
+    expect(policy.canSeeCharacter({ playerId: NIL_UUID, visibility: "Private" })).toBe(true);
   });
 
   test("only deletes an archived campaign permanently", async () => {

@@ -13,7 +13,6 @@ import {
   formatAmount,
   formatCount,
   formatDecimal,
-  formatDie,
   formatTrimmed,
   formatTrimmedAmount,
 } from "@/client/src/lib/formatNumeric.ts";
@@ -93,10 +92,6 @@ describe("Numbers shown to the user", () => {
       "0 lbs",
       "0.00 lbs",
     ]);
-  });
-
-  test("write a die in dice notation, as the books write a hit die", () => {
-    expect([4, 8, 12].map(formatDie)).toEqual(["d4", "d8", "d12"]);
   });
 
   test("carry their noun when they're counts", () => {

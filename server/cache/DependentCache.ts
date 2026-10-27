@@ -25,10 +25,6 @@ export default class DependentCache<T> {
     this.pending.clear();
   }
 
-  isPinned(key: string): boolean {
-    return this.cache.isPinned(key);
-  }
-
   async getOrFetch(key: string, dependencyIds: readonly string[], fetcher: () => Promise<Loaded<T>>): Promise<T> {
     if (!MemoryCache.isEnabled()) return (await fetcher()).data;
 
