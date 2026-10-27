@@ -105,7 +105,10 @@ export async function createSeededTestRuleset(
   return ruleset;
 }
 
-/** A seeded fork that also uses every extension shipped with the seeded base ruleset, in the order they were seeded. */
+/**
+ * A seeded fork that also uses every extension shipped with the seeded base ruleset, in the order `Rulesets.findMany`
+ * reads them (by when each was made, then by id).
+ */
 export async function createSeededTestRulesetWithExtensions(userId: string) {
   const fork = await createSeededTestRuleset(userId);
   const extensionIds = (await Rulesets.findMany(db, { system: true }))

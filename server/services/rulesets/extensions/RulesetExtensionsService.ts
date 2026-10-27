@@ -96,7 +96,8 @@ class RulesetExtensionsService {
       const names = new EntityNames(childRuleset, await CowDataReader.read(tx, childRuleset));
       await names.assertExtensionNamesAvailable(tx, newExtensionIds);
 
-      // 3. The ruleset changes now, and subscribes to them after those it subscribes to, in their order
+      // 3. The ruleset changes now, and subscribes to them after those it subscribes to, in their order. Its row's
+      // update comes first: the row lock orders concurrent subscribes' places, each placed after the last one's
       await Rulesets.update(tx, {}, { id });
       await RulesetExtensions.upsert(tx, { rulesetId: id, extensionIds: newExtensionIds });
 
