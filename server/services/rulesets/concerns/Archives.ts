@@ -1,5 +1,4 @@
 import type { Constructor } from "@/lib/mixins.ts";
-import { RulesetViews } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { InternalError, NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Rulesets } from "@/server/repositories/index.ts";
@@ -7,7 +6,10 @@ import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
-/** Archiving a ruleset, and bringing it back. */
+/**
+ * Archiving a ruleset, and bringing it back (a draft): its status and its last change alone, which no cached view
+ * reads (`RulesetViews` composes its entities), so neither drops one.
+ */
 export function Archives<B extends Constructor>(Base: B) {
   abstract class Archiving extends Base {
     async archiveRuleset(session: Session, id: string) {
@@ -24,6 +26,8 @@ export function Archives<B extends Constructor>(Base: B) {
         const rows = await Rulesets.archive(tx, { id });
         const archivedRuleset = rows[0];
 
+        if (!archivedRuleset) throw new InternalError("Failed to archive ruleset");
+
         await Activities.create(tx, {
           userId: session.userId,
           targetId: archivedRuleset.id,
@@ -36,7 +40,7 @@ export function Archives<B extends Constructor>(Base: B) {
     }
 
     async unarchiveRuleset(session: Session, id: string) {
-      const result = await withTransaction(async (tx) => {
+      return await withTransaction(async (tx) => {
         const ruleset = await Rulesets.findOne(tx, { id });
         if (!ruleset) throw new NotFoundError("Ruleset not found");
 
@@ -56,8 +60,6 @@ export function Archives<B extends Constructor>(Base: B) {
 
         return unarchivedRuleset;
       });
-      RulesetViews.invalidate(id);
-      return result;
     }
   }
   return Archiving;

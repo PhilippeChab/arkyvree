@@ -1,7 +1,7 @@
 import type { Constructor } from "@/lib/mixins.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { InternalError, NotFoundError } from "@/server/errors/index.ts";
-import { Activities, Characters, PLAYER_KINDS, PlayerCharacters, Visibility } from "@/server/repositories/index.ts";
+import { Activities, Characters, PlayerCharacters, Visibility } from "@/server/repositories/index.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -16,8 +16,8 @@ export function Archives<B extends Constructor>(Base: B) {
           userId: session.userId,
         });
 
-        if (!existingCharacter || !PLAYER_KINDS.includes(existingCharacter.kind))
-          throw new NotFoundError("Character not found");
+        // Its owner's alone, and a player character's: a child (3.5's bonded creatures) follows its parent
+        if (!existingCharacter) throw new NotFoundError("Character not found");
 
         // Archive sets deletedAt on the character's row and on its child characters' (3.5's bonded creatures), and
         // unarchive clears both. Its own rows (its levels and their picks, its links, its inventory) have no archive:
@@ -46,8 +46,8 @@ export function Archives<B extends Constructor>(Base: B) {
           Visibility.ArchivedOnly,
         );
 
-        if (!existingCharacter || !PLAYER_KINDS.includes(existingCharacter.kind))
-          throw new NotFoundError("Character not found");
+        // Its owner's alone, and a player character's: a child (3.5's bonded creatures) follows its parent
+        if (!existingCharacter) throw new NotFoundError("Character not found");
 
         const inActiveCampaign = await PlayerCharacters.exists(tx, { characterId, campaignArchived: false });
         (await CharactersPolicy.for(tx, session, existingCharacter)).canHardDelete({ inActiveCampaign });
@@ -78,8 +78,8 @@ export function Archives<B extends Constructor>(Base: B) {
           Visibility.ArchivedOnly,
         );
 
-        if (!existingCharacter || !PLAYER_KINDS.includes(existingCharacter.kind))
-          throw new NotFoundError("Character not found");
+        // Its owner's alone, and a player character's: a child (3.5's bonded creatures) follows its parent
+        if (!existingCharacter) throw new NotFoundError("Character not found");
 
         const rows = await Characters.unarchive(tx, { id: characterId });
         const unarchivedCharacter = rows[0];
