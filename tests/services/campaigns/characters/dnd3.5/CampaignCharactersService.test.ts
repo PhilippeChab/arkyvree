@@ -6,6 +6,7 @@ import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, Characters, Players } from "@/server/repositories/index.ts";
+import { AccountService } from "@/server/services/authentication/account/index.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 import { createAdvancement } from "@/server/services/characters/levels/index.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
@@ -143,6 +144,28 @@ describe("CampaignCharactersService", () => {
       await Characters.archive(db, { id: archived.id });
 
       expect((await list(user.id, campaign.id)).items.map((c) => c.id)).toEqual([kept.id]);
+    });
+
+    test("fills its pages with live characters, past those of a player who deleted their account", async () => {
+      const { user: gm } = await createTestUser("gm");
+      const { campaign } = await createTestCampaign(gm.id);
+      const kept: string[] = [];
+      for (let index = 0; index < 3; index++) {
+        const { id } = await createTestCharacter(gm.id);
+        await link(gm.id, campaign.id, id);
+        kept.push(id);
+      }
+      const { user: leaver, session } = await createTestUser("leaver");
+      await Players.create(db, { userId: leaver.id, campaignId: campaign.id, role: "Player Character" });
+      for (let index = 0; index < 2; index++)
+        await link(leaver.id, campaign.id, (await createTestCharacter(leaver.id)).id);
+      // Their seat and characters archived, their links left in place
+      await AccountService.deleteAccount(session, "password1234");
+
+      const first = await list(gm.id, campaign.id, { limit: 2, page: 1 });
+      const second = await list(gm.id, campaign.id, { limit: 2, page: 2 });
+      expect([first.items.length, first.nextPage, second.items.length, second.nextPage]).toEqual([2, 2, 1, undefined]);
+      expect([...first.items, ...second.items].map((c) => c.id).toSorted()).toEqual(kept.toSorted());
     });
 
     test("shows each player what the visibility allows, and the Game Master everything", async () => {

@@ -3,8 +3,9 @@
 -- archiving left its seats alone archived them with it, in the same request, so an unarchived one came back with its
 -- seats archived: its Game Master was refused its edits, and its characters' pages answered none. Each seat archived
 -- within a second of its archived campaign is restored, as that archive would now leave it, unless its user's account
--- is deleted. No other column or row changes, nor a character's last change (`arkyvree.registry_sync`, which the touch
--- triggers read).
+-- is deleted. A seat with no user is restored too, an empty slot: its user, if it had one, was deleted for good (a
+-- demo's purge, `ON DELETE SET NULL`), and a live empty slot is what that leaves anyway. No other column or row
+-- changes, nor a character's last change (`arkyvree.registry_sync`, which the touch triggers read).
 
 SELECT set_config('arkyvree.registry_sync', 'on', true);
 -- The rows of the migrations before it run their deferred checks now: drizzle runs the pending migrations in one

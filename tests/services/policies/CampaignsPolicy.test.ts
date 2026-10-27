@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
 import { ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
-import { Campaigns, Players } from "@/server/repositories/index.ts";
+import { Campaigns, Players, Users } from "@/server/repositories/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
@@ -81,7 +81,9 @@ describe("CampaignsPolicy", () => {
 
   test("gives a seat archived with its user's account nothing", async () => {
     const { campaign, session } = await policyFor("Game Master");
+    // As deleting an account does: its seats archived, then its user
     await Players.archive(db, { userId: session.userId });
+    await Users.archive(db, { id: session.userId });
     const policy = await CampaignsPolicy.for(db, session, campaign);
     expect(policy.isGameMaster()).toBe(false);
     expect(() => policy.canRead()).toThrow(ForbiddenError);

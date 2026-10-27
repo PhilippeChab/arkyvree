@@ -187,18 +187,22 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
   }
 
   /**
-   * The user's seat in a campaign on the ruleset, if any is still stored, in a campaign archived or not (what lets them
-   * read it), and whether one is a live seat in a live campaign (what lets them create on it). A removed player's seat is
-   * deleted, so they have none.
+   * The user's live seat in a campaign on the ruleset, if any, in a campaign archived or not (what lets them read it,
+   * as it lets them read the campaign), and whether one is in a live campaign (what lets them create on it). A removed
+   * player's seat is deleted, and a seat is archived only with its user's account, so neither gives one.
    */
   async findSeat(db: Db, where: { rulesetId: string; userId: string }) {
     const [row] = await db
-      .select({
-        live: sql<boolean>`bool_or(${this.table.deletedAt} is null and ${campaignsInCampaign.deletedAt} is null)`,
-      })
+      .select({ live: sql<boolean>`bool_or(${campaignsInCampaign.deletedAt} is null)` })
       .from(this.table)
       .innerJoin(campaignsInCampaign, eq(this.table.campaignId, campaignsInCampaign.id))
-      .where(and(eq(this.table.userId, where.userId), eq(campaignsInCampaign.rulesetId, where.rulesetId)))
+      .where(
+        and(
+          eq(this.table.userId, where.userId),
+          eq(campaignsInCampaign.rulesetId, where.rulesetId),
+          isNull(this.table.deletedAt),
+        ),
+      )
       .groupBy(this.table.userId);
     return row;
   }
