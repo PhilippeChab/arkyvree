@@ -24,14 +24,13 @@ export const NO_FIELDS = new DeclaredFields({}, []);
  */
 export const VIEW_SCHEMA: ViewSchema = {
   kinds: [
-    { type: "owners", customizable: false, fields: false, tracked: true },
-    { type: "targets", customizable: false, fields: false, tracked: false },
-    { type: "listed", customizable: false, fields: false, tracked: false },
+    { type: "owners", customizable: false, tracked: true },
+    { type: "targets", customizable: false, tracked: false },
+    { type: "listed", customizable: false, tracked: false },
     {
       type: "owned",
       customizable: false,
       ownerType: "owners",
-      fields: false,
       tracked: false,
     },
   ],

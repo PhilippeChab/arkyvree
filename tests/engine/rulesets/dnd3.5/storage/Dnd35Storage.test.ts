@@ -23,12 +23,6 @@ describe("3.5's storage", () => {
     ]);
   });
 
-  test("holds fields in its customizable kinds, its skills, its saves, its languages and its rulesets", () => {
-    expect(StorageEngine.shared().fieldOwners().toSorted()).toEqual([
-      ...["class-levels", "classes", "feats", "items", "languages", "races", "rulesets", "saves", "skills", "spells"],
-    ]);
-  });
-
   test("declares its player character's kind, which a new race or class is for", () => {
     expect(StorageEngine.shared().playerKinds()).toEqual([PLAYER_CHARACTER_KIND]);
     expect(StorageEngine.shared().isPlayerKind(PLAYER_CHARACTER_KIND)).toBe(true);

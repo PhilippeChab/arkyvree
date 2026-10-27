@@ -295,7 +295,7 @@ async function setupRuleset({ fork = false } = {}) {
     ].map(([name, ability]) => ({
       name: name as string,
       rulesetId,
-      primaryAbilityId: abilities[ability as number].id,
+      links: { keyAbility: abilities[ability as number].id },
     })),
   );
   const featList = await Entities.createMany<Feat>(db, "feats", [
