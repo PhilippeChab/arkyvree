@@ -319,7 +319,7 @@ async function setupRuleset({ fork = false } = {}) {
     spellList.map((p) => ({ fromId: p.id, toId: spellAptitude.id })),
   );
 
-  const character = await createTestCharacter(user.id, { rulesetId: characterRuleset.id, raceId: race.id });
+  const character = await createTestCharacter(user.id, { rulesetId: characterRuleset.id, links: { race: race.id } });
   const byName = <T extends { name: string }>(rows: T[]) => Object.fromEntries(rows.map((r) => [r.name, r]));
   return {
     user,

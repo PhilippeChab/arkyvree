@@ -87,7 +87,7 @@ describe("CampaignCharactersService", () => {
       const master = await createTestCharacter(user.id);
       const familiar = await createTestCharacter(user.id, {
         name: "Cat Familiar",
-        raceId: ctx.raceMap.familiar["Cat"],
+        links: { race: ctx.raceMap.familiar["Cat"] },
         kind: "familiar",
         parentCharacterId: master.id,
       });

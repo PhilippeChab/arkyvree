@@ -185,7 +185,7 @@ describe("reverting a fork's copy", () => {
     const race = await copyEntity(db, "races", human, fork);
     const itemCopy = await copyEntity(db, "items", item.id, fork);
     const languageCopy = await copyEntity(db, "languages", language, fork);
-    const character = await createTestCharacter(user.id, { rulesetId: fork.id, raceId: race.id });
+    const character = await createTestCharacter(user.id, { rulesetId: fork.id, links: { race: race.id } });
     const { classLevel } = await createTestClassLevel(fork.id);
     const level = await addCharacterLevel(character.id, classLevel.id, {
       feats: { [ctx.aptMap.General]: [feat.id] },

@@ -36,7 +36,7 @@ describe("EntitiesService: races", () => {
     test("is refused when a character of the ruleset is of that race", async () => {
       const { user, session, ruleset } = await createTestUserAndRuleset();
       const race = await EntitiesService.createEntity(session, ruleset.id, "races", elf);
-      await createTestCharacter(user.id, { rulesetId: ruleset.id, raceId: race.id });
+      await createTestCharacter(user.id, { rulesetId: ruleset.id, links: { race: race.id } });
       expect(EntitiesService.deleteEntity(session, ruleset.id, "races", race.id)).rejects.toThrow(ConflictError);
     });
 
@@ -44,7 +44,7 @@ describe("EntitiesService: races", () => {
       const { user, session, ruleset: parent } = await createTestUserAndRuleset();
       const race = await EntitiesService.createEntity(session, parent.id, "races", elf);
       const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
-      await createTestCharacter(user.id, { rulesetId: fork.id, raceId: race.id });
+      await createTestCharacter(user.id, { rulesetId: fork.id, links: { race: race.id } });
       expect(EntitiesService.deleteEntity(session, parent.id, "races", race.id)).rejects.toThrow(ConflictError);
     });
 
@@ -52,7 +52,7 @@ describe("EntitiesService: races", () => {
       const { user, session, ruleset: extension } = await createTestUserAndRuleset();
       const race = await EntitiesService.createEntity(session, extension.id, "races", elf);
       const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
-      await createTestCharacter(user.id, { rulesetId: host.id, raceId: race.id });
+      await createTestCharacter(user.id, { rulesetId: host.id, links: { race: race.id } });
       expect(EntitiesService.deleteEntity(session, extension.id, "races", race.id)).rejects.toThrow(ConflictError);
     });
 
@@ -61,7 +61,7 @@ describe("EntitiesService: races", () => {
       const { user, session } = await createTestUser();
       const parent = await createTestRuleset(user.id, { status: "Published" });
       const race = await EntitiesService.createEntity(session, parent.id, "races", elf);
-      await createTestCharacter(user.id, { rulesetId: parent.id, raceId: race.id });
+      await createTestCharacter(user.id, { rulesetId: parent.id, links: { race: race.id } });
       const fork = await RulesetsService.forkRuleset(session, parent.id, { name: "Race Fork", private: true });
 
       expect(await EntitiesService.deleteEntity(session, fork.id, "races", race.id)).toBeDefined();

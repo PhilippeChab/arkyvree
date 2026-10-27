@@ -124,7 +124,7 @@ async function setup(race?: { size: SizeType }) {
   RulesetViews.invalidate(ruleset.id);
   const character = await createCharacterAs(
     session,
-    raceId ? { rulesetId: ruleset.id, raceId } : { rulesetId: ruleset.id },
+    raceId ? { rulesetId: ruleset.id, links: { race: raceId } } : { rulesetId: ruleset.id },
   );
   const newItem = (values?: EntityWrite, fields?: Record<string, FieldValue>) =>
     createTestItem({ rulesetId: ruleset.id, ...values }, { ...ITEM_VALUES, ...fields });
@@ -409,7 +409,7 @@ describe("InventoryService", () => {
         await createTestRuleset(user.id, { rulesetId: grandparent.id, ancestorRulesetIds: [grandparent.id] }),
         await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id, grandparent.id] }),
       ]) {
-        const character = await createCharacterAs(session, { rulesetId: ruleset.id, raceId: race.id });
+        const character = await createCharacterAs(session, { rulesetId: ruleset.id, links: { race: race.id } });
         expect(await add(session, character.id, inherited.id)).toMatchObject({ itemId: inherited.id });
       }
 

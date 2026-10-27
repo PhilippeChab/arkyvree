@@ -2294,7 +2294,7 @@ describe("DetailedCharacter", () => {
         fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
       });
       const { classLevel } = await createTestClassLevel(ruleset.id);
-      const character = await createTestCharacter(SEED_USER_ID, { rulesetId: ruleset.id, raceId: race.id });
+      const character = await createTestCharacter(SEED_USER_ID, { rulesetId: ruleset.id, links: { race: race.id } });
       await addCharacterLevel(character.id, classLevel.id);
 
       const integrityIssues = (detailed: Detailed) =>

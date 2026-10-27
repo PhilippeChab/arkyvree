@@ -136,7 +136,7 @@ describe("CharactersService", () => {
 
     test("lets a private ruleset's campaign players and contributors in, and nobody else", async () => {
       const { owner, ruleset, race } = await setupPrivateRuleset();
-      const onPrivate = { rulesetId: ruleset.id, raceId: race.id };
+      const onPrivate = { rulesetId: ruleset.id, links: { race: race.id } };
 
       const { user: player, session: playerSession } = await createTestUser();
       const [campaign] = await Campaigns.create(db, { name: "Test Campaign", rulesetId: ruleset.id });
@@ -184,7 +184,7 @@ describe("CharactersService", () => {
         await createTestRuleset(user.id, { rulesetId: grandparent.id, ancestorRulesetIds: [grandparent.id] }),
         await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id, grandparent.id] }),
       ]) {
-        expect(await createCharacterAs(session, { rulesetId: fork.id, raceId: race.id })).toMatchObject({
+        expect(await createCharacterAs(session, { rulesetId: fork.id, links: { race: race.id } })).toMatchObject({
           rulesetId: fork.id,
           links: { race: race.id },
         });
@@ -195,7 +195,9 @@ describe("CharactersService", () => {
         rulesetId: grandparent.id,
         ancestorRulesetIds: [grandparent.id],
       });
-      expect(createCharacterAs(session, { rulesetId: fork.id, raceId: unrelated.race.id })).rejects.toMatchObject({
+      expect(
+        createCharacterAs(session, { rulesetId: fork.id, links: { race: unrelated.race.id } }),
+      ).rejects.toMatchObject({
         message: `Race ${unrelated.race.id} does not belong to the character's ruleset`,
         refusal: "invalid",
       });
@@ -212,7 +214,7 @@ describe("CharactersService", () => {
       // The seed's ids are the sources': the API takes them, as it takes the copies' the client sends
       const values = {
         rulesetId: fork.id,
-        raceId: ctx.raceMap.pc["Elf"],
+        links: { race: ctx.raceMap.pc["Elf"] },
         abilities: { [ctx.abilityMap["Strength"]]: 17 },
       };
       const character = await createCharacterAs(session, values);
@@ -230,7 +232,9 @@ describe("CharactersService", () => {
         message: `${kind} ${NIL_UUID} does not belong to the character's ruleset`,
         refusal: "invalid",
       });
-      expect(createCharacterAs(session, { ...values, raceId: NIL_UUID })).rejects.toMatchObject(lacking("Race"));
+      expect(createCharacterAs(session, { ...values, links: { race: NIL_UUID } })).rejects.toMatchObject(
+        lacking("Race"),
+      );
       expect(createCharacterAs(session, { ...values, abilities: { [NIL_UUID]: 12 } })).rejects.toMatchObject(
         lacking("Ability"),
       );

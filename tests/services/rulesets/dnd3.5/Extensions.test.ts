@@ -1160,7 +1160,7 @@ describe("unsubscribing from an extension", () => {
         })
       )[0];
     const characterOn = async (rulesetId: string) => {
-      const character = await createTestCharacter(user.id, { rulesetId, raceId: copies.race });
+      const character = await createTestCharacter(user.id, { rulesetId, links: { race: copies.race } });
       await CharacterInventory.create(db, { characterId: character.id, itemId: copies.item, quantity: 1 });
       await CharacterLinks.createMany(db, character.id, "speaks", [{ entityId: copies.language }]);
       const { classLevel } = await createTestClassLevel(rulesetId);

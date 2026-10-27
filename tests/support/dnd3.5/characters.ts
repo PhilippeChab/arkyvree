@@ -42,12 +42,12 @@ interface NewFields {
 }
 
 /**
- * A 3.5 character's start as a test names it: its race (`raceId`, its creation pick) and its ability scores
- * (`abilities`, its scored link's amounts), which a create sends as its `picks` and `scores`, by role.
+ * A 3.5 character's start as a test names it: its race (`links.race`, the link its creation pick makes) and its ability
+ * scores (`abilities`, its scored link's amounts), which a create sends as its `picks` and `scores`, by role.
  */
 interface NewStart {
   abilities?: Record<string, number>;
-  raceId?: string;
+  links?: { race?: string };
 }
 
 /**
@@ -82,10 +82,13 @@ function splitFields<T extends NewFields & { fields?: FieldsRequest }>(values: T
   };
 }
 
-/** A create's `picks` and `scores` of a test's 3.5 start (`raceId`, `abilities`), and the rest of what it gives. */
-function splitStart<T extends NewStart>(values: T, start: Required<NewStart>) {
-  const { abilities = start.abilities, raceId = start.raceId, ...rest } = values;
-  return { picks: { [RACE_ROLE]: raceId }, scores: { score: abilities }, rest };
+/**
+ * A create's `picks` and `scores` of a test's 3.5 start (`links.race`, `abilities`), past its default one (`start`: its
+ * race, `race`, and its abilities), and the rest of what it gives.
+ */
+function splitStart<T extends NewStart>(values: T, start: { abilities: Record<string, number>; race: string }) {
+  const { abilities = start.abilities, links: { race = start.race } = {}, ...rest } = values;
+  return { picks: { [RACE_ROLE]: race }, scores: { score: abilities }, rest };
 }
 
 /**
@@ -138,7 +141,7 @@ export async function createCharacterAs(
 ) {
   const { rulesetId, raceMap } = await getSeedCtx();
   const { fields, rest: given } = splitFields(values);
-  const { picks, scores, rest } = splitStart(given, { abilities: {}, raceId: raceMap.pc["Human"] });
+  const { picks, scores, rest } = splitStart(given, { abilities: {}, race: raceMap.pc["Human"] });
   return await CharactersService.createCharacter(session, {
     rulesetId,
     name: `Test Character ${uniqueId()}`,
@@ -151,13 +154,17 @@ export async function createCharacterAs(
 
 /**
  * A human character of `userId`'s on the seeded ruleset, written straight to the database: a Neutral Good man of 25,
- * 180 tall and 75 heavy, with no experience, unless `values` says otherwise (its race, `raceId`; its experience, `xp`;
- * its row's own columns), and no abilities, levels or activity. Create one with `createCharacterAs` when the test
- * needs those.
+ * 180 tall and 75 heavy, with no experience, unless `values` says otherwise (its race, its `race` link, `links.race`;
+ * its experience, `xp`; its row's own columns), and no abilities, levels or activity. Create one with
+ * `createCharacterAs` when the test needs those.
  */
 export async function createTestCharacter(
   userId: string,
-  { raceId, xp = 0, ...values }: Partial<Omit<Character, "fields" | "links">> & { raceId?: string; xp?: number } = {},
+  {
+    links,
+    xp = 0,
+    ...values
+  }: Partial<Omit<Character, "fields" | "links">> & { links?: { race?: string }; xp?: number } = {},
 ) {
   const ctx = await getSeedCtx();
   const [character] = await Characters.create(db, {
@@ -174,7 +181,7 @@ export async function createTestCharacter(
       [CHARACTER_WEIGHT]: "75",
       [CHARACTER_XP]: xp,
     },
-    links: { [RACE_ROLE]: raceId ?? ctx.raceMap.pc["Human"] },
+    links: { [RACE_ROLE]: links?.race ?? ctx.raceMap.pc["Human"] },
   });
   return character;
 }
@@ -190,7 +197,7 @@ export async function postCharacter(
   const { fields, rest: given } = splitFields(json);
   const { picks, scores, rest } = splitStart(given, {
     abilities: Object.fromEntries(Object.values(ctx.abilityMap).map((id) => [id, 10])),
-    raceId: ctx.raceMap.pc["Human"],
+    race: ctx.raceMap.pc["Human"],
   });
   const { rulesetId = ctx.rulesetId, name = `Test Character ${uniqueId()}`, ...others } = rest;
   return await expectOk(

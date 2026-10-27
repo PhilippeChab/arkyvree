@@ -82,7 +82,7 @@ describe("A character's languages, as its requirements read them", () => {
 
   test("hold a language known when a modifier grants it: its race's, or one of its own", async () => {
     const { raceMap } = await getSeedCtx();
-    const dwarf = await createTestCharacter(SEED_USER_ID, { raceId: raceMap.pc["Dwarf"] });
+    const dwarf = await createTestCharacter(SEED_USER_ID, { links: { race: raceMap.pc["Dwarf"] } });
     expect(await speaks(dwarf, "dwarven")).toBe(true);
     expect(await speaks(dwarf, "draconic")).toBe(false);
 
