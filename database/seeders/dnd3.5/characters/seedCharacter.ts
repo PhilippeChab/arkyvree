@@ -70,7 +70,7 @@ export async function addClassLevels(
   for (let i = 0; i < levels.length; i++) {
     const classLevel = classLevels.find((owned) => owned.position === levels[i])!;
     const advancement = await createAdvancement(db, characterId, {
-      trackId: classLevel.id,
+      entryId: classLevel.id,
       picks: [{ step: "hp", amount: hpPerLevel[i] }],
     });
     levelIds.push(advancement.id);

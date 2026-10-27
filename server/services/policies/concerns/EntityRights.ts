@@ -6,7 +6,7 @@ import type RulesetRoles from "@/server/services/policies/RulesetRoles.ts";
 export function EntityRights<B extends Constructor<RulesetRoles>>(Base: B) {
   abstract class WithEntityRights extends Base {
     /**
-     * `inUse` means: deleting this entity would orphan a character's row naming it (a link, a level's track, a pick, an
+     * `inUse` means: deleting this entity would orphan a character's row naming it (a link, a level's entry, a pick, an
      * inventory entry) on the current ruleset, any descendant fork, or any host ruleset that subscribes to this one as
      * an extension (`EntityReferences.exists`). Nothing else.
      *

@@ -145,7 +145,7 @@ describe("character levels", () => {
 
       expect(await nextFighterLevel()).toMatchObject({ track: { next: 1 }, eligible: true });
       const created = await addLevelOk(characterId, fighter, 1, 8, fighter1(ctx));
-      expect(created).toMatchObject({ characterId, position: 1, trackId: (await findClassLevel(fighter, 1))!.id });
+      expect(created).toMatchObject({ characterId, position: 1, entryId: (await findClassLevel(fighter, 1))!.id });
       expect(await nextFighterLevel()).toMatchObject({ track: { next: 2 } });
       await addLevelOk(characterId, fighter, 2, 6, fighter2(ctx));
       expect(await nextFighterLevel()).toMatchObject({ track: { next: 3 } });

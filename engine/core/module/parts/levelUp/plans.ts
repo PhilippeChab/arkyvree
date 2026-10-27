@@ -9,10 +9,10 @@ import type { LinkPlan } from "@/engine/core/module/parts/characters/index.ts";
 import type { StoredAdvancement } from "@/engine/core/module/storage.ts";
 import type { Character, CharacterFieldValue } from "@/shared/relations.ts";
 
-/** What a level-up writes of an advancement: its track (3.5's class level), and its picks under it. */
+/** What a level-up writes of an advancement: its entry (3.5's class level), and its picks under it. */
 export interface AdvancementPlan {
+  entryId: string;
   picks: PickPlan[];
-  trackId: string;
 }
 
 /** The advancements a child takes, and the ids of those it loses. */
@@ -27,7 +27,7 @@ export interface ChildrenPlan {
 }
 
 /**
- * What a saved level's edit writes, checked: the advancement as saved (`advancement`, which keeps its track), its picks
+ * What a saved level's edit writes, checked: the advancement as saved (`advancement`, which keeps its entry), its picks
  * in place of those it had, and what the children become.
  */
 export interface LevelEditPlan extends ChildrenPlan {

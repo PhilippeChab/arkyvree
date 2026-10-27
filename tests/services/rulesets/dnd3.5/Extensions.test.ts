@@ -1261,7 +1261,7 @@ describe("unsubscribing from an extension", () => {
       await CharacterAdvancements.delete(db, { id: level.id });
     }
     await RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id);
-    expect(await CharacterAdvancements.findOne(db, { id: kept.id })).toMatchObject({ trackId: sourceLevel.id });
+    expect(await CharacterAdvancements.findOne(db, { id: kept.id })).toMatchObject({ entryId: sourceLevel.id });
   });
 
   test("refuses an extension the fork doesn't use, another user, and an archived fork", async () => {

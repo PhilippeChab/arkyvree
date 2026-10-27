@@ -113,7 +113,7 @@ export default class ClassPicker
   private readMaxLevels() {
     const maxLevels = new Map<string, number>();
     for (const level of this.input.rows.advancements) {
-      const classLevel = level.trackId === null ? undefined : this.dnd35.classLevelsById.get(level.trackId);
+      const classLevel = level.entryId === null ? undefined : this.dnd35.classLevelsById.get(level.entryId);
       if (classLevel)
         maxLevels.set(classLevel.ownerId, Math.max(maxLevels.get(classLevel.ownerId) ?? 0, classLevel.position));
     }

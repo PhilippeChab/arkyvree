@@ -66,7 +66,7 @@ export default class DetailedCharacter extends include(
     const advancement = {
       id: crypto.randomUUID(),
       characterId: this.character.id,
-      trackId: classLevel.id,
+      entryId: classLevel.id,
       createdAt: now,
       updatedAt: now,
       position: (this.data.advancements.at(-1)?.position ?? 0) + 1,

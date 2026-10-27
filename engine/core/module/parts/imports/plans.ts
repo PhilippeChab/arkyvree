@@ -24,7 +24,7 @@ export interface ImportOwner {
 
 /**
  * What an import writes: a new character's row (its owner and ruleset aside), its advancements as if leveled up one at
- * a time (each its track and its picks, in order), its links by role (each scored link's amounts, each picked link's
+ * a time (each its entry and its picks, in order), its links by role (each scored link's amounts, each picked link's
  * picks), its inventory entries, and what its children become; and the report of what it did.
  */
 export interface ImportPlan extends ChildrenPlan {

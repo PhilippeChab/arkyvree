@@ -7,8 +7,9 @@ import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import StoredCharacters from "@/server/repositories/stored/StoredCharacters.ts";
 
 /**
- * A character's levels: its advancements (`character.advancements`), each in a track (3.5's class level), read as
- * stored. What each picks, its value step's amount among them (3.5's hit points), is its picks' (`Picks`).
+ * A character's levels: its advancements (`character.advancements`), each of an entry on a track (3.5's class level, on
+ * its class's), read as stored. What each picks, its value step's amount among them (3.5's hit points), is its picks'
+ * (`Picks`).
  */
 class CharacterAdvancementsRepository extends BaseRepository<typeof advancementsInCharacter> {
   constructor() {
@@ -20,9 +21,9 @@ class CharacterAdvancementsRepository extends BaseRepository<typeof advancements
     return {
       characterId: advancementsInCharacter.characterId,
       createdAt: advancementsInCharacter.createdAt,
+      entryId: advancementsInCharacter.entryId,
       id: advancementsInCharacter.id,
       position: advancementsInCharacter.position,
-      trackId: advancementsInCharacter.trackId,
       updatedAt: advancementsInCharacter.updatedAt,
     };
   }
@@ -37,12 +38,12 @@ class CharacterAdvancementsRepository extends BaseRepository<typeof advancements
   }
 
   /**
-   * An advancement in a track (`trackId`) after the character's last: its position one past theirs, read in the
+   * An advancement of an entry (`entryId`) after the character's last: its position one past theirs, read in the
    * insert. Two inserts for one character read the same last position unless the first commits before the second
    * reads: a level flow locks the character first (`Characters.lock`), and the unique index refuses a second level at
    * a position.
    */
-  async create(db: Db, values: { characterId: string; trackId: string }): Promise<StoredAdvancement[]> {
+  async create(db: Db, values: { characterId: string; entryId: string }): Promise<StoredAdvancement[]> {
     const nextPosition = sql<number>`(
       SELECT coalesce(max(${this.table.position}), 0) + 1 FROM ${this.table}
       WHERE ${this.table.characterId} = ${values.characterId}
@@ -52,8 +53,8 @@ class CharacterAdvancementsRepository extends BaseRepository<typeof advancements
       .values({
         characterId: values.characterId,
         position: nextPosition,
-        trackId: values.trackId,
-        trackType: StoredCharacters.buildTypeOf(values.trackId),
+        entryId: values.entryId,
+        entryType: StoredCharacters.buildTypeOf(values.entryId),
       })
       .returning(CharacterAdvancementsRepository.buildColumns());
   }
@@ -81,7 +82,7 @@ class CharacterAdvancementsRepository extends BaseRepository<typeof advancements
   }
 
   /**
-   * Marks an advancement edited (its `updatedAt`), as an edit of its picks changes it: it keeps its track (its
+   * Marks an advancement edited (its `updatedAt`), as an edit of its picks changes it: it keeps its entry (its
    * class level). Answers it, or nothing.
    */
   async update(db: Db, where: { id: string }) {

@@ -23,7 +23,7 @@ export async function addCharacterLevel(characterId: string, classLevelId: strin
   const pooled = (step: string, byPool: Record<string, string[]> = {}) =>
     Object.entries(byPool).flatMap(([viaId, ids]) => ids.map((entityId) => ({ step, entityId, viaId })));
   return await createAdvancement(db, characterId, {
-    trackId: classLevelId,
+    entryId: classLevelId,
     picks: [
       { step: "hp", amount: 1 },
       ...pooled("feats", picks.feats),

@@ -3,7 +3,7 @@ import { sql, type SQL } from "drizzle-orm";
 import { CHAIN, query } from "./queries.ts";
 
 /**
- * Each row a character holds that names an entity (`e`), by what it is (its role, its step, its track, its item): the
+ * Each row a character holds that names an entity (`e`), by what it is (its role, its step, its entry, its item): the
  * database refuses a dangling one, so what's checked is that it names an entity of the character's ruleset chain, which
  * its ruleset's view reads (an entity of another ruleset, the view leaves out).
  */
@@ -17,11 +17,11 @@ const refChecks: { label: string; sql: SQL }[] = [
           WHERE c.deleted_at IS NULL AND NOT e.ruleset_id = ANY(${CHAIN}::uuid[])`,
   },
   {
-    label: "advancement → track",
-    sql: sql`SELECT c.id, c.name, a.track_type AS "what", a.track_id AS "entityId"
+    label: "advancement → entry",
+    sql: sql`SELECT c.id, c.name, a.entry_type AS "what", a.entry_id AS "entityId"
           FROM character.advancements a
           JOIN character.characters c ON c.id = a.character_id
-          JOIN rules.entities e ON e.id = a.track_id
+          JOIN rules.entities e ON e.id = a.entry_id
           WHERE c.deleted_at IS NULL AND NOT e.ruleset_id = ANY(${CHAIN}::uuid[])`,
   },
   {

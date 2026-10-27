@@ -23,27 +23,27 @@ function grantedAt<E>(
   entityOf: (link: ViewLink) => E | undefined,
 ): HeldSource<E>[] {
   return levels.flatMap((level) =>
-    grants(level.trackId!).flatMap((grant) => {
+    grants(level.entryId!).flatMap((grant) => {
       const entity = entityOf(grant);
       if (entity === undefined) return [];
-      return [{ advancementId: level.id, entity, grant, step, trackId: grant.fromId, viaId: grant.viaId! }];
+      return [{ advancementId: level.id, classLevelId: grant.fromId, entity, grant, step, viaId: grant.viaId! }];
     }),
   );
 }
 
 /**
  * Each saved level's picks of a step (`picks`, in the order they were read) with the entity each names (`entityOf`),
- * held at the level it's picked at, whose track is its class level. The character's input holds a pick's references as
- * the ids the view stands for them (a fork's copy, the winner of books' copies), and the view holds every picked
- * entity: deleting one, a fork's deleting an inherited one and unsubscribing its book are refused while a character
- * picks it.
+ * held at the level it's picked at, with that level's class level (its entry). The character's input holds a pick's
+ * references as the ids the view stands for them (a fork's copy, the winner of books' copies), and the view holds every
+ * picked entity: deleting one, a fork's deleting an inherited one and unsubscribing its book are refused while a
+ * character picks it.
  */
 function pickedAt<E>(picks: StoredPick[], levels: StoredAdvancement[], entityOf: (pick: StoredPick) => E | undefined) {
-  const trackIds = new Map(levels.map((level) => [level.id, level.trackId]));
+  const classLevelIds = new Map(levels.map((level) => [level.id, level.entryId]));
   return picks.flatMap((pick) => {
     const entity = entityOf(pick);
-    const trackId = trackIds.get(pick.advancementId);
-    return entity && trackId ? [{ advancementId: pick.advancementId, entity, pick, trackId }] : [];
+    const classLevelId = classLevelIds.get(pick.advancementId);
+    return entity && classLevelId ? [{ advancementId: pick.advancementId, classLevelId, entity, pick }] : [];
   });
 }
 
@@ -57,11 +57,11 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
     private buildFeats(picks: CharacterPicks, rulesetData: RulesetData, { advancements }: LoadedLevels) {
       const dnd35 = Dnd35View.of(rulesetData);
       const picked = pickedAt(picks.feats, advancements, (pick) => dnd35.featsById.get(pick.entityId!)).map(
-        ({ advancementId, entity, pick, trackId }): HeldSource<Feat> => ({
+        ({ advancementId, classLevelId, entity, pick }): HeldSource<Feat> => ({
           advancementId,
+          classLevelId,
           entity,
           step: "feats",
-          trackId,
           viaId: pick.viaId!,
         }),
       );
@@ -108,8 +108,8 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
         viaId: source.viaId!,
       });
       const picked = pickedAt(picks.spells, advancements, (pick) => dnd35.spellsById.get(pick.entityId!)).map(
-        ({ advancementId, entity, pick, trackId }) =>
-          held({ advancementId, entity, step: "spells", trackId, viaId: pick.viaId! }),
+        ({ advancementId, classLevelId, entity, pick }) =>
+          held({ advancementId, classLevelId, entity, step: "spells", viaId: pick.viaId! }),
       );
       const granted = grantedAt(
         advancements,
@@ -127,11 +127,11 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
     protected buildPicks(picks: CharacterPicks, rulesetData: RulesetData, levels: LoadedLevels) {
       const { skillsById } = Dnd35View.of(rulesetData);
       const skills = pickedAt(picks.skills, levels.advancements, (pick) => skillsById.get(pick.entityId!)).map(
-        ({ advancementId, entity, pick, trackId }): SkillPick => ({
+        ({ advancementId, classLevelId, entity, pick }): SkillPick => ({
           advancementId,
           amount: pick.amount!,
+          classLevelId,
           entity,
-          trackId,
         }),
       );
       const { feats, featGrants } = this.buildFeats(picks, rulesetData, levels);
@@ -144,13 +144,13 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
 
     /**
      * The character's levels (its advancements, as the view reads them) in the order it took them, their class levels
-     * (their tracks), and the hit points each rolled (its `hp` pick).
+     * (their entries), and the hit points each rolled (its `hp` pick).
      */
     protected sortLevels(stored: StoredAdvancement[], picks: CharacterPicks): LoadedLevels {
       const advancements = stored.toSorted((a, b) => a.position - b.position);
       return {
         advancements,
-        classLevelIds: advancements.map((level) => level.trackId!),
+        classLevelIds: advancements.map((level) => level.entryId!),
         hitPoints: new Map(picks.hp.map((pick) => [pick.advancementId, pick.amount!])),
       };
     }

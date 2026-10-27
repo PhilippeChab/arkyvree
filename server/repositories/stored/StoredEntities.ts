@@ -199,7 +199,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
         sql`COALESCE((
           SELECT MAX(owned.position)
           FROM ${entitiesInRules} owned
-          JOIN ${advancementsInCharacter} ON ${advancementsInCharacter.trackId} = owned.id
+          JOIN ${advancementsInCharacter} ON ${advancementsInCharacter.entryId} = owned.id
           WHERE owned.owner_id = "rules"."entities"."id"
           AND ${advancementsInCharacter.characterId} = ${characterId}
         ), 0)`,

@@ -141,9 +141,9 @@ export default abstract class LevelUpBase<C> {
     return classLevel;
   }
 
-  /** A saved level's class level (its advancement's track) and class, in the composed ruleset, or a 404. */
-  protected getSavedClassLevel(advancement: { trackId: string | null }) {
-    const classLevel = advancement.trackId ? this.dnd35.classLevelsById.get(advancement.trackId) : undefined;
+  /** A saved level's class level (its advancement's entry) and class, in the composed ruleset, or a 404. */
+  protected getSavedClassLevel(advancement: { entryId: string | null }) {
+    const classLevel = advancement.entryId ? this.dnd35.classLevelsById.get(advancement.entryId) : undefined;
     if (!classLevel) throw new RulesError("not-found", "Class level not found");
 
     const klass = this.dnd35.classesById.get(classLevel.ownerId);
