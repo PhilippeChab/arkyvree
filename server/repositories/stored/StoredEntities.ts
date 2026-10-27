@@ -22,7 +22,7 @@ import {
 import { include } from "@/lib/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
-import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
+import { Paginates, type Pagination } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 import { buildLineageCondition } from "@/server/repositories/rulesets/rulesetLineage.ts";
 
@@ -458,7 +458,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     where: Omit<EntityListWhere, "fields" | "linkedBy" | "links" | "orderBy" | "orderDir" | "partitions"> & {
       groupField: string;
     },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     if (where.ids !== undefined && where.ids.length === 0) return this.paginated([], pagination);
     const { limit, offset } = this.paginate(pagination);
@@ -584,7 +584,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   async findOptionGroupPage(
     db: Db,
     where: OptionWhere & { groups: { group: string; id: string }[] },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     const { limit, offset } = this.paginate(pagination);
     // Each entity's group, as one parameter: a row per entity and group
@@ -618,7 +618,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   }
 
   /** A picker's page of a kind's entities (a list's, as the ruleset composes it), by name: each its name and text. */
-  async findOptionPage(db: Db, where: OptionWhere, pagination: { limit: number; page: number }) {
+  async findOptionPage(db: Db, where: OptionWhere, pagination: Pagination) {
     const rows = await db
       .select({ id: entitiesInRules.id, name: entitiesInRules.name, description: entitiesInRules.description })
       .from(entitiesInRules)
@@ -633,7 +633,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   async findPage<R extends Pick<EntityRecord, "id"> = EntityRecord>(
     db: Db,
     where: EntityListWhere,
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     if (where.ids !== undefined && where.ids.length === 0) return this.paginated<R>([], pagination);
     const { search, orderBy = "name", orderDir = "asc", linkedBy } = where;

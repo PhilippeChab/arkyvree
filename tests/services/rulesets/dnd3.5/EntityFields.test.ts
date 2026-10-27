@@ -7,7 +7,7 @@ import { Entities } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { findFormValues, listValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
-import { copyEntity, createSeededTestRuleset, type Described } from "@/tests/support/rulesets.ts";
+import { copyEntity, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { DEFAULT_HIT_DIE } from "@/vocabulary/dnd3.5/classes.ts";
@@ -78,7 +78,7 @@ function linkedBy(answer: { links: readonly { role: string; toId: string }[] }, 
 
 /** An entity's fields as its answer holds them (`type`'s `id`, in `rulesetId`): by the stored field that keeps each. */
 async function fieldsOf(rulesetId: string, type: "classes" | "feats" | "items" | "races" | "spells", id: string) {
-  return (await EntitiesService.getEntity<{ fields: Record<string, unknown> }>(rulesetId, type, id)).fields;
+  return (await EntitiesService.getEntity(rulesetId, type, id)).fields;
 }
 
 /** A new user's empty ruleset with a feat pool and a spell list, and its Intelligence. */
@@ -149,7 +149,7 @@ describe("An entity's fields", () => {
       fields: { [CLASS_CASTER_TYPE]: "Arcane" },
       links: { bonusSpellAbility: intelligence.id },
     });
-    const described = await EntitiesService.getEntity<Described<"classes">>(rulesetId, "classes", wizard.id);
+    const described = await EntitiesService.getEntity(rulesetId, "classes", wizard.id);
     expect(described.fields).toMatchObject({ [CLASS_CASTER_TYPE]: "Arcane" });
     expect(linkedBy(described, "bonusSpellAbility")).toBe(intelligence.id);
     // None, as its form's select says it
@@ -336,7 +336,7 @@ describe("An entity's fields", () => {
     });
 
     // The seed's ids are the sources': the API takes them, and stores the fork's copy's
-    const saved = await EntitiesService.updateEntity<Described<"classes">>(session, fork.id, "classes", fighter!.id, {
+    const saved = await EntitiesService.updateEntity(session, fork.id, "classes", fighter!.id, {
       name: "Fighter",
       fields: { [CLASS_CASTER_TYPE]: "Divine" },
       links: { bonusSpellAbility: abilityMap["Wisdom"] },
@@ -348,7 +348,7 @@ describe("An entity's fields", () => {
       [`bonusSpellAbility=${wisdom.id}`, `${CLASS_CASTER_TYPE}=Divine`].toSorted(),
     );
     expect(listValues(await findFormValues("classes", fighter!.id))).toEqual([]);
-    const source = await EntitiesService.getEntity<Described<"classes">>(fork.rulesetId!, "classes", fighter!.id);
+    const source = await EntitiesService.getEntity(fork.rulesetId!, "classes", fighter!.id);
     expect(source.fields).toMatchObject({ [CLASS_CASTER_TYPE]: null });
     expect(linkedBy(source, "bonusSpellAbility")).toBeNull();
   });

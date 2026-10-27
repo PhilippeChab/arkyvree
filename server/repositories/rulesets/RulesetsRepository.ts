@@ -24,7 +24,7 @@ import {
 import { include } from "@/lib/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
-import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
+import { Paginates, type Pagination } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -166,7 +166,7 @@ class RulesetsRepository extends include(
     session: Session,
     condition: SQL | undefined,
     order: SQL,
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     return await this.withPagination(
       pagination,
@@ -281,7 +281,7 @@ class RulesetsRepository extends include(
       scope?: RulesetScope;
       search?: string;
     },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     const { kind, scope, search, orderBy = "createdAt", orderDir = "desc" } = where || {};
 

@@ -11,7 +11,7 @@ import { findCustomizations } from "@/tests/support/customizations.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { customize } from "@/tests/support/dnd3.5/customizations.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { createTestRuleset, describedAs } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import {
   ITEM_COST_GP,
@@ -194,15 +194,19 @@ describe("EntitiesService: items", () => {
       name: "Ring",
       fields: { [ITEM_SLOT]: "Finger" },
     });
-    expect((await EntitiesService.getEntity(ruleset.id, "items", sword.id)).placement).toMatchObject({
+    expect(
+      describedAs("items", await EntitiesService.getEntity(ruleset.id, "items", sword.id)).placement,
+    ).toMatchObject({
       hand: true,
       slot: null,
     });
-    expect((await EntitiesService.getEntity(ruleset.id, "items", ring.id)).placement).toMatchObject({
-      charges: null,
-      hand: false,
-      slot: "Finger",
-    });
+    expect(describedAs("items", await EntitiesService.getEntity(ruleset.id, "items", ring.id)).placement).toMatchObject(
+      {
+        charges: null,
+        hand: false,
+        slot: "Finger",
+      },
+    );
   });
 
   test("puts armor on the torso and shields in the off hand, whatever slot is asked for", async () => {

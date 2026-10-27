@@ -9,7 +9,7 @@ import {
 } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
-import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
+import { Paginates, type Pagination } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 
 class PlayerCharactersRepository extends include(
@@ -86,7 +86,7 @@ class PlayerCharactersRepository extends include(
       search?: string;
       visibilityPlayerId?: string;
     },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     if ("playerIds" in where && where.playerIds.length === 0) return this.paginated([], pagination);
     const { search, orderBy = "createdAt", orderDir = "desc" } = where;

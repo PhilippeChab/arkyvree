@@ -14,10 +14,28 @@ import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 import { uniqueId } from "./seed.ts";
 
-/** An entity as its kind's page describes it (`K`, its table): what `EntitiesService.getEntity` answers of it. */
+/**
+ * An entity as its kind's page describes it (`K`, its table): what `EntitiesService.getEntity` answers of it, which it
+ * types as any kind's (`describedAs` reads it as its own kind's).
+ */
 export type Described<K extends keyof EntityKinds> = ReturnType<EntityKinds[K]["describe"]>;
 
 const writtenSeededRulesets = new Set<string>();
+
+/** Whether an entity's description is of a kind (`type`): its row's. */
+function isDescribed<K extends keyof EntityKinds>(type: K, entity: { type: string }): entity is Described<K> {
+  return entity.type === type;
+}
+
+/**
+ * An entity's description (`entity`, as `EntitiesService.getEntity` answers it, any kind's) as its kind's (`type`),
+ * with what its kind's rules describe past every kind's (3.5's item's placement, its feat's modifiers): refused when
+ * it's another kind's.
+ */
+export function describedAs<K extends keyof EntityKinds>(type: K, entity: { type: string }): Described<K> {
+  if (!isDescribed(type, entity)) throw new Error(`A ${entity.type} entity is no ${type} entity`);
+  return entity;
+}
 
 /** Drops the rules of the seeded rulesets the test wrote to, now that the rollback undid its rows. */
 export function forgetSeededRulesetWrites() {

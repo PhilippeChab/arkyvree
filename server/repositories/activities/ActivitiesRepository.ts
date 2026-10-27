@@ -4,7 +4,7 @@ import type { Db } from "@/drizzle/database.ts";
 import { activitiesInAccount } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
-import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
+import { Paginates, type Pagination } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 
 class ActivitiesRepository extends include(BaseRepository<typeof activitiesInAccount>, Paginates, Searches) {
@@ -37,7 +37,7 @@ class ActivitiesRepository extends include(BaseRepository<typeof activitiesInAcc
       type?: string;
       userId: string;
     },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     const { search, orderBy = "createdAt", orderDir = "desc" } = where;
 

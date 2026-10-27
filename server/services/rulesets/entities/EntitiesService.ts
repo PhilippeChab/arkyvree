@@ -1,9 +1,9 @@
 import type { Db } from "@/drizzle/database.ts";
-import { Engine, type EntityAction, type EntityCopies } from "@/engine/index.ts";
+import { Engine, type EntityAction, type EntityCopies, type EntityRecord } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, type RulesetEntityType } from "@/server/repositories/index.ts";
+import { Entities, type Pagination, type RulesetEntityType } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { Copies } from "./concerns/Copies.ts";
@@ -11,7 +11,18 @@ import { Links } from "./concerns/Links.ts";
 import { Owned } from "./concerns/Owned.ts";
 import { Progressions } from "./concerns/Progressions.ts";
 import EntityWriter, { type EntityBody } from "./EntityWriter.ts";
-import type { EntityRow, ListWhere, Pagination } from "./rows.ts";
+
+/**
+ * What a list reads: every kind's (its search, its own entities alone, its order), and its kind's filters past them,
+ * each by the field, the role or the partition it filters (a race's `partition`, a spell's list by its `listedIn` role
+ * and its `tier`), which its kind's rules read.
+ */
+type ListWhere = Record<string, unknown> & {
+  childOnly?: boolean;
+  orderBy?: "createdAt" | "name" | "updatedAt";
+  orderDir?: "asc" | "desc";
+  search?: string;
+};
 
 /**
  * A ruleset's entities by their kind (`type`), whatever it is, as its kind's rules answer them
@@ -51,8 +62,8 @@ class EntitiesService extends include(Object, Copies, Links, Owned, Progressions
    * (`EntityNames.repointTombstone`), and its kind's rules read the ancestor's stored row when they take after it (a
    * feat takes its mark).
    */
-  async createEntity<R = EntityRow>(session: Session, rulesetId: string, type: RulesetEntityType, body: EntityBody) {
-    const created = await this.writerOf(type, "create").create(
+  async createEntity(session: Session, rulesetId: string, type: RulesetEntityType, body: EntityBody) {
+    return await this.writerOf(type, "create").create(
       session,
       rulesetId,
       body.name,
@@ -65,37 +76,34 @@ class EntitiesService extends include(Object, Copies, Links, Owned, Progressions
         return kind.planCreate(body, ancestor);
       },
     );
-    return created as R;
   }
 
-  async deleteEntity<R = EntityRow>(session: Session, rulesetId: string, type: RulesetEntityType, entityId: string) {
-    const deleted = await this.writerOf(type, "delete").delete(session, rulesetId, entityId, async (scope, { tx }) => {
+  async deleteEntity(session: Session, rulesetId: string, type: RulesetEntityType, entityId: string) {
+    return await this.writerOf(type, "delete").delete(session, rulesetId, entityId, async (scope, { tx }) => {
       const plan = Engine.for(scope).entities(type).planDelete(entityId);
       await this.checkCopies(tx, scope, type, plan.copies);
       return plan;
     });
-    return deleted as R;
   }
 
   /**
    * A duplicate of an entity (`sourceId`), as its kind's rules plan it (an item points at the same template, and takes
    * its source's customizations when its source isn't one).
    */
-  async duplicateEntity<R = EntityRow>(
+  async duplicateEntity(
     session: Session,
     rulesetId: string,
     type: RulesetEntityType,
     sourceId: string,
     body: EntityBody,
   ) {
-    const created = await this.writerOf(type, "duplicate").create(session, rulesetId, body.name, (scope) =>
+    return await this.writerOf(type, "duplicate").create(session, rulesetId, body.name, (scope) =>
       Engine.for(scope).entities(type).planDuplicate(sourceId, body),
     );
-    return created as R;
   }
 
   /** A page of a kind's list, as its query asks for it (`where`), each row as its kind's rules describe it. */
-  async getEntities<R = EntityRow>(
+  async getEntities(
     rulesetId: string,
     type: RulesetEntityType,
     { childOnly, orderBy, orderDir, search, ...filters }: ListWhere,
@@ -105,7 +113,7 @@ class EntitiesService extends include(Object, Copies, Links, Owned, Progressions
       const list = Engine.for(scope)
         .entities(type)
         .openList({ childOnly, ...filters });
-      const result = await Entities.findPage(
+      const result = await Entities.findPage<EntityRecord & { name: string }>(
         db,
         {
           entityType: type,
@@ -119,16 +127,12 @@ class EntitiesService extends include(Object, Copies, Links, Owned, Progressions
         },
         pagination,
       );
-      return { ...result, items: list.describe(result.items) as R[] };
+      return { ...result, items: list.describe(result.items) };
     });
   }
 
-  async getEntity<R = EntityRow>(rulesetId: string, type: RulesetEntityType, entityId: string) {
-    return await withRulesetScope(
-      db,
-      rulesetId,
-      async (scope) => Engine.for(scope).entities(type).describe(entityId) as unknown as R,
-    );
+  async getEntity(rulesetId: string, type: RulesetEntityType, entityId: string) {
+    return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).entities(type).describe(entityId));
   }
 
   /** A page of a kind's groups (a feat's families), as its query asks for it (`where`): refused for a kind without. */
@@ -165,19 +169,12 @@ class EntitiesService extends include(Object, Copies, Links, Owned, Progressions
   }
 
   /** An entity's update off its form, checked against the copies its plan reaches (a template's type change). */
-  async updateEntity<R = EntityRow>(
-    session: Session,
-    rulesetId: string,
-    type: RulesetEntityType,
-    entityId: string,
-    body: EntityBody,
-  ) {
-    const updated = await this.writerOf(type, "update").update(session, rulesetId, body, async (scope, { tx }) => {
+  async updateEntity(session: Session, rulesetId: string, type: RulesetEntityType, entityId: string, body: EntityBody) {
+    return await this.writerOf(type, "update").update(session, rulesetId, body, async (scope, { tx }) => {
       const plan = Engine.for(scope).entities(type).planEdit(entityId, body);
       await this.checkCopies(tx, scope, type, plan.copies);
       return plan;
     });
-    return updated as R;
   }
 }
 

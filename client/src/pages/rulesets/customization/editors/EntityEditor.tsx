@@ -97,7 +97,8 @@ export function EntityEditor({
             columns={kind.wideForm ? 2 : undefined}
             context={{
               knownLinks: linkedEntities(described, entity),
-              templateName: typeof entity.templateName === "string" ? entity.templateName : null,
+              templateName:
+                "templateName" in entity && typeof entity.templateName === "string" ? entity.templateName : null,
             }}
             nameLocked={lockedName && ownFieldOf(entity, lockedName.field) === true ? lockedName.reason : undefined}
           />

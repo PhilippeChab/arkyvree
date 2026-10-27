@@ -8,6 +8,7 @@ import {
   CharacterAdvancements,
   CharacterContributors,
   Characters,
+  type Pagination,
   PlayerCharacters,
   Players,
   Visibility,
@@ -98,7 +99,7 @@ class CampaignCharactersService {
     session: Session,
     campaignId: string,
     where: { orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     const member = await this.getMember(session, campaignId);
 

@@ -4,7 +4,7 @@ import type { Db } from "@/drizzle/database.ts";
 import { contributorsInCharacter, usersInAccount } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
-import { Paginates } from "@/server/repositories/concerns/Paginates.ts";
+import { Paginates, type Pagination } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 import type { ContributorStatus } from "@/server/repositories/rulesets/ContributorsRepository.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
@@ -98,7 +98,7 @@ class CharacterContributorsRepository extends include(
   async findPage(
     db: Db,
     where: { characterId: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
-    pagination: { limit: number; page: number },
+    pagination: Pagination,
   ) {
     const { search, orderBy = "createdAt", orderDir = "desc" } = where;
     const { limit, offset } = this.paginate(pagination);
