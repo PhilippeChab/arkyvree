@@ -8,13 +8,15 @@
  * values the winner lacks (`union`), a single value the winner's, else the first sibling's that holds one
  * (`fallback`), or the winner's alone (`winner`). Requirements merge as trees (`RequirementTree`), whose top-level
  * rows are AND'd: merging the winner with N siblings is `AND(winner, sibling 1, …)`, each sibling's tree kept as it is, appended at the top level. A
- * sibling's group gets a fresh top-level number, its rows renumbered under it; a sibling's top-level condition keeps
- * its level (suffixed `-2`, `-3`… when the winner has it), unless the winner already holds the same condition.
+ * sibling's group gets a fresh top-level number, past every level the rows hold (a row under a missing one, which the
+ * tree reads as a top-level row, counting for it: the group neither meets nor adopts it), its rows renumbered under it;
+ * a sibling's top-level condition keeps its level (suffixed `-2`, `-3`… when the winner has it), unless the winner
+ * already holds the same condition.
  */
 
 import { type DeclaredFields, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
 import type { FieldValue, OwnerFields } from "@/engine/core/module/index.ts";
-import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
+import RequirementTree, { getNextLevel, type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 type ModifierKey = Pick<Modifier, "target" | "value" | "operator" | "valueType">;
@@ -36,7 +38,7 @@ export default class SiblingMerge {
   /**
    * A tree's rows under a given level, on the winner, keeping each row's identity: the copying caller allocates new IDs
    * and records the source-to-copy mapping. Children are renumbered `level.1`, `level.2`… whatever their original
-   * numbers, so the result is collision-free as long as the caller picks a level nothing else holds.
+   * numbers, so the result is collision-free as long as the caller picks a level nothing else holds, at it or under it.
    */
   private static serializeNode(node: RequirementNode<Requirement>, level: string, entityId: string): Requirement[] {
     const rows: Requirement[] = [{ ...node.requirement, entityId, level }];
@@ -123,8 +125,6 @@ export default class SiblingMerge {
         .map((node) => SiblingMerge.conditionKey(node.requirement)),
     );
     const usedLevels = new Set(own.map((r) => r.level));
-    let maxTopInt = 0;
-    for (const r of own) if (/^\d+$/.test(r.level)) maxTopInt = Math.max(maxTopInt, Number(r.level));
 
     const merged: Requirement[] = [];
     for (const requirements of siblings) {
@@ -132,9 +132,9 @@ export default class SiblingMerge {
         const isGroup = !!node.requirement.chainingOperator;
         if (!isGroup && standaloneKeys.has(SiblingMerge.conditionKey(node.requirement))) continue;
         let level: string;
+        // A group's rows go under a top level past every one held, so none of them meets a row already there
         if (isGroup) {
-          do level = String(++maxTopInt);
-          while (usedLevels.has(level));
+          level = getNextLevel([...usedLevels], null);
         } else {
           const originalLevel = node.requirement.level;
           level = originalLevel;

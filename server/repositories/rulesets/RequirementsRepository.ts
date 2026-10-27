@@ -40,9 +40,9 @@ class RequirementsRepository extends CustomizationRepository<typeof requirements
   async findOne(
     db: Db,
     where:
-      | { id: string }
       | { entityId: string; entityType: string; id: string }
-      | { entityId: string; entityType: string; level: string },
+      | { entityId: string; entityType: string; level: string }
+      | { expectedUpdatedAt?: string; id: string },
   ) {
     return await db.query.requirementsInCustomization.findFirst({
       where: this.branchWhere(
@@ -50,6 +50,7 @@ class RequirementsRepository extends CustomizationRepository<typeof requirements
         [
           "entityId" in where && eq(this.table.entityId, where.entityId),
           "entityType" in where && eq(this.table.entityType, where.entityType),
+          "expectedUpdatedAt" in where && this.casUpdatedAt(where.expectedUpdatedAt),
         ],
       ),
     });

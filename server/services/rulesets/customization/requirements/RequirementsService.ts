@@ -28,12 +28,22 @@ function conditionOf(requirement: { operator?: string | null; target?: string | 
 
 class RequirementsService {
   /**
-   * Refuses a requirement at a level its entity (`entityId`, as stored: a copy's once copied) holds another one at
-   * (`requirementId`, the one an edit moves): the database keeps one per level.
+   * Refuses a requirement at a level its entity (`entityId`, as stored: a copy's once copied) holds another one at: the
+   * database keeps one per level. An edit (`edited`: the requirement it moves, and the version it started from) keeps
+   * its own level, and one started from a stale version is told so first, its refresh showing the level taken.
    */
-  private async refuseTakenLevel(tx: Db, entityType: string, entityId: string, level: string, requirementId?: string) {
+  private async refuseTakenLevel(
+    tx: Db,
+    entityType: string,
+    entityId: string,
+    level: string,
+    edited?: { expectedUpdatedAt?: string; id: string },
+  ) {
     const taken = await Requirements.findOne(tx, { entityId, entityType, level });
-    if (taken && taken.id !== requirementId) throw new ConflictError("A requirement at this level already exists");
+    if (!taken || taken.id === edited?.id) return;
+    if (edited?.expectedUpdatedAt && !(await Requirements.exists(tx, edited)))
+      throw new ConflictError(STALE_ENTITY_MESSAGE);
+    throw new ConflictError("A requirement at this level already exists");
   }
 
   async createRequirement(
@@ -154,9 +164,12 @@ class RequirementsService {
             requirementId,
           );
 
-          await this.refuseTakenLevel(tx, entityType, resolvedEntityId, row.level, resolvedRequirementId);
-
           const expectedUpdatedAt = resolvedRequirementId === requirementId ? body.updatedAt : undefined;
+          await this.refuseTakenLevel(tx, entityType, resolvedEntityId, row.level, {
+            id: resolvedRequirementId,
+            expectedUpdatedAt,
+          });
+
           const rows = await Requirements.update(tx, row, { id: resolvedRequirementId, expectedUpdatedAt });
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
