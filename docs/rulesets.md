@@ -29,7 +29,7 @@ Base Ruleset (D&D 3.5)           ← system-owned, userId: null, no parent
 | `ancestorRulesetIds` | `[parentId]` — only base rulesets can be forked, so the chain has at most one entry |
 | `extensionRulesetIds` | Subscribed extension IDs (appended on subscribe, removed on unsubscribe) |
 | `status` | `Draft`, `Published`, or `Archived` |
-| `kind` | `ruleset` (default; playable) or `extension` (subscribable add-on). The character-creation picker shows only `kind = 'ruleset'`; the subscribe-extension picker shows only `kind = 'extension'`. Author chooses at publish time and can change later via the edit dialog. Setting `kind = 'extension'` requires the row to be a fork (`rulesetId IS NOT NULL`) and to have no own extensions (`extensionRulesetIds = []`) |
+| `kind` | `ruleset` (default; playable) or `extension` (subscribable add-on). The character-creation picker shows only `kind = 'ruleset'`; the subscribe-extension picker shows only `kind = 'extension'`. Author chooses at publish time and can change later via the edit dialog, under the same checks (`Publishes.checkKind`): setting `kind = 'extension'` requires the row to be a fork (`rulesetId IS NOT NULL`) and to have no own extensions (`extensionRulesetIds = []`); setting a published ruleset's `kind = 'ruleset'`, the content a playable ruleset needs (below) |
 
 ## Ruleset Lifecycle
 
@@ -79,7 +79,7 @@ The author's responsibility post-publish is purely social — "don't break what 
 
 The `kind` is editable post-publish via the standard edit dialog (under the same "Publish as" toggle the publish dialog uses).
 
-- **Validation when setting `kind = 'extension'`**: row must be a fork (`rulesetId IS NOT NULL`) and must not subscribe to other extensions (`extensionRulesetIds` is empty). Switching back to `kind = 'ruleset'` is unconditional.
+- **Validation**: the publish's own, by the kind it switches to (`Publishes.checkKind`, which publishing calls, and the edit calls on a published ruleset). Setting `kind = 'extension'`: row must be a fork (`rulesetId IS NOT NULL`) and must not subscribe to other extensions (`extensionRulesetIds` is empty). Switching a published ruleset back to `kind = 'ruleset'`: its view must give what its rules make a character of (`checkPublishable`), so an edit never makes a playable ruleset that publishing would refuse. A draft's switch to `ruleset` isn't checked: its content is when it's published. An edit that keeps the kind checks neither.
 - **Existing characters and campaigns are grandfathered** — same model as archived rulesets. The character/campaign rows still resolve content via the now-extension fork, but new characters and new campaigns can no longer be created on it (the `published` scope filters them out). The author makes the trade-off when they flip the toggle; nothing is migrated or invalidated.
 - **Subscribers**: a fork that's `kind = 'extension'` cannot itself subscribe to other extensions (`canSubscribeExtension` rejects). If the fork is currently being subscribed-to as an extension by another user, that downstream subscription keeps working through the fork's normal source-chain resolution.
 
