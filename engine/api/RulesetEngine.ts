@@ -14,6 +14,7 @@ import CharacterEngine from "./CharacterEngine.ts";
 import CharactersEngine from "./CharactersEngine.ts";
 import ModifiersEngine from "./ModifiersEngine.ts";
 import Modules, { type Accepted, type EntityKinds, type EntityType, type Module } from "./Modules.ts";
+import ProgressionEngine from "./ProgressionEngine.ts";
 import RequirementsEngine from "./RequirementsEngine.ts";
 import TargetPathsEngine from "./TargetPathsEngine.ts";
 
@@ -130,9 +131,13 @@ export default class RulesetEngine {
     return this.module.ruleset.planSettings(this.view, body);
   }
 
-  /** An entity's progression (`type`, `ownerId`: a class's levels at once): refused for a kind without one. */
+  /**
+   * An entity's progression (`type`, `ownerId`: a class's levels at once): what its tabs read, and one save of it, its
+   * refusals named in its rules' words. Refused for a kind without one.
+   */
   progression<K extends EntityType>(type: K, ownerId: string) {
-    return this.part(type, "progression", ownerId) as Extract<PartOf<EntityKinds[K], "progression">, EntityProgression>;
+    const progression = this.part(type, "progression", ownerId);
+    return new ProgressionEngine(this.view, type, progression as Extract<typeof progression, EntityProgression>);
   }
 
   /** An entity's requirements (`entityType`, `entityId`). */

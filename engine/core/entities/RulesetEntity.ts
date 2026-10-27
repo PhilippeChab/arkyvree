@@ -399,7 +399,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
    * named in its rules' word: "Save not found in this ruleset".
    */
   protected refuseMissing(type: string = this.type): never {
-    throw new RulesError("not-found", `${this.rulesetData.labelOf(type)} not found in this ruleset`);
+    throw this.rulesetData.notFound(type, { where: "in this ruleset" });
   }
 
   /** The ruleset's view, as its rules read it. */

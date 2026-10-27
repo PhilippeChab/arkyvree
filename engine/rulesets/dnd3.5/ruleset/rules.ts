@@ -1,5 +1,6 @@
 import { NAMED_LIST } from "@/engine/core/entities/index.ts";
-import type { RulesDeclaration, RulesWord } from "@/engine/core/module/index.ts";
+import type { KindWord, RulesDeclaration, RulesWord } from "@/engine/core/module/index.ts";
+import type { ViewKinds } from "@/engine/core/view/index.ts";
 import { CHARACTER_FORM } from "@/engine/rulesets/dnd3.5/characters/form.ts";
 import { CLASS_LIST } from "@/engine/rulesets/dnd3.5/entities/classes/lists.ts";
 import { PROGRESSION } from "@/engine/rulesets/dnd3.5/entities/classes/progression.ts";
@@ -88,6 +89,7 @@ export const RULES: RulesDeclaration = {
   },
   progression: PROGRESSION,
   tiers: SPELL_LEVELS.map((level) => ({ label: SPELL_LEVEL_LABELS[level], level })),
+  // Every kind its word, and no other type
   words: {
     abilities: { many: "Abilities", one: "Ability" },
     aptitudes: { many: "Aptitudes", one: "Aptitude" },
@@ -101,5 +103,5 @@ export const RULES: RulesDeclaration = {
     races: { many: "Races", one: "Race" },
     saves: { many: "Saves", one: "Save" },
     skills: { many: "Skills", one: "Skill" },
-  },
+  } satisfies Record<keyof ViewKinds, KindWord>,
 };

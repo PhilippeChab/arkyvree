@@ -1,7 +1,9 @@
 import type { CowData } from "@/engine/core/cow/index.ts";
 import { OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
 import type { OwnerFields, RulesDescription } from "@/engine/core/module/index.ts";
+import RulesError from "@/engine/core/RulesError.ts";
 import type { Modifier, Requirement, Ruleset } from "@/shared/relations.ts";
+import { toSentenceCase } from "@/shared/text.ts";
 
 import type { InventoryItem, NamedLink, ViewEntity, ViewKinds, ViewLink } from "./rows.ts";
 
@@ -92,6 +94,16 @@ export default class RulesetData {
     this.tieredIds = lists.tieredIds;
     this.settings = lists.settings;
     this.cow = cow;
+  }
+
+  /**
+   * What rules (their `words`) call an entity of a type (`type`), as a refusal or an issue names it, in a sentence's
+   * case, as the client writes a word in a message ("Class level not found in this ruleset", of 3.5's "Class Level";
+   * "Feat <id> does not belong to this ruleset"): the type itself for one they have no word for.
+   */
+  static labelIn(words: RulesDescription["words"], type: string): string {
+    const one = words[type]?.one;
+    return one ? toSentenceCase(one) : type;
   }
 
   private readonly built: Partial<Indices> = {};
@@ -273,14 +285,9 @@ export default class RulesetData {
     return values;
   }
 
-  /**
-   * What the ruleset's rules call an entity of a type (`type`), as a refusal or an issue names it, in a sentence's
-   * case, as the client writes a word in a message ("Class level not found in this ruleset", of 3.5's "Class Level";
-   * "Feat <id> does not belong to this ruleset"): the type itself for one they have no word for.
-   */
+  /** What the ruleset's rules call an entity of a type (`type`), as a refusal or an issue names it (`labelIn`). */
   labelOf(type: string): string {
-    const one = this.words[type]?.one;
-    return one ? `${one.charAt(0)}${one.slice(1).toLowerCase()}` : type;
+    return RulesetData.labelIn(this.words, type);
   }
 
   /**
@@ -321,6 +328,14 @@ export default class RulesetData {
       const target = this.find(link.toType as keyof ViewKinds, link.toId) as ViewEntity | undefined;
       return target ? [{ ...link, toName: typeof target.name === "string" ? target.name : "" }] : [];
     });
+  }
+
+  /**
+   * The refusal of an entity of a type (`type`) the view doesn't show, named in its rules' word, after the level it's
+   * about (`about`: "Level 1: ") and before where it was sought (`where`: "in this ruleset"): "Class level not found".
+   */
+  notFound(type: string, { about = "", where }: { about?: string; where?: string } = {}): RulesError {
+    return new RulesError("not-found", `${about}${this.labelOf(type)} not found${where ? ` ${where}` : ""}`);
   }
 
   /**

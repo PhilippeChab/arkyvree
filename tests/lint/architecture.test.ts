@@ -92,7 +92,9 @@ describe("architecture rules", () => {
           "server/cow/views/h.ts": engine + `export function h(x: T) {\n  ${plan};\n  return ${describe};\n}\n`,
           // What the modules declare is no operation, read through a module's function or the action's own
           "server/services/n/kinds.ts":
-            engine + "export function isOwned(x: string) {\n  return Engine.storage().ownerOf(x) !== undefined;\n}\n",
+            engine +
+            "export function isOwned(x: string) {\n" +
+            "  return Engine.storage().ownerOf(x) !== undefined && Engine.rules().labelOf(x, x) !== x;\n}\n",
           "server/services/o.ts":
             engine +
             'import { isOwned } from "./n/kinds.ts";\n' +

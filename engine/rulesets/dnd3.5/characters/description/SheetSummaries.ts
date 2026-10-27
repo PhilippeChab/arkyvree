@@ -22,17 +22,20 @@ export default class SheetSummaries {
    * partly seen character's has none (`{}`).
    */
   static describe(classes: SheetClasses): SheetSummary {
+    // A level's word, as a label ("Level", "Levels") and as a sentence says it ("level", "levels")
+    const { many, one } = LEVEL_WORD;
+    const [manyLower, oneLower] = [many.toLowerCase(), one.toLowerCase()];
     return {
       separator: ClassLevels.SEPARATOR,
       words: {
-        add: "Add Level",
-        removeLast: "Remove Last Level",
-        removeLastMessage: "Are you sure you want to remove the last level? This action cannot be undone.",
+        add: `Add ${one}`,
+        removeLast: `Remove Last ${one}`,
+        removeLastMessage: `Are you sure you want to remove the last ${oneLower}? This action cannot be undone.`,
         deleteMessage:
-          "Are you sure you want to permanently delete this character? Its levels, abilities, inventory, attachments " +
-          "and customizations go with it. This action cannot be undone.",
-        removed: "Level removed",
-        removeFailed: "Failed to remove level",
+          `Are you sure you want to permanently delete this character? Its ${manyLower}, abilities, inventory, ` +
+          "attachments and customizations go with it. This action cannot be undone.",
+        removed: `${one} removed`,
+        removeFailed: `Failed to remove ${oneLower}`,
       },
       tracks: Object.values(classes).map(({ klass, levels }) => {
         const label = ClassLevels.format(klass.name, levels.length);
@@ -41,11 +44,11 @@ export default class SheetSummaries {
           entityType: "classes",
           name: klass.name,
           label,
-          words: { open: `${label} Levels`, levels: `${klass.name} Levels`, add: `Add ${klass.name} Level` },
+          words: { open: `${label} ${many}`, levels: `${klass.name} ${many}`, add: `Add ${klass.name} ${one}` },
           advancements: levels.map(({ advancement, classLevel }) => ({
             id: advancement.id,
-            label: `${LEVEL_WORD.one} ${classLevel.position}`,
-            edit: `Edit ${klass.name} ${LEVEL_WORD.one} ${classLevel.position}`,
+            label: `${one} ${classLevel.position}`,
+            edit: `Edit ${klass.name} ${one} ${classLevel.position}`,
           })),
         };
       }),

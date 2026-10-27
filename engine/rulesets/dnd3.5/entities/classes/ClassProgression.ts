@@ -442,10 +442,6 @@ export default class ClassProgression {
     });
     return {
       activity: { entityName: this.klass.name, levels: owned.length },
-      gone: {
-        owned: "Class level no longer exists; refresh the class",
-        owner: "Class no longer exists; refresh the class",
-      },
       owned,
       ownedType: "class-levels",
       owner: this.klass,

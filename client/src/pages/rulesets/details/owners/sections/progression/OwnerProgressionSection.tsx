@@ -43,6 +43,7 @@ import { useEntityFields, useOpenEntity, useRulesetSection } from "@/client/src/
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildEntityPagePath } from "@/shared/customization/entities.ts";
 import { isRecord } from "@/shared/isRecord.ts";
+import { toSentenceCase } from "@/shared/text.ts";
 
 import { CHANGED_CELL_SX } from "./changedCell.ts";
 import { OwnerFeaturesCard } from "./OwnerFeaturesCard.tsx";
@@ -168,7 +169,7 @@ export function OwnerProgressionSection({ rulesetId, ownerId, ownerName, ownerTy
   const { createDialogProps, handleCreate } = useRulesetSection({
     createDefaults: withEntityFields(nextLevel(levels, levelLists), levelFields, savedRows.at(-1)),
     rulesetId,
-    label: `${levelWord.charAt(0)}${levelWord.slice(1).toLowerCase()}`,
+    label: toSentenceCase(levelWord),
     query,
     data: levelRows,
     queryKeysToInvalidate,

@@ -8,6 +8,7 @@ import type {
   RulesDescription,
   RulesetModule,
 } from "@/engine/core/module/index.ts";
+import { RulesetData } from "@/engine/core/view/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 import Modules, { type EntityType } from "./Modules.ts";
@@ -159,6 +160,14 @@ export default class RulesEngine {
     return Object.fromEntries(
       this.modules.map(([baseRules, module]) => [baseRules, this.describeModule(module)]),
     ) as Record<BaseRules, RulesDescription>;
+  }
+
+  /**
+   * What a base rules' refusals call an entity of a type (`type`), in its rules' word, as its rulesets' views do
+   * (`RulesetData.labelOf`): "Class level". What the server's own refusals of an entity name it by.
+   */
+  labelOf(baseRules: BaseRules, type: string): string {
+    return RulesetData.labelIn(Modules.of(baseRules).ruleset.describeRules().words, type);
   }
 
   /**

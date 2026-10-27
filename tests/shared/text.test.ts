@@ -2,13 +2,19 @@ import { describe, expect, test } from "bun:test";
 
 import { isOneOf } from "@/shared/isOneOf.ts";
 import { isRecord } from "@/shared/isRecord.ts";
-import { capitalize, formatSigned, sanitizeText, stripSeparators } from "@/shared/text.ts";
+import { capitalize, formatSigned, sanitizeText, stripSeparators, toSentenceCase } from "@/shared/text.ts";
 
 describe("Text", () => {
   test("is capitalized by its first letter only", () => {
     expect(capitalize("medium load")).toBe("Medium load");
     expect(capitalize("iOS")).toBe("IOS");
     expect(capitalize("")).toBe("");
+  });
+
+  test("is written in a sentence's case from a label's Title Case", () => {
+    expect(toSentenceCase("Owned Step")).toBe("Owned step");
+    expect(toSentenceCase("Gizmo")).toBe("Gizmo");
+    expect(toSentenceCase("")).toBe("");
   });
 
   test("carries a bonus's sign, a missing one +0", () => {
