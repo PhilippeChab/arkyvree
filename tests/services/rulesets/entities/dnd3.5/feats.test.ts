@@ -56,6 +56,58 @@ describe("EntitiesService: feats", () => {
       expect(await linkedAptitudeIds(feat.id)).toEqual([]);
     });
 
+    test("an edit answers an aptitude its fork copied after the feat was listed in it as the copy, as its page does", async () => {
+      const {
+        user,
+        session,
+        ruleset: parent,
+        aptitudeIds: [combat],
+      } = await createTestUserAndRuleset(APTITUDES);
+      const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+      const feat = await EntitiesService.createEntity(session, fork.id, "feats", {
+        name: "Cleave",
+        links: { listedIn: [{ toId: combat }] },
+      });
+      const copy = await EntitiesService.updateEntity(session, fork.id, "aptitudes", combat, { name: "Melee" });
+
+      // Its stored list is the original, which its view reads as the fork's copy
+      const edited = await EntitiesService.updateEntity(session, fork.id, "feats", feat.id, {
+        name: "Cleave",
+        description: "Renamed list",
+      });
+      expect(edited.links).toEqual([expect.objectContaining({ role: "listedIn", toId: copy.id, toName: "Melee" })]);
+      expect(edited.links).toEqual((await EntitiesService.getEntity(session, fork.id, "feats", feat.id)).links);
+    });
+
+    test("an edit in a fork of a fork answers the copy of the aptitude that stands for it there, or none once it's deleted, as its page does", async () => {
+      const {
+        user,
+        session,
+        ruleset: base,
+        aptitudeIds: [combat],
+      } = await createTestUserAndRuleset(APTITUDES);
+      const middle = await createTestRuleset(user.id, { rulesetId: base.id, ancestorRulesetIds: [base.id] });
+      const leaf = await createTestRuleset(user.id, { rulesetId: middle.id, ancestorRulesetIds: [middle.id, base.id] });
+      const feat = await EntitiesService.createEntity(session, leaf.id, "feats", {
+        name: "Cleave",
+        links: { listedIn: [{ toId: combat }] },
+      });
+      const editedLinks = async () => {
+        const edited = await EntitiesService.updateEntity(session, leaf.id, "feats", feat.id, { name: "Cleave" });
+        expect(edited.links).toEqual((await EntitiesService.getEntity(session, leaf.id, "feats", feat.id)).links);
+        return edited.links;
+      };
+
+      const middleCopy = await EntitiesService.updateEntity(session, middle.id, "aptitudes", combat, {
+        name: "Middle",
+      });
+      expect(await editedLinks()).toEqual([expect.objectContaining({ toId: middleCopy.id, toName: "Middle" })]);
+      const leafCopy = await EntitiesService.updateEntity(session, leaf.id, "aptitudes", combat, { name: "Leaf" });
+      expect(await editedLinks()).toEqual([expect.objectContaining({ toId: leafCopy.id, toName: "Leaf" })]);
+      await EntitiesService.deleteEntity(session, leaf.id, "aptitudes", leafCopy.id);
+      expect(await editedLinks()).toEqual([]);
+    });
+
     test("refuses a new feat without an aptitude", async () => {
       const { session, ruleset } = await createTestUserAndRuleset(APTITUDES);
       await expectRefusedWith(
