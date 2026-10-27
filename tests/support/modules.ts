@@ -1,4 +1,5 @@
 import Modules from "@/engine/api/Modules.ts";
+import StorageEngine from "@/engine/api/StorageEngine.ts";
 import type { Fields } from "@/engine/core/fields/index.ts";
 import type { RulesetModule, StorageDeclaration } from "@/engine/core/module/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
@@ -51,4 +52,17 @@ export function modulesWithCharacterFlagAndSet(): [BaseRules, RulesetModule][] {
   return modulesWith((_, __, characterFields) => {
     Object.assign(characterFields, CHARACTER_FLAG_AND_SET);
   });
+}
+
+/**
+ * Every registered module, and a made-up one beside them (`second`), the first's but for its storage and its fields: it
+ * stores no kind, role or step of its own, and declares these fields alone (`fields`, by owner type: its characters',
+ * its rulesets' Settings').
+ */
+export function modulesWithSecond(fields: Record<string, Fields>): [BaseRules, RulesetModule][] {
+  const [[, first]] = Modules.all();
+  const { [StorageEngine.shared().characterOwnerType]: characterFields = {}, ...owners } = fields;
+  const registries = { characterRoles: [], entityTypes: [], itemTypes: [], linkRoles: [], rulesetRoles: [], steps: [] };
+  const storage = { character: { playerKind: "second-pc", scoredRoles: [] }, kinds: {}, registries };
+  return [...Modules.all(), ["second" as BaseRules, { ...first, characterFields, fields: owners, storage }]];
 }

@@ -1,8 +1,9 @@
 import { eq, inArray, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { rulesetFieldsInRules, rulesetLinksInRules } from "@/drizzle/schema.ts";
+import { rulesetFieldsInRules, rulesetLinksInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import { Engine, type FieldsWrite, type FieldValue, type StoredRuleset } from "@/engine/index.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 import { toFieldRows } from "./toFieldRows.ts";
 
@@ -27,6 +28,16 @@ function unnest(named: { id: string; name: string }[]) {
  * (`createCopy`).
  */
 class StoredSettings {
+  /** The base rules of rulesets (`ids`), by id: whose module's fields their Settings' write takes. */
+  private async baseRulesOf(db: Db, ids: string[]) {
+    if (ids.length === 0) return new Map<string, BaseRules>();
+    const rows = await db
+      .select({ id: rulesetsInRules.id, baseRules: rulesetsInRules.baseRules })
+      .from(rulesetsInRules)
+      .where(inArray(rulesetsInRules.id, ids));
+    return new Map(rows.map((row) => [row.id, row.baseRules]));
+  }
+
   /**
    * Copies a ruleset's Settings as they're stored (`fromId`'s) onto another (`toId`, a fork that holds none): its
    * fields' values and its links, the entities they name as they are (the fork's view resolves them). One insert of
@@ -83,19 +94,23 @@ class StoredSettings {
   /**
    * Writes rulesets' Settings (`writes`, each a ruleset's): each field and link role a write names replaced by its
    * values (in their order, a set's ordinals 0 to n-1) and the entity it names, none for `[]` or null; what it doesn't
-   * name stays. A value is written as every write stores it (`Engine.storage().writtenFields`), in its field's column
-   * by its declaration, refused when it isn't of its kind.
+   * name stays. A value is written as every write stores it, as its ruleset's own module declares it
+   * (`Engine.storage().writtenFields`, by its base rules), in its field's column by its declaration, refused when it
+   * isn't of its kind.
    */
   async update(db: Db, writes: SettingsUpdate[]) {
     const storage = Engine.storage();
     const roles = storage.registries().rulesetRoles;
     const fields = writes.flatMap(({ id, write }) => Object.keys(write.fields).map((name) => ({ id, name })));
     const links = writes.flatMap(({ id, write }) => Object.keys(write.links).map((name) => ({ id, name })));
-    const fieldRows = writes.flatMap(({ id, write }) =>
-      Object.entries(storage.writtenFields(storage.settingsOwnerType, write.fields, false)).flatMap(([field, values]) =>
+    const modules = await this.baseRulesOf(db, [...new Set(fields.map(({ id }) => id))]);
+    const fieldRows = writes.flatMap(({ id, write }) => {
+      if (Object.keys(write.fields).length === 0) return [];
+      const written = storage.writtenFields(storage.settingsOwnerType, write.fields, false, modules.get(id));
+      return Object.entries(written).flatMap(([field, values]) =>
         toFieldRows(storage.settingsOwnerType, field, values).map((row) => ({ rulesetId: id, ...row })),
-      ),
-    );
+      );
+    });
     const linkRows = writes.flatMap(({ id, write }) =>
       Object.entries(write.links).flatMap(([role, toId]) => {
         const def = roles.find((held) => held.role === role);

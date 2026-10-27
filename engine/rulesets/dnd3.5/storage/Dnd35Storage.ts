@@ -49,10 +49,10 @@ export const LINK_ROLES = [
  * How 3.5 stores its data in the generic tables: its kinds (`KINDS`), its characters' (its links of the `score` role
  * hold an amount; its identity is its `CHARACTER_*` fields, its race a `race` link, a level an advancement, its feats
  * `feats` picks), and its registries' rows, which every migrate writes (`StoredRegistries.reconcile`;
- * `tests/database/dnd3.5/registries.test.ts` checks the database holds them; its fields' the engine derives from its
- * vocabulary's declarations): its link roles, by which its entities' links are read (an item's template is its
- * `madeFrom` link, a class's bonus spell ability its `bonusSpellAbility` link, a feat's pools its `listedIn` links, a
- * class's skills its `classSkill` links); a ruleset's skill point ability is its `skillPointAbility` link.
+ * `tests/database/dnd3.5/registries.test.ts` checks the database holds them): its link roles, by which its entities'
+ * links are read (an item's template is its `madeFrom` link, a class's bonus spell ability its `bonusSpellAbility`
+ * link, a feat's pools its `listedIn` links, a class's skills its `classSkill` links); a ruleset's skill point ability
+ * is its `skillPointAbility` link. Its fields' rows are the engine's, derived from its vocabulary's declarations.
  */
 export const DND35_STORAGE: StorageDeclaration = {
   kinds: KINDS,

@@ -38,16 +38,18 @@ function compareText(a: string, b: string) {
 }
 
 /**
- * Every module's owners' fields (`owners`, each module's by owner type), each owner type's merged field by field: a
- * field two modules declare of one owner type is refused, whatever else they declare of it (every module's characters'
- * fields share one owner type, and so do their rulesets' Settings').
+ * Every module's owners' fields (`owned`, each module's by owner type), by owner type: an owner type two modules declare
+ * is refused, but those every module's owners share (`shared`: their characters', their rulesets' Settings'), merged
+ * field by field, a field two modules declare of one refused.
  */
-function mergeFields(modules: [BaseRules, RulesetModule][], owners: (module: RulesetModule) => Record<string, Fields>) {
+function mergeFields(owned: ReadonlyMap<BaseRules, Record<string, Fields>>, shared: readonly string[]) {
   const merged: Record<string, Record<string, Fields[string]>> = {};
-  for (const [baseRules, module] of modules) {
-    for (const [ownerType, owned] of Object.entries(owners(module))) {
+  for (const [baseRules, owners] of owned) {
+    for (const [ownerType, fields] of Object.entries(owners)) {
+      if (ownerType in merged && !shared.includes(ownerType))
+        throw new Error(`${baseRules} declares ${ownerType}, which another module stores`);
       merged[ownerType] ??= {};
-      for (const [name, field] of Object.entries(owned)) {
+      for (const [name, field] of Object.entries(fields)) {
         if (name in merged[ownerType])
           throw new Error(`${baseRules} declares the field ${name} of ${ownerType}, which another module declares`);
         merged[ownerType][name] = field;
@@ -78,16 +80,21 @@ function mergeRecords<T>(modules: [BaseRules, RulesetModule][], pick: (module: R
  * links an entity's page edits (`editedLinks`), the kinds a name is the identity of (`isIdentityKind`), an owned kind's
  * owner (`ownerOf`) and the kinds no other owns (`standaloneKinds`), each field and link role (`field`, `role`), and
  * the registries' rows (`registries`: its fields' derived from their declarations, `fieldDefsOf`). Names are global: two
- * modules declaring one kind, role, or field of one owner type is refused, as the registries' keys refuse it.
+ * modules declaring one kind, role, or field of one owner type is refused, as the registries' keys refuse it. What a
+ * character's or a ruleset's Settings' write stores is its own module's fields' (`writtenFields`).
  */
 export default class StorageEngine {
   constructor(modules: [BaseRules, RulesetModule][]) {
     this.baseRules = modules.map(([baseRules]) => baseRules);
     this.kinds = mergeRecords(modules, (module) => module.storage.kinds);
-    this.fields = mergeFields(modules, (module) => ({
-      ...module.fields,
-      [this.characterOwnerType]: module.characterFields,
-    }));
+    this.owned = new Map(
+      modules.map(([baseRules, module]) => {
+        if (this.characterOwnerType in module.fields)
+          throw new Error(`${baseRules} declares its characters' fields among its owners', not as theirs`);
+        return [baseRules, { ...module.fields, [this.characterOwnerType]: module.characterFields }];
+      }),
+    );
+    this.fields = mergeFields(this.owned, [this.characterOwnerType, this.settingsOwnerType]);
     this.playerKindList = modules.map(([, module]) => module.storage.character.playerKind);
     this.customizable = Object.keys(this.kinds)
       .filter((type) => this.kinds[type].customizable)
@@ -214,6 +221,9 @@ export default class StorageEngine {
 
   private readonly merged: StorageRegistries;
 
+  /** Each module's owners' fields, by owner type (its characters' among them), by its base rules (`writtenFields`). */
+  private readonly owned: ReadonlyMap<BaseRules, Record<string, Fields>>;
+
   /** Each kind another owns, by its type, and the kind that owns it, in their declarations' order (`ownerOf`). */
   private readonly owners: ReadonlyMap<string, string>;
 
@@ -247,8 +257,8 @@ export default class StorageEngine {
   /** What every module declares of a view's kinds and links, once read (`viewSchema`). */
   private schema?: ViewSchema;
 
-  /** What a write of every module's owners' fields stores, once read (`writtenFields`). */
-  private writes?: FieldWrites;
+  /** What a write of each module's owners' fields stores, by its base rules, once read (`writtenFields`). */
+  private writes?: ReadonlyMap<BaseRules, FieldWrites>;
 
   /**
    * The registry rows of every module's fields (`fields`), each stored field of an owner type (but a reference's, which a
@@ -560,10 +570,22 @@ export default class StorageEngine {
   /**
    * What a write of an owner's fields (`fields`, of `ownerType`: an entity type, `settingsOwnerType`,
    * `characterOwnerType`) stores, by field, whoever writes it (a seed, a form's save, an import), so the same values store
-   * the same rows (`FieldWrites`): a new owner's (`creating`) or an existing one's.
+   * the same rows (`FieldWrites`): a new owner's (`creating`) or an existing one's. It takes the fields of the module
+   * that declares them: an entity type's, the one module that stores it; a character's or a ruleset's Settings', which
+   * every module declares, its own (`baseRules`, its ruleset's), so a new one holds its own module's defaults alone.
    */
-  writtenFields(ownerType: string, fields: Readonly<Record<string, FieldWrite>>, creating: boolean) {
-    this.writes ??= new FieldWrites(this.fields);
-    return this.writes.written(ownerType, fields, creating);
+  writtenFields(
+    ownerType: string,
+    fields: Readonly<Record<string, FieldWrite>>,
+    creating: boolean,
+    baseRules?: BaseRules,
+  ) {
+    this.writes ??= new Map([...this.owned].map(([module, owners]) => [module, new FieldWrites(owners)]));
+    const shared = ownerType === this.characterOwnerType || ownerType === this.settingsOwnerType;
+    const module = shared ? baseRules : [...this.owned].find(([, owners]) => ownerType in owners)?.[0];
+    const writes = module && this.writes.get(module);
+    if (shared && !writes)
+      throw new Error(`A write of the fields of ${ownerType} takes a registered module's base rules, not ${module}`);
+    return (writes ?? new FieldWrites({})).written(ownerType, fields, creating);
   }
 }
