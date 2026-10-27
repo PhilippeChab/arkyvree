@@ -17,6 +17,8 @@ graphile-worker runs in the worker app. Jobs are enqueued from the web process w
 
 `WORKER_FLYCAST_URL` env var controls the ping target. Unset in local/test → `pingWorker()` no-ops.
 
+Scheduled jobs (`crontab` in `server/jobs/runner.ts`: the cleanup daily at 04:00, the blob sweep hourly) only fire while the worker runs, and nothing wakes it for them. Each schedule backfills its last missed run (`?fill=1d`, `?fill=1h`), so a worker woken for any job also runs the cleanup or sweep that came due while it was stopped.
+
 ## Suspend vs stop
 
 - **Web uses `suspend`** (memory snapshot, ~200ms wake). Users wait on web, so cold-start speed matters. WS LISTEN client and DB pool both have reconnect logic for the stale-socket problem that suspend/resume produces.
