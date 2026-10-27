@@ -769,6 +769,18 @@ describe("characters", () => {
       );
     });
 
+    test("names a shared sheet's PDF whose name is cut short at a character beyond a single UTF-16 unit", async () => {
+      // Its 200th character is an emoji, two UTF-16 units: the cut keeps it whole
+      const { id } = await postCharacter({ name: `${"a".repeat(199)}😀 rest` });
+      const { shareToken } = await expectOk(character.share.$post({ param: { id } }));
+
+      const pdf = await guestApi.api.shared.characters[":shareToken"].pdf.$get({ param: { shareToken: shareToken! } });
+      expect(pdf.status).toBe(200);
+      expect(pdf.headers.get("Content-Disposition")).toBe(
+        `inline; filename*=UTF-8''${"a".repeat(199)}%F0%9F%98%80-sheet.pdf`,
+      );
+    });
+
     test("shares a master's bonded creature without its private notes", async () => {
       const { masterId, bonded } = await createWizardWithFamiliar();
       await expectOk(character.$put({ param: { id: bonded.id }, json: { privateNotes: PRIVATE_NOTES } }));

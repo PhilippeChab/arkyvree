@@ -17,7 +17,8 @@ const MAX_SHEET_BYTES = 10 * 1024 * 1024;
 /** A rendered sheet's file: its bytes, refused over 10 MB, and its name, the character's (`formatSheetFileName`). */
 export function toSheetFile(data: ArrayBuffer, characterName: string) {
   if (data.byteLength > MAX_SHEET_BYTES) {
-    const megabytes = (bytes: number) => Math.round(bytes / 1024 / 1024);
+    // Rounded up to a tenth, so a sheet past the cap never reads as at it
+    const megabytes = (bytes: number) => Math.ceil((bytes / 1024 / 1024) * 10) / 10;
     throw new UnprocessableEntityError(
       `This sheet's PDF is too large (${megabytes(data.byteLength)} MB, max ${megabytes(MAX_SHEET_BYTES)} MB)`,
     );

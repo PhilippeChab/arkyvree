@@ -8,5 +8,6 @@ describe("toSheetFile", () => {
     const limit = 10 * 1024 * 1024;
     expect(toSheetFile(new ArrayBuffer(limit), "Ada: Draft/1")).toMatchObject({ fileName: "Ada_ Draft_1-sheet.pdf" });
     expect(() => toSheetFile(new ArrayBuffer(limit + 1), "Ada")).toThrow(UnprocessableEntityError);
+    expect(() => toSheetFile(new ArrayBuffer(limit + 1), "Ada")).toThrow("too large (10.1 MB, max 10 MB)");
   });
 });
