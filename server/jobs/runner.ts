@@ -13,8 +13,12 @@ import { runCleanupTask } from "./runCleanup.ts";
 import { sendEmailTask } from "./sendEmail.ts";
 import { sweepPendingBlobsTask } from "./sweepPendingBlobs.ts";
 
-/** The cleanup at 4 every morning, the blob sweep every hour. */
-export const crontab = ["0 4 * * * runCleanup", "0 * * * * sweepPendingBlobs"].join("\n");
+/**
+ * The cleanup at 4 every morning, the blob sweep every hour. Fly stops the worker while it's idle and starts it for a
+ * job the web queues (`server/queue.ts`), so a schedule's time often finds it stopped: each one backfills its last missed
+ * run (`?fill`, a day for the cleanup, an hour for the sweep), which the worker runs once it starts.
+ */
+export const crontab = ["0 4 * * * runCleanup ?fill=1d", "0 * * * * sweepPendingBlobs ?fill=1h"].join("\n");
 
 export const taskList = {
   generatePdf: generatePdfTask,
