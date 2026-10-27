@@ -14,7 +14,7 @@ import {
   withEntityFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
-import { useEntityFields, useEntityPageBack } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityPageBack } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { entityQuery } from "./entityDetailQueries.ts";
@@ -29,14 +29,13 @@ interface EntityDetailsProps {
 }
 
 /**
- * An entity's details, any kind's whose row opens its own page: its form of its columns and fields, as its rules
+ * An entity's details, any kind's whose row opens its own page: its form of its fields, as its rules
  * describe them, saved and deleted through the routes by kind; its description alone for a read-only kind (an
  * ability's).
  */
 function EntityDetails({ entityId, kind, label, rulesetId }: EntityDetailsProps) {
   const param = { id: rulesetId, entityType: kind.type, entityId };
   const endpoint = rpc.api.rulesets[":id"].entities[":entityType"][":entityId"];
-  const { fields } = useEntityFields(rulesetId, kind.type);
 
   return (
     <RulesetEntityDetail
@@ -48,15 +47,15 @@ function EntityDetails({ entityId, kind, label, rulesetId }: EntityDetailsProps)
       editing={
         kind.readOnly
           ? undefined
-          : (columns) => ({
-              empty: toEntityForm<EntityFormData>(columns),
+          : (fields) => ({
+              empty: toEntityForm<EntityFormData>(fields),
               toFormValues: (entity): EntityFormData =>
-                withEntityFields<EntityFormData>(toEntityForm<EntityFormData>(columns, entity), fields, entity),
+                withEntityFields<EntityFormData>(toEntityForm<EntityFormData>(fields, entity), fields, entity),
               updateFn: (data, updatedAt) =>
                 parseResponse(
                   endpoint.$put({
                     param,
-                    json: { ...toEntityBody<EntityFormData, EntityFormData>(columns, data), updatedAt },
+                    json: { ...toEntityBody<EntityFormData, EntityFormData>(fields, data), updatedAt },
                   }),
                 ),
               removeFn: () => parseResponse(endpoint.$delete({ param })),

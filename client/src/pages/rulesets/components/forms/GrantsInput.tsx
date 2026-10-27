@@ -12,11 +12,11 @@ import {
 import { useDebouncedValue, useListboxQuery } from "@/client/src/hooks/index.ts";
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
-import { useEntityColumns } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { entityOptionsQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
 
-import type { ColumnInputProps } from "./columnContext.ts";
 import { poolsOf } from "./entityFields.ts";
+import type { EntityInputProps } from "./fieldContext.ts";
 import { grantKey, grantLabel, sortGrants } from "./grants.ts";
 
 /** A grant as its input holds it and its save sends it: its entity's id (`toId`) and the one it's through's (`viaId`). */
@@ -46,7 +46,7 @@ export function GrantsInput<T extends FieldValues>({
   form,
   name,
   rulesetId,
-}: ColumnInputProps<T, GrantsField>) {
+}: EntityInputProps<T, GrantsField>) {
   const { field: bound } = useController({ control: form.control, name });
   const grants: Grant[] = Array.isArray(bound.value) ? bound.value : [];
   const readOnly = useReadOnlyFields();
@@ -62,14 +62,14 @@ export function GrantsInput<T extends FieldValues>({
     ...entityOptionsQuery(rulesetId, field.references, debouncedSearch, { limit: 50 }),
     placeholderData: keepPreviousData,
   });
-  // An entity's pools, where its rules' columns say a read holds them
-  const { columns } = useEntityColumns(rulesetId, field.references);
+  // An entity's pools, where its rules' fields say a read holds them
+  const { fields } = useEntityFields(rulesetId, field.references);
   // Labels of the grants picked here, for when neither a later search nor the saved entity lists them.
   const [pickedLabels, setPickedLabels] = useState<ReadonlyMap<string, string>>(new Map());
 
   // One option per entity and pool it can be granted through.
   const options: GrantOption[] = entities.flatMap((entity) =>
-    poolsOf(columns, entity).map((pool) => ({
+    poolsOf(fields ?? [], entity).map((pool) => ({
       entityId: entity.id,
       viaId: pool.id,
       label: grantLabel(entity.name, pool.name),

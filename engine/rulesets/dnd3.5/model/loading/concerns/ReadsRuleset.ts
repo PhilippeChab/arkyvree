@@ -38,10 +38,10 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
       const classBonusSpellAbilityMap = new Map<string, string>();
       const classCasterTypeMap = new Map<string, CasterType>();
       for (const classId of classIds) {
-        const { bonusSpellAbilityId, casterType } = CLASS_FIELDS.read(
+        const { bonusSpellAbility, casterType } = CLASS_FIELDS.read(
           rulesetData.find("classes", classId) ?? OwnerValues.NONE,
         );
-        const abilityName = bonusSpellAbilityId ? abilityLookup.get(bonusSpellAbilityId) : undefined;
+        const abilityName = bonusSpellAbility ? abilityLookup.get(bonusSpellAbility) : undefined;
         if (abilityName) classBonusSpellAbilityMap.set(classId, abilityName);
         if (casterType) classCasterTypeMap.set(classId, casterType);
       }
@@ -58,7 +58,7 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
       // Each setting is the nearest ruleset of the chain's that holds it: the fork's own once it saves one, its
       // source's until then
       const settings = RULESET_FIELDS.read(rulesetData.rulesetValuesOf(ruleset.id));
-      const skillPointAbilityId = settings.skillPointAbilityId ? resolveId(settings.skillPointAbilityId) : null;
+      const skillPointAbilityId = settings.skillPointAbility ? resolveId(settings.skillPointAbility) : null;
       return { levelRules: new LevelRules(settings), skillFields, skillPointAbilityId };
     }
   }

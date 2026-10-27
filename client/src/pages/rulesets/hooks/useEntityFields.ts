@@ -1,15 +1,15 @@
-import { useQuery } from "@tanstack/react-query";
+import { useRulesetRules } from "@/client/src/hooks/index.ts";
+import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 
-import { type EntityField, rulesetFieldsQuery } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
-
-/** A type's fields when its ruleset declares none (a language's). */
+/** A type's fields when its rules describe none (an ability's). */
 const NO_FIELDS: readonly EntityField[] = [];
 
 /**
- * The fields an entity type's form shows, as its ruleset declares them (`rulesets`: its Settings'; an empty list for a
- * type it declares none for), and why they didn't load: none until they do.
+ * The fields an entity type's form shows, as its ruleset's rules describe them (`rulesets`: its Settings'; an empty
+ * list for a type they describe none for): those beside its name, its others, its lists of links. None until its
+ * ruleset and its rules load, and why either didn't (`error`).
  */
 export function useEntityFields(rulesetId: string, entityType: string) {
-  const { data, error } = useQuery(rulesetFieldsQuery(rulesetId));
-  return { error, fields: data && (Object.entries(data).find(([type]) => type === entityType)?.[1] ?? NO_FIELDS) };
+  const { rules, error } = useRulesetRules(rulesetId);
+  return { error, fields: rules && (rules.fields[entityType] ?? NO_FIELDS) };
 }

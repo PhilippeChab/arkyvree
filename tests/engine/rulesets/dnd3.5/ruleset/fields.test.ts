@@ -19,7 +19,7 @@ const CORE = {
 
 describe("A ruleset's own fields", () => {
   test("are the core rules' progression and no ability without their values, each off its field's values with them", () => {
-    expect(RULESET_FIELDS.read(OwnerValues.NONE)).toEqual({ ...CORE, skillPointAbilityId: null });
+    expect(RULESET_FIELDS.read(OwnerValues.NONE)).toEqual({ ...CORE, skillPointAbility: null });
     expect(
       RULESET_FIELDS.read(
         heldValues(
@@ -42,14 +42,14 @@ describe("A ruleset's own fields", () => {
           { amount: 1, level: 5 },
         ],
       },
-      skillPointAbilityId: "intelligence",
+      skillPointAbility: "intelligence",
     });
   });
 
   test("are kept in a value per field with a value, a progression's its frequency's and one per level more", () => {
     const written = (values: Partial<typeof RULESET_FIELDS.defaults>) => writtenValues(RULESET_FIELDS.write(values));
-    expect(written({ skillPointAbilityId: null })).toEqual({ fields: {}, links: {} });
-    expect(written({ skillPointAbilityId: "intelligence" })).toEqual({
+    expect(written({ skillPointAbility: null })).toEqual({ fields: {}, links: {} });
+    expect(written({ skillPointAbility: "intelligence" })).toEqual({
       fields: {},
       links: { skillPointAbility: "intelligence" },
     });
@@ -65,13 +65,13 @@ describe("A ruleset's own fields", () => {
     const progression = { featAdvancement: { every: 2, extra: [{ amount: 1, level: 3 }] } };
     await RulesetSettings.update(db, [{ id: ruleset.id, write: RULESET_FIELDS.write(progression) }]);
 
-    const partial = RULESET_FIELDS.write({ skillPointAbilityId: intelligence });
+    const partial = RULESET_FIELDS.write({ skillPointAbility: intelligence });
     expect(partial).toEqual({ fields: {}, links: { skillPointAbility: intelligence } });
     await RulesetSettings.update(db, [{ id: ruleset.id, write: partial }]);
     expect(RULESET_FIELDS.read(await findFormValues("rulesets", ruleset.id))).toEqual({
       ...CORE,
       ...progression,
-      skillPointAbilityId: intelligence,
+      skillPointAbility: intelligence,
     });
   });
 

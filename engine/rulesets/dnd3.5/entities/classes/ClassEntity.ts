@@ -2,29 +2,22 @@
 
 import { z } from "zod";
 
-import { type FormBody, type FormColumnValues, RulesetEntity } from "@/engine/core/entities/index.ts";
+import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
-import { DEFAULT_HIT_DIE } from "@/vocabulary/dnd3.5/classes.ts";
-import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import ClassLevelEntity from "./ClassLevelEntity.ts";
 import ClassProgression from "./ClassProgression.ts";
 import ClassSkills from "./ClassSkills.ts";
 import ClassTable from "./ClassTable.ts";
-import { CLASS_COLUMNS } from "./columns.ts";
-import { CLASS_FIELDS, CLASS_LEVEL_FIELDS } from "./fields.ts";
+import { CLASS_FIELDS } from "./fields.ts";
 
 /**
  * A class as the ruleset describes it, what its form stores, and its parts, each bound to the class as the view has
  * it: its levels, its class skills, its table.
  */
 export default class ClassEntity extends RulesetEntity<"classes", typeof CLASS_FIELDS.fields> {
-  /** Its hit die. */
-  protected override readonly columns = CLASS_COLUMNS;
-
-  /** The ability its bonus spells use, and the spells it casts. */
+  /** Its hit die, the ability its bonus spells use, and the spells it casts. */
   protected override readonly fields = CLASS_FIELDS;
 
   protected override readonly label = "Class";
@@ -36,23 +29,6 @@ export default class ClassEntity extends RulesetEntity<"classes", typeof CLASS_F
   override readonly ownedType = "class-levels";
 
   override readonly type = "classes";
-
-  /**
-   * A form's columns: the hit die it gives (a new class's `DEFAULT_HIT_DIE` when it gives none), or the edited class's.
-   */
-  protected override columnsOf(body: FormBody, klass?: Klass): FormColumnValues {
-    const columns = super.columnsOf(body, klass);
-    const hd = (body.fields[CLASS_HD] as number | undefined) ?? klass?.fields[CLASS_HD] ?? DEFAULT_HIT_DIE;
-    return { ...columns, fields: { ...columns.fields, [CLASS_HD]: hd } };
-  }
-
-  /**
-   * The fields a class level's form shows (`type`, the kind it owns: its levels), as the ruleset declares them: its base
-   * attack bonus, its skill points.
-   */
-  override describeOwnedFields(type: string) {
-    return type === this.ownedType ? CLASS_LEVEL_FIELDS.describe() : [];
-  }
 
   /**
    * A class level by its id alone, with its details, its class's name, which its page shows, and the ruleset that holds

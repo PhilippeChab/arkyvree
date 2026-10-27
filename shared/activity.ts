@@ -30,8 +30,8 @@ export interface ChangedLink {
 
 /**
  * The links of a role an update set (`role`: a feat's `listedIn`, a class level's `grants`), labeled as its role's
- * column describes it (`label`: "Aptitudes", "Feats"): the entries it added and those it removed, each in its order. An
- * entry whose own columns change (a spell list's level) is removed as it was and added as it is.
+ * declaration labels it (`label`: "Aptitudes", "Feats"): the entries it added and those it removed, each in its order.
+ * An entry whose own columns change (a spell list's level) is removed as it was and added as it is.
  */
 export interface ChangedLinks {
   added: ChangedLink[];

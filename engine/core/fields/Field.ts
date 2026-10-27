@@ -39,16 +39,21 @@ export type FieldValues<S extends Fields> = DeclaredFieldValues<S>;
 /** A field of a spec that isn't a group: a value of its own, which its stored field keeps (a reference's, a link). */
 export type LeafSpec = DeclaredLeafSpec<StandaloneKind>;
 
+/** A leaf its owner's links keep: a reference's single link, or a list of links of its role. */
+export type LinkedLeaf = Extract<LeafSpec, { kind: "links" | "ref" }>;
+
 /** No fields: a kind whose entities hold none of their own (`FieldCodec.NONE`). */
 export type NoFields = Record<never, never>;
 
 /** Some of the values an entity's fields read, by name, a group's some of its own: what a form gives of them. */
 export type PartialFieldValues<S extends Fields> = {
-  -readonly [K in keyof S]?: S[K] extends GroupSpec ? PartialFieldValues<S[K]["fields"]> : FieldValues<S>[K];
+  -readonly [K in keyof FieldValues<S>]?: S[K] extends GroupSpec
+    ? PartialFieldValues<S[K]["fields"]>
+    : FieldValues<S>[K];
 };
 
-/** A leaf its owner's fields keep: any but a reference, whose value is a single link's. */
-export type StoredLeaf = Exclude<LeafSpec, { kind: "ref" }>;
+/** A leaf its owner's fields keep: any but a reference or a list of links, whose values are links'. */
+export type StoredLeaf = Exclude<LeafSpec, { kind: "links" | "ref" }>;
 
 /** A flag's values, true first: the order a stat block lists them in. */
 const FLAG_VALUES = ["true", "false"] as const;
@@ -73,17 +78,31 @@ export default class Field {
    */
   static closedValuesOf(leaf: LeafSpec): readonly string[] | null {
     if (leaf.kind === "flag") return FLAG_VALUES;
-    return "values" in leaf && leaf.values ? leaf.values : null;
+    return leaf.kind !== "number" && "values" in leaf && leaf.values ? leaf.values : null;
   }
 
   /**
    * Whether a field counts beside the values of the fields at its level (`values`): always, unless its condition names
-   * one of them (`FieldCondition`) whose value isn't one it counts on. A column's condition is its form's alone.
+   * one of them (`FieldCondition`) whose value isn't one it counts on.
    */
   static counts(field: FieldSpec, values: Readonly<Record<string, unknown>>) {
     const { when } = field;
-    if (!when || !("field" in when)) return true;
+    if (!when) return true;
     return isOneOf(values[when.field], when.values);
+  }
+
+  /**
+   * Whether a field is one its form shows among its others, below its name, which a keeper keeps (`keepsForm`):
+   * neither beside its name (`placement`), nor one its form shows no input of (`form`), nor a list of links.
+   */
+  static isKept(field: FieldSpec): boolean {
+    if (field.kind === "group") return true;
+    return field.kind !== "links" && !field.placement && !("form" in field && field.form);
+  }
+
+  /** Whether a leaf's values are its owner's links of its role (a reference's, a list of links'), not a field's. */
+  static isLinked(leaf: LeafSpec): leaf is LinkedLeaf {
+    return leaf.kind === "ref" || leaf.kind === "links";
   }
 
   /**
@@ -92,13 +111,21 @@ export default class Field {
    */
   static keepersOf(fields: Fields): [string, StoredLeaf][] {
     return Object.entries(fields).flatMap(([key, field]): [string, StoredLeaf][] =>
-      field.kind !== "group" && field.kind !== "ref" && field.keepsForm ? [[key, field]] : [],
+      field.kind !== "group" && !Field.isLinked(field) && field.keepsForm ? [[key, field]] : [],
     );
   }
 
   /** The fields that hold a value of their own, a group's too, in the spec's order. */
   static leavesOf(fields: Fields): LeafSpec[] {
     return Object.values(fields).flatMap((field) => (field.kind === "group" ? Field.leavesOf(field.fields) : [field]));
+  }
+
+  /**
+   * Where a form holds a leaf's value, and an owner's write: its stored field's among its fields, or its link's role's
+   * among its links (a reference's, a list of links').
+   */
+  static placeOf(leaf: LeafSpec): { at: string; part: "fields" | "links" } {
+    return Field.isLinked(leaf) ? { at: leaf.role, part: "links" } : { at: leaf.field, part: "fields" };
   }
 
   /**
@@ -123,9 +150,12 @@ export default class Field {
     }
   }
 
-  /** The leaves its owner's fields keep, a group's too, in the spec's order: a reference's value is a link's. */
+  /**
+   * The leaves its owner's fields keep, a group's too, in the spec's order: a reference's and a list of links' values
+   * are links'.
+   */
   static storedLeavesOf(fields: Fields): StoredLeaf[] {
-    return Field.leavesOf(fields).flatMap((leaf) => (leaf.kind === "ref" ? [] : [leaf]));
+    return Field.leavesOf(fields).flatMap((leaf) => (Field.isLinked(leaf) ? [] : [leaf]));
   }
 
   /**

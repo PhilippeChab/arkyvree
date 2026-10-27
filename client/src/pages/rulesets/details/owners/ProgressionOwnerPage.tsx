@@ -19,7 +19,6 @@ import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets
 import { entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
 import {
   useCopyOnWrite,
-  useEntityColumns,
   useEntityFields,
   useEntityForm,
   useEntityPageBack,
@@ -37,7 +36,7 @@ interface OwnerViewProps {
   /** Where Back goes, and its name */
   back: ReturnType<typeof useEntityPageBack>;
   ownerId: string;
-  /** Its kind (3.5's `classes`), whose routes, columns and words its page reads */
+  /** Its kind (3.5's `classes`), whose routes, fields and words its page reads */
   ownerType: string;
   /** The owner's ruleset, whose base rules its forms, its fields and its tabs are */
   ruleset: RulesetDetail;
@@ -50,7 +49,7 @@ interface OwnerViewProps {
 
 /** What a progression owner's page takes: its kind (3.5's `classes`), and its kind's module's rules. */
 interface ProgressionOwnerPageProps {
-  /** Its kind (3.5's `classes`), whose routes, columns and words its page reads */
+  /** Its kind (3.5's `classes`), whose routes, fields and words its page reads */
   ownerType: string;
   /** Its kind's module's rules, which its words are */
   rules: RulesDescription;
@@ -98,15 +97,14 @@ function OwnerView({ back, ownerId, ownerType, ruleset, rulesetId, section, word
   const { restorable, error: changesError } = useRestorableDelete(ruleset, ownerData);
 
   const { fields: ownerFields } = useEntityFields(rulesetId, ownerType);
-  const { columns: ownerColumns } = useEntityColumns(rulesetId, ownerType);
-  // Its form of the owner: its columns as its rules describe them, and the fields its ruleset declares for its kind
+  // Its form of the owner: its fields as its rules describe them for its kind
   const toOwnerForm = (entity: OwnerDetail) =>
-    withEntityFields(toEntityForm<EntityFormData>(ownerColumns, entity), ownerFields, entity);
+    withEntityFields(toEntityForm<EntityFormData>(ownerFields ?? [], entity), ownerFields, entity);
   const forgetSource = copy.forgetSource(!!ownerData);
 
   const { form: editForm, save } = useEntityForm({
     // Its rules' empty owner until the owner loads, which its editor never shows
-    empty: toEntityForm<EntityFormData>(ownerColumns),
+    empty: toEntityForm<EntityFormData>(ownerFields ?? []),
     values: ownerData && toOwnerForm(ownerData),
     formKey: copy.key,
     adoptKey: copy.adoptKey,
@@ -119,7 +117,7 @@ function OwnerView({ back, ownerId, ownerType, ruleset, rulesetId, section, word
       parseResponse(
         rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].$put({
           param: { id: rulesetId, entityType: ownerType, entityId: ownerId },
-          json: { ...toEntityBody<EntityFormData, EntityFormData>(ownerColumns, data), updatedAt },
+          json: { ...toEntityBody<EntityFormData, EntityFormData>(ownerFields ?? [], data), updatedAt },
         }),
       ),
     toFormValues: toOwnerForm,

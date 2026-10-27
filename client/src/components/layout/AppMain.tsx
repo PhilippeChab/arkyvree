@@ -20,7 +20,7 @@ interface AppMainProps {
  * Scrolling page area of the app shells: sits under the app bar, centers the
  * routed page with the footer below, and eases back to the top on navigation.
  * Its pages wait for the rules every ruleset's pages read (their words, their
- * forms' columns, their tabs), which load once and are kept: should they fail,
+ * forms' fields, their tabs), which load once and are kept: should they fail,
  * it says so with a retry in place of the page, which never shows without them.
  */
 export function AppMain({ banner, railWidth = 0 }: AppMainProps) {

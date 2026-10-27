@@ -9,7 +9,7 @@ import type { ProgressionGrants, RulesWords } from "@/client/src/lib/queries.ts"
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { grantLabel, poolsOf } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { useEntityOptions } from "@/client/src/pages/rulesets/components/index.ts";
-import { useEntityColumns } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { entityOptionsQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
 
 import { LevelToggles } from "./LevelToggles.tsx";
@@ -100,10 +100,10 @@ export function OwnerFeaturesCard({
     scope: grants.pools.scope,
     what: entityTypeLabel(grants.pools.type, words, true),
   });
-  // An entity's pools, where its rules' columns say a read holds them
-  const { columns: grantedColumns } = useEntityColumns(rulesetId, granted.type);
+  // An entity's pools, where its rules' fields say a read holds them
+  const { fields: grantedFields } = useEntityFields(rulesetId, granted.type);
   const entityOptions = entities.flatMap((entity) =>
-    poolsOf(grantedColumns, entity).map((pool): FeatureRow => ({
+    poolsOf(grantedFields ?? [], entity).map((pool): FeatureRow => ({
       entityId: entity.id,
       key: describeFeatureKey({ entityId: entity.id, viaId: pool.id }),
       levelIds: [],

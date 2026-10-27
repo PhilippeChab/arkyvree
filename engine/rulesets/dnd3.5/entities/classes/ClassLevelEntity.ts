@@ -2,9 +2,9 @@
 
 import { z } from "zod";
 
-import { CustomizationPageEntity, type FormBody, type FormColumnValues } from "@/engine/core/entities/index.ts";
-import type { EntityForm, EntityLinkEntry, PartialFieldValues } from "@/engine/core/fields/index.ts";
-import type { EntityWrites, LinkSet } from "@/engine/core/module/index.ts";
+import { CustomizationPageEntity, type FormBody } from "@/engine/core/entities/index.ts";
+import type { EntityForm, PartialFieldValues } from "@/engine/core/fields/index.ts";
+import type { EntityWrite, EntityWrites, LinkSet } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
@@ -13,7 +13,6 @@ import ClassesPaths from "@/engine/rulesets/dnd3.5/model/classes/ClassesPaths.ts
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
-import { CLASS_LEVEL_COLUMNS } from "./columns.ts";
 import { CLASS_LEVEL_FIELDS } from "./fields.ts";
 
 /** A new level's number: the class's first to its last. */
@@ -35,35 +34,24 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     super(view);
   }
 
-  /** Its saves' base bonuses and the feats it grants. */
-  protected override readonly columns = CLASS_LEVEL_COLUMNS;
-
-  /** Its base attack bonus and its skill points. */
+  /** Its saves' base bonuses and the feats it grants, its base attack bonus and its skill points. */
   protected override readonly fields = CLASS_LEVEL_FIELDS;
 
   protected override readonly label = "Class level";
 
-  /** The pools its granted feats are taken through, which its edit's activity names them by: aptitudes. */
-  protected override readonly viaTypes = { grants: "aptitudes" };
-
   override readonly type = "class-levels";
 
   /**
-   * Refuses a new level without its number (its `position`), or past the class's bounds (its columns refuse a save's
+   * Refuses a new level without its number (its `position`), or past the class's bounds (its fields refuse a save's
    * base bonus past the rules').
    */
-  protected override checkForm({ position }: FormBody, level?: KlassLevel) {
+  protected override checkForm({ position }: FormBody, _given: object, level?: KlassLevel) {
     if (!level) RulesError.parse(LEVEL, position, ["position"]);
-  }
-
-  /** A form's columns: none, a level's number is its own (a new one's, its form's: `planCreate`). */
-  protected override columnsOf(): FormColumnValues {
-    return { fields: {}, links: {} };
   }
 
   /**
    * A form's links, by role: the feats it grants (`grants`, each through its pool, free unless it says), and its saves'
-   * base bonuses (`baseBonus`), each entity the view's (`resolveIds`). A role the form leaves out it keeps.
+   * base bonuses (`baseBonus`), each entity the view's. A role the form leaves out it keeps.
    */
   protected override linksOf(body: FormBody): LinkSet[] {
     const sets = super.linksOf(body) ?? [];
@@ -74,26 +62,9 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     ];
   }
 
-  /**
-   * A form's granted feats and their pools, and its saves, the view's: refused when it names a save or a feat twice (by
-   * its source's id and its copy's), a level granting a feat once.
-   */
-  protected override resolveIds(body: FormBody) {
-    const links = super.resolveIds(body);
-    const grants = links.grants as EntityLinkEntry[] | undefined;
-    if (!grants) return links;
-    const featIds = this.ids.resolveAll(
-      "feats",
-      grants.map((grant) => grant.toId),
-    );
-    return {
-      ...links,
-      grants: grants.map((grant, index) => ({
-        ...grant,
-        toId: featIds[index],
-        viaId: this.ids.resolve("aptitudes", grant.viaId!),
-      })),
-    };
+  /** What a level's form writes of its row: nothing, a level has no name nor description (its number its `position`). */
+  protected override storedOf(): EntityWrite {
+    return {};
   }
 
   /**
@@ -137,7 +108,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
    */
   override planCreate(form: EntityForm) {
     const plan = super.planCreate(form);
-    const level = RulesError.parse(LEVEL, this.formOf(form).position);
+    const level = RulesError.parse(LEVEL, form.position);
     return {
       ...plan,
       activity: { entityName: this.klass.name, level },

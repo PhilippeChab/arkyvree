@@ -12,6 +12,11 @@ interface FormFieldBase {
   help: string;
   label: string;
   /**
+   * Where its form shows it: beside its name and description, before its other fields (3.5's class's hit die, an item's
+   * cost). None: among its other fields, a list of links after them
+   */
+  placement?: "beside-name";
+  /**
    * The role of the link it's kept in, which its form sends among its `links` (a reference's, a template's, a list of
    * links'): none for a field's.
    */

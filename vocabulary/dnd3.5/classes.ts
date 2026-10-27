@@ -20,6 +20,9 @@ export const DEFAULT_HIT_DIE = 8;
 export const FIRST_LEVEL_GENERAL_FEATS = 1;
 /** How many character levels apart the general feats come in the core rules: one at every third level. */
 export const GENERAL_FEAT_LEVEL_INTERVAL = 3;
+/** Each hit die's name, as dice notation writes it, by its place among `HIT_DIE_VALUES`. */
+export const HIT_DIE_LABELS = ["d4", "d6", "d8", "d10", "d12"] as const;
+/** The dice a class's levels roll for hit points. */
 export const HIT_DIE_VALUES = [4, 6, 8, 10, 12] as const;
 /** The highest character level: the app has no epic levels. */
 export const MAX_CHARACTER_LEVEL = 20;

@@ -14,13 +14,14 @@ import { useRulesetRules } from "@/client/src/hooks/index.ts";
 import { formatCount } from "@/client/src/lib/formatNumeric.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { NAME_RULES } from "@/client/src/lib/validation.ts";
+import { formSectionsOf } from "@/client/src/pages/rulesets/components/forms/index.ts";
 
 import { type EntityVariantsFormValues, type VariantRow, variantRow } from "./entityVariants.ts";
 
 interface EntityVariantsDialogProps {
   baseDescription?: string | null;
   baseName: string;
-  /** Its kind's type (`items`), whose word and columns it names */
+  /** Its kind's type (`items`), whose word and fields it names */
   entityType: string;
   /** Reset by the caller before opening, with `variantRow(entity, 1)`. */
   form: UseFormReturn<EntityVariantsFormValues>;
@@ -52,9 +53,10 @@ export function EntityVariantsDialog({
 }: EntityVariantsDialogProps) {
   const { rules } = useRulesetRules(rulesetId);
   const one = entityTypeLabel(entityType, rules?.words).toLowerCase();
-  // What a variant copies of its base entity: its columns, as its rules name them ("cost, weight, item type…")
+  // What a variant copies of its base entity: the fields beside its name, as its rules name them ("cost, weight, item
+  // type…")
   const copied = COPIED_LIST.format([
-    ...new Set((rules?.columns[entityType] ?? []).map((column) => column.label.toLowerCase())),
+    ...new Set(formSectionsOf(rules?.fields[entityType] ?? []).beside.map((field) => field.label.toLowerCase())),
   ]);
   const { fields, append, remove } = useFieldArray({
     control: form.control,

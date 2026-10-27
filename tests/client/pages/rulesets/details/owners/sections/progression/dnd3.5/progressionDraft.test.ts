@@ -1,21 +1,19 @@
 import { describe, expect, test } from "bun:test";
 
-import { type LevelColumns, readLevel } from "@/client/src/pages/rulesets/components/forms/levelForm.ts";
+import { type LevelLists, levelListsOf, readLevel } from "@/client/src/pages/rulesets/components/forms/levelForm.ts";
 import {
   buildProgressionBody,
   describeFeatureRows,
   NO_EDITS,
 } from "@/client/src/pages/rulesets/details/owners/sections/progression/progressionDraft.ts";
-import { CLASS_LEVEL_COLUMNS } from "@/engine/rulesets/dnd3.5/entities/classes/columns.ts";
+import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
+import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
-/** A 3.5 class level's columns the tab reads past its fields: its saves' bases and its granted feats. */
-const COLUMNS: LevelColumns = {
-  amounts: CLASS_LEVEL_COLUMNS.find((column) => column.input === "amounts"),
-  grants: CLASS_LEVEL_COLUMNS.find((column) => column.input === "grants"),
-} as LevelColumns;
-
 const EVASION = { id: "evasion", viaId: "features", name: "Evasion" };
+
+/** A 3.5 class level's lists of links, as its rules describe them: its saves' bases and its granted feats. */
+const LISTS: LevelLists = levelListsOf(CLASS_LEVEL_FIELDS.describe() as unknown as EntityField[]);
 
 /** The fields a 3.5 class's Progression tab sets: its base attack bonus and skill points, each by its stored field. */
 const TRACKS = [
@@ -36,7 +34,7 @@ function level(id: string, number: number, grants: { id: string; name: string; v
     baseBonus: [{ toId: "fort", amount: 2 }],
     grants: grants.map((grant) => ({ ...grant, description: null, viaName: "Class Features", free: false })),
   };
-  return readLevel(row, COLUMNS, TRACKS);
+  return readLevel(row, LISTS, TRACKS);
 }
 
 /** A class's first two levels, its second granting Evasion. */
@@ -60,12 +58,12 @@ describe("A Progression tab's save", () => {
 
   test("sends nothing for a tab that changed nothing", () => {
     expect(
-      buildProgressionBody(twoLevels(), COLUMNS, TRACKS, ["fort"], describeFeatureRows(twoLevels()), [], NO_EDITS),
+      buildProgressionBody(twoLevels(), LISTS, TRACKS, ["fort"], describeFeatureRows(twoLevels()), [], NO_EDITS),
     ).toEqual({});
   });
 
   test("sends a level's own saves as they are while the ruleset's aren't read yet, never none", () => {
-    const body = buildProgressionBody(twoLevels(), COLUMNS, TRACKS, undefined, [], [], {
+    const body = buildProgressionBody(twoLevels(), LISTS, TRACKS, undefined, [], [], {
       ...NO_EDITS,
       tracks: { bab: { l1: 0 } },
     });
@@ -74,7 +72,7 @@ describe("A Progression tab's save", () => {
 
   test("sends no pick at a level the class no longer has", () => {
     const pools = [{ id: "pool", name: "Pool", picks: {} }];
-    const body = buildProgressionBody(twoLevels(), COLUMNS, TRACKS, ["fort"], [], pools, {
+    const body = buildProgressionBody(twoLevels(), LISTS, TRACKS, ["fort"], [], pools, {
       ...NO_EDITS,
       pools: { pool: { gone: 1 } },
     });
@@ -85,7 +83,7 @@ describe("A Progression tab's save", () => {
     const features = describeFeatureRows(twoLevels());
     const body = buildProgressionBody(
       twoLevels(),
-      COLUMNS,
+      LISTS,
       TRACKS,
       ["fort"],
       features,

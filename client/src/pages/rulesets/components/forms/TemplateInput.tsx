@@ -9,8 +9,8 @@ import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQue
 import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { templatesQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
 
-import type { ColumnInputProps } from "./columnContext.ts";
-import { emptyFieldValues, setFormParts, toFieldValues } from "./entityFields.ts";
+import { emptyFieldValues, formSectionsOf, setFormParts, toFieldValues } from "./entityFields.ts";
+import type { EntityInputProps } from "./fieldContext.ts";
 import { templateOptions } from "./templateOptions.ts";
 
 /** The template an entity is made from (an item's). */
@@ -27,7 +27,7 @@ function fetchTemplate(queryClient: QueryClient, rulesetId: string, entityType: 
   });
 }
 
-/** A path of a form's values, which a column's description names as text (`fields.ITEM_TYPE`). */
+/** A path of a form's values, which a field's description names as text (`fields.ITEM_TYPE`). */
 function formPath<T extends FieldValues>(path: string): FieldPath<T> {
   return path as FieldPath<T>;
 }
@@ -36,7 +36,7 @@ function formPath<T extends FieldValues>(path: string): FieldPath<T> {
  * The template an item is made from: a select of its type's templates (`typeField`, the stored field whose value
  * they're of), named for it ("Weapon Template"). An item starts with its template's fields, which a save keeps none of
  * while they're the template's: another template's fill in once they load, unless another was picked since, and none
- * leaves them empty. Its columns (its cost, its weight) stay as they are.
+ * leaves them empty. The fields beside its name (its cost, its weight) stay as they are.
  */
 export function TemplateInput<T extends FieldValues>({
   context,
@@ -45,13 +45,15 @@ export function TemplateInput<T extends FieldValues>({
   form,
   name,
   rulesetId,
-}: ColumnInputProps<T, TemplateField>) {
+}: EntityInputProps<T, TemplateField>) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const type: unknown = useWatch({ control: form.control, name: formPath<T>(`fields.${field.typeField}`) });
   const held: unknown = useWatch({ control: form.control, name });
   const { data: templates, isLoading, error } = useQuery(templatesQuery(rulesetId, entityType, String(type)));
-  const { fields } = useEntityFields(rulesetId, entityType);
+  const { fields: described } = useEntityFields(rulesetId, entityType);
+  // Its template's fields are those it shows among its others
+  const fields = described && formSectionsOf(described).body;
 
   const handleTemplateChange = (templateId: unknown) => {
     if (!fields) return;

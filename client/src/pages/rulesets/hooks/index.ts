@@ -1,6 +1,5 @@
 export { useAllAmounts } from "./useAllAmounts.ts";
 export { useCopyOnWrite } from "./useCopyOnWrite.ts";
-export { useEntityColumns } from "./useEntityColumns.ts";
 export { useEntityFields } from "./useEntityFields.ts";
 export { useEntityFilters } from "./useEntityFilters.ts";
 export { useEntityForm } from "./useEntityForm.ts";

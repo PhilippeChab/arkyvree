@@ -18,7 +18,7 @@ import {
 } from "@/client/src/pages/rulesets/hooks/useEntityFilters.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
-import { rulesetFieldsQuery, rulesetSettingsQuery } from "./rulesetQueries.ts";
+import { rulesetSettingsQuery } from "./rulesetQueries.ts";
 
 /**
  * A kind's list's filters: past every list's, those its kind narrows it by, the kind a race or a class is for and its
@@ -191,12 +191,7 @@ export function prefetchSection(
   childOnly: boolean,
 ) {
   const filters = { search: "", childOnly };
-  if (section === "settings") {
-    return Promise.all([
-      queryClient.prefetchQuery(rulesetSettingsQuery(rulesetId)),
-      queryClient.prefetchQuery(rulesetFieldsQuery(rulesetId)),
-    ]);
-  }
+  if (section === "settings") return queryClient.prefetchQuery(rulesetSettingsQuery(rulesetId));
   if (!kind) return;
   if (kind.families) return queryClient.prefetchInfiniteQuery(entityGroupsQuery(rulesetId, kind, filters));
   const where = kind.partitioned ? { ...filters, kind: entityKind, ...DEFAULT_ENTITY_SORT } : filters;

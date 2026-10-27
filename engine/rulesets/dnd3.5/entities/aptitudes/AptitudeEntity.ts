@@ -27,7 +27,7 @@ export default class AptitudeEntity extends RulesetEntity<"aptitudes"> {
   }
 
   /** Refuses renaming an aptitude the rules count on by name. */
-  protected override checkForm(body: FormBody, aptitude?: Aptitude) {
+  protected override checkForm(body: FormBody, _given: object, aptitude?: Aptitude) {
     if (aptitude) this.checkName(aptitude, body.name);
   }
 

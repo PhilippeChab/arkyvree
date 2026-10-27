@@ -4,10 +4,10 @@ import { CreateDialog, DeleteDialog, FormTextField } from "@/client/src/componen
 import { useRules } from "@/client/src/hooks/index.ts";
 import { wholeNumberRules } from "@/client/src/lib/validation.ts";
 import {
-  EntityFormFields,
-  type LevelColumns,
+  EntityFields,
   type LevelFormData,
   type LevelLinks,
+  type LevelLists,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import type { LinkWords } from "@/client/src/pages/rulesets/details/owners/ownerTab.ts";
 import { useAllAmounts } from "@/client/src/pages/rulesets/hooks/index.ts";
@@ -16,11 +16,11 @@ import type { BaseRules } from "@/shared/enums.ts";
 interface CreateLevelDialogProps {
   /** The ruleset's, whose last level bounds the level's number, and whose fields a level has. */
   baseRules: BaseRules;
-  /** Its level kind's columns past its fields: its amounts, which its save sends all of */
-  columns: LevelColumns;
   form: UseFormReturn<LevelFormData>;
-  /** Its level kind (3.5's `class-levels`), whose columns and fields its form shows */
+  /** Its level kind (3.5's `class-levels`), whose fields its form shows */
   levelType: string;
+  /** Its level kind's lists of links: its amounts, which its save sends all of */
+  lists: LevelLists;
   onClose: () => void;
   onSubmit: (data: LevelFormData) => void;
   open: boolean;
@@ -47,15 +47,15 @@ export function CreateLevelDialog({
   pending,
   rulesetId,
   baseRules,
-  columns,
+  lists,
   levelType,
 }: CreateLevelDialogProps) {
-  const { withAll } = useAllAmounts(rulesetId, columns.amounts);
+  const { withAll } = useAllAmounts(rulesetId, lists.amounts);
   // Its rules' last level bounds the number (none while they load: the save's check still holds it)
   const lastLevel = useRules(baseRules).rules?.progression.lastLevel;
 
   // The endpoint takes an amount of every entity its amounts are of (3.5's every ruleset save), 0 when unset
-  const amountsRole = columns.amounts?.role;
+  const amountsRole = lists.amounts?.role;
   const handleSubmit = (data: LevelFormData) =>
     onSubmit(
       amountsRole
@@ -86,7 +86,7 @@ export function CreateLevelDialog({
           htmlInput: { min: 1, max: lastLevel },
         }}
       />
-      <EntityFormFields form={form} entityType={levelType} rulesetId={rulesetId} />
+      <EntityFields form={form} entityType={levelType} rulesetId={rulesetId} />
     </CreateDialog>
   );
 }

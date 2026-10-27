@@ -368,14 +368,14 @@ describe("rulesets entities by kind", () => {
     expect(featPools.filter((poolId) => spellLists.includes(poolId))).toEqual([]);
   });
 
-  test("reads an entity's pools where its kind's columns say its links are", async () => {
+  test("reads an entity's pools where its kind's fields say its links are", async () => {
     const { id, featPool, spellList } = await setup();
     const rules = await expectOk(api.api.rules.$get());
     const pools: Record<string, string> = { feats: featPool.id, spells: spellList.id };
     const visited: string[] = [];
-    for (const [type, columns] of Object.entries(rules["Dungeons & Dragons: 3.5"].columns)) {
-      for (const column of columns ?? []) {
-        if ((column.input !== "links" && column.input !== "leveledLinks") || !column.role) continue;
+    for (const [type, fields] of Object.entries(rules["Dungeons & Dragons: 3.5"].fields)) {
+      for (const field of fields ?? []) {
+        if ((field.input !== "links" && field.input !== "leveledLinks") || !field.role) continue;
         // An entity of its kind in a pool: its read holds its link to it, its aptitude named, its level where it has one
         visited.push(type);
         expect(Object.keys(pools)).toContain(type);
@@ -389,10 +389,10 @@ describe("rulesets entities by kind", () => {
           type,
           links: expect.arrayContaining([
             expect.objectContaining({
-              role: column.role,
+              role: field.role,
               toId: pools[type],
               toName: expect.any(String),
-              ...(column.input === "leveledLinks" && { tier: expect.any(Number) }),
+              ...(field.input === "leveledLinks" && { tier: expect.any(Number) }),
             }),
           ]),
         });

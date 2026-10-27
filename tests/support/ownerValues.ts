@@ -1,7 +1,7 @@
 /**
  * An owner's fields' values and links, as a test writes and reads them: what a codec reads (`heldValues`), those its
- * form writes as its rows hold them (`findFormValues`: not a column's nor a hidden one, and the links its references
- * read), and a write of fields' values (`writeFieldValues`).
+ * form shows among its others as its rows hold them (`findFormValues`: not one beside its name nor one it doesn't show,
+ * and the links its references there read), and a write of fields' values (`writeFieldValues`).
  */
 
 import { Field, type Fields, type FieldsWrite, OwnerValues, type StoredValues } from "@/engine/core/fields/index.ts";
@@ -18,16 +18,15 @@ export interface HeldValues {
 }
 
 /**
- * The fields an owner's form writes (`type`'s: not a column's nor a hidden one), and the roles its references read:
- * none for a kind that holds no field (an ability, a save).
+ * The fields an owner's form shows among its others (`type`'s: not one beside its name nor one it shows no input of,
+ * `Field.isKept`), and the roles its references there read: none for a kind that holds no field (an ability).
  */
 function formWritten(type: string) {
   const spec: Fields = ENTITY_FIELDS[type as keyof typeof ENTITY_FIELDS] ?? {};
+  const kept = Field.leavesOf(spec).filter((leaf) => Field.isKept(leaf));
   return {
-    fields: Field.storedLeavesOf(spec)
-      .filter((leaf) => !leaf.form)
-      .map((leaf) => leaf.field),
-    roles: Field.leavesOf(spec).flatMap((leaf) => (leaf.kind === "ref" ? [leaf.role] : [])),
+    fields: kept.flatMap((leaf) => (Field.isLinked(leaf) ? [] : [leaf.field])),
+    roles: kept.flatMap((leaf) => (leaf.kind === "ref" ? [leaf.role] : [])),
   };
 }
 
@@ -75,8 +74,8 @@ export function writtenValues({ fields, links }: FieldsWrite): HeldValues {
 }
 
 /**
- * The values an owner's form writes (`type`, `id`), as its rows hold them: its form's fields' (in their stored order)
- * and its references' links, not a column's nor a hidden one's. None when it holds none.
+ * The values an owner's form shows among its others (`type`, `id`), as its rows hold them: its fields' (in their stored
+ * order) and its references' links, not one beside its name nor one it doesn't show. None when it holds none.
  */
 export async function findFormValues(type: string, id: string): Promise<HeldValues> {
   const [stored] =

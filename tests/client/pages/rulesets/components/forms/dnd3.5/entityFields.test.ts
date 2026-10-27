@@ -4,14 +4,15 @@ import {
   changedValues,
   choiceOptions,
   emptyFieldValues,
+  formSectionsOf,
   isFieldShown,
   linkedEntities,
   noneLabel,
   ownFieldValues,
   poolsOf,
-  toColumnsBody,
-  toColumnValues,
   toFieldValues,
+  toWholeBody,
+  toWholeValues,
   valueAt,
   withEntityFields,
 } from "@/client/src/pages/rulesets/components/forms/entityFields.ts";
@@ -25,6 +26,8 @@ import {
   ITEM_SLOT,
   ITEM_TYPE,
   ITEM_WEIGHT,
+  SPELL_SAVE_EFFECT,
+  SPELL_SCHOOL,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A form's values: any, its fields and its links among them. */
@@ -147,11 +150,22 @@ describe("an entity's fields in its form", () => {
       expect(toFieldValues(fields, { fields: { FEATS: feats } })).toEqual({ fields: { FEATS: core }, links: {} });
   });
 
-  test("join a form's values once they load, over its columns': a new entity's empty, an entity's own", () => {
+  test("join a form's values once they load, over its own: a new entity's empty, an entity's own", () => {
     const form: Form = { name: "", fields: { COST: "1.00" }, links: { madeFrom: "t" } };
     expect(withEntityFields(form, undefined)).toEqual(form);
     expect(withEntityFields(form, FIELDS.slice(0, 1))).toEqual({ ...form, fields: { COST: "1.00", SCHOOL: "" } });
     expect(withEntityFields(form, FIELDS.slice(0, 1), { fields: { SCHOOL: "Illusion" } })).toEqual({
+      ...form,
+      fields: { COST: "1.00", SCHOOL: "Illusion" },
+    });
+  });
+
+  test("join none of those it sends whole, which the form makes itself: beside its name, its lists", () => {
+    const beside: EntityField = { ...BASE, field: "COST", label: "Cost", input: "decimal", placement: "beside-name" };
+    const lists: EntityField = { ...BASE, input: "links", label: "Pools", references: "aptitudes", role: "pools" };
+    const form: Form = { name: "", fields: { COST: "1.00" }, links: { pools: [] } };
+    const entity = { fields: { COST: 5, SCHOOL: "Illusion" }, links: [{ role: "pools", toId: "p", toName: "Pool" }] };
+    expect(withEntityFields(form, [beside, FIELDS[0], lists], entity)).toEqual({
       ...form,
       fields: { COST: "1.00", SCHOOL: "Illusion" },
     });
@@ -206,8 +220,11 @@ describe("an entity's fields in its form", () => {
     });
   });
 
-  test("send an edit's changed fields and links alone, a group's by each field, its columns' whole", () => {
-    const columns: EntityField[] = [{ ...BASE, field: "COST", label: "Cost", input: "decimal" }];
+  test("send an edit's changed fields and links alone, a group's by each field, those beside its name whole", () => {
+    const beside: EntityField[] = [
+      { ...BASE, field: "COST", label: "Cost", input: "decimal", placement: "beside-name" },
+      { ...BASE, field: "REACH", label: "Reach", input: "number", default: null },
+    ];
     const baseline = { fields: { SCHOOL: "Sorcery", TAG: ["Fire"], REACH: 10, COST: "1.00" }, links: { ability: "a" } };
     expect(
       changedValues(
@@ -217,7 +234,7 @@ describe("an entity's fields in its form", () => {
           links: { ability: "a" },
         } as Form,
         baseline,
-        columns,
+        beside,
       ),
     ).toEqual({ name: "Bolt", fields: { REACH: 15, COST: "1.00" }, links: {} });
     expect(changedValues<Form>({ fields: { SCHOOL: "Evocation" }, links: { ability: "b" } }, baseline, [])).toEqual({
@@ -249,15 +266,28 @@ describe("an entity's fields shown in a group but held at its own level", () => 
   });
 });
 
-describe("an entity's columns in its form", () => {
-  /** 3.5's item columns, as the engine describes them: what the item form holds and sends. */
-  const ITEM = Engine.rules().describeAll()["Dungeons & Dragons: 3.5"].columns.items ?? [];
-  /** 3.5's class columns: a hit die among its own, 8 by default. */
-  const CLASS = Engine.rules().describeAll()["Dungeons & Dragons: 3.5"].columns.classes ?? [];
+describe("an entity's fields beside its name in its form", () => {
+  /** 3.5's item fields, as the engine describes them: what the item form holds and sends. */
+  const ITEM = Engine.rules().describeAll()["Dungeons & Dragons: 3.5"].fields.items ?? [];
+  /** 3.5's class fields: a hit die among its own, 8 by default. */
+  const CLASS = Engine.rules().describeAll()["Dungeons & Dragons: 3.5"].fields.classes ?? [];
+
+  test("lie beside its name, its lists of links after its others", () => {
+    const placesOf = (fields: readonly EntityField[]) =>
+      fields.map((field) => (field.input === "group" ? field.label : (field.field ?? field.role)));
+    const { beside, body, lists } = formSectionsOf(ITEM);
+    expect(placesOf(beside)).toEqual([ITEM_COST_GP, ITEM_WEIGHT, ITEM_TYPE, ITEM_TYPE, ITEM_SLOT, "madeFrom"]);
+    expect(placesOf(body)).toContain("Weapon");
+    expect(lists).toEqual([]);
+    const spell = formSectionsOf(Engine.rules().describeAll()["Dungeons & Dragons: 3.5"].fields.spells ?? []);
+    expect(placesOf(spell.beside)).toEqual(["resistedBy", SPELL_SAVE_EFFECT]);
+    expect(placesOf(spell.lists)).toEqual(["listedIn"]);
+    expect(placesOf(spell.body)[0]).toBe(SPELL_SCHOOL);
+  });
 
   test("start empty: a required choice its default, a decimal no text, a template none", () => {
-    expect(toColumnValues(CLASS)).toEqual({ fields: { [CLASS_HD]: 8 }, links: {} });
-    expect(toColumnValues(ITEM)).toEqual({
+    expect(toWholeValues(CLASS)).toEqual({ fields: { [CLASS_HD]: 8 }, links: {} });
+    expect(toWholeValues(ITEM)).toEqual({
       fields: { [ITEM_COST_GP]: "", [ITEM_WEIGHT]: "", [ITEM_TYPE]: "", [ITEM_SLOT]: "" },
       links: { madeFrom: "" },
     });
@@ -265,7 +295,7 @@ describe("an entity's columns in its form", () => {
 
   test("hold an entity's: a decimal as its text, a type a template couldn't be of, a die it doesn't offer its default", () => {
     expect(
-      toColumnValues(ITEM, {
+      toWholeValues(ITEM, {
         fields: { [ITEM_COST_GP]: 15, [ITEM_WEIGHT]: 2.5, [ITEM_TYPE]: "Ring", [ITEM_SLOT]: "Finger" },
         links: [],
       }),
@@ -273,13 +303,13 @@ describe("an entity's columns in its form", () => {
       fields: { [ITEM_COST_GP]: "15.00", [ITEM_WEIGHT]: "2.50", [ITEM_TYPE]: "Ring", [ITEM_SLOT]: "Finger" },
       links: { madeFrom: "" },
     });
-    expect(toColumnValues(CLASS, { fields: { [CLASS_HD]: 7 } })).toEqual({ fields: { [CLASS_HD]: 8 }, links: {} });
+    expect(toWholeValues(CLASS, { fields: { [CLASS_HD]: 7 } })).toEqual({ fields: { [CLASS_HD]: 8 }, links: {} });
     // Its template, its link's of the template's role
     const madeFrom = { role: "madeFrom", toId: "t", toName: "Longsword" };
-    expect(toColumnValues(ITEM, { fields: {}, links: [madeFrom] })).toMatchObject({ links: { madeFrom: "t" } });
+    expect(toWholeValues(ITEM, { fields: {}, links: [madeFrom] })).toMatchObject({ links: { madeFrom: "t" } });
   });
 
-  test("send a decimal's number, none null, and a column the form hides null", () => {
+  test("send a decimal's number, none null, and a field beside its name the form hides null", () => {
     const ring: Form & { fields: Record<string, unknown> } = {
       name: "Ring",
       fields: {
@@ -292,7 +322,7 @@ describe("an entity's columns in its form", () => {
       },
       links: { madeFrom: "" },
     };
-    expect(toColumnsBody(ITEM, ring)).toEqual({
+    expect(toWholeBody(ITEM, ring)).toEqual({
       name: "Ring",
       fields: {
         [ITEM_COST_GP]: 1500,
@@ -310,8 +340,8 @@ describe("an entity's columns in its form", () => {
       fields: { ...ring.fields, [ITEM_TYPE]: "Weapon" },
       links: { madeFrom: "t1" },
     };
-    expect(toColumnsBody(ITEM, weapon)).toMatchObject({ fields: { [ITEM_SLOT]: null }, links: { madeFrom: "t1" } });
-    expect(toColumnsBody(ITEM, { ...weapon, fields: { ...weapon.fields, [ITEM_IS_TEMPLATE]: true } })).toMatchObject({
+    expect(toWholeBody(ITEM, weapon)).toMatchObject({ fields: { [ITEM_SLOT]: null }, links: { madeFrom: "t1" } });
+    expect(toWholeBody(ITEM, { ...weapon, fields: { ...weapon.fields, [ITEM_IS_TEMPLATE]: true } })).toMatchObject({
       fields: { [ITEM_SLOT]: null, [ITEM_TYPE]: "Weapon" },
       links: { madeFrom: null },
     });
@@ -355,13 +385,13 @@ describe("an entity's pools in its form", () => {
   };
 
   test("read them off the entity's links, by their aptitudes' names, a level where one is held, none left without one", () => {
-    expect(toColumnValues(POOLS, entity)).toEqual({
+    expect(toWholeValues(POOLS, entity)).toEqual({
       fields: {},
       links: { pool: [{ toId: "b" }, { toId: "a" }], list: [{ toId: "c" }, { toId: "w", tier: 3 }] },
     });
-    // An entity read without its links holds none, and a link of another role is none of its column's
-    expect(toColumnValues(POOLS, {})).toEqual({ fields: {}, links: { pool: [], list: [] } });
-    expect(toColumnValues(POOLS, { links: [{ role: "other", toId: "x", toName: "Other" }] }).links.pool).toEqual([]);
+    // An entity read without its links holds none, and a link of another role is none of its field's
+    expect(toWholeValues(POOLS, {})).toEqual({ fields: {}, links: { pool: [], list: [] } });
+    expect(toWholeValues(POOLS, { links: [{ role: "other", toId: "x", toName: "Other" }] }).links.pool).toEqual([]);
   });
 
   test("name the entities it links, which its pickers show by name", () => {

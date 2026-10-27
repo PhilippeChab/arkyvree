@@ -5,7 +5,6 @@ import type {
   EntityTables,
   OwnedEntities,
 } from "@/engine/core/entities/index.ts";
-import type { FormField } from "@/engine/core/fields/index.ts";
 import type { CharacterInput, SettingsForm } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
@@ -16,7 +15,6 @@ import CharactersEngine from "./CharactersEngine.ts";
 import ModifiersEngine from "./ModifiersEngine.ts";
 import Modules, { type Accepted, type EntityKinds, type EntityType, type Module } from "./Modules.ts";
 import RequirementsEngine from "./RequirementsEngine.ts";
-import StorageEngine from "./StorageEngine.ts";
 import TargetPathsEngine from "./TargetPathsEngine.ts";
 
 /**
@@ -81,35 +79,6 @@ export default class RulesetEngine {
    */
   checkPublishable(kind: RulesetKind) {
     this.module.ruleset.checkPublishable(this.view, kind);
-  }
-
-  /**
-   * The fields each entity's form shows among its own, by its type, and the ruleset's Settings' (`rulesets`), as the
-   * ruleset declares them: what a form lays out and what its save holds each to. A type whose form shows none (its
-   * fields its columns', 3.5's language's type) is left out.
-   */
-  describeFields(): Record<string, FormField[]> {
-    const ownerOf = new Map(
-      StorageEngine.shared()
-        .registries()
-        .entityTypes.map(({ ownerType, type }) => [type, ownerType]),
-    );
-    const fieldsOf = (type: string) => {
-      if (type === "rulesets") return this.module.ruleset.describeSettingsFields();
-      const owner = ownerOf.get(type);
-      return owner
-        ? this.entities(owner as EntityType).describeOwnedFields(type)
-        : this.entities(type as EntityType).describeFields();
-    };
-    return Object.fromEntries(
-      StorageEngine.shared()
-        .fieldOwners()
-        .toSorted()
-        .flatMap((type) => {
-          const fields = fieldsOf(type);
-          return fields.length > 0 ? [[type, fields]] : [];
-        }),
-    );
   }
 
   /**

@@ -16,7 +16,7 @@ import {
   withTemplateFlag,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
-import { useEntityColumns, useEntityFields, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useEntityFields, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import type { EditorProps } from "./renderEditor.tsx";
@@ -28,7 +28,7 @@ interface EntityEditorProps extends EditorProps<EntityRow> {
 
 /**
  * An entity's details on its customization page, any kind's (a feat's, a race's, an item's, a spell's), as its rules
- * describe it: its form of its columns and fields, two side by side where its kind's form is wide, read off the entity
+ * describe it: its form of its fields, two side by side where its kind's form is wide, read off the entity
  * (its pools off its links, a copy's template flag), saved through the routes by kind; its name locked while its kind
  * says so (a generated feat's), and every field sent once a copy moves to another template.
  */
@@ -44,21 +44,21 @@ export function EntityEditor({
   refetchSaved,
 }: EntityEditorProps) {
   const { fields } = useEntityFields(rulesetId, kind.type);
-  const { columns } = useEntityColumns(rulesetId, kind.type);
+  const described = fields ?? [];
   const label = entityTypeLabel(kind.type, useRulesetRules(rulesetId).rules?.words);
   const { copies, lockedName } = kind;
   const { form, save } = useEntityForm({
-    empty: withTemplateFlag(toEntityForm<EntityFormData>(columns), copies, false),
+    empty: withTemplateFlag(toEntityForm<EntityFormData>(described), copies, false),
     values: withEntityFields(
       withTemplateFlag(
-        toEntityForm<EntityFormData>(columns, entity),
+        toEntityForm<EntityFormData>(described, entity),
         copies,
         ownFieldOf(entity, copies?.template.field ?? "") === true,
       ),
       fields,
       entity,
     ),
-    columns,
+    fields,
     formKey: recordKey,
     adoptKey,
     updatedAt: entity.updatedAt,
@@ -80,7 +80,7 @@ export function EntityEditor({
       parseResponse(
         rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].$put({
           param: { id: rulesetId, entityType: kind.type, entityId },
-          json: { ...toEntityBody<EntityFormData, EntityFormData>(columns, data), updatedAt },
+          json: { ...toEntityBody<EntityFormData, EntityFormData>(described, data), updatedAt },
         }),
       ),
   });
@@ -96,7 +96,7 @@ export function EntityEditor({
             rulesetId={rulesetId}
             columns={kind.wideForm ? 2 : undefined}
             context={{
-              knownLinks: linkedEntities(columns, entity),
+              knownLinks: linkedEntities(described, entity),
               templateName: typeof entity.templateName === "string" ? entity.templateName : null,
             }}
             nameLocked={lockedName && ownFieldOf(entity, lockedName.field) === true ? lockedName.reason : undefined}

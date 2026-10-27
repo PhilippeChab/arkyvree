@@ -2,15 +2,15 @@ import { NAMED_LIST } from "@/engine/core/entities/index.ts";
 import type { EntityPoolsDescription, RulesDeclaration } from "@/engine/core/module/index.ts";
 import { CHARACTER_FORM } from "@/engine/rulesets/dnd3.5/characters/form.ts";
 import { CLASS_SKILL_LINKS } from "@/engine/rulesets/dnd3.5/entities/classes/classSkillLinks.ts";
-import { CLASS_COLUMNS, CLASS_LEVEL_COLUMNS, CLASS_LIST } from "@/engine/rulesets/dnd3.5/entities/classes/columns.ts";
+import { CLASS_LIST } from "@/engine/rulesets/dnd3.5/entities/classes/lists.ts";
 import { PROGRESSION } from "@/engine/rulesets/dnd3.5/entities/classes/progression.ts";
-import { FEAT_COLUMNS, FEAT_LIST } from "@/engine/rulesets/dnd3.5/entities/feats/columns.ts";
-import { ITEM_COLUMNS, ITEM_LIST } from "@/engine/rulesets/dnd3.5/entities/items/columns.ts";
-import { LANGUAGE_COLUMNS, LANGUAGE_LIST } from "@/engine/rulesets/dnd3.5/entities/languages/columns.ts";
-import { RACE_COLUMNS, RACE_LIST } from "@/engine/rulesets/dnd3.5/entities/races/columns.ts";
-import { SAVE_COLUMNS, SAVE_LIST } from "@/engine/rulesets/dnd3.5/entities/saves/columns.ts";
-import { SKILL_COLUMNS, SKILL_LIST } from "@/engine/rulesets/dnd3.5/entities/skills/columns.ts";
-import { SPELL_COLUMNS, SPELL_LIST } from "@/engine/rulesets/dnd3.5/entities/spells/columns.ts";
+import { FEAT_LIST } from "@/engine/rulesets/dnd3.5/entities/feats/lists.ts";
+import { ITEM_LIST } from "@/engine/rulesets/dnd3.5/entities/items/lists.ts";
+import { LANGUAGE_LIST } from "@/engine/rulesets/dnd3.5/entities/languages/lists.ts";
+import { RACE_LIST } from "@/engine/rulesets/dnd3.5/entities/races/lists.ts";
+import { SAVE_LIST } from "@/engine/rulesets/dnd3.5/entities/saves/lists.ts";
+import { SKILL_LIST } from "@/engine/rulesets/dnd3.5/entities/skills/lists.ts";
+import { SPELL_LIST } from "@/engine/rulesets/dnd3.5/entities/spells/lists.ts";
 import { BONDED_KINDS, PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import {
   FEAT_FAMILY,
@@ -34,23 +34,12 @@ const APTITUDE_POOLS: Omit<EntityPoolsDescription, "scope"> = {
 
 /**
  * What every 3.5 ruleset shares: its entity kinds, in its page's order, and their words, its
- * entities' columns (a class's hit die, an item's slot…), a race or a class is for a player character or a creature
+ * entities' lists, a race or a class is for a player character or a creature
  * bonded to one, a class has 20 levels and a spell 0 to 9, its system rulesets' SRD content is Open Game Content, and a
  * new character's form.
  */
 export const RULES: RulesDeclaration = {
   characterForm: CHARACTER_FORM,
-  columns: {
-    feats: FEAT_COLUMNS,
-    items: ITEM_COLUMNS,
-    "class-levels": CLASS_LEVEL_COLUMNS,
-    classes: CLASS_COLUMNS,
-    languages: LANGUAGE_COLUMNS,
-    spells: SPELL_COLUMNS,
-    races: RACE_COLUMNS,
-    saves: SAVE_COLUMNS,
-    skills: SKILL_COLUMNS,
-  },
   entityKinds: [
     { label: "Player Character", value: PLAYER_CHARACTER_KIND },
     ...BONDED_KINDS.map((kind) => ({ label: kind.label, value: kind.slug })),

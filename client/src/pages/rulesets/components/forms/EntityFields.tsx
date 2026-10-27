@@ -34,34 +34,26 @@ import { countRoomAt, findProgressionIssues } from "@/shared/customization/progr
 import { isOneOf } from "@/shared/isOneOf.ts";
 
 import { AmountsInput } from "./AmountsInput.tsx";
-import type { ColumnContext } from "./columnContext.ts";
-import { choiceOptions, isFieldShown, noneLabel, placeOf, valueAt } from "./entityFields.ts";
+import { choiceOptions, formSectionsOf, isFieldShown, noneLabel, placeOf, valueAt } from "./entityFields.ts";
+import type { FieldContext } from "./fieldContext.ts";
 import { GrantsInput } from "./GrantsInput.tsx";
 import { LeveledLinksInput } from "./LeveledLinksInput.tsx";
 import { LinksInput } from "./LinksInput.tsx";
 import { TemplateInput } from "./TemplateInput.tsx";
 import { useTemplateReset } from "./useTemplateReset.ts";
 
-/** What lays out an entity's columns: their description, its form, where they go, and what they read of the entity. */
-interface EntityColumnsProps<T extends FieldValues> {
-  /** Its rules' (`useEntityColumns`) */
-  columns: readonly EntityField[];
-  context?: ColumnContext;
-  /** The entity type whose columns they are, whose templates a template column offers */
-  entityType: string;
-  form: UseFormReturn<T>;
-  placement: "after" | "before";
-  rulesetId: string;
-}
-
-/** What lays out an entity's fields: its form, and how they show. */
+/** What lays out an entity's fields: its form, how they show, and what they read of the entity. */
 interface EntityFieldsProps<T extends FieldValues> {
-  /** Two side by side past a phone's width, in a form that lays its own out so (a spell's): one a row otherwise. */
+  /**
+   * Its fields among its others two side by side past a phone's width, in a form that lays its own out so (a spell's):
+   * one a row otherwise.
+   */
   columns?: 1 | 2;
-  /** The entity type whose fields they are (`rulesets`: the ruleset's Settings). */
+  context?: FieldContext;
+  /** The entity type whose fields they are (`rulesets`: the ruleset's Settings), whose templates a template offers. */
   entityType: string;
   form: UseFormReturn<T>;
-  /** Each says what it's for under it: a class's do, and the Settings'. */
+  /** Its fields among its others each say what it's for under it: a class's do, and the Settings'. */
   help?: boolean;
   rulesetId: string;
 }
@@ -77,13 +69,13 @@ interface FieldsGridProps<T extends FieldValues> extends FieldsShowing<T> {
 }
 
 /**
- * What every field of a form shares: the form, how they show, what its columns read of the entity, and the ruleset
- * whose entities they name. Each goes in the form where its save sends it (`placeOf`).
+ * What every field of a form shares: the form, how they show, what they read of the entity, and the ruleset whose
+ * entities they name. Each goes in the form where its save sends it (`placeOf`).
  */
 interface FieldsShowing<T extends FieldValues> {
   columns: 1 | 2;
-  context: ColumnContext;
-  /** The entity type the form edits (`rulesets`: the ruleset's Settings), whose templates a template column offers */
+  context: FieldContext;
+  /** The entity type the form edits (`rulesets`: the ruleset's Settings), whose templates a template offers */
   entityType: string;
   form: UseFormReturn<T>;
   help: boolean;
@@ -136,11 +128,8 @@ const FLAG_CHOICES = [
   { value: "false", label: "No" },
 ] as const;
 
-/** The column inputs that list links (a spell's aptitudes, a level's saves and feats), below the form's fields. */
-const LINK_INPUTS = ["leveledLinks", "grants", "amounts"] as const;
-
 /** A form that reads nothing of its entity past its values. */
-const NO_CONTEXT: ColumnContext = {};
+const NO_CONTEXT: FieldContext = {};
 
 /** A progression's level and its amount, and the action that removes it: two inputs side by side, then the action. */
 const PROGRESSION_ROW_SX = {
@@ -358,7 +347,7 @@ function isSwitch(field: EntityField) {
   return field.input === "flag" && !field.nullable;
 }
 
-/** Whether a field takes the grid's whole width: a group, several values, a progression, or a column's list. */
+/** Whether a field takes the grid's whole width: a group, several values, a progression, or a list of links. */
 function isWide(field: EntityField) {
   return (
     isOneOf(field.input, ["leveledLinks", "links", "grants", "group", "progression", "amounts"]) ||
@@ -564,61 +553,40 @@ function ValuesInput<T extends FieldValues>({ field, form, help }: FieldInputPro
 }
 
 /**
- * An entity's columns, as its rules describe them (`columns`: its form's own, beside its name and description), bound
- * where each goes in the form itself: its plain values (`placement` "before", the form's fields' place: a hit die, a
- * cost, a type), or its lists of links (`after`, below the fields: a spell's aptitudes, a level's saves and feats),
- * each as `EntityFields` lays a field out, reading what it needs of the entity (`context`).
- */
-export function EntityColumns<T extends FieldValues>({
-  columns,
-  context = NO_CONTEXT,
-  entityType,
-  form,
-  placement,
-  rulesetId,
-}: EntityColumnsProps<T>) {
-  const { onChoiceChange } = useTemplateReset(form, rulesetId, entityType, columns, context);
-  const placed = columns.filter((column) => isOneOf(column.input, LINK_INPUTS) === (placement === "after"));
-  if (placed.length === 0) return null;
-  return (
-    <FieldsGrid
-      columns={1}
-      context={context}
-      entityType={entityType}
-      fields={placed}
-      form={form}
-      help={false}
-      onChoiceChange={onChoiceChange}
-      rulesetId={rulesetId}
-    />
-  );
-}
-
-/**
- * An entity's fields, as its ruleset declares them (`useEntityFields`): each its input, one a row (two side by side,
- * `columns`), a group's under its label, a field on a condition while the form meets it, read-only under
- * `ReadOnlyFields`. Bound where its save sends each as it is: its form's `fields`, by stored field (a reference among
- * its `links`, by role).
+ * An entity's fields, as its ruleset's rules describe them (`useEntityFields`), each its input, bound where its save
+ * sends it as it is: its form's `fields`, by stored field, a link among its `links`, by role. Those beside its name
+ * first, one a row, reading what they need of the entity (`context`); then its others, one a row (two side by side,
+ * `columns`), a group's under its label, each saying what it's for when its form says (`help`); then its lists of links
+ * (a feat's pools, a spell's spell lists, a level's saves and feats), one a row. A field on a condition shows while the
+ * form meets it, and every one is read-only under `ReadOnlyFields`.
  */
 export function EntityFields<T extends FieldValues>({
   columns = 1,
+  context = NO_CONTEXT,
   entityType,
   form,
   help = false,
   rulesetId,
 }: EntityFieldsProps<T>) {
   const { fields, error } = useEntityFields(rulesetId, entityType);
-  if (!fields) return error ? <LoadError what="Fields" error={error} /> : <DiceSpinner sx={{ py: 4 }} />;
-  if (fields.length === 0) return null;
+  const { beside, body, lists } = formSectionsOf(fields ?? []);
+  const { onChoiceChange } = useTemplateReset(form, rulesetId, entityType, beside, context);
+  const shared = { context, entityType, form, rulesetId };
   return (
-    <FieldsGrid
-      columns={columns}
-      context={NO_CONTEXT}
-      entityType={entityType}
-      fields={fields}
-      form={form}
-      help={help}
-      rulesetId={rulesetId}
-    />
+    <>
+      {beside.length > 0 && (
+        <FieldsGrid {...shared} columns={1} fields={beside} help={false} onChoiceChange={onChoiceChange} />
+      )}
+      {!fields ? (
+        error ? (
+          <LoadError what="Fields" error={error} />
+        ) : (
+          <DiceSpinner sx={{ py: 4 }} />
+        )
+      ) : (
+        body.length > 0 && <FieldsGrid {...shared} context={NO_CONTEXT} columns={columns} fields={body} help={help} />
+      )}
+      {lists.length > 0 && <FieldsGrid {...shared} columns={1} fields={lists} help={false} />}
+    </>
   );
 }

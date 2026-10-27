@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Feat, Klass, RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { Feat, Klass, Race, RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
@@ -10,8 +10,10 @@ import { findFormValues, listValues, writeFieldValues } from "@/tests/support/ow
 import { copyEntity, createSeededTestRuleset, type Described } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { DEFAULT_HIT_DIE } from "@/vocabulary/dnd3.5/classes.ts";
 import {
   CLASS_CASTER_TYPE,
+  CLASS_HD,
   CLASS_LEVEL_BAB,
   CLASS_LEVEL_SKILL_POINTS,
   DAMAGE_TYPE,
@@ -291,6 +293,34 @@ describe("An entity's fields", () => {
         fields: { [SPELL_SUBSCHOOL]: "Creation or Calling" },
       }),
     ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: `fields.${SPELL_SUBSCHOOL}` }] });
+  });
+
+  test("give a new entity those it always holds, their defaults where its form or any writer gives none, never none", async () => {
+    const { session, ruleset } = await createTestUserAndRuleset();
+    const mage = await EntitiesService.createEntity(session, ruleset.id, "classes", { name: "Mage" });
+    expect(mage.fields[CLASS_HD]).toBe(DEFAULT_HIT_DIE);
+    const elf = await EntitiesService.createEntity(session, ruleset.id, "races", { name: "Elf" });
+    expect(elf.fields).toMatchObject({ [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 });
+    // A writer past its form, which gives none of them: its storage writes their defaults
+    const [bard] = await Entities.create<Klass>(db, "classes", { name: "Bard", rulesetId: ruleset.id });
+    const [gnome] = await Entities.create<Race>(db, "races", { name: "Gnome", rulesetId: ruleset.id });
+    expect(bard.fields[CLASS_HD]).toBe(DEFAULT_HIT_DIE);
+    expect(gnome.fields).toMatchObject({ [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 });
+    // Given, it's what it stores; none is refused
+    const wizard = await EntitiesService.createEntity(session, ruleset.id, "classes", {
+      name: "Wizard",
+      fields: { [CLASS_HD]: 4 },
+    });
+    expect(wizard.fields[CLASS_HD]).toBe(4);
+    for (const [type, id, field] of [
+      ["classes", mage.id, CLASS_HD],
+      ["races", elf.id, RACE_SIZE],
+      ["races", elf.id, RACE_BASE_SPEED],
+    ] as const) {
+      expect(
+        EntitiesService.updateEntity(session, ruleset.id, type, id, { name: "Kept", fields: { [field]: null } }),
+      ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: `fields.${field}` }] });
+    }
   });
 
   test("copy an inherited entity to save them, its source's left as they were", async () => {

@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 
-import type { FormBody, FormColumnValues } from "@/engine/core/entities/index.ts";
+import type { FormBody } from "@/engine/core/entities/index.ts";
 import type { EntityForm } from "@/engine/core/fields/index.ts";
 import type { EntityRecord } from "@/engine/core/module/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
@@ -13,7 +13,6 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Feat } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { FEAT_FAMILY, FEAT_GENERATED } from "@/vocabulary/dnd3.5/fields/index.ts";
 
-import { FEAT_COLUMNS } from "./columns.ts";
 import { FEAT_FIELDS } from "./fields.ts";
 
 /** A slot a feat's modifier adds to (or sets on) a pool. */
@@ -25,10 +24,7 @@ export interface PoolModifier {
 
 /** A feat as the ruleset has it: described with its customizations, listed by pool or family, saved by its rules. */
 export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS.fields> {
-  /** Its feat pools. */
-  protected override readonly columns = FEAT_COLUMNS;
-
-  /** Its families, the weapon rules it changes, the schools it forbids. */
+  /** Its feat pools, its flags, its families, the weapon rules it changes, the schools it forbids. */
   protected override readonly fields = FEAT_FIELDS;
 
   /** Its groups' filters: a pool's families (the pool its `listedIn` links name). */
@@ -48,18 +44,12 @@ export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS
    * Refuses renaming a generated feat (its name names its option, `Weapon Focus: Longsword`,
    * which checks and generators find it by), and a feat linked to a pool the view's spells use.
    */
-  protected override checkForm(body: FormBody, feat?: Feat) {
+  protected override checkForm(body: FormBody, _given: object, feat?: Feat) {
     if (feat && body.name !== feat.name && feat.fields[FEAT_GENERATED])
       throw new RulesError("invalid", "Generated feats cannot be renamed");
     const message = "Cannot link feat to aptitude(s) already used for spells";
     const listIds = (this.listsOf(body) ?? []).map((list) => list.toId);
     this.refuseLists(listIds, this.dnd35.aptitudeIdsWithSpells, message);
-  }
-
-  /** A form's columns: a new feat's not generated (`planCreate` marks one that stands in for a generated one). */
-  protected override columnsOf(body: FormBody, feat?: Feat): FormColumnValues {
-    const columns = super.columnsOf(body, feat);
-    return feat ? columns : { ...columns, fields: { ...columns.fields, [FEAT_GENERATED]: false } };
   }
 
   /** A page of the ruleset's feats' families, of a pool's feats when its query says (`listedIn`). */

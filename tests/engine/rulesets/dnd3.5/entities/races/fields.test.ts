@@ -11,11 +11,11 @@ import {
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 describe("A race's fields", () => {
-  test("are its size and speed as stored, and each flag true when its value says so, and false without it", () => {
+  test("are its size and speed as stored (Medium and 30 without them), and each flag true when its value says so", () => {
     expect(RACE_FIELDS.read(OwnerValues.NONE)).toEqual({
-      baseSpeed: null,
+      baseSpeed: 30,
       quadruped: false,
-      size: null,
+      size: "Medium",
       speedIgnoresEncumbrance: false,
     });
     expect(

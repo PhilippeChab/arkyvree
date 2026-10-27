@@ -2,7 +2,7 @@ import type { FormField } from "@/engine/core/fields/index.ts";
 import type { CharacterForm } from "@/engine/core/module/parts/characters/index.ts";
 
 /**
- * How a kind's row copies an entity (an item's): a duplicate, whose form keeps the columns it can't change (`locked`,
+ * How a kind's row copies an entity (an item's): a duplicate, whose form keeps the fields it can't change (`locked`,
  * each by the stored field or the role that keeps it: an item's type, slot and template), and variants, the most at
  * once (`most`), each its own name and description. A copy names the template it's from in its `source` link, by its
  * role: a template's own, its own flag (`template.field`) true, or the entity's own template; a copy is never a template
@@ -214,18 +214,13 @@ export interface ProgressionTrack {
 }
 
 /**
- * What a base rules' rulesets share, past any ruleset's view: what the app calls their entities, the columns their
+ * What a base rules' rulesets share, past any ruleset's view: what the app calls their entities, the fields their
  * forms show, the kinds a race or a class is for, how a class progresses, a listed entity's tiers, and the license a
  * system ruleset's content is under. The client reads it once, for every base rules, and holds none of it.
  */
 export interface RulesDescription {
   /** A new character's form, as its rules lay it out: its sections, their fields, its ability scores among them */
   characterForm: CharacterForm;
-  /**
-   * The columns each entity type's form shows beside its name and description, by type, as its rules hold them (a
-   * class's hit die, an item's cost, type and slot): each keyed where its value goes in the form's body
-   */
-  columns: Partial<Record<string, FormField[]>>;
   /**
    * The kinds whose customizations have a page of their own, as its storage declares them customizable (3.5's feats,
    * items, spells, races and class levels), an owned kind's with the kind that owns it (`owner`: a class level's
@@ -234,6 +229,13 @@ export interface RulesDescription {
   customizationPages: { owner?: string; type: string }[];
   /** The kinds a race or a class is for: a player character (`pc`), and those its rules add (3.5's bonded creatures) */
   entityKinds: { label: string; value: string }[];
+  /**
+   * Each type's fields as its form shows them, by type (an entity type's, `rulesets` a ruleset's Settings'), as its
+   * module declares them (`FieldCodec.describe`): each its label, what it's for, its input and where its form shows it
+   * (beside its name and description, `placement`; among its other fields; a list of links after them), keyed where
+   * its value goes in the form's body (a field's `field`, a link's `role`). A type whose form shows none is left out
+   */
+  fields: Partial<Record<string, FormField[]>>;
   /**
    * The help its pages give in its own terms, which name what its characters have (3.5's strength, skills, feats): a
    * customization's tabs' (`modifiers`, `requirements`), its ruleset's Settings tab's (`settings`), and a condition's
@@ -277,5 +279,8 @@ export interface RulesWord {
   one: string;
 }
 
-/** What a module's rules describe of themselves: all but what the engine reads off its storage and its imports. */
-export type RulesDeclaration = Omit<RulesDescription, "customizationPages" | "importers">;
+/**
+ * What a module's rules describe of themselves: all but what the engine reads off its storage, its fields'
+ * declarations and its imports.
+ */
+export type RulesDeclaration = Omit<RulesDescription, "customizationPages" | "fields" | "importers">;

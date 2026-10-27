@@ -4,7 +4,6 @@ import type {
   FieldCodec,
   FieldsWrite,
   FieldValues,
-  FormField,
   LeafSpec,
 } from "@/engine/core/fields/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
@@ -79,11 +78,6 @@ export default abstract class RulesetPart {
     return this.fields.toForm(this.settingsOf(view)) as SettingsForm;
   }
 
-  /** The fields of the ruleset's Settings, as it declares them: their labels, their inputs and their options. */
-  describeSettingsFields(): FormField[] {
-    return this.fields.describe();
-  }
-
   /**
    * A save of the ruleset's Settings (`body`: its fields by stored field, its links by role, those it changes): read as
    * an entity's fields are, against the ruleset's declarations (refused as invalid otherwise), over those it has. The
@@ -93,7 +87,11 @@ export default abstract class RulesetPart {
   planSettings(view: RulesetView, body: SettingsForm): SettingsForm & { write: FieldsWrite } {
     const kept = this.settingsOf(view);
     const ids = new RequestIds(view.rulesetData, "this ruleset");
-    const given = this.fields.parse(body, { kept, resolve: (type, id) => ids.resolve(type, id) });
+    const { values: given } = this.fields.parse(body, {
+      kept,
+      resolve: (type, id) => ids.resolve(type, id),
+      resolveAll: (type, idsGiven) => ids.resolveAll(type, idsGiven),
+    });
     const fields = this.fields.merge(kept, given);
     const form = this.fields.toForm(fields as FieldValues<Readonly<Record<string, LeafSpec>>>) as SettingsForm;
     return { ...form, write: this.fields.write(fields) };
