@@ -548,7 +548,7 @@ describe("LevelsService", () => {
       const { session, character, klass, classLevels, skills } = await setupRuleset();
       await addClassSkills(db, klass.id, [skills["Diplomacy"].id]);
       const level = await createAdvancement(db, character.id, {
-        trackId: classLevels[0].id,
+        entryId: classLevels[0].id,
         picks: [{ step: "hp", amount: 8 }],
       });
       await Picks.createMany(db, [
@@ -1959,11 +1959,11 @@ describe("LevelsService", () => {
       const classLevel = async (klass: string, level: number) =>
         (await findClassLevel(ctx.classMap.pc[klass], level))!.id;
       const fighter2 = await createAdvancement(db, characterId, {
-        trackId: await classLevel("Fighter", 2),
+        entryId: await classLevel("Fighter", 2),
         picks: [{ step: "hp", amount: 10 }],
       });
       const rogue1 = await createAdvancement(db, characterId, {
-        trackId: await classLevel("Rogue", 1),
+        entryId: await classLevel("Rogue", 1),
         picks: [{ step: "hp", amount: 6 }],
       });
       await addSkills(db, ctx, [rogue1.id], [{ levelIndex: 0, skillName: "Hide", rank: 4 }]);

@@ -69,7 +69,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       const slotsByList = new Map<string, { className: string; featId: string; modifiers: Modifier[] }>();
       for (const feat of feats) {
         // A feat held without a level (a modifier's) is of no class
-        const className = feat.trackId === undefined ? undefined : classNameByClassLevelId.get(feat.trackId);
+        const className = feat.classLevelId === undefined ? undefined : classNameByClassLevelId.get(feat.classLevelId);
         if (!className) continue;
         for (const modifier of feat.modifiers) {
           const list = AptitudeTargets.parseSpellLevel(modifier.target)?.list;
@@ -102,7 +102,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
       for (const kl of classLevels) {
         if (kl.modifiers.some((m) => m.target === target && m.operator === "add")) continue;
         for (const feat of featsWithTargetMod) {
-          if (feat.trackId !== kl.id) continue;
+          if (feat.classLevelId !== kl.id) continue;
           const klass = rulesetClassById.get(kl.ownerId);
           grantingLevels.push({
             className: klass?.name ?? "Unknown",

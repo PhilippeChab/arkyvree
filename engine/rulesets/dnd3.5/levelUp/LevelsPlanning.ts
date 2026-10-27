@@ -52,7 +52,7 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
   /** What planned levels write: each its advancement in its class level, and its picks. */
   private advancementsOf(planned: PlannedLevel[]): AdvancementPlan[] {
     return planned.map(({ abilityIncreases, classLevelId, hp, picks }) => ({
-      trackId: classLevelId,
+      entryId: classLevelId,
       picks: this.savedPicksOf(hp, abilityIncreases, picks),
     }));
   }
@@ -98,19 +98,19 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     const distributed = this.rules.distributePicks(this.view, this.character, classLevelEntries, picks);
 
     // Each level sees the saved ones and those planned before it
-    const otherLevels: { trackId: string | null }[] = [...rows.advancements];
+    const otherLevels: { entryId: string | null }[] = [...rows.advancements];
     const planned: PlannedLevel[] = [];
     for (const [i, { klass, classLevel }] of classLevelEntries.entries()) {
       const { hp, abilityIncreases } = levels[i];
       const levelPicks = distributed[i];
       // A refusal names the character's level it's about, after its saved levels and those planned before it
       const label = `Level ${rows.advancements.length + i + 1}: `;
-      if (otherLevels.some((other) => other.trackId === classLevel.id))
+      if (otherLevels.some((other) => other.entryId === classLevel.id))
         throw new RulesError("invalid", `${label}This level has already been finalized`);
       this.checks.checkAbilityIncreases(rows.advancements.length + i, abilityIncreases, label);
       this.checks.checkLevel({ klass, hp, ...levelPicks });
       planned.push({ abilityIncreases, classLevelId: classLevel.id, hp, picks: levelPicks });
-      otherLevels.push({ trackId: classLevel.id });
+      otherLevels.push({ entryId: classLevel.id });
     }
     // A pick the character holds with every planned level, a later one too, the plan picks before, or the plan's other
     // picks give, is refused

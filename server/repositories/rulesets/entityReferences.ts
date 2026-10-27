@@ -47,7 +47,7 @@ export const ENTITY_REFERENCES: EntityReference[] = [
   { column: rulesetLinksInRules.toId, owner: { rulesetId: rulesetLinksInRules.rulesetId } },
   { column: linksInCharacter.entityId, owner: { characterId: linksInCharacter.characterId } },
   { column: inventoryInCharacter.itemId, owner: { characterId: inventoryInCharacter.characterId } },
-  { column: advancementsInCharacter.trackId, owner: { characterId: advancementsInCharacter.characterId } },
+  { column: advancementsInCharacter.entryId, owner: { characterId: advancementsInCharacter.characterId } },
   { column: advancementPicksInCharacter.entityId, owner: { advancementId: advancementPicksInCharacter.advancementId } },
   { column: advancementPicksInCharacter.viaId, owner: { advancementId: advancementPicksInCharacter.advancementId } },
 ];

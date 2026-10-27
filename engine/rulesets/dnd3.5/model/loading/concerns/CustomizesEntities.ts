@@ -26,7 +26,7 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
     ): HeldSpell[] {
       const classIdByLevelId = new Map(classLevels.map((level) => [level.id, level.ownerId]));
       return spells.map((spell) => {
-        const classId = spell.trackId === undefined ? undefined : classIdByLevelId.get(spell.trackId);
+        const classId = spell.classLevelId === undefined ? undefined : classIdByLevelId.get(spell.classLevelId);
         const abilityDcName = classId === undefined ? undefined : classBonusSpellAbilityMap.get(classId);
         return { ...spell, abilityDcName: abilityDcName ?? null };
       });

@@ -365,8 +365,8 @@ export const advancementsInCharacter = character.table(
     id: uuid().defaultRandom().primaryKey().notNull(),
     characterId: uuid("character_id").notNull(),
     position: integer().notNull(),
-    trackId: uuid("track_id"),
-    trackType: text("track_type"),
+    entryId: uuid("entry_id"),
+    entryType: text("entry_type"),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
   },
@@ -376,14 +376,14 @@ export const advancementsInCharacter = character.table(
       table.characterId.asc().nullsLast(),
       table.position.asc().nullsLast(),
     ),
-    uniqueIndex("advancements_character_track_idx").using(
+    uniqueIndex("advancements_character_entry_idx").using(
       "btree",
       table.characterId.asc().nullsLast(),
-      table.trackId.asc().nullsLast(),
+      table.entryId.asc().nullsLast(),
     ),
-    index("advancements_track_idx")
-      .using("btree", table.trackId.asc().nullsLast())
-      .where(sql`(track_id IS NOT NULL)`),
+    index("advancements_entry_idx")
+      .using("btree", table.entryId.asc().nullsLast())
+      .where(sql`(entry_id IS NOT NULL)`),
     foreignKey({
       columns: [table.characterId],
       foreignColumns: [charactersInCharacter.id],
@@ -391,9 +391,9 @@ export const advancementsInCharacter = character.table(
     }).onDelete("cascade"),
     // The database's is MATCH FULL DEFERRABLE INITIALLY DEFERRED, which drizzle's `foreignKey` doesn't declare
     foreignKey({
-      columns: [table.trackId, table.trackType],
+      columns: [table.entryId, table.entryType],
       foreignColumns: [entitiesInRules.id, entitiesInRules.type],
-      name: "advancements_track_id_track_type_fkey",
+      name: "advancements_entry_id_entry_type_fkey",
     }),
     check("advancements_position_check", sql`"position" > 0`),
   ],

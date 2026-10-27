@@ -220,7 +220,7 @@ describe("reverting a fork's copy", () => {
 
     await RulesetChangesService.revertOverride(session, fork.id, "classes", fighter);
 
-    expect(await CharacterAdvancements.findOne(db, { id: level.id })).toMatchObject({ trackId: sourceLevel.id });
+    expect(await CharacterAdvancements.findOne(db, { id: level.id })).toMatchObject({ entryId: sourceLevel.id });
     expect(await Entities.findOne<Klass>(db, { entityType: "classes", id: copy.id })).toBeUndefined();
   });
 

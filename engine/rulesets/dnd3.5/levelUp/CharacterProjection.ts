@@ -43,15 +43,15 @@ export default class CharacterProjection {
   }
 
   /**
-   * Adds an advancement in a track (`trackId`: a class level): after the character's levels, or in the place of the
+   * Adds an advancement of an entry (`entryId`: a class level): after the character's levels, or in the place of the
    * level it's `replacing`, which it leaves out. A fresh id keeps it apart from the level it replaces.
    */
-  private place(trackId: string, replacing?: { id: string; position: number }): StoredAdvancement {
+  private place(entryId: string, replacing?: { id: string; position: number }): StoredAdvancement {
     if (replacing) this.droppedLevelIds.add(replacing.id);
     const level = {
       id: crypto.randomUUID(),
       characterId: this.character.record.id,
-      trackId,
+      entryId,
       position: replacing ? replacing.position : this.nextPosition++,
       ...this.stamps(),
     };
@@ -69,8 +69,8 @@ export default class CharacterProjection {
    * Adds an advancement as a save writes it (`plan`: its class level, and its picks, its hit points and ability
    * increases among them), after the character's levels.
    */
-  addAdvancement({ picks, trackId }: AdvancementPlan): StoredAdvancement {
-    const level = this.place(trackId);
+  addAdvancement({ entryId, picks }: AdvancementPlan): StoredAdvancement {
+    const level = this.place(entryId);
     for (const pick of picks) this.add(level.id, pick);
     return level;
   }

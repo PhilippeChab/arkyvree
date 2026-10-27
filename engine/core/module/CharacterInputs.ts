@@ -53,15 +53,15 @@ export type CharacterPicks = Record<string, StoredPick[]>;
 
 /**
  * A character's rows as its ruleset's view reads them: each reference to an entity (a single link's, a link's, an
- * advancement's track, an inventory entry's item, a pick's entity and pool) resolved to the one the view shows in its
+ * advancement's entry, an inventory entry's item, a pick's entity and pool) resolved to the one the view shows in its
  * place, a copy's or a sibling winner's, since a row stored before the copy names its source. The engine resolves what
  * it's handed once, as it enters; the server passes rows as stored.
  */
 export default class CharacterInputs {
-  /** Advancements, each one's track resolved. */
+  /** Advancements, each one's entry resolved. */
   private static resolveAdvancements(advancements: StoredAdvancement[], cow: CowData): StoredAdvancement[] {
     return advancements.map((advancement) =>
-      advancement.trackId === null ? advancement : { ...advancement, trackId: cow.resolve(advancement.trackId) },
+      advancement.entryId === null ? advancement : { ...advancement, entryId: cow.resolve(advancement.entryId) },
     );
   }
 

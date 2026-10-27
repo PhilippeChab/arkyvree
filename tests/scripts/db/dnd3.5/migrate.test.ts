@@ -135,6 +135,22 @@ async function addUnwrittenColumns() {
 }
 
 /**
+ * An advancement's columns, indexes and constraints, each as one line (its name, and its definition as the database
+ * gives it), in order: what 0095 renames.
+ */
+async function advancementDefinitions() {
+  const { rows } = await db.execute<{ line: string }>(sql`
+    SELECT 'column ' || attnum || ' ' || attname || ' ' || format_type(atttypid, atttypmod) AS line FROM pg_attribute
+    WHERE attrelid = 'character.advancements'::regclass AND attnum > 0 AND NOT attisdropped
+    UNION ALL SELECT 'index ' || indexname || ' ' || indexdef FROM pg_indexes
+    WHERE schemaname = 'character' AND tablename = 'advancements'
+    UNION ALL SELECT 'constraint ' || conname || ' ' || pg_get_constraintdef(oid) FROM pg_constraint
+    WHERE conrelid = 'character.advancements'::regclass
+  `);
+  return rows.map((row) => row.line).toSorted();
+}
+
+/**
  * Every field row 0090 reads (an entity's, a ruleset's, a character's), each as one line (its owner, its field, its
  * ordinal and its text, quoted), and every character's last change: what it leaves.
  */
@@ -250,12 +266,32 @@ async function restoreIndexesBefore0089() {
 }
 
 /**
+ * The names 0095 gives an advancement's entry, as the migrations before left them: its statements run backwards, each
+ * `entry` name back to its `track` one (`entry_id` to `track_id`, and its indexes' and foreign key's), the registry
+ * sync off again. What the migrations before 0095 ran on.
+ */
+async function restoreTracksBefore0095() {
+  const swapped = new Map([
+    ["entry_", "track_"],
+    ["_entry", "_track"],
+    ["track_", "entry_"],
+    ["_track", "_entry"],
+  ]);
+  for (const statement of statementsOf("0095_advancement-entry.sql")) {
+    const backwards = statement.replace(/entry_|_entry|track_|_track/g, (word) => swapped.get(word)!);
+    await db.execute(sql.raw(backwards));
+  }
+  await db.execute(sql`SELECT set_config('arkyvree.registry_sync', 'off', true)`);
+}
+
+/**
  * The rows and columns 0092 renames, as the migrations before left them: its statements run backwards, each type back to
  * its old spelling (`class-levels` to `class_levels`) and `target_type` back to `target_table`, its registry sync off
- * again (the seeded database records no activity, whose targets a test writes as they were). What the migrations
- * before 0092 ran on.
+ * again (the seeded database records no activity, whose targets a test writes as they were), and the names 0095 gives
+ * after it back too (`restoreTracksBefore0095`). What the migrations before 0092 ran on.
  */
 async function restoreTypesBefore0092() {
+  await restoreTracksBefore0095();
   const swapped = new Map([
     ["class-levels", "class_levels"],
     ["class_levels", "class-levels"],
@@ -1107,5 +1143,25 @@ describe("0094_link-activity-keys", () => {
       `);
       expect({ table, rows }).toEqual({ table, rows: expected });
     }
+  });
+});
+
+describe("0095_advancement-entry", () => {
+  test("names an advancement's class level its entry, with the indexes and key naming it, and rewrites no row", async () => {
+    const fresh = await advancementDefinitions();
+    expect(fresh.filter((line) => line.includes("entry"))).toHaveLength(5);
+    await restoreTracksBefore0095();
+    expect(await advancementDefinitions()).toEqual(fresh.map((line) => line.replaceAll("entry", "track")).toSorted());
+    const before = await typedRows(false);
+    const placed = sql`SELECT id, ctid::text AS place, xmin::text AS version FROM character.advancements ORDER BY id`;
+    const { rows: stored } = await db.execute(placed);
+    expect(stored.length).toBeGreaterThan(0);
+
+    for (const statement of statementsOf("0095_advancement-entry.sql")) await db.execute(sql.raw(statement));
+
+    // What a fresh database's migrations give, every row as it was, in its place, and every character's last change
+    expect(await advancementDefinitions()).toEqual(fresh);
+    expect(await typedRows(false)).toEqual(before);
+    expect((await db.execute(placed)).rows).toEqual(stored);
   });
 });

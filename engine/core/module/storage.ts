@@ -146,15 +146,16 @@ export interface StorageRegistries {
 }
 
 /**
- * A character's advancement as stored (`character.advancements`): its track (3.5's class level), and where it stands
- * among the character's (`position`). What it picks are its picks, its value step's among them (3.5's hit points).
+ * A character's advancement as stored (`character.advancements`): its entry on a track (`entryId`: 3.5's class level,
+ * on its class's track), and where it stands among the character's (`position`). What it picks are its picks, its
+ * value step's among them (3.5's hit points).
  */
 export interface StoredAdvancement {
   characterId: string;
   createdAt: string;
+  entryId: string | null;
   id: string;
   position: number;
-  trackId: string | null;
   updatedAt: string;
 }
 

@@ -114,12 +114,12 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
           // Its DC's ability, as a loaded spell's (`CustomizesEntities.withDcAbilities`): its class's bonus spell ability
           abilityDcName: classBonusSpellAbilityMap.get(firstLevel.classLevel.ownerId) ?? null,
           advancementId: firstLevel.advancement.id,
+          classLevelId: firstLevel.classLevel.id,
           free: true,
           given: false,
           modifiers: [],
           requirements: [],
           step: "spells",
-          trackId: firstLevel.classLevel.id,
           viaId: aptitudeId,
           virtual: false,
         };
@@ -162,7 +162,7 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
       const tagsByAptitudeId = new Map<string, string[]>();
       for (const feat of feats) {
         // A feat held at a level is of that level's class: one held without a level (a modifier's) is of none
-        const className = feat.trackId === undefined ? undefined : classNameByClassLevelId.get(feat.trackId);
+        const className = feat.classLevelId === undefined ? undefined : classNameByClassLevelId.get(feat.classLevelId);
         const classListIds = className
           ? this.spellListsOf(className).flatMap((key) => (aptitudes[key] ? [aptitudes[key].id] : []))
           : [];

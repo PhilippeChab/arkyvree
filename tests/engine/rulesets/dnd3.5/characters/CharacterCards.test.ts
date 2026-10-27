@@ -19,9 +19,9 @@ const DATA = {
 describe("A 3.5 character's card", () => {
   test("is its race's chip, which a partly seen character shows, then each class at its highest level", () => {
     const card = CharacterCards.describe(DATA, { links: { race: "elf" } }, [
-      { trackId: "fighter-1" },
-      { trackId: "rogue-1" },
-      { trackId: "fighter-2" },
+      { entryId: "fighter-1" },
+      { entryId: "rogue-1" },
+      { entryId: "fighter-2" },
     ]);
     expect(card).toEqual({
       chips: [
@@ -33,7 +33,7 @@ describe("A 3.5 character's card", () => {
   });
 
   test("names a race it doesn't read Unknown, skips a level it doesn't read, and has no class without levels", () => {
-    expect(CharacterCards.describe(DATA, { links: { race: "gone" } }, [{ trackId: "gone-1" }])).toEqual({
+    expect(CharacterCards.describe(DATA, { links: { race: "gone" } }, [{ entryId: "gone-1" }])).toEqual({
       chips: [{ label: "Unknown", partial: true, tone: "secondary" }],
     });
   });

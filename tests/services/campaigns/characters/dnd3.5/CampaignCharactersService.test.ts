@@ -31,7 +31,7 @@ async function addLevels(characterId: string, levels: [string, number][]) {
   const ctx = await getSeedCtx();
   for (const [klass, level] of levels) {
     const classLevel = (await findClassLevel(ctx.classMap.pc[klass], level))!;
-    await createAdvancement(db, characterId, { trackId: classLevel.id, picks: [{ step: "hp", amount: 8 }] });
+    await createAdvancement(db, characterId, { entryId: classLevel.id, picks: [{ step: "hp", amount: 8 }] });
   }
 }
 

@@ -3,11 +3,11 @@ import type { AdvancementPlan, LevelEditPlan } from "@/engine/index.ts";
 import { CharacterAdvancements, Picks } from "@/server/repositories/index.ts";
 
 /**
- * Writes an advancement a plan makes after the character's last (`plan`: its track, and its picks under it, its value
+ * Writes an advancement a plan makes after the character's last (`plan`: its entry, and its picks under it, its value
  * step's among them: 3.5's hit points). Answers it as stored.
  */
 export async function createAdvancement(tx: Db, characterId: string, plan: AdvancementPlan) {
-  const [created] = await CharacterAdvancements.create(tx, { characterId, trackId: plan.trackId });
+  const [created] = await CharacterAdvancements.create(tx, { characterId, entryId: plan.entryId });
   await Picks.createMany(
     tx,
     plan.picks.map((pick) => ({ ...pick, advancementId: created.id })),

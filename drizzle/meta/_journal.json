@@ -666,6 +666,13 @@
       "when": 1793055325917,
       "tag": "0094_link-activity-keys",
       "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "7",
+      "when": 1793061841714,
+      "tag": "0095_advancement-entry",
+      "breakpoints": true
     }
   ]
 }

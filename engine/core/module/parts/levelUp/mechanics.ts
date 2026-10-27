@@ -138,7 +138,10 @@ export interface PlannedAdvancement {
   track: string;
 }
 
-/** An advancement a plan takes, as its answer reads it: its entry (3.5's class level), its track and its position. */
+/**
+ * An advancement a plan takes, as its answer reads it: its entry (`id`: 3.5's class level, which its saved advancement
+ * stores, `entryId`), the track the entry is on (3.5's class) and its position on it (the class's level).
+ */
 export interface PlannedAdvancementAnswer {
   id: string;
   position: number;
