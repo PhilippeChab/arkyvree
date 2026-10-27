@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { addClassLevels, createCharacter } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { db } from "@/server/database/index.ts";
-import { ForbiddenError } from "@/server/errors/index.ts";
+import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Characters, Picks } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { RulesetSettingsService } from "@/server/services/rulesets/settings/index.ts";
@@ -14,7 +14,7 @@ import { levelEditPlan, levelUpPlan, savedPicksOf } from "@/tests/support/dnd3.5
 import { findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { getPlanAnswer, stepAnswerOf } from "@/tests/support/levels.ts";
 import { findFormValues } from "@/tests/support/ownerValues.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 import {
@@ -99,7 +99,7 @@ async function setup() {
 describe("RulesetSettingsService", () => {
   test("reads a fork's Settings off its source's, until it saves its own", async () => {
     const { session, fork, abilityMap } = await setup();
-    expect(await RulesetSettingsService.getSettings(fork.id)).toEqual({
+    expect(await RulesetSettingsService.getSettings(await ownerSessionOf(fork.id), fork.id)).toEqual({
       id: fork.id,
       fields: CORE_PROGRESSION,
       links: { skillPointAbility: abilityMap["Intelligence"] },
@@ -115,13 +115,15 @@ describe("RulesetSettingsService", () => {
       fields: CORE_PROGRESSION,
       links: { skillPointAbility: abilityMap["Wisdom"] },
     });
-    expect(await RulesetSettingsService.getSettings(fork.id)).toEqual(saved);
+    expect(await RulesetSettingsService.getSettings(await ownerSessionOf(fork.id), fork.id)).toEqual(saved);
     // With Wisdom's +4
     expect(await fighterBudget(fork.id)).toBe(28);
 
     // Its own row in place of the copy it held; its source's as they were
     expect((await findFormValues("rulesets", fork.id)).links).toEqual({ skillPointAbility: abilityMap["Wisdom"] });
-    expect(await RulesetSettingsService.getSettings(fork.rulesetId!)).toMatchObject({
+    expect(
+      await RulesetSettingsService.getSettings(await ownerSessionOf(fork.rulesetId!), fork.rulesetId!),
+    ).toMatchObject({
       links: { skillPointAbility: abilityMap["Intelligence"] },
     });
     expect(await activityTypes(session.userId, TARGET_TYPES.rulesets, fork.id)).toEqual(["updateRulesetSettings"]);
@@ -158,18 +160,20 @@ describe("RulesetSettingsService", () => {
       [RULESET_ABILITY_INCREASES]: abilityIncreases,
       [RULESET_FEAT_ADVANCEMENT]: featAdvancement,
     });
-    expect(await RulesetSettingsService.getSettings(fork.id)).toEqual(saved);
+    expect(await RulesetSettingsService.getSettings(await ownerSessionOf(fork.id), fork.id)).toEqual(saved);
 
     expect(await fighterGeneralFeats(fork.id, 3)).toBe(4);
     expect(await fighterGeneralFeats(fork.id, 5)).toBe(5);
     expect(await abilityStep()).toMatchObject({ advancements: [0], chosen: false });
     // Its source's characters follow the core rules still
-    expect(await RulesetSettingsService.getSettings(fork.rulesetId!)).toMatchObject({ fields: CORE_PROGRESSION });
+    expect(
+      await RulesetSettingsService.getSettings(await ownerSessionOf(fork.rulesetId!), fork.rulesetId!),
+    ).toMatchObject({ fields: CORE_PROGRESSION });
 
     // None at any level stands for the fork, its source's progression aside
     const none = { every: 0, extra: [] };
     await RulesetSettingsService.updateSettings(session, fork.id, { fields: { [RULESET_ABILITY_INCREASES]: none } });
-    expect(await RulesetSettingsService.getSettings(fork.id)).toMatchObject({
+    expect(await RulesetSettingsService.getSettings(await ownerSessionOf(fork.id), fork.id)).toMatchObject({
       fields: { [RULESET_ABILITY_INCREASES]: none, [RULESET_FEAT_ADVANCEMENT]: featAdvancement },
     });
   });
@@ -249,7 +253,7 @@ describe("RulesetSettingsService", () => {
       refusal: "invalid",
       issues: [{ category: `fields.${RULESET_FEAT_ADVANCEMENT}` }],
     });
-    expect(await RulesetSettingsService.getSettings(fork.id)).toMatchObject({
+    expect(await RulesetSettingsService.getSettings(await ownerSessionOf(fork.id), fork.id)).toMatchObject({
       fields: CORE_PROGRESSION,
       links: { skillPointAbility: abilityMap["Intelligence"] },
     });
@@ -259,7 +263,8 @@ describe("RulesetSettingsService", () => {
     const { fork, abilityMap } = await setup();
     const { session: other } = await createTestUser();
     const links = { skillPointAbility: abilityMap["Wisdom"] };
-    expect(RulesetSettingsService.updateSettings(other, fork.id, { links })).rejects.toThrow(ForbiddenError);
+    // A private fork isn't revealed to a stranger
+    expect(RulesetSettingsService.updateSettings(other, fork.id, { links })).rejects.toThrow(NotFoundError);
     const { session } = await setup();
     expect(RulesetSettingsService.updateSettings(session, fork.rulesetId!, { links })).rejects.toThrow(ForbiddenError);
   });

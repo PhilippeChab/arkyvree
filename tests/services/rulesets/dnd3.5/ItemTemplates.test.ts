@@ -15,6 +15,7 @@ import {
   type Described,
   describedAs,
   invalidateSeededRuleset,
+  ownerSessionOf,
 } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
@@ -92,7 +93,9 @@ async function setup(values: { private?: boolean } = {}) {
   const { user, session } = await createTestUser();
   const ruleset = await createSeededTestRuleset(user.id, values);
   const template = async (name: string) => {
-    const found = (await EntitiesService.getTemplates(ruleset.id, "items")).find((item) => item.name === name);
+    const found = (await EntitiesService.getTemplates(await ownerSessionOf(ruleset.id), ruleset.id, "items")).find(
+      (item) => item.name === name,
+    );
     if (!found) throw new Error(`Seed template ${name} not found`);
     return found;
   };
@@ -144,7 +147,12 @@ describe("Item templates", () => {
       ],
     ])("%s fields", async (name, expected) => {
       const { ruleset, instance } = await setup();
-      const { fields } = await EntitiesService.getEntity(ruleset.id, "items", (await instance(name)).id);
+      const { fields } = await EntitiesService.getEntity(
+        await ownerSessionOf(ruleset.id),
+        ruleset.id,
+        "items",
+        (await instance(name)).id,
+      );
       expect(fields).toMatchObject(expected);
     });
 
@@ -161,8 +169,11 @@ describe("Item templates", () => {
         [ITEM_COST_GP]: longsword.fields[ITEM_COST_GP],
       };
       expect(inherited).toEqual({ [ITEM_WEIGHT]: 4, [ITEM_COST_GP]: 15 });
-      expect((await EntitiesService.getEntity(ruleset.id, "items", sword.id)).fields).toMatchObject(inherited);
+      expect(
+        (await EntitiesService.getEntity(await ownerSessionOf(ruleset.id), ruleset.id, "items", sword.id)).fields,
+      ).toMatchObject(inherited);
       const { items } = await EntitiesService.getEntities(
+        await ownerSessionOf(ruleset.id),
         ruleset.id,
         "items",
         { search: sword.name },
@@ -203,7 +214,12 @@ describe("Item templates", () => {
       const { ruleset, instance } = await setup();
       const { requirements } = describedAs(
         "items",
-        await EntitiesService.getEntity(ruleset.id, "items", (await instance(name)).id),
+        await EntitiesService.getEntity(
+          await ownerSessionOf(ruleset.id),
+          ruleset.id,
+          "items",
+          (await instance(name)).id,
+        ),
       );
       expect(requirements.map((r) => r.chainingOperator ?? r.target)).toEqual(expected);
     });
@@ -217,7 +233,9 @@ describe("Item templates", () => {
       // The instance's own value, written past the services, after its create read the fork's view
       RulesetViews.invalidate(ruleset.id);
 
-      expect((await EntitiesService.getEntity(ruleset.id, "items", sword.id)).fields).toMatchObject({
+      expect(
+        (await EntitiesService.getEntity(await ownerSessionOf(ruleset.id), ruleset.id, "items", sword.id)).fields,
+      ).toMatchObject({
         [WEAPON_BASE_DAMAGE]: "2d6",
         [ITEM_MADE_OF]: "Adamantine",
       });
@@ -228,6 +246,7 @@ describe("Item templates", () => {
     const { ruleset, instance } = await setup();
     const sword = await instance("Longsword");
     const { items } = await EntitiesService.getEntities(
+      await ownerSessionOf(ruleset.id),
       ruleset.id,
       "items",
       { search: sword.name },
@@ -242,7 +261,9 @@ describe("Item templates", () => {
       name: "Custom Item",
       fields: { [ITEM_TYPE]: "Weapon" },
     });
-    expect(await EntitiesService.getEntity(ruleset.id, "items", item.id)).toMatchObject({
+    expect(
+      await EntitiesService.getEntity(await ownerSessionOf(ruleset.id), ruleset.id, "items", item.id),
+    ).toMatchObject({
       requirements: [],
     });
     expect(await findFormValues("items", item.id)).toEqual({ fields: {}, links: {} });
@@ -266,7 +287,9 @@ describe("Item templates", () => {
         }),
       ),
     ).toMatchObject({ isTemplate: false, sourceItemId: sword.id });
-    expect((await EntitiesService.getEntity(ruleset.id, "items", copy.id)).fields).toMatchObject({
+    expect(
+      (await EntitiesService.getEntity(await ownerSessionOf(ruleset.id), ruleset.id, "items", copy.id)).fields,
+    ).toMatchObject({
       [WEAPON_TYPE]: "Longsword",
     });
   });
@@ -755,8 +778,10 @@ describe("Item templates", () => {
       description: "Local",
     });
     await expectRefusedWith(EntitiesService.deleteEntity(session, ruleset.id, "items", local.id), 409);
-    expect((await EntitiesService.getTemplates(ruleset.id, "items", "Weapon")).map((item) => item.id)).toContain(
-      local.id,
-    );
+    expect(
+      (await EntitiesService.getTemplates(await ownerSessionOf(ruleset.id), ruleset.id, "items", "Weapon")).map(
+        (item) => item.id,
+      ),
+    ).toContain(local.id);
   });
 });

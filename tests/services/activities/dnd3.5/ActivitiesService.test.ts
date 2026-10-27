@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { type KlassLevel, type Mechanic } from "@/engine/rulesets/dnd3.5/index.ts";
+import { type Feat, type KlassLevel, type Mechanic } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   CharacterContributors,
@@ -32,7 +32,7 @@ async function resolveAll(targets: string[][]) {
 describe("ActivitiesService.getActivityUrl", () => {
   test("links rulesets, characters and campaigns to their page, archived or not, and accounts nowhere", async () => {
     const { user } = await createTestUser();
-    const ruleset = await createTestRuleset(user.id);
+    const ruleset = await createTestRuleset(user.id, { private: false });
     const character = await createTestCharacter(user.id, { deletedAt: new Date().toISOString() });
     const { campaign } = await createTestCampaign(user.id);
     expect(
@@ -52,6 +52,46 @@ describe("ActivitiesService.getActivityUrl", () => {
       null,
       null,
     ]);
+  });
+
+  test("links a private ruleset to its page for who may read it, and nowhere for anyone else", async () => {
+    const { user, session } = await createTestUser();
+    const ruleset = await createTestRuleset(user.id);
+    expect(await resolve("rulesets", ruleset.id, session)).toBe(`/rulesets/${ruleset.id}`);
+    expect(await resolve("rulesets", ruleset.id)).toBeNull();
+  });
+
+  test("links a private ruleset's content, customizations and contributors nowhere for who may not read it", async () => {
+    const { user, session } = await createTestUser();
+    const ruleset = await createTestRuleset(user.id);
+    const [feat] = await Entities.create<Feat>(db, "feats", { name: "Secret Feat", rulesetId: ruleset.id });
+    const customized = { sourceId: feat.id, sourceType: "feats", target: "combat.bab", value: "1" };
+    const [modifier] = await Modifiers.create(db, { ...customized, valueType: "number", operator: "add" });
+    const [requirement] = await Requirements.create(db, {
+      entityId: feat.id,
+      entityType: "feats",
+      level: "1",
+      target: "abilities.strength.total",
+      value: "13",
+      valueType: "number",
+      operator: "greater_than_or_equal",
+    });
+    const [contributor] = await Contributors.create(db, {
+      rulesetId: ruleset.id,
+      email: "invitee@example.com",
+      role: "Editor",
+      invitedBy: user.id,
+    });
+
+    for (const [targetType, id] of [
+      ["feats", feat.id],
+      ["modifiers", modifier.id],
+      ["requirements", requirement.id],
+      ["contributors", contributor.id],
+    ]) {
+      expect(await resolve(targetType, id, session)).toStartWith(`/rulesets/${ruleset.id}`);
+      expect(await resolve(targetType, id)).toBeNull();
+    }
   });
 
   test("links a ruleset's entities to their page, or their customization when they have one", async () => {

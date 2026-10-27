@@ -135,6 +135,25 @@ class CharactersRepository extends include(
     return await db.delete(this.table).where(eq(this.table.id, where.id));
   }
 
+  /**
+   * Whether the user may edit a character built on the ruleset (`{ editorId, rulesetId }`: theirs, or one they actively
+   * contribute to), archived or not, whose sheet stays readable: what lets them read a private ruleset.
+   */
+  async exists(db: Db, where: { editorId: string; rulesetId: string }) {
+    const [row] = await db
+      .select({ one: sql`1` })
+      .from(charactersInCharacter)
+      .where(
+        and(
+          eq(charactersInCharacter.rulesetId, where.rulesetId),
+          inArray(charactersInCharacter.kind, [...Engine.storage().playerKinds()]),
+          or(eq(charactersInCharacter.userId, where.editorId), this.contributesTo(db, where.editorId)),
+        ),
+      )
+      .limit(1);
+    return Boolean(row);
+  }
+
   async findIds(db: Db, where: { userIds: string[] }) {
     if (where.userIds.length === 0) return [];
     const rows = await db

@@ -1,10 +1,10 @@
 import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Activities, Rulesets } from "@/server/repositories/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
 import type { Ruleset, Session } from "@/shared/relations.ts";
@@ -22,9 +22,9 @@ export function Publishes<B extends Constructor>(Base: B) {
     async publishRuleset(session: Session, id: string, body: { kind?: RulesetKind } = {}) {
       const result = await withTransaction(
         async (tx) =>
-          await withRulesetScope(tx, id, async (scope) => {
+          await withReadableRuleset(tx, session, id, async (scope, policy) => {
             const { ruleset } = scope;
-            (await RulesetsPolicy.for(tx, session, ruleset)).canPublish();
+            policy.canPublish();
 
             const targetKind = body.kind ?? ruleset.kind;
             if (targetKind === "extension") this.assertCanBeExtension(ruleset);

@@ -44,7 +44,7 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestClassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { addClassSkills, addLists, findLists } from "@/tests/support/dnd3.5/links.ts";
 import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
-import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import {
@@ -326,7 +326,9 @@ describe("RulesetsService", () => {
         (await Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: created.id }, firstPage)).items,
       ).toEqual([]);
       expect(await EntitySnapshots.findMany(db, { rulesetId: created.id })).toEqual([]);
-      expect(await EntitiesService.getEntity(created.id, "feats", feat.id)).toMatchObject({
+      expect(
+        await EntitiesService.getEntity(await ownerSessionOf(created.id), created.id, "feats", feat.id),
+      ).toMatchObject({
         id: feat.id,
         links: [{ role: "listedIn", toId: aptitude.id }],
       });
@@ -399,14 +401,15 @@ describe("RulesetsService", () => {
       const ruleset = await createTestRuleset(user.id);
       const base = await createTestRuleset(null, { private: false, status: "Published" });
 
-      expect(RulesetsService.archiveRuleset(other, ruleset.id)).rejects.toThrow(ForbiddenError);
+      // Another user's private ruleset isn't revealed to them
+      expect(RulesetsService.archiveRuleset(other, ruleset.id)).rejects.toThrow(NotFoundError);
       expect(RulesetsService.archiveRuleset(session, base.id)).rejects.toThrow(ForbiddenError);
       expect(RulesetsService.archiveRuleset(session, NIL_UUID)).rejects.toThrow(NotFoundError);
       expect(RulesetsService.unarchiveRuleset(session, ruleset.id)).rejects.toThrow(ForbiddenError);
       expect(RulesetsService.unarchiveRuleset(session, base.id)).rejects.toThrow(ForbiddenError);
       expect(RulesetsService.unarchiveRuleset(session, NIL_UUID)).rejects.toThrow(NotFoundError);
       await RulesetsService.archiveRuleset(session, ruleset.id);
-      expect(RulesetsService.unarchiveRuleset(other, ruleset.id)).rejects.toThrow(ForbiddenError);
+      expect(RulesetsService.unarchiveRuleset(other, ruleset.id)).rejects.toThrow(NotFoundError);
     });
   });
 
@@ -466,10 +469,10 @@ describe("RulesetsService", () => {
       const draft = await createTestRuleset(user.id);
       await addPlayableContent(draft.id);
 
-      expect(RulesetsService.publishRuleset(other, draft.id)).rejects.toThrow(ForbiddenError);
-      expect(RulesetsService.publishRuleset(session, (await createTestRuleset(null)).id)).rejects.toThrow(
-        ForbiddenError,
-      );
+      // Another user's private ruleset isn't revealed to them
+      expect(RulesetsService.publishRuleset(other, draft.id)).rejects.toThrow(NotFoundError);
+      const base = await createTestRuleset(null, { private: false });
+      expect(RulesetsService.publishRuleset(session, base.id)).rejects.toThrow(ForbiddenError);
       expect(
         RulesetsService.publishRuleset(session, (await createTestRuleset(user.id, { status: "Published" })).id),
       ).rejects.toThrow(UnprocessableEntityError);
@@ -515,12 +518,14 @@ describe("RulesetsService", () => {
       const { user, session } = await createTestUser();
       const { session: other } = await createTestUser();
       const body = { name: "Updated", description: "Updated" };
+      // Another user's private ruleset isn't revealed to them; a public one is refused
       expect(RulesetsService.updateRuleset(other, (await createTestRuleset(user.id)).id, body)).rejects.toThrow(
-        ForbiddenError,
+        NotFoundError,
       );
-      expect(RulesetsService.updateRuleset(session, (await createTestRuleset(null)).id, body)).rejects.toThrow(
-        ForbiddenError,
-      );
+      const shared = await createTestRuleset(user.id, { private: false });
+      expect(RulesetsService.updateRuleset(other, shared.id, body)).rejects.toThrow(ForbiddenError);
+      const base = await createTestRuleset(null, { private: false });
+      expect(RulesetsService.updateRuleset(session, base.id, body)).rejects.toThrow(ForbiddenError);
       expect(
         RulesetsService.updateRuleset(session, (await createTestRuleset(user.id, { status: "Archived" })).id, body),
       ).rejects.toThrow(UnprocessableEntityError);
@@ -593,8 +598,9 @@ describe("RulesetsService", () => {
       );
       expect(RulesetChangesService.getChanges(session, NIL_UUID)).rejects.toThrow(NotFoundError);
 
+      // A private fork isn't revealed to a stranger: its changes answer as an unknown ruleset's
       const { fork } = await setupChanges({ private: true });
-      expect(RulesetChangesService.getChanges(session, fork.id)).rejects.toThrow(ForbiddenError);
+      expect(RulesetChangesService.getChanges(session, fork.id)).rejects.toThrow(NotFoundError);
     });
 
     describe("reverting", () => {
@@ -618,7 +624,9 @@ describe("RulesetsService", () => {
         await RulesetChangesService.revertOverride(session, fork.id, "feats", modified.id);
 
         expect(await RulesetChangesService.getChanges(session, fork.id)).toEqual([]);
-        expect(await EntitiesService.getEntity(fork.id, "feats", modified.id)).toMatchObject({
+        expect(
+          await EntitiesService.getEntity(await ownerSessionOf(fork.id), fork.id, "feats", modified.id),
+        ).toMatchObject({
           id: modified.id,
           description: null,
         });
@@ -633,7 +641,9 @@ describe("RulesetsService", () => {
         await EntitiesService.deleteEntity(session, fork.id, "feats", deleted.id);
         await RulesetChangesService.revertOverride(session, fork.id, "feats", deleted.id);
         expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toEqual([]);
-        expect(await EntitiesService.getEntity(fork.id, "feats", deleted.id)).toMatchObject({ id: deleted.id });
+        expect(
+          await EntitiesService.getEntity(await ownerSessionOf(fork.id), fork.id, "feats", deleted.id),
+        ).toMatchObject({ id: deleted.id });
       });
 
       test("deletes a copied class's levels and class skills", async () => {

@@ -1,10 +1,10 @@
 import { Engine, type EntityRecord } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { CustomizationCopies, EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { CustomizationCopies, EntityNames, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { Entities, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { getActivityName } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -34,12 +34,12 @@ export function Copies<B extends Constructor>(Base: B) {
     ) {
       const result = await withTransaction(
         async (tx) =>
-          await withRulesetScope(tx, rulesetId, async (scope) => {
+          await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
             const { ruleset, rulesetData } = scope;
 
             // Refused first, for a kind that makes no copies
             const kind = Engine.for(scope).entities(type, "variants");
-            (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+            policy.canUpdateEntity();
             const plan = kind.planVariants(sourceId, variants);
             // Every variant's name kept free, as a create's is, in one read: the tombstones they take over, by name
             const names = new EntityNames(ruleset, rulesetData.cow);
@@ -92,8 +92,8 @@ export function Copies<B extends Constructor>(Base: B) {
      * The entities of a type others are made from (`templateType`: an item's templates of a type), by name: each as
      * stored (its own columns, every field it holds, its single links), named.
      */
-    async getTemplates(rulesetId: string, type: RulesetEntityType, templateType?: string) {
-      return await withRulesetScope(db, rulesetId, async (scope) => {
+    async getTemplates(session: Session, rulesetId: string, type: RulesetEntityType, templateType?: string) {
+      return await withReadableRuleset(db, session, rulesetId, async (scope) => {
         const { rulesetData } = scope;
         const { filters } = Engine.for(scope).entities(type).openTemplates(templateType);
         return await Entities.findList<EntityRecord & { name: string }>(db, {

@@ -18,7 +18,12 @@ import { insertRows, measure } from "@/tests/support/database.ts";
 import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { addLists } from "@/tests/support/dnd3.5/links.ts";
 import { findFormValues, type HeldValues, viewValuesOf, writeFieldValues } from "@/tests/support/ownerValues.ts";
-import { copyEntity, createSeededTestRuleset, invalidateTestRulesets } from "@/tests/support/rulesets.ts";
+import {
+  copyEntity,
+  createSeededTestRuleset,
+  invalidateTestRulesets,
+  ownerSessionOf,
+} from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { FEAT_FAMILY, FEAT_WEAPON_FINESSE, SPELL_SUBSCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -109,7 +114,12 @@ for (const entityType of ["feats", "spells"] as const) {
 
       invalidateTestRulesets(...rulesetIds);
       const local = await ModifiersService.createModifier(session, host.id, entityType, winnerId, STRENGTH_BONUS);
-      const copied = await RequirementsService.getRequirements(host.id, entityType, local.resolvedEntityId);
+      const copied = await RequirementsService.getRequirements(
+        await ownerSessionOf(host.id),
+        host.id,
+        entityType,
+        local.resolvedEntityId,
+      );
       const copiedRequirement = copied.find((r) => r.target === requirement.target)!;
       expect(copiedRequirement.id).not.toBe(requirement.id);
       await RequirementsService.deleteRequirement(
@@ -120,14 +130,24 @@ for (const entityType of ["feats", "spells"] as const) {
         copiedRequirement.id,
       );
       if (entityType === "feats") {
-        const feat = await EntitiesService.getEntity(host.id, "feats", local.resolvedEntityId);
+        const feat = await EntitiesService.getEntity(
+          await ownerSessionOf(host.id),
+          host.id,
+          "feats",
+          local.resolvedEntityId,
+        );
         expect(feat.links.some((a) => a.toId === aptitude.id)).toBe(true);
         await EntitiesService.updateEntity(session, host.id, "feats", feat.id, {
           name: feat.name,
           links: { listedIn: [] },
         });
       } else {
-        const spell = await EntitiesService.getEntity(host.id, "spells", local.resolvedEntityId);
+        const spell = await EntitiesService.getEntity(
+          await ownerSessionOf(host.id),
+          host.id,
+          "spells",
+          local.resolvedEntityId,
+        );
         expect(spell.links.some((a) => a.toId === aptitude.id)).toBe(true);
         await EntitiesService.updateEntity(session, host.id, "spells", spell.id, {
           name: spell.name,
@@ -136,11 +156,24 @@ for (const entityType of ["feats", "spells"] as const) {
       }
       for (const cold of [false, true]) {
         if (cold) invalidateTestRulesets(...rulesetIds);
-        const requirements = await RequirementsService.getRequirements(host.id, entityType, local.resolvedEntityId);
+        const requirements = await RequirementsService.getRequirements(
+          await ownerSessionOf(host.id),
+          host.id,
+          entityType,
+          local.resolvedEntityId,
+        );
         expect(requirements.some((r) => r.target === requirement.target)).toBe(false);
-        if (entityType === "feats")
-          expect((await EntitiesService.getEntity(host.id, "feats", local.resolvedEntityId)).links).toEqual([]);
-        else expect((await EntitiesService.getEntity(host.id, "spells", local.resolvedEntityId)).links).toEqual([]);
+        if (entityType === "feats") {
+          expect(
+            (await EntitiesService.getEntity(await ownerSessionOf(host.id), host.id, "feats", local.resolvedEntityId))
+              .links,
+          ).toEqual([]);
+        } else {
+          expect(
+            (await EntitiesService.getEntity(await ownerSessionOf(host.id), host.id, "spells", local.resolvedEntityId))
+              .links,
+          ).toEqual([]);
+        }
       }
       expect(await Requirements.findOne(db, { id: requirement.id })).toEqual(requirement);
       if (entityType === "feats") await EntitiesService.deleteEntity(session, host.id, "feats", local.resolvedEntityId);
@@ -154,17 +187,26 @@ for (const entityType of ["feats", "spells"] as const) {
         expect(rulesetData.requirementsByEntity.get(local.resolvedEntityId) ?? []).toEqual([]);
       });
       await RulesetChangesService.revertOverride(session, host.id, entityType, winnerId);
-      const restored = await RequirementsService.getRequirements(host.id, entityType, winnerId);
+      const restored = await RequirementsService.getRequirements(
+        await ownerSessionOf(host.id),
+        host.id,
+        entityType,
+        winnerId,
+      );
       expect(restored.filter((r) => r.target === requirement.target)).toEqual([
         expect.objectContaining({ value: requirement.value, operator: requirement.operator }),
       ]);
       if (entityType === "feats") {
         expect(
-          (await EntitiesService.getEntity(host.id, "feats", winnerId)).links.some((a) => a.toId === aptitude.id),
+          (await EntitiesService.getEntity(await ownerSessionOf(host.id), host.id, "feats", winnerId)).links.some(
+            (a) => a.toId === aptitude.id,
+          ),
         ).toBe(true);
       } else {
         expect(
-          (await EntitiesService.getEntity(host.id, "spells", winnerId)).links.some((a) => a.toId === aptitude.id),
+          (await EntitiesService.getEntity(await ownerSessionOf(host.id), host.id, "spells", winnerId)).links.some(
+            (a) => a.toId === aptitude.id,
+          ),
         ).toBe(true);
       }
     });
@@ -185,7 +227,9 @@ for (const entityType of ["feats", "spells"] as const) {
         });
         invalidateTestRulesets(...rulesetIds);
         expect(
-          (await ModifiersService.getModifiers(host.id, entityType, winnerId)).some((m) => m.id === modifier.id),
+          (await ModifiersService.getModifiers(await ownerSessionOf(host.id), host.id, entityType, winnerId)).some(
+            (m) => m.id === modifier.id,
+          ),
         ).toBe(true);
         const result =
           action === "create"
@@ -204,11 +248,21 @@ for (const entityType of ["feats", "spells"] as const) {
         expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toEqual([
           original,
         ]);
-        const copies = await ModifiersService.getModifiers(host.id, entityType, winnerId);
+        const copies = await ModifiersService.getModifiers(
+          await ownerSessionOf(host.id),
+          host.id,
+          entityType,
+          winnerId,
+        );
         expect(copies.filter((m) => m.target === modifier.target)).toEqual([
           expect.objectContaining({ id: result.resolvedEntityId }),
         ]);
-        const requirements = await RequirementsService.getRequirements(host.id, "modifiers", result.resolvedEntityId);
+        const requirements = await RequirementsService.getRequirements(
+          await ownerSessionOf(host.id),
+          host.id,
+          "modifiers",
+          result.resolvedEntityId,
+        );
         expect(requirements.map((r) => r.chainingOperator).sort()).toEqual(
           action === "create" ? ["and", "or"] : action === "update" ? ["or"] : [],
         );
@@ -250,7 +304,12 @@ for (const entityType of ["feats", "spells"] as const) {
               })
             : await ModifiersService.deleteModifier(session, host.id, entityType, winnerId, modifier.id);
         invalidateTestRulesets(...rulesetIds);
-        const visible = await ModifiersService.getModifiers(host.id, entityType, result.resolvedEntityId);
+        const visible = await ModifiersService.getModifiers(
+          await ownerSessionOf(host.id),
+          host.id,
+          entityType,
+          result.resolvedEntityId,
+        );
         expect(visible.filter((m) => m.target === modifier.target)).toEqual(
           action === "update" ? [expect.objectContaining({ id: result.id, value: "5" })] : [],
         );

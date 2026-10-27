@@ -19,7 +19,6 @@ import {
   EntityUses,
   type RulesetScope,
   RulesetViews,
-  withRulesetScope,
 } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
@@ -33,7 +32,8 @@ import {
   type RulesetEntityType,
 } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import type { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { getActivityName } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -108,10 +108,18 @@ export default class EntityWriter {
     private readonly open: (scope: RulesetScope) => unknown = () => undefined,
   ) {}
 
-  /** Runs a save in its transaction and its ruleset's scope, the ruleset's views dropping what it changed. */
-  private static async inScope<T>(rulesetId: string, save: (tx: Db, scope: RulesetScope) => Promise<T>): Promise<T> {
+  /**
+   * Runs a save in its transaction and its ruleset's scope, with the session's policy on it, if the session may read it
+   * (`withReadableRuleset`), the ruleset's views dropping what it changed.
+   */
+  private static async inScope<T>(
+    session: Session,
+    rulesetId: string,
+    save: (tx: Db, scope: RulesetScope, policy: RulesetsPolicy) => Promise<T>,
+  ): Promise<T> {
     const result = await withTransaction(
-      async (tx) => await withRulesetScope(tx, rulesetId, async (scope) => await save(tx, scope)),
+      async (tx) =>
+        await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => await save(tx, scope, policy)),
     );
     RulesetViews.invalidate(rulesetId);
     return result;
@@ -242,10 +250,10 @@ export default class EntityWriter {
     name: string,
     plan: (scope: RulesetScope, reads: { tombstoneAncestorId: string | null; tx: Db }) => P | Promise<P>,
   ) {
-    return await EntityWriter.inScope(rulesetId, async (tx, scope) => {
+    return await EntityWriter.inScope(session, rulesetId, async (tx, scope, policy) => {
       const { ruleset, rulesetData } = scope;
       this.open(scope);
-      (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+      policy.canUpdateEntity();
 
       const names = new EntityNames(ruleset, rulesetData.cow);
       const { tombstoneAncestorId } = await names.assertNameAvailable(tx, this.type, name);
@@ -273,9 +281,9 @@ export default class EntityWriter {
     rulesetId: string,
     plan: (scope: RulesetScope) => OwnedPlanned<P>,
   ) {
-    return await EntityWriter.inScope(rulesetId, async (tx, scope) => {
+    return await EntityWriter.inScope(session, rulesetId, async (tx, scope, policy) => {
       const { ruleset, rulesetData } = scope;
-      (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+      policy.canUpdateEntity();
       const { plan: planned, type } = plan(scope);
 
       const owner = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, this.type, planned.owner);
@@ -298,11 +306,11 @@ export default class EntityWriter {
     entityId: string,
     plan: (scope: RulesetScope, reads: { tx: Db }) => P | Promise<P>,
   ): Promise<Row> {
-    return await EntityWriter.inScope(rulesetId, async (tx, scope) => {
+    return await EntityWriter.inScope(session, rulesetId, async (tx, scope, policy) => {
       const { ruleset, rulesetData } = scope;
       this.open(scope);
       const inUse = await new EntityUses(ruleset, rulesetData.cow).refusesDelete(tx, this.type, entityId);
-      (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+      policy.canDeleteEntity({ inUse });
 
       const planned = await plan(scope, { tx });
       const targetId = await new EntityEdit(ruleset, rulesetData.cow).cowToDelete(tx, this.type, planned.entity);
@@ -331,12 +339,12 @@ export default class EntityWriter {
     ownedId: string,
     reads: { ownedType: (scope: RulesetScope) => string | undefined; plan: (scope: RulesetScope) => OwnedPlanned<P> },
   ): Promise<Row> {
-    return await EntityWriter.inScope(rulesetId, async (tx, scope) => {
+    return await EntityWriter.inScope(session, rulesetId, async (tx, scope, policy) => {
       const { ruleset, rulesetData } = scope;
       const ownedType = reads.ownedType(scope);
       const uses = new EntityUses(ruleset, rulesetData.cow);
       const inUse = ownedType ? await uses.refusesDelete(tx, ownedType as ReferencedType, ownedId) : false;
-      (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+      policy.canDeleteEntity({ inUse });
       const { plan: planned, type } = reads.plan(scope);
 
       const target = await new EntityEdit(ruleset, rulesetData.cow).cowOwned(tx, type, this.type, planned.entity.id);
@@ -362,10 +370,10 @@ export default class EntityWriter {
     body: { name: string; updatedAt?: string },
     plan: (scope: RulesetScope, reads: { tx: Db }) => P | Promise<P>,
   ) {
-    return await EntityWriter.inScope(rulesetId, async (tx, scope) => {
+    return await EntityWriter.inScope(session, rulesetId, async (tx, scope, policy) => {
       const { ruleset, rulesetData } = scope;
       this.open(scope);
-      (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+      policy.canUpdateEntity();
 
       const planned = await plan(scope, { tx });
       await new EntityNames(ruleset, rulesetData.cow).assertRenameAvailable(tx, this.type, planned.entity, body.name);
@@ -394,9 +402,9 @@ export default class EntityWriter {
     updatedAt: string | undefined,
     plan: (scope: RulesetScope) => OwnedPlanned<P>,
   ) {
-    return await EntityWriter.inScope(rulesetId, async (tx, scope) => {
+    return await EntityWriter.inScope(session, rulesetId, async (tx, scope, policy) => {
       const { ruleset, rulesetData } = scope;
-      (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+      policy.canUpdateEntity();
       const { plan: planned, type } = plan(scope);
 
       const target = await new EntityEdit(ruleset, rulesetData.cow).cowOwned(tx, type, this.type, planned.entity.id);

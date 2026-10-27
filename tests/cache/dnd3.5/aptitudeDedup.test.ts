@@ -14,7 +14,7 @@ import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { EntityLinks } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
-import { createSeededTestRulesetWithExtensions } from "@/tests/support/rulesets.ts";
+import { createSeededTestRulesetWithExtensions, ownerSessionOf } from "@/tests/support/rulesets.ts";
 
 /** The entities of `type` named `name` (`names`), with their rulesets' names, in the rulesets of `rulesetIds`. */
 async function namedEntities(type: string, names: string[], rulesetIds?: string[]) {
@@ -129,6 +129,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     // "Visage of the Deity, Lesser" is a CD spell with "Blackguard Spells" aptitude
     // Both DMG and CD create this aptitude — service should dedup
     const { items } = await EntitiesService.getEntities(
+      await ownerSessionOf(ruleset.id),
       ruleset.id,
       "spells",
       { search: "Visage of the Deity, Lesser" },
@@ -151,7 +152,7 @@ describe("aptitude deduplication across sibling extensions", () => {
       [await rulesetIdOf(DND35_COMPLETE_DIVINE_NAME)],
     );
 
-    const spell = await EntitiesService.getEntity(ruleset.id, "spells", seeded.id);
+    const spell = await EntitiesService.getEntity(await ownerSessionOf(ruleset.id), ruleset.id, "spells", seeded.id);
     const aptNames = spell.links.map((link) => link.toName);
     const uniqueNames = new Set(aptNames);
     expect(aptNames.length).toBe(uniqueNames.size);
@@ -160,6 +161,7 @@ describe("aptitude deduplication across sibling extensions", () => {
   test("the aptitudes list returns no duplicate aptitude names in list", async () => {
     const { ruleset } = await setup();
     const { items } = await EntitiesService.getEntities(
+      await ownerSessionOf(ruleset.id),
       ruleset.id,
       "aptitudes",
       { scope: "spells" },
@@ -180,6 +182,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     expect(winningApt).toBeDefined();
 
     const { items } = await EntitiesService.getEntities(
+      await ownerSessionOf(ruleset.id),
       ruleset.id,
       "feats",
       { listedIn: winningApt!.id },

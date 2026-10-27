@@ -8,7 +8,7 @@ import { RulesetSettingsService } from "@/server/services/rulesets/settings/inde
 export default new Hono<SessionContext>()
   .get("/:id/settings", validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
-    return c.json(await RulesetSettingsService.getSettings(id), 200);
+    return c.json(await RulesetSettingsService.getSettings(c.var.requestSession, id), 200);
   })
   .put(
     "/:id/settings",

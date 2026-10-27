@@ -6,7 +6,7 @@ import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { TargetPathsService } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";
-import { createTestRuleset, readTargetPaths } from "@/tests/support/rulesets.ts";
+import { createTestRuleset, ownerSessionOf, readTargetPaths } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
@@ -30,6 +30,7 @@ async function complete(
 ) {
   const { rulesetId } = await getSeedCtx();
   return await TargetPathsService.getCompletions(
+    await ownerSessionOf(rulesetId),
     rulesetId,
     partialPath,
     partialPath.length,
@@ -46,6 +47,7 @@ async function complete(
 async function pathsTaken(kind: TargetPathKind, entityType?: string) {
   const { rulesetId } = await getSeedCtx();
   const { items } = await TargetPathsService.getCompletions(
+    await ownerSessionOf(rulesetId),
     rulesetId,
     "",
     0,
@@ -66,7 +68,13 @@ async function seedPaths(kind: TargetPathKind) {
 }
 
 async function validate(path: string, kind: TargetPathKind = "modifier", entityType?: string) {
-  return TargetPathsService.validatePath((await getSeedCtx()).rulesetId, path, kind, entityType);
+  return TargetPathsService.validatePath(
+    await ownerSessionOf((await getSeedCtx()).rulesetId),
+    (await getSeedCtx()).rulesetId,
+    path,
+    kind,
+    entityType,
+  );
 }
 
 // Completing and validating a path through the API are covered in the customization target router test.
@@ -386,7 +394,9 @@ describe("TargetPathsService", () => {
   });
 
   test("throws NotFoundError for a missing ruleset", async () => {
-    expect(TargetPathsService.validatePath(NIL_UUID, "combat.ac.misc")).rejects.toThrow(NotFoundError);
+    expect(TargetPathsService.validatePath(await ownerSessionOf(NIL_UUID), NIL_UUID, "combat.ac.misc")).rejects.toThrow(
+      NotFoundError,
+    );
   });
 
   describe("completing a path", () => {

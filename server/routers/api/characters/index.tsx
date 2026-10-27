@@ -76,7 +76,7 @@ export default new Hono()
   // How a new character of a ruleset sets its scores of a scored link's role (3.5's `score`, its ability scores)
   .get("/creation", validate("query", z.object({ role: z.string(), rulesetId: z.string().uuid() })), async (c) => {
     const { role, rulesetId } = c.req.valid("query");
-    return c.json(await CharactersService.getCreation(rulesetId, role), 200);
+    return c.json(await CharactersService.getCreation(c.var.requestSession, rulesetId, role), 200);
   })
   // A new character's creation pick's options (a single link's, by its role: 3.5's race), each checked
   .get(
@@ -91,7 +91,14 @@ export default new Hono()
       const { role } = c.req.valid("param");
       const { rulesetId, limit, page, search, ...narrowing } = c.req.valid("query");
       return c.json(
-        await CharactersService.getCreationOptions(rulesetId, role, narrowing, { search }, { limit, page }),
+        await CharactersService.getCreationOptions(
+          c.var.requestSession,
+          rulesetId,
+          role,
+          narrowing,
+          { search },
+          { limit, page },
+        ),
         200,
       );
     },

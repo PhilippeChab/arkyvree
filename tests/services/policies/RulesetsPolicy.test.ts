@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
-import { ConflictError, ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Campaigns, Players } from "@/server/repositories/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
@@ -132,6 +132,20 @@ describe("RulesetsPolicy", () => {
     expectOnly(["Owner"], (p) => p.canUnarchive(), ForbiddenError, { status: "Archived" });
     expect(() => policyOf("Owner").canUnarchive()).toThrow("Ruleset is not archived");
     expect(() => policyOf("Owner", { userId: null, status: "Archived" }).canUnarchive()).toThrow(ForbiddenError);
+  });
+
+  test("canRead: anyone, a ruleset that isn't private; a private one, its members and its characters' editors", () => {
+    expectOnly(["Owner", "Admin", "Editor", "Viewer"], (p) => p.canRead(), NotFoundError);
+    expectOnly(ACTORS, (p) => p.canRead(), NotFoundError, { private: false });
+    expect(policyOf("Stranger").isReadable()).toBe(false);
+
+    const stranger = makeSession(OTHER);
+    expect(new RulesetsPolicy(stranger, rulesetOf(), undefined, { isCampaignPlayer: true }).canRead()).toBe(true);
+    // A member of a campaign archived or not reads it, and creates on it only from a live seat in a live campaign
+    const member = new RulesetsPolicy(stranger, rulesetOf(), undefined, { isCampaignMember: true });
+    expect(member.canRead()).toBe(true);
+    expect(() => member.canCreateCharacter()).toThrow(ForbiddenError);
+    expect(new RulesetsPolicy(stranger, rulesetOf(), undefined, { isCharacterEditor: true }).canRead()).toBe(true);
   });
 
   test("canViewChanges: anyone on a public ruleset, the owner and contributors on a private one", () => {

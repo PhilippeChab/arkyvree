@@ -1,11 +1,11 @@
 import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { EntityEdit, EntityUses, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { EntityEdit, EntityUses, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { EntityLinks, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { getActivityName } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -29,10 +29,10 @@ export function Links<B extends Constructor>(Base: B) {
     ) {
       const result = await withTransaction(
         async (tx) =>
-          await withRulesetScope(tx, rulesetId, async (scope) => {
+          await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
             const { ruleset, rulesetData } = scope;
 
-            (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+            policy.canUpdateEntity();
             const plan = Engine.for(scope).links(type, ownerId).planAdd(targetId);
 
             const { id: fromId } = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, type, plan.owner);
@@ -54,8 +54,10 @@ export function Links<B extends Constructor>(Base: B) {
     }
 
     /** The links an entity edits (`ownerId`), each with its target. */
-    async getEntityLinks(rulesetId: string, type: RulesetEntityType, ownerId: string) {
-      return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).links(type, ownerId).describe());
+    async getEntityLinks(session: Session, rulesetId: string, type: RulesetEntityType, ownerId: string) {
+      return await withReadableRuleset(db, session, rulesetId, async (scope) =>
+        Engine.for(scope).links(type, ownerId).describe(),
+      );
     }
 
     /**
@@ -72,11 +74,11 @@ export function Links<B extends Constructor>(Base: B) {
     ) {
       const result = await withTransaction(
         async (tx) =>
-          await withRulesetScope(tx, rulesetId, async (scope) => {
+          await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
             const { ruleset, rulesetData } = scope;
 
             const inUse = await new EntityUses(ruleset, rulesetData.cow).isPicked(tx, type, ownerId);
-            (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity({ inUse });
+            policy.canDeleteEntity({ inUse });
             const plan = Engine.for(scope).links(type, ownerId).planRemove(targetId);
 
             const { id: fromId } = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, type, plan.owner);

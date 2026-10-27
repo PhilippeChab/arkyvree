@@ -60,11 +60,13 @@ describe("rulesets contributors", () => {
     const { id } = await setup();
     const { api: outsider } = await createSignedInUser("outsider");
     const contributors = outsider.api.rulesets[":id"].contributors;
-    await expectStatus(
-      contributors.$post({ param: { id }, json: { email: "someone@example.com", role: "Editor" } }),
-      403,
-    );
-    await expectStatus(contributors.$get({ param: { id }, query: {} }), 403);
+    const invite = { email: "someone@example.com", role: "Editor" } as const;
+    // A private ruleset isn't revealed to them: it answers as an unknown ruleset; a public one refuses them
+    await expectStatus(contributors.$post({ param: { id }, json: invite }), 404);
+    await expectStatus(contributors.$get({ param: { id }, query: {} }), 404);
+    const { id: publicId } = await createTestRuleset(SEED_USER_ID, { private: false });
+    await expectStatus(contributors.$post({ param: { id: publicId }, json: invite }), 403);
+    await expectStatus(contributors.$get({ param: { id: publicId }, query: {} }), 403);
   });
 
   test("requires a session", async () => {

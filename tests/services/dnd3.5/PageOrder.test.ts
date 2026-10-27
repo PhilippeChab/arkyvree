@@ -5,6 +5,7 @@ import { db } from "@/server/database/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { ownerSessionOf } from "@/tests/support/rulesets.ts";
 
 test("rows that tie on a list's sort come in one order, by id, each on one page", async () => {
   const { ruleset } = await createTestUserAndRuleset();
@@ -22,6 +23,7 @@ test("rows that tie on a list's sort come in one order, by id, each on one page"
   const ids: string[] = [];
   for (let page = 1; page <= 3; page++) {
     const result = await EntitiesService.getEntities(
+      await ownerSessionOf(ruleset.id),
       ruleset.id,
       "languages",
       { childOnly: true, orderBy: "createdAt" },

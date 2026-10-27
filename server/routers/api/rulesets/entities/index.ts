@@ -82,6 +82,7 @@ export default new Hono<SessionContext>()
       const { limit, page, search, childOnly, orderBy, orderDir, ...filters } = c.req.valid("query");
       return c.json(
         await EntitiesService.getEntities(
+          c.var.requestSession,
           id,
           entityType,
           { search, childOnly, orderBy, orderDir, ...filters },
@@ -102,14 +103,20 @@ export default new Hono<SessionContext>()
       const { id, entityType } = c.req.valid("param");
       const { limit, page, search, childOnly, ...filters } = c.req.valid("query");
       return c.json(
-        await EntitiesService.getEntityGroups(id, entityType, { search, childOnly, ...filters }, { limit, page }),
+        await EntitiesService.getEntityGroups(
+          c.var.requestSession,
+          id,
+          entityType,
+          { search, childOnly, ...filters },
+          { limit, page },
+        ),
         200,
       );
     },
   )
   .get("/:id/entities/:entityType/owned/:ownedId", validate("param", ownedByIdParams), async (c) => {
     const { id, entityType, ownedId } = c.req.valid("param");
-    return c.json(await EntitiesService.getOwnedEntityWithOwner(id, entityType, ownedId), 200);
+    return c.json(await EntitiesService.getOwnedEntityWithOwner(c.var.requestSession, id, entityType, ownedId), 200);
   })
   .get(
     "/:id/entities/:entityType/templates",
@@ -118,28 +125,28 @@ export default new Hono<SessionContext>()
     async (c) => {
       const { id, entityType } = c.req.valid("param");
       const { type } = c.req.valid("query");
-      return c.json(await EntitiesService.getTemplates(id, entityType, type), 200);
+      return c.json(await EntitiesService.getTemplates(c.var.requestSession, id, entityType, type), 200);
     },
   )
   .get("/:id/entities/:entityType/:entityId", validate("param", entityParams), async (c) => {
     const { id, entityType, entityId } = c.req.valid("param");
-    return c.json(await EntitiesService.getEntity(id, entityType, entityId), 200);
+    return c.json(await EntitiesService.getEntity(c.var.requestSession, id, entityType, entityId), 200);
   })
   .get("/:id/entities/:entityType/:entityId/links", validate("param", entityParams), async (c) => {
     const { id, entityType, entityId } = c.req.valid("param");
-    return c.json(await EntitiesService.getEntityLinks(id, entityType, entityId), 200);
+    return c.json(await EntitiesService.getEntityLinks(c.var.requestSession, id, entityType, entityId), 200);
   })
   .get("/:id/entities/:entityType/:entityId/owned", validate("param", entityParams), async (c) => {
     const { id, entityType, entityId } = c.req.valid("param");
-    return c.json(await EntitiesService.getOwnedEntities(id, entityType, entityId), 200);
+    return c.json(await EntitiesService.getOwnedEntities(c.var.requestSession, id, entityType, entityId), 200);
   })
   .get("/:id/entities/:entityType/:entityId/progression", validate("param", entityParams), async (c) => {
     const { id, entityType, entityId } = c.req.valid("param");
-    return c.json(await EntitiesService.getProgression(id, entityType, entityId), 200);
+    return c.json(await EntitiesService.getProgression(c.var.requestSession, id, entityType, entityId), 200);
   })
   .get("/:id/entities/:entityType/:entityId/tables/:table", validate("param", tableParams), async (c) => {
     const { id, entityType, entityId, table } = c.req.valid("param");
-    return c.json(await EntitiesService.getEntityTable(id, entityType, entityId, table), 200);
+    return c.json(await EntitiesService.getEntityTable(c.var.requestSession, id, entityType, entityId, table), 200);
   })
   .post("/:id/entities/:entityType", validate("param", kindParams), validate("json", kindEntityBody), async (c) => {
     const { id, entityType } = c.req.valid("param");

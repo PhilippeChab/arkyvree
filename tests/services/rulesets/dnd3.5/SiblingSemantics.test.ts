@@ -21,6 +21,7 @@ import {
   createSeededTestRuleset,
   createSeededTestRulesetWithExtensions,
   invalidateTestRulesets,
+  ownerSessionOf,
 } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -72,10 +73,14 @@ test("a list leaves out a book's copy that lost to another book's in its query: 
   });
   const pagination = (page: number) => ({ limit: 100, page });
   for (const getPage of [
-    (page: number) => EntitiesService.getEntities(fork.id, "spells", {}, pagination(page)),
-    (page: number) => EntitiesService.getEntities(fork.id, "feats", {}, pagination(page)),
-    (page: number) => EntitiesService.getEntities(fork.id, "classes", {}, pagination(page)),
-    (page: number) => EntitiesService.getEntities(fork.id, "aptitudes", {}, pagination(page)),
+    async (page: number) =>
+      EntitiesService.getEntities(await ownerSessionOf(fork.id), fork.id, "spells", {}, pagination(page)),
+    async (page: number) =>
+      EntitiesService.getEntities(await ownerSessionOf(fork.id), fork.id, "feats", {}, pagination(page)),
+    async (page: number) =>
+      EntitiesService.getEntities(await ownerSessionOf(fork.id), fork.id, "classes", {}, pagination(page)),
+    async (page: number) =>
+      EntitiesService.getEntities(await ownerSessionOf(fork.id), fork.id, "aptitudes", {}, pagination(page)),
   ]) {
     const pages = await readPages(getPage);
     expect(pages.slice(0, -1).every((ids) => ids.length === 100)).toBe(true);

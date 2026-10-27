@@ -6,6 +6,7 @@ import type { Db } from "@/drizzle/database.ts";
 import { rulesetExtensionsInRules, type rulesetsInRules } from "@/drizzle/schema.ts";
 import type { CowData, RulesetSources } from "@/engine/core/cow/index.ts";
 import type { EntityKinds } from "@/engine/index.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { EntityCopy, RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { type RulesetEntityType, Rulesets, RulesetSettings } from "@/server/repositories/index.ts";
@@ -13,6 +14,7 @@ import type { TargetPathKind } from "@/shared/customization/target.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 import { uniqueId } from "./seed.ts";
+import { makeSession } from "./users.ts";
 
 /**
  * An entity as its kind's page describes it (`K`, its table): what `EntitiesService.getEntity` answers of it, which it
@@ -141,6 +143,15 @@ export async function createTestRuleset(
  */
 export async function editRuleset<E>(Edit: new (ruleset: RulesetSources, cow: CowData) => E, ruleset: RulesetSources) {
   return new Edit(ruleset, await RulesetViews.getCowData(ruleset));
+}
+
+/**
+ * A session of the user who owns `rulesetId` (the seed user's, for a system ruleset or none), who reads it whatever its
+ * privacy (`RulesetsPolicy.canRead`): what a test of a ruleset's content, not of who may read it, reads it as.
+ */
+export async function ownerSessionOf(rulesetId: string) {
+  const ruleset = await Rulesets.findOne(db, { id: rulesetId });
+  return makeSession(ruleset?.userId ?? SEED_USER_ID);
 }
 
 /** A ruleset's target paths of a kind, by its id, as the cache keeps them (`RulesetViews.getTargetPaths`). */

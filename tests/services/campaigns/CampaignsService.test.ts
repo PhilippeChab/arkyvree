@@ -59,8 +59,9 @@ describe("CampaignsService", () => {
       const { user: outsider, session } = await createTestUser("outsider");
       const ruleset = await createSeededTestRuleset(owner.id);
 
+      // A private ruleset isn't revealed to an outsider
       expect(CampaignsService.createCampaign(session, { name: "Unauthorized", rulesetId: ruleset.id })).rejects.toThrow(
-        ForbiddenError,
+        NotFoundError,
       );
       expect(await Campaigns.count(db, { userId: outsider.id })).toBe(0);
 

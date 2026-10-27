@@ -33,6 +33,7 @@ import { levelEditPlan, levelUpPlan } from "@/tests/support/dnd3.5/levelPlans.ts
 import { findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { LOCATION_OPTIONS } from "@/vocabulary/dnd3.5/equipment.ts";
@@ -173,7 +174,9 @@ describe("a ruleset's entities", () => {
       links: { baseBonus: [{ amount: 12, toId: saveId }] },
       position: 1,
     });
-    expect(await EntitiesService.getOwnedEntityWithOwner(rulesetId, "classes", level.id)).toMatchObject({
+    expect(
+      await EntitiesService.getOwnedEntityWithOwner(await ownerSessionOf(rulesetId), rulesetId, "classes", level.id),
+    ).toMatchObject({
       links: [{ role: "baseBonus", amount: 12, toId: saveId }],
     });
     for (const base of [-1, 13]) {
@@ -191,7 +194,9 @@ describe("a ruleset's entities", () => {
     await EntitiesService.updateProgression(owner, rulesetId, "classes", classId, {
       levels: [{ levelId: level.id, links: { baseBonus: [{ amount: 0, toId: saveId }] } }],
     });
-    expect(await EntitiesService.getOwnedEntityWithOwner(rulesetId, "classes", level.id)).toMatchObject({
+    expect(
+      await EntitiesService.getOwnedEntityWithOwner(await ownerSessionOf(rulesetId), rulesetId, "classes", level.id),
+    ).toMatchObject({
       links: [{ role: "baseBonus", amount: 0, toId: saveId }],
     });
   });
@@ -273,7 +278,9 @@ describe("a ruleset's entities", () => {
       name: "Gem",
       fields: { [ITEM_WEIGHT]: 10_000, [ITEM_COST_GP]: 90_071_992_547_409.9 },
     });
-    expect((await EntitiesService.getEntity(ruleset.id, "items", gem.id)).fields).toMatchObject({
+    expect(
+      (await EntitiesService.getEntity(await ownerSessionOf(ruleset.id), ruleset.id, "items", gem.id)).fields,
+    ).toMatchObject({
       [ITEM_WEIGHT]: 10_000,
       [ITEM_COST_GP]: 90_071_992_547_409.9,
     });
@@ -282,7 +289,9 @@ describe("a ruleset's entities", () => {
       name: "Gem",
       fields: { [ITEM_WEIGHT]: 0.125, [ITEM_COST_GP]: 1.005 },
     });
-    expect((await EntitiesService.getEntity(ruleset.id, "items", gem.id)).fields).toMatchObject({
+    expect(
+      (await EntitiesService.getEntity(await ownerSessionOf(ruleset.id), ruleset.id, "items", gem.id)).fields,
+    ).toMatchObject({
       [ITEM_WEIGHT]: 0.13,
       [ITEM_COST_GP]: 1.01,
     });
@@ -406,7 +415,9 @@ describe("a ruleset's entity's form", () => {
         } as never),
       ),
     ).toEqual(refusal(["spells", 'Unrecognized key: "extra"']));
-    expect(await EntitiesService.getOwnedEntityWithOwner(rulesetId, "classes", level.id)).toMatchObject({
+    expect(
+      await EntitiesService.getOwnedEntityWithOwner(await ownerSessionOf(rulesetId), rulesetId, "classes", level.id),
+    ).toMatchObject({
       links: [{ role: "baseBonus", amount: 2, toId: saveId }],
     });
   });

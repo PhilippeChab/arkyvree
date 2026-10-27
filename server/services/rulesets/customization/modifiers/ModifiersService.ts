@@ -1,10 +1,10 @@
 import { Engine } from "@/engine/index.ts";
-import { CustomizationCopies, CustomizationEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { CustomizationCopies, CustomizationEdit, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Modifiers } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -23,9 +23,9 @@ class ModifiersService {
   ) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async (scope) => {
+        await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
           const { ruleset, rulesetData } = scope;
-          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+          policy.canUpdateEntity();
 
           const catalogs = await RulesetViews.getTargetPathCatalogs(scope.ruleset, "modifier");
           const modifiers = Engine.for(scope).modifiers(entityType, entityId);
@@ -71,9 +71,9 @@ class ModifiersService {
   async deleteModifier(session: Session, rulesetId: string, entityType: string, entityId: string, modifierId: string) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async (scope) => {
+        await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
           const { ruleset, rulesetData } = scope;
-          (await RulesetsPolicy.for(tx, session, ruleset)).canDeleteEntity();
+          policy.canDeleteEntity();
 
           const { entity, modifier } = Engine.for(scope).modifiers(entityType, entityId).planDelete(modifierId);
 
@@ -123,15 +123,15 @@ class ModifiersService {
     return await this.addEntityModifier(session, rulesetId, entityType, entityId, body, sourceModifierId);
   }
 
-  async getModifier(rulesetId: string, entityType: string, entityId: string, modifierId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => {
+  async getModifier(session: Session, rulesetId: string, entityType: string, entityId: string, modifierId: string) {
+    return await withReadableRuleset(db, session, rulesetId, async (scope) => {
       const catalog = await RulesetViews.getTargetPaths(scope.ruleset, "modifier");
       return Engine.for(scope).modifiers(entityType, entityId).describe(catalog, modifierId);
     });
   }
 
-  async getModifiers(rulesetId: string, entityType: string, entityId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => {
+  async getModifiers(session: Session, rulesetId: string, entityType: string, entityId: string) {
+    return await withReadableRuleset(db, session, rulesetId, async (scope) => {
       const catalog = await RulesetViews.getTargetPaths(scope.ruleset, "modifier");
       return Engine.for(scope).modifiers(entityType, entityId).describeAll(catalog);
     });
@@ -152,9 +152,9 @@ class ModifiersService {
   ) {
     const result = await withTransaction(
       async (tx) =>
-        await withRulesetScope(tx, rulesetId, async (scope) => {
+        await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
           const { ruleset, rulesetData } = scope;
-          (await RulesetsPolicy.for(tx, session, ruleset)).canUpdateEntity();
+          policy.canUpdateEntity();
 
           const catalogs = await RulesetViews.getTargetPathCatalogs(scope.ruleset, "modifier");
           const { updatedAt, ...fields } = body;

@@ -3,14 +3,14 @@ import { describe, expect, test } from "bun:test";
 import type { Klass, KlassLevel, RulesetAbility, Skill } from "@/engine/rulesets/dnd3.5/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { ConflictError, ForbiddenError } from "@/server/errors/index.ts";
+import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Entities, EntityLinks, EntitySnapshots } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A new user's empty ruleset with two classes and two skills. */
@@ -42,7 +42,9 @@ async function setup() {
 }
 
 async function skillIdsOf(rulesetId: string, classId: string) {
-  return (await EntitiesService.getEntityLinks(rulesetId, "classes", classId)).map((link) => link.toId).sort();
+  return (await EntitiesService.getEntityLinks(await ownerSessionOf(rulesetId), rulesetId, "classes", classId))
+    .map((link) => link.toId)
+    .sort();
 }
 
 // Adding, listing and removing a class skill, and refusing one the class has, are covered in the class skills router test.
@@ -78,18 +80,22 @@ describe("EntitiesService: a class's skills", () => {
   test("refuses changes from anyone but the owner", async () => {
     const { ruleset, fighter, climb } = await setup();
     const { session: other } = await createTestUserAndRuleset();
+    // A private ruleset isn't revealed to a stranger
     expect(EntitiesService.addEntityLink(other, ruleset.id, "classes", fighter.id, climb.id)).rejects.toThrow(
-      ForbiddenError,
+      NotFoundError,
     );
     expect(EntitiesService.removeEntityLink(other, ruleset.id, "classes", fighter.id, climb.id)).rejects.toThrow(
-      ForbiddenError,
+      NotFoundError,
     );
   });
 
   test("doesn't find a class or skill of another ruleset, nor a skill the class doesn't have", async () => {
     const { session, ruleset, fighter, climb } = await setup();
     const other = await setup();
-    await expectRefusedWith(EntitiesService.getEntityLinks(ruleset.id, "classes", other.fighter.id), 404);
+    await expectRefusedWith(
+      EntitiesService.getEntityLinks(await ownerSessionOf(ruleset.id), ruleset.id, "classes", other.fighter.id),
+      404,
+    );
     await expectRefusedWith(
       EntitiesService.addEntityLink(session, ruleset.id, "classes", other.fighter.id, climb.id),
       404,

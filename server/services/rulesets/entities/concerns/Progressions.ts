@@ -1,13 +1,13 @@
 import type { Db } from "@/drizzle/database.ts";
 import { Engine, type ProgressionForm, type ProgressionPlan } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { EntityEdit, type RulesetScope, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { EntityEdit, type RulesetScope, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Entities, Modifiers, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import EntityWriter from "@/server/services/rulesets/entities/EntityWriter.ts";
+import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { getActivityName } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -97,8 +97,8 @@ export function Progressions<B extends Constructor>(Base: B) {
     }
 
     /** What an entity's progression tabs read beside its owned entities and tables (`ownerId`). */
-    async getProgression(rulesetId: string, type: RulesetEntityType, ownerId: string) {
-      return await withRulesetScope(db, rulesetId, async (scope) =>
+    async getProgression(session: Session, rulesetId: string, type: RulesetEntityType, ownerId: string) {
+      return await withReadableRuleset(db, session, rulesetId, async (scope) =>
         Engine.for(scope).progression(type, ownerId).describe(),
       );
     }
@@ -120,8 +120,8 @@ export function Progressions<B extends Constructor>(Base: B) {
       const tokens = new Map((ownedTokens ?? []).map((token) => [token.id, token.updatedAt]));
       const result = await withTransaction(
         async (tx) =>
-          await withRulesetScope(tx, rulesetId, async (scope) => {
-            (await RulesetsPolicy.for(tx, session, scope.ruleset)).canUpdateEntity();
+          await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
+            policy.canUpdateEntity();
             const plan = Engine.for(scope).progression(type, ownerId).plan(form);
             const unchanged = { entityId: plan.owner.id, ownedIds: [] as string[], updatedAt: plan.owner.updatedAt };
             if (plan.owned.length === 0) return unchanged;

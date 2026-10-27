@@ -86,24 +86,6 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
     return await db.delete(this.table).where(eq(this.table.id, where.id));
   }
 
-  /** Whether the user plays in a live campaign on the ruleset: what lets a member create on a private ruleset. */
-  async exists(db: Db, where: { rulesetId: string; userId: string }) {
-    const [row] = await db
-      .select({ one: sql`1` })
-      .from(this.table)
-      .innerJoin(campaignsInCampaign, eq(this.table.campaignId, campaignsInCampaign.id))
-      .where(
-        and(
-          eq(this.table.userId, where.userId),
-          isNull(this.table.deletedAt),
-          isNull(campaignsInCampaign.deletedAt),
-          eq(campaignsInCampaign.rulesetId, where.rulesetId),
-        ),
-      )
-      .limit(1);
-    return Boolean(row);
-  }
-
   async findMany(
     db: Db,
     where: { campaignId: string } | { userId: string },
@@ -202,6 +184,23 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
           offset,
         }),
     );
+  }
+
+  /**
+   * The user's seat in a campaign on the ruleset, if any is still stored, in a campaign archived or not (what lets them
+   * read it), and whether one is a live seat in a live campaign (what lets them create on it). A removed player's seat is
+   * deleted, so they have none.
+   */
+  async findSeat(db: Db, where: { rulesetId: string; userId: string }) {
+    const [row] = await db
+      .select({
+        live: sql<boolean>`bool_or(${this.table.deletedAt} is null and ${campaignsInCampaign.deletedAt} is null)`,
+      })
+      .from(this.table)
+      .innerJoin(campaignsInCampaign, eq(this.table.campaignId, campaignsInCampaign.id))
+      .where(and(eq(this.table.userId, where.userId), eq(campaignsInCampaign.rulesetId, where.rulesetId)))
+      .groupBy(this.table.userId);
+    return row;
   }
 
   async update(db: Db, values: Partial<InferInsertModel<typeof playersInCampaign>>, where: { id: string }) {

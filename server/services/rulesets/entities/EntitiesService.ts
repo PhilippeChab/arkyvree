@@ -1,9 +1,10 @@
 import type { Db } from "@/drizzle/database.ts";
 import { Engine, type EntityAction, type EntityCopies, type EntityRecord } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
-import { type RulesetScope, withRulesetScope } from "@/server/cow/index.ts";
+import type { RulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, type Pagination, type RulesetEntityType } from "@/server/repositories/index.ts";
+import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { Copies } from "./concerns/Copies.ts";
@@ -104,12 +105,13 @@ class EntitiesService extends include(Object, Copies, Links, Owned, Progressions
 
   /** A page of a kind's list, as its query asks for it (`where`), each row as its kind's rules describe it. */
   async getEntities(
+    session: Session,
     rulesetId: string,
     type: RulesetEntityType,
     { childOnly, orderBy, orderDir, search, ...filters }: ListWhere,
     pagination: Pagination,
   ) {
-    return await withRulesetScope(db, rulesetId, async (scope) => {
+    return await withReadableRuleset(db, session, rulesetId, async (scope) => {
       const list = Engine.for(scope)
         .entities(type)
         .openList({ childOnly, ...filters });
@@ -131,18 +133,21 @@ class EntitiesService extends include(Object, Copies, Links, Owned, Progressions
     });
   }
 
-  async getEntity(rulesetId: string, type: RulesetEntityType, entityId: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) => Engine.for(scope).entities(type).describe(entityId));
+  async getEntity(session: Session, rulesetId: string, type: RulesetEntityType, entityId: string) {
+    return await withReadableRuleset(db, session, rulesetId, async (scope) =>
+      Engine.for(scope).entities(type).describe(entityId),
+    );
   }
 
   /** A page of a kind's groups (a feat's families), as its query asks for it (`where`): refused for a kind without. */
   async getEntityGroups(
+    session: Session,
     rulesetId: string,
     type: RulesetEntityType,
     { childOnly, search, ...filters }: Pick<ListWhere, "childOnly" | "search"> & Record<string, unknown>,
     pagination: Pagination,
   ) {
-    return await withRulesetScope(db, rulesetId, async (scope) => {
+    return await withReadableRuleset(db, session, rulesetId, async (scope) => {
       const { groupFilters } = Engine.for(scope)
         .entities(type)
         .openGroups({ childOnly, ...filters });
@@ -162,8 +167,8 @@ class EntitiesService extends include(Object, Copies, Links, Owned, Progressions
   }
 
   /** One of an entity's tables (`table`, by name: a class's spells per day): refused for a table it has none of. */
-  async getEntityTable(rulesetId: string, type: RulesetEntityType, entityId: string, table: string) {
-    return await withRulesetScope(db, rulesetId, async (scope) =>
+  async getEntityTable(session: Session, rulesetId: string, type: RulesetEntityType, entityId: string, table: string) {
+    return await withReadableRuleset(db, session, rulesetId, async (scope) =>
       Engine.for(scope).tables(type, entityId).describe(table),
     );
   }

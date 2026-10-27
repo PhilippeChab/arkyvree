@@ -6,6 +6,7 @@ import { NotFoundError } from "@/server/errors/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
 describe("EntitiesService: abilities", () => {
@@ -13,7 +14,13 @@ describe("EntitiesService: abilities", () => {
     test("should return empty paginated result when no abilities exist", async () => {
       const { ruleset } = await createTestUserAndRuleset();
 
-      const result = await EntitiesService.getEntities(ruleset.id, "abilities", {}, { limit: 10, page: 1 });
+      const result = await EntitiesService.getEntities(
+        await ownerSessionOf(ruleset.id),
+        ruleset.id,
+        "abilities",
+        {},
+        { limit: 10, page: 1 },
+      );
 
       expect(result.items).toEqual([]);
     });
@@ -27,7 +34,13 @@ describe("EntitiesService: abilities", () => {
         { name: "Constitution", description: "Endurance", rulesetId: ruleset.id },
       ]);
 
-      const result = await EntitiesService.getEntities(ruleset.id, "abilities", {}, { limit: 10, page: 1 });
+      const result = await EntitiesService.getEntities(
+        await ownerSessionOf(ruleset.id),
+        ruleset.id,
+        "abilities",
+        {},
+        { limit: 10, page: 1 },
+      );
 
       expect(result.items.length).toBe(3);
     });
@@ -41,6 +54,7 @@ describe("EntitiesService: abilities", () => {
       ]);
 
       const result = await EntitiesService.getEntities(
+        await ownerSessionOf(ruleset.id),
         ruleset.id,
         "abilities",
         { search: "Strength" },
@@ -60,16 +74,22 @@ describe("EntitiesService: abilities", () => {
         { name: "Constitution", description: "Endurance", rulesetId: ruleset.id },
       ]);
 
-      const result = await EntitiesService.getEntities(ruleset.id, "abilities", {}, { limit: 2, page: 1 });
+      const result = await EntitiesService.getEntities(
+        await ownerSessionOf(ruleset.id),
+        ruleset.id,
+        "abilities",
+        {},
+        { limit: 2, page: 1 },
+      );
 
       expect(result.items.length).toBe(2);
       expect(result.nextPage).toBe(2);
     });
 
     test("should throw NotFoundError for non-existent ruleset", async () => {
-      expect(EntitiesService.getEntities(NIL_UUID, "abilities", {}, { limit: 10, page: 1 })).rejects.toThrow(
-        NotFoundError,
-      );
+      expect(
+        EntitiesService.getEntities(await ownerSessionOf(NIL_UUID), NIL_UUID, "abilities", {}, { limit: 10, page: 1 }),
+      ).rejects.toThrow(NotFoundError);
     });
   });
 });

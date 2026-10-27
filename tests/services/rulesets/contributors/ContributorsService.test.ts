@@ -72,8 +72,9 @@ describe("ContributorsService", () => {
     test("refuses strangers, the owner's own email, a second invite and an archived ruleset", async () => {
       const { owner, ownerSession, ruleset } = await setup();
       const { session: stranger } = await createTestUser("stranger");
+      // A private ruleset isn't revealed to a stranger
       expect(ContributorsService.inviteContributor(stranger, ruleset.id, "test@example.com", "Editor")).rejects.toThrow(
-        ForbiddenError,
+        NotFoundError,
       );
       expect(
         ContributorsService.inviteContributor(ownerSession, ruleset.id, owner.emailAddress, "Editor"),
@@ -153,8 +154,9 @@ describe("ContributorsService", () => {
 
       expect((await list(ownerSession)).items.map((c) => c.email)).toEqual([user.emailAddress]);
       expect((await list(viewer)).items).toHaveLength(1);
+      // A private ruleset isn't revealed to a stranger: its list answers as an unknown ruleset's
       const { session: stranger } = await createTestUser("stranger");
-      expect(list(stranger)).rejects.toThrow(ForbiddenError);
+      expect(list(stranger)).rejects.toThrow(NotFoundError);
     });
   });
 

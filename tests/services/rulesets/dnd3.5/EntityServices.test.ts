@@ -9,16 +9,17 @@ import { Engine } from "@/engine/index.ts";
 import type { RulesetAbility, RulesetSave, Skill } from "@/engine/rulesets/dnd3.5/index.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { ForbiddenError } from "@/server/errors/index.ts";
+import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Entities, Requirements, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
+import { addRulesetContributor } from "@/tests/support/contributors.ts";
 import { findCustomizations } from "@/tests/support/customizations.ts";
 import { customize } from "@/tests/support/dnd3.5/customizations.ts";
 import { findLists } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
-import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import {
   LANGUAGE_TYPE,
@@ -90,8 +91,9 @@ const SERVICES: Record<string, Service> = Object.fromEntries(
   Object.entries(BODIES).map(([kind, body]) => {
     const type = kind as RulesetEntityType;
     const service: Service = {
-      list: (rulesetId, search) => EntitiesService.getEntities(rulesetId, type, { search }, firstPage),
-      get: (rulesetId, id) => EntitiesService.getEntity(rulesetId, type, id),
+      list: async (rulesetId, search) =>
+        EntitiesService.getEntities(await ownerSessionOf(rulesetId), rulesetId, type, { search }, firstPage),
+      get: async (rulesetId, id) => EntitiesService.getEntity(await ownerSessionOf(rulesetId), rulesetId, type, id),
       create: (session, rulesetId, name, refs) =>
         EntitiesService.createEntity(session, rulesetId, type, { name, ...body(refs) }),
       update: (session, rulesetId, id, name, refs, updatedAt) =>
@@ -219,11 +221,17 @@ describe.each(ENTITY_TYPES)("%s service", (entityType) => {
   test("refuses writes from anyone but the owner, and through another ruleset", async () => {
     const { session, ruleset, refs } = await setup();
     const entity = await service.create(session, ruleset.id, "Guarded Entity", refs);
-    const { session: other, ruleset: otherRuleset } = await createTestUserAndRuleset();
+    const { user, session: other, ruleset: otherRuleset } = await createTestUserAndRuleset();
+    const writes = () => [
+      service.create(other, ruleset.id, "Intruder", refs),
+      service.update(other, ruleset.id, entity.id, "Hijacked", refs),
+      service.remove(other, ruleset.id, entity.id),
+    ];
 
-    expect(service.create(other, ruleset.id, "Intruder", refs)).rejects.toThrow(ForbiddenError);
-    expect(service.update(other, ruleset.id, entity.id, "Hijacked", refs)).rejects.toThrow(ForbiddenError);
-    expect(service.remove(other, ruleset.id, entity.id)).rejects.toThrow(ForbiddenError);
+    // A stranger isn't told the private ruleset exists; a reader who may not write is refused
+    for (const write of writes()) expect(write).rejects.toThrow(NotFoundError);
+    await addRulesetContributor(ruleset.id, user, session.userId, "Viewer");
+    for (const write of writes()) expect(write).rejects.toThrow(ForbiddenError);
     // Reading it through a ruleset it isn't part of doesn't find it either.
     await expectRefusedWith(service.get(otherRuleset.id, entity.id), 404);
   });
