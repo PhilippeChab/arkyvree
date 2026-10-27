@@ -505,6 +505,22 @@ describe("RulesetsService", () => {
       expect(update(standalone.id, standalone.name)).rejects.toThrow(UnprocessableEntityError);
     });
 
+    test("makes a published extension playable only with the content publishing it as a ruleset needs", async () => {
+      const { session } = await createTestUser();
+      const base = await createParent();
+      const [empty, playable] = [await fork(session, base), await fork(session, base)];
+      await addPlayableContent(playable.id);
+      const update = async ({ id, name }: { id: string; name: string }) => {
+        await RulesetsService.publishRuleset(session, id, { kind: "extension" });
+        return RulesetsService.updateRuleset(session, id, { name, description: "", kind: "ruleset" });
+      };
+      expect(await update(playable)).toMatchObject({ kind: "ruleset", status: "Published" });
+      expect(update(empty)).rejects.toMatchObject({
+        refusal: "unprocessable",
+        message: "Ruleset requires at least one of each: race, class, skill, feat",
+      });
+    });
+
     test("refuses an edit started from a stale copy", async () => {
       const { user, session } = await createTestUser();
       const ruleset = await createTestRuleset(user.id);

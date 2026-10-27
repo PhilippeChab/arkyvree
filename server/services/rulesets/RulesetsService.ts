@@ -23,7 +23,7 @@ import type { Session } from "@/shared/relations.ts";
 import { Archives } from "./concerns/Archives.ts";
 import { Publishes } from "./concerns/Publishes.ts";
 import { Stars } from "./concerns/Stars.ts";
-import { getReadableRuleset } from "./readableRuleset.ts";
+import { getReadableRuleset, withReadableRuleset } from "./readableRuleset.ts";
 
 /** Whether a policy's check (`check`) lets the session act: refused (forbidden, or not now) is no. */
 function allows(check: () => unknown): boolean {
@@ -191,31 +191,32 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
     id: string,
     body: { description: string; kind?: RulesetKind; name: string; private?: boolean; updatedAt?: string },
   ) {
-    const result = await withTransaction(async (tx) => {
-      // First verify the ruleset exists
-      const { policy, ruleset } = await getReadableRuleset(tx, session, id);
-      policy.canUpdate();
+    const result = await withTransaction(
+      async (tx) =>
+        await withReadableRuleset(tx, session, id, async (scope, policy) => {
+          const { ruleset } = scope;
+          policy.canUpdate();
 
-      if (!ruleset.private && body.private) throw new ForbiddenError("Cannot make a public ruleset private");
+          if (!ruleset.private && body.private) throw new ForbiddenError("Cannot make a public ruleset private");
 
-      if (body.kind === "extension" && ruleset.kind !== "extension") this.assertCanBeExtension(ruleset);
+          if (body.kind && body.kind !== ruleset.kind) this.checkKind(scope, body.kind);
 
-      const { updatedAt, ...columns } = body;
-      const rows = await Rulesets.update(tx, columns, { id, expectedUpdatedAt: updatedAt });
-      if (updatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+          const { updatedAt, ...columns } = body;
+          const rows = await Rulesets.update(tx, columns, { id, expectedUpdatedAt: updatedAt });
+          if (updatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
-      const updatedRuleset = rows[0];
+          const updatedRuleset = rows[0];
 
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: updatedRuleset.id,
-        targetType: TARGET_TYPES.rulesets,
-        type: "updateRuleset",
-      });
+          await Activities.create(tx, {
+            userId: session.userId,
+            targetId: updatedRuleset.id,
+            targetType: TARGET_TYPES.rulesets,
+            type: "updateRuleset",
+          });
 
-      return updatedRuleset;
-    });
-
+          return updatedRuleset;
+        }),
+    );
     RulesetViews.invalidate(id);
     return result;
   }
