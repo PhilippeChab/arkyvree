@@ -9,6 +9,7 @@ import {
   type EntityFormData,
   linkedEntities,
   ownFieldOf,
+  ownLinkOf,
   RulesetEntityFormFields,
   toEntityBody,
   toEntityForm,
@@ -47,6 +48,8 @@ export function EntityEditor({
   const described = fields ?? [];
   const label = entityTypeLabel(kind.type, useRulesetRules(rulesetId).rules?.words);
   const { copies, lockedName } = kind;
+  // The template a copy is made from, by name: its link of the role its kind's copies name it by
+  const templateName = copies && ownLinkOf(entity, copies.source)?.toName;
   const { form, save } = useEntityForm({
     empty: withTemplateFlag(toEntityForm<EntityFormData>(described), copies, false),
     values: withEntityFields(
@@ -97,8 +100,7 @@ export function EntityEditor({
             columns={kind.wideForm ? 2 : undefined}
             context={{
               knownLinks: linkedEntities(described, entity),
-              templateName:
-                "templateName" in entity && typeof entity.templateName === "string" ? entity.templateName : null,
+              templateName: typeof templateName === "string" ? templateName : null,
             }}
             nameLocked={lockedName && ownFieldOf(entity, lockedName.field) === true ? lockedName.reason : undefined}
           />

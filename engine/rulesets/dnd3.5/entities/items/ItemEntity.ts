@@ -110,34 +110,17 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
     );
   }
 
-  /** A page of the ruleset's items, each with its template's name. */
-  protected override listOf(where: { childOnly?: boolean } & Record<string, unknown>) {
-    const list = super.listOf(where);
-    return {
-      ...list,
-      describe: <T extends Pick<EntityRecord, "fields" | "id" | "links">>(rows: T[]) =>
-        list
-          .describe(rows)
-          .map((item, index) => ({ ...item, templateName: this.templateNameOf(rows[index].links.madeFrom) })),
-    };
-  }
-
   /** An item's requirements: its template's, its proficiency, before its own. */
   protected override requirementsOf(item: Pick<Item, "fields" | "id" | "links">) {
     const { own: requirements, template: proficiency } = this.rulesetData.templateRequirements("items", item);
     return [...proficiency, ...requirements];
   }
 
-  /**
-   * An item as its page shows it, with where a character carrying it can place it (`placement`), and its template's
-   * name (`templateName`), which its editor shows while the template isn't one of its type.
-   */
+  /** An item as its page shows it, with where a character carrying it can place it (`placement`). */
   override describe(id: string) {
-    const stored = this.find(id);
     return {
       ...super.describe(id),
-      placement: ItemPlacement.describe(this.rulesetData.withInheritedFields(this.type, stored)),
-      templateName: this.templateNameOf(stored.links.madeFrom),
+      placement: ItemPlacement.describe(this.rulesetData.withInheritedFields(this.type, this.find(id))),
     };
   }
 
@@ -334,15 +317,6 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
   private templateIdOf(given: ItemGiven, item?: Item) {
     if (item?.fields[ITEM_IS_TEMPLATE]) return null;
     return given.madeFrom === undefined ? (item?.links.madeFrom ?? null) : given.madeFrom;
-  }
-
-  /**
-   * The name of an item's template (`templateId`, its `madeFrom` link's, stored or the view's), the entity the view
-   * shows for it: null for none.
-   */
-  private templateNameOf(templateId: string | undefined) {
-    if (templateId === undefined) return null;
-    return Dnd35View.of(this.rulesetData).itemsById.get(this.rulesetData.cow.resolve(templateId))?.name ?? null;
   }
 
   /** The template an item made from `item` points at: `item` itself when it's a template, or its own template. */
