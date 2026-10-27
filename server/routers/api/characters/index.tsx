@@ -22,8 +22,14 @@ import sharing from "./sharing/index.ts";
 
 const campaignIdParam = z.object({ campaignId: z.string().uuid() });
 
-/** A character's fields, by their keys, which its ruleset reads and checks: a text, a number, or none. */
-const characterFields = z.record(z.string(), z.union([z.string(), z.number(), z.null()]));
+/** A field's value as a body sends it: a text, a number or a flag. */
+const fieldValue = z.union([z.string(), z.number(), z.boolean()]);
+
+/**
+ * A character's fields, by their keys, which its ruleset reads and checks by their declarations (`FieldCodec.parse`):
+ * a single field's value, a set's values, or none.
+ */
+const characterFields = z.record(z.string(), z.union([fieldValue, z.array(fieldValue).readonly(), z.null()]));
 
 /** A creation pick's role: its single link's (3.5's `race`). */
 const roleParam = z.object({ role: z.string() });

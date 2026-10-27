@@ -86,6 +86,39 @@ describe("characters", () => {
     await expectStatus(character.$put({ param: { id }, json: { fields: { CHARACTER_AGE: 2.5 } } }), 400);
   });
 
+  test("refuses a flag or a set sent for a single text or number field, as its codec reads it, by field", async () => {
+    const ctx = await getSeedCtx();
+    const { id } = await postCharacter({ deity: "Pelor", xp: 300 });
+    const refusals: [string, boolean | number[] | string[]][] = [
+      ["CHARACTER_XP", true],
+      ["CHARACTER_XP", [1]],
+      ["CHARACTER_DEITY", false],
+      ["CHARACTER_DEITY", ["Pelor"]],
+      ["CHARACTER_ALIGNMENT", ["True Neutral"]],
+    ];
+    for (const [field, value] of refusals) {
+      const fields = { [field]: value };
+      const edit = await expectStatus(character.$put({ param: { id }, json: { fields } }), 400);
+      expect(await edit.json()).toMatchObject({ error: "BadRequestError", issues: [{ category: `fields.${field}` }] });
+      const create = await expectStatus(
+        characters.$post({
+          json: {
+            rulesetId: ctx.rulesetId,
+            name: "Refused Character",
+            picks: { race: ctx.raceMap.pc["Human"] },
+            scores: { score: Object.fromEntries(Object.values(ctx.abilityMap).map((ability) => [ability, 10])) },
+            fields: { CHARACTER_ALIGNMENT: "True Neutral", CHARACTER_GENDER: "Male", CHARACTER_XP: 0, ...fields },
+          },
+        }),
+        400,
+      );
+      expect(await create.json()).toMatchObject({ issues: [{ category: `fields.${field}` }] });
+    }
+    // Nothing of the refused edits is written
+    const row = await Characters.findOne(db, { id });
+    expect(row?.fields).toMatchObject({ CHARACTER_DEITY: "Pelor", CHARACTER_XP: 300 });
+  });
+
   test("lists the races a new character can pick", async () => {
     const ctx = await getSeedCtx();
     const races = await expectOk(

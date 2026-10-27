@@ -4,6 +4,7 @@
  * reader reads a sheet and what a printed one adds. Whether to force the rules is always an operation's last argument.
  */
 
+import type { FieldWrite } from "@/engine/core/module/storage.ts";
 import type { InventoryItem } from "@/engine/core/view/index.ts";
 
 import type { InventoryEntryPlan } from "./plans.ts";
@@ -58,10 +59,11 @@ export interface StartRequest {
 export type CreationPickQuery = Record<string, string | undefined>;
 
 /**
- * A character's fields, by their keys: a `fields` block's edit (null: cleared, or left as it is where it can't be), or
- * a new character's form's (null: none).
+ * A character's fields, by their keys, each a single field's value or a set's values, as its module's declarations
+ * read them: a `fields` block's edit (null: cleared, or left as it is where it can't be), or a new character's form's
+ * (null: none).
  */
-export type FieldsRequest = Record<string, number | string | null>;
+export type FieldsRequest = Record<string, FieldWrite>;
 
 /**
  * What an inventory entry's add (a new entry of the ruleset's item `itemId`) or edit (an `entry` of the character's)
