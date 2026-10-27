@@ -1,11 +1,9 @@
 import { Engine, type EntityRecord } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { CustomizationCopies, EntityNames, RulesetViews } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { db } from "@/server/database/index.ts";
 import { Entities, type RulesetEntityType } from "@/server/repositories/index.ts";
-import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import EntityWriter from "@/server/services/rulesets/entities/EntityWriter.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
-import { getActivityName } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** A copy's own name and description. */
@@ -21,9 +19,10 @@ export interface VariantBody {
 export function Copies<B extends Constructor>(Base: B) {
   abstract class WithCopies extends Base {
     /**
-     * Copies of an entity (`sourceId`), each its own name and description (`variants`), as its kind's rules plan them:
-     * each name kept free, as a create's is, each copy taking over a deleted ancestor's tombstone by its name, and the
-     * customizations its plan copies.
+     * Copies of an entity (`sourceId`), each its own name and description (`variants`), as its kind's rules plan them,
+     * each written as a create writes its own (`EntityWriter.createMany`): each name kept free, each copy taking over a
+     * deleted ancestor's tombstone by its name, the customizations its plan copies, and what its plan writes past its
+     * row. Refused first for a kind that makes no copies.
      */
     async createVariants(
       session: Session,
@@ -32,60 +31,10 @@ export function Copies<B extends Constructor>(Base: B) {
       sourceId: string,
       variants: VariantBody[],
     ) {
-      const result = await withTransaction(
-        async (tx) =>
-          await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
-            const { ruleset, rulesetData } = scope;
-
-            // Refused first, for a kind that makes no copies
-            const kind = Engine.for(scope).entities(type, "variants");
-            policy.canUpdateEntity();
-            const plan = kind.planVariants(sourceId, variants);
-            // Every variant's name kept free, as a create's is, in one read: the tombstones they take over, by name
-            const names = new EntityNames(ruleset, rulesetData.cow);
-            const tombstones = await names.assertNamesAvailable(
-              tx,
-              type,
-              variants.map((variant) => variant.name),
-            );
-
-            const copiedFrom = plan.copyCustomizationsFrom;
-            const sourceType = Engine.storage().customizableKinds().includes(type) ? type : undefined;
-            const customizations = copiedFrom
-              ? (await CustomizationCopies.read(tx, [copiedFrom], type, sourceType)).get(copiedFrom)
-              : undefined;
-
-            const created = [];
-            for (const row of plan.rows) {
-              const [copy] = await Entities.create(tx, type, { ...row, rulesetId });
-              const tombstoneAncestorId = tombstones.get(row.name!);
-              if (tombstoneAncestorId) await names.repointTombstone(tx, type, tombstoneAncestorId, copy.id);
-
-              await createActivityWithNotifications(tx, {
-                userId: session.userId,
-                targetId: copy.id,
-                targetType: type,
-                type: `create${getActivityName(type)}`,
-                data: { entityName: copy.name },
-              });
-
-              created.push(copy);
-            }
-
-            if (customizations) {
-              await CustomizationCopies.copyToMany(
-                tx,
-                created.map((copy) => copy.id),
-                type,
-                customizations,
-              );
-            }
-
-            return created;
-          }),
+      const writer = new EntityWriter(type, (scope) => Engine.for(scope).entities(type, "variants"));
+      return await writer.createMany(session, rulesetId, (scope) =>
+        Engine.for(scope).entities(type).planVariants(sourceId, variants),
       );
-      RulesetViews.invalidate(rulesetId);
-      return result;
     }
 
     /**

@@ -21,11 +21,12 @@ import {
 import CustomizationCopies from "./CustomizationCopies.ts";
 
 /**
- * A copy made: the copied entity, and each customization it copied, by its source's id (equal values don't make the
- * same row: a modifier's requirements may differ).
+ * A copy: the copied entity, and, when this call made it, each customization it copied, by its source's id (equal
+ * values don't make the same row: a modifier's requirements may differ). A copy the ruleset already had (another
+ * write's, made since this one's view was read) has none: its rows may have changed since.
  */
 export interface CopiedEntity {
-  copiedIds: ReadonlyMap<string, string>;
+  copiedIds?: ReadonlyMap<string, string>;
   entity: EntityRecord;
 }
 
@@ -35,10 +36,11 @@ export interface CopiedEntity {
  * own instance, which records the customizations it copied.
  */
 export default class EntityCopy {
-  private constructor(entityType: RulesetEntityType, entityId: string, ruleset: RulesetSources) {
+  private constructor(entityType: RulesetEntityType, entityId: string, ruleset: RulesetSources, gone: string) {
     this.entityType = entityType;
     this.entityId = entityId;
     this.ruleset = ruleset;
+    this.gone = gone;
     this.sourceType = Engine.storage().customizableKinds().includes(entityType) ? entityType : undefined;
   }
 
@@ -63,17 +65,19 @@ export default class EntityCopy {
 
   /**
    * Copies `entityId` into `ruleset`, or returns the copy it already has (then with no copied ids): the newly created
-   * child entity, and the customizations copied with it.
+   * child entity, and the customizations copied with it, by their sources' ids. Refused as not found, in the write's
+   * words (`gone`), when the source was deleted since the write's view was read.
    */
   static async create(
     tx: Db,
     entityType: RulesetEntityType,
     entityId: string,
     ruleset: RulesetSources,
+    gone: string,
   ): Promise<CopiedEntity> {
-    const copy = new EntityCopy(entityType, entityId, ruleset);
-    const entity = await copy.copy(tx);
-    return { entity, copiedIds: copy.copiedIds };
+    const copy = new EntityCopy(entityType, entityId, ruleset, gone);
+    const { entity, made } = await copy.copy(tx);
+    return made ? { entity, copiedIds: copy.copiedIds } : { entity };
   }
 
   private readonly copiedIds = new Map<string, string>();
@@ -82,13 +86,19 @@ export default class EntityCopy {
 
   private readonly entityType: RulesetEntityType;
 
+  /** What refuses the copy when its source was deleted since the write's view was read, in the write's words. */
+  private readonly gone: string;
+
   /** The ruleset the copy is made in, and where its inherited entities come from. */
   private readonly ruleset: RulesetSources;
 
   private readonly sourceType: string | undefined;
 
-  /** Copies the entity into the target ruleset, or returns the copy it already has: the newly created child entity. */
-  private async copy(tx: Db): Promise<EntityRecord> {
+  /**
+   * Copies the entity into the target ruleset, or returns the copy it already has: the child entity, and whether this
+   * call made it (`made`).
+   */
+  private async copy(tx: Db): Promise<{ entity: EntityRecord; made: boolean }> {
     const entityType = this.entityType;
     const { id: childRulesetId } = this.ruleset;
 
@@ -110,7 +120,7 @@ export default class EntityCopy {
       const existing = exists
         ? await Entities.findOne(tx, { entityType, id: existingSnapshot.forkedEntityId })
         : undefined;
-      if (existing) return existing;
+      if (existing) return { entity: existing, made: false };
       await EntitySnapshots.delete(tx, {
         sourceEntityId: this.entityId,
         rulesetId: childRulesetId,
@@ -118,8 +128,7 @@ export default class EntityCopy {
     }
 
     // 1. Fetch the parent entity
-    if (!(await Entities.lock(tx, { id: this.entityId }, "share")))
-      throw new NotFoundError("Customization source no longer exists; refresh the entity");
+    if (!(await Entities.lock(tx, { id: this.entityId }, "share"))) throw new NotFoundError(this.gone);
 
     const parentEntity = await Entities.findOne(tx, { entityType, id: this.entityId });
     if (!parentEntity) throw new Error(`Parent entity not found: ${this.entityType}/${this.entityId}`);
@@ -163,7 +172,7 @@ export default class EntityCopy {
       forkedEntityId: newEntity.id,
     });
 
-    return newEntity;
+    return { entity: newEntity, made: true };
   }
 
   /**

@@ -1,16 +1,28 @@
 import { describe, expect, test } from "bun:test";
 
 import type { EntityWrites } from "@/engine/index.ts";
-import type { Spell } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { Aptitude, Feat, Klass, KlassLevel, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, Requirements } from "@/server/repositories/index.ts";
+import { Entities, EntityLinks, Requirements } from "@/server/repositories/index.ts";
 import EntityWriter from "@/server/services/rulesets/entities/EntityWriter.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
+import { activityTypes } from "@/tests/support/activities.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
 import { measure } from "@/tests/support/database.ts";
 import { createTestClassLevel } from "@/tests/support/dnd3.5/levels.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { CLASS_HD, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
+
+/** A requirement a plan writes beside an entity. */
+const REQUIREMENT = {
+  level: "1",
+  operator: "greater_than",
+  target: "classes.wizard.level",
+  value: "1",
+  valueType: "number",
+} as const;
 
 /** Writes that write nothing but what's given. */
 function writesOf(writes: Partial<EntityWrites>): EntityWrites {
@@ -24,23 +36,30 @@ async function createSpell() {
   return { entity: { entityId: spell.id, entityType: "spells" } as const, rulesetId: ruleset.id };
 }
 
+/**
+ * A feat a fork inherits from its parent, the fork's view read, then the feat deleted from the parent: what a first
+ * write to it finds as it copies it.
+ */
+async function deleteInheritedFeat() {
+  const session = makeSession();
+  const parent = await createTestRuleset(session.userId);
+  const [feat] = await Entities.create<Feat>(db, "feats", { name: "Probe Inherited Feat", rulesetId: parent.id });
+  const fork = await createTestRuleset(session.userId, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+  await withRulesetScope(db, fork.id, async () => undefined);
+  await Entities.delete(db, { entityType: "feats", id: feat.id });
+  return { session, feat, rulesetId: fork.id };
+}
+
 describe("EntityWriter.setParts: what a save writes past an entity's row", () => {
   test("sets the requirement its plan writes on the entity", async () => {
     const { entity, rulesetId } = await createSpell();
-    const requirement = {
-      level: "1",
-      operator: "greater_than",
-      target: "classes.wizard.level",
-      value: "1",
-      valueType: "number",
-    } as const;
 
     await withRulesetScope(db, rulesetId, async (scope) =>
-      EntityWriter.setParts(db, scope, entity, { writes: writesOf({ requirement }) }, true),
+      EntityWriter.setParts(db, scope, entity, { writes: writesOf({ requirement: REQUIREMENT }) }, true),
     );
 
     const stored = await Requirements.findMany(db, { entityIds: [entity.entityId] });
-    expect(stored).toEqual([expect.objectContaining({ ...entity, ...requirement })]);
+    expect(stored).toEqual([expect.objectContaining({ ...entity, ...REQUIREMENT })]);
   });
 
   test("refuses removing an entity the ruleset doesn't have as that entity, not found", async () => {
@@ -85,5 +104,86 @@ describe("EntityWriter: an entity deleted since the view was read", () => {
     expect(
       EntitiesService.deleteOwnedEntity(makeSession(), ruleset.id, "classes", klass.id, classLevel.id),
     ).rejects.toMatchObject({ message: "ClassLevel not found", name: "NotFoundError" });
+  });
+
+  test("refuses an owned entity's edit as that owned entity, not found, when another write copied its owner without it", async () => {
+    const session = makeSession();
+    const parent = await createTestRuleset(session.userId);
+    const [klass] = await Entities.create<Klass>(db, "classes", {
+      name: "Probe Class",
+      rulesetId: parent.id,
+      fields: { [CLASS_HD]: 8 },
+    });
+    const [level] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
+    const fork = await createTestRuleset(session.userId, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+    // The view is read; then another write copies the class and deletes its copy's level
+    await withRulesetScope(db, fork.id, async () => undefined);
+    const copy = await copyEntity(db, "classes", klass.id, fork);
+    const [copied] = await Entities.findPositions(db, { entityType: "class-levels", ownerIds: [copy.id] });
+    await Entities.delete(db, { entityType: "class-levels", id: copied.id });
+
+    expect(
+      EntitiesService.updateOwnedEntity(session, fork.id, "classes", klass.id, level.id, {
+        fields: { [CLASS_LEVEL_SKILL_POINTS]: 4 },
+      }),
+    ).rejects.toMatchObject({ message: "ClassLevel not found", name: "NotFoundError" });
+  });
+
+  test("refuses an inherited entity's first edit and delete as that entity, not found, as they copy it", async () => {
+    const { session, feat, rulesetId } = await deleteInheritedFeat();
+    const notFound = { message: "Feat not found", name: "NotFoundError" };
+
+    expect(
+      EntitiesService.updateEntity(session, rulesetId, "feats", feat.id, {
+        name: feat.name,
+        description: "Changed",
+        updatedAt: feat.updatedAt,
+      }),
+    ).rejects.toMatchObject(notFound);
+    expect(EntitiesService.deleteEntity(session, rulesetId, "feats", feat.id)).rejects.toMatchObject(notFound);
+  });
+});
+
+describe("EntityWriter.createMany: several rows of one plan", () => {
+  test("writes each row as a create does: its name kept free, once in the list, its links, its requirement, its activity", async () => {
+    const session = makeSession();
+    const ruleset = await createSeededTestRuleset(session.userId);
+    const general = (await Entities.findOne<Aptitude>(db, {
+      entityType: "aptitudes",
+      name: "General",
+      rulesetId: ruleset.ancestorRulesetIds[0],
+    }))!;
+    // A feat's pools, a list of links no item's variants carry: what a kind's copies would write past their rows
+    const plan = {
+      rows: [{ name: "Probe Feat One" }, { name: "Probe Feat Two" }],
+      links: [{ role: "listedIn", toType: "aptitudes", links: [{ toId: general.id }] }],
+      writes: writesOf({ requirement: REQUIREMENT }),
+    };
+
+    const written = await new EntityWriter("feats").createMany(session, ruleset.id, () => plan);
+
+    expect(written.map((row) => row.name)).toEqual(["Probe Feat One", "Probe Feat Two"]);
+    for (const row of written) {
+      const entity = { entityId: row.id, entityType: "feats" };
+      expect(await EntityLinks.findOwn(db, row.id)).toEqual([
+        expect.objectContaining({ role: "listedIn", toId: general.id }),
+      ]);
+      expect(await Requirements.findMany(db, { entityIds: [row.id] })).toEqual([
+        expect.objectContaining({ ...entity, ...REQUIREMENT }),
+      ]);
+      expect(await activityTypes(session.userId, "feats", row.id)).toEqual(["createFeat"]);
+    }
+    await expectRefusedWith(
+      new EntityWriter("feats").createMany(session, ruleset.id, () => ({ rows: [{ name: "Probe Feat Two" }] })),
+      409,
+    );
+    const twice = { rows: [{ name: "Probe Feat Three" }, { name: "Probe Feat Three" }] };
+    await expectRefusedWith(
+      new EntityWriter("feats").createMany(session, ruleset.id, () => twice),
+      409,
+    );
+    expect(
+      await Entities.findOne(db, { entityType: "feats", name: "Probe Feat Three", rulesetId: ruleset.id }),
+    ).toBeUndefined();
   });
 });

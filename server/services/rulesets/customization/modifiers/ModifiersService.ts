@@ -78,7 +78,7 @@ class ModifiersService {
           const { entity, modifier } = Engine.for(scope).modifiers(entityType, entityId).planDelete(modifierId);
 
           const edit = new CustomizationEdit(ruleset, rulesetData.cow);
-          const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await edit.cowCustomization(
+          const { customization, resolvedEntityId } = await edit.cowCustomization(
             tx,
             entityType,
             entity.id,
@@ -87,7 +87,7 @@ class ModifiersService {
           );
 
           // The database deletes the modifier's requirements with it
-          const rows = await Modifiers.delete(tx, { ids: [resolvedModifierId] });
+          const rows = await Modifiers.delete(tx, { ids: [customization.id] });
           const deletedModifier = rows[0];
 
           await createActivityWithNotifications(tx, {
@@ -163,7 +163,7 @@ class ModifiersService {
 
           // COW the owning entity if this modifier is inherited
           const edit = new CustomizationEdit(ruleset, rulesetData.cow);
-          const { resolvedEntityId, resolvedCustomizationId: resolvedModifierId } = await edit.cowCustomization(
+          const { customization, resolvedEntityId } = await edit.cowCustomization(
             tx,
             entityType,
             entity.id,
@@ -171,8 +171,8 @@ class ModifiersService {
             modifierId,
           );
 
-          const expectedUpdatedAt = resolvedModifierId === modifierId ? updatedAt : undefined;
-          const rows = await Modifiers.update(tx, row, { id: resolvedModifierId, expectedUpdatedAt });
+          const expectedUpdatedAt = customization.expected(updatedAt);
+          const rows = await Modifiers.update(tx, row, { id: customization.id, expectedUpdatedAt });
           if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
           const updatedModifier = rows[0];
