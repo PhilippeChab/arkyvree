@@ -21,11 +21,12 @@ import {
 import CustomizationCopies from "./CustomizationCopies.ts";
 
 /**
- * A copy made: the copied entity, and each customization it copied, by its source's id (equal values don't make the
- * same row: a modifier's requirements may differ).
+ * A copy: the copied entity, and, when this call made it, each customization it copied, by its source's id (equal
+ * values don't make the same row: a modifier's requirements may differ). A copy the ruleset already had (another
+ * write's, made since this one's view was read) has none: its rows may have changed since.
  */
 export interface CopiedEntity {
-  copiedIds: ReadonlyMap<string, string>;
+  copiedIds?: ReadonlyMap<string, string>;
   entity: EntityRecord;
 }
 
@@ -63,7 +64,7 @@ export default class EntityCopy {
 
   /**
    * Copies `entityId` into `ruleset`, or returns the copy it already has (then with no copied ids): the newly created
-   * child entity, and the customizations copied with it.
+   * child entity, and the customizations copied with it, by their sources' ids.
    */
   static async create(
     tx: Db,
@@ -72,8 +73,8 @@ export default class EntityCopy {
     ruleset: RulesetSources,
   ): Promise<CopiedEntity> {
     const copy = new EntityCopy(entityType, entityId, ruleset);
-    const entity = await copy.copy(tx);
-    return { entity, copiedIds: copy.copiedIds };
+    const { entity, made } = await copy.copy(tx);
+    return made ? { entity, copiedIds: copy.copiedIds } : { entity };
   }
 
   private readonly copiedIds = new Map<string, string>();
@@ -87,8 +88,11 @@ export default class EntityCopy {
 
   private readonly sourceType: string | undefined;
 
-  /** Copies the entity into the target ruleset, or returns the copy it already has: the newly created child entity. */
-  private async copy(tx: Db): Promise<EntityRecord> {
+  /**
+   * Copies the entity into the target ruleset, or returns the copy it already has: the child entity, and whether this
+   * call made it (`made`).
+   */
+  private async copy(tx: Db): Promise<{ entity: EntityRecord; made: boolean }> {
     const entityType = this.entityType;
     const { id: childRulesetId } = this.ruleset;
 
@@ -110,7 +114,7 @@ export default class EntityCopy {
       const existing = exists
         ? await Entities.findOne(tx, { entityType, id: existingSnapshot.forkedEntityId })
         : undefined;
-      if (existing) return existing;
+      if (existing) return { entity: existing, made: false };
       await EntitySnapshots.delete(tx, {
         sourceEntityId: this.entityId,
         rulesetId: childRulesetId,
@@ -163,7 +167,7 @@ export default class EntityCopy {
       forkedEntityId: newEntity.id,
     });
 
-    return newEntity;
+    return { entity: newEntity, made: true };
   }
 
   /**

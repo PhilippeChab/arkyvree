@@ -1,5 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
-import { NotFoundError } from "@/server/errors/index.ts";
+import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
 
 /** A customization's kind, which its rows are read by. */
@@ -13,8 +13,9 @@ const CUSTOMIZATION_REPOS = {
 
 /**
  * The row a write to a ruleset's entity changes (`id`), as copy-on-write resolved the entity the write named
- * (`namedId`): the ruleset's own, or the copy of an inherited one this call made (`EntityEdit`), with the ids of what it
- * copied with it, by their sources' (`copiedIds`: its owned entities' and its customizations'). What a write needs of a
+ * (`namedId`): the ruleset's own, or the copy of an inherited one (`EntityEdit`). A copy this call made holds the ids of
+ * what it copied with it, by their sources' (`copiedIds`: its owned entities' and its customizations'); a copy another
+ * write made since this one's view was read holds none, and is checked as the ruleset's own. What a write needs of a
  * copy it asks the target: the token to check the row by (`expected`), the entities it owns by their places
  * (`findOwned`), a customization's row (`customization`, several at once: `resolveCustomizations`).
  */
@@ -25,14 +26,14 @@ export default class EditTarget {
     readonly copiedIds?: ReadonlyMap<string, string>,
   ) {}
 
-  /** Whether this call copied the row: an inherited entity's first edit. */
+  /** Whether this call made the copy it writes: an inherited entity's first edit. */
   get copied(): boolean {
     return this.copiedIds !== undefined;
   }
 
   /**
    * The token a write checks the row by: the client's (`updatedAt`), or none on a copy this call made, whose token was
-   * its source's.
+   * its source's. A copy another write made is checked: the client's token, its source's, is stale on it.
    */
   expected(updatedAt: string | undefined): string | undefined {
     return this.copied ? undefined : updatedAt;
@@ -60,12 +61,16 @@ export default class EditTarget {
    * The rows customizations of the entity, or of what it owns (`customizationIds`, of `kind`, as the view shows them),
    * change, in their order: their copies, by the ids this call recorded as it copied the entity (equal values aren't
    * unique), or themselves, which must still exist. Refused as not found when one was deleted since the view was read,
-   * or when the write named the entity by another row's id.
+   * and as stale when the write named the entity by another row's id that this call didn't copy (its copy made by
+   * another write since the view was read: the ids it names are its source's).
    */
   async resolveCustomizations(tx: Db, kind: CustomizationKind, customizationIds: string[]): Promise<string[]> {
+    if (customizationIds.length === 0) return [];
     if (this.id !== this.namedId) {
+      const { copiedIds } = this;
+      if (!copiedIds) throw new ConflictError(STALE_ENTITY_MESSAGE);
       return customizationIds.map((customizationId) => {
-        const copiedId = this.copiedIds?.get(customizationId);
+        const copiedId = copiedIds.get(customizationId);
         if (!copiedId) throw new NotFoundError(`Copied ${kind} not found`);
         return copiedId;
       });
