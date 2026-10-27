@@ -105,12 +105,15 @@ export interface KindWord extends RulesWord {
 
 /**
  * A column of an entity's own value in its type's list, between its name and its description, by where it's stored
- * (one of the two), which names it in its table too (the client's `listColumnId`): its own field (`field`: among its `fields`, `ITEM_COST_GP`) or its
- * links of a role (`role`: among its `links`, a skill's `keyAbility`, a feat's `listedIn`), its label, its share of the list's width (percent), where a phone shows it (`slot`), and how its value reads
- * (`reads`):
+ * (one of the two), which names it in its table too (the client's `listColumnId`): its own field (`field`: among its
+ * `fields`, `ITEM_COST_GP`) or its links of a role (`role`: among its `links`, a skill's `keyAbility`, a feat's
+ * `listedIn`), its label (its field's, unless its rules give a shorter one: a race's "Speed"), its share of the list's
+ * width (percent), where a phone shows it (`slot`), what its field's declaration says of its value, which the engine
+ * reads off it (`RulesEngine`: a number's `labels` and `unit`, a reference's kind, `references`), and how its value
+ * reads (`reads`):
  * - `chip`: a chip of its label (`labels`, by value: a hit die's 10 is "d10"), else of the value;
  * - `muted`: its text, quiet;
- * - `number`, `decimal`: in its `unit` ("30 ft", "15.00 gp"), a decimal with two places;
+ * - `number`, `decimal`: in its `unit` ("30 feet", "15.00 gp"), a decimal with two places;
  * - `reference`: the name of the entity of the ruleset it names (`references`: its kind, `abilities`), its link's
  *   target;
  * - `flag`: a warning's "Yes" while it's `yesWhen` ("Trained Only" while a skill isn't usable untrained), "No" else;
@@ -131,6 +134,19 @@ export interface ListColumn {
   slot?: "block" | "inline";
   unit?: string;
   yesWhen?: boolean;
+}
+
+/**
+ * A list's column as a module's rules declare it: what's its own alone, its label only where it's shorter than its
+ * field's (`label`: a race's speed's "Speed"). The rest its field's declaration says.
+ */
+export interface ListColumnDeclaration extends Omit<ListColumn, "label" | "labels" | "references" | "unit"> {
+  label?: string;
+}
+
+/** An entity type's list as a module's rules declare it: its columns' own (`ListColumnDeclaration`). */
+export interface ListDeclaration extends Omit<ListDescription, "columns"> {
+  columns: ListColumnDeclaration[];
 }
 
 /** An entity type's list: its name's share of its width (percent), and its columns after it, its description's last. */
@@ -157,6 +173,11 @@ export interface ProgressionCounts {
   several: string;
   tab: string;
   type: string;
+}
+
+/** How a class's levels progress, as a module's rules declare it: its tracks' own (`ProgressionTrackDeclaration`). */
+export interface ProgressionDeclaration extends Omit<ProgressionDescription, "tracks"> {
+  tracks: ProgressionTrackDeclaration[];
 }
 
 /**
@@ -224,9 +245,11 @@ export interface ProgressionTable {
 /**
  * A column of a class's table its Progression tab sets: where a level holds it (`source`: one of its fields, the stored
  * `field` a level's read holds it at, which its form's save gives at `key`; or its amounts, by `key`, one per entity of
- * a kind: 3.5's base per save of the ruleset), its labels (the table's `shortLabel`, the value's `unitLabel` when one
- * number sets every level), its bounds, each value's label from `min` (`labels[value - min]`: none reads it as it is),
- * and the progressions it follows (`presets`: each its value at each level, from the first).
+ * a kind: 3.5's base per save of the ruleset), its labels (its field's `label`, the table's `shortLabel`, the value's
+ * `unitLabel` when one number sets every level), its bounds (its field's `min` and `max`), each value's label from
+ * `min` (`labels[value - min]`: none reads it as it is), and the progressions it follows (`presets`: each its value at
+ * each level, from the first). Its field is its level's (its `field`, or its list of amounts), whose declaration the
+ * engine reads its label and bounds off (`RulesEngine`).
  */
 export interface ProgressionTrack {
   field?: string;
@@ -243,14 +266,17 @@ export interface ProgressionTrack {
 
 /**
  * What a module's rules describe of themselves: all but what the engine reads off its storage, its fields'
- * declarations and its imports, and of its kinds their presentation alone (`EntityKindDeclaration`), what each can do
- * being its rules' class's and its storage's.
+ * declarations and its imports, of its kinds their presentation alone (`EntityKindDeclaration`), what each can do
+ * being its rules' class's and its storage's, and of its lists' columns and its progression's tracks what's their own,
+ * what their values are being their fields' declarations'.
  */
 export interface RulesDeclaration extends Omit<
   RulesDescription,
-  "customizationPages" | "fields" | "importers" | "kinds"
+  "customizationPages" | "fields" | "importers" | "kinds" | "lists" | "progression"
 > {
   kinds: EntityKindDeclaration[];
+  lists: Partial<Record<string, ListDeclaration>>;
+  progression: ProgressionDeclaration;
 }
 
 /**
@@ -320,3 +346,6 @@ export interface RulesWord {
   many: string;
   one: string;
 }
+
+/** A column of a class's table as a module's rules declare it: what's its own, its label and bounds its field's. */
+export type ProgressionTrackDeclaration = Omit<ProgressionTrack, "label" | "max" | "min">;

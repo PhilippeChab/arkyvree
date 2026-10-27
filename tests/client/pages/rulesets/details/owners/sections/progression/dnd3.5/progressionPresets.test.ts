@@ -6,10 +6,10 @@ import {
   formatTrackValue,
   presetsOf,
 } from "@/client/src/pages/rulesets/details/owners/sections/progression/progressionPresets.ts";
-import { PROGRESSION } from "@/engine/rulesets/dnd3.5/entities/classes/progression.ts";
+import { Engine } from "@/engine/index.ts";
 
-/** 3.5's base attack bonus and saves tracks. */
-const [BAB, SAVES] = PROGRESSION.tracks;
+/** 3.5's tracks, as its rules describe them: its base attack bonus, its saves and its skill points. */
+const [BAB, SAVES, SKILLS] = Engine.rules().describeAll()["Dungeons & Dragons: 3.5"].progression.tracks;
 
 /** A track's values at levels 1 to `count`, each `valueAt`'s. */
 function track(count: number, valueAt: (level: number) => number) {
@@ -55,6 +55,6 @@ describe("A class's progression presets", () => {
     ]);
     expect([0, 4].map((base) => formatTrackValue(SAVES, base))).toEqual(["+0", "+4"]);
     expect(formatTrackValue(BAB, 21)).toBe("21");
-    expect(formatTrackValue(PROGRESSION.tracks[2], 6)).toBe("6");
+    expect(formatTrackValue(SKILLS, 6)).toBe("6");
   });
 });
