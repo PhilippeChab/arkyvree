@@ -1,10 +1,8 @@
 import { Hono } from "hono";
 import { upgradeWebSocket } from "hono/bun";
-import { getCookie } from "hono/cookie";
 
-import { db } from "@/server/database/index.ts";
-import { SESSION_COOKIE_NAME } from "@/server/middlewares/index.ts";
-import { Sessions, Users } from "@/server/repositories/index.ts";
+import { UnauthorizedError } from "@/server/errors/index.ts";
+import { findRequestSession, getSessionCookie } from "@/server/middlewares/index.ts";
 import { BUILD_ID, Connections } from "@/server/websockets/index.ts";
 
 export default new Hono().get(
@@ -14,25 +12,17 @@ export default new Hono().get(
 
     return {
       async onOpen(_event, ws) {
-        const sessionId = getCookie(c, SESSION_COOKIE_NAME);
-        if (!sessionId) {
+        // The session a request takes, refused as a request's is (an expired demo user's among them)
+        const signedIn = await findRequestSession(getSessionCookie(c)).catch((error: unknown) => {
+          if (error instanceof UnauthorizedError) return null;
+          throw error;
+        });
+        if (!signedIn) {
           ws.close(4001, "Unauthorized");
           return;
         }
 
-        const session = await Sessions.findOne(db, { id: sessionId });
-        if (!session || new Date(session.expiresAt) < new Date()) {
-          ws.close(4001, "Unauthorized");
-          return;
-        }
-
-        const user = await Users.findOne(db, { id: session.userId });
-        if (!user) {
-          ws.close(4001, "Unauthorized");
-          return;
-        }
-
-        userId = user.id;
+        userId = signedIn.user.id;
         Connections.add(userId, ws);
         ws.send(JSON.stringify({ type: "app:version", version: BUILD_ID }));
       },

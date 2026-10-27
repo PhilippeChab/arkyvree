@@ -1,6 +1,7 @@
 import { type Context } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { createMiddleware } from "hono/factory";
+import { z } from "zod";
 
 import { db } from "@/server/database/index.ts";
 import { isProduction } from "@/server/environment.ts";
@@ -24,8 +25,13 @@ export function deleteSessionCookie(c: Context) {
   deleteCookie(c, SESSION_COOKIE_NAME);
 }
 
-export function getSessionCookie(c: Context) {
-  return getCookie(c, SESSION_COOKIE_NAME);
+/**
+ * The session id a request's cookie holds: none when it holds none, or holds what isn't a session's id (a session's is a
+ * UUID), which no session matches.
+ */
+export function getSessionCookie(c: Context): string | undefined {
+  const id = z.string().uuid().safeParse(getCookie(c, SESSION_COOKIE_NAME));
+  return id.success ? id.data : undefined;
 }
 
 export function setSessionCookie(c: Context, sessionId: string) {
@@ -38,8 +44,11 @@ export function setSessionCookie(c: Context, sessionId: string) {
   });
 }
 
-export default createMiddleware<SessionContext>(async (c, next) => {
-  const sessionId = getSessionCookie(c);
+/**
+ * The session a request's cookie (`sessionId`, `getSessionCookie`'s) signs in, and its user: refused when there's none,
+ * or when the session or its user (a demo's) has expired. What every signed-in request and the websocket take.
+ */
+export async function findRequestSession(sessionId: string | undefined): Promise<{ session: Session; user: User }> {
   if (!sessionId) throw new UnauthorizedError("Invalid session");
 
   const session = await Sessions.findOne(db, { id: sessionId });
@@ -49,6 +58,12 @@ export default createMiddleware<SessionContext>(async (c, next) => {
   const user = await Users.findOne(db, { id: session.userId });
   if (!user) throw new UnauthorizedError("Invalid session");
   if (user.expiresAt && new Date(user.expiresAt) < new Date()) throw new UnauthorizedError("Session expired");
+
+  return { session, user };
+}
+
+export default createMiddleware<SessionContext>(async (c, next) => {
+  const { session, user } = await findRequestSession(getSessionCookie(c));
 
   c.set(SESSION_CONTEXT_KEY, session);
   c.set(USER_CONTEXT_KEY, user);
