@@ -362,6 +362,7 @@ export default function CharacterDetailsPage() {
               characterId={id}
               readOnly
               identityReadOnly={!canEdit}
+              portraitReadOnly={!canEditPortrait}
               equipmentMode="readonly"
               rulesetId={character.rulesetId}
             />
