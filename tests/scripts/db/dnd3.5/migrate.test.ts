@@ -19,6 +19,34 @@ function statementsOf(file: string) {
 }
 
 /**
+ * An entity's campaign, as 0080 made it and 0097 drops it, none of them written: its column and its key, the foreign
+ * key to its campaign and its index, the owner's foreign key and the name's keys by it, and the ruleset's index with it.
+ * What the migrations before 0097 ran on.
+ */
+async function addEntityCampaigns() {
+  await db.execute(sql`
+    ALTER TABLE rules.entities ADD COLUMN campaign_id uuid
+      CONSTRAINT entities_campaign_id_fkey REFERENCES campaign.campaigns(id) ON DELETE CASCADE;
+    ALTER TABLE rules.entities ADD COLUMN campaign_key uuid
+      GENERATED ALWAYS AS (coalesce(campaign_id, '00000000-0000-0000-0000-000000000000')) STORED;
+    ALTER TABLE rules.entities DROP CONSTRAINT entities_owner_id_ruleset_id_fkey;
+    ALTER TABLE rules.entities DROP CONSTRAINT entities_id_ruleset_id_key;
+    ALTER TABLE rules.entities ADD CONSTRAINT entities_id_ruleset_id_campaign_key_key UNIQUE (id, ruleset_id, campaign_key);
+    ALTER TABLE rules.entities ADD CONSTRAINT entities_owner_id_ruleset_id_campaign_key_fkey
+      FOREIGN KEY (owner_id, ruleset_id, campaign_key) REFERENCES rules.entities(id, ruleset_id, campaign_key)
+      ON DELETE CASCADE;
+    DROP INDEX rules.entities_name_unique_idx;
+    CREATE UNIQUE INDEX entities_without_campaign_unique_idx ON rules.entities (ruleset_id, type, partition, name)
+      WHERE campaign_id IS NULL AND name IS NOT NULL;
+    CREATE UNIQUE INDEX entities_with_campaign_unique_idx ON rules.entities
+      (ruleset_id, campaign_id, type, partition, name) WHERE campaign_id IS NOT NULL AND name IS NOT NULL;
+    DROP INDEX rules.entities_ruleset_type_idx;
+    CREATE INDEX entities_ruleset_type_campaign_idx ON rules.entities (ruleset_id, type, campaign_id);
+    CREATE INDEX entities_campaign_idx ON rules.entities (campaign_id) WHERE campaign_id IS NOT NULL;
+  `);
+}
+
+/**
  * The columns of a pick 0093 drops, as 0080 made them, none of them written: its tier, and its parent pick, with the
  * parent's foreign key and its partial index. What the migrations before 0093 ran on.
  */
@@ -136,22 +164,6 @@ async function addUnwrittenColumns() {
   `);
 }
 
-/**
- * An advancement's columns, indexes and constraints, each as one line (its name, and its definition as the database
- * gives it), in order: what 0095 renames.
- */
-async function advancementDefinitions() {
-  const { rows } = await db.execute<{ line: string }>(sql`
-    SELECT 'column ' || attnum || ' ' || attname || ' ' || format_type(atttypid, atttypmod) AS line FROM pg_attribute
-    WHERE attrelid = 'character.advancements'::regclass AND attnum > 0 AND NOT attisdropped
-    UNION ALL SELECT 'index ' || indexname || ' ' || indexdef FROM pg_indexes
-    WHERE schemaname = 'character' AND tablename = 'advancements'
-    UNION ALL SELECT 'constraint ' || conname || ' ' || pg_get_constraintdef(oid) FROM pg_constraint
-    WHERE conrelid = 'character.advancements'::regclass
-  `);
-  return rows.map((row) => row.line).toSorted();
-}
-
 /** Archives a user, a campaign or a seat `offset` (an interval) from when 0096's test archives its campaigns. */
 async function archiveAt(
   table: "account.users" | "campaign.campaigns" | "campaign.players",
@@ -161,6 +173,37 @@ async function archiveAt(
   await db.execute(sql`
     UPDATE ${sql.raw(table)} SET deleted_at = '2026-01-01T00:00:00Z'::timestamptz + ${offset}::interval WHERE id = ${id}
   `);
+}
+
+/**
+ * A table's columns, indexes and constraints, each as one line (its name, and its definition as the database gives
+ * it), in order: what 0095 renames of an advancement's, and what 0097 drops and keys of an entity's.
+ */
+async function definitionsOf(schema: "character" | "rules", table: "advancements" | "entities") {
+  const qualified = `${schema}.${table}`;
+  const { rows } = await db.execute<{ line: string }>(sql`
+    SELECT 'column ' || attnum || ' ' || attname || ' ' || format_type(atttypid, atttypmod) AS line FROM pg_attribute
+    WHERE attrelid = ${qualified}::regclass AND attnum > 0 AND NOT attisdropped
+    UNION ALL SELECT 'index ' || indexname || ' ' || indexdef FROM pg_indexes
+    WHERE schemaname = ${schema} AND tablename = ${table}
+    UNION ALL SELECT 'constraint ' || conname || ' ' || pg_get_constraintdef(oid) FROM pg_constraint
+    WHERE conrelid = ${qualified}::regclass
+  `);
+  return rows.map((row) => row.line).toSorted();
+}
+
+/**
+ * Every entity, each as one line (every column 0097 keeps), and every character's last change: what 0097 leaves.
+ */
+async function entityRows() {
+  const { rows } = await db.execute<{ line: string }>(sql`
+    SELECT 'entity ' || concat_ws(' ', id, ruleset_id, type, name, description, owner_id, owner_type, owned, position,
+      partition, created_at::text, updated_at::text) AS line
+    FROM rules.entities
+    UNION ALL SELECT 'character ' || id || ' ' || last_changed_at::text FROM character.characters
+    ORDER BY line
+  `);
+  return rows.map((row) => row.line);
 }
 
 /**
@@ -1176,10 +1219,12 @@ describe("0094_link-activity-keys", () => {
 
 describe("0095_advancement-entry", () => {
   test("names an advancement's class level its entry, with the indexes and key naming it, and rewrites no row", async () => {
-    const fresh = await advancementDefinitions();
+    const fresh = await definitionsOf("character", "advancements");
     expect(fresh.filter((line) => line.includes("entry"))).toHaveLength(5);
     await restoreTracksBefore0095();
-    expect(await advancementDefinitions()).toEqual(fresh.map((line) => line.replaceAll("entry", "track")).toSorted());
+    expect(await definitionsOf("character", "advancements")).toEqual(
+      fresh.map((line) => line.replaceAll("entry", "track")).toSorted(),
+    );
     const before = await typedRows(false);
     const placed = sql`SELECT id, ctid::text AS place, xmin::text AS version FROM character.advancements ORDER BY id`;
     const { rows: stored } = await db.execute(placed);
@@ -1188,7 +1233,7 @@ describe("0095_advancement-entry", () => {
     for (const statement of statementsOf("0095_advancement-entry.sql")) await db.execute(sql.raw(statement));
 
     // What a fresh database's migrations give, every row as it was, in its place, and every character's last change
-    expect(await advancementDefinitions()).toEqual(fresh);
+    expect(await definitionsOf("character", "advancements")).toEqual(fresh);
     expect(await typedRows(false)).toEqual(before);
     expect((await db.execute(placed)).rows).toEqual(stored);
   });
@@ -1237,5 +1282,39 @@ describe("0096_campaign-seats", () => {
     // A second run restores nothing more
     for (const statement of statementsOf("0096_campaign-seats.sql")) await db.execute(sql.raw(statement));
     expect(await seatRows()).toEqual(expected);
+  });
+});
+
+describe("0097_entity-campaign-scope", () => {
+  test("drops an entity's campaign, which nothing wrote, keys its name and its owner without it, and rewrites no row", async () => {
+    const fresh = await definitionsOf("rules", "entities");
+    await addEntityCampaigns();
+    const restored = await definitionsOf("rules", "entities");
+    expect(restored.filter((line) => line.includes("campaign"))).toHaveLength(10);
+    const before = await entityRows();
+    const placed = sql`SELECT id, ctid::text AS place, xmin::text AS version FROM rules.entities ORDER BY id`;
+    const { rows: stored } = await db.execute(placed);
+    expect(stored.length).toBeGreaterThan(0);
+
+    for (const statement of statementsOf("0097_entity-campaign-scope.sql")) await db.execute(sql.raw(statement));
+
+    // What a fresh database's migrations give, every row as it was, in its place, and every character's last change
+    expect(await definitionsOf("rules", "entities")).toEqual(fresh);
+    expect(await entityRows()).toEqual(before);
+    expect((await db.execute(placed)).rows).toEqual(stored);
+  });
+
+  test("refuses an entity that holds a campaign", async () => {
+    await addEntityCampaigns();
+    const { campaign } = await createTestCampaign(SEED_USER_ID);
+    const languageId = (await getSeedCtx()).langMap["Common"];
+    await db.execute(sql`UPDATE rules.entities SET campaign_id = ${campaign.id} WHERE id = ${languageId}`);
+
+    const refused = await db
+      .transaction(async (tx) => {
+        for (const statement of statementsOf("0097_entity-campaign-scope.sql")) await tx.execute(sql.raw(statement));
+      })
+      .catch((error: unknown) => error);
+    expect(refused).toMatchObject({ cause: { message: "Entities hold a campaign, which nothing reads" } });
   });
 });
