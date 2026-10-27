@@ -1,16 +1,8 @@
 import type { Db } from "@/drizzle/database.ts";
-import type { CowData, OwnedKind, RulesetSources } from "@/engine/index.ts";
+import type { CowData, RulesetSources } from "@/engine/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import {
-  CUSTOMIZABLE_TYPES,
-  Entities,
-  Modifiers,
-  OWNED_TYPES,
-  Requirements,
-  type RulesetEntityType,
-} from "@/server/repositories/index.ts";
+import { CUSTOMIZABLE_TYPES, Modifiers, Requirements } from "@/server/repositories/index.ts";
 
-import EntityCopy from "./EntityCopy.ts";
 import EntityEdit from "./EntityEdit.ts";
 
 /**
@@ -33,7 +25,7 @@ const CUSTOMIZATION_REPOS = {
 /**
  * The row a customization (a modifier, a requirement) of a ruleset's entity changes, made in its scope
  * (`new CustomizationEdit(ruleset, rulesetData.cow)`): on the ruleset's own owner, locked, or on the copy of an
- * inherited one, made on its first edit (`EntityCopy`), the customization mapped to its copy. Its copy-on-write data
+ * inherited one, made on its first edit (`EntityEdit`), the customization mapped to its copy. Its copy-on-write data
  * gives it the entity the view shows for an id and the source chain. Every method takes the transaction; a copy and the
  * ids it copied live for the call that made it.
  */
@@ -45,30 +37,14 @@ export default class CustomizationEdit {
 
   /**
    * The row a customization of a customizable entity changes (3.5's feats, spells, items, races, classes and class
-   * levels): the ruleset's own entity, locked, or the copy of an inherited one (an owned entity's owner is copied with
-   * what it owns, and the owned entity mapped to its copy: a class level's class).
+   * levels): the row its write targets (`EntityEdit.cowById`: the ruleset's own, locked, or the copy of an inherited
+   * one, an owned entity's on its owner's copy).
    */
   private async cowEntityOwner(tx: Db, entityType: string, entityId: string): Promise<Owner> {
     if (!CUSTOMIZABLE_TYPES.includes(entityType))
       throw new NotFoundError("Customization source not found in this ruleset");
-    const ownerType = OWNED_TYPES.get(entityType as OwnedKind);
-    if (ownerType) return this.cowOwnedOwner(tx, entityType, ownerType, entityId);
-
-    const cowType = entityType as RulesetEntityType;
-
-    // The entity the view shows for the id: the ruleset's copy of it, or the winner of its siblings
-    const entity = await Entities.findOne(tx, { entityType: cowType, id: this.cow.resolve(entityId) });
-    if (!entity) throw new NotFoundError("Customization source not found in this ruleset");
-
-    if (entity.rulesetId === this.ruleset.id) {
-      await EntityEdit.lock(tx, entity.id);
-      return { id: entity.id };
-    }
-    if (!this.cow.sourceChain.includes(entity.rulesetId))
-      throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
-
-    const copy = await EntityCopy.create(tx, cowType, entity.id, this.ruleset);
-    return { id: copy.entity.id, copiedIds: copy.copiedIds };
+    const target = await new EntityEdit(this.ruleset, this.cow).cowById(tx, entityType, entityId);
+    return target.copied ? { id: target.id, copiedIds: target.copiedIds } : { id: target.id };
   }
 
   /** Resolve a modifier as the owner of requirements: COW its owning entity and map the modifier to its copy. */
@@ -81,44 +57,6 @@ export default class CustomizationEdit {
     const owner = await this.cowEntityOwner(tx, modifier.sourceType, modifier.sourceId);
     const id = await this.resolveExistingCustomization(tx, modifier.sourceId, owner, "modifier", modifier.id);
     return { id, copiedIds: owner.copiedIds };
-  }
-
-  /**
-   * An owned entity as the owner of customizations (`entityType`, owned by `ownerType`: a class level, by its class):
-   * its owner's own, locked, or the owner copied with what it owns and the owned entity mapped to its copy's of its
-   * position.
-   */
-  private async cowOwnedOwner(
-    tx: Db,
-    entityType: string,
-    ownerType: RulesetEntityType,
-    ownedId: string,
-  ): Promise<Owner> {
-    // The owned entity the view shows for the id, and its owner
-    const [owned] = await Entities.findPositions(tx, { entityType, ids: [this.cow.resolve(ownedId)] });
-    if (!owned) throw new NotFoundError("Customization source not found in this ruleset");
-
-    const owner = await Entities.findOne(tx, { entityType: ownerType, id: this.cow.resolve(owned.ownerId) });
-    if (!owner) throw new NotFoundError("Customization source not found in this ruleset");
-    const ownerRulesetId = String(owner.rulesetId);
-
-    if (ownerRulesetId === this.ruleset.id) {
-      await EntityEdit.lock(tx, owner.id);
-      if (!(await Entities.findOne(tx, { entityType, id: owned.id })))
-        throw new NotFoundError("Customization source no longer exists; refresh the entity");
-
-      return { id: owned.id };
-    }
-    if (!this.cow.sourceChain.includes(ownerRulesetId))
-      throw new NotFoundError("Customization source not found in this ruleset"); // Not from source chain
-
-    // Copy the owner (it copies what it owns), and find the owned entity's copy by its position: owned entities aren't
-    // snapshotted one by one
-    const copy = await EntityCopy.create(tx, ownerType, owner.id, this.ruleset);
-    const copies = await Entities.findPositions(tx, { entityType, ownerIds: [copy.entity.id] });
-    const ownedCopy = copies.find((candidate) => candidate.position === owned.position);
-    if (!ownedCopy) throw new NotFoundError("Copied owned entity not found");
-    return { id: ownedCopy.id, copiedIds: copy.copiedIds };
   }
 
   private async cowOwnerOf(tx: Db, entityType: string, entityId: string): Promise<Owner> {
