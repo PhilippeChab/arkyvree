@@ -3,6 +3,7 @@ import type { InferSelectModel } from "drizzle-orm";
 import type { Db } from "@/drizzle/database.ts";
 import type { usersInAccount } from "@/drizzle/schema.ts";
 import { withTransaction } from "@/server/database/index.ts";
+import { sanitizeEmail } from "@/server/emailAddress.ts";
 import { ConflictError, InternalError } from "@/server/errors/index.ts";
 import {
   Activities,
@@ -74,7 +75,7 @@ export async function purgeDemoSessionUser(tx: Db, sessionId: string | undefined
  * user, the account with its email (which it links and verifies), or a new user.
  */
 export async function signInAsGoogleAccount(payload: { email: string; sub: string }, existingSessionId?: string) {
-  const email = payload.email.toLowerCase();
+  const email = sanitizeEmail(payload.email);
 
   return await withTransaction(async (tx) => {
     await purgeDemoSessionUser(tx, existingSessionId);

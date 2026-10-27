@@ -43,6 +43,13 @@ class CampaignPlayersService {
     });
   }
 
+  /** Refuses (`message`) to remove or demote `player` when it's its campaign's last live Game Master. */
+  private async assertNotLastGameMaster(tx: Db, player: Player, message: string) {
+    if (player.role !== "Game Master") return;
+    if ((await Players.count(tx, { campaignId: player.campaignId, role: "Game Master" })) <= 1)
+      throw new ConflictError(message);
+  }
+
   /** Core invite creation logic — must be called within a transaction. */
   private async createInviteInTransaction(tx: Db, session: Session, player: Player, email: string) {
     const campaign = await Campaigns.findOne(tx, { id: player.campaignId }, Visibility.All);
@@ -182,11 +189,7 @@ class CampaignPlayersService {
       const isSelfRemoval = player.userId === session.userId;
       if (!isSelfRemoval) policy.canUpdate();
 
-      if (player.role === "Game Master") {
-        const campaignPlayers = await Players.findMany(tx, { campaignId });
-        const gmCount = campaignPlayers.filter((p) => p.role === "Game Master").length;
-        if (gmCount <= 1) throw new ConflictError("Cannot remove the last Game Master from a campaign");
-      }
+      await this.assertNotLastGameMaster(tx, player, "Cannot remove the last Game Master from a campaign");
 
       const removedPlayer = player;
 
@@ -220,11 +223,7 @@ class CampaignPlayersService {
       const player = await Players.findOne(tx, { id: playerId, campaignId });
       if (!player) throw new NotFoundError("Player not found in this campaign");
 
-      if (player.role === "Game Master" && role !== "Game Master") {
-        const campaignPlayers = await Players.findMany(tx, { campaignId });
-        const gmCount = campaignPlayers.filter((p) => p.role === "Game Master").length;
-        if (gmCount <= 1) throw new ConflictError("Cannot demote the last Game Master");
-      }
+      if (role !== "Game Master") await this.assertNotLastGameMaster(tx, player, "Cannot demote the last Game Master");
 
       const rows = await Players.update(tx, { role }, { id: playerId });
       const updatedPlayer = rows[0];

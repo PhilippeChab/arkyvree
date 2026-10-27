@@ -144,8 +144,12 @@ describe("CampaignPlayersService", () => {
       ).toBe("Game Master");
     });
 
-    test("never demotes the last Game Master", async () => {
+    test("demotes a Game Master while another is left, never the last", async () => {
       const { session, campaign, gmPlayer } = await setup();
+      const { player } = await CampaignPlayersService.addPlayer(session, campaign.id, "Game Master");
+      expect(
+        (await CampaignPlayersService.updatePlayer(session, campaign.id, player.id, "Player Character")).player.role,
+      ).toBe("Player Character");
       expect(
         CampaignPlayersService.updatePlayer(session, campaign.id, gmPlayer.id, "Player Character"),
       ).rejects.toThrow("Cannot demote the last Game Master");

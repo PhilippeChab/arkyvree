@@ -16,6 +16,16 @@ export type OperatorKind = Exclude<TargetPathKind, "template">;
 /** A chaining requirement's operator's words: how it joins the requirements it groups. */
 const CHAINING_LABELS: Record<ChainingOperator, string> = { and: "AND", or: "OR" };
 
+/** The requirement operators that compare a number: what a numeric target path offers a requirement. */
+const NUMERIC_REQUIREMENT_OPERATORS = [
+  "equal",
+  "not_equal",
+  "greater_than",
+  "less_than",
+  "greater_than_or_equal",
+  "less_than_or_equal",
+] as const;
+
 /**
  * An operator's words, by its kind: a modifier's sign, a requirement's comparison. Every operator of the lists has
  * them: one the lists add without its words fails the type check.
@@ -56,15 +66,6 @@ export const LEVEL_MODIFIER_OPERATORS = ["add", "subtract", "set"] as const;
 
 export const MODIFIER_OPERATORS = ["add", "subtract", "multiply", "divide", "set"] as const;
 
-/** The requirement operators that compare a number: what a numeric target path offers a requirement. */
-export const NUMERIC_REQUIREMENT_OPERATORS = [
-  "equal",
-  "not_equal",
-  "greater_than",
-  "less_than",
-  "greater_than_or_equal",
-  "less_than_or_equal",
-] as const;
 export const REQUIREMENT_OPERATORS = [
   ...NUMERIC_REQUIREMENT_OPERATORS,
   "contains",

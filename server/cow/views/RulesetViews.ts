@@ -55,11 +55,6 @@ class RulesetViews {
     this.rawData.invalidate(rulesetId);
   }
 
-  /** Whether a ruleset's own rows are pinned, kept whatever else the cache evicts. */
-  isRawDataPinned(rulesetId: string, campaignId?: string): boolean {
-    return this.rawData.isPinned(getRawDataKey(rulesetId, campaignId));
-  }
-
   /**
    * A ruleset's copy-on-write data: its source chain, its overrides and sibling pairs. Keyed by the ruleset and its
    * ordered source chain: a request holding old ruleset metadata must not cache its old subscription chain under the

@@ -81,7 +81,7 @@ class ObjectStorage {
       if (now - this.publicUrlLastWarnedAt > PUBLIC_URL_WARN_COOLDOWN_MS) {
         this.publicUrlLastWarnedAt = now;
         console.warn(
-          `[attachments] getPublicUrl() returning null — storage not configured: ${error instanceof Error ? error.message : error}`,
+          `[attachments] findPublicUrl() returning null — storage not configured: ${error instanceof Error ? error.message : error}`,
         );
       }
       return null;

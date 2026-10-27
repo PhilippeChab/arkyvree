@@ -12,12 +12,8 @@ import ObjectStorage from "@/server/storage/ObjectStorage.ts";
 import { ALLOWED_IMAGE_TYPES, ATTACHMENT_SLOTS, MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
 import type { Session } from "@/shared/relations.ts";
 
-import { canAnySessionRead } from "./readers.ts";
-import { getPublicUrl } from "./records.ts";
-
 interface AttachableConfig {
   isOwner: OwnershipChecker;
-  isReader: OwnershipChecker;
   names: readonly string[];
   policy: UploadPolicy;
 }
@@ -40,13 +36,15 @@ const imagePolicy: UploadPolicy = {
   contentTypes: [...ALLOWED_IMAGE_TYPES],
 };
 
-/** The records that take attachments: who may attach to one and read them, what they take, under which names. */
+/**
+ * The records that take attachments: who may attach to one, what they take, under which names. Any signed-in session
+ * reads their attachments: avatars and portraits are display assets, and a URL adds no exposure beyond its page.
+ */
 const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
   [
     ATTACHMENT_SLOTS.avatar.recordType,
     {
       isOwner: async (session, recordId) => session.userId === recordId,
-      isReader: canAnySessionRead,
       policy: imagePolicy,
       names: [ATTACHMENT_SLOTS.avatar.name],
     },
@@ -59,7 +57,6 @@ const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
         // A player character's is its owner's alone; a child's (3.5's bonded creature), whoever edits its parent
         return !!character && (!Engine.storage().isPlayerKind(character.kind) || character.userId === session.userId);
       },
-      isReader: canAnySessionRead,
       policy: imagePolicy,
       names: [ATTACHMENT_SLOTS.portrait.name],
     },
@@ -136,11 +133,6 @@ class AttachmentsService {
   private async assertCanAttach(session: Session, recordType: string, recordId: string): Promise<void> {
     const config = this.getAttachableConfig(recordType);
     if (!(await config.isOwner(session, recordId))) throw new ForbiddenError("Not authorized to attach to this record");
-  }
-
-  private async assertCanRead(session: Session, recordType: string, recordId: string): Promise<void> {
-    const config = this.getAttachableConfig(recordType);
-    if (!(await config.isReader(session, recordId))) throw new ForbiddenError("Not authorized to view this attachment");
   }
 
   private async findOrphanedBlob(tx: Db, blobId: string): Promise<{ id: string; key: string } | null> {
@@ -291,15 +283,16 @@ class AttachmentsService {
     return { id: result.id };
   }
 
-  async getAttachment(session: Session, params: { name: string; recordId: string; recordType: string }) {
-    await this.assertCanRead(session, params.recordType, params.recordId);
+  async getAttachment(params: { name: string; recordId: string; recordType: string }) {
+    // A record type that takes no attachments is refused, as a write's is
+    this.getAttachableConfig(params.recordType);
     const row = await Attachments.findOneWithBlob(db, {
       recordType: params.recordType,
       recordId: params.recordId,
       name: params.name,
     });
     if (!row) return null;
-    return { id: row.id, url: getPublicUrl(row) };
+    return { id: row.id, url: ObjectStorage.findPublicUrl(row.key) };
   }
 }
 

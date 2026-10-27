@@ -1,4 +1,4 @@
-import { and, eq, inArray, type InferInsertModel, isNull, sql, type SQLWrapper } from "drizzle-orm";
+import { and, count, eq, inArray, type InferInsertModel, isNull, sql, type SQLWrapper } from "drizzle-orm";
 import type { PgColumn } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
@@ -7,6 +7,7 @@ import { include } from "@/lib/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Paginates, type Pagination } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
+import type { CampaignRole } from "@/shared/enums.ts";
 
 /** The columns of a players query's row that its subqueries read. */
 interface SlotColumns {
@@ -63,6 +64,17 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
       .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
       .where(and(eq(this.table.userId, where.userId), isNull(this.table.deletedAt)))
       .returning();
+  }
+
+  /** A campaign's live players of a role. */
+  async count(db: Db, where: { campaignId: string; role: CampaignRole }) {
+    const [result] = await db
+      .select({ count: count() })
+      .from(this.table)
+      .where(
+        and(eq(this.table.campaignId, where.campaignId), eq(this.table.role, where.role), isNull(this.table.deletedAt)),
+      );
+    return result.count;
   }
 
   async create(db: Db, values: InferInsertModel<typeof playersInCampaign>) {

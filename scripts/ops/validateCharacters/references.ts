@@ -1,56 +1,74 @@
-import { sql, type SQL } from "drizzle-orm";
+import { getTableName, type SQL, sql, type Table } from "drizzle-orm";
+import type { PgColumn } from "drizzle-orm/pg-core";
+
+import {
+  advancementPicksInCharacter,
+  advancementsInCharacter,
+  inventoryInCharacter,
+  linksInCharacter,
+} from "@/drizzle/schema.ts";
+import {
+  ENTITY_REFERENCES,
+  type EntityReference,
+  type ReferenceOwner,
+} from "@/server/repositories/rulesets/entityReferences.ts";
 
 import { CHAIN, query } from "./queries.ts";
 
-/**
- * Each row a character holds that names an entity (`e`), by what it is (its role, its step, its entry, its item): the
- * database refuses a dangling one, so what's checked is that it names an entity of the character's ruleset chain, which
- * its ruleset's view reads (an entity of another ruleset, the view leaves out).
- */
-const refChecks: { label: string; sql: SQL }[] = [
-  {
-    label: "character link → entity",
-    sql: sql`SELECT c.id, c.name, l.role AS "what", l.entity_id AS "entityId"
-          FROM character.links l
-          JOIN character.characters c ON c.id = l.character_id
-          JOIN rules.entities e ON e.id = l.entity_id
-          WHERE c.deleted_at IS NULL AND NOT e.ruleset_id = ANY(${CHAIN}::uuid[])`,
-  },
-  {
-    label: "advancement → entry",
-    sql: sql`SELECT c.id, c.name, a.entry_type AS "what", a.entry_id AS "entityId"
-          FROM character.advancements a
-          JOIN character.characters c ON c.id = a.character_id
-          JOIN rules.entities e ON e.id = a.entry_id
-          WHERE c.deleted_at IS NULL AND NOT e.ruleset_id = ANY(${CHAIN}::uuid[])`,
-  },
-  {
-    label: "pick → entity or pool",
-    sql: sql`SELECT c.id, c.name, p.step AS "what", e.id AS "entityId"
-          FROM character.advancement_picks p
-          JOIN character.advancements a ON a.id = p.advancement_id
-          JOIN character.characters c ON c.id = a.character_id
-          JOIN rules.entities e ON e.id IN (p.entity_id, p.via_id)
-          WHERE c.deleted_at IS NULL AND NOT e.ruleset_id = ANY(${CHAIN}::uuid[])`,
-  },
-  {
-    label: "inventory → item",
-    sql: sql`SELECT c.id, c.name, inv.item_type AS "what", inv.item_id AS "entityId"
-          FROM character.inventory inv
-          JOIN character.characters c ON c.id = inv.character_id
-          JOIN rules.entities e ON e.id = inv.item_id
-          WHERE c.deleted_at IS NULL AND NOT e.ruleset_id = ANY(${CHAIN}::uuid[])`,
-  },
-];
+/** A check of the rows a character holds that name an entity in one column: its label, and its broken rows' query. */
+interface ReferenceCheck {
+  label: string;
+  sql: SQL;
+}
 
 /**
- * Phase 1: every entity a character's rows name is of its ruleset chain: its ruleset, its extensions, the rulesets it's
- * forked from. Returns the issues found.
+ * What a character's row naming an entity is, shown beside the entity it names: a link's role, a level's entry, a
+ * pick's step, an item's type. A row of a table it doesn't list shows the column naming the entity.
+ */
+const ROW_KINDS = new Map<Table, PgColumn>([
+  [advancementPicksInCharacter, advancementPicksInCharacter.step],
+  [advancementsInCharacter, advancementsInCharacter.entryType],
+  [inventoryInCharacter, inventoryInCharacter.itemType],
+  [linksInCharacter, linksInCharacter.role],
+]);
+
+/** The join from a row naming an entity to its character (`c`): its own, or its level's; none for an entity's or a ruleset's row. */
+function characterJoin(owner: ReferenceOwner): SQL | undefined {
+  if ("characterId" in owner) return sql`JOIN character.characters c ON c.id = ${owner.characterId}`;
+  if ("advancementId" in owner) {
+    return sql`JOIN character.advancements a ON a.id = ${owner.advancementId}
+          JOIN character.characters c ON c.id = a.character_id`;
+  }
+  return undefined;
+}
+
+/** The check of a character's rows naming an entity (`e`) in `column`, or none for rows that aren't a character's. */
+function checkOf({ column, owner }: EntityReference): ReferenceCheck | undefined {
+  const character = characterJoin(owner);
+  if (!character) return undefined;
+
+  const kind = ROW_KINDS.get(column.table) ?? sql`${column.name}::text`;
+  return {
+    label: `${getTableName(column.table)}.${column.name} → entity`,
+    sql: sql`SELECT c.id, c.name, ${kind} AS "what", ${column} AS "entityId"
+          FROM ${column.table}
+          ${character}
+          JOIN rules.entities e ON e.id = ${column}
+          WHERE c.deleted_at IS NULL AND NOT e.ruleset_id = ANY(${CHAIN}::uuid[])`,
+  };
+}
+
+/**
+ * Phase 1: every entity a character's rows name (`ENTITY_REFERENCES`: its links, its levels, their picks, its
+ * inventory) is of its ruleset chain: its ruleset, its extensions, the rulesets it's forked from, which its ruleset's
+ * view reads (an entity of another ruleset, the view leaves out; the database refuses a dangling one). Returns the
+ * issues found.
  */
 export async function checkReferences() {
   console.log("═══ Phase 1: Reference Scope ═══\n");
   let issues = 0;
-  for (const check of refChecks) {
+  for (const check of ENTITY_REFERENCES.map(checkOf)) {
+    if (!check) continue;
     const broken = await query<{ entityId: string; id: string; name: string; what: string }>(check.sql);
     if (broken.length > 0) {
       issues += broken.length;

@@ -21,7 +21,7 @@ export default new Hono()
     ),
     async (c) => {
       const query = c.req.valid("query");
-      return c.json(await AttachmentsService.getAttachment(c.var.requestSession, query), 200);
+      return c.json(await AttachmentsService.getAttachment(query), 200);
     },
   )
   .post(

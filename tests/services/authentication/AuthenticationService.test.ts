@@ -496,7 +496,8 @@ describe("AuthenticationService", () => {
       const [slot] = await Players.create(db, { campaignId: campaign.id, role: "Player Character" });
       const invite = await inviteToSlot(gmSession, slot, account.email);
 
-      const { user } = await signInAsGoogleAccount({ ...account, email: account.email.toUpperCase() });
+      // Its email stored as every other is (`sanitizeEmail`): normalized, trimmed and lowercased
+      const { user } = await signInAsGoogleAccount({ ...account, email: ` ${account.email.toUpperCase()} ` });
       expect(user).toMatchObject({
         emailAddress: account.email,
         hasPassword: false,
@@ -517,7 +518,8 @@ describe("AuthenticationService", () => {
       const { user } = await AuthenticationService.signUp(account.emailAddress, account.password);
       expect(user.emailVerifiedAt).toBeNull();
 
-      const signedIn = await signInAsGoogleAccount(googleAccount(account.emailAddress));
+      // Matched as stored: the fullwidth "＠" normalizes to "@"
+      const signedIn = await signInAsGoogleAccount(googleAccount(account.emailAddress.replace("@", "＠")));
       expect(signedIn.user).toMatchObject({ id: user.id, hasPassword: true, emailVerifiedAt: expect.any(String) });
       expect(await EmailVerifications.findOne(db, { userId: user.id })).toBeUndefined();
       expect(await LinkedAccountsService.getLinkedAccounts(makeSession(user.id))).toMatchObject([

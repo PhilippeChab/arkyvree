@@ -37,9 +37,14 @@ class ModifiersRepository extends CustomizationRepository<typeof modifiersInCust
     });
   }
 
-  async findOne(db: Db, where: { id: string }) {
+  /** A modifier, by its id, or on the source it's said to be on. */
+  async findOne(db: Db, where: { id: string } | { id: string; sourceId: string; sourceType: string }) {
     return await db.query.modifiersInCustomization.findFirst({
-      where: eq(this.table.id, where.id),
+      where: this.where([
+        eq(this.table.id, where.id),
+        "sourceId" in where && eq(this.table.sourceId, where.sourceId),
+        "sourceType" in where && eq(this.table.sourceType, where.sourceType),
+      ]),
     });
   }
 }

@@ -7,6 +7,7 @@ import { type Aptitude, type Feat, type Item, type Klass, type KlassLevel } from
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
+import RawDataReader from "@/server/cow/views/RawDataReader.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import { Entities, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
@@ -178,24 +179,19 @@ describe("RulesetViews", () => {
   test("system-seeded rulesets are pinned; user forks (and orphaned forks) are not", async () => {
     const ruleset = await getRuleset();
     expect(ruleset.system).toBe(true);
-    RulesetViews.invalidateAll();
 
-    // Seed (system = true) is pinned after the first fetch.
-    await RulesetViews.getRawData(ruleset.id);
-    expect(RulesetViews.isRawDataPinned(ruleset.id)).toBe(true);
+    // Seed (system = true) is pinned: what the cache reads its rows with says so
+    expect((await RawDataReader.read(ruleset.id)).pinned).toBe(true);
 
     // A user-owned fork should NOT be pinned — forks come and go and pinning
     // them would starve the LRU budget intended for bases + extensions.
     const userFork = await createTestRuleset(SEED_USER_ID, { rulesetId: ruleset.id, ancestorRulesetIds: [ruleset.id] });
-    await RulesetViews.getRawData(userFork.id);
-    expect(RulesetViews.isRawDataPinned(userFork.id)).toBe(false);
+    expect((await RawDataReader.read(userFork.id)).pinned).toBe(false);
 
     // An orphaned fork (userId nulled out by Rulesets.orphan) still has system = false
     // and must not bleed into the pinned set.
     await Rulesets.orphan(db, { userId: SEED_USER_ID });
-    RulesetViews.invalidateAll();
-    await RulesetViews.getRawData(userFork.id);
-    expect(RulesetViews.isRawDataPinned(userFork.id)).toBe(false);
+    expect((await RawDataReader.read(userFork.id)).pinned).toBe(false);
   });
 
   test("invalidate clears COW and raw entity caches", async () => {

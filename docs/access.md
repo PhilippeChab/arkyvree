@@ -1,6 +1,6 @@
 # Access & Authorization
 
-This is the source of truth for who can do what across the app. Every gated mutation goes through one of the policy classes under `server/services/policies/` — services call them, policies throw `ForbiddenError` / `UnprocessableEntityError` / `ConflictError`, the throw propagates.
+This is the source of truth for who can do what across the app. Every gated mutation goes through one of the policy classes under `server/services/policies/` — services call them, policies throw `ForbiddenError` / `UnprocessableEntityError` / `ConflictError` (and `NotFoundError` where a refusal mustn't reveal the row, `CampaignsPolicy.canSeeCharacter`), the throw propagates.
 
 If you're adding a new mutation, find the matching row below and call the same policy method. If your case isn't covered, extend the policy — don't write inline `userId === session.userId` checks (see "Identity vs. policy" at the bottom).
 
@@ -102,8 +102,9 @@ Campaign character responses leave the private notes out of the identity's block
 | Method | Allowed actors |
 |---|---|
 | `canRead` | any member, Player or Game Master, of the campaign archived or not: returns their player row. Reading a campaign, its players, invites and characters starts with it (an unknown campaign is a 404 first) |
+| `canSeeCharacter` | a member, on a character linked to the campaign; a **Private** one its linking player and the Game Master alone (`isGameMasterByRole`), refused to the others as a 404, as a character not linked is |
 | `canUpdate` | **Game Master only**, by an active player row (`isGameMaster`) |
-| `canDelete` | **Game Master only** (archive), an archived player row too |
+| `canDelete` | **Game Master only** (archive), an archived player row too (`isGameMasterByRole`) |
 | `canHardDelete` | **Game Master only**, must be archived. See [persistence.md](./persistence.md#recoverable-user-content) |
 | `canModify` | anyone the other checks allow, on a campaign that isn't archived (archived campaigns are read-only; a Game Master can still revoke an invite) |
 
@@ -117,16 +118,16 @@ Campaign character responses leave the private notes out of the identity's block
 
 ## Attachments — `AttachmentsService` registry
 
-Attachments (avatars, character portraits) don't go through a `BasePolicy` subclass — they use the `ATTACHABLE_TYPES` map in `AttachmentsService`, where each record type declares its own `isOwner` (write) and `isReader` (read) checkers. Writes throw `ForbiddenError "Not authorized to attach to this record"` when `isOwner` returns false.
+Attachments (avatars, character portraits) don't go through a `BasePolicy` subclass — they use the `ATTACHABLE_TYPES` map in `AttachmentsService`, where each record type declares its own `isOwner` (write) checker. Writes throw `ForbiddenError "Not authorized to attach to this record"` when `isOwner` returns false.
 
-| Record type | Write (`isOwner`) | Read (`isReader`) |
+| Record type | Write (`isOwner`) | Read |
 |---|---|---|
 | `User` (avatar) | `session.userId === recordId` | any authenticated session |
 | `Character` (portrait) | a player character's **owner only**; a bonded character's: whoever can edit its master (owner or contributor). Both through `findEditableCharacterOrChild`, unarchived, then owner-only for a player character | any authenticated session |
 
 Note the divergence: a character's active contributor **can edit the character** (`getEditableCharacter`) but **cannot upload or replace its portrait** — a player character's portrait writes are owner-only. If that's not the desired behavior, change `Character`'s `isOwner` in `ATTACHABLE_TYPES` to also accept active contributors.
 
-Reads are intentionally permissive (`canAnySessionRead`, `attachments/readers.ts`) since avatar/portrait URLs add no exposure beyond pages that are already gated.
+Reads are intentionally permissive, with no check of their own, since avatar/portrait URLs add no exposure beyond pages that are already gated: a record type that needs one adds its read checker to `ATTACHABLE_TYPES`.
 
 ## Invites (rulesets / campaigns / character contributors)
 
@@ -147,7 +148,7 @@ Modifiers, fields, and requirements live on a parent entity (a feat, item, class
 - Customizations on a **ruleset entity** are gated by `RulesetsPolicy.canUpdateEntity` (owner / Admin / Editor). Its fields are written by its own save, gated as its save is; a ruleset's own, its Settings (`RulesetSettingsService.updateSettings`), by `canUpdateEntity` too: who edits its content edits them, never a system ruleset.
 - Customizations on a **character** (e.g. character modifiers) go through `CharactersService` and are gated by `getEditableCharacter` (owner / contributor).
 
-A ruleset entity's customization plans (`Engine.for(scope).modifiers(entityType, entityId).planCreate`, `.requirements(…).planDelete`…) refuse as not found (a 404) a parent the composed ruleset doesn't have (`CustomizedEntity.find`), and answer its display name for activity logging; before an update or a delete, `checkCustomizedEntity` (`server/services/rulesets/customization/customizableEntities.ts`) checks that the customization's own parent is still stored, read from the database itself.
+A ruleset entity's customization plans (`Engine.for(scope).modifiers(entityType, entityId).planCreate`, `.requirements(…).planDelete`…) refuse as not found (a 404) a parent the composed ruleset doesn't have (`CustomizedEntity.find`), and answer its display name for activity logging; before an update or a delete, `CustomizationEdit.cowCustomization` reads, in the write's transaction, the parent the row is on and the row itself, and refuses as not found (a 404) one no longer stored.
 
 ## Identity vs. policy
 

@@ -287,7 +287,7 @@ describe("AttachmentsService", () => {
   describe("findOne", () => {
     test("returns null when no live attachment exists in the slot", async () => {
       const { session } = await createTestUser();
-      const result = await AttachmentsService.getAttachment(session, {
+      const result = await AttachmentsService.getAttachment({
         recordType: "User",
         recordId: session.userId,
         name: "avatar",
@@ -295,12 +295,18 @@ describe("AttachmentsService", () => {
       expect(result).toBeNull();
     });
 
+    test("refuses a record type that takes no attachments", () => {
+      expect(
+        AttachmentsService.getAttachment({ recordType: "Campaign", recordId: NIL_UUID, name: "avatar" }),
+      ).rejects.toThrow(BadRequestError);
+    });
+
     test("returns attachment + blob + url when one exists", async () => {
       const { session } = await createTestUser();
       const direct = await AttachmentsService.createDirectUpload(session, uploadParams(session.userId));
       await AttachmentsService.attach(session, direct.signedId);
 
-      const result = await AttachmentsService.getAttachment(session, {
+      const result = await AttachmentsService.getAttachment({
         recordType: "User",
         recordId: session.userId,
         name: "avatar",

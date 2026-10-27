@@ -1,9 +1,15 @@
 import type { Db } from "@/drizzle/database.ts";
-import { ForbiddenError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import { ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Players, Visibility } from "@/server/repositories/index.ts";
 import type { Campaign, Player, Session } from "@/shared/relations.ts";
 
 import BasePolicy from "./BasePolicy.ts";
+
+/** What a character's check reads of its link to the campaign: the player who linked it, and how they linked it. */
+interface CharacterLink {
+  playerId: string;
+  visibility: string;
+}
 
 /** What a campaign's checks read of it. */
 type PolicyCampaign = Pick<Campaign, "id" | "deletedAt">;
@@ -26,13 +32,13 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
   private readonly player: Player | null;
 
   canDelete() {
-    if (this.player?.role !== "Game Master") throw new ForbiddenError("Only the Game Master can manage this campaign");
+    if (!this.isGameMasterByRole()) throw new ForbiddenError("Only the Game Master can manage this campaign");
 
     return true;
   }
 
   canHardDelete() {
-    if (this.player?.role !== "Game Master")
+    if (!this.isGameMasterByRole())
       throw new ForbiddenError("Only the Game Master can permanently delete this campaign");
 
     if (!this.entity.deletedAt)
@@ -53,14 +59,34 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
     return this.player;
   }
 
+  /**
+   * Whether the session sees the campaign's character `link`: a member does, but a Private one is its player's and the
+   * Game Master's alone, refused to the others as not linked (a 404), as an unknown character is.
+   */
+  canSeeCharacter(link: CharacterLink) {
+    const player = this.canRead();
+    if (link.visibility === "Private" && link.playerId !== player.id && !this.isGameMasterByRole())
+      throw new NotFoundError("Character not found in this campaign");
+
+    return true;
+  }
+
   canUpdate() {
     if (!this.isGameMaster()) throw new ForbiddenError("Only the Game Master can edit this campaign");
 
     return true;
   }
 
-  /** Whether the session is the campaign's Game Master, by an active player row. */
+  /** Whether the session is the campaign's Game Master, by an active player row: what acting as one takes. */
   isGameMaster() {
-    return this.player?.role === "Game Master" && !this.player.deletedAt;
+    return this.isGameMasterByRole() && !this.player?.deletedAt;
+  }
+
+  /**
+   * Whether the session's player row is the campaign's Game Master's, an archived one too (a campaign archived before
+   * archiving left its players alone archived them with it): what reading and archiving the campaign go by, as `canRead`.
+   */
+  isGameMasterByRole() {
+    return this.player?.role === "Game Master";
   }
 }

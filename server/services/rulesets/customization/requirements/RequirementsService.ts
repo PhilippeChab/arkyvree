@@ -5,7 +5,6 @@ import { ConflictError, InternalError, STALE_ENTITY_MESSAGE } from "@/server/err
 import { Requirements } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { checkCustomizedEntity } from "@/server/services/rulesets/customization/customizableEntities.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -81,8 +80,6 @@ class RequirementsService {
           const { entity, requirement } = Engine.for(scope)
             .requirements(entityType, entityId)
             .planDelete(requirementId);
-          // Before the copy-on-write: the lookup reads the shared db, not tx
-          await checkCustomizedEntity(requirement);
 
           const edit = new CustomizationEdit(ruleset, rulesetData.cow);
           const { resolvedEntityId, resolvedCustomizationId: resolvedRequirementId } = await edit.cowCustomization(
@@ -134,9 +131,7 @@ class RequirementsService {
 
           const catalogs = await RulesetViews.getTargetPathCatalogs(scope.ruleset, "requirement");
           const requirements = Engine.for(scope).requirements(entityType, entityId);
-          const { entity, requirement, row } = requirements.planEdit(catalogs, requirementId, body);
-          // Before the copy-on-write: the lookup reads the shared db, not tx
-          await checkCustomizedEntity(requirement);
+          const { entity, row } = requirements.planEdit(catalogs, requirementId, body);
 
           // COW the owning entity if this requirement is inherited
           const edit = new CustomizationEdit(ruleset, rulesetData.cow);

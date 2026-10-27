@@ -35,12 +35,16 @@ class CampaignCharactersService {
     return visibility === "Partial" && !viewer.isOwner && !viewer.isGM && !viewer.canEdit;
   }
 
-  /** The session's player row in the campaign: a 404 when there's no such campaign, a 403 when they aren't in it. */
+  /**
+   * The session's policy on the campaign and its player row there: a 404 when there's no such campaign, a 403 when
+   * they aren't in it.
+   */
   private async getMember(session: Session, campaignId: string) {
     const campaign = await Campaigns.findOne(db, { id: campaignId }, Visibility.All);
     if (!campaign) throw new NotFoundError("Campaign not found");
 
-    return (await CampaignsPolicy.for(db, session, campaign)).canRead();
+    const policy = await CampaignsPolicy.for(db, session, campaign);
+    return { member: policy.canRead(), policy };
   }
 
   async enqueuePdf(session: Session, campaignId: string, characterId: string) {
@@ -52,17 +56,14 @@ class CampaignCharactersService {
   }
 
   async getCharacter(session: Session, campaignId: string, characterId: string) {
-    const member = await this.getMember(session, campaignId);
+    const { member, policy } = await this.getMember(session, campaignId);
 
     const link = await PlayerCharacters.findOne(db, { characterId, campaignId });
     if (!link) throw new NotFoundError("Character not found in this campaign");
+    policy.canSeeCharacter(link);
 
     const isOwner = link.playerId === member.id;
-    const isGM = member.role === "Game Master";
-
-    // Private characters are only visible to the owner and GMs
-    if (!isOwner && !isGM && link.visibility === "Private")
-      throw new NotFoundError("Character not found in this campaign");
+    const isGM = policy.isGameMasterByRole();
 
     // Full character build for all visible cases (Public, Partial, owner, GM)
     const character = await Characters.findOne(db, { id: characterId });
@@ -101,9 +102,9 @@ class CampaignCharactersService {
     where: { orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
     pagination: Pagination,
   ) {
-    const member = await this.getMember(session, campaignId);
+    const { member, policy } = await this.getMember(session, campaignId);
 
-    const isGM = member.role === "Game Master";
+    const isGM = policy.isGameMasterByRole();
 
     // Get all players in this campaign (include archived for archived campaigns)
     const campaignPlayers = await Players.findMany(db, { campaignId }, Visibility.All);
