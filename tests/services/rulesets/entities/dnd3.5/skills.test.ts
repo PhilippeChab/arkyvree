@@ -16,51 +16,25 @@ import {
   SKILL_USABLE_WITHOUT_TRAINING,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
-/** A skill as it reads: its columns, and its fields beside them. */
-interface SkillValues {
-  checkPenaltyMultiplier: number;
+/** A skill's body: its name and description, its fields by stored field, and its ability its `keyAbility` link. */
+interface SkillBody {
   description?: string | null;
-  impactedByWeight: boolean;
-  keyAbilityId: string;
+  fields: Record<string, boolean | number>;
+  links: { keyAbility: string };
   name: string;
-  usableWithoutTraining: boolean;
 }
 
-type SkillBody = Parameters<typeof EntitiesService.createEntity>[3];
-
 /**
- * What a write of a skill (`values`, as it reads) answers, as a read does: its fields by stored field, its ability
- * (named `abilityName`) its `keyAbility` link.
+ * What a write of a skill (`body`) answers, as a read does: its fields by stored field, its ability (named
+ * `abilityName`) its `keyAbility` link.
  */
-function answerOf({ description, name, keyAbilityId, ...values }: SkillValues, abilityName: string) {
-  return {
-    description,
-    fields: fieldsOf(values),
-    links: [{ role: "keyAbility", toId: keyAbilityId, toName: abilityName }],
-    name,
-  };
-}
-
-/** A skill's body (`values`, as it reads): its fields by stored field, its ability its `keyAbility` link. */
-function bodyOf({ description, name, keyAbilityId, ...values }: SkillValues): SkillBody {
-  return { description, fields: fieldsOf(values), links: { keyAbility: keyAbilityId }, name };
-}
-
-/** A skill's fields (`values`, as it reads), as its answer holds them: by the stored field that keeps each. */
-function fieldsOf(values: Partial<SkillValues>) {
-  return {
-    ...(values.impactedByWeight !== undefined && { [SKILL_IMPACTED_BY_WEIGHT]: values.impactedByWeight }),
-    ...(values.checkPenaltyMultiplier !== undefined && {
-      [SKILL_CHECK_PENALTY_MULTIPLIER]: values.checkPenaltyMultiplier,
-    }),
-    ...(values.usableWithoutTraining !== undefined && {
-      [SKILL_USABLE_WITHOUT_TRAINING]: values.usableWithoutTraining,
-    }),
-  };
+function answerOf({ description, fields, links, name }: SkillBody, abilityName: string) {
+  return { description, fields, links: [{ role: "keyAbility", toId: links.keyAbility, toName: abilityName }], name };
 }
 
 /**
- * A new user's empty ruleset with three abilities, and a skill using its Strength: as it reads (`values`), and its body.
+ * A new user's empty ruleset with three abilities, and a skill using its Strength: its body (`body`), "Climb", armor
+ * weighing on it once, usable untrained, unless `overrides` says otherwise (its fields beside the others).
  */
 async function setup() {
   const { user, session, ruleset } = await createTestUserAndRuleset();
@@ -70,17 +44,19 @@ async function setup() {
     ["Strength", "Dexterity", "Intelligence"].map((name) => ({ name, description: name, rulesetId: ruleset.id })),
   );
   const abilityMap = Object.fromEntries(abilities.map((a) => [a.name, a.id]));
-  const values = (overrides: Partial<SkillValues> = {}): SkillValues => ({
+  const body = (overrides: Partial<SkillBody> = {}): SkillBody => ({
     name: "Climb",
     description: "Climbing skill",
-    keyAbilityId: abilityMap.Strength,
-    impactedByWeight: true,
-    checkPenaltyMultiplier: 1,
-    usableWithoutTraining: true,
     ...overrides,
+    fields: {
+      [SKILL_IMPACTED_BY_WEIGHT]: true,
+      [SKILL_CHECK_PENALTY_MULTIPLIER]: 1,
+      [SKILL_USABLE_WITHOUT_TRAINING]: true,
+      ...overrides.fields,
+    },
+    links: { keyAbility: abilityMap.Strength, ...overrides.links },
   });
-  const body = (overrides: Partial<SkillValues> = {}) => bodyOf(values(overrides));
-  return { user, session, ruleset, abilityMap, body, values };
+  return { user, session, ruleset, abilityMap, body };
 }
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
@@ -114,17 +90,16 @@ describe("EntitiesService: skills", () => {
   });
 
   test("stores a skill's ability, weight and training flags, and lists them", async () => {
-    const { session, ruleset, abilityMap, body, values } = await setup();
-    const spellcraft = values({
+    const { session, ruleset, abilityMap, body } = await setup();
+    const spellcraft = body({
       name: "Spellcraft",
-      keyAbilityId: abilityMap.Intelligence,
-      impactedByWeight: false,
-      usableWithoutTraining: false,
+      fields: { [SKILL_IMPACTED_BY_WEIGHT]: false, [SKILL_USABLE_WITHOUT_TRAINING]: false },
+      links: { keyAbility: abilityMap.Intelligence },
     });
     expect(await EntitiesService.createEntity(session, ruleset.id, "skills", body())).toMatchObject(
-      answerOf(values(), "Strength"),
+      answerOf(body(), "Strength"),
     );
-    expect(await EntitiesService.createEntity(session, ruleset.id, "skills", bodyOf(spellcraft))).toMatchObject(
+    expect(await EntitiesService.createEntity(session, ruleset.id, "skills", spellcraft)).toMatchObject(
       answerOf(spellcraft, "Intelligence"),
     );
 
@@ -136,8 +111,8 @@ describe("EntitiesService: skills", () => {
       { limit: 10, page: 1 },
     );
     expect(items).toMatchObject([
-      { name: "Climb", fields: fieldsOf({ impactedByWeight: true, usableWithoutTraining: true }) },
-      { name: "Spellcraft", fields: fieldsOf({ impactedByWeight: false, usableWithoutTraining: false }) },
+      { name: "Climb", fields: { [SKILL_IMPACTED_BY_WEIGHT]: true, [SKILL_USABLE_WITHOUT_TRAINING]: true } },
+      { name: "Spellcraft", fields: { [SKILL_IMPACTED_BY_WEIGHT]: false, [SKILL_USABLE_WITHOUT_TRAINING]: false } },
     ]);
   });
 
@@ -147,9 +122,10 @@ describe("EntitiesService: skills", () => {
       session,
       ruleset.id,
       "skills",
-      body({ name: "Swim", checkPenaltyMultiplier: 2 }),
+      body({ name: "Swim", fields: { [SKILL_CHECK_PENALTY_MULTIPLIER]: 2 } }),
     );
-    expect(swim).toMatchObject({ fields: fieldsOf({ impactedByWeight: true, checkPenaltyMultiplier: 2 }) });
+    const weighed = { [SKILL_IMPACTED_BY_WEIGHT]: true, [SKILL_CHECK_PENALTY_MULTIPLIER]: 2 };
+    expect(swim).toMatchObject({ fields: weighed });
     const listed = async () =>
       (
         await EntitiesService.getEntities(
@@ -160,26 +136,26 @@ describe("EntitiesService: skills", () => {
           { limit: 10, page: 1 },
         )
       ).items[0];
-    expect(await listed()).toMatchObject({
-      name: "Swim",
-      fields: fieldsOf({ impactedByWeight: true, checkPenaltyMultiplier: 2 }),
-    });
+    expect(await listed()).toMatchObject({ name: "Swim", fields: weighed });
 
     // The save answers the flags as stored: a multiplier counts only while armor weighs on the skill.
-    const unweighed = body({ name: "Swim", impactedByWeight: false, checkPenaltyMultiplier: 3 });
+    const unweighed = body({
+      name: "Swim",
+      fields: { [SKILL_IMPACTED_BY_WEIGHT]: false, [SKILL_CHECK_PENALTY_MULTIPLIER]: 3 },
+    });
     const updated = await EntitiesService.updateEntity(session, ruleset.id, "skills", swim.id, unweighed);
-    const unweighedFields = fieldsOf({ impactedByWeight: false, checkPenaltyMultiplier: 1 });
+    const unweighedFields = { [SKILL_IMPACTED_BY_WEIGHT]: false, [SKILL_CHECK_PENALTY_MULTIPLIER]: 1 };
     expect(updated).toMatchObject({ fields: unweighedFields });
     expect(await listed()).toMatchObject({ fields: unweighedFields });
   });
 
   test("updates every field, and the cached list shows the change", async () => {
-    const { session, ruleset, abilityMap, body, values } = await setup();
+    const { session, ruleset, abilityMap, body } = await setup();
     const created = await EntitiesService.createEntity(
       session,
       ruleset.id,
       "skills",
-      body({ impactedByWeight: false }),
+      body({ fields: { [SKILL_IMPACTED_BY_WEIGHT]: false } }),
     );
     // Read the list once so the ruleset's cache holds the old values.
     await EntitiesService.getEntities(
@@ -190,14 +166,13 @@ describe("EntitiesService: skills", () => {
       { limit: 10, page: 1 },
     );
 
-    const update = values({
+    const update = body({
       name: "Jump",
       description: "Updated",
-      keyAbilityId: abilityMap.Dexterity,
-      impactedByWeight: true,
-      usableWithoutTraining: false,
+      fields: { [SKILL_IMPACTED_BY_WEIGHT]: true, [SKILL_USABLE_WITHOUT_TRAINING]: false },
+      links: { keyAbility: abilityMap.Dexterity },
     });
-    expect(await EntitiesService.updateEntity(session, ruleset.id, "skills", created.id, bodyOf(update))).toMatchObject(
+    expect(await EntitiesService.updateEntity(session, ruleset.id, "skills", created.id, update)).toMatchObject(
       answerOf(update, "Dexterity"),
     );
     const after = await EntitiesService.getEntities(
@@ -208,7 +183,11 @@ describe("EntitiesService: skills", () => {
       { limit: 10, page: 1 },
     );
     expect(after.items).toMatchObject([
-      { id: created.id, name: "Jump", fields: fieldsOf({ impactedByWeight: true, usableWithoutTraining: false }) },
+      {
+        id: created.id,
+        name: "Jump",
+        fields: { [SKILL_IMPACTED_BY_WEIGHT]: true, [SKILL_USABLE_WITHOUT_TRAINING]: false },
+      },
     ]);
   });
 
