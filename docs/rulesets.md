@@ -134,23 +134,23 @@ Extensions come first so their entities are visible. Repositories receive this a
 
 Inherited entities are read-only. When a user edits or deletes one:
 
-1. **Snapshot** — an `entity_snapshots` row is created: `{ rulesetId, entityType, sourceEntityId, forkedEntityId }`
+1. **Snapshot** — an `entity_snapshots` row is created: `{ rulesetId, sourceEntityId, forkedEntityId }`, one per ruleset and source (an entity's id is global, so its type is its entities')
 2. **Local copy** — the entity + its fields + all customizations (modifiers, requirements) + its links of the roles it holds many of (a feat's pools, a class's skills) + the entities it owns (a class's levels, with their customizations and links) are duplicated into the child ruleset
 3. **Modification** — the local copy is updated or deleted (for deletes)
 4. **Query exclusion** — the repository SQL excludes the original from ancestor results when a snapshot exists
 
 ### COW in Repositories
 
-Each repository's `findPage` builds COW-aware SQL per ancestor:
+A kind's list (`Entities`' `findPage`, through `StoredEntities.buildRulesetCondition`) builds COW-aware SQL per ancestor:
 
 ```sql
 -- For each ancestor in the source chain:
-SELECT * FROM feats
-WHERE ruleset_id = :ancestorId
+SELECT * FROM rules.entities
+WHERE type = 'feats'
+  AND ruleset_id = :ancestorId
   AND id NOT IN (
-    SELECT source_entity_id FROM entity_snapshots
+    SELECT source_entity_id FROM rules.entity_snapshots
     WHERE ruleset_id IN (:childId, ...closer_ancestors)
-      AND entity_type = 'feats'
   )
 ```
 

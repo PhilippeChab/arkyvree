@@ -26,12 +26,12 @@ export default class EntityRevert {
   private static async repointOwned(tx: Db, ownedType: OwnedKind, copyId: string, sourceId: string, rulesetId: string) {
     const pairs = await findOwnedPairs(tx, ownedType, new Map([[copyId, sourceId]]));
     const unpaired = [...pairs].filter(([, sourceOwnedId]) => !sourceOwnedId).map(([id]) => id);
-    if (await EntityReferences.exists(tx, { entityType: ownedType, ids: unpaired, rulesetId }))
+    if (await EntityReferences.exists(tx, { ids: unpaired, rulesetId }))
       throw new ConflictError("Cannot restore: characters took levels its parent's class doesn't have");
 
     for (const [ownedId, sourceOwnedId] of pairs) {
       if (!sourceOwnedId) continue;
-      await EntityReferences.update(tx, { entityId: sourceOwnedId }, { entityType: ownedType, entityId: ownedId });
+      await EntityReferences.update(tx, { entityId: sourceOwnedId }, { entityId: ownedId });
     }
   }
 
@@ -58,7 +58,7 @@ export default class EntityRevert {
     await names?.assertRestoreAvailable(tx, entityType, sourceEntityId, copyId);
     for (const ownedType of Engine.storage().ownedKinds(entityType))
       await EntityRevert.repointOwned(tx, ownedType as OwnedKind, copyId, sourceEntityId, rulesetId);
-    await EntityReferences.update(tx, { entityId: sourceEntityId }, { entityType, entityId: copyId });
+    await EntityReferences.update(tx, { entityId: sourceEntityId }, { entityId: copyId });
     await EntitySnapshots.update(tx, { sourceEntityId }, { sourceEntityId: copyId });
     // The database deletes its own rows with it, and its customizations
     await Entities.delete(tx, { entityType, id: copyId });
