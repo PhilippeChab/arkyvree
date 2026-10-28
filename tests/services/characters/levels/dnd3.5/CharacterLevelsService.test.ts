@@ -1977,6 +1977,52 @@ describe("LevelsService", () => {
       });
     });
 
+    test("answers for the spell levels of a spell list the level adds to, not its others", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(ctx, "sorcerer");
+      // Sorcerer 1, forced: one of its two 1st-level spells left unpicked
+      const first = await levelUp(
+        session,
+        ctx,
+        characterId,
+        "Sorcerer",
+        1,
+        {
+          ...SORCERER_1,
+          spells: { "Sorcerer Spells": ["Detect Magic", "Light", "Read Magic", "Mage Hand", "Magic Missile"] },
+        },
+        true,
+      );
+      // Sorcerer 2 adds a cantrip and no 1st-level spell
+      const second = await levelUp(
+        session,
+        ctx,
+        characterId,
+        "Sorcerer",
+        2,
+        {
+          hp: 3,
+          skills: { Bluff: 1, Concentration: 1, Spellcraft: 1, "Use Magic Device": 1 },
+          spells: { "Sorcerer Spells": ["Prestidigitation"] },
+        },
+        true,
+      );
+      const resave = async (level: string) =>
+        CharacterLevelsService.updatePlannedLevel(
+          session,
+          characterId,
+          level,
+          await CharacterLevelsService.getLevelPlan(session, characterId, level),
+          false,
+        );
+
+      expect(await answerTo(() => resave(first.id))).toMatchObject({
+        status: 400,
+        body: { message: "Sorcerer Spells (level 1): 1 unspent slot(s) (1/2)" },
+      });
+      await resave(second.id);
+    });
+
     test("keeps the familiar a feat of the edited level brings", async () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx, "sorcerer");

@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/bun";
 
-import { RulesError } from "@/engine/index.ts";
+import { RulesError, type RulesIssue } from "@/engine/index.ts";
 import { isDevelopment } from "@/server/environment.ts";
 
 type Code = 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500;
@@ -9,14 +9,7 @@ type Code = 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500;
 export interface ErrorJson {
   cause: string;
   error: string;
-  issues?: {
-    category: string;
-    entityId?: string;
-    entityName?: string;
-    entityType?: string;
-    message: string;
-    requirementTree?: string;
-  }[];
+  issues?: RulesIssue[];
   message: string;
 }
 

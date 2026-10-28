@@ -136,18 +136,23 @@ export default class Dnd35LevelUp extends LevelUpPart implements LevelUpRules<De
 
   /**
    * The issues an edited level answers for: all the character's (`issues`) but those of the pools the level doesn't add
-   * to, which the levels before it or after it give. A level adds to a pool the character allows more of with it
-   * (`withLevel`) than without it (`before`). A pool's issue carries the pool, by id (`entityId`).
+   * to, which the levels before it or after it give. A level adds to a pool (an aptitude, or a leveled one's spell level)
+   * the character allows more of with it (`withLevel`) than without it (`before`). A pool's issue carries the pool: its
+   * aptitude's id (`entityId`) and its spell level (`level`).
    */
   findEditedLevelIssues(issues: RulesIssue[], before: DetailedCharacter, withLevel: DetailedCharacter) {
-    const allowedBefore = new Map<string, number>();
-    for (const apt of Object.values(before.components.aptitudes.getAptitudes())) allowedBefore.set(apt.id, apt.allowed);
+    const poolKey = (id: string, level?: number) => `${id}:${level ?? ""}`;
+    const allowedBefore = new Map(
+      before.components.aptitudes.getSlotPools().map((pool) => [poolKey(pool.id, pool.level), pool.allowed]),
+    );
     const owned = new Set<string>();
-    for (const apt of Object.values(withLevel.components.aptitudes.getAptitudes()))
-      if (apt.allowed > (allowedBefore.get(apt.id) ?? 0)) owned.add(apt.id);
+    for (const { id, level, allowed } of withLevel.components.aptitudes.getSlotPools())
+      if (allowed > (allowedBefore.get(poolKey(id, level)) ?? 0)) owned.add(poolKey(id, level));
 
     return issues.filter(
-      (issue) => issue.category !== "aptitudes" || (issue.entityId !== undefined && owned.has(issue.entityId)),
+      (issue) =>
+        issue.category !== "aptitudes" ||
+        (issue.entityId !== undefined && owned.has(poolKey(issue.entityId, issue.level))),
     );
   }
 

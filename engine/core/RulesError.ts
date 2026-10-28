@@ -2,13 +2,14 @@ import type { z } from "zod";
 
 /**
  * One thing a refusal says a character fails: the kind of check (`category`), what it's about (an entity: its type, its
- * name, its id), and why.
+ * name, its id, and its level a check per level reads, such as a spell list's spell level), and why.
  */
 export interface RulesIssue {
   category: string;
   entityId?: string;
   entityName?: string;
   entityType?: string;
+  level?: number;
   message: string;
   requirementTree?: string;
 }

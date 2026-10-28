@@ -45,6 +45,16 @@ interface OverfullPool {
   room: number;
 }
 
+/** A pool's slots: an unleveled aptitude's, or a leveled one's at a spell level (`level`). */
+interface SlotPool {
+  allowed: number;
+  available: number;
+  id: string;
+  level?: number;
+  name: string;
+  spent: number;
+}
+
 /** A pool a level-up picks spells in: a leveled aptitude, with each spell level it has left (`levels`), or a shared one. */
 interface SpellPool {
   allowed: number;
@@ -328,6 +338,24 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
       }
     }
     return overfull;
+  }
+
+  /** Each pool's slots: an unleveled aptitude's, and a leveled one's at each of its spell levels. */
+  getSlotPools(): SlotPool[] {
+    const pools: SlotPool[] = [];
+    for (const [key, aptitude] of Object.entries(this.aptitudes)) {
+      const { id, name } = aptitude;
+      if (!this.leveledAptitudeKeys.has(key)) {
+        pools.push({ id, name, allowed: aptitude.allowed, spent: aptitude.spent, available: aptitude.available });
+        continue;
+      }
+      for (let level = 0; level <= MAX_SPELL_LEVEL; level++) {
+        const slots = this.spellLevelOf(aptitude, String(level));
+        if (slots)
+          pools.push({ id, name, level, allowed: slots.allowed, spent: slots.spent, available: slots.available });
+      }
+    }
+    return pools;
   }
 
   /** The general feats the character's level gives that count toward no aptitude: its ruleset has no General. */
