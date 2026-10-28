@@ -35,9 +35,6 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
   /** What the picker offers: a player character's classes (their partition, `pc`). */
   override readonly filters = { partitions: [PLAYER_CHARACTER_KIND] };
 
-  /** The character's highest level in each class it has levels of, by the class's id, once read. */
-  private maxLevels?: Map<string, number>;
-
   /**
    * The class's place on its track: its next level, its last, and the levels the character can still take, whatever
    * their classes (`left`, the same for every class): those it has count, not those the wizard plans, which a plan
@@ -105,20 +102,12 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
     return Dnd35View.of(this.rulesetData);
   }
 
-  /** The class's next level for the character: after its highest in the class. */
+  /**
+   * The class's next level for the character (`LevelRules.findNextClassLevel`): its lowest the character doesn't hold,
+   * none when the class has no more.
+   */
   private nextLevelOf(klass: EntityRecord): KlassLevel | undefined {
-    this.maxLevels ??= this.readMaxLevels();
-    return this.dnd35.classLevelByClassAndLevel.get(`${klass.id}:${(this.maxLevels.get(klass.id) || 0) + 1}`);
-  }
-
-  /** The character's highest level in each class it has levels of, by the class's id. */
-  private readMaxLevels() {
-    const maxLevels = new Map<string, number>();
-    for (const level of this.input.rows.advancements) {
-      const classLevel = level.entryId === null ? undefined : this.dnd35.classLevelsById.get(level.entryId);
-      if (classLevel)
-        maxLevels.set(classLevel.ownerId, Math.max(maxLevels.get(classLevel.ownerId) ?? 0, classLevel.position));
-    }
-    return maxLevels;
+    const next = LevelRules.findNextClassLevel(this.dnd35.classLevelsById, this.input.rows.advancements, klass.id);
+    return this.dnd35.classLevelByClassAndLevel.get(`${klass.id}:${next}`);
   }
 }
