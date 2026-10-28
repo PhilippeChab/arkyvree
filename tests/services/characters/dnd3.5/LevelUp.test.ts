@@ -30,7 +30,13 @@ import {
   type PlanPicks,
   savedPicksOf,
 } from "@/tests/support/dnd3.5/levelPlans.ts";
-import { addCharacterLevel, findClassLevel, findPicks, increasesOf } from "@/tests/support/dnd3.5/levels.ts";
+import {
+  addCharacterLevel,
+  addOneLevel,
+  findClassLevel,
+  findPicks,
+  increasesOf,
+} from "@/tests/support/dnd3.5/levels.ts";
 import { addLists } from "@/tests/support/dnd3.5/links.ts";
 import { getPlanAnswer, getStepOptions, stepAnswerOf } from "@/tests/support/levels.ts";
 import { copyEntity, createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
@@ -1712,7 +1718,7 @@ describe("a character's level in a class", () => {
         "Level 2: Fighter 4 can't be taken there: Fighter 1 comes next",
       );
     }
-    // Forced: until it holds Fighter 2, the character fails Fighter 3's own requirement, a fighter level past 2
+    // Forced: the stored Fighter 3 picked nothing, which leaves the character's first level's pools unspent
     const bonusFeat = { hp: 10, skills: { Climb: 1 }, feats: { "Fighter Bonus Feat": ["Improved Initiative"] } };
     await levelUp(session, ctx, characterId, "Fighter", 1, bonusFeat, true);
     expect(await offered()).toEqual({ next: 2, eligible: true });
@@ -1721,6 +1727,39 @@ describe("a character's level in a class", () => {
     await levelUp(session, ctx, characterId, "Fighter", 4, FIGHTER_LEVELS[3], true);
     const { summary } = await CharactersService.getCharacter(session, characterId);
     expect(summary.tracks.map(({ label }) => label)).toEqual(["Fighter 4"]);
+  });
+
+  test("takes a renamed class's levels in its order, unforced: the order reads the class by its id", async () => {
+    const ctx = await getSeedCtx();
+    const fork = await createSeededTestRuleset(SEED_USER_ID);
+    // Renaming the fork's Fighter copies it, with its levels
+    const warrior = await EntitiesService.updateEntity(session, fork.id, "classes", ctx.classMap.pc["Fighter"], {
+      name: "Warrior",
+    });
+    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000, rulesetId: fork.id });
+    const [first, second] = FIGHTER_LEVELS.map((level) => ({ hp: level.hp, ...picks(ctx, level) }));
+    await addOneLevel(session, characterId, warrior.id, 1, first.hp, null, first.skills, first.feats, first.spells);
+
+    const options = await getStepOptions(session, characterId, "class-plan", { steps: {} }, {}, { limit: 500 });
+    if (options.grouped) throw new Error("Expected the classes ungrouped");
+    const offered = options.items.find(({ id }) => id === warrior.id);
+    expect({ next: offered?.track?.next, eligible: offered?.eligible }).toEqual({ next: 2, eligible: true });
+    const saved = await addOneLevel(
+      session,
+      characterId,
+      warrior.id,
+      2,
+      second.hp,
+      null,
+      second.skills,
+      second.feats,
+      second.spells,
+    );
+    const { summary } = await CharactersService.getCharacter(session, characterId);
+    expect({ position: saved.position, tracks: summary.tracks.map(({ label }) => label) }).toEqual({
+      position: 2,
+      tracks: ["Warrior 2"],
+    });
   });
 });
 
