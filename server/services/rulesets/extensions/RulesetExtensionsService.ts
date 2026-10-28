@@ -56,7 +56,7 @@ class RulesetExtensionsService {
       // The host can't subscribe to anything if it's already being used as an
       // extension by someone else — adding extensions to it would create
       // transitive deps for those subscribers.
-      const subscribers = await Rulesets.findMany(tx, { extensionRulesetId: id });
+      const subscribers = await Rulesets.findMany(tx, { subscribedTo: id });
       if (subscribers.length > 0) {
         throw new UnprocessableEntityError(
           "Cannot subscribe to extensions while this ruleset is being used as an extension",
@@ -85,7 +85,7 @@ class RulesetExtensionsService {
         if (childRuleset.rulesetId !== extension.rulesetId)
           throw new UnprocessableEntityError("Extension must share a common ancestor ruleset");
 
-        if (childRuleset.extensionRulesetIds.includes(extensionId))
+        if (childRuleset.extensionIds.includes(extensionId))
           throw new ConflictError("Already subscribed to this extension");
 
         newExtensionIds.push(extensionId);
@@ -122,8 +122,7 @@ class RulesetExtensionsService {
       const { policy, ruleset } = await getReadableRuleset(tx, session, id);
       policy.canUnsubscribeExtension();
 
-      if (!ruleset.extensionRulesetIds.includes(extensionId))
-        throw new NotFoundError("Not subscribed to this extension");
+      if (!ruleset.extensionIds.includes(extensionId)) throw new NotFoundError("Not subscribed to this extension");
 
       // 2. The fork's copies of the extension's entities: the snapshots whose sourceEntityId belongs to the extension
       const snapshots = await EntitySnapshots.findMany(tx, { rulesetId: id });

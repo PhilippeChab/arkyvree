@@ -316,7 +316,7 @@ describe("EntitiesService: spells", () => {
       name: "Extension Spell",
       links: { listedIn: [{ toId: wizard }] },
     });
-    const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
+    const host = await createTestRuleset(user.id, { extensionIds: [extension.id] });
 
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
     const { classLevel } = await createTestClassLevel(host.id);

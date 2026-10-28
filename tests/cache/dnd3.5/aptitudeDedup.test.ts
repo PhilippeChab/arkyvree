@@ -110,7 +110,7 @@ describe("aptitude deduplication across sibling extensions", () => {
   test("loser aptitude IDs resolve to the winner", async () => {
     const { ruleset, cowData, rulesetData } = await setup();
     // Fetch all raw "Assassin Spells" aptitudes across extensions
-    const extIds = ruleset.extensionRulesetIds;
+    const extIds = ruleset.extensionIds;
     const allAssassinApts = await namedEntities("aptitudes", ["Assassin Spells"], extIds);
 
     expect(allAssassinApts.length).toBeGreaterThan(1);
