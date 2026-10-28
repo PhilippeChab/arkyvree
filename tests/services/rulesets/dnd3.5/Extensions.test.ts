@@ -54,6 +54,7 @@ import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { findLinks } from "@/tests/support/characters.ts";
+import { addRulesetContributor } from "@/tests/support/contributors.ts";
 import { buildAs, createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { findPlainItem } from "@/tests/support/dnd3.5/items.ts";
@@ -493,6 +494,16 @@ describe("subscribing to an extension", () => {
       ],
       ["a draft", async () => subscribe((await createExtension(user.id, { status: "Draft" })).id)],
       ["a private extension", async () => subscribe((await createExtension(user.id, { private: true })).id)],
+      [
+        "a deleted account's private extension, which the user contributes to",
+        async () => {
+          const { user: leaver } = await createTestUser();
+          const orphaned = await createExtension(leaver.id, { private: true });
+          await addRulesetContributor(orphaned.id, user, leaver.id);
+          await Rulesets.orphan(db, { userId: leaver.id });
+          return await subscribe(orphaned.id);
+        },
+      ],
       [
         "an extension of another base",
         async () =>

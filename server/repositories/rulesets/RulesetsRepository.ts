@@ -79,7 +79,8 @@ class RulesetsRepository extends include(
 
   /**
    * What a listing scope keeps (the starred scope, its join aside); no scope, the list as it opens, which `count`
-   * totals.
+   * totals. A system ruleset is one `system` marks, not one without an owner: an orphaned ruleset (its owner's account
+   * deleted) is listed as a user's is, by its privacy.
    */
   private scopeConditions(db: Db, session: Session, scope: RulesetScope | undefined): (SQL | undefined)[] {
     const notArchived = not(eq(rulesetsInRules.status, "Archived"));
@@ -88,7 +89,7 @@ class RulesetsRepository extends include(
       case "starred":
         return [notArchived];
       case "base":
-        return [isNull(rulesetsInRules.userId), isNull(rulesetsInRules.rulesetId), notArchived];
+        return [eq(rulesetsInRules.system, true), isNull(rulesetsInRules.rulesetId), notArchived];
       case "forked":
         return [eq(rulesetsInRules.userId, session.userId), isNotNull(rulesetsInRules.rulesetId), notArchived];
       case "createdByMe":
@@ -116,18 +117,18 @@ class RulesetsRepository extends include(
           eq(rulesetsInRules.kind, "extension"),
           eq(rulesetsInRules.status, "Published"),
           notArchived,
-          or(isNull(rulesetsInRules.userId), eq(rulesetsInRules.private, false)),
+          or(eq(rulesetsInRules.system, true), eq(rulesetsInRules.private, false)),
         ];
       case "systems":
         return [
           notArchived,
-          isNull(rulesetsInRules.userId),
+          eq(rulesetsInRules.system, true),
           or(isNull(rulesetsInRules.rulesetId), eq(rulesetsInRules.status, "Published")),
         ];
       case "community":
         return [
           notArchived,
-          isNotNull(rulesetsInRules.userId),
+          eq(rulesetsInRules.system, false),
           eq(rulesetsInRules.status, "Published"),
           eq(rulesetsInRules.private, false),
           eq(rulesetsInRules.kind, "ruleset"),
@@ -139,7 +140,7 @@ class RulesetsRepository extends include(
           notArchived,
           or(
             eq(rulesetsInRules.userId, session.userId),
-            and(isNull(rulesetsInRules.userId), isNull(rulesetsInRules.rulesetId)),
+            and(eq(rulesetsInRules.system, true), isNull(rulesetsInRules.rulesetId)),
             this.userPlaysInCampaign(db, session.userId),
             this.userIsActiveContributor(db, session.userId),
           ),

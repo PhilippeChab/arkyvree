@@ -1,13 +1,13 @@
 import { bonus } from "@/content/core/builders/customization/modifiers.ts";
-import { gt } from "@/content/core/builders/customization/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import type { BabType, CasterLevelAdvancement, ClassSeed, SaveType } from "@/content/dnd3.5/builders/classes/types.ts";
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import { getSpellLevelOpenings } from "@/database/seeders/dnd3.5/spellTable.ts";
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
+import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { BAB_PROGRESSIONS, SAVE_PROGRESSIONS } from "@/vocabulary/dnd3.5/classes.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -142,18 +142,17 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
       );
     }
 
-    /** Each level after the first takes the one before; the first, the class's requirements. */
+    /**
+     * Each level after the first takes the one before, as the engine plans a new level's requirement; the first, the
+     * class's requirements.
+     */
     private async insertLevelRequirements(def: ClassSeed, levels: Levels, levelIds: Record<number, string>) {
-      const classSlug = stripSeparators(def.name);
+      const content = Engine.forRules(DND35_BASE_RULES);
       await this.insertAll(requirementsInCustomization, [
-        ...levels
-          .filter(({ level }) => level >= 2)
-          .map(({ id, level }) => ({
-            entityId: id,
-            entityType: "class-levels",
-            level: "1",
-            ...gt(`classes.${classSlug}.level`, level - 1),
-          })),
+        ...levels.flatMap(({ id, level }) => {
+          const requirement = content.planPositionRequirement("class-levels", def.name, level);
+          return requirement ? [{ entityId: id, entityType: "class-levels", ...requirement }] : [];
+        }),
         ...this.requirementRows(levelIds[1], "class-levels", def.requirements),
       ]);
     }
@@ -191,8 +190,9 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
     }
 
     /**
-     * Seeds a class and its levels: their base attack, saves and skill points, spell slots, picks and granted feats,
-     * and what it takes to reach each. The class's skills and feats must be seeded.
+     * Seeds a class, in its partition (its kind's default without one), and its levels: their base attack, saves and
+     * skill points, spell slots, picks and granted feats, and what it takes to reach each. The class's skills and feats
+     * must be seeded.
      */
     async seedClass(def: ClassSeed) {
       const [classId] = await this.insertRows("classes", [
@@ -202,7 +202,7 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
           description: def.description,
           fields: def.fields,
           links: this.classLinks(def),
-          partition: def.partition ?? PLAYER_CHARACTER_KIND,
+          partition: def.partition,
         },
       ]);
       const klass = { id: classId };

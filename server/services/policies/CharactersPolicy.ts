@@ -120,16 +120,6 @@ export default class CharactersPolicy extends BasePolicy<Character> {
   }
 
   /**
-   * Reading the character by its id (`isReadable`). Anyone else gets the 404 an unknown character gets, so its
-   * existence isn't revealed.
-   */
-  canRead() {
-    if (!this.isReadable()) throw new NotFoundError("Character not found");
-
-    return true;
-  }
-
-  /**
    * Reading its contributors, and leaving them: a player character's editors (`isEditor`), as a child has none. Anyone
    * else gets the 404 an unknown character gets.
    */
