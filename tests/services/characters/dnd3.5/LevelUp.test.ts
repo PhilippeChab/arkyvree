@@ -1270,9 +1270,9 @@ describe("a pick the level's other picks give", () => {
     const weaponPicked = { feats: { [weapon]: [ctx.featMap[WAR_WEAPON]] } };
     expect(await offeredFeats(characterId, "Cleric", 1, "General", FOCUS, weaponPicked)).not.toContain(FOCUS);
     const focusPicked = { feats: { [general]: [ctx.featMap[FOCUS]] } };
-    expect(await offeredFeats(characterId, "Cleric", 1, "War Domain Weapon", WAR_WEAPON, focusPicked)).toContain(
-      WAR_WEAPON,
-    );
+    // The search's best match first
+    const [warWeapon] = await offeredFeats(characterId, "Cleric", 1, "War Domain Weapon", WAR_WEAPON, focusPicked);
+    expect(warWeapon).toBe(WAR_WEAPON);
 
     // Picked first or last, Weapon Focus gives way: its slot goes to the next General feat, the war weapon stays
     const orders: [string[], "General" | "War Domain Weapon"][] = [

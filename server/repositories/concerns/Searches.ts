@@ -47,14 +47,17 @@ export function Searches<B extends Constructor<BaseRepository<Table>>>(Base: B) 
 
     /**
      * A searched list's order: what holds the text first, a name that does before a description, then the names closest
-     * to it, then the list's own order (`fallback`).
+     * to it, then the list's own order (`fallback`). A list of groups (`grouped`) orders each by its best row's.
      */
-    protected searchOrderBy(search: string | undefined, columns: Column[], fallback: SQL): SQL {
+    protected searchOrderBy(search: string | undefined, columns: Column[], fallback: SQL, grouped = false): SQL {
       if (!search) return fallback;
       const ilikeMatch = or(...columns.map((c) => ilike(c, `%${search}%`)))!;
       const nameIlikeMatch = ilike(columns[0], `%${search}%`);
+      const holds = sql`CASE WHEN ${ilikeMatch} THEN 0 ELSE 1 END`;
+      const nameHolds = sql`CASE WHEN ${nameIlikeMatch} THEN 0 ELSE 1 END`;
       const nameSimilarity = sql`strict_word_similarity(${search}, ${columns[0]})`;
-      return sql`(CASE WHEN ${ilikeMatch} THEN 0 ELSE 1 END), (CASE WHEN ${nameIlikeMatch} THEN 0 ELSE 1 END), ${nameSimilarity} DESC, ${fallback}`;
+      if (grouped) return sql`min(${holds}), min(${nameHolds}), max(${nameSimilarity}) DESC, ${fallback}`;
+      return sql`(${holds}), (${nameHolds}), ${nameSimilarity} DESC, ${fallback}`;
     }
   }
   return Searching;

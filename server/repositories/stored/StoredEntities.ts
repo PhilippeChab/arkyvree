@@ -278,7 +278,8 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
    * A page of a kind's entities its conditions pick (`conditions`, among `ids` when it says), each group's as one row,
    * the groups an entity is in given (`groups`: a feat's families it's a variant of), one in none a row of its own; or,
    * of one group (`group`), its entities, each a row of its own. Each row is its group's columns (`groupColumns`), named
-   * for its entity when it holds one, else for its group, and in the order of its name.
+   * for its entity when it holds one, else for its group, in the order of its name, a search's best match first (its
+   * best entity's, as a list orders a search).
    */
   private async readGroupPage(
     db: Db,
@@ -287,10 +288,11 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
       group?: string;
       groups: EntityGroupMember[];
       ids?: string[];
+      search?: string;
     },
     pagination: Pagination,
   ) {
-    const { conditions, group, groups, ids } = where;
+    const { conditions, group, groups, ids, search } = where;
     if (ids !== undefined && ids.length === 0) return this.paginated([], pagination);
     const { limit, offset } = this.paginate(pagination);
     // Each entity's group, as one parameter: a row per entity and group
@@ -311,7 +313,12 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
       // A group's entities as one row, but those of the group asked for, each its own
       .groupBy(group === undefined ? sql`coalesce(${groupName}, ${entitiesInRules.id}::text)` : entitiesInRules.id)
       // A group is a value or an entity alone: its smallest id is its own
-      .orderBy(...this.pageOrder(name, sql`min(${entitiesInRules.id}::text)`))
+      .orderBy(
+        ...this.pageOrder(
+          this.searchOrderBy(search, SEARCH_COLUMNS, name, true),
+          sql`min(${entitiesInRules.id}::text)`,
+        ),
+      )
       .limit(limit)
       .offset(offset);
     return this.paginated(rows, pagination);
@@ -522,8 +529,8 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
       this.buildRulesetCondition(db, where),
       this.buildSearchCondition(where),
     ];
-    const { family, groups, ids } = where;
-    return await this.readGroupPage(db, { conditions, group: family, groups, ids }, pagination);
+    const { family, groups, ids, search } = where;
+    return await this.readGroupPage(db, { conditions, group: family, groups, ids, search }, pagination);
   }
 
   /**
@@ -617,7 +624,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   async findOptionGroupPage(db: Db, where: OptionWhere & { groups: EntityGroupMember[] }, pagination: Pagination) {
     return await this.readGroupPage(
       db,
-      { conditions: this.buildOptionConditions(where), groups: where.groups },
+      { conditions: this.buildOptionConditions(where), groups: where.groups, search: where.search },
       pagination,
     );
   }
