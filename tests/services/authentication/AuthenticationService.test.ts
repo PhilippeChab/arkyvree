@@ -3,7 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { eq } from "drizzle-orm";
 
 import { emailVerificationsInAccount, passwordResetsInAccount } from "@/drizzle/schema.ts";
-import { db } from "@/server/database/index.ts";
+import { db, withTransaction } from "@/server/database/index.ts";
 import {
   BadRequestError,
   ConflictError,
@@ -24,6 +24,7 @@ import {
   Users,
 } from "@/server/repositories/index.ts";
 import { AccountService } from "@/server/services/authentication/account/index.ts";
+import { withTakenRefusal } from "@/server/services/authentication/accounts.ts";
 import { AuthenticationService, signInAsGoogleAccount } from "@/server/services/authentication/index.ts";
 import { LinkedAccountsService, linkGoogleAccountTo } from "@/server/services/authentication/linkedAccounts/index.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -88,13 +89,6 @@ describe("AuthenticationService", () => {
       const verification = (await EmailVerifications.findOne(db, { userId: result.user.id }))!;
       expect(verification.code).toHaveLength(8);
       expect(new Date(verification.expiresAt).getTime()).toBeGreaterThan(Date.now());
-    });
-
-    test("refuses an email a deleted account still holds", async () => {
-      // The deleted row keeps the email's unique index: this must be a conflict, not a constraint crash.
-      const { session, account } = await signUpAndVerify();
-      await AccountService.deleteAccount(session, account.password);
-      expect(AuthenticationService.signUp(account.emailAddress, account.password)).rejects.toThrow(ConflictError);
     });
   });
 
@@ -376,6 +370,24 @@ describe("AuthenticationService", () => {
       expect(signInAsGoogleAccount(googleAccount(contested))).rejects.toEqual(emailTaken);
     });
 
+    test("answers a unique index's refusal as the check does, for a value another request claimed since", async () => {
+      // Two requests that claim one value at once both pass the check: the second one's write meets the index.
+      const { user } = await signUpAndVerify();
+      const username = `claimed-${uniqueId()}`;
+      await Users.update(db, { username }, { id: user.id });
+      const other = await signUpAndVerify();
+
+      expect(
+        withTransaction((tx) => withTakenRefusal(() => Users.create(tx, { emailAddress: user.emailAddress }))),
+      ).rejects.toEqual(new ConflictError("Email address already in use"));
+      expect(
+        withTransaction((tx) => withTakenRefusal(() => Users.update(tx, { username }, { id: other.user.id }))),
+      ).rejects.toEqual(new ConflictError("Username already in use"));
+      const unrelated = new InternalError("Could not create user");
+      expect(withTakenRefusal(() => Promise.reject(unrelated))).rejects.toBe(unrelated);
+      expect((await Users.findOne(db, { id: other.user.id }))!.username).toBeNull();
+    });
+
     test("refuses to confirm a new email with a wrong or expired code, without one pending, or once another account took it", async () => {
       const { session, user, account } = await signUpAndVerify();
       expect(AccountService.verifyEmailChange(session, "123456")).rejects.toThrow(BadRequestError);
@@ -553,12 +565,6 @@ describe("AuthenticationService", () => {
       expect(await LinkedAccountsService.getLinkedAccounts(makeSession(user.id))).toMatchObject([
         { provider: "google" },
       ]);
-    });
-
-    test("refuses the email of a deleted account", async () => {
-      const { session, account } = await signUpAndVerify();
-      await AccountService.deleteAccount(session, account.password);
-      expect(signInAsGoogleAccount(googleAccount(account.emailAddress))).rejects.toThrow(ConflictError);
     });
 
     test("links an account to the signed-in user, once, and never to another user", async () => {

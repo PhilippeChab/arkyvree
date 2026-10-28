@@ -17,13 +17,30 @@ import {
   Visibility,
 } from "@/server/repositories/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 
-/** What an account is found by, besides its id: its email address or its username, each one account's alone. */
+/** A field that's one account's alone: its email address or its username. */
+type AccountField = "emailAddress" | "username";
+
+/** What an account is found by, besides its id: its email address or its username. */
 type AccountIdentifier = { emailAddress: string } | { username: string };
 
+/** The unique indexes that keep an email address or a username one account's (`drizzle/schema.ts`), by name. */
+const UNIQUE_INDEXES = new Map<string, AccountField>([
+  ["users_email", "emailAddress"],
+  ["users_username", "username"],
+]);
+
+/** The account field whose unique index refused a write (`23505`, under drizzle's `DrizzleQueryError`), if one did. */
+function readTakenField(error: unknown) {
+  const cause = error instanceof Error ? error.cause : undefined;
+  if (!isRecord(cause) || cause.code !== "23505" || typeof cause.constraint !== "string") return undefined;
+  return UNIQUE_INDEXES.get(cause.constraint);
+}
+
 /** The refusal of an email address or a username another account holds, whichever path asks. */
-function toTakenError(identifier: AccountIdentifier) {
-  return new ConflictError(`${"username" in identifier ? "Username" : "Email address"} already in use`);
+function toTakenError(field: AccountField) {
+  return new ConflictError(`${field === "username" ? "Username" : "Email address"} already in use`);
 }
 
 /**
@@ -47,7 +64,7 @@ export function toSafeUser(user: InferSelectModel<typeof usersInAccount>) {
 
 /** Refuses an email address or a username an account holds, a deleted one too (`findTakenUser`). */
 export async function assertNotTaken(tx: Db, identifier: AccountIdentifier) {
-  if (await findTakenUser(tx, identifier)) throw toTakenError(identifier);
+  if (await findTakenUser(tx, identifier)) throw toTakenError("username" in identifier ? "username" : "emailAddress");
 }
 
 /**
@@ -118,7 +135,7 @@ export async function signInAsGoogleAccount(payload: { email: string; sub: strin
     // Case 2: Link existing account (same email). A deleted account's email stays taken, never linked.
     const existingUser = await findTakenUser(tx, { emailAddress: email });
 
-    if (existingUser?.deletedAt) throw toTakenError({ emailAddress: email });
+    if (existingUser?.deletedAt) throw toTakenError("emailAddress");
 
     if (existingUser) {
       await OauthAccounts.create(tx, {
@@ -139,7 +156,7 @@ export async function signInAsGoogleAccount(payload: { email: string; sub: strin
     }
 
     // Case 3: New user
-    const userRows = await Users.create(tx, { emailAddress: email });
+    const userRows = await withTakenRefusal(() => Users.create(tx, { emailAddress: email }));
     if (!userRows[0]) throw new InternalError("Could not create user");
     const [user] = await Users.update(tx, { emailVerifiedAt: new Date().toISOString() }, { id: userRows[0].id });
 
@@ -152,4 +169,18 @@ export async function signInAsGoogleAccount(payload: { email: string; sub: strin
     const session = await openSession(tx, user, "signUp", { provider: "google" });
     return { session, user: toSafeUser(user) };
   });
+}
+
+/**
+ * Runs `write`, which sets an email address or a username, answering a unique index's refusal as `assertNotTaken`
+ * does: two requests that claim one value at once both pass the check, and the second one's write meets the index.
+ */
+export async function withTakenRefusal<T>(write: () => Promise<T>) {
+  try {
+    return await write();
+  } catch (error) {
+    const field = readTakenField(error);
+    if (field) throw toTakenError(field);
+    throw error;
+  }
 }

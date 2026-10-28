@@ -19,7 +19,7 @@ import {
   Users,
 } from "@/server/repositories/index.ts";
 import { purgeAttachmentsForRecords } from "@/server/services/attachments/index.ts";
-import { assertNotTaken, toSafeUser } from "@/server/services/authentication/accounts.ts";
+import { assertNotTaken, toSafeUser, withTakenRefusal } from "@/server/services/authentication/accounts.ts";
 import { createCode, hasRecentCode, verifyCode } from "@/server/services/authentication/codes.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -187,7 +187,7 @@ class AccountService {
 
       if (username !== undefined) updateData.username = username;
 
-      const rows = await Users.update(tx, updateData, { id: session.userId });
+      const rows = await withTakenRefusal(() => Users.update(tx, updateData, { id: session.userId }));
       const updatedUser = rows[0];
       if (!updatedUser) throw new InternalError("Failed to update profile");
 
@@ -235,14 +235,13 @@ class AccountService {
       // Re-check uniqueness — someone else may have claimed this email
       await assertNotTaken(tx, { emailAddress: user.pendingEmailAddress });
 
-      const rows = await Users.update(
-        tx,
-        {
-          emailAddress: user.pendingEmailAddress,
-          pendingEmailAddress: null,
-          emailVerifiedAt: new Date().toISOString(),
-        },
-        { id: user.id },
+      const { pendingEmailAddress } = user;
+      const rows = await withTakenRefusal(() =>
+        Users.update(
+          tx,
+          { emailAddress: pendingEmailAddress, pendingEmailAddress: null, emailVerifiedAt: new Date().toISOString() },
+          { id: user.id },
+        ),
       );
       const updatedUser = rows[0];
       if (!updatedUser) throw new InternalError("Failed to update email");

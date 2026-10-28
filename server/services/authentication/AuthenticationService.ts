@@ -6,7 +6,14 @@ import { Activities, EmailVerifications, PasswordResets, Sessions, Users } from 
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session, User } from "@/shared/relations.ts";
 
-import { assertNotTaken, openSession, purgeDemoSessionUser, signInAsGoogleAccount, toSafeUser } from "./accounts.ts";
+import {
+  assertNotTaken,
+  openSession,
+  purgeDemoSessionUser,
+  signInAsGoogleAccount,
+  toSafeUser,
+  withTakenRefusal,
+} from "./accounts.ts";
 import { createCode, hasRecentCode, verifyCode } from "./codes.ts";
 import { verifyGoogleIdToken } from "./google.ts";
 
@@ -153,7 +160,7 @@ class AuthenticationService {
     const { user, code } = await withTransaction(async (tx) => {
       await assertNotTaken(tx, { emailAddress });
 
-      const rows = await Users.create(tx, { emailAddress, password });
+      const rows = await withTakenRefusal(() => Users.create(tx, { emailAddress, password }));
       const user = rows[0];
       if (!user) throw new InternalError("Could not create user");
 
