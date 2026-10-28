@@ -52,8 +52,8 @@ export default abstract class LevelUpPart {
   abstract planChildren(view: RulesetView, character: CharacterInput, children: CharacterInput[]): ChildrenPlan;
 
   /**
-   * A plan's edit (`plan`) of the character's saved level (`plan.editedLevel`): what it writes, checked unless `force`d,
-   * and what the children become with it.
+   * A plan's edit (`plan`) of the character's saved level (`plan.editedLevel`): what it writes, checked unless
+   * `force`d, and what the children become with it.
    */
   abstract planLevelEdit(
     view: RulesetView,

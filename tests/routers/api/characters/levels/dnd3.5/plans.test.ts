@@ -870,12 +870,19 @@ describe("character level plans", () => {
       expect(await (await expectStatus(call(), 404)).json()).toMatchObject({ message: "Character level not found" });
 
     // A step an edit hasn't, an unanswered step and a pool the ruleset hasn't are refused first
-    const invalid: (() => Promise<Refusal>)[] = [
-      () => levels.plan.$post({ param: { characterId }, json: { ...plan, steps: { "class-plan": classPlan } } }),
-      () => level.$put({ param: unknown, json: { steps: {} } }),
-      () => options.$post({ param: { characterId, step: "feats" }, query: {}, json: { plan, pool: NIL_UUID } }),
+    const invalid: [() => Promise<Refusal>, string][] = [
+      [
+        () => levels.plan.$post({ param: { characterId }, json: { ...plan, steps: { "class-plan": classPlan } } }),
+        "The level has no class-plan step",
+      ],
+      [() => level.$put({ param: unknown, json: { steps: {} } }), "The plan doesn't answer its hp step"],
+      [
+        () => options.$post({ param: { characterId, step: "feats" }, query: {}, json: { plan, pool: NIL_UUID } }),
+        `Aptitude ${NIL_UUID} does not belong to the character's ruleset`,
+      ],
     ];
-    for (const call of invalid) await expectStatus(call(), 400);
+    for (const [call, message] of invalid)
+      expect(await (await expectStatus(call(), 400)).json()).toMatchObject({ message });
   });
 
   test("opens a saved level as an edit's plan, which answers as the level saved it", async () => {

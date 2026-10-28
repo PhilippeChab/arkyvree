@@ -156,6 +156,8 @@ export interface PlannedAdvancementAnswer {
  */
 export interface ResolvedPlan {
   editedLevel?: StoredAdvancement;
+  /** None: a request's level id (`LevelPlanRequest`) is resolved to the level, so a raw request is no resolved one. */
+  editedLevelId?: never;
   steps: Record<string, StepPayload>;
 }
 

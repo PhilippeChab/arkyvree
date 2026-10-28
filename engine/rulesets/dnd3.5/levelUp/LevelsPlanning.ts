@@ -179,10 +179,11 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
   }
 
   /**
-   * The edit of the character's saved level `level`, with its bonded creatures' rows (`bonded`): the level as saved, its new hit points, ability increases and picks, checked, its picks refused when they pick a feat that
-   * doesn't stack the character has already or a spell it knows in its pool already, the level's other picks' gifts
-   * too (but the level's own saved picks), or overfill a pool (forced or not), and refused with the issues it answers
-   * for unless `force`d; and what its bonded creatures become with it.
+   * The edit of the character's saved level `level`, with its bonded creatures' rows (`bonded`): the level as saved,
+   * its new hit points, ability increases and picks, checked, its picks refused when they pick a feat that doesn't
+   * stack the character has already or a spell it knows in its pool already, the level's other picks' gifts too (but
+   * the level's own saved picks), or overfill a pool (forced or not), and refused with the issues it answers for unless
+   * `force`d; and what its bonded creatures become with it.
    */
   planEdit(bonded: CharacterInput[], level: StoredAdvancement, edit: LevelEditRequest, force: boolean): LevelEditPlan {
     const { rows } = this.character;

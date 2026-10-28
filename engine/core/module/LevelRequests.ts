@@ -144,8 +144,8 @@ export default class LevelRequests {
     if (!step) throw new RulesError("not-found", "Level step not found");
     const { plan, pool } = query;
     const payloads = this.resolveSteps(steps, plan.steps);
-    // The pool is read before the edited level, as the module read them: a picker that names an unknown one of each is
-    // refused for its pool
+    // The pool is read before the edited level: a picker naming an unknown pool and an unknown level is refused for its
+    // pool (400) before its level (404)
     const picker = { ...query, ...(pool && { pool: this.resolveOf(step.pools, pool) }) };
     return { ...picker, plan: this.withLevel(plan.editedLevelId, payloads) };
   }
