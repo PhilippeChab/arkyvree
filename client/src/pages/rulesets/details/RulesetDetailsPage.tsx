@@ -159,6 +159,7 @@ export default function RulesetDetailsPage() {
     canSubscribeExtensions,
     canUnarchive,
     canUnsubscribeExtensions,
+    canViewChanges,
   } = useRulesetPermissions(ruleset);
 
   const [contributorsDialogOpen, setContributorsDialogOpen] = useState(false);
@@ -194,7 +195,7 @@ export default function RulesetDetailsPage() {
     canFork && (
       <ActionMenuItem key="fork" icon={ForkIcon} label="Fork" onClick={menu.closeMenuAnd(() => handleFork(ruleset))} />
     ),
-    !!ruleset.rulesetId && (
+    !!ruleset.rulesetId && canViewChanges && (
       <ActionMenuItem
         key="local-changes"
         icon={CompareArrowsIcon}

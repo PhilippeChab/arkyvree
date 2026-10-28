@@ -32,6 +32,8 @@ interface RulesetPermissions {
   canUnsubscribeExtensions: boolean;
   /** Owner or Admin, while it isn't archived — can change its contributors' roles. */
   canUpdateContributorRoles: boolean;
+  /** Anyone, on a public ruleset; the owner and contributors, on a private one — can see its local changes. */
+  canViewChanges: boolean;
   isOwner: boolean;
 }
 
@@ -53,6 +55,7 @@ const NONE: RulesetPermissions = {
   canUnarchive: false,
   canUnsubscribeExtensions: false,
   canUpdateContributorRoles: false,
+  canViewChanges: false,
   isOwner: false,
 };
 

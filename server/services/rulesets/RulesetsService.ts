@@ -26,8 +26,8 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
    * allows: edit its entities, edit the ruleset itself, fork it, unarchive it, see its contributors, invite and manage
    * them, change their roles, manage its Admins, publish it, subscribe it to extensions (`usedAsExtension`: another
    * ruleset subscribes to it) and unsubscribe it from one (whether a character uses what would leave is the server's
-   * answer once asked), and whether it can be an extension, which its edit and its publish offer. It may leave it
-   * while it contributes to it (`contributorRole`: an active role, its owner's never looked up).
+   * answer once asked), see its local changes, and whether it can be an extension, which its edit and its publish
+   * offer. It may leave it while it contributes to it (`contributorRole`: an active role, its owner's never looked up).
    */
   private permissionsOf(policy: RulesetsPolicy, usedAsExtension: boolean) {
     return {
@@ -45,6 +45,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       canUnarchive: isAllowed(() => policy.canUnarchive()),
       canUnsubscribeExtensions: isAllowed(() => policy.canUnsubscribeExtension()),
       canUpdateContributorRoles: isAllowed(() => policy.canUpdateContributorRole()),
+      canViewChanges: isAllowed(() => policy.canViewChanges()),
     };
   }
 

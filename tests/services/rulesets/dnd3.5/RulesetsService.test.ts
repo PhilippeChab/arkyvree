@@ -293,6 +293,7 @@ describe("RulesetsService", () => {
       canUnarchive: false,
       canUnsubscribeExtensions: false,
       canUpdateContributorRoles: false,
+      canViewChanges: false,
     };
     const OWNER = {
       ...NONE,
@@ -303,6 +304,7 @@ describe("RulesetsService", () => {
       canManageContributors: true,
       canReadContributors: true,
       canUpdateContributorRoles: true,
+      canViewChanges: true,
     };
 
     test("its owner edits everything, publishes a draft alone, and subscribes a fork to extensions and unsubscribes it", async () => {
@@ -347,8 +349,14 @@ describe("RulesetsService", () => {
         canFork: true,
         canLeave: true,
         canReadContributors: true,
+        canViewChanges: true,
       });
-      expect((await RulesetsService.getRuleset(stranger, ruleset.id)).permissions).toEqual({ ...NONE, canFork: true });
+      // A public ruleset's changes are anyone's to see
+      expect((await RulesetsService.getRuleset(stranger, ruleset.id)).permissions).toEqual({
+        ...NONE,
+        canFork: true,
+        canViewChanges: true,
+      });
     });
 
     test("an archived ruleset is read-only but unarchived: contributors are still managed, never invited nor their roles changed", async () => {
@@ -362,6 +370,7 @@ describe("RulesetsService", () => {
         canManageContributors: true,
         canReadContributors: true,
         canUnarchive: true,
+        canViewChanges: true,
       };
 
       expect((await RulesetsService.getRuleset(session, ruleset.id)).permissions).toEqual(archived);
@@ -387,6 +396,19 @@ describe("RulesetsService", () => {
       });
     });
 
+    test("a campaign's Game Master reads a private fork it plays on, but not its local changes", async () => {
+      const { user: owner } = await createTestUser();
+      const { user: gameMaster, session } = await createTestUser();
+      const fork = await createFork(owner.id, { status: "Published" });
+      await createTestCampaign(gameMaster.id, fork.id);
+
+      expect((await RulesetsService.getRuleset(session, fork.id)).permissions).toEqual({
+        ...NONE,
+        canBeExtension: true,
+      });
+      expect(RulesetChangesService.getChanges(session, fork.id)).rejects.toThrow(ForbiddenError);
+    });
+
     test("a deleted account's ruleset is frozen: its Admin, as its other contributors, may only leave it", async () => {
       const { user: leaver } = await createTestUser();
       const { user: admin, session } = await createTestUser();
@@ -399,6 +421,7 @@ describe("RulesetsService", () => {
         canBeExtension: true,
         canLeave: true,
         canReadContributors: true,
+        canViewChanges: true,
       });
       expect(RulesetsService.updateRuleset(session, ruleset.id, { name: "Renamed", description: "" })).rejects.toThrow(
         "Cannot edit a ruleset without an owner",
