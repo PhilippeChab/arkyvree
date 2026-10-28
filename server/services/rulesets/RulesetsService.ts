@@ -93,7 +93,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
     const [star, starCount, isUsedAsExtension] = await Promise.all([
       StarredRulesets.findOne(db, { userId: session.userId, rulesetId: id }),
       StarredRulesets.count(db, { rulesetId: id }),
-      Rulesets.exists(db, { extensionRulesetId: id }),
+      Rulesets.exists(db, { subscribedTo: id }),
     ]);
 
     const parent = ruleset.rulesetId ? await Rulesets.findOne(db, { id: ruleset.rulesetId }) : undefined;
