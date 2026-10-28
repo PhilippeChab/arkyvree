@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, test } from "bun:test";
 
-import { DND35_DMG_NAME } from "@/content/dnd3.5/rulesetNames.ts";
+import { DND35_COMPLETE_SCOUNDREL_NAME, DND35_DMG_NAME } from "@/content/dnd3.5/rulesetNames.ts";
 import { addClassLevels, addFeats, addSkills, addSpells } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import type { LevelPlanRequest, StepOption, StepOptionGroup } from "@/engine/index.ts";
 import type {
@@ -68,6 +68,7 @@ import {
   createSeededTestRulesetWithExtensions,
   createTestRuleset,
   invalidateSeededRuleset,
+  subscribeTestRuleset,
 } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
@@ -1000,6 +1001,28 @@ describe("LevelsService", () => {
       // Simple Weapon Proficiency is every simple weapon, a feat of its own
       expect(grouped.find((r) => r.name === "Simple Weapon Proficiency")).toMatchObject({ group: null });
     });
+
+    test("count a family's row as the variants it opens to, none of them offered alone too", async () => {
+      // Complete Scoundrel's luck feats are a family, Lucky Break among them, and none is a variant of it
+      const ctx = await getSeedCtx();
+      const ruleset = await createSeededTestRuleset(SEED_USER_ID);
+      await subscribeTestRuleset(ruleset.id, [(await findSeededRuleset(DND35_COMPLETE_SCOUNDREL_NAME)).id]);
+      const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: ruleset.id });
+      const plan = levelUpPlan([planned(ctx.classMap.pc["Fighter"], 1)]);
+      const general = ctx.aptMap["General"];
+      const grouped = await featGroups(session, characterId, plan, general);
+      const families = grouped.filter((r) => r.group !== null && r.count > 1);
+      const alone = new Set(grouped.filter((r) => !families.includes(r)).map((r) => r.name));
+
+      for (const { count, group } of families) {
+        const variants = names(await familyFeats(session, characterId, plan, general, group!));
+        expect({ group, count: variants.length }).toEqual({ group, count });
+        expect(variants.filter((name) => alone.has(name))).toEqual([]);
+      }
+      expect(families.map((r) => r.group)).toContain("Weapon Focus");
+      expect(families.map((r) => r.group)).not.toContain("Luck");
+      expect([...alone]).toEqual(expect.arrayContaining(["Lucky Break", "Good Karma"]));
+    }, 30_000);
 
     test("leave out a feat that a pending level grants", async () => {
       const ctx = await getSeedCtx();
