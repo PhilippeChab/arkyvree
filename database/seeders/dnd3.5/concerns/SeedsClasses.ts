@@ -4,10 +4,8 @@ import type { BabType, CasterLevelAdvancement, ClassSeed, SaveType } from "@/con
 import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
 import { getSpellLevelOpenings } from "@/database/seeders/dnd3.5/spellTable.ts";
 import { requirementsInCustomization } from "@/drizzle/schema.ts";
-import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { BAB_PROGRESSIONS, SAVE_PROGRESSIONS } from "@/vocabulary/dnd3.5/classes.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -93,6 +91,17 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
       );
     }
 
+    /**
+     * Its first level's requirements: the class's. A later level requires none of the one before, which the levels are
+     * taken in (`LevelRules.findNextClassLevel`).
+     */
+    private async insertFirstLevelRequirements(def: ClassSeed, levelIds: Record<number, string>) {
+      await this.insertAll(
+        requirementsInCustomization,
+        this.requirementRows(levelIds[1], "class-levels", def.requirements),
+      );
+    }
+
     /** The feats its levels grant: its class features, its proficiencies and its free feats. */
     private async insertGrantedFeats(def: ClassSeed, levelIds: Record<number, string>) {
       const granted = (level: number, feat: string, aptitude: string, what: string) => ({
@@ -140,21 +149,6 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
           ].map((modifier) => ({ sourceId: id, modifier })),
         ),
       );
-    }
-
-    /**
-     * Each level after the first takes the one before, as the engine plans a new level's requirement; the first, the
-     * class's requirements.
-     */
-    private async insertLevelRequirements(def: ClassSeed, levels: Levels, levelIds: Record<number, string>) {
-      const content = Engine.forRules(DND35_BASE_RULES);
-      await this.insertAll(requirementsInCustomization, [
-        ...levels.flatMap(({ id, level }) => {
-          const requirement = content.planPositionRequirement("class-levels", def.name, level);
-          return requirement ? [{ entityId: id, entityType: "class-levels", ...requirement }] : [];
-        }),
-        ...this.requirementRows(levelIds[1], "class-levels", def.requirements),
-      ]);
     }
 
     /** Each level's base saves: its `baseBonus` links. */
@@ -221,7 +215,7 @@ export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
 
       await this.insertSaves(def, levels);
       await this.insertLevelModifiers(def, levels);
-      await this.insertLevelRequirements(def, levels, levelIds);
+      await this.insertFirstLevelRequirements(def, levelIds);
       await this.insertSkills(def, klass.id);
       await this.insertGrantedFeats(def, levelIds);
       return { classId: klass.id, levelIds };

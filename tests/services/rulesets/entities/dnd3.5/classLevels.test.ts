@@ -93,7 +93,7 @@ async function setupFork() {
   return { ...context, parent: context.ruleset, fork, inheritedLevel };
 }
 
-// Creating, reading, updating and deleting a level, and the requirement on the previous level, are covered in the class levels router test.
+// Creating, reading, updating and deleting a level are covered in the class levels router test.
 describe("EntitiesService: a class's levels", () => {
   describe("feats and saves", () => {
     test("lists a class's levels in order, with the feats they grant through an aptitude and their base saves", async () => {
@@ -328,13 +328,22 @@ describe("EntitiesService: a class's levels", () => {
     await createLevel(session, ruleset.id, klass.id, 1);
     const level = await createLevel(session, ruleset.id, klass.id, 2);
     await Modifiers.create(db, modifier(level.id, "combat.bab", "1"));
+    await Requirements.create(db, {
+      entityId: level.id,
+      entityType: "class-levels",
+      level: "1",
+      target: "abilities.strength.total",
+      operator: "greater_than_or_equal",
+      value: "13",
+      valueType: "number",
+    });
 
     const detail = {
       id: level.id,
       position: 2,
       fields: levelFields(2, 4),
       modifiers: [{ target: "combat.bab" }],
-      requirements: [{ target: "classes.testclass.level", value: "1" }],
+      requirements: [{ target: "abilities.strength.total", value: "13" }],
     };
     expect(
       await EntitiesService.getOwnedEntityWithOwner(await ownerSessionOf(ruleset.id), ruleset.id, "classes", level.id),

@@ -75,7 +75,7 @@ describe("rulesets class levels", () => {
     expect(await expectOk(levels.$get({ param: classParam(id, classId) }))).toEqual([]);
   });
 
-  test("requires the previous class level from level 2 on", async () => {
+  test("writes no requirement of the class's previous level, which the levels' order holds", async () => {
     const { id, classId } = await setup();
     const first = await expectOk(
       levels.$post({
@@ -92,9 +92,7 @@ describe("rulesets class levels", () => {
 
     const param = (entityId: string) => ({ id, entityType: "class-levels" as const, entityId });
     expect(await expectOk(requirements.$get({ param: param(first.id) }))).toEqual([]);
-    expect(await expectOk(requirements.$get({ param: param(fifth.id) }))).toMatchObject([
-      { level: "1", valueType: "number", operator: "greater_than", value: "4" },
-    ]);
+    expect(await expectOk(requirements.$get({ param: param(fifth.id) }))).toEqual([]);
   });
 
   test("reads a class's spells per day, spells known, feat pools and spell lists", async () => {

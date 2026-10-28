@@ -288,6 +288,21 @@ async function pickRows() {
 }
 
 /**
+ * Every requirement, each as one line (its owner, its level, and its condition or its group), and every character's
+ * last change: what 0100 leaves.
+ */
+async function requirementRows() {
+  const { rows } = await db.execute<{ line: string }>(sql`
+    SELECT 'requirement ' || concat_ws(' ', id, entity_id, entity_type, level, target, operator, value, value_type,
+      chaining_operator, created_at::text, updated_at::text) AS line
+    FROM customization.requirements
+    UNION ALL SELECT 'character ' || id || ' ' || last_changed_at::text FROM character.characters
+    ORDER BY line
+  `);
+  return rows.map((row) => row.line);
+}
+
+/**
  * The indexes 0089 drops, rebuilds or creates, as the migrations before left them: the btrees another index covers (a
  * user's starred rulesets, a ruleset's snapshots, a record's attachments), the archived tables' indexes by a foreign
  * key, which left an archived row out, and none on the foreign keys whose deletes no index served, with a snapshot's
@@ -1410,4 +1425,72 @@ describe("0099_snapshot-type", () => {
       .catch((error: unknown) => error);
     expect(refused).toMatchObject({ cause: { message: "Rulesets hold two snapshots of one source" } });
   });
+});
+
+describe("0100_level-order-requirements", () => {
+  test("deletes a class level's requirement of its previous level, whatever its class's name, alone on the level, and nothing else", async () => {
+    const { classMap } = await getSeedCtx();
+    const { rows: levels } = await db.execute<{ id: string; position: number }>(sql`
+      SELECT id, position FROM rules.entities WHERE owner_id = ${classMap.pc["Fighter"]} ORDER BY position
+    `);
+    const levelAt = (position: number) => levels.find((level) => level.position === position)!.id;
+    // A modifier without requirements, whichever the seed's ids make first
+    const { rows: modifiers } = await db.execute<{ id: string }>(sql`
+      SELECT id FROM customization.modifiers AS modifier
+      WHERE NOT EXISTS (
+        SELECT 1 FROM customization.requirements WHERE entity_id = modifier.id AND entity_type = 'modifiers'
+      )
+      ORDER BY id LIMIT 1
+    `);
+    // Fighter's levels hold no requirement, which the rows below are written on
+    const { rows: held } = await db.execute(sql`
+      SELECT 1 FROM customization.requirements WHERE entity_id IN (SELECT id FROM rules.entities WHERE owner_id = ${classMap.pc["Fighter"]})
+    `);
+    expect(held).toEqual([]);
+    const write = async (entityId: string, entityType: string, level: string, condition: string[] | string) => {
+      const [target, operator, value, type = "number"] = typeof condition === "string" ? [] : condition;
+      const chaining = typeof condition === "string" ? condition : null;
+      const valueType = chaining ? null : type;
+      const { rows } = await db.execute<{ id: string }>(sql`
+        INSERT INTO customization.requirements
+          (entity_id, entity_type, level, target, operator, value, value_type, chaining_operator)
+        VALUES (${entityId}, ${entityType}, ${level}, ${target ?? null}, ${operator ?? null}, ${value ?? null},
+          ${valueType}, ${chaining})
+        RETURNING id
+      `);
+      return rows[0]!.id;
+    };
+    await db.execute(sql`SELECT set_config('arkyvree.registry_sync', 'on', true)`);
+    // As a level's save or the seeders wrote it, and of a class renamed since
+    const written = await write(levelAt(2), "class-levels", "1", ["classes.fighter.level", "greater_than", "1"]);
+    const renamed = await write(levelAt(3), "class-levels", "1", ["classes.warrior.level", "greater_than", "2"]);
+    // What differs from it: its value, its value's type, its operator, its target, its level's place, its owner's type,
+    // its root, and a level holding it beside another requirement or under a group
+    await write(levelAt(4), "class-levels", "1", ["classes.fighter.level", "greater_than", "2"]);
+    await write(levelAt(10), "class-levels", "1", ["classes.fighter.level", "greater_than", "9", "string"]);
+    await write(levelAt(5), "class-levels", "1", ["classes.fighter.level", "greater_than_or_equal", "4"]);
+    await write(levelAt(6), "class-levels", "1", ["classes.fighter.bonuscasterlevel", "greater_than", "5"]);
+    await write(levelAt(1), "class-levels", "1", ["classes.fighter.level", "greater_than", "0"]);
+    await write(modifiers[0]!.id, "modifiers", "1", ["classes.fighter.level", "greater_than", "1"]);
+    await write(levelAt(7), "class-levels", "2", ["classes.fighter.level", "greater_than", "6"]);
+    await write(levelAt(8), "class-levels", "1", ["classes.fighter.level", "greater_than", "7"]);
+    await write(levelAt(8), "class-levels", "2", ["abilities.strength.total", "greater_than_or_equal", "13"]);
+    await write(levelAt(9), "class-levels", "1", "or");
+    await write(levelAt(9), "class-levels", "1.1", ["classes.fighter.level", "greater_than", "8"]);
+    await write(levelAt(9), "class-levels", "1.2", ["classes.rogue.level", "greater_than", "8"]);
+    await db.execute(sql`SELECT set_config('arkyvree.registry_sync', 'off', true)`);
+    const before = await requirementRows();
+
+    for (const statement of statementsOf("0100_level-order-requirements.sql")) await db.execute(sql.raw(statement));
+
+    // Only the two rows as a save wrote them go; every other row stays as it was, and every character's last change
+    const deleted = new Set([written, renamed]);
+    const expected = before.filter((line) => !deleted.has(line.split(" ")[1]!));
+    expect(before.length - expected.length).toBe(2);
+    expect(await requirementRows()).toEqual(expected);
+
+    // A second run deletes nothing more
+    for (const statement of statementsOf("0100_level-order-requirements.sql")) await db.execute(sql.raw(statement));
+    expect(await requirementRows()).toEqual(expected);
+  }, 30_000);
 });

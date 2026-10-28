@@ -107,7 +107,7 @@ function linksOf(entity: WrittenEntity, { links, role, toType }: LinkSet) {
  * copy-on-write resolves (`EntityEdit`: the ruleset's own, or the copy of an inherited one, made on its first edit; an
  * owned entity's on its owner's): refused as not found when it's gone since the view was read, and as stale when the
  * client's token is behind (a copy's never is). Then its links (`setLinks`), then what its plan writes beside it
- * (`writeBeside`: the entities it removes, a requirement, the entities it makes). A delete is refused while the entity
+ * (`writeBeside`: the entities it removes, then those it makes). A delete is refused while the entity
  * is in use (`EntityUses`). Each first opens the kind's rules for its action (`open`), records its activity (its verb
  * and the written kind's name), and the ruleset's views drop what it changed.
  */
@@ -210,13 +210,9 @@ export default class EntityWriter {
     return rows[0];
   }
 
-  /**
-   * Writes what a plan writes beside an entity (`writes`): the entities it removes, a requirement on it, and the
-   * entities it makes.
-   */
-  private static async writeBeside(tx: Db, scope: RulesetScope, entity: WrittenEntity, writes: EntityWrites) {
+  /** Writes what a plan writes beside an entity (`writes`): the entities it removes, then those it makes. */
+  private static async writeBeside(tx: Db, scope: RulesetScope, writes: EntityWrites) {
     for (const removal of writes.removed ?? []) await EntityWriter.removeEntity(tx, scope, removal);
-    if (writes.requirement) await Requirements.create(tx, { ...entity, ...writes.requirement });
     for (const made of writes.made ?? []) await EntityWriter.makeEntity(tx, scope, made);
   }
 
@@ -253,7 +249,7 @@ export default class EntityWriter {
    */
   static async setParts(tx: Db, scope: RulesetScope, entity: WrittenEntity, parts: SavedParts, replacing: boolean) {
     await EntityWriter.setLinks(tx, entity, parts.links, replacing);
-    if (parts.writes) await EntityWriter.writeBeside(tx, scope, entity, parts.writes);
+    if (parts.writes) await EntityWriter.writeBeside(tx, scope, parts.writes);
   }
 
   /** The entity's customizations, copied onto the new ones (`entities`) from `sourceId`'s. */
@@ -326,7 +322,7 @@ export default class EntityWriter {
    * New entities in the ruleset, several rows of one plan (`plan`: an entity's copies, its variants), each written as
    * a create writes its own (`create`): its name kept free in its view (all of them in one read, a name given twice
    * refused), taking over the tombstone of a deleted ancestor of its name, the customizations its plan copies, its
-   * links and the requirement its plan sets on it, and its activity. Answers the rows written, in the plan's order.
+   * links, and its activity. Answers the rows written, in the plan's order.
    */
   async createMany<P extends EntityCopiesPlan>(
     session: Session,
@@ -344,9 +340,9 @@ export default class EntityWriter {
       const names = new EntityNames(ruleset, rulesetData.cow);
       const tombstones = await names.assertNamesAvailable(tx, this.type, given);
       const rows = planned.rows.map((row) => ({ row, tombstoneAncestorId: row.name && tombstones.get(row.name) }));
-      // What each row writes beside it: its requirement alone, whatever else the plan carries
-      const parts = { ...planned, writes: { requirement: planned.writes?.requirement } };
-      return await this.writeNew(tx, session, scope, rows, parts);
+      // What each row writes beside it: its links and the customizations it copies, whatever else the plan carries
+      const { copyCustomizationsFrom, links } = planned;
+      return await this.writeNew(tx, session, scope, rows, { copyCustomizationsFrom, links });
     });
   }
 
@@ -399,8 +395,7 @@ export default class EntityWriter {
       const planned = await plan(scope, { tx });
       const { gone } = EntityWriter.getNotFound(ruleset, this.type);
       const targetId = await new EntityEdit(ruleset, rulesetData.cow).cowToDelete(tx, this.type, planned.entity, gone);
-      const written = { entityId: targetId, entityType: this.type };
-      if (planned.writes) await EntityWriter.writeBeside(tx, scope, written, planned.writes);
+      if (planned.writes) await EntityWriter.writeBeside(tx, scope, planned.writes);
 
       // The database deletes its links and customizations with it.
       const [row] = await Entities.delete<Row>(tx, { entityType: this.type, id: targetId });
@@ -437,8 +432,7 @@ export default class EntityWriter {
       const notFound = EntityWriter.getNotFound(ruleset, type);
       const edit = new EntityEdit(ruleset, rulesetData.cow);
       const target = await edit.cowOwned(tx, type, this.type, planned.entity.id, notFound);
-      const written = { entityId: target.id, entityType: type };
-      if (planned.writes) await EntityWriter.writeBeside(tx, scope, written, planned.writes);
+      if (planned.writes) await EntityWriter.writeBeside(tx, scope, planned.writes);
 
       // The database deletes its links and its customizations with it
       const [row] = await Entities.delete<Row>(tx, { entityType: type, id: target.id });
