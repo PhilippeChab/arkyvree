@@ -1657,6 +1657,19 @@ describe("a character's level in a class", () => {
     expect(
       finalizeBatch(ctx, characterId, [...levelsOf("Rogue", [6]), ["Fighter", 3, 8]], { skills: { Climb: 8 } }, true),
     ).rejects.toThrow("Level 3: Fighter 3 can't be taken there: Fighter 2 comes next");
+    // And of the class's own: its Fighter 2 makes Fighter 3 its next, not Fighter 4
+    expect(
+      finalizeBatch(
+        ctx,
+        characterId,
+        [
+          ["Fighter", 2, 8],
+          ["Fighter", 4, 8],
+        ],
+        { skills: { Climb: 8 } },
+        true,
+      ),
+    ).rejects.toThrow("Level 3: Fighter 4 can't be taken there: Fighter 3 comes next");
     const [second] = await finalizeBatch(ctx, characterId, [["Fighter", 2, 8]], FIGHTER_LEVELS[1]);
     expect(second.entryId).toBe((await findClassLevel(ctx.classMap.pc["Fighter"], 2))!.id);
   });
@@ -1679,6 +1692,30 @@ describe("a character's level in a class", () => {
       // The next level's own requirement, a fighter level past the one before, reads the count too
       picker: { next: fighter?.track?.next, eligible: fighter?.eligible },
     }).toEqual({ sheet: ["Fighter 1"], card: ["Fighter 1"], picker: { next: 2, eligible: true } });
+  });
+
+  test("offers no level of a class whose next the character holds, and saves none, forced or not", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 10000 });
+    const fighterId = ctx.classMap.pc["Fighter"];
+    const offered = async () => {
+      const options = await getStepOptions(session, characterId, "class-plan", { steps: {} }, {}, { limit: 50 });
+      if (options.grouped) throw new Error("Expected the classes ungrouped");
+      return options.items.map(({ id }) => id);
+    };
+    // A lone Fighter 3, as a level saved before the rule, then its next, Fighter 2: Fighter 3, held, comes next
+    await addCharacterLevel(characterId, (await findClassLevel(fighterId, 3))!.id);
+    await levelUp(session, ctx, characterId, "Fighter", 2, FIGHTER_LEVELS[1], true);
+    expect(await offered()).not.toContain(fighterId);
+    expect(await offered()).toContain(ctx.classMap.pc["Rogue"]);
+    for (const force of [false, true]) {
+      expect(levelUp(session, ctx, characterId, "Fighter", 3, FIGHTER_LEVELS[2], force)).rejects.toThrow(
+        "Level 3: This level has already been finalized",
+      );
+      expect(levelUp(session, ctx, characterId, "Fighter", 4, FIGHTER_LEVELS[3], force)).rejects.toThrow(
+        "Level 3: Fighter 4 can't be taken there: the character's Fighter levels skip a level, so none comes next",
+      );
+    }
   });
 });
 

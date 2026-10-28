@@ -1,7 +1,6 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
 import type { StoredAdvancement } from "@/engine/core/module/index.ts";
 import type { RulesetView, ViewLink } from "@/engine/core/view/index.ts";
-import ClassLevels from "@/engine/rulesets/dnd3.5/characters/ClassLevels.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import type {
   CustomizedClassLevel,
@@ -85,10 +84,9 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
       });
     }
 
-    const levelByClass = ClassLevels.countByClass(classLevelsById, advancements);
     for (const klass of Object.values(this.classes)) {
       klass.levels.sort((a, b) => a.classLevel.position - b.classLevel.position);
-      klass.level = levelByClass.get(klass.klass.id) ?? 0;
+      klass.level = klass.levels.length;
     }
 
     // Add level-0 entries for ruleset classes the character doesn't have

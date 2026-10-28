@@ -40,8 +40,8 @@ export interface CheckedCharacter extends HoldingCharacter {
  * - a level-up's planned levels are the ruleset's classes' (`getPlannedClassLevels`), and its selections linked to
  *   their pools, before its picks are spread over its levels (`distributePicks`): each is the view's, by the id the view
  *   keys it by, as the request entered (`LevelRequests`);
- * - each level isn't saved already (a level-up's), is its class's next, forced or not (`ClassLevels.isNext`), and
- *   raises its abilities by what the rules give it;
+ * - each level isn't saved already (a level-up's), is its class's next, forced or not
+ *   (`LevelRules.findNextClassLevel`), and raises its abilities by what the rules give it;
  * - its hit points, its selections and their pools checked, no non-stackable feat or spell picked twice at a level
  *   (`SelectionChecks`);
  * - no pick the character holds already, forced or not (`checkPicksNotHeld`): a non-stackable feat it has, or a spell
@@ -63,8 +63,9 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
 
   /**
    * Refuses class level `classLevel` of class `className` unless it's its class's next after `levels` (the character's
-   * saved ones and those planned before it), forced or not: a class's levels come one after another
-   * (`ClassLevels.isNext`), so the character's level in a class is its highest class level too.
+   * saved ones and those planned before it), forced or not (`LevelRules.findNextClassLevel`, which the class picker
+   * offers): a class's levels come one after another, so the character's level in a class is its highest class level
+   * too.
    */
   private checkNextLevel(
     levels: { entryId: string | null }[],
@@ -72,11 +73,16 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     classLevel: KlassLevel,
     label: string,
   ) {
-    const levelByClass = ClassLevels.countByClass(this.dnd35.classLevelsById, levels);
-    if (ClassLevels.isNext(levelByClass, classLevel)) return;
-    const next = ClassLevels.format(className, ClassLevels.nextPositionOf(levelByClass, classLevel.ownerId));
-    const taken = ClassLevels.format(className, classLevel.position);
-    throw new RulesError("invalid", `${label}${taken} can't be taken there: ${next} comes next`);
+    const next = LevelRules.findNextClassLevel(this.dnd35.classLevelsById, levels, classLevel.ownerId);
+    if (next === classLevel.position) return;
+    const why =
+      next === undefined
+        ? `the character's ${className} levels skip a level, so none comes next`
+        : `${ClassLevels.format(className, next)} comes next`;
+    throw new RulesError(
+      "invalid",
+      `${label}${ClassLevels.format(className, classLevel.position)} can't be taken there: ${why}`,
+    );
   }
 
   /**

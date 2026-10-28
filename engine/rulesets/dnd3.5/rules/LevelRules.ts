@@ -1,10 +1,13 @@
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import ClassLevels from "@/engine/rulesets/dnd3.5/characters/ClassLevels.ts";
 import { RULESET_FIELDS, type RulesetFieldValues } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
 import { countProgressionAt } from "@/shared/customization/progression.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { MAX_CHARACTER_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
 import { GENERAL_FEATS_APTITUDE } from "@/vocabulary/dnd3.5/feats.ts";
 
+/** A ruleset's class levels by id, as the next-level rule reads them: each its class and its number in it. */
+type ClassLevelsById = ReadonlyMap<string, { ownerId: string; position: number }>;
 /** What a character's levels give it whatever its classes, by its ruleset's Settings: its feats and its increases. */
 type Progression = Pick<RulesetFieldValues, "abilityIncreases" | "featAdvancement">;
 
@@ -29,6 +32,35 @@ export default class LevelRules {
    */
   static countLevelsLeft(totalLevel: number): number {
     return Math.max(0, MAX_CHARACTER_LEVEL - totalLevel);
+  }
+
+  /**
+   * The number of class `classId`'s next level for a character with `levels` (its advancements, each with its entry, a
+   * class level of `classLevelsById`): a class's levels come one after another, so its next is one past its levels of
+   * the class (`ClassLevels.countByClass`). None when the character holds that class level already, which only a level
+   * forced past a class's order before the rule leaves (a lone Fighter 3, then Fighter 2): no level of the class is
+   * its next. What the class picker offers, and the only class level a level-up's save or an import takes.
+   */
+  static findNextClassLevel(
+    classLevelsById: ClassLevelsById,
+    levels: { entryId: string | null }[],
+    classId: string,
+  ): number | undefined {
+    const next = (ClassLevels.countByClass(classLevelsById, levels).get(classId) ?? 0) + 1;
+    const held = levels.some(({ entryId }) => {
+      const classLevel = entryId === null ? undefined : classLevelsById.get(entryId);
+      return classLevel?.ownerId === classId && classLevel.position === next;
+    });
+    return held ? undefined : next;
+  }
+
+  /** Whether class level `classLevel` is its class's next for a character with `levels` (`findNextClassLevel`). */
+  static isNextClassLevel(
+    classLevelsById: ClassLevelsById,
+    levels: { entryId: string | null }[],
+    classLevel: { ownerId: string; position: number },
+  ): boolean {
+    return this.findNextClassLevel(classLevelsById, levels, classLevel.ownerId) === classLevel.position;
   }
 
   /**

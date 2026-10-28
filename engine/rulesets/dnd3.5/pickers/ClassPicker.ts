@@ -1,7 +1,6 @@
 import type { CharacterInput, EntityRecord, OptionRow, PickerOption, StepOption } from "@/engine/core/module/index.ts";
 import { CharacterPicker } from "@/engine/core/pickers/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import ClassLevels from "@/engine/rulesets/dnd3.5/characters/ClassLevels.ts";
 import CharacterProjection from "@/engine/rulesets/dnd3.5/levelUp/CharacterProjection.ts";
 import type LevelUpPlan from "@/engine/rulesets/dnd3.5/levelUp/LevelUpPlan.ts";
 import type { PlannedSoFar } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
@@ -35,9 +34,6 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
 
   /** What the picker offers: a player character's classes (their partition, `pc`). */
   override readonly filters = { partitions: [PLAYER_CHARACTER_KIND] };
-
-  /** The character's level in each class it has levels of, by the class's id, once read. */
-  private levelByClass?: Map<string, number>;
 
   /**
    * The class's place on its track: its next level, its last, and the levels the character can still take, whatever
@@ -106,11 +102,12 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
     return Dnd35View.of(this.rulesetData);
   }
 
-  /** The class's next level for the character: one past its level in the class (`ClassLevels.countByClass`). */
+  /**
+   * The class's next level for the character (`LevelRules.findNextClassLevel`): one past its levels of the class, none
+   * when the character holds it already or the class has no more.
+   */
   private nextLevelOf(klass: EntityRecord): KlassLevel | undefined {
-    this.levelByClass ??= ClassLevels.countByClass(this.dnd35.classLevelsById, this.input.rows.advancements);
-    return this.dnd35.classLevelByClassAndLevel.get(
-      `${klass.id}:${ClassLevels.nextPositionOf(this.levelByClass, klass.id)}`,
-    );
+    const next = LevelRules.findNextClassLevel(this.dnd35.classLevelsById, this.input.rows.advancements, klass.id);
+    return next === undefined ? undefined : this.dnd35.classLevelByClassAndLevel.get(`${klass.id}:${next}`);
   }
 }
