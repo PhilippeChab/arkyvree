@@ -123,7 +123,7 @@ export const rulesetsInRules = rules.table(
     private: boolean().default(false).notNull(),
     status: rulesetStatus().default("Draft").notNull(),
     kind: rulesetKind().default("ruleset").notNull(),
-    baseRules: text("base_rules").notNull().$type<"Dungeons & Dragons: 3.5">(),
+    baseRules: text("base_rules").notNull(),
   },
   (table) => [
     foreignKey({

@@ -18,6 +18,7 @@ import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
+  STALE_ENTITY_MESSAGE,
   UnprocessableEntityError,
 } from "@/server/errors/index.ts";
 import {
@@ -56,6 +57,7 @@ import {
 
 type RulesetValues = NonNullable<Parameters<typeof createTestRuleset>[1]>;
 const firstPage = { limit: 100, page: 1 };
+const NAME_TAKEN = new ConflictError("A ruleset with this name already exists");
 
 /** A fork of `parent` for `session`'s user. */
 function fork(
@@ -504,7 +506,7 @@ describe("RulesetsService", () => {
         UnprocessableEntityError,
       );
       expect(fork(session, { id: NIL_UUID })).rejects.toThrow(NotFoundError);
-      expect(fork(session, parent, { name: (await createTestRuleset(user.id)).name })).rejects.toThrow(ConflictError);
+      expect(fork(session, parent, { name: (await createTestRuleset(user.id)).name })).rejects.toEqual(NAME_TAKEN);
     });
 
     test("lets an ordinary account override more than 25 inherited entities", async () => {
@@ -677,6 +679,29 @@ describe("RulesetsService", () => {
         RulesetsService.updateRuleset(session, ruleset.id, { name, description: "", updatedAt: ruleset.updatedAt });
       await edit(`First ${uniqueId()}`);
       expect(edit(`Second ${uniqueId()}`)).rejects.toThrow(ConflictError);
+    });
+
+    test("refuses a name another ruleset holds, another user's or an archived one's, and keeps its own", async () => {
+      const { user, session } = await createTestUser();
+      const ruleset = await createTestRuleset(user.id);
+      const holders = [
+        await createTestRuleset(user.id),
+        await createTestRuleset((await createTestUser()).user.id),
+        await createTestRuleset(user.id, { status: "Archived" }),
+      ];
+      const edit = (name: string) =>
+        RulesetsService.updateRuleset(session, ruleset.id, { name, description: "Edited" });
+      for (const holder of holders) expect(edit(holder.name)).rejects.toEqual(NAME_TAKEN);
+      expect(await edit(ruleset.name)).toMatchObject({ name: ruleset.name, description: "Edited" });
+    });
+
+    test("tells an edit started from a stale copy it's stale before refusing the name it takes", async () => {
+      const { user, session } = await createTestUser();
+      const [ruleset, holder] = [await createTestRuleset(user.id), await createTestRuleset(user.id)];
+      const edit = (name: string, updatedAt?: string) =>
+        RulesetsService.updateRuleset(session, ruleset.id, { name, description: "", updatedAt });
+      await edit(`Edited ${uniqueId()}`);
+      expect(edit(holder.name, ruleset.updatedAt)).rejects.toEqual(new ConflictError(STALE_ENTITY_MESSAGE));
     });
 
     test("refuses another user's ruleset, a base, an archived one and a missing one", async () => {

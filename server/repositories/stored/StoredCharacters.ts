@@ -9,6 +9,7 @@ import {
   rulesetsInRules,
 } from "@/drizzle/schema.ts";
 import { Engine, type FieldValue, type FieldWrite, type StorageEngine } from "@/engine/index.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 import type { Character } from "@/shared/relations.ts";
 
 import { toFieldRows } from "./toFieldRows.ts";
@@ -47,8 +48,9 @@ export default class StoredCharacters {
     storage: StorageEngine,
   ) {
     const owner = storage.characterOwnerType;
+    // A ruleset's base rules are a registered module's, by their foreign key to `rules.modules`
     const modules = await db
-      .select({ id: charactersInCharacter.id, baseRules: rulesetsInRules.baseRules })
+      .select({ id: charactersInCharacter.id, baseRules: sql<BaseRules>`${rulesetsInRules.baseRules}` })
       .from(charactersInCharacter)
       .innerJoin(rulesetsInRules, eq(rulesetsInRules.id, charactersInCharacter.rulesetId))
       .where(inArray(charactersInCharacter.id, ids));

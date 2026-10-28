@@ -28,7 +28,7 @@ import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
 import { Paginates, type Pagination } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
-import type { RulesetKind } from "@/shared/enums.ts";
+import type { BaseRules, RulesetKind } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { buildSubscribersCondition } from "./rulesetLineage.ts";
@@ -56,11 +56,13 @@ const SUBSCRIBED = and(
 );
 
 /**
- * A ruleset's row as every read and write of it answers it: its columns, and the extensions it subscribes to
+ * A ruleset's row as every read and write of it answers it: its columns, its base rules a registered module's (its
+ * foreign key to `rules.modules`, whose rows `BASE_RULES_OPTIONS` lists), and the extensions it subscribes to
  * (`extensionIds`), in their order, which its view composes them in.
  */
 const RULESET_COLUMNS = {
   ...getTableColumns(rulesetsInRules),
+  baseRules: sql<BaseRules>`${rulesetsInRules.baseRules}`,
   extensionIds: sql<string[]>`ARRAY(
     SELECT ${rulesetExtensionsInRules.extensionId} FROM ${rulesetExtensionsInRules}
     WHERE ${SUBSCRIBED} ORDER BY ${rulesetExtensionsInRules.ordinal}

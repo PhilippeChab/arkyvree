@@ -1,6 +1,6 @@
 import { include } from "@/lib/mixins.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { db, withTransaction, withUniqueRefusal } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
   Activities,
@@ -19,6 +19,12 @@ import { Archives } from "./concerns/Archives.ts";
 import { Publishes } from "./concerns/Publishes.ts";
 import { Stars } from "./concerns/Stars.ts";
 import { getReadableRuleset } from "./readableRuleset.ts";
+
+/**
+ * The unique index that keeps a ruleset's name its own (`drizzle/schema.ts`): across every user's rulesets, a private,
+ * an archived or an orphaned one's too.
+ */
+const NAME_INDEX = "rulesets_name_unique_idx";
 
 class RulesetsService extends include(Object, Archives, Publishes, Stars) {
   /**
@@ -49,15 +55,21 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
     };
   }
 
+  /**
+   * Runs `write`, which sets a ruleset's name, answering the name index's refusal with a 409: the index is the name's
+   * one check, a fork's and an edit's, so two requests that claim one name at once are refused alike.
+   */
+  private async withNameRefusal<T>(write: () => Promise<T>) {
+    return await withUniqueRefusal(write, (index) =>
+      index === NAME_INDEX ? new ConflictError("A ruleset with this name already exists") : undefined,
+    );
+  }
+
   async forkRuleset(session: Session, id: string, body: { description?: string; name: string; private: boolean }) {
     const result = await withTransaction(async (tx) => {
       // 1. Verify source ruleset exists and is published
       const { policy, ruleset } = await getReadableRuleset(tx, session, id);
       policy.canFork();
-
-      // 2. Verify name uniqueness
-      const existing = await Rulesets.findOne(tx, { name: body.name });
-      if (existing) throw new ConflictError("A ruleset with this name already exists");
 
       // canFork blocks forks-of-forks, so the parent is always a base —
       // ancestorRulesetIds is always [baseId].
@@ -65,15 +77,17 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
 
       // 4. Create the new forked ruleset
       const newRuleset = (
-        await Rulesets.create(tx, {
-          name: body.name,
-          description: body.description || ruleset.description,
-          userId: session.userId,
-          rulesetId: id,
-          ancestorRulesetIds,
-          baseRules: ruleset.baseRules,
-          private: body.private,
-        })
+        await this.withNameRefusal(() =>
+          Rulesets.create(tx, {
+            name: body.name,
+            description: body.description || ruleset.description,
+            userId: session.userId,
+            rulesetId: id,
+            ancestorRulesetIds,
+            baseRules: ruleset.baseRules,
+            private: body.private,
+          }),
+        )
       )[0];
 
       // The fork subscribes to its source's extensions, in their order
@@ -198,8 +212,9 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
         else if (kind === "extension") policy.canBeExtension();
       }
 
+      // A stale edit updates no row, so it's told it's stale before its name is checked
       const { updatedAt, ...columns } = body;
-      const rows = await Rulesets.update(tx, columns, { id, expectedUpdatedAt: updatedAt });
+      const rows = await this.withNameRefusal(() => Rulesets.update(tx, columns, { id, expectedUpdatedAt: updatedAt }));
       if (updatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
       const updatedRuleset = rows[0];
