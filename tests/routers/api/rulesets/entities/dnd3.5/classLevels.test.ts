@@ -149,6 +149,31 @@ describe("rulesets class levels", () => {
       await expectStatus(levels.$post({ param: classParam(id, classId), json: json as never }), 400);
   });
 
+  test("refuses a level its class already has, written since its view was read too", async () => {
+    const { id, classId } = await setup();
+    const post = (position: number) =>
+      levels.$post({ param: classParam(id, classId), json: { fields: { [CLASS_LEVEL_BAB]: 1 }, position } });
+    await expectOk(post(3));
+    expect(await (await expectStatus(post(3), 409)).json()).toMatchObject({
+      message: "Level Class already has a level 3",
+    });
+
+    // An inherited class's levels are its fork's: no copy of it is made
+    const { classMap } = await getSeedCtx();
+    const fighter = classParam(id, classMap.pc["Fighter"]);
+    const inherited = levels.$post({ param: fighter, json: { fields: { [CLASS_LEVEL_BAB]: 3 }, position: 3 } });
+    expect(await (await expectStatus(inherited, 409)).json()).toMatchObject({
+      message: "Fighter already has a level 3",
+    });
+    expect(await Entities.findOne(db, { entityType: "classes", name: "Fighter", rulesetId: id })).toBeUndefined();
+
+    // A level another save wrote after the view was read (the view cached without it) meets the database's index
+    await Entities.create(db, "class-levels", { ownerId: classId, position: 4 });
+    expect(await (await expectStatus(post(4), 409)).json()).toMatchObject({
+      message: "Level Class already has a level 4",
+    });
+  });
+
   test("returns 404 for a missing ruleset, class or level, a class or a level named in its rules' word", async () => {
     const { id, classId } = await setup();
     const missing = (word: string) => ({ message: `${word} not found in this ruleset` });

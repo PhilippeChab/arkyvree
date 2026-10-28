@@ -65,11 +65,14 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   override readonly type = "class-levels";
 
   /**
-   * Refuses a new level without its number (its `position`), or past the class's bounds (its fields refuse a save's
-   * base bonus past the rules').
+   * Refuses a new level without its number (its `position`), past the class's bounds (its fields refuse a save's base
+   * bonus past the rules'), or of a number the class already has (`taken`).
    */
   protected override checkForm({ position }: FormBody, _given: object, level?: KlassLevel) {
-    if (!level) RulesError.parse(LEVEL, position, ["position"]);
+    if (level) return;
+    const number = RulesError.parse(LEVEL, position, ["position"]);
+    const levels = this.dnd35.classLevelsByClass.get(this.klass.id) ?? [];
+    if (levels.some((held) => held.position === number)) throw new RulesError("conflict", this.taken(number));
   }
 
   /**
@@ -142,7 +145,8 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
 
   /**
    * A new level of the class: the class as the view has it, the level's row (its number, its `position`) and links,
-   * what its form writes beside them, and the level it answers once written, with the fields it keeps.
+   * what its form writes beside them, the level it answers once written, with the fields it keeps, and what it's
+   * refused with when another save gave the class its number first (`taken`).
    */
   override planCreate(form: EntityForm) {
     const plan = super.planCreate(form);
@@ -152,6 +156,7 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
       activity: { entityName: this.klass.name, level },
       owner: this.klass,
       row: { ...plan.row, position: level },
+      taken: this.taken(level),
     };
   }
 
@@ -195,6 +200,11 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     const nameOf = (link: ViewLink) => featsById.get(link.toId)?.name ?? "";
     const feats = links.filter(isFeat).toSorted((a, b) => nameOf(a).localeCompare(nameOf(b)));
     return [...feats, ...links.filter((link) => !isFeat(link))];
+  }
+
+  /** What a new level of a number the class already has (`level`) is refused with: "Fighter already has a level 3". */
+  private taken(level: number) {
+    return `${this.klass.name} already has a level ${level}`;
   }
 
   /**
