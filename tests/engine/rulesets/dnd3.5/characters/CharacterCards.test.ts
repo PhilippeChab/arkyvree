@@ -10,14 +10,14 @@ const DATA = {
   ]),
   classLevelsById: new Map(
     ["fighter", "rogue"].flatMap((classId) =>
-      [1, 2, 3].map((level) => [`${classId}-${level}`, { ownerId: classId, position: level }] as const),
+      [1, 2, 3].map((level) => [`${classId}-${level}`, { ownerId: classId }] as const),
     ),
   ),
   racesById: new Map([["elf", { name: "Elf" }]]),
 };
 
 describe("A 3.5 character's card", () => {
-  test("is its race's chip, which a partly seen character shows, then each class at its highest level", () => {
+  test("is its race's chip, which a partly seen character shows, then each class at the character's level in it", () => {
     const card = CharacterCards.describe(DATA, { links: { race: "elf" } }, [
       { entryId: "fighter-1" },
       { entryId: "rogue-1" },
@@ -30,6 +30,11 @@ describe("A 3.5 character's card", () => {
         { label: "Rogue 1", partial: false, tone: "primary" },
       ],
     });
+  });
+
+  test("counts a class's levels, whatever their class levels: a forced level may skip some", () => {
+    const card = CharacterCards.describe(DATA, { links: { race: "elf" } }, [{ entryId: "fighter-3" }]);
+    expect(card.chips.at(-1)?.label).toBe("Fighter 1");
   });
 
   test("names a race it doesn't read Unknown, skips a level it doesn't read, and has no class without levels", () => {

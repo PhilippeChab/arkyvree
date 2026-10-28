@@ -7,6 +7,7 @@ import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Characters, Modifiers, Picks } from "@/server/repositories/index.ts";
+import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { sheetOf } from "@/tests/support/dnd3.5/characters.ts";
@@ -1636,6 +1637,30 @@ describe("a character's last level", () => {
     expect(await levelsLeft(atLast)).toEqual(new Set([0]));
     expect(finalizeBatch(ctx, atLast, levelsOf("Rogue", [6]), {}, true)).rejects.toMatchObject(pastLastLevel(0));
     expect(await levelsLeft(await createFighterAt(ctx, 18))).toEqual(new Set([2]));
+  });
+});
+
+describe("a character's level in a class", () => {
+  test("counts its levels of the class, on its sheet, its card and in the class picker, when a forced level skips some", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
+    const fighterId = ctx.classMap.pc["Fighter"];
+    // Its first level, forced as Fighter 3, which gives no bonus feat: one level of the class, Fighter 3's
+    const [{ hp, skills }] = FIGHTER_LEVELS;
+    const feats = { General: ["Power Attack", "Great Fortitude"] };
+    await finalizeBatch(ctx, characterId, [["Fighter", 3, hp]], { skills, feats }, true);
+    const { name, summary } = await CharactersService.getCharacter(session, characterId);
+    const { items } = await CharactersService.getCharacters(session, { search: name }, { limit: 10, page: 1 });
+    const card = items.find(({ id }) => id === characterId);
+    const options = await getStepOptions(session, characterId, "class-plan", { steps: {} }, {}, { limit: 50 });
+    if (options.grouped) throw new Error("Expected the classes ungrouped");
+    const fighter = options.items.find(({ id }) => id === fighterId);
+    expect({
+      sheet: summary.tracks.map(({ label }) => label),
+      card: card?.chips.filter(({ tone }) => tone === "primary").map(({ label }) => label),
+      // The next level's own requirement, a fighter level past the one before, reads the count too
+      picker: { next: fighter?.track?.next, eligible: fighter?.eligible },
+    }).toEqual({ sheet: ["Fighter 1"], card: ["Fighter 1"], picker: { next: 2, eligible: true } });
   });
 });
 

@@ -1,6 +1,7 @@
 import type { CharacterInput, EntityRecord, OptionRow, PickerOption, StepOption } from "@/engine/core/module/index.ts";
 import { CharacterPicker } from "@/engine/core/pickers/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import ClassLevels from "@/engine/rulesets/dnd3.5/characters/ClassLevels.ts";
 import CharacterProjection from "@/engine/rulesets/dnd3.5/levelUp/CharacterProjection.ts";
 import type LevelUpPlan from "@/engine/rulesets/dnd3.5/levelUp/LevelUpPlan.ts";
 import type { PlannedSoFar } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
@@ -35,8 +36,8 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
   /** What the picker offers: a player character's classes (their partition, `pc`). */
   override readonly filters = { partitions: [PLAYER_CHARACTER_KIND] };
 
-  /** The character's highest level in each class it has levels of, by the class's id, once read. */
-  private maxLevels?: Map<string, number>;
+  /** The character's level in each class it has levels of, by the class's id, once read. */
+  private levelByClass?: Map<string, number>;
 
   /**
    * The class's place on its track: its next level, its last, and the levels the character can still take, whatever
@@ -105,20 +106,9 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
     return Dnd35View.of(this.rulesetData);
   }
 
-  /** The class's next level for the character: after its highest in the class. */
+  /** The class's next level for the character: one past its level in the class (`ClassLevels.countByClass`). */
   private nextLevelOf(klass: EntityRecord): KlassLevel | undefined {
-    this.maxLevels ??= this.readMaxLevels();
-    return this.dnd35.classLevelByClassAndLevel.get(`${klass.id}:${(this.maxLevels.get(klass.id) || 0) + 1}`);
-  }
-
-  /** The character's highest level in each class it has levels of, by the class's id. */
-  private readMaxLevels() {
-    const maxLevels = new Map<string, number>();
-    for (const level of this.input.rows.advancements) {
-      const classLevel = level.entryId === null ? undefined : this.dnd35.classLevelsById.get(level.entryId);
-      if (classLevel)
-        maxLevels.set(classLevel.ownerId, Math.max(maxLevels.get(classLevel.ownerId) ?? 0, classLevel.position));
-    }
-    return maxLevels;
+    this.levelByClass ??= ClassLevels.countByClass(this.dnd35.classLevelsById, this.input.rows.advancements);
+    return this.dnd35.classLevelByClassAndLevel.get(`${klass.id}:${(this.levelByClass.get(klass.id) ?? 0) + 1}`);
   }
 }
