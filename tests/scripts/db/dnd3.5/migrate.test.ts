@@ -1438,9 +1438,9 @@ describe("0100_level-order-requirements", () => {
       SELECT id FROM customization.modifiers ORDER BY id LIMIT 1
     `);
     const write = async (entityId: string, entityType: string, level: string, condition: string[] | string) => {
-      const [target, operator, value] = typeof condition === "string" ? [] : condition;
+      const [target, operator, value, type = "number"] = typeof condition === "string" ? [] : condition;
       const chaining = typeof condition === "string" ? condition : null;
-      const valueType = chaining ? null : "number";
+      const valueType = chaining ? null : type;
       const { rows } = await db.execute<{ id: string }>(sql`
         INSERT INTO customization.requirements
           (entity_id, entity_type, level, target, operator, value, value_type, chaining_operator)
@@ -1454,9 +1454,10 @@ describe("0100_level-order-requirements", () => {
     // As a level's save or the seeders wrote it, and of a class renamed since
     const written = await write(levelAt(2), "class-levels", "1", ["classes.fighter.level", "greater_than", "1"]);
     const renamed = await write(levelAt(3), "class-levels", "1", ["classes.warrior.level", "greater_than", "2"]);
-    // What differs from it: its value, its operator, its target, its level's place, its owner's type, its root, and a
-    // level holding it beside another requirement or under a group
+    // What differs from it: its value, its value's type, its operator, its target, its level's place, its owner's type,
+    // its root, and a level holding it beside another requirement or under a group
     await write(levelAt(4), "class-levels", "1", ["classes.fighter.level", "greater_than", "2"]);
+    await write(levelAt(10), "class-levels", "1", ["classes.fighter.level", "greater_than", "9", "string"]);
     await write(levelAt(5), "class-levels", "1", ["classes.fighter.level", "greater_than_or_equal", "4"]);
     await write(levelAt(6), "class-levels", "1", ["classes.fighter.bonuscasterlevel", "greater_than", "5"]);
     await write(levelAt(1), "class-levels", "1", ["classes.fighter.level", "greater_than", "0"]);
