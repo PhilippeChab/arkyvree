@@ -51,17 +51,13 @@ export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS
   }
 
   /**
-   * A page of the ruleset's feats, as its query asks for it: what it's read with (`filters`: a pool's feats, a
-   * family's), and its records described, with their pools as the ruleset composes them.
+   * A page of the ruleset's feats, as its query asks for it: what it's read with (`filters`: a pool's feats), and its
+   * records described, with their pools as the ruleset composes them.
    */
-  protected override listOf(where: Record<string, unknown> & { listedIn?: string }) {
-    const family = where[FEAT_FAMILY] as string | undefined;
+  protected override listOf(where: { listedIn?: string }) {
     return {
       describe: <T extends Pick<EntityRecord, "fields" | "id" | "links">>(rows: T[]) => this.describeListed(rows),
-      filters: {
-        ids: this.poolFeatIds(where.listedIn),
-        ...(family && { fields: { [FEAT_FAMILY]: family } }),
-      },
+      filters: { ids: this.poolFeatIds(where.listedIn) },
     };
   }
 

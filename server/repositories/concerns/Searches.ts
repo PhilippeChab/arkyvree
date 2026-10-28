@@ -1,4 +1,4 @@
-import { type Column, ilike, or, sql, type SQL, type Table } from "drizzle-orm";
+import { and, type Column, ilike, inArray, or, sql, type SQL, type Table } from "drizzle-orm";
 
 import type { Constructor } from "@/lib/mixins.ts";
 import type BaseRepository from "@/server/repositories/BaseRepository.ts";
@@ -23,6 +23,21 @@ export function Searches<B extends Constructor<BaseRepository<Table>>>(Base: B) 
         ...columns.map((column) => ilike(column, `%${search}%`)),
         sql`strict_word_similarity(${search}, ${columns[0]}) >= ${NAME_SIMILARITY}`,
       )!;
+    }
+
+    /**
+     * A search over the texts a row holds in another table (`held`: its rows naming it by `owner`, each its text in
+     * `text`, those whose `key` is one of `keys`: an entity's fields' values): the rows (`id`) one of them holds the text
+     * in. None without a search, or without a key.
+     */
+    protected heldSearch(
+      search: string | undefined,
+      id: Column,
+      held: { key: Column; keys: readonly string[]; owner: Column; text: Column },
+    ): SQL | false {
+      if (!search || held.keys.length === 0) return false;
+      const { key, keys, owner, text } = held;
+      return sql`${id} IN (SELECT ${owner} FROM ${owner.table} WHERE ${and(inArray(key, [...keys]), ilike(text, `%${search}%`))})`;
     }
 
     protected search(search: string | undefined, columns: Column[]): SQL | false {

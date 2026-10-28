@@ -208,9 +208,7 @@ describe("rules", () => {
       ["spells", { ...aptitudes, scope: "spells" }],
     ]);
     expect(dnd35.kinds.filter((each) => each.levels).map(({ type }) => type)).toEqual(["spells"]);
-    expect(dnd35.kinds.filter((each) => each.families).map(({ families, type }) => [type, families])).toEqual([
-      ["feats", { field: FEAT_FAMILY }],
-    ]);
+    expect(dnd35.kinds.filter((each) => each.families).map(({ type }) => type)).toEqual(["feats"]);
     expect(dnd35.kinds.filter((each) => each.wideForm).map(({ type, wideForm }) => [type, wideForm])).toEqual([
       ["spells", "fixed"],
       ["items", "fluid"],

@@ -83,7 +83,7 @@ describe("The rules' engine", () => {
         type,
         described: !!kind,
         copies: !!kind?.copies,
-        families: kind?.families,
+        families: !!kind?.families,
         levels: !!kind?.levels,
         lockedName: kind?.lockedName,
         partitioned: !!kind?.partitioned,
@@ -94,7 +94,7 @@ describe("The rules' engine", () => {
         type,
         described: true,
         ...capabilities,
-        families: capabilities.families,
+        families: !!capabilities.families,
         lockedName: capabilities.lockedName,
         pools: capabilities.pools,
       });
@@ -128,7 +128,8 @@ describe("The rules' engine", () => {
           writes: WRITES.map(() => !readOnly),
           copies: COPIES.map(() => copies),
           groups: !!families,
-          families: families && true,
+          // A family is no filter of its list: its groups' route opens one (`family`)
+          families: families && false,
           levels,
           partitioned,
           pools: roles.map((role) => pools?.role === role),

@@ -1,4 +1,4 @@
-import { and, count, eq, ilike, inArray, notInArray, or, type SQL, sql } from "drizzle-orm";
+import { and, count, eq, inArray, notInArray, or, type SQL, sql } from "drizzle-orm";
 import type { PgInsertValue } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
@@ -13,6 +13,7 @@ import {
 import {
   Engine,
   type EntityFilters,
+  type EntityGroupMember,
   type EntityRecord,
   type EntityWrite,
   type FieldValue,
@@ -205,11 +206,14 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     where: { search?: string; searchFields?: EntityFilters["searchFields"] },
     found: SQL | false,
   ): SQL | false {
-    const { search, searchFields = [] } = where;
-    if (!search || !found || searchFields.length === 0) return found;
     const fields = entityFieldsInRules;
-    const held = sql`${entitiesInRules.id} IN (SELECT ${fields.entityId} FROM ${fields} WHERE ${and(inArray(fields.field, [...searchFields]), ilike(fields.textValue, `%${search}%`))})`;
-    return or(found, held)!;
+    const held = this.heldSearch(where.search, entitiesInRules.id, {
+      key: fields.field,
+      keys: where.searchFields ?? [],
+      owner: fields.entityId,
+      text: fields.textValue,
+    });
+    return found && held ? or(found, held)! : found;
   }
 
   /** The order of a list by a character's advancements: its entities whose owned ones it advanced in highest first. */
@@ -280,7 +284,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     where: {
       conditions: (SQL | false)[];
       group?: string;
-      groups: { group: string; id: string }[];
+      groups: EntityGroupMember[];
       ids?: string[];
     },
     pagination: Pagination,
@@ -508,7 +512,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     db: Db,
     where: Omit<EntityListWhere, "fields" | "linkedBy" | "links" | "orderBy" | "orderDir" | "partitions"> & {
       family?: string;
-      groups: { group: string; id: string }[];
+      groups: EntityGroupMember[];
     },
     pagination: Pagination,
   ) {
@@ -612,11 +616,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
    * feat's family): the groups an entity is in are given (`groups`), and one in none is a row of its own. Each row is
    * its group's columns (`groupColumns`: its name an entity's alone, its group's), and its text.
    */
-  async findOptionGroupPage(
-    db: Db,
-    where: OptionWhere & { groups: { group: string; id: string }[] },
-    pagination: Pagination,
-  ) {
+  async findOptionGroupPage(db: Db, where: OptionWhere & { groups: EntityGroupMember[] }, pagination: Pagination) {
     return await this.readGroupPage(
       db,
       { conditions: this.buildOptionConditions(where), groups: where.groups },

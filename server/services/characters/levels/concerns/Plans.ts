@@ -62,19 +62,30 @@ export function Plans<B extends Constructor>(Base: B) {
               orderByAdvancementsOf: characterId,
               ...opened.picker.filters,
               search,
+              searchFields: opened.searchFields,
             };
             const result = await Entities.findPage<EntityRecord & { name: string }>(db, filters, pagination);
             const items = opened.picker.describeOptions(result.items);
             return { grouped: false as const, items, page: result.page, nextPage: result.nextPage };
           }
           case "groups": {
-            const filters = { entityType: opened.kind, ...opened.picker.groupFilters, search };
+            const filters = {
+              entityType: opened.kind,
+              ...opened.picker.groupFilters,
+              search,
+              searchFields: opened.searchFields,
+            };
             const result = await Entities.findOptionGroupPage(db, filters, pagination);
             const items = opened.picker.describeGroups(result.items);
             return { grouped: true as const, items, page: result.page, nextPage: result.nextPage };
           }
           case "options": {
-            const filters = { entityType: opened.kind, ...opened.picker.filters, search };
+            const filters = {
+              entityType: opened.kind,
+              ...opened.picker.filters,
+              search,
+              searchFields: opened.searchFields,
+            };
             const result = await Entities.findOptionPage(db, filters, pagination);
             const items = opened.picker.describeOptions(result.items);
             return { grouped: false as const, items, page: result.page, nextPage: result.nextPage };

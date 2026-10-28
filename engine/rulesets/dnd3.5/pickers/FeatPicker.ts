@@ -16,10 +16,9 @@ import LevelPicker from "./LevelPicker.ts";
 
 /**
  * A feat picker for the character, from its rows: the pool's feats (`filters`, a family's variants when the query names
- * one; `groupFilters`, grouped by family), a search finding one by its name or its family, but those that don't stack
- * it holds (`holder`: picked or granted at any of its levels, a later one and a planned one too, or made possessed by
- * its modifiers, the feats' and spells' picked so far too), or picked so far; a family's row described when the picker
- * opens it (`describeGroups`).
+ * one; `groupFilters`, grouped by family), but those that don't stack it holds (`holder`: picked or granted at any of its
+ * levels, a later one and a planned one too, or made possessed by its modifiers, the feats' and spells' picked so far
+ * too), or picked so far; a family's row described when the picker opens it (`describeGroups`).
  */
 export default class FeatPicker extends LevelPicker {
   constructor(view: RulesetView, input: CharacterInput, query: FeatPickQuery) {
@@ -31,8 +30,6 @@ export default class FeatPicker extends LevelPicker {
       fields: { [FEAT_SELECTABLE]: true },
       ids: Dnd35View.of(this.rulesetData).listFeatIds(query.aptitudeId),
       excludeIds: [...heldIds].filter((featId) => !rules.canTake(featId, heldIds)),
-      // A search finds a feat by its family too, as the ruleset's feats page does
-      searchFields: this.feats.searchFields,
     };
     const groups = this.feats.groupByFamily(offered.ids);
     // A family's feats are those its row groups, so the row counts what it opens to

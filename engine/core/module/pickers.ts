@@ -1,4 +1,4 @@
-import type { EntityFilters } from "./parts/entities/index.ts";
+import type { EntityFilters, EntityGroupMember } from "./parts/entities/index.ts";
 import type { StepOption, StepOptionGroup } from "./parts/levelUp/index.ts";
 import type { EntityRecord } from "./storage.ts";
 
@@ -32,23 +32,20 @@ export interface OptionRow {
 
 /**
  * What a page of a list's entities is read with: those of the list (`ids`), less those left out (`excludeIds`), of the
- * values of their fields (`fields`: a feat's selectable), and the fields a search finds one by as well as its name
- * (`searchFields`: a feat's family).
+ * values of their fields (`fields`: a feat's selectable).
  */
 export interface PickFilters {
   excludeIds: string[];
   fields?: EntityFilters["fields"];
   ids: string[];
-  searchFields?: EntityFilters["searchFields"];
 }
 
 /**
  * What a page of a list's groups is read with: the list's entities, less those left out, of the values of their
- * fields, searched as its entities are, and the group each one is in (`groups`, as the ruleset groups them): an entity
- * in none stands alone.
+ * fields, and the group each one is in (`groups`, as the ruleset groups them): an entity in none stands alone.
  */
 export interface PickGroupFilters extends PickFilters {
-  groups: { group: string; id: string }[];
+  groups: EntityGroupMember[];
 }
 
 /**

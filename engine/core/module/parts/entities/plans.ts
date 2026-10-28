@@ -98,6 +98,15 @@ export interface EntityFilters {
 }
 
 /**
+ * An entity of a kind's list in one of the groups its rules group them in (3.5's feat in a family it's a variant of):
+ * its id, and its group. An entity in several groups is one of these in each.
+ */
+export interface EntityGroupMember {
+  group: string;
+  id: string;
+}
+
+/**
  * An entity a plan removes with the one it writes (`type`, its kind, and its `id`): refused (`inUse`) while a
  * character of the ruleset picked it.
  */

@@ -16,6 +16,7 @@ import type {
   EntityDeletePlan,
   EntityEditPlan,
   EntityFilters,
+  EntityGroupMember,
   EntityRecord,
   EntityWrite,
   EntityWrites,
@@ -93,8 +94,8 @@ const COPY_ACTIONS: readonly EntityAction[] = ["duplicate", "templates", "varian
  * ruleset's page shows): an action it has none of it refuses as not found (`checkAction`): a read-only kind's writes
  * (`readOnly`: "No create for abilities"), the groups of a kind that lists none (`families`), a duplicate, variants and
  * templates of a kind that makes no copies (`copies`: "No templates for races"); its list's query takes the filters it
- * declares (`listFilters`, and those its `families`, `pools`, `levels` and `partitioned` add); and an edit refuses renaming an entity whose name
- * its kind locks (`lockedName`), in the words its form shows.
+ * declares (`listFilters`, and those its `pools`, `levels` and `partitioned` add); and an edit refuses renaming an
+ * entity whose name its kind locks (`lockedName`), in the words its form shows.
  */
 export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends Fields = NoFields> {
   constructor(protected readonly view: RulesetView) {}
@@ -103,9 +104,9 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
   protected static readonly copies: boolean = false;
 
   /**
-   * Its families (a feat's): the field that holds an entity's, which its list's query filters by and a search finds it
-   * by (`searchFields`), and the filters of a page of its groups (its variants under their family, `groupsOf`), by
-   * query key (a feat's pool). None for a kind that lists no groups.
+   * Its families (a feat's): the field that holds an entity's, which a search finds it by (`searchFields`), and the
+   * filters of a page of its groups (its variants under their family, `groupsOf`), by query key (a feat's pool). None
+   * for a kind that lists no groups.
    */
   protected static readonly families?: { field: string; groupFilters: z.ZodRawShape };
 
@@ -113,7 +114,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
   protected static readonly levels: boolean = false;
 
   /**
-   * Its list's filters past the shared ones and those its families, pools, tiers and partitions add, each by the field
+   * Its list's filters past the shared ones and those its pools, tiers and partitions add, each by the field
    * or the role it filters, and its value's schema: none.
    */
   protected static readonly listFilters: z.ZodRawShape = {};
@@ -140,12 +141,11 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
   protected static readonly readOnly: boolean = false;
 
   /**
-   * Its list's filters, by query key, each one at a time: its family's field, its pool's role, its tier (`tier`), its
-   * partition (`partition`), then its own (`listFilters`). A query's issues follow their order.
+   * Its list's filters, by query key, each one at a time: its pool's role, its tier (`tier`), its partition
+   * (`partition`), then its own (`listFilters`). A query's issues follow their order.
    */
   private static listShape(): z.ZodRawShape {
     return {
-      ...(this.families && { [this.families.field]: z.string() }),
       ...(this.pools && { [this.pools.role]: z.string().uuid() }),
       ...(this.levels && { tier: z.coerce.number() }),
       ...(this.partitioned && { partition: z.string() }),
@@ -344,7 +344,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
    * stands alone.
    */
   protected groupsOf(_where: Record<string, unknown>): {
-    groupFilters: { groups: { group: string; id: string }[]; ids?: string[] };
+    groupFilters: { groups: EntityGroupMember[]; ids?: string[] };
   } {
     return this.refuseAction("groups");
   }
