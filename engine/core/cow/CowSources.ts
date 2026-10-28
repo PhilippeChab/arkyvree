@@ -51,9 +51,12 @@ export default class CowSources {
    * (`getReads`' `owned`), which a copy of a kind that owns none has none of.
    */
   static getPairedOwnerIds(rows: Pick<CowRows, "ownNamesakes" | "snapshots">, owners: readonly string[]) {
+    // Sibling copies share their source: each id once
     return [
-      ...rows.snapshots.flatMap((snap) => [snap.sourceEntityId, snap.forkedEntityId]),
-      ...rows.ownNamesakes.filter((row) => owners.includes(row.entityType)).map((row) => row.id),
+      ...new Set([
+        ...rows.snapshots.flatMap((snap) => [snap.sourceEntityId, snap.forkedEntityId]),
+        ...rows.ownNamesakes.filter((row) => owners.includes(row.entityType)).map((row) => row.id),
+      ]),
     ];
   }
 
