@@ -208,14 +208,16 @@ through its transaction, never the cache: the second of two such writes checks
 what the first wrote. A subscribe and an unsubscribe lock every kind's, in the
 modules' order, and check the ruleset's extensions again on the row the lock
 read. A save that makes entities beside its own (3.5's generated feats) locks
-their kinds with its own, in one call, and checks their names too. One another
-save took since the save's view was read (a restore showing an inherited feat
-again, a subscribe, a create) has the save plan again, once, from the view read
-afresh (`EntityWriter.checkMade`), whose rules then make none of it, as when it
-runs after that save; a name the fresh plan still takes is refused. An edit that
-keeps its name and makes none locks nothing. The locks are the ruleset's own: a
-write to a ruleset of its source chain (its parent, an extension it subscribes
-to) checks no view built on that ruleset, so it waits on none of them.
+their kinds with its own, in one call, and checks their names too. A made name
+another save took since the save's view was read (a restore showing an inherited
+feat again, a subscribe, a create) rolls the save back, freeing its lock and its
+connection, and runs it again, once, on the ruleset's view read afresh
+(`MadeNameTaken`, `EntityWriter.inScope`), whose rules then make none of it, as
+when it runs after that save; a name the second run still takes is refused. An
+edit that keeps its name and makes none locks nothing. The locks are the
+ruleset's own: a write to a ruleset of its source chain (its parent, an
+extension it subscribes to) checks no view built on that ruleset, so it waits on
+none of them.
 
 A restore (`assertRestoreAvailable`, from `EntityRevert`) shows the source again
 under its name, as a rename back to it would: refused while the view shows another

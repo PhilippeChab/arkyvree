@@ -127,6 +127,8 @@ From `server/cow/index.ts`: `RulesetViews`, the class that holds the cache (`Rul
 | `RulesetViews.warm`               | Boot-time warm-up for pinned system rulesets. Called once from `server/main.ts`.                      |
 | `RulesetData` (type)              | Parameter / return type for scope callbacks and framework extension points.                           |
 
+A save whose plan made an entity of a name another save took since its view was read (3.5's generated feats: `MadeNameTaken`) invalidates its ruleset's view once its transaction rolled back, outside any uncommitted transaction, and runs again on the view read afresh (`EntityWriter.inScope`): the save that took the name drops the cached view only once it committed.
+
 `CowData`, the class `rulesetData.cow` is (`engine/core/cow/CowData.ts`), comes from `engine/index.ts` too.
 
 ### Framework / copy primitives

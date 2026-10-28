@@ -24,7 +24,7 @@ import {
   RulesetViews,
   withRulesetScope,
 } from "@/server/cow/index.ts";
-import { withTransaction, withUniqueRefusal } from "@/server/database/index.ts";
+import { db, withTransaction, withUniqueRefusal } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
   Entities,
@@ -106,9 +106,29 @@ function madeNamesOf(writes: EntityWrites | undefined): Map<RulesetEntityType, s
   return new Map([...byType].map(([type, made]) => [type, made.map((entity) => entity.row.name)]));
 }
 
-/** Refuses what a plan makes beside its entity under a name its view shows (`made`, by kind), by the locked `names`. */
+/**
+ * Refuses what a plan makes beside its entity under a name its view shows (`made`, by kind), by the locked `names`: as
+ * a name another save took since the save's view was read (`MadeNameTaken`), which runs the save again.
+ */
 async function assertMadeAvailable(tx: Db, names: EntityNames, made: Map<RulesetEntityType, string[]>) {
-  for (const [type, typeNames] of made) await names.assertNamesAvailable(tx, type, typeNames);
+  try {
+    for (const [type, typeNames] of made) await names.assertNamesAvailable(tx, type, typeNames);
+  } catch (error) {
+    if (error instanceof ConflictError) throw new MadeNameTaken(error);
+    throw error;
+  }
+}
+
+/**
+ * A name a save's plan makes an entity of beside its own (3.5's generated feat) that the view read under its lock
+ * shows: another save took it since the view the plan was made from was read (a restore, a subscribe, a create). Its
+ * save runs again, once, from a view read afresh (`EntityWriter.inScope`), whose rules then make none of it; a second
+ * one is the refusal it carries (`conflict`).
+ */
+class MadeNameTaken extends Error {
+  constructor(readonly conflict: ConflictError) {
+    super(conflict.message);
+  }
 }
 
 /**
@@ -134,47 +154,34 @@ export default class EntityWriter {
   ) {}
 
   /**
-   * The plan a save writes, and the scope it was made in, once what it makes is checked under its lock (`names`): the
-   * plan given, or, when another save took one of its made names since the scope's view was read, the plan made again
-   * (`replan`) from the view read afresh, whose rules then make none of it, as a save run after that one would. A name
-   * the fresh plan still takes is refused: it plans again once, no more.
-   */
-  private static async checkMade<P extends { writes?: EntityWrites }>(
-    tx: Db,
-    names: EntityNames,
-    scope: RulesetScope,
-    planned: P,
-    replan: (scope: RulesetScope) => P | Promise<P>,
-  ): Promise<{ planned: P; scope: RulesetScope }> {
-    try {
-      await assertMadeAvailable(tx, names, madeNamesOf(planned.writes));
-      return { planned, scope };
-    } catch (error) {
-      if (!(error instanceof ConflictError)) throw error;
-    }
-    // The save that took it drops the cached view only once committed: the cache may still hold the view before it
-    RulesetViews.invalidate(scope.ruleset.id);
-    const fresh = await withRulesetScope(tx, scope.ruleset.id, async (read) => read);
-    const replanned = await replan(fresh);
-    await assertMadeAvailable(tx, names, madeNamesOf(replanned.writes));
-    return { planned: replanned, scope: fresh };
-  }
-
-  /**
    * Runs a save in its transaction and its ruleset's scope, with the session's policy on it, if the session may read it
-   * (`withReadableRuleset`), the ruleset's views dropping what it changed.
+   * (`withReadableRuleset`), the ruleset's views dropping what it changed. A save whose plan makes an entity of a name
+   * another save took since its view was read (`MadeNameTaken`) runs again, once, after its transaction rolled back
+   * (its locks and its connection freed), on the ruleset's view read afresh, before its transaction opens: the save
+   * that took it drops the cached view only once committed. Taken again, the name is refused.
    */
   private static async inScope<T>(
     session: Session,
     rulesetId: string,
     save: (tx: Db, scope: RulesetScope, policy: RulesetsPolicy) => Promise<T>,
+    again = false,
   ): Promise<T> {
-    const result = await withTransaction(
-      async (tx) =>
-        await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => await save(tx, scope, policy)),
-    );
-    RulesetViews.invalidate(rulesetId);
-    return result;
+    try {
+      const result = await withTransaction(
+        async (tx) =>
+          await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => await save(tx, scope, policy)),
+      );
+      RulesetViews.invalidate(rulesetId);
+      return result;
+    } catch (error) {
+      if (!(error instanceof MadeNameTaken)) throw error;
+      if (again) throw error.conflict;
+      // Read afresh before its transaction opens, on a connection of its own: a read inside it would hold its
+      // connection while waiting on another, which saves waiting on its lock may all be holding
+      RulesetViews.invalidate(rulesetId);
+      await withRulesetScope(db, rulesetId, async () => undefined);
+      return await EntityWriter.inScope(session, rulesetId, save, true);
+    }
   }
 
   /**
@@ -294,23 +301,17 @@ export default class EntityWriter {
   }
 
   /**
-   * An edit's names (`planned`'s, in the scope it was made in), checked under their lock: a new name (`name`) kept free,
-   * as a create's is, and what its plan makes (`checkMade`, which may plan again: `replan`), its kind's names and those
-   * of the kinds it makes locked in one call. An edit that keeps its name and makes nothing locks none.
+   * An edit's names (`planned`'s, in the ruleset `rulesetId`), checked under their lock: a new name (`name`) kept free,
+   * as a create's is, and what its plan makes (`assertMadeAvailable`), its kind's names and those of the kinds it makes
+   * locked in one call. An edit that keeps its name and makes nothing locks none.
    */
-  private async checkEdit<P extends EntityEditPlan<PlannedEntity>>(
-    tx: Db,
-    scope: RulesetScope,
-    name: string,
-    planned: P,
-    replan: (scope: RulesetScope) => P | Promise<P>,
-  ): Promise<{ planned: P; scope: RulesetScope }> {
+  private async checkEdit(tx: Db, rulesetId: string, name: string, planned: EntityEditPlan<PlannedEntity>) {
     const renamed = name !== planned.entity.name;
     const made = madeNamesOf(planned.writes);
-    if (!renamed && made.size === 0) return { planned, scope };
-    const names = await EntityNames.lock(tx, scope.ruleset.id, [this.type, ...made.keys()]);
+    if (!renamed && made.size === 0) return;
+    const names = await EntityNames.lock(tx, rulesetId, [this.type, ...made.keys()]);
     if (renamed) await names.assertRenameAvailable(tx, this.type, name);
-    return await EntityWriter.checkMade(tx, names, scope, planned, replan);
+    await assertMadeAvailable(tx, names, made);
   }
 
   /** The entity's customizations, copied onto the new ones (`entities`) from `sourceId`'s. */
@@ -378,12 +379,11 @@ export default class EntityWriter {
       const draft = await plan(scope, { tombstoneAncestorId: null, tx });
       const names = await EntityNames.lock(tx, rulesetId, [this.type, ...madeNamesOf(draft.writes).keys()]);
       const { tombstoneAncestorId } = await names.assertNameAvailable(tx, this.type, name);
-      const replan = (from: RulesetScope) => plan(from, { tombstoneAncestorId, tx });
-      const given = tombstoneAncestorId ? await replan(scope) : draft;
-      const { planned, scope: current } = await EntityWriter.checkMade(tx, names, scope, given, replan);
+      const planned = tombstoneAncestorId ? await plan(scope, { tombstoneAncestorId, tx }) : draft;
+      await assertMadeAvailable(tx, names, madeNamesOf(planned.writes));
 
       const rows = [{ row: planned.row, tombstoneAncestorId }];
-      const [row] = await this.writeNew(tx, session, current, names, rows, planned);
+      const [row] = await this.writeNew(tx, session, scope, names, rows, planned);
       return planned.describe(row, await EntityLinks.findOwn(tx, row.id));
     });
   }
@@ -522,14 +522,13 @@ export default class EntityWriter {
     body: { name: string; updatedAt?: string },
     plan: (scope: RulesetScope, reads: { tx: Db }) => P | Promise<P>,
   ) {
-    return await EntityWriter.inScope(session, rulesetId, async (tx, opened, policy) => {
-      this.open(opened);
+    return await EntityWriter.inScope(session, rulesetId, async (tx, scope, policy) => {
+      const { ruleset, rulesetData } = scope;
+      this.open(scope);
       policy.canUpdateEntity();
 
-      const draft = await plan(opened, { tx });
-      const replan = (from: RulesetScope) => plan(from, { tx });
-      const { planned, scope } = await this.checkEdit(tx, opened, body.name, draft, replan);
-      const { ruleset, rulesetData } = scope;
+      const planned = await plan(scope, { tx });
+      await this.checkEdit(tx, rulesetId, body.name, planned);
       const { gone } = EntityWriter.getNotFound(ruleset, this.type);
       const target = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, this.type, planned.entity, gone);
       const row = await EntityNames.withNameRefusal(body.name, () =>

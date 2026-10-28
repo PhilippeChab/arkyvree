@@ -10,7 +10,7 @@ import type { InferInsertModel } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import type { rulesetsInRules } from "@/drizzle/schema.ts";
-import type { Aptitude, Feat } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { Aptitude } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -37,13 +37,15 @@ const COMMITTED_RULESET_IDS: string[] = [];
 
 const pool = createTestPool();
 
-/** How many feats of a name the ruleset's view shows. */
-async function countFeats(rulesetId: string, name: string) {
-  return await withRulesetScope(
-    db,
-    rulesetId,
-    async ({ rulesetData }) => Dnd35View.of(rulesetData).feats.filter((feat: Feat) => feat.name === name).length,
-  );
+/** The feat a spell of Evocation makes, unless its view shows it. */
+const SPELL_FOCUS = "Spell Focus: Evocation";
+
+/** How many entities of a kind its view shows under a name. */
+async function countNamed(rulesetId: string, kind: "aptitudes" | "feats", name: string) {
+  return await withRulesetScope(db, rulesetId, async ({ rulesetData }) => {
+    const entities: { name: string }[] = Dnd35View.of(rulesetData)[kind];
+    return entities.filter((entity) => entity.name === name).length;
+  });
 }
 
 /** A fork of `parentId`, written outside the test's transaction, the seed user's (`session`), with `values`. */
@@ -75,6 +77,25 @@ async function createCommittedRuleset(committed: Db, values: Partial<InferInsert
   });
   COMMITTED_RULESET_IDS.push(ruleset.id);
   return ruleset;
+}
+
+/**
+ * A fork whose parent has a spell list, the General feats' pool and Evocation's Spell Focus and Greater Spell Focus,
+ * and which deleted its copy of the Spell Focus (`source`), written outside the test's transaction: a spell of
+ * Evocation it saves makes the Spell Focus again, unless a restore shows the parent's.
+ */
+async function createCommittedSchoolFork(committed: Db) {
+  const parent = await createCommittedRuleset(committed, {});
+  const [wizard] = await Entities.create<Aptitude>(committed, "aptitudes", {
+    rulesetId: parent.id,
+    name: "Wizard Spells",
+  });
+  await Entities.create(committed, "aptitudes", { rulesetId: parent.id, name: "General" });
+  const [source] = await Entities.create(committed, "feats", { rulesetId: parent.id, name: SPELL_FOCUS });
+  await Entities.create(committed, "feats", { rulesetId: parent.id, name: `Greater ${SPELL_FOCUS}` });
+  const forked = await createCommittedFork(committed, parent.id);
+  await deleteCommittedCopy(committed, forked.fork.id, "feats", { id: source.id, name: SPELL_FOCUS });
+  return { ...forked, source, wizard };
 }
 
 /**
@@ -124,6 +145,7 @@ test("a create waiting on a restore that commits is refused the name the restore
     await deleteCommittedCopy(committed, forked.fork.id, "aptitudes", { id: aptitude.id, name });
     return { ...forked, source: aptitude };
   });
+  expect(await countNamed(fork.id, "aptitudes", name)).toBe(0);
 
   await runWhileLocked(
     pool,
@@ -137,42 +159,39 @@ test("a create waiting on a restore that commits is refused the name the restore
 });
 
 // A spell's save planned from the view read before its lock would make its school's Spell Focus, which a restore
-// another transaction committed shows again: planned again from the view read afresh, it makes none, and saves, as it
-// would once the restore ran.
-test("a spell create waiting on a restore of its school's Spell Focus saves without making it", async () => {
-  const focus = "Spell Focus: Evocation";
-  const { session, fork, source, wizard } = await withCommittedDb(async (committed) => {
-    const parent = await createCommittedRuleset(committed, {});
-    const [spells] = await Entities.create<Aptitude>(committed, "aptitudes", {
-      rulesetId: parent.id,
-      name: "Wizard Spells",
+// another transaction committed shows again: run again on the view read afresh, it makes none, and saves, as it would
+// once the restore ran.
+test.each(["create", "edit moving it to the school"] as const)(
+  "a spell's %s waiting on a restore of its school's Spell Focus saves without making it",
+  async (save) => {
+    const { session, fork, source, wizard, spellId } = await withCommittedDb(async (committed) => {
+      const school = await createCommittedSchoolFork(committed);
+      const [spell] = await Entities.create(committed, "spells", { rulesetId: school.fork.id, name: "Probe Bolt" });
+      return { ...school, spellId: spell.id };
     });
-    await Entities.create(committed, "aptitudes", { rulesetId: parent.id, name: "General" });
-    const [feat] = await Entities.create(committed, "feats", { rulesetId: parent.id, name: focus });
-    await Entities.create(committed, "feats", { rulesetId: parent.id, name: `Greater ${focus}` });
-    const forked = await createCommittedFork(committed, parent.id);
-    await deleteCommittedCopy(committed, forked.fork.id, "feats", { id: feat.id, name: focus });
-    return { ...forked, source: feat, wizard: spells };
-  });
-  const body = {
-    name: "Probe Bolt",
-    links: { listedIn: [{ toId: wizard.id }] },
-    fields: { [SPELL_SCHOOL]: "Evocation" },
-  };
+    const body = {
+      name: "Probe Bolt",
+      links: { listedIn: [{ toId: wizard.id }] },
+      fields: { [SPELL_SCHOOL]: "Evocation" },
+    };
 
-  const spell = await runWhileLocked(
-    pool,
-    async (blockerDb) => {
-      await RulesetEntities.lockNames(blockerDb, { entityTypes: ["feats"], rulesetId: fork.id });
-      await EntitySnapshots.delete(blockerDb, { rulesetId: fork.id, sourceEntityId: source.id });
-    },
-    () => EntitiesService.createEntity(session, fork.id, "spells", body),
-    "COMMIT",
-  );
-  expect(spell.name).toBe("Probe Bolt");
-  expect(await Entities.findOne(db, { entityType: "feats", rulesetId: fork.id, name: focus })).toBeUndefined();
-  expect(await countFeats(fork.id, focus)).toBe(1);
-});
+    const spell = await runWhileLocked(
+      pool,
+      async (blockerDb) => {
+        await RulesetEntities.lockNames(blockerDb, { entityTypes: ["feats"], rulesetId: fork.id });
+        await EntitySnapshots.delete(blockerDb, { rulesetId: fork.id, sourceEntityId: source.id });
+      },
+      () =>
+        save === "create"
+          ? EntitiesService.createEntity(session, fork.id, "spells", { ...body, name: "Probe Missile" })
+          : EntitiesService.updateEntity(session, fork.id, "spells", spellId, body),
+      "COMMIT",
+    );
+    expect(spell.fields).toMatchObject({ [SPELL_SCHOOL]: "Evocation" });
+    expect(await Entities.findOne(db, { entityType: "feats", rulesetId: fork.id, name: SPELL_FOCUS })).toBeUndefined();
+    expect(await countNamed(fork.id, "feats", SPELL_FOCUS)).toBe(1);
+  },
+);
 
 // A subscribe and an unsubscribe check the subscription again on the ruleset their lock reads: one another committed
 // while they waited is seen, as it would be one after the other.
