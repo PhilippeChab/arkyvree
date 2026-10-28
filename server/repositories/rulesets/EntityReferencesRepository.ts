@@ -14,12 +14,7 @@ import {
 } from "@/drizzle/schema.ts";
 import { toQualified } from "@/server/repositories/stored/toQualified.ts";
 
-import {
-  ENTITY_REFERENCES,
-  type EntityReference,
-  type ReferencedType,
-  type ReferenceOwner,
-} from "./entityReferences.ts";
+import { ENTITY_REFERENCES, type EntityReference, type ReferenceOwner } from "./entityReferences.ts";
 import type { RulesetEntityType } from "./entityTypes.ts";
 import { buildLineageCondition } from "./rulesetLineage.ts";
 
@@ -187,7 +182,7 @@ class EntityReferencesRepository {
    * extension), names one of `ids`: an in-use check. Archived characters count: one can be restored, and its picks must
    * still resolve.
    */
-  async exists(db: Db, where: { entityType: ReferencedType; ids: string[]; rulesetId: string }): Promise<boolean> {
+  async exists(db: Db, where: { ids: string[]; rulesetId: string }): Promise<boolean> {
     if (where.ids.length === 0) return false;
     for (const { column, owner } of ENTITY_REFERENCES)
       if (isCharacters(owner) && (await this.existsPick(db, column, owner, where))) return true;
@@ -260,9 +255,7 @@ class EntityReferencesRepository {
   async update(
     db: Db,
     values: { entityId: string },
-    where:
-      | { entityId: string; entityType: ReferencedType }
-      | { entityId: string; entityType: ReferencedType; rulesetId: string },
+    where: { entityId: string } | { entityId: string; rulesetId: string },
   ) {
     const rulesetId = "rulesetId" in where ? where.rulesetId : undefined;
     for (const reference of ENTITY_REFERENCES)

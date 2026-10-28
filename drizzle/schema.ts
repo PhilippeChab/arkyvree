@@ -946,13 +946,12 @@ export const entitySnapshotsInRules = rules.table(
       .primaryKey()
       .notNull(),
     rulesetId: uuid("ruleset_id").notNull(),
-    entityType: text("entity_type").notNull(),
     sourceEntityId: uuid("source_entity_id").notNull(),
     forkedEntityId: uuid("forked_entity_id").notNull(),
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
   },
   (table) => [
-    unique("entity_snapshots_ruleset_type_source_unique").on(table.rulesetId, table.entityType, table.sourceEntityId),
+    unique("entity_snapshots_ruleset_id_source_entity_id_key").on(table.rulesetId, table.sourceEntityId),
     index("entity_snapshots_source_entity_id_idx").using("btree", table.sourceEntityId.asc().nullsLast()),
     foreignKey({
       columns: [table.rulesetId],

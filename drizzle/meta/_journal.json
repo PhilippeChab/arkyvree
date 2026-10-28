@@ -694,6 +694,13 @@
       "when": 1793072641714,
       "tag": "0098_extensions-store",
       "breakpoints": true
+    },
+    {
+      "idx": 99,
+      "version": "7",
+      "when": 1793076241714,
+      "tag": "0099_snapshot-type",
+      "breakpoints": true
     }
   ]
 }

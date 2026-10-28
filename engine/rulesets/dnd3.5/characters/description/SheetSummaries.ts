@@ -2,11 +2,15 @@ import type { SheetSummary } from "@/engine/core/module/index.ts";
 import ClassLevels from "@/engine/rulesets/dnd3.5/characters/ClassLevels.ts";
 import { LEVEL_WORD } from "@/engine/rulesets/dnd3.5/ruleset/rules.ts";
 
-/** A 3.5 character's classes, as its sheet reads them: each its class, and its levels in it, in the order it took them. */
+/**
+ * A 3.5 character's classes, as its sheet reads them: each its class, the character's level in it, and its levels in
+ * it, in the order it took them.
+ */
 type SheetClasses = Record<
   string,
   {
     klass: { id: string; name: string };
+    level: number;
     levels: { advancement: { id: string }; classLevel: { position: number } }[];
   }
 >;
@@ -38,8 +42,8 @@ export default class SheetSummaries {
         removed: `${one} removed`,
         removeFailed: `Failed to remove ${oneLower}`,
       },
-      tracks: Object.values(classes).map(({ klass, levels }) => {
-        const label = ClassLevels.format(klass.name, levels.length);
+      tracks: Object.values(classes).map(({ klass, level, levels }) => {
+        const label = ClassLevels.format(klass.name, level);
         return {
           id: klass.id,
           entityType: "classes",

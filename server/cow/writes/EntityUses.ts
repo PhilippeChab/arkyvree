@@ -21,7 +21,7 @@ export default class EntityUses {
    */
   async isPicked(tx: Db, entityType: ReferencedType, entityId: string): Promise<boolean> {
     const ids = await Entities.findPickedIds(tx, { entityType, ids: this.cow.getEquivalentIds(entityId) });
-    return await EntityReferences.exists(tx, { entityType, ids, rulesetId: this.ruleset.id });
+    return await EntityReferences.exists(tx, { ids, rulesetId: this.ruleset.id });
   }
 
   /**
