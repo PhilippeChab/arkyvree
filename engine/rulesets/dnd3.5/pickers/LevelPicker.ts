@@ -41,9 +41,9 @@ export default abstract class LevelPicker<Details extends object = object> exten
    * one and their ability increases, then this class level with its own and the feats and spells picked so far.
    */
   protected override project() {
-    const { abilityIncreases, editedLevelId, planned = {} } = this.query;
+    const { abilityIncreases, editedLevel, planned = {} } = this.query;
     const projection = new CharacterProjection(this.input);
-    if (editedLevelId) projection.dropLevelsFrom(editedLevelId);
+    if (editedLevel) projection.dropLevelsFrom(editedLevel.id);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
     projection.addLevels(planned.classLevelIds ?? [], { abilityIncreases: planned.abilityIncreases, hp });
     projection.pick(projection.addLevel(this.classLevel.id, { abilityIncreases, hp }), planned.picks ?? []);
@@ -56,10 +56,9 @@ export default abstract class LevelPicker<Details extends object = object> exten
    * planned before it and before those planned after it.
    */
   private projectHolder() {
-    const { abilityIncreases, editedLevelId, laterClassLevelIds = [], planned = {} } = this.query;
+    const { abilityIncreases, editedLevel: replacing, laterClassLevelIds = [], planned = {} } = this.query;
     const projection = new CharacterProjection(this.input);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
-    const replacing = this.input.rows.advancements.find((level) => level.id === editedLevelId);
     projection.addLevels(planned.classLevelIds ?? [], { abilityIncreases: planned.abilityIncreases, hp });
     projection.pick(projection.addLevel(this.classLevel.id, { abilityIncreases, hp, replacing }), planned.picks ?? []);
     projection.addLevels(laterClassLevelIds, { hp });
@@ -75,8 +74,8 @@ export default abstract class LevelPicker<Details extends object = object> exten
    */
   protected get holder(): DetailedCharacter {
     // With no level edited or planned after it, it's the character the pick is made for
-    const { editedLevelId, laterClassLevelIds = [] } = this.query;
-    if (!editedLevelId && laterClassLevelIds.length === 0) return this.character;
+    const { editedLevel, laterClassLevelIds = [] } = this.query;
+    if (!editedLevel && laterClassLevelIds.length === 0) return this.character;
     return (this.heldBy ??= this.build(this.projectHolder().input));
   }
 }
