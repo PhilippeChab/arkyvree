@@ -18,6 +18,22 @@ import {
 } from "@/server/repositories/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 
+/** What an account is found by, besides its id: its email address or its username, each one account's alone. */
+type AccountIdentifier = { emailAddress: string } | { username: string };
+
+/** The refusal of an email address or a username another account holds, whichever path asks. */
+function toTakenError(identifier: AccountIdentifier) {
+  return new ConflictError(`${"username" in identifier ? "Username" : "Email address"} already in use`);
+}
+
+/**
+ * The account that holds an email address or a username, a deleted one too: a deleted account keeps both on their
+ * unique indexes (`users_email`, `users_username`), so neither is free for another account.
+ */
+async function findTakenUser(tx: Db, identifier: AccountIdentifier) {
+  return await Users.findOne(tx, identifier, Visibility.All);
+}
+
 /** A user as another's page shows them: their public columns (an owner, an invitee), never the rest of their account. */
 export function toPublicUser(user: Pick<InferSelectModel<typeof usersInAccount>, "emailAddress" | "id" | "username">) {
   return { id: user.id, username: user.username, emailAddress: user.emailAddress };
@@ -27,6 +43,11 @@ export function toPublicUser(user: Pick<InferSelectModel<typeof usersInAccount>,
 export function toSafeUser(user: InferSelectModel<typeof usersInAccount>) {
   const { passwordDigest, ...safeUser } = user;
   return { ...safeUser, hasPassword: !!passwordDigest };
+}
+
+/** Refuses an email address or a username an account holds, a deleted one too (`findTakenUser`). */
+export async function assertNotTaken(tx: Db, identifier: AccountIdentifier) {
+  if (await findTakenUser(tx, identifier)) throw toTakenError(identifier);
 }
 
 /**
@@ -94,12 +115,10 @@ export async function signInAsGoogleAccount(payload: { email: string; sub: strin
       return { session, user: toSafeUser(user) };
     }
 
-    // Case 2: Link existing account (same email). Visibility.All so the
-    // email of a deleted account is recognised as taken instead of falling
-    // through to Case 3 and hitting the users_email constraint.
-    const existingUser = await Users.findOne(tx, { emailAddress: email }, Visibility.All);
+    // Case 2: Link existing account (same email). A deleted account's email stays taken, never linked.
+    const existingUser = await findTakenUser(tx, { emailAddress: email });
 
-    if (existingUser?.deletedAt) throw new ConflictError("Email already in use");
+    if (existingUser?.deletedAt) throw toTakenError({ emailAddress: email });
 
     if (existingUser) {
       await OauthAccounts.create(tx, {

@@ -349,8 +349,31 @@ describe("AuthenticationService", () => {
       const { session: first } = await signUpAndVerify();
       await AccountService.updateProfile(first, "uniqueusername", undefined);
       const { session } = await signUpAndVerify();
-      expect(AccountService.updateProfile(session, undefined, taken.emailAddress)).rejects.toThrow(BadRequestError);
-      expect(AccountService.updateProfile(session, "uniqueusername", undefined)).rejects.toThrow(BadRequestError);
+      expect(AccountService.updateProfile(session, undefined, taken.emailAddress)).rejects.toThrow(ConflictError);
+      expect(AccountService.updateProfile(session, "uniqueusername", undefined)).rejects.toThrow(ConflictError);
+    });
+
+    test("refuses an email or a username a deleted account still holds, as signing up does", async () => {
+      const deleted = await signUpAndVerify();
+      const username = `deleted-${uniqueId()}`;
+      await AccountService.updateProfile(deleted.session, username, undefined);
+      const { session, user } = await signUpAndVerify();
+      const contested = `contested-${uniqueId()}@example.com`;
+      await AccountService.updateProfile(session, undefined, contested);
+      // The address the user is changing to goes to the other account, which is then deleted.
+      await Users.update(db, { emailAddress: contested }, { id: deleted.user.id });
+      await AccountService.deleteAccount(deleted.session, deleted.account.password);
+
+      const emailTaken = new ConflictError("Email address already in use");
+      expect(AccountService.updateProfile(session, username, undefined)).rejects.toEqual(
+        new ConflictError("Username already in use"),
+      );
+      expect(AccountService.updateProfile(session, undefined, contested)).rejects.toEqual(emailTaken);
+      expect(AccountService.verifyEmailChange(session, await findVerificationCode(user.id))).rejects.toEqual(
+        emailTaken,
+      );
+      expect(AuthenticationService.signUp(contested, deleted.account.password)).rejects.toEqual(emailTaken);
+      expect(signInAsGoogleAccount(googleAccount(contested))).rejects.toEqual(emailTaken);
     });
 
     test("refuses to confirm a new email with a wrong or expired code, without one pending, or once another account took it", async () => {
@@ -371,7 +394,7 @@ describe("AuthenticationService", () => {
         { emailAddress: contested, emailVerifiedAt: new Date().toISOString() },
         { id: other.user.id },
       );
-      expect(AccountService.verifyEmailChange(session, verification.code)).rejects.toThrow(BadRequestError);
+      expect(AccountService.verifyEmailChange(session, verification.code)).rejects.toThrow(ConflictError);
 
       await db
         .update(emailVerificationsInAccount)

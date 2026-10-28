@@ -1,25 +1,12 @@
 import { db, withTransaction } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
-import {
-  BadRequestError,
-  ConflictError,
-  EmailNotVerifiedError,
-  InternalError,
-  UnauthorizedError,
-} from "@/server/errors/index.ts";
+import { BadRequestError, EmailNotVerifiedError, InternalError, UnauthorizedError } from "@/server/errors/index.ts";
 import { hashPassword, verifyPassword } from "@/server/password.ts";
-import {
-  Activities,
-  EmailVerifications,
-  PasswordResets,
-  Sessions,
-  Users,
-  Visibility,
-} from "@/server/repositories/index.ts";
+import { Activities, EmailVerifications, PasswordResets, Sessions, Users } from "@/server/repositories/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session, User } from "@/shared/relations.ts";
 
-import { openSession, purgeDemoSessionUser, signInAsGoogleAccount, toSafeUser } from "./accounts.ts";
+import { assertNotTaken, openSession, purgeDemoSessionUser, signInAsGoogleAccount, toSafeUser } from "./accounts.ts";
 import { createCode, hasRecentCode, verifyCode } from "./codes.ts";
 import { verifyGoogleIdToken } from "./google.ts";
 
@@ -164,11 +151,7 @@ class AuthenticationService {
 
   async signUp(emailAddress: string, password: string) {
     const { user, code } = await withTransaction(async (tx) => {
-      // Visibility.All: a deleted account keeps its email on the (unique)
-      // users_email index, so re-registering with it must 409 here rather than
-      // sail past an unarchived-only check and blow up on the constraint.
-      const existingUser = await Users.findOne(tx, { emailAddress }, Visibility.All);
-      if (existingUser) throw new ConflictError("Email already in use");
+      await assertNotTaken(tx, { emailAddress });
 
       const rows = await Users.create(tx, { emailAddress, password });
       const user = rows[0];
