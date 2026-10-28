@@ -38,6 +38,8 @@ interface GroupExpansionProps {
   group: string;
   onPick: (option: StepOption) => void;
   plan: PlanRequest | undefined;
+  /** Its picker's search, which its members are read with too, as its count is */
+  search: string;
   step: string;
 }
 
@@ -80,10 +82,10 @@ const GROUP_PAGE = 50;
 /** The open pool's options, a page at a time. */
 const OPTIONS_PAGE = 20;
 
-/** A group's members, listed under its row once it expands, checked where its row was. */
-function GroupExpansion({ at, characterId, group, onPick, plan, step }: GroupExpansionProps) {
+/** A group's members, listed under its row once it expands, searched and checked where its row was. */
+function GroupExpansion({ at, characterId, group, onPick, plan, search, step }: GroupExpansionProps) {
   const query = useInfiniteQuery({
-    ...stepOptionsQuery(characterId, step, plan, { ...at, group }, "", GROUP_PAGE),
+    ...stepOptionsQuery(characterId, step, plan, { ...at, group }, search, GROUP_PAGE),
     placeholderData: keepPreviousData,
   });
   // A group's members are plain options, never groups
@@ -264,6 +266,7 @@ export function PickStep({ characterId, step, wizard }: PickStepProps) {
                     at={at}
                     group={group}
                     onPick={pickInto}
+                    search={debouncedSearch}
                   />
                 )}
               </Box>

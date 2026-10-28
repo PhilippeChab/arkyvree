@@ -279,7 +279,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
    * the groups an entity is in given (`groups`: a feat's families it's a variant of), one in none a row of its own; or,
    * of one group (`group`), its entities, each a row of its own. Each row is its group's columns (`groupColumns`), named
    * for its entity when it holds one, else for its group, in the order of its name, a search's best match first (its
-   * best entity's, as a list orders a search).
+   * best entity's, then its name's, as a list orders a search).
    */
   private async readGroupPage(
     db: Db,
@@ -315,7 +315,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
       // A group is a value or an entity alone: its smallest id is its own
       .orderBy(
         ...this.pageOrder(
-          this.searchOrderBy(search, SEARCH_COLUMNS, name, true),
+          this.searchOrderBy(search, SEARCH_COLUMNS, name, name),
           sql`min(${entitiesInRules.id}::text)`,
         ),
       )

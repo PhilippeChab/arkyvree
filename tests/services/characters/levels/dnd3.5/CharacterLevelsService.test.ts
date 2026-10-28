@@ -1056,6 +1056,8 @@ describe("LevelsService", () => {
       expect(names(await found("Power Atack"))).toContain("Power Attack");
       // Their descriptions say it, not their names
       expect(names(await found("dodge bonus"))).toEqual(expect.arrayContaining(["Dodge", "Mobility"]));
+      // Both families' names hold it: the one it names whole first
+      expect(names(await found("Weapon Focus")).slice(0, 2)).toEqual(["Weapon Focus", "Greater Weapon Focus"]);
       // Most of Weapon Focus's variants say it in their text, so its row counts those, and opens to them
       const search = "all attack rolls made with";
       const [weaponFocus] = (await found(search)).filter((r) => r.group === "Weapon Focus");

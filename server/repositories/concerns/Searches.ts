@@ -47,17 +47,20 @@ export function Searches<B extends Constructor<BaseRepository<Table>>>(Base: B) 
 
     /**
      * A searched list's order: what holds the text first, a name that does before a description, then the names closest
-     * to it, then the list's own order (`fallback`). A list of groups (`grouped`) orders each by its best row's.
+     * to it by their words, then whole (Power Attack before Favored Power Attack), then the list's own order
+     * (`fallback`). A list of groups orders each by its best row's, then by the name it shows (`groupName`) whole.
      */
-    protected searchOrderBy(search: string | undefined, columns: Column[], fallback: SQL, grouped = false): SQL {
+    protected searchOrderBy(search: string | undefined, columns: Column[], fallback: SQL, groupName?: SQL): SQL {
       if (!search) return fallback;
       const ilikeMatch = or(...columns.map((c) => ilike(c, `%${search}%`)))!;
       const nameIlikeMatch = ilike(columns[0], `%${search}%`);
       const holds = sql`CASE WHEN ${ilikeMatch} THEN 0 ELSE 1 END`;
       const nameHolds = sql`CASE WHEN ${nameIlikeMatch} THEN 0 ELSE 1 END`;
-      const nameSimilarity = sql`strict_word_similarity(${search}, ${columns[0]})`;
-      if (grouped) return sql`min(${holds}), min(${nameHolds}), max(${nameSimilarity}) DESC, ${fallback}`;
-      return sql`(${holds}), (${nameHolds}), ${nameSimilarity} DESC, ${fallback}`;
+      const wordSimilarity = sql`strict_word_similarity(${search}, ${columns[0]})`;
+      const nameSimilarity = sql`similarity(${search}, ${groupName ?? columns[0]})`;
+      if (groupName)
+        return sql`min(${holds}), min(${nameHolds}), max(${wordSimilarity}) DESC, ${nameSimilarity} DESC, ${fallback}`;
+      return sql`(${holds}), (${nameHolds}), ${wordSimilarity} DESC, ${nameSimilarity} DESC, ${fallback}`;
     }
   }
   return Searching;
