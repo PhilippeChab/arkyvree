@@ -7,7 +7,7 @@ import {
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
 import CharacterHandle from "./CharacterHandle.ts";
-import type { Module, Rest } from "./Modules.ts";
+import type { EntityType, Module, Rest } from "./Modules.ts";
 
 /** What its module answers of a character's level flows, past the view and the character the handle binds. */
 type Args<K extends keyof Module["levelUp"]> = Rest<Module["levelUp"][K], [RulesetView, CharacterInput]>;
@@ -57,10 +57,15 @@ export default class LevelUpEngine extends CharacterHandle {
     return this.module.levelUp.listSteps(this.view, this.input, editedLevelId !== undefined);
   }
 
-  /** Step `step`'s picker over the plan (`query`): the kind it reads a page of, and its picker. */
+  /**
+   * Step `step`'s picker over the plan (`query`): the kind it reads a page of, its picker, and the fields a search of
+   * that kind finds an entity by as well as its name (`searchFields`, its kind's: a feat's family), so a picker searches
+   * as its kind's list does.
+   */
   openStepPicker(step: string, query: StepPickerQuery) {
     const resolved = this.requests.resolveStepPicker(this.stepsOf(query.plan), step, query);
-    return this.module.levelUp.openStepPicker(this.view, this.input, step, resolved);
+    const opened = this.module.levelUp.openStepPicker(this.view, this.input, step, resolved);
+    return { ...opened, searchFields: this.module.entities.of(this.view, opened.kind as EntityType).searchFields };
   }
 
   /** What the character's children become as its stored levels make them, from their rows (`children`). */

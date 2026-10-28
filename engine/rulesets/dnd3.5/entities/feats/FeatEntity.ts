@@ -14,7 +14,10 @@ import { FEAT_FIELDS } from "./fields.ts";
 
 /** A feat as the ruleset has it: described with its customizations, listed by pool or family, saved by its rules. */
 export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS.fields> {
-  /** Its families: its family field, its groups a pool's families (the pool its `listedIn` links name). */
+  /**
+   * Its families: its family field, its groups a pool's feats grouped under the families they're variants of (the pool
+   * its `listedIn` links name).
+   */
   protected static override readonly families = { field: FEAT_FAMILY, groupFilters: { listedIn: z.string().uuid() } };
 
   /**
@@ -38,28 +41,23 @@ export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS
     this.refuseLists(listIds, this.dnd35.aptitudeIdsWithSpells, message);
   }
 
-  /** A page of the ruleset's feats' families, of a pool's feats when its query says (`listedIn`). */
+  /**
+   * A page of the ruleset's feats grouped by family, of a pool's feats when its query says (`listedIn`): each under the
+   * families it's a variant of (`groupByFamily`), as a picker groups them.
+   */
   protected override groupsOf(where: { listedIn?: string }) {
-    return {
-      groupFilters: {
-        groupField: FEAT_FAMILY,
-        ids: this.poolFeatIds(where.listedIn),
-      },
-    };
+    const ids = this.poolFeatIds(where.listedIn);
+    return { groupFilters: { groups: this.groupByFamily(ids ?? [...this.dnd35.featsById.keys()]), ids } };
   }
 
   /**
-   * A page of the ruleset's feats, as its query asks for it: what it's read with (`filters`: a pool's feats, a
-   * family's), and its records described, with their pools as the ruleset composes them.
+   * A page of the ruleset's feats, as its query asks for it: what it's read with (`filters`: a pool's feats), and its
+   * records described, with their pools as the ruleset composes them.
    */
-  protected override listOf(where: Record<string, unknown> & { listedIn?: string }) {
-    const family = where[FEAT_FAMILY] as string | undefined;
+  protected override listOf(where: { listedIn?: string }) {
     return {
       describe: <T extends Pick<EntityRecord, "fields" | "id" | "links">>(rows: T[]) => this.describeListed(rows),
-      filters: {
-        ids: this.poolFeatIds(where.listedIn),
-        ...(family && { fields: { [FEAT_FAMILY]: family } }),
-      },
+      filters: { ids: this.poolFeatIds(where.listedIn) },
     };
   }
 

@@ -6,6 +6,7 @@ export type {
   EntityDeletePlan,
   EntityEditPlan,
   EntityFilters,
+  EntityGroupMember,
   EntityRemoval,
   EntityWrites,
   LinkAddPlan,

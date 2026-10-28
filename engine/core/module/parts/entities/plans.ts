@@ -87,12 +87,23 @@ export interface EntityEditPlan<E = { id: string; name: string }> extends Entity
 /**
  * What a list of a kind's entities reads them by, past its ruleset's: the values of their fields (`fields`, one or one
  * of several each: 3.5's item's `ITEM_IS_TEMPLATE`, a feat's family), the targets of their single links (`links`, one
- * of several each: an item's template), their partition (`partitions`, one of: 3.5's race's `pc`).
+ * of several each: an item's template), their partition (`partitions`, one of: 3.5's race's `pc`), and the fields a
+ * search finds an entity by as well as its own columns (`searchFields`, a text it holds there: 3.5's feat's family).
  */
 export interface EntityFilters {
   fields?: Readonly<Record<string, FieldValue | readonly FieldValue[]>>;
   links?: Readonly<Record<string, readonly string[]>>;
   partitions?: readonly string[];
+  searchFields?: readonly string[];
+}
+
+/**
+ * An entity of a kind's list in one of the groups its rules group them in (3.5's feat in a family it's a variant of):
+ * its id, and its group. An entity in several groups is one of these in each.
+ */
+export interface EntityGroupMember {
+  group: string;
+  id: string;
 }
 
 /**

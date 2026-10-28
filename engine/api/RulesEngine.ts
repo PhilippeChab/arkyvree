@@ -167,7 +167,7 @@ export default class RulesEngine {
     const described: EntityKindDescription = {
       ...presentation,
       ...(capabilities.copies && { copies: this.copiesOf(type, words) }),
-      ...(capabilities.families && { families: capabilities.families }),
+      ...(capabilities.families && { families: true }),
       ...(capabilities.levels && { levels: true }),
       ...(links && { links }),
       ...(capabilities.lockedName && { lockedName: capabilities.lockedName }),

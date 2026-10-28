@@ -32,6 +32,7 @@ export type {
   EntityDeletePlan,
   EntityEditPlan,
   EntityFilters,
+  EntityGroupMember,
   EntityRecord,
   EntityRemoval,
   EntityWrite,

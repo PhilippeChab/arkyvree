@@ -86,6 +86,7 @@ export {
   type EntityDeletePlan,
   type EntityEditPlan,
   type EntityFilters,
+  type EntityGroupMember,
   type EntityKindsContract,
   type EntityRemoval,
   type EntityWrites,

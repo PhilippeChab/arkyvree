@@ -112,7 +112,7 @@ describe("rulesets entities by kind", () => {
     const list = (entityType: Segment, query: Record<string, string>) =>
       expectOk(kinds.$get({ param: { id, entityType }, query: { limit: "100", ...query } }));
 
-    // A new pool's feats, and its feats of a family: those alone
+    // A new pool's feats
     const pool = await expectOk(kinds.$post({ param: { id, entityType: "aptitudes" }, json: { name: "Test Pool" } }));
     const feat = (form: { fields?: Record<string, string[]>; name: string }) =>
       expectOk(
@@ -124,7 +124,6 @@ describe("rulesets entities by kind", () => {
     const focus = await feat({ name: "Test Focus", fields: { [FEAT_FAMILY]: [FEAT_FAMILIES[0]] } });
     const plain = await feat({ name: "Test Plain" });
     expect(ids(await list("feats", { listedIn: pool.id }))).toEqual([focus.id, plain.id].sort());
-    expect(ids(await list("feats", { listedIn: pool.id, [FEAT_FAMILY]: FEAT_FAMILIES[0] }))).toEqual([focus.id]);
     const groups = (query: Record<string, string>) =>
       expectOk(grouped.$get({ param: { id, entityType: "feats" }, query: { listedIn: pool.id, ...query } }));
     // Each group by its smallest id, which stands for it
@@ -156,7 +155,10 @@ describe("rulesets entities by kind", () => {
     expect(await refused.json()).toMatchObject({
       issues: [{ category: "tier", message: "races take no tier filter" }],
     });
+    // A family's field is no filter, of the list or its groups: the groups' route opens a family (`family`)
     const family = { [FEAT_FAMILY]: FEAT_FAMILIES[0] };
+    const listFamily = kinds.$get({ param: { id, entityType: "feats" }, query: family });
+    expect(await (await expectStatus(listFamily, 400)).json()).toMatchObject({ issues: [{ category: FEAT_FAMILY }] });
     const groupFamily = grouped.$get({ param: { id, entityType: "feats" }, query: family });
     expect(await (await expectStatus(groupFamily, 400)).json()).toMatchObject({ issues: [{ category: FEAT_FAMILY }] });
     await expectStatus(kinds.$get({ param: { id, entityType: "feats" }, query: { listedIn: "pool" } }), 400);

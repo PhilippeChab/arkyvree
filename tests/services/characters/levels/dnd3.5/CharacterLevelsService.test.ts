@@ -1024,6 +1024,28 @@ describe("LevelsService", () => {
       expect([...alone]).toEqual(expect.arrayContaining(["Lucky Break", "Good Karma"]));
     }, 30_000);
 
+    test("find a feat by its family as well as its name, so a family's search finds its every feat", async () => {
+      // Complete Scoundrel's 20 luck feats, Good Karma and Tempting Fate among them, which no name says
+      const ctx = await getSeedCtx();
+      const scoundrel = await findSeededRuleset(DND35_COMPLETE_SCOUNDREL_NAME);
+      const ruleset = await createSeededTestRuleset(SEED_USER_ID);
+      await subscribeTestRuleset(ruleset.id, [scoundrel.id]);
+      const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: ruleset.id });
+      const plan = levelUpPlan([planned(ctx.classMap.pc["Fighter"], 1)]);
+      const luck = names(
+        await Entities.findList<Feat>(db, {
+          entityType: "feats",
+          rulesetId: scoundrel.id,
+          fields: { [FEAT_FAMILY]: "Luck" },
+          order: "name",
+        }),
+      );
+      expect(luck).toHaveLength(20);
+
+      const found = names(await featGroups(session, characterId, plan, ctx.aptMap["General"], { search: "Luck" }));
+      expect(found).toEqual(expect.arrayContaining(luck));
+    }, 30_000);
+
     test("leave out a feat that a pending level grants", async () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx, "fighter", { xp: 3000 });

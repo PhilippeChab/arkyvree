@@ -67,10 +67,10 @@ const tableParams = entityParams.extend({ table: z.string() });
 /**
  * Every ruleset entity kind's routes, by its URL segment (`/rulesets/:id/entities/races`), each answered by its kind's
  * rules: its list, with its kind's filters past the shared ones (each by the field, the role or the partition it
- * filters: `partition`, `listedIn`…, which its rules read), its
- * page, its create, update and delete, and its kind's actions (its groups, its templates, a duplicate, variants), and
- * an entity's parts its kind may have: the entities it owns (a class's levels, and one by its id alone), the links it
- * edits (a class's skills), its progression and its tables.
+ * filters: `partition`, `listedIn`…, which its rules read), its page, its create, update and delete, and its kind's
+ * actions (its groups and a group's entities, `family`, its templates, a duplicate, variants), and an entity's parts
+ * its kind may have: the entities it owns (a class's levels, and one by its id alone), the links it edits (a class's
+ * skills), its progression and its tables.
  */
 export default new Hono<SessionContext>()
   .get(
@@ -107,17 +107,23 @@ export default new Hono<SessionContext>()
     validate("param", kindParams),
     validate(
       "query",
-      z.looseObject({ limit, page, search: z.string().optional(), childOnly: z.stringbool().optional() }),
+      z.looseObject({
+        limit,
+        page,
+        search: z.string().optional(),
+        childOnly: z.stringbool().optional(),
+        family: z.string().optional(),
+      }),
     ),
     async (c) => {
       const { id, entityType } = c.req.valid("param");
-      const { limit, page, search, childOnly, ...filters } = c.req.valid("query");
+      const { limit, page, search, childOnly, family, ...filters } = c.req.valid("query");
       return c.json(
         await EntitiesService.getEntityGroups(
           c.var.requestSession,
           id,
           entityType,
-          { search, childOnly, ...filters },
+          { search, childOnly, family, ...filters },
           { limit, page },
         ),
         200,

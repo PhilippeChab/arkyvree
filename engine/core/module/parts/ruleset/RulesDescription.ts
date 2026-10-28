@@ -44,17 +44,16 @@ export interface EntityKindDeclaration {
  * one's form says what each of its fields is for (`fieldHelp`: a class's), whether its form shows two fields side by
  * side in a wide dialog (`wideForm`: `fluid`, an item's; `fixed`, its height kept as its fields change, a spell's), the
  * pools its list narrows by (`pools`), the entities its page links one to (`links`: a class's skills), whether its list
- * narrows by a tier (`levels`: a spell's, by its level, `RulesDescription.tiers`, its query's `tier`), the field its list
- * groups an entity's variants under their family by (`families`: a feat's, its query's filter of that field), how its
- * row copies one (`copies`: an item's), and when its name
- * can't change (`lockedName`: while its own flag `field` holds, a generated feat's, its form saying why, `reason`). Its
- * word is its rules' (`RulesDescription.words`), and its URL's segment its type (`classes`, `class-levels`). Not the
- * kinds a race or a class is for (`entityKinds`).
+ * narrows by a tier (`levels`: a spell's, by its level, `RulesDescription.tiers`, its query's `tier`), whether its list
+ * groups an entity's variants under their family (`families`: a feat's), how its row copies one (`copies`: an
+ * item's), and when its name can't change (`lockedName`: while its own flag `field` holds, a generated feat's, its form
+ * saying why, `reason`). Its word is its rules' (`RulesDescription.words`), and its URL's segment its type (`classes`,
+ * `class-levels`). Not the kinds a race or a class is for (`entityKinds`).
  */
 export interface EntityKindDescription {
   copies?: EntityCopiesDescription;
   empty?: string;
-  families?: { field: string };
+  families?: boolean;
   fieldHelp?: boolean;
   help?: string;
   icon: string;
