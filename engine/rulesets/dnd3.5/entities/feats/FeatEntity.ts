@@ -6,6 +6,7 @@ import type { FormBody } from "@/engine/core/entities/index.ts";
 import type { EntityForm } from "@/engine/core/fields/index.ts";
 import type { EntityRecord } from "@/engine/core/module/index.ts";
 import ListedEntity from "@/engine/rulesets/dnd3.5/entities/ListedEntity.ts";
+import FeatRules from "@/engine/rulesets/dnd3.5/rules/FeatRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { FEAT_FAMILY, FEAT_GENERATED } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -84,14 +85,17 @@ export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS
 
   /**
    * The families these feats (`featIds`) are grouped in, as a picker's list of variants shows them: each of a feat's
-   * families its name starts with (`Weapon Focus: Longsword`'s Weapon Focus). A feat named for none stands alone.
+   * families it's a variant of (`FeatRules.variantOf`: `Weapon Focus: Longsword`'s Weapon Focus). A feat that's a
+   * variant of none stands alone.
    */
   groupByFamily(featIds: string[]) {
     return featIds.flatMap((featId) => {
       const feat = this.dnd35.featsById.get(featId);
       if (!feat) return [];
       const { families } = this.fields.read(feat);
-      return families.filter((family) => feat.name.startsWith(family)).map((family) => ({ group: family, id: featId }));
+      return families
+        .filter((family) => FeatRules.variantOf(feat.name, family) !== undefined)
+        .map((family) => ({ group: family, id: featId }));
     });
   }
 }
