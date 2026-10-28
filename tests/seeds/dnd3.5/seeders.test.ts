@@ -308,7 +308,7 @@ describe("Seeding", () => {
   });
 
   describe("a class", () => {
-    test("seeds its levels: base attack, saves, skill points, spell slots, picks, modifiers, granted feats and what it takes to reach each", async () => {
+    test("seeds its levels: base attack, saves, skill points, spell slots, picks, modifiers, granted feats, and what it takes to reach the first", async () => {
       const seeder = await freshSeeder({ named: true });
       const ctx = seeder.ctx;
       await seeder.seedAptitudes(["Test Class Feature", "Test Bonus Feat"]);
@@ -398,7 +398,7 @@ describe("Seeding", () => {
             slot(0, "uses", "add", 1),
             slot(1, "uses", "add", 1),
           ].sort(),
-          requirements: ["1 classes.testmage.level greater_than 1"],
+          requirements: [],
           feats: ["Test Evasion in Test Class Feature, free"],
         },
         {
@@ -411,7 +411,7 @@ describe("Seeding", () => {
             slot(2, "allowed", "add", 1),
             slot(2, "uses", "add", 1),
           ].sort(),
-          requirements: ["1 classes.testmage.level greater_than 2"],
+          requirements: [],
           feats: ["Test Bonus in Test Bonus Feat, free"],
         },
       ]);

@@ -4,7 +4,7 @@ import type { EntityWrites } from "@/engine/index.ts";
 import type { Aptitude, Feat, Klass, KlassLevel, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, EntityLinks, Requirements } from "@/server/repositories/index.ts";
+import { Entities, EntityLinks } from "@/server/repositories/index.ts";
 import EntityWriter from "@/server/services/rulesets/entities/EntityWriter.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
@@ -14,15 +14,6 @@ import { createTestClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { copyEntity, createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { CLASS_HD, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
-
-/** A requirement a plan writes beside an entity. */
-const REQUIREMENT = {
-  level: "1",
-  operator: "greater_than",
-  target: "classes.wizard.level",
-  value: "1",
-  valueType: "number",
-} as const;
 
 /** Writes that write nothing but what's given. */
 function writesOf(writes: Partial<EntityWrites>): EntityWrites {
@@ -51,17 +42,6 @@ async function deleteInheritedFeat() {
 }
 
 describe("EntityWriter.setParts: what a save writes past an entity's row", () => {
-  test("sets the requirement its plan writes on the entity", async () => {
-    const { entity, rulesetId } = await createSpell();
-
-    await withRulesetScope(db, rulesetId, async (scope) =>
-      EntityWriter.setParts(db, scope, entity, { writes: writesOf({ requirement: REQUIREMENT }) }, true),
-    );
-
-    const stored = await Requirements.findMany(db, { entityIds: [entity.entityId] });
-    expect(stored).toEqual([expect.objectContaining({ ...entity, ...REQUIREMENT })]);
-  });
-
   test("refuses removing an entity the ruleset doesn't have as that entity, not found", async () => {
     const { entity, rulesetId } = await createSpell();
     const removed = [{ id: crypto.randomUUID(), inUse: "In use", type: "spells" }];
@@ -145,7 +125,7 @@ describe("EntityWriter: an entity deleted since the view was read", () => {
 });
 
 describe("EntityWriter.createMany: several rows of one plan", () => {
-  test("writes each row as a create does: its name kept free, once in the list, its links, its requirement, its activity", async () => {
+  test("writes each row as a create does: its name kept free, once in the list, its links, its activity", async () => {
     const session = makeSession();
     const ruleset = await createSeededTestRuleset(session.userId);
     const general = (await Entities.findOne<Aptitude>(db, {
@@ -157,19 +137,14 @@ describe("EntityWriter.createMany: several rows of one plan", () => {
     const plan = {
       rows: [{ name: "Probe Feat One" }, { name: "Probe Feat Two" }],
       links: [{ role: "listedIn", toType: "aptitudes", links: [{ toId: general.id }] }],
-      writes: writesOf({ requirement: REQUIREMENT }),
     };
 
     const written = await new EntityWriter("feats").createMany(session, ruleset.id, () => plan);
 
     expect(written.map((row) => row.name)).toEqual(["Probe Feat One", "Probe Feat Two"]);
     for (const row of written) {
-      const entity = { entityId: row.id, entityType: "feats" };
       expect(await EntityLinks.findOwn(db, row.id)).toEqual([
         expect.objectContaining({ role: "listedIn", toId: general.id }),
-      ]);
-      expect(await Requirements.findMany(db, { entityIds: [row.id] })).toEqual([
-        expect.objectContaining({ ...entity, ...REQUIREMENT }),
       ]);
       expect(await activityTypes(session.userId, "feats", row.id)).toEqual(["createFeat"]);
     }

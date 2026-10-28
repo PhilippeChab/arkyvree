@@ -3,13 +3,12 @@
 import { z } from "zod";
 
 import { CustomizationPageEntity, type FormBody } from "@/engine/core/entities/index.ts";
-import type { EntityForm, PartialFieldValues } from "@/engine/core/fields/index.ts";
-import type { EntityRecord, EntityWrite, EntityWrites, LinkSet } from "@/engine/core/module/index.ts";
+import type { EntityForm } from "@/engine/core/fields/index.ts";
+import type { EntityRecord, EntityWrite, LinkSet } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { NamedLink, RulesetView, ViewLink } from "@/engine/core/view/index.ts";
 import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
-import ClassesPaths from "@/engine/rulesets/dnd3.5/model/classes/ClassesPaths.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
@@ -29,9 +28,9 @@ const LEVEL = z.number().int().min(1).max(RULESET_LIMITS.classLevel);
 
 /**
  * A class's levels (`klass`, as the view has it) as the ruleset describes them, each with all its links (`links`, as
- * its saves answer them too), and what a level's save writes beside its row: its fields, the feats it grants and its
- * saves' base bonuses (its `grants` and `baseBonus` links, `linksOf`), and its requirement of the class's previous
- * level. A level's number is its `position` on its class's.
+ * its saves answer them too), and what a level's save writes beside its row: its fields, and the feats it grants and
+ * its saves' base bonuses (its `grants` and `baseBonus` links, `linksOf`). A level's number is its `position` on its
+ * class's, which the levels are taken in (`LevelRules.findNextClassLevel`): a level requires none of the one before.
  */
 export default class ClassLevelEntity extends CustomizationPageEntity<
   "class-levels",
@@ -42,21 +41,6 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     private readonly klass: Klass,
   ) {
     super(view);
-  }
-
-  /**
-   * What a class's level (`level`, of the class named `className`) requires of it: past the first, the class's
-   * previous level (`classes.<slug>.level` above it), which a new level's save writes and the seeders write of theirs.
-   */
-  static planRequirement(className: string, level: number): EntityWrites["requirement"] {
-    if (level <= 1) return undefined;
-    return {
-      level: "1",
-      target: ClassesPaths.level(className),
-      value: (level - 1).toString(),
-      valueType: "number",
-      operator: "greater_than",
-    };
   }
 
   /** Its saves' base bonuses and the feats it grants, its base attack bonus and its skill points. */
@@ -112,22 +96,6 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   /** What a level's form writes of its row: nothing, a level has no name nor description (its number its `position`). */
   protected override storedOf(): EntityWrite {
     return {};
-  }
-
-  /**
-   * What saving a level writes beside its row (`level`: the one edited): made with a level past the class's first, its
-   * requirement of the class's previous level (`classes.<slug>.level` above it).
-   */
-  protected override writesOf(
-    body: FormBody,
-    _given: PartialFieldValues<typeof CLASS_LEVEL_FIELDS.fields>,
-    level?: KlassLevel,
-  ): EntityWrites {
-    const requirement =
-      !level && body.position !== undefined
-        ? ClassLevelEntity.planRequirement(this.klass.name, body.position)
-        : undefined;
-    return requirement ? { requirement } : {};
   }
 
   /** One of the class's levels with all its links and its customizations: refused when it isn't the class's. */
