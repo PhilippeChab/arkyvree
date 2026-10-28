@@ -25,7 +25,7 @@ A user can hold multiple roles for the same entity (e.g. owner of a ruleset they
 
 | Method | Allowed actors | Notes |
 |---|---|---|
-| `canUpdate` | owner, **Admin** | edits ruleset metadata (name, description, privacy, archive). Throws on base rulesets and Archived rulesets |
+| `canUpdate` | owner, **Admin** | edits ruleset metadata (name, description, privacy, archive). Throws on a ruleset without an owner (a base, or an orphan) and on Archived rulesets |
 | `canUpdateEntity` | owner, **Admin**, **Editor** | edits entity content (feats, items, classes, …). Same archive guard |
 | `canDeleteEntity({ inUse })` | owner, **Admin**, **Editor** | deletes individual entities. Throws if `inUse` (would orphan a character pick on this ruleset or any descendant fork). See [rulesets.md](./rulesets.md#what-inuse-means-in-entity-delete-services) |
 | `canPublish` | **owner only** | Draft → Published; can't be delegated to Admin |
@@ -71,7 +71,7 @@ Listing rulesets is enforced by the `findPage` scopes, not the policy. Every req
 | User fork as ruleset (`kind='ruleset'`) | ✓ | ✓ (if public) | – | – |
 | User fork as extension (`kind='extension'`) | – | – | ✓ (if public) | – |
 
-**A system ruleset is one `system` marks, not one without an owner.** Deleting an account leaves its rulesets without an owner (`Rulesets.orphan`), `system` still false. Such an orphaned ruleset is still a user's: the scopes list it by its privacy, a public one in `community` or `extensions`, a private one to its contributors and campaign members alone, and `RulesetsPolicy` reads it so: its contributors keep their role, though the edit checks refuse a ruleset without an owner. An extension subscribed to must be public unless it's a system one, so an orphaned private extension is refused.
+**A system ruleset is one `system` marks, not one without an owner.** Deleting an account leaves its rulesets without an owner (`Rulesets.orphan`), `system` still false. Such an orphaned ruleset is still a user's: the scopes list it by its privacy, a public one in `community` or `extensions`, a private one to its contributors and campaign members alone, and `RulesetsPolicy` reads it so: its contributors keep their role, so they read it, see its changes and its contributors, create characters, imports and campaigns on it, and leave it, though every edit, invite, publish and archive check refuses a ruleset without an owner. An extension subscribed to must be public unless it's a system one, so an orphaned private extension is refused.
 
 The character-creation wizard combines `published + campaignAccessible` (and historically `myDrafts`, now subsumed by `published` for owned/contributed drafts) to show the full eligible list. `myDrafts` is still useful as a focused "drafts I'm working on" filter.
 

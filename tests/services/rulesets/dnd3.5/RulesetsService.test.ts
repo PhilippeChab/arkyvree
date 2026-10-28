@@ -30,6 +30,7 @@ import {
   Rulesets,
   StarredRulesets,
 } from "@/server/repositories/index.ts";
+import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
@@ -252,14 +253,14 @@ describe("RulesetsService", () => {
     expect(RulesetsService.getRuleset(session, NIL_UUID)).rejects.toThrow(NotFoundError);
   });
 
-  test("reads a deleted account's private ruleset to its contributors, as it lists it to them", async () => {
+  test("reads a deleted account's private ruleset to its contributors, who may build on it", async () => {
     const { user: leaver } = await createTestUser();
     const { user: contributor, session } = await createTestUser();
     const { session: stranger } = await createTestUser();
     const base = await createTestRuleset(null, { private: false, status: "Published" });
     const ruleset = await createTestRuleset(leaver.id, { rulesetId: base.id, ancestorRulesetIds: [base.id] });
     await addRulesetContributor(ruleset.id, contributor, leaver.id);
-    await Rulesets.orphan(db, { userId: leaver.id });
+    const [orphaned] = await Rulesets.orphan(db, { userId: leaver.id });
 
     const { items } = await RulesetsService.getRulesets(session, { scope: "contributedTo" }, firstPage);
     expect(items.map((r) => r.id)).toEqual([ruleset.id]);
@@ -267,6 +268,7 @@ describe("RulesetsService", () => {
       id: ruleset.id,
       contributorRole: "Editor",
     });
+    expect((await RulesetsPolicy.for(db, session, orphaned)).canCreateCharacter()).toBe(true);
     expect(RulesetsService.getRuleset(stranger, ruleset.id)).rejects.toThrow(NotFoundError);
   });
 
