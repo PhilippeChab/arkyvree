@@ -29,7 +29,7 @@ export interface CowRows {
 /** A ruleset's id and where its inherited entities come from. */
 export interface RulesetSources {
   ancestorRulesetIds: string[];
-  extensionRulesetIds: string[];
+  extensionIds: string[];
   id: string;
 }
 
@@ -39,8 +39,8 @@ export default class CowSources {
    * Build the combined source chain for COW lookups:
    * extensions first (their new entities are visible), then ancestors.
    */
-  static buildSourceChain(ruleset: { ancestorRulesetIds: string[]; extensionRulesetIds: string[] }): string[] {
-    return [...ruleset.extensionRulesetIds, ...ruleset.ancestorRulesetIds];
+  static buildSourceChain(ruleset: { ancestorRulesetIds: string[]; extensionIds: string[] }): string[] {
+    return [...ruleset.extensionIds, ...ruleset.ancestorRulesetIds];
   }
 
   /**
@@ -71,7 +71,7 @@ export default class CowSources {
    */
   static getReads(ruleset: RulesetSources, kinds: CowKinds) {
     const chain = CowSources.buildSourceChain(ruleset);
-    const hasExtensions = ruleset.extensionRulesetIds.length > 0;
+    const hasExtensions = ruleset.extensionIds.length > 0;
     return {
       identities: { entityTypes: kinds.identities, rulesetIds: hasExtensions ? [ruleset.id, ...chain] : [] },
       owned: { entityTypes: kinds.owned },
@@ -79,7 +79,7 @@ export default class CowSources {
         entityTypes: hasExtensions && chain.length > 1 ? kinds.reprints : [],
         rulesetIds: chain,
       },
-      ownNamesakes: { rulesetId: ruleset.id, rulesetIds: hasExtensions ? ruleset.extensionRulesetIds : [] },
+      ownNamesakes: { rulesetId: ruleset.id, rulesetIds: hasExtensions ? ruleset.extensionIds : [] },
       snapshotRulesetIds: chain.length > 0 ? [ruleset.id, ...chain] : [],
     };
   }

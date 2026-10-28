@@ -122,14 +122,14 @@ export async function createSeededTestRulesetWithExtensions(userId: string) {
 /**
  * An empty private draft ruleset owned by `userId` (`null` for a system ruleset; with `system: false`, an orphaned one,
  * its owner's account deleted), of the base rules the seeded content is written for (3.5's), unless `values` names
- * others. Pass `rulesetId` and `ancestorRulesetIds` to make it a fork, and `extensionRulesetIds` the extensions it
+ * others. Pass `rulesetId` and `ancestorRulesetIds` to make it a fork, and `extensionIds` the extensions it
  * subscribes to, in their order. For one that already has the seeded content, use `createSeededTestRuleset`.
  */
 export async function createTestRuleset(
   userId: string | null,
-  values: Partial<InferInsertModel<typeof rulesetsInRules>> & { extensionRulesetIds?: string[] } = {},
+  values: Partial<InferInsertModel<typeof rulesetsInRules>> & { extensionIds?: string[] } = {},
 ) {
-  const { extensionRulesetIds = [], ...columns } = values;
+  const { extensionIds = [], ...columns } = values;
   const [ruleset] = await Rulesets.create(db, {
     name: `Test Ruleset ${uniqueId()}`,
     description: "Test ruleset description",
@@ -139,7 +139,7 @@ export async function createTestRuleset(
     system: userId === null,
     ...columns,
   });
-  return extensionRulesetIds.length > 0 ? await subscribeTestRuleset(ruleset.id, extensionRulesetIds) : ruleset;
+  return extensionIds.length > 0 ? await subscribeTestRuleset(ruleset.id, extensionIds) : ruleset;
 }
 
 /**

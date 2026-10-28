@@ -51,14 +51,14 @@ export default class CowDataBuilder {
   constructor(ruleset: RulesetSources) {
     this.rulesetId = ruleset.id;
     this.sourceChain = CowSources.buildSourceChain(ruleset);
-    this.extensionRulesetIds = ruleset.extensionRulesetIds;
+    this.extensionIds = ruleset.extensionIds;
   }
 
   /** A ruleset's `CowData`, from its rows: the stored ids the server reads, copy-on-write resolution off. */
   static build(ruleset: RulesetSources, rows: CowRows): CowData {
     const builder = new CowDataBuilder(ruleset);
     if (builder.sourceChain.length > 0) builder.load(rows);
-    if (builder.extensionRulesetIds.length > 0) {
+    if (builder.extensionIds.length > 0) {
       builder.pairIdentities(rows);
       builder.overrideOwnNamesakes(rows);
     }
@@ -69,7 +69,7 @@ export default class CowDataBuilder {
   /** Every stale id to the id that stands for it: the overrides and the sibling losers. */
   private readonly aliases = new Map<string, string>();
 
-  private readonly extensionRulesetIds: string[];
+  private readonly extensionIds: string[];
 
   /** True overrides: compose skips each source, with its customizations. */
   private readonly overrides = new Map<string, string>();
@@ -106,7 +106,7 @@ export default class CowDataBuilder {
     const byRuleset: SnapshotsByRuleset = Map.groupBy(rows.snapshots, (snap) => snap.rulesetId);
     this.overrideSnapshots(allRulesetIds, byRuleset);
 
-    const extensionSet = new Set(this.extensionRulesetIds);
+    const extensionSet = new Set(this.extensionIds);
     if (extensionSet.size > 0) this.pairSnapshotSiblings(allRulesetIds, byRuleset, extensionSet);
 
     if (extensionSet.size > 0 && this.sourceChain.length > 1) this.pairNamesakes(rows);

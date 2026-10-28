@@ -472,7 +472,7 @@ describe("EntitiesService: items", () => {
   test("refuses to delete an item in a character's inventory, even through a ruleset using it as an extension", async () => {
     const { user, session, ruleset: extension } = await createTestUserAndRuleset();
     const item = await EntitiesService.createEntity(session, extension.id, "items", { name: "Extension Item" });
-    const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
+    const host = await createTestRuleset(user.id, { extensionIds: [extension.id] });
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
     await CharacterInventory.create(db, { characterId: character.id, itemId: item.id, quantity: 1 });
 

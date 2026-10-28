@@ -334,7 +334,7 @@ describe("RulesetsService", () => {
       const extension = await createTestRuleset(null, { private: false, status: "Published", kind: "extension" });
       const parent = await createParent(owner.id, {
         description: "Parent description",
-        extensionRulesetIds: [extension.id],
+        extensionIds: [extension.id],
       });
       const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", { name: "General", rulesetId: parent.id });
       const feat = await EntitiesService.createEntity({ ...session, userId: owner.id }, parent.id, "feats", {
@@ -356,7 +356,7 @@ describe("RulesetsService", () => {
         userId: user.id,
         rulesetId: parent.id,
         ancestorRulesetIds: [parent.id],
-        extensionRulesetIds: [extension.id],
+        extensionIds: [extension.id],
         baseRules: parent.baseRules,
       });
       expect(

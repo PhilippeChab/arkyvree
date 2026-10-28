@@ -64,6 +64,7 @@ export type {
   StoredRuleset,
 } from "./core/module/index.ts";
 export { default as RulesError } from "./core/RulesError.ts";
+export type { RulesIssue } from "./core/RulesError.ts";
 export type {
   EntityCustomizations,
   OwnedKind,

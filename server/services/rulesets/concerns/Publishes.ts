@@ -12,10 +12,10 @@ import type { Ruleset, Session } from "@/shared/relations.ts";
 /** Publishing a ruleset: as one to fork, or as an extension. */
 export function Publishes<B extends Constructor>(Base: B) {
   abstract class Publishing extends Base {
-    protected assertCanBeExtension(ruleset: Pick<Ruleset, "rulesetId" | "extensionRulesetIds">) {
+    protected assertCanBeExtension(ruleset: Pick<Ruleset, "rulesetId" | "extensionIds">) {
       if (!ruleset.rulesetId) throw new UnprocessableEntityError("Only forks can be published as extensions");
 
-      if (ruleset.extensionRulesetIds.length > 0)
+      if (ruleset.extensionIds.length > 0)
         throw new UnprocessableEntityError("A ruleset that subscribes to extensions cannot itself be an extension");
     }
 
