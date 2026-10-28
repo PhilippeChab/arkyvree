@@ -1,6 +1,7 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
+import FeatRules from "@/engine/rulesets/dnd3.5/rules/FeatRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { FEAT_FAMILIES } from "@/vocabulary/dnd3.5/feats.ts";
@@ -68,11 +69,8 @@ export default class FeatGroupingsComponent extends CharacterComponent<LoadedCha
     for (const familyName of families) {
       const normalizedFamily = stripSeparators(familyName);
 
-      // Derive variant key: strip "Family: " prefix from feat name
-      const prefix = `${familyName}: `;
-      const variant = feat.name.startsWith(prefix)
-        ? stripSeparators(feat.name.slice(prefix.length))
-        : stripSeparators(feat.name);
+      // Keyed by its variant (Weapon Focus: Longsword's Longsword), else by its whole name (Lucky Break, a luck feat)
+      const variant = stripSeparators(FeatRules.variantOf(feat.name, familyName) ?? feat.name);
       // A variant named like the family's count stays out of the family
       if (variant === FAMILY_COUNT) continue;
 
