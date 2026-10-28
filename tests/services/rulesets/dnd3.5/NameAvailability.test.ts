@@ -1,22 +1,34 @@
-import { expect, test } from "bun:test";
+import { afterAll, expect, test } from "bun:test";
+
+import { sql } from "drizzle-orm";
 
 import type { Aptitude, Feat, Race } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
+import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
 import { ConflictError } from "@/server/errors/index.ts";
-import { Entities, EntitySnapshots, Rulesets } from "@/server/repositories/index.ts";
+import {
+  Entities,
+  EntitySnapshots,
+  RULESET_ENTITY_TYPES,
+  RulesetEntities,
+  type RulesetEntityType,
+  Rulesets,
+} from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
+import { runWhileLocked } from "@/tests/support/database.ts";
 import { findPlainItem } from "@/tests/support/dnd3.5/items.ts";
 import {
   copyEntity,
   createSeededTestRuleset,
   createSeededTestRulesetWithExtensions,
   createTestRuleset,
+  subscribeTestRuleset,
 } from "@/tests/support/rulesets.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -35,6 +47,8 @@ interface RenamedKind {
   rename: (session: Session, forkId: string, id: string, name: string) => Promise<unknown>;
   taken: (baseId: string) => Promise<string>;
 }
+
+const pool = createTestPool();
 
 /** Each kind a fork renames its own entity in: what it creates, renames, and the name of one of the core rules'. */
 const RENAMED_KINDS: Record<"aptitudes" | "feats" | "items" | "spells", RenamedKind> = {
@@ -97,6 +111,26 @@ async function publishExtension(rulesetId: string) {
   );
 }
 
+/**
+ * Runs `run` while another transaction holds the names of these kinds in these rulesets (`held`), which it mustn't wait
+ * on: a wait fails the test rather than hang it.
+ */
+async function runWhileNamesHeld(
+  held: { entityTypes: readonly RulesetEntityType[]; rulesetId: string }[],
+  run: () => Promise<unknown>,
+) {
+  const blocker = await pool.connect();
+  try {
+    await blocker.query("BEGIN");
+    for (const where of held) await RulesetEntities.lockNames(createTestDbFromClient(blocker), where);
+    await db.execute(sql`set local lock_timeout = '2s'`);
+    await run();
+  } finally {
+    await blocker.query("ROLLBACK");
+    blocker.release();
+  }
+}
+
 async function setup() {
   const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
@@ -110,6 +144,8 @@ async function setup() {
     (await Entities.findOne<Feat>(db, { entityType: "feats", name, rulesetId: baseId }))!;
   return { session, fork, baseId, general, baseFeat };
 }
+
+afterAll(() => pool.end());
 
 // A renamed local copy is still the override: inherited picks of the source
 // must keep resolving to it, and its snapshot must not move to a new entity
@@ -439,4 +475,100 @@ test("a name another save took since the check, which meets the index, is refuse
   const unrelated = new Error("not the index's");
   expect(EntityNames.withNameRefusal(name, () => Promise.reject(unrelated))).rejects.toBe(unrelated);
   expect(await Entities.findMany(db, { entityType: "aptitudes", rulesetIds: [rulesetId] })).toHaveLength(1);
+});
+
+// No index refuses a name the view shows of an inherited entity, whose row is its source ruleset's: two writes checking
+// at once (a restore and a create of its source's name) both passed, and the view showed the name twice. Each write
+// that takes a name waits on its kind's names in the ruleset (`EntityNames.lock`), then reads the view; the race itself
+// needs two of the app's connections, which a test's one transaction doesn't have. A test's lock lasts as long as its
+// transaction, so each sets up without taking the one its write waits on.
+test.each([
+  [
+    "create",
+    "feats",
+    async () => {
+      const { session, fork, general } = await setup();
+      const body = { name: "Probe Feat", links: { listedIn: [{ toId: general.id }] } };
+      return { fork, write: () => EntitiesService.createEntity(session, fork.id, "feats", body) };
+    },
+  ],
+  [
+    "variants' create",
+    "items",
+    async () => {
+      const { session, fork, baseId } = await setup();
+      const item = await findPlainItem(baseId);
+      const variants = [{ name: "Probe Variant" }];
+      return { fork, write: () => EntitiesService.createVariants(session, fork.id, "items", item.id, variants) };
+    },
+  ],
+  [
+    "rename",
+    "feats",
+    async () => {
+      const { session, fork, baseFeat } = await setup();
+      const { id } = await baseFeat("Alertness");
+      return { fork, write: () => EntitiesService.updateEntity(session, fork.id, "feats", id, { name: "Probe Feat" }) };
+    },
+  ],
+  [
+    "restore",
+    "feats",
+    async () => {
+      const { session, fork, baseFeat } = await setup();
+      const { id } = await baseFeat("Alertness");
+      await copyEntity(db, "feats", id, fork);
+      return { fork, write: () => RulesetChangesService.revertOverride(session, fork.id, "feats", id) };
+    },
+  ],
+  [
+    "subscribe",
+    "races",
+    async () => {
+      const { session, fork } = await setup();
+      const extension = await createSeededTestRuleset(session.userId);
+      await publishExtension(extension.id);
+      return { fork, write: () => RulesetExtensionsService.subscribeExtension(session, fork.id, [extension.id]) };
+    },
+  ],
+  [
+    "unsubscribe",
+    "races",
+    async () => {
+      const { session, fork } = await setup();
+      const extension = await createSeededTestRuleset(session.userId);
+      await publishExtension(extension.id);
+      await subscribeTestRuleset(fork.id, [extension.id]);
+      return { fork, write: () => RulesetExtensionsService.unsubscribeExtension(session, fork.id, extension.id) };
+    },
+  ],
+] as const)(
+  "a %s waits on the ruleset's names of its kind (%s) another transaction holds",
+  async (_, kind, prepare) => {
+    const { fork, write } = await prepare();
+    await runWhileLocked<unknown>(
+      pool,
+      (blockerDb) => RulesetEntities.lockNames(blockerDb, { entityTypes: [kind], rulesetId: fork.id }),
+      write,
+    );
+  },
+);
+
+test("an edit keeping its name waits on no names, and a create on no other kind's, nor another ruleset's", async () => {
+  const { session, fork, general, baseFeat } = await setup();
+  const { id } = await baseFeat("Toughness");
+  await runWhileNamesHeld([{ entityTypes: ["feats"], rulesetId: fork.id }], () =>
+    EntitiesService.updateEntity(session, fork.id, "feats", id, { name: "Toughness", description: "Local" }),
+  );
+
+  const others = RULESET_ENTITY_TYPES.filter((type) => type !== "feats");
+  const elsewhere = { entityTypes: ["feats"] as const, rulesetId: (await createTestRuleset(null)).id };
+  await runWhileNamesHeld([{ entityTypes: others, rulesetId: fork.id }, elsewhere], () =>
+    EntitiesService.createEntity(session, fork.id, "feats", {
+      name: "Probe Feat",
+      links: { listedIn: [{ toId: general.id }] },
+    }),
+  );
+  expect(await countNamed(fork.id, "feats", "Probe Feat")).toBe(1);
+  expect(await countNamed(fork.id, "feats", "Toughness")).toBe(1);
 });

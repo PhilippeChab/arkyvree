@@ -143,8 +143,8 @@ export async function createTestRuleset(
 }
 
 /**
- * A change to `ruleset`'s entities or customizations (`Edit`: `EntityEdit`, `CustomizationEdit`, `EntityNames`), as a
- * service makes it in its scope, outside one.
+ * A change to `ruleset`'s entities or customizations (`Edit`: `EntityEdit`, `CustomizationEdit`), as a service makes
+ * it in its scope, outside one.
  */
 export async function editRuleset<E>(Edit: new (ruleset: RulesetSources, cow: CowData) => E, ruleset: RulesetSources) {
   return new Edit(ruleset, await RulesetViews.getCowData(ruleset));

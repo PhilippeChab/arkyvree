@@ -6,7 +6,6 @@ import type { Aptitude, Feat, RulesetAbility, Skill } from "@/engine/rulesets/dn
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { ConflictError } from "@/server/errors/index.ts";
 import { Entities, EntitySnapshots, Modifiers, Picks, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createSeedCharacter } from "@/tests/support/dnd3.5/levelFixtures.ts";
@@ -120,6 +119,16 @@ async function featShape(featId: string) {
 
 async function findFeat(rulesetId: string, name: string) {
   return (await Entities.findOne<Feat>(db, { entityType: "feats", rulesetId, name }))!;
+}
+
+/** A fork of a published ruleset of its own (`parentId`), by a user of its own. */
+async function forkOf(parentId: string) {
+  await Rulesets.update(db, { status: "Published" }, { id: parentId });
+  const { user, session } = await createTestUser();
+  return {
+    session,
+    ruleset: await createTestRuleset(user.id, { rulesetId: parentId, ancestorRulesetIds: [parentId] }),
+  };
 }
 
 async function forkWithExtensions() {
@@ -273,16 +282,26 @@ describe("Spell Focus", () => {
     expect(await featNames(ruleset.id)).toEqual(["Greater Spell Focus: Evocation", "Spell Focus: Evocation"]);
   });
 
-  test("a school whose Greater Spell Focus the ruleset has of its own is refused as a taken name", async () => {
-    // Only the set's first feat, Spell Focus, is checked against the view: its second meets the name index
-    const { session, ruleset, spells } = await bareRuleset();
-    const greater = "Greater Spell Focus: Evocation";
-    await Entities.create(db, "feats", { name: greater, description: "", rulesetId: ruleset.id });
-    expect(
-      EntitiesService.createEntity(session, ruleset.id, "spells", spell(spells.id, "Fireball", "Evocation")),
-    ).rejects.toEqual(new ConflictError(`Name already exists in this ruleset: ${greater}`));
-    expect(await featNames(ruleset.id)).toEqual([greater]);
-  });
+  test.each(["its own", "its parent's"] as const)(
+    "a school whose Greater Spell Focus the ruleset shows, %s, gets only the Spell Focus it lacks",
+    async (holder) => {
+      const parent = await bareRuleset();
+      const greater = "Greater Spell Focus: Evocation";
+      await Entities.create(db, "feats", { name: greater, description: "", rulesetId: parent.ruleset.id });
+      const { session, ruleset } = holder === "its own" ? parent : await forkOf(parent.ruleset.id);
+
+      await EntitiesService.createEntity(
+        session,
+        ruleset.id,
+        "spells",
+        spell(parent.spells.id, "Fireball", "Evocation"),
+      );
+      expect(await featNames(ruleset.id)).toEqual([greater, "Spell Focus: Evocation"]);
+      expect(await findFeat(ruleset.id, "Spell Focus: Evocation")).toBeDefined();
+      expect((await findFeat(parent.ruleset.id, greater)).description).toBe("");
+      if (holder === "its parent's") expect(await findFeat(ruleset.id, greater)).toBeUndefined();
+    },
+  );
 });
 
 describe("Skill Focus", () => {
@@ -354,12 +373,7 @@ describe("Skill Focus", () => {
 
 test("a fork's new skills and spells put their feats in the General aptitude it inherits", async () => {
   const parent = await bareRuleset();
-  await Rulesets.update(db, { status: "Published" }, { id: parent.ruleset.id });
-  const { user, session } = await createTestUser();
-  const fork = await createTestRuleset(user.id, {
-    rulesetId: parent.ruleset.id,
-    ancestorRulesetIds: [parent.ruleset.id],
-  });
+  const { session, ruleset: fork } = await forkOf(parent.ruleset.id);
 
   await EntitiesService.createEntity(session, fork.id, "skills", skill(parent.strength.id, "Swim"));
   await EntitiesService.createEntity(

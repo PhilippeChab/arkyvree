@@ -1,11 +1,12 @@
 import type { Db } from "@/drizzle/database.ts";
-import { CowDataReader, EntityNames, EntityRevert, RulesetViews } from "@/server/cow/index.ts";
+import { EntityNames, EntityRevert, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import {
   Activities,
   EntityReferences,
   EntitySnapshots,
+  RULESET_ENTITY_TYPES,
   RulesetExtensions,
   Rulesets,
 } from "@/server/repositories/index.ts";
@@ -78,8 +79,9 @@ class RulesetExtensionsService {
         newExtensionIds.push(extensionId);
       }
 
-      // Its view would show no two entities of a name it shows one of, nor two the extensions bring
-      const names = new EntityNames(childRuleset, await CowDataReader.read(tx, childRuleset));
+      // Its view would show no two entities of a name it shows one of, nor two the extensions bring: the host's names
+      // of every kind locked, as its own writes lock theirs (an extension's writes check no view built on it)
+      const names = await EntityNames.lock(tx, id, RULESET_ENTITY_TYPES);
       await names.assertExtensionNamesAvailable(tx, newExtensionIds);
 
       // 3. The ruleset changes now, and subscribes to them after those it subscribes to, in their order. Its row's
@@ -110,6 +112,8 @@ class RulesetExtensionsService {
       policy.canUnsubscribeExtension();
 
       if (!ruleset.extensionIds.includes(extensionId)) throw new NotFoundError("Not subscribed to this extension");
+      // Every kind's names locked first: a restore reverting one of its copies commits before they're read
+      const names = await EntityNames.lock(tx, id, RULESET_ENTITY_TYPES);
 
       // 2. The fork's copies of the extension's entities: the snapshots whose source belongs to the extension (a snapshot
       // whose source is gone belongs to none)
@@ -125,7 +129,6 @@ class RulesetExtensionsService {
         ]),
       );
       // What the book hid shows again: its view would show no two entities of a name, as a subscribe's wouldn't
-      const names = new EntityNames(ruleset, await CowDataReader.read(tx, ruleset));
       await names.assertReturningNamesAvailable(tx, extensionId, [...copies.values()].flat());
       // What leaves with the book, each with what the fork's view shows in its place once it's gone, if anything
       const departures = await findDepartures(tx, ruleset, extensionId, copies);

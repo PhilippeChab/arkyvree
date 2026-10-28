@@ -22,7 +22,7 @@ export default abstract class GeneratedFeats {
   /** The pool the set's feats go in, by its slug. */
   protected abstract readonly poolSlug: string;
 
-  /** The feats `name` brings, the first its key: the set is made unless the view has a feat of its name. */
+  /** The feats `name` brings, the first its key: the set is made unless the view shows a feat of its name. */
   protected abstract featsOf(name: string): GeneratedFeat[];
 
   /** The generated feat named `featName` a plan removes, refused (`inUse`) while picked: none when the view has none. */
@@ -34,15 +34,20 @@ export default abstract class GeneratedFeats {
 
   /**
    * The feats `name` brings, as entities a plan makes in the set's pool: none when the ruleset has no such pool, or
-   * when its view shows the set's key feat (its own or its chain's; one it deleted, a tombstone hides, doesn't count).
+   * when its view shows the set's key feat, and of the others only those its view shows none of. A feat the view shows
+   * counts whoever has it, the ruleset or its chain, since a second of its name would show twice (one the ruleset
+   * deleted, a tombstone hides, doesn't count); a set whose key it shows makes none, so one of its other feats the
+   * ruleset deleted isn't made again.
    */
   make(name: string): MadeEntity[] {
     const { rulesetData } = this.view;
     const dnd35 = Dnd35View.of(rulesetData);
     const feats = this.featsOf(name);
     const aptitudeId = dnd35.aptitudeIdBySlug.get(this.poolSlug);
-    if (!aptitudeId || dnd35.feats.some((feat) => feat.name === feats[0]?.name)) return [];
-    return feats.map(({ description, fields, modifiers, name: featName, requirements }) => ({
+    const shown = new Set(dnd35.feats.map((feat) => feat.name));
+    if (!aptitudeId || (feats[0] && shown.has(feats[0].name))) return [];
+    const missing = feats.filter((feat) => !shown.has(feat.name));
+    return missing.map(({ description, fields, modifiers, name: featName, requirements }) => ({
       links: [{ links: [{ toId: aptitudeId }], role: "listedIn", toType: "aptitudes" }],
       modifiers,
       requirements,

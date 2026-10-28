@@ -112,6 +112,20 @@ class RulesetEntitiesRepository {
       )
       .orderBy(entitiesInRules.type, entitiesInRules.name, entitiesInRules.id);
   }
+
+  /**
+   * Locks the names of a ruleset's entities of these types (`entityTypes`) until its transaction ends: an advisory lock
+   * for each type, as a copy's is (`EntitySnapshots.lock`), since a name the ruleset's view shows may be no row of its
+   * own to lock (an inherited entity's row is its source's). Taken in the modules' order of the types, whatever order
+   * they're given in, so two writes that lock several never wait on each other both ways.
+   */
+  async lockNames(db: Db, where: { entityTypes: readonly RulesetEntityType[]; rulesetId: string }) {
+    for (const entityType of RULESET_ENTITY_TYPES) {
+      if (!where.entityTypes.includes(entityType)) continue;
+      const key = `names:${where.rulesetId}:${entityType}`;
+      await db.execute(sql`select pg_advisory_xact_lock(hashtextextended(${key}, 0))`);
+    }
+  }
 }
 
 export default RulesetEntitiesRepository;

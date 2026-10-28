@@ -268,18 +268,19 @@ export default class EntityWriter {
 
   /**
    * New entities of the kind in the scope's ruleset, each its row (`rows`), taking over the tombstone of a deleted copy
-   * of an ancestor of its name, the customizations its plan copies (`copyCustomizationsFrom`), then what its plan writes
-   * past its row (`setParts`) and its activity: every create's steps, in one order. Answers the rows written.
+   * of an ancestor of its name (by `names`, which checked them), the customizations its plan copies
+   * (`copyCustomizationsFrom`), then what its plan writes past its row (`setParts`) and its activity: every create's
+   * steps, in one order. Answers the rows written.
    */
   private async writeNew(
     tx: Db,
     session: Session,
     scope: RulesetScope,
+    names: EntityNames,
     rows: NewRow[],
     plan: SavedParts & { copyCustomizationsFrom?: string },
   ): Promise<Row[]> {
-    const { ruleset, rulesetData } = scope;
-    const names = new EntityNames(ruleset, rulesetData.cow);
+    const { ruleset } = scope;
     const written: Row[] = [];
     for (const { row, tombstoneAncestorId } of rows) {
       const [entity] = await EntityNames.withNameRefusal(row.name, () =>
@@ -309,15 +310,15 @@ export default class EntityWriter {
     plan: (scope: RulesetScope, reads: { tombstoneAncestorId: string | null; tx: Db }) => P | Promise<P>,
   ) {
     return await EntityWriter.inScope(session, rulesetId, async (tx, scope, policy) => {
-      const { ruleset, rulesetData } = scope;
       this.open(scope);
       policy.canUpdateEntity();
 
-      const names = new EntityNames(ruleset, rulesetData.cow);
+      const names = await EntityNames.lock(tx, rulesetId, [this.type]);
       const { tombstoneAncestorId } = await names.assertNameAvailable(tx, this.type, name);
       const planned = await plan(scope, { tombstoneAncestorId, tx });
 
-      const [row] = await this.writeNew(tx, session, scope, [{ row: planned.row, tombstoneAncestorId }], planned);
+      const rows = [{ row: planned.row, tombstoneAncestorId }];
+      const [row] = await this.writeNew(tx, session, scope, names, rows, planned);
       return planned.describe(row, await EntityLinks.findOwn(tx, row.id));
     });
   }
@@ -334,19 +335,18 @@ export default class EntityWriter {
     plan: (scope: RulesetScope) => P,
   ): Promise<Row[]> {
     return await EntityWriter.inScope(session, rulesetId, async (tx, scope, policy) => {
-      const { ruleset, rulesetData } = scope;
       this.open(scope);
       policy.canUpdateEntity();
       const planned = plan(scope);
 
       const given = planned.rows.flatMap((row) => row.name ?? []);
       if (new Set(given).size !== given.length) throw new ConflictError("A name is given twice in the list");
-      const names = new EntityNames(ruleset, rulesetData.cow);
+      const names = await EntityNames.lock(tx, rulesetId, [this.type]);
       const tombstones = await names.assertNamesAvailable(tx, this.type, given);
       const rows = planned.rows.map((row) => ({ row, tombstoneAncestorId: row.name && tombstones.get(row.name) }));
       // What each row writes beside it: its links and the customizations it copies, whatever else the plan carries
       const { copyCustomizationsFrom, links } = planned;
-      return await this.writeNew(tx, session, scope, rows, { copyCustomizationsFrom, links });
+      return await this.writeNew(tx, session, scope, names, rows, { copyCustomizationsFrom, links });
     });
   }
 
@@ -463,7 +463,10 @@ export default class EntityWriter {
       policy.canUpdateEntity();
 
       const planned = await plan(scope, { tx });
-      await new EntityNames(ruleset, rulesetData.cow).assertRenameAvailable(tx, this.type, planned.entity, body.name);
+      if (body.name !== planned.entity.name) {
+        const names = await EntityNames.lock(tx, rulesetId, [this.type]);
+        await names.assertRenameAvailable(tx, this.type, body.name);
+      }
       const { gone } = EntityWriter.getNotFound(ruleset, this.type);
       const target = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, this.type, planned.entity, gone);
       const row = await EntityNames.withNameRefusal(body.name, () =>

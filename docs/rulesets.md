@@ -197,6 +197,20 @@ An edit that keeps its entity's name checks none: an inherited entity's first ed
 copies it under its name, and a duplicate stored before the rename was checked
 stays editable. Names compare as written: a case-only change is a new name.
 
+The checks run one at a time in a ruleset. No index refuses a name the view shows
+of an inherited entity, whose row is its source ruleset's: two writes checking at
+once (a restore and a create of its source's name) would both pass, and the view
+would show the name twice, the inherited entity's first edit then meeting the
+name index. So a write that takes a name first locks the ruleset's names of its
+kind (`EntityNames.lock`: a transaction-scoped advisory lock per ruleset and kind,
+`RulesetEntities.lockNames`), then reads the ruleset's sources and its `CowData`
+through its transaction, never the cache: the second of two such writes checks
+what the first wrote. A subscribe and an unsubscribe lock every kind's, in the
+modules' order; an edit that keeps its name locks none. The locks are the
+ruleset's own: a write to a ruleset of its source chain (its parent, an extension
+it subscribes to) checks no view built on that ruleset, so it waits on none of
+them.
+
 A restore (`assertRestoreAvailable`, from `EntityRevert`) shows the source again
 under its name, as a rename back to it would: refused while the view shows another
 entity of it, unless the copy kept the source's name. A subscribe

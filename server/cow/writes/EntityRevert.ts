@@ -38,8 +38,8 @@ export default class EntityRevert {
   /**
    * Reverts the ruleset's copy of `sourceEntityId` (of `entityType`) to the source: a not found when the ruleset has
    * none. A copy deleted since (a tombstone) has nothing left naming it: its snapshot goes, and the source shows again.
-   * A restore, whose source shows again in the ruleset's view, keeps its name free there (`names`), as a rename does; an
-   * unsubscribe's revert gives none, its source leaving the view.
+   * A restore, whose source shows again in the ruleset's view, keeps its name free there (`names`, the kind's names
+   * locked before the copy is), as a rename does; an unsubscribe's revert gives none, its source leaving the view.
    */
   static async revert(
     tx: Db,

@@ -2,13 +2,14 @@ import type { Db } from "@/drizzle/database.ts";
 import type { CowData, RulesetSources } from "@/engine/index.ts";
 import CowDataReader from "@/server/cow/views/CowDataReader.ts";
 import { withUniqueRefusal } from "@/server/database/index.ts";
-import { ConflictError } from "@/server/errors/index.ts";
+import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import {
   Entities,
   EntitySnapshots,
   RULESET_ENTITY_TYPES,
   RulesetEntities,
   type RulesetEntityType,
+  Rulesets,
 } from "@/server/repositories/index.ts";
 
 /** An entity of a name, as stored: its id and its ruleset. */
@@ -27,19 +28,36 @@ function toOwnNameError(name: string) {
 }
 
 /**
- * The names a ruleset's composed view shows (`new EntityNames(ruleset, rulesetData.cow)`), which no change makes it show
- * twice: a new entity, a renamed one, a restored one, a subscribed extension's and one an unsubscribe shows again take a
- * name only when no other entity of their kind the view shows has it, the ruleset's own or an inherited one. An
+ * The names a ruleset's composed view shows (`EntityNames.lock(tx, rulesetId, entityTypes)`), which no change makes it
+ * show twice: a new entity, a renamed one, a restored one, a subscribed extension's and one an unsubscribe shows again
+ * take a name only when no other entity of their kind the view shows has it, the ruleset's own or an inherited one. An
  * inherited entity the view hides (overridden, or a sibling loser) doesn't block its name, and one whose local copy was
  * deleted left a tombstone snapshot, which a new entity of its name takes over (`repointTombstone`), so the inherited
- * one stays hidden. Its instance methods take the transaction; its static `withNameRefusal` runs a write that takes a
- * name, answering the name index as the checks do.
+ * one stays hidden. A write has them only by locking the names of the kinds it takes one of (`lock`), so two writes
+ * that would each take a name the other's leaves the view showing twice run one after the other, the second checking
+ * what the first wrote. Its instance methods take the transaction; its static `withNameRefusal` runs a write that takes
+ * a name, answering the name index as the checks do.
  */
 export default class EntityNames {
-  constructor(
+  private constructor(
     private readonly ruleset: RulesetSources,
     private readonly cow: CowData,
   ) {}
+
+  /**
+   * The names a ruleset's view shows (`rulesetId`), for a write that takes names of these kinds (`entityTypes`; a
+   * change to its extensions, every kind's): locked until its transaction ends (`RulesetEntities.lockNames`), then the
+   * ruleset's sources and its `CowData` read through it, as the write that held the lock before left them, never the
+   * cache's. No index refuses a name the view shows of an inherited entity, whose row is its source ruleset's: two
+   * writes checking at once (a restore and a create of its source's name) would both pass. A write to a ruleset of the
+   * source chain takes no lock of the ruleset's: it checks no view built on its own, in whatever order it runs.
+   */
+  static async lock(tx: Db, rulesetId: string, entityTypes: readonly RulesetEntityType[]): Promise<EntityNames> {
+    await RulesetEntities.lockNames(tx, { entityTypes, rulesetId });
+    const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
+    if (!ruleset) throw new NotFoundError("Ruleset not found");
+    return new EntityNames(ruleset, await CowDataReader.read(tx, ruleset));
+  }
 
   /**
    * Runs `write`, which gives an entity of the ruleset the name `name` (none: a row without one, which the index
@@ -181,18 +199,13 @@ export default class EntityNames {
   }
 
   /**
-   * Refuses renaming an entity (`entity`, as the view has it) to a name the view shows, as a create's is: the name it
-   * keeps is its own, whoever else has it (an inherited entity's first edit copies it under its name). A renamed entity
-   * takes over no tombstone: the copy it may be keeps its own snapshot, and the hidden ancestor of its new name stays
-   * hidden.
+   * Refuses renaming an entity to a name the view shows (`name`, another than its own), as a create's is: an edit that
+   * keeps its name checks none, the name being its own whoever else has it (an inherited entity's first edit copies it
+   * under its name). A renamed entity takes over no tombstone: the copy it may be keeps its own snapshot, and the hidden
+   * ancestor of its new name stays hidden.
    */
-  async assertRenameAvailable(
-    tx: Db,
-    entityType: RulesetEntityType,
-    entity: { name: string },
-    name: string,
-  ): Promise<void> {
-    if (name !== entity.name) this.refuseShown(await this.findNamed(tx, entityType, [name]));
+  async assertRenameAvailable(tx: Db, entityType: RulesetEntityType, name: string): Promise<void> {
+    this.refuseShown(await this.findNamed(tx, entityType, [name]));
   }
 
   /**
