@@ -44,6 +44,21 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     super(view);
   }
 
+  /**
+   * What a class's level (`level`, of the class named `className`) requires of it: past the first, the class's
+   * previous level (`classes.<slug>.level` above it), which a new level's save writes and the seeders write of theirs.
+   */
+  static planRequirement(className: string, level: number): EntityWrites["requirement"] {
+    if (level <= 1) return undefined;
+    return {
+      level: "1",
+      target: ClassesPaths.level(className),
+      value: (level - 1).toString(),
+      valueType: "number",
+      operator: "greater_than",
+    };
+  }
+
   /** Its saves' base bonuses and the feats it grants, its base attack bonus and its skill points. */
   protected override readonly fields = CLASS_LEVEL_FIELDS;
 
@@ -105,17 +120,11 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     _given: PartialFieldValues<typeof CLASS_LEVEL_FIELDS.fields>,
     level?: KlassLevel,
   ): EntityWrites {
-    const writes: EntityWrites = {};
-    if (!level && body.position !== undefined && body.position > 1) {
-      writes.requirement = {
-        level: "1",
-        target: ClassesPaths.level(this.klass.name),
-        value: (body.position - 1).toString(),
-        valueType: "number",
-        operator: "greater_than",
-      };
-    }
-    return writes;
+    const requirement =
+      !level && body.position !== undefined
+        ? ClassLevelEntity.planRequirement(this.klass.name, body.position)
+        : undefined;
+    return requirement ? { requirement } : {};
   }
 
   /** One of the class's levels with all its links and its customizations: refused when it isn't the class's. */
