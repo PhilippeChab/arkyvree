@@ -11,7 +11,7 @@ import { publishWsEvent } from "@/server/websockets/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 
 interface GeneratePdfPayload {
-  /** Set when a Game Master exports a character of their campaign. */
+  /** Set when the export is requested from a campaign: by its Game Master, or by a member who edits the character. */
   campaignId?: string;
   characterId: string;
   characterName: string;
