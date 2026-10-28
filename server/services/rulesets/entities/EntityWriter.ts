@@ -23,7 +23,7 @@ import {
   type RulesetScope,
   RulesetViews,
 } from "@/server/cow/index.ts";
-import { readUniqueViolation, withTransaction } from "@/server/database/index.ts";
+import { withTransaction, withUniqueRefusal } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
   Entities,
@@ -144,7 +144,9 @@ export default class EntityWriter {
    */
   private static async makeEntity(tx: Db, scope: RulesetScope, made: MadeEntity) {
     const type = entityTypeOf(made.type);
-    const [entity] = await Entities.create(tx, type, { ...made.row, rulesetId: scope.ruleset.id });
+    const [entity] = await EntityNames.withNameRefusal(made.row.name, () =>
+      Entities.create(tx, type, { ...made.row, rulesetId: scope.ruleset.id }),
+    );
     const written = { entityId: entity.id, entityType: type };
     await EntityWriter.setLinks(tx, written, made.links, false);
     await Modifiers.createMany(
@@ -280,7 +282,9 @@ export default class EntityWriter {
     const names = new EntityNames(ruleset, rulesetData.cow);
     const written: Row[] = [];
     for (const { row, tombstoneAncestorId } of rows) {
-      const [entity] = await Entities.create<Row>(tx, this.type, { ...row, rulesetId: ruleset.id });
+      const [entity] = await EntityNames.withNameRefusal(row.name, () =>
+        Entities.create<Row>(tx, this.type, { ...row, rulesetId: ruleset.id }),
+      );
       if (tombstoneAncestorId) await names.repointTombstone(tx, tombstoneAncestorId, entity.id);
       written.push(entity);
     }
@@ -364,10 +368,10 @@ export default class EntityWriter {
 
       const { gone } = EntityWriter.getNotFound(ruleset, this.type);
       const owner = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, this.type, planned.owner, gone);
-      const [row] = await Entities.create<Row>(tx, type, { ...planned.row, ownerId: owner.id }).catch((error) => {
-        if (readUniqueViolation(error) === OWNED_POSITION_INDEX) throw new ConflictError(planned.taken);
-        throw error;
-      });
+      const [row] = await withUniqueRefusal(
+        () => Entities.create<Row>(tx, type, { ...planned.row, ownerId: owner.id }),
+        (index) => (index === OWNED_POSITION_INDEX ? new ConflictError(planned.taken) : undefined),
+      );
       await EntityWriter.setParts(tx, scope, { entityId: row.id, entityType: type }, planned, false);
 
       await EntityWriter.recordActivity(tx, session, "create", type, row.id, planned.activity);
@@ -462,7 +466,9 @@ export default class EntityWriter {
       await new EntityNames(ruleset, rulesetData.cow).assertRenameAvailable(tx, this.type, planned.entity, body.name);
       const { gone } = EntityWriter.getNotFound(ruleset, this.type);
       const target = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, this.type, planned.entity, gone);
-      const row = await EntityWriter.updateRow(tx, this.type, planned.row, target, { gone, updatedAt: body.updatedAt });
+      const row = await EntityNames.withNameRefusal(body.name, () =>
+        EntityWriter.updateRow(tx, this.type, planned.row, target, { gone, updatedAt: body.updatedAt }),
+      );
       await EntityWriter.setParts(tx, scope, { entityId: target.id, entityType: this.type }, planned, true);
 
       await EntityWriter.recordActivity(tx, session, "update", this.type, target.id, {

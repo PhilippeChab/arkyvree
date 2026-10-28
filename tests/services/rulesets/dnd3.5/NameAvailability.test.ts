@@ -2,8 +2,9 @@ import { expect, test } from "bun:test";
 
 import type { Aptitude, Feat, Race } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
-import { db } from "@/server/database/index.ts";
+import { EntityNames, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { db, withTransaction } from "@/server/database/index.ts";
+import { ConflictError } from "@/server/errors/index.ts";
 import { Entities, EntitySnapshots, Rulesets } from "@/server/repositories/index.ts";
 import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
@@ -17,6 +18,7 @@ import {
   createSeededTestRulesetWithExtensions,
   createTestRuleset,
 } from "@/tests/support/rulesets.ts";
+import { uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import {
   ITEM_COST_GP,
@@ -421,4 +423,20 @@ test("subscribing to an extension that shows a name its view shows twice no more
   expect(await countNamed(host.id, "races", "Twin")).toBe(2);
   await RulesetExtensionsService.unsubscribeExtension(session, host.id, extension.id);
   expect(await countNamed(host.id, "races", "Twin")).toBe(2);
+});
+
+test("a name another save took since the check, which meets the index, is refused as the check refuses it", async () => {
+  // Two saves that take one name at once both pass the check: the second one's write meets the index.
+  const { id: rulesetId } = await createTestRuleset(null);
+  const name = `Taken ${uniqueId()}`;
+  await Entities.create(db, "aptitudes", { rulesetId, name });
+
+  expect(
+    withTransaction((tx) =>
+      EntityNames.withNameRefusal(name, () => Entities.create(tx, "aptitudes", { rulesetId, name })),
+    ),
+  ).rejects.toEqual(new ConflictError(`Name already exists in this ruleset: ${name}`));
+  const unrelated = new Error("not the index's");
+  expect(EntityNames.withNameRefusal(name, () => Promise.reject(unrelated))).rejects.toBe(unrelated);
+  expect(await Entities.findMany(db, { entityType: "aptitudes", rulesetIds: [rulesetId] })).toHaveLength(1);
 });
