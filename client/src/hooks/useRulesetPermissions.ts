@@ -4,33 +4,58 @@ import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { useIsDemo } from "./useIsDemo.ts";
 
 interface RulesetPermissions {
+  /** A fork that subscribes to no extension — can be published as an extension, or made one. */
+  canBeExtension: boolean;
   /** Owner, Admin, or Editor, while it isn't archived — can create, edit and delete its entities. */
   canEditEntities: boolean;
   /** Owner or Admin, while it isn't archived — can update ruleset name/description/privacy, archive. */
   canEditRuleset: boolean;
-  /** Owner or Admin, while it isn't archived — can invite contributors and change their roles. Demo users blocked. */
+  /** Anyone, on a published base ruleset — can fork it. */
+  canFork: boolean;
+  /** Owner or Admin, while it isn't archived — can invite contributors. Demo users blocked. */
   canInviteContributors: boolean;
   /** A contributor, but its owner — can leave it, archived or not. */
   canLeave: boolean;
-  /** Owner or Admin — can invite/remove contributors. Demo users blocked. */
+  /** Owner — can make a contributor an Admin, and change or remove an Admin. */
+  canManageAdminContributors: boolean;
+  /** Owner or Admin — can remove contributors, archived or not. Demo users blocked. */
   canManageContributors: boolean;
   /** Owner, while it's a draft. Demo users blocked. */
   canPublish: boolean;
-  isContributor: boolean;
+  /** Owner or a contributor — can see its contributors (and a contributor leave), archived or not. */
+  canReadContributors: boolean;
+  /** Owner, of a live fork that isn't an extension, nor subscribed to as one — can subscribe it to extensions. */
+  canSubscribeExtensions: boolean;
+  /** Owner, while it's archived — can unarchive it. */
+  canUnarchive: boolean;
+  /** Owner, of a live fork — can unsubscribe it from an extension, unless a character uses what would leave. */
+  canUnsubscribeExtensions: boolean;
+  /** Owner or Admin, while it isn't archived — can change its contributors' roles. */
+  canUpdateContributorRoles: boolean;
+  /** Anyone, on a public ruleset; the owner and contributors, on a private one — can see its local changes. */
+  canViewChanges: boolean;
   isOwner: boolean;
 }
 
-/** The fields permissions depend on: what the server allows on the ruleset (`permissions`), its owner and the role. */
-type RulesetData = Pick<RulesetDetail, "contributorRole" | "permissions" | "userId">;
+/** The fields permissions depend on: what the server allows on the ruleset (`permissions`), and its owner. */
+type RulesetData = Pick<RulesetDetail, "permissions" | "userId">;
 
 const NONE: RulesetPermissions = {
+  canBeExtension: false,
   canEditEntities: false,
   canEditRuleset: false,
+  canFork: false,
   canInviteContributors: false,
   canLeave: false,
+  canManageAdminContributors: false,
   canManageContributors: false,
   canPublish: false,
-  isContributor: false,
+  canReadContributors: false,
+  canSubscribeExtensions: false,
+  canUnarchive: false,
+  canUnsubscribeExtensions: false,
+  canUpdateContributorRoles: false,
+  canViewChanges: false,
   isOwner: false,
 };
 
@@ -50,7 +75,6 @@ export function useRulesetPermissions(ruleset: RulesetData | undefined): Ruleset
     canInviteContributors: permissions.canInviteContributors && !isDemo,
     canManageContributors: permissions.canManageContributors && !isDemo,
     canPublish: permissions.canPublish && !isDemo,
-    isContributor: !!ruleset.contributorRole,
     isOwner: ruleset.userId === currentUserId,
   };
 }

@@ -30,11 +30,19 @@ export function RulesetContributorsDialog({ ruleset, open, onClose }: RulesetCon
   const snackbar = useSnackbar();
   // An archived ruleset refuses invites and role changes, as the server does, but who manages its contributors still
   // removes one, and a contributor still leaves
-  const { isOwner, canInviteContributors, canLeave, canManageContributors } = useRulesetPermissions(ruleset);
-  // Only the owner may grant Admin
-  const assignableRoles: ContributorRole[] = isOwner ? ["Admin", "Editor", "Viewer"] : ["Editor", "Viewer"];
-  // Only the owner can change or remove an Admin
-  const outranks = (contributor: Contributor) => isOwner || contributor.role !== "Admin";
+  const {
+    canInviteContributors,
+    canLeave,
+    canManageAdminContributors,
+    canManageContributors,
+    canUpdateContributorRoles,
+  } = useRulesetPermissions(ruleset);
+  // Who manages Admins (the owner) grants Admin
+  const assignableRoles: ContributorRole[] = canManageAdminContributors
+    ? ["Admin", "Editor", "Viewer"]
+    : ["Editor", "Viewer"];
+  // And changes or removes an Admin
+  const outranks = (contributor: Contributor) => canManageAdminContributors || contributor.role !== "Admin";
 
   // The contributor whose role is being edited; the role itself lives in roleForm
   const roleDialog = useDialogState<string>();
@@ -68,7 +76,7 @@ export function RulesetContributorsDialog({ ruleset, open, onClose }: RulesetCon
         canRemove={canManageContributors ? outranks : undefined}
         roles={assignableRoles}
         rowActions={(contributor) =>
-          canInviteContributors &&
+          canUpdateContributorRoles &&
           outranks(contributor) &&
           contributor.status === "Active" && (
             <RowAction

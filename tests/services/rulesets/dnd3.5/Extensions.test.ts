@@ -549,7 +549,12 @@ describe("subscribing to an extension", () => {
     await RulesetsService.publishRuleset(other, homebrew.id, { kind: "extension" });
     await RulesetExtensionsService.subscribeExtension(session, (await forkBase(session)).id, [homebrew.id]);
     expect(RulesetExtensionsService.subscribeExtension(other, homebrew.id, [extension.id])).rejects.toThrow(
-      UnprocessableEntityError,
+      "Extensions cannot subscribe to other extensions",
+    );
+    // Made a playable ruleset again, it's still subscribed to as an extension
+    await RulesetsService.updateRuleset(other, homebrew.id, { name: homebrew.name, description: "", kind: "ruleset" });
+    expect(RulesetExtensionsService.subscribeExtension(other, homebrew.id, [extension.id])).rejects.toThrow(
+      "Cannot subscribe to extensions while this ruleset is being used as an extension",
     );
   });
 

@@ -33,7 +33,7 @@ export function EntityRights<B extends Constructor<RulesetRoles>>(Base: B) {
      * Owner, Admin, and Editor contributors are allowed.
      */
     canUpdateEntity() {
-      if (!this.entity.userId) throw new ForbiddenError("Cannot edit a base ruleset");
+      this.checkOwned("edit");
 
       if (!this.isOwner && !this.isAdminContributor && !this.isEditorContributor)
         throw new ForbiddenError("Cannot edit another user's ruleset");
