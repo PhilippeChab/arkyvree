@@ -11,7 +11,7 @@ interface BaseRulesetAlertProps {
  * would space it even closed: it's mounted only while it shows.
  */
 export function BaseRulesetAlert({ ruleset }: BaseRulesetAlertProps) {
-  if (ruleset === null || ruleset.userId) return null;
+  if (ruleset === null || !ruleset.system) return null;
   return (
     <AnimatedAlert in severity="warning">
       Base rulesets are read-only templates. Fork it first to customize rules for your group.

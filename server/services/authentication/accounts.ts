@@ -2,7 +2,7 @@ import type { InferSelectModel } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import type { usersInAccount } from "@/drizzle/schema.ts";
-import { withTransaction } from "@/server/database/index.ts";
+import { readUniqueViolation, withTransaction } from "@/server/database/index.ts";
 import { sanitizeEmail } from "@/server/emailAddress.ts";
 import { ConflictError, InternalError } from "@/server/errors/index.ts";
 import {
@@ -18,6 +18,31 @@ import {
 } from "@/server/repositories/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 
+/** A field that's one account's alone: its email address or its username. */
+type AccountField = "emailAddress" | "username";
+
+/** What an account is found by, besides its id: its email address or its username. */
+type AccountIdentifier = { emailAddress: string } | { username: string };
+
+/** The unique indexes that keep an email address or a username one account's (`drizzle/schema.ts`), by name. */
+const UNIQUE_INDEXES = new Map<string, AccountField>([
+  ["users_email", "emailAddress"],
+  ["users_username", "username"],
+]);
+
+/** The refusal of an email address or a username another account holds, whichever path asks. */
+function toTakenError(field: AccountField) {
+  return new ConflictError(`${field === "username" ? "Username" : "Email address"} already in use`);
+}
+
+/**
+ * The account that holds an email address or a username, a deleted one too: a deleted account keeps both on their
+ * unique indexes (`users_email`, `users_username`), so neither is free for another account.
+ */
+async function findTakenUser(tx: Db, identifier: AccountIdentifier) {
+  return await Users.findOne(tx, identifier, Visibility.All);
+}
+
 /** A user as another's page shows them: their public columns (an owner, an invitee), never the rest of their account. */
 export function toPublicUser(user: Pick<InferSelectModel<typeof usersInAccount>, "emailAddress" | "id" | "username">) {
   return { id: user.id, username: user.username, emailAddress: user.emailAddress };
@@ -27,6 +52,11 @@ export function toPublicUser(user: Pick<InferSelectModel<typeof usersInAccount>,
 export function toSafeUser(user: InferSelectModel<typeof usersInAccount>) {
   const { passwordDigest, ...safeUser } = user;
   return { ...safeUser, hasPassword: !!passwordDigest };
+}
+
+/** Refuses an email address or a username an account holds, a deleted one too (`findTakenUser`). */
+export async function assertNotTaken(tx: Db, identifier: AccountIdentifier) {
+  if (await findTakenUser(tx, identifier)) throw toTakenError("username" in identifier ? "username" : "emailAddress");
 }
 
 /**
@@ -94,12 +124,10 @@ export async function signInAsGoogleAccount(payload: { email: string; sub: strin
       return { session, user: toSafeUser(user) };
     }
 
-    // Case 2: Link existing account (same email). Visibility.All so the
-    // email of a deleted account is recognised as taken instead of falling
-    // through to Case 3 and hitting the users_email constraint.
-    const existingUser = await Users.findOne(tx, { emailAddress: email }, Visibility.All);
+    // Case 2: Link existing account (same email). A deleted account's email stays taken, never linked.
+    const existingUser = await findTakenUser(tx, { emailAddress: email });
 
-    if (existingUser?.deletedAt) throw new ConflictError("Email already in use");
+    if (existingUser?.deletedAt) throw toTakenError("emailAddress");
 
     if (existingUser) {
       await OauthAccounts.create(tx, {
@@ -120,7 +148,7 @@ export async function signInAsGoogleAccount(payload: { email: string; sub: strin
     }
 
     // Case 3: New user
-    const userRows = await Users.create(tx, { emailAddress: email });
+    const userRows = await withTakenRefusal(() => Users.create(tx, { emailAddress: email }));
     if (!userRows[0]) throw new InternalError("Could not create user");
     const [user] = await Users.update(tx, { emailVerifiedAt: new Date().toISOString() }, { id: userRows[0].id });
 
@@ -133,4 +161,18 @@ export async function signInAsGoogleAccount(payload: { email: string; sub: strin
     const session = await openSession(tx, user, "signUp", { provider: "google" });
     return { session, user: toSafeUser(user) };
   });
+}
+
+/**
+ * Runs `write`, which sets an email address or a username, answering a unique index's refusal as `assertNotTaken`
+ * does: two requests that claim one value at once both pass the check, and the second one's write meets the index.
+ */
+export async function withTakenRefusal<T>(write: () => Promise<T>) {
+  try {
+    return await write();
+  } catch (error) {
+    const field = UNIQUE_INDEXES.get(readUniqueViolation(error) ?? "");
+    if (field) throw toTakenError(field);
+    throw error;
+  }
 }
