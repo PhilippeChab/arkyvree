@@ -2,7 +2,7 @@ import type { InferSelectModel } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import type { usersInAccount } from "@/drizzle/schema.ts";
-import { withTransaction } from "@/server/database/index.ts";
+import { readUniqueViolation, withTransaction } from "@/server/database/index.ts";
 import { sanitizeEmail } from "@/server/emailAddress.ts";
 import { ConflictError, InternalError } from "@/server/errors/index.ts";
 import {
@@ -17,7 +17,6 @@ import {
   Visibility,
 } from "@/server/repositories/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
-import { isRecord } from "@/shared/isRecord.ts";
 
 /** A field that's one account's alone: its email address or its username. */
 type AccountField = "emailAddress" | "username";
@@ -30,13 +29,6 @@ const UNIQUE_INDEXES = new Map<string, AccountField>([
   ["users_email", "emailAddress"],
   ["users_username", "username"],
 ]);
-
-/** The account field whose unique index refused a write (`23505`, under drizzle's `DrizzleQueryError`), if one did. */
-function readTakenField(error: unknown) {
-  const cause = error instanceof Error ? error.cause : undefined;
-  if (!isRecord(cause) || cause.code !== "23505" || typeof cause.constraint !== "string") return undefined;
-  return UNIQUE_INDEXES.get(cause.constraint);
-}
 
 /** The refusal of an email address or a username another account holds, whichever path asks. */
 function toTakenError(field: AccountField) {
@@ -179,7 +171,7 @@ export async function withTakenRefusal<T>(write: () => Promise<T>) {
   try {
     return await write();
   } catch (error) {
-    const field = readTakenField(error);
+    const field = UNIQUE_INDEXES.get(readUniqueViolation(error) ?? "");
     if (field) throw toTakenError(field);
     throw error;
   }
