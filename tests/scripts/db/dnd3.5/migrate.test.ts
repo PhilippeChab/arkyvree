@@ -1434,9 +1434,19 @@ describe("0100_level-order-requirements", () => {
       SELECT id, position FROM rules.entities WHERE owner_id = ${classMap.pc["Fighter"]} ORDER BY position
     `);
     const levelAt = (position: number) => levels.find((level) => level.position === position)!.id;
+    // A modifier without requirements, whichever the seed's ids make first
     const { rows: modifiers } = await db.execute<{ id: string }>(sql`
-      SELECT id FROM customization.modifiers ORDER BY id LIMIT 1
+      SELECT id FROM customization.modifiers AS modifier
+      WHERE NOT EXISTS (
+        SELECT 1 FROM customization.requirements WHERE entity_id = modifier.id AND entity_type = 'modifiers'
+      )
+      ORDER BY id LIMIT 1
     `);
+    // Fighter's levels hold no requirement, which the rows below are written on
+    const { rows: held } = await db.execute(sql`
+      SELECT 1 FROM customization.requirements WHERE entity_id IN (SELECT id FROM rules.entities WHERE owner_id = ${classMap.pc["Fighter"]})
+    `);
+    expect(held).toEqual([]);
     const write = async (entityId: string, entityType: string, level: string, condition: string[] | string) => {
       const [target, operator, value, type = "number"] = typeof condition === "string" ? [] : condition;
       const chaining = typeof condition === "string" ? condition : null;
