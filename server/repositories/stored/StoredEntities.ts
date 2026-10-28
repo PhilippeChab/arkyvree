@@ -173,8 +173,11 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
    * the hidden ids its copy-on-write data gives: a book's copy that lost to another book's, a book's entity the
    * ruleset's own of its name shadows).
    */
-  private buildRulesetCondition(db: Db, where: Omit<EntityListWhere, "search">): SQL {
-    const { ancestorRulesetIds = [], childOnly, entityType, hiddenIds } = where;
+  private buildRulesetCondition(
+    db: Db,
+    where: Pick<EntityListWhere, "ancestorRulesetIds" | "childOnly" | "hiddenIds" | "rulesetId">,
+  ): SQL {
+    const { ancestorRulesetIds = [], childOnly, hiddenIds } = where;
     const childOwned = eq(entitiesInRules.rulesetId, where.rulesetId);
     if (childOnly) return childOwned;
     const inheritedClauses = ancestorRulesetIds.map((ancestorId, i) => {
@@ -184,12 +187,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
         db
           .select({ id: entitySnapshotsInRules.sourceEntityId })
           .from(entitySnapshotsInRules)
-          .where(
-            and(
-              inArray(entitySnapshotsInRules.rulesetId, overriddenBy),
-              eq(entitySnapshotsInRules.entityType, entityType),
-            ),
-          ),
+          .where(inArray(entitySnapshotsInRules.rulesetId, overriddenBy)),
       );
       return and(eq(entitiesInRules.rulesetId, ancestorId), copied);
     });
@@ -715,11 +713,10 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     if ("ids" in where)
       return await this.readStored(db, inArray(entitiesInRules.id, where.ids), [this.orderBy(entitiesInRules.id)]);
 
-    return await this.readStored(
-      db,
-      this.buildRulesetCondition(db, { ...where, entityType: "", ancestorRulesetIds: [] }),
-      [this.orderBy(entitiesInRules.name), this.orderBy(entitiesInRules.id)],
-    );
+    return await this.readStored(db, this.buildRulesetCondition(db, { ...where, ancestorRulesetIds: [] }), [
+      this.orderBy(entitiesInRules.name),
+      this.orderBy(entitiesInRules.id),
+    ]);
   }
 
   /**
@@ -730,7 +727,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     const own = db
       .select({ id: entitiesInRules.id })
       .from(entitiesInRules)
-      .where(this.buildRulesetCondition(db, { ...where, entityType: "", ancestorRulesetIds: [] }));
+      .where(this.buildRulesetCondition(db, { ...where, ancestorRulesetIds: [] }));
     const rows = await db
       .selectDistinct({ id: entityLinksInRules.toId })
       .from(entityLinksInRules)

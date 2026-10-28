@@ -7,6 +7,7 @@ import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Characters, Modifiers, Picks } from "@/server/repositories/index.ts";
+import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { sheetOf } from "@/tests/support/dnd3.5/characters.ts";
@@ -1636,6 +1637,90 @@ describe("a character's last level", () => {
     expect(await levelsLeft(atLast)).toEqual(new Set([0]));
     expect(finalizeBatch(ctx, atLast, levelsOf("Rogue", [6]), {}, true)).rejects.toMatchObject(pastLastLevel(0));
     expect(await levelsLeft(await createFighterAt(ctx, 18))).toEqual(new Set([2]));
+  });
+});
+
+describe("a character's level in a class", () => {
+  test("refuses a class level out of its class's order, forced or not, and saves its next", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 3000 });
+    const [{ hp, skills }] = FIGHTER_LEVELS;
+    const feats = { General: ["Power Attack", "Great Fortitude"] };
+    for (const force of [false, true]) {
+      expect(finalizeBatch(ctx, characterId, [["Fighter", 3, hp]], { skills, feats }, force)).rejects.toMatchObject({
+        message: "Level 1: Fighter 3 can't be taken there: Fighter 1 comes next",
+        refusal: "invalid",
+      });
+    }
+    await finalizeBatch(ctx, characterId, fighterLevels(1), FIGHTER_LEVELS[0]);
+    // A batch's levels see those planned before them: its second level's Fighter 3 skips Fighter 2
+    expect(
+      finalizeBatch(ctx, characterId, [...levelsOf("Rogue", [6]), ["Fighter", 3, 8]], { skills: { Climb: 8 } }, true),
+    ).rejects.toThrow("Level 3: Fighter 3 can't be taken there: Fighter 2 comes next");
+    // And of the class's own: its Fighter 2 makes Fighter 3 its next, not Fighter 4
+    expect(
+      finalizeBatch(
+        ctx,
+        characterId,
+        [
+          ["Fighter", 2, 8],
+          ["Fighter", 4, 8],
+        ],
+        { skills: { Climb: 8 } },
+        true,
+      ),
+    ).rejects.toThrow("Level 3: Fighter 4 can't be taken there: Fighter 3 comes next");
+    const [second] = await finalizeBatch(ctx, characterId, [["Fighter", 2, 8]], FIGHTER_LEVELS[1]);
+    expect(second.entryId).toBe((await findClassLevel(ctx.classMap.pc["Fighter"], 2))!.id);
+  });
+
+  test("counts its levels of the class, on its sheet, its card and in the class picker, when one was skipped", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
+    const fighterId = ctx.classMap.pc["Fighter"];
+    // A first level of Fighter 3, which no save takes: written as stored rows, as a level saved before the rule
+    await addCharacterLevel(characterId, (await findClassLevel(fighterId, 3))!.id);
+    const { name, summary } = await CharactersService.getCharacter(session, characterId);
+    const { items } = await CharactersService.getCharacters(session, { search: name }, { limit: 10, page: 1 });
+    const card = items.find(({ id }) => id === characterId);
+    const options = await getStepOptions(session, characterId, "class-plan", { steps: {} }, {}, { limit: 50 });
+    if (options.grouped) throw new Error("Expected the classes ungrouped");
+    const fighter = options.items.find(({ id }) => id === fighterId);
+    expect({
+      sheet: summary.tracks.map(({ label }) => label),
+      card: card?.chips.filter(({ tone }) => tone === "primary").map(({ label }) => label),
+      // The level it skipped comes next, the lowest it doesn't hold
+      picker: { next: fighter?.track?.next, eligible: fighter?.eligible },
+    }).toEqual({ sheet: ["Fighter 1"], card: ["Fighter 1"], picker: { next: 1, eligible: true } });
+  });
+
+  test("fills a class's gap a forced level left before the rule: its lowest level it doesn't hold comes next", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 10000 });
+    const fighterId = ctx.classMap.pc["Fighter"];
+    const offered = async () => {
+      const options = await getStepOptions(session, characterId, "class-plan", { steps: {} }, {}, { limit: 50 });
+      if (options.grouped) throw new Error("Expected the classes ungrouped");
+      const fighter = options.items.find(({ id }) => id === fighterId);
+      return { next: fighter?.track?.next, eligible: fighter?.eligible };
+    };
+    // A lone Fighter 3, as a level saved before the rule: the levels it skipped come first, then Fighter 4
+    await addCharacterLevel(characterId, (await findClassLevel(fighterId, 3))!.id);
+    expect(await offered()).toEqual({ next: 1, eligible: true });
+    for (const force of [false, true]) {
+      expect(levelUp(session, ctx, characterId, "Fighter", 4, FIGHTER_LEVELS[3], force)).rejects.toThrow(
+        "Level 2: Fighter 4 can't be taken there: Fighter 1 comes next",
+      );
+    }
+    // Forced: until it holds Fighter 2, the character fails Fighter 3's own requirement, a fighter level past 2
+    const bonusFeat = { hp: 10, skills: { Climb: 1 }, feats: { "Fighter Bonus Feat": ["Improved Initiative"] } };
+    await levelUp(session, ctx, characterId, "Fighter", 1, bonusFeat, true);
+    expect(await offered()).toEqual({ next: 2, eligible: true });
+    await levelUp(session, ctx, characterId, "Fighter", 2, FIGHTER_LEVELS[1], true);
+    expect(await offered()).toEqual({ next: 4, eligible: true });
+    await levelUp(session, ctx, characterId, "Fighter", 4, FIGHTER_LEVELS[3], true);
+    const { summary } = await CharactersService.getCharacter(session, characterId);
+    expect(summary.tracks.map(({ label }) => label)).toEqual(["Fighter 4"]);
   });
 });
 

@@ -464,7 +464,7 @@ describe("EntitiesService: items", () => {
         { name: "Ghostly Scroll" },
       ]);
 
-      const snapshots = await EntitySnapshots.findMany(db, { rulesetId: fork.id, entityType: "items" });
+      const snapshots = await EntitySnapshots.findManyWithEntities(db, { rulesetId: fork.id, entityType: "items" });
       expect(snapshots).toMatchObject([{ sourceEntityId: inherited.id, forkedEntityId: variant.id }]);
     });
   });

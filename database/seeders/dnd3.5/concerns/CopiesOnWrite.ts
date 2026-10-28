@@ -41,7 +41,7 @@ export function CopiesOnWrite<B extends Constructor<Dnd35ContentSeeder>>(Base: B
       );
       const copies = new Map([[featId, copyId]]);
       await this.copyCustomizations(copies);
-      await this.recordCopies("feats", copies);
+      await this.recordCopies(copies);
       return copyId;
     }
 
@@ -75,7 +75,7 @@ export function CopiesOnWrite<B extends Constructor<Dnd35ContentSeeder>>(Base: B
       );
       const copies = new Map(entries.map(({ spellId }) => [spellId, ids[spells.get(spellId)!.name]]));
       await this.copyCustomizations(copies);
-      await this.recordCopies("spells", copies);
+      await this.recordCopies(copies);
       const kept = await this.keptSpellLinks([...copies.keys()]);
       await this.insertListings(
         "spells",

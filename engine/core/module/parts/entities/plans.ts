@@ -176,10 +176,15 @@ export interface MadeEntity {
   type: string;
 }
 
-/** What an owned entity's create writes past an entity's: its owner, and what its activity records. */
+/**
+ * What an owned entity's create writes past an entity's: its owner, what its activity records, and what it's refused
+ * with when its owner holds another at its place (`taken`: one written since the view was read, which the view's check
+ * missed).
+ */
 export interface OwnedCreatePlan extends EntityCreatePlan {
   activity: Record<string, unknown>;
   owner: PlanOwner;
+  taken: string;
 }
 
 /** What an owned entity's delete writes past an entity's: its owner, and what its activity records. */

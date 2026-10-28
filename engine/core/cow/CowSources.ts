@@ -23,7 +23,7 @@ export interface CowRows {
   namesakes: { entityType: string; id: string; name: string; rulesetId: string }[];
   owned: { entityType: string; id: string; ownerId: string; position: number }[];
   ownNamesakes: { entityType: string; id: string; name: string; rulesetId: string }[];
-  snapshots: { entityType: string; forkedEntityId: string; rulesetId: string; sourceEntityId: string }[];
+  snapshots: { forkedEntityId: string; rulesetId: string; sourceEntityId: string }[];
 }
 
 /** A ruleset's id and where its inherited entities come from. */
@@ -47,14 +47,16 @@ export default class CowSources {
    * The owners whose owned entities pair by position (`owners`: their kinds): those the ruleset and its source chain
    * copied (their snapshots say: an extension's copy of a core class, the ruleset's copy of that copy) and their
    * sources, and those of its own and its extensions' of a name both have (`ownNamesakes`), whose owned entities pair
-   * when its own hides theirs.
+   * when its own hides theirs. Every copy's ids, whatever its kind: what's read of them is the owned kinds' entities
+   * (`getReads`' `owned`), which a copy of a kind that owns none has none of.
    */
   static getPairedOwnerIds(rows: Pick<CowRows, "ownNamesakes" | "snapshots">, owners: readonly string[]) {
+    // Sibling copies share their source: each id once
     return [
-      ...rows.snapshots
-        .filter((snap) => owners.includes(snap.entityType))
-        .flatMap((snap) => [snap.sourceEntityId, snap.forkedEntityId]),
-      ...rows.ownNamesakes.filter((row) => owners.includes(row.entityType)).map((row) => row.id),
+      ...new Set([
+        ...rows.snapshots.flatMap((snap) => [snap.sourceEntityId, snap.forkedEntityId]),
+        ...rows.ownNamesakes.filter((row) => owners.includes(row.entityType)).map((row) => row.id),
+      ]),
     ];
   }
 

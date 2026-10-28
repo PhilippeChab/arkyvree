@@ -148,8 +148,19 @@ export default function RulesetDetailsPage() {
   const extensionsMenu = useAnchorMenu();
   if (!subscribedExtensions?.length && extensionsMenu.open) extensionsMenu.closeMenu();
 
-  const { isOwner, isContributor, canEditEntities, canEditRuleset, canPublish } = useRulesetPermissions(ruleset);
-  const isFork = !!ruleset?.rulesetId && !isExtension;
+  const {
+    isOwner,
+    canBeExtension,
+    canEditEntities,
+    canEditRuleset,
+    canFork,
+    canPublish,
+    canReadContributors,
+    canSubscribeExtensions,
+    canUnarchive,
+    canUnsubscribeExtensions,
+    canViewChanges,
+  } = useRulesetPermissions(ruleset);
 
   const [contributorsDialogOpen, setContributorsDialogOpen] = useState(false);
   const { rules, isPending: rulesPending } = useRules(ruleset?.baseRules);
@@ -179,14 +190,12 @@ export default function RulesetDetailsPage() {
   if (!currentTab) return <Navigate to={`/rulesets/${id}/${tabConfig[0]?.key ?? "settings"}`} replace />;
 
   const isActive = ruleset.status !== "Archived";
-  // A user's fork that subscribes to none can be an extension: what its edit and its publish offer
-  const canBeExtension = !!ruleset.rulesetId && ruleset.userId !== null && ruleset.extensionIds.length === 0;
   // What the session may do here: the header's menu, whose button shows only when it holds something
   const menuItems = [
-    ruleset.status === "Published" && !isExtension && !isFork && (
+    canFork && (
       <ActionMenuItem key="fork" icon={ForkIcon} label="Fork" onClick={menu.closeMenuAnd(() => handleFork(ruleset))} />
     ),
-    !!ruleset.rulesetId && (
+    !!ruleset.rulesetId && canViewChanges && (
       <ActionMenuItem
         key="local-changes"
         icon={CompareArrowsIcon}
@@ -194,7 +203,7 @@ export default function RulesetDetailsPage() {
         onClick={menu.closeMenuAnd(() => setLocalChangesOpen(true))}
       />
     ),
-    isOwner && !!ruleset.rulesetId && isActive && !ruleset.isUsedAsExtension && !isExtension && (
+    canSubscribeExtensions && (
       <ActionMenuItem
         key="subscribe"
         icon={ExtensionIcon}
@@ -203,7 +212,7 @@ export default function RulesetDetailsPage() {
       />
     ),
     // An archived ruleset's too: its owner or an Admin removes a contributor, and a contributor leaves
-    (isOwner || isContributor) && (
+    canReadContributors && (
       <ActionMenuItem
         key="contributors"
         icon={ContributorsIcon}
@@ -249,7 +258,7 @@ export default function RulesetDetailsPage() {
           />,
         ]
       : []),
-    isOwner && !isActive && (
+    canUnarchive && (
       <ActionMenuItem
         key="unarchive"
         icon={UnarchiveIcon}
@@ -299,7 +308,7 @@ export default function RulesetDetailsPage() {
                             color={ext.updateAvailable ? "warning" : "default"}
                             to={`/rulesets/${ext.extensionId}`}
                             onDelete={
-                              isOwner
+                              canUnsubscribeExtensions
                                 ? (e: MouseEvent) => {
                                     e.preventDefault();
                                     e.stopPropagation();
@@ -325,7 +334,7 @@ export default function RulesetDetailsPage() {
           {/* An archived ruleset's notice, and extensions that failed to load, above its tabs */}
           <Stack spacing={3}>
             {!!extensionsError && !subscribedExtensions && <LoadError what="Extensions" error={extensionsError} />}
-            {!isActive && <ArchivedNotice what="ruleset" canUnarchive={isOwner} />}
+            {!isActive && <ArchivedNotice what="ruleset" canUnarchive={canUnarchive} />}
 
             <SectionTabs
               tabs={tabConfig}
@@ -381,6 +390,7 @@ export default function RulesetDetailsPage() {
           canBeExtension={canBeExtension}
         />
 
+        {/* Whether its archiver could unarchive it once archived, which `canUnarchive` answers only then: its owner */}
         <ArchiveRulesetDialog
           open={archiveDialog.open}
           onClose={archiveDialog.close}

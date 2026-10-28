@@ -24,7 +24,7 @@ describe("A repoint of what names an entity, an unsubscribe's or a revert's", ()
     ]);
 
     await db.transaction(async (tx) => {
-      await EntityReferences.update(tx, { entityId: to }, { entityId: from, entityType: "feats" });
+      await EntityReferences.update(tx, { entityId: to }, { entityId: from });
     });
 
     const picked = await db.execute<{ entity_id: string; ordinal: number }>(sql`

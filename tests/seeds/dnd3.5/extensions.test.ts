@@ -57,7 +57,7 @@ describe("The seeded extensions", () => {
     const warrior = await seededRows(DND35_COMPLETE_WARRIOR_NAME);
     const coreFeats = new Map((await seededRows()).feats.map((feat) => [feat.id, feat]));
     const snapshots = (
-      await EntitySnapshots.findMany(db, { rulesetId: warrior.rulesetId, entityType: "feats" })
+      await EntitySnapshots.findManyWithEntities(db, { rulesetId: warrior.rulesetId, entityType: "feats" })
     ).filter((s) => coreFeats.has(s.sourceEntityId));
     expect(snapshots.length).toBeGreaterThan(0);
     for (const snapshot of snapshots) {
@@ -76,7 +76,7 @@ describe("The seeded extensions", () => {
     let copies = 0;
     for (const extension of (await Rulesets.findMany(db, { system: true })).filter((r) => r.id !== core.rulesetId)) {
       const rows = await seededRows(extension.name);
-      for (const { sourceEntityId, forkedEntityId } of await EntitySnapshots.findMany(db, {
+      for (const { sourceEntityId, forkedEntityId } of await EntitySnapshots.findManyWithEntities(db, {
         rulesetId: extension.id,
         entityType: "spells",
       })) {
@@ -97,9 +97,9 @@ describe("The seeded extensions", () => {
 
     const divine = await seededRows(DND35_COMPLETE_DIVINE_NAME);
     const missile = divine.spells.find((spell) => spell.name === "Magic Missile")!;
-    const snapshot = (await EntitySnapshots.findMany(db, { rulesetId: divine.rulesetId, entityType: "spells" })).find(
-      (s) => s.forkedEntityId === missile.id,
-    );
+    const snapshot = (
+      await EntitySnapshots.findManyWithEntities(db, { rulesetId: divine.rulesetId, entityType: "spells" })
+    ).find((s) => s.forkedEntityId === missile.id);
     expect(snapshot?.sourceEntityId).toBe(core.spells.find((spell) => spell.name === "Magic Missile")!.id);
     expect(missile.listedIn.map((link) => link.toId)).toContain(divine.aptitude("Force Domain Spells").id);
   });

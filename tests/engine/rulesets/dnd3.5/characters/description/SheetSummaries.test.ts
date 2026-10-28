@@ -17,6 +17,7 @@ const LEVEL_WORDS = {
 function classOf(id: string, name: string, levels: number) {
   return {
     klass: { id, name },
+    level: levels,
     levels: Array.from({ length: levels }, (_, index) => ({
       advancement: { id: `${id}-${index + 1}` },
       classLevel: { position: index + 1 },

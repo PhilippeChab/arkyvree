@@ -12,8 +12,12 @@ import { createTestUser, makeSession } from "@/tests/support/users.ts";
 type Actor = "Owner" | ContributorRole | "Stranger";
 
 const ACTORS: Actor[] = ["Owner", "Admin", "Editor", "Viewer", "Stranger"];
+/** An orphaned ruleset: its owner's account deleted, its contributors kept. */
+const ORPHANED: Partial<Ruleset> = { userId: null };
 const OTHER = "other-id";
 const OWNER = "owner-id";
+/** A system ruleset: nobody owns it. */
+const SYSTEM: Partial<Ruleset> = { userId: null, system: true };
 
 /** Which actors may act; everyone else gets `error`. */
 function expectOnly(
@@ -62,7 +66,34 @@ describe("RulesetsPolicy", () => {
     expectOnly(["Owner", "Admin"], (p) => p.canUpdate(), ForbiddenError, { status: "Published" });
     expect(() => policyOf("Owner", { status: "Archived" }).canUpdate()).toThrow("Archived rulesets are read-only");
     expect(() => policyOf("Admin", { status: "Archived" }).canUpdate()).toThrow(UnprocessableEntityError);
-    expect(() => policyOf("Owner", { userId: null }).canUpdate()).toThrow("Cannot edit a base ruleset");
+    expect(() => policyOf("Owner", SYSTEM).canUpdate()).toThrow("Cannot edit a base ruleset");
+  });
+
+  test("refuses every change to a ruleset nobody owns: a system one, and an orphaned one, frozen as it was left", () => {
+    const changes: [string, (p: RulesetsPolicy) => unknown][] = [
+      ["edit", (p) => p.canUpdate()],
+      ["edit", (p) => p.canUpdateEntity()],
+      ["edit", (p) => p.canDeleteEntity()],
+      ["publish", (p) => p.canPublish()],
+      ["manage contributors on", (p) => p.canManageContributors()],
+      ["manage contributors on", (p) => p.canInviteContributors()],
+      ["manage contributors on", (p) => p.canRevokeContributor({ role: "Viewer" })],
+      ["manage contributors on", (p) => p.canUpdateContributorRole()],
+      ["subscribe to extensions on", (p) => p.canSubscribeExtension({ usedAsExtension: false })],
+      ["subscribe to extensions on", (p) => p.canUnsubscribeExtension()],
+    ];
+    for (const [what, check] of changes) {
+      expect(() => check(policyOf("Admin", SYSTEM))).toThrow(`Cannot ${what} a base ruleset`);
+      for (const actor of ["Admin", "Editor"] as const)
+        expect(() => check(policyOf(actor, ORPHANED))).toThrow(`Cannot ${what} a ruleset without an owner`);
+    }
+    expect(() => policyOf("Admin", { ...ORPHANED, status: "Archived" }).canUnarchive()).toThrow(
+      "Cannot unarchive a ruleset without an owner",
+    );
+    // Its contributors still read it, see its changes and contributors, and build on it
+    expect(policyOf("Viewer", ORPHANED).canRead()).toBe(true);
+    expect(policyOf("Viewer", ORPHANED).canReadContributors()).toBe(true);
+    expect(policyOf("Viewer", ORPHANED).canCreateCharacter()).toBe(true);
   });
 
   test("canUpdateEntity and canDeleteEntity: the owner, Admins and Editors", () => {
@@ -71,7 +102,7 @@ describe("RulesetsPolicy", () => {
     expectOnly(["Owner", "Admin", "Editor"], (p) => p.canDeleteEntity(), ForbiddenError, { status: "Published" });
     for (const check of [(p: RulesetsPolicy) => p.canUpdateEntity(), (p: RulesetsPolicy) => p.canDeleteEntity()]) {
       expect(() => check(policyOf("Editor", { status: "Archived" }))).toThrow(UnprocessableEntityError);
-      expect(() => check(policyOf("Owner", { userId: null }))).toThrow("Cannot edit a base ruleset");
+      expect(() => check(policyOf("Owner", SYSTEM))).toThrow("Cannot edit a base ruleset");
     }
   });
 
@@ -84,7 +115,7 @@ describe("RulesetsPolicy", () => {
     for (const status of ["Published", "Archived"] as const)
       expect(() => policyOf("Owner", { status }).canPublish()).toThrow("Can only publish draft rulesets");
 
-    expect(() => policyOf("Owner", { userId: null }).canPublish()).toThrow("Cannot publish a base ruleset");
+    expect(() => policyOf("Owner", SYSTEM).canPublish()).toThrow("Cannot publish a base ruleset");
   });
 
   test("canFork: published base rulesets only", () => {
@@ -101,37 +132,74 @@ describe("RulesetsPolicy", () => {
   });
 
   test("canSubscribeExtension and canUnsubscribeExtension: the owner of a live fork that isn't an extension", () => {
-    expectOnly(["Owner"], (p) => p.canSubscribeExtension(), ForbiddenError);
-    expect(() => policyOf("Owner", { userId: null }).canSubscribeExtension()).toThrow(ForbiddenError);
-    expect(() => policyOf("Owner", { status: "Archived" }).canSubscribeExtension()).toThrow(UnprocessableEntityError);
-    expect(() => policyOf("Owner", { rulesetId: null }).canSubscribeExtension()).toThrow(
+    expectOnly(["Owner"], (p) => p.canSubscribeExtension({ usedAsExtension: false }), ForbiddenError);
+    expect(() => policyOf("Owner", SYSTEM).canSubscribeExtension({ usedAsExtension: false })).toThrow(ForbiddenError);
+    expect(() => policyOf("Owner", { status: "Archived" }).canSubscribeExtension({ usedAsExtension: false })).toThrow(
+      UnprocessableEntityError,
+    );
+    expect(() => policyOf("Owner", { rulesetId: null }).canSubscribeExtension({ usedAsExtension: false })).toThrow(
       "Only forked rulesets can subscribe to extensions",
     );
-    expect(() => policyOf("Owner", { kind: "extension" }).canSubscribeExtension()).toThrow(
+    expect(() => policyOf("Owner", { kind: "extension" }).canSubscribeExtension({ usedAsExtension: false })).toThrow(
       "Extensions cannot subscribe to other extensions",
+    );
+
+    // Not while another ruleset subscribes to it, which unsubscribing doesn't ask
+    expect(() => policyOf("Owner").canSubscribeExtension({ usedAsExtension: true })).toThrow(
+      "Cannot subscribe to extensions while this ruleset is being used as an extension",
     );
 
     expect(policyOf("Owner").canUnsubscribeExtension()).toBe(true);
     expect(() => policyOf("Owner").canUnsubscribeExtension({ inUse: true })).toThrow(ConflictError);
     expect(() => policyOf("Admin").canUnsubscribeExtension()).toThrow(ForbiddenError);
+    expect(() => policyOf("Owner", { status: "Archived" }).canUnsubscribeExtension()).toThrow(UnprocessableEntityError);
   });
 
-  test("canInviteContributors: who manages contributors, on a ruleset that isn't archived", () => {
+  test("canBeExtension: a fork that subscribes to none, whoever asks", () => {
+    expectOnly(ACTORS, (p) => p.canBeExtension(), UnprocessableEntityError);
+    expect(() => policyOf("Owner", { rulesetId: null }).canBeExtension()).toThrow(
+      "Only forks can be published as extensions",
+    );
+    expect(() => policyOf("Owner", { extensionIds: ["extension-id"] }).canBeExtension()).toThrow(
+      "A ruleset that subscribes to extensions cannot itself be an extension",
+    );
+  });
+
+  test("canInviteContributors: who manages contributors, on a ruleset that isn't archived; an Admin, the owner", () => {
     expectOnly(["Owner", "Admin"], (p) => p.canInviteContributors(), ForbiddenError);
-    expect(() => policyOf("Owner", { userId: null }).canInviteContributors()).toThrow(ForbiddenError);
+    expectOnly(["Owner", "Admin"], (p) => p.canInviteContributors({ role: "Editor" }), ForbiddenError);
+    expectOnly(["Owner"], (p) => p.canInviteContributors({ role: "Admin" }), ForbiddenError);
+    expect(() => policyOf("Owner", SYSTEM).canInviteContributors()).toThrow(ForbiddenError);
     expect(() => policyOf("Owner", { status: "Archived" }).canInviteContributors()).toThrow(ConflictError);
   });
 
   test("canManageContributors: the owner and Admins; Admin contributors themselves only by the owner", () => {
     expectOnly(["Owner", "Admin"], (p) => p.canManageContributors(), ForbiddenError);
-    expect(() => policyOf("Owner", { userId: null }).canManageContributors()).toThrow(ForbiddenError);
+    expect(() => policyOf("Owner", SYSTEM).canManageContributors()).toThrow(ForbiddenError);
     expectOnly(["Owner"], (p) => p.canManageAdminContributors(), ForbiddenError);
+  });
+
+  test("canRevokeContributor: who manages contributors, archived or not; an Admin, the owner", () => {
+    for (const status of ["Draft", "Archived"] as const) {
+      expectOnly(["Owner", "Admin"], (p) => p.canRevokeContributor({ role: "Editor" }), ForbiddenError, { status });
+      expectOnly(["Owner"], (p) => p.canRevokeContributor({ role: "Admin" }), ForbiddenError, { status });
+    }
+  });
+
+  test("canUpdateContributorRole: who manages contributors, on a ruleset that isn't archived; to or from Admin, the owner", () => {
+    expectOnly(["Owner", "Admin"], (p) => p.canUpdateContributorRole(), ForbiddenError);
+    expectOnly(["Owner", "Admin"], (p) => p.canUpdateContributorRole({ from: "Editor", to: "Viewer" }), ForbiddenError);
+    expectOnly(["Owner"], (p) => p.canUpdateContributorRole({ from: "Editor", to: "Admin" }), ForbiddenError);
+    expectOnly(["Owner"], (p) => p.canUpdateContributorRole({ from: "Admin", to: "Viewer" }), ForbiddenError);
+    expect(() => policyOf("Owner", { status: "Archived" }).canUpdateContributorRole()).toThrow(
+      "Cannot modify roles on an archived ruleset",
+    );
   });
 
   test("canUnarchive: the owner, on an archived ruleset", () => {
     expectOnly(["Owner"], (p) => p.canUnarchive(), ForbiddenError, { status: "Archived" });
     expect(() => policyOf("Owner").canUnarchive()).toThrow("Ruleset is not archived");
-    expect(() => policyOf("Owner", { userId: null, status: "Archived" }).canUnarchive()).toThrow(ForbiddenError);
+    expect(() => policyOf("Owner", { ...SYSTEM, status: "Archived" }).canUnarchive()).toThrow(ForbiddenError);
   });
 
   test("canRead: anyone, a ruleset that isn't private; a private one, its members and its characters' editors", () => {

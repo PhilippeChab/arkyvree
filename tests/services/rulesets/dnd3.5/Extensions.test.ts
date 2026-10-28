@@ -549,7 +549,12 @@ describe("subscribing to an extension", () => {
     await RulesetsService.publishRuleset(other, homebrew.id, { kind: "extension" });
     await RulesetExtensionsService.subscribeExtension(session, (await forkBase(session)).id, [homebrew.id]);
     expect(RulesetExtensionsService.subscribeExtension(other, homebrew.id, [extension.id])).rejects.toThrow(
-      UnprocessableEntityError,
+      "Extensions cannot subscribe to other extensions",
+    );
+    // Made a playable ruleset again, it's still subscribed to as an extension
+    await RulesetsService.updateRuleset(other, homebrew.id, { name: homebrew.name, description: "", kind: "ruleset" });
+    expect(RulesetExtensionsService.subscribeExtension(other, homebrew.id, [extension.id])).rejects.toThrow(
+      "Cannot subscribe to extensions while this ruleset is being used as an extension",
     );
   });
 
@@ -1034,7 +1039,7 @@ describe("unsubscribing from an extension", () => {
 
     for (const [type, id] of [...fromBase, ...fromExtension])
       await copyEntity(db, type, id, { ...draft, extensionIds: [extension.id] });
-    const copies = await EntitySnapshots.findMany(db, { rulesetId: draft.id });
+    const copies = await EntitySnapshots.findManyWithEntities(db, { rulesetId: draft.id });
     const ofBase = copies.filter((copy) => fromBase.some(([, id]) => copy.sourceEntityId === id));
     expect(new Set(ofBase.map((copy) => copy.entityType))).toEqual(new Set(fromBase.map(([type]) => type)));
     expect(copies).toHaveLength(fromBase.length + fromExtension.length);
@@ -1042,7 +1047,7 @@ describe("unsubscribing from an extension", () => {
     expect(await RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id)).toEqual({
       unsubscribed: true,
     });
-    expect(await EntitySnapshots.findMany(db, { rulesetId: draft.id })).toEqual(ofBase);
+    expect(await EntitySnapshots.findManyWithEntities(db, { rulesetId: draft.id })).toEqual(ofBase);
   });
 
   test.each(["named", "naming"])(

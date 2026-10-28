@@ -30,17 +30,16 @@ class ContributorsService {
   }
 
   /**
-   * A contributor the session's user may manage, with its ruleset and the policy that allowed it. A contributor to a
-   * ruleset the session may not read is refused as an unknown one is: a private ruleset's existence isn't revealed.
+   * A contributor, with its ruleset and the session's policy on it, which decides what the session may do to it. A
+   * contributor to a ruleset the session may not read is refused as an unknown one is: a private ruleset's existence
+   * isn't revealed.
    */
-  private async getManagedContributor(tx: Db, session: Session, contributorId: string) {
+  private async getReadableContributor(tx: Db, session: Session, contributorId: string) {
     const contributor = await Contributors.findOne(tx, { id: contributorId });
     const readable = contributor && (await findReadableRuleset(tx, session, contributor.rulesetId));
     if (!contributor || !readable) throw new NotFoundError("Contributor not found");
 
-    const { policy, ruleset } = readable;
-    policy.canManageContributors();
-    return { contributor, ruleset, policy };
+    return { contributor, ...readable };
   }
 
   async acceptInvite(session: Session, contributorId: string) {
@@ -90,9 +89,7 @@ class ContributorsService {
   async inviteContributor(session: Session, rulesetId: string, email: string, role: ContributorRole) {
     const { contributor, emailData } = await withTransaction(async (tx) => {
       const { policy, ruleset } = await getReadableRuleset(tx, session, rulesetId);
-      policy.canInviteContributors();
-
-      if (role === "Admin") policy.canManageAdminContributors();
+      policy.canInviteContributors({ role });
 
       const user = await Users.findOne(tx, { emailAddress: email });
 
@@ -191,9 +188,8 @@ class ContributorsService {
 
   async revokeContributor(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const { contributor, ruleset, policy } = await this.getManagedContributor(tx, session, contributorId);
-
-      if (contributor.role === "Admin") policy.canManageAdminContributors();
+      const { contributor, ruleset, policy } = await this.getReadableContributor(tx, session, contributorId);
+      policy.canRevokeContributor({ role: contributor.role });
 
       if (contributor.status !== "Active" && contributor.status !== "Pending")
         throw new ConflictError("Contributor is not active or pending");
@@ -217,11 +213,8 @@ class ContributorsService {
 
   async updateContributorRole(session: Session, contributorId: string, role: ContributorRole) {
     return await withTransaction(async (tx) => {
-      const { contributor, ruleset, policy } = await this.getManagedContributor(tx, session, contributorId);
-
-      if (ruleset.status === "Archived") throw new ConflictError("Cannot modify roles on an archived ruleset");
-
-      if (role === "Admin" || contributor.role === "Admin") policy.canManageAdminContributors();
+      const { contributor, policy } = await this.getReadableContributor(tx, session, contributorId);
+      policy.canUpdateContributorRole({ from: contributor.role, to: role });
 
       if (contributor.status !== "Active") throw new ConflictError("Can only update role of active contributors");
 
