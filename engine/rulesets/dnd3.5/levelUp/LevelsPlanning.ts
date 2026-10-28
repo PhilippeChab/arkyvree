@@ -5,6 +5,7 @@ import type {
   LevelEditPlan,
   LevelsPlan,
   PickPlan,
+  StoredAdvancement,
 } from "@/engine/core/module/index.ts";
 import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
@@ -178,17 +179,14 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
   }
 
   /**
-   * The edit of saved level `advancementId`, with the character's bonded creatures' rows (`bonded`): the level as
-   * saved, its new hit points, ability increases and picks, checked, its picks refused when they pick a feat that
+   * The edit of the character's saved level `level`, with its bonded creatures' rows (`bonded`): the level as saved, its new hit points, ability increases and picks, checked, its picks refused when they pick a feat that
    * doesn't stack the character has already or a spell it knows in its pool already, the level's other picks' gifts
    * too (but the level's own saved picks), or overfill a pool (forced or not), and refused with the issues it answers
    * for unless `force`d; and what its bonded creatures become with it.
    */
-  planEdit(bonded: CharacterInput[], advancementId: string, edit: LevelEditRequest, force: boolean): LevelEditPlan {
+  planEdit(bonded: CharacterInput[], level: StoredAdvancement, edit: LevelEditRequest, force: boolean): LevelEditPlan {
     const { rows } = this.character;
     const { abilityIncreases, hp } = edit;
-    const level = rows.advancements.find((saved) => saved.id === advancementId);
-    if (!level) throw new RulesError("not-found", "Character level not found");
     const { classLevel, klass } = this.getSavedClassLevel(level);
     // The levels in the order the character took them: the edited level's index is its total level less one
     this.checks.checkAbilityIncreases(rows.advancements.indexOf(level), abilityIncreases);
@@ -198,14 +196,14 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     const holding = this.buildOnce((picks) =>
       this.build(this.projectEditedLevel(level, classLevel.id, { ...edit, ...picks })),
     );
-    this.checks.checkPicksNotHeld(edit, holding, this.getSavedPicks(advancementId));
+    this.checks.checkPicksNotHeld(edit, holding, this.getSavedPicks(level.id));
 
     const edited = holding(edit);
     this.refuseOverfull(edited, edit);
     const { valid, issues } = edited.validate();
     if (!valid && !force) {
       // The issues the level answers for: built without the level and every later one, then with it alone
-      const { before, withLevel } = this.projectLevelContribution(advancementId, classLevel.id, edit);
+      const { before, withLevel } = this.projectLevelContribution(level.id, classLevel.id, edit);
       RulesError.refuseIssues(this.rules.findEditedLevelIssues(issues, this.build(before), this.build(withLevel)));
     }
     return {

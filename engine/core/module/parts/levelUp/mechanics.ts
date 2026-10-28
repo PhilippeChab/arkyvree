@@ -12,6 +12,7 @@
  */
 
 import type { RulesWord } from "@/engine/core/module/parts/ruleset/index.ts";
+import type { StoredAdvancement } from "@/engine/core/module/storage.ts";
 import type { ViewKinds } from "@/engine/core/view/index.ts";
 
 /**
@@ -148,6 +149,16 @@ export interface PlannedAdvancementAnswer {
   track: { id: string; name: string };
 }
 
+/**
+ * A plan as its module reads it, once the level-up handle has resolved its request (`LevelRequests`): each step's
+ * payload, each id the view's, and the character's saved level it edits in place (`editedLevel`), found among its
+ * levels, when it edits one.
+ */
+export interface ResolvedPlan {
+  editedLevel?: StoredAdvancement;
+  steps: Record<string, StepPayload>;
+}
+
 /** A `spend` step's answer: the points to spend over the plan, those each advancement gives, and the rows. */
 export interface SpendAnswer {
   budget: number;
@@ -226,13 +237,14 @@ export interface StepPayloads {
 }
 
 /**
- * A step's picker, over a plan: the plan so far (`plan`), the advancement (by its index in the plan) its pick lands on
- * (a pool's `next`), the pool and the tier it picks in, and the group whose members it lists (3.5's feat family).
+ * A step's picker, over a plan: the plan so far (`plan`, as a wizard sends it, or as its module reads it once resolved:
+ * `ResolvedPlan`), the advancement (by its index in the plan) its pick lands on (a pool's `next`), the pool and the
+ * tier it picks in, and the group whose members it lists (3.5's feat family).
  */
-export interface StepPickerQuery {
+export interface StepPickerQuery<P extends LevelPlanRequest | ResolvedPlan = LevelPlanRequest> {
   advancement?: number;
   group?: string;
-  plan: LevelPlanRequest;
+  plan: P;
   pool?: string;
   tier?: string;
 }
@@ -298,6 +310,9 @@ export type LevelStep = {
     words: StepWords[M];
   };
 }[StepMechanic];
+
+/** An edit's plan as its module reads it (`ResolvedPlan`): of the character's saved level it edits. */
+export type ResolvedEdit = ResolvedPlan & { editedLevel: StoredAdvancement };
 
 /** A step's answer, by its mechanic. */
 export type StepAnswer = ChooseAnswer | PickAnswer | PlanAnswer | SpendAnswer | ValueAnswer;

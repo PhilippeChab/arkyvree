@@ -16,6 +16,8 @@ export type {
   PlanAnswer,
   PlannedAdvancement,
   PlannedAdvancementAnswer,
+  ResolvedEdit,
+  ResolvedPlan,
   SpendAnswer,
   SpendRow,
   SpentPoints,

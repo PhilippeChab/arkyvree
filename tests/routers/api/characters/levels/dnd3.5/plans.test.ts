@@ -9,6 +9,13 @@ import { FIGHTER_LEVELS, picks, type Picks, SORCERER_1 } from "@/tests/support/d
 import { savedPicksOf } from "@/tests/support/dnd3.5/levelPlans.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
+/** Any route's response, read as a refusal: its status and its body. */
+interface Refusal {
+  clone(): { text(): Promise<string> };
+  json(): Promise<unknown>;
+  status: number;
+}
+
 /** A `pick` step's answer, as the API answers it. */
 type PickStep = Extract<StepAnswer, { mechanic: "pick" }>;
 
@@ -838,6 +845,37 @@ describe("character level plans", () => {
       400,
     );
     await expectStatus(levels.steps.$get({ param: { characterId }, query: { editedLevelId: NIL_UUID } }), 404);
+  });
+
+  test("refuses a level the character hasn't alike in every flow that names one, after the request's other refusals", async () => {
+    const { characterId, ctx } = await createCharacter();
+    const { "class-plan": classPlan, ...edit } = {
+      ...fighterPlan(ctx, 1),
+      ...payloadsOf(picks(ctx, FIGHTER_LEVELS[0])),
+    };
+    await expectOk(levels.$post({ param: { characterId }, json: { steps: { "class-plan": classPlan, ...edit } } }));
+    const options = levels.options[":step"];
+    const unknown = { characterId, advancementId: NIL_UUID };
+    const plan = { editedLevelId: NIL_UUID, steps: {} };
+    const pool = ctx.aptMap["General"];
+    const refused: (() => Promise<Refusal>)[] = [
+      () => levels.steps.$get({ param: { characterId }, query: { editedLevelId: NIL_UUID } }),
+      () => level.plan.$get({ param: unknown }),
+      () => levels.plan.$post({ param: { characterId }, json: plan }),
+      () => options.$post({ param: { characterId, step: "feats" }, query: {}, json: { plan, pool } }),
+      () => level.$put({ param: unknown, json: { steps: edit } }),
+    ];
+    // One at a time: the test's transaction has a single connection
+    for (const call of refused)
+      expect(await (await expectStatus(call(), 404)).json()).toMatchObject({ message: "Character level not found" });
+
+    // A step an edit hasn't, an unanswered step and a pool the ruleset hasn't are refused first
+    const invalid: (() => Promise<Refusal>)[] = [
+      () => levels.plan.$post({ param: { characterId }, json: { ...plan, steps: { "class-plan": classPlan } } }),
+      () => level.$put({ param: unknown, json: { steps: {} } }),
+      () => options.$post({ param: { characterId, step: "feats" }, query: {}, json: { plan, pool: NIL_UUID } }),
+    ];
+    for (const call of invalid) await expectStatus(call(), 400);
   });
 
   test("opens a saved level as an edit's plan, which answers as the level saved it", async () => {
