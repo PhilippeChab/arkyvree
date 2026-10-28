@@ -9,8 +9,8 @@ export default class ClassLevels {
   /**
    * The character's level in each class it has levels of, by the class's id: its levels (`levels`, its advancements,
    * each with its entry, a class level of `classLevelsById`) of the class, counted, whatever their class levels'
-   * positions, which a forced level may skip. What `classes.<class>.level` reads and a class's next level follows; a
-   * level whose class level the view doesn't have counts in no class.
+   * positions. What `classes.<class>.level` reads and a class's next level follows (`isNext`); a level whose class
+   * level the view doesn't have counts in no class.
    */
   static countByClass(
     classLevelsById: ReadonlyMap<string, { ownerId: string }>,
@@ -27,5 +27,18 @@ export default class ClassLevels {
   /** A class and the character's level in it: "Fighter 3" */
   static format(className: string, level: number) {
     return `${className} ${level}`;
+  }
+
+  /**
+   * Whether class level `classLevel` is its class's next for a character whose level in each class is `levelByClass`
+   * (`countByClass`'s): a class's levels come one after another, a save's forced or not, and an import's.
+   */
+  static isNext(levelByClass: ReadonlyMap<string, number>, classLevel: { ownerId: string; position: number }) {
+    return classLevel.position === this.nextPositionOf(levelByClass, classLevel.ownerId);
+  }
+
+  /** The position of class `classId`'s next level for a character whose level in each class is `levelByClass`. */
+  static nextPositionOf(levelByClass: ReadonlyMap<string, number>, classId: string) {
+    return (levelByClass.get(classId) ?? 0) + 1;
   }
 }

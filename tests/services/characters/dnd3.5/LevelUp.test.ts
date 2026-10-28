@@ -1641,14 +1641,32 @@ describe("a character's last level", () => {
 });
 
 describe("a character's level in a class", () => {
-  test("counts its levels of the class, on its sheet, its card and in the class picker, when a forced level skips some", async () => {
+  test("refuses a class level out of its class's order, forced or not, and saves its next", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 3000 });
+    const [{ hp, skills }] = FIGHTER_LEVELS;
+    const feats = { General: ["Power Attack", "Great Fortitude"] };
+    for (const force of [false, true]) {
+      expect(finalizeBatch(ctx, characterId, [["Fighter", 3, hp]], { skills, feats }, force)).rejects.toMatchObject({
+        message: "Level 1: Fighter 3 can't be taken there: Fighter 1 comes next",
+        refusal: "invalid",
+      });
+    }
+    await finalizeBatch(ctx, characterId, fighterLevels(1), FIGHTER_LEVELS[0]);
+    // A batch's levels see those planned before them: its second level's Fighter 3 skips Fighter 2
+    expect(
+      finalizeBatch(ctx, characterId, [...levelsOf("Rogue", [6]), ["Fighter", 3, 8]], { skills: { Climb: 8 } }, true),
+    ).rejects.toThrow("Level 3: Fighter 3 can't be taken there: Fighter 2 comes next");
+    const [second] = await finalizeBatch(ctx, characterId, [["Fighter", 2, 8]], FIGHTER_LEVELS[1]);
+    expect(second.entryId).toBe((await findClassLevel(ctx.classMap.pc["Fighter"], 2))!.id);
+  });
+
+  test("counts its levels of the class, on its sheet, its card and in the class picker, when one was skipped", async () => {
     const ctx = await getSeedCtx();
     const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
     const fighterId = ctx.classMap.pc["Fighter"];
-    // Its first level, forced as Fighter 3, which gives no bonus feat: one level of the class, Fighter 3's
-    const [{ hp, skills }] = FIGHTER_LEVELS;
-    const feats = { General: ["Power Attack", "Great Fortitude"] };
-    await finalizeBatch(ctx, characterId, [["Fighter", 3, hp]], { skills, feats }, true);
+    // A first level of Fighter 3, which no save takes: written as stored rows, as a level saved before the rule
+    await addCharacterLevel(characterId, (await findClassLevel(fighterId, 3))!.id);
     const { name, summary } = await CharactersService.getCharacter(session, characterId);
     const { items } = await CharactersService.getCharacters(session, { search: name }, { limit: 10, page: 1 });
     const card = items.find(({ id }) => id === characterId);

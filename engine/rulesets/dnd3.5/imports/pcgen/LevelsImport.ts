@@ -2,6 +2,7 @@ import type { ImportReport } from "@/engine/core/imports/index.ts";
 import type { AdvancementPlan, CharacterInput, ChildPlan, PickPlan } from "@/engine/core/module/index.ts";
 import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import ClassLevels from "@/engine/rulesets/dnd3.5/characters/ClassLevels.ts";
 import type { ImportedCharacter, ImportedFeat, ImportedLevel } from "@/engine/rulesets/dnd3.5/imports/imported.ts";
 import ImportedLevelGains from "@/engine/rulesets/dnd3.5/imports/ImportedLevelGains.ts";
 import PicksPlacement, {
@@ -132,13 +133,16 @@ export default class LevelsImport {
       const klass = this.names.findClass(level.className);
       // The view's class level the file's level names: its class's, at its number there (`level.classLevel`)
       const matchedLevel = klass && this.dnd35.classLevelByClassAndLevel.get(`${klass.id}:${level.classLevel}`);
-      // A class's levels come one after another: its next is one past those taken
-      const taken = matched.filter((other) => other.klass.id === klass?.id).length;
+      // A class's levels come one after another, as a save takes them: its next is one past those taken
+      const taken = ClassLevels.countByClass(
+        this.dnd35.classLevelsById,
+        matched.map(({ classLevel }) => ({ entryId: classLevel.id })),
+      );
       if (this.stop && matched.length === this.stop.count) {
         this.skipFrom(level, this.stop.reason);
         break;
       }
-      if (!klass || !matchedLevel || level.classLevel !== taken + 1 || matched.length >= levelsLeft) {
+      if (!klass || !matchedLevel || !ClassLevels.isNext(taken, matchedLevel) || matched.length >= levelsLeft) {
         const reason = !klass
           ? `${level.className} isn't a class of the ruleset`
           : `${level.className} ${level.classLevel} can't be taken there`;

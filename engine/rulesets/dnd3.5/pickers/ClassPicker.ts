@@ -109,6 +109,8 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
   /** The class's next level for the character: one past its level in the class (`ClassLevels.countByClass`). */
   private nextLevelOf(klass: EntityRecord): KlassLevel | undefined {
     this.levelByClass ??= ClassLevels.countByClass(this.dnd35.classLevelsById, this.input.rows.advancements);
-    return this.dnd35.classLevelByClassAndLevel.get(`${klass.id}:${(this.levelByClass.get(klass.id) ?? 0) + 1}`);
+    return this.dnd35.classLevelByClassAndLevel.get(
+      `${klass.id}:${ClassLevels.nextPositionOf(this.levelByClass, klass.id)}`,
+    );
   }
 }
