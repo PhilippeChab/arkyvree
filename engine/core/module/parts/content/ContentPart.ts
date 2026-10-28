@@ -1,4 +1,5 @@
 import type { EntityWrites } from "@/engine/core/module/parts/entities/index.ts";
+import type { OwnedKind } from "@/engine/core/view/index.ts";
 import type { TargetPath } from "@/shared/customization/target.ts";
 
 /**
@@ -21,5 +22,9 @@ export default abstract class ContentPart {
    * `ownerName`), as a new one's save writes it: 3.5's class level past the first, the class's previous level. None
    * when its position asks nothing.
    */
-  abstract planPositionRequirement(ownedType: string, ownerName: string, position: number): EntityWrites["requirement"];
+  abstract planPositionRequirement(
+    ownedType: OwnedKind,
+    ownerName: string,
+    position: number,
+  ): EntityWrites["requirement"];
 }

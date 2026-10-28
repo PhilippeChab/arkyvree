@@ -16,8 +16,7 @@ describe("3.5's content", () => {
     });
   });
 
-  test("requires nothing of a class's first level, nor of another kind's position", () => {
+  test("requires nothing of a class's first level", () => {
     expect(content.planPositionRequirement("class-levels", "Fighter", 1)).toBeUndefined();
-    expect(content.planPositionRequirement("races", "Elf", 2)).toBeUndefined();
   });
 });

@@ -1,4 +1,5 @@
 import { ContentPart } from "@/engine/core/module/index.ts";
+import type { OwnedKind } from "@/engine/core/view/index.ts";
 import ClassLevelEntity from "@/engine/rulesets/dnd3.5/entities/classes/ClassLevelEntity.ts";
 
 import BookPaths from "./BookPaths.ts";
@@ -14,7 +15,7 @@ export default class Dnd35Content extends ContentPart {
   }
 
   /** A class level's requirement of its class's previous level, as a new one's save writes it: none of another kind. */
-  override planPositionRequirement(ownedType: string, className: string, level: number) {
+  override planPositionRequirement(ownedType: OwnedKind, className: string, level: number) {
     return ownedType === "class-levels" ? ClassLevelEntity.planRequirement(className, level) : undefined;
   }
 }
