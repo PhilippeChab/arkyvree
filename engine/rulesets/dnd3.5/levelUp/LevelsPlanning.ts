@@ -8,7 +8,9 @@ import type {
   StoredAdvancement,
 } from "@/engine/core/module/index.ts";
 import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
+import ClassLevels from "@/engine/rulesets/dnd3.5/characters/ClassLevels.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
+import type { KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 import CharacterProjection from "./CharacterProjection.ts";
 import LevelUpBase from "./LevelUpBase.ts";
@@ -39,7 +41,8 @@ export interface CheckedCharacter extends HoldingCharacter {
  * - a level-up's planned levels are the ruleset's classes' (`getPlannedClassLevels`), and its selections linked to
  *   their pools, before its picks are spread over its levels (`distributePicks`): each is the view's, by the id the view
  *   keys it by, as the request entered (`LevelRequests`);
- * - each level isn't saved already (a level-up's), and raises its abilities by what the rules give it;
+ * - each level isn't saved already (a level-up's), is its class's next, forced or not
+ *   (`LevelRules.findNextClassLevel`), and raises its abilities by what the rules give it;
  * - its hit points, its selections and their pools checked, no non-stackable feat or spell picked twice at a level
  *   (`SelectionChecks`);
  * - no pick the character holds already, forced or not (`checkPicksNotHeld`): a non-stackable feat it has, or a spell
@@ -57,6 +60,27 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
       entryId: classLevelId,
       picks: this.savedPicksOf(hp, abilityIncreases, picks),
     }));
+  }
+
+  /**
+   * Refuses class level `classLevel` of class `className` unless it's its class's next after `levels` (the character's
+   * saved ones and those planned before it), forced or not (`LevelRules.findNextClassLevel`, which the class picker
+   * offers): a class's levels come one after another, so the character's level in a class is its highest class level
+   * too, once a gap a forced level left before the rule is filled.
+   */
+  private checkNextLevel(
+    levels: { entryId: string | null }[],
+    className: string,
+    classLevel: KlassLevel,
+    label: string,
+  ) {
+    const next = LevelRules.findNextClassLevel(this.dnd35.classLevelsById, levels, classLevel.ownerId);
+    if (next === classLevel.position) return;
+    const taken = ClassLevels.format(className, classLevel.position);
+    throw new RulesError(
+      "invalid",
+      `${label}${taken} can't be taken there: ${ClassLevels.format(className, next)} comes next`,
+    );
   }
 
   /**
@@ -109,6 +133,7 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
       const label = `Level ${rows.advancements.length + i + 1}: `;
       if (otherLevels.some((other) => other.entryId === classLevel.id))
         throw new RulesError("invalid", `${label}This level has already been finalized`);
+      this.checkNextLevel(otherLevels, klass.name, classLevel, label);
       this.checks.checkAbilityIncreases(rows.advancements.length + i, abilityIncreases, label);
       this.checks.checkLevel({ klass, hp, ...levelPicks });
       planned.push({ abilityIncreases, classLevelId: classLevel.id, hp, picks: levelPicks });

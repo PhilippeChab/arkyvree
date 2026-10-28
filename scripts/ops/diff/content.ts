@@ -261,16 +261,16 @@ async function pullRulesetRow(query: Query, rulesetId: string): Promise<Identifi
 /** An extension's copies of a base entity, each by the keys of both. */
 async function pullSnapshots(query: Query, rulesetId: string): Promise<IdentifiedRow[]> {
   return keyed(
-    await query<{ entity_type: string; forked: string | null; source: string | null }>(
+    await query<{ forked: string | null; source: string | null }>(
       `${ENTITY_KEYS}
-       select s.entity_type, src.key as source, frk.key as forked
+       select src.key as source, frk.key as forked
          from rules.entity_snapshots s
          left join entity_keys src on src.id = s.source_entity_id
          left join entity_keys frk on frk.id = s.forked_entity_id
         where s.ruleset_id = $1`,
       [rulesetId],
     ),
-    (r) => `${r.entity_type}: ${r.source ?? "<unresolved>"} → ${r.forked ?? "<unresolved>"}`,
+    (r) => `${r.source ?? "<unresolved>"} → ${r.forked ?? "<unresolved>"}`,
   );
 }
 

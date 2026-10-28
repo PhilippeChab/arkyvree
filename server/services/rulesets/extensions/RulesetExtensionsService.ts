@@ -4,10 +4,8 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import {
   Activities,
-  Entities,
   EntityReferences,
   EntitySnapshots,
-  type RulesetEntityType,
   RulesetExtensions,
   Rulesets,
 } from "@/server/repositories/index.ts";
@@ -22,15 +20,14 @@ class RulesetExtensionsService {
    * Whether a character on the host picked what leaves its view with the extension (`departures`): one of its entities,
    * or one of the host's copies of them, with nothing in its place once it's gone (an entity only the extension has), or
    * a level of a class the class standing in its place doesn't have. The pick would dangle. A pick of what the view
-   * shows something else in place of (a core feat the extension overrides) names that instead. Every type's picks, a
-   * class's by its levels (`EntityReferences.exists`).
+   * shows something else in place of (a core feat the extension overrides) names that instead. Every type's picks at
+   * once, a class's by its levels (`EntityReferences.exists`).
    */
   private async isExtensionInUseByHost(tx: Db, hostRulesetId: string, departures: Departures) {
-    for (const [entityType, fallbacks] of departures) {
-      const ids = [...fallbacks].filter(([, fallbackId]) => !fallbackId).map(([id]) => id);
-      if (await EntityReferences.exists(tx, { entityType, ids, rulesetId: hostRulesetId })) return true;
-    }
-    return false;
+    const ids = [...departures.values()].flatMap((fallbacks) =>
+      [...fallbacks].filter(([, fallbackId]) => !fallbackId).map(([id]) => id),
+    );
+    return await EntityReferences.exists(tx, { ids, rulesetId: hostRulesetId });
   }
 
   async getExtensions(session: Session, id: string) {
@@ -124,14 +121,12 @@ class RulesetExtensionsService {
 
       if (!ruleset.extensionIds.includes(extensionId)) throw new NotFoundError("Not subscribed to this extension");
 
-      // 2. The fork's copies of the extension's entities: the snapshots whose sourceEntityId belongs to the extension
-      const snapshots = await EntitySnapshots.findMany(tx, { rulesetId: id });
-      const extensionSnapshots = [];
-      for (const snap of snapshots) {
-        const entityType = snap.entityType as RulesetEntityType;
-        const sourceEntity = await Entities.findOne(tx, { entityType, id: snap.sourceEntityId });
-        if (sourceEntity?.rulesetId === extensionId) extensionSnapshots.push(snap);
-      }
+      // 2. The fork's copies of the extension's entities: the snapshots whose source belongs to the extension (a snapshot
+      // whose source is gone belongs to none)
+      const snapshots = await EntitySnapshots.findManyWithEntities(tx, { rulesetId: id });
+      const extensionSnapshots = snapshots.flatMap(({ entityType, sourceRulesetId, ...snap }) =>
+        entityType && sourceRulesetId === extensionId ? [{ ...snap, entityType }] : [],
+      );
 
       const copies = new Map(
         [...Map.groupBy(extensionSnapshots, (snap) => snap.entityType)].map(([type, snaps]) => [
@@ -152,8 +147,7 @@ class RulesetExtensionsService {
 
       // The fork's copies go as a restore reverts them (`EntityRevert`): what names a copy names the extension's entity
       // first, so no copy's delete trips another's reference to it (an item's copy naming its template's), in any order
-      for (const snap of extensionSnapshots)
-        await EntityRevert.revert(tx, snap.entityType as RulesetEntityType, snap.sourceEntityId, id);
+      for (const snap of extensionSnapshots) await EntityRevert.revert(tx, snap.entityType, snap.sourceEntityId, id);
 
       // 3. The ruleset changes now, and subscribes to the extension no more: its row is archived
       await Rulesets.update(tx, {}, { id });

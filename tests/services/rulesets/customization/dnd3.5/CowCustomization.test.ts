@@ -180,7 +180,7 @@ describe.each(CASES)("an inherited %s's %s", (ownerType, kindName) => {
       ownerType === "classes" || ownerType === "class-levels"
         ? { entityType: "classes", sourceEntityId: klass.id }
         : { entityType: "feats", sourceEntityId: feat.id };
-    expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toMatchObject([copied]);
+    expect(await EntitySnapshots.findManyWithEntities(db, { rulesetId: fork.id })).toMatchObject([copied]);
     expect(await kind.rowsOf(ownerType, ownerId)).toEqual(parentRows);
   });
 

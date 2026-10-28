@@ -19,6 +19,7 @@ import { CharacterInventoryService } from "@/server/services/characters/inventor
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 import { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
+import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { subsheetsOf } from "@/tests/support/characters.ts";
@@ -229,7 +230,9 @@ describe("Bonded creatures", () => {
     ).items.map((c) => c.id);
     expect(listed).toContain(masterId);
     expect(listed).not.toContain(bonded.id);
-    expect(await Characters.findOne(db, { id: bonded.id, userId: SEED_USER_ID })).toBeUndefined();
+    // Its player owns it through its master alone: as a character of their own, it's an unknown one
+    const policy = await CharactersPolicy.for(db, owner, bonded);
+    expect(() => policy.canArchive()).toThrow(NotFoundError);
 
     await Characters.archive(db, { id: masterId });
     expect(await Characters.findOne(db, { id: bonded.id }, Visibility.UnarchivedOnly)).toBeUndefined();

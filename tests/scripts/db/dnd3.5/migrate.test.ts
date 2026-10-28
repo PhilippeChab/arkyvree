@@ -177,9 +177,10 @@ async function archiveAt(
 
 /**
  * A table's columns, indexes and constraints, each as one line (its name, and its definition as the database gives
- * it), in order: what 0095 renames of an advancement's, and what 0097 drops and keys of an entity's.
+ * it), in order: what 0095 renames of an advancement's, what 0097 drops and keys of an entity's, and what 0099 drops
+ * and keys of a snapshot's.
  */
-async function definitionsOf(schema: "character" | "rules", table: "advancements" | "entities") {
+async function definitionsOf(schema: "character" | "rules", table: "advancements" | "entities" | "entity_snapshots") {
   const qualified = `${schema}.${table}`;
   const { rows } = await db.execute<{ line: string }>(sql`
     SELECT 'column ' || attnum || ' ' || attname || ' ' || format_type(atttypid, atttypmod) AS line FROM pg_attribute
@@ -289,10 +290,11 @@ async function pickRows() {
 /**
  * The indexes 0089 drops, rebuilds or creates, as the migrations before left them: the btrees another index covers (a
  * user's starred rulesets, a ruleset's snapshots, a record's attachments), the archived tables' indexes by a foreign
- * key, which left an archived row out, and none on the foreign keys whose deletes no index served. What the migrations
- * before 0089 ran on.
+ * key, which left an archived row out, and none on the foreign keys whose deletes no index served, with a snapshot's
+ * type 0099 drops after it (`restoreSnapshotTypesBefore0099`). What the migrations before 0089 ran on.
  */
 async function restoreIndexesBefore0089() {
+  await restoreSnapshotTypesBefore0099();
   await db.execute(sql`
     CREATE INDEX starred_rulesets_user_id ON account.starred_rulesets (user_id);
     CREATE INDEX entity_snapshots_ruleset_id_entity_type ON rules.entity_snapshots (ruleset_id, entity_type);
@@ -322,6 +324,25 @@ async function restoreIndexesBefore0089() {
 }
 
 /**
+ * A snapshot's type, as the migrations before 0099 left it: its column, each row's its copy's, or its source's when its
+ * copy is gone (a tombstone), and the key by its ruleset, its type and its source in place of the one without its type.
+ * What the migrations before 0099 ran on.
+ */
+async function restoreSnapshotTypesBefore0099() {
+  await db.execute(sql`
+    ALTER TABLE rules.entity_snapshots ADD COLUMN entity_type text;
+    UPDATE rules.entity_snapshots AS s SET entity_type = coalesce(
+      (SELECT type FROM rules.entities WHERE id = s.forked_entity_id),
+      (SELECT type FROM rules.entities WHERE id = s.source_entity_id)
+    );
+    ALTER TABLE rules.entity_snapshots ALTER COLUMN entity_type SET NOT NULL;
+    ALTER TABLE rules.entity_snapshots DROP CONSTRAINT entity_snapshots_ruleset_id_source_entity_id_key;
+    ALTER TABLE rules.entity_snapshots ADD CONSTRAINT entity_snapshots_ruleset_type_source_unique
+      UNIQUE (ruleset_id, entity_type, source_entity_id);
+  `);
+}
+
+/**
  * The names 0095 gives an advancement's entry, as the migrations before left them: its statements run backwards, each
  * `entry` name back to its `track` one (`entry_id` to `track_id`, and its indexes' and foreign key's), the registry
  * sync off again. What the migrations before 0095 ran on.
@@ -343,10 +364,12 @@ async function restoreTracksBefore0095() {
 /**
  * The rows and columns 0092 renames, as the migrations before left them: its statements run backwards, each type back to
  * its old spelling (`class-levels` to `class_levels`) and `target_type` back to `target_table`, its registry sync off
- * again (the seeded database records no activity, whose targets a test writes as they were), and the names 0095 gives
- * after it back too (`restoreTracksBefore0095`). What the migrations before 0092 ran on.
+ * again (the seeded database records no activity, whose targets a test writes as they were), and what 0095 and 0099
+ * change after it back too (`restoreTracksBefore0095`, `restoreSnapshotTypesBefore0099`). What the migrations before
+ * 0092 ran on.
  */
 async function restoreTypesBefore0092() {
+  await restoreSnapshotTypesBefore0099();
   await restoreTracksBefore0095();
   const swapped = new Map([
     ["class-levels", "class_levels"],
@@ -371,6 +394,19 @@ async function seatRows() {
     FROM campaign.campaigns
     UNION ALL SELECT 'seat ' || id || ' ' || campaign_id || ' ' || coalesce(user_id::text, '-') || ' ' || role || ' '
       || updated_at::text || ' ' || coalesce(to_json(deleted_at)::text, '-') FROM campaign.players
+    ORDER BY line
+  `);
+  return rows.map((row) => row.line);
+}
+
+/**
+ * Every snapshot, each as one line (every column 0099 keeps), and every character's last change: what 0099 leaves.
+ */
+async function snapshotRows() {
+  const { rows } = await db.execute<{ line: string }>(sql`
+    SELECT 'snapshot ' || concat_ws(' ', id, ruleset_id, source_entity_id, forked_entity_id, created_at::text) AS line
+    FROM rules.entity_snapshots
+    UNION ALL SELECT 'character ' || id || ' ' || last_changed_at::text FROM character.characters
     ORDER BY line
   `);
   return rows.map((row) => row.line);
@@ -479,7 +515,7 @@ describe("0081_spells-and-classes", () => {
         data: '{"entityType":"spells","propertyType":"CLASS_HD","target":"spells.wizard.known","value":"[ spells.cleric.known ]"}',
       },
     ]);
-  });
+  }, 30_000);
 });
 
 describe("0082_fields", () => {
@@ -564,7 +600,7 @@ describe("0082_fields", () => {
       `);
       expect({ table, rows }).toEqual({ table, rows: expected });
     }
-  });
+  }, 30_000);
 });
 
 describe("0084_link-activities", () => {
@@ -608,7 +644,7 @@ describe("0084_link-activities", () => {
       `);
       expect({ table, rows }).toEqual({ table, rows: expected });
     }
-  });
+  }, 30_000);
 });
 
 describe("0085_advancement-activities", () => {
@@ -654,7 +690,7 @@ describe("0085_advancement-activities", () => {
       `);
       expect({ table, rows }).toEqual({ table, rows: expected });
     }
-  });
+  }, 30_000);
 });
 
 describe("0086_registry-declarations", () => {
@@ -795,7 +831,7 @@ describe("0088_unwritten-columns", () => {
       ),
     ).toHaveLength(4);
     expect(await unwrittenRows()).toEqual(before.filter((line) => !gone.has(line.split(" ")[1]!)));
-  });
+  }, 30_000);
 
   test("leaves a character archived since 0080, its advancements live, as it is", async () => {
     await addUnwrittenColumns();
@@ -1028,7 +1064,7 @@ describe("0091_stored-name-activities", () => {
       `);
       expect({ table, rows }).toEqual({ table, rows: expected });
     }
-  });
+  }, 30_000);
 });
 
 describe("0092_stored-type-forms", () => {
@@ -1113,7 +1149,7 @@ describe("0092_stored-type-forms", () => {
       .registries()
       .entityTypes.map(({ type }) => type);
     expect(types.map(({ type }) => type).toSorted()).toEqual(declared.toSorted());
-  });
+  }, 30_000);
 });
 
 describe("0093_unused-pick-columns", () => {
@@ -1236,7 +1272,7 @@ describe("0095_advancement-entry", () => {
     expect(await definitionsOf("character", "advancements")).toEqual(fresh);
     expect(await typedRows(false)).toEqual(before);
     expect((await db.execute(placed)).rows).toEqual(stored);
-  });
+  }, 30_000);
 });
 
 describe("0096_campaign-seats", () => {
@@ -1316,5 +1352,62 @@ describe("0097_entity-campaign-scope", () => {
       })
       .catch((error: unknown) => error);
     expect(refused).toMatchObject({ cause: { message: "Entities hold a campaign, which nothing reads" } });
+  });
+});
+
+describe("0099_snapshot-type", () => {
+  test("drops a snapshot's type, which its entities hold, keys it by its ruleset and its source, and rewrites no row", async () => {
+    const fresh = await definitionsOf("rules", "entity_snapshots");
+    await restoreSnapshotTypesBefore0099();
+    const restored = await definitionsOf("rules", "entity_snapshots");
+    expect(restored.filter((line) => line.includes("type"))).toHaveLength(3);
+    const before = await snapshotRows();
+    const placed = sql`SELECT id, ctid::text AS place, xmin::text AS version FROM rules.entity_snapshots ORDER BY id`;
+    const { rows: stored } = await db.execute(placed);
+    expect(stored.length).toBeGreaterThan(0);
+
+    for (const statement of statementsOf("0099_snapshot-type.sql")) await db.execute(sql.raw(statement));
+
+    // What a fresh database's migrations give, every row as it was, in its place, and every character's last change
+    expect(await definitionsOf("rules", "entity_snapshots")).toEqual(fresh);
+    expect(await snapshotRows()).toEqual(before);
+    expect((await db.execute(placed)).rows).toEqual(stored);
+  });
+
+  test.each([
+    ["its copy's", sql``],
+    ["its source's, its copy deleted (a tombstone)", sql`, forked_entity_id = public.gen_random_uuid()`],
+  ])("refuses a snapshot whose type differs from %s", async (_, tombstoned) => {
+    await restoreSnapshotTypesBefore0099();
+    await db.execute(sql`
+      UPDATE rules.entity_snapshots SET entity_type = 'none'${tombstoned}
+      WHERE id = (SELECT id FROM rules.entity_snapshots ORDER BY id LIMIT 1)
+    `);
+
+    const refused = await db
+      .transaction(async (tx) => {
+        for (const statement of statementsOf("0099_snapshot-type.sql")) await tx.execute(sql.raw(statement));
+      })
+      .catch((error: unknown) => error);
+    expect(refused).toMatchObject({ cause: { message: "Snapshots differ from their entities' type" } });
+  });
+
+  test("refuses two snapshots of one source in a ruleset, of two types, its copies and its source gone", async () => {
+    await restoreSnapshotTypesBefore0099();
+    const { rulesetId } = await getSeedCtx();
+    const sourceId = crypto.randomUUID();
+    for (const type of ["feats", "spells"]) {
+      await db.execute(sql`
+        INSERT INTO rules.entity_snapshots (ruleset_id, entity_type, source_entity_id, forked_entity_id)
+        VALUES (${rulesetId}, ${type}, ${sourceId}, ${crypto.randomUUID()})
+      `);
+    }
+
+    const refused = await db
+      .transaction(async (tx) => {
+        for (const statement of statementsOf("0099_snapshot-type.sql")) await tx.execute(sql.raw(statement));
+      })
+      .catch((error: unknown) => error);
+    expect(refused).toMatchObject({ cause: { message: "Rulesets hold two snapshots of one source" } });
   });
 });

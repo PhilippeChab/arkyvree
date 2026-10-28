@@ -186,19 +186,14 @@ class CharactersRepository extends include(
   }
 
   /**
-   * A character by id, or its owner's (`{ id, userId }`); by share token; or a character's child (3.5's bonded
-   * creature). Who may edit one is its policy's (`CharactersPolicy`).
+   * A character by id; a player character by share token; or a character's child (3.5's bonded creature). Who may read
+   * or edit one is its policy's (`CharactersPolicy`).
    */
   async findOne(
     db: Db,
-    where:
-      | { id: string }
-      | { id: string; userId: string }
-      | { shareToken: string }
-      | { kind: string; parentCharacterId: string },
+    where: { id: string } | { shareToken: string } | { kind: string; parentCharacterId: string },
     visibility: Visibility = Visibility.UnarchivedOnly,
   ) {
-    const isUserFacing = "userId" in where || "shareToken" in where;
     const [row] = await this.rows(
       db,
       this.branchWhere(
@@ -208,9 +203,8 @@ class CharactersRepository extends include(
           "parentCharacterId" in where && eq(this.table.parentCharacterId, where.parentCharacterId),
         ],
         [
-          "userId" in where && eq(this.table.userId, where.userId),
           "kind" in where && eq(this.table.kind, where.kind),
-          isUserFacing && inArray(this.table.kind, [...Engine.storage().playerKinds()]),
+          "shareToken" in where && inArray(this.table.kind, [...Engine.storage().playerKinds()]),
           this.visibility(visibility),
         ],
       ),

@@ -64,7 +64,6 @@ class RulesetEntitiesRepository {
         and(
           eq(entitySnapshotsInRules.forkedEntityId, entitiesInRules.id),
           eq(entitySnapshotsInRules.rulesetId, entitiesInRules.rulesetId),
-          eq(entitySnapshotsInRules.entityType, entitiesInRules.type),
         ),
       )
       .where(
