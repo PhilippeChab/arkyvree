@@ -2,7 +2,7 @@ import { createHmac, randomUUID } from "node:crypto";
 
 import type { Db } from "@/drizzle/database.ts";
 import { compareInConstantTime } from "@/server/constantTime.ts";
-import { db, readUniqueViolation, withTransaction } from "@/server/database/index.ts";
+import { db, withTransaction, withUniqueRefusal } from "@/server/database/index.ts";
 import { readEnv } from "@/server/environment.ts";
 import { BadRequestError, ConflictError, ForbiddenError, InternalError, NotFoundError } from "@/server/errors/index.ts";
 import { Attachments, Blobs, Characters } from "@/server/repositories/index.ts";
@@ -185,21 +185,16 @@ class AttachmentsService {
       });
       if (existing) await Attachments.delete(tx, { id: existing.id });
 
-      let attachment;
-      try {
-        const rows = await Attachments.create(tx, {
-          recordType: payload.recordType,
-          recordId: payload.recordId,
-          name: payload.name,
-          blobId: blob.id,
-        });
-        attachment = rows[0];
-      } catch (error) {
-        if (readUniqueViolation(error) !== undefined)
-          throw new ConflictError("Slot is already attached by a concurrent request");
-
-        throw error;
-      }
+      const [attachment] = await withUniqueRefusal(
+        () =>
+          Attachments.create(tx, {
+            recordType: payload.recordType,
+            recordId: payload.recordId,
+            name: payload.name,
+            blobId: blob.id,
+          }),
+        () => new ConflictError("Slot is already attached by a concurrent request"),
+      );
       if (!attachment) throw new InternalError("Failed to create attachment");
 
       const updated = await Blobs.update(tx, { attachedAt: new Date().toISOString() }, { id: blob.id });

@@ -12,7 +12,7 @@ import {
   type RulesetAbility,
   type Skill,
 } from "@/engine/rulesets/dnd3.5/index.ts";
-import { db } from "@/server/database/index.ts";
+import { db, withTransaction } from "@/server/database/index.ts";
 import {
   BadRequestError,
   ConflictError,
@@ -35,6 +35,7 @@ import { RulesetChangesService } from "@/server/services/rulesets/changes/index.
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
+import { withNameRefusal } from "@/server/services/rulesets/rulesetNames.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { addRulesetContributor } from "@/tests/support/contributors.ts";
@@ -56,6 +57,7 @@ import {
 
 type RulesetValues = NonNullable<Parameters<typeof createTestRuleset>[1]>;
 const firstPage = { limit: 100, page: 1 };
+const NAME_TAKEN = new ConflictError("A ruleset with this name already exists");
 
 /** A fork of `parent` for `session`'s user. */
 function fork(
@@ -504,7 +506,7 @@ describe("RulesetsService", () => {
         UnprocessableEntityError,
       );
       expect(fork(session, { id: NIL_UUID })).rejects.toThrow(NotFoundError);
-      expect(fork(session, parent, { name: (await createTestRuleset(user.id)).name })).rejects.toThrow(ConflictError);
+      expect(fork(session, parent, { name: (await createTestRuleset(user.id)).name })).rejects.toEqual(NAME_TAKEN);
     });
 
     test("lets an ordinary account override more than 25 inherited entities", async () => {
@@ -677,6 +679,36 @@ describe("RulesetsService", () => {
         RulesetsService.updateRuleset(session, ruleset.id, { name, description: "", updatedAt: ruleset.updatedAt });
       await edit(`First ${uniqueId()}`);
       expect(edit(`Second ${uniqueId()}`)).rejects.toThrow(ConflictError);
+    });
+
+    test("refuses a name another ruleset holds, another user's or an archived one's, and keeps its own", async () => {
+      const { user, session } = await createTestUser();
+      const ruleset = await createTestRuleset(user.id);
+      const holders = [
+        await createTestRuleset(user.id),
+        await createTestRuleset((await createTestUser()).user.id),
+        await createTestRuleset(user.id, { status: "Archived" }),
+      ];
+      const edit = (name: string) =>
+        RulesetsService.updateRuleset(session, ruleset.id, { name, description: "Edited" });
+      for (const holder of holders) expect(edit(holder.name)).rejects.toEqual(NAME_TAKEN);
+      expect(await edit(ruleset.name)).toMatchObject({ name: ruleset.name, description: "Edited" });
+    });
+
+    test("answers the name index's refusal as the check does, for a name another request claimed since", async () => {
+      // Two requests that claim one name at once both pass the check: the second one's write meets the index.
+      const { user } = await createTestUser();
+      const [holder, renamed] = [await createTestRuleset(user.id), await createTestRuleset(user.id)];
+      const { name, baseRules } = holder;
+      expect(
+        withTransaction((tx) => withNameRefusal(() => Rulesets.create(tx, { name, description: "", baseRules }))),
+      ).rejects.toEqual(NAME_TAKEN);
+      expect(
+        withTransaction((tx) => withNameRefusal(() => Rulesets.update(tx, { name }, { id: renamed.id }))),
+      ).rejects.toEqual(NAME_TAKEN);
+      const unrelated = new Error("not the index's");
+      expect(withNameRefusal(() => Promise.reject(unrelated))).rejects.toBe(unrelated);
+      expect((await Rulesets.findOne(db, { id: renamed.id }))!.name).toBe(renamed.name);
     });
 
     test("refuses another user's ruleset, a base, an archived one and a missing one", async () => {

@@ -23,7 +23,7 @@ import {
   type RulesetScope,
   RulesetViews,
 } from "@/server/cow/index.ts";
-import { readUniqueViolation, withTransaction } from "@/server/database/index.ts";
+import { withTransaction, withUniqueRefusal } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
   Entities,
@@ -368,10 +368,10 @@ export default class EntityWriter {
 
       const { gone } = EntityWriter.getNotFound(ruleset, this.type);
       const owner = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, this.type, planned.owner, gone);
-      const [row] = await Entities.create<Row>(tx, type, { ...planned.row, ownerId: owner.id }).catch((error) => {
-        if (readUniqueViolation(error) === OWNED_POSITION_INDEX) throw new ConflictError(planned.taken);
-        throw error;
-      });
+      const [row] = await withUniqueRefusal(
+        () => Entities.create<Row>(tx, type, { ...planned.row, ownerId: owner.id }),
+        (index) => (index === OWNED_POSITION_INDEX ? new ConflictError(planned.taken) : undefined),
+      );
       await EntityWriter.setParts(tx, scope, { entityId: row.id, entityType: type }, planned, false);
 
       await EntityWriter.recordActivity(tx, session, "create", type, row.id, planned.activity);
