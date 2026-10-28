@@ -3,9 +3,8 @@ import type { PickPlan } from "@/engine/core/module/index.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import type { PlannedClassLevel } from "@/engine/rulesets/dnd3.5/levelUp/LevelUpBase.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import FeatRules from "@/engine/rulesets/dnd3.5/rules/FeatRules.ts";
 import SkillRules from "@/engine/rulesets/dnd3.5/rules/SkillRules.ts";
-import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import { FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import type ImportedLevelGains from "./ImportedLevelGains.ts";
 import type { LevelGains } from "./ImportedLevelGains.ts";
@@ -85,10 +84,12 @@ export default class PicksPlacement {
   /** The spells not placed yet, in the file's order. */
   private readonly spells: MatchedSpell[];
 
-  /** Whether the character (`character`) can take the feat: it meets its requirements, and holds it not unless it stacks. */
-  private canTake(character: DetailedCharacter, feat: MatchedFeat) {
-    const stackable = Dnd35View.of(this.rulesetData).featsById.get(feat.entityId)?.fields[FEAT_STACKABLE] === true;
-    if (!stackable && character.getHeldFeats().some(({ entity }) => entity.id === feat.entityId)) return false;
+  /**
+   * Whether the character (`character`, holding the feats `heldIds`) can take the feat: it meets its requirements, and
+   * holds it not unless it stacks.
+   */
+  private canTake(character: DetailedCharacter, heldIds: ReadonlySet<string>, feat: MatchedFeat) {
+    if (!FeatRules.of(this.rulesetData).canTake(feat.entityId, heldIds)) return false;
     const requirements = this.rulesetData.requirementsByEntity.get(feat.entityId) ?? [];
     return requirements.length === 0 || character.areRequirementsMet([requirements]);
   }
@@ -98,10 +99,11 @@ export default class PicksPlacement {
    * has room (`hinted`), or in any pool of its with room otherwise.
    */
   private findNext(character: DetailedCharacter, room: Map<string, number>, hinted: boolean) {
+    const heldIds = new Set(character.getHeldFeats().map(({ entity }) => entity.id));
     for (const feat of this.feats) {
       const pools = hinted ? [feat.viaId] : feat.poolIds;
       const poolId = pools.find((id) => id !== undefined && (room.get(id) ?? 0) > 0);
-      if (poolId && this.canTake(character, feat)) return { feat, poolId };
+      if (poolId && this.canTake(character, heldIds, feat)) return { feat, poolId };
     }
     return undefined;
   }

@@ -17,6 +17,7 @@ import {
   SKILL_CHECK_PENALTY_MULTIPLIER,
   SKILL_IMPACTED_BY_WEIGHT,
   SKILL_USABLE_WITHOUT_TRAINING,
+  SPELL_COMPONENT,
   SPELL_DESCRIPTOR,
   SPELL_SAVE_EFFECT,
   SPELL_SCHOOL,
@@ -259,6 +260,31 @@ describe("An update's activity", () => {
         { field: SKILL_USABLE_WITHOUT_TRAINING, label: "Usable Without Training", from: "false", to: "true" },
       ],
       [{ field: RACE_QUADRUPED, label: "Quadruped", from: "false", to: "true" }],
+    ]);
+  });
+
+  test("of a set records its values in their declared order, before and after, whatever their text's", async () => {
+    const { aptitudes, rulesetId, session } = await setup();
+    const fieldsWith = (components: string[]) => ({
+      [SPELL_SCHOOL]: "Abjuration",
+      [SPELL_SAVE_EFFECT]: "negates",
+      [SPELL_COMPONENT]: components,
+    });
+    const links = { listedIn: [{ toId: aptitudes.Wizard, tier: 1 }] };
+    const spell = await EntitiesService.createEntity(session, rulesetId, "spells", {
+      name: "Shield",
+      fields: fieldsWith(["Somatic", "Verbal"]),
+      links,
+    });
+    await EntitiesService.updateEntity(session, rulesetId, "spells", spell.id, {
+      name: "Shield",
+      fields: fieldsWith(["Material", "Verbal", "Somatic"]),
+      links,
+    });
+
+    // Its closed list's order (Verbal, Somatic, Material), not the order it's sent in, nor by text
+    expect(await changesOf(session.userId, spell.id)).toEqual([
+      { field: SPELL_COMPONENT, label: "Components", from: "Verbal, Somatic", to: "Verbal, Somatic, Material" },
     ]);
   });
 });

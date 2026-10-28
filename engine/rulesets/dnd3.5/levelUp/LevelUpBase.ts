@@ -19,9 +19,9 @@ export interface LevelHitPoints {
 
 /**
  * What the level-up rules decide (`Dnd35LevelUp`), which every level-up flow reads: how a character is built (`C`),
- * what a level's ability increases add up to, the hit points it gains and those it counts before they're rolled, and
- * what a master's bonded creatures become with it; and what a save's checks (`LevelsPlanning`) ask of them: its planned
- * levels, its picks spread over them, the pools they overfill, the issues an edited level answers for.
+ * what a level's ability increases add up to, the hit points it gains, and what a master's bonded creatures become
+ * with it; and what a save's checks (`LevelsPlanning`) ask of them: its planned levels, its picks spread over them, the
+ * pools they overfill, the issues an edited level answers for.
  */
 export interface LevelUpRules<C> {
   /** The character built from its rows (as the server read them, or with what a level-up adds), in the ruleset's view. */
@@ -66,8 +66,6 @@ export interface LevelUpRules<C> {
    * (`record`), which a creature it makes takes after.
    */
   planBondedCreatures(view: RulesetView, master: C, record: Character, bonded: CharacterInput[]): ChildrenPlan;
-  /** The hit points a level counts before they're rolled: a level a flow projects, whose hit points its save sets. */
-  readonly unrolledLevelHp: number;
 }
 
 /** A level a level-up plans: its class and class level, and its ability increases (its `abilities` picks). */

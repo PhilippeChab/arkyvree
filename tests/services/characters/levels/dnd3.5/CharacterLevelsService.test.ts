@@ -784,6 +784,27 @@ describe("LevelsService", () => {
       }
     });
 
+    test("hold a granted feat that doesn't stack once, picked or granted before, and one that stacks each time", async () => {
+      const { character, classLevels, featAptitude, feats } = await setupRuleset();
+      const granted = ["Dodge", "Power Attack", "Weapon Focus"];
+      for (const classLevel of classLevels.slice(0, 2)) {
+        const grants = granted.map((name) => ({ toId: feats[name].id, viaId: featAptitude.id, free: true }));
+        await addGrants(db, classLevel.id, "feats", grants);
+      }
+      await addCharacterLevel(character.id, classLevels[0].id, { feats: { [featAptitude.id]: [feats["Dodge"].id] } });
+      await addCharacterLevel(character.id, classLevels[1].id);
+      const detailed = await buildAs(DetailedCharacter, (await Characters.findOne(db, { id: character.id }))!);
+      const held = detailed.getHeldFeats();
+
+      // Dodge picked, then granted at both levels; Power Attack granted at both; Weapon Focus stacks
+      expect(granted.map((name) => held.filter(({ entity }) => entity.id === feats[name].id).length)).toEqual([
+        1, 1, 2,
+      ]);
+      // The grant kept is the first level's: the feat keeps its level
+      const powerAttack = held.find(({ entity }) => entity.id === feats["Power Attack"].id);
+      expect(powerAttack?.classLevelId).toBe(classLevels[0].id);
+    });
+
     test("stop granting a feat the fork deletes", async () => {
       // Deleting an inherited feat in a fork copies it there and deletes the copy: the fork no longer has the feat
       const { session, ruleset, character, classLevels, featAptitude, feats } = await setupRuleset({ fork: true });

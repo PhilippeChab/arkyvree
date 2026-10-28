@@ -1,9 +1,10 @@
 import type { PickPlan, StoredPick } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
+import FeatRules from "@/engine/rulesets/dnd3.5/rules/FeatRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { type Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
-import { CLASS_HD, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import type { LevelUpRules } from "./LevelUpBase.ts";
 import type { LevelPicks } from "./requests.ts";
@@ -71,7 +72,12 @@ export default class SelectionChecks {
   constructor(
     private readonly view: RulesetView,
     private readonly rules: Pick<LevelUpRules<unknown>, "getAbilityIncreaseTotal" | "hitPointsOf">,
-  ) {}
+  ) {
+    this.feats = FeatRules.of(view.rulesetData);
+  }
+
+  /** The feat rules: which feats stack, and which the character can take again. */
+  private readonly feats: FeatRules;
 
   /**
    * Throws when the level picks a non-stackable feat or a spell more than once, in a pool or under two: a character
@@ -79,7 +85,7 @@ export default class SelectionChecks {
    * again, at this level as at another: each pick is a row of its own.
    */
   private checkRepeatedPicks(feats: Record<string, string[]>, spells: Record<string, string[]>) {
-    const nonStackable = this.findRepeated(feats).find((featId) => !this.isStackable(featId));
+    const nonStackable = this.findRepeated(feats).find((featId) => !this.feats.isStackable(featId));
     if (nonStackable) {
       const name = this.dnd35.featsById.get(nonStackable)?.name ?? nonStackable;
       throw new RulesError("invalid", `Non-stackable feat "${name}" cannot be picked more than once`);
@@ -122,7 +128,7 @@ export default class SelectionChecks {
     const { featsById, spellsById } = this.dnd35;
     const picked = [
       ...this.listPicks("feats", picks.feats, featsById).filter(
-        ({ entityId }) => !this.isStackable(entityId) && !ownFeats.has(entityId),
+        ({ entityId }) => !this.feats.isStackable(entityId) && !ownFeats.has(entityId),
       ),
       ...this.listPicks("spells", picks.spells, spellsById).filter(
         ({ entityId, viaId }) => !ownSpells.has(`${entityId}:${viaId}`),
@@ -146,11 +152,6 @@ export default class SelectionChecks {
     const ids = Object.values(picks).flat();
     const repeated = new Set(ids.filter((id, index) => ids.indexOf(id) !== index));
     return [...new Set(ids)].filter((id) => repeated.has(id));
-  }
-
-  /** Whether the ruleset's feat stacks: a character may have it more than once. */
-  private isStackable(featId: string) {
-    return this.dnd35.featsById.get(featId)?.fields[FEAT_STACKABLE] === true;
   }
 
   /** A pool's picks of a step (`picks`, by pool) as the level's picks, each named by its row (`byId`). */
@@ -192,14 +193,14 @@ export default class SelectionChecks {
   private splitHeldFeats(feats: Record<string, string[]>, held: () => HeldEntity[], kept: StoredPick[]) {
     const repeated: PickPlan[] = [];
     const picked = Object.values(feats).flat();
-    if (picked.every((featId) => this.isStackable(featId))) return { fresh: feats, repeated };
+    if (picked.every((featId) => this.feats.isStackable(featId))) return { fresh: feats, repeated };
     const seen = new Set(held().map(({ entity }) => entity.id));
     const own = new Set(kept.map(({ entityId }) => entityId));
     const fresh: Record<string, string[]> = {};
     for (const [viaId, ids] of Object.entries(feats)) {
       fresh[viaId] = [];
       for (const featId of ids) {
-        if (!this.isStackable(featId) && seen.has(featId) && !own.has(featId))
+        if (!this.feats.canTake(featId, seen) && !own.has(featId))
           repeated.push({ step: "feats", entityId: featId, viaId });
         else fresh[viaId].push(featId);
         seen.add(featId);

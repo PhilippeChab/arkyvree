@@ -31,9 +31,6 @@ import LevelUpPlan from "./LevelUpPlan.ts";
  * read (`LevelUpRules`).
  */
 export default class Dnd35LevelUp extends LevelUpPart implements LevelUpRules<DetailedCharacter> {
-  /** The hit points a level counts before they're rolled. */
-  readonly unrolledLevelHp = LevelRules.UNROLLED_LEVEL_HP;
-
   /** The plan's answer: Add Level's plan or Edit Level's level, each step in its mechanic's shape. */
   override describePlan(view: RulesetView, character: CharacterInput, request: LevelPlanRequest) {
     return new LevelPlans(view, character, this).describePlan(request);

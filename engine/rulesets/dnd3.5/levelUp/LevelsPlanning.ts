@@ -7,6 +7,7 @@ import type {
   PickPlan,
 } from "@/engine/core/module/index.ts";
 import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
+import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 
 import CharacterProjection from "./CharacterProjection.ts";
 import LevelUpBase from "./LevelUpBase.ts";
@@ -151,7 +152,7 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     before.dropLevelsFrom(advancementId);
     const withLevel = new CharacterProjection(this.character);
     withLevel.dropLevelsFrom(advancementId);
-    withLevel.pick(withLevel.addLevel(classLevelId, { hp: this.rules.unrolledLevelHp }), this.toPickPlans(picks));
+    withLevel.pick(withLevel.addLevel(classLevelId, { hp: LevelRules.UNROLLED_LEVEL_HP }), this.toPickPlans(picks));
     return { before, withLevel };
   }
 

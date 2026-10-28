@@ -15,12 +15,13 @@ import type { PlannedClassLevel } from "@/engine/rulesets/dnd3.5/levelUp/LevelUp
 import type { LevelPicks, LevelRequest } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
 import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import FeatRules from "@/engine/rulesets/dnd3.5/rules/FeatRules.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { formatSigned } from "@/shared/text.ts";
-import { CLASS_HD, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { PCGEN_POOLS } from "./names.ts";
 import type PcgenNames from "./PcgenNames.ts";
@@ -234,14 +235,14 @@ export default class LevelsImport {
    */
   private reportLeft(placement: PicksPlacement, character: DetailedCharacter, writes: AdvancementPlan[]) {
     const picked = new Set(
-      writes.flatMap(({ picks }) => picks.flatMap(({ entityId, step }) => (step === "feats" ? [entityId] : []))),
+      writes.flatMap(({ picks }) => picks.flatMap(({ entityId, step }) => (step === "feats" ? [entityId!] : []))),
     );
     const held = new Set(character.getHeldFeats().map(({ entity }) => entity.id));
+    const feats = FeatRules.of(this.view.rulesetData);
     for (const feat of placement.leftFeats()) {
       // Two lines the ruleset reads as one feat (a choice it keeps whole): the second isn't another pick
       // A stackable feat's copy no level took is lost as any feat, however many copies the levels took
-      const stackable = this.dnd35.featsById.get(feat.entityId)?.fields[FEAT_STACKABLE] === true;
-      if (picked.has(feat.entityId) && !stackable)
+      if (!feats.canTake(feat.entityId, picked))
         this.report.skip(feat.line, `${feat.name} is imported already, from another line`);
       else if (held.has(feat.entityId) && !picked.has(feat.entityId))
         this.report.import(`Feat: ${feat.name}, given by its class or race`);
