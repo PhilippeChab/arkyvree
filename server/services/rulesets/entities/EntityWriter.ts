@@ -282,7 +282,7 @@ export default class EntityWriter {
     const written: Row[] = [];
     for (const { row, tombstoneAncestorId } of rows) {
       const [entity] = await Entities.create<Row>(tx, this.type, { ...row, rulesetId: ruleset.id });
-      if (tombstoneAncestorId) await names.repointTombstone(tx, this.type, tombstoneAncestorId, entity.id);
+      if (tombstoneAncestorId) await names.repointTombstone(tx, tombstoneAncestorId, entity.id);
       written.push(entity);
     }
     // The customizations they copy, before what the plan writes beside them

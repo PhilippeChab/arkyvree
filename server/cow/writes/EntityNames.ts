@@ -225,12 +225,7 @@ export default class EntityNames {
    * Points the tombstone snapshot a deleted local copy of `ancestorEntityId` left at the new entity of its name, so the
    * inherited entity stays hidden behind it.
    */
-  async repointTombstone(
-    tx: Db,
-    entityType: RulesetEntityType,
-    ancestorEntityId: string,
-    newEntityId: string,
-  ): Promise<void> {
+  async repointTombstone(tx: Db, ancestorEntityId: string, newEntityId: string): Promise<void> {
     const tombstone = await EntitySnapshots.findOne(tx, {
       sourceEntityId: ancestorEntityId,
       rulesetId: this.ruleset.id,
@@ -242,7 +237,6 @@ export default class EntityNames {
     });
     await EntitySnapshots.create(tx, {
       rulesetId: this.ruleset.id,
-      entityType,
       sourceEntityId: ancestorEntityId,
       forkedEntityId: newEntityId,
     });

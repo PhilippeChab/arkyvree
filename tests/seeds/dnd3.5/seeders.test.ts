@@ -11,10 +11,10 @@ import type { LeveledSpellSeed } from "@/content/dnd3.5/builders/spells/types.ts
 import { ALL_CLASSES as SRD_CLASSES } from "@/content/dnd3.5/generated/srd/classes/index.ts";
 import type { Dnd35SeedContext as SeedContext } from "@/database/seeders/dnd3.5/Dnd35ContentSeeder.ts";
 import { findSpellcastingClass } from "@/database/seeders/dnd3.5/spellTable.ts";
-import { entitySnapshotsInRules, requirementsInCustomization } from "@/drizzle/schema.ts";
+import { requirementsInCustomization } from "@/drizzle/schema.ts";
 import { type Feat, type Item, type Klass, type Race, type Spell } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, EntityLinks } from "@/server/repositories/index.ts";
+import { Entities, EntityLinks, EntitySnapshots } from "@/server/repositories/index.ts";
 import {
   CLASS_CASTER_TYPE,
   CLASS_HD,
@@ -809,10 +809,7 @@ describe("Seeding", () => {
         { named: true, name: "Test Open" },
         { named: true, name: "Test Single" },
       ]);
-      const snapshots = await db
-        .select()
-        .from(entitySnapshotsInRules)
-        .where(eq(entitySnapshotsInRules.rulesetId, ctx.rulesetId));
+      const snapshots = await EntitySnapshots.findMany(db, { rulesetId: ctx.rulesetId });
       expect(
         snapshots
           .map(({ entityType, sourceEntityId, forkedEntityId }) => ({ entityType, sourceEntityId, forkedEntityId }))
@@ -820,7 +817,7 @@ describe("Seeding", () => {
       ).toEqual(
         ["Test Grouped", "Test Single", "Test Open"]
           .map((name) => ({
-            entityType: "feats",
+            entityType: "feats" as const,
             sourceEntityId: original[name],
             forkedEntityId: ctx.featMap[name],
           }))
@@ -901,10 +898,7 @@ describe("Seeding", () => {
       // Its own spell keeps the inherited one's lists, and isn't copied
       expect(ctx.spellMap["Test Ward"]).toBe(ownWard);
       expect(await spellListsOf(ctx, ownWard)).toEqual(["Arcane Spells 2", "Cleric Spells 1"]);
-      const snapshots = await db
-        .select()
-        .from(entitySnapshotsInRules)
-        .where(eq(entitySnapshotsInRules.rulesetId, ctx.rulesetId));
+      const snapshots = await EntitySnapshots.findMany(db, { rulesetId: ctx.rulesetId });
       expect(snapshots).toMatchObject([
         {
           entityType: "spells",

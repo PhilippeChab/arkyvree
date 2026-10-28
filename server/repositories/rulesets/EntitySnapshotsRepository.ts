@@ -1,8 +1,11 @@
-import { and, eq, inArray, type InferInsertModel, sql } from "drizzle-orm";
+import { and, eq, getTableColumns, inArray, type InferInsertModel, isNotNull, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
-import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
+import { entitiesInRules, entitySnapshotsInRules } from "@/drizzle/schema.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
+
+import type { RulesetEntityType } from "./entityTypes.ts";
 
 class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInRules> {
   constructor() {
@@ -39,29 +42,43 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
       .where(and(eq(this.table.sourceEntityId, where.sourceEntityId), eq(this.table.rulesetId, where.rulesetId)));
   }
 
+  /**
+   * A ruleset's snapshots (`rulesetId`, of a type, or of these sources), or these rulesets' (`rulesetIds`), each with
+   * its entities' type (`entityType`): its copy's, or its source's once its copy is deleted (a tombstone). One whose
+   * copy and source are both gone stands for nothing, and isn't read.
+   */
   async findMany(
     db: Db,
     where:
       | { rulesetId: string }
       | { rulesetIds: string[] }
-      | { entityType: string; rulesetId: string }
+      | { entityType: RulesetEntityType; rulesetId: string }
       | { rulesetId: string; sourceEntityIds: string[] },
   ) {
     if ("rulesetIds" in where && where.rulesetIds.length === 0) return [];
     if ("sourceEntityIds" in where && where.sourceEntityIds.length === 0) return [];
-    return await db.query.entitySnapshotsInRules.findMany({
-      where: this.branchWhere(
-        [
-          "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
-          "rulesetIds" in where && inArray(this.table.rulesetId, where.rulesetIds),
-        ],
-        [
-          "entityType" in where && eq(this.table.entityType, where.entityType),
-          "sourceEntityIds" in where && inArray(this.table.sourceEntityId, where.sourceEntityIds),
-        ],
-      ),
-      orderBy: [this.orderBy(this.table.createdAt), this.orderBy(this.table.id)],
-    });
+    const forked = alias(entitiesInRules, "forked");
+    const source = alias(entitiesInRules, "source");
+    const entityType = sql<RulesetEntityType>`coalesce(${forked.type}, ${source.type})`;
+    return await db
+      .select({ ...getTableColumns(this.table), entityType: entityType.as("entity_type") })
+      .from(this.table)
+      .leftJoin(forked, eq(forked.id, this.table.forkedEntityId))
+      .leftJoin(source, eq(source.id, this.table.sourceEntityId))
+      .where(
+        this.branchWhere(
+          [
+            "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
+            "rulesetIds" in where && inArray(this.table.rulesetId, where.rulesetIds),
+          ],
+          [
+            "entityType" in where && eq(entityType, where.entityType),
+            "sourceEntityIds" in where && inArray(this.table.sourceEntityId, where.sourceEntityIds),
+            isNotNull(entityType),
+          ],
+        ),
+      )
+      .orderBy(this.orderBy(this.table.createdAt), this.orderBy(this.table.id));
   }
 
   async findOne(db: Db, where: { rulesetId: string; sourceEntityId: string }) {

@@ -125,10 +125,10 @@ export async function repointDepartingReferences(tx: Db, rulesetId: string, depa
     [...fallbacks].filter(([, fallbackId]) => fallbackId).map(([id]) => id),
   );
   const named = new Set(await EntityReferences.findIds(tx, { entityIds: replaced, rulesetId }));
-  for (const [entityType, fallbacks] of departures) {
+  for (const fallbacks of departures.values()) {
     for (const [entityId, fallbackId] of fallbacks) {
       if (fallbackId && named.has(entityId))
-        await EntityReferences.update(tx, { entityId: fallbackId }, { entityType, entityId, rulesetId });
+        await EntityReferences.update(tx, { entityId: fallbackId }, { entityId, rulesetId });
     }
   }
 }
