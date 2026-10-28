@@ -32,7 +32,8 @@ function toOwnNameError(name: string) {
  * name only when no other entity of their kind the view shows has it, the ruleset's own or an inherited one. An
  * inherited entity the view hides (overridden, or a sibling loser) doesn't block its name, and one whose local copy was
  * deleted left a tombstone snapshot, which a new entity of its name takes over (`repointTombstone`), so the inherited
- * one stays hidden. Every method takes the transaction.
+ * one stays hidden. Its instance methods take the transaction; its static `withNameRefusal` runs a write that takes a
+ * name, answering the name index as the checks do.
  */
 export default class EntityNames {
   constructor(
