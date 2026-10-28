@@ -71,8 +71,8 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   protected override checkForm({ position }: FormBody, _given: object, level?: KlassLevel) {
     if (level) return;
     const number = RulesError.parse(LEVEL, position, ["position"]);
-    const levels = this.dnd35.classLevelsByClass.get(this.klass.id) ?? [];
-    if (levels.some((held) => held.position === number)) throw new RulesError("conflict", this.taken(number));
+    if (this.dnd35.classLevelByClassAndLevel.has(`${this.klass.id}:${number}`))
+      throw new RulesError("conflict", this.taken(number));
   }
 
   /**

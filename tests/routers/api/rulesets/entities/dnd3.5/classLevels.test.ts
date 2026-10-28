@@ -6,7 +6,7 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { CLASS_HD, CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -171,6 +171,18 @@ describe("rulesets class levels", () => {
     await Entities.create(db, "class-levels", { ownerId: classId, position: 4 });
     expect(await (await expectStatus(post(4), 409)).json()).toMatchObject({
       message: "Level Class already has a level 4",
+    });
+
+    // And on an inherited class: a level its source got after the fork's view was read meets the index on its copy
+    const fork = await createTestRuleset(SEED_USER_ID, { rulesetId: id, ancestorRulesetIds: [id] });
+    await expectOk(levels.$get({ param: classParam(fork.id, classId) }));
+    await Entities.create(db, "class-levels", { ownerId: classId, position: 5 });
+    const raced = levels.$post({
+      param: classParam(fork.id, classId),
+      json: { fields: { [CLASS_LEVEL_BAB]: 5 }, position: 5 },
+    });
+    expect(await (await expectStatus(raced, 409)).json()).toMatchObject({
+      message: "Level Class already has a level 5",
     });
   });
 
