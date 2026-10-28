@@ -1,3 +1,4 @@
+import { ForbiddenError } from "@/server/errors/index.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 import type { Ruleset, Session } from "@/shared/relations.ts";
 
@@ -53,6 +54,18 @@ export default abstract class RulesetRoles extends BasePolicy<Ruleset> {
 
   /** The session's active contributor role on the ruleset: none for its owner or anyone else. */
   readonly contributorRole: ContributorRole | undefined;
+
+  /**
+   * Refuses changing a ruleset nobody owns (`what`: the change, "edit", "publish"…), whoever asks. A system ruleset is
+   * its seeders'. An orphaned one (its owner's account deleted, `Rulesets.orphan`) is frozen as its owner left it: with
+   * nobody to manage its Admins, unarchive it or publish it, its contributors keep reading it and may leave, but
+   * change nothing.
+   */
+  protected checkOwned(what: string) {
+    if (this.entity.userId !== null) return;
+
+    throw new ForbiddenError(`Cannot ${what} ${this.entity.system ? "a base ruleset" : "a ruleset without an owner"}`);
+  }
 
   protected get isAdminContributor() {
     return this.contributorRole === "Admin";
