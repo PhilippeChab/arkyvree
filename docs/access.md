@@ -25,19 +25,25 @@ A user can hold multiple roles for the same entity (e.g. owner of a ruleset they
 
 | Method | Allowed actors | Notes |
 |---|---|---|
-| `canUpdate` | owner, **Admin** | edits ruleset metadata (name, description, privacy, archive). Throws on a ruleset without an owner (a base, or an orphan) and on Archived rulesets |
+| `canUpdate` | owner, **Admin** | edits ruleset metadata (name, description, privacy, archive). Throws on a ruleset without an owner (a system one, or an orphan: see below) and on Archived rulesets |
 | `canUpdateEntity` | owner, **Admin**, **Editor** | edits entity content (feats, items, classes, …). Same archive guard |
 | `canDeleteEntity({ inUse })` | owner, **Admin**, **Editor** | deletes individual entities. Throws if `inUse` (would orphan a character pick on this ruleset or any descendant fork). See [rulesets.md](./rulesets.md#what-inuse-means-in-entity-delete-services) |
 | `canPublish` | **owner only** | Draft → Published; can't be delegated to Admin |
 | `canFork` | anyone (any session) | source must be Published and be a base ruleset (`rulesetId IS NULL`) |
-| `canSubscribeExtension` | **owner only** | private to the owner of the host fork |
-| `canUnsubscribeExtension({ inUse })` | **owner only** | adds the in-use guard on top of `canSubscribeExtension` |
-| `canManageContributors` | owner, **Admin** | invite / revoke / role-change |
+| `canBeExtension` | anyone (any session) | whether the ruleset can be published as an extension, or made one: a fork that subscribes to no extension. Publishing and editing ask it after `canPublish` and `canUpdate` |
+| `canSubscribeExtension({ usedAsExtension })` | **owner only** | the host must be a live fork that isn't an extension, and no other ruleset may subscribe to it (`usedAsExtension`) |
+| `canUnsubscribeExtension({ inUse })` | **owner only** | `canSubscribeExtension`, used as an extension or not, plus the in-use guard |
+| `canManageContributors` | owner, **Admin** | managing contributors, archived or not: what every check below starts with |
 | `canManageAdminContributors` | **owner only** | narrowing of the above for touching `Admin`-tier rows |
+| `canInviteContributors({ role })` | owner, **Admin** | on a ruleset that isn't archived (`ConflictError`); an Admin (`role`), the owner only |
+| `canRevokeContributor({ role })` | owner, **Admin** | archived or not; an Admin (`role`), the owner only |
+| `canUpdateContributorRole({ from, to })` | owner, **Admin** | on a ruleset that isn't archived (`ConflictError`); to or from Admin, the owner only |
 | `canRead` | public rulesets: anyone; private: owner, any active contributor, a member (any role) of a campaign on it, archived or not, the owner or an active contributor of a character built on it | every request that names the ruleset by its id, a read or a write, asks it first. Throws `NotFoundError "Ruleset not found"`, the 404 an unknown ruleset gets, so a private ruleset's existence isn't revealed. `isReadable` answers the same yes or no |
 | `canReadContributors` | owner, any contributor | lists the contributors |
 | `canUnarchive` | **owner only** | Archived → Draft |
 | `canViewChanges` | public rulesets: anyone; private: owner + any contributor | overrides metadata |
+
+A ruleset page offers what these answer (`permissions`, `GET /api/rulesets/:id`, which `useRulesetPermissions` reads): editing its entities and the ruleset, inviting and managing contributors, changing their roles (`canUpdateContributorRole()`), managing its Admins, publishing it, subscribing it to extensions, and whether it can be an extension. The client rebuilds none of them.
 
 Listing rulesets is enforced by the `findPage` scopes, not the policy. Every request that names a ruleset by its id goes through `canRead` before any other check: a read of it or of what's under it (its entities, owned entities, groups, templates, tables, progression, links, modifiers, requirements, target paths, Settings, extensions, changes, contributors, a new character's creation picks), and a write (its update, archive, unarchive, publish, fork and star, its contributors' invites, role changes, revokes and leave, its Settings, its entities', links', progressions', variants', customizations' and restores' saves, its extensions' subscribes and unsubscribes, and a character, an import or a campaign created on it). The services start with `getReadableRuleset` or `withReadableRuleset` (`server/services/rulesets/readableRuleset.ts`), which look the ruleset up, ask it, and hand on the policy, whose write checks (`canUpdate`, `canUpdateEntity`, `canCreateCharacter`…) then refuse a reader who may not write with their 403. Whoever may not read it gets the answer an unknown id gets, the same status and body, whatever else the request would have been refused for: a contributor's role change or revoke a contributor of a ruleset the session may not read is answered as an unknown contributor (`Contributor not found`), and an extension it may not read as an unknown one (`Extension not found`). An activity links to a ruleset, its content, its customizations and its contributors only when the session may read it (`findReadableRuleset`). `canViewChanges` and `canReadContributors` narrow reading further. A ruleset read as another's ancestor or extension, through that ruleset's view, isn't read by its id: its readers are that ruleset's. A character's reads (its sheet, its level-up, its inventory, its PDF) are gated by the character, not its ruleset. Rulesets are never hard-deleted: they're archived (`canUpdate`).
 
@@ -71,7 +77,7 @@ Listing rulesets is enforced by the `findPage` scopes, not the policy. Every req
 | User fork as ruleset (`kind='ruleset'`) | ✓ | ✓ (if public) | – | – |
 | User fork as extension (`kind='extension'`) | – | – | ✓ (if public) | – |
 
-**A system ruleset is one `system` marks, not one without an owner.** Deleting an account leaves its rulesets without an owner (`Rulesets.orphan`), `system` still false. Such an orphaned ruleset is still a user's: the scopes list it by its privacy, a public one in `community` or `extensions`, a private one to its contributors and campaign members (and in `starred` to whoever starred it), and `RulesetsPolicy` reads it so: its contributors keep their role, so they read it, see its changes and its contributors, create characters, imports and campaigns on it, and leave it, though every edit, invite, publish and archive check refuses a ruleset without an owner. An extension subscribed to must be public unless it's a system one, so an orphaned private extension is refused.
+**A system ruleset is one `system` marks, not one without an owner.** Deleting an account leaves its rulesets without an owner (`Rulesets.orphan`), `system` still false. Such an orphaned ruleset is still a user's: the scopes list it by its privacy, a public one in `community` or `extensions`, a private one to its contributors and campaign members (and in `starred` to whoever starred it), and `RulesetsPolicy` reads it so: its contributors keep their role, so they read it, see its changes and its contributors, create characters, imports and campaigns on it, and leave it. It is frozen as its owner left it: with nobody left to manage its Admins, publish it or unarchive it, every change is refused to everyone, an Admin's and an Editor's too (`RulesetRoles.checkOwned`: its entities, the ruleset itself, its contributors, its publish, archive and unarchive, its extensions), with "… a ruleset without an owner", where a system ruleset's refusal says "… a base ruleset". An extension subscribed to must be public unless it's a system one, so an orphaned private extension is refused.
 
 The character-creation wizard combines `published + campaignAccessible` (and historically `myDrafts`, now subsumed by `published` for owned/contributed drafts) to show the full eligible list. `myDrafts` is still useful as a focused "drafts I'm working on" filter.
 
@@ -151,7 +157,7 @@ The three invite lifecycles share the same shape:
 
 | Action | Gate |
 |---|---|
-| Send / re-send / revoke an invite | The policy that gates managing the parent: `RulesetsPolicy.canManageContributors`, `CampaignsPolicy.canUpdate` (GM), or `CharactersPolicy.canManageContributors` (owner) |
+| Send / re-send / revoke an invite | The policy that gates managing the parent: `RulesetsPolicy.canInviteContributors({ role })` and `canRevokeContributor({ role })`, `CampaignsPolicy.canUpdate` (GM), or `CharactersPolicy.canManageContributors` (owner) |
 | Accept / reject | Identity match: `invite.userId === session.userId` (or `contributor.userId === session.userId` for contributor rows). Throws `NotFoundError` rather than `ForbiddenError` to avoid leaking the existence of invites addressed to other users |
 | Leave (self-remove from contributor or self-remove from campaign) | Identity match: must be holding the row being removed. Throws `NotFoundError` otherwise |
 

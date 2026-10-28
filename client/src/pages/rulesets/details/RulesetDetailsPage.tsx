@@ -148,7 +148,15 @@ export default function RulesetDetailsPage() {
   const extensionsMenu = useAnchorMenu();
   if (!subscribedExtensions?.length && extensionsMenu.open) extensionsMenu.closeMenu();
 
-  const { isOwner, isContributor, canEditEntities, canEditRuleset, canPublish } = useRulesetPermissions(ruleset);
+  const {
+    isOwner,
+    isContributor,
+    canBeExtension,
+    canEditEntities,
+    canEditRuleset,
+    canPublish,
+    canSubscribeExtensions,
+  } = useRulesetPermissions(ruleset);
   const isFork = !!ruleset?.rulesetId && !isExtension;
 
   const [contributorsDialogOpen, setContributorsDialogOpen] = useState(false);
@@ -179,8 +187,6 @@ export default function RulesetDetailsPage() {
   if (!currentTab) return <Navigate to={`/rulesets/${id}/${tabConfig[0]?.key ?? "settings"}`} replace />;
 
   const isActive = ruleset.status !== "Archived";
-  // A user's fork that subscribes to none can be an extension: what its edit and its publish offer
-  const canBeExtension = !!ruleset.rulesetId && ruleset.userId !== null && ruleset.extensionRulesetIds.length === 0;
   // What the session may do here: the header's menu, whose button shows only when it holds something
   const menuItems = [
     ruleset.status === "Published" && !isExtension && !isFork && (
@@ -194,7 +200,7 @@ export default function RulesetDetailsPage() {
         onClick={menu.closeMenuAnd(() => setLocalChangesOpen(true))}
       />
     ),
-    isOwner && !!ruleset.rulesetId && isActive && !ruleset.isUsedAsExtension && !isExtension && (
+    canSubscribeExtensions && (
       <ActionMenuItem
         key="subscribe"
         icon={ExtensionIcon}

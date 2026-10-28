@@ -51,17 +51,7 @@ class RulesetExtensionsService {
     const result = await withTransaction(async (tx) => {
       // 1. Validate ruleset
       const { policy, ruleset: childRuleset } = await getReadableRuleset(tx, session, id);
-      policy.canSubscribeExtension();
-
-      // The host can't subscribe to anything if it's already being used as an
-      // extension by someone else — adding extensions to it would create
-      // transitive deps for those subscribers.
-      const subscribers = await Rulesets.findMany(tx, { extensionRulesetId: id });
-      if (subscribers.length > 0) {
-        throw new UnprocessableEntityError(
-          "Cannot subscribe to extensions while this ruleset is being used as an extension",
-        );
-      }
+      policy.canSubscribeExtension({ usedAsExtension: await Rulesets.exists(tx, { extensionRulesetId: id }) });
 
       // 2. Validate each extension
       const newExtensionIds: string[] = [];

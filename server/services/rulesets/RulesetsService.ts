@@ -23,17 +23,23 @@ import { getReadableRuleset } from "./readableRuleset.ts";
 class RulesetsService extends include(Object, Archives, Publishes, Stars) {
   /**
    * What the session may do with a ruleset, as its policy decides each (`policy`), so a page offers what the server
-   * allows: edit its entities, edit the ruleset itself, invite and manage contributors, and publish it. It may leave
-   * it while it contributes to it (`contributorRole`: an active role, its owner's never looked up).
+   * allows: edit its entities, edit the ruleset itself, invite and manage contributors, change their roles, manage its
+   * Admins, publish it, and subscribe it to extensions (`usedAsExtension`: another ruleset subscribes to it), and
+   * whether it can be an extension, which its edit and its publish offer. It may leave it while it contributes to it
+   * (`contributorRole`: an active role, its owner's never looked up).
    */
-  private permissionsOf(policy: RulesetsPolicy) {
+  private permissionsOf(policy: RulesetsPolicy, usedAsExtension: boolean) {
     return {
+      canBeExtension: isAllowed(() => policy.canBeExtension()),
       canEditEntities: isAllowed(() => policy.canUpdateEntity()),
       canEditRuleset: isAllowed(() => policy.canUpdate()),
       canInviteContributors: isAllowed(() => policy.canInviteContributors()),
       canLeave: policy.contributorRole !== undefined,
+      canManageAdminContributors: isAllowed(() => policy.canManageAdminContributors()),
       canManageContributors: isAllowed(() => policy.canManageContributors()),
       canPublish: isAllowed(() => policy.canPublish()),
+      canSubscribeExtensions: isAllowed(() => policy.canSubscribeExtension({ usedAsExtension })),
+      canUpdateContributorRoles: isAllowed(() => policy.canUpdateContributorRole()),
     };
   }
 
@@ -90,7 +96,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
   async getRuleset(session: Session, id: string) {
     const { policy, ruleset } = await getReadableRuleset(db, session, id);
 
-    const [star, starCount, isUsedAsExtension] = await Promise.all([
+    const [star, starCount, usedAsExtension] = await Promise.all([
       StarredRulesets.findOne(db, { userId: session.userId, rulesetId: id }),
       StarredRulesets.count(db, { rulesetId: id }),
       Rulesets.exists(db, { extensionRulesetId: id }),
@@ -106,8 +112,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       // A response says none with null: JSON leaves an undefined key out
       contributorRole: policy.contributorRole ?? null,
       isStarrable: this.isStarrable(ruleset),
-      isUsedAsExtension,
-      permissions: this.permissionsOf(policy),
+      permissions: this.permissionsOf(policy, usedAsExtension),
     };
   }
 
@@ -183,8 +188,8 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
         // A published ruleset becomes what publishing it as `kind` would make it; a draft's content is checked when
         // it's published
         if (ruleset.status === "Published")
-          await withRulesetScope(tx, id, async (scope) => this.checkKind(scope, kind));
-        else if (kind === "extension") this.assertCanBeExtension(ruleset);
+          await withRulesetScope(tx, id, async (scope) => this.checkKind(scope, policy, kind));
+        else if (kind === "extension") policy.canBeExtension();
       }
 
       const { updatedAt, ...columns } = body;

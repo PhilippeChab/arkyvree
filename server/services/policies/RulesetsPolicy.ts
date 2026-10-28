@@ -55,7 +55,7 @@ class RulesetsPolicy extends include(RulesetRoles, ContributorRights, CreationRi
   }
 
   canPublish() {
-    if (!this.entity.userId) throw new ForbiddenError("Cannot publish a base ruleset");
+    this.checkOwned("publish");
 
     if (this.entity.userId !== this.session.userId) throw new ForbiddenError("Cannot publish another user's ruleset");
 
@@ -75,7 +75,7 @@ class RulesetsPolicy extends include(RulesetRoles, ContributorRights, CreationRi
   }
 
   canUnarchive() {
-    if (!this.entity.userId) throw new ForbiddenError("Cannot unarchive a base ruleset");
+    this.checkOwned("unarchive");
 
     if (!this.isOwner) throw new ForbiddenError("Cannot unarchive this ruleset");
 
@@ -89,7 +89,7 @@ class RulesetsPolicy extends include(RulesetRoles, ContributorRights, CreationRi
    * Only owner and Admin contributors are allowed.
    */
   canUpdate() {
-    if (!this.entity.userId) throw new ForbiddenError("Cannot edit a base ruleset");
+    this.checkOwned("edit");
 
     if (!this.isOwner && !this.isAdminContributor) throw new ForbiddenError("Cannot edit another user's ruleset");
 

@@ -79,9 +79,9 @@ The author's responsibility post-publish is purely social — "don't break what 
 
 The `kind` is editable post-publish via the standard edit dialog (under the same "Publish as" toggle the publish dialog uses).
 
-- **Validation**: the publish's own, by the kind it switches to (`Publishes.checkKind`, which publishing calls, and the edit calls on a published ruleset). Setting `kind = 'extension'`: row must be a fork (`rulesetId IS NOT NULL`) and must not subscribe to other extensions (`extensionRulesetIds` is empty). Switching a published ruleset back to `kind = 'ruleset'`: its view must give what its rules make a character of (`checkPublishable`), so an edit never makes a playable ruleset that publishing would refuse. A draft's switch to `ruleset` isn't checked: its content is when it's published. An edit that keeps the kind checks neither.
+- **Validation**: the publish's own, by the kind it switches to (`Publishes.checkKind`, which publishing calls, and the edit calls on a published ruleset). Setting `kind = 'extension'`: row must be a fork (`rulesetId IS NOT NULL`) and must not subscribe to other extensions (`extensionRulesetIds` is empty): `RulesetsPolicy.canBeExtension`, which the page's `permissions` answer too, so its publish and edit dialogs offer the toggle only then. Switching a published ruleset back to `kind = 'ruleset'`: its view must give what its rules make a character of (`checkPublishable`), so an edit never makes a playable ruleset that publishing would refuse. A draft's switch to `ruleset` isn't checked: its content is when it's published. An edit that keeps the kind checks neither.
 - **Existing characters and campaigns are grandfathered** — same model as archived rulesets. The character/campaign rows still resolve content via the now-extension fork, but new characters and new campaigns can no longer be created on it (the `published` scope filters them out). The author makes the trade-off when they flip the toggle; nothing is migrated or invalidated.
-- **Subscribers**: a fork that's `kind = 'extension'` cannot itself subscribe to other extensions (`canSubscribeExtension` rejects). If the fork is currently being subscribed-to as an extension by another user, that downstream subscription keeps working through the fork's normal source-chain resolution.
+- **Subscribers**: a fork that's `kind = 'extension'` cannot itself subscribe to other extensions (`canSubscribeExtension` rejects), nor can one another ruleset subscribes to (`usedAsExtension`), whatever its kind. If the fork is currently being subscribed-to as an extension by another user, that downstream subscription keeps working through the fork's normal source-chain resolution.
 
 ### Starring
 
@@ -396,7 +396,7 @@ The validators that set `kind = 'extension'` enforce: must be a fork, must not s
 
 ### Subscribe (`subscribeExtension`)
 
-1. Validates: ruleset is a fork, not archived, user is owner, extension is `kind = 'extension'` + published + shares the same base + public, unless a system one, + the host's own `kind` is `'ruleset'`
+1. Validates: ruleset is a fork, not archived, user is owner, no other ruleset subscribes to it (`canSubscribeExtension({ usedAsExtension })`), extension is `kind = 'extension'` + published + shares the same base + public, unless a system one, + the host's own `kind` is `'ruleset'`
 2. Checks not already subscribed (`extensionRulesetIds.includes`), and that its view would show no name more often than once and than it does now (`EntityNames.assertExtensionNamesAvailable`, see [Names of entities](#names-of-entities)): the names of the new extensions' entities, their copies included, counted in the view as it is and as it would be, read with its `CowData` once subscribed, so what that view pairs (an extension's copy of an inherited entity, two books' entities of a kind a book reprints (`namesakes: "reprints"`: 3.5's feats and spells), pools of a name (`namesakes: "identity"`), whoever holds them, the host's own too) counts once. An extension's entity of a name the host's own entity has counts, though the view would show the host's alone: the host is told of the clash
 3. Writes a `ruleset_extensions` row for each, after the host's last (`ordinal`), live again if an unsubscribe archived it: what the source chain and the extensions page read (name, `updateAvailable` flag), and touches the host's `updatedAt`
 
@@ -421,7 +421,7 @@ The child can subscribe to and unsubscribe from extensions independently of the 
 
 ## Authorization
 
-See [docs/access.md](./access.md) for the full policy matrix across rulesets, characters, campaigns, and customizations, plus the listing-scope reference for the create-character wizard. Quick summary for ruleset writes: `canUpdate` (metadata) requires owner or **Admin** contributor; `canUpdateEntity` (content) also accepts **Editor** contributors; `canPublish` / `canSubscribeExtension` / `canUnarchive` / `canManageAdminContributors` are owner-only.
+See [docs/access.md](./access.md) for the full policy matrix across rulesets, characters, campaigns, and customizations, plus the listing-scope reference for the create-character wizard. Quick summary for ruleset writes: `canUpdate` (metadata) requires owner or **Admin** contributor; `canUpdateEntity` (content) also accepts **Editor** contributors; `canPublish` / `canSubscribeExtension` / `canUnarchive` / `canManageAdminContributors` are owner-only. A ruleset without an owner (a system one, or an orphan, its owner's account deleted) refuses them all.
 
 ### What `inUse` means in an entity's delete
 

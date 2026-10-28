@@ -4,18 +4,26 @@ import { useAuthStore } from "@/client/src/stores/authStore.ts";
 import { useIsDemo } from "./useIsDemo.ts";
 
 interface RulesetPermissions {
+  /** A fork that subscribes to no extension — can be published as an extension, or made one. */
+  canBeExtension: boolean;
   /** Owner, Admin, or Editor, while it isn't archived — can create, edit and delete its entities. */
   canEditEntities: boolean;
   /** Owner or Admin, while it isn't archived — can update ruleset name/description/privacy, archive. */
   canEditRuleset: boolean;
-  /** Owner or Admin, while it isn't archived — can invite contributors and change their roles. Demo users blocked. */
+  /** Owner or Admin, while it isn't archived — can invite contributors. Demo users blocked. */
   canInviteContributors: boolean;
   /** A contributor, but its owner — can leave it, archived or not. */
   canLeave: boolean;
+  /** Owner — can make a contributor an Admin, and change or remove an Admin. */
+  canManageAdminContributors: boolean;
   /** Owner or Admin — can invite/remove contributors. Demo users blocked. */
   canManageContributors: boolean;
   /** Owner, while it's a draft. Demo users blocked. */
   canPublish: boolean;
+  /** Owner, of a live fork that isn't an extension, nor subscribed to as one — can subscribe it to extensions. */
+  canSubscribeExtensions: boolean;
+  /** Owner or Admin, while it isn't archived — can change its contributors' roles. */
+  canUpdateContributorRoles: boolean;
   isContributor: boolean;
   isOwner: boolean;
 }
@@ -24,12 +32,16 @@ interface RulesetPermissions {
 type RulesetData = Pick<RulesetDetail, "contributorRole" | "permissions" | "userId">;
 
 const NONE: RulesetPermissions = {
+  canBeExtension: false,
   canEditEntities: false,
   canEditRuleset: false,
   canInviteContributors: false,
   canLeave: false,
+  canManageAdminContributors: false,
   canManageContributors: false,
   canPublish: false,
+  canSubscribeExtensions: false,
+  canUpdateContributorRoles: false,
   isContributor: false,
   isOwner: false,
 };
