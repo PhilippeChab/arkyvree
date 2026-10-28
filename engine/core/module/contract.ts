@@ -39,7 +39,10 @@ export interface RulesetModule<
   characterFields: Fields;
   /** What the ruleset answers of its characters, from the rows the server reads: their sheets, their links, an item */
   characters: CharactersPart<D>;
-  /** What the ruleset answers its content's seeders and codegen: the paths a book can target */
+  /**
+   * What the ruleset answers its content's seeders and codegen: the paths a book can target, and what an owned entity
+   * requires at its position
+   */
   content: ContentPart;
   createTargetPaths(): TargetPaths;
   /** What the ruleset answers of its entities: their fields, and what their forms write */

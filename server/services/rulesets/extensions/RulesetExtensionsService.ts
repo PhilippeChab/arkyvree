@@ -53,7 +53,7 @@ class RulesetExtensionsService {
       // The host can't subscribe to anything if it's already being used as an
       // extension by someone else — adding extensions to it would create
       // transitive deps for those subscribers.
-      const subscribers = await Rulesets.findMany(tx, { extensionRulesetId: id });
+      const subscribers = await Rulesets.findMany(tx, { subscribedTo: id });
       if (subscribers.length > 0) {
         throw new UnprocessableEntityError(
           "Cannot subscribe to extensions while this ruleset is being used as an extension",
@@ -74,8 +74,7 @@ class RulesetExtensionsService {
 
         if (extension.status !== "Published") throw new UnprocessableEntityError("Extension must be published");
 
-        if (extension.userId !== null && extension.private)
-          throw new UnprocessableEntityError("Extension must be public");
+        if (!extension.system && extension.private) throw new UnprocessableEntityError("Extension must be public");
 
         // Both child and extension are forks of a base ruleset (fork-of-fork
         // is blocked, extensions are forks of bases) so "share a common ancestor"
@@ -83,7 +82,7 @@ class RulesetExtensionsService {
         if (childRuleset.rulesetId !== extension.rulesetId)
           throw new UnprocessableEntityError("Extension must share a common ancestor ruleset");
 
-        if (childRuleset.extensionRulesetIds.includes(extensionId))
+        if (childRuleset.extensionIds.includes(extensionId))
           throw new ConflictError("Already subscribed to this extension");
 
         newExtensionIds.push(extensionId);
@@ -120,8 +119,7 @@ class RulesetExtensionsService {
       const { policy, ruleset } = await getReadableRuleset(tx, session, id);
       policy.canUnsubscribeExtension();
 
-      if (!ruleset.extensionRulesetIds.includes(extensionId))
-        throw new NotFoundError("Not subscribed to this extension");
+      if (!ruleset.extensionIds.includes(extensionId)) throw new NotFoundError("Not subscribed to this extension");
 
       // 2. The fork's copies of the extension's entities: the snapshots whose source belongs to the extension (a snapshot
       // whose source is gone belongs to none)

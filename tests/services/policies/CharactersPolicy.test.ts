@@ -21,11 +21,11 @@ async function setup() {
 }
 
 describe("CharactersPolicy", () => {
-  test("canRead: its editors, a child's parent's; anyone else as an unknown character", async () => {
+  test("isReadable: its editors, a child's parent's", async () => {
     const { character, owner, other } = await setup();
-    expect(new CharactersPolicy(owner, character).canRead()).toBe(true);
-    expect(new CharactersPolicy(other, character, { isActiveContributor: true }).canRead()).toBe(true);
-    expect(() => new CharactersPolicy(other, character).canRead()).toThrow(new NotFoundError("Character not found"));
+    expect(new CharactersPolicy(owner, character).isReadable()).toBe(true);
+    expect(new CharactersPolicy(other, character, { isActiveContributor: true }).isReadable()).toBe(true);
+    expect(new CharactersPolicy(other, character).isReadable()).toBe(false);
 
     const child = await createChild(character.userId, character.id);
     expect(new CharactersPolicy(other, child, { isParentEditor: true }).isReadable()).toBe(true);

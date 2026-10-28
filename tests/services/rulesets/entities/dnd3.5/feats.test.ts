@@ -282,7 +282,7 @@ describe("EntitiesService: feats", () => {
         name: "Extension Feat",
         links: { listedIn: [{ toId: combat }] },
       });
-      const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
+      const host = await createTestRuleset(user.id, { extensionIds: [extension.id] });
       await pickFeat(user.id, host.id, feat.id, combat);
       await expectRefusedWith(EntitiesService.deleteEntity(session, extension.id, "feats", feat.id), 409);
     });

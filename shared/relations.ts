@@ -49,7 +49,7 @@ export type Requirement = typeof requirementsInCustomization.$inferSelect;
  */
 export type Ruleset = Omit<typeof rulesetsInRules.$inferSelect, "baseRules"> & {
   baseRules: BaseRules;
-  extensionRulesetIds: string[];
+  extensionIds: string[];
 };
 export type Session = typeof sessionsInAccount.$inferSelect;
 export type User = typeof usersInAccount.$inferSelect;

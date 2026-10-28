@@ -133,7 +133,7 @@ for (const [chainingOperator, reverseOrder] of [
       const source = (await Entities.findOne<Feat>(db, { entityType: "feats", rulesetId: baseId, name: "Toughness" }))!;
       const copy = await copyEntity(db, "feats", source.id, {
         id: rulesetId,
-        extensionRulesetIds: [],
+        extensionIds: [],
         ancestorRulesetIds: [baseId],
       });
       copies.push(copy.id);
@@ -218,12 +218,12 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
       const spell = (await Entities.findOne<Spell>(db, { entityType: "spells", rulesetId: baseId, name: "Fireball" }))!;
       const featCopy = await copyEntity(db, "feats", feat.id, {
         id: rulesetId,
-        extensionRulesetIds: [],
+        extensionIds: [],
         ancestorRulesetIds: [baseId],
       });
       const spellCopy = await copyEntity(db, "spells", spell.id, {
         id: rulesetId,
-        extensionRulesetIds: [],
+        extensionIds: [],
         ancestorRulesetIds: [baseId],
       });
       const owner = { entityId: featCopy.id, entityType: "feats" };

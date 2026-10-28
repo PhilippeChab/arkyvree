@@ -114,7 +114,7 @@ class RulesetChangesService {
       const names = new EntityNames(ruleset, await CowDataReader.read(tx, ruleset));
       await EntityRevert.revert(tx, entityType, entityId, rulesetId, names);
       // The rulesets built on it, whose rows may have named the copy: its subscribers, when it's an extension
-      return await Rulesets.findMany(tx, { extensionRulesetId: rulesetId });
+      return await Rulesets.findMany(tx, { subscribedTo: rulesetId });
     });
 
     for (const id of [rulesetId, ...subscribers.map((subscriber) => subscriber.id)]) RulesetViews.invalidate(id);

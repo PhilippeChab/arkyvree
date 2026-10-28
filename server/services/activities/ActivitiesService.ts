@@ -3,15 +3,14 @@ import { db } from "@/server/database/index.ts";
 import {
   Activities,
   CharacterContributors,
-  Characters,
   Contributors,
   Invites,
   type Pagination,
   PlayerCharacters,
   Players,
-  Visibility,
 } from "@/server/repositories/index.ts";
 import { findReadableCampaign } from "@/server/services/campaigns/index.ts";
+import { findReadableCharacter } from "@/server/services/characters/index.ts";
 import { findReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { isNavigableTarget } from "@/shared/activity.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
@@ -49,6 +48,15 @@ class ActivitiesService {
    */
   private async campaignUrl(session: Session, campaignId: string, path = "") {
     return (await findReadableCampaign(db, session, campaignId)) ? `/campaigns/${campaignId}${path}` : null;
+  }
+
+  /**
+   * A character's page, archived or not, or null when it's gone or the session may not read it
+   * (`findReadableCharacter`): a character's existence isn't revealed to whoever doesn't edit it (or a child's parent),
+   * nor its levels', inventory's and contributors'.
+   */
+  private async characterUrl(session: Session, characterId: string) {
+    return (await findReadableCharacter(db, session, characterId)) ? `/characters/${characterId}` : null;
   }
 
   /**
@@ -141,7 +149,7 @@ class ActivitiesService {
       // Character sub-entities: targetId is the characterId
       case TARGET_TYPES.advancements:
       case TARGET_TYPES.inventory:
-        return (await Characters.findOne(db, { id: targetId }, Visibility.All)) ? `/characters/${targetId}` : null;
+        return await this.characterUrl(session, targetId);
       case TARGET_TYPES.campaigns:
         return await this.campaignUrl(session, targetId);
 
@@ -169,7 +177,7 @@ class ActivitiesService {
         const contributor = await CharacterContributors.findOne(db, { id: targetId });
         if (!contributor) return null;
         const inviteUrl = `/character-contributor-invite/${targetId}`;
-        const characterUrl = `/characters/${contributor.characterId}`;
+        const characterUrl = await this.characterUrl(session, contributor.characterId);
         return this.contributorUrl(session, contributor, "character", inviteUrl, characterUrl);
       }
 

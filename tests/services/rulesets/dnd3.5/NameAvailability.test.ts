@@ -385,7 +385,7 @@ test("unsubscribing from an extension whose copy of a core feat the fork renamed
     'Cannot unsubscribe: feats "Dodge", which this extension replaces, would show again beside another of its name',
   );
   await expectRefusedWith(RulesetExtensionsService.unsubscribeExtension(session, fork.id, extension.id), 409);
-  expect((await Rulesets.findOne(db, { id: fork.id }))!.extensionRulesetIds).toEqual([extension.id]);
+  expect((await Rulesets.findOne(db, { id: fork.id }))!.extensionIds).toEqual([extension.id]);
   expect(await countNamed(fork.id, "feats", "Dodge")).toBe(1);
 
   // Once the fork renamed its own, the core feat comes back alone

@@ -57,11 +57,11 @@ const SUBSCRIBED = and(
 
 /**
  * A ruleset's row as every read and write of it answers it: its columns, and the extensions it subscribes to
- * (`extensionRulesetIds`), in their order, which its view composes them in.
+ * (`extensionIds`), in their order, which its view composes them in.
  */
 const RULESET_COLUMNS = {
   ...getTableColumns(rulesetsInRules),
-  extensionRulesetIds: sql<string[]>`ARRAY(
+  extensionIds: sql<string[]>`ARRAY(
     SELECT ${rulesetExtensionsInRules.extensionId} FROM ${rulesetExtensionsInRules}
     WHERE ${SUBSCRIBED} ORDER BY ${rulesetExtensionsInRules.ordinal}
   )`,
@@ -79,7 +79,8 @@ class RulesetsRepository extends include(
 
   /**
    * What a listing scope keeps (the starred scope, its join aside); no scope, the list as it opens, which `count`
-   * totals.
+   * totals. A system ruleset is one `system` marks, not one without an owner: an orphaned ruleset (its owner's account
+   * deleted) is listed as a user's is, by its privacy.
    */
   private scopeConditions(db: Db, session: Session, scope: RulesetScope | undefined): (SQL | undefined)[] {
     const notArchived = not(eq(rulesetsInRules.status, "Archived"));
@@ -88,7 +89,7 @@ class RulesetsRepository extends include(
       case "starred":
         return [notArchived];
       case "base":
-        return [isNull(rulesetsInRules.userId), isNull(rulesetsInRules.rulesetId), notArchived];
+        return [eq(rulesetsInRules.system, true), isNull(rulesetsInRules.rulesetId), notArchived];
       case "forked":
         return [eq(rulesetsInRules.userId, session.userId), isNotNull(rulesetsInRules.rulesetId), notArchived];
       case "createdByMe":
@@ -116,18 +117,18 @@ class RulesetsRepository extends include(
           eq(rulesetsInRules.kind, "extension"),
           eq(rulesetsInRules.status, "Published"),
           notArchived,
-          or(isNull(rulesetsInRules.userId), eq(rulesetsInRules.private, false)),
+          or(eq(rulesetsInRules.system, true), eq(rulesetsInRules.private, false)),
         ];
       case "systems":
         return [
           notArchived,
-          isNull(rulesetsInRules.userId),
+          eq(rulesetsInRules.system, true),
           or(isNull(rulesetsInRules.rulesetId), eq(rulesetsInRules.status, "Published")),
         ];
       case "community":
         return [
           notArchived,
-          isNotNull(rulesetsInRules.userId),
+          eq(rulesetsInRules.system, false),
           eq(rulesetsInRules.status, "Published"),
           eq(rulesetsInRules.private, false),
           eq(rulesetsInRules.kind, "ruleset"),
@@ -139,7 +140,7 @@ class RulesetsRepository extends include(
           notArchived,
           or(
             eq(rulesetsInRules.userId, session.userId),
-            and(isNull(rulesetsInRules.userId), isNull(rulesetsInRules.rulesetId)),
+            and(eq(rulesetsInRules.system, true), isNull(rulesetsInRules.rulesetId)),
             this.userPlaysInCampaign(db, session.userId),
             this.userIsActiveContributor(db, session.userId),
           ),
@@ -235,18 +236,18 @@ class RulesetsRepository extends include(
     return await db.insert(this.table).values(values).returning(RULESET_COLUMNS);
   }
 
-  /** Whether a ruleset subscribes to the extension. */
-  async exists(db: Db, where: { extensionRulesetId: string }): Promise<boolean> {
+  /** Whether a ruleset subscribes to the extension (`subscribedTo`: its id). */
+  async exists(db: Db, where: { subscribedTo: string }): Promise<boolean> {
     const [row] = await db
       .select({ exists: sql<boolean>`true` })
       .from(this.table)
-      .where(buildSubscribersCondition(where.extensionRulesetId))
+      .where(buildSubscribersCondition(where.subscribedTo))
       .limit(1);
     return !!row;
   }
 
-  /** Rulesets by id, those subscribing to an extension (`extensionRulesetId`), or the system's own (`system`). */
-  async findMany(db: Db, where: { ids: string[] } | { extensionRulesetId: string } | { system: true }) {
+  /** Rulesets by id, those subscribing to an extension (`subscribedTo`: its id), or the system's own (`system`). */
+  async findMany(db: Db, where: { ids: string[] } | { subscribedTo: string } | { system: true }) {
     if ("ids" in where && where.ids.length === 0) return [];
     return await db
       .select(RULESET_COLUMNS)
@@ -254,7 +255,7 @@ class RulesetsRepository extends include(
       .where(
         this.branchWhere([
           "ids" in where && inArray(this.table.id, where.ids),
-          "extensionRulesetId" in where && buildSubscribersCondition(where.extensionRulesetId),
+          "subscribedTo" in where && buildSubscribersCondition(where.subscribedTo),
           "system" in where && eq(this.table.system, where.system),
         ]),
       )

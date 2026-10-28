@@ -180,7 +180,7 @@ export default function RulesetDetailsPage() {
 
   const isActive = ruleset.status !== "Archived";
   // A user's fork that subscribes to none can be an extension: what its edit and its publish offer
-  const canBeExtension = !!ruleset.rulesetId && ruleset.userId !== null && ruleset.extensionRulesetIds.length === 0;
+  const canBeExtension = !!ruleset.rulesetId && ruleset.userId !== null && ruleset.extensionIds.length === 0;
   // What the session may do here: the header's menu, whose button shows only when it holds something
   const menuItems = [
     ruleset.status === "Published" && !isExtension && !isFork && (

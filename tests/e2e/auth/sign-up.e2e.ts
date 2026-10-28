@@ -10,7 +10,13 @@ test.describe("Sign Up", () => {
     ["an invalid email", "not-an-email", "password1234", "password1234", ["Enter a valid email address"]],
     ["a short password", "newuser@example.com", "12345", "12345", ["Password must be at least 12 characters"]],
     ["passwords that differ", "newuser@example.com", "password1234", "different123", ["Passwords do not match"]],
-    ["an email already in use", TEST_USERS.user1.email, "password1234", "password1234", [/email already in use/i]],
+    [
+      "an email already in use",
+      TEST_USERS.user1.email,
+      "password1234",
+      "password1234",
+      [/email address already in use/i],
+    ],
   ] as const) {
     test(`refuses ${what}`, async ({ page }) => {
       await page.goto("/sign-up");

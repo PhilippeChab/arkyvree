@@ -72,7 +72,7 @@ export async function findDepartures(
   extensionId: string,
   copies: Copies,
 ): Promise<Departures> {
-  const remaining = { ...ruleset, extensionRulesetIds: ruleset.extensionRulesetIds.filter((id) => id !== extensionId) };
+  const remaining = { ...ruleset, extensionIds: ruleset.extensionIds.filter((id) => id !== extensionId) };
   const before = await CowDataReader.read(tx, ruleset);
   const after = await CowDataReader.read(tx, remaining);
   const leaving = new Map<RulesetEntityType, string[]>();
