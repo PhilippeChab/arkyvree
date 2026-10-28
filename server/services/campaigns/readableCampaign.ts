@@ -1,7 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Campaigns, Visibility } from "@/server/repositories/index.ts";
-import { CampaignsPolicy } from "@/server/services/policies/index.ts";
+import { Campaigns, PlayerCharacters, Players, Visibility } from "@/server/repositories/index.ts";
+import { CampaignsPolicy, isAllowed } from "@/server/services/policies/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** The campaign `campaignId` of `visibility` and the session's policy on it, or none when there's no such campaign. */
@@ -24,6 +24,20 @@ async function findCampaignPolicy(
 export async function findReadableCampaign(db: Db, session: Pick<Session, "userId">, campaignId: string) {
   const found = await findCampaignPolicy(db, session, campaignId, Visibility.All);
   return found?.policy.isReadable() ? found : undefined;
+}
+
+/**
+ * The campaign the character `characterId` is linked to (one at a time) and the session's policy on it, if the session
+ * sees the character there (`CampaignsPolicy.canSeeCharacter`: a member, but a Private one its player and the Game
+ * Master alone), or none, as for a character in no campaign: what links to a campaign's character asks, so a Private
+ * one's link isn't revealed.
+ */
+export async function findVisibleCampaignCharacter(db: Db, session: Pick<Session, "userId">, characterId: string) {
+  const link = await PlayerCharacters.findOne(db, { characterId });
+  if (!link) return undefined;
+  const player = await Players.findOne(db, { id: link.playerId });
+  const found = player && (await findReadableCampaign(db, session, player.campaignId));
+  return found && isAllowed(() => found.policy.canSeeCharacter(link)) ? found : undefined;
 }
 
 /**

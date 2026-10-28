@@ -319,6 +319,22 @@ describe("ActivitiesService.getActivityUrl", () => {
     expect(await resolveAll(targets, removedSession)).toEqual([null, null, null, null]);
   });
 
+  test("links a Private campaign character to its page for its player and the Game Master alone", async () => {
+    const [gm, owner, other] = [await createTestUser(), await createTestUser(), await createTestUser()];
+    const { campaign } = await createTestCampaign(gm.user.id);
+    for (const { user } of [owner, other])
+      await Players.create(db, { campaignId: campaign.id, userId: user.id, role: "Player Character" });
+    const character = await createTestCharacter(owner.user.id);
+    await CampaignCharactersService.linkCharacter(owner.session, campaign.id, character.id, "Private");
+    const page = `/campaigns/${campaign.id}/characters/${character.id}`;
+
+    expect(await resolve("player-characters", character.id, owner.session)).toBe(page);
+    expect(await resolve("player-characters", character.id, gm.session)).toBe(page);
+    expect(await resolve("player-characters", character.id, other.session)).toBeNull();
+    await CampaignCharactersService.updateCharacterVisibility(owner.session, campaign.id, character.id, "Partial");
+    expect(await resolve("player-characters", character.id, other.session)).toBe(page);
+  });
+
   test("links a campaign invite's invitee to the invite until they've accepted it, then to the campaign", async () => {
     const [gm, invitee] = [await createTestUser(), await createTestUser()];
     const { campaign } = await createTestCampaign(gm.user.id);
