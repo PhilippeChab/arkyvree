@@ -2,3 +2,4 @@ export { db, pingDatabase, waitForDatabase, withTransaction } from "./connection
 export { addJob } from "./jobQueue.ts";
 export { notifyChannel } from "./notify.ts";
 export { clearRequestCache, memoizeRequest, runWithRequestCache } from "./requestCache.ts";
+export { readUniqueViolation } from "./uniqueViolation.ts";
