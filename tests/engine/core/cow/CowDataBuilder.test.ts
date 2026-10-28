@@ -49,7 +49,7 @@ describe("A ruleset's copy-on-write data, built by its module's kinds", () => {
   });
 
   test("hides an extension's copy of a source behind the ruleset's deleted copy of it (a tombstone), whatever's left of the source", () => {
-    const host = { ...RULESET, extensionRulesetIds: ["book"], id: "host" };
+    const host = { ...RULESET, extensionIds: ["book"], id: "host" };
     // The book's copy of `x`, and the host's, deleted since: no row of either the host's copy or `x` is read
     const copy = { forkedEntityId: "x1", rulesetId: "book", sourceEntityId: "x" };
     const tombstone = { forkedEntityId: "xh", rulesetId: "host", sourceEntityId: "x" };
