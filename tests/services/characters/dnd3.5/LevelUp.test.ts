@@ -1353,8 +1353,10 @@ describe("a pick the level's other picks give", () => {
   });
 
   test("drops a feat a spell picked at the level gives, as the feat picker leaves it out and the save refuses it", async () => {
-    const { characterId, ctx } = await createLightGivingSorcerer();
+    const { characterId, ctx, rulesetId } = await createLightGivingSorcerer();
+    // Written straight to the database: the fork's view, built when the character was created, reads it anew
     await give("spells", ctx.spellMap["Detect Magic"], "feats.ironwill.possessed");
+    RulesetViews.invalidate(rulesetId);
     const detectMagic = { [ctx.aptMap["Sorcerer Spells"]]: [ctx.spellMap["Detect Magic"]] };
     expect(await offeredFeats(characterId, "Sorcerer", 1, "General", "Iron Will")).toEqual(["Iron Will"]);
     const detectPicked = { spells: detectMagic };
@@ -1710,6 +1712,10 @@ describe("a character's level in a class", () => {
     for (const force of [false, true]) {
       expect(levelUp(session, ctx, characterId, "Fighter", 4, FIGHTER_LEVELS[3], force)).rejects.toThrow(
         "Level 2: Fighter 4 can't be taken there: Fighter 1 comes next",
+      );
+      // The level it holds, past the one that comes next, is one already finalized
+      expect(levelUp(session, ctx, characterId, "Fighter", 3, FIGHTER_LEVELS[2], force)).rejects.toThrow(
+        "Level 2: This level has already been finalized",
       );
     }
     // Forced: until it holds Fighter 2, the character fails Fighter 3's own requirement, a fighter level past 2

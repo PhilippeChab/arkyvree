@@ -6,10 +6,9 @@ import {
   Contributors,
   Invites,
   type Pagination,
-  PlayerCharacters,
   Players,
 } from "@/server/repositories/index.ts";
-import { findReadableCampaign } from "@/server/services/campaigns/index.ts";
+import { findReadableCampaign, findVisibleCampaignCharacter } from "@/server/services/campaigns/index.ts";
 import { findReadableCharacter } from "@/server/services/characters/index.ts";
 import { findReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { isNavigableTarget } from "@/shared/activity.ts";
@@ -43,11 +42,20 @@ class ActivitiesService {
   }
 
   /**
-   * A campaign's page (`path` under it), or null when it's gone or the session may not read it (`findReadableCampaign`):
-   * a campaign's existence isn't revealed to whoever isn't in it, nor its players', invites' and characters'.
+   * A campaign character's page, or null when it's in no campaign or the session may not see it
+   * (`findVisibleCampaignCharacter`): a Private character's link isn't revealed to the campaign's other players.
    */
-  private async campaignUrl(session: Session, campaignId: string, path = "") {
-    return (await findReadableCampaign(db, session, campaignId)) ? `/campaigns/${campaignId}${path}` : null;
+  private async campaignCharacterUrl(session: Session, characterId: string) {
+    const found = await findVisibleCampaignCharacter(db, session, characterId);
+    return found ? `/campaigns/${found.campaign.id}/characters/${characterId}` : null;
+  }
+
+  /**
+   * A campaign's page, or null when it's gone or the session may not read it (`findReadableCampaign`): a campaign's
+   * existence isn't revealed to whoever isn't in it, nor its players' and invites'.
+   */
+  private async campaignUrl(session: Session, campaignId: string) {
+    return (await findReadableCampaign(db, session, campaignId)) ? `/campaigns/${campaignId}` : null;
   }
 
   /**
@@ -68,10 +76,10 @@ class ActivitiesService {
     return await this.playerCampaignUrl(session, invite.playerId);
   }
 
-  /** The page of a player's campaign (`path` under it), or null when the player is gone (`campaignUrl`). */
-  private async playerCampaignUrl(session: Session, playerId: string, path = "") {
+  /** The page of a player's campaign, or null when the player is gone (`campaignUrl`). */
+  private async playerCampaignUrl(session: Session, playerId: string) {
     const player = await Players.findOne(db, { id: playerId });
-    return player ? await this.campaignUrl(session, player.campaignId, path) : null;
+    return player ? await this.campaignUrl(session, player.campaignId) : null;
   }
 
   /**
@@ -156,11 +164,9 @@ class ActivitiesService {
       // Campaign sub-entities
       case TARGET_TYPES.players:
         return await this.playerCampaignUrl(session, targetId);
-      // targetId is the characterId; a character is linked to one campaign at a time.
-      case TARGET_TYPES.playerCharacters: {
-        const link = await PlayerCharacters.findOne(db, { characterId: targetId });
-        return link ? await this.playerCampaignUrl(session, link.playerId, `/characters/${targetId}`) : null;
-      }
+      // targetId is the characterId
+      case TARGET_TYPES.playerCharacters:
+        return await this.campaignCharacterUrl(session, targetId);
       case TARGET_TYPES.invites: {
         const invite = await Invites.findOne(db, { id: targetId });
         return invite ? await this.inviteUrl(session, invite) : null;
