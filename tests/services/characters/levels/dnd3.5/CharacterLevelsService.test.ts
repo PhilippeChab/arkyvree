@@ -1,6 +1,10 @@
 import { afterAll, describe, expect, test } from "bun:test";
 
-import { DND35_COMPLETE_SCOUNDREL_NAME, DND35_DMG_NAME } from "@/content/dnd3.5/rulesetNames.ts";
+import {
+  DND35_COMPLETE_SCOUNDREL_NAME,
+  DND35_COMPLETE_WARRIOR_NAME,
+  DND35_DMG_NAME,
+} from "@/content/dnd3.5/rulesetNames.ts";
 import { addClassLevels, addFeats, addSkills, addSpells } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import type { LevelPlanRequest, StepOption, StepOptionGroup } from "@/engine/index.ts";
 import type {
@@ -1046,6 +1050,38 @@ describe("LevelsService", () => {
       expect(found).toEqual(expect.arrayContaining(luck));
     }, 30_000);
 
+    test("search a pool as the feats list does: a name's typo, a text, a family's row counting what it opens to", async () => {
+      // Complete Warrior's Favored Power Attack beside Power Attack
+      const ctx = await getSeedCtx();
+      const warrior = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
+      const ruleset = await createSeededTestRuleset(SEED_USER_ID);
+      await subscribeTestRuleset(ruleset.id, [warrior.id]);
+      const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: ruleset.id });
+      const plan = levelUpPlan([planned(ctx.classMap.pc["Fighter"], 1)]);
+      const general = ctx.aptMap["General"];
+      const found = async (search: string) => await featGroups(session, characterId, plan, general, { search });
+
+      // Equally close by their words: the closer whole first
+      expect(names(await found("Power Atack"))).toEqual(["Power Attack", "Favored Power Attack"]);
+      // Their descriptions say it, not their names
+      expect(names(await found("dodge bonus"))).toEqual(expect.arrayContaining(["Dodge", "Mobility"]));
+      // Both families' names hold it: the one it names whole first
+      expect(names(await found("Weapon Focus")).slice(0, 2)).toEqual(["Weapon Focus", "Greater Weapon Focus"]);
+      // Its variants all hold it: opened, in the family's own order
+      const focused = await familyFeats(session, characterId, plan, general, "Weapon Focus", {
+        search: "Weapon Focus",
+      });
+      expect(names(focused)).toEqual(names(await familyFeats(session, characterId, plan, general, "Weapon Focus")));
+      // Most of Weapon Focus's variants say it in their text, so its row counts those, and opens to them
+      const search = "all attack rolls made with";
+      const [weaponFocus] = (await found(search)).filter((r) => r.group === "Weapon Focus");
+      const variants = await familyFeats(session, characterId, plan, general, "Weapon Focus", { search });
+      const unsearched = await familyFeats(session, characterId, plan, general, "Weapon Focus");
+      expect(weaponFocus.count).toBe(variants.length);
+      expect(variants.length).toBeGreaterThan(0);
+      expect(variants.length).toBeLessThan(unsearched.length);
+    });
+
     test("leave out a feat that a pending level grants", async () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx, "fighter", { xp: 3000 });
@@ -1312,6 +1348,18 @@ describe("LevelsService", () => {
       expect(items.map(({ name, eligible }) => ({ name, eligible }))).toEqual([
         { name: "Uncanny Dodge", eligible: true },
       ]);
+    });
+
+    test("search a pool as the spells list does: a name's typo, and a text, a name that holds it first", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(ctx, "wizard");
+      const plan = levelUpPlan([planned(ctx.classMap.pc["Wizard"], 1)]);
+      const found = async (search: string) =>
+        names(await spellOptions(session, characterId, plan, ctx.aptMap["Wizard Spells"], { search }));
+
+      expect(await found("Magic Missle")).toEqual(["Magic Missile"]);
+      // Magic Missile's name holds it, the others' descriptions: the name first, then the rest by name
+      expect(await found("missile")).toEqual(["Magic Missile", "Antimagic Field", "Leomund's Tiny Hut", "Shield"]);
     });
 
     test("list a class level's granted spells free as their grants say, and count only a non-free one in its pool", async () => {

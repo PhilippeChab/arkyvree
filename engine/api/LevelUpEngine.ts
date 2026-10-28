@@ -59,8 +59,8 @@ export default class LevelUpEngine extends CharacterHandle {
 
   /**
    * Step `step`'s picker over the plan (`query`): the kind it reads a page of, its picker, and the fields a search of
-   * that kind finds an entity by as well as its name (`searchFields`, its kind's: a feat's family), so a picker searches
-   * as its kind's list does.
+   * that kind finds an entity by besides its name and text (`searchFields`, its kind's: a feat's family), which its
+   * list's search reads too: a picker and its kind's list search by one rule.
    */
   openStepPicker(step: string, query: StepPickerQuery) {
     const resolved = this.requests.resolveStepPicker(this.stepsOf(query.plan), step, query);

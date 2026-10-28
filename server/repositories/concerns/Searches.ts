@@ -47,14 +47,23 @@ export function Searches<B extends Constructor<BaseRepository<Table>>>(Base: B) 
 
     /**
      * A searched list's order: what holds the text first, a name that does before a description, then the names closest
-     * to it, then the list's own order (`fallback`).
+     * to it by their words, then by the name it shows (`groupName` for a list of groups, which orders each by its best
+     * row's, else its name): the text itself, then one holding it, in the list's own order (`fallback`), then the
+     * closest whole (a typo's: Power Attack before Favored Power Attack).
      */
-    protected searchOrderBy(search: string | undefined, columns: Column[], fallback: SQL): SQL {
+    protected searchOrderBy(search: string | undefined, columns: Column[], fallback: SQL, groupName?: SQL): SQL {
       if (!search) return fallback;
       const ilikeMatch = or(...columns.map((c) => ilike(c, `%${search}%`)))!;
       const nameIlikeMatch = ilike(columns[0], `%${search}%`);
-      const nameSimilarity = sql`strict_word_similarity(${search}, ${columns[0]})`;
-      return sql`(CASE WHEN ${ilikeMatch} THEN 0 ELSE 1 END), (CASE WHEN ${nameIlikeMatch} THEN 0 ELSE 1 END), ${nameSimilarity} DESC, ${fallback}`;
+      const holds = sql`CASE WHEN ${ilikeMatch} THEN 0 ELSE 1 END`;
+      const nameHolds = sql`CASE WHEN ${nameIlikeMatch} THEN 0 ELSE 1 END`;
+      const wordSimilarity = sql`strict_word_similarity(${search}, ${columns[0]})`;
+      const shown = groupName ?? columns[0];
+      // Above any similarity (at most 1): the text itself, then a name holding it, which the list's order ranks
+      const shownMatch = sql`CASE WHEN lower(${shown}) = lower(${search}) THEN 3 WHEN ${ilike(shown, `%${search}%`)} THEN 2 ELSE similarity(${search}, ${shown}) END`;
+      if (groupName)
+        return sql`min(${holds}), min(${nameHolds}), max(${wordSimilarity}) DESC, ${shownMatch} DESC, ${fallback}`;
+      return sql`(${holds}), (${nameHolds}), ${wordSimilarity} DESC, ${shownMatch} DESC, ${fallback}`;
     }
   }
   return Searching;
