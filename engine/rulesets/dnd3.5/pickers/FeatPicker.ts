@@ -33,8 +33,9 @@ export default class FeatPicker extends LevelPicker {
     };
     const groups = this.feats.groupByFamily(offered.ids);
     // A family's feats are those its row groups, so the row counts what it opens to
-    const members = groups.filter(({ group }) => group === query.family).map(({ id }) => id);
-    this.filters = query.family ? { ...offered, ids: members } : offered;
+    const { family } = query;
+    const members = family && groups.filter(({ group }) => group === family).map(({ id }) => id);
+    this.filters = members ? { ...offered, ids: members } : offered;
     this.groupFilters = { ...offered, groups };
   }
 
