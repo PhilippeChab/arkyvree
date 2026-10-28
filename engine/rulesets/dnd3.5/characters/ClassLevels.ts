@@ -9,8 +9,9 @@ export default class ClassLevels {
   /**
    * The character's level in each class it has levels of, by the class's id: its levels (`levels`, its advancements,
    * each with its entry, a class level of `classLevelsById`) of the class, counted, whatever their class levels'
-   * positions, as the model counts `classes.<class>.level`; a class's next level follows it
-   * (`LevelRules.findNextClassLevel`). A level whose class level the view doesn't have counts in no class.
+   * positions, as the model counts `classes.<class>.level`; a class's next level is one past it
+   * (`LevelRules.findNextClassLevel`), but for a gap a forced level left before the rule. A level whose class level the
+   * view doesn't have counts in no class.
    */
   static countByClass(
     classLevelsById: ReadonlyMap<string, { ownerId: string }>,

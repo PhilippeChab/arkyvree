@@ -103,11 +103,11 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
   }
 
   /**
-   * The class's next level for the character (`LevelRules.findNextClassLevel`): one past its levels of the class, none
-   * when the character holds it already or the class has no more.
+   * The class's next level for the character (`LevelRules.findNextClassLevel`): its lowest the character doesn't hold,
+   * none when the class has no more.
    */
   private nextLevelOf(klass: EntityRecord): KlassLevel | undefined {
     const next = LevelRules.findNextClassLevel(this.dnd35.classLevelsById, this.input.rows.advancements, klass.id);
-    return next === undefined ? undefined : this.dnd35.classLevelByClassAndLevel.get(`${klass.id}:${next}`);
+    return this.dnd35.classLevelByClassAndLevel.get(`${klass.id}:${next}`);
   }
 }

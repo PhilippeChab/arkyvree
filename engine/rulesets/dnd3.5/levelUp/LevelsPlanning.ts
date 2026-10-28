@@ -65,7 +65,7 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
    * Refuses class level `classLevel` of class `className` unless it's its class's next after `levels` (the character's
    * saved ones and those planned before it), forced or not (`LevelRules.findNextClassLevel`, which the class picker
    * offers): a class's levels come one after another, so the character's level in a class is its highest class level
-   * too.
+   * too, once a gap a forced level left before the rule is filled.
    */
   private checkNextLevel(
     levels: { entryId: string | null }[],
@@ -75,13 +75,10 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
   ) {
     const next = LevelRules.findNextClassLevel(this.dnd35.classLevelsById, levels, classLevel.ownerId);
     if (next === classLevel.position) return;
-    const why =
-      next === undefined
-        ? `the character's ${className} levels skip a level, so none comes next`
-        : `${ClassLevels.format(className, next)} comes next`;
+    const taken = ClassLevels.format(className, classLevel.position);
     throw new RulesError(
       "invalid",
-      `${label}${ClassLevels.format(className, classLevel.position)} can't be taken there: ${why}`,
+      `${label}${taken} can't be taken there: ${ClassLevels.format(className, next)} comes next`,
     );
   }
 
