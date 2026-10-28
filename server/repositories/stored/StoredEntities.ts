@@ -30,8 +30,8 @@ import { toFieldRows } from "./toFieldRows.ts";
 import { toQualified } from "./toQualified.ts";
 
 /**
- * A picker's page of a kind's entities, among `ids`, of the values of their `fields`, but `excludeIds`, searched by
- * name and the `searchFields`.
+ * A picker's page of a kind's entities, among `ids`, of the values of their `fields`, but `excludeIds`, searched as its
+ * kind's list is (`buildSearchCondition`).
  */
 interface OptionWhere {
   entityType: string;
@@ -85,6 +85,9 @@ const OWN_COLUMNS = {
   createdAt: entitiesInRules.createdAt,
   updatedAt: entitiesInRules.updatedAt,
 };
+
+/** The columns a search of a kind's entities reads: its name first, as `fuzzySearch` takes it, then its text. */
+const SEARCH_COLUMNS = [entitiesInRules.name, entitiesInRules.description];
 
 /** The most rows one insert writes: a statement holds at most 65,535 parameters. */
 const WRITE_BATCH = 2000;
@@ -156,15 +159,15 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   }
 
   /**
-   * A picker's conditions: a kind's entities among `ids`, of its values, searched by name and its `searchFields`, but
-   * `excludeIds`.
+   * A picker's conditions: a kind's entities among `ids`, of its values, searched as its kind's list is
+   * (`buildSearchCondition`), but `excludeIds`.
    */
   private buildOptionConditions(where: OptionWhere): (SQL | false)[] {
     return [
       eq(entitiesInRules.type, where.entityType),
       inArray(entitiesInRules.id, where.ids),
       ...StoredEntities.buildValueConditions(where),
-      this.buildSearchCondition(where, this.search(where.search, [entitiesInRules.name])),
+      this.buildSearchCondition(where),
       where.excludeIds !== undefined && where.excludeIds.length > 0 && notInArray(entitiesInRules.id, where.excludeIds),
     ];
   }
@@ -198,14 +201,12 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   }
 
   /**
-   * A search's condition: what its own columns' search finds (`found`: `search` or `fuzzySearch`'s), or an entity
-   * holding the text in one of the fields its kind's search reads too (`searchFields`: a feat's family). None without a
-   * search.
+   * A search of a kind's entities, its list's, its groups' and its pickers' alike: an entity whose name or text holds
+   * the text, or whose name the text is a typo of (`fuzzySearch` over `SEARCH_COLUMNS`), or one holding the text in one
+   * of the fields its kind's search reads too (`searchFields`: a feat's family). None without a search.
    */
-  private buildSearchCondition(
-    where: { search?: string; searchFields?: EntityFilters["searchFields"] },
-    found: SQL | false,
-  ): SQL | false {
+  private buildSearchCondition(where: { search?: string; searchFields?: EntityFilters["searchFields"] }): SQL | false {
+    const found = this.fuzzySearch(where.search, SEARCH_COLUMNS);
     const fields = entityFieldsInRules;
     const held = this.heldSearch(where.search, entitiesInRules.id, {
       key: fields.field,
@@ -277,7 +278,8 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
    * A page of a kind's entities its conditions pick (`conditions`, among `ids` when it says), each group's as one row,
    * the groups an entity is in given (`groups`: a feat's families it's a variant of), one in none a row of its own; or,
    * of one group (`group`), its entities, each a row of its own. Each row is its group's columns (`groupColumns`), named
-   * for its entity when it holds one, else for its group, and in the order of its name.
+   * for its entity when it holds one, else for its group, in the order of its name, a search's best match first (its
+   * best entity's, then its name's, as a list orders a search).
    */
   private async readGroupPage(
     db: Db,
@@ -286,10 +288,11 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
       group?: string;
       groups: EntityGroupMember[];
       ids?: string[];
+      search?: string;
     },
     pagination: Pagination,
   ) {
-    const { conditions, group, groups, ids } = where;
+    const { conditions, group, groups, ids, search } = where;
     if (ids !== undefined && ids.length === 0) return this.paginated([], pagination);
     const { limit, offset } = this.paginate(pagination);
     // Each entity's group, as one parameter: a row per entity and group
@@ -310,7 +313,12 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
       // A group's entities as one row, but those of the group asked for, each its own
       .groupBy(group === undefined ? sql`coalesce(${groupName}, ${entitiesInRules.id}::text)` : entitiesInRules.id)
       // A group is a value or an entity alone: its smallest id is its own
-      .orderBy(...this.pageOrder(name, sql`min(${entitiesInRules.id}::text)`))
+      .orderBy(
+        ...this.pageOrder(
+          this.searchOrderBy(search, SEARCH_COLUMNS, name, name),
+          sql`min(${entitiesInRules.id}::text)`,
+        ),
+      )
       .limit(limit)
       .offset(offset);
     return this.paginated(rows, pagination);
@@ -519,13 +527,10 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     const conditions = [
       eq(entitiesInRules.type, where.entityType),
       this.buildRulesetCondition(db, where),
-      this.buildSearchCondition(
-        where,
-        this.fuzzySearch(where.search, [entitiesInRules.name, entitiesInRules.description]),
-      ),
+      this.buildSearchCondition(where),
     ];
-    const { family, groups, ids } = where;
-    return await this.readGroupPage(db, { conditions, group: family, groups, ids }, pagination);
+    const { family, groups, ids, search } = where;
+    return await this.readGroupPage(db, { conditions, group: family, groups, ids, search }, pagination);
   }
 
   /**
@@ -619,18 +624,22 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   async findOptionGroupPage(db: Db, where: OptionWhere & { groups: EntityGroupMember[] }, pagination: Pagination) {
     return await this.readGroupPage(
       db,
-      { conditions: this.buildOptionConditions(where), groups: where.groups },
+      { conditions: this.buildOptionConditions(where), groups: where.groups, search: where.search },
       pagination,
     );
   }
 
-  /** A picker's page of a kind's entities (a list's, as the ruleset composes it), by name: each its name and text. */
+  /**
+   * A picker's page of a kind's entities (a list's, as the ruleset composes it), by name, a search's best match first
+   * as its list orders it: each its name and text.
+   */
   async findOptionPage(db: Db, where: OptionWhere, pagination: Pagination) {
+    const order = this.searchOrderBy(where.search, SEARCH_COLUMNS, this.orderBy(entitiesInRules.name));
     const rows = await db
       .select({ id: entitiesInRules.id, name: entitiesInRules.name, description: entitiesInRules.description })
       .from(entitiesInRules)
       .where(this.where(this.buildOptionConditions(where)))
-      .orderBy(...this.pageOrder(this.orderBy(entitiesInRules.name)))
+      .orderBy(...this.pageOrder(order))
       .limit(this.paginate(pagination).limit)
       .offset(this.paginate(pagination).offset);
     return this.paginated(rows as { description: string | null; id: string; name: string }[], pagination);
@@ -644,11 +653,10 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   ) {
     if (where.ids !== undefined && where.ids.length === 0) return this.paginated<R>([], pagination);
     const { search, orderBy = "name", orderDir = "asc", linkedBy } = where;
-    const searchColumns = [entitiesInRules.name, entitiesInRules.description];
     const conditions = [
       eq(entitiesInRules.type, where.entityType),
       this.buildRulesetCondition(db, where),
-      this.buildSearchCondition(where, this.fuzzySearch(search, searchColumns)),
+      this.buildSearchCondition(where),
       where.ids !== undefined && inArray(entitiesInRules.id, where.ids),
       linkedBy !== undefined &&
         sql`${entitiesInRules.id} IN (SELECT ${entityLinksInRules.toId} FROM ${entityLinksInRules} WHERE ${and(eq(entityLinksInRules.role, linkedBy.role), eq(entityLinksInRules.fromType, linkedBy.fromType), eq(entityLinksInRules.toType, where.entityType))})`,
@@ -656,7 +664,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     ];
     const order = where.orderByAdvancementsOf
       ? this.orderByAdvancements(where.orderByAdvancementsOf)
-      : [this.searchOrderBy(search, searchColumns, this.orderBy(entitiesInRules[orderBy], orderDir))];
+      : [this.searchOrderBy(search, SEARCH_COLUMNS, this.orderBy(entitiesInRules[orderBy], orderDir))];
     return await this.withPagination(
       pagination,
       async (page) => await this.read<R>(db, this.where(conditions), this.pageOrder(order), page),

@@ -1188,8 +1188,9 @@ describe("a feat that doesn't stack, held once", () => {
     const proficiency = "Martial Weapon Proficiency: Longsword";
     const elf = await createSeedCharacter(ctx, "wizard");
     const human = await createSeedCharacter(ctx, "sorcerer");
-    expect(await offeredFeats(human, "Wizard", 1, "General", proficiency)).toEqual([proficiency]);
-    expect(await offeredFeats(elf, "Wizard", 1, "General", proficiency)).toEqual([]);
+    // A search finds its family's other weapons too, by their names' likeness
+    expect(await offeredFeats(human, "Wizard", 1, "General", proficiency)).toContain(proficiency);
+    expect(await offeredFeats(elf, "Wizard", 1, "General", proficiency)).not.toContain(proficiency);
 
     const plan = { ...WIZARD_1, feats: { ...WIZARD_1.feats, General: [proficiency] } };
     const previewed = await preview(ctx, elf, [["Wizard", 1]], undefined, { feats: plan.feats });
@@ -1275,9 +1276,9 @@ describe("a pick the level's other picks give", () => {
     const weaponPicked = { feats: { [weapon]: [ctx.featMap[WAR_WEAPON]] } };
     expect(await offeredFeats(characterId, "Cleric", 1, "General", FOCUS, weaponPicked)).not.toContain(FOCUS);
     const focusPicked = { feats: { [general]: [ctx.featMap[FOCUS]] } };
-    expect(await offeredFeats(characterId, "Cleric", 1, "War Domain Weapon", WAR_WEAPON, focusPicked)).toEqual([
-      WAR_WEAPON,
-    ]);
+    // The search's best match first
+    const [warWeapon] = await offeredFeats(characterId, "Cleric", 1, "War Domain Weapon", WAR_WEAPON, focusPicked);
+    expect(warWeapon).toBe(WAR_WEAPON);
 
     // Picked first or last, Weapon Focus gives way: its slot goes to the next General feat, the war weapon stays
     const orders: [string[], "General" | "War Domain Weapon"][] = [
@@ -1335,7 +1336,7 @@ describe("a pick the level's other picks give", () => {
       "Detect Magic",
       pickOf("Light"),
     );
-    expect(detectOffered).toEqual(["Detect Magic"]);
+    expect(detectOffered).toContain("Detect Magic");
 
     // Picked first or last, Light gives way: its slot goes to the next cantrip, Detect Magic stays
     const kept = ["Detect Magic", "Read Magic", "Mage Hand", "Resistance", "Magic Missile", "Shield"];
