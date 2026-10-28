@@ -1,8 +1,12 @@
 import type { z } from "zod";
 
-/** One thing a refusal says a character fails: the kind of check (`category`), what it's about, and why. */
+/**
+ * One thing a refusal says a character fails: the kind of check (`category`), what it's about (an entity: its type, its
+ * name, its id), and why.
+ */
 export interface RulesIssue {
   category: string;
+  entityId?: string;
   entityName?: string;
   entityType?: string;
   message: string;

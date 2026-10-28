@@ -137,18 +137,17 @@ export default class Dnd35LevelUp extends LevelUpPart implements LevelUpRules<De
   /**
    * The issues an edited level answers for: all the character's (`issues`) but those of the pools the level doesn't add
    * to, which the levels before it or after it give. A level adds to a pool the character allows more of with it
-   * (`withLevel`) than without it (`before`).
+   * (`withLevel`) than without it (`before`). A pool's issue carries the pool, by id (`entityId`).
    */
   findEditedLevelIssues(issues: RulesIssue[], before: DetailedCharacter, withLevel: DetailedCharacter) {
     const allowedBefore = new Map<string, number>();
-    for (const apt of Object.values(before.components.aptitudes.getAptitudes()))
-      allowedBefore.set(apt.name, apt.allowed);
+    for (const apt of Object.values(before.components.aptitudes.getAptitudes())) allowedBefore.set(apt.id, apt.allowed);
     const owned = new Set<string>();
     for (const apt of Object.values(withLevel.components.aptitudes.getAptitudes()))
-      if (apt.allowed > (allowedBefore.get(apt.name) ?? 0)) owned.add(apt.name);
+      if (apt.allowed > (allowedBefore.get(apt.id) ?? 0)) owned.add(apt.id);
 
     return issues.filter(
-      (issue) => issue.category !== "aptitudes" || [...owned].some((name) => issue.message.startsWith(name)),
+      (issue) => issue.category !== "aptitudes" || (issue.entityId !== undefined && owned.has(issue.entityId)),
     );
   }
 

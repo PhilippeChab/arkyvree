@@ -27,15 +27,22 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
     protected override findRulesetIssues(): RulesIssue[] {
       const issues: RulesIssue[] = [];
 
-      // Check aptitudes: each should have available === 0
-      const slotIssue = (name: string, { allowed, spent, available }: AptitudeSlots) => {
+      // Check aptitudes: each should have available === 0. An issue names its pool (`label`) and carries it, by id.
+      const slotIssue = (
+        { id, name }: { id: string; name: string },
+        label: string,
+        { allowed, spent, available }: AptitudeSlots,
+      ) => {
         if (allowed === ALLOWED_ALL || available === 0) return;
         issues.push({
           category: "aptitudes",
           message:
             available > 0
-              ? `${name}: ${available} unspent slot(s) (${spent}/${allowed})`
-              : `${name}: overspent by ${Math.abs(available)} (${spent}/${allowed})`,
+              ? `${label}: ${available} unspent slot(s) (${spent}/${allowed})`
+              : `${label}: overspent by ${Math.abs(available)} (${spent}/${allowed})`,
+          entityId: id,
+          entityName: name,
+          entityType: "aptitudes",
         });
       };
       const aptitudes = this.components.aptitudes.getAptitudes();
@@ -44,10 +51,10 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
           const aptitudeObj = aptitude as Record<string, unknown>;
           for (let level = 0; level <= MAX_SPELL_LEVEL; level++) {
             const levelData = aptitudeObj[String(level)] as AptitudeSlots | undefined;
-            if (levelData) slotIssue(`${aptitude.name} (level ${level})`, levelData);
+            if (levelData) slotIssue(aptitude, `${aptitude.name} (level ${level})`, levelData);
           }
         } else {
-          slotIssue(aptitude.name, aptitude);
+          slotIssue(aptitude, aptitude.name, aptitude);
         }
       }
 

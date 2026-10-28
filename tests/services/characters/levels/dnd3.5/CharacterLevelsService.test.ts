@@ -1937,6 +1937,46 @@ describe("LevelsService", () => {
       expect(refused).toMatchObject({ status: 400, body: { message: expect.stringMatching(/cleave/i) } });
     });
 
+    test("answers for the pools the level adds to, not another whose name begins with one of theirs", async () => {
+      const ctx = await getSeedCtx();
+      const fenn = await findSeededCharacter("Fenn Ashwalker");
+      const ranger = ctx.classMap.pc["Ranger"];
+      // Ranger 5, forced: its second favored enemy picked, the Favored Enemy Specialization its 5th level gives left unspent
+      await CharacterLevelsService.addLevels(
+        session,
+        fenn.id,
+        levelUpPlan(
+          [
+            { classId: ranger, level: 4, hp: 5, abilityIncreases: increasesOf(ctx.abilityMap["Wisdom"]) },
+            { classId: ranger, level: 5, hp: 5 },
+          ],
+          picks(ctx, {
+            skills: { Climb: 4, Swim: 4, Heal: 3, "Handle Animal": 3 },
+            feats: { "Favored Enemy": ["Favored Enemy: Undead"] },
+          }),
+        ),
+        true,
+      );
+      const [first, , , , fifth] = (await CharacterAdvancements.findMany(db, { characterId: fenn.id })).toSorted(
+        (a, b) => a.position - b.position,
+      );
+      const resave = async (level: string) =>
+        CharacterLevelsService.updatePlannedLevel(
+          session,
+          fenn.id,
+          level,
+          await CharacterLevelsService.getLevelPlan(session, fenn.id, level),
+          false,
+        );
+
+      // The 1st level adds to Favored Enemy only; the 5th to Favored Enemy Specialization, whose slot it leaves unspent
+      await resave(first.id);
+      expect(await answerTo(() => resave(fifth.id))).toMatchObject({
+        status: 400,
+        body: { message: "Favored Enemy Specialization: 1 unspent slot(s) (0/1)" },
+      });
+    });
+
     test("keeps the familiar a feat of the edited level brings", async () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx, "sorcerer");
