@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, test } from "bun:test";
 
-import { DND35_DMG_NAME } from "@/content/dnd3.5/rulesetNames.ts";
+import { DND35_COMPLETE_SCOUNDREL_NAME, DND35_DMG_NAME } from "@/content/dnd3.5/rulesetNames.ts";
 import { addClassLevels, addFeats, addSkills, addSpells } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import type { LevelPlanRequest, StepOption, StepOptionGroup } from "@/engine/index.ts";
 import type {
@@ -68,6 +68,7 @@ import {
   createSeededTestRulesetWithExtensions,
   createTestRuleset,
   invalidateSeededRuleset,
+  subscribeTestRuleset,
 } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
@@ -1000,6 +1001,28 @@ describe("LevelsService", () => {
       // Simple Weapon Proficiency is every simple weapon, a feat of its own
       expect(grouped.find((r) => r.name === "Simple Weapon Proficiency")).toMatchObject({ group: null });
     });
+
+    test("count a family's row as the variants it opens to, none of them offered alone too", async () => {
+      // Complete Scoundrel's luck feats are a family, Lucky Break among them, and none is a variant of it
+      const ctx = await getSeedCtx();
+      const ruleset = await createSeededTestRuleset(SEED_USER_ID);
+      await subscribeTestRuleset(ruleset.id, [(await findSeededRuleset(DND35_COMPLETE_SCOUNDREL_NAME)).id]);
+      const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: ruleset.id });
+      const plan = levelUpPlan([planned(ctx.classMap.pc["Fighter"], 1)]);
+      const general = ctx.aptMap["General"];
+      const grouped = await featGroups(session, characterId, plan, general);
+      const families = grouped.filter((r) => r.group !== null && r.count > 1);
+      const alone = new Set(grouped.filter((r) => !families.includes(r)).map((r) => r.name));
+
+      for (const { count, group } of families) {
+        const variants = names(await familyFeats(session, characterId, plan, general, group!));
+        expect({ group, count: variants.length }).toEqual({ group, count });
+        expect(variants.filter((name) => alone.has(name))).toEqual([]);
+      }
+      expect(families.map((r) => r.group)).toContain("Weapon Focus");
+      expect(families.map((r) => r.group)).not.toContain("Luck");
+      expect([...alone]).toEqual(expect.arrayContaining(["Lucky Break", "Good Karma"]));
+    }, 30_000);
 
     test("leave out a feat that a pending level grants", async () => {
       const ctx = await getSeedCtx();
@@ -1935,6 +1958,92 @@ describe("LevelsService", () => {
         ),
       );
       expect(refused).toMatchObject({ status: 400, body: { message: expect.stringMatching(/cleave/i) } });
+    });
+
+    test("answers for the pools the level adds to, not another whose name begins with one of theirs", async () => {
+      const ctx = await getSeedCtx();
+      const fenn = await findSeededCharacter("Fenn Ashwalker");
+      const ranger = ctx.classMap.pc["Ranger"];
+      // Ranger 5, forced: its second favored enemy picked, the Favored Enemy Specialization its 5th level gives left unspent
+      await CharacterLevelsService.addLevels(
+        session,
+        fenn.id,
+        levelUpPlan(
+          [
+            { classId: ranger, level: 4, hp: 5, abilityIncreases: increasesOf(ctx.abilityMap["Wisdom"]) },
+            { classId: ranger, level: 5, hp: 5 },
+          ],
+          picks(ctx, {
+            skills: { Climb: 4, Swim: 4, Heal: 3, "Handle Animal": 3 },
+            feats: { "Favored Enemy": ["Favored Enemy: Undead"] },
+          }),
+        ),
+        true,
+      );
+      const [first, , , , fifth] = (await CharacterAdvancements.findMany(db, { characterId: fenn.id })).toSorted(
+        (a, b) => a.position - b.position,
+      );
+      const resave = async (level: string) =>
+        CharacterLevelsService.updatePlannedLevel(
+          session,
+          fenn.id,
+          level,
+          await CharacterLevelsService.getLevelPlan(session, fenn.id, level),
+          false,
+        );
+
+      // The 1st level adds to Favored Enemy only; the 5th to Favored Enemy Specialization, whose slot it leaves unspent
+      await resave(first.id);
+      expect(await answerTo(() => resave(fifth.id))).toMatchObject({
+        status: 400,
+        body: { message: "Favored Enemy Specialization: 1 unspent slot(s) (0/1)" },
+      });
+    });
+
+    test("answers for the spell levels of a spell list the level adds to, not its others", async () => {
+      const ctx = await getSeedCtx();
+      const characterId = await createSeedCharacter(ctx, "sorcerer");
+      // Sorcerer 1, forced: one of its two 1st-level spells left unpicked
+      const first = await levelUp(
+        session,
+        ctx,
+        characterId,
+        "Sorcerer",
+        1,
+        {
+          ...SORCERER_1,
+          spells: { "Sorcerer Spells": ["Detect Magic", "Light", "Read Magic", "Mage Hand", "Magic Missile"] },
+        },
+        true,
+      );
+      // Sorcerer 2 adds a cantrip and no 1st-level spell
+      const second = await levelUp(
+        session,
+        ctx,
+        characterId,
+        "Sorcerer",
+        2,
+        {
+          hp: 3,
+          skills: { Bluff: 1, Concentration: 1, Spellcraft: 1, "Use Magic Device": 1 },
+          spells: { "Sorcerer Spells": ["Prestidigitation"] },
+        },
+        true,
+      );
+      const resave = async (level: string) =>
+        CharacterLevelsService.updatePlannedLevel(
+          session,
+          characterId,
+          level,
+          await CharacterLevelsService.getLevelPlan(session, characterId, level),
+          false,
+        );
+
+      expect(await answerTo(() => resave(first.id))).toMatchObject({
+        status: 400,
+        body: { message: "Sorcerer Spells (level 1): 1 unspent slot(s) (1/2)" },
+      });
+      await resave(second.id);
     });
 
     test("keeps the familiar a feat of the edited level brings", async () => {

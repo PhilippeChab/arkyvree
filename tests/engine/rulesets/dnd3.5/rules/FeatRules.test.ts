@@ -34,3 +34,11 @@ describe("a feat a character takes", () => {
     expect(rules.canTake(powerAttack, held)).toBe(false);
   });
 });
+
+describe("a feat of a family", () => {
+  test("is a variant of it when its name says the family's and a colon, and a member of it alone otherwise", () => {
+    expect(FeatRules.variantOf("Weapon Focus: Longsword", "Weapon Focus")).toBe("Longsword");
+    expect(FeatRules.variantOf("Lucky Break", "Luck")).toBeUndefined();
+    expect(FeatRules.variantOf("Deity's Weapon Focus: Club", "Weapon Focus")).toBeUndefined();
+  });
+});

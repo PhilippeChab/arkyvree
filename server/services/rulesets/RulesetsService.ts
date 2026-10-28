@@ -71,7 +71,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       )[0];
 
       // The fork subscribes to its source's extensions, in their order
-      await RulesetExtensions.upsert(tx, { rulesetId: newRuleset.id, extensionIds: ruleset.extensionRulesetIds });
+      await RulesetExtensions.upsert(tx, { rulesetId: newRuleset.id, extensionIds: ruleset.extensionIds });
 
       // 3. Copy the ruleset's Settings as stored (parent entity IDs, which the fork's view resolves at read time)
       await RulesetSettings.createCopy(tx, { fromId: id, toId: newRuleset.id });
@@ -86,7 +86,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       });
 
       // Its row was written before its extensions' rows were, which it answers with
-      return { ...newRuleset, extensionRulesetIds: ruleset.extensionRulesetIds };
+      return { ...newRuleset, extensionIds: ruleset.extensionIds };
     });
 
     RulesetViews.invalidate(result.id);
@@ -99,7 +99,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
     const [star, starCount, usedAsExtension] = await Promise.all([
       StarredRulesets.findOne(db, { userId: session.userId, rulesetId: id }),
       StarredRulesets.count(db, { rulesetId: id }),
-      Rulesets.exists(db, { extensionRulesetId: id }),
+      Rulesets.exists(db, { subscribedTo: id }),
     ]);
 
     const parent = ruleset.rulesetId ? await Rulesets.findOne(db, { id: ruleset.rulesetId }) : undefined;

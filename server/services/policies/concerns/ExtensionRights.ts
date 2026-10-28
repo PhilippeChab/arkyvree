@@ -12,7 +12,7 @@ export function ExtensionRights<B extends Constructor<RulesetRoles>>(Base: B) {
     canBeExtension() {
       if (!this.entity.rulesetId) throw new UnprocessableEntityError("Only forks can be published as extensions");
 
-      if (this.entity.extensionRulesetIds.length > 0)
+      if (this.entity.extensionIds.length > 0)
         throw new UnprocessableEntityError("A ruleset that subscribes to extensions cannot itself be an extension");
 
       return true;

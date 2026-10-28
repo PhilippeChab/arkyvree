@@ -7,14 +7,6 @@ import type { Feat, Klass, Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier } from "@/shared/relations.ts";
 import { GENERAL_FEATS_APTITUDE } from "@/vocabulary/dnd3.5/feats.ts";
-import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
-
-/** An aptitude pool's (or one of its spell levels') slots. */
-interface AptitudeSlots {
-  allowed: number;
-  available: number;
-  spent: number;
-}
 
 /**
  * A 3.5 character's diagnostics, which core's validation reads (`Validates`): the issues its rules flag (its pools'
@@ -27,28 +19,21 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
     protected override findRulesetIssues(): RulesIssue[] {
       const issues: RulesIssue[] = [];
 
-      // Check aptitudes: each should have available === 0
-      const slotIssue = (name: string, { allowed, spent, available }: AptitudeSlots) => {
-        if (allowed === ALLOWED_ALL || available === 0) return;
+      // Each pool should have available === 0. An issue carries its pool: its aptitude, and its spell level (`tier`).
+      for (const { id, name, spellLevel, allowed, spent, available } of this.components.aptitudes.getSlotPools()) {
+        if (allowed === ALLOWED_ALL || available === 0) continue;
+        const pool = spellLevel === undefined ? name : `${name} (level ${spellLevel})`;
         issues.push({
           category: "aptitudes",
           message:
             available > 0
-              ? `${name}: ${available} unspent slot(s) (${spent}/${allowed})`
-              : `${name}: overspent by ${Math.abs(available)} (${spent}/${allowed})`,
+              ? `${pool}: ${available} unspent slot(s) (${spent}/${allowed})`
+              : `${pool}: overspent by ${Math.abs(available)} (${spent}/${allowed})`,
+          entityId: id,
+          entityName: name,
+          entityType: "aptitudes",
+          tier: spellLevel,
         });
-      };
-      const aptitudes = this.components.aptitudes.getAptitudes();
-      for (const [key, aptitude] of Object.entries(aptitudes)) {
-        if (this.components.aptitudes.isLeveledAptitude(key)) {
-          const aptitudeObj = aptitude as Record<string, unknown>;
-          for (let level = 0; level <= MAX_SPELL_LEVEL; level++) {
-            const levelData = aptitudeObj[String(level)] as AptitudeSlots | undefined;
-            if (levelData) slotIssue(`${aptitude.name} (level ${level})`, levelData);
-          }
-        } else {
-          slotIssue(aptitude.name, aptitude);
-        }
       }
 
       const { budget, ranks } = this.getSkillValidationIssues();

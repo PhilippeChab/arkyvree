@@ -51,7 +51,7 @@ class RulesetExtensionsService {
     const result = await withTransaction(async (tx) => {
       // 1. Validate ruleset
       const { policy, ruleset: childRuleset } = await getReadableRuleset(tx, session, id);
-      policy.canSubscribeExtension({ usedAsExtension: await Rulesets.exists(tx, { extensionRulesetId: id }) });
+      policy.canSubscribeExtension({ usedAsExtension: await Rulesets.exists(tx, { subscribedTo: id }) });
 
       // 2. Validate each extension
       const newExtensionIds: string[] = [];
@@ -75,7 +75,7 @@ class RulesetExtensionsService {
         if (childRuleset.rulesetId !== extension.rulesetId)
           throw new UnprocessableEntityError("Extension must share a common ancestor ruleset");
 
-        if (childRuleset.extensionRulesetIds.includes(extensionId))
+        if (childRuleset.extensionIds.includes(extensionId))
           throw new ConflictError("Already subscribed to this extension");
 
         newExtensionIds.push(extensionId);
@@ -112,8 +112,7 @@ class RulesetExtensionsService {
       const { policy, ruleset } = await getReadableRuleset(tx, session, id);
       policy.canUnsubscribeExtension();
 
-      if (!ruleset.extensionRulesetIds.includes(extensionId))
-        throw new NotFoundError("Not subscribed to this extension");
+      if (!ruleset.extensionIds.includes(extensionId)) throw new NotFoundError("Not subscribed to this extension");
 
       // 2. The fork's copies of the extension's entities: the snapshots whose sourceEntityId belongs to the extension
       const snapshots = await EntitySnapshots.findMany(tx, { rulesetId: id });

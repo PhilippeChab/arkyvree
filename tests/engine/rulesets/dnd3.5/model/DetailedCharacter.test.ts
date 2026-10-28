@@ -267,7 +267,7 @@ async function forkWith(...extensionNames: string[]) {
   const fork = await createTestRuleset(SEED_USER_ID, {
     rulesetId,
     ancestorRulesetIds: [rulesetId],
-    extensionRulesetIds: extensions,
+    extensionIds: extensions,
   });
   RulesetViews.invalidate(fork.id);
   return fork;

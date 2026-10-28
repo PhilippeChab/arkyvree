@@ -6,7 +6,7 @@ import { CowDataBuilder, type CowRows } from "@/engine/core/cow/index.ts";
 const NO_ROWS: CowRows = { identities: [], namesakes: [], owned: [], ownNamesakes: [], snapshots: [] };
 
 /** A fork of a base, of a made-up module's kinds. */
-const RULESET = { ancestorRulesetIds: ["base"], extensionRulesetIds: [], id: "fork" };
+const RULESET = { ancestorRulesetIds: ["base"], extensionIds: [], id: "fork" };
 
 /** An entity of a kind a name is the identity of, named "General", of a ruleset. */
 function named(entityType: string, id: string, rulesetId: string) {
@@ -37,7 +37,7 @@ describe("A ruleset's copy-on-write data, built by its module's kinds", () => {
 
   test("pairs the namesakes of a kind a name is the identity of, never two kinds' of one name", () => {
     const cow = CowDataBuilder.build(
-      { ...RULESET, extensionRulesetIds: ["book"] },
+      { ...RULESET, extensionIds: ["book"] },
       {
         ...NO_ROWS,
         identities: [named("pools", "p1", "fork"), named("pools", "p2", "book"), named("lists", "x1", "book")],

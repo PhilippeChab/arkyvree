@@ -19,7 +19,7 @@ import {
   Users,
 } from "@/server/repositories/index.ts";
 import { purgeAttachmentsForRecords } from "@/server/services/attachments/index.ts";
-import { toSafeUser } from "@/server/services/authentication/accounts.ts";
+import { assertNotTaken, toSafeUser, withTakenRefusal } from "@/server/services/authentication/accounts.ts";
 import { createCode, hasRecentCode, verifyCode } from "@/server/services/authentication/codes.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -179,26 +179,15 @@ class AccountService {
 
       const newEmailAddress = emailAddress && emailAddress !== user.emailAddress ? emailAddress : undefined;
 
-      // Check if email is being changed and is already taken
-      if (newEmailAddress) {
-        const existingUser = await Users.findOne(tx, { emailAddress: newEmailAddress });
-        if (existingUser) throw new BadRequestError("Email address already in use");
-      }
-
-      // Check if username is being changed and is already taken
-      if (username && username !== user.username) {
-        const existingUser = await Users.findOne(tx, {
-          username,
-        });
-        if (existingUser) throw new BadRequestError("Username already in use");
-      }
+      if (newEmailAddress) await assertNotTaken(tx, { emailAddress: newEmailAddress });
+      if (username && username !== user.username) await assertNotTaken(tx, { username });
 
       const updateData: Partial<InferInsertModel<typeof usersInAccount>> = {};
       if (newEmailAddress) updateData.pendingEmailAddress = newEmailAddress;
 
       if (username !== undefined) updateData.username = username;
 
-      const rows = await Users.update(tx, updateData, { id: session.userId });
+      const rows = await withTakenRefusal(() => Users.update(tx, updateData, { id: session.userId }));
       const updatedUser = rows[0];
       if (!updatedUser) throw new InternalError("Failed to update profile");
 
@@ -244,17 +233,15 @@ class AccountService {
       );
 
       // Re-check uniqueness — someone else may have claimed this email
-      const existingUser = await Users.findOne(tx, { emailAddress: user.pendingEmailAddress });
-      if (existingUser) throw new BadRequestError("Email address already in use");
+      await assertNotTaken(tx, { emailAddress: user.pendingEmailAddress });
 
-      const rows = await Users.update(
-        tx,
-        {
-          emailAddress: user.pendingEmailAddress,
-          pendingEmailAddress: null,
-          emailVerifiedAt: new Date().toISOString(),
-        },
-        { id: user.id },
+      const { pendingEmailAddress } = user;
+      const rows = await withTakenRefusal(() =>
+        Users.update(
+          tx,
+          { emailAddress: pendingEmailAddress, pendingEmailAddress: null, emailVerifiedAt: new Date().toISOString() },
+          { id: user.id },
+        ),
       );
       const updatedUser = rows[0];
       if (!updatedUser) throw new InternalError("Failed to update email");

@@ -134,7 +134,7 @@ describe("0098_extensions-store", () => {
       "ruleset_extensions_ruleset_id_ordinal_idx",
     ]);
     // What every read of a ruleset answers of its extensions: its rows', in their order
-    expect((await Rulesets.findOne(db, { id: host.id }))!.extensionRulesetIds).toEqual([second.id, first.id, third.id]);
+    expect((await Rulesets.findOne(db, { id: host.id }))!.extensionIds).toEqual([second.id, first.id, third.id]);
   });
 
   test("refuses an array that names an extension twice, or a ruleset that doesn't exist, naming its ruleset", async () => {

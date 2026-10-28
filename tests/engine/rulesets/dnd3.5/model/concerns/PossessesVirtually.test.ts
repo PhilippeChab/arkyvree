@@ -285,7 +285,7 @@ describe("A grant", () => {
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: ctx.rulesetId,
         ancestorRulesetIds: [ctx.rulesetId],
-        extensionRulesetIds: [book.id],
+        extensionIds: [book.id],
       });
       const characterId = await seedHuman("Catlord", { rulesetId: fork.id });
       const animalLord = (await Entities.findOne<Klass>(db, {

@@ -353,9 +353,9 @@ describe("RulesetsService", () => {
       const { user, session } = await createTestUser();
       const { user: subscriber } = await createTestUser();
       const used = await createFork(user.id, { private: false, status: "Published" });
-      await createFork(subscriber.id, { extensionRulesetIds: [used.id] });
+      await createFork(subscriber.id, { extensionIds: [used.id] });
       const extension = await createTestRuleset(null, { rulesetId: used.rulesetId, kind: "extension" });
-      const subscribing = await createFork(user.id, { extensionRulesetIds: [extension.id] });
+      const subscribing = await createFork(user.id, { extensionIds: [extension.id] });
 
       expect((await RulesetsService.getRuleset(session, used.id)).permissions).toMatchObject({
         canBeExtension: true,
@@ -392,7 +392,7 @@ describe("RulesetsService", () => {
       const extension = await createTestRuleset(null, { private: false, status: "Published", kind: "extension" });
       const parent = await createParent(owner.id, {
         description: "Parent description",
-        extensionRulesetIds: [extension.id],
+        extensionIds: [extension.id],
       });
       const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", { name: "General", rulesetId: parent.id });
       const feat = await EntitiesService.createEntity({ ...session, userId: owner.id }, parent.id, "feats", {
@@ -414,7 +414,7 @@ describe("RulesetsService", () => {
         userId: user.id,
         rulesetId: parent.id,
         ancestorRulesetIds: [parent.id],
-        extensionRulesetIds: [extension.id],
+        extensionIds: [extension.id],
         baseRules: parent.baseRules,
       });
       expect(
