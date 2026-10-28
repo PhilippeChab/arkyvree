@@ -23,22 +23,27 @@ import { getReadableRuleset } from "./readableRuleset.ts";
 class RulesetsService extends include(Object, Archives, Publishes, Stars) {
   /**
    * What the session may do with a ruleset, as its policy decides each (`policy`), so a page offers what the server
-   * allows: edit its entities, edit the ruleset itself, invite and manage contributors, change their roles, manage its
-   * Admins, publish it, and subscribe it to extensions (`usedAsExtension`: another ruleset subscribes to it), and
-   * whether it can be an extension, which its edit and its publish offer. It may leave it while it contributes to it
-   * (`contributorRole`: an active role, its owner's never looked up).
+   * allows: edit its entities, edit the ruleset itself, fork it, unarchive it, see its contributors, invite and manage
+   * them, change their roles, manage its Admins, publish it, subscribe it to extensions (`usedAsExtension`: another
+   * ruleset subscribes to it) and unsubscribe it from one (whether a character uses what would leave is the server's
+   * answer once asked), and whether it can be an extension, which its edit and its publish offer. It may leave it
+   * while it contributes to it (`contributorRole`: an active role, its owner's never looked up).
    */
   private permissionsOf(policy: RulesetsPolicy, usedAsExtension: boolean) {
     return {
       canBeExtension: isAllowed(() => policy.canBeExtension()),
       canEditEntities: isAllowed(() => policy.canUpdateEntity()),
       canEditRuleset: isAllowed(() => policy.canUpdate()),
+      canFork: isAllowed(() => policy.canFork()),
       canInviteContributors: isAllowed(() => policy.canInviteContributors()),
       canLeave: policy.contributorRole !== undefined,
       canManageAdminContributors: isAllowed(() => policy.canManageAdminContributors()),
       canManageContributors: isAllowed(() => policy.canManageContributors()),
       canPublish: isAllowed(() => policy.canPublish()),
+      canReadContributors: isAllowed(() => policy.canReadContributors()),
       canSubscribeExtensions: isAllowed(() => policy.canSubscribeExtension({ usedAsExtension })),
+      canUnarchive: isAllowed(() => policy.canUnarchive()),
+      canUnsubscribeExtensions: isAllowed(() => policy.canUnsubscribeExtension()),
       canUpdateContributorRoles: isAllowed(() => policy.canUpdateContributorRole()),
     };
   }

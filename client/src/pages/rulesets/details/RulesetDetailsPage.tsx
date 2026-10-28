@@ -150,14 +150,16 @@ export default function RulesetDetailsPage() {
 
   const {
     isOwner,
-    isContributor,
     canBeExtension,
     canEditEntities,
     canEditRuleset,
+    canFork,
     canPublish,
+    canReadContributors,
     canSubscribeExtensions,
+    canUnarchive,
+    canUnsubscribeExtensions,
   } = useRulesetPermissions(ruleset);
-  const isFork = !!ruleset?.rulesetId && !isExtension;
 
   const [contributorsDialogOpen, setContributorsDialogOpen] = useState(false);
   const { rules, isPending: rulesPending } = useRules(ruleset?.baseRules);
@@ -189,7 +191,7 @@ export default function RulesetDetailsPage() {
   const isActive = ruleset.status !== "Archived";
   // What the session may do here: the header's menu, whose button shows only when it holds something
   const menuItems = [
-    ruleset.status === "Published" && !isExtension && !isFork && (
+    canFork && (
       <ActionMenuItem key="fork" icon={ForkIcon} label="Fork" onClick={menu.closeMenuAnd(() => handleFork(ruleset))} />
     ),
     !!ruleset.rulesetId && (
@@ -209,7 +211,7 @@ export default function RulesetDetailsPage() {
       />
     ),
     // An archived ruleset's too: its owner or an Admin removes a contributor, and a contributor leaves
-    (isOwner || isContributor) && (
+    canReadContributors && (
       <ActionMenuItem
         key="contributors"
         icon={ContributorsIcon}
@@ -255,7 +257,7 @@ export default function RulesetDetailsPage() {
           />,
         ]
       : []),
-    isOwner && !isActive && (
+    canUnarchive && (
       <ActionMenuItem
         key="unarchive"
         icon={UnarchiveIcon}
@@ -305,7 +307,7 @@ export default function RulesetDetailsPage() {
                             color={ext.updateAvailable ? "warning" : "default"}
                             to={`/rulesets/${ext.extensionId}`}
                             onDelete={
-                              isOwner
+                              canUnsubscribeExtensions
                                 ? (e: MouseEvent) => {
                                     e.preventDefault();
                                     e.stopPropagation();
@@ -331,7 +333,7 @@ export default function RulesetDetailsPage() {
           {/* An archived ruleset's notice, and extensions that failed to load, above its tabs */}
           <Stack spacing={3}>
             {!!extensionsError && !subscribedExtensions && <LoadError what="Extensions" error={extensionsError} />}
-            {!isActive && <ArchivedNotice what="ruleset" canUnarchive={isOwner} />}
+            {!isActive && <ArchivedNotice what="ruleset" canUnarchive={canUnarchive} />}
 
             <SectionTabs
               tabs={tabConfig}
@@ -387,6 +389,7 @@ export default function RulesetDetailsPage() {
           canBeExtension={canBeExtension}
         />
 
+        {/* Whether its archiver could unarchive it once archived, which `canUnarchive` answers only then: its owner */}
         <ArchiveRulesetDialog
           open={archiveDialog.open}
           onClose={archiveDialog.close}

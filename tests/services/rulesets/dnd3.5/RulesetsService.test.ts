@@ -282,12 +282,16 @@ describe("RulesetsService", () => {
       canBeExtension: false,
       canEditEntities: false,
       canEditRuleset: false,
+      canFork: false,
       canInviteContributors: false,
       canLeave: false,
       canManageAdminContributors: false,
       canManageContributors: false,
       canPublish: false,
+      canReadContributors: false,
       canSubscribeExtensions: false,
+      canUnarchive: false,
+      canUnsubscribeExtensions: false,
       canUpdateContributorRoles: false,
     };
     const OWNER = {
@@ -297,22 +301,28 @@ describe("RulesetsService", () => {
       canInviteContributors: true,
       canManageAdminContributors: true,
       canManageContributors: true,
+      canReadContributors: true,
       canUpdateContributorRoles: true,
     };
 
-    test("its owner edits everything, publishes a draft alone, and subscribes a fork to extensions", async () => {
+    test("its owner edits everything, publishes a draft alone, and subscribes a fork to extensions and unsubscribes it", async () => {
       const { user, session } = await createTestUser();
       const draft = await createTestRuleset(user.id, { status: "Draft" });
       const published = await createTestRuleset(user.id, { status: "Published" });
       const fork = await createFork(user.id);
 
       expect((await RulesetsService.getRuleset(session, draft.id)).permissions).toEqual({ ...OWNER, canPublish: true });
-      expect((await RulesetsService.getRuleset(session, published.id)).permissions).toEqual(OWNER);
+      // A published ruleset that isn't a fork is forked, by anyone
+      expect((await RulesetsService.getRuleset(session, published.id)).permissions).toEqual({
+        ...OWNER,
+        canFork: true,
+      });
       expect((await RulesetsService.getRuleset(session, fork.id)).permissions).toEqual({
         ...OWNER,
         canBeExtension: true,
         canPublish: true,
         canSubscribeExtensions: true,
+        canUnsubscribeExtensions: true,
       });
     });
 
@@ -327,26 +337,36 @@ describe("RulesetsService", () => {
 
       expect((await RulesetsService.getRuleset(adminSession, ruleset.id)).permissions).toEqual({
         ...OWNER,
+        canFork: true,
         canLeave: true,
         canManageAdminContributors: false,
       });
       expect((await RulesetsService.getRuleset(session, ruleset.id)).permissions).toEqual({
         ...NONE,
         canEditEntities: true,
+        canFork: true,
         canLeave: true,
+        canReadContributors: true,
       });
-      expect((await RulesetsService.getRuleset(stranger, ruleset.id)).permissions).toEqual(NONE);
+      expect((await RulesetsService.getRuleset(stranger, ruleset.id)).permissions).toEqual({ ...NONE, canFork: true });
     });
 
-    test("an archived ruleset is read-only: contributors are still managed, never invited nor their roles changed", async () => {
+    test("an archived ruleset is read-only but unarchived: contributors are still managed, never invited nor their roles changed", async () => {
       const { user, session } = await createTestUser();
       const ruleset = await createTestRuleset(user.id, { status: "Archived" });
-
-      expect((await RulesetsService.getRuleset(session, ruleset.id)).permissions).toEqual({
+      const extension = await createTestRuleset(null, { kind: "extension" });
+      const fork = await createFork(user.id, { status: "Archived", extensionIds: [extension.id] });
+      const archived = {
         ...NONE,
         canManageAdminContributors: true,
         canManageContributors: true,
-      });
+        canReadContributors: true,
+        canUnarchive: true,
+      };
+
+      expect((await RulesetsService.getRuleset(session, ruleset.id)).permissions).toEqual(archived);
+      // An archived fork keeps its extensions: none is unsubscribed
+      expect((await RulesetsService.getRuleset(session, fork.id)).permissions).toEqual(archived);
     });
 
     test("a fork other rulesets subscribe to takes no extensions, and one with extensions can't be one", async () => {
@@ -378,6 +398,7 @@ describe("RulesetsService", () => {
         ...NONE,
         canBeExtension: true,
         canLeave: true,
+        canReadContributors: true,
       });
       expect(RulesetsService.updateRuleset(session, ruleset.id, { name: "Renamed", description: "" })).rejects.toThrow(
         "Cannot edit a ruleset without an owner",

@@ -79,7 +79,8 @@ describe("RulesetsPolicy", () => {
       ["manage contributors on", (p) => p.canInviteContributors()],
       ["manage contributors on", (p) => p.canRevokeContributor({ role: "Viewer" })],
       ["manage contributors on", (p) => p.canUpdateContributorRole()],
-      ["subscribe to extensions on", (p) => p.canSubscribeExtension()],
+      ["subscribe to extensions on", (p) => p.canSubscribeExtension({ usedAsExtension: false })],
+      ["subscribe to extensions on", (p) => p.canUnsubscribeExtension()],
     ];
     for (const [what, check] of changes) {
       expect(() => check(policyOf("Admin", SYSTEM))).toThrow(`Cannot ${what} a base ruleset`);
@@ -131,13 +132,15 @@ describe("RulesetsPolicy", () => {
   });
 
   test("canSubscribeExtension and canUnsubscribeExtension: the owner of a live fork that isn't an extension", () => {
-    expectOnly(["Owner"], (p) => p.canSubscribeExtension(), ForbiddenError);
-    expect(() => policyOf("Owner", SYSTEM).canSubscribeExtension()).toThrow(ForbiddenError);
-    expect(() => policyOf("Owner", { status: "Archived" }).canSubscribeExtension()).toThrow(UnprocessableEntityError);
-    expect(() => policyOf("Owner", { rulesetId: null }).canSubscribeExtension()).toThrow(
+    expectOnly(["Owner"], (p) => p.canSubscribeExtension({ usedAsExtension: false }), ForbiddenError);
+    expect(() => policyOf("Owner", SYSTEM).canSubscribeExtension({ usedAsExtension: false })).toThrow(ForbiddenError);
+    expect(() => policyOf("Owner", { status: "Archived" }).canSubscribeExtension({ usedAsExtension: false })).toThrow(
+      UnprocessableEntityError,
+    );
+    expect(() => policyOf("Owner", { rulesetId: null }).canSubscribeExtension({ usedAsExtension: false })).toThrow(
       "Only forked rulesets can subscribe to extensions",
     );
-    expect(() => policyOf("Owner", { kind: "extension" }).canSubscribeExtension()).toThrow(
+    expect(() => policyOf("Owner", { kind: "extension" }).canSubscribeExtension({ usedAsExtension: false })).toThrow(
       "Extensions cannot subscribe to other extensions",
     );
 
@@ -149,6 +152,7 @@ describe("RulesetsPolicy", () => {
     expect(policyOf("Owner").canUnsubscribeExtension()).toBe(true);
     expect(() => policyOf("Owner").canUnsubscribeExtension({ inUse: true })).toThrow(ConflictError);
     expect(() => policyOf("Admin").canUnsubscribeExtension()).toThrow(ForbiddenError);
+    expect(() => policyOf("Owner", { status: "Archived" }).canUnsubscribeExtension()).toThrow(UnprocessableEntityError);
   });
 
   test("canBeExtension: a fork that subscribes to none, whoever asks", () => {

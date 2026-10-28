@@ -23,7 +23,7 @@ export function ExtensionRights<B extends Constructor<RulesetRoles>>(Base: B) {
      * either (`usedAsExtension`: another ruleset subscribes to it), whose subscribers would then depend on extensions
      * through it.
      */
-    canSubscribeExtension({ usedAsExtension = false }: { usedAsExtension?: boolean } = {}) {
+    canSubscribeExtension({ usedAsExtension }: { usedAsExtension: boolean }) {
       this.checkOwned("subscribe to extensions on");
 
       if (this.entity.userId !== this.session.userId)
@@ -49,7 +49,7 @@ export function ExtensionRights<B extends Constructor<RulesetRoles>>(Base: B) {
 
     /** Unsubscribing the ruleset from an extension: who may subscribe it to one, whether or not it's used as one. */
     canUnsubscribeExtension({ inUse = false }: { inUse?: boolean } = {}) {
-      this.canSubscribeExtension();
+      this.canSubscribeExtension({ usedAsExtension: false });
 
       // An extension COWs base entities into its own ruleset and those COWs
       // may have sibling-winner ids characters have already picked. Removing
