@@ -7,9 +7,9 @@ Rulesets define game rules (races, classes, feats, skills, items, spells, etc.) 
 ## Ruleset Types
 
 ```
-Base Ruleset (D&D 3.5)           ← system-owned, userId: null, no parent
-├── Complete Warrior (extension)  ← system-owned, rulesetId: baseId, published
-├── User's Fork (draft)           ← userId set, rulesetId: baseId
+Base Ruleset (D&D 3.5)           ← system: true, userId: null, no parent
+├── Complete Warrior (extension)  ← system: true, rulesetId: baseId, published
+├── User's Fork (draft)           ← system: false, userId set (null once its owner's account is deleted), rulesetId: baseId
 │   └── Complete Warrior (subscribed extension)
 └── Another User's Fork
 ```
@@ -389,14 +389,14 @@ Extensions add supplemental entities to a base ruleset. They come in two flavors
 
 Eligibility is determined by `kind = 'extension'` on the ruleset row, set explicitly by the author (or seeded for system extensions). Both flavors share the same row shape:
 
-- **System extensions**: `userId IS NULL`, `kind = 'extension'` (e.g., Complete Warrior).
+- **System extensions**: `system`, `kind = 'extension'` (e.g., Complete Warrior).
 - **User extensions**: user-owned forks with `kind = 'extension'`, `private = false`, `status = 'Published'`. The `extensions` listing scope returns both flavors merged.
 
 The validators that set `kind = 'extension'` enforce: must be a fork, must not subscribe to other extensions. That keeps the dependency graph one level deep — subscribers never need to walk a transitive chain. The same invariant is enforced on the subscribe path: a host whose own `kind = 'extension'` cannot subscribe to anything (`canSubscribeExtension` policy).
 
 ### Subscribe (`subscribeExtension`)
 
-1. Validates: ruleset is a fork, not archived, user is owner, extension is `kind = 'extension'` + published + shares the same base + (if user-owned) public + the host's own `kind` is `'ruleset'`
+1. Validates: ruleset is a fork, not archived, user is owner, extension is `kind = 'extension'` + published + shares the same base + public, unless a system one, + the host's own `kind` is `'ruleset'`
 2. Checks not already subscribed (`extensionIds.includes`), and that its view would show no name more often than once and than it does now (`EntityNames.assertExtensionNamesAvailable`, see [Names of entities](#names-of-entities)): the names of the new extensions' entities, their copies included, counted in the view as it is and as it would be, read with its `CowData` once subscribed, so what that view pairs (an extension's copy of an inherited entity, two books' entities of a kind a book reprints (`namesakes: "reprints"`: 3.5's feats and spells), pools of a name (`namesakes: "identity"`), whoever holds them, the host's own too) counts once. An extension's entity of a name the host's own entity has counts, though the view would show the host's alone: the host is told of the clash
 3. Writes a `ruleset_extensions` row for each, after the host's last (`ordinal`), live again if an unsubscribe archived it: what the source chain and the extensions page read (name, `updateAvailable` flag), and touches the host's `updatedAt`
 

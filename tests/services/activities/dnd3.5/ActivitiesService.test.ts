@@ -5,6 +5,7 @@ import { db } from "@/server/database/index.ts";
 import {
   Campaigns,
   CharacterContributors,
+  Characters,
   Contributors,
   Entities,
   Invites,
@@ -16,6 +17,7 @@ import { ActivitiesService } from "@/server/services/activities/index.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
+import { addCharacterContributor } from "@/tests/support/contributors.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
@@ -97,6 +99,40 @@ describe("ActivitiesService.getActivityUrl", () => {
     ]) {
       expect(await resolve(targetType, id, session)).toStartWith(`/rulesets/${ruleset.id}`);
       expect(await resolve(targetType, id)).toBeNull();
+    }
+  });
+
+  test("links a character, its child, levels, inventory and contributors for its readers alone, archived or not", async () => {
+    const [owner, helper, former] = [await createTestUser(), await createTestUser(), await createTestUser()];
+    const character = await createTestCharacter(owner.user.id);
+    const child = await createTestCharacter(owner.user.id, { kind: "child", parentCharacterId: character.id });
+    await addCharacterContributor(character.id, helper.user, owner.user.id);
+    const revoked = await addCharacterContributor(character.id, former.user, owner.user.id);
+    await CharacterContributors.update(db, { status: "Revoked" }, { id: revoked.id });
+    const [invite] = await CharacterContributors.create(db, {
+      characterId: character.id,
+      email: "invitee@example.com",
+      role: "Editor",
+      invitedBy: owner.user.id,
+    });
+    const targets = [
+      ["characters", character.id, character.id],
+      ["characters", child.id, child.id],
+      ["advancements", character.id, character.id],
+      ["inventory", character.id, character.id],
+      ["character-contributors", invite.id, character.id],
+    ];
+
+    for (const archive of [false, true]) {
+      if (archive) await Characters.archive(db, { id: character.id });
+      for (const [targetType, id, page] of targets) {
+        // Its owner and an active contributor, who read its child too
+        for (const reader of [owner, helper])
+          expect(await resolve(targetType, id, reader.session)).toBe(`/characters/${page}`);
+        // A stranger, and a contributor whose access was revoked, get what an unknown id gets
+        expect(await resolve(targetType, id)).toBeNull();
+        expect(await resolve(targetType, id, former.session)).toBeNull();
+      }
     }
   });
 
