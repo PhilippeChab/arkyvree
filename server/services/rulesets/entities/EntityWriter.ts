@@ -23,7 +23,7 @@ import {
   type RulesetScope,
   RulesetViews,
 } from "@/server/cow/index.ts";
-import { withTransaction } from "@/server/database/index.ts";
+import { readUniqueViolation, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
   Entities,
@@ -83,6 +83,9 @@ type Row = EntityRecord & { name: string };
  * its fields and links, which its kind's rules read by their descriptions.
  */
 export type EntityBody = EntityForm & { name: string; updatedAt?: string };
+
+/** The unique index that keeps an owner's entities at their own places (a class's levels at their numbers). */
+const OWNED_POSITION_INDEX = "entities_owner_position_unique_idx";
 
 /** An entity's type, as a plan names it: refused when it isn't a ruleset entity's. */
 function entityTypeOf(type: string): RulesetEntityType {
@@ -350,9 +353,10 @@ export default class EntityWriter {
   /**
    * A new entity an entity owns, as its owner's rules plan it (`plan`: the plan and the owned entity's type): its owner
    * copied when it's inherited (the new row would otherwise be the source ruleset's), its row, its links and what its
-   * form writes beside it. What its plan answers once written (`describe`: the row, with its links as stored).
+   * form writes beside it. Refused as its plan says (`taken`) when another save gave its owner one at its place since
+   * the view was read. What its plan answers once written (`describe`: the row, with its links as stored).
    */
-  async createOwned<P extends OwnedPlan<EntityCreatePlan & { owner: PlannedEntity }>>(
+  async createOwned<P extends OwnedPlan<EntityCreatePlan & { owner: PlannedEntity; taken: string }>>(
     session: Session,
     rulesetId: string,
     plan: (scope: RulesetScope) => OwnedPlanned<P>,
@@ -364,7 +368,10 @@ export default class EntityWriter {
 
       const { gone } = EntityWriter.getNotFound(ruleset, this.type);
       const owner = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, this.type, planned.owner, gone);
-      const [row] = await Entities.create<Row>(tx, type, { ...planned.row, ownerId: owner.id });
+      const [row] = await Entities.create<Row>(tx, type, { ...planned.row, ownerId: owner.id }).catch((error) => {
+        if (readUniqueViolation(error) === OWNED_POSITION_INDEX) throw new ConflictError(planned.taken);
+        throw error;
+      });
       await EntityWriter.setParts(tx, scope, { entityId: row.id, entityType: type }, planned, false);
 
       await EntityWriter.recordActivity(tx, session, "create", type, row.id, planned.activity);
