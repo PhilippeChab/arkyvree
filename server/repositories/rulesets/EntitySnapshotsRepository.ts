@@ -1,4 +1,4 @@
-import { and, eq, getTableColumns, inArray, type InferInsertModel, isNotNull, sql } from "drizzle-orm";
+import { and, eq, getTableColumns, inArray, type InferInsertModel, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
@@ -42,40 +42,52 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
       .where(and(eq(this.table.sourceEntityId, where.sourceEntityId), eq(this.table.rulesetId, where.rulesetId)));
   }
 
-  /**
-   * A ruleset's snapshots (`rulesetId`, of a type, or of these sources), or these rulesets' (`rulesetIds`), each with
-   * its entities' type (`entityType`): its copy's, or its source's once its copy is deleted (a tombstone). One whose
-   * copy and source are both gone stands for nothing, and isn't read.
-   */
+  /** A ruleset's snapshots (`rulesetId`, or those of these sources), or these rulesets' (`rulesetIds`), as stored. */
   async findMany(
     db: Db,
-    where:
-      | { rulesetId: string }
-      | { rulesetIds: string[] }
-      | { entityType: RulesetEntityType; rulesetId: string }
-      | { rulesetId: string; sourceEntityIds: string[] },
+    where: { rulesetId: string } | { rulesetIds: string[] } | { rulesetId: string; sourceEntityIds: string[] },
   ) {
     if ("rulesetIds" in where && where.rulesetIds.length === 0) return [];
     if ("sourceEntityIds" in where && where.sourceEntityIds.length === 0) return [];
+    return await db.query.entitySnapshotsInRules.findMany({
+      where: this.branchWhere(
+        [
+          "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
+          "rulesetIds" in where && inArray(this.table.rulesetId, where.rulesetIds),
+        ],
+        ["sourceEntityIds" in where && inArray(this.table.sourceEntityId, where.sourceEntityIds)],
+      ),
+      orderBy: [this.orderBy(this.table.createdAt), this.orderBy(this.table.id)],
+    });
+  }
+
+  /**
+   * A ruleset's snapshots (`rulesetId`, or those of a type), each with what its entities say of it: its type
+   * (`entityType`), its copy's, or its source's once its copy is deleted (a tombstone), and its source's ruleset
+   * (`sourceRulesetId`). A snapshot whose source is gone has no source ruleset, and one whose copy is gone too has no
+   * type: it stands for no entity of the ruleset's, though its view still reads it (`findMany`), a tombstone hiding the
+   * extensions' copies of its source.
+   */
+  async findManyWithEntities(
+    db: Db,
+    where: { rulesetId: string } | { entityType: RulesetEntityType; rulesetId: string },
+  ) {
     const forked = alias(entitiesInRules, "forked");
     const source = alias(entitiesInRules, "source");
-    const entityType = sql<RulesetEntityType>`coalesce(${forked.type}, ${source.type})`;
+    const entityType = sql<RulesetEntityType | null>`coalesce(${forked.type}, ${source.type})`;
     return await db
-      .select({ ...getTableColumns(this.table), entityType: entityType.as("entity_type") })
+      .select({
+        ...getTableColumns(this.table),
+        entityType: entityType.as("entity_type"),
+        sourceRulesetId: source.rulesetId,
+      })
       .from(this.table)
       .leftJoin(forked, eq(forked.id, this.table.forkedEntityId))
       .leftJoin(source, eq(source.id, this.table.sourceEntityId))
       .where(
-        this.branchWhere(
-          [
-            "rulesetId" in where && eq(this.table.rulesetId, where.rulesetId),
-            "rulesetIds" in where && inArray(this.table.rulesetId, where.rulesetIds),
-          ],
-          [
-            "entityType" in where && eq(entityType, where.entityType),
-            "sourceEntityIds" in where && inArray(this.table.sourceEntityId, where.sourceEntityIds),
-            isNotNull(entityType),
-          ],
+        and(
+          eq(this.table.rulesetId, where.rulesetId),
+          "entityType" in where ? eq(entityType, where.entityType) : undefined,
         ),
       )
       .orderBy(this.orderBy(this.table.createdAt), this.orderBy(this.table.id));

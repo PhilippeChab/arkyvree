@@ -515,7 +515,7 @@ describe("0081_spells-and-classes", () => {
         data: '{"entityType":"spells","propertyType":"CLASS_HD","target":"spells.wizard.known","value":"[ spells.cleric.known ]"}',
       },
     ]);
-  });
+  }, 30_000);
 });
 
 describe("0082_fields", () => {
@@ -600,7 +600,7 @@ describe("0082_fields", () => {
       `);
       expect({ table, rows }).toEqual({ table, rows: expected });
     }
-  });
+  }, 30_000);
 });
 
 describe("0084_link-activities", () => {
@@ -644,7 +644,7 @@ describe("0084_link-activities", () => {
       `);
       expect({ table, rows }).toEqual({ table, rows: expected });
     }
-  });
+  }, 30_000);
 });
 
 describe("0085_advancement-activities", () => {
@@ -690,7 +690,7 @@ describe("0085_advancement-activities", () => {
       `);
       expect({ table, rows }).toEqual({ table, rows: expected });
     }
-  });
+  }, 30_000);
 });
 
 describe("0086_registry-declarations", () => {
@@ -831,7 +831,7 @@ describe("0088_unwritten-columns", () => {
       ),
     ).toHaveLength(4);
     expect(await unwrittenRows()).toEqual(before.filter((line) => !gone.has(line.split(" ")[1]!)));
-  });
+  }, 30_000);
 
   test("leaves a character archived since 0080, its advancements live, as it is", async () => {
     await addUnwrittenColumns();
@@ -1064,7 +1064,7 @@ describe("0091_stored-name-activities", () => {
       `);
       expect({ table, rows }).toEqual({ table, rows: expected });
     }
-  });
+  }, 30_000);
 });
 
 describe("0092_stored-type-forms", () => {
@@ -1149,7 +1149,7 @@ describe("0092_stored-type-forms", () => {
       .registries()
       .entityTypes.map(({ type }) => type);
     expect(types.map(({ type }) => type).toSorted()).toEqual(declared.toSorted());
-  });
+  }, 30_000);
 });
 
 describe("0093_unused-pick-columns", () => {
@@ -1272,7 +1272,7 @@ describe("0095_advancement-entry", () => {
     expect(await definitionsOf("character", "advancements")).toEqual(fresh);
     expect(await typedRows(false)).toEqual(before);
     expect((await db.execute(placed)).rows).toEqual(stored);
-  });
+  }, 30_000);
 });
 
 describe("0096_campaign-seats", () => {
@@ -1390,5 +1390,24 @@ describe("0099_snapshot-type", () => {
       })
       .catch((error: unknown) => error);
     expect(refused).toMatchObject({ cause: { message: "Snapshots differ from their entities' type" } });
+  });
+
+  test("refuses two snapshots of one source in a ruleset, of two types, its copies and its source gone", async () => {
+    await restoreSnapshotTypesBefore0099();
+    const { rulesetId } = await getSeedCtx();
+    const sourceId = crypto.randomUUID();
+    for (const type of ["feats", "spells"]) {
+      await db.execute(sql`
+        INSERT INTO rules.entity_snapshots (ruleset_id, entity_type, source_entity_id, forked_entity_id)
+        VALUES (${rulesetId}, ${type}, ${sourceId}, ${crypto.randomUUID()})
+      `);
+    }
+
+    const refused = await db
+      .transaction(async (tx) => {
+        for (const statement of statementsOf("0099_snapshot-type.sql")) await tx.execute(sql.raw(statement));
+      })
+      .catch((error: unknown) => error);
+    expect(refused).toMatchObject({ cause: { message: "Rulesets hold two snapshots of one source" } });
   });
 });

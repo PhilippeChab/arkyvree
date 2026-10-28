@@ -1023,7 +1023,7 @@ describe("unsubscribing from an extension", () => {
 
     for (const [type, id] of [...fromBase, ...fromExtension])
       await copyEntity(db, type, id, { ...draft, extensionRulesetIds: [extension.id] });
-    const copies = await EntitySnapshots.findMany(db, { rulesetId: draft.id });
+    const copies = await EntitySnapshots.findManyWithEntities(db, { rulesetId: draft.id });
     const ofBase = copies.filter((copy) => fromBase.some(([, id]) => copy.sourceEntityId === id));
     expect(new Set(ofBase.map((copy) => copy.entityType))).toEqual(new Set(fromBase.map(([type]) => type)));
     expect(copies).toHaveLength(fromBase.length + fromExtension.length);
@@ -1031,7 +1031,7 @@ describe("unsubscribing from an extension", () => {
     expect(await RulesetExtensionsService.unsubscribeExtension(session, draft.id, extension.id)).toEqual({
       unsubscribed: true,
     });
-    expect(await EntitySnapshots.findMany(db, { rulesetId: draft.id })).toEqual(ofBase);
+    expect(await EntitySnapshots.findManyWithEntities(db, { rulesetId: draft.id })).toEqual(ofBase);
   });
 
   test.each(["named", "naming"])(

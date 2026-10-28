@@ -141,14 +141,15 @@ Inherited entities are read-only. When a user edits or deletes one:
 
 ### COW in Repositories
 
-Each repository's `findPage` builds COW-aware SQL per ancestor:
+A kind's list (`Entities`' `findPage`, through `StoredEntities.buildRulesetCondition`) builds COW-aware SQL per ancestor:
 
 ```sql
 -- For each ancestor in the source chain:
-SELECT * FROM feats
-WHERE ruleset_id = :ancestorId
+SELECT * FROM rules.entities
+WHERE type = 'feats'
+  AND ruleset_id = :ancestorId
   AND id NOT IN (
-    SELECT source_entity_id FROM entity_snapshots
+    SELECT source_entity_id FROM rules.entity_snapshots
     WHERE ruleset_id IN (:childId, ...closer_ancestors)
   )
 ```

@@ -19,11 +19,13 @@ class RulesetChangesService {
 
     if (!ruleset.rulesetId) throw new BadRequestError("Only forked rulesets have local changes");
 
-    const snapshots = await EntitySnapshots.findMany(db, { rulesetId });
+    const snapshots = await EntitySnapshots.findManyWithEntities(db, { rulesetId });
 
-    // Group snapshots by entity type for batch fetching
+    // Group snapshots by entity type for batch fetching. One with no type (its copy and its source both gone) stands for
+    // no entity, and lists no change
     const snapshotsByType = new Map<string, typeof snapshots>();
     for (const snap of snapshots) {
+      if (!snap.entityType) continue;
       if (!snapshotsByType.has(snap.entityType)) snapshotsByType.set(snap.entityType, []);
       snapshotsByType.get(snap.entityType)!.push(snap);
     }

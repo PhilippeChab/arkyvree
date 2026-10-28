@@ -4,7 +4,6 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import {
   Activities,
-  Entities,
   EntityReferences,
   EntitySnapshots,
   RulesetExtensions,
@@ -124,13 +123,12 @@ class RulesetExtensionsService {
       if (!ruleset.extensionRulesetIds.includes(extensionId))
         throw new NotFoundError("Not subscribed to this extension");
 
-      // 2. The fork's copies of the extension's entities: the snapshots whose sourceEntityId belongs to the extension
-      const snapshots = await EntitySnapshots.findMany(tx, { rulesetId: id });
-      const extensionSnapshots = [];
-      for (const snap of snapshots) {
-        const sourceEntity = await Entities.findOne(tx, { entityType: snap.entityType, id: snap.sourceEntityId });
-        if (sourceEntity?.rulesetId === extensionId) extensionSnapshots.push(snap);
-      }
+      // 2. The fork's copies of the extension's entities: the snapshots whose source belongs to the extension (a snapshot
+      // whose source is gone belongs to none)
+      const snapshots = await EntitySnapshots.findManyWithEntities(tx, { rulesetId: id });
+      const extensionSnapshots = snapshots.flatMap(({ entityType, sourceRulesetId, ...snap }) =>
+        entityType && sourceRulesetId === extensionId ? [{ ...snap, entityType }] : [],
+      );
 
       const copies = new Map(
         [...Map.groupBy(extensionSnapshots, (snap) => snap.entityType)].map(([type, snaps]) => [

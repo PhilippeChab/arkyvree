@@ -1,17 +1,18 @@
--- A snapshot is keyed by its ruleset and its source entity alone. An entity's id is global since 0080, so a snapshot's
--- type (`entity_type`), which the per-kind tables' ids needed in its key (`entity_snapshots_ruleset_type_source_unique`),
--- copies its entities' (its copy's, or its source's once a tombstone's copy is deleted), and nothing ties it to them.
--- The type goes, with that key, and a ruleset copies a source once (`entity_snapshots_ruleset_id_source_entity_id_key`).
--- A snapshot whose type differs from its copy's or its source's refuses the migration: two of a source in one ruleset
--- differ in type, so one of them does. No row changes, nor a character's last change (`arkyvree.registry_sync`, which
--- the touch triggers read).
+-- A snapshot is keyed by its ruleset and its source entity alone. Its type (`entity_type`), which the per-kind tables'
+-- ids needed in its key (`entity_snapshots_ruleset_type_source_unique`), copies its entities' since 0080 made an
+-- entity's id global (its copy's, or its source's once a tombstone's copy is deleted), and nothing ties it to them. The
+-- type goes, with that key, and a ruleset copies a source once (`entity_snapshots_ruleset_id_source_entity_id_key`). A
+-- snapshot whose type differs from its copy's or its source's refuses the migration, and so do two snapshots of one
+-- source in a ruleset (the old key let them differ in type), each with its own message. No row changes, nor a
+-- character's last change (`arkyvree.registry_sync`, which the touch triggers read).
 
 SELECT set_config('arkyvree.registry_sync', 'on', true);
 -- The rows of the migrations before it run their deferred checks now: drizzle runs the pending migrations in one
 -- transaction
 SET CONSTRAINTS ALL IMMEDIATE;
 
--- Every snapshot's type is its copy's and its source's, or the migration stops
+-- Every snapshot's type is its copy's and its source's, and a ruleset holds one snapshot of a source, or the migration
+-- stops
 DO $$
 BEGIN
   IF EXISTS (
@@ -20,6 +21,11 @@ BEGIN
     WHERE e.type <> s.entity_type
   ) THEN
     RAISE EXCEPTION 'Snapshots differ from their entities'' type';
+  END IF;
+  IF EXISTS (
+    SELECT 1 FROM rules.entity_snapshots GROUP BY ruleset_id, source_entity_id HAVING count(*) > 1
+  ) THEN
+    RAISE EXCEPTION 'Rulesets hold two snapshots of one source';
   END IF;
 END $$;
 
