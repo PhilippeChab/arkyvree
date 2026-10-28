@@ -6,8 +6,11 @@ import {
   Payloads,
   type PickAnswer,
   type PickedEntity,
+  type ResolvedEdit,
+  type ResolvedPlan,
   type SpendAnswer,
   type StepPickerQuery,
+  type StoredAdvancement,
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
@@ -48,9 +51,9 @@ interface PoolStep {
   fitted: Record<string, string[]>;
 }
 
-/** A plan request read as the 3.5 level flows take it: its levels and its picks, and the level it edits. */
+/** A plan request read as the 3.5 level flows take it: its levels and its picks, and the saved level it edits. */
 interface ReadPlan extends LevelUpRequest {
-  editedLevelId?: string;
+  editedLevel?: StoredAdvancement;
 }
 
 /** A 3.5 step's picker, as `openStepPicker` opens it: the class picker over the plan, or a pool's at a level. */
@@ -158,15 +161,19 @@ function poolsOf({ aptitudePools }: PoolStep): PickAnswer["pools"] {
  */
 export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
   /**
-   * An edit's level (`plan`, in the place of `editedLevelId`) answered: its steps at the level, each in its mechanic's
+   * An edit's level (`plan`, in the place of `editedLevel`) answered: its steps at the level, each in its mechanic's
    * shape, its one advancement the level's class level, its hit points bound by the class's die.
    */
-  private describeLevelEdit({ editedLevelId, levels, picks }: ReadPlan & { editedLevelId: string }): LevelPlanAnswer {
+  private describeLevelEdit({
+    editedLevel,
+    levels,
+    picks,
+  }: ReadPlan & { editedLevel: StoredAdvancement }): LevelPlanAnswer {
     const [level] = levels;
-    const { klass, classLevel } = this.getSavedClassLevel(this.findLevel(editedLevelId));
+    const { klass, classLevel } = this.getSavedClassLevel(editedLevel);
     const query = {
       abilityIncreases: level.abilityIncreases,
-      editedLevelId,
+      editedLevel,
       classId: klass.id,
       level: level.level,
       picks,
@@ -247,13 +254,6 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
     };
   }
 
-  /** The character's saved level `advancementId`: refused when it has none. */
-  private findLevel(advancementId: string) {
-    const level = this.character.rows.advancements.find((saved) => saved.id === advancementId);
-    if (!level) throw new RulesError("not-found", "Character level not found");
-    return level;
-  }
-
   /**
    * The abilities an ability increase chooses among, as a `choose` step's options: each with its score and modifier.
    */
@@ -320,17 +320,18 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
    * with its hit points (`needsHp`: refused when one has none; as they're projected otherwise) and ability increases,
    * and its picks, pooled over them.
    */
-  private readPlan(request: LevelPlanRequest, needsHp: boolean): ReadPlan {
+  private readPlan(request: ResolvedPlan, needsHp: boolean): ReadPlan {
+    const { editedLevel } = request;
     const values = Payloads.readStep(request, STEP.hp);
     const choices = Payloads.readStep(request, STEP.abilities);
-    const tracks: Pick<LevelRequest, "classId" | "level">[] = request.editedLevelId
-      ? [this.trackOf(request.editedLevelId)]
+    const tracks: Pick<LevelRequest, "classId" | "level">[] = editedLevel
+      ? [this.trackOf(editedLevel)]
       : Payloads.readStep(request, STEP.plan).map(({ position, track }) => ({ classId: track, level: position }));
     const levels = tracks.map((track, i) => {
       const hp = values[i];
       if (hp === undefined && needsHp) {
-        const total = request.editedLevelId
-          ? this.character.rows.advancements.indexOf(this.findLevel(request.editedLevelId))
+        const total = editedLevel
+          ? this.character.rows.advancements.indexOf(editedLevel)
           : this.character.rows.advancements.length + i;
         throw new RulesError("invalid", `Level ${total + 1}: its hit points are required`);
       }
@@ -341,7 +342,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
       };
     });
     return {
-      ...(request.editedLevelId && { editedLevelId: request.editedLevelId }),
+      ...(editedLevel && { editedLevel }),
       levels,
       picks: {
         feats: byPool(Payloads.readStep(request, STEP.feats)),
@@ -403,9 +404,9 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
     };
   }
 
-  /** The class and level of the character's saved level `advancementId`, which an edit keeps. */
-  private trackOf(advancementId: string) {
-    const { klass, classLevel } = this.getSavedClassLevel(this.findLevel(advancementId));
+  /** The class and level of the character's saved level `level`, which an edit keeps. */
+  private trackOf(level: StoredAdvancement) {
+    const { klass, classLevel } = this.getSavedClassLevel(level);
     return { classId: klass.id, level: classLevel.position };
   }
 
@@ -413,25 +414,24 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
    * The plan's answer: Add Level's plan over its planned levels, or Edit Level's level in its place, each step in its
    * mechanic's shape.
    */
-  describePlan(request: LevelPlanRequest): LevelPlanAnswer {
+  describePlan(request: ResolvedPlan): LevelPlanAnswer {
     const plan = this.readPlan(request, false);
     if (plan.levels.length === 0) throw new RulesError("invalid", "The plan takes no level");
-    return plan.editedLevelId
-      ? this.describeLevelEdit({ ...plan, editedLevelId: plan.editedLevelId })
+    return plan.editedLevel
+      ? this.describeLevelEdit({ ...plan, editedLevel: plan.editedLevel })
       : this.describeLevelUp(plan);
   }
 
   /**
-   * The character's saved level `advancementId` as an edit's plan opens it: each step's payload as the level saved
-   * it (its hit points, its ability increases where its rules still give one, its skills' points, its feats and its
-   * spells, each in its pool, a spell at its spell level). A pool's picks come in its saved rows' order, by name: a
-   * save keeps no pick order, so a pool its rules shrank since drops its last by name, as Edit Level's always has.
-   * Refused when the character has no such level.
+   * The character's saved level `level` as an edit's plan opens it: each step's payload as the level saved it (its hit
+   * points, its ability increases where its rules still give one, its skills' points, its feats and its spells, each in
+   * its pool, a spell at its spell level). A pool's picks come in its saved rows' order, by name: a save keeps no pick
+   * order, so a pool its rules shrank since drops its last by name, as Edit Level's always has.
    */
-  describeSavedPlan(advancementId: string): LevelPlanRequest {
-    const saved = new LevelSelections(this.view, this.character, this.rules).describeLevel(advancementId);
+  describeSavedPlan(level: StoredAdvancement): LevelPlanRequest {
+    const saved = new LevelSelections(this.view, this.character, this.rules).describeLevel(level);
     return {
-      editedLevelId: advancementId,
+      editedLevelId: level.id,
       steps: {
         [STEP.hp.name]: [saved.hp],
         [STEP.abilities.name]: [
@@ -459,7 +459,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
   }
 
   /** An edit as its save writes it: the edited level's hit points, ability increases and picks. */
-  readEdit(request: LevelPlanRequest): LevelEditRequest {
+  readEdit(request: ResolvedEdit): LevelEditRequest {
     const {
       levels: [level],
       picks,
@@ -468,7 +468,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
   }
 
   /** A level-up as its save writes it: its levels, each with its hit points and ability increases, and its picks. */
-  readLevelUp(request: LevelPlanRequest): LevelUpRequest {
+  readLevelUp(request: ResolvedPlan): LevelUpRequest {
     const { levels, picks } = this.readPlan(request, true);
     if (levels.length === 0) throw new RulesError("invalid", "The plan takes no level");
     return { levels, picks };
@@ -480,7 +480,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
    * class, level and ability increases, the plan's levels before it and after it, and its picks so far. Refused for a
    * step that opens none.
    */
-  readStepPicker(step: string, query: StepPickerQuery): StepPickerRead {
+  readStepPicker(step: string, query: StepPickerQuery<ResolvedPlan>): StepPickerRead {
     const plan = this.readPlan(query.plan, false);
     // The feats and spells picked so far, as pickers check their options against them
     const picks = this.toPickPlans({ ...plan.picks, skills: {} });
@@ -498,16 +498,16 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
     if (step !== STEP.feats.name && step !== STEP.spells.name)
       throw new RulesError("not-found", "The step has no picker");
     if (!query.pool) throw new RulesError("invalid", "The step's picker takes a pool");
-    const index = plan.editedLevelId ? 0 : (query.advancement ?? 0);
+    const index = plan.editedLevel ? 0 : (query.advancement ?? 0);
     const level = plan.levels[index];
     if (!level) throw new RulesError("invalid", "The plan has no such level");
-    const before = plan.editedLevelId ? [] : plan.levels.slice(0, index);
+    const before = plan.editedLevel ? [] : plan.levels.slice(0, index);
     const pick = {
       abilityIncreases: level.abilityIncreases,
       aptitudeId: query.pool,
-      ...(plan.editedLevelId && { editedLevelId: plan.editedLevelId }),
+      ...(plan.editedLevel && { editedLevel: plan.editedLevel }),
       classId: level.classId,
-      laterClassLevelIds: plan.editedLevelId ? [] : this.plannedClassLevelIds(plan.levels.slice(index + 1)),
+      laterClassLevelIds: plan.editedLevel ? [] : this.plannedClassLevelIds(plan.levels.slice(index + 1)),
       level: level.level,
       planned: {
         abilityIncreases: before.map((planned) => planned.abilityIncreases),

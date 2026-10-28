@@ -6,7 +6,7 @@
  * (its ability and amount), a feat or a spell its `feats` or `spells` pick (its entity and pool).
  */
 
-import type { PickPlan } from "@/engine/core/module/index.ts";
+import type { PickPlan, StoredAdvancement } from "@/engine/core/module/index.ts";
 
 /** A level's picks, as a form sends them: its skill ranks, and its feats and spells by the pool they're picked in. */
 export interface LevelPicks {
@@ -18,13 +18,13 @@ export interface LevelPicks {
 /**
  * The level a module's step or picker answers for, read from a plan: class `classId`'s `level` (a step that reads the
  * level's class refuses to answer without them) and its ability increases, after the levels the plan takes before it
- * (`planned`), or in the place of the saved level it edits (`editedLevelId`), and what the plan picked at it so far
- * (`picks`), which a step says what it comes to.
+ * (`planned`), or in the place of the character's saved level it edits (`editedLevel`), and what the plan picked at it
+ * so far (`picks`), which a step says what it comes to.
  */
 export interface LevelQuery {
   abilityIncreases?: PickPlan[];
   classId?: string;
-  editedLevelId?: string;
+  editedLevel?: StoredAdvancement;
   level?: number;
   picks?: Partial<LevelPicks>;
   planned?: PlannedSoFar;

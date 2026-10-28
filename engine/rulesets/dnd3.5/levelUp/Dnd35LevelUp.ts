@@ -1,9 +1,11 @@
 import {
   type CharacterInput,
-  type LevelPlanRequest,
   LevelUpPart,
   type OpenedStepPicker,
+  type ResolvedEdit,
+  type ResolvedPlan,
   type StepPickerQuery,
+  type StoredAdvancement,
 } from "@/engine/core/module/index.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
@@ -32,13 +34,13 @@ import LevelUpPlan from "./LevelUpPlan.ts";
  */
 export default class Dnd35LevelUp extends LevelUpPart implements LevelUpRules<DetailedCharacter> {
   /** The plan's answer: Add Level's plan or Edit Level's level, each step in its mechanic's shape. */
-  override describePlan(view: RulesetView, character: CharacterInput, request: LevelPlanRequest) {
-    return new LevelPlans(view, character, this).describePlan(request);
+  override describePlan(view: RulesetView, character: CharacterInput, plan: ResolvedPlan) {
+    return new LevelPlans(view, character, this).describePlan(plan);
   }
 
   /** A saved level as an edit's plan opens it: each step's payload as the level saved it. */
-  override describeSavedPlan(view: RulesetView, character: CharacterInput, advancementId: string) {
-    return new LevelPlans(view, character, this).describeSavedPlan(advancementId);
+  override describeSavedPlan(view: RulesetView, character: CharacterInput, level: StoredAdvancement) {
+    return new LevelPlans(view, character, this).describeSavedPlan(level);
   }
 
   /**
@@ -58,7 +60,7 @@ export default class Dnd35LevelUp extends LevelUpPart implements LevelUpRules<De
     view: RulesetView,
     character: CharacterInput,
     step: string,
-    query: StepPickerQuery,
+    query: StepPickerQuery<ResolvedPlan>,
   ): OpenedStepPicker {
     const read = new LevelPlans(view, character, this).readStepPicker(step, query);
     switch (read.kind) {
@@ -85,19 +87,18 @@ export default class Dnd35LevelUp extends LevelUpPart implements LevelUpRules<De
   }
 
   /**
-   * A plan's edit of saved level `advancementId`, read as its save writes it (the level's hit points, ability
+   * A plan's edit of its saved level (`plan.editedLevel`), read as its save writes it (the level's hit points, ability
    * increases and picks): what it writes, checked unless `force`d, and what the bonded creatures become with it.
    */
   override planLevelEdit(
     view: RulesetView,
     character: CharacterInput,
     bonded: CharacterInput[],
-    advancementId: string,
-    request: LevelPlanRequest,
+    plan: ResolvedEdit,
     force: boolean,
   ) {
-    const edit = new LevelPlans(view, character, this).readEdit(request);
-    return new LevelsPlanning(view, character, this).planEdit(bonded, advancementId, edit, force);
+    const edit = new LevelPlans(view, character, this).readEdit(plan);
+    return new LevelsPlanning(view, character, this).planEdit(bonded, plan.editedLevel, edit, force);
   }
 
   /**
@@ -109,10 +110,10 @@ export default class Dnd35LevelUp extends LevelUpPart implements LevelUpRules<De
     view: RulesetView,
     character: CharacterInput,
     bonded: CharacterInput[],
-    request: LevelPlanRequest,
+    plan: ResolvedPlan,
     force: boolean,
   ) {
-    const levelUp = new LevelPlans(view, character, this).readLevelUp(request);
+    const levelUp = new LevelPlans(view, character, this).readLevelUp(plan);
     return new LevelsPlanning(view, character, this).planLevels(bonded, levelUp, force);
   }
 

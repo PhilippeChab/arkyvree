@@ -51,7 +51,7 @@ export default class Payloads {
    * refused when it isn't in its mechanic's shape.
    */
   static readStep<M extends StepMechanic>(
-    request: LevelPlanRequest,
+    request: Pick<LevelPlanRequest, "steps">,
     step: Pick<LevelStep, "name"> & { mechanic: M },
   ): StepPayloads[M] {
     return Payloads.read(step, request.steps[step.name] ?? []);

@@ -139,6 +139,8 @@ export {
   type PlanAnswer,
   type PlannedAdvancement,
   type PlannedAdvancementAnswer,
+  type ResolvedEdit,
+  type ResolvedPlan,
   type SpendAnswer,
   type SpendRow,
   type SpentPoints,

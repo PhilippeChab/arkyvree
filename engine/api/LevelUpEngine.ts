@@ -1,5 +1,9 @@
-import { type CharacterInput, type LevelPlanRequest, LevelRequests } from "@/engine/core/module/index.ts";
-import RulesError from "@/engine/core/RulesError.ts";
+import {
+  type CharacterInput,
+  type LevelPlanRequest,
+  LevelRequests,
+  type StepPickerQuery,
+} from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 
 import CharacterHandle from "./CharacterHandle.ts";
@@ -11,11 +15,12 @@ type Args<K extends keyof Module["levelUp"]> = Rest<Module["levelUp"][K], [Rules
 /**
  * The engine bound to a character's level flows: its wizard's steps and pickers, and what its level saves write. Its
  * character's input is read as the view reads it (`CharacterEngine` resolved it), and so are its children's and
- * each request, as it enters (`LevelRequests`): the ids it names resolved to the view's, a pick the view lacks refused.
+ * each request, as it enters (`LevelRequests`): the ids it names resolved to the view's, a pick the view lacks refused,
+ * and the saved level it edits found among the character's, refused when it isn't one, so its module reads the level.
  */
 export default class LevelUpEngine extends CharacterHandle {
-  /** The requests the flows take, read as the view reads them. */
-  private readonly requests = new LevelRequests(this.view.rulesetData);
+  /** The requests the flows take, read as the view reads them, the levels they edit the character's. */
+  private readonly requests = new LevelRequests(this.view.rulesetData, this.input.rows.advancements);
 
   /** The level's steps, each its mechanic's: an edit's (`request.editedLevelId`) without its plan step. */
   private stepsOf(request: { editedLevelId?: string }) {
@@ -23,10 +28,10 @@ export default class LevelUpEngine extends CharacterHandle {
   }
 
   /**
-   * The plan's answer (`request`, read by its level's steps, each id the view's): each step in its mechanic's shape,
-   * Add Level's plan and Edit Level's level alike.
+   * The plan's answer (`request`, read by its level's steps, each id the view's, the level it edits the character's):
+   * each step in its mechanic's shape, Add Level's plan and Edit Level's level alike.
    */
-  describePlan(...[request]: Args<"describePlan">) {
+  describePlan(request: LevelPlanRequest) {
     return this.module.levelUp.describePlan(
       this.view,
       this.input,
@@ -34,9 +39,12 @@ export default class LevelUpEngine extends CharacterHandle {
     );
   }
 
-  /** A saved level as an edit's plan opens it: each step's payload as the level saved it. */
-  describeSavedPlan(...[advancementId]: Args<"describeSavedPlan">) {
-    return this.module.levelUp.describeSavedPlan(this.view, this.input, advancementId);
+  /**
+   * The character's saved level `advancementId` as an edit's plan opens it: each step's payload as the level saved it.
+   * Refused when the character has no such level.
+   */
+  describeSavedPlan(advancementId: string) {
+    return this.module.levelUp.describeSavedPlan(this.view, this.input, this.requests.findLevel(advancementId));
   }
 
   /**
@@ -45,17 +53,16 @@ export default class LevelUpEngine extends CharacterHandle {
    * such level.
    */
   listSteps(editedLevelId?: string) {
-    if (editedLevelId !== undefined && !this.input.rows.advancements.some((level) => level.id === editedLevelId))
-      throw new RulesError("not-found", "Character level not found");
+    if (editedLevelId !== undefined) this.requests.findLevel(editedLevelId);
     return this.module.levelUp.listSteps(this.view, this.input, editedLevelId !== undefined);
   }
 
   /**
-   * Step `step`'s picker over the plan: the kind it reads a page of, its picker, and the fields a search of that kind
-   * finds an entity by as well as its name (`searchFields`, its kind's: a feat's family), so a picker searches as its
-   * kind's list does.
+   * Step `step`'s picker over the plan (`query`): the kind it reads a page of, its picker, and the fields a search of
+   * that kind finds an entity by as well as its name (`searchFields`, its kind's: a feat's family), so a picker searches
+   * as its kind's list does.
    */
-  openStepPicker(...[step, query]: Args<"openStepPicker">) {
+  openStepPicker(step: string, query: StepPickerQuery) {
     const resolved = this.requests.resolveStepPicker(this.stepsOf(query.plan), step, query);
     const opened = this.module.levelUp.openStepPicker(this.view, this.input, step, resolved);
     return { ...opened, searchFields: this.module.entities.of(this.view, opened.kind as EntityType).searchFields };
@@ -68,16 +75,15 @@ export default class LevelUpEngine extends CharacterHandle {
 
   /**
    * A plan's edit of the character's saved level `advancementId` (`request`, read by an edit's steps, each id the
-   * view's): what it writes, checked, and what the children become with it.
+   * view's): what it writes, checked, and what the children become with it. Refused when the character has no such
+   * level.
    */
   planLevelEdit(children: CharacterInput[], advancementId: string, request: LevelPlanRequest, force: boolean) {
-    const plan = { ...request, editedLevelId: advancementId };
     return this.module.levelUp.planLevelEdit(
       this.view,
       this.input,
       this.resolveChildren(children),
-      advancementId,
-      this.requests.resolveSave(this.stepsOf(plan), plan),
+      this.requests.resolveEdit(this.stepsOf({ editedLevelId: advancementId }), advancementId, request),
       force,
     );
   }

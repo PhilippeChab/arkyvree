@@ -6,15 +6,6 @@ import LevelUpState, { type PoolPicks } from "./LevelUpState.ts";
 import type { LevelQuery } from "./requests.ts";
 
 /**
- * What a level-up step projects: a new level after the levels planned before it (`pendingLevel…`), or an edit of one
- * of the character's (`editedLevel`), which the projected level replaces.
- */
-type StepProjection = Omit<LevelQuery, "editedLevelId"> & {
-  /** The level edited: the projected level takes its place, so the first level stays the first (its x4 skill points). */
-  editedLevel?: { id: string; position: number };
-};
-
-/**
  * The level-up wizard's steps for a character, from its rows, in their order: its ability increase, its skill points,
  * and its feat and spell pools, each for the character built with the step's level.
  */
@@ -26,11 +17,10 @@ export default class LevelUpSteps extends LevelUpState {
    */
   private buildPicked(step: LevelQuery) {
     const classLevel = this.readClassLevel(step);
-    const projected = this.readStep(step);
     const fitted = this.fitPicks(
       step.picks ?? {},
-      (picks) => this.build(this.projectStep(classLevel.id, projected, picks)),
-      this.getSavedPicks(projected.editedLevel?.id),
+      (picks) => this.build(this.projectStep(classLevel.id, step, picks)),
+      this.getSavedPicks(step.editedLevel?.id),
     );
     const pools = fitted.character.components.aptitudes.getLevelUpPools(this.dnd35, this.countOwnPicks(fitted.picks));
     return { classLevel, picks: fitted.picks, pools };
@@ -43,7 +33,7 @@ export default class LevelUpSteps extends LevelUpState {
    * them, or nothing to pick at a level that takes none.
    */
   private describeAbilityStep(step: LevelQuery) {
-    const { abilityIncreases = [], editedLevel, planned } = this.readStep(step);
+    const { abilityIncreases = [], editedLevel, planned } = step;
     const projection = new CharacterProjection(this.character);
     if (editedLevel) projection.dropLevelsFrom(editedLevel.id);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
@@ -76,7 +66,7 @@ export default class LevelUpSteps extends LevelUpState {
   private describeSkillStep(step: LevelQuery) {
     const dnd35 = this.dnd35;
     const classLevel = this.readClassLevel(step);
-    const projection = this.projectStep(classLevel.id, this.readStep(step));
+    const projection = this.projectStep(classLevel.id, step);
     const character = this.build(projection);
     // A skill's class status is any of the character's classes' (its max rank, `isClassSkill`) and the leveled class's
     // (its cost, `isCurrentClassSkill`)
@@ -103,7 +93,7 @@ export default class LevelUpSteps extends LevelUpState {
    * level's place, so the first level stays the first (its x4 skill points), with the feats and spells it picks
    * (`picks`), when given.
    */
-  private projectStep(classLevelId: string, step: StepProjection, picks?: PoolPicks) {
+  private projectStep(classLevelId: string, step: LevelQuery, picks?: PoolPicks) {
     const projection = new CharacterProjection(this.character);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
     projection.addLevels(step.planned?.classLevelIds ?? [], { abilityIncreases: step.planned?.abilityIncreases, hp });
@@ -117,14 +107,6 @@ export default class LevelUpSteps extends LevelUpState {
   private readClassLevel({ classId, level }: LevelQuery) {
     if (!classId || level === undefined) throw new RulesError("invalid", "The step's class and level are required");
     return this.getClassLevel(classId, level);
-  }
-
-  /** The step's projection, the edited level's place read off the character's levels: refused when it has no such level. */
-  private readStep({ editedLevelId, ...step }: LevelQuery): StepProjection {
-    if (!editedLevelId) return step;
-    const editedLevel = this.character.rows.advancements.find((level) => level.id === editedLevelId);
-    if (!editedLevel) throw new RulesError("not-found", "Character level not found");
-    return { ...step, editedLevel };
   }
 
   /** Every step of the step's level, by its name: its ability increase, its skills, its feats and its spells. */
