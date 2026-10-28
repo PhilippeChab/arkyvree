@@ -12,12 +12,13 @@ import {
   type RulesetAbility,
   type Skill,
 } from "@/engine/rulesets/dnd3.5/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { db } from "@/server/database/index.ts";
 import {
   BadRequestError,
   ConflictError,
   ForbiddenError,
   NotFoundError,
+  STALE_ENTITY_MESSAGE,
   UnprocessableEntityError,
 } from "@/server/errors/index.ts";
 import {
@@ -35,7 +36,6 @@ import { RulesetChangesService } from "@/server/services/rulesets/changes/index.
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
-import { withNameRefusal } from "@/server/services/rulesets/rulesetNames.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { addRulesetContributor } from "@/tests/support/contributors.ts";
@@ -695,20 +695,13 @@ describe("RulesetsService", () => {
       expect(await edit(ruleset.name)).toMatchObject({ name: ruleset.name, description: "Edited" });
     });
 
-    test("answers the name index's refusal as the check does, for a name another request claimed since", async () => {
-      // Two requests that claim one name at once both pass the check: the second one's write meets the index.
-      const { user } = await createTestUser();
-      const [holder, renamed] = [await createTestRuleset(user.id), await createTestRuleset(user.id)];
-      const { name, baseRules } = holder;
-      expect(
-        withTransaction((tx) => withNameRefusal(() => Rulesets.create(tx, { name, description: "", baseRules }))),
-      ).rejects.toEqual(NAME_TAKEN);
-      expect(
-        withTransaction((tx) => withNameRefusal(() => Rulesets.update(tx, { name }, { id: renamed.id }))),
-      ).rejects.toEqual(NAME_TAKEN);
-      const unrelated = new Error("not the index's");
-      expect(withNameRefusal(() => Promise.reject(unrelated))).rejects.toBe(unrelated);
-      expect((await Rulesets.findOne(db, { id: renamed.id }))!.name).toBe(renamed.name);
+    test("tells an edit started from a stale copy it's stale before refusing the name it takes", async () => {
+      const { user, session } = await createTestUser();
+      const [ruleset, holder] = [await createTestRuleset(user.id), await createTestRuleset(user.id)];
+      const edit = (name: string, updatedAt?: string) =>
+        RulesetsService.updateRuleset(session, ruleset.id, { name, description: "", updatedAt });
+      await edit(`Edited ${uniqueId()}`);
+      expect(edit(holder.name, ruleset.updatedAt)).rejects.toEqual(new ConflictError(STALE_ENTITY_MESSAGE));
     });
 
     test("refuses another user's ruleset, a base, an archived one and a missing one", async () => {

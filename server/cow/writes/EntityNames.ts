@@ -1,6 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
 import type { CowData, RulesetSources } from "@/engine/index.ts";
 import CowDataReader from "@/server/cow/views/CowDataReader.ts";
+import { withUniqueRefusal } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
   Entities,
@@ -17,6 +18,14 @@ interface NamedEntity {
   rulesetId: string;
 }
 
+/** The unique index that keeps an entity's name its own among its ruleset's entities of its kind (`drizzle/schema.ts`). */
+const NAME_INDEX = "entities_name_unique_idx";
+
+/** The refusal of a name an entity of the ruleset's own has, whichever path asks. */
+function toOwnNameError(name: string) {
+  return new ConflictError(`Name already exists in this ruleset: ${name}`);
+}
+
 /**
  * The names a ruleset's composed view shows (`new EntityNames(ruleset, rulesetData.cow)`), which no change makes it show
  * twice: a new entity, a renamed one, a restored one, a subscribed extension's and one an unsubscribe shows again take a
@@ -31,10 +40,19 @@ export default class EntityNames {
     private readonly cow: CowData,
   ) {}
 
+  /**
+   * Runs `write`, which gives an entity of the ruleset the name `name` (none: a row without one, which the index
+   * doesn't hold), answering the name index's refusal as the check answers the ruleset's own name: two saves that take
+   * one name at once both pass the check, and the second one's write meets the index.
+   */
+  static async withNameRefusal<T>(name: string | undefined, write: () => Promise<T>) {
+    return await withUniqueRefusal(write, (index) => (index === NAME_INDEX ? toOwnNameError(name ?? "") : undefined));
+  }
+
   /** Refuses the names an entity of the view has (`named`): the ruleset's own, or a visible inherited entity's. */
   private refuseShown(named: NamedEntity[]) {
     const own = named.find((entity) => entity.rulesetId === this.ruleset.id);
-    if (own) throw new ConflictError(`Name already exists in this ruleset: ${own.name}`);
+    if (own) throw toOwnNameError(own.name);
 
     const shown = named.find((entity) => !this.cow.isHidden(entity.id));
     if (shown) {
