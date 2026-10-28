@@ -15,12 +15,13 @@ class RulesetsPolicy extends include(RulesetRoles, ContributorRights, CreationRi
    * The session's policy on `ruleset`: a contributor's rights come from their active role on it, a campaign member's
    * from their live seat in a campaign on it (in any campaign to read it, in a live one to create on it), which
    * matters only on a ruleset that isn't public, and a character's editor's from a character built on it, which
-   * matters only on a private ruleset they have no other standing on (it lets them read it).
+   * matters only on a private ruleset they have no other standing on (it lets them read it). A system ruleset has no
+   * contributors; an orphaned one (its owner's account deleted) keeps its own.
    */
   static async for(db: Db, session: Session, ruleset: Ruleset) {
     const isOwner = ruleset.userId === session.userId;
     const role =
-      ruleset.userId && !isOwner
+      !ruleset.system && !isOwner
         ? await Contributors.findRole(db, { userId: session.userId, rulesetId: ruleset.id })
         : undefined;
     const seat =

@@ -21,11 +21,11 @@ A user can hold multiple roles for the same entity (e.g. owner of a ruleset they
 
 ## Rulesets — `RulesetsPolicy`
 
-`RulesetsPolicy.for(tx, session, ruleset)` loads the session's contributor role (`contributorsInRules`); on a ruleset that isn't public, whether it has a live seat in a campaign on it, and whether one is in a live campaign (`Players.findSeat(db, { userId, rulesetId })`: a seat in a campaign archived or not, who may read the campaign, `CampaignsPolicy.canRead`, lets it read the ruleset; one in a live campaign lets it create there); and, on a private ruleset it has no other standing on, whether it edits a character built on it (`Characters.exists(db, { editorId, rulesetId })`: owns one, or actively contributes to one, archived or not; what lets it read it). A removed player's seat is deleted, and a seat is archived only with its user's account, which no session signs in to, so neither gives anything.
+`RulesetsPolicy.for(tx, session, ruleset)` loads the session's contributor role (`contributorsInRules`: a system ruleset has none); on a ruleset that isn't public, whether it has a live seat in a campaign on it, and whether one is in a live campaign (`Players.findSeat(db, { userId, rulesetId })`: a seat in a campaign archived or not, who may read the campaign, `CampaignsPolicy.canRead`, lets it read the ruleset; one in a live campaign lets it create there); and, on a private ruleset it has no other standing on, whether it edits a character built on it (`Characters.exists(db, { editorId, rulesetId })`: owns one, or actively contributes to one, archived or not; what lets it read it). A removed player's seat is deleted, and a seat is archived only with its user's account, which no session signs in to, so neither gives anything.
 
 | Method | Allowed actors | Notes |
 |---|---|---|
-| `canUpdate` | owner, **Admin** | edits ruleset metadata (name, description, privacy, archive). Throws on base rulesets and Archived rulesets |
+| `canUpdate` | owner, **Admin** | edits ruleset metadata (name, description, privacy, archive). Throws on a ruleset without an owner (a base, or an orphan) and on Archived rulesets |
 | `canUpdateEntity` | owner, **Admin**, **Editor** | edits entity content (feats, items, classes, …). Same archive guard |
 | `canDeleteEntity({ inUse })` | owner, **Admin**, **Editor** | deletes individual entities. Throws if `inUse` (would orphan a character pick on this ruleset or any descendant fork). See [rulesets.md](./rulesets.md#what-inuse-means-in-entity-delete-services) |
 | `canPublish` | **owner only** | Draft → Published; can't be delegated to Admin |
@@ -47,15 +47,15 @@ Listing rulesets is enforced by the `findPage` scopes, not the policy. Every req
 
 | `scope` query param | Returns |
 |---|---|
-| `base` | System base rulesets: no owner, not a fork |
+| `base` | System base rulesets: `system`, not a fork |
 | `forked` | The user's own forks |
 | `myDrafts` | Draft rulesets where the user is owner OR active contributor |
 | `published` | Rulesets the user can play with: public ones must be `status = 'Published'`; owned and contributed-to ones bypass the status gate (Draft is fine — `Published` only governs outward discoverability for *public* rulesets). `kind = 'ruleset'`. Powers the character-creation and campaign-creation pickers — extensions are filtered out so they're never offered as a playable target |
-| `community` | Public Published user forks with `kind = 'ruleset'` (`userId IS NOT NULL`, `private = false`). Extensions (system or user) are filtered out — they live under the `extensions` scope |
+| `community` | Public Published user forks with `kind = 'ruleset'` (`system = false`, `private = false`). Extensions (system or user) are filtered out — they live under the `extensions` scope |
 | `campaignAccessible` | Rulesets the user has access to via campaign membership |
 | `archived` | The user's archived rulesets (owner-only) |
 | `extensions` | Published rulesets with `kind = 'extension'` — both system-seeded and user-published. Powers the subscribe-extension picker on a fork |
-| `systems` | System-owned rulesets (`userId IS NULL`) — bases plus published system extensions. Used for sitemap/SEO |
+| `systems` | System rulesets (`system`) — bases plus published system extensions. Used for sitemap/SEO |
 | `starred` | Anything the user starred |
 | `contributedTo` | Rulesets where the user is an active contributor |
 | `createdByMe` | Rulesets the user owns or actively contributes to |
@@ -67,9 +67,11 @@ Listing rulesets is enforced by the `findPage` scopes, not the policy. Every req
 | Type / Scope | `published` | `community` | `extensions` | `systems` |
 |---|---|---|---|---|
 | Base (system) | ✓ | – | – | ✓ |
-| System extension (`kind='extension'`, `userId IS NULL`) | – | – | ✓ | ✓ |
+| System extension (`kind='extension'`, `system`) | – | – | ✓ | ✓ |
 | User fork as ruleset (`kind='ruleset'`) | ✓ | ✓ (if public) | – | – |
 | User fork as extension (`kind='extension'`) | – | – | ✓ (if public) | – |
+
+**A system ruleset is one `system` marks, not one without an owner.** Deleting an account leaves its rulesets without an owner (`Rulesets.orphan`), `system` still false. Such an orphaned ruleset is still a user's: the scopes list it by its privacy, a public one in `community` or `extensions`, a private one to its contributors and campaign members (and in `starred` to whoever starred it), and `RulesetsPolicy` reads it so: its contributors keep their role, so they read it, see its changes and its contributors, create characters, imports and campaigns on it, and leave it, though every edit, invite, publish and archive check refuses a ruleset without an owner. An extension subscribed to must be public unless it's a system one, so an orphaned private extension is refused.
 
 The character-creation wizard combines `published + campaignAccessible` (and historically `myDrafts`, now subsumed by `published` for owned/contributed drafts) to show the full eligible list. `myDrafts` is still useful as a focused "drafts I'm working on" filter.
 
