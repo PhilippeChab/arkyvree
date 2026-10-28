@@ -654,6 +654,20 @@ describe("RulesetsService", () => {
       ]);
     });
 
+    test("lists nothing for a snapshot whose copy and source are both gone, which stands for no entity", async () => {
+      const { session, fork } = await setupChanges();
+      const gone = crypto.randomUUID();
+      await EntitySnapshots.create(db, {
+        rulesetId: fork.id,
+        sourceEntityId: gone,
+        forkedEntityId: crypto.randomUUID(),
+      });
+      expect(await EntitySnapshots.findManyWithEntities(db, { rulesetId: fork.id })).toMatchObject([
+        { sourceEntityId: gone, entityType: null, sourceRulesetId: null },
+      ]);
+      expect(await RulesetChangesService.getChanges(session, fork.id)).toEqual([]);
+    });
+
     test("are only a fork's, and a private fork's only its members'", async () => {
       const { user, session } = await createTestUser();
       expect(RulesetChangesService.getChanges(session, (await createTestRuleset(user.id)).id)).rejects.toThrow(

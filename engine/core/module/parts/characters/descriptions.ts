@@ -125,7 +125,7 @@ export interface PlacementDescription {
 
 /**
  * What a ruleset describes of a character's card (`CharacterCard`), past its row's columns, which the characters part
- * writes: its chips, in its ruleset's order (3.5's race, then each class at its highest level).
+ * writes: its chips, in its ruleset's order (3.5's race, then each class at the character's level in it).
  */
 export interface RulesetCard {
   chips: CardChip[];

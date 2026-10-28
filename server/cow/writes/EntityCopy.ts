@@ -153,7 +153,6 @@ export default class EntityCopy {
     // 5. Record the copy: the ruleset's view shows it in place of the parent
     await EntitySnapshots.create(tx, {
       rulesetId: childRulesetId,
-      entityType: this.entityType,
       sourceEntityId: this.entityId,
       forkedEntityId: newEntity.id,
     });

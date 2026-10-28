@@ -192,12 +192,11 @@ export abstract class SeederState {
   }
 
   /** Records copies (`copies`: each entity's copy, by its id) in `entity_snapshots`: the ruleset shows each in place of its original. */
-  protected async recordCopies(entityType: string, copies: Map<string, string>) {
+  protected async recordCopies(copies: Map<string, string>) {
     await this.insertAll(
       entitySnapshotsInRules,
       [...copies].map(([sourceEntityId, forkedEntityId]) => ({
         rulesetId: this.ctx.rulesetId,
-        entityType,
         sourceEntityId,
         forkedEntityId,
       })),
