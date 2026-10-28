@@ -77,8 +77,7 @@ class RulesetExtensionsService {
 
         if (extension.status !== "Published") throw new UnprocessableEntityError("Extension must be published");
 
-        if (extension.userId !== null && extension.private)
-          throw new UnprocessableEntityError("Extension must be public");
+        if (!extension.system && extension.private) throw new UnprocessableEntityError("Extension must be public");
 
         // Both child and extension are forks of a base ruleset (fork-of-fork
         // is blocked, extensions are forks of bases) so "share a common ancestor"

@@ -118,10 +118,14 @@ async function setupChanges(values: { private?: boolean } = {}) {
   return { user, session, owner, parent, fork: forked, aptitude, modified, deleted, untouched };
 }
 
-/** The user's view of a dozen rulesets: owned, others', system, contributed to and reached through a campaign. */
+/**
+ * The user's view of a dozen rulesets: owned, others', system, contributed to, reached through a campaign, and a deleted
+ * account's.
+ */
 async function setupListing() {
   const { user, session } = await createTestUser();
   const { user: other } = await createTestUser();
+  const { user: leaver } = await createTestUser();
   const base = await createTestRuleset(null, { private: false, status: "Published" });
   const fork = { rulesetId: base.id, ancestorRulesetIds: [base.id] };
   const published = { private: false, status: "Published" } as const;
@@ -138,7 +142,11 @@ async function setupListing() {
     contributedDraft: await createTestRuleset(other.id, fork),
     contributedPublished: await createTestRuleset(other.id, { ...fork, status: "Published" }),
     campaign: await createTestRuleset(other.id, fork),
+    orphanedPublic: await createTestRuleset(leaver.id, { ...fork, ...published }),
+    orphanedExtension: await createTestRuleset(leaver.id, { ...fork, status: "Published", kind: "extension" }),
   };
+  // As deleting the account leaves them: no owner, and not the system's
+  await Rulesets.orphan(db, { userId: leaver.id });
   await addRulesetContributor(rulesets.contributedDraft.id, user, other.id);
   await addRulesetContributor(rulesets.contributedPublished.id, user, other.id);
   const { campaign } = await createTestCampaign(other.id, rulesets.campaign.id);
@@ -158,8 +166,19 @@ describe("RulesetsService", () => {
       ["base", ["base"]],
       ["systems", ["base", "systemExtension"]],
       ["extensions", ["systemExtension", "othersExtension"]],
-      ["community", ["ownPublic", "othersPublished"]],
-      ["published", ["base", "ownDraft", "ownPublic", "othersPublished", "contributedDraft", "contributedPublished"]],
+      ["community", ["ownPublic", "othersPublished", "orphanedPublic"]],
+      [
+        "published",
+        [
+          "base",
+          "ownDraft",
+          "ownPublic",
+          "othersPublished",
+          "contributedDraft",
+          "contributedPublished",
+          "orphanedPublic",
+        ],
+      ],
       ["forked", ["ownDraft", "ownPublic"]],
       ["createdByMe", ["ownDraft", "ownPublic", "contributedDraft", "contributedPublished"]],
       ["createdByMePrivate", ["ownDraft"]],
@@ -231,6 +250,24 @@ describe("RulesetsService", () => {
       isUsedAsExtension: false,
     });
     expect(RulesetsService.getRuleset(session, NIL_UUID)).rejects.toThrow(NotFoundError);
+  });
+
+  test("reads a deleted account's private ruleset to its contributors, as it lists it to them", async () => {
+    const { user: leaver } = await createTestUser();
+    const { user: contributor, session } = await createTestUser();
+    const { session: stranger } = await createTestUser();
+    const base = await createTestRuleset(null, { private: false, status: "Published" });
+    const ruleset = await createTestRuleset(leaver.id, { rulesetId: base.id, ancestorRulesetIds: [base.id] });
+    await addRulesetContributor(ruleset.id, contributor, leaver.id);
+    await Rulesets.orphan(db, { userId: leaver.id });
+
+    const { items } = await RulesetsService.getRulesets(session, { scope: "contributedTo" }, firstPage);
+    expect(items.map((r) => r.id)).toEqual([ruleset.id]);
+    expect(await RulesetsService.getRuleset(session, ruleset.id)).toMatchObject({
+      id: ruleset.id,
+      contributorRole: "Editor",
+    });
+    expect(RulesetsService.getRuleset(stranger, ruleset.id)).rejects.toThrow(NotFoundError);
   });
 
   describe("answers what the reader may do, as the policy decides it", () => {
