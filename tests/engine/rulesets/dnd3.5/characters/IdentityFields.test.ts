@@ -106,12 +106,13 @@ describe("IdentityFields", () => {
     expect(block).not.toHaveProperty("languages");
   });
 
-  test("labels and bounds each field as it's declared: its experience required from 0, its age from 1", () => {
-    const [[, alignment, xp, deity], [age, gender]] = IdentityFields.describe(IDENTITY).lines;
+  test("labels and bounds each field as it's declared, as a new character's form does: its alignment, gender and experience required", () => {
+    const [[, alignment, xp, deity], [age, gender, height]] = IdentityFields.describe(IDENTITY).lines;
     expect(alignment).toMatchObject({
       key: CHARACTER_ALIGNMENT,
       kind: "select",
       label: "Alignment",
+      required: "Alignment is required",
       value: "Lawful Good",
     });
     expect(xp).toEqual({
@@ -124,7 +125,19 @@ describe("IdentityFields", () => {
     });
     expect(deity).toEqual({ key: CHARACTER_DEITY, kind: "text", label: "Deity", value: "Pelor" });
     expect(age).toEqual({ key: CHARACTER_AGE, kind: "number", label: "Age", min: 1, value: 30 });
-    expect(gender).toMatchObject({ key: CHARACTER_GENDER, options: ["Male", "Female", "Other"], value: "Female" });
+    expect(gender).toMatchObject({
+      key: CHARACTER_GENDER,
+      options: ["Male", "Female", "Other"],
+      required: "Gender is required",
+      value: "Female",
+    });
+    expect(height).toEqual({
+      key: CHARACTER_HEIGHT,
+      kind: "text",
+      label: "Height",
+      placeholder: "e.g., 5 feet 8 inches",
+      value: "180",
+    });
   });
 
   test("reads a value its options don't hold as unset, and its private notes as its identity holds them", () => {

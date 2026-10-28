@@ -85,7 +85,7 @@ export default class FieldForms {
     };
     switch (field.kind) {
       case "flag":
-        return [{ ...base, input: "flag", nullable: field.absent === null }];
+        return [{ ...base, input: "flag", nullable: !Field.isRequired(field) }];
       case "number":
         return [FieldForms.describeNumber(base, field)];
       case "progression":
@@ -106,7 +106,7 @@ export default class FieldForms {
             ...base,
             input: "ref",
             references: field.references,
-            required: field.required ?? false,
+            required: Field.isRequired(field),
             role: field.role,
           },
         ];
@@ -119,7 +119,7 @@ export default class FieldForms {
             input: "choice",
             multiple: false,
             options: field.values,
-            ...(field.required && { required: true }),
+            ...(Field.isRequired(field) && { required: true }),
           },
         ];
       default:
@@ -161,7 +161,7 @@ export default class FieldForms {
    */
   private static describeNumber(base: { field?: string; help: string; label: string }, field: NumberSpec): FormField {
     if (field.values) {
-      const required = field.default !== undefined;
+      const required = Field.isRequired(field);
       return {
         ...base,
         input: "choice",
@@ -218,7 +218,7 @@ export default class FieldForms {
    */
   private static describeValues(base: { help: string; label: string }, field: ListSpec | TextSpec): FormField[] {
     const multiple = field.kind === "list";
-    const required = field.kind === "text" && field.required;
+    const required = field.kind === "text" && Field.isRequired(field);
     if (!field.values)
       return [{ ...base, input: "text", multiple, nullable: !required, placeholder: field.placeholder }];
     const own: FormField = {
@@ -272,14 +272,13 @@ export default class FieldForms {
    */
   private static isGivenOnCreate(field: LeafSpec): boolean {
     switch (field.kind) {
+      case "choice":
       case "ref":
-        return field.required === true;
+        return Field.isRequired(field);
       case "links":
         return field.required !== undefined;
-      case "choice":
-        return field.required === true;
       case "text":
-        return field.required === true && field.default === undefined;
+        return Field.isRequired(field) && field.default === undefined;
       default:
         return false;
     }
@@ -413,21 +412,21 @@ export default class FieldForms {
    * values when they're a closed list, a progression's (`progressionShapeOf`), a text, a choice or a list among its
    * values when they're a closed list, any string otherwise, a reference any string (which names an entity, read as the
    * view's: `resolveLinks`), a list of links' entries (`entriesShapeOf`, one at least on a new entity's form, `creating`,
-   * when it's `required`); none (null, or `""`) for one that has none (a number without a default, a reference not
-   * `required`, a text not `required`).
+   * when it's `required`); none (null, or `""`) for one a form may leave at none (not `Field.isRequired`: a number
+   * without a default, a reference, a choice or a text not `required`).
    */
   private static shapeOf(field: LeafSpec, creating: boolean): z.ZodType {
     switch (field.kind) {
       case "flag":
-        return field.absent === null ? z.boolean().nullable() : z.boolean();
+        return Field.isRequired(field) ? z.boolean() : z.boolean().nullable();
       case "number": {
         const number = FieldForms.numberShapeOf(field);
-        return field.default === undefined ? number.nullable() : number;
+        return Field.isRequired(field) ? number : number.nullable();
       }
       case "progression":
         return FieldForms.progressionShapeOf(field);
       case "ref":
-        return field.required ? z.string().min(1) : z.string().nullable();
+        return Field.isRequired(field) ? z.string().min(1) : z.string().nullable();
       case "links": {
         const entries = FieldForms.entriesShapeOf(field);
         // A new entity's list needs one: an edit's may empty it
@@ -486,7 +485,7 @@ export default class FieldForms {
   private static valueShapeOf(field: ValuesSpec): z.ZodType {
     const value = field.values ? FieldForms.closedShapeOf(field.label, field.values) : z.string();
     if (field.kind === "list") return z.array(value);
-    if (field.required) return value;
+    if (Field.isRequired(field)) return value;
     return z.union([value, z.literal("")]).nullable();
   }
 

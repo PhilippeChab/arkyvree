@@ -23,6 +23,8 @@ export {
   type DescribedInventoryEntry,
   type DescribedLink,
   type EntriesBlock,
+  type FieldInput,
+  FieldInputs,
   type FieldsBlock,
   type FieldsPlan,
   type FieldsRequest,

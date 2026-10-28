@@ -1,7 +1,13 @@
 import { z } from "zod";
 
-import { Field } from "@/engine/core/fields/index.ts";
-import type { CharacterInput, FieldsBlock, FieldsPlan, FieldsRequest, SheetField } from "@/engine/core/module/index.ts";
+import {
+  type CharacterInput,
+  FieldInputs,
+  type FieldsBlock,
+  type FieldsPlan,
+  type FieldsRequest,
+  type SheetField,
+} from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import { CHARACTER_FIELDS } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -34,42 +40,11 @@ const OWN_REQUEST = z.object({ description: z.string().optional() });
  * A 3.5 character's identity as its sheet's `fields` block: its race (its creation's), alignment, experience and deity
  * on a line, its age, gender, height and weight on the next, its description under them, the languages it speaks, and
  * its notes; a partly seen character's race and physical traits alone. Each field is keyed by the stored field that
- * keeps it, labeled and bounded as it's declared (`CHARACTER_FIELDS`). And what an edit of its fields writes, read by
- * the character's codec as an entity's form is (`FieldCodec.parse`).
+ * keeps it, labeled and bounded as it's declared (`CHARACTER_FIELDS`), as a new character's form shows it
+ * (`FieldInputs`). And what an edit of its fields writes, read by the character's codec as an entity's form is
+ * (`FieldCodec.parse`).
  */
 export default class IdentityFields {
-  /**
-   * A character's field (`name`'s) as its block shows it, holding `value` (the identity's, as its sheet reads it): a
-   * number at least its least (one it always holds required, `CharacterValues.held`), a select of its values (one
-   * they don't hold reads as not set), or a text.
-   */
-  private static sheetFieldOf(name: FieldName, value: unknown): SheetField {
-    const declared = CHARACTER_FIELDS[name];
-    const { field: key, label } = declared;
-    if (declared.kind === "number") {
-      const fallback: number | undefined = "default" in declared ? declared.default : undefined;
-      return {
-        key,
-        kind: "number",
-        label,
-        min: Field.boundsOf(declared).min,
-        ...(CharacterValues.isHeld(key) && { required: `${label} is required` }),
-        value: typeof value === "number" ? value : (fallback ?? null),
-      };
-    }
-    if ("values" in declared) {
-      const options: readonly string[] = declared.values;
-      return {
-        key,
-        kind: "select",
-        label,
-        options: [...options],
-        value: options.find((option) => option === value) ?? null,
-      };
-    }
-    return { key, kind: "text", label, value: typeof value === "string" ? value : "" };
-  }
-
   /** The identity's fields' values (`identity`, as its sheet reads it), by their names. */
   private static valuesOf({ beliefs, meta, physiology }: SheetIdentity): Record<FieldName, unknown> {
     return {
@@ -91,7 +66,8 @@ export default class IdentityFields {
   static describe(identity: SheetIdentity, partial = false): FieldsBlock {
     const { background, physiology } = identity;
     const values = IdentityFields.valuesOf(identity);
-    const fieldsOf = (names: FieldName[]) => names.map((name) => IdentityFields.sheetFieldOf(name, values[name]));
+    const fieldsOf = (names: FieldName[]) =>
+      names.map((name) => FieldInputs.sheetFieldOf(CHARACTER_FIELDS[name], values[name]));
     const race: SheetField = {
       key: "race",
       kind: "text",
@@ -141,15 +117,13 @@ export default class IdentityFields {
    * What an edit of a character's (`character`) identity (`request`: its fields by the stored field that keeps each,
    * and its description) writes, each checked by the character's codec as an entity's form is (`FieldCodec.parse`):
    * refused, by field, when it names a field the character hasn't, or a value its field doesn't take. A field it
-   * leaves out is kept, and so is one a form never leaves at none that it sends unset (`CharacterValues.keptUnset`:
+   * leaves out is kept, and so is a select its forms never leave at none that it sends unset (`FieldInputs.sentOf`:
    * its alignment, its gender); one it clears (null, an empty text), none. Its experience sent unset is refused.
    */
   static plan(view: RulesetView, character: CharacterInput, request: FieldsRequest): FieldsPlan {
     const { description, ...given } = request;
     const own = RulesError.parse(OWN_REQUEST, { description }, ["fields"]);
-    const sent = Object.fromEntries(
-      Object.entries(given).filter(([field, value]) => value !== null || !CharacterValues.keptUnset.has(field)),
-    );
+    const sent = FieldInputs.sentOf(CHARACTER_FIELDS, given);
     const values = CharacterValues.parseForm(view, sent, CharacterValues.fieldsOf(character.record));
     return {
       fields: CharacterValues.writeOf(values),

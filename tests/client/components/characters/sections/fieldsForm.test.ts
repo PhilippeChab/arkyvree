@@ -1,7 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
-import { sentFieldsOf, toFieldsForm } from "@/client/src/components/characters/sections/fieldsForm.ts";
-import type { BlockOf } from "@/client/src/components/characters/sections/sheetBlocks.ts";
+import { createFormControl } from "react-hook-form";
+
+import {
+  type FieldsFormData,
+  selectRulesOf,
+  sentFieldsOf,
+  toFieldsForm,
+} from "@/client/src/components/characters/sections/fieldsForm.ts";
+import type { BlockOf, SheetField } from "@/client/src/components/characters/sections/sheetBlocks.ts";
 
 /** A fields block: a fixed origin, a required experience, a clearable age, a gender select, a description. */
 const BLOCK: BlockOf<"fields"> = {
@@ -56,5 +63,33 @@ describe("A fields block's form", () => {
       notes: undefined,
       privateNotes: undefined,
     });
+  });
+
+  test("waits for a pick of a required select that holds none of its options: its save says so and sends nothing", async () => {
+    const gender: Extract<SheetField, { kind: "select" }> = {
+      key: "gender",
+      kind: "select",
+      label: "Gender",
+      options: ["Male", "Female"],
+      required: "Gender is required",
+      value: null,
+    };
+    const block: BlockOf<"fields"> = { ...BLOCK, lines: [[gender]], fields: [] };
+    const form = createFormControl<FieldsFormData>({ defaultValues: toFieldsForm(block, true) });
+    form.register("gender", selectRulesOf(gender));
+    const sent: unknown[] = [];
+    await form.handleSubmit((values) => {
+      sent.push(sentFieldsOf(block, values));
+    })();
+    expect(sent).toEqual([]);
+    expect(form.getFieldState("gender").error?.message).toBe("Gender is required");
+    // Once picked, it's sent
+    form.setValue("gender", "Male");
+    await form.handleSubmit((values) => {
+      sent.push(sentFieldsOf(block, values).fields);
+    })();
+    expect(sent).toEqual([{ gender: "Male" }]);
+    const { required: _required, ...optional } = gender;
+    expect(selectRulesOf(optional)).toBeUndefined();
   });
 });

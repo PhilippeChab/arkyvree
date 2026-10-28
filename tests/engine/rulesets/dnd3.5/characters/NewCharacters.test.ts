@@ -128,36 +128,4 @@ describe("A new 3.5 character's creation", () => {
       ],
     });
   });
-
-  test("lays out its form's fields as they're declared, by their stored fields", () => {
-    expect(NewCharacters.describeField("xp")).toEqual({
-      key: CHARACTER_XP,
-      kind: "number",
-      label: "Experience Points",
-      min: 0,
-      required: "Experience Points is required",
-      start: 0,
-    });
-    expect(NewCharacters.describeField("alignment", { narrows: true })).toMatchObject({
-      key: CHARACTER_ALIGNMENT,
-      kind: "select",
-      label: "Alignment",
-      narrows: true,
-      required: "Alignment is required",
-    });
-    expect(NewCharacters.describeField("age", { stepped: true })).toEqual({
-      key: CHARACTER_AGE,
-      kind: "number",
-      label: "Age",
-      min: 1,
-      stepped: true,
-    });
-    expect(NewCharacters.describeField("height")).toEqual({
-      key: CHARACTER_HEIGHT,
-      kind: "text",
-      label: "Height",
-      placeholder: "e.g., 5 feet 8 inches",
-    });
-    expect(NewCharacters.describeField("deity")).toEqual({ key: CHARACTER_DEITY, kind: "text", label: "Deity" });
-  });
 });

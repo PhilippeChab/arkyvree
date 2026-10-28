@@ -10,7 +10,7 @@ import type { ValidationResult } from "@/engine/core/character/index.ts";
 import type { InventoryItem } from "@/engine/core/view/index.ts";
 import type { Character, Modifier, Requirement, Ruleset } from "@/shared/relations.ts";
 
-import type { FieldsBlock, SheetBlock } from "./blocks.ts";
+import type { FieldInput, FieldsBlock, SheetBlock } from "./blocks.ts";
 import type { InventoryEntryPlan } from "./plans.ts";
 
 /**
@@ -202,19 +202,17 @@ export interface SheetSummary {
 }
 
 /**
- * A field of a new character's form, by its kind, keyed as its create sends it (`fields`): a whole number at least
- * `min` (`required`: what's said without one, else it may be left empty; `start`: its first value, else empty;
- * `stepped`: its input's own arrows stop at `min`), one of a select's options (`required`: what's said without one), a
- * line of text or several (`placeholder`: what it says empty). `narrows`: a select its creation picks' pickers narrow
- * their options by (3.5's alignment and gender, a race's). Its key is a plain name (letters, digits and `_`), none of
- * the form's own values' nor a picker's query's.
+ * A field of a new character's form, by its kind, keyed as its create sends it (`fields`): a character's own field's
+ * input (`FieldInput`: a number starting at `start`, else empty, whose input's own arrows stop at `min` when it's
+ * `stepped`; a select its creation picks' pickers narrow their options by when it `narrows`: 3.5's alignment and
+ * gender, a race's), or several lines of text (`placeholder`: what it says empty). Its key is a plain name (letters,
+ * digits and `_`), none of the form's own values' nor a picker's query's.
  */
-export type CreationField = { key: string; label: string } & (
-  | { kind: "number"; min: number; required?: string; start?: number; stepped?: boolean }
-  | { kind: "select"; narrows?: boolean; options: string[]; required?: string }
-  | { kind: "text"; placeholder?: string }
-  | { kind: "textarea"; placeholder: string }
-);
+export type CreationField =
+  | (Extract<FieldInput, { kind: "number" }> & { start?: number; stepped?: boolean })
+  | (Extract<FieldInput, { kind: "select" }> & { narrows?: boolean })
+  | Extract<FieldInput, { kind: "text" }>
+  | { key: string; kind: "textarea"; label: string; placeholder: string };
 
 /**
  * An item of a new character's form's line: one of the form's own (its name, its notes, its ruleset, or a creation
