@@ -180,7 +180,7 @@ Some entities get fields, requirements, or feats generated. Every kind's form wr
 Every create's or edit's plan takes one shape, `EntityWrites` (`engine/core/module/parts/entities/plans.ts`): it says what to write beside the entity's row, without ids, and the service writes it in its transaction (`EntityWriter.setParts`, `server/services/rulesets/entities/EntityWriter.ts`).
 - `made` gives the entities the plan makes with it, each by its type (`type`), its record's write (`EntityWrite`: its name, description and fields), its links by role (`links`, each a `LinkSet`: a role, its targets' kind, and each link's target, `toId`, and its tier, pool, amount or flag where it holds one: a feat's `listedIn` links to its pools) and its customizations, and `removed` the ones that go with it, each by its type and id, refused while a character picked one. The core names no kind: the 3.5 module's are feats, generated in the general feats' pool (`GeneratedFeats`, `engine/rulesets/dnd3.5/entities/feats/GeneratedFeats.ts`: a skill's Skill Focus, a school's Spell Focus). The service writes each as its kind's entity (`Entities.create`, by its type), reading of the view only its copy-on-write data.
 - A feat that's one entity's own (a skill's Skill Focus) is made, renamed and deleted with it: a new skill brings its own, even in a fork that deleted the one it inherited.
-- A feat that a grouping's entities share (a school's Spell Focus) is made when the first of them is saved, unless the ruleset or one of its sources has it, even in a fork that deleted the copy it inherited, and none goes with an entity. Of the feats made with it (the school's Greater Spell Focus), one the view already shows, the ruleset's own or its sources', isn't made again: the save makes only those it lacks.
+- A feat that a grouping's entities share (a school's Spell Focus) is made when the first of them is saved, unless its view shows it (its own or a source's; one the fork deleted doesn't count), and none goes with an entity. Of the feats made with it (the school's Greater Spell Focus), one the view already shows, the ruleset's own or its sources', isn't made again: the save makes only those it lacks.
 
 ### Weapons (type = "Weapon")
 
@@ -329,7 +329,7 @@ Fields written from the spell form by `entities("spells").planCreate` and `planE
 | `SPELL_RESISTANCE` | Whether spell resistance applies, as the book writes it: "Yes", "No", "Yes (harmless)" (optional, free text) |
 | `SPELL_COMPONENT` | Required components — one field row per value (optional, multi) |
 
-On create: with a school, writes the form's fields, and the school's Spell Focus feats unless its Spell Focus is there, each but one the view shows already (`entities("spells").planCreate`'s `made`).
+On create: with a school, writes the form's fields, and those of the school's feats the view doesn't show, none when it shows the Spell Focus (`entities("spells").planCreate`'s `made`).
 On update: replaces the spell's fields with the form's, none without a school, and creates the feats of a school that's new. Existing school feats remain.
 On delete: cleans up the spell's customizations. School feats remain even if the school has no spells left.
 

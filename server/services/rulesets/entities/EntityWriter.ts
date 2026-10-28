@@ -99,6 +99,20 @@ function linksOf(entity: WrittenEntity, { links, role, toType }: LinkSet) {
   return links.map((link) => ({ ...link, fromId: entity.entityId, fromType: entity.entityType, role, toType }));
 }
 
+/** The names what a plan makes beside its entity takes (`writes.made`: 3.5's generated feats), by their kind. */
+function madeNamesOf(writes: EntityWrites | undefined): Map<RulesetEntityType, string[]> {
+  const byType = Map.groupBy(writes?.made ?? [], (made) => entityTypeOf(made.type));
+  return new Map([...byType].map(([type, made]) => [type, made.map((entity) => entity.row.name)]));
+}
+
+/**
+ * Refuses what a plan makes beside its entity under a name its view shows (`made`, by kind), checked by the names its
+ * save locked: a plan made from the scope's view, read before the lock, may name one another save took since.
+ */
+async function assertMadeAvailable(tx: Db, names: EntityNames, made: Map<RulesetEntityType, string[]>) {
+  for (const [type, typeNames] of made) await names.assertNamesAvailable(tx, type, typeNames);
+}
+
 /**
  * Writes a save of an entity as its rules plan it, every kind's and every save's in one order and by one rule: a
  * ruleset entity's create, update and delete (`type`), and those of the entities it owns (its class levels, by
@@ -299,9 +313,10 @@ export default class EntityWriter {
   }
 
   /**
-   * A new entity in the ruleset (`name`, which must be free in its view), as its rules plan it (`plan`, given the
-   * ancestor whose deleted copy's tombstone the new entity takes over, and the transaction to read what the plan needs):
-   * what its plan answers once written (`describe`: the row, with its links as stored).
+   * A new entity in the ruleset (`name`, which must be free in its view, as must the names of what it makes beside it),
+   * as its rules plan it (`plan`, given the ancestor whose deleted copy's tombstone the new entity takes over, and the
+   * transaction to read what the plan needs): what its plan answers once written (`describe`: the row, with its links
+   * as stored).
    */
   async create<P extends EntityCreatePlan>(
     session: Session,
@@ -313,9 +328,13 @@ export default class EntityWriter {
       this.open(scope);
       policy.canUpdateEntity();
 
-      const names = await EntityNames.lock(tx, rulesetId, [this.type]);
+      // Planned first, its kind's names and those of the kinds it makes locked in one call (in the modules' order),
+      // then planned again when its name takes over an ancestor's tombstone, which a kind's plan may take after
+      const draft = await plan(scope, { tombstoneAncestorId: null, tx });
+      const names = await EntityNames.lock(tx, rulesetId, [this.type, ...madeNamesOf(draft.writes).keys()]);
       const { tombstoneAncestorId } = await names.assertNameAvailable(tx, this.type, name);
-      const planned = await plan(scope, { tombstoneAncestorId, tx });
+      const planned = tombstoneAncestorId ? await plan(scope, { tombstoneAncestorId, tx }) : draft;
+      await assertMadeAvailable(tx, names, madeNamesOf(planned.writes));
 
       const rows = [{ row: planned.row, tombstoneAncestorId }];
       const [row] = await this.writeNew(tx, session, scope, names, rows, planned);
@@ -463,9 +482,13 @@ export default class EntityWriter {
       policy.canUpdateEntity();
 
       const planned = await plan(scope, { tx });
-      if (body.name !== planned.entity.name) {
-        const names = await EntityNames.lock(tx, rulesetId, [this.type]);
-        await names.assertRenameAvailable(tx, this.type, body.name);
+      // A new name, or entities it makes (a spell's new school's feats), locks its kind's names and theirs in one call
+      const renamed = body.name !== planned.entity.name;
+      const made = madeNamesOf(planned.writes);
+      if (renamed || made.size > 0) {
+        const names = await EntityNames.lock(tx, rulesetId, [this.type, ...made.keys()]);
+        if (renamed) await names.assertRenameAvailable(tx, this.type, body.name);
+        await assertMadeAvailable(tx, names, made);
       }
       const { gone } = EntityWriter.getNotFound(ruleset, this.type);
       const target = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, this.type, planned.entity, gone);

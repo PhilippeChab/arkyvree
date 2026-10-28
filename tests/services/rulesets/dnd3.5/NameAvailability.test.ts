@@ -32,6 +32,7 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   ITEM_COST_GP,
   ITEM_SLOT,
@@ -39,6 +40,7 @@ import {
   ITEM_WEIGHT,
   RACE_BASE_SPEED,
   RACE_SIZE,
+  SPELL_SCHOOL,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A kind a fork renames its own entity in, to the name of one of the core rules' (`taken`). */
@@ -143,6 +145,20 @@ async function setup() {
   const baseFeat = async (name: string) =>
     (await Entities.findOne<Feat>(db, { entityType: "feats", name, rulesetId: baseId }))!;
   return { session, fork, baseId, general, baseFeat };
+}
+
+/** A spell's form in the seeded rules' Wizard Spells (`baseId`'s), of a school when given one. */
+async function spellBody(baseId: string, name: string, school?: string) {
+  const wizard = (await Entities.findOne<Aptitude>(db, {
+    entityType: "aptitudes",
+    name: "Wizard Spells",
+    rulesetId: baseId,
+  }))!;
+  return {
+    name,
+    links: { listedIn: [{ toId: wizard.id, tier: 1 }] },
+    fields: school ? { [SPELL_SCHOOL]: school } : {},
+  };
 }
 
 afterAll(() => pool.end());
@@ -522,8 +538,30 @@ test.each([
     },
   ],
   [
+    "spell create making its school's Spell Focus",
+    "feats",
+    async () => {
+      const { session, fork, baseId, baseFeat } = await setup();
+      await EntitiesService.deleteEntity(session, fork.id, "feats", (await baseFeat("Spell Focus: Evocation")).id);
+      const body = await spellBody(baseId, "Probe Spell", "Evocation");
+      return { fork, write: () => EntitiesService.createEntity(session, fork.id, "spells", body) };
+    },
+  ],
+  [
+    "spell edit keeping its name, moving it to a school whose Spell Focus it makes",
+    "feats",
+    async () => {
+      const { session, fork, baseId, baseFeat } = await setup();
+      await EntitiesService.deleteEntity(session, fork.id, "feats", (await baseFeat("Spell Focus: Evocation")).id);
+      const body = await spellBody(baseId, "Probe Spell");
+      const { id } = await EntitiesService.createEntity(session, fork.id, "spells", body);
+      const moved = await spellBody(baseId, "Probe Spell", "Evocation");
+      return { fork, write: () => EntitiesService.updateEntity(session, fork.id, "spells", id, moved) };
+    },
+  ],
+  [
     "subscribe",
-    "races",
+    "every kind",
     async () => {
       const { session, fork } = await setup();
       const extension = await createSeededTestRuleset(session.userId);
@@ -533,7 +571,7 @@ test.each([
   ],
   [
     "unsubscribe",
-    "races",
+    "every kind",
     async () => {
       const { session, fork } = await setup();
       const extension = await createSeededTestRuleset(session.userId);
@@ -543,16 +581,71 @@ test.each([
     },
   ],
 ] as const)(
-  "a %s waits on the ruleset's names of its kind (%s) another transaction holds",
-  async (_, kind, prepare) => {
-    const { fork, write } = await prepare();
-    await runWhileLocked<unknown>(
-      pool,
-      (blockerDb) => RulesetEntities.lockNames(blockerDb, { entityTypes: [kind], rulesetId: fork.id }),
-      write,
-    );
+  "a %s waits on the ruleset's names of %s another transaction holds",
+  async (_, held, prepare) => {
+    // Each kind it locks held in turn, on a fork of its own
+    for (const kind of held === "every kind" ? RULESET_ENTITY_TYPES : [held]) {
+      const { fork, write } = await prepare();
+      await runWhileLocked<unknown>(
+        pool,
+        (blockerDb) => RulesetEntities.lockNames(blockerDb, { entityTypes: [kind], rulesetId: fork.id }),
+        write,
+      );
+    }
   },
+  60_000,
 );
+
+// The view a write checks is the one its lock leaves, read again: a restore another transaction committed while the
+// write waited shows its source again, whose name the write is then refused. The view read before the wait (the
+// scope's, the cache's) still hid it. The restore commits, so the rows it reads are written outside the test's
+// transaction, and deleted after it.
+test("a create waiting on a restore that commits is refused the name the restore shows again", async () => {
+  const session = makeSession();
+  const name = `Probe Restored ${uniqueId()}`;
+  const client = await pool.connect();
+  const committed = createTestDbFromClient(client);
+  const ruleset = { description: "", private: true, baseRules: DND35_BASE_RULES };
+  const [parent] = await Rulesets.create(committed, {
+    ...ruleset,
+    name: `Probe ${uniqueId()}`,
+    userId: null,
+    system: true,
+  });
+  const [fork] = await Rulesets.create(committed, {
+    ...ruleset,
+    name: `Probe ${uniqueId()}`,
+    userId: session.userId,
+    system: false,
+    rulesetId: parent.id,
+    ancestorRulesetIds: [parent.id],
+  });
+  try {
+    // The fork deleted its copy of the parent's aptitude: a tombstone hides it
+    const [source] = await Entities.create(committed, "aptitudes", { rulesetId: parent.id, name });
+    const [copy] = await Entities.create(committed, "aptitudes", { rulesetId: fork.id, name });
+    await EntitySnapshots.create(committed, { rulesetId: fork.id, sourceEntityId: source.id, forkedEntityId: copy.id });
+    await Entities.delete(committed, { entityType: "aptitudes", id: copy.id });
+    expect(await countNamed(fork.id, "aptitudes", name)).toBe(0);
+
+    await runWhileLocked(
+      pool,
+      async (blockerDb) => {
+        await RulesetEntities.lockNames(blockerDb, { entityTypes: ["aptitudes"], rulesetId: fork.id });
+        await EntitySnapshots.delete(blockerDb, { rulesetId: fork.id, sourceEntityId: source.id });
+      },
+      () => expectRefusedWith(EntitiesService.createEntity(session, fork.id, "aptitudes", { name }), 409),
+      "COMMIT",
+    );
+  } finally {
+    for (const { id } of [fork, parent]) {
+      await committed.execute(sql`delete from rules.entity_snapshots where ruleset_id = ${id}`);
+      await committed.execute(sql`delete from rules.entities where ruleset_id = ${id}`);
+      await committed.execute(sql`delete from rules.rulesets where id = ${id}`);
+    }
+    client.release();
+  }
+});
 
 test("an edit keeping its name waits on no names, and a create on no other kind's, nor another ruleset's", async () => {
   const { session, fork, general, baseFeat } = await setup();

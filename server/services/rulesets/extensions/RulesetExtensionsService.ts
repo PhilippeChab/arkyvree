@@ -82,6 +82,9 @@ class RulesetExtensionsService {
       // Its view would show no two entities of a name it shows one of, nor two the extensions bring: the host's names
       // of every kind locked, as its own writes lock theirs (an extension's writes check no view built on it)
       const names = await EntityNames.lock(tx, id, RULESET_ENTITY_TYPES);
+      // Checked again on the ruleset the lock read: a subscribe that held it first may have taken one of them since
+      if (newExtensionIds.some((extensionId) => names.ruleset.extensionIds.includes(extensionId)))
+        throw new ConflictError("Already subscribed to this extension");
       await names.assertExtensionNamesAvailable(tx, newExtensionIds);
 
       // 3. The ruleset changes now, and subscribes to them after those it subscribes to, in their order. Its row's
@@ -112,8 +115,11 @@ class RulesetExtensionsService {
       policy.canUnsubscribeExtension();
 
       if (!ruleset.extensionIds.includes(extensionId)) throw new NotFoundError("Not subscribed to this extension");
-      // Every kind's names locked first: a restore reverting one of its copies commits before they're read
+      // Every kind's names locked first: a restore reverting one of its copies commits before they're read, and an
+      // unsubscribe that held the lock first, from this extension, is seen in the ruleset it read
       const names = await EntityNames.lock(tx, id, RULESET_ENTITY_TYPES);
+      if (!names.ruleset.extensionIds.includes(extensionId))
+        throw new NotFoundError("Not subscribed to this extension");
 
       // 2. The fork's copies of the extension's entities: the snapshots whose source belongs to the extension (a snapshot
       // whose source is gone belongs to none)
@@ -131,7 +137,7 @@ class RulesetExtensionsService {
       // What the book hid shows again: its view would show no two entities of a name, as a subscribe's wouldn't
       await names.assertReturningNamesAvailable(tx, extensionId, [...copies.values()].flat());
       // What leaves with the book, each with what the fork's view shows in its place once it's gone, if anything
-      const departures = await findDepartures(tx, ruleset, extensionId, copies);
+      const departures = await findDepartures(tx, names.ruleset, extensionId, copies);
       policy.canUnsubscribeExtension({ inUse: await this.isExtensionInUseByHost(tx, id, departures) });
 
       // What the fork and its characters keep that names what leaves names what stands in its place, or the

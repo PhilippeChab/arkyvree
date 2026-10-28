@@ -206,10 +206,12 @@ kind (`EntityNames.lock`: a transaction-scoped advisory lock per ruleset and kin
 `RulesetEntities.lockNames`), then reads the ruleset's sources and its `CowData`
 through its transaction, never the cache: the second of two such writes checks
 what the first wrote. A subscribe and an unsubscribe lock every kind's, in the
-modules' order; an edit that keeps its name locks none. The locks are the
-ruleset's own: a write to a ruleset of its source chain (its parent, an extension
-it subscribes to) checks no view built on that ruleset, so it waits on none of
-them.
+modules' order, and check the ruleset's extensions again on the row the lock
+read. A save that makes entities beside its own (3.5's generated feats) locks
+their kinds with its own, in one call, and checks their names too; an edit that
+keeps its name and makes none locks nothing. The locks are the ruleset's own: a
+write to a ruleset of its source chain (its parent, an extension it subscribes
+to) checks no view built on that ruleset, so it waits on none of them.
 
 A restore (`assertRestoreAvailable`, from `EntityRevert`) shows the source again
 under its name, as a rename back to it would: refused while the view shows another

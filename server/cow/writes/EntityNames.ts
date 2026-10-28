@@ -1,5 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
-import type { CowData, RulesetSources } from "@/engine/index.ts";
+import type { CowData } from "@/engine/index.ts";
 import CowDataReader from "@/server/cow/views/CowDataReader.ts";
 import { withUniqueRefusal } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
@@ -18,6 +18,9 @@ interface NamedEntity {
   name: string;
   rulesetId: string;
 }
+
+/** A ruleset's row as stored, its sources among it. */
+type LockedRuleset = NonNullable<Awaited<ReturnType<typeof Rulesets.findOne>>>;
 
 /** The unique index that keeps an entity's name its own among its ruleset's entities of its kind (`drizzle/schema.ts`). */
 const NAME_INDEX = "entities_name_unique_idx";
@@ -40,15 +43,17 @@ function toOwnNameError(name: string) {
  */
 export default class EntityNames {
   private constructor(
-    private readonly ruleset: RulesetSources,
+    readonly ruleset: LockedRuleset,
     private readonly cow: CowData,
+    private readonly locked: readonly RulesetEntityType[],
   ) {}
 
   /**
-   * The names a ruleset's view shows (`rulesetId`), for a write that takes names of these kinds (`entityTypes`; a
-   * change to its extensions, every kind's): locked until its transaction ends (`RulesetEntities.lockNames`), then the
-   * ruleset's sources and its `CowData` read through it, as the write that held the lock before left them, never the
-   * cache's. No index refuses a name the view shows of an inherited entity, whose row is its source ruleset's: two
+   * The names a ruleset's view shows (`rulesetId`), for a write that takes names of these kinds (`entityTypes`, in one
+   * call: an entity's kind and those its save makes; a change to its extensions, every kind's): locked until its
+   * transaction ends (`RulesetEntities.lockNames`), then the ruleset (`ruleset`, its sources among it) and its
+   * `CowData` read through it, as the write that held the lock before left them, never the cache's. A check of a kind
+   * it didn't lock throws. No index refuses a name the view shows of an inherited entity, whose row is its source ruleset's: two
    * writes checking at once (a restore and a create of its source's name) would both pass. A write to a ruleset of the
    * source chain takes no lock of the ruleset's: it checks no view built on its own, in whatever order it runs.
    */
@@ -56,7 +61,7 @@ export default class EntityNames {
     await RulesetEntities.lockNames(tx, { entityTypes, rulesetId });
     const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
     if (!ruleset) throw new NotFoundError("Ruleset not found");
-    return new EntityNames(ruleset, await CowDataReader.read(tx, ruleset));
+    return new EntityNames(ruleset, await CowDataReader.read(tx, ruleset), entityTypes);
   }
 
   /**
@@ -88,6 +93,7 @@ export default class EntityNames {
     names: string[],
     chain = this.cow.sourceChain,
   ): Promise<NamedEntity[]> {
+    if (!this.locked.includes(entityType)) throw new Error(`The names of ${entityType} are checked unlocked`);
     return await RulesetEntities.findNames(tx, entityType, { names, rulesetIds: [this.ruleset.id, ...chain] });
   }
 
