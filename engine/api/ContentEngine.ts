@@ -8,12 +8,4 @@ export default class ContentEngine {
   listBookTargetPaths(...args: Parameters<ContentPart["listBookTargetPaths"]>) {
     return this.content.listBookTargetPaths(...args);
   }
-
-  /**
-   * What an owned entity requires at its position on its owner's track, as a new one's save writes it: what the seeders
-   * write of the content's (3.5's class levels).
-   */
-  planPositionRequirement(...args: Parameters<ContentPart["planPositionRequirement"]>) {
-    return this.content.planPositionRequirement(...args);
-  }
 }

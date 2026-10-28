@@ -12,7 +12,6 @@ import { NotFoundError } from "@/server/errors/index.ts";
 import { CharacterInventory, Characters, Entities, Picks } from "@/server/repositories/index.ts";
 import { createNewCharacter, readCharacterInput, readChildInputs } from "@/server/services/characters/index.ts";
 import { createAdvancement, writeChildren } from "@/server/services/characters/levels/index.ts";
-import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
 import { type SeedContext } from "./seedContext.ts";
 
@@ -130,6 +129,10 @@ export async function addSpells(
   );
 }
 
+/**
+ * Writes a seeded character's row and links: it starts as a new character does, as the engine plans it (its kind, its
+ * race and its ability scores), with its languages and its fields as stored.
+ */
 export async function createCharacter(
   db: Db,
   ctx: SeedContext,
@@ -138,24 +141,35 @@ export async function createCharacter(
     rulesetId?: string;
   },
 ) {
+  const rulesetId = data.rulesetId ?? ctx.rulesetId;
+  const start = {
+    picks: { race: idOf(ctx.raceMap.pc, data.links.race, `${data.name}'s race`) },
+    scores: {
+      score: Object.fromEntries(
+        Object.entries(data.abilities).map(([name, amount]) => [
+          idOf(ctx.abilityMap, name, `${data.name}'s ability`),
+          amount,
+        ]),
+      ),
+    },
+  };
+  const { links, row } = await withRulesetScope(db, rulesetId, async (scope) =>
+    Engine.for(scope).characters().planStart(start),
+  );
   const character = await createNewCharacter(db, {
     links: {
-      score: Object.entries(data.abilities).map(([name, amount]) => ({
-        entityId: idOf(ctx.abilityMap, name, `${data.name}'s ability`),
-        amount,
-      })),
+      ...links,
       speaks: data.languages.map((language) => ({
         entityId: idOf(ctx.langMap, language, `${data.name}'s language`),
       })),
     },
     row: {
-      kind: PLAYER_CHARACTER_KIND,
+      ...row,
       userId: SEED_USER_ID,
-      rulesetId: data.rulesetId ?? ctx.rulesetId,
+      rulesetId,
       name: data.name,
       description: data.description,
       fields: { ...data.fields },
-      links: { race: idOf(ctx.raceMap.pc, data.links.race, `${data.name}'s race`) },
     },
   });
 

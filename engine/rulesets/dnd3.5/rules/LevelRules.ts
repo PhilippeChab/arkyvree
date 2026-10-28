@@ -34,24 +34,36 @@ export default class LevelRules {
   }
 
   /**
+   * The numbers of class `classId`'s levels a character with `levels` holds (its advancements, each with its entry, a
+   * class level of `classLevelsById`, by any id the view keys it by).
+   */
+  static findHeldClassLevels(
+    classLevelsById: ClassLevelsById,
+    levels: { entryId: string | null }[],
+    classId: string,
+  ): Set<number> {
+    return new Set(
+      levels.flatMap(({ entryId }) => {
+        const classLevel = entryId === null ? undefined : classLevelsById.get(entryId);
+        return classLevel?.ownerId === classId ? [classLevel.position] : [];
+      }),
+    );
+  }
+
+  /**
    * The number of class `classId`'s next level for a character with `levels` (its advancements, each with its entry, a
-   * class level of `classLevelsById`): its lowest the character doesn't hold. A class's levels come one after another,
-   * so it's one past the character's levels of the class, or, for a character a level forced past a class's order left
-   * a gap before the rule (a lone Fighter 3), the level it skipped, which fills the gap (Fighter 1, Fighter 2, then
-   * Fighter 4). What the class picker offers, and the only class level a level-up's save or an import takes; past a
-   * class's last level, a number the class has no level at.
+   * class level of `classLevelsById`): its lowest the character doesn't hold (`findHeldClassLevels`). A class's levels
+   * come one after another, so it's one past the character's levels of the class, or, for a character a level forced
+   * past a class's order left a gap before the rule (a lone Fighter 3), the level it skipped, which fills the gap
+   * (Fighter 1, Fighter 2, then Fighter 4). What the class picker offers, and the only class level a level-up's save or
+   * an import takes; past a class's last level, a number the class has no level at.
    */
   static findNextClassLevel(
     classLevelsById: ClassLevelsById,
     levels: { entryId: string | null }[],
     classId: string,
   ): number {
-    const held = new Set(
-      levels.flatMap(({ entryId }) => {
-        const classLevel = entryId === null ? undefined : classLevelsById.get(entryId);
-        return classLevel?.ownerId === classId ? [classLevel.position] : [];
-      }),
-    );
+    const held = this.findHeldClassLevels(classLevelsById, levels, classId);
     let next = 1;
     while (held.has(next)) next++;
     return next;
