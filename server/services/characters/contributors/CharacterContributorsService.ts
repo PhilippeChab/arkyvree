@@ -5,6 +5,7 @@ import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { CharacterContributors, Characters, type Pagination, Users, Visibility } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { toPublicUser } from "@/server/services/authentication/index.ts";
+import { findReadableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import {
   checkNewContributor,
   getInviteNames,
@@ -181,12 +182,12 @@ class CharacterContributorsService {
   async revokeContributor(session: Session, contributorId: string) {
     return await withTransaction(async (tx) => {
       const contributor = await CharacterContributors.findOne(tx, { id: contributorId });
-      const character = contributor && (await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All));
-      const policy = character && (await CharactersPolicy.for(tx, session, character));
+      const readable = contributor && (await findReadableCharacter(tx, session, contributor.characterId));
       // A contributor of a character the session may not read is refused as an unknown one is: the character's
       // existence isn't revealed
-      if (!contributor || !character || !policy?.isReadable()) throw new NotFoundError("Contributor not found");
+      if (!contributor || !readable) throw new NotFoundError("Contributor not found");
 
+      const { character, policy } = readable;
       policy.canManageContributors();
 
       if (contributor.status !== "Active" && contributor.status !== "Pending")

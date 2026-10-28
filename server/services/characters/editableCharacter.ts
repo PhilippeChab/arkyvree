@@ -20,6 +20,18 @@ export async function findEditableCharacterOrChild(db: Db, characterId: string, 
 }
 
 /**
+ * The character `characterId`, archived or not, and the session's policy on it, if the session may read it
+ * (`CharactersPolicy.isReadable`), or none, as for a character that doesn't exist: what reads a character by its id,
+ * or by what's under it, and what links to one, ask, so its existence isn't revealed.
+ */
+export async function findReadableCharacter(db: Db, session: Pick<Session, "userId">, characterId: string) {
+  const character = await Characters.findOne(db, { id: characterId }, Visibility.All);
+  if (!character) return undefined;
+  const policy = await CharactersPolicy.for(db, session, character);
+  return policy.isReadable() ? { character, policy } : undefined;
+}
+
+/**
  * The player character whose own rows the session's user may edit (`CharactersPolicy.isEditor`: they own it or
  * contribute to it), or a 404: a child's are its parent's. It's looked up unarchived; `Visibility.All` finds an archived
  * one too, whose sheet stays readable.

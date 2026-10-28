@@ -20,7 +20,7 @@ import {
   Visibility,
   visibilityMap,
 } from "@/server/repositories/index.ts";
-import { CharactersPolicy, isAllowed } from "@/server/services/policies/index.ts";
+import { type CharactersPolicy, isAllowed } from "@/server/services/policies/index.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -29,7 +29,7 @@ import { describeCharacterCards } from "./characterCards.ts";
 import { readCharacterInput, readChildInputs } from "./characterInputs.ts";
 import { Archives } from "./concerns/Archives.ts";
 import { Imports } from "./concerns/Imports.ts";
-import { findEditableCharacterOrChild, getEditableCharacter } from "./editableCharacter.ts";
+import { findEditableCharacterOrChild, findReadableCharacter, getEditableCharacter } from "./editableCharacter.ts";
 import { createNewCharacter } from "./newCharacterWrites.ts";
 import { enqueueCharacterPdf, findExportableCharacter } from "./pdf.ts";
 
@@ -112,15 +112,14 @@ class CharactersService extends include(Object, Archives, Imports) {
 
   /**
    * A character's sheet, as the API answers it: a player character's with its children's (3.5's bonded creatures), or a
-   * child's, which its parent's editors read. Its editors alone read it (`canRead`), archived or not, so it carries its
-   * share token, and what they may do with it (`permissions`).
+   * child's, which its parent's editors read. Its editors alone read it (`findReadableCharacter`), archived or not, so it
+   * carries its share token, and what they may do with it (`permissions`). Anyone else gets the 404 an unknown character
+   * gets.
    */
   async getCharacter(session: Session, characterId: string) {
-    const record = await Characters.findOne(db, { id: characterId }, Visibility.All);
-    if (!record) throw new NotFoundError("Character not found");
-
-    const policy = await CharactersPolicy.for(db, session, record);
-    policy.canRead();
+    const readable = await findReadableCharacter(db, session, characterId);
+    if (!readable) throw new NotFoundError("Character not found");
+    const { character: record, policy } = readable;
 
     return await withRulesetScope(db, record.rulesetId, async (scope) => {
       const character = await readCharacterInput(db, record);

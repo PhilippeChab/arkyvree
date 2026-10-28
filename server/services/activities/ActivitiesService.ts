@@ -3,16 +3,14 @@ import { db } from "@/server/database/index.ts";
 import {
   Activities,
   CharacterContributors,
-  Characters,
   Contributors,
   Invites,
   type Pagination,
   PlayerCharacters,
   Players,
-  Visibility,
 } from "@/server/repositories/index.ts";
 import { findReadableCampaign } from "@/server/services/campaigns/index.ts";
-import { CharactersPolicy } from "@/server/services/policies/index.ts";
+import { findReadableCharacter } from "@/server/services/characters/index.ts";
 import { findReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { isNavigableTarget } from "@/shared/activity.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
@@ -54,13 +52,11 @@ class ActivitiesService {
 
   /**
    * A character's page, archived or not, or null when it's gone or the session may not read it
-   * (`CharactersPolicy.isReadable`): a character's existence isn't revealed to whoever doesn't edit it (or a child's
-   * parent), nor its levels', inventory's and contributors'.
+   * (`findReadableCharacter`): a character's existence isn't revealed to whoever doesn't edit it (or a child's parent),
+   * nor its levels', inventory's and contributors'.
    */
   private async characterUrl(session: Session, characterId: string) {
-    const character = await Characters.findOne(db, { id: characterId }, Visibility.All);
-    if (!character || !(await CharactersPolicy.for(db, session, character)).isReadable()) return null;
-    return `/characters/${characterId}`;
+    return (await findReadableCharacter(db, session, characterId)) ? `/characters/${characterId}` : null;
   }
 
   /**
