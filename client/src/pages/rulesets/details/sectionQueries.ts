@@ -46,6 +46,9 @@ type EntityListKind = Pick<EntityKindDescription, "levels" | "partitioned" | "ty
   pools?: Pick<NonNullable<EntityKindDescription["pools"]>, "role">;
 };
 
+/** What a kind's grouped list reads of its kind: its type, and its pools, by their links' role. */
+type GroupedKind = Pick<EntityListKind, "pools" | "type">;
+
 /** A group of an entity kind's list (a feat's family), as its grouped list gives it. */
 export type EntityGroup = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["entities"][":entityType"]["grouped"]["$get"],
@@ -88,6 +91,24 @@ function pageSearchParams(pageParam: number, { search, childOnly }: ListFilters)
   };
 }
 
+/**
+ * A page of a kind's grouped list, through its grouped route: its search params (`params`, its page's, a family's), and
+ * its pool where its kind narrows by one.
+ */
+function readGroupsFn(
+  rulesetId: string,
+  kind: GroupedKind,
+  pool: string | undefined,
+  params: Readonly<Record<string, string | undefined>>,
+) {
+  return parseResponse(
+    rpc.api.rulesets[":id"].entities[":entityType"].grouped.$get({
+      param: { id: rulesetId, entityType: kind.type },
+      query: givenParams({ ...params, ...(kind.pools && { [kind.pools.role]: pool }) }),
+    }),
+  );
+}
+
 function sectionKey(rulesetId: string, section: RulesetSection, filters: ListFilters) {
   return [...QUERY_KEYS.rulesets.section(rulesetId, section), filters.search, filters.childOnly] as const;
 }
@@ -106,24 +127,24 @@ export function entitiesQuery(rulesetId: string, kind: EntityListKind, filters: 
 }
 
 /**
- * The variants of a family of a kind (`type`: a feat's), by the field that holds its families (`field`), which its
- * group's row lists as it expands; a row of one entity has none to ask for.
+ * The variants of a family of a kind (a feat's), which its group's row lists as it expands: read through the grouped
+ * list with the family (`family`), narrowed by the same search, pool and Local Changes, so they're what its row counts.
+ * A row of one entity has none to ask for.
  */
-export function entityFamilyQuery(
-  rulesetId: string,
-  { field, type }: { field: string; type: string },
-  family: string | null,
-  childOnly: boolean,
-) {
+export function entityFamilyQuery(rulesetId: string, kind: GroupedKind, family: string | null, filters: PoolFilters) {
   return infiniteQueryOptions({
-    queryKey: QUERY_KEYS.rulesets.familyVariants(rulesetId, type, family ?? "", childOnly),
+    queryKey: [
+      ...QUERY_KEYS.rulesets.familyVariants(rulesetId, kind.type, family ?? ""),
+      filters.search,
+      filters.childOnly,
+      filters.pool,
+    ],
     queryFn: family
       ? ({ pageParam }) =>
-          readEntitiesFn(rulesetId, type, {
+          readGroupsFn(rulesetId, kind, filters.pool, {
+            ...pageSearchParams(pageParam, filters),
             limit: "50",
-            page: pageParam.toString(),
-            [field]: family,
-            childOnly: childOnly ? "true" : undefined,
+            family,
           })
       : skipToken,
     initialPageParam: 1,
@@ -135,11 +156,7 @@ export function entityFamilyQuery(
  * A kind's list with its variants grouped under their family (a feat's), its kind's default view, narrowed by its
  * pool where its kind is (`kind`: its type and its pools).
  */
-export function entityGroupsQuery(
-  rulesetId: string,
-  kind: Pick<EntityListKind, "pools" | "type">,
-  filters: PoolFilters,
-) {
+export function entityGroupsQuery(rulesetId: string, kind: GroupedKind, filters: PoolFilters) {
   return infiniteQueryOptions({
     queryKey: [
       ...QUERY_KEYS.rulesets.sectionGrouped(rulesetId, kind.type),
@@ -147,16 +164,7 @@ export function entityGroupsQuery(
       filters.childOnly,
       filters.pool,
     ],
-    queryFn: ({ pageParam }) =>
-      parseResponse(
-        rpc.api.rulesets[":id"].entities[":entityType"].grouped.$get({
-          param: { id: rulesetId, entityType: kind.type },
-          query: givenParams({
-            ...pageSearchParams(pageParam, filters),
-            ...(kind.pools && { [kind.pools.role]: filters.pool }),
-          }),
-        }),
-      ),
+    queryFn: ({ pageParam }) => readGroupsFn(rulesetId, kind, filters.pool, pageSearchParams(pageParam, filters)),
     initialPageParam: 1,
     getNextPageParam: nextPage,
   });

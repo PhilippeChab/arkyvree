@@ -139,12 +139,20 @@ class EntitiesService extends include(Object, Copies, Links, Owned, Progressions
     );
   }
 
-  /** A page of a kind's groups (a feat's families), as its query asks for it (`where`): refused for a kind without. */
+  /**
+   * A page of a kind's groups (a feat's families), as its query asks for it (`where`), or of one group's entities
+   * (`family`), read as its row counted them: refused for a kind without.
+   */
   async getEntityGroups(
     session: Session,
     rulesetId: string,
     type: RulesetEntityType,
-    { childOnly, search, ...filters }: Pick<ListWhere, "childOnly" | "search"> & Record<string, unknown>,
+    {
+      childOnly,
+      family,
+      search,
+      ...filters
+    }: Pick<ListWhere, "childOnly" | "search"> & { family?: string } & Record<string, unknown>,
     pagination: Pagination,
   ) {
     return await withReadableRuleset(db, session, rulesetId, async (scope) => {
@@ -159,6 +167,7 @@ class EntitiesService extends include(Object, Copies, Links, Owned, Progressions
           ...scope.rulesetData.cow.listFilters,
           ...groupFilters,
           childOnly,
+          family,
           search,
         },
         pagination,

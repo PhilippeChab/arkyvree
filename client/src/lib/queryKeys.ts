@@ -44,8 +44,8 @@ export const QUERY_KEYS = {
     ownerProgression: (id: string, ownerId: string) =>
       ["rulesets", "detail", id, "owner", ownerId, "progression"] as const,
     sectionGrouped: (id: string, section: string) => ["rulesets", "detail", id, section, "grouped"] as const,
-    familyVariants: (id: string, section: string, family: string, childOnly: boolean) =>
-      ["rulesets", "detail", id, section, "family", family, childOnly] as const,
+    familyVariants: (id: string, section: string, family: string) =>
+      ["rulesets", "detail", id, section, "family", family] as const,
     entity: (id: string, entityType: string, entityId: string) =>
       ["rulesets", "detail", id, "entity", entityType, entityId] as const,
     /**

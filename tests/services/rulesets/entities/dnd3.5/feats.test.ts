@@ -1,9 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import type { Aptitude, Klass } from "@/engine/rulesets/dnd3.5/index.ts";
+import { DND35_COMPLETE_SCOUNDREL_NAME } from "@/content/dnd3.5/rulesetNames.ts";
+import type { Aptitude, Feat, Klass } from "@/engine/rulesets/dnd3.5/index.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Characters, Entities, EntityLinks, EntitySnapshots } from "@/server/repositories/index.ts";
+import { Characters, Entities, EntityLinks, EntitySnapshots, fetchEveryPage } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
@@ -11,12 +13,40 @@ import { pickFeat } from "@/tests/support/dnd3.5/levels.ts";
 import { findLists } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { writeFieldValues } from "@/tests/support/ownerValues.ts";
-import { createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
+import {
+  createSeededTestRuleset,
+  createSeededTestRulesetWithExtensions,
+  createTestRuleset,
+  ownerSessionOf,
+  subscribeTestRuleset,
+} from "@/tests/support/rulesets.ts";
+import { findSeededRuleset, getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { CLASS_HD, CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** The aptitudes of the test's ruleset. */
 const APTITUDES = ["Combat", "Metamagic", "General"];
+
+/**
+ * A ruleset's feats page grouped by family, as its query asks for it (`where`: its pool, its search): every row, and
+ * each family's row's feats as it opens to them, through the same route with the family.
+ */
+async function featGroupsOf(rulesetId: string, where: { listedIn?: string; search?: string }) {
+  const session = await ownerSessionOf(rulesetId);
+  const rows = await fetchEveryPage((page) =>
+    EntitiesService.getEntityGroups(session, rulesetId, "feats", where, page),
+  );
+  const opened = new Map<string, { id: string; name: string }[]>();
+  for (const { count, group } of rows) {
+    if (group === null || count < 2) continue;
+    const family = { ...where, family: group };
+    opened.set(
+      group,
+      await fetchEveryPage((page) => EntitiesService.getEntityGroups(session, rulesetId, "feats", family, page)),
+    );
+  }
+  return { opened, rows };
+}
 
 async function linkedAptitudeIds(featId: string) {
   return (await findLists(db, [featId])).map((link) => link.toId).sort();
@@ -203,6 +233,67 @@ describe("EntitiesService: feats", () => {
       { name: "Cleave", group: null, count: 1 },
       { name: "Focus", group: "Focus", count: 2 },
     ]);
+  });
+
+  describe("the page's families", () => {
+    test("count a family's row as the feats it opens to, in a pool and for a search only their texts hold", async () => {
+      const ruleset = await createSeededTestRulesetWithExtensions(SEED_USER_ID);
+      const session = await ownerSessionOf(ruleset.id);
+      const general = (await getSeedCtx()).aptMap["General"];
+      const pool = await fetchEveryPage((page) =>
+        EntitiesService.getEntities(session, ruleset.id, "feats", { listedIn: general }, page),
+      );
+      const inPool = new Set(pool.map((feat) => feat.id));
+
+      // In the General pool, Weapon Focus opens to its variants there: no Deity's Weapon Focus, no War Domain Weapon
+      const pooled = await featGroupsOf(ruleset.id, { listedIn: general });
+      expect([...pooled.opened.keys()]).toContain("Weapon Focus");
+      for (const row of pooled.rows.filter((row) => pooled.opened.has(row.group!))) {
+        const feats = pooled.opened.get(row.group!)!;
+        expect({ family: row.group, count: feats.length }).toEqual({ family: row.group, count: row.count });
+        expect(feats.filter((feat) => !inPool.has(feat.id) || !feat.name.startsWith(`${row.group}: `))).toEqual([]);
+      }
+
+      // "threat range" is in Improved Critical's texts, and in no feat's name
+      const searched = await featGroupsOf(ruleset.id, { search: "threat range" });
+      const improved = searched.rows.find((row) => row.group === "Improved Critical");
+      expect(improved?.count).toBeGreaterThan(1);
+      for (const row of searched.rows.filter((row) => searched.opened.has(row.group!)))
+        expect(searched.opened.get(row.group!)!.length).toBe(row.count);
+      expect(searched.opened.get("Improved Critical")!.map((feat) => feat.name)).toEqual(
+        expect.arrayContaining(["Improved Critical: Longsword"]),
+      );
+    }, 60_000);
+
+    test("list no feat in two groups: a family's are its variants alone", async () => {
+      // War Domain Weapon: Longsword is of the Weapon Focus and Martial Weapon Proficiency families, and a variant of
+      // neither
+      const ruleset = await createSeededTestRulesetWithExtensions(SEED_USER_ID);
+      const { opened, rows } = await featGroupsOf(ruleset.id, {});
+      const listed = rows.flatMap((row) => (opened.get(row.group!) ?? [row]).map((feat) => feat.id));
+      expect(listed.length).toBe(new Set(listed).size);
+      for (const [family, feats] of opened)
+        expect(feats.filter((feat) => !feat.name.startsWith(`${family}: `))).toEqual([]);
+      expect(rows.find((row) => row.name === "War Domain Weapon: Longsword")).toMatchObject({ count: 1 });
+    }, 60_000);
+
+    test("find a feat by its family as well as its name, so a family's search finds its every feat", async () => {
+      // Complete Scoundrel's 20 luck feats, Good Karma and Tempting Fate among them, which no name says
+      const scoundrel = await findSeededRuleset(DND35_COMPLETE_SCOUNDREL_NAME);
+      const ruleset = await createSeededTestRuleset(SEED_USER_ID);
+      await subscribeTestRuleset(ruleset.id, [scoundrel.id]);
+      const where = { entityType: "feats", rulesetId: scoundrel.id, fields: { [FEAT_FAMILY]: "Luck" } };
+      const luck = (await Entities.findList<Feat>(db, { ...where, order: "name" })).map((feat) => feat.name);
+      expect(luck).toHaveLength(20);
+
+      const { rows } = await featGroupsOf(ruleset.id, { search: "Luck" });
+      expect(rows.map((row) => row.name)).toEqual(expect.arrayContaining(luck));
+      const session = await ownerSessionOf(ruleset.id);
+      const listed = await fetchEveryPage((page) =>
+        EntitiesService.getEntities(session, ruleset.id, "feats", { search: "Luck" }, page),
+      );
+      expect(listed.map((feat) => feat.name)).toEqual(expect.arrayContaining(luck));
+    }, 30_000);
   });
 
   test("deletes a feat's aptitude and class-level links with it", async () => {

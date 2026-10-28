@@ -1,4 +1,4 @@
-import { and, count, eq, inArray, notInArray, or, type SQL, sql } from "drizzle-orm";
+import { and, count, eq, ilike, inArray, notInArray, or, type SQL, sql } from "drizzle-orm";
 import type { PgInsertValue } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
@@ -28,13 +28,17 @@ import { buildLineageCondition } from "@/server/repositories/rulesets/rulesetLin
 import { toFieldRows } from "./toFieldRows.ts";
 import { toQualified } from "./toQualified.ts";
 
-/** A picker's page of a kind's entities, among `ids`, of the values of their `fields`, but `excludeIds`. */
+/**
+ * A picker's page of a kind's entities, among `ids`, of the values of their `fields`, but `excludeIds`, searched by
+ * name and the `searchFields`.
+ */
 interface OptionWhere {
   entityType: string;
   excludeIds?: string[];
   fields?: EntityFilters["fields"];
   ids: string[];
   search?: string;
+  searchFields?: EntityFilters["searchFields"];
 }
 
 /** A page's bounds: the rows it reads, and those it skips. */
@@ -86,12 +90,13 @@ const WRITE_BATCH = 2000;
 
 /**
  * A page of groups' columns, a kind's entities grouped by a value (`value`: a feat's family), an entity holding none a
- * group alone: the group's name (`name`, as its read names it), its value (`group`), how many it holds (`count`), and
- * its smallest id (`id`), which stands for it.
+ * group alone: the group's name (`name`, as its read names it), its value (`group`), how many it holds (`count`), its
+ * smallest id (`id`), which stands for it, and a text of it (`description`, its entity's for a group of one).
  */
 function groupColumns(value: SQL<string | null>, name: SQL<string>) {
   return {
     count: count().as("group_count"),
+    description: sql<string | null>`min(${entitiesInRules.description})`.as("description"),
     group: sql<string | null>`min(${value})`.as("group"),
     id: sql<string>`min(${entitiesInRules.id}::text)`.as("group_id"),
     name: name.as("group_name"),
@@ -149,13 +154,16 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     ];
   }
 
-  /** A picker's conditions: a kind's entities among `ids`, of its values, searched by name, but `excludeIds`. */
+  /**
+   * A picker's conditions: a kind's entities among `ids`, of its values, searched by name and its `searchFields`, but
+   * `excludeIds`.
+   */
   private buildOptionConditions(where: OptionWhere): (SQL | false)[] {
     return [
       eq(entitiesInRules.type, where.entityType),
       inArray(entitiesInRules.id, where.ids),
       ...StoredEntities.buildValueConditions(where),
-      this.search(where.search, [entitiesInRules.name]),
+      this.buildSearchCondition(where, this.search(where.search, [entitiesInRules.name])),
       where.excludeIds !== undefined && where.excludeIds.length > 0 && notInArray(entitiesInRules.id, where.excludeIds),
     ];
   }
@@ -188,6 +196,22 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     const hidden = hiddenIds && hiddenIds.length > 0 ? notInArray(entitiesInRules.id, hiddenIds) : undefined;
     const inherited = inheritedClauses.length > 0 ? and(or(...inheritedClauses), hidden) : undefined;
     return inherited ? or(childOwned, inherited)! : childOwned;
+  }
+
+  /**
+   * A search's condition: what its own columns' search finds (`found`: `search` or `fuzzySearch`'s), or an entity
+   * holding the text in one of the fields its kind's search reads too (`searchFields`: a feat's family). None without a
+   * search.
+   */
+  private buildSearchCondition(
+    where: { search?: string; searchFields?: EntityFilters["searchFields"] },
+    found: SQL | false,
+  ): SQL | false {
+    const { search, searchFields = [] } = where;
+    if (!search || !found || searchFields.length === 0) return found;
+    const fields = entityFieldsInRules;
+    const held = sql`${entitiesInRules.id} IN (SELECT ${fields.entityId} FROM ${fields} WHERE ${and(inArray(fields.field, [...searchFields]), ilike(fields.textValue, `%${search}%`))})`;
+    return or(found, held)!;
   }
 
   /** The order of a list by a character's advancements: its entities whose owned ones it advanced in highest first. */
@@ -245,6 +269,49 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
       .orderBy(...order);
     const storage = Engine.storage();
     return rows.map((row) => ({ ...row, fields: storage.fieldsOf(row.type, row.fields) })) as R[];
+  }
+
+  /**
+   * A page of a kind's entities its conditions pick (`conditions`, among `ids` when it says), each group's as one row,
+   * the groups an entity is in given (`groups`: a feat's families it's a variant of), one in none a row of its own; or,
+   * of one group (`group`), its entities, each a row of its own. Each row is its group's columns (`groupColumns`), named
+   * for its entity when it holds one, else for its group, and in the order of its name.
+   */
+  private async readGroupPage(
+    db: Db,
+    where: {
+      conditions: (SQL | false)[];
+      group?: string;
+      groups: { group: string; id: string }[];
+      ids?: string[];
+    },
+    pagination: Pagination,
+  ) {
+    const { conditions, group, groups, ids } = where;
+    if (ids !== undefined && ids.length === 0) return this.paginated([], pagination);
+    const { limit, offset } = this.paginate(pagination);
+    // Each entity's group, as one parameter: a row per entity and group
+    const members = sql`jsonb_to_recordset(${JSON.stringify(groups)}::jsonb) AS member(id uuid, "group" text)`;
+    const groupName = sql<string | null>`member."group"`;
+    const name = sql<string>`CASE WHEN count(*) = 1 THEN min(${entitiesInRules.name}) ELSE coalesce(min(${groupName}), min(${entitiesInRules.name})) END`;
+    const rows = await db
+      .select(groupColumns(groupName, name))
+      .from(entitiesInRules)
+      .leftJoin(members, sql`member.id = ${entitiesInRules.id}`)
+      .where(
+        this.where([
+          ...conditions,
+          ids !== undefined && inArray(entitiesInRules.id, ids),
+          group !== undefined && sql`${groupName} = ${group}`,
+        ]),
+      )
+      // A group's entities as one row, but those of the group asked for, each its own
+      .groupBy(group === undefined ? sql`coalesce(${groupName}, ${entitiesInRules.id}::text)` : entitiesInRules.id)
+      // A group is a value or an entity alone: its smallest id is its own
+      .orderBy(...this.pageOrder(name, sql`min(${entitiesInRules.id}::text)`))
+      .limit(limit)
+      .offset(offset);
+    return this.paginated(rows, pagination);
   }
 
   /** Entities by id, as their records, in the order of `ids`. */
@@ -433,48 +500,30 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   }
 
   /**
-   * A ruleset's list of a kind grouped by a field's value (`groupField`: a feat's family), a group a value or an entity
-   * holding none: its name (its value, or the entity's), its value (`group`), how many it holds, and its smallest id
-   * (`groupColumns`).
+   * A ruleset's list of a kind, its entities grouped as its rules group them (`groups`: each entity and a group it's in,
+   * a feat and a family it's a variant of), one in none a group alone, searched as its list is (its name, its text, and
+   * its `searchFields`): each group's name, its value (`group`), how many it holds, and its smallest id
+   * (`groupColumns`). Or, of one group (`family`), its entities, read by the same conditions, so a group's row counts
+   * what it lists.
    */
   async findGroupPage(
     db: Db,
     where: Omit<EntityListWhere, "fields" | "linkedBy" | "links" | "orderBy" | "orderDir" | "partitions"> & {
-      groupField: string;
+      family?: string;
+      groups: { group: string; id: string }[];
     },
     pagination: Pagination,
   ) {
-    if (where.ids !== undefined && where.ids.length === 0) return this.paginated([], pagination);
-    const { limit, offset } = this.paginate(pagination);
-    const group = entityFieldsInRules;
-    const rows = await db
-      .select(
-        groupColumns(
-          sql`${group.textValue}`,
-          sql<string>`coalesce(min(${group.textValue}), min(${entitiesInRules.name}))`,
-        ),
-      )
-      .from(entitiesInRules)
-      .leftJoin(group, and(eq(group.entityId, entitiesInRules.id), eq(group.field, where.groupField)))
-      .where(
-        this.where([
-          eq(entitiesInRules.type, where.entityType),
-          this.buildRulesetCondition(db, where),
-          this.search(where.search, [entitiesInRules.name]),
-          where.ids !== undefined && inArray(entitiesInRules.id, where.ids),
-        ]),
-      )
-      .groupBy(sql`coalesce(${group.textValue}, ${entitiesInRules.id}::text)`)
-      // A group is a value or an entity alone: its smallest id is its own
-      .orderBy(
-        ...this.pageOrder(
-          sql`coalesce(min(${group.textValue}), min(${entitiesInRules.name}))`,
-          sql`min(${entitiesInRules.id}::text)`,
-        ),
-      )
-      .limit(limit)
-      .offset(offset);
-    return this.paginated(rows, pagination);
+    const conditions = [
+      eq(entitiesInRules.type, where.entityType),
+      this.buildRulesetCondition(db, where),
+      this.buildSearchCondition(
+        where,
+        this.fuzzySearch(where.search, [entitiesInRules.name, entitiesInRules.description]),
+      ),
+    ];
+    const { family, groups, ids } = where;
+    return await this.readGroupPage(db, { conditions, group: family, groups, ids }, pagination);
   }
 
   /**
@@ -570,32 +619,11 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     where: OptionWhere & { groups: { group: string; id: string }[] },
     pagination: Pagination,
   ) {
-    const { limit, offset } = this.paginate(pagination);
-    // Each entity's group, as one parameter: a row per entity and group
-    const groups = sql`jsonb_to_recordset(${JSON.stringify(where.groups)}::jsonb) AS member(id uuid, "group" text)`;
-    const groupName = sql<string | null>`member."group"`;
-    const rows = await db
-      .select({
-        ...groupColumns(
-          groupName,
-          sql<string>`CASE WHEN count(*) = 1 THEN min(${entitiesInRules.name}) ELSE coalesce(min(${groupName}), min(${entitiesInRules.name})) END`,
-        ),
-        description: sql<string>`min(${entitiesInRules.description})`.as("description"),
-      })
-      .from(entitiesInRules)
-      .leftJoin(groups, sql`member.id = ${entitiesInRules.id}`)
-      .where(this.where(this.buildOptionConditions(where)))
-      .groupBy(sql`coalesce(${groupName}, ${entitiesInRules.id}::text)`)
-      // A group is a value or an entity alone: its smallest id is its own
-      .orderBy(
-        ...this.pageOrder(
-          sql`coalesce(min(${groupName}), min(${entitiesInRules.name}))`,
-          sql`min(${entitiesInRules.id}::text)`,
-        ),
-      )
-      .limit(limit)
-      .offset(offset);
-    return this.paginated(rows, pagination);
+    return await this.readGroupPage(
+      db,
+      { conditions: this.buildOptionConditions(where), groups: where.groups },
+      pagination,
+    );
   }
 
   /** A picker's page of a kind's entities (a list's, as the ruleset composes it), by name: each its name and text. */
@@ -622,7 +650,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     const conditions = [
       eq(entitiesInRules.type, where.entityType),
       this.buildRulesetCondition(db, where),
-      this.fuzzySearch(search, searchColumns),
+      this.buildSearchCondition(where, this.fuzzySearch(search, searchColumns)),
       where.ids !== undefined && inArray(entitiesInRules.id, where.ids),
       linkedBy !== undefined &&
         sql`${entitiesInRules.id} IN (SELECT ${entityLinksInRules.toId} FROM ${entityLinksInRules} WHERE ${and(eq(entityLinksInRules.role, linkedBy.role), eq(entityLinksInRules.fromType, linkedBy.fromType), eq(entityLinksInRules.toType, where.entityType))})`,
