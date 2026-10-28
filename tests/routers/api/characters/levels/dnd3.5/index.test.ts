@@ -318,7 +318,7 @@ describe("character levels", () => {
     test("lists each spell once when sibling extensions both carry it", async () => {
       const ctx = await getSeedCtx();
       const fork = await createSeededTestRulesetWithExtensions(SEED_USER_ID);
-      expect(fork.extensionRulesetIds.length).toBeGreaterThan(0);
+      expect(fork.extensionIds.length).toBeGreaterThan(0);
       const { characterId } = await createCharacter(fork.id);
       const listNames = async (pool: string, classId: string, tier?: string) => {
         const answer = await expectOk(

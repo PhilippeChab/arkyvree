@@ -57,11 +57,11 @@ const SUBSCRIBED = and(
 
 /**
  * A ruleset's row as every read and write of it answers it: its columns, and the extensions it subscribes to
- * (`extensionRulesetIds`), in their order, which its view composes them in.
+ * (`extensionIds`), in their order, which its view composes them in.
  */
 const RULESET_COLUMNS = {
   ...getTableColumns(rulesetsInRules),
-  extensionRulesetIds: sql<string[]>`ARRAY(
+  extensionIds: sql<string[]>`ARRAY(
     SELECT ${rulesetExtensionsInRules.extensionId} FROM ${rulesetExtensionsInRules}
     WHERE ${SUBSCRIBED} ORDER BY ${rulesetExtensionsInRules.ordinal}
   )`,
@@ -236,18 +236,18 @@ class RulesetsRepository extends include(
     return await db.insert(this.table).values(values).returning(RULESET_COLUMNS);
   }
 
-  /** Whether a ruleset subscribes to the extension. */
-  async exists(db: Db, where: { extensionRulesetId: string }): Promise<boolean> {
+  /** Whether a ruleset subscribes to the extension (`subscribedTo`: its id). */
+  async exists(db: Db, where: { subscribedTo: string }): Promise<boolean> {
     const [row] = await db
       .select({ exists: sql<boolean>`true` })
       .from(this.table)
-      .where(buildSubscribersCondition(where.extensionRulesetId))
+      .where(buildSubscribersCondition(where.subscribedTo))
       .limit(1);
     return !!row;
   }
 
-  /** Rulesets by id, those subscribing to an extension (`extensionRulesetId`), or the system's own (`system`). */
-  async findMany(db: Db, where: { ids: string[] } | { extensionRulesetId: string } | { system: true }) {
+  /** Rulesets by id, those subscribing to an extension (`subscribedTo`: its id), or the system's own (`system`). */
+  async findMany(db: Db, where: { ids: string[] } | { subscribedTo: string } | { system: true }) {
     if ("ids" in where && where.ids.length === 0) return [];
     return await db
       .select(RULESET_COLUMNS)
@@ -255,7 +255,7 @@ class RulesetsRepository extends include(
       .where(
         this.branchWhere([
           "ids" in where && inArray(this.table.id, where.ids),
-          "extensionRulesetId" in where && buildSubscribersCondition(where.extensionRulesetId),
+          "subscribedTo" in where && buildSubscribersCondition(where.subscribedTo),
           "system" in where && eq(this.table.system, where.system),
         ]),
       )
