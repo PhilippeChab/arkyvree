@@ -19,10 +19,10 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
     protected override findRulesetIssues(): RulesIssue[] {
       const issues: RulesIssue[] = [];
 
-      // Check aptitudes: each pool should have available === 0. An issue carries its pool: its aptitude and spell level.
-      for (const { id, name, level, allowed, spent, available } of this.components.aptitudes.getSlotPools()) {
+      // Each pool should have available === 0. An issue carries its pool: its aptitude, and its spell level (`tier`).
+      for (const { id, name, spellLevel, allowed, spent, available } of this.components.aptitudes.getSlotPools()) {
         if (allowed === ALLOWED_ALL || available === 0) continue;
-        const pool = level === undefined ? name : `${name} (level ${level})`;
+        const pool = spellLevel === undefined ? name : `${name} (level ${spellLevel})`;
         issues.push({
           category: "aptitudes",
           message:
@@ -32,7 +32,7 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
           entityId: id,
           entityName: name,
           entityType: "aptitudes",
-          level,
+          tier: spellLevel,
         });
       }
 

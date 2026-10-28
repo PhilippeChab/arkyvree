@@ -45,13 +45,13 @@ interface OverfullPool {
   room: number;
 }
 
-/** A pool's slots: an unleveled aptitude's, or a leveled one's at a spell level (`level`). */
+/** A pool's slots: an unleveled aptitude's, or a leveled one's at a spell level (`spellLevel`). */
 interface SlotPool {
   allowed: number;
   available: number;
   id: string;
-  level?: number;
   name: string;
+  spellLevel?: number;
   spent: number;
 }
 
@@ -349,10 +349,10 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
         pools.push({ id, name, allowed: aptitude.allowed, spent: aptitude.spent, available: aptitude.available });
         continue;
       }
-      for (let level = 0; level <= MAX_SPELL_LEVEL; level++) {
-        const slots = this.spellLevelOf(aptitude, String(level));
+      for (let spellLevel = 0; spellLevel <= MAX_SPELL_LEVEL; spellLevel++) {
+        const slots = this.spellLevelOf(aptitude, String(spellLevel));
         if (slots)
-          pools.push({ id, name, level, allowed: slots.allowed, spent: slots.spent, available: slots.available });
+          pools.push({ id, name, spellLevel, allowed: slots.allowed, spent: slots.spent, available: slots.available });
       }
     }
     return pools;
