@@ -118,8 +118,8 @@ export default class EntityNames {
    * view shows, or as another the extensions bring.
    */
   async assertExtensionNamesAvailable(tx: Db, extensionIds: string[]): Promise<void> {
-    const extensionRulesetIds = [...this.ruleset.extensionRulesetIds, ...extensionIds];
-    const after = await CowDataReader.read(tx, { ...this.ruleset, extensionRulesetIds });
+    const subscribed = [...this.ruleset.extensionIds, ...extensionIds];
+    const after = await CowDataReader.read(tx, { ...this.ruleset, extensionIds: subscribed });
     const names = new Map<RulesetEntityType, string[]>();
     for (const entityType of RULESET_ENTITY_TYPES) {
       const brought = await RulesetEntities.findNames(tx, entityType, { rulesetIds: extensionIds });
@@ -201,8 +201,8 @@ export default class EntityNames {
    * the extension's entities (`copyIds`) go with it.
    */
   async assertReturningNamesAvailable(tx: Db, extensionId: string, copyIds: string[]): Promise<void> {
-    const extensionRulesetIds = this.ruleset.extensionRulesetIds.filter((id) => id !== extensionId);
-    const after = await CowDataReader.read(tx, { ...this.ruleset, extensionRulesetIds });
+    const extensionIds = this.ruleset.extensionIds.filter((id) => id !== extensionId);
+    const after = await CowDataReader.read(tx, { ...this.ruleset, extensionIds });
     const remaining = new Set([this.ruleset.id, ...after.sourceChain]);
     const returning = this.cow.getStaleIds().filter((id) => !after.isHidden(id));
     const names = new Map<RulesetEntityType, string[]>();

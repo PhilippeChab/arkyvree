@@ -57,11 +57,11 @@ const SUBSCRIBED = and(
 
 /**
  * A ruleset's row as every read and write of it answers it: its columns, and the extensions it subscribes to
- * (`extensionRulesetIds`), in their order, which its view composes them in.
+ * (`extensionIds`), in their order, which its view composes them in.
  */
 const RULESET_COLUMNS = {
   ...getTableColumns(rulesetsInRules),
-  extensionRulesetIds: sql<string[]>`ARRAY(
+  extensionIds: sql<string[]>`ARRAY(
     SELECT ${rulesetExtensionsInRules.extensionId} FROM ${rulesetExtensionsInRules}
     WHERE ${SUBSCRIBED} ORDER BY ${rulesetExtensionsInRules.ordinal}
   )`,

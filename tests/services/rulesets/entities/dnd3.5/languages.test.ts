@@ -34,7 +34,7 @@ describe("EntitiesService: languages", () => {
       name: "Extension Tongue",
       fields: { [LANGUAGE_TYPE]: "Standard" },
     });
-    const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
+    const host = await createTestRuleset(user.id, { extensionIds: [extension.id] });
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
     await CharacterLinks.createMany(db, character.id, "speaks", [{ entityId: language.id }]);
 

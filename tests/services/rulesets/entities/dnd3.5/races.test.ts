@@ -51,7 +51,7 @@ describe("EntitiesService: races", () => {
     test("is refused when a character of a ruleset using it as an extension is of that race", async () => {
       const { user, session, ruleset: extension } = await createTestUserAndRuleset();
       const race = await EntitiesService.createEntity(session, extension.id, "races", elf);
-      const host = await createTestRuleset(user.id, { extensionRulesetIds: [extension.id] });
+      const host = await createTestRuleset(user.id, { extensionIds: [extension.id] });
       await createTestCharacter(user.id, { rulesetId: host.id, links: { race: race.id } });
       expect(EntitiesService.deleteEntity(session, extension.id, "races", race.id)).rejects.toThrow(ConflictError);
     });

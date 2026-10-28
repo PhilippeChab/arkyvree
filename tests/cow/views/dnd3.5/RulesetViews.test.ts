@@ -585,7 +585,7 @@ describe("RulesetViews", () => {
       const child = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,
         ancestorRulesetIds: [seed.id],
-        extensionRulesetIds: [extA.id, extB.id],
+        extensionIds: [extA.id, extB.id],
       });
       RulesetViews.invalidateAll();
 
@@ -630,7 +630,7 @@ describe("RulesetViews", () => {
       const child = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,
         ancestorRulesetIds: [seed.id],
-        extensionRulesetIds: [extA.id, extB.id],
+        extensionIds: [extA.id, extB.id],
       });
       RulesetViews.invalidateAll();
 
@@ -668,7 +668,7 @@ describe("RulesetViews", () => {
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,
         ancestorRulesetIds: [seed.id],
-        extensionRulesetIds: [first.id, second.id],
+        extensionIds: [first.id, second.id],
       });
       const [ownFeat] = await Entities.createMany<Feat>(db, "feats", [{ name: featName, rulesetId: fork.id }]);
       const [ownItem] = await Entities.createMany<Item>(db, "items", [
@@ -713,7 +713,7 @@ describe("RulesetViews", () => {
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,
         ancestorRulesetIds: [seed.id],
-        extensionRulesetIds: [book.id],
+        extensionIds: [book.id],
       });
       const [ownClass] = await Entities.createMany<Klass>(db, "classes", [
         { name, rulesetId: fork.id, fields: { [CLASS_HD]: 10 } },
@@ -747,7 +747,7 @@ describe("RulesetViews", () => {
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,
         ancestorRulesetIds: [seed.id],
-        extensionRulesetIds: [book.id],
+        extensionIds: [book.id],
       });
       const [ownClass] = await Entities.createMany<Klass>(db, "classes", [
         { name: "Cleric", rulesetId: fork.id, fields: { [CLASS_HD]: 8 } },
@@ -771,7 +771,7 @@ describe("RulesetViews", () => {
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,
         ancestorRulesetIds: [seed.id],
-        extensionRulesetIds: [first.id, second.id],
+        extensionIds: [first.id, second.id],
       });
       const copy = await copyEntity(db, "aptitudes", secondList.id, fork);
       const [firstList] = await Entities.createMany<Aptitude>(db, "aptitudes", [{ name, rulesetId: first.id }]);
