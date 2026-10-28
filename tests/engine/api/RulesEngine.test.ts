@@ -129,7 +129,7 @@ describe("The rules' engine", () => {
           copies: COPIES.map(() => copies),
           groups: !!families,
           // A family is no filter of its list: its groups' route opens one (`family`)
-          families: families && false,
+          families: families ? false : undefined,
           levels,
           partitioned,
           pools: roles.map((role) => pools?.role === role),
