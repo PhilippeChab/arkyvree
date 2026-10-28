@@ -161,7 +161,7 @@ describe("authentication", () => {
       const first = await signUpAndVerify("taken");
       const { api } = await signUpAndVerify("taker");
       const response = await api.auth.profile.$put({ json: { emailAddress: first.email } });
-      await expectStatus(response, 400);
+      await expectStatus(response, 409);
       expect(await response.json()).toMatchObject({ message: expect.stringContaining("Email address already in use") });
     });
 
