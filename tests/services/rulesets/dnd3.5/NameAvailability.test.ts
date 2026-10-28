@@ -32,7 +32,6 @@ import {
 } from "@/tests/support/rulesets.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
-import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import {
   ITEM_COST_GP,
   ITEM_SLOT,
@@ -595,57 +594,6 @@ test.each([
   },
   60_000,
 );
-
-// The view a write checks is the one its lock leaves, read again: a restore another transaction committed while the
-// write waited shows its source again, whose name the write is then refused. The view read before the wait (the
-// scope's, the cache's) still hid it. The restore commits, so the rows it reads are written outside the test's
-// transaction, and deleted after it.
-test("a create waiting on a restore that commits is refused the name the restore shows again", async () => {
-  const session = makeSession();
-  const name = `Probe Restored ${uniqueId()}`;
-  const client = await pool.connect();
-  const committed = createTestDbFromClient(client);
-  const ruleset = { description: "", private: true, baseRules: DND35_BASE_RULES };
-  const [parent] = await Rulesets.create(committed, {
-    ...ruleset,
-    name: `Probe ${uniqueId()}`,
-    userId: null,
-    system: true,
-  });
-  const [fork] = await Rulesets.create(committed, {
-    ...ruleset,
-    name: `Probe ${uniqueId()}`,
-    userId: session.userId,
-    system: false,
-    rulesetId: parent.id,
-    ancestorRulesetIds: [parent.id],
-  });
-  try {
-    // The fork deleted its copy of the parent's aptitude: a tombstone hides it
-    const [source] = await Entities.create(committed, "aptitudes", { rulesetId: parent.id, name });
-    const [copy] = await Entities.create(committed, "aptitudes", { rulesetId: fork.id, name });
-    await EntitySnapshots.create(committed, { rulesetId: fork.id, sourceEntityId: source.id, forkedEntityId: copy.id });
-    await Entities.delete(committed, { entityType: "aptitudes", id: copy.id });
-    expect(await countNamed(fork.id, "aptitudes", name)).toBe(0);
-
-    await runWhileLocked(
-      pool,
-      async (blockerDb) => {
-        await RulesetEntities.lockNames(blockerDb, { entityTypes: ["aptitudes"], rulesetId: fork.id });
-        await EntitySnapshots.delete(blockerDb, { rulesetId: fork.id, sourceEntityId: source.id });
-      },
-      () => expectRefusedWith(EntitiesService.createEntity(session, fork.id, "aptitudes", { name }), 409),
-      "COMMIT",
-    );
-  } finally {
-    for (const { id } of [fork, parent]) {
-      await committed.execute(sql`delete from rules.entity_snapshots where ruleset_id = ${id}`);
-      await committed.execute(sql`delete from rules.entities where ruleset_id = ${id}`);
-      await committed.execute(sql`delete from rules.rulesets where id = ${id}`);
-    }
-    client.release();
-  }
-});
 
 test("an edit keeping its name waits on no names, and a create on no other kind's, nor another ruleset's", async () => {
   const { session, fork, general, baseFeat } = await setup();

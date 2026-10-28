@@ -208,7 +208,11 @@ through its transaction, never the cache: the second of two such writes checks
 what the first wrote. A subscribe and an unsubscribe lock every kind's, in the
 modules' order, and check the ruleset's extensions again on the row the lock
 read. A save that makes entities beside its own (3.5's generated feats) locks
-their kinds with its own, in one call, and checks their names too; an edit that
+their kinds with its own, in one call, and checks their names too. One another
+save took since the save's view was read (a restore showing an inherited feat
+again, a subscribe, a create) has the save plan again, once, from the view read
+afresh (`EntityWriter.checkMade`), whose rules then make none of it, as when it
+runs after that save; a name the fresh plan still takes is refused. An edit that
 keeps its name and makes none locks nothing. The locks are the ruleset's own: a
 write to a ruleset of its source chain (its parent, an extension it subscribes
 to) checks no view built on that ruleset, so it waits on none of them.
