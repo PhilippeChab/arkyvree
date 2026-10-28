@@ -800,6 +800,9 @@ describe("LevelsService", () => {
       expect(granted.map((name) => held.filter(({ entity }) => entity.id === feats[name].id).length)).toEqual([
         1, 1, 2,
       ]);
+      // The grant kept is the first level's: the feat keeps its level
+      const powerAttack = held.find(({ entity }) => entity.id === feats["Power Attack"].id);
+      expect(powerAttack?.classLevelId).toBe(classLevels[0].id);
     });
 
     test("stop granting a feat the fork deletes", async () => {
