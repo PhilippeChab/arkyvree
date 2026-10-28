@@ -9,7 +9,7 @@ Rulesets define game rules (races, classes, feats, skills, items, spells, etc.) 
 ```
 Base Ruleset (D&D 3.5)           ← system: true, userId: null, no parent
 ├── Complete Warrior (extension)  ← system: true, rulesetId: baseId, published
-├── User's Fork (draft)           ← userId set, rulesetId: baseId
+├── User's Fork (draft)           ← system: false, userId set (null once its owner's account is deleted), rulesetId: baseId
 │   └── Complete Warrior (subscribed extension)
 └── Another User's Fork
 ```
