@@ -44,7 +44,7 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestClassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { addClassSkills, addLists, findLists } from "@/tests/support/dnd3.5/links.ts";
 import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
-import { copyEntity, createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
+import { copyEntity, createTestRuleset, ownerSessionOf, sourcesOf } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import {
@@ -458,9 +458,9 @@ describe("RulesetsService", () => {
         status: "Draft",
         userId: user.id,
         rulesetId: parent.id,
-        extensionIds: [extension.id],
         baseRules: parent.baseRules,
       });
+      expect((await sourcesOf(created.id)).extensionIds).toEqual([extension.id]);
       expect(
         (await Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: created.id }, firstPage)).items,
       ).toEqual([]);
