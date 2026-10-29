@@ -24,7 +24,7 @@ class TargetPathsService {
     flat: boolean = false,
   ) {
     return await withReadableRuleset(db, session, rulesetId, async (scope) => {
-      const catalog = await RulesetViews.getTargetPaths(scope.ruleset, kind);
+      const catalog = await RulesetViews.getTargetPaths(scope, kind);
       const completions = Engine.for(scope)
         .targetPaths()
         .getCompletions(catalog, kind, { flat, partialPath, position, search }, entityType);
@@ -46,7 +46,7 @@ class TargetPathsService {
     return await withReadableRuleset(db, session, rulesetId, async (scope) =>
       Engine.for(scope)
         .targetPaths()
-        .validate(await RulesetViews.getTargetPaths(scope.ruleset, kind), path, entityType),
+        .validate(await RulesetViews.getTargetPaths(scope, kind), path, entityType),
     );
   }
 }

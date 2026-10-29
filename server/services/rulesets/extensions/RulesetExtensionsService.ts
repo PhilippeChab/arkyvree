@@ -49,6 +49,7 @@ class RulesetExtensionsService {
       // 1. Validate ruleset
       const { policy, ruleset: childRuleset } = await getReadableRuleset(tx, session, id);
       policy.canSubscribeExtension({ usedAsExtension: await Rulesets.exists(tx, { subscribedTo: id }) });
+      const sources = (await Rulesets.findSources(tx, { id }))!;
 
       // 2. Validate each extension
       const newExtensionIds: string[] = [];
@@ -72,14 +73,13 @@ class RulesetExtensionsService {
         if (childRuleset.rulesetId !== extension.rulesetId)
           throw new UnprocessableEntityError("Extension must share a common ancestor ruleset");
 
-        if (childRuleset.extensionIds.includes(extensionId))
-          throw new ConflictError("Already subscribed to this extension");
+        if (sources.extensionIds.includes(extensionId)) throw new ConflictError("Already subscribed to this extension");
 
         newExtensionIds.push(extensionId);
       }
 
       // Its view would show no two entities of a name it shows one of, nor two the extensions bring
-      const names = new EntityNames(childRuleset, await CowDataReader.read(tx, childRuleset));
+      const names = new EntityNames(sources, await CowDataReader.read(tx, sources));
       await names.assertExtensionNamesAvailable(tx, newExtensionIds);
 
       // 3. The ruleset changes now, and subscribes to them after those it subscribes to, in their order. Its row's
@@ -106,10 +106,11 @@ class RulesetExtensionsService {
   async unsubscribeExtension(session: Session, id: string, extensionId: string) {
     const result = await withTransaction(async (tx) => {
       // 1. Validate
-      const { policy, ruleset } = await getReadableRuleset(tx, session, id);
+      const { policy } = await getReadableRuleset(tx, session, id);
       policy.canUnsubscribeExtension();
 
-      if (!ruleset.extensionIds.includes(extensionId)) throw new NotFoundError("Not subscribed to this extension");
+      const sources = (await Rulesets.findSources(tx, { id }))!;
+      if (!sources.extensionIds.includes(extensionId)) throw new NotFoundError("Not subscribed to this extension");
 
       // 2. The fork's copies of the extension's entities: the snapshots whose source belongs to the extension (a snapshot
       // whose source is gone belongs to none)
@@ -125,10 +126,10 @@ class RulesetExtensionsService {
         ]),
       );
       // What the book hid shows again: its view would show no two entities of a name, as a subscribe's wouldn't
-      const names = new EntityNames(ruleset, await CowDataReader.read(tx, ruleset));
+      const names = new EntityNames(sources, await CowDataReader.read(tx, sources));
       await names.assertReturningNamesAvailable(tx, extensionId, [...copies.values()].flat());
       // What leaves with the book, each with what the fork's view shows in its place once it's gone, if anything
-      const departures = await findDepartures(tx, ruleset, extensionId, copies);
+      const departures = await findDepartures(tx, sources, extensionId, copies);
       policy.canUnsubscribeExtension({ inUse: await this.isExtensionInUseByHost(tx, id, departures) });
 
       // What the fork and its characters keep that names what leaves names what stands in its place, or the

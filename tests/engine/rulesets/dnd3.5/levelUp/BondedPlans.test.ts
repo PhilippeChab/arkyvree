@@ -4,12 +4,12 @@ import RulesError from "@/engine/core/RulesError.ts";
 import BondedPlans from "@/engine/rulesets/dnd3.5/levelUp/BondedPlans.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { CharacterAdvancements, Characters, Rulesets } from "@/server/repositories/index.ts";
+import { CharacterAdvancements, Characters } from "@/server/repositories/index.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { createDruidWithCompanion, createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
+import { readView } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 
 /** The refusal `plan` throws. */
@@ -33,7 +33,7 @@ async function masterOf(create: () => ReturnType<typeof createDruidWithCompanion
   const { ctx, masterId, bonded } = await create();
   const record = (await Characters.findOne(db, { id: masterId }))!;
   const master = await buildAs(DetailedCharacter, record);
-  const view = Dnd35View.of(await RulesetViews.getData((await Rulesets.findOne(db, { id: ctx.rulesetId }))!));
+  const view = Dnd35View.of(await readView(ctx.rulesetId));
   return { bonded, ctx, master, record, view };
 }
 

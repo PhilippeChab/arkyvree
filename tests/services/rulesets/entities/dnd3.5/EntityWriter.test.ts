@@ -35,7 +35,7 @@ async function deleteInheritedFeat() {
   const session = makeSession();
   const parent = await createTestRuleset(session.userId);
   const [feat] = await Entities.create<Feat>(db, "feats", { name: "Probe Inherited Feat", rulesetId: parent.id });
-  const fork = await createTestRuleset(session.userId, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+  const fork = await createTestRuleset(session.userId, { rulesetId: parent.id });
   await withRulesetScope(db, fork.id, async () => undefined);
   await Entities.delete(db, { entityType: "feats", id: feat.id });
   return { session, feat, rulesetId: fork.id };
@@ -95,7 +95,7 @@ describe("EntityWriter: an entity deleted since the view was read", () => {
       fields: { [CLASS_HD]: 8 },
     });
     const [level] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
-    const fork = await createTestRuleset(session.userId, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+    const fork = await createTestRuleset(session.userId, { rulesetId: parent.id });
     // The view is read; then another write copies the class and deletes its copy's level
     await withRulesetScope(db, fork.id, async () => undefined);
     const copy = await copyEntity(db, "classes", klass.id, fork);
@@ -131,7 +131,7 @@ describe("EntityWriter.createMany: several rows of one plan", () => {
     const general = (await Entities.findOne<Aptitude>(db, {
       entityType: "aptitudes",
       name: "General",
-      rulesetId: ruleset.ancestorRulesetIds[0],
+      rulesetId: ruleset.rulesetId!,
     }))!;
     // A feat's pools, a list of links no item's variants carry: what a kind's copies would write past their rows
     const plan = {

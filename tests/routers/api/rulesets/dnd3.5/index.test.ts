@@ -29,7 +29,7 @@ describe("rulesets", () => {
   test("lists a user's forks of one kind, however many of another come first", async () => {
     const { rulesetId } = await getSeedCtx();
     const { api: userApi, user } = await createSignedInUser();
-    const fork = { rulesetId, ancestorRulesetIds: [rulesetId] };
+    const fork = { rulesetId };
     // The oldest, so a list by creation, the newest first, holds it last
     const playable = await createTestRuleset(user.id, { ...fork, createdAt: "2000-01-01T00:00:00Z" });
     // More forks published as an extension than a page holds

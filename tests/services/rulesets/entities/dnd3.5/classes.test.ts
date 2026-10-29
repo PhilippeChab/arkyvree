@@ -151,7 +151,7 @@ describe("EntitiesService: classes", () => {
       level: "1",
       chainingOperator: "and",
     });
-    const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+    const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
 
     const copy = await EntitiesService.updateEntity(session, fork.id, "classes", klass.id, {
       name: "Cleric",

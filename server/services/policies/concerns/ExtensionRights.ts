@@ -6,13 +6,14 @@ import type RulesetRoles from "@/server/services/policies/RulesetRoles.ts";
 export function ExtensionRights<B extends Constructor<RulesetRoles>>(Base: B) {
   abstract class WithExtensionRights extends Base {
     /**
-     * Whether the ruleset can be published as an extension, or made one: a fork that subscribes to none, so subscribers
-     * never walk a chain of extensions. Whoever asks: who may publish or edit it is `canPublish`'s and `canUpdate`'s.
+     * Whether the ruleset can be published as an extension, or made one: a fork that subscribes to none
+     * (`hasExtensions`: it subscribes to one), so subscribers never walk a chain of extensions. Whoever asks: who may
+     * publish or edit it is `canPublish`'s and `canUpdate`'s.
      */
-    canBeExtension() {
+    canBeExtension({ hasExtensions }: { hasExtensions: boolean }) {
       if (!this.entity.rulesetId) throw new UnprocessableEntityError("Only forks can be published as extensions");
 
-      if (this.entity.extensionIds.length > 0)
+      if (hasExtensions)
         throw new UnprocessableEntityError("A ruleset that subscribes to extensions cannot itself be an extension");
 
       return true;

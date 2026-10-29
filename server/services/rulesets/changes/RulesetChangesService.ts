@@ -107,11 +107,12 @@ class RulesetChangesService {
    */
   async revertOverride(session: Session, rulesetId: string, entityType: RulesetEntityType, entityId: string) {
     const subscribers = await withTransaction(async (tx) => {
-      const { policy, ruleset } = await getReadableRuleset(tx, session, rulesetId);
+      const { policy } = await getReadableRuleset(tx, session, rulesetId);
       policy.canUpdateEntity();
 
       // The parent's entity shows again: under a name its view shows no other entity of
-      const names = new EntityNames(ruleset, await CowDataReader.read(tx, ruleset));
+      const sources = (await Rulesets.findSources(tx, { id: rulesetId }))!;
+      const names = new EntityNames(sources, await CowDataReader.read(tx, sources));
       await EntityRevert.revert(tx, entityType, entityId, rulesetId, names);
       // The rulesets built on it, whose rows may have named the copy: its subscribers, when it's an extension
       return await Rulesets.findMany(tx, { subscribedTo: rulesetId });

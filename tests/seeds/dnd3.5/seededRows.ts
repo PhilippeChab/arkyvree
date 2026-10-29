@@ -5,6 +5,7 @@ import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
 import { rawLists } from "@/tests/support/dnd3.5/rawLists.ts";
+import { readView } from "@/tests/support/rulesets.ts";
 
 /** A requirement as its level and check, "2 classes.fighter.level greater_than_or_equal 4", or its level and chaining for a group, "1 or". */
 export function describeRequirement(r: Requirement) {
@@ -20,7 +21,7 @@ export async function seededRows(rulesetName = DND35_RULESET_NAME) {
   const ruleset = await Rulesets.findOne(db, { name: rulesetName });
   if (!ruleset) throw new Error(`${rulesetName} isn't seeded`);
   const raw = await RulesetViews.getRawData(ruleset.id);
-  const view = await RulesetViews.getData(ruleset);
+  const view = await readView(ruleset.id);
   const listedIn = (entity: { id: string }) =>
     (raw.links.get(entity.id)?.links ?? [])
       .filter((link) => link.role === "listedIn")

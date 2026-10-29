@@ -17,7 +17,7 @@ import { insertRows } from "@/tests/support/database.ts";
 import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { writeFieldValues } from "@/tests/support/ownerValues.ts";
-import { copyEntity, createTestRuleset } from "@/tests/support/rulesets.ts";
+import { copyEntity, createTestRuleset, readCowData, readView } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { CLASS_HD, ITEM_COST_GP, ITEM_IS_TEMPLATE, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -28,16 +28,15 @@ function createBook(seedId: string) {
     private: false,
     status: "Published",
     rulesetId: seedId,
-    ancestorRulesetIds: [seedId],
   });
 }
 
 function createFork(seedId: string) {
-  return createTestRuleset(SEED_USER_ID, { rulesetId: seedId, ancestorRulesetIds: [seedId] });
+  return createTestRuleset(SEED_USER_ID, { rulesetId: seedId });
 }
 
-async function composeFork(fork: Parameters<typeof RulesetViews.getData>[0]) {
-  return RulesetViews.getData(fork);
+async function composeFork(fork: { id: string }) {
+  return readView(fork.id);
 }
 
 async function getRuleset() {
@@ -56,7 +55,7 @@ describe("RulesetViews", () => {
   test("getCowData returns correct structure for base ruleset", async () => {
     const ruleset = await getRuleset();
 
-    const cowData = await RulesetViews.getCowData(ruleset);
+    const cowData = await readCowData(ruleset.id);
 
     expect(cowData).toBeDefined();
     expect(cowData.sourceChain).toBeArray();
@@ -68,8 +67,8 @@ describe("RulesetViews", () => {
   test("getCowData returns same result on second call (cached)", async () => {
     const ruleset = await getRuleset();
 
-    const first = await RulesetViews.getCowData(ruleset);
-    const second = await RulesetViews.getCowData(ruleset);
+    const first = await readCowData(ruleset.id);
+    const second = await readCowData(ruleset.id);
 
     // Same reference — confirms it was served from cache
     expect(second).toBe(first);
@@ -78,9 +77,9 @@ describe("RulesetViews", () => {
   test("invalidateEntities clears COW cache for a specific ruleset", async () => {
     const ruleset = await getRuleset();
 
-    const first = await RulesetViews.getCowData(ruleset);
+    const first = await readCowData(ruleset.id);
     RulesetViews.invalidateEntities(ruleset.id);
-    const second = await RulesetViews.getCowData(ruleset);
+    const second = await readCowData(ruleset.id);
 
     // Different reference — confirms cache was invalidated and data re-fetched
     expect(second).not.toBe(first);
@@ -91,7 +90,7 @@ describe("RulesetViews", () => {
   test("getData returns all entity types", async () => {
     const ruleset = await getRuleset();
 
-    const rulesetData = await RulesetViews.getData(ruleset);
+    const rulesetData = await readView(ruleset.id);
     const dnd35 = Dnd35View.of(rulesetData);
 
     expect(rulesetData).toBeDefined();
@@ -127,9 +126,9 @@ describe("RulesetViews", () => {
   test("getData produces structurally stable composed output", async () => {
     const ruleset = await getRuleset();
 
-    const first = await RulesetViews.getData(ruleset);
+    const first = await readView(ruleset.id);
     const firstView = Dnd35View.of(first);
-    const second = await RulesetViews.getData(ruleset);
+    const second = await readView(ruleset.id);
     const secondView = Dnd35View.of(second);
 
     // Compose produces a fresh object each call, but the content must match.
@@ -166,7 +165,7 @@ describe("RulesetViews", () => {
       ["DAMAGE_TYPE", "Slashing"],
     ]);
 
-    const data = await RulesetViews.getData(ruleset);
+    const data = await readView(ruleset.id);
     expect(data.modifiersBySource.get(item.id)?.map((m) => m.target)).toEqual([
       "abilities.dex.score",
       "abilities.str.score",
@@ -184,7 +183,7 @@ describe("RulesetViews", () => {
 
     // A user-owned fork should NOT be pinned — forks come and go and pinning
     // them would starve the LRU budget intended for bases + extensions.
-    const userFork = await createTestRuleset(SEED_USER_ID, { rulesetId: ruleset.id, ancestorRulesetIds: [ruleset.id] });
+    const userFork = await createTestRuleset(SEED_USER_ID, { rulesetId: ruleset.id });
     expect((await RawDataReader.read(userFork.id)).pinned).toBe(false);
 
     // An orphaned fork (userId nulled out by Rulesets.orphan) still has system = false
@@ -196,16 +195,16 @@ describe("RulesetViews", () => {
   test("invalidate clears COW and raw entity caches", async () => {
     const ruleset = await getRuleset();
 
-    const cowData = await RulesetViews.getCowData(ruleset);
+    const cowData = await readCowData(ruleset.id);
     const rawData = await RulesetViews.getRawData(ruleset.id);
-    const rulesetData = await RulesetViews.getData(ruleset);
+    const rulesetData = await readView(ruleset.id);
     const dnd35 = Dnd35View.of(rulesetData);
 
     RulesetViews.invalidate(ruleset.id);
 
-    const cowData2 = await RulesetViews.getCowData(ruleset);
+    const cowData2 = await readCowData(ruleset.id);
     const rawData2 = await RulesetViews.getRawData(ruleset.id);
-    const rulesetData2 = await RulesetViews.getData(ruleset);
+    const rulesetData2 = await readView(ruleset.id);
     const ruleset2View = Dnd35View.of(rulesetData2);
 
     // Different references for raw + COW — confirms those caches were invalidated.
@@ -224,12 +223,12 @@ describe("RulesetViews", () => {
   test("invalidateAll clears all cached data including pinned entries", async () => {
     const ruleset = await getRuleset();
 
-    const cowData = await RulesetViews.getCowData(ruleset);
+    const cowData = await readCowData(ruleset.id);
     const rawData = await RulesetViews.getRawData(ruleset.id);
 
     RulesetViews.invalidateAll();
 
-    const cowData2 = await RulesetViews.getCowData(ruleset);
+    const cowData2 = await readCowData(ruleset.id);
     const rawData2 = await RulesetViews.getRawData(ruleset.id);
 
     // Both caches cleared, including the pinned system-owned raw entry.
@@ -242,7 +241,7 @@ describe("RulesetViews", () => {
     const ruleset = await getRuleset();
     RulesetViews.invalidateAll();
 
-    const rulesetData = await RulesetViews.getData(ruleset);
+    const rulesetData = await readView(ruleset.id);
     const dnd35 = Dnd35View.of(rulesetData);
 
     // Verify ability names include D&D 3.5 standard abilities
@@ -272,7 +271,7 @@ describe("RulesetViews", () => {
       const seed = await getRuleset();
       const fork = await createFork(seed.id);
 
-      const seedData = await RulesetViews.getData(seed);
+      const seedData = await readView(seed.id);
       const seedView = Dnd35View.of(seedData);
       const forkData = await composeFork(fork);
       const forkView = Dnd35View.of(forkData);
@@ -305,7 +304,7 @@ describe("RulesetViews", () => {
 
     test("items cache includes templates AND non-template catalog items (no ITEM_IS_TEMPLATE filter)", async () => {
       const seed = await getRuleset();
-      const seedData = await RulesetViews.getData(seed);
+      const seedData = await readView(seed.id);
       const seedView = Dnd35View.of(seedData);
 
       // The seed should have BOTH templates (ITEM_IS_TEMPLATE true) and concrete catalog
@@ -318,7 +317,7 @@ describe("RulesetViews", () => {
 
     test("race modifiers are included in the composed modifiers array", async () => {
       const seed = await getRuleset();
-      const seedData = await RulesetViews.getData(seed);
+      const seedData = await readView(seed.id);
 
       // D&D 3.5 races define ability score modifiers (e.g., Dwarf CON+2), so
       // the composed modifiers must include rows with sourceType='races'.
@@ -332,7 +331,7 @@ describe("RulesetViews", () => {
 
     test("a class's and a class level's links are from the class and the level the view shows", async () => {
       const seed = await getRuleset();
-      const seedData = await RulesetViews.getData(seed);
+      const seedData = await readView(seed.id);
       const seedView = Dnd35View.of(seedData);
 
       for (const klass of seedView.classes)
@@ -422,7 +421,7 @@ describe("RulesetViews", () => {
       RulesetViews.invalidate(seed.id);
 
       // Sanity: seed compose sees the new feat + its customizations.
-      const seedBefore = await RulesetViews.getData(seed);
+      const seedBefore = await readView(seed.id);
       expect(Dnd35View.of(seedBefore).featsById.get(baseFeat.id)).toBeDefined();
       expect(seedBefore.modifiersBySource.get(baseFeat.id)?.some((m) => m.id === baseModifier.id)).toBe(true);
       expect(seedBefore.requirementsByEntity.get(baseFeat.id)?.length).toBe(1);
@@ -465,7 +464,7 @@ describe("RulesetViews", () => {
       const fork = await createFork(seed.id);
 
       const sampleFeats = await fetchEveryPage((p) =>
-        Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: seed.id, ancestorRulesetIds: [] }, p),
+        Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: seed.id }, p),
       );
       const sampleFeat = sampleFeats[0];
       expect(sampleFeat).toBeDefined();
@@ -478,7 +477,7 @@ describe("RulesetViews", () => {
 
       const forkData = await composeFork(fork);
       const forkView = Dnd35View.of(forkData);
-      const seedData = await RulesetViews.getData(seed);
+      const seedData = await readView(seed.id);
 
       // Fork's compose: the original ancestor feat is excluded, the COW copy is present.
       expect(forkView.feats.find((f) => f.id === sampleFeat.id)).toBeUndefined();
@@ -496,7 +495,7 @@ describe("RulesetViews", () => {
       const fork = await createFork(seed.id);
 
       const sampleFeats = await fetchEveryPage((p) =>
-        Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: seed.id, ancestorRulesetIds: [] }, p),
+        Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: seed.id }, p),
       );
       const sampleFeat = sampleFeats[0];
 
@@ -505,7 +504,7 @@ describe("RulesetViews", () => {
 
       const forkData = await composeFork(fork);
       const forkView = Dnd35View.of(forkData);
-      const seedData = await RulesetViews.getData(seed);
+      const seedData = await readView(seed.id);
 
       expect(forkView.feats.find((f) => f.id === sampleFeat.id)).toBeUndefined();
       // Deleted COW copy is also absent (archived).
@@ -541,7 +540,7 @@ describe("RulesetViews", () => {
       const fork = await createFork(seed.id);
 
       const [sampleFeat] = await fetchEveryPage((p) =>
-        Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: seed.id, ancestorRulesetIds: [] }, p),
+        Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: seed.id }, p),
       );
       const before = await composeFork(fork);
       const modifierCountBefore = (before.modifiersBySource.get(sampleFeat.id) ?? []).length;
@@ -584,12 +583,11 @@ describe("RulesetViews", () => {
       // Child fork subscribed to both extensions.
       const child = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,
-        ancestorRulesetIds: [seed.id],
         extensionIds: [extA.id, extB.id],
       });
       RulesetViews.invalidateAll();
 
-      const cowData = await RulesetViews.getCowData(child);
+      const cowData = await readCowData(child.id);
       // siblingIds should be precomputed and non-empty (one extension wins, the other is a loser).
       expect(cowData.siblingIds.size).toBeGreaterThan(0);
       const winnerId = cowData.resolve(baseFeat.id);
@@ -598,7 +596,7 @@ describe("RulesetViews", () => {
       const loserId = winnerId === cowA.id ? cowB.id : cowA.id;
       expect(cowData.siblingIds.has(loserId)).toBe(true);
 
-      const composed = await RulesetViews.getData(child);
+      const composed = await readView(child.id);
       const composedView = Dnd35View.of(composed);
       // Winner is present; loser and original base feat are excluded.
       expect(composedView.feats.find((f) => f.id === winnerId)).toBeDefined();
@@ -629,19 +627,18 @@ describe("RulesetViews", () => {
 
       const child = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,
-        ancestorRulesetIds: [seed.id],
         extensionIds: [extA.id, extB.id],
       });
       RulesetViews.invalidateAll();
 
-      const cowData = await RulesetViews.getCowData(child);
+      const cowData = await readCowData(child.id);
       const winnerId = cowData.resolve(baseItem.id);
       expect(cowData.isOverridden(baseItem.id)).toBe(true);
       expect([cowA.id, cowB.id]).toContain(winnerId!);
       const loserId = winnerId === cowA.id ? cowB.id : cowA.id;
       expect(cowData.siblingIds.has(loserId)).toBe(true);
 
-      const composed = await RulesetViews.getData(child);
+      const composed = await readView(child.id);
       const composedView = Dnd35View.of(composed);
       expect(composedView.items.find((i) => i.id === winnerId)).toBeDefined();
       expect(composedView.items.find((i) => i.id === loserId)).toBeUndefined();
@@ -667,7 +664,6 @@ describe("RulesetViews", () => {
       await Entities.update<Item>(db, "items", { name: itemName }, { id: bookItem.id as string });
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,
-        ancestorRulesetIds: [seed.id],
         extensionIds: [first.id, second.id],
       });
       const [ownFeat] = await Entities.createMany<Feat>(db, "feats", [{ name: featName, rulesetId: fork.id }]);
@@ -676,7 +672,7 @@ describe("RulesetViews", () => {
       ]);
       await insertRows(modifiersInCustomization, [{ ...STRENGTH_BONUS, sourceType: "feats", sourceId: firstFeat.id }]);
 
-      const cow = await RulesetViews.getCowData(fork);
+      const cow = await readCowData(fork.id);
       expect([firstFeat.id, secondFeat.id].map((id) => cow.resolve(id))).toEqual([ownFeat.id, ownFeat.id]);
       expect([bookItem.id as string, baseItem.id].map((id) => cow.resolve(id))).toEqual([ownItem.id, ownItem.id]);
       expect([firstFeat.id, secondFeat.id, bookItem.id as string].map((id) => cow.isShadowed(id))).toEqual([
@@ -689,7 +685,7 @@ describe("RulesetViews", () => {
       );
       expect(cow.hasSiblings(ownFeat.id)).toBe(false);
 
-      const view = await RulesetViews.getData(fork);
+      const view = await readView(fork.id);
       const dnd35 = Dnd35View.of(view);
       expect(dnd35.feats.filter((feat) => feat.name === featName).map((feat) => feat.id)).toEqual([ownFeat.id]);
       expect(dnd35.items.filter((item) => item.name === itemName).map((item) => item.id)).toEqual([ownItem.id]);
@@ -712,7 +708,6 @@ describe("RulesetViews", () => {
       ]);
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,
-        ancestorRulesetIds: [seed.id],
         extensionIds: [book.id],
       });
       const [ownClass] = await Entities.createMany<Klass>(db, "classes", [
@@ -722,7 +717,7 @@ describe("RulesetViews", () => {
         { ownerId: ownClass.id, position: 1 },
       ]);
 
-      const view = await RulesetViews.getData(fork);
+      const view = await readView(fork.id);
       const dnd35 = Dnd35View.of(view);
       expect(dnd35.classes.filter((klass) => klass.name === name).map((klass) => klass.id)).toEqual([ownClass.id]);
       expect(view.cow.resolve(bookFirst.id)).toBe(ownFirst.id);
@@ -746,7 +741,6 @@ describe("RulesetViews", () => {
       await copyEntity(db, "classes", coreCleric.id, book);
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,
-        ancestorRulesetIds: [seed.id],
         extensionIds: [book.id],
       });
       const [ownClass] = await Entities.createMany<Klass>(db, "classes", [
@@ -756,7 +750,7 @@ describe("RulesetViews", () => {
         { ownerId: ownClass.id, position: 1 },
       ]);
 
-      const view = await RulesetViews.getData(fork);
+      const view = await readView(fork.id);
       expect(view.cow.resolve(coreFirst.id)).toBe(ownFirst.id);
       expect(Dnd35View.of(view).classLevelsById.get(coreFirst.id)?.id).toBe(ownFirst.id);
     });
@@ -770,13 +764,12 @@ describe("RulesetViews", () => {
       const [secondList] = await Entities.createMany<Aptitude>(db, "aptitudes", [{ name, rulesetId: second.id }]);
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: seed.id,
-        ancestorRulesetIds: [seed.id],
         extensionIds: [first.id, second.id],
       });
       const copy = await copyEntity(db, "aptitudes", secondList.id, fork);
       const [firstList] = await Entities.createMany<Aptitude>(db, "aptitudes", [{ name, rulesetId: first.id }]);
 
-      const view = await RulesetViews.getData(fork);
+      const view = await readView(fork.id);
       expect(
         Dnd35View.of(view)
           .aptitudes.filter((list) => list.name === name)

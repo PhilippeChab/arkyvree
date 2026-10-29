@@ -2,15 +2,13 @@ import { describe, expect, test } from "bun:test";
 
 import FeatRules from "@/engine/rulesets/dnd3.5/rules/FeatRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import { RulesetViews } from "@/server/cow/index.ts";
-import { db } from "@/server/database/index.ts";
-import { Rulesets } from "@/server/repositories/index.ts";
+import { readView } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
 /** The seeded ruleset's feat rules, and its feats' ids by name. */
 async function seededRules() {
   const { rulesetId } = await getSeedCtx();
-  const data = await RulesetViews.getData((await Rulesets.findOne(db, { id: rulesetId }))!);
+  const data = await readView(rulesetId);
   const idOf = (name: string) => Dnd35View.of(data).feats.find((feat) => feat.name === name)!.id;
   return { idOf, rules: FeatRules.of(data) };
 }

@@ -59,17 +59,6 @@ describe("A table's diff", () => {
     expect(changes(null, 0)).toBe(1);
   });
 
-  test("writes a field that references other rows as a comment: its value is their names, which no id column takes", () => {
-    const diff = collectDiff(
-      [row("Homebrew", { ancestor_ruleset_ids: "Psionics" })],
-      [row("Homebrew", { ancestor_ruleset_ids: "Epic" }, "t1")],
-    );
-    expect(renderSql("rules.rulesets", diff, ["ancestor_ruleset_ids"])).toEqual([
-      "-- rules.rulesets:",
-      '--   Homebrew.ancestor_ruleset_ids: reference "Psionics", target "Epic" (UPDATE skipped — it references other rows)',
-    ]);
-  });
-
   test("reads for a person, and as the SQL that aligns the target, its one-sided rows as comments", () => {
     const diff = collectDiff(
       [row("Dodge", { description: "It's dodgy" }), row("Cleave", {})],

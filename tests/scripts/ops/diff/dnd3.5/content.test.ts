@@ -2,13 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import { sql } from "drizzle-orm";
 
-import {
-  COMPARED_TABLES,
-  LABELLED_COLUMNS,
-  pullTable,
-  UNCOMPARED_COLUMNS,
-  UNCOMPARED_TABLES,
-} from "@/scripts/ops/diff/content.ts";
+import { COMPARED_TABLES, pullTable, UNCOMPARED_COLUMNS, UNCOMPARED_TABLES } from "@/scripts/ops/diff/content.ts";
 import { collectDiff, diffIsEmpty, renderSql } from "@/scripts/ops/diff/rows.ts";
 import { db } from "@/server/database/index.ts";
 
@@ -265,8 +259,8 @@ describe("The content comparison (diff-prod)", () => {
     );
   });
 
-  // An id compared as is would differ between any two seeds; compared by name, SQL can't write it back
-  test("compares every reference by the names of the rows it references", async () => {
+  // An id compared as is would differ between any two seeds: a reference is compared by the key of what it names
+  test("compares no reference by its id", async () => {
     const references = new Set(
       (
         await query<{ name: string }>(
@@ -288,24 +282,9 @@ describe("The content comparison (diff-prod)", () => {
         }
       }
     }
-    const labelled = Object.entries(LABELLED_COLUMNS).flatMap(([table, columns]) =>
-      columns.map((c) => `${table}.${c}`),
-    );
-    expect([...compared].sort()).toEqual(labelled.sort());
+    expect([...compared]).toEqual([]);
     expect(ids).toEqual([]);
   }, 60_000);
-
-  test("writes no UPDATE for a reference that drifted, which would set an id to a name", async () => {
-    const [extension] = await query<{ id: string }>(
-      `select id from rules.rulesets where system and cardinality(ancestor_ruleset_ids) > 0 limit 1`,
-    );
-    const before = await pullTable(query, "rules.rulesets", extension.id);
-    await query(`update rules.rulesets set ancestor_ruleset_ids = '{}' where id = $1`, [extension.id]);
-    const diff = collectDiff(before, await pullTable(query, "rules.rulesets", extension.id));
-    const sqlLines = renderSql("rules.rulesets", diff, LABELLED_COLUMNS["rules.rulesets"]);
-    expect(sqlLines.some((line) => line.includes("ancestor_ruleset_ids") && line.startsWith("--"))).toBe(true);
-    expect(sqlLines.filter((line) => line.startsWith("UPDATE"))).toEqual([]);
-  });
 
   test("writes the UPDATE of a link's drifted column by the link's id", async () => {
     const [link] = await query<{ amount: number; id: string; ruleset_id: string }>(

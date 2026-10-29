@@ -1,15 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
 import PcgenNames from "@/engine/rulesets/dnd3.5/imports/pcgen/PcgenNames.ts";
-import { RulesetViews } from "@/server/cow/index.ts";
-import { db } from "@/server/database/index.ts";
-import { Rulesets } from "@/server/repositories/index.ts";
+import { readView } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
 /** The names of the seeded ruleset, as an import finds them. */
 async function seededNames() {
   const { rulesetId } = await getSeedCtx();
-  return new PcgenNames(await RulesetViews.getData((await Rulesets.findOne(db, { id: rulesetId }))!));
+  return new PcgenNames(await readView(rulesetId));
 }
 
 describe("PcgenNames", () => {

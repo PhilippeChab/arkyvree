@@ -174,7 +174,7 @@ describe("TargetPathsService", () => {
     const { rulesetId } = await getSeedCtx();
     const check = (value: string, target = "combat.ac.misc") =>
       withRulesetScope(db, rulesetId, async (scope) => {
-        const catalogs = await RulesetViews.getTargetPathCatalogs(scope.ruleset, "modifier");
+        const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "modifier");
         return Engine.for(scope).targetPaths().planModifier(catalogs, "characters", { operator: "add", target, value })
           .valueType;
       });
@@ -387,7 +387,7 @@ describe("TargetPathsService", () => {
   test("lists a fork's inherited paths", async () => {
     const { rulesetId } = await getSeedCtx();
     const { user } = await createTestUser();
-    const fork = await createTestRuleset(user.id, { rulesetId, ancestorRulesetIds: [rulesetId] });
+    const fork = await createTestRuleset(user.id, { rulesetId });
     const { paths, segmentLabels } = await readTargetPaths(fork.id, "modifier");
     expect(paths.some((p) => p.path.startsWith("aptitudes.wizardspells.0."))).toBe(true);
     expect(segmentLabels.strength).toBe("Strength");

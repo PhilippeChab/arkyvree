@@ -10,11 +10,15 @@ import {
 import { entitiesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
-import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { EntityLinks } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
-import { createSeededTestRulesetWithExtensions, ownerSessionOf } from "@/tests/support/rulesets.ts";
+import {
+  createSeededTestRulesetWithExtensions,
+  ownerSessionOf,
+  readView,
+  sourcesOf,
+} from "@/tests/support/rulesets.ts";
 
 /** The entities of `type` named `name` (`names`), with their rulesets' names, in the rulesets of `rulesetIds`. */
 async function namedEntities(type: string, names: string[], rulesetIds?: string[]) {
@@ -51,7 +55,7 @@ async function rulesetIdOf(name: string) {
  */
 async function setup() {
   const ruleset = await createSeededTestRulesetWithExtensions(SEED_USER_ID);
-  const rulesetData = await RulesetViews.getData(ruleset);
+  const rulesetData = await readView(ruleset.id);
   return { ruleset, cowData: rulesetData.cow, rulesetData };
 }
 
@@ -70,8 +74,7 @@ describe("aptitude deduplication across sibling extensions", () => {
     // lands on it.
     const general = Dnd35View.of(rulesetData).aptitudes.filter((a) => a.name === "General");
     expect(general).toHaveLength(1);
-    const ancestorIds = new Set(ruleset.ancestorRulesetIds);
-    expect(ancestorIds.has(general[0].rulesetId)).toBe(true);
+    expect(general[0].rulesetId).toBe(ruleset.rulesetId!);
   });
 
   test("CD spell is linked to Blackguard Spells via the winner aptitude id", async () => {
@@ -110,7 +113,7 @@ describe("aptitude deduplication across sibling extensions", () => {
   test("loser aptitude IDs resolve to the winner", async () => {
     const { ruleset, cowData, rulesetData } = await setup();
     // Fetch all raw "Assassin Spells" aptitudes across extensions
-    const extIds = ruleset.extensionIds;
+    const extIds = (await sourcesOf(ruleset.id)).extensionIds;
     const allAssassinApts = await namedEntities("aptitudes", ["Assassin Spells"], extIds);
 
     expect(allAssassinApts.length).toBeGreaterThan(1);

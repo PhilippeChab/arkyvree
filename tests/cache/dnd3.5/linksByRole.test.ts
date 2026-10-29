@@ -10,10 +10,10 @@ import { type SeedContext } from "@/database/seeders/dnd3.5/characters/seedConte
 import StorageEngine from "@/engine/api/StorageEngine.ts";
 import { type RulesetData, type ViewKinds, type ViewLink } from "@/engine/core/view/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { EntityLinks, Rulesets } from "@/server/repositories/index.ts";
 import { viewValuesOf } from "@/tests/support/ownerValues.ts";
+import { readView } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { SPELL_SCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -46,7 +46,7 @@ describe("the view's links by role — parity with the stored links", () => {
     ctx = await getSeedCtx();
     const ruleset = await Rulesets.findOne(db, { id: ctx.rulesetId });
     if (!ruleset) throw new Error("seed ruleset missing");
-    rulesetData = await RulesetViews.getData(ruleset);
+    rulesetData = await readView(ruleset.id);
   });
 
   test("a class level's granted feats are its stored grants links to feats, by their feats' names", async () => {

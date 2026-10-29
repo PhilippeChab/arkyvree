@@ -17,7 +17,7 @@ import {
   savedPicksOf,
 } from "@/tests/support/dnd3.5/levelPlans.ts";
 import { findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
-import { createSeededTestRulesetWithExtensions } from "@/tests/support/rulesets.ts";
+import { createSeededTestRulesetWithExtensions, sourcesOf } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 
 /** A plan's answer, as the API answers it. */
@@ -318,7 +318,7 @@ describe("character levels", () => {
     test("lists each spell once when sibling extensions both carry it", async () => {
       const ctx = await getSeedCtx();
       const fork = await createSeededTestRulesetWithExtensions(SEED_USER_ID);
-      expect(fork.extensionIds.length).toBeGreaterThan(0);
+      expect((await sourcesOf(fork.id)).extensionIds.length).toBeGreaterThan(0);
       const { characterId } = await createCharacter(fork.id);
       const listNames = async (pool: string, classId: string, tier?: string) => {
         const answer = await expectOk(

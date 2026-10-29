@@ -5,7 +5,7 @@ type SnapshotsByRuleset = Map<string, CowRows["snapshots"]>;
 
 /**
  * Each group of namesakes (rows sharing a key) of more than one row: its winner, the row closest in the chain, and its
- * losers. Closest-first: extensions come before ancestors in the chain, so an extension that natively reprints a base
+ * losers. Closest-first: extensions come before the parent in the chain, so an extension that natively reprints a base
  * entity wins and the base's aliases to it, the same direction as the snapshots' (extension overrides base, full stop).
  */
 function rankNamesakes<T extends { id: string; rulesetId: string }>(

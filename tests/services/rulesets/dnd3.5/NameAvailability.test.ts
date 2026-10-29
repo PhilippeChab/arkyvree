@@ -17,6 +17,7 @@ import {
   createSeededTestRuleset,
   createSeededTestRulesetWithExtensions,
   createTestRuleset,
+  sourcesOf,
 } from "@/tests/support/rulesets.ts";
 import { uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -100,7 +101,7 @@ async function publishExtension(rulesetId: string) {
 async function setup() {
   const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
-  const baseId = fork.ancestorRulesetIds[0];
+  const baseId = fork.rulesetId!;
   const general = (await Entities.findOne<Aptitude>(db, {
     entityType: "aptitudes",
     name: "General",
@@ -387,7 +388,7 @@ test("unsubscribing from an extension whose copy of a core feat the fork renamed
     'Cannot unsubscribe: feats "Dodge", which this extension replaces, would show again beside another of its name',
   );
   await expectRefusedWith(RulesetExtensionsService.unsubscribeExtension(session, fork.id, extension.id), 409);
-  expect((await Rulesets.findOne(db, { id: fork.id }))!.extensionIds).toEqual([extension.id]);
+  expect((await sourcesOf(fork.id)).extensionIds).toEqual([extension.id]);
   expect(await countNamed(fork.id, "feats", "Dodge")).toBe(1);
 
   // Once the fork renamed its own, the core feat comes back alone
@@ -400,7 +401,7 @@ test("unsubscribing from an extension whose copy of a core feat the fork renamed
 test("subscribing to an extension that shows a name its view shows twice no more often, or unsubscribing, is no clash", async () => {
   const session = makeSession();
   const base = await createTestRuleset(null);
-  const fork = { rulesetId: base.id, ancestorRulesetIds: [base.id] };
+  const fork = { rulesetId: base.id };
   // A familiar's race and an animal companion's of one name, as the core rules' Hawk
   const [twin] = await Entities.create<Race>(db, "races", {
     name: "Twin",

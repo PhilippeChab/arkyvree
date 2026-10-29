@@ -43,7 +43,7 @@ describe("EntitiesService: races", () => {
     test("is refused when a character of a fork is of that race", async () => {
       const { user, session, ruleset: parent } = await createTestUserAndRuleset();
       const race = await EntitiesService.createEntity(session, parent.id, "races", elf);
-      const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+      const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
       await createTestCharacter(user.id, { rulesetId: fork.id, links: { race: race.id } });
       expect(EntitiesService.deleteEntity(session, parent.id, "races", race.id)).rejects.toThrow(ConflictError);
     });

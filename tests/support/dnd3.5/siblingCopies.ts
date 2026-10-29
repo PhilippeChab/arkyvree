@@ -1,4 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
+import type { RulesetSources } from "@/engine/core/cow/index.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
 import type { KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
@@ -6,8 +7,9 @@ import { EntityEdit, RulesetViews } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { Entities, EntityLinks, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { viewValuesOf } from "@/tests/support/ownerValues.ts";
+import { readView, sourcesOf } from "@/tests/support/rulesets.ts";
 
-type Fork = Parameters<typeof RulesetViews.getData>[0];
+type Fork = Pick<RulesetSources, "id">;
 
 /** The entity type of a feat, a spell or an item of the view. */
 function typeOf(data: RulesetData, id: string): RulesetEntityType | undefined {
@@ -50,15 +52,15 @@ async function withCopy(
   check: (tx: Db, after: RulesetData, copyId: string) => Promise<void>,
 ) {
   await withTransaction(async (tx) => {
-    const { cow } = await RulesetViews.getData(fork);
-    const { id: copyId } = await new EntityEdit(fork, cow).cowToEdit(
+    const { cow } = await readView(fork.id);
+    const { id: copyId } = await new EntityEdit(await sourcesOf(fork.id), cow).cowToEdit(
       tx,
       type,
       { id, rulesetId: "inherited" },
       `${type} not found`,
     );
     RulesetViews.invalidate(fork.id);
-    await check(tx, await RulesetViews.getData(fork), copyId);
+    await check(tx, await readView(fork.id), copyId);
     throw new Rollback();
   }).catch((error) => {
     if (!(error instanceof Rollback)) throw error;
@@ -109,7 +111,7 @@ export function valuesOf(data: RulesetData, id: string) {
  * with the winner's before it was copied: the winners compared, and the mismatches, by winner and kind.
  */
 export async function compareCopies(fork: Fork, winnerIds: string[]) {
-  const before = await RulesetViews.getData(fork);
+  const before = await readView(fork.id);
   const mismatches: string[] = [];
   let compared = 0;
   for (const winnerId of winnerIds) {
@@ -132,13 +134,13 @@ export async function compareCopies(fork: Fork, winnerIds: string[]) {
 
 /** The classes of the fork's view, sorted: what a copy of each stores, the sweeps check (`findStaleClassCopies`). */
 export async function findClassIds(fork: Fork) {
-  const view = await RulesetViews.getData(fork);
+  const view = await readView(fork.id);
   return [...new Set(view.rows("classes").map((klass) => klass.id))].sort();
 }
 
 /** The sibling winners of the fork's view, sorted: what a copy of each must hold as the view showed it. */
 export async function findSiblingWinnerIds(fork: Fork) {
-  const { cow } = await RulesetViews.getData(fork);
+  const { cow } = await readView(fork.id);
   return [...new Set([...cow.siblingIds].flatMap((loserId) => cow.getWinner(loserId) ?? []))].sort();
 }
 
@@ -147,7 +149,7 @@ export async function findSiblingWinnerIds(fork: Fork) {
  * losing copy stands for, by name, with those lists.
  */
 export async function findStaleClassCopies(fork: Fork, classIds: string[]) {
-  const view = await RulesetViews.getData(fork);
+  const view = await readView(fork.id);
   const stale: string[] = [];
   for (const classId of classIds) {
     await withCopy(fork, "classes", classId, async (tx, after, copyId) => {

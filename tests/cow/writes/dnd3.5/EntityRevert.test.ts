@@ -41,7 +41,6 @@ import { CLASS_HD, RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields
 async function createExtensionAndHost(userId: string, coreId: string) {
   const extension = await createTestRuleset(userId, {
     rulesetId: coreId,
-    ancestorRulesetIds: [coreId],
     kind: "extension",
     private: false,
     status: "Published",
@@ -233,7 +232,7 @@ describe("reverting a fork's copy", () => {
   test("is refused while a character took a level the copied class added", async () => {
     const { user, session } = await createTestUser();
     const parent = await createTestRuleset(null, { private: false, status: "Published" });
-    const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+    const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
     // A class of the parent's, with one level, which the fork copied and gave a second
     const [source] = await Entities.create<Klass>(db, "classes", {
       name: `Parent Class ${uniqueId()}`,

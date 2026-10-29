@@ -97,7 +97,7 @@ async function addPlayableContent(rulesetId: string) {
 /** A fork of a published base, owned by `userId`. */
 async function createFork(userId: string, values: RulesetValues = {}) {
   const base = await createTestRuleset(null, { private: false, status: "Published" });
-  return await createTestRuleset(userId, { rulesetId: base.id, ancestorRulesetIds: [base.id], ...values });
+  return await createTestRuleset(userId, { rulesetId: base.id, ...values });
 }
 
 /** A published ruleset of `userId` (a system one when null), with a template item so forking it doesn't seed the engine's. */
@@ -136,7 +136,7 @@ async function setupListing() {
   const { user: other } = await createTestUser();
   const { user: leaver } = await createTestUser();
   const base = await createTestRuleset(null, { private: false, status: "Published" });
-  const fork = { rulesetId: base.id, ancestorRulesetIds: [base.id] };
+  const fork = { rulesetId: base.id };
   const published = { private: false, status: "Published" } as const;
   const rulesets = {
     base,
@@ -241,7 +241,6 @@ describe("RulesetsService", () => {
     const parent = await createTestRuleset(null, { private: false, status: "Published" });
     const ruleset = await createTestRuleset(owner.id, {
       rulesetId: parent.id,
-      ancestorRulesetIds: [parent.id],
       private: false,
       status: "Published",
       kind: "extension",
@@ -265,7 +264,7 @@ describe("RulesetsService", () => {
     const { user: contributor, session } = await createTestUser();
     const { session: stranger } = await createTestUser();
     const base = await createTestRuleset(null, { private: false, status: "Published" });
-    const ruleset = await createTestRuleset(leaver.id, { rulesetId: base.id, ancestorRulesetIds: [base.id] });
+    const ruleset = await createTestRuleset(leaver.id, { rulesetId: base.id });
     await addRulesetContributor(ruleset.id, contributor, leaver.id);
     const [orphaned] = await Rulesets.orphan(db, { userId: leaver.id });
 
@@ -459,7 +458,6 @@ describe("RulesetsService", () => {
         status: "Draft",
         userId: user.id,
         rulesetId: parent.id,
-        ancestorRulesetIds: [parent.id],
         extensionIds: [extension.id],
         baseRules: parent.baseRules,
       });
@@ -729,7 +727,6 @@ describe("RulesetsService", () => {
       const base = await createTestRuleset(null, { private: false, status: "Published" });
       const fork: RulesetValues = {
         rulesetId: base.id,
-        ancestorRulesetIds: [base.id],
         private: false,
         status: "Published",
       };

@@ -402,12 +402,11 @@ describe("InventoryService", () => {
       // Forks of forks can't be made through the API, but the lineage check walks every ancestor.
       const parent = await createTestRuleset(author.id, {
         rulesetId: grandparent.id,
-        ancestorRulesetIds: [grandparent.id],
         status: "Published",
       });
       for (const ruleset of [
-        await createTestRuleset(user.id, { rulesetId: grandparent.id, ancestorRulesetIds: [grandparent.id] }),
-        await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id, grandparent.id] }),
+        await createTestRuleset(user.id, { rulesetId: grandparent.id }),
+        await createTestRuleset(user.id, { rulesetId: parent.id }),
       ]) {
         const character = await createCharacterAs(session, { rulesetId: ruleset.id, links: { race: race.id } });
         expect(await add(session, character.id, inherited.id)).toMatchObject({ itemId: inherited.id });

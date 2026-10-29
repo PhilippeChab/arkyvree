@@ -172,7 +172,7 @@ describe("rulesets class levels", () => {
     });
 
     // And on an inherited class: a level its source got after the fork's view was read meets the index on its copy
-    const fork = await createTestRuleset(SEED_USER_ID, { rulesetId: id, ancestorRulesetIds: [id] });
+    const fork = await createTestRuleset(SEED_USER_ID, { rulesetId: id });
     await expectOk(levels.$get({ param: classParam(fork.id, classId) }));
     await Entities.create(db, "class-levels", { ownerId: classId, position: 5 });
     const raced = levels.$post({

@@ -5,7 +5,7 @@ import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import type { Aptitude, Feat, RulesetAbility, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
 import AbilitiesComponent from "@/engine/rulesets/dnd3.5/model/abilities/AbilitiesComponent.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { fetchEveryPage } from "@/server/repositories/concerns/Paginates.ts";
 import { Entities, Modifiers, Requirements, Rulesets } from "@/server/repositories/index.ts";
@@ -22,6 +22,7 @@ import {
   createSeededTestRulesetWithExtensions,
   invalidateTestRulesets,
   ownerSessionOf,
+  readView,
 } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
@@ -49,7 +50,7 @@ async function setup(
   const extensionIds: string[] = [];
   for (let i = 0; i < extensionCount; i++) {
     const extension = await createSeededTestRuleset(session.userId);
-    await configure(extension.id, host.ancestorRulesetIds[0], i);
+    await configure(extension.id, host.rulesetId!, i);
     await Rulesets.update(
       db,
       { kind: "extension", status: "Published", private: false, userId: null },
@@ -134,7 +135,7 @@ for (const [chainingOperator, reverseOrder] of [
       const copy = await copyEntity(db, "feats", source.id, {
         id: rulesetId,
         extensionIds: [],
-        ancestorRulesetIds: [baseId],
+        parentId: baseId,
       });
       copies.push(copy.id);
       const owner = { entityId: copy.id, entityType: "feats" };
@@ -156,14 +157,10 @@ for (const [chainingOperator, reverseOrder] of [
     }, reverseOrder);
     const abilities = new AbilitiesComponent();
     const rows = await fetchEveryPage((pagination) =>
-      Entities.findPage<RulesetAbility>(
-        db,
-        { entityType: "abilities", rulesetId: host.ancestorRulesetIds[0], ancestorRulesetIds: [] },
-        pagination,
-      ),
+      Entities.findPage<RulesetAbility>(db, { entityType: "abilities", rulesetId: host.rulesetId! }, pagination),
     );
     // The base's scores, each its `score` link, its ability named by the base's view
-    const base = (await Rulesets.findOne(db, { id: host.ancestorRulesetIds[0] }))!;
+    const base = (await Rulesets.findOne(db, { id: host.rulesetId! }))!;
     const scoreLinks = rows.map((row) => ({
       amount: row.name === "Strength" ? 13 : 10,
       characterId: NIL_UUID,
@@ -171,10 +168,7 @@ for (const [chainingOperator, reverseOrder] of [
       entityId: row.id,
       updatedAt: "",
     }));
-    abilities.initialize(
-      { abilityPicks: [], scoreLinks },
-      { ruleset: base, rulesetData: await RulesetViews.getData(base) },
-    );
+    abilities.initialize({ abilityPicks: [], scoreLinks }, { ruleset: base, rulesetData: await readView(base.id) });
     const evaluate = (groups: Requirement[][]) => {
       const engine = new RequirementEvaluator(new Dnd35TargetPaths());
       engine.evaluateRequirements({ abilities }, groups);
@@ -219,12 +213,12 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
       const featCopy = await copyEntity(db, "feats", feat.id, {
         id: rulesetId,
         extensionIds: [],
-        ancestorRulesetIds: [baseId],
+        parentId: baseId,
       });
       const spellCopy = await copyEntity(db, "spells", spell.id, {
         id: rulesetId,
         extensionIds: [],
-        ancestorRulesetIds: [baseId],
+        parentId: baseId,
       });
       const owner = { entityId: featCopy.id, entityType: "feats" };
       await writeFieldValues("feats", featCopy.id, [[FEAT_FAMILY, "shared"]]);
@@ -259,9 +253,9 @@ test("a sibling winner takes, of equal rows, the first sibling's, and so does it
     false,
     3,
   );
-  const baseId = host.ancestorRulesetIds[0];
+  const baseId = host.rulesetId!;
   const fork = (await Rulesets.findOne(db, { id: host.id }))!;
-  const view = await RulesetViews.getData(fork);
+  const view = await readView(fork.id);
   const featId = view.cow.resolve(
     (await Entities.findOne<Feat>(db, { entityType: "feats", rulesetId: baseId, name: "Toughness" }))!.id,
   );

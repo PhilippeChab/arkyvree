@@ -93,7 +93,7 @@ describe("EntitiesService: feats", () => {
         ruleset: parent,
         aptitudeIds: [combat],
       } = await createTestUserAndRuleset(APTITUDES);
-      const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+      const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
       const feat = await EntitiesService.createEntity(session, fork.id, "feats", {
         name: "Cleave",
         links: { listedIn: [{ toId: combat }] },
@@ -116,8 +116,8 @@ describe("EntitiesService: feats", () => {
         ruleset: base,
         aptitudeIds: [combat],
       } = await createTestUserAndRuleset(APTITUDES);
-      const middle = await createTestRuleset(user.id, { rulesetId: base.id, ancestorRulesetIds: [base.id] });
-      const leaf = await createTestRuleset(user.id, { rulesetId: middle.id, ancestorRulesetIds: [middle.id, base.id] });
+      const middle = await createTestRuleset(user.id, { rulesetId: base.id });
+      const leaf = await createTestRuleset(user.id, { rulesetId: middle.id });
       const feat = await EntitiesService.createEntity(session, leaf.id, "feats", {
         name: "Cleave",
         links: { listedIn: [{ toId: combat }] },
@@ -183,7 +183,7 @@ describe("EntitiesService: feats", () => {
       const [list] = await Entities.create<Aptitude>(db, "aptitudes", { name: "Shared List", rulesetId: base.id });
       const forkOf = async () => {
         const { user, session } = await createTestUser();
-        const fork = await createTestRuleset(user.id, { rulesetId: base.id, ancestorRulesetIds: [base.id] });
+        const fork = await createTestRuleset(user.id, { rulesetId: base.id });
         return { session, fork };
       };
       const [spellFork, featFork] = [await forkOf(), await forkOf()];
@@ -357,7 +357,7 @@ describe("EntitiesService: feats", () => {
         name: "Inherited Feat",
         links: { listedIn: [{ toId: combat }] },
       });
-      const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+      const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
       await pickFeat(user.id, fork.id, feat.id, combat);
       await expectRefusedWith(EntitiesService.deleteEntity(session, parent.id, "feats", feat.id), 409);
     });
@@ -407,7 +407,7 @@ describe("EntitiesService: feats", () => {
       name: "Endurance",
       links: { listedIn: [{ toId: combat }] },
     });
-    const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+    const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
 
     const copy = await EntitiesService.updateEntity(session, fork.id, "feats", source.id, {
       name: "Endurance",

@@ -32,12 +32,16 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
    * allows: edit its entities, edit the ruleset itself, fork it, unarchive it, see its contributors, invite and manage
    * them, change their roles, manage its Admins, publish it, subscribe it to extensions (`usedAsExtension`: another
    * ruleset subscribes to it) and unsubscribe it from one (whether a character uses what would leave is the server's
-   * answer once asked), see its local changes, and whether it can be an extension, which its edit and its publish
-   * offer. It may leave it while it contributes to it (`contributorRole`: an active role, its owner's never looked up).
+   * answer once asked), see its local changes, and whether it can be an extension (`hasExtensions`: it subscribes to
+   * one), which its edit and its publish offer. It may leave it while it contributes to it (`contributorRole`: an
+   * active role, its owner's never looked up).
    */
-  private permissionsOf(policy: RulesetsPolicy, usedAsExtension: boolean) {
+  private permissionsOf(
+    policy: RulesetsPolicy,
+    { hasExtensions, usedAsExtension }: { hasExtensions: boolean; usedAsExtension: boolean },
+  ) {
     return {
-      canBeExtension: isAllowed(() => policy.canBeExtension()),
+      canBeExtension: isAllowed(() => policy.canBeExtension({ hasExtensions })),
       canEditEntities: isAllowed(() => policy.canUpdateEntity()),
       canEditRuleset: isAllowed(() => policy.canUpdate()),
       canFork: isAllowed(() => policy.canFork()),
@@ -71,11 +75,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       const { policy, ruleset } = await getReadableRuleset(tx, session, id);
       policy.canFork();
 
-      // canFork blocks forks-of-forks, so the parent is always a base —
-      // ancestorRulesetIds is always [baseId].
-      const ancestorRulesetIds = [id];
-
-      // 4. Create the new forked ruleset
+      // 2. Create the new forked ruleset: canFork blocks forks-of-forks, so its parent is always a base
       const newRuleset = (
         await this.withNameRefusal(() =>
           Rulesets.create(tx, {
@@ -83,7 +83,6 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
             description: body.description || ruleset.description,
             userId: session.userId,
             rulesetId: id,
-            ancestorRulesetIds,
             baseRules: ruleset.baseRules,
             private: body.private,
           }),
@@ -91,7 +90,8 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       )[0];
 
       // The fork subscribes to its source's extensions, in their order
-      await RulesetExtensions.upsert(tx, { rulesetId: newRuleset.id, extensionIds: ruleset.extensionIds });
+      const { extensionIds } = (await Rulesets.findSources(tx, { id }))!;
+      await RulesetExtensions.upsert(tx, { rulesetId: newRuleset.id, extensionIds });
 
       // 3. Copy the ruleset's Settings as stored (parent entity IDs, which the fork's view resolves at read time)
       await RulesetSettings.createCopy(tx, { fromId: id, toId: newRuleset.id });
@@ -105,8 +105,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
         data: { sourceRulesetId: id },
       });
 
-      // Its row was written before its extensions' rows were, which it answers with
-      return { ...newRuleset, extensionIds: ruleset.extensionIds };
+      return newRuleset;
     });
 
     RulesetViews.invalidate(result.id);
@@ -116,11 +115,13 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
   async getRuleset(session: Session, id: string) {
     const { policy, ruleset } = await getReadableRuleset(db, session, id);
 
-    const [star, starCount, usedAsExtension] = await Promise.all([
+    const [star, starCount, usedAsExtension, sources] = await Promise.all([
       StarredRulesets.findOne(db, { userId: session.userId, rulesetId: id }),
       StarredRulesets.count(db, { rulesetId: id }),
       Rulesets.exists(db, { subscribedTo: id }),
+      Rulesets.findSources(db, { id }),
     ]);
+    const hasExtensions = sources!.extensionIds.length > 0;
 
     const parent = ruleset.rulesetId ? await Rulesets.findOne(db, { id: ruleset.rulesetId }) : undefined;
 
@@ -132,7 +133,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       // A response says none with null: JSON leaves an undefined key out
       contributorRole: policy.contributorRole ?? null,
       isStarrable: this.isStarrable(ruleset),
-      permissions: this.permissionsOf(policy, usedAsExtension),
+      permissions: this.permissionsOf(policy, { hasExtensions, usedAsExtension }),
     };
   }
 
@@ -209,7 +210,8 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
         // it's published
         if (ruleset.status === "Published")
           await withRulesetScope(tx, id, async (scope) => this.checkKind(scope, policy, kind));
-        else if (kind === "extension") policy.canBeExtension();
+        else if (kind === "extension")
+          policy.canBeExtension({ hasExtensions: (await Rulesets.findSources(tx, { id }))!.extensionIds.length > 0 });
       }
 
       // A stale edit updates no row, so it's told it's stale before its name is checked

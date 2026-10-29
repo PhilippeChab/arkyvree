@@ -27,7 +27,7 @@ test("worker familiar HP matches web after customizing an inherited master feat"
   await Characters.update(db, { rulesetId: fork.id }, { id: familiarId });
   const source = (await Entities.findOne<Feat>(db, {
     entityType: "feats",
-    rulesetId: fork.ancestorRulesetIds[0],
+    rulesetId: fork.rulesetId!,
     name: "Toughness",
   }))!;
   const copy = await copyEntity(db, "feats", source.id, fork);

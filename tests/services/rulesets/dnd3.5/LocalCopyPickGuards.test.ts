@@ -34,7 +34,7 @@ import {
 async function setup() {
   const session = makeSession();
   const fork = await createSeededTestRuleset(session.userId);
-  const baseId = fork.ancestorRulesetIds[0];
+  const baseId = fork.rulesetId!;
   const human = (await Entities.findOne<Race>(db, { entityType: "races", name: "Human", rulesetId: baseId }))!;
   const [character] = await Characters.create(db, {
     kind: PLAYER_CHARACTER_KIND,

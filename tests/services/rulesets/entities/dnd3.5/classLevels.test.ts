@@ -88,7 +88,6 @@ async function setupFork() {
   const inheritedLevel = await createLevel(context.session, context.ruleset.id, context.klass.id, 1);
   const fork = await createTestRuleset(context.user.id, {
     rulesetId: context.ruleset.id,
-    ancestorRulesetIds: [context.ruleset.id],
   });
   return { ...context, parent: context.ruleset, fork, inheritedLevel };
 }
@@ -254,7 +253,7 @@ describe("EntitiesService: a class's levels", () => {
         links: { listedIn: [{ toId: aptitude.id }] },
       });
       const fortitude = await createSave(ruleset.id, "Fortitude");
-      const fork = await createTestRuleset(user.id, { rulesetId: ruleset.id, ancestorRulesetIds: [ruleset.id] });
+      const fork = await createTestRuleset(user.id, { rulesetId: ruleset.id });
       const copies = {
         aptitude: (await copyEntity(db, "aptitudes", aptitude.id, fork)).id,
         feat: (await copyEntity(db, "feats", feat.id, fork)).id,

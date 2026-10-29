@@ -94,7 +94,7 @@ export default class CopyOnWriteEngine {
     };
   }
 
-  /** A ruleset's source chain: its extensions first (their new entities are visible), then its ancestors. */
+  /** A ruleset's source chain: its extensions first (their new entities are visible), then its parent. */
   buildSourceChain(ruleset: Omit<RulesetSources, "id">): string[] {
     return CowSources.buildSourceChain(ruleset);
   }

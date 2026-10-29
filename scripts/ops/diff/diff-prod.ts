@@ -27,7 +27,7 @@ import { Pool, type PoolClient } from "pg";
 import { CONTENT_PACKAGES } from "@/database/packages/registry.ts";
 import { planPackages } from "@/database/packages/runner.ts";
 
-import { diffContent, LABELLED_COLUMNS, type Query } from "./content.ts";
+import { diffContent, type Query } from "./content.ts";
 import { renderHuman, renderSql } from "./rows.ts";
 
 const emitSql = process.argv.includes("--emit-sql");
@@ -197,8 +197,7 @@ async function reportContentDrift(target: Query, reference: Query): Promise<bool
     }
     for (const { ruleset, tables } of drifted) {
       console.log(`\n-- ### ${ruleset}`);
-      for (const { table, diff } of tables)
-        for (const line of renderSql(table, diff, LABELLED_COLUMNS[table])) console.log(line);
+      for (const { table, diff } of tables) for (const line of renderSql(table, diff)) console.log(line);
     }
     console.log(`\nCOMMIT;`);
   } else {

@@ -54,8 +54,6 @@ function rulesetOf(overrides: Partial<Ruleset> = {}): Ruleset {
     rulesetId: "base-id",
     createdAt: now,
     updatedAt: now,
-    ancestorRulesetIds: ["base-id"],
-    extensionIds: [],
     ...overrides,
   };
 }
@@ -156,11 +154,11 @@ describe("RulesetsPolicy", () => {
   });
 
   test("canBeExtension: a fork that subscribes to none, whoever asks", () => {
-    expectOnly(ACTORS, (p) => p.canBeExtension(), UnprocessableEntityError);
-    expect(() => policyOf("Owner", { rulesetId: null }).canBeExtension()).toThrow(
+    expectOnly(ACTORS, (p) => p.canBeExtension({ hasExtensions: false }), UnprocessableEntityError);
+    expect(() => policyOf("Owner", { rulesetId: null }).canBeExtension({ hasExtensions: false })).toThrow(
       "Only forks can be published as extensions",
     );
-    expect(() => policyOf("Owner", { extensionIds: ["extension-id"] }).canBeExtension()).toThrow(
+    expect(() => policyOf("Owner").canBeExtension({ hasExtensions: true })).toThrow(
       "A ruleset that subscribes to extensions cannot itself be an extension",
     );
   });

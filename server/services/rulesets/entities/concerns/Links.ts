@@ -31,13 +31,13 @@ export function Links<B extends Constructor>(Base: B) {
       const result = await withTransaction(
         async (tx) =>
           await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
-            const { ruleset, rulesetData } = scope;
+            const { ruleset, rulesetData, sources } = scope;
 
             policy.canUpdateEntity();
             const plan = Engine.for(scope).links(type, ownerId).planAdd(targetId);
 
             const { gone } = EntityWriter.getNotFound(ruleset, type);
-            const { id: fromId } = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, type, plan.owner, gone);
+            const { id: fromId } = await new EntityEdit(sources, rulesetData.cow).cowToEdit(tx, type, plan.owner, gone);
             const [link] = await EntityLinks.createMany(tx, [{ ...plan.link, fromId, fromType: type }]);
 
             await createActivityWithNotifications(tx, {
@@ -77,14 +77,14 @@ export function Links<B extends Constructor>(Base: B) {
       const result = await withTransaction(
         async (tx) =>
           await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
-            const { ruleset, rulesetData } = scope;
+            const { ruleset, rulesetData, sources } = scope;
 
-            const inUse = await new EntityUses(ruleset, rulesetData.cow).isPicked(tx, type, ownerId);
+            const inUse = await new EntityUses(sources, rulesetData.cow).isPicked(tx, type, ownerId);
             policy.canDeleteEntity({ inUse });
             const plan = Engine.for(scope).links(type, ownerId).planRemove(targetId);
 
             const { gone } = EntityWriter.getNotFound(ruleset, type);
-            const { id: fromId } = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, type, plan.owner, gone);
+            const { id: fromId } = await new EntityEdit(sources, rulesetData.cow).cowToEdit(tx, type, plan.owner, gone);
             const [link] = await EntityLinks.delete(tx, { fromId, role: plan.role, toId: plan.toId });
             // Another removal took it since the view was read
             if (!link) throw new ConflictError(STALE_ENTITY_MESSAGE);

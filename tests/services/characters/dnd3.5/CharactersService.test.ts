@@ -178,12 +178,11 @@ describe("CharactersService", () => {
       // Forks of forks can't be made through the API, but the lineage check walks every ancestor.
       const parent = await createTestRuleset(owner.id, {
         rulesetId: grandparent.id,
-        ancestorRulesetIds: [grandparent.id],
         status: "Published",
       });
       for (const fork of [
-        await createTestRuleset(user.id, { rulesetId: grandparent.id, ancestorRulesetIds: [grandparent.id] }),
-        await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id, grandparent.id] }),
+        await createTestRuleset(user.id, { rulesetId: grandparent.id }),
+        await createTestRuleset(user.id, { rulesetId: parent.id }),
       ]) {
         expect(await createCharacterAs(session, { rulesetId: fork.id, links: { race: race.id } })).toMatchObject({
           rulesetId: fork.id,
@@ -194,7 +193,6 @@ describe("CharactersService", () => {
       const unrelated = await setupPrivateRuleset();
       const fork = await createTestRuleset(user.id, {
         rulesetId: grandparent.id,
-        ancestorRulesetIds: [grandparent.id],
       });
       expect(
         createCharacterAs(session, { rulesetId: fork.id, links: { race: unrelated.race.id } }),
@@ -294,7 +292,6 @@ describe("CharactersService", () => {
       const session = makeSession();
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: ctx.rulesetId,
-        ancestorRulesetIds: [ctx.rulesetId],
       });
       const character = await createCharacterAs(session, { rulesetId: fork.id });
       const copy = (await copyEntity(db, "abilities", ctx.abilityMap["Strength"], fork)).id as string;

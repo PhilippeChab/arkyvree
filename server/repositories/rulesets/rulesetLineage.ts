@@ -10,7 +10,7 @@ import { rulesetExtensionsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 export function buildLineageCondition(rulesetId: string): SQL {
   return or(
     eq(rulesetsInRules.id, rulesetId),
-    sql`${rulesetsInRules.ancestorRulesetIds} @> ARRAY[${rulesetId}::uuid]`,
+    eq(rulesetsInRules.rulesetId, rulesetId),
     buildSubscribersCondition(rulesetId),
   )!;
 }

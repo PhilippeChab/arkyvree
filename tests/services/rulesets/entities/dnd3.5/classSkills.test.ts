@@ -135,7 +135,7 @@ describe("EntitiesService: a class's skills", () => {
   test("in a fork, reads the inherited class's skills and changes them on the fork's copy of the class", async () => {
     const { user, session, ruleset: parent, fighter, climb, swim } = await setup();
     await EntitiesService.addEntityLink(session, parent.id, "classes", fighter.id, climb.id);
-    const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+    const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
     expect(await skillIdsOf(fork.id, fighter.id)).toEqual([climb.id]);
 
     // The fork's changes are its copy's: the parent's cached rows, which every fork of it reads, stay
