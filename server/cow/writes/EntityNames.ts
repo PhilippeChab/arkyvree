@@ -210,7 +210,7 @@ export default class EntityNames {
     sourceEntityId: string,
     copyId: string,
   ): Promise<void> {
-    const entities = await RulesetEntities.findNames(tx, { ids: [sourceEntityId, copyId] });
+    const entities = await RulesetEntities.findNames(tx, { entityType, ids: [sourceEntityId, copyId] });
     const source = entities.find((entity) => entity.id === sourceEntityId);
     const copy = entities.find((entity) => entity.id === copyId);
     if (source && copy?.name !== source.name) this.refuseShown(await this.findNamed(tx, entityType, [source.name]));
