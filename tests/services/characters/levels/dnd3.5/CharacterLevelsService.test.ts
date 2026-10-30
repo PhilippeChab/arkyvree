@@ -36,7 +36,9 @@ import { CharacterLevelsService, createAdvancement } from "@/server/services/cha
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
+import { activityTypes } from "@/tests/support/activities.ts";
 import { measure, runWhileLocked } from "@/tests/support/database.ts";
 import { buildAs, createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import {
@@ -2045,6 +2047,8 @@ describe("LevelsService", () => {
         ),
         true,
       );
+      // Its character's activity, which opens its page
+      expect(await activityTypes(session.userId, TARGET_TYPES.characters, fenn.id)).toContain("addLevel");
       const [first, , , , fifth] = (await CharacterAdvancements.findMany(db, { characterId: fenn.id })).toSorted(
         (a, b) => a.position - b.position,
       );
