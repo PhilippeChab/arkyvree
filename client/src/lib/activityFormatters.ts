@@ -246,7 +246,7 @@ function wordsOf(d: Record<string, unknown>, rules: RulesDescriptions | undefine
  * What an activity of `type` changed: its fields and its single links, each by its declaration's label (an older one's
  * as the fields of the entity it names, `rules`: every base rules'), each value as its field's input reads it, its
  * lists of links' entries added and removed, its level, a link's target (`toName`), its modifier's or requirement's
- * change, its field's value.
+ * change.
  */
 export function formatActivityDetails(type: string, data: unknown, rules?: RulesDescriptions): string | null {
   const d = payload(data);
