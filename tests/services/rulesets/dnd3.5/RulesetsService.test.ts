@@ -598,7 +598,7 @@ describe("RulesetsService", () => {
       const seedExtension = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
       await RulesetExtensionsService.subscribeExtension(session, host.id, [seedExtension.id]);
       expect(RulesetsService.publishRuleset(session, host.id, { kind: "extension" })).rejects.toThrow(
-        UnprocessableEntityError,
+        "A ruleset that subscribes to extensions cannot itself be an extension",
       );
     });
 
@@ -642,6 +642,21 @@ describe("RulesetsService", () => {
       expect(await update(forked.id, forked.name)).toMatchObject({ kind: "extension" });
       const standalone = await createTestRuleset(user.id);
       expect(update(standalone.id, standalone.name)).rejects.toThrow(UnprocessableEntityError);
+    });
+
+    test("refuses making an extension of a ruleset that subscribes to one, a draft or a published one", async () => {
+      const { session } = await createTestUser();
+      const { rulesetId } = await getSeedCtx();
+      const seedExtension = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
+      const [draft, published] = [await fork(session, { id: rulesetId }), await fork(session, { id: rulesetId })];
+      for (const host of [draft, published])
+        await RulesetExtensionsService.subscribeExtension(session, host.id, [seedExtension.id]);
+      await RulesetsService.publishRuleset(session, published.id);
+      for (const host of [draft, published]) {
+        expect(
+          RulesetsService.updateRuleset(session, host.id, { name: host.name, description: "", kind: "extension" }),
+        ).rejects.toThrow("A ruleset that subscribes to extensions cannot itself be an extension");
+      }
     });
 
     test("makes a published extension playable only with the content publishing it as a ruleset needs", async () => {

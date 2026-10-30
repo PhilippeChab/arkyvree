@@ -721,7 +721,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     if ("ids" in where)
       return await this.readStored(db, inArray(entitiesInRules.id, where.ids), [this.orderBy(entitiesInRules.id)]);
 
-    return await this.readStored(db, this.buildRulesetCondition(db, where), [
+    return await this.readStored(db, this.buildRulesetCondition(db, { rulesetId: where.rulesetId }), [
       this.orderBy(entitiesInRules.name),
       this.orderBy(entitiesInRules.id),
     ]);
@@ -735,7 +735,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     const own = db
       .select({ id: entitiesInRules.id })
       .from(entitiesInRules)
-      .where(this.buildRulesetCondition(db, where));
+      .where(this.buildRulesetCondition(db, { rulesetId: where.rulesetId }));
     const rows = await db
       .selectDistinct({ id: entityLinksInRules.toId })
       .from(entityLinksInRules)

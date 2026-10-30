@@ -142,24 +142,25 @@ Inherited entities are read-only. When a user edits or deletes one:
 1. **Snapshot** — an `entity_snapshots` row is created: `{ rulesetId, sourceEntityId, forkedEntityId }`, one per ruleset and source (an entity's id is global, so its type is its entities')
 2. **Local copy** — the entity + its fields + all customizations (modifiers, requirements) + its links of the roles it holds many of (a feat's pools, a class's skills) + the entities it owns (a class's levels, with their customizations and links) are duplicated into the child ruleset
 3. **Modification** — the local copy is updated or deleted (for deletes)
-4. **Query exclusion** — the repository SQL excludes the original from ancestor results when a snapshot exists
+4. **Query exclusion** — the repository SQL excludes the original from its source's results when a snapshot exists
 
 ### COW in Repositories
 
-A kind's list (`Entities`' `findPage`, through `StoredEntities.buildRulesetCondition`) builds COW-aware SQL per ancestor:
+A kind's list (`Entities`' `findPage`, through `StoredEntities.buildRulesetCondition`) builds COW-aware SQL per source in
+its `sourceChain`:
 
 ```sql
--- For each ancestor in the source chain:
+-- For each source in the source chain (its extensions, then its parent):
 SELECT * FROM rules.entities
 WHERE type = 'feats'
-  AND ruleset_id = :ancestorId
+  AND ruleset_id = :sourceId
   AND id NOT IN (
     SELECT source_entity_id FROM rules.entity_snapshots
-    WHERE ruleset_id IN (:childId, ...closer_ancestors)
+    WHERE ruleset_id IN (:childId, ...closer_sources)
   )
 ```
 
-The child's own entities are always included. Ancestor entities are included only if no snapshot overrides them.
+The child's own entities are always included. A source's entities are included only if no snapshot overrides them.
 
 ### COW for Complex Entities
 
@@ -436,11 +437,11 @@ See [docs/access.md](./access.md) for the full policy matrix across rulesets, ch
 - **Scoping is current + descendants.** The in-use check,
   `EntityReferences.exists`, reads every character row naming an entity of the
   type (`ENTITY_REFERENCES`), and joins the character's ruleset on
-  `id = $rulesetId`, or `$rulesetId` among its ancestors or its extensions
+  `id = $rulesetId`, or `$rulesetId` its parent (its `ruleset_id`) or among its extensions
   (`buildLineageCondition`, which a template's change reads its items by too) — one
   query per such column. With forks of forks blocked, descendants of a base ruleset
-  are at most one level deep, but the query shape stays the same so the
-  guard is robust if depth ever changes. A parent author deleting a feat
+  are one level deep: its forks, by their `ruleset_id`, and its extensions'
+  subscribers. A parent author deleting a feat
   that a downstream fork's character picked is blocked; a fork deleting an
   inherited entity that only the parent's character uses is not (parent's
   characters are unrelated to the fork).

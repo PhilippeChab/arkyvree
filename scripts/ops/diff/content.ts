@@ -73,6 +73,12 @@ export const COMPARED_TABLES = [
   "customization.requirements",
 ];
 
+/**
+ * The fields compared by the names of the rows they reference, which SQL can't set back from a name: a ruleset's parent
+ * (`parent`, its `ruleset_id`'s name).
+ */
+export const LABELLED_COLUMNS: Record<string, string[]> = { "rules.rulesets": ["parent"] };
+
 /** The columns of a compared table nothing compares, as `<table>.<column>`, and why. */
 export const UNCOMPARED_COLUMNS: Record<string, string> = {
   "rules.entity_fields.ordinal": SET_ORDINAL,
@@ -237,9 +243,12 @@ async function pullRulesetLinks(query: Query, rulesetId: string): Promise<Identi
   );
 }
 
-/** The ruleset's own row. */
+/** The ruleset's own row, its parent by name (`parent`). */
 async function pullRulesetRow(query: Query, rulesetId: string): Promise<IdentifiedRow[]> {
-  const rows = await query(`select * from rules.rulesets where id = $1`, [rulesetId]);
+  const rows = await query(
+    `select r.*, p.name as parent from rules.rulesets r left join rules.rulesets p on p.id = r.ruleset_id where r.id = $1`,
+    [rulesetId],
+  );
   return rows.map((row) => ({ bk: String(row.name), id: String(row.id), row: stripVolatile(row) }));
 }
 

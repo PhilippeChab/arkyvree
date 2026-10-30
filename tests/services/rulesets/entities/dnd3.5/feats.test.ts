@@ -86,7 +86,7 @@ describe("EntitiesService: feats", () => {
       expect(await linkedAptitudeIds(feat.id)).toEqual([]);
     });
 
-    test("an edit answers an aptitude its fork copied after the feat was listed in it as the copy, as its page does", async () => {
+    test("an edit answers an aptitude its fork copied after the feat was listed in it as the copy, or none once the copy's deleted, as its page does", async () => {
       const {
         user,
         session,
@@ -98,37 +98,20 @@ describe("EntitiesService: feats", () => {
         name: "Cleave",
         links: { listedIn: [{ toId: combat }] },
       });
-      const copy = await EntitiesService.updateEntity(session, fork.id, "aptitudes", combat, { name: "Melee" });
-
-      // Its stored list is the original, which its view reads as the fork's copy
-      const edited = await EntitiesService.updateEntity(session, fork.id, "feats", feat.id, {
-        name: "Cleave",
-        description: "Renamed list",
-      });
-      expect(edited.links).toEqual([expect.objectContaining({ role: "listedIn", toId: copy.id, toName: "Melee" })]);
-      expect(edited.links).toEqual((await EntitiesService.getEntity(session, fork.id, "feats", feat.id)).links);
-    });
-
-    test("an edit answers the copy of the aptitude that stands for it in its fork, or none once it's deleted, as its page does", async () => {
-      const {
-        user,
-        session,
-        ruleset: base,
-        aptitudeIds: [combat],
-      } = await createTestUserAndRuleset(APTITUDES);
-      const fork = await createTestRuleset(user.id, { rulesetId: base.id });
-      const feat = await EntitiesService.createEntity(session, fork.id, "feats", {
-        name: "Cleave",
-        links: { listedIn: [{ toId: combat }] },
-      });
       const editedLinks = async () => {
-        const edited = await EntitiesService.updateEntity(session, fork.id, "feats", feat.id, { name: "Cleave" });
+        const edited = await EntitiesService.updateEntity(session, fork.id, "feats", feat.id, {
+          name: "Cleave",
+          description: "Renamed list",
+        });
         expect(edited.links).toEqual((await EntitiesService.getEntity(session, fork.id, "feats", feat.id)).links);
         return edited.links;
       };
+      const copy = await EntitiesService.updateEntity(session, fork.id, "aptitudes", combat, { name: "Melee" });
 
-      const copy = await EntitiesService.updateEntity(session, fork.id, "aptitudes", combat, { name: "Copy" });
-      expect(await editedLinks()).toEqual([expect.objectContaining({ toId: copy.id, toName: "Copy" })]);
+      // Its stored list is the original, which its view reads as the fork's copy
+      expect(await editedLinks()).toEqual([
+        expect.objectContaining({ role: "listedIn", toId: copy.id, toName: "Melee" }),
+      ]);
       await EntitiesService.deleteEntity(session, fork.id, "aptitudes", copy.id);
       expect(await editedLinks()).toEqual([]);
     });
