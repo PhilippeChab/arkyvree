@@ -809,15 +809,14 @@ describe("Seeding", () => {
         { named: true, name: "Test Open" },
         { named: true, name: "Test Single" },
       ]);
-      const snapshots = await EntitySnapshots.findManyWithEntities(db, { rulesetId: ctx.rulesetId });
+      const snapshots = await EntitySnapshots.findMany(db, { rulesetId: ctx.rulesetId });
       expect(
         snapshots
-          .map(({ entityType, sourceEntityId, forkedEntityId }) => ({ entityType, sourceEntityId, forkedEntityId }))
+          .map(({ sourceEntityId, forkedEntityId }) => ({ sourceEntityId, forkedEntityId }))
           .sort((a, b) => a.sourceEntityId.localeCompare(b.sourceEntityId)),
       ).toEqual(
         ["Test Grouped", "Test Single", "Test Open"]
           .map((name) => ({
-            entityType: "feats" as const,
             sourceEntityId: original[name],
             forkedEntityId: ctx.featMap[name],
           }))
@@ -898,10 +897,9 @@ describe("Seeding", () => {
       // Its own spell keeps the inherited one's lists, and isn't copied
       expect(ctx.spellMap["Test Ward"]).toBe(ownWard);
       expect(await spellListsOf(ctx, ownWard)).toEqual(["Arcane Spells 2", "Cleric Spells 1"]);
-      const snapshots = await EntitySnapshots.findManyWithEntities(db, { rulesetId: ctx.rulesetId });
+      const snapshots = await EntitySnapshots.findMany(db, { rulesetId: ctx.rulesetId });
       expect(snapshots).toMatchObject([
         {
-          entityType: "spells",
           sourceEntityId: core.spellMap["Test Bolt"],
           forkedEntityId: boltId,
         },

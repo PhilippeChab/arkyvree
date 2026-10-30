@@ -1,11 +1,8 @@
-import { and, eq, getTableColumns, inArray, type InferInsertModel, sql } from "drizzle-orm";
-import { alias } from "drizzle-orm/pg-core";
+import { and, eq, inArray, type InferInsertModel, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { entitiesInRules, entitySnapshotsInRules } from "@/drizzle/schema.ts";
+import { entitySnapshotsInRules } from "@/drizzle/schema.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
-
-import type { RulesetEntityType } from "./entityTypes.ts";
 
 class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInRules> {
   constructor() {
@@ -59,38 +56,6 @@ class EntitySnapshotsRepository extends BaseRepository<typeof entitySnapshotsInR
       ),
       orderBy: [this.orderBy(this.table.createdAt), this.orderBy(this.table.id)],
     });
-  }
-
-  /**
-   * A ruleset's snapshots (`rulesetId`, or those of a type), each with what its entities say of it: its type
-   * (`entityType`), its copy's, or its source's once its copy is deleted (a tombstone), and its source's ruleset
-   * (`sourceRulesetId`). A snapshot whose source is gone has no source ruleset, and one whose copy is gone too has no
-   * type: it stands for no entity of the ruleset's, though its view still reads it (`findMany`), a tombstone hiding the
-   * extensions' copies of its source.
-   */
-  async findManyWithEntities(
-    db: Db,
-    where: { rulesetId: string } | { entityType: RulesetEntityType; rulesetId: string },
-  ) {
-    const forked = alias(entitiesInRules, "forked");
-    const source = alias(entitiesInRules, "source");
-    const entityType = sql<RulesetEntityType | null>`coalesce(${forked.type}, ${source.type})`;
-    return await db
-      .select({
-        ...getTableColumns(this.table),
-        entityType: entityType.as("entity_type"),
-        sourceRulesetId: source.rulesetId,
-      })
-      .from(this.table)
-      .leftJoin(forked, eq(forked.id, this.table.forkedEntityId))
-      .leftJoin(source, eq(source.id, this.table.sourceEntityId))
-      .where(
-        and(
-          eq(this.table.rulesetId, where.rulesetId),
-          "entityType" in where ? eq(entityType, where.entityType) : undefined,
-        ),
-      )
-      .orderBy(this.orderBy(this.table.createdAt), this.orderBy(this.table.id));
   }
 
   async findOne(db: Db, where: { rulesetId: string; sourceEntityId: string }) {

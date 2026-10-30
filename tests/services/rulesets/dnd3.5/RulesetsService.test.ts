@@ -801,9 +801,7 @@ describe("RulesetsService", () => {
         sourceEntityId: gone,
         forkedEntityId: crypto.randomUUID(),
       });
-      expect(await EntitySnapshots.findManyWithEntities(db, { rulesetId: fork.id })).toMatchObject([
-        { sourceEntityId: gone, entityType: null, sourceRulesetId: null },
-      ]);
+      expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toMatchObject([{ sourceEntityId: gone }]);
       expect(await RulesetChangesService.getChanges(session, fork.id)).toEqual([]);
     });
 
