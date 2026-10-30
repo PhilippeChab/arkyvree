@@ -6,6 +6,7 @@ import {
   Activities,
   EntityReferences,
   EntitySnapshots,
+  RulesetEntities,
   RulesetExtensions,
   Rulesets,
 } from "@/server/repositories/index.ts";
@@ -112,12 +113,19 @@ class RulesetExtensionsService {
       const sources = (await Rulesets.findSources(tx, { id }))!;
       if (!sources.extensionIds.includes(extensionId)) throw new NotFoundError("Not subscribed to this extension");
 
-      // 2. The fork's copies of the extension's entities: the snapshots whose source belongs to the extension (a snapshot
-      // whose source is gone belongs to none)
-      const snapshots = await EntitySnapshots.findManyWithEntities(tx, { rulesetId: id });
-      const extensionSnapshots = snapshots.flatMap(({ entityType, sourceRulesetId, ...snap }) =>
-        entityType && sourceRulesetId === extensionId ? [{ ...snap, entityType }] : [],
+      // 2. The fork's copies of the extension's entities: the snapshots whose source belongs to the extension, each of
+      // its source's type (a snapshot whose source is gone belongs to none)
+      const snapshots = await EntitySnapshots.findMany(tx, { rulesetId: id });
+      const sourceIds = snapshots.map((snap) => snap.sourceEntityId);
+      const typeOf = new Map(
+        (await RulesetEntities.findNames(tx, { ids: sourceIds }))
+          .filter((source) => source.rulesetId === extensionId)
+          .map((source) => [source.id, source.entityType]),
       );
+      const extensionSnapshots = snapshots.flatMap((snap) => {
+        const entityType = typeOf.get(snap.sourceEntityId);
+        return entityType ? [{ ...snap, entityType }] : [];
+      });
 
       const copies = new Map(
         [...Map.groupBy(extensionSnapshots, (snap) => snap.entityType)].map(([type, snaps]) => [

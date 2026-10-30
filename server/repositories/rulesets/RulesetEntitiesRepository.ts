@@ -8,9 +8,11 @@ import { RULESET_ENTITY_TYPES, type RulesetEntityType } from "./entityTypes.ts";
 
 /**
  * The rows `findNames` reads: a ruleset's own, those with these ids, or the rows of these rulesets, of these names when
- * it's given them.
+ * it's given them; of one type (`entityType`), where a name is its type's alone, or of every ruleset entity type.
  */
-type NamesWhere = { rulesetId: string } | { ids: string[] } | { names?: string[]; rulesetIds: string[] };
+type NamesWhere = ({ rulesetId: string } | { ids: string[] } | { names?: string[]; rulesetIds: string[] }) & {
+  entityType?: RulesetEntityType;
+};
 
 /** An entity's id and name, with its type and its ruleset: what the name queries answer. */
 const NAMED = {
@@ -34,18 +36,15 @@ class RulesetEntitiesRepository {
     return eq(entitiesInRules.rulesetId, where.rulesetId);
   }
 
-  /** An entity type's ids and names, each with its ruleset (`where`: which rows). */
-  async findNames(db: Db, entityType: RulesetEntityType, where: NamesWhere) {
+  /** Entities' ids and names, each with its type and its ruleset (`where`: which rows, of which types). */
+  async findNames(db: Db, where: NamesWhere) {
     if ("ids" in where && where.ids.length === 0) return [];
     if ("rulesetIds" in where && (where.rulesetIds.length === 0 || where.names?.length === 0)) return [];
+    const types = where.entityType ? [where.entityType] : RULESET_ENTITY_TYPES;
     return await db
-      .select({
-        id: entitiesInRules.id,
-        name: sql<string>`${entitiesInRules.name}`,
-        rulesetId: entitiesInRules.rulesetId,
-      })
+      .select(NAMED)
       .from(entitiesInRules)
-      .where(and(eq(entitiesInRules.type, entityType), this.namesCondition(where)));
+      .where(and(inArray(entitiesInRules.type, types), this.namesCondition(where)));
   }
 
   /**

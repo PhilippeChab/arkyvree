@@ -47,11 +47,10 @@ async function findLostReferences(tx: Db, rulesetId: string, departures: Departu
   const references = (await EntityReferences.findMany(tx, { rulesetId, entityIds: [...typeOf.keys()] })).filter(
     (reference) => !deleted.has(reference.id),
   );
-  const names = new Map<string, string>();
-  for (const [type, lost] of Map.groupBy(references, (reference) => typeOf.get(reference.targetId)!)) {
-    const ids = lost.map((reference) => reference.targetId);
-    for (const entity of await RulesetEntities.findNames(tx, type, { ids })) names.set(entity.id, entity.name);
-  }
+  const targetIds = [...new Set(references.map((reference) => reference.targetId))];
+  const names = new Map(
+    (await RulesetEntities.findNames(tx, { ids: targetIds })).map((entity) => [entity.id, entity.name]),
+  );
   return references.map((reference) =>
     Engine.storage().isIdentityKind(typeOf.get(reference.targetId)!)
       ? `${names.get(reference.targetId)}, a list no other book of this ruleset has`
@@ -75,29 +74,34 @@ export async function findDepartures(
   const remaining = { ...ruleset, extensionIds: ruleset.extensionIds.filter((id) => id !== extensionId) };
   const before = await CowDataReader.read(tx, ruleset);
   const after = await CowDataReader.read(tx, remaining);
-  const leaving = new Map<RulesetEntityType, string[]>();
-  for (const type of RULESET_ENTITY_TYPES) {
-    const own = await RulesetEntities.findNames(tx, type, { rulesetId: extensionId });
-    leaving.set(type, [...own.map((entity) => entity.id), ...(copies.get(type) ?? [])]);
-  }
+  const own = Map.groupBy(
+    await RulesetEntities.findNames(tx, { rulesetId: extensionId }),
+    (entity) => entity.entityType,
+  );
+  const leaving = new Map(
+    RULESET_ENTITY_TYPES.map((type) => [
+      type,
+      [...(own.get(type) ?? []).map((entity) => entity.id), ...(copies.get(type) ?? [])],
+    ]),
+  );
   const left = new Set([...leaving.values()].flat());
+  // What each stands in place of, in the view without the book: an entity's equivalents are of its own kind
+  const candidates = new Map(
+    [...left].map((id) => [
+      id,
+      before
+        .getEquivalentIds(id)
+        .filter((other) => !left.has(other))
+        .map((other) => after.resolve(other))
+        .filter((other) => !after.isHidden(other)),
+    ]),
+  );
+  const shown = [...new Set([...candidates.values()].flat())];
+  const live = new Set((await RulesetEntities.findNames(tx, { ids: shown })).map((entity) => entity.id));
 
   const departures = new Map<ReferencedType, ReadonlyMap<string, string | undefined>>();
-  for (const [type, ids] of leaving) {
-    const candidates = new Map(
-      ids.map((id) => [
-        id,
-        before
-          .getEquivalentIds(id)
-          .filter((other) => !left.has(other))
-          .map((other) => after.resolve(other))
-          .filter((other) => !after.isHidden(other)),
-      ]),
-    );
-    const shown = [...new Set([...candidates.values()].flat())];
-    const live = new Set((await RulesetEntities.findNames(tx, type, { ids: shown })).map((entity) => entity.id));
+  for (const [type, ids] of leaving)
     departures.set(type, new Map(ids.map((id) => [id, candidates.get(id)!.find((other) => live.has(other))])));
-  }
   const storage = Engine.storage();
   for (const ownedType of storage.ownedTypes() as OwnedKind[]) {
     const ownerType = storage.ownerOf(ownedType) as RulesetEntityType;

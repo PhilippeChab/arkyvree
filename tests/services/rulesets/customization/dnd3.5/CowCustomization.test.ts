@@ -176,11 +176,8 @@ describe.each(CASES)("an inherited %s's %s", (ownerType, kindName) => {
 
     expect(created.resolvedEntityId).not.toBe(ownerId);
     expect((await kind.rowsOf(ownerType, created.resolvedEntityId)).map((r) => r.id)).toContain(created.id);
-    const copied =
-      ownerType === "classes" || ownerType === "class-levels"
-        ? { entityType: "classes", sourceEntityId: klass.id }
-        : { entityType: "feats", sourceEntityId: feat.id };
-    expect(await EntitySnapshots.findManyWithEntities(db, { rulesetId: fork.id })).toMatchObject([copied]);
+    const copied = { sourceEntityId: ownerType === "classes" || ownerType === "class-levels" ? klass.id : feat.id };
+    expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toMatchObject([copied]);
     expect(await kind.rowsOf(ownerType, ownerId)).toEqual(parentRows);
   });
 

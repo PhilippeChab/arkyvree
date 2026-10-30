@@ -19,72 +19,42 @@ class RulesetChangesService {
 
     if (!ruleset.rulesetId) throw new BadRequestError("Only forked rulesets have local changes");
 
-    const snapshots = await EntitySnapshots.findManyWithEntities(db, { rulesetId });
-
-    // Group snapshots by entity type for batch fetching. One with no type (its copy and its source both gone) stands for
-    // no entity, and lists no change
-    const snapshotsByType = new Map<string, typeof snapshots>();
-    for (const snap of snapshots) {
-      if (!snap.entityType) continue;
-      if (!snapshotsByType.has(snap.entityType)) snapshotsByType.set(snap.entityType, []);
-      snapshotsByType.get(snap.entityType)!.push(snap);
-    }
+    // The fork's own entities, and the snapshots of those it copied: a copy is a change to what it copied, the rest are
+    // its own additions
+    const snapshots = await EntitySnapshots.findMany(db, { rulesetId });
+    const local = await RulesetEntities.findNames(db, { rulesetId });
+    const localById = new Map(local.map((row) => [row.id, row]));
+    const copied = new Set(snapshots.map((snap) => snap.forkedEntityId));
+    // A deleted copy (a tombstone) lists its source by its name; a snapshot whose copy and source are both gone stands
+    // for no entity, and lists no change
+    const tombstones = snapshots.filter((snap) => !localById.has(snap.forkedEntityId));
+    const sources = await RulesetEntities.findNames(db, { ids: tombstones.map((snap) => snap.sourceEntityId) });
+    const sourceById = new Map(sources.map((row) => [row.id, row]));
 
     type ChangeRow =
       | { entityId: string; entityType: RulesetEntityType; name: string; sourceEntityId: string; status: "modified" }
       | { entityType: RulesetEntityType; name: string; sourceEntityId: string; status: "deleted" }
       | { entityId: string; entityType: RulesetEntityType; name: string; status: "added" };
 
-    const changes: ChangeRow[] = [];
+    const changes: ChangeRow[] = local.flatMap(({ entityType, id, name }) =>
+      copied.has(id) ? [] : [{ entityType, status: "added" as const, entityId: id, name }],
+    );
+    // A read-only kind (3.5's abilities) has no snapshots: no route edits it
     const restorable = Engine.rules().restorableKinds();
-
-    // Walk every entity type so we can emit "added" rows for locally-owned
-    // entities that aren't tracked by any snapshot, alongside the snapshot-
-    // tracked "modified"/"deleted" rows.
-    for (const entityType of RULESET_ENTITY_TYPES) {
-      const typeSnapshots = snapshotsByType.get(entityType) ?? [];
-      const forkedIds = typeSnapshots.map((s) => s.forkedEntityId);
-
-      // Locally-owned rows. Forked entity ids that have a snapshot are COWs
-      // (modified/deleted); the rest are locally-created (added).
-      const localRows = await RulesetEntities.findNames(db, entityType, { rulesetId });
-      const forkedIdSet = new Set(forkedIds);
-      const localById = new Map(localRows.map((r) => [r.id, r]));
-
-      for (const local of localRows) {
-        if (forkedIdSet.has(local.id)) continue;
+    for (const snap of snapshots) {
+      const forked = localById.get(snap.forkedEntityId);
+      const source = sourceById.get(snap.sourceEntityId);
+      if (forked && restorable.includes(forked.entityType)) {
         changes.push({
-          entityType,
-          status: "added",
-          entityId: local.id,
-          name: local.name,
+          entityType: forked.entityType,
+          status: "modified",
+          sourceEntityId: snap.sourceEntityId,
+          entityId: forked.id,
+          name: forked.name,
         });
-      }
-
-      // A read-only kind (3.5's abilities) has no snapshots: no route edits it.
-      if (typeSnapshots.length === 0 || !restorable.includes(entityType)) continue;
-
-      // Tombstones (COW hard-deleted) need the source entity's name as a fallback.
-      const sourceIds = typeSnapshots.map((s) => s.sourceEntityId);
-      const sourceRows = await RulesetEntities.findNames(db, entityType, { ids: sourceIds });
-      const sourceById = new Map(sourceRows.map((r) => [r.id, r]));
-
-      for (const snap of typeSnapshots) {
-        const forked = localById.get(snap.forkedEntityId);
-        if (forked) {
-          changes.push({
-            entityType,
-            status: "modified",
-            sourceEntityId: snap.sourceEntityId,
-            entityId: snap.forkedEntityId,
-            name: forked.name,
-          });
-          continue;
-        }
-        const source = sourceById.get(snap.sourceEntityId);
-        if (!source) continue;
+      } else if (!forked && source && restorable.includes(source.entityType)) {
         changes.push({
-          entityType,
+          entityType: source.entityType,
           status: "deleted",
           sourceEntityId: snap.sourceEntityId,
           name: source.name,
@@ -92,7 +62,7 @@ class RulesetChangesService {
       }
     }
 
-    // One order, whatever the rows' storage: by kind, as walked, then by name
+    // One order, whatever the rows' storage: by kind, in the modules' order, then by name
     return changes.toSorted(
       (a, b) =>
         RULESET_ENTITY_TYPES.indexOf(a.entityType) - RULESET_ENTITY_TYPES.indexOf(b.entityType) ||

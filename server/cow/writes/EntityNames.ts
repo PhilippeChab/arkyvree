@@ -41,6 +41,14 @@ export default class EntityNames {
     private readonly cow: CowData,
   ) {}
 
+  /** The names of `entities`, each once, by their type, in the order the modules declare the types. */
+  private static namesByType(entities: { entityType: RulesetEntityType; name: string }[]) {
+    const byType = Map.groupBy(entities, (entity) => entity.entityType);
+    return new Map(
+      RULESET_ENTITY_TYPES.map((type) => [type, [...new Set((byType.get(type) ?? []).map((entity) => entity.name))]]),
+    );
+  }
+
   /**
    * Runs `write`, which gives an entity of the ruleset the name `name` (none: a row without one, which the index
    * doesn't hold), answering the name index's refusal as the check answers the ruleset's own name: two saves that take
@@ -70,7 +78,7 @@ export default class EntityNames {
     names: string[],
     chain = this.cow.sourceChain,
   ): Promise<NamedEntity[]> {
-    return await RulesetEntities.findNames(tx, entityType, { names, rulesetIds: [this.ruleset.id, ...chain] });
+    return await RulesetEntities.findNames(tx, { entityType, names, rulesetIds: [this.ruleset.id, ...chain] });
   }
 
   /**
@@ -139,15 +147,11 @@ export default class EntityNames {
   async assertExtensionNamesAvailable(tx: Db, extensionIds: string[]): Promise<void> {
     const subscribed = [...this.ruleset.extensionIds, ...extensionIds];
     const after = await CowDataReader.read(tx, { ...this.ruleset, extensionIds: subscribed });
-    const names = new Map<RulesetEntityType, string[]>();
-    for (const entityType of RULESET_ENTITY_TYPES) {
-      const brought = await RulesetEntities.findNames(tx, entityType, { rulesetIds: extensionIds });
-      names.set(entityType, [...new Set(brought.map((entity) => entity.name))]);
-    }
+    const brought = await RulesetEntities.findNames(tx, { rulesetIds: extensionIds });
     await this.refuseChainNames(
       tx,
       after,
-      names,
+      EntityNames.namesByType(brought),
       new Set(),
       (entityType, name) =>
         `Cannot subscribe: ${entityType} "${name}" already exists in this ruleset or another subscribed extension`,
@@ -206,7 +210,7 @@ export default class EntityNames {
     sourceEntityId: string,
     copyId: string,
   ): Promise<void> {
-    const entities = await RulesetEntities.findNames(tx, entityType, { ids: [sourceEntityId, copyId] });
+    const entities = await RulesetEntities.findNames(tx, { ids: [sourceEntityId, copyId] });
     const source = entities.find((entity) => entity.id === sourceEntityId);
     const copy = entities.find((entity) => entity.id === copyId);
     if (source && copy?.name !== source.name) this.refuseShown(await this.findNamed(tx, entityType, [source.name]));
@@ -224,16 +228,11 @@ export default class EntityNames {
     const after = await CowDataReader.read(tx, { ...this.ruleset, extensionIds });
     const remaining = new Set([this.ruleset.id, ...after.sourceChain]);
     const returning = this.cow.getStaleIds().filter((id) => !after.isHidden(id));
-    const names = new Map<RulesetEntityType, string[]>();
-    for (const entityType of RULESET_ENTITY_TYPES) {
-      const shown = await RulesetEntities.findNames(tx, entityType, { ids: returning });
-      const kept = shown.filter((entity) => remaining.has(entity.rulesetId));
-      names.set(entityType, [...new Set(kept.map((entity) => entity.name))]);
-    }
+    const shown = await RulesetEntities.findNames(tx, { ids: returning });
     await this.refuseChainNames(
       tx,
       after,
-      names,
+      EntityNames.namesByType(shown.filter((entity) => remaining.has(entity.rulesetId))),
       new Set(copyIds),
       (entityType, name) =>
         `Cannot unsubscribe: ${entityType} "${name}", which this extension replaces, would show again beside another of its name: rename that one first`,

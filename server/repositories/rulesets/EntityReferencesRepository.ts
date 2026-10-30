@@ -15,7 +15,6 @@ import {
 import { toQualified } from "@/server/repositories/stored/toQualified.ts";
 
 import { ENTITY_REFERENCES, type EntityReference, type ReferenceOwner } from "./entityReferences.ts";
-import type { RulesetEntityType } from "./entityTypes.ts";
 import { buildLineageCondition } from "./rulesetLineage.ts";
 
 /** What a character's row naming an entity belongs to: the character, or one of its levels. */
@@ -207,8 +206,8 @@ class EntityReferencesRepository {
   }
 
   /**
-   * A ruleset's rows that name one of `entityIds` (another ruleset's entities), each by what it's of (an entity's type,
-   * id and name, a class level's by its class; the ruleset itself) and the entity it names (`targetId`): an entity's
+   * A ruleset's rows that name one of `entityIds` (another ruleset's entities), each by what it's of (an entity's id
+   * and name, a class level's by its class; the ruleset itself) and the entity it names (`targetId`): an entity's
    * link (an item's template, a class's or a race's parent, a spell's save, a save's or a skill's ability, a feat's or a
    * spell's list, a class's skill, a class level's saves and grants), and the ruleset's own (its skill point ability).
    * What the ruleset would keep dangling were those entities to leave it.
@@ -220,7 +219,6 @@ class EntityReferencesRepository {
     const linked = (column: PgColumn) =>
       db
         .select({
-          entityType: sql<RulesetEntityType>`coalesce(${owner.type}, ${from.type})`.as("entity_type"),
           id: sql<string>`coalesce(${owner.id}, ${from.id})`.as("id"),
           name: sql<string>`coalesce(${owner.name}, ${from.name})`.as("name"),
           targetId: sql<string>`${column}`.as("target_id"),
@@ -231,7 +229,6 @@ class EntityReferencesRepository {
         .where(and(inArray(column, where.entityIds), eq(from.rulesetId, where.rulesetId)));
     const ruleset = db
       .select({
-        entityType: sql<RulesetEntityType>`'rulesets'`.as("entity_type"),
         id: rulesetsInRules.id,
         name: rulesetsInRules.name,
         targetId: sql<string>`${rulesetLinksInRules.toId}`.as("target_id"),
@@ -242,7 +239,7 @@ class EntityReferencesRepository {
         and(inArray(rulesetLinksInRules.toId, where.entityIds), eq(rulesetLinksInRules.rulesetId, where.rulesetId)),
       );
     return await unionAll(linked(entityLinksInRules.toId), linked(entityLinksInRules.viaId), ruleset).orderBy(
-      sql`entity_type, name, id, target_id`,
+      sql`name, id, target_id`,
     );
   }
 
