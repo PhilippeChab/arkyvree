@@ -262,3 +262,38 @@ describe("0102_activity-targets", () => {
     expect(await targetsOf("notifications")).toEqual(expected);
   });
 });
+
+describe("0103_field-activities", () => {
+  test("deletes the activities and notifications of a custom field, and no other", async () => {
+    const { user } = await createTestUser();
+    const rows = [
+      ["entity-fields", "createField"],
+      ["entity-fields", "updateField"],
+      ["entity-fields", "deleteField"],
+      ["rulesets", "updateRuleset"],
+      ["modifiers", "createModifier"],
+    ];
+    for (const [targetType, type] of rows) {
+      const { rows: inserted } = await db.execute<{ id: string }>(sql`
+        INSERT INTO account.activities (user_id, target_id, target_type, type)
+        VALUES (${user.id}, ${NIL_UUID}, ${targetType}, ${type}) RETURNING id
+      `);
+      await db.execute(sql`
+        INSERT INTO account.notifications (recipient_id, actor_id, activity_id, target_id, target_type, type)
+        VALUES (${user.id}, ${user.id}, ${inserted[0].id}, ${NIL_UUID}, ${targetType}, ${type})
+      `);
+    }
+    const typesOf = async (table: "activities" | "notifications") => {
+      const owner = table === "activities" ? sql`user_id` : sql`recipient_id`;
+      const { rows: types } = await db.execute<{ type: string }>(
+        sql`SELECT type FROM ${sql.raw(`account.${table}`)} WHERE ${owner} = ${user.id} ORDER BY type`,
+      );
+      return types.map((row) => row.type);
+    };
+
+    for (const statement of statementsOf("0103_field-activities.sql")) await db.execute(sql.raw(statement));
+
+    expect(await typesOf("activities")).toEqual(["createModifier", "updateRuleset"]);
+    expect(await typesOf("notifications")).toEqual(["createModifier", "updateRuleset"]);
+  });
+});
