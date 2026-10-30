@@ -9,7 +9,6 @@ class ModifiersRepository extends CustomizationRepository<typeof modifiersInCust
     super(modifiersInCustomization);
   }
 
-  // Exception to soft-delete: disposable configuration data — intentional removal
   async delete(db: Db, where: { id: string } | { ids: string[] } | { sourceIds: string[]; sourceType: string }) {
     return await db
       .delete(this.table)
