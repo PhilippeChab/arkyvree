@@ -9,7 +9,6 @@ class RequirementsRepository extends CustomizationRepository<typeof requirements
     super(requirementsInCustomization);
   }
 
-  // Exception to soft-delete: disposable configuration data — intentional removal
   async delete(db: Db, where: { id: string } | { ids: string[] } | { entityIds: string[]; entityType: string }) {
     return await db
       .delete(this.table)
@@ -55,8 +54,6 @@ class RequirementsRepository extends CustomizationRepository<typeof requirements
       ),
     });
   }
-
-  // Exception to soft-delete: disposable configuration data — intentional removal
 }
 
 export default RequirementsRepository;

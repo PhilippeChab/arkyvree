@@ -36,9 +36,7 @@ export type Character = typeof charactersInCharacter.$inferSelect & {
  */
 export type CharacterFieldValue = boolean | number | string | readonly (boolean | number | string)[];
 /** An inventory entry: an item a character holds, where, in which groups (3.5's weapon sets), and its charges. */
-export type CharacterInventory = Omit<typeof inventoryInCharacter.$inferSelect, "itemType" | "location"> & {
-  location: string | null;
-};
+export type CharacterInventory = Omit<typeof inventoryInCharacter.$inferSelect, "itemType">;
 export type Invite = typeof invitesInCampaign.$inferSelect;
 export type Modifier = typeof modifiersInCustomization.$inferSelect;
 export type Player = typeof playersInCampaign.$inferSelect;

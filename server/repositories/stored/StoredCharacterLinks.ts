@@ -42,7 +42,6 @@ class StoredCharacterLinks extends BaseRepository<typeof linksInCharacter> {
     );
   }
 
-  // Exception to soft-delete: a character's links are disposable reference data
   async delete(db: Db, where: { characterId: string; role: string }) {
     return await db
       .delete(this.table)
