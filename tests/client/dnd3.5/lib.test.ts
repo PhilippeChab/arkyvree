@@ -272,19 +272,9 @@ describe("An activity", () => {
       "Ann added Climb to Fighter",
       "Ann removed a skill from a class",
     ]);
-    // A field's change, an older activity's: its entity's name, else an entity
-    expect([
-      formatNotificationMessage("createField", { actorName: "Ann", entityName: "Fireball" }),
-      formatNotificationMessage("updateField", { actorName: "Ann" }),
-      formatNotificationMessage("deleteField", { entityName: "Fireball" }),
-    ]).toEqual([
-      "Ann added a field to Fireball",
-      "Ann updated a field on an entity",
-      "Someone removed a field from Fireball",
-    ]);
   });
 
-  test("details the fields it changed, its level, modifier and a field's value", () => {
+  test("details the fields it changed, its level and a customization's condition", () => {
     expect(
       formatActivityDetails(
         "updateItem",
@@ -327,8 +317,7 @@ describe("An activity", () => {
     expect([
       formatActivityDetails("createModifier", { target: "combat.ac.misc", operator: "add", value: "1" }),
       formatActivityDetails("updateRequirement", { target: "identity.name", operator: "not_empty" }),
-      formatActivityDetails("createField", { field: "SPELL_SCHOOL", value: "Evocation" }),
-    ]).toEqual(["+ 1 on combat.ac.misc", "is not empty on identity.name", "Spell School: Evocation"]);
+    ]).toEqual(["+ 1 on combat.ac.misc", "is not empty on identity.name"]);
     expect([formatActivityDetails("updateItem", {}), formatActivityDetails("updateItem", "not a payload")]).toEqual([
       null,
       null,

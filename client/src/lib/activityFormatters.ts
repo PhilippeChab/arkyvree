@@ -53,17 +53,14 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
   // create
   createModifier: (actor, d) => `${actor} added a modifier to ${d.entityName || "an entity"}`,
   createRequirement: (actor, d) => `${actor} added a requirement to ${d.entityName || "an entity"}`,
-  createField: (actor, d) => `${actor} added a field to ${d.entityName || "an entity"}`,
 
   // Ruleset content — update
   updateModifier: (actor, d) => `${actor} updated a modifier on ${d.entityName || "an entity"}`,
   updateRequirement: (actor, d) => `${actor} updated a requirement on ${d.entityName || "an entity"}`,
-  updateField: (actor, d) => `${actor} updated a field on ${d.entityName || "an entity"}`,
 
   // Ruleset content — delete
   deleteModifier: (actor, d) => `${actor} removed a modifier from ${d.entityName || "an entity"}`,
   deleteRequirement: (actor, d) => `${actor} removed a requirement from ${d.entityName || "an entity"}`,
-  deleteField: (actor, d) => `${actor} removed a field from ${d.entityName || "an entity"}`,
 
   // Exports
   pdfReady: (_actor, d) => `Your PDF for ${d.characterName || "your character"} is ready to download`,
@@ -274,9 +271,6 @@ export function formatActivityDetails(type: string, data: unknown, rules?: Rules
     const operator = formatOperator(type.endsWith("Requirement") ? "requirement" : "modifier", d.operator);
     parts.push(`${operator}${d.value ? ` ${d.value}` : ""} on ${d.target}`);
   }
-
-  // A field's value
-  if (typeof d.field === "string" && d.field) parts.push(`${formatFieldName(d.field)}: ${d.value ?? ""}`);
 
   return parts.length > 0 ? parts.join("\n") : null;
 }
