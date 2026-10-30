@@ -34,7 +34,7 @@ class CharacterInventoryService {
         await Activities.create(tx, {
           userId: session.userId,
           targetId: characterId,
-          targetType: TARGET_TYPES.inventory,
+          targetType: TARGET_TYPES.characters,
           type: "addItem",
         });
 
@@ -86,7 +86,7 @@ class CharacterInventoryService {
         await Activities.create(tx, {
           userId: session.userId,
           targetId: characterId,
-          targetType: TARGET_TYPES.inventory,
+          targetType: TARGET_TYPES.characters,
           type: "removeItem",
         });
 
@@ -129,7 +129,7 @@ class CharacterInventoryService {
         await Activities.create(tx, {
           userId: session.userId,
           targetId: characterId,
-          targetType: TARGET_TYPES.inventory,
+          targetType: TARGET_TYPES.characters,
           type: "updateItem",
         });
 

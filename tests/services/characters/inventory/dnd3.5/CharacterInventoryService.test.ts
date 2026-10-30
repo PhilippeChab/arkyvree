@@ -10,7 +10,9 @@ import { CharacterInventory, Entities, Modifiers, Requirements } from "@/server/
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
+import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
+import { activityTypes } from "@/tests/support/activities.ts";
 import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
 import { createTestItem, findPlainItem } from "@/tests/support/dnd3.5/items.ts";
 import { writeValues } from "@/tests/support/ownerValues.ts";
@@ -336,6 +338,17 @@ describe("InventoryService", () => {
         totalCharges: 50,
         remainingCharges: 30,
       });
+      // Each is its character's activity, which opens its page
+      const types = await activityTypes(session.userId, TARGET_TYPES.characters, character.id);
+      expect(types.filter((type) => type.endsWith("Item"))).toEqual([
+        "addItem",
+        "addItem",
+        "addItem",
+        "updateItem",
+        "updateItem",
+        "updateItem",
+        "updateItem",
+      ]);
     });
 
     test("refuses charges without both counts, or with more left than in all", async () => {

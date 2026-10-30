@@ -33,7 +33,6 @@ class ActivitiesRepository extends include(BaseRepository<typeof activitiesInAcc
       orderBy?: "createdAt" | "type";
       orderDir?: "asc" | "desc";
       search?: string;
-      targetType?: string;
       type?: string;
       userId: string;
     },
@@ -48,7 +47,6 @@ class ActivitiesRepository extends include(BaseRepository<typeof activitiesInAcc
 
     const whereConditions = this.where([
       eq(this.table.userId, where.userId),
-      "targetType" in where && !!where.targetType && eq(this.table.targetType, where.targetType),
       "type" in where && !!where.type && eq(this.table.type, where.type),
       searchConditions,
       gte(this.table.createdAt, threeMonthsAgo.toISOString()),

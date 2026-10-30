@@ -44,7 +44,7 @@ class CharacterLevelsService extends include(Object, Plans) {
         await Activities.create(tx, {
           userId: session.userId,
           targetId: characterId,
-          targetType: TARGET_TYPES.advancements,
+          targetType: TARGET_TYPES.characters,
           type: "editLevel",
         });
 
@@ -87,7 +87,7 @@ class CharacterLevelsService extends include(Object, Plans) {
         await Activities.create(tx, {
           userId: session.userId,
           targetId: characterId,
-          targetType: TARGET_TYPES.advancements,
+          targetType: TARGET_TYPES.characters,
           type: "addLevel",
           data: { count: plan.advancements.length },
         });
@@ -127,7 +127,7 @@ class CharacterLevelsService extends include(Object, Plans) {
       await Activities.create(tx, {
         userId: session.userId,
         targetId: characterId,
-        targetType: TARGET_TYPES.advancements,
+        targetType: TARGET_TYPES.characters,
         type: "removeLevel",
       });
 

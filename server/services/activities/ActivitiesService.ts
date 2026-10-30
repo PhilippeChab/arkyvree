@@ -132,7 +132,6 @@ class ActivitiesService {
       orderBy?: "createdAt" | "type";
       orderDir?: "asc" | "desc";
       search?: string;
-      targetType?: string;
       type?: string;
     },
     pagination: Pagination,
@@ -154,9 +153,6 @@ class ActivitiesService {
       case TARGET_TYPES.rulesets:
         return await this.rulesetUrl(session, targetId);
       case TARGET_TYPES.characters:
-      // Character sub-entities: targetId is the characterId
-      case TARGET_TYPES.advancements:
-      case TARGET_TYPES.inventory:
         return await this.characterUrl(session, targetId);
       case TARGET_TYPES.campaigns:
         return await this.campaignUrl(session, targetId);

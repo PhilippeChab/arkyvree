@@ -85,11 +85,7 @@ describe("EntitiesService: spells", () => {
       name: "Shield",
       fields: { [SPELL_SAVE_EFFECT]: "negates" },
     });
-    const { items } = await Activities.findPage(
-      db,
-      { userId: session.userId, targetType: "spells" },
-      { limit: 10, page: 1 },
-    );
+    const { items } = await Activities.findPage(db, { userId: session.userId }, { limit: 100, page: 1 });
     const updates = items.filter((activity) => activity.type === "updateSpell");
     expect(
       updates.map((activity) => activity.data).sort((a, b) => JSON.stringify(a).length - JSON.stringify(b).length),

@@ -66,11 +66,7 @@ describe("EntitiesService: skills", () => {
       links: [{ role: "keyAbility", toId: abilityMap.Strength, toName: "Strength" }],
     });
     // Its activity records what it changed, never what it left out
-    const { items } = await Activities.findPage(
-      db,
-      { userId: session.userId, targetType: "skills" },
-      { limit: 10, page: 1 },
-    );
+    const { items } = await Activities.findPage(db, { userId: session.userId }, { limit: 100, page: 1 });
     expect(items.find((activity) => activity.type === "updateSkill")?.data).toMatchObject({
       changedFields: [{ field: "name", from: "Climb", to: "Climbing" }],
     });
