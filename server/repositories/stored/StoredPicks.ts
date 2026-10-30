@@ -89,7 +89,7 @@ class StoredPicks extends BaseRepository<typeof advancementPicksInCharacter> {
     await db.insert(this.table).values(rows);
   }
 
-  /** Deletes an advancement's picks: a level's save writes them again. */
+  /** Deletes an advancement's picks: a saved level's edit writes them again. */
   async delete(db: Db, where: { advancementId: string }) {
     return await db.delete(this.table).where(eq(this.table.advancementId, where.advancementId));
   }
