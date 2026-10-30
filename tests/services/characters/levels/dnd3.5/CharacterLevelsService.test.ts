@@ -256,9 +256,7 @@ async function setupRuleset({ fork = false } = {}) {
   const { user: author } = await createTestUser();
   const owner = fork ? author : user;
   const parent = await createTestRuleset(owner.id, { status: "Published" });
-  const characterRuleset = fork
-    ? await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] })
-    : parent;
+  const characterRuleset = fork ? await createTestRuleset(user.id, { rulesetId: parent.id }) : parent;
   const rulesetId = parent.id;
 
   const [race] = await Entities.create<Race>(db, "races", {
@@ -622,7 +620,6 @@ describe("LevelsService", () => {
       const ctx = await getSeedCtx();
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: ctx.rulesetId,
-        ancestorRulesetIds: [ctx.rulesetId],
       });
       const characterId = await createSeedCharacter(ctx, "cleric", { rulesetId: fork.id });
 
@@ -1617,7 +1614,6 @@ describe("LevelsService", () => {
         const ctx = await getSeedCtx();
         const fork = await createTestRuleset(SEED_USER_ID, {
           rulesetId: ctx.rulesetId,
-          ancestorRulesetIds: [ctx.rulesetId],
         });
         const characterId = await createSeedCharacter(ctx, "wizard", { xp: 3000, rulesetId: fork.id });
         await levelUp(session, ctx, characterId, "Wizard", 1, WIZARD_1);
@@ -1839,7 +1835,6 @@ describe("LevelsService", () => {
       const ctx = await getSeedCtx();
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: ctx.rulesetId,
-        ancestorRulesetIds: [ctx.rulesetId],
       });
       const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: fork.id });
       // The skill point ability comes from the parent: 16 points take INT's +1 into account.

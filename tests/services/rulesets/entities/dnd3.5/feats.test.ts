@@ -86,55 +86,33 @@ describe("EntitiesService: feats", () => {
       expect(await linkedAptitudeIds(feat.id)).toEqual([]);
     });
 
-    test("an edit answers an aptitude its fork copied after the feat was listed in it as the copy, as its page does", async () => {
+    test("an edit answers an aptitude its fork copied after the feat was listed in it as the copy, or none once the copy's deleted, as its page does", async () => {
       const {
         user,
         session,
         ruleset: parent,
         aptitudeIds: [combat],
       } = await createTestUserAndRuleset(APTITUDES);
-      const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+      const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
       const feat = await EntitiesService.createEntity(session, fork.id, "feats", {
         name: "Cleave",
         links: { listedIn: [{ toId: combat }] },
       });
+      const editedLinks = async () => {
+        const edited = await EntitiesService.updateEntity(session, fork.id, "feats", feat.id, {
+          name: "Cleave",
+          description: "Renamed list",
+        });
+        expect(edited.links).toEqual((await EntitiesService.getEntity(session, fork.id, "feats", feat.id)).links);
+        return edited.links;
+      };
       const copy = await EntitiesService.updateEntity(session, fork.id, "aptitudes", combat, { name: "Melee" });
 
       // Its stored list is the original, which its view reads as the fork's copy
-      const edited = await EntitiesService.updateEntity(session, fork.id, "feats", feat.id, {
-        name: "Cleave",
-        description: "Renamed list",
-      });
-      expect(edited.links).toEqual([expect.objectContaining({ role: "listedIn", toId: copy.id, toName: "Melee" })]);
-      expect(edited.links).toEqual((await EntitiesService.getEntity(session, fork.id, "feats", feat.id)).links);
-    });
-
-    test("an edit in a fork of a fork answers the copy of the aptitude that stands for it there, or none once it's deleted, as its page does", async () => {
-      const {
-        user,
-        session,
-        ruleset: base,
-        aptitudeIds: [combat],
-      } = await createTestUserAndRuleset(APTITUDES);
-      const middle = await createTestRuleset(user.id, { rulesetId: base.id, ancestorRulesetIds: [base.id] });
-      const leaf = await createTestRuleset(user.id, { rulesetId: middle.id, ancestorRulesetIds: [middle.id, base.id] });
-      const feat = await EntitiesService.createEntity(session, leaf.id, "feats", {
-        name: "Cleave",
-        links: { listedIn: [{ toId: combat }] },
-      });
-      const editedLinks = async () => {
-        const edited = await EntitiesService.updateEntity(session, leaf.id, "feats", feat.id, { name: "Cleave" });
-        expect(edited.links).toEqual((await EntitiesService.getEntity(session, leaf.id, "feats", feat.id)).links);
-        return edited.links;
-      };
-
-      const middleCopy = await EntitiesService.updateEntity(session, middle.id, "aptitudes", combat, {
-        name: "Middle",
-      });
-      expect(await editedLinks()).toEqual([expect.objectContaining({ toId: middleCopy.id, toName: "Middle" })]);
-      const leafCopy = await EntitiesService.updateEntity(session, leaf.id, "aptitudes", combat, { name: "Leaf" });
-      expect(await editedLinks()).toEqual([expect.objectContaining({ toId: leafCopy.id, toName: "Leaf" })]);
-      await EntitiesService.deleteEntity(session, leaf.id, "aptitudes", leafCopy.id);
+      expect(await editedLinks()).toEqual([
+        expect.objectContaining({ role: "listedIn", toId: copy.id, toName: "Melee" }),
+      ]);
+      await EntitiesService.deleteEntity(session, fork.id, "aptitudes", copy.id);
       expect(await editedLinks()).toEqual([]);
     });
 
@@ -183,7 +161,7 @@ describe("EntitiesService: feats", () => {
       const [list] = await Entities.create<Aptitude>(db, "aptitudes", { name: "Shared List", rulesetId: base.id });
       const forkOf = async () => {
         const { user, session } = await createTestUser();
-        const fork = await createTestRuleset(user.id, { rulesetId: base.id, ancestorRulesetIds: [base.id] });
+        const fork = await createTestRuleset(user.id, { rulesetId: base.id });
         return { session, fork };
       };
       const [spellFork, featFork] = [await forkOf(), await forkOf()];
@@ -357,7 +335,7 @@ describe("EntitiesService: feats", () => {
         name: "Inherited Feat",
         links: { listedIn: [{ toId: combat }] },
       });
-      const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+      const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
       await pickFeat(user.id, fork.id, feat.id, combat);
       await expectRefusedWith(EntitiesService.deleteEntity(session, parent.id, "feats", feat.id), 409);
     });
@@ -407,7 +385,7 @@ describe("EntitiesService: feats", () => {
       name: "Endurance",
       links: { listedIn: [{ toId: combat }] },
     });
-    const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+    const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
 
     const copy = await EntitiesService.updateEntity(session, fork.id, "feats", source.id, {
       name: "Endurance",

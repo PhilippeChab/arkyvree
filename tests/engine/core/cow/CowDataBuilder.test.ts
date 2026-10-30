@@ -6,7 +6,7 @@ import { CowDataBuilder, type CowRows } from "@/engine/core/cow/index.ts";
 const NO_ROWS: CowRows = { identities: [], namesakes: [], owned: [], ownNamesakes: [], snapshots: [] };
 
 /** A fork of a base, of a made-up module's kinds. */
-const RULESET = { ancestorRulesetIds: ["base"], extensionIds: [], id: "fork" };
+const RULESET = { extensionIds: [], id: "fork", parentId: "base" };
 
 /** An entity of a kind a name is the identity of, named "General", of a ruleset. */
 function named(entityType: string, id: string, rulesetId: string) {

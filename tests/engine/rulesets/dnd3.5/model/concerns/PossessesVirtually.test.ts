@@ -284,7 +284,6 @@ describe("A grant", () => {
       const book = await findSeededRuleset(DND35_COMPLETE_ADVENTURER_NAME);
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: ctx.rulesetId,
-        ancestorRulesetIds: [ctx.rulesetId],
         extensionIds: [book.id],
       });
       const characterId = await seedHuman("Catlord", { rulesetId: fork.id });

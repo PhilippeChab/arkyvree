@@ -44,7 +44,7 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestClassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { addClassSkills, addLists, findLists } from "@/tests/support/dnd3.5/links.ts";
 import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
-import { copyEntity, createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
+import { copyEntity, createTestRuleset, ownerSessionOf, sourcesOf } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import {
@@ -97,7 +97,7 @@ async function addPlayableContent(rulesetId: string) {
 /** A fork of a published base, owned by `userId`. */
 async function createFork(userId: string, values: RulesetValues = {}) {
   const base = await createTestRuleset(null, { private: false, status: "Published" });
-  return await createTestRuleset(userId, { rulesetId: base.id, ancestorRulesetIds: [base.id], ...values });
+  return await createTestRuleset(userId, { rulesetId: base.id, ...values });
 }
 
 /** A published ruleset of `userId` (a system one when null), with a template item so forking it doesn't seed the engine's. */
@@ -136,7 +136,7 @@ async function setupListing() {
   const { user: other } = await createTestUser();
   const { user: leaver } = await createTestUser();
   const base = await createTestRuleset(null, { private: false, status: "Published" });
-  const fork = { rulesetId: base.id, ancestorRulesetIds: [base.id] };
+  const fork = { rulesetId: base.id };
   const published = { private: false, status: "Published" } as const;
   const rulesets = {
     base,
@@ -241,7 +241,6 @@ describe("RulesetsService", () => {
     const parent = await createTestRuleset(null, { private: false, status: "Published" });
     const ruleset = await createTestRuleset(owner.id, {
       rulesetId: parent.id,
-      ancestorRulesetIds: [parent.id],
       private: false,
       status: "Published",
       kind: "extension",
@@ -265,7 +264,7 @@ describe("RulesetsService", () => {
     const { user: contributor, session } = await createTestUser();
     const { session: stranger } = await createTestUser();
     const base = await createTestRuleset(null, { private: false, status: "Published" });
-    const ruleset = await createTestRuleset(leaver.id, { rulesetId: base.id, ancestorRulesetIds: [base.id] });
+    const ruleset = await createTestRuleset(leaver.id, { rulesetId: base.id });
     await addRulesetContributor(ruleset.id, contributor, leaver.id);
     const [orphaned] = await Rulesets.orphan(db, { userId: leaver.id });
 
@@ -459,10 +458,9 @@ describe("RulesetsService", () => {
         status: "Draft",
         userId: user.id,
         rulesetId: parent.id,
-        ancestorRulesetIds: [parent.id],
-        extensionIds: [extension.id],
         baseRules: parent.baseRules,
       });
+      expect((await sourcesOf(created.id)).extensionIds).toEqual([extension.id]);
       expect(
         (await Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: created.id }, firstPage)).items,
       ).toEqual([]);
@@ -600,7 +598,7 @@ describe("RulesetsService", () => {
       const seedExtension = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
       await RulesetExtensionsService.subscribeExtension(session, host.id, [seedExtension.id]);
       expect(RulesetsService.publishRuleset(session, host.id, { kind: "extension" })).rejects.toThrow(
-        UnprocessableEntityError,
+        "A ruleset that subscribes to extensions cannot itself be an extension",
       );
     });
 
@@ -644,6 +642,21 @@ describe("RulesetsService", () => {
       expect(await update(forked.id, forked.name)).toMatchObject({ kind: "extension" });
       const standalone = await createTestRuleset(user.id);
       expect(update(standalone.id, standalone.name)).rejects.toThrow(UnprocessableEntityError);
+    });
+
+    test("refuses making an extension of a ruleset that subscribes to one, a draft or a published one", async () => {
+      const { session } = await createTestUser();
+      const { rulesetId } = await getSeedCtx();
+      const seedExtension = await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME);
+      const [draft, published] = [await fork(session, { id: rulesetId }), await fork(session, { id: rulesetId })];
+      for (const host of [draft, published])
+        await RulesetExtensionsService.subscribeExtension(session, host.id, [seedExtension.id]);
+      await RulesetsService.publishRuleset(session, published.id);
+      for (const host of [draft, published]) {
+        expect(
+          RulesetsService.updateRuleset(session, host.id, { name: host.name, description: "", kind: "extension" }),
+        ).rejects.toThrow("A ruleset that subscribes to extensions cannot itself be an extension");
+      }
     });
 
     test("makes a published extension playable only with the content publishing it as a ruleset needs", async () => {
@@ -729,7 +742,6 @@ describe("RulesetsService", () => {
       const base = await createTestRuleset(null, { private: false, status: "Published" });
       const fork: RulesetValues = {
         rulesetId: base.id,
-        ancestorRulesetIds: [base.id],
         private: false,
         status: "Published",
       };

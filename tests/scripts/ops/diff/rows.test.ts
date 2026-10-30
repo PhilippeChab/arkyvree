@@ -60,13 +60,10 @@ describe("A table's diff", () => {
   });
 
   test("writes a field that references other rows as a comment: its value is their names, which no id column takes", () => {
-    const diff = collectDiff(
-      [row("Homebrew", { ancestor_ruleset_ids: "Psionics" })],
-      [row("Homebrew", { ancestor_ruleset_ids: "Epic" }, "t1")],
-    );
-    expect(renderSql("rules.rulesets", diff, ["ancestor_ruleset_ids"])).toEqual([
+    const diff = collectDiff([row("Homebrew", { parent: "Psionics" })], [row("Homebrew", { parent: "Epic" }, "t1")]);
+    expect(renderSql("rules.rulesets", diff, ["parent"])).toEqual([
       "-- rules.rulesets:",
-      '--   Homebrew.ancestor_ruleset_ids: reference "Psionics", target "Epic" (UPDATE skipped — it references other rows)',
+      '--   Homebrew.parent: reference "Psionics", target "Epic" (UPDATE skipped — it references other rows)',
     ]);
   });
 

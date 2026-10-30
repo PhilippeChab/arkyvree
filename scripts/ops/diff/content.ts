@@ -47,9 +47,6 @@ const OWNERS = `,
 /** Why a registry isn't compared. */
 const REGISTRY = "a registry: what the modules declare, which every migration syncs from the code";
 
-/** A ruleset's lists of other rulesets, compared by their names. */
-const RULESET_LISTS = ["ancestor_ruleset_ids"];
-
 /** Why a field's ordinal isn't compared. */
 const SET_ORDINAL = "a set's values are compared as a set: an ordinal keys a value, it orders none";
 
@@ -76,8 +73,11 @@ export const COMPARED_TABLES = [
   "customization.requirements",
 ];
 
-/** The columns compared by the names of the rows they reference, which SQL can't set back from a name. */
-export const LABELLED_COLUMNS: Record<string, string[]> = { "rules.rulesets": RULESET_LISTS };
+/**
+ * The fields compared by the names of the rows they reference, which SQL can't set back from a name: a ruleset's parent
+ * (`parent`, its `ruleset_id`'s name).
+ */
+export const LABELLED_COLUMNS: Record<string, string[]> = { "rules.rulesets": ["parent"] };
 
 /** The columns of a compared table nothing compares, as `<table>.<column>`, and why. */
 export const UNCOMPARED_COLUMNS: Record<string, string> = {
@@ -243,19 +243,13 @@ async function pullRulesetLinks(query: Query, rulesetId: string): Promise<Identi
   );
 }
 
-/** The ruleset's own row, the rulesets it lists (its ancestors) by name. */
+/** The ruleset's own row, its parent by name (`parent`). */
 async function pullRulesetRow(query: Query, rulesetId: string): Promise<IdentifiedRow[]> {
-  const rows = await query(`select * from rules.rulesets where id = $1`, [rulesetId]);
-  const names = new Map(
-    (await query<{ id: string; name: string }>(`select id, name from rules.rulesets`)).map((r) => [r.id, r.name]),
+  const rows = await query(
+    `select r.*, p.name as parent from rules.rulesets r left join rules.rulesets p on p.id = r.ruleset_id where r.id = $1`,
+    [rulesetId],
   );
-  return rows.map((row) => {
-    for (const column of RULESET_LISTS) {
-      const ids = row[column];
-      if (Array.isArray(ids)) row[column] = ids.map((id) => names.get(id) ?? "<unresolved>");
-    }
-    return { bk: String(row.name), id: String(row.id), row: stripVolatile(row) };
-  });
+  return rows.map((row) => ({ bk: String(row.name), id: String(row.id), row: stripVolatile(row) }));
 }
 
 /** An extension's copies of a base entity, each by the keys of both. */

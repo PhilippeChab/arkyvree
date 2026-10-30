@@ -25,11 +25,9 @@ Base Ruleset (D&D 3.5)           ← system: true, userId: null, no parent
 
 | Field | Description |
 |---|---|
-| `rulesetId` | Parent ruleset (null for base rulesets) |
-| `ancestorRulesetIds` | `[parentId]` — only base rulesets can be forked, so the chain has at most one entry |
-| `extensionIds` | Subscribed extension IDs, in subscription order: not a column, but the ruleset's live `ruleset_extensions` rows, by their `ordinal`, which every read and write of the row answers (`RulesetsRepository`). A subscribe adds rows after the last, an unsubscribe archives its row |
+| `rulesetId` | Parent ruleset (null for base rulesets): only base rulesets can be forked, so a fork's parent is a base, and its only one |
 | `status` | `Draft`, `Published`, or `Archived` |
-| `kind` | `ruleset` (default; playable) or `extension` (subscribable add-on). The character-creation picker shows only `kind = 'ruleset'`; the subscribe-extension picker shows only `kind = 'extension'`. Author chooses at publish time and can change later via the edit dialog, under the same checks (`Publishes.checkKind`): setting `kind = 'extension'` requires the row to be a fork (`rulesetId IS NOT NULL`) and to have no own extensions (`extensionIds = []`); setting a published ruleset's `kind = 'ruleset'`, the content a playable ruleset needs (below) |
+| `kind` | `ruleset` (default; playable) or `extension` (subscribable add-on). The character-creation picker shows only `kind = 'ruleset'`; the subscribe-extension picker shows only `kind = 'extension'`. Author chooses at publish time and can change later via the edit dialog, under the same checks (`Publishes.checkKind`): setting `kind = 'extension'` requires the row to be a fork (`rulesetId IS NOT NULL`) and to have no own extensions (no live `ruleset_extensions` row); setting a published ruleset's `kind = 'ruleset'`, the content a playable ruleset needs (below) |
 
 ## Ruleset Lifecycle
 
@@ -37,7 +35,7 @@ Base Ruleset (D&D 3.5)           ← system: true, userId: null, no parent
 
 Creates a child copy of a published ruleset. No entities are duplicated — the child inherits everything via the source chain.
 
-- Builds `ancestorRulesetIds = [parentId]` — `canFork` rejects forking a fork, so the parent is always a base
+- Sets `rulesetId` to the parent — `canFork` rejects forking a fork, so the parent is always a base
 - Subscribes the child to the parent's extensions, in their order (`ruleset_extensions` rows)
 - Child starts as `Draft`
 
@@ -79,7 +77,7 @@ The author's responsibility post-publish is purely social — "don't break what 
 
 The `kind` is editable post-publish via the standard edit dialog (under the same "Publish as" toggle the publish dialog uses).
 
-- **Validation**: the publish's own, by the kind it switches to (`Publishes.checkKind`, which publishing calls, and the edit calls on a published ruleset). Setting `kind = 'extension'`: row must be a fork (`rulesetId IS NOT NULL`) and must not subscribe to other extensions (`extensionIds` is empty): `RulesetsPolicy.canBeExtension`, which the page's `permissions` answer too, so its publish and edit dialogs offer the toggle only then. Switching a published ruleset back to `kind = 'ruleset'`: its view must give what its rules make a character of (`checkPublishable`), so an edit never makes a playable ruleset that publishing would refuse. A draft's switch to `ruleset` isn't checked: its content is when it's published. An edit that keeps the kind checks neither.
+- **Validation**: the publish's own, by the kind it switches to (`Publishes.checkKind`, which publishing calls, and the edit calls on a published ruleset). Setting `kind = 'extension'`: row must be a fork (`rulesetId IS NOT NULL`) and must not subscribe to other extensions (its sources' `extensionIds` is empty): `RulesetsPolicy.canBeExtension`, which the page's `permissions` answer too, so its publish and edit dialogs offer the toggle only then. Switching a published ruleset back to `kind = 'ruleset'`: its view must give what its rules make a character of (`checkPublishable`), so an edit never makes a playable ruleset that publishing would refuse. A draft's switch to `ruleset` isn't checked: its content is when it's published. An edit that keeps the kind checks neither.
 - **Existing characters and campaigns are grandfathered** — same model as archived rulesets. The character/campaign rows still resolve content via the now-extension fork, but new characters and new campaigns can no longer be created on it (the `published` scope filters them out). The author makes the trade-off when they flip the toggle; nothing is migrated or invalidated.
 - **Subscribers**: a fork that's `kind = 'extension'` cannot itself subscribe to other extensions (`canSubscribeExtension` rejects), nor can one another ruleset subscribes to (`usedAsExtension`), whatever its kind. If the fork is currently being subscribed-to as an extension by another user, that downstream subscription keeps working through the fork's normal source-chain resolution.
 
@@ -120,15 +118,22 @@ an inherited template is tracked by an entity snapshot, not a `madeFrom` link.
 
 ## Source Chain & Entity Inheritance
 
-At query time, a combined **source chain** determines which entities are visible:
+At query time, a combined **source chain** determines which entities are visible. It's built in one place
+(`CowSources.buildSourceChain`) from a ruleset's sources (`RulesetSources`), which `Rulesets.findSources` reads from
+the two stores that hold them: its subscribed extensions (`extensionIds`, its live `ruleset_extensions` rows by their
+`ordinal`), then its parent (`parentId`, its `rulesetId`):
 
 ```ts
-function buildSourceChain(ruleset): string[] {
-  return [...ruleset.extensionIds, ...ruleset.ancestorRulesetIds];
+function buildSourceChain(ruleset: RulesetSources): string[] {
+  return [...ruleset.extensionIds, ...(ruleset.parentId ? [ruleset.parentId] : [])];
 }
 ```
 
-Extensions come first so their entities are visible. Repositories receive this as `ancestorRulesetIds` — they don't distinguish between extension and ancestor sources.
+Extensions come first so their entities are visible. Repositories receive the chain as a list's `sourceChain` — they
+don't distinguish between extension and parent sources. A ruleset's row carries neither: its sources are read where
+they're needed, a scope's (`withRulesetScope` hands its callback `sources`), a subscribe's and an unsubscribe's, a
+revert's, a fork's and the checks of whether a ruleset can be an extension (`canBeExtension({ hasExtensions })`). The
+ruleset page lists its extensions through their own route (`GET /api/rulesets/:id/extensions`).
 
 ## Copy-on-Write (COW)
 
@@ -137,24 +142,25 @@ Inherited entities are read-only. When a user edits or deletes one:
 1. **Snapshot** — an `entity_snapshots` row is created: `{ rulesetId, sourceEntityId, forkedEntityId }`, one per ruleset and source (an entity's id is global, so its type is its entities')
 2. **Local copy** — the entity + its fields + all customizations (modifiers, requirements) + its links of the roles it holds many of (a feat's pools, a class's skills) + the entities it owns (a class's levels, with their customizations and links) are duplicated into the child ruleset
 3. **Modification** — the local copy is updated or deleted (for deletes)
-4. **Query exclusion** — the repository SQL excludes the original from ancestor results when a snapshot exists
+4. **Query exclusion** — the repository SQL excludes the original from its source's results when a snapshot exists
 
 ### COW in Repositories
 
-A kind's list (`Entities`' `findPage`, through `StoredEntities.buildRulesetCondition`) builds COW-aware SQL per ancestor:
+A kind's list (`Entities`' `findPage`, through `StoredEntities.buildRulesetCondition`) builds COW-aware SQL per source in
+its `sourceChain`:
 
 ```sql
--- For each ancestor in the source chain:
+-- For each source in the source chain (its extensions, then its parent):
 SELECT * FROM rules.entities
 WHERE type = 'feats'
-  AND ruleset_id = :ancestorId
+  AND ruleset_id = :sourceId
   AND id NOT IN (
     SELECT source_entity_id FROM rules.entity_snapshots
-    WHERE ruleset_id IN (:childId, ...closer_ancestors)
+    WHERE ruleset_id IN (:childId, ...closer_sources)
   )
 ```
 
-The child's own entities are always included. Ancestor entities are included only if no snapshot overrides them.
+The child's own entities are always included. A source's entities are included only if no snapshot overrides them.
 
 ### COW for Complex Entities
 
@@ -343,7 +349,7 @@ normal merged view of the currently subscribed extensions. Hidden sibling IDs
 still resolve to the local copy; deleting that copy leaves the whole entity hidden
 until the override is restored.
 
-`EntityCopy` requires both the source chain and `extensionIds` (`EntityEdit` and `CustomizationEdit` pass the ruleset's). Every edit path passes the current ruleset’s extensions, including entity edits, class-skill changes, and class-level changes, so the local copy contains all visible sibling customizations before read-time merging stops.
+`EntityCopy` requires both the source chain and `extensionIds` (`EntityEdit` and `CustomizationEdit` pass the scope's `sources`). Every edit path passes the current ruleset’s extensions, including entity edits, class-skill changes, and class-level changes, so the local copy contains all visible sibling customizations before read-time merging stops.
 
 ### Aptitudes and the Sibling Map
 
@@ -431,11 +437,11 @@ See [docs/access.md](./access.md) for the full policy matrix across rulesets, ch
 - **Scoping is current + descendants.** The in-use check,
   `EntityReferences.exists`, reads every character row naming an entity of the
   type (`ENTITY_REFERENCES`), and joins the character's ruleset on
-  `id = $rulesetId`, or `$rulesetId` among its ancestors or its extensions
+  `id = $rulesetId`, or `$rulesetId` its parent (its `ruleset_id`) or among its extensions
   (`buildLineageCondition`, which a template's change reads its items by too) — one
   query per such column. With forks of forks blocked, descendants of a base ruleset
-  are at most one level deep, but the query shape stays the same so the
-  guard is robust if depth ever changes. A parent author deleting a feat
+  are one level deep: its forks, by their `ruleset_id`, and its extensions'
+  subscribers. A parent author deleting a feat
   that a downstream fork's character picked is blocked; a fork deleting an
   inherited entity that only the parent's character uses is not (parent's
   characters are unrelated to the fork).

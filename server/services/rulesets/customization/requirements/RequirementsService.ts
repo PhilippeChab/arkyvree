@@ -56,13 +56,13 @@ class RequirementsService {
     const result = await withTransaction(
       async (tx) =>
         await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
-          const { ruleset, rulesetData } = scope;
+          const { rulesetData, sources } = scope;
           policy.canUpdateEntity();
 
-          const catalogs = await RulesetViews.getTargetPathCatalogs(scope.ruleset, "requirement");
+          const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "requirement");
           const { entity, row } = Engine.for(scope).requirements(entityType, entityId).planCreate(catalogs, body);
 
-          const edit = new CustomizationEdit(ruleset, rulesetData.cow);
+          const edit = new CustomizationEdit(sources, rulesetData.cow);
           const resolvedEntityId = await edit.cowOwner(tx, entityType, entity.id);
           await this.refuseTakenLevel(tx, entityType, resolvedEntityId, row.level);
 
@@ -95,14 +95,14 @@ class RequirementsService {
     const result = await withTransaction(
       async (tx) =>
         await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
-          const { ruleset, rulesetData } = scope;
+          const { rulesetData, sources } = scope;
           policy.canDeleteEntity();
 
           const { entity, requirement } = Engine.for(scope)
             .requirements(entityType, entityId)
             .planDelete(requirementId);
 
-          const edit = new CustomizationEdit(ruleset, rulesetData.cow);
+          const edit = new CustomizationEdit(sources, rulesetData.cow);
           const { customization, resolvedEntityId } = await edit.cowCustomization(
             tx,
             entityType,
@@ -131,7 +131,7 @@ class RequirementsService {
 
   async getRequirements(session: Session, rulesetId: string, entityType: string, entityId: string) {
     return await withReadableRuleset(db, session, rulesetId, async (scope) => {
-      const catalog = await RulesetViews.getTargetPaths(scope.ruleset, "requirement");
+      const catalog = await RulesetViews.getTargetPaths(scope, "requirement");
       return Engine.for(scope).requirements(entityType, entityId).describeAll(catalog);
     });
   }
@@ -147,15 +147,15 @@ class RequirementsService {
     const result = await withTransaction(
       async (tx) =>
         await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
-          const { ruleset, rulesetData } = scope;
+          const { rulesetData, sources } = scope;
           policy.canUpdateEntity();
 
-          const catalogs = await RulesetViews.getTargetPathCatalogs(scope.ruleset, "requirement");
+          const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "requirement");
           const requirements = Engine.for(scope).requirements(entityType, entityId);
           const { entity, row } = requirements.planEdit(catalogs, requirementId, body);
 
           // COW the owning entity if this requirement is inherited
-          const edit = new CustomizationEdit(ruleset, rulesetData.cow);
+          const edit = new CustomizationEdit(sources, rulesetData.cow);
           const { customization, resolvedEntityId } = await edit.cowCustomization(
             tx,
             entityType,

@@ -44,17 +44,17 @@ async function setup(
     entityType === "items"
       ? (
           await Entities.create<Item>(db, "items", {
-            rulesetId: host.ancestorRulesetIds[0],
+            rulesetId: host.rulesetId!,
             name: "Audit Template",
             fields: { [ITEM_TYPE]: "Weapon", [ITEM_IS_TEMPLATE]: true },
           })
         )[0]
       : (await Entities.findOne<Feat>(db, {
           entityType: "feats",
-          rulesetId: host.ancestorRulesetIds[0],
+          rulesetId: host.rulesetId!,
           name: "Toughness",
         }))!;
-  if (entityType === "items") invalidateSeededRuleset(host.ancestorRulesetIds[0]);
+  if (entityType === "items") invalidateSeededRuleset(host.rulesetId!);
   const copies: string[] = [];
   const extensionIds: string[] = [];
   for (let i = 0; i < extensionCount; i++) {

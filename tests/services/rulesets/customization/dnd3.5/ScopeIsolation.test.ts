@@ -80,7 +80,7 @@ describe("ruleset customization isolation", () => {
     const { session, own } = await setup();
     const feat = (await Entities.findOne<Feat>(db, {
       entityType: "feats",
-      rulesetId: own.ancestorRulesetIds[0],
+      rulesetId: own.rulesetId!,
       name: "Skill Focus: Climb",
     }))!;
     const modifiers = await Modifiers.findMany(db, { sourceIds: [feat.id], sourceType: "feats" });
@@ -124,7 +124,7 @@ describe("modifier requirement ownership", () => {
     const { session, own } = await setup();
     const feat = (await Entities.findOne<Feat>(db, {
       entityType: "feats",
-      rulesetId: own.ancestorRulesetIds[0],
+      rulesetId: own.rulesetId!,
       name: "Skill Focus: Climb",
     }))!;
     const modifier = await createModifier(feat.id);
@@ -192,7 +192,7 @@ describe("stale ancestor customization IDs", () => {
       const { session, own } = await setup();
       const feat = (await Entities.findOne<Feat>(db, {
         entityType: "feats",
-        rulesetId: own.ancestorRulesetIds[0],
+        rulesetId: own.rulesetId!,
         name: "Skill Focus: Climb",
       }))!;
       const [original] = await Requirements.create(db, {
@@ -223,7 +223,7 @@ test("editing the second identical inherited modifier keeps its own requirements
   const { session, own } = await setup();
   const feat = (await Entities.findOne<Feat>(db, {
     entityType: "feats",
-    rulesetId: own.ancestorRulesetIds[0],
+    rulesetId: own.rulesetId!,
     name: "Skill Focus: Climb",
   }))!;
   const [first, second] = await Modifiers.createMany(

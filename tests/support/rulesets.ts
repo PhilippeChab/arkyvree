@@ -7,7 +7,7 @@ import type { rulesetsInRules } from "@/drizzle/schema.ts";
 import type { CowData, RulesetSources } from "@/engine/core/cow/index.ts";
 import type { EntityKinds } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
-import { EntityCopy, RulesetViews } from "@/server/cow/index.ts";
+import { EntityCopy, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { type RulesetEntityType, RulesetExtensions, Rulesets, RulesetSettings } from "@/server/repositories/index.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";
@@ -27,6 +27,14 @@ const writtenSeededRulesets = new Set<string>();
 /** Whether an entity's description is of a kind (`type`): its row's. */
 function isDescribed<K extends keyof EntityKinds>(type: K, entity: { type: string }): entity is Described<K> {
   return entity.type === type;
+}
+
+/** The sources `ruleset` gives (its `extensionIds`, its `parentId`), none of its other keys: a row's give none. */
+function pickSources(ruleset: Partial<RulesetSources>): Partial<RulesetSources> {
+  return {
+    ...(ruleset.extensionIds && { extensionIds: ruleset.extensionIds }),
+    ...(ruleset.parentId !== undefined && { parentId: ruleset.parentId }),
+  };
 }
 
 /**
@@ -65,16 +73,18 @@ export function invalidateTestRulesets(...rulesetIds: string[]) {
 }
 
 /**
- * Copies an inherited entity into `rulesetId` (`EntityCopy`), on the chain given: what a first edit there copies, its
- * source refused as not found, by its type, when it's gone. The copied row.
+ * Copies an inherited entity into `ruleset` (`EntityCopy`), on its sources as stored, or on those given (`ruleset`'s
+ * `extensionIds` or `parentId`, a chain it doesn't store): what a first edit there copies, its source refused as not
+ * found, by its type, when it's gone. The copied row.
  */
 export async function copyEntity(
   database: Db,
   entityType: RulesetEntityType,
   entityId: string,
-  ruleset: RulesetSources,
+  ruleset: Pick<RulesetSources, "id"> & Partial<RulesetSources>,
 ) {
-  return (await EntityCopy.create(database, entityType, entityId, ruleset, `${entityType} not found`)).entity;
+  const sources = { ...(await Rulesets.findSources(database, { id: ruleset.id }))!, ...pickSources(ruleset) };
+  return (await EntityCopy.create(database, entityType, entityId, sources, `${entityType} not found`)).entity;
 }
 
 /**
@@ -93,11 +103,7 @@ export async function createSeededTestRuleset(
 ) {
   const coreId = await RulesetSeeder.findCoreRulesetId(db, DND35_CORE_PACKAGE, "A seeded test ruleset");
 
-  const ruleset = await createTestRuleset(userId, {
-    rulesetId: coreId,
-    ancestorRulesetIds: [coreId],
-    ...options,
-  });
+  const ruleset = await createTestRuleset(userId, { rulesetId: coreId, ...options });
 
   // Copy the ruleset's Settings, as a fork does (its skill point ability)
   await RulesetSettings.createCopy(db, { fromId: coreId, toId: ruleset.id });
@@ -122,7 +128,7 @@ export async function createSeededTestRulesetWithExtensions(userId: string) {
 /**
  * An empty private draft ruleset owned by `userId` (`null` for a system ruleset; with `system: false`, an orphaned one,
  * its owner's account deleted), of the base rules the seeded content is written for (3.5's), unless `values` names
- * others. Pass `rulesetId` and `ancestorRulesetIds` to make it a fork, and `extensionIds` the extensions it
+ * others. Pass `rulesetId` to make it a fork of that ruleset, and `extensionIds` the extensions it
  * subscribes to, in their order. For one that already has the seeded content, use `createSeededTestRuleset`.
  */
 export async function createTestRuleset(
@@ -144,10 +150,11 @@ export async function createTestRuleset(
 
 /**
  * A change to `ruleset`'s entities or customizations (`Edit`: `EntityEdit`, `CustomizationEdit`, `EntityNames`), as a
- * service makes it in its scope, outside one.
+ * service makes it in its scope, outside one, on its sources as stored.
  */
-export async function editRuleset<E>(Edit: new (ruleset: RulesetSources, cow: CowData) => E, ruleset: RulesetSources) {
-  return new Edit(ruleset, await RulesetViews.getCowData(ruleset));
+export async function editRuleset<E>(Edit: new (ruleset: RulesetSources, cow: CowData) => E, ruleset: { id: string }) {
+  const sources = await sourcesOf(ruleset.id);
+  return new Edit(sources, await RulesetViews.getCowData(sources));
 }
 
 /**
@@ -159,9 +166,24 @@ export async function ownerSessionOf(rulesetId: string) {
   return makeSession(ruleset?.userId ?? SEED_USER_ID);
 }
 
+/** A ruleset's copy-on-write data, by its id, as the cache keeps it (`RulesetViews.getCowData`). */
+export async function readCowData(rulesetId: string) {
+  return await RulesetViews.getCowData(await sourcesOf(rulesetId));
+}
+
 /** A ruleset's target paths of a kind, by its id, as the cache keeps them (`RulesetViews.getTargetPaths`). */
 export async function readTargetPaths(rulesetId: string, kind: TargetPathKind) {
-  return await RulesetViews.getTargetPaths((await Rulesets.findOne(db, { id: rulesetId }))!, kind);
+  return await withRulesetScope(db, rulesetId, async (scope) => await RulesetViews.getTargetPaths(scope, kind));
+}
+
+/** A ruleset's view, by its id, as its scope composes it (`withRulesetScope`). */
+export async function readView(rulesetId: string) {
+  return await withRulesetScope(db, rulesetId, async (scope) => scope.rulesetData);
+}
+
+/** A ruleset's sources, by its id, as a scope reads them (`Rulesets.findSources`). */
+export async function sourcesOf(rulesetId: string) {
+  return (await Rulesets.findSources(db, { id: rulesetId }))!;
 }
 
 /**

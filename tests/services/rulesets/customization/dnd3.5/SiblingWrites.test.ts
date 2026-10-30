@@ -55,7 +55,7 @@ async function setup(entityType: EntityType, pairing: Pairing, extensionCount = 
   const host = await createSeededTestRuleset(session.userId);
   const base = (await Entities.findOne(db, {
     entityType,
-    rulesetId: host.ancestorRulesetIds[0],
+    rulesetId: host.rulesetId!,
     name: entityType === "feats" ? "Toughness" : "Magic Missile",
   }))!;
   const extensions: Array<{ copy: { id: string }; extension: Awaited<ReturnType<typeof createSeededTestRuleset>> }> =

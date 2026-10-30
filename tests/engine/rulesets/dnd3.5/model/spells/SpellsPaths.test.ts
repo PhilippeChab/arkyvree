@@ -3,9 +3,9 @@ import { describe, expect, test } from "bun:test";
 import type { Spell } from "@/engine/rulesets/dnd3.5/index.ts";
 import SpellsComponent from "@/engine/rulesets/dnd3.5/model/spells/SpellsComponent.ts";
 import SpellsPaths from "@/engine/rulesets/dnd3.5/model/spells/SpellsPaths.ts";
-import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities, Rulesets } from "@/server/repositories/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
+import { readView } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { SPELL_COMPONENT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -13,7 +13,7 @@ describe("SpellsPaths.generateSpellPaths", () => {
   test("offers a spell's values of a field as a list: one of them required, or added or taken", async () => {
     const { rulesetId } = await getSeedCtx();
     const enthrall = (await Entities.findOne<Spell>(db, { entityType: "spells", name: "Enthrall", rulesetId }))!;
-    const rulesetData = await RulesetViews.getData((await Rulesets.findOne(db, { id: rulesetId }))!);
+    const rulesetData = await readView(rulesetId);
     const spell = rulesetData.find("spells", enthrall.id)!;
     const listedFields = Object.keys(SpellsComponent.listedFieldsOf(spell));
     const operatorsOf = (kind: "modifier" | "requirement") =>

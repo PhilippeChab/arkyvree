@@ -172,30 +172,16 @@ describe("CharactersService", () => {
       expect(createCharacterAs(stranger, { rulesetId: NIL_UUID })).rejects.toThrow(NotFoundError);
     });
 
-    test("takes a race the ruleset inherits, however far up, and not one of an unrelated ruleset", async () => {
+    test("takes a race the ruleset inherits from its parent, and not one of an unrelated ruleset", async () => {
       const { user, session } = await createTestUser();
-      const { owner, ruleset: grandparent, race } = await setupPrivateRuleset();
-      // Forks of forks can't be made through the API, but the lineage check walks every ancestor.
-      const parent = await createTestRuleset(owner.id, {
-        rulesetId: grandparent.id,
-        ancestorRulesetIds: [grandparent.id],
-        status: "Published",
+      const { ruleset: parent, race } = await setupPrivateRuleset();
+      const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
+      expect(await createCharacterAs(session, { rulesetId: fork.id, links: { race: race.id } })).toMatchObject({
+        rulesetId: fork.id,
+        links: { race: race.id },
       });
-      for (const fork of [
-        await createTestRuleset(user.id, { rulesetId: grandparent.id, ancestorRulesetIds: [grandparent.id] }),
-        await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id, grandparent.id] }),
-      ]) {
-        expect(await createCharacterAs(session, { rulesetId: fork.id, links: { race: race.id } })).toMatchObject({
-          rulesetId: fork.id,
-          links: { race: race.id },
-        });
-      }
 
       const unrelated = await setupPrivateRuleset();
-      const fork = await createTestRuleset(user.id, {
-        rulesetId: grandparent.id,
-        ancestorRulesetIds: [grandparent.id],
-      });
       expect(
         createCharacterAs(session, { rulesetId: fork.id, links: { race: unrelated.race.id } }),
       ).rejects.toMatchObject({
@@ -294,7 +280,6 @@ describe("CharactersService", () => {
       const session = makeSession();
       const fork = await createTestRuleset(SEED_USER_ID, {
         rulesetId: ctx.rulesetId,
-        ancestorRulesetIds: [ctx.rulesetId],
       });
       const character = await createCharacterAs(session, { rulesetId: fork.id });
       const copy = (await copyEntity(db, "abilities", ctx.abilityMap["Strength"], fork)).id as string;

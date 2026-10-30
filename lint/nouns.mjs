@@ -40,6 +40,8 @@ const DROPPED_NAME_HOMES = new Map([
  * a key (`dropped-names`). `saveId`, `raceId` and `isTemplate` aren't: they name a live link or field.
  */
 const DROPPED_NAMES = new Map([
+  ["ancestorRulesetIds", "a fork's parent is its `rulesetId` (its sources' `parentId`)"],
+  ["ancestor_ruleset_ids", "a fork's parent is its `ruleset_id`"],
   ["characterLevelId", "a character's level is its advancement (`advancementId`)"],
   ["character_level_id", "a character's level is its advancement (`advancement_id`)"],
   ["costGp", "an item's cost is its field (`ITEM_COST_GP`)"],

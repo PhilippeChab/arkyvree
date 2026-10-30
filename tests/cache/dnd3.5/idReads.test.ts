@@ -34,7 +34,7 @@ async function setupOwnRows() {
     links: { keyAbility: ability.id },
   });
   RulesetViews.invalidate(parent.id);
-  const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+  const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
   const feat = await EntitiesService.createEntity(session, fork.id, "feats", {
     name: "Own Feat",
     links: { listedIn: [{ toId: pool.id }] },
@@ -51,7 +51,7 @@ test("a page's inherited rows name an entity the fork copied by its copy", async
   const fortitude = (await Entities.findOne<RulesetSave>(db, {
     entityType: "saves",
     name: "Fortitude",
-    rulesetId: fork.ancestorRulesetIds[0],
+    rulesetId: fork.rulesetId!,
   }))!;
   // Constitution, copied in the fork: the core's Fortitude and Concentration still store the core's id
   const constitution = await copyEntity(db, "abilities", fortitude.links.keyAbility!, fork);
@@ -131,7 +131,7 @@ test("a spell names its save by the view's id, and carries no stored save row", 
 
 test("a character's inventory entry carries its item as the view has it, and no stored item row", async () => {
   const fork = await createSeededTestRuleset(SEED_USER_ID);
-  const item = await findPlainItem(fork.ancestorRulesetIds[0]);
+  const item = await findPlainItem(fork.rulesetId!);
   const character = await createTestCharacter(SEED_USER_ID, { rulesetId: fork.id });
   await CharacterInventory.create(db, { characterId: character.id, itemId: item.id, quantity: 1 });
   // Copied and renamed in the fork: the entry still stores the core's item

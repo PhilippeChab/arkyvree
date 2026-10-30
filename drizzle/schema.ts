@@ -115,7 +115,6 @@ export const rulesetsInRules = rules.table(
       .notNull(),
     name: text().notNull(),
     rulesetId: uuid("ruleset_id"),
-    ancestorRulesetIds: uuid("ancestor_ruleset_ids").array().default([]).notNull(),
     description: text().notNull(),
     userId: uuid("user_id"),
     /** True for system-seeded bases and extensions; false for user forks (including orphaned ones). */

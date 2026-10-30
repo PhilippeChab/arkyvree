@@ -41,7 +41,7 @@ const MARKERS: Record<EntityType, { merged: string[]; type: string; values: [Fie
 async function setup(entityType: EntityType, omitLastLevel = false) {
   const session = makeSession();
   const host = await createSeededTestRuleset(session.userId);
-  const baseId = host.ancestorRulesetIds[0];
+  const baseId = host.rulesetId!;
   const source =
     entityType === "races"
       ? (await Entities.findOne<Race>(db, { entityType: "races", rulesetId: baseId, name: "Human" }))!

@@ -14,11 +14,12 @@ export function Publishes<B extends Constructor>(Base: B) {
   abstract class Publishing extends Base {
     /**
      * Refuses publishing the ruleset in `scope` as `kind`, which the publish and an edit of a published ruleset's kind
-     * both ask: an extension must be one its policy says it can be (`policy.canBeExtension`), and a playable ruleset's
-     * view must give what its rules make a character of (`checkPublishable`).
+     * both ask: an extension must be one its policy says it can be (`policy.canBeExtension`, by the extensions it
+     * subscribes to, its scope's `sources`), and a playable ruleset's view must give what its rules make a character of
+     * (`checkPublishable`).
      */
     protected checkKind(scope: RulesetScope, policy: RulesetsPolicy, kind: RulesetKind) {
-      if (kind === "extension") policy.canBeExtension();
+      if (kind === "extension") policy.canBeExtension({ hasExtensions: scope.sources.extensionIds.length > 0 });
       Engine.for(scope).checkPublishable(kind);
     }
 

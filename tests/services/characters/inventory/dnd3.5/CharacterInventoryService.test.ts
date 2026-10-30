@@ -389,29 +389,19 @@ describe("InventoryService", () => {
       expect(update(session, character.id, item.id, { quantity: 3 }, added.updatedAt)).rejects.toThrow(ConflictError);
     });
 
-    test("takes an item the character's ruleset inherits, however far up, and not one of an unrelated ruleset", async () => {
+    test("takes an item the character's ruleset inherits from its parent, and not one of an unrelated ruleset", async () => {
       const { user, session } = await createTestUser();
       const { user: author } = await createTestUser();
-      const grandparent = await createTestRuleset(author.id, { status: "Published" });
+      const parent = await createTestRuleset(author.id, { status: "Published" });
       const [race] = await Entities.create<Race>(db, "races", {
         name: "Test Race",
-        rulesetId: grandparent.id,
+        rulesetId: parent.id,
         fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
       });
-      const inherited = await createTestItem({ rulesetId: grandparent.id }, ITEM_VALUES);
-      // Forks of forks can't be made through the API, but the lineage check walks every ancestor.
-      const parent = await createTestRuleset(author.id, {
-        rulesetId: grandparent.id,
-        ancestorRulesetIds: [grandparent.id],
-        status: "Published",
-      });
-      for (const ruleset of [
-        await createTestRuleset(user.id, { rulesetId: grandparent.id, ancestorRulesetIds: [grandparent.id] }),
-        await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id, grandparent.id] }),
-      ]) {
-        const character = await createCharacterAs(session, { rulesetId: ruleset.id, links: { race: race.id } });
-        expect(await add(session, character.id, inherited.id)).toMatchObject({ itemId: inherited.id });
-      }
+      const inherited = await createTestItem({ rulesetId: parent.id }, ITEM_VALUES);
+      const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
+      const character = await createCharacterAs(session, { rulesetId: fork.id, links: { race: race.id } });
+      expect(await add(session, character.id, inherited.id)).toMatchObject({ itemId: inherited.id });
 
       // A character of the seeded ruleset: the item's ruleset is unrelated to it.
       const onSeed = await createCharacterAs(session);

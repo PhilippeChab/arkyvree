@@ -44,7 +44,7 @@ async function forkWithClass(name: string) {
   const klass = (await Entities.findOne<Klass>(db, {
     entityType: "classes",
     name,
-    rulesetId: fork.ancestorRulesetIds[0],
+    rulesetId: fork.rulesetId!,
   }))!;
   const levels = await EntitiesService.getOwnedEntities(await ownerSessionOf(fork.id), fork.id, "classes", klass.id);
   return { session, fork, klass, levelId: (level: number) => levels.find((l) => l.position === level)!.id };
@@ -97,8 +97,8 @@ describe("EntitiesService: a class's progression", () => {
     // Another level, and the ancestor's class, stay as they were
     expect(babAndSkills(levels.get(3)!)).toEqual([2, 4]);
     const ancestor = await EntitiesService.getOwnedEntities(
-      await ownerSessionOf(fork.ancestorRulesetIds[0]),
-      fork.ancestorRulesetIds[0],
+      await ownerSessionOf(fork.rulesetId!),
+      fork.rulesetId!,
       "classes",
       klass.id,
     );
@@ -110,7 +110,7 @@ describe("EntitiesService: a class's progression", () => {
     const fortitude = (await Entities.findOne<RulesetSave>(db, {
       entityType: "saves",
       name: "Fortitude",
-      rulesetId: fork.ancestorRulesetIds[0],
+      rulesetId: fork.rulesetId!,
     }))!;
     const before = await EntitiesService.getOwnedEntities(await ownerSessionOf(fork.id), fork.id, "classes", klass.id);
     const first = before.find((level) => level.position === 1)!;
@@ -386,7 +386,7 @@ describe("EntitiesService: a class's progression", () => {
       ),
       404,
     );
-    invalidateSeededRuleset(fork.ancestorRulesetIds[0]);
+    invalidateSeededRuleset(fork.rulesetId!);
     expect(
       await Entities.findOne<Klass>(db, { entityType: "classes", name: "Wizard", rulesetId: fork.id }),
     ).toBeUndefined();

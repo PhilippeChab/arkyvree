@@ -26,21 +26,21 @@ export interface CowRows {
   snapshots: { forkedEntityId: string; rulesetId: string; sourceEntityId: string }[];
 }
 
-/** A ruleset's id and where its inherited entities come from. */
+/**
+ * A ruleset's id and where its inherited entities come from: the extensions it subscribes to, in their order (its
+ * `ruleset_extensions` rows'), and the parent it forks (its `ruleset_id`), none for a base.
+ */
 export interface RulesetSources {
-  ancestorRulesetIds: string[];
   extensionIds: string[];
   id: string;
+  parentId: string | null;
 }
 
 /** Where a ruleset's copy-on-write data comes from: its source chain, and the rows it's built from. */
 export default class CowSources {
-  /**
-   * Build the combined source chain for COW lookups:
-   * extensions first (their new entities are visible), then ancestors.
-   */
-  static buildSourceChain(ruleset: { ancestorRulesetIds: string[]; extensionIds: string[] }): string[] {
-    return [...ruleset.extensionIds, ...ruleset.ancestorRulesetIds];
+  /** A ruleset's source chain: its extensions first, in their order (their new entities are visible), then its parent. */
+  static buildSourceChain(ruleset: Omit<RulesetSources, "id">): string[] {
+    return [...ruleset.extensionIds, ...(ruleset.parentId ? [ruleset.parentId] : [])];
   }
 
   /**
@@ -65,7 +65,7 @@ export default class CowSources {
    * (`kinds`): its snapshots and its chain's, when it has a chain (a ruleset with none copies nothing); the entities of
    * the kinds a name is the identity of, its own and its chain's, its own first, which pair by name when it has
    * extensions (its own pools with its books' too); its chain's native namesakes of the kinds a book reprints, when its
-   * extensions and ancestors make more than one source (a same-name match of any other kind, a race or a class, is more
+   * extensions and parent make more than one source (a same-name match of any other kind, a race or a class, is more
    * likely two things than a reprint, and pairing them would merge them); and, when it has extensions, its own entities
    * and theirs of a name both have, of every kind (`ownNamesakes`: its own hide theirs). The owned entities of the
    * owners it copied or its own hide follow from those (`getPairedOwnerIds`). A subscribe reads the view's pairing as

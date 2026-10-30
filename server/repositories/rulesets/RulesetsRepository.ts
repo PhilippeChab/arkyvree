@@ -23,6 +23,7 @@ import {
   rulesetsInRules,
   starredRulesetsInAccount,
 } from "@/drizzle/schema.ts";
+import type { RulesetSources } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
@@ -49,25 +50,20 @@ type RulesetScope =
   | "systems"
   | "contributedTo";
 
+/**
+ * A ruleset's row as every read and write of it answers it: its columns, its base rules a registered module's (its
+ * foreign key to `rules.modules`, whose rows `BASE_RULES_OPTIONS` lists).
+ */
+const RULESET_COLUMNS = {
+  ...getTableColumns(rulesetsInRules),
+  baseRules: sql<BaseRules>`${rulesetsInRules.baseRules}`,
+};
+
 /** A ruleset's live `ruleset_extensions` rows (`rulesetsInRules`' row's): the extensions it subscribes to. */
 const SUBSCRIBED = and(
   eq(rulesetExtensionsInRules.rulesetId, rulesetsInRules.id),
   isNull(rulesetExtensionsInRules.deletedAt),
 );
-
-/**
- * A ruleset's row as every read and write of it answers it: its columns, its base rules a registered module's (its
- * foreign key to `rules.modules`, whose rows `BASE_RULES_OPTIONS` lists), and the extensions it subscribes to
- * (`extensionIds`), in their order, which its view composes them in.
- */
-const RULESET_COLUMNS = {
-  ...getTableColumns(rulesetsInRules),
-  baseRules: sql<BaseRules>`${rulesetsInRules.baseRules}`,
-  extensionIds: sql<string[]>`ARRAY(
-    SELECT ${rulesetExtensionsInRules.extensionId} FROM ${rulesetExtensionsInRules}
-    WHERE ${SUBSCRIBED} ORDER BY ${rulesetExtensionsInRules.ordinal}
-  )`,
-};
 
 class RulesetsRepository extends include(
   BaseRepository<typeof rulesetsInRules>,
@@ -315,6 +311,26 @@ class RulesetsRepository extends include(
           .limit(paginate.limit)
           .offset(paginate.offset),
     );
+  }
+
+  /**
+   * Where a ruleset's inherited entities come from (`RulesetSources`): the extensions it subscribes to, its live
+   * `ruleset_extensions` rows' in their order, which its view composes them in, and the parent it forks.
+   */
+  async findSources(db: Db, where: { id: string }): Promise<RulesetSources | undefined> {
+    const [row] = await db
+      .select({
+        extensionIds: sql<string[]>`ARRAY(
+          SELECT ${rulesetExtensionsInRules.extensionId} FROM ${rulesetExtensionsInRules}
+          WHERE ${SUBSCRIBED} ORDER BY ${rulesetExtensionsInRules.ordinal}
+        )`,
+        id: this.table.id,
+        parentId: this.table.rulesetId,
+      })
+      .from(this.table)
+      .where(eq(this.table.id, where.id))
+      .limit(1);
+    return row;
   }
 
   /** Leaves a user's rulesets without an owner, when the user deletes their account. */

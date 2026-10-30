@@ -266,7 +266,7 @@ describe("The content comparison (diff-prod)", () => {
   });
 
   // An id compared as is would differ between any two seeds; compared by name, SQL can't write it back
-  test("compares every reference by the names of the rows it references", async () => {
+  test("compares a reference by the names of the rows it references, never by its id", async () => {
     const references = new Set(
       (
         await query<{ name: string }>(
@@ -278,12 +278,15 @@ describe("The content comparison (diff-prod)", () => {
       ).map(({ name }) => name),
     );
     const compared = new Set<string>();
+    const named = new Set<string>();
     const ids: string[] = [];
     for (const rulesetId of await systemRulesetIds()) {
       for (const table of COMPARED_TABLES) {
         for (const { bk, row } of await pullTable(query, table, rulesetId)) {
-          for (const field of Object.keys(row))
+          for (const field of Object.keys(row)) {
             if (references.has(`${table}.${field}`)) compared.add(`${table}.${field}`);
+            if (LABELLED_COLUMNS[table]?.includes(field)) named.add(`${table}.${field}`);
+          }
           if (UUID.test(bk) || UUID.test(JSON.stringify(row))) ids.push(`${table}: ${bk}`);
         }
       }
@@ -291,19 +294,20 @@ describe("The content comparison (diff-prod)", () => {
     const labelled = Object.entries(LABELLED_COLUMNS).flatMap(([table, columns]) =>
       columns.map((c) => `${table}.${c}`),
     );
-    expect([...compared].sort()).toEqual(labelled.sort());
+    expect([...compared]).toEqual([]);
+    expect([...named].sort()).toEqual(labelled.sort());
     expect(ids).toEqual([]);
   }, 60_000);
 
   test("writes no UPDATE for a reference that drifted, which would set an id to a name", async () => {
     const [extension] = await query<{ id: string }>(
-      `select id from rules.rulesets where system and cardinality(ancestor_ruleset_ids) > 0 limit 1`,
+      `select id from rules.rulesets where system and ruleset_id is not null limit 1`,
     );
     const before = await pullTable(query, "rules.rulesets", extension.id);
-    await query(`update rules.rulesets set ancestor_ruleset_ids = '{}' where id = $1`, [extension.id]);
+    await query(`update rules.rulesets set ruleset_id = null where id = $1`, [extension.id]);
     const diff = collectDiff(before, await pullTable(query, "rules.rulesets", extension.id));
     const sqlLines = renderSql("rules.rulesets", diff, LABELLED_COLUMNS["rules.rulesets"]);
-    expect(sqlLines.some((line) => line.includes("ancestor_ruleset_ids") && line.startsWith("--"))).toBe(true);
+    expect(sqlLines.some((line) => line.includes(".parent:") && line.startsWith("--"))).toBe(true);
     expect(sqlLines.filter((line) => line.startsWith("UPDATE"))).toEqual([]);
   });
 

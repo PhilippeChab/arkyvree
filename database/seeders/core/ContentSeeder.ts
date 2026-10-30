@@ -46,9 +46,7 @@ export abstract class ContentSeeder<Core = unknown, Book = unknown> extends incl
         status: "Published",
         baseRules,
         system: true,
-        ...(baseId
-          ? { kind: "extension" as const, rulesetId: baseId, ancestorRulesetIds: [baseId] }
-          : { kind: "ruleset" as const }),
+        ...(baseId ? { kind: "extension" as const, rulesetId: baseId } : { kind: "ruleset" as const }),
       })
       .returning({ id: rulesetsInRules.id });
     return id;

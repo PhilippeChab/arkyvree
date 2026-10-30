@@ -2,9 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import PicksPlacement from "@/engine/rulesets/dnd3.5/imports/PicksPlacement.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import { RulesetViews } from "@/server/cow/index.ts";
-import { db } from "@/server/database/index.ts";
-import { Rulesets } from "@/server/repositories/index.ts";
+import { readView } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 
 /** A level's gains of 4 points, at which `skillId` is a class skill of the character's and of the level's class or not. */
@@ -21,7 +19,7 @@ function gainsOf(skillId: string, classSkill: boolean) {
 /** The seeded ruleset's view. */
 async function getSeededData() {
   const { rulesetId } = await getSeedCtx();
-  return await RulesetViews.getData((await Rulesets.findOne(db, { id: rulesetId }))!);
+  return await readView(rulesetId);
 }
 
 /** A placement of a skill's ranks bought as a fighter, in the seeded ruleset's view. */

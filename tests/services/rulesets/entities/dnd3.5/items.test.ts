@@ -401,7 +401,7 @@ describe("EntitiesService: items", () => {
         name: "Parent Scroll",
         fields: { [ITEM_WEIGHT]: 0.1 },
       });
-      const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+      const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
 
       const variants = await EntitiesService.createVariants(session, fork.id, "items", source.id, [
         { name: "Forked Scroll" },
@@ -453,7 +453,7 @@ describe("EntitiesService: items", () => {
       const { user, session, ruleset: parent } = await createTestUserAndRuleset();
       const inherited = await EntitiesService.createEntity(session, parent.id, "items", { name: "Ghostly Scroll" });
       const source = await EntitiesService.createEntity(session, parent.id, "items", { name: "Bulk Source" });
-      const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+      const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
 
       const copy = await EntitiesService.updateEntity(session, fork.id, "items", inherited.id, {
         name: "Ghostly Scroll",

@@ -48,7 +48,7 @@ export default class CowData {
   /** Every sibling loser. */
   readonly siblingIds: ReadonlySet<string>;
 
-  /** The ruleset's extensions, then its ancestors: where its inherited entities come from. */
+  /** The ruleset's extensions, then its parent: where its inherited entities come from. */
   readonly sourceChain: string[];
 
   /** Every id that resolves to the entity `id` resolves to, that entity's own first: a stored row may hold any. */
@@ -107,12 +107,12 @@ export default class CowData {
   }
 
   /**
-   * What a list of the ruleset's entities reads besides its own rows: its source chain's (`ancestorRulesetIds`), less
+   * What a list of the ruleset's entities reads besides its own rows: its source chain's (`sourceChain`), less
    * what the view hides that no snapshot overrides (`hiddenIds`: the sibling losers, the shadowed books' entities),
    * which it leaves out in the query, so a page keeps its size.
    */
   get listFilters() {
-    return { ancestorRulesetIds: this.sourceChain, hiddenIds: [...this.siblingIds, ...this.shadowedIds] };
+    return { sourceChain: this.sourceChain, hiddenIds: [...this.siblingIds, ...this.shadowedIds] };
   }
 
   /** The id that stands for `id`: its copy or its winner when it's stale, itself otherwise. */

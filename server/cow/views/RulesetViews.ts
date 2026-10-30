@@ -4,10 +4,13 @@ import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import type { TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
 import type { BaseRules } from "@/shared/enums.ts";
-import type { Ruleset } from "@/shared/relations.ts";
 
 import CowDataReader from "./CowDataReader.ts";
 import RawDataReader from "./RawDataReader.ts";
+import type { RulesetScope } from "./scope.ts";
+
+/** A ruleset and its sources: what its target paths are listed of. */
+type TargetPathScope = Pick<RulesetScope, "ruleset" | "sources">;
 
 /**
  * The rulesets' cache: what a ruleset's view is built from, read once and kept for every reader, and what the engine
@@ -25,8 +28,9 @@ class RulesetViews {
   private readonly targetPaths = new DependentCache<TargetPathCatalog>();
 
   /** The engine's list of a ruleset's target paths of a kind, from its view. */
-  private async listTargetPaths(ruleset: Ruleset, kind: TargetPathKind): Promise<TargetPathCatalog> {
-    return Engine.for({ ruleset, rulesetData: await this.getData(ruleset) })
+  private async listTargetPaths(scope: TargetPathScope, kind: TargetPathKind): Promise<TargetPathCatalog> {
+    const { ruleset, sources } = scope;
+    return Engine.for({ ruleset, rulesetData: await this.getData(sources, ruleset.baseRules) })
       .targetPaths()
       .list(kind);
   }
@@ -62,11 +66,14 @@ class RulesetViews {
     }));
   }
 
-  /** A ruleset's view: its own rows and its source chain's, composed by its copy-on-write data. */
-  async getData(ruleset: RulesetSources & { baseRules: BaseRules }): Promise<RulesetData> {
+  /**
+   * A ruleset's view, of its sources (`ruleset`) and its base rules: its own rows and its source chain's, composed by its
+   * copy-on-write data.
+   */
+  async getData(ruleset: RulesetSources, baseRules: BaseRules): Promise<RulesetData> {
     const cowData = await this.getCowData(ruleset);
     const chain = await Promise.all([ruleset.id, ...cowData.sourceChain].map((id) => this.getRawData(id)));
-    return Engine.copyOnWrite().buildView(ruleset, chain, cowData);
+    return Engine.copyOnWrite().buildView({ baseRules }, chain, cowData);
   }
 
   /** A ruleset's own rows, none of its ancestors': pinned when it's a system ruleset. */
@@ -75,10 +82,10 @@ class RulesetViews {
   }
 
   /** A ruleset's target paths of a kind, and its template paths: what a modifier's or a requirement's check reads. */
-  async getTargetPathCatalogs(ruleset: Ruleset, kind: "modifier" | "requirement") {
+  async getTargetPathCatalogs(scope: TargetPathScope, kind: "modifier" | "requirement") {
     return {
-      paths: await this.getTargetPaths(ruleset, kind),
-      templatePaths: await this.getTargetPaths(ruleset, "template"),
+      paths: await this.getTargetPaths(scope, kind),
+      templatePaths: await this.getTargetPaths(scope, "template"),
     };
   }
 
@@ -87,12 +94,13 @@ class RulesetViews {
    * lists them from its view: kept for the ruleset and its source chain, a change to any of which drops them. Listed
    * inside the cache's fill, so a change during the listing keeps its late result out.
    */
-  async getTargetPaths(ruleset: Ruleset, kind: TargetPathKind): Promise<TargetPathCatalog> {
-    const sourceChain = Engine.copyOnWrite().buildSourceChain(ruleset);
+  async getTargetPaths(scope: TargetPathScope, kind: TargetPathKind): Promise<TargetPathCatalog> {
+    const { sources } = scope;
+    const sourceChain = Engine.copyOnWrite().buildSourceChain(sources);
     // Old subscription metadata must not populate the key for the new chain.
-    const key = JSON.stringify([ruleset.id, kind, ...sourceChain]);
-    return this.targetPaths.getOrFetch(key, [ruleset.id, ...sourceChain], async () => ({
-      data: await this.listTargetPaths(ruleset, kind),
+    const key = JSON.stringify([sources.id, kind, ...sourceChain]);
+    return this.targetPaths.getOrFetch(key, [sources.id, ...sourceChain], async () => ({
+      data: await this.listTargetPaths(scope, kind),
     }));
   }
 

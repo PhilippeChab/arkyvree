@@ -143,7 +143,7 @@ describe("EntitiesService: spells", () => {
         ruleset: parent,
         aptitudeIds: [wizard],
       } = await createTestUserAndRuleset(APTITUDES);
-      const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+      const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
       const spell = await EntitiesService.createEntity(session, fork.id, "spells", {
         name: "Zap",
         links: { listedIn: [{ toId: wizard, tier: 1 }] },
@@ -242,7 +242,7 @@ describe("EntitiesService: spells", () => {
         name: "Fireball",
         links: { listedIn: [{ toId: wizard, tier: 3 }] },
       });
-      const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+      const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
       expect(
         (await EntitiesService.getEntity(await ownerSessionOf(fork.id), fork.id, "spells", source.id)).links,
       ).toMatchObject([{ toId: wizard, tier: 3 }]);

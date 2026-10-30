@@ -14,7 +14,7 @@ class CharacterModifiersService {
     return await withRulesetScope(db, rulesetId, async (scope) =>
       Engine.for(scope)
         .targetPaths()
-        .planModifier(await RulesetViews.getTargetPathCatalogs(scope.ruleset, "modifier"), "characters", {
+        .planModifier(await RulesetViews.getTargetPathCatalogs(scope, "modifier"), "characters", {
           operator,
           target,
           value,
@@ -86,7 +86,7 @@ class CharacterModifiersService {
     return await withRulesetScope(db, character.rulesetId, async (scope) =>
       Engine.for(scope)
         .targetPaths()
-        .describeModifiers(await RulesetViews.getTargetPaths(scope.ruleset, "modifier"), modifiers),
+        .describeModifiers(await RulesetViews.getTargetPaths(scope, "modifier"), modifiers),
     );
   }
 

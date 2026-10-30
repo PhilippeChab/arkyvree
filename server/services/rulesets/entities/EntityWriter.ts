@@ -182,13 +182,13 @@ export default class EntityWriter {
    * a tombstone snapshot: it disappears from the ruleset while its ancestor stays intact. A hard delete: the database
    * deletes its links and customizations with it, and a soft-archive would block an entity of the same name made later.
    */
-  private static async removeEntity(tx: Db, { ruleset, rulesetData }: RulesetScope, removal: EntityRemoval) {
+  private static async removeEntity(tx: Db, { ruleset, rulesetData, sources }: RulesetScope, removal: EntityRemoval) {
     const type = entityTypeOf(removal.type);
-    if (await new EntityUses(ruleset, rulesetData.cow).isPicked(tx, type, removal.id))
+    if (await new EntityUses(sources, rulesetData.cow).isPicked(tx, type, removal.id))
       throw new ConflictError(removal.inUse);
 
     const notFound = EntityWriter.getNotFound(ruleset, type);
-    const target = await new EntityEdit(ruleset, rulesetData.cow).cowById(tx, type, removal.id, notFound);
+    const target = await new EntityEdit(sources, rulesetData.cow).cowById(tx, type, removal.id, notFound);
     await Entities.delete(tx, { entityType: type, id: target.id });
   }
 
@@ -278,8 +278,8 @@ export default class EntityWriter {
     rows: NewRow[],
     plan: SavedParts & { copyCustomizationsFrom?: string },
   ): Promise<Row[]> {
-    const { ruleset, rulesetData } = scope;
-    const names = new EntityNames(ruleset, rulesetData.cow);
+    const { ruleset, rulesetData, sources } = scope;
+    const names = new EntityNames(sources, rulesetData.cow);
     const written: Row[] = [];
     for (const { row, tombstoneAncestorId } of rows) {
       const [entity] = await EntityNames.withNameRefusal(row.name, () =>
@@ -309,11 +309,11 @@ export default class EntityWriter {
     plan: (scope: RulesetScope, reads: { tombstoneAncestorId: string | null; tx: Db }) => P | Promise<P>,
   ) {
     return await EntityWriter.inScope(session, rulesetId, async (tx, scope, policy) => {
-      const { ruleset, rulesetData } = scope;
+      const { rulesetData, sources } = scope;
       this.open(scope);
       policy.canUpdateEntity();
 
-      const names = new EntityNames(ruleset, rulesetData.cow);
+      const names = new EntityNames(sources, rulesetData.cow);
       const { tombstoneAncestorId } = await names.assertNameAvailable(tx, this.type, name);
       const planned = await plan(scope, { tombstoneAncestorId, tx });
 
@@ -334,14 +334,14 @@ export default class EntityWriter {
     plan: (scope: RulesetScope) => P,
   ): Promise<Row[]> {
     return await EntityWriter.inScope(session, rulesetId, async (tx, scope, policy) => {
-      const { ruleset, rulesetData } = scope;
+      const { rulesetData, sources } = scope;
       this.open(scope);
       policy.canUpdateEntity();
       const planned = plan(scope);
 
       const given = planned.rows.flatMap((row) => row.name ?? []);
       if (new Set(given).size !== given.length) throw new ConflictError("A name is given twice in the list");
-      const names = new EntityNames(ruleset, rulesetData.cow);
+      const names = new EntityNames(sources, rulesetData.cow);
       const tombstones = await names.assertNamesAvailable(tx, this.type, given);
       const rows = planned.rows.map((row) => ({ row, tombstoneAncestorId: row.name && tombstones.get(row.name) }));
       // What each row writes beside it: its links and the customizations it copies, whatever else the plan carries
@@ -362,12 +362,12 @@ export default class EntityWriter {
     plan: (scope: RulesetScope) => OwnedPlanned<P>,
   ) {
     return await EntityWriter.inScope(session, rulesetId, async (tx, scope, policy) => {
-      const { ruleset, rulesetData } = scope;
+      const { ruleset, rulesetData, sources } = scope;
       policy.canUpdateEntity();
       const { plan: planned, type } = plan(scope);
 
       const { gone } = EntityWriter.getNotFound(ruleset, this.type);
-      const owner = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, this.type, planned.owner, gone);
+      const owner = await new EntityEdit(sources, rulesetData.cow).cowToEdit(tx, this.type, planned.owner, gone);
       const [row] = await withUniqueRefusal(
         () => Entities.create<Row>(tx, type, { ...planned.row, ownerId: owner.id }),
         (index) => (index === OWNED_POSITION_INDEX ? new ConflictError(planned.taken) : undefined),
@@ -391,14 +391,14 @@ export default class EntityWriter {
     plan: (scope: RulesetScope, reads: { tx: Db }) => P | Promise<P>,
   ): Promise<Row> {
     return await EntityWriter.inScope(session, rulesetId, async (tx, scope, policy) => {
-      const { ruleset, rulesetData } = scope;
+      const { ruleset, rulesetData, sources } = scope;
       this.open(scope);
-      const inUse = await new EntityUses(ruleset, rulesetData.cow).refusesDelete(tx, this.type, entityId);
+      const inUse = await new EntityUses(sources, rulesetData.cow).refusesDelete(tx, this.type, entityId);
       policy.canDeleteEntity({ inUse });
 
       const planned = await plan(scope, { tx });
       const { gone } = EntityWriter.getNotFound(ruleset, this.type);
-      const targetId = await new EntityEdit(ruleset, rulesetData.cow).cowToDelete(tx, this.type, planned.entity, gone);
+      const targetId = await new EntityEdit(sources, rulesetData.cow).cowToDelete(tx, this.type, planned.entity, gone);
       if (planned.writes) await EntityWriter.writeBeside(tx, scope, planned.writes);
 
       // The database deletes its links and customizations with it.
@@ -425,8 +425,8 @@ export default class EntityWriter {
     plan: (scope: RulesetScope) => OwnedPlanned<P>,
   ): Promise<Row> {
     return await EntityWriter.inScope(session, rulesetId, async (tx, scope, policy) => {
-      const { ruleset, rulesetData } = scope;
-      const uses = new EntityUses(ruleset, rulesetData.cow);
+      const { ruleset, rulesetData, sources } = scope;
+      const uses = new EntityUses(sources, rulesetData.cow);
       let inUse = false;
       for (const ownedType of Engine.storage().ownedKinds(this.type))
         inUse ||= await uses.refusesDelete(tx, ownedType as ReferencedType, ownedId);
@@ -434,7 +434,7 @@ export default class EntityWriter {
       const { plan: planned, type } = plan(scope);
 
       const notFound = EntityWriter.getNotFound(ruleset, type);
-      const edit = new EntityEdit(ruleset, rulesetData.cow);
+      const edit = new EntityEdit(sources, rulesetData.cow);
       const target = await edit.cowOwned(tx, type, this.type, planned.entity.id, notFound);
       if (planned.writes) await EntityWriter.writeBeside(tx, scope, planned.writes);
 
@@ -458,14 +458,14 @@ export default class EntityWriter {
     plan: (scope: RulesetScope, reads: { tx: Db }) => P | Promise<P>,
   ) {
     return await EntityWriter.inScope(session, rulesetId, async (tx, scope, policy) => {
-      const { ruleset, rulesetData } = scope;
+      const { ruleset, rulesetData, sources } = scope;
       this.open(scope);
       policy.canUpdateEntity();
 
       const planned = await plan(scope, { tx });
-      await new EntityNames(ruleset, rulesetData.cow).assertRenameAvailable(tx, this.type, planned.entity, body.name);
+      await new EntityNames(sources, rulesetData.cow).assertRenameAvailable(tx, this.type, planned.entity, body.name);
       const { gone } = EntityWriter.getNotFound(ruleset, this.type);
-      const target = await new EntityEdit(ruleset, rulesetData.cow).cowToEdit(tx, this.type, planned.entity, gone);
+      const target = await new EntityEdit(sources, rulesetData.cow).cowToEdit(tx, this.type, planned.entity, gone);
       const row = await EntityNames.withNameRefusal(body.name, () =>
         EntityWriter.updateRow(tx, this.type, planned.row, target, { gone, updatedAt: body.updatedAt }),
       );
@@ -493,12 +493,12 @@ export default class EntityWriter {
     plan: (scope: RulesetScope) => OwnedPlanned<P>,
   ) {
     return await EntityWriter.inScope(session, rulesetId, async (tx, scope, policy) => {
-      const { ruleset, rulesetData } = scope;
+      const { ruleset, rulesetData, sources } = scope;
       policy.canUpdateEntity();
       const { plan: planned, type } = plan(scope);
 
       const notFound = EntityWriter.getNotFound(ruleset, type);
-      const edit = new EntityEdit(ruleset, rulesetData.cow);
+      const edit = new EntityEdit(sources, rulesetData.cow);
       const target = await edit.cowOwned(tx, type, this.type, planned.entity.id, notFound);
       const row = await EntityWriter.updateRow(tx, type, planned.row, target, { gone: notFound.gone, updatedAt });
       await EntityWriter.setParts(tx, scope, { entityId: target.id, entityType: type }, planned, true);

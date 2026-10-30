@@ -6,12 +6,11 @@ import PcgenFile from "@/engine/rulesets/dnd3.5/imports/pcgen/file/PcgenFile.ts"
 import PcgenImport from "@/engine/rulesets/dnd3.5/imports/pcgen/PcgenImport.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
-import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { Rulesets } from "@/server/repositories/index.ts";
 import { createTestItem } from "@/tests/support/dnd3.5/items.ts";
 import { planImportOf, readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.ts";
-import { createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset, invalidateSeededRuleset, readView } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 
@@ -83,7 +82,7 @@ async function refusalOf(plan: Promise<unknown>) {
 /** The seeded ruleset's view, which names what a plan writes by id. */
 async function seededData() {
   const { rulesetId } = await getSeedCtx();
-  return await RulesetViews.getData((await Rulesets.findOne(db, { id: rulesetId }))!);
+  return await readView(rulesetId);
 }
 
 describe("A PCGen fighter / rogue", () => {

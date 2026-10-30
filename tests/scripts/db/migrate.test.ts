@@ -16,6 +16,21 @@ function statementsOf(file: string) {
 }
 
 /**
+ * Each ruleset's array of ancestors written as it stood before 0101, a copy of its parent: its parent alone, or none
+ * for a base, but for the rulesets `drifted` names, whose array is the one given (`ancestors`).
+ */
+async function restoreAncestorsBefore0101(drifted: { ancestors: string[]; id: string }[] = []) {
+  await db.execute(sql`
+    ALTER TABLE rules.rulesets ADD COLUMN ancestor_ruleset_ids uuid[] DEFAULT '{}' NOT NULL;
+    UPDATE rules.rulesets SET ancestor_ruleset_ids = ARRAY[ruleset_id] WHERE ruleset_id IS NOT NULL;
+  `);
+  for (const { ancestors, id } of drifted) {
+    await db.execute(sql`UPDATE rules.rulesets SET ancestor_ruleset_ids = ${`{${ancestors.join(",")}}`}::uuid[]
+      WHERE id = ${id}`);
+  }
+}
+
+/**
  * Each ruleset's array (`extensions`, its ids in its order) and `ruleset_extensions` rows (`rows`: an extension's id,
  * archived or not), written as they stood before 0098: its array back, its ordinal, check and index gone.
  */
@@ -48,11 +63,11 @@ async function rowsOf(rulesetId: string) {
   return rows;
 }
 
-/** Every ruleset's columns but the array, each as one line: what 0098 leaves as it was. */
+/** Every ruleset's columns but the arrays, each as one line: what 0098 and 0101 leave as they were. */
 async function rulesetRows() {
   const { rows } = await db.execute<{ line: string }>(sql`
-    SELECT concat_ws(' ', id, name, ruleset_id, ancestor_ruleset_ids::text, user_id, system, private, status, kind,
-      base_rules, created_at::text, updated_at::text) AS line
+    SELECT concat_ws(' ', id, name, ruleset_id, user_id, system, private, status, kind, base_rules, created_at::text,
+      updated_at::text) AS line
     FROM rules.rulesets ORDER BY id
   `);
   return rows.map((row) => row.line);
@@ -133,8 +148,8 @@ describe("0098_extensions-store", () => {
       "ruleset_extensions_ordinal_check",
       "ruleset_extensions_ruleset_id_ordinal_idx",
     ]);
-    // What every read of a ruleset answers of its extensions: its rows', in their order
-    expect((await Rulesets.findOne(db, { id: host.id }))!.extensionIds).toEqual([second.id, first.id, third.id]);
+    // What a ruleset's sources read of its extensions: its rows', in their order
+    expect((await Rulesets.findSources(db, { id: host.id }))!.extensionIds).toEqual([second.id, first.id, third.id]);
   });
 
   test("refuses an array that names an extension twice, or a ruleset that doesn't exist, naming its ruleset", async () => {
@@ -153,6 +168,57 @@ describe("0098_extensions-store", () => {
     expect(refused).toMatchObject({
       cause: {
         message: `Rulesets whose extensions differ from their rows: ${[twice.id, missing.id].toSorted().join(", ")}`,
+      },
+    });
+  });
+});
+
+describe("0101_ruleset-parent", () => {
+  test("drops the array of ancestors, a copy of each ruleset's parent, and changes no row", async () => {
+    const base = await createTestRuleset(null);
+    const fork = await createTestRuleset(null, { rulesetId: base.id });
+    await restoreAncestorsBefore0101();
+    const before = await rulesetRows();
+
+    for (const statement of statementsOf("0101_ruleset-parent.sql")) await db.execute(sql.raw(statement));
+
+    const { rows: schema } = await db.execute(sql`
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'rules' AND table_name = 'rulesets' AND column_name = 'ancestor_ruleset_ids'
+    `);
+    expect(schema).toEqual([]);
+    expect(await rulesetRows()).toEqual(before);
+    // A fork's parent is its key alone
+    expect(await Rulesets.findSources(db, { id: fork.id })).toEqual({
+      extensionIds: [],
+      id: fork.id,
+      parentId: base.id,
+    });
+  });
+
+  test("refuses an array that isn't its ruleset's parent alone, naming its ruleset", async () => {
+    const [base, other] = [await createTestRuleset(null), await createTestRuleset(null)];
+    const [elsewhere, longer, agreeing] = [
+      await createTestRuleset(null, { rulesetId: base.id }),
+      await createTestRuleset(null, { rulesetId: base.id }),
+      await createTestRuleset(null, { rulesetId: base.id }),
+    ];
+    // A fork's array of another ruleset, one of more than its parent, and a base's of any
+    await restoreAncestorsBefore0101([
+      { id: elsewhere.id, ancestors: [other.id] },
+      { id: longer.id, ancestors: [base.id, other.id] },
+      { id: other.id, ancestors: [base.id] },
+      { id: agreeing.id, ancestors: [base.id] },
+    ]);
+
+    const refused = await db
+      .transaction(async (tx) => {
+        for (const statement of statementsOf("0101_ruleset-parent.sql")) await tx.execute(sql.raw(statement));
+      })
+      .catch((error: unknown) => error);
+    expect(refused).toMatchObject({
+      cause: {
+        message: `Rulesets whose ancestors differ from their parent: ${[elsewhere.id, longer.id, other.id].toSorted().join(", ")}`,
       },
     });
   });

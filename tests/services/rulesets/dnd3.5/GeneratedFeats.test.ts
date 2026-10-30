@@ -138,7 +138,7 @@ async function seededForkWithClimb() {
   const fork = await createSeededTestRuleset(session.userId);
   const climb = (await Entities.findOne<Skill>(db, {
     entityType: "skills",
-    rulesetId: fork.ancestorRulesetIds[0],
+    rulesetId: fork.rulesetId!,
     name: "Climb",
   }))!;
   const climbBody = {
@@ -358,7 +358,6 @@ test("a fork's new skills and spells put their feats in the General aptitude it 
   const { user, session } = await createTestUser();
   const fork = await createTestRuleset(user.id, {
     rulesetId: parent.ruleset.id,
-    ancestorRulesetIds: [parent.ruleset.id],
   });
 
   await EntitiesService.createEntity(session, fork.id, "skills", skill(parent.strength.id, "Swim"));
@@ -530,7 +529,7 @@ describe("generated feats", () => {
     const { session, fork } = await seededFork();
     const climb = (await Entities.findOne<Skill>(db, {
       entityType: "skills",
-      rulesetId: fork.ancestorRulesetIds[0],
+      rulesetId: fork.rulesetId!,
       name: "Climb",
     }))!;
     await EntitiesService.createEntity(
@@ -591,7 +590,7 @@ describe("generated feats", () => {
     const { session, fork } = await seededFork();
     const climb = (await Entities.findOne<Skill>(db, {
       entityType: "skills",
-      rulesetId: fork.ancestorRulesetIds[0],
+      rulesetId: fork.rulesetId!,
       name: "Climb",
     }))!;
     const feat = await findFeat(climb.rulesetId, "Skill Focus: Climb");

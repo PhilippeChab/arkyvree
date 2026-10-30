@@ -266,7 +266,7 @@ describe.each(ENTITY_TYPES)("%s service", (entityType) => {
     const { session: parentSession, ruleset: parent, refs } = await setup();
     const inherited = await service.create(parentSession, parent.id, "Inherited Entity", refs);
     const { user, session } = await createTestUserAndRuleset();
-    const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+    const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
 
     await expectRefusedWith(service.create(session, fork.id, "Inherited Entity", refs), 409);
     const own = await service.create(session, fork.id, "Own Entity", refs);
@@ -289,7 +289,7 @@ describe.each(ENTITY_TYPES)("%s service", (entityType) => {
     const { session: parentSession, ruleset: parent, refs } = await setup();
     const inherited = await service.create(parentSession, parent.id, "Inherited Entity", refs);
     const { user, session } = await createTestUserAndRuleset();
-    const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+    const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
 
     await service.remove(session, fork.id, inherited.id);
     expect((await service.list(fork.id)).items.map((e) => e.name)).not.toContain("Inherited Entity");
@@ -304,7 +304,7 @@ describe.each(Object.keys(FORM_REFS))("%s form naming another entity", (entityTy
   test("stores what its fork copied as the copy, sent by its source's id, and refuses an id the fork lacks by name", async () => {
     const { ruleset: parent, refs } = await setup();
     const { user, session } = await createTestUserAndRuleset();
-    const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+    const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
     const copy = await copyEntity(db, kind, refs[ref], fork);
     RulesetViews.invalidate(fork.id);
 
@@ -329,7 +329,7 @@ describe.each(Object.keys(FORM_REFS))("%s form naming another entity", (entityTy
 test("refuses a form naming one list twice: by its source's id and its copy's", async () => {
   const { ruleset: parent, refs } = await setup();
   const { user, session } = await createTestUserAndRuleset();
-  const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+  const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
   const copy = await copyEntity(db, "aptitudes", refs.featAptitudeId, fork);
   RulesetViews.invalidate(fork.id);
 
@@ -370,7 +370,7 @@ describe.each(ENTITY_TYPES.filter((type) => type !== "mechanics"))("customized %
     const inherited = await service.create(parentSession, parent.id, "Inherited Entity", refs);
     await customize(entityType, inherited.id, { modifier: ownsModifiers });
     const { user, session } = await createTestUserAndRuleset();
-    const fork = await createTestRuleset(user.id, { rulesetId: parent.id, ancestorRulesetIds: [parent.id] });
+    const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
 
     const source = await findCustomizations(entityType, inherited.id);
     const sourceCounts = await counts(entityType, inherited.id);

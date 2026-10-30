@@ -55,7 +55,6 @@ interface PageBounds {
  * the targets of the links of a role from a kind (`linkedBy`: an aptitude a feat is listed in); searched, in an order.
  */
 export interface EntityListWhere extends EntityFilters {
-  ancestorRulesetIds?: string[];
   childOnly?: boolean;
   entityType: string;
   hiddenIds?: string[];
@@ -67,6 +66,7 @@ export interface EntityListWhere extends EntityFilters {
   orderDir?: "asc" | "desc";
   rulesetId: string;
   search?: string;
+  sourceChain?: string[];
 }
 
 /** A field's value as JSON, typed by the column that holds it: a text, a number or a flag. */
@@ -179,13 +179,13 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
    */
   private buildRulesetCondition(
     db: Db,
-    where: Pick<EntityListWhere, "ancestorRulesetIds" | "childOnly" | "hiddenIds" | "rulesetId">,
+    where: Pick<EntityListWhere, "childOnly" | "hiddenIds" | "rulesetId" | "sourceChain">,
   ): SQL {
-    const { ancestorRulesetIds = [], childOnly, hiddenIds } = where;
+    const { childOnly, hiddenIds, sourceChain = [] } = where;
     const childOwned = eq(entitiesInRules.rulesetId, where.rulesetId);
     if (childOnly) return childOwned;
-    const inheritedClauses = ancestorRulesetIds.map((ancestorId, i) => {
-      const overriddenBy = [where.rulesetId, ...ancestorRulesetIds.slice(0, i)];
+    const inheritedClauses = sourceChain.map((sourceId, i) => {
+      const overriddenBy = [where.rulesetId, ...sourceChain.slice(0, i)];
       const copied = notInArray(
         entitiesInRules.id,
         db
@@ -193,7 +193,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
           .from(entitySnapshotsInRules)
           .where(inArray(entitySnapshotsInRules.rulesetId, overriddenBy)),
       );
-      return and(eq(entitiesInRules.rulesetId, ancestorId), copied);
+      return and(eq(entitiesInRules.rulesetId, sourceId), copied);
     });
     const hidden = hiddenIds && hiddenIds.length > 0 ? notInArray(entitiesInRules.id, hiddenIds) : undefined;
     const inherited = inheritedClauses.length > 0 ? and(or(...inheritedClauses), hidden) : undefined;
@@ -721,7 +721,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     if ("ids" in where)
       return await this.readStored(db, inArray(entitiesInRules.id, where.ids), [this.orderBy(entitiesInRules.id)]);
 
-    return await this.readStored(db, this.buildRulesetCondition(db, { ...where, ancestorRulesetIds: [] }), [
+    return await this.readStored(db, this.buildRulesetCondition(db, { rulesetId: where.rulesetId }), [
       this.orderBy(entitiesInRules.name),
       this.orderBy(entitiesInRules.id),
     ]);
@@ -735,7 +735,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     const own = db
       .select({ id: entitiesInRules.id })
       .from(entitiesInRules)
-      .where(this.buildRulesetCondition(db, { ...where, ancestorRulesetIds: [] }));
+      .where(this.buildRulesetCondition(db, { rulesetId: where.rulesetId }));
     const rows = await db
       .selectDistinct({ id: entityLinksInRules.toId })
       .from(entityLinksInRules)
