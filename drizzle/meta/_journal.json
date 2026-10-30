@@ -715,6 +715,13 @@
       "when": 1793083441714,
       "tag": "0101_ruleset-parent",
       "breakpoints": true
+    },
+    {
+      "idx": 102,
+      "version": "7",
+      "when": 1793087041714,
+      "tag": "0102_activity-targets",
+      "breakpoints": true
     }
   ]
 }

@@ -17,20 +17,18 @@ export default new Hono()
         limit,
         page,
         search: z.string().optional(),
-        targetType: z.string().optional(),
         type: z.string().optional(),
         orderBy: z.enum(["createdAt", "type"]).default("createdAt"),
         orderDir: orderDirDesc,
       }),
     ),
     async (c) => {
-      const { search, targetType, type, orderBy, orderDir, limit, page } = c.req.valid("query");
+      const { search, type, orderBy, orderDir, limit, page } = c.req.valid("query");
       return c.json(
         await ActivitiesService.getActivities(
           c.var.requestSession,
           {
             search,
-            targetType,
             type,
             orderBy,
             orderDir,

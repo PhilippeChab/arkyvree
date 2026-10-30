@@ -9,6 +9,7 @@ import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
+import { createTestUser } from "@/tests/support/users.ts";
 
 /** A migration's statements, as drizzle splits them. */
 function statementsOf(file: string) {
@@ -221,5 +222,43 @@ describe("0101_ruleset-parent", () => {
         message: `Rulesets whose ancestors differ from their parent: ${[elsewhere.id, longer.id, other.id].toSorted().join(", ")}`,
       },
     });
+  });
+});
+
+describe("0102_activity-targets", () => {
+  test("targets a level's and an inventory item's activities and notifications at their character, and nothing else", async () => {
+    const { user } = await createTestUser();
+    const characterId = crypto.randomUUID();
+    const rows = [
+      ["advancements", characterId, "addLevel"],
+      ["inventory", characterId, "addItem"],
+      ["characters", characterId, "updateCharacter"],
+      ["rulesets", NIL_UUID, "updateRuleset"],
+    ];
+    for (const [targetType, targetId, type] of rows) {
+      await db.execute(sql`INSERT INTO account.activities (user_id, target_id, target_type, type)
+        VALUES (${user.id}, ${targetId}, ${targetType}, ${type})`);
+      await db.execute(sql`INSERT INTO account.notifications (recipient_id, actor_id, target_id, target_type, type)
+        VALUES (${user.id}, ${user.id}, ${targetId}, ${targetType}, ${type})`);
+    }
+    const targetsOf = async (table: "activities" | "notifications") => {
+      const owner = table === "activities" ? sql`user_id` : sql`recipient_id`;
+      const { rows: targets } = await db.execute<{ target: string }>(sql`
+        SELECT type || ' ' || target_type || ' ' || target_id AS target FROM ${sql.raw(`account.${table}`)}
+        WHERE ${owner} = ${user.id} ORDER BY type
+      `);
+      return targets.map((row) => row.target);
+    };
+
+    for (const statement of statementsOf("0102_activity-targets.sql")) await db.execute(sql.raw(statement));
+
+    const expected = [
+      `addItem characters ${characterId}`,
+      `addLevel characters ${characterId}`,
+      `updateCharacter characters ${characterId}`,
+      `updateRuleset rulesets ${NIL_UUID}`,
+    ];
+    expect(await targetsOf("activities")).toEqual(expected);
+    expect(await targetsOf("notifications")).toEqual(expected);
   });
 });

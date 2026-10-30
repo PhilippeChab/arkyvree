@@ -333,11 +333,7 @@ describe("Item templates", () => {
       name: mine.name,
       fields: { [ITEM_TYPE]: "Weapon", [ITEM_WEIGHT]: 5 },
     });
-    const { items } = await Activities.findPage(
-      db,
-      { userId: session.userId, targetType: "items" },
-      { limit: 10, page: 1 },
-    );
+    const { items } = await Activities.findPage(db, { userId: session.userId }, { limit: 100, page: 1 });
     const edit = items.find((activity) => activity.targetId === mine.id && activity.type === "updateItem");
     expect(edit?.data).toMatchObject({ changedFields: [{ field: ITEM_WEIGHT, to: "5" }] });
   });

@@ -338,11 +338,7 @@ describe("EntitiesService: items", () => {
       expect(second).toMatchObject(copiedCustomizations);
       expect(first.modifiers[0].id).not.toBe(second.modifiers[0].id);
       // Each a new item's activity
-      const { items } = await Activities.findPage(
-        db,
-        { userId: session.userId, targetType: "items" },
-        { limit: 10, page: 1 },
-      );
+      const { items } = await Activities.findPage(db, { userId: session.userId }, { limit: 100, page: 1 });
       expect(variants.map((variant) => items.find((activity) => activity.targetId === variant.id))).toMatchObject([
         { type: "createItem", data: { entityName: "Scroll of Healing" } },
         { type: "createItem", data: { entityName: "Scroll of Light" } },

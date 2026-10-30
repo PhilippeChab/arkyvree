@@ -118,8 +118,6 @@ describe("ActivitiesService.getActivityUrl", () => {
     const targets = [
       ["characters", character.id, character.id],
       ["characters", child.id, child.id],
-      ["advancements", character.id, character.id],
-      ["inventory", character.id, character.id],
       ["character-contributors", invite.id, character.id],
     ];
 
@@ -272,7 +270,7 @@ describe("ActivitiesService.getActivityUrl", () => {
     ).toEqual([null, null]);
   });
 
-  test("links a character's inventory and levels to the character, and a campaign's players, invites and characters to the campaign", async () => {
+  test("links a campaign's players, invites and characters to the campaign", async () => {
     const { user, session } = await createTestUser();
     const { campaign, player } = await createTestCampaign(user.id);
     const character = await createTestCharacter(user.id);
@@ -282,8 +280,6 @@ describe("ActivitiesService.getActivityUrl", () => {
     expect(
       await resolveAll(
         [
-          ["inventory", character.id],
-          ["advancements", character.id],
           ["players", player.id],
           ["invites", invite.id],
           ["player-characters", character.id],
@@ -291,8 +287,6 @@ describe("ActivitiesService.getActivityUrl", () => {
         session,
       ),
     ).toEqual([
-      `/characters/${character.id}`,
-      `/characters/${character.id}`,
       `/campaigns/${campaign.id}`,
       `/campaigns/${campaign.id}`,
       `/campaigns/${campaign.id}/characters/${character.id}`,
@@ -412,8 +406,6 @@ describe("ActivitiesService.getActivityUrl", () => {
       // A character or campaign deleted for good
       "rulesets",
       "characters",
-      "inventory",
-      "advancements",
       "campaigns",
       "feats",
       "class-levels",
