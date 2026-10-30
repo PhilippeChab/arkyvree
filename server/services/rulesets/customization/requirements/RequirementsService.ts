@@ -75,7 +75,7 @@ class RequirementsService {
             targetId: requirement.id,
             targetType: TARGET_TYPES.requirements,
             type: "createRequirement",
-            data: { entityName: entity.name, entityType, ...conditionOf(row) },
+            data: { entityName: entity.name, ...conditionOf(row) },
           });
 
           return { ...requirement, resolvedEntityId };
@@ -119,7 +119,7 @@ class RequirementsService {
             targetId: deletedRequirement.id,
             targetType: TARGET_TYPES.requirements,
             type: "deleteRequirement",
-            data: { rulesetId, entityName: entity.name, entityType, ...conditionOf(requirement) },
+            data: { rulesetId, entityName: entity.name, ...conditionOf(requirement) },
           });
 
           return { ...deletedRequirement, resolvedEntityId };
@@ -181,7 +181,7 @@ class RequirementsService {
             targetId: updatedRequirement.id,
             targetType: TARGET_TYPES.requirements,
             type: "updateRequirement",
-            data: { entityName: entity.name, entityType, ...conditionOf(row) },
+            data: { entityName: entity.name, ...conditionOf(row) },
           });
 
           return { ...updatedRequirement, resolvedEntityId };

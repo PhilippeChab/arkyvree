@@ -47,7 +47,7 @@ class ModifiersService {
             targetId: modifier.id,
             targetType: TARGET_TYPES.modifiers,
             type: "createModifier",
-            data: { entityName: entity.name, entityType, target: row.target, value: row.value, operator: row.operator },
+            data: { entityName: entity.name, target: row.target, value: row.value, operator: row.operator },
           });
 
           return { ...modifier, resolvedEntityId };
@@ -98,7 +98,6 @@ class ModifiersService {
             data: {
               rulesetId,
               entityName: entity.name,
-              entityType,
               target: modifier.target,
               value: modifier.value,
               operator: modifier.operator,
@@ -182,7 +181,7 @@ class ModifiersService {
             targetId: updatedModifier.id,
             targetType: TARGET_TYPES.modifiers,
             type: "updateModifier",
-            data: { entityName: entity.name, entityType, target: row.target, value: row.value, operator: row.operator },
+            data: { entityName: entity.name, target: row.target, value: row.value, operator: row.operator },
           });
 
           return { ...updatedModifier, resolvedEntityId };

@@ -99,7 +99,7 @@ export default class FieldCodec<S extends Fields> {
     if (values.length === 0) return FieldCodec.defaultOf(field);
     switch (field.kind) {
       case "flag":
-        return values.some((value) => String(value) === "true");
+        return values.includes(true);
       case "number":
         return FieldCodec.readNumber(field, values);
       case "choice": {
@@ -128,13 +128,12 @@ export default class FieldCodec<S extends Fields> {
     return FieldCodec.applyConditions(fields, values);
   }
 
-  /** A number field's value: the first of its values that's a number in its bounds (as text too), its default otherwise. */
+  /** A number field's value: the first of its values that's a number in its bounds, its default otherwise. */
   private static readNumber(field: NumberSpec, values: readonly FieldValue[]): number | null {
     for (const value of values) {
-      const number = typeof value === "number" ? value : Number(value);
-      if (typeof value === "boolean" || String(value).trim() === "" || !Number.isFinite(number)) continue;
-      if ((field.min !== undefined && number < field.min) || (field.max !== undefined && number > field.max)) continue;
-      return number;
+      if (typeof value !== "number" || !Number.isFinite(value)) continue;
+      if ((field.min !== undefined && value < field.min) || (field.max !== undefined && value > field.max)) continue;
+      return value;
     }
     return field.default ?? null;
   }

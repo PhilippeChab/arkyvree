@@ -152,7 +152,7 @@ describe("A field codec", () => {
     ).toBe(true);
   });
 
-  test("reads a number off the first value that's one in its bounds (as text too), and its default otherwise", () => {
+  test("reads a number off the first value that's one in its bounds, never a text or a flag, and its default otherwise", () => {
     // The flag its condition reads keeps the count, which counts only while it's on
     const counted = (...counts: FieldValue[]) =>
       heldValues([["FLAG", true], ...counts.map((count): [string, FieldValue] => ["COUNT", count])]);
@@ -171,9 +171,10 @@ describe("A field codec", () => {
         heldValues([
           ["LEVEL", true],
           ["LEVEL", "7"],
+          ["LEVEL", 5],
         ]),
       ).group.level,
-    ).toBe(7);
+    ).toBe(5);
   });
 
   test("reads a text off its first value and a reference off its link, a choice only among its values, a list whole", () => {

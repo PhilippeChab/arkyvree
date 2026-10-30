@@ -65,8 +65,7 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
    * The fields saving an item writes (`item`: the one edited; `keptFrom`, the one whose values it keeps, it or a
    * duplicate's source): the fields its form gives, over those it keeps (its own over the template it's saved with,
    * `formFields`), as its own: those it reads off its template that its template's don't hold (`toOverrides`), so it
-   * keeps reading the rest off its template. None when the form gives none; but an edited template keeps no source,
-   * which its save clears where it holds one (an old self-reference).
+   * keeps reading the rest off its template. None when the form gives none.
    */
   protected override fieldsWrite(
     _body: FormBody,
@@ -77,16 +76,14 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
     const fields = this.formFields(given, item, keptFrom);
     const templateId = this.templateIdOf(given, item);
     const template = templateId ? this.templateValuesOf(templateId) : OwnerValues.NONE;
-    const write = fields && this.fields.toOverrides(fields, this.fields.read(template));
-    if (!item?.fields[ITEM_IS_TEMPLATE] || !item.links.madeFrom) return write;
-    return { fields: write?.fields ?? {}, links: { ...write?.links, madeFrom: null } };
+    return fields && this.fields.toOverrides(fields, this.fields.read(template));
   }
 
   /**
    * The fields a form writes (none when it gives none), over those the item keeps (`item`: the one edited; `keptFrom`,
    * the one whose values it keeps, it or a duplicate's source: its own over the template it's saved with, one it moves
    * to among them; a new one's defaults): its slot always one (`"Other"` for none, a template's type's its own),
-   * whether it's a template a new item's alone (an edit leaves it as it is), and an edited template no source.
+   * and whether it's a template a new item's alone (an edit leaves it as it is).
    */
   protected override formFields(given: ItemGiven, item?: Item, keptFrom: Item | undefined = item) {
     if (this.fields.formNames.every((key) => given[key] === undefined)) return undefined;
@@ -98,7 +95,6 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
       ...given,
       ...(slot !== undefined && { slot }),
       ...(item && { template: undefined }),
-      ...(item?.fields[ITEM_IS_TEMPLATE] && { madeFrom: null }),
     };
     if (!keptFrom) return super.formFields(values);
     const madeFrom = this.templateIdOf(given, item) ?? undefined;
