@@ -2,8 +2,9 @@
  * Copy-on-write, the server's part: storage and concurrency, around the model the engine computes.
  *
  * - Its read side (`views/`): the rulesets' cache (`RulesetViews`: each ruleset's copy-on-write data, its own rows and
- *   its target paths, and the view composed from them), what it reads them with (`CowDataReader`, `RawDataReader`), and
- *   the scope a service reads a view in (`withRulesetScope`).
+ *   its target paths, and the view composed from them), what it reads them with (`CowDataReader`, `RawDataReader`), the
+ *   scope a service reads a view in (`withRulesetScope`), and a ruleset's changes to what it inherits, by what each
+ *   snapshot stands for (`RulesetChanges`).
  * - Its write side (`writes/`): the row a write to an entity changes, an owned one's on its owner's (`EntityEdit`), and
  *   what a write asks of it: a copy's token, its owned entities and its customizations' rows (`EditTarget`); the row a
  *   change to a customization writes (`CustomizationEdit`), the names an entity may take (`EntityNames`), what keeps an
@@ -12,6 +13,7 @@
  *   owned entities of two owners paired by position (`findOwnedPairs`).
  */
 export { default as CowDataReader } from "./views/CowDataReader.ts";
+export { default as RulesetChanges } from "./views/RulesetChanges.ts";
 export { default as RulesetViews } from "./views/RulesetViews.ts";
 export { type RulesetScope, withRulesetScope, withRulesetScopes } from "./views/scope.ts";
 export { default as CustomizationCopies } from "./writes/CustomizationCopies.ts";
