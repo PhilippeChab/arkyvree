@@ -58,8 +58,9 @@
  * - `include-order`: a class includes its concerns by name, after its base (`include(BaseRepository<…>, Paginates,
  *   Searches)`): a concern builds on the base alone, so their order is the reader's. `oxlint --fix` sorts them.
  * - `policy-shape`: a service builds a policy with `XPolicy.for(db, session, entity)`, which loads the session's standing
- *   on the entity (its role on it), never with `new`; a policy's only static is `for`, and its only async method: a
- *   check reads that standing and what the service passes it (`canDeleteEntity({ inUse })`), and throws or answers.
+ *   on the entity (its role on it), or a list's with `XPolicy.forMany(db, session, entities)`, which loads a page's at
+ *   once, never with `new`; a policy's only statics are those, and its only async methods: a check reads that standing
+ *   and what the service passes it (`canDeleteEntity({ inUse })`), and throws or answers.
  * - `class-file-names`: a module that declares a class and exports it, or its shared instance (`export default new
  *   X()`), is named after the class: `X.ts` (`EntitiesService.ts`, `References.ts`). A module of several classes is
  *   named for what groups them (`server/errors/`), and a router's `new Hono()` is another module's class.
@@ -97,6 +98,9 @@ const INPUT_VARIABLES = { json: "body", query: "query" };
 const METHOD_VERBS = JSON.parse(
   fs.readFileSync(new URL("../server/repositories/methodVerbs.json", import.meta.url), "utf8"),
 );
+
+/** The statics that build a policy: one entity's (`for`), and a page's at once (`forMany`). */
+const POLICY_BUILDERS = new Set(["for", "forMany"]);
 
 const READ_VERBS = METHOD_VERBS.read;
 
@@ -732,11 +736,13 @@ function createPolicyShape(context) {
   const inPolicies = file.startsWith("server/services/policies/");
   return {
     MethodDefinition(node) {
-      if (!inPolicies || node.key.type !== "Identifier" || node.key.name === "for") return;
+      if (!inPolicies || node.key.type !== "Identifier" || POLICY_BUILDERS.has(node.key.name)) return;
       if (node.static) {
         context.report({
           node: node.key,
-          message: "A policy's only static is `for`, which builds it: a check is the policy's (`policy.canRead()`).",
+          message:
+            "A policy's only statics are `for` and `forMany`, which build it: a check is the policy's " +
+            "(`policy.canRead()`).",
         });
       } else if (node.value.async) {
         context.report({
@@ -751,7 +757,7 @@ function createPolicyShape(context) {
       if (inPolicies || node.callee.type !== "Identifier" || !node.callee.name.endsWith("Policy")) return;
       context.report({
         node,
-        message: `Build a policy with \`${node.callee.name}.for(db, session, entity)\`: it loads the session's standing on it.`,
+        message: `Build a policy with \`${node.callee.name}.for(db, session, entity)\` (or a page's with \`forMany\`): it loads the session's standing on it.`,
       });
     },
   };

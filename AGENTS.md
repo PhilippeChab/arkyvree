@@ -95,7 +95,7 @@ Where code goes, by what it needs:
 
 Permission gates that determine whether a session is _allowed_ to perform an action belong in a Policy class under `server/services/policies/` — `CampaignsPolicy`, `CharactersPolicy`, `RulesetsPolicy`, etc. Each has the checks its services make (`canUpdate`, `canDelete`, `canManageContributors`, `canPublish`, …): a check no service makes doesn't exist. Policies throw `ForbiddenError` / `UnprocessableEntityError` (a `NotFoundError` where a refusal mustn't say the record is there: `CampaignsPolicy.canSeeCharacter`, a Private character); services call them and let the throw propagate.
 
-A service builds a policy with `await XPolicy.for(db, session, entity)`, never `new`, and its checks are sync (`arkyvree/policy-shape`): see [docs/access.md](./docs/access.md) for what `for` loads and what a check is passed.
+A service builds a policy with `await XPolicy.for(db, session, entity)` (a list's page of them with `forMany`, which reads their standing at once), never `new`, and its checks are sync (`arkyvree/policy-shape`): see [docs/access.md](./docs/access.md) for what `for` loads and what a check is passed.
 
 Inline `<x>.userId === session.userId` comparisons are only acceptable when they're **identity matches**, not permission gates:
 

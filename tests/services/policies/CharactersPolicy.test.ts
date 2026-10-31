@@ -4,6 +4,7 @@ import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Characters } from "@/server/repositories/index.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
+import type { Session } from "@/shared/relations.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createTestUser } from "@/tests/support/users.ts";
@@ -45,16 +46,36 @@ describe("CharactersPolicy", () => {
     expect((await CharactersPolicy.for(db, other, child)).isReadable()).toBe(true);
   });
 
-  test("for, with a page's contributions: a player character's role read off them, a child's still off its parent", async () => {
+  test("forMany: each of a page's policies as its for builds it, its contributions read at once", async () => {
     const { character, owner, other, user, stranger } = await setup();
     const child = await createChild(user.id, character.id);
+    const page = [character, child];
+    // Whether the session edits and reads each of the page's characters, by forMany and by for
+    const standings = async (session: Pick<Session, "userId">) => {
+      const policies = await CharactersPolicy.forMany(db, session, page);
+      const many = page.map((entity) => [policies.get(entity.id)?.isEditor(), policies.get(entity.id)?.isReadable()]);
+      const one = [];
+      for (const entity of page) {
+        const policy = await CharactersPolicy.for(db, session, entity);
+        one.push([policy.isEditor(), policy.isReadable()]);
+      }
+      expect(many).toEqual(one);
+      return many;
+    };
+    // Its owner edits it and reads its child; a stranger neither, until it contributes
+    expect(await standings(owner)).toEqual([
+      [true, true],
+      [false, true],
+    ]);
+    expect(await standings(other)).toEqual([
+      [false, false],
+      [false, false],
+    ]);
     await addCharacterContributor(character.id, stranger, user.id);
-    // The ids given decide a player character's role, not its own lookup
-    expect((await CharactersPolicy.for(db, other, character, new Set())).isEditor()).toBe(false);
-    expect((await CharactersPolicy.for(db, other, character, new Set([character.id]))).isEditor()).toBe(true);
-    // Its owner's whatever they say, and a child reads its parent's standing as without them
-    expect((await CharactersPolicy.for(db, owner, character, new Set())).isEditor()).toBe(true);
-    expect((await CharactersPolicy.for(db, other, child, new Set())).isReadable()).toBe(true);
+    expect(await standings(other)).toEqual([
+      [true, true],
+      [false, true],
+    ]);
   });
 
   test("canArchive, canShare and canLink: a player character's owner; anyone else as an unknown character", async () => {

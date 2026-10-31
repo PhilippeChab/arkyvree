@@ -671,7 +671,7 @@ describe("conventions", () => {
       "concern-shape server/a/Scoped.ts",
     ]);
   });
-  test("a policy is built by its `for`, its only static and its only async method", async () => {
+  test("a policy is built by its `for`, or a page's by its `forMany`, its only statics and async methods", async () => {
     const policy = (member: string) => `export default class FeatsPolicy extends BasePolicy<Feat> {\n  ${member}\n}\n`;
     expect(
       await lintRepo(
@@ -679,11 +679,15 @@ describe("conventions", () => {
           "server/services/policies/FeatsPolicy.ts": policy(
             "static async for(db: Db) {\n    return new FeatsPolicy(db);\n  }",
           ),
+          "server/services/policies/Many.ts": policy(
+            'static async forMany(db: Db) {\n    return new Map([["id", new FeatsPolicy(db)]]);\n  }',
+          ),
           "server/services/policies/Checks.ts": policy("canUpdate() {\n    return true;\n  }"),
           "server/services/policies/Queries.ts": policy("async canUpdate() {\n    return true;\n  }"),
           "server/services/policies/Statics.ts": policy("static canRead() {\n    return true;\n  }"),
           "server/services/feats/FeatsService.ts": "export const p = new FeatsPolicy(session, feat);\n",
           "server/services/feats/Built.ts": "export const p = await FeatsPolicy.for(db, session, feat);\n",
+          "server/services/feats/Page.ts": "export const p = await FeatsPolicy.forMany(db, session, feats);\n",
           "tests/services/policies/FeatsPolicy.test.ts": "export const p = new FeatsPolicy(session, feat);\n",
         },
         ["policy-shape"],

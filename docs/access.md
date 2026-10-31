@@ -4,7 +4,7 @@ This is the source of truth for who can do what across the app. Every gated muta
 
 If you're adding a new mutation, find the matching row below and call the same policy method. If your case isn't covered, extend the policy — don't write inline `userId === session.userId` checks (see "Identity vs. policy" at the bottom).
 
-A service builds a policy with `await XPolicy.for(db, session, entity)`, through its transaction's handle: `for` loads the session's standing on the entity (its contributor role on a ruleset or a character, its player row in a campaign). Every check is then sync: it reads that standing, and what the service passes it about other rows (`canDeleteEntity({ inUse })`, `canHardDelete({ inActiveCampaign })`), and throws or answers. A policy has no other static and no check queries (`arkyvree/policy-shape`); a test may build one with `new`, from a standing it sets.
+A service builds a policy with `await XPolicy.for(db, session, entity)`, through its transaction's handle (a list's page of them with `forMany(db, session, entities)`, each what `for` builds, their standing read at once: `CharactersPolicy.forMany`, the campaign roster's): `for` loads the session's standing on the entity (its contributor role on a ruleset or a character, its player row in a campaign). Every check is then sync: it reads that standing, and what the service passes it about other rows (`canDeleteEntity({ inUse })`, `canHardDelete({ inActiveCampaign })`), and throws or answers. A policy has no other static and no check queries (`arkyvree/policy-shape`); a test may build one with `new`, from a standing it sets.
 
 ## Actors
 
@@ -83,7 +83,7 @@ The character-creation wizard combines `published + campaignAccessible` (and his
 
 ## Characters — `CharactersPolicy`
 
-`CharactersPolicy.for(tx, session, character)` loads, for a player character, whether the session is an active contributor (`contributorsInCharacter`, status `Active`, not deleted; a list that read the session's contributions for its page at once passes their ids instead, `contributions`, the campaign roster), and for a child (3.5's bonded creature) whether it edits its parent, a player character archived or not (the parent's own policy's `isEditor`), and whether that parent is archived: a child is its parent's editors', a player character its own editors' alone. The schema has a `role` column (`Admin | Editor | Viewer`) for parity with ruleset contributors, but `CharacterContributorsService.inviteContributor` always creates rows as `Editor` and `CharactersPolicy` ignores the role — every active contributor has the same effective grant. The column is reserved for future tiering.
+`CharactersPolicy.for(tx, session, character)` loads, for a player character, whether the session is an active contributor (`contributorsInCharacter`, status `Active`, not deleted; `forMany` reads a page's at once, the campaign roster's), and for a child (3.5's bonded creature) whether it edits its parent, a player character archived or not (the parent's own policy's `isEditor`), and whether that parent is archived: a child is its parent's editors', a player character its own editors' alone. The schema has a `role` column (`Admin | Editor | Viewer`) for parity with ruleset contributors, but `CharacterContributorsService.inviteContributor` always creates rows as `Editor` and `CharactersPolicy` ignores the role — every active contributor has the same effective grant. The column is reserved for future tiering.
 
 | Method | Allowed actors |
 |---|---|

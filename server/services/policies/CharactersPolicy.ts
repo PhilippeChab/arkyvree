@@ -28,16 +28,9 @@ export default class CharactersPolicy extends BasePolicy<Character> {
   /**
    * The session's policy on `character`: a player character's contributor's rights come from their active role on it,
    * and a child's (3.5's bonded creature) from the session's on its parent, a player character, archived or not (an
-   * archived parent's child is read-only, as the parent is). A list that read the session's active contributions for its
-   * page at once passes them (`contributions`, the ids of the characters it contributes to), which a player character's
-   * role is read off in place of its own lookup; a child still reads its parent's.
+   * archived parent's child is read-only, as the parent is).
    */
-  static async for(
-    db: Db,
-    session: Pick<Session, "userId">,
-    character: Character,
-    contributions?: ReadonlySet<string>,
-  ): Promise<CharactersPolicy> {
+  static async for(db: Db, session: Pick<Session, "userId">, character: Character): Promise<CharactersPolicy> {
     if (!Engine.storage().isPlayerKind(character.kind)) {
       const parent = character.parentCharacterId
         ? await Characters.findOne(db, { id: character.parentCharacterId }, Visibility.All)
@@ -49,11 +42,39 @@ export default class CharactersPolicy extends BasePolicy<Character> {
       return new CharactersPolicy(session, character, { isParentArchived: !!parent?.deletedAt, isParentEditor });
     }
 
-    if (character.userId === session.userId) return new CharactersPolicy(session, character);
-    const isActiveContributor = contributions
-      ? contributions.has(character.id)
-      : (await CharacterContributors.findRole(db, { userId: session.userId, characterId: character.id })) !== undefined;
-    return new CharactersPolicy(session, character, { isActiveContributor });
+    const role =
+      character.userId === session.userId
+        ? undefined
+        : await CharacterContributors.findRole(db, { userId: session.userId, characterId: character.id });
+    return new CharactersPolicy(session, character, { isActiveContributor: role !== undefined });
+  }
+
+  /**
+   * The session's policies on a page of characters (`characters`), by id, each what `for` builds: its active
+   * contributions to the page's player characters read at once, and a child's standing on its parent as `for` reads it.
+   */
+  static async forMany(
+    db: Db,
+    session: Pick<Session, "userId">,
+    characters: Character[],
+  ): Promise<Map<string, CharactersPolicy>> {
+    const contributed = characters.filter(
+      (character) => Engine.storage().isPlayerKind(character.kind) && character.userId !== session.userId,
+    );
+    const contributions = await CharacterContributors.findMany(db, {
+      characterIds: contributed.map((character) => character.id),
+      status: "Active",
+      userId: session.userId,
+    });
+    const contributedIds = new Set(contributions.map((contribution) => contribution.characterId));
+    const policies = new Map<string, CharactersPolicy>();
+    for (const character of characters) {
+      const policy = Engine.storage().isPlayerKind(character.kind)
+        ? new CharactersPolicy(session, character, { isActiveContributor: contributedIds.has(character.id) })
+        : await CharactersPolicy.for(db, session, character);
+      policies.set(character.id, policy);
+    }
+    return policies;
   }
 
   /** The child's parent is archived: looked up only for a child. */
