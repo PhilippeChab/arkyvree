@@ -138,8 +138,7 @@ export async function createCharacterAs(
  * A human character of `userId`'s on the seeded ruleset, written straight to the database: a Neutral Good man of 25,
  * 180 tall and 75 heavy, with no experience, unless `values` says otherwise (its race, its `race` link, `links.race`;
  * its fields, `fields`, by the stored field that keeps each; its row's own columns), and no abilities, levels or
- * activity. Create one with
- * `createCharacterAs` when the test needs those.
+ * activity. Create one with `createCharacterAs` when the test needs those.
  */
 export async function createTestCharacter(
   userId: string,

@@ -119,8 +119,8 @@ export async function createSeededTestRulesetWithExtensions(userId: string) {
 /**
  * An empty private draft ruleset owned by `userId` (`null` for a system ruleset; with `system: false`, an orphaned one,
  * its owner's account deleted), of the base rules the seeded content is written for (3.5's), unless `values` names
- * others. Pass `rulesetId` to make it a fork of that ruleset (`subscribeTestRuleset` subscribes it to extensions)
- * subscribes to, in their order. For one that already has the seeded content, use `createSeededTestRuleset`.
+ * others. Pass `rulesetId` to make it a fork of that ruleset; `subscribeTestRuleset` subscribes it to extensions, in
+ * their order. For one that already has the seeded content, use `createSeededTestRuleset`.
  */
 export async function createTestRuleset(
   userId: string | null,
