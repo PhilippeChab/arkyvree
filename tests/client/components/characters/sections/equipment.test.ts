@@ -16,31 +16,18 @@ describe("An inventory placement", () => {
   const form = { selectedItem: null, quantity: 2, groups: [2], totalCharges: 5, remainingCharges: 3 };
 
   test("sends each of its groups stored from 0", () => {
-    expect(placementPayload({ ...form, location: "Off Hand", groups: [1, 2] }, null)).toMatchObject({
-      groups: [0, 1],
-    });
+    expect(placementPayload({ ...form, location: "Off Hand", groups: [1, 2] })).toMatchObject({ groups: [0, 1] });
   });
 
-  test("equips at a slot, with the group stored from 0, which the server keeps for a hand only", () => {
-    expect(placementPayload({ ...form, location: "Main Hand" }, profile(null))).toEqual({
+  test("equips at a slot, with the group stored from 0, and the charges the form holds, which the server keeps for an item that comes with them only", () => {
+    expect(placementPayload({ ...form, location: "Main Hand" })).toEqual({
       quantity: 2,
       location: "Main Hand",
-      totalCharges: null,
-      remainingCharges: null,
-      groups: [1],
-    });
-    expect(placementPayload({ ...form, location: "none" }, null)).toMatchObject({ location: null });
-  });
-
-  test("sends charges for an item that comes with them only", () => {
-    expect(placementPayload({ ...form, location: "Neck" }, profile(10))).toMatchObject({
       totalCharges: 5,
       remainingCharges: 3,
+      groups: [1],
     });
-    expect(placementPayload({ ...form, location: "Neck" }, profile(null))).toMatchObject({
-      totalCharges: null,
-      remainingCharges: null,
-    });
+    expect(placementPayload({ ...form, location: "none" })).toMatchObject({ location: null });
   });
 });
 

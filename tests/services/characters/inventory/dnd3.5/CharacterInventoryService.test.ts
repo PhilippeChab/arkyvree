@@ -22,6 +22,7 @@ import { createTestUser, makeSession } from "@/tests/support/users.ts";
 import type { ItemLocation } from "@/vocabulary/dnd3.5/equipment.ts";
 import {
   ITEM_COST_GP,
+  ITEM_HAS_CHARGES,
   ITEM_IS_TEMPLATE,
   ITEM_TYPE,
   ITEM_WEIGHT,
@@ -290,14 +291,19 @@ describe("InventoryService", () => {
   describe("adding and changing an item", () => {
     test("carries it or equips it in a slot, with charges; only equipped items have a slot", async () => {
       const { session, character, item, newItem } = await setup();
-      const [ring, wand] = [await newItem(), await newItem()];
+      // A wand comes with charges; the ring and the item don't, and keep none they're sent
+      const [ring, wand] = [await newItem(), await newItem({}, { [ITEM_HAS_CHARGES]: 50 })];
       expect(await add(session, character.id, item.id, { quantity: 5 })).toMatchObject({
         characterId: character.id,
         itemId: item.id,
         quantity: 5,
         location: null,
       });
-      expect(await add(session, character.id, ring.id, equipped("Trinket"))).toMatchObject({ location: "Trinket" });
+      expect(await add(session, character.id, ring.id, { ...equipped("Trinket"), charges: [5, 3] })).toMatchObject({
+        location: "Trinket",
+        totalCharges: null,
+        remainingCharges: null,
+      });
       expect(await add(session, character.id, wand.id, { charges: [50, 50] })).toMatchObject({
         totalCharges: 50,
         remainingCharges: 50,
@@ -324,7 +330,8 @@ describe("InventoryService", () => {
     });
 
     test("refuses charges without both counts, or with more left than in all", async () => {
-      const { session, character, item } = await setup();
+      const { session, character, newItem } = await setup();
+      const item = await newItem({}, { [ITEM_HAS_CHARGES]: 10 });
       for (const charges of [
         [10, 20],
         [10, null],

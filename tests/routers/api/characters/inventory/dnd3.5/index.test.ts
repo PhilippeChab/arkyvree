@@ -4,20 +4,20 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
-import { ITEM_COST_GP, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { ITEM_COST_GP, ITEM_HAS_CHARGES, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const inventory = api.api.characters.inventory[":characterId"];
 const entry = inventory[":entryId"];
 const unequipped = { quantity: 1, location: null, totalCharges: null, remainingCharges: null };
 
-/** A character in a seeded fork, and an item of that fork it doesn't carry yet. */
+/** A character in a seeded fork, and an item of that fork it doesn't carry yet, which comes with charges. */
 async function setup() {
   const ctx = await getSeedCtx();
   const { id: rulesetId } = await createSeededTestRuleset(SEED_USER_ID);
   const item = await expectOk(
     api.api.rulesets[":id"].entities[":entityType"].$post({
       param: { id: rulesetId, entityType: "items" },
-      json: { name: "Inventory Item", fields: { [ITEM_WEIGHT]: 5, [ITEM_COST_GP]: 10 } },
+      json: { name: "Inventory Item", fields: { [ITEM_WEIGHT]: 5, [ITEM_COST_GP]: 10, [ITEM_HAS_CHARGES]: 50 } },
     }),
   );
   const abilities = Object.fromEntries(Object.values(ctx.abilityMap).map((id) => [id, 10]));

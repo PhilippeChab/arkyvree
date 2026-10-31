@@ -48,17 +48,16 @@ export function pickedLocation(current: InventoryFormData["location"], placement
 }
 
 /**
- * The placement as the inventory endpoints take it: a slot equips the item, charges only for an item that has them (as
- * its `profile` says), and the groups stored from 0, which the server keeps where its placement takes them.
+ * The placement as the inventory endpoints take it: a slot equips the item, and the groups stored from 0. The server
+ * keeps the groups where its placement takes them, and the charges of an item that comes with them alone.
  */
-export function placementPayload(data: InventoryFormData, profile: PlacementProfile | null) {
+export function placementPayload(data: InventoryFormData) {
   const location = data.location === "none" ? null : data.location;
-  const hasCharges = typeof profile?.charges === "number";
   return {
     quantity: data.quantity,
     location,
-    totalCharges: hasCharges ? data.totalCharges : null,
-    remainingCharges: hasCharges ? data.remainingCharges : null,
+    totalCharges: data.totalCharges,
+    remainingCharges: data.remainingCharges,
     groups: storedGroups(data.groups),
   };
 }

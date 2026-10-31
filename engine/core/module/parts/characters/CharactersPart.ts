@@ -301,16 +301,16 @@ export default abstract class CharactersPart<D extends Descriptions> {
   protected abstract planNewFields(view: RulesetView, fields: FieldsRequest): FieldsPlan;
 
   /**
-   * Where an inventory entry's add or edit (`change`) holds its item: its location (none to carry it), and its groups
-   * (3.5's weapon sets, in a hand). Refused when the item can't be equipped where it's asked to be, its requirements
-   * checked unless `force`d.
+   * Where an inventory entry's add or edit (`change`) holds its item and what it holds of it: its location (none to
+   * carry it), its groups (3.5's weapon sets, in a hand), and its charges, which only an item that comes with them
+   * keeps. Refused when the item can't be equipped where it's asked to be, its requirements checked unless `force`d.
    */
   protected abstract planPlacement(
     view: RulesetView,
     character: CharacterInput,
     change: PlacementChange,
     force: boolean,
-  ): HeldInventoryEntry;
+  ): Omit<InventoryEntryPlan, "itemId">;
 
   /**
    * Why a placement (`query`: its location, in its groups: 3.5's weapon sets, for a hand) can't take one more item of
@@ -493,7 +493,8 @@ export default abstract class CharactersPart<D extends Descriptions> {
 
   /**
    * What an inventory entry's add or edit stores, checked: its item (an added one's, as the view has it), its placement
-   * (`planPlacement`: the item equipped where asked, its requirements checked unless `force`d) and its charges. Refused
+   * and its charges (`planPlacement`: the item equipped where asked, its requirements checked unless `force`d; charges
+   * only for an item that comes with them). Refused
    * when an added item isn't one of the ruleset's (unknown, of an unrelated ruleset, or deleted), or its charges
    * disagree.
    */
@@ -506,13 +507,9 @@ export default abstract class CharactersPart<D extends Descriptions> {
     const { request } = change;
     const placed: PlacementChange =
       "itemId" in change ? { item: CharactersPart.idsOf(view).findItem(change.itemId), request } : change;
-    CharactersPart.checkCharges(request.totalCharges, request.remainingCharges);
-    return {
-      ...this.planPlacement(view, character, placed, force),
-      itemId: "item" in placed ? placed.item.id : placed.entry.itemId,
-      totalCharges: request.totalCharges ?? null,
-      remainingCharges: request.remainingCharges ?? null,
-    };
+    const placement = this.planPlacement(view, character, placed, force);
+    CharactersPart.checkCharges(placement.totalCharges, placement.remainingCharges);
+    return { ...placement, itemId: "item" in placed ? placed.item.id : placed.entry.itemId };
   }
 
   /**

@@ -172,7 +172,7 @@ export function InventorySection({ block, characterId, rulesetId, readOnly, load
       parseResponse(
         rpc.api.characters.inventory[":characterId"].$post({
           param: { characterId },
-          json: { itemId: item.id, ...placementPayload(data, addProfile), force },
+          json: { itemId: item.id, ...placementPayload(data), force },
         }),
       ),
     onSuccess: () => {
@@ -197,7 +197,7 @@ export function InventorySection({ block, characterId, rulesetId, readOnly, load
       parseResponse(
         rpc.api.characters.inventory[":characterId"][":entryId"].$put({
           param: { characterId, entryId },
-          json: { ...placementPayload(data, editProfile), force, updatedAt: editingEntry?.updatedAt },
+          json: { ...placementPayload(data), force, updatedAt: editingEntry?.updatedAt },
         }),
       ),
     onSuccess: () => {

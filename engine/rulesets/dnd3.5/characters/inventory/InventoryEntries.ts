@@ -3,6 +3,7 @@ import { z } from "zod";
 import type {
   CharacterInput,
   HeldInventoryEntry,
+  InventoryEntryPlan,
   InventoryEntryRequest,
   PlacementChange,
   PlacementDescription,
@@ -57,8 +58,9 @@ export default class InventoryEntries {
   }
 
   /**
-   * Where an entry's add or edit holds its item, from the character's rows: its location, none to carry it. Refused as
-   * invalid when the location isn't one of 3.5's, and when the item can't be equipped there (`Equipping`:
+   * Where an entry's add or edit holds its item, from the character's rows: its location, none to carry it, and its
+   * charges, which only an item that comes with them keeps (`ItemPlacement`'s, its template's field among its own).
+   * Refused as invalid when the location isn't one of 3.5's, and when the item can't be equipped there (`Equipping`:
    * an item already carried takes another entry, a second dagger held in the other hand; its requirements unless
    * `force`d).
    */
@@ -67,18 +69,22 @@ export default class InventoryEntries {
     character: CharacterInput,
     change: PlacementChange,
     force: boolean,
-  ): HeldInventoryEntry {
+  ): Omit<InventoryEntryPlan, "itemId"> {
     const { request } = change;
     const { groups: weaponSets } = request;
     const location = RulesError.parse(LOCATION.nullable(), request.location, ["location"]);
-    if (location) {
-      const entry =
-        "item" in change
-          ? { id: null, item: change.item }
-          : { id: change.entry.id, item: Dnd35View.of(view.rulesetData).itemsById.get(change.entry.itemId) };
-      if (!entry.item) throw view.rulesetData.notFound("items");
+    const entry =
+      "item" in change
+        ? { id: null, item: change.item }
+        : { id: change.entry.id, item: Dnd35View.of(view.rulesetData).itemsById.get(change.entry.itemId) };
+    if (!entry.item) throw view.rulesetData.notFound("items");
+    if (location)
       new Equipping(view, character).checkEquip({ id: entry.id, item: entry.item }, location, weaponSets, force);
-    }
-    return InventoryEntries.placementOf(request);
+    const { charges } = ItemPlacement.describe(view.rulesetData.withInheritedFields("items", entry.item));
+    return {
+      ...InventoryEntries.placementOf(request),
+      totalCharges: charges === null ? null : (request.totalCharges ?? null),
+      remainingCharges: charges === null ? null : (request.remainingCharges ?? null),
+    };
   }
 }
