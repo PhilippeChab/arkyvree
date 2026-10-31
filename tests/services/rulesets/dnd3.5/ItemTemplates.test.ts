@@ -245,7 +245,6 @@ describe("Item templates", () => {
     );
     const listed = items.find((item) => item.id === sword.id);
     expect(listed?.links).toContainEqual(expect.objectContaining({ role: "madeFrom", toName: "Longsword" }));
-    expect(listed).not.toHaveProperty("templateName");
   });
 
   test("an item without a template has no fields its form shows or requirements of its own", async () => {

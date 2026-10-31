@@ -140,11 +140,13 @@ describe("rulesets class levels", () => {
   test("rejects a level without a number or out of 1–20", async () => {
     const { id, classId } = await setup();
     for (const json of [
-      { bab: 1, skills: 4 },
-      { level: "1", bab: 1, skills: 4 },
-      { level: 21, bab: 1, skills: 4 },
-    ])
-      await expectStatus(levels.$post({ param: classParam(id, classId), json: json as never }), 400);
+      { fields: { [CLASS_LEVEL_BAB]: 1 } },
+      { fields: { [CLASS_LEVEL_BAB]: 1 }, position: "1" },
+      { fields: { [CLASS_LEVEL_BAB]: 1 }, position: 21 },
+    ]) {
+      const refused = await expectStatus(levels.$post({ param: classParam(id, classId), json: json as never }), 400);
+      expect(await refused.json()).toMatchObject({ issues: [{ category: "position" }] });
+    }
   });
 
   test("refuses a level its class already has, written since its view was read too", async () => {

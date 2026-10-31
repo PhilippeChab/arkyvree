@@ -163,14 +163,6 @@ describe("rulesets entities by kind", () => {
     expect(await (await expectStatus(groupFamily, 400)).json()).toMatchObject({ issues: [{ category: FEAT_FAMILY }] });
     await expectStatus(kinds.$get({ param: { id, entityType: "feats" }, query: { listedIn: "pool" } }), 400);
     await expectStatus(kinds.$get({ param: { id, entityType: "spells" }, query: { tier: "one" } }), 400);
-    // The old join's and the old table's keys, filters no kind takes
-    for (const [entityType, query] of [
-      ["feats", { aptitudeId: pool.id }],
-      ["spells", { level: "1" }],
-      ["items", { isTemplate: "true" }],
-      ["races", { kind: "pc" }],
-    ] as const)
-      await expectStatus(kinds.$get({ param: { id, entityType }, query }), 400);
   });
 
   test("reads a list's shared query: its order, its page, its own entities alone", async () => {

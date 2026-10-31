@@ -26,21 +26,21 @@ test("extension COW invalidates the warm subscriber mapping", async () => {
   const extension = await createSeededTestRuleset(session.userId);
   await Rulesets.update(db, { kind: "extension", status: "Published" }, { id: extension.id });
   const host = await createSeededTestRuleset(session.userId);
-  const updatedHost = await subscribeTestRuleset(host.id, [extension.id]);
+  await subscribeTestRuleset(host.id, [extension.id]);
   const source = (await Entities.findOne<Feat>(db, {
     entityType: "feats",
     rulesetId: extension.rulesetId!,
     name: "Skill Focus: Climb",
   }))!;
-  const before = await readCowData(updatedHost.id);
-  await readView(updatedHost.id);
+  const before = await readCowData(host.id);
+  await readView(host.id);
   const copy = await copyEntity(db, "feats", source.id, extension);
   await Entities.update<Feat>(db, "feats", { description: "Updated extension feat" }, { id: copy.id });
   RulesetViews.invalidate(extension.id);
-  const after = await readCowData(updatedHost.id);
+  const after = await readCowData(host.id);
   expect(after).not.toBe(before);
   expect(after.resolve(source.id)).toBe(copy.id);
-  const data = await readView(updatedHost.id);
+  const data = await readView(host.id);
   const dataView = Dnd35View.of(data);
   expect(dataView.featsById.get(copy.id)?.description).toBe("Updated extension feat");
   expect(dataView.feats.some((f) => f.id === source.id)).toBe(false);

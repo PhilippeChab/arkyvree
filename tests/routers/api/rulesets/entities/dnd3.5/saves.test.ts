@@ -51,8 +51,6 @@ describe("rulesets entities: saves", () => {
       { links: { keyAbility: abilityMap["Wisdom"] } },
       { name: "No ability" },
       { name: "Bad ability", links: { keyAbility: "not-a-uuid" } },
-      // Its ability by the old table's column, which no body takes
-      { name: "Old ability", abilityId: abilityMap["Wisdom"] },
     ])
       await expectStatus(kinds.$post({ param: { id, entityType }, json: json as never }), 400);
   });

@@ -144,22 +144,22 @@ describe("The seeded core rules", () => {
     const reaches = rows.items
       .flatMap((item) =>
         rows
-          .textsOf(item.id, WEAPON_MAX_RANGE_INCREMENTS)
-          .map((increments) => [item.name, increments, rows.textsOf(item.id, WEAPON_RANGE)[0]]),
+          .valuesOf(item.id, WEAPON_MAX_RANGE_INCREMENTS)
+          .map((increments) => [item.name, increments, rows.valuesOf(item.id, WEAPON_RANGE)[0]]),
       )
       .sort(([a], [b]) => String(a).localeCompare(String(b)));
     expect(reaches).toEqual([
-      ["Composite Longbow", "10", "110"],
-      ["Composite Shortbow", "10", "70"],
-      ["Hand Crossbow", "10", "30"],
-      ["Heavy Crossbow", "10", "120"],
-      ["Light Crossbow", "10", "80"],
-      ["Longbow", "10", "100"],
-      ["Net", "1", "10"],
-      ["Repeating Heavy Crossbow", "10", "120"],
-      ["Repeating Light Crossbow", "10", "80"],
-      ["Shortbow", "10", "60"],
-      ["Sling", "10", "50"],
+      ["Composite Longbow", 10, 110],
+      ["Composite Shortbow", 10, 70],
+      ["Hand Crossbow", 10, 30],
+      ["Heavy Crossbow", 10, 120],
+      ["Light Crossbow", 10, 80],
+      ["Longbow", 10, 100],
+      ["Net", 1, 10],
+      ["Repeating Heavy Crossbow", 10, 120],
+      ["Repeating Light Crossbow", 10, 80],
+      ["Shortbow", 10, 60],
+      ["Sling", 10, 50],
     ]);
   });
 
@@ -279,7 +279,7 @@ describe("The seeded core rules", () => {
 
   test("put each class's own feat of a class feature, and a spell's Weapon Focus, in its family, and only those", async () => {
     const rows = await seededRows();
-    const familyOf = (name: string) => rows.textsOf(rows.feat(name).id, FEAT_FAMILY);
+    const familyOf = (name: string) => rows.valuesOf(rows.feat(name).id, FEAT_FAMILY);
     expect(
       [
         "Sneak Attack (Rogue)",
@@ -309,7 +309,7 @@ describe("The seeded core rules", () => {
       const aptitude = rows.aptitude("Favored Enemy");
       for (const name of variants) {
         const feat = rows.feat(name);
-        const family = rows.textsOf(feat.id, FEAT_FAMILY);
+        const family = rows.valuesOf(feat.id, FEAT_FAMILY);
         expect({
           name,
           fields: { [FEAT_STACKABLE]: feat.fields[FEAT_STACKABLE] },

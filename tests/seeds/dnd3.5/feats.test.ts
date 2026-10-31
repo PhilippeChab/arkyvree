@@ -9,7 +9,13 @@ import { seededRows } from "./seededRows.ts";
 
 /** The families the rulesets' feats are in (their FEAT_FAMILY). */
 function familiesOf(rulesets: Awaited<ReturnType<typeof seededRulesets>>) {
-  return new Set(rulesets.flatMap((rows) => rows.feats.flatMap((feat) => rows.textsOf(feat.id, FEAT_FAMILY))));
+  return new Set(
+    rulesets.flatMap((rows) =>
+      rows.feats.flatMap((feat) =>
+        rows.valuesOf(feat.id, FEAT_FAMILY).filter((family): family is string => typeof family === "string"),
+      ),
+    ),
+  );
 }
 
 /** Every seeded ruleset's rows. */

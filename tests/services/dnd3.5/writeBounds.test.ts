@@ -386,26 +386,26 @@ describe("a ruleset's entity's form", () => {
       links: { baseBonus: [{ amount: 2, toId: saveId }] },
       position: 1,
     });
-    // A level's old shape, its saves by key
+    // A key none of them takes, on a level, the form, a pool and a pool's pick
     expect(
       await refusalOf(
         EntitiesService.updateProgression(owner, rulesetId, "classes", classId, {
-          levels: [{ levelId: level.id, saves: [{ saveId, base: 5 }] }],
+          levels: [{ levelId: level.id, extra: 5 }],
         } as never),
       ),
-    ).toEqual(refusal(["levels.0", 'Unrecognized key: "saves"']));
+    ).toEqual(refusal(["levels.0", 'Unrecognized key: "extra"']));
     expect(
       await refusalOf(
         EntitiesService.updateProgression(owner, rulesetId, "classes", classId, {
-          pools: [{ aptitudeId: saveId, id: saveId, picks: [{ count: 1, levelId: level.id, tier: 1 }] }],
-          bab: [],
+          pools: [{ extra: saveId, id: saveId, picks: [{ count: 1, levelId: level.id, extra: 1 }] }],
+          extra: [],
         } as never),
       ),
     ).toEqual(
       refusal(
-        ["json", 'Unrecognized key: "bab"'],
-        ["pools.0", 'Unrecognized key: "aptitudeId"'],
-        ["pools.0.picks.0", 'Unrecognized key: "tier"'],
+        ["json", 'Unrecognized key: "extra"'],
+        ["pools.0", 'Unrecognized key: "extra"'],
+        ["pools.0.picks.0", 'Unrecognized key: "extra"'],
       ),
     );
     expect(

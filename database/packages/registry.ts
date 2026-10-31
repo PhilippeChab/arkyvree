@@ -14,7 +14,7 @@ import type { RulesetContent } from "./types.ts";
 
 /**
  * Each base rules' content, the one way the runner and the dev and test seeds reach a ruleset's packages, seeder and
- * test characters: one the database's enum gains has to be written here, or the database's code doesn't compile, and
+ * test characters: one `BASE_RULES_OPTIONS` gains has to be written here, or the database's code doesn't compile, and
  * its seeder is checked against the contract (`ContentSeeder`'s abstract members). A package's updates, which write,
  * are given here too (`updates`, by package name).
  */

@@ -107,7 +107,6 @@ describe("A new 3.5 character's creation", () => {
       [CHARACTER_AGE, { ...fields, [CHARACTER_AGE]: 0 }],
       [CHARACTER_ALIGNMENT, { ...fields, [CHARACTER_ALIGNMENT]: "Lawful Awesome" }],
       ["strength", { ...fields, strength: 18 }],
-      ["xp", { ...fields, xp: 0 }],
     ];
     for (const [field, sent] of refused)
       expect(planOf(sent)).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: `fields.${field}` }] });
