@@ -268,12 +268,13 @@ its copy of an inherited entity to the source, of a kind the engine says a fork 
 its route and Local Changes read): `EntityRevert` (`server/cow/writes/`),
 `EntityCopy`'s inverse, refused while the fork's view shows another entity of the
 source's name (`EntityNames.assertRestoreAvailable`, see
-[Names of entities](#names-of-entities)), and as no override's once the source is gone
-(an extension deleted it): the copy is then the fork's own. What a fork's snapshots
-stand for is `RulesetChanges` (`server/cow/views/`), which its Local Changes list: a copy
-of a live source is modified, a source whose copy was deleted (a tombstone) is deleted,
-a copy whose source is gone is added, as an entity the fork made is. Every row naming the copy names the source
-instead, which the views show in the copy's place once it's gone. The rows that name an entity are
+[Names of entities](#names-of-entities)). Every row naming the copy names the source
+instead, which the views show in the copy's place once it's gone. A copy whose source is
+gone (its extension deleted it) is no override: the fork's own, which no restore brings
+back, its source kept until a restore ends. What a fork's snapshots stand for is
+`RulesetChanges` (`server/cow/views/`), which its Local Changes list: a copy of a live
+source is modified, a source whose copy was deleted (a tombstone) is deleted, and a copy
+whose source is gone is added, as an entity the fork made is. The rows that name an entity are
 one list, by the entity's type (`ENTITY_REFERENCES`,
 `server/repositories/rulesets/entityReferences.ts`), which `EntityReferences` reads
 for every use: a revert's repoint (`update`: a restore's, and an unsubscribe's of
@@ -1097,7 +1098,7 @@ An audit on 2026-04-16 identified real leaks and some false alarms. It predates 
 
 | File | Purpose |
 |---|---|
-| `server/cow/views/` | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `RulesetViews` (the cache), and what it reads with: a ruleset's own rows (`RawDataReader`) and the rows its `CowData` is built from (`CowDataReader`): copy-on-write's read side. `CowData` itself (`engine/core/cow/CowData.ts`, built by the engine's `Engine.copyOnWrite().buildData`) is what a scope resolves ids through. |
+| `server/cow/views/` | `withRulesetScope` / `withRulesetScopes` (consumer entry points), `RulesetViews` (the cache), and what it reads with: a ruleset's own rows (`RawDataReader`) and the rows its `CowData` is built from (`CowDataReader`), and what a fork's snapshots stand for (`RulesetChanges`, its Local Changes): copy-on-write's read side. `CowData` itself (`engine/core/cow/CowData.ts`, built by the engine's `Engine.copyOnWrite().buildData`) is what a scope resolves ids through. |
 | `server/cow/writes/` | `EntityEdit` (the row an entity's change writes), `EditTarget` (what a write asks of it: a copy's token, its owned entities, its customizations' rows), `CustomizationEdit` (a customization's), `EntityNames` (the names a create, a rename, a restore or a subscribe takes), `EntityCopy` (a copy of an inherited entity), `EntityRevert` (a copy reverted to its source, what names it repointed), `CustomizationCopies`, `findOwnedPairs` (the owned entities of two owners paired by position): copy-on-write's write side, `EntityEdit` locking an entity a change writes under. `EntityCopy` merges sibling data into newly COW'd local copies by the engine's rules (`Engine.copyOnWrite().mergeCustomizations`, `mergeLinks`). Sibling read-time merging lives in the compose step (`engine/core/view/RulesetComposition.ts`). |
 | `server/services/rulesets/RulesetsService.ts` | `forkRuleset`, `publishRuleset`, `archiveRuleset` |
 | `server/services/rulesets/extensions/RulesetExtensionsService.ts` | `subscribeExtension`, `unsubscribeExtension`, `getExtensions` |

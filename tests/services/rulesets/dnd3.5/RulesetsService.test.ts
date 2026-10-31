@@ -831,12 +831,16 @@ describe("RulesetsService", () => {
 
       // Its source gone, the copy is the host's own: listed as added, and its restore refused as no override's
       await EntitiesService.deleteEntity(session, extension.id, "languages", language.id);
-      expect(await RulesetChangesService.getChanges(session, host.id)).toEqual([
-        { entityType: "languages", status: "added", entityId: copy.id, name: "Fading Tongue" },
-      ]);
-      expect(RulesetChangesService.revertOverride(session, host.id, "languages", language.id)).rejects.toThrow(
-        new NotFoundError("Entity is not an override in this ruleset"),
+      const listed = [
+        { entityType: "languages" as const, status: "added" as const, entityId: copy.id, name: "Fading Tongue" },
+      ];
+      expect(await RulesetChangesService.getChanges(session, host.id)).toEqual(listed);
+      const refusal = await RulesetChangesService.revertOverride(session, host.id, "languages", language.id).catch(
+        (error: unknown) => error,
       );
+      expect(refusal).toEqual(new NotFoundError("Entity is not an override in this ruleset"));
+      // The refused restore deletes nothing: the copy stays the host's
+      expect(await RulesetChangesService.getChanges(session, host.id)).toEqual(listed);
     });
 
     test("are only a fork's, and a private fork's only its members'", async () => {
