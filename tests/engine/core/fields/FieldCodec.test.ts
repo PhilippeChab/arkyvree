@@ -132,7 +132,7 @@ describe("A field codec", () => {
     expect(CODEC.read(OwnerValues.NONE)).toEqual(CODEC.defaults);
   });
 
-  test("reads a flag true once a value is, a three-state one false off a false value", () => {
+  test("reads a flag true once a value is, never off a text, a three-state one false off a false value", () => {
     expect(
       CODEC.read(
         heldValues([
@@ -141,6 +141,7 @@ describe("A field codec", () => {
         ]),
       ).flag,
     ).toBe(true);
+    expect(CODEC.read(heldValues([["FLAG", "true"]])).flag).toBe(false);
     expect(CODEC.read(heldValues([["KNOWN", false]])).group.known).toBe(false);
     expect(
       CODEC.read(
