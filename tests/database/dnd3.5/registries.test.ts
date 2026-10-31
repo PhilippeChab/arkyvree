@@ -161,7 +161,6 @@ describe("The keys drizzle-kit doesn't record, which a generated migration would
     expect(keys.rows.map((row) => row.name)).toEqual([
       "advancement_picks_entity_id_entity_type_fkey",
       "advancement_picks_via_id_via_type_fkey",
-      "advancements_entry_id_entry_type_fkey",
       "entities_owner_id_owner_type_fkey",
       "entity_links_via_id_via_type_fkey",
     ]);

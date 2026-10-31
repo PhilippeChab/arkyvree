@@ -361,6 +361,18 @@ async function restoreIndexesBefore0089() {
 }
 
 /**
+ * An advancement's entry key, as the migrations before 0105 left it: matched in full, as 0080 wrote it. What the
+ * migrations before 0105 ran on.
+ */
+async function restoreKeyBefore0105() {
+  await db.execute(sql`
+    ALTER TABLE character.advancements DROP CONSTRAINT advancements_entry_id_entry_type_fkey;
+    ALTER TABLE character.advancements ADD CONSTRAINT advancements_entry_id_entry_type_fkey
+      FOREIGN KEY (entry_id, entry_type) REFERENCES rules.entities(id, type) MATCH FULL DEFERRABLE INITIALLY DEFERRED;
+  `);
+}
+
+/**
  * A snapshot's type, as the migrations before 0099 left it: its column, each row's its copy's, or its source's when its
  * copy is gone (a tombstone), and the key by its ruleset, its type and its source in place of the one without its type.
  * What the migrations before 0099 ran on.
@@ -1557,5 +1569,27 @@ describe("0104_required-advancement-entry", () => {
           .join(", ")}`,
       },
     });
+  }, 30_000);
+});
+
+describe("0105_advancement-entry-key", () => {
+  test("writes an advancement's entry key as a required pair's, and rewrites no row", async () => {
+    const fresh = await definitionsOf("character", "advancements");
+    const key =
+      "constraint advancements_entry_id_entry_type_fkey FOREIGN KEY (entry_id, entry_type) REFERENCES rules.entities(id, type)";
+    expect(fresh).toContain(`${key} DEFERRABLE INITIALLY DEFERRED`);
+    await restoreKeyBefore0105();
+    expect(await definitionsOf("character", "advancements")).toContain(
+      `${key} MATCH FULL DEFERRABLE INITIALLY DEFERRED`,
+    );
+    const placed = sql`SELECT id, ctid::text AS place, xmin::text AS version FROM character.advancements ORDER BY id`;
+    const { rows: stored } = await db.execute(placed);
+    expect(stored.length).toBeGreaterThan(0);
+
+    for (const statement of statementsOf("0105_advancement-entry-key.sql")) await db.execute(sql.raw(statement));
+
+    // What a fresh database's migrations give, every row as it was, in its place
+    expect(await definitionsOf("character", "advancements")).toEqual(fresh);
+    expect((await db.execute(placed)).rows).toEqual(stored);
   }, 30_000);
 });

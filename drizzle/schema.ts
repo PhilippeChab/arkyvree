@@ -323,7 +323,7 @@ export const advancementsInCharacter = character.table(
       foreignColumns: [charactersInCharacter.id],
       name: "advancements_character_id_fkey",
     }).onDelete("cascade"),
-    // The database's is MATCH FULL DEFERRABLE INITIALLY DEFERRED, which drizzle's `foreignKey` doesn't declare
+    // The database's is DEFERRABLE INITIALLY DEFERRED, which drizzle's `foreignKey` doesn't declare
     foreignKey({
       columns: [table.entryId, table.entryType],
       foreignColumns: [entitiesInRules.id, entitiesInRules.type],
