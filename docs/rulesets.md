@@ -268,7 +268,11 @@ its copy of an inherited entity to the source, of a kind the engine says a fork 
 its route and Local Changes read): `EntityRevert` (`server/cow/writes/`),
 `EntityCopy`'s inverse, refused while the fork's view shows another entity of the
 source's name (`EntityNames.assertRestoreAvailable`, see
-[Names of entities](#names-of-entities)). Every row naming the copy names the source
+[Names of entities](#names-of-entities)), and as no override's once the source is gone
+(an extension deleted it): the copy is then the fork's own. What a fork's snapshots
+stand for is `RulesetChanges` (`server/cow/views/`), which its Local Changes list: a copy
+of a live source is modified, a source whose copy was deleted (a tombstone) is deleted,
+a copy whose source is gone is added, as an entity the fork made is. Every row naming the copy names the source
 instead, which the views show in the copy's place once it's gone. The rows that name an entity are
 one list, by the entity's type (`ENTITY_REFERENCES`,
 `server/repositories/rulesets/entityReferences.ts`), which `EntityReferences` reads

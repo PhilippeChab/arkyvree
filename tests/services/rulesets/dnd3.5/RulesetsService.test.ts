@@ -57,6 +57,7 @@ import {
   CLASS_HD,
   FEAT_FAMILY,
   ITEM_IS_TEMPLATE,
+  LANGUAGE_TYPE,
   RACE_BASE_SPEED,
   RACE_SIZE,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -809,6 +810,33 @@ describe("RulesetsService", () => {
       });
       expect(await EntitySnapshots.findMany(db, { rulesetId: fork.id })).toMatchObject([{ sourceEntityId: gone }]);
       expect(await RulesetChangesService.getChanges(session, fork.id)).toEqual([]);
+    });
+
+    test("lists a copy whose source its extension deleted as its own, which no restore brings back", async () => {
+      const { user, session } = await createTestUser();
+      const { rulesetId } = await getSeedCtx();
+      const extension = await createTestRuleset(user.id, { rulesetId });
+      const host = await createTestRuleset(user.id, { rulesetId });
+      await subscribeTestRuleset(host.id, [extension.id]);
+      const language = await EntitiesService.createEntity(session, extension.id, "languages", {
+        name: "Fading Tongue",
+        fields: { [LANGUAGE_TYPE]: "Standard" },
+      });
+      const copy = await EntitiesService.updateEntity(session, host.id, "languages", language.id, {
+        name: "Fading Tongue",
+        description: "Kept by the host",
+        fields: { [LANGUAGE_TYPE]: "Standard" },
+      });
+      expect(await RulesetChangesService.getChanges(session, host.id)).toMatchObject([{ status: "modified" }]);
+
+      // Its source gone, the copy is the host's own: listed as added, and its restore refused as no override's
+      await EntitiesService.deleteEntity(session, extension.id, "languages", language.id);
+      expect(await RulesetChangesService.getChanges(session, host.id)).toEqual([
+        { entityType: "languages", status: "added", entityId: copy.id, name: "Fading Tongue" },
+      ]);
+      expect(RulesetChangesService.revertOverride(session, host.id, "languages", language.id)).rejects.toThrow(
+        new NotFoundError("Entity is not an override in this ruleset"),
+      );
     });
 
     test("are only a fork's, and a private fork's only its members'", async () => {

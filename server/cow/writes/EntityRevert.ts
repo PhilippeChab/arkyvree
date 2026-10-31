@@ -37,7 +37,7 @@ export default class EntityRevert {
 
   /**
    * Reverts the ruleset's copy of `sourceEntityId` (of `entityType`) to the source: a not found when the ruleset has
-   * none. A copy deleted since (a tombstone) has nothing left naming it: its snapshot goes, and the source shows again.
+   * none, or the source is gone (an extension deleted it: the copy is the ruleset's own, `RulesetChanges`). A copy deleted since (a tombstone) has nothing left naming it: its snapshot goes, and the source shows again.
    * A restore, whose source shows again in the ruleset's view, keeps its name free there (`names`), as a rename does; an
    * unsubscribe's revert gives none, its source leaving the view.
    */
@@ -51,7 +51,8 @@ export default class EntityRevert {
     // A first edit of the entity copying it meanwhile waits, then copies it anew (`EntityCopy`)
     await EntitySnapshots.lock(tx, { rulesetId, sourceEntityId });
     const snapshot = await EntitySnapshots.findOne(tx, { rulesetId, sourceEntityId });
-    if (!snapshot) throw new NotFoundError("Entity is not an override in this ruleset");
+    if (!snapshot || !(await Entities.has(tx, { entityType, id: sourceEntityId })))
+      throw new NotFoundError("Entity is not an override in this ruleset");
 
     const copyId = snapshot.forkedEntityId;
     await Entities.lock(tx, { id: copyId });
