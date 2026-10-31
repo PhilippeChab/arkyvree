@@ -382,7 +382,7 @@ describe("An activity", () => {
   });
 
   test("details an older activity's changes, which names no base rules, by every base rules' columns", () => {
-    // As 0090 rewrote what an item's, a race's and a spell's update recorded before its activity named its base rules
+    // As 0091 rewrote what an item's, a race's and a spell's update recorded before its activity named its base rules
     const changedFields = [
       { field: "madeFrom", from: "7c0d4b52-0c0e-4b8e-9d7f-1f2a3b4c5d6e", to: "00000000-0000-0000-0000-000000000000" },
       { field: ITEM_TYPE, from: "Weapon", to: "Armor" },

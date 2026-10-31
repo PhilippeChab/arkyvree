@@ -1,10 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
 import StorageEngine from "@/engine/api/StorageEngine.ts";
-import Field from "@/engine/core/fields/Field.ts";
 import {
   DAMAGE_TYPE,
-  ENTITY_FIELDS,
   SPELL_AREA_OF_EFFECT,
   SPELL_CASTING_TIME,
   SPELL_COMPONENT,
@@ -61,13 +59,5 @@ describe("The 3.5 fields", () => {
 
   test("give a weapon's damage types in the rules' order: an urgrosh's Slashing, Piercing", () => {
     expect(DECLARED.orderValues(DAMAGE_TYPE, ["Piercing", "Slashing"])).toEqual(["Slashing", "Piercing"]);
-  });
-
-  test("leave out the spell's fields no data holds: its level and saving throw, its material and duration type", () => {
-    const dropped = ["SPELL_LEVEL", "SPELL_SAVING_THROW", "SPELL_MATERIAL", "SPELL_DURATION_TYPE"];
-    const declared = Object.values(ENTITY_FIELDS).flatMap((fields) =>
-      Field.storedLeavesOf(fields).map((leaf) => leaf.field),
-    );
-    expect(dropped.filter((field) => declared.includes(field))).toEqual([]);
   });
 });

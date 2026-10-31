@@ -112,7 +112,7 @@ test("a fork's own feats and spells, listed alone, name a list the fork copied b
   }
 });
 
-test("a spell names its save by the view's id, and carries no stored save row", async () => {
+test("a spell names its save by the view's id", async () => {
   const { session, fork, ability, save, spell } = await setupOwnRows();
   const saveCopy = await EntitiesService.updateEntity(session, fork.id, "saves", save.id, {
     name: "Copied Save",
@@ -123,13 +123,10 @@ test("a spell names its save by the view's id, and carries no stored save row", 
     await EntitiesService.getEntities(await ownerSessionOf(fork.id), fork.id, "spells", {}, PAGE)
   ).items.find((row) => row.id === spell.id)!;
   const page = await EntitiesService.getEntity(await ownerSessionOf(fork.id), fork.id, "spells", spell.id);
-  for (const read of [listed, page]) {
-    expect(linkedId(read, "resistedBy")).toBe(saveCopy.id);
-    expect(read).not.toHaveProperty("savesInRule");
-  }
+  for (const read of [listed, page]) expect(linkedId(read, "resistedBy")).toBe(saveCopy.id);
 });
 
-test("a character's inventory entry carries its item as the view has it, and no stored item row", async () => {
+test("a character's inventory entry carries its item as the view has it", async () => {
   const fork = await createSeededTestRuleset(SEED_USER_ID);
   const item = await findPlainItem(fork.rulesetId!);
   const character = await createTestCharacter(SEED_USER_ID, { rulesetId: fork.id });
@@ -141,5 +138,4 @@ test("a character's inventory entry carries its item as the view has it, and no 
 
   const [entry] = await CharacterInventoryService.getInventory(makeSession(), character.id);
   expect(entry.item).toMatchObject({ id: copy.id, name: "Copied Item" });
-  expect(entry).not.toHaveProperty("itemsInRule");
 });

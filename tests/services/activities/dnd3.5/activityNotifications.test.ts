@@ -183,7 +183,6 @@ describe("activity notifications", () => {
     expect(await inbox(author)).toEqual([]);
   });
 
-  // A mechanic's create and update used to reach nobody: its ruleset was looked up among the other kinds' tables only.
   test("of a mechanic go to its ruleset's owner", async () => {
     const [owner, author] = await users(2);
     const ruleset = await createTestRuleset(owner.user.id);

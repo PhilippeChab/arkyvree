@@ -59,8 +59,6 @@ describe("rulesets entities: feats", () => {
       { name: "", links: { listedIn: [{ toId: aptitudeId }] } },
       { name: "Feat", links: { listedIn: [] } },
       { name: "Feat", links: { listedIn: aptitudeId } },
-      // Its pools by the old join's key, which no body takes
-      { name: "Feat", aptitudeIds: [aptitudeId] } as never,
     ])
       await expectStatus(kinds.$post({ param: { id, entityType }, json }), 400);
   });

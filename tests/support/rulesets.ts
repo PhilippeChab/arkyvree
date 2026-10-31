@@ -111,9 +111,9 @@ export async function createSeededTestRulesetWithExtensions(userId: string) {
   const extensionIds = (await Rulesets.findMany(db, { system: true }))
     .filter((ruleset) => ruleset.kind === "extension" && ruleset.rulesetId === fork.rulesetId)
     .map((extension) => extension.id);
-  const ruleset = await subscribeTestRuleset(fork.id, extensionIds);
+  await subscribeTestRuleset(fork.id, extensionIds);
   RulesetViews.invalidate(fork.id);
-  return ruleset;
+  return fork;
 }
 
 /**
@@ -178,9 +178,8 @@ export async function sourcesOf(rulesetId: string) {
 
 /**
  * Subscribes a ruleset to extensions (`extensionIds`), after those it subscribes to, as its rows alone, none of a
- * subscribe's checks: the ruleset as it reads then.
+ * subscribe's checks.
  */
 export async function subscribeTestRuleset(rulesetId: string, extensionIds: string[]) {
   await RulesetExtensions.upsert(db, { rulesetId, extensionIds });
-  return (await Rulesets.findOne(db, { id: rulesetId }))!;
 }

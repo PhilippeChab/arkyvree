@@ -34,7 +34,7 @@ describe("activities", () => {
     expect(firstPage.items).toHaveLength(1);
   });
 
-  test("filters activities by type and searches their type and table", async () => {
+  test("filters activities by type and searches their type", async () => {
     const { activities, aptitude } = await userWithActivities();
     const byType = await expectOk(activities.$get({ query: { type: "createAptitude" } }));
     expect(byType.items.map((a) => a.targetId)).toEqual([aptitude.id]);

@@ -46,8 +46,8 @@ async function createExtensionAndHost(userId: string, coreId: string) {
     status: "Published",
   });
   const fork = await createSeededTestRuleset(userId);
-  const host = await subscribeTestRuleset(fork.id, [extension.id]);
-  return { extension, host };
+  await subscribeTestRuleset(fork.id, [extension.id]);
+  return { extension, host: fork };
 }
 
 /** A fork's own feat and spell, each named uniquely. */

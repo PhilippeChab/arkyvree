@@ -854,9 +854,8 @@ describe("characters", () => {
       { ...valid, fields: { ...fields, CHARACTER_GENDER: "InvalidGender" } },
       { ...valid, fields: { ...fields, CHARACTER_XP: -1 } },
       { ...valid, fields: { ...fields, CHARACTER_AGE: 0 } },
-      // The old keys, which name no field
-      { ...valid, fields: { ...fields, xp: 0 } },
       { ...valid, fields: withoutAlignment },
+      // A key that names no field
       { ...valid, fields: { ...fields, strength: 18 } },
     ])
       await expectStatus(characters.$post({ json: json as never }), 400);

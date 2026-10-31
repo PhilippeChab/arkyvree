@@ -36,9 +36,12 @@ describe("rulesets settings", () => {
     await expectStatus(settings.$put({ param: { id }, json: { fields: { SKILL_POINTS: 4 } } }), 400);
     const partial = { [RULESET_FEAT_ADVANCEMENT]: { every: 3 } } as never;
     await expectStatus(settings.$put({ param: { id }, json: { fields: partial } }), 400);
-    // A body by its fields' names in their declaration, as it was sent before
-    await expectStatus(settings.$put({ param: { id }, json: { skillPointAbilityId: NIL_UUID } as never }), 400);
     const links = { skillPointAbility: abilityMap["Wisdom"] };
+    // A key past its fields and links
+    const refused = await expectStatus(settings.$put({ param: { id }, json: { links, extra: 1 } as never }), 400);
+    expect(await refused.json()).toMatchObject({
+      issues: [{ category: "json", message: 'Unrecognized key: "extra"' }],
+    });
     await expectStatus(settings.$put({ param: { id: rulesetId }, json: { links } }), 403);
     await expectStatus(guestApi.api.rulesets[":id"].settings.$get({ param: { id } }), 401);
   });

@@ -169,8 +169,6 @@ async function candidates(table: string, column: Column, row: Record<string, unk
   const reference = await referenceOf(table, column.name);
   if (column.type === "uuid")
     return (await otherIds(column.name, row, reference?.table)).map((id) => `${literal(id)}::uuid`);
-  if (column.type === "ARRAY")
-    return [`array_append(coalesce(${current}, '{}'), (select id from rules.rulesets limit 1))`];
   if (column.type === "USER-DEFINED") {
     return [
       `(select e.enumlabel::${column.udt} from pg_enum e where e.enumtypid = '${column.udt}'::regtype and e.enumlabel <> ${current}::text limit 1)`,
@@ -207,15 +205,14 @@ async function operators(table: string): Promise<string[]> {
 
 /**
  * Other ids `column` can point to: rows of the table its foreign key references, else (a customization's owner, a
- * snapshot's entity) entities; an entity of the type the row names it by (`owner_id`'s `owner_type`, else its
- * `entity_type`).
+ * snapshot's entity) entities; an entity of the type the row names it by (`owner_id`'s `owner_type`) when it does.
  */
 async function otherIds(
   column: string,
   row: Record<string, unknown>,
   referenced = "rules.entities",
 ): Promise<string[]> {
-  const type = row[`${column.replace(/_id$/, "")}_type`] ?? row.entity_type;
+  const type = row[`${column.replace(/_id$/, "")}_type`];
   const byType = referenced === "rules.entities" && typeof type === "string";
   const ids = await query<{ id: string }>(
     `select id::text from ${referenced} where id::text <> coalesce($1, '') ${byType ? "and type = $2" : ""}
@@ -271,7 +268,7 @@ describe("The content comparison (diff-prod)", () => {
       (
         await query<{ name: string }>(
           `select table_schema || '.' || table_name || '.' || column_name as name from information_schema.columns
-            where table_schema || '.' || table_name = any($1) and udt_name in ('uuid', '_uuid')
+            where table_schema || '.' || table_name = any($1) and udt_name = 'uuid'
               and column_name <> all($2)`,
           [COMPARED_TABLES, BOOKKEEPING],
         )

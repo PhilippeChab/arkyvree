@@ -51,12 +51,12 @@ export async function seededRows(rulesetName = DND35_RULESET_NAME) {
       rows.classLevels.find((l) => l.ownerId === named(rows.classes, klass).id && l.position === level)!,
     modifiersOf: (sourceId: string) => rows.modifiers.filter((m) => m.sourceId === sourceId),
     requirementsOf: (entityId: string) => rows.requirements.filter((r) => r.entityId === entityId),
-    /** An entity's values of a field, as text (none without the field): the values the seed wrote. */
-    textsOf: (entityId: string, field: string) => {
+    /** An entity's values of a field, as stored (none without the field): the values the seed wrote. */
+    valuesOf: (entityId: string, field: string) => {
       const entity = Object.values(raw.entities)
         .flat()
         .find(({ id }) => id === entityId);
-      return entity ? OwnerValues.valuesOf(entity.fields, field).map(String) : [];
+      return entity ? OwnerValues.valuesOf(entity.fields, field) : [];
     },
   };
 }
