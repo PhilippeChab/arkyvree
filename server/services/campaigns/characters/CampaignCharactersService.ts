@@ -131,10 +131,8 @@ class CampaignCharactersService {
     });
     const contributedIds = new Set(contributions.map((contribution) => contribution.characterId));
     const editedIds = new Set<string>();
-    for (const char of characters) {
-      const standing = { isActiveContributor: contributedIds.has(char.id) };
-      if ((await CharactersPolicy.for(db, session, char, standing)).isEditor()) editedIds.add(char.id);
-    }
+    for (const char of characters)
+      if ((await CharactersPolicy.for(db, session, char, contributedIds)).isEditor()) editedIds.add(char.id);
 
     // A Partial character shows the other players its name and race, and none of its build
     const partialIds = new Set(

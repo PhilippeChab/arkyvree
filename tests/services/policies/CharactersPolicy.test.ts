@@ -45,6 +45,18 @@ describe("CharactersPolicy", () => {
     expect((await CharactersPolicy.for(db, other, child)).isReadable()).toBe(true);
   });
 
+  test("for, with a page's contributions: a player character's role read off them, a child's still off its parent", async () => {
+    const { character, owner, other, user, stranger } = await setup();
+    const child = await createChild(user.id, character.id);
+    await addCharacterContributor(character.id, stranger, user.id);
+    // The ids given decide a player character's role, not its own lookup
+    expect((await CharactersPolicy.for(db, other, character, new Set())).isEditor()).toBe(false);
+    expect((await CharactersPolicy.for(db, other, character, new Set([character.id]))).isEditor()).toBe(true);
+    // Its owner's whatever they say, and a child reads its parent's standing as without them
+    expect((await CharactersPolicy.for(db, owner, character, new Set())).isEditor()).toBe(true);
+    expect((await CharactersPolicy.for(db, other, child, new Set())).isReadable()).toBe(true);
+  });
+
   test("canArchive, canShare and canLink: a player character's owner; anyone else as an unknown character", async () => {
     const { character, owner, other } = await setup();
     const child = await createChild(character.userId, character.id);

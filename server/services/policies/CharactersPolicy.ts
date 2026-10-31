@@ -28,16 +28,16 @@ export default class CharactersPolicy extends BasePolicy<Character> {
   /**
    * The session's policy on `character`: a player character's contributor's rights come from their active role on it,
    * and a child's (3.5's bonded creature) from the session's on its parent, a player character, archived or not (an
-   * archived parent's child is read-only, as the parent is). A caller that read a page's standing at once (`standing`,
-   * a list's contributions) passes it, and nothing more is read.
+   * archived parent's child is read-only, as the parent is). A list that read the session's active contributions for its
+   * page at once passes them (`contributions`, the ids of the characters it contributes to), which a player character's
+   * role is read off in place of its own lookup; a child still reads its parent's.
    */
   static async for(
     db: Db,
     session: Pick<Session, "userId">,
     character: Character,
-    standing?: CharacterStanding,
+    contributions?: ReadonlySet<string>,
   ): Promise<CharactersPolicy> {
-    if (standing) return new CharactersPolicy(session, character, standing);
     if (!Engine.storage().isPlayerKind(character.kind)) {
       const parent = character.parentCharacterId
         ? await Characters.findOne(db, { id: character.parentCharacterId }, Visibility.All)
@@ -49,11 +49,11 @@ export default class CharactersPolicy extends BasePolicy<Character> {
       return new CharactersPolicy(session, character, { isParentArchived: !!parent?.deletedAt, isParentEditor });
     }
 
-    const role =
-      character.userId === session.userId
-        ? undefined
-        : await CharacterContributors.findRole(db, { userId: session.userId, characterId: character.id });
-    return new CharactersPolicy(session, character, { isActiveContributor: role !== undefined });
+    if (character.userId === session.userId) return new CharactersPolicy(session, character);
+    const isActiveContributor = contributions
+      ? contributions.has(character.id)
+      : (await CharacterContributors.findRole(db, { userId: session.userId, characterId: character.id })) !== undefined;
+    return new CharactersPolicy(session, character, { isActiveContributor });
   }
 
   /** The child's parent is archived: looked up only for a child. */

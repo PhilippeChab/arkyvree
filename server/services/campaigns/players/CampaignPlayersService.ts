@@ -52,6 +52,7 @@ class CampaignPlayersService {
 
   /** Refuses (`message`) to remove or demote `player` when it's its campaign's last live Game Master. */
   private async assertNotLastGameMaster(tx: Db, player: Player, message: string) {
+    if (player.role !== "Game Master") return;
     const masters = await Players.count(tx, { campaignId: player.campaignId, role: "Game Master" });
     if (CampaignPlayersService.isLastGameMaster(player, masters)) throw new ConflictError(message);
   }

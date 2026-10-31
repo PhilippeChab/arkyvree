@@ -9,13 +9,10 @@ import { Paginates, type Pagination } from "@/server/repositories/concerns/Pagin
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
 
-/** The columns of a players query's row that its subqueries read. */
+/** The columns of a players query's row that its subquery reads (`joinedAt`). */
 interface SlotColumns {
-  campaignId: SQLWrapper;
   createdAt: SQLWrapper;
-  deletedAt: SQLWrapper;
   id: SQLWrapper;
-  role: SQLWrapper;
   userId: SQLWrapper;
 }
 
