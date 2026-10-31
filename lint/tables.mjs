@@ -15,7 +15,10 @@ const TABLE_NAME = "getTableName";
 /** The folders that name no table: the server and the shared code name kinds and target types. */
 const TABLELESS_FOLDERS = [/^server\//, /^shared\//];
 
-/** `table-names`: a table's name read in the server or `shared/` (`getTableName`), by name or by a computed member. */
+/**
+ * `table-names`: a table's name read in the server or `shared/` (`getTableName`): by name, by a computed member
+ * (`orm["getTableName"]`, `` orm[`getTableName`] ``) or by a destructured key (`const { "getTableName": name } = orm`).
+ */
 function createTableNames(context) {
   if (!isInRepo(context.filename)) return {};
   if (!TABLELESS_FOLDERS.some((folder) => folder.test(repoPath(context.filename)))) return {};
@@ -36,16 +39,19 @@ function createTableNames(context) {
       if (node.name === TABLE_NAME) report(node);
     },
     Literal(node) {
-      const { parent } = node;
-      if (
-        node.value === TABLE_NAME &&
-        parent?.type === "MemberExpression" &&
-        parent.computed &&
-        parent.property === node
-      )
-        report(node);
+      if (node.value === TABLE_NAME && isKeyRead(node)) report(node);
+    },
+    TemplateLiteral(node) {
+      if (node.quasis.length === 1 && node.quasis[0].value.cooked === TABLE_NAME && isKeyRead(node)) report(node);
     },
   };
+}
+
+/** Whether a string reads the member it names: a computed member's (`orm["x"]`) or a destructured key's (`{ "x": y }`). */
+function isKeyRead(node) {
+  const { parent } = node;
+  if (parent?.type === "MemberExpression") return parent.computed && parent.property === node;
+  return parent?.type === "Property" && parent.key === node && parent.parent?.type === "ObjectPattern";
 }
 
 export default {
