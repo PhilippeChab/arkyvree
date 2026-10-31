@@ -62,7 +62,7 @@ export default {
     { levelIndex: 2, spellName: "Shield", aptitude: "Sorcerer Spells" },
   ],
   inventory: [
-    { name: "Dagger", quantity: 1, equipped: true, location: "Main Hand", groups: [0] },
-    { name: "Light Crossbow", quantity: 1, equipped: true, location: "Two Handed", groups: [1] },
+    { name: "Dagger", quantity: 1, location: "Main Hand", groups: [0] },
+    { name: "Light Crossbow", quantity: 1, location: "Two Handed", groups: [1] },
   ],
 } satisfies CharacterSeed;

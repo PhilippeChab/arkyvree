@@ -14,7 +14,6 @@ import { SIZE_OPTIONS } from "@/vocabulary/dnd3.5/sizes.ts";
 
 /** An inventory entry, as where it's worn reads it. */
 interface HeldEntry {
-  equipped: boolean;
   /** The weapon sets a hand holds it in (its groups), stored from 0; none outside the hands. */
   groups: number[];
   location: string | null;
@@ -102,7 +101,7 @@ export default class ItemPlacement {
    * none when it's carried.
    */
   static describeSlot(entry: HeldEntry): string | null {
-    if (!entry.equipped || !entry.location) return null;
+    if (!entry.location) return null;
     if (!ItemPlacement.isHand(entry.location) || entry.groups.length === 0) return entry.location;
 
     const sets = entry.groups.map((set) => set + 1).join(", ");

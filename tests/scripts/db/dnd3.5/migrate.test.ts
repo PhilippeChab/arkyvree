@@ -208,6 +208,22 @@ async function entityRows() {
 }
 
 /**
+ * The ids of the inventory entries whose item's type sets where it goes (a weapon, armor, a shield: its own type, else
+ * its template's), or of those whose doesn't (`placed`), in their order: what 0106 places at `Other` or refuses.
+ */
+async function entriesPlaced(placed: boolean) {
+  const { rows } = await db.execute<{ id: string }>(sql`
+    SELECT i.id FROM character.inventory AS i
+    LEFT JOIN rules.entity_fields AS own ON own.entity_id = i.item_id AND own.field = 'ITEM_TYPE'
+    LEFT JOIN rules.entity_links AS made ON made.from_id = i.item_id AND made.role = 'madeFrom'
+    LEFT JOIN rules.entity_fields AS template ON template.entity_id = made.to_id AND template.field = 'ITEM_TYPE'
+    WHERE (coalesce(own.text_value, template.text_value) IN ('Weapon', 'Armor', 'Shield')) IS ${placed ? sql`TRUE` : sql`NOT TRUE`}
+    ORDER BY i.id
+  `);
+  return rows.map((row) => row.id);
+}
+
+/**
  * Every field row 0090 reads (an entity's, a ruleset's, a character's), each as one line (its owner, its field, its
  * ordinal and its text, quoted), and every character's last change: what it leaves.
  */
@@ -258,6 +274,16 @@ async function findHeldCharacter() {
     ORDER BY c.id LIMIT 1
   `);
   return rows[0]!.id;
+}
+
+/** Every inventory entry, each as one line (where it's held, its sets), and every character's last change. */
+async function inventoryRows() {
+  const { rows } = await db.execute<{ line: string }>(sql`
+    SELECT 'entry ' || id || ' ' || coalesce(location, '-') || ' ' || groups::text AS line FROM character.inventory
+    UNION ALL SELECT 'character ' || id || ' ' || last_changed_at::text FROM character.characters
+    ORDER BY line
+  `);
+  return rows.map((row) => row.line);
 }
 
 /** The registries' columns 0086 keeps, each row as one line, and every character's last change: what it leaves. */
@@ -321,6 +347,17 @@ async function restoreEntriesBefore0104() {
     ALTER TABLE character.advancements ALTER COLUMN entry_type DROP NOT NULL;
     DROP INDEX character.advancements_entry_idx;
     CREATE INDEX advancements_entry_idx ON character.advancements (entry_id) WHERE entry_id IS NOT NULL;
+  `);
+}
+
+/**
+ * An inventory entry's `equipped`, as the migrations before 0106 left it: whether it has a location, every write's.
+ * What the migrations before 0106 ran on.
+ */
+async function restoreEquippedBefore0106() {
+  await db.execute(sql`
+    ALTER TABLE character.inventory ADD COLUMN equipped boolean DEFAULT false NOT NULL;
+    UPDATE character.inventory SET equipped = location IS NOT NULL;
   `);
 }
 
@@ -1592,4 +1629,56 @@ describe("0105_advancement-entry-key", () => {
     expect(await definitionsOf("character", "advancements")).toEqual(fresh);
     expect((await db.execute(placed)).rows).toEqual(stored);
   }, 30_000);
+});
+
+describe("0106_inventory-location", () => {
+  test("keeps a held entry's location alone: a carried entry's location goes, an equipped one's without is Other", async () => {
+    await restoreEquippedBefore0106();
+    // A weapon carried at a hand, and an item of no set place worn nowhere
+    const [carried] = await entriesPlaced(true);
+    const [worn] = await entriesPlaced(false);
+    expect([carried, worn].every(Boolean)).toBe(true);
+    // As the test characters' seeder wrote them: carried at a hand in a set, and equipped nowhere
+    await db.execute(sql`SELECT set_config('arkyvree.registry_sync', 'on', true)`);
+    await db.execute(sql`UPDATE character.inventory SET equipped = false, location = 'Main Hand', groups = '{1}'
+      WHERE id = ${carried}`);
+    await db.execute(sql`UPDATE character.inventory SET equipped = true, location = NULL, groups = '{}'
+      WHERE id = ${worn}`);
+    await db.execute(sql`SELECT set_config('arkyvree.registry_sync', 'off', true)`);
+    const before = await inventoryRows();
+
+    for (const statement of statementsOf("0106_inventory-location.sql")) await db.execute(sql.raw(statement));
+
+    const expected = before.map((line) =>
+      line.startsWith(`entry ${carried} `)
+        ? `entry ${carried} - {}`
+        : line.startsWith(`entry ${worn} `)
+          ? `entry ${worn} Other {}`
+          : line,
+    );
+    expect(await inventoryRows()).toEqual(expected.toSorted());
+    const { rows: columns } = await db.execute(sql`
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'character' AND table_name = 'inventory' AND column_name = 'equipped'
+    `);
+    expect(columns).toEqual([]);
+  }, 30_000);
+
+  test("refuses an equipped entry with no location whose item has a set place, naming it", async () => {
+    await restoreEquippedBefore0106();
+    const [weapon] = await entriesPlaced(true);
+    await db.execute(sql`SELECT set_config('arkyvree.registry_sync', 'on', true)`);
+    await db.execute(sql`UPDATE character.inventory SET equipped = true, location = NULL, groups = '{}'
+      WHERE id = ${weapon}`);
+    await db.execute(sql`SELECT set_config('arkyvree.registry_sync', 'off', true)`);
+
+    const refused = await db
+      .transaction(async (tx) => {
+        for (const statement of statementsOf("0106_inventory-location.sql")) await tx.execute(sql.raw(statement));
+      })
+      .catch((error: unknown) => error);
+    expect(refused).toMatchObject({
+      cause: { message: `Equipped inventory entries with no location, whose item has a set place: ${weapon}` },
+    });
+  });
 });

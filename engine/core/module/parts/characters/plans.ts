@@ -24,10 +24,9 @@ export interface FieldsPlan {
 
 /**
  * What an inventory entry's add or edit stores: its item (an added one's, by the view's id; the one an edited entry
- * keeps), where it's held, and its charges.
+ * keeps), where it's held (its location, none for an item carried: an equipped item has one), and its charges.
  */
 export interface InventoryEntryPlan {
-  equipped: boolean;
   /** The groups it's held in, stored from 0 (3.5's weapon sets a hand holds it in): none outside them */
   groups: number[];
   itemId: string;

@@ -62,8 +62,8 @@ export default {
     { levelIndex: 2, featName: "Precise Shot", aptitude: "General" },
   ],
   inventory: [
-    { name: "Longbow", quantity: 1, equipped: true, location: "Two Handed", groups: [0] },
-    { name: "Longsword", quantity: 1, equipped: false, location: "Main Hand", groups: [1] },
-    { name: "Studded Leather", quantity: 1, equipped: true, location: "Torso" },
+    { name: "Longbow", quantity: 1, location: "Two Handed", groups: [0] },
+    { name: "Longsword", quantity: 1 },
+    { name: "Studded Leather", quantity: 1, location: "Torso" },
   ],
 } satisfies CharacterSeed;

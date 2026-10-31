@@ -175,7 +175,7 @@ describe("A PCGen fighter / rogue", () => {
     const dataView = Dnd35View.of(data);
     expect(plan.links.speaks.map(({ entityId }) => dataView.languagesById.get(entityId)?.name)).toEqual(["Dwarven"]);
     const worn = plan.inventory
-      .filter((entry) => entry.equipped)
+      .filter((entry) => entry.location !== null)
       .map((entry) =>
         `${dataView.itemsById.get(entry.itemId)?.name}: ${entry.location} ${entry.groups.join(",")}`.trim(),
       );
@@ -186,7 +186,7 @@ describe("A PCGen fighter / rogue", () => {
       "Ring of Protection +1: Finger",
     ]);
     const carried = plan.inventory
-      .filter((entry) => !entry.equipped)
+      .filter((entry) => entry.location === null)
       .map((entry) => dataView.itemsById.get(entry.itemId)?.name);
     expect(carried).toContain("Rope, hempen (50 ft.)");
     expect(carried).toContain("Backpack (empty)");
@@ -408,7 +408,7 @@ describe("What a file holds past what the app keeps", () => {
     const rings = plan.inventory.filter(
       (entry) => Dnd35View.of(data).itemsById.get(entry.itemId)?.name === "Ring of Protection +1",
     );
-    expect(rings.map(({ equipped, location, quantity }) => `${equipped ? location : "carried"} ${quantity}`)).toEqual([
+    expect(rings.map(({ location, quantity }) => `${location ?? "carried"} ${quantity}`)).toEqual([
       "Finger 1",
       "Finger 1",
       "carried 1",
@@ -439,9 +439,10 @@ describe("What a file holds past what the app keeps", () => {
     const data = await seededData();
     expect(
       plan.inventory.map(
-        ({ equipped, itemId, quantity }) => `${Dnd35View.of(data).itemsById.get(itemId)?.name} ${equipped} ${quantity}`,
+        ({ itemId, location, quantity }) =>
+          `${Dnd35View.of(data).itemsById.get(itemId)?.name} ${location ?? "carried"} ${quantity}`,
       ),
-    ).toEqual(["Chain Mail true 1", "Chain Mail false 1999", "Rope, hempen (50 ft.) false 2000"]);
+    ).toEqual(["Chain Mail Torso 1", "Chain Mail carried 1999", "Rope, hempen (50 ft.) carried 2000"]);
   });
 
   test("gear past the most the app keeps, and gear the character owns without carrying it, said in the report", async () => {

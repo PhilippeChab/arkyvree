@@ -24,13 +24,12 @@ describe("An inventory placement", () => {
   test("equips at a slot, with the group stored from 0, which the server keeps for a hand only", () => {
     expect(placementPayload({ ...form, location: "Main Hand" }, profile(null))).toEqual({
       quantity: 2,
-      equipped: true,
       location: "Main Hand",
       totalCharges: null,
       remainingCharges: null,
       groups: [1],
     });
-    expect(placementPayload({ ...form, location: "none" }, null)).toMatchObject({ equipped: false, location: null });
+    expect(placementPayload({ ...form, location: "none" }, null)).toMatchObject({ location: null });
   });
 
   test("sends charges for an item that comes with them only", () => {

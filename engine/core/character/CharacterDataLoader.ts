@@ -94,7 +94,7 @@ export default abstract class CharacterDataLoader<D extends LoadedCharacter, P e
    */
   private equippedItems(inventory: InventoryEntry[]): ModifierSource[] {
     const items = new Map<string, InventoryEntry["item"]>();
-    for (const { equipped, item } of inventory) if (equipped && !items.has(item.id)) items.set(item.id, item);
+    for (const { item, location } of inventory) if (location !== null && !items.has(item.id)) items.set(item.id, item);
     return [...items.values()];
   }
 
@@ -111,7 +111,7 @@ export default abstract class CharacterDataLoader<D extends LoadedCharacter, P e
         ...entry,
         item: {
           ...rulesetData.withInheritedFields(item.type, item),
-          modifiers: entry.equipped ? (rulesetData.modifiersBySource.get(item.id) ?? []) : [],
+          modifiers: entry.location !== null ? (rulesetData.modifiersBySource.get(item.id) ?? []) : [],
           proficiency: template,
           requirements: own,
         },

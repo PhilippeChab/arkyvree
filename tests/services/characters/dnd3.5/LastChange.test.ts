@@ -71,7 +71,7 @@ describe("a character's last change", () => {
     const item = await findPlainItem(ctx.rulesetId);
 
     const entry = await expectMoved(characterId, () =>
-      CharacterInventoryService.addItem(session, characterId, item.id, 1, false, null, null, null, []),
+      CharacterInventoryService.addItem(session, characterId, item.id, 1, null, null, null, []),
     );
     await expectMoved(characterId, () => CharacterInventoryService.removeItem(session, characterId, entry.id));
   });

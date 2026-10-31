@@ -743,6 +743,13 @@
       "when": 1793097841714,
       "tag": "0105_advancement-entry-key",
       "breakpoints": true
+    },
+    {
+      "idx": 106,
+      "version": "7",
+      "when": 1793101441714,
+      "tag": "0106_inventory-location",
+      "breakpoints": true
     }
   ]
 }

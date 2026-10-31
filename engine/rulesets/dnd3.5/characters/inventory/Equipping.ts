@@ -224,7 +224,7 @@ export default class Equipping {
   describeConflict(entryId: string | null, location: ItemLocation, weaponSets: number[]): string | null {
     const equipped = this.view.rulesetData
       .entriesWithItems(this.input.rows.inventory)
-      .filter(({ entry }) => entry.equipped && entry.id !== entryId)
+      .filter(({ entry }) => entry.location !== null && entry.id !== entryId)
       .map(({ entry, item }) => ({ ...entry, name: item.name }));
     const sets = ItemPlacement.isHand(location) ? ItemPlacement.heldSets({ groups: weaponSets }) : [null];
     for (const weaponSet of sets) {

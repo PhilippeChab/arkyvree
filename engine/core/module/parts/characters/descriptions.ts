@@ -268,6 +268,7 @@ export type DescribedInventoryEntry<T, X = unknown> = T &
 export type DescribedSheet<S extends RulesetSheet> = CharacterColumns & Pick<S, keyof RulesetSheet>;
 
 /**
- * An inventory entry, as where it's held reads it: whether it's equipped, where, and its groups (3.5's weapon sets).
+ * An inventory entry, as where it's held reads it: where (none for an item carried, which isn't equipped), and its
+ * groups (3.5's weapon sets).
  */
-export type HeldInventoryEntry = Pick<InventoryEntryPlan, "equipped" | "groups" | "location">;
+export type HeldInventoryEntry = Pick<InventoryEntryPlan, "groups" | "location">;

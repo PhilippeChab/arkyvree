@@ -306,7 +306,7 @@ export default class SheetBlocks {
         quantity: entry.quantity,
         weight: entry.fields[INVENTORY_ITEM_FIELDS.weight] ?? null,
         cost: entry.fields[INVENTORY_ITEM_FIELDS.cost] ?? null,
-        held: entry.equipped,
+        held: entry.location !== null,
         ...(entry.totalCharges != null && {
           charges: { remaining: entry.remainingCharges, total: entry.totalCharges },
         }),

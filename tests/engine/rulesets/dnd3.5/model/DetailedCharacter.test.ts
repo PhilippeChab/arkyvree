@@ -3780,7 +3780,7 @@ describe("DetailedCharacter", () => {
       invalidateSeededRuleset((await getSeedCtx()).rulesetId);
 
       const initiative = async (barrels: number) => {
-        await carry(bjorn, barrels ? [{ item: "Barrel (empty)", quantity: barrels, equipped: false }] : []);
+        await carry(bjorn, barrels ? [{ item: "Barrel (empty)", quantity: barrels }] : []);
         return (await build(bjorn)).components.combat.getCombat().initiative.misc;
       };
       expect([await initiative(4), await initiative(0)]).toEqual([5, 0]);
@@ -3814,7 +3814,7 @@ describe("DetailedCharacter", () => {
       // Weight times quantity: ten 1 lb torches.
       expect(
         (
-          await buildCarrying("Bjorn Ironhand", [{ item: "Torch", quantity: 10, equipped: false }])
+          await buildCarrying("Bjorn Ironhand", [{ item: "Torch", quantity: 10 }])
         ).components.encumbrance.getEncumbrance().carriedweight,
       ).toBe(10);
     });
@@ -3833,22 +3833,14 @@ describe("DetailedCharacter", () => {
         "medium",
         [
           { item: "Full Plate", location: "Torso" },
-          { item: "Barrel (empty)", equipped: false },
-          { item: "Chest (empty)", equipped: false },
-          { item: "Rope, hempen (50 ft.)", equipped: false },
+          { item: "Barrel (empty)" },
+          { item: "Chest (empty)" },
+          { item: "Rope, hempen (50 ft.)" },
         ],
         { carriedweight: 115, maxdex: 3, checkpenalty: -3 },
       ],
-      [
-        "heavy",
-        [{ item: "Barrel (empty)", quantity: 7, equipped: false }],
-        { carriedweight: 210, maxdex: 1, checkpenalty: -6 },
-      ],
-      [
-        "overloaded",
-        [{ item: "Barrel (empty)", quantity: 11, equipped: false }],
-        { carriedweight: 330, maxdex: 0, checkpenalty: -6 },
-      ],
+      ["heavy", [{ item: "Barrel (empty)", quantity: 7 }], { carriedweight: 210, maxdex: 1, checkpenalty: -6 }],
+      ["overloaded", [{ item: "Barrel (empty)", quantity: 11 }], { carriedweight: 330, maxdex: 0, checkpenalty: -6 }],
     ] as [string, Carried[], object][])(
       "of a %s load caps dexterity and costs checks",
       async (load, carried, expected) => {
@@ -3860,7 +3852,7 @@ describe("DetailedCharacter", () => {
     );
 
     test("slows the character", async () => {
-      const barrels = (quantity: number): Carried[] => [{ item: "Barrel (empty)", quantity, equipped: false }];
+      const barrels = (quantity: number): Carried[] => [{ item: "Barrel (empty)", quantity }];
       expect((await buildCarrying("Bjorn Ironhand", barrels(4))).components.combat.getCombat()).toMatchObject({
         encumbrance: { load: "medium" },
         speed: { base: 30, total: 20 },
@@ -3876,7 +3868,7 @@ describe("DetailedCharacter", () => {
 
     test("caps dexterity in armor class and costs weight-affected skills, swim double, unless the armor costs more", async () => {
       // A heavy load's max dex 1, over DEX 14's +2.
-      const loaded = await buildCarrying("Bjorn Ironhand", [{ item: "Barrel (empty)", quantity: 7, equipped: false }]);
+      const loaded = await buildCarrying("Bjorn Ironhand", [{ item: "Barrel (empty)", quantity: 7 }]);
       expect(loaded.components.combat.getCombat().encumbrance.maxdex).toBe(1);
       expect(weaponSet(loaded).ac).toMatchObject({ dexterity: 1, total: 11 });
 
@@ -3885,12 +3877,12 @@ describe("DetailedCharacter", () => {
         return [swim?.weight, climb?.weight];
       };
       // A medium load's -3, twice that on Swim.
-      expect(await skills([{ item: "Barrel (empty)", quantity: 4, equipped: false }])).toEqual([6, 3]);
+      expect(await skills([{ item: "Barrel (empty)", quantity: 4 }])).toEqual([6, 3]);
       // Chain mail's -5 wins over the medium load's -3.
       expect(
         await skills([
           { item: "Chain Mail", location: "Torso" },
-          { item: "Barrel (empty)", quantity: 3, equipped: false },
+          { item: "Barrel (empty)", quantity: 3 },
         ]),
       ).toEqual([10, 5]);
     });

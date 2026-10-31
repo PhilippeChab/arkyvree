@@ -26,18 +26,12 @@ const LOCATION = z.enum(LOCATION_OPTIONS);
  */
 export default class InventoryEntries {
   /**
-   * Where an entry is held, as it stores it: only an equipped item has a location, only a held one sets, each once, in
-   * order.
+   * Where an entry is held, as it stores it: its location, none for an item carried, and its weapon sets, which only a
+   * held one sets, each once, in order.
    */
-  private static placementOf({ equipped, groups, location }: InventoryEntryRequest): HeldInventoryEntry {
-    const resolvedLocation = equipped ? (location ?? null) : null;
-    const resolvedEquipped = !!resolvedLocation;
-    const held = resolvedEquipped && ItemPlacement.isHand(resolvedLocation);
-    return {
-      equipped: resolvedEquipped,
-      location: resolvedLocation,
-      groups: held ? [...new Set(groups)].sort((a, b) => a - b) : [],
-    };
+  private static placementOf({ groups, location }: InventoryEntryRequest): HeldInventoryEntry {
+    const held = location !== null && ItemPlacement.isHand(location);
+    return { location, groups: held ? [...new Set(groups)].sort((a, b) => a - b) : [] };
   }
 
   /**
@@ -63,8 +57,8 @@ export default class InventoryEntries {
   }
 
   /**
-   * Where an entry's add or edit holds its item, from the character's rows. Refused as invalid when the location it
-   * names isn't one of 3.5's, equipped or not, and when the item can't be equipped where it's asked to be (`Equipping`:
+   * Where an entry's add or edit holds its item, from the character's rows: its location, none to carry it. Refused as
+   * invalid when the location isn't one of 3.5's, and when the item can't be equipped there (`Equipping`:
    * an item already carried takes another entry, a second dagger held in the other hand; its requirements unless
    * `force`d).
    */
@@ -75,9 +69,9 @@ export default class InventoryEntries {
     force: boolean,
   ): HeldInventoryEntry {
     const { request } = change;
-    const { equipped, groups: weaponSets } = request;
+    const { groups: weaponSets } = request;
     const location = RulesError.parse(LOCATION.nullable(), request.location, ["location"]);
-    if (equipped && location) {
+    if (location) {
       const entry =
         "item" in change
           ? { id: null, item: change.item }

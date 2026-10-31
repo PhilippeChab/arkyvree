@@ -61,7 +61,9 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
       // A weapon's proficiency is its base item's requirements (the loader's `toCustomizedInventory`), apart from its
       // others, read of the entry holding it: a bastard sword's in the hands it's in, each of an item's entries alone
       const unproficient = this.data.inventory
-        .filter((inv) => inv.equipped && !this.areRequirementsMet([inv.item.proficiency], { sourceId: inv.id }))
+        .filter(
+          (inv) => inv.location !== null && !this.areRequirementsMet([inv.item.proficiency], { sourceId: inv.id }),
+        )
         .map((inv) => ({ id: inv.id, itemId: inv.item.id }));
       this.components.combat.applyProficiencyPenalties(unproficient);
     }

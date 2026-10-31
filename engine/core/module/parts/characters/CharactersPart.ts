@@ -301,7 +301,7 @@ export default abstract class CharactersPart<D extends Descriptions> {
   protected abstract planNewFields(view: RulesetView, fields: FieldsRequest): FieldsPlan;
 
   /**
-   * Where an inventory entry's add or edit (`change`) holds its item: whether it's equipped, where, and its groups
+   * Where an inventory entry's add or edit (`change`) holds its item: its location (none to carry it), and its groups
    * (3.5's weapon sets, in a hand). Refused when the item can't be equipped where it's asked to be, its requirements
    * checked unless `force`d.
    */

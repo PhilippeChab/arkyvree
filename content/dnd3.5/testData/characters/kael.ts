@@ -56,8 +56,8 @@ export default {
     { levelIndex: 1, featName: "Dodge", aptitude: "Fighter Bonus Feat" },
   ],
   inventory: [
-    { name: "Battleaxe", quantity: 1, equipped: true, location: "Main Hand", groups: [0] },
-    { name: "Scale Mail", quantity: 1, equipped: true, location: "Torso" },
-    { name: "Heavy Steel Shield", quantity: 1, equipped: true, location: "Off Hand", groups: [0] },
+    { name: "Battleaxe", quantity: 1, location: "Main Hand", groups: [0] },
+    { name: "Scale Mail", quantity: 1, location: "Torso" },
+    { name: "Heavy Steel Shield", quantity: 1, location: "Off Hand", groups: [0] },
   ],
 } satisfies CharacterSeed;

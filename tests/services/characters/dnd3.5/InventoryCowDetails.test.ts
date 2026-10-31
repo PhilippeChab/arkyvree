@@ -38,7 +38,7 @@ async function setup() {
       CHARACTER_WEIGHT: "80 kg",
     },
   });
-  await CharacterInventoryService.addItem(session, character.id, item.id, 2, true, "Main Hand", null, null, [0]);
+  await CharacterInventoryService.addItem(session, character.id, item.id, 2, "Main Hand", null, null, [0]);
   return { session, ruleset, item, character };
 }
 
@@ -69,7 +69,7 @@ describe("COW inventory item details", () => {
         description: updated.description,
         fields: { [ITEM_WEIGHT]: 12, [ITEM_COST_GP]: 30, [ITEM_TYPE]: "Weapon" },
       });
-      expect(entry).toMatchObject({ quantity: 2, equipped: true, location: "Main Hand", groups: [0] });
+      expect(entry).toMatchObject({ quantity: 2, location: "Main Hand", groups: [0] });
       // Its fields, its template's of each it holds none of: the inventory's by field, as an item's page reads them, the
       // sheet's as the view holds them
       const held = entry.item.fields as OwnerFields;

@@ -88,7 +88,7 @@ export default abstract class CharacterBase<
     return this.data.inventory
       .filter(
         (entry) =>
-          entry.equipped &&
+          entry.location !== null &&
           entry.item.id === modifier.sourceId &&
           this.areRequirementsMet(gates, { sourceId: entry.id }),
       )

@@ -12,9 +12,8 @@ import { ITEM_IS_TEMPLATE, ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts
 /** An item, as the view registers it. */
 type Item = ViewKinds["items"];
 
-/** An inventory entry a test gives a character: a seeded item by its name, or an item's id, equipped by default. */
+/** An inventory entry a test gives a character: a seeded item by its name, or an item's id, carried unless it has a location. */
 export interface Carried {
-  equipped?: boolean;
   groups?: number[];
   item: string;
   location?: string;
@@ -27,10 +26,9 @@ export async function carry(character: Pick<Character, "id">, carried: Carried[]
   await db.delete(inventoryInCharacter).where(eq(inventoryInCharacter.characterId, character.id));
   await CharacterInventory.createMany(
     db,
-    carried.map(({ item, equipped = true, quantity = 1, ...rest }) => ({
+    carried.map(({ item, quantity = 1, ...rest }) => ({
       characterId: character.id,
       itemId: itemMap[item] ?? item,
-      equipped,
       quantity,
       ...rest,
     })),

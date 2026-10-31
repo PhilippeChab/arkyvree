@@ -180,7 +180,6 @@ export default class CharacterResponse {
       description: entry.item.description,
       fields: entry.item.fields,
       quantity: entry.quantity,
-      equipped: entry.equipped,
       location: entry.location,
       groups: entry.groups,
       slotLabel: ItemPlacement.describeSlot(entry),

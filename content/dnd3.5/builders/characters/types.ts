@@ -43,9 +43,8 @@ export interface CharacterSeed {
   spells?: (Picks<"spellName"> & { aptitude: string })[];
 }
 
-/** An item in a seeded character's inventory, by name: how many, and where it's equipped. */
+/** An item in a seeded character's inventory, by name: how many, and where it's equipped (none to carry it). */
 export interface InventorySeed {
-  equipped?: boolean;
   /** The groups it's held in (3.5's weapon sets a hand holds it in), from 0 */
   groups?: number[];
   location?: ItemLocation;

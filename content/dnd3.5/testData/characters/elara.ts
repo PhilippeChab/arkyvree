@@ -78,5 +78,5 @@ export default {
     { levelIndex: 2, spellName: "Scorching Ray", aptitude: "Wizard Spells" },
     { levelIndex: 2, spellName: "Web", aptitude: "Wizard Spells" },
   ],
-  inventory: [{ name: "Quarterstaff", quantity: 1, equipped: true, location: "Two Handed", groups: [0] }],
+  inventory: [{ name: "Quarterstaff", quantity: 1, location: "Two Handed", groups: [0] }],
 } satisfies CharacterSeed;

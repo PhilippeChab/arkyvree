@@ -96,22 +96,14 @@ describe("An item's placement", () => {
 
 describe("Where an entry is worn", () => {
   test("names each weapon set a hand holds it in, from 1", () => {
-    expect(ItemPlacement.describeSlot({ equipped: true, location: "Off Hand", groups: [0, 1] })).toBe(
-      "Off Hand (Sets 1, 2)",
-    );
-    expect(ItemPlacement.describeSlot({ equipped: true, location: "Main Hand", groups: [0, 2, 3] })).toBe(
-      "Main Hand (Sets 1, 3, 4)",
-    );
+    expect(ItemPlacement.describeSlot({ location: "Off Hand", groups: [0, 1] })).toBe("Off Hand (Sets 1, 2)");
+    expect(ItemPlacement.describeSlot({ location: "Main Hand", groups: [0, 2, 3] })).toBe("Main Hand (Sets 1, 3, 4)");
   });
 
   test("is its location, its weapon set from 1 in a hand, or none while it's carried", () => {
-    expect(ItemPlacement.describeSlot({ equipped: true, location: "Main Hand", groups: [0] })).toBe(
-      "Main Hand (Set 1)",
-    );
-    expect(ItemPlacement.describeSlot({ equipped: true, location: "Two Handed", groups: [2] })).toBe(
-      "Two Handed (Set 3)",
-    );
-    expect(ItemPlacement.describeSlot({ equipped: true, location: "Neck", groups: [] })).toBe("Neck");
-    expect(ItemPlacement.describeSlot({ equipped: false, location: null, groups: [] })).toBeNull();
+    expect(ItemPlacement.describeSlot({ location: "Main Hand", groups: [0] })).toBe("Main Hand (Set 1)");
+    expect(ItemPlacement.describeSlot({ location: "Two Handed", groups: [2] })).toBe("Two Handed (Set 3)");
+    expect(ItemPlacement.describeSlot({ location: "Neck", groups: [] })).toBe("Neck");
+    expect(ItemPlacement.describeSlot({ location: null, groups: [] })).toBeNull();
   });
 });
