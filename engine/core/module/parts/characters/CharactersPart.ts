@@ -125,7 +125,6 @@ export default abstract class CharactersPart<D extends Descriptions> {
       rulesetId: record.rulesetId,
       rulesetName: ruleset.name,
       baseRules: ruleset.baseRules,
-      isCustomRuleset: !!ruleset.rulesetId,
       deletedAt: record.deletedAt,
       updatedAt: record.updatedAt,
       shareToken: null,

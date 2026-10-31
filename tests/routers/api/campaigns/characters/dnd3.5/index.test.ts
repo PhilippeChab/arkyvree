@@ -233,7 +233,6 @@ describe("campaigns characters", () => {
       "canEdit",
       "deletedAt",
       "id",
-      "isCustomRuleset",
       "isOwner",
       "isPartial",
       "kind",

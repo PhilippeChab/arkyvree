@@ -39,12 +39,12 @@ export default class LevelRules {
    */
   static findHeldClassLevels(
     classLevelsById: ClassLevelsById,
-    levels: { entryId: string | null }[],
+    levels: { entryId: string }[],
     classId: string,
   ): Set<number> {
     return new Set(
       levels.flatMap(({ entryId }) => {
-        const classLevel = entryId === null ? undefined : classLevelsById.get(entryId);
+        const classLevel = classLevelsById.get(entryId);
         return classLevel?.ownerId === classId ? [classLevel.position] : [];
       }),
     );
@@ -58,11 +58,7 @@ export default class LevelRules {
    * (Fighter 1, Fighter 2, then Fighter 4). What the class picker offers, and the only class level a level-up's save or
    * an import takes; past a class's last level, a number the class has no level at.
    */
-  static findNextClassLevel(
-    classLevelsById: ClassLevelsById,
-    levels: { entryId: string | null }[],
-    classId: string,
-  ): number {
+  static findNextClassLevel(classLevelsById: ClassLevelsById, levels: { entryId: string }[], classId: string): number {
     const held = this.findHeldClassLevels(classLevelsById, levels, classId);
     let next = 1;
     while (held.has(next)) next++;
@@ -72,7 +68,7 @@ export default class LevelRules {
   /** Whether class level `classLevel` is its class's next for a character with `levels` (`findNextClassLevel`). */
   static isNextClassLevel(
     classLevelsById: ClassLevelsById,
-    levels: { entryId: string | null }[],
+    levels: { entryId: string }[],
     classLevel: { ownerId: string; position: number },
   ): boolean {
     return this.findNextClassLevel(classLevelsById, levels, classLevel.ownerId) === classLevel.position;

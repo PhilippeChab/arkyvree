@@ -36,14 +36,13 @@ export interface CharacterCard extends RulesetCard {
 
 /**
  * What a sheet, as the API answers it, opens with in every ruleset's: its character's row's own columns and its
- * ruleset's (its name, its base rules, and whether it's a user's own rather than a system one). Its share token is
- * none (`shareToken`): whether a reader reads it is the server's access decision, which writes it for who may.
+ * ruleset's (its name and its base rules). Its share token is none (`shareToken`): whether a reader reads it is the
+ * server's access decision, which writes it for who may.
  */
 export interface CharacterColumns {
   baseRules: Ruleset["baseRules"];
   deletedAt: Character["deletedAt"];
   id: string;
-  isCustomRuleset: boolean;
   kind: Character["kind"];
   name: string;
   parentCharacterId: Character["parentCharacterId"];

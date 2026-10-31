@@ -301,8 +301,8 @@ export const advancementsInCharacter = character.table(
     id: uuid().defaultRandom().primaryKey().notNull(),
     characterId: uuid("character_id").notNull(),
     position: integer().notNull(),
-    entryId: uuid("entry_id"),
-    entryType: text("entry_type"),
+    entryId: uuid("entry_id").notNull(),
+    entryType: text("entry_type").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
   },
@@ -317,9 +317,7 @@ export const advancementsInCharacter = character.table(
       table.characterId.asc().nullsLast(),
       table.entryId.asc().nullsLast(),
     ),
-    index("advancements_entry_idx")
-      .using("btree", table.entryId.asc().nullsLast())
-      .where(sql`(entry_id IS NOT NULL)`),
+    index("advancements_entry_idx").using("btree", table.entryId.asc().nullsLast()),
     foreignKey({
       columns: [table.characterId],
       foreignColumns: [charactersInCharacter.id],

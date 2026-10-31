@@ -15,11 +15,11 @@ export default class ClassLevels {
    */
   static countByClass(
     classLevelsById: ReadonlyMap<string, { ownerId: string }>,
-    levels: { entryId: string | null }[],
+    levels: { entryId: string }[],
   ): Map<string, number> {
     const levelByClass = new Map<string, number>();
     for (const { entryId } of levels) {
-      const classId = entryId === null ? undefined : classLevelsById.get(entryId)?.ownerId;
+      const classId = classLevelsById.get(entryId)?.ownerId;
       if (classId) levelByClass.set(classId, (levelByClass.get(classId) ?? 0) + 1);
     }
     return levelByClass;
