@@ -1,3 +1,16 @@
+import { toV1Activity } from "./activities.ts";
+import { toV1Attachment } from "./attachments.ts";
+import {
+  toV1Campaign,
+  toV1CampaignCharacter,
+  toV1CampaignCharacterLink,
+  toV1CampaignCharacterSummary,
+  toV1CampaignInvite,
+  toV1CampaignPlayer,
+  toV1CampaignSummary,
+  toV1LinkableCharacter,
+  toV1PlayerSlot,
+} from "./campaigns.ts";
 import {
   toV1Character,
   toV1Characters,
@@ -8,6 +21,7 @@ import {
   toV1LinkRoom,
   toV1Modifiers,
 } from "./characters.ts";
+import { toV1Contributor, toV1Contributors } from "./contributors.ts";
 import {
   toV1Entity,
   toV1EntityGroup,
@@ -21,7 +35,15 @@ import {
   toV1Progression,
   toV1StoredEntity,
 } from "./entities.ts";
+import { toV1Export } from "./exports.ts";
+import {
+  toV1InviteStatus,
+  toV1ReceivedCampaignInvite,
+  toV1ReceivedCharacterInvite,
+  toV1ReceivedRulesetInvite,
+} from "./invites.ts";
 import { toV1LevelPlan, toV1LevelPlanAnswer, toV1LevelSteps, toV1StepOptions } from "./levels.ts";
+import { toV1Notification } from "./notifications.ts";
 import { toV1Page } from "./pages.ts";
 import { toV1Rules } from "./rules.ts";
 import {
@@ -31,6 +53,8 @@ import {
   toV1RulesetSettings,
   toV1RulesetSummary,
 } from "./rulesets.ts";
+import { toV1ShareLink } from "./sharing.ts";
+import { toV1Found, toV1Written } from "./written.ts";
 
 /**
  * Version 1's translators: from what a service answers to v1's shape. Each is typed by the service it reads and by
@@ -39,6 +63,28 @@ import {
  * and v1 keeps working untouched.
  */
 export const V1 = {
+  activity: toV1Activity,
+  attachment: toV1Attachment,
+  campaign: toV1Campaign,
+  campaignCharacter: toV1CampaignCharacter,
+  campaignCharacterLink: toV1CampaignCharacterLink,
+  campaignCharacterSummary: toV1CampaignCharacterSummary,
+  campaignInvite: toV1CampaignInvite,
+  campaignPlayer: toV1CampaignPlayer,
+  campaignSummary: toV1CampaignSummary,
+  contributor: toV1Contributor,
+  contributors: toV1Contributors,
+  export: toV1Export,
+  found: toV1Found,
+  inviteStatus: toV1InviteStatus,
+  linkableCharacter: toV1LinkableCharacter,
+  notification: toV1Notification,
+  playerSlot: toV1PlayerSlot,
+  receivedCampaignInvite: toV1ReceivedCampaignInvite,
+  receivedCharacterInvite: toV1ReceivedCharacterInvite,
+  receivedRulesetInvite: toV1ReceivedRulesetInvite,
+  shareLink: toV1ShareLink,
+  written: toV1Written,
   character: toV1Character,
   characters: toV1Characters,
   creation: toV1Creation,

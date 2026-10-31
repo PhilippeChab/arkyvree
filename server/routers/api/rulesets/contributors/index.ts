@@ -84,12 +84,15 @@ export default new Hono<SessionContext>()
       }),
     ),
     async (c) => {
-      const { contributorId } = c.req.valid("param");
+      const { contributorId, id } = c.req.valid("param");
       const { role } = c.req.valid("json");
-      return c.json(await ContributorsService.updateContributorRole(c.var.requestSession, contributorId, role), 200);
+      return c.json(
+        await ContributorsService.updateContributorRole(c.var.requestSession, id, contributorId, role),
+        200,
+      );
     },
   )
   .delete("/:id/contributors/:contributorId", denyDemoUser, validate("param", contributorParams), async (c) => {
-    const { contributorId } = c.req.valid("param");
-    return c.json(await ContributorsService.revokeContributor(c.var.requestSession, contributorId), 200);
+    const { contributorId, id } = c.req.valid("param");
+    return c.json(await ContributorsService.revokeContributor(c.var.requestSession, id, contributorId), 200);
   });

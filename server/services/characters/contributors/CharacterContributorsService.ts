@@ -179,9 +179,11 @@ class CharacterContributorsService {
     });
   }
 
-  async revokeContributor(session: Session, contributorId: string) {
+  /** Revokes a contributor of the character (`characterId`), or its pending invite: another character's is a 404. */
+  async revokeContributor(session: Session, characterId: string, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const contributor = await CharacterContributors.findOne(tx, { id: contributorId });
+      const found = await CharacterContributors.findOne(tx, { id: contributorId });
+      const contributor = found?.characterId === characterId ? found : undefined;
       const readable = contributor && (await findReadableCharacter(tx, session, contributor.characterId));
       // A contributor of a character the session may not read is refused as an unknown one is: the character's
       // existence isn't revealed

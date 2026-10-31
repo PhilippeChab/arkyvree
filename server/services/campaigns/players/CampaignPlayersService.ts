@@ -26,6 +26,26 @@ interface InviteEmailData {
   inviterName: string;
 }
 
+/** A player slot as its campaign's list reads it. */
+type PlayerRow = Awaited<ReturnType<typeof Players.findPage>>["items"][number];
+
+/**
+ * A player slot as a player (`readerId`) reads it: its user's and its invites' addresses left out, which its Game
+ * Master reads, but on their own slot. The row is named whole so its addresses read nullable to the app.
+ */
+function hidePlayerAddresses<P extends PlayerRow>(player: P, readerId: string) {
+  if (player.usersInAccount?.id === readerId) return player;
+  return {
+    ...player,
+    invitesInCampaigns: player.invitesInCampaigns.map((invite) => ({
+      ...invite,
+      email: null,
+      usersInAccount: invite.usersInAccount && { ...invite.usersInAccount, emailAddress: null },
+    })),
+    usersInAccount: player.usersInAccount && { ...player.usersInAccount, emailAddress: null },
+  };
+}
+
 class CampaignPlayersService {
   /**
    * Whether `player` is its campaign's last live Game Master (`masters`, the campaign's count of them), whom the server
@@ -166,16 +186,20 @@ class CampaignPlayersService {
     where: { orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
     pagination: Pagination,
   ) {
-    await getReadableCampaign(db, session, campaignId);
+    const { policy } = await getReadableCampaign(db, session, campaignId);
 
-    const page = await Players.findPage(db, { campaignId, ...where }, pagination, Visibility.All);
+    // An address is its Game Master's to read, and so to search
+    const readsAddresses = policy.isGameMaster();
+    const query = { campaignId, ...where, searchAddresses: readsAddresses };
+    const page = await Players.findPage(db, query, pagination, Visibility.All);
     const masters = await Players.count(db, { campaignId, role: "Game Master" });
+    const items = page.items.map((player) => ({
+      ...player,
+      isLastGameMaster: CampaignPlayersService.isLastGameMaster(player, masters),
+    }));
     return {
       ...page,
-      items: page.items.map((player) => ({
-        ...player,
-        isLastGameMaster: CampaignPlayersService.isLastGameMaster(player, masters),
-      })),
+      items: readsAddresses ? items : items.map((player) => hidePlayerAddresses(player, session.userId)),
     };
   }
 

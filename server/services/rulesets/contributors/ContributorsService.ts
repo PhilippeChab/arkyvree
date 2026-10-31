@@ -35,10 +35,12 @@ class ContributorsService {
    * contributor to a ruleset the session may not read is refused as an unknown one is: a private ruleset's existence
    * isn't revealed.
    */
-  private async getReadableContributor(tx: Db, session: Session, contributorId: string) {
+  private async getReadableContributor(tx: Db, session: Session, rulesetId: string, contributorId: string) {
     const contributor = await Contributors.findOne(tx, { id: contributorId });
-    const readable = contributor && (await findReadableRuleset(tx, session, contributor.rulesetId));
-    if (!contributor || !readable) throw new NotFoundError("Contributor not found");
+    // Another ruleset's contributor is unknown under this one's path
+    if (contributor?.rulesetId !== rulesetId) throw new NotFoundError("Contributor not found");
+    const readable = await findReadableRuleset(tx, session, contributor.rulesetId);
+    if (!readable) throw new NotFoundError("Contributor not found");
 
     return { contributor, ...readable };
   }
@@ -186,9 +188,9 @@ class ContributorsService {
     });
   }
 
-  async revokeContributor(session: Session, contributorId: string) {
+  async revokeContributor(session: Session, rulesetId: string, contributorId: string) {
     return await withTransaction(async (tx) => {
-      const { contributor, ruleset, policy } = await this.getReadableContributor(tx, session, contributorId);
+      const { contributor, ruleset, policy } = await this.getReadableContributor(tx, session, rulesetId, contributorId);
       policy.canRevokeContributor({ role: contributor.role });
 
       if (contributor.status !== "Active" && contributor.status !== "Pending")
@@ -211,9 +213,9 @@ class ContributorsService {
     });
   }
 
-  async updateContributorRole(session: Session, contributorId: string, role: ContributorRole) {
+  async updateContributorRole(session: Session, rulesetId: string, contributorId: string, role: ContributorRole) {
     return await withTransaction(async (tx) => {
-      const { contributor, policy } = await this.getReadableContributor(tx, session, contributorId);
+      const { contributor, policy } = await this.getReadableContributor(tx, session, rulesetId, contributorId);
       policy.canUpdateContributorRole({ from: contributor.role, to: role });
 
       if (contributor.status !== "Active") throw new ConflictError("Can only update role of active contributors");

@@ -9,6 +9,18 @@ import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
 
+/** An invite as its campaign's list reads it. */
+type InviteRow = Awaited<ReturnType<typeof Invites.findPage>>["items"][number];
+
+/** An invite as a player reads it: whom it went to by name, its addresses left out, which its Game Master reads. */
+function hideInviteAddresses(invite: InviteRow) {
+  return {
+    ...invite,
+    invites: { ...invite.invites, email: null },
+    users: invite.users && { ...invite.users, emailAddress: null },
+  };
+}
+
 class CampaignInvitesService {
   /** The invitee's answer, which the Game Masters are told of. */
   private async answerInvite(tx: Db, session: Session, invite: Invite, status: "Accepted" | "Rejected") {
@@ -61,9 +73,12 @@ class CampaignInvitesService {
     where: { orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
     pagination: Pagination,
   ) {
-    await getReadableCampaign(db, session, campaignId);
+    const { policy } = await getReadableCampaign(db, session, campaignId);
 
-    return await Invites.findPage(db, { campaignId, ...where }, pagination);
+    // An address is its Game Master's to read, and so to search
+    const readsAddresses = policy.isGameMaster();
+    const page = await Invites.findPage(db, { campaignId, ...where, searchAddresses: readsAddresses }, pagination);
+    return readsAddresses ? page : { ...page, items: page.items.map(hideInviteAddresses) };
   }
 
   async rejectInvite(session: Session, inviteId: string) {

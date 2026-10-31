@@ -1,8 +1,10 @@
 import { addJob, db, withTransaction } from "@/server/database/index.ts";
 import { pingWorker } from "@/server/queue.ts";
-import { Activities, Characters, PlayerCharacters } from "@/server/repositories/index.ts";
+import { Activities, Characters, Exports, PlayerCharacters } from "@/server/repositories/index.ts";
 import { findReadableCampaign } from "@/server/services/campaigns/index.ts";
+import { PENDING_EXPORT_TTL_MS, toExportJobKey } from "@/server/services/exports/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
+import { formatSheetFileName } from "@/shared/exports.ts";
 import type { Character, Session } from "@/shared/relations.ts";
 
 import { findEditableCharacterOrChild } from "./editableCharacter.ts";
@@ -18,20 +20,37 @@ export function getCharacterPdfTargetType(campaignId?: string) {
 
 /**
  * Queues a PDF of the character for the session user, who is notified when it
- * is ready. Callers check access with `findExportableCharacter`, passing the
- * same `campaignId` so the worker repeats that check.
+ * is ready, and answers its export, pending: its id says whether it's ready
+ * (`ExportsService.getExportStatus`), which the worker fills in. Callers check
+ * access with `findExportableCharacter`, passing the same `campaignId` so the
+ * worker repeats that check.
  */
 export async function enqueueCharacterPdf(
   session: Session,
   characterRecord: Pick<Character, "id" | "name">,
   campaignId?: string,
 ) {
-  await withTransaction(async (tx) => {
+  const pending = await withTransaction(async (tx) => {
+    const [exportRecord] = await Exports.create(tx, {
+      userId: session.userId,
+      type: "pdf",
+      mimeType: "application/pdf",
+      fileName: formatSheetFileName(characterRecord.name),
+      status: "pending",
+      expiresAt: new Date(Date.now() + PENDING_EXPORT_TTL_MS).toISOString(),
+    });
+
     await addJob(
       tx,
       "generatePdf",
-      { userId: session.userId, characterId: characterRecord.id, characterName: characterRecord.name, campaignId },
-      { maxAttempts: 2, queueName: `pdf-${session.userId}` },
+      {
+        userId: session.userId,
+        characterId: characterRecord.id,
+        characterName: characterRecord.name,
+        campaignId,
+        exportId: exportRecord.id,
+      },
+      { jobKey: toExportJobKey(exportRecord.id), maxAttempts: 2, queueName: `pdf-${session.userId}` },
     );
 
     await Activities.create(tx, {
@@ -40,9 +59,12 @@ export async function enqueueCharacterPdf(
       targetType: getCharacterPdfTargetType(campaignId),
       type: "generatePdf",
     });
+
+    return exportRecord;
   });
 
   pingWorker();
+  return pending;
 }
 
 /**

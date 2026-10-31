@@ -16,7 +16,7 @@ describe("campaigns players", () => {
     const [gameMaster] = await list();
     expect(gameMaster.role).toBe("Game Master");
     const email = gameMaster.usersInAccount!.emailAddress;
-    expect((await list(email.slice(0, 6))).map((p) => p.id)).toContain(gameMaster.id);
+    expect((await list(email!.slice(0, 6))).map((p) => p.id)).toContain(gameMaster.id);
     expect(await list("no-player-matches-this")).toEqual([]);
   });
 

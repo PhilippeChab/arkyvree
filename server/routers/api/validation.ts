@@ -98,3 +98,9 @@ export const sanitizedText = z.string().overwrite(sanitizeText);
 
 /** A character's amount of a scored link's entity (3.5's ability score). */
 export const score = z.number().int();
+
+/** A shared sheet's `:shareToken`: the token its owner's share link carries. */
+export const shareTokenParam = z.object({ shareToken: z.string().uuid() });
+
+/** A direct upload's `:signedId`: the blob's signed id its upload answered. */
+export const signedIdParam = z.object({ signedId: z.string().min(1) });

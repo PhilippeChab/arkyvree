@@ -44,6 +44,13 @@ const ERROR_RESPONSES = {
   default: { $ref: "#/components/responses/Error" },
 };
 
+/**
+ * A router's routes, each its handlers' description and validations, by path and method.
+ *
+ * A file a route answers instead of JSON (a PDF), its bytes as they are.
+ */
+const FILE_SCHEMA = { format: "binary", type: "string" };
+
 /** Where a validation's input is in the request, as the document names it. */
 const PARAMETER_PLACES = { param: "path", query: "query" } as const;
 
@@ -57,7 +64,6 @@ const SECURITY_SCHEMES = {
   },
 };
 
-/** A router's routes, each its handlers' description and validations, by path and method. */
 function collectRoutes(router: Router) {
   const routes = new Map<string, Map<string, RouteParts>>();
   for (const { handler, method, path } of router.routes) {
@@ -117,7 +123,7 @@ function toOperation(
 ) {
   if (!description) throw new Error(`The public API's route ${path} has no description (\`describeRoute\`)`);
   const body = validations.find(({ target }) => target === "json" || target === "form");
-  const { response, status, summary } = description;
+  const { file, response, status, summary } = description;
   const operation: Operation = {
     description: summary,
     operationId: toOperationId(method, path),
@@ -126,6 +132,7 @@ function toOperation(
       [status]: {
         description: summary,
         ...(response && { content: { "application/json": { schema: toJsonSchema(response, "output", components) } } }),
+        ...(file && { content: { [file]: { schema: FILE_SCHEMA } } }),
       },
       ...ERROR_RESPONSES,
     },
