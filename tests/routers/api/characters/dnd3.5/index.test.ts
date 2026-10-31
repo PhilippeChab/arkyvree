@@ -15,6 +15,15 @@ import { readPcgenFile } from "@/tests/support/dnd3.5/pcgenFiles.ts";
 import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd3.5/abilities.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_DEITY,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const characters = api.api.characters;
 const character = characters[":id"];
@@ -73,7 +82,9 @@ describe("characters", () => {
   });
 
   test("clears a character's age, height and weight with null, and refuses an age below 1", async () => {
-    const { id } = await postCharacter({ age: 30, height: "180", weight: "80" });
+    const { id } = await postCharacter({
+      fields: { [CHARACTER_AGE]: 30, [CHARACTER_HEIGHT]: "180", [CHARACTER_WEIGHT]: "80" },
+    });
     const cleared = await expectOk(
       character.$put({
         param: { id },
@@ -88,7 +99,7 @@ describe("characters", () => {
 
   test("refuses a flag or a set sent for a single text or number field, as its codec reads it, by field", async () => {
     const ctx = await getSeedCtx();
-    const { id } = await postCharacter({ deity: "Pelor", xp: 300 });
+    const { id } = await postCharacter({ fields: { [CHARACTER_DEITY]: "Pelor", [CHARACTER_XP]: 300 } });
     const refusals: [string, boolean | number[] | string[]][] = [
       ["CHARACTER_XP", true],
       ["CHARACTER_XP", [1]],
@@ -646,7 +657,7 @@ describe("characters", () => {
     });
 
     test("leaves a field the edit doesn't send as it is", async () => {
-      const { id } = await postCharacter({ age: 30, deity: "Pelor" });
+      const { id } = await postCharacter({ fields: { [CHARACTER_AGE]: 30, [CHARACTER_DEITY]: "Pelor" } });
       const saved = await expectOk(character.$put({ param: { id }, json: { fields: { CHARACTER_DEITY: "Moradin" } } }));
       expect(saved.fields).toMatchObject({
         CHARACTER_DEITY: "Moradin",
@@ -657,7 +668,7 @@ describe("characters", () => {
     });
 
     test("clears a text an edit sends empty: no row, read as one never set, its sheet's the same", async () => {
-      const { id } = await postCharacter({ deity: "Pelor" });
+      const { id } = await postCharacter({ fields: { [CHARACTER_DEITY]: "Pelor" } });
       const { id: unset } = await postCharacter({});
       const saved = await expectOk(character.$put({ param: { id }, json: { fields: { CHARACTER_DEITY: "" } } }));
       expect(saved.fields).not.toHaveProperty("CHARACTER_DEITY");
@@ -853,13 +864,15 @@ describe("characters", () => {
 
   test("writes a new character's fields, an empty one left at its column's default", async () => {
     const { id } = await postCharacter({
-      xp: 1500,
-      alignment: "Lawful Good",
-      gender: "Female",
-      age: null,
-      height: "",
-      weight: "60",
-      deity: "",
+      fields: {
+        [CHARACTER_XP]: 1500,
+        [CHARACTER_ALIGNMENT]: "Lawful Good",
+        [CHARACTER_GENDER]: "Female",
+        [CHARACTER_AGE]: null,
+        [CHARACTER_HEIGHT]: "",
+        [CHARACTER_WEIGHT]: "60",
+        [CHARACTER_DEITY]: "",
+      },
       description: "Tall",
     });
     expect(await Characters.findOne(db, { id })).toMatchObject({

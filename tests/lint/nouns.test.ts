@@ -118,12 +118,11 @@ describe("a ruleset's nouns", () => {
           "server/fresh/table.ts": 'import { getTableName } from "drizzle-orm";\nexport const name = getTableName;\n',
           "shared/fresh/table.ts": 'import * as orm from "drizzle-orm";\nexport const name = orm.getTableName;\n',
           "server/fresh/computed.ts": 'import * as orm from "drizzle-orm";\nexport const name = orm["getTableName"];\n',
-          // The migrations' tests, a name's own homes (3.5's codegen's scraped cost, the test that sends the old column
-          // to see it refused), a string, a type's literal, a template's key, an export's string name, a comment, a name
-          // that holds one (a level's feats), the live names, and a script's table name
+          // The migrations' tests, a name's own home (3.5's codegen's scraped cost), a string, a type's literal, a
+          // template's key, an export's string name, a comment, a name that holds one (a level's feats), the live names,
+          // and a script's table name
           "tests/scripts/db/fresh.test.ts": "export const row = { target_table: 1, costGp: 2 };\n",
           "codegen/dnd3.5/fresh/items.ts": "export interface Scraped {\n  costGp: number;\n}\n",
-          "tests/routers/api/rulesets/entities/dnd3.5/items.test.ts": "export const body = { costGp: 1 };\n",
           "engine/core/fresh/string.ts": 'export const column = "costGp";\n',
           "engine/core/fresh/omitted.ts":
             'import type { Row } from "./x.ts";\nexport type Rest = Omit<Row, "costGp">;\n',

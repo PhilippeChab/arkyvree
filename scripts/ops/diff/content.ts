@@ -4,7 +4,7 @@
  * changes every column of every table below and checks the comparison sees it.
  */
 
-import { collectDiff, diffIsEmpty, type IdentifiedRow, keyed, stripVolatile, type TableDiff } from "./rows.ts";
+import { collectDiff, diffIsEmpty, type IdentifiedRow, keyed, type TableDiff } from "./rows.ts";
 
 /** Runs a query with positional parameters ($1…) and gives its rows, as pg's client does. */
 export type Query = <R extends Record<string, unknown>>(text: string, params?: unknown[]) => Promise<R[]>;
@@ -243,13 +243,15 @@ async function pullRulesetLinks(query: Query, rulesetId: string): Promise<Identi
   );
 }
 
-/** The ruleset's own row, its parent by name (`parent`). */
+/** The ruleset's own row: its columns a seed writes, and its parent by name (`parent`). */
 async function pullRulesetRow(query: Query, rulesetId: string): Promise<IdentifiedRow[]> {
-  const rows = await query(
-    `select r.*, p.name as parent from rules.rulesets r left join rules.rulesets p on p.id = r.ruleset_id where r.id = $1`,
+  const rows = await query<{ id: string; name: string }>(
+    `select r.id, r.name, r.description, r.system, r.private, r.status, r.kind, r.base_rules, p.name as parent
+       from rules.rulesets r left join rules.rulesets p on p.id = r.ruleset_id
+      where r.id = $1`,
     [rulesetId],
   );
-  return rows.map((row) => ({ bk: String(row.name), id: String(row.id), row: stripVolatile(row) }));
+  return rows.map(({ id, ...row }) => ({ bk: row.name, id, row }));
 }
 
 /** An extension's copies of a base entity, each by the keys of both. */

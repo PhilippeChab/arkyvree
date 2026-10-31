@@ -8,6 +8,7 @@ import { postCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { FIGHTER_LEVELS, picks, type Picks, SORCERER_1 } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { savedPicksOf } from "@/tests/support/dnd3.5/levelPlans.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { CHARACTER_ALIGNMENT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** Any route's response, read as a refusal: its status and its body. */
 interface Refusal {
@@ -174,7 +175,7 @@ async function createCharacter(charisma = 8) {
     Charisma: charisma,
   };
   const abilities = Object.fromEntries(Object.entries(scores).map(([name, score]) => [ctx.abilityMap[name], score]));
-  const character = await postCharacter({ abilities, alignment: "Neutral Good" });
+  const character = await postCharacter({ abilities, fields: { [CHARACTER_ALIGNMENT]: "Neutral Good" } });
   return { characterId: character.id, ctx };
 }
 

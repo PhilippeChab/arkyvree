@@ -24,11 +24,6 @@ export interface TableDiff {
   onlyInTgt: string[];
 }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** The bookkeeping columns, which differ between any two seeds. */
-const VOLATILE = new Set(["id", "created_at", "updated_at", "deleted_at", "ruleset_id"]);
-
 /** A Postgres string literal, dollar-quoted with a tag the text doesn't hold. */
 function dollarQuote(s: string): string {
   let tag = "q";
@@ -107,15 +102,4 @@ export function sqlLiteral(v: unknown): string {
   if (typeof v === "number") return String(v);
   if (typeof v === "string") return dollarQuote(v);
   return `${dollarQuote(JSON.stringify(v))}::jsonb`;
-}
-
-/**
- * A row's comparable fields: without its bookkeeping columns, nor any UUID, a reference each seed draws anew.
- */
-export function stripVolatile(row: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(row).filter(
-      ([field, value]) => !VOLATILE.has(field) && !(typeof value === "string" && UUID.test(value)),
-    ),
-  );
 }

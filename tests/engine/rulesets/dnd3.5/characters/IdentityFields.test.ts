@@ -37,7 +37,9 @@ const IDENTITY = {
 
 /** What an edit of a new Lawful Good woman's identity (`fields`, as its sheet sends them) writes, as planned. */
 async function planOf(fields: FieldsRequest) {
-  const record: Character = await createCharacterAs(makeSession(), { alignment: "Lawful Good", gender: "Female" });
+  const record: Character = await createCharacterAs(makeSession(), {
+    fields: { [CHARACTER_ALIGNMENT]: "Lawful Good", [CHARACTER_GENDER]: "Female" },
+  });
   return await withRulesetScope(db, record.rulesetId, async (scope) =>
     Engine.for(scope)
       .character(await readCharacterInput(db, record))
