@@ -6,7 +6,7 @@ import { CharacterLinks } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { createTestRuleset, subscribeTestRuleset } from "@/tests/support/rulesets.ts";
 import { LANGUAGE_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 // CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
@@ -34,7 +34,8 @@ describe("EntitiesService: languages", () => {
       name: "Extension Tongue",
       fields: { [LANGUAGE_TYPE]: "Standard" },
     });
-    const host = await createTestRuleset(user.id, { extensionIds: [extension.id] });
+    const host = await createTestRuleset(user.id);
+    await subscribeTestRuleset(host.id, [extension.id]);
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
     await CharacterLinks.createMany(db, character.id, "speaks", [{ entityId: language.id }]);
 

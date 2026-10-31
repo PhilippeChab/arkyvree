@@ -17,7 +17,13 @@ import { insertRows } from "@/tests/support/database.ts";
 import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { writeFieldValues } from "@/tests/support/ownerValues.ts";
-import { copyEntity, createTestRuleset, readCowData, readView } from "@/tests/support/rulesets.ts";
+import {
+  copyEntity,
+  createTestRuleset,
+  readCowData,
+  readView,
+  subscribeTestRuleset,
+} from "@/tests/support/rulesets.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { CLASS_HD, ITEM_COST_GP, ITEM_IS_TEMPLATE, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -581,10 +587,8 @@ describe("RulesetViews", () => {
       const cowB = await copyEntity(db, "feats", baseFeat.id, extB);
 
       // Child fork subscribed to both extensions.
-      const child = await createTestRuleset(SEED_USER_ID, {
-        rulesetId: seed.id,
-        extensionIds: [extA.id, extB.id],
-      });
+      const child = await createTestRuleset(SEED_USER_ID, { rulesetId: seed.id });
+      await subscribeTestRuleset(child.id, [extA.id, extB.id]);
       RulesetViews.invalidateAll();
 
       const cowData = await readCowData(child.id);
@@ -625,10 +629,8 @@ describe("RulesetViews", () => {
       const cowA = await copyEntity(db, "items", baseItem.id, extA);
       const cowB = await copyEntity(db, "items", baseItem.id, extB);
 
-      const child = await createTestRuleset(SEED_USER_ID, {
-        rulesetId: seed.id,
-        extensionIds: [extA.id, extB.id],
-      });
+      const child = await createTestRuleset(SEED_USER_ID, { rulesetId: seed.id });
+      await subscribeTestRuleset(child.id, [extA.id, extB.id]);
       RulesetViews.invalidateAll();
 
       const cowData = await readCowData(child.id);
@@ -662,10 +664,8 @@ describe("RulesetViews", () => {
       ]);
       const bookItem = await copyEntity(db, "items", baseItem.id, first);
       await Entities.update<Item>(db, "items", { name: itemName }, { id: bookItem.id as string });
-      const fork = await createTestRuleset(SEED_USER_ID, {
-        rulesetId: seed.id,
-        extensionIds: [first.id, second.id],
-      });
+      const fork = await createTestRuleset(SEED_USER_ID, { rulesetId: seed.id });
+      await subscribeTestRuleset(fork.id, [first.id, second.id]);
       const [ownFeat] = await Entities.createMany<Feat>(db, "feats", [{ name: featName, rulesetId: fork.id }]);
       const [ownItem] = await Entities.createMany<Item>(db, "items", [
         { name: itemName, rulesetId: fork.id, fields: { [ITEM_WEIGHT]: 1, [ITEM_COST_GP]: 1 } },
@@ -706,10 +706,8 @@ describe("RulesetViews", () => {
         { ownerId: bookClass.id, position: 1 },
         { ownerId: bookClass.id, position: 2 },
       ]);
-      const fork = await createTestRuleset(SEED_USER_ID, {
-        rulesetId: seed.id,
-        extensionIds: [book.id],
-      });
+      const fork = await createTestRuleset(SEED_USER_ID, { rulesetId: seed.id });
+      await subscribeTestRuleset(fork.id, [book.id]);
       const [ownClass] = await Entities.createMany<Klass>(db, "classes", [
         { name, rulesetId: fork.id, fields: { [CLASS_HD]: 10 } },
       ]);
@@ -739,10 +737,8 @@ describe("RulesetViews", () => {
       }))!;
       const coreFirst = (await findClassLevel(coreCleric.id, 1))!;
       await copyEntity(db, "classes", coreCleric.id, book);
-      const fork = await createTestRuleset(SEED_USER_ID, {
-        rulesetId: seed.id,
-        extensionIds: [book.id],
-      });
+      const fork = await createTestRuleset(SEED_USER_ID, { rulesetId: seed.id });
+      await subscribeTestRuleset(fork.id, [book.id]);
       const [ownClass] = await Entities.createMany<Klass>(db, "classes", [
         { name: "Cleric", rulesetId: fork.id, fields: { [CLASS_HD]: 8 } },
       ]);
@@ -762,10 +758,8 @@ describe("RulesetViews", () => {
       const [first, second] = [await createBook(seed.id), await createBook(seed.id)];
       const name = `Shared Spells ${uniqueId()}`;
       const [secondList] = await Entities.createMany<Aptitude>(db, "aptitudes", [{ name, rulesetId: second.id }]);
-      const fork = await createTestRuleset(SEED_USER_ID, {
-        rulesetId: seed.id,
-        extensionIds: [first.id, second.id],
-      });
+      const fork = await createTestRuleset(SEED_USER_ID, { rulesetId: seed.id });
+      await subscribeTestRuleset(fork.id, [first.id, second.id]);
       const copy = await copyEntity(db, "aptitudes", secondList.id, fork);
       const [firstList] = await Entities.createMany<Aptitude>(db, "aptitudes", [{ name, rulesetId: first.id }]);
 

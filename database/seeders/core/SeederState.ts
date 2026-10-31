@@ -117,7 +117,7 @@ export abstract class SeederState {
 
   /**
    * Copies entities' requirements and modifiers (with theirs) onto their copies (`copies`: each entity's copy, by its
-   * id), of a type: a few writes, however many copies.
+   * id): a few writes, however many copies.
    */
   protected async copyCustomizations(copies: Map<string, string>) {
     if (copies.size === 0) return;

@@ -5,7 +5,7 @@ import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { createTestRuleset, subscribeTestRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { RACE_BASE_SPEED, RACE_SIZE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -51,7 +51,8 @@ describe("EntitiesService: races", () => {
     test("is refused when a character of a ruleset using it as an extension is of that race", async () => {
       const { user, session, ruleset: extension } = await createTestUserAndRuleset();
       const race = await EntitiesService.createEntity(session, extension.id, "races", elf);
-      const host = await createTestRuleset(user.id, { extensionIds: [extension.id] });
+      const host = await createTestRuleset(user.id);
+      await subscribeTestRuleset(host.id, [extension.id]);
       await createTestCharacter(user.id, { rulesetId: host.id, links: { race: race.id } });
       expect(EntitiesService.deleteEntity(session, extension.id, "races", race.id)).rejects.toThrow(ConflictError);
     });

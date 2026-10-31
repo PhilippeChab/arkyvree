@@ -92,7 +92,7 @@ describe("A character's fields", () => {
       [CHARACTER_GENDER]: "Other",
     });
 
-    const { id } = await createTestCharacter(SEED_USER_ID, { xp: 300 });
+    const { id } = await createTestCharacter(SEED_USER_ID, { fields: { [CHARACTER_XP]: 300 } });
     await StoredCharacters.write(db, [id], {
       fields: { [CHARACTER_ALIGNMENT]: null, [CHARACTER_GENDER]: "", [CHARACTER_XP]: null },
     });

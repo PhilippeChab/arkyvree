@@ -19,6 +19,7 @@ import {
 import { findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createSeededTestRulesetWithExtensions, sourcesOf } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { CHARACTER_ALIGNMENT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A plan's answer, as the API answers it. */
 type PlanAnswer = InferResponseType<(typeof levels)["plan"]["$post"], 200>;
@@ -107,7 +108,7 @@ async function createCharacter(rulesetId?: string) {
     Charisma: 8,
   };
   const abilities = Object.fromEntries(Object.entries(scores).map(([name, score]) => [ctx.abilityMap[name], score]));
-  const character = await postCharacter({ rulesetId, abilities, alignment: "Neutral Good" });
+  const character = await postCharacter({ rulesetId, abilities, fields: { [CHARACTER_ALIGNMENT]: "Neutral Good" } });
   return { characterId: character.id, ctx };
 }
 

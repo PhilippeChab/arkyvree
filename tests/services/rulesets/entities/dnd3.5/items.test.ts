@@ -11,7 +11,7 @@ import { findCustomizations } from "@/tests/support/customizations.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { customize } from "@/tests/support/dnd3.5/customizations.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
-import { createTestRuleset, describedAs, ownerSessionOf } from "@/tests/support/rulesets.ts";
+import { createTestRuleset, describedAs, ownerSessionOf, subscribeTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import {
   ITEM_COST_GP,
@@ -468,7 +468,8 @@ describe("EntitiesService: items", () => {
   test("refuses to delete an item in a character's inventory, even through a ruleset using it as an extension", async () => {
     const { user, session, ruleset: extension } = await createTestUserAndRuleset();
     const item = await EntitiesService.createEntity(session, extension.id, "items", { name: "Extension Item" });
-    const host = await createTestRuleset(user.id, { extensionIds: [extension.id] });
+    const host = await createTestRuleset(user.id);
+    await subscribeTestRuleset(host.id, [extension.id]);
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
     await CharacterInventory.create(db, { characterId: character.id, itemId: item.id, quantity: 1 });
 

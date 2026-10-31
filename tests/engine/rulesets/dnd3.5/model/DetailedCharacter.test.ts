@@ -51,7 +51,12 @@ import { type Carried, carry, createTestItem } from "@/tests/support/dnd3.5/item
 import { addCharacterLevel, createTestClassLevel, findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { addListings, addLists } from "@/tests/support/dnd3.5/links.ts";
 import { writeFieldValues, writeValues } from "@/tests/support/ownerValues.ts";
-import { createSeededTestRuleset, createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import {
+  createSeededTestRuleset,
+  createTestRuleset,
+  invalidateSeededRuleset,
+  subscribeTestRuleset,
+} from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import type { ItemLocation } from "@/vocabulary/dnd3.5/equipment.ts";
@@ -264,10 +269,8 @@ async function forkWith(...extensionNames: string[]) {
   const { rulesetId } = await getSeedCtx();
   const extensions = [];
   for (const name of extensionNames) extensions.push((await findSeededRuleset(name)).id);
-  const fork = await createTestRuleset(SEED_USER_ID, {
-    rulesetId,
-    extensionIds: extensions,
-  });
+  const fork = await createTestRuleset(SEED_USER_ID, { rulesetId });
+  await subscribeTestRuleset(fork.id, extensions);
   RulesetViews.invalidate(fork.id);
   return fork;
 }

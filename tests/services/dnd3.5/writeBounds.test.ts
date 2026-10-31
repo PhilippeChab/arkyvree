@@ -515,18 +515,32 @@ describe("a ruleset's entity's form", () => {
 
 describe("a character's identity", () => {
   test("refuses a new character's negative experience, an age under 1, or either past what it holds exactly", async () => {
-    expect(createCharacterAs(session, { xp: -1 })).rejects.toMatchObject(invalidAt(`fields.${CHARACTER_XP}`));
-    expect(createCharacterAs(session, { age: 0 })).rejects.toMatchObject(invalidAt(`fields.${CHARACTER_AGE}`));
-    expect(createCharacterAs(session, { xp: 1e300 })).rejects.toMatchObject(invalidAt(`fields.${CHARACTER_XP}`));
-    expect(createCharacterAs(session, { age: 1e21 })).rejects.toMatchObject(invalidAt(`fields.${CHARACTER_AGE}`));
-    expect((await createCharacterAs(session, { xp: Number.MAX_SAFE_INTEGER })).fields).toMatchObject({
+    expect(createCharacterAs(session, { fields: { [CHARACTER_XP]: -1 } })).rejects.toMatchObject(
+      invalidAt(`fields.${CHARACTER_XP}`),
+    );
+    expect(createCharacterAs(session, { fields: { [CHARACTER_AGE]: 0 } })).rejects.toMatchObject(
+      invalidAt(`fields.${CHARACTER_AGE}`),
+    );
+    expect(createCharacterAs(session, { fields: { [CHARACTER_XP]: 1e300 } })).rejects.toMatchObject(
+      invalidAt(`fields.${CHARACTER_XP}`),
+    );
+    expect(createCharacterAs(session, { fields: { [CHARACTER_AGE]: 1e21 } })).rejects.toMatchObject(
+      invalidAt(`fields.${CHARACTER_AGE}`),
+    );
+    expect(
+      (await createCharacterAs(session, { fields: { [CHARACTER_XP]: Number.MAX_SAFE_INTEGER } })).fields,
+    ).toMatchObject({
       [CHARACTER_XP]: Number.MAX_SAFE_INTEGER,
     });
-    expect((await createCharacterAs(session, { xp: 0, age: 1 })).fields).toMatchObject({
+    expect(
+      (await createCharacterAs(session, { fields: { [CHARACTER_XP]: 0, [CHARACTER_AGE]: 1 } })).fields,
+    ).toMatchObject({
       [CHARACTER_XP]: 0,
       [CHARACTER_AGE]: 1,
     });
-    expect((await createCharacterAs(session, { age: null })).fields).not.toHaveProperty(CHARACTER_AGE);
+    expect((await createCharacterAs(session, { fields: { [CHARACTER_AGE]: null } })).fields).not.toHaveProperty(
+      CHARACTER_AGE,
+    );
   });
 
   test("refuses a new character without an alignment, a gender or a race, or with one not among its options", async () => {
@@ -561,7 +575,9 @@ describe("a character's identity", () => {
   });
 
   test("refuses an edit's negative experience, an age under 1, either past what it holds exactly, an alignment or a gender not among their options", async () => {
-    const { id } = await createCharacterAs(session, { alignment: "Lawful Good", gender: "Female" });
+    const { id } = await createCharacterAs(session, {
+      fields: { [CHARACTER_ALIGNMENT]: "Lawful Good", [CHARACTER_GENDER]: "Female" },
+    });
     const edits: [string, FieldsRequest][] = [
       [`fields.${CHARACTER_XP}`, { [CHARACTER_XP]: -1 }],
       [`fields.${CHARACTER_XP}`, { [CHARACTER_XP]: 1e21 }],

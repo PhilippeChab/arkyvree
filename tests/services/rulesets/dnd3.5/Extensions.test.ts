@@ -92,6 +92,7 @@ import {
 import { findSeededRuleset, getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import {
+  CHARACTER_XP,
   CLASS_HD,
   ITEM_IS_TEMPLATE,
   ITEM_SLOT,
@@ -1031,8 +1032,7 @@ describe("unsubscribing from an extension", () => {
       ["mechanics", (await Entities.create<Mechanic>(db, "mechanics", { name: name("Wager"), rulesetId }))[0].id],
     ] as const;
 
-    for (const [type, id] of [...fromBase, ...fromExtension])
-      await copyEntity(db, type, id, { ...draft, extensionIds: [extension.id] });
+    for (const [type, id] of [...fromBase, ...fromExtension]) await copyEntity(db, type, id, draft);
     const copies = await EntitySnapshots.findMany(db, { rulesetId: draft.id });
     const ofBase = copies.filter((copy) => fromBase.some(([, id]) => copy.sourceEntityId === id));
     const baseCopies = await RulesetEntities.findNames(db, { ids: ofBase.map((copy) => copy.forkedEntityId) });
@@ -1054,8 +1054,7 @@ describe("unsubscribing from an extension", () => {
       await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
       // Each copy names the copies made before it (`EntityCopy` remaps them): a named entity is copied first
       const copies = new Map<string, string>();
-      for (const [type, id] of Object.values(entities))
-        copies.set(id, (await copyEntity(db, type, id, { ...draft, extensionIds: [extension.id] })).id);
+      for (const [type, id] of Object.values(entities)) copies.set(id, (await copyEntity(db, type, id, draft)).id);
       const copyOf = (id: string) => copies.get(id)!;
       const namingsOf = (idOf: (id: string) => string) =>
         NAMINGS.map(([from, to]) => `${idOf(entities[from][1])} names ${idOf(entities[to][1])}`).toSorted();
@@ -1573,7 +1572,7 @@ describe("an extension's content in a fork", () => {
       (await findSeededRuleset(DND35_DMG_NAME)).id,
       (await findSeededRuleset(DND35_COMPLETE_DIVINE_NAME)).id,
     ]);
-    const character = await createTestCharacter(user.id, { rulesetId: draft.id, xp: 21000 });
+    const character = await createTestCharacter(user.id, { rulesetId: draft.id, fields: { [CHARACTER_XP]: 21000 } });
     await CharacterLinks.createMany(
       db,
       character.id,

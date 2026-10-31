@@ -60,7 +60,7 @@ function checkOf({ column, owner }: EntityReference): ReferenceCheck | undefined
 
 /**
  * Phase 1: every entity a character's rows name (`ENTITY_REFERENCES`: its links, its levels, their picks, its
- * inventory) is of its ruleset chain: its ruleset, its extensions, the rulesets it's forked from, which its ruleset's
+ * inventory) is of its ruleset chain: its ruleset, its extensions, the ruleset it's forked from, which its ruleset's
  * view reads (an entity of another ruleset, the view leaves out; the database refuses a dangling one). Returns the
  * issues found.
  */

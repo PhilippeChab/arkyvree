@@ -10,7 +10,12 @@ import { addCharacterLevel, createTestClassLevel } from "@/tests/support/dnd3.5/
 import { addGrants, findLists } from "@/tests/support/dnd3.5/links.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
 import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
-import { createSeededTestRuleset, createTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
+import {
+  createSeededTestRuleset,
+  createTestRuleset,
+  ownerSessionOf,
+  subscribeTestRuleset,
+} from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import {
@@ -312,7 +317,8 @@ describe("EntitiesService: spells", () => {
       name: "Extension Spell",
       links: { listedIn: [{ toId: wizard }] },
     });
-    const host = await createTestRuleset(user.id, { extensionIds: [extension.id] });
+    const host = await createTestRuleset(user.id);
+    await subscribeTestRuleset(host.id, [extension.id]);
 
     const character = await createTestCharacter(user.id, { rulesetId: host.id });
     const { classLevel } = await createTestClassLevel(host.id);

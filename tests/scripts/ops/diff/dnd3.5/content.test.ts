@@ -20,7 +20,7 @@ interface Column {
 }
 
 /** The columns that aren't content: a row's bookkeeping, and what scopes it (its ruleset, a user's own data). */
-const BOOKKEEPING = ["id", "created_at", "updated_at", "deleted_at", "ruleset_id", "campaign_id", "user_id"];
+const BOOKKEEPING = ["id", "created_at", "updated_at", "deleted_at", "ruleset_id", "user_id"];
 
 /** The values a check constraint allows a text column, which a change picks another of. */
 const CHECKED: Record<string, string[]> = {

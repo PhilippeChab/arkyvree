@@ -86,13 +86,15 @@ describe("CharactersService", () => {
       const { abilityMap } = await getSeedCtx();
       const details = {
         name: "Test Paladin",
-        xp: 2000,
-        alignment: "Lawful Good",
-        age: 28,
-        gender: "Female",
-        height: "6'2\"",
-        weight: "200 lbs",
-        deity: "Bahamut",
+        fields: {
+          [CHARACTER_XP]: 2000,
+          [CHARACTER_ALIGNMENT]: "Lawful Good",
+          [CHARACTER_AGE]: 28,
+          [CHARACTER_GENDER]: "Female",
+          [CHARACTER_HEIGHT]: "6'2\"",
+          [CHARACTER_WEIGHT]: "200 lbs",
+          [CHARACTER_DEITY]: "Bahamut",
+        },
         description: "A noble paladin",
         notes: "Sworn to protect",
       } as const;
@@ -103,15 +105,7 @@ describe("CharactersService", () => {
         description: details.description,
         notes: details.notes,
         userId: user.id,
-        fields: {
-          [CHARACTER_XP]: details.xp,
-          [CHARACTER_ALIGNMENT]: details.alignment,
-          [CHARACTER_AGE]: details.age,
-          [CHARACTER_GENDER]: details.gender,
-          [CHARACTER_HEIGHT]: details.height,
-          [CHARACTER_WEIGHT]: details.weight,
-          [CHARACTER_DEITY]: details.deity,
-        },
+        fields: details.fields,
       });
 
       const abilities = Object.fromEntries((await findLinks("score", paladin.id)).map((a) => [a.entityId, a.amount]));
@@ -239,7 +233,7 @@ describe("CharactersService", () => {
   describe("reading and changing a character", () => {
     test("reads it built, changes only the fields sent, and refuses an edit from a stale copy", async () => {
       const { session } = await createTestUser();
-      const created = await createCharacterAs(session, { deity: "Old Deity" });
+      const created = await createCharacterAs(session, { fields: { [CHARACTER_DEITY]: "Old Deity" } });
       const sheet = await CharactersService.getCharacter(session, created.id);
       expect(sheet).toMatchObject({ id: created.id, name: created.name });
       // Built: its combat, not only who it is

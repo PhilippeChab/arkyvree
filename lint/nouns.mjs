@@ -28,12 +28,9 @@ const COMPARISONS = new Set(["===", "!==", "==", "!="]);
 
 /**
  * The files where a dropped name means something today (`dropped-names`), beside `MIGRATION_TESTS`: 3.5's codegen,
- * whose scraped items the books give a cost in gold pieces, and the test that sends an item's old column in a body to
- * see it refused.
+ * whose scraped items the books give a cost in gold pieces.
  */
-const DROPPED_NAME_HOMES = new Map([
-  ["costGp", [/^codegen\/dnd3\.5\//, /^tests\/routers\/api\/rulesets\/entities\/dnd3\.5\/items\.test\.ts$/]],
-]);
+const DROPPED_NAME_HOMES = new Map([["costGp", [/^codegen\/dnd3\.5\//]]]);
 
 /**
  * The names of the dropped tables' columns and rows that mean nothing today, each with what holds it now, as a name or

@@ -17,7 +17,7 @@ import { uniqueId } from "./seed.ts";
 import { makeSession } from "./users.ts";
 
 /**
- * An entity as its kind's page describes it (`K`, its table): what `EntitiesService.getEntity` answers of it, which it
+ * An entity as its kind's page describes it (`K`, its kind): what `EntitiesService.getEntity` answers of it, which it
  * types as any kind's (`describedAs` reads it as its own kind's).
  */
 export type Described<K extends keyof EntityKinds> = ReturnType<EntityKinds[K]["describe"]>;
@@ -27,14 +27,6 @@ const writtenSeededRulesets = new Set<string>();
 /** Whether an entity's description is of a kind (`type`): its row's. */
 function isDescribed<K extends keyof EntityKinds>(type: K, entity: { type: string }): entity is Described<K> {
   return entity.type === type;
-}
-
-/** The sources `ruleset` gives (its `extensionIds`, its `parentId`), none of its other keys: a row's give none. */
-function pickSources(ruleset: Partial<RulesetSources>): Partial<RulesetSources> {
-  return {
-    ...(ruleset.extensionIds && { extensionIds: ruleset.extensionIds }),
-    ...(ruleset.parentId !== undefined && { parentId: ruleset.parentId }),
-  };
 }
 
 /**
@@ -73,17 +65,16 @@ export function invalidateTestRulesets(...rulesetIds: string[]) {
 }
 
 /**
- * Copies an inherited entity into `ruleset` (`EntityCopy`), on its sources as stored, or on those given (`ruleset`'s
- * `extensionIds` or `parentId`, a chain it doesn't store): what a first edit there copies, its source refused as not
- * found, by its type, when it's gone. The copied row.
+ * Copies an inherited entity into `ruleset` (`EntityCopy`), on its sources as stored: what a first edit there copies,
+ * its source refused as not found, by its type, when it's gone. The copied row.
  */
 export async function copyEntity(
   database: Db,
   entityType: RulesetEntityType,
   entityId: string,
-  ruleset: Pick<RulesetSources, "id"> & Partial<RulesetSources>,
+  ruleset: { id: string },
 ) {
-  const sources = { ...(await Rulesets.findSources(database, { id: ruleset.id }))!, ...pickSources(ruleset) };
+  const sources = (await Rulesets.findSources(database, { id: ruleset.id }))!;
   return (await EntityCopy.create(database, entityType, entityId, sources, `${entityType} not found`)).entity;
 }
 
@@ -128,14 +119,13 @@ export async function createSeededTestRulesetWithExtensions(userId: string) {
 /**
  * An empty private draft ruleset owned by `userId` (`null` for a system ruleset; with `system: false`, an orphaned one,
  * its owner's account deleted), of the base rules the seeded content is written for (3.5's), unless `values` names
- * others. Pass `rulesetId` to make it a fork of that ruleset, and `extensionIds` the extensions it
- * subscribes to, in their order. For one that already has the seeded content, use `createSeededTestRuleset`.
+ * others. Pass `rulesetId` to make it a fork of that ruleset; `subscribeTestRuleset` subscribes it to extensions, in
+ * their order. For one that already has the seeded content, use `createSeededTestRuleset`.
  */
 export async function createTestRuleset(
   userId: string | null,
-  values: Partial<InferInsertModel<typeof rulesetsInRules>> & { extensionIds?: string[] } = {},
+  values: Partial<InferInsertModel<typeof rulesetsInRules>> = {},
 ) {
-  const { extensionIds = [], ...columns } = values;
   const [ruleset] = await Rulesets.create(db, {
     name: `Test Ruleset ${uniqueId()}`,
     description: "Test ruleset description",
@@ -143,9 +133,9 @@ export async function createTestRuleset(
     baseRules: DND35_BASE_RULES,
     userId,
     system: userId === null,
-    ...columns,
+    ...values,
   });
-  return extensionIds.length > 0 ? await subscribeTestRuleset(ruleset.id, extensionIds) : ruleset;
+  return ruleset;
 }
 
 /**

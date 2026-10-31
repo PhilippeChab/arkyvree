@@ -14,6 +14,7 @@ import { createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.t
 import { addCharacterLevel, findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { queuedPdfJobs, silentJobHelpers } from "@/tests/support/jobs.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
+import { CHARACTER_ALIGNMENT, CHARACTER_DEITY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type Client = typeof api;
 
@@ -69,7 +70,12 @@ async function postFilledCharacter() {
   const abilities = Object.fromEntries(
     Object.entries(abilityMap).map(([name, abilityId]) => [abilityId, name === "Intelligence" ? 12 : 10]),
   );
-  const { id } = await postCharacter({ alignment: "Chaotic Good", abilities, deity, description, notes });
+  const { id } = await postCharacter({
+    abilities,
+    description,
+    notes,
+    fields: { [CHARACTER_ALIGNMENT]: "Chaotic Good", [CHARACTER_DEITY]: deity },
+  });
   await expectOk(
     api.api.characters[":id"].$put({
       param: { id },

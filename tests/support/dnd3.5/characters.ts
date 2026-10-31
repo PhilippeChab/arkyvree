@@ -18,27 +18,16 @@ import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import {
   CHARACTER_AGE,
   CHARACTER_ALIGNMENT,
-  CHARACTER_FIELDS,
   CHARACTER_GENDER,
   CHARACTER_HEIGHT,
   CHARACTER_WEIGHT,
   CHARACTER_XP,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
-import type { Alignment, Gender } from "@/vocabulary/dnd3.5/identity.ts";
 
-/**
- * A new character's fields, past those every character has, by their names among 3.5's declarations
- * (`CHARACTER_FIELDS`), which its form sends by their stored fields, and its description.
- */
+/** A new character's fields, by the stored field that keeps each (`fields`), and its description. */
 interface NewFields {
-  age?: number | null;
-  alignment?: Alignment;
-  deity?: string;
   description?: string;
-  gender?: Gender;
-  height?: string;
-  weight?: string;
-  xp?: number;
+  fields?: FieldsRequest;
 }
 
 /**
@@ -54,30 +43,23 @@ interface NewStart {
  * A test character's fields, unless it's given its own: a True Neutral man of 25, 180 tall and 80 heavy, with no
  * experience.
  */
-const NEW_FIELDS = { age: 25, alignment: "True Neutral", gender: "Male", height: "180", weight: "80", xp: 0 };
+const NEW_FIELDS: FieldsRequest = {
+  [CHARACTER_AGE]: 25,
+  [CHARACTER_ALIGNMENT]: "True Neutral",
+  [CHARACTER_GENDER]: "Male",
+  [CHARACTER_HEIGHT]: "180",
+  [CHARACTER_WEIGHT]: "80",
+  [CHARACTER_XP]: 0,
+};
 
 /**
- * A new character's request split: its fields (3.5's form's, by the stored field that keeps each: a True Neutral man of
- * 25, 180 tall and 80 heavy, with no experience, unless given; its description), sent under `fields` with those it
- * sends as they are (`fields`), and the rest as it is.
+ * A new character's request split: its fields, by the stored field that keeps each (a True Neutral man of 25, 180 tall
+ * and 80 heavy, with no experience, unless given; its description), sent under `fields`, and the rest as it is.
  */
-function splitFields<T extends NewFields & { fields?: FieldsRequest }>(values: T) {
-  const { age, alignment, deity, description, fields, gender, height, weight, xp, ...rest } = values;
-  const given = { age, alignment, deity, gender, height, weight, xp };
-  const named = {
-    ...NEW_FIELDS,
-    ...Object.fromEntries(Object.entries(given).filter(([, value]) => value !== undefined)),
-  };
-  const stored = Object.entries(named).map(([name, value]) => [
-    CHARACTER_FIELDS[name as keyof typeof CHARACTER_FIELDS].field,
-    value,
-  ]);
+function splitFields<T extends NewFields>(values: T) {
+  const { description, fields, ...rest } = values;
   return {
-    fields: {
-      ...Object.fromEntries(stored),
-      ...(description !== undefined && { description }),
-      ...fields,
-    } as FieldsRequest,
+    fields: { ...NEW_FIELDS, ...(description !== undefined && { description }), ...fields } as FieldsRequest,
     rest,
   };
 }
@@ -155,16 +137,16 @@ export async function createCharacterAs(
 /**
  * A human character of `userId`'s on the seeded ruleset, written straight to the database: a Neutral Good man of 25,
  * 180 tall and 75 heavy, with no experience, unless `values` says otherwise (its race, its `race` link, `links.race`;
- * its experience, `xp`; its row's own columns), and no abilities, levels or activity. Create one with
- * `createCharacterAs` when the test needs those.
+ * its fields, `fields`, by the stored field that keeps each; its row's own columns), and no abilities, levels or
+ * activity. Create one with `createCharacterAs` when the test needs those.
  */
 export async function createTestCharacter(
   userId: string,
   {
+    fields,
     links,
-    xp = 0,
     ...values
-  }: Partial<Omit<Character, "fields" | "links">> & { links?: { race?: string }; xp?: number } = {},
+  }: Partial<Omit<Character, "fields" | "links">> & { fields?: Character["fields"]; links?: { race?: string } } = {},
 ) {
   const ctx = await getSeedCtx();
   const [character] = await Characters.create(db, {
@@ -179,7 +161,8 @@ export async function createTestCharacter(
       [CHARACTER_GENDER]: "Male",
       [CHARACTER_HEIGHT]: "180",
       [CHARACTER_WEIGHT]: "75",
-      [CHARACTER_XP]: xp,
+      [CHARACTER_XP]: 0,
+      ...fields,
     },
     links: { [RACE_ROLE]: links?.race ?? ctx.raceMap.pc["Human"] },
   });

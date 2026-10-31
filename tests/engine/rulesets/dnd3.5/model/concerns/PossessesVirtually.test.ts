@@ -10,7 +10,7 @@ import { Characters, Entities, Modifiers, Requirements } from "@/server/reposito
 import type { Requirement } from "@/shared/relations.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, findClassLevel } from "@/tests/support/dnd3.5/levels.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { createTestRuleset, subscribeTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx } from "@/tests/support/seed.ts";
 import {
   CHARACTER_AGE,
@@ -282,10 +282,8 @@ describe("A grant", () => {
       // Second Totem grants each totem's feat behind its totem: a catlord's is Lightning Reflexes
       const ctx = await getSeedCtx();
       const book = await findSeededRuleset(DND35_COMPLETE_ADVENTURER_NAME);
-      const fork = await createTestRuleset(SEED_USER_ID, {
-        rulesetId: ctx.rulesetId,
-        extensionIds: [book.id],
-      });
+      const fork = await createTestRuleset(SEED_USER_ID, { rulesetId: ctx.rulesetId });
+      await subscribeTestRuleset(fork.id, [book.id]);
       const characterId = await seedHuman("Catlord", { rulesetId: fork.id });
       const animalLord = (await Entities.findOne<Klass>(db, {
         entityType: "classes",

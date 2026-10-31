@@ -262,8 +262,6 @@ describe("rulesets entities: items", () => {
       { name: "" },
       { name: "Item", fields: { [ITEM_WEIGHT]: "heavy" } },
       { name: "Item", fields: { [ITEM_COST_GP]: "cheap" } },
-      // Its cost by the old table's column, which no body takes
-      { name: "Item", costGp: 1 },
     ])
       await expectStatus(kinds.$post({ param: { id, entityType }, json: json as never }), 400);
   });

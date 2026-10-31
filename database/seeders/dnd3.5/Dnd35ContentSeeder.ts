@@ -62,7 +62,7 @@ export abstract class Dnd35ContentSeeder extends ContentSeeder<CoreContent, Book
     return { ...names, rulesetId, spellMap: {}, inheritedSpellMap: { ...inheritedSpellMap, ...spellMap } };
   }
 
-  /** The context of a seeded ruleset: the ids of its unarchived rows. */
+  /** The context of a seeded ruleset: the ids of its rows. */
   static override async loadContext(db: Db, rulesetId: string): Promise<Dnd35SeedContext> {
     // One after the other: a transaction runs one query at a time.
     return {

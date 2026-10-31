@@ -44,7 +44,13 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { addCharacterLevel, createTestClassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { addClassSkills, addLists, findLists } from "@/tests/support/dnd3.5/links.ts";
 import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
-import { copyEntity, createTestRuleset, ownerSessionOf, sourcesOf } from "@/tests/support/rulesets.ts";
+import {
+  copyEntity,
+  createTestRuleset,
+  ownerSessionOf,
+  sourcesOf,
+  subscribeTestRuleset,
+} from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import {
@@ -364,7 +370,8 @@ describe("RulesetsService", () => {
       const { user, session } = await createTestUser();
       const ruleset = await createTestRuleset(user.id, { status: "Archived" });
       const extension = await createTestRuleset(null, { kind: "extension" });
-      const fork = await createFork(user.id, { status: "Archived", extensionIds: [extension.id] });
+      const fork = await createFork(user.id, { status: "Archived" });
+      await subscribeTestRuleset(fork.id, [extension.id]);
       const archived = {
         ...NONE,
         canManageAdminContributors: true,
@@ -383,9 +390,10 @@ describe("RulesetsService", () => {
       const { user, session } = await createTestUser();
       const { user: subscriber } = await createTestUser();
       const used = await createFork(user.id, { private: false, status: "Published" });
-      await createFork(subscriber.id, { extensionIds: [used.id] });
+      await subscribeTestRuleset((await createFork(subscriber.id)).id, [used.id]);
       const extension = await createTestRuleset(null, { rulesetId: used.rulesetId, kind: "extension" });
-      const subscribing = await createFork(user.id, { extensionIds: [extension.id] });
+      const subscribing = await createFork(user.id);
+      await subscribeTestRuleset(subscribing.id, [extension.id]);
 
       expect((await RulesetsService.getRuleset(session, used.id)).permissions).toMatchObject({
         canBeExtension: true,
@@ -435,10 +443,8 @@ describe("RulesetsService", () => {
       const { user: owner } = await createTestUser();
       const { user, session } = await createTestUser();
       const extension = await createTestRuleset(null, { private: false, status: "Published", kind: "extension" });
-      const parent = await createParent(owner.id, {
-        description: "Parent description",
-        extensionIds: [extension.id],
-      });
+      const parent = await createParent(owner.id, { description: "Parent description" });
+      await subscribeTestRuleset(parent.id, [extension.id]);
       const [aptitude] = await Entities.create<Aptitude>(db, "aptitudes", { name: "General", rulesetId: parent.id });
       const feat = await EntitiesService.createEntity({ ...session, userId: owner.id }, parent.id, "feats", {
         name: "Toughness",
