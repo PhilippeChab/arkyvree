@@ -94,6 +94,13 @@ describe("CharactersPolicy", () => {
     ]);
   });
 
+  test("canAcceptInvite: a character that isn't archived, a 409 for an archived one", async () => {
+    const { character, other } = await setup();
+    expect(new CharactersPolicy(other, character).canAcceptInvite()).toBe(true);
+    const [archived] = await Characters.archive(db, { id: character.id });
+    expect(() => new CharactersPolicy(other, archived).canAcceptInvite()).toThrow(ConflictError);
+  });
+
   test("canArchive, canShare and canLink: a player character's owner; anyone else as an unknown character", async () => {
     const { character, owner, other } = await setup();
     const child = await createChild(character.userId, character.id);

@@ -1,5 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
-import { ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Players } from "@/server/repositories/index.ts";
 import type { Campaign, Player, Session } from "@/shared/relations.ts";
 
@@ -31,6 +31,13 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
   }
 
   private readonly player: Player | null;
+
+  /** Accepting an invite to a seat in the campaign: one that isn't archived. */
+  canAcceptInvite() {
+    if (this.entity.deletedAt) throw new ConflictError("Cannot accept an invite for an archived campaign");
+
+    return true;
+  }
 
   canDelete() {
     if (!this.isGameMaster()) throw new ForbiddenError("Only the Game Master can manage this campaign");

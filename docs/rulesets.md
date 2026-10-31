@@ -401,7 +401,7 @@ The validators that set `kind = 'extension'` enforce: must be a fork, must not s
 
 ### Subscribe (`subscribeExtension`)
 
-1. Validates: ruleset is a fork, not archived, user is owner, no other ruleset subscribes to it (`canSubscribeExtension({ usedAsExtension })`), extension is `kind = 'extension'` + published + shares the same base + public, unless a system one, + the host's own `kind` is `'ruleset'`
+1. Validates: ruleset is a fork, not archived, user is owner, no other ruleset subscribes to it (`canSubscribeExtension({ usedAsExtension })`), each extension is `kind = 'extension'` + published + shares the same base + public, unless a system one (its policy's `canBeSubscribed({ parentId })`), + the host's own `kind` is `'ruleset'`
 2. Checks not already subscribed (`extensionIds.includes`), and that its view would show no name more often than once and than it does now (`EntityNames.assertExtensionNamesAvailable`, see [Names of entities](#names-of-entities)): the names of the new extensions' entities, their copies included, counted in the view as it is and as it would be, read with its `CowData` once subscribed, so what that view pairs (an extension's copy of an inherited entity, two books' entities of a kind a book reprints (`namesakes: "reprints"`: 3.5's feats and spells), pools of a name (`namesakes: "identity"`), whoever holds them, the host's own too) counts once. An extension's entity of a name the host's own entity has counts, though the view would show the host's alone: the host is told of the clash
 3. Writes a `ruleset_extensions` row for each, after the host's last (`ordinal`), live again if an unsubscribe archived it: what the source chain and the extensions page read (name, `updateAvailable` flag), and touches the host's `updatedAt`
 

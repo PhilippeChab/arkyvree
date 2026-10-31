@@ -25,12 +25,15 @@ A user can hold multiple roles for the same entity (e.g. owner of a ruleset they
 
 | Method | Allowed actors | Notes |
 |---|---|---|
-| `canUpdate` | owner, **Admin** | edits ruleset metadata (name, description, privacy, archive). Throws on a ruleset without an owner (a system one, or an orphan: see below) and on Archived rulesets |
+| `canUpdate({ private })` | owner, **Admin** | edits ruleset metadata (name, description, privacy, archive). Throws on a ruleset without an owner (a system one, or an orphan: see below), on Archived rulesets, and on making a public ruleset private (`private`, what the edit asks) |
 | `canUpdateEntity` | owner, **Admin**, **Editor** | edits entity content (feats, items, classes, …). Same archive guard |
 | `canDeleteEntity({ inUse })` | owner, **Admin**, **Editor** | deletes individual entities. Throws if `inUse` (would orphan a character pick on this ruleset or any descendant fork). See [rulesets.md](./rulesets.md#what-inuse-means-in-entity-delete-services) |
 | `canPublish` | **owner only** | Draft → Published; can't be delegated to Admin |
 | `canFork` | anyone (any session) | source must be Published and be a base ruleset (`rulesetId IS NULL`) |
 | `canBeExtension` | anyone (any session) | whether the ruleset can be published as an extension, or made one: a fork that subscribes to no extension. Publishing and editing ask it after `canPublish` and `canUpdate` |
+| `canBeSubscribed({ parentId })` | anyone (any session) | the extension a fork subscribes to: published as an extension, public (a system one always is), and a fork of the subscriber's base (`parentId`). The subscribe asks it of each extension, after `canSubscribeExtension` |
+| `canStar` | anyone (any session) | a public base or extension (`isStarrable`, which a list's rows answer too): a fork for play is no bookmark |
+| `canAcceptInvite` | anyone (any session) | accepting a contributor's invite, on a ruleset that isn't archived (`ConflictError`) |
 | `canSubscribeExtension({ usedAsExtension })` | **owner only** | the host must be a live fork that isn't an extension, and no other ruleset may subscribe to it (`usedAsExtension`) |
 | `canUnsubscribeExtension({ inUse })` | **owner only** | `canSubscribeExtension`, used as an extension or not, plus the in-use guard |
 | `canManageContributors` | owner, **Admin** | managing contributors, archived or not: what every check below starts with |
@@ -98,6 +101,7 @@ The character-creation wizard combines `published + campaignAccessible` (and his
 | `canReadContributors` | its editors (`isEditor`): listing its contributors, and leaving them (`leaveCharacter`, then an identity match on the session's active row). Anyone else gets the 404 an unknown character gets |
 | `canManageContributors` | `canReadContributors`, then **owner only** (a contributor gets `ForbiddenError`): revoking a contributor |
 | `canInviteContributors` | `canManageContributors`, on a character that isn't archived (`ConflictError`) |
+| `canAcceptInvite` | anyone: accepting a contributor's invite, on a character that isn't archived (`ConflictError`) |
 
 Whoever may not read a character gets the answer an unknown id gets on its contributors, the same status and body: its list, an invite and a leave (`Character not found`), and a revoke of one of its contributors (`Contributor not found`, as an unknown contributor). An activity links to a character, its levels, its inventory and its contributors only when the session may read it (`findReadableCharacter`), archived or not; a character contributor's, its invitee to the invite while it's pending, and to no access once it's revoked or rejected. `CharactersService.getCharacter` answers what its reader may do with it, as `permissions`, each from the policy (a check through `isAllowed`, `server/services/policies/isAllowed.ts`, as `RulesetsService.getRuleset` does): `canArchive`, `canEdit` (`isEditable`), `canEditPortrait` (`isPortraitEditable`), `canInviteContributors`, `canLeave` (an active contributor), `canManageContributors`, `canReadContributors` and `canShare`. The client's `useCharacterPermissions` reads them, and decides only what a demo user is spared.
 
@@ -125,6 +129,7 @@ Campaign character responses leave the private notes out of the identity's block
 | `canUpdate` | **Game Master only** (`isGameMaster`) |
 | `canManagePlayers` | **Game Master only**, on a campaign that isn't archived (`canModify` and `canUpdate`): adding a player, editing one, and removing another's seat (`CampaignPlayersService`) |
 | `canDelete` | **Game Master only** (archive and unarchive) |
+| `canAcceptInvite` | anyone: accepting an invite to a seat, in a campaign that isn't archived (`ConflictError`) |
 | `canHardDelete` | **Game Master only**, must be archived. See [persistence.md](./persistence.md#recoverable-user-content) |
 | `canModify` | anyone the other checks allow, on a campaign that isn't archived (archived campaigns are read-only; a Game Master can still revoke an invite) |
 | `canLinkCharacter` | any member, Player or Game Master, of a campaign that isn't archived (a seat, `canRead`, and `canModify`): linking a character (`CampaignCharactersService.linkCharacter`), and listing those the session could link, so the link dialog lists only what linking accepts (`GET /characters/unlinked/:campaignId`, `getLinkableCharacters`: the session's own player characters on the campaign's ruleset, in no campaign yet) |
@@ -159,7 +164,7 @@ The three invite lifecycles share the same shape:
 | Action | Gate |
 |---|---|
 | Send / re-send / revoke an invite | The policy that gates managing the parent: `RulesetsPolicy.canInviteContributors({ role })` and `canRevokeContributor({ role })`, `CampaignsPolicy.canManagePlayers` to send (GM, a campaign that isn't archived) and `canUpdate` to revoke (GM, an archived campaign's too), or `CharactersPolicy.canManageContributors` (owner) |
-| Accept / reject | Identity match: `invite.userId === session.userId` (or `contributor.userId === session.userId` for contributor rows). Throws `NotFoundError` rather than `ForbiddenError` to avoid leaking the existence of invites addressed to other users |
+| Accept / reject | Identity match: `invite.userId === session.userId` (or `contributor.userId === session.userId` for contributor rows). Throws `NotFoundError` rather than `ForbiddenError` to avoid leaking the existence of invites addressed to other users. An accept then asks its parent's policy, `canAcceptInvite` (`ConflictError` on an archived ruleset, character or campaign) |
 | Leave (self-remove from contributor or self-remove from campaign) | Identity match: must be holding the row being removed. Throws `NotFoundError` otherwise |
 
 The invite services' `acceptInvite` and `rejectInvite` (campaigns, rulesets and characters), `leaveRuleset`, and `leaveCharacter` all follow this pattern. Campaign self-leave goes through `CampaignPlayersService.removePlayer` with its own seat's branch (`player.userId === session.userId`) — same shape (identity match skips the GM gate). They're identity matches, not permission gates — see "Identity vs. policy" below.

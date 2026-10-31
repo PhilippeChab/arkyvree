@@ -11,6 +11,7 @@ import {
   getPendingInvite,
   saveInviteAnswer,
 } from "@/server/services/invites/index.ts";
+import { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { findReadableRuleset, getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
@@ -48,8 +49,7 @@ class ContributorsService {
 
       const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId });
       if (!ruleset) throw new NotFoundError("Ruleset not found");
-
-      if (ruleset.status === "Archived") throw new ConflictError("This ruleset has been archived");
+      (await RulesetsPolicy.for(tx, session, ruleset)).canAcceptInvite();
 
       return await this.answerInvite(tx, session, contributor.id, "Active");
     });

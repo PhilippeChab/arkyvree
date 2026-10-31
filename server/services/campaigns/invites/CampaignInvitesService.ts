@@ -1,10 +1,11 @@
 import type { Db } from "@/drizzle/database.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
-import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
+import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, Invites, type Pagination, Players, Visibility } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { findReadableCampaign, getReadableCampaign } from "@/server/services/campaigns/readableCampaign.ts";
 import { getPendingInvite, saveInviteAnswer } from "@/server/services/invites/index.ts";
+import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
 
@@ -34,7 +35,7 @@ class CampaignInvitesService {
     return await withTransaction(async (tx) => {
       const invite = await getPendingInvite(tx, session, Invites, inviteId, "Invite not found");
       const campaign = await this.getInviteCampaign(tx, invite);
-      if (campaign.deletedAt) throw new ForbiddenError("Cannot accept an invite for an archived campaign");
+      (await CampaignsPolicy.for(tx, session, campaign)).canAcceptInvite();
 
       await Players.update(tx, { userId: session.userId }, { id: invite.playerId });
       return { ...(await this.answerInvite(tx, session, invite, "Accepted")), campaignId: campaign.id };
