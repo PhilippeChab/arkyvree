@@ -149,6 +149,16 @@ describe("CampaignInvitesService", () => {
       expect(CampaignInvitesService.acceptInvite(invitee.session, invite.id)).rejects.toThrow(ConflictError);
     });
 
+    test("refuses an invite to a campaign archived since, which stays pending", async () => {
+      const { invitee, slot, invite, campaign } = await setup();
+      await Campaigns.archive(db, { id: campaign.id });
+      expect(CampaignInvitesService.acceptInvite(invitee.session, invite.id)).rejects.toThrow(
+        new ConflictError("Cannot accept an invite for an archived campaign"),
+      );
+      expect((await Invites.findOne(db, { id: invite.id }))?.status).toBe("Pending");
+      expect((await Players.findOne(db, { id: slot.id }))?.userId).toBeNull();
+    });
+
     test("throws NotFoundError for a missing invite or someone else's", async () => {
       const { invite } = await setup();
       const { session: stranger } = await createTestUser();

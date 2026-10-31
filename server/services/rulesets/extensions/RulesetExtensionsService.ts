@@ -58,9 +58,9 @@ class RulesetExtensionsService {
         if (extensionId === id) throw new UnprocessableEntityError("Cannot subscribe to itself");
 
         // One the session may not read is refused as an unknown one is: a private ruleset's existence isn't revealed
-        const extension = await findReadableRuleset(tx, session, extensionId);
-        if (!extension) throw new NotFoundError("Extension not found");
-        extension.policy.canBeSubscribed({ parentId: childRuleset.rulesetId });
+        const readable = await findReadableRuleset(tx, session, extensionId);
+        if (!readable) throw new NotFoundError("Extension not found");
+        readable.policy.canBeSubscribed({ parentId: childRuleset.rulesetId });
 
         if (sources.extensionIds.includes(extensionId)) throw new ConflictError("Already subscribed to this extension");
 
