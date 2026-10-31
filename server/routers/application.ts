@@ -1,21 +1,22 @@
 import { httpInstrumentationMiddleware } from "@hono/otel";
 import { Hono } from "hono";
 import { cors as buildCors } from "hono/cors";
-import { csrf } from "hono/csrf";
 import { HTTPException } from "hono/http-exception";
 import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 
 import { runWithRequestCache } from "@/server/database/index.ts";
-import { isProduction, isTest, readEnv } from "@/server/environment.ts";
+import { isProduction, readEnv } from "@/server/environment.ts";
 import { toJson } from "@/server/errors/index.ts";
-import { requestLogger, type SessionContext, wrapNonErrors } from "@/server/middlewares/index.ts";
+import { checkCsrf, requestLogger, type SessionContext, wrapNonErrors } from "@/server/middlewares/index.ts";
 import { collectNotified, publishWsEvent } from "@/server/websockets/index.ts";
 
 import apiRouter from "./api/index.ts";
 import authenticationRouter from "./authentication/index.ts";
 import healthRouter from "./health.ts";
 import staticRouter from "./static.ts";
+import v1Router from "./v1/index.ts";
+import openApiRouter from "./v1/openApi.ts";
 import wsRouter from "./ws.ts";
 
 export type Application = typeof application;
@@ -53,7 +54,7 @@ export const application = new Hono<{ Variables: Partial<SessionContext["Variabl
     return c.redirect(`https://${canonicalHost}${url.pathname}${url.search}`, 301);
   })
   .use("*", cors)
-  .use("*", isTest() ? async (_, next) => next() : csrf({ origin }))
+  .use("*", checkCsrf(origin))
   .use("*", httpInstrumentationMiddleware({ disableTracing: true }))
   .use("*", requestLogger())
   .use("*", requestId())
@@ -101,6 +102,9 @@ export const application = new Hono<{ Variables: Partial<SessionContext["Variabl
   .route("/", healthRouter)
   .route("/auth", authenticationRouter)
   .route("/api", apiRouter)
+  // Before the public API, whose routes all take a key: its document takes none
+  .route("/v1/openapi.json", openApiRouter)
+  .route("/v1", v1Router)
   .route("/", staticRouter)
   .onError((err, c) => {
     if (err instanceof HTTPException)

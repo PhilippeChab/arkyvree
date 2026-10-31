@@ -511,7 +511,7 @@ describe("component rules", () => {
     ]);
   });
 
-  test("a list's actions sit in its toolbar (a dialog's across from its lead), the list 24px under it and its Load More 16px under the list", async () => {
+  test("a list's actions sit in its toolbar (a dialog's across from its lead, a panel's across from its title), the list 24px under it and its Load More 16px under the list", async () => {
     const more = "<LoadMoreButton hasNextPage={more} isFetchingNextPage={fetching} onClick={next} />";
     expect(
       await lintRepo(
@@ -534,6 +534,10 @@ describe("component rules", () => {
             'export const d = <DialogContent><Stack spacing={3}><DialogLead actions={<AddButton label="Add" />}>Lead</DialogLead><Table /></Stack></DialogContent>;\n',
           "client/src/dialog-close.tsx":
             "export const d = <Stack spacing={2}><DialogLead>Lead</DialogLead><Table /></Stack>;\n",
+          "client/src/panel-bar.tsx":
+            'export const p = <Panel spacing={3}><ListToolbar actions={<AddButton label="Add" />} /><Table /></Panel>;\n',
+          "client/src/panel-lead.tsx":
+            'export const p = <Panel spacing={3}><PanelLead actions={<AddButton label="Add" />}>Title</PanelLead><Table /></Panel>;\n',
         },
         ["list-toolbars"],
       ),
@@ -544,6 +548,7 @@ describe("component rules", () => {
       "list-toolbars client/src/dialog-close.tsx",
       "list-toolbars client/src/far.tsx",
       "list-toolbars client/src/lead.tsx",
+      "list-toolbars client/src/panel-bar.tsx",
     ]);
   });
 

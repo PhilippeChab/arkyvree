@@ -3,6 +3,7 @@ import type { JobHelpers } from "graphile-worker";
 import { withTransaction } from "@/server/database/index.ts";
 import {
   Activities,
+  ApiKeys,
   EmailVerifications,
   Exports,
   Notifications,
@@ -36,6 +37,12 @@ export async function runCleanupTask(_payload: unknown, helpers: JobHelpers): Pr
     {
       name: "sessions",
       run: () => withTransaction((tx) => Sessions.delete(tx, { expiredOrArchivedBefore: now })),
+    },
+    {
+      name: "api_keys",
+      run: async () => ({
+        rowCount: (await withTransaction((tx) => ApiKeys.delete(tx, { expiresBefore: now }))).length,
+      }),
     },
     {
       name: "exports",

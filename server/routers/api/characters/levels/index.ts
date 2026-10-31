@@ -3,26 +3,10 @@ import { z } from "zod";
 
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { limitDefaultingTo } from "@/server/routers/api/schemaBuilders.ts";
-import { characterIdParam, page } from "@/server/routers/api/validation.ts";
+import { characterIdParam, page, planSteps } from "@/server/routers/api/validation.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 
 const levelParams = characterIdParam.extend({ advancementId: z.string().uuid() });
-
-/**
- * A step's payload, in any mechanic's shape (the engine reads it by its step's): a plan's advancements, a value per
- * advancement, the options chosen at each, the points spent on rows in their order, or the entities picked in their
- * pools, in pick order.
- */
-const stepPayload = z.union([
-  z.array(z.object({ position: z.number().int().min(1), track: z.string().uuid() })),
-  z.array(z.number().int().min(0)),
-  z.array(z.array(z.object({ amount: z.number().int().min(1), id: z.string().uuid() }))),
-  z.array(z.object({ id: z.string().uuid(), points: z.number().int().min(0) })),
-  z.array(z.object({ id: z.string().uuid(), pool: z.string().uuid(), tier: z.string().optional() })),
-]);
-
-/** A plan's steps' payloads, by step: what a level wizard answered so far. */
-const planSteps = z.record(z.string().min(1), stepPayload);
 
 /** A step's name, as its ruleset lists it. */
 const stepParams = characterIdParam.extend({ step: z.string().min(1) });

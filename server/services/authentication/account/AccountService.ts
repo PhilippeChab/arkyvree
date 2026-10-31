@@ -14,15 +14,19 @@ import {
   PasswordResets,
   Players,
   Rulesets,
-  Sessions,
   StarredRulesets,
   Users,
 } from "@/server/repositories/index.ts";
 import { purgeAttachmentsForRecords } from "@/server/services/attachments/index.ts";
-import { assertNotTaken, toSafeUser, withTakenRefusal } from "@/server/services/authentication/accounts.ts";
+import {
+  assertNotTaken,
+  signOutEverywhere,
+  toSafeUser,
+  withTakenRefusal,
+} from "@/server/services/authentication/accounts.ts";
 import { createCode, hasRecentCode, verifyCode } from "@/server/services/authentication/codes.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { Session, SessionRow } from "@/shared/relations.ts";
 
 class AccountService {
   async cancelEmailChange(session: Session) {
@@ -76,7 +80,7 @@ class AccountService {
       await Players.archive(tx, { userId });
       await Invites.archive(tx, { userId });
       await StarredRulesets.archive(tx, { userId });
-      await Sessions.archive(tx, { userId });
+      await signOutEverywhere(tx, userId);
       await EmailVerifications.archive(tx, { userId });
       await PasswordResets.archive(tx, { userId });
       await OauthAccounts.archive(tx, { userId });
@@ -141,7 +145,7 @@ class AccountService {
     });
   }
 
-  async updatePassword(session: Session, currentPassword: string, newPassword: string) {
+  async updatePassword(session: SessionRow, currentPassword: string, newPassword: string) {
     return await withTransaction(async (tx) => {
       const user = await Users.findOne(tx, { id: session.userId });
       if (!user) throw new InternalError("User not found");
@@ -159,7 +163,8 @@ class AccountService {
       const rows = await Users.update(tx, { passwordDigest: newHash }, { id: session.userId });
       const updatedUser = rows[0];
       if (!updatedUser) throw new InternalError("Failed to update password");
-      await Sessions.archive(tx, { userId: session.userId, exceptId: session.id });
+      // Whatever had the old password is cut off: but the session changing it
+      await signOutEverywhere(tx, session.userId, session.id);
 
       await Activities.create(tx, {
         userId: session.userId,

@@ -7,11 +7,11 @@ import { db } from "@/server/database/index.ts";
 import { isProduction } from "@/server/environment.ts";
 import { UnauthorizedError } from "@/server/errors/index.ts";
 import { SESSION_TTL_SECONDS, Sessions, Users } from "@/server/repositories/index.ts";
-import type { Session, User } from "@/shared/relations.ts";
+import type { SessionRow, User } from "@/shared/relations.ts";
 
 export interface SessionContext {
   Variables: {
-    requestSession: Session;
+    requestSession: SessionRow;
     requestUser: User;
   };
 }
@@ -49,7 +49,7 @@ export function setSessionCookie(c: Context, sessionId: string) {
  * or when the session or its user (a demo's) has expired. What every signed-in request takes; a route that also serves a
  * signed-out visitor (the websocket, a demo's start) takes `findSignedIn`.
  */
-export async function findRequestSession(sessionId: string | undefined): Promise<{ session: Session; user: User }> {
+export async function findRequestSession(sessionId: string | undefined): Promise<{ session: SessionRow; user: User }> {
   if (!sessionId) throw new UnauthorizedError("Invalid session");
 
   const session = await Sessions.findOne(db, { id: sessionId });

@@ -9,6 +9,7 @@ export const QUERY_KEYS = {
      */
     requests: ["auth", "requests"] as const,
     linkedAccounts: ["auth", "linkedAccounts"] as const,
+    apiKeys: ["auth", "apiKeys"] as const,
   },
   rulesets: {
     lists: ["rulesets", "list"] as const,
