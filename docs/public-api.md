@@ -72,9 +72,9 @@ answer is the read's shape. A delete (a character's archive, an entity's, an ite
 
 - An edit sends back the `updatedAt` it read (a character's, an entry's, a modifier's, a ruleset's), and is refused
   with a 409 when the row changed since, as the app's forms are.
-- A level is saved as the wizard saves one: a plan's steps, the payloads `POST …/level-plan` answered; `force` saves it
-  past the rules' issues, as the wizard's confirm does. An edit (`PUT …/levels/{advancementId}`) takes the saved plan
-  (`GET …/levels/{advancementId}/plan`) without its plan step.
+- A level is saved as the wizard saves one: a plan's steps, the payloads `POST …/level-plan` answered; `force` saves
+  it past the rules' issues, as the wizard's confirm does. An edit (`PUT …/levels/{advancementId}`) takes the saved
+  plan (`GET …/levels/{advancementId}/plan`) without its plan step.
 - A fork's entity restored (`POST …/entities/{kind}/{entityId}/restore`) is named by its parent's id, which its copy
   shows as.
 
