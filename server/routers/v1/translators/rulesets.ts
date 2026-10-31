@@ -2,12 +2,13 @@
 
 import type { z } from "zod";
 
-import type {
-  v1Ruleset,
-  v1RulesetChanges,
-  v1RulesetExtensions,
-  v1RulesetSettings,
-  v1RulesetSummary,
+import {
+  type v1Ruleset,
+  type v1RulesetChanges,
+  type v1RulesetExtensions,
+  v1RulesetPermissions,
+  type v1RulesetSettings,
+  type v1RulesetSummary,
 } from "@/server/routers/v1/schemas/rulesets.ts";
 import type { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
 import type { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
@@ -15,6 +16,7 @@ import type { RulesetsService } from "@/server/services/rulesets/index.ts";
 import type { RulesetSettingsService } from "@/server/services/rulesets/settings/index.ts";
 
 import type { Answer } from "./answers.ts";
+import { pickShape } from "./picks.ts";
 
 /** A ruleset in a list, as the app's own API answers it. */
 type RulesetListItem = Answer<typeof RulesetsService.getRulesets>["items"][number];
@@ -24,7 +26,7 @@ export function toV1Ruleset(ruleset: Answer<typeof RulesetsService.getRuleset>):
   return {
     ...toV1RulesetSummary(ruleset),
     contributorRole: ruleset.contributorRole,
-    permissions: ruleset.permissions,
+    permissions: pickShape(v1RulesetPermissions, ruleset.permissions),
   };
 }
 

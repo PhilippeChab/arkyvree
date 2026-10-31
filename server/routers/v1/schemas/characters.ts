@@ -9,20 +9,6 @@ import { planSteps } from "@/server/routers/api/validation.ts";
 
 import { buildPageSchema, v1Id, v1Named } from "./references.ts";
 
-/** What the key's user may do with a character. */
-const v1CharacterPermissions = z
-  .strictObject({
-    canArchive: z.boolean(),
-    canEdit: z.boolean(),
-    canEditPortrait: z.boolean(),
-    canInviteContributors: z.boolean(),
-    canLeave: z.boolean(),
-    canManageContributors: z.boolean(),
-    canReadContributors: z.boolean(),
-    canShare: z.boolean(),
-  })
-  .meta({ description: "What the key's user may do with the character", id: "CharacterPermissions" });
-
 /** How many of a pool's picks are allowed, spent and left. */
 const v1Room = z.strictObject({ allowed: z.number(), available: z.number(), spent: z.number() });
 
@@ -141,6 +127,20 @@ const v1StepOptionGroup = z.strictObject({
   name: z.string(),
   requirementTree: z.string().optional(),
 });
+
+/** What the key's user may do with a character. */
+export const v1CharacterPermissions = z
+  .strictObject({
+    canArchive: z.boolean(),
+    canEdit: z.boolean(),
+    canEditPortrait: z.boolean(),
+    canInviteContributors: z.boolean(),
+    canLeave: z.boolean(),
+    canManageContributors: z.boolean(),
+    canReadContributors: z.boolean(),
+    canShare: z.boolean(),
+  })
+  .meta({ description: "What the key's user may do with the character", id: "CharacterPermissions" });
 
 /** A character's sheet. */
 export const v1Character = z

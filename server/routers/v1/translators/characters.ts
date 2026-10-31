@@ -5,12 +5,13 @@
 
 import type { z } from "zod";
 
-import type {
-  v1Character,
-  v1CharacterCard,
-  v1Inventory,
-  v1LinkRoom,
-  v1Modifiers,
+import {
+  type v1Character,
+  type v1CharacterCard,
+  v1CharacterPermissions,
+  type v1Inventory,
+  type v1LinkRoom,
+  type v1Modifiers,
 } from "@/server/routers/v1/schemas/characters.ts";
 import type { CharactersService } from "@/server/services/characters/index.ts";
 import type { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
@@ -18,6 +19,7 @@ import type { CharacterModifiersService } from "@/server/services/characters/mod
 
 import type { Answer } from "./answers.ts";
 import { toV1Page, type V1Page } from "./pages.ts";
+import { pickShape } from "./picks.ts";
 
 /** A character's card, as the app's own API answers it in a page of them. */
 type Card = Answer<typeof CharactersService.getCharacters>["items"][number];
@@ -31,7 +33,7 @@ export function toV1Character(sheet: Answer<typeof CharactersService.getCharacte
     name: sheet.name,
     ownerId: sheet.userId,
     parentCharacterId: sheet.parentCharacterId,
-    permissions: sheet.permissions,
+    permissions: pickShape(v1CharacterPermissions, sheet.permissions),
     rulesetId: sheet.rulesetId,
     rulesetName: sheet.rulesetName,
     sections: sheet.blocks.map((block) => ({ ...block })),

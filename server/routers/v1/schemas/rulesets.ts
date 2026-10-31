@@ -4,6 +4,27 @@ import { z } from "zod";
 
 import { buildPageSchema, v1Id } from "./references.ts";
 
+/** What the key's user may do with a ruleset. */
+export const v1RulesetPermissions = z
+  .strictObject({
+    canBeExtension: z.boolean(),
+    canEditEntities: z.boolean(),
+    canEditRuleset: z.boolean(),
+    canFork: z.boolean(),
+    canInviteContributors: z.boolean(),
+    canLeave: z.boolean(),
+    canManageAdminContributors: z.boolean(),
+    canManageContributors: z.boolean(),
+    canPublish: z.boolean(),
+    canReadContributors: z.boolean(),
+    canSubscribeExtensions: z.boolean(),
+    canUnarchive: z.boolean(),
+    canUnsubscribeExtensions: z.boolean(),
+    canUpdateContributorRoles: z.boolean(),
+    canViewChanges: z.boolean(),
+  })
+  .meta({ description: "What the key's user may do with it", id: "RulesetPermissions" });
+
 /** A ruleset, in a page of them. */
 export const v1RulesetSummary = z
   .strictObject({
@@ -32,25 +53,7 @@ export const v1Ruleset = v1RulesetSummary
       .enum(["Admin", "Editor", "Viewer"])
       .nullable()
       .meta({ description: "The key's user's role, when they contribute to it" }),
-    permissions: z
-      .strictObject({
-        canBeExtension: z.boolean(),
-        canEditEntities: z.boolean(),
-        canEditRuleset: z.boolean(),
-        canFork: z.boolean(),
-        canInviteContributors: z.boolean(),
-        canLeave: z.boolean(),
-        canManageAdminContributors: z.boolean(),
-        canManageContributors: z.boolean(),
-        canPublish: z.boolean(),
-        canReadContributors: z.boolean(),
-        canSubscribeExtensions: z.boolean(),
-        canUnarchive: z.boolean(),
-        canUnsubscribeExtensions: z.boolean(),
-        canUpdateContributorRoles: z.boolean(),
-        canViewChanges: z.boolean(),
-      })
-      .meta({ description: "What the key's user may do with it", id: "RulesetPermissions" }),
+    permissions: v1RulesetPermissions,
   })
   .meta({ description: "A ruleset, with what the key's user may do with it", id: "Ruleset" });
 
