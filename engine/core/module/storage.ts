@@ -154,7 +154,7 @@ export interface StorageRegistries {
 export interface StoredAdvancement {
   characterId: string;
   createdAt: string;
-  entryId: string | null;
+  entryId: string;
   id: string;
   position: number;
   updatedAt: string;

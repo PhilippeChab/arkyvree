@@ -50,9 +50,7 @@ export type CharacterPicks = Record<string, StoredPick[]>;
 export default class CharacterInputs {
   /** Advancements, each one's entry resolved. */
   private static resolveAdvancements(advancements: StoredAdvancement[], cow: CowData): StoredAdvancement[] {
-    return advancements.map((advancement) =>
-      advancement.entryId === null ? advancement : { ...advancement, entryId: cow.resolve(advancement.entryId) },
-    );
+    return advancements.map((advancement) => ({ ...advancement, entryId: cow.resolve(advancement.entryId) }));
   }
 
   /** Links by role, each one's entity resolved. */

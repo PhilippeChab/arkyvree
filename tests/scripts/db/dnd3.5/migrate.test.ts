@@ -287,6 +287,15 @@ async function pickRows() {
   return rows.map((row) => row.line);
 }
 
+/** Whether an advancement's entry columns take no null, each as one line: what 0104 changes. */
+async function requiredEntries() {
+  const { rows } = await db.execute<{ line: string }>(sql`
+    SELECT attname || ' ' || attnotnull AS line FROM pg_attribute
+    WHERE attrelid = 'character.advancements'::regclass AND attname IN ('entry_id', 'entry_type') ORDER BY attname
+  `);
+  return rows.map((row) => row.line);
+}
+
 /**
  * Every requirement, each as one line (its owner, its level, and its condition or its group), and every character's
  * last change: what 0100 leaves.
@@ -300,6 +309,19 @@ async function requirementRows() {
     ORDER BY line
   `);
   return rows.map((row) => row.line);
+}
+
+/**
+ * An advancement's entry, as the migrations before 0104 left it: its columns nullable, and its index of the rows with
+ * one. What the migrations before 0104 ran on.
+ */
+async function restoreEntriesBefore0104() {
+  await db.execute(sql`
+    ALTER TABLE character.advancements ALTER COLUMN entry_id DROP NOT NULL;
+    ALTER TABLE character.advancements ALTER COLUMN entry_type DROP NOT NULL;
+    DROP INDEX character.advancements_entry_idx;
+    CREATE INDEX advancements_entry_idx ON character.advancements (entry_id) WHERE entry_id IS NOT NULL;
+  `);
 }
 
 /**
@@ -1492,5 +1514,48 @@ describe("0100_level-order-requirements", () => {
     // A second run deletes nothing more
     for (const statement of statementsOf("0100_level-order-requirements.sql")) await db.execute(sql.raw(statement));
     expect(await requirementRows()).toEqual(expected);
+  }, 30_000);
+});
+
+describe("0104_required-advancement-entry", () => {
+  test("makes an advancement's entry required and its index every row's, and rewrites no row", async () => {
+    const fresh = await definitionsOf("character", "advancements");
+    expect(await requiredEntries()).toEqual(["entry_id true", "entry_type true"]);
+    await restoreEntriesBefore0104();
+    expect(await requiredEntries()).toEqual(["entry_id false", "entry_type false"]);
+    const placed = sql`SELECT id, ctid::text AS place, xmin::text AS version FROM character.advancements ORDER BY id`;
+    const { rows: stored } = await db.execute(placed);
+    expect(stored.length).toBeGreaterThan(0);
+
+    for (const statement of statementsOf("0104_required-advancement-entry.sql")) await db.execute(sql.raw(statement));
+
+    // What a fresh database's migrations give, every row as it was, in its place
+    expect(await definitionsOf("character", "advancements")).toEqual(fresh);
+    expect(await requiredEntries()).toEqual(["entry_id true", "entry_type true"]);
+    expect((await db.execute(placed)).rows).toEqual(stored);
+  }, 30_000);
+
+  test("refuses an advancement with no entry, naming it", async () => {
+    const characterId = await findHeldCharacter();
+    await restoreEntriesBefore0104();
+    const { rows: entryless } = await db.execute<{ id: string }>(sql`
+      INSERT INTO character.advancements (character_id, position) VALUES (${characterId}, 100), (${characterId}, 101)
+      RETURNING id
+    `);
+
+    const refused = await db
+      .transaction(async (tx) => {
+        for (const statement of statementsOf("0104_required-advancement-entry.sql"))
+          await tx.execute(sql.raw(statement));
+      })
+      .catch((error: unknown) => error);
+    expect(refused).toMatchObject({
+      cause: {
+        message: `Advancements with no entry: ${entryless
+          .map((row) => row.id)
+          .toSorted()
+          .join(", ")}`,
+      },
+    });
   }, 30_000);
 });

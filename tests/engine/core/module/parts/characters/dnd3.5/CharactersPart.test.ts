@@ -188,7 +188,7 @@ describe("The characters part, whatever its ruleset describes", () => {
     for (const sheet of [shown, hidden]) {
       expect(Object.keys(sheet)).toEqual([
         ...["id", "userId", "kind", "parentCharacterId", "name", "rulesetId", "rulesetName", "baseRules"],
-        ...["isCustomRuleset", "deletedAt", "updatedAt", "shareToken"],
+        ...["deletedAt", "updatedAt", "shareToken"],
         ...["requirements", "modifiers", "validation", "summary", "blocks"],
       ]);
       expect(sheet).toMatchObject({ id: "character", userId: "owner", shareToken: null });
@@ -208,7 +208,6 @@ describe("The characters part, whatever its ruleset describes", () => {
       ...COLUMNS,
       rulesetName: "Rules",
       baseRules: DND35_BASE_RULES,
-      isCustomRuleset: false,
       shareToken: null,
       requirements: {},
       modifiers: {},

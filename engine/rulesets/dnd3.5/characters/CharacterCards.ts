@@ -19,11 +19,7 @@ export default class CharacterCards {
    * and classes, a copied or renamed one by its own name: its race's chip, which a partly seen character shows, then
    * each class at the character's level in it (`ClassLevels.countByClass`).
    */
-  static describe(
-    data: CardData,
-    character: Pick<Character, "links">,
-    levels: { entryId: string | null }[],
-  ): RulesetCard {
+  static describe(data: CardData, character: Pick<Character, "links">, levels: { entryId: string }[]): RulesetCard {
     const classLevels = [...ClassLevels.countByClass(data.classLevelsById, levels)].map(([classId, level]) => ({
       klass: data.classesById.get(classId)?.name || "Unknown",
       level,

@@ -69,12 +69,7 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
    * too, once a gap a forced level left before the rule is filled. One the character holds already is never its
    * class's next, and its refusal says so.
    */
-  private checkNextLevel(
-    levels: { entryId: string | null }[],
-    className: string,
-    classLevel: KlassLevel,
-    label: string,
-  ) {
+  private checkNextLevel(levels: { entryId: string }[], className: string, classLevel: KlassLevel, label: string) {
     const { classLevelsById } = this.dnd35;
     const next = LevelRules.findNextClassLevel(classLevelsById, levels, classLevel.ownerId);
     if (next === classLevel.position) return;
@@ -128,7 +123,7 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     const distributed = this.rules.distributePicks(this.view, this.character, classLevelEntries, picks);
 
     // Each level sees the saved ones and those planned before it
-    const otherLevels: { entryId: string | null }[] = [...rows.advancements];
+    const otherLevels: { entryId: string }[] = [...rows.advancements];
     const planned: PlannedLevel[] = [];
     for (const [i, { klass, classLevel }] of classLevelEntries.entries()) {
       const { hp, abilityIncreases } = levels[i];
