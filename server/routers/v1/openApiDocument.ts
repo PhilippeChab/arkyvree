@@ -44,11 +44,7 @@ const ERROR_RESPONSES = {
   default: { $ref: "#/components/responses/Error" },
 };
 
-/**
- * A router's routes, each its handlers' description and validations, by path and method.
- *
- * A file a route answers instead of JSON (a PDF), its bytes as they are.
- */
+/** A file a route answers instead of JSON (a PDF), its bytes as they are. */
 const FILE_SCHEMA = { format: "binary", type: "string" };
 
 /** Where a validation's input is in the request, as the document names it. */
@@ -64,6 +60,7 @@ const SECURITY_SCHEMES = {
   },
 };
 
+/** A router's routes, each its handlers' description and validations, by path and method. */
 function collectRoutes(router: Router) {
   const routes = new Map<string, Map<string, RouteParts>>();
   for (const { handler, method, path } of router.routes) {
