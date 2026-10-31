@@ -101,7 +101,7 @@ Inline `<x>.userId === session.userId` comparisons are only acceptable when they
 
 - "Is this invite addressed to me?" — `invite.userId !== session.userId` in the invite services' `acceptInvite`
 - "Did I just oauth-link this account to myself?" — `existing.userId === session.userId`
-- "Am I removing my own player slot?" — `isSelfRemoval = player.userId === session.userId` (a branching predicate, not a gate)
+- "Am I removing my own player slot?" — `player.userId === session.userId` (a branching predicate, not a gate)
 - Boolean predicates an attachable record registers — the `isOwner(session, recordId)` of `ATTACHABLE_TYPES`' entries (`server/services/attachments/AttachmentsService.ts`): an avatar's `session.userId === recordId` (a portrait's asks `CharactersPolicy.isPortraitEditable`)
 
 Anything that _throws_ on the basis of ownership is a permission check and should move into a Policy.

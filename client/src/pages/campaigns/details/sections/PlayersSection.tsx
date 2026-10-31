@@ -263,9 +263,10 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
               const isCurrentUser = player.userId === currentUserId;
               const canRevokeInvite = slot.state === "pending" && canRevokeInvites;
               // Its own seat the session leaves, another's the manager removes: but the last Game Master's, whom the
-              // server neither demotes nor lets leave
-              const canRemove = !player.isLastGameMaster && (isCurrentUser ? canLeave : canManagePlayers);
-              const canEdit = !player.isLastGameMaster && canManagePlayers;
+              // server neither demotes nor lets leave, and a seat archived with its user's account, which it no longer finds
+              const isHeld = !player.isLastGameMaster && !player.deletedAt;
+              const canRemove = isHeld && (isCurrentUser ? canLeave : canManagePlayers);
+              const canEdit = isHeld && canManagePlayers;
               const hasActions = canEdit || canRevokeInvite || canRemove;
 
               return (
