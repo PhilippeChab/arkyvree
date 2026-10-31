@@ -2,8 +2,9 @@ import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
-import { Characters } from "@/server/repositories/index.ts";
+import { CharacterContributors, Characters } from "@/server/repositories/index.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
+import type { Session } from "@/shared/relations.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { createTestUser } from "@/tests/support/users.ts";
@@ -43,6 +44,54 @@ describe("CharactersPolicy", () => {
     await addCharacterContributor(character.id, stranger, user.id);
     expect((await CharactersPolicy.for(db, other, character)).isActiveContributor).toBe(true);
     expect((await CharactersPolicy.for(db, other, child)).isReadable()).toBe(true);
+  });
+
+  test("forMany: each of a page's policies as its for builds it, its contributions read at once", async () => {
+    const { character, owner, other, user, stranger } = await setup();
+    const child = await createChild(user.id, character.id);
+    const [archived] = await Characters.archive(db, { id: (await createTestCharacter(user.id)).id });
+    const page = [character, child, archived];
+    // Whether the session edits, reads and may edit each of the page's characters, by forMany and by for
+    const standings = async (session: Pick<Session, "userId">) => {
+      const policies = await CharactersPolicy.forMany(db, session, page);
+      const many = page.map((entity) => {
+        const policy = policies.get(entity.id);
+        return [policy?.isEditor(), policy?.isReadable(), policy?.isEditable()];
+      });
+      const one = [];
+      for (const entity of page) {
+        const policy = await CharactersPolicy.for(db, session, entity);
+        one.push([policy.isEditor(), policy.isReadable(), policy.isEditable()]);
+      }
+      expect(many).toEqual(one);
+      return many;
+    };
+    // Its owner edits its characters, an archived one read-only, and reads the child; a stranger none
+    expect(await standings(owner)).toEqual([
+      [true, true, true],
+      [false, true, true],
+      [true, true, false],
+    ]);
+    expect(await standings(other)).toEqual([
+      [false, false, false],
+      [false, false, false],
+      [false, false, false],
+    ]);
+    // Invited, it's no contributor yet; once active, the character and its child are its
+    const [invite] = await CharacterContributors.create(db, {
+      characterId: character.id,
+      userId: stranger.id,
+      email: stranger.emailAddress,
+      role: "Editor",
+      invitedBy: user.id,
+    });
+    expect((await standings(other))[0]).toEqual([false, false, false]);
+    await CharacterContributors.update(db, { status: "Active" }, { id: invite.id });
+    expect(await standings(other)).toEqual([
+      [true, true, true],
+      [false, true, true],
+      [false, false, false],
+    ]);
   });
 
   test("canArchive, canShare and canLink: a player character's owner; anyone else as an unknown character", async () => {

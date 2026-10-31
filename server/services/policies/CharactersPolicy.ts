@@ -49,6 +49,34 @@ export default class CharactersPolicy extends BasePolicy<Character> {
     return new CharactersPolicy(session, character, { isActiveContributor: role !== undefined });
   }
 
+  /**
+   * The session's policies on a page of characters (`characters`), by id, each what `for` builds: its active
+   * contributions to the page's player characters read at once, and a child's standing on its parent as `for` reads it.
+   */
+  static async forMany(
+    db: Db,
+    session: Pick<Session, "userId">,
+    characters: Character[],
+  ): Promise<Map<string, CharactersPolicy>> {
+    const contributed = characters.filter(
+      (character) => Engine.storage().isPlayerKind(character.kind) && character.userId !== session.userId,
+    );
+    const contributions = await CharacterContributors.findMany(db, {
+      characterIds: contributed.map((character) => character.id),
+      status: "Active",
+      userId: session.userId,
+    });
+    const contributedIds = new Set(contributions.map((contribution) => contribution.characterId));
+    const policies = new Map<string, CharactersPolicy>();
+    for (const character of characters) {
+      const policy = Engine.storage().isPlayerKind(character.kind)
+        ? new CharactersPolicy(session, character, { isActiveContributor: contributedIds.has(character.id) })
+        : await CharactersPolicy.for(db, session, character);
+      policies.set(character.id, policy);
+    }
+    return policies;
+  }
+
   /** The child's parent is archived: looked up only for a child. */
   private readonly isParentArchived: boolean;
 
