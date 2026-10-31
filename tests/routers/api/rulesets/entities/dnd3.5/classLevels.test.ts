@@ -137,7 +137,7 @@ describe("rulesets class levels", () => {
     await expectStatus(guestLevels.$get({ param: classParam(id, classId) }), 401);
   });
 
-  test("rejects a level without a number or out of 1–20", async () => {
+  test("rejects a level without a number, out of 1–20 or with a key its body doesn't take", async () => {
     const { id, classId } = await setup();
     for (const json of [
       { fields: { [CLASS_LEVEL_BAB]: 1 } },
@@ -147,6 +147,11 @@ describe("rulesets class levels", () => {
       const refused = await expectStatus(levels.$post({ param: classParam(id, classId), json: json as never }), 400);
       expect(await refused.json()).toMatchObject({ issues: [{ category: "position" }] });
     }
+    const extra = { fields: { [CLASS_LEVEL_BAB]: 1 }, position: 2, extra: 1 } as never;
+    const unknown = await expectStatus(levels.$post({ param: classParam(id, classId), json: extra }), 400);
+    expect(await unknown.json()).toMatchObject({
+      issues: [{ category: "json", message: 'Unrecognized key: "extra"' }],
+    });
   });
 
   test("refuses a level its class already has, written since its view was read too", async () => {

@@ -63,7 +63,7 @@ describe("rulesets class progression", () => {
       { levels: "all" },
       { levels: [{ levelId: "not-an-id" }] },
       { levels: [{ levelId: first.id, fields: 1 }] },
-      { pools: [{ aptitudeId: first.id }] },
+      { pools: [{ id: first.id }] },
       { ownedTokens: [{ id: "not-an-id", updatedAt: first.updatedAt }] },
     ])
       await expectStatus(progression.$put({ param, json: json as never }), 400);
