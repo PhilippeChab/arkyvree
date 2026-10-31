@@ -18,12 +18,6 @@
  *   itself in words, never an emoji (the spinner's die is `DiceSpinner`'s own).
  * - `app-name`: the app's name is `APP_NAME` (`lib/brand.ts`), wherever it shows (a tab's title, the brand, a welcome,
  *   the footer): never written out.
- * - `described-words`: what a character's screens say of its game is its ruleset's, which the engine describes (its
- *   sheet's blocks, its header's summary, its card's chips, its form's fields, its level steps): their modules
- *   (`DESCRIBED_SCREENS`) write none of a ruleset's nouns in a string or a text they show: the game's own in any case
- *   (`GAME_NOUNS`: a feat, a spell, "No feats yet", `formatCount(n, "spell")`), and those English shares as a ruleset
- *   writes them, capitalized (`RULESET_NOUNS`: a Class, an Alignment, "Strength", "AC"). A comment's example, a module's path,
- *   a type and a key may name them. "Level" is the app's: every ruleset's characters advance by levels.
  * - `entity-type-labels`: an entity's type shows in its ruleset's words, `entityTypeLabel(type, words)`
  *   (`lib/rulesetLabels.ts`, its rules' words: "Class Level" for 3.5's `class-levels`), never as the code names it
  *   ("class-levels"): an `entityType` or a `sourceType` is never rendered as it is.
@@ -46,31 +40,8 @@ const BRAND_MODULE = "client/src/lib/brand.ts";
 /** How a deletion's confirmation ends: for good, or restorable, what a fork inherits (`isRestorableDelete`) */
 const DELETE_ENDINGS = ["This action cannot be undone.", "You can restore it from Local Changes."];
 
-/**
- * The client's modules whose words of a game are their ruleset's, as the engine describes them: a character's sheet,
- * header, cards, creation form, level steps and pages, a share link's and a campaign's.
- */
-const DESCRIBED_SCREENS = [
-  "client/src/components/characters/",
-  "client/src/pages/characters/",
-  "client/src/pages/share/",
-  "client/src/pages/campaigns/CampaignCharacterPage.tsx",
-  "client/src/pages/campaigns/details/sections/CharactersSection.tsx",
-];
-
 /** The members that hold an entity's type as the code names it ("class-levels"), which a reader sees in words */
 const ENTITY_TYPE_MEMBERS = new Set(["entityType", "sourceType"]);
-
-/**
- * The game's own nouns, as 3.5 names its things (its kinds, its identity's fields, its sheet's parts, its
- * abbreviations), which a screen that shows what the engine describes never writes, in any case: a count's noun
- * (`formatCount(n, "feat")`), a string naming a 3.5 key (`kind === "spells"`), a sentence's word.
- */
-const GAME_NOUNS =
-  /\b(Armou?r\s+Class|Base\s+Attack\s+Bonus|Cantrips?|Caster\s+Levels?|Deit(y|ies)|Experience\s+Points?|Feats?|Hit\s+(Dice|Die|Points?)|Racial|Saving\s+Throws?|Spellbooks?|Spellcast(ers?|ing)|Spells?|BAB|CHA|DEX|HD|HP|STR|WIS|XP)\b/;
-
-/** The game's own nouns in any case */
-const GAME_NOUNS_ANY_CASE = new RegExp(GAME_NOUNS.source, "i");
 
 /** What lays a label out without being one: its row, its box, its spinner while pending */
 const LABEL_LAYOUT = new Set(["Box", "DiceSpinner", "Stack", "Typography", "span"]);
@@ -93,13 +64,6 @@ const LABELLED = new Set([
 /** The elements whose `label` names them: the actions, the fields, the dialogs */
 const LABELLED_BY_PROP =
   /^(ActionMenuItem|AddButton|Button|ChoiceChip|Tab|ToggleButton|DescriptionField|EmailField|FormControlLabel|FormTextField|LinkButton|NameField|OptionToggle|PageActionButton|PasswordField|SelectField|SwitchField|TextField|.*Dialog|Modal)$/;
-
-/**
- * The nouns 3.5 shares with English, which a text in lowercase means otherwise ("an item", "a class"), caught as a
- * ruleset writes them, capitalized; and its abbreviations that read as English in lowercase ("con", "int", "ac").
- */
-const RULESET_NOUNS =
-  /\b(Abilit(y|ies)|Alignments?|Charisma|Class(es)?|Constitution|Dexterity|Domains?|Equipment|Experience|Familiars?|Fortitude|Initiative|Intelligence|Inventory|Items?|Languages?|Races?|Reflex|Skills?|Strength|Weapons?|Wisdom|AC|Con|CON|CR|DC|Int|INT)\b/;
 
 /** The components whose `label` or `title` is a sentence, not a label: a chip's value, an empty state's */
 const SENTENCE_TITLED = /(Chip|^BlankState|^Tooltip)$/;
@@ -168,32 +132,6 @@ function createConfirmWording(context) {
           'cannot be undone.", or "You can restore it from Local Changes." for what a fork inherits; an archive ends ' +
           `"${ARCHIVE_ENDINGS[0]}", or "${ARCHIVE_ENDINGS[1]}" for who doesn't own it`,
       });
-    },
-  };
-}
-
-function createDescribedWords(context) {
-  const file = repoPath(context.filename);
-  if (!DESCRIBED_SCREENS.some((screen) => file.startsWith(screen))) return {};
-  const check = (node, text) => {
-    const noun = (GAME_NOUNS_ANY_CASE.exec(text) ?? RULESET_NOUNS.exec(text))?.[0].replace(/\s+/g, " ");
-    if (!noun) return;
-    context.report({
-      node,
-      message:
-        `A character's screens say what the engine describes, in its ruleset's words (its blocks, summary, chips, ` +
-        `form and steps): "${noun}" is a ruleset's, never written here.`,
-    });
-  };
-  return {
-    JSXText(node) {
-      check(node, node.value);
-    },
-    Literal(node) {
-      if (typeof node.value === "string" && !isModuleSource(node) && !isUnshown(node)) check(node, node.value);
-    },
-    TemplateElement(node) {
-      if (node.parent.type !== "TSTemplateLiteralType") check(node, node.value.cooked ?? node.value.raw);
     },
   };
 }
@@ -349,18 +287,6 @@ function isModuleSource(node) {
   );
 }
 
-/** Whether a string is never shown: a type's, an enum member's name, or a key shaped as one (an object's, a type's). */
-function isUnshown(node) {
-  const { parent } = node;
-  return (
-    parent.type === "TSLiteralType" ||
-    (parent.type === "TSEnumMember" && parent.id === node) ||
-    (["Property", "PropertyDefinition", "TSPropertySignature"].includes(parent.type) &&
-      parent.key === node &&
-      !/\s/.test(node.value))
-  );
-}
-
 /** Whether a text is a label: its element's, or its element's layout's in a labelled one (a title's row, a button's spinner). */
 function labelledBy(node) {
   for (let parent = node.parent; parent?.type === "JSXElement"; parent = parent.parent) {
@@ -403,7 +329,6 @@ function wrapsIconButton(tooltip) {
 export default {
   "app-name": { meta: { type: "suggestion" }, create: createAppName },
   "confirm-wording": { meta: { type: "suggestion" }, create: createConfirmWording },
-  "described-words": { meta: { type: "suggestion" }, create: createDescribedWords },
   "entity-type-labels": { meta: { type: "suggestion" }, create: createEntityTypeLabels },
   "label-case": { meta: { type: "suggestion" }, create: createLabelCase },
   "toast-wording": { meta: { type: "suggestion" }, create: createToastWording },

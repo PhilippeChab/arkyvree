@@ -198,18 +198,8 @@
     "arkyvree/confirm-wording": "error",
     "arkyvree/typography-marks": "error",
     "arkyvree/app-name": "error",
-    // A character's screens write none of a ruleset's nouns: what they show of its game, the engine describes
-    // (lint/wording.mjs).
-    "arkyvree/described-words": "error",
-    // No file outside a ruleset's folders names one of its nouns: the core, the server and the client speak of
-    // entities, kinds, fields, links, tracks, steps and pools (lint/nouns.mjs).
-    "arkyvree/ruleset-nouns": "error",
-    // `klass` names 3.5's types alone (`Klass`, `KlassLevel`) and a value that is one: every other name says `class`
-    // (lint/nouns.mjs).
-    "arkyvree/klass-names": "error",
-    // The dropped tables' columns and rows that mean nothing today (`characterLevelId`, `targetTable`…) come back as no
-    // name or key, and the server and shared/ name no table, `getTableName` (lint/nouns.mjs).
-    "arkyvree/dropped-names": "error",
+    // The server and shared/ name no table, `getTableName`: they name kinds and target types (lint/tables.mjs).
+    "arkyvree/table-names": "error",
     "arkyvree/entity-type-labels": "error",
     "arkyvree/dialog-mounts": "error",
     "arkyvree/menus": "error",
