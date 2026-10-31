@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
+import { Engine } from "@/engine/index.ts";
 import { type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
 import { chainingOperator, requirementOperator } from "@/server/routers/api/rulesets/customization/validation.ts";
 import { v1LabeledRequirements } from "@/server/routers/v1/schemas/entities.ts";
@@ -18,7 +19,14 @@ const requirementFields = {
   valueType: z.string().optional(),
 };
 
-const requirementParams = customizedParams.extend({ requirementId: z.string().uuid() });
+/** A requirement's owner: an entity of a customized kind, or a modifier, whose requirements say when it applies. */
+const requirementOwnerParams = customizedParams.extend({
+  kind: z
+    .enum([...Engine.storage().customizableKinds(), "modifiers"])
+    .meta({ description: "The owner's kind: a customized entity's (3.5: `feats`…), or `modifiers` for a modifier's" }),
+});
+
+const requirementParams = requirementOwnerParams.extend({ requirementId: z.string().uuid() });
 
 /** An entity's requirements and their groups, each with its target's labels and its value's. */
 export default new Hono<ApiKeyContext>()
@@ -29,7 +37,7 @@ export default new Hono<ApiKeyContext>()
       status: 200,
       summary: "An entity's requirements and their groups, each with its target's labels and its value's",
     }),
-    validate("param", customizedParams),
+    validate("param", requirementOwnerParams),
     async (c) => {
       const { entityId, id, kind } = c.req.valid("param");
       const requirements = await RequirementsService.getRequirements(c.var.requestSession, id, kind, entityId);
@@ -43,7 +51,7 @@ export default new Hono<ApiKeyContext>()
       status: 201,
       summary: "Adds a requirement, or a group of them, to an entity, answering its requirements",
     }),
-    validate("param", customizedParams),
+    validate("param", requirementOwnerParams),
     validate("json", z.object(requirementFields)),
     async (c) => {
       const { entityId, id, kind } = c.req.valid("param");

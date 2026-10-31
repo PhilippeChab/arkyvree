@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { z } from "zod";
 
 import { rulesetKind } from "@/drizzle/schema.ts";
-import { type ApiKeyContext, denyDemoUser, describeRoute, validate } from "@/server/middlewares/index.ts";
+import { type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
 import { idParam } from "@/server/routers/api/validation.ts";
 import { v1Ruleset, v1RulesetPage } from "@/server/routers/v1/schemas/rulesets.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
@@ -100,7 +100,6 @@ export default new Hono<ApiKeyContext>()
   .post(
     "/:id/publish",
     describeRoute({ response: v1Ruleset, status: 200, summary: "Publishes a ruleset, or an extension" }),
-    denyDemoUser,
     validate("param", idParam),
     validate(
       "json",

@@ -41,6 +41,35 @@ describe("v1 ruleset writes", () => {
     expect((await expectOk(rulesets.unarchive.$post({ param }))).status).not.toBe("Archived");
   });
 
+  test("publishes a ruleset", async () => {
+    const { id, rulesets } = await keyedFork();
+    expect(await expectOk(rulesets.publish.$post({ json: {}, param: { id } }))).toMatchObject({
+      id,
+      status: "Published",
+    });
+  });
+
+  test("gives a modifier requirements, which say when it applies", async () => {
+    const { id, rulesets } = await keyedFork();
+    const { aptMap } = await getSeedCtx();
+    const feat = await expectOk(
+      rulesets.entities[":kind"].$post({
+        json: { links: { listedIn: [{ toId: aptMap.General! }] }, name: "Keyed Feat" },
+        param: { id, kind: "feats" },
+      }),
+    );
+    const json = { operator: "add", target: "abilities.strength.misc", value: "2" };
+    const customization = rulesets.customization[":kind"][":entityId"];
+    const [modifier] = await expectOk(
+      customization.modifiers.$post({ json, param: { entityId: feat.id, id, kind: "feats" } }),
+    );
+    const param = { entityId: modifier!.id, id, kind: "modifiers" as const };
+    expect(
+      await expectOk(customization.requirements.$post({ json: { chainingOperator: "and", level: "0" }, param })),
+    ).toEqual([expect.objectContaining({ chainingOperator: "and" })]);
+    expect(await expectOk(customization.requirements.$get({ param }))).toHaveLength(1);
+  });
+
   test("updates a ruleset's settings", async () => {
     const { id, rulesets } = await keyedFork();
     const { abilityMap } = await getSeedCtx();
