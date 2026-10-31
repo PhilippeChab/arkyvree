@@ -14,7 +14,6 @@ class CharacterInventoryService {
     characterId: string,
     itemId: string,
     quantity: number,
-    equipped: boolean,
     location: string | null,
     totalCharges: number | null,
     remainingCharges: number | null,
@@ -26,7 +25,7 @@ class CharacterInventoryService {
 
       return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
         const character = await readCharacterInput(tx, characterRecord);
-        const request = { equipped, location, remainingCharges, totalCharges, groups };
+        const request = { location, remainingCharges, totalCharges, groups };
         // The item the view shows for the id sent (a copy's, when the ruleset copied it), refused when it shows none
         const fields = Engine.for(scope).character(character).planInventoryEntry({ itemId, request }, force);
         const rows = await CharacterInventory.create(tx, { ...fields, characterId, quantity });
@@ -100,7 +99,6 @@ class CharacterInventoryService {
     characterId: string,
     entryId: string,
     quantity: number,
-    equipped: boolean,
     location: string | null,
     totalCharges: number | null,
     remainingCharges: number | null,
@@ -116,7 +114,7 @@ class CharacterInventoryService {
         if (!existing) throw new NotFoundError("Item not in inventory");
 
         const character = await readCharacterInput(tx, characterRecord);
-        const request = { equipped, location, remainingCharges, totalCharges, groups };
+        const request = { location, remainingCharges, totalCharges, groups };
         const fields = Engine.for(scope).character(character).planInventoryEntry({ entry: existing, request }, force);
 
         const rows = await CharacterInventory.update(

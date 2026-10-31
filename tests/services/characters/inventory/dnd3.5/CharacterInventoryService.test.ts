@@ -34,7 +34,6 @@ import type { SizeType } from "@/vocabulary/dnd3.5/sizes.ts";
 
 interface Placement {
   charges?: [number | null, number | null];
-  equipped?: boolean;
   force?: boolean;
   groups?: number[];
   location?: ItemLocation | null;
@@ -48,21 +47,13 @@ function add(
   session: Session,
   characterId: string,
   itemId: string,
-  {
-    quantity = 1,
-    equipped = false,
-    location = null,
-    groups = [],
-    charges = [null, null],
-    force = false,
-  }: Placement = {},
+  { quantity = 1, location = null, groups = [], charges = [null, null], force = false }: Placement = {},
 ) {
   return CharacterInventoryService.addItem(
     session,
     characterId,
     itemId,
     quantity,
-    equipped,
     location,
     charges[0],
     charges[1],
@@ -72,11 +63,7 @@ function add(
 }
 
 function equipped(location: ItemLocation, ...groups: number[]): Placement {
-  return {
-    equipped: true,
-    location,
-    groups,
-  };
+  return { location, groups };
 }
 
 /** The character's entry of the item, by the item: a test carries each item once. An id it doesn't carry is its own. */
@@ -137,14 +124,7 @@ async function update(
   session: Session,
   characterId: string,
   itemId: string,
-  {
-    quantity = 1,
-    equipped = false,
-    location = null,
-    groups = [],
-    charges = [null, null],
-    force = false,
-  }: Placement = {},
+  { quantity = 1, location = null, groups = [], charges = [null, null], force = false }: Placement = {},
   updatedAt?: string,
 ) {
   return CharacterInventoryService.updateItem(
@@ -152,7 +132,6 @@ async function update(
     characterId,
     await entryOf(characterId, itemId),
     quantity,
-    equipped,
     location,
     charges[0],
     charges[1],
@@ -194,7 +173,7 @@ describe("InventoryService", () => {
       {
         itemId: item.id,
         quantity: 3,
-        equipped: false,
+        location: null,
         item: {
           name: item.name,
           fields: { [WEAPON_PROFICIENCY]: "Martial" },
@@ -294,9 +273,9 @@ describe("InventoryService", () => {
       expect(inventory.find((entry) => entry.itemId === shield.id)?.slotLabel).toBe("Off Hand (Sets 1, 3)");
 
       // Carried, or worn outside the hands, it's in no set
-      expect(
-        await update(session, character.id, shield.id, { equipped: false, location: null, groups: [0, 2] }),
-      ).toMatchObject({ groups: [] });
+      expect(await update(session, character.id, shield.id, { location: null, groups: [0, 2] })).toMatchObject({
+        groups: [],
+      });
     });
 
     test("needs a weapon set in a hand", async () => {
@@ -312,28 +291,21 @@ describe("InventoryService", () => {
     test("carries it or equips it in a slot, with charges; only equipped items have a slot", async () => {
       const { session, character, item, newItem } = await setup();
       const [ring, wand] = [await newItem(), await newItem()];
-      expect(await add(session, character.id, item.id, { quantity: 5, location: "Trinket" })).toMatchObject({
+      expect(await add(session, character.id, item.id, { quantity: 5 })).toMatchObject({
         characterId: character.id,
         itemId: item.id,
         quantity: 5,
-        equipped: false,
         location: null,
       });
-      expect(await add(session, character.id, ring.id, equipped("Trinket"))).toMatchObject({
-        equipped: true,
-        location: "Trinket",
-      });
+      expect(await add(session, character.id, ring.id, equipped("Trinket"))).toMatchObject({ location: "Trinket" });
       expect(await add(session, character.id, wand.id, { charges: [50, 50] })).toMatchObject({
         totalCharges: 50,
         remainingCharges: 50,
       });
 
       expect(await update(session, character.id, item.id, { quantity: 10 })).toMatchObject({ quantity: 10 });
-      expect(await update(session, character.id, item.id, equipped("Waist"))).toMatchObject({
-        equipped: true,
-        location: "Waist",
-      });
-      expect(await update(session, character.id, ring.id)).toMatchObject({ equipped: false, location: null });
+      expect(await update(session, character.id, item.id, equipped("Waist"))).toMatchObject({ location: "Waist" });
+      expect(await update(session, character.id, ring.id)).toMatchObject({ location: null });
       expect(await update(session, character.id, wand.id, { charges: [50, 30] })).toMatchObject({
         totalCharges: 50,
         remainingCharges: 30,
@@ -476,11 +448,9 @@ describe("InventoryService", () => {
       );
 
       expect(await add(session, character.id, armor.id, equipped("Torso"))).toMatchObject({
-        equipped: true,
         location: "Torso",
       });
       expect(await add(session, character.id, shield.id, equipped("Off Hand", 0))).toMatchObject({
-        equipped: true,
         location: "Off Hand",
       });
     });
@@ -552,7 +522,7 @@ describe("InventoryService", () => {
         );
 
         const attempt = add(session, character.id, weapon.id, equipped(slot, 0));
-        if (outcome === "allowed") expect(await attempt).toMatchObject({ equipped: true, location: slot });
+        if (outcome === "allowed") expect(await attempt).toMatchObject({ location: slot });
         else expect(attempt).rejects.toThrow(outcome);
       },
     );
@@ -592,20 +562,10 @@ describe("InventoryService", () => {
       expect(second.id).not.toBe(first.id);
       // The other dagger takes the main hand: the second can't go there, but moving the first within its hand is fine
       expect(
-        CharacterInventoryService.updateItem(session, character.id, second.id, 1, true, "Main Hand", null, null, [0]),
+        CharacterInventoryService.updateItem(session, character.id, second.id, 1, "Main Hand", null, null, [0]),
       ).rejects.toThrow("Main Hand is occupied by Dagger (Set 1)");
       expect(
-        await CharacterInventoryService.updateItem(
-          session,
-          character.id,
-          first.id,
-          2,
-          true,
-          "Main Hand",
-          null,
-          null,
-          [0],
-        ),
+        await CharacterInventoryService.updateItem(session, character.id, first.id, 2, "Main Hand", null, null, [0]),
       ).toMatchObject({ id: first.id, quantity: 2 });
       expect(await CharacterInventoryService.removeItem(session, character.id, first.id)).toEqual({ success: true });
       expect((await CharacterInventoryService.getInventory(session, character.id)).map((entry) => entry.id)).toEqual([
@@ -686,7 +646,6 @@ describe("InventoryService", () => {
         refusal: "invalid",
       });
       expect(await add(session, character.id, armor.id, { ...equipped("Torso"), force: true })).toMatchObject({
-        equipped: true,
         location: "Torso",
       });
     });

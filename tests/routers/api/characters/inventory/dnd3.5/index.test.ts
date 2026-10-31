@@ -8,7 +8,7 @@ import { ITEM_COST_GP, ITEM_WEIGHT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const inventory = api.api.characters.inventory[":characterId"];
 const entry = inventory[":entryId"];
-const unequipped = { quantity: 1, equipped: false, location: null, totalCharges: null, remainingCharges: null };
+const unequipped = { quantity: 1, location: null, totalCharges: null, remainingCharges: null };
 
 /** A character in a seeded fork, and an item of that fork it doesn't carry yet. */
 async function setup() {
@@ -49,16 +49,16 @@ describe("character inventory", () => {
     const added = await inventory.$post({ param: { characterId }, json: { ...unequipped, itemId, quantity: 5 } });
     expect(added.status).toBe(201);
     const { id: entryId, ...addedEntry } = await expectOk(added);
-    expect(addedEntry).toMatchObject({ quantity: 5, equipped: false });
+    expect(addedEntry).toMatchObject({ quantity: 5, location: null });
     expect((await expectOk(inventory.$get({ param: { characterId } }))).map((e) => e.itemId)).toContain(itemId);
 
     const updated = await expectOk(
       entry.$put({
         param: { characterId, entryId },
-        json: { ...unequipped, quantity: 10, equipped: true, location: "Trinket" },
+        json: { ...unequipped, quantity: 10, location: "Trinket" },
       }),
     );
-    expect(updated).toMatchObject({ quantity: 10, equipped: true, location: "Trinket" });
+    expect(updated).toMatchObject({ quantity: 10, location: "Trinket" });
 
     expect(await expectOk(entry.$delete({ param: { characterId, entryId } }))).toEqual({ success: true });
     expect((await expectOk(inventory.$get({ param: { characterId } }))).map((e) => e.itemId)).not.toContain(itemId);
@@ -67,9 +67,9 @@ describe("character inventory", () => {
   test("adds an equipped item and an item with charges", async () => {
     const { characterId, itemId } = await setup();
     const equipped = await expectOk(
-      inventory.$post({ param: { characterId }, json: { ...unequipped, itemId, equipped: true, location: "Trinket" } }),
+      inventory.$post({ param: { characterId }, json: { ...unequipped, itemId, location: "Trinket" } }),
     );
-    expect(equipped).toMatchObject({ equipped: true, location: "Trinket" });
+    expect(equipped).toMatchObject({ location: "Trinket" });
 
     await expectOk(entry.$delete({ param: { characterId, entryId: equipped.id } }));
     const charged = await expectOk(
@@ -84,7 +84,7 @@ describe("character inventory", () => {
   test("lists the items in the sheet's inventory block, each in its units, with the load they make", async () => {
     const { characterId, itemId } = await setup();
     const worn = await expectOk(
-      inventory.$post({ param: { characterId }, json: { ...unequipped, itemId, equipped: true, location: "Trinket" } }),
+      inventory.$post({ param: { characterId }, json: { ...unequipped, itemId, location: "Trinket" } }),
     );
     const charged = await expectOk(
       inventory.$post({
@@ -144,7 +144,7 @@ describe("character inventory", () => {
     const { characterId, itemId } = await setup();
     const placement = inventory.placement;
     const held = await expectOk(
-      inventory.$post({ param: { characterId }, json: { ...unequipped, itemId, equipped: true, location: "Head" } }),
+      inventory.$post({ param: { characterId }, json: { ...unequipped, itemId, location: "Head" } }),
     );
     expect(
       await expectOk(placement.$get({ param: { characterId }, query: { location: "Head", groups: "0" } })),
@@ -161,7 +161,7 @@ describe("character inventory", () => {
     const held = await expectOk(
       inventory.$post({
         param: { characterId },
-        json: { ...unequipped, itemId, equipped: true, location: "Off Hand", groups: [1, 0] },
+        json: { ...unequipped, itemId, location: "Off Hand", groups: [1, 0] },
       }),
     );
     expect(held.groups).toEqual([0, 1]);

@@ -26,14 +26,8 @@ import { getSeedCtx } from "@/tests/support/seed.ts";
 
 import { namesOf } from "./freshSeed.ts";
 
-function inventoryLine(item: {
-  equipped?: boolean;
-  groups?: number[];
-  location?: string | null;
-  name: string;
-  quantity: number;
-}) {
-  return `${item.name} x${item.quantity}${item.equipped ? ", equipped" : ""} in ${item.location ?? "—"} set ${item.groups?.join(", ") || "—"}`;
+function inventoryLine(item: { groups?: number[]; location?: string | null; name: string; quantity: number }) {
+  return `${item.name} x${item.quantity} in ${item.location ?? "—"} set ${item.groups?.join(", ") || "—"}`;
 }
 
 /**

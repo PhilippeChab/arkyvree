@@ -21,7 +21,6 @@ const COLUMNS = {
   quantity: inventoryInCharacter.quantity,
   totalCharges: inventoryInCharacter.totalCharges,
   remainingCharges: inventoryInCharacter.remainingCharges,
-  equipped: inventoryInCharacter.equipped,
   location: inventoryInCharacter.location,
   groups: inventoryInCharacter.groups,
 };

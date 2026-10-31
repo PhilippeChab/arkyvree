@@ -1069,7 +1069,6 @@ export const inventoryInCharacter = character.table(
     quantity: integer().notNull(),
     totalCharges: integer("total_charges"),
     remainingCharges: integer("remaining_charges"),
-    equipped: boolean().default(false).notNull(),
     itemType: text("item_type").notNull(),
     location: text(),
     groups: smallint().array().default([]).notNull(),

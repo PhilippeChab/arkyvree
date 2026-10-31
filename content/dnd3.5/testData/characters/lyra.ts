@@ -67,8 +67,8 @@ export default {
     { levelIndex: 2, featName: "Weapon Finesse", aptitude: "General" },
   ],
   inventory: [
-    { name: "Shortsword", quantity: 1, equipped: true, location: "Main Hand", groups: [0] },
-    { name: "Dagger", quantity: 1, equipped: true, location: "Off Hand", groups: [0] },
-    { name: "Studded Leather", quantity: 1, equipped: true, location: "Torso" },
+    { name: "Shortsword", quantity: 1, location: "Main Hand", groups: [0] },
+    { name: "Dagger", quantity: 1, location: "Off Hand", groups: [0] },
+    { name: "Studded Leather", quantity: 1, location: "Torso" },
   ],
 } satisfies CharacterSeed;

@@ -260,6 +260,16 @@ async function findHeldCharacter() {
   return rows[0]!.id;
 }
 
+/** Every inventory entry, each as one line (where it's held, its sets), and every character's last change. */
+async function inventoryRows() {
+  const { rows } = await db.execute<{ line: string }>(sql`
+    SELECT 'entry ' || id || ' ' || coalesce(location, '-') || ' ' || groups::text AS line FROM character.inventory
+    UNION ALL SELECT 'character ' || id || ' ' || last_changed_at::text FROM character.characters
+    ORDER BY line
+  `);
+  return rows.map((row) => row.line);
+}
+
 /** The registries' columns 0086 keeps, each row as one line, and every character's last change: what it leaves. */
 async function keptRows() {
   const { rows } = await db.execute<{ line: string }>(sql`
@@ -321,6 +331,17 @@ async function restoreEntriesBefore0104() {
     ALTER TABLE character.advancements ALTER COLUMN entry_type DROP NOT NULL;
     DROP INDEX character.advancements_entry_idx;
     CREATE INDEX advancements_entry_idx ON character.advancements (entry_id) WHERE entry_id IS NOT NULL;
+  `);
+}
+
+/**
+ * An inventory entry's `equipped`, as the migrations before 0106 left it: whether it has a location, every write's.
+ * What the migrations before 0106 ran on.
+ */
+async function restoreEquippedBefore0106() {
+  await db.execute(sql`
+    ALTER TABLE character.inventory ADD COLUMN equipped boolean DEFAULT false NOT NULL;
+    UPDATE character.inventory SET equipped = location IS NOT NULL;
   `);
 }
 
@@ -1591,5 +1612,40 @@ describe("0105_advancement-entry-key", () => {
     // What a fresh database's migrations give, every row as it was, in its place
     expect(await definitionsOf("character", "advancements")).toEqual(fresh);
     expect((await db.execute(placed)).rows).toEqual(stored);
+  }, 30_000);
+});
+
+describe("0106_inventory-location", () => {
+  test("keeps a held entry's location alone: a carried entry's location goes, an equipped one's without is Other", async () => {
+    const characterId = await findHeldCharacter();
+    await restoreEquippedBefore0106();
+    const { rows: entries } = await db.execute<{ id: string }>(sql`
+      SELECT id FROM character.inventory WHERE character_id = ${characterId} ORDER BY id LIMIT 2
+    `);
+    const [carried, worn] = entries.map((entry) => entry.id);
+    // As the test characters' seeder wrote them: carried at a hand in a set, and equipped nowhere
+    await db.execute(sql`SELECT set_config('arkyvree.registry_sync', 'on', true)`);
+    await db.execute(sql`UPDATE character.inventory SET equipped = false, location = 'Main Hand', groups = '{1}'
+      WHERE id = ${carried}`);
+    await db.execute(sql`UPDATE character.inventory SET equipped = true, location = NULL, groups = '{}'
+      WHERE id = ${worn}`);
+    await db.execute(sql`SELECT set_config('arkyvree.registry_sync', 'off', true)`);
+    const before = await inventoryRows();
+
+    for (const statement of statementsOf("0106_inventory-location.sql")) await db.execute(sql.raw(statement));
+
+    const expected = before.map((line) =>
+      line.startsWith(`entry ${carried} `)
+        ? `entry ${carried} - {}`
+        : line.startsWith(`entry ${worn} `)
+          ? `entry ${worn} Other {}`
+          : line,
+    );
+    expect(await inventoryRows()).toEqual(expected.toSorted());
+    const { rows: columns } = await db.execute(sql`
+      SELECT 1 FROM information_schema.columns
+      WHERE table_schema = 'character' AND table_name = 'inventory' AND column_name = 'equipped'
+    `);
+    expect(columns).toEqual([]);
   }, 30_000);
 });

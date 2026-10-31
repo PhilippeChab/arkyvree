@@ -18,7 +18,7 @@ import type PcgenNames from "./PcgenNames.ts";
 export type ImportedEntry = InventoryEntryPlan & { quantity: number };
 
 /** An entry's request to carry its item, unequipped. */
-const CARRIED = { equipped: false, groups: [], location: null };
+const CARRIED = { groups: [], location: null };
 
 /**
  * The gear a file holds, as inventory entries of the character with its levels: each item found in the ruleset by its
@@ -70,7 +70,7 @@ export default class GearImport {
   private placementOf(
     gear: ImportedGear,
     placement: ItemPlacementDescription,
-  ): Pick<InventoryEntryRequest, "equipped" | "groups" | "location"> {
+  ): Pick<InventoryEntryRequest, "groups" | "location"> {
     if (gear.location === undefined) return CARRIED;
     const mapped = PCGEN_LOCATIONS.get(gear.location);
     const offered = placement.locations.map(({ location }) => location);
@@ -82,7 +82,7 @@ export default class GearImport {
       );
       return CARRIED;
     }
-    return { equipped: true, groups: ItemPlacement.isHand(location) ? [0] : [], location };
+    return { groups: ItemPlacement.isHand(location) ? [0] : [], location };
   }
 
   /**
@@ -102,7 +102,7 @@ export default class GearImport {
     try {
       return { ...plan(request), quantity };
     } catch (error) {
-      if (!(error instanceof RulesError) || !placement.equipped) throw error;
+      if (!(error instanceof RulesError) || placement.location === null) throw error;
       this.report.issue(`${item.name}: carried, not in ${placement.location}: ${error.message}`);
       return { ...plan({ ...request, ...CARRIED }), quantity };
     }
@@ -159,7 +159,7 @@ export default class GearImport {
       const held = entry.location ? `, ${entry.location}` : "";
       this.report.import(`Item: ${item.name} ×${entry.quantity}${held}`);
       const key = `${entry.itemId}:${entry.remainingCharges ?? ""}`;
-      const same = entry.equipped ? undefined : carried.get(key);
+      const same = entry.location !== null ? undefined : carried.get(key);
       if (same) {
         const total = same.quantity + entry.quantity;
         same.quantity = Math.min(MAX_ITEM_QUANTITY, total);
@@ -167,7 +167,7 @@ export default class GearImport {
           this.report.issue(`${item.name} ×${total} is past the most the app keeps: ${same.quantity} kept`);
         continue;
       }
-      if (!entry.equipped) carried.set(key, entry);
+      if (entry.location === null) carried.set(key, entry);
       entries.push(entry);
       holder = this.withEntry(holder, entry);
     }

@@ -47,12 +47,17 @@ function InventoryPage({ detailedCharacter }: { detailedCharacter: DetailedChara
               </View>
 
               {flatItems.map((entry, i) => (
-                <View key={i} style={[styles.inventoryTableRow, !entry.equipped ? { backgroundColor: "#fafafa" } : {}]}>
+                <View
+                  key={i}
+                  style={[styles.inventoryTableRow, entry.location === null ? { backgroundColor: "#fafafa" } : {}]}
+                >
                   <View style={{ width: "26%", paddingHorizontal: 4 }}>
-                    <Text style={{ fontSize: FONT_SIZE.base, fontWeight: entry.equipped ? "bold" : "normal" }}>
+                    <Text style={{ fontSize: FONT_SIZE.base, fontWeight: entry.location !== null ? "bold" : "normal" }}>
                       {entry.item.name}
                     </Text>
-                    {!entry.equipped && <Text style={{ fontSize: FONT_SIZE.xs, color: "#888" }}>unequipped</Text>}
+                    {entry.location === null && (
+                      <Text style={{ fontSize: FONT_SIZE.xs, color: "#888" }}>unequipped</Text>
+                    )}
                   </View>
                   <Text style={{ fontSize: FONT_SIZE.base, width: "9%", paddingHorizontal: 2, textAlign: "center" }}>
                     {entry.quantity}

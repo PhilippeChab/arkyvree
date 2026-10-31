@@ -57,7 +57,6 @@ export default new Hono<SessionContext>()
       z.object({
         itemId: z.string().uuid(),
         quantity: z.number().int().min(1),
-        equipped: z.boolean().default(false),
         location: z.string().nullable().default(null),
         totalCharges: z.number().int().min(0).nullable().default(null),
         remainingCharges: z.number().int().min(0).nullable().default(null),
@@ -67,15 +66,13 @@ export default new Hono<SessionContext>()
     ),
     async (c) => {
       const { characterId } = c.req.valid("param");
-      const { itemId, quantity, equipped, location, totalCharges, remainingCharges, groups, force } =
-        c.req.valid("json");
+      const { itemId, quantity, location, totalCharges, remainingCharges, groups, force } = c.req.valid("json");
       return c.json(
         await CharacterInventoryService.addItem(
           c.var.requestSession,
           characterId,
           itemId,
           quantity,
-          equipped,
           location,
           totalCharges,
           remainingCharges,
@@ -93,7 +90,6 @@ export default new Hono<SessionContext>()
       "json",
       z.object({
         quantity: z.number().int().min(1),
-        equipped: z.boolean(),
         location: z.string().nullable().default(null),
         totalCharges: z.number().int().min(0).nullable().default(null),
         remainingCharges: z.number().int().min(0).nullable().default(null),
@@ -104,15 +100,13 @@ export default new Hono<SessionContext>()
     ),
     async (c) => {
       const { characterId, entryId } = c.req.valid("param");
-      const { quantity, equipped, location, totalCharges, remainingCharges, groups, force, updatedAt } =
-        c.req.valid("json");
+      const { quantity, location, totalCharges, remainingCharges, groups, force, updatedAt } = c.req.valid("json");
       return c.json(
         await CharacterInventoryService.updateItem(
           c.var.requestSession,
           characterId,
           entryId,
           quantity,
-          equipped,
           location,
           totalCharges,
           remainingCharges,

@@ -54,8 +54,8 @@ export default {
   ],
   // Clerics know all spells on their list — no spell picks needed
   inventory: [
-    { name: "Heavy Mace", quantity: 1, equipped: true, location: "Main Hand", groups: [0] },
-    { name: "Chain Mail", quantity: 1, equipped: true, location: "Torso" },
-    { name: "Heavy Steel Shield", quantity: 1, equipped: true, location: "Off Hand", groups: [0] },
+    { name: "Heavy Mace", quantity: 1, location: "Main Hand", groups: [0] },
+    { name: "Chain Mail", quantity: 1, location: "Torso" },
+    { name: "Heavy Steel Shield", quantity: 1, location: "Off Hand", groups: [0] },
   ],
 } satisfies CharacterSeed;

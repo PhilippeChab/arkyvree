@@ -58,8 +58,8 @@ export default {
     { levelIndex: 4, featName: "Heavy Warhorse Special Mount", aptitude: "Special Mount Bond" },
   ],
   inventory: [
-    { name: "Longsword", quantity: 1, equipped: true, location: "Main Hand", groups: [0] },
-    { name: "Heavy Steel Shield", quantity: 1, equipped: true, location: "Off Hand", groups: [0] },
-    { name: "Full Plate", quantity: 1, equipped: true, location: "Torso" },
+    { name: "Longsword", quantity: 1, location: "Main Hand", groups: [0] },
+    { name: "Heavy Steel Shield", quantity: 1, location: "Off Hand", groups: [0] },
+    { name: "Full Plate", quantity: 1, location: "Torso" },
   ],
 } satisfies CharacterSeed;

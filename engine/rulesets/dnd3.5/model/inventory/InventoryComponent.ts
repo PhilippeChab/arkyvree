@@ -47,7 +47,7 @@ export default class InventoryComponent extends CharacterComponent<LoadedCharact
   override initialize({ inventory }: Pick<LoadedCharacterData, "inventory">) {
     this.rawItems = inventory;
     for (const entry of inventory) {
-      if (!entry.equipped) continue;
+      if (entry.location === null) continue;
 
       const slot = InventorySlots.getSlot(entry.item.fields[ITEM_TYPE] ?? null, entry.location);
       if (!slot) continue;

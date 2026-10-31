@@ -56,7 +56,6 @@ export function placementPayload(data: InventoryFormData, profile: PlacementProf
   const hasCharges = typeof profile?.charges === "number";
   return {
     quantity: data.quantity,
-    equipped: !!location,
     location,
     totalCharges: hasCharges ? data.totalCharges : null,
     remainingCharges: hasCharges ? data.remainingCharges : null,

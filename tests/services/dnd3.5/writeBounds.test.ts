@@ -769,7 +769,7 @@ describe("a character's inventory", () => {
     const { id: characterId } = await postCharacter();
     const { id: itemId } = await findPlainItem(rulesetId);
     const inventory = api.api.characters.inventory[":characterId"];
-    const entry = { quantity: 1, equipped: true, totalCharges: null, remainingCharges: null };
+    const entry = { quantity: 1, totalCharges: null, remainingCharges: null };
     const issue = {
       category: "location",
       message: `Invalid option: expected one of ${LOCATION_OPTIONS.map((location) => `"${location}"`).join("|")}`,

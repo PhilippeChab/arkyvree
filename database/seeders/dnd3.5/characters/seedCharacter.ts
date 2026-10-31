@@ -30,7 +30,6 @@ async function addInventory(db: Db, ctx: SeedContext, characterId: string, items
       characterId,
       itemId: idOf(ctx.itemMap, item.name, "An inventory's item"),
       quantity: item.quantity,
-      equipped: item.equipped ?? false,
       location: item.location,
       groups: item.groups,
     })),
