@@ -51,7 +51,7 @@ class CampaignPlayersService {
 
   /**
    * Core invite creation logic — must be called within a transaction, by a caller that checked the session may manage
-   * `campaign` (`getReadableCampaign`, `canModify`, `canUpdate`).
+   * `campaign` (`getReadableCampaign`, `canManagePlayers`).
    */
   private async createInviteInTransaction(tx: Db, session: Session, campaign: Campaign, player: Player, email: string) {
     // Look up user by email (may not exist)
@@ -122,8 +122,7 @@ class CampaignPlayersService {
 
     const { player, invite } = await withTransaction(async (tx) => {
       const { campaign, policy } = await getReadableCampaign(tx, session, campaignId);
-      policy.canModify();
-      policy.canUpdate();
+      policy.canManagePlayers();
 
       const rows = await Players.create(tx, {
         campaignId,
@@ -172,8 +171,8 @@ class CampaignPlayersService {
       const player = await Players.findOne(tx, { id: playerId });
       if (!player || player.campaignId !== campaignId) throw new NotFoundError("Player not found in this campaign");
 
-      const isSelfRemoval = player.userId === session.userId;
-      if (!isSelfRemoval) policy.canUpdate();
+      // A player leaves on their own; another's removal is the Game Master's
+      if (player.userId !== session.userId) policy.canManagePlayers();
 
       await this.assertNotLastGameMaster(tx, player, "Cannot remove the last Game Master from a campaign");
 
@@ -200,8 +199,7 @@ class CampaignPlayersService {
 
     const { updatedPlayer, invite } = await withTransaction(async (tx) => {
       const { campaign, policy } = await getReadableCampaign(tx, session, campaignId);
-      policy.canModify();
-      policy.canUpdate();
+      policy.canManagePlayers();
 
       const player = await Players.findOne(tx, { id: playerId, campaignId });
       if (!player) throw new NotFoundError("Player not found in this campaign");

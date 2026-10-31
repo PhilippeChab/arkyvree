@@ -1,13 +1,13 @@
 import type { CampaignDetail } from "@/client/src/pages/campaigns/campaignQueries.ts";
 
-/** What the session may do in a campaign; nothing until the campaign has loaded. */
-export function useCampaignPermissions(campaign: Pick<CampaignDetail, "currentUserRole"> | undefined) {
-  // Its Game Master runs it: its details, its players and its invites. A demo user, whom the server lets create no
-  // campaign, is never one.
-  const isDM = campaign?.currentUserRole === "Game Master";
+/** What the session may do in a campaign, as the server's policy answers it; nothing until the campaign has loaded. */
+export function useCampaignPermissions(campaign: Pick<CampaignDetail, "permissions"> | undefined) {
+  const permissions = campaign?.permissions;
 
   return {
-    canEdit: isDM,
-    canManagePlayers: isDM,
+    canEdit: !!permissions?.canEdit,
+    canLeave: !!permissions?.canLeave,
+    canManagePlayers: !!permissions?.canManagePlayers,
+    canRevokeInvites: !!permissions?.canRevokeInvites,
   };
 }

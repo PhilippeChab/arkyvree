@@ -57,6 +57,12 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
     return player;
   }
 
+  /** Adding, editing and removing the campaign's players: its Game Master's, in a campaign that isn't archived. */
+  canManagePlayers() {
+    this.canModify();
+    return this.canUpdate();
+  }
+
   /** An archived campaign is read-only. */
   canModify() {
     if (this.entity.deletedAt) throw new ForbiddenError("Cannot modify an archived campaign");
