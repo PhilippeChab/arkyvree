@@ -84,7 +84,7 @@ const PRIVACY_OPTIONS = [
   { value: true, label: "Private", icon: PrivateIcon },
 ] as const;
 
-/** Archiving a ruleset: its owner, or an Admin, archives it, and only its owner brings it back, whoever asks. */
+/** Archiving a ruleset, which its owner or an Admin archives and only its owner unarchives: the same words to both. */
 export function ArchiveRulesetDialog({ open, onClose, onConfirm, pending }: ArchiveRulesetDialogProps) {
   return (
     <ConfirmDialog

@@ -87,7 +87,7 @@ describe("wording rules", () => {
           "client/src/archive.tsx":
             'export const r = <ConfirmDialog message="Are you sure you want to archive this campaign? You can restore it later." />;\n',
           "client/src/admin.tsx":
-            'export const m = <ConfirmDialog message={canUnarchive ? "Are you sure you want to archive this ruleset? You can unarchive it at any time from the Archived filter." : "Are you sure you want to archive this ruleset? Only its owner can unarchive it."} />;\n',
+            'export const m = <ConfirmDialog message="Are you sure you want to archive this ruleset? Only its owner can unarchive it." />;\n',
           "client/src/says.tsx": 'export const s = <ConfirmDialog message="This may break prerequisites." />;\n',
           "client/src/delete.tsx":
             'export const d = <DeleteDialog message="Are you sure you want to delete this modifier? This action cannot be undone." />;\n',
