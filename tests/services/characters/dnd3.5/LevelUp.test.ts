@@ -42,6 +42,7 @@ import { getPlanAnswer, getStepOptions, stepAnswerOf } from "@/tests/support/lev
 import { copyEntity, createSeededTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { CHARACTER_XP } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** A level of a batch: class, level, hit points and the ability it increases. */
 type BatchLevel = [klass: string, level: number, hp: number, ability?: string];
@@ -133,7 +134,10 @@ async function createLightGivingSorcerer() {
   const detectMagic = await copyEntity(db, "spells", ctx.spellMap["Detect Magic"], fork);
   await give("spells", detectMagic.id, "spells.light.sorcerer.known");
   RulesetViews.invalidate(fork.id);
-  const characterId = await createSeedCharacter(ctx, "sorcerer", { rulesetId: fork.id, xp: 1000 });
+  const characterId = await createSeedCharacter(ctx, "sorcerer", {
+    rulesetId: fork.id,
+    fields: { [CHARACTER_XP]: 1000 },
+  });
   const forkCtx: SeedContext = { ...ctx, spellMap: { ...ctx.spellMap, "Detect Magic": detectMagic.id } };
   return { characterId, ctx: forkCtx, rulesetId: fork.id };
 }
@@ -156,8 +160,8 @@ async function eligible(
 ) {
   const ctx = await getSeedCtx();
   const characterId = await createSeedCharacter(ctx, "fighter", {
-    xp: 6000,
     abilities: { Strength: options.strength ?? 14 },
+    fields: { [CHARACTER_XP]: 6000 },
   });
   const general = ctx.aptMap["General"];
   const plan = levelUpPlan(
@@ -285,7 +289,7 @@ async function savedLevel(characterId: string, levelId: string) {
 /** A fighter's first two levels, and the plan the first was saved with. */
 async function setupFighter() {
   const ctx = await getSeedCtx();
-  const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
+  const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 1000 } });
   const first = await levelUp(session, ctx, characterId, "Fighter", 1, FIGHTER_LEVELS[0]);
   await levelUp(session, ctx, characterId, "Fighter", 2, FIGHTER_LEVELS[1]);
   // The level's picks past the first fighter level's, and the ability its increase pick raises (`entityId`), if any
@@ -326,7 +330,7 @@ describe("finalizing several levels at once", () => {
     {
       name: "a fighter's first four levels, with an ability increase at the fourth",
       build: "fighter",
-      values: { xp: 6000 },
+      values: { fields: { [CHARACTER_XP]: 6000 } },
       levels: fighterLevels(4),
       plan: {
         skills: { Climb: 7, Intimidate: 7, Jump: 7, Swim: 7 },
@@ -340,7 +344,7 @@ describe("finalizing several levels at once", () => {
       // Five cantrips and two first-level spells.
       name: "a sorcerer's first two levels, with their spells",
       build: "sorcerer",
-      values: { xp: 1000 },
+      values: { fields: { [CHARACTER_XP]: 1000 } },
       levels: levelsOf("Sorcerer", [4, 4]),
       plan: {
         skills: { Bluff: 5, Concentration: 5, Spellcraft: 5, "Use Magic Device": 5 },
@@ -363,10 +367,10 @@ describe("finalizing several levels at once", () => {
       name: "an elf fighter's first two levels",
       build: "fighter",
       values: {
-        xp: 3000,
         race: "Elf",
         languages: ["Common", "Elven"],
         abilities: { Strength: 10, Dexterity: 16, Constitution: 12, Intelligence: 14 },
+        fields: { [CHARACTER_XP]: 3000 },
       },
       levels: fighterLevels(2),
       plan: {
@@ -377,7 +381,7 @@ describe("finalizing several levels at once", () => {
     {
       name: "a cleric's first two levels, with two domains",
       build: "cleric",
-      values: { xp: 1000 },
+      values: { fields: { [CHARACTER_XP]: 1000 } },
       levels: levelsOf("Cleric", [8, 6]),
       plan: {
         skills: { Concentration: 5, Heal: 5, Spellcraft: 5, "Knowledge (Religion)": 5 },
@@ -407,10 +411,10 @@ describe("finalizing several levels at once", () => {
       name: "a fighter level, then a wizard level that gives up schools",
       build: "wizard",
       values: {
-        xp: 3000,
         race: "Human",
         languages: ["Common"],
         abilities: { Strength: 10, Constitution: 14, Intelligence: 16, Charisma: 8 },
+        fields: { [CHARACTER_XP]: 3000 },
       },
       levels: [
         ["Fighter", 1, 10],
@@ -438,7 +442,10 @@ describe("finalizing several levels at once", () => {
     {
       name: "a ranger's first two levels, with a combat style",
       build: "fighter",
-      values: { xp: 1000, abilities: { Strength: 14, Dexterity: 16, Constitution: 12, Wisdom: 14 } },
+      values: {
+        abilities: { Strength: 14, Dexterity: 16, Constitution: 12, Wisdom: 14 },
+        fields: { [CHARACTER_XP]: 1000 },
+      },
       levels: levelsOf("Ranger", [8, 6]),
       plan: {
         skills: {
@@ -486,7 +493,7 @@ describe("finalizing several levels at once", () => {
 
   test("spreads pooled skill ranks over the levels, within each level's rank cap", async () => {
     const ctx = await getSeedCtx();
-    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
+    const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 1000 } });
     // 16 points at the first level, 4 at the second; a first level caps ranks at 4.
     const [first, second] = await finalizeBatch(ctx, characterId, fighterLevels(2), {
       skills: { Climb: 5, Intimidate: 5, Jump: 5, Swim: 5 },
@@ -511,7 +518,7 @@ describe("finalizing several levels at once", () => {
         async () =>
           finalizeBatch(
             ctx,
-            await createSeedCharacter(ctx, "fighter", { xp: 1000 }),
+            await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 1000 } }),
             [
               ["Fighter", 1, 10],
               ["Fighter", 2, 999],
@@ -523,7 +530,7 @@ describe("finalizing several levels at once", () => {
       [
         "Level 4: Ability increase is required at this level",
         async () => {
-          const characterId = await createSeedCharacter(ctx, "fighter", { xp: 6000 });
+          const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 6000 } });
           await addFighterLevels(session, ctx, characterId, 3);
           return finalizeBatch(ctx, characterId, [["Fighter", 4, 8]], {
             skills: { Climb: 4 },
@@ -545,10 +552,15 @@ describe("finalizing several levels at once", () => {
       [
         "unspent",
         async () =>
-          finalizeBatch(ctx, await createSeedCharacter(ctx, "fighter", { xp: 1000 }), fighterLevels(2), {
-            skills: { Climb: 20 },
-            feats: { General: ["Power Attack"], "Fighter Bonus Feat": ["Improved Initiative", "Dodge"] },
-          }),
+          finalizeBatch(
+            ctx,
+            await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 1000 } }),
+            fighterLevels(2),
+            {
+              skills: { Climb: 20 },
+              feats: { General: ["Power Attack"], "Fighter Bonus Feat": ["Improved Initiative", "Dodge"] },
+            },
+          ),
       ],
       // A third General feat, which the pool has no room for: refused, where it used to be dropped (#476)
       [
@@ -566,10 +578,15 @@ describe("finalizing several levels at once", () => {
       [
         'Non-stackable feat "Power Attack" cannot be picked more than once',
         async () =>
-          finalizeBatch(ctx, await createSeedCharacter(ctx, "fighter", { xp: 1000 }), fighterLevels(2), {
-            skills: { Climb: 20 },
-            feats: { General: ["Power Attack", "Great Fortitude"], "Fighter Bonus Feat": ["Power Attack"] },
-          }),
+          finalizeBatch(
+            ctx,
+            await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 1000 } }),
+            fighterLevels(2),
+            {
+              skills: { Climb: 20 },
+              feats: { General: ["Power Attack", "Great Fortitude"], "Fighter Bonus Feat": ["Power Attack"] },
+            },
+          ),
       ],
     ];
     for (const [error, attempt] of refusals) {
@@ -587,7 +604,7 @@ describe("finalizing several levels at once", () => {
     };
     const twice = finalizeBatch(
       ctx,
-      await createSeedCharacter(ctx, "fighter", { xp: 1000 }),
+      await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 1000 } }),
       [
         ["Fighter", 1, 10],
         ["Fighter", 1, 10],
@@ -600,7 +617,7 @@ describe("finalizing several levels at once", () => {
     });
     const thirdRepeatsSecond = finalizeBatch(
       ctx,
-      await createSeedCharacter(ctx, "fighter", { xp: 3000 }),
+      await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 3000 } }),
       [...fighterLevels(2), ["Fighter", 2, 6]],
       { skills: { Climb: 20 }, feats: firstTwo },
     );
@@ -1031,12 +1048,12 @@ describe("a spell known once in its class list", () => {
     // The second Light goes on the second level, past the first level's four cantrips
     const lightTwice = ["Detect Magic", "Light", "Read Magic", "Mage Hand", "Light", "Magic Missile", "Shield"];
     for (const force of [false, true]) {
-      const savedId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
+      const savedId = await createSeedCharacter(ctx, "sorcerer", { fields: { [CHARACTER_XP]: 1000 } });
       await levelUp(session, ctx, savedId, "Sorcerer", 1, SORCERER_1);
       const lightAgain = { ...SORCERER_2, spells: { "Sorcerer Spells": ["Light"] } };
       expect(levelUp(session, ctx, savedId, "Sorcerer", 2, lightAgain, force)).rejects.toMatchObject(KNOWN_LIGHT);
 
-      const plannedId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
+      const plannedId = await createSeedCharacter(ctx, "sorcerer", { fields: { [CHARACTER_XP]: 1000 } });
       const plan = { ...SORCERER_1_TO_2, spells: { "Sorcerer Spells": lightTwice } };
       expect(finalizeBatch(ctx, plannedId, levelsOf("Sorcerer", [4, 4]), plan, force)).rejects.toMatchObject(
         KNOWN_LIGHT,
@@ -1072,7 +1089,7 @@ describe("a spell known once in its class list", () => {
     const sorcererSpells = ctx.aptMap["Sorcerer Spells"];
     const idsOf = (names: string[]) => names.map((name) => ctx.spellMap[name]);
     // A plan's second Light, past the first level's four cantrips
-    const plannedId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
+    const plannedId = await createSeedCharacter(ctx, "sorcerer", { fields: { [CHARACTER_XP]: 1000 } });
     const kept = ["Detect Magic", "Light", "Read Magic", "Mage Hand", "Resistance", "Magic Missile", "Shield"];
     const picked = { spells: { "Sorcerer Spells": [...kept.slice(0, 4), "Light", ...kept.slice(4)] } };
     const sorcerer1To2: [string, number][] = [
@@ -1085,7 +1102,7 @@ describe("a spell known once in its class list", () => {
     expect(await finalizeBatch(ctx, plannedId, levelsOf("Sorcerer", [4, 4]), plan)).toHaveLength(2);
 
     // A saved level's Light, picked again at the next
-    const savedId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
+    const savedId = await createSeedCharacter(ctx, "sorcerer", { fields: { [CHARACTER_XP]: 1000 } });
     await levelUp(session, ctx, savedId, "Sorcerer", 1, SORCERER_1);
     const next = await preview(ctx, savedId, [["Sorcerer", 2]], undefined, {
       spells: { "Sorcerer Spells": ["Light", "Resistance"] },
@@ -1100,7 +1117,7 @@ describe("a spell known once in its class list", () => {
   test("lets a spell known in one class's list be picked in another's, previewed and saved", async () => {
     const ctx = await getSeedCtx();
     const wizardSpells = ctx.aptMap["Wizard Spells"];
-    const characterId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
+    const characterId = await createSeedCharacter(ctx, "sorcerer", { fields: { [CHARACTER_XP]: 1000 } });
     await levelUp(session, ctx, characterId, "Sorcerer", 1, SORCERER_1);
     const wizardLight = { spells: { "Wizard Spells": ["Light"] } };
     const previewed = await preview(ctx, characterId, [["Wizard", 1]], undefined, wizardLight);
@@ -1115,7 +1132,7 @@ describe("a spell known once in its class list", () => {
 
   test("refuses a spell a modifier makes known in its list though another class's list picked it, forced or not", async () => {
     const ctx = await getSeedCtx();
-    const characterId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
+    const characterId = await createSeedCharacter(ctx, "sorcerer", { fields: { [CHARACTER_XP]: 1000 } });
     await Modifiers.create(db, {
       sourceId: characterId,
       sourceType: "characters",
@@ -1138,7 +1155,7 @@ describe("a spell known once in its class list", () => {
   test("lists a cleric spell a cleric/wizard's spellbook has on his cleric's list too, each at its class's DC", async () => {
     const ctx = await getSeedCtx();
     const abilities = { Intelligence: 16, Wisdom: 14 };
-    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000, abilities });
+    const characterId = await createSeedCharacter(ctx, "fighter", { abilities, fields: { [CHARACTER_XP]: 1000 } });
     // Forced: the levels' other picks aren't this test's
     const spellbook = { hp: 4, spells: { "Wizard Spells": ["Protection from Evil"] } };
     await levelUp(session, ctx, characterId, "Wizard", 1, spellbook, true);
@@ -1161,7 +1178,7 @@ describe("a spell known once in its class list", () => {
     const ctx = await getSeedCtx();
     const sorcererSpells = ctx.aptMap["Sorcerer Spells"];
     const [light, detectMagic] = [ctx.spellMap["Light"], ctx.spellMap["Detect Magic"]];
-    const characterId = await createSeedCharacter(ctx, "sorcerer", { xp: 1000 });
+    const characterId = await createSeedCharacter(ctx, "sorcerer", { fields: { [CHARACTER_XP]: 1000 } });
     const first = await levelUp(session, ctx, characterId, "Sorcerer", 1, SORCERER_1);
     // A second level that knows Light again, saved before the rule: written straight to the database
     const { skills } = picks(ctx, SORCERER_2);
@@ -1201,7 +1218,7 @@ describe("a feat that doesn't stack, held once", () => {
 
   test("refuses a feat another level picked, forced or not, as the picker leaves it out and the preview drops it", async () => {
     const ctx = await getSeedCtx();
-    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
+    const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 1000 } });
     // The first level picked Power Attack, which the second's bonus feat picks again
     await levelUp(session, ctx, characterId, "Fighter", 1, FIGHTER_LEVELS[0]);
     expect(await offeredFeats(characterId, "Fighter", 2, "Fighter Bonus Feat", "Power Attack")).toEqual([]);
@@ -1252,7 +1269,7 @@ describe("a feat that doesn't stack, held once", () => {
     expect(resave({ feats: ironWill }, true)).rejects.toMatchObject(alreadyHeld("Iron Will"));
 
     // Track, picked at a fighter's first level before a ranger's granted it
-    const trackerId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
+    const trackerId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 1000 } });
     const tracker = { ...FIGHTER_LEVELS[0], feats: { ...FIGHTER_LEVELS[0].feats, General: ["Power Attack", "Track"] } };
     const tracking = await levelUp(session, ctx, trackerId, "Fighter", 1, tracker);
     const ranger = { hp: 8, skills: { Spot: 4, Survival: 4 }, feats: { "Favored Enemy": ["Favored Enemy: Undead"] } };
@@ -1381,7 +1398,7 @@ describe("a pick the level's other picks give", () => {
 
   test("drops a feat one planned level picks that another's pick gives, as the save refuses it, forced or not", async () => {
     const ctx = await getSeedCtx();
-    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
+    const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 1000 } });
     // A fighter's first level, whose bonus feat is Weapon Focus: Longsword, then a cleric's, whose war weapon gives it
     const plan = {
       skills: { ...FIGHTER_LEVELS[0].skills, Concentration: 1, Heal: 1, Spellcraft: 1, Diplomacy: 1 },
@@ -1478,7 +1495,7 @@ describe("a pick the level's other picks give", () => {
     expect(pickSteps(lightKept).spells.fitted[sorcererSpells]).toEqual(spells[sorcererSpells]);
 
     // A level saved without Light: its edit that picks it is refused, and its step drops it
-    const otherId = await createSeedCharacter(ctx, "sorcerer", { rulesetId, xp: 1000 });
+    const otherId = await createSeedCharacter(ctx, "sorcerer", { rulesetId, fields: { [CHARACTER_XP]: 1000 } });
     const kept = ["Detect Magic", "Read Magic", "Mage Hand", "Resistance", "Magic Missile", "Shield"];
     const saved = await levelUp(session, ctx, otherId, "Sorcerer", 1, {
       ...SORCERER_1,
@@ -1546,7 +1563,10 @@ describe("a pick sent by the id of what the fork copied", () => {
       name,
       description: "Copied",
     });
-    const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: fork.id, xp: 1000 });
+    const characterId = await createSeedCharacter(ctx, "fighter", {
+      rulesetId: fork.id,
+      fields: { [CHARACTER_XP]: 1000 },
+    });
     const first = await levelUp(session, ctx, characterId, "Fighter", 1, FIGHTER_LEVELS[0]);
     const rows = await findPicks("feats", [first.id]);
     expect(rows.map(({ entityId }) => entityId)).toContain(copy.id);
@@ -1652,7 +1672,7 @@ describe("a character's last level", () => {
 describe("a character's level in a class", () => {
   test("refuses a class level out of its class's order, forced or not, and saves its next", async () => {
     const ctx = await getSeedCtx();
-    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 3000 });
+    const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 3000 } });
     const [{ hp, skills }] = FIGHTER_LEVELS;
     const feats = { General: ["Power Attack", "Great Fortitude"] };
     for (const force of [false, true]) {
@@ -1685,7 +1705,7 @@ describe("a character's level in a class", () => {
 
   test("counts its levels of the class, on its sheet, its card and in the class picker, when one was skipped", async () => {
     const ctx = await getSeedCtx();
-    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
+    const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 1000 } });
     const fighterId = ctx.classMap.pc["Fighter"];
     // A first level of Fighter 3, which no save takes: written as stored rows, as a level saved before the rule
     await addCharacterLevel(characterId, (await findClassLevel(fighterId, 3))!.id);
@@ -1705,7 +1725,7 @@ describe("a character's level in a class", () => {
 
   test("fills a class's gap a forced level left before the rule: its lowest level it doesn't hold comes next", async () => {
     const ctx = await getSeedCtx();
-    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 10000 });
+    const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 10000 } });
     const fighterId = ctx.classMap.pc["Fighter"];
     const offered = async () => {
       const options = await getStepOptions(session, characterId, "class-plan", { steps: {} }, {}, { limit: 50 });
@@ -1743,7 +1763,10 @@ describe("a character's level in a class", () => {
     const warrior = await EntitiesService.updateEntity(session, fork.id, "classes", ctx.classMap.pc["Fighter"], {
       name: "Warrior",
     });
-    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000, rulesetId: fork.id });
+    const characterId = await createSeedCharacter(ctx, "fighter", {
+      rulesetId: fork.id,
+      fields: { [CHARACTER_XP]: 1000 },
+    });
     const [first, second] = FIGHTER_LEVELS.map((level) => ({ hp: level.hp, ...picks(ctx, level) }));
     await addOneLevel(session, characterId, warrior.id, 1, first.hp, null, first.skills, first.feats, first.spells);
 
@@ -1850,7 +1873,7 @@ describe("re-saving a level", () => {
 
     test("at a level that grants one raises one ability by 1, read back with the level", async () => {
       const ctx = await getSeedCtx();
-      const characterId = await createSeedCharacter(ctx, "fighter", { xp: 6000 });
+      const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 6000 } });
       const [strength, dexterity] = [ctx.abilityMap["Strength"], ctx.abilityMap["Dexterity"]];
       const save = (increases: PlannedClassLevel["abilityIncreases"]) =>
         CharacterLevelsService.addLevels(

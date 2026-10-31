@@ -9,13 +9,14 @@ import { addFighterLevels, createSeedCharacter } from "@/tests/support/dnd3.5/le
 import { levelUpPlan, type PlannedClassLevel } from "@/tests/support/dnd3.5/levelPlans.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
+import { CHARACTER_XP } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const session = makeSession();
 
 /** The levels a fighter with `saved` levels plans, `levels`, refused as the engine refuses them: its message. */
 async function refusalOf(saved: number, levels: Omit<PlannedClassLevel, "classId">[]) {
   const ctx = await getSeedCtx();
-  const characterId = await createSeedCharacter(ctx, "fighter", { xp: 10000 });
+  const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 10000 } });
   await addFighterLevels(session, ctx, characterId, saved);
   const record = (await Characters.findOne(db, { id: characterId }))!;
   const input = await readCharacterInput(db, record);

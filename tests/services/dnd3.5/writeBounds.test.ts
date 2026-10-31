@@ -662,7 +662,7 @@ describe("a character's levels", () => {
 
   test("refuses a class level a character has already, forced too", async () => {
     const ctx = await getSeedCtx();
-    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 1000 });
+    const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 1000 } });
     await levelUp(session, ctx, characterId, "Fighter", 1, FIGHTER_LEVELS[0]);
     expect(levelUp(session, ctx, characterId, "Fighter", 1, FIGHTER_LEVELS[0], true)).rejects.toMatchObject({
       message: "Level 2: This level has already been finalized",
@@ -688,7 +688,7 @@ describe("a character's levels", () => {
 
   test("refuses an ability increase of 0, forced or not, on a level-up and an edit", async () => {
     const ctx = await getSeedCtx();
-    const characterId = await createSeedCharacter(ctx, "fighter", { xp: 6000 });
+    const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 6000 } });
     for (const [index, plan] of FIGHTER_LEVELS.slice(0, 3).entries())
       await levelUp(session, ctx, characterId, "Fighter", index + 1, plan);
     const fourth = FIGHTER_LEVELS[3];

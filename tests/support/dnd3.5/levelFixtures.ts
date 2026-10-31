@@ -328,13 +328,13 @@ export async function addFighterLevels(session: Session, ctx: SeedContext, chara
 
 /**
  * A new character of the seeded user on the seeded ruleset (or `rulesetId`), built as `build` with these changes: its
- * race (by name), some of its fields, its experience and some of its scores.
+ * race (by name), some of its fields (by the stored field that keeps each; no experience unless given) and some of its
+ * scores.
  */
 export async function createSeedCharacter(
   ctx: SeedContext,
   build: keyof typeof BUILDS = "fighter",
   {
-    xp = 0,
     abilities = {},
     fields = {},
     race,
@@ -343,7 +343,6 @@ export async function createSeedCharacter(
     abilities?: Record<string, number>;
     fields?: Partial<CharacterFields>;
     race?: string;
-    xp?: number;
   } = {},
 ) {
   const base = BUILDS[build];
@@ -351,7 +350,7 @@ export async function createSeedCharacter(
     ...base,
     ...values,
     links: { race: race ?? base.links.race },
-    fields: { ...base.fields, ...fields, [CHARACTER_XP]: xp },
+    fields: { ...base.fields, [CHARACTER_XP]: 0, ...fields },
     abilities: { ...base.abilities, ...abilities },
     name: `Test ${build} ${uniqueId()}`,
     description: "Test",
