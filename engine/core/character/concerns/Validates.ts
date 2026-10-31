@@ -3,7 +3,7 @@ import type { LoadedCharacter } from "@/engine/core/character/CharacterDataLoade
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { formatChainingOperator, formatOperator } from "@/shared/customization/operators.ts";
+import { formatChainingOperator, formatOperator, isValuelessOperator } from "@/shared/customization/operators.ts";
 import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
@@ -129,11 +129,13 @@ export function Validates<
           const childLines = node.children.map((child) => formatNode(child, indent + "  ")).join("\n");
           return `${indent}${label}\n${childLines}`;
         }
-        // Worded as the app words it elsewhere (`shared/`)
+        // An operator's words, as the app shows them elsewhere (`formatOperator`); one checking its target alone, no value
         const op = req.operator ? formatOperator("requirement", req.operator) : "?";
-        const isMet = isLeafMet(req);
-        const marker = isMet ? "" : "  [UNMET]";
-        return `${indent}${req.target} ${op} ${req.value}${marker}`;
+        const condition = isValuelessOperator(req.operator ?? undefined)
+          ? `${req.target} ${op}`
+          : `${req.target} ${op} ${req.value}`;
+        const marker = isLeafMet(req) ? "" : "  [UNMET]";
+        return `${indent}${condition}${marker}`;
       };
 
       return roots.map((root) => formatNode(root, "")).join("\n");
