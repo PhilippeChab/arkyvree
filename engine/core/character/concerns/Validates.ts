@@ -3,6 +3,7 @@ import type { LoadedCharacter } from "@/engine/core/character/CharacterDataLoade
 import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluator.ts";
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { Constructor } from "@/lib/mixins.ts";
+import { formatChainingOperator, formatOperator, isValuelessOperator } from "@/shared/customization/operators.ts";
 import RequirementTree, { type RequirementNode } from "@/shared/customization/RequirementTree.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
@@ -11,22 +12,6 @@ export interface ValidationResult {
   issues: RulesIssue[];
   valid: boolean;
 }
-
-/** Each comparison's symbol, as a requirement's tree prints it. */
-const OPERATOR_SYMBOLS: Record<string, string> = {
-  equal: "=",
-  not_equal: "!=",
-  greater_than: ">",
-  less_than: "<",
-  greater_than_or_equal: ">=",
-  less_than_or_equal: "<=",
-  contains: "contains",
-  not_contains: "not contains",
-  starts_with: "starts with",
-  ends_with: "ends with",
-  is_empty: "is empty",
-  not_empty: "is not empty",
-};
 
 /**
  * A character's validation, as every ruleset's reads its build: the ruleset's own issues (`findRulesetIssues`), its
@@ -140,14 +125,17 @@ export function Validates<
       const formatNode = (node: RequirementNode<Requirement>, indent: string): string => {
         const req = node.requirement;
         if (req.chainingOperator) {
-          const label = `(${req.chainingOperator.toUpperCase()})`;
+          const label = `(${formatChainingOperator(req.chainingOperator)})`;
           const childLines = node.children.map((child) => formatNode(child, indent + "  ")).join("\n");
           return `${indent}${label}\n${childLines}`;
         }
-        const op = OPERATOR_SYMBOLS[req.operator ?? ""] ?? req.operator ?? "?";
-        const isMet = isLeafMet(req);
-        const marker = isMet ? "" : "  [UNMET]";
-        return `${indent}${req.target} ${op} ${req.value}${marker}`;
+        // An operator's words, as the app shows them elsewhere (`formatOperator`); one checking its target alone, no value
+        const op = req.operator ? formatOperator("requirement", req.operator) : "?";
+        const condition = isValuelessOperator(req.operator ?? undefined)
+          ? `${req.target} ${op}`
+          : `${req.target} ${op} ${req.value}`;
+        const marker = isLeafMet(req) ? "" : "  [UNMET]";
+        return `${indent}${condition}${marker}`;
       };
 
       return roots.map((root) => formatNode(root, "")).join("\n");

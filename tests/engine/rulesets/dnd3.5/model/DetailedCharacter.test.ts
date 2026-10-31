@@ -2248,7 +2248,8 @@ describe("DetailedCharacter", () => {
         ...requiring(target, check)[0][0],
         level,
       });
-      // A value computed from another path, a string operator, and a boolean written false: Bjorn has Dodge
+      // A value computed from another path, string operators, and a boolean written false: Bjorn has Dodge. Each operator
+      // is worded as the app words it (`formatOperator`), and one checking its target alone prints no value
       const tree = (await buildSeeded("Bjorn Ironhand")).formatRequirements([
         condition("1", "classes.fighter.level", {
           operator: "greater_than_or_equal",
@@ -2257,11 +2258,15 @@ describe("DetailedCharacter", () => {
         }),
         condition("2", "identity.physiology.name", { operator: "starts_with", value: "Bjorn", valueType: "string" }),
         condition("3", "feats.dodge.possessed", { operator: "equal", value: "false", valueType: "boolean" }),
+        condition("4", "identity.physiology.name", { operator: "not_contains", value: "Zed", valueType: "string" }),
+        condition("5", "identity.physiology.name", { operator: "not_empty", value: "", valueType: "string" }),
       ]);
       expect(tree.split("\n")).toEqual([
         "classes.fighter.level >= {{ [classes.fighter.level] }}",
         "identity.physiology.name starts with Bjorn",
-        "feats.dodge.possessed = false  [UNMET]",
+        "feats.dodge.possessed == false  [UNMET]",
+        "identity.physiology.name does not contain Zed",
+        "identity.physiology.name is not empty",
       ]);
     });
   });
