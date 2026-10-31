@@ -93,8 +93,7 @@ Item templates (their own `ITEM_IS_TEMPLATE` field true, which a create's form
 sends among its `fields`) remain editable under the ruleset's normal permissions,
 but cannot be made from another (a `madeFrom` link, the form's `links.madeFrom`). The item editor hides the
 source selector for templates, and the item service rejects sources on template
-creation or update using the stored template status. Saving a template without a
-source also clears any legacy source reference.
+creation or update using the stored template status.
 
 A template is of a type an item can be based on a template of
 (`TEMPLATE_ITEM_TYPES`: a weapon, an armor, a shield), refused otherwise on

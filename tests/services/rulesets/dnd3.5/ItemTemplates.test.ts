@@ -397,23 +397,6 @@ describe("Item templates", () => {
         links: { madeFrom: null },
       });
     });
-
-    test("and an old self-reference is cleared on save", async () => {
-      const { session, ruleset, template } = await setup();
-      const mace = await template("Heavy Mace");
-      const local = await EntitiesService.updateEntity(session, ruleset.id, "items", mace.id, { name: mace.name });
-      await Entities.update<Item>(db, "items", { links: { madeFrom: local.id } }, { id: local.id });
-      RulesetViews.invalidate(ruleset.id);
-
-      expect(
-        recordOf(
-          await EntitiesService.updateEntity(session, ruleset.id, "items", local.id, {
-            name: local.name,
-            description: "Updated template",
-          }),
-        ),
-      ).toMatchObject({ fields: { [ITEM_IS_TEMPLATE]: true }, links: { madeFrom: null } });
-    });
   });
 
   describe("are templates of their instances' type", () => {

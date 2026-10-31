@@ -132,7 +132,7 @@ describe("A field codec", () => {
     expect(CODEC.read(OwnerValues.NONE)).toEqual(CODEC.defaults);
   });
 
-  test("reads a flag true once a value is, a three-state one false off a false value", () => {
+  test("reads a flag true once a value is, never off a text, a three-state one false off a false value", () => {
     expect(
       CODEC.read(
         heldValues([
@@ -141,6 +141,7 @@ describe("A field codec", () => {
         ]),
       ).flag,
     ).toBe(true);
+    expect(CODEC.read(heldValues([["FLAG", "true"]])).flag).toBe(false);
     expect(CODEC.read(heldValues([["KNOWN", false]])).group.known).toBe(false);
     expect(
       CODEC.read(
@@ -152,7 +153,7 @@ describe("A field codec", () => {
     ).toBe(true);
   });
 
-  test("reads a number off the first value that's one in its bounds (as text too), and its default otherwise", () => {
+  test("reads a number off the first value that's one in its bounds, never a text or a flag, and its default otherwise", () => {
     // The flag its condition reads keeps the count, which counts only while it's on
     const counted = (...counts: FieldValue[]) =>
       heldValues([["FLAG", true], ...counts.map((count): [string, FieldValue] => ["COUNT", count])]);
@@ -171,9 +172,10 @@ describe("A field codec", () => {
         heldValues([
           ["LEVEL", true],
           ["LEVEL", "7"],
+          ["LEVEL", 5],
         ]),
       ).group.level,
-    ).toBe(7);
+    ).toBe(5);
   });
 
   test("reads a text off its first value and a reference off its link, a choice only among its values, a list whole", () => {
