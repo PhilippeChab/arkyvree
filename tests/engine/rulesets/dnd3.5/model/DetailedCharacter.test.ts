@@ -243,17 +243,9 @@ async function createAbilityItem(ability: string, bonus: number, slot: ItemLocat
 }
 
 /** A character of a fork with Complete Divine, with these modifiers of its own (`[target, value, valueType]`). */
-async function divineCharacter(
-  name: string,
-  abilities: Record<string, number>,
-  granted: [string, string, string][],
-  alignment?: "Neutral Good" | "Chaotic Neutral",
-) {
+async function divineCharacter(name: string, abilities: Record<string, number>, granted: [string, string, string][]) {
   const fork = await forkWith(DND35_COMPLETE_DIVINE_NAME);
-  const characterId = await seedHuman(name, abilities, {
-    rulesetId: fork.id,
-    fields: { [CHARACTER_ALIGNMENT]: alignment },
-  });
+  const characterId = await seedHuman(name, abilities, { rulesetId: fork.id });
   for (const [target, value, valueType] of granted) {
     const operator = valueType === "boolean" ? "set" : "add";
     await Modifiers.create(db, {
