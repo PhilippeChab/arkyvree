@@ -127,16 +127,31 @@ describe("CampaignsService", () => {
   });
 
   describe("getCampaign", () => {
-    test("returns the campaign with the user's role in it", async () => {
-      const { session } = await createTestUser();
-      const created = await createCampaign(session);
-      expect(await CampaignsService.getCampaign(session, created.id)).toMatchObject({
-        id: created.id,
+    test("returns the campaign with what the session may do in it, as its policy decides", async () => {
+      const { gm, campaign, player } = await setup();
+      const all = { canEdit: true, canLeave: true, canManagePlayers: true, canRevokeInvites: true };
+      expect(await CampaignsService.getCampaign(gm, campaign.id)).toMatchObject({
+        id: campaign.id,
         name: "Test Campaign",
         description: "Test description",
-        currentUserRole: "Game Master",
+        permissions: all,
       });
-      expect(CampaignsService.getCampaign(session, NIL_UUID)).rejects.toThrow(NotFoundError);
+      // A player leaves it alone
+      expect((await CampaignsService.getCampaign(player, campaign.id)).permissions).toEqual({
+        canEdit: false,
+        canLeave: true,
+        canManagePlayers: false,
+        canRevokeInvites: false,
+      });
+      // Archived, it's read-only, but its Game Master still edits it (unarchives, deletes) and revokes a pending invite
+      await CampaignsService.archiveCampaign(gm, campaign.id);
+      expect((await CampaignsService.getCampaign(gm, campaign.id)).permissions).toEqual({
+        ...all,
+        canLeave: false,
+        canManagePlayers: false,
+      });
+      expect((await CampaignsService.getCampaign(player, campaign.id)).permissions).toMatchObject({ canLeave: false });
+      expect(CampaignsService.getCampaign(gm, NIL_UUID)).rejects.toThrow(NotFoundError);
     });
   });
 

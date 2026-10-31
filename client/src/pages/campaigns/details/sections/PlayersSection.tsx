@@ -94,7 +94,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
   // Search state with debounce
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("playerSearch");
 
-  const { canManagePlayers } = useCampaignPermissions(campaign);
+  const { canLeave, canManagePlayers, canRevokeInvites } = useCampaignPermissions(campaign);
   const currentUserId = useAuthStore((s) => s.user?.id);
 
   const addForm = useFormWith<PlayerFormData>({
@@ -230,7 +230,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
           {...searchTextProps}
           searchPlaceholder="Search players…"
           addLabel="Add Player"
-          onAdd={canManagePlayers && !campaign.deletedAt ? handleAddPlayer : undefined}
+          onAdd={canManagePlayers ? handleAddPlayer : undefined}
         />
         <ListPageResults
           variant="section"
@@ -244,7 +244,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
               title="No players in this campaign"
               description="Add players to start your adventure together"
               action={
-                canManagePlayers && !campaign.deletedAt ? (
+                canManagePlayers ? (
                   <AddButton variant="outlined" size="large" label="Add Your First Player" onClick={handleAddPlayer} />
                 ) : undefined
               }
@@ -261,13 +261,12 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
               const isGameMaster = player.role === "Game Master";
               const RoleIcon = ROLE_ICONS[player.role];
               const isCurrentUser = player.userId === currentUserId;
-              const canRevokeInvite = slot.state === "pending" && canManagePlayers && !campaign.deletedAt;
-              // A row's actions: the manager's on any slot but an assigned Game Master's, the player's on their own,
-              // but the last Game Master's, whom the server neither demotes nor lets leave
-              const hasActions =
-                !campaign.deletedAt &&
-                !player.isLastGameMaster &&
-                ((canManagePlayers && (!isGameMaster || slot.state !== "assigned")) || isCurrentUser);
+              const canRevokeInvite = slot.state === "pending" && canRevokeInvites;
+              // Its own seat the session leaves, another's the manager removes: but the last Game Master's, whom the
+              // server neither demotes nor lets leave
+              const canRemove = !player.isLastGameMaster && (isCurrentUser ? canLeave : canManagePlayers);
+              const canEdit = !player.isLastGameMaster && canManagePlayers;
+              const hasActions = canEdit || canRevokeInvite || canRemove;
 
               return (
                 <DataRow
@@ -309,9 +308,7 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                   <DataCell slot={hasActions ? "trailing" : "hidden"} align="right">
                     {hasActions && (
                       <RowActions>
-                        {canManagePlayers && (
-                          <RowAction icon={EditIcon} label="Edit" onClick={() => handleEditPlayer(player)} />
-                        )}
+                        {canEdit && <RowAction icon={EditIcon} label="Edit" onClick={() => handleEditPlayer(player)} />}
                         {canRevokeInvite && (
                           <RowAction
                             icon={RevokeIcon}
@@ -321,12 +318,14 @@ export function PlayersSection({ campaign }: PlayersSectionProps) {
                             disabled={revokeInviteMutation.isPending}
                           />
                         )}
-                        <RowAction
-                          icon={isCurrentUser ? LeaveIcon : DeleteIcon}
-                          label={isCurrentUser ? "Leave" : "Remove"}
-                          intent={isCurrentUser ? "caution" : "destructive"}
-                          onClick={() => handleRemovePlayer(player)}
-                        />
+                        {canRemove && (
+                          <RowAction
+                            icon={isCurrentUser ? LeaveIcon : DeleteIcon}
+                            label={isCurrentUser ? "Leave" : "Remove"}
+                            intent={isCurrentUser ? "caution" : "destructive"}
+                            onClick={() => handleRemovePlayer(player)}
+                          />
+                        )}
                       </RowActions>
                     )}
                   </DataCell>

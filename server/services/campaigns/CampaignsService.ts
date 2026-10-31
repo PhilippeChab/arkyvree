@@ -8,6 +8,7 @@ import {
   Visibility,
   visibilityMap,
 } from "@/server/repositories/index.ts";
+import { type CampaignsPolicy, isAllowed } from "@/server/services/policies/index.ts";
 import { getReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -15,6 +16,20 @@ import type { Session } from "@/shared/relations.ts";
 import { getReadableCampaign } from "./readableCampaign.ts";
 
 class CampaignsService {
+  /**
+   * What the session may do in a campaign, as its policy decides it: edit, archive or delete it (`canEdit`), add, edit
+   * and remove its players (`canManagePlayers`), revoke a pending invite, an archived campaign's too
+   * (`canRevokeInvites`), and leave it (`canLeave`). The client offers what it answers.
+   */
+  private permissionsOf(policy: CampaignsPolicy) {
+    return {
+      canEdit: isAllowed(() => policy.canUpdate()),
+      canLeave: isAllowed(() => policy.canModify()),
+      canManagePlayers: isAllowed(() => policy.canManagePlayers()),
+      canRevokeInvites: isAllowed(() => policy.canUpdate()),
+    };
+  }
+
   async archiveCampaign(session: Session, id: string) {
     return await withTransaction(async (tx) => {
       const { policy } = await getReadableCampaign(tx, session, id, Visibility.UnarchivedOnly);
@@ -80,14 +95,14 @@ class CampaignsService {
   }
 
   async getCampaign(session: Session, id: string) {
-    const { member } = await getReadableCampaign(db, session, id);
+    const { policy } = await getReadableCampaign(db, session, id);
 
     const rows = await Campaigns.findOneWithPlayerCount(db, { id });
     const campaign = rows[0];
 
     if (!campaign) throw new NotFoundError("Campaign not found");
 
-    return { ...campaign, currentUserRole: member.role };
+    return { ...campaign, permissions: this.permissionsOf(policy) };
   }
 
   async getCampaigns(
