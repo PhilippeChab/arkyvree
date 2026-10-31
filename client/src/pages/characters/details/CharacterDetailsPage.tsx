@@ -82,7 +82,7 @@ export default function CharacterDetailsPage() {
     canArchive,
     canDownloadPdf,
     canEdit,
-    canEditLevels,
+    canEditAdvancements,
     canEditPortrait,
     canInviteContributors,
     canLeave,
@@ -172,8 +172,8 @@ export default function CharacterDetailsPage() {
             rulesetId={character.rulesetId}
             rulesetName={character.rulesetName}
             backTo={isSubsheet && parentCharacterId ? `/characters/${parentCharacterId}` : "/characters"}
-            onAddLevel={canEditLevels ? (trackId) => addLevel.openWith({ trackId }) : undefined}
-            onEditLevel={canEditLevels ? editLevel.openWith : undefined}
+            onAddLevel={canEditAdvancements ? (trackId) => addLevel.openWith({ trackId }) : undefined}
+            onEditLevel={canEditAdvancements ? editLevel.openWith : undefined}
             onMenuOpen={isSubsheet && (isArchived || !canDownloadPdf) ? undefined : menu.openMenu}
             rename={canEdit ? { characterId: id, updatedAt: character.updatedAt, parentCharacterId } : undefined}
           />
