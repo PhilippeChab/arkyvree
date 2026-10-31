@@ -340,7 +340,6 @@ export default class EntityWriter {
       const planned = plan(scope);
 
       const given = planned.rows.flatMap((row) => row.name ?? []);
-      if (new Set(given).size !== given.length) throw new ConflictError("A name is given twice in the list");
       const names = new EntityNames(sources, rulesetData.cow);
       const tombstones = await names.assertNamesAvailable(tx, this.type, given);
       const rows = planned.rows.map((row) => ({ row, tombstoneAncestorId: row.name && tombstones.get(row.name) }));

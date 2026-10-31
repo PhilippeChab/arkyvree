@@ -204,13 +204,11 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
    * An item's variants (`variants`, of `sourceId`): each a copy of its source's type and slot, pointing at its
    * template; and, unless its source is a template (whose copies read its other fields off it, its weight and cost
    * among them, as it changes), of every other field its source holds of its own and of its customizations
-   * (`copyCustomizationsFrom`). Refused with more than the rules make at once, or two of a name.
+   * (`copyCustomizationsFrom`). Refused with more than the rules make at once; two of a name, the names an entity may
+   * take (`EntityNames`, the server's).
    */
   override planVariants(sourceId: string, variants: VariantBody[]) {
     RulesError.parse(VARIANTS, variants, ["variants"]);
-    const names = variants.map((variant) => variant.name);
-    if (new Set(names).size !== names.length)
-      throw new RulesError("conflict", "Duplicate names within the variants list");
 
     const source = this.findSource(sourceId);
     const template = source.fields[ITEM_IS_TEMPLATE];
