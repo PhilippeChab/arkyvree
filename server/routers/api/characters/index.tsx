@@ -9,7 +9,16 @@ import {
   sessionMiddleware,
   validate,
 } from "@/server/middlewares/index.ts";
-import { characterIdParam, idList, idParam, limit, orderDirDesc, page } from "@/server/routers/api/validation.ts";
+import {
+  characterFields,
+  characterIdParam,
+  idList,
+  idParam,
+  limit,
+  orderDirDesc,
+  page,
+  score,
+} from "@/server/routers/api/validation.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { MAX_CHARACTER_NAME_LENGTH, MAX_IMPORT_FILE_LENGTH } from "@/shared/characters.ts";
@@ -22,23 +31,11 @@ import sharing from "./sharing/index.ts";
 
 const campaignIdParam = z.object({ campaignId: z.string().uuid() });
 
-/** A field's value as a body sends it: a text, a number or a flag. */
-const fieldValue = z.union([z.string(), z.number(), z.boolean()]);
-
-/**
- * A character's fields, by their keys, which its ruleset reads and checks by their declarations (`FieldCodec.parse`):
- * a single field's value, a set's values, or none.
- */
-const characterFields = z.record(z.string(), z.union([fieldValue, z.array(fieldValue).readonly(), z.null()]));
-
 /** A creation pick's role: its single link's (3.5's `race`). */
 const roleParam = z.object({ role: z.string() });
 
 /** A character's links of a role (3.5's `score`, `speaks`). */
 const roleParams = idParam.extend({ role: z.string() });
-
-/** A character's amount of a scored link's entity (3.5's ability score). */
-const score = z.number().int();
 
 export default new Hono()
   .use(sessionMiddleware)

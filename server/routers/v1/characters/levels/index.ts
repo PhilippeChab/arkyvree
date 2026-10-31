@@ -4,8 +4,15 @@ import { z } from "zod";
 import { type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
 import { limitDefaultingTo } from "@/server/routers/api/schemaBuilders.ts";
 import { idParam, page, planSteps } from "@/server/routers/api/validation.ts";
-import { v1LevelPlan, v1LevelPlanAnswer, v1LevelSteps, v1StepOptions } from "@/server/routers/v1/schemas/characters.ts";
+import {
+  v1Character,
+  v1LevelPlan,
+  v1LevelPlanAnswer,
+  v1LevelSteps,
+  v1StepOptions,
+} from "@/server/routers/v1/schemas/characters.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
+import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 
 const levelParams = idParam.extend({ advancementId: z.string().uuid() });
@@ -15,6 +22,15 @@ const levelPlan = z.object({
   editedLevelId: z.string().uuid().optional().meta({ description: "The saved level it edits, none for new levels" }),
   steps: planSteps.meta({ description: "Each step's payload, by its name, in its mechanic's shape" }),
 });
+
+/** A plan's save: each step's payload by its name, and whether it's saved past the rules' issues. */
+const levelSave = {
+  force: z
+    .boolean()
+    .default(false)
+    .meta({ description: "Saves it though the rules find issues with it (3.5: a feat whose prerequisite is unmet)" }),
+  steps: planSteps.meta({ description: "Each step's payload, by its name, in its mechanic's shape" }),
+};
 
 /** A step's name, as its ruleset lists it. */
 const stepParams = idParam.extend({
@@ -123,5 +139,51 @@ export default new Hono<ApiKeyContext>()
         page,
       });
       return c.json(V1.stepOptions(options), 200);
+    },
+  )
+  .post(
+    "/:id/levels",
+    describeRoute({
+      response: v1Character,
+      status: 201,
+      summary: "Saves a level plan's levels, answering the character's sheet",
+    }),
+    validate("param", idParam),
+    validate("json", z.object(levelSave)),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      const { force, steps } = c.req.valid("json");
+      await CharacterLevelsService.addLevels(c.var.requestSession, id, { steps }, force);
+      return c.json(V1.character(await CharactersService.getCharacter(c.var.requestSession, id)), 201);
+    },
+  )
+  .put(
+    "/:id/levels/:advancementId",
+    describeRoute({
+      response: v1Character,
+      status: 200,
+      summary: "Saves a level's edit (its plan, without its plan step), answering the character's sheet",
+    }),
+    validate("param", levelParams),
+    validate("json", z.object(levelSave)),
+    async (c) => {
+      const { advancementId, id } = c.req.valid("param");
+      const { force, steps } = c.req.valid("json");
+      await CharacterLevelsService.updatePlannedLevel(c.var.requestSession, id, advancementId, { steps }, force);
+      return c.json(V1.character(await CharactersService.getCharacter(c.var.requestSession, id)), 200);
+    },
+  )
+  .delete(
+    "/:id/levels",
+    describeRoute({
+      response: v1Character,
+      status: 200,
+      summary: "Removes a character's last level, answering its sheet",
+    }),
+    validate("param", idParam),
+    async (c) => {
+      const { id } = c.req.valid("param");
+      await CharacterLevelsService.removeLevel(c.var.requestSession, id);
+      return c.json(V1.character(await CharactersService.getCharacter(c.var.requestSession, id)), 200);
     },
   );

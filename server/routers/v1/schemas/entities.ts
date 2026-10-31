@@ -1,7 +1,7 @@
 /**
  * A ruleset's entity as v1 answers it, whatever its kind: its columns, its fields by the names its ruleset declares
  * them, and its links to others, each with its target's name; and what an entity's kind may have past them (3.5's class
- * levels, progression and tables; a feat's family).
+ * levels, progression and tables; 3.5's feat family).
  */
 
 import { z } from "zod";
@@ -14,6 +14,7 @@ export const v1EntityModifier = z
     id: v1Id,
     operator: z.string().meta({ description: "`add`, `subtract`, `multiply`, `divide` or `set`" }),
     target: z.string().meta({ description: "The target path it changes (3.5: `abilities.strength.misc`)" }),
+    updatedAt: z.string().meta({ description: "When it last changed, which an update sends back" }),
     value: z.string(),
     valueType: z.string(),
   })
@@ -67,6 +68,7 @@ export const v1Requirement = z
     level: z.string().meta({ description: "Where it sits in its tree of groups" }),
     operator: z.string().nullable(),
     target: z.string().nullable(),
+    updatedAt: z.string().meta({ description: "When it last changed, which an update sends back" }),
     value: z.string().nullable(),
     valueType: z.string().nullable(),
   })
@@ -136,6 +138,21 @@ export const v1OwnedEntity = v1EntitySummary
   .meta({ description: "An entity another owns (3.5: a class's level)", id: "OwnedEntity" });
 
 export const v1OwnedEntities = z.array(v1OwnedEntity);
+
+/** A page of completions for a target path being typed, with its segments' labels. */
+export const v1PathCompletions = z
+  .strictObject({
+    items: z.array(z.looseObject({})).meta({ description: "Each completion: what it inserts, and its label" }),
+    nextPage: z.number().int().nullable(),
+    page: z.number().int(),
+    segmentLabels: z.record(z.string(), z.string()),
+  })
+  .meta({ description: "A page of a target path's completions", id: "PathCompletions" });
+
+/** What a target path is: whether it's valid, its errors, and what it could be. */
+export const v1PathValidation = z
+  .looseObject({ errors: z.array(z.looseObject({})), isValid: z.boolean(), suggestions: z.array(z.string()) })
+  .meta({ description: "Whether a target path is valid, its errors, and suggestions", id: "PathValidation" });
 
 /**
  * What an entity's levels give, as its rules describe it: each pool's picks by level, and past them the values the

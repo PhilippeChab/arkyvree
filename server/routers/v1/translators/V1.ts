@@ -1,4 +1,13 @@
-import { toV1Character, toV1Characters, toV1Inventory, toV1LinkRoom, toV1Modifiers } from "./characters.ts";
+import {
+  toV1Character,
+  toV1Characters,
+  toV1Creation,
+  toV1CreationOption,
+  toV1ImportedCharacter,
+  toV1Inventory,
+  toV1LinkRoom,
+  toV1Modifiers,
+} from "./characters.ts";
 import {
   toV1Entity,
   toV1EntityGroup,
@@ -8,6 +17,7 @@ import {
   toV1LabeledModifiers,
   toV1LabeledRequirements,
   toV1OwnedEntity,
+  toV1PathCompletions,
   toV1Progression,
   toV1StoredEntity,
 } from "./entities.ts";
@@ -31,6 +41,9 @@ import {
 export const V1 = {
   character: toV1Character,
   characters: toV1Characters,
+  creation: toV1Creation,
+  creationOption: toV1CreationOption,
+  importedCharacter: toV1ImportedCharacter,
   entity: toV1Entity,
   entityGroup: toV1EntityGroup,
   entityLinks: toV1EntityLinks,
@@ -46,6 +59,7 @@ export const V1 = {
   modifiers: toV1Modifiers,
   ownedEntity: toV1OwnedEntity,
   page: toV1Page,
+  pathCompletions: toV1PathCompletions,
   rules: toV1Rules,
   progression: toV1Progression,
   ruleset: toV1Ruleset,

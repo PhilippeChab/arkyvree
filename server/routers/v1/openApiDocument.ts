@@ -90,7 +90,7 @@ function toComponentRefs(value: unknown, suffix: string): unknown {
   );
 }
 
-/** A word of a path, capitalized: `spells-known` is `SpellsKnown`, a parameter `:classId` `ByClassId`. */
+/** A word of a path, capitalized: `level-plan` is `LevelPlan`, a parameter `:entityId` `ByEntityId`. */
 function toIdWord(segment: string) {
   const word = segment.replace(/^:/, "").replaceAll(/-(\w)/g, (_, letter: string) => letter.toUpperCase());
   return `${segment.startsWith(":") ? "By" : ""}${word.charAt(0).toUpperCase()}${word.slice(1)}`;

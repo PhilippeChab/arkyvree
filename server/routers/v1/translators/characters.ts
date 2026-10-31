@@ -9,6 +9,9 @@ import {
   type v1Character,
   type v1CharacterCard,
   v1CharacterPermissions,
+  type v1Creation,
+  type v1CreationOption,
+  type v1ImportedCharacter,
   type v1Inventory,
   type v1LinkRoom,
   type v1Modifiers,
@@ -67,6 +70,48 @@ export function toV1Characters(
   }));
 }
 
+/** How a new character sets its scores of a role. */
+export function toV1Creation(creation: Answer<typeof CharactersService.getCreation>): z.infer<typeof v1Creation> {
+  return {
+    entities: creation.entities.map(({ id, name }) => ({ id, name })),
+    methods: creation.methods.map((method) => ({ ...method })),
+    modifiers: { ...creation.modifiers },
+    scores: { max: creation.scores.max, min: creation.scores.min, start: creation.scores.start },
+  };
+}
+
+/** An option a new character's creation pick offers, as it's stored. */
+export function toV1CreationOption(
+  option: Answer<typeof CharactersService.getCreationOptions>["items"][number],
+): z.infer<typeof v1CreationOption> {
+  return {
+    description: option.description,
+    eligible: option.eligible,
+    fields: { ...option.fields },
+    id: option.id,
+    links: { ...option.links },
+    name: option.name ?? "",
+    partition: option.partition,
+    requirementTree: option.requirementTree,
+  };
+}
+
+/** A character imported from another program's file, with what the import says it did. */
+export function toV1ImportedCharacter(
+  sheet: Answer<typeof CharactersService.getCharacter>,
+  report: Answer<typeof CharactersService.importCharacter>["report"],
+): z.infer<typeof v1ImportedCharacter> {
+  return {
+    character: toV1Character(sheet),
+    report: {
+      imported: report.imported,
+      issues: report.issues,
+      program: report.program,
+      unmatched: report.unmatched.map(({ line, reason, text }) => ({ line, reason, text })),
+    },
+  };
+}
+
 /** A character's inventory, each item with its fields by the names its ruleset declares them. */
 export function toV1Inventory(
   inventory: Answer<typeof CharacterInventoryService.getInventory>,
@@ -106,6 +151,7 @@ export function toV1Modifiers(
     operator: modifier.operator,
     target: modifier.target,
     targetLabels: modifier.targetLabels,
+    updatedAt: modifier.updatedAt,
     value: modifier.value,
     valueLabel: modifier.valueLabel,
     valueType: modifier.valueType,

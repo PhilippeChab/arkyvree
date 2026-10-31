@@ -62,6 +62,22 @@ the service returns to v1's shape (`V1.character`).
 - A new version copies the last, replacing only what changed (`const V2 = { ...V1, character: … }`, mounted at `/v2`),
   and v1 keeps working untouched.
 
+## Writes
+
+A write calls the service the app's own route calls, with its checks, and answers what it changed as v1 reads it: a
+character's edit, a level's save and its removal answer its sheet (`V1.character`), an inventory edit the entry, an
+entity's edit the entity (an inherited one's edit its fork's copy, under the copy's id), a customization's edit its
+entity's modifiers or requirements. The answer is read after the write, through the read's own service, so a write's
+answer is the read's shape. A delete (a character's archive, an entity's, an item removed) answers 204.
+
+- An edit sends back the `updatedAt` it read (a character's, an entry's, a modifier's, a ruleset's), and is refused
+  with a 409 when the row changed since, as the app's forms are.
+- A level is saved as the wizard saves one: a plan's steps, the payloads `POST …/level-plan` answered; `force` saves it
+  past the rules' issues, as the wizard's confirm does. An edit (`PUT …/levels/{advancementId}`) takes the saved plan
+  (`GET …/levels/{advancementId}/plan`) without its plan step.
+- A fork's entity restored (`POST …/entities/{kind}/{entityId}/restore`) is named by its parent's id, which its copy
+  shows as.
+
 ## The reference
 
 `GET /v1/openapi.json` answers the OpenAPI 3.1 document of every v1 route, without a key, built as the server starts
@@ -78,5 +94,4 @@ A page answers `{ items, page, nextPage }`, `nextPage` null on the last. An erro
 
 ## Not yet
 
-The issue's later stages: editing characters and rulesets, campaigns and notifications, and a route that says whether
-a PDF is ready and fetches it.
+The issue's last stage: campaigns and notifications, and a route that says whether a PDF is ready and fetches it.
