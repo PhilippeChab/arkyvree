@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
-import { ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Campaigns, Players, Users } from "@/server/repositories/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
@@ -38,6 +38,13 @@ describe("CampaignsPolicy", () => {
       expect(() => policy.canDelete()).toThrow(ForbiddenError);
       expect(() => policy.canHardDelete()).toThrow(ForbiddenError);
     }
+  });
+
+  test("canAcceptInvite: a campaign that isn't archived, a 409 for an archived one", async () => {
+    const { campaign, policy } = await policyFor(null);
+    expect(policy.canAcceptInvite()).toBe(true);
+    const [archived] = await Campaigns.archive(db, { id: campaign.id });
+    expect(() => new CampaignsPolicy({ userId: "invitee" }, archived).canAcceptInvite()).toThrow(ConflictError);
   });
 
   test("canRead: the session's player row, the 404 an unknown campaign gets for an outsider", async () => {

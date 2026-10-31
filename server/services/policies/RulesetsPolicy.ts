@@ -1,6 +1,6 @@
 import type { Db } from "@/drizzle/database.ts";
 import { include } from "@/lib/mixins.ts";
-import { ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Characters, Contributors, Players } from "@/server/repositories/index.ts";
 import type { Ruleset, Session } from "@/shared/relations.ts";
 
@@ -8,7 +8,7 @@ import { ContributorRights } from "./concerns/ContributorRights.ts";
 import { CreationRights } from "./concerns/CreationRights.ts";
 import { EntityRights } from "./concerns/EntityRights.ts";
 import { ExtensionRights } from "./concerns/ExtensionRights.ts";
-import RulesetRoles, { isPublicRuleset } from "./RulesetRoles.ts";
+import RulesetRoles, { isPublicRuleset, isStarrable } from "./RulesetRoles.ts";
 
 class RulesetsPolicy extends include(RulesetRoles, ContributorRights, CreationRights, EntityRights, ExtensionRights) {
   /**
@@ -39,6 +39,13 @@ class RulesetsPolicy extends include(RulesetRoles, ContributorRights, CreationRi
       isCampaignPlayer: seat?.live ?? false,
       isCharacterEditor,
     });
+  }
+
+  /** Accepting an invite to contribute to the ruleset: one that isn't archived. */
+  canAcceptInvite() {
+    if (this.entity.status === "Archived") throw new ConflictError("This ruleset has been archived");
+
+    return true;
   }
 
   canFork() {
@@ -74,6 +81,13 @@ class RulesetsPolicy extends include(RulesetRoles, ContributorRights, CreationRi
     return true;
   }
 
+  /** Starring the ruleset: one that can be built on (`isStarrable`), a public base or extension. */
+  canStar() {
+    if (!isStarrable(this.entity)) throw new ForbiddenError("Only base rulesets and extensions can be starred");
+
+    return true;
+  }
+
   canUnarchive() {
     this.checkOwned("unarchive");
 
@@ -86,14 +100,17 @@ class RulesetsPolicy extends include(RulesetRoles, ContributorRights, CreationRi
 
   /**
    * Used by RulesetsService for updating the ruleset itself (name, description, privacy, archive).
-   * Only owner and Admin contributors are allowed.
+   * Only owner and Admin contributors are allowed, and a public ruleset stays public (`values.private`: the privacy an
+   * update asks for).
    */
-  canUpdate() {
+  canUpdate(values: { private?: boolean } = {}) {
     this.checkOwned("edit");
 
     if (!this.isOwner && !this.isAdminContributor) throw new ForbiddenError("Cannot edit another user's ruleset");
 
     if (this.entity.status === "Archived") throw new UnprocessableEntityError("Archived rulesets are read-only");
+
+    if (!this.entity.private && values.private) throw new ForbiddenError("Cannot make a public ruleset private");
 
     return true;
   }

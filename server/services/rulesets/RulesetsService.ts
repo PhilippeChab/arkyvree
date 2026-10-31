@@ -1,7 +1,7 @@
 import { include } from "@/lib/mixins.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db, withTransaction, withUniqueRefusal } from "@/server/database/index.ts";
-import { ConflictError, ForbiddenError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
   Activities,
   type Pagination,
@@ -10,7 +10,7 @@ import {
   RulesetSettings,
   StarredRulesets,
 } from "@/server/repositories/index.ts";
-import { isAllowed, type RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { isAllowed, isStarrable, type RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -132,7 +132,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       starCount,
       // A response says none with null: JSON leaves an undefined key out
       contributorRole: policy.contributorRole ?? null,
-      isStarrable: this.isStarrable(ruleset),
+      isStarrable: isAllowed(() => policy.canStar()),
       permissions: this.permissionsOf(policy, { hasExtensions, usedAsExtension }),
     };
   }
@@ -183,7 +183,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       rulesetName: ruleset.rulesetId ? parentNameMap.get(ruleset.rulesetId) : undefined,
       isStarred: starredSet.has(ruleset.id),
       starCount: starCounts.get(ruleset.id) ?? 0,
-      isStarrable: this.isStarrable(ruleset),
+      isStarrable: isStarrable(ruleset),
     }));
 
     return {
@@ -200,9 +200,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
     const result = await withTransaction(async (tx) => {
       // First verify the ruleset exists
       const { policy, ruleset } = await getReadableRuleset(tx, session, id);
-      policy.canUpdate();
-
-      if (!ruleset.private && body.private) throw new ForbiddenError("Cannot make a public ruleset private");
+      policy.canUpdate({ private: body.private });
 
       const { kind } = body;
       if (kind && kind !== ruleset.kind) {

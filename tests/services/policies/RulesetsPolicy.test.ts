@@ -65,6 +65,12 @@ describe("RulesetsPolicy", () => {
     expect(() => policyOf("Owner", { status: "Archived" }).canUpdate()).toThrow("Archived rulesets are read-only");
     expect(() => policyOf("Admin", { status: "Archived" }).canUpdate()).toThrow(UnprocessableEntityError);
     expect(() => policyOf("Owner", SYSTEM).canUpdate()).toThrow("Cannot edit a base ruleset");
+    // A private ruleset becomes public, a public one stays so
+    expect(policyOf("Owner").canUpdate({ private: false })).toBe(true);
+    expect(policyOf("Owner", { private: false }).canUpdate({ private: false })).toBe(true);
+    expect(() => policyOf("Owner", { private: false }).canUpdate({ private: true })).toThrow(
+      "Cannot make a public ruleset private",
+    );
   });
 
   test("refuses every change to a ruleset nobody owns: a system one, and an orphaned one, frozen as it was left", () => {
@@ -151,6 +157,45 @@ describe("RulesetsPolicy", () => {
     expect(() => policyOf("Owner").canUnsubscribeExtension({ inUse: true })).toThrow(ConflictError);
     expect(() => policyOf("Admin").canUnsubscribeExtension()).toThrow(ForbiddenError);
     expect(() => policyOf("Owner", { status: "Archived" }).canUnsubscribeExtension()).toThrow(UnprocessableEntityError);
+  });
+
+  test("canBeSubscribed: a published, public extension of the subscriber's base, whoever asks", () => {
+    const extension = { kind: "extension" as const, status: "Published" as const, private: false };
+    expectOnly(ACTORS, (p) => p.canBeSubscribed({ parentId: "base-id" }), UnprocessableEntityError, extension);
+    // A system extension is public whatever its flag says
+    expect(
+      policyOf("Stranger", { ...extension, ...SYSTEM, private: true }).canBeSubscribed({ parentId: "base-id" }),
+    ).toBe(true);
+    for (const [overrides, message] of [
+      [{ kind: "ruleset" }, "Ruleset is not published as an extension"],
+      [{ status: "Draft" }, "Extension must be published"],
+      [{ private: true }, "Extension must be public"],
+    ] as const) {
+      expect(() => policyOf("Owner", { ...extension, ...overrides }).canBeSubscribed({ parentId: "base-id" })).toThrow(
+        message,
+      );
+    }
+    expect(() => policyOf("Owner", extension).canBeSubscribed({ parentId: "other-base" })).toThrow(
+      "Extension must share a common ancestor ruleset",
+    );
+  });
+
+  test("canStar: a public base or extension, whoever asks", () => {
+    const published = { status: "Published" as const, private: false };
+    expectOnly(ACTORS, (p) => p.canStar(), ForbiddenError, { ...published, rulesetId: null });
+    expectOnly(ACTORS, (p) => p.canStar(), ForbiddenError, { ...published, kind: "extension" });
+    // A fork for play, a draft base and a private base are no bookmarks
+    for (const overrides of [
+      published,
+      { ...published, rulesetId: null, status: "Draft" as const },
+      { ...published, rulesetId: null, private: true },
+    ])
+      expect(() => policyOf("Owner", overrides).canStar()).toThrow("Only base rulesets and extensions can be starred");
+  });
+
+  test("canAcceptInvite: a ruleset that isn't archived, whoever asks", () => {
+    expectOnly(ACTORS, (p) => p.canAcceptInvite(), ConflictError);
+    expect(() => policyOf("Stranger", { status: "Archived" }).canAcceptInvite()).toThrow(ConflictError);
   });
 
   test("canBeExtension: a fork that subscribes to none, whoever asks", () => {

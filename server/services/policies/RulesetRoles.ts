@@ -12,8 +12,16 @@ export interface RulesetStanding {
 }
 
 /** Whether anyone may use `ruleset`: published, and not private. */
-export function isPublicRuleset(ruleset: Ruleset) {
+export function isPublicRuleset(ruleset: Pick<Ruleset, "private" | "status">) {
   return !ruleset.private && ruleset.status === "Published";
+}
+
+/**
+ * Whether `ruleset` may be starred, a bookmark on what can be built on: a public base, which is forked, or a public
+ * extension, which is subscribed to. A fork for play is neither.
+ */
+export function isStarrable(ruleset: Pick<Ruleset, "kind" | "private" | "rulesetId" | "status">) {
+  return isPublicRuleset(ruleset) && (!ruleset.rulesetId || ruleset.kind === "extension");
 }
 
 /**

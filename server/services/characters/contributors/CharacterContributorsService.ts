@@ -42,7 +42,7 @@ class CharacterContributorsService {
       const character = await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All);
       if (!character) throw new NotFoundError("Character not found");
 
-      if (character.deletedAt) throw new ConflictError("This character has been archived and can no longer be edited");
+      (await CharactersPolicy.for(tx, session, character)).canAcceptInvite();
 
       return await this.answerInvite(tx, session, contributor, character.name, "Active");
     });

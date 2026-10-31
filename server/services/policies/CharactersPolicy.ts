@@ -104,6 +104,13 @@ export default class CharactersPolicy extends BasePolicy<Character> {
     return Engine.storage().isPlayerKind(this.entity.kind);
   }
 
+  /** Accepting an invite to contribute to the character: one that isn't archived, which no one edits. */
+  canAcceptInvite() {
+    if (this.entity.deletedAt) throw new ConflictError("This character has been archived and can no longer be edited");
+
+    return true;
+  }
+
   /** Archiving the character, unarchiving it and deleting it for good: its owner's (`canOwn`). */
   canArchive() {
     return this.canOwn();

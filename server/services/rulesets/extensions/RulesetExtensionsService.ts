@@ -58,21 +58,9 @@ class RulesetExtensionsService {
         if (extensionId === id) throw new UnprocessableEntityError("Cannot subscribe to itself");
 
         // One the session may not read is refused as an unknown one is: a private ruleset's existence isn't revealed
-        const extension = (await findReadableRuleset(tx, session, extensionId))?.ruleset;
+        const extension = await findReadableRuleset(tx, session, extensionId);
         if (!extension) throw new NotFoundError("Extension not found");
-
-        if (extension.kind !== "extension")
-          throw new UnprocessableEntityError("Ruleset is not published as an extension");
-
-        if (extension.status !== "Published") throw new UnprocessableEntityError("Extension must be published");
-
-        if (!extension.system && extension.private) throw new UnprocessableEntityError("Extension must be public");
-
-        // Both child and extension are forks of a base ruleset (fork-of-fork
-        // is blocked, extensions are forks of bases) so "share a common ancestor"
-        // collapses to "fork the same base."
-        if (childRuleset.rulesetId !== extension.rulesetId)
-          throw new UnprocessableEntityError("Extension must share a common ancestor ruleset");
+        extension.policy.canBeSubscribed({ parentId: childRuleset.rulesetId });
 
         if (sources.extensionIds.includes(extensionId)) throw new ConflictError("Already subscribed to this extension");
 

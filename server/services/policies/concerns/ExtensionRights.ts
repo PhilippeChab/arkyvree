@@ -20,6 +20,25 @@ export function ExtensionRights<B extends Constructor<RulesetRoles>>(Base: B) {
     }
 
     /**
+     * Being subscribed to, as an extension, by a fork of `parentId`: a published extension, public (a system one
+     * always is), of the same base, as extensions are forks of a base, which no fork forks again. Whoever asks: who may
+     * subscribe the fork is `canSubscribeExtension`'s.
+     */
+    canBeSubscribed({ parentId }: { parentId: string | null }) {
+      if (this.entity.kind !== "extension")
+        throw new UnprocessableEntityError("Ruleset is not published as an extension");
+
+      if (this.entity.status !== "Published") throw new UnprocessableEntityError("Extension must be published");
+
+      if (!this.entity.system && this.entity.private) throw new UnprocessableEntityError("Extension must be public");
+
+      if (parentId !== this.entity.rulesetId)
+        throw new UnprocessableEntityError("Extension must share a common ancestor ruleset");
+
+      return true;
+    }
+
+    /**
      * Subscribing the ruleset to extensions: its owner, on a live fork that isn't an extension, and isn't one in use
      * either (`usedAsExtension`: another ruleset subscribes to it), whose subscribers would then depend on extensions
      * through it.
