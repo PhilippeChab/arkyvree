@@ -153,10 +153,10 @@ interface RulesetRawData {
   entities: Record<string, ViewEntity[]>; // each kind's entities as stored (its record), by its type (3.5's "feats", "class-levels"…)
   links: ReadonlyMap<string, { links: readonly ViewLink[]; type: string }>; // each entity's links of the roles it holds many of, and its kind, by its id
   tieredIds: Set<string>; // the entities a link with a tier points at (3.5's spell lists at a level)
-  values: ReadonlyMap<string, ReadonlyMap<string, StoredValues>>; // each owner's field values, by its type then its id
   kindValues: ReadonlyMap<string, readonly KindValue[]>; // each kind's values kind-wide: each with the entities holding it
   modifiers: Modifier[];
   requirements: Requirement[];
+  settings?: { rulesetId: string; values: StoredValues }; // its own Settings (its fields and its links), none for a ruleset that holds none
 }
 ```
 

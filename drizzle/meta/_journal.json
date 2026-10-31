@@ -736,6 +736,13 @@
       "when": 1793094241714,
       "tag": "0104_required-advancement-entry",
       "breakpoints": true
+    },
+    {
+      "idx": 105,
+      "version": "7",
+      "when": 1793097841714,
+      "tag": "0105_advancement-entry-key",
+      "breakpoints": true
     }
   ]
 }
