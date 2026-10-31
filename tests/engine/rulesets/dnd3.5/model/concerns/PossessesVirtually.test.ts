@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import type { CharacterFields } from "@/content/dnd3.5/builders/characters/types.ts";
 import { DND35_COMPLETE_ADVENTURER_NAME } from "@/content/dnd3.5/rulesetNames.ts";
 import { addClassLevels, createCharacter } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
 import type { Aptitude, Feat, Klass } from "@/engine/rulesets/dnd3.5/index.ts";
@@ -60,11 +61,11 @@ async function grant(characterId: string, target: string, gate?: Gate) {
   return modifier;
 }
 
-/** A human of the seeded ruleset (`rulesetId` when given), every ability score 10. */
-async function seedHuman(
-  name: string,
-  values: { alignment?: "Lawful Good" | "True Neutral"; rulesetId?: string } = {},
-) {
+/**
+ * A human of the seeded ruleset (`rulesetId` when given), every ability score 10, true neutral unless `values` gives
+ * other fields (by the stored field that keeps each).
+ */
+async function seedHuman(name: string, values: { fields?: Partial<CharacterFields>; rulesetId?: string } = {}) {
   const ctx = await getSeedCtx();
   const abilities = Object.fromEntries(Object.keys(ctx.abilityMap).map((ability) => [ability, 10]));
   return await createCharacter(db, ctx, {
@@ -76,11 +77,12 @@ async function seedHuman(
     links: { race: "Human" },
     fields: {
       [CHARACTER_XP]: 0,
-      [CHARACTER_ALIGNMENT]: values.alignment ?? "True Neutral",
+      [CHARACTER_ALIGNMENT]: "True Neutral",
       [CHARACTER_AGE]: 30,
       [CHARACTER_GENDER]: "Male",
       [CHARACTER_HEIGHT]: "180",
       [CHARACTER_WEIGHT]: "80",
+      ...values.fields,
     },
   });
 }
@@ -319,7 +321,7 @@ describe("A grant", () => {
       async (alignment, speaks) => {
         // The druid's first level takes a neutral alignment, which gates its modifiers, its grant of Druidic among them
         const ctx = await getSeedCtx();
-        const characterId = await seedHuman(`${alignment} Druid`, { alignment });
+        const characterId = await seedHuman(`${alignment} Druid`, { fields: { [CHARACTER_ALIGNMENT]: alignment } });
         await addClassLevels(db, ctx, characterId, "Druid", [1], [8]);
         const detailed = await build(characterId);
 

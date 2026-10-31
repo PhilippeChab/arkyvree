@@ -8,6 +8,7 @@ import { Characters } from "@/server/repositories/index.ts";
 import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
 import { createSeedCharacter } from "@/tests/support/dnd3.5/levelFixtures.ts";
 import { findSeededCharacter, getSeedCtx } from "@/tests/support/seed.ts";
+import { CHARACTER_XP } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /**
  * A new cleric 5 / wizard 5, Wisdom 16 (+3) and Intelligence 16 (+3): of the Good and Magic domains, and an evoker. Built
@@ -15,7 +16,10 @@ import { findSeededCharacter, getSeedCtx } from "@/tests/support/seed.ts";
  */
 async function buildClericWizard() {
   const ctx = await getSeedCtx();
-  const characterId = await createSeedCharacter(ctx, "cleric", { xp: 45000, abilities: { Intelligence: 16 } });
+  const characterId = await createSeedCharacter(ctx, "cleric", {
+    abilities: { Intelligence: 16 },
+    fields: { [CHARACTER_XP]: 45000 },
+  });
   const clericLevels = await addClassLevels(db, ctx, characterId, "Cleric", [1, 2, 3, 4, 5], [8, 6, 6, 6, 6]);
   const wizardLevels = await addClassLevels(db, ctx, characterId, "Wizard", [1, 2, 3, 4, 5], [4, 3, 3, 3, 3]);
   await addFeats(db, ctx, clericLevels, [
