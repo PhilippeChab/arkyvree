@@ -28,9 +28,16 @@ export default class CharactersPolicy extends BasePolicy<Character> {
   /**
    * The session's policy on `character`: a player character's contributor's rights come from their active role on it,
    * and a child's (3.5's bonded creature) from the session's on its parent, a player character, archived or not (an
-   * archived parent's child is read-only, as the parent is).
+   * archived parent's child is read-only, as the parent is). A caller that read a page's standing at once (`standing`,
+   * a list's contributions) passes it, and nothing more is read.
    */
-  static async for(db: Db, session: Pick<Session, "userId">, character: Character): Promise<CharactersPolicy> {
+  static async for(
+    db: Db,
+    session: Pick<Session, "userId">,
+    character: Character,
+    standing?: CharacterStanding,
+  ): Promise<CharactersPolicy> {
+    if (standing) return new CharactersPolicy(session, character, standing);
     if (!Engine.storage().isPlayerKind(character.kind)) {
       const parent = character.parentCharacterId
         ? await Characters.findOne(db, { id: character.parentCharacterId }, Visibility.All)

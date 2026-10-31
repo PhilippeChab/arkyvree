@@ -57,11 +57,7 @@ class CampaignCharactersService {
     const character = await Characters.findOne(db, { id: characterId });
     if (!character) throw new NotFoundError("Character not found");
 
-    const isCharacterOwner = character.userId === session.userId;
-    const contributorRole = isCharacterOwner
-      ? undefined
-      : await CharacterContributors.findRole(db, { userId: session.userId, characterId });
-    const canEdit = isCharacterOwner || contributorRole !== undefined;
+    const canEdit = (await CharactersPolicy.for(db, session, character)).isEditor();
 
     const isPartial = this.isPartial(link.visibility, { canEdit, isGM, isOwner });
 
@@ -125,7 +121,8 @@ class CampaignCharactersService {
 
     if (characters.length === 0) return { items: [], page: paginationMeta.page, nextPage: paginationMeta.nextPage };
 
-    // Batch fetch advancements for all characters, and the ones the session contributes to: it edits them
+    // Batch fetch advancements for all characters, and the ones the session contributes to, its standing on them,
+    // which their policies read: the ones it edits
     const advancements = await CharacterAdvancements.findMany(db, { characterIds });
     const contributions = await CharacterContributors.findMany(db, {
       characterIds,
@@ -133,13 +130,18 @@ class CampaignCharactersService {
       userId: session.userId,
     });
     const contributedIds = new Set(contributions.map((contribution) => contribution.characterId));
+    const editedIds = new Set<string>();
+    for (const char of characters) {
+      const standing = { isActiveContributor: contributedIds.has(char.id) };
+      if ((await CharactersPolicy.for(db, session, char, standing)).isEditor()) editedIds.add(char.id);
+    }
 
     // A Partial character shows the other players its name and race, and none of its build
     const partialIds = new Set(
       characters
         .filter((char) => {
           const meta = characterMeta.get(char.id);
-          const canEdit = char.userId === session.userId || contributedIds.has(char.id);
+          const canEdit = editedIds.has(char.id);
           const isOwner = meta?.playerId === member.id;
           return this.isPartial(meta?.visibility ?? "Private", { canEdit, isGM, isOwner });
         })

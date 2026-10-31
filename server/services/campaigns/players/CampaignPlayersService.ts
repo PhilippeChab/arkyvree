@@ -27,6 +27,14 @@ interface InviteEmailData {
 }
 
 class CampaignPlayersService {
+  /**
+   * Whether `player` is its campaign's last live Game Master (`masters`, the campaign's count of them), whom the server
+   * neither removes nor demotes: an archived seat (its user's account deleted) never is.
+   */
+  private static isLastGameMaster(player: Pick<Player, "deletedAt" | "role">, masters: number) {
+    return player.role === "Game Master" && !player.deletedAt && masters <= 1;
+  }
+
   /** Send the invite email (fire-and-forget, call after transaction commits). */
   private sendInviteEmail(data: InviteEmailData) {
     emailService.send({
@@ -44,9 +52,8 @@ class CampaignPlayersService {
 
   /** Refuses (`message`) to remove or demote `player` when it's its campaign's last live Game Master. */
   private async assertNotLastGameMaster(tx: Db, player: Player, message: string) {
-    if (player.role !== "Game Master") return;
-    if ((await Players.count(tx, { campaignId: player.campaignId, role: "Game Master" })) <= 1)
-      throw new ConflictError(message);
+    const masters = await Players.count(tx, { campaignId: player.campaignId, role: "Game Master" });
+    if (CampaignPlayersService.isLastGameMaster(player, masters)) throw new ConflictError(message);
   }
 
   /**
@@ -160,7 +167,15 @@ class CampaignPlayersService {
   ) {
     await getReadableCampaign(db, session, campaignId);
 
-    return await Players.findPage(db, { campaignId, ...where }, pagination, Visibility.All);
+    const page = await Players.findPage(db, { campaignId, ...where }, pagination, Visibility.All);
+    const masters = await Players.count(db, { campaignId, role: "Game Master" });
+    return {
+      ...page,
+      items: page.items.map((player) => ({
+        ...player,
+        isLastGameMaster: CampaignPlayersService.isLastGameMaster(player, masters),
+      })),
+    };
   }
 
   async removePlayer(session: Session, campaignId: string, playerId: string) {

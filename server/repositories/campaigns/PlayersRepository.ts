@@ -40,19 +40,6 @@ function joinedAt(slot: SlotColumns) {
   ) end`;
 }
 
-/**
- * Whether a slot is its campaign's only live Game Master, whom the server neither removes nor demotes: an archived one
- * (its user's account deleted) never is.
- */
-function lastGameMaster(slot: SlotColumns) {
-  const master = (column: PgColumn) => aliasedColumn("masters", column);
-  return sql<boolean>`${slot.role} = 'Game Master' and ${slot.deletedAt} is null and (
-    select count(*) from ${playersInCampaign} as ${sql.identifier("masters")}
-      where ${master(playersInCampaign.campaignId)} = ${slot.campaignId}
-        and ${master(playersInCampaign.role)} = 'Game Master' and ${master(playersInCampaign.deletedAt)} is null
-  ) = 1`;
-}
-
 class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>, Paginates, Searches) {
   constructor() {
     super(playersInCampaign);
@@ -145,7 +132,6 @@ class PlayersRepository extends include(BaseRepository<typeof playersInCampaign>
           ]),
           extras: (players) => ({
             joinedAt: joinedAt(players).as("joined_at"),
-            isLastGameMaster: lastGameMaster(players).as("is_last_game_master"),
           }),
           with: {
             usersInAccount: {
