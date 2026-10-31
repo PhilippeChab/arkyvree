@@ -208,6 +208,22 @@ async function entityRows() {
 }
 
 /**
+ * The ids of the inventory entries whose item's type sets where it goes (a weapon, armor, a shield: its own type, else
+ * its template's), or of those whose doesn't (`placed`), in their order: what 0106 places at `Other` or refuses.
+ */
+async function entriesPlaced(placed: boolean) {
+  const { rows } = await db.execute<{ id: string }>(sql`
+    SELECT i.id FROM character.inventory AS i
+    LEFT JOIN rules.entity_fields AS own ON own.entity_id = i.item_id AND own.field = 'ITEM_TYPE'
+    LEFT JOIN rules.entity_links AS made ON made.from_id = i.item_id AND made.role = 'madeFrom'
+    LEFT JOIN rules.entity_fields AS template ON template.entity_id = made.to_id AND template.field = 'ITEM_TYPE'
+    WHERE (coalesce(own.text_value, template.text_value) IN ('Weapon', 'Armor', 'Shield')) IS ${placed ? sql`TRUE` : sql`NOT TRUE`}
+    ORDER BY i.id
+  `);
+  return rows.map((row) => row.id);
+}
+
+/**
  * Every field row 0090 reads (an entity's, a ruleset's, a character's), each as one line (its owner, its field, its
  * ordinal and its text, quoted), and every character's last change: what it leaves.
  */
@@ -1618,11 +1634,10 @@ describe("0105_advancement-entry-key", () => {
 describe("0106_inventory-location", () => {
   test("keeps a held entry's location alone: a carried entry's location goes, an equipped one's without is Other", async () => {
     await restoreEquippedBefore0106();
-    const { rows: entries } = await db.execute<{ id: string }>(
-      sql`SELECT id FROM character.inventory ORDER BY id LIMIT 2`,
-    );
-    expect(entries).toHaveLength(2);
-    const [carried, worn] = entries.map((entry) => entry.id);
+    // A weapon carried at a hand, and an item of no set place worn nowhere
+    const [carried] = await entriesPlaced(true);
+    const [worn] = await entriesPlaced(false);
+    expect([carried, worn].every(Boolean)).toBe(true);
     // As the test characters' seeder wrote them: carried at a hand in a set, and equipped nowhere
     await db.execute(sql`SELECT set_config('arkyvree.registry_sync', 'on', true)`);
     await db.execute(sql`UPDATE character.inventory SET equipped = false, location = 'Main Hand', groups = '{1}'
@@ -1648,4 +1663,22 @@ describe("0106_inventory-location", () => {
     `);
     expect(columns).toEqual([]);
   }, 30_000);
+
+  test("refuses an equipped entry with no location whose item has a set place, naming it", async () => {
+    await restoreEquippedBefore0106();
+    const [weapon] = await entriesPlaced(true);
+    await db.execute(sql`SELECT set_config('arkyvree.registry_sync', 'on', true)`);
+    await db.execute(sql`UPDATE character.inventory SET equipped = true, location = NULL, groups = '{}'
+      WHERE id = ${weapon}`);
+    await db.execute(sql`SELECT set_config('arkyvree.registry_sync', 'off', true)`);
+
+    const refused = await db
+      .transaction(async (tx) => {
+        for (const statement of statementsOf("0106_inventory-location.sql")) await tx.execute(sql.raw(statement));
+      })
+      .catch((error: unknown) => error);
+    expect(refused).toMatchObject({
+      cause: { message: `Equipped inventory entries with no location, whose item has a set place: ${weapon}` },
+    });
+  });
 });
