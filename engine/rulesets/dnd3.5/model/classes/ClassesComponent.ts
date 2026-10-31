@@ -58,7 +58,7 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
     const spellsByLevel = Map.groupBy(spells, (spell) => spell.advancementId);
 
     for (const advancement of advancements) {
-      const classLevel = classLevelsById.get(advancement.entryId!);
+      const classLevel = classLevelsById.get(advancement.entryId);
       if (!classLevel) throw new Error("Class level not found");
 
       const klass = classesById.get(classLevel.ownerId);

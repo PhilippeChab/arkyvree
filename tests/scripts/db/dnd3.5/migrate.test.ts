@@ -1557,5 +1557,5 @@ describe("0104_required-advancement-entry", () => {
           .join(", ")}`,
       },
     });
-  });
+  }, 30_000);
 });

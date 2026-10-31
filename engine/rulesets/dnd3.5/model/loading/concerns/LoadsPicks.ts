@@ -23,7 +23,7 @@ function grantedAt<E>(
   entityOf: (link: ViewLink) => E | undefined,
 ): HeldSource<E>[] {
   return levels.flatMap((level) =>
-    grants(level.entryId!).flatMap((grant) => {
+    grants(level.entryId).flatMap((grant) => {
       const entity = entityOf(grant);
       if (entity === undefined) return [];
       return [{ advancementId: level.id, classLevelId: grant.fromId, entity, grant, step, viaId: grant.viaId! }];
@@ -148,7 +148,7 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
       const advancements = stored.toSorted((a, b) => a.position - b.position);
       return {
         advancements,
-        classLevelIds: advancements.map((level) => level.entryId!),
+        classLevelIds: advancements.map((level) => level.entryId),
         hitPoints: new Map(picks.hp.map((pick) => [pick.advancementId, pick.amount!])),
       };
     }
