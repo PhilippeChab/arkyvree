@@ -173,12 +173,13 @@ export default class EntityNames {
   }
 
   /**
-   * Refuses new entities' names (`names`) the view shows: one the ruleset has, or a visible inherited entity has (the
-   * source chain's, an ancestor's or a subscribed extension's), named in the refusal. Returns, by name, the closest
-   * hidden ancestor whose local copy was deleted (a tombstone), which a new entity of that name takes over
-   * (`repointTombstone`).
+   * Refuses new entities' names (`names`): one given twice among them (a list of variants), and one the view shows: one
+   * the ruleset has, or a visible inherited entity has (the source chain's, an ancestor's or a subscribed extension's),
+   * named in the refusal. Returns, by name, the closest hidden ancestor whose local copy was deleted (a tombstone), which
+   * a new entity of that name takes over (`repointTombstone`).
    */
   async assertNamesAvailable(tx: Db, entityType: RulesetEntityType, names: string[]): Promise<Map<string, string>> {
+    if (new Set(names).size !== names.length) throw new ConflictError("A name is given twice in the list");
     const named = await this.findNamed(tx, entityType, names);
     this.refuseShown(named);
     return await this.findTombstones(tx, entityType, named);
