@@ -48,16 +48,18 @@ export function pickedLocation(current: InventoryFormData["location"], placement
 }
 
 /**
- * The placement as the inventory endpoints take it: a slot equips the item, and the groups stored from 0. The server
- * keeps the groups where its placement takes them, and the charges of an item that comes with them alone.
+ * The placement as the inventory endpoints take it: a slot equips the item, and the groups stored from 0. Its charges
+ * are the form's once it holds its item's (`profile`, the placement it was filled from), none while the item's details
+ * load, which would send an earlier pick's. The server keeps the groups where its placement takes them, and the
+ * charges of an item that comes with them alone.
  */
-export function placementPayload(data: InventoryFormData) {
+export function placementPayload(data: InventoryFormData, profile: PlacementProfile | null) {
   const location = data.location === "none" ? null : data.location;
   return {
     quantity: data.quantity,
     location,
-    totalCharges: data.totalCharges,
-    remainingCharges: data.remainingCharges,
+    totalCharges: profile ? data.totalCharges : null,
+    remainingCharges: profile ? data.remainingCharges : null,
     groups: storedGroups(data.groups),
   };
 }

@@ -494,9 +494,8 @@ export default abstract class CharactersPart<D extends Descriptions> {
   /**
    * What an inventory entry's add or edit stores, checked: its item (an added one's, as the view has it), its placement
    * and its charges (`planPlacement`: the item equipped where asked, its requirements checked unless `force`d; charges
-   * only for an item that comes with them). Refused
-   * when an added item isn't one of the ruleset's (unknown, of an unrelated ruleset, or deleted), or its charges
-   * disagree.
+   * only for an item that comes with them). Refused when an added item isn't one of the ruleset's (unknown, of an
+   * unrelated ruleset, or deleted), or the charges it keeps disagree.
    */
   planInventoryEntry(
     view: RulesetView,

@@ -329,6 +329,25 @@ describe("InventoryService", () => {
       ]);
     });
 
+    test("keeps charges an item comes with by its template's field too, and drops them on an edit once it has none", async () => {
+      const { session, character, newItem } = await setup();
+      const template = await newItem({}, { [ITEM_IS_TEMPLATE]: true, [ITEM_HAS_CHARGES]: 7 });
+      const wand = await newItem({ links: { madeFrom: template.id } });
+      expect(await add(session, character.id, wand.id, { charges: [7, 3] })).toMatchObject({
+        totalCharges: 7,
+        remainingCharges: 3,
+      });
+      // A plain item's entry, its charges stored as an earlier write left them: an edit keeps none, whatever it's sent
+      const plain = await newItem();
+      const { id } = await add(session, character.id, plain.id);
+      await CharacterInventory.update(db, { totalCharges: 10, remainingCharges: 5 }, { characterId: character.id, id });
+      expect(await update(session, character.id, plain.id, { quantity: 2, charges: [10, 50] })).toMatchObject({
+        quantity: 2,
+        totalCharges: null,
+        remainingCharges: null,
+      });
+    });
+
     test("refuses charges without both counts, or with more left than in all", async () => {
       const { session, character, newItem } = await setup();
       const item = await newItem({}, { [ITEM_HAS_CHARGES]: 10 });
