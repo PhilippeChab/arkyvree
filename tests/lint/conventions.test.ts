@@ -687,7 +687,6 @@ describe("conventions", () => {
           "server/services/policies/Statics.ts": policy("static canRead() {\n    return true;\n  }"),
           "server/services/feats/FeatsService.ts": "export const p = new FeatsPolicy(session, feat);\n",
           "server/services/feats/Built.ts": "export const p = await FeatsPolicy.for(db, session, feat);\n",
-          "server/services/feats/Page.ts": "export const p = await FeatsPolicy.forMany(db, session, feats);\n",
           "tests/services/policies/FeatsPolicy.test.ts": "export const p = new FeatsPolicy(session, feat);\n",
         },
         ["policy-shape"],
