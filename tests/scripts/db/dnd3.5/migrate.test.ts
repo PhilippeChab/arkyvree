@@ -1617,11 +1617,11 @@ describe("0105_advancement-entry-key", () => {
 
 describe("0106_inventory-location", () => {
   test("keeps a held entry's location alone: a carried entry's location goes, an equipped one's without is Other", async () => {
-    const characterId = await findHeldCharacter();
     await restoreEquippedBefore0106();
-    const { rows: entries } = await db.execute<{ id: string }>(sql`
-      SELECT id FROM character.inventory WHERE character_id = ${characterId} ORDER BY id LIMIT 2
-    `);
+    const { rows: entries } = await db.execute<{ id: string }>(
+      sql`SELECT id FROM character.inventory ORDER BY id LIMIT 2`,
+    );
+    expect(entries).toHaveLength(2);
     const [carried, worn] = entries.map((entry) => entry.id);
     // As the test characters' seeder wrote them: carried at a hand in a set, and equipped nowhere
     await db.execute(sql`SELECT set_config('arkyvree.registry_sync', 'on', true)`);
