@@ -9,6 +9,7 @@ import {
 import type { StoredValues } from "@/engine/core/fields/index.ts";
 import type { StoredEntity, StoredLink, StoredRuleset } from "@/engine/core/module/index.ts";
 import {
+  type CopiedSources,
   type EntityCustomizations,
   RulesetComposition,
   type RulesetData,
@@ -165,9 +166,10 @@ export default class CopyOnWriteEngine {
 
   /**
    * A sibling winner's fields and single links (`own`, of `entityType`, as stored), with its siblings' (`siblings`, in
-   * the order its `CowData` pairs them) merged in as the view merges them: each field and role by its declared merge.
+   * the order its `CowData` pairs them) merged in as the view merges them: each field and role by its declared merge,
+   * against what each copied (`sources`).
    */
-  mergeValues(own: StoredValues, siblings: StoredValues[], entityType: string): StoredValues {
-    return SiblingMerge.mergeValues(own, siblings, entityType, StorageEngine.shared().declaredFields()).values;
+  mergeValues(own: StoredValues, siblings: StoredValues[], entityType: string, sources: CopiedSources): StoredValues {
+    return SiblingMerge.mergeValues(own, siblings, entityType, StorageEngine.shared().declaredFields(), sources).values;
   }
 }

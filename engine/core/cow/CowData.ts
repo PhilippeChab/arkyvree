@@ -11,7 +11,8 @@ export default class CowData {
    * `overrides` maps each overridden id to its copy, `aliases` every stale id to the id that stands for it (each
    * override among them), `siblings` each winner to its sibling losers, in the order they were paired. A loser paired
    * twice is listed once, where it was paired under the later winner. `shadowedIds`: the overridden books' entities the
-   * ruleset's own of their names stands for.
+   * ruleset's own of their names stands for. `sources`: each copy the chain's snapshots record, to the entity it
+   * copied.
    */
   constructor(
     sourceChain: string[],
@@ -19,11 +20,13 @@ export default class CowData {
     aliases: ReadonlyMap<string, string>,
     siblings: ReadonlyMap<string, readonly string[]>,
     shadowedIds: ReadonlySet<string>,
+    sources: ReadonlyMap<string, string> = new Map(),
   ) {
     this.sourceChain = sourceChain;
     this.overrides = overrides;
     this.aliases = aliases;
     this.shadowedIds = shadowedIds;
+    this.sources = sources;
     for (const [winnerId, loserIds] of siblings) for (const loserId of loserIds) this.winners.set(loserId, winnerId);
 
     const losersOf = new Map<string, string[]>();
@@ -42,6 +45,8 @@ export default class CowData {
   private readonly shadowedIds: ReadonlySet<string>;
 
   private readonly siblings: ReadonlyMap<string, readonly string[]>;
+
+  private readonly sources: ReadonlyMap<string, string>;
 
   private readonly winners = new Map<string, string>();
 
@@ -140,5 +145,13 @@ export default class CowData {
         links: Object.fromEntries(links.map(([role, toId]) => [role, toId === undefined ? toId : this.resolve(toId)])),
       };
     });
+  }
+
+  /**
+   * The entity a copy copied (`copyId`, as stored), as its snapshot records it: none for one that copies none (a
+   * ruleset's own entity, a book's reprint of another's).
+   */
+  sourceOf(copyId: string): string | undefined {
+    return this.sources.get(copyId);
   }
 }

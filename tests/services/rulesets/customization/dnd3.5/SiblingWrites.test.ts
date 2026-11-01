@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 
 import { entityFieldsInRules } from "@/drizzle/schema.ts";
 import type { FieldValue } from "@/engine/core/module/index.ts";
-import type { Aptitude, Feat } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { Aptitude, Feat, Skill } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
@@ -25,7 +25,14 @@ import {
   ownerSessionOf,
 } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
-import { FEAT_FAMILY, FEAT_WEAPON_FINESSE, SPELL_AREA_OF_EFFECT } from "@/vocabulary/dnd3.5/fields/index.ts";
+import {
+  FEAT_FAMILY,
+  FEAT_WEAPON_FINESSE,
+  SKILL_CHECK_PENALTY_MULTIPLIER,
+  SKILL_IMPACTED_BY_WEIGHT,
+  SKILL_USABLE_WITHOUT_TRAINING,
+  SPELL_AREA_OF_EFFECT,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type EntityType = "feats" | "spells";
 type Pairing = "snapshot" | "name";
@@ -467,3 +474,49 @@ for (const entityType of ["feats", "spells"] as const) {
     });
   }
 }
+
+test.each([
+  ["first", [0, 1]],
+  ["last", [1, 0]],
+])(
+  "a copy that sets a flag back to false holds it over a sibling that keeps its source's, subscribed %s, in the view and in a copy",
+  async (_, order) => {
+    const session = makeSession();
+    const extensions = [await createSeededTestRuleset(session.userId), await createSeededTestRuleset(session.userId)];
+    const climb = (await Entities.findOne<Skill>(db, {
+      entityType: "skills",
+      rulesetId: extensions[0].rulesetId!,
+      name: "Climb",
+    }))!;
+    const body = { name: "Climb", links: { keyAbility: climb.links.keyAbility } };
+    // One sets Climb unusable untrained; the other edits its description alone, keeping the core's flag
+    await EntitiesService.updateEntity(session, extensions[0].id, "skills", climb.id, {
+      ...body,
+      fields: { [SKILL_USABLE_WITHOUT_TRAINING]: false },
+    });
+    await EntitiesService.updateEntity(session, extensions[1].id, "skills", climb.id, {
+      ...body,
+      description: "Another book's Climb",
+    });
+    for (const { id } of extensions)
+      await Rulesets.update(db, { kind: "extension", status: "Published", private: false, userId: null }, { id });
+    const host = await createSeededTestRuleset(session.userId);
+    await RulesetExtensionsService.subscribeExtension(
+      session,
+      host.id,
+      order.map((index) => extensions[index].id),
+    );
+    invalidateTestRulesets(host.id, ...extensions.map(({ id }) => id));
+    const usable = async () =>
+      (await EntitiesService.getEntity(session, host.id, "skills", climb.id)).fields[SKILL_USABLE_WITHOUT_TRAINING];
+    expect(await usable()).toBe(false);
+
+    // The host's copy, which merges its siblings as the view does, and keeps what it holds as the view shows it
+    await EntitiesService.updateEntity(session, host.id, "skills", climb.id, { ...body, description: "The host's" });
+    expect(await usable()).toBe(false);
+    expect((await EntitiesService.getEntity(session, host.id, "skills", climb.id)).fields).toMatchObject({
+      [SKILL_IMPACTED_BY_WEIGHT]: true,
+      [SKILL_CHECK_PENALTY_MULTIPLIER]: 1,
+    });
+  },
+);
