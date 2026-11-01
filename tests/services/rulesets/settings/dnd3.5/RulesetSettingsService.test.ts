@@ -6,6 +6,7 @@ import { db } from "@/server/database/index.ts";
 import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import { Characters, Picks } from "@/server/repositories/index.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
+import { RulesetsService } from "@/server/services/rulesets/index.ts";
 import { RulesetSettingsService } from "@/server/services/rulesets/settings/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import { activityTypes } from "@/tests/support/activities.ts";
@@ -14,7 +15,7 @@ import { levelEditPlan, levelUpPlan, savedPicksOf } from "@/tests/support/dnd3.5
 import { findPicks } from "@/tests/support/dnd3.5/levels.ts";
 import { getPlanAnswer, stepAnswerOf } from "@/tests/support/levels.ts";
 import { findFormValues } from "@/tests/support/ownerValues.ts";
-import { createSeededTestRuleset, ownerSessionOf } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset, ownerSessionOf, subscribeTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 import {
@@ -97,6 +98,24 @@ async function setup() {
 }
 
 describe("RulesetSettingsService", () => {
+  test("reads a fork's Settings through its chain, its extensions' before its base's, until it saves its own", async () => {
+    const { session, abilityMap } = await setup();
+    // An extension of the core rules' whose skill points come from Wisdom
+    const { session: author, user } = await createTestUser("author");
+    const extension = await createSeededTestRuleset(user.id);
+    await RulesetSettingsService.updateSettings(author, extension.id, {
+      links: { skillPointAbility: abilityMap["Wisdom"] },
+    });
+    // A fork of the core rules, as a user forks it, subscribed to the extension
+    const fork = await RulesetsService.forkRuleset(session, extension.rulesetId!, { name: "Mine", private: false });
+    await subscribeTestRuleset(fork.id, [extension.id]);
+
+    expect((await findFormValues("rulesets", fork.id)).links).toEqual({});
+    expect((await RulesetSettingsService.getSettings(session, fork.id)).links).toEqual({
+      skillPointAbility: abilityMap["Wisdom"],
+    });
+  });
+
   test("reads a fork's Settings off its source's, until it saves its own", async () => {
     const { session, fork, abilityMap } = await setup();
     expect(await RulesetSettingsService.getSettings(await ownerSessionOf(fork.id), fork.id)).toEqual({
@@ -119,7 +138,7 @@ describe("RulesetSettingsService", () => {
     // With Wisdom's +4
     expect(await fighterBudget(fork.id)).toBe(28);
 
-    // Its own row in place of the copy it held; its source's as they were
+    // Its own row, where it read its source's; its source's as they were
     expect((await findFormValues("rulesets", fork.id)).links).toEqual({ skillPointAbility: abilityMap["Wisdom"] });
     expect(
       await RulesetSettingsService.getSettings(await ownerSessionOf(fork.rulesetId!), fork.rulesetId!),

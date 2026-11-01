@@ -1682,3 +1682,46 @@ describe("0106_inventory-location", () => {
     });
   });
 });
+
+describe("0107_fork-settings-chain", () => {
+  test("drops a fork's Settings copied from its parent, unsaved since, and keeps those it saved or that differ", async () => {
+    const { abilityMap } = await getSeedCtx();
+    const base = (
+      await db.execute<{ id: string }>(
+        sql`SELECT id FROM rules.rulesets WHERE ruleset_id IS NULL ORDER BY name LIMIT 1`,
+      )
+    ).rows[0].id;
+    const { rows: parentRows } = await db.execute<{ to_id: string }>(
+      sql`SELECT to_id FROM rules.ruleset_links WHERE ruleset_id = ${base} AND role = 'skillPointAbility'`,
+    );
+    const [parent] = parentRows;
+    expect(parent).toBeDefined();
+    // Four forks of the base: one copied it as it was made, one long before (a copy of a row its parent has rewritten
+    // since), one saved the same ability after, and one saved another
+    const forks: string[] = [];
+    for (const name of ["Copied", "Copied long ago", "Saved the same", "Saved another"]) {
+      const { rows } = await db.execute<{ id: string }>(sql`
+        INSERT INTO rules.rulesets (name, description, user_id, ruleset_id, status, base_rules)
+        SELECT ${`0107 ${name}`}, '', ${SEED_USER_ID}, id, 'Draft', base_rules FROM rules.rulesets WHERE id = ${base}
+        RETURNING id`);
+      forks.push(rows[0].id);
+    }
+    const [copied, copiedLongAgo, savedSame, savedOther] = forks;
+    const link = (rulesetId: string, toId: string, at: string) => sql`
+      INSERT INTO rules.ruleset_links (ruleset_id, role, to_id, to_type, created_at, updated_at)
+      VALUES (${rulesetId}, 'skillPointAbility', ${toId}, 'abilities', ${at}::timestamptz, ${at}::timestamptz)`;
+    await db.execute(link(copied, parent.to_id, "epoch"));
+    await db.execute(sql`UPDATE rules.ruleset_links SET created_at = r.created_at, updated_at = r.created_at
+      FROM rules.rulesets AS r WHERE r.id = ruleset_links.ruleset_id AND ruleset_links.ruleset_id = ${copied}`);
+    await db.execute(link(copiedLongAgo, parent.to_id, "2000-01-01"));
+    await db.execute(link(savedSame, parent.to_id, "2100-01-01"));
+    await db.execute(link(savedOther, abilityMap["Wisdom"], "2100-01-01"));
+
+    for (const statement of statementsOf("0107_fork-settings-chain.sql")) await db.execute(sql.raw(statement));
+
+    const { rows: kept } = await db.execute<{ ruleset_id: string }>(
+      sql`SELECT ruleset_id FROM rules.ruleset_links WHERE ruleset_id = ANY(${sql.param(forks)}::uuid[])`,
+    );
+    expect(kept.map(({ ruleset_id }) => ruleset_id).toSorted()).toEqual([savedSame, savedOther].toSorted());
+  });
+});
