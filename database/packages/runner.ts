@@ -1,6 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
+import { RULESET_LOCK_ORDER } from "@/drizzle/lockOrder.ts";
 import { contentPackagesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 
 import { CONTENT_PACKAGES } from "./registry.ts";
@@ -29,8 +30,8 @@ function updatesOf(pkg: ContentPackage) {
 }
 
 /**
- * Locks the system rulesets until the transaction ends, in the order every lock of several takes (the server's
- * `Rulesets.lockVersions`: extensions before bases, then by id), so it waits on their writes and never on one in a
+ * Locks the system rulesets until the transaction ends, in the order every lock of several takes
+ * (`RULESET_LOCK_ORDER`: extensions before bases, then by id), so it waits on their writes and never on one in a
  * cycle.
  */
 async function lockSystemRulesets(tx: Db) {
@@ -38,10 +39,7 @@ async function lockSystemRulesets(tx: Db) {
     .select({ id: rulesetsInRules.id })
     .from(rulesetsInRules)
     .where(eq(rulesetsInRules.system, true))
-    .orderBy(
-      sql`CASE WHEN ${rulesetsInRules.rulesetId} IS NULL THEN 2 WHEN ${rulesetsInRules.kind} = 'extension' THEN 1 ELSE 0 END`,
-      rulesetsInRules.id,
-    )
+    .orderBy(RULESET_LOCK_ORDER)
     .for("no key update");
 }
 

@@ -2,17 +2,18 @@ import { afterAll, expect, test } from "bun:test";
 
 import type { Feat } from "@/engine/rulesets/dnd3.5/index.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
-import { db, setLockTimeout } from "@/server/database/index.ts";
+import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
 import { Entities, Rulesets } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { BUSY_RULESET_MESSAGE } from "@/server/services/rulesets/index.ts";
-import { runWhileLocked } from "@/tests/support/database.ts";
+import { expectRefusedWith } from "@/tests/support/api.ts";
+import { measure, runWhileLocked } from "@/tests/support/database.ts";
 import { STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
-import { bumpContentVersion, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { bumpContentVersion, createSeededTestRuleset, readView } from "@/tests/support/rulesets.ts";
 import { getSeedCtx } from "@/tests/support/seed.ts";
-import { makeSession } from "@/tests/support/users.ts";
+import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
 const pool = createTestPool();
 
@@ -54,13 +55,34 @@ test("two forks of one parent write at once: a write holds its parent shared, no
     await blocker.query("BEGIN");
     // Another fork's write holds the parent as every fork's write does
     await Rulesets.lockVersions(createTestDbFromClient(blocker), { ids: [parentId] });
-    await setLockTimeout(db, 2000);
+    // A wait would end at the write's lock wait, refused as busy
     const created = await EntitiesService.createEntity(session, fork.id, "aptitudes", { name: "Concurrent Aptitude" });
     expect(created.name).toBe("Concurrent Aptitude");
   } finally {
     await blocker.query("ROLLBACK");
     blocker.release();
   }
+}, 15_000);
+
+test("a stranger's write to a private ruleset is refused before it reads the ruleset's view", async () => {
+  const { fork } = await setup();
+  await Rulesets.update(db, { private: true }, { id: fork.id });
+  const { session: stranger } = await createTestUser();
+  const refuse = async () =>
+    (
+      await measure(() =>
+        expectRefusedWith(
+          EntitiesService.createEntity(stranger, fork.id, "aptitudes", { name: "Stranger Aptitude" }),
+          404,
+        ),
+      )
+    ).timing.queryCount;
+
+  RulesetViews.invalidate(fork.id);
+  const cold = await refuse();
+  await readView(fork.id);
+  // Its lock and its access alone, under it: the same queries whether the cache holds the view it never reads or not
+  expect(await refuse()).toBe(cold);
 });
 
 test("a write that waits on another past its lock wait is refused as busy, and writes nothing", async () => {

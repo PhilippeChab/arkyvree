@@ -147,6 +147,17 @@ test("a customization change of a modifier or requirement another write copied s
   for (const change of changes) await expectRefusedWith(change(), 409);
 });
 
+test("a customization change of an entity another write copied, then deleted, since the client read it is not found", async () => {
+  const sourceId = (await getSeedCtx()).featMap.Toughness;
+  const [modifier] = await Modifiers.findMany(db, { sourceIds: [sourceId], sourceType: "feats" });
+  // Its copy deleted: its snapshot a tombstone, which still overrides the source, the entity gone from the view
+  const { session, fork } = await copiedSinceRead("feats", sourceId, (copyId) =>
+    Entities.delete<Feat>(db, { entityType: "feats", id: copyId }),
+  );
+
+  await expectRefusedWith(ModifiersService.deleteModifier(session, fork.id, "feats", sourceId, modifier.id), 404);
+});
+
 test("a progression save of a class another write copied since the client read it is stale, its change kept", async () => {
   const seeded = (await getSeedCtx()).rulesetId;
   const wizard = (await Entities.findOne<Klass>(db, { entityType: "classes", name: "Wizard", rulesetId: seeded }))!;
