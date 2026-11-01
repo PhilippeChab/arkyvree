@@ -1,4 +1,3 @@
-import { Engine } from "@/engine/index.ts";
 import { CowDataReader, EntityNames, EntityRevert, RulesetChanges, RulesetViews } from "@/server/cow/index.ts";
 import { db, withTransaction } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
@@ -13,29 +12,23 @@ class RulesetChangesService {
 
     if (!ruleset.rulesetId) throw new BadRequestError("Only forked rulesets have local changes");
 
-    // Its changes as copy-on-write reads its snapshots, of the kinds a restore brings back (a read-only kind, 3.5's
-    // abilities, has no snapshots: no route edits it)
+    // Its changes as copy-on-write reads its snapshots, of the kinds a restore brings back
     const { added, deleted, modified } = await RulesetChanges.read(db, rulesetId);
-    const restorable = Engine.rules().restorableKinds();
     const changes = [
       ...added.map(({ entityType, id, name }) => ({ entityType, status: "added" as const, entityId: id, name })),
-      ...modified
-        .filter(({ entityType }) => restorable.includes(entityType))
-        .map(({ entityType, id, name, sourceEntityId }) => ({
-          entityType,
-          status: "modified" as const,
-          sourceEntityId,
-          entityId: id,
-          name,
-        })),
-      ...deleted
-        .filter(({ entityType }) => restorable.includes(entityType))
-        .map(({ entityType, name, sourceEntityId }) => ({
-          entityType,
-          status: "deleted" as const,
-          sourceEntityId,
-          name,
-        })),
+      ...modified.map(({ entityType, id, name, sourceEntityId }) => ({
+        entityType,
+        status: "modified" as const,
+        sourceEntityId,
+        entityId: id,
+        name,
+      })),
+      ...deleted.map(({ entityType, name, sourceEntityId }) => ({
+        entityType,
+        status: "deleted" as const,
+        sourceEntityId,
+        name,
+      })),
     ];
 
     // One order, whatever the rows' storage: by kind, in the modules' order, then by name
