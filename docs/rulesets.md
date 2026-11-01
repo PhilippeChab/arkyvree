@@ -128,7 +128,7 @@ function buildSourceChain(ruleset: RulesetSources): string[] {
 }
 ```
 
-Extensions come first so their entities are visible. Repositories receive the chain as a list's `sourceChain` — they
+Extensions come first so their entities are visible. Repositories receive the chain in a list's `inherited` (`CowData.listFilters`) — they
 don't distinguish between extension and parent sources. A ruleset's row carries neither: its sources are read where
 they're needed, a scope's (`withRulesetScope` hands its callback `sources`), a subscribe's and an unsubscribe's, a
 revert's, a fork's and the checks of whether a ruleset can be an extension (`canBeExtension({ hasExtensions })`). The
@@ -145,21 +145,25 @@ Inherited entities are read-only. When a user edits or deletes one:
 
 ### COW in Repositories
 
-A kind's list (`Entities`' `findPage`, through `StoredEntities.buildRulesetCondition`) builds COW-aware SQL per source in
-its `sourceChain`:
+A kind's list (`Entities`' `findPage`, through `StoredEntities.buildRulesetCondition`) builds COW-aware SQL over the
+source chain copy-on-write gives it (`rulesetData.cow.listFilters`: its `inherited`, the chain with what hides its rows):
 
 ```sql
--- For each source in the source chain (its extensions, then its parent):
+-- The source chain's rows (its extensions, then its parent), less what a snapshot overrides
 SELECT * FROM rules.entities
 WHERE type = 'feats'
-  AND ruleset_id = :sourceId
-  AND id NOT IN (
-    SELECT source_entity_id FROM rules.entity_snapshots
-    WHERE ruleset_id IN (:childId, ...closer_sources)
-  )
+  AND (ruleset_id = :childId
+    OR (ruleset_id IN (:sourceChain)
+      AND id NOT IN (
+        SELECT source_entity_id FROM rules.entity_snapshots
+        WHERE ruleset_id IN (:snapshotRulesetIds) -- the child's and its chain's, as CowDataBuilder overrides them
+      )
+      AND id NOT IN (:hiddenIds)))
 ```
 
-The child's own entities are always included. A source's entities are included only if no snapshot overrides them.
+The child's own entities are always included. A source's entities are included only if no snapshot of the child or its
+chain overrides them, whichever copied them, as the view hides them; a list read without `inherited` reads the child's
+own alone.
 
 ### COW for Complex Entities
 
@@ -243,7 +247,7 @@ local copy overrides what it copied:
   and its sibling losers (another book's reprint it won over). A class's levels
   pair by number with the fork's class's, as a copy's do; a level the fork's class
   doesn't have goes with the book's class;
-- a list leaves it out in its query (`listFilters.hiddenIds`), so the pages, the
+- a list leaves it out in its query (`listFilters`' `hiddenIds`), so the pages, the
   pickers and the sheets show the fork's alone;
 - an unsubscribe points what named it at the fork's entity (`findDepartures`: the
   fork's entity stands in its place), and refuses nothing for it;

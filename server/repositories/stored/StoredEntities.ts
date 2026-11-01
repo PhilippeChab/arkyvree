@@ -48,8 +48,8 @@ interface PageBounds {
 }
 
 /**
- * A list of a kind's entities (`entityType`): a ruleset's own, its source chain's (less what its copy-on-write data
- * hides: the sources of `snapshotRulesetIds`' snapshots, and `hiddenIds`); those of `ids`, of the values of their fields, the targets of
+ * A list of a kind's entities (`entityType`): a ruleset's own, and its source chain's less what its copy-on-write data
+ * hides (`inherited`, `CowData.listFilters`); those of `ids`, of the values of their fields, the targets of
  * their single links and their partition (`EntityFilters`: an item's template flag, a feat's family, a race's `pc`),
  * the targets of the links of a role from a kind (`linkedBy`: an aptitude a feat is listed in); searched, in an order.
  */
@@ -58,15 +58,14 @@ export interface EntityListWhere extends EntityFilters {
   entityType: string;
   /** The entities listed first, in their order (a tracks picker's, `TrackFilters`), the others after them by name. */
   firstIds?: readonly string[];
-  hiddenIds?: string[];
   ids?: string[];
+  /** The source chain's entities a list reads, less what the view hides: none without (`CowData.listFilters`). */
+  inherited?: { hiddenIds: readonly string[]; snapshotRulesetIds: readonly string[]; sourceChain: readonly string[] };
   linkedBy?: { fromType: string; role: string };
   orderBy?: "createdAt" | "name" | "updatedAt";
   orderDir?: "asc" | "desc";
   rulesetId: string;
   search?: string;
-  snapshotRulesetIds?: string[];
-  sourceChain?: string[];
 }
 
 /** A field's value as JSON, typed by the column that holds it: a text, a number or a flag. */
@@ -173,17 +172,14 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   }
 
   /**
-   * A kind's entities in a ruleset's list: its own, and its source chain's less what its copy-on-write data hides (the
-   * sources of the snapshots of `snapshotRulesetIds`, whichever copied them; `hiddenIds`: a book's copy that lost to
-   * another book's, a book's entity the ruleset's own of its name shadows).
+   * A kind's entities in a ruleset's list: its own, and its source chain's less what its copy-on-write data hides
+   * (`inherited`: the sources of the snapshots of `snapshotRulesetIds`, whichever copied them; `hiddenIds`, a book's
+   * copy that lost to another book's, a book's entity the ruleset's own of its name shadows).
    */
-  private buildRulesetCondition(
-    db: Db,
-    where: Pick<EntityListWhere, "childOnly" | "hiddenIds" | "rulesetId" | "snapshotRulesetIds" | "sourceChain">,
-  ): SQL {
-    const { childOnly, hiddenIds = [], snapshotRulesetIds = [], sourceChain = [] } = where;
+  private buildRulesetCondition(db: Db, where: Pick<EntityListWhere, "childOnly" | "inherited" | "rulesetId">): SQL {
     const childOwned = eq(entitiesInRules.rulesetId, where.rulesetId);
-    if (childOnly || sourceChain.length === 0) return childOwned;
+    if (where.childOnly || !where.inherited || where.inherited.sourceChain.length === 0) return childOwned;
+    const { hiddenIds, snapshotRulesetIds, sourceChain } = where.inherited;
     const copied =
       snapshotRulesetIds.length > 0
         ? notInArray(
@@ -191,11 +187,11 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
             db
               .select({ id: entitySnapshotsInRules.sourceEntityId })
               .from(entitySnapshotsInRules)
-              .where(inArray(entitySnapshotsInRules.rulesetId, snapshotRulesetIds)),
+              .where(inArray(entitySnapshotsInRules.rulesetId, [...snapshotRulesetIds])),
           )
         : undefined;
-    const hidden = hiddenIds.length > 0 ? notInArray(entitiesInRules.id, hiddenIds) : undefined;
-    return or(childOwned, and(inArray(entitiesInRules.rulesetId, sourceChain), copied, hidden))!;
+    const hidden = hiddenIds.length > 0 ? notInArray(entitiesInRules.id, [...hiddenIds]) : undefined;
+    return or(childOwned, and(inArray(entitiesInRules.rulesetId, [...sourceChain]), copied, hidden))!;
   }
 
   /**

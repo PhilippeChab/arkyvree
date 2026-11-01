@@ -13,7 +13,7 @@ export default class CowData {
    * twice is listed once, where it was paired under the later winner. `shadowedIds`: the overridden books' entities the
    * ruleset's own of their names stands for. `sources`: each copy the chain's snapshots record, to the entity it
    * copied. `snapshotRulesetIds`: the rulesets whose snapshots override what they copied, the ruleset's and its
-   * chain's (`CowSources.getReads`).
+   * chain's, as the builder overrides them.
    */
   constructor(
     sourceChain: string[],
@@ -117,16 +117,19 @@ export default class CowData {
   }
 
   /**
-   * What a list of the ruleset's entities reads besides its own rows: its source chain's (`sourceChain`), less what the
-   * view hides, which it leaves out in the query, so a page keeps its size: what a snapshot overrides (the sources of
-   * `snapshotRulesetIds`' snapshots, whichever of the chain copied them), and what none does (`hiddenIds`: the sibling
-   * losers, the shadowed books' entities).
+   * What a list of the ruleset's entities reads besides its own rows (`inherited`, one filter: a chain is never read
+   * without what hides its rows): its source chain's (`sourceChain`), less what the view hides, which it leaves out in
+   * the query, so a page keeps its size: what a snapshot overrides (the sources of `snapshotRulesetIds`' snapshots,
+   * whichever of the chain copied them), and what none does (`hiddenIds`: the sibling losers, the shadowed books'
+   * entities).
    */
   get listFilters() {
     return {
-      sourceChain: this.sourceChain,
-      snapshotRulesetIds: [...this.snapshotRulesetIds],
-      hiddenIds: [...this.siblingIds, ...this.shadowedIds],
+      inherited: {
+        sourceChain: this.sourceChain,
+        snapshotRulesetIds: [...this.snapshotRulesetIds],
+        hiddenIds: [...this.siblingIds, ...this.shadowedIds],
+      },
     };
   }
 
