@@ -904,11 +904,11 @@ const SPELL_FIELDS = {
   },
   subschool: {
     description: "Spell subschool (Calling, Charm, Creation, etc.)",
-    kind: "text",
+    kind: "list",
     kindWide: true,
     label: "Subschool",
     field: SPELL_SUBSCHOOL,
-    merge: "fallback",
+    merge: "union",
     values: SPELL_SUBSCHOOLS,
   },
   descriptors: {

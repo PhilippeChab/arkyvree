@@ -166,7 +166,7 @@ describe("Spell Focus", () => {
       "every field, several descriptors and components",
       "Evocation",
       {
-        [SPELL_SUBSCHOOL]: "Creation",
+        [SPELL_SUBSCHOOL]: ["Creation"],
         [SPELL_DESCRIPTOR]: ["Fire", "Light"],
         [SPELL_CASTING_TIME]: "1 standard action",
         [SPELL_RANGE_TYPE]: "Long",

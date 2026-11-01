@@ -554,7 +554,7 @@ Every kind's entity answers in one shape, its page's (`describe`), its list's ro
 { "name": "Escape Artist", "fields": { "SKILL_IMPACTED_BY_WEIGHT": true, "SKILL_CHECK_PENALTY_MULTIPLIER": 1,
   "SKILL_USABLE_WITHOUT_TRAINING": true }, "links": [{ "role": "keyAbility", "toName": "Dexterity", … }] }
 // A spell: what a save against it does a field, the save it allows a link
-{ "name": "Forcecage", "fields": { "SPELL_SCHOOL": "Evocation", "SPELL_SUBSCHOOL": null, "SPELL_DESCRIPTOR": ["Force"],
+{ "name": "Forcecage", "fields": { "SPELL_SCHOOL": "Evocation", "SPELL_SUBSCHOOL": [], "SPELL_DESCRIPTOR": ["Force"],
   "SPELL_COMPONENT": ["Verbal", "Somatic", "Material"], …, "SPELL_SAVE_EFFECT": null },
   "links": [{ "role": "listedIn", "tier": 7, "toName": "Wizard Spells", … }] }
 // An ability, an aptitude, a save: no fields

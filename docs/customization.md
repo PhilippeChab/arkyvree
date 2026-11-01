@@ -318,7 +318,7 @@ Fields written from the spell form by `entities("spells").planCreate` and `planE
 | Field | Description |
 |---|---|
 | `SPELL_SCHOOL` | School of magic (required) |
-| `SPELL_SUBSCHOOL` | Subschool (optional) |
+| `SPELL_SUBSCHOOL` | Subschool(s) — one field row per value (optional, multi) |
 | `SPELL_DESCRIPTOR` | Spell descriptor(s) — one field row per value (optional, multi) |
 | `SPELL_CASTING_TIME` | Casting time (optional) |
 | `SPELL_RANGE_TYPE` | Range, as the book writes it: "Touch", "60 ft.", "Close (25 ft. + 5 ft./2 levels)" (optional, free text) |

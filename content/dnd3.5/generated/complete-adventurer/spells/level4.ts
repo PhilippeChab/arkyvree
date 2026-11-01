@@ -55,7 +55,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Bard Spells", "Sublime Chord Spells", "Vigilante Spells"],
     fields: {
       [SPELL_SCHOOL]: "Divination",
-      [SPELL_SUBSCHOOL]: "Scrying",
+      [SPELL_SUBSCHOOL]: ["Scrying"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Touch",
@@ -84,7 +84,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     },
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Shadow",
+      [SPELL_SUBSCHOOL]: ["Shadow"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Personal",
@@ -115,7 +115,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Bard Spells", "Sublime Chord Spells"],
     fields: {
       [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: "Compulsion",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
       [SPELL_DESCRIPTOR]: ["Mind-Affecting", "Sonic"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 swift action",

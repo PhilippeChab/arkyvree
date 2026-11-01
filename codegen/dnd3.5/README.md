@@ -125,7 +125,7 @@ Scrapes feat listing and detail pages into `FeatReference` JSON.
 Scrapes spell listing and detail pages into `SpellReference` JSON.
 
 **Auto-detected:**
-- Spell name, school, subschool, descriptor
+- Spell name, school, subschools and descriptors: each value its school line combines its own ("[Fire or Cold]": Fire and Cold, "(Figment and Glamer)": Figment and Glamer; a spell has both, and a choice the book writes with "or" stays in its description), and a subschool the site gives as a descriptor (Bladeweave's Pattern) a subschool
 - Level entries per class (e.g. "Cleric 3, Druid 4")
 - Description text: its paragraphs, and the lines a paragraph splits (`<br />`, which cheerio's `text()` drops: `Page.text` keeps them), which the reference stores as one text, a space between them
 - The stat block's fields (casting time, range, target, effect, area, duration, components, saving throw, spell resistance)

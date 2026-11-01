@@ -22,7 +22,7 @@ export const CANTRIPS: SpellSeed[] = [
     aptitudes: [],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 full round",
       [SPELL_RANGE_TYPE]: "Long",

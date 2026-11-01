@@ -25,7 +25,7 @@ import {
   ownerSessionOf,
 } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
-import { FEAT_FAMILY, FEAT_WEAPON_FINESSE, SPELL_SUBSCHOOL } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { FEAT_FAMILY, FEAT_WEAPON_FINESSE, SPELL_AREA_OF_EFFECT } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type EntityType = "feats" | "spells";
 type Pairing = "snapshot" | "name";
@@ -36,7 +36,7 @@ type Pairing = "snapshot" | "name";
  */
 const PRECEDENCE: Record<EntityType, { type: string; valueOf: (index: number) => FieldValue }> = {
   feats: { type: FEAT_WEAPON_FINESSE, valueOf: (index) => index === 1 },
-  spells: { type: SPELL_SUBSCHOOL, valueOf: (index) => `Extension ${index}` },
+  spells: { type: SPELL_AREA_OF_EFFECT, valueOf: (index) => `Extension ${index}` },
 };
 
 /**
