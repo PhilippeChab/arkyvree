@@ -105,6 +105,16 @@ describe("CampaignInvitesService", () => {
       expect(fetched.canAccept).toBe(false);
     });
 
+    test("still answers a rejected invite once its seat is archived with a later player's account", async () => {
+      const { gmSession, invitee, slot, invite } = await setup();
+      await CampaignInvitesService.rejectInvite(invitee.session, invite.id);
+      const later = await createTestUser("later");
+      const laterInvite = await inviteToSlot(gmSession, slot, later.user.emailAddress);
+      await CampaignInvitesService.acceptInvite(later.session, laterInvite.id);
+      await Players.archive(db, { userId: later.user.id });
+      expect(await CampaignInvitesService.getInvite(invitee.session, invite.id)).toMatchObject({ status: "Rejected" });
+    });
+
     test("hides the invite from anyone else", async () => {
       const { invite } = await setup();
       const { session: stranger } = await createTestUser();

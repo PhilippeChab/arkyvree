@@ -53,9 +53,10 @@ class CampaignInvitesService {
     });
     if (!invite) throw new NotFoundError("Invite not found");
 
-    const campaign = await this.getInviteCampaign(db, invite);
-    const policy = await CampaignsPolicy.for(db, session, campaign);
-    return { ...invite, canAccept: isAllowed(() => policy.canAcceptInvite()) };
+    // Its campaign as its read loaded it, its seat archived or not: an answered invite outlives a seat archived since
+    const campaign = invite.playersInCampaign?.campaignsInCampaign;
+    const policy = campaign && (await CampaignsPolicy.for(db, session, campaign));
+    return { ...invite, canAccept: !!policy && isAllowed(() => policy.canAcceptInvite()) };
   }
 
   async getInvites(
