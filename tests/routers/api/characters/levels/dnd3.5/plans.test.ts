@@ -473,6 +473,32 @@ describe("character level plans", () => {
     const plan = fighterPlan(ctx, 1);
     await expectStatus(levels.plan.$post({ param: { characterId }, json: { steps: { ...plan, bonus: [1] } } }), 400);
     await expectStatus(levels.plan.$post({ param: { characterId }, json: { steps: { ...plan, hp: [[]] } } }), 400);
+    // The engine reads each answer by its step's mechanic, and words its refusal: a negative spend among them
+    const negative = { ...plan, skills: [{ id: ctx.skillMap["Climb"], points: -1 }] };
+    expect(
+      await (await expectStatus(levels.plan.$post({ param: { characterId }, json: { steps: negative } }), 400)).json(),
+    ).toMatchObject({ message: "The skills step's answer isn't a spend step's" });
+    // An id that names nothing of the ruleset is refused, a plan's answer's and a save's, whatever its form
+    const unknown = { ...payloadsOf(picks(ctx, FIGHTER_LEVELS[0])), ...plan, skills: [{ id: "not-an-id", points: 1 }] };
+    for (const response of [
+      levels.plan.$post({ param: { characterId }, json: { steps: unknown } }),
+      levels.$post({ param: { characterId }, json: { steps: unknown } }),
+      levels.plan.$post({
+        param: { characterId },
+        json: { steps: { ...plan, "class-plan": [{ track: "not-an-id" }] } },
+      }),
+      levels.$post({
+        param: { characterId },
+        json: {
+          steps: {
+            ...payloadsOf(picks(ctx, FIGHTER_LEVELS[0])),
+            ...plan,
+            feats: [{ id: "not-an-id", pool: "nor-this" }],
+          },
+        },
+      }),
+    ])
+      expect([400, 404]).toContain((await response).status);
     await expectStatus(levels.plan.$post({ param: { characterId }, json: { steps: { hp: [8] } } }), 400);
     await expectStatus(
       levels.$post({ param: { characterId }, json: { steps: { "class-plan": plan["class-plan"] } } }),
