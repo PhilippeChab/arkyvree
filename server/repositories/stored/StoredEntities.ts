@@ -48,8 +48,8 @@ interface PageBounds {
 }
 
 /**
- * A list of a kind's entities (`entityType`): a ruleset's own, its source chain's (less what a later ruleset copied,
- * and the `hiddenIds` its copy-on-write data gives); those of `ids`, of the values of their fields, the targets of
+ * A list of a kind's entities (`entityType`): a ruleset's own, its source chain's (less what its copy-on-write data
+ * hides: the sources of `snapshotRulesetIds`' snapshots, and `hiddenIds`); those of `ids`, of the values of their fields, the targets of
  * their single links and their partition (`EntityFilters`: an item's template flag, a feat's family, a race's `pc`),
  * the targets of the links of a role from a kind (`linkedBy`: an aptitude a feat is listed in); searched, in an order.
  */
@@ -65,6 +65,7 @@ export interface EntityListWhere extends EntityFilters {
   orderDir?: "asc" | "desc";
   rulesetId: string;
   search?: string;
+  snapshotRulesetIds?: string[];
   sourceChain?: string[];
 }
 
@@ -172,31 +173,29 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   }
 
   /**
-   * A kind's entities in a ruleset's list: its own, and its source chain's (each less what a later ruleset copied, and
-   * the hidden ids its copy-on-write data gives: a book's copy that lost to another book's, a book's entity the
-   * ruleset's own of its name shadows).
+   * A kind's entities in a ruleset's list: its own, and its source chain's less what its copy-on-write data hides (the
+   * sources of the snapshots of `snapshotRulesetIds`, whichever copied them; `hiddenIds`: a book's copy that lost to
+   * another book's, a book's entity the ruleset's own of its name shadows).
    */
   private buildRulesetCondition(
     db: Db,
-    where: Pick<EntityListWhere, "childOnly" | "hiddenIds" | "rulesetId" | "sourceChain">,
+    where: Pick<EntityListWhere, "childOnly" | "hiddenIds" | "rulesetId" | "snapshotRulesetIds" | "sourceChain">,
   ): SQL {
-    const { childOnly, hiddenIds, sourceChain = [] } = where;
+    const { childOnly, hiddenIds = [], snapshotRulesetIds = [], sourceChain = [] } = where;
     const childOwned = eq(entitiesInRules.rulesetId, where.rulesetId);
-    if (childOnly) return childOwned;
-    const inheritedClauses = sourceChain.map((sourceId, i) => {
-      const overriddenBy = [where.rulesetId, ...sourceChain.slice(0, i)];
-      const copied = notInArray(
-        entitiesInRules.id,
-        db
-          .select({ id: entitySnapshotsInRules.sourceEntityId })
-          .from(entitySnapshotsInRules)
-          .where(inArray(entitySnapshotsInRules.rulesetId, overriddenBy)),
-      );
-      return and(eq(entitiesInRules.rulesetId, sourceId), copied);
-    });
-    const hidden = hiddenIds && hiddenIds.length > 0 ? notInArray(entitiesInRules.id, hiddenIds) : undefined;
-    const inherited = inheritedClauses.length > 0 ? and(or(...inheritedClauses), hidden) : undefined;
-    return inherited ? or(childOwned, inherited)! : childOwned;
+    if (childOnly || sourceChain.length === 0) return childOwned;
+    const copied =
+      snapshotRulesetIds.length > 0
+        ? notInArray(
+            entitiesInRules.id,
+            db
+              .select({ id: entitySnapshotsInRules.sourceEntityId })
+              .from(entitySnapshotsInRules)
+              .where(inArray(entitySnapshotsInRules.rulesetId, snapshotRulesetIds)),
+          )
+        : undefined;
+    const hidden = hiddenIds.length > 0 ? notInArray(entitiesInRules.id, hiddenIds) : undefined;
+    return or(childOwned, and(inArray(entitiesInRules.rulesetId, sourceChain), copied, hidden))!;
   }
 
   /**

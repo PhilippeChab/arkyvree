@@ -282,6 +282,7 @@ export default class CowDataBuilder {
       this.siblings,
       new Set(this.shadows.keys()),
       sources,
+      [this.rulesetId, ...this.sourceChain],
     );
   }
 }
