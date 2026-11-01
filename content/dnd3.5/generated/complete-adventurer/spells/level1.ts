@@ -144,7 +144,7 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
     aptitudes: ["Assassin Spells", "Hexblade Spells", "Sorcerer Spells", "Sublime Chord Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: "Compulsion",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
       [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "1 swift action",
@@ -243,7 +243,7 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
     aptitudes: ["Bard Spells", "Sublime Chord Spells"],
     fields: {
       [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: "Compulsion",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
       [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal"],
       [SPELL_CASTING_TIME]: "1 standard action",
@@ -370,7 +370,7 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
     aptitudes: ["Bard Spells", "Druid Spells", "Spirit Shaman Spells", "Sublime Chord Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Healing",
+      [SPELL_SUBSCHOOL]: ["Healing"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "10 minutes",
       [SPELL_RANGE_TYPE]: "Close",
@@ -388,7 +388,7 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
     aptitudes: ["Bard Spells", "Sublime Chord Spells"],
     fields: {
       [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: "Compulsion",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
       [SPELL_DESCRIPTOR]: ["Mind-Affecting", "Sonic"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 swift action",
@@ -428,7 +428,7 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
     aptitudes: ["Bard Spells", "Sublime Chord Spells"],
     fields: {
       [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: "Compulsion",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
       [SPELL_DESCRIPTOR]: ["Mind-Affecting", "Sonic"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 swift action",

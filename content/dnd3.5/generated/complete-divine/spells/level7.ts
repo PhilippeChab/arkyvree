@@ -76,7 +76,7 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
     aptitudes: ["Druid Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Long",
@@ -94,7 +94,7 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
     aptitudes: ["Cleric Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Healing",
+      [SPELL_SUBSCHOOL]: ["Healing"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus", "XP Cost"],
       [SPELL_CASTING_TIME]: "10 minutes",
       [SPELL_RANGE_TYPE]: "Touch",
@@ -112,7 +112,7 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
     aptitudes: ["Cleric Spells"],
     fields: {
       [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: "Compulsion",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
       [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 standard action",
@@ -146,7 +146,7 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
     aptitudes: ["Cleric Spells", "Druid Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Summoning",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Close",
@@ -196,7 +196,7 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
     aptitudes: ["Druid Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 full round",
       [SPELL_RANGE_TYPE]: "Long",

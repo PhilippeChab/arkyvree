@@ -48,7 +48,7 @@ import {
   WEAPON_PROFICIENCY,
   WIZARD_PROHIBITED_SCHOOL,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
-import { SPELL_COMPONENTS, SPELL_SCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
+import { SPELL_COMPONENTS, SPELL_SCHOOLS, SPELL_SUBSCHOOLS } from "@/vocabulary/dnd3.5/spells.ts";
 
 /** Where a form's field sends its value: its stored field, a link its role; a group, its label. */
 function placeOf(field: FormField) {
@@ -324,6 +324,10 @@ describe("rules", () => {
     );
     expect(fields.spells).toContainEqual(
       expect.objectContaining({ field: SPELL_COMPONENT, input: "choice", multiple: true, options: SPELL_COMPONENTS }),
+    );
+    // A spell's subschools are chips, as its descriptors: Gate is Creation and Calling
+    expect(fields.spells).toContainEqual(
+      expect.objectContaining({ field: SPELL_SUBSCHOOL, input: "choice", multiple: true, options: SPELL_SUBSCHOOLS }),
     );
     expect(fields.spells).toContainEqual(
       expect.objectContaining({

@@ -23,7 +23,7 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
     aptitudes: ["Wu Jen Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "10 ft.",
@@ -104,7 +104,7 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
     aptitudes: ["Wu Jen Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Healing",
+      [SPELL_SUBSCHOOL]: ["Healing"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Focus"],
       [SPELL_CASTING_TIME]: "1 round",
       [SPELL_RANGE_TYPE]: "Touch",

@@ -54,7 +54,7 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
     aptitudes: ["Bard Spells", "Hexblade Spells", "Sublime Chord Spells"],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Phantasm",
+      [SPELL_SUBSCHOOL]: ["Phantasm"],
       [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 action",

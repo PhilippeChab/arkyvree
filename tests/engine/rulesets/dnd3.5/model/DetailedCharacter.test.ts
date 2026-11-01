@@ -1748,6 +1748,40 @@ describe("DetailedCharacter", () => {
       });
     });
 
+    test("keeps the Dexterity bonus flat-footed with the Fate domain or the Robe of Eyes, as uncanny dodge", async () => {
+      const ctx = await getSeedCtx();
+      const fork = await forkWith(DND35_COMPLETE_WARRIOR_NAME);
+      const fate = (await Entities.findOne<Feat>(db, {
+        entityType: "feats",
+        name: "Fate Domain",
+        rulesetId: (await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME)).id,
+      }))!;
+      // An unarmored cleric 1 with Dexterity 14 (+2), of two domains (Dodge gives no standing bonus: it's against one
+      // opponent)
+      const clericOf = async (name: string, domains: string[]) => {
+        const characterId = await seedHuman(name, { ...WIZARD_SCORES, Dexterity: 14 }, { rulesetId: fork.id });
+        const levels = await addClassLevels(db, ctx, characterId, "Cleric", [1], [8]);
+        await addFeats(
+          db,
+          { ...ctx, featMap: { ...ctx.featMap, [fate.name]: fate.id } },
+          levels,
+          domains.map((featName) => ({ levelIndex: 0, featName, aptitude: "Cleric Domain" })),
+        );
+        return (await Characters.findOne(db, { id: characterId }))!;
+      };
+      const acOf = async (character: Character) => {
+        const { total, flatfooted } = weaponSet(await build(character)).ac;
+        return { total, flatfooted };
+      };
+      const sunCleric = await clericOf("Sun Cleric", ["Good Domain", "Sun Domain"]);
+      const fateCleric = await clericOf("Fate Cleric", ["Fate Domain", "Good Domain"]);
+      expect(await acOf(sunCleric)).toEqual({ total: 12, flatfooted: 10 });
+      expect(await acOf(fateCleric)).toEqual({ total: 12, flatfooted: 12 });
+
+      await carry(sunCleric, [{ item: "Robe of Eyes", location: "Head" }]);
+      expect(await acOf(sunCleric)).toEqual({ total: 12, flatfooted: 12 });
+    });
+
     test("gives a duelist its Intelligence bonus as a dodge bonus, up to its duelist level, and never a penalty", async () => {
       const ctx = await getSeedCtx();
       const fork = await forkWith(DND35_DMG_NAME);

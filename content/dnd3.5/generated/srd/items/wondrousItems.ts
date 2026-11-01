@@ -2750,6 +2750,7 @@ export const WONDROUS_ITEMS: Dnd35ItemSeed[] = [
     modifiers: [
       { target: "skills.search.misc", operator: "add", value: "10", valueType: "number" },
       { target: "skills.spot.misc", operator: "add", value: "10", valueType: "number" },
+      { target: "combat.ac.uncannydodge", operator: "set", value: "true", valueType: "boolean" },
     ],
   },
   {

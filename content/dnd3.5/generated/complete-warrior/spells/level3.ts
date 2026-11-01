@@ -20,7 +20,7 @@ export const LEVEL_3_SPELLS: SpellSeed[] = [
     aptitudes: ["Hexblade Spells"],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Shadow",
+      [SPELL_SUBSCHOOL]: ["Shadow"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 round",
       [SPELL_RANGE_TYPE]: "Close",

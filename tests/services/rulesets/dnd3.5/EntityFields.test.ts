@@ -288,15 +288,15 @@ describe("An entity's fields", () => {
     });
     expect(await fieldsOf(rulesetId, "spells", bolt.id)).toMatchObject({
       [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_SUBSCHOOL]: "Creation or Calling",
+      [SPELL_SUBSCHOOL]: ["Creation or Calling"],
     });
     // Given back, it's refused as any value outside the list
     expect(
       EntitiesService.updateEntity(session, rulesetId, "spells", bolt.id, {
         ...spell,
-        fields: { [SPELL_SUBSCHOOL]: "Creation or Calling" },
+        fields: { [SPELL_SUBSCHOOL]: ["Creation or Calling"] },
       }),
-    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: `fields.${SPELL_SUBSCHOOL}` }] });
+    ).rejects.toMatchObject({ refusal: "invalid", issues: [{ category: `fields.${SPELL_SUBSCHOOL}.0` }] });
   });
 
   test("give a new entity those it always holds, their defaults where its form or any writer gives none, never none", async () => {

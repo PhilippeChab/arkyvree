@@ -54,7 +54,7 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     ],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_DESCRIPTOR]: ["Pattern"],
+      [SPELL_SUBSCHOOL]: ["Pattern"],
       [SPELL_COMPONENT]: ["Verbal"],
       [SPELL_CASTING_TIME]: "1 swift action",
       [SPELL_RANGE_TYPE]: "Personal",
@@ -179,7 +179,7 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     aptitudes: ["Bard Spells", "Sublime Chord Spells"],
     fields: {
       [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: "Compulsion",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
       [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 standard action",
@@ -197,7 +197,7 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     aptitudes: ["Assassin Spells", "Bard Spells", "Sublime Chord Spells", "Vigilante Spells"],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Glamer",
+      [SPELL_SUBSCHOOL]: ["Glamer"],
       [SPELL_COMPONENT]: ["Verbal"],
       [SPELL_CASTING_TIME]: "1 swift action",
       [SPELL_RANGE_TYPE]: "Personal",
@@ -263,7 +263,7 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Sublime Chord Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: "Compulsion",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
       [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus"],
       [SPELL_CASTING_TIME]: "1 standard action",
@@ -340,7 +340,7 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     aptitudes: ["Consecrated Harrier Spells", "Druid Spells", "Ranger Spells", "Spirit Shaman Spells"],
     fields: {
       [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: "Charm",
+      [SPELL_SUBSCHOOL]: ["Charm"],
       [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
       [SPELL_CASTING_TIME]: "10 minutes",

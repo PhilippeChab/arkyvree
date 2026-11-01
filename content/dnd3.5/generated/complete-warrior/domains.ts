@@ -23,6 +23,7 @@ export const ALL_DOMAINS: DomainSeed[] = [
     name: "Fate",
     description:
       "You possess the uncanny dodge ability, which lets you keep your Dexterity bonus to AC (if any) even when flat-footed or when attacked by an unseen opponent. Being immobilized still causes you to lose your Dexterity bonus to AC as normal. If another one of your classes also grants uncanny dodge, you may add your cleric levels to that class's levels when determining whether you qualify for improved uncanny dodge.",
+    modifiers: [{ target: "combat.ac.uncannydodge", operator: "set", value: "true", valueType: "boolean" }],
     spells: [
       { name: "True Strike", level: 1 },
       { name: "Augury", level: 2 },

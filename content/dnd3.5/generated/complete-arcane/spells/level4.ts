@@ -39,7 +39,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     },
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_DESCRIPTOR]: ["Electricity"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 standard action",
@@ -81,7 +81,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_DESCRIPTOR]: ["Fire"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "1 standard action",
@@ -232,7 +232,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_DESCRIPTOR]: ["Acid"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 standard action",
@@ -251,7 +251,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_DESCRIPTOR]: ["Cold"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 standard action",
@@ -270,7 +270,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_DESCRIPTOR]: ["Electricity"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 standard action",
@@ -289,7 +289,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_DESCRIPTOR]: ["Fire"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 standard action",
@@ -308,7 +308,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_DESCRIPTOR]: ["Force"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 standard action",
@@ -325,7 +325,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_DESCRIPTOR]: ["Sonic"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 standard action",
@@ -409,7 +409,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Wu Jen Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Calling",
+      [SPELL_SUBSCHOOL]: ["Calling"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "10 minutes",
       [SPELL_RANGE_TYPE]: "Close",
@@ -444,7 +444,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Wu Jen Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "1 round",
       [SPELL_RANGE_TYPE]: "Medium",

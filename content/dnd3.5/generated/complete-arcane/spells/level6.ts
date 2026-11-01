@@ -146,7 +146,7 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
     aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Figment",
+      [SPELL_SUBSCHOOL]: ["Figment"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 round",
       [SPELL_RANGE_TYPE]: "Medium",
@@ -198,7 +198,7 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
     aptitudes: ["Wu Jen Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Calling",
+      [SPELL_SUBSCHOOL]: ["Calling"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "10 minutes",
       [SPELL_RANGE_TYPE]: "Close",
@@ -216,7 +216,7 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
     aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells", "Wu Jen Spells"],
     fields: {
       [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: "Compulsion",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
       [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "1 round",

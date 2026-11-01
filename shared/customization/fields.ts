@@ -322,7 +322,8 @@ export type LeafSpec<K extends string = string> = Exclude<FieldSpec<K>, GroupSpe
 
 /**
  * How an owner's sibling copies (one entity copied by two books, a book's reprint of another's) merge a field or a
- * single link into the winning copy's: the winner's value or none (`winner`), the winner's else the first sibling's
+ * single link into the winning copy's: the winner's value or none (`winner`), a field's of the first copy that changed
+ * it from what it copied (its default among them, which no row holds), else the winner's, else the first sibling's
  * that holds one (`fallback`), or every copy's values (`union`, a set's).
  */
 export type Merge = "fallback" | "union" | "winner";
