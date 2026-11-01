@@ -294,6 +294,7 @@ describe("RulesetsService", () => {
       canFork: false,
       canInviteContributors: false,
       canLeave: false,
+      canMakePrivate: false,
       canManageAdminContributors: false,
       canManageContributors: false,
       canPublish: false,
@@ -309,6 +310,7 @@ describe("RulesetsService", () => {
       canEditEntities: true,
       canEditRuleset: true,
       canInviteContributors: true,
+      canMakePrivate: true,
       canManageAdminContributors: true,
       canManageContributors: true,
       canReadContributors: true,
@@ -320,6 +322,7 @@ describe("RulesetsService", () => {
       const { user, session } = await createTestUser();
       const draft = await createTestRuleset(user.id, { status: "Draft" });
       const published = await createTestRuleset(user.id, { status: "Published" });
+      const publicRuleset = await createTestRuleset(user.id, { private: false, status: "Published" });
       const fork = await createFork(user.id);
 
       expect((await RulesetsService.getRuleset(session, draft.id)).permissions).toEqual({ ...OWNER, canPublish: true });
@@ -327,6 +330,12 @@ describe("RulesetsService", () => {
       expect((await RulesetsService.getRuleset(session, published.id)).permissions).toEqual({
         ...OWNER,
         canFork: true,
+      });
+      // A public ruleset stays public, its owner's too
+      expect((await RulesetsService.getRuleset(session, publicRuleset.id)).permissions).toEqual({
+        ...OWNER,
+        canFork: true,
+        canMakePrivate: false,
       });
       expect((await RulesetsService.getRuleset(session, fork.id)).permissions).toEqual({
         ...OWNER,
@@ -350,6 +359,8 @@ describe("RulesetsService", () => {
         ...OWNER,
         canFork: true,
         canLeave: true,
+        // A public ruleset stays public
+        canMakePrivate: false,
         canManageAdminContributors: false,
       });
       expect((await RulesetsService.getRuleset(session, ruleset.id)).permissions).toEqual({

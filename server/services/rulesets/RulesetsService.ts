@@ -28,12 +28,12 @@ const NAME_INDEX = "rulesets_name_unique_idx";
 class RulesetsService extends include(Object, Archives, Publishes, Stars) {
   /**
    * What the session may do with a ruleset, as its policy decides each (`policy`), so a page offers what the server
-   * allows: edit its entities, edit the ruleset itself, fork it, unarchive it, see its contributors, invite and manage
-   * them, change their roles, manage its Admins, publish it, subscribe it to extensions (`usedAsExtension`: another
-   * ruleset subscribes to it) and unsubscribe it from one (whether a character uses what would leave is the server's
-   * answer once asked), see its local changes, and whether it can be an extension (`hasExtensions`: it subscribes to
-   * one), which its edit and its publish offer. It may leave it while it contributes to it (`contributorRole`: an
-   * active role, its owner's never looked up).
+   * allows: edit its entities, edit the ruleset itself (make it private too, while it isn't public), fork it, unarchive
+   * it, see its contributors, invite and manage them, change their roles, manage its Admins, publish it, subscribe it
+   * to extensions (`usedAsExtension`: another ruleset subscribes to it) and unsubscribe it from one (whether a
+   * character uses what would leave is the server's answer once asked), see its local changes, and whether it can be an
+   * extension (`hasExtensions`: it subscribes to one), which its edit and its publish offer. It may leave it while it
+   * contributes to it (`contributorRole`: an active role, its owner's never looked up).
    */
   private permissionsOf(
     policy: RulesetsPolicy,
@@ -46,6 +46,7 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       canFork: isAllowed(() => policy.canFork()),
       canInviteContributors: isAllowed(() => policy.canInviteContributors()),
       canLeave: policy.contributorRole !== undefined,
+      canMakePrivate: isAllowed(() => policy.canUpdate({ private: true })),
       canManageAdminContributors: isAllowed(() => policy.canManageAdminContributors()),
       canManageContributors: isAllowed(() => policy.canManageContributors()),
       canPublish: isAllowed(() => policy.canPublish()),

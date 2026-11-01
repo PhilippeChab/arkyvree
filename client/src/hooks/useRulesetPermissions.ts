@@ -16,6 +16,8 @@ interface RulesetPermissions {
   canInviteContributors: boolean;
   /** A contributor, but its owner — can leave it, archived or not. */
   canLeave: boolean;
+  /** Who edits it, while it isn't public: a public ruleset stays public — its edit offers privacy. */
+  canMakePrivate: boolean;
   /** Owner — can make a contributor an Admin, and change or remove an Admin. */
   canManageAdminContributors: boolean;
   /** Owner or Admin — can remove contributors, archived or not. Demo users blocked. */
@@ -47,6 +49,7 @@ const NONE: RulesetPermissions = {
   canFork: false,
   canInviteContributors: false,
   canLeave: false,
+  canMakePrivate: false,
   canManageAdminContributors: false,
   canManageContributors: false,
   canPublish: false,
