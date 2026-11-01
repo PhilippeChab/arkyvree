@@ -1,10 +1,9 @@
 import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { withTransaction } from "@/server/database/index.ts";
 import { Activities, CharacterInventory } from "@/server/repositories/index.ts";
+import { withCharacterCreate } from "@/server/services/characters/characterWrites.ts";
 import { createAdvancement, writeChildren } from "@/server/services/characters/levels/index.ts";
 import { createNewCharacter } from "@/server/services/characters/newCharacterWrites.ts";
-import { withReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -29,33 +28,30 @@ export function Imports<B extends Constructor>(Base: B) {
      * written in (a second or so for a high-level character, which the route's rate limit bounds).
      */
     async importCharacter(session: Session, rulesetId: string, text: string) {
-      return await withTransaction(
-        async (tx) =>
-          await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
-            policy.canCreateCharacter();
-            const characterId = crypto.randomUUID();
-            const plan = Engine.for(scope).characters().planImport(text, { characterId, userId: session.userId });
-            const character = await createNewCharacter(tx, {
-              links: plan.links,
-              row: { ...plan.row, id: characterId, rulesetId, userId: session.userId },
-            });
-            for (const advancement of plan.advancements) await createAdvancement(tx, characterId, advancement);
-            await CharacterInventory.createMany(
-              tx,
-              plan.inventory.map((entry) => ({ ...entry, characterId })),
-            );
-            await writeChildren(tx, character, plan.children);
+      return await withCharacterCreate(session, rulesetId, async (tx, scope, policy) => {
+        policy.canCreateCharacter();
+        const characterId = crypto.randomUUID();
+        const plan = Engine.for(scope).characters().planImport(text, { characterId, userId: session.userId });
+        const character = await createNewCharacter(tx, {
+          links: plan.links,
+          row: { ...plan.row, id: characterId, rulesetId, userId: session.userId },
+        });
+        for (const advancement of plan.advancements) await createAdvancement(tx, characterId, advancement);
+        await CharacterInventory.createMany(
+          tx,
+          plan.inventory.map((entry) => ({ ...entry, characterId })),
+        );
+        await writeChildren(tx, character, plan.children);
 
-            await Activities.create(tx, {
-              userId: session.userId,
-              targetId: characterId,
-              targetType: TARGET_TYPES.characters,
-              type: "createCharacter",
-            });
+        await Activities.create(tx, {
+          userId: session.userId,
+          targetId: characterId,
+          targetType: TARGET_TYPES.characters,
+          type: "createCharacter",
+        });
 
-            return { character, report: plan.report };
-          }),
-      );
+        return { character, report: plan.report };
+      });
     }
   }
   return Importing;

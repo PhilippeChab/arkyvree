@@ -8,7 +8,7 @@ import {
 } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import { withRulesetScope, withRulesetScopes } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
   Activities,
@@ -27,9 +27,10 @@ import type { Session } from "@/shared/relations.ts";
 
 import { describeCharacterCards } from "./characterCards.ts";
 import { readCharacterInput, readChildInputs } from "./characterInputs.ts";
+import { withCharacterCreate, withCharacterWrite } from "./characterWrites.ts";
 import { Archives } from "./concerns/Archives.ts";
 import { Imports } from "./concerns/Imports.ts";
-import { findEditableCharacterOrChild, findReadableCharacter, getEditableCharacter } from "./editableCharacter.ts";
+import { findEditableCharacterOrChild, findReadableCharacter } from "./editableCharacter.ts";
 import { createNewCharacter } from "./newCharacterWrites.ts";
 import { enqueueCharacterPdf, findExportableCharacter } from "./pdf.ts";
 
@@ -79,28 +80,25 @@ class CharactersService extends include(Object, Archives, Imports) {
       scores: Record<string, Record<string, number>>;
     },
   ) {
-    return await withTransaction(
-      async (tx) =>
-        await withReadableRuleset(tx, session, characterData.rulesetId, async (scope, policy) => {
-          policy.canCreateCharacter();
-          const { fields, name, notes, picks, rulesetId, scores } = characterData;
-          const { links, row } = Engine.for(scope).characters().planCreate({ fields, picks, scores });
-          const newCharacter = await createNewCharacter(tx, {
-            links,
-            row: { ...row, name, notes, rulesetId, userId: session.userId },
-          });
+    return await withCharacterCreate(session, characterData.rulesetId, async (tx, scope, policy) => {
+      policy.canCreateCharacter();
+      const { fields, name, notes, picks, rulesetId, scores } = characterData;
+      const { links, row } = Engine.for(scope).characters().planCreate({ fields, picks, scores });
+      const newCharacter = await createNewCharacter(tx, {
+        links,
+        row: { ...row, name, notes, rulesetId, userId: session.userId },
+      });
 
-          // Log the activity
-          await Activities.create(tx, {
-            userId: session.userId,
-            targetId: newCharacter.id,
-            targetType: TARGET_TYPES.characters,
-            type: "createCharacter",
-          });
+      // Log the activity
+      await Activities.create(tx, {
+        userId: session.userId,
+        targetId: newCharacter.id,
+        targetType: TARGET_TYPES.characters,
+        type: "createCharacter",
+      });
 
-          return newCharacter;
-        }),
-    );
+      return newCharacter;
+    });
   }
 
   async enqueuePdf(session: Session, characterId: string) {
@@ -243,60 +241,33 @@ class CharactersService extends include(Object, Archives, Imports) {
       updatedAt?: string;
     },
   ) {
-    return await withTransaction(async (tx) => {
-      const characterRecord = await findEditableCharacterOrChild(tx, characterId, session.userId);
-      if (!characterRecord) throw new NotFoundError("Character not found");
+    return await withCharacterWrite(
+      session,
+      characterId,
+      async (tx, scope, characterRecord) => {
+        const { fields, links, updatedAt: expectedUpdatedAt, ...characterFields } = updateData;
 
-      const { fields, links, updatedAt: expectedUpdatedAt, ...characterFields } = updateData;
-
-      // Its fields, by the keys its sheet sends them, and its picked links' picks, as its ruleset writes them: each
-      // checked. The engine reads the picks' ids as the character's ruleset's view does
-      const planned =
-        fields || links
-          ? await withRulesetScope(tx, characterRecord.rulesetId, async (scope) =>
-              Engine.for(scope)
+        // Its fields, by the keys its sheet sends them, and its picked links' picks, as its ruleset writes them: each
+        // checked. The engine reads the picks' ids as the character's ruleset's view does
+        const planned =
+          fields || links
+            ? Engine.for(scope)
                 .character(await readCharacterInput(tx, characterRecord))
-                .planEdit({ fields, links }),
-            )
-          : undefined;
+                .planEdit({ fields, links })
+            : undefined;
 
-      const updatedRows = await Characters.update(
-        tx,
-        { ...characterFields, ...planned?.own, fields: planned?.fields },
-        { id: characterId, expectedUpdatedAt },
-      );
-      if (expectedUpdatedAt && updatedRows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+        const updatedRows = await Characters.update(
+          tx,
+          { ...characterFields, ...planned?.own, fields: planned?.fields },
+          { id: characterId, expectedUpdatedAt },
+        );
+        if (expectedUpdatedAt && updatedRows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
-      const [updatedCharacter] = updatedRows;
+        const [updatedCharacter] = updatedRows;
 
-      // Its picked links' picks, atomically with it, when it sends them: none sent leaves them alone, `[]` clears them
-      for (const [role, plan] of Object.entries(planned?.links ?? {}))
-        await this.writeLinkPicks(tx, characterId, role, plan);
-
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: characterId,
-        targetType: TARGET_TYPES.characters,
-        type: "updateCharacter",
-      });
-
-      return updatedCharacter;
-    });
-  }
-
-  /** Sets a character's amounts of a scored link's role (`role`: 3.5's `score`), as its ruleset plans them. */
-  async updateScores(session: Session, characterId: string, role: string, scores: Record<string, number>) {
-    return await withTransaction(async (tx) => {
-      const characterRecord = await getEditableCharacter(tx, session, characterId);
-
-      return await withRulesetScope(tx, characterRecord.rulesetId, async (scope) => {
-        const plan = Engine.for(scope).characters().planScores(role, scores);
-        // An amount stored before its entity was copied names the source: the copy's id the client sends matches it
-        for (const { amount, entityId } of plan.links) {
-          const entityIds = scope.rulesetData.cow.getEquivalentIds(entityId);
-          const rows = await CharacterLinks.updateAmount(tx, amount, { role, characterId, entityIds });
-          if (rows.length === 0) throw new NotFoundError("Score not found");
-        }
+        // Its picked links' picks, atomically with it, when it sends them: none sent leaves them alone, `[]` clears them
+        for (const [role, plan] of Object.entries(planned?.links ?? {}))
+          await this.writeLinkPicks(tx, characterId, role, plan);
 
         await Activities.create(tx, {
           userId: session.userId,
@@ -304,6 +275,29 @@ class CharactersService extends include(Object, Archives, Imports) {
           targetType: TARGET_TYPES.characters,
           type: "updateCharacter",
         });
+
+        return updatedCharacter;
+      },
+      { access: "editorOrChild" },
+    );
+  }
+
+  /** Sets a character's amounts of a scored link's role (`role`: 3.5's `score`), as its ruleset plans them. */
+  async updateScores(session: Session, characterId: string, role: string, scores: Record<string, number>) {
+    return await withCharacterWrite(session, characterId, async (tx, scope) => {
+      const plan = Engine.for(scope).characters().planScores(role, scores);
+      // An amount stored before its entity was copied names the source: the copy's id the client sends matches it
+      for (const { amount, entityId } of plan.links) {
+        const entityIds = scope.rulesetData.cow.getEquivalentIds(entityId);
+        const rows = await CharacterLinks.updateAmount(tx, amount, { role, characterId, entityIds });
+        if (rows.length === 0) throw new NotFoundError("Score not found");
+      }
+
+      await Activities.create(tx, {
+        userId: session.userId,
+        targetId: characterId,
+        targetType: TARGET_TYPES.characters,
+        type: "updateCharacter",
       });
     });
   }

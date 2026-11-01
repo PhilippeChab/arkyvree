@@ -64,20 +64,21 @@ abstract class BaseRepository<T extends Table> {
 
   /** Call inside a transaction to lock a stored row before changing its children.
    * IDs are already resolved by the caller. Never memoize a locking read.
-   * `skipLocked`: a row another transaction holds counts as not found instead of being waited for.
+   * `visibility`: which of a table's rows count, its unarchived ones by default (a table without `deletedAt` keeps no
+   * archived rows). `skipLocked`: a row another transaction holds counts as not found instead of being waited for.
    */
   async lock(
     db: Db,
-    where: { id: string },
+    where: { id: string; visibility?: Visibility },
     mode: "no key update" | "share" | "update" = "update",
     skipLocked = false,
   ): Promise<boolean> {
-    // A table without `deletedAt` keeps no archived rows to skip
     const { deletedAt } = getTableColumns(this.table);
+    const visible = deletedAt ? this.visibility(where.visibility ?? Visibility.UnarchivedOnly) : false;
     const rows = await db
       .select({ locked: sql<number>`1` })
       .from(sql`${this.table}`)
-      .where(and(eq(getTableColumns(this.table).id, where.id), deletedAt ? isNull(deletedAt) : undefined))
+      .where(this.where([eq(getTableColumns(this.table).id, where.id), visible]))
       .for(mode, skipLocked ? { skipLocked: true } : {});
     return rows.length > 0;
   }

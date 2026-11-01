@@ -21,6 +21,7 @@ export {
   withLockedRulesetScope,
   withRulesetScope,
   withRulesetScopes,
+  withSharedRulesetScope,
 } from "./views/scope.ts";
 export { default as CustomizationCopies } from "./writes/CustomizationCopies.ts";
 export { default as CustomizationEdit } from "./writes/CustomizationEdit.ts";
