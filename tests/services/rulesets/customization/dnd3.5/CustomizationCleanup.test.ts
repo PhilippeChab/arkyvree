@@ -36,8 +36,9 @@ import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { customize, STRENGTH_BONUS } from "@/tests/support/dnd3.5/customizations.ts";
 import { createTestClassLevel } from "@/tests/support/dnd3.5/levels.ts";
 import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
-import { findFormValues } from "@/tests/support/ownerValues.ts";
+import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import {
   CLASS_HD,
@@ -181,8 +182,9 @@ describe("customization cleanup", () => {
 
   test("deletes a demo account's customizations with its rulesets and characters", async () => {
     const { user } = await AuthenticationService.startDemo();
-    // The fork comes with a copy of the seeded ruleset's Settings
+    // The fork saves Settings of its own: the skill points' ability
     const fork = await createSeededTestRuleset(user.id);
+    await writeFieldValues("rulesets", fork.id, [], { skillPointAbility: (await getSeedCtx()).abilityMap["Wisdom"] });
     const { classLevel } = await createTestClassLevel(fork.id);
     const character = await createTestCharacter(user.id, { rulesetId: fork.id });
     await customize("feats", await createOwner("feats", user.id, fork.id));

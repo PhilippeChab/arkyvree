@@ -36,6 +36,7 @@ import { RulesetChangesService } from "@/server/services/rulesets/changes/index.
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
+import { RulesetSettingsService } from "@/server/services/rulesets/settings/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { addRulesetContributor } from "@/tests/support/contributors.ts";
@@ -478,10 +479,10 @@ describe("RulesetsService", () => {
         id: feat.id,
         links: [{ role: "listedIn", toId: aptitude.id }],
       });
-      // Ruleset-wide settings are copied as they are.
-      expect(await findFormValues("rulesets", created.id)).toEqual({
-        fields: {},
-        links: { skillPointAbility: intelligence.id },
+      // Its Settings are its chain's: it holds none of its own, and reads its parent's
+      expect(await findFormValues("rulesets", created.id)).toEqual({ fields: {}, links: {} });
+      expect((await RulesetSettingsService.getSettings(await ownerSessionOf(created.id), created.id)).links).toEqual({
+        skillPointAbility: intelligence.id,
       });
 
       expect((await fork(session, parent, { description: "Mine" })).description).toBe("Mine");
