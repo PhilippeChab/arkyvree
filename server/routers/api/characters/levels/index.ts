@@ -1,12 +1,23 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
+import type { StepPayload } from "@/engine/index.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { limitDefaultingTo } from "@/server/routers/api/schemaBuilders.ts";
-import { characterIdParam, page, planSteps } from "@/server/routers/api/validation.ts";
+import { characterIdParam, page } from "@/server/routers/api/validation.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 
 const levelParams = characterIdParam.extend({ advancementId: z.string().uuid() });
+
+/**
+ * A step's payload, as its wizard sends it: a list, which the engine reads by its step's mechanic (`Payloads`: a plan's
+ * tracks, a value per advancement, the options chosen at each, the points spent on rows, the entities picked in their
+ * pools), refusing as invalid one in another shape.
+ */
+const stepPayload = z.custom<StepPayload>((value) => Array.isArray(value), "Expected a step's answer: a list");
+
+/** A plan's steps' payloads, by step: what a level wizard answered so far. */
+const planSteps = z.record(z.string().min(1), stepPayload);
 
 /** A step's name, as its ruleset lists it. */
 const stepParams = characterIdParam.extend({ step: z.string().min(1) });

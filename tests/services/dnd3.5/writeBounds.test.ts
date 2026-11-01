@@ -660,14 +660,12 @@ describe("a character's levels", () => {
     }
   });
 
-  test("refuses a class level a character has already, forced too", async () => {
+  test("takes no class level a character has already: a plan names the class, the engine its next level", async () => {
     const ctx = await getSeedCtx();
     const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 1000 } });
     await levelUp(session, ctx, characterId, "Fighter", 1, FIGHTER_LEVELS[0]);
-    expect(levelUp(session, ctx, characterId, "Fighter", 1, FIGHTER_LEVELS[0], true)).rejects.toMatchObject({
-      message: "Level 2: This level has already been finalized",
-      refusal: "invalid",
-    });
+    // `levelUp` checks the level it saved: Fighter 2, the class's next, not the Fighter 1 the character has
+    await levelUp(session, ctx, characterId, "Fighter", 2, FIGHTER_LEVELS[1], true);
   });
 
   test("refuses negative skill points, and stores no rank for a skill a level spends none on", async () => {

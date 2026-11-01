@@ -19,13 +19,15 @@ class CampaignsService {
   /**
    * What the session may do in a campaign, as its policy decides it: edit it, its Game Master's, who archives and deletes
    * it too (`canEdit`), add, edit and remove its players (`canManagePlayers`), revoke a pending invite, an archived
-   * campaign's too (`canRevokeInvites`), and leave it (`canLeave`; but the last Game Master, whose seat the players list
-   * reads). The client offers what it answers.
+   * campaign's too (`canRevokeInvites`), link the session's characters to it and set their visibility
+   * (`canLinkCharacters`), and leave it (`canLeave`; but the last Game Master, whose seat the players list reads). The
+   * client offers what it answers.
    */
   private permissionsOf(policy: CampaignsPolicy) {
     return {
       canEdit: isAllowed(() => policy.canUpdate()),
       canLeave: isAllowed(() => policy.canModify()),
+      canLinkCharacters: isAllowed(() => policy.canLinkCharacter()),
       canManagePlayers: isAllowed(() => policy.canManagePlayers()),
       canRevokeInvites: isAllowed(() => policy.canUpdate()),
     };

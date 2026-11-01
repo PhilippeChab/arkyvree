@@ -10,9 +10,9 @@
  *   what failed ("Failed to remove item").
  * - `confirm-wording`: a confirmation asks "Are you sure you want to …?", then says what follows; a deletion ends
  *   "This action cannot be undone.", or "You can restore it from Local Changes." for what a fork inherits, each branch
- *   of a message that says either; an archive ends "You can unarchive it at any time from the Archived filter.", the
- *   one way a ruleset, a campaign or a character comes back, or "Only its owner can unarchive it." for who archives
- *   what they don't own (a ruleset's Admin).
+ *   of a message that says either; an archive ends "You can unarchive it at any time from the Archived filter.", for
+ *   what only its owner archives (a campaign, a character), or "Only its owner can unarchive it." for what more than
+ *   its owner archives (a ruleset, which its Admins archive too).
  * - `typography-marks`: an ellipsis is "…" and a dash between words "—", never "..." or " - ", a template's
  *   interpolations reading as words (`${pool} - ${level}`); a text cut short is `truncate(text, length)`. A text says
  *   itself in words, never an emoji (the spinner's die is `DiceSpinner`'s own).

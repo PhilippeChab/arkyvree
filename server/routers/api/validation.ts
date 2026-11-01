@@ -11,19 +11,6 @@ import { isUuid, limitDefaultingTo } from "./schemaBuilders.ts";
 const fieldValue = z.union([z.string(), z.number(), z.boolean()]);
 
 /**
- * A step's payload, in any mechanic's shape (the engine reads it by its step's): a plan's advancements, a value per
- * advancement, the options chosen at each, the points spent on rows in their order, or the entities picked in their
- * pools, in pick order.
- */
-const stepPayload = z.union([
-  z.array(z.object({ position: z.number().int().min(1), track: z.string().uuid() })),
-  z.array(z.number().int().min(0)),
-  z.array(z.array(z.object({ amount: z.number().int().min(1), id: z.string().uuid() }))),
-  z.array(z.object({ id: z.string().uuid(), points: z.number().int().min(0) })),
-  z.array(z.object({ id: z.string().uuid(), pool: z.string().uuid(), tier: z.string().optional() })),
-]);
-
-/**
  * A character's fields, by their keys, which its ruleset reads and checks by their declarations (`FieldCodec.parse`):
  * a single field's value, a set's values, or none.
  */
@@ -76,9 +63,9 @@ export const idList = z
   .string()
   .optional()
   .transform((value) => value?.split(",").filter(isUuid));
+
 /** Standard limit: 1–100, defaults to 10 */
 export const limit = limitDefaultingTo(10);
-
 /** Standard orderDir */
 export const orderDirAsc = z.enum(["asc", "desc"]).default("asc");
 
@@ -86,9 +73,6 @@ export const orderDirDesc = z.enum(["asc", "desc"]).default("desc");
 
 /** Standard page parameter: positive integer, defaults to 1 */
 export const page = z.coerce.number().min(1).default(1);
-
-/** A plan's steps' payloads, by step: what a level wizard answered so far. */
-export const planSteps = z.record(z.string().min(1), stepPayload);
 
 /** An email address, sanitized as it's stored, then checked. */
 export const sanitizedEmail = z.string().overwrite(sanitizeEmail).email();

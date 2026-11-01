@@ -25,7 +25,8 @@ import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluato
 import CharacterResponse from "@/engine/rulesets/dnd3.5/characters/description/CharacterResponse.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import type { Aptitude, Feat, Klass, Race, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
-import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
+import type { AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
+import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import type { WeaponSlot } from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
@@ -1745,6 +1746,40 @@ describe("DetailedCharacter", () => {
         touch: before.touch + 2,
         flatfooted: before.total - before.dexterity,
       });
+    });
+
+    test("keeps the Dexterity bonus flat-footed with the Fate domain or the Robe of Eyes, as uncanny dodge", async () => {
+      const ctx = await getSeedCtx();
+      const fork = await forkWith(DND35_COMPLETE_WARRIOR_NAME);
+      const fate = (await Entities.findOne<Feat>(db, {
+        entityType: "feats",
+        name: "Fate Domain",
+        rulesetId: (await findSeededRuleset(DND35_COMPLETE_WARRIOR_NAME)).id,
+      }))!;
+      // An unarmored cleric 1 with Dexterity 14 (+2), of two domains (Dodge gives no standing bonus: it's against one
+      // opponent)
+      const clericOf = async (name: string, domains: string[]) => {
+        const characterId = await seedHuman(name, { ...WIZARD_SCORES, Dexterity: 14 }, { rulesetId: fork.id });
+        const levels = await addClassLevels(db, ctx, characterId, "Cleric", [1], [8]);
+        await addFeats(
+          db,
+          { ...ctx, featMap: { ...ctx.featMap, [fate.name]: fate.id } },
+          levels,
+          domains.map((featName) => ({ levelIndex: 0, featName, aptitude: "Cleric Domain" })),
+        );
+        return (await Characters.findOne(db, { id: characterId }))!;
+      };
+      const acOf = async (character: Character) => {
+        const { total, flatfooted } = weaponSet(await build(character)).ac;
+        return { total, flatfooted };
+      };
+      const sunCleric = await clericOf("Sun Cleric", ["Good Domain", "Sun Domain"]);
+      const fateCleric = await clericOf("Fate Cleric", ["Fate Domain", "Good Domain"]);
+      expect(await acOf(sunCleric)).toEqual({ total: 12, flatfooted: 10 });
+      expect(await acOf(fateCleric)).toEqual({ total: 12, flatfooted: 12 });
+
+      await carry(sunCleric, [{ item: "Robe of Eyes", location: "Head" }]);
+      expect(await acOf(sunCleric)).toEqual({ total: 12, flatfooted: 12 });
     });
 
     test("gives a duelist its Intelligence bonus as a dodge bonus, up to its duelist level, and never a penalty", async () => {

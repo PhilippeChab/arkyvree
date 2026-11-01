@@ -255,6 +255,19 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
   }
 
   /**
+   * The plan's levels' classes (`classIds`, in order) with the level each takes: its class's next after the character's
+   * and the plan's before it (`LevelRules.numberPlannedLevels`), as the class picker offers them.
+   */
+  private numberPlan(classIds: string[]) {
+    const levels = LevelRules.numberPlannedLevels(
+      this.dnd35.classLevelsById,
+      this.character.rows.advancements,
+      classIds,
+    );
+    return classIds.map((classId, i) => ({ classId, level: levels[i] }));
+  }
+
+  /**
    * The abilities an ability increase chooses among, as a `choose` step's options: each with its score and modifier.
    */
   private optionsOf(
@@ -326,7 +339,7 @@ export default class LevelPlans extends LevelUpBase<DetailedCharacter> {
     const choices = Payloads.readStep(request, STEP.abilities);
     const tracks: Pick<LevelRequest, "classId" | "level">[] = editedLevel
       ? [this.trackOf(editedLevel)]
-      : Payloads.readStep(request, STEP.plan).map(({ position, track }) => ({ classId: track, level: position }));
+      : this.numberPlan(Payloads.readStep(request, STEP.plan).map(({ track }) => track));
     const levels = tracks.map((track, i) => {
       const hp = values[i];
       if (hp === undefined && needsHp) {

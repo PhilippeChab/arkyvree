@@ -4,6 +4,7 @@ import { Players } from "@/server/repositories/index.ts";
 import type { Campaign, Player, Session } from "@/shared/relations.ts";
 
 import BasePolicy from "./BasePolicy.ts";
+import type CharactersPolicy from "./CharactersPolicy.ts";
 
 /** What a character's check reads of its link to the campaign: the player who linked it, and how they linked it. */
 interface CharacterLink {
@@ -45,6 +46,14 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
     return true;
   }
 
+  /**
+   * Exporting a character linked to the campaign as a PDF, from the campaign: its Game Master's, or whoever exports it
+   * themselves (`character`, the session's policy on it: `canExport`, its editors').
+   */
+  canExportCharacter(character: CharactersPolicy) {
+    return this.isGameMaster() || character.canExport();
+  }
+
   canHardDelete() {
     if (!this.isGameMaster()) throw new ForbiddenError("Only the Game Master can permanently delete this campaign");
 
@@ -55,8 +64,9 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
   }
 
   /**
-   * Linking a character to the campaign, and listing those the session could link: its seat (returned, `canRead`), in a
-   * campaign that isn't archived (`canModify`).
+   * Linking a character to the campaign, listing those the session could link, and setting the visibility of one it
+   * linked (its link's, which its service matches to the seat): its seat (returned, `canRead`), in a campaign that isn't
+   * archived (`canModify`).
    */
   canLinkCharacter() {
     const player = this.canRead();

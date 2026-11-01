@@ -22,7 +22,7 @@ export default abstract class GeneratedFeats {
   /** The pool the set's feats go in, by its slug. */
   protected abstract readonly poolSlug: string;
 
-  /** The feats `name` brings, the first its key: the set is made unless the view has a feat of its name. */
+  /** The feats `name` brings: each is made unless the view has a feat of its name. */
   protected abstract featsOf(name: string): GeneratedFeat[];
 
   /** The generated feat named `featName` a plan removes, refused (`inUse`) while picked: none when the view has none. */
@@ -33,15 +33,17 @@ export default abstract class GeneratedFeats {
   }
 
   /**
-   * The feats `name` brings, as entities a plan makes in the set's pool: none when the ruleset has no such pool, or
-   * when its view shows the set's key feat (its own or its chain's; one it deleted, a tombstone hides, doesn't count).
+   * The feats `name` brings, as entities a plan makes in the set's pool: none when the ruleset has no such pool, and
+   * none of those whose name its view shows (its own or its chain's; one it deleted, a tombstone hides, doesn't count),
+   * so a set the ruleset holds part of gets the rest.
    */
   make(name: string): MadeEntity[] {
     const { rulesetData } = this.view;
     const dnd35 = Dnd35View.of(rulesetData);
-    const feats = this.featsOf(name);
     const aptitudeId = dnd35.aptitudeIdBySlug.get(this.poolSlug);
-    if (!aptitudeId || dnd35.feats.some((feat) => feat.name === feats[0]?.name)) return [];
+    if (!aptitudeId) return [];
+    const shown = new Set(dnd35.feats.map((feat) => feat.name));
+    const feats = this.featsOf(name).filter((feat) => !shown.has(feat.name));
     return feats.map(({ description, fields, modifiers, name: featName, requirements }) => ({
       links: [{ links: [{ toId: aptitudeId }], role: "listedIn", toType: "aptitudes" }],
       modifiers,

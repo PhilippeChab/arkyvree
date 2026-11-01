@@ -7,6 +7,8 @@ export function useCampaignPermissions(campaign: Pick<CampaignDetail, "permissio
   return {
     canEdit: !!permissions?.canEdit,
     canLeave: !!permissions?.canLeave,
+    /** Link its own characters, and set the visibility of those it linked. */
+    canLinkCharacters: !!permissions?.canLinkCharacters,
     canManagePlayers: !!permissions?.canManagePlayers,
     canRevokeInvites: !!permissions?.canRevokeInvites,
   };

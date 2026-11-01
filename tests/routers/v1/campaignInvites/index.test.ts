@@ -26,6 +26,7 @@ describe("v1 campaign invites to the key's user", () => {
     const { api, campaign, id } = await invite();
     const received = {
       campaign: { id: campaign.id, name: campaign.name },
+      canAccept: true,
       id,
       role: "Player Character" as const,
       status: "Pending",

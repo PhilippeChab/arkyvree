@@ -248,7 +248,7 @@ export default new Hono<ApiKeyContext>()
         links: z
           .record(z.string(), z.array(z.string().uuid()))
           .optional()
-          .meta({ description: "Each picked link's picks, by role: `speaks`" }),
+          .meta({ description: "Each picked link's picks, by the role a `links` entry of its sheet's sections names" }),
         name: z.string().min(1).max(MAX_CHARACTER_NAME_LENGTH).optional(),
         notes: z.string().optional(),
         privateNotes: z.string().optional(),

@@ -52,13 +52,13 @@ export default class LevelTotals {
 
   /**
    * A modifier's step on the spells known by spell level: a list's spell level's `allowed` adds to it, and "All", every
-   * spell of its list, once a level sets it to -1.
+   * spell of its list, once a level sets it so (`AptitudeTargets.setsAllKnown`).
    */
   static readKnownStep(modifier: TableModifier): TableStep<number | "All"> | undefined {
     const target = AptitudeTargets.parseSpellLevel(modifier.target);
     const value = LiteralValue.parse(modifier.value, "number");
     if (target?.field !== "allowed" || typeof value !== "number") return undefined;
-    const setsAll = modifier.operator === "set" && value === -1;
+    const setsAll = AptitudeTargets.setsAllKnown(modifier);
     return { key: target.level, step: (total) => (setsAll || total === "All" ? "All" : (total ?? 0) + value) };
   }
 

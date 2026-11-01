@@ -129,7 +129,7 @@ export default class EntityCopy {
     // 2. Copy the entity, its fields and its single links (its sibling copies' merged in, as the view merges them) to
     // the child ruleset, each link to the entity the ruleset shows in its target's place (a race's parent, an item's
     // template, a spell's save)
-    const merged = await this.mergeValues(tx, parentEntity, siblingIds);
+    const merged = await this.mergeValues(tx, parentEntity, siblingIds, cow);
     const [{ description, fields, links, name, partition }] = cow.resolveLinks([{ ...parentEntity, ...merged }]);
     // Its rows as they're stored, its source's: a copy keeps them as they are
     const [newEntity] = await Entities.create(
@@ -251,14 +251,20 @@ export default class EntityCopy {
 
   /**
    * The entity's fields and single links (`entity`, as stored) with its sibling copies' (`siblingIds`, by their stored
-   * ids, in the order its `CowData` pairs them) merged in, as the view merges them (`copyOnWrite().mergeValues`): its own
-   * without any.
+   * ids, in the order its `CowData` pairs them) merged in, as the view merges them (`copyOnWrite().mergeValues`), each
+   * against what it copied (`cow.sourceOf`): its own without any.
    */
-  private async mergeValues(tx: Db, entity: EntityRecord, siblingIds: string[]): Promise<StoredValues> {
+  private async mergeValues(tx: Db, entity: EntityRecord, siblingIds: string[], cow: CowData): Promise<StoredValues> {
     if (siblingIds.length === 0) return entity;
-    const records = await Entities.findMany(tx, { entityType: this.entityType, ids: siblingIds });
+    const sourceIds = [entity.id, ...siblingIds].map((id) => cow.sourceOf(id));
+    const ids = [...new Set([...siblingIds, ...sourceIds.flatMap((id) => (id === undefined ? [] : [id]))])];
+    const records = await Entities.findMany(tx, { entityType: this.entityType, ids });
     const byId = new Map(records.map((record) => [record.id, record]));
     const siblings = siblingIds.map((id) => byId.get(id) ?? { fields: {}, links: {} });
-    return Engine.copyOnWrite().mergeValues(entity, siblings, this.entityType);
+    // A sibling gone since gives none, nor its source
+    const [own, ...sources] = sourceIds.map((id, index) =>
+      id === undefined || (index > 0 && !byId.has(siblingIds[index - 1])) ? undefined : byId.get(id),
+    );
+    return Engine.copyOnWrite().mergeValues(entity, siblings, this.entityType, { own, siblings: sources });
   }
 }

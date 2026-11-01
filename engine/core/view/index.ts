@@ -20,4 +20,4 @@ export type {
 export { default as RulesetComposition, type RulesetRawData, type ViewSchema } from "./RulesetComposition.ts";
 export { default as RulesetData } from "./RulesetData.ts";
 export type { KindValue, RulesetView, ViewKind } from "./RulesetData.ts";
-export { type EntityCustomizations, default as SiblingMerge } from "./SiblingMerge.ts";
+export { type CopiedSources, type EntityCustomizations, default as SiblingMerge } from "./SiblingMerge.ts";

@@ -22,7 +22,7 @@ export const LEVEL_5_SPELLS: SpellSeed[] = [
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Sublime Chord Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Teleportation",
+      [SPELL_SUBSCHOOL]: ["Teleportation"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Touch",
@@ -81,7 +81,7 @@ export const LEVEL_5_SPELLS: SpellSeed[] = [
     },
     fields: {
       [SPELL_SCHOOL]: "Divination",
-      [SPELL_SUBSCHOOL]: "Scrying",
+      [SPELL_SUBSCHOOL]: ["Scrying"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Focus", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 hour",
       [SPELL_RANGE_TYPE]: "See text",

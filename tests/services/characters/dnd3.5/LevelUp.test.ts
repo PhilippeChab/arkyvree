@@ -33,6 +33,7 @@ import {
 import {
   addCharacterLevel,
   addOneLevel,
+  expectSavedLevels,
   findClassLevel,
   findPicks,
   increasesOf,
@@ -72,23 +73,6 @@ function fighter(count: number) {
 /** Fighter levels 1 to `count`, as a batch. */
 function fighterLevels(count: number): BatchLevel[] {
   return FIGHTER_LEVELS.slice(0, count).map((plan, index) => ["Fighter", index + 1, plan.hp, plan.ability]);
-}
-
-/** Finalizes several levels at once, the picks pooled across them. */
-function finalizeBatch(
-  ctx: SeedContext,
-  characterId: string,
-  levels: BatchLevel[],
-  plan: Omit<LevelPlan, "hp">,
-  force = false,
-) {
-  const batch = levels.map(([klass, level, hp, ability]) => ({
-    classId: ctx.classMap.pc[klass],
-    level,
-    hp,
-    abilityIncreases: increasesOf(ability && ctx.abilityMap[ability]),
-  }));
-  return CharacterLevelsService.addLevels(session, characterId, levelUpPlan(batch, picks(ctx, plan)), force);
 }
 
 function levelsOf(klass: string, hps: number[]): BatchLevel[] {
@@ -183,6 +167,33 @@ async function eligible(
     { limit: 20, search },
   );
   return items.find((row) => row.name === search)!.eligible;
+}
+
+/** Finalizes several levels at once, the picks pooled across them, each at the level the batch states (checked). */
+async function finalizeBatch(
+  ctx: SeedContext,
+  characterId: string,
+  levels: BatchLevel[],
+  plan: Omit<LevelPlan, "hp">,
+  force = false,
+) {
+  const batch = levels.map(([klass, level, hp, ability]) => ({
+    classId: ctx.classMap.pc[klass],
+    level,
+    hp,
+    abilityIncreases: increasesOf(ability && ctx.abilityMap[ability]),
+  }));
+  const saved = await CharacterLevelsService.addLevels(
+    session,
+    characterId,
+    levelUpPlan(batch, picks(ctx, plan)),
+    force,
+  );
+  await expectSavedLevels(
+    saved,
+    batch.map(({ level }) => level),
+  );
+  return saved;
 }
 
 /** Gives a row (`sourceType`'s `sourceId`) a modifier that gives what `target` names, a feat or a spell on a list. */
@@ -596,34 +607,17 @@ describe("finalizing several levels at once", () => {
     expect(finalizeBatch(ctx, NIL_UUID, fighterLevels(1), {})).rejects.toThrow(NotFoundError);
   });
 
-  test("refuses a class level the batch takes twice: the second sees the first", async () => {
+  test("numbers a class the batch takes twice: the second takes the level after the first", async () => {
     const ctx = await getSeedCtx();
     const firstTwo = {
       General: ["Power Attack", "Great Fortitude"],
       "Fighter Bonus Feat": ["Improved Initiative", "Dodge"],
     };
-    const twice = finalizeBatch(
-      ctx,
-      await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 1000 } }),
-      [
-        ["Fighter", 1, 10],
-        ["Fighter", 1, 10],
-      ],
-      { skills: { Climb: 16 }, feats: FIGHTER_LEVELS[0].feats },
-    );
-    expect(twice).rejects.toMatchObject({
-      message: "Level 2: This level has already been finalized",
-      refusal: "invalid",
-    });
-    const thirdRepeatsSecond = finalizeBatch(
-      ctx,
-      await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 3000 } }),
-      [...fighterLevels(2), ["Fighter", 2, 6]],
-      { skills: { Climb: 20 }, feats: firstTwo },
-    );
-    expect(thirdRepeatsSecond).rejects.toMatchObject({
-      message: "Level 3: This level has already been finalized",
-      refusal: "invalid",
+    // A plan names each level's class alone: the batch's Fighter levels are 1 and 2 (checked by `finalizeBatch`)
+    const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 1000 } });
+    await finalizeBatch(ctx, characterId, fighterLevels(2), {
+      skills: { Climb: 5, Intimidate: 5, Jump: 5, Swim: 5 },
+      feats: firstTwo,
     });
   });
 });
@@ -1670,37 +1664,27 @@ describe("a character's last level", () => {
 });
 
 describe("a character's level in a class", () => {
-  test("refuses a class level out of its class's order, forced or not, and saves its next", async () => {
+  test("takes its class's next level, after the batch's levels before it", async () => {
     const ctx = await getSeedCtx();
     const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 3000 } });
-    const [{ hp, skills }] = FIGHTER_LEVELS;
-    const feats = { General: ["Power Attack", "Great Fortitude"] };
-    for (const force of [false, true]) {
-      expect(finalizeBatch(ctx, characterId, [["Fighter", 3, hp]], { skills, feats }, force)).rejects.toMatchObject({
-        message: "Level 1: Fighter 3 can't be taken there: Fighter 1 comes next",
-        refusal: "invalid",
-      });
-    }
     await finalizeBatch(ctx, characterId, fighterLevels(1), FIGHTER_LEVELS[0]);
-    // A batch's levels see those planned before them: its second level's Fighter 3 skips Fighter 2
-    expect(
-      finalizeBatch(ctx, characterId, [...levelsOf("Rogue", [6]), ["Fighter", 3, 8]], { skills: { Climb: 8 } }, true),
-    ).rejects.toThrow("Level 3: Fighter 3 can't be taken there: Fighter 2 comes next");
-    // And of the class's own: its Fighter 2 makes Fighter 3 its next, not Fighter 4
-    expect(
-      finalizeBatch(
-        ctx,
-        characterId,
-        [
-          ["Fighter", 2, 8],
-          ["Fighter", 4, 8],
-        ],
-        { skills: { Climb: 8 } },
-        true,
-      ),
-    ).rejects.toThrow("Level 3: Fighter 4 can't be taken there: Fighter 3 comes next");
-    const [second] = await finalizeBatch(ctx, characterId, [["Fighter", 2, 8]], FIGHTER_LEVELS[1]);
-    expect(second.entryId).toBe((await findClassLevel(ctx.classMap.pc["Fighter"], 2))!.id);
+    // A plan names each level's class alone, the engine numbers it (checked by `finalizeBatch`): a batch's Rogue 1, then
+    // its Fighter 2, the class's next after the character's Fighter 1
+    await finalizeBatch(
+      ctx,
+      characterId,
+      [...levelsOf("Rogue", [6]), ["Fighter", 2, 8]],
+      { skills: { Climb: 8 } },
+      true,
+    );
+    const [third] = await finalizeBatch(
+      ctx,
+      characterId,
+      [["Fighter", 3, 8, "Strength"]],
+      { skills: { Climb: 1 } },
+      true,
+    );
+    expect(third.entryId).toBe((await findClassLevel(ctx.classMap.pc["Fighter"], 3))!.id);
   });
 
   test("counts its levels of the class, on its sheet, its card and in the class picker, when one was skipped", async () => {
@@ -1719,8 +1703,31 @@ describe("a character's level in a class", () => {
       sheet: summary.tracks.map(({ label }) => label),
       card: card?.chips.filter(({ tone }) => tone === "primary").map(({ label }) => label),
       // The level it skipped comes next, the lowest it doesn't hold
-      picker: { next: fighter?.track?.next, eligible: fighter?.eligible },
+      picker: { next: fighter?.track?.positions[0], eligible: fighter?.eligible },
     }).toEqual({ sheet: ["Fighter 1"], card: ["Fighter 1"], picker: { next: 1, eligible: true } });
+  });
+
+  test("numbers a plan of a class's levels past a gap as its picker offers them: Fighter 1, 2, then 4 (#243)", async () => {
+    const ctx = await getSeedCtx();
+    const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 10000 } });
+    const fighterId = ctx.classMap.pc["Fighter"];
+    // A lone Fighter 3, as a level saved before the rule
+    await addCharacterLevel(characterId, (await findClassLevel(fighterId, 3))!.id);
+    const options = await getStepOptions(session, characterId, "class-plan", { steps: {} }, {}, { limit: 50 });
+    if (options.grouped) throw new Error("Expected the classes ungrouped");
+    expect(options.items.find(({ id }) => id === fighterId)?.track?.positions.slice(0, 3)).toEqual([1, 2, 4]);
+    // The plan names the class three times; `finalizeBatch` checks the levels it saved took Fighter 1, 2 and 4
+    await finalizeBatch(
+      ctx,
+      characterId,
+      [
+        ["Fighter", 1, 10],
+        ["Fighter", 2, 8],
+        ["Fighter", 4, 8, "Strength"],
+      ],
+      { skills: { Climb: 1 } },
+      true,
+    );
   });
 
   test("fills a class's gap a forced level left before the rule: its lowest level it doesn't hold comes next", async () => {
@@ -1731,20 +1738,12 @@ describe("a character's level in a class", () => {
       const options = await getStepOptions(session, characterId, "class-plan", { steps: {} }, {}, { limit: 50 });
       if (options.grouped) throw new Error("Expected the classes ungrouped");
       const fighter = options.items.find(({ id }) => id === fighterId);
-      return { next: fighter?.track?.next, eligible: fighter?.eligible };
+      return { next: fighter?.track?.positions[0], eligible: fighter?.eligible };
     };
     // A lone Fighter 3, as a level saved before the rule: the levels it skipped come first, then Fighter 4
     await addCharacterLevel(characterId, (await findClassLevel(fighterId, 3))!.id);
     expect(await offered()).toEqual({ next: 1, eligible: true });
-    for (const force of [false, true]) {
-      expect(levelUp(session, ctx, characterId, "Fighter", 4, FIGHTER_LEVELS[3], force)).rejects.toThrow(
-        "Level 2: Fighter 4 can't be taken there: Fighter 1 comes next",
-      );
-      // The level it holds, past the one that comes next, is one already finalized
-      expect(levelUp(session, ctx, characterId, "Fighter", 3, FIGHTER_LEVELS[2], force)).rejects.toThrow(
-        "Level 2: This level has already been finalized",
-      );
-    }
+    // A plan names the class alone: its levels take Fighter 1, then 2, then 4 (`levelUp` checks each)
     // Forced: the stored Fighter 3 picked nothing, which leaves the character's first level's pools unspent
     const bonusFeat = { hp: 10, skills: { Climb: 1 }, feats: { "Fighter Bonus Feat": ["Improved Initiative"] } };
     await levelUp(session, ctx, characterId, "Fighter", 1, bonusFeat, true);
@@ -1773,7 +1772,7 @@ describe("a character's level in a class", () => {
     const options = await getStepOptions(session, characterId, "class-plan", { steps: {} }, {}, { limit: 500 });
     if (options.grouped) throw new Error("Expected the classes ungrouped");
     const offered = options.items.find(({ id }) => id === warrior.id);
-    expect({ next: offered?.track?.next, eligible: offered?.eligible }).toEqual({ next: 2, eligible: true });
+    expect({ next: offered?.track?.positions[0], eligible: offered?.eligible }).toEqual({ next: 2, eligible: true });
     const saved = await addOneLevel(
       session,
       characterId,

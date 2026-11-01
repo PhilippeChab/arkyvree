@@ -187,6 +187,7 @@ export type {
   PickerOption,
   PickFilters,
   PickGroupFilters,
+  TrackFilters,
 } from "./pickers.ts";
 export type {
   CharacterRoleDef,

@@ -15,15 +15,19 @@ describe("v1 entity modifiers", () => {
   test("answers a customizable entity's modifiers and requirements, labeled", async () => {
     const { api } = await createKeyedApi();
     const { id } = await findBaseRuleset(api);
-    const kind = await findCustomizable(api, id);
+    const rules = await readRulesOf(api, id);
     const customization = api.v1.rulesets[":id"].customization[":kind"][":entityId"];
+    const kinds = rules.customizable.filter((customizable) => rules.kinds.some(({ type }) => type === customizable));
 
-    // The first of a page of its entities that has requirements
+    // The first entity of a customizable kind's page that has requirements
     const requirements = [];
-    for (const { id: entityId } of await listEntities(api, id, kind, { limit: "50" })) {
-      const param = { entityId, id, kind };
-      expect(Array.isArray(await expectOk(customization.modifiers.$get({ param })))).toBe(true);
-      requirements.push(...(await expectOk(customization.requirements.$get({ param }))));
+    for (const type of kinds) {
+      for (const { id: entityId } of await listEntities(api, id, type, { limit: "50" })) {
+        const param = { entityId, id, kind: type as RulesetEntityType };
+        expect(Array.isArray(await expectOk(customization.modifiers.$get({ param })))).toBe(true);
+        requirements.push(...(await expectOk(customization.requirements.$get({ param }))));
+        if (requirements.length > 0) break;
+      }
       if (requirements.length > 0) break;
     }
     expect(requirements[0]).toMatchObject({ targetLabels: expect.any(Object) });
@@ -38,7 +42,7 @@ describe("v1 entity modifiers", () => {
     const customization = api.v1.rulesets[":id"].customization[":kind"][":entityId"];
     const param = { entityId: entity!.id, id, kind };
 
-    const json = { operator: "add", target: await findNumberTarget(api, id), value: "2" };
+    const json = { operator: "add", target: await findNumberTarget(api, id, kind), value: "2" };
     const added = await expectOk(customization.modifiers.$post({ json, param }));
     const modifier = added.find(({ target, value }) => target === json.target && value === "2")!;
     const modifierParam = { ...param, modifierId: modifier.id };

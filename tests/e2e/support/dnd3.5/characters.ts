@@ -27,7 +27,7 @@ export async function addFirstLevel(page: Page, characterId: string, klass: stri
   );
   const option = options.items.find((item) => item.name === klass);
   if (!option) throw new Error(`The core rules have no ${klass}`);
-  const planned = { "class-plan": [{ track: option.id, position: 1 }] };
+  const planned = { "class-plan": [{ track: option.id }] };
   const answer = await parseResponse(levels.plan.$post({ param: { characterId }, json: { steps: planned } }));
   const hp = answer.steps.hp;
   if (hp?.mechanic !== "value") throw new Error("The plan answered no hit points");

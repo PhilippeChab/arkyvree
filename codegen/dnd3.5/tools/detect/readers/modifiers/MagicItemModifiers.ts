@@ -1,6 +1,6 @@
 import { ABILITY_SLUGS } from "@/codegen/dnd3.5/tools/terms/abilities.ts";
 import { SAVE_SLUGS } from "@/codegen/dnd3.5/tools/terms/saves.ts";
-import { bonus } from "@/content/core/builders/customization/modifiers.ts";
+import { bonus, setFlag } from "@/content/core/builders/customization/modifiers.ts";
 import type { Modifier } from "@/content/core/builders/customization/types.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd3.5/abilities.ts";
 
@@ -58,8 +58,9 @@ const NAME_MODIFIER_PATTERNS: { pattern: RegExp; toModifiers: (match: RegExpMatc
 ];
 
 /**
- * A magic item's modifiers, from its name ("Cloak of Resistance +2") and its description, each target once, but the
- * bonuses that apply only sometimes; and the skills it names that aren't skills, and the paths no character has.
+ * A magic item's modifiers, from its name ("Cloak of Resistance +2") and its description (its bonuses and uncanny
+ * dodge), each target once, but the bonuses that apply only sometimes; and the skills it names that aren't skills, and
+ * the paths no character has.
  */
 export class MagicItemModifiers extends ModifierReading<Modifier> {
   constructor(name: string, description: string) {
@@ -82,7 +83,7 @@ export class MagicItemModifiers extends ModifierReading<Modifier> {
     if (!this.modifiers.some((modifier) => modifier.target === target)) this.modifiers.push(bonus(target, value));
   }
 
-  /** The ability score, skill, save and initiative bonuses the item's description gives. */
+  /** The ability score, skill, save and initiative bonuses the item's description gives, and uncanny dodge. */
   private readDescription(text: BonusText) {
     // 1. Ability score bonuses: "+N enhancement bonus to Constitution"
     const enhRegex = new RegExp(
@@ -115,5 +116,8 @@ export class MagicItemModifiers extends ModifierReading<Modifier> {
     // 4. Initiative: "+N <type> bonus on/to initiative"
     const initMatch = text.first(/\+(\d+)\s+\w+\s+bonus (?:on|to)\s+initiative/i);
     if (initMatch) this.add("combat.initiative.misc", initMatch[1]);
+
+    // 5. Uncanny dodge: "She retains her Dexterity bonus to AC even when flat-footed" (the Robe of Eyes)
+    if (text.hasUncannyDodge()) this.modifiers.push(setFlag("combat.ac.uncannydodge"));
   }
 }

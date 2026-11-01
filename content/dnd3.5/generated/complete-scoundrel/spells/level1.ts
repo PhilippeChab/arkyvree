@@ -23,7 +23,7 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
     aptitudes: ["Druid Spells", "Spirit Shaman Spells"],
     fields: {
       [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_SUBSCHOOL]: "Polymorph",
+      [SPELL_SUBSCHOOL]: ["Polymorph"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 swift action",
       [SPELL_RANGE_TYPE]: "Personal",
@@ -72,7 +72,7 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
     ],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "1 swift action",
       [SPELL_RANGE_TYPE]: "0 ft.",
@@ -199,7 +199,7 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
     aptitudes: ["Druid Spells", "Spirit Shaman Spells"],
     fields: {
       [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_SUBSCHOOL]: "Polymorph",
+      [SPELL_SUBSCHOOL]: ["Polymorph"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 swift action",
       [SPELL_RANGE_TYPE]: "Personal",

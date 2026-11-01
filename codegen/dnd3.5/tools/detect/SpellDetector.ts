@@ -60,6 +60,12 @@ const NAME_QUALIFIERS = /^((?:(?:greater|improved|lesser|mass|swift)\s+)+)(.+)$/
 
 const SUBSCHOOL_CANON: Record<string, string> = Object.fromEntries(SPELL_SUBSCHOOLS.map((s) => [s.toLowerCase(), s]));
 
+/**
+ * What joins the values a school line combines: "Fire or Cold", "Creation or Calling", "Figment and Glamer",
+ * "Figment, Glamer". A spell has each of them; a choice the book writes with "or" stays in its description.
+ */
+const VALUE_JOINS = /\s*(?:,|\bor\b|\band\b)\s*/i;
+
 /** A reference's spells, each with the stat block's fields its override corrects. */
 function correctedSpells({ overrides, raw }: Pick<SpellReference, "overrides" | "raw">): RawSpell[] {
   return raw.map((entry) => {
@@ -115,8 +121,7 @@ function lacksFields(entry: RawSpell): boolean {
 function normalizeDescriptor(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return trimmed;
-  // Only normalize all-lowercase scrapes (e.g. "good"); leave mixed-case
-  // compounds like "Fire or Cold" or "Mind-Affecting" untouched.
+  // Only normalize all-lowercase scrapes (e.g. "good"); leave mixed-case ones like "Mind-Affecting" untouched
   if (trimmed !== trimmed.toLowerCase()) return trimmed;
   return trimmed.split("-").map(capitalize).join("-");
 }
@@ -139,7 +144,7 @@ function normalizeSubschool(value: string): string {
     if (SUBSCHOOL_CANON[inner]) return SUBSCHOOL_CANON[inner];
   }
   const lower = value.trim().toLowerCase();
-  return SUBSCHOOL_CANON[lower] ?? value;
+  return SUBSCHOOL_CANON[lower] ?? value.trim();
 }
 
 /**
@@ -155,6 +160,26 @@ function resolveBaseSpell(spells: Map<string, RawSpell>, name: string): RawSpell
     (qualified ? spells.get(`${qualified[2]}, ${qualified[1].trim().replace(/\s+/g, " ")}`) : undefined) ??
     [...spells.values()].find((spell) => spell.name.toLowerCase().endsWith(` ${lower}`))
   );
+}
+
+/**
+ * A spell's subschools and descriptors, each value of a combination its own ("Fire or Cold": Fire and Cold), each
+ * once. A descriptor the site gives that's a subschool (Bladeweave's Pattern) is one of its subschools.
+ */
+function schoolValues(entry: RawSpell): { descriptors: string[]; subschools: string[] } {
+  const descriptors = entry.descriptors.flatMap(splitCombination).map(normalizeDescriptor);
+  // A subschool written in its school's words ("illusion (figment, glamer)") is the part in its parentheses, when it
+  // names subschools ("Creation (see text)" stays as it is)
+  const inner = splitCombination(entry.subschool?.match(/\(([^)]+)\)/)?.[1] ?? "");
+  const named = inner.length > 0 && inner.every((value) => SUBSCHOOL_CANON[value.toLowerCase()]);
+  const subschools = [
+    ...(named ? inner : splitCombination(entry.subschool ?? "")).map(normalizeSubschool),
+    ...descriptors.filter((value) => SUBSCHOOL_CANON[value.toLowerCase()]).map(normalizeSubschool),
+  ];
+  return {
+    descriptors: [...new Set(descriptors.filter((value) => !SUBSCHOOL_CANON[value.toLowerCase()]))],
+    subschools: [...new Set(subschools)],
+  };
 }
 
 function simplifyRange(range: string): string {
@@ -173,12 +198,12 @@ function simplifyRange(range: string): string {
  * its source leaves empty (a range, a target, a duration…) gives none.
  */
 function spellFields(entry: RawSpell): SpellFields {
-  const descriptors = [...new Set(entry.descriptors.map(normalizeDescriptor))];
+  const { descriptors, subschools } = schoolValues(entry);
   const range = simplifyRange(normalizeSpellText(entry.range));
   const duration = normalizeSpellText(entry.duration);
   const fields: SpellFields = {
     [SPELL_SCHOOL]: entry.school,
-    ...(entry.subschool ? { [SPELL_SUBSCHOOL]: normalizeSubschool(entry.subschool) } : {}),
+    ...(subschools.length > 0 ? { [SPELL_SUBSCHOOL]: subschools } : {}),
     ...(descriptors.length > 0 ? { [SPELL_DESCRIPTOR]: descriptors } : {}),
     [SPELL_COMPONENT]: [...new Set(expandComponents(entry.components))],
     [SPELL_CASTING_TIME]: normalizeSpellText(entry.castingTime || "1 standard action"),
@@ -190,6 +215,14 @@ function spellFields(entry: RawSpell): SpellFields {
     [SPELL_RESISTANCE]: normalizeSpellResistance(normalizeSpellText(entry.spellResistance || "No")),
   };
   return Object.fromEntries(Object.entries(fields).filter(([, value]) => value.length > 0));
+}
+
+/** The values a school line's `value` combines ("Fire or Cold": Fire, Cold), none of an empty one. */
+function splitCombination(value: string): string[] {
+  return value
+    .split(VALUE_JOINS)
+    .map((part) => part.trim())
+    .filter(Boolean);
 }
 
 /**

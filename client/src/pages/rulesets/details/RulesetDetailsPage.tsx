@@ -390,13 +390,11 @@ export default function RulesetDetailsPage() {
           canBeExtension={canBeExtension}
         />
 
-        {/* Whether its archiver could unarchive it once archived, which `canUnarchive` answers only then: its owner */}
         <ArchiveRulesetDialog
           open={archiveDialog.open}
           onClose={archiveDialog.close}
           onConfirm={confirmArchive}
           pending={archiveMutation.isPending}
-          canUnarchive={isOwner}
         />
 
         <PublishRulesetDialog

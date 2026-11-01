@@ -12,7 +12,7 @@ import {
   getPendingInvite,
   saveInviteAnswer,
 } from "@/server/services/invites/index.ts";
-import { CharactersPolicy } from "@/server/services/policies/index.ts";
+import { CharactersPolicy, isAllowed } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -68,9 +68,10 @@ class CharacterContributorsService {
     return { ...paginated, owner: ownerUser ? toPublicUser(ownerUser) : null };
   }
 
-  // Single invite for the current user, any status. Used by the invite-accept
-  // page so a stale link still resolves to "Already accepted" / "no longer
-  // pending" copy instead of "Not found".
+  /**
+   * The session's invite, whatever its status, so a stale link still says what became of it, and whether it may be
+   * accepted, as its acceptance asks the character's policy (`canAccept`).
+   */
   async getInvite(session: Session, contributorId: string) {
     const invite = await CharacterContributors.findOneWithCharacter(db, {
       id: contributorId,
@@ -78,7 +79,9 @@ class CharacterContributorsService {
     });
     if (!invite) throw new NotFoundError(INVITE_NOT_FOUND);
 
-    return invite;
+    const character = await Characters.findOne(db, { id: invite.characterId }, Visibility.All);
+    const policy = character && (await CharactersPolicy.for(db, session, character));
+    return { ...invite, canAccept: !!policy && isAllowed(() => policy.canAcceptInvite()) };
   }
 
   async inviteContributor(session: Session, characterId: string, email: string) {

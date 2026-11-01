@@ -108,16 +108,17 @@ describe("CharacterContributorsService", () => {
   });
 
   describe("getInvite", () => {
-    test("shows the invitee their invite whatever became of it, the character's archival included", async () => {
+    test("shows the invitee their invite whatever became of it, and whether the character's policy lets it be accepted", async () => {
       const { ownerSession, inviteeSession, character, invite } = await setup();
       expect(await CharacterContributorsService.getInvite(inviteeSession, invite.id)).toMatchObject({
         status: "Active",
         charactersInCharacter: { name: character.name },
+        canAccept: true,
       });
       await CharactersService.archiveCharacter(ownerSession, character.id);
-      expect(
-        (await CharacterContributorsService.getInvite(inviteeSession, invite.id)).charactersInCharacter?.deletedAt,
-      ).not.toBeNull();
+      const archived = await CharacterContributorsService.getInvite(inviteeSession, invite.id);
+      expect(archived.charactersInCharacter?.deletedAt).not.toBeNull();
+      expect(archived.canAccept).toBe(false);
     });
 
     test("hides the invite from anyone else", async () => {

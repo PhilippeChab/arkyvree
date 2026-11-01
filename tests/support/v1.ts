@@ -94,14 +94,9 @@ export async function createFormCharacter(userId: string, rulesetId: string, nam
   });
 }
 
-/**
- * A base ruleset the seed installs, read through the key's client: v1's tests run on whichever base rules it is,
- * reading their names from `GET /v1/rules`.
- */
+/** The base ruleset the seed installs, read through the key's client (`findSeededBase`). */
 export async function findBaseRuleset(api: KeyedApi) {
-  const { items } = await expectOk(api.v1.rulesets.$get({ query: { scope: "base" } }));
-  if (!items[0]) throw new Error("No base ruleset is seeded");
-  return items[0];
+  return await expectOk(api.v1.rulesets[":id"].$get({ param: { id: (await findSeededBase()).id } }));
 }
 
 /** The key's user's character that `matches`, of a page of theirs, refused when none does. */
@@ -114,11 +109,11 @@ export async function findCharacter(api: KeyedApi, matches: (card: { id: string 
 
 /**
  * A target path of a ruleset a modifier may add a number to, as its completions offer it (every path at once): one that
- * names a single target, no wildcard.
+ * names a single target, no wildcard; of the paths an entity of a kind (`entityType`) may change, with one.
  */
-export async function findNumberTarget(api: KeyedApi, rulesetId: string) {
+export async function findNumberTarget(api: KeyedApi, rulesetId: string, entityType?: string) {
   const completions = api.v1.rulesets[":id"].customization.target.paths.completions;
-  const json = { flat: true, kind: "modifier" as const, limit: 100, partialPath: "", position: 0 };
+  const json = { entityType, flat: true, kind: "modifier" as const, limit: 100, partialPath: "", position: 0 };
   const { items } = await expectOk(completions.$post({ json, param: { id: rulesetId } }));
   const target = (items as { operators?: string[]; path?: string; valueType?: string }[]).find(
     ({ operators, path, valueType }) => valueType === "number" && operators?.includes("add") && !path?.includes("*"),
@@ -129,9 +124,8 @@ export async function findNumberTarget(api: KeyedApi, rulesetId: string) {
 
 /** The base ruleset the seed installs, as stored: v1's tests run on whichever base rules it is. */
 export async function findSeededBase() {
-  const base = (await Rulesets.findMany(db, { system: true })).find(
-    ({ kind, rulesetId }) => kind === "ruleset" && !rulesetId,
-  );
+  const rulesets = await Rulesets.findMany(db, { system: true });
+  const base = rulesets.find(({ kind, rulesetId }) => kind === "ruleset" && !rulesetId);
   if (!base) throw new Error("No base ruleset is seeded");
   return base;
 }
@@ -159,7 +153,7 @@ export async function planFirstLevel(api: KeyedApi, characterId: string) {
   const track = options.items.find(({ eligible }) => eligible);
   if (!track) throw new Error("The plan step has no eligible track");
 
-  const tracked = { [planned.name]: [{ position: 1, track: track.id }] };
+  const tracked = { [planned.name]: [{ track: track.id }] };
   const answer = await expectOk(character["level-plan"].$post({ json: { steps: tracked }, param }));
   const payloads = steps.map(({ mechanic, name }) => {
     const answered = answer.steps[name];

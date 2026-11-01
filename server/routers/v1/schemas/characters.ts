@@ -5,7 +5,7 @@
 
 import { z } from "zod";
 
-import { planSteps } from "@/server/routers/api/validation.ts";
+import { planSteps } from "@/server/routers/v1/validation.ts";
 
 import { buildPageSchema, v1Id, v1Named } from "./references.ts";
 
@@ -114,9 +114,13 @@ const v1StepOption = z.strictObject({
   name: z.string(),
   requirementTree: z.string().optional().meta({ description: "What it requires, when the character doesn't meet it" }),
   track: z
-    .strictObject({ last: z.number(), left: z.number(), next: z.number() })
+    .strictObject({ left: z.number(), positions: z.array(z.number()) })
     .optional()
-    .meta({ description: "A track's levels: its last, how many are left, the next" }),
+    .meta({
+      description:
+        "A `plan` step's track: how many advancements the character has left, and the positions it takes next, in " +
+        "the order a plan takes them",
+    }),
 });
 
 /** A group of a step's options. */

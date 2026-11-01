@@ -7,11 +7,13 @@ import {
   SPELL_AREA_OF_EFFECT,
   SPELL_CASTING_TIME,
   SPELL_COMPONENT,
+  SPELL_DESCRIPTOR,
   SPELL_DURATION,
   SPELL_EFFECT,
   SPELL_RANGE_TYPE,
   SPELL_RESISTANCE,
   SPELL_SCHOOL,
+  SPELL_SUBSCHOOL,
   SPELL_TARGET,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -76,6 +78,32 @@ describe("A spell's detected fields", () => {
     ]);
     expect(detected.Warded[SPELL_COMPONENT]).toEqual(["Verbal", "Somatic", "Focus", "Divine Focus"]);
     expect(detected.Costly[SPELL_COMPONENT]).toEqual(["Verbal", "Material", "XP Cost"]);
+  });
+
+  test("hold each value its school line combines as its own, a subschool given as a descriptor among its subschools", () => {
+    const detected = fieldsDetected([
+      spell("Shield", { descriptors: ["Fire or Cold"] }),
+      spell("Gate", { school: "Conjuration", subschool: "Creation or Calling" }),
+      spell("Mislead", { school: "Illusion", subschool: "Figment and Glamer" }),
+      spell("Veil", { school: "Illusion", subschool: "illusion (figment, glamer)" }),
+      spell("Noted", { school: "Conjuration", subschool: "Creation (see text)" }),
+      spell("Weave", { school: "Illusion", descriptors: ["Pattern"] }),
+      spell("Plain", { school: "Conjuration", subschool: "conjuration (summoning)", descriptors: ["mind-affecting"] }),
+    ]);
+    const schoolLine = (fields: SpellFields): SpellFields => ({
+      [SPELL_SUBSCHOOL]: fields[SPELL_SUBSCHOOL],
+      [SPELL_DESCRIPTOR]: fields[SPELL_DESCRIPTOR],
+    });
+    expect(schoolLine(detected.Shield)).toEqual({ [SPELL_DESCRIPTOR]: ["Fire", "Cold"] });
+    expect(schoolLine(detected.Gate)).toEqual({ [SPELL_SUBSCHOOL]: ["Creation", "Calling"] });
+    expect(schoolLine(detected.Mislead)).toEqual({ [SPELL_SUBSCHOOL]: ["Figment", "Glamer"] });
+    expect(schoolLine(detected.Veil)).toEqual({ [SPELL_SUBSCHOOL]: ["Figment", "Glamer"] });
+    expect(schoolLine(detected.Noted)).toEqual({ [SPELL_SUBSCHOOL]: ["Creation (see text)"] });
+    expect(schoolLine(detected.Weave)).toEqual({ [SPELL_SUBSCHOOL]: ["Pattern"] });
+    expect(schoolLine(detected.Plain)).toEqual({
+      [SPELL_SUBSCHOOL]: ["Summoning"],
+      [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
+    });
   });
 
   test("hold its duration, but none when its source gives none", () => {

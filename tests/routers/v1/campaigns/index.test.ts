@@ -27,7 +27,13 @@ describe("v1 campaigns", () => {
       description: "Into the dark",
       id: expect.any(String),
       name: expect.stringMatching(/^Campaign /),
-      permissions: { canEdit: true, canLeave: expect.any(Boolean), canManagePlayers: true, canRevokeInvites: true },
+      permissions: {
+        canEdit: true,
+        canLeave: expect.any(Boolean),
+        canLinkCharacters: true,
+        canManagePlayers: true,
+        canRevokeInvites: true,
+      },
       players: 1,
       ruleset: { id: rulesetId, name },
     });

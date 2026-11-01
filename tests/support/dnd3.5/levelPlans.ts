@@ -10,7 +10,8 @@ import type { LevelPlanRequest } from "@/engine/index.ts";
 type Payload = LevelPlanRequest["steps"][string];
 
 /**
- * A level a level-up plans: its class, its level in it, its hit points and its ability increases (each as its pick
+ * A level a level-up plans: its class, the level in it the test expects it to take (a plan names its class alone, the
+ * engine numbers it: `expectSavedLevels` checks a save's), its hit points and its ability increases (each as its pick
  * holds it: the ability, `entityId`, and what it's raised by, `amount`).
  */
 export interface PlannedClassLevel {
@@ -74,7 +75,7 @@ export function levelEditPlan(
 export function levelUpPlan(levels: PlannedClassLevel[], picks: PlanPicks = {}): LevelPlanRequest {
   return {
     steps: {
-      "class-plan": levels.map(({ classId, level }) => ({ position: level, track: classId })),
+      "class-plan": levels.map(({ classId }) => ({ track: classId })),
       hp: levels.map(({ hp }) => hp),
       abilities: levels.map(({ abilityIncreases }) => chosenOf(abilityIncreases)),
       ...picksOf(picks),

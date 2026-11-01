@@ -11,7 +11,7 @@ import {
   getPendingInvite,
   saveInviteAnswer,
 } from "@/server/services/invites/index.ts";
-import { RulesetsPolicy } from "@/server/services/policies/index.ts";
+import { isAllowed, RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { findReadableRuleset, getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
@@ -75,9 +75,10 @@ class ContributorsService {
     return { ...paginated, owner: ownerUser ? toPublicUser(ownerUser) : null };
   }
 
-  // Single invite for the current user, any status. Used by the invite-accept
-  // page so a stale link still resolves to "Already accepted" / "no longer
-  // pending" copy instead of "Not found".
+  /**
+   * The session's invite, whatever its status, so a stale link still says what became of it, and whether it may be
+   * accepted, as its acceptance asks the ruleset's policy (`canAccept`).
+   */
   async getInvite(session: Session, contributorId: string) {
     const invite = await Contributors.findOneWithRuleset(db, {
       id: contributorId,
@@ -85,7 +86,9 @@ class ContributorsService {
     });
     if (!invite) throw new NotFoundError(INVITE_NOT_FOUND);
 
-    return invite;
+    const ruleset = await Rulesets.findOne(db, { id: invite.rulesetId });
+    const policy = ruleset && (await RulesetsPolicy.for(db, session, ruleset));
+    return { ...invite, canAccept: !!policy && isAllowed(() => policy.canAcceptInvite()) };
   }
 
   async inviteContributor(session: Session, rulesetId: string, email: string, role: ContributorRole) {

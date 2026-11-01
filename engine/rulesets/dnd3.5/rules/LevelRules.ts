@@ -75,6 +75,24 @@ export default class LevelRules {
   }
 
   /**
+   * The class levels a plan's levels take, in order (`classIds`, each planned level's class, after the character's
+   * `levels`): each its class's next (`findNextClassLevel`) after the character's levels and the plan's before it, a gap
+   * filled first (a lone Fighter 3 planning three Fighter levels takes Fighter 1, 2 and 4); past a class's last, a
+   * number the class has no level at.
+   */
+  static numberPlannedLevels(classLevelsById: ClassLevelsById, levels: { entryId: string }[], classIds: string[]) {
+    const heldByClass = new Map<string, Set<number>>();
+    return classIds.map((classId) => {
+      const held = heldByClass.get(classId) ?? this.findHeldClassLevels(classLevelsById, levels, classId);
+      heldByClass.set(classId, held);
+      let next = 1;
+      while (held.has(next)) next++;
+      held.add(next);
+      return next;
+    });
+  }
+
+  /**
    * The level rules of a ruleset's view, off its Settings (`RULESET_FIELDS`): the nearest ruleset of its chain's that
    * holds them, the fork's first, the core rules' when none does.
    */

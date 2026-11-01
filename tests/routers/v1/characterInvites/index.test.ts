@@ -24,7 +24,7 @@ async function invite() {
 describe("v1 character invites to the key's user", () => {
   test("reads one, and accepts it: the user edits the character", async () => {
     const { api, character, id } = await invite();
-    const received = { character: { id: character.id, name: character.name }, id, status: "Pending" };
+    const received = { canAccept: true, character: { id: character.id, name: character.name }, id, status: "Pending" };
     expect(await expectOk(api.v1["character-invites"][":id"].$get({ param: { id } }))).toEqual(received);
 
     expect(await expectOk(api.v1["character-invites"][":id"].accept.$post({ param: { id } }))).toEqual({

@@ -37,7 +37,8 @@ export function toV1ReceivedCampaignInvite(
   invite: Answer<typeof CampaignInvitesService.getInvite>,
 ): z.infer<typeof v1ReceivedCampaignInvite> {
   const { campaignsInCampaign: campaign, role } = invite.playersInCampaign;
-  return { campaign: { id: campaign.id, name: campaign.name }, id: invite.id, role, status: invite.status };
+  const { canAccept, id, status } = invite;
+  return { campaign: { id: campaign.id, name: campaign.name }, canAccept, id, role, status };
 }
 
 /** An invite to the key's user to contribute to a character. */
@@ -45,7 +46,8 @@ export function toV1ReceivedCharacterInvite(
   invite: Answer<typeof CharacterContributorsService.getInvite>,
 ): z.infer<typeof v1ReceivedCharacterInvite> {
   const { charactersInCharacter: character } = invite;
-  return { character: { id: character.id, name: character.name }, id: invite.id, status: invite.status };
+  const { canAccept, id, status } = invite;
+  return { canAccept, character: { id: character.id, name: character.name }, id, status };
 }
 
 /** An invite to the key's user to contribute to a ruleset, and the role it offers. */
@@ -53,5 +55,6 @@ export function toV1ReceivedRulesetInvite(
   invite: Answer<typeof ContributorsService.getInvite>,
 ): z.infer<typeof v1ReceivedRulesetInvite> {
   const { rulesetsInRule: ruleset } = invite;
-  return { id: invite.id, role: invite.role, ruleset: { id: ruleset.id, name: ruleset.name }, status: invite.status };
+  const { canAccept, id, role, status } = invite;
+  return { canAccept, id, role, ruleset: { id: ruleset.id, name: ruleset.name }, status };
 }

@@ -39,6 +39,9 @@ export const v1Campaign = v1CampaignSummary
       .strictObject({
         canEdit: z.boolean(),
         canLeave: z.boolean(),
+        canLinkCharacters: z
+          .boolean()
+          .meta({ description: "Whether they may link their characters to it and set what the players see of them" }),
         canManagePlayers: z.boolean(),
         canRevokeInvites: z.boolean(),
       })

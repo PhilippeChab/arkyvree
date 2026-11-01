@@ -53,6 +53,7 @@ describe("v1 rulesets", () => {
     const settings = await expectOk(api.v1.rulesets[":id"].settings.$get({ param: { id } }));
     const fieldKeys = declared.flatMap(({ field }) => (typeof field === "string" ? [field] : []));
     const linkRoles = declared.flatMap(({ role }) => (typeof role === "string" ? [role] : []));
+    expect(Object.keys(settings.fields).length + Object.keys(settings.links).length).toBeGreaterThan(0);
     expect(Object.keys(settings.fields).every((key) => fieldKeys.includes(key))).toBe(true);
     expect(Object.keys(settings.links).every((role) => linkRoles.includes(role))).toBe(true);
     expect(await expectOk(api.v1.rulesets[":id"].extensions.$get({ param: { id } }))).toEqual([]);

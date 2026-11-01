@@ -28,6 +28,7 @@ export const v1InviteStatus = z
 export const v1ReceivedCampaignInvite = z
   .strictObject({
     campaign: v1Named,
+    canAccept: z.boolean().meta({ description: "Whether the key's user may accept it now" }),
     id: v1Id,
     role: z.enum(role.enumValues).meta({ description: "The role of the player slot it offers" }),
     status: z
@@ -37,11 +38,17 @@ export const v1ReceivedCampaignInvite = z
   .meta({ description: "An invite to the key's user to play in a campaign", id: "ReceivedCampaignInvite" });
 
 export const v1ReceivedCharacterInvite = z
-  .strictObject({ character: v1Named, id: v1Id, status: v1ContributorInviteStatus })
+  .strictObject({
+    canAccept: z.boolean().meta({ description: "Whether the key's user may accept it now" }),
+    character: v1Named,
+    id: v1Id,
+    status: v1ContributorInviteStatus,
+  })
   .meta({ description: "An invite to the key's user to contribute to a character", id: "ReceivedCharacterInvite" });
 
 export const v1ReceivedRulesetInvite = z
   .strictObject({
+    canAccept: z.boolean().meta({ description: "Whether the key's user may accept it now" }),
     id: v1Id,
     role: z.enum(contributorRole.enumValues),
     ruleset: v1Named,
