@@ -74,7 +74,7 @@ function collectRoutes(router: Router) {
 
 /**
  * A schema the document names, its references moved from zod's `$defs` to the document's components, each name ending
- * in `suffix`: a request's are its own (`FeatInput`), since a default or a transform makes what a request may send
+ * in `suffix`: a request's are its own (`EntityInput`), since a default or a transform makes what a request may send
  * differ from what an answer holds.
  */
 function toComponentRefs(value: unknown, suffix: string): unknown {
@@ -90,7 +90,7 @@ function toComponentRefs(value: unknown, suffix: string): unknown {
   );
 }
 
-/** A word of a path, capitalized: `spells-known` is `SpellsKnown`, a parameter `:classId` `ByClassId`. */
+/** A word of a path, capitalized: `level-plan` is `LevelPlan`, a parameter `:entityId` `ByEntityId`. */
 function toIdWord(segment: string) {
   const word = segment.replace(/^:/, "").replaceAll(/-(\w)/g, (_, letter: string) => letter.toUpperCase());
   return `${segment.startsWith(":") ? "By" : ""}${word.charAt(0).toUpperCase()}${word.slice(1)}`;
@@ -142,7 +142,7 @@ function toOperation(
   return operation;
 }
 
-/** A route's operation's id, its method and its path's words: `getRulesetsByIdFeatsByFeatId`. */
+/** A route's operation's id, its method and its path's words: `getRulesetsByIdEntitiesByKind`. */
 function toOperationId(method: string, path: string) {
   return `${method}${path.split("/").filter(Boolean).map(toIdWord).join("")}`;
 }
