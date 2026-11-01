@@ -1,9 +1,11 @@
 import type { Db } from "@/drizzle/database.ts";
-import { CowDataReader, EntityNames, EntityRevert, RulesetChanges, RulesetViews } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { EntityNames, EntityRevert, type LockedRulesetScope, RulesetChanges } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Activities, EntityReferences, RulesetExtensions, Rulesets } from "@/server/repositories/index.ts";
+import type { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { findReadableRuleset, getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
+import { BUSY_RULESET_MESSAGE, withRulesetWrite } from "@/server/services/rulesets/rulesetWrites.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -39,11 +41,15 @@ class RulesetExtensionsService {
   }
 
   async subscribeExtension(session: Session, id: string, extensionIds: string[]) {
-    const result = await withTransaction(async (tx) => {
+    // The extensions it adds are locked with its chain before they're checked: no write of theirs runs meanwhile. Only
+    // what's stored as an extension (an extension subscribes to nothing, so it never waits on the ruleset): anything
+    // else is refused under the lock, unlocked, as an unknown or a ruleset no extension is
+    const candidates = await Rulesets.findMany(db, { ids: extensionIds.filter((extensionId) => extensionId !== id) });
+    const reads = candidates.filter((ruleset) => ruleset.kind === "extension").map((ruleset) => ruleset.id);
+    const write = async (tx: Db, scope: LockedRulesetScope, policy: RulesetsPolicy) => {
       // 1. Validate ruleset
-      const { policy, ruleset: childRuleset } = await getReadableRuleset(tx, session, id);
+      const { ruleset: childRuleset, sources } = scope;
       policy.canSubscribeExtension({ usedAsExtension: await Rulesets.exists(tx, { subscribedTo: id }) });
-      const sources = (await Rulesets.findSources(tx, { id }))!;
 
       // 2. Validate each extension
       const newExtensionIds: string[] = [];
@@ -52,6 +58,8 @@ class RulesetExtensionsService {
         const readable = await findReadableRuleset(tx, session, extensionId);
         if (!readable) throw new NotFoundError("Extension not found");
         readable.policy.canBeSubscribed({ id, parentId: childRuleset.rulesetId });
+        // One that became an extension after its kind was read isn't locked, as its chain is: its writes may be running
+        if (!scope.versions.has(extensionId)) throw new ConflictError(BUSY_RULESET_MESSAGE);
 
         if (sources.extensionIds.includes(extensionId)) throw new ConflictError("Already subscribed to this extension");
 
@@ -59,12 +67,11 @@ class RulesetExtensionsService {
       }
 
       // Its view would show no two entities of a name it shows one of, nor two the extensions bring
-      const names = new EntityNames(sources, await CowDataReader.read(tx, sources));
+      const names = new EntityNames(scope);
       await names.assertExtensionNamesAvailable(tx, newExtensionIds);
 
-      // 3. The ruleset changes now, and subscribes to them after those it subscribes to, in their order. Its row's
-      // update comes first: the row lock orders concurrent subscribes' places, each placed after the last one's
-      await Rulesets.update(tx, {}, { id });
+      // 3. It subscribes to them after those it subscribes to, in their order: its lock orders concurrent subscribes'
+      // places, each placed after the last one's
       await RulesetExtensions.upsert(tx, { rulesetId: id, extensionIds: newExtensionIds });
 
       // 4. Log activity
@@ -77,19 +84,16 @@ class RulesetExtensionsService {
       });
 
       return { subscribed: true };
-    });
-
-    RulesetViews.invalidate(id);
-    return result;
+    };
+    return await withRulesetWrite(session, id, write, { reads });
   }
 
   async unsubscribeExtension(session: Session, id: string, extensionId: string) {
-    const result = await withTransaction(async (tx) => {
+    return await withRulesetWrite(session, id, async (tx, scope, policy) => {
+      const { sources } = scope;
       // 1. Validate
-      const { policy } = await getReadableRuleset(tx, session, id);
       policy.canUnsubscribeExtension();
 
-      const sources = (await Rulesets.findSources(tx, { id }))!;
       if (!sources.extensionIds.includes(extensionId)) throw new NotFoundError("Not subscribed to this extension");
 
       // 2. The fork's copies of the extension's entities, as copy-on-write reads its snapshots (`RulesetChanges`)
@@ -102,7 +106,7 @@ class RulesetExtensionsService {
         ]),
       );
       // What the book hid shows again: its view would show no two entities of a name, as a subscribe's wouldn't
-      const names = new EntityNames(sources, await CowDataReader.read(tx, sources));
+      const names = new EntityNames(scope);
       await names.assertReturningNamesAvailable(tx, extensionId, [...copies.values()].flat());
       // What leaves with the book, each with what the fork's view shows in its place once it's gone, if anything
       const departures = await findDepartures(tx, sources, extensionId, copies);
@@ -114,10 +118,9 @@ class RulesetExtensionsService {
 
       // The fork's copies go as a restore reverts them (`EntityRevert`): what names a copy names the extension's entity
       // first, so no copy's delete trips another's reference to it (an item's copy naming its template's), in any order
-      for (const snap of extensionSnapshots) await EntityRevert.revert(tx, snap.entityType, snap.sourceEntityId, id);
+      for (const snap of extensionSnapshots) await EntityRevert.revert(tx, snap.entityType, snap.sourceEntityId, scope);
 
-      // 3. The ruleset changes now, and subscribes to the extension no more: its row is archived
-      await Rulesets.update(tx, {}, { id });
+      // 3. It subscribes to the extension no more: its row is archived
       await RulesetExtensions.archive(tx, { rulesetId: id, extensionId });
 
       // 4. Log activity
@@ -131,9 +134,6 @@ class RulesetExtensionsService {
 
       return { unsubscribed: true };
     });
-
-    RulesetViews.invalidate(id);
-    return result;
   }
 }
 

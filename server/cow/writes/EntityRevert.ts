@@ -1,5 +1,6 @@
 import type { Db } from "@/drizzle/database.ts";
 import { Engine, type OwnedKind } from "@/engine/index.ts";
+import type { LockedRulesetScope } from "@/server/cow/views/scope.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Entities, EntityReferences, EntitySnapshots, type RulesetEntityType } from "@/server/repositories/index.ts";
 
@@ -36,29 +37,29 @@ export default class EntityRevert {
   }
 
   /**
-   * Reverts the ruleset's copy of `sourceEntityId` (of `entityType`) to the source: a not found when the ruleset has
-   * none, or the source is gone (the copy is then the ruleset's own, `RulesetChanges`), which stays until the revert
-   * ends. A copy deleted since (a tombstone) has nothing left naming it: its snapshot goes, and the source shows again.
-   * A restore, whose source shows again in the ruleset's view, keeps its name free there (`names`), as a rename does; an
-   * unsubscribe's revert gives none, its source leaving the view.
+   * Reverts the copy of `sourceEntityId` (of `entityType`) of the ruleset a write holds (`scope`, under its lock: no
+   * other write of it, nor of its source chain, where the source is, runs meanwhile) to the source: a not found when
+   * the ruleset has none, or the source is gone (the copy is then the ruleset's own, `RulesetChanges`). A copy deleted
+   * since (a tombstone) has nothing left naming it: its snapshot goes, and the source shows again. A restore, whose
+   * source shows again in the ruleset's view, keeps its name free there (`names`), as a rename does; an unsubscribe's
+   * revert gives none, its source leaving the view.
    */
   static async revert(
     tx: Db,
     entityType: RulesetEntityType,
     sourceEntityId: string,
-    rulesetId: string,
+    scope: LockedRulesetScope,
     names?: EntityNames,
   ): Promise<void> {
-    // A first edit of the entity copying it meanwhile waits, then copies it anew (`EntityCopy`)
-    await EntitySnapshots.lock(tx, { rulesetId, sourceEntityId });
+    const rulesetId = scope.ruleset.id;
     const snapshot = await EntitySnapshots.findOne(tx, { rulesetId, sourceEntityId });
-    // The source's delete meanwhile waits: what names the copy moves to a row that stays
-    const isSourceKept =
-      (await Entities.lock(tx, { id: sourceEntityId }, "share")) &&
-      (await Entities.has(tx, { entityType, id: sourceEntityId }));
-    if (!snapshot || !isSourceKept) throw new NotFoundError("Entity is not an override in this ruleset");
+    if (!snapshot || !(await Entities.has(tx, { entityType, id: sourceEntityId })))
+      throw new NotFoundError("Entity is not an override in this ruleset");
 
     const copyId = snapshot.forkedEntityId;
+    // The copy's row locked before what names it moves: a character's write naming it (its pick's foreign key, which
+    // holds it shared, no ruleset lock yet) commits first, so its pick moves with the rest, and the delete never meets
+    // it
     await Entities.lock(tx, { id: copyId });
     await names?.assertRestoreAvailable(tx, entityType, sourceEntityId, copyId);
     for (const ownedType of Engine.storage().ownedKinds(entityType))

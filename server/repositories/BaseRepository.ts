@@ -66,7 +66,12 @@ abstract class BaseRepository<T extends Table> {
    * IDs are already resolved by the caller. Never memoize a locking read.
    * `skipLocked`: a row another transaction holds counts as not found instead of being waited for.
    */
-  async lock(db: Db, where: { id: string }, mode: "update" | "share" = "update", skipLocked = false): Promise<boolean> {
+  async lock(
+    db: Db,
+    where: { id: string },
+    mode: "no key update" | "share" | "update" = "update",
+    skipLocked = false,
+  ): Promise<boolean> {
     // A table without `deletedAt` keeps no archived rows to skip
     const { deletedAt } = getTableColumns(this.table);
     const rows = await db

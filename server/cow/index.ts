@@ -15,12 +15,18 @@
 export { default as CowDataReader } from "./views/CowDataReader.ts";
 export { default as RulesetChanges } from "./views/RulesetChanges.ts";
 export { default as RulesetViews } from "./views/RulesetViews.ts";
-export { type RulesetScope, withRulesetScope, withRulesetScopes } from "./views/scope.ts";
+export {
+  type LockedRulesetScope,
+  type RulesetScope,
+  withLockedRulesetScope,
+  withRulesetScope,
+  withRulesetScopes,
+} from "./views/scope.ts";
 export { default as CustomizationCopies } from "./writes/CustomizationCopies.ts";
 export { default as CustomizationEdit } from "./writes/CustomizationEdit.ts";
 export { type default as EditTarget } from "./writes/EditTarget.ts";
 export { default as EntityCopy } from "./writes/EntityCopy.ts";
-export { default as EntityEdit, type NotFoundMessages } from "./writes/EntityEdit.ts";
+export { default as EntityEdit } from "./writes/EntityEdit.ts";
 export { default as EntityNames } from "./writes/EntityNames.ts";
 export { default as EntityRevert } from "./writes/EntityRevert.ts";
 export { default as EntityUses } from "./writes/EntityUses.ts";

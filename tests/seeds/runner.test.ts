@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { afterAll, describe, expect, test } from "bun:test";
 
 import { eq } from "drizzle-orm";
 
@@ -6,7 +6,12 @@ import { applyPackages } from "@/database/packages/runner.ts";
 import type { ContentPackage } from "@/database/packages/types.ts";
 import { contentPackagesInRules } from "@/drizzle/schema.ts";
 import { db } from "@/server/database/index.ts";
-import { uniqueId } from "@/tests/support/seed.ts";
+import { createTestPool } from "@/server/database/test.ts";
+import { Rulesets } from "@/server/repositories/index.ts";
+import { runWhileLocked } from "@/tests/support/database.ts";
+import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
+
+const pool = createTestPool();
 
 function record(pkg: ContentPackage, version: number) {
   return db.insert(contentPackagesInRules).values({ name: pkg.name, type: pkg.type, version });
@@ -35,6 +40,14 @@ async function recordedVersion(name: string) {
   )[0]?.version;
 }
 
+/** The system rulesets' content versions, by id. */
+async function systemVersions() {
+  const systemIds = (await Rulesets.findMany(db, { system: true })).map((ruleset) => ruleset.id);
+  return await Rulesets.findVersions(db, { ids: systemIds });
+}
+
+afterAll(() => pool.end());
+
 describe("Applying content packages", () => {
   test("installs a new package: its seeds, then every update, at its last update's version", async () => {
     const ran: string[] = [];
@@ -51,6 +64,30 @@ describe("Applying content packages", () => {
     await applyPackages(db, [pkg]);
     expect(ran).toEqual([`${pkg.name} v5`]);
     expect(await recordedVersion(pkg.name)).toBe(5);
+  });
+
+  test("updates an installed package once a write to a system ruleset ends, its versions bumped", async () => {
+    let released = false;
+    let updatedAfterRelease: boolean | undefined;
+    const pkg = { ...testPackage(3, [], []), updates: { 4: async () => void (updatedAfterRelease = released) } };
+    await record(pkg, 3);
+    const before = await systemVersions();
+    // A write to the base holds its lock: the update waits for it before it changes anything, then bumps every system
+    // ruleset's version, so the next write reads their rows fresh
+    await runWhileLocked(
+      pool,
+      async (blockerDb) => Rulesets.lockContent(blockerDb, { id: (await getSeedCtx()).rulesetId }),
+      () => applyPackages(db, [pkg]),
+      () => (released = true),
+    );
+    expect(updatedAfterRelease).toBe(true);
+    expect(await systemVersions()).toEqual(new Map([...before].map(([id, version]) => [id, version + 1])));
+  });
+
+  test("installs a new package without bumping the system rulesets' versions", async () => {
+    const before = await systemVersions();
+    await applyPackages(db, [testPackage(3, [], [])]);
+    expect(await systemVersions()).toEqual(before);
   });
 
   test("leaves an up-to-date package alone", async () => {

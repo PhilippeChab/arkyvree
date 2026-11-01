@@ -9,7 +9,7 @@ import {
   type ViewLink,
 } from "@/engine/index.ts";
 import CowDataReader from "@/server/cow/views/CowDataReader.ts";
-import { NotFoundError } from "@/server/errors/index.ts";
+import type { LockedRulesetScope } from "@/server/cow/views/scope.ts";
 import {
   Entities,
   EntityLinks,
@@ -23,7 +23,7 @@ import CustomizationCopies from "./CustomizationCopies.ts";
 /**
  * A copy: the copied entity, and, when this call made it, each customization it copied, by its source's id (equal
  * values don't make the same row: a modifier's requirements may differ). A copy the ruleset already had (another
- * write's, made since this one's view was read) has none: its rows may have changed since.
+ * write's, made since the client read the entity) has none: its rows may have changed since.
  */
 export interface CopiedEntity {
   copiedIds?: ReadonlyMap<string, string>;
@@ -36,11 +36,10 @@ export interface CopiedEntity {
  * own instance, which records the customizations it copied.
  */
 export default class EntityCopy {
-  private constructor(entityType: RulesetEntityType, entityId: string, ruleset: RulesetSources, gone: string) {
+  private constructor(entityType: RulesetEntityType, entityId: string, ruleset: RulesetSources) {
     this.entityType = entityType;
     this.entityId = entityId;
     this.ruleset = ruleset;
-    this.gone = gone;
   }
 
   /**
@@ -54,18 +53,17 @@ export default class EntityCopy {
   }
 
   /**
-   * Copies `entityId` into `ruleset`, or returns the copy it already has (then with no copied ids): the newly created
-   * child entity, and the customizations copied with it, by their sources' ids. Refused as not found, in the write's
-   * words (`gone`), when the source was deleted since the write's view was read.
+   * Copies `entityId` into the ruleset a write holds (`scope`, under its lock: no other write of it, nor of its source
+   * chain, where the source is, runs meanwhile), or returns the copy it already has (then with no copied ids): the
+   * newly created child entity, and the customizations copied with it, by their sources' ids.
    */
   static async create(
     tx: Db,
     entityType: RulesetEntityType,
     entityId: string,
-    ruleset: RulesetSources,
-    gone: string,
+    scope: LockedRulesetScope,
   ): Promise<CopiedEntity> {
-    const copy = new EntityCopy(entityType, entityId, ruleset, gone);
+    const copy = new EntityCopy(entityType, entityId, scope.sources);
     const { entity, made } = await copy.copy(tx);
     return made ? { entity, copiedIds: copy.copiedIds } : { entity };
   }
@@ -75,9 +73,6 @@ export default class EntityCopy {
   private readonly entityId: string;
 
   private readonly entityType: RulesetEntityType;
-
-  /** What refuses the copy when its source was deleted since the write's view was read, in the write's words. */
-  private readonly gone: string;
 
   /** The ruleset the copy is made in, and where its inherited entities come from. */
   private readonly ruleset: RulesetSources;
@@ -90,11 +85,6 @@ export default class EntityCopy {
     const entityType = this.entityType;
     const { id: childRulesetId } = this.ruleset;
 
-    // A second first edit must wait for the copying transaction, then see its
-    // committed snapshot. Keep this separate from the SELECT: under READ
-    // COMMITTED, a SELECT started before the wait retains its old snapshot.
-    await EntitySnapshots.lock(tx, { rulesetId: childRulesetId, sourceEntityId: this.entityId });
-
     // 0. Idempotency: if a COW copy already exists, return it.
     // If the snapshot is a tombstone (the COW row was hard-deleted by a
     // user-initiated delete on an overridden entity), drop the snapshot so
@@ -104,10 +94,7 @@ export default class EntityCopy {
       rulesetId: childRulesetId,
     });
     if (existingSnapshot) {
-      const exists = await Entities.lock(tx, { id: existingSnapshot.forkedEntityId });
-      const existing = exists
-        ? await Entities.findOne(tx, { entityType, id: existingSnapshot.forkedEntityId })
-        : undefined;
+      const existing = await Entities.findOne(tx, { entityType, id: existingSnapshot.forkedEntityId });
       if (existing) return { entity: existing, made: false };
       await EntitySnapshots.delete(tx, {
         sourceEntityId: this.entityId,
@@ -116,8 +103,6 @@ export default class EntityCopy {
     }
 
     // 1. Fetch the parent entity
-    if (!(await Entities.lock(tx, { id: this.entityId }, "share"))) throw new NotFoundError(this.gone);
-
     const parentEntity = await Entities.findOne(tx, { entityType, id: this.entityId });
     if (!parentEntity) throw new Error(`Parent entity not found: ${this.entityType}/${this.entityId}`);
 

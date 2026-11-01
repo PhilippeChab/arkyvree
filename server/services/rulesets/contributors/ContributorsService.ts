@@ -1,5 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { db } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Contributors, type Pagination, Rulesets, Users } from "@/server/repositories/index.ts";
@@ -13,10 +13,13 @@ import {
 } from "@/server/services/invites/index.ts";
 import { isAllowed, RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { findReadableRuleset, getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
+import { withLockedRuleset, withRulesetLock } from "@/server/services/rulesets/rulesetWrites.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { ContributorRole } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
+/** What a contributor the session may not read is refused with, as an unknown one is. */
+const CONTRIBUTOR_NOT_FOUND = "Contributor not found";
 /** What an invite the session's user can't answer, or see, is refused with: it doesn't reveal whether it exists. */
 const INVITE_NOT_FOUND = "Contributor invite not found";
 
@@ -38,15 +41,26 @@ class ContributorsService {
   private async getReadableContributor(tx: Db, session: Session, rulesetId: string, contributorId: string) {
     const contributor = await Contributors.findOne(tx, { id: contributorId });
     // Another ruleset's contributor is unknown under this one's path
-    if (contributor?.rulesetId !== rulesetId) throw new NotFoundError("Contributor not found");
+    if (contributor?.rulesetId !== rulesetId) throw new NotFoundError(CONTRIBUTOR_NOT_FOUND);
     const readable = await findReadableRuleset(tx, session, contributor.rulesetId);
-    if (!readable) throw new NotFoundError("Contributor not found");
+    if (!readable) throw new NotFoundError(CONTRIBUTOR_NOT_FOUND);
 
     return { contributor, ...readable };
   }
 
+  /**
+   * Runs a write of a contributor (`contributorId`) under its ruleset's lock (`withRulesetLock`), which decides the
+   * session's rights itself: an unknown contributor refused with `notFound`. A contributor's ruleset never changes, so
+   * it's read before the lock.
+   */
+  private async withContributorsRuleset<T>(contributorId: string, notFound: string, write: (tx: Db) => Promise<T>) {
+    const contributor = await Contributors.findOne(db, { id: contributorId });
+    if (!contributor) throw new NotFoundError(notFound);
+    return await withRulesetLock(contributor.rulesetId, write);
+  }
+
   async acceptInvite(session: Session, contributorId: string) {
-    return await withTransaction(async (tx) => {
+    return await this.withContributorsRuleset(contributorId, INVITE_NOT_FOUND, async (tx) => {
       const contributor = await getPendingInvite(tx, session, Contributors, contributorId, INVITE_NOT_FOUND);
 
       const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId });
@@ -92,8 +106,7 @@ class ContributorsService {
   }
 
   async inviteContributor(session: Session, rulesetId: string, email: string, role: ContributorRole) {
-    const { contributor, emailData } = await withTransaction(async (tx) => {
-      const { policy, ruleset } = await getReadableRuleset(tx, session, rulesetId);
+    const { contributor, emailData } = await withLockedRuleset(session, rulesetId, async (tx, policy, ruleset) => {
       policy.canInviteContributors({ role });
 
       const user = await Users.findOne(tx, { emailAddress: email });
@@ -152,9 +165,7 @@ class ContributorsService {
   }
 
   async leaveRuleset(session: Session, rulesetId: string) {
-    return await withTransaction(async (tx) => {
-      await getReadableRuleset(tx, session, rulesetId);
-
+    return await withLockedRuleset(session, rulesetId, async (tx) => {
       const role = await Contributors.findRole(tx, {
         userId: session.userId,
         rulesetId,
@@ -184,7 +195,7 @@ class ContributorsService {
   }
 
   async rejectInvite(session: Session, contributorId: string) {
-    return await withTransaction(async (tx) => {
+    return await this.withContributorsRuleset(contributorId, INVITE_NOT_FOUND, async (tx) => {
       const contributor = await getPendingInvite(tx, session, Contributors, contributorId, INVITE_NOT_FOUND);
 
       return await this.answerInvite(tx, session, contributor.id, "Rejected");
@@ -192,7 +203,7 @@ class ContributorsService {
   }
 
   async revokeContributor(session: Session, rulesetId: string, contributorId: string) {
-    return await withTransaction(async (tx) => {
+    return await this.withContributorsRuleset(contributorId, CONTRIBUTOR_NOT_FOUND, async (tx) => {
       const { contributor, ruleset, policy } = await this.getReadableContributor(tx, session, rulesetId, contributorId);
       policy.canRevokeContributor({ role: contributor.role });
 
@@ -217,7 +228,7 @@ class ContributorsService {
   }
 
   async updateContributorRole(session: Session, rulesetId: string, contributorId: string, role: ContributorRole) {
-    return await withTransaction(async (tx) => {
+    return await this.withContributorsRuleset(contributorId, CONTRIBUTOR_NOT_FOUND, async (tx) => {
       const { contributor, policy } = await this.getReadableContributor(tx, session, rulesetId, contributorId);
       policy.canUpdateContributorRole({ from: contributor.role, to: role });
 

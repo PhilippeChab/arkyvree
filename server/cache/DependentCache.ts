@@ -13,6 +13,14 @@ export default class DependentCache<T> {
 
   private readonly pending = new Map<string, { dependencies: ReadonlySet<string>; promise: Promise<T> }>();
 
+  /** A fresh read's own fill of `key`, kept in its place for every reader. */
+  private async fill(key: string, dependencyIds: readonly string[], fetcher: () => Promise<Loaded<T>>): Promise<T> {
+    const { data, pinned } = await fetcher();
+    this.cache.set(key, { data, dependencies: new Set(dependencyIds) });
+    if (pinned) this.cache.pin(key);
+    return data;
+  }
+
   invalidate(dependencyId: string): void {
     // MemoryCache is capped at 200 entries. No unbounded dependency registry,
     // no database lookup, and unrelated cached/in-flight reads stay reusable.
@@ -25,11 +33,22 @@ export default class DependentCache<T> {
     this.pending.clear();
   }
 
-  async getOrFetch(key: string, dependencyIds: readonly string[], fetcher: () => Promise<Loaded<T>>): Promise<T> {
+  /**
+   * The entry of `key`: the cached one, else the one a fill in flight reads, else one `fetcher` reads, kept for every
+   * reader under its dependencies. Given `accepts`, a fresh read's (a write's, under its lock): the cached entry when
+   * it accepts it, else its own fill, never one in flight (which read before the write's lock), kept in its place.
+   */
+  async getOrFetch(
+    key: string,
+    dependencyIds: readonly string[],
+    fetcher: () => Promise<Loaded<T>>,
+    accepts?: (data: T) => boolean,
+  ): Promise<T> {
     if (!MemoryCache.isEnabled()) return (await fetcher()).data;
 
     const cached = this.cache.get(key);
-    if (cached) return cached.data;
+    if (cached && (!accepts || accepts(cached.data))) return cached.data;
+    if (accepts) return await this.fill(key, dependencyIds, fetcher);
     const active = this.pending.get(key);
     if (active) return active.promise;
 

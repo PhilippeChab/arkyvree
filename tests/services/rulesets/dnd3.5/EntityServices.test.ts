@@ -222,16 +222,17 @@ describe.each(ENTITY_TYPES)("%s service", (entityType) => {
     const { session, ruleset, refs } = await setup();
     const entity = await service.create(session, ruleset.id, "Guarded Entity", refs);
     const { user, session: other, ruleset: otherRuleset } = await createTestUserAndRuleset();
-    const writes = () => [
-      service.create(other, ruleset.id, "Intruder", refs),
-      service.update(other, ruleset.id, entity.id, "Hijacked", refs),
-      service.remove(other, ruleset.id, entity.id),
+    // Each sent in turn: a test's writes share its connection
+    const writes = [
+      () => service.create(other, ruleset.id, "Intruder", refs),
+      () => service.update(other, ruleset.id, entity.id, "Hijacked", refs),
+      () => service.remove(other, ruleset.id, entity.id),
     ];
 
     // A stranger isn't told the private ruleset exists; a reader who may not write is refused
-    for (const write of writes()) expect(write).rejects.toThrow(NotFoundError);
+    for (const write of writes) expect(write()).rejects.toThrow(NotFoundError);
     await addRulesetContributor(ruleset.id, user, session.userId, "Viewer");
-    for (const write of writes()) expect(write).rejects.toThrow(ForbiddenError);
+    for (const write of writes) expect(write()).rejects.toThrow(ForbiddenError);
     // Reading it through a ruleset it isn't part of doesn't find it either.
     await expectRefusedWith(service.get(otherRuleset.id, entity.id), 404);
   });

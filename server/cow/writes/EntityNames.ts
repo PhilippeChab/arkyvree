@@ -1,6 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
 import type { CowData, RulesetSources } from "@/engine/index.ts";
 import CowDataReader from "@/server/cow/views/CowDataReader.ts";
+import type { LockedRulesetScope } from "@/server/cow/views/scope.ts";
 import { withUniqueRefusal } from "@/server/database/index.ts";
 import { ConflictError } from "@/server/errors/index.ts";
 import {
@@ -27,19 +28,16 @@ function toOwnNameError(name: string) {
 }
 
 /**
- * The names a ruleset's composed view shows (`new EntityNames(ruleset, rulesetData.cow)`), which no change makes it show
- * twice: a new entity, a renamed one, a restored one, a subscribed extension's and one an unsubscribe shows again take a
- * name only when no other entity of their kind the view shows has it, the ruleset's own or an inherited one. An
- * inherited entity the view hides (overridden, or a sibling loser) doesn't block its name, and one whose local copy was
- * deleted left a tombstone snapshot, which a new entity of its name takes over (`repointTombstone`), so the inherited
- * one stays hidden. Its instance methods take the transaction; its static `withNameRefusal` runs a write that takes a
- * name, answering the name index as the checks do.
+ * The names a ruleset's composed view shows (`new EntityNames(scope)`, a write's, under its lock), which no change
+ * makes it show twice: a new entity, a renamed one, a restored one, a subscribed extension's and one an unsubscribe
+ * shows again take a name only when no other entity of their kind the view shows has it, the ruleset's own or an
+ * inherited one. An inherited entity the view hides (overridden, or a sibling loser) doesn't block its name, and one
+ * whose local copy was deleted left a tombstone snapshot, which a new entity of its name takes over
+ * (`repointTombstone`), so the inherited one stays hidden. Its instance methods take the transaction; its static
+ * `withNameRefusal` runs a write that takes a name, answering the name index as the checks do.
  */
 export default class EntityNames {
-  constructor(
-    private readonly ruleset: RulesetSources,
-    private readonly cow: CowData,
-  ) {}
+  constructor(private readonly scope: LockedRulesetScope) {}
 
   /** The names of `entities`, each once, by their type, in the order the modules declare the types. */
   private static namesByType(entities: { entityType: RulesetEntityType; name: string }[]) {
@@ -58,6 +56,11 @@ export default class EntityNames {
     return await withUniqueRefusal(write, (index) => (index === NAME_INDEX ? toOwnNameError(name ?? "") : undefined));
   }
 
+  /** The ruleset's copy-on-write data, as its view was read under the write's lock. */
+  private get cow(): CowData {
+    return this.scope.rulesetData.cow;
+  }
+
   /** Refuses the names an entity of the view has (`named`): the ruleset's own, or a visible inherited entity's. */
   private refuseShown(named: NamedEntity[]) {
     const own = named.find((entity) => entity.rulesetId === this.ruleset.id);
@@ -69,6 +72,11 @@ export default class EntityNames {
         `Name already exists in the source chain (an ancestor or subscribed extension): ${shown.name}`,
       );
     }
+  }
+
+  /** The ruleset and its sources. */
+  private get ruleset(): RulesetSources {
+    return this.scope.sources;
   }
 
   /** The entities of a kind named `names`, the ruleset's own and its source chain's (`chain`: its own, unless given). */

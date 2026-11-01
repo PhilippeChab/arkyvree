@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   check,
   customType,
@@ -123,6 +124,7 @@ export const rulesetsInRules = rules.table(
     status: rulesetStatus().default("Draft").notNull(),
     kind: rulesetKind().default("ruleset").notNull(),
     baseRules: text("base_rules").notNull(),
+    contentVersion: bigint("content_version", { mode: "number" }).default(0).notNull(),
   },
   (table) => [
     foreignKey({

@@ -1,11 +1,12 @@
 import type { Db } from "@/drizzle/database.ts";
 import { Engine } from "@/engine/index.ts";
 import { CustomizationEdit, RulesetViews } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { db } from "@/server/database/index.ts";
 import { ConflictError, InternalError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Requirements } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
+import { withRulesetWrite } from "@/server/services/rulesets/rulesetWrites.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -53,36 +54,35 @@ class RequirementsService {
     entityId: string,
     body: RequirementBody,
   ) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
-          const { rulesetData, sources } = scope;
-          policy.canUpdateEntity();
+    return await withRulesetWrite(
+      session,
+      rulesetId,
+      async (tx, scope, policy) => {
+        policy.canUpdateEntity();
 
-          const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "requirement");
-          const { entity, row } = Engine.for(scope).requirements(entityType, entityId).planCreate(catalogs, body);
+        const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "requirement");
+        const { entity, row } = Engine.for(scope).requirements(entityType, entityId).planCreate(catalogs, body);
 
-          const edit = new CustomizationEdit(sources, rulesetData.cow);
-          const resolvedEntityId = await edit.cowOwner(tx, entityType, entity.id);
-          await this.refuseTakenLevel(tx, entityType, resolvedEntityId, row.level);
+        const edit = new CustomizationEdit(scope);
+        const resolvedEntityId = await edit.cowOwner(tx, entityType, entity.id);
+        await this.refuseTakenLevel(tx, entityType, resolvedEntityId, row.level);
 
-          const rows = await Requirements.create(tx, { entityId: resolvedEntityId, entityType, ...row });
-          const requirement = rows[0];
-          if (!requirement) throw new InternalError("Failed to create requirement");
+        const rows = await Requirements.create(tx, { entityId: resolvedEntityId, entityType, ...row });
+        const requirement = rows[0];
+        if (!requirement) throw new InternalError("Failed to create requirement");
 
-          await createActivityWithNotifications(tx, {
-            userId: session.userId,
-            targetId: requirement.id,
-            targetType: TARGET_TYPES.requirements,
-            type: "createRequirement",
-            data: { entityName: entity.name, ...conditionOf(row) },
-          });
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: requirement.id,
+          targetType: TARGET_TYPES.requirements,
+          type: "createRequirement",
+          data: { entityName: entity.name, ...conditionOf(row) },
+        });
 
-          return { ...requirement, resolvedEntityId };
-        }),
+        return { ...requirement, resolvedEntityId };
+      },
+      { drops: "entities" },
     );
-    RulesetViews.invalidateEntities(rulesetId);
-    return result;
   }
 
   async deleteRequirement(
@@ -92,41 +92,39 @@ class RequirementsService {
     entityId: string,
     requirementId: string,
   ) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
-          const { rulesetData, sources } = scope;
-          policy.canDeleteEntity();
+    return await withRulesetWrite(
+      session,
+      rulesetId,
+      async (tx, scope, policy) => {
+        policy.canDeleteEntity();
+        await new CustomizationEdit(scope).refuseCopiedSince(tx, entityType, entityId, "requirement", requirementId);
 
-          const { entity, requirement } = Engine.for(scope)
-            .requirements(entityType, entityId)
-            .planDelete(requirementId);
+        const { entity, requirement } = Engine.for(scope).requirements(entityType, entityId).planDelete(requirementId);
 
-          const edit = new CustomizationEdit(sources, rulesetData.cow);
-          const { customization, resolvedEntityId } = await edit.cowCustomization(
-            tx,
-            entityType,
-            entity.id,
-            "requirement",
-            requirementId,
-          );
+        const edit = new CustomizationEdit(scope);
+        const { customization, resolvedEntityId } = await edit.cowCustomization(
+          tx,
+          entityType,
+          entity.id,
+          "requirement",
+          requirementId,
+        );
 
-          const rows = await Requirements.delete(tx, { id: customization.id });
-          const deletedRequirement = rows[0];
+        const rows = await Requirements.delete(tx, { id: customization.id });
+        const deletedRequirement = rows[0];
 
-          await createActivityWithNotifications(tx, {
-            userId: session.userId,
-            targetId: deletedRequirement.id,
-            targetType: TARGET_TYPES.requirements,
-            type: "deleteRequirement",
-            data: { rulesetId, entityName: entity.name, ...conditionOf(requirement) },
-          });
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: deletedRequirement.id,
+          targetType: TARGET_TYPES.requirements,
+          type: "deleteRequirement",
+          data: { rulesetId, entityName: entity.name, ...conditionOf(requirement) },
+        });
 
-          return { ...deletedRequirement, resolvedEntityId };
-        }),
+        return { ...deletedRequirement, resolvedEntityId };
+      },
+      { drops: "entities" },
     );
-    RulesetViews.invalidateEntities(rulesetId);
-    return result;
   }
 
   async getRequirements(session: Session, rulesetId: string, entityType: string, entityId: string) {
@@ -144,51 +142,51 @@ class RequirementsService {
     requirementId: string,
     body: RequirementBody & { updatedAt?: string },
   ) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
-          const { rulesetData, sources } = scope;
-          policy.canUpdateEntity();
+    return await withRulesetWrite(
+      session,
+      rulesetId,
+      async (tx, scope, policy) => {
+        policy.canUpdateEntity();
+        await new CustomizationEdit(scope).refuseCopiedSince(tx, entityType, entityId, "requirement", requirementId);
 
-          const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "requirement");
-          const requirements = Engine.for(scope).requirements(entityType, entityId);
-          const { entity, row } = requirements.planEdit(catalogs, requirementId, body);
+        const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "requirement");
+        const requirements = Engine.for(scope).requirements(entityType, entityId);
+        const { entity, row } = requirements.planEdit(catalogs, requirementId, body);
 
-          // COW the owning entity if this requirement is inherited
-          const edit = new CustomizationEdit(sources, rulesetData.cow);
-          const { customization, resolvedEntityId } = await edit.cowCustomization(
-            tx,
-            entityType,
-            entity.id,
-            "requirement",
-            requirementId,
-          );
+        // COW the owning entity if this requirement is inherited
+        const edit = new CustomizationEdit(scope);
+        const { customization, resolvedEntityId } = await edit.cowCustomization(
+          tx,
+          entityType,
+          entity.id,
+          "requirement",
+          requirementId,
+        );
 
-          const expectedUpdatedAt = customization.expected(body.updatedAt);
-          await this.refuseTakenLevel(tx, entityType, resolvedEntityId, row.level, {
-            id: customization.id,
-            expectedUpdatedAt,
-          });
+        const expectedUpdatedAt = customization.expected(body.updatedAt);
+        await this.refuseTakenLevel(tx, entityType, resolvedEntityId, row.level, {
+          id: customization.id,
+          expectedUpdatedAt,
+        });
 
-          const rows = await Requirements.update(tx, row, { id: customization.id, expectedUpdatedAt });
-          if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+        const rows = await Requirements.update(tx, row, { id: customization.id, expectedUpdatedAt });
+        if (expectedUpdatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
-          const updatedRequirement = rows[0];
-          if (!updatedRequirement) throw new InternalError("Failed to update requirement");
+        const updatedRequirement = rows[0];
+        if (!updatedRequirement) throw new InternalError("Failed to update requirement");
 
-          await createActivityWithNotifications(tx, {
-            userId: session.userId,
-            targetId: updatedRequirement.id,
-            targetType: TARGET_TYPES.requirements,
-            type: "updateRequirement",
-            data: { entityName: entity.name, ...conditionOf(row) },
-          });
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: updatedRequirement.id,
+          targetType: TARGET_TYPES.requirements,
+          type: "updateRequirement",
+          data: { entityName: entity.name, ...conditionOf(row) },
+        });
 
-          return { ...updatedRequirement, resolvedEntityId };
-        }),
+        return { ...updatedRequirement, resolvedEntityId };
+      },
+      { drops: "entities" },
     );
-    RulesetViews.invalidateEntities(rulesetId);
-    return result;
   }
 }
 

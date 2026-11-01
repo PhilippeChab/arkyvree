@@ -1,8 +1,7 @@
 import type { Constructor } from "@/lib/mixins.ts";
-import { withTransaction } from "@/server/database/index.ts";
 import { InternalError } from "@/server/errors/index.ts";
 import { Activities, Rulesets } from "@/server/repositories/index.ts";
-import { getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
+import { withLockedRuleset } from "@/server/services/rulesets/rulesetWrites.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -13,8 +12,7 @@ import type { Session } from "@/shared/relations.ts";
 export function Archives<B extends Constructor>(Base: B) {
   abstract class Archiving extends Base {
     async archiveRuleset(session: Session, id: string) {
-      return await withTransaction(async (tx) => {
-        const { policy } = await getReadableRuleset(tx, session, id);
+      return await withLockedRuleset(session, id, async (tx, policy) => {
         policy.canUpdate();
 
         // Archive only flips status='Archived'. Entities and overrides stay
@@ -38,8 +36,7 @@ export function Archives<B extends Constructor>(Base: B) {
     }
 
     async unarchiveRuleset(session: Session, id: string) {
-      return await withTransaction(async (tx) => {
-        const { policy } = await getReadableRuleset(tx, session, id);
+      return await withLockedRuleset(session, id, async (tx, policy) => {
         policy.canUnarchive();
 
         const rows = await Rulesets.unarchive(tx, { id });

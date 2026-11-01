@@ -46,9 +46,11 @@ import { addCharacterLevel, createTestClassLevel, findPicks } from "@/tests/supp
 import { addClassSkills, addLists, findLists } from "@/tests/support/dnd3.5/links.ts";
 import { findFormValues, writeFieldValues } from "@/tests/support/ownerValues.ts";
 import {
+  bumpContentVersion,
   copyEntity,
   createTestRuleset,
   ownerSessionOf,
+  readView,
   sourcesOf,
   subscribeTestRuleset,
 } from "@/tests/support/rulesets.ts";
@@ -692,6 +694,23 @@ describe("RulesetsService", () => {
         refusal: "unprocessable",
         message: "Ruleset requires at least one of each: race, class, skill, feat",
       });
+    });
+
+    test("checks a published extension's switch to a ruleset on its content as committed, not as cached", async () => {
+      const { session } = await createTestUser();
+      const extension = await fork(session, await createParent());
+      await RulesetsService.publishRuleset(session, extension.id, { kind: "extension" });
+      // Its view cached empty, then its content written by another process, whose cache never told this one
+      await readView(extension.id);
+      await addPlayableContent(extension.id);
+      await bumpContentVersion(extension.id);
+      expect(
+        await RulesetsService.updateRuleset(session, extension.id, {
+          name: extension.name,
+          description: "",
+          kind: "ruleset",
+        }),
+      ).toMatchObject({ kind: "ruleset", status: "Published" });
     });
 
     test("switches a draft extension back to a ruleset before its content, which publishing checks", async () => {

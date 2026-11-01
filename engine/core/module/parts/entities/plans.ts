@@ -185,8 +185,8 @@ export interface MadeEntity {
 
 /**
  * What an owned entity's create writes past an entity's: its owner, what its activity records, and what it's refused
- * with when its owner holds another at its place (`taken`: one written since the view was read, which the view's check
- * missed).
+ * with when its owner holds another at its place (`taken`: what a save's check of its stored rows finds, which the
+ * view's may not have).
  */
 export interface OwnedCreatePlan extends EntityCreatePlan {
   activity: Record<string, unknown>;
@@ -216,8 +216,8 @@ export interface PlanOwner {
 /**
  * One save of an owner's progression (a class's levels at once): the owner as the view has it, the kind it owns
  * (`ownedType`), each owned entity it changes, by its place on the owner's track (`position`), with its edit and the
- * modifiers it adds and removes, and what its activity records. What refuses it when what it writes is gone since the
- * view was read is the server's, named in the rules' words (`Engine.rules().labelOf`).
+ * modifiers it adds and removes, and what its activity records. What refuses it when what the client read of it is gone
+ * is the server's, named in the rules' words (`Engine.rules().labelOf`).
  */
 export interface ProgressionPlan {
   activity: Record<string, unknown>;

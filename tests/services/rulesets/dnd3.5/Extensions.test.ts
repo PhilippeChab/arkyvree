@@ -533,7 +533,10 @@ describe("subscribing to an extension", () => {
     expect(subscribe(extension.id, session, archived.id)).rejects.toThrow(UnprocessableEntityError);
     expect(subscribe(extension.id, other)).rejects.toThrow(ForbiddenError);
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
-    await expectRefusedWith(subscribe(extension.id), 409);
+    expect(subscribe(extension.id)).rejects.toMatchObject({
+      code: 409,
+      message: "Already subscribed to this extension",
+    });
   });
 
   test("refuses extensions to a fork others use as one", async () => {
@@ -856,7 +859,7 @@ describe("unsubscribing from an extension", () => {
     // Alter Self's copies merge in Complete Warrior's lists, its Assassin Spells the winner of the books' namesakes
     const alterSelf = [...Dnd35View.of(view).spellsById.values()].find((spell) => spell.name === "Alter Self")!;
     const { id: copyId } = await withTransaction(async (tx) =>
-      (await editRuleset(EntityEdit, fork)).cowToEdit(tx, "spells", alterSelf, "Spell not found"),
+      (await editRuleset(EntityEdit, fork)).cowToEdit(tx, "spells", alterSelf),
     );
 
     await RulesetExtensionsService.unsubscribeExtension(session, fork.id, warrior.id);
