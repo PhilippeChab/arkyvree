@@ -24,7 +24,10 @@ type Request = (client: Client, id: string, fixture: Fixture) => Promise<{ json(
 /** A user signed in through the API, as `createSignedInUser` makes one. */
 type SignedIn = Awaited<ReturnType<typeof createSignedInUser>>;
 
-/** Whether a request acts on a live campaign or on an archived one. */
+/**
+ * The campaign a request acts on: a live one or an archived one (a permanent delete takes either, its policy refusing a
+ * live one).
+ */
 type State = "archived" | "live";
 
 const HIDDEN = ["hidden", "hidden", "hidden", "hidden"];
@@ -60,6 +63,12 @@ const WRITES: [string, Request, number, State][] = [
   ],
   ["an archive", (client, id) => client.api.campaigns[":id"].$delete({ param: { id } }), 403, "live"],
   ["an unarchive", (client, id) => client.api.campaigns[":id"].unarchive.$post({ param: { id } }), 403, "archived"],
+  [
+    "a live campaign's permanent delete",
+    (client, id) => client.api.campaigns[":id"].permanent.$delete({ param: { id } }),
+    403,
+    "live",
+  ],
   [
     "a permanent delete",
     (client, id) => client.api.campaigns[":id"].permanent.$delete({ param: { id } }),

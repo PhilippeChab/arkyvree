@@ -402,6 +402,7 @@ describe("CharactersService", () => {
         () => CharactersService.updateCharacter(s, id, { fields: { [CHARACTER_AGE]: 40 } }),
         () => CharactersService.enqueuePdf(s, id),
         () => CharactersService.archiveCharacter(s, id),
+        () => CharactersService.hardDeleteCharacter(s, id),
         () => CharacterSharingService.generateShareToken(s, id),
         () => CharacterSharingService.revokeShareToken(s, id),
       ];
