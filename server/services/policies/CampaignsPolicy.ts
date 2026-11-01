@@ -108,6 +108,16 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
     return true;
   }
 
+  /**
+   * The campaign's linked characters the session sees, as a filter of its links (`canRead` first): every one for the
+   * Game Master; a player's, all but the Private ones of other seats (`visibilityPlayerId`: theirs), as
+   * `canSeeCharacter` decides one.
+   */
+  canSeeCharacters() {
+    const player = this.canRead();
+    return { visibilityPlayerId: this.isGameMaster() ? undefined : player.id };
+  }
+
   canUpdate() {
     if (!this.isGameMaster()) throw new ForbiddenError("Only the Game Master can edit this campaign");
 
@@ -126,6 +136,28 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
   /** Whether the session's player row is the campaign's Game Master's. */
   isGameMaster() {
     return this.player?.role === "Game Master";
+  }
+
+  /**
+   * Whether the session reads a linked character (`link`; `character`, the session's policy on it) partially: a
+   * Partial one shows its name and physical traits alone to an incidental viewer, but its player, the Game Master and
+   * its editors (its owner, an active contributor) read it whole.
+   */
+  isPartialReader(link: CharacterLink, character: CharactersPolicy) {
+    return (
+      link.visibility === "Partial" &&
+      link.playerId !== this.player?.id &&
+      !this.isGameMaster() &&
+      !character.isEditor()
+    );
+  }
+
+  /**
+   * Whether the session reads a linked character's private notes (`character`, its policy on it): its editors' and the
+   * Game Master's.
+   */
+  isPrivateNotesReader(character: CharactersPolicy) {
+    return character.isEditor() || this.isGameMaster();
   }
 
   /** Whether the session may read the campaign: it holds a live seat in it, Player or Game Master. */

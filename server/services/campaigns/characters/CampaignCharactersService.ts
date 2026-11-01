@@ -25,15 +25,6 @@ import type { CharacterVisibility } from "@/shared/campaigns.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class CampaignCharactersService {
-  /**
-   * Whether a character linked with `visibility` shows the viewer its name and physical traits only: Partial hides the
-   * rest from incidental viewers. The link's player, the Game Master and anyone with edit rights (the character's owner
-   * or an active contributor) see it whole: they're not incidental viewers.
-   */
-  private isPartial(visibility: string, viewer: { canEdit: boolean; isGM: boolean; isOwner: boolean }) {
-    return visibility === "Partial" && !viewer.isOwner && !viewer.isGM && !viewer.canEdit;
-  }
-
   async enqueuePdf(session: Session, campaignId: string, characterId: string) {
     // Not found for every refusal, as for the character's own export.
     const character = await findExportableCharacter(session.userId, characterId, campaignId);
@@ -50,7 +41,6 @@ class CampaignCharactersService {
     policy.canSeeCharacter(link);
 
     const isOwner = link.playerId === member.id;
-    const isGM = policy.isGameMaster();
 
     // Full character build for all visible cases (Public, Partial, owner, GM)
     const character = await Characters.findOne(db, { id: characterId });
@@ -59,7 +49,7 @@ class CampaignCharactersService {
     const characterPolicy = await CharactersPolicy.for(db, session, character);
     const canEdit = characterPolicy.isEditor();
 
-    const isPartial = this.isPartial(link.visibility, { canEdit, isGM, isOwner });
+    const isPartial = policy.isPartialReader(link, characterPolicy);
 
     const viewer = {
       visibility: link.visibility as CharacterVisibility,
@@ -68,8 +58,8 @@ class CampaignCharactersService {
       canDownloadPdf: isAllowed(() => policy.canExportCharacter(characterPolicy)),
       isPartial,
     };
-    // Its editors and the Game Master read its private notes, which the others' sheet holds none of
-    const readsPrivateNotes = canEdit || isGM;
+    // Who reads its private notes is the policy's: the others' sheet holds none of them
+    const readsPrivateNotes = policy.isPrivateNotesReader(characterPolicy);
     return await withRulesetScope(db, character.rulesetId, async (scope) => {
       const input = await readCharacterInput(db, character);
       // A partial reading shows none of the character's children (3.5's bonded creatures)
@@ -89,18 +79,16 @@ class CampaignCharactersService {
   ) {
     const { member, policy } = await getReadableCampaign(db, session, campaignId);
 
-    const isGM = policy.isGameMaster();
-
     // Get all players in this campaign
     const campaignPlayers = await Players.findMany(db, { campaignId });
     const playerIds = campaignPlayers.map((p) => p.id);
 
     if (playerIds.length === 0) return { items: [], page: 1, nextPage: undefined };
 
-    // Get linked characters with pagination; GMs see all characters regardless of visibility
+    // Its linked characters the session sees, a page at a time
     const paginatedResult = await PlayerCharacters.findPage(
       db,
-      { playerIds, search: where.search, visibilityPlayerId: isGM ? undefined : member.id },
+      { playerIds, search: where.search, ...policy.canSeeCharacters() },
       pagination,
     );
     const linkedCharacters = paginatedResult.items;
@@ -130,9 +118,8 @@ class CampaignCharactersService {
       characters
         .filter((char) => {
           const meta = characterMeta.get(char.id);
-          const canEdit = !!policies.get(char.id)?.isEditor();
-          const isOwner = meta?.playerId === member.id;
-          return this.isPartial(meta?.visibility ?? "Private", { canEdit, isGM, isOwner });
+          const characterPolicy = policies.get(char.id);
+          return !!meta && !!characterPolicy && policy.isPartialReader(meta, characterPolicy);
         })
         .map((char) => char.id),
     );
