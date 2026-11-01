@@ -57,9 +57,9 @@ export default class EntityRevert {
       throw new NotFoundError("Entity is not an override in this ruleset");
 
     const copyId = snapshot.forkedEntityId;
-    // The copy's row locked before what names it moves: a character's write holds its ruleset's chain shared, so it
-    // never runs alongside, but what else names the copy by its foreign key (which holds it shared) commits first, so
-    // it moves with the rest, and the delete never meets it
+    // The copy's row locked before what names it moves: a character's write that names an entity holds its ruleset's
+    // chain shared, so it never runs alongside, but what else names the copy by its foreign key (which holds it
+    // shared) commits first, so it moves with the rest, and the delete never meets it
     await Entities.lock(tx, { id: copyId });
     await names?.assertRestoreAvailable(tx, entityType, sourceEntityId, copyId);
     for (const ownedType of Engine.storage().ownedKinds(entityType))

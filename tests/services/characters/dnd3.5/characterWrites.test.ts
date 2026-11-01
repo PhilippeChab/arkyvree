@@ -9,24 +9,26 @@ import { CharacterInventory, Characters, Entities, Rulesets } from "@/server/rep
 import { BUSY_CHARACTER_MESSAGE } from "@/server/services/characters/characterWrites.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
+import type { Session } from "@/shared/relations.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { measure, runWhileLocked } from "@/tests/support/database.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
-import { bumpContentVersion, readView } from "@/tests/support/rulesets.ts";
+import { bumpContentVersion, invalidateSeededRuleset, readView } from "@/tests/support/rulesets.ts";
 import { findSeededCharacter, getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
-/** What a character's write waits at while another holds the character's row: its own lock of it, before it reads. */
+/** What a character's write waits at while another holds the character's row: its own lock of it. */
 const CHARACTER_LOCK = /from "character"\."characters".*for no key update/is;
 
 const pool = createTestPool();
 
 /** A write of a character that reads its ruleset's view: an item of its ruleset, made for it, added to its inventory. */
-async function addItem(characterId: string, rulesetId: string) {
+async function addItem(characterId: string, rulesetId: string, session: Session = makeSession()) {
   const [item] = await Entities.create<Item>(db, "items", { name: `Probe Item ${uniqueId()}`, rulesetId });
-  // Written past the ruleset's helper, which would bump its version and hold its row for the test: its view dropped
-  RulesetViews.invalidate(rulesetId);
-  return () => CharacterInventoryService.addItem(makeSession(), characterId, item.id, 1, null, null, null, []);
+  // Written past the ruleset's helper, which would bump its version and hold its row for the test: its view dropped,
+  // now and once the rollback undoes the item
+  invalidateSeededRuleset(rulesetId);
+  return () => CharacterInventoryService.addItem(session, characterId, item.id, 1, null, null, null, []);
 }
 
 afterAll(() => pool.end());
@@ -40,7 +42,7 @@ test("a character's write waits for a write to its ruleset, which it reads share
   expect(entry.characterId).toBe(character.id);
 });
 
-test("a character's write locks the character's row before it reads it, one of its own columns or one of its ruleset", async () => {
+test("a character's write waits at its own lock of the character's row, one of its own columns or one of its ruleset", async () => {
   // Seeded characters: ones another connection sees, so it can hold their rows. One each: a write's lock lasts the
   // test's transaction
   const named = await findSeededCharacter("Fenn Ashwalker");
@@ -118,18 +120,17 @@ test("a character's write reads its ruleset's rows a write committed after its v
   await bumpContentVersion(rulesetId);
   const entry = await CharacterInventoryService.addItem(makeSession(), character.id, item.id, 1, null, null, null, []);
   expect(entry.characterId).toBe(character.id);
+  // What the write cached of the item goes once the rollback undoes it
+  invalidateSeededRuleset(rulesetId);
 });
 
 test("a stranger's write to a character is refused before it reads the ruleset's view", async () => {
   const character = await createTestCharacter(SEED_USER_ID);
   const { session: stranger } = await createTestUser();
   const { rulesetId } = await getSeedCtx();
-  const refuse = async () =>
-    (
-      await measure(() =>
-        expectRefusedWith(CharactersService.updateCharacter(stranger, character.id, { name: "Stranger" }), 404),
-      )
-    ).timing.queryCount;
+  // A write that reads the ruleset's view, a stranger's
+  const write = await addItem(character.id, rulesetId, stranger);
+  const refuse = async () => (await measure(() => expectRefusedWith(write(), 404))).timing.queryCount;
 
   RulesetViews.invalidate(rulesetId);
   const cold = await refuse();
