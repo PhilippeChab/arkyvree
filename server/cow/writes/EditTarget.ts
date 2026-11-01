@@ -15,7 +15,7 @@ const CUSTOMIZATION_REPOS = {
  * What refuses a customization the client read that's gone, or isn't the entity's, on the ruleset's own entity or on
  * the copy a write made: the user reads it as it is.
  */
-export const GONE_CUSTOMIZATION = "Customization source no longer exists; refresh the entity";
+const GONE_CUSTOMIZATION = "Customization source no longer exists; refresh the entity";
 
 /**
  * The row a write to a ruleset's entity changes (`id`), as copy-on-write resolved the entity the write named

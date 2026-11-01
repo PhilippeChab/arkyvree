@@ -10,9 +10,8 @@ import RulesetViews from "./RulesetViews.ts";
  * source chain's shared, its view fresh, read at the content versions its locks read (`versions`, committed: the
  * ruleset's own before the write). Only `withLockedRulesetScope` makes one: copy-on-write's writes take nothing else.
  */
-export interface LockedRulesetScope extends RulesetScope {
+export interface LockedRulesetScope extends SharedRulesetScope {
   readonly [LOCKED]: true;
-  versions: ReadonlyMap<string, number>;
 }
 
 /**
@@ -23,6 +22,14 @@ export interface RulesetScope {
   ruleset: NonNullable<Awaited<ReturnType<typeof Rulesets.findOne>>>;
   rulesetData: RulesetData;
   sources: RulesetSources;
+}
+
+/**
+ * A ruleset's scope as a write that reads it holds it, under its shared locks (`withSharedRulesetScope`): its view
+ * fresh, read at the content versions its locks read (`versions`), which its target paths are checked by too.
+ */
+export interface SharedRulesetScope extends RulesetScope {
+  versions: ReadonlyMap<string, number>;
 }
 
 /** What only a locked scope holds: no other value has it, so no scope reads as locked but one its lock made. */
@@ -114,7 +121,7 @@ export async function withRulesetScopes<T>(
 export async function withSharedRulesetScope<T, B = undefined>(
   tx: Db,
   rulesetId: string,
-  fn: (scope: RulesetScope, checked: B) => Promise<T>,
+  fn: (scope: SharedRulesetScope, checked: B) => Promise<T>,
   { before }: { before?: () => Promise<B> } = {},
 ): Promise<T> {
   const own = await Rulesets.lockVersions(tx, { ids: [rulesetId] });
@@ -127,5 +134,5 @@ export async function withSharedRulesetScope<T, B = undefined>(
   const checked = (await before?.()) as B;
   const versions = new Map([...own, ...chain]);
   const rulesetData = await RulesetViews.getFreshData(tx, sources, ruleset.baseRules, versions);
-  return await fn({ ruleset, rulesetData, sources }, checked);
+  return await fn({ ruleset, rulesetData, sources, versions }, checked);
 }

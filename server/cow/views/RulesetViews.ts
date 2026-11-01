@@ -8,7 +8,7 @@ import type { BaseRules } from "@/shared/enums.ts";
 
 import CowDataReader from "./CowDataReader.ts";
 import RawDataReader from "./RawDataReader.ts";
-import type { LockedRulesetScope, RulesetScope } from "./scope.ts";
+import type { RulesetScope, SharedRulesetScope } from "./scope.ts";
 
 /**
  * What the cache keeps of a ruleset (`value`), and the content versions of the rulesets whose writes reach it, as they
@@ -20,11 +20,11 @@ interface Versioned<T> {
 }
 
 /**
- * A ruleset and its sources: what its target paths are listed of; a write's, under its lock (`LockedRulesetScope`),
- * with its view and the versions its lock read.
+ * A ruleset and its sources: what its target paths are listed of; a write's, under its locks (a `LockedRulesetScope`,
+ * a `SharedRulesetScope`), with its view and the versions its locks read.
  */
 type TargetPathScope = Pick<RulesetScope, "ruleset" | "sources"> &
-  Partial<Pick<LockedRulesetScope, "rulesetData" | "versions">>;
+  Partial<Pick<SharedRulesetScope, "rulesetData" | "versions">>;
 
 /**
  * The rulesets' cache: what a ruleset's view is built from, read once and kept for every reader, and what the engine
@@ -48,10 +48,12 @@ class RulesetViews {
 
   /**
    * The rulesets whose writes reach a ruleset's own rows (`rulesetId`, of the chain `ruleset` reads): its own, and, of
-   * the ruleset read, its extensions', whose restore repoints the rows naming the copy it removes.
+   * the ruleset read, its source chain's: an extension's restore repoints the rows naming the copy it removes, and a
+   * delete in any of them unlinks the rows naming what it deletes (the database's `apply_delete_rules`).
    */
   private static rowWritersOf(rulesetId: string, ruleset: RulesetSources) {
-    return rulesetId === ruleset.id ? [rulesetId, ...ruleset.extensionIds] : [rulesetId];
+    if (rulesetId !== ruleset.id) return [rulesetId];
+    return [rulesetId, ...ruleset.extensionIds, ...(ruleset.parentId ? [ruleset.parentId] : [])];
   }
 
   /** The versions of `ids`, of those a write's lock read (`current`). */

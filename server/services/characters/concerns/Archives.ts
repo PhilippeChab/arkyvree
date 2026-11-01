@@ -60,7 +60,7 @@ export function Archives<B extends Constructor>(Base: B) {
 
           return { id: characterId };
         },
-        Visibility.All,
+        { visibility: Visibility.All },
       );
     }
 
@@ -87,7 +87,7 @@ export function Archives<B extends Constructor>(Base: B) {
 
           return unarchivedCharacter;
         },
-        Visibility.ArchivedOnly,
+        { visibility: Visibility.ArchivedOnly },
       );
     }
   }

@@ -1,10 +1,11 @@
 import type { Db } from "@/drizzle/database.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { db } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { CharacterContributors, Characters, type Pagination, Users, Visibility } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { toPublicUser } from "@/server/services/authentication/index.ts";
+import { withCharacterLock } from "@/server/services/characters/characterWrites.ts";
 import { findReadableCharacter } from "@/server/services/characters/editableCharacter.ts";
 import {
   checkNewContributor,
@@ -35,8 +36,22 @@ class CharacterContributorsService {
     });
   }
 
+  /**
+   * Runs a write of an invite (`contributorId`) under its character's lock (`withCharacterLock`, archived or not),
+   * which decides the session's rights itself: an unknown invite refused as one the session can't see. An invite's
+   * character never changes, so it's read before the lock.
+   */
+  private async withInviteCharacter<T>(contributorId: string, write: (tx: Db) => Promise<T>) {
+    const contributor = await CharacterContributors.findOne(db, { id: contributorId });
+    if (!contributor) throw new NotFoundError(INVITE_NOT_FOUND);
+    return await withCharacterLock(contributor.characterId, write, {
+      notFound: INVITE_NOT_FOUND,
+      visibility: Visibility.All,
+    });
+  }
+
   async acceptInvite(session: Session, contributorId: string) {
-    return await withTransaction(async (tx) => {
+    return await this.withInviteCharacter(contributorId, async (tx) => {
       const contributor = await getPendingInvite(tx, session, CharacterContributors, contributorId, INVITE_NOT_FOUND);
 
       const character = await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All);
@@ -85,48 +100,52 @@ class CharacterContributorsService {
   }
 
   async inviteContributor(session: Session, characterId: string, email: string) {
-    const { contributor, emailData } = await withTransaction(async (tx) => {
-      const character = await Characters.findOne(tx, { id: characterId }, Visibility.All);
-      if (!character) throw new NotFoundError("Character not found");
+    const { contributor, emailData } = await withCharacterLock(
+      characterId,
+      async (tx) => {
+        const character = await Characters.findOne(tx, { id: characterId }, Visibility.All);
+        if (!character) throw new NotFoundError("Character not found");
 
-      (await CharactersPolicy.for(tx, session, character)).canInviteContributors();
+        (await CharactersPolicy.for(tx, session, character)).canInviteContributors();
 
-      const user = await Users.findOne(tx, { emailAddress: email });
+        const user = await Users.findOne(tx, { emailAddress: email });
 
-      if (user && user.id === character.userId)
-        throw new ConflictError("Cannot invite the character owner as a contributor");
+        if (user && user.id === character.userId)
+          throw new ConflictError("Cannot invite the character owner as a contributor");
 
-      await checkNewContributor(tx, CharacterContributors, { characterId }, user, email);
+        await checkNewContributor(tx, CharacterContributors, { characterId }, user, email);
 
-      const rows = await CharacterContributors.create(tx, {
-        characterId,
-        email,
-        role: "Editor",
-        invitedBy: session.userId,
-        userId: user?.id,
-      });
-      const contributor = rows[0];
-
-      await createActivityWithNotifications(tx, {
-        userId: session.userId,
-        targetId: contributor.id,
-        targetType: TARGET_TYPES.characterContributors,
-        type: "inviteCharacterContributor",
-        data: { email, characterId, characterName: character.name },
-      });
-
-      const names = await getInviteNames(tx, session, user, email);
-
-      return {
-        contributor,
-        emailData: {
+        const rows = await CharacterContributors.create(tx, {
+          characterId,
           email,
-          ...names,
-          characterName: character.name,
-          contributorId: contributor.id,
-        },
-      };
-    });
+          role: "Editor",
+          invitedBy: session.userId,
+          userId: user?.id,
+        });
+        const contributor = rows[0];
+
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: contributor.id,
+          targetType: TARGET_TYPES.characterContributors,
+          type: "inviteCharacterContributor",
+          data: { email, characterId, characterName: character.name },
+        });
+
+        const names = await getInviteNames(tx, session, user, email);
+
+        return {
+          contributor,
+          emailData: {
+            email,
+            ...names,
+            characterName: character.name,
+            contributorId: contributor.id,
+          },
+        };
+      },
+      { visibility: Visibility.All },
+    );
 
     emailService.send({
       to: emailData.email,
@@ -144,36 +163,40 @@ class CharacterContributorsService {
   }
 
   async leaveCharacter(session: Session, characterId: string) {
-    return await withTransaction(async (tx) => {
-      const character = await Characters.findOne(tx, { id: characterId }, Visibility.All);
-      if (!character) throw new NotFoundError("Character not found");
+    return await withCharacterLock(
+      characterId,
+      async (tx) => {
+        const character = await Characters.findOne(tx, { id: characterId }, Visibility.All);
+        if (!character) throw new NotFoundError("Character not found");
 
-      (await CharactersPolicy.for(tx, session, character)).canReadContributors();
+        (await CharactersPolicy.for(tx, session, character)).canReadContributors();
 
-      const contributor = await CharacterContributors.findOne(tx, {
-        characterId,
-        userId: session.userId,
-        status: "Active",
-      });
-      if (!contributor) throw new NotFoundError("You are not a contributor of this character");
+        const contributor = await CharacterContributors.findOne(tx, {
+          characterId,
+          userId: session.userId,
+          status: "Active",
+        });
+        if (!contributor) throw new NotFoundError("You are not a contributor of this character");
 
-      const rows = await CharacterContributors.update(tx, { status: "Revoked" }, { id: contributor.id });
-      const updated = rows[0];
+        const rows = await CharacterContributors.update(tx, { status: "Revoked" }, { id: contributor.id });
+        const updated = rows[0];
 
-      await createActivityWithNotifications(tx, {
-        userId: session.userId,
-        targetId: updated.id,
-        targetType: TARGET_TYPES.characterContributors,
-        type: "leaveCharacter",
-        data: { characterId, characterName: character.name },
-      });
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: updated.id,
+          targetType: TARGET_TYPES.characterContributors,
+          type: "leaveCharacter",
+          data: { characterId, characterName: character.name },
+        });
 
-      return updated;
-    });
+        return updated;
+      },
+      { visibility: Visibility.All },
+    );
   }
 
   async rejectInvite(session: Session, contributorId: string) {
-    return await withTransaction(async (tx) => {
+    return await this.withInviteCharacter(contributorId, async (tx) => {
       const contributor = await getPendingInvite(tx, session, CharacterContributors, contributorId, INVITE_NOT_FOUND);
 
       const character = await Characters.findOne(tx, { id: contributor.characterId }, Visibility.All);
@@ -184,34 +207,38 @@ class CharacterContributorsService {
 
   /** Revokes a contributor of the character (`characterId`), or its pending invite: another character's is a 404. */
   async revokeContributor(session: Session, characterId: string, contributorId: string) {
-    return await withTransaction(async (tx) => {
-      const found = await CharacterContributors.findOne(tx, { id: contributorId });
-      const contributor = found?.characterId === characterId ? found : undefined;
-      const readable = contributor && (await findReadableCharacter(tx, session, contributor.characterId));
-      // A contributor of a character the session may not read is refused as an unknown one is: the character's
-      // existence isn't revealed
-      if (!contributor || !readable) throw new NotFoundError("Contributor not found");
+    return await withCharacterLock(
+      characterId,
+      async (tx) => {
+        const found = await CharacterContributors.findOne(tx, { id: contributorId });
+        const contributor = found?.characterId === characterId ? found : undefined;
+        const readable = contributor && (await findReadableCharacter(tx, session, contributor.characterId));
+        // A contributor of a character the session may not read is refused as an unknown one is: the character's
+        // existence isn't revealed
+        if (!contributor || !readable) throw new NotFoundError("Contributor not found");
 
-      const { character, policy } = readable;
-      policy.canManageContributors();
+        const { character, policy } = readable;
+        policy.canManageContributors();
 
-      if (contributor.status !== "Active" && contributor.status !== "Pending")
-        throw new ConflictError("Contributor is not active or pending");
+        if (contributor.status !== "Active" && contributor.status !== "Pending")
+          throw new ConflictError("Contributor is not active or pending");
 
-      const prevStatus = contributor.status;
-      const rows = await CharacterContributors.update(tx, { status: "Revoked" }, { id: contributorId });
-      const updated = rows[0];
+        const prevStatus = contributor.status;
+        const rows = await CharacterContributors.update(tx, { status: "Revoked" }, { id: contributorId });
+        const updated = rows[0];
 
-      await createActivityWithNotifications(tx, {
-        userId: session.userId,
-        targetId: updated.id,
-        targetType: TARGET_TYPES.characterContributors,
-        type: "revokeCharacterContributor",
-        data: { contributorId, prevStatus, characterId: contributor.characterId, characterName: character.name },
-      });
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: updated.id,
+          targetType: TARGET_TYPES.characterContributors,
+          type: "revokeCharacterContributor",
+          data: { contributorId, prevStatus, characterId: contributor.characterId, characterName: character.name },
+        });
 
-      return updated;
-    });
+        return updated;
+      },
+      { notFound: "Contributor not found", visibility: Visibility.All },
+    );
   }
 }
 

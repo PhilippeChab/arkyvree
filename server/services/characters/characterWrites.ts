@@ -1,5 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
-import { type RulesetScope, withSharedRulesetScope } from "@/server/cow/index.ts";
+import { type SharedRulesetScope, withSharedRulesetScope } from "@/server/cow/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Characters, Visibility } from "@/server/repositories/index.ts";
 import type { RulesetsPolicy } from "@/server/services/policies/index.ts";
@@ -7,6 +7,12 @@ import { getReadableRuleset, withBoundedWrite } from "@/server/services/rulesets
 import type { Character, Session } from "@/shared/relations.ts";
 
 import { findEditableCharacterOrChild, getEditableCharacter } from "./editableCharacter.ts";
+
+/** Which of a character's rows a write of its own row alone finds (`visibility`), and what an unknown one answers. */
+interface CharacterLockOptions {
+  notFound?: string;
+  visibility?: Visibility;
+}
 
 /** Who may make a character's write: its own editors (`getEditableCharacter`), or a child's parent's too. */
 type CharacterAccess = "editor" | "editorOrChild";
@@ -30,7 +36,7 @@ async function findWritable(tx: Db, session: Session, characterId: string, acces
 export async function withCharacterCreate<T>(
   session: Session,
   rulesetId: string,
-  write: (tx: Db, scope: RulesetScope, policy: RulesetsPolicy) => Promise<T>,
+  write: (tx: Db, scope: SharedRulesetScope, policy: RulesetsPolicy) => Promise<T>,
 ): Promise<T> {
   return await withBoundedWrite(BUSY_CHARACTER_MESSAGE, async (tx) =>
     withSharedRulesetScope(tx, rulesetId, async (scope, policy) => write(tx, scope, policy), {
@@ -42,17 +48,18 @@ export async function withCharacterCreate<T>(
 /**
  * Runs a write of a character's own row alone, which reads none of its ruleset (`characterId`: its archive, its
  * contributors, its share link), and decides the session's rights itself: the row locked first (`visibility`: an
- * archived one too, for its unarchive or its delete), so its writes take turns, an unknown one refused as not found. A
+ * archived one too, for its unarchive or its delete), so its writes take turns, an unknown one refused as not found
+ * (`notFound`: what the write names, a contributor's own 404 under an unknown character's path). A
  * write that waited past the lock wait is refused as a conflict (`BUSY_CHARACTER_MESSAGE`).
  */
 export async function withCharacterLock<T>(
   characterId: string,
   write: (tx: Db) => Promise<T>,
-  visibility: Visibility = Visibility.UnarchivedOnly,
+  { notFound = "Character not found", visibility = Visibility.UnarchivedOnly }: CharacterLockOptions = {},
 ): Promise<T> {
   return await withBoundedWrite(BUSY_CHARACTER_MESSAGE, async (tx) => {
     if (!(await Characters.lock(tx, { id: characterId, visibility }, "no key update")))
-      throw new NotFoundError("Character not found");
+      throw new NotFoundError(notFound);
     return await write(tx);
   });
 }
@@ -70,7 +77,7 @@ export async function withCharacterLock<T>(
 export async function withCharacterWrite<T>(
   session: Session,
   characterId: string,
-  write: (tx: Db, scope: RulesetScope, character: Character) => Promise<T>,
+  write: (tx: Db, scope: SharedRulesetScope, character: Character) => Promise<T>,
   { access = "editor" }: { access?: CharacterAccess } = {},
 ): Promise<T> {
   return await withBoundedWrite(BUSY_CHARACTER_MESSAGE, async (tx) => {

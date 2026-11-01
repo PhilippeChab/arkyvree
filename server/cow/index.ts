@@ -18,6 +18,7 @@ export { default as RulesetViews } from "./views/RulesetViews.ts";
 export {
   type LockedRulesetScope,
   type RulesetScope,
+  type SharedRulesetScope,
   withLockedRulesetScope,
   withRulesetScope,
   withRulesetScopes,

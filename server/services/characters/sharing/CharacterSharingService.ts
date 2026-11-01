@@ -1,10 +1,11 @@
 import { Engine } from "@/engine/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { db } from "@/server/database/index.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
 import { Activities, Characters, Visibility } from "@/server/repositories/index.ts";
 import { getSlotUrl } from "@/server/services/attachments/index.ts";
 import { readCharacterInput, readChildInputs } from "@/server/services/characters/characterInputs.ts";
+import { withCharacterLock } from "@/server/services/characters/characterWrites.ts";
 import { renderCharacterSheet } from "@/server/services/characters/printedSheet.ts";
 import { CharactersPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
@@ -21,25 +22,29 @@ class CharacterSharingService {
   }
 
   async generateShareToken(session: Session, characterId: string) {
-    return await withTransaction(async (tx) => {
-      // Archived or not: its policy refuses an archived one as an unknown one
-      const characterRecord = await Characters.findOne(tx, { id: characterId }, Visibility.All);
-      if (!characterRecord) throw new NotFoundError("Character not found");
+    return await withCharacterLock(
+      characterId,
+      async (tx) => {
+        // Archived or not: its policy refuses an archived one as an unknown one
+        const characterRecord = await Characters.findOne(tx, { id: characterId }, Visibility.All);
+        if (!characterRecord) throw new NotFoundError("Character not found");
 
-      (await CharactersPolicy.for(tx, session, characterRecord)).canShare();
+        (await CharactersPolicy.for(tx, session, characterRecord)).canShare();
 
-      const shareToken = crypto.randomUUID();
-      const [updated] = await Characters.update(tx, { shareToken }, { id: characterId });
+        const shareToken = crypto.randomUUID();
+        const [updated] = await Characters.update(tx, { shareToken }, { id: characterId });
 
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: characterId,
-        targetType: TARGET_TYPES.characters,
-        type: "generateShareToken",
-      });
+        await Activities.create(tx, {
+          userId: session.userId,
+          targetId: characterId,
+          targetType: TARGET_TYPES.characters,
+          type: "generateShareToken",
+        });
 
-      return updated;
-    });
+        return updated;
+      },
+      { visibility: Visibility.All },
+    );
   }
 
   /** A shared character's sheet, without its private notes: its token is the one its reader sent. */
@@ -57,24 +62,28 @@ class CharacterSharingService {
   }
 
   async revokeShareToken(session: Session, characterId: string) {
-    return await withTransaction(async (tx) => {
-      // Archived or not: its policy refuses an archived one as an unknown one
-      const characterRecord = await Characters.findOne(tx, { id: characterId }, Visibility.All);
-      if (!characterRecord) throw new NotFoundError("Character not found");
+    return await withCharacterLock(
+      characterId,
+      async (tx) => {
+        // Archived or not: its policy refuses an archived one as an unknown one
+        const characterRecord = await Characters.findOne(tx, { id: characterId }, Visibility.All);
+        if (!characterRecord) throw new NotFoundError("Character not found");
 
-      (await CharactersPolicy.for(tx, session, characterRecord)).canShare();
+        (await CharactersPolicy.for(tx, session, characterRecord)).canShare();
 
-      const [updated] = await Characters.update(tx, { shareToken: null }, { id: characterId });
+        const [updated] = await Characters.update(tx, { shareToken: null }, { id: characterId });
 
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: characterId,
-        targetType: TARGET_TYPES.characters,
-        type: "revokeShareToken",
-      });
+        await Activities.create(tx, {
+          userId: session.userId,
+          targetId: characterId,
+          targetType: TARGET_TYPES.characters,
+          type: "revokeShareToken",
+        });
 
-      return updated;
-    });
+        return updated;
+      },
+      { visibility: Visibility.All },
+    );
   }
 }
 

@@ -340,7 +340,7 @@ describe("EntitiesService: a class's progression", () => {
     );
   });
 
-  test("refuses a save dropping a modifier deleted since the view was read as not found, on its own class", async () => {
+  test("refuses a save dropping a modifier deleted since the client read it as not found, on its own class", async () => {
     const { session, fork, klass, levelId } = await forkWithClass("Wizard");
     const { saved } = await save(session, fork.id, klass.id, {
       levels: [{ levelId: levelId(1), fields: { [CLASS_LEVEL_BAB]: 0, [CLASS_LEVEL_SKILL_POINTS]: 4 } }],
@@ -369,11 +369,11 @@ describe("EntitiesService: a class's progression", () => {
     expect(await findSpecializationPick(third)).toBeUndefined();
   });
 
-  test("refuses a save dropping a modifier deleted since the view was read as not found, on an inherited class's copy", async () => {
+  test("refuses a save dropping a modifier deleted since the client read it as not found, on an inherited class's copy", async () => {
     const { session, fork, klass, levelId } = await forkWithClass("Wizard");
     const { pools } = await EntitiesService.getProgression(await ownerSessionOf(fork.id), fork.id, "classes", klass.id);
     const pool = pools.find((p) => p.name === "Wizard Specialization")!;
-    // Its source's pick deleted since the view was read: the copy the save makes holds none of it
+    // Its source's pick deleted since the client read it: the copy the save makes holds none of it
     await Modifiers.delete(db, { id: (await findSpecializationPick(levelId(1)))!.id });
 
     await expectRefusedWith(
@@ -392,7 +392,7 @@ describe("EntitiesService: a class's progression", () => {
     ).toBeUndefined();
   });
 
-  test("refuses a save whose class or level is gone since the view was read, each named in the rules' word", async () => {
+  test("refuses a save whose class or level is gone since the client read it, each named in the rules' word", async () => {
     const session = makeSession();
     const fork = await createSeededTestRuleset(session.userId);
     const level = await createTestClassLevel(fork.id);

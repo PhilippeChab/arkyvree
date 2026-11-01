@@ -117,6 +117,14 @@ const LOCKED_WRITES = [
     message:
       "A ruleset's write opens its transaction through its helper (`withRulesetWrite`, `withLockedRuleset`, `withRulesetLock` from `rulesetWrites.ts`), which locks the ruleset before it reads anything: not `withTransaction`.",
   },
+  {
+    folder: "server/services/characters/",
+    helpers: "server/services/characters/characterWrites.ts",
+    lock: "withSharedRulesetScope",
+    others: ["server/services/characters/pdf.ts"],
+    message:
+      "A character's write opens its transaction through its helper (`withCharacterWrite`, `withCharacterLock`, `withCharacterCreate` from `characterWrites.ts`), which locks its ruleset's chain and the character before it reads anything: not `withTransaction`.",
+  },
 ];
 
 const METHOD_VERBS = JSON.parse(

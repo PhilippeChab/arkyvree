@@ -438,7 +438,9 @@ row locked, its source chain's shared, its view read fresh under them, so no oth
 ruleset it inherits from, runs meanwhile, and a modifier, a requirement or a level the view shows stays until the
 write ends. A modifier or requirement the client names that the view no longer shows (another write removed it) is
 refused as not found (404), for both kinds, and so is a modifier a class's progression save drops
-(`EditTarget.resolveCustomizations`). Ordinary reads take no lock, and different rulesets are edited independently.
+(`EditTarget.resolveCustomizations`). One of an entity another write copied since the client read it, a copy deleted
+since included, is refused as stale (409): its ids are the source's, which the copy doesn't keep
+(`CustomizationEdit.refuseCopiedSince`). Ordinary reads take no lock, and different rulesets are edited independently.
 First COW copies run under the same lock. Modifier
 deletion removes the selected modifiers and batches removal of their requirements
 and activity records.

@@ -376,7 +376,7 @@ describe("conventions", () => {
           "server/services/rulesets/entities/Writer.ts": opening,
           "server/services/rulesets/helped.ts":
             'import { withRulesetWrite } from "./rulesetWrites.ts";\nexport const f = () => withRulesetWrite(session, id, g);\n',
-          "server/services/characters/Other.ts": opening,
+          "server/services/campaigns/Other.ts": opening,
           "server/services/rulesets/concerns/Stars.ts": opening,
           "server/services/rulesets/direct.ts": "export const f = () => db.transaction(g);\n",
           "server/services/rulesets/scoped.ts":
@@ -389,6 +389,31 @@ describe("conventions", () => {
       "writes-in-transactions server/services/rulesets/direct.ts",
       "writes-in-transactions server/services/rulesets/entities/Writer.ts",
       "writes-in-transactions server/services/rulesets/scoped.ts",
+    ]);
+  });
+
+  test("a character's write opens its transaction through its helper alone, which locks the character first", async () => {
+    const opening =
+      'import { withTransaction } from "@/server/database/index.ts";\nexport const f = () => withTransaction(g);\n';
+    const shared =
+      'import { withSharedRulesetScope } from "@/server/cow/index.ts";\nexport const f = () => withSharedRulesetScope(tx, id, g);\n';
+    expect(
+      await lintRepo(
+        {
+          "server/services/characters/characterWrites.ts": opening + shared,
+          "server/services/characters/levels/Writer.ts": opening,
+          "server/services/characters/helped.ts":
+            'import { withCharacterWrite } from "./characterWrites.ts";\nexport const f = () => withCharacterWrite(session, id, g);\n',
+          "server/services/characters/pdf.ts": opening,
+          "server/services/characters/scoped.ts": shared,
+          "server/services/campaigns/scoped.ts": shared,
+        },
+        ["writes-in-transactions"],
+      ),
+    ).toEqual([
+      "writes-in-transactions server/services/campaigns/scoped.ts",
+      "writes-in-transactions server/services/characters/levels/Writer.ts",
+      "writes-in-transactions server/services/characters/scoped.ts",
     ]);
   });
 
