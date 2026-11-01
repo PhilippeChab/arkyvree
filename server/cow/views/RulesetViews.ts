@@ -47,13 +47,15 @@ class RulesetViews {
   }
 
   /**
-   * The rulesets whose writes reach a ruleset's own rows (`rulesetId`, of the chain `ruleset` reads): its own, and, of
-   * the ruleset read, its source chain's: an extension's restore repoints the rows naming the copy it removes, and a
-   * delete in any of them unlinks the rows naming what it deletes (the database's `apply_delete_rules`).
+   * The rulesets whose writes reach a ruleset's own rows (`rulesetId`, of the chain `ruleset` reads): its own, and its
+   * sources': of the ruleset read, its source chain's (an extension's restore repoints the rows naming the copy it
+   * removes), and of an extension in it, its parent's, the ruleset's own (an extension subscribes to none); a delete in
+   * any of them unlinks the rows naming what it deletes (the database's `apply_delete_rules`).
    */
   private static rowWritersOf(rulesetId: string, ruleset: RulesetSources) {
-    if (rulesetId !== ruleset.id) return [rulesetId];
-    return [rulesetId, ...ruleset.extensionIds, ...(ruleset.parentId ? [ruleset.parentId] : [])];
+    const parent = ruleset.parentId ? [ruleset.parentId] : [];
+    if (rulesetId === ruleset.id) return [rulesetId, ...ruleset.extensionIds, ...parent];
+    return ruleset.extensionIds.includes(rulesetId) ? [rulesetId, ...parent] : [rulesetId];
   }
 
   /** The versions of `ids`, of those a write's lock read (`current`). */

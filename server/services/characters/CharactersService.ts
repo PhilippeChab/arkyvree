@@ -27,12 +27,25 @@ import type { Session } from "@/shared/relations.ts";
 
 import { describeCharacterCards } from "./characterCards.ts";
 import { readCharacterInput, readChildInputs } from "./characterInputs.ts";
-import { withCharacterCreate, withCharacterWrite } from "./characterWrites.ts";
+import { withCharacterCreate, withCharacterLock, withCharacterWrite } from "./characterWrites.ts";
 import { Archives } from "./concerns/Archives.ts";
 import { Imports } from "./concerns/Imports.ts";
 import { findEditableCharacterOrChild, findReadableCharacter } from "./editableCharacter.ts";
 import { createNewCharacter } from "./newCharacterWrites.ts";
 import { enqueueCharacterPdf, findExportableCharacter } from "./pdf.ts";
+
+/** A character's edit as its sheet sends it: its own columns, its fields, its picked links, and its row's token. */
+interface CharacterEdit {
+  fields?: FieldsRequest;
+  links?: Record<string, string[]>;
+  name?: string;
+  notes?: string;
+  privateNotes?: string;
+  updatedAt?: string;
+}
+
+/** What a character's ruleset plans of an edit's fields and picked links (`CharacterEngine.planEdit`). */
+type CharacterEditPlan = ReturnType<ReturnType<ReturnType<typeof Engine.for>["character"]>["planEdit"]>;
 
 class CharactersService extends include(Object, Archives, Imports) {
   /**
@@ -51,6 +64,41 @@ class CharactersService extends include(Object, Archives, Imports) {
       canReadContributors: isAllowed(() => policy.canReadContributors()),
       canShare: isAllowed(() => policy.canShare()),
     };
+  }
+
+  /**
+   * Writes a character's edit (`edit`) under its write's lock: its own columns, refused as stale when its token is
+   * behind (`updatedAt`), and what its ruleset planned of its fields and its picked links (`planned`), and an activity.
+   */
+  private async applyEdit(
+    tx: Db,
+    session: Session,
+    characterId: string,
+    edit: CharacterEdit,
+    planned?: CharacterEditPlan,
+  ) {
+    const { fields: _fields, links: _links, updatedAt: expectedUpdatedAt, ...characterFields } = edit;
+    const updatedRows = await Characters.update(
+      tx,
+      { ...characterFields, ...planned?.own, fields: planned?.fields },
+      { id: characterId, expectedUpdatedAt },
+    );
+    if (expectedUpdatedAt && updatedRows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+
+    const [updatedCharacter] = updatedRows;
+
+    // Its picked links' picks, atomically with it, when it sends them: none sent leaves them alone, `[]` clears them
+    for (const [role, plan] of Object.entries(planned?.links ?? {}))
+      await this.writeLinkPicks(tx, characterId, role, plan);
+
+    await Activities.create(tx, {
+      userId: session.userId,
+      targetId: characterId,
+      targetType: TARGET_TYPES.characters,
+      type: "updateCharacter",
+    });
+
+    return updatedCharacter;
   }
 
   /** A character's picks of a picked link's role (`role`) as a plan has them: its picks replaced. */
@@ -229,54 +277,28 @@ class CharactersService extends include(Object, Archives, Imports) {
     );
   }
 
-  async updateCharacter(
-    session: Session,
-    characterId: string,
-    updateData: {
-      fields?: FieldsRequest;
-      links?: Record<string, string[]>;
-      name?: string;
-      notes?: string;
-      privateNotes?: string;
-      updatedAt?: string;
-    },
-  ) {
+  async updateCharacter(session: Session, characterId: string, updateData: CharacterEdit) {
+    // Its fields and its picked links are checked by its ruleset's view, read fresh under its write's locks; its own
+    // columns alone (its name, its notes) take the character's lock alone, reading none of its ruleset
+    if (!updateData.fields && !updateData.links) {
+      return await withCharacterLock(characterId, async (tx) => {
+        const characterRecord = await findEditableCharacterOrChild(tx, characterId, session.userId);
+        if (!characterRecord) throw new NotFoundError("Character not found");
+        return await this.applyEdit(tx, session, characterId, updateData);
+      });
+    }
+
     return await withCharacterWrite(
       session,
       characterId,
       async (tx, scope, characterRecord) => {
-        const { fields, links, updatedAt: expectedUpdatedAt, ...characterFields } = updateData;
-
         // Its fields, by the keys its sheet sends them, and its picked links' picks, as its ruleset writes them: each
         // checked. The engine reads the picks' ids as the character's ruleset's view does
-        const planned =
-          fields || links
-            ? Engine.for(scope)
-                .character(await readCharacterInput(tx, characterRecord))
-                .planEdit({ fields, links })
-            : undefined;
-
-        const updatedRows = await Characters.update(
-          tx,
-          { ...characterFields, ...planned?.own, fields: planned?.fields },
-          { id: characterId, expectedUpdatedAt },
-        );
-        if (expectedUpdatedAt && updatedRows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
-
-        const [updatedCharacter] = updatedRows;
-
-        // Its picked links' picks, atomically with it, when it sends them: none sent leaves them alone, `[]` clears them
-        for (const [role, plan] of Object.entries(planned?.links ?? {}))
-          await this.writeLinkPicks(tx, characterId, role, plan);
-
-        await Activities.create(tx, {
-          userId: session.userId,
-          targetId: characterId,
-          targetType: TARGET_TYPES.characters,
-          type: "updateCharacter",
-        });
-
-        return updatedCharacter;
+        const { fields, links } = updateData;
+        const planned = Engine.for(scope)
+          .character(await readCharacterInput(tx, characterRecord))
+          .planEdit({ fields, links });
+        return await this.applyEdit(tx, session, characterId, updateData, planned);
       },
       { access: "editorOrChild" },
     );

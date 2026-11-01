@@ -14,6 +14,11 @@ interface CharacterLockOptions {
   visibility?: Visibility;
 }
 
+/** Who may make a character's write that reads its ruleset (`access`): its own editors, or a child's parent's too. */
+interface CharacterWriteOptions {
+  access?: CharacterAccess;
+}
+
 /** Who may make a character's write: its own editors (`getEditableCharacter`), or a child's parent's too. */
 type CharacterAccess = "editor" | "editorOrChild";
 
@@ -26,6 +31,23 @@ async function findWritable(tx: Db, session: Session, characterId: string, acces
   const character = await findEditableCharacterOrChild(tx, characterId, session.userId);
   if (!character) throw new NotFoundError("Character not found");
   return character;
+}
+
+/**
+ * Locks a character's row (`character`, as read before its lock: a child's parent never changes) until the transaction
+ * ends, a child's (3.5's bonded creature's) parent's first: a write of the parent writes its children after locking it
+ * (a level save's, an archive's), and a write of a child touches its parent (its last change, the database's
+ * `touch_masters`), so masters go first, as the database's own writes take them. Whether the character's row is there
+ * (`visibility`).
+ */
+async function lockCharacter(
+  tx: Db,
+  character: Pick<Character, "id" | "parentCharacterId">,
+  visibility: Visibility = Visibility.UnarchivedOnly,
+) {
+  if (character.parentCharacterId)
+    await Characters.lock(tx, { id: character.parentCharacterId, visibility: Visibility.All }, "no key update");
+  return await Characters.lock(tx, { id: character.id, visibility }, "no key update");
 }
 
 /**
@@ -46,11 +68,11 @@ export async function withCharacterCreate<T>(
 }
 
 /**
- * Runs a write of a character's own row alone, which reads none of its ruleset (`characterId`: its archive, its
- * contributors, its share link), and decides the session's rights itself: the row locked first (`visibility`: an
- * archived one too, for its unarchive or its delete), so its writes take turns, an unknown one refused as not found
- * (`notFound`: what the write names, a contributor's own 404 under an unknown character's path). A
- * write that waited past the lock wait is refused as a conflict (`BUSY_CHARACTER_MESSAGE`).
+ * Runs a write of a character that reads none of its ruleset (`characterId`: its own columns alone, its archive, its
+ * contributors, its share link, an item's or a modifier's removal), and decides the session's rights itself: the row
+ * locked first (`visibility`: an archived one too, for its unarchive or its delete), so its writes take turns, an
+ * unknown one refused as not found (`notFound`: what the write names, a contributor's own 404 under an unknown
+ * character's path). A write that waited past the lock wait is refused as a conflict (`BUSY_CHARACTER_MESSAGE`).
  */
 export async function withCharacterLock<T>(
   characterId: string,
@@ -58,8 +80,8 @@ export async function withCharacterLock<T>(
   { notFound = "Character not found", visibility = Visibility.UnarchivedOnly }: CharacterLockOptions = {},
 ): Promise<T> {
   return await withBoundedWrite(BUSY_CHARACTER_MESSAGE, async (tx) => {
-    if (!(await Characters.lock(tx, { id: characterId, visibility }, "no key update")))
-      throw new NotFoundError(notFound);
+    const located = await Characters.findOne(tx, { id: characterId }, visibility);
+    if (!located || !(await lockCharacter(tx, located, visibility))) throw new NotFoundError(notFound);
     return await write(tx);
   });
 }
@@ -70,15 +92,15 @@ export async function withCharacterLock<T>(
  * locked shared (`withSharedRulesetScope`), so no write of theirs runs meanwhile while other characters' writes run
  * alongside, then the character's row (its writes take turns), then the session's access (`access`), then its view,
  * fresh under them: a ruleset's write locks its own row before its chain's, and a character's write after them, so
- * the two never wait on each other in a cycle. A write that waited past the lock wait, or deadlocked, is refused as a
- * conflict (`BUSY_CHARACTER_MESSAGE`), changing nothing. A character's ruleset never changes, so it's read before the
- * locks.
+ * the two never wait on each other in a cycle; a child's parent's row is locked before the child's (`lockCharacter`).
+ * A write that waited past the lock wait, or deadlocked, is refused as a conflict (`BUSY_CHARACTER_MESSAGE`), changing
+ * nothing. A character's ruleset never changes, so it's read before the locks.
  */
 export async function withCharacterWrite<T>(
   session: Session,
   characterId: string,
   write: (tx: Db, scope: SharedRulesetScope, character: Character) => Promise<T>,
-  { access = "editor" }: { access?: CharacterAccess } = {},
+  { access = "editor" }: CharacterWriteOptions = {},
 ): Promise<T> {
   return await withBoundedWrite(BUSY_CHARACTER_MESSAGE, async (tx) => {
     const located = await Characters.findOne(tx, { id: characterId });
@@ -89,8 +111,7 @@ export async function withCharacterWrite<T>(
       async (scope, character) => write(tx, scope, character),
       {
         before: async () => {
-          if (!(await Characters.lock(tx, { id: characterId }, "no key update")))
-            throw new NotFoundError("Character not found");
+          if (!(await lockCharacter(tx, located))) throw new NotFoundError("Character not found");
           return await findWritable(tx, session, characterId, access);
         },
       },

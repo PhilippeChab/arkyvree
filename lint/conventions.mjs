@@ -86,10 +86,12 @@ import { onImports, targetOf } from "./imports.mjs";
 import { startsWithVerb } from "./methodNames.mjs";
 import { repoPath, rootOf, rulesetsOf } from "./paths.mjs";
 
+/** The bounded transaction every locked aggregate's write opens (`rulesetWrites.ts`), its locks its helpers'. */
+const BOUNDED_WRITE = "withBoundedWrite";
+
 const CAMEL_CASE = /^[a-z][a-zA-Z0-9]*$/;
 
 const CONCURRENT = new Set(["all", "allSettled", "any", "race"]);
-
 /** An `eslint-disable` / `oxlint-disable` comment's text. */
 const DIRECTIVE = /^\s*(?:eslint|oxlint)-disable(?:-next-line|-line)?\b/;
 /** The limit a route that renders or queues a PDF counts its requests with: per user under `/v1`, per address else. */
@@ -98,11 +100,12 @@ const EXPORT_RATE_LIMITS = { api: "exportRateLimit", v1: "apiExportRateLimit" };
 const FIXED_SEGMENT = /^([a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9]+)?|\*)$/;
 /** A module or folder named for no particular thing: `helpers.ts`, `utils/`. */
 const GRAB_BAG = /(^|\/)(helpers|utils?)(\.tsx?$|\/)/;
+
 /** A route's whole input, named for its target when it's named: `ownedParams`, `ownedBody`, a query's `…Query`. */
 const INPUT_NAMES = { param: /Params?$/, json: /Body$/, query: /Query$/ };
-
 /** The variable a handler reads a whole input into: it destructures params, and an input it reads field by field. */
 const INPUT_VARIABLES = { json: "body", query: "query" };
+
 /**
  * The aggregates whose writes open their transaction through their helper alone (`folder`: their services; `helpers`:
  * the module that holds the helpers, which lock the aggregate first): no other module of the folder calls
@@ -1021,6 +1024,14 @@ function createWritesInTransactions(context) {
           callee.property.type === "Identifier" &&
           callee.property.name === "transaction");
       if (locked && opens) context.report({ node, message: locked.message });
+      // A locked aggregate's bounded transaction opens none of its locks: only its helpers call it, which take them
+      const bounded = callee.type === "Identifier" && callee.name === BOUNDED_WRITE;
+      if (bounded && file.startsWith("server/") && !LOCKED_WRITES.some(({ helpers }) => helpers === file)) {
+        context.report({
+          node,
+          message: `\`${BOUNDED_WRITE}\` is a locked aggregate's helpers' to call (${LOCKED_WRITES.map(({ helpers }) => `\`${helpers}\``).join(", ")}), which take its locks in the transaction it opens.`,
+        });
+      }
       // A write's lock is its helper's to take, in the transaction it opens: no other module of the server takes it
       const lock = LOCKED_WRITES.find(
         ({ helpers, lock: name }) =>

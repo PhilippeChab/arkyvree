@@ -39,14 +39,15 @@ export async function measure<T>(run: () => Promise<T>) {
 /**
  * Runs `call` on the test's connection while another transaction (a connection of `pool`) holds what `lock` takes, and
  * returns its result once that transaction rolls back. `call` must have waited on the lock: PostgreSQL shows it blocked,
- * rather than a sleep guessing it reached its critical section. `onRelease` runs just before that transaction rolls
- * back: what `call` did before it, it did while the lock was held.
+ * rather than a sleep guessing it reached its critical section. `onRelease` runs once `call` waits, just before that
+ * transaction rolls back, with what still holds the lock (`blockerDb`) and what waits on it (`waiting`: the statement
+ * `call` waits at): what `call` did before it, it did while the lock was held.
  */
 export async function runWhileLocked<T>(
   pool: Pool,
   lock: (blockerDb: Db) => Promise<unknown>,
   call: () => Promise<T>,
-  onRelease: () => void = () => undefined,
+  onRelease: (held: { blockerDb: Db; waiting: string }) => unknown = () => undefined,
 ) {
   const writer = await db.execute<{ pid: number }>(sql`select pg_backend_pid() as pid`);
   const blocker = await pool.connect();
@@ -56,7 +57,10 @@ export async function runWhileLocked<T>(
     await lock(createTestDbFromClient(blocker));
     pending = call();
     if (!(await waitUntilBlocked(blocker, writer.rows[0].pid))) throw new Error("The call never waited on the lock");
-    onRelease();
+    const activity = await blocker.query<{ query: string }>("select query from pg_stat_activity where pid = $1", [
+      writer.rows[0].pid,
+    ]);
+    await onRelease({ blockerDb: createTestDbFromClient(blocker), waiting: activity.rows[0].query });
     await blocker.query("ROLLBACK");
     return await pending;
   } finally {

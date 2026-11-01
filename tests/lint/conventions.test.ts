@@ -407,11 +407,15 @@ describe("conventions", () => {
           "server/services/characters/pdf.ts": opening,
           "server/services/characters/scoped.ts": shared,
           "server/services/campaigns/scoped.ts": shared,
+          "server/services/characters/bounded.ts":
+            'import { withBoundedWrite } from "@/server/services/rulesets/index.ts";\nexport const f = () => withBoundedWrite(busy, g);\n',
+          "server/services/rulesets/rulesetWrites.ts": "export const f = () => withBoundedWrite(busy, g);\n",
         },
         ["writes-in-transactions"],
       ),
     ).toEqual([
       "writes-in-transactions server/services/campaigns/scoped.ts",
+      "writes-in-transactions server/services/characters/bounded.ts",
       "writes-in-transactions server/services/characters/levels/Writer.ts",
       "writes-in-transactions server/services/characters/scoped.ts",
     ]);
