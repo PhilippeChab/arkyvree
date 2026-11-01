@@ -6,7 +6,6 @@ import type { Aptitude, Feat, RulesetAbility, Skill } from "@/engine/rulesets/dn
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { ConflictError } from "@/server/errors/index.ts";
 import { Entities, EntitySnapshots, Modifiers, Picks, Requirements, Rulesets } from "@/server/repositories/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { createSeedCharacter } from "@/tests/support/dnd3.5/levelFixtures.ts";
@@ -273,15 +272,23 @@ describe("Spell Focus", () => {
     expect(await featNames(ruleset.id)).toEqual(["Greater Spell Focus: Evocation", "Spell Focus: Evocation"]);
   });
 
-  test("a school whose Greater Spell Focus the ruleset has of its own is refused as a taken name", async () => {
-    // Only the set's first feat, Spell Focus, is checked against the view: its second meets the name index
+  test("a school whose Greater Spell Focus the ruleset has of its own gets the set's other feat alone", async () => {
     const { session, ruleset, spells } = await bareRuleset();
     const greater = "Greater Spell Focus: Evocation";
     await Entities.create(db, "feats", { name: greater, description: "", rulesetId: ruleset.id });
-    expect(
-      EntitiesService.createEntity(session, ruleset.id, "spells", spell(spells.id, "Fireball", "Evocation")),
-    ).rejects.toEqual(new ConflictError(`Name already exists in this ruleset: ${greater}`));
-    expect(await featNames(ruleset.id)).toEqual([greater]);
+    await EntitiesService.createEntity(session, ruleset.id, "spells", spell(spells.id, "Fireball", "Evocation"));
+    expect(await featNames(ruleset.id)).toEqual([greater, "Spell Focus: Evocation"]);
+  });
+
+  test("a school whose Greater Spell Focus a fork inherits gets the set's other feat alone, each name once", async () => {
+    const parent = await bareRuleset();
+    const greater = "Greater Spell Focus: Evocation";
+    await Entities.create(db, "feats", { name: greater, description: "", rulesetId: parent.ruleset.id });
+    await Rulesets.update(db, { status: "Published" }, { id: parent.ruleset.id });
+    const { user, session } = await createTestUser();
+    const fork = await createTestRuleset(user.id, { rulesetId: parent.ruleset.id });
+    await EntitiesService.createEntity(session, fork.id, "spells", spell(parent.spells.id, "Fireball", "Evocation"));
+    expect(await featNames(fork.id)).toEqual([greater, "Spell Focus: Evocation"]);
   });
 });
 
