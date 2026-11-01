@@ -61,7 +61,7 @@ export const v1RulesetChanges = z
   .array(
     z.strictObject({
       entityId: v1Id.nullable().meta({ description: "The ruleset's own entity, none when it's deleted" }),
-      kind: z.string().meta({ description: "The entity's kind, as its route names it: `classes`, `feats`" }),
+      kind: z.string().meta({ description: "The entity's kind, as its route names it (3.5: `classes`, `feats`)" }),
       name: z.string(),
       sourceId: v1Id.nullable().meta({ description: "The entity it changes of its parent's, none when it's added" }),
       status: z.enum(["added", "deleted", "modified"]),
@@ -88,6 +88,6 @@ export const v1RulesetSettings = z
     fields: z.record(z.string(), z.unknown()).meta({ description: "Its own fields, by their stored names" }),
     links: z
       .record(z.string(), z.unknown())
-      .meta({ description: "The entities it names, by role: the ability skill points add" }),
+      .meta({ description: "The entities it names, by role (3.5: the ability skill points add)" }),
   })
   .meta({ description: "A ruleset's settings: its own fields and links", id: "RulesetSettings" });

@@ -19,6 +19,17 @@ describe("v1 rulesets", () => {
     await expectStatus(api.v1.rulesets[":id"].$get({ param: { id: NIL_UUID } }), 404);
   });
 
+  test("answers what each base rules' rulesets are made of, which other answers key by", async () => {
+    const { api } = await createKeyedApi();
+    const rules = (await expectOk(api.v1.rules.$get()))["Dungeons & Dragons: 3.5"]!;
+    expect(rules.kinds).toContainEqual(expect.objectContaining({ families: true, type: "feats" }));
+    expect(rules.kinds).toContainEqual(expect.objectContaining({ tiered: true, type: "spells" }));
+    expect(rules.characterKinds).toContainEqual({ label: "Player Character", value: "pc" });
+    expect(rules.fields.feats?.length).toBeGreaterThan(0);
+    expect(rules.tiers[0]).toEqual({ label: expect.any(String), level: 0 });
+    expect(rules.progression).toEqual({ list: "spellList", picks: "featPicks", several: "severalSpellLists" });
+  });
+
   test("answers a ruleset's settings and extensions", async () => {
     const { api } = await createKeyedApi();
     const { abilityMap, rulesetId: id } = await getSeedCtx();
@@ -51,7 +62,7 @@ describe("v1 rulesets", () => {
     await expectStatus(changes.$get({ param: { id: (await getSeedCtx()).rulesetId } }), 400);
   });
 
-  test("answers a kind's entities a page at a time, filtered by what the kind takes, and one with its parts", async () => {
+  test("answers a kind's entities a page at a time, filtered as the kind takes, and one with its parts", async () => {
     const { api } = await createKeyedApi();
     const { featMap, rulesetId: id } = await getSeedCtx();
     const entities = api.v1.rulesets[":id"].entities[":kind"];
@@ -87,7 +98,8 @@ describe("v1 rulesets", () => {
 
     const levels = await expectOk(entities[":entityId"].owned.$get({ param }));
     expect(levels.map(({ position }) => position).slice(0, 3)).toEqual([1, 2, 3]);
-    expect(levels[0]).toMatchObject({ babLabel: expect.any(String), name: null, ownerId: param.entityId });
+    expect(levels[0]).toMatchObject({ name: null, ownerId: param.entityId });
+    expect(levels[0]).not.toHaveProperty("babLabel");
     const level = await expectOk(
       entities.owned[":ownedId"].$get({ param: { id, kind: "classes", ownedId: levels[0]!.id } }),
     );
@@ -96,8 +108,11 @@ describe("v1 rulesets", () => {
     expect(await expectOk(entities[":entityId"].links.$get({ param }))).toContainEqual(
       expect.objectContaining({ role: "classSkill", toType: "skills" }),
     );
+    // Past its pools, a progression holds what the rules name in theirs: 3.5's spell list, at `spellList`
     const progression = await expectOk(entities[":entityId"].progression.$get({ param }));
-    expect(progression.spellList).toMatchObject({ name: expect.any(String) });
+    const rules = await expectOk(api.v1.rules.$get());
+    const { list } = rules["Dungeons & Dragons: 3.5"]!.progression;
+    expect(progression[list!]).toMatchObject({ name: expect.any(String) });
     const spells = await expectOk(
       entities[":entityId"].tables[":table"].$get({ param: { ...param, table: "spells" } }),
     );

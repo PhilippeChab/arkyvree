@@ -6,8 +6,9 @@ answers in shapes of its own, which stay fixed.
 
 ## Keys
 
-- A user makes and revokes keys on the Settings page (`ApiKeysPanel`, through `/auth/api-keys`). A demo account makes
-  none (`denyDemoUser`).
+- A user makes and revokes keys on the Settings page (`ApiKeysPanel`, through `/auth/api-keys`). A demo account has no
+  access to the public API: every key route refuses it (`denyDemoUser`), its Settings page shows no panel, and a key
+  whose user is a demo signs in nothing.
 - A key's token (`ark_` and 32 random bytes, base64url) is shown once, when it's made: the table (`account.api_keys`)
   keeps its SHA-256 digest, which a request's token is looked up by, and its start, which names it on the page
   (`server/apiKeyTokens.ts`). A revoked key is deleted. A user keeps 10 at most (`MAX_API_KEYS`).
@@ -40,10 +41,16 @@ the service returns to v1's shape (`V1.character`).
   translator is typed by the service it reads (`Answer<typeof CharactersService.getCharacter>`) and by that schema
   (`z.infer`): an answer that changes inside the app stops its translator compiling, and v1 is kept before anyone
   outside sees the change.
-- A ruleset's entities are read by kind, as the engine names them (`/v1/rulesets/{id}/entities/{kind}`: `feats`,
-  `spells`, `classes`…, `Engine.storage().standaloneKinds()`), whatever the kind: their columns, their fields under
-  `fields` by the names the ruleset declares, and their links with their targets' names. A kind adds what its rules
-  describe: a feat's modifiers and requirements, an item's placement.
+- v1 is the same whatever a ruleset's base rules: no answer's shape is one game's. What a ruleset's rules name (its
+  entity kinds, each kind's fields, a list's tiers, the values a progression holds) a caller reads from `GET /v1/rules`
+  (`RulesService.getRules`, translated), and an answer keys those by the rules' own names: an entity's `fields`, a
+  progression's values past its pools. A description names a game's term only as an example, marked (3.5: `feats`).
+- A ruleset's entities are read by kind, as the rules name them (`/v1/rulesets/{id}/entities/{kind}`,
+  `Engine.storage().standaloneKinds()`), whatever the kind: their columns, their fields under `fields` by the names the
+  ruleset declares, and their links with their targets' names. A kind adds what its rules describe: its modifiers and
+  requirements, where a character may place it.
+- The routers follow the app's, a resource each (`characters/inventory/`, `characters/levels/`, `rulesets/changes/`,
+  `rulesets/customization/modifiers/`…), each route its reads and its writes together.
 - A character's sheet answers its columns, what the rules find wrong with it (`validation`), what the user may do with
   it, and its sections as the engine describes them for the app (`sections`: each a `kind`, `key` and `title`, its
   values with the words the app shows them by). The summary's prompts and the modifiers and requirements the engine

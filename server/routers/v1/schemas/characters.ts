@@ -15,7 +15,9 @@ const v1Room = z.strictObject({ allowed: z.number(), available: z.number(), spen
 /** An issue the rules find with a character. */
 const v1RulesIssue = z
   .strictObject({
-    category: z.string().meta({ description: "What the issue is about: `aptitudes`, `skills`, `requirements`…" }),
+    category: z.string().meta({
+      description: "What the issue is about, as the rules name it (3.5: `aptitudes`, `skills`, `requirements`…)",
+    }),
     entityId: z.string().optional(),
     entityName: z.string().optional(),
     entityType: z.string().optional(),
@@ -114,10 +116,10 @@ const v1StepOption = z.strictObject({
   track: z
     .strictObject({ last: z.number(), left: z.number(), next: z.number() })
     .optional()
-    .meta({ description: "A track's levels (a class's): its last, how many are left, the next" }),
+    .meta({ description: "A track's levels (3.5: a class's): its last, how many are left, the next" }),
 });
 
-/** A group of a step's options (a feat's family). */
+/** A group of a step's options (3.5's feat family). */
 const v1StepOptionGroup = z.strictObject({
   count: z.number(),
   description: z.string().nullable(),
@@ -147,13 +149,15 @@ export const v1Character = z
   .strictObject({
     archived: z.boolean(),
     id: v1Id,
-    kind: z.string().meta({ description: "Its kind: a player character's, or a bonded creature's (`familiar`…)" }),
+    kind: z.string().meta({
+      description: "Its kind: the rules' player character's, or a child character's (3.5: `familiar`, `mount`…)",
+    }),
     name: z.string(),
     ownerId: z.string().nullable(),
-    parentCharacterId: z
-      .string()
-      .nullable()
-      .meta({ description: "A bonded creature's master, whose editors read and edit it" }),
+    parentCharacterId: z.string().nullable().meta({
+      description:
+        "The character a child character belongs to (3.5: a familiar's master), whose editors read and edit it",
+    }),
     permissions: v1CharacterPermissions,
     rulesetId: v1Id,
     rulesetName: z.string(),
@@ -173,9 +177,11 @@ export const v1CharacterCard = z
     description: z.string().nullable(),
     id: v1Id,
     name: z.string(),
-    summary: z
-      .array(z.strictObject({ label: z.string(), partial: z.boolean() }))
-      .meta({ description: "What its card shows of it (its race, each class with its level), partial when unknown" }),
+    summary: z.array(z.strictObject({ label: z.string(), partial: z.boolean() })).meta({
+      description:
+        "What its card shows of it, as its rules describe it (3.5: its race, each class with its level), " +
+        "partial when unknown",
+    }),
   })
   .meta({ description: "A character, as its card shows it", id: "CharacterCard" });
 
@@ -188,7 +194,9 @@ export const v1InventoryEntry = z
       .strictObject({ remaining: z.number().nullable(), total: z.number().nullable() })
       .nullable()
       .meta({ description: "Its charges, for an item that has them" }),
-    groups: z.array(z.number()).meta({ description: "The weapon sets a hand holds it in, from 0" }),
+    groups: z.array(z.number()).meta({
+      description: "The groups it's held in, from 0, as its rules place it (3.5: the weapon sets a hand holds it in)",
+    }),
     id: v1Id,
     item: z
       .strictObject({
@@ -198,9 +206,12 @@ export const v1InventoryEntry = z
         name: z.string(),
       })
       .meta({ description: "The item, its fields by the names its ruleset declares them" }),
-    location: z.string().nullable().meta({ description: "Where it's worn or held, none for an item carried" }),
+    location: z
+      .string()
+      .nullable()
+      .meta({ description: "Where it's placed, as its rules name the place: none for an item carried" }),
     quantity: z.number(),
-    slotLabel: z.string().nullable().meta({ description: "Where it's worn, as its sheet names it" }),
+    slotLabel: z.string().nullable().meta({ description: "Its place, as its sheet names it" }),
     updatedAt: z.string(),
   })
   .meta({ description: "An item a character carries", id: "InventoryEntry" });
@@ -228,13 +239,16 @@ export const v1LevelSteps = z
   .strictObject({
     steps: z.array(
       z.strictObject({
-        kind: z.string().optional().meta({ description: "The entity kind it reads or picks: `classes`, `feats`…" }),
+        kind: z
+          .string()
+          .optional()
+          .meta({ description: "The entity kind it reads or picks (3.5: `classes`, `feats`…)" }),
         label: z.string(),
         mechanic: z
           .enum(["choose", "pick", "plan", "spend", "value"])
           .meta({ description: "How its payload is shaped, in a plan's `steps`" }),
         name: z.string().meta({ description: "Its name, a plan's `steps` key" }),
-        pools: z.string().optional().meta({ description: "The kind its picks' pools are of: `aptitudes`" }),
+        pools: z.string().optional().meta({ description: "The kind its picks' pools are of (3.5: `aptitudes`)" }),
       }),
     ),
   })
@@ -243,7 +257,7 @@ export const v1LevelSteps = z
     id: "LevelSteps",
   });
 
-/** A character's links of a role (the languages it speaks): those it picked, those it has anyway, those it may add. */
+/** A character's links of a role (3.5's languages it speaks): its picks, those it has anyway, those it may pick. */
 export const v1LinkRoom = z
   .strictObject({
     automatic: z.array(v1Named).meta({ description: "Those it has without picking them" }),
@@ -257,7 +271,7 @@ export const v1Modifier = z
   .strictObject({
     id: v1Id,
     operator: z.string().meta({ description: "`add`, `subtract`, `multiply`, `divide` or `set`" }),
-    target: z.string().meta({ description: "The path it changes: `abilities.strength.misc`…" }),
+    target: z.string().meta({ description: "The target path it changes (3.5: `abilities.strength.misc`)" }),
     targetLabels: z.record(z.string(), z.string()).meta({ description: "Its path's segments, each by its label" }),
     value: z.string(),
     valueLabel: z.string().nullable().meta({ description: "Its value as its target names it, when it names one" }),

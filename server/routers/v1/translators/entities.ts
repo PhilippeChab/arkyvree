@@ -1,6 +1,6 @@
 /**
  * A ruleset's entity as v1 answers it, whatever its kind: its columns, its fields, its links with their targets' names,
- * and what its kind adds; and the parts an entity's kind may have (a class's levels, progression and tables).
+ * and what its kind adds; and the parts an entity's kind may have (3.5's class levels, progression and tables).
  */
 
 import type { z } from "zod";
@@ -58,7 +58,7 @@ interface DescribedLink {
   viaName?: string | null;
 }
 
-/** An entity, with what its kind adds: its modifiers and requirements, an item's placement. */
+/** An entity, with what its kind adds: its modifiers and requirements, where a character may place it. */
 export function toV1Entity(
   entity: DescribedEntity & { modifiers?: Modifier[]; placement?: object; requirements?: Requirement[] },
 ): z.infer<typeof v1Entity> {
@@ -70,7 +70,7 @@ export function toV1Entity(
   };
 }
 
-/** A group of a kind's entities (a feat's family), or an entity in none. */
+/** A group of a kind's entities (3.5's feat family), or an entity in none. */
 export function toV1EntityGroup(
   group: Answer<typeof EntitiesService.getEntityGroups>["items"][number],
 ): z.infer<typeof v1EntityGroup> {
@@ -95,7 +95,7 @@ export function toV1EntityLink(link: DescribedLink): z.infer<typeof v1EntityLink
   };
 }
 
-/** An entity's links (a class's skills). */
+/** An entity's links (3.5's class skills). */
 export function toV1EntityLinks(links: Answer<typeof EntitiesService.getEntityLinks>): z.infer<typeof v1EntityLink>[] {
   return links.map(toV1EntityLink);
 }
@@ -156,10 +156,9 @@ export function toV1LabeledRequirements(
   }));
 }
 
-/** An entity another owns (a class's level). */
+/** An entity another owns (3.5's class level). */
 export function toV1OwnedEntity(
   owned: Omit<DescribedEntity, "name"> & {
-    babLabel?: string;
     modifiers?: Modifier[];
     name: string | null;
     requirements?: Requirement[];
@@ -167,24 +166,21 @@ export function toV1OwnedEntity(
 ): z.infer<typeof v1OwnedEntity> {
   return {
     ...toV1EntitySummary(owned),
-    babLabel: owned.babLabel,
     modifiers: owned.modifiers?.map(toV1EntityModifier),
     name: owned.name,
     requirements: owned.requirements?.map(toV1Requirement),
   };
 }
 
-/** What an entity's levels give: each pool's picks, its spell list. */
-export function toV1Progression(
-  progression: Answer<typeof EntitiesService.getProgression>,
-): z.infer<typeof v1Progression> {
-  const { featPicks, pools, severalSpellLists, spellList } = progression;
-  return {
-    featPicks,
-    pools: pools.map(({ id, name, picks }) => ({ id, name, picks })),
-    severalSpellLists,
-    spellList: spellList && { id: spellList.id, name: spellList.name },
-  };
+/**
+ * What an entity's levels give: each pool's picks by level, and past them the values its rules name in their
+ * progression (`Engine.rules()`'s progression: 3.5's `featPicks`, `spellList`, `severalSpellLists`), as they give them.
+ */
+export function toV1Progression(progression: {
+  pools: readonly { id: string; name: string; picks: Record<string, number> }[];
+}): z.infer<typeof v1Progression> {
+  const { pools, ...declared } = progression;
+  return { ...declared, pools: pools.map(({ id, name, picks }) => ({ id, name, picks })) };
 }
 
 /** A requirement an entity has, or a group of them. */

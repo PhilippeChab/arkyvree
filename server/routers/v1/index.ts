@@ -4,6 +4,7 @@ import { NotFoundError } from "@/server/errors/index.ts";
 import { apiAddressRateLimit, apiKeyMiddleware, apiKeyRateLimit } from "@/server/middlewares/index.ts";
 
 import characters from "./characters/index.ts";
+import rules from "./rules/index.ts";
 import rulesets from "./rulesets/index.ts";
 
 /**
@@ -17,6 +18,7 @@ export default new Hono()
   .use(apiKeyMiddleware)
   .use(apiKeyRateLimit)
   .route("/characters", characters)
+  .route("/rules", rules)
   .route("/rulesets", rulesets)
   // A path no route answers: the API's error, never the app's page, which the static router would serve
   .all("*", () => {

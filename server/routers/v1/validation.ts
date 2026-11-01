@@ -1,4 +1,4 @@
-/** What several of the public API's routes take: a page of a list, and a ruleset's entity kinds. */
+/** What several of the public API's routers take: a page of a list, and a customized entity. */
 
 import { z } from "zod";
 
@@ -10,19 +10,8 @@ export const customizedParams = idParam.extend({
   entityId: z.string().uuid(),
   kind: z
     .enum(Engine.storage().customizableKinds())
-    .meta({ description: "The entity's kind: `feats`, `spells`, `items`, `races`, `classes`, `class-levels`" }),
+    .meta({ description: "The entity's kind, among those the rules customize (3.5: `feats`, `class-levels`…)" }),
 });
-
-/** A ruleset route's `:id` (the ruleset) and its entity kind (`:kind`): a kind no other owns, as the engine names it. */
-export const kindParams = idParam.extend({
-  kind: z
-    .string()
-    .pipe(z.enum(Engine.storage().standaloneKinds()))
-    .meta({ description: "The entity kind: `feats`, `spells`, `classes`, `items`, `races`…" }),
-});
-
-/** A ruleset route's entity: its kind's params, and its id. */
-export const entityParams = kindParams.extend({ entityId: z.string().uuid() });
 
 /** A page of a list: which, and how many to a page. */
 export const PAGE_FILTERS = {

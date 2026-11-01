@@ -10,7 +10,7 @@ export const v1Error = z
     issues: z
       .array(
         z.object({
-          category: z.string().meta({ description: "What the issue is about: a field's path (`fields.bab`)" }),
+          category: z.string().meta({ description: "What the issue is about: a field's path (`fields.<name>`)" }),
           message: z.string(),
         }),
       )
@@ -23,12 +23,12 @@ export const v1Error = z
 /** A record's id. */
 export const v1Id = z.string().meta({ format: "uuid" });
 
-/** A thing (a feat, a spell, an aptitude) named, by its id and its name. */
+/** An entity named, by its id and its name. */
 export const v1Named = z
   .strictObject({ id: v1Id, name: z.string() })
-  .meta({ description: "A thing (a feat, a spell, an aptitude) named, by its id and its name", id: "Named" });
+  .meta({ description: "An entity named, by its id and its name", id: "Named" });
 
-/** A page of a list of `item`s, named for them in the document (`FeatPage`). */
+/** A page of a list of `item`s, named for them in the document (`EntitySummaryPage`). */
 export function buildPageSchema<T extends z.ZodType>(item: T) {
   const id = item.meta()?.id;
   if (!id) throw new Error("A page's items are named in the document: `.meta({ id })`");

@@ -13,6 +13,7 @@ import {
 } from "./entities.ts";
 import { toV1LevelPlan, toV1LevelPlanAnswer, toV1LevelSteps, toV1StepOptions } from "./levels.ts";
 import { toV1Page } from "./pages.ts";
+import { toV1Rules } from "./rules.ts";
 import {
   toV1Ruleset,
   toV1RulesetChanges,
@@ -45,6 +46,7 @@ export const V1 = {
   modifiers: toV1Modifiers,
   ownedEntity: toV1OwnedEntity,
   page: toV1Page,
+  rules: toV1Rules,
   progression: toV1Progression,
   ruleset: toV1Ruleset,
   rulesetChanges: toV1RulesetChanges,

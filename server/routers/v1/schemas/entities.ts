@@ -1,7 +1,7 @@
 /**
  * A ruleset's entity as v1 answers it, whatever its kind: its columns, its fields by the names its ruleset declares
- * them, and its links to others, each with its target's name; and what an entity's kind may have past them (a class's
- * levels, its progression, its tables; a feat's family).
+ * them, and its links to others, each with its target's name; and what an entity's kind may have past them (3.5's class
+ * levels, progression and tables; a feat's family).
  */
 
 import { z } from "zod";
@@ -13,7 +13,7 @@ export const v1EntityModifier = z
   .strictObject({
     id: v1Id,
     operator: z.string().meta({ description: "`add`, `subtract`, `multiply`, `divide` or `set`" }),
-    target: z.string().meta({ description: "The path it changes: `abilities.strength.misc`…" }),
+    target: z.string().meta({ description: "The target path it changes (3.5: `abilities.strength.misc`)" }),
     value: z.string(),
     valueType: z.string(),
   })
@@ -26,7 +26,9 @@ export const v1EntityLink = z
     free: z.boolean(),
     id: v1Id,
     ordinal: z.number(),
-    role: z.string().meta({ description: "What it links for: `listedIn`, `classSkill`, `grants`…" }),
+    role: z.string().meta({
+      description: "What it links for, as the rules name the role (3.5: `listedIn`, `classSkill`, `grants`…)",
+    }),
     tier: z.number().nullable(),
     toDescription: z.string().nullable().optional(),
     toId: v1Id,
@@ -48,11 +50,11 @@ export const v1EntitySummary = z
     id: v1Id,
     links: z.array(v1EntityLink),
     name: z.string(),
-    ownerId: v1Id.nullable().meta({ description: "The entity that owns it (a class level's class)" }),
-    partition: z.string().meta({ description: "Its kind's partition: `pc`, `npc`…" }),
+    ownerId: v1Id.nullable().meta({ description: "The entity that owns it (3.5: a class level's class)" }),
+    partition: z.string().meta({ description: "Its kind's partition, as the rules name it (3.5: `pc`, `npc`…)" }),
     position: z.number().nullable(),
     rulesetId: v1Id,
-    type: z.string().meta({ description: "Its kind: `feats`, `classes`…" }),
+    type: z.string().meta({ description: "Its kind, as the rules name it (3.5: `feats`, `classes`…)" }),
     updatedAt: z.string(),
   })
   .meta({ description: "An entity, in a page of them", id: "EntitySummary" });
@@ -70,21 +72,26 @@ export const v1Requirement = z
   })
   .meta({ description: "A requirement an entity has, or a group of them", id: "Requirement" });
 
-/** An entity, with what its kind adds: its modifiers and requirements, an item's placement. */
+/** An entity, with what its kind adds: its modifiers and requirements, where a character may place it. */
 export const v1Entity = v1EntitySummary
   .extend({
     modifiers: z.array(v1EntityModifier).optional(),
-    placement: z.looseObject({}).optional().meta({ description: "Where an item is worn or held, and its charges" }),
+    placement: z.looseObject({}).optional().meta({
+      description:
+        "Where a character's inventory may place it, as the rules describe it, for a kind a character carries",
+    }),
     requirements: z.array(v1Requirement).optional(),
   })
   .meta({ description: "An entity, with what its kind adds", id: "Entity" });
 
-/** A group of a kind's entities (a feat's family). */
+/** A group of a kind's entities (3.5's feat family). */
 export const v1EntityGroup = z
   .strictObject({
     count: z.number(),
     description: z.string().nullable(),
-    group: z.string().nullable().meta({ description: "Its name, a list's `family` filter: none for one alone" }),
+    group: z.string().nullable().meta({
+      description: "Its name, a list's `family` filter (3.5: a feat's family): none for an entity in no group",
+    }),
     id: v1Id,
     name: z.string(),
   })
@@ -96,10 +103,11 @@ export const v1EntityLinks = z.array(v1EntityLink);
 
 export const v1EntityPage = buildPageSchema(v1EntitySummary);
 
-/** One of an entity's tables (a class's spells per day), a row a level. */
-export const v1EntityTable = z
-  .array(z.looseObject({ id: v1Id }))
-  .meta({ description: "One of an entity's tables, a row a level, or a list", id: "EntityTable" });
+/** One of an entity's tables (3.5's class spells per day), a row a level. */
+export const v1EntityTable = z.array(z.looseObject({ id: v1Id })).meta({
+  description: "One of an entity's tables, as the rules name it (3.5: a class's `spells`): a row a level, or a list",
+  id: "EntityTable",
+});
 
 /** A modifier an entity has, as its customization reads it: its target's labels, and its value's. */
 export const v1LabeledModifier = v1EntityModifier
@@ -118,31 +126,33 @@ export const v1LabeledRequirement = v1Requirement
 
 export const v1LabeledRequirements = z.array(v1LabeledRequirement);
 
-/** An entity another owns (a class's level). */
+/** An entity another owns (3.5's class level). */
 export const v1OwnedEntity = v1EntitySummary
   .extend({
-    babLabel: z.string().optional().meta({ description: "A class level's base attack bonus, as its table shows it" }),
     modifiers: z.array(v1EntityModifier).optional(),
     name: z.string().nullable().meta({ description: "Its owner's, read on its own" }),
     requirements: z.array(v1Requirement).optional(),
   })
-  .meta({ description: "An entity another owns (a class's level)", id: "OwnedEntity" });
+  .meta({ description: "An entity another owns (3.5: a class's level)", id: "OwnedEntity" });
 
 export const v1OwnedEntities = z.array(v1OwnedEntity);
 
-/** What an entity's levels give (a class's): the picks of each pool by level, and its spell list. */
+/**
+ * What an entity's levels give, as its rules describe it: each pool's picks by level, and past them the values the
+ * rules name in their progression (`GET /v1/rules`: 3.5's `featPicks`, `spellList` and `severalSpellLists`).
+ */
 export const v1Progression = z
-  .strictObject({
-    featPicks: z
-      .record(z.string(), z.record(z.string(), z.number()))
-      .meta({ description: "The picks each source gives, by pool" }),
+  .looseObject({
     pools: z.array(
       v1Named.extend({ picks: z.record(z.string(), z.number()).meta({ description: "Its picks, by level" }) }),
     ),
-    severalSpellLists: z.boolean(),
-    spellList: v1Named.nullable(),
   })
-  .meta({ description: "What an entity's levels give: each pool's picks, its spell list", id: "Progression" });
+  .meta({
+    description:
+      "What an entity's levels give: each pool's picks by level, and past them the values `GET /v1/rules` names " +
+      "in the rules' progression (3.5: `featPicks`, `spellList`, `severalSpellLists`)",
+    id: "Progression",
+  });
 
 /** An entity as it's stored (a template's): its fields and links by their stored names. */
 export const v1StoredEntity = z

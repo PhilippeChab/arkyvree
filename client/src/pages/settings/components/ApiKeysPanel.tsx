@@ -24,10 +24,10 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useDialogState } from "@/client/src/hooks/index.ts";
 import { formatDate, formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
-import { apiKeysQuery } from "@/client/src/pages/settings/settingsQueries.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { MAX_API_KEYS } from "@/shared/apiKeys.ts";
 
+import { apiKeysQuery } from "./apiKeysQueries.ts";
 import { ApiKeyTokenDialog } from "./ApiKeyTokenDialog.tsx";
 import { CreateApiKeyDialog, type CreatedApiKey } from "./CreateApiKeyDialog.tsx";
 
@@ -83,7 +83,8 @@ export function ApiKeysPanel() {
         </PanelLead>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
           A key lets a program outside the app, such as a script or an assistant, read and change your characters,
-          rulesets and campaigns through the public API. It acts as you: revoke it once nothing uses it. You can keep {MAX_API_KEYS} at most.
+          rulesets and campaigns through the public API. It acts as you: revoke it once nothing uses it. You can keep{" "}
+          {MAX_API_KEYS} at most.
         </Typography>
       </Stack>
       {!keys && !error && <DiceSpinner sx={{ py: 4 }} />}

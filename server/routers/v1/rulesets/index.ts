@@ -4,30 +4,29 @@ import { z } from "zod";
 import { rulesetKind } from "@/drizzle/schema.ts";
 import { type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
 import { idParam } from "@/server/routers/api/validation.ts";
-import {
-  v1Ruleset,
-  v1RulesetChanges,
-  v1RulesetExtensions,
-  v1RulesetPage,
-  v1RulesetSettings,
-} from "@/server/routers/v1/schemas/rulesets.ts";
+import { v1Ruleset, v1RulesetPage } from "@/server/routers/v1/schemas/rulesets.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
 import { PAGE_FILTERS } from "@/server/routers/v1/validation.ts";
-import { RulesetChangesService } from "@/server/services/rulesets/changes/index.ts";
-import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
-import { RulesetSettingsService } from "@/server/services/rulesets/settings/index.ts";
 
-import customization from "./customization/index.ts";
+import changes from "./changes/index.ts";
+import modifiers from "./customization/modifiers/index.ts";
+import requirements from "./customization/requirements/index.ts";
 import entities from "./entities/index.ts";
+import extensions from "./extensions/index.ts";
+import settings from "./settings/index.ts";
 
 /**
- * The rulesets the key's user can read: a page of them, one, its settings, its extensions and a fork's changes, and
- * its entities of every kind (`entities/`) with their customizations (`customization/`).
+ * The rulesets the key's user can read: a page of them and one; their changes, extensions and settings, their entities
+ * of every kind, and those entities' modifiers and requirements, each a router of its own.
  */
 export default new Hono<ApiKeyContext>()
+  .route("/", changes)
   .route("/", entities)
-  .route("/", customization)
+  .route("/", extensions)
+  .route("/", modifiers)
+  .route("/", requirements)
+  .route("/", settings)
   .get(
     "/",
     describeRoute({
@@ -82,36 +81,5 @@ export default new Hono<ApiKeyContext>()
     async (c) => {
       const { id } = c.req.valid("param");
       return c.json(V1.ruleset(await RulesetsService.getRuleset(c.var.requestSession, id)), 200);
-    },
-  )
-  .get(
-    "/:id/changes",
-    describeRoute({
-      response: v1RulesetChanges,
-      status: 200,
-      summary: "What a fork changed of the ruleset it's forked from: the entities it added, changed and deleted",
-    }),
-    validate("param", idParam),
-    async (c) => {
-      const { id } = c.req.valid("param");
-      return c.json(V1.rulesetChanges(await RulesetChangesService.getChanges(c.var.requestSession, id)), 200);
-    },
-  )
-  .get(
-    "/:id/extensions",
-    describeRoute({ response: v1RulesetExtensions, status: 200, summary: "The extensions a ruleset is subscribed to" }),
-    validate("param", idParam),
-    async (c) => {
-      const { id } = c.req.valid("param");
-      return c.json(V1.rulesetExtensions(await RulesetExtensionsService.getExtensions(c.var.requestSession, id)), 200);
-    },
-  )
-  .get(
-    "/:id/settings",
-    describeRoute({ response: v1RulesetSettings, status: 200, summary: "A ruleset's settings" }),
-    validate("param", idParam),
-    async (c) => {
-      const { id } = c.req.valid("param");
-      return c.json(V1.rulesetSettings(await RulesetSettingsService.getSettings(c.var.requestSession, id)), 200);
     },
   );
