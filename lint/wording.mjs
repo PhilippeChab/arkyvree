@@ -37,7 +37,10 @@ const ARCHIVE_ENDINGS = [
 /** The module that writes the app's name, once */
 const BRAND_MODULE = "client/src/lib/brand.ts";
 
-/** How a deletion's confirmation ends: for good, or restorable, what a fork inherits (`isRestorableDelete`) */
+/**
+ * How a deletion's confirmation ends: for good, or restorable, what a fork inherits (its entity's `restorableDelete`,
+ * `RulesetChanges.restoresDelete`)
+ */
 const DELETE_ENDINGS = ["This action cannot be undone.", "You can restore it from Local Changes."];
 
 /** The members that hold an entity's type as the code names it ("class-levels"), which a reader sees in words */

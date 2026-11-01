@@ -19,13 +19,19 @@ import {
   useEntityFields,
   useEntityForm,
   useEntityPageBack,
-  useRestorableDelete,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
+
+import { pickedEntityQuery } from "./entityDetailQueries.ts";
 
 interface EntityBase {
   description?: string | null;
   id: string;
   name: string;
+  /**
+   * Its delete can be undone from Local Changes, as the server answers it (`RulesetChanges.restoresDelete`): a fork's
+   * inherited entity, or its copy of one: its menu says "Delete", not "Delete Permanently"
+   */
+  restorableDelete: boolean;
   /** The ruleset that holds it: the page's, or one it inherits from */
   rulesetId: string;
   updatedAt: string;
@@ -37,12 +43,14 @@ interface EntityEditing<TEntity, TForm extends FieldValues> {
   /** Deletes the entity: the delete mutation's request. */
   removeFn: () => Promise<unknown>;
   renderFields: (form: UseFormReturn<TForm>) => ReactNode;
-  toFormValues: (entity: TEntity) => TForm;
+  /** Its form's values of the entity, or of a save's row, which carries no `restorableDelete` */
+  toFormValues: (entity: Omit<TEntity, "restorableDelete">) => TForm;
   /**
    * Saves the form, the save mutation's request; resolves to the saved entity, whose id changes when a fork copies an
-   * inherited one.
+   * inherited one: its row, which says nothing of its delete (an edit changes nothing of it: a copy's delete is
+   * restorable as its source's was).
    */
-  updateFn: (data: TForm, updatedAt: string | undefined) => Promise<TEntity>;
+  updateFn: (data: TForm, updatedAt: string | undefined) => Promise<Omit<TEntity, "restorableDelete">>;
 }
 
 interface RulesetEntityDetailProps<TEntity extends EntityBase, TForm extends FieldValues, TKey extends QueryKey> {
@@ -103,12 +111,19 @@ function FormDetails<TEntity extends EntityBase, TForm extends FieldValues, TKey
     listKey: QUERY_KEYS.rulesets.section(rulesetId, section),
     saveFn: editing.updateFn,
     toFormValues: editing.toFormValues,
-    // The save's response is the whole entity: the copy's page shows it at once
-    storeSaved: (saved) => {
+    // The save's response is the entity's row: the copy's page shows it at once, its delete as the entity's was
+    storeSaved: (saved, sourceId) => {
       const savedKey = query(saved.id).queryKey;
-      queryClient.setQueryData<TEntity>(savedKey, saved);
-      // Supersede any refetch that left before the save committed.
+      queryClient.setQueryData<TEntity>(savedKey, { ...entity, ...saved });
+      // Supersede any refetch that left before the save committed; a list's pool filter that picked it (under its key,
+      // `pickedEntityQuery`), by its id or its source's, reads it again too
       void queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
+      for (const id of new Set([saved.id, sourceId])) {
+        void queryClient.invalidateQueries({
+          queryKey: pickedEntityQuery(rulesetId, section, id).queryKey,
+          exact: true,
+        });
+      }
     },
     followCopy: copy.followCopy,
   });
@@ -152,8 +167,6 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
 
   const { canEditEntities } = useRulesetPermissions(ruleset);
   const canEdit = !!editing && canEditEntities;
-  // Deleting an inherited entity can be undone
-  const { restorable, error: changesError } = useRestorableDelete(ruleset, entity);
 
   if (!isRulesetLoading && !isEntityLoading && (!ruleset || !entity)) {
     return (
@@ -178,8 +191,7 @@ export function RulesetEntityDetail<TEntity extends EntityBase, TForm extends Fi
               deleteFn: editing.removeFn,
               listKeys: [QUERY_KEYS.rulesets.section(rulesetId, section)],
               entityKey: query(entityId).queryKey,
-              restorable,
-              changesError,
+              restorable: !!entity?.restorableDelete,
             }
           : undefined
       }

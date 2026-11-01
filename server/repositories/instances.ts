@@ -3,6 +3,7 @@
 import { emailVerificationsInAccount, passwordResetsInAccount } from "@/drizzle/schema.ts";
 
 import AccountCodesRepository from "./accounts/AccountCodesRepository.ts";
+import ApiKeysRepository from "./accounts/ApiKeysRepository.ts";
 import OauthAccountsRepository from "./accounts/OauthAccountsRepository.ts";
 import SessionsRepository from "./accounts/SessionsRepository.ts";
 import UsersRepository from "./accounts/UsersRepository.ts";
@@ -36,6 +37,7 @@ import StoredSettings from "./stored/StoredSettings.ts";
 import { withRequestCache } from "./withRequestCache.ts";
 
 export const Activities = withRequestCache("Activities", new ActivitiesRepository());
+export const ApiKeys = withRequestCache("ApiKeys", new ApiKeysRepository());
 export const Attachments = withRequestCache("Attachments", new AttachmentsRepository());
 export const Blobs = withRequestCache("Blobs", new BlobsRepository());
 export const Campaigns = withRequestCache("Campaigns", new CampaignsRepository());

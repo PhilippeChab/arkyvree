@@ -3,6 +3,7 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, Invites, type Pagination, Players, Visibility } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { redactInviteAddresses } from "@/server/services/campaigns/campaignAddresses.ts";
 import { findReadableCampaign, getReadableCampaign } from "@/server/services/campaigns/readableCampaign.ts";
 import { getPendingInvite, saveInviteAnswer } from "@/server/services/invites/index.ts";
 import { CampaignsPolicy, isAllowed } from "@/server/services/policies/index.ts";
@@ -65,9 +66,12 @@ class CampaignInvitesService {
     where: { orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
     pagination: Pagination,
   ) {
-    await getReadableCampaign(db, session, campaignId);
+    const { policy } = await getReadableCampaign(db, session, campaignId);
 
-    return await Invites.findPage(db, { campaignId, ...where }, pagination);
+    // An address is its Game Master's to read, and so to search
+    const readsAddresses = policy.isGameMaster();
+    const page = await Invites.findPage(db, { campaignId, ...where, searchAddresses: readsAddresses }, pagination);
+    return readsAddresses ? page : { ...page, items: page.items.map(redactInviteAddresses) };
   }
 
   async rejectInvite(session: Session, inviteId: string) {

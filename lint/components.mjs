@@ -51,8 +51,8 @@
  * - `page-titles`: a page's title (its `h1`) is its header's: `PageHeader`, `DetailPageHeader`, or the header of a page
  *   that opens on its own (the dashboard, the auth pages, an invite).
  * - `list-toolbars`: a list's actions sit in its `ListToolbar` (`SearchBar` is one), or in a dialog across from its lead
- *   (`DialogLead`), never a bare row; the list sits 24px under it (`spacing={3}`), and its Load More 16px under the
- *   list (`spacing={2}`).
+ *   (`DialogLead`), or in a panel across from its title (`PanelLead`), never a bare row; the list sits 24px under its
+ *   toolbar (`spacing={3}`), and its Load More 16px under the list (`spacing={2}`).
  * - `list-results`: a searched list's results, a page's or a tab's, show one way: `ListPageResults` (a tab's
  *   `variant="section"`), or a ruleset tab's `RulesetSectionTable`, each with its first load, its failure, the search
  *   that found nothing (`NoMatchesState`) and its empty state. No other module draws a `NoMatchesState`. A ruleset
@@ -613,6 +613,14 @@ function createListToolbars(context) {
             "`ListToolbar`, a page's bar.",
         });
       }
+      if (elementName(node) === "ListToolbar" && inPanel(node)) {
+        context.report({
+          node: node.openingElement,
+          message:
+            "A panel holds one list: its actions sit across from its title, `PanelLead`'s `actions`, never in a " +
+            "`ListToolbar`, a page's bar.",
+        });
+      }
       if (elementName(node) !== "Stack") return;
       const children = childElements(node).map(elementName);
       const spacing = attributeValue(attribute(node, "spacing"));
@@ -1138,6 +1146,12 @@ function inHoverRow(node, context) {
     const sx = attribute(p, "sx");
     if (sx && context.sourceCode.getText(sx).includes("ROW_ACTIONS_HOVER_SX")) return true;
   }
+  return false;
+}
+
+/** Whether `node` sits in a `Panel`, a page's panel, whose list's actions sit across from its title (`PanelLead`). */
+function inPanel(node) {
+  for (let p = parentElement(node); p; p = parentElement(p)) if (elementName(p) === "Panel") return true;
   return false;
 }
 

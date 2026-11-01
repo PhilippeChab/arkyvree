@@ -33,7 +33,10 @@ interface RemoveLinkDialogProps {
   onConfirm: () => void;
   open: boolean;
   pending: boolean;
-  /** The removal can be undone from Local Changes: the owner is inherited, or a copy of one (`useRestorableDelete`). */
+  /**
+   * The removal can be undone from Local Changes: the owner is inherited, or a copy of one (its owner's
+   * `restorableDelete`).
+   */
   restorable: boolean;
   /** Its rules' words: the linked entity's (`one`, "Skill") and the owner's (`owner`, "class"). */
   words: LinkWords;

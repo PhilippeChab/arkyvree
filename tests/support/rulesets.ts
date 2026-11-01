@@ -14,7 +14,7 @@ import {
   withRulesetScope,
 } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { type RulesetEntityType, RulesetExtensions, Rulesets, RulesetSettings } from "@/server/repositories/index.ts";
+import { type RulesetEntityType, RulesetExtensions, Rulesets } from "@/server/repositories/index.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";
 import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
@@ -115,9 +115,6 @@ export async function createSeededTestRuleset(
   const coreId = await RulesetSeeder.findCoreRulesetId(db, DND35_CORE_PACKAGE, "A seeded test ruleset");
 
   const ruleset = await createTestRuleset(userId, { rulesetId: coreId, ...options });
-
-  // Copy the ruleset's Settings, as a fork does (its skill point ability)
-  await RulesetSettings.createCopy(db, { fromId: coreId, toId: ruleset.id });
 
   return ruleset;
 }

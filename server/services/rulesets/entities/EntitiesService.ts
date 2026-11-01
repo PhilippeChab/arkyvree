@@ -1,7 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
 import { Engine, type EntityAction, type EntityCopies, type EntityRecord } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
-import type { RulesetScope } from "@/server/cow/index.ts";
+import { RulesetChanges, type RulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, type Pagination, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
@@ -134,9 +134,10 @@ class EntitiesService extends include(Object, Copies, Links, Owned, Progressions
   }
 
   async getEntity(session: Session, rulesetId: string, type: RulesetEntityType, entityId: string) {
-    return await withReadableRuleset(db, session, rulesetId, async (scope) =>
-      Engine.for(scope).entities(type).describe(entityId),
-    );
+    return await withReadableRuleset(db, session, rulesetId, async (scope) => {
+      const entity = Engine.for(scope).entities(type).describe(entityId);
+      return { ...entity, restorableDelete: await RulesetChanges.restoresDelete(db, scope, type, entity) };
+    });
   }
 
   /**

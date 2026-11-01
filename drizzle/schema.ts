@@ -442,6 +442,38 @@ export const advancementPicksInCharacter = character.table(
   ],
 );
 
+/** A user's API keys: each acts as its user on the public API, by its token, which only its digest keeps. */
+export const apiKeysInAccount = account.table(
+  "api_keys",
+  {
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    id: uuid()
+      .default(sql`public.gen_random_uuid()`)
+      .primaryKey()
+      .notNull(),
+    userId: uuid("user_id").notNull(),
+    name: text().notNull(),
+    /** The token's start, which names it on the settings page: the token itself is shown once, when it's made. */
+    prefix: text().notNull(),
+    /** The token's SHA-256 digest, hex: what a request's token is looked up by. */
+    digest: text().notNull(),
+    lastUsedAt: timestamp("last_used_at", { mode: "string", withTimezone: true }),
+    /** When the key stops working, chosen as it's made: none for a key that never expires. */
+    expiresAt: timestamp("expires_at", { mode: "string", withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex("api_keys_digest").using("btree", table.digest.asc().nullsLast()),
+    index("api_keys_expires_at").using("btree", table.expiresAt.asc().nullsLast()),
+    index("api_keys_user_id").using("btree", table.userId.asc().nullsLast()),
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [usersInAccount.id],
+      name: "api_keys_user_id_fkey",
+    }).onDelete("cascade"),
+  ],
+);
+
 export const storage = pgSchema("storage");
 
 export const blobsInStorage = storage.table(
@@ -960,6 +992,8 @@ export const entitySnapshotsInRules = rules.table(
   ],
 );
 
+export const exportStatus = pgEnum("export_status", ["pending", "ready", "failed"]);
+
 export const exportsInAccount = account.table(
   "exports",
   {
@@ -972,8 +1006,9 @@ export const exportsInAccount = account.table(
     type: text().notNull(),
     mimeType: text("mime_type").notNull(),
     fileName: text("file_name").notNull(),
-    data: bytea("data").notNull(),
+    data: bytea("data"),
     expiresAt: timestamp("expires_at", { mode: "string", withTimezone: true }).notNull(),
+    status: exportStatus().default("ready").notNull(),
   },
   (table) => [
     index("exports_user_id_idx").using("btree", table.userId.asc().nullsLast()),

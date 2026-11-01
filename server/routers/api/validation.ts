@@ -7,6 +7,15 @@ import { sanitizeText } from "@/shared/text.ts";
 
 import { isUuid, limitDefaultingTo } from "./schemaBuilders.ts";
 
+/** A field's value as a body sends it: a text, a number or a flag. */
+const fieldValue = z.union([z.string(), z.number(), z.boolean()]);
+
+/**
+ * A character's fields, by their keys, which its ruleset reads and checks by their declarations (`FieldCodec.parse`):
+ * a single field's value, a set's values, or none.
+ */
+export const characterFields = z.record(z.string(), z.union([fieldValue, z.array(fieldValue).readonly(), z.null()]));
+
 /** A route's `:characterId` param */
 export const characterIdParam = z.object({ characterId: z.string().uuid() });
 
@@ -38,6 +47,17 @@ export const entityLinks = z.custom<EntityLinkValues>(
 /** Ruleset entity sorting (name/createdAt/updatedAt, ascending) */
 export const entityOrderBy = z.enum(["name", "createdAt", "updatedAt"]).default("name");
 
+/** The groups an inventory entry is held in, stored from 0 (3.5's weapon sets a hand holds it in): none outside them. */
+export const groupIndexes = z.array(z.number().int().min(0)).default([]);
+
+/** Comma-separated groups (3.5's weapon sets), stored from 0: what isn't one is dropped (an empty string is none). */
+export const groupIndexList = z.string().transform((value) =>
+  value
+    .split(",")
+    .filter((set) => /^\d+$/.test(set))
+    .map(Number),
+);
+
 /** Comma-separated ids in a query string: what isn't one is dropped, none when the query leaves it out. */
 export const idList = z
   .string()
@@ -59,3 +79,12 @@ export const sanitizedEmail = z.string().overwrite(sanitizeEmail).email();
 
 /** Text, sanitized as it's stored: a check chained to it (`sanitizedText.min(3)`) reads the sanitized text. */
 export const sanitizedText = z.string().overwrite(sanitizeText);
+
+/** A character's amount of a scored link's entity (3.5's ability score). */
+export const score = z.number().int();
+
+/** A shared sheet's `:shareToken`: the token its owner's share link carries. */
+export const shareTokenParam = z.object({ shareToken: z.string().uuid() });
+
+/** A direct upload's `:signedId`: the blob's signed id its upload answered. */
+export const signedIdParam = z.object({ signedId: z.string().min(1) });

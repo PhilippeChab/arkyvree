@@ -39,7 +39,7 @@ class CampaignCharactersService {
     const character = await findExportableCharacter(session.userId, characterId, campaignId);
     if (!character) throw new NotFoundError("Character not found in this campaign");
 
-    await enqueueCharacterPdf(session, character, campaignId);
+    return await enqueueCharacterPdf(session, character, campaignId);
   }
 
   async getCharacter(session: Session, campaignId: string, characterId: string) {

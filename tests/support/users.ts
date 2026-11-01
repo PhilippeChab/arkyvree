@@ -1,7 +1,7 @@
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { EmailVerifications, Sessions, Users } from "@/server/repositories/index.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { SessionRow } from "@/shared/relations.ts";
 
 import { uniqueId } from "./seed.ts";
 
@@ -9,7 +9,7 @@ import { uniqueId } from "./seed.ts";
  * A session for `userId` that services accept. It isn't stored, so it can't
  * sign in an API request: use `signedInApi` from `tests/support/api.ts` for that.
  */
-export function makeSession(userId: string = SEED_USER_ID): Session {
+export function makeSession(userId: string = SEED_USER_ID): SessionRow {
   const now = new Date().toISOString();
   return {
     id: `session-${uniqueId()}`,

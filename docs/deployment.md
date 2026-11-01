@@ -156,7 +156,7 @@ Create a token: `fly tokens create deploy -o personal`.
 
 **Known caveat**: logs emitted in the first ~1-1.5s of a cold boot can still be dropped. Fly's Vector collector doesn't ingest immediately on process start. Nothing app-side fixes this — it'd require a log drain (Better Stack / Axiom) to cover. Currently accepted.
 
-**Source of truth for job success is the database, not the logs.** If `account.exports` has a row, the PDF was generated, regardless of whether you see the completion log.
+**Source of truth for job success is the database, not the logs.** A PDF's `account.exports` row is stored as it's queued, `pending`: once its `status` is `ready`, the PDF was generated, regardless of whether you see the completion log (`failed` once the job gave up on it). The deploy workflow deploys the web app first, its release command migrating the database, then the worker: the new worker writes columns the migration adds. In the minutes between the two, the old worker still runs the jobs the new web app queues. It ignores the export a job names and stores a ready one of its own, which its `pdfReady` notification names, so the app's download works; the pending export the request stored reads `failed` once that job is gone (`ExportsService` reads an export whose job is gone as lost). A PDF requested through `/v1` in that window is asked for again.
 
 ## Debugging
 
@@ -178,7 +178,7 @@ fly image show -a arkyvree-worker    # look for GH_SHA label
 # Inspect queue state (requires .env.production DATABASE_URL)
 # - pending jobs: SELECT * FROM graphile_worker._private_jobs
 # - queue locks: SELECT * FROM graphile_worker._private_job_queues
-# - recent exports: SELECT * FROM account.exports ORDER BY created_at DESC
+# - recent exports: SELECT id, user_id, status, file_name, expires_at FROM account.exports ORDER BY created_at DESC
 ```
 
 ### Common issues

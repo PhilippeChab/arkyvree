@@ -12,7 +12,8 @@ export default class CowData {
    * override among them), `siblings` each winner to its sibling losers, in the order they were paired. A loser paired
    * twice is listed once, where it was paired under the later winner. `shadowedIds`: the overridden books' entities the
    * ruleset's own of their names stands for. `sources`: each copy the chain's snapshots record, to the entity it
-   * copied.
+   * copied. `snapshotRulesetIds`: the rulesets whose snapshots override what they copied, the ruleset's and its
+   * chain's, as the builder overrides them.
    */
   constructor(
     sourceChain: string[],
@@ -21,8 +22,10 @@ export default class CowData {
     siblings: ReadonlyMap<string, readonly string[]>,
     shadowedIds: ReadonlySet<string>,
     sources: ReadonlyMap<string, string> = new Map(),
+    snapshotRulesetIds: readonly string[] = [],
   ) {
     this.sourceChain = sourceChain;
+    this.snapshotRulesetIds = snapshotRulesetIds;
     this.overrides = overrides;
     this.aliases = aliases;
     this.shadowedIds = shadowedIds;
@@ -45,6 +48,8 @@ export default class CowData {
   private readonly shadowedIds: ReadonlySet<string>;
 
   private readonly siblings: ReadonlyMap<string, readonly string[]>;
+
+  private readonly snapshotRulesetIds: readonly string[];
 
   private readonly sources: ReadonlyMap<string, string>;
 
@@ -112,12 +117,20 @@ export default class CowData {
   }
 
   /**
-   * What a list of the ruleset's entities reads besides its own rows: its source chain's (`sourceChain`), less
-   * what the view hides that no snapshot overrides (`hiddenIds`: the sibling losers, the shadowed books' entities),
-   * which it leaves out in the query, so a page keeps its size.
+   * What a list of the ruleset's entities reads besides its own rows (`inherited`, one filter: a chain is never read
+   * without what hides its rows): its source chain's (`sourceChain`), less what the view hides, which it leaves out in
+   * the query, so a page keeps its size: what a snapshot overrides (the sources of `snapshotRulesetIds`' snapshots,
+   * whichever of the chain copied them), and what none does (`hiddenIds`: the sibling losers, the shadowed books'
+   * entities).
    */
   get listFilters() {
-    return { sourceChain: this.sourceChain, hiddenIds: [...this.siblingIds, ...this.shadowedIds] };
+    return {
+      inherited: {
+        sourceChain: this.sourceChain,
+        snapshotRulesetIds: [...this.snapshotRulesetIds],
+        hiddenIds: [...this.siblingIds, ...this.shadowedIds],
+      },
+    };
   }
 
   /** The id that stands for `id`: its copy or its winner when it's stale, itself otherwise. */

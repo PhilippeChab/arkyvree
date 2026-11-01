@@ -132,7 +132,7 @@ describe("ContributorsService", () => {
       // Stale links still resolve, so the page can say what happened.
       await ContributorsService.acceptInvite(session, invite.id);
       expect((await fetch()).status).toBe("Active");
-      await ContributorsService.revokeContributor(ownerSession, invite.id);
+      await ContributorsService.revokeContributor(ownerSession, ruleset.id, invite.id);
       expect((await fetch()).status).toBe("Revoked");
       await Rulesets.archive(db, { id: ruleset.id });
       expect(await fetch()).toMatchObject({ rulesetsInRule: { status: "Archived" }, canAccept: false });
@@ -165,26 +165,28 @@ describe("ContributorsService", () => {
     test("changes an active contributor's role", async () => {
       const { ownerSession, ruleset } = await setup();
       const { invite } = await addContributor(ownerSession, ruleset.id, "Editor");
-      expect((await ContributorsService.updateContributorRole(ownerSession, invite.id, "Viewer")).role).toBe("Viewer");
+      expect(
+        (await ContributorsService.updateContributorRole(ownerSession, ruleset.id, invite.id, "Viewer")).role,
+      ).toBe("Viewer");
     });
 
     test("refuses a pending invite, an archived ruleset, and an Admin promoting to Admin", async () => {
       const { ownerSession, ruleset } = await setup();
       const pending = await addContributor(ownerSession, ruleset.id, "Editor", true);
-      expect(ContributorsService.updateContributorRole(ownerSession, pending.invite.id, "Viewer")).rejects.toThrow(
-        ConflictError,
-      );
+      expect(
+        ContributorsService.updateContributorRole(ownerSession, ruleset.id, pending.invite.id, "Viewer"),
+      ).rejects.toThrow(ConflictError);
 
       const { session: admin } = await addContributor(ownerSession, ruleset.id, "Admin");
       const editor = await addContributor(ownerSession, ruleset.id, "Editor");
-      expect(ContributorsService.updateContributorRole(admin, editor.invite.id, "Admin")).rejects.toThrow(
+      expect(ContributorsService.updateContributorRole(admin, ruleset.id, editor.invite.id, "Admin")).rejects.toThrow(
         ForbiddenError,
       );
 
       await Rulesets.archive(db, { id: ruleset.id });
-      expect(ContributorsService.updateContributorRole(ownerSession, editor.invite.id, "Viewer")).rejects.toThrow(
-        ConflictError,
-      );
+      expect(
+        ContributorsService.updateContributorRole(ownerSession, ruleset.id, editor.invite.id, "Viewer"),
+      ).rejects.toThrow(ConflictError);
     });
   });
 
@@ -193,7 +195,9 @@ describe("ContributorsService", () => {
       const { ownerSession, ruleset } = await setup();
       for (const role of ["Editor", "Admin"] as const) {
         const { invite } = await addContributor(ownerSession, ruleset.id, role);
-        expect((await ContributorsService.revokeContributor(ownerSession, invite.id)).status).toBe("Revoked");
+        expect((await ContributorsService.revokeContributor(ownerSession, ruleset.id, invite.id)).status).toBe(
+          "Revoked",
+        );
       }
     });
 
@@ -201,7 +205,7 @@ describe("ContributorsService", () => {
       const { ownerSession, ruleset } = await setup();
       const { session: admin } = await addContributor(ownerSession, ruleset.id, "Admin");
       const other = await addContributor(ownerSession, ruleset.id, "Admin");
-      expect(ContributorsService.revokeContributor(admin, other.invite.id)).rejects.toThrow(ForbiddenError);
+      expect(ContributorsService.revokeContributor(admin, ruleset.id, other.invite.id)).rejects.toThrow(ForbiddenError);
     });
   });
 

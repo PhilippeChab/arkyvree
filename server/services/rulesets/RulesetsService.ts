@@ -8,7 +8,6 @@ import {
   type Pagination,
   RulesetExtensions,
   Rulesets,
-  RulesetSettings,
   StarredRulesets,
 } from "@/server/repositories/index.ts";
 import { isAllowed, isStarrable, type RulesetsPolicy } from "@/server/services/policies/index.ts";
@@ -151,10 +150,8 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
         const { extensionIds } = (await Rulesets.findSources(tx, { id }))!;
         await RulesetExtensions.upsert(tx, { rulesetId: newRuleset.id, extensionIds });
 
-        // 3. Copy the ruleset's Settings as stored (parent entity IDs, which the fork's view resolves at read time)
-        await RulesetSettings.createCopy(tx, { fromId: id, toId: newRuleset.id });
-
-        // 4. Log the fork activity
+        // 3. Log the fork activity. Its Settings are its chain's (`rulesetValuesOf`), as all it inherits is, until it
+        // saves its own: none is copied
         await Activities.create(tx, {
           userId: session.userId,
           targetId: newRuleset.id,

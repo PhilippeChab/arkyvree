@@ -11,6 +11,8 @@ import ObjectStorage from "@/server/storage/ObjectStorage.ts";
 import { ALLOWED_IMAGE_TYPES, ATTACHMENT_SLOTS, MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
 import type { Session } from "@/shared/relations.ts";
 
+import { detectImageType } from "./imageTypes.ts";
+
 interface AttachableConfig {
   isOwner: OwnershipChecker;
   names: readonly string[];
@@ -128,6 +130,48 @@ class AttachmentsService {
     if (!(await config.isOwner(session, recordId))) throw new ForbiddenError("Not authorized to attach to this record");
   }
 
+  /**
+   * Puts a stored blob in its slot, replacing the attachment there: the blob locked, so the sweep of unattached blobs
+   * can't take it meanwhile, and marked attached. Answers the old attachment's blob when nothing else holds it.
+   */
+  private async attachBlob(slot: { name: string; recordId: string; recordType: string }, blobId: string) {
+    return await withTransaction(async (tx: Db) => {
+      // Lock the blob row so a concurrent sweep can't delete it between
+      // here and the Attachments.create below — that would surface as a
+      // 23503 FK violation on insert.
+      await Blobs.lock(tx, { id: blobId });
+      const blob = await Blobs.findOne(tx, { id: blobId });
+      if (!blob) throw new NotFoundError("Blob not found");
+      if (blob.attachedAt) throw new ConflictError("Blob is already attached");
+
+      const existing = await Attachments.findOne(tx, {
+        recordType: slot.recordType,
+        recordId: slot.recordId,
+        name: slot.name,
+      });
+      if (existing) await Attachments.delete(tx, { id: existing.id });
+
+      const [attachment] = await withUniqueRefusal(
+        () =>
+          Attachments.create(tx, {
+            recordType: slot.recordType,
+            recordId: slot.recordId,
+            name: slot.name,
+            blobId: blob.id,
+          }),
+        () => new ConflictError("Slot is already attached by a concurrent request"),
+      );
+      if (!attachment) throw new InternalError("Failed to create attachment");
+
+      const updated = await Blobs.update(tx, { attachedAt: new Date().toISOString() }, { id: blob.id });
+      const attachedBlob = updated[0] ?? blob;
+
+      const orphan = existing ? await this.findOrphanedBlob(tx, existing.blobId) : null;
+
+      return { attachment, blob: attachedBlob, orphan };
+    });
+  }
+
   private async findOrphanedBlob(tx: Db, blobId: string): Promise<{ id: string; key: string } | null> {
     const refs = await Attachments.findMany(tx, { blobIds: [blobId] });
     if (refs.length > 0) return null;
@@ -169,41 +213,7 @@ class AttachmentsService {
     if (stats.size !== preBlob.byteSize)
       throw new BadRequestError(`Upload size ${stats.size} does not match declared byteSize ${preBlob.byteSize}`);
 
-    const result = await withTransaction(async (tx: Db) => {
-      // Lock the blob row so a concurrent sweep can't delete it between
-      // here and the Attachments.create below — that would surface as a
-      // 23503 FK violation on insert.
-      await Blobs.lock(tx, { id: payload.blobId });
-      const blob = await Blobs.findOne(tx, { id: payload.blobId });
-      if (!blob) throw new NotFoundError("Blob not found");
-      if (blob.attachedAt) throw new ConflictError("Blob is already attached");
-
-      const existing = await Attachments.findOne(tx, {
-        recordType: payload.recordType,
-        recordId: payload.recordId,
-        name: payload.name,
-      });
-      if (existing) await Attachments.delete(tx, { id: existing.id });
-
-      const [attachment] = await withUniqueRefusal(
-        () =>
-          Attachments.create(tx, {
-            recordType: payload.recordType,
-            recordId: payload.recordId,
-            name: payload.name,
-            blobId: blob.id,
-          }),
-        () => new ConflictError("Slot is already attached by a concurrent request"),
-      );
-      if (!attachment) throw new InternalError("Failed to create attachment");
-
-      const updated = await Blobs.update(tx, { attachedAt: new Date().toISOString() }, { id: blob.id });
-      const attachedBlob = updated[0] ?? blob;
-
-      const orphan = existing ? await this.findOrphanedBlob(tx, existing.blobId) : null;
-
-      return { attachment, blob: attachedBlob, orphan };
-    });
+    const result = await this.attachBlob(payload, payload.blobId);
 
     await this.purgeOrphan(result.orphan);
     return { attachment: result.attachment, blob: result.blob };
@@ -282,6 +292,39 @@ class AttachmentsService {
     });
     if (!row) return null;
     return { id: row.id, url: ObjectStorage.findPublicUrl(row.key) };
+  }
+
+  /**
+   * Uploads an image through the server into its slot, at once: its type read from its bytes, stored as a pending blob
+   * first, so one a crash leaves unattached is swept with its row, then put in storage and attached. A failed write or
+   * attach deletes what it stored. Answers the attachment as its read does: its id and its image's URL.
+   */
+  async setAttachment(session: Session, recordType: string, recordId: string, name: string, file: File) {
+    const slot = { name, recordId, recordType };
+    await this.assertCanAttach(session, slot.recordType, slot.recordId);
+    this.assertValidName(slot.recordType, slot.name);
+
+    const data = new Uint8Array(await file.arrayBuffer());
+    const contentType = detectImageType(data);
+    if (!contentType) throw new BadRequestError("The file isn't a PNG, JPEG, WebP or GIF image");
+    this.assertWithinPolicy(slot.recordType, data.byteLength, contentType);
+
+    const blobId = randomUUID();
+    const key = this.buildKey(blobId, file.name);
+    await withTransaction((tx) =>
+      Blobs.create(tx, { id: blobId, key, filename: file.name || "file", contentType, byteSize: data.byteLength }),
+    );
+
+    let result;
+    try {
+      await ObjectStorage.get().putObject(key, data, { contentType });
+      result = await this.attachBlob(slot, blobId);
+    } catch (error) {
+      await this.purgeOrphan({ id: blobId, key });
+      throw error;
+    }
+    await this.purgeOrphan(result.orphan);
+    return { id: result.attachment.id, url: ObjectStorage.findPublicUrl(result.blob.key) };
   }
 }
 

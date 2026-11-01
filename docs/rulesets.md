@@ -128,7 +128,7 @@ function buildSourceChain(ruleset: RulesetSources): string[] {
 }
 ```
 
-Extensions come first so their entities are visible. Repositories receive the chain as a list's `sourceChain` — they
+Extensions come first so their entities are visible. Repositories receive the chain in a list's `inherited` (`CowData.listFilters`) — they
 don't distinguish between extension and parent sources. A ruleset's row carries neither: its sources are read where
 they're needed, a scope's (`withRulesetScope` hands its callback `sources`), a subscribe's and an unsubscribe's, a
 revert's, a fork's and the checks of whether a ruleset can be an extension (`canBeExtension({ hasExtensions })`). The
@@ -145,21 +145,25 @@ Inherited entities are read-only. When a user edits or deletes one:
 
 ### COW in Repositories
 
-A kind's list (`Entities`' `findPage`, through `StoredEntities.buildRulesetCondition`) builds COW-aware SQL per source in
-its `sourceChain`:
+A kind's list (`Entities`' `findPage`, through `StoredEntities.buildRulesetCondition`) builds COW-aware SQL over the
+source chain copy-on-write gives it (`rulesetData.cow.listFilters`: its `inherited`, the chain with what hides its rows):
 
 ```sql
--- For each source in the source chain (its extensions, then its parent):
+-- The source chain's rows (its extensions, then its parent), less what a snapshot overrides
 SELECT * FROM rules.entities
 WHERE type = 'feats'
-  AND ruleset_id = :sourceId
-  AND id NOT IN (
-    SELECT source_entity_id FROM rules.entity_snapshots
-    WHERE ruleset_id IN (:childId, ...closer_sources)
-  )
+  AND (ruleset_id = :childId
+    OR (ruleset_id IN (:sourceChain)
+      AND id NOT IN (
+        SELECT source_entity_id FROM rules.entity_snapshots
+        WHERE ruleset_id IN (:snapshotRulesetIds) -- the child's and its chain's, as CowDataBuilder overrides them
+      )
+      AND id NOT IN (:hiddenIds)))
 ```
 
-The child's own entities are always included. A source's entities are included only if no snapshot overrides them.
+The child's own entities are always included. A source's entities are included only if no snapshot of the child or its
+chain overrides them, whichever copied them, as the view hides them; a list read without `inherited` reads the child's
+own alone.
 
 ### COW for Complex Entities
 
@@ -243,7 +247,7 @@ local copy overrides what it copied:
   and its sibling losers (another book's reprint it won over). A class's levels
   pair by number with the fork's class's, as a copy's do; a level the fork's class
   doesn't have goes with the book's class;
-- a list leaves it out in its query (`listFilters.hiddenIds`), so the pages, the
+- a list leaves it out in its query (`listFilters`' `hiddenIds`), so the pages, the
   pickers and the sheets show the fork's alone;
 - an unsubscribe points what named it at the fork's entity (`findDepartures`: the
   fork's entity stands in its place), and refuses nothing for it;
@@ -274,7 +278,9 @@ gone (its extension deleted it) is no override: the fork's own, which no restore
 back, its source kept until a restore ends. What a fork's snapshots stand for is
 `RulesetChanges` (`server/cow/views/`), which its Local Changes list: a copy of a live
 source is modified, a source whose copy was deleted (a tombstone) is deleted, and a copy
-whose source is gone is added, as an entity the fork made is. The rows that name an entity are
+whose source is gone is added, as an entity the fork made is; and its copies of an
+extension's entities (`copiesOf`: the changes and tombstones whose source the extension
+holds), which an unsubscribe reverts. The rows that name an entity are
 one list, by the entity's type (`ENTITY_REFERENCES`,
 `server/repositories/rulesets/entityReferences.ts`), which `EntityReferences` reads
 for every use: a revert's repoint (`update`: a restore's, and an unsubscribe's of
@@ -333,7 +339,7 @@ User's Fork (subscribed to A, then B)
 
 1. `CowDataBuilder` detects when multiple extension snapshots share the same `sourceEntityId`. It pairs the winner's `forkedEntityId` with the sibling `forkedEntityId`s (`CowData.getSiblings(winnerId)`, `getWinner(loserId)`). Feats and spells that several rulesets in the source chain define natively under the same name (reprints: the kinds whose storage says `namesakes: "reprints"`) are paired the same way, closest ruleset first. A winner the fork's own entity of its name hides is overridden by it, its siblings with it (see [Names of entities](#names-of-entities)). A winner's siblings are listed in the order they were paired (the snapshot pass's, then the reprint pass's), each once, under the winner it resolves to: the order both merges below take them in.
 
-2. **Entity list filtering**: Sibling entities are left out of every ruleset entity's list in its query (only the winner is returned), so the user never sees duplicate feats and a page keeps its size: `StoredEntities.buildRulesetCondition` excludes the `hiddenIds` it's given (`rulesetData.cow.listFilters`, with the source chain: the sibling losers, and the books' entities the fork's own of their names hide) from the inherited rows. A list read without them sees them.
+2. **Entity list filtering**: Sibling entities are left out of every ruleset entity's list in its query (only the winner is returned), so the user never sees duplicate feats and a page keeps its size: `StoredEntities.buildRulesetCondition` leaves out of the inherited rows what `rulesetData.cow.listFilters` says the view hides, with the source chain: the sources of the snapshots of `snapshotRulesetIds` (the ruleset's and its chain's: whichever copied an entity, as `CowDataBuilder` overrides it), in one subquery, and the `hiddenIds` no snapshot overrides (the sibling losers, and the books' entities the fork's own of their names hide). A list read without them sees them.
 
 3. **Read-time merging** (built into the compose step, the engine's `copyOnWrite().buildView`: `RulesetComposition` in `engine/core/view/RulesetComposition.ts`): `RulesetViews.getData` folds sibling contributions into the winner's buckets before the engine's operations read them. Consumers read `rulesetData.byId(type)` (3.5's `Dnd35View.of(rulesetData).featsById` / `spellsById`) / `rulesetData.modifiersBySource` / `rulesetData.requirementsByEntity` and get pre-merged rows — no sibling helpers needed at call sites. The rules are one class, `SiblingMerge` (`engine/core/view/SiblingMerge.ts`), which `EntityCopy` writes by too, through the engine (`copyOnWrite().mergeCustomizations`, `mergeLinks`): each takes the winner's own rows and each sibling's, in `getSiblings` order, and returns the siblings' rows the winner takes. Of two equal rows (by the kind's key), the winner's, then the earlier sibling's, is kept: its requirements, its description, its level.
    - **Links of a role that merges** (`mergeLinks`, a role whose registry row merges by `union`: 3.5's `listedIn`, a feat's pools, a spell's lists): a sibling's links are merged into the winner's (`RulesetData.linksOf`), deduped by their role and resolved target (3.5's aptitude) after FK remap; a role that doesn't merge keeps the winner's alone.

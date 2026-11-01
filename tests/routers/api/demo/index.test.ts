@@ -68,5 +68,9 @@ describe("demo", () => {
     await expectStatus(api.auth["delete-account"].$post({ json: { password: "doesnt-matter" } }), 403);
     // A campaign would leave a players row behind when the demo expires.
     await expectStatus(api.api.campaigns.$post({ json: { name: "demo campaign", rulesetId: NIL_UUID } }), 403);
+    // A demo account has no access to the public API: it makes, lists and revokes no key
+    await expectStatus(api.auth["api-keys"].$post({ json: { expiresInDays: null, name: "demo key" } }), 403);
+    await expectStatus(api.auth["api-keys"].$get(), 403);
+    await expectStatus(api.auth["api-keys"][":id"].$delete({ param: { id: NIL_UUID } }), 403);
   });
 });

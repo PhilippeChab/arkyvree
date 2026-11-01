@@ -10,7 +10,6 @@ export { useEntityVariants } from "./useEntityVariants.ts";
 export { useFormOptions } from "./useFormOptions.ts";
 export { useOpenEntity } from "./useOpenEntity.ts";
 export { usePoolFilter } from "./usePoolFilter.ts";
-export { useRestorableDelete } from "./useRestorableDelete.ts";
 export { useRowPrefetch } from "./useRowPrefetch.ts";
 export { type PublishKind, useRulesetOperations } from "./useRulesetOperations.ts";
 export { useRulesetSection } from "./useRulesetSection.ts";

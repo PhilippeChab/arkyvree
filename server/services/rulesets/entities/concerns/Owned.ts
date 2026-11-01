@@ -1,5 +1,6 @@
 import { Engine, type EntityForm } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
+import { RulesetChanges } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import type { RulesetEntityType } from "@/server/repositories/index.ts";
 import EntityWriter from "@/server/services/rulesets/entities/EntityWriter.ts";
@@ -49,11 +50,16 @@ export function Owned<B extends Constructor>(Base: B) {
       );
     }
 
-    /** An owned entity by its id alone (`ownedId`), with its owner's name, as its page shows it. */
+    /**
+     * An owned entity by its id alone (`ownedId`), with its owner's name, as its page shows it, and whether deleting it
+     * can be undone: its owner's (`restorableDelete`), which a restore brings back with what it owns.
+     */
     async getOwnedEntityWithOwner(session: Session, rulesetId: string, type: RulesetEntityType, ownedId: string) {
-      return await withReadableRuleset(db, session, rulesetId, async (scope) =>
-        Engine.for(scope).describeOwned(type, ownedId),
-      );
+      return await withReadableRuleset(db, session, rulesetId, async (scope) => {
+        const owned = Engine.for(scope).describeOwned(type, ownedId);
+        const owner = { id: owned.ownerId, rulesetId: owned.rulesetId };
+        return { ...owned, restorableDelete: await RulesetChanges.restoresDelete(db, scope, type, owner) };
+      });
     }
 
     /** An owned entity's edit (`ownedId`, of `ownerId`) off its form (`EntityWriter.updateOwned`). */

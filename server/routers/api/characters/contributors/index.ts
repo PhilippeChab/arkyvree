@@ -73,6 +73,6 @@ export default new Hono<SessionContext>()
     return c.json(await CharacterContributorsService.leaveCharacter(c.var.requestSession, id), 200);
   })
   .delete("/:id/contributors/:contributorId", denyDemoUser, validate("param", contributorParams), async (c) => {
-    const { contributorId } = c.req.valid("param");
-    return c.json(await CharacterContributorsService.revokeContributor(c.var.requestSession, contributorId), 200);
+    const { contributorId, id } = c.req.valid("param");
+    return c.json(await CharacterContributorsService.revokeContributor(c.var.requestSession, id, contributorId), 200);
   });

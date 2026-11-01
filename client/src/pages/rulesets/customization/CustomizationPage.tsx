@@ -30,12 +30,7 @@ import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel, positionWordOf } from "@/client/src/lib/rulesetLabels.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
 import { entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
-import {
-  useCopyOnWrite,
-  useEntityPageBack,
-  useFormOptions,
-  useRestorableDelete,
-} from "@/client/src/pages/rulesets/hooks/index.ts";
+import { useCopyOnWrite, useEntityPageBack, useFormOptions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { buildCustomizationPath, buildEntityPagePath, hasCustomizationPage } from "@/shared/customization/entities.ts";
 import { formatOperator } from "@/shared/customization/operators.ts";
@@ -97,7 +92,7 @@ function CustomizationView({
   const copy = useCopyOnWrite(rulesetId, entityId, (id) => buildCustomizationPath(type, id));
   const forgetSource = copy.forgetSource(!locked);
   // What this page deletes, the entity or what it holds, comes back with the entity when it's inherited
-  const { restorable, error: changesError } = useRestorableDelete(ruleset, deletedHolder(data));
+  const restorable = isRestorable(data);
 
   // A save answers the entity's row, its fields and its links, not all its page reads (its customizations, an item's
   // placement, a level's class's name): refetch the entity
@@ -129,7 +124,6 @@ function CustomizationView({
               listKeys: [ownerQueryKey ?? QUERY_KEYS.rulesets.section(rulesetId, type)],
               entityKey,
               restorable,
-              changesError,
             }
           : undefined
       }
@@ -186,15 +180,6 @@ function CustomizationView({
 }
 
 /**
- * The ruleset entity whose delete the page's comes back with: its own, an owned entity's owner (a class level's class);
- * a modifier's isn't told.
- */
-function deletedHolder(data: CustomizationEntity) {
-  if (data.holder === "modifier") return undefined;
-  return { id: data.holder === "owned" ? data.ownerId : data.entity.id, rulesetId: data.entity.rulesetId };
-}
-
-/**
  * What surrounds the editor: the header (an owned entity's by its position, in its rules' `words`) and where Back goes.
  */
 function describe(
@@ -237,6 +222,14 @@ function describe(
     default:
       return { title: data.entity.name, pageTitle: data.entity.name };
   }
+}
+
+/**
+ * Whether the page's delete, of the entity or what it holds, comes back with the entity, as the server answers it: its
+ * own (`restorableDelete`), an owned entity's its owner's (a class level's class's); a modifier's isn't told.
+ */
+function isRestorable(data: CustomizationEntity) {
+  return data.holder !== "modifier" && data.entity.restorableDelete;
 }
 
 /**

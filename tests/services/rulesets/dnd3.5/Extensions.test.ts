@@ -88,6 +88,7 @@ import {
   readCowData,
   readView,
   sourcesOf,
+  subscribeTestRuleset,
 } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
@@ -448,11 +449,10 @@ describe("subscribing to an extension", () => {
   test("adds the extension's feats to the fork's: Complete Warrior brings 514 of its own", async () => {
     const { session, extension, draft } = await setupFork();
     const total = async () => {
-      const { extensionIds, parentId } = await sourcesOf(draft.id);
-      const sourceChain = [...extensionIds, parentId!];
+      const { listFilters } = await readCowData(draft.id);
       return (
         await fetchEveryPage((page) =>
-          Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: draft.id, sourceChain }, page),
+          Entities.findPage<Feat>(db, { entityType: "feats", rulesetId: draft.id, ...listFilters }, page),
         )
       ).length;
     };
@@ -742,6 +742,27 @@ describe("subscribing to an extension", () => {
       });
       expect(await featsNamed(draft.id, "Toughness")).toHaveLength(1);
     });
+  });
+
+  test("lists what its view shows of an extension's feat its parent copied: the parent's copy alone", async () => {
+    const { user, session } = await createTestUser();
+    const { rulesetId, aptMap } = await getSeedCtx();
+    const extension = await createExtension(user.id);
+    const name = `Parent's Copy ${uniqueId()}`;
+    const feat = await EntitiesService.createEntity(session, extension.id, "feats", {
+      name,
+      links: { listedIn: [{ toId: aptMap["General"] }] },
+    });
+    // A parent's copy of the extension's feat, then a fork of the parent subscribing to the extension
+    const parent = await createTestRuleset(user.id, { rulesetId });
+    await subscribeTestRuleset(parent.id, [extension.id]);
+    const copy = await copyEntity(db, "feats", feat.id, parent);
+    const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
+    await subscribeTestRuleset(fork.id, [extension.id]);
+
+    const shown = Dnd35View.of(await readView(fork.id)).feats.filter((f) => f.name === name);
+    expect(shown.map((f) => f.id)).toEqual([copy.id]);
+    expect((await featsNamed(fork.id, name)).map((f) => f.id)).toEqual([copy.id]);
   });
 });
 
