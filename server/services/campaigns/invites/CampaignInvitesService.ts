@@ -68,8 +68,7 @@ class CampaignInvitesService {
   ) {
     const { policy } = await getReadableCampaign(db, session, campaignId);
 
-    // An address is its Game Master's to read, and so to search
-    const readsAddresses = policy.isGameMaster();
+    const readsAddresses = policy.isAddressReader();
     const page = await Invites.findPage(db, { campaignId, ...where, searchAddresses: readsAddresses }, pagination);
     return readsAddresses ? page : { ...page, items: page.items.map(redactInviteAddresses) };
   }

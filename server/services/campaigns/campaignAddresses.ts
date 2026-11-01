@@ -1,6 +1,6 @@
 /**
- * A campaign's email addresses, which its Game Master alone reads: its player slots' and its invites', as a player of
- * it reads them, by name, the addresses left out.
+ * A campaign's email addresses left out, as one who may not read them reads its player slots and its invites, by name:
+ * who reads them is its policy's (`CampaignsPolicy.isAddressReader`, `isSlotAddressReader`).
  */
 
 import type { Invites, Players } from "@/server/repositories/index.ts";
@@ -22,11 +22,10 @@ export function redactInviteAddresses(invite: InviteRow) {
 }
 
 /**
- * A player slot as a player (`readerId`) reads it: its user's and its invites' addresses left out, but on their own
- * slot. The row is named whole so its addresses read nullable to the app.
+ * A player slot as one who may not read its addresses reads it: its user's and its invites' addresses left out. The
+ * row is named whole so its addresses read nullable to the app.
  */
-export function redactPlayerAddresses<P extends PlayerRow>(player: P, readerId: string) {
-  if (player.usersInAccount?.id === readerId) return player;
+export function redactPlayerAddresses<P extends PlayerRow>(player: P) {
   return {
     ...player,
     invitesInCampaigns: player.invitesInCampaigns.map((invite) => ({
