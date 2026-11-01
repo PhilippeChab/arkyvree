@@ -16,9 +16,12 @@ import { PAGE_FILTERS } from "@/server/routers/v1/validation.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { MAX_CHARACTER_NAME_LENGTH, MAX_IMPORT_FILE_LENGTH } from "@/shared/characters.ts";
 
+import contributors from "./contributors/index.ts";
 import inventory from "./inventory/index.ts";
 import levels from "./levels/index.ts";
 import modifiers from "./modifiers/index.ts";
+import pdf from "./pdf/index.ts";
+import sharing from "./sharing/index.ts";
 
 /** A creation pick's role: its single link's, as the rules' character form names it. */
 const creationParams = z.object({
@@ -42,9 +45,12 @@ const scoreParams = idParam.extend({
  * and its levels, each a router of its own.
  */
 export default new Hono<ApiKeyContext>()
+  .route("/", contributors)
   .route("/", inventory)
   .route("/", levels)
   .route("/", modifiers)
+  .route("/", pdf)
+  .route("/", sharing)
   .get(
     "/",
     describeRoute({ response: v1CharacterPage, status: 200, summary: "The key's user's characters, a page at a time" }),

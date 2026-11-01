@@ -1,11 +1,9 @@
 import { Hono } from "hono";
-import { z } from "zod";
 
 import { exportRateLimit, validate } from "@/server/middlewares/index.ts";
 import { formatContentDisposition } from "@/server/routers/api/contentDisposition.ts";
+import { shareTokenParam } from "@/server/routers/api/validation.ts";
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
-
-const shareTokenParam = z.object({ shareToken: z.string().uuid() });
 
 export default new Hono()
   // Get shared character data (public, no auth)

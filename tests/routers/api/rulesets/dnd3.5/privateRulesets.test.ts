@@ -22,6 +22,8 @@ interface Fixture {
   modifierId: string;
   ownFork: string;
   requirementId: string;
+  /** The private ruleset's id, whose contributor's routes name it */
+  rulesetId: string;
   skillId: string;
   wizardId: string;
 }
@@ -215,9 +217,9 @@ const WRITES: [string, Request, number, Reader, "contributorId" | "rulesetId"][]
   ],
   [
     "a contributor's role change",
-    (client, contributorId, { ownFork }) =>
+    (client, contributorId, { rulesetId }) =>
       client.api.rulesets[":id"].contributors[":contributorId"].$put({
-        param: { id: ownFork, contributorId },
+        param: { id: rulesetId, contributorId },
         json: { role: "Editor" },
       }),
     403,
@@ -226,8 +228,8 @@ const WRITES: [string, Request, number, Reader, "contributorId" | "rulesetId"][]
   ],
   [
     "a contributor's revoke",
-    (client, contributorId, { ownFork }) =>
-      client.api.rulesets[":id"].contributors[":contributorId"].$delete({ param: { id: ownFork, contributorId } }),
+    (client, contributorId, { rulesetId }) =>
+      client.api.rulesets[":id"].contributors[":contributorId"].$delete({ param: { id: rulesetId, contributorId } }),
     403,
     "viewer",
     "contributorId",
@@ -569,6 +571,7 @@ async function setupFixture(owner: SignedIn, id: string, viewer: SignedIn["user"
     modifierId: modifier.id,
     ownFork,
     requirementId: requirement.id,
+    rulesetId: id,
     skillId: skillMap["Climb"],
     wizardId: classMap.pc["Wizard"],
   };

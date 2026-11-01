@@ -16,9 +16,11 @@ import {
   type v1LinkRoom,
   type v1Modifiers,
 } from "@/server/routers/v1/schemas/characters.ts";
+import type { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 import type { CharactersService } from "@/server/services/characters/index.ts";
 import type { CharacterInventoryService } from "@/server/services/characters/inventory/index.ts";
 import type { CharacterModifiersService } from "@/server/services/characters/modifiers/index.ts";
+import type { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 
 import type { Answer } from "./answers.ts";
 import { toV1Page, type V1Page } from "./pages.ts";
@@ -27,8 +29,25 @@ import { pickShape } from "./picks.ts";
 /** A character's card, as the app's own API answers it in a page of them. */
 type Card = Answer<typeof CharactersService.getCharacters>["items"][number];
 
-/** A character's sheet, as v1 answers it. */
-export function toV1Character(sheet: Answer<typeof CharactersService.getCharacter>): z.infer<typeof v1Character> {
+/** What a reader of a sheet without a role of theirs may do with it (a shared sheet's): nothing. */
+const NO_PERMISSIONS: z.infer<typeof v1Character>["permissions"] = {
+  canArchive: false,
+  canEdit: false,
+  canEditPortrait: false,
+  canInviteContributors: false,
+  canLeave: false,
+  canManageContributors: false,
+  canReadContributors: false,
+  canShare: false,
+};
+
+/** A character's sheet, as v1 answers it: a shared one's, read by its link, with no permission. */
+export function toV1Character(
+  sheet:
+    | Answer<typeof CharactersService.getCharacter>
+    | Answer<typeof CharacterSharingService.getSharedCharacter>
+    | Answer<typeof CampaignCharactersService.getCharacter>,
+): z.infer<typeof v1Character> {
   return {
     archived: sheet.deletedAt !== null,
     id: sheet.id,
@@ -36,7 +55,7 @@ export function toV1Character(sheet: Answer<typeof CharactersService.getCharacte
     name: sheet.name,
     ownerId: sheet.userId,
     parentCharacterId: sheet.parentCharacterId,
-    permissions: pickShape(v1CharacterPermissions, sheet.permissions),
+    permissions: "permissions" in sheet ? pickShape(v1CharacterPermissions, sheet.permissions) : NO_PERMISSIONS,
     rulesetId: sheet.rulesetId,
     rulesetName: sheet.rulesetName,
     sections: sheet.blocks.map((block) => ({ ...block })),

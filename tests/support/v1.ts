@@ -31,6 +31,11 @@ export function findKind(rules: V1Rules, matches: (kind: V1Rules["kinds"][number
   return kind;
 }
 
+/** A new character of `userId`'s on the seeded base ruleset, made as its rules' form lays it out (`createFormCharacter`). */
+export async function createBaseCharacter(userId: string, name?: string) {
+  return await createFormCharacter(userId, (await findSeededBase()).id, name);
+}
+
 /** `userId`'s private fork of a base ruleset, as the app forks one: subscribed to its extensions with `extensions`. */
 export async function createFork(userId: string, rulesetId: string, { extensions = false } = {}) {
   const session = { userId };
@@ -48,7 +53,7 @@ export async function createFork(userId: string, rulesetId: string, { extensions
  * A new character of `userId`'s on a ruleset, made as its rules' form lays it out, whatever its base rules: each field
  * its form's start or first option, each pick its first eligible option, each score its start.
  */
-export async function createFormCharacter(userId: string, rulesetId: string) {
+export async function createFormCharacter(userId: string, rulesetId: string, name = `Character ${uniqueId()}`) {
   const session = { userId };
   const ruleset = await Rulesets.findOne(db, { id: rulesetId });
   if (!ruleset) throw new Error(`No ruleset ${rulesetId}`);
@@ -82,7 +87,7 @@ export async function createFormCharacter(userId: string, rulesetId: string) {
 
   return await CharactersService.createCharacter(session, {
     fields,
-    name: `Character ${uniqueId()}`,
+    name,
     picks,
     rulesetId,
     scores,

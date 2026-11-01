@@ -990,6 +990,8 @@ export const entitySnapshotsInRules = rules.table(
   ],
 );
 
+export const exportStatus = pgEnum("export_status", ["pending", "ready", "failed"]);
+
 export const exportsInAccount = account.table(
   "exports",
   {
@@ -1002,8 +1004,9 @@ export const exportsInAccount = account.table(
     type: text().notNull(),
     mimeType: text("mime_type").notNull(),
     fileName: text("file_name").notNull(),
-    data: bytea("data").notNull(),
+    data: bytea("data"),
     expiresAt: timestamp("expires_at", { mode: "string", withTimezone: true }).notNull(),
+    status: exportStatus().default("ready").notNull(),
   },
   (table) => [
     index("exports_user_id_idx").using("btree", table.userId.asc().nullsLast()),

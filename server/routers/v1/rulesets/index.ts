@@ -10,6 +10,7 @@ import { PAGE_FILTERS } from "@/server/routers/v1/validation.ts";
 import { RulesetsService } from "@/server/services/rulesets/index.ts";
 
 import changes from "./changes/index.ts";
+import contributors from "./contributors/index.ts";
 import modifiers from "./customization/modifiers/index.ts";
 import requirements from "./customization/requirements/index.ts";
 import target from "./customization/target/index.ts";
@@ -23,6 +24,7 @@ import settings from "./settings/index.ts";
  */
 export default new Hono<ApiKeyContext>()
   .route("/", changes)
+  .route("/", contributors)
   .route("/", entities)
   .route("/", extensions)
   .route("/", modifiers)

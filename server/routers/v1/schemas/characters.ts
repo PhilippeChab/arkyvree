@@ -134,6 +134,11 @@ const v1StepOptionGroup = z.strictObject({
   requirementTree: z.string().optional(),
 });
 
+/** What a character's card shows of it, as its rules describe it: each a chip, partial where it's unknown. */
+export const v1CardSummary = z.array(z.strictObject({ label: z.string(), partial: z.boolean() })).meta({
+  description: "What its card shows of it, as its rules describe it, each partial where it's unknown or hidden",
+});
+
 /** What the key's user may do with a character. */
 export const v1CharacterPermissions = z
   .strictObject({
@@ -180,9 +185,7 @@ export const v1CharacterCard = z
     description: z.string().nullable(),
     id: v1Id,
     name: z.string(),
-    summary: z.array(z.strictObject({ label: z.string(), partial: z.boolean() })).meta({
-      description: "What its card shows of it, as its rules describe it, " + "partial when unknown",
-    }),
+    summary: v1CardSummary,
   })
   .meta({ description: "A character, as its card shows it", id: "CharacterCard" });
 
