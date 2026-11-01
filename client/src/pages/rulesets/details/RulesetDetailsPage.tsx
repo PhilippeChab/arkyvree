@@ -154,7 +154,6 @@ export default function RulesetDetailsPage() {
     canEditEntities,
     canEditRuleset,
     canFork,
-    canMakePrivate,
     canPublish,
     canReadContributors,
     canSubscribeExtensions,
@@ -387,7 +386,8 @@ export default function RulesetDetailsPage() {
           form={editForm}
           onSubmit={confirmEdit}
           pending={updateMutation.isPending}
-          canMakePrivate={canMakePrivate}
+          // As the ruleset read when the dialog opened, which it keeps while it closes
+          canMakePrivate={!!editDialog.target?.permissions.canMakePrivate}
           canBeExtension={canBeExtension}
         />
 
