@@ -97,6 +97,7 @@ class RequirementsService {
       rulesetId,
       async (tx, scope, policy) => {
         policy.canDeleteEntity();
+        await new CustomizationEdit(scope).refuseCopiedSince(tx, entityType, entityId, "requirement", requirementId);
 
         const { entity, requirement } = Engine.for(scope).requirements(entityType, entityId).planDelete(requirementId);
 
@@ -146,6 +147,7 @@ class RequirementsService {
       rulesetId,
       async (tx, scope, policy) => {
         policy.canUpdateEntity();
+        await new CustomizationEdit(scope).refuseCopiedSince(tx, entityType, entityId, "requirement", requirementId);
 
         const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "requirement");
         const requirements = Engine.for(scope).requirements(entityType, entityId);

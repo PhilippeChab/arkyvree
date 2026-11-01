@@ -1,8 +1,8 @@
 import type { Db } from "@/drizzle/database.ts";
 import { Engine } from "@/engine/index.ts";
 import type { LockedRulesetScope } from "@/server/cow/views/scope.ts";
-import { NotFoundError } from "@/server/errors/index.ts";
-import { Modifiers } from "@/server/repositories/index.ts";
+import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
+import { Modifiers, Requirements } from "@/server/repositories/index.ts";
 
 import type { CustomizationKind, default as EditTarget } from "./EditTarget.ts";
 import EntityEdit from "./EntityEdit.ts";
@@ -70,5 +70,27 @@ export default class CustomizationEdit {
    */
   async cowOwner(tx: Db, entityType: string, entityId: string): Promise<string> {
     return (await this.cowOwnerOf(tx, entityType, entityId)).id;
+  }
+
+  /**
+   * Refuses as stale (409) a change of a customization (`customizationId`, of `kind`) the client read on an entity the
+   * ruleset copied since (`entityId`, of `entityType`: its source's id, which the view shows the copy for now): the
+   * customization is its source's, whose ids the copy doesn't keep, so the client's form is behind, as a token behind
+   * is. A customization of a modifier is checked by the modifier's owner. Anything else is the change's to refuse.
+   */
+  async refuseCopiedSince(
+    tx: Db,
+    entityType: string,
+    entityId: string,
+    kind: CustomizationKind,
+    customizationId: string,
+  ): Promise<void> {
+    const owner = entityType === "modifiers" ? (await Modifiers.findOne(tx, { id: entityId }))?.sourceId : entityId;
+    if (owner === undefined || !this.scope.rulesetData.cow.isOverridden(owner)) return;
+    const customization =
+      kind === "modifier"
+        ? (await Modifiers.findOne(tx, { id: customizationId }))?.sourceId
+        : (await Requirements.findOne(tx, { id: customizationId }))?.entityId;
+    if (customization === entityId) throw new ConflictError(STALE_ENTITY_MESSAGE);
   }
 }

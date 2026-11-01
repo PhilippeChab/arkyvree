@@ -24,6 +24,9 @@ class ModifiersService {
   ) {
     return await withRulesetWrite(session, rulesetId, async (tx, scope, policy) => {
       policy.canUpdateEntity();
+      // A duplicate of a modifier the client read before another write copied its entity is stale
+      if (sourceModifierId)
+        await new CustomizationEdit(scope).refuseCopiedSince(tx, entityType, entityId, "modifier", sourceModifierId);
 
       const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "modifier");
       const modifiers = Engine.for(scope).modifiers(entityType, entityId);
@@ -65,6 +68,7 @@ class ModifiersService {
   async deleteModifier(session: Session, rulesetId: string, entityType: string, entityId: string, modifierId: string) {
     return await withRulesetWrite(session, rulesetId, async (tx, scope, policy) => {
       policy.canDeleteEntity();
+      await new CustomizationEdit(scope).refuseCopiedSince(tx, entityType, entityId, "modifier", modifierId);
 
       const { entity, modifier } = Engine.for(scope).modifiers(entityType, entityId).planDelete(modifierId);
 
@@ -139,6 +143,7 @@ class ModifiersService {
   ) {
     return await withRulesetWrite(session, rulesetId, async (tx, scope, policy) => {
       policy.canUpdateEntity();
+      await new CustomizationEdit(scope).refuseCopiedSince(tx, entityType, entityId, "modifier", modifierId);
 
       const catalogs = await RulesetViews.getTargetPathCatalogs(scope, "modifier");
       const { updatedAt, ...fields } = body;

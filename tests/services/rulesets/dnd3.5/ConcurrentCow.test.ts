@@ -5,8 +5,16 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db, setLockTimeout } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
-import { Entities, EntitySnapshots, Modifiers, type RulesetEntityType, Rulesets } from "@/server/repositories/index.ts";
+import {
+  Entities,
+  EntitySnapshots,
+  Modifiers,
+  Requirements,
+  type RulesetEntityType,
+  Rulesets,
+} from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
+import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { runWhileLocked } from "@/tests/support/database.ts";
@@ -108,20 +116,35 @@ test("an edit of an entity another write copied since the client read it is stal
   expect((await Entities.findOne<Feat>(db, { entityType: "feats", id: copy.id }))?.description).toBe("Theirs");
 });
 
-test("a customization edit of a modifier another write copied since the client read it is refused, its source's no more shown", async () => {
+test("a customization change of a modifier or requirement another write copied since the client read it is stale", async () => {
   const sourceId = (await getSeedCtx()).featMap.Toughness;
   const [modifier] = await Modifiers.findMany(db, { sourceIds: [sourceId], sourceType: "feats" });
+  const [requirement] = await Requirements.createMany(db, [
+    {
+      entityId: sourceId,
+      entityType: "feats",
+      level: "9",
+      target: "combat.bab",
+      operator: "greater_than_or_equal",
+      value: "1",
+      valueType: "number",
+    },
+  ]);
   const { session, fork } = await copiedSinceRead("feats", sourceId);
 
-  await expectRefusedWith(
-    ModifiersService.updateModifier(session, fork.id, "feats", sourceId, modifier.id, {
-      operator: modifier.operator,
-      target: modifier.target,
-      value: "4",
-      updatedAt: modifier.updatedAt,
-    }),
-    404,
-  );
+  // Each sent in turn: the client's ids are the source's, which the copy doesn't keep
+  const changes = [
+    () =>
+      ModifiersService.updateModifier(session, fork.id, "feats", sourceId, modifier.id, {
+        operator: modifier.operator,
+        target: modifier.target,
+        value: "4",
+        updatedAt: modifier.updatedAt,
+      }),
+    () => ModifiersService.deleteModifier(session, fork.id, "feats", sourceId, modifier.id),
+    () => RequirementsService.deleteRequirement(session, fork.id, "feats", sourceId, requirement.id),
+  ];
+  for (const change of changes) await expectRefusedWith(change(), 409);
 });
 
 test("a progression save of a class another write copied since the client read it is stale, its change kept", async () => {
