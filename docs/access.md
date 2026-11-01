@@ -33,7 +33,7 @@ A user can hold multiple roles for the same entity (e.g. owner of a ruleset they
 | `canPublish` | **owner only** | Draft → Published; can't be delegated to Admin |
 | `canFork` | anyone (any session) | source must be Published and be a base ruleset (`rulesetId IS NULL`) |
 | `canBeExtension` | anyone (any session) | whether the ruleset can be published as an extension, or made one: a fork that subscribes to no extension. Publishing and editing ask it after `canPublish` and `canUpdate` |
-| `canBeSubscribed({ parentId })` | anyone (any session) | the extension a fork subscribes to: published as an extension, public (a system one always is), and a fork of the subscriber's base (`parentId`). The subscribe asks it of each extension, after `canSubscribeExtension` |
+| `canBeSubscribed({ id, parentId })` | anyone (any session) | the extension a fork subscribes to: never the subscriber itself (`id`), whatever kind either read of it says, published as an extension, public (a system one always is), and a fork of the subscriber's base (`parentId`). The subscribe asks it of each extension, after `canSubscribeExtension` |
 | `canStar` | anyone (any session) | a public base or extension (`isStarrable`, which a list's rows answer too): a fork for play is no bookmark |
 | `canAcceptInvite` | anyone (any session) | accepting a contributor's invite, on a ruleset that isn't archived (`ConflictError`) |
 | `canSubscribeExtension({ usedAsExtension })` | **owner only** | the host must be a live fork that isn't an extension, and no other ruleset may subscribe to it (`usedAsExtension`) |
