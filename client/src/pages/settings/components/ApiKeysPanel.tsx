@@ -21,7 +21,7 @@ import {
 } from "@/client/src/components/common/index.ts";
 import { RevokeIcon } from "@/client/src/components/icons/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
-import { useDialogState, useIsDemo } from "@/client/src/hooks/index.ts";
+import { useDialogState } from "@/client/src/hooks/index.ts";
 import { formatDate, formatRelativeTime } from "@/client/src/lib/formatDate.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { apiKeysQuery } from "@/client/src/pages/settings/settingsQueries.ts";
@@ -51,8 +51,6 @@ export function ApiKeysPanel() {
   const createDialog = useDialogState();
   const tokenDialog = useDialogState<CreatedApiKey>();
   const revokeDialog = useDialogState<ApiKey>();
-  // A demo's account goes when the demo ends: it makes no key
-  const isDemo = useIsDemo();
 
   const revokeMutation = useMutation({
     mutationFn: (id: string) => parseResponse(rpc.auth["api-keys"][":id"].$delete({ param: { id } })),
@@ -74,25 +72,23 @@ export function ApiKeysPanel() {
       <Stack spacing={1}>
         <PanelLead
           actions={
-            !isDemo && (
-              <AddButton
-                label="Create Key"
-                disabled={(keys?.length ?? 0) >= MAX_API_KEYS}
-                onClick={() => createDialog.openWith(true)}
-              />
-            )
+            <AddButton
+              label="Create Key"
+              disabled={(keys?.length ?? 0) >= MAX_API_KEYS}
+              onClick={() => createDialog.openWith(true)}
+            />
           }
         >
           API Keys
         </PanelLead>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          A key lets a program outside the app, such as a script or an assistant, read your characters and rulesets
-          through the public API. It acts as you: revoke it once nothing uses it. You can keep {MAX_API_KEYS} at most.
+          A key lets a program outside the app, such as a script or an assistant, read and change your characters,
+          rulesets and campaigns through the public API. It acts as you: revoke it once nothing uses it. You can keep {MAX_API_KEYS} at most.
         </Typography>
       </Stack>
       {!keys && !error && <DiceSpinner sx={{ py: 4 }} />}
       {!keys && !!error && <LoadError what="API keys" error={error} />}
-      {keys?.length === 0 && <BlankNote>{isDemo ? "Sign up to create API keys" : "No API keys yet"}</BlankNote>}
+      {keys?.length === 0 && <BlankNote>No API keys yet</BlankNote>}
       {!!keys?.length && (
         <DataTable columns={API_KEY_COLUMNS} inset={0}>
           {keys.map((key) => (

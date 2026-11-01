@@ -6,9 +6,9 @@ import { idParam, sanitizedText } from "@/server/routers/api/validation.ts";
 import { ApiKeysService } from "@/server/services/authentication/apiKeys/index.ts";
 import { MAX_API_KEY_LIFETIME_IN_DAYS, MAX_API_KEY_NAME_LENGTH } from "@/shared/apiKeys.ts";
 
-/** The user's API keys, which act as them on the public API: listed, made and revoked, a demo account's never made. */
+/** The user's API keys, which act as them on the public API: listed, made and revoked. A demo account has none of these. */
 export default new Hono<SessionContext>()
-  .get("/api-keys", async (c) => c.json(await ApiKeysService.getKeys(c.var.requestSession), 200))
+  .get("/api-keys", denyDemoUser, async (c) => c.json(await ApiKeysService.getKeys(c.var.requestSession), 200))
   .post(
     "/api-keys",
     denyDemoUser,
@@ -25,7 +25,7 @@ export default new Hono<SessionContext>()
       return c.json(await ApiKeysService.createKey(c.var.requestSession, name, expiresInDays), 201);
     },
   )
-  .delete("/api-keys/:id", validate("param", idParam), async (c) => {
+  .delete("/api-keys/:id", denyDemoUser, validate("param", idParam), async (c) => {
     const { id } = c.req.valid("param");
     return c.json(await ApiKeysService.revokeKey(c.var.requestSession, id), 200);
   });
