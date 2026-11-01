@@ -518,7 +518,7 @@ describe("subscribing to an extension", () => {
         async () => subscribe(extension.id, session, (await createTestRuleset(user.id)).id),
       ],
     ];
-    await expect(subscribe(draft.id)).rejects.toThrow("A ruleset can't subscribe to itself");
+    expect(subscribe(draft.id)).rejects.toThrow("A ruleset can't subscribe to itself");
     for (const [what, refuse] of refusals) {
       const outcome = await refuse().then(
         () => "subscribed",
