@@ -1,4 +1,11 @@
-import type { CharacterInput, EntityRecord, OptionRow, PickerOption, StepOption } from "@/engine/core/module/index.ts";
+import type {
+  CharacterInput,
+  EntityRecord,
+  OptionRow,
+  PickerOption,
+  StepOption,
+  TrackFilters,
+} from "@/engine/core/module/index.ts";
 import { CharacterPicker } from "@/engine/core/pickers/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import CharacterProjection from "@/engine/rulesets/dnd3.5/levelUp/CharacterProjection.ts";
@@ -31,9 +38,6 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
   ) {
     super(view, input, Dnd35CharacterBuilder);
   }
-
-  /** What the picker offers: a player character's classes (their partition, `pc`). */
-  override readonly filters = { partitions: [PLAYER_CHARACTER_KIND] };
 
   /**
    * The class's place on its track: its next level, its last, and the levels the character can still take, whatever
@@ -95,6 +99,30 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
   /** A class as the step's option: with its place on its track. */
   protected override stepOptionOf(option: PickerOption<OptionRow, TrackDetails>) {
     return { ...super.stepOptionOf(option), track: option.track };
+  }
+
+  /**
+   * What the picker offers, a player character's classes (their partition, `pc`), and the order the server pages them
+   * in: the character's own classes first (`firstIds`), as a page orders them (`order`: highest next level first, then
+   * by name), the others after them by name, each next at its first level, as a class whose first the character skipped
+   * is too.
+   */
+  override get filters(): TrackFilters {
+    const { classesById, classLevelsById } = this.dnd35;
+    // Each class the character's levels are of, as the view resolves it (a copy for its source), once
+    const held = new Map(
+      this.input.rows.advancements.flatMap(({ entryId }) => {
+        const ownerId = classLevelsById.get(entryId)?.ownerId;
+        const klass = ownerId ? classesById.get(ownerId) : undefined;
+        return klass ? [[klass.id, klass] as const] : [];
+      }),
+    );
+    const classes = [...held.values()].map((klass) => ({
+      ...klass,
+      track: { next: LevelRules.findNextClassLevel(classLevelsById, this.input.rows.advancements, klass.id) },
+    }));
+    const firstIds = this.order(classes.filter((klass) => klass.track.next > 1)).map((klass) => klass.id);
+    return { partitions: [PLAYER_CHARACTER_KIND], firstIds };
   }
 
   /** The view's 3.5 lists and indices. */
