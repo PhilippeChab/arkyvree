@@ -228,7 +228,7 @@ describe("characters", () => {
 
   test("only deletes an archived character permanently", async () => {
     const { id } = await postCharacter();
-    await expectStatus(character.permanent.$delete({ param: { id } }), 404);
+    await expectStatus(character.permanent.$delete({ param: { id } }), 422);
   });
 
   test("enqueues a PDF of the character", async () => {

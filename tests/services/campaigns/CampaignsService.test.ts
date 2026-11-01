@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { db } from "@/server/database/index.ts";
-import { ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
+import { ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Campaigns, Players, Rulesets } from "@/server/repositories/index.ts";
 import { CampaignsService } from "@/server/services/campaigns/index.ts";
@@ -226,7 +226,7 @@ describe("CampaignsService", () => {
 
     test("refuses a campaign that isn't archived, and anyone but the Game Master", async () => {
       const { gm, campaign, player } = await setup();
-      expect(CampaignsService.hardDeleteCampaign(gm, campaign.id)).rejects.toThrow(NotFoundError);
+      expect(CampaignsService.hardDeleteCampaign(gm, campaign.id)).rejects.toThrow(UnprocessableEntityError);
       await CampaignsService.archiveCampaign(gm, campaign.id);
       expect(CampaignsService.hardDeleteCampaign(player, campaign.id)).rejects.toThrow(ForbiddenError);
       expect(await Campaigns.findOne(db, { id: campaign.id }, Visibility.All)).toBeDefined();

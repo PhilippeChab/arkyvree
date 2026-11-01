@@ -87,10 +87,10 @@ describe("v1 campaigns", () => {
     expect(edited).toEqual({ ...campaign, description: "Out of the dark" });
   });
 
-  test("archives a campaign, restores it, and deletes it once archived: an active one is no archived one to delete", async () => {
+  test("archives a campaign, restores it, and deletes it once archived: an active one is refused as not archived", async () => {
     const { api, campaign } = await createCampaign();
     const param = { id: campaign.id };
-    await expectStatus(api.v1.campaigns[":id"].permanent.$delete({ param }), 404);
+    await expectStatus(api.v1.campaigns[":id"].permanent.$delete({ param }), 422);
 
     await expectStatus(api.v1.campaigns[":id"].$delete({ param }), 204);
     expect(await expectOk(api.v1.campaigns[":id"].$get({ param }))).toMatchObject({ archived: true });

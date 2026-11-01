@@ -128,7 +128,8 @@ class CampaignsService {
 
   async hardDeleteCampaign(session: Session, id: string) {
     return await withTransaction(async (tx) => {
-      const { policy } = await getReadableCampaign(tx, session, id, Visibility.ArchivedOnly);
+      // Archived or not: its policy refuses a live one
+      const { policy } = await getReadableCampaign(tx, session, id, Visibility.All);
       policy.canHardDelete();
 
       // Campaigns aren't an Attachable record type, so no polymorphic cleanup
