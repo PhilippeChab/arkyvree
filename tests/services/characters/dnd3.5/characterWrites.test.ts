@@ -114,14 +114,14 @@ test("a character's write that waits on its ruleset's write past its lock wait i
 test("a character's write reads its ruleset's rows a write committed after its view was cached", async () => {
   const character = await createTestCharacter(SEED_USER_ID);
   const { rulesetId } = await getSeedCtx();
+  // What the write caches of the item below goes once the rollback undoes it
+  invalidateSeededRuleset(rulesetId);
   await readView(rulesetId);
   // Another process's write of the ruleset, committed: this process's cache never hears of it but by its version
   const [item] = await Entities.create<Item>(db, "items", { name: `Fresh Item ${uniqueId()}`, rulesetId });
   await bumpContentVersion(rulesetId);
   const entry = await CharacterInventoryService.addItem(makeSession(), character.id, item.id, 1, null, null, null, []);
   expect(entry.characterId).toBe(character.id);
-  // What the write cached of the item goes once the rollback undoes it
-  invalidateSeededRuleset(rulesetId);
 });
 
 test("a stranger's write to a character is refused before it reads the ruleset's view", async () => {

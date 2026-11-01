@@ -126,7 +126,7 @@ const LOCKED_WRITES = [
     lock: "withSharedRulesetScope",
     others: ["server/services/characters/pdf.ts"],
     message:
-      "A character's write opens its transaction through its helper (`withCharacterWrite`, `withCharacterLock`, `withCharacterCreate` from `characterWrites.ts`), which locks the character (and its ruleset's chain, for a write that reads it) before it reads anything: not `withTransaction`.",
+      "A character's write opens its transaction through its helper (`withCharacterWrite`, `withCharacterLock`, `withCharacterCreate` from `characterWrites.ts`), which takes its locks (its ruleset's chain shared, for a write that reads its ruleset; then the character, but for a new one) before it reads the rows it writes: not `withTransaction`.",
   },
 ];
 

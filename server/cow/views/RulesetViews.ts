@@ -171,7 +171,8 @@ class RulesetViews {
 
   /**
    * A ruleset's own rows, none of its ancestors': pinned when it's a system ruleset. Tagged with the versions of the
-   * rulesets whose writes reach them (`writerIds`, `rowWritersOf`: its own, and its sources').
+   * rulesets whose writes reach them (`writerIds`, `rowWritersOf`: its own, and of the ruleset read or an extension in
+   * its chain, its sources').
    */
   async getRawData(rulesetId: string, writerIds = [rulesetId]): Promise<RulesetRawData> {
     const entry = await this.rawData.getOrFetch(rulesetId, [rulesetId], () => this.readRawData(rulesetId, writerIds));
