@@ -159,6 +159,34 @@ describe("ContributorsService", () => {
       const { session: stranger } = await createTestUser("stranger");
       expect(list(stranger)).rejects.toThrow(NotFoundError);
     });
+
+    test("answers, for each row, whether the reader removes it and the roles it may give it, as the policy decides", async () => {
+      const { ownerSession, ruleset } = await setup();
+      const { session: admin } = await addContributor(ownerSession, ruleset.id, "Admin");
+      const { session: editor } = await addContributor(ownerSession, ruleset.id, "Editor");
+      await addContributor(ownerSession, ruleset.id, "Viewer", true);
+      const rows = async (session: typeof admin) =>
+        Object.fromEntries(
+          (await ContributorsService.getContributors(session, ruleset.id, {}, { limit: 10, page: 1 })).items.map(
+            (row) => [`${row.role}${row.status === "Pending" ? " invite" : ""}`, [row.canRemove, row.roles]],
+          ),
+        );
+
+      // The owner manages everyone; an invite's role is its invite's
+      expect(await rows(ownerSession)).toEqual({
+        Admin: [true, ["Admin", "Editor", "Viewer"]],
+        Editor: [true, ["Admin", "Editor", "Viewer"]],
+        "Viewer invite": [true, []],
+      });
+      // An Admin manages Editors and Viewers, never an Admin nor to Admin
+      expect(await rows(admin)).toEqual({
+        Admin: [false, []],
+        Editor: [true, ["Editor", "Viewer"]],
+        "Viewer invite": [true, []],
+      });
+      // An Editor manages none
+      expect(await rows(editor)).toEqual({ Admin: [false, []], Editor: [false, []], "Viewer invite": [false, []] });
+    });
   });
 
   describe("updateContributorRole", () => {

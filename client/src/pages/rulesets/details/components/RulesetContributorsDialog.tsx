@@ -21,6 +21,11 @@ type RoleFormData = InferRequestType<
   (typeof rpc.api.rulesets)[":id"]["contributors"][":contributorId"]["$put"]
 >["json"];
 
+/** The roles a ruleset contributor's row may take, as its list answers them (a character's has none). */
+function rolesOf(contributor: Contributor): ContributorRole[] {
+  return "roles" in contributor ? [...contributor.roles] : [];
+}
+
 /**
  * A ruleset's contributors (`ContributorsDialog`), whose roles who manages them changes too: an Admin's, the owner
  * alone.
@@ -30,22 +35,15 @@ export function RulesetContributorsDialog({ ruleset, open, onClose }: RulesetCon
   const snackbar = useSnackbar();
   // An archived ruleset refuses invites and role changes, as the server does, but who manages its contributors still
   // removes one, and a contributor still leaves
-  const {
-    canInviteContributors,
-    canLeave,
-    canManageAdminContributors,
-    canManageContributors,
-    canUpdateContributorRoles,
-  } = useRulesetPermissions(ruleset);
-  // Who manages Admins (the owner) grants Admin
-  const assignableRoles: ContributorRole[] = canManageAdminContributors
+  const { canInviteContributors, canLeave, canManageAdminContributors, canManageContributors } =
+    useRulesetPermissions(ruleset);
+  // An invite gives Admin as who manages Admins (the owner) does
+  const inviteRoles: ContributorRole[] = canManageAdminContributors
     ? ["Admin", "Editor", "Viewer"]
     : ["Editor", "Viewer"];
-  // And changes or removes an Admin
-  const outranks = (contributor: Contributor) => canManageAdminContributors || contributor.role !== "Admin";
 
-  // The contributor whose role is being edited; the role itself lives in roleForm
-  const roleDialog = useDialogState<string>();
+  // The contributor whose role is being edited, with the roles its row may take; the role itself lives in roleForm
+  const roleDialog = useDialogState<{ id: string; roles: ContributorRole[] }>();
   const roleForm = useFormWith<RoleFormData>({ role: "Editor" });
 
   const updateRoleMutation = useMutation({
@@ -73,22 +71,24 @@ export function RulesetContributorsDialog({ ruleset, open, onClose }: RulesetCon
         onClose={onClose}
         canInvite={canInviteContributors}
         canLeave={canLeave}
-        canRemove={canManageContributors ? outranks : undefined}
-        roles={assignableRoles}
-        rowActions={(contributor) =>
-          canUpdateContributorRoles &&
-          outranks(contributor) &&
-          contributor.status === "Active" && (
-            <RowAction
-              icon={EditIcon}
-              label="Edit Role"
-              onClick={() => {
-                roleForm.reset({ role: contributor.role });
-                roleDialog.openWith(contributor.id);
-              }}
-            />
-          )
-        }
+        canManage={canManageContributors}
+        roles={inviteRoles}
+        rowActions={(contributor) => {
+          // A row's roles are those the server's policy lets the session give it: none, and it offers no edit
+          const roles = rolesOf(contributor);
+          return (
+            roles.length > 0 && (
+              <RowAction
+                icon={EditIcon}
+                label="Edit Role"
+                onClick={() => {
+                  roleForm.reset({ role: contributor.role });
+                  roleDialog.openWith({ id: contributor.id, roles });
+                }}
+              />
+            )
+          );
+        }}
       />
       <EditDialog
         open={roleDialog.open}
@@ -96,11 +96,11 @@ export function RulesetContributorsDialog({ ruleset, open, onClose }: RulesetCon
         title="Edit Role"
         form={roleForm}
         onSubmit={({ role }) =>
-          roleDialog.target && updateRoleMutation.mutate({ contributorId: roleDialog.target, role })
+          roleDialog.target && updateRoleMutation.mutate({ contributorId: roleDialog.target.id, role })
         }
         pending={updateRoleMutation.isPending}
       >
-        <SelectField control={roleForm.control} name="role" label="Role" options={assignableRoles} />
+        <SelectField control={roleForm.control} name="role" label="Role" options={roleDialog.target?.roles ?? []} />
       </EditDialog>
     </>
   );

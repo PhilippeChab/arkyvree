@@ -81,7 +81,7 @@ describe("RulesetsPolicy", () => {
       ["publish", (p) => p.canPublish()],
       ["manage contributors on", (p) => p.canManageContributors()],
       ["manage contributors on", (p) => p.canInviteContributors()],
-      ["manage contributors on", (p) => p.canRevokeContributor({ role: "Viewer" })],
+      ["manage contributors on", (p) => p.canRevokeContributor({ role: "Viewer", status: "Active" })],
       ["manage contributors on", (p) => p.canUpdateContributorRole()],
       ["subscribe to extensions on", (p) => p.canSubscribeExtension({ usedAsExtension: false })],
       ["subscribe to extensions on", (p) => p.canUnsubscribeExtension()],
@@ -234,11 +234,22 @@ describe("RulesetsPolicy", () => {
     expectOnly(["Owner"], (p) => p.canManageAdminContributors(), ForbiddenError);
   });
 
-  test("canRevokeContributor: who manages contributors, archived or not; an Admin, the owner", () => {
+  test("canRevokeContributor: who manages contributors, archived or not; an Admin, the owner; one who contributes or is invited", () => {
     for (const status of ["Draft", "Archived"] as const) {
-      expectOnly(["Owner", "Admin"], (p) => p.canRevokeContributor({ role: "Editor" }), ForbiddenError, { status });
-      expectOnly(["Owner"], (p) => p.canRevokeContributor({ role: "Admin" }), ForbiddenError, { status });
+      expectOnly(
+        ["Owner", "Admin"],
+        (p) => p.canRevokeContributor({ role: "Editor", status: "Active" }),
+        ForbiddenError,
+        { status },
+      );
+      expectOnly(["Owner"], (p) => p.canRevokeContributor({ role: "Admin", status: "Active" }), ForbiddenError, {
+        status,
+      });
     }
+    // A revoked or rejected contributor is gone already
+    expect(policyOf("Owner").canRevokeContributor({ role: "Editor", status: "Pending" })).toBe(true);
+    for (const status of ["Revoked", "Rejected"])
+      expect(() => policyOf("Owner").canRevokeContributor({ role: "Editor", status })).toThrow(ConflictError);
   });
 
   test("canUpdateContributorRole: who manages contributors, on a ruleset that isn't archived; to or from Admin, the owner", () => {
@@ -249,6 +260,10 @@ describe("RulesetsPolicy", () => {
     expect(() => policyOf("Owner", { status: "Archived" }).canUpdateContributorRole()).toThrow(
       "Cannot modify roles on an archived ruleset",
     );
+    // An invite's role is its invite's
+    expect(() =>
+      policyOf("Owner").canUpdateContributorRole({ from: "Editor", status: "Pending", to: "Viewer" }),
+    ).toThrow("Can only update role of active contributors");
   });
 
   test("canUnarchive: the owner, on an archived ruleset", () => {
