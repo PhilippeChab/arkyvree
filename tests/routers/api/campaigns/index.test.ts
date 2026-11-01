@@ -45,7 +45,7 @@ describe("campaigns", () => {
 
   test("only deletes an archived campaign permanently", async () => {
     const { id } = await postCampaign();
-    await expectStatus(campaign.permanent.$delete({ param: { id } }), 404);
+    await expectStatus(campaign.permanent.$delete({ param: { id } }), 422);
   });
 
   test("requires a session", async () => {

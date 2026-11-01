@@ -22,7 +22,8 @@ class CharacterSharingService {
 
   async generateShareToken(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
-      const characterRecord = await Characters.findOne(tx, { id: characterId });
+      // Archived or not: its policy refuses an archived one as an unknown one
+      const characterRecord = await Characters.findOne(tx, { id: characterId }, Visibility.All);
       if (!characterRecord) throw new NotFoundError("Character not found");
 
       (await CharactersPolicy.for(tx, session, characterRecord)).canShare();
@@ -57,7 +58,8 @@ class CharacterSharingService {
 
   async revokeShareToken(session: Session, characterId: string) {
     return await withTransaction(async (tx) => {
-      const characterRecord = await Characters.findOne(tx, { id: characterId });
+      // Archived or not: its policy refuses an archived one as an unknown one
+      const characterRecord = await Characters.findOne(tx, { id: characterId }, Visibility.All);
       if (!characterRecord) throw new NotFoundError("Character not found");
 
       (await CharactersPolicy.for(tx, session, characterRecord)).canShare();

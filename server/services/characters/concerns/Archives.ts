@@ -38,7 +38,8 @@ export function Archives<B extends Constructor>(Base: B) {
 
     async hardDeleteCharacter(session: Session, characterId: string) {
       return await withTransaction(async (tx) => {
-        const existingCharacter = await Characters.findOne(tx, { id: characterId }, Visibility.ArchivedOnly);
+        // Archived or not: its policy refuses a live one
+        const existingCharacter = await Characters.findOne(tx, { id: characterId }, Visibility.All);
         if (!existingCharacter) throw new NotFoundError("Character not found");
 
         const inActiveCampaign = await PlayerCharacters.exists(tx, { characterId, campaignArchived: false });

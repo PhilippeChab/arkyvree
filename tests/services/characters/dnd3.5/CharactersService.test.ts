@@ -7,7 +7,7 @@ import type { Race } from "@/engine/rulesets/dnd3.5/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
+import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Visibility } from "@/server/repositories/BaseRepository.ts";
 import {
   Activities,
@@ -414,6 +414,9 @@ describe("CharactersService", () => {
         () => CharactersService.unarchiveCharacter(other, character.id),
         () => CharactersService.unarchiveCharacter(owner, NIL_UUID),
         () => CharactersService.hardDeleteCharacter(other, character.id),
+        // Its share link is out of reach while it's archived, its owner's too (`canShare`)
+        () => CharacterSharingService.generateShareToken(owner, character.id),
+        () => CharacterSharingService.revokeShareToken(owner, character.id),
       ])
         expect(call()).rejects.toThrow(NotFoundError);
     });
@@ -554,7 +557,7 @@ describe("CharactersService", () => {
       test("is refused for a character that isn't archived, or that plays in an active campaign", async () => {
         const { session } = await createTestUser();
         const character = await createCharacterAs(session);
-        expect(CharactersService.hardDeleteCharacter(session, character.id)).rejects.toThrow(NotFoundError);
+        expect(CharactersService.hardDeleteCharacter(session, character.id)).rejects.toThrow(UnprocessableEntityError);
 
         const { player } = await createTestCampaign(session.userId);
         await PlayerCharacters.create(db, { playerId: player.id, characterId: character.id });
