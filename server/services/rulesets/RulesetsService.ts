@@ -1,5 +1,6 @@
+import type { Db } from "@/drizzle/database.ts";
 import { include } from "@/lib/mixins.ts";
-import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { type LockedRulesetScope, RulesetViews } from "@/server/cow/index.ts";
 import { db, withUniqueRefusal } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
@@ -13,13 +14,22 @@ import {
 import { isAllowed, isStarrable, type RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { Ruleset, Session } from "@/shared/relations.ts";
 
 import { Archives } from "./concerns/Archives.ts";
 import { Publishes } from "./concerns/Publishes.ts";
 import { Stars } from "./concerns/Stars.ts";
 import { getReadableRuleset } from "./readableRuleset.ts";
-import { withLockedRuleset } from "./rulesetWrites.ts";
+import { withLockedRuleset, withRulesetWrite } from "./rulesetWrites.ts";
+
+/** A ruleset's update: its own row's columns, and the token of the row the client read (`updatedAt`). */
+interface RulesetUpdate {
+  description: string;
+  kind?: RulesetKind;
+  name: string;
+  private?: boolean;
+  updatedAt?: string;
+}
 
 /**
  * The unique index that keeps a ruleset's name its own (`drizzle/schema.ts`): across every user's rulesets, a private,
@@ -58,6 +68,51 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
       canUpdateContributorRoles: isAllowed(() => policy.canUpdateContributorRole()),
       canViewChanges: isAllowed(() => policy.canViewChanges()),
     };
+  }
+
+  /**
+   * Updates a ruleset's own row (`body`), under its lock, the session's policy on it and the ruleset as the lock read
+   * it: a kind change of a published one checks its content on its view (`scope`, a write's fresh one), refused as
+   * stale when the write read none (the ruleset was published since its status was read).
+   */
+  private async applyUpdate(
+    tx: Db,
+    session: Session,
+    { policy, ruleset, scope }: { policy: RulesetsPolicy; ruleset: Ruleset; scope?: LockedRulesetScope },
+    body: RulesetUpdate,
+  ) {
+    policy.canUpdate({ private: body.private });
+
+    const { kind } = body;
+    if (kind && kind !== ruleset.kind) {
+      // A published ruleset becomes what publishing it as `kind` would make it; a draft's content is checked when
+      // it's published
+      if (ruleset.status === "Published") {
+        if (!scope) throw new ConflictError(STALE_ENTITY_MESSAGE);
+        this.checkKind(scope, policy, kind);
+      } else if (kind === "extension") {
+        const { extensionIds } = (await Rulesets.findSources(tx, { id: ruleset.id }))!;
+        policy.canBeExtension({ hasExtensions: extensionIds.length > 0 });
+      }
+    }
+
+    // A stale edit updates no row, so it's told it's stale before its name is checked
+    const { updatedAt, ...columns } = body;
+    const rows = await this.withNameRefusal(() =>
+      Rulesets.update(tx, columns, { id: ruleset.id, expectedUpdatedAt: updatedAt }),
+    );
+    if (updatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
+
+    const updatedRuleset = rows[0];
+
+    await Activities.create(tx, {
+      userId: session.userId,
+      targetId: updatedRuleset.id,
+      targetType: TARGET_TYPES.rulesets,
+      type: "updateRuleset",
+    });
+
+    return updatedRuleset;
   }
 
   /**
@@ -197,41 +252,20 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
     };
   }
 
-  async updateRuleset(
-    session: Session,
-    id: string,
-    body: { description: string; kind?: RulesetKind; name: string; private?: boolean; updatedAt?: string },
-  ) {
-    // Its own row: locked as a write of its content locks it, no view read but a kind's check
-    const result = await withLockedRuleset(session, id, async (tx, policy, ruleset) => {
-      policy.canUpdate({ private: body.private });
+  async updateRuleset(session: Session, id: string, body: RulesetUpdate) {
+    // A published ruleset's kind change checks its content, on its view read fresh under its write's locks; anything
+    // else locks its own row alone, as a write of its content locks it, and reads no view
+    const stored = await Rulesets.findOne(db, { id });
+    const checksContent = stored?.status === "Published" && body.kind !== undefined && body.kind !== stored.kind;
+    if (checksContent) {
+      return await withRulesetWrite(session, id, async (tx, scope, policy) =>
+        this.applyUpdate(tx, session, { policy, ruleset: scope.ruleset, scope }, body),
+      );
+    }
 
-      const { kind } = body;
-      if (kind && kind !== ruleset.kind) {
-        // A published ruleset becomes what publishing it as `kind` would make it; a draft's content is checked when
-        // it's published. Its content's writes wait on its lock
-        if (ruleset.status === "Published")
-          await withRulesetScope(tx, id, async (scope) => this.checkKind(scope, policy, kind));
-        else if (kind === "extension")
-          policy.canBeExtension({ hasExtensions: (await Rulesets.findSources(tx, { id }))!.extensionIds.length > 0 });
-      }
-
-      // A stale edit updates no row, so it's told it's stale before its name is checked
-      const { updatedAt, ...columns } = body;
-      const rows = await this.withNameRefusal(() => Rulesets.update(tx, columns, { id, expectedUpdatedAt: updatedAt }));
-      if (updatedAt && rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
-
-      const updatedRuleset = rows[0];
-
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: updatedRuleset.id,
-        targetType: TARGET_TYPES.rulesets,
-        type: "updateRuleset",
-      });
-
-      return updatedRuleset;
-    });
+    const result = await withLockedRuleset(session, id, async (tx, policy, ruleset) =>
+      this.applyUpdate(tx, session, { policy, ruleset }, body),
+    );
     RulesetViews.invalidate(id);
     return result;
   }

@@ -12,7 +12,7 @@ import {
 } from "@/server/repositories/index.ts";
 import type { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { findReadableRuleset, getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
-import { withRulesetWrite } from "@/server/services/rulesets/rulesetWrites.ts";
+import { BUSY_RULESET_MESSAGE, withRulesetWrite } from "@/server/services/rulesets/rulesetWrites.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -67,6 +67,8 @@ class RulesetExtensionsService {
         const readable = await findReadableRuleset(tx, session, extensionId);
         if (!readable) throw new NotFoundError("Extension not found");
         readable.policy.canBeSubscribed({ parentId: childRuleset.rulesetId });
+        // One that became an extension after its kind was read isn't locked: its writes may be running
+        if (!reads.includes(extensionId)) throw new ConflictError(BUSY_RULESET_MESSAGE);
 
         if (sources.extensionIds.includes(extensionId)) throw new ConflictError("Already subscribed to this extension");
 
