@@ -104,7 +104,7 @@ export function PlanStep({ characterId, step, wizard }: PlanStepProps) {
 
   // A button adds a track at the end of the plan, at the position after those planned: "+ Wizard 3" once Wizard 2 is.
   // It pushes the track as the server gives it, which the wizard numbers in its place. The character's own tracks first
-  // (a next position past 1 means one taken), from the unsearched options, so searching drops none of them
+  // (those the picker lists first, a next position past 1), from the unsearched options, so searching drops none
   const quickAdd = planOptions.quickAdd.filter((option) => (option.track?.positions[0] ?? 1) > 1 && option.eligible);
   // Then any planned track not already among them
   const seen = new Set(quickAdd.map((option) => option.id));
@@ -113,6 +113,12 @@ export function PlanStep({ characterId, step, wizard }: PlanStepProps) {
     seen.add(option.id);
     quickAdd.push(option);
   }
+
+  // The position a track takes at a place in the plan, in its rules' word ("Level 4"), or that it has none left
+  const positionAt = (option: StepOption, before: number) => {
+    const at = plannedPosition(option, plan, before);
+    return at === undefined ? `No ${position.many.toLowerCase()} left` : `${position.one} ${at}`;
+  };
 
   // The plan stops at the character's last advancement: every option says how many are left
   const left = planOptions.quickAdd[0]?.track?.left;
@@ -142,7 +148,7 @@ export function PlanStep({ characterId, step, wizard }: PlanStepProps) {
         <Slot key={slotKeys[index]} index={index} onRemove={handleRemoveSlot} position={position.one}>
           {planned ? (
             <Stack sx={PLANNED_SX}>
-              <Typography>{`${planned.name} — ${position.one} ${plannedPosition(planned, plan, index)}`}</Typography>
+              <Typography>{`${planned.name} — ${positionAt(planned, index)}`}</Typography>
             </Stack>
           ) : (
             <Autocomplete<StepOption>
@@ -158,11 +164,11 @@ export function PlanStep({ characterId, step, wizard }: PlanStepProps) {
                 if (reason === "input") planOptions.setSearch(inputValue);
               }}
               filterOptions={(x) => x}
-              getOptionLabel={(option) => `${option.name} — ${position.one} ${plannedPosition(option, plan, index)}`}
+              getOptionLabel={(option) => `${option.name} — ${positionAt(option, index)}`}
               getOptionDisabled={(option) => !option.eligible || plannedPosition(option, plan, index) === undefined}
               isOptionEqualToValue={(option, value) => option.id === value.id}
               renderOption={({ key, ...props }, option) => {
-                const next = `${position.one} ${plannedPosition(option, plan, index)}`;
+                const next = positionAt(option, index);
                 return (
                   <OptionTooltip
                     key={key}
