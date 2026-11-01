@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
+import AptitudeTargets, { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 
 describe("the aptitudes' target grammar", () => {
   test("read a list's pool, its spell levels' slots and uses, and its join, by the list's slug", () => {
@@ -45,5 +45,23 @@ describe("the aptitudes' target grammar", () => {
 
     expect(AptitudeTargets.parseAllowed("aptitudes.x.foo.notallowed")).toBeUndefined();
     expect(AptitudeTargets.parseList("aptitudesx.general.allowed")).toBeUndefined();
+  });
+
+  test("reads a modifier that sets a spell level's spells known to all of them, the one marker for it", () => {
+    const modifier = (operator: string, value: string) => ({ operator, value });
+    expect(AptitudeTargets.setsAllKnown(modifier("set", String(ALLOWED_ALL)))).toBe(true);
+    // An add of it, another number, or no number at all, sets nothing so
+    for (const [operator, value] of [
+      ["add", "-1"],
+      ["set", "999"],
+      ["set", "0"],
+      ["set", "{{ x }}"],
+    ]) {
+      expect([operator, value, AptitudeTargets.setsAllKnown(modifier(operator, value))]).toEqual([
+        operator,
+        value,
+        false,
+      ]);
+    }
   });
 });

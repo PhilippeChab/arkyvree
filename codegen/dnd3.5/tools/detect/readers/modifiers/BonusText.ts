@@ -24,6 +24,15 @@ const EQUIPPED =
   /\b(?:when|while|if|as long as)\s+(?:(?:it is|you are|they are|she|he|you)\s+)?(?:worn|wears|wearing|placed|donned|held|holds|holding|grasped|carried|carries|carrying|used|activated|wielded|wields|wielding)\b/gi;
 
 /**
+ * Uncanny dodge's benefit, in a text's words: the character keeps its Dexterity bonus to AC when flat-footed ("allowing
+ * you to retain your Dexterity bonus to AC (if any) even if caught flat-footed", the Fate domain's; "She retains her
+ * Dexterity bonus to AC even when flat-footed", the Robe of Eyes'; "retains his Dexterity bonus to Armor Class (if any)
+ * regardless of being caught flat-footed", a class feature's).
+ */
+const KEEPS_DEXTERITY_FLAT_FOOTED =
+  /\b(?:keeps?|retains?|retaining)\s+(?:her|his|its|your|their)\s+Dexterity (?:bonus|modifier) to (?:AC|Armor Class)\b[^.]*?\b(?:even (?:when|if)|regardless of)\b[^.]*?\bflat-footed\b/i;
+
+/**
  * The level a class feature comes at, which conditions nothing: the feature is granted at that level ("When she attains
  * 6th level, a dervish gains…", "Upon reaching 9th level").
  */
@@ -164,6 +173,14 @@ export class BonusText {
     if (pattern.global) throw new Error(`BonusText.first takes a non-global pattern: ${pattern}`);
     const match = this.text.match(pattern);
     return match && !this.isConditional(match) ? match : undefined;
+  }
+
+  /**
+   * Whether the text gives uncanny dodge's benefit: the character keeps its Dexterity bonus to AC when flat-footed
+   * (`combat.ac.uncannydodge`, which keeps its dodge bonuses too), as a class's Uncanny Dodge feature does.
+   */
+  hasUncannyDodge(): boolean {
+    return KEEPS_DEXTERITY_FLAT_FOOTED.test(this.text);
   }
 
   /** Whether the bonus `match` read applies only sometimes. */

@@ -72,7 +72,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Cleric Spells"],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Pattern",
+      [SPELL_SUBSCHOOL]: ["Pattern"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "80 ft.",
@@ -175,7 +175,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Cleric Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "60 ft.",
@@ -191,7 +191,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Blackguard Spells", "Cleric Spells", "Paladin Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Healing",
+      [SPELL_SUBSCHOOL]: ["Healing"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Touch",
@@ -226,7 +226,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Blackguard Spells", "Paladin Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Close",

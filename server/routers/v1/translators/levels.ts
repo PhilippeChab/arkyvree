@@ -161,7 +161,7 @@ export function toV1StepOptions(
         id,
         name,
         requirementTree,
-        track: track && { last: track.last, left: track.left, next: track.next },
+        track: track && { left: track.left, positions: [...track.positions] },
       }));
   return { grouped: options.grouped, items, nextPage: options.nextPage ?? null, page: options.page };
 }

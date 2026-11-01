@@ -55,6 +55,7 @@ export type {
   SettingsForm,
   StepOption,
   StepOptionGroup,
+  StepPayload,
   StepPickerQuery,
   StorageRegistries,
   StoredAdvancement,

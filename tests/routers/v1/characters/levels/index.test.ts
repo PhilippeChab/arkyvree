@@ -33,7 +33,7 @@ describe("v1 character levels", () => {
     expect(options).toMatchObject({ page: 1 });
     const track = options.items.find(({ eligible }) => eligible)!;
 
-    const plan = { steps: { [planned.name]: [{ position: 1, track: track.id }] } };
+    const plan = { steps: { [planned.name]: [{ track: track.id }] } };
     const answer = await expectOk(characters["level-plan"].$post({ json: plan, param }));
     expect(answer.advancements).toEqual([
       { id: expect.any(String), position: 1, track: { id: track.id, name: track.name } },

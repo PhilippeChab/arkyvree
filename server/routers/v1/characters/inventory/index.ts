@@ -53,7 +53,7 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1Placement,
       status: 200,
-      summary: "Why a place can't take one more of a character's items (a third ring), none when it can",
+      summary: "Why a place can't take one more of a character's items, as its rules say, none when it can",
     }),
     validate("param", idParam),
     validate(

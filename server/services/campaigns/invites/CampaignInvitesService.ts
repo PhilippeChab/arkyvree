@@ -5,7 +5,7 @@ import { Campaigns, Invites, type Pagination, Players, Visibility } from "@/serv
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { findReadableCampaign, getReadableCampaign } from "@/server/services/campaigns/readableCampaign.ts";
 import { getPendingInvite, saveInviteAnswer } from "@/server/services/invites/index.ts";
-import { CampaignsPolicy } from "@/server/services/policies/index.ts";
+import { CampaignsPolicy, isAllowed } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
 
@@ -42,9 +42,10 @@ class CampaignInvitesService {
     });
   }
 
-  // Single invite for the current user, any status. Used by the invite-accept
-  // page so a stale link still resolves to "Already accepted" / "no longer
-  // pending" copy instead of "Not found".
+  /**
+   * The session's invite, whatever its status, so a stale link still says what became of it, and whether it may be
+   * accepted, as its acceptance asks the campaign's policy (`canAccept`).
+   */
   async getInvite(session: Session, inviteId: string) {
     const invite = await Invites.findOneWithCampaign(db, {
       id: inviteId,
@@ -52,7 +53,10 @@ class CampaignInvitesService {
     });
     if (!invite) throw new NotFoundError("Invite not found");
 
-    return invite;
+    // Its campaign as its read loaded it, its seat archived or not: an answered invite outlives a seat archived since
+    const campaign = invite.playersInCampaign?.campaignsInCampaign;
+    const policy = campaign && (await CampaignsPolicy.for(db, session, campaign));
+    return { ...invite, canAccept: !!policy && isAllowed(() => policy.canAcceptInvite()) };
   }
 
   async getInvites(

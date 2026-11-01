@@ -75,7 +75,7 @@ export const LEVEL_3_SPELLS: SpellSeed[] = [
     aptitudeLevels: { "Druid Spells": 4, "Ranger Spells": 3 },
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus"],
       [SPELL_CASTING_TIME]: "10 minutes",
       [SPELL_RANGE_TYPE]: "Touch",
@@ -205,7 +205,7 @@ export const LEVEL_3_SPELLS: SpellSeed[] = [
     aptitudes: ["Ranger Spells"],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Phantasm",
+      [SPELL_SUBSCHOOL]: ["Phantasm"],
       [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 standard action",
@@ -296,7 +296,7 @@ export const LEVEL_3_SPELLS: SpellSeed[] = [
     aptitudes: ["Cleric Spells", "Druid Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Healing",
+      [SPELL_SUBSCHOOL]: ["Healing"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Touch",
@@ -314,7 +314,7 @@ export const LEVEL_3_SPELLS: SpellSeed[] = [
     aptitudes: ["Cleric Spells", "Druid Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Healing",
+      [SPELL_SUBSCHOOL]: ["Healing"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "20 ft.",

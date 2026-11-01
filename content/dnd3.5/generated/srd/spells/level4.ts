@@ -80,7 +80,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Divination",
-      [SPELL_SUBSCHOOL]: "Scrying",
+      [SPELL_SUBSCHOOL]: ["Scrying"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "10 minutes",
       [SPELL_RANGE_TYPE]: "Unlimited",
@@ -197,7 +197,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudeLevels: { "Blackguard Spells": 4, "Cleric Spells": 4, "Druid Spells": 5, "Hunter of the Dead Spells": 4 },
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Healing",
+      [SPELL_SUBSCHOOL]: ["Healing"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Touch",
@@ -239,7 +239,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Divination",
-      [SPELL_SUBSCHOOL]: "Scrying",
+      [SPELL_SUBSCHOOL]: ["Scrying"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "40 ft.",
@@ -255,7 +255,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Assassin Spells", "Bard Spells", "Sorcerer Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Teleportation",
+      [SPELL_SUBSCHOOL]: ["Teleportation"],
       [SPELL_COMPONENT]: ["Verbal"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Long",
@@ -380,7 +380,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudeLevels: { "Bard Spells": 4, "Sorcerer Spells": 5, "Wizard Spells": 5, "Wu Jen Spells": 5 },
     fields: {
       [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: "Compulsion",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
       [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 round",
@@ -430,7 +430,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Medium",
@@ -447,7 +447,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudeLevels: { "Sorcerer Spells": 4, "Warmage Spells": 3, "Wizard Spells": 4 },
     fields: {
       [SPELL_SCHOOL]: "Evocation",
-      [SPELL_DESCRIPTOR]: ["Fire or Cold"],
+      [SPELL_DESCRIPTOR]: ["Fire", "Cold"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Personal",
@@ -538,7 +538,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Glamer",
+      [SPELL_SUBSCHOOL]: ["Glamer"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "10 minutes",
       [SPELL_RANGE_TYPE]: "Long",
@@ -557,7 +557,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudeLevels: { "Bard Spells": 4, "Sorcerer Spells": 5, "Wizard Spells": 5, "Wu Jen Spells": 5 },
     fields: {
       [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: "Compulsion",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
       [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 standard action",
@@ -627,7 +627,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Figment",
+      [SPELL_SUBSCHOOL]: ["Figment"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Close",
@@ -684,7 +684,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     ],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Glamer",
+      [SPELL_SUBSCHOOL]: ["Glamer"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Personal or touch",
@@ -718,7 +718,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Focus"],
       [SPELL_CASTING_TIME]: "10 minutes",
       [SPELL_RANGE_TYPE]: "Close",
@@ -772,7 +772,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Sorcerer Spells", "Wizard Spells", "Wu Jen Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "1 minute",
       [SPELL_RANGE_TYPE]: "0 ft.",
@@ -788,7 +788,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Assassin Spells", "Bard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: "Compulsion",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
       [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 round; see text",
@@ -843,7 +843,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Hexblade Spells", "Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Phantasm",
+      [SPELL_SUBSCHOOL]: ["Phantasm"],
       [SPELL_DESCRIPTOR]: ["Fear", "Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 standard action",
@@ -862,7 +862,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Cleric Spells", "Knight of the Chalice Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Calling",
+      [SPELL_SUBSCHOOL]: ["Calling"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus", "XP Cost"],
       [SPELL_CASTING_TIME]: "10 minutes",
       [SPELL_RANGE_TYPE]: "Close",
@@ -893,7 +893,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Pattern",
+      [SPELL_SUBSCHOOL]: ["Pattern"],
       [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Focus"],
       [SPELL_CASTING_TIME]: "1 standard action",
@@ -959,7 +959,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Cleric Spells", "Hunter of the Dead Spells", "Paladin Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Healing",
+      [SPELL_SUBSCHOOL]: ["Healing"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "3 rounds",
       [SPELL_RANGE_TYPE]: "Touch",
@@ -1009,7 +1009,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Vigilante Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Shadow",
+      [SPELL_SUBSCHOOL]: ["Shadow"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "See text",
@@ -1060,7 +1060,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Medium",
@@ -1136,7 +1136,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     ],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Summoning",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 round",
       [SPELL_RANGE_TYPE]: "Close",
@@ -1152,7 +1152,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Druid Spells", "Ranger Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Summoning",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 round",
       [SPELL_RANGE_TYPE]: "Close",
@@ -1169,7 +1169,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudeLevels: { "Druid Spells": 5, "Ranger Spells": 4 },
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Teleportation",
+      [SPELL_SUBSCHOOL]: ["Teleportation"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Personal",
@@ -1246,7 +1246,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     aptitudes: ["Bard Spells", "Vigilante Spells"],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Glamer",
+      [SPELL_SUBSCHOOL]: ["Glamer"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 round",
       [SPELL_RANGE_TYPE]: "Personal",

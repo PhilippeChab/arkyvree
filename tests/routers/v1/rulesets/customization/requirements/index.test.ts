@@ -15,7 +15,7 @@ describe("v1 entity requirements", () => {
     const [entity] = await listEntities(api, id, kind!, { limit: "1" });
     const customization = api.v1.rulesets[":id"].customization[":kind"][":entityId"];
 
-    const json = { operator: "add", target: await findNumberTarget(api, id), value: "2" };
+    const json = { operator: "add", target: await findNumberTarget(api, id, kind), value: "2" };
     const added = await expectOk(
       customization.modifiers.$post({ json, param: { entityId: entity!.id, id, kind: kind as RulesetEntityType } }),
     );

@@ -14,8 +14,8 @@ export default class SpellFocusFeats extends GeneratedFeats {
   protected override readonly poolSlug = LevelRules.GENERAL_FEATS_APTITUDE_SLUG;
 
   /**
-   * The feats a spell school brings: Spell Focus (the set's key) and Greater Spell Focus, each a +1 to its spells' DCs,
-   * the greater one requiring the other.
+   * The feats a spell school brings: Spell Focus and Greater Spell Focus, each a +1 to its spells' DCs, the greater one
+   * requiring the other.
    */
   protected override featsOf(schoolName: string) {
     const spellFocus = `Spell Focus: ${schoolName}`;

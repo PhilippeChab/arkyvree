@@ -132,10 +132,10 @@ export interface PlanAnswer {
 }
 
 /**
- * A `plan` step's payload's advancement: the track it takes (3.5's class) and its position on it (the class's level).
+ * A `plan` step's payload's advancement: the track it takes (3.5's class), at the position the module numbers it (the
+ * class's next level, after those of it the plan takes before).
  */
 export interface PlannedAdvancement {
-  position: number;
   track: string;
 }
 
@@ -198,8 +198,9 @@ export interface SpentPoints {
 
 /**
  * An option a step's picker offers, in no game's nouns: its entity, whether the character may take it and what it
- * lacks when not (`requirementTree`), and, a `plan` step's, the position it takes next on its track, the track's last,
- * and how many advancements the character has left (`track`).
+ * lacks when not (`requirementTree`), and, a `plan` step's, how many advancements the character has left and the
+ * positions its track takes next, in the order a plan takes them, as many as it can (`track`: 3.5's class levels, a
+ * gap a forced level left filled first, none past its last).
  */
 export interface StepOption {
   description: string | null;
@@ -207,7 +208,7 @@ export interface StepOption {
   id: string;
   name: string;
   requirementTree?: string;
-  track?: { last: number; left: number; next: number };
+  track?: { left: number; positions: number[] };
 }
 
 /**

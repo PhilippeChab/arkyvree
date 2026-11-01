@@ -7,6 +7,16 @@ import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { createFormCharacter, findBaseRuleset, findCharacter, readRulesOf } from "@/tests/support/v1.ts";
 
+/** An item of a new character's form's `fields` section, as the rules lay it out. */
+interface FormItem {
+  key?: string;
+  kind: string;
+  min?: number;
+  options?: (number | string)[];
+  required?: string;
+  start?: number;
+}
+
 /** A new user's key, and a character of theirs made as its base rules' form lays it out. */
 async function keyedCharacter() {
   const { user } = await createTestUser();
@@ -91,12 +101,20 @@ describe("v1 characters", () => {
       section.kind === "fields" ? (section.lines as { key?: string; kind: string; role?: string }[][]).flat() : [],
     );
 
-    // Each pick its first eligible option, each score its start, no field set but those the form requires
+    // Each field the form requires its start or first option, each pick its first eligible option over those fields,
+    // each score its start
+    const fields: Record<string, number | string> = {};
+    for (const { key, kind, min, options, required, start } of items as FormItem[]) {
+      if (!key || !required) continue;
+      if (kind === "number") fields[key] = start ?? min ?? 1;
+      else if (options?.[0] !== undefined) fields[key] = options[0];
+      else fields[key] = "Test";
+    }
+    const narrowing = Object.fromEntries(Object.entries(fields).map(([key, value]) => [key, String(value)]));
     const picks: Record<string, string> = {};
     for (const { role } of items.filter(({ kind }) => kind === "pick")) {
-      const options = await expectOk(
-        api.v1.characters.creation[":role"].$get({ param: { role: role! }, query: { rulesetId } }),
-      );
+      const query = { ...narrowing, rulesetId };
+      const options = await expectOk(api.v1.characters.creation[":role"].$get({ param: { role: role! }, query }));
       picks[role!] = options.items.find(({ eligible }) => eligible)!.id;
     }
     const scores: Record<string, Record<string, number>> = {};
@@ -105,11 +123,6 @@ describe("v1 characters", () => {
       const creation = await expectOk(api.v1.characters.creation.$get({ query: { role, rulesetId } }));
       scores[role] = Object.fromEntries(creation.entities.map(({ id }) => [id, creation.scores.start]));
     }
-    const fields: Record<string, number | string> = Object.fromEntries(
-      (items as { key?: string; options?: (number | string)[]; required?: string; start?: number }[]).flatMap((item) =>
-        item.key && item.required ? [[item.key, item.start ?? item.options?.[0] ?? "Test"]] : [],
-      ),
-    );
 
     const json = { fields, name: "Keyed Hero", picks, rulesetId, scores };
     const sheet = await expectOk(api.v1.characters.$post({ json }));
