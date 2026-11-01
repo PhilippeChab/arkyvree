@@ -73,7 +73,8 @@ class AccountService {
       // masters first, locked as their writes lock them, before anything writes them (an attachment's purge touches
       // its character's row): it waits on their writes (a campaign it creates meanwhile, an invite it accepts), never
       // on one in a cycle
-      await Users.lock(tx, { id: userId }, "no key update");
+      // A deletion that ran meanwhile leaves it nothing to delete
+      if (!(await Users.lock(tx, { id: userId }, "no key update"))) throw new InternalError("User not found");
       await Rulesets.orphan(tx, { userId });
       await Campaigns.lockMany(tx, { userId });
       const characterIds = await Characters.lockMany(tx, { userId });

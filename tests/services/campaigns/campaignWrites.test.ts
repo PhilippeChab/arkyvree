@@ -5,7 +5,7 @@ import { sql } from "drizzle-orm";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
-import { Campaigns, Characters, Players, Rulesets } from "@/server/repositories/index.ts";
+import { Campaigns, Characters, Players, Rulesets, Users } from "@/server/repositories/index.ts";
 import { BUSY_CAMPAIGN_MESSAGE } from "@/server/services/campaigns/campaignWrites.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 import { CampaignsService } from "@/server/services/campaigns/index.ts";
@@ -19,6 +19,9 @@ const CAMPAIGN_LOCK = /from "campaign"\."campaigns".*for no key update/is;
 
 /** The campaigns the probes committed, which another connection sees: deleted once every test rolled back. */
 const committed: string[] = [];
+
+/** The demo users the probes committed, deleted after the campaigns. */
+const committedUsers: string[] = [];
 
 const pool = createTestPool();
 
@@ -47,6 +50,7 @@ afterAll(async () => {
   const client = await pool.connect();
   try {
     for (const id of committed) await Campaigns.delete(createTestDbFromClient(client), { id });
+    for (const id of committedUsers) await Users.delete(createTestDbFromClient(client), { id });
   } finally {
     client.release();
   }
@@ -70,8 +74,12 @@ test("a campaign's write waits at its own lock of the campaign's row", async () 
 test("two Game Masters' removals of each other take turns: the second, once the first commits, is the last one's", async () => {
   const campaign = await commitCampaign();
   const client = await pool.connect();
-  const other = await Players.create(createTestDbFromClient(client), { campaignId: campaign.id, role: "Game Master" });
-  client.release();
+  let other: Awaited<ReturnType<typeof Players.create>>;
+  try {
+    other = await Players.create(createTestDbFromClient(client), { campaignId: campaign.id, role: "Game Master" });
+  } finally {
+    client.release();
+  }
   const mine = (await Players.findOne(db, { campaignId: campaign.id, userId: SEED_USER_ID }))!;
   const writer = (await db.execute<{ pid: number }>(sql`select pg_backend_pid() as pid`)).rows[0].pid;
   const blocker = await pool.connect();
@@ -92,7 +100,7 @@ test("two Game Masters' removals of each other take turns: the second, once the 
   }
 });
 
-test("a character's link holds the character's row alone, so a second link of it waits and sees the first", async () => {
+test("a character's link holds the character's row alone: a second link of it waits for the first", async () => {
   // Seeded characters: ones another connection sees, so it can hold their rows. Held shared: only a link that takes
   // the row alone waits on it
   const seeded = await findSeededCharacter("Fenn Ashwalker");
@@ -131,4 +139,44 @@ test("a campaign's creation waits for a write to its ruleset, which it holds sha
     () => CampaignsService.createCampaign(makeSession(), { name, rulesetId }),
   );
   expect(campaign.name).toBe(name);
+});
+
+test("a campaign's creation that waits for its creator's account's deletion is refused, and makes no campaign", async () => {
+  const { rulesetId } = await getSeedCtx();
+  // A demo user, committed: one another connection sees, which its deletion can delete for good
+  const client = await pool.connect();
+  let user: Awaited<ReturnType<typeof Users.create>>[number];
+  try {
+    const id = uniqueId();
+    [user] = await Users.create(createTestDbFromClient(client), {
+      username: `locked-${id}`,
+      emailAddress: `locked-${id}@example.com`,
+      password: "password1234",
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    });
+    committedUsers.push(user.id);
+  } finally {
+    client.release();
+  }
+  const writer = (await db.execute<{ pid: number }>(sql`select pg_backend_pid() as pid`)).rows[0].pid;
+  const blocker = await pool.connect();
+  let creation: Promise<unknown> | undefined;
+  const name = `Refused ${uniqueId()}`;
+  try {
+    // The account's deletion holds its row, then archives it and commits
+    await blocker.query("BEGIN");
+    await Users.lock(createTestDbFromClient(blocker), { id: user.id }, "no key update");
+    creation = CampaignsService.createCampaign(makeSession(user.id), { name, rulesetId }).catch(
+      (error: Error) => error,
+    );
+    expect(await waitUntilBlocked(blocker, writer)).toBe(true);
+    await Users.archive(createTestDbFromClient(blocker), { id: user.id });
+    await blocker.query("COMMIT");
+    expect(await creation).toMatchObject({ code: 401 });
+  } finally {
+    await blocker.query("ROLLBACK");
+    await creation;
+    blocker.release();
+  }
+  expect(await Campaigns.count(db, { userId: user.id })).toBe(0);
 });

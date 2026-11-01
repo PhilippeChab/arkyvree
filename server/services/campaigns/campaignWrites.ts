@@ -1,8 +1,8 @@
 import type { Db } from "@/drizzle/database.ts";
-import { NotFoundError } from "@/server/errors/index.ts";
+import { NotFoundError, UnauthorizedError } from "@/server/errors/index.ts";
 import { Campaigns, Invites, Players, Rulesets, Users, Visibility } from "@/server/repositories/index.ts";
 import type { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { BUSY_RULESET_MESSAGE, getReadableRuleset, withBoundedWrite } from "@/server/services/rulesets/index.ts";
+import { getReadableRuleset, withBoundedWrite } from "@/server/services/rulesets/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { getReadableCampaign } from "./readableCampaign.ts";
@@ -10,21 +10,25 @@ import { getReadableCampaign } from "./readableCampaign.ts";
 /** What a write that gave up on a lock answers: another save held the campaign. */
 export const BUSY_CAMPAIGN_MESSAGE = "The campaign is being changed by another save; try again";
 
+/** What a campaign's creation that gave up on a lock answers: another save held its ruleset or its creator's account. */
+export const BUSY_CREATION_MESSAGE = "The ruleset or your account is being changed by another save; try again";
+
 /**
  * Runs the creation of a campaign in a ruleset (`rulesetId`): its creator's row locked shared, so an account's
  * deletion, which locks it first, waits for the seat it makes or makes it wait; then the ruleset's row shared, so no
  * write of its own row (its archive, its status) runs meanwhile; then the session's policy on it, if it may read it
  * (`getReadableRuleset`, the 404 an unknown ruleset gets otherwise). Users lock before rulesets, rulesets before
- * campaigns, and campaigns before characters, as every write that locks several takes them. A creation that waited on
- * the ruleset past the lock wait is refused as its write is (`BUSY_RULESET_MESSAGE`).
+ * campaigns, and campaigns before characters, as every write that locks several takes them. A creator whose account
+ * was deleted meanwhile is refused as its session is (401). A creation that waited past the lock wait is refused as a
+ * conflict (`BUSY_CREATION_MESSAGE`).
  */
 export async function withCampaignCreate<T>(
   session: Session,
   rulesetId: string,
   write: (tx: Db, policy: RulesetsPolicy) => Promise<T>,
 ): Promise<T> {
-  return await withBoundedWrite(BUSY_RULESET_MESSAGE, async (tx) => {
-    await Users.lock(tx, { id: session.userId }, "share");
+  return await withBoundedWrite(BUSY_CREATION_MESSAGE, async (tx) => {
+    if (!(await Users.lock(tx, { id: session.userId }, "share"))) throw new UnauthorizedError("Invalid session");
     if (!(await Rulesets.lock(tx, { id: rulesetId }, "share"))) throw new NotFoundError("Ruleset not found");
     return await write(tx, (await getReadableRuleset(tx, session, rulesetId)).policy);
   });

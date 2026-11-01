@@ -1,4 +1,5 @@
-import { and, count, countDistinct, eq, inArray, type InferInsertModel, isNull, not, or, sql } from "drizzle-orm";
+import { and, count, countDistinct, eq, inArray, type InferInsertModel, isNull, not, sql } from "drizzle-orm";
+import { union } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
 import { campaignsInCampaign, invitesInCampaign, playersInCampaign, rulesetsInRules } from "@/drizzle/schema.ts";
@@ -149,10 +150,10 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
   }
 
   /**
-   * Locks the campaigns a user holds a live seat or a live invite in (`userId`) until the transaction ends, by id: an
-   * account's deletion, which archives its seats and its invites, waits on their campaigns' writes (an invite's
+   * Locks the campaigns a user holds a live seat or a pending invite in (`userId`) until the transaction ends, by id:
+   * an account's deletion, which archives its seats and its invites, waits on their campaigns' writes (an invite's
    * acceptance among them), after its rulesets and before its characters, as every write that locks several takes
-   * them, and never on one in a cycle.
+   * them, and never on one in a cycle. One set of ids, so each is found by the campaigns' key.
    */
   async lockMany(db: Db, where: { userId: string }) {
     const seats = db
@@ -163,11 +164,17 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
       .select({ campaignId: playersInCampaign.campaignId })
       .from(invitesInCampaign)
       .innerJoin(playersInCampaign, eq(playersInCampaign.id, invitesInCampaign.playerId))
-      .where(and(eq(invitesInCampaign.userId, where.userId), isNull(invitesInCampaign.deletedAt)));
+      .where(
+        and(
+          eq(invitesInCampaign.userId, where.userId),
+          eq(invitesInCampaign.status, "Pending"),
+          isNull(invitesInCampaign.deletedAt),
+        ),
+      );
     await db
       .select({ id: this.table.id })
       .from(this.table)
-      .where(or(inArray(this.table.id, seats), inArray(this.table.id, invited)))
+      .where(inArray(this.table.id, union(seats, invited)))
       .orderBy(this.table.id)
       .for("no key update");
   }
