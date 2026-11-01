@@ -134,6 +134,11 @@ const v1StepOptionGroup = z.strictObject({
   requirementTree: z.string().optional(),
 });
 
+/** What a character's card shows of it, as its rules describe it: each a chip, partial where it's unknown. */
+export const v1CardSummary = z.array(z.strictObject({ label: z.string(), partial: z.boolean() })).meta({
+  description: "What its card shows of it, as its rules describe it, each partial where it's unknown or hidden",
+});
+
 /** What the key's user may do with a character. */
 export const v1CharacterPermissions = z
   .strictObject({
@@ -180,13 +185,54 @@ export const v1CharacterCard = z
     description: z.string().nullable(),
     id: v1Id,
     name: z.string(),
-    summary: z.array(z.strictObject({ label: z.string(), partial: z.boolean() })).meta({
-      description: "What its card shows of it, as its rules describe it, " + "partial when unknown",
-    }),
+    summary: v1CardSummary,
   })
   .meta({ description: "A character, as its card shows it", id: "CharacterCard" });
 
 export const v1CharacterPage = buildPageSchema(v1CharacterCard);
+
+/** How a new character of a ruleset sets its scores of a role: its entities, methods, bounds. */
+export const v1Creation = z
+  .strictObject({
+    entities: z.array(v1Named).meta({ description: "The entities it scores, in the sheet's order" }),
+    methods: z
+      .array(z.looseObject({ id: z.string(), kind: z.enum(["array", "pointBuy", "roll"]), label: z.string() }))
+      .meta({ description: "The ways its scores are made: dice rolled, an array, or points bought" }),
+    modifiers: z.record(z.string(), z.number()).meta({ description: "Each score's modifier, by the score" }),
+    scores: z.strictObject({ max: z.number(), min: z.number(), start: z.number() }),
+  })
+  .meta({ description: "How a new character sets its scores of a role", id: "Creation" });
+
+/** An option a new character's creation pick offers, as it's stored, eligible or not. */
+export const v1CreationOption = z
+  .strictObject({
+    description: z.string().nullable(),
+    eligible: z.boolean(),
+    fields: z.record(z.string(), z.unknown()).meta({ description: "Its fields, by their stored names" }),
+    id: v1Id,
+    links: z.record(z.string(), z.string()).meta({ description: "The entities it names, by role" }),
+    name: z.string(),
+    partition: z.string(),
+    requirementTree: z.string().optional(),
+  })
+  .meta({ description: "An option a new character's creation pick offers", id: "CreationOption" });
+
+export const v1CreationOptionPage = buildPageSchema(v1CreationOption);
+
+/** A character imported from another program's file, with what the import says it did. */
+export const v1ImportedCharacter = z
+  .strictObject({
+    character: v1Character,
+    report: z
+      .strictObject({
+        imported: z.array(z.string()),
+        issues: z.array(z.string()).meta({ description: "What the level-up's checks found of the levels it saved" }),
+        program: z.string(),
+        unmatched: z.array(z.strictObject({ line: z.number(), reason: z.string(), text: z.string() })),
+      })
+      .meta({ description: "What the import did: what it imported, and each line it couldn't match" }),
+  })
+  .meta({ description: "A character imported from another program's file", id: "ImportedCharacter" });
 
 /** An item a character carries. */
 export const v1InventoryEntry = z
@@ -274,10 +320,16 @@ export const v1Modifier = z
     value: z.string(),
     valueLabel: z.string().nullable().meta({ description: "Its value as its target names it, when it names one" }),
     valueType: z.string(),
+    updatedAt: z.string().meta({ description: "When it last changed, which an update sends back" }),
   })
   .meta({ description: "A modifier: what it changes, how, and by what", id: "Modifier" });
 
 export const v1Modifiers = z.array(v1Modifier);
+
+/** Why a place can't take one more of a character's items, if it can't. */
+export const v1Placement = z
+  .strictObject({ warning: z.string().nullable() })
+  .meta({ description: "Why a place can't take an item, none when it can", id: "Placement" });
 
 /** A page of a step's options, or of its groups of options. */
 export const v1StepOptions = z

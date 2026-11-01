@@ -1,8 +1,9 @@
-/** What several of the public API's routers take: a page of a list, a customized entity, and a level's plan. */
+/** What several of the public API's routers take: a page of a list, a customized entity, a modifier, a level's plan. */
 
 import { z } from "zod";
 
 import { Engine, type StepPayload } from "@/engine/index.ts";
+import { modifierOperator } from "@/server/routers/api/rulesets/customization/validation.ts";
 import { idParam, limit, page } from "@/server/routers/api/validation.ts";
 
 /**
@@ -28,6 +29,16 @@ export const customizedParams = idParam.extend({
     .enum(Engine.storage().customizableKinds())
     .meta({ description: "The entity's kind, among those the rules customize" }),
 });
+
+/** What a modifier's body says, a character's own and an entity's alike: what it changes, how, and by what. */
+export const modifierFields = {
+  operator: modifierOperator.meta({ description: "`add`, `subtract`, `multiply`, `divide` or `set`" }),
+  target: z
+    .string()
+    .min(1)
+    .meta({ description: "The target path it changes, as `…/customization/target` completes it" }),
+  value: z.string().min(1),
+};
 
 /** A page of a list: which, and how many to a page. */
 export const PAGE_FILTERS = {

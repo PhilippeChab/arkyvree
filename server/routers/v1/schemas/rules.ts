@@ -19,9 +19,10 @@ const v1RulesCharacterForm = z
   })
   .meta({
     description:
-      "A new character's form: a `fields` section's lines, each item a field (its `key`, where a character's " +
-      "`fields` keep its value) or a pick (its `role`, the link it makes to the entity it names); a `scores` " +
-      "section's `role`, the link role a character's scores are held at",
+      "A new character's form: a `fields` section's lines, each item a field (its `key` is where a create's " +
+      "`fields` takes its value) or a pick (its `role` is where a create's `picks` takes the entity it names, whose " +
+      "options `GET /v1/characters/creation/{role}` pages); a `scores` section's `role`, where a create's `scores` " +
+      "takes its amounts, which `GET /v1/characters/creation` describes",
     id: "RulesCharacterForm",
   });
 
@@ -71,6 +72,9 @@ const v1RulesDescription = z
     fields: z
       .record(z.string(), z.array(v1RulesField))
       .meta({ description: "Each kind's fields, by kind, keyed in an entity's `fields` by their `field`" }),
+    importers: z.array(z.string()).meta({
+      description: "The programs whose files `POST /v1/characters/import` imports a character from, in the order tried",
+    }),
     kinds: z.array(v1RulesKind).meta({ description: "The entity kinds its rulesets hold" }),
     progression: z
       .strictObject({

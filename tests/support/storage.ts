@@ -10,6 +10,7 @@ export function fakeStorage(overrides: Partial<StorageBackend> = {}): StorageBac
     presignPut: (key) => `https://fake.example.com/${key}?sig=fake`,
     publicUrl: (key) => `https://fake.example.com/${key}`,
     async deleteObject() {},
+    async putObject() {},
     async objectExists() {
       return true;
     },

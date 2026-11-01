@@ -36,11 +36,15 @@ function pendingInviteOf(player: CampaignPlayer): PendingInvite | undefined {
   return player.invitesInCampaigns?.[0];
 }
 
-/** Where a player slot stands, and its name: its user's, its invitee's, else what it is ("Unassigned Player Slot"). */
+/**
+ * Where a player slot stands, and its name: its user's, its invitee's, else what it is ("Unassigned Player Slot"). A
+ * user without a username is named by their address, which a player doesn't read: "Unnamed Player" then.
+ */
 export function getPlayerSlot(player: CampaignPlayer): PlayerSlot {
   const pendingInvite = pendingInviteOf(player);
   const user = player.usersInAccount;
-  if (player.userId && user?.id) return { state: "assigned", name: user.username ?? user.emailAddress, pendingInvite };
+  if (player.userId && user?.id)
+    return { state: "assigned", name: user.username ?? user.emailAddress ?? "Unnamed Player", pendingInvite };
 
   if (pendingInvite) {
     const invitee = pendingInvite.usersInAccount;

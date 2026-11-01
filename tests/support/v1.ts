@@ -31,6 +31,11 @@ export function findKind(rules: V1Rules, matches: (kind: V1Rules["kinds"][number
   return kind;
 }
 
+/** A new character of `userId`'s on the seeded base ruleset, made as its rules' form lays it out (`createFormCharacter`). */
+export async function createBaseCharacter(userId: string, name?: string) {
+  return await createFormCharacter(userId, (await findSeededBase()).id, name);
+}
+
 /** `userId`'s private fork of a base ruleset, as the app forks one: subscribed to its extensions with `extensions`. */
 export async function createFork(userId: string, rulesetId: string, { extensions = false } = {}) {
   const session = { userId };
@@ -48,7 +53,7 @@ export async function createFork(userId: string, rulesetId: string, { extensions
  * A new character of `userId`'s on a ruleset, made as its rules' form lays it out, whatever its base rules: each field
  * its form's start or first option, each pick its first eligible option, each score its start.
  */
-export async function createFormCharacter(userId: string, rulesetId: string) {
+export async function createFormCharacter(userId: string, rulesetId: string, name = `Character ${uniqueId()}`) {
   const session = { userId };
   const ruleset = await Rulesets.findOne(db, { id: rulesetId });
   if (!ruleset) throw new Error(`No ruleset ${rulesetId}`);
@@ -82,7 +87,7 @@ export async function createFormCharacter(userId: string, rulesetId: string) {
 
   return await CharactersService.createCharacter(session, {
     fields,
-    name: `Character ${uniqueId()}`,
+    name,
     picks,
     rulesetId,
     scores,
@@ -102,6 +107,21 @@ export async function findCharacter(api: KeyedApi, matches: (card: { id: string 
   return card;
 }
 
+/**
+ * A target path of a ruleset a modifier may add a number to, as its completions offer it (every path at once): one that
+ * names a single target, no wildcard; of the paths an entity of a kind (`entityType`) may change, with one.
+ */
+export async function findNumberTarget(api: KeyedApi, rulesetId: string, entityType?: string) {
+  const completions = api.v1.rulesets[":id"].customization.target.paths.completions;
+  const json = { entityType, flat: true, kind: "modifier" as const, limit: 100, partialPath: "", position: 0 };
+  const { items } = await expectOk(completions.$post({ json, param: { id: rulesetId } }));
+  const target = (items as { operators?: string[]; path?: string; valueType?: string }[]).find(
+    ({ operators, path, valueType }) => valueType === "number" && operators?.includes("add") && !path?.includes("*"),
+  );
+  if (!target?.path) throw new Error("The ruleset has no target path a modifier adds a number to");
+  return target.path;
+}
+
 /** The base ruleset the seed installs, as stored: v1's tests run on whichever base rules it is. */
 export async function findSeededBase() {
   const rulesets = await Rulesets.findMany(db, { system: true });
@@ -114,6 +134,35 @@ export async function findSeededBase() {
 export async function listEntities(api: KeyedApi, rulesetId: string, kind: string, query: Record<string, string> = {}) {
   const entities = api.v1.rulesets[":id"].entities[":kind"];
   return (await expectOk(entities.$get({ param: { id: rulesetId, kind }, query }))).items;
+}
+
+/**
+ * A character's first level, planned from what the API offers: the plan step's first eligible track, each value step's
+ * average, and nothing picked, chosen or spent in the others, which a forced save takes.
+ */
+export async function planFirstLevel(api: KeyedApi, characterId: string) {
+  const character = api.v1.characters[":id"];
+  const param = { id: characterId };
+  const { steps } = await expectOk(character.levels.steps.$get({ param, query: {} }));
+  const planned = steps.find(({ mechanic }) => mechanic === "plan");
+  if (!planned) throw new Error("The level has no plan step");
+  const step = { ...param, step: planned.name };
+  const options = await expectOk(
+    character["level-plan"].options[":step"].$post({ json: { plan: { steps: {} } }, param: step, query: {} }),
+  );
+  const track = options.items.find(({ eligible }) => eligible);
+  if (!track) throw new Error("The plan step has no eligible track");
+
+  const tracked = { [planned.name]: [{ track: track.id }] };
+  const answer = await expectOk(character["level-plan"].$post({ json: { steps: tracked }, param }));
+  const payloads = steps.map(({ mechanic, name }) => {
+    const answered = answer.steps[name];
+    if (mechanic === "plan") return [name, tracked[planned.name]!] as const;
+    if (answered?.mechanic === "value") return [name, answered.advancements.map(({ average }) => average)] as const;
+    if (mechanic === "choose") return [name, [[]]] as const;
+    return [name, []] as const;
+  });
+  return { steps: Object.fromEntries(payloads), track };
 }
 
 /** A ruleset's base rules' description, as `GET /v1/rules` answers it. */

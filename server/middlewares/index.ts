@@ -6,6 +6,8 @@ export { describeRoute } from "./describeRoute.ts";
 export type { RouteDescription } from "./describeRoute.ts";
 export {
   apiAddressRateLimit,
+  apiAttachmentUploadRateLimit,
+  apiExportRateLimit,
   apiKeyRateLimit,
   attachmentUploadRateLimit,
   authEmailRateLimit,

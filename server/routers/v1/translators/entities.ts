@@ -15,12 +15,14 @@ import type {
   v1LabeledModifiers,
   v1LabeledRequirements,
   v1OwnedEntity,
+  v1PathCompletions,
   v1Progression,
   v1Requirement,
   v1StoredEntity,
 } from "@/server/routers/v1/schemas/entities.ts";
 import type { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import type { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
+import type { TargetPathsService } from "@/server/services/rulesets/customization/targetPaths/index.ts";
 import type { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
@@ -106,6 +108,7 @@ export function toV1EntityModifier(modifier: Modifier): z.infer<typeof v1EntityM
     id: modifier.id,
     operator: modifier.operator,
     target: modifier.target,
+    updatedAt: modifier.updatedAt,
     value: modifier.value,
     valueType: modifier.valueType,
   };
@@ -172,6 +175,18 @@ export function toV1OwnedEntity(
   };
 }
 
+/** A page of a target path's completions, with its segments' labels. */
+export function toV1PathCompletions(
+  completions: Answer<typeof TargetPathsService.getCompletions>,
+): z.infer<typeof v1PathCompletions> {
+  return {
+    items: completions.items.map((item) => ({ ...item })),
+    nextPage: completions.nextPage ?? null,
+    page: completions.page,
+    segmentLabels: completions.segmentLabels,
+  };
+}
+
 /**
  * What an entity's levels give: each pool's picks by level, and past them the values its rules name in their
  * progression (`Engine.rules()`'s progression), as they give them.
@@ -191,6 +206,7 @@ export function toV1Requirement(requirement: Requirement): z.infer<typeof v1Requ
     level: requirement.level,
     operator: requirement.operator,
     target: requirement.target,
+    updatedAt: requirement.updatedAt,
     value: requirement.value,
     valueType: requirement.valueType,
   };

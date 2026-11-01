@@ -29,6 +29,7 @@ function toV1RulesDescription(rules: RulesDescription, storage: KindStorage): z.
     fields: Object.fromEntries(
       Object.entries(rules.fields).map(([kind, fields]) => [kind, (fields ?? []).map((field) => ({ ...field }))]),
     ),
+    importers: [...rules.importers],
     kinds: rules.kinds.map((kind) => ({
       families: kind.families ?? false,
       links: kind.links ? { role: kind.links.role, type: kind.links.type } : null,

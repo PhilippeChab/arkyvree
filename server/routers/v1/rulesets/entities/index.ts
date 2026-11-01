@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { Engine } from "@/engine/index.ts";
 import { type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
-import { entityOrderBy, idParam, orderDirAsc } from "@/server/routers/api/validation.ts";
+import { entityFields, entityLinks, entityOrderBy, idParam, orderDirAsc } from "@/server/routers/api/validation.ts";
 import {
   v1Entity,
   v1EntityGroupPage,
@@ -25,6 +25,21 @@ const childOnly = z
   .optional()
   .meta({ description: "Only those the ruleset has of its own, not its parent's" });
 
+/**
+ * An entity's body, its create's, update's and duplicate's, as it stores it: its name, its description, its fields by
+ * stored name and its links by role, which its kind's rules read and check.
+ */
+const entityBody = z.strictObject({
+  description: z
+    .string()
+    .optional()
+    .transform((value) => value || null),
+  fields: entityFields.optional().meta({ description: "Its fields, by the names its rules declare them" }),
+  links: entityLinks.optional().meta({ description: "The entities it names, by role" }),
+  name: z.string().min(1),
+  updatedAt: z.string().optional().meta({ description: "When it was read: an update's, refused if it changed (409)" }),
+});
+
 /** A route's ruleset (`:id`) and entity kind (`:kind`): a kind no other owns, as the rules name it. */
 const kindParams = idParam.extend({
   kind: z
@@ -36,8 +51,22 @@ const kindParams = idParam.extend({
 /** A route's entity: its kind's params, and its id. */
 const entityParams = kindParams.extend({ entityId: z.string().uuid() });
 
+/** A route's link from an entity: its entity's params, and the entity it links to. */
+const linkParams = entityParams.extend({ targetId: z.string().uuid() });
+
+/** An owned entity's body, its create's and update's. */
+const ownedBody = z.strictObject({
+  fields: entityFields.optional(),
+  links: entityLinks.optional().meta({ description: "Its links, by the roles its kind's fields declare" }),
+  position: z.number().optional().meta({ description: "Its place among its owner's" }),
+  updatedAt: z.string().optional(),
+});
+
 /** A route's owned entity by its id alone: its owner's kind's params, and its id. */
 const ownedByIdParams = kindParams.extend({ ownedId: z.string().uuid() });
+
+/** A route's entity's owned entity: its entity's params, and its id. */
+const ownedParams = entityParams.extend({ ownedId: z.string().uuid() });
 
 /** A route's entity's table: its entity's params, and the table's name. */
 const tableParams = entityParams.extend({
@@ -218,5 +247,190 @@ export default new Hono<ApiKeyContext>()
       const { entityId, id, kind, table } = c.req.valid("param");
       const rows = await EntitiesService.getEntityTable(c.var.requestSession, id, kind, entityId, table);
       return c.json(V1.entityTable(rows), 200);
+    },
+  )
+  .post(
+    "/:id/entities/:kind",
+    describeRoute({ response: v1Entity, status: 201, summary: "Creates an entity of a kind" }),
+    validate("param", kindParams),
+    validate("json", entityBody),
+    async (c) => {
+      const { id, kind } = c.req.valid("param");
+      const body = c.req.valid("json");
+      const created = await EntitiesService.createEntity(c.var.requestSession, id, kind, body);
+      return c.json(V1.entity(await EntitiesService.getEntity(c.var.requestSession, id, kind, created.id)), 201);
+    },
+  )
+  .post(
+    "/:id/entities/:kind/:entityId/duplicate",
+    describeRoute({ response: v1Entity, status: 201, summary: "Duplicates an entity under the body's name" }),
+    validate("param", entityParams),
+    validate("json", entityBody),
+    async (c) => {
+      const { entityId, id, kind } = c.req.valid("param");
+      const body = c.req.valid("json");
+      const created = await EntitiesService.duplicateEntity(c.var.requestSession, id, kind, entityId, body);
+      return c.json(V1.entity(await EntitiesService.getEntity(c.var.requestSession, id, kind, created.id)), 201);
+    },
+  )
+  .post(
+    "/:id/entities/:kind/:entityId/links",
+    describeRoute({
+      response: v1EntityLinks,
+      status: 200,
+      summary: "Adds a link an entity edits, answering its links",
+    }),
+    validate("param", entityParams),
+    validate("json", z.object({ targetId: z.string().uuid() })),
+    async (c) => {
+      const { entityId, id, kind } = c.req.valid("param");
+      const { targetId } = c.req.valid("json");
+      await EntitiesService.addEntityLink(c.var.requestSession, id, kind, entityId, targetId);
+      const links = await EntitiesService.getEntityLinks(c.var.requestSession, id, kind, entityId);
+      return c.json(V1.entityLinks(links), 200);
+    },
+  )
+  .post(
+    "/:id/entities/:kind/:entityId/owned",
+    describeRoute({
+      response: v1OwnedEntity,
+      status: 201,
+      summary: "Creates an entity another owns",
+    }),
+    validate("param", entityParams),
+    validate("json", ownedBody),
+    async (c) => {
+      const { entityId, id, kind } = c.req.valid("param");
+      const body = c.req.valid("json");
+      const created = await EntitiesService.createOwnedEntity(c.var.requestSession, id, kind, entityId, body);
+      const owned = await EntitiesService.getOwnedEntityWithOwner(c.var.requestSession, id, kind, created.id);
+      return c.json(V1.ownedEntity(owned), 201);
+    },
+  )
+  .post(
+    "/:id/entities/:kind/:entityId/variants",
+    describeRoute({
+      response: z.array(v1Entity),
+      status: 201,
+      summary: "Creates an entity's variants, each a copy under its own name",
+    }),
+    validate("param", entityParams),
+    validate(
+      "json",
+      z.object({
+        variants: z
+          .array(
+            z.object({
+              description: z
+                .string()
+                .optional()
+                .transform((value) => value || null),
+              name: z.string().min(1),
+            }),
+          )
+          .min(1),
+      }),
+    ),
+    async (c) => {
+      const { entityId, id, kind } = c.req.valid("param");
+      const { variants } = c.req.valid("json");
+      const created = await EntitiesService.createVariants(c.var.requestSession, id, kind, entityId, variants);
+      const entities = [];
+      for (const variant of created)
+        entities.push(V1.entity(await EntitiesService.getEntity(c.var.requestSession, id, kind, variant.id)));
+      return c.json(entities, 201);
+    },
+  )
+  .put(
+    "/:id/entities/:kind/:entityId",
+    describeRoute({
+      response: v1Entity,
+      status: 200,
+      summary: "Updates an entity: a fork's copy of its parent's, when it's inherited, which answers its own id",
+    }),
+    validate("param", entityParams),
+    validate("json", entityBody),
+    async (c) => {
+      const { entityId, id, kind } = c.req.valid("param");
+      const body = c.req.valid("json");
+      const updated = await EntitiesService.updateEntity(c.var.requestSession, id, kind, entityId, body);
+      return c.json(V1.entity(await EntitiesService.getEntity(c.var.requestSession, id, kind, updated.id)), 200);
+    },
+  )
+  .put(
+    "/:id/entities/:kind/:entityId/owned/:ownedId",
+    describeRoute({
+      response: v1OwnedEntity,
+      status: 200,
+      summary: "Updates an entity another owns",
+    }),
+    validate("param", ownedParams),
+    validate("json", ownedBody),
+    async (c) => {
+      const { entityId, id, kind, ownedId } = c.req.valid("param");
+      const body = c.req.valid("json");
+      const updated = await EntitiesService.updateOwnedEntity(c.var.requestSession, id, kind, entityId, ownedId, body);
+      const owned = await EntitiesService.getOwnedEntityWithOwner(c.var.requestSession, id, kind, updated.id);
+      return c.json(V1.ownedEntity(owned), 200);
+    },
+  )
+  .put(
+    "/:id/entities/:kind/:entityId/progression",
+    describeRoute({
+      response: v1Progression,
+      status: 200,
+      summary: "Saves what an entity's levels give at once",
+    }),
+    validate("param", entityParams),
+    validate(
+      "json",
+      z
+        .looseObject({
+          ownedTokens: z
+            .array(z.object({ id: z.string().uuid(), updatedAt: z.string() }))
+            .optional()
+            .meta({ description: "Each level's `updatedAt` as it was read: refused if one changed since (409)" }),
+        })
+        .meta({
+          description:
+            "Past its tokens, the progression as the kind's rules take it: what `…/progression` answers of it",
+        }),
+    ),
+    async (c) => {
+      const { entityId, id, kind } = c.req.valid("param");
+      const body = c.req.valid("json");
+      const saved = await EntitiesService.updateProgression(c.var.requestSession, id, kind, entityId, body);
+      const progression = await EntitiesService.getProgression(c.var.requestSession, id, kind, saved.entityId);
+      return c.json(V1.progression(progression), 200);
+    },
+  )
+  .delete(
+    "/:id/entities/:kind/:entityId",
+    describeRoute({ response: null, status: 204, summary: "Deletes an entity" }),
+    validate("param", entityParams),
+    async (c) => {
+      const { entityId, id, kind } = c.req.valid("param");
+      await EntitiesService.deleteEntity(c.var.requestSession, id, kind, entityId);
+      return c.body(null, 204);
+    },
+  )
+  .delete(
+    "/:id/entities/:kind/:entityId/links/:targetId",
+    describeRoute({ response: null, status: 204, summary: "Removes a link an entity edits" }),
+    validate("param", linkParams),
+    async (c) => {
+      const { entityId, id, kind, targetId } = c.req.valid("param");
+      await EntitiesService.removeEntityLink(c.var.requestSession, id, kind, entityId, targetId);
+      return c.body(null, 204);
+    },
+  )
+  .delete(
+    "/:id/entities/:kind/:entityId/owned/:ownedId",
+    describeRoute({ response: null, status: 204, summary: "Deletes an entity another owns" }),
+    validate("param", ownedParams),
+    async (c) => {
+      const { entityId, id, kind, ownedId } = c.req.valid("param");
+      await EntitiesService.deleteOwnedEntity(c.var.requestSession, id, kind, entityId, ownedId);
+      return c.body(null, 204);
     },
   );

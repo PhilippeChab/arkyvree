@@ -117,7 +117,7 @@ describe("activity notifications", () => {
       const id = await kind.create(owner);
       const { id: contributorId } = await kind.invite(owner, id, contributor);
       await kind.accept(contributor.session, contributorId);
-      await kind.revoke(owner.session, contributorId);
+      await kind.revoke(owner.session, id, contributorId);
 
       expect(await inbox(contributor)).toEqual([note(invite, owner), note(revoke, owner)]);
       expect(await inbox(owner)).toEqual([note(`accept${kind.noun}`, contributor)]);
@@ -126,7 +126,7 @@ describe("activity notifications", () => {
     test("go to nobody for a revoked invite that was never accepted", async () => {
       const [owner, invitee] = await users(2);
       const id = await kind.create(owner);
-      await kind.revoke(owner.session, (await kind.invite(owner, id, invitee)).id);
+      await kind.revoke(owner.session, id, (await kind.invite(owner, id, invitee)).id);
       expect(await inbox(invitee)).toEqual([note(invite, owner)]);
     });
 
@@ -153,7 +153,7 @@ describe("activity notifications", () => {
     const [owner, contributor] = await users(2);
     const ruleset = await createTestRuleset(owner.user.id);
     const { id } = await addRulesetContributor(ruleset.id, contributor.user, owner.user.id);
-    await ContributorsService.updateContributorRole(owner.session, id, "Viewer");
+    await ContributorsService.updateContributorRole(owner.session, ruleset.id, id, "Viewer");
     expect(await inbox(contributor)).toEqual([note("updateContributorRole", owner)]);
   });
 

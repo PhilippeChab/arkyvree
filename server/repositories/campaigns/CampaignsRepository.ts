@@ -71,11 +71,16 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
         id: campaignsInCampaign.id,
         name: campaignsInCampaign.name,
         description: campaignsInCampaign.description,
+        rulesetId: campaignsInCampaign.rulesetId,
         rulesetName: rulesetsInRules.name,
         deletedAt: campaignsInCampaign.deletedAt,
         createdAt: campaignsInCampaign.createdAt,
         updatedAt: campaignsInCampaign.updatedAt,
-        currentPlayers: count(playersInCampaign.userId).as("currentPlayers"),
+        // Its live players, as a page of campaigns counts them: an archived slot is none
+        currentPlayers:
+          sql<number>`(count(${playersInCampaign.userId}) filter (where ${playersInCampaign.deletedAt} is null))::int`.as(
+            "currentPlayers",
+          ),
       })
       .from(campaignsInCampaign)
       .innerJoin(playersInCampaign, eq(campaignsInCampaign.id, playersInCampaign.campaignId))
@@ -85,6 +90,7 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
         campaignsInCampaign.id,
         campaignsInCampaign.name,
         campaignsInCampaign.description,
+        campaignsInCampaign.rulesetId,
         rulesetsInRules.name,
         campaignsInCampaign.deletedAt,
         campaignsInCampaign.createdAt,
@@ -112,9 +118,11 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
         id: campaignsInCampaign.id,
         name: campaignsInCampaign.name,
         description: campaignsInCampaign.description,
+        rulesetId: campaignsInCampaign.rulesetId,
         rulesetName: rulesetsInRules.name,
         createdAt: campaignsInCampaign.createdAt,
         updatedAt: campaignsInCampaign.updatedAt,
+        deletedAt: campaignsInCampaign.deletedAt,
         currentPlayers: sql<number>`coalesce(${playerCountSubquery.count}, 0)::int`.as("currentPlayers"),
       })
       .from(campaignsInCampaign)
@@ -126,9 +134,11 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
         campaignsInCampaign.id,
         campaignsInCampaign.name,
         campaignsInCampaign.description,
+        campaignsInCampaign.rulesetId,
         rulesetsInRules.name,
         campaignsInCampaign.createdAt,
         campaignsInCampaign.updatedAt,
+        campaignsInCampaign.deletedAt,
         playerCountSubquery.count,
       )
       .orderBy(...this.pageOrder(this.orderBy(this.table[orderBy], orderDir)))
