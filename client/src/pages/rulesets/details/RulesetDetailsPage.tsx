@@ -154,6 +154,7 @@ export default function RulesetDetailsPage() {
     canEditEntities,
     canEditRuleset,
     canFork,
+    canMakePrivate,
     canPublish,
     canReadContributors,
     canSubscribeExtensions,
@@ -386,7 +387,7 @@ export default function RulesetDetailsPage() {
           form={editForm}
           onSubmit={confirmEdit}
           pending={updateMutation.isPending}
-          isPublic={editDialog.target ? !editDialog.target.private : false}
+          canMakePrivate={canMakePrivate}
           canBeExtension={canBeExtension}
         />
 

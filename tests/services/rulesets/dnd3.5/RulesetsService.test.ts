@@ -294,6 +294,7 @@ describe("RulesetsService", () => {
       canFork: false,
       canInviteContributors: false,
       canLeave: false,
+      canMakePrivate: false,
       canManageAdminContributors: false,
       canManageContributors: false,
       canPublish: false,
@@ -309,6 +310,7 @@ describe("RulesetsService", () => {
       canEditEntities: true,
       canEditRuleset: true,
       canInviteContributors: true,
+      canMakePrivate: true,
       canManageAdminContributors: true,
       canManageContributors: true,
       canReadContributors: true,
@@ -350,6 +352,8 @@ describe("RulesetsService", () => {
         ...OWNER,
         canFork: true,
         canLeave: true,
+        // A public ruleset stays public
+        canMakePrivate: false,
         canManageAdminContributors: false,
       });
       expect((await RulesetsService.getRuleset(session, ruleset.id)).permissions).toEqual({

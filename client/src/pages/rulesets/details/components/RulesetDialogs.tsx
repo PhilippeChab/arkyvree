@@ -30,8 +30,9 @@ interface ArchiveRulesetDialogProps {
 
 interface EditRulesetDialogProps {
   canBeExtension: boolean;
+  /** Its privacy can change (the ruleset's `canMakePrivate`): a public ruleset stays public, and offers none. */
+  canMakePrivate: boolean;
   form: UseFormReturn<EditRulesetFormData>;
-  isPublic: boolean;
   onClose: () => void;
   onSubmit: (data: EditRulesetFormData) => void;
   open: boolean;
@@ -107,14 +108,14 @@ export function EditRulesetDialog({
   form,
   onSubmit,
   pending,
-  isPublic,
+  canMakePrivate,
   canBeExtension,
 }: EditRulesetDialogProps) {
   return (
     <EditDialog open={open} onClose={onClose} title="Edit Ruleset" form={form} onSubmit={onSubmit} pending={pending}>
       <NameField control={form.control} name="name" autoFocus disabled={pending} />
       <DescriptionField control={form.control} name="description" disabled={pending} rows={4} />
-      {!isPublic && (
+      {canMakePrivate && (
         <Controller
           control={form.control}
           name="private"
