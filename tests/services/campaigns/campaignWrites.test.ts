@@ -6,6 +6,7 @@ import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
 import { Campaigns, Characters, Players, Rulesets, Users } from "@/server/repositories/index.ts";
+import { AccountService } from "@/server/services/authentication/account/index.ts";
 import { BUSY_CAMPAIGN_MESSAGE } from "@/server/services/campaigns/campaignWrites.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
 import { CampaignsService } from "@/server/services/campaigns/index.ts";
@@ -41,6 +42,27 @@ async function commitCampaign(rulesetId?: string) {
     committed.push(campaign.id);
     await Players.create(committedDb, { campaignId: campaign.id, role: "Game Master", userId: SEED_USER_ID });
     return campaign;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * A demo user, committed through the probes' pool: one another connection sees, which `Users.delete` deletes for good
+ * after the file's tests (`afterAll`).
+ */
+async function commitDemoUser() {
+  const client = await pool.connect();
+  try {
+    const id = uniqueId();
+    const [user] = await Users.create(createTestDbFromClient(client), {
+      username: `locked-${id}`,
+      emailAddress: `locked-${id}@demo.invalid`,
+      password: "password1234",
+      expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    });
+    committedUsers.push(user.id);
+    return user;
   } finally {
     client.release();
   }
@@ -143,21 +165,7 @@ test("a campaign's creation waits for a write to its ruleset, which it holds sha
 
 test("a campaign's creation that waits for its creator's account's deletion is refused, and makes no campaign", async () => {
   const { rulesetId } = await getSeedCtx();
-  // A demo user, committed: one another connection sees, which its deletion can delete for good
-  const client = await pool.connect();
-  let user: Awaited<ReturnType<typeof Users.create>>[number];
-  try {
-    const id = uniqueId();
-    [user] = await Users.create(createTestDbFromClient(client), {
-      username: `locked-${id}`,
-      emailAddress: `locked-${id}@example.com`,
-      password: "password1234",
-      expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-    });
-    committedUsers.push(user.id);
-  } finally {
-    client.release();
-  }
+  const user = await commitDemoUser();
   const writer = (await db.execute<{ pid: number }>(sql`select pg_backend_pid() as pid`)).rows[0].pid;
   const blocker = await pool.connect();
   let creation: Promise<unknown> | undefined;
@@ -179,4 +187,25 @@ test("a campaign's creation that waits for its creator's account's deletion is r
     blocker.release();
   }
   expect(await Campaigns.count(db, { userId: user.id })).toBe(0);
+});
+
+test("an account's deletion that waits for another deletion of it is refused as its session is", async () => {
+  const user = await commitDemoUser();
+  const writer = (await db.execute<{ pid: number }>(sql`select pg_backend_pid() as pid`)).rows[0].pid;
+  const blocker = await pool.connect();
+  let deletion: Promise<unknown> | undefined;
+  try {
+    // Another tab's deletion holds the account, then archives it and commits
+    await blocker.query("BEGIN");
+    await Users.lock(createTestDbFromClient(blocker), { id: user.id }, "no key update");
+    deletion = AccountService.deleteAccount(makeSession(user.id), "password1234").catch((error: Error) => error);
+    expect(await waitUntilBlocked(blocker, writer)).toBe(true);
+    await Users.archive(createTestDbFromClient(blocker), { id: user.id });
+    await blocker.query("COMMIT");
+    expect(await deletion).toMatchObject({ code: 401 });
+  } finally {
+    await blocker.query("ROLLBACK");
+    await deletion;
+    blocker.release();
+  }
 });
