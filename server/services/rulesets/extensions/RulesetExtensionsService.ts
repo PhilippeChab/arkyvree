@@ -67,8 +67,8 @@ class RulesetExtensionsService {
         const readable = await findReadableRuleset(tx, session, extensionId);
         if (!readable) throw new NotFoundError("Extension not found");
         readable.policy.canBeSubscribed({ parentId: childRuleset.rulesetId });
-        // One that became an extension after its kind was read isn't locked: its writes may be running
-        if (!reads.includes(extensionId)) throw new ConflictError(BUSY_RULESET_MESSAGE);
+        // One that became an extension after its kind was read isn't locked, as its chain is: its writes may be running
+        if (!scope.versions.has(extensionId)) throw new ConflictError(BUSY_RULESET_MESSAGE);
 
         if (sources.extensionIds.includes(extensionId)) throw new ConflictError("Already subscribed to this extension");
 

@@ -364,8 +364,8 @@ class RulesetsRepository extends include(
 
   /**
    * Locks rulesets a write reads (`ids`: its source chain, the extensions it subscribes to) until its transaction ends,
-   * shared, in the order every lock of several takes (`RULESET_LOCK_ORDER`), so a write to each waits. Their content versions,
-   * by id, of those that exist.
+   * shared, in the order every lock of several takes (`RULESET_LOCK_ORDER`), so a write to each waits. Their content
+   * versions, by id, of those that exist.
    */
   async lockVersions(db: Db, where: { ids: string[] }): Promise<Map<string, number>> {
     if (where.ids.length === 0) return new Map();
@@ -380,8 +380,8 @@ class RulesetsRepository extends include(
 
   /**
    * Leaves a user's rulesets without an owner, when the user deletes their account: each locked first, in the order
-   * every lock of several takes (`RULESET_LOCK_ORDER`), so it waits on their writes, which an owner's rights let through, and
-   * never on one in a cycle.
+   * every lock of several takes (`RULESET_LOCK_ORDER`), so it waits on their writes, which an owner's rights let
+   * through, and never on one in a cycle.
    */
   async orphan(db: Db, where: { userId: string }) {
     await db

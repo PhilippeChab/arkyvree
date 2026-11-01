@@ -67,16 +67,20 @@ describe("Applying content packages", () => {
   });
 
   test("updates an installed package once a write to a system ruleset ends, its versions bumped", async () => {
-    const pkg = testPackage(3, [4], []);
+    let released = false;
+    let updatedAfterRelease: boolean | undefined;
+    const pkg = { ...testPackage(3, [], []), updates: { 4: async () => void (updatedAfterRelease = released) } };
     await record(pkg, 3);
     const before = await systemVersions();
-    // A write to the base holds its lock: the update waits for it, then bumps every system ruleset's version, so the
-    // next write reads their rows fresh
+    // A write to the base holds its lock: the update waits for it before it changes anything, then bumps every system
+    // ruleset's version, so the next write reads their rows fresh
     await runWhileLocked(
       pool,
       async (blockerDb) => Rulesets.lockContent(blockerDb, { id: (await getSeedCtx()).rulesetId }),
       () => applyPackages(db, [pkg]),
+      () => (released = true),
     );
+    expect(updatedAfterRelease).toBe(true);
     expect(await systemVersions()).toEqual(new Map([...before].map(([id, version]) => [id, version + 1])));
   });
 
