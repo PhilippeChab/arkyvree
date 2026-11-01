@@ -9,10 +9,12 @@ import { isRecord } from "@/shared/isRecord.ts";
 import type { Modifier } from "@/shared/relations.ts";
 
 /**
- * A planned level's slot deltas: per feat pool, and per spell pool and spell level, where a level that makes every spell
- * of it known holds `ALLOWED_ALL`.
+ * A planned level's slot deltas: per feat pool, and per spell pool and spell level, its adds summed, and the spell levels
+ * it makes every spell of known (`allKnown`, by `aptitudeId:level`), apart from any sum: an add can take a level's
+ * count down, never to all.
  */
 interface SlotDeltas {
+  allKnown: Set<string>;
   feats: Record<string, number>;
   spells: Record<string, Record<string, number>>;
 }
@@ -48,10 +50,9 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
           if (aptId && spellSlots[aptId]) {
             if (!deltas.spells[aptId]) deltas.spells[aptId] = {};
             const spellLevel = String(slot.level);
-            const delta = deltas.spells[aptId][spellLevel];
-            if (AptitudeTargets.setsAllKnown(mod) || delta === ALLOWED_ALL)
-              deltas.spells[aptId][spellLevel] = ALLOWED_ALL;
-            else deltas.spells[aptId][spellLevel] = (delta ?? 0) + value;
+            const delta = deltas.spells[aptId][spellLevel] ?? 0;
+            if (AptitudeTargets.setsAllKnown(mod)) deltas.allKnown.add(`${aptId}:${spellLevel}`);
+            deltas.spells[aptId][spellLevel] = AptitudeTargets.setsAllKnown(mod) ? delta : delta + value;
           }
         }
       }
@@ -80,7 +81,7 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
       featSlots: FeatSlots,
       spellSlots: SpellSlots,
     ): SlotDeltas {
-      const deltas: SlotDeltas = { feats: {}, spells: {} };
+      const deltas: SlotDeltas = { allKnown: new Set(), feats: {}, spells: {} };
       const { aptitudeIdBySlug } = this.dnd35;
       const { modifiersBySource } = this.rulesetData;
       const add = (modifiers: Modifier[]) => this.addModifierDeltas(deltas, modifiers, featSlots, spellSlots);
@@ -132,7 +133,7 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
             const key = `${aptId}:${sl}`;
             if (allKnown.has(key)) continue;
             // A level that makes them all known has room for every spell of its level
-            if (delta === ALLOWED_ALL) {
+            if (deltas.allKnown.has(key)) {
               allKnown.add(key);
               slots[sl] = Number.POSITIVE_INFINITY;
             } else if (delta > 0) {

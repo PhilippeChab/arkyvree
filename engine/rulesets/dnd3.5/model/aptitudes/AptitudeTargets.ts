@@ -1,7 +1,8 @@
 /**
  * The aptitudes' target grammar, as the listing writes it: a list's slug (`[a-z0-9]+`), a whole spell level, an anchored
- * field. A leaf module: the listing (`AptitudesPaths`) reads the spell lists (`SpellLists.ts`), which read targets, and
- * both read this.
+ * field, and the setting that makes a spell level all known. A leaf of the ruleset, which reads only the core's
+ * `LiteralValue`: the listing (`AptitudesPaths`) reads the spell lists (`SpellLists.ts`), which read targets, and both
+ * read this.
  */
 
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
