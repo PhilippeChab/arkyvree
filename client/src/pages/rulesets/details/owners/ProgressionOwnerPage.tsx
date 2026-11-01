@@ -22,7 +22,6 @@ import {
   useEntityFields,
   useEntityForm,
   useEntityPageBack,
-  useRestorableDelete,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -93,8 +92,8 @@ function OwnerView({ back, ownerId, ownerType, ruleset, rulesetId, section, word
   const aliasedTab = getOwnerTabAlias(rules, section);
 
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
-  // Deleting an inherited owner, or what it holds, can be undone
-  const { restorable, error: changesError } = useRestorableDelete(ruleset, ownerData);
+  // Deleting an inherited owner, or what it holds, can be undone: the server says
+  const restorable = !!ownerData?.restorableDelete;
 
   const { fields: ownerFields } = useEntityFields(rulesetId, ownerType);
   // Its form of the owner: its fields as its rules describe them for its kind
@@ -162,7 +161,6 @@ function OwnerView({ back, ownerId, ownerType, ruleset, rulesetId, section, word
                 // With its tabs
                 entityKey: ownerDetailQuery(rulesetId, ownerType, ownerId).queryKey,
                 restorable,
-                changesError,
               }
             : undefined
         }

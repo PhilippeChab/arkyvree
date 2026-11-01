@@ -51,7 +51,7 @@ describe("rulesets entities: skills", () => {
     await expectStatus(entity.$get({ param }), 404);
   });
 
-  test("answers a save as a read answers the skill: its create, its update, and an inherited one's copied on its edit", async () => {
+  test("answers a save as a read answers the skill, which says whether its delete is restorable too: its create, its update, and an inherited one's copied on its edit", async () => {
     const { abilityMap, skillMap } = await getSeedCtx();
     const { id } = await createSeededTestRuleset(SEED_USER_ID);
     const read = (entityId: string) => expectOk(entity.$get({ param: { id, entityType, entityId } }));
@@ -63,7 +63,7 @@ describe("rulesets entities: skills", () => {
 
     const json = { name: "Test Skill", links: { keyAbility: abilityMap["Intelligence"] }, fields };
     const created = await expectOk(kinds.$post({ param: { id, entityType }, json }));
-    expect(created).toEqual(await read(created.id));
+    expect(await read(created.id)).toEqual({ ...created, restorableDelete: false });
     expect(created.links).toMatchObject([
       { role: "keyAbility", toId: abilityMap["Intelligence"], toName: "Intelligence" },
     ]);
@@ -71,7 +71,7 @@ describe("rulesets entities: skills", () => {
     const param = { id, entityType, entityId: created.id };
     const update = { ...json, name: "Renamed Skill", links: { keyAbility: abilityMap["Wisdom"] } };
     const updated = await expectOk(entity.$put({ param, json: update }));
-    expect(updated).toEqual(await read(created.id));
+    expect(await read(created.id)).toEqual({ ...updated, restorableDelete: false });
     expect(updated.links).toMatchObject([{ role: "keyAbility", toId: abilityMap["Wisdom"], toName: "Wisdom" }]);
 
     // The fork's first edit of an inherited skill writes its copy, which the answer and a read by either id give
@@ -79,8 +79,9 @@ describe("rulesets entities: skills", () => {
     const climb = { name: "Climb", links: { keyAbility: abilityMap["Dexterity"] }, fields };
     const copied = await expectOk(entity.$put({ param: { id, entityType, entityId: climbId }, json: climb }));
     expect(copied.id).not.toBe(climbId);
-    expect(copied).toEqual(await read(copied.id));
-    expect(copied).toEqual(await read(climbId));
+    // The copy's delete brings Climb back, from Local Changes
+    expect(await read(copied.id)).toEqual({ ...copied, restorableDelete: true });
+    expect(await read(climbId)).toEqual({ ...copied, restorableDelete: true });
     expect(copied.links).toMatchObject([{ role: "keyAbility", toId: abilityMap["Dexterity"], toName: "Dexterity" }]);
   });
 

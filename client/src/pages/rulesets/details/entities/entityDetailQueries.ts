@@ -1,6 +1,7 @@
 /**
  * The detail queries of the ruleset entities: an entity of any kind (`entityQuery`), shared by its page and the section
- * rows' hover prefetch so both cache the same response, and the pool a list's pool filter picked.
+ * rows' hover prefetch so both cache the same response, and the pool a list's pool filter picked, cached apart: a list's
+ * row seeds it, which isn't its page's answer.
  */
 
 import { type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
@@ -16,13 +17,15 @@ export function entityQuery(rulesetId: string, type: string, entityId: string) {
   });
 }
 
-/** An entity of a kind (`type`) a picker picked, as its page reads it; skipped without one (a list's pool, unset). */
+/** An entity of a kind (`type`) a picker picked, as its row; skipped without one (a list's pool, unset). */
 export function pickedEntityQuery(rulesetId: string, type: string, entityId: string | undefined) {
-  const read = entityQuery(rulesetId, type, entityId ?? "");
-  return queryOptions({ queryKey: read.queryKey, queryFn: entityId ? read.queryFn : skipToken });
+  return queryOptions({
+    queryKey: [...QUERY_KEYS.rulesets.entity(rulesetId, type, entityId ?? ""), "picked"],
+    queryFn: entityId ? async (): Promise<EntityRow> => await readEntityFn(rulesetId, type, entityId) : skipToken,
+  });
 }
 
-/** An entity a list's picker picked, cached as its own read would be, so the filter shows it before any refetch. */
+/** An entity a list's picker picked, cached as its picked read, so the filter shows it before any refetch. */
 export function seedEntity(queryClient: QueryClient, rulesetId: string, type: string, entity: EntityRow) {
-  queryClient.setQueryData(entityQuery(rulesetId, type, entity.id).queryKey, entity);
+  queryClient.setQueryData(pickedEntityQuery(rulesetId, type, entity.id).queryKey, entity);
 }

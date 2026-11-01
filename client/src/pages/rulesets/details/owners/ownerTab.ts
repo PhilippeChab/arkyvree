@@ -18,7 +18,7 @@ export interface OwnerSectionProps {
   ownerName: string;
   /** Its kind (3.5's `classes`), whose routes its tabs read and write through */
   ownerType: string;
-  /** A delete on its tab can be undone from Local Changes: the owner is inherited (`useRestorableDelete`) */
+  /** A delete on its tab can be undone from Local Changes: the owner is inherited (its `restorableDelete`) */
   restorable: boolean;
   ruleset: RulesetDetail;
   rulesetId: string;

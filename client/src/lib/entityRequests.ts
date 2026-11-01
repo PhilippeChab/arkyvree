@@ -8,6 +8,9 @@ import { type InferResponseType, parseResponse } from "hono/client";
 
 import { rpc } from "@/client/src/services/rpc.ts";
 
+/** An entity as its own read answers it (`readEntityFn`): its row, and whether its delete can be undone. */
+export type EntityAnswer = Awaited<ReturnType<typeof readEntityFn>>;
+
 /** An entity of any kind, as its list gives it: its name, its description, and what its kind's list reads of it. */
 export type EntityRow = InferResponseType<
   (typeof rpc.api.rulesets)[":id"]["entities"][":entityType"]["$get"],
