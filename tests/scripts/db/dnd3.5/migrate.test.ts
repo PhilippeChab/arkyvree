@@ -1724,4 +1724,45 @@ describe("0107_fork-settings-chain", () => {
     );
     expect(kept.map(({ ruleset_id }) => ruleset_id).toSorted()).toEqual([savedSame, savedOther].toSorted());
   });
+  test("drops a fork's copied field only when the whole of it is its parent's, keeping a role its parent holds none of", async () => {
+    const base = (
+      await db.execute<{ id: string }>(
+        sql`SELECT id FROM rules.rulesets WHERE ruleset_id IS NULL ORDER BY name LIMIT 1`,
+      )
+    ).rows[0].id;
+    const forks: string[] = [];
+    for (const name of ["Same", "Subset", "Reordered", "Unheld role"]) {
+      const { rows } = await db.execute<{ id: string }>(sql`
+        INSERT INTO rules.rulesets (name, description, user_id, ruleset_id, status, base_rules)
+        SELECT ${`0107 ${name}`}, '', ${SEED_USER_ID}, id, 'Draft', base_rules FROM rules.rulesets WHERE id = ${base}
+        RETURNING id`);
+      forks.push(rows[0].id);
+    }
+    const [same, subset, reordered, unheldRole] = forks;
+    // The parent's feats: a set of two values, in order
+    const field = (rulesetId: string, ordinal: number, value: string) => sql`
+      INSERT INTO rules.ruleset_fields
+        (ruleset_id, owner_type, field, ordinal, value_kind, multiple, text_value, created_at, updated_at)
+      VALUES (${rulesetId}, 'rulesets', 'RULESET_FEAT_ADVANCEMENT', ${ordinal}, 'text', true, ${value}, 'epoch', 'epoch')`;
+    await db.execute(sql`DELETE FROM rules.ruleset_fields WHERE ruleset_id = ${base}`);
+    await db.execute(field(base, 0, "first"));
+    await db.execute(field(base, 1, "second"));
+    // Copies of it, all as old as copies are: the whole of it, a part of it, its values swapped
+    await db.execute(field(same, 0, "first"));
+    await db.execute(field(same, 1, "second"));
+    await db.execute(field(subset, 0, "first"));
+    await db.execute(field(reordered, 0, "second"));
+    await db.execute(field(reordered, 1, "first"));
+    // A role its parent holds no row of
+    await db.execute(sql`DELETE FROM rules.ruleset_links WHERE ruleset_id = ${base}`);
+    await db.execute(sql`INSERT INTO rules.ruleset_links (ruleset_id, role, to_id, to_type, created_at, updated_at)
+      VALUES (${unheldRole}, 'skillPointAbility', ${(await getSeedCtx()).abilityMap["Wisdom"]}, 'abilities', 'epoch', 'epoch')`);
+
+    for (const statement of statementsOf("0107_fork-settings-chain.sql")) await db.execute(sql.raw(statement));
+
+    const { rows: kept } = await db.execute<{ ruleset_id: string }>(sql`
+      SELECT DISTINCT ruleset_id FROM rules.ruleset_fields WHERE ruleset_id = ANY(${sql.param(forks)}::uuid[])
+      UNION SELECT DISTINCT ruleset_id FROM rules.ruleset_links WHERE ruleset_id = ANY(${sql.param(forks)}::uuid[])`);
+    expect(kept.map(({ ruleset_id }) => ruleset_id).toSorted()).toEqual([subset, reordered, unheldRole].toSorted());
+  });
 });

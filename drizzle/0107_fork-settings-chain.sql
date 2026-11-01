@@ -2,9 +2,10 @@
 -- parent's), as everything else it inherits is, until it saves its own. A fork copied its parent's Settings rows when
 -- it was made, which always won over the chain: a fork never read an extension's Settings, nor its parent's later ones.
 -- Forks no longer copy them. The copies go: a fork's rows of a field or a role, when the whole of them is what its
--- parent holds of it now, none saved since it was copied (none newer than the fork, which a save would be, nor changed
--- since). The fork reads its parent's same rows in their place, unless an extension of its holds its own. Rows a fork
--- saved stay.
+-- parent holds of it now, none saved since it was copied. A copy is no newer than its fork (written in the fork's own
+-- transaction, or older, brought over by 0080), where a save rewrites its rows after the fork, and none changed since.
+-- The fork reads its parent's same rows in their place, unless an extension of its holds its own. Rows a fork saved
+-- stay.
 
 -- The rows of the migrations before it run their deferred checks now: drizzle runs the pending migrations in one
 -- transaction
