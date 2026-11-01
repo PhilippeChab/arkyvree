@@ -63,7 +63,7 @@ export default class CowDataBuilder {
       builder.overrideOwnNamesakes(rows);
     }
     if (builder.sourceChain.length > 0) builder.pairOwned(rows);
-    return builder.toCowData();
+    return builder.toCowData(rows);
   }
 
   /** Every stale id to the id that stands for it: the overrides and the sibling losers. */
@@ -273,7 +273,15 @@ export default class CowDataBuilder {
     }
   }
 
-  private toCowData(): CowData {
-    return new CowData(this.sourceChain, this.overrides, this.aliases, this.siblings, new Set(this.shadows.keys()));
+  private toCowData(rows: CowRows): CowData {
+    const sources = new Map(rows.snapshots.map((snap) => [snap.forkedEntityId, snap.sourceEntityId]));
+    return new CowData(
+      this.sourceChain,
+      this.overrides,
+      this.aliases,
+      this.siblings,
+      new Set(this.shadows.keys()),
+      sources,
+    );
   }
 }

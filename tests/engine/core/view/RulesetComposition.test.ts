@@ -19,7 +19,8 @@ const TARGETS = "targets" as string as StandaloneKind;
 
 /**
  * The made-up owners' fields: a set in its closed list's order, its sibling copies' values unioned, two single values,
- * the winner's or else its first sibling's, and a link a field reads, its first sibling's without the winner's.
+ * the first copy's that changed it from what it copied, else the winner's, else its first sibling's, and a link a field
+ * reads, its first sibling's without the winner's.
  */
 const OWNER_FIELDS = new DeclaredFields(
   {
@@ -149,6 +150,31 @@ describe("A ruleset's view, composed by its modules' declarations", () => {
       "SET=a:o1",
       "ONE=w:o1",
       "EXTRA=x:o1",
+    ]);
+  });
+
+  test("takes a single value from the sibling copy that changed it from what both copied, its kind-wide value too", () => {
+    // Both books copied the core's o0: the winner kept its ONE, the loser changed it and cleared its EXTRA
+    const core = ownersRaw({ o0: { fields: { EXTRA: "x", ONE: "w" }, links: {} } });
+    const books = ownersRaw({
+      o1: { fields: { EXTRA: "x", ONE: "w" }, links: {} },
+      o2: { fields: { ONE: "l" }, links: {} },
+    });
+    const view = composeView(
+      [books, core],
+      {
+        overrides: [["o0", "o1"]],
+        siblings: [["o1", ["o2"]]],
+        sources: [
+          ["o1", "o0"],
+          ["o2", "o0"],
+        ],
+      },
+      OWNER_FIELDS,
+    );
+    expect(entityOf(view, "owners", "o1")!.fields).toEqual({ ONE: "l" });
+    expect(view.kindValues("owners").map(({ entityIds, field, value }) => `${field}=${value}:${entityIds}`)).toEqual([
+      "ONE=l:o1",
     ]);
   });
 

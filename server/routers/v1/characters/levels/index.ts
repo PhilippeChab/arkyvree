@@ -3,9 +3,10 @@ import { z } from "zod";
 
 import { type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
 import { limitDefaultingTo } from "@/server/routers/api/schemaBuilders.ts";
-import { idParam, page, planSteps } from "@/server/routers/api/validation.ts";
+import { idParam, page } from "@/server/routers/api/validation.ts";
 import { v1LevelPlan, v1LevelPlanAnswer, v1LevelSteps, v1StepOptions } from "@/server/routers/v1/schemas/characters.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
+import { planSteps } from "@/server/routers/v1/validation.ts";
 import { CharacterLevelsService } from "@/server/services/characters/levels/index.ts";
 
 const levelParams = idParam.extend({ advancementId: z.string().uuid() });

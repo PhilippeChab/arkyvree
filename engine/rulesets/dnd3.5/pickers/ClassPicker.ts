@@ -1,4 +1,11 @@
-import type { CharacterInput, EntityRecord, OptionRow, PickerOption, StepOption } from "@/engine/core/module/index.ts";
+import type {
+  CharacterInput,
+  EntityRecord,
+  OptionRow,
+  PickerOption,
+  StepOption,
+  TrackFilters,
+} from "@/engine/core/module/index.ts";
 import { CharacterPicker } from "@/engine/core/pickers/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import CharacterProjection from "@/engine/rulesets/dnd3.5/levelUp/CharacterProjection.ts";
@@ -18,9 +25,9 @@ type TrackDetails = Required<Pick<StepOption, "track">>;
 
 /**
  * The class picker for the character, from its rows and what the level-up wizard plans so far: a player character's
- * classes (`filters`), each the character can take another level of offered with that level, its class's last, and the
- * levels the character has left, and checked with that level added; highest next level first, then by name. The skill
- * points spent so far go on the planned levels as a save would spread them (`plan`).
+ * classes (`filters`), each the character can take another level of offered with the levels it takes next, in order,
+ * and the levels the character has left, and checked with its next level added; highest next level first, then by
+ * name. The skill points spent so far go on the planned levels as a save would spread them (`plan`).
  */
 export default class ClassPicker extends CharacterPicker<DetailedCharacter, EntityRecord, TrackDetails> {
   constructor(
@@ -32,21 +39,15 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
     super(view, input, Dnd35CharacterBuilder);
   }
 
-  /** What the picker offers: a player character's classes (their partition, `pc`). */
-  override readonly filters = { partitions: [PLAYER_CHARACTER_KIND] };
-
   /**
-   * The class's place on its track: its next level, its last, and the levels the character can still take, whatever
-   * their classes (`left`, the same for every class): those it has count, not those the wizard plans, which a plan
-   * counts.
+   * The class's place on its track: the levels the character can still take, whatever their classes (`left`, the same
+   * for every class), and the class's it takes next, in the order a plan takes them (`positions`:
+   * `LevelRules.numberPlannedLevels`, a gap filled first), as many as it has left, up to the class's last. Those the
+   * character has count, not those the wizard plans, which a plan numbers in its place.
    */
   protected override detailsOf() {
     const left = LevelRules.countLevelsLeft(this.input.rows.advancements.length);
-    return (klass: EntityRecord) => {
-      const next = this.nextLevelOf(klass)!;
-      const last = this.dnd35.classLevelsByClass.get(klass.id)?.at(-1)?.position ?? next.position;
-      return { track: { last, left, next: next.position } };
-    };
+    return (klass: EntityRecord) => ({ track: { left, positions: this.positionsOf(klass, left) } });
   }
 
   /** Whether the character meets a class's requirement groups with the class's next level added. */
@@ -60,8 +61,9 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
   }
 
   /** Highest next level first, then by name. */
-  protected override order<O extends EntityRecord & { track: { next: number } }>(options: O[]) {
-    return options.sort((a, b) => b.track.next - a.track.next || (a.name ?? "").localeCompare(b.name ?? ""));
+  protected override order<O extends EntityRecord & { track: { positions: number[] } }>(options: O[]) {
+    const next = (option: O) => option.track.positions[0] ?? 0;
+    return options.sort((a, b) => next(b) - next(a) || (a.name ?? "").localeCompare(b.name ?? ""));
   }
 
   /**
@@ -97,6 +99,29 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
     return { ...super.stepOptionOf(option), track: option.track };
   }
 
+  /**
+   * What the picker offers, a player character's classes (their partition, `pc`), and the order the server pages them
+   * in: the character's own classes first (`firstIds`), as a page orders them (`order`: highest next level first, then
+   * by name), the others after them by name, each next at its first level, as a class whose first the character skipped
+   * is too.
+   */
+  override get filters(): TrackFilters {
+    const { classesById, classLevelsById } = this.dnd35;
+    // Each class the character's levels are of, as the view resolves it (a copy for its source), once
+    const held = new Map(
+      this.input.rows.advancements.flatMap(({ entryId }) => {
+        const ownerId = classLevelsById.get(entryId)?.ownerId;
+        const klass = ownerId ? classesById.get(ownerId) : undefined;
+        return klass ? [[klass.id, klass] as const] : [];
+      }),
+    );
+    const classes = [...held.values()].map((klass) => ({ ...klass, track: { positions: this.positionsOf(klass, 1) } }));
+    const firstIds = this.order(classes.filter((klass) => (klass.track.positions[0] ?? 0) > 1)).map(
+      (klass) => klass.id,
+    );
+    return { partitions: [PLAYER_CHARACTER_KIND], firstIds };
+  }
+
   /** The view's 3.5 lists and indices. */
   private get dnd35(): Dnd35View {
     return Dnd35View.of(this.rulesetData);
@@ -109,5 +134,20 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
   private nextLevelOf(klass: EntityRecord): KlassLevel | undefined {
     const next = LevelRules.findNextClassLevel(this.dnd35.classLevelsById, this.input.rows.advancements, klass.id);
     return this.dnd35.classLevelByClassAndLevel.get(`${klass.id}:${next}`);
+  }
+
+  /**
+   * The class's levels the character takes next (`count` of them at most), in the order a plan takes them
+   * (`LevelRules.numberPlannedLevels`), those the class has: none past its last.
+   */
+  private positionsOf(klass: EntityRecord, count: number) {
+    const { classLevelByClassAndLevel, classLevelsById } = this.dnd35;
+    const numbered = LevelRules.numberPlannedLevels(
+      classLevelsById,
+      this.input.rows.advancements,
+      Array.from({ length: count }, () => klass.id),
+    );
+    const past = numbered.findIndex((position) => !classLevelByClassAndLevel.has(`${klass.id}:${position}`));
+    return past === -1 ? numbered : numbered.slice(0, past);
   }
 }

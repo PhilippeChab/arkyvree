@@ -102,7 +102,7 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     aptitudes: ["Cleric Spells", "Favored Soul Spells", "Shugenja Spells", "Ur-priest Spells"],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Pattern",
+      [SPELL_SUBSCHOOL]: ["Pattern"],
       [SPELL_DESCRIPTOR]: ["Fear", "Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 swift action",
@@ -161,7 +161,7 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     ],
     fields: {
       [SPELL_SCHOOL]: "Divination",
-      [SPELL_SUBSCHOOL]: "Scrying",
+      [SPELL_SUBSCHOOL]: ["Scrying"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Touch",

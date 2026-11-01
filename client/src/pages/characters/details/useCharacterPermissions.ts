@@ -24,8 +24,8 @@ export function useCharacterPermissions(
     canDownloadPdf: !isDemo,
     /** Its sheet. */
     canEdit: !!permissions?.canEdit,
-    /** Add, edit and remove its levels: its sheet's editors, but a subsheet's levels are the character's it's under. */
-    canEditLevels: !!permissions?.canEdit && !isSubsheet,
+    /** Add, edit and remove its advancements: its sheet's editors, but a subsheet's are the character's it's under. */
+    canEditAdvancements: !!permissions?.canEdit && !isSubsheet,
     /** Its portrait. */
     canEditPortrait: !!permissions?.canEditPortrait,
     canInviteContributors: !!permissions?.canInviteContributors,

@@ -13,7 +13,7 @@ import Dnd35LevelUp from "@/engine/rulesets/dnd3.5/levelUp/Dnd35LevelUp.ts";
 import LevelByLevel from "@/engine/rulesets/dnd3.5/levelUp/LevelByLevel.ts";
 import type { PlannedClassLevel } from "@/engine/rulesets/dnd3.5/levelUp/LevelUpBase.ts";
 import type { LevelPicks, LevelRequest } from "@/engine/rulesets/dnd3.5/levelUp/requests.ts";
-import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
+import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import FeatRules from "@/engine/rulesets/dnd3.5/rules/FeatRules.ts";
 import LevelRules from "@/engine/rulesets/dnd3.5/rules/LevelRules.ts";

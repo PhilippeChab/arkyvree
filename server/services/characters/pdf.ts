@@ -2,10 +2,15 @@ import { addJob, db, withTransaction } from "@/server/database/index.ts";
 import { pingWorker } from "@/server/queue.ts";
 import { Activities, Characters, PlayerCharacters } from "@/server/repositories/index.ts";
 import { findReadableCampaign } from "@/server/services/campaigns/index.ts";
+import { CharactersPolicy, isAllowed } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Character, Session } from "@/shared/relations.ts";
 
-import { findEditableCharacterOrChild } from "./editableCharacter.ts";
+/** The campaign `campaignId` the user may read, if the character is linked to it; none otherwise. */
+async function findLinkedCampaign(userId: string, characterId: string, campaignId: string) {
+  if (!(await PlayerCharacters.findOne(db, { characterId, campaignId }))) return undefined;
+  return await findReadableCampaign(db, { userId }, campaignId);
+}
 
 /**
  * Where a PDF export's activity and failure notification link to: the
@@ -46,19 +51,22 @@ export async function enqueueCharacterPdf(
 }
 
 /**
- * The character `userId` may export as a PDF, or null: one they own or
- * contribute to (or a child of such a parent: 3.5's bonded creature). Through
- * `campaignId`, the character must be linked to that campaign, which they may
- * read (`findReadableCampaign`: a member), and its Game Master may export it
- * too. Checked when the export is queued and again when the worker runs it, so
- * access revoked in between is honored.
+ * The character `userId` may export as a PDF, or null: as its policy says (`CharactersPolicy.canExport`: its editors,
+ * while they may edit it). Through `campaignId`, the character must be linked to that campaign, which they may read
+ * (`findReadableCampaign`: a member), and the campaign's policy says (`CampaignsPolicy.canExportCharacter`: its Game
+ * Master too). Checked when the export is queued and again when the worker runs it, so access revoked in between is
+ * honored.
  */
 export async function findExportableCharacter(userId: string, characterId: string, campaignId?: string) {
-  if (campaignId) {
-    if (!(await PlayerCharacters.findOne(db, { characterId, campaignId }))) return null;
-    const readable = await findReadableCampaign(db, { userId }, campaignId);
-    if (!readable) return null;
-    if (readable.policy.isGameMaster()) return (await Characters.findOne(db, { id: characterId })) ?? null;
-  }
-  return findEditableCharacterOrChild(db, characterId, userId);
+  // Through a campaign, its link and the campaign come first, so a non-member gets no further
+  const readable = campaignId && (await findLinkedCampaign(userId, characterId, campaignId));
+  if (campaignId && !readable) return null;
+
+  const character = await Characters.findOne(db, { id: characterId });
+  if (!character) return null;
+  const policy = await CharactersPolicy.for(db, { userId }, character);
+  const allowed = readable
+    ? isAllowed(() => readable.policy.canExportCharacter(policy))
+    : isAllowed(() => policy.canExport());
+  return allowed ? character : null;
 }

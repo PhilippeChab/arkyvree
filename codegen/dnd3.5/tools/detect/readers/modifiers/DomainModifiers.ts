@@ -4,6 +4,7 @@ import type { Modifier } from "@/content/core/builders/customization/types.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { KNOWLEDGE_SKILLS, SKILL_NAMES } from "@/vocabulary/dnd3.5/skills.ts";
 
+import { BonusText } from "./BonusText.ts";
 import { ModifierReading } from "./ModifierReading.ts";
 
 /**
@@ -19,7 +20,10 @@ const DOMAIN_SKILL_SLUGS: Record<string, string> = {
   ),
 };
 
-/** The modifiers a domain's granted power gives: the skills it adds to the cleric's class skills. */
+/**
+ * The modifiers a domain's granted power gives: the skills it adds to the cleric's class skills, and uncanny dodge (the
+ * Fate domain's).
+ */
 export class DomainModifiers extends ModifierReading<Modifier> {
   constructor(description: string) {
     super();
@@ -52,6 +56,10 @@ export class DomainModifiers extends ModifierReading<Modifier> {
         }
       }
     }
+
+    // Pattern: "You gain the uncanny dodge ability, allowing you to retain your Dexterity bonus to AC (if any) even if
+    // caught flat-footed"
+    if (new BonusText(description).hasUncannyDodge()) this.modifiers.push(setFlag("combat.ac.uncannydodge"));
 
     this.keepValidModifiers();
   }

@@ -46,12 +46,16 @@ export const VIEW_SCHEMA: ViewSchema = {
 
 /**
  * The view of the made-up module a chain composes (`chain`, its own first), by its copy-on-write data's overrides,
- * aliases and siblings, and the fields it declares (`declared`, none by default): its owners and the entities they own
- * named in its words (`WORDS`).
+ * aliases, siblings and the entities its copies copied (`sources`, each copy to its source), and the fields it declares
+ * (`declared`, none by default): its owners and the entities they own named in its words (`WORDS`).
  */
 export function composeView(
   chain: RulesetRawData[],
-  { overrides = [], siblings = [] }: { overrides?: [string, string][]; siblings?: [string, string[]][] } = {},
+  {
+    overrides = [],
+    siblings = [],
+    sources = [],
+  }: { overrides?: [string, string][]; siblings?: [string, string[]][]; sources?: [string, string][] } = {},
   declared = NO_FIELDS,
 ): RulesetData {
   const aliases = [...overrides, ...siblings.flatMap(([winner, losers]) => losers.map((loser) => [loser, winner]))];
@@ -61,6 +65,7 @@ export function composeView(
     new Map(aliases as [string, string][]),
     new Map(siblings),
     new Set(),
+    new Map(sources),
   );
   return new RulesetComposition(chain, cow, declared, VIEW_SCHEMA, WORDS).build();
 }

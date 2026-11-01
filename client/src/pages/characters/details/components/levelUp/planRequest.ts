@@ -43,7 +43,8 @@ export interface PlannedPick {
 
 /**
  * An advancement a wizard plans: its slot's key, which its values and choices are kept by, and, Add Level's, the track
- * it takes and its position on it (an edit's are its level's, which the engine reads).
+ * it takes, which its request names alone, and the position its picker says it takes there, which the engine numbers
+ * and its answer's advancement is checked against (an edit's are its level's, which the engine reads).
  */
 export interface PlannedSlot {
   key: number;
@@ -71,9 +72,7 @@ function payloadOf(step: LevelStep, slots: PlannedSlot[], form: LevelPlanForm, c
         picks.map(({ id, tier }) => ({ id, pool, ...(tier !== undefined && { tier }) })),
       );
     case "plan":
-      return slots.flatMap(({ position, track }) =>
-        position !== undefined && track !== undefined ? [{ position, track }] : [],
-      );
+      return slots.flatMap(({ track }) => (track !== undefined ? [{ track }] : []));
     case "spend":
       return Object.entries(form.points[step.name] ?? {})
         .filter(([, points]) => points > 0)

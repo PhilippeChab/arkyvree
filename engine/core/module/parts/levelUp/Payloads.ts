@@ -24,7 +24,7 @@ function isPayloadItem(mechanic: StepMechanic, item: unknown) {
         (item.tier === undefined || typeof item.tier === "string")
       );
     case "plan":
-      return isRecord(item) && typeof item.track === "string" && isCount(item.position, 1);
+      return isRecord(item) && typeof item.track === "string";
     case "spend":
       return isRecord(item) && typeof item.id === "string" && isCount(item.points, 0);
     case "value":

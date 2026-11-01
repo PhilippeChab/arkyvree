@@ -1,8 +1,35 @@
 import { describe, expect, test } from "bun:test";
 
+import { DeclaredFields, type StoredValues } from "@/engine/core/fields/index.ts";
 import { SiblingMerge } from "@/engine/core/view/index.ts";
 import RequirementTree from "@/shared/customization/RequirementTree.ts";
 import type { Requirement } from "@/shared/relations.ts";
+
+/**
+ * A made-up owner's single values, each the first copy's that changed it from what it copied, else its winner's, else
+ * its first sibling's: a flag, and a number of default 1.
+ */
+const COPY_FIELDS = new DeclaredFields(
+  {
+    owners: {
+      count: {
+        default: 1,
+        description: "Its count",
+        field: "COUNT",
+        kind: "number",
+        label: "Count",
+        merge: "fallback",
+      },
+      flag: { description: "Its flag", field: "FLAG", kind: "flag", label: "Flag", merge: "fallback" },
+    },
+  },
+  [],
+);
+
+/** A made-up owner's values: its fields', no link. */
+function held(fields: StoredValues["fields"]): StoredValues {
+  return { fields, links: {} };
+}
 
 /**
  * The winner's requirements (`own`) with a sibling's merged in, as the view reads them: each row's level by its id, the
@@ -71,5 +98,28 @@ describe("SiblingMerge.mergeRequirements", () => {
   test("gives a sibling's condition at a level the winner holds a fresh top level", () => {
     const merged = mergeOf([rowOf("w1", "winner", "1")], [rowOf("s1", "sibling", "1"), rowOf("s2", "sibling", "2")]);
     expect(merged).toEqual({ levels: { w1: "1", s1: "2", s2: "3" }, roots: ["w1", "s1", "s2"], detached: [] });
+  });
+});
+
+describe("SiblingMerge.mergeValues", () => {
+  // What both copied: the flag set, a count of 2
+  const source = held({ COUNT: [2], FLAG: [true] });
+  // The winner set its flag back to false, which no row holds, and kept the count; its sibling kept the flag and
+  // changed the count
+  const winner = held({ COUNT: [2] });
+  const sibling = held({ COUNT: [3], FLAG: [true] });
+
+  test("takes a single value from the first copy that changed it from what it copied, its default among them", () => {
+    const sources = { own: source, siblings: [source] };
+    expect(SiblingMerge.mergeValues(winner, [sibling], "owners", COPY_FIELDS, sources)).toEqual({
+      taken: [held({ COUNT: [3] })],
+      values: held({ COUNT: [3] }),
+    });
+  });
+
+  test("takes the winner's, else its first sibling's that holds one, from copies that copied nothing (a reprint)", () => {
+    expect(SiblingMerge.mergeValues(winner, [sibling], "owners", COPY_FIELDS).values).toEqual(
+      held({ COUNT: [2], FLAG: [true] }),
+    );
   });
 });

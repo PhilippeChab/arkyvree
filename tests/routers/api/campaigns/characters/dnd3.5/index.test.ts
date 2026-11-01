@@ -403,6 +403,14 @@ describe("campaigns characters", () => {
 
     test("refuses other players and non-members", async () => {
       const { campaignId, characterId, member } = await setupExport("Player Character");
+      // A player who sees the character, its sheet doesn't offer them its export, which the export refuses alike
+      const link = (await PlayerCharacters.findOne(db, { characterId, campaignId }))!;
+      await PlayerCharacters.update(db, { visibility: "Public" }, { characterId, playerId: link.playerId });
+      expect(
+        await expectOk(
+          member.api.api.campaigns[":id"].characters[":characterId"].$get({ param: { id: campaignId, characterId } }),
+        ),
+      ).toMatchObject({ canDownloadPdf: false });
       const { api: outsider } = await createSignedInUser("outsider");
       for (const client of [member.api, outsider]) {
         const response = await client.api.campaigns[":id"].characters[":characterId"].pdf.$post({

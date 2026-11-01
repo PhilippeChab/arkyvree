@@ -39,7 +39,7 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     aptitudes: ["Wu Jen Spells"],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Phantasm",
+      [SPELL_SUBSCHOOL]: ["Phantasm"],
       [SPELL_DESCRIPTOR]: ["Fear", "Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "1 round",
@@ -58,7 +58,7 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     aptitudes: ["Consecrated Harrier Spells", "Ranger Spells", "Sorcerer Spells", "Warmage Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_DESCRIPTOR]: ["Fire"],
       [SPELL_COMPONENT]: ["Verbal"],
       [SPELL_CASTING_TIME]: "1 swift action",
@@ -75,7 +75,7 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     aptitudes: ["Druid Spells", "Spirit Shaman Spells", "Wu Jen Spells"],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Glamer",
+      [SPELL_SUBSCHOOL]: ["Glamer"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "1 round",
       [SPELL_RANGE_TYPE]: "Touch",
@@ -174,7 +174,7 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     aptitudes: ["Assassin Spells", "Warmage Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: "Creation",
+      [SPELL_SUBSCHOOL]: ["Creation"],
       [SPELL_DESCRIPTOR]: ["Cold"],
       [SPELL_COMPONENT]: ["Somatic", "Material"],
       [SPELL_CASTING_TIME]: "1 standard action",
@@ -226,7 +226,7 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Phantasm",
+      [SPELL_SUBSCHOOL]: ["Phantasm"],
       [SPELL_DESCRIPTOR]: ["Fear", "Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 standard action",
@@ -293,7 +293,7 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     aptitudes: ["Sorcerer Spells", "Spellthief Spells", "Wizard Spells", "Wu Jen Spells"],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: "Shadow",
+      [SPELL_SUBSCHOOL]: ["Shadow"],
       [SPELL_DESCRIPTOR]: ["Darkness", "Fear", "Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
       [SPELL_CASTING_TIME]: "1 standard action",
