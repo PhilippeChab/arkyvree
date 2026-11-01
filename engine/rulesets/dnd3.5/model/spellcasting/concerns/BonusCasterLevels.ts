@@ -1,9 +1,9 @@
 import type { BuiltCharacter } from "@/engine/core/character/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
+import type { AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
 import AptitudesPaths from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesPaths.ts";
-import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
+import AptitudeTargets, { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import ClassesPaths from "@/engine/rulesets/dnd3.5/model/classes/ClassesPaths.ts";
 import type { CustomizedClassLevel, HeldFeat } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import type SpellcastingState from "@/engine/rulesets/dnd3.5/model/spellcasting/SpellcastingState.ts";
@@ -126,7 +126,7 @@ export function BonusCasterLevels<B extends Constructor<SpellcastingState>>(Base
         const value = LiteralValue.parse(modifier.value, "number");
         if (typeof value !== "number") continue;
         if (modifier.target.endsWith(".uses")) uses += value;
-        else if (modifier.operator === "set" && value === ALLOWED_ALL) allKnown = true;
+        else if (AptitudeTargets.setsAllKnown(modifier)) allKnown = true;
         else allowed += value;
       }
       return { uses, allowed: allKnown ? ALLOWED_ALL : allowed };

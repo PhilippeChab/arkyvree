@@ -25,7 +25,8 @@ import RequirementEvaluator from "@/engine/core/requirements/RequirementEvaluato
 import CharacterResponse from "@/engine/rulesets/dnd3.5/characters/description/CharacterResponse.ts";
 import Dnd35TargetPaths from "@/engine/rulesets/dnd3.5/Dnd35TargetPaths.ts";
 import type { Aptitude, Feat, Klass, Race, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
-import { ALLOWED_ALL, type AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
+import type { AptitudeLevelData } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
+import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import type { WeaponSlot } from "@/engine/rulesets/dnd3.5/model/combat/CombatState.ts";
 import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
