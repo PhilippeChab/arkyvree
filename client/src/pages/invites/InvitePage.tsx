@@ -136,7 +136,7 @@ export default function InvitePage({ kind }: InvitePageProps) {
     );
   }
 
-  if (!isAnswering && invite.status === "Pending" && invite.isArchived) {
+  if (!isAnswering && invite.status === "Pending" && !invite.canAccept) {
     return (
       <InviteStateCard icon={stateIcon} title={`${entityLabel} Archived`} action={BACK_TO_DASHBOARD}>
         <strong>{name}</strong> has been archived. This invite can no longer be accepted.

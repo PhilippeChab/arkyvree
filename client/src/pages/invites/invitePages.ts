@@ -9,10 +9,11 @@ import type { ContributorRole } from "@/shared/enums.ts";
 
 /** What an invite's page shows of it, whatever its kind. */
 interface InviteDetails {
+  /** Whether the session may accept it, as the server's policy answers: none once its parent is archived. */
+  canAccept: boolean;
   entityId: string | null | undefined;
   entityName: string | undefined;
   invitedAt: string;
-  isArchived: boolean;
   /** The contributor role it offers. */
   role?: ContributorRole;
   status: string;
@@ -36,7 +37,7 @@ export const INVITE_PAGES = {
         status: invite.status,
         entityName: campaign?.name,
         entityId: campaign?.id,
-        isArchived: !!campaign?.deletedAt,
+        canAccept: invite.canAccept,
         invitedAt: invite.createdAt,
       };
     },
@@ -53,7 +54,7 @@ export const INVITE_PAGES = {
         status: invite.status,
         entityName: invite.charactersInCharacter?.name,
         entityId: invite.characterId,
-        isArchived: !!invite.charactersInCharacter?.deletedAt,
+        canAccept: invite.canAccept,
         invitedAt: invite.createdAt,
         role: invite.role,
       };
@@ -71,7 +72,7 @@ export const INVITE_PAGES = {
         status: invite.status,
         entityName: invite.rulesetsInRule?.name,
         entityId: invite.rulesetId,
-        isArchived: invite.rulesetsInRule?.status === "Archived",
+        canAccept: invite.canAccept,
         invitedAt: invite.createdAt,
         role: invite.role,
       };

@@ -127,6 +127,7 @@ describe("ContributorsService", () => {
         id: invite.id,
         status: "Pending",
         rulesetsInRule: { name: ruleset.name, status: "Draft" },
+        canAccept: true,
       });
       // Stale links still resolve, so the page can say what happened.
       await ContributorsService.acceptInvite(session, invite.id);
@@ -134,7 +135,7 @@ describe("ContributorsService", () => {
       await ContributorsService.revokeContributor(ownerSession, invite.id);
       expect((await fetch()).status).toBe("Revoked");
       await Rulesets.archive(db, { id: ruleset.id });
-      expect((await fetch()).rulesetsInRule?.status).toBe("Archived");
+      expect(await fetch()).toMatchObject({ rulesetsInRule: { status: "Archived" }, canAccept: false });
     });
 
     test("hides the invite from anyone else", async () => {
