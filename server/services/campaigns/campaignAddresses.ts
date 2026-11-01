@@ -1,6 +1,6 @@
 /**
- * A campaign's email addresses left out, as one who may not read them reads its player slots and its invites, by name:
- * who reads them is its policy's (`CampaignsPolicy.isAddressReader`, `isSlotAddressReader`).
+ * A campaign's player slots and invites with their email addresses left out, for a reader the campaign's policy says
+ * may not read them (`CampaignsPolicy.isAddressReader`, `isSlotAddressReader`): they read who's who by name.
  */
 
 import type { Invites, Players } from "@/server/repositories/index.ts";

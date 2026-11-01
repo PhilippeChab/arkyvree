@@ -116,7 +116,8 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
 
   /**
    * Whether the session reads the campaign's email addresses, its player slots' and its invites', and searches them by
-   * an address: its Game Master's to read. A player reads their own slot's alone (`isSlotAddressReader`).
+   * an address: its Game Master's to read. In the players list, a player reads their own slot's alone
+   * (`isSlotAddressReader`).
    */
   isAddressReader() {
     return this.isGameMaster();
