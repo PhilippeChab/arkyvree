@@ -18,6 +18,27 @@ function conditionalAt(text: string, pattern: RegExp) {
   return new BonusText(text).first(pattern) === undefined;
 }
 
+describe("A text's uncanny dodge", () => {
+  test("is the Dexterity bonus to AC kept when flat-footed, whatever the wording", () => {
+    const gives = (text: string) => new BonusText(text).hasUncannyDodge();
+    expect([
+      gives(
+        "You possess the uncanny dodge ability, which lets you keep your Dexterity bonus to AC (if any) even when flat-footed.",
+      ),
+      gives(
+        "You gain the uncanny dodge ability, allowing you to retain your Dexterity bonus to AC (if any) even if caught flat-footed.",
+      ),
+      gives("She retains her Dexterity bonus to AC even when flat-footed, and she can't be flanked."),
+      gives("He retains his Dexterity bonus to Armor Class regardless of being caught flat-footed."),
+      gives("She retains her Dexterity modifier to AC even if caught flat-footed."),
+    ]).toEqual([true, true, true, true, true]);
+    expect([
+      gives("A flat-footed character loses his Dexterity bonus to AC."),
+      gives("He retains his Dexterity bonus to AC. He is never flat-footed."),
+    ]).toEqual([false, false]);
+  });
+});
+
 describe("A text's skill bonuses", () => {
   test("are read from a list, a check after another, with any bonus type and possessive", () => {
     expect(
