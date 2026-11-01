@@ -55,8 +55,9 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
   }
 
   /**
-   * Linking a character to the campaign, and listing those the session could link: its seat (returned, `canRead`), in a
-   * campaign that isn't archived (`canModify`).
+   * Linking a character to the campaign, listing those the session could link, and setting the visibility of one it
+   * linked (its link's, which its service matches to the seat): its seat (returned, `canRead`), in a campaign that isn't
+   * archived (`canModify`).
    */
   canLinkCharacter() {
     const player = this.canRead();

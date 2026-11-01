@@ -36,15 +36,16 @@ import {
   campaignCharactersQuery,
   unlinkedCharactersQuery,
 } from "@/client/src/pages/campaigns/details/sectionQueries.ts";
+import { useCampaignPermissions } from "@/client/src/pages/campaigns/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { CHARACTER_VISIBILITY_OPTIONS, type CharacterVisibility } from "@/shared/campaigns.ts";
 
 interface CharacterCardProps {
   animationIndex: number;
   animationOffset: number;
-  /** Its campaign is archived: its visibility is set. */
-  campaignArchived: boolean;
   campaignId: string;
+  /** The session links its characters, and sets the visibility of those it linked (`canLinkCharacters`). */
+  canLinkCharacters: boolean;
   character: CampaignCharacter;
   portraitUrl: string | null;
 }
@@ -77,7 +78,7 @@ const VISIBILITY_DESCRIPTIONS: Record<CharacterVisibility, string> = {
 function CharacterCard({
   character,
   campaignId,
-  campaignArchived,
+  canLinkCharacters,
   animationIndex,
   animationOffset,
   portraitUrl,
@@ -111,7 +112,7 @@ function CharacterCard({
     navigate(`/campaigns/${campaignId}/characters/${character.id}`);
   };
 
-  const canEditVisibility = character.isOwn && !campaignArchived;
+  const canEditVisibility = character.isOwn && canLinkCharacters;
 
   return (
     <ListCard
@@ -267,6 +268,7 @@ function LinkCharacterDialog({ open, onClose, onExited, campaignId }: LinkCharac
 
 export function CharactersSection({ campaign }: CharactersSectionProps) {
   const linkDialog = useDialogState();
+  const { canLinkCharacters } = useCampaignPermissions(campaign);
 
   // Search state with debounce
   const { search: searchQuery, searchBarProps: searchTextProps } = useSearchText("characterSearch");
@@ -281,7 +283,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
           {...searchTextProps}
           searchPlaceholder="Search characters…"
           addLabel="Link Character"
-          onAdd={campaign.deletedAt ? undefined : () => linkDialog.openWith(true)}
+          onAdd={canLinkCharacters ? () => linkDialog.openWith(true) : undefined}
         />
 
         <ListPageResults
@@ -303,7 +305,7 @@ export function CharactersSection({ campaign }: CharactersSectionProps) {
                 key={character.id}
                 character={character}
                 campaignId={campaign.id}
-                campaignArchived={!!campaign.deletedAt}
+                canLinkCharacters={canLinkCharacters}
                 animationIndex={index}
                 animationOffset={characters.offset}
                 portraitUrl={portraitsByCharacterId.get(character.id) ?? null}
