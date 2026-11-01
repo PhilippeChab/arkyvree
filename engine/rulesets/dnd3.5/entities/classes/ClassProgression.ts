@@ -10,7 +10,7 @@ import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
-import AptitudeTargets from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
+import AptitudeTargets, { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
@@ -117,7 +117,7 @@ function isPlainAdd(modifier: LevelModifier) {
 
 /** Whether a modifier sets its spell level's spells known to every spell of its list, ungated. */
 function isPlainAll(modifier: LevelModifier) {
-  return !modifier.gated && modifier.operator === "set" && LiteralValue.parse(modifier.value, "number") === -1;
+  return !modifier.gated && AptitudeTargets.setsAllKnown(modifier);
 }
 
 /** A spell table's column as its totals read: none until its first count, then 0 for none, and "All" once it's all. */
@@ -148,7 +148,7 @@ function planColumn(target: string, wanted: SpellTotal[], kept: SpellTotal[]): (
     if (all || total === undefined) return [];
     if (total === "All") {
       all = true;
-      return [planned(target, "set", -1)];
+      return [planned(target, "set", ALLOWED_ALL)];
     }
     const need = total - (other ?? 0);
     const gain = need - given;

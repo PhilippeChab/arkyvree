@@ -11,6 +11,7 @@ import { stripSeparators } from "@/shared/text.ts";
 import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd3.5/spells.ts";
 
 import { JOINS_CLASS_LIST } from "./AptitudesPaths.ts";
+import { ALLOWED_ALL } from "./AptitudeTargets.ts";
 
 interface AptitudesData {
   [key: string]: {
@@ -86,8 +87,6 @@ export interface OwnPicks {
 
 /** No picks of a level-up's own: a pool's room is what it has left. */
 const NO_OWN_PICKS: OwnPicks = { feats: {}, spells: {} };
-
-export const ALLOWED_ALL = -1;
 
 /** What's left to pick in all of `pools`. */
 function sumAvailable(pools: { available: number }[]) {

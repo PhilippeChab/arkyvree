@@ -8,21 +8,29 @@ import {
   plannedSlotKeys,
 } from "@/client/src/pages/characters/details/components/levelUp/planSlots.ts";
 
-/** A track the character has two positions on, its next the third, and one it has none on */
-const FIGHTER = { id: "fighter", track: { last: 4, left: 2, next: 3 } };
+/**
+ * A track the character has two positions on, its last the fourth, which takes the third and fourth next; and one it
+ * has none on, as their picker answers them
+ */
+const FIGHTER = { id: "fighter", track: { left: 2, positions: [3, 4] } };
 
-const WIZARD = { id: "wizard", track: { last: 20, left: 2, next: 1 } };
+/** A lone Fighter 3, a gap a forced level left: the engine numbers its next Fighter levels 1, 2, then 4 */
+const GAP = { id: "fighter", track: { left: 3, positions: [1, 2, 4] } };
+
+const WIZARD = { id: "wizard", track: { left: 2, positions: [1, 2] } };
 
 describe("Add Level's plan", () => {
-  test("numbers a track after the advancements of it planned before its place", () => {
+  test("numbers a track as its picker does, after the advancements of it planned before its place", () => {
+    expect([0, 1, 2].map((before) => plannedPosition(GAP, [GAP, GAP, GAP], before))).toEqual([1, 2, 4]);
     const plan = [FIGHTER, null, WIZARD, FIGHTER];
     expect(plannedPosition(FIGHTER, plan, 0)).toBe(3);
     expect(plannedPosition(FIGHTER, plan, 3)).toBe(4);
     expect(plannedPosition(WIZARD, plan, 2)).toBe(1);
   });
 
-  test("numbers the next one added at the plan's end", () => {
-    expect(plannedPosition(FIGHTER, [FIGHTER, WIZARD, FIGHTER])).toBe(5);
+  test("numbers the next one added at the plan's end, none past the track's last", () => {
+    expect(plannedPosition(FIGHTER, [FIGHTER, WIZARD])).toBe(4);
+    expect(plannedPosition(FIGHTER, [FIGHTER, WIZARD, FIGHTER])).toBeUndefined();
     expect(plannedPosition(WIZARD, [])).toBe(1);
   });
 
@@ -70,7 +78,7 @@ describe("a plan's answer", () => {
     expect(answersSlots(answered, slots)).toBe(true);
     // A slot removed, or another track planned, while the answer for the plan before loads
     expect(answersSlots(answered, slots.slice(1))).toBe(false);
-    expect(answersSlots(answered, [slots[0], { position: 4, track: "fighter" }])).toBe(false);
+    expect(answersSlots(answered, [slots[0], { track: "fighter" }])).toBe(false);
   });
 
   test("is for an edit's one advancement, whose slot names no track", () => {
