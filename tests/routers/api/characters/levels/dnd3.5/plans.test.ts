@@ -478,7 +478,8 @@ describe("character level plans", () => {
     expect(
       await (await expectStatus(levels.plan.$post({ param: { characterId }, json: { steps: negative } }), 400)).json(),
     ).toMatchObject({ message: "The skills step's answer isn't a spend step's" });
-    // An id that names nothing of the ruleset is refused, a plan's answer's and a save's, whatever its form
+    // An id that names nothing of the ruleset, whatever its form, is refused where it's read: a skill spent on, a track, a
+    // pick's entity and pool (a row spending no points is read as none, and writes nothing)
     const unknown = { ...payloadsOf(picks(ctx, FIGHTER_LEVELS[0])), ...plan, skills: [{ id: "not-an-id", points: 1 }] };
     for (const response of [
       levels.plan.$post({ param: { characterId }, json: { steps: unknown } }),
