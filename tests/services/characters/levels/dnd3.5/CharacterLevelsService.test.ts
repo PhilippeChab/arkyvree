@@ -432,6 +432,27 @@ describe("LevelsService", () => {
       });
     });
 
+    test("pages its own classes first, by its next level in them, a class its fork copied too", async () => {
+      // Editing an inherited class in a fork copies it there: the character's levels still name the source's, which the
+      // engine reads as the copy's (#242)
+      const ctx = await getSeedCtx();
+      const fork = await createSeededTestRuleset(SEED_USER_ID);
+      const characterId = await createSeedCharacter(ctx, "fighter", {
+        rulesetId: fork.id,
+        fields: { [CHARACTER_XP]: 10000 },
+      });
+      await addClassLevels(db, ctx, characterId, "Wizard", [1, 2], [4, 4]);
+      const wizard = ctx.classMap.pc["Wizard"];
+      await EntitiesService.updateEntity(session, fork.id, "classes", wizard, { name: "Wizard", description: "Ours" });
+
+      const firstPage = rowsOf(
+        await getStepOptions(session, characterId, "class-plan", { steps: {} }, {}, { limit: 3, page: 1 }),
+        false,
+      );
+      expect(firstPage[0]).toMatchObject({ name: "Wizard", track: { next: 3 } });
+      expect(firstPage[0].id).not.toBe(wizard);
+    });
+
     test("counts any feat of a family a class requires, and only those", async () => {
       const ctx = await getSeedCtx();
       const fork = await createSeededTestRuleset(SEED_USER_ID);

@@ -3,7 +3,6 @@ import type { PgInsertValue } from "drizzle-orm/pg-core";
 
 import type { Db } from "@/drizzle/database.ts";
 import {
-  advancementsInCharacter,
   entitiesInRules,
   entityFieldsInRules,
   entityLinksInRules,
@@ -57,12 +56,12 @@ interface PageBounds {
 export interface EntityListWhere extends EntityFilters {
   childOnly?: boolean;
   entityType: string;
+  /** The entities listed first, in their order (a tracks picker's, `TrackFilters`), the others after them by name. */
+  firstIds?: readonly string[];
   hiddenIds?: string[];
   ids?: string[];
   linkedBy?: { fromType: string; role: string };
   orderBy?: "createdAt" | "name" | "updatedAt";
-  /** A character's (its id): the kind's entities first by the highest of theirs it advanced in (a class's levels) */
-  orderByAdvancementsOf?: string;
   orderDir?: "asc" | "desc";
   rulesetId: string;
   search?: string;
@@ -217,19 +216,15 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     return found && held ? or(found, held)! : found;
   }
 
-  /** The order of a list by a character's advancements: its entities whose owned ones it advanced in highest first. */
-  private orderByAdvancements(characterId: string): SQL[] {
+  /** The order of a list that lists some of its entities first (`firstIds`), in their order, then the others by name. */
+  private orderFirst(firstIds: readonly string[]): SQL[] {
+    const ids = sql.join(
+      firstIds.map((id) => sql`${id}`),
+      sql`, `,
+    );
+    // The others' position is null, which an ascending order puts last
     return [
-      this.orderBy(
-        sql`COALESCE((
-          SELECT MAX(owned.position)
-          FROM ${entitiesInRules} owned
-          JOIN ${advancementsInCharacter} ON ${advancementsInCharacter.entryId} = owned.id
-          WHERE owned.owner_id = "rules"."entities"."id"
-          AND ${advancementsInCharacter.characterId} = ${characterId}
-        ), 0)`,
-        "desc",
-      ),
+      this.orderBy(sql`array_position(ARRAY[${ids}]::uuid[], ${entitiesInRules.id})`),
       this.orderBy(entitiesInRules.name),
     ];
   }
@@ -662,8 +657,8 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
         sql`${entitiesInRules.id} IN (SELECT ${entityLinksInRules.toId} FROM ${entityLinksInRules} WHERE ${and(eq(entityLinksInRules.role, linkedBy.role), eq(entityLinksInRules.fromType, linkedBy.fromType), eq(entityLinksInRules.toType, where.entityType))})`,
       ...StoredEntities.buildValueConditions(where),
     ];
-    const order = where.orderByAdvancementsOf
-      ? this.orderByAdvancements(where.orderByAdvancementsOf)
+    const order = where.firstIds?.length
+      ? this.orderFirst(where.firstIds)
       : [this.searchOrderBy(search, SEARCH_COLUMNS, this.orderBy(entitiesInRules[orderBy], orderDir))];
     return await this.withPagination(
       pagination,
