@@ -1,7 +1,7 @@
-import { and, count, countDistinct, eq, inArray, type InferInsertModel, isNull, not, sql } from "drizzle-orm";
+import { and, count, countDistinct, eq, inArray, type InferInsertModel, isNull, not, or, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { campaignsInCampaign, playersInCampaign, rulesetsInRules } from "@/drizzle/schema.ts";
+import { campaignsInCampaign, invitesInCampaign, playersInCampaign, rulesetsInRules } from "@/drizzle/schema.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { Paginates, type Pagination } from "@/server/repositories/concerns/Paginates.ts";
@@ -149,19 +149,25 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
   }
 
   /**
-   * Locks the campaigns a user holds a live seat in (`userId`) until the transaction ends, by id: an account's
-   * deletion, which archives its seats, waits on their campaigns' writes, after its rulesets and before its characters,
-   * as every write that locks several takes them, and never on one in a cycle.
+   * Locks the campaigns a user holds a live seat or a live invite in (`userId`) until the transaction ends, by id: an
+   * account's deletion, which archives its seats and its invites, waits on their campaigns' writes (an invite's
+   * acceptance among them), after its rulesets and before its characters, as every write that locks several takes
+   * them, and never on one in a cycle.
    */
   async lockMany(db: Db, where: { userId: string }) {
     const seats = db
       .select({ campaignId: playersInCampaign.campaignId })
       .from(playersInCampaign)
       .where(and(eq(playersInCampaign.userId, where.userId), isNull(playersInCampaign.deletedAt)));
+    const invited = db
+      .select({ campaignId: playersInCampaign.campaignId })
+      .from(invitesInCampaign)
+      .innerJoin(playersInCampaign, eq(playersInCampaign.id, invitesInCampaign.playerId))
+      .where(and(eq(invitesInCampaign.userId, where.userId), isNull(invitesInCampaign.deletedAt)));
     await db
       .select({ id: this.table.id })
       .from(this.table)
-      .where(inArray(this.table.id, seats))
+      .where(or(inArray(this.table.id, seats), inArray(this.table.id, invited)))
       .orderBy(this.table.id)
       .for("no key update");
   }

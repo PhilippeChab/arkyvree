@@ -183,9 +183,10 @@ class CampaignCharactersService {
     return await withCampaignWrite(session, campaignId, async (tx, { campaign, policy }) => {
       const player = policy.canLinkCharacter();
 
-      // The character's row shared, after its campaign's (as every write that locks both takes them): its writes, its
-      // delete among them, which asks whether it's in a campaign, wait for the link
-      const character = (await Characters.lock(tx, { id: characterId }, "share"))
+      // The character's row, after its campaign's (as every write that locks both takes them): its writes, its delete
+      // among them, which asks whether it's in a campaign, and its link to another campaign wait for the link, so a
+      // second link sees the first
+      const character = (await Characters.lock(tx, { id: characterId }, "no key update"))
         ? await Characters.findOne(tx, { id: characterId })
         : undefined;
       if (!character) throw new NotFoundError("Character not found");

@@ -1,8 +1,8 @@
 import type { Db } from "@/drizzle/database.ts";
 import { NotFoundError } from "@/server/errors/index.ts";
-import { Campaigns, Invites, Players, Rulesets, Visibility } from "@/server/repositories/index.ts";
+import { Campaigns, Invites, Players, Rulesets, Users, Visibility } from "@/server/repositories/index.ts";
 import type { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { getReadableRuleset, withBoundedWrite } from "@/server/services/rulesets/index.ts";
+import { BUSY_RULESET_MESSAGE, getReadableRuleset, withBoundedWrite } from "@/server/services/rulesets/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
 import { getReadableCampaign } from "./readableCampaign.ts";
@@ -11,17 +11,20 @@ import { getReadableCampaign } from "./readableCampaign.ts";
 export const BUSY_CAMPAIGN_MESSAGE = "The campaign is being changed by another save; try again";
 
 /**
- * Runs the creation of a campaign in a ruleset (`rulesetId`): the ruleset's row locked shared, so no write of its own
- * row (its archive, its status) runs meanwhile, then the session's policy on it, if it may read it
- * (`getReadableRuleset`, the 404 an unknown ruleset gets otherwise). Rulesets are locked before campaigns, and campaigns
- * before characters, as every write that locks several takes them.
+ * Runs the creation of a campaign in a ruleset (`rulesetId`): its creator's row locked shared, so an account's
+ * deletion, which locks it first, waits for the seat it makes or makes it wait; then the ruleset's row shared, so no
+ * write of its own row (its archive, its status) runs meanwhile; then the session's policy on it, if it may read it
+ * (`getReadableRuleset`, the 404 an unknown ruleset gets otherwise). Users lock before rulesets, rulesets before
+ * campaigns, and campaigns before characters, as every write that locks several takes them. A creation that waited on
+ * the ruleset past the lock wait is refused as its write is (`BUSY_RULESET_MESSAGE`).
  */
 export async function withCampaignCreate<T>(
   session: Session,
   rulesetId: string,
   write: (tx: Db, policy: RulesetsPolicy) => Promise<T>,
 ): Promise<T> {
-  return await withBoundedWrite(BUSY_CAMPAIGN_MESSAGE, async (tx) => {
+  return await withBoundedWrite(BUSY_RULESET_MESSAGE, async (tx) => {
+    await Users.lock(tx, { id: session.userId }, "share");
     if (!(await Rulesets.lock(tx, { id: rulesetId }, "share"))) throw new NotFoundError("Ruleset not found");
     return await write(tx, (await getReadableRuleset(tx, session, rulesetId)).policy);
   });
@@ -49,15 +52,15 @@ export async function withCampaignWrite<T>(
 
 /**
  * Runs a write of an invite (`inviteId`) under its campaign's lock, which decides the session's rights itself (an
- * invitee's answer, by a session that may not read the campaign yet): an unknown invite refused as not found (`notFound`).
- * An invite's seat, and a seat's campaign, never change, so they're read before the lock.
+ * invitee's answer, by a session that may not read the campaign yet): an unknown invite refused as not found. An
+ * invite's seat, and a seat's campaign, never change, so they're read before the lock.
  */
-export async function withInviteCampaign<T>(inviteId: string, notFound: string, write: (tx: Db) => Promise<T>) {
+export async function withInviteCampaign<T>(inviteId: string, write: (tx: Db) => Promise<T>): Promise<T> {
   return await withBoundedWrite(BUSY_CAMPAIGN_MESSAGE, async (tx) => {
     const invite = await Invites.findOne(tx, { id: inviteId });
     const player = invite && (await Players.findOne(tx, { id: invite.playerId }, Visibility.All));
     if (!player || !(await Campaigns.lock(tx, { id: player.campaignId, visibility: Visibility.All }, "no key update")))
-      throw new NotFoundError(notFound);
+      throw new NotFoundError("Invite not found");
     return await write(tx);
   });
 }

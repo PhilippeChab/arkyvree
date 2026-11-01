@@ -69,9 +69,11 @@ class AccountService {
     }
 
     return await withTransaction(async (tx) => {
-      // Its rulesets, then the campaigns it holds a seat in, then its characters, masters first, locked as their writes
-      // lock them, before anything writes them (an attachment's purge touches its character's row): it waits on their
-      // writes, never on one in a cycle
+      // Its own row, then its rulesets, then the campaigns it holds a seat or an invite in, then its characters,
+      // masters first, locked as their writes lock them, before anything writes them (an attachment's purge touches
+      // its character's row): it waits on their writes (a campaign it creates meanwhile, an invite it accepts), never
+      // on one in a cycle
+      await Users.lock(tx, { id: userId }, "no key update");
       await Rulesets.orphan(tx, { userId });
       await Campaigns.lockMany(tx, { userId });
       const characterIds = await Characters.lockMany(tx, { userId });

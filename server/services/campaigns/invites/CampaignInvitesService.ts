@@ -34,7 +34,7 @@ class CampaignInvitesService {
 
   /** Accepts the invite: its answer names the campaign joined, whose data its client refreshes. */
   async acceptInvite(session: Session, inviteId: string) {
-    return await withInviteCampaign(inviteId, "Invite not found", async (tx) => {
+    return await withInviteCampaign(inviteId, async (tx) => {
       const invite = await getPendingInvite(tx, session, Invites, inviteId, "Invite not found");
       const campaign = await this.getInviteCampaign(tx, invite);
       (await CampaignsPolicy.for(tx, session, campaign)).canAcceptInvite();
@@ -75,14 +75,14 @@ class CampaignInvitesService {
   }
 
   async rejectInvite(session: Session, inviteId: string) {
-    return await withInviteCampaign(inviteId, "Invite not found", async (tx) => {
+    return await withInviteCampaign(inviteId, async (tx) => {
       const invite = await getPendingInvite(tx, session, Invites, inviteId, "Invite not found");
       return await this.answerInvite(tx, session, invite, "Rejected");
     });
   }
 
   async revokeInvite(session: Session, inviteId: string) {
-    return await withInviteCampaign(inviteId, "Invite not found", async (tx) => {
+    return await withInviteCampaign(inviteId, async (tx) => {
       // Whoever may not read its campaign gets the answer an unknown invite gets, before any other check: its slot is
       // read archived or not (a slot is archived with its user's account, its rejected invite left behind)
       const invite = await Invites.findOne(tx, { id: inviteId });

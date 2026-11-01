@@ -134,7 +134,7 @@ const LOCKED_WRITES = [
     helpers: "server/services/campaigns/campaignWrites.ts",
     others: [],
     message:
-      "A campaign's write opens its transaction through its helper (`withCampaignWrite`, `withInviteCampaign`, `withCampaignCreate` from `campaignWrites.ts`), which locks the campaign (or, for a new one, its ruleset) before it reads anything: not `withTransaction`.",
+      "A campaign's write opens its transaction through its helper (`withCampaignWrite`, `withInviteCampaign`, `withCampaignCreate` from `campaignWrites.ts`), which locks the campaign (or, for a new one, its ruleset) before it reads the rows it writes: not `withTransaction`.",
   },
 ];
 
