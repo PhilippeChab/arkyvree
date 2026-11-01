@@ -6,6 +6,12 @@ import { CharactersPolicy, isAllowed } from "@/server/services/policies/index.ts
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Character, Session } from "@/shared/relations.ts";
 
+/** The campaign `campaignId` the user may read, if the character is linked to it; none otherwise. */
+async function findLinkedCampaign(userId: string, characterId: string, campaignId: string) {
+  if (!(await PlayerCharacters.findOne(db, { characterId, campaignId }))) return undefined;
+  return await findReadableCampaign(db, { userId }, campaignId);
+}
+
 /**
  * Where a PDF export's activity and failure notification link to: the
  * character page, or for an export requested from a campaign the campaign
@@ -52,12 +58,15 @@ export async function enqueueCharacterPdf(
  * honored.
  */
 export async function findExportableCharacter(userId: string, characterId: string, campaignId?: string) {
+  // Through a campaign, its link and the campaign come first, so a non-member gets no further
+  const readable = campaignId && (await findLinkedCampaign(userId, characterId, campaignId));
+  if (campaignId && !readable) return null;
+
   const character = await Characters.findOne(db, { id: characterId });
   if (!character) return null;
   const policy = await CharactersPolicy.for(db, { userId }, character);
-  if (!campaignId) return isAllowed(() => policy.canExport()) ? character : null;
-
-  if (!(await PlayerCharacters.findOne(db, { characterId, campaignId }))) return null;
-  const readable = await findReadableCampaign(db, { userId }, campaignId);
-  return readable && isAllowed(() => readable.policy.canExportCharacter(policy)) ? character : null;
+  const allowed = readable
+    ? isAllowed(() => readable.policy.canExportCharacter(policy))
+    : isAllowed(() => policy.canExport());
+  return allowed ? character : null;
 }
