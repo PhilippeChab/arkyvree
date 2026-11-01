@@ -91,16 +91,28 @@ describe("CampaignInvitesService", () => {
       const pending = await CampaignInvitesService.getInvite(invitee.session, invite.id);
       expect(pending.status).toBe("Pending");
       expect(pending.playersInCampaign?.campaignsInCampaign?.name).toBe(campaign.name);
+      expect(pending.canAccept).toBe(true);
 
       await CampaignInvitesService.acceptInvite(invitee.session, invite.id);
       expect((await CampaignInvitesService.getInvite(invitee.session, invite.id)).status).toBe("Accepted");
     });
 
-    test("shows the campaign as archived through its deletedAt", async () => {
+    test("answers that an archived campaign's invite can't be accepted, as its policy says", async () => {
       const { invitee, campaign, invite } = await setup();
       await Campaigns.archive(db, { id: campaign.id });
       const fetched = await CampaignInvitesService.getInvite(invitee.session, invite.id);
       expect(fetched.playersInCampaign?.campaignsInCampaign?.deletedAt).not.toBeNull();
+      expect(fetched.canAccept).toBe(false);
+    });
+
+    test("still answers a rejected invite once its seat is archived with a later player's account", async () => {
+      const { gmSession, invitee, slot, invite } = await setup();
+      await CampaignInvitesService.rejectInvite(invitee.session, invite.id);
+      const later = await createTestUser("later");
+      const laterInvite = await inviteToSlot(gmSession, slot, later.user.emailAddress);
+      await CampaignInvitesService.acceptInvite(later.session, laterInvite.id);
+      await Players.archive(db, { userId: later.user.id });
+      expect(await CampaignInvitesService.getInvite(invitee.session, invite.id)).toMatchObject({ status: "Rejected" });
     });
 
     test("hides the invite from anyone else", async () => {
