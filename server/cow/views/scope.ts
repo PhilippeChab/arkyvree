@@ -6,6 +6,16 @@ import { Rulesets } from "@/server/repositories/index.ts";
 import RulesetViews from "./RulesetViews.ts";
 
 /**
+ * A ruleset's scope as a write holds it, under its lock (`withLockedRulesetScope`): the ruleset's row locked, its
+ * source chain's shared, its view fresh, read at the content versions its locks read (`versions`, committed: the
+ * ruleset's own before the write). Only `withLockedRulesetScope` makes one: copy-on-write's writes take nothing else.
+ */
+export interface LockedRulesetScope extends RulesetScope {
+  readonly [LOCKED]: true;
+  versions: ReadonlyMap<string, number>;
+}
+
+/**
  * A ruleset, its sources and its view: what `withRulesetScope` hands its callback, and what an effect of the ruleset
  * runs in.
  */
@@ -15,12 +25,44 @@ export interface RulesetScope {
   sources: RulesetSources;
 }
 
+/** What only a locked scope holds: no other value has it, so no scope reads as locked but one its lock made. */
+declare const LOCKED: unique symbol;
+
 /** A ruleset's scope (`RulesetScope`), by its id, or none when it doesn't exist. */
 async function readRulesetScope(tx: Db, rulesetId: string): Promise<RulesetScope | undefined> {
   const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
   const sources = await Rulesets.findSources(tx, { id: rulesetId });
   if (!ruleset || !sources) return undefined;
   return { ruleset, rulesetData: await RulesetViews.getData(sources, ruleset.baseRules), sources };
+}
+
+/**
+ * Runs `fn` in a ruleset's scope as a write holds it (`LockedRulesetScope`), in the write's transaction (`tx`), its
+ * locks taken before it reads anything of the ruleset: the ruleset's row first, its content version bumped
+ * (`Rulesets.lockContent`), then its row, its sources and its source chain's rows, shared, in the order every lock of
+ * several takes (`Rulesets.lockVersions`), then its view, fresh at the versions they read (`RulesetViews.getFreshData`).
+ * Its chain can't change while it holds them: only a write of the ruleset subscribes it. What else it reads of other
+ * rulesets (`reads`: the extensions a subscribe adds) is locked with its chain, alike. Refuses a missing ruleset
+ * (`NotFoundError`). The locks end with the transaction.
+ */
+export async function withLockedRulesetScope<T>(
+  tx: Db,
+  rulesetId: string,
+  fn: (scope: LockedRulesetScope) => Promise<T>,
+  reads: readonly string[] = [],
+): Promise<T> {
+  const committed = await Rulesets.lockContent(tx, { id: rulesetId });
+  const ruleset = committed === undefined ? undefined : await Rulesets.findOne(tx, { id: rulesetId });
+  const sources = ruleset && (await Rulesets.findSources(tx, { id: rulesetId }));
+  if (committed === undefined || !ruleset || !sources) throw new NotFoundError("Ruleset not found");
+  const chain = await Rulesets.lockVersions(
+    tx,
+    { ids: [...new Set([...sources.extensionIds, ...(sources.parentId ? [sources.parentId] : []), ...reads])] },
+    "share",
+  );
+  const versions = new Map([[rulesetId, committed], ...chain]);
+  const rulesetData = await RulesetViews.getFreshData(tx, sources, ruleset.baseRules, versions);
+  return await fn({ ruleset, rulesetData, sources, versions } as unknown as LockedRulesetScope);
 }
 
 /**

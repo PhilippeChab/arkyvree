@@ -393,6 +393,8 @@ test("installing another extension preserves the local override and exposes unre
     name: "Unrelated extension feat",
     rulesetId: loserRulesetId,
   });
+  // As its write's commit drops it
+  invalidateTestRulesets(loserRulesetId);
   await RulesetExtensionsService.subscribeExtension(session, host.id, [loserRulesetId]);
   await withRulesetScope(db, host.id, async ({ rulesetData }) => {
     expect(holds(viewValuesOf(rulesetData, local.id))).toBe(false);

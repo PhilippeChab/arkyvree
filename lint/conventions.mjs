@@ -34,7 +34,11 @@
  *   transaction's handle, `tx` (`withTransaction(async (tx) => …)`), never the shared `db`: a write is atomic with the
  *   rest of its request, and a lock holds until its transaction ends. A transaction's queries run one at a time, on its
  *   one connection: never in a `Promise.all` (`tx`, or a handle the function is given, which may be a transaction), nor,
- *   in a test, over its `db`, which is the test's transaction (`tests/setup.ts`), and which it writes through.
+ *   in a test, over its `db`, which is the test's transaction (`tests/setup.ts`), and which it writes through. A
+ *   ruleset's write opens its transaction through its aggregate's helper alone (`server/services/rulesets/
+ *   rulesetWrites.ts`: `withRulesetWrite`, `withLockedRuleset`, `withRulesetLock`), which locks the ruleset before it
+ *   reads anything: no other module of `server/services/rulesets/` calls `withTransaction`, but one that writes none of a
+ *   ruleset's rows (its stars, its users' own).
  * - `empty-list-reads`: an empty list never reaches the database, and is checked in one place: the repository. A read
  *   method filtering on a list of `where` (`inArray(column, where.ids)`, outside an `or`) answers an empty one without a
  *   query (`if (where.ids.length === 0) return [];` first), and its callers read without checking: no
@@ -95,6 +99,21 @@ const INPUT_NAMES = { param: /Params?$/, json: /Body$/, query: /Query$/ };
 
 /** The variable a handler reads a whole input into: it destructures params, and an input it reads field by field. */
 const INPUT_VARIABLES = { json: "body", query: "query" };
+/**
+ * The aggregates whose writes open their transaction through their helper alone (`folder`: their services; `helpers`:
+ * the module that holds the helpers, which lock the aggregate first): no other module of the folder calls
+ * `withTransaction`, but those that write none of the aggregate's rows (`others`: a ruleset's stars, its users' own).
+ */
+const LOCKED_WRITES = [
+  {
+    folder: "server/services/rulesets/",
+    helpers: "server/services/rulesets/rulesetWrites.ts",
+    others: ["server/services/rulesets/concerns/Stars.ts"],
+    message:
+      "A ruleset's write opens its transaction through its helper (`withRulesetWrite`, `withLockedRuleset`, `withRulesetLock` from `rulesetWrites.ts`), which locks the ruleset before it reads anything: not `withTransaction`.",
+  },
+];
+
 const METHOD_VERBS = JSON.parse(
   fs.readFileSync(new URL("../server/repositories/methodVerbs.json", import.meta.url), "utf8"),
 );
@@ -961,6 +980,9 @@ function createTestPlacement(context) {
 
 function createWritesInTransactions(context) {
   const file = repoPath(context.filename);
+  const locked = LOCKED_WRITES.find(
+    ({ folder, helpers, others }) => file.startsWith(folder) && file !== helpers && !others.includes(file),
+  );
   // A test's `db` is its own transaction (`tests/setup.ts`), which it writes through; an e2e test holds none
   const inTest = file.startsWith("tests/") && !file.startsWith("tests/e2e/");
   if (!inTest && (!file.startsWith("server/") || /^server\/(repositories|database)\//.test(file))) return {};
@@ -975,6 +997,8 @@ function createWritesInTransactions(context) {
     },
     CallExpression(node) {
       const callee = node.callee;
+      if (locked && callee.type === "Identifier" && callee.name === "withTransaction")
+        context.report({ node, message: locked.message });
       if (callee.type !== "MemberExpression" || callee.object.type !== "Identifier") return;
       if (callee.object.name === "Promise" && CONCURRENT.has(callee.property.name) && node.arguments[0]) {
         const onTransaction = [...callsIn(node.arguments[0])].some((call) => {

@@ -50,14 +50,20 @@ type RulesetScope =
   | "systems"
   | "contributedTo";
 
+/** The rulesets' columns, but their content version, which only a write's lock reads (`lockContent`). */
+const { contentVersion: _contentVersion, ...ROW_COLUMNS } = getTableColumns(rulesetsInRules);
+
+/**
+ * The order rulesets are locked in, whatever locks several: a fork before an extension, an extension before a base
+ * (the tiers its source chain climbs, no ruleset waiting on one below it), then by id. A write locks its own ruleset,
+ * then its chain's, so two writes never wait on each other in a cycle.
+ */
+const LOCK_ORDER = sql`CASE WHEN ${rulesetsInRules.rulesetId} IS NULL THEN 2 WHEN ${rulesetsInRules.kind} = 'extension' THEN 1 ELSE 0 END, ${rulesetsInRules.id}`;
 /**
  * A ruleset's row as every read and write of it answers it: its columns, its base rules a registered module's (its
  * foreign key to `rules.modules`, whose rows `BASE_RULES_OPTIONS` lists).
  */
-const RULESET_COLUMNS = {
-  ...getTableColumns(rulesetsInRules),
-  baseRules: sql<BaseRules>`${rulesetsInRules.baseRules}`,
-};
+const RULESET_COLUMNS = { ...ROW_COLUMNS, baseRules: sql<BaseRules>`${rulesetsInRules.baseRules}` };
 
 /** A ruleset's live `ruleset_extensions` rows (`rulesetsInRules`' row's): the extensions it subscribes to. */
 const SUBSCRIBED = and(
@@ -333,8 +339,62 @@ class RulesetsRepository extends include(
     return row;
   }
 
-  /** Leaves a user's rulesets without an owner, when the user deletes their account. */
+  /**
+   * Rulesets' content versions, by id, of those that exist: what a view read of them is tagged with, read before its
+   * rows (`RulesetViews`), so a write committed between the two reads makes the tag older than its rows, never newer.
+   */
+  async findVersions(db: Db, where: { ids: string[] }): Promise<Map<string, number>> {
+    if (where.ids.length === 0) return new Map();
+    const rows = await db
+      .select({ contentVersion: this.table.contentVersion, id: this.table.id })
+      .from(this.table)
+      .where(inArray(this.table.id, where.ids));
+    return new Map(rows.map((row) => [row.id, row.contentVersion]));
+  }
+
+  /**
+   * Takes a ruleset's write lock, before a write reads anything of it: its row locked until the transaction ends, and
+   * its content version bumped, which tells the views read of it before from its rows once written (its updated time,
+   * a form's save's check, left as it is). The version committed before the write, none for a ruleset that doesn't
+   * exist.
+   */
+  async lockContent(db: Db, where: { id: string }): Promise<number | undefined> {
+    const [row] = await db
+      .update(this.table)
+      .set({ contentVersion: sql`${this.table.contentVersion} + 1` })
+      .where(eq(this.table.id, where.id))
+      .returning({ contentVersion: this.table.contentVersion });
+    return row && row.contentVersion - 1;
+  }
+
+  /**
+   * Locks rulesets a write reads (`ids`: its source chain, the extensions it subscribes to) until its transaction ends,
+   * in the order every lock of several takes (`LOCK_ORDER`): shared, so a write to each waits, or each of a user's for
+   * a write (an account's deletion). Their content versions, by id, of those that exist.
+   */
+  async lockVersions(db: Db, where: { ids: string[] }, mode: "no key update" | "share"): Promise<Map<string, number>> {
+    if (where.ids.length === 0) return new Map();
+    const rows = await db
+      .select({ contentVersion: this.table.contentVersion, id: this.table.id })
+      .from(this.table)
+      .where(inArray(this.table.id, where.ids))
+      .orderBy(LOCK_ORDER)
+      .for(mode);
+    return new Map(rows.map((row) => [row.id, row.contentVersion]));
+  }
+
+  /**
+   * Leaves a user's rulesets without an owner, when the user deletes their account: each locked first, in the order
+   * every lock of several takes (`LOCK_ORDER`), so it waits on their writes, which an owner's rights let through, and
+   * never on one in a cycle.
+   */
   async orphan(db: Db, where: { userId: string }) {
+    await db
+      .select({ id: this.table.id })
+      .from(this.table)
+      .where(eq(this.table.userId, where.userId))
+      .orderBy(LOCK_ORDER)
+      .for("no key update");
     return await db
       .update(this.table)
       .set({ userId: null, updatedAt: new Date().toISOString() })

@@ -1,12 +1,12 @@
 import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { EntityEdit, EntityUses, RulesetViews } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { EntityEdit, EntityUses } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { EntityLinks, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
-import EntityWriter from "@/server/services/rulesets/entities/EntityWriter.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
+import { withRulesetWrite } from "@/server/services/rulesets/rulesetWrites.ts";
 import { getActivityName } from "@/shared/activity.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -28,31 +28,22 @@ export function Links<B extends Constructor>(Base: B) {
       ownerId: string,
       targetId: string,
     ) {
-      const result = await withTransaction(
-        async (tx) =>
-          await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
-            const { ruleset, rulesetData, sources } = scope;
+      return await withRulesetWrite(session, rulesetId, async (tx, scope, policy) => {
+        policy.canUpdateEntity();
+        const plan = Engine.for(scope).links(type, ownerId).planAdd(targetId);
+        const { id: fromId } = await new EntityEdit(scope).cowToEdit(tx, type, plan.owner);
+        const [link] = await EntityLinks.createMany(tx, [{ ...plan.link, fromId, fromType: type }]);
 
-            policy.canUpdateEntity();
-            const plan = Engine.for(scope).links(type, ownerId).planAdd(targetId);
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: fromId,
+          targetType: plan.link.role,
+          type: `add${getActivityName(plan.link.role)}`,
+          data: plan.activity,
+        });
 
-            const { gone } = EntityWriter.getNotFound(ruleset, type);
-            const { id: fromId } = await new EntityEdit(sources, rulesetData.cow).cowToEdit(tx, type, plan.owner, gone);
-            const [link] = await EntityLinks.createMany(tx, [{ ...plan.link, fromId, fromType: type }]);
-
-            await createActivityWithNotifications(tx, {
-              userId: session.userId,
-              targetId: fromId,
-              targetType: plan.link.role,
-              type: `add${getActivityName(plan.link.role)}`,
-              data: plan.activity,
-            });
-
-            return link;
-          }),
-      );
-      RulesetViews.invalidate(rulesetId);
-      return result;
+        return link;
+      });
     }
 
     /** The links an entity edits (`ownerId`), each with its target. */
@@ -74,34 +65,25 @@ export function Links<B extends Constructor>(Base: B) {
       ownerId: string,
       targetId: string,
     ) {
-      const result = await withTransaction(
-        async (tx) =>
-          await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
-            const { ruleset, rulesetData, sources } = scope;
+      return await withRulesetWrite(session, rulesetId, async (tx, scope, policy) => {
+        const inUse = await new EntityUses(scope).isPicked(tx, type, ownerId);
+        policy.canDeleteEntity({ inUse });
+        const plan = Engine.for(scope).links(type, ownerId).planRemove(targetId);
+        const { id: fromId } = await new EntityEdit(scope).cowToEdit(tx, type, plan.owner);
+        const [link] = await EntityLinks.delete(tx, { fromId, role: plan.role, toId: plan.toId });
+        // Another removal took it since the view was read
+        if (!link) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
-            const inUse = await new EntityUses(sources, rulesetData.cow).isPicked(tx, type, ownerId);
-            policy.canDeleteEntity({ inUse });
-            const plan = Engine.for(scope).links(type, ownerId).planRemove(targetId);
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: fromId,
+          targetType: plan.role,
+          type: `remove${getActivityName(plan.role)}`,
+          data: plan.activity,
+        });
 
-            const { gone } = EntityWriter.getNotFound(ruleset, type);
-            const { id: fromId } = await new EntityEdit(sources, rulesetData.cow).cowToEdit(tx, type, plan.owner, gone);
-            const [link] = await EntityLinks.delete(tx, { fromId, role: plan.role, toId: plan.toId });
-            // Another removal took it since the view was read
-            if (!link) throw new ConflictError(STALE_ENTITY_MESSAGE);
-
-            await createActivityWithNotifications(tx, {
-              userId: session.userId,
-              targetId: fromId,
-              targetType: plan.role,
-              type: `remove${getActivityName(plan.role)}`,
-              data: plan.activity,
-            });
-
-            return link;
-          }),
-      );
-      RulesetViews.invalidate(rulesetId);
-      return result;
+        return link;
+      });
     }
   }
   return WithLinks;

@@ -1,23 +1,17 @@
-import { afterAll, afterEach, expect, test } from "bun:test";
+import { afterEach, expect, test } from "bun:test";
 
 import type { Feat } from "@/engine/rulesets/dnd3.5/index.ts";
-import { EntityEdit, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
-import { GONE_CUSTOMIZATION } from "@/server/cow/writes/EditTarget.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
 import { Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
 import { RequirementsService } from "@/server/services/rulesets/customization/requirements/index.ts";
-import { runWhileLocked } from "@/tests/support/database.ts";
-import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
-import { getSeedCtx } from "@/tests/support/seed.ts";
+import { bumpContentVersion, createSeededTestRuleset } from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 
-const pool = createTestPool();
-
 /**
- * The composed ruleset data a request reads can predate a concurrent delete (for example one that committed while this
- * request waited on the owner lock). Every customization kind re-reads its row after the lock and reports it missing.
+ * A feat's modifier and requirement, the ruleset's view cached, then both removed by another write (its content version
+ * bumped, as its lock leaves it): what a client that read them before sends.
  */
 async function setupRemovedCustomizations() {
   const session = makeSession();
@@ -40,41 +34,11 @@ async function setupRemovedCustomizations() {
   await withRulesetScope(db, ruleset.id, async () => {});
   await Modifiers.delete(db, { ids: [modifier.id] });
   await Requirements.delete(db, { ids: [requirement.id] });
+  await bumpContentVersion(ruleset.id);
   return { session, rulesetId: ruleset.id, featId: feat.id, modifier, requirement };
 }
-afterAll(() => pool.end());
 afterEach(() => RulesetViews.invalidateAll());
-test("owner mutation waits for a competing transaction and acquires the row after rollback", async () => {
-  const seed = await getSeedCtx();
-  await runWhileLocked(
-    pool,
-    async (blockerDb) => expect(await Entities.lock(blockerDb, { id: seed.featMap.Toughness })).toBe(true),
-    () => EntityEdit.lock(db, seed.featMap.Toughness, GONE_CUSTOMIZATION),
-  );
-});
-
-test("owner locks leave other entities independent and shared copy reads compatible", async () => {
-  const seed = await getSeedCtx();
-  const otherId = Object.values(seed.featMap).find((id) => id !== seed.featMap.Toughness)!;
-  await EntityEdit.lock(db, seed.featMap.Toughness, GONE_CUSTOMIZATION);
-  expect(await Entities.lock(db, { id: otherId }, "share")).toBe(true);
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    await client.query("SET LOCAL lock_timeout = '500ms'");
-    const other = createTestDbFromClient(client);
-    expect(await Entities.lock(other, { id: otherId }, "share")).toBe(true);
-  } finally {
-    await client.query("ROLLBACK");
-    client.release();
-  }
-});
-
-test("a missing owner is rejected before customization writes", async () => {
-  expect(EntityEdit.lock(db, crypto.randomUUID(), GONE_CUSTOMIZATION)).rejects.toThrow(GONE_CUSTOMIZATION);
-});
-
-test("every customization kind reports a row removed before the owner lock as missing", async () => {
+test("every customization kind refuses one another write removed as missing", async () => {
   const { session, rulesetId, featId, modifier, requirement } = await setupRemovedCustomizations();
   const mutations = [
     () =>
@@ -87,5 +51,6 @@ test("every customization kind reports a row removed before the owner lock as mi
     () => RequirementsService.updateRequirement(session, rulesetId, "feats", featId, requirement.id, { level: "1" }),
     () => RequirementsService.deleteRequirement(session, rulesetId, "feats", featId, requirement.id),
   ];
-  for (const mutate of mutations) expect(mutate()).rejects.toThrow("no longer exists");
+  // The view shows neither: the engine refuses each as not found
+  for (const mutate of mutations) expect(mutate()).rejects.toMatchObject({ refusal: "not-found" });
 });

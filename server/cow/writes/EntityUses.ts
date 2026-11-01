@@ -1,18 +1,26 @@
 import type { Db } from "@/drizzle/database.ts";
 import type { CowData, RulesetSources } from "@/engine/index.ts";
+import type { LockedRulesetScope } from "@/server/cow/views/scope.ts";
 import { Entities, EntityLinks, EntityReferences, type ReferencedType } from "@/server/repositories/index.ts";
 
 /**
- * What keeps a ruleset's entity in use, in its scope (`new EntityUses(ruleset, rulesetData.cow)`), across the rulesets
+ * What keeps a ruleset's entity in use, in its scope (`new EntityUses(scope)`, a write's, under its lock), across the rulesets
  * built on it: the guard of what would hard-delete one (an entity's delete, an owned entity's, a link's removal, an
  * entity a save removes). Its copy-on-write data gives it an entity's equivalents in the view: a pick stored before
  * the entity was copied names its source.
  */
 export default class EntityUses {
-  constructor(
-    private readonly ruleset: RulesetSources,
-    private readonly cow: CowData,
-  ) {}
+  constructor(private readonly scope: LockedRulesetScope) {}
+
+  /** The ruleset's copy-on-write data, as its view was read under the write's lock. */
+  private get cow(): CowData {
+    return this.scope.rulesetData.cow;
+  }
+
+  /** The ruleset and its sources. */
+  private get ruleset(): RulesetSources {
+    return this.scope.sources;
+  }
 
   /**
    * Whether a character on the ruleset, or on a ruleset built on it (a fork of it, or a ruleset subscribing to it as an

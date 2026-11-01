@@ -83,6 +83,8 @@ export const LABELLED_COLUMNS: Record<string, string[]> = { "rules.rulesets": ["
 export const UNCOMPARED_COLUMNS: Record<string, string> = {
   "rules.entity_fields.ordinal": SET_ORDINAL,
   "rules.ruleset_fields.ordinal": SET_ORDINAL,
+  "rules.rulesets.content_version":
+    "how many writes took its lock, which a database's history decides, not its content",
 };
 
 /** The tables nothing compares, and why. */

@@ -1,6 +1,6 @@
 import { include } from "@/lib/mixins.ts";
-import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
-import { db, withTransaction, withUniqueRefusal } from "@/server/database/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
+import { db, withUniqueRefusal } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import {
   Activities,
@@ -19,6 +19,7 @@ import { Archives } from "./concerns/Archives.ts";
 import { Publishes } from "./concerns/Publishes.ts";
 import { Stars } from "./concerns/Stars.ts";
 import { getReadableRuleset } from "./readableRuleset.ts";
+import { withLockedRuleset, withRulesetWrite } from "./rulesetWrites.ts";
 
 /**
  * The unique index that keeps a ruleset's name its own (`drizzle/schema.ts`): across every user's rulesets, a private,
@@ -70,43 +71,47 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
   }
 
   async forkRuleset(session: Session, id: string, body: { description?: string; name: string; private: boolean }) {
-    const result = await withTransaction(async (tx) => {
-      // 1. Verify source ruleset exists and is published
-      const { policy, ruleset } = await getReadableRuleset(tx, session, id);
-      policy.canFork();
+    const result = await withLockedRuleset(
+      session,
+      id,
+      async (tx, policy, ruleset) => {
+        // 1. Verify source ruleset exists and is published
+        policy.canFork();
 
-      // 2. Create the new forked ruleset: canFork blocks forks-of-forks, so its parent is always a base
-      const newRuleset = (
-        await this.withNameRefusal(() =>
-          Rulesets.create(tx, {
-            name: body.name,
-            description: body.description || ruleset.description,
-            userId: session.userId,
-            rulesetId: id,
-            baseRules: ruleset.baseRules,
-            private: body.private,
-          }),
-        )
-      )[0];
+        // 2. Create the new forked ruleset: canFork blocks forks-of-forks, so its parent is always a base
+        const newRuleset = (
+          await this.withNameRefusal(() =>
+            Rulesets.create(tx, {
+              name: body.name,
+              description: body.description || ruleset.description,
+              userId: session.userId,
+              rulesetId: id,
+              baseRules: ruleset.baseRules,
+              private: body.private,
+            }),
+          )
+        )[0];
 
-      // The fork subscribes to its source's extensions, in their order
-      const { extensionIds } = (await Rulesets.findSources(tx, { id }))!;
-      await RulesetExtensions.upsert(tx, { rulesetId: newRuleset.id, extensionIds });
+        // The fork subscribes to its source's extensions, in their order
+        const { extensionIds } = (await Rulesets.findSources(tx, { id }))!;
+        await RulesetExtensions.upsert(tx, { rulesetId: newRuleset.id, extensionIds });
 
-      // 3. Copy the ruleset's Settings as stored (parent entity IDs, which the fork's view resolves at read time)
-      await RulesetSettings.createCopy(tx, { fromId: id, toId: newRuleset.id });
+        // 3. Copy the ruleset's Settings as stored (parent entity IDs, which the fork's view resolves at read time)
+        await RulesetSettings.createCopy(tx, { fromId: id, toId: newRuleset.id });
 
-      // 4. Log the fork activity
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: newRuleset.id,
-        targetType: TARGET_TYPES.rulesets,
-        type: "forkRuleset",
-        data: { sourceRulesetId: id },
-      });
+        // 4. Log the fork activity
+        await Activities.create(tx, {
+          userId: session.userId,
+          targetId: newRuleset.id,
+          targetType: TARGET_TYPES.rulesets,
+          type: "forkRuleset",
+          data: { sourceRulesetId: id },
+        });
 
-      return newRuleset;
-    });
+        return newRuleset;
+      },
+      "share",
+    );
 
     RulesetViews.invalidate(result.id);
     return result;
@@ -197,19 +202,16 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
     id: string,
     body: { description: string; kind?: RulesetKind; name: string; private?: boolean; updatedAt?: string },
   ) {
-    const result = await withTransaction(async (tx) => {
-      // First verify the ruleset exists
-      const { policy, ruleset } = await getReadableRuleset(tx, session, id);
+    return await withRulesetWrite(session, id, async (tx, scope, policy) => {
+      const { ruleset } = scope;
       policy.canUpdate({ private: body.private });
 
       const { kind } = body;
       if (kind && kind !== ruleset.kind) {
         // A published ruleset becomes what publishing it as `kind` would make it; a draft's content is checked when
         // it's published
-        if (ruleset.status === "Published")
-          await withRulesetScope(tx, id, async (scope) => this.checkKind(scope, policy, kind));
-        else if (kind === "extension")
-          policy.canBeExtension({ hasExtensions: (await Rulesets.findSources(tx, { id }))!.extensionIds.length > 0 });
+        if (ruleset.status === "Published") this.checkKind(scope, policy, kind);
+        else if (kind === "extension") policy.canBeExtension({ hasExtensions: scope.sources.extensionIds.length > 0 });
       }
 
       // A stale edit updates no row, so it's told it's stale before its name is checked
@@ -228,9 +230,6 @@ class RulesetsService extends include(Object, Archives, Publishes, Stars) {
 
       return updatedRuleset;
     });
-
-    RulesetViews.invalidate(id);
-    return result;
   }
 }
 

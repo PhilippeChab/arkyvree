@@ -433,17 +433,12 @@ link, or a copy's fields therefore stays effective until the override is restore
 
 Modifiers and their requirements are copied in batches, without recursive modifier queries.
 
-Customization writes hold a PostgreSQL row lock on their owning ruleset entity
-until the transaction ends. Deletion and override restoration acquire that same
-lock before removing child rows. Requirements on modifiers lock the modifier's
-owner; class levels lock their class. After waiting, sources are checked again so a
-deleted modifier or level cannot receive a new customization, and the modifier
-or requirement being edited is re-read so one deleted meanwhile is reported as
-missing (404) for both kinds, and so is a modifier a class's progression save
-drops (`EditTarget.resolveCustomizations`). Ordinary reads
-do not take these locks, and different owners can be edited independently.
-
-First COW copies retain the fork/source advisory lock and hold a shared row lock
-on the source while copying. An existing copy is locked before reuse. Modifier
+Customization writes, as every write of a ruleset's content, run under the ruleset's lock (`withRulesetWrite`): its
+row locked, its source chain's shared, its view read fresh under them, so no other write of the ruleset, nor of a
+ruleset it inherits from, runs meanwhile, and a modifier, a requirement or a level the view shows stays until the
+write ends. A modifier or requirement the client names that the view no longer shows (another write removed it) is
+refused as not found (404), for both kinds, and so is a modifier a class's progression save drops
+(`EditTarget.resolveCustomizations`). Ordinary reads take no lock, and different rulesets are edited independently.
+First COW copies run under the same lock. Modifier
 deletion removes the selected modifiers and batches removal of their requirements
 and activity records.

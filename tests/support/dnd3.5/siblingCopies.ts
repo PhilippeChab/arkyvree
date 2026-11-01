@@ -3,11 +3,11 @@ import type { RulesetSources } from "@/engine/core/cow/index.ts";
 import { type RulesetData } from "@/engine/core/view/index.ts";
 import type { KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import { EntityEdit, RulesetViews } from "@/server/cow/index.ts";
+import { EntityEdit, RulesetViews, withLockedRulesetScope } from "@/server/cow/index.ts";
 import { withTransaction } from "@/server/database/index.ts";
 import { Entities, EntityLinks, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { viewValuesOf } from "@/tests/support/ownerValues.ts";
-import { readView, sourcesOf } from "@/tests/support/rulesets.ts";
+import { readView } from "@/tests/support/rulesets.ts";
 
 type Fork = Pick<RulesetSources, "id">;
 
@@ -52,12 +52,8 @@ async function withCopy(
   check: (tx: Db, after: RulesetData, copyId: string) => Promise<void>,
 ) {
   await withTransaction(async (tx) => {
-    const { cow } = await readView(fork.id);
-    const { id: copyId } = await new EntityEdit(await sourcesOf(fork.id), cow).cowToEdit(
-      tx,
-      type,
-      { id, rulesetId: "inherited" },
-      `${type} not found`,
+    const { id: copyId } = await withLockedRulesetScope(tx, fork.id, async (scope) =>
+      new EntityEdit(scope).cowToEdit(tx, type, { id, rulesetId: "inherited" }),
     );
     RulesetViews.invalidate(fork.id);
     await check(tx, await readView(fork.id), copyId);

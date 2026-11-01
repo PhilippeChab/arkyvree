@@ -1,9 +1,10 @@
 import { Engine } from "@/engine/index.ts";
-import { CowDataReader, EntityNames, EntityRevert, RulesetChanges, RulesetViews } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { EntityNames, EntityRevert, RulesetChanges, RulesetViews } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
 import { BadRequestError } from "@/server/errors/index.ts";
 import { RULESET_ENTITY_TYPES, type RulesetEntityType, Rulesets } from "@/server/repositories/index.ts";
 import { getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
+import { withRulesetWrite } from "@/server/services/rulesets/rulesetWrites.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class RulesetChangesService {
@@ -52,19 +53,18 @@ class RulesetChangesService {
    * another entity of the parent's entity's name (`EntityNames`), which it would show twice.
    */
   async revertOverride(session: Session, rulesetId: string, entityType: RulesetEntityType, entityId: string) {
-    const subscribers = await withTransaction(async (tx) => {
-      const { policy } = await getReadableRuleset(tx, session, rulesetId);
+    const subscribers = await withRulesetWrite(session, rulesetId, async (tx, scope, policy) => {
       policy.canUpdateEntity();
 
       // The parent's entity shows again: under a name its view shows no other entity of
-      const sources = (await Rulesets.findSources(tx, { id: rulesetId }))!;
-      const names = new EntityNames(sources, await CowDataReader.read(tx, sources));
-      await EntityRevert.revert(tx, entityType, entityId, rulesetId, names);
-      // The rulesets built on it, whose rows may have named the copy: its subscribers, when it's an extension
+      const names = new EntityNames(scope);
+      await EntityRevert.revert(tx, entityType, entityId, scope, names);
+      // The rulesets built on it, whose rows may have named the copy: its subscribers, when it's an extension. Their
+      // writes hold it shared, so none ran meanwhile, and its bumped version tells their views from their rows
       return await Rulesets.findMany(tx, { subscribedTo: rulesetId });
     });
 
-    for (const id of [rulesetId, ...subscribers.map((subscriber) => subscriber.id)]) RulesetViews.invalidate(id);
+    for (const subscriber of subscribers) RulesetViews.invalidate(subscriber.id);
     return { restored: true };
   }
 }

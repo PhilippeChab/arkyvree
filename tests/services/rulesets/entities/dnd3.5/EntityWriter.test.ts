@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import type { EntityWrites } from "@/engine/index.ts";
 import type { Aptitude, Feat, Klass, KlassLevel, Spell } from "@/engine/rulesets/dnd3.5/index.ts";
-import { withRulesetScope } from "@/server/cow/index.ts";
+import { withLockedRulesetScope, withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, EntityLinks } from "@/server/repositories/index.ts";
 import EntityWriter from "@/server/services/rulesets/entities/EntityWriter.ts";
@@ -11,7 +11,12 @@ import { activityTypes } from "@/tests/support/activities.ts";
 import { expectRefusedWith } from "@/tests/support/api.ts";
 import { measure } from "@/tests/support/database.ts";
 import { createTestClassLevel } from "@/tests/support/dnd3.5/levels.ts";
-import { copyEntity, createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
+import {
+  bumpContentVersion,
+  copyEntity,
+  createSeededTestRuleset,
+  createTestRuleset,
+} from "@/tests/support/rulesets.ts";
 import { makeSession } from "@/tests/support/users.ts";
 import { CLASS_HD, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -38,6 +43,7 @@ async function deleteInheritedFeat() {
   const fork = await createTestRuleset(session.userId, { rulesetId: parent.id });
   await withRulesetScope(db, fork.id, async () => undefined);
   await Entities.delete(db, { entityType: "feats", id: feat.id });
+  await bumpContentVersion(parent.id);
   return { session, feat, rulesetId: fork.id };
 }
 
@@ -47,7 +53,7 @@ describe("EntityWriter.setParts: what a save writes past an entity's row", () =>
     const removed = [{ id: crypto.randomUUID(), inUse: "In use", type: "spells" }];
 
     expect(
-      withRulesetScope(db, rulesetId, async (scope) =>
+      withLockedRulesetScope(db, rulesetId, async (scope) =>
         EntityWriter.setParts(db, scope, entity, { writes: writesOf({ removed }) }, true),
       ),
     ).rejects.toMatchObject({ message: "Spell not found", name: "NotFoundError" });
@@ -55,23 +61,24 @@ describe("EntityWriter.setParts: what a save writes past an entity's row", () =>
 
   test("writes nothing beside the row when its plan sets nothing", async () => {
     const { entity, rulesetId } = await createSpell();
-    await withRulesetScope(db, rulesetId, async (scope) => {
+    await withLockedRulesetScope(db, rulesetId, async (scope) => {
       const { timing } = await measure(() => EntityWriter.setParts(db, scope, entity, { writes: writesOf({}) }, true));
       expect(timing).toMatchObject({ queryCount: 0 });
     });
   });
 });
 
-describe("EntityWriter: an entity deleted since the view was read", () => {
+describe("EntityWriter: an entity another write deleted after the view was cached", () => {
   test("refuses its delete as that entity, not found", async () => {
     const { entity, rulesetId } = await createSpell();
-    // The view is read, then the row goes
+    // The view is cached, then another write deletes the row
     await withRulesetScope(db, rulesetId, async () => undefined);
     await Entities.delete(db, { entityType: "spells", id: entity.entityId });
+    await bumpContentVersion(rulesetId);
 
     expect(EntitiesService.deleteEntity(makeSession(), rulesetId, "spells", entity.entityId)).rejects.toMatchObject({
-      message: "Spell not found",
-      name: "NotFoundError",
+      message: "Spell not found in this ruleset",
+      refusal: "not-found",
     });
   });
 
@@ -80,10 +87,11 @@ describe("EntityWriter: an entity deleted since the view was read", () => {
     const { classLevel, klass } = await createTestClassLevel(ruleset.id);
     await withRulesetScope(db, ruleset.id, async () => undefined);
     await Entities.delete(db, { entityType: "class-levels", id: classLevel.id });
+    await bumpContentVersion(ruleset.id);
 
     expect(
       EntitiesService.deleteOwnedEntity(makeSession(), ruleset.id, "classes", klass.id, classLevel.id),
-    ).rejects.toMatchObject({ message: "Class level not found", name: "NotFoundError" });
+    ).rejects.toMatchObject({ message: "Class level not found in this ruleset", refusal: "not-found" });
   });
 
   test("refuses an owned entity's edit as that owned entity, not found, when another write copied its owner without it", async () => {
@@ -96,22 +104,23 @@ describe("EntityWriter: an entity deleted since the view was read", () => {
     });
     const [level] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
     const fork = await createTestRuleset(session.userId, { rulesetId: parent.id });
-    // The view is read; then another write copies the class and deletes its copy's level
+    // The view is cached; then another write copies the class and deletes its copy's level
     await withRulesetScope(db, fork.id, async () => undefined);
     const copy = await copyEntity(db, "classes", klass.id, fork);
     const [copied] = await Entities.findPositions(db, { entityType: "class-levels", ownerIds: [copy.id] });
     await Entities.delete(db, { entityType: "class-levels", id: copied.id });
+    await bumpContentVersion(fork.id);
 
     expect(
       EntitiesService.updateOwnedEntity(session, fork.id, "classes", klass.id, level.id, {
         fields: { [CLASS_LEVEL_SKILL_POINTS]: 4 },
       }),
-    ).rejects.toMatchObject({ message: "Class level not found", name: "NotFoundError" });
+    ).rejects.toMatchObject({ message: "Class level not found in this ruleset", refusal: "not-found" });
   });
 
   test("refuses an inherited entity's first edit and delete as that entity, not found, as they copy it", async () => {
     const { session, feat, rulesetId } = await deleteInheritedFeat();
-    const notFound = { message: "Feat not found", name: "NotFoundError" };
+    const notFound = { message: "Feat not found in this ruleset", refusal: "not-found" };
 
     expect(
       EntitiesService.updateEntity(session, rulesetId, "feats", feat.id, {

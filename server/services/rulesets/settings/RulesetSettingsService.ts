@@ -1,8 +1,8 @@
 import { Engine, type SettingsForm } from "@/engine/index.ts";
-import { RulesetViews } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { db } from "@/server/database/index.ts";
 import { Activities, RulesetSettings } from "@/server/repositories/index.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
+import { withRulesetWrite } from "@/server/services/rulesets/rulesetWrites.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
@@ -25,26 +25,21 @@ class RulesetSettingsService {
    * way to, and recorded as the ruleset's own update is. Answers the Settings it keeps, as `getSettings` does.
    */
   async updateSettings(session: Session, rulesetId: string, body: SettingsForm) {
-    const result = await withTransaction(
-      async (tx) =>
-        await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
-          const { ruleset } = scope;
-          policy.canUpdateEntity();
+    return await withRulesetWrite(session, rulesetId, async (tx, scope, policy) => {
+      const { ruleset } = scope;
+      policy.canUpdateEntity();
 
-          const { write, ...settings } = Engine.for(scope).planSettings(body);
-          await RulesetSettings.update(tx, [{ id: ruleset.id, baseRules: ruleset.baseRules, write }]);
-          await Activities.create(tx, {
-            userId: session.userId,
-            targetId: ruleset.id,
-            targetType: TARGET_TYPES.rulesets,
-            type: "updateRulesetSettings",
-            data: { entityName: ruleset.name },
-          });
-          return { id: rulesetId, ...settings };
-        }),
-    );
-    RulesetViews.invalidate(rulesetId);
-    return result;
+      const { write, ...settings } = Engine.for(scope).planSettings(body);
+      await RulesetSettings.update(tx, [{ id: ruleset.id, baseRules: ruleset.baseRules, write }]);
+      await Activities.create(tx, {
+        userId: session.userId,
+        targetId: ruleset.id,
+        targetType: TARGET_TYPES.rulesets,
+        type: "updateRulesetSettings",
+        data: { entityName: ruleset.name },
+      });
+      return { id: rulesetId, ...settings };
+    });
   }
 }
 

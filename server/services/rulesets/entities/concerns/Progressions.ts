@@ -1,13 +1,14 @@
 import type { Db } from "@/drizzle/database.ts";
 import { Engine, type ProgressionForm, type ProgressionPlan } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { type EditTarget, EntityEdit, type RulesetScope, RulesetViews } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { type EditTarget, EntityEdit, type LockedRulesetScope } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Entities, Modifiers, type RulesetEntityType } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import EntityWriter from "@/server/services/rulesets/entities/EntityWriter.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
+import { withRulesetWrite } from "@/server/services/rulesets/rulesetWrites.ts";
 import { getActivityName } from "@/shared/activity.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -40,20 +41,18 @@ function describeGone({ baseRules }: { baseRules: BaseRules }, type: string, own
 export function Progressions<B extends Constructor>(Base: B) {
   abstract class WithProgressions extends Base {
     /**
-     * The entity row a progression's save writes (`owner`, of `type`, as the view has it): the ruleset's own, locked,
-     * its owned entities' writes waiting on other saves of it (its own columns aren't written, nor its token moved: its
-     * owned entities' tokens check the save), or the copy of an inherited one, with its owned entities and their
-     * customizations. Refused as not found (`gone`) when it's gone since the view was read.
+     * The entity row a progression's save writes (`owner`, of `type`, as the view has it, under the write's lock): the
+     * ruleset's own (its own columns aren't written, nor its token moved: its owned entities' tokens check the save),
+     * or the copy of an inherited one, with its owned entities and their customizations.
      */
     private async targetOwner(
       tx: Db,
-      scope: RulesetScope,
+      scope: LockedRulesetScope,
       type: RulesetEntityType,
       owner: ProgressionPlan["owner"],
       gone: string,
     ): Promise<TargetOwner> {
-      const target = await new EntityEdit(scope.sources, scope.rulesetData.cow).cowToEdit(tx, type, owner, gone);
-      if (!target.copied) await EntityEdit.lock(tx, target.id, gone);
+      const target = await new EntityEdit(scope).cowToEdit(tx, type, owner);
       const row = await Entities.findOne(tx, { entityType: type, id: target.id });
       if (!row) throw new NotFoundError(gone);
       return { target, updatedAt: row.updatedAt };
@@ -69,7 +68,7 @@ export function Progressions<B extends Constructor>(Base: B) {
      */
     private async writeOwned(
       tx: Db,
-      scope: RulesetScope,
+      scope: LockedRulesetScope,
       target: EditTarget,
       plan: ProgressionPlan,
       { gone, tokens }: { gone: string; tokens: ReadonlyMap<string, string> },
@@ -122,32 +121,31 @@ export function Progressions<B extends Constructor>(Base: B) {
       body: ProgressionForm & { ownedTokens?: { id: string; updatedAt: string }[] },
     ) {
       const { ownedTokens, ...form } = body;
-      const tokens = new Map((ownedTokens ?? []).map((token) => [token.id, token.updatedAt]));
-      const result = await withTransaction(
-        async (tx) =>
-          await withReadableRuleset(tx, session, rulesetId, async (scope, policy) => {
-            policy.canUpdateEntity();
-            const plan = Engine.for(scope).progression(type, ownerId).plan(form);
-            const unchanged = { entityId: plan.owner.id, ownedIds: [] as string[], updatedAt: plan.owner.updatedAt };
-            if (plan.owned.length === 0) return unchanged;
+      return await withRulesetWrite(session, rulesetId, async (tx, scope, policy) => {
+        policy.canUpdateEntity();
+        // Each token by the owned entity the view shows for the id the client read: a copy another write made since
+        // keeps its source's times until it's written, so a token of the source's checks it
+        const tokens = new Map(
+          (ownedTokens ?? []).map((token) => [scope.rulesetData.cow.resolve(token.id), token.updatedAt]),
+        );
+        const plan = Engine.for(scope).progression(type, ownerId).plan(form);
+        const unchanged = { entityId: plan.owner.id, ownedIds: [] as string[], updatedAt: plan.owner.updatedAt };
+        if (plan.owned.length === 0) return unchanged;
 
-            const gone = describeGone(scope.ruleset, type, plan.ownedType);
-            const { target, updatedAt } = await this.targetOwner(tx, scope, type, plan.owner, gone.owner);
-            const ownedIds = await this.writeOwned(tx, scope, target, plan, { gone: gone.owned, tokens });
+        const gone = describeGone(scope.ruleset, type, plan.ownedType);
+        const { target, updatedAt } = await this.targetOwner(tx, scope, type, plan.owner, gone.owner);
+        const ownedIds = await this.writeOwned(tx, scope, target, plan, { gone: gone.owned, tokens });
 
-            await createActivityWithNotifications(tx, {
-              userId: session.userId,
-              targetId: target.id,
-              targetType: type,
-              type: `update${getActivityName(type)}Progression`,
-              data: plan.activity,
-            });
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: target.id,
+          targetType: type,
+          type: `update${getActivityName(type)}Progression`,
+          data: plan.activity,
+        });
 
-            return { entityId: target.id, ownedIds, updatedAt };
-          }),
-      );
-      RulesetViews.invalidate(rulesetId);
-      return result;
+        return { entityId: target.id, ownedIds, updatedAt };
+      });
     }
   }
   return WithProgressions;

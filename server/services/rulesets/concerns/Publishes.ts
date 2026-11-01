@@ -1,10 +1,9 @@
 import { Engine } from "@/engine/index.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { type RulesetScope, RulesetViews } from "@/server/cow/index.ts";
-import { withTransaction } from "@/server/database/index.ts";
+import { type RulesetScope } from "@/server/cow/index.ts";
 import { Activities, Rulesets } from "@/server/repositories/index.ts";
 import type { RulesetsPolicy } from "@/server/services/policies/index.ts";
-import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
+import { withRulesetWrite } from "@/server/services/rulesets/rulesetWrites.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { RulesetKind } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -24,32 +23,26 @@ export function Publishes<B extends Constructor>(Base: B) {
     }
 
     async publishRuleset(session: Session, id: string, body: { kind?: RulesetKind } = {}) {
-      const result = await withTransaction(
-        async (tx) =>
-          await withReadableRuleset(tx, session, id, async (scope, policy) => {
-            const { ruleset } = scope;
-            policy.canPublish();
+      return await withRulesetWrite(session, id, async (tx, scope, policy) => {
+        const { ruleset } = scope;
+        policy.canPublish();
 
-            this.checkKind(scope, policy, body.kind ?? ruleset.kind);
+        this.checkKind(scope, policy, body.kind ?? ruleset.kind);
 
-            if (body.kind && body.kind !== ruleset.kind) await Rulesets.update(tx, { kind: body.kind }, { id });
+        if (body.kind && body.kind !== ruleset.kind) await Rulesets.update(tx, { kind: body.kind }, { id });
 
-            const rows = await Rulesets.publish(tx, { id });
-            const publishedRuleset = rows[0];
+        const rows = await Rulesets.publish(tx, { id });
+        const publishedRuleset = rows[0];
 
-            await Activities.create(tx, {
-              userId: session.userId,
-              targetId: publishedRuleset.id,
-              targetType: TARGET_TYPES.rulesets,
-              type: "publishRuleset",
-            });
+        await Activities.create(tx, {
+          userId: session.userId,
+          targetId: publishedRuleset.id,
+          targetType: TARGET_TYPES.rulesets,
+          type: "publishRuleset",
+        });
 
-            return publishedRuleset;
-          }),
-      );
-
-      RulesetViews.invalidate(id);
-      return result;
+        return publishedRuleset;
+      });
     }
   }
   return Publishing;

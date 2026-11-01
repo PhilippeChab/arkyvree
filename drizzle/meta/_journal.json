@@ -750,6 +750,13 @@
       "when": 1793101441714,
       "tag": "0106_inventory-location",
       "breakpoints": true
+    },
+    {
+      "idx": 107,
+      "version": "7",
+      "when": 1793556584281,
+      "tag": "0107_ruleset-content-version",
+      "breakpoints": true
     }
   ]
 }

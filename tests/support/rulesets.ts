@@ -4,10 +4,15 @@ import { DND35_CORE_PACKAGE } from "@/content/dnd3.5/packages/core.ts";
 import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
 import type { Db } from "@/drizzle/database.ts";
 import type { rulesetsInRules } from "@/drizzle/schema.ts";
-import type { CowData, RulesetSources } from "@/engine/core/cow/index.ts";
 import type { EntityKinds } from "@/engine/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
-import { EntityCopy, RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import {
+  EntityCopy,
+  type LockedRulesetScope,
+  RulesetViews,
+  withLockedRulesetScope,
+  withRulesetScope,
+} from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { type RulesetEntityType, RulesetExtensions, Rulesets, RulesetSettings } from "@/server/repositories/index.ts";
 import type { TargetPathKind } from "@/shared/customization/target.ts";
@@ -65,8 +70,18 @@ export function invalidateTestRulesets(...rulesetIds: string[]) {
 }
 
 /**
- * Copies an inherited entity into `ruleset` (`EntityCopy`), on its sources as stored: what a first edit there copies,
- * its source refused as not found, by its type, when it's gone. The copied row.
+ * What another write's lock leaves a ruleset (`rulesetId`), for a test that writes its rows straight to the database:
+ * its content version bumped (`Rulesets.lockContent`), which tells a write's fresh read (`RulesetViews.getFreshData`)
+ * the views the cache holds of it from the rows written since.
+ */
+export async function bumpContentVersion(rulesetId: string) {
+  await Rulesets.lockContent(db, { id: rulesetId });
+}
+
+/**
+ * Copies an inherited entity into `ruleset` (`EntityCopy`), under the ruleset's lock (`withLockedRulesetScope`), as a
+ * write takes it, the ruleset's views dropped once it's written, as a write's are: what a first edit there copies. The
+ * copied row.
  */
 export async function copyEntity(
   database: Db,
@@ -74,8 +89,13 @@ export async function copyEntity(
   entityId: string,
   ruleset: { id: string },
 ) {
-  const sources = (await Rulesets.findSources(database, { id: ruleset.id }))!;
-  return (await EntityCopy.create(database, entityType, entityId, sources, `${entityType} not found`)).entity;
+  const copy = await withLockedRulesetScope(
+    database,
+    ruleset.id,
+    async (scope) => (await EntityCopy.create(database, entityType, entityId, scope)).entity,
+  );
+  RulesetViews.invalidate(ruleset.id);
+  return copy;
 }
 
 /**
@@ -140,11 +160,10 @@ export async function createTestRuleset(
 
 /**
  * A change to `ruleset`'s entities or customizations (`Edit`: `EntityEdit`, `CustomizationEdit`, `EntityNames`), as a
- * service makes it in its scope, outside one, on its sources as stored.
+ * write makes it, in the scope its lock gives (`withLockedRulesetScope`), which the test's transaction keeps.
  */
-export async function editRuleset<E>(Edit: new (ruleset: RulesetSources, cow: CowData) => E, ruleset: { id: string }) {
-  const sources = await sourcesOf(ruleset.id);
-  return new Edit(sources, await RulesetViews.getCowData(sources));
+export async function editRuleset<E>(Edit: new (scope: LockedRulesetScope) => E, ruleset: { id: string }) {
+  return await withLockedRulesetScope(db, ruleset.id, async (scope) => new Edit(scope));
 }
 
 /**
