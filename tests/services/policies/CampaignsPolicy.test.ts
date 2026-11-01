@@ -3,8 +3,9 @@ import { describe, expect, test } from "bun:test";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { Campaigns, Players, Users } from "@/server/repositories/index.ts";
-import { CampaignsPolicy } from "@/server/services/policies/index.ts";
+import { CampaignsPolicy, CharactersPolicy } from "@/server/services/policies/index.ts";
 import type { CampaignRole } from "@/shared/enums.ts";
+import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 
@@ -70,6 +71,19 @@ describe("CampaignsPolicy", () => {
     const [archived] = await Campaigns.archive(db, { id: campaign.id });
     const policy = await CampaignsPolicy.for(db, session, archived);
     expect(() => policy.canLinkCharacter()).toThrow("Cannot modify an archived campaign");
+  });
+
+  test("canExportCharacter: the Game Master, or whoever exports the character themselves", async () => {
+    const { user } = await createTestUser();
+    const character = await createTestCharacter(user.id);
+    const { policy: gm, session } = await policyFor("Game Master");
+    const { policy: player } = await policyFor("Player Character");
+    const stranger = new CharactersPolicy(session, character);
+    const editor = new CharactersPolicy(session, character, { isActiveContributor: true });
+
+    expect(gm.canExportCharacter(stranger)).toBe(true);
+    expect(player.canExportCharacter(editor)).toBe(true);
+    expect(() => player.canExportCharacter(stranger)).toThrow(new NotFoundError("Character not found"));
   });
 
   test("canSeeCharacter: a member sees a linked character, a Private one only its player and the Game Master", async () => {

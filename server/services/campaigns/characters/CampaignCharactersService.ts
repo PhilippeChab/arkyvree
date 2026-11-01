@@ -19,7 +19,7 @@ import {
   readCharacterInput,
   readChildInputs,
 } from "@/server/services/characters/index.ts";
-import { CharactersPolicy } from "@/server/services/policies/index.ts";
+import { CharactersPolicy, isAllowed } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { CharacterVisibility } from "@/shared/campaigns.ts";
 import type { Session } from "@/shared/relations.ts";
@@ -56,7 +56,8 @@ class CampaignCharactersService {
     const character = await Characters.findOne(db, { id: characterId });
     if (!character) throw new NotFoundError("Character not found");
 
-    const canEdit = (await CharactersPolicy.for(db, session, character)).isEditor();
+    const characterPolicy = await CharactersPolicy.for(db, session, character);
+    const canEdit = characterPolicy.isEditor();
 
     const isPartial = this.isPartial(link.visibility, { canEdit, isGM, isOwner });
 
@@ -64,7 +65,7 @@ class CampaignCharactersService {
       visibility: link.visibility as CharacterVisibility,
       isOwner,
       canEdit,
-      canDownloadPdf: canEdit || isGM,
+      canDownloadPdf: isAllowed(() => policy.canExportCharacter(characterPolicy)),
       isPartial,
     };
     // Its editors and the Game Master read its private notes, which the others' sheet holds none of

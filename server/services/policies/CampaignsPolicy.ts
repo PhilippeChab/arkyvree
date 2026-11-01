@@ -4,6 +4,7 @@ import { Players } from "@/server/repositories/index.ts";
 import type { Campaign, Player, Session } from "@/shared/relations.ts";
 
 import BasePolicy from "./BasePolicy.ts";
+import type CharactersPolicy from "./CharactersPolicy.ts";
 
 /** What a character's check reads of its link to the campaign: the player who linked it, and how they linked it. */
 interface CharacterLink {
@@ -43,6 +44,14 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
     if (!this.isGameMaster()) throw new ForbiddenError("Only the Game Master can manage this campaign");
 
     return true;
+  }
+
+  /**
+   * Exporting a character linked to the campaign as a PDF, from the campaign: its Game Master's, or whoever exports it
+   * themselves (`character`, the session's policy on it: `canExport`, its editors').
+   */
+  canExportCharacter(character: CharactersPolicy) {
+    return this.isGameMaster() || character.canExport();
   }
 
   canHardDelete() {

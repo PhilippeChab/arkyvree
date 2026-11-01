@@ -53,7 +53,7 @@ export default function CampaignCharacterPage() {
             summary={data.summary}
             rulesetName={data.rulesetName}
             backTo={backTo}
-            onMenuOpen={data.canDownloadPdf && !data.deletedAt ? menu.openMenu : undefined}
+            onMenuOpen={data.canDownloadPdf ? menu.openMenu : undefined}
           />
           <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
             {data.canEdit && (
