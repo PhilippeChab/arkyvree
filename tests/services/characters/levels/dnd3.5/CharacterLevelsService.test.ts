@@ -453,6 +453,41 @@ describe("LevelsService", () => {
       expect(firstPage[0].id).not.toBe(wizard);
     });
 
+    test("pages the classes as it orders them, searched or not, a class whose first level a gap left among the others", async () => {
+      const ctx = await getSeedCtx();
+      const pagesOf = async (characterId: string, search?: string) => {
+        const names: string[][] = [];
+        for (let pageNumber = 1; pageNumber <= 4; pageNumber++) {
+          const options = await getStepOptions(
+            session,
+            characterId,
+            "class-plan",
+            { steps: {} },
+            {},
+            {
+              limit: 3,
+              page: pageNumber,
+              search,
+            },
+          );
+          names.push(rowsOf(options, false).map((option) => option.name));
+        }
+        return names.flat().filter(Boolean);
+      };
+      const byName = (names: string[]) => names.toSorted((a, b) => a.localeCompare(b));
+
+      // A new character's, and one with a lone Fighter 3, whose next Fighter level is its first: by name
+      const fresh = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 10000 } });
+      const gap = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 10000 } });
+      await addClassLevels(db, ctx, gap, "Fighter", [3], [10]);
+      for (const characterId of [fresh, gap]) {
+        const searched = await pagesOf(characterId, "ar");
+        expect(searched).toEqual(byName(searched));
+        const all = await pagesOf(characterId);
+        expect(all).toEqual(byName(all));
+      }
+    });
+
     test("counts any feat of a family a class requires, and only those", async () => {
       const ctx = await getSeedCtx();
       const fork = await createSeededTestRuleset(SEED_USER_ID);

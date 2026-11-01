@@ -53,7 +53,7 @@ export function Plans<B extends Constructor>(Base: B) {
       return await withEditableCharacter(db, session, characterId, async (scope, character) => {
         const opened = Engine.for(scope).character(character).levelUp().openStepPicker(step, picker);
         switch (opened.read) {
-          // Tracks: its kind's rows in the character's ruleset, those its picker lists first (`firstIds`) ahead
+          // Tracks: its kind's rows in the character's ruleset, those its picker lists first (`firstIds`)
           case "tracks": {
             const filters = {
               entityType: opened.kind,

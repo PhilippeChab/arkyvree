@@ -79,7 +79,8 @@ export interface TrackFilters extends EntityFilters {
  * A level step's picker, as its module opens it, in no game's nouns: the kind it reads a page of (`kind`), the read it
  * takes (`read`), and its picker, which says what it reads it with and describes the page it read as the step's:
  * - `tracks`: the tracks of its kind the character may advance on (3.5's classes), read as its kind's rows in the
- *   character's ruleset, those its picker lists first ahead (`TrackFilters`), each with its place on its track (`StepOption`'s `track`);
+ *   character's ruleset, those its picker lists first (`TrackFilters`), each with its place on its track
+ *   (`StepOption`'s `track`);
  * - `options`: a list's entities (`OptionRow`);
  * - `groups`: a list's groups (3.5's feat families), a group's entities as one row (`OptionGroupRow`).
  */

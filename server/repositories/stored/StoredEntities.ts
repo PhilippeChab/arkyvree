@@ -657,7 +657,8 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
         sql`${entitiesInRules.id} IN (SELECT ${entityLinksInRules.toId} FROM ${entityLinksInRules} WHERE ${and(eq(entityLinksInRules.role, linkedBy.role), eq(entityLinksInRules.fromType, linkedBy.fromType), eq(entityLinksInRules.toType, where.entityType))})`,
       ...StoredEntities.buildValueConditions(where),
     ];
-    const order = where.firstIds?.length
+    // A tracks picker's pages go in its order whatever its search, none of its own listed first included
+    const order = where.firstIds
       ? this.orderFirst(where.firstIds)
       : [this.searchOrderBy(search, SEARCH_COLUMNS, this.orderBy(entitiesInRules[orderBy], orderDir))];
     return await this.withPagination(

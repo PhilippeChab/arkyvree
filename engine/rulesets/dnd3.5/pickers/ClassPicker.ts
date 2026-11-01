@@ -109,17 +109,18 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
    */
   override get filters(): TrackFilters {
     const { classesById, classLevelsById } = this.dnd35;
-    const held = new Set(this.input.rows.advancements.map(({ entryId }) => classLevelsById.get(entryId)?.ownerId));
-    const classes = [...held].flatMap((classId) => {
-      const klass = classId ? classesById.get(classId) : undefined;
-      if (!klass) return [];
-      return [
-        {
-          ...klass,
-          track: { next: LevelRules.findNextClassLevel(classLevelsById, this.input.rows.advancements, klass.id) },
-        },
-      ];
-    });
+    // Each class the character's levels are of, as the view resolves it (a copy for its source), once
+    const held = new Map(
+      this.input.rows.advancements.flatMap(({ entryId }) => {
+        const ownerId = classLevelsById.get(entryId)?.ownerId;
+        const klass = ownerId ? classesById.get(ownerId) : undefined;
+        return klass ? [[klass.id, klass] as const] : [];
+      }),
+    );
+    const classes = [...held.values()].map((klass) => ({
+      ...klass,
+      track: { next: LevelRules.findNextClassLevel(classLevelsById, this.input.rows.advancements, klass.id) },
+    }));
     const firstIds = this.order(classes.filter((klass) => klass.track.next > 1)).map((klass) => klass.id);
     return { partitions: [PLAYER_CHARACTER_KIND], firstIds };
   }
