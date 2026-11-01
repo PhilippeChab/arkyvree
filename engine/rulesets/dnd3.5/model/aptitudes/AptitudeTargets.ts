@@ -4,6 +4,8 @@
  * both read this.
  */
 
+import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
+
 /** A list's pool or one of its spell levels' slots, by the list's slug: `aptitudes.<list>(.<level>).allowed`. */
 const ALLOWED_TARGET = /^aptitudes\.([a-z0-9]+)(?:\.\d+)?\.allowed$/;
 /** Its spells joining its class's list: `aptitudes.<list>.joinsclasslist`. */
@@ -14,6 +16,12 @@ const LIST_TARGET = /^aptitudes\.([a-z0-9]+)(?:\.|$)/;
 const POOL_TARGET = /^aptitudes\.([a-z0-9]+)\.allowed$/;
 /** A list's spell level: `aptitudes.<list>.<level>.allowed` or `.uses`. */
 const SPELL_LEVEL_TARGET = /^aptitudes\.([a-z0-9]+)\.(\d+)\.(allowed|uses)$/;
+
+/**
+ * A spell level's spells known once every spell of its list is (`aptitudes.<list>.<level>.allowed`): "all spells known",
+ * which a modifier sets (`AptitudeTargets.setsAllKnown`), and the sheet holds.
+ */
+export const ALLOWED_ALL = -1;
 
 /** What a modifier's target says of an aptitude: the pool, list, spell level or join it names. */
 export default class AptitudeTargets {
@@ -42,5 +50,10 @@ export default class AptitudeTargets {
     const match = SPELL_LEVEL_TARGET.exec(target);
     if (!match) return undefined;
     return { list: match[1], level: Number(match[2]), field: match[3] === "uses" ? "uses" : "allowed" };
+  }
+
+  /** Whether a modifier sets its spell level's spells known to every spell of its list (`ALLOWED_ALL`). */
+  static setsAllKnown(modifier: { operator: string; value: string }) {
+    return modifier.operator === "set" && LiteralValue.parse(modifier.value, "number") === ALLOWED_ALL;
   }
 }

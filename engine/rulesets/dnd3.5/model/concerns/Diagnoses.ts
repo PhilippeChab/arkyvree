@@ -1,5 +1,5 @@
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
-import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudesComponent.ts";
+import { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import type CharacterState from "@/engine/rulesets/dnd3.5/model/CharacterState.ts";
 import type { CustomizedClassLevel } from "@/engine/rulesets/dnd3.5/model/loading/loadedEntities.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
