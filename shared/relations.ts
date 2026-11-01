@@ -43,5 +43,8 @@ export type Player = typeof playersInCampaign.$inferSelect;
 export type Requirement = typeof requirementsInCustomization.$inferSelect;
 /** A ruleset's row: its base rules, a registered module's. */
 export type Ruleset = Omit<typeof rulesetsInRules.$inferSelect, "baseRules"> & { baseRules: BaseRules };
-export type Session = typeof sessionsInAccount.$inferSelect;
+/** Who a request acts as, which the services read: a signed-in session's user, or the user an API key acts as. */
+export type Session = Pick<SessionRow, "userId">;
+/** A signed-in session's row, which signing in and out write. */
+export type SessionRow = typeof sessionsInAccount.$inferSelect;
 export type User = typeof usersInAccount.$inferSelect;

@@ -32,7 +32,7 @@ describe("generatePdf", () => {
       const pdf = await Exports.findOne(db, { id: ready.targetId, userId: SEED_USER_ID });
       // Named after the character it prints, as a shared sheet is, not by the name it was queued under
       expect(pdf).toMatchObject({ type: "pdf", mimeType: "application/pdf", fileName: `${name}-sheet.pdf` });
-      expect(Buffer.from(pdf!.data).subarray(0, 5).toString()).toBe("%PDF-");
+      expect(Buffer.from(pdf!.data!).subarray(0, 5).toString()).toBe("%PDF-");
       expect(new Date(pdf!.expiresAt).getTime()).toBeGreaterThan(Date.now());
     },
     30_000,
@@ -90,7 +90,7 @@ describe("generatePdf", () => {
     );
     const [ready] = await notificationsOf(user.id, "pdfReady");
     const pdf = await Exports.findOne(db, { id: ready.targetId, userId: user.id });
-    expect(Buffer.from(pdf!.data).subarray(0, 5).toString()).toBe("%PDF-");
+    expect(Buffer.from(pdf!.data!).subarray(0, 5).toString()).toBe("%PDF-");
   }, 30_000);
 
   test("tells the player it failed when the character isn't theirs to export anymore", async () => {

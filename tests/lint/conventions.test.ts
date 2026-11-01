@@ -88,6 +88,7 @@ describe("conventions", () => {
           "server/middlewares/validate.ts":
             'import { zValidator } from "@hono/zod-validator";\nexport const z = zValidator;\n',
           "server/routers/api/caught.ts": "export const r = () => {\n  try {\n    f();\n  } catch {}\n};\n",
+          "server/routers/v1/caught.ts": "export const r = () => {\n  try {\n    f();\n  } catch {}\n};\n",
           "server/routers/static.ts": "export const r = () => {\n  try {\n    f();\n  } catch {}\n};\n",
           "server/routers/api/cleanup.ts":
             "export const r = () => {\n  try {\n    f();\n  } finally {\n    g();\n  }\n};\n",
@@ -123,6 +124,7 @@ describe("conventions", () => {
       "route-conventions server/routers/api/sub.ts",
       "route-conventions server/routers/api/template.ts",
       "route-conventions server/routers/api/zod.ts",
+      "route-conventions server/routers/v1/caught.ts",
     ]);
   });
 

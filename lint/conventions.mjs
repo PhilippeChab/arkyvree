@@ -17,8 +17,8 @@
  *   reads its input into a const and destructures what it reads of it (`body` or `query` when it reads one whole), a
  *   router is its module's export (`export default new Hono()…`) and names a schema for what it validates (never
  *   `…Schema`), and it lets an error reach `onError` instead of catching it (`server/routers/api/`; a `finally` alone
- *   is fine). A route that renders a PDF or queues one (its path ends in `/pdf`) takes `exportRateLimit`, signed in or
- *   not: each request costs a render.
+ *   is fine). A route that renders a PDF or queues one (its path ends in `/pdf`) takes `exportRateLimit` (the public
+ *   API's `apiExportRateLimit`, counted per user), signed in or not: each request costs a render.
  * - `order-through-repository`: the server's queries sort with a repository's `this.orderBy(column, direction)`, never
  *   drizzle's `asc` / `desc`, and a repository method that reads a page orders it by `this.pageOrder(keys)`, which ends
  *   on a key no two rows share: OFFSET paging repeats or skips rows that tie.
@@ -84,8 +84,11 @@ import { repoPath, rootOf, rulesetsOf } from "./paths.mjs";
 const CAMEL_CASE = /^[a-z][a-zA-Z0-9]*$/;
 
 const CONCURRENT = new Set(["all", "allSettled", "any", "race"]);
+
 /** An `eslint-disable` / `oxlint-disable` comment's text. */
 const DIRECTIVE = /^\s*(?:eslint|oxlint)-disable(?:-next-line|-line)?\b/;
+/** The limit a route that renders or queues a PDF counts its requests with: per user under `/v1`, per address else. */
+const EXPORT_RATE_LIMITS = { api: "exportRateLimit", v1: "apiExportRateLimit" };
 /** kebab-case, a file's name (`sitemap.xml`) or a wildcard */
 const FIXED_SEGMENT = /^([a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9]+)?|\*)$/;
 /** A module or folder named for no particular thing: `helpers.ts`, `utils/`. */
@@ -782,6 +785,9 @@ function createRouteConventions(context) {
   if (!file.startsWith("server/")) return {};
   const inRouters = file.startsWith("server/routers/");
   const inApi = file.startsWith("server/routers/api/");
+  // The app's routers and the public API's, whose errors both reach `onError`
+  const inRouteTree = inApi || file.startsWith("server/routers/v1/");
+  const exportLimit = EXPORT_RATE_LIMITS[file.startsWith("server/routers/v1/") ? "v1" : "api"];
   const constants = new Set();
   const named = new Map();
   return {
@@ -834,11 +840,13 @@ function createRouteConventions(context) {
       if (
         callee.property.name !== "route" &&
         routePath.endsWith("/pdf") &&
-        !node.arguments.some((arg) => arg.type === "Identifier" && arg.name === "exportRateLimit")
+        !node.arguments.some((arg) => arg.type === "Identifier" && arg.name === exportLimit)
       ) {
         context.report({
           node: route,
-          message: "A route that renders a PDF, or queues one, takes `exportRateLimit`: each request costs a render.",
+          message:
+            `A route that renders a PDF, or queues one, takes \`${exportLimit}\`: each request costs a render ` +
+            "(the public API's counted per user, the app's per address).",
         });
       }
       for (const segment of routePath.split("/")) {
@@ -852,7 +860,7 @@ function createRouteConventions(context) {
     },
     // A try that only cleans up (`finally`) lets the error through.
     TryStatement(node) {
-      if (!inApi || !node.handler) return;
+      if (!inRouteTree || !node.handler) return;
       context.report({
         node,
         message: "A route lets an error reach the app's `onError`, which answers in the API's envelope: no try.",

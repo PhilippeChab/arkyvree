@@ -3,8 +3,13 @@ import { describe, expect, test } from "bun:test";
 import { Hono, type MiddlewareHandler } from "hono";
 
 import { toJson } from "@/server/errors/index.ts";
-import { limitRate } from "@/server/middlewares/limitRate.ts";
+import type { ApiKeyContext } from "@/server/middlewares/apiKey.ts";
+import { limitRate, limitRatePerUser } from "@/server/middlewares/limitRate.ts";
 import { expectStatus } from "@/tests/support/api.ts";
+
+function asUser(userId: string, ip = "10.0.0.1") {
+  return from(ip, { headers: { "x-user": userId } });
+}
 
 /** An app behind `limiter`, answering errors as the application does. */
 function behind(limiter: MiddlewareHandler) {
@@ -27,6 +32,21 @@ function limitedPerEmail() {
 
 function limitedPerIp() {
   return behind(limitRate({ windowMs: 60_000, limit: 2 }, true));
+}
+
+/** An app behind the per-user limit, its requests' user the `x-user` header's, as the public API's sign-in sets it. */
+function limitedPerUser() {
+  return new Hono<ApiKeyContext>()
+    .use(async (c, next) => {
+      c.set("requestSession", { userId: c.req.header("x-user") ?? "" });
+      await next();
+    })
+    .use(limitRatePerUser({ windowMs: 60_000, limit: 1 }, true))
+    .all("/", (c) => c.text("ok"))
+    .onError((err, c) => {
+      const [error, code] = toJson(err);
+      return c.json(error, code);
+    });
 }
 
 function withEmail(emailAddress: unknown) {
@@ -85,6 +105,28 @@ describe("limitRate", () => {
         expect((await app.request("/", { method: "PUT", body: "not json" })).status).toBe(200);
         expect((await app.request("/", withEmail(42))).status).toBe(200);
       }
+    });
+  });
+
+  describe("per user", () => {
+    test("refuses a user past their limit from any address and with any key, and counts each user apart", async () => {
+      const app = limitedPerUser();
+      expect((await app.request("/", asUser("ada", "10.0.0.1"))).status).toBe(200);
+      await expectStatus(app.request("/", asUser("ada", "10.0.0.2")), 429);
+      expect((await app.request("/", asUser("grace", "10.0.0.1"))).status).toBe(200);
+    });
+
+    test("answers the outer limit's count in its headers, past a route's own limit within it", async () => {
+      const app = new Hono<ApiKeyContext>()
+        .use(async (c, next) => {
+          c.set("requestSession", { userId: "ada" });
+          await next();
+        })
+        .use(limitRatePerUser({ windowMs: 60_000, limit: 120 }, true))
+        .use(limitRatePerUser({ windowMs: 60_000, limit: 20, headers: false }, true))
+        .all("/", (c) => c.text("ok"));
+      const res = await app.request("/");
+      expect([res.headers.get("ratelimit-limit"), res.headers.get("ratelimit-remaining")]).toEqual(["120", "119"]);
     });
   });
 });

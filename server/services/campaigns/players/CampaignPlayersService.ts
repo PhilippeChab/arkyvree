@@ -12,6 +12,7 @@ import {
   Visibility,
 } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { redactPlayerAddresses } from "@/server/services/campaigns/campaignAddresses.ts";
 import { getReadableCampaign } from "@/server/services/campaigns/readableCampaign.ts";
 import { getInviteNames } from "@/server/services/invites/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
@@ -166,16 +167,20 @@ class CampaignPlayersService {
     where: { orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
     pagination: Pagination,
   ) {
-    await getReadableCampaign(db, session, campaignId);
+    const { policy } = await getReadableCampaign(db, session, campaignId);
 
-    const page = await Players.findPage(db, { campaignId, ...where }, pagination, Visibility.All);
+    // An address is its Game Master's to read, and so to search
+    const readsAddresses = policy.isGameMaster();
+    const query = { campaignId, ...where, searchAddresses: readsAddresses };
+    const page = await Players.findPage(db, query, pagination, Visibility.All);
     const masters = await Players.count(db, { campaignId, role: "Game Master" });
+    const items = page.items.map((player) => ({
+      ...player,
+      isLastGameMaster: CampaignPlayersService.isLastGameMaster(player, masters),
+    }));
     return {
       ...page,
-      items: page.items.map((player) => ({
-        ...player,
-        isLastGameMaster: CampaignPlayersService.isLastGameMaster(player, masters),
-      })),
+      items: readsAddresses ? items : items.map((player) => redactPlayerAddresses(player, session.userId)),
     };
   }
 

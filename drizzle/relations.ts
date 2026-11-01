@@ -2,6 +2,7 @@ import { relations } from "drizzle-orm/relations";
 
 import {
   activitiesInAccount,
+  apiKeysInAccount,
   campaignsInCampaign,
   charactersInCharacter,
   contributorsInCharacter,
@@ -25,6 +26,13 @@ import {
 export const activitiesInAccountRelations = relations(activitiesInAccount, ({ one }) => ({
   usersInAccount: one(usersInAccount, {
     fields: [activitiesInAccount.userId],
+    references: [usersInAccount.id],
+  }),
+}));
+
+export const apiKeysInAccountRelations = relations(apiKeysInAccount, ({ one }) => ({
+  usersInAccount: one(usersInAccount, {
+    fields: [apiKeysInAccount.userId],
     references: [usersInAccount.id],
   }),
 }));
@@ -235,6 +243,7 @@ export const starredRulesetsInAccountRelations = relations(starredRulesetsInAcco
 
 export const usersInAccountRelations = relations(usersInAccount, ({ many }) => ({
   activitiesInAccounts: many(activitiesInAccount),
+  apiKeysInAccounts: many(apiKeysInAccount),
   notificationsReceived: many(notificationsInAccount, { relationName: "notifications_recipientId_users_id" }),
   notificationsActed: many(notificationsInAccount, { relationName: "notifications_actorId_users_id" }),
   invitesInCampaigns: many(invitesInCampaign),

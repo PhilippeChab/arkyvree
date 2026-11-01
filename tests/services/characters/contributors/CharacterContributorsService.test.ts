@@ -150,7 +150,7 @@ describe("CharacterContributorsService", () => {
         revokedUser.emailAddress,
       );
       await CharacterContributorsService.acceptInvite(revoked, revokedInvite.id);
-      await CharacterContributorsService.revokeContributor(ownerSession, revokedInvite.id);
+      await CharacterContributorsService.revokeContributor(ownerSession, character.id, revokedInvite.id);
       const { session: stranger } = await createTestUser("stranger");
 
       /** What a call answers: its error's message, or that it went through. */
@@ -163,7 +163,7 @@ describe("CharacterContributorsService", () => {
       const answersOf = async (session: Session, characterId: string, contributorId: string) => [
         await answerOf(CharacterContributorsService.getContributors(session, characterId, {}, { limit: 10, page: 1 })),
         await answerOf(CharacterContributorsService.inviteContributor(session, characterId, `x${uniqueId()}@e.com`)),
-        await answerOf(CharacterContributorsService.revokeContributor(session, contributorId)),
+        await answerOf(CharacterContributorsService.revokeContributor(session, characterId, contributorId)),
         await answerOf(CharacterContributorsService.leaveCharacter(session, characterId)),
       ];
 
@@ -184,7 +184,11 @@ describe("CharacterContributorsService", () => {
 
     test("lose edit access when revoked or when they leave", async () => {
       const revoked = await setup();
-      await CharacterContributorsService.revokeContributor(revoked.ownerSession, revoked.invite.id);
+      await CharacterContributorsService.revokeContributor(
+        revoked.ownerSession,
+        revoked.character.id,
+        revoked.invite.id,
+      );
       expect(
         CharactersService.updateCharacter(revoked.inviteeSession, revoked.character.id, { notes: "after revoke" }),
       ).rejects.toThrow(NotFoundError);

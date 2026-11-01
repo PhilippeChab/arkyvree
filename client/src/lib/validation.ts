@@ -1,7 +1,17 @@
+import { MAX_API_KEY_NAME_LENGTH } from "@/shared/apiKeys.ts";
 import { PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from "@/shared/auth.ts";
 import { sanitizeText } from "@/shared/text.ts";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** React Hook Form rules for an API key's name, measured as it's stored (`sanitizeText`): required, and within its bound. */
+export const API_KEY_NAME_RULES = {
+  validate: (value: unknown) => {
+    const name = sanitizeText(String(value));
+    if (name.length === 0) return "Name is required";
+    return name.length <= MAX_API_KEY_NAME_LENGTH || `Name must be at most ${MAX_API_KEY_NAME_LENGTH} characters`;
+  },
+} as const;
 
 /** React Hook Form rules for a decimal written as text (an item's cost, its weight): digits with one point, or nothing. */
 export const DECIMAL_RULES = { pattern: { value: /^(\d+\.?\d*|\.\d+)?$/, message: "Must be a number" } } as const;

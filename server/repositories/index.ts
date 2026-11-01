@@ -4,6 +4,7 @@ export { fetchEveryPage, paginateItems } from "./concerns/Paginates.ts";
 export type { Pagination } from "./concerns/Paginates.ts";
 export {
   Activities,
+  ApiKeys,
   Attachments,
   Blobs,
   Campaigns,

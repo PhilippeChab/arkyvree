@@ -17,6 +17,8 @@ The system has four actor categories. Most policies are an OR of two or three of
 | **Campaign member (Player / Game Master)** | An `Active`, non-deleted row in `playersInCampaign`, keyed by `(campaign.id, session.userId)`. Roles: `'Player' | 'Game Master'`. |
 | **Public visitor** | Anyone with a session. Public rulesets and characters with `visibility = "Public"` are readable by all visitors. |
 
+A request to the public API (`/v1`) acts as the user its API key belongs to: the services read its `Session`, `{ userId }`, as they read a signed-in session's, so every check below holds for it alike (see [public-api.md](./public-api.md)).
+
 A user can hold multiple roles for the same entity (e.g. owner of a ruleset they're also a contributor on — happens via test seed data). Policies check the strongest applicable role.
 
 ## Rulesets — `RulesetsPolicy`

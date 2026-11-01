@@ -121,17 +121,24 @@ class InvitesRepository extends include(BaseRepository<typeof invitesInCampaign>
 
   async findPage(
     db: Db,
-    where: { campaignId: string; orderBy?: "createdAt" | "updatedAt"; orderDir?: "asc" | "desc"; search?: string },
+    where: {
+      campaignId: string;
+      orderBy?: "createdAt" | "updatedAt";
+      orderDir?: "asc" | "desc";
+      search?: string;
+      searchAddresses?: boolean;
+    },
     pagination: Pagination,
   ) {
-    const { search, orderBy = "createdAt", orderDir = "desc" } = where;
+    const { search, orderBy = "createdAt", orderDir = "desc", searchAddresses = true } = where;
     const { limit, offset } = this.paginate(pagination);
 
+    // An address is searched when the reader may read it
     const searchCondition = search
       ? or(
-          ilike(this.table.email, `%${search}%`),
+          searchAddresses ? ilike(this.table.email, `%${search}%`) : undefined,
           ilike(usersInAccount.username, `%${search}%`),
-          ilike(usersInAccount.emailAddress, `%${search}%`),
+          searchAddresses ? ilike(usersInAccount.emailAddress, `%${search}%`) : undefined,
         )!
       : false;
 

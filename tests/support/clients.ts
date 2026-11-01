@@ -9,3 +9,8 @@ export function apiAs(sessionId: string) {
     headers: { cookie: `${SESSION_COOKIE_NAME}=${sessionId}` },
   });
 }
+
+/** A public API (`/v1`) client whose requests carry an API key's `token`. */
+export function apiWithKey(token: string) {
+  return testClient<Application>(application, {}, undefined, { headers: { authorization: `Bearer ${token}` } });
+}

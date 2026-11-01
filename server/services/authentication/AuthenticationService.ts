@@ -4,13 +4,14 @@ import { BadRequestError, EmailNotVerifiedError, InternalError, UnauthorizedErro
 import { hashPassword, verifyPassword } from "@/server/password.ts";
 import { Activities, EmailVerifications, PasswordResets, Sessions, Users } from "@/server/repositories/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
-import type { Session, User } from "@/shared/relations.ts";
+import type { Session, SessionRow, User } from "@/shared/relations.ts";
 
 import {
   assertNotTaken,
   openSession,
   purgeDemoSessionUser,
   signInAsGoogleAccount,
+  signOutEverywhere,
   toSafeUser,
   withTakenRefusal,
 } from "./accounts.ts";
@@ -87,7 +88,8 @@ class AuthenticationService {
       const newHash = await hashPassword(newPassword);
       await Users.update(tx, { passwordDigest: newHash }, { id: user.id });
       await PasswordResets.archive(tx, { id: reset.id });
-      await Sessions.archive(tx, { userId: user.id });
+      // A reset is how an account is taken back
+      await signOutEverywhere(tx, user.id);
 
       await Activities.create(tx, {
         userId: user.id,
@@ -135,7 +137,7 @@ class AuthenticationService {
     return await signInAsGoogleAccount(payload, existingSessionId);
   }
 
-  async signOut(session: Session) {
+  async signOut(session: SessionRow) {
     return await withTransaction(async (tx) => {
       const user = await Users.findOne(tx, { id: session.userId });
       if (user?.expiresAt) {
@@ -185,7 +187,7 @@ class AuthenticationService {
    * when it's in one, refused when it's a real user's, else a fresh demo user and session. Expired demo users are the
    * runCleanup cron task's to delete.
    */
-  async startDemo(signedIn: { session: Session; user: User } | null = null) {
+  async startDemo(signedIn: { session: SessionRow; user: User } | null = null) {
     if (signedIn) {
       if (!signedIn.user.expiresAt) throw new BadRequestError("Already signed in");
       return { session: signedIn.session, user: toSafeUser(signedIn.user), reused: true as const };

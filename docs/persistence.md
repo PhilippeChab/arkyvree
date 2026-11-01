@@ -41,6 +41,7 @@ Rows whose disappearance leaves no observable history a user would expect to fin
 | Internal forking metadata | `EntitySnapshots` |
 | Ruleset entities, every kind's | `Entities` |
 | Status-driven lifecycle | `Contributors`, a ruleset's and a character's (Pending/Active/Rejected/Revoked enum: a revoked one stays, by its status) |
+| Account credentials | `ApiKeys` (a revoked key: nothing names it, and its token must stop working at once; an expired one, which the sign-in refuses, once `runCleanup.ts` reaps it) |
 
 A read-only kind's entities (3.5's abilities) are seeded and never deleted: its rules refuse their writes (`RulesetEntity.readOnly`).
 
