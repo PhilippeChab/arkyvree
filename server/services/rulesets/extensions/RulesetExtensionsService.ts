@@ -48,11 +48,10 @@ class RulesetExtensionsService {
       // 2. Validate each extension
       const newExtensionIds: string[] = [];
       for (const extensionId of extensionIds) {
-        // Itself is refused by the policies: an extension subscribes to none, and a ruleset that isn't one is none
         // One the session may not read is refused as an unknown one is: a private ruleset's existence isn't revealed
         const readable = await findReadableRuleset(tx, session, extensionId);
         if (!readable) throw new NotFoundError("Extension not found");
-        readable.policy.canBeSubscribed({ parentId: childRuleset.rulesetId });
+        readable.policy.canBeSubscribed({ id, parentId: childRuleset.rulesetId });
 
         if (sources.extensionIds.includes(extensionId)) throw new ConflictError("Already subscribed to this extension");
 

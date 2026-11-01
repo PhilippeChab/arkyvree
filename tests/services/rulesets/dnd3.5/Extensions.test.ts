@@ -484,13 +484,6 @@ describe("subscribing to an extension", () => {
     const refusals: [string, () => Promise<unknown>][] = [
       ["itself", async () => subscribe(draft.id)],
       [
-        "an extension, itself",
-        async () => {
-          const own = await createExtension(user.id);
-          return await subscribe(own.id, session, own.id);
-        },
-      ],
-      [
         "a fork published as a ruleset",
         async () => subscribe((await createExtension(user.id, { kind: "ruleset" })).id),
       ],
@@ -525,6 +518,7 @@ describe("subscribing to an extension", () => {
         async () => subscribe(extension.id, session, (await createTestRuleset(user.id)).id),
       ],
     ];
+    await expect(subscribe(draft.id)).rejects.toThrow("A ruleset can't subscribe to itself");
     for (const [what, refuse] of refusals) {
       const outcome = await refuse().then(
         () => "subscribed",
