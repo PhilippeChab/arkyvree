@@ -107,14 +107,16 @@ describe("CampaignCharactersService", () => {
   });
 
   describe("updateCharacterVisibility", () => {
-    test("is the link's owner's, while the campaign isn't archived, as linking is", async () => {
+    test("is the link's owner's, while the campaign isn't archived, as linking is; a 404 to a non-member", async () => {
       const { user: gm } = await createTestUser();
       const { campaign } = await createTestCampaign(gm.id);
       const { user, character } = await joinWithCharacter(campaign.id, "Public");
       const update = (userId: string) =>
         CampaignCharactersService.updateCharacterVisibility(makeSession(userId), campaign.id, character.id, "Private");
 
+      const { user: outsider } = await createTestUser();
       expect(await update(user.id)).toMatchObject({ characterId: character.id, visibility: "Private" });
+      expect(update(outsider.id)).rejects.toThrow(new NotFoundError("Campaign not found"));
       expect(update(gm.id)).rejects.toThrow(ForbiddenError);
       await Campaigns.archive(db, { id: campaign.id });
       expect(update(user.id)).rejects.toThrow("Cannot modify an archived campaign");
