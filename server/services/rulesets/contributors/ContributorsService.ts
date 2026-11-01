@@ -15,7 +15,7 @@ import { isAllowed, RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { findReadableRuleset, getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { withLockedRuleset, withRulesetLock } from "@/server/services/rulesets/rulesetWrites.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
-import type { ContributorRole } from "@/shared/enums.ts";
+import { CONTRIBUTOR_ROLES, type ContributorRole } from "@/shared/enums.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /** What a contributor the session may not read is refused with, as an unknown one is. */
@@ -86,7 +86,16 @@ class ContributorsService {
 
     const paginated = await Contributors.findPage(db, { rulesetId, ...where }, pagination);
     const ownerUser = ruleset.userId ? await Users.findOne(db, { id: ruleset.userId }) : undefined;
-    return { ...paginated, owner: ownerUser ? toPublicUser(ownerUser) : null };
+    // Each with what the session may do to it, as the policy decides: remove it, and the roles it may give it
+    const items = paginated.items.map((contributor) => {
+      const { role: from, status } = contributor;
+      return {
+        ...contributor,
+        canRemove: isAllowed(() => policy.canRevokeContributor({ role: from, status })),
+        roles: CONTRIBUTOR_ROLES.filter((to) => isAllowed(() => policy.canUpdateContributorRole({ from, status, to }))),
+      };
+    });
+    return { ...paginated, items, owner: ownerUser ? toPublicUser(ownerUser) : null };
   }
 
   /**
@@ -205,10 +214,7 @@ class ContributorsService {
   async revokeContributor(session: Session, rulesetId: string, contributorId: string) {
     return await this.withContributorsRuleset(contributorId, CONTRIBUTOR_NOT_FOUND, async (tx) => {
       const { contributor, ruleset, policy } = await this.getReadableContributor(tx, session, rulesetId, contributorId);
-      policy.canRevokeContributor({ role: contributor.role });
-
-      if (contributor.status !== "Active" && contributor.status !== "Pending")
-        throw new ConflictError("Contributor is not active or pending");
+      policy.canRevokeContributor({ role: contributor.role, status: contributor.status });
 
       const prevStatus = contributor.status;
       const rows = await Contributors.update(tx, { status: "Revoked" }, { id: contributorId });
@@ -230,9 +236,7 @@ class ContributorsService {
   async updateContributorRole(session: Session, rulesetId: string, contributorId: string, role: ContributorRole) {
     return await this.withContributorsRuleset(contributorId, CONTRIBUTOR_NOT_FOUND, async (tx) => {
       const { contributor, policy } = await this.getReadableContributor(tx, session, rulesetId, contributorId);
-      policy.canUpdateContributorRole({ from: contributor.role, to: role });
-
-      if (contributor.status !== "Active") throw new ConflictError("Can only update role of active contributors");
+      policy.canUpdateContributorRole({ from: contributor.role, status: contributor.status, to: role });
 
       const rows = await Contributors.update(tx, { role }, { id: contributorId });
       const updated = rows[0];

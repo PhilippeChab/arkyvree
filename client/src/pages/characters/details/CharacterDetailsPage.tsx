@@ -323,7 +323,7 @@ export default function CharacterDetailsPage() {
             onClose={() => setContributorsOpen(false)}
             canInvite={canInviteContributors}
             canLeave={canLeave}
-            canRemove={canManageContributors ? () => true : undefined}
+            canManage={canManageContributors}
           />
 
           <CharacterModifiersDialog

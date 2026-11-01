@@ -27,10 +27,10 @@ interface ContributorsDialogProps {
   /** Whether the session contributes, and may leave. */
   canLeave: boolean;
   /**
-   * Whether the session may remove this contributor, when it manages them (a ruleset's Admin is its owner's alone):
-   * without it, the rows show no actions.
+   * Whether the session manages the contributors: without it, the rows show no actions. Each row says whether it may
+   * remove it (`canRemove`, as the server's policy answers it: a ruleset's Admin is its owner's alone).
    */
-  canRemove?: (contributor: Contributor) => boolean;
+  canManage: boolean;
   /** The ruleset's or the character's id. */
   id: string;
   kind: ContributorKind;
@@ -53,7 +53,7 @@ export function ContributorsDialog({
   onClose,
   canInvite,
   canLeave,
-  canRemove,
+  canManage,
   roles,
   rowActions,
 }: ContributorsDialogProps) {
@@ -72,20 +72,21 @@ export function ContributorsDialog({
           owner={contributors.owner}
           contributors={contributors.contributors}
           renderActions={
-            canRemove &&
-            ((contributor) => (
-              <>
-                {rowActions?.(contributor)}
-                {canRemove(contributor) && (
-                  <RowAction
-                    icon={DeleteIcon}
-                    label="Remove"
-                    intent="destructive"
-                    onClick={() => removeDialog.openWith(contributor)}
-                  />
-                )}
-              </>
-            ))
+            canManage
+              ? (contributor) => (
+                  <>
+                    {rowActions?.(contributor)}
+                    {contributor.canRemove && (
+                      <RowAction
+                        icon={DeleteIcon}
+                        label="Remove"
+                        intent="destructive"
+                        onClick={() => removeDialog.openWith(contributor)}
+                      />
+                    )}
+                  </>
+                )
+              : undefined
           }
         />
         {/* None but its owner yet: said under the owner's row */}

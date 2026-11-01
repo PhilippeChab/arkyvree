@@ -41,8 +41,8 @@ A user can hold multiple roles for the same entity (e.g. owner of a ruleset they
 | `canManageContributors` | owner, **Admin** | managing contributors, archived or not: what every check below starts with |
 | `canManageAdminContributors` | **owner only** | narrowing of the above for touching `Admin`-tier rows |
 | `canInviteContributors({ role })` | owner, **Admin** | on a ruleset that isn't archived (`ConflictError`); an Admin (`role`), the owner only |
-| `canRevokeContributor({ role })` | owner, **Admin** | archived or not; an Admin (`role`), the owner only |
-| `canUpdateContributorRole({ from, to })` | owner, **Admin** | on a ruleset that isn't archived (`ConflictError`); to or from Admin, the owner only |
+| `canRevokeContributor({ role, status })` | owner, **Admin** | archived or not; an Admin (`role`), the owner only; a contributor who's active or invited (`status`, `ConflictError`). A ruleset's contributors list answers it for each row (`canRemove`), and a character's its own (`CharactersPolicy.canRevokeContributor`) |
+| `canUpdateContributorRole({ from, to, status })` | owner, **Admin** | on a ruleset that isn't archived (`ConflictError`); to or from Admin, the owner only; an active contributor's (`status`, `ConflictError`). Its contributors list answers, for each row, the roles it may take (`roles`): none, and its dialog offers no Edit Role |
 | `canRead` | public rulesets: anyone; private: owner, any active contributor, a member (any role) of a campaign on it, archived or not, the owner or an active contributor of a character built on it | every request that names the ruleset by its id, a read or a write, asks it first. Throws `NotFoundError "Ruleset not found"`, the 404 an unknown ruleset gets, so a private ruleset's existence isn't revealed. `isReadable` answers the same yes or no |
 | `canReadContributors` | owner, any contributor | lists the contributors |
 | `canUnarchive` | **owner only** | Archived → Draft |
@@ -169,7 +169,7 @@ The three invite lifecycles share the same shape:
 
 | Action | Gate |
 |---|---|
-| Send / re-send / revoke an invite | The policy that gates managing the parent: `RulesetsPolicy.canInviteContributors({ role })` and `canRevokeContributor({ role })`, `CampaignsPolicy.canManagePlayers` to send (GM, a campaign that isn't archived) and `canUpdate` to revoke (GM, an archived campaign's too), or `CharactersPolicy.canManageContributors` (owner) |
+| Send / re-send / revoke an invite | The policy that gates managing the parent: `RulesetsPolicy.canInviteContributors({ role })` and `canRevokeContributor({ role, status })`, `CampaignsPolicy.canManagePlayers` to send (GM, a campaign that isn't archived) and `canUpdate` to revoke (GM, an archived campaign's too), or `CharactersPolicy.canManageContributors` (owner) |
 | Accept / reject | Identity match: `invite.userId === session.userId` (or `contributor.userId === session.userId` for contributor rows). Throws `NotFoundError` rather than `ForbiddenError` to avoid leaking the existence of invites addressed to other users. An accept then asks its parent's policy, `canAcceptInvite` (`ConflictError` on an archived ruleset, character or campaign), which the invitee's read of the invite answers too (`canAccept`), so the invite's page offers Accept as the accept would take it |
 | Leave (self-remove from contributor or self-remove from campaign) | Identity match: must be holding the row being removed. Throws `NotFoundError` otherwise |
 

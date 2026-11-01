@@ -47,25 +47,37 @@ export function ContributorRights<B extends Constructor<RulesetRoles>>(Base: B) 
       return true;
     }
 
-    /** Revoking a contributor of `role`: managing contributors, archived or not, and an Admin, managing Admins. */
-    canRevokeContributor({ role }: { role: ContributorRole }) {
+    /**
+     * Revoking a contributor of `role`: managing contributors, archived or not, and an Admin, managing Admins; one who
+     * contributes or is invited (`status`), as neither a revoked nor a rejected one does.
+     */
+    canRevokeContributor({ role, status }: { role: ContributorRole; status: string }) {
       this.canManageContributors();
 
       if (role === "Admin") this.canManageAdminContributors();
+
+      if (status !== "Active" && status !== "Pending") throw new ConflictError("Contributor is not active or pending");
 
       return true;
     }
 
     /**
      * Changing a contributor's role from `from` to `to`: managing contributors, on a ruleset that isn't archived, and
-     * where either is Admin, managing Admins.
+     * where either is Admin, managing Admins; an active contributor's (`status`), as an invite's is its invite's.
      */
-    canUpdateContributorRole({ from, to }: { from?: ContributorRole; to?: ContributorRole } = {}) {
+    canUpdateContributorRole({
+      from,
+      status,
+      to,
+    }: { from?: ContributorRole; status?: string; to?: ContributorRole } = {}) {
       this.canManageContributors();
 
       if (this.entity.status === "Archived") throw new ConflictError("Cannot modify roles on an archived ruleset");
 
       if (from === "Admin" || to === "Admin") this.canManageAdminContributors();
+
+      if (status !== undefined && status !== "Active")
+        throw new ConflictError("Can only update role of active contributors");
 
       return true;
     }

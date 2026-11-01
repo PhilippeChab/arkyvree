@@ -175,6 +175,18 @@ export default class CharactersPolicy extends BasePolicy<Character> {
   }
 
   /**
+   * Revoking a contributor: managing them (`canManageContributors`); one who contributes or is invited (`status`), as
+   * neither a revoked nor a rejected one does.
+   */
+  canRevokeContributor({ status }: { status: string }) {
+    this.canManageContributors();
+
+    if (status !== "Active" && status !== "Pending") throw new ConflictError("Contributor is not active or pending");
+
+    return true;
+  }
+
+  /**
    * Creating and revoking its share link: its owner's (`canOwn`), while it isn't archived, which puts it out of the
    * link's reach as an unknown character is.
    */

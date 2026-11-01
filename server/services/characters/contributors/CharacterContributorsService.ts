@@ -61,11 +61,17 @@ class CharacterContributorsService {
     const character = await Characters.findOne(db, { id: characterId }, Visibility.All);
     if (!character) throw new NotFoundError("Character not found");
 
-    (await CharactersPolicy.for(db, session, character)).canReadContributors();
+    const policy = await CharactersPolicy.for(db, session, character);
+    policy.canReadContributors();
 
     const paginated = await CharacterContributors.findPage(db, { characterId, ...where }, pagination);
     const ownerUser = await Users.findOne(db, { id: character.userId });
-    return { ...paginated, owner: ownerUser ? toPublicUser(ownerUser) : null };
+    // Each with whether the session may remove it, as the policy decides
+    const items = paginated.items.map((contributor) => ({
+      ...contributor,
+      canRemove: isAllowed(() => policy.canRevokeContributor({ status: contributor.status })),
+    }));
+    return { ...paginated, items, owner: ownerUser ? toPublicUser(ownerUser) : null };
   }
 
   /**
@@ -193,10 +199,7 @@ class CharacterContributorsService {
       if (!contributor || !readable) throw new NotFoundError("Contributor not found");
 
       const { character, policy } = readable;
-      policy.canManageContributors();
-
-      if (contributor.status !== "Active" && contributor.status !== "Pending")
-        throw new ConflictError("Contributor is not active or pending");
+      policy.canRevokeContributor({ status: contributor.status });
 
       const prevStatus = contributor.status;
       const rows = await CharacterContributors.update(tx, { status: "Revoked" }, { id: contributorId });
