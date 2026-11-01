@@ -532,7 +532,10 @@ describe("subscribing to an extension", () => {
     expect(subscribe(extension.id, session, archived.id)).rejects.toThrow(UnprocessableEntityError);
     expect(subscribe(extension.id, other)).rejects.toThrow(ForbiddenError);
     await RulesetExtensionsService.subscribeExtension(session, draft.id, [extension.id]);
-    await expectRefusedWith(subscribe(extension.id), 409);
+    expect(subscribe(extension.id)).rejects.toMatchObject({
+      code: 409,
+      message: "Already subscribed to this extension",
+    });
   });
 
   test("refuses extensions to a fork others use as one", async () => {
