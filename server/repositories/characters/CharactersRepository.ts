@@ -156,15 +156,6 @@ class CharactersRepository extends include(
     return Boolean(row);
   }
 
-  async findIds(db: Db, where: { userIds: string[] }) {
-    if (where.userIds.length === 0) return [];
-    const rows = await db
-      .select({ id: this.table.id })
-      .from(this.table)
-      .where(inArray(this.table.userId, where.userIds));
-    return rows.map((r) => r.id);
-  }
-
   /** Characters by id, or a parent's children (`parentCharacterId`: 3.5's bonded creatures). */
   async findMany(
     db: Db,
@@ -267,6 +258,21 @@ class CharactersRepository extends include(
 
       return results.map((row) => StoredCharacters.toCharacter(row));
     });
+  }
+
+  /**
+   * Locks a user's characters (`userId`) until the transaction ends, archived or not, its masters before their children
+   * (3.5's bonded creatures), as a character's write locks them, then by id: an account's deletion, which writes them
+   * all, waits on their writes and never on one in a cycle. Answers their ids.
+   */
+  async lockMany(db: Db, where: { userId: string }) {
+    const rows = await db
+      .select({ id: this.table.id })
+      .from(this.table)
+      .where(eq(this.table.userId, where.userId))
+      .orderBy(sql`${this.table.parentCharacterId} IS NOT NULL`, this.table.id)
+      .for("no key update");
+    return rows.map((row) => row.id);
   }
 
   async unarchive(db: Db, where: { id: string }) {

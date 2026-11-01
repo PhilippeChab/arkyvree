@@ -50,25 +50,35 @@ class ContributorsService {
 
   /**
    * Runs a write of a contributor (`contributorId`) under its ruleset's lock (`withRulesetLock`), which decides the
-   * session's rights itself: an unknown contributor refused with `notFound`. A contributor's ruleset never changes, so
-   * it's read before the lock.
+   * session's rights itself: an unknown contributor refused with `notFound`, and so is one of another ruleset than the
+   * path's (`rulesetId`), before any lock, so no lock of a ruleset it didn't name answers it. A contributor's ruleset
+   * never changes, so it's read before the lock.
    */
-  private async withContributorsRuleset<T>(contributorId: string, notFound: string, write: (tx: Db) => Promise<T>) {
+  private async withContributorsRuleset<T>(
+    contributorId: string,
+    write: (tx: Db) => Promise<T>,
+    { notFound, rulesetId }: { notFound: string; rulesetId?: string },
+  ) {
     const contributor = await Contributors.findOne(db, { id: contributorId });
-    if (!contributor) throw new NotFoundError(notFound);
+    if (!contributor || (rulesetId !== undefined && contributor.rulesetId !== rulesetId))
+      throw new NotFoundError(notFound);
     return await withRulesetLock(contributor.rulesetId, write);
   }
 
   async acceptInvite(session: Session, contributorId: string) {
-    return await this.withContributorsRuleset(contributorId, INVITE_NOT_FOUND, async (tx) => {
-      const contributor = await getPendingInvite(tx, session, Contributors, contributorId, INVITE_NOT_FOUND);
+    return await this.withContributorsRuleset(
+      contributorId,
+      async (tx) => {
+        const contributor = await getPendingInvite(tx, session, Contributors, contributorId, INVITE_NOT_FOUND);
 
-      const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId });
-      if (!ruleset) throw new NotFoundError("Ruleset not found");
-      (await RulesetsPolicy.for(tx, session, ruleset)).canAcceptInvite();
+        const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId });
+        if (!ruleset) throw new NotFoundError("Ruleset not found");
+        (await RulesetsPolicy.for(tx, session, ruleset)).canAcceptInvite();
 
-      return await this.answerInvite(tx, session, contributor.id, "Active");
-    });
+        return await this.answerInvite(tx, session, contributor.id, "Active");
+      },
+      { notFound: INVITE_NOT_FOUND },
+    );
   }
 
   async getContributors(
@@ -195,58 +205,75 @@ class ContributorsService {
   }
 
   async rejectInvite(session: Session, contributorId: string) {
-    return await this.withContributorsRuleset(contributorId, INVITE_NOT_FOUND, async (tx) => {
-      const contributor = await getPendingInvite(tx, session, Contributors, contributorId, INVITE_NOT_FOUND);
+    return await this.withContributorsRuleset(
+      contributorId,
+      async (tx) => {
+        const contributor = await getPendingInvite(tx, session, Contributors, contributorId, INVITE_NOT_FOUND);
 
-      return await this.answerInvite(tx, session, contributor.id, "Rejected");
-    });
+        return await this.answerInvite(tx, session, contributor.id, "Rejected");
+      },
+      { notFound: INVITE_NOT_FOUND },
+    );
   }
 
   async revokeContributor(session: Session, rulesetId: string, contributorId: string) {
-    return await this.withContributorsRuleset(contributorId, CONTRIBUTOR_NOT_FOUND, async (tx) => {
-      const { contributor, ruleset, policy } = await this.getReadableContributor(tx, session, rulesetId, contributorId);
-      policy.canRevokeContributor({ role: contributor.role });
+    return await this.withContributorsRuleset(
+      contributorId,
+      async (tx) => {
+        const { contributor, ruleset, policy } = await this.getReadableContributor(
+          tx,
+          session,
+          rulesetId,
+          contributorId,
+        );
+        policy.canRevokeContributor({ role: contributor.role });
 
-      if (contributor.status !== "Active" && contributor.status !== "Pending")
-        throw new ConflictError("Contributor is not active or pending");
+        if (contributor.status !== "Active" && contributor.status !== "Pending")
+          throw new ConflictError("Contributor is not active or pending");
 
-      const prevStatus = contributor.status;
-      const rows = await Contributors.update(tx, { status: "Revoked" }, { id: contributorId });
-      const updated = rows[0];
+        const prevStatus = contributor.status;
+        const rows = await Contributors.update(tx, { status: "Revoked" }, { id: contributorId });
+        const updated = rows[0];
 
-      await createActivityWithNotifications(tx, {
-        userId: session.userId,
-        targetId: updated.id,
-        targetType: TARGET_TYPES.contributors,
-        type: "revokeContributor",
-        // Its notification names the ruleset it no longer contributes to
-        data: { contributorId, prevStatus, rulesetName: ruleset.name },
-      });
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: updated.id,
+          targetType: TARGET_TYPES.contributors,
+          type: "revokeContributor",
+          // Its notification names the ruleset it no longer contributes to
+          data: { contributorId, prevStatus, rulesetName: ruleset.name },
+        });
 
-      return updated;
-    });
+        return updated;
+      },
+      { notFound: CONTRIBUTOR_NOT_FOUND, rulesetId },
+    );
   }
 
   async updateContributorRole(session: Session, rulesetId: string, contributorId: string, role: ContributorRole) {
-    return await this.withContributorsRuleset(contributorId, CONTRIBUTOR_NOT_FOUND, async (tx) => {
-      const { contributor, policy } = await this.getReadableContributor(tx, session, rulesetId, contributorId);
-      policy.canUpdateContributorRole({ from: contributor.role, to: role });
+    return await this.withContributorsRuleset(
+      contributorId,
+      async (tx) => {
+        const { contributor, policy } = await this.getReadableContributor(tx, session, rulesetId, contributorId);
+        policy.canUpdateContributorRole({ from: contributor.role, to: role });
 
-      if (contributor.status !== "Active") throw new ConflictError("Can only update role of active contributors");
+        if (contributor.status !== "Active") throw new ConflictError("Can only update role of active contributors");
 
-      const rows = await Contributors.update(tx, { role }, { id: contributorId });
-      const updated = rows[0];
+        const rows = await Contributors.update(tx, { role }, { id: contributorId });
+        const updated = rows[0];
 
-      await createActivityWithNotifications(tx, {
-        userId: session.userId,
-        targetId: updated.id,
-        targetType: TARGET_TYPES.contributors,
-        type: "updateContributorRole",
-        data: { contributorId, role },
-      });
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: updated.id,
+          targetType: TARGET_TYPES.contributors,
+          type: "updateContributorRole",
+          data: { contributorId, role },
+        });
 
-      return updated;
-    });
+        return updated;
+      },
+      { notFound: CONTRIBUTOR_NOT_FOUND, rulesetId },
+    );
   }
 }
 

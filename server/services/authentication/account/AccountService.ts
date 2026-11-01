@@ -68,14 +68,17 @@ class AccountService {
     }
 
     return await withTransaction(async (tx) => {
+      // Its rulesets, then its characters, masters first, locked as their writes lock them, before anything writes
+      // them (an attachment's purge touches its character's row): it waits on their writes, never on one in a cycle
+      await Rulesets.orphan(tx, { userId });
+      const characterIds = await Characters.lockMany(tx, { userId });
+
       // Drop polymorphic attachment rows for the user + their characters so
       // the sweep can reclaim S3 objects. archive() leaves rows in place, so
       // without this the avatar + every portrait leak forever.
-      const characterIds = await Characters.findIds(tx, { userIds: [userId] });
       await purgeAttachmentsForRecords(tx, "User", [userId]);
       await purgeAttachmentsForRecords(tx, "Character", characterIds);
 
-      await Rulesets.orphan(tx, { userId });
       await Characters.archive(tx, { userId });
       await Players.archive(tx, { userId });
       await Invites.archive(tx, { userId });

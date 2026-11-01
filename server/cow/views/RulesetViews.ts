@@ -8,7 +8,7 @@ import type { BaseRules } from "@/shared/enums.ts";
 
 import CowDataReader from "./CowDataReader.ts";
 import RawDataReader from "./RawDataReader.ts";
-import type { LockedRulesetScope, RulesetScope } from "./scope.ts";
+import type { RulesetScope, SharedRulesetScope } from "./scope.ts";
 
 /**
  * What the cache keeps of a ruleset (`value`), and the content versions of the rulesets whose writes reach it, as they
@@ -20,11 +20,11 @@ interface Versioned<T> {
 }
 
 /**
- * A ruleset and its sources: what its target paths are listed of; a write's, under its lock (`LockedRulesetScope`),
- * with its view and the versions its lock read.
+ * A ruleset and its sources: what its target paths are listed of; a write's, under its locks (a `LockedRulesetScope`,
+ * a `SharedRulesetScope`), with its view and the versions its locks read.
  */
 type TargetPathScope = Pick<RulesetScope, "ruleset" | "sources"> &
-  Partial<Pick<LockedRulesetScope, "rulesetData" | "versions">>;
+  Partial<Pick<SharedRulesetScope, "rulesetData" | "versions">>;
 
 /**
  * The rulesets' cache: what a ruleset's view is built from, read once and kept for every reader, and what the engine
@@ -47,11 +47,15 @@ class RulesetViews {
   }
 
   /**
-   * The rulesets whose writes reach a ruleset's own rows (`rulesetId`, of the chain `ruleset` reads): its own, and, of
-   * the ruleset read, its extensions', whose restore repoints the rows naming the copy it removes.
+   * The rulesets whose writes reach a ruleset's own rows (`rulesetId`, of the chain `ruleset` reads): its own, and its
+   * sources': of the ruleset read, its source chain's (an extension's restore repoints the rows naming the copy it
+   * removes), and of an extension in it, its parent's, the ruleset's own (an extension subscribes to none); a delete in
+   * any of them unlinks the rows naming what it deletes (the database's `apply_delete_rules`).
    */
   private static rowWritersOf(rulesetId: string, ruleset: RulesetSources) {
-    return rulesetId === ruleset.id ? [rulesetId, ...ruleset.extensionIds] : [rulesetId];
+    const parent = ruleset.parentId ? [ruleset.parentId] : [];
+    if (rulesetId === ruleset.id) return [rulesetId, ...ruleset.extensionIds, ...parent];
+    return ruleset.extensionIds.includes(rulesetId) ? [rulesetId, ...parent] : [rulesetId];
   }
 
   /** The versions of `ids`, of those a write's lock read (`current`). */
@@ -167,7 +171,8 @@ class RulesetViews {
 
   /**
    * A ruleset's own rows, none of its ancestors': pinned when it's a system ruleset. Tagged with the versions of the
-   * rulesets whose writes reach them (`writerIds`: its own, and a fork's extensions').
+   * rulesets whose writes reach them (`writerIds`, `rowWritersOf`: its own, and of the ruleset read or an extension in
+   * its chain, its sources').
    */
   async getRawData(rulesetId: string, writerIds = [rulesetId]): Promise<RulesetRawData> {
     const entry = await this.rawData.getOrFetch(rulesetId, [rulesetId], () => this.readRawData(rulesetId, writerIds));
@@ -212,7 +217,8 @@ class RulesetViews {
   /** Loads the system rulesets' rows (the bases and the extensions), at boot: the first user doesn't wait for them. */
   async warm(): Promise<void> {
     const systemRulesets = await Rulesets.findMany(db, { system: true });
-    await Promise.all(systemRulesets.map((r) => this.getRawData(r.id)));
+    // Each tagged as a fork's chain reads it: an extension with its parent's version too (`rowWritersOf`)
+    await Promise.all(systemRulesets.map((r) => this.getRawData(r.id, r.rulesetId ? [r.id, r.rulesetId] : [r.id])));
   }
 }
 

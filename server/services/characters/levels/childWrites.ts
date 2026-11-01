@@ -15,7 +15,7 @@ import { createAdvancement } from "./advancementWrites.ts";
  * before the lock archived them with it.
  */
 export async function writeChildren(tx: Db, parent: Character, plans: ChildPlan[]): Promise<void> {
-  if (!(await Characters.lock(tx, { id: parent.id }))) return;
+  if (!(await Characters.lock(tx, { id: parent.id }, "no key update"))) return;
   for (const plan of plans) {
     if (plan.removedId) await Characters.delete(tx, { id: plan.removedId });
     if (!plan.levels) continue;

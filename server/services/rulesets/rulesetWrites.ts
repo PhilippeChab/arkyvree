@@ -18,8 +18,9 @@ interface RulesetWriteOptions {
 }
 
 /**
- * How long a ruleset's write waits on another's lock before it gives up, answered as a conflict: writes to a ruleset
- * take turns, each a few milliseconds, so a longer wait is a stuck one, which never reaches the statement timeout.
+ * How long a write waits on another's lock before it gives up, answered as a conflict: writes to a ruleset, or to a
+ * character, take turns, each a few milliseconds, so a longer wait is a stuck one, which never reaches the statement
+ * timeout.
  */
 const LOCK_WAIT_MILLISECONDS = 5000;
 
@@ -27,23 +28,21 @@ const LOCK_WAIT_MILLISECONDS = 5000;
 export const BUSY_RULESET_MESSAGE = "The ruleset is being changed by another save; try again";
 
 /**
- * Runs a write's transaction (`run`), a write that gave up on a lock refused as a conflict (`BUSY_RULESET_MESSAGE`).
+ * Opens a write's transaction (`write`), the one way every write of a locked aggregate (a ruleset, a character) opens
+ * one: its lock waits bounded (`LOCK_WAIT_MILLISECONDS`), and a write that gave up on a lock, or deadlocked with
+ * another, refused as a conflict (`busy`: what the aggregate answers, `BUSY_RULESET_MESSAGE` for a ruleset), changing
+ * nothing, so it can be sent again.
  */
-async function refuseBusy<T>(run: () => Promise<T>): Promise<T> {
+export async function withBoundedWrite<T>(busy: string, write: (tx: Db) => Promise<T>): Promise<T> {
   try {
-    return await run();
+    return await withTransaction(async (tx) => {
+      await setLockTimeout(tx, LOCK_WAIT_MILLISECONDS);
+      return await write(tx);
+    });
   } catch (error) {
-    if (isLockFailure(error)) throw new ConflictError(BUSY_RULESET_MESSAGE);
+    if (isLockFailure(error)) throw new ConflictError(busy);
     throw error;
   }
-}
-
-/** Opens a write's transaction (`write`), its lock waits bounded (`LOCK_WAIT_MILLISECONDS`). */
-async function withBoundedTransaction<T>(write: (tx: Db) => Promise<T>): Promise<T> {
-  return await withTransaction(async (tx) => {
-    await setLockTimeout(tx, LOCK_WAIT_MILLISECONDS);
-    return await write(tx);
-  });
 }
 
 /**
@@ -78,12 +77,10 @@ export async function withRulesetLock<T>(
   write: (tx: Db) => Promise<T>,
   mode: "no key update" | "share" = "no key update",
 ): Promise<T> {
-  return await refuseBusy(() =>
-    withBoundedTransaction(async (tx) => {
-      if (!(await Rulesets.lock(tx, { id: rulesetId }, mode))) throw new NotFoundError("Ruleset not found");
-      return await write(tx);
-    }),
-  );
+  return await withBoundedWrite(BUSY_RULESET_MESSAGE, async (tx) => {
+    if (!(await Rulesets.lock(tx, { id: rulesetId }, mode))) throw new NotFoundError("Ruleset not found");
+    return await write(tx);
+  });
 }
 
 /**
@@ -102,15 +99,14 @@ export async function withRulesetWrite<T>(
   write: (tx: Db, scope: LockedRulesetScope, policy: RulesetsPolicy) => Promise<T>,
   { drops = "everything", reads = [] }: RulesetWriteOptions = {},
 ): Promise<T> {
-  const result = await refuseBusy(() =>
-    withBoundedTransaction(
-      async (tx) =>
-        await withLockedRulesetScope(tx, rulesetId, async (scope, policy) => await write(tx, scope, policy), {
-          // The session's access, under the ruleset's lock, before its chain's locks and its view
-          before: async () => (await getReadableRuleset(tx, session, rulesetId)).policy,
-          reads,
-        }),
-    ),
+  const result = await withBoundedWrite(
+    BUSY_RULESET_MESSAGE,
+    async (tx) =>
+      await withLockedRulesetScope(tx, rulesetId, async (scope, policy) => await write(tx, scope, policy), {
+        // The session's access, under the ruleset's lock, before its chain's locks and its view
+        before: async () => (await getReadableRuleset(tx, session, rulesetId)).policy,
+        reads,
+      }),
   );
   if (drops === "entities") RulesetViews.invalidateEntities(rulesetId);
   else RulesetViews.invalidate(rulesetId);

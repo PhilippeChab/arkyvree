@@ -18,9 +18,11 @@ export { default as RulesetViews } from "./views/RulesetViews.ts";
 export {
   type LockedRulesetScope,
   type RulesetScope,
+  type SharedRulesetScope,
   withLockedRulesetScope,
   withRulesetScope,
   withRulesetScopes,
+  withSharedRulesetScope,
 } from "./views/scope.ts";
 export { default as CustomizationCopies } from "./writes/CustomizationCopies.ts";
 export { default as CustomizationEdit } from "./writes/CustomizationEdit.ts";
