@@ -14,8 +14,6 @@ import { EntityDeleteDialog } from "./EntityDeleteDialog.tsx";
 
 /** An entity page's delete, its header's menu offers to who may delete it: confirmed, it goes Back once it's done. */
 interface EntityDeletion {
-  /** Why the ruleset's Local Changes didn't load, which tell a copy of an inherited entity (`useRestorableDelete`) */
-  changesError?: unknown;
   /** Deletes the entity: the delete mutation's request */
   deleteFn: () => Promise<unknown>;
   /** Its own queries, removed once it's gone, so Back never renders it from the cache */
@@ -23,7 +21,7 @@ interface EntityDeletion {
   /** The lists it showed in, which its delete refreshes with the ruleset's Local Changes */
   listKeys: readonly QueryKey[];
   /**
-   * Its delete can be undone from Local Changes (`useRestorableDelete`): its menu says "Delete", not "Delete
+   * Its delete can be undone from Local Changes (its entity's `restorableDelete`): its menu says "Delete", not "Delete
    * Permanently", and its confirmation says so.
    */
   restorable: boolean;
@@ -138,7 +136,6 @@ export function EntityDetailLayout({
           onClose={confirm.close}
           what={what}
           restorable={confirming.restorable}
-          changesError={confirming.changesError}
           onConfirm={() => deleteMutation.mutate(confirming)}
           pending={deleteMutation.isPending}
         />

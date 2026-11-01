@@ -48,7 +48,7 @@ interface RequirementsSectionProps {
   entityType: string;
   followCopy?: (copyId: string, sourceId: string) => void;
   queryKeysToInvalidate?: readonly (readonly unknown[])[];
-  /** A delete can be undone from Local Changes, its entity's being inherited (`useRestorableDelete`) */
+  /** A delete can be undone from Local Changes, its entity's being inherited (its entity's `restorableDelete`) */
   restorable: boolean;
   ruleset: RulesetDetail;
 }

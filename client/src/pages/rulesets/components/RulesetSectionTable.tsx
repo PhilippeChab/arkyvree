@@ -44,7 +44,10 @@ interface RulesetSectionTableProps<T extends { id: string }> {
   /** Warms the page a row opens (`useRowPrefetch`): 150ms into a hover, at once on focus */
   onRowPrefetch?: (item: T) => void;
   renderCell: (item: T, columnKey: string) => ReactNode;
-  /** A row's delete can be undone from Local Changes (`useRestorableDelete`): "Delete", not "Delete Permanently". */
+  /**
+   * A row's delete can be undone from Local Changes (its entity's `restorableDelete`): "Delete", not "Delete
+   * Permanently".
+   */
   restorable?: boolean;
   /** The section's search, so an empty result reads as no matches rather than an empty section. */
   search?: string;

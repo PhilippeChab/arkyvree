@@ -7,7 +7,7 @@ import { queryOptions, skipToken } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 
 import type { CustomizationPage } from "@/client/src/hooks/index.ts";
-import { type EntityRow, readEntityFn } from "@/client/src/lib/entityRequests.ts";
+import { type EntityAnswer, readEntityFn } from "@/client/src/lib/entityRequests.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -23,7 +23,7 @@ type CustomizedModifier = InferResponseType<
  */
 export type CustomizationEntity =
   | { entity: CustomizedModifier; holder: "modifier"; type: "modifiers" }
-  | { entity: EntityRow; holder: "entity"; type: string }
+  | { entity: EntityAnswer; holder: "entity"; type: string }
   | { entity: OwnedEntity; holder: "owned"; owner: string; ownerId: string; type: string };
 
 /**
@@ -35,6 +35,8 @@ export type OwnedEntity = Record<string, unknown> & {
   name: string;
   ownerId: string;
   position: number;
+  /** Its delete can be undone from Local Changes, its owner's being (`RulesetChanges.restoresDelete`) */
+  restorableDelete: boolean;
   rulesetId: string;
   updatedAt: string;
 };

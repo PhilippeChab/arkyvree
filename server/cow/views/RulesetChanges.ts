@@ -1,5 +1,9 @@
 import type { Db } from "@/drizzle/database.ts";
+import { Engine } from "@/engine/index.ts";
 import { EntitySnapshots, RulesetEntities, type RulesetEntityType } from "@/server/repositories/index.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
+
+import type { RulesetScope } from "./scope.ts";
 
 /** An entity a ruleset's changes name: its kind, its id and its name. */
 interface ChangedEntity {
@@ -16,10 +20,16 @@ type NamedEntity = ChangedEntity & { rulesetId: string };
  * snapshot is. A copy of a live source is a change to it (`modified`, its source's id beside it); a source whose copy
  * was deleted (a tombstone) is deleted, and its restore shows it again (`deleted`); a copy whose source is gone (an
  * extension deleted it) is the ruleset's own entity, as one it made is (`added`); a snapshot whose copy and source are
- * both gone stands for nothing. A source's ruleset says whose entity the ruleset copied (`copiesOf`: an extension's,
- * which its unsubscribe reverts).
+ * both gone stands for nothing. A change it lists is of a kind a restore brings back (`restorableKinds`: no route
+ * edits a read-only one, 3.5's abilities). A source's ruleset says whose entity the ruleset copied (`copiesOf`: an
+ * extension's, which its unsubscribe reverts).
  */
 export default class RulesetChanges {
+  /** Whether a restore brings back an entity of the kind (`entityType`): one a route writes (`restorableKinds`). */
+  private static isRestorable(entityType: string) {
+    return isOneOf(entityType, Engine.rules().restorableKinds());
+  }
+
   /** The ruleset's snapshots, each with its source, if it's still there. */
   private static async readSources(db: Db, rulesetId: string) {
     const snapshots = await EntitySnapshots.findMany(db, { rulesetId });
@@ -61,12 +71,32 @@ export default class RulesetChanges {
       const copy = localById.get(forkedEntityId);
       if (copy && source) {
         copiedIds.add(copy.id);
-        modified.push({ ...of(copy), sourceEntityId: source.id });
-      } else if (source) {
+        if (RulesetChanges.isRestorable(copy.entityType)) modified.push({ ...of(copy), sourceEntityId: source.id });
+      } else if (source && RulesetChanges.isRestorable(source.entityType)) {
         deleted.push({ ...of(source), sourceEntityId: source.id });
       }
     }
     const added = local.filter((row) => !copiedIds.has(row.id)).map(of);
     return { added, deleted, modified };
+  }
+
+  /**
+   * Whether deleting an entity the ruleset's view shows (`entity`, of `entityType`) leaves a change its Local Changes
+   * restore (`read`), which brings the entity back with what it holds: of a fork, of a kind a restore takes
+   * (`restorableKinds`), an inherited entity (its delete leaves a tombstone of it), or the fork's copy of a source
+   * still there (a change to it, its delete a tombstone). The fork's own entity, a copy whose source is gone among
+   * them, is gone for good, as is everything of a ruleset without a parent.
+   */
+  static async restoresDelete(
+    db: Db,
+    { ruleset, rulesetData }: Pick<RulesetScope, "ruleset" | "rulesetData">,
+    entityType: string,
+    entity: { id: string; rulesetId: string },
+  ) {
+    if (!ruleset.rulesetId || !RulesetChanges.isRestorable(entityType)) return false;
+    if (entity.rulesetId !== ruleset.id) return true;
+    const sourceId = rulesetData.cow.sourceOf(entity.id);
+    if (!sourceId) return false;
+    return (await RulesetEntities.findNames(db, { ids: [sourceId] })).length > 0;
   }
 }
