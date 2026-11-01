@@ -116,6 +116,16 @@ export default class CharactersPolicy extends BasePolicy<Character> {
     return this.canOwn();
   }
 
+  /**
+   * Exporting the character as a PDF: its editors', while they may edit it (`isEditable`: neither it nor a child's
+   * parent is archived). Anyone else gets the 404 an unknown character gets.
+   */
+  canExport() {
+    if (!this.isEditable()) throw new NotFoundError("Character not found");
+
+    return true;
+  }
+
   /** `inActiveCampaign`: the character is linked to a campaign that isn't archived. */
   canHardDelete({ inActiveCampaign }: { inActiveCampaign: boolean }) {
     this.canArchive();

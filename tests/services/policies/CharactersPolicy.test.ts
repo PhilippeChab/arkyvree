@@ -166,6 +166,16 @@ describe("CharactersPolicy", () => {
     expect(new CharactersPolicy(owner, archived).isPortraitEditable()).toBe(false);
   });
 
+  test("canExport: its editors while they may edit it; anyone else, and an archived one, as an unknown character", async () => {
+    const { character, owner, other } = await setup();
+    expect(new CharactersPolicy(owner, character).canExport()).toBe(true);
+    expect(new CharactersPolicy(other, character, { isActiveContributor: true }).canExport()).toBe(true);
+    expect(() => new CharactersPolicy(other, character).canExport()).toThrow(new NotFoundError("Character not found"));
+
+    const [archived] = await Characters.archive(db, { id: character.id });
+    expect(() => new CharactersPolicy(owner, archived).canExport()).toThrow(NotFoundError);
+  });
+
   test("a live child under an archived parent is read-only, as its parent is", async () => {
     const { character, owner, user } = await setup();
     // Archiving the parent archives its children: a live one under it is left as if it hadn't been
