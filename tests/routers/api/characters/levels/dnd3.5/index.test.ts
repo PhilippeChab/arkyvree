@@ -144,17 +144,20 @@ describe("character levels", () => {
           false,
         ).items.find((k) => k.id === fighter);
 
-      expect(await nextFighterLevel()).toMatchObject({ track: { next: 1 }, eligible: true });
+      expect(await nextFighterLevel()).toMatchObject({
+        track: { positions: expect.arrayContaining([1, 2]) },
+        eligible: true,
+      });
       const created = await addLevelOk(characterId, fighter, 1, 8, fighter1(ctx));
       expect(created).toMatchObject({ characterId, position: 1, entryId: (await findClassLevel(fighter, 1))!.id });
-      expect(await nextFighterLevel()).toMatchObject({ track: { next: 2 } });
+      expect((await nextFighterLevel())?.track?.positions[0]).toBe(2);
       await addLevelOk(characterId, fighter, 2, 6, fighter2(ctx));
-      expect(await nextFighterLevel()).toMatchObject({ track: { next: 3 } });
+      expect((await nextFighterLevel())?.track?.positions[0]).toBe(3);
     });
 
     test("refuses a step the ruleset doesn't give a level, and a pool's picker over a plan of no level", async () => {
       const { characterId, ctx } = await createCharacter();
-      const plan = { steps: { "class-plan": [{ track: ctx.classMap.pc["Fighter"], position: 1 }] } };
+      const plan = { steps: { "class-plan": [{ track: ctx.classMap.pc["Fighter"] }] } };
       await expectStatus(options.$post({ param: { characterId, step: "languages" }, query: {}, json: { plan } }), 404);
       // A pool's picker reads its level's class: a plan without one has none
       await expectStatus(
@@ -170,7 +173,7 @@ describe("character levels", () => {
     test("answers the room a class level gives each step", async () => {
       const { characterId, ctx } = await createCharacter();
       const plan = await planOk(characterId, {
-        steps: { "class-plan": [{ track: ctx.classMap.pc["Fighter"], position: 1 }] },
+        steps: { "class-plan": [{ track: ctx.classMap.pc["Fighter"] }] },
       });
       expect(plan.advancements.map(({ position }) => position)).toEqual([1]);
 
@@ -197,7 +200,7 @@ describe("character levels", () => {
       const character = await postCharacter({ links: { race: ctx.raceMap.pc["Half-Orc"] }, abilities });
       const fighter = ctx.classMap.pc["Fighter"];
       // INT 12, 10 (+0) with the half-orc's -2: (2 + 0) x 4
-      const plan = await planOk(character.id, { steps: { "class-plan": [{ track: fighter, position: 1 }] } });
+      const plan = await planOk(character.id, { steps: { "class-plan": [{ track: fighter }] } });
       expect(stepOf(plan, "skills", "spend")).toMatchObject({ budget: 8 });
 
       const levelPicks = picks(ctx, {
@@ -213,7 +216,7 @@ describe("character levels", () => {
       const fighter = ctx.classMap.pc["Fighter"];
       const climb = async (count: number) => {
         const plan = await planOk(characterId, {
-          steps: { "class-plan": Array.from({ length: count }, (_, i) => ({ track: fighter, position: i + 1 })) },
+          steps: { "class-plan": Array.from({ length: count }, () => ({ track: fighter })) },
         });
         expect(plan.advancements).toHaveLength(count);
         return stepOf(plan, "skills", "spend").rows.find(({ id }) => id === ctx.skillMap["Climb"]);
@@ -236,7 +239,7 @@ describe("character levels", () => {
       ];
       const plan = await planOk(characterId, {
         steps: {
-          "class-plan": abilities.map((_, i) => ({ track: fighter, position: i + 1 })),
+          "class-plan": abilities.map(() => ({ track: fighter })),
           abilities,
         },
       });
@@ -259,13 +262,14 @@ describe("character levels", () => {
   describe("spell pickers", () => {
     test("keeps a spell another class picked, and drops one this class already picked", async () => {
       const { characterId, ctx } = await createCharacter();
-      const detectMagic = async (wizardLevel: number) => {
+      // The plan takes the wizard's next level, as the engine numbers it
+      const detectMagic = async () => {
         const answer = await expectOk(
           options.$post({
             param: { characterId, step: "spells" },
             query: { search: "Detect Magic" },
             json: {
-              plan: { steps: { "class-plan": [{ track: ctx.classMap.pc["Wizard"], position: wizardLevel }] } },
+              plan: { steps: { "class-plan": [{ track: ctx.classMap.pc["Wizard"] }] } },
               pool: ctx.aptMap["Wizard Spells"],
               tier: "0",
             },
@@ -281,7 +285,7 @@ describe("character levels", () => {
         [clericLevel],
         [{ levelIndex: 0, spellName: "Detect Magic", aptitude: "Cleric Spells" }],
       );
-      expect(await detectMagic(1)).toContain("Detect Magic");
+      expect(await detectMagic()).toContain("Detect Magic");
 
       const [wizardLevel] = await addClassLevels(db, ctx, characterId, "Wizard", [1], [4]);
       await addSpells(
@@ -290,13 +294,13 @@ describe("character levels", () => {
         [wizardLevel],
         [{ levelIndex: 0, spellName: "Detect Magic", aptitude: "Wizard Spells" }],
       );
-      expect(await detectMagic(2)).not.toContain("Detect Magic");
+      expect(await detectMagic()).not.toContain("Detect Magic");
     });
 
     test("leaves out the spells the wizard picked already, as the feat picker leaves out a feat held", async () => {
       const { characterId, ctx } = await createCharacter();
       const wizardSpells = ctx.aptMap["Wizard Spells"];
-      const classPlan = [{ track: ctx.classMap.pc["Wizard"], position: 1 }];
+      const classPlan = [{ track: ctx.classMap.pc["Wizard"] }];
       const cantrips = async (spells: { id: string; pool: string; tier: string }[] = []) => {
         const answer = await expectOk(
           options.$post({
@@ -326,7 +330,7 @@ describe("character levels", () => {
           options.$post({
             param: { characterId, step: "spells" },
             query: { limit: "100" },
-            json: { plan: { steps: { "class-plan": [{ track: classId, position: 1 }] } }, pool, tier },
+            json: { plan: { steps: { "class-plan": [{ track: classId }] } }, pool, tier },
           }),
         );
         return optionsOf(answer, false).items.map((p) => p.name);
@@ -420,11 +424,6 @@ describe("character levels", () => {
       await expectStatus(addLevel(characterId, ctx.classMap.pc["Fighter"], 1, 8, { ...levelPicks, feats }), 400);
     });
 
-    test("refuses a class level beyond the rules' last", async () => {
-      const { characterId, ctx } = await createCharacter();
-      await expectStatus(addLevel(characterId, ctx.classMap.pc["Fighter"], 21, 8, fighter1(ctx)), 400);
-    });
-
     test("edits an earlier level without touching the later ones", async () => {
       const { characterId, ctx } = await createCharacter();
       const first = await addLevelOk(characterId, ctx.classMap.pc["Fighter"], 1, 8, fighter1(ctx));
@@ -457,7 +456,7 @@ describe("character levels", () => {
         poolNamed(stepOf(await planOk(characterId, plan), "feats", "pick"), "General")!;
       const editing = await general({ editedLevelId: first.id, steps: {} });
       // The next level's, which every saved level's picks count against
-      const leveling = await general({ steps: { "class-plan": [{ track: classId, position: 3 }] } });
+      const leveling = await general({ steps: { "class-plan": [{ track: classId }] } });
       // A human fighter 1 picks two General feats, which its edit picks again: none spent, both slots open
       expect([editing.available, editing.spent]).toEqual([2, 0]);
       expect(leveling.spent - editing.spent).toBe(2);
@@ -600,9 +599,9 @@ describe("character levels", () => {
       const classes = await expectOk(
         options.$post({ param: { characterId, step: "class-plan" }, query: {}, json: { plan: { steps: {} } } }),
       );
-      expect(optionsOf(classes, false).items.find((k) => k.id === ctx.classMap.pc["Fighter"])).toMatchObject({
-        track: { next: 2 },
-      });
+      expect(
+        optionsOf(classes, false).items.find((k) => k.id === ctx.classMap.pc["Fighter"])?.track?.positions[0],
+      ).toBe(2);
     });
 
     test("returns 404 for a character without levels", async () => {

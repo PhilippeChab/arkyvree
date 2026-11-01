@@ -43,8 +43,8 @@ export function useAddLevelWizard({ open, onClose, characterId, trackId }: UseAd
   const [openedFor, setOpenedFor] = useState(trackId);
   const [openedSlot, setOpenedSlot] = useState<number>();
 
-  // The planned advancements, in plan order: each its slot's key, its track and its position on it, a track planned
-  // again taking the position after
+  // The planned advancements, in plan order: each its slot's key, its track and the position its picker says it takes
+  // there, a track planned again taking the one after
   const slots = useMemo(() => {
     const keys = plannedSlotKeys(plan, slotKeys);
     const filled = plan.flatMap((option, index) => (option ? [{ index, option }] : []));

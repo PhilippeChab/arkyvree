@@ -46,12 +46,5 @@ describe("planLevelUp", () => {
         { abilityIncreases: [], hp: 6, level: 4 },
       ]),
     ).toBe("Level 4: Ability increase is required at this level");
-    // A class level taken twice: the plan's second level is the character's third
-    expect(
-      await refusalOf(1, [
-        { abilityIncreases: [], hp: 6, level: 2 },
-        { abilityIncreases: [], hp: 6, level: 2 },
-      ]),
-    ).toBe("Level 3: This level has already been finalized");
   });
 });

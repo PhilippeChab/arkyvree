@@ -105,7 +105,7 @@ export function PlanStep({ characterId, step, wizard }: PlanStepProps) {
   // A button adds a track at the end of the plan, at the position after those planned: "+ Wizard 3" once Wizard 2 is.
   // It pushes the track as the server gives it, which the wizard numbers in its place. The character's own tracks first
   // (a next position past 1 means one taken), from the unsearched options, so searching drops none of them
-  const quickAdd = planOptions.quickAdd.filter((option) => (option.track?.next ?? 1) > 1 && option.eligible);
+  const quickAdd = planOptions.quickAdd.filter((option) => (option.track?.positions[0] ?? 1) > 1 && option.eligible);
   // Then any planned track not already among them
   const seen = new Set(quickAdd.map((option) => option.id));
   for (const option of plan) {
@@ -127,7 +127,7 @@ export function PlanStep({ characterId, step, wizard }: PlanStepProps) {
             key={option.id}
             variant="text"
             size="small"
-            label={`${option.name} ${plannedPosition(option, plan)}`}
+            label={`${option.name} ${plannedPosition(option, plan) ?? ""}`.trim()}
             onClick={() => handleQuickAdd(option)}
             disabled={!canPlan(option, plan, left)}
           />
@@ -159,7 +159,7 @@ export function PlanStep({ characterId, step, wizard }: PlanStepProps) {
               }}
               filterOptions={(x) => x}
               getOptionLabel={(option) => `${option.name} — ${position.one} ${plannedPosition(option, plan, index)}`}
-              getOptionDisabled={(option) => !option.eligible}
+              getOptionDisabled={(option) => !option.eligible || plannedPosition(option, plan, index) === undefined}
               isOptionEqualToValue={(option, value) => option.id === value.id}
               renderOption={({ key, ...props }, option) => {
                 const next = `${position.one} ${plannedPosition(option, plan, index)}`;

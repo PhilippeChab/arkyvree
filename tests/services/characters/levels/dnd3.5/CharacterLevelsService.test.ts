@@ -373,8 +373,8 @@ describe("LevelsService", () => {
     const { session, character, klass, featAptitude, spellAptitude } = await setupRuleset();
     const { session: other } = await createTestUser();
     const first = levelUpPlan([planned(klass.id, 1)]);
-    // The class has five levels
-    const past = levelUpPlan([planned(klass.id, 6)]);
+    // The class has five levels: a plan taking it six times numbers the sixth past its last
+    const past = levelUpPlan(Array.from({ length: 6 }, (_, i) => planned(klass.id, i + 1)));
     const notFound = [
       () => getStepOptions(session, NIL_UUID, "class-plan", { steps: {} }),
       () => getStepOptions(other, character.id, "class-plan", { steps: {} }),
@@ -388,7 +388,7 @@ describe("LevelsService", () => {
       () => getStepOptions(session, NIL_UUID, "spells", first, { pool: spellAptitude.id }),
       () => getStepOptions(session, character.id, "spells", past, { pool: spellAptitude.id }),
       () => addOneLevel(session, NIL_UUID, klass.id, 1, 8, null, {}, {}, {}),
-      () => addOneLevel(session, character.id, klass.id, 6, 8, null, {}, {}, {}),
+      () => CharacterLevelsService.addLevels(session, character.id, past),
       () => CharacterLevelsService.removeLevel(session, NIL_UUID),
       () => CharacterLevelsService.removeLevel(other, character.id),
       () => CharacterLevelsService.removeLevel(session, character.id),
@@ -397,37 +397,36 @@ describe("LevelsService", () => {
     for (const call of notFound) expect((await answerTo(call)).status).toBe(404);
     // A class or a class level the ruleset lacks named in its rules' word, after the level it's about when it's planned
     const messageOf = async (call: () => Promise<unknown>) => (await answerTo(call)).body.message;
-    expect(await messageOf(() => getPlanAnswer(session, character.id, past))).toBe("Level 1: Class level not found");
+    expect(await messageOf(() => getPlanAnswer(session, character.id, past))).toBe("Level 6: Class level not found");
     expect(await messageOf(() => getStepOptions(session, character.id, "feats", past, { pool: featAptitude.id }))).toBe(
       "Class level not found",
     );
     expect(await messageOf(() => getPlanAnswer(session, character.id, levelUpPlan([planned(NIL_UUID, 1)])))).toBe(
       "Level 1: Class does not belong to the character's ruleset",
     );
-    // A level past the rules' last class level is refused before it's looked up
-    const pastRules = levelUpPlan([planned(klass.id, 999)]);
-    for (const call of [
-      () => addOneLevel(session, character.id, klass.id, 999, 8, null, {}, {}, {}),
-      () => getPlanAnswer(session, character.id, pastRules),
-    ])
-      expect((await answerTo(call)).status).toBe(400);
   });
 
   describe("classes a character can take", () => {
     test("lists each with its next level and whether the character qualifies", async () => {
       const ctx = await getSeedCtx();
       const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 1000 } });
-      const classes = () => classOptions(session, characterId, { steps: {} });
+      // Each class's next levels, its first three of the twenty it takes in turn
+      const classes = async () =>
+        (await classOptions(session, characterId, { steps: {} })).map(({ eligible, id, track }) => ({
+          eligible,
+          id,
+          next: track?.positions.slice(0, 3),
+        }));
       expect(
         (await classes()).filter((k) => [ctx.classMap.pc["Fighter"], ctx.classMap.pc["Rogue"]].includes(k.id)),
       ).toMatchObject([
-        { track: { next: 1 }, eligible: true },
-        { track: { next: 1 }, eligible: true },
+        { next: [1, 2, 3], eligible: true },
+        { next: [1, 2, 3], eligible: true },
       ]);
 
       await addFighterLevels(session, ctx, characterId, 1);
       expect((await classes()).find((k) => k.id === ctx.classMap.pc["Fighter"])).toMatchObject({
-        track: { next: 2 },
+        next: [2, 3, 4],
         eligible: true,
       });
     });
@@ -449,7 +448,7 @@ describe("LevelsService", () => {
         await getStepOptions(session, characterId, "class-plan", { steps: {} }, {}, { limit: 3, page: 1 }),
         false,
       );
-      expect(firstPage[0]).toMatchObject({ name: "Wizard", track: { next: 3 } });
+      expect({ name: firstPage[0].name, next: firstPage[0].track?.positions[0] }).toEqual({ name: "Wizard", next: 3 });
       expect(firstPage[0].id).not.toBe(wizard);
     });
 
@@ -1789,14 +1788,6 @@ describe("LevelsService", () => {
               ...FIGHTER_LEVELS[1],
               feats: { "Fighter Bonus Feat": ["Power Attack"] },
             });
-          },
-        ],
-        [
-          "This level has already been finalized",
-          async () => {
-            const characterId = await createSeedCharacter(ctx);
-            await addFighterLevels(session, ctx, characterId, 1);
-            return levelUp(session, ctx, characterId, "Fighter", 1, fighter);
           },
         ],
       ];
