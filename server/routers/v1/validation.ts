@@ -11,13 +11,16 @@ export const customizedParams = idParam.extend({
   entityId: z.string().uuid(),
   kind: z
     .enum(Engine.storage().customizableKinds())
-    .meta({ description: "The entity's kind, among those the rules customize (3.5: `feats`, `class-levels`…)" }),
+    .meta({ description: "The entity's kind, among those the rules customize" }),
 });
 
 /** What a modifier's body says, a character's own and an entity's alike: what it changes, how, and by what. */
 export const modifierFields = {
   operator: modifierOperator.meta({ description: "`add`, `subtract`, `multiply`, `divide` or `set`" }),
-  target: z.string().min(1).meta({ description: "The target path it changes (3.5: `abilities.strength.misc`)" }),
+  target: z
+    .string()
+    .min(1)
+    .meta({ description: "The target path it changes, as `…/customization/target` completes it" }),
   value: z.string().min(1),
 };
 

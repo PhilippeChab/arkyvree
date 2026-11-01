@@ -1,6 +1,6 @@
 /**
  * A ruleset's entity as v1 answers it, whatever its kind: its columns, its fields, its links with their targets' names,
- * and what its kind adds; and the parts an entity's kind may have (3.5's class levels, progression and tables).
+ * and what its kind adds; and the parts an entity's kind may have (owned entities, progression and tables).
  */
 
 import type { z } from "zod";
@@ -72,7 +72,7 @@ export function toV1Entity(
   };
 }
 
-/** A group of a kind's entities (3.5's feat family), or an entity in none. */
+/** A group of a kind's entities, or an entity in none. */
 export function toV1EntityGroup(
   group: Answer<typeof EntitiesService.getEntityGroups>["items"][number],
 ): z.infer<typeof v1EntityGroup> {
@@ -97,7 +97,7 @@ export function toV1EntityLink(link: DescribedLink): z.infer<typeof v1EntityLink
   };
 }
 
-/** An entity's links (3.5's class skills). */
+/** An entity's links, of the role its kind edits. */
 export function toV1EntityLinks(links: Answer<typeof EntitiesService.getEntityLinks>): z.infer<typeof v1EntityLink>[] {
   return links.map(toV1EntityLink);
 }
@@ -159,7 +159,7 @@ export function toV1LabeledRequirements(
   }));
 }
 
-/** An entity another owns (3.5's class level). */
+/** An entity another owns. */
 export function toV1OwnedEntity(
   owned: Omit<DescribedEntity, "name"> & {
     modifiers?: Modifier[];
@@ -189,7 +189,7 @@ export function toV1PathCompletions(
 
 /**
  * What an entity's levels give: each pool's picks by level, and past them the values its rules name in their
- * progression (`Engine.rules()`'s progression: 3.5's `featPicks`, `spellList`, `severalSpellLists`), as they give them.
+ * progression (`Engine.rules()`'s progression), as they give them.
  */
 export function toV1Progression(progression: {
   pools: readonly { id: string; name: string; picks: Record<string, number> }[];

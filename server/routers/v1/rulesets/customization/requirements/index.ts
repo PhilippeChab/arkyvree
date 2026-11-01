@@ -23,7 +23,7 @@ const requirementFields = {
 const requirementOwnerParams = customizedParams.extend({
   kind: z
     .enum([...Engine.storage().customizableKinds(), "modifiers"])
-    .meta({ description: "The owner's kind: a customized entity's (3.5: `feats`…), or `modifiers` for a modifier's" }),
+    .meta({ description: "The owner's kind: one of the rules' `customizable` kinds, or `modifiers` for a modifier's" }),
 });
 
 const requirementParams = requirementOwnerParams.extend({ requirementId: z.string().uuid() });
