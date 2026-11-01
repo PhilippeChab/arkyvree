@@ -3,23 +3,12 @@ import { db, withTransaction } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, Invites, type Pagination, Players, Visibility } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { redactInviteAddresses } from "@/server/services/campaigns/campaignAddresses.ts";
 import { findReadableCampaign, getReadableCampaign } from "@/server/services/campaigns/readableCampaign.ts";
 import { getPendingInvite, saveInviteAnswer } from "@/server/services/invites/index.ts";
 import { CampaignsPolicy } from "@/server/services/policies/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
-
-/** An invite as its campaign's list reads it. */
-type InviteRow = Awaited<ReturnType<typeof Invites.findPage>>["items"][number];
-
-/** An invite as a player reads it: whom it went to by name, its addresses left out, which its Game Master reads. */
-function hideInviteAddresses(invite: InviteRow) {
-  return {
-    ...invite,
-    invites: { ...invite.invites, email: null },
-    users: invite.users && { ...invite.users, emailAddress: null },
-  };
-}
 
 class CampaignInvitesService {
   /** The invitee's answer, which the Game Masters are told of. */
@@ -78,7 +67,7 @@ class CampaignInvitesService {
     // An address is its Game Master's to read, and so to search
     const readsAddresses = policy.isGameMaster();
     const page = await Invites.findPage(db, { campaignId, ...where, searchAddresses: readsAddresses }, pagination);
-    return readsAddresses ? page : { ...page, items: page.items.map(hideInviteAddresses) };
+    return readsAddresses ? page : { ...page, items: page.items.map(redactInviteAddresses) };
   }
 
   async rejectInvite(session: Session, inviteId: string) {

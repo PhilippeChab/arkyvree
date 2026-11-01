@@ -5,7 +5,7 @@ import { type ApiKeyContext, describeRoute, validate } from "@/server/middleware
 import { idParam, orderDirDesc } from "@/server/routers/api/validation.ts";
 import { v1Notification, v1NotificationPage } from "@/server/routers/v1/schemas/notifications.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
-import { flag, PAGE_FILTERS } from "@/server/routers/v1/validation.ts";
+import { PAGE_FILTERS } from "@/server/routers/v1/validation.ts";
 import { NotificationsService } from "@/server/services/notifications/index.ts";
 
 /**
@@ -26,7 +26,7 @@ export default new Hono<ApiKeyContext>()
         ...PAGE_FILTERS,
         orderDir: orderDirDesc,
         search: z.string().optional().meta({ description: "A part of the type" }),
-        unreadOnly: flag.meta({ description: "Only the unread ones" }),
+        unreadOnly: z.stringbool().optional().meta({ description: "Only the unread ones" }),
       }),
     ),
     async (c) => {

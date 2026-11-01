@@ -14,7 +14,9 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1Character,
       status: 200,
-      summary: "A character its owner shares, by its link's token: its sheet, with its bonded creatures'",
+      summary:
+        "A character its owner shares, by its link's token: its sheet, with its child characters' " +
+        "(3.5: bonded creatures)",
     }),
     validate("param", shareTokenParam),
     async (c) => {

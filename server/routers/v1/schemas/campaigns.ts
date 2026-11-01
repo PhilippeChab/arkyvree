@@ -8,7 +8,7 @@ import { z } from "zod";
 import { role } from "@/drizzle/schema.ts";
 import { CHARACTER_VISIBILITY_OPTIONS } from "@/shared/campaigns.ts";
 
-import { v1Character } from "./characters.ts";
+import { v1CardSummary, v1Character } from "./characters.ts";
 import { buildPageSchema, v1Id, v1Named } from "./references.ts";
 import { v1User } from "./users.ts";
 
@@ -76,9 +76,7 @@ export const v1CampaignCharacterSummary = z
     name: z.string(),
     own: z.boolean().meta({ description: "Whether the key's user linked it" }),
     partial: z.boolean().meta({ description: "Whether the key's user sees its identity alone, none of its build" }),
-    summary: z
-      .array(z.strictObject({ label: z.string(), partial: z.boolean() }))
-      .meta({ description: "What its card shows of it: its race, and each class with its level unless it's partial" }),
+    summary: v1CardSummary,
     visibility: v1CharacterVisibility,
   })
   .meta({ description: "A character linked to a campaign, in its list", id: "CampaignCharacterSummary" });

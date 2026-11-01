@@ -69,7 +69,7 @@ export function toV1CampaignCharacterLink(
   return { characterId: link.characterId, visibility: toVisibility(link.visibility) };
 }
 
-/** A character linked to a campaign, in its list: its name and race, and its build unless it's partial. */
+/** A character linked to a campaign, in its list: its name and what its card shows, partial to whom it's partial. */
 export function toV1CampaignCharacterSummary(
   character: Answer<typeof CampaignCharactersService.getCharacters>["items"][number],
 ): z.infer<typeof v1CampaignCharacterSummary> {

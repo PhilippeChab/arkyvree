@@ -72,7 +72,7 @@ export default new Hono<ApiKeyContext>()
       const { file, name, recordId, recordType } = c.req.valid("form");
       const session = c.var.requestSession;
       // What it attached, as its write left it: another request may replace it since
-      const attachment = await AttachmentsService.setAttachment(session, { file, name, recordId, recordType });
+      const attachment = await AttachmentsService.setAttachment(session, recordType, recordId, name, file);
       return c.json(V1.attachment(attachment), 201);
     },
   )

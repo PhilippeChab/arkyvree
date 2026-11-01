@@ -14,12 +14,6 @@ export const customizedParams = idParam.extend({
     .meta({ description: "The entity's kind, among those the rules customize (3.5: `feats`, `class-levels`…)" }),
 });
 
-/** A yes or no in a query string, `true` or `false`: none when the query leaves it out. */
-export const flag = z
-  .enum(["true", "false"])
-  .optional()
-  .transform((value) => (value === undefined ? undefined : value === "true"));
-
 /** What a modifier's body says, a character's own and an entity's alike: what it changes, how, and by what. */
 export const modifierFields = {
   operator: modifierOperator.meta({ description: "`add`, `subtract`, `multiply`, `divide` or `set`" }),

@@ -21,7 +21,7 @@ class ExportsService {
    * and stored failed as it's answered so: an attempt that outlived its lock and finishes still stores it, or fails it,
    * telling the user then. One the cleanup deletes between the reads is gone.
    */
-  private async readExport<T extends { expiresAt: string; id: string; status: string }>(
+  private async resolveExport<T extends { expiresAt: string; id: string; status: string }>(
     read: () => Promise<T | undefined>,
   ) {
     const readFound = async () => {
@@ -47,7 +47,7 @@ class ExportsService {
   /** An export's file, once it's ready: a pending or failed one has none to download. */
   async getExport(session: Session, exportId: string) {
     const where = { id: exportId, userId: session.userId };
-    const exportRecord = await this.readExport(() => Exports.findOne(db, where));
+    const exportRecord = await this.resolveExport(() => Exports.findOne(db, where));
 
     const { data, status } = exportRecord;
     if (status === "failed") throw new ConflictError("The export failed: queue it again");
@@ -56,10 +56,10 @@ class ExportsService {
     return { ...exportRecord, data };
   }
 
-  /** Where an export stands, without its file: pending, ready to download, or failed. */
+  /** Where an export stands, without its file: pending, ready to download, or failed (a lost one marked so). */
   async getExportStatus(session: Session, exportId: string) {
     const where = { id: exportId, userId: session.userId };
-    return await this.readExport(() => Exports.findStatus(db, where));
+    return await this.resolveExport(() => Exports.findStatus(db, where));
   }
 }
 

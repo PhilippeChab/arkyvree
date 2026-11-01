@@ -299,8 +299,8 @@ class AttachmentsService {
    * first, so one a crash leaves unattached is swept with its row, then put in storage and attached. A failed write or
    * attach deletes what it stored. Answers the attachment as its read does: its id and its image's URL.
    */
-  async setAttachment(session: Session, params: { file: File; name: string; recordId: string; recordType: string }) {
-    const { file, ...slot } = params;
+  async setAttachment(session: Session, recordType: string, recordId: string, name: string, file: File) {
+    const slot = { name, recordId, recordType };
     await this.assertCanAttach(session, slot.recordType, slot.recordId);
     this.assertValidName(slot.recordType, slot.name);
 

@@ -785,6 +785,8 @@ function createRouteConventions(context) {
   if (!file.startsWith("server/")) return {};
   const inRouters = file.startsWith("server/routers/");
   const inApi = file.startsWith("server/routers/api/");
+  // The app's routers and the public API's, whose errors both reach `onError`
+  const inRouteTree = inApi || file.startsWith("server/routers/v1/");
   const exportLimit = EXPORT_RATE_LIMITS[file.startsWith("server/routers/v1/") ? "v1" : "api"];
   const constants = new Set();
   const named = new Map();
@@ -858,7 +860,7 @@ function createRouteConventions(context) {
     },
     // A try that only cleans up (`finally`) lets the error through.
     TryStatement(node) {
-      if (!inApi || !node.handler) return;
+      if (!inRouteTree || !node.handler) return;
       context.report({
         node,
         message: "A route lets an error reach the app's `onError`, which answers in the API's envelope: no try.",

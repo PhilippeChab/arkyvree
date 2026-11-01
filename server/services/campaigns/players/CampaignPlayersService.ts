@@ -12,6 +12,7 @@ import {
   Visibility,
 } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { redactPlayerAddresses } from "@/server/services/campaigns/campaignAddresses.ts";
 import { getReadableCampaign } from "@/server/services/campaigns/readableCampaign.ts";
 import { getInviteNames } from "@/server/services/invites/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
@@ -24,26 +25,6 @@ interface InviteEmailData {
   invite: Invite;
   inviteeName: string;
   inviterName: string;
-}
-
-/** A player slot as its campaign's list reads it. */
-type PlayerRow = Awaited<ReturnType<typeof Players.findPage>>["items"][number];
-
-/**
- * A player slot as a player (`readerId`) reads it: its user's and its invites' addresses left out, which its Game
- * Master reads, but on their own slot. The row is named whole so its addresses read nullable to the app.
- */
-function hidePlayerAddresses<P extends PlayerRow>(player: P, readerId: string) {
-  if (player.usersInAccount?.id === readerId) return player;
-  return {
-    ...player,
-    invitesInCampaigns: player.invitesInCampaigns.map((invite) => ({
-      ...invite,
-      email: null,
-      usersInAccount: invite.usersInAccount && { ...invite.usersInAccount, emailAddress: null },
-    })),
-    usersInAccount: player.usersInAccount && { ...player.usersInAccount, emailAddress: null },
-  };
 }
 
 class CampaignPlayersService {
@@ -199,7 +180,7 @@ class CampaignPlayersService {
     }));
     return {
       ...page,
-      items: readsAddresses ? items : items.map((player) => hidePlayerAddresses(player, session.userId)),
+      items: readsAddresses ? items : items.map((player) => redactPlayerAddresses(player, session.userId)),
     };
   }
 
