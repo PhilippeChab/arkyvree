@@ -101,6 +101,53 @@ describe("CampaignsPolicy", () => {
     expect(() => player.canSeeCharacter({ playerId: NIL_UUID, visibility: "Private" })).toThrow(NotFoundError);
   });
 
+  test("isAddressReader: the Game Master reads every address; a player their own slot's alone", async () => {
+    const { policy: gameMaster } = await policyFor("Game Master");
+    const { policy: player, session } = await policyFor("Player Character");
+
+    expect([gameMaster.isAddressReader(), gameMaster.isSlotAddressReader(NIL_UUID)]).toEqual([true, true]);
+    expect([
+      player.isAddressReader(),
+      player.isSlotAddressReader(NIL_UUID),
+      player.isSlotAddressReader(session.userId),
+    ]).toEqual([false, false, true]);
+    // A slot nobody holds yet (an invite's) is no player's own
+    expect(player.isSlotAddressReader(null)).toBe(false);
+  });
+
+  test("canSeeCharacters: every link for the Game Master, a player's own Private ones alone, a 404 for an outsider", async () => {
+    const { policy: gameMaster } = await policyFor("Game Master");
+    const { policy: player } = await policyFor("Player Character");
+    const { policy: outsider } = await policyFor(null);
+
+    expect(gameMaster.canSeeCharacters()).toEqual({ visibilityPlayerId: undefined });
+    expect(player.canSeeCharacters()).toEqual({ visibilityPlayerId: player.canRead().id });
+    expect(() => outsider.canSeeCharacters()).toThrow("Campaign not found");
+  });
+
+  test("isPartialReader and isPrivateNotesReader: a Partial character is whole to its player, the Game Master and its editors", async () => {
+    const { user } = await createTestUser();
+    const character = await createTestCharacter(user.id);
+    const { policy: gameMaster, session } = await policyFor("Game Master");
+    const { policy: player } = await policyFor("Player Character");
+    const reader = new CharactersPolicy(session, character);
+    const editor = new CharactersPolicy(session, character, { isActiveContributor: true });
+    const partial = { playerId: NIL_UUID, visibility: "Partial" };
+
+    expect(player.isPartialReader(partial, reader)).toBe(true);
+    expect([
+      player.isPartialReader({ ...partial, visibility: "Public" }, reader),
+      player.isPartialReader({ ...partial, playerId: player.canRead().id }, reader),
+      player.isPartialReader(partial, editor),
+      gameMaster.isPartialReader(partial, reader),
+    ]).toEqual([false, false, false, false]);
+    expect([
+      player.isPrivateNotesReader(reader),
+      player.isPrivateNotesReader(editor),
+      gameMaster.isPrivateNotesReader(reader),
+    ]).toEqual([false, true, true]);
+  });
+
   test("refuses the Game Master of another campaign", async () => {
     const { campaign } = await policyFor(null);
     const { session: otherGameMaster } = await policyFor("Game Master");

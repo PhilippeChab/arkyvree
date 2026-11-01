@@ -386,7 +386,8 @@ export default function RulesetDetailsPage() {
           form={editForm}
           onSubmit={confirmEdit}
           pending={updateMutation.isPending}
-          isPublic={editDialog.target ? !editDialog.target.private : false}
+          // As the ruleset read when the dialog opened, which it keeps while it closes
+          canMakePrivate={!!editDialog.target?.permissions.canMakePrivate}
           canBeExtension={canBeExtension}
         />
 
