@@ -104,7 +104,7 @@ function expectRowsConsistent({ budget, rows }: SpendStep, favored: string[]) {
 function fighterPlan(ctx: SeedContext, count: number) {
   const plans = FIGHTER_LEVELS.slice(0, count);
   return {
-    "class-plan": plans.map((_, i) => ({ track: ctx.classMap.pc["Fighter"], position: i + 1 })),
+    "class-plan": plans.map(() => ({ track: ctx.classMap.pc["Fighter"] })),
     hp: plans.map((plan) => plan.hp),
     abilities: plans.map(() => []),
   };
@@ -316,8 +316,9 @@ describe("character level plans", () => {
     const classes = await expectOk(
       options.$post({ param: { characterId, step: "class-plan" }, query: {}, json: { plan: empty } }),
     );
-    expect(optionsOf(classes, false).items.find((klass) => klass.id === fighter)).toMatchObject({
-      track: { next: 1 },
+    const fighterOption = optionsOf(classes, false).items.find((klass) => klass.id === fighter);
+    expect({ next: fighterOption?.track?.positions[0], eligible: fighterOption?.eligible }).toEqual({
+      next: 1,
       eligible: true,
     });
 
@@ -371,7 +372,7 @@ describe("character level plans", () => {
     // A sorcerer's cantrips, at tier 0
     const sorcerer = await createCharacter(16);
     const sorcererSpells = sorcerer.ctx.aptMap["Sorcerer Spells"];
-    const sorcererPlan = { steps: { "class-plan": [{ track: sorcerer.ctx.classMap.pc["Sorcerer"], position: 1 }] } };
+    const sorcererPlan = { steps: { "class-plan": [{ track: sorcerer.ctx.classMap.pc["Sorcerer"] }] } };
     const cantrips = await expectOk(
       options.$post({
         param: { characterId: sorcerer.characterId, step: "spells" },
@@ -455,7 +456,7 @@ describe("character level plans", () => {
     const { characterId, ctx } = await createCharacter(16);
     const sorcerer1 = picks(ctx, SORCERER_1);
     const steps = {
-      "class-plan": [{ track: ctx.classMap.pc["Sorcerer"], position: 1 }],
+      "class-plan": [{ track: ctx.classMap.pc["Sorcerer"] }],
       hp: [SORCERER_1.hp],
       abilities: [[]],
       ...payloadsOf(sorcerer1),
@@ -495,9 +496,9 @@ describe("character level plans", () => {
     const { characterId, ctx } = await createCharacter();
     const fighter = ctx.classMap.pc["Fighter"];
     // Three fighter levels saved, one at a time; the fourth planned, with its increase
-    for (const [i, plan] of FIGHTER_LEVELS.slice(0, 3).entries()) {
+    for (const plan of FIGHTER_LEVELS.slice(0, 3)) {
       const steps = {
-        "class-plan": [{ track: fighter, position: i + 1 }],
+        "class-plan": [{ track: fighter }],
         hp: [plan.hp],
         abilities: [[]],
         ...payloadsOf(picks(ctx, plan)),
@@ -510,7 +511,7 @@ describe("character level plans", () => {
         param: { characterId },
         json: {
           steps: {
-            "class-plan": [{ track: fighter, position: 4 }],
+            "class-plan": [{ track: fighter }],
             abilities: [[{ id: strength, amount: 1 }]],
             skills: [{ id: ctx.skillMap["Climb"], points: 1 }],
           },
@@ -564,7 +565,7 @@ describe("character level plans", () => {
         param: { characterId: sorcerer.characterId },
         json: {
           steps: {
-            "class-plan": [{ track: sorcererClass, position: 1 }],
+            "class-plan": [{ track: sorcererClass }],
             spells: cantrips.map((id) => ({ id, pool: sorcererSpells, tier: "0" })),
           },
         },
@@ -624,7 +625,7 @@ describe("character level plans", () => {
     const sorcererClass = ctx.classMap.pc["Sorcerer"];
     const sorcererSpells = ctx.aptMap["Sorcerer Spells"];
     const steps = {
-      "class-plan": [{ track: sorcererClass, position: 1 }],
+      "class-plan": [{ track: sorcererClass }],
       hp: [SORCERER_1.hp],
       abilities: [[]],
       ...payloadsOf(sorcerer1),
@@ -704,10 +705,7 @@ describe("character level plans", () => {
     const options = levels.options[":step"];
     const fighterRanger = {
       ...fighterPlan(ctx, 1),
-      "class-plan": [
-        { track: ctx.classMap.pc["Fighter"], position: 1 },
-        { track: ctx.classMap.pc["Ranger"], position: 1 },
-      ],
+      "class-plan": [{ track: ctx.classMap.pc["Fighter"] }, { track: ctx.classMap.pc["Ranger"] }],
     };
     const track = async (steps: Record<string, unknown>, advancement: number) => {
       const answer = await expectOk(
@@ -742,9 +740,10 @@ describe("character level plans", () => {
         json: { plan: { steps: fighterPlan(ctx, 1) } },
       }),
     );
-    expect(optionsOf(classes, false).items.find(({ id }) => id === ctx.classMap.pc["Fighter"])).toMatchObject({
+    const fighterOption = optionsOf(classes, false).items.find(({ id }) => id === ctx.classMap.pc["Fighter"]);
+    expect({ eligible: fighterOption?.eligible, next: fighterOption?.track?.positions[0] }).toEqual({
       eligible: true,
-      track: { next: 1 },
+      next: 1,
     });
 
     // An edit's: at its level, Cleave eligible with the level's Power Attack, not without it
@@ -788,9 +787,9 @@ describe("character level plans", () => {
   test("saves a level's increase, refuses an unanswered step, and an unmet requirement unless forced", async () => {
     const { characterId, ctx } = await createCharacter();
     const fighter = ctx.classMap.pc["Fighter"];
-    for (const [i, plan] of FIGHTER_LEVELS.slice(0, 3).entries()) {
+    for (const plan of FIGHTER_LEVELS.slice(0, 3)) {
       const steps = {
-        "class-plan": [{ track: fighter, position: i + 1 }],
+        "class-plan": [{ track: fighter }],
         hp: [plan.hp],
         abilities: [[]],
         ...payloadsOf(picks(ctx, plan)),
@@ -798,7 +797,7 @@ describe("character level plans", () => {
       await expectOk(levels.$post({ param: { characterId }, json: { steps } }));
     }
     const fourth = {
-      "class-plan": [{ track: fighter, position: 4 }],
+      "class-plan": [{ track: fighter }],
       hp: [FIGHTER_LEVELS[3].hp],
       abilities: [[{ id: ctx.abilityMap["Strength"], amount: 1 }]],
       ...payloadsOf(picks(ctx, FIGHTER_LEVELS[3])),
@@ -890,7 +889,7 @@ describe("character level plans", () => {
     const { characterId, ctx } = await createCharacter(16);
     const sorcerer1 = picks(ctx, SORCERER_1);
     const steps = {
-      "class-plan": [{ track: ctx.classMap.pc["Sorcerer"], position: 1 }],
+      "class-plan": [{ track: ctx.classMap.pc["Sorcerer"] }],
       hp: [SORCERER_1.hp],
       abilities: [[]],
       ...payloadsOf(sorcerer1),
