@@ -7,6 +7,7 @@ import { BadRequestError, InternalError, UnauthorizedError } from "@/server/erro
 import { hashPassword, verifyPassword } from "@/server/password.ts";
 import {
   Activities,
+  Campaigns,
   Characters,
   EmailVerifications,
   Invites,
@@ -68,9 +69,11 @@ class AccountService {
     }
 
     return await withTransaction(async (tx) => {
-      // Its rulesets, then its characters, masters first, locked as their writes lock them, before anything writes
-      // them (an attachment's purge touches its character's row): it waits on their writes, never on one in a cycle
+      // Its rulesets, then the campaigns it holds a seat in, then its characters, masters first, locked as their writes
+      // lock them, before anything writes them (an attachment's purge touches its character's row): it waits on their
+      // writes, never on one in a cycle
       await Rulesets.orphan(tx, { userId });
+      await Campaigns.lockMany(tx, { userId });
       const characterIds = await Characters.lockMany(tx, { userId });
 
       // Drop polymorphic attachment rows for the user + their characters so

@@ -41,7 +41,7 @@ export function Imports<B extends Constructor>(Base: B) {
           tx,
           plan.inventory.map((entry) => ({ ...entry, characterId })),
         );
-        await writeChildren(tx, character, plan.children);
+        await writeChildren(tx, plan.children);
 
         await Activities.create(tx, {
           userId: session.userId,

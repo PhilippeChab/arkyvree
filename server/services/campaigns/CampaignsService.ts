@@ -1,4 +1,4 @@
-import { db, withTransaction } from "@/server/database/index.ts";
+import { db } from "@/server/database/index.ts";
 import { InternalError, NotFoundError } from "@/server/errors/index.ts";
 import {
   Activities,
@@ -9,10 +9,10 @@ import {
   visibilityMap,
 } from "@/server/repositories/index.ts";
 import { type CampaignsPolicy, isAllowed } from "@/server/services/policies/index.ts";
-import { getReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import type { Session } from "@/shared/relations.ts";
 
+import { withCampaignCreate, withCampaignWrite } from "./campaignWrites.ts";
 import { getReadableCampaign } from "./readableCampaign.ts";
 
 class CampaignsService {
@@ -34,27 +34,32 @@ class CampaignsService {
   }
 
   async archiveCampaign(session: Session, id: string) {
-    return await withTransaction(async (tx) => {
-      const { policy } = await getReadableCampaign(tx, session, id, Visibility.UnarchivedOnly);
-      policy.canDelete();
+    return await withCampaignWrite(
+      session,
+      id,
+      async (tx, { policy }) => {
+        policy.canDelete();
 
-      // Archive flips deletedAt on the campaign row alone: its players, invites and player-character links stay live,
-      // and unarchiving flips that row back (0096 restored the players a campaign archived before then had archived
-      // with it). The campaign lists leave it out but under their Archived filter; its pages still read it, read-only.
-      const rows = await Campaigns.archive(tx, { id });
-      const archivedCampaign = rows[0];
+        // Archive flips deletedAt on the campaign row alone: its players, invites and player-character links stay
+        // live, and unarchiving flips that row back (0096 restored the players a campaign archived before then had
+        // archived with it). The campaign lists leave it out but under their Archived filter; its pages still read it,
+        // read-only.
+        const rows = await Campaigns.archive(tx, { id });
+        const archivedCampaign = rows[0];
 
-      if (!archivedCampaign) throw new InternalError("Failed to archive campaign");
+        if (!archivedCampaign) throw new InternalError("Failed to archive campaign");
 
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: archivedCampaign.id,
-        targetType: TARGET_TYPES.campaigns,
-        type: "archiveCampaign",
-      });
+        await Activities.create(tx, {
+          userId: session.userId,
+          targetId: archivedCampaign.id,
+          targetType: TARGET_TYPES.campaigns,
+          type: "archiveCampaign",
+        });
 
-      return archivedCampaign;
-    });
+        return archivedCampaign;
+      },
+      Visibility.UnarchivedOnly,
+    );
   }
 
   async createCampaign(
@@ -65,8 +70,7 @@ class CampaignsService {
       rulesetId: string;
     },
   ) {
-    return await withTransaction(async (tx) => {
-      const { policy } = await getReadableRuleset(tx, session, body.rulesetId);
+    return await withCampaignCreate(session, body.rulesetId, async (tx, policy) => {
       policy.canCreateCampaign();
 
       const campaignRows = await Campaigns.create(tx, body);
@@ -127,9 +131,8 @@ class CampaignsService {
   }
 
   async hardDeleteCampaign(session: Session, id: string) {
-    return await withTransaction(async (tx) => {
-      // Archived or not: its policy refuses a live one
-      const { policy } = await getReadableCampaign(tx, session, id, Visibility.All);
+    // Archived or not: its policy refuses a live one
+    return await withCampaignWrite(session, id, async (tx, { policy }) => {
       policy.canHardDelete();
 
       // Campaigns aren't an Attachable record type, so no polymorphic cleanup
@@ -148,24 +151,28 @@ class CampaignsService {
   }
 
   async unarchiveCampaign(session: Session, id: string) {
-    return await withTransaction(async (tx) => {
-      const { policy } = await getReadableCampaign(tx, session, id, Visibility.ArchivedOnly);
-      policy.canDelete();
+    return await withCampaignWrite(
+      session,
+      id,
+      async (tx, { policy }) => {
+        policy.canDelete();
 
-      const rows = await Campaigns.unarchive(tx, { id });
-      const unarchivedCampaign = rows[0];
+        const rows = await Campaigns.unarchive(tx, { id });
+        const unarchivedCampaign = rows[0];
 
-      if (!unarchivedCampaign) throw new InternalError("Failed to unarchive campaign");
+        if (!unarchivedCampaign) throw new InternalError("Failed to unarchive campaign");
 
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: unarchivedCampaign.id,
-        targetType: TARGET_TYPES.campaigns,
-        type: "unarchiveCampaign",
-      });
+        await Activities.create(tx, {
+          userId: session.userId,
+          targetId: unarchivedCampaign.id,
+          targetType: TARGET_TYPES.campaigns,
+          type: "unarchiveCampaign",
+        });
 
-      return unarchivedCampaign;
-    });
+        return unarchivedCampaign;
+      },
+      Visibility.ArchivedOnly,
+    );
   }
 
   async updateCampaign(
@@ -176,24 +183,28 @@ class CampaignsService {
       name?: string;
     },
   ) {
-    return await withTransaction(async (tx) => {
-      const { policy } = await getReadableCampaign(tx, session, id, Visibility.UnarchivedOnly);
-      policy.canUpdate();
+    return await withCampaignWrite(
+      session,
+      id,
+      async (tx, { policy }) => {
+        policy.canUpdate();
 
-      const rows = await Campaigns.update(tx, body, { id });
-      const updatedCampaign = rows[0];
+        const rows = await Campaigns.update(tx, body, { id });
+        const updatedCampaign = rows[0];
 
-      if (!updatedCampaign) throw new InternalError("Failed to update campaign");
+        if (!updatedCampaign) throw new InternalError("Failed to update campaign");
 
-      await Activities.create(tx, {
-        userId: session.userId,
-        targetId: updatedCampaign.id,
-        targetType: TARGET_TYPES.campaigns,
-        type: "updateCampaign",
-      });
+        await Activities.create(tx, {
+          userId: session.userId,
+          targetId: updatedCampaign.id,
+          targetType: TARGET_TYPES.campaigns,
+          type: "updateCampaign",
+        });
 
-      return updatedCampaign;
-    });
+        return updatedCampaign;
+      },
+      Visibility.UnarchivedOnly,
+    );
   }
 }
 

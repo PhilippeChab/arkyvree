@@ -49,7 +49,7 @@ async function reconcileChildren(tx: Db, characterId: string): Promise<void> {
   await withRulesetScope(tx, parent.rulesetId, async (scope) => {
     const character = await readCharacterInput(tx, parent);
     const children = await readChildInputs(tx, character);
-    await writeChildren(tx, parent, Engine.for(scope).character(character).levelUp().planChildren(children).children);
+    await writeChildren(tx, Engine.for(scope).character(character).levelUp().planChildren(children).children);
   });
 }
 

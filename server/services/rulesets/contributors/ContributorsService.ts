@@ -56,8 +56,9 @@ class ContributorsService {
    */
   private async withContributorsRuleset<T>(
     contributorId: string,
+    notFound: string,
     write: (tx: Db) => Promise<T>,
-    { notFound, rulesetId }: { notFound: string; rulesetId?: string },
+    { rulesetId }: { rulesetId?: string } = {},
   ) {
     const contributor = await Contributors.findOne(db, { id: contributorId });
     if (!contributor || (rulesetId !== undefined && contributor.rulesetId !== rulesetId))
@@ -66,19 +67,15 @@ class ContributorsService {
   }
 
   async acceptInvite(session: Session, contributorId: string) {
-    return await this.withContributorsRuleset(
-      contributorId,
-      async (tx) => {
-        const contributor = await getPendingInvite(tx, session, Contributors, contributorId, INVITE_NOT_FOUND);
+    return await this.withContributorsRuleset(contributorId, INVITE_NOT_FOUND, async (tx) => {
+      const contributor = await getPendingInvite(tx, session, Contributors, contributorId, INVITE_NOT_FOUND);
 
-        const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId });
-        if (!ruleset) throw new NotFoundError("Ruleset not found");
-        (await RulesetsPolicy.for(tx, session, ruleset)).canAcceptInvite();
+      const ruleset = await Rulesets.findOne(tx, { id: contributor.rulesetId });
+      if (!ruleset) throw new NotFoundError("Ruleset not found");
+      (await RulesetsPolicy.for(tx, session, ruleset)).canAcceptInvite();
 
-        return await this.answerInvite(tx, session, contributor.id, "Active");
-      },
-      { notFound: INVITE_NOT_FOUND },
-    );
+      return await this.answerInvite(tx, session, contributor.id, "Active");
+    });
   }
 
   async getContributors(
@@ -205,20 +202,17 @@ class ContributorsService {
   }
 
   async rejectInvite(session: Session, contributorId: string) {
-    return await this.withContributorsRuleset(
-      contributorId,
-      async (tx) => {
-        const contributor = await getPendingInvite(tx, session, Contributors, contributorId, INVITE_NOT_FOUND);
+    return await this.withContributorsRuleset(contributorId, INVITE_NOT_FOUND, async (tx) => {
+      const contributor = await getPendingInvite(tx, session, Contributors, contributorId, INVITE_NOT_FOUND);
 
-        return await this.answerInvite(tx, session, contributor.id, "Rejected");
-      },
-      { notFound: INVITE_NOT_FOUND },
-    );
+      return await this.answerInvite(tx, session, contributor.id, "Rejected");
+    });
   }
 
   async revokeContributor(session: Session, rulesetId: string, contributorId: string) {
     return await this.withContributorsRuleset(
       contributorId,
+      CONTRIBUTOR_NOT_FOUND,
       async (tx) => {
         const { contributor, ruleset, policy } = await this.getReadableContributor(
           tx,
@@ -246,13 +240,14 @@ class ContributorsService {
 
         return updated;
       },
-      { notFound: CONTRIBUTOR_NOT_FOUND, rulesetId },
+      { rulesetId },
     );
   }
 
   async updateContributorRole(session: Session, rulesetId: string, contributorId: string, role: ContributorRole) {
     return await this.withContributorsRuleset(
       contributorId,
+      CONTRIBUTOR_NOT_FOUND,
       async (tx) => {
         const { contributor, policy } = await this.getReadableContributor(tx, session, rulesetId, contributorId);
         policy.canUpdateContributorRole({ from: contributor.role, to: role });
@@ -272,7 +267,7 @@ class ContributorsService {
 
         return updated;
       },
-      { notFound: CONTRIBUTOR_NOT_FOUND, rulesetId },
+      { rulesetId },
     );
   }
 }

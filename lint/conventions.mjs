@@ -109,7 +109,8 @@ const INPUT_VARIABLES = { json: "body", query: "query" };
 /**
  * The aggregates whose writes open their transaction through their helper alone (`folder`: their services; `helpers`:
  * the module that holds the helpers, which lock the aggregate first): no other module of the folder calls
- * `withTransaction`, but those that write none of the aggregate's rows (`others`: a ruleset's stars, its users' own).
+ * `withTransaction`, but those that write none of the aggregate's rows (`others`: a ruleset's stars, a character's
+ * exports), and no other module of the server takes the lock its helpers take in it (`lock`, where it has one).
  */
 const LOCKED_WRITES = [
   {
@@ -127,6 +128,13 @@ const LOCKED_WRITES = [
     others: ["server/services/characters/pdf.ts"],
     message:
       "A character's write opens its transaction through its helper (`withCharacterWrite`, `withCharacterLock`, `withCharacterCreate` from `characterWrites.ts`), which takes its locks (its ruleset's chain shared, for a write that reads its ruleset; then the character, but for a new one) before it reads the rows it writes: not `withTransaction`.",
+  },
+  {
+    folder: "server/services/campaigns/",
+    helpers: "server/services/campaigns/campaignWrites.ts",
+    others: [],
+    message:
+      "A campaign's write opens its transaction through its helper (`withCampaignWrite`, `withInviteCampaign`, `withCampaignCreate` from `campaignWrites.ts`), which locks the campaign (or, for a new one, its ruleset) before it reads anything: not `withTransaction`.",
   },
 ];
 

@@ -1,9 +1,10 @@
 import type { Db } from "@/drizzle/database.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Campaigns, Invites, type Pagination, Players, Visibility } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { redactInviteAddresses } from "@/server/services/campaigns/campaignAddresses.ts";
+import { withInviteCampaign } from "@/server/services/campaigns/campaignWrites.ts";
 import { findReadableCampaign, getReadableCampaign } from "@/server/services/campaigns/readableCampaign.ts";
 import { getPendingInvite, saveInviteAnswer } from "@/server/services/invites/index.ts";
 import { CampaignsPolicy, isAllowed } from "@/server/services/policies/index.ts";
@@ -33,7 +34,7 @@ class CampaignInvitesService {
 
   /** Accepts the invite: its answer names the campaign joined, whose data its client refreshes. */
   async acceptInvite(session: Session, inviteId: string) {
-    return await withTransaction(async (tx) => {
+    return await withInviteCampaign(inviteId, "Invite not found", async (tx) => {
       const invite = await getPendingInvite(tx, session, Invites, inviteId, "Invite not found");
       const campaign = await this.getInviteCampaign(tx, invite);
       (await CampaignsPolicy.for(tx, session, campaign)).canAcceptInvite();
@@ -74,14 +75,14 @@ class CampaignInvitesService {
   }
 
   async rejectInvite(session: Session, inviteId: string) {
-    return await withTransaction(async (tx) => {
+    return await withInviteCampaign(inviteId, "Invite not found", async (tx) => {
       const invite = await getPendingInvite(tx, session, Invites, inviteId, "Invite not found");
       return await this.answerInvite(tx, session, invite, "Rejected");
     });
   }
 
   async revokeInvite(session: Session, inviteId: string) {
-    return await withTransaction(async (tx) => {
+    return await withInviteCampaign(inviteId, "Invite not found", async (tx) => {
       // Whoever may not read its campaign gets the answer an unknown invite gets, before any other check: its slot is
       // read archived or not (a slot is archived with its user's account, its rejected invite left behind)
       const invite = await Invites.findOne(tx, { id: inviteId });

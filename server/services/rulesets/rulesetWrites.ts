@@ -18,9 +18,9 @@ interface RulesetWriteOptions {
 }
 
 /**
- * How long a write waits on another's lock before it gives up, answered as a conflict: writes to a ruleset, or to a
- * character, take turns, each a few milliseconds, so a longer wait is a stuck one, which never reaches the statement
- * timeout.
+ * How long a write waits on another's lock before it gives up, answered as a conflict: writes to a ruleset, a
+ * character or a campaign take turns, most a few milliseconds (a character's import, a second or so, holds its
+ * ruleset's chain shared that long), so a longer wait is a stuck one, which never reaches the statement timeout.
  */
 const LOCK_WAIT_MILLISECONDS = 5000;
 

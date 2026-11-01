@@ -33,7 +33,7 @@ class CharacterLevelsService extends include(Object, Plans) {
       const edit = planOf(Engine.for(scope).character(character).levelUp(), children);
 
       await updateAdvancement(tx, edit);
-      await writeChildren(tx, characterRecord, edit.children);
+      await writeChildren(tx, edit.children);
 
       await Activities.create(tx, {
         userId: session.userId,
@@ -61,7 +61,7 @@ class CharacterLevelsService extends include(Object, Plans) {
       const plan = planOf(Engine.for(scope).character(character).levelUp(), children);
       const created = [];
       for (const advancement of plan.advancements) created.push(await createAdvancement(tx, characterId, advancement));
-      await writeChildren(tx, characterRecord, plan.children);
+      await writeChildren(tx, plan.children);
 
       await Activities.create(tx, {
         userId: session.userId,
@@ -96,7 +96,7 @@ class CharacterLevelsService extends include(Object, Plans) {
       const children = await readChildInputs(tx, character);
       const removal = Engine.for(scope).character(character).levelUp().planRemoval(children);
       await CharacterAdvancements.delete(tx, { id: removal.advancement.id });
-      await writeChildren(tx, characterRecord, removal.children);
+      await writeChildren(tx, removal.children);
 
       await Activities.create(tx, {
         userId: session.userId,

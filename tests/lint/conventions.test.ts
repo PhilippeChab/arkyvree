@@ -376,7 +376,7 @@ describe("conventions", () => {
           "server/services/rulesets/entities/Writer.ts": opening,
           "server/services/rulesets/helped.ts":
             'import { withRulesetWrite } from "./rulesetWrites.ts";\nexport const f = () => withRulesetWrite(session, id, g);\n',
-          "server/services/campaigns/Other.ts": opening,
+          "server/services/exports/Other.ts": opening,
           "server/services/rulesets/concerns/Stars.ts": opening,
           "server/services/rulesets/direct.ts": "export const f = () => db.transaction(g);\n",
           "server/services/rulesets/scoped.ts":
@@ -419,6 +419,23 @@ describe("conventions", () => {
       "writes-in-transactions server/services/characters/levels/Writer.ts",
       "writes-in-transactions server/services/characters/scoped.ts",
     ]);
+  });
+
+  test("a campaign's write opens its transaction through its helper alone, which locks the campaign first", async () => {
+    const opening =
+      'import { withTransaction } from "@/server/database/index.ts";\nexport const f = () => withTransaction(g);\n';
+    expect(
+      await lintRepo(
+        {
+          "server/services/campaigns/campaignWrites.ts":
+            'import { withBoundedWrite } from "@/server/services/rulesets/index.ts";\nexport const f = () => withBoundedWrite(busy, g);\n',
+          "server/services/campaigns/players/Writer.ts": opening,
+          "server/services/campaigns/helped.ts":
+            'import { withCampaignWrite } from "./campaignWrites.ts";\nexport const f = () => withCampaignWrite(session, id, g);\n',
+        },
+        ["writes-in-transactions"],
+      ),
+    ).toEqual(["writes-in-transactions server/services/campaigns/players/Writer.ts"]);
   });
 
   test("an empty list is checked in its repository's read, which answers it without a query, never by a caller", async () => {

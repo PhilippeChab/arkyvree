@@ -1,4 +1,4 @@
-import { and, count, countDistinct, eq, type InferInsertModel, isNull, not, sql } from "drizzle-orm";
+import { and, count, countDistinct, eq, inArray, type InferInsertModel, isNull, not, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { campaignsInCampaign, playersInCampaign, rulesetsInRules } from "@/drizzle/schema.ts";
@@ -146,6 +146,24 @@ class CampaignsRepository extends include(BaseRepository<typeof campaignsInCampa
       .offset(offset);
 
     return this.paginated(rows, pagination);
+  }
+
+  /**
+   * Locks the campaigns a user holds a live seat in (`userId`) until the transaction ends, by id: an account's
+   * deletion, which archives its seats, waits on their campaigns' writes, after its rulesets and before its characters,
+   * as every write that locks several takes them, and never on one in a cycle.
+   */
+  async lockMany(db: Db, where: { userId: string }) {
+    const seats = db
+      .select({ campaignId: playersInCampaign.campaignId })
+      .from(playersInCampaign)
+      .where(and(eq(playersInCampaign.userId, where.userId), isNull(playersInCampaign.deletedAt)));
+    await db
+      .select({ id: this.table.id })
+      .from(this.table)
+      .where(inArray(this.table.id, seats))
+      .orderBy(this.table.id)
+      .for("no key update");
   }
 
   async unarchive(db: Db, where: { id: string }) {

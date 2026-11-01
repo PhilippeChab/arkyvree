@@ -1,5 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { db } from "@/server/database/index.ts";
 import { emailService, EmailTemplate } from "@/server/emails/index.ts";
 import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import {
@@ -13,6 +13,7 @@ import {
 } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { redactPlayerAddresses } from "@/server/services/campaigns/campaignAddresses.ts";
+import { withCampaignWrite } from "@/server/services/campaigns/campaignWrites.ts";
 import { getReadableCampaign } from "@/server/services/campaigns/readableCampaign.ts";
 import { getInviteNames } from "@/server/services/invites/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
@@ -129,8 +130,7 @@ class CampaignPlayersService {
   async addPlayer(session: Session, campaignId: string, role: CampaignRole, email?: string) {
     let emailData: InviteEmailData | null = null;
 
-    const { player, invite } = await withTransaction(async (tx) => {
-      const { campaign, policy } = await getReadableCampaign(tx, session, campaignId);
+    const { player, invite } = await withCampaignWrite(session, campaignId, async (tx, { campaign, policy }) => {
       policy.canManagePlayers();
 
       const rows = await Players.create(tx, {
@@ -185,8 +185,7 @@ class CampaignPlayersService {
   }
 
   async removePlayer(session: Session, campaignId: string, playerId: string) {
-    return await withTransaction(async (tx) => {
-      const { policy } = await getReadableCampaign(tx, session, campaignId);
+    return await withCampaignWrite(session, campaignId, async (tx, { policy }) => {
       policy.canModify();
 
       const player = await Players.findOne(tx, { id: playerId });
@@ -218,8 +217,7 @@ class CampaignPlayersService {
   async updatePlayer(session: Session, campaignId: string, playerId: string, role: CampaignRole, email?: string) {
     let emailData: InviteEmailData | null = null;
 
-    const { updatedPlayer, invite } = await withTransaction(async (tx) => {
-      const { campaign, policy } = await getReadableCampaign(tx, session, campaignId);
+    const { updatedPlayer, invite } = await withCampaignWrite(session, campaignId, async (tx, { campaign, policy }) => {
       policy.canManagePlayers();
 
       const player = await Players.findOne(tx, { id: playerId, campaignId });

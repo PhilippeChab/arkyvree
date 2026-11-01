@@ -1,6 +1,6 @@
 import { Engine } from "@/engine/index.ts";
 import { withRulesetScope, withRulesetScopes } from "@/server/cow/index.ts";
-import { db, withTransaction } from "@/server/database/index.ts";
+import { db } from "@/server/database/index.ts";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
 import {
   Activities,
@@ -11,6 +11,7 @@ import {
   Players,
   Visibility,
 } from "@/server/repositories/index.ts";
+import { withCampaignWrite } from "@/server/services/campaigns/campaignWrites.ts";
 import { getReadableCampaign } from "@/server/services/campaigns/readableCampaign.ts";
 import {
   describeCharacterCards,
@@ -179,11 +180,14 @@ class CampaignCharactersService {
   }
 
   async linkCharacter(session: Session, campaignId: string, characterId: string, visibility: CharacterVisibility) {
-    return await withTransaction(async (tx) => {
-      const { campaign, policy } = await getReadableCampaign(tx, session, campaignId);
+    return await withCampaignWrite(session, campaignId, async (tx, { campaign, policy }) => {
       const player = policy.canLinkCharacter();
 
-      const character = await Characters.findOne(tx, { id: characterId });
+      // The character's row shared, after its campaign's (as every write that locks both takes them): its writes, its
+      // delete among them, which asks whether it's in a campaign, wait for the link
+      const character = (await Characters.lock(tx, { id: characterId }, "share"))
+        ? await Characters.findOne(tx, { id: characterId })
+        : undefined;
       if (!character) throw new NotFoundError("Character not found");
 
       (await CharactersPolicy.for(tx, session, character)).canLink();
@@ -226,8 +230,7 @@ class CampaignCharactersService {
     characterId: string,
     visibility: CharacterVisibility,
   ) {
-    return await withTransaction(async (tx) => {
-      const { policy } = await getReadableCampaign(tx, session, campaignId);
+    return await withCampaignWrite(session, campaignId, async (tx, { policy }) => {
       const player = policy.canLinkCharacter();
 
       const link = await PlayerCharacters.findOne(tx, { characterId });
