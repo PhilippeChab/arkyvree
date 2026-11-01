@@ -8,29 +8,61 @@ interface ChangedEntity {
   name: string;
 }
 
+/** An entity as the name queries read it: a changed entity, with the ruleset that holds it. */
+type NamedEntity = ChangedEntity & { rulesetId: string };
+
 /**
  * A ruleset's changes to what it inherits, as its snapshots and its own entities stand: what copy-on-write decides a
  * snapshot is. A copy of a live source is a change to it (`modified`, its source's id beside it); a source whose copy
  * was deleted (a tombstone) is deleted, and its restore shows it again (`deleted`); a copy whose source is gone (an
  * extension deleted it) is the ruleset's own entity, as one it made is (`added`); a snapshot whose copy and source are
- * both gone stands for nothing.
+ * both gone stands for nothing. A source's ruleset says whose entity the ruleset copied (`copiesOf`: an extension's,
+ * which its unsubscribe reverts).
  */
 export default class RulesetChanges {
-  /** The ruleset's changes, by what each is. */
-  static async read(db: Db, rulesetId: string) {
+  /**
+   * The ruleset's snapshots, each with what stands for it: its copy, if the ruleset still holds it, and its source, if
+   * it's still there; and the ruleset's own entities.
+   */
+  private static async readSnapshots(db: Db, rulesetId: string) {
     const snapshots = await EntitySnapshots.findMany(db, { rulesetId });
-    const local = await RulesetEntities.findNames(db, { rulesetId });
-    const sources = await RulesetEntities.findNames(db, { ids: snapshots.map((snap) => snap.sourceEntityId) });
+    const local: NamedEntity[] = await RulesetEntities.findNames(db, { rulesetId });
+    const sources: NamedEntity[] = await RulesetEntities.findNames(db, {
+      ids: snapshots.map((snap) => snap.sourceEntityId),
+    });
     const localById = new Map(local.map((row) => [row.id, row]));
     const sourceById = new Map(sources.map((row) => [row.id, row]));
+    const read = snapshots.map((snap) => ({
+      copy: localById.get(snap.forkedEntityId),
+      forkedEntityId: snap.forkedEntityId,
+      source: sourceById.get(snap.sourceEntityId),
+    }));
+    return { local, snapshots: read };
+  }
+
+  /**
+   * The ruleset's copies of `sourceRulesetId`'s entities (an extension's): each snapshot whose source the extension
+   * holds, a change to it or a tombstone of it, with its source's type and id and its copy's id. A copy whose source is
+   * gone is the ruleset's own, of no extension's.
+   */
+  static async copiesOf(db: Db, rulesetId: string, sourceRulesetId: string) {
+    const { snapshots } = await RulesetChanges.readSnapshots(db, rulesetId);
+    return snapshots.flatMap(({ forkedEntityId, source }) =>
+      source?.rulesetId === sourceRulesetId
+        ? [{ entityType: source.entityType, forkedEntityId, sourceEntityId: source.id }]
+        : [],
+    );
+  }
+
+  /** The ruleset's changes, by what each is. */
+  static async read(db: Db, rulesetId: string) {
+    const { local, snapshots } = await RulesetChanges.readSnapshots(db, rulesetId);
     const of = ({ entityType, id, name }: ChangedEntity) => ({ entityType, id, name });
 
     const modified: (ChangedEntity & { sourceEntityId: string })[] = [];
     const deleted: (ChangedEntity & { sourceEntityId: string })[] = [];
     const copiedIds = new Set<string>();
-    for (const snap of snapshots) {
-      const copy = localById.get(snap.forkedEntityId);
-      const source = sourceById.get(snap.sourceEntityId);
+    for (const { copy, source } of snapshots) {
       if (copy && source) {
         copiedIds.add(copy.id);
         modified.push({ ...of(copy), sourceEntityId: source.id });
