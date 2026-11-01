@@ -20,24 +20,17 @@ type NamedEntity = ChangedEntity & { rulesetId: string };
  * which its unsubscribe reverts).
  */
 export default class RulesetChanges {
-  /**
-   * The ruleset's snapshots, each with what stands for it: its copy, if the ruleset still holds it, and its source, if
-   * it's still there; and the ruleset's own entities.
-   */
-  private static async readSnapshots(db: Db, rulesetId: string) {
+  /** The ruleset's snapshots, each with its source, if it's still there. */
+  private static async readSources(db: Db, rulesetId: string) {
     const snapshots = await EntitySnapshots.findMany(db, { rulesetId });
-    const local: NamedEntity[] = await RulesetEntities.findNames(db, { rulesetId });
     const sources: NamedEntity[] = await RulesetEntities.findNames(db, {
       ids: snapshots.map((snap) => snap.sourceEntityId),
     });
-    const localById = new Map(local.map((row) => [row.id, row]));
     const sourceById = new Map(sources.map((row) => [row.id, row]));
-    const read = snapshots.map((snap) => ({
-      copy: localById.get(snap.forkedEntityId),
+    return snapshots.map((snap) => ({
       forkedEntityId: snap.forkedEntityId,
       source: sourceById.get(snap.sourceEntityId),
     }));
-    return { local, snapshots: read };
   }
 
   /**
@@ -46,7 +39,7 @@ export default class RulesetChanges {
    * gone is the ruleset's own, of no extension's.
    */
   static async copiesOf(db: Db, rulesetId: string, sourceRulesetId: string) {
-    const { snapshots } = await RulesetChanges.readSnapshots(db, rulesetId);
+    const snapshots = await RulesetChanges.readSources(db, rulesetId);
     return snapshots.flatMap(({ forkedEntityId, source }) =>
       source?.rulesetId === sourceRulesetId
         ? [{ entityType: source.entityType, forkedEntityId, sourceEntityId: source.id }]
@@ -56,13 +49,16 @@ export default class RulesetChanges {
 
   /** The ruleset's changes, by what each is. */
   static async read(db: Db, rulesetId: string) {
-    const { local, snapshots } = await RulesetChanges.readSnapshots(db, rulesetId);
+    const snapshots = await RulesetChanges.readSources(db, rulesetId);
+    const local: NamedEntity[] = await RulesetEntities.findNames(db, { rulesetId });
+    const localById = new Map(local.map((row) => [row.id, row]));
     const of = ({ entityType, id, name }: ChangedEntity) => ({ entityType, id, name });
 
     const modified: (ChangedEntity & { sourceEntityId: string })[] = [];
     const deleted: (ChangedEntity & { sourceEntityId: string })[] = [];
     const copiedIds = new Set<string>();
-    for (const { copy, source } of snapshots) {
+    for (const { forkedEntityId, source } of snapshots) {
+      const copy = localById.get(forkedEntityId);
       if (copy && source) {
         copiedIds.add(copy.id);
         modified.push({ ...of(copy), sourceEntityId: source.id });

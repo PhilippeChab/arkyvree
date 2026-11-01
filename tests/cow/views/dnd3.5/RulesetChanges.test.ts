@@ -13,10 +13,11 @@ describe("A ruleset's copies of an extension's entities", () => {
     const { user, session } = await createTestUser();
     const { rulesetId, featMap } = await getSeedCtx();
     const extension = await createTestRuleset(user.id, { rulesetId });
+    const other = await createTestRuleset(user.id, { rulesetId });
     const host = await createTestRuleset(user.id, { rulesetId });
-    await subscribeTestRuleset(host.id, [extension.id]);
-    const language = (name: string) =>
-      EntitiesService.createEntity(session, extension.id, "languages", {
+    await subscribeTestRuleset(host.id, [extension.id, other.id]);
+    const language = (name: string, bookId = extension.id) =>
+      EntitiesService.createEntity(session, bookId, "languages", {
         name,
         fields: { [LANGUAGE_TYPE]: "Standard" },
       });
@@ -33,7 +34,8 @@ describe("A ruleset's copies of an extension's entities", () => {
     await EntitiesService.deleteEntity(session, host.id, "languages", tombstonedCopy.id);
     await edit(gone.id, "Gone");
     await EntitiesService.deleteEntity(session, extension.id, "languages", gone.id);
-    // And a copy of the core rules' feat, of no extension's
+    // Copies of the other extension's language and of the core rules' feat, which the extension's unsubscribe leaves
+    await edit((await language("Other's", other.id)).id, "Other's");
     await EntitiesService.updateEntity(session, host.id, "feats", featMap["Dodge"], {
       name: "Dodge",
       description: "The host's",
