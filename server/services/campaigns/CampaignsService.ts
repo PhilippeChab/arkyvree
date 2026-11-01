@@ -26,6 +26,7 @@ class CampaignsService {
     return {
       canEdit: isAllowed(() => policy.canUpdate()),
       canLeave: isAllowed(() => policy.canModify()),
+      canLinkCharacters: isAllowed(() => policy.canLinkCharacter()),
       canManagePlayers: isAllowed(() => policy.canManagePlayers()),
       canRevokeInvites: isAllowed(() => policy.canUpdate()),
     };

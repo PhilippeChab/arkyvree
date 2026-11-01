@@ -239,8 +239,8 @@ class CampaignCharactersService {
     visibility: CharacterVisibility,
   ) {
     return await withTransaction(async (tx) => {
-      const { member: player, policy } = await getReadableCampaign(tx, session, campaignId);
-      policy.canModify();
+      const { policy } = await getReadableCampaign(tx, session, campaignId);
+      const player = policy.canLinkCharacter();
 
       const link = await PlayerCharacters.findOne(tx, { characterId });
       if (!link || link.playerId !== player.id)

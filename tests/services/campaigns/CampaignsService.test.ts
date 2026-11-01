@@ -129,7 +129,13 @@ describe("CampaignsService", () => {
   describe("getCampaign", () => {
     test("returns the campaign with what the session may do in it, as its policy decides", async () => {
       const { gm, campaign, player } = await setup();
-      const all = { canEdit: true, canLeave: true, canManagePlayers: true, canRevokeInvites: true };
+      const all = {
+        canEdit: true,
+        canLeave: true,
+        canLinkCharacters: true,
+        canManagePlayers: true,
+        canRevokeInvites: true,
+      };
       expect(await CampaignsService.getCampaign(gm, campaign.id)).toMatchObject({
         id: campaign.id,
         name: "Test Campaign",
@@ -140,6 +146,7 @@ describe("CampaignsService", () => {
       expect((await CampaignsService.getCampaign(player, campaign.id)).permissions).toEqual({
         canEdit: false,
         canLeave: true,
+        canLinkCharacters: true,
         canManagePlayers: false,
         canRevokeInvites: false,
       });
@@ -148,9 +155,13 @@ describe("CampaignsService", () => {
       expect((await CampaignsService.getCampaign(gm, campaign.id)).permissions).toEqual({
         ...all,
         canLeave: false,
+        canLinkCharacters: false,
         canManagePlayers: false,
       });
-      expect((await CampaignsService.getCampaign(player, campaign.id)).permissions).toMatchObject({ canLeave: false });
+      expect((await CampaignsService.getCampaign(player, campaign.id)).permissions).toMatchObject({
+        canLeave: false,
+        canLinkCharacters: false,
+      });
       expect(CampaignsService.getCampaign(gm, NIL_UUID)).rejects.toThrow(NotFoundError);
     });
   });
