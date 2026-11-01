@@ -1,7 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
 import { EntityNames, EntityRevert, type LockedRulesetScope, RulesetChanges } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { ConflictError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import { ConflictError, NotFoundError } from "@/server/errors/index.ts";
 import { Activities, EntityReferences, RulesetExtensions, Rulesets } from "@/server/repositories/index.ts";
 import type { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { findReadableRuleset, getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
@@ -54,12 +54,10 @@ class RulesetExtensionsService {
       // 2. Validate each extension
       const newExtensionIds: string[] = [];
       for (const extensionId of extensionIds) {
-        if (extensionId === id) throw new UnprocessableEntityError("Cannot subscribe to itself");
-
         // One the session may not read is refused as an unknown one is: a private ruleset's existence isn't revealed
         const readable = await findReadableRuleset(tx, session, extensionId);
         if (!readable) throw new NotFoundError("Extension not found");
-        readable.policy.canBeSubscribed({ parentId: childRuleset.rulesetId });
+        readable.policy.canBeSubscribed({ id, parentId: childRuleset.rulesetId });
         // One that became an extension after its kind was read isn't locked, as its chain is: its writes may be running
         if (!scope.versions.has(extensionId)) throw new ConflictError(BUSY_RULESET_MESSAGE);
 

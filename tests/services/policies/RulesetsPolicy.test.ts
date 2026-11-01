@@ -159,24 +159,36 @@ describe("RulesetsPolicy", () => {
     expect(() => policyOf("Owner", { status: "Archived" }).canUnsubscribeExtension()).toThrow(UnprocessableEntityError);
   });
 
-  test("canBeSubscribed: a published, public extension of the subscriber's base, whoever asks", () => {
+  test("canBeSubscribed: a published, public extension of the subscriber's base, whoever asks, never by itself", () => {
     const extension = { kind: "extension" as const, status: "Published" as const, private: false };
-    expectOnly(ACTORS, (p) => p.canBeSubscribed({ parentId: "base-id" }), UnprocessableEntityError, extension);
+    expectOnly(
+      ACTORS,
+      (p) => p.canBeSubscribed({ id: "subscriber-id", parentId: "base-id" }),
+      UnprocessableEntityError,
+      extension,
+    );
     // A system extension is public whatever its flag says
     expect(
-      policyOf("Stranger", { ...extension, ...SYSTEM, private: true }).canBeSubscribed({ parentId: "base-id" }),
+      policyOf("Stranger", { ...extension, ...SYSTEM, private: true }).canBeSubscribed({
+        id: "subscriber-id",
+        parentId: "base-id",
+      }),
     ).toBe(true);
     for (const [overrides, message] of [
       [{ kind: "ruleset" }, "Ruleset is not published as an extension"],
       [{ status: "Draft" }, "Extension must be published"],
       [{ private: true }, "Extension must be public"],
     ] as const) {
-      expect(() => policyOf("Owner", { ...extension, ...overrides }).canBeSubscribed({ parentId: "base-id" })).toThrow(
-        message,
-      );
+      expect(() =>
+        policyOf("Owner", { ...extension, ...overrides }).canBeSubscribed({ id: "subscriber-id", parentId: "base-id" }),
+      ).toThrow(message);
     }
-    expect(() => policyOf("Owner", extension).canBeSubscribed({ parentId: "other-base" })).toThrow(
+    expect(() => policyOf("Owner", extension).canBeSubscribed({ id: "subscriber-id", parentId: "other-base" })).toThrow(
       "Extension must share a common ancestor ruleset",
+    );
+    // Itself, even one read as an extension it would take (its kind changed between the reads)
+    expect(() => policyOf("Owner", extension).canBeSubscribed({ id: "ruleset-id", parentId: "base-id" })).toThrow(
+      "A ruleset can't subscribe to itself",
     );
   });
 
