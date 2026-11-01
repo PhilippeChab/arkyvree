@@ -4,15 +4,15 @@ import { db } from "@/server/database/index.ts";
 import { Players } from "@/server/repositories/index.ts";
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
-import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { createFork, findSeededBase } from "@/tests/support/v1.ts";
 
 /** A new user's key, and a campaign they created through it, on the seeded ruleset. */
 async function createCampaign() {
   const { user } = await createTestUser();
   const { api } = await createKeyedApi(user.id);
-  const { rulesetId } = await getSeedCtx();
+  const { id: rulesetId } = await findSeededBase();
   const name = `Campaign ${uniqueId()}`;
   const campaign = await expectOk(api.v1.campaigns.$post({ json: { description: "Into the dark", name, rulesetId } }));
   return { api, campaign, user };
@@ -21,7 +21,7 @@ async function createCampaign() {
 describe("v1 campaigns", () => {
   test("creates a campaign, its creator its Game Master, and answers it as its read does", async () => {
     const { api, campaign } = await createCampaign();
-    const { rulesetId } = await getSeedCtx();
+    const { id: rulesetId, name } = await findSeededBase();
     expect(campaign).toEqual({
       archived: false,
       description: "Into the dark",
@@ -29,7 +29,7 @@ describe("v1 campaigns", () => {
       name: expect.stringMatching(/^Campaign /),
       permissions: { canEdit: true, canLeave: expect.any(Boolean), canManagePlayers: true, canRevokeInvites: true },
       players: 1,
-      ruleset: { id: rulesetId, name: "Core SRD 3.5" },
+      ruleset: { id: rulesetId, name },
     });
     expect(await expectOk(api.v1.campaigns[":id"].$get({ param: { id: campaign.id } }))).toEqual(campaign);
   });
@@ -109,7 +109,7 @@ describe("v1 campaigns", () => {
   test("refuses a campaign on a ruleset the key's user can't build on", async () => {
     const { user } = await createTestUser();
     const { api } = await createKeyedApi(user.id);
-    const privateRuleset = await createTestRuleset((await createTestUser()).user.id);
+    const privateRuleset = await createFork((await createTestUser()).user.id, (await findSeededBase()).id);
     await expectStatus(api.v1.campaigns.$post({ json: { name: "Nope", rulesetId: privateRuleset.id } }), 404);
     await expectStatus(api.v1.campaigns.$post({ json: { name: "Nope", rulesetId: NIL_UUID } }), 404);
     await expectStatus(api.v1.campaigns.$post({ json: { name: "", rulesetId: NIL_UUID } }), 400);

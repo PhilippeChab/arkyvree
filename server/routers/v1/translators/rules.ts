@@ -1,4 +1,4 @@
-/** What a ruleset's base rules are, as v1 answers them: their kinds, fields, tiers and progression's names. */
+/** What a ruleset's base rules are, as v1 answers them: kinds, fields, tiers, progression's names, character form. */
 
 import type { z } from "zod";
 
@@ -10,22 +10,36 @@ type RulesDescription = ReturnType<typeof RulesService.getRules>[keyof ReturnTyp
 
 /** One base rules' description: what v1 names of it. */
 function toV1RulesDescription(rules: RulesDescription): z.infer<typeof v1Rules>[string] {
-  const { counts, grants } = rules.progression;
+  const { counts, grants, tables } = rules.progression;
+  const tableNames = [grants?.table, counts?.lists, ...tables.map(({ table }) => table)].filter(
+    (name) => name !== undefined,
+  );
   return {
+    characterForm: { sections: rules.characterForm.sections.map((section) => ({ ...section })) },
     characterKinds: rules.entityKinds.map(({ label, value }) => ({ label, value })),
+    customizable: rules.customizationPages.map(({ type }) => type),
     fields: Object.fromEntries(
       Object.entries(rules.fields).map(([kind, fields]) => [kind, (fields ?? []).map((field) => ({ ...field }))]),
     ),
+    importers: [...rules.importers],
     kinds: rules.kinds.map((kind) => ({
       families: kind.families ?? false,
       links: kind.links ? { role: kind.links.role, type: kind.links.type } : null,
+      owns: rules.customizationPages.find(({ owner }) => owner === kind.type)?.type ?? null,
       partitioned: kind.partitioned ?? false,
       pools: kind.pools ? { role: kind.pools.role, scope: kind.pools.scope, type: kind.pools.type } : null,
+      progression: kind.opens === "progression",
       readOnly: kind.readOnly ?? false,
+      templates: kind.copies?.template !== undefined,
       tiered: kind.levels ?? false,
       type: kind.type,
     })),
-    progression: { list: counts?.list ?? null, picks: grants?.picks ?? null, several: counts?.several ?? null },
+    progression: {
+      list: counts?.list ?? null,
+      picks: grants?.picks ?? null,
+      several: counts?.several ?? null,
+      tables: [...new Set(tableNames)],
+    },
     tiers: rules.tiers.map(({ label, level }) => ({ label, level })),
   };
 }

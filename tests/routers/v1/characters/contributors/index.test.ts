@@ -2,15 +2,15 @@ import { describe, expect, test } from "bun:test";
 
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
-import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { createBaseCharacter } from "@/tests/support/v1.ts";
 
 /** A new user's character, their key's client, and another user to invite. */
 async function setup() {
   const { user: owner, session } = await createTestUser("owner");
   const { user: invitee } = await createTestUser("invitee");
-  const character = await createCharacterAs(session);
+  const character = await createBaseCharacter(session.userId);
   const { api } = await createKeyedApi(owner.id);
   return { api, character, contributors: api.v1.characters[":id"].contributors, invitee, owner };
 }
@@ -40,7 +40,7 @@ describe("v1 character contributors", () => {
   test("removes a contributor, through their own character alone", async () => {
     const { character, contributors, invitee, owner } = await setup();
     const { id: contributorId } = await addCharacterContributor(character.id, invitee, owner.id);
-    const other = await createCharacterAs({ userId: owner.id });
+    const other = await createBaseCharacter(owner.id);
     await expectStatus(contributors[":contributorId"].$delete({ param: { contributorId, id: other.id } }), 404);
 
     const param = { contributorId, id: character.id };

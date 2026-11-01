@@ -10,7 +10,7 @@ export const v1Target = z
     id: v1Id,
     kind: z.string().meta({
       description:
-        "The record's kind, as v1's routes name it (`characters`, `campaigns`, `classes`, `spells`, `exports`…), or " +
+        "The record's kind, as v1's routes name it (`characters`, `campaigns`, `rulesets`, an entity's kind, `exports`…), or " +
         "its table where no v1 route reads it for everyone a notice of it goes to (`invites`, `contributors`, " +
         "`player_characters`…), its id then the app's (a campaign character's PDF notice names the character's)",
     }),

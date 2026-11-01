@@ -16,7 +16,7 @@ const v1Room = z.strictObject({ allowed: z.number(), available: z.number(), spen
 const v1RulesIssue = z
   .strictObject({
     category: z.string().meta({
-      description: "What the issue is about, as the rules name it (3.5: `aptitudes`, `skills`, `requirements`…)",
+      description: "What the issue is about, as the rules name it",
     }),
     entityId: z.string().optional(),
     entityName: z.string().optional(),
@@ -116,10 +116,10 @@ const v1StepOption = z.strictObject({
   track: z
     .strictObject({ last: z.number(), left: z.number(), next: z.number() })
     .optional()
-    .meta({ description: "A track's levels (3.5: a class's): its last, how many are left, the next" }),
+    .meta({ description: "A track's levels: its last, how many are left, the next" }),
 });
 
-/** A group of a step's options (3.5's feat family). */
+/** A group of a step's options. */
 const v1StepOptionGroup = z.strictObject({
   count: z.number(),
   description: z.string().nullable(),
@@ -132,9 +132,7 @@ const v1StepOptionGroup = z.strictObject({
 
 /** What a character's card shows of it, as its rules describe it: each a chip, partial where it's unknown. */
 export const v1CardSummary = z.array(z.strictObject({ label: z.string(), partial: z.boolean() })).meta({
-  description:
-    "What its card shows of it, as its rules describe it (3.5: its race, each class with its level), each partial " +
-    "where it's unknown or hidden",
+  description: "What its card shows of it, as its rules describe it, each partial where it's unknown or hidden",
 });
 
 /** What the key's user may do with a character. */
@@ -157,13 +155,12 @@ export const v1Character = z
     archived: z.boolean(),
     id: v1Id,
     kind: z.string().meta({
-      description: "Its kind: the rules' player character's, or a child character's (3.5: `familiar`, `mount`…)",
+      description: "Its kind, one of the `characterKinds` `GET /v1/rules` lists",
     }),
     name: z.string(),
     ownerId: z.string().nullable(),
     parentCharacterId: z.string().nullable().meta({
-      description:
-        "The character a child character belongs to (3.5: a familiar's master), whose editors read and edit it",
+      description: "The character a child character belongs to, whose editors read and edit it",
     }),
     permissions: v1CharacterPermissions,
     rulesetId: v1Id,
@@ -190,7 +187,7 @@ export const v1CharacterCard = z
 
 export const v1CharacterPage = buildPageSchema(v1CharacterCard);
 
-/** How a new character of a ruleset sets its scores of a role (3.5's ability scores): its entities, methods, bounds. */
+/** How a new character of a ruleset sets its scores of a role: its entities, methods, bounds. */
 export const v1Creation = z
   .strictObject({
     entities: z.array(v1Named).meta({ description: "The entities it scores, in the sheet's order" }),
@@ -202,7 +199,7 @@ export const v1Creation = z
   })
   .meta({ description: "How a new character sets its scores of a role", id: "Creation" });
 
-/** An option a new character's creation pick offers (3.5's race), as it's stored, eligible or not. */
+/** An option a new character's creation pick offers, as it's stored, eligible or not. */
 export const v1CreationOption = z
   .strictObject({
     description: z.string().nullable(),
@@ -241,7 +238,7 @@ export const v1InventoryEntry = z
       .nullable()
       .meta({ description: "Its charges, for an item that has them" }),
     groups: z.array(z.number()).meta({
-      description: "The groups it's held in, from 0, as its rules place it (3.5: the weapon sets a hand holds it in)",
+      description: "The groups it's held in, from 0, as its rules place it",
     }),
     id: v1Id,
     item: z
@@ -285,16 +282,13 @@ export const v1LevelSteps = z
   .strictObject({
     steps: z.array(
       z.strictObject({
-        kind: z
-          .string()
-          .optional()
-          .meta({ description: "The entity kind it reads or picks (3.5: `classes`, `feats`…)" }),
+        kind: z.string().optional().meta({ description: "The entity kind it reads or picks" }),
         label: z.string(),
         mechanic: z
           .enum(["choose", "pick", "plan", "spend", "value"])
           .meta({ description: "How its payload is shaped, in a plan's `steps`" }),
         name: z.string().meta({ description: "Its name, a plan's `steps` key" }),
-        pools: z.string().optional().meta({ description: "The kind its picks' pools are of (3.5: `aptitudes`)" }),
+        pools: z.string().optional().meta({ description: "The kind its picks' pools are of" }),
       }),
     ),
   })
@@ -303,7 +297,7 @@ export const v1LevelSteps = z
     id: "LevelSteps",
   });
 
-/** A character's links of a role (3.5's languages it speaks): its picks, those it has anyway, those it may pick. */
+/** A character's links of a role: its picks, those it has anyway, those it may pick. */
 export const v1LinkRoom = z
   .strictObject({
     automatic: z.array(v1Named).meta({ description: "Those it has without picking them" }),
@@ -317,7 +311,7 @@ export const v1Modifier = z
   .strictObject({
     id: v1Id,
     operator: z.string().meta({ description: "`add`, `subtract`, `multiply`, `divide` or `set`" }),
-    target: z.string().meta({ description: "The target path it changes (3.5: `abilities.strength.misc`)" }),
+    target: z.string().meta({ description: "The target path it changes, as `…/customization/target` completes it" }),
     targetLabels: z.record(z.string(), z.string()).meta({ description: "Its path's segments, each by its label" }),
     value: z.string(),
     valueLabel: z.string().nullable().meta({ description: "Its value as its target names it, when it names one" }),

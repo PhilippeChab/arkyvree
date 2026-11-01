@@ -3,9 +3,8 @@ import { describe, expect, test } from "bun:test";
 import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
 import { ContributorsService } from "@/server/services/rulesets/contributors/index.ts";
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
-import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { createBaseCharacter, createFork, findSeededBase } from "@/tests/support/v1.ts";
 
 /**
  * A new user invited to contribute to a ruleset, who accepted, and whose role its owner then changed: an invite's
@@ -14,7 +13,7 @@ import { createTestUser } from "@/tests/support/users.ts";
 async function setup() {
   const owner = await createTestUser("owner");
   const { user, session } = await createTestUser("contributor");
-  const ruleset = await createTestRuleset(owner.user.id);
+  const ruleset = await createFork(owner.user.id, (await findSeededBase()).id);
   const contributor = await ContributorsService.inviteContributor(
     owner.session,
     ruleset.id,
@@ -61,7 +60,7 @@ describe("v1 notifications", () => {
   test("marks them all read but invites, which stay unread until they're answered", async () => {
     const { api, user } = await setup();
     const owner = await createTestUser("owner");
-    const character = await createCharacterAs(owner.session);
+    const character = await createBaseCharacter(owner.session.userId);
     await CharacterContributorsService.inviteContributor(owner.session, character.id, user.emailAddress);
 
     await expectStatus(api.v1.notifications["read-all"].$post(), 204);

@@ -45,7 +45,7 @@ const kindParams = idParam.extend({
   kind: z
     .string()
     .pipe(z.enum(Engine.storage().standaloneKinds()))
-    .meta({ description: "The entity kind, as the rules name it (3.5: `feats`, `classes`…)" }),
+    .meta({ description: "The entity kind, one of the `kinds` `GET /v1/rules` lists" }),
 });
 
 /** A route's entity: its kind's params, and its id. */
@@ -54,13 +54,11 @@ const entityParams = kindParams.extend({ entityId: z.string().uuid() });
 /** A route's link from an entity: its entity's params, and the entity it links to. */
 const linkParams = entityParams.extend({ targetId: z.string().uuid() });
 
-/** An owned entity's body (3.5's class level's), its create's and update's. */
+/** An owned entity's body, its create's and update's. */
 const ownedBody = z.strictObject({
   fields: entityFields.optional(),
-  links: entityLinks
-    .optional()
-    .meta({ description: "Its links by role (3.5: a class level's saves, the feats it grants)" }),
-  position: z.number().optional().meta({ description: "Its place among its owner's (3.5: a class level's number)" }),
+  links: entityLinks.optional().meta({ description: "Its links, by the roles its kind's fields declare" }),
+  position: z.number().optional().meta({ description: "Its place among its owner's" }),
   updatedAt: z.string().optional(),
 });
 
@@ -73,16 +71,15 @@ const ownedParams = entityParams.extend({ ownedId: z.string().uuid() });
 /** A route's entity's table: its entity's params, and the table's name. */
 const tableParams = entityParams.extend({
   table: z.string().meta({
-    description:
-      "The table, as the rules name it (3.5: a class's `feat-pools`, `spells`, `spells-known`, `spell-lists`)",
+    description: "The table, as the rules name it",
   }),
 });
 
 /**
- * A ruleset's entities of every kind, by its route's `kind` (3.5's `feats`, `classes`…), each answered by its kind's
- * rules: a page of them, with its kind's filters past the shared ones, a page of its groups (3.5's feat families), its
- * templates (3.5's items'), one entity, and the parts its kind may have: the entities it owns (3.5's class levels, and
- * one by its id alone), its links (3.5's class skills), its progression and its tables.
+ * A ruleset's entities of every kind, by its route's `kind` (one `GET /v1/rules` lists), each answered by its kind's
+ * rules: a page of them, with its kind's filters past the shared ones, a page of its groups, its templates, one entity,
+ * and the parts its kind may have: the entities it owns (and one by its id alone), its links, its progression and its
+ * tables.
  */
 export default new Hono<ApiKeyContext>()
   .get(
@@ -105,8 +102,9 @@ export default new Hono<ApiKeyContext>()
         })
         .meta({
           description:
-            "Past these, the filters the kind's rules take, each by the field, the link role or the partition it " +
-            "filters (3.5: a feat's `listedIn`, a spell's `tier`, a class's `partition`): another is refused",
+            "Past these, the filters the kind's rules take, each by the field or the link role it filters (as " +
+            "`GET /v1/rules` names them), `tier` for a tiered kind and `partition` for a partitioned one; another " +
+            "is refused",
         }),
     ),
     async (c) => {
@@ -127,7 +125,7 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1EntityGroupPage,
       status: 200,
-      summary: "A kind's entities by group (3.5: a feat's family), a page at a time: each group, or an entity in none",
+      summary: "A kind's entities by group, a page at a time: each group, or an entity in none",
     }),
     validate("param", kindParams),
     validate(
@@ -157,7 +155,7 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1OwnedEntity,
       status: 200,
-      summary: "An entity another owns (3.5: a class's level), by its id alone, with its modifiers and requirements",
+      summary: "An entity another owns, by its id alone, with its modifiers and requirements",
     }),
     validate("param", ownedByIdParams),
     async (c) => {
@@ -171,7 +169,7 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1StoredEntities,
       status: 200,
-      summary: "A kind's templates (3.5: an item's), each as it's stored, which a new entity copies",
+      summary: "A kind's templates, each as it's stored, which a new entity copies",
     }),
     validate("param", kindParams),
     validate("query", z.object({ type: z.string().optional().meta({ description: "Only templates of a type" }) })),
@@ -200,7 +198,7 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1EntityLinks,
       status: 200,
-      summary: "The links an entity edits (3.5: a class's skills)",
+      summary: "The links an entity edits, of the role its kind's `links` names",
     }),
     validate("param", entityParams),
     async (c) => {
@@ -214,7 +212,7 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1OwnedEntities,
       status: 200,
-      summary: "The entities an entity owns (3.5: a class's levels)",
+      summary: "The entities an entity owns",
     }),
     validate("param", entityParams),
     async (c) => {
@@ -228,8 +226,7 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1Progression,
       status: 200,
-      summary:
-        "What an entity's levels give (3.5: a class's): each pool's picks by level, and the values its rules name",
+      summary: "What an entity's levels give: each pool's picks by level, and the values its rules name",
     }),
     validate("param", entityParams),
     async (c) => {
@@ -243,7 +240,7 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1EntityTable,
       status: 200,
-      summary: "One of an entity's tables (3.5: a class's spells per day), a row a level",
+      summary: "One of an entity's tables, a row a level",
     }),
     validate("param", tableParams),
     async (c) => {
@@ -281,7 +278,7 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1EntityLinks,
       status: 200,
-      summary: "Adds a link an entity edits (3.5: a class's skill), answering its links",
+      summary: "Adds a link an entity edits, answering its links",
     }),
     validate("param", entityParams),
     validate("json", z.object({ targetId: z.string().uuid() })),
@@ -298,7 +295,7 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1OwnedEntity,
       status: 201,
-      summary: "Creates an entity another owns (3.5: a class's level)",
+      summary: "Creates an entity another owns",
     }),
     validate("param", entityParams),
     validate("json", ownedBody),
@@ -315,7 +312,7 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: z.array(v1Entity),
       status: 201,
-      summary: "Creates an entity's variants (3.5: a weapon's magic versions), each a copy under its own name",
+      summary: "Creates an entity's variants, each a copy under its own name",
     }),
     validate("param", entityParams),
     validate(
@@ -365,7 +362,7 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1OwnedEntity,
       status: 200,
-      summary: "Updates an entity another owns (3.5: a class's level)",
+      summary: "Updates an entity another owns",
     }),
     validate("param", ownedParams),
     validate("json", ownedBody),
@@ -382,7 +379,7 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1Progression,
       status: 200,
-      summary: "Saves what an entity's levels give at once (3.5: a class's pools' picks and spells by level)",
+      summary: "Saves what an entity's levels give at once",
     }),
     validate("param", entityParams),
     validate(
@@ -396,8 +393,7 @@ export default new Hono<ApiKeyContext>()
         })
         .meta({
           description:
-            "Past its tokens, the progression as the kind's rules take it " +
-            "(3.5: a class's `pools` and `spells` by level)",
+            "Past its tokens, the progression as the kind's rules take it: what `…/progression` answers of it",
         }),
     ),
     async (c) => {
@@ -420,7 +416,7 @@ export default new Hono<ApiKeyContext>()
   )
   .delete(
     "/:id/entities/:kind/:entityId/links/:targetId",
-    describeRoute({ response: null, status: 204, summary: "Removes a link an entity edits (3.5: a class's skill)" }),
+    describeRoute({ response: null, status: 204, summary: "Removes a link an entity edits" }),
     validate("param", linkParams),
     async (c) => {
       const { entityId, id, kind, targetId } = c.req.valid("param");
@@ -430,7 +426,7 @@ export default new Hono<ApiKeyContext>()
   )
   .delete(
     "/:id/entities/:kind/:entityId/owned/:ownedId",
-    describeRoute({ response: null, status: 204, summary: "Deletes an entity another owns (3.5: a class's level)" }),
+    describeRoute({ response: null, status: 204, summary: "Deletes an entity another owns" }),
     validate("param", ownedParams),
     async (c) => {
       const { entityId, id, kind, ownedId } = c.req.valid("param");

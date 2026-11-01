@@ -28,7 +28,7 @@ export const v1RulesetPermissions = z
 /** A ruleset, in a page of them. */
 export const v1RulesetSummary = z
   .strictObject({
-    baseRules: z.string().meta({ description: "The game its rules are: `Dungeons & Dragons: 3.5`" }),
+    baseRules: z.string().meta({ description: "Its base rules, the key `GET /v1/rules` describes them at" }),
     createdAt: z.string(),
     description: z.string(),
     id: v1Id,
@@ -61,7 +61,7 @@ export const v1RulesetChanges = z
   .array(
     z.strictObject({
       entityId: v1Id.nullable().meta({ description: "The ruleset's own entity, none when it's deleted" }),
-      kind: z.string().meta({ description: "The entity's kind, as its route names it (3.5: `classes`, `feats`)" }),
+      kind: z.string().meta({ description: "The entity's kind, as its route names it" }),
       name: z.string(),
       sourceId: v1Id.nullable().meta({ description: "The entity it changes of its parent's, none when it's added" }),
       status: z.enum(["added", "deleted", "modified"]),
@@ -88,6 +88,6 @@ export const v1RulesetSettings = z
     fields: z.record(z.string(), z.unknown()).meta({ description: "Its own fields, by their stored names" }),
     links: z
       .record(z.string(), z.unknown())
-      .meta({ description: "The entities it names, by role (3.5: the ability skill points add)" }),
+      .meta({ description: "The entities it names, by the `role` a field of the rules' `rulesets` fields declares" }),
   })
   .meta({ description: "A ruleset's settings: its own fields and links", id: "RulesetSettings" });

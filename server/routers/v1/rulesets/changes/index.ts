@@ -11,7 +11,9 @@ import { RulesetChangesService } from "@/server/services/rulesets/changes/index.
 /** A fork's entity it restores to its parent's, by the parent's id: of a kind the rules restore. */
 const restorableParams = idParam.extend({
   entityId: z.string().uuid(),
-  kind: z.enum(Engine.rules().restorableKinds()).meta({ description: "The entity's kind" }),
+  kind: z
+    .enum(Engine.rules().restorableKinds())
+    .meta({ description: "The entity's kind, one the `kinds` of `GET /v1/rules` lists that isn't `readOnly`" }),
 });
 
 /** What a fork changed of the ruleset it's forked from. */

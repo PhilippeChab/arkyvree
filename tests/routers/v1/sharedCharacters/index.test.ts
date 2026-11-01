@@ -2,14 +2,14 @@ import { describe, expect, test } from "bun:test";
 
 import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
-import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { createBaseCharacter } from "@/tests/support/v1.ts";
 
 /** A character of a new user's, shared by its link, and another user's key. */
 async function share() {
   const { session } = await createTestUser();
-  const character = await createCharacterAs(session);
+  const character = await createBaseCharacter(session.userId);
   const { shareToken } = await CharacterSharingService.generateShareToken(session, character.id);
   const { api } = await createKeyedApi((await createTestUser()).user.id);
   return { api, character, session, shareToken: shareToken! };

@@ -4,11 +4,10 @@ import { db } from "@/server/database/index.ts";
 import { Players } from "@/server/repositories/index.ts";
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
-import { createCharacterAs, createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { queuedPdfJobs } from "@/tests/support/jobs.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { createBaseCharacter, createFork, createFormCharacter } from "@/tests/support/v1.ts";
 
 /** A new user in a campaign's slot of `role`, their key's client. */
 async function joinAs(campaignId: string, role: "Game Master" | "Player Character") {
@@ -23,7 +22,7 @@ async function setup() {
   const { campaign } = await createTestCampaign(gm.id);
   const player = await joinAs(campaign.id, "Player Character");
   const other = await joinAs(campaign.id, "Player Character");
-  const character = await createCharacterAs(player.session);
+  const character = await createBaseCharacter(player.session.userId);
   return { campaign, character, gm: (await createKeyedApi(gm.id)).api, other, player };
 }
 
@@ -58,9 +57,8 @@ describe("v1 campaign characters", () => {
 
   test("refuses a character on another ruleset, and one of another user's", async () => {
     const { campaign, character, other, player } = await setup();
-    const elsewhere = await createTestCharacter(player.user.id, {
-      rulesetId: (await createTestRuleset(player.user.id)).id,
-    });
+    const fork = await createFork(player.user.id, campaign.rulesetId);
+    const elsewhere = await createFormCharacter(player.user.id, fork.id);
     const param = { id: campaign.id };
     await expectStatus(
       player.api.v1.campaigns[":id"].characters.$post({ param, json: { characterId: elsewhere.id } }),
@@ -84,11 +82,13 @@ describe("v1 campaign characters", () => {
     };
 
     expect(await list(player.api)).toEqual([{ ...whole, own: true, partial: false, summary: expect.any(Array) }]);
-    expect(await list(gm)).toEqual([{ ...whole, own: false, partial: false, summary: expect.any(Array) }]);
+    const [full] = await list(gm);
+    expect(full).toEqual({ ...whole, own: false, partial: false, summary: expect.any(Array) });
     const [partial] = await list(other.api);
     expect(partial).toMatchObject({ ...whole, own: false, partial: true });
-    // Its race alone: a partial card names no class
-    expect(partial?.summary.map(({ label }) => label)).toEqual(["Human"]);
+    // What a partial card shows is some of what the whole card does
+    const labels = full!.summary.map(({ label }) => label);
+    expect(partial!.summary.every(({ label }) => labels.includes(label))).toBe(true);
   });
 
   test("answers a linked character's sheet, or its identity alone to whom it's `Partial`", async () => {

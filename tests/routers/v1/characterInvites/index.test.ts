@@ -1,15 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
-import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { createBaseCharacter } from "@/tests/support/v1.ts";
 
 /** A character whose owner invited a new user to contribute, through the public API: both users' clients. */
 async function invite() {
   const { user: owner, session } = await createTestUser("owner");
   const { user: invitee } = await createTestUser("invitee");
-  const character = await createCharacterAs(session);
+  const character = await createBaseCharacter(session.userId);
   const { api: ownerApi } = await createKeyedApi(owner.id);
   const { api } = await createKeyedApi(invitee.id);
   const { id } = await expectOk(

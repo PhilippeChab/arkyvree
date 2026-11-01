@@ -2,15 +2,15 @@ import { describe, expect, test } from "bun:test";
 
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
 import { addRulesetContributor } from "@/tests/support/contributors.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { createFork, findSeededBase } from "@/tests/support/v1.ts";
 
 /** A new user's ruleset, their key's client, and another user to invite. */
 async function setup() {
   const { user: owner } = await createTestUser("owner");
   const { user: invitee } = await createTestUser("invitee");
-  const ruleset = await createTestRuleset(owner.id);
+  const ruleset = await createFork(owner.id, (await findSeededBase()).id);
   const { api } = await createKeyedApi(owner.id);
   return { contributors: api.v1.rulesets[":id"].contributors, invitee, owner, ruleset };
 }
@@ -42,7 +42,7 @@ describe("v1 ruleset contributors", () => {
   test("changes an active contributor's role, and removes them, through their own ruleset alone", async () => {
     const { contributors, invitee, owner, ruleset } = await setup();
     const { id: contributorId } = await addRulesetContributor(ruleset.id, invitee, owner.id);
-    const other = await createTestRuleset(owner.id);
+    const other = await createFork(owner.id, (await findSeededBase()).id);
     const elsewhere = { contributorId, id: other.id };
     await expectStatus(contributors[":contributorId"].$put({ param: elsewhere, json: { role: "Admin" } }), 404);
     await expectStatus(contributors[":contributorId"].$delete({ param: elsewhere }), 404);

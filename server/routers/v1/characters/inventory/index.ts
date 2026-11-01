@@ -12,10 +12,10 @@ import type { Session } from "@/shared/relations.ts";
 /** What an entry's body says of where and how it's carried, its add's and its update's. */
 const entryFields = {
   force: z.boolean().default(false).meta({
-    description: "Saves it though the character doesn't meet its requirements (3.5: a weapon it isn't proficient in)",
+    description: "Saves it though the character doesn't meet its requirements",
   }),
   groups: groupIndexes.meta({
-    description: "The groups it's held in, from 0, as its rules place it (3.5: the weapon sets a hand holds it in)",
+    description: "The groups it's held in, from 0, as its rules place it",
   }),
   location: z
     .string()
@@ -61,7 +61,7 @@ export default new Hono<ApiKeyContext>()
       z.object({
         entryId: z.string().uuid().optional().meta({ description: "The entry it moves, none for a new one" }),
         groups: groupIndexList.meta({
-          description: "The groups it's held in, comma-separated, from 0 (3.5: the weapon sets a hand holds it in)",
+          description: "The groups it's held in, comma-separated, from 0, as its rules place it",
         }),
         location: z.string(),
       }),

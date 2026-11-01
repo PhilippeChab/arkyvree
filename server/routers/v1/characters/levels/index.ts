@@ -25,16 +25,13 @@ const levelPlan = z.object({
 
 /** A plan's save: each step's payload by its name, and whether it's saved past the rules' issues. */
 const levelSave = {
-  force: z
-    .boolean()
-    .default(false)
-    .meta({ description: "Saves it though the rules find issues with it (3.5: a feat whose prerequisite is unmet)" }),
+  force: z.boolean().default(false).meta({ description: "Saves it though the rules find issues with it" }),
   steps: planSteps.meta({ description: "Each step's payload, by its name, in its mechanic's shape" }),
 };
 
 /** A step's name, as its ruleset lists it. */
 const stepParams = idParam.extend({
-  step: z.string().min(1).meta({ description: "The step's name, as `GET …/levels/steps` lists it (3.5: `feats`)" }),
+  step: z.string().min(1).meta({ description: "The step's name, as `GET …/levels/steps` lists it" }),
 });
 
 /**
@@ -125,8 +122,15 @@ export default new Hono<ApiKeyContext>()
           .meta({ description: "Which of the plan's advancements it picks for, from 0" }),
         group: z.string().optional().meta({ description: "A group whose options it opens, from a grouped page" }),
         plan: levelPlan,
-        pool: z.string().uuid().optional().meta({ description: "The pool it picks in (3.5: an aptitude)" }),
-        tier: z.string().optional().meta({ description: "The pool's tier it picks in (3.5: a spell level)" }),
+        pool: z
+          .string()
+          .uuid()
+          .optional()
+          .meta({ description: "The pool it picks in, as a `pick` step's answer names it" }),
+        tier: z
+          .string()
+          .optional()
+          .meta({ description: "The pool's tier it picks in, as a `pick` step's answer names it" }),
       }),
     ),
     async (c) => {

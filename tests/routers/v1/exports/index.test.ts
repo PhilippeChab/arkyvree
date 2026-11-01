@@ -3,16 +3,16 @@ import { describe, expect, test } from "bun:test";
 import { generatePdfTask } from "@/server/jobs/generatePdf.ts";
 import { CharactersService } from "@/server/services/characters/index.ts";
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
-import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
 import { queuedPdfJobs, silentJobHelpers } from "@/tests/support/jobs.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { createBaseCharacter } from "@/tests/support/v1.ts";
 
 /** A new user's character (named `name`), its PDF queued through the public API, and the job the worker would run. */
 async function queuePdf(name?: string) {
   const { user, session } = await createTestUser();
   const { api } = await createKeyedApi(user.id);
-  const character = await createCharacterAs(session, name ? { name } : {});
+  const character = await createBaseCharacter(session.userId, name);
   const pending = await expectOk(api.v1.characters[":id"].pdf.$post({ param: { id: character.id } }));
   const [job] = await queuedPdfJobs(character.id);
   return { api, character, job: job!, pending, session };

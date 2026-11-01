@@ -1,15 +1,15 @@
 import { describe, expect, test } from "bun:test";
 
 import { createKeyedApi, expectOk, expectStatus } from "@/tests/support/api.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
 import { NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { createFork, findSeededBase } from "@/tests/support/v1.ts";
 
 /** A ruleset whose owner invited a new user to contribute, through the public API: both users' clients. */
 async function invite() {
   const { user: owner } = await createTestUser("owner");
   const { user: invitee } = await createTestUser("invitee");
-  const ruleset = await createTestRuleset(owner.id);
+  const ruleset = await createFork(owner.id, (await findSeededBase()).id);
   const { api: ownerApi } = await createKeyedApi(owner.id);
   const { api } = await createKeyedApi(invitee.id);
   const { id } = await expectOk(

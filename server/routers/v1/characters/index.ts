@@ -23,18 +23,22 @@ import modifiers from "./modifiers/index.ts";
 import pdf from "./pdf/index.ts";
 import sharing from "./sharing/index.ts";
 
-/** A creation pick's role: its single link's (3.5's `race`). */
+/** A creation pick's role: its single link's, as the rules' character form names it. */
 const creationParams = z.object({
-  role: z.string().meta({ description: "The pick's role, as the rules name it (3.5: `race`)" }),
+  role: z
+    .string()
+    .meta({ description: "The pick's role: a `pick` item's `role` in the `characterForm` of `GET /v1/rules`" }),
 });
 
-/** A character's links of a role (3.5's `speaks`, the languages it speaks). */
+/** A character's links of a role, as its sheet's sections name it. */
 const roleParams = idParam.extend({
-  role: z.string().meta({ description: "The links' role, as the rules name it (3.5: `speaks`)" }),
+  role: z.string().meta({ description: "The links' role, as a `links` entry of its sheet's sections names it" }),
 });
 
-/** A character's scores of a role (3.5's `score`, its ability scores). */
-const scoreParams = idParam.extend({ role: z.string().meta({ description: "The scores' role: `score`" }) });
+/** A character's scores of a role, as the rules' character form names it. */
+const scoreParams = idParam.extend({
+  role: z.string().meta({ description: "The scores' role: a `scores` section's `role` in the rules' `characterForm`" }),
+});
 
 /**
  * The key's user's characters: a page of them, one's sheet and its links of a role; its inventory, its own modifiers
@@ -82,12 +86,14 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1Creation,
       status: 200,
-      summary: "How a new character of a ruleset sets its scores of a role (3.5: its ability scores)",
+      summary: "How a new character of a ruleset sets its scores of a role",
     }),
     validate(
       "query",
       z.object({
-        role: z.string().meta({ description: "The scores' role: `score`" }),
+        role: z
+          .string()
+          .meta({ description: "The scores' role: a `scores` section's `role` in the rules' `characterForm`" }),
         rulesetId: z.string().uuid(),
       }),
     ),
@@ -101,7 +107,7 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1CreationOptionPage,
       status: 200,
-      summary: "A page of a new character's creation pick's options (3.5: its race), each eligible or not",
+      summary: "A page of a new character's creation pick's options, each eligible or not",
     }),
     validate("param", creationParams),
     validate(
@@ -149,7 +155,7 @@ export default new Hono<ApiKeyContext>()
       response: v1LinkRoom,
       status: 200,
       summary:
-        "A character's links of a role (3.5: the languages it `speaks`): those it picked, those it has anyway, " +
+        "A character's links of a role, as its sheet names it: those it picked, those it has anyway, " +
         "and those it may pick",
     }),
     validate("param", roleParams),
@@ -181,11 +187,11 @@ export default new Hono<ApiKeyContext>()
         notes: z.string().optional(),
         picks: z
           .record(z.string(), z.string().uuid())
-          .meta({ description: "The entity each creation pick names, by its role (3.5: `race`)" }),
+          .meta({ description: "The entity each creation pick names, by its role in the rules' `characterForm`" }),
         rulesetId: z.string().uuid(),
         scores: z
           .record(z.string(), z.record(z.string().uuid(), score))
-          .meta({ description: "Each scored role's amounts, by entity (3.5: `score`, its ability scores)" }),
+          .meta({ description: "Each scored role's amounts, by entity, by its role in the rules' `characterForm`" }),
       }),
     ),
     async (c) => {
@@ -199,8 +205,7 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1ImportedCharacter,
       status: 201,
-      summary:
-        "Imports the character another program's file holds into a ruleset, as its rules import it (3.5: a PCGen file)",
+      summary: "Imports the character another program's file holds into a ruleset, as its rules import it ",
     }),
     importRateLimit,
     validate(
@@ -262,7 +267,7 @@ export default new Hono<ApiKeyContext>()
     describeRoute({
       response: v1Character,
       status: 200,
-      summary: "Sets a character's scores of a role (3.5: its ability scores), answering its sheet",
+      summary: "Sets a character's scores of a role, answering its sheet",
     }),
     validate("param", scoreParams),
     validate("json", z.record(z.string().uuid(), score).meta({ description: "Each score, by its entity" })),

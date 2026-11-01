@@ -1,14 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
 import { createKeyedApi, expectOk } from "@/tests/support/api.ts";
-import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { findSeededBase } from "@/tests/support/v1.ts";
 
 /** A new user's key, and a campaign they created through it. */
 async function setup() {
   const { user } = await createTestUser();
   const { api } = await createKeyedApi(user.id);
-  const { rulesetId } = await getSeedCtx();
+  const { id: rulesetId } = await findSeededBase();
   const campaign = await expectOk(api.v1.campaigns.$post({ json: { name: "Logged", rulesetId } }));
   return { api, campaign, user };
 }
