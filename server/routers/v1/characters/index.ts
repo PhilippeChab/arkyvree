@@ -12,9 +12,9 @@ import inventory from "./inventory/index.ts";
 import levels from "./levels/index.ts";
 import modifiers from "./modifiers/index.ts";
 
-/** A character's links of a role (3.5's `speaks`, the languages it speaks). */
+/** A character's links of a role, as its sheet's sections name it. */
 const roleParams = idParam.extend({
-  role: z.string().meta({ description: "The links' role, as the rules name it (3.5: `speaks`)" }),
+  role: z.string().meta({ description: "The links' role, as a `links` entry of its sheet's sections names it" }),
 });
 
 /**
@@ -74,7 +74,7 @@ export default new Hono<ApiKeyContext>()
       response: v1LinkRoom,
       status: 200,
       summary:
-        "A character's links of a role (3.5: the languages it `speaks`): those it picked, those it has anyway, " +
+        "A character's links of a role, as its sheet names it: those it picked, those it has anyway, " +
         "and those it may pick",
     }),
     validate("param", roleParams),

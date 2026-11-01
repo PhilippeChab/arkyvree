@@ -41,10 +41,15 @@ the service returns to v1's shape (`V1.character`).
   translator is typed by the service it reads (`Answer<typeof CharactersService.getCharacter>`) and by that schema
   (`z.infer`): an answer that changes inside the app stops its translator compiling, and v1 is kept before anyone
   outside sees the change.
-- v1 is the same whatever a ruleset's base rules: no answer's shape is one game's. What a ruleset's rules name (its
-  entity kinds, each kind's fields, a list's tiers, the values a progression holds) a caller reads from `GET /v1/rules`
-  (`RulesService.getRules`, translated), and an answer keys those by the rules' own names: an entity's `fields`, a
-  progression's values past its pools. A description names a game's term only as an example, marked (3.5: `feats`).
+- v1 is the same whatever a ruleset's base rules: no answer's shape, route or description is one game's. What a
+  ruleset's rules name a caller reads from `GET /v1/rules` (`RulesService.getRules`, translated): its entity kinds and
+  what each has (groups, tiers, pools, the kind it owns, a progression, templates), each kind's fields, the kinds that
+  have modifiers and requirements, a list's tiers, the values and tables a progression holds, and a new character's
+  form (its fields by key, its picks and scores by role). An answer keys those by the rules' own names: an entity's
+  `fields` and `links`, a progression's values past its pools, a character's sections, links and scores.
+- The v1 tests hold to it too: they read the names they use from `GET /v1/rules` and the answers before them, run on
+  the seeded base ruleset whichever base rules it is (`tests/support/v1.ts`: a character made as the rules' form lays
+  it out, a fork as the app forks one), and name no game's term.
 - A ruleset's entities are read by kind, as the rules name them (`/v1/rulesets/{id}/entities/{kind}`,
   `Engine.storage().standaloneKinds()`), whatever the kind: their columns, their fields under `fields` by the names the
   ruleset declares, and their links with their targets' names. A kind adds what its rules describe: its modifiers and

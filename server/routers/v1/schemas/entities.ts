@@ -1,7 +1,7 @@
 /**
  * A ruleset's entity as v1 answers it, whatever its kind: its columns, its fields by the names its ruleset declares
- * them, and its links to others, each with its target's name; and what an entity's kind may have past them (3.5's class
- * levels, progression and tables; a feat's family).
+ * them, and its links to others, each with its target's name; and what an entity's kind may have past them (owned
+ * entities, a progression, tables, a group).
  */
 
 import { z } from "zod";
@@ -13,7 +13,7 @@ export const v1EntityModifier = z
   .strictObject({
     id: v1Id,
     operator: z.string().meta({ description: "`add`, `subtract`, `multiply`, `divide` or `set`" }),
-    target: z.string().meta({ description: "The target path it changes (3.5: `abilities.strength.misc`)" }),
+    target: z.string().meta({ description: "The target path it changes, as `…/customization/target` completes it" }),
     value: z.string(),
     valueType: z.string(),
   })
@@ -27,7 +27,7 @@ export const v1EntityLink = z
     id: v1Id,
     ordinal: z.number(),
     role: z.string().meta({
-      description: "What it links for, as the rules name the role (3.5: `listedIn`, `classSkill`, `grants`…)",
+      description: "What it links for: the `role` a field of `GET /v1/rules` declares",
     }),
     tier: z.number().nullable(),
     toDescription: z.string().nullable().optional(),
@@ -50,11 +50,13 @@ export const v1EntitySummary = z
     id: v1Id,
     links: z.array(v1EntityLink),
     name: z.string(),
-    ownerId: v1Id.nullable().meta({ description: "The entity that owns it (3.5: a class level's class)" }),
-    partition: z.string().meta({ description: "Its kind's partition, as the rules name it (3.5: `pc`, `npc`…)" }),
+    ownerId: v1Id.nullable().meta({ description: "The entity that owns it" }),
+    partition: z
+      .string()
+      .meta({ description: "The kind of character it's for, one of the `characterKinds` `GET /v1/rules` lists" }),
     position: z.number().nullable(),
     rulesetId: v1Id,
-    type: z.string().meta({ description: "Its kind, as the rules name it (3.5: `feats`, `classes`…)" }),
+    type: z.string().meta({ description: "Its kind, one of the `kinds` `GET /v1/rules` lists" }),
     updatedAt: z.string(),
   })
   .meta({ description: "An entity, in a page of them", id: "EntitySummary" });
@@ -84,13 +86,13 @@ export const v1Entity = v1EntitySummary
   })
   .meta({ description: "An entity, with what its kind adds", id: "Entity" });
 
-/** A group of a kind's entities (3.5's feat family). */
+/** A group of a kind's entities, for a kind whose entities fall in groups. */
 export const v1EntityGroup = z
   .strictObject({
     count: z.number(),
     description: z.string().nullable(),
     group: z.string().nullable().meta({
-      description: "Its name, a list's `family` filter (3.5: a feat's family): none for an entity in no group",
+      description: "Its name, a list's `family` filter: none for an entity in no group",
     }),
     id: v1Id,
     name: z.string(),
@@ -103,9 +105,9 @@ export const v1EntityLinks = z.array(v1EntityLink);
 
 export const v1EntityPage = buildPageSchema(v1EntitySummary);
 
-/** One of an entity's tables (3.5's class spells per day), a row a level. */
+/** One of an entity's tables, a row a level. */
 export const v1EntityTable = z.array(z.looseObject({ id: v1Id })).meta({
-  description: "One of an entity's tables, as the rules name it (3.5: a class's `spells`): a row a level, or a list",
+  description: "One of an entity's tables, as the rules name it: a row a level, or a list",
   id: "EntityTable",
 });
 
@@ -126,20 +128,20 @@ export const v1LabeledRequirement = v1Requirement
 
 export const v1LabeledRequirements = z.array(v1LabeledRequirement);
 
-/** An entity another owns (3.5's class level). */
+/** An entity another owns. */
 export const v1OwnedEntity = v1EntitySummary
   .extend({
     modifiers: z.array(v1EntityModifier).optional(),
     name: z.string().nullable().meta({ description: "Its owner's, read on its own" }),
     requirements: z.array(v1Requirement).optional(),
   })
-  .meta({ description: "An entity another owns (3.5: a class's level)", id: "OwnedEntity" });
+  .meta({ description: "An entity another owns", id: "OwnedEntity" });
 
 export const v1OwnedEntities = z.array(v1OwnedEntity);
 
 /**
  * What an entity's levels give, as its rules describe it: each pool's picks by level, and past them the values the
- * rules name in their progression (`GET /v1/rules`: 3.5's `featPicks`, `spellList` and `severalSpellLists`).
+ * rules name in their progression (`GET /v1/rules`' `progression`).
  */
 export const v1Progression = z
   .looseObject({
@@ -150,7 +152,7 @@ export const v1Progression = z
   .meta({
     description:
       "What an entity's levels give: each pool's picks by level, and past them the values `GET /v1/rules` names " +
-      "in the rules' progression (3.5: `featPicks`, `spellList`, `severalSpellLists`)",
+      "in the rules' `progression`",
     id: "Progression",
   });
 

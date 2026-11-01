@@ -16,7 +16,7 @@ const v1Room = z.strictObject({ allowed: z.number(), available: z.number(), spen
 const v1RulesIssue = z
   .strictObject({
     category: z.string().meta({
-      description: "What the issue is about, as the rules name it (3.5: `aptitudes`, `skills`, `requirements`…)",
+      description: "What the issue is about, as the rules name it",
     }),
     entityId: z.string().optional(),
     entityName: z.string().optional(),
@@ -116,10 +116,10 @@ const v1StepOption = z.strictObject({
   track: z
     .strictObject({ last: z.number(), left: z.number(), next: z.number() })
     .optional()
-    .meta({ description: "A track's levels (3.5: a class's): its last, how many are left, the next" }),
+    .meta({ description: "A track's levels: its last, how many are left, the next" }),
 });
 
-/** A group of a step's options (3.5's feat family). */
+/** A group of a step's options. */
 const v1StepOptionGroup = z.strictObject({
   count: z.number(),
   description: z.string().nullable(),
@@ -150,13 +150,12 @@ export const v1Character = z
     archived: z.boolean(),
     id: v1Id,
     kind: z.string().meta({
-      description: "Its kind: the rules' player character's, or a child character's (3.5: `familiar`, `mount`…)",
+      description: "Its kind, one of the `characterKinds` `GET /v1/rules` lists",
     }),
     name: z.string(),
     ownerId: z.string().nullable(),
     parentCharacterId: z.string().nullable().meta({
-      description:
-        "The character a child character belongs to (3.5: a familiar's master), whose editors read and edit it",
+      description: "The character a child character belongs to, whose editors read and edit it",
     }),
     permissions: v1CharacterPermissions,
     rulesetId: v1Id,
@@ -178,9 +177,7 @@ export const v1CharacterCard = z
     id: v1Id,
     name: z.string(),
     summary: z.array(z.strictObject({ label: z.string(), partial: z.boolean() })).meta({
-      description:
-        "What its card shows of it, as its rules describe it (3.5: its race, each class with its level), " +
-        "partial when unknown",
+      description: "What its card shows of it, as its rules describe it, " + "partial when unknown",
     }),
   })
   .meta({ description: "A character, as its card shows it", id: "CharacterCard" });
@@ -195,7 +192,7 @@ export const v1InventoryEntry = z
       .nullable()
       .meta({ description: "Its charges, for an item that has them" }),
     groups: z.array(z.number()).meta({
-      description: "The groups it's held in, from 0, as its rules place it (3.5: the weapon sets a hand holds it in)",
+      description: "The groups it's held in, from 0, as its rules place it",
     }),
     id: v1Id,
     item: z
@@ -239,16 +236,13 @@ export const v1LevelSteps = z
   .strictObject({
     steps: z.array(
       z.strictObject({
-        kind: z
-          .string()
-          .optional()
-          .meta({ description: "The entity kind it reads or picks (3.5: `classes`, `feats`…)" }),
+        kind: z.string().optional().meta({ description: "The entity kind it reads or picks" }),
         label: z.string(),
         mechanic: z
           .enum(["choose", "pick", "plan", "spend", "value"])
           .meta({ description: "How its payload is shaped, in a plan's `steps`" }),
         name: z.string().meta({ description: "Its name, a plan's `steps` key" }),
-        pools: z.string().optional().meta({ description: "The kind its picks' pools are of (3.5: `aptitudes`)" }),
+        pools: z.string().optional().meta({ description: "The kind its picks' pools are of" }),
       }),
     ),
   })
@@ -257,7 +251,7 @@ export const v1LevelSteps = z
     id: "LevelSteps",
   });
 
-/** A character's links of a role (3.5's languages it speaks): its picks, those it has anyway, those it may pick. */
+/** A character's links of a role: its picks, those it has anyway, those it may pick. */
 export const v1LinkRoom = z
   .strictObject({
     automatic: z.array(v1Named).meta({ description: "Those it has without picking them" }),
@@ -271,7 +265,7 @@ export const v1Modifier = z
   .strictObject({
     id: v1Id,
     operator: z.string().meta({ description: "`add`, `subtract`, `multiply`, `divide` or `set`" }),
-    target: z.string().meta({ description: "The target path it changes (3.5: `abilities.strength.misc`)" }),
+    target: z.string().meta({ description: "The target path it changes, as `…/customization/target` completes it" }),
     targetLabels: z.record(z.string(), z.string()).meta({ description: "Its path's segments, each by its label" }),
     value: z.string(),
     valueLabel: z.string().nullable().meta({ description: "Its value as its target names it, when it names one" }),

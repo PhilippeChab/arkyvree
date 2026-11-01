@@ -10,7 +10,7 @@ export const customizedParams = idParam.extend({
   entityId: z.string().uuid(),
   kind: z
     .enum(Engine.storage().customizableKinds())
-    .meta({ description: "The entity's kind, among those the rules customize (3.5: `feats`, `class-levels`…)" }),
+    .meta({ description: "The entity's kind, among those the rules customize" }),
 });
 
 /** A page of a list: which, and how many to a page. */
