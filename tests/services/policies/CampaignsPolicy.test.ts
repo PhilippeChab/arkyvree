@@ -101,6 +101,20 @@ describe("CampaignsPolicy", () => {
     expect(() => player.canSeeCharacter({ playerId: NIL_UUID, visibility: "Private" })).toThrow(NotFoundError);
   });
 
+  test("isAddressReader: the Game Master reads every address; a player their own slot's alone", async () => {
+    const { policy: gameMaster } = await policyFor("Game Master");
+    const { policy: player, session } = await policyFor("Player Character");
+
+    expect([gameMaster.isAddressReader(), gameMaster.isSlotAddressReader(NIL_UUID)]).toEqual([true, true]);
+    expect([
+      player.isAddressReader(),
+      player.isSlotAddressReader(NIL_UUID),
+      player.isSlotAddressReader(session.userId),
+    ]).toEqual([false, false, true]);
+    // A slot nobody holds yet (an invite's) is no player's own
+    expect(player.isSlotAddressReader(null)).toBe(false);
+  });
+
   test("refuses the Game Master of another campaign", async () => {
     const { campaign } = await policyFor(null);
     const { session: otherGameMaster } = await policyFor("Game Master");

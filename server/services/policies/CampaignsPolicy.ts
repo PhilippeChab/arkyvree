@@ -114,6 +114,15 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
     return true;
   }
 
+  /**
+   * Whether the session reads the campaign's email addresses, its player slots' and its invites', and searches them by
+   * an address: its Game Master's to read. In the players list, a player reads their own slot's alone
+   * (`isSlotAddressReader`).
+   */
+  isAddressReader() {
+    return this.isGameMaster();
+  }
+
   /** Whether the session's player row is the campaign's Game Master's. */
   isGameMaster() {
     return this.player?.role === "Game Master";
@@ -122,5 +131,10 @@ export default class CampaignsPolicy extends BasePolicy<PolicyCampaign> {
   /** Whether the session may read the campaign: it holds a live seat in it, Player or Game Master. */
   isReadable() {
     return this.player !== null;
+  }
+
+  /** Whether the session reads the addresses of a player slot (`userId`, the user who holds it): all, or its own. */
+  isSlotAddressReader(userId: string | null | undefined) {
+    return this.isAddressReader() || userId === this.session.userId;
   }
 }

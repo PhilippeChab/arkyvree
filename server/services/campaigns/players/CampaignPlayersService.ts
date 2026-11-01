@@ -169,9 +169,7 @@ class CampaignPlayersService {
   ) {
     const { policy } = await getReadableCampaign(db, session, campaignId);
 
-    // An address is its Game Master's to read, and so to search
-    const readsAddresses = policy.isGameMaster();
-    const query = { campaignId, ...where, searchAddresses: readsAddresses };
+    const query = { campaignId, ...where, searchAddresses: policy.isAddressReader() };
     const page = await Players.findPage(db, query, pagination, Visibility.All);
     const masters = await Players.count(db, { campaignId, role: "Game Master" });
     const items = page.items.map((player) => ({
@@ -180,7 +178,9 @@ class CampaignPlayersService {
     }));
     return {
       ...page,
-      items: readsAddresses ? items : items.map((player) => redactPlayerAddresses(player, session.userId)),
+      items: items.map((player) =>
+        policy.isSlotAddressReader(player.usersInAccount?.id) ? player : redactPlayerAddresses(player),
+      ),
     };
   }
 
