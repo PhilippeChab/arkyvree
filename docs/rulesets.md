@@ -274,7 +274,9 @@ gone (its extension deleted it) is no override: the fork's own, which no restore
 back, its source kept until a restore ends. What a fork's snapshots stand for is
 `RulesetChanges` (`server/cow/views/`), which its Local Changes list: a copy of a live
 source is modified, a source whose copy was deleted (a tombstone) is deleted, and a copy
-whose source is gone is added, as an entity the fork made is. The rows that name an entity are
+whose source is gone is added, as an entity the fork made is; and its copies of an
+extension's entities (`copiesOf`: the changes and tombstones whose source the extension
+holds), which an unsubscribe reverts. The rows that name an entity are
 one list, by the entity's type (`ENTITY_REFERENCES`,
 `server/repositories/rulesets/entityReferences.ts`), which `EntityReferences` reads
 for every use: a revert's repoint (`update`: a restore's, and an unsubscribe's of
