@@ -150,7 +150,7 @@ caller asks for it by its export.
    pending or failed export is a 409, and one past its expiry, or another user's, a 404.
 
 The export is stored as the PDF is queued (`enqueueCharacterPdf`), its file none and its status `pending`
-(`account.exports.status`, migration `0108_export-status`), and its id goes in the job's payload: the job
+(`account.exports.status`, migration `0109_export-status`), and its id goes in the job's payload: the job
 (`generatePdf.ts`) fills its file in and makes it `ready`, or marks it `failed`, and notifies the user as before, the
 failure's notification naming the export (`data.exportId`). A pending export keeps a day, a ready one an hour, and the
 daily cleanup deletes either once it's past. A job an older worker runs, which reads no `exportId` (in the minutes

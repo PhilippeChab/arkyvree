@@ -1,6 +1,6 @@
 {
-  "id": "bc00df91-f836-4908-ad75-ae07ac7b34d7",
-  "prevId": "931c8dd3-1280-4df3-ba21-3cb54bba81b3",
+  "id": "d0a6d27a-8446-41e7-81e2-a5c70e4f8fa5",
+  "prevId": "7e80da3d-88e0-4f71-93fe-201c0546d24c",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -3035,21 +3035,13 @@
           "name": "data",
           "type": "bytea",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
         "expires_at": {
           "name": "expires_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true
-        },
-        "status": {
-          "name": "status",
-          "type": "export_status",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'ready'"
         }
       },
       "indexes": {
@@ -6270,15 +6262,6 @@
         "Admin",
         "Editor",
         "Viewer"
-      ]
-    },
-    "public.export_status": {
-      "name": "export_status",
-      "schema": "public",
-      "values": [
-        "pending",
-        "ready",
-        "failed"
       ]
     },
     "public.role": {

@@ -1,4 +1,4 @@
-import { eq, inArray, sql } from "drizzle-orm";
+import { inArray, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
 import { rulesetFieldsInRules, rulesetLinksInRules } from "@/drizzle/schema.ts";
@@ -25,30 +25,10 @@ function unnest(named: { id: string; name: string }[]) {
 /**
  * A ruleset's own Settings, as the generic tables store them: its fields (`rules.ruleset_fields`, a set's one a row)
  * and its single links (`ruleset_links`: 3.5's skill point ability), read as stored (`findMany`), each a field's value in
- * its column by its declaration, written as an entity's fields are (`toFieldRows`), and copied onto a fork
- * (`createCopy`).
+ * its column by its declaration, written as an entity's fields are (`toFieldRows`). A fork holds none until it saves
+ * its own: its chain's are read in their place (`rulesetValuesOf`).
  */
 class StoredSettings {
-  /**
-   * Copies a ruleset's Settings as they're stored (`fromId`'s) onto another (`toId`, a fork that holds none): its
-   * fields' values and its links, the entities they name as they are (the fork's view resolves them). One insert of
-   * each table's rows, selected in the order of its insertable columns (its generated `value_key` aside), made now.
-   */
-  async createCopy(db: Db, where: { fromId: string; toId: string }) {
-    const fields = rulesetFieldsInRules;
-    await db
-      .insert(fields)
-      .select(
-        sql`select ${where.toId}::uuid, ${fields.ownerType}, ${fields.field}, ${fields.ordinal}, ${fields.valueKind}, ${fields.multiple}, ${fields.textValue}, ${fields.numberValue}, ${fields.flagValue}, now(), now() from ${fields} where ${eq(fields.rulesetId, where.fromId)}`,
-      );
-    const links = rulesetLinksInRules;
-    await db
-      .insert(links)
-      .select(
-        sql`select ${where.toId}::uuid, ${links.role}, ${links.toId}, ${links.toType}, now(), now() from ${links} where ${eq(links.rulesetId, where.fromId)}`,
-      );
-  }
-
   /** Rulesets' own Settings as stored (`ids`): their fields' values and their links; one that holds none, left out. */
   async findMany(db: Db, where: { ids: string[] }): Promise<StoredRuleset[]> {
     if (where.ids.length === 0) return [];
