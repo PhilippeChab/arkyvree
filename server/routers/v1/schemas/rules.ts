@@ -49,9 +49,10 @@ const v1RulesKind = z.strictObject({
     .nullable()
     .meta({ description: "The pools its entities are picked in: the role that lists them, the pools' kind and scope" }),
   progression: z.boolean().meta({
-    description: "Whether its entities progress by level, which `…/progression` and `…/tables/{table}` answer",
+    description: "Whether its entities progress by level, which `…/progression` answers",
   }),
   readOnly: z.boolean().meta({ description: "Whether its entities are the rules' own, which no ruleset edits" }),
+  tables: z.array(z.string()).meta({ description: "The tables its entities answer at `…/tables/{table}`" }),
   templates: z.boolean().meta({ description: "Whether it has templates, which `…/templates` answers" }),
   tiered: z.boolean().meta({ description: "Whether its lists narrow by a tier, their `tier` filter" }),
   type: z.string().meta({ description: "Its name, the kind its routes take" }),
@@ -76,9 +77,6 @@ const v1RulesDescription = z
         list: z.string().nullable(),
         picks: z.string().nullable(),
         several: z.string().nullable(),
-        tables: z
-          .array(z.string())
-          .meta({ description: "The tables a progressing entity answers at `…/tables/{table}`" }),
       })
       .meta({
         description:

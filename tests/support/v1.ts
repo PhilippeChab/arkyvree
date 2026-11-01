@@ -89,14 +89,9 @@ export async function createFormCharacter(userId: string, rulesetId: string) {
   });
 }
 
-/**
- * A base ruleset the seed installs, read through the key's client: v1's tests run on whichever base rules it is,
- * reading their names from `GET /v1/rules`.
- */
+/** The base ruleset the seed installs, read through the key's client (`findSeededBase`). */
 export async function findBaseRuleset(api: KeyedApi) {
-  const { items } = await expectOk(api.v1.rulesets.$get({ query: { scope: "base" } }));
-  if (!items[0]) throw new Error("No base ruleset is seeded");
-  return items[0];
+  return await expectOk(api.v1.rulesets[":id"].$get({ param: { id: (await findSeededBase()).id } }));
 }
 
 /** The key's user's character that `matches`, of a page of theirs, refused when none does. */
@@ -105,6 +100,14 @@ export async function findCharacter(api: KeyedApi, matches: (card: { id: string 
   const card = items.find(matches);
   if (!card) throw new Error("The user has no character a test needs");
   return card;
+}
+
+/** The base ruleset the seed installs, as stored: v1's tests run on whichever base rules it is. */
+export async function findSeededBase() {
+  const rulesets = await Rulesets.findMany(db, { system: true });
+  const base = rulesets.find(({ kind, rulesetId }) => kind === "ruleset" && !rulesetId);
+  if (!base) throw new Error("No base ruleset is seeded");
+  return base;
 }
 
 /** A page of a kind's entities in a ruleset, through the key's client. */

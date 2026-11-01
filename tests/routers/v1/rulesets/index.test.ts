@@ -55,6 +55,7 @@ describe("v1 rulesets", () => {
     const settings = await expectOk(api.v1.rulesets[":id"].settings.$get({ param: { id } }));
     const fieldKeys = declared.flatMap(({ field }) => (typeof field === "string" ? [field] : []));
     const linkRoles = declared.flatMap(({ role }) => (typeof role === "string" ? [role] : []));
+    expect(Object.keys(settings.fields).length + Object.keys(settings.links).length).toBeGreaterThan(0);
     expect(Object.keys(settings.fields).every((key) => fieldKeys.includes(key))).toBe(true);
     expect(Object.keys(settings.links).every((role) => linkRoles.includes(role))).toBe(true);
     expect(await expectOk(api.v1.rulesets[":id"].extensions.$get({ param: { id } }))).toEqual([]);
@@ -132,32 +133,69 @@ describe("v1 rulesets", () => {
     });
 
     if (kind.links) {
+      // The first of a page of its entities that has links of its role
       const { role, type } = kind.links;
-      const links = await expectOk(entities[":entityId"].links.$get({ param }));
+      let links: { role: string; toType: string }[] = [];
+      for (const { id: entityId } of await listEntities(api, id, kind.type, { limit: "50" })) {
+        links = await expectOk(entities[":entityId"].links.$get({ param: { ...param, entityId } }));
+        if (links.length > 0) break;
+      }
+      expect(links.length).toBeGreaterThan(0);
       expect(links.every((link) => link.role === role && link.toType === type)).toBe(true);
     }
-    // Past its pools, a progression holds the values the rules name in theirs
+    // Past its pools, a progression holds the values the rules name in theirs: each of them, and no other
     const progression = await expectOk(entities[":entityId"].progression.$get({ param }));
     const { list, picks, several } = rules.progression;
     const named = ["pools", list, picks, several].filter((key) => key !== null);
-    expect(Object.keys(progression).every((key) => named.includes(key))).toBe(true);
+    expect(Object.keys(progression).toSorted()).toEqual(named.toSorted());
+    expect(Array.isArray(progression.pools)).toBe(true);
 
+    // Each table the kind names answers, at least one a row per owned level
     const tables = entities[":entityId"].tables[":table"];
-    for (const table of rules.progression.tables) await expectOk(tables.$get({ param: { ...param, table } }));
+    expect(kind.tables.length).toBeGreaterThan(0);
+    const rows = [];
+    for (const table of kind.tables) rows.push(await expectOk(tables.$get({ param: { ...param, table } })));
+    expect(rows.some(({ length }) => length === owned.length)).toBe(true);
     await expectStatus(tables.$get({ param: { ...param, table: "nothing" } }), 404);
+  });
+
+  test("answers each kind's parts as the rules describe them: owned, progression, tables, customization", async () => {
+    const { api, id, rules } = await keyedBase();
+    const entities = api.v1.rulesets[":id"].entities[":kind"];
+    const customization = api.v1.rulesets[":id"].customization[":kind"][":entityId"];
+
+    for (const kind of rules.kinds) {
+      const [entity] = await listEntities(api, id, kind.type, { limit: "1" });
+      if (!entity) continue;
+      const param = { entityId: entity.id, id, kind: kind.type };
+      expect((await entities[":entityId"].owned.$get({ param })).status as number).toBe(kind.owns ? 200 : 404);
+      expect((await entities[":entityId"].progression.$get({ param })).status as number).toBe(
+        kind.progression ? 200 : 404,
+      );
+      const table = { ...param, table: kind.tables[0] ?? "nothing" };
+      expect((await entities[":entityId"].tables[":table"].$get({ param: table })).status as number).toBe(
+        kind.tables[0] ? 200 : 404,
+      );
+      const customized = { ...param, kind: kind.type as RulesetEntityType };
+      const status = (await customization.modifiers.$get({ param: customized })).status as number;
+      expect(status).toBe(rules.customizable.includes(kind.type) ? 200 : 400);
+    }
   });
 
   test("answers a customizable entity's modifiers and requirements, labeled", async () => {
     const { api, id, rules } = await keyedBase();
-    const type = rules.customizable.find((customizable) => rules.kinds.some((kind) => kind.type === customizable))!;
     const customization = api.v1.rulesets[":id"].customization[":kind"][":entityId"];
+    const kinds = rules.customizable.filter((customizable) => rules.kinds.some(({ type }) => type === customizable));
 
-    // The first of a page of its entities that has requirements
+    // The first entity of a customizable kind's page that has requirements
     const requirements = [];
-    for (const { id: entityId } of await listEntities(api, id, type, { limit: "50" })) {
-      const param = { entityId, id, kind: type as RulesetEntityType };
-      expect(Array.isArray(await expectOk(customization.modifiers.$get({ param })))).toBe(true);
-      requirements.push(...(await expectOk(customization.requirements.$get({ param }))));
+    for (const type of kinds) {
+      for (const { id: entityId } of await listEntities(api, id, type, { limit: "50" })) {
+        const param = { entityId, id, kind: type as RulesetEntityType };
+        expect(Array.isArray(await expectOk(customization.modifiers.$get({ param })))).toBe(true);
+        requirements.push(...(await expectOk(customization.requirements.$get({ param }))));
+        if (requirements.length > 0) break;
+      }
       if (requirements.length > 0) break;
     }
     expect(requirements[0]).toMatchObject({ targetLabels: expect.any(Object) });

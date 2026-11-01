@@ -43,9 +43,10 @@ the service returns to v1's shape (`V1.character`).
   outside sees the change.
 - v1 is the same whatever a ruleset's base rules: no answer's shape, route or description is one game's. What a
   ruleset's rules name a caller reads from `GET /v1/rules` (`RulesService.getRules`, translated): its entity kinds and
-  what each has (groups, tiers, pools, the kind it owns, a progression, templates), each kind's fields, the kinds that
-  have modifiers and requirements, a list's tiers, the values and tables a progression holds, and a new character's
-  form (its fields by key, its picks and scores by role). An answer keys those by the rules' own names: an entity's
+  what each has (groups, tiers, pools, the kind it owns, a progression, its tables, templates: the kind's parts as the
+  engine's storage declares them, which its routes check), each kind's fields, the kinds that have modifiers and
+  requirements, a list's tiers, the values a progression holds, and a new character's form (its fields by key, its
+  picks and scores by role). An answer keys those by the rules' own names: an entity's
   `fields` and `links`, a progression's values past its pools, a character's sections, links and scores.
 - The v1 tests hold to it too: they read the names they use from `GET /v1/rules` and the answers before them, run on
   the seeded base ruleset whichever base rules it is (`tests/support/v1.ts`: a character made as the rules' form lays

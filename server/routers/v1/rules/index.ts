@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 
+import { Engine } from "@/engine/index.ts";
 import { type ApiKeyContext, describeRoute } from "@/server/middlewares/index.ts";
 import { v1Rules } from "@/server/routers/v1/schemas/rules.ts";
 import { V1 } from "@/server/routers/v1/translators/V1.ts";
@@ -16,5 +17,5 @@ export default new Hono<ApiKeyContext>().get(
     status: 200,
     summary: "What each base rules' rulesets are made of: their entity kinds, fields, tiers and progression's keys",
   }),
-  (c) => c.json(V1.rules(RulesService.getRules()), 200),
+  (c) => c.json(V1.rules(RulesService.getRules(), Engine.storage()), 200),
 );
