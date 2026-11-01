@@ -484,6 +484,13 @@ describe("subscribing to an extension", () => {
     const refusals: [string, () => Promise<unknown>][] = [
       ["itself", async () => subscribe(draft.id)],
       [
+        "an extension, itself",
+        async () => {
+          const own = await createExtension(user.id);
+          return await subscribe(own.id, session, own.id);
+        },
+      ],
+      [
         "a fork published as a ruleset",
         async () => subscribe((await createExtension(user.id, { kind: "ruleset" })).id),
       ],
