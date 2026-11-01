@@ -4,10 +4,10 @@ import type { LockedRulesetScope } from "@/server/cow/views/scope.ts";
 import { Entities, EntityLinks, EntityReferences, type ReferencedType } from "@/server/repositories/index.ts";
 
 /**
- * What keeps a ruleset's entity in use, in its scope (`new EntityUses(scope)`, a write's, under its lock), across the rulesets
- * built on it: the guard of what would hard-delete one (an entity's delete, an owned entity's, a link's removal, an
- * entity a save removes). Its copy-on-write data gives it an entity's equivalents in the view: a pick stored before
- * the entity was copied names its source.
+ * What keeps a ruleset's entity in use, in its scope (`new EntityUses(scope)`, a write's, under its lock), across the
+ * rulesets built on it: the guard of what would hard-delete one (an entity's delete, an owned entity's, a link's
+ * removal, an entity a save removes). Its copy-on-write data gives it an entity's equivalents in the view: a pick
+ * stored before the entity was copied names its source.
  */
 export default class EntityUses {
   constructor(private readonly scope: LockedRulesetScope) {}

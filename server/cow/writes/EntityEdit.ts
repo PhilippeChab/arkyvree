@@ -12,8 +12,8 @@ import EntityCopy from "./EntityCopy.ts";
  * its view fresh, and no other write of the ruleset, nor of its source chain, running meanwhile): the ruleset's own
  * entity, or the copy of an inherited one, made on its first edit (`EntityCopy`). An entity another owns (a class
  * level) is written on its owner's: the owner copied with what it owns, and the owned entity mapped to its copy by its
- * position. Its copy-on-write data gives it the entity the view shows for an id and the source chain. Every method takes
- * the transaction, and refuses an entity the view doesn't show as not found, in the write's words (`notFound`).
+ * position. Its copy-on-write data gives it the entity the view shows for an id and the source chain. Every method
+ * takes the transaction, and refuses an entity the view doesn't show as not found, in the write's words (`notFound`).
  */
 export default class EntityEdit {
   constructor(private readonly scope: LockedRulesetScope) {}
@@ -23,7 +23,10 @@ export default class EntityEdit {
     return this.scope.rulesetData.cow;
   }
 
-  /** The copy of an inherited entity (`entityId`, of `entityType`), made on its first edit, as the target of a write that named it `namedId`: with what it copied. */
+  /**
+   * The copy of an inherited entity (`entityId`, of `entityType`), made on its first edit, as the target of a write
+   * that named it `namedId`: with what it copied.
+   */
   private async copy(tx: Db, entityType: RulesetEntityType, entityId: string, namedId: string): Promise<EditTarget> {
     const copy = await EntityCopy.create(tx, entityType, entityId, this.scope);
     return new EditTarget(copy.entity.id, namedId, copy.copiedIds);

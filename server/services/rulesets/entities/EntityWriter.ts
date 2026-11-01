@@ -103,11 +103,11 @@ function linksOf(entity: WrittenEntity, { links, role, toType }: LinkSet) {
  * `createOwned`, `updateOwned` and `deleteOwned`), each in its transaction and its ruleset's scope. A save checks
  * access, keeps a name free (a create's, taking over a deleted copy's tombstone, and a rename's), and writes the row
  * copy-on-write resolves (`EntityEdit`: the ruleset's own, or the copy of an inherited one, made on its first edit; an
- * owned entity's on its owner's): refused as not found when it's gone since the view was read, and as stale when the
- * client's token is behind (a copy's never is). Then its links (`setLinks`), then what its plan writes beside it
- * (`writeBeside`: the entities it removes, then those it makes). A delete is refused while the entity
- * is in use (`EntityUses`). Each first opens the kind's rules for its action (`open`), records its activity (its verb
- * and the written kind's name), and the ruleset's views drop what it changed.
+ * owned entity's on its owner's), under the ruleset's lock (`withRulesetWrite`): refused as not found when its fresh
+ * view doesn't show it, and as stale when the client's token is behind (a copy's never is). Then its links
+ * (`setLinks`), then what its plan writes beside it (`writeBeside`: the entities it removes, then those it makes). A
+ * delete is refused while the entity is in use (`EntityUses`). Each first opens the kind's rules for its action
+ * (`open`), records its activity (its verb and the written kind's name), and the ruleset's views drop what it changed.
  */
 export default class EntityWriter {
   constructor(
@@ -332,8 +332,8 @@ export default class EntityWriter {
   /**
    * A new entity an entity owns, as its owner's rules plan it (`plan`: the plan and the owned entity's type): its owner
    * copied when it's inherited (the new row would otherwise be the source ruleset's), its row, its links and what its
-   * form writes beside it. Refused as its plan says (`taken`) when another save gave its owner one at its place since
-   * the view was read. What its plan answers once written (`describe`: the row, with its links as stored).
+   * form writes beside it. Refused as its plan says (`taken`) when its owner holds one at its place. What its plan
+   * answers once written (`describe`: the row, with its links as stored).
    */
   async createOwned<P extends OwnedPlan<EntityCreatePlan & { owner: PlannedEntity; taken: string }>>(
     session: Session,

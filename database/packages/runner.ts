@@ -1,7 +1,7 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { contentPackagesInRules } from "@/drizzle/schema.ts";
+import { contentPackagesInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 
 import { CONTENT_PACKAGES } from "./registry.ts";
 import type { ContentPackage } from "./types.ts";
@@ -26,6 +26,23 @@ function updatesOf(pkg: ContentPackage) {
       throw new Error(`${pkg.name}: update v${version} doesn't follow v${pkg.seedsVersion + i}`);
   }
   return versions.map((version) => ({ version, update: pkg.updates![version] }));
+}
+
+/**
+ * Locks the system rulesets until the transaction ends, in the order every lock of several takes (the server's
+ * `Rulesets.lockVersions`: extensions before bases, then by id), so it waits on their writes and never on one in a
+ * cycle.
+ */
+async function lockSystemRulesets(tx: Db) {
+  await tx
+    .select({ id: rulesetsInRules.id })
+    .from(rulesetsInRules)
+    .where(eq(rulesetsInRules.system, true))
+    .orderBy(
+      sql`CASE WHEN ${rulesetsInRules.rulesetId} IS NULL THEN 2 WHEN ${rulesetsInRules.kind} = 'extension' THEN 1 ELSE 0 END`,
+      rulesetsInRules.id,
+    )
+    .for("no key update");
 }
 
 /**
@@ -84,9 +101,20 @@ export async function applyPackages(db: Db, packages: ContentPackage[] = CONTENT
         : `  Updating ${pkg.name} v${from} → v${version}...`,
     );
     await db.transaction(async (tx) => {
+      // An update changes the system rulesets' rows while a server runs: locked first, in the order every lock of
+      // several takes, so no write of theirs runs meanwhile, and their versions bumped, so the next write reads them
+      // fresh rather than trust the rows its process pinned (`RulesetViews`)
+      if (from !== undefined) await lockSystemRulesets(tx);
+
       if (from === undefined) for (const seed of pkg.seeds) await seed(tx);
 
       for (const { update } of updates.filter((u) => u.version > (from ?? pkg.seedsVersion))) await update(tx);
+      if (from !== undefined) {
+        await tx
+          .update(rulesetsInRules)
+          .set({ contentVersion: sql`${rulesetsInRules.contentVersion} + 1` })
+          .where(eq(rulesetsInRules.system, true));
+      }
 
       if (from === undefined) {
         await tx.insert(contentPackagesInRules).values({ name: pkg.name, type: pkg.type, version });

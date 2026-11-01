@@ -23,7 +23,7 @@ import CustomizationCopies from "./CustomizationCopies.ts";
 /**
  * A copy: the copied entity, and, when this call made it, each customization it copied, by its source's id (equal
  * values don't make the same row: a modifier's requirements may differ). A copy the ruleset already had (another
- * write's, made since this one's view was read) has none: its rows may have changed since.
+ * write's, made since the client read the entity) has none: its rows may have changed since.
  */
 export interface CopiedEntity {
   copiedIds?: ReadonlyMap<string, string>;
@@ -54,8 +54,8 @@ export default class EntityCopy {
 
   /**
    * Copies `entityId` into the ruleset a write holds (`scope`, under its lock: no other write of it, nor of its source
-   * chain, where the source is, runs meanwhile), or returns the copy it already has (then with no copied ids): the newly
-   * created child entity, and the customizations copied with it, by their sources' ids.
+   * chain, where the source is, runs meanwhile), or returns the copy it already has (then with no copied ids): the
+   * newly created child entity, and the customizations copied with it, by their sources' ids.
    */
   static async create(
     tx: Db,

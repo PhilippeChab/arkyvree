@@ -20,9 +20,9 @@ interface TargetOwner {
 }
 
 /**
- * What refuses a progression's save when what it writes is gone since the view was read: its owner (of `type`) or an
- * owned entity (of `ownedType`), each named in its rules' word, as `EntityWriter.getNotFound` names an entity: "Class
- * level no longer exists; refresh the class".
+ * What refuses a progression's save when what the client read of it is gone: its owner (of `type`) or an owned entity
+ * (of `ownedType`), each named in its rules' word, as `EntityWriter.getNotFound` names an entity: "Class level no
+ * longer exists; refresh the class".
  */
 function describeGone({ baseRules }: { baseRules: BaseRules }, type: string, ownedType: string) {
   const rules = Engine.rules();
@@ -62,7 +62,7 @@ export function Progressions<B extends Constructor>(Base: B) {
      * Writes each owned entity a progression's save changes on the target owner's of its place on its track (a copy's
      * own, once the owner was copied: `EditTarget.findOwned`): its `updatedAt` moved, refused when stale (`tokens`: the
      * entity the client read; a copy's take no check, `EditTarget.expected`), its form's edit, and its modifiers, those
-     * it drops (their copies', on a copy: refused as not found when one is gone since the view was read,
+     * it drops (their copies', on a copy: refused as not found when one the client read is gone,
      * `EditTarget.resolveCustomizations`) and those it adds; refused as not found (`gone`) when the owner's copy lacks
      * one. Answers the entities it wrote, by their ids.
      */

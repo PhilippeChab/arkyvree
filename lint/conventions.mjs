@@ -35,10 +35,11 @@
  *   rest of its request, and a lock holds until its transaction ends. A transaction's queries run one at a time, on its
  *   one connection: never in a `Promise.all` (`tx`, or a handle the function is given, which may be a transaction), nor,
  *   in a test, over its `db`, which is the test's transaction (`tests/setup.ts`), and which it writes through. A
- *   ruleset's write opens its transaction through its aggregate's helper alone (`server/services/rulesets/
- *   rulesetWrites.ts`: `withRulesetWrite`, `withLockedRuleset`, `withRulesetLock`), which locks the ruleset before it
- *   reads anything: no other module of `server/services/rulesets/` calls `withTransaction`, but one that writes none of a
- *   ruleset's rows (its stars, its users' own).
+ *   ruleset's write opens its transaction through its aggregate's helper alone (`rulesetWrites.ts`, of
+ *   `server/services/rulesets/`: `withRulesetWrite`, `withLockedRuleset`, `withRulesetLock`), which locks the ruleset
+ *   before it reads anything: no other module of the folder calls `withTransaction` (nor `db.transaction`), but one
+ *   that writes none of a ruleset's rows (its stars, its users' own), and no other module of the server takes its lock
+ *   (`withLockedRulesetScope`), but copy-on-write's own.
  * - `empty-list-reads`: an empty list never reaches the database, and is checked in one place: the repository. A read
  *   method filtering on a list of `where` (`inArray(column, where.ids)`, outside an `or`) answers an empty one without a
  *   query (`if (where.ids.length === 0) return [];` first), and its callers read without checking: no
@@ -108,6 +109,7 @@ const LOCKED_WRITES = [
   {
     folder: "server/services/rulesets/",
     helpers: "server/services/rulesets/rulesetWrites.ts",
+    lock: "withLockedRulesetScope",
     others: ["server/services/rulesets/concerns/Stars.ts"],
     message:
       "A ruleset's write opens its transaction through its helper (`withRulesetWrite`, `withLockedRuleset`, `withRulesetLock` from `rulesetWrites.ts`), which locks the ruleset before it reads anything: not `withTransaction`.",
@@ -997,8 +999,23 @@ function createWritesInTransactions(context) {
     },
     CallExpression(node) {
       const callee = node.callee;
-      if (locked && callee.type === "Identifier" && callee.name === "withTransaction")
-        context.report({ node, message: locked.message });
+      const opens =
+        (callee.type === "Identifier" && callee.name === "withTransaction") ||
+        (callee.type === "MemberExpression" &&
+          callee.property.type === "Identifier" &&
+          callee.property.name === "transaction");
+      if (locked && opens) context.report({ node, message: locked.message });
+      // A write's lock is its helper's to take, in the transaction it opens: no other module of the server takes it
+      const lock = LOCKED_WRITES.find(
+        ({ helpers, lock: name }) =>
+          callee.type === "Identifier" && callee.name === name && file !== helpers && !file.startsWith("server/cow/"),
+      );
+      if (lock && file.startsWith("server/")) {
+        context.report({
+          node,
+          message: `\`${lock.lock}\` is its aggregate's helper's to call (\`${lock.helpers}\`), which opens the transaction it locks in.`,
+        });
+      }
       if (callee.type !== "MemberExpression" || callee.object.type !== "Identifier") return;
       if (callee.object.name === "Promise" && CONCURRENT.has(callee.property.name) && node.arguments[0]) {
         const onTransaction = [...callsIn(node.arguments[0])].some((call) => {

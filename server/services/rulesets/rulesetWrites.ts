@@ -26,7 +26,9 @@ const LOCK_WAIT_MILLISECONDS = 5000;
 /** What a write that gave up on a lock answers: another change of the ruleset held it, so it can be sent again. */
 export const BUSY_RULESET_MESSAGE = "The ruleset is being changed by another save; try again";
 
-/** Runs a write's transaction (`run`), a write that gave up on a lock refused as a conflict (`BUSY_RULESET_MESSAGE`). */
+/**
+ * Runs a write's transaction (`run`), a write that gave up on a lock refused as a conflict (`BUSY_RULESET_MESSAGE`).
+ */
 async function refuseBusy<T>(run: () => Promise<T>): Promise<T> {
   try {
     return await run();
@@ -103,15 +105,11 @@ export async function withRulesetWrite<T>(
   const result = await refuseBusy(() =>
     withBoundedTransaction(
       async (tx) =>
-        await withLockedRulesetScope(
-          tx,
-          rulesetId,
-          async (scope) => {
-            const { policy } = await getReadableRuleset(tx, session, rulesetId);
-            return await write(tx, scope, policy);
-          },
+        await withLockedRulesetScope(tx, rulesetId, async (scope, policy) => await write(tx, scope, policy), {
+          // The session's access, under the ruleset's lock, before its chain's locks and its view
+          before: async () => (await getReadableRuleset(tx, session, rulesetId)).policy,
           reads,
-        ),
+        }),
     ),
   );
   if (drops === "entities") RulesetViews.invalidateEntities(rulesetId);

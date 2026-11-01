@@ -71,7 +71,7 @@ export function Links<B extends Constructor>(Base: B) {
         const plan = Engine.for(scope).links(type, ownerId).planRemove(targetId);
         const { id: fromId } = await new EntityEdit(scope).cowToEdit(tx, type, plan.owner);
         const [link] = await EntityLinks.delete(tx, { fromId, role: plan.role, toId: plan.toId });
-        // Another removal took it since the view was read
+        // The fresh view showed it, and no other write runs under the lock: a guard, should one have
         if (!link) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
         await createActivityWithNotifications(tx, {

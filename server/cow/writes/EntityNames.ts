@@ -28,13 +28,13 @@ function toOwnNameError(name: string) {
 }
 
 /**
- * The names a ruleset's composed view shows (`new EntityNames(scope)`, a write's, under its lock), which no change makes it show
- * twice: a new entity, a renamed one, a restored one, a subscribed extension's and one an unsubscribe shows again take a
- * name only when no other entity of their kind the view shows has it, the ruleset's own or an inherited one. An
- * inherited entity the view hides (overridden, or a sibling loser) doesn't block its name, and one whose local copy was
- * deleted left a tombstone snapshot, which a new entity of its name takes over (`repointTombstone`), so the inherited
- * one stays hidden. Its instance methods take the transaction; its static `withNameRefusal` runs a write that takes a
- * name, answering the name index as the checks do.
+ * The names a ruleset's composed view shows (`new EntityNames(scope)`, a write's, under its lock), which no change
+ * makes it show twice: a new entity, a renamed one, a restored one, a subscribed extension's and one an unsubscribe
+ * shows again take a name only when no other entity of their kind the view shows has it, the ruleset's own or an
+ * inherited one. An inherited entity the view hides (overridden, or a sibling loser) doesn't block its name, and one
+ * whose local copy was deleted left a tombstone snapshot, which a new entity of its name takes over
+ * (`repointTombstone`), so the inherited one stays hidden. Its instance methods take the transaction; its static
+ * `withNameRefusal` runs a write that takes a name, answering the name index as the checks do.
  */
 export default class EntityNames {
   constructor(private readonly scope: LockedRulesetScope) {}

@@ -37,9 +37,13 @@ type TargetPathScope = Pick<RulesetScope, "ruleset" | "sources"> &
  * through `withRulesetScope`, and a write through its helper (`scope.ts`).
  */
 class RulesetViews {
-  /** Whether what the cache keeps was read at the versions a write's lock read (`current`), each of its rulesets'. */
-  private static isCurrent({ versions }: Versioned<unknown>, current: ReadonlyMap<string, number>) {
-    return [...versions].every(([id, version]) => current.get(id) === version);
+  /**
+   * Whether what the cache keeps was read at the versions a write's lock read (`current`), each of the rulesets whose
+   * writes reach it (`ids`): an entry tagged with fewer (read before a subscribe added an extension, or a read's target
+   * paths, tagged with none) isn't.
+   */
+  private static isCurrent({ versions }: Versioned<unknown>, current: ReadonlyMap<string, number>, ids: string[]) {
+    return ids.every((id) => versions.has(id) && versions.get(id) === current.get(id));
   }
 
   /**
@@ -132,7 +136,6 @@ class RulesetViews {
     baseRules: BaseRules,
     current: ReadonlyMap<string, number>,
   ): Promise<RulesetData> {
-    const accepts = (entry: Versioned<unknown>) => RulesetViews.isCurrent(entry, current);
     const dependencies = [ruleset.id, ...Engine.copyOnWrite().buildSourceChain(ruleset)];
     const cowEntry = await this.cowData.getOrFetch(
       JSON.stringify(dependencies),
@@ -143,7 +146,7 @@ class RulesetViews {
           versions: RulesetViews.versionsOf(dependencies, current),
         },
       }),
-      accepts,
+      (cached) => RulesetViews.isCurrent(cached, current, dependencies),
     );
     const chain: RulesetRawData[] = [];
     for (const id of [ruleset.id, ...cowEntry.value.sourceChain]) {
@@ -155,7 +158,7 @@ class RulesetViews {
           const { data, pinned } = await RawDataReader.read(id, tx);
           return { data: { value: data, versions: RulesetViews.versionsOf(writers, current) }, pinned };
         },
-        accepts,
+        (cached) => RulesetViews.isCurrent(cached, current, writers),
       );
       chain.push(entry.value);
     }
@@ -183,7 +186,8 @@ class RulesetViews {
    * A ruleset's target paths for a modifier, a requirement or a template, and their segments' labels, as the engine
    * lists them from its view: kept for the ruleset and its source chain, a change to any of which drops them. Listed
    * inside the cache's fill, so a change during the listing keeps its late result out. A write's, under its lock (its
-   * scope's `versions`), lists them from its own view unless the cache keeps them at the versions its lock read.
+   * scope's `versions`), lists them from its own view unless the cache keeps them at the versions its lock read, a
+   * write's own listing: a read's, listed from a view composed before, is tagged with none.
    */
   async getTargetPaths(scope: TargetPathScope, kind: TargetPathKind): Promise<TargetPathCatalog> {
     const { sources, versions: current } = scope;
@@ -195,12 +199,12 @@ class RulesetViews {
       key,
       dependencies,
       async () => {
-        const versions = current
-          ? RulesetViews.versionsOf(dependencies, current)
-          : await Rulesets.findVersions(db, { ids: dependencies });
+        // A read's are listed from a view composed before (its scope's), whose versions it can't tell: tagged with
+        // none, no write trusts them
+        const versions = current ? RulesetViews.versionsOf(dependencies, current) : new Map<string, number>();
         return { data: { value: await this.listTargetPaths(scope, kind), versions } };
       },
-      current && ((cached) => RulesetViews.isCurrent(cached, current)),
+      current && ((cached) => RulesetViews.isCurrent(cached, current, dependencies)),
     );
     return entry.value;
   }

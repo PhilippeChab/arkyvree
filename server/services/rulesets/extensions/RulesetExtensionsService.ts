@@ -48,8 +48,11 @@ class RulesetExtensionsService {
   }
 
   async subscribeExtension(session: Session, id: string, extensionIds: string[]) {
-    // The extensions it adds are locked with its chain before they're checked: no write of theirs runs meanwhile
-    const reads = extensionIds.filter((extensionId) => extensionId !== id);
+    // The extensions it adds are locked with its chain before they're checked: no write of theirs runs meanwhile. Only
+    // what's stored as an extension (an extension subscribes to nothing, so it never waits on the ruleset): anything
+    // else is refused under the lock, unlocked, as an unknown or a ruleset no extension is
+    const candidates = await Rulesets.findMany(db, { ids: extensionIds.filter((extensionId) => extensionId !== id) });
+    const reads = candidates.filter((ruleset) => ruleset.kind === "extension").map((ruleset) => ruleset.id);
     const write = async (tx: Db, scope: LockedRulesetScope, policy: RulesetsPolicy) => {
       // 1. Validate ruleset
       const { ruleset: childRuleset, sources } = scope;

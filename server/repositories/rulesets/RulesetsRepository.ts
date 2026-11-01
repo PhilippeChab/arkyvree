@@ -369,17 +369,17 @@ class RulesetsRepository extends include(
 
   /**
    * Locks rulesets a write reads (`ids`: its source chain, the extensions it subscribes to) until its transaction ends,
-   * in the order every lock of several takes (`LOCK_ORDER`): shared, so a write to each waits, or each of a user's for
-   * a write (an account's deletion). Their content versions, by id, of those that exist.
+   * shared, in the order every lock of several takes (`LOCK_ORDER`), so a write to each waits. Their content versions,
+   * by id, of those that exist.
    */
-  async lockVersions(db: Db, where: { ids: string[] }, mode: "no key update" | "share"): Promise<Map<string, number>> {
+  async lockVersions(db: Db, where: { ids: string[] }): Promise<Map<string, number>> {
     if (where.ids.length === 0) return new Map();
     const rows = await db
       .select({ contentVersion: this.table.contentVersion, id: this.table.id })
       .from(this.table)
       .where(inArray(this.table.id, where.ids))
       .orderBy(LOCK_ORDER)
-      .for(mode);
+      .for("share");
     return new Map(rows.map((row) => [row.id, row.contentVersion]));
   }
 

@@ -35,8 +35,8 @@ export default class DependentCache<T> {
 
   /**
    * The entry of `key`: the cached one, else the one a fill in flight reads, else one `fetcher` reads, kept for every
-   * reader under its dependencies. Given `accepts`, a fresh read's (a write's, under its lock): the cached entry when it
-   * accepts it, else its own fill, never one in flight (which read before the write's lock), kept in its place.
+   * reader under its dependencies. Given `accepts`, a fresh read's (a write's, under its lock): the cached entry when
+   * it accepts it, else its own fill, never one in flight (which read before the write's lock), kept in its place.
    */
   async getOrFetch(
     key: string,

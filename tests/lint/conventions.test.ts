@@ -375,10 +375,19 @@ describe("conventions", () => {
           "server/services/rulesets/helped.ts":
             'import { withRulesetWrite } from "./rulesetWrites.ts";\nexport const f = () => withRulesetWrite(session, id, g);\n',
           "server/services/characters/Other.ts": opening,
+          "server/services/rulesets/concerns/Stars.ts": opening,
+          "server/services/rulesets/direct.ts": "export const f = () => db.transaction(g);\n",
+          "server/services/rulesets/scoped.ts":
+            'import { withLockedRulesetScope } from "@/server/cow/index.ts";\nexport const f = () => withLockedRulesetScope(tx, id, g);\n',
+          "server/cow/writes/inside.ts": "export const f = () => withLockedRulesetScope(tx, id, g);\n",
         },
         ["writes-in-transactions"],
       ),
-    ).toEqual(["writes-in-transactions server/services/rulesets/entities/Writer.ts"]);
+    ).toEqual([
+      "writes-in-transactions server/services/rulesets/direct.ts",
+      "writes-in-transactions server/services/rulesets/entities/Writer.ts",
+      "writes-in-transactions server/services/rulesets/scoped.ts",
+    ]);
   });
 
   test("an empty list is checked in its repository's read, which answers it without a query, never by a caller", async () => {

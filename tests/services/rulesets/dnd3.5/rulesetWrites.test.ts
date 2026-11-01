@@ -1,8 +1,8 @@
 import { afterAll, expect, test } from "bun:test";
 
 import type { Feat } from "@/engine/rulesets/dnd3.5/index.ts";
-import { withRulesetScope } from "@/server/cow/index.ts";
-import { db } from "@/server/database/index.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { db, setLockTimeout } from "@/server/database/index.ts";
 import { createTestDbFromClient, createTestPool } from "@/server/database/test.ts";
 import { Entities, Rulesets } from "@/server/repositories/index.ts";
 import { ModifiersService } from "@/server/services/rulesets/customization/modifiers/index.ts";
@@ -36,6 +36,33 @@ test("a write to a fork waits for a write to its parent, which it reads shared, 
   expect(created.name).toBe("Waited Aptitude");
 });
 
+test("a write to a ruleset waits for another write to it, before it reads anything", async () => {
+  const { session, parentId } = await setup();
+  // A system ruleset no session writes: its lock is taken, and waited for, before the write is refused
+  const refused = runWhileLocked(
+    pool,
+    (blockerDb) => Rulesets.lockContent(blockerDb, { id: parentId }),
+    () => EntitiesService.createEntity(session, parentId, "aptitudes", { name: "Refused Aptitude" }),
+  );
+  expect(refused).rejects.toMatchObject({ code: 403 });
+});
+
+test("two forks of one parent write at once: a write holds its parent shared, no other fork's waits on it", async () => {
+  const { session, fork, parentId } = await setup();
+  const blocker = await pool.connect();
+  try {
+    await blocker.query("BEGIN");
+    // Another fork's write holds the parent as every fork's write does
+    await Rulesets.lockVersions(createTestDbFromClient(blocker), { ids: [parentId] });
+    await setLockTimeout(db, 2000);
+    const created = await EntitiesService.createEntity(session, fork.id, "aptitudes", { name: "Concurrent Aptitude" });
+    expect(created.name).toBe("Concurrent Aptitude");
+  } finally {
+    await blocker.query("ROLLBACK");
+    blocker.release();
+  }
+});
+
 test("a write that waits on another past its lock wait is refused as busy, and writes nothing", async () => {
   const { session, fork, parentId } = await setup();
   const blocker = await pool.connect();
@@ -64,4 +91,11 @@ test("a write reads the rows another write committed after its view was cached",
   // The modifier's write finds the feat in its view, read fresh under its lock
   const modifier = await ModifiersService.createModifier(session, fork.id, "feats", feat.id, STRENGTH_BONUS);
   expect(modifier.resolvedEntityId).toBe(feat.id);
+});
+
+test("a write keeps what the cache holds at the versions its locks read: its parent's rows, unchanged", async () => {
+  const { session, fork, parentId } = await setup();
+  const parentRows = await RulesetViews.getRawData(parentId);
+  await EntitiesService.createEntity(session, fork.id, "aptitudes", { name: "Cached Aptitude" });
+  expect(await RulesetViews.getRawData(parentId)).toBe(parentRows);
 });

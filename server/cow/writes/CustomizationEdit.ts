@@ -11,9 +11,9 @@ import EntityEdit from "./EntityEdit.ts";
 const SOURCE_NOT_FOUND = "Customization source not found in this ruleset";
 
 /**
- * The row a customization (a modifier, a requirement) of a ruleset's entity changes, in the scope a write holds
- * (`new CustomizationEdit(scope)`, under its lock): on the ruleset's own owner, or on the copy of an inherited one, made
- * on its first edit (`EntityEdit`), the customization mapped to its copy. Its copy-on-write data gives it the entity the
+ * The row a customization (a modifier, a requirement) of a ruleset's entity changes, in the scope a write holds (`new
+ * CustomizationEdit(scope)`, under its lock): on the ruleset's own owner, or on the copy of an inherited one, made on
+ * its first edit (`EntityEdit`), the customization mapped to its copy. Its copy-on-write data gives it the entity the
  * view shows for an id and the source chain. Every method takes the transaction; a copy and the ids it copied live for
  * the call that made it.
  */

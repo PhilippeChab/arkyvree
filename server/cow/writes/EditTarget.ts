@@ -12,19 +12,19 @@ const CUSTOMIZATION_REPOS = {
 } as const;
 
 /**
- * What refuses a customization, or its source, deleted since the view was read, on the ruleset's own entity or on the
- * copy a write made (`CustomizationEdit`'s `gone` too): the user reads it as it is.
+ * What refuses a customization the client read that's gone, or isn't the entity's, on the ruleset's own entity or on
+ * the copy a write made: the user reads it as it is.
  */
 export const GONE_CUSTOMIZATION = "Customization source no longer exists; refresh the entity";
 
 /**
  * The row a write to a ruleset's entity changes (`id`), as copy-on-write resolved the entity the write named
- * (`namedId`): the ruleset's own, or the copy of an inherited one (`EntityEdit`). A copy this call made holds the ids of
- * what it copied with it, by their sources' (`copiedIds`: its owned entities' and its customizations'); a copy another
- * write made since this one's view was read holds none, and its token is checked as the ruleset's own row's: stale when
- * the copy's row changed since its source's the client read. What a write needs of a
- * copy it asks the target: the token to check the row by (`expected`), the entities it owns by their places
- * (`findOwned`), a customization's row (`customization`, several at once: `resolveCustomizations`).
+ * (`namedId`): the ruleset's own, or the copy of an inherited one (`EntityEdit`). A copy this call made holds the ids
+ * of what it copied with it, by their sources' (`copiedIds`: its owned entities' and its customizations'); a copy
+ * another write made since the client read the entity holds none, and its token is checked as the ruleset's own row's:
+ * stale when the copy's row changed since its source's the client read. What a write needs of a copy it asks the
+ * target: the token to check the row by (`expected`), the entities it owns by their places (`findOwned`), a
+ * customization's row (`customization`, several at once: `resolveCustomizations`).
  */
 export default class EditTarget {
   constructor(
@@ -69,9 +69,9 @@ export default class EditTarget {
   /**
    * The rows customizations of the entity, or of what it owns (`customizationIds`, of `kind`, as the view shows them),
    * change, in their order: their copies, by the ids this call recorded as it copied the entity (equal values aren't
-   * unique), or themselves, which must still exist. Refused as not found when one was deleted since the view was read,
-   * and as stale when the write named the entity by another row's id that this call didn't copy (its copy made by
-   * another write since the view was read: the ids it names are its source's).
+   * unique), or themselves, which must still exist. Refused as not found when one the client read is gone, and as stale
+   * when the write named the entity by another row's id that this call didn't copy (its copy made by another write
+   * since the client read it: the ids it names are its source's).
    */
   async resolveCustomizations(tx: Db, kind: CustomizationKind, customizationIds: string[]): Promise<string[]> {
     if (customizationIds.length === 0) return [];

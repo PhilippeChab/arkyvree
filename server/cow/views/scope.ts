@@ -40,29 +40,30 @@ async function readRulesetScope(tx: Db, rulesetId: string): Promise<RulesetScope
  * Runs `fn` in a ruleset's scope as a write holds it (`LockedRulesetScope`), in the write's transaction (`tx`), its
  * locks taken before it reads anything of the ruleset: the ruleset's row first, its content version bumped
  * (`Rulesets.lockContent`), then its row, its sources and its source chain's rows, shared, in the order every lock of
- * several takes (`Rulesets.lockVersions`), then its view, fresh at the versions they read (`RulesetViews.getFreshData`).
- * Its chain can't change while it holds them: only a write of the ruleset subscribes it. What else it reads of other
- * rulesets (`reads`: the extensions a subscribe adds) is locked with its chain, alike. Refuses a missing ruleset
+ * several takes (`Rulesets.lockVersions`), then its view, fresh at the versions they read
+ * (`RulesetViews.getFreshData`). Its chain can't change while it holds them: only a write of the ruleset subscribes it.
+ * What runs before its chain's locks and its view (`before`: the session's access, which refuses a write before it
+ * costs more, its answer handed to `fn`) runs under the ruleset's lock alone; what else it reads of other rulesets
+ * (`reads`: the extensions a subscribe adds) is locked with its chain, alike. Refuses a missing ruleset
  * (`NotFoundError`). The locks end with the transaction.
  */
-export async function withLockedRulesetScope<T>(
+export async function withLockedRulesetScope<T, B = undefined>(
   tx: Db,
   rulesetId: string,
-  fn: (scope: LockedRulesetScope) => Promise<T>,
-  reads: readonly string[] = [],
+  fn: (scope: LockedRulesetScope, checked: B) => Promise<T>,
+  { before, reads = [] }: { before?: () => Promise<B>; reads?: readonly string[] } = {},
 ): Promise<T> {
   const committed = await Rulesets.lockContent(tx, { id: rulesetId });
   const ruleset = committed === undefined ? undefined : await Rulesets.findOne(tx, { id: rulesetId });
   const sources = ruleset && (await Rulesets.findSources(tx, { id: rulesetId }));
   if (committed === undefined || !ruleset || !sources) throw new NotFoundError("Ruleset not found");
-  const chain = await Rulesets.lockVersions(
-    tx,
-    { ids: [...new Set([...sources.extensionIds, ...(sources.parentId ? [sources.parentId] : []), ...reads])] },
-    "share",
-  );
+  const checked = (await before?.()) as B;
+  const chain = await Rulesets.lockVersions(tx, {
+    ids: [...new Set([...sources.extensionIds, ...(sources.parentId ? [sources.parentId] : []), ...reads])],
+  });
   const versions = new Map([[rulesetId, committed], ...chain]);
   const rulesetData = await RulesetViews.getFreshData(tx, sources, ruleset.baseRules, versions);
-  return await fn({ ruleset, rulesetData, sources, versions } as unknown as LockedRulesetScope);
+  return await fn({ ruleset, rulesetData, sources, versions } as unknown as LockedRulesetScope, checked);
 }
 
 /**
