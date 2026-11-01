@@ -680,7 +680,7 @@ describe("RulesetViews", () => {
         false,
         true,
       ]);
-      expect(cow.listFilters.hiddenIds).toEqual(
+      expect(cow.listFilters.inherited.hiddenIds).toEqual(
         expect.arrayContaining([firstFeat.id, secondFeat.id, bookItem.id as string]),
       );
       expect(cow.hasSiblings(ownFeat.id)).toBe(false);
