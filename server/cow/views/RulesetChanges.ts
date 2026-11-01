@@ -77,9 +77,9 @@ export default class RulesetChanges {
   /**
    * Whether deleting an entity the ruleset's view shows (`entity`, of `entityType`) leaves a change its Local Changes
    * restore (`read`), which brings the entity back with what it holds: of a fork, of a kind a restore takes
-   * (`restorableKinds`), an inherited entity (its delete leaves a tombstone of it), or the fork's copy of a source still
-   * there (a change to it, its delete a tombstone). The fork's own entity, a copy whose source is gone among them, is
-   * gone for good, as is everything of a ruleset without a parent.
+   * (`restorableKinds`), an inherited entity (its delete leaves a tombstone of it), or the fork's copy of a source
+   * still there (a change to it, its delete a tombstone). The fork's own entity, a copy whose source is gone among
+   * them, is gone for good, as is everything of a ruleset without a parent.
    */
   static async restoresDelete(
     db: Db,

@@ -16,13 +16,11 @@ import { rpc } from "@/client/src/services/rpc.ts";
  */
 export type EntityField = NonNullable<RulesDescription["fields"][string]>[number];
 
-/** What a fork changed from the rulesets it inherits: the Local Changes dialog's list; skipped until it's known. */
-export function rulesetChangesQuery(rulesetId: string | undefined) {
+/** What a fork changed from the rulesets it inherits: the Local Changes dialog's list. */
+export function rulesetChangesQuery(rulesetId: string) {
   return queryOptions({
-    queryKey: QUERY_KEYS.rulesets.changes(rulesetId ?? ""),
-    queryFn: rulesetId
-      ? () => parseResponse(rpc.api.rulesets[":id"].changes.$get({ param: { id: rulesetId } }))
-      : skipToken,
+    queryKey: QUERY_KEYS.rulesets.changes(rulesetId),
+    queryFn: () => parseResponse(rpc.api.rulesets[":id"].changes.$get({ param: { id: rulesetId } })),
   });
 }
 

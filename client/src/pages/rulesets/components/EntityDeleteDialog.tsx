@@ -5,7 +5,10 @@ interface EntityDeleteDialogProps {
   onConfirm: () => void;
   open: boolean;
   pending: boolean;
-  /** Its delete can be undone from Local Changes (its entity's `restorableDelete`): a fork's inherited entity, or what it holds. */
+  /**
+   * Its delete can be undone from Local Changes (its entity's `restorableDelete`): a fork's inherited entity, or what
+   * it holds.
+   */
   restorable: boolean;
   /** What it deletes, as its title names it: "Language", "Modifier". */
   what: string;

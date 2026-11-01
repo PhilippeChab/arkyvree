@@ -21,6 +21,8 @@ import {
   useEntityPageBack,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 
+import { pickedEntityQuery } from "./entityDetailQueries.ts";
+
 interface EntityBase {
   description?: string | null;
   id: string;
@@ -45,8 +47,8 @@ interface EntityEditing<TEntity, TForm extends FieldValues> {
   toFormValues: (entity: Omit<TEntity, "restorableDelete">) => TForm;
   /**
    * Saves the form, the save mutation's request; resolves to the saved entity, whose id changes when a fork copies an
-   * inherited one: its row, which says nothing of its delete (an edit changes nothing of it: a copy's delete is restorable
-   * as its source's was).
+   * inherited one: its row, which says nothing of its delete (an edit changes nothing of it: a copy's delete is
+   * restorable as its source's was).
    */
   updateFn: (data: TForm, updatedAt: string | undefined) => Promise<Omit<TEntity, "restorableDelete">>;
 }
@@ -110,11 +112,18 @@ function FormDetails<TEntity extends EntityBase, TForm extends FieldValues, TKey
     saveFn: editing.updateFn,
     toFormValues: editing.toFormValues,
     // The save's response is the entity's row: the copy's page shows it at once, its delete as the entity's was
-    storeSaved: (saved) => {
+    storeSaved: (saved, sourceId) => {
       const savedKey = query(saved.id).queryKey;
       queryClient.setQueryData<TEntity>(savedKey, { ...entity, ...saved });
-      // Supersede any refetch that left before the save committed.
+      // Supersede any refetch that left before the save committed; a list's pool filter that picked it (under its key,
+      // `pickedEntityQuery`), by its id or its source's, reads it again too
       void queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
+      for (const id of new Set([saved.id, sourceId])) {
+        void queryClient.invalidateQueries({
+          queryKey: pickedEntityQuery(rulesetId, section, id).queryKey,
+          exact: true,
+        });
+      }
     },
     followCopy: copy.followCopy,
   });

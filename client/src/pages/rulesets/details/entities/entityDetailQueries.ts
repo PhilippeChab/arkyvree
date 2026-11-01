@@ -1,7 +1,7 @@
 /**
  * The detail queries of the ruleset entities: an entity of any kind (`entityQuery`), shared by its page and the section
- * rows' hover prefetch so both cache the same response, and the pool a list's pool filter picked, cached apart: a list's
- * row seeds it, which isn't its page's answer.
+ * rows' hover prefetch so both cache the same response, and the pool a list's pool filter picked, cached apart under
+ * it (a list's row seeds it, which isn't its page's answer), so what refreshes the entity refreshes it too.
  */
 
 import { type QueryClient, queryOptions, skipToken } from "@tanstack/react-query";
