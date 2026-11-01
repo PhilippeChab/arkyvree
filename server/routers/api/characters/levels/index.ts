@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
+import type { StepPayload } from "@/engine/index.ts";
 import { type SessionContext, validate } from "@/server/middlewares/index.ts";
 import { limitDefaultingTo } from "@/server/routers/api/schemaBuilders.ts";
 import { characterIdParam, page } from "@/server/routers/api/validation.ts";
@@ -9,17 +10,11 @@ import { CharacterLevelsService } from "@/server/services/characters/levels/inde
 const levelParams = characterIdParam.extend({ advancementId: z.string().uuid() });
 
 /**
- * A step's payload, in any mechanic's shape (the engine reads it by its step's): a plan's advancements' tracks, a value
- * per advancement, the options chosen at each, the points spent on rows in their order, or the entities picked in their
- * pools, in pick order.
+ * A step's payload, as its wizard sends it: a list, which the engine reads by its step's mechanic (`Payloads`: a plan's
+ * tracks, a value per advancement, the options chosen at each, the points spent on rows, the entities picked in their
+ * pools), refusing as invalid one in another shape.
  */
-const stepPayload = z.union([
-  z.array(z.object({ track: z.string().uuid() })),
-  z.array(z.number().int().min(0)),
-  z.array(z.array(z.object({ amount: z.number().int().min(1), id: z.string().uuid() }))),
-  z.array(z.object({ id: z.string().uuid(), points: z.number().int().min(0) })),
-  z.array(z.object({ id: z.string().uuid(), pool: z.string().uuid(), tier: z.string().optional() })),
-]);
+const stepPayload = z.custom<StepPayload>((value) => Array.isArray(value), "Expected a step's answer: a list");
 
 /** A plan's steps' payloads, by step: what a level wizard answered so far. */
 const planSteps = z.record(z.string().min(1), stepPayload);
