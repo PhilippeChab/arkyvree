@@ -98,24 +98,6 @@ export function emptyOwned({ amounts, grants }: OwnedLists): OwnedFormData {
 }
 
 /**
- * A class's next owned entity, which its create dialog opens on (`ownedEntities`, as read): one above its highest, from
- * whose amounts it starts; a class without owned entities starts from the first's empty form. Its declared fields start
- * from the highest's too (the class levels' section's `withEntityFields`).
- */
-export function nextOwned(ownedEntities: readonly OwnedRead[] | undefined, lists: OwnedLists): OwnedFormData {
-  if (!ownedEntities?.length) return emptyOwned(lists);
-  const highest = ownedEntities.reduce((top, ownedEntity) => (ownedEntity.position > top.position ? ownedEntity : top));
-  const { amounts, grants } = lists;
-  return {
-    position: highest.position + 1,
-    links: {
-      ...(amounts && { [amounts.role]: highest.amounts.map((amount) => ({ ...amount })) }),
-      ...(grants && { [grants.role]: [] }),
-    },
-  };
-}
-
-/**
  * The places (`placeOf`) of an owned kind's fields (`fields`) an owner of `ownerKind` leaves out: those of the tracks
  * its rules' progression leaves out for the kind (`tracks`' `omittedFor`: 3.5's bonded creature's class's base attack
  * bonus, saves and skill points, which its sheet works out), a track of amounts its lists' amounts. None while the

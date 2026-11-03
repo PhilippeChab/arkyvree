@@ -1,6 +1,5 @@
 import { Box, Stack, Tooltip, Typography } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
 import { useState } from "react";
 
 import {
@@ -14,39 +13,50 @@ import {
   ValueChip,
 } from "@/client/src/components/common/index.ts";
 import { ProgressionIcon } from "@/client/src/components/icons/index.ts";
-import { useCustomizationPages, useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import {
+  useCustomizationPages,
+  useDialogState,
+  useFormWith,
+  useRules,
+  useRulesetPermissions,
+} from "@/client/src/hooks/index.ts";
 import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel, formatWordCount, positionWordsOf, withArticle } from "@/client/src/lib/rulesetLabels.ts";
 import {
-  nextOwned,
   omittedPlacesOf,
-  type OwnedFormData,
   ownedListsOf,
   type OwnedRead,
   readOwned,
-  withEntityFields,
   withoutPlaces,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { CreateOwnedDialog } from "@/client/src/pages/rulesets/details/owners/components/index.ts";
+import {
+  CreateOwnedDialog,
+  type OwnedCreateFormData,
+} from "@/client/src/pages/rulesets/details/owners/components/index.ts";
 import { ownedPageOf } from "@/client/src/pages/rulesets/details/owners/ownerKind.ts";
 import {
   ownedEntitiesQuery,
-  ownerParam,
   ownerProgressionQuery,
   ownerTableQuery,
 } from "@/client/src/pages/rulesets/details/owners/ownerSectionQueries.ts";
 import type { OwnerSectionProps } from "@/client/src/pages/rulesets/details/owners/ownerTab.ts";
 import { byPosition } from "@/client/src/pages/rulesets/details/owners/sections/byPosition.ts";
-import { useOwnerCopy } from "@/client/src/pages/rulesets/details/owners/sections/useOwnerCopy.ts";
-import { useEntityFields, useOpenEntity, useRulesetSection } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { rpc } from "@/client/src/services/rpc.ts";
+import { useOpenEntity } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { buildEntityPagePath } from "@/shared/customization/entities.ts";
 import { isRecord } from "@/shared/isRecord.ts";
-import { toSentenceCase } from "@/shared/text.ts";
 
 import { CHANGED_CELL_SX } from "./changedCell.ts";
+import {
+  buildOwnedBatch,
+  defaultBatchChoices,
+  listBatchCounts,
+  listOpenPositions,
+  listTrackValues,
+  type OwnerTrack,
+  type ShownOwned,
+} from "./ownedBatch.ts";
 import { OwnerFeaturesCard } from "./OwnerFeaturesCard.tsx";
 import {
   amountTrackKey,
@@ -59,21 +69,12 @@ import {
   withAddedFeatures,
   withAddedPools,
 } from "./progressionDraft.ts";
-import { detectPreset, formatTrackValue, presetsOf, type ProgressionTrack } from "./progressionPresets.ts";
+import { detectPreset, formatTrackValue, presetsOf } from "./progressionPresets.ts";
 import { ProgressionSaveBar } from "./ProgressionSaveBar.tsx";
 import { ProgressionTrackRow } from "./ProgressionTrackRow.tsx";
+import { useCreateOwnedBatch } from "./useCreateOwnedBatch.ts";
 import { useProgressionDraft } from "./useProgressionDraft.ts";
 import { useProgressionSave } from "./useProgressionSave.ts";
-
-/**
- * A track the tab edits: its key, its label (an entity's name, for a track of an owned entity's amounts: 3.5's saves),
- * and its rules' track: its bounds, how its values read, and the progressions it can follow.
- */
-interface Track {
-  key: TrackKey;
-  label: string;
-  rules: ProgressionTrack;
-}
 
 /** A pool of a progression's answer: its `id`, its name and its picks by owned entity. */
 function readPool(pool: unknown): PoolRow[] {
@@ -126,7 +127,6 @@ export function OwnerProgressionSection({
   const fieldTracks = trackRules.flatMap(({ field, key, source }) =>
     source === "field" && field ? [{ field, key }] : [],
   );
-  const { followCopy, queryKeysToInvalidate, tag } = useOwnerCopy(rulesetId, ownerType, ownerId);
 
   const query = ownedEntitiesQuery(rulesetId, ownerType, ownerId);
   const { data: ownedRows, isLoading, isFetching, error } = useQuery(query);
@@ -175,39 +175,59 @@ export function OwnerProgressionSection({
     word: entityTypeLabel(ownerType, rules?.words),
   });
 
-  // Its create opens on the owner's next owned entity, its fields the highest's
-  const { fields: allOwnedFields } = useEntityFields(rulesetId, ownedType);
-  const ownedFields = allOwnedFields && withoutPlaces(allOwnedFields, omitted);
   // A message's word for an owned entity ("Class level")
   const ownedWord = entityTypeLabel(ownedType, rules?.words);
   // An owned entity's position's word, which names one ("Level 3"), and as a sentence says it ("level", "levels")
   const positionWord = positionWordsOf(ownedType, rules?.words);
   const [positionSingular, positionPlural] = [positionWord.one.toLowerCase(), positionWord.many.toLowerCase()];
-  const { createDialogProps, handleCreate } = useRulesetSection({
-    createDefaults: withEntityFields(nextOwned(ownedEntities, ownedLists), ownedFields, savedRows.at(-1)),
-    rulesetId,
-    label: toSentenceCase(ownedWord),
-    query,
-    data: ownedRows,
-    queryKeysToInvalidate,
-    createFn: async (form: OwnedFormData) =>
-      tag(
-        parseResponse(
-          rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].owned.$post({
-            ...ownerParam(rulesetId, ownerType, ownerId),
-            json: form,
-          }),
-        ),
-      ),
-    // The owner the owned entity was made on: the copy an edit of an inherited owner made, its owner
-    onCreateSuccess: (created) => followCopy(created.ownerId ?? ownerId, created.sourceEntityId),
-  });
-
-  const tracks = trackRules.flatMap((rules): Track[] =>
+  const tracks = trackRules.flatMap((rules): OwnerTrack[] =>
     rules.source === "amounts"
-      ? (amountEntities ?? []).map((entity) => ({ key: amountTrackKey(entity.id), label: entity.name, rules }))
+      ? (amountEntities ?? []).map((entity) => ({
+          key: amountTrackKey(entity.id),
+          label: entity.name,
+          rules,
+          toId: entity.id,
+        }))
       : [{ key: rules.key, label: rules.label, rules }],
   );
+  // Its create makes one or several at once, alike, always at the owner's next positions (no number to type), each
+  // track starting at what the owner's own follow, in one request
+  const open = listOpenPositions(
+    ownedEntities.map(({ position }) => position),
+    progressionRules?.lastPosition,
+  );
+  // What it makes starts and carries on from the owner as saved: its create waits while the Progression has edits,
+  // unsaved or saving (an inherited owner's copy, which a create follows, would drop them)
+  const shown: ShownOwned = { entities: ownedEntities, read: readTrack };
+  const batchDefaults = defaultBatchChoices(tracks, shown);
+  // What a track's choice gives what it makes, under its toggle: its first and its last ("+16/+11/+6 at level 16,
+  // +18/+13/+8 at level 20")
+  const describeChoice = (track: OwnerTrack) => (choice: number | string, positions: readonly number[]) => {
+    const values = listTrackValues(track, choice, positions, shown);
+    const at = (index: number) =>
+      `${formatTrackValue(track.rules, values[index])} at ${positionSingular} ${positions[index]}`;
+    if (positions.length === 0) return undefined;
+    return positions.length === 1 ? at(0) : `${at(0)}, ${at(positions.length - 1)}`;
+  };
+  const createDefaults: OwnedCreateFormData = { choices: batchDefaults, count: 1 };
+  const createDialog = useDialogState();
+  const createForm = useFormWith<OwnedCreateFormData>(createDefaults);
+  const createOwned = useCreateOwnedBatch(
+    rulesetId,
+    ownerId,
+    { ownedType, ownerType, word: { one: ownedWord, many: entityTypeLabel(ownedType, rules?.words, true) } },
+    createDialog.close,
+  );
+  // Opened on one, whatever a cancelled one held
+  const handleCreate = () => {
+    createForm.reset(createDefaults);
+    createDialog.openWith(true);
+  };
+  // A track left as it opened, or whose entities loaded after it opened, takes its default, as its toggle shows
+  const handleCreateSubmit = (data: OwnedCreateFormData) => {
+    const choices = Object.fromEntries(tracks.map(({ key }) => [key, data.choices[key] ?? batchDefaults[key]]));
+    createOwned.mutate(buildOwnedBatch(open.slice(0, data.count), tracks, choices, ownedLists, shown));
+  };
   const valuesOf = (read: (ownedEntity: OwnedRead) => number) =>
     ownedEntities.map((ownedEntity) => ({
       ownedId: ownedEntity.id,
@@ -303,6 +323,9 @@ export function OwnerProgressionSection({
     }),
   ];
 
+  // A create waits while the Progression has edits, unsaved or saving
+  const createWaits = changes.length > 0 || save.isPending;
+
   // Its edits, and the tracks' editors they were made in
   const discard = () => {
     draft.discard();
@@ -387,7 +410,23 @@ export function OwnerProgressionSection({
 
   return (
     <Stack spacing={3}>
-      {canEdit && <ListToolbar actions={<AddButton label={`Add ${positionWord.one}`} onClick={handleCreate} />} />}
+      {/* Once the owner has every position its rules give, it takes no more; it waits for its owned entities, and while
+          its Progression has edits, unsaved or saving, which a create's copy of an inherited owner would drop */}
+      {canEdit && open.length > 0 && (
+        <ListToolbar
+          actions={
+            <Tooltip describeChild title={createWaits ? `Save or discard the progression's changes first` : ""}>
+              <span>
+                <AddButton
+                  label={`Add ${positionWord.one}`}
+                  onClick={handleCreate}
+                  disabled={!ownedRows || createWaits}
+                />
+              </span>
+            </Tooltip>
+          }
+        />
+      )}
       {!!amountsError && !amountEntities && (
         <LoadError what={entityTypeLabel(amountsType, rules?.words, true)} error={amountsError} />
       )}
@@ -500,12 +539,28 @@ export function OwnerProgressionSection({
         />
       )}
       <CreateOwnedDialog
-        {...createDialogProps}
-        rulesetId={rulesetId}
+        open={createDialog.open}
+        onClose={createDialog.close}
+        form={createForm}
+        onSubmit={handleCreateSubmit}
+        pending={createOwned.isPending}
         baseRules={ruleset.baseRules}
-        lists={ownedLists}
-        omitted={omitted}
+        counts={listBatchCounts(open.length)}
+        nextPositions={open}
         ownedType={ownedType}
+        ownerName={ownerName}
+        // Its levels send every amount: they wait for the entities they're of
+        submitDisabled={!!ownedLists.amounts && !amountEntities}
+        tracks={tracks.map((track) => ({
+          describe: describeChoice(track),
+          initial: batchDefaults[track.key],
+          key: track.key,
+          label: track.label,
+          max: track.rules.max,
+          min: track.rules.min,
+          presets: presetsOf(track.rules),
+          unitLabel: track.rules.unitLabel,
+        }))}
       />
     </Stack>
   );

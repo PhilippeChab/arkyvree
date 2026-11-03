@@ -131,39 +131,41 @@ export function ProgressionTrackRow({
   return (
     <Stack id={id} spacing={1.5} sx={{ py: 2, borderTop: 1, borderColor: "divider" }}>
       {presets ? (
-        <Stack direction="row" spacing={2} useFlexGap sx={{ alignItems: "flex-end", flexWrap: "wrap" }}>
-          <OptionToggle
-            label={label}
-            caption={status}
-            value={custom || !detected ? CUSTOM : detected.key}
-            options={[
-              ...presets.map(({ key, label: presetLabel }) => ({ label: presetLabel, value: key })),
-              { label: "Custom", value: CUSTOM },
-            ]}
-            onChange={(next) => {
-              const preset = presets.find((p) => p.key === next);
-              if (preset) {
-                follow(preset);
-                return;
-              }
-              setCustom(true);
-              setBaseKey((detected ?? findNearestPreset(presets, values)).key);
-            }}
-          />
-          {/* A track that follows no preset is Custom already, whose toggle a click can't select again */}
-          {!custom && !detected && (
-            <Button
-              size="small"
-              onClick={() => {
-                // Its base stays the one nearest its values as they are, however they're typed after
-                setBaseKey(findNearestPreset(presets, values).key);
-                setCustom(true);
-              }}
-            >
-              Edit {positionWord.many}
-            </Button>
-          )}
-        </Stack>
+        <OptionToggle
+          label={label}
+          caption={status}
+          value={custom || !detected ? CUSTOM : detected.key}
+          options={[
+            ...presets.map(({ key, label: presetLabel }) => ({ label: presetLabel, value: key })),
+            { label: "Custom", value: CUSTOM },
+          ]}
+          onChange={(next) => {
+            const preset = presets.find((p) => p.key === next);
+            if (preset) {
+              follow(preset);
+              return;
+            }
+            setCustom(true);
+            setBaseKey((detected ?? findNearestPreset(presets, values)).key);
+          }}
+          // A track that follows no preset is Custom already, whose toggle a click can't select again: its levels open
+          // from a button on the toggle's line
+          action={
+            !custom &&
+            !detected && (
+              <Button
+                size="small"
+                onClick={() => {
+                  // Its base stays the one nearest its values as they are, however they're typed after
+                  setBaseKey(findNearestPreset(presets, values).key);
+                  setCustom(true);
+                }}
+              >
+                Edit {positionWord.many}
+              </Button>
+            )
+          }
+        />
       ) : (
         <Box>
           <Typography variant="subtitle2" component="p" gutterBottom sx={{ color: "text.secondary" }}>

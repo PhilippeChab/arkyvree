@@ -58,7 +58,9 @@ export const QUERY_KEYS = {
     familyVariants: (id: string, section: string, family: string) =>
       ["rulesets", "detail", id, section, "family", family] as const,
     entity: (id: string, entityType: string, entityId: string) =>
-      ["rulesets", "detail", id, "entity", entityType, entityId] as const,
+      [...QUERY_KEYS.rulesets.entityPages(id, entityType), entityId] as const,
+    /** Every entity page of a kind (`entityType`): a class's levels' pages, which a create or a delete of one changes. */
+    entityPages: (id: string, entityType: string) => ["rulesets", "detail", id, "entity", entityType] as const,
     /**
      * An entity's customization tab's rows (its modifiers, its requirements), nested in the ruleset its saves refresh.
      */

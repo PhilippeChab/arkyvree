@@ -17,7 +17,6 @@ export { grantKey, grantLabel } from "./grants.ts";
 export {
   emptyOwned,
   type GrantLink,
-  nextOwned,
   omittedPlacesOf,
   type OwnedFormData,
   type OwnedLinks,

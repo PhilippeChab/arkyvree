@@ -184,6 +184,16 @@ export interface MadeEntity {
 }
 
 /**
+ * What creating several owned entities at once writes (a class's levels 6 to 15): each one's create, as its own would
+ * write it (`created`, by place), on their one owner, and what the one activity they're recorded as records.
+ */
+export interface OwnedCreateManyPlan {
+  activity: Record<string, unknown>;
+  created: OwnedCreatePlan[];
+  owner: PlanOwner;
+}
+
+/**
  * What an owned entity's create writes past an entity's: its owner, what its activity records, and what it's refused
  * with when its owner holds another at its place (`taken`: what a save's check of its stored rows finds, which the
  * view's may not have).

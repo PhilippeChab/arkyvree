@@ -102,13 +102,13 @@ describe("EntitiesService: a class's levels", () => {
         links: { listedIn: [{ toId: aptitude.id }] },
       });
       const fortitude = await createSave(ruleset.id, "Fortitude");
-      await createLevel(session, ruleset.id, klass.id, 2);
       await createLevel(session, ruleset.id, klass.id, 1, {
         links: {
           grants: [{ toId: feat.id, viaId: aptitude.id, free: false }],
           baseBonus: [{ toId: fortitude.id, amount: 2 }],
         },
       });
+      await createLevel(session, ruleset.id, klass.id, 2);
 
       expect(
         await EntitiesService.getOwnedEntities(await ownerSessionOf(ruleset.id), ruleset.id, "classes", klass.id),

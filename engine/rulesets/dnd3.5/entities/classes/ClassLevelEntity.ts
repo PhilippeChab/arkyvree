@@ -145,10 +145,13 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     return {};
   }
 
-  /** One of the class's levels with all its links and its customizations: refused when it isn't the class's. */
+  /**
+   * One of the class's levels with all its links and its customizations, and whether it can be deleted (`deletable`:
+   * the class's last alone, `checkLast`): refused when it isn't the class's.
+   */
   override describe(levelId: string) {
     const level = super.describe(levelId);
-    return { ...level, links: this.linksIn(level.id) };
+    return { ...level, deletable: level.position >= this.lastPosition(), links: this.linksIn(level.id) };
   }
 
   /** One of the class's levels, as the view has it: refused when there's none, or it isn't the class's. */
@@ -161,23 +164,22 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   /**
    * A new level of the class: the class as the view has it, the level's row (its number, its `position`) and links,
    * what its form writes beside them, the level it answers once written, with the fields it keeps, and what it's
-   * refused with when another save gave the class its number first (`taken`).
+   * refused with when another save gave the class its number first (`taken`). Refused when it isn't the class's next
+   * (`checkNext`).
    */
   override planCreate(form: EntityForm) {
-    const plan = super.planCreate(form);
-    const level = RulesError.parse(LEVEL, form.position);
-    return {
-      ...plan,
-      activity: { entityName: this.klass.name, position: level },
-      owner: this.klass,
-      row: { ...plan.row, position: level },
-      taken: this.taken(level),
-    };
+    const plan = this.planOne(form);
+    this.checkNext([plan.row.position]);
+    return plan;
   }
 
-  /** Deleting one of the class's levels: the class and the level, as the view has them. */
+  /**
+   * Deleting one of the class's levels: the class and the level, as the view has them. Refused for a level the class
+   * has one above (`checkLast`).
+   */
   override planDelete(levelId: string) {
     const plan = super.planDelete(levelId);
+    this.checkLast(plan.entity);
     const activity = { rulesetId: this.view.ruleset.id, entityName: this.klass.name, position: plan.entity.position };
     return { ...plan, activity, owner: this.klass };
   }
@@ -192,9 +194,41 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     return { ...plan, activity: { entityName: this.klass.name, position: plan.entity.position }, owner: this.klass };
   }
 
+  /**
+   * Refuses deleting a level the class has one above: its characters take its levels in order, so a gap would stop them
+   * there ("Only Fighter's last level, level 20, can be deleted"). Its last goes, then the one below it.
+   */
+  private checkLast(level: KlassLevel) {
+    const last = this.lastPosition();
+    if (level.position < last)
+      throw new RulesError("conflict", `Only ${this.klass.name}'s last level, level ${last}, can be deleted`);
+  }
+
+  /**
+   * Refuses new levels (`positions`) that aren't the class's next: the lowest numbers it lacks, a gap's first, as many
+   * as there are, so a create leaves no gap, which would stop its characters there ("Fighter's next level is 3").
+   */
+  private checkNext(positions: readonly number[]) {
+    const held = new Set((this.dnd35.classLevelsByClass.get(this.klass.id) ?? []).map((level) => level.position));
+    const next: number[] = [];
+    for (let position = 1; next.length < positions.length; position++) if (!held.has(position)) next.push(position);
+    const given = positions.toSorted((a, b) => a - b);
+    if (given.every((position, index) => position === next[index])) return;
+    const [first] = next;
+    const last = next.at(-1) ?? first;
+    const what = next.length === 1 ? `level is ${first}` : `levels are ${first} to ${last}`;
+    throw new RulesError("conflict", `${this.klass.name}'s next ${what}`);
+  }
+
   /** The view's 3.5 lists and indices. */
   private get dnd35(): Dnd35View {
     return Dnd35View.of(this.rulesetData);
+  }
+
+  /** The class's highest level's number, as the view has its levels; 0 for a class without one. */
+  private lastPosition() {
+    const levels = this.dnd35.classLevelsByClass.get(this.klass.id) ?? [];
+    return Math.max(0, ...levels.map((level) => level.position));
   }
 
   /**
@@ -225,6 +259,36 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     return [...feats, ...links.filter((link) => !isFeat(link))];
   }
 
+  /**
+   * A new level among several (`form`, the `index`th of them), planned as its own create is (`planOne`): a refusal of
+   * its form names it by its place among them (`owned.2.position`).
+   */
+  private planEach(form: EntityForm, index: number) {
+    try {
+      return this.planOne(form);
+    } catch (error) {
+      if (!(error instanceof RulesError) || !error.issues) throw error;
+      const issues = error.issues.map((issue) => ({ ...issue, category: `owned.${index}.${issue.category}` }));
+      throw new RulesError(error.refusal, error.message, issues);
+    }
+  }
+
+  /**
+   * A new level of the class, its next or not: what `planCreate` answers, and each level of several plans
+   * (`planEach`), which `planCreateMany` checks are its next together.
+   */
+  private planOne(form: EntityForm) {
+    const plan = super.planCreate(form);
+    const level = RulesError.parse(LEVEL, form.position);
+    return {
+      ...plan,
+      activity: { entityName: this.klass.name, position: level },
+      owner: this.klass,
+      row: { ...plan.row, position: level },
+      taken: this.taken(level),
+    };
+  }
+
   /** What a new level of a number the class already has (`level`) is refused with: "Fighter already has a level 3". */
   private taken(level: number) {
     return `${this.klass.name} already has a level ${level}`;
@@ -241,5 +305,28 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
       babLabel: CombatSheet.formatBab(this.fieldsOf(levels[index]).bab),
       links: this.linksIn(level.id),
     }));
+  }
+
+  /**
+   * New levels of the class at once (`forms`, each a level's, as `planCreate` reads it: levels 6 to 15 of a class that
+   * has 5), each planned as its own create is, a refusal of one naming it by its place among them; refused as invalid
+   * when there are more than a class has levels, or two give one number, and when they aren't the class's next
+   * (`checkNext`). What their one activity records: the class's name and the levels' numbers, in order.
+   */
+  planCreateMany(forms: readonly EntityForm[]) {
+    if (forms.length > RULESET_LIMITS.classLevel) {
+      const issue = { category: "owned", message: `A class has at most ${RULESET_LIMITS.classLevel} levels` };
+      throw new RulesError("invalid", issue.message, [issue]);
+    }
+    const created = forms.map((form, index) => this.planEach(form, index));
+    const positions = created.map((plan) => plan.row.position);
+    const repeated = positions.findIndex((position, index) => positions.indexOf(position) !== index);
+    if (repeated >= 0) {
+      const issue = { category: `owned.${repeated}.position`, message: `Level ${positions[repeated]} is listed twice` };
+      throw new RulesError("invalid", issue.message, [issue]);
+    }
+    this.checkNext(positions);
+    const activity = { entityName: this.klass.name, positions: positions.toSorted((a, b) => a - b) };
+    return { activity, created, owner: this.klass };
   }
 }

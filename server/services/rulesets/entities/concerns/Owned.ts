@@ -9,12 +9,29 @@ import type { Session } from "@/shared/relations.ts";
 
 /**
  * The entities an entity owns (a class's levels), of its kind (`type`, the owner's), as its kind's rules answer them
- * (`Engine.for(scope).owned(type, ownerId)`): their list, one described by its id alone, and their creates, edits
- * and deletes, each written on the owner the view's resolves to (its copy, made on its first edit) and recorded as its
- * kind's activity.
+ * (`Engine.for(scope).owned(type, ownerId)`): their list, one described by its id alone, and their creates (several at
+ * once too), edits and deletes, each written on the owner the view's resolves to (its copy, made on its first edit) and
+ * recorded as its kind's activity.
  */
 export function Owned<B extends Constructor>(Base: B) {
   abstract class WithOwned extends Base {
+    /**
+     * New entities the owner (`ownerId`) owns, several at once (`bodies`, each one's form: a class's levels 6 to 15),
+     * in one transaction, all or none (`EntityWriter.createOwnedMany`).
+     */
+    async createOwnedEntities(
+      session: Session,
+      rulesetId: string,
+      type: RulesetEntityType,
+      ownerId: string,
+      bodies: EntityForm[],
+    ) {
+      return await new EntityWriter(type).createOwnedMany(session, rulesetId, (scope) => {
+        const owned = Engine.for(scope).owned(type, ownerId);
+        return { plan: owned.planCreateMany(bodies), type: owned.type };
+      });
+    }
+
     /** A new entity the owner (`ownerId`) owns, off its form (`EntityWriter.createOwned`). */
     async createOwnedEntity(
       session: Session,

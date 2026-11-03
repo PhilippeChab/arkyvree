@@ -75,8 +75,9 @@ const tableParams = entityParams.extend({ table: z.string() });
  * rules: its list, with its kind's filters past the shared ones (each by the field, the role or the partition it
  * filters: `partition`, `listedIn`…, which its rules read), its page, its create, update and delete, and its kind's
  * actions (its groups and a group's entities, `family`, its templates, a duplicate, variants), and an entity's parts
- * its kind may have: the entities it owns (a class's levels, and one by its id alone), the links it edits (a class's
- * skills), its progression (and what a save of it would leave its tables at, its `plan`) and its tables.
+ * its kind may have: the entities it owns (a class's levels, one by its id alone, several made at once), the links it
+ * edits (a class's skills), its progression (and what a save of it would leave its tables at, its `plan`) and its
+ * tables.
  */
 export default new Hono<SessionContext>()
   .get(
@@ -203,6 +204,20 @@ export default new Hono<SessionContext>()
       const { id, entityType, entityId } = c.req.valid("param");
       const body = c.req.valid("json");
       return c.json(await EntitiesService.createOwnedEntity(c.var.requestSession, id, entityType, entityId, body), 201);
+    },
+  )
+  .post(
+    "/:id/entities/:entityType/:entityId/owned/many",
+    validate("param", entityParams),
+    // Several owned entities at once (a class's levels 6 to 15), each its create's body: all made, or none
+    validate("json", z.strictObject({ owned: z.array(ownedBody.omit({ updatedAt: true })).min(1) })),
+    async (c) => {
+      const { id, entityType, entityId } = c.req.valid("param");
+      const { owned } = c.req.valid("json");
+      return c.json(
+        await EntitiesService.createOwnedEntities(c.var.requestSession, id, entityType, entityId, owned),
+        201,
+      );
     },
   )
   .post(

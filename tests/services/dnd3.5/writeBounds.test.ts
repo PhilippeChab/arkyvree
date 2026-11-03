@@ -149,15 +149,14 @@ describe("a ruleset's entities", () => {
       invalidAt("position"),
     );
     expect(
-      await EntitiesService.createOwnedEntity(owner, rulesetId, "classes", classId, { position: 20 }),
-    ).toMatchObject({
-      position: 20,
-    });
-    expect(
       await EntitiesService.createOwnedEntity(owner, rulesetId, "classes", classId, { position: 1 }),
     ).toMatchObject({
       position: 1,
     });
+    // Level 20 is within its bounds: refused for its place alone, the class's next being 2
+    expect(
+      EntitiesService.createOwnedEntity(owner, rulesetId, "classes", classId, { position: 20 }),
+    ).rejects.toMatchObject({ refusal: "conflict" });
   });
 
   test("refuses a save's base bonus past 0 to 12, on a new level, an edit and the class's progression", async () => {

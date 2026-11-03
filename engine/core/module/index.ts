@@ -140,6 +140,7 @@ export {
   type LinkSet,
   type LinkWrite,
   type MadeEntity,
+  type OwnedCreateManyPlan,
   type OwnedCreatePlan,
   type OwnedDeletePlan,
   type OwnedEditPlan,

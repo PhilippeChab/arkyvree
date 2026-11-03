@@ -139,18 +139,24 @@ for (const entityType of ["races", "classes", "items"] as const) {
 for (const action of ["add skill", "remove skill", "create level", "update level", "delete level"] as const) {
   test(`${action} copies the inherited class with its sibling customizations`, async () => {
     const { session, host, source, assertCopied } = await setup("classes", action === "create level");
-    const { assignedSkill, otherSkill, levelId } = await withRulesetScope(db, host.id, async ({ rulesetData }) => {
-      const id = rulesetData.canonicalize(source.id);
-      const assigned = Dnd35View.of(rulesetData).classSkillsOf(id);
-      return {
-        assignedSkill: assigned[0].toId,
-        otherSkill: Dnd35View.of(rulesetData).skills.find((skill) => !assigned.some((link) => link.toId === skill.id))!
-          .id,
-        levelId: [...Dnd35View.of(rulesetData).classLevelsById.values()].find(
-          (level) => level.ownerId === id && level.position === 1,
-        )!.id,
-      };
-    });
+    const { assignedSkill, otherSkill, levelId, lastLevelId } = await withRulesetScope(
+      db,
+      host.id,
+      async ({ rulesetData }) => {
+        const id = rulesetData.canonicalize(source.id);
+        const assigned = Dnd35View.of(rulesetData).classSkillsOf(id);
+        const levels = [...Dnd35View.of(rulesetData).classLevelsById.values()].filter((level) => level.ownerId === id);
+        return {
+          assignedSkill: assigned[0].toId,
+          otherSkill: Dnd35View.of(rulesetData).skills.find(
+            (skill) => !assigned.some((link) => link.toId === skill.id),
+          )!.id,
+          levelId: levels.find((level) => level.position === 1)!.id,
+          // Only a class's last level can be deleted
+          lastLevelId: levels.reduce((top, level) => (level.position > top.position ? level : top)).id,
+        };
+      },
+    );
     if (action === "add skill") {
       await EntitiesService.addEntityLink(session, host.id, "classes", source.id, otherSkill);
     } else if (action === "remove skill") {
@@ -165,7 +171,7 @@ for (const action of ["add skill", "remove skill", "create level", "update level
         fields: { [CLASS_LEVEL_SKILL_POINTS]: 3 },
       });
     } else {
-      await EntitiesService.deleteOwnedEntity(session, host.id, "classes", source.id, levelId);
+      await EntitiesService.deleteOwnedEntity(session, host.id, "classes", source.id, lastLevelId);
     }
     await assertCopied();
   });

@@ -116,13 +116,15 @@ function CustomizationView({
       backTo={back.to}
       backDisabled={locked}
       deletion={
-        canEdit && isEditable(data) && !locked
+        canEdit && isEditable(data) && isDeletable(data) && !locked
           ? {
               rulesetId,
               deleteFn: () => deleteEntityFn(data, rulesetId, entityId),
               // An owned entity is listed by its owner alone (a class level by its class's levels): a ruleset has no
-              // list of them
-              listKeys: [ownerQueryKey ?? QUERY_KEYS.rulesets.section(rulesetId, type)],
+              // list of them; its kind's other pages say which of them can be deleted now
+              listKeys: ownerQueryKey
+                ? [ownerQueryKey, QUERY_KEYS.rulesets.entityPages(rulesetId, type)]
+                : [QUERY_KEYS.rulesets.section(rulesetId, type)],
               entityKey,
               restorable,
             }
@@ -223,6 +225,14 @@ function describe(
     default:
       return { title: data.entity.name, pageTitle: data.entity.name };
   }
+}
+
+/**
+ * Whether the page offers to delete its entity: an owned one only where its owner's rules let it go (`deletable`: a
+ * class's last level alone, its levels being taken in order).
+ */
+function isDeletable(data: CustomizationEntity) {
+  return data.holder !== "owned" || data.entity.deletable;
 }
 
 /**

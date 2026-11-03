@@ -37,11 +37,15 @@ test.describe("A class created in a fork", () => {
     // A level: the table shows what it was given, after a reload too
     await page.getByRole("button", { name: "Add Level" }).click();
     const level = page.getByRole("dialog", { name: "Create New Level" });
-    await level.getByLabel("Level", { exact: true }).fill("1");
-    await level.getByLabel("Base Attack Bonus").fill("1");
-    await level.getByLabel("Fortitude Save").fill("2");
+    // Always the class's next level, which the dialog names
+    await expect(level.getByText(`Adds level 1 to ${name}.`, { exact: true })).toBeVisible();
+    // Its tracks' presets at level 1: a good base attack bonus (+1), a good Fortitude (+2), poor Reflex and Will (+0)
+    await level.getByRole("group", { name: "Base Attack Bonus" }).getByRole("button", { name: "Good (full)" }).click();
+    await level.getByRole("group", { name: "Fortitude" }).getByRole("button", { name: "Good" }).click();
+    await level.getByRole("group", { name: "Reflex" }).getByRole("button", { name: "Poor" }).click();
+    await level.getByRole("group", { name: "Will" }).getByRole("button", { name: "Poor" }).click();
     await level.getByLabel("Skill Points").fill("4");
-    const created = apiResponse(page, "POST", /\/entities\/classes\/[a-f0-9-]+\/owned$/);
+    const created = apiResponse(page, "POST", /\/entities\/classes\/[a-f0-9-]+\/owned\/many$/);
     await level.getByRole("button", { name: "Create" }).click();
     await created;
     await page.reload();
@@ -68,6 +72,62 @@ test.describe("A class created in a fork", () => {
     await removed;
     await expect(skill).toHaveCount(0);
     await expect(page.getByText("No class skills assigned", { exact: true })).toBeVisible();
+  });
+});
+
+// A new class's first ten levels in one dialog: each track's preset picked once, every level taking its value there.
+test.describe("A class built from scratch", () => {
+  test("gets ten levels at once, each track following the preset picked for it", async ({ page, ownerUser }) => {
+    await signIn(page, ownerUser.email, ownerUser.password);
+    const forkId = await forkCoreRuleset(page, uniqueName("Levels Fork"));
+    const className = uniqueName("Batch Class");
+    const classId = await parseResponse(
+      apiOf(page).api.rulesets[":id"].entities[":entityType"].$post({
+        param: { id: forkId, entityType: "classes" },
+        json: { name: className },
+      }),
+    ).then((created) => created.id);
+    await page.goto(`/rulesets/${forkId}/classes/${classId}/progression`);
+    await expect(page.getByText("No levels", { exact: true })).toBeVisible({ timeout: 10_000 });
+
+    await page.getByRole("button", { name: "Add Level" }).click();
+    await page.getByRole("dialog", { name: "Create New Level" }).getByRole("button", { name: "10" }).click();
+    const levels = page.getByRole("dialog", { name: "Create New Levels" });
+    await expect(levels.getByText(`Adds levels 1 to 10 to ${className}.`, { exact: true })).toBeVisible();
+    await levels.getByRole("group", { name: "Base Attack Bonus" }).getByRole("button", { name: "Medium (¾)" }).click();
+    await levels.getByRole("group", { name: "Fortitude" }).getByRole("button", { name: "Good" }).click();
+    await levels.getByRole("group", { name: "Reflex" }).getByRole("button", { name: "Poor" }).click();
+    await levels.getByRole("group", { name: "Will" }).getByRole("button", { name: "Poor" }).click();
+    await levels.getByLabel("Skill Points").fill("4");
+    const created = apiResponse(page, "POST", /\/entities\/classes\/[a-f0-9-]+\/owned\/many$/);
+    await levels.getByRole("button", { name: "Create" }).click();
+    await created;
+
+    // The table shows them at once: the tenth's medium base attack bonus, good Fortitude, poor Reflex and Will
+    await expect(page.getByText("10 class levels created")).toBeVisible();
+    const tenth = page.getByRole("row").filter({ has: page.getByRole("cell", { name: "+7/+2", exact: true }) });
+    await expect(tenth).toHaveCount(1, { timeout: 10_000 });
+    await expect(tenth.getByRole("cell", { name: "+7", exact: true })).toHaveCount(1);
+    await expect(tenth.getByRole("cell", { name: "+3", exact: true })).toHaveCount(2);
+    await expect(tenth.getByRole("cell", { name: "4", exact: true })).toBeVisible();
+    // Its Progression reads the presets they follow
+    await expect(
+      page.getByRole("group", { name: "Base Attack Bonus" }).getByRole("button", { name: "Medium (¾)" }),
+    ).toHaveAttribute("aria-pressed", "true");
+
+    // Set to Good on its Progression, Add Level waits for the change's save; saved, the next level starts at Good
+    await page.getByRole("group", { name: "Base Attack Bonus" }).getByRole("button", { name: "Good (full)" }).click();
+    await expect(page.getByRole("button", { name: "Add Level" })).toBeDisabled();
+    const saved = apiResponse(page, "PUT", /\/entities\/classes\/[a-f0-9-]+\/progression$/);
+    await page.getByRole("button", { name: "Save Progression" }).click();
+    await saved;
+    await expect(page.getByRole("button", { name: "Add Level" })).toBeEnabled({ timeout: 10_000 });
+    await page.getByRole("button", { name: "Add Level" }).click();
+    const next = page.getByRole("dialog", { name: "Create New Level" });
+    await expect(next.getByText(`Adds level 11 to ${className}.`, { exact: true })).toBeVisible();
+    await expect(
+      next.getByRole("group", { name: "Base Attack Bonus" }).getByRole("button", { name: "Good (full)" }),
+    ).toHaveAttribute("aria-pressed", "true");
   });
 });
 

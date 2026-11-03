@@ -24,6 +24,15 @@ export function entityTypeOfActivityName(name: string, words: RulesWords | undef
   return Object.keys(words ?? {}).find((entityType) => getActivityName(entityType) === name);
 }
 
+/** Positions as a list in their word: a run "Levels 6 to 15", others "Levels 1, 3 and 5", one "Level 6". */
+export function formatPositions(positions: readonly number[], word: PositionWord) {
+  const [first] = positions;
+  const last = positions.at(-1) ?? first;
+  if (positions.length === 1) return `${word.one} ${first}`;
+  if (positions.every((position, index) => position === first + index)) return `${word.many} ${first} to ${last}`;
+  return `${word.many} ${positions.slice(0, -1).join(", ")} and ${last}`;
+}
+
 /** A count in a word its rules give (`word`: "1 level", "3 levels"), lowercase, as a sentence reads it. */
 export function formatWordCount(count: number, word: RulesWord): string {
   return `${count} ${(count === 1 ? word.one : word.many).toLowerCase()}`;
