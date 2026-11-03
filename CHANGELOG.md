@@ -8,6 +8,7 @@
 - D&D 3.5: an item made from a template takes its weight and cost when it has none of its own
 - The activity feed names every change an update makes, the entries a list gains and loses included
 - API keys and a public API, with its OpenAPI reference
+- An MCP server: connect Claude Code or another AI assistant to your characters and rulesets with an API key
 
 ## 0.6.0 — 2026-10-12
 

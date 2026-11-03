@@ -1,4 +1,6 @@
 import * as Sentry from "@sentry/bun";
+import type { Context } from "hono";
+import { HTTPException } from "hono/http-exception";
 
 import { RulesError, type RulesIssue } from "@/engine/index.ts";
 import { isDevelopment } from "@/server/environment.ts";
@@ -134,6 +136,17 @@ export class InternalError extends BaseError {
     this.cause = this.cause ?? "internal";
     this.code = 500;
   }
+}
+
+/**
+ * What a request answers when its route or a service throws: the error in the API's envelope, with its status. Hono's
+ * own refusal (an `HTTPException`: a cross-site write the CSRF check refuses) answers a 403.
+ */
+export function toErrorResponse(err: Error, c: Context) {
+  if (err instanceof HTTPException)
+    return c.json({ error: "Forbidden", cause: "forbidden", message: "Forbidden" }, 403);
+  const [error, code] = toJson(err);
+  return c.json(error, code);
 }
 
 export function toJson(error: Error): [ErrorJson, Code] {

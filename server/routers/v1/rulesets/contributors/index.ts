@@ -68,7 +68,12 @@ export default new Hono<ApiKeyContext>()
   )
   .post(
     "/:id/contributors/leave",
-    describeRoute({ response: null, status: 204, summary: "The key's user stops contributing to a ruleset" }),
+    describeRoute({
+      effect: "removes",
+      response: null,
+      status: 204,
+      summary: "The key's user stops contributing to a ruleset",
+    }),
     validate("param", idParam),
     async (c) => {
       const { id } = c.req.valid("param");

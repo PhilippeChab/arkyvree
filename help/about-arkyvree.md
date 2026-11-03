@@ -30,3 +30,13 @@ The 3.5 data is auto-generated from SRD pages and hand-checked. Errors get fixed
 Yes, through Arkyvree's public API, with an API key. Make one under **Settings → API Keys**, named for what will use it (a script, an assistant leveling your fighter), and choose when it expires: in 30 days, 90 days or a year, or never. Its key is shown once: copy it then, and give it to the program, which sends it with each request.
 
 A key acts as you: it reads and changes your characters and the rulesets you can edit, as the app does (a character's sheet, its inventory, its levels as the Add Level wizard plans and saves them; a ruleset's content and its customizations), and reads the rulesets you can read. It runs your campaigns, their players, invites and characters; invites contributors to your characters and rulesets, and answers the invites you get; shares your characters, makes their PDFs, reads your notifications and activity, and sets your portraits and avatar. The API's reference, every route and what it answers, is its OpenAPI document, at `/v1/openapi.json` on Arkyvree's site. Revoke it on the same page once nothing uses it: it stops working at once. Changing or resetting your password, or deleting your account, revokes every key too.
+
+## Can an AI assistant use Arkyvree?
+
+Yes, through Arkyvree's MCP server, with an API key: an assistant that connects to an MCP server with a key, like Claude Code, reads your characters' sheets and rulesets and changes them as the API does, with nothing to install. Add the server at `https://rpg.arkyvree.com/mcp`, sending your key as `Authorization: Bearer <key>`; in Claude Code:
+
+```bash
+claude mcp add --transport http arkyvree https://rpg.arkyvree.com/mcp --header "Authorization: Bearer <key>"
+```
+
+Then ask it what you'd ask the app: "what's my character's armor class?", "add a level and take this feat". Arkyvree marks the tool that archives or deletes apart from the others, so your assistant can ask you before it uses it.

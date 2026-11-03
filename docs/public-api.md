@@ -39,7 +39,8 @@ as it is today, never a promise that it holds no other key.
 
 `server/routers/v1/` is version 1: a router layer over the app's services, each route calling the service the app's
 own route calls, with the same access checks, and answering through v1's translators (`translators/V1.ts`): from what
-the service returns to v1's shape (`V1.character`).
+the service returns to v1's shape (`V1.character`). Its routes (`routes.ts`) answer the user a sign-in in front of them
+found: `/v1`'s key (`index.ts`), or the MCP server's, whose tools call them in the process ([mcp.md](./mcp.md)).
 
 - Each answer's shape is a zod schema (`schemas/`), named for the document (`.meta({ id: "Character" })`), and its
   translator is typed by the service it reads (`Answer<typeof CharactersService.getCharacter>`) and by that schema
@@ -104,6 +105,11 @@ unsubscribing it from an extension answers its extensions.
 - Each route says what it does and what it answers on success (`describeRoute({ summary, response, status })`), the
   answer's schema its `response`: none for a 204, and none for a file it answers instead of JSON, whose media type
   (`file: "application/pdf"`) the document gives. A route without a description stops the server starting.
+- What a route does to what its user reaches (`RouteEffect`: reads, changes, or removes what they won't get back as it
+  was) is its method's, a GET reading and a DELETE removing, but where its description's `effect` says otherwise: a
+  POST that saves nothing (`advancement-plan`, a target path's completions) reads, and one that discards (a fork's
+  entity restored, a contributor leaving, a share link replaced, an invite taken back or turned down) removes. The MCP
+  server's tools call a route by it.
 - Outside production, `describeRoute` checks each success a route answers against its schema (a strict one: a key it
   doesn't name fails too), so every test that calls a route checks the document describes its answer.
 

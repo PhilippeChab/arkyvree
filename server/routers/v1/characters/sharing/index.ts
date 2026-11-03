@@ -11,6 +11,7 @@ export default new Hono<ApiKeyContext>()
   .post(
     "/:id/share",
     describeRoute({
+      effect: "removes",
       response: v1ShareLink,
       status: 200,
       summary: "Makes a character's share link, as its owner: a new token, which replaces the one before",
