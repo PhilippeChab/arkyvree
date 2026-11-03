@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { type ApiKeyContext, describeRoute, importRateLimit, validate } from "@/server/middlewares/index.ts";
+import { apiImportRateLimit, type ApiKeyContext, describeRoute, validate } from "@/server/middlewares/index.ts";
 import {
   characterFields,
   characterName,
@@ -216,7 +216,7 @@ export default new Hono<ApiKeyContext>()
       status: 201,
       summary: "Imports the character another program's file holds into a ruleset, as its rules import it",
     }),
-    importRateLimit,
+    apiImportRateLimit,
     validate(
       "json",
       z.object({

@@ -100,7 +100,7 @@ describe("conventions", () => {
           "server/routers/api/nostatus.ts": 'export const r = app.get("/:id", (c) => c.json({ ok: true }));\n',
           "server/routers/api/camel.ts": 'export const r = app.post("/:id/spellsKnown", (c) => c);\n',
           "server/routers/files.ts":
-            'export const r = app.get("/robots.txt", (c) => c).get("/assets/*", (c) => c).get("/:id/class-levels", (c) => c);\n',
+            'export const r = app.get("/robots.txt", (c) => c).get("/assets/*", (c) => c).get("/:id/class-levels", (c) => c).route("/.well-known", c);\n',
           "server/routers/api/reexport.ts": 'export { zValidator } from "@hono/zod-validator";\n',
           "server/routers/api/named.ts":
             'export const r = app.get("/:id", validate("param", idParam), validate("json", z.object({})), (c) => c);\n',

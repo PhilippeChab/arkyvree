@@ -7,7 +7,7 @@ import { useThemeMode } from "@/client/src/contexts/useThemeMode.ts";
 import { useIsDemo, usePageTitle } from "@/client/src/hooks/index.ts";
 import { APP_NAME } from "@/client/src/lib/brand.ts";
 
-import { ApiKeysPanel } from "./components/index.ts";
+import { ApiKeysPanel, ConnectedAppsPanel } from "./components/index.ts";
 
 const THEME_MODE_OPTIONS = [
   { value: "light", label: "Light", icon: LightModeIcon },
@@ -45,6 +45,7 @@ export default function SettingsPage() {
             </Stack>
           </Panel>
 
+          {!isDemo && <ConnectedAppsPanel />}
           {!isDemo && <ApiKeysPanel />}
         </Stack>
       </Container>

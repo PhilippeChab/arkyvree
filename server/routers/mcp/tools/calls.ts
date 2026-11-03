@@ -5,13 +5,10 @@ import v1Calls from "@/server/routers/mcp/v1Calls.ts";
 import type { Session } from "@/shared/relations.ts";
 
 /**
- * Who a tool calls the routes for: the user the MCP server's sign-in found, whether their key only reads (`readOnly`:
- * the routes refuse it a change, and the tools that change aren't offered), and the address their request came from
- * (its `X-Forwarded-For`, `X-Real-IP`), which the routes that count per address (an import) count it by, as they count
- * a key's call to `/v1`.
+ * Who a tool calls the routes for: the user the MCP server's sign-in found, and whether it only reads (`readOnly`: the
+ * routes refuse it a change, and the tools that change aren't offered).
  */
 export interface Caller {
-  addresses: Record<string, string>;
   readOnly: boolean;
   session: Session;
 }
@@ -51,8 +48,8 @@ export function toV1Url(path: string, query: QueryValues = {}) {
 }
 
 /** A route's answer to the caller's user, as the public API answers it: the routes' own checks, shapes and errors. */
-export async function requestV1({ addresses, readOnly, session }: Caller, method: string, url: URL, body?: unknown) {
-  const headers = { ...addresses, ...(body !== undefined && { "content-type": "application/json" }) };
+export async function requestV1({ readOnly, session }: Caller, method: string, url: URL, body?: unknown) {
+  const headers: Record<string, string> = body === undefined ? {} : { "content-type": "application/json" };
   const init: RequestInit = { headers, method, ...(body !== undefined && { body: JSON.stringify(body) }) };
   return await v1Calls.request(`${url.pathname}${url.search}`, init, { readOnly, session });
 }

@@ -1363,6 +1363,132 @@ export const oauthAccountsInAccount = account.table(
   ],
 );
 
+/**
+ * An app that signs in to the MCP server with OAuth (Claude, ChatGPT), as its Client ID Metadata Document describes it:
+ * its id is the document's URL, which the server fetches and keeps here, refetched once it's a day old.
+ */
+export const oauthClientsInAccount = account.table("oauth_clients", {
+  createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+  /** The URL of the app's metadata document, which is its OAuth client id. */
+  id: text().primaryKey().notNull(),
+  /** The app's name, as its document gives it: what the consent page and the connected apps name it by. */
+  name: text().notNull(),
+  /** The addresses the app takes a sign-in's answer at, as its document lists them. */
+  redirectUris: text("redirect_uris").array().notNull(),
+  fetchedAt: timestamp("fetched_at", { mode: "string", withTimezone: true }).notNull(),
+});
+
+/**
+ * A sign-in to the MCP server in progress: what an app asked for (`/oauth/authorize`), until its user answers on the
+ * consent page, then the code the app exchanges for its tokens (`code_digest`), once.
+ */
+export const oauthAuthorizationsInAccount = account.table(
+  "oauth_authorizations",
+  {
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    id: uuid()
+      .default(sql`public.gen_random_uuid()`)
+      .primaryKey()
+      .notNull(),
+    clientId: text("client_id").notNull(),
+    redirectUri: text("redirect_uri").notNull(),
+    /** The PKCE challenge, S256: what the code's exchange proves it holds the verifier of. */
+    codeChallenge: text("code_challenge").notNull(),
+    /** The app's own value, which the answer sends back. */
+    state: text(),
+    /** Whether the app asked to read alone: the consent page's Read Only starts on. */
+    readOnlyAsked: boolean("read_only_asked").default(false).notNull(),
+    /** Who allowed it, once they did. */
+    userId: uuid("user_id"),
+    /** Whether they allowed it to read alone, once they did. */
+    readOnly: boolean("read_only"),
+    /** The code's SHA-256 digest, hex, once allowed: what the exchange looks it up by. */
+    codeDigest: text("code_digest"),
+    expiresAt: timestamp("expires_at", { mode: "string", withTimezone: true }).notNull(),
+  },
+  (table) => [
+    uniqueIndex("oauth_authorizations_code_digest").using("btree", table.codeDigest.asc().nullsLast()),
+    index("oauth_authorizations_expires_at").using("btree", table.expiresAt.asc().nullsLast()),
+    foreignKey({
+      columns: [table.clientId],
+      foreignColumns: [oauthClientsInAccount.id],
+      name: "oauth_authorizations_client_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [usersInAccount.id],
+      name: "oauth_authorizations_user_id_fkey",
+    }).onDelete("cascade"),
+  ],
+);
+
+/** An app a user connected to the MCP server with OAuth: what Settings lists, and what disconnecting it deletes. */
+export const oauthGrantsInAccount = account.table(
+  "oauth_grants",
+  {
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    id: uuid()
+      .default(sql`public.gen_random_uuid()`)
+      .primaryKey()
+      .notNull(),
+    userId: uuid("user_id").notNull(),
+    clientId: text("client_id").notNull(),
+    /** Whether the user allowed it to read alone: the MCP server offers it the tools that read, and refuses a change. */
+    readOnly: boolean("read_only").notNull(),
+    lastUsedAt: timestamp("last_used_at", { mode: "string", withTimezone: true }),
+  },
+  (table) => [
+    index("oauth_grants_user_id").using("btree", table.userId.asc().nullsLast()),
+    foreignKey({
+      columns: [table.userId],
+      foreignColumns: [usersInAccount.id],
+      name: "oauth_grants_user_id_fkey",
+    }).onDelete("cascade"),
+    foreignKey({
+      columns: [table.clientId],
+      foreignColumns: [oauthClientsInAccount.id],
+      name: "oauth_grants_client_id_fkey",
+    }).onDelete("cascade"),
+  ],
+);
+
+/**
+ * A connected app's access token and the refresh token that replaces it, each kept as its SHA-256 digest. A refresh
+ * replaces both (`refreshed_at` marks the pair it used): a refresh token used twice disconnects the app, whoever stole it.
+ */
+export const oauthTokensInAccount = account.table(
+  "oauth_tokens",
+  {
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true }).defaultNow().notNull(),
+    id: uuid()
+      .default(sql`public.gen_random_uuid()`)
+      .primaryKey()
+      .notNull(),
+    grantId: uuid("grant_id").notNull(),
+    accessDigest: text("access_digest").notNull(),
+    accessExpiresAt: timestamp("access_expires_at", { mode: "string", withTimezone: true }).notNull(),
+    refreshDigest: text("refresh_digest").notNull(),
+    refreshExpiresAt: timestamp("refresh_expires_at", { mode: "string", withTimezone: true }).notNull(),
+    /** When its refresh token was used, which replaced the pair: none while it's the grant's current one. */
+    refreshedAt: timestamp("refreshed_at", { mode: "string", withTimezone: true }),
+  },
+  (table) => [
+    uniqueIndex("oauth_tokens_access_digest").using("btree", table.accessDigest.asc().nullsLast()),
+    uniqueIndex("oauth_tokens_refresh_digest").using("btree", table.refreshDigest.asc().nullsLast()),
+    index("oauth_tokens_grant_id").using("btree", table.grantId.asc().nullsLast()),
+    index("oauth_tokens_refresh_expires_at").using("btree", table.refreshExpiresAt.asc().nullsLast()),
+    foreignKey({
+      columns: [table.grantId],
+      foreignColumns: [oauthGrantsInAccount.id],
+      name: "oauth_tokens_grant_id_fkey",
+    }).onDelete("cascade"),
+  ],
+);
+
 export const passwordResetsInAccount = account.table(
   "password_resets",
   {

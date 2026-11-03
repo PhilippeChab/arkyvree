@@ -18,6 +18,7 @@ const CampaignDetailsPage = lazy(() => import("./pages/campaigns/details/Campaig
 const CampaignsPage = lazy(() => import("./pages/campaigns/CampaignsPage.tsx"));
 const CharacterDetailsPage = lazy(() => import("./pages/characters/details/CharacterDetailsPage.tsx"));
 const CharactersPage = lazy(() => import("./pages/characters/CharactersPage.tsx"));
+const ConsentPage = lazy(() => import("./pages/oauth/ConsentPage.tsx"));
 const CustomizationPage = lazy(() => import("./pages/rulesets/customization/CustomizationPage.tsx"));
 const DemoExpiredPage = lazy(() => import("./pages/demo-expired/DemoExpiredPage.tsx"));
 const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage.tsx"));
@@ -81,6 +82,8 @@ const router = createBrowserRouter(
           <Route path="notifications" element={<NotificationsPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="settings" element={<SettingsPage />} />
+          {/* An app's sign-in to the MCP server (Claude's, ChatGPT's), which its user answers */}
+          <Route path="oauth/consent" element={<ConsentPage />} />
           {/* An invite's page, whatever its kind: the email's link names the invite (a contributor's is its row) */}
           <Route path="campaign-invite/:inviteId" element={<InvitePage kind="campaign" />} />
           <Route path="ruleset-contributor-invite/:inviteId" element={<InvitePage kind="rulesetContributor" />} />

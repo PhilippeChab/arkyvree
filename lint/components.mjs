@@ -49,7 +49,7 @@
  *   content sits 32px under its header (the column holding the header takes `spacing={4}`), and a tab's 56px under its
  *   tabs, in a `SectionTabPanel`.
  * - `page-titles`: a page's title (its `h1`) is its header's: `PageHeader`, `DetailPageHeader`, or the header of a page
- *   that opens on its own (the dashboard, the auth pages, an invite).
+ *   that opens on its own (the dashboard, the auth pages, an invite, an app's consent).
  * - `list-toolbars`: a list's actions sit in its `ListToolbar` (`SearchBar` is one), or in a dialog across from its
  *   lead (`DialogLead`), or in a panel across from its title (`PanelLead`), never a bare row; the list sits 24px under
  *   its toolbar (`spacing={3}`), and its Load More 16px under the list (`spacing={2}`).
@@ -170,6 +170,7 @@ const PAGE_TITLE_MODULES = new Set([
   "client/src/components/layout/ErrorBoundary.tsx",
   "client/src/pages/dashboard/DashboardPage.tsx",
   "client/src/pages/invites/InvitePage.tsx",
+  "client/src/pages/oauth/ConsentPage.tsx",
 ]);
 
 /** The modules that draw a skeleton of what loads: a table's, the character sheet's, an entity page's */

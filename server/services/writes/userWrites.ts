@@ -120,3 +120,12 @@ export async function withAccountWrite<T>(userId: string, write: (tx: Db, user: 
 export async function withNewAccount<T>(write: (tx: Db) => Promise<T>): Promise<T> {
   return await withWrite(write, BUSY_ACCOUNT_MESSAGE);
 }
+
+/**
+ * Runs a write of an app's sign-in to the MCP server before any user answers it (its app's document kept, its request
+ * stored), which locks no account: nothing of one is read or written. Its user's answer, and every write after it, is
+ * their account's (`withAccountWrite`).
+ */
+export async function withSignInWrite<T>(write: (tx: Db) => Promise<T>): Promise<T> {
+  return await withWrite(write);
+}

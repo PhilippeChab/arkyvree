@@ -10,6 +10,10 @@ export const QUERY_KEYS = {
     requests: ["auth", "requests"] as const,
     linkedAccounts: ["auth", "linkedAccounts"] as const,
     apiKeys: ["auth", "apiKeys"] as const,
+    /** The apps the user connected to the MCP server (Claude, ChatGPT), which Settings lists. */
+    connectedApps: ["auth", "connectedApps"] as const,
+    /** An app's sign-in the consent page answers. */
+    oauthAuthorization: (id: string) => ["auth", "oauthAuthorization", id] as const,
   },
   rulesets: {
     lists: ["rulesets", "list"] as const,

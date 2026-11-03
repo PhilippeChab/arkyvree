@@ -20,15 +20,22 @@ function getClientIp(c: { req: { header: (name: string) => string | undefined } 
 /**
  * At most `limit` requests per `windowMs` of those `keyGenerator` counts together; past it, `TooManyRequestsError`.
  * Its count answers in the `RateLimit-*` headers unless `headers` is false: a route's own limit within another's leaves
- * them to the outer one, whose count a client paces itself by.
+ * them to the outer one, whose count a client paces itself by. With `failedOnly`, a request that succeeds counts
+ * nothing: one address's many users (an app's servers) aren't throttled together, while failures from it are.
  */
 function limitBy<E extends Env>(
-  { headers = true, windowMs, limit }: { headers?: boolean; limit: number; windowMs: number },
+  {
+    failedOnly = false,
+    headers = true,
+    windowMs,
+    limit,
+  }: { failedOnly?: boolean; headers?: boolean; limit: number; windowMs: number },
   keyGenerator: (c: Context<E>) => Promise<string> | string,
 ) {
   return rateLimiter<E>({
     windowMs,
     limit,
+    skipSuccessfulRequests: failedOnly,
     standardHeaders: headers ? "draft-6" : false,
     keyGenerator,
     handler: () => {
@@ -56,7 +63,7 @@ async function emailKey(c: Parameters<KeyGenerator>[0]): Promise<string> {
  * `TooManyRequestsError`. Off in the tests, whose requests share an IP.
  */
 export function limitRate(
-  { per = "ip", ...options }: { limit: number; per?: "email" | "ip"; windowMs: number },
+  { per = "ip", ...options }: { failedOnly?: boolean; limit: number; per?: "email" | "ip"; windowMs: number },
   enabled = !isTest(),
 ) {
   if (!enabled) return noop;

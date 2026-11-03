@@ -13,6 +13,8 @@ import {
   EmailVerifications,
   Invites,
   OauthAccounts,
+  OAuthAuthorizations,
+  OAuthGrants,
   Sessions,
   Users,
   Visibility,
@@ -230,11 +232,13 @@ export async function signInAsGoogleAccount(payload: { email: string; sub: strin
 
 /**
  * Signs a user out everywhere but the session `exceptId` (the one changing their password, when given): their sessions
- * ended and their API keys revoked, whatever signed in as them before cut off.
+ * ended, their API keys revoked and their connected apps disconnected, whatever signed in as them before cut off.
  */
 export async function signOutEverywhere(tx: Db, userId: string, exceptId?: string) {
   await Sessions.archive(tx, { userId, exceptId });
   await ApiKeys.delete(tx, { userId });
+  await OAuthGrants.delete(tx, { userId });
+  await OAuthAuthorizations.delete(tx, { userId });
 }
 
 /**
