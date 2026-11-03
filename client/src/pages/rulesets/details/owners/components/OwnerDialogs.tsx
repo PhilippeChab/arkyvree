@@ -1,17 +1,11 @@
+import { DialogContentText } from "@mui/material";
 import { useController, type UseFormReturn, useWatch } from "react-hook-form";
 
 import { CreateDialog, DeleteDialog, FormTextField, OptionToggle } from "@/client/src/components/common/index.ts";
 import { useRules } from "@/client/src/hooks/index.ts";
-import { type PositionWord, positionWordsOf } from "@/client/src/lib/rulesetLabels.ts";
+import { formatPositions, type PositionWord, positionWordsOf } from "@/client/src/lib/rulesetLabels.ts";
 import { wholeNumberRules } from "@/client/src/lib/validation.ts";
-import {
-  EntityFields,
-  type OwnedFormData,
-  type OwnedLinks,
-  type OwnedLists,
-} from "@/client/src/pages/rulesets/components/forms/index.ts";
 import type { LinkWords } from "@/client/src/pages/rulesets/details/owners/ownerTab.ts";
-import { useAllAmounts } from "@/client/src/pages/rulesets/hooks/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 interface BatchCountFieldProps {
@@ -28,25 +22,24 @@ interface BatchTrackFieldProps {
 }
 
 interface CreateOwnedDialogProps {
-  /** The ruleset's, whose last position bounds the owned entity's number, and whose fields an owned entity has. */
+  /** The ruleset's, whose words its title and its tracks' say */
   baseRules: BaseRules;
   /** How many it may make at once (`listBatchCounts`: 1, 5, 10, 20, up to the last position); one alone offers none */
   counts: readonly number[];
   form: UseFormReturn<OwnedCreateFormData>;
-  /** Its owned kind's lists of links: its amounts, which its save sends all of */
-  lists: OwnedLists;
-  /** The places of its fields its owner's kind leaves out (`omittedPlacesOf`), which its form doesn't show */
-  omitted: readonly string[];
+  /** The positions it takes, in order: the owner's next, the first for one (`listOpenPositions`), which it names */
+  nextPositions: readonly number[];
   onClose: () => void;
   onSubmit: (data: OwnedCreateFormData) => void;
   open: boolean;
-  /** Its owned kind (3.5's `class-levels`), whose fields its form shows and whose word its title says */
+  /** Its owned kind (3.5's `class-levels`), whose word its title and its lead say */
   ownedType: string;
+  /** The owner's name, which it says it adds them to */
+  ownerName: string;
   pending: boolean;
-  rulesetId: string;
-  /** Its submit waits: what several made at once take hasn't loaded (an amounts track's entities) */
+  /** Its submit waits: what its tracks take hasn't loaded (an amounts track's entities) */
   submitDisabled?: boolean;
-  /** The tracks several made at once set, each a preset or a number across them */
+  /** The tracks it sets, each a preset or a number across what it makes */
   tracks: readonly BatchTrack[];
 }
 
@@ -65,7 +58,7 @@ interface RemoveLinkDialogProps {
 }
 
 /**
- * A track a create of several owned entities sets across them (3.5's base attack bonus, a save, skill points): its key
+ * A track an owned entity's create sets across what it makes (3.5's base attack bonus, a save, skill points): its key
  * (its choice's, under `choices`), its label, what it starts at (`initial`: a preset's key, or a number), the presets
  * it can follow, or the bounds of the number it sets at each (`min`, `max`, and what that number is, `unitLabel`:
  * "Points a Level").
@@ -81,29 +74,23 @@ export interface BatchTrack {
 }
 
 /**
- * An owned entity's create form, past the entity's own: how many it makes at once (`count`, from its `position` on),
- * and what each track follows across them (`choices`, by track: a preset's key, or a number).
+ * An owned entity's create form: how many it makes at once (`count`, at the owner's next positions), and what each
+ * track follows across them (`choices`, by track: a preset's key, or a number).
  */
-export interface OwnedCreateFormData extends OwnedFormData {
+export interface OwnedCreateFormData {
   choices: Record<string, number | string>;
   count: number;
 }
 
-/**
- * How many owned entities the create makes at once, a toggle of its counts, and which they are under it ("Levels 6 to
- * 15"), from its first position as typed.
- */
+/** How many owned entities the create makes at once, a toggle of its counts. */
 function BatchCountField({ counts, form, positionWord }: BatchCountFieldProps) {
   const { field } = useController({ control: form.control, name: "count" });
-  const from = useWatch({ control: form.control, name: "position" });
-  const count = Number(field.value);
   return (
     <OptionToggle
       label={`${positionWord.many} to Create`}
       options={counts.map((each) => ({ label: String(each), value: String(each) }))}
-      value={String(count)}
+      value={String(field.value)}
       onChange={(next) => field.onChange(Number(next))}
-      caption={count > 1 && Number.isInteger(from) ? `${positionWord.many} ${from} to ${from + count - 1}` : undefined}
     />
   );
 }
@@ -142,9 +129,9 @@ function BatchTrackField({ form, track }: BatchTrackFieldProps) {
 }
 
 /**
- * An owned entity's create (3.5's Create New Level): one, its number and its fields, or several at once from its number
- * on (`counts`: "Levels 6 to 15"), each track a preset or a number across them (`tracks`), which its parent sends in
- * one request.
+ * An owned entity's create (3.5's Create New Level), always at the owner's next positions, which it names ("Adds levels
+ * 6 to 15 to Fighter."): one or several at once (`counts`), alike, each track a preset or a number across them
+ * (`tracks`), which its parent sends in one request.
  */
 export function CreateOwnedDialog({
   open,
@@ -152,66 +139,38 @@ export function CreateOwnedDialog({
   form,
   onSubmit,
   pending,
-  rulesetId,
   baseRules,
   counts,
-  lists,
-  omitted,
+  nextPositions,
   ownedType,
+  ownerName,
   submitDisabled,
   tracks,
 }: CreateOwnedDialogProps) {
-  const { withAll } = useAllAmounts(rulesetId, lists.amounts);
-  // Its rules' last position bounds the number (none while they load: the save's check still holds it)
   const { rules } = useRules(baseRules);
-  const lastPosition = rules?.progression.lastPosition;
   const positionWord = positionWordsOf(ownedType, rules?.words);
-  const position = positionWord.one;
   const count = useWatch({ control: form.control, name: "count" });
-  const several = count > 1;
-  // The first of several leaves room for the others up to the last position
-  const lastFirst = lastPosition === undefined || !several ? lastPosition : lastPosition - count + 1;
-
-  // The endpoint takes an amount of every entity its amounts are of (3.5's every ruleset save), 0 when unset; several
-  // made at once send theirs, every amounts track's
-  const amountsRole = lists.amounts?.role;
-  const handleSubmit = (data: OwnedCreateFormData) =>
-    onSubmit(
-      amountsRole && !several
-        ? {
-            ...data,
-            links: { ...data.links, [amountsRole]: withAll(data.links?.[amountsRole] ?? []) as OwnedLinks[string] },
-          }
-        : data,
-    );
+  const positions = nextPositions.slice(0, count);
 
   return (
     <CreateDialog
       open={open}
       onClose={onClose}
-      title={`Create New ${several ? positionWord.many : position}`}
+      title={`Create New ${count > 1 ? positionWord.many : positionWord.one}`}
       form={form}
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
       pending={pending}
-      submitDisabled={several && submitDisabled}
+      submitDisabled={submitDisabled}
     >
-      {counts.length > 1 && <BatchCountField counts={counts} form={form} positionWord={positionWord} />}
-      <FormTextField
-        control={form.control}
-        name="position"
-        rules={wholeNumberRules(1, `${position} is required`, lastFirst)}
-        number
-        label={several ? `First ${position}` : position}
-        fullWidth
-        slotProps={{
-          htmlInput: { min: 1, max: lastFirst },
-        }}
-      />
-      {several ? (
-        tracks.map((track) => <BatchTrackField key={track.key} form={form} track={track} />)
-      ) : (
-        <EntityFields form={form} entityType={ownedType} omitted={omitted} rulesetId={rulesetId} />
+      {positions.length > 0 && (
+        <DialogContentText>
+          Adds {formatPositions(positions, positionWord).toLowerCase()} to {ownerName}.
+        </DialogContentText>
       )}
+      {counts.length > 1 && <BatchCountField counts={counts} form={form} positionWord={positionWord} />}
+      {tracks.map((track) => (
+        <BatchTrackField key={track.key} form={form} track={track} />
+      ))}
     </CreateDialog>
   );
 }

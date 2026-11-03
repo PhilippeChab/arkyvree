@@ -12,9 +12,9 @@ import type { RulesDescription, RulesDescriptions, RulesWords } from "./queries.
 import {
   entityTypeLabel,
   entityTypeOfActivityName,
+  formatPositions,
   formatWordCount,
   getActivityLabelOverrides,
-  type PositionWord,
   positionWordOf,
   positionWordsOf,
   withArticle,
@@ -190,15 +190,6 @@ function formatLinksChange(change: ChangedLinks, tierNames: TierNames): string {
     ...(change.removed.length > 0 ? [`removed ${entries(change.removed)}`] : []),
   ];
   return `${change.label}: ${parts.join("; ")}`;
-}
-
-/** Positions as a list in their word: a run "Levels 6 to 15", others "Levels 1, 3 and 5", one "Level 6". */
-function formatPositions(positions: readonly number[], word: PositionWord) {
-  const [first] = positions;
-  const last = positions.at(-1) ?? first;
-  if (positions.length === 1) return `${word.one} ${first}`;
-  if (positions.every((position, index) => position === first + index)) return `${word.many} ${first} to ${last}`;
-  return `${word.many} ${positions.slice(0, -1).join(", ")} and ${last}`;
 }
 
 /**

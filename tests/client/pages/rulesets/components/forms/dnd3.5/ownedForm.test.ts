@@ -3,7 +3,6 @@ import { describe, expect, test } from "bun:test";
 import { withoutPlaces } from "@/client/src/pages/rulesets/components/forms/entityFields.ts";
 import {
   emptyOwned,
-  nextOwned,
   omittedPlacesOf,
   type OwnedLists,
   ownedListsOf,
@@ -58,15 +57,9 @@ const READ = {
   ],
 };
 
-/** A class level as its route reads it, its saves' bases among its links. */
-function level(number: number, baseBonus: { amount: number; toId: string }[]) {
-  const links = baseBonus.map((link) => ({ ...link, role: "baseBonus", toType: "saves", toName: link.toId }));
-  return readOwned({ id: `l${number}`, position: number, updatedAt: "", links }, LISTS);
-}
-
 describe("a class level's form", () => {
   // A bonded creature's class's level (a familiar's) has no base attack bonus, saves or skill points: its sheet works
-  // them out, so its page and its Add Level dialog show none, and its lists hold no amounts
+  // them out, so its page shows none, and its lists hold no amounts
   test("leaves out the fields its class's kind has none of, by their places, and none while the kind is unknown", () => {
     const { tracks } = Engine.rules().describeAll()["Dungeons & Dragons: 3.5"].progression;
     const bonded = [`fields.${CLASS_LEVEL_BAB}`, "links.baseBonus", `fields.${CLASS_LEVEL_SKILL_POINTS}`];
@@ -81,17 +74,7 @@ describe("a class level's form", () => {
     expect([familiars.amounts, familiars.grants?.role]).toEqual([undefined, "grants"]);
   });
 
-  // Its create dialog opens on the class's next level
-  test("starts one above the class's highest level, from its saves (its fields: `withEntityFields`)", () => {
-    const levels = [level(2, [{ ...FORTITUDE, amount: 3 }]), level(1, [FORTITUDE])];
-    expect(nextOwned(levels, LISTS)).toEqual({
-      position: 3,
-      links: { baseBonus: [{ ...FORTITUDE, amount: 3 }], grants: [] },
-    });
-  });
-
-  test("starts from the first level's empty form for a class without one, or while its levels load", () => {
-    expect([nextOwned([], LISTS), nextOwned(undefined, LISTS)]).toEqual([emptyOwned(LISTS), emptyOwned(LISTS)]);
+  test("starts from the first level's empty form", () => {
     expect(emptyOwned(LISTS)).toEqual({ position: 1, links: { baseBonus: [], grants: [] } });
   });
 

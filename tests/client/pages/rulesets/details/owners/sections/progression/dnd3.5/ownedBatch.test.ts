@@ -5,6 +5,7 @@ import {
   buildOwnedBatch,
   defaultBatchChoices,
   listBatchCounts,
+  listOpenPositions,
   type OwnerTrack,
 } from "@/client/src/pages/rulesets/details/owners/sections/progression/ownedBatch.ts";
 import { amountTrackKey } from "@/client/src/pages/rulesets/details/owners/sections/progression/progressionDraft.ts";
@@ -47,14 +48,28 @@ function level(position: number, bab: number, saves: [number, number], skills: n
 }
 
 describe("Several class levels made at once", () => {
-  test("offer one, five, ten or twenty levels, cut to what's left up to level 20", () => {
-    expect(listBatchCounts(1, 20)).toEqual([1, 5, 10, 20]);
-    expect(listBatchCounts(6, 20)).toEqual([1, 5, 10, 15]);
-    expect(listBatchCounts(18, 20)).toEqual([1, 3]);
-    expect(listBatchCounts(20, 20)).toEqual([1]);
-    // Past the last level, or while the rules load: one, as the create always offered
-    expect(listBatchCounts(21, 20)).toEqual([1]);
-    expect(listBatchCounts(1, undefined)).toEqual([1]);
+  test("are always the class's next levels, a gap's first, up to level 20", () => {
+    expect(listOpenPositions([], 20)).toEqual(Array.from({ length: 20 }, (_, index) => index + 1));
+    expect(listOpenPositions([1, 2, 3, 4, 5], 20).slice(0, 3)).toEqual([6, 7, 8]);
+    // A gap comes first
+    expect(listOpenPositions([1, 2, 5], 20).slice(0, 4)).toEqual([3, 4, 6, 7]);
+    expect(listOpenPositions([...Array.from({ length: 19 }, (_, index) => index + 1)], 20)).toEqual([20]);
+    expect(
+      listOpenPositions(
+        Array.from({ length: 20 }, (_, index) => index + 1),
+        20,
+      ),
+    ).toEqual([]);
+    // While the rules load: the next alone
+    expect(listOpenPositions([1, 2], undefined)).toEqual([3]);
+  });
+
+  test("offer one, five, ten or twenty levels, cut to how many the class lacks", () => {
+    expect(listBatchCounts(20)).toEqual([1, 5, 10, 20]);
+    expect(listBatchCounts(15)).toEqual([1, 5, 10, 15]);
+    expect(listBatchCounts(3)).toEqual([1, 3]);
+    expect(listBatchCounts(1)).toEqual([1]);
+    expect(listBatchCounts(0)).toEqual([]);
   });
 
   test("give each level its tracks' values at its number, a save's base bonus among its links", () => {
@@ -64,7 +79,7 @@ describe("Several class levels made at once", () => {
       [amountTrackKey(REFLEX)]: "poor",
       [SKILLS.key]: 4,
     };
-    const levels = buildOwnedBatch(6, 10, TRACKS, choices, LISTS);
+    const levels = buildOwnedBatch([6, 7, 8, 9, 10, 11, 12, 13, 14, 15], TRACKS, choices, LISTS);
     expect(levels.map(({ position }) => position)).toEqual([6, 7, 8, 9, 10, 11, 12, 13, 14, 15]);
     const role = LISTS.amounts?.role ?? "";
     expect([levels[0], levels[9]]).toEqual([
@@ -90,7 +105,7 @@ describe("Several class levels made at once", () => {
       },
     ]);
     // A class whose kind sets no track (a bonded creature's) makes levels of their numbers alone
-    expect(buildOwnedBatch(1, 2, [], {}, LISTS)).toEqual([
+    expect(buildOwnedBatch([1, 2], [], {}, LISTS)).toEqual([
       { position: 1, fields: {} },
       { position: 2, fields: {} },
     ]);

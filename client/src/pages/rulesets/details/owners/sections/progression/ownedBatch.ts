@@ -1,7 +1,8 @@
 /**
- * Several owned entities made at once (3.5's class levels 6 to 15), as an owner's create dialog lays them out: how many
- * its rules' last position leaves room for (`listBatchCounts`), what each track starts at (`defaultBatchChoices`), and
- * each owned entity's form, its tracks' values as their choices give them at its position (`buildOwnedBatch`).
+ * Several owned entities made at once (3.5's class levels 6 to 15), as an owner's create dialog lays them out: the
+ * positions a create takes, always the owner's next (`listOpenPositions`), how many it may make at once
+ * (`listBatchCounts`), what each track starts at (`defaultBatchChoices`), and each owned entity's form, its tracks'
+ * values as their choices give them at its position (`buildOwnedBatch`).
  */
 
 import type { OwnedFormData, OwnedLists, OwnedRead } from "@/client/src/pages/rulesets/components/forms/index.ts";
@@ -38,21 +39,20 @@ function valueAt(track: OwnerTrack, choice: BatchChoice | undefined, position: n
 }
 
 /**
- * Each owned entity a create makes at once, from its first position (`from`), `count` of them: its position, the fields
- * its tracks set (`tracks`: each its stored field) and its amounts among its links, at its list's role (`lists`: every
- * entity its amounts' tracks are of), each its track's value at its position (`choices`, by track).
+ * Each owned entity a create makes at once, at its positions (`positions`, the owner's next: `listOpenPositions`): its
+ * position, the fields its tracks set (`tracks`: each its stored field) and its amounts among its links, at its list's
+ * role (`lists`: every entity its amounts' tracks are of), each its track's value at its position (`choices`, by
+ * track).
  */
 export function buildOwnedBatch(
-  from: number,
-  count: number,
+  positions: readonly number[],
   tracks: readonly OwnerTrack[],
   choices: Readonly<Record<TrackKey, BatchChoice>>,
   { amounts }: OwnedLists,
 ): OwnedFormData[] {
   const fieldTracks = tracks.filter(({ rules }) => rules.source === "field" && rules.field !== undefined);
   const amountTracks = tracks.filter(({ rules, toId }) => rules.source === "amounts" && toId !== undefined);
-  return Array.from({ length: count }, (_, index) => {
-    const position = from + index;
+  return positions.map((position) => {
     const valueOf = (track: OwnerTrack) => valueAt(track, choices[track.key], position);
     return {
       position,
@@ -86,11 +86,21 @@ export function defaultBatchChoices(
 }
 
 /**
- * How many owned entities a create may make at once from a position (`from`): one, five, ten or twenty, each cut to
- * what's left up to the rules' last position (`lastPosition`, its owner's last: 3.5's level 20), the same count once.
- * One alone while the rules load, or from past their last.
+ * How many owned entities a create may make at once, of the positions open to it (`open`: `listOpenPositions`'s): one,
+ * five, ten or twenty, each cut to how many are open, the same count once; none once the owner has them all.
  */
-export function listBatchCounts(from: number, lastPosition: number | undefined): number[] {
-  const left = lastPosition === undefined ? 1 : Math.max(lastPosition - from + 1, 1);
-  return [...new Set(BATCH_COUNTS.map((count) => Math.min(count, left)))].filter((count) => count >= 1);
+export function listBatchCounts(open: number): number[] {
+  return [...new Set(BATCH_COUNTS.map((count) => Math.min(count, open)))].filter((count) => count >= 1);
+}
+
+/**
+ * The positions a create takes, in the order it takes them (`taken`, the owner's own): those the owner lacks up to its
+ * rules' last (`lastPosition`: 3.5's level 20), a gap's first, so its next is always the lowest it lacks; while the
+ * rules load, that one alone.
+ */
+export function listOpenPositions(taken: readonly number[], lastPosition: number | undefined): number[] {
+  const held = new Set(taken);
+  const last = lastPosition ?? Math.max(0, ...taken) + 1;
+  const open = Array.from({ length: last }, (_, index) => index + 1).filter((position) => !held.has(position));
+  return lastPosition === undefined ? open.slice(0, 1) : open;
 }
