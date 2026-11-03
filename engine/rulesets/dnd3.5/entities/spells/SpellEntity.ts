@@ -14,9 +14,6 @@ import type { Spell } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 import { SPELL_FIELDS } from "./fields.ts";
 
-/** A spell's level: 0 to the rules' last. */
-const SPELL_LEVEL = z.number().int().min(0).max(RULESET_LIMITS.spellLevel);
-
 /** A spell's grouping, which its feats go by: its school, none without one. */
 function getGrouping(fields: PartialFieldValues<typeof SPELL_FIELDS.fields>) {
   return typeof fields.school === "string" && fields.school.length > 0 ? fields.school : null;
@@ -26,6 +23,9 @@ function getGrouping(fields: PartialFieldValues<typeof SPELL_FIELDS.fields>) {
 export default class SpellEntity extends ListedEntity<"spells", typeof SPELL_FIELDS.fields> {
   /** Its list narrows by a spell level (its `listedIn` links' `tier`). */
   protected static override readonly tiered = true;
+
+  /** A spell's level on a list: 0 to the rules' last, as its list's filter and a class's list's add read it. */
+  static readonly level = z.number().int().min(0).max(RULESET_LIMITS.spellLevel);
 
   /** The Spell Focus feats a spell's school brings. */
   private readonly spellFocus = new SpellFocusFeats(this.view);
@@ -59,7 +59,7 @@ export default class SpellEntity extends ListedEntity<"spells", typeof SPELL_FIE
    */
   protected override listOf(where: { listedIn?: string; tier?: number }) {
     const { listedIn, tier } = where;
-    RulesError.parse(SPELL_LEVEL.optional(), tier, ["tier"]);
+    RulesError.parse(SpellEntity.level.optional(), tier, ["tier"]);
     const listed = listedIn !== undefined || tier != null;
     return {
       describe: <T extends Pick<EntityRecord, "fields" | "id" | "links">>(rows: T[]) => this.describeListed(rows),

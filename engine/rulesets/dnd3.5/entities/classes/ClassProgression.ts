@@ -381,14 +381,14 @@ export default class ClassProgression {
    */
   private get spellList() {
     const [list] = this.spellLists;
-    const id = list?.id ?? this.dnd35.aptitudeIdBySlug.get(`${stripSeparators(this.klass.name)}spells`);
-    const aptitude = id === undefined ? undefined : this.dnd35.aptitudesById.get(id);
+    const id = list?.id ?? this.table.describeOwnList().id;
+    const aptitude = id === undefined || id === null ? undefined : this.dnd35.aptitudesById.get(id);
     return aptitude && { id: aptitude.id, name: aptitude.name, slug: stripSeparators(aptitude.name) };
   }
 
   /** The spell lists the class's levels give slots in, its own first: read once. */
   private get spellLists() {
-    return (this.lists ??= this.table.describeSpellLists());
+    return (this.lists ??= this.table.describeSlotLists());
   }
 
   /**
@@ -423,8 +423,9 @@ export default class ClassProgression {
    * own picks (what the pool's own modifiers add, by the level's id; a feat the level grants adds its own apart), the
    * spell list its spells go to (none for a class without one), whether its levels give spells in several
    * (`severalSpellLists`, which the public API answers), why its spell tables take no save (`spellTablesRefusal`, in
-   * the save's words: a class without a list, or with several; none when they take one), and the picks the ruleset's
-   * feats give in pools (`featPicks`, a granted feature's).
+   * the save's words: a class without a list, or with several; none when they take one), its own list (`ownSpellList`:
+   * "Witch Spells", its id none while the ruleset has no such aptitude, which its list's first add makes), and the
+   * picks the ruleset's feats give in pools (`featPicks`, a granted feature's).
    */
   describe() {
     const { rulesetData } = this;
@@ -448,6 +449,7 @@ export default class ClassProgression {
     const list = this.spellList;
     return {
       featPicks,
+      ownSpellList: this.table.describeOwnList(),
       pools,
       severalSpellLists: this.spellLists.length > 1,
       spellList: list ? { id: list.id, name: list.name } : null,

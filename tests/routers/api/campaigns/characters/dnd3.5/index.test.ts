@@ -379,6 +379,7 @@ describe("campaigns characters", () => {
       const resolved = await expectOk(
         member.api.api.activities.resolve[":targetType"][":targetId"].$get({
           param: { targetType: activity!.targetType, targetId: characterId },
+          query: {},
         }),
       );
       expect(resolved.url).toBe(`/campaigns/${campaignId}/characters/${characterId}`);

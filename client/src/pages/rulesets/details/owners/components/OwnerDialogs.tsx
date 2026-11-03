@@ -1,12 +1,45 @@
 import { DialogContentText } from "@mui/material";
 import { useController, type UseFormReturn, useWatch } from "react-hook-form";
 
-import { CreateDialog, DeleteDialog, FormTextField, OptionToggle } from "@/client/src/components/common/index.ts";
+import {
+  CreateDialog,
+  DeleteDialog,
+  FormTextField,
+  OptionToggle,
+  SelectField,
+} from "@/client/src/components/common/index.ts";
 import { useRules } from "@/client/src/hooks/index.ts";
+import type { EntityRow } from "@/client/src/lib/entityRequests.ts";
+import type { RulesDescription } from "@/client/src/lib/queries.ts";
 import { formatPositions, type PositionWord, positionWordsOf } from "@/client/src/lib/rulesetLabels.ts";
-import { wholeNumberRules } from "@/client/src/lib/validation.ts";
+import { requiredRules, wholeNumberRules } from "@/client/src/lib/validation.ts";
+import { EntitiesAutocomplete } from "@/client/src/pages/rulesets/components/index.ts";
 import type { LinkWords } from "@/client/src/pages/rulesets/details/owners/ownerTab.ts";
 import type { BaseRules } from "@/shared/enums.ts";
+
+interface AddListedDialogProps {
+  form: UseFormReturn<ListedFormData>;
+  /**
+   * The list it adds to, as the tab read it: its id, which an entity already on it can't be picked for (none: the
+   * owner's own list, which the add makes), and its name
+   */
+  list: { id: string | null; name: string | null } | null;
+  onClose: () => void;
+  onExited: () => void;
+  onSubmit: (data: ListedFormData) => void;
+  open: boolean;
+  /** The owner's name, which a list the add makes is for */
+  ownerName: string;
+  pending: boolean;
+  /** The role of its entities' links to their lists (its kind's pools' `role`), by which one on the list is known */
+  role: string | undefined;
+  rulesetId: string;
+  /** The tiers an entity takes on the list, as its rules name them */
+  tiers: RulesDescription["tiers"];
+  /** The kind its entities are of (`counts.type`: 3.5's spells), which it searches */
+  type: string;
+  words: ListedWords;
+}
 
 interface BatchCountFieldProps {
   /** How many it may make at once */
@@ -59,6 +92,22 @@ interface RemoveLinkDialogProps {
   words: LinkWords;
 }
 
+interface RemoveListedDialogProps {
+  /** What it removes, by name, and the list it's removed from */
+  entityName: string | undefined;
+  listName: string | null | undefined;
+  onClose: () => void;
+  onConfirm: () => void;
+  open: boolean;
+  pending: boolean;
+  /**
+   * The removal can be undone from Local Changes: the entity is inherited, or the ruleset's copy of one (its page's
+   * `restorableDelete`, which the server answers).
+   */
+  restorable: boolean;
+  words: ListedWords;
+}
+
 /**
  * A track an owned entity's create sets across what it makes (3.5's base attack bonus, a save, skill points): its key
  * (its choice's, under `choices`), its label, what it starts at (`initial`: a preset's key, or a number), the presets
@@ -75,6 +124,22 @@ export interface BatchTrack {
   min: number;
   presets: readonly { key: string; label: string }[];
   unitLabel?: string;
+}
+
+/**
+ * The entities an add to an owner's list sends (3.5's spells to a class's spell list), as its dialog holds them: those
+ * picked, by their id and name, and their tier on it (a spell's level).
+ */
+export interface ListedFormData {
+  entities: Pick<EntityRow, "id" | "name">[];
+  tier: number;
+}
+
+/** What a list's add and removal say, in its rules' words: its entities' (`one`, `many`) and its tiers' (`tier`). */
+export interface ListedWords {
+  many: string;
+  one: string;
+  tier: string;
 }
 
 /**
@@ -131,6 +196,74 @@ function BatchTrackField({ form, positions, track }: BatchTrackFieldProps) {
       fullWidth
       slotProps={{ htmlInput: { min: track.min, max: track.max } }}
     />
+  );
+}
+
+/**
+ * The add of entities to an owner's list (3.5's spells to a class's spell list): those picked, searched on the server
+ * (one already on the list greyed, saying so), and their tier on it, in its rules' words, sent in one save; a list the
+ * add makes (the owner's own, where it has none) said to be new.
+ */
+export function AddListedDialog({
+  form,
+  list,
+  onClose,
+  onExited,
+  onSubmit,
+  open,
+  ownerName,
+  pending,
+  role,
+  rulesetId,
+  tiers,
+  type,
+  words,
+}: AddListedDialogProps) {
+  const many = words.many.toLowerCase();
+  const { field: picked, fieldState } = useController({
+    control: form.control,
+    name: "entities",
+    rules: { validate: (entities) => entities.length > 0 || `Pick at least one ${words.one.toLowerCase()}` },
+  });
+  // An entity on the list already, at any tier, can't be picked again
+  const alreadyListed = (entity: EntityRow) =>
+    list?.id && entity.links.some((link) => link.role === role && link.toId === list.id)
+      ? `Already on ${list.name}`
+      : undefined;
+  // A list the add makes says so
+  const made = list?.id === null ? `, a new list for ${ownerName}` : "";
+  return (
+    <CreateDialog
+      open={open}
+      onClose={onClose}
+      onExited={onExited}
+      title={`Add ${words.many}`}
+      form={form}
+      onSubmit={onSubmit}
+      pending={pending}
+      submitLabel={`Add ${words.many}`}
+    >
+      <DialogContentText>
+        {`Pick the ${many} to add to ${list?.name}${made}, and their ${words.tier.toLowerCase()} on it.`}
+      </DialogContentText>
+      <EntitiesAutocomplete
+        rulesetId={rulesetId}
+        type={type}
+        label={words.many}
+        inputRef={picked.ref}
+        error={fieldState.error}
+        value={picked.value}
+        onChange={picked.onChange}
+        unavailable={alreadyListed}
+      />
+      <SelectField
+        control={form.control}
+        name="tier"
+        label={words.tier}
+        rules={requiredRules(`${words.tier} is required`)}
+        options={tiers.map(({ label, tier }) => ({ label, value: tier }))}
+      />
+    </CreateDialog>
   );
 }
 
@@ -192,6 +325,22 @@ export function RemoveLinkDialog({ restorable, words, ...props }: RemoveLinkDial
         restorable
           ? `Are you sure you want to remove this ${one} from the ${words.owner}? You can restore it from Local Changes.`
           : `Are you sure you want to remove this ${one} from the ${words.owner}? This action cannot be undone.`
+      }
+      confirmLabel={`Remove ${words.one}`}
+    />
+  );
+}
+
+export function RemoveListedDialog({ entityName, listName, restorable, words, ...props }: RemoveListedDialogProps) {
+  const what = `${entityName} from ${listName}`;
+  return (
+    <DeleteDialog
+      {...props}
+      title={`Remove ${words.one}`}
+      message={
+        restorable
+          ? `Are you sure you want to remove ${what}? You can restore it from Local Changes.`
+          : `Are you sure you want to remove ${what}? This action cannot be undone.`
       }
       confirmLabel={`Remove ${words.one}`}
     />

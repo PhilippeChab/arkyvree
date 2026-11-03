@@ -171,6 +171,21 @@ export interface LinkWrite {
 }
 
 /**
+ * Adding entities to a list an owner counts on, or removing one from it (a class's spell list's spells): the owner as
+ * the view has it, the kind its entities are (`listedType`), what it writes before them (`writes`: the list an add to
+ * the owner's own list makes, where the ruleset has none, at the id the entities' links name), each entity's edit (its
+ * lists, the one changed among them; its other columns as they are), and what its activity records (`activity`). The
+ * owner itself isn't written.
+ */
+export interface ListEntriesPlan {
+  activity: Record<string, unknown>;
+  edits: EntityEditPlan<PlanOwner>[];
+  listedType: string;
+  owner: PlanOwner;
+  writes?: EntityWrites;
+}
+
+/**
  * An entity a plan makes with the one it writes, in the same ruleset: its type (`type`), its row (`EntityWrite`: its
  * fields and its single links among it), its links of the roles it holds many of (`links`, by role), and its
  * modifiers and requirements.

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- D&D 3.5: add spells to a class's spell list, several at once, and remove them, from the class's Spell List tab; a class's first add makes its list
 - Rulesets choose the levels that give every character a feat or an ability score increase
 - Import a character from a PCGen file
 - D&D 3.5: edit a class's whole progression at once

@@ -1,19 +1,39 @@
 import { Box, MenuItem, Stack, TextField } from "@mui/material";
 import { keepPreviousData, useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { BlankState, LoadMoreButton, SearchBar, type TableColumn } from "@/client/src/components/common/index.ts";
-import { useCustomizationPages, useRules, useSearchParam, useSearchText } from "@/client/src/hooks/index.ts";
+import {
+  BlankState,
+  LoadError,
+  LoadMoreButton,
+  SearchBar,
+  type TableColumn,
+} from "@/client/src/components/common/index.ts";
+import {
+  useCustomizationPages,
+  useRules,
+  useRulesetPermissions,
+  useSearchParam,
+  useSearchText,
+} from "@/client/src/hooks/index.ts";
 import type { EntityRow } from "@/client/src/lib/entityRequests.ts";
 import { itemsBeforeLastPage, pageItems } from "@/client/src/lib/pageItems.ts";
 import type { ProgressionCounts, RulesDescription } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
 import { DescriptionCell, RulesetSectionTable, TierFilter } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import { AddListedDialog, RemoveListedDialog } from "@/client/src/pages/rulesets/details/owners/components/index.ts";
 import { kindIconOf } from "@/client/src/pages/rulesets/details/owners/ownerKind.ts";
-import { listEntitiesQuery, ownerListsQuery } from "@/client/src/pages/rulesets/details/owners/ownerSectionQueries.ts";
+import {
+  listEntitiesQuery,
+  ownerListsQuery,
+  ownerProgressionQuery,
+} from "@/client/src/pages/rulesets/details/owners/ownerSectionQueries.ts";
 import type { OwnerSectionProps } from "@/client/src/pages/rulesets/details/owners/ownerTab.ts";
 import { useOpenEntity, useTierFilter } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { buildEntityPagePath } from "@/shared/customization/entities.ts";
+import { isRecord } from "@/shared/isRecord.ts";
+
+import { useOwnerListEntries } from "./useOwnerListEntries.ts";
 
 /** What an owner's owned entities count (`counts`), and the words its tab says them in, its rules' (`rules`). */
 interface OwnerListProps extends OwnerSectionProps {
@@ -28,9 +48,12 @@ const COLUMNS: TableColumn[] = [
 
 /**
  * The entities of an owner's list (3.5's spells of its spell list), at a tier and searched, each opening its
- * customization page; a picker of its lists where it counts on several, its own first.
+ * customization page; a picker of its lists where it counts on several, its own first. Who may edit the ruleset's
+ * content adds several of its kind's entities to the list shown at once, at a tier (the one shown, to start), and
+ * removes one from it, each entity written as its own page's save writes it (an inherited one copied); an owner with
+ * no list yet takes its first add on its own list, which the add makes, under the name its rules give it.
  */
-function OwnerList({ rulesetId, ownerId, ownerType, ruleset, counts, rules }: OwnerListProps) {
+function OwnerList({ rulesetId, ownerId, ownerName, ownerType, ruleset, counts, rules }: OwnerListProps) {
   const openEntity = useOpenEntity();
   const queryClient = useQueryClient();
   const pages = useCustomizationPages();
@@ -42,6 +65,11 @@ function OwnerList({ rulesetId, ownerId, ownerType, ruleset, counts, rules }: Ow
   const many = entityTypeLabel(counts.type, rules.words, true);
   const owner = entityTypeLabel(ownerType, rules.words).toLowerCase();
   const kind = { pools: rules.kinds.find(({ type }) => type === counts.type)?.pools, type: counts.type };
+  const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
+  const words = { many, one, tier: rules.tierWord.one };
+  // An add shows the tier it added at
+  const entries = useOwnerListEntries(rulesetId, ownerType, ownerId, counts, kind.pools?.type, words, setTier);
+  const { data: progression, error: progressionError } = useQuery(ownerProgressionQuery(rulesetId, ownerType, ownerId));
 
   const {
     data: lists = [],
@@ -49,7 +77,13 @@ function OwnerList({ rulesetId, ownerId, ownerType, ruleset, counts, rules }: Ow
     error: listsError,
   } = useQuery(ownerListsQuery(rulesetId, ownerType, ownerId, counts.lists));
   // The owner's own list opens first; one it counts on too (a pious templar's blackguard list) is picked
-  const listId = lists.some((list) => list.id === chosenListId) ? chosenListId : lists[0]?.id;
+  const list = lists.find(({ id }) => id === chosenListId) ?? lists.at(0);
+  const listId = list?.id;
+  // Without a list, its own one its first add makes (none while its lists load)
+  const answer: Record<string, unknown> | undefined = progression;
+  const ownList = readOwnList(answer?.[counts.ownList]);
+  const newList = lists.length === 0 && !isLoadingLists && ownList?.id === null ? ownList : undefined;
+  const addTo = list ?? newList;
 
   // Another tier or search keeps the list's entities showing; without a list there's nothing to keep
   function keepListEntities<T>(previous: T | undefined) {
@@ -85,9 +119,15 @@ function OwnerList({ rulesetId, ownerId, ownerType, ruleset, counts, rules }: Ow
 
   return (
     <Stack spacing={3}>
+      {/* Its own list, which a class without one adds to, is its progression's */}
+      {!!progressionError && !progression && lists.length === 0 && (
+        <LoadError what={`${one} List`} error={progressionError} />
+      )}
       <SearchBar
         {...searchBarProps}
         searchPlaceholder={`Search ${many.toLowerCase()}…`}
+        addLabel={`Add ${many}`}
+        onAdd={canEdit && addTo ? () => entries.openAdd(addTo, tier) : undefined}
         filters={
           <>
             {lists.length > 1 && (
@@ -124,15 +164,19 @@ function OwnerList({ rulesetId, ownerId, ownerType, ruleset, counts, rules }: Ow
           columns={COLUMNS}
           onRowClick={handleRowClick}
           onRowPrefetch={handleRowPrefetch}
+          canEdit={canEdit}
+          onRemove={list && ((entity: EntityRow) => entries.openRemove(entity, list))}
           renderCell={renderCell}
           empty={
             <BlankState
               icon={kindIconOf(rules, counts.type)}
               title={`No ${many.toLowerCase()}`}
               description={
-                lists.length === 0 && !isLoadingLists
-                  ? `This ${owner} has no ${one.toLowerCase()} list of its own.`
-                  : `No ${many.toLowerCase()} found for this ${owner} at the selected ${rules.tierWord.one.toLowerCase()}.`
+                canEdit && newList
+                  ? `This ${owner} has no ${one.toLowerCase()} list yet: adding ${many.toLowerCase()} makes ${newList.name}.`
+                  : lists.length === 0 && !isLoadingLists
+                    ? `This ${owner} has no ${one.toLowerCase()} list of its own.`
+                    : `No ${many.toLowerCase()} found for this ${owner} at the selected ${rules.tierWord.one.toLowerCase()}.`
               }
             />
           }
@@ -144,8 +188,42 @@ function OwnerList({ rulesetId, ownerId, ownerType, ruleset, counts, rules }: Ow
           onClick={() => fetchNextPage()}
         />
       </Stack>
+      <AddListedDialog
+        open={entries.addDialog.open}
+        onClose={entries.addDialog.close}
+        onExited={entries.addDialog.onExited}
+        list={entries.addDialog.target}
+        ownerName={ownerName}
+        form={entries.form}
+        onSubmit={entries.handleAdd}
+        pending={entries.addMutation.isPending}
+        role={kind.pools?.role}
+        rulesetId={rulesetId}
+        tiers={rules.tiers}
+        type={counts.type}
+        words={words}
+      />
+      <RemoveListedDialog
+        open={entries.removeDialog.open}
+        onClose={entries.removeDialog.close}
+        onConfirm={entries.confirmRemove}
+        pending={entries.removeMutation.isPending}
+        entityName={entries.removeDialog.target?.entity.name}
+        listName={entries.removeDialog.target?.list.name}
+        restorable={!!entries.removeDialog.target?.restorable}
+        words={words}
+      />
     </Stack>
   );
+}
+
+/**
+ * An owner's own list, as its progression's answer gives it (at its rules' `counts.ownList`): its id, none while its
+ * ruleset has no such list, which its first add makes, and its name ("Witch Spells").
+ */
+function readOwnList(value: unknown): { id: string | null; name: string } | undefined {
+  if (!isRecord(value) || typeof value.name !== "string") return undefined;
+  return { id: typeof value.id === "string" ? value.id : null, name: value.name };
 }
 
 /**

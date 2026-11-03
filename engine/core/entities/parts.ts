@@ -1,13 +1,15 @@
 /**
  * The parts of an entity a kind may have past its own row, each bound to the entity as the view has it: the entities it
- * owns (a class's levels), the links of a role it edits one at a time (a class's skills), its progression (its owned
- * entities' at once) and its tables. A kind that has none of one has it refused as not found (`RulesetEngine`'s `part`).
+ * owns (a class's levels), the links of a role it edits one at a time (a class's skills), the lists its owned entities
+ * count entities on (a class's spell lists), its progression (its owned entities' at once) and its tables. A kind that
+ * has none of one has it refused as not found (`RulesetEngine`'s `part`).
  */
 
 import type { EntityForm } from "@/engine/core/fields/index.ts";
 import type {
   LinkAddPlan,
   LinkRemovePlan,
+  ListEntriesPlan,
   OwnedCreateManyPlan,
   OwnedCreatePlan,
   OwnedDeletePlan,
@@ -24,6 +26,16 @@ export interface EntityLinks {
   describe(): unknown;
   planAdd(toId: string): LinkAddPlan;
   planRemove(toId: string): LinkRemovePlan;
+}
+
+/**
+ * The lists an entity's owned entities count entities on (a class's spell lists, each of spells): what adding entities
+ * to one at a tier (`tier`: a spell's level on it; `listId` none: the entity's own list, made first where its ruleset
+ * has none), or removing one from it, writes on those entities.
+ */
+export interface EntityLists {
+  planAdd(listId: string | undefined, targetIds: string[], tier: number | undefined): ListEntriesPlan;
+  planRemove(listId: string, targetId: string): ListEntriesPlan;
 }
 
 /**

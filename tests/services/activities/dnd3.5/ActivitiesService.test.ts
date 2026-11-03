@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
 import { type Feat, type KlassLevel, type Mechanic } from "@/engine/rulesets/dnd3.5/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
+  Activities,
   Campaigns,
   CharacterContributors,
   Characters,
@@ -15,11 +17,12 @@ import {
 } from "@/server/repositories/index.ts";
 import { ActivitiesService } from "@/server/services/activities/index.ts";
 import { CampaignCharactersService } from "@/server/services/campaigns/characters/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
 import type { Session } from "@/shared/relations.ts";
 import { createTestCampaign } from "@/tests/support/campaigns.ts";
 import { addCharacterContributor } from "@/tests/support/contributors.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset, createTestRuleset, subscribeTestRuleset } from "@/tests/support/rulesets.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser, makeSession } from "@/tests/support/users.ts";
 
@@ -164,6 +167,65 @@ describe("ActivitiesService.getActivityUrl", () => {
       ["classSkill", fighter, `/rulesets/${r}/classes/${fighter}/skills`],
     ])
       expect({ targetType, url: await resolve(targetType, id) }).toEqual({ targetType, url });
+  });
+
+  // A fork's change to a class it inherits that leaves the class as it is (its spell list's) records the fork it wrote
+  test("links a ruleset's entity in the ruleset its activity recorded writing, where that ruleset shows it", async () => {
+    const { rulesetId: core, classMap, spellMap, aptMap, skillMap } = await getSeedCtx();
+    const wizard = classMap.pc["Wizard"];
+    const { user, session } = await createTestUser();
+    const fork = await createSeededTestRuleset(user.id);
+    const list = aptMap["Wizard Spells"];
+    await EntitiesService.addListedEntities(session, fork.id, "classes", wizard, list, [spellMap["Bless"]], 1);
+    const [activity] = (await Activities.findPage(db, { userId: user.id }, { limit: 1, page: 1 })).items;
+    expect(activity).toMatchObject({ targetType: "classes", targetId: wizard, data: { rulesetId: fork.id } });
+    const open = (rulesetId?: string) => ActivitiesService.getActivityUrl(session, "classes", wizard, rulesetId);
+
+    expect(await open(fork.id)).toBe(`/rulesets/${fork.id}/classes/${wizard}`);
+    // Without one, or in a ruleset the session can't read, or one that doesn't show the class: in the class's own
+    const coreLink = `/rulesets/${core}/classes/${wizard}`;
+    const { user: stranger } = await createTestUser();
+    const [unreadable, unrelated] = [await createTestRuleset(stranger.id), await createTestRuleset(user.id)];
+    expect([await open(), await open(unreadable.id), await open(unrelated.id)]).toEqual([coreLink, coreLink, coreLink]);
+    // Once the fork copies the class, at its copy
+    const { fromId: copyId } = await EntitiesService.addEntityLink(
+      session,
+      fork.id,
+      "classes",
+      wizard,
+      skillMap["Climb"],
+    );
+    expect(await open(fork.id)).toBe(`/rulesets/${fork.id}/classes/${copyId}`);
+  });
+
+  // A delete leaves a tombstone that maps the inherited id to the deleted copy: the link opens the class's own page
+  test("links an entity the ruleset its activity wrote has deleted since, or an extension it takes has, in its own ruleset", async () => {
+    const { rulesetId: core, classMap, spellMap, aptMap } = await getSeedCtx();
+    const wizard = classMap.pc["Wizard"];
+    const coreLink = `/rulesets/${core}/classes/${wizard}`;
+    const { user, session } = await createTestUser();
+    const list = aptMap["Wizard Spells"];
+    const addBless = (rulesetId: string) =>
+      EntitiesService.addListedEntities(session, rulesetId, "classes", wizard, list, [spellMap["Bless"]], 1);
+    const open = (rulesetId: string) => ActivitiesService.getActivityUrl(session, "classes", wizard, rulesetId);
+
+    // Deleted in the fork itself
+    const fork = await createSeededTestRuleset(user.id);
+    await addBless(fork.id);
+    expect(await open(fork.id)).toBe(`/rulesets/${fork.id}/classes/${wizard}`);
+    await EntitiesService.deleteEntity(session, fork.id, "classes", wizard);
+    expect(await open(fork.id)).toBe(coreLink);
+
+    // Deleted in an extension of its source chain, a fork of the same base
+    const subscriber = await createSeededTestRuleset(user.id);
+    const extension = await createTestRuleset(user.id, { rulesetId: core, kind: "extension" });
+    await subscribeTestRuleset(subscriber.id, [extension.id]);
+    RulesetViews.invalidate(subscriber.id);
+    await addBless(subscriber.id);
+    expect(await open(subscriber.id)).toBe(`/rulesets/${subscriber.id}/classes/${wizard}`);
+    await EntitiesService.deleteEntity(session, extension.id, "classes", wizard);
+    RulesetViews.invalidate(subscriber.id);
+    expect(await open(subscriber.id)).toBe(coreLink);
   });
 
   test("links a customization to its entity's customization page, on its tab", async () => {

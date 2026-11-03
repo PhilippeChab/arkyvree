@@ -88,7 +88,8 @@ export default function ActivitiesPage() {
                   return (
                     <DataRow
                       key={activity.id}
-                      {...(isNavigable && clickableProps(() => openTarget(activity.targetType, activity.targetId)))}
+                      {...(isNavigable &&
+                        clickableProps(() => openTarget(activity.targetType, activity.targetId, activity.data)))}
                       sx={[isNavigable && CLICKABLE_ROW_SX]}
                     >
                       <DataCell slot="primary">

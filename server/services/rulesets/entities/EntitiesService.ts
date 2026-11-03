@@ -9,6 +9,7 @@ import type { Session } from "@/shared/relations.ts";
 
 import { Copies } from "./concerns/Copies.ts";
 import { Links } from "./concerns/Links.ts";
+import { Lists } from "./concerns/Lists.ts";
 import { Owned } from "./concerns/Owned.ts";
 import { Progressions } from "./concerns/Progressions.ts";
 import EntityWriter, { type EntityBody } from "./EntityWriter.ts";
@@ -31,9 +32,10 @@ type ListWhere = Record<string, unknown> & {
  * what its form writes (`EntityWriter`), checked against the copies a plan reaches. An action a kind has none of (an
  * ability's create, a race's templates) its rules refuse as not found. Its copies (`Copies`: its templates, variants),
  * and an entity's parts its kind may have: the entities it owns (`Owned`: a class's levels), the links it edits
- * (`Links`: a class's skills), its progression (`Progressions`) and its tables.
+ * (`Links`: a class's skills), the lists its owned entities count on (`Lists`: a class's spell lists' spells), its
+ * progression (`Progressions`) and its tables.
  */
-class EntitiesService extends include(Object, Copies, Links, Owned, Progressions) {
+class EntitiesService extends include(Object, Copies, Links, Lists, Owned, Progressions) {
   /** A kind's writer for an action (`action`), which opens its rules for it first: refused when it has none of it. */
   private writerOf(type: RulesetEntityType, action: EntityAction) {
     return new EntityWriter(type, (scope) => Engine.for(scope).entities(type, action));

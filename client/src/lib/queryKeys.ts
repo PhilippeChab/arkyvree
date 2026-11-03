@@ -155,7 +155,8 @@ export const QUERY_KEYS = {
     all: ["activities"] as const,
     list: (filters?: Record<string, unknown>) => ["activities", "list", filters] as const,
     /** Where an activity's or a notification's target is now, resolved as it's opened. */
-    target: (targetType: string, targetId: string) => ["activities", "target", targetType, targetId] as const,
+    target: (targetType: string, targetId: string, rulesetId: string | undefined) =>
+      ["activities", "target", targetType, targetId, rulesetId] as const,
   },
   notifications: {
     all: ["notifications"] as const,

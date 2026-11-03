@@ -250,6 +250,16 @@ export default class EntityNames {
   }
 
   /**
+   * The closest hidden ancestor of a name (`name`, of `entityType`) whose local copy the ruleset deleted (a tombstone),
+   * which an entity a save makes under that name takes over (`repointTombstone`), as a create's does; none without
+   * one. It refuses nothing: what the view shows, the save's plan checked, and the ruleset's own names the index holds.
+   */
+  async findTombstoneAncestor(tx: Db, entityType: RulesetEntityType, name: string): Promise<string | null> {
+    const tombstones = await this.findTombstones(tx, entityType, await this.findNamed(tx, entityType, [name]));
+    return tombstones.get(name) ?? null;
+  }
+
+  /**
    * Points the tombstone snapshot a deleted local copy of `ancestorEntityId` left at the new entity of its name, so the
    * inherited entity stays hidden behind it.
    */

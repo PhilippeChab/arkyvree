@@ -5,21 +5,25 @@ import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { NO_TIME } from "@/client/src/lib/durations.ts";
 import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { ApiError } from "@/client/src/services/ApiError.ts";
+import { isRecord } from "@/shared/isRecord.ts";
 
 import { activityTargetQuery } from "./activityTargetQueries.ts";
 
 /**
  * Open the page of an activity or notification target. The link is resolved
  * server-side at click time, since the entity may have moved (COW copies),
- * been deleted, or become inaccessible since the activity was recorded.
+ * been deleted, or become inaccessible since the activity was recorded: a
+ * ruleset's content in the ruleset its activity recorded writing (its data's
+ * `rulesetId`: a fork's change to a class it inherits), where that ruleset shows it.
  */
 export function useOpenActivityTarget() {
   const navigate = useNavigate();
   const snackbar = useSnackbar();
   const queryClient = useQueryClient();
 
-  return (targetType: string, targetId: string) => {
-    queryClient.fetchQuery({ ...activityTargetQuery(targetType, targetId), staleTime: NO_TIME }).then(
+  return (targetType: string, targetId: string, data: unknown) => {
+    const rulesetId = isRecord(data) && typeof data.rulesetId === "string" ? data.rulesetId : undefined;
+    queryClient.fetchQuery({ ...activityTargetQuery(targetType, targetId, rulesetId), staleTime: NO_TIME }).then(
       ({ url }) => navigate(url),
       // A 403 says why ("You no longer have access to this character"), a 404 that there's no page to open, the entity
       // gone or its page too (a deleted class's levels); any other failure (the server's, the network's) is an error of

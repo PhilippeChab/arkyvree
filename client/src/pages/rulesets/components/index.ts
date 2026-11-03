@@ -1,5 +1,6 @@
 export { byName } from "./byName.ts";
 export { DescriptionCell } from "./DescriptionCell.tsx";
+export { EntitiesAutocomplete } from "./EntitiesAutocomplete.tsx";
 export { EntityDeleteDialog } from "./EntityDeleteDialog.tsx";
 export { EntityDetailLayout, EntityPageError } from "./EntityDetailLayout.tsx";
 export { EntityDetailsCard } from "./EntityDetailsCard.tsx";

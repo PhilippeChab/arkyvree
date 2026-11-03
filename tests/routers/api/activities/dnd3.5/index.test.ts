@@ -62,10 +62,12 @@ describe("activities", () => {
   test("resolves an activity's target to a page", async () => {
     const { activities, fork, aptitude } = await userWithActivities();
     const resolve = activities.resolve[":targetType"][":targetId"];
-    expect(await expectOk(resolve.$get({ param: { targetType: "aptitudes", targetId: aptitude.id } }))).toEqual({
+    expect(
+      await expectOk(resolve.$get({ param: { targetType: "aptitudes", targetId: aptitude.id }, query: {} })),
+    ).toEqual({
       url: `/rulesets/${fork.id}/aptitudes/${aptitude.id}`,
     });
-    await expectStatus(resolve.$get({ param: { targetType: "aptitudes", targetId: NIL_UUID } }), 404);
+    await expectStatus(resolve.$get({ param: { targetType: "aptitudes", targetId: NIL_UUID }, query: {} }), 404);
   });
 
   test("requires a session", async () => {
