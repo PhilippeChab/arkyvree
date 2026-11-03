@@ -42,12 +42,7 @@ export default new Hono<ApiKeyContext>()
   )
   .post(
     "/:id/reject",
-    describeRoute({
-      effect: "removes",
-      response: v1InviteStatus,
-      status: 200,
-      summary: "Rejects a pending invite to the key's user",
-    }),
+    describeRoute({ response: v1InviteStatus, status: 200, summary: "Rejects a pending invite to the key's user" }),
     validate("param", idParam),
     async (c) => {
       const { id } = c.req.valid("param");

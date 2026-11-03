@@ -108,8 +108,8 @@ unsubscribing it from an extension answers its extensions.
 - What a route does to what its user reaches (`RouteEffect`: reads, changes, or removes what they won't get back as it
   was) is its method's, a GET reading and a DELETE removing, but where its description's `effect` says otherwise: a
   POST that saves nothing (`advancement-plan`, a target path's completions) reads, and one that discards (a fork's
-  entity restored, a contributor leaving, a share link replaced, an invite taken back or turned down) removes. The MCP
-  server's tools call a route by it.
+  entity restored, a contributor leaving, a share link replaced) removes. An invite answered or taken back changes:
+  another invite undoes it. The MCP server's tools call a route by it.
 - Outside production, `describeRoute` checks each success a route answers against its schema (a strict one: a key it
   doesn't name fails too), so every test that calls a route checks the document describes its answer.
 

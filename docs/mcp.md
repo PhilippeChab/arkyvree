@@ -20,7 +20,7 @@ reference.
 | `describe_route` | What a route takes and answers: its parameters, its body's and its answer's schemas, and the schemas they name | read-only |
 | `read` | Calls a route that reads: a GET, or a POST that saves nothing (a plan answered, a path checked) | read-only |
 | `write` | Calls a route that changes: creates, edits, saves | writes |
-| `remove` | Calls a route that removes what the user won't get back as it was: an archive, a delete, a fork's changes discarded, a contributor leaving, a share link replaced, an invite taken back or turned down | destructive |
+| `remove` | Calls a route that removes what the user won't get back as it was: an archive, a delete, a fork's changes discarded, a contributor leaving, a share link replaced | destructive |
 | `read_sheet` | A character's sheet without the app's layout or each entry's long text, a section or a few at a time | read-only |
 
 - **Which tool calls a route** is what the route does (`RouteEffect`, `server/middlewares/describeRoute.ts`): its

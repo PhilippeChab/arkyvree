@@ -18,9 +18,10 @@ describe("Catalog", () => {
     expect(toolOf("POST", "/v1/characters/{id}/contributors/leave")).toBe("removes");
     expect(toolOf("POST", "/v1/rulesets/{id}/contributors/leave")).toBe("removes");
     expect(toolOf("POST", "/v1/characters/{id}/share")).toBe("removes");
-    expect(toolOf("POST", "/v1/campaign-invites/{id}/revoke")).toBe("removes");
+    // Answering an invite, or taking one back, is an answer another invite undoes: a change, which no client warns of
+    expect(toolOf("POST", "/v1/campaign-invites/{id}/revoke")).toBe("changes");
     for (const invites of ["campaign-invites", "character-invites", "ruleset-invites"])
-      expect(toolOf("POST", `/v1/${invites}/{id}/reject`)).toBe("removes");
+      expect(toolOf("POST", `/v1/${invites}/{id}/reject`)).toBe("changes");
   });
 
   test("names a path's route, a literal segment before a parameter, its prefix and query optional", () => {
