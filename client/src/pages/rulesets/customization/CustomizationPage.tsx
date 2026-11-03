@@ -121,8 +121,10 @@ function CustomizationView({
               rulesetId,
               deleteFn: () => deleteEntityFn(data, rulesetId, entityId),
               // An owned entity is listed by its owner alone (a class level by its class's levels): a ruleset has no
-              // list of them
-              listKeys: [ownerQueryKey ?? QUERY_KEYS.rulesets.section(rulesetId, type)],
+              // list of them; its kind's other pages say which of them can be deleted now
+              listKeys: ownerQueryKey
+                ? [ownerQueryKey, QUERY_KEYS.rulesets.entityPages(rulesetId, type)]
+                : [QUERY_KEYS.rulesets.section(rulesetId, type)],
               entityKey,
               restorable,
             }

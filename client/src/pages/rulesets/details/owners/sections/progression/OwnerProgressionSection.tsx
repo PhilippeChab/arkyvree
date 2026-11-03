@@ -196,12 +196,9 @@ export function OwnerProgressionSection({
     ownedEntities.map(({ position }) => position),
     progressionRules?.lastPosition,
   );
-  // What it makes starts and carries on from the owner as the table shows it: its Progression's edits too, unsaved or
-  // saving, which a save keeps showing until its owned entities are read again
-  const shown: ShownOwned = {
-    entities: ownedEntities,
-    read: (ownedEntity, key) => readEditedTrack(ownedEntity, key, draft.edits),
-  };
+  // What it makes starts and carries on from the owner as saved: its create waits while the Progression has edits,
+  // unsaved or saving (an inherited owner's copy, which a create follows, would drop them)
+  const shown: ShownOwned = { entities: ownedEntities, read: readTrack };
   const batchDefaults = defaultBatchChoices(tracks, shown);
   // What a track's choice gives what it makes, under its toggle: its first and its last ("+16/+11/+6 at level 16,
   // +18/+13/+8 at level 20")
@@ -218,7 +215,7 @@ export function OwnerProgressionSection({
   const createOwned = useCreateOwnedBatch(
     rulesetId,
     ownerId,
-    { ownerType, word: { one: ownedWord, many: entityTypeLabel(ownedType, rules?.words, true) } },
+    { ownedType, ownerType, word: { one: ownedWord, many: entityTypeLabel(ownedType, rules?.words, true) } },
     createDialog.close,
   );
   // Opened on one, whatever a cancelled one held
@@ -226,9 +223,9 @@ export function OwnerProgressionSection({
     createForm.reset(createDefaults);
     createDialog.openWith(true);
   };
-  // A track whose entities loaded after the dialog opened starts where its defaults say, as its toggle shows
+  // A track left as it opened, or whose entities loaded after it opened, takes its default, as its toggle shows
   const handleCreateSubmit = (data: OwnedCreateFormData) => {
-    const choices = { ...batchDefaults, ...data.choices };
+    const choices = Object.fromEntries(tracks.map(({ key }) => [key, data.choices[key] ?? batchDefaults[key]]));
     createOwned.mutate(buildOwnedBatch(open.slice(0, data.count), tracks, choices, ownedLists, shown));
   };
   const valuesOf = (read: (ownedEntity: OwnedRead) => number) =>
@@ -326,6 +323,9 @@ export function OwnerProgressionSection({
     }),
   ];
 
+  // A create waits while the Progression has edits, unsaved or saving
+  const createWaits = changes.length > 0 || save.isPending;
+
   // Its edits, and the tracks' editors they were made in
   const discard = () => {
     draft.discard();
@@ -410,9 +410,22 @@ export function OwnerProgressionSection({
 
   return (
     <Stack spacing={3}>
-      {/* Once the owner has every position its rules give, it takes no more */}
+      {/* Once the owner has every position its rules give, it takes no more; it waits for its owned entities, and while
+          its Progression has edits, unsaved or saving, which a create's copy of an inherited owner would drop */}
       {canEdit && open.length > 0 && (
-        <ListToolbar actions={<AddButton label={`Add ${positionWord.one}`} onClick={handleCreate} />} />
+        <ListToolbar
+          actions={
+            <Tooltip describeChild title={createWaits ? `Save or discard the progression's changes first` : ""}>
+              <span>
+                <AddButton
+                  label={`Add ${positionWord.one}`}
+                  onClick={handleCreate}
+                  disabled={!ownedRows || createWaits}
+                />
+              </span>
+            </Tooltip>
+          }
+        />
       )}
       {!!amountsError && !amountEntities && (
         <LoadError what={entityTypeLabel(amountsType, rules?.words, true)} error={amountsError} />

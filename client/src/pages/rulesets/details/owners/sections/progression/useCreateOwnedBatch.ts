@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { formatWordCount } from "@/client/src/lib/rulesetLabels.ts";
 import type { OwnedFormData } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { ownedEntitiesQuery, ownerParam } from "@/client/src/pages/rulesets/details/owners/ownerSectionQueries.ts";
@@ -13,6 +14,8 @@ import { toSentenceCase } from "@/shared/text.ts";
 
 /** What an owner's owned entities' create is of: its owner's kind, and its messages' word for them. */
 interface OwnedBatchOf {
+  /** Its owned entities' kind (3.5's `class-levels`), whose pages it refreshes: which of them can be deleted changes */
+  ownedType: string;
   /** Its owner's kind (3.5's `classes`), whose routes it's sent through */
   ownerType: string;
   /** Its messages' word for the owned entities, singular and plural ("Class Level", "Class Levels") */
@@ -26,7 +29,7 @@ interface OwnedBatchOf {
  * `onCreated` closes its dialog.
  */
 export function useCreateOwnedBatch(rulesetId: string, ownerId: string, of: OwnedBatchOf, onCreated: () => void) {
-  const { ownerType, word } = of;
+  const { ownedType, ownerType, word } = of;
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const { followCopy, queryKeysToInvalidate, tag } = useOwnerCopy(rulesetId, ownerType, ownerId);
@@ -46,6 +49,7 @@ export function useCreateOwnedBatch(rulesetId: string, ownerId: string, of: Owne
       snackbar.success(made === 1 ? `${toSentenceCase(word.one)} created` : `${formatWordCount(made, word)} created`);
       void invalidateRulesetEdit(queryClient, rulesetId, [
         ownedEntitiesQuery(rulesetId, ownerType, ownerId).queryKey,
+        QUERY_KEYS.rulesets.entityPages(rulesetId, ownedType),
         ...queryKeysToInvalidate,
       ]);
       onCreated();

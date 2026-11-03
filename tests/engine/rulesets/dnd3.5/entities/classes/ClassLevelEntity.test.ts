@@ -64,6 +64,15 @@ describe("A class's levels", () => {
       expect(issuesOf(() => levels.planCreateMany([{ position: 1 }, { position: 21 }]))).toMatchObject([
         { category: "owned.1.position" },
       ]);
+      // Only the class's next levels: a gap would stop its characters there
+      expect(refusalOf(() => levels.planCreate({ position: 2 }))).toEqual({
+        message: "Batch Class's next level is 1",
+        refusal: "conflict",
+      });
+      expect(refusalOf(() => levels.planCreateMany([{ position: 1 }, { position: 3 }]))).toEqual({
+        message: "Batch Class's next levels are 1 to 2",
+        refusal: "conflict",
+      });
     });
     // A level the class has refuses them all, as its own create would be
     const { classMap, rulesetId } = await getSeedCtx();

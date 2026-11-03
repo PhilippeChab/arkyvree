@@ -115,8 +115,13 @@ test.describe("A class built from scratch", () => {
       page.getByRole("group", { name: "Base Attack Bonus" }).getByRole("button", { name: "Medium (¾)" }),
     ).toHaveAttribute("aria-pressed", "true");
 
-    // Set to Good on its Progression, unsaved, the next levels start at Good too: what the table shows
+    // Set to Good on its Progression, Add Level waits for the change's save; saved, the next level starts at Good
     await page.getByRole("group", { name: "Base Attack Bonus" }).getByRole("button", { name: "Good (full)" }).click();
+    await expect(page.getByRole("button", { name: "Add Level" })).toBeDisabled();
+    const saved = apiResponse(page, "PUT", /\/entities\/classes\/[a-f0-9-]+\/progression$/);
+    await page.getByRole("button", { name: "Save Progression" }).click();
+    await saved;
+    await expect(page.getByRole("button", { name: "Add Level" })).toBeEnabled({ timeout: 10_000 });
     await page.getByRole("button", { name: "Add Level" }).click();
     const next = page.getByRole("dialog", { name: "Create New Level" });
     await expect(next.getByText(`Adds level 11 to ${className}.`, { exact: true })).toBeVisible();

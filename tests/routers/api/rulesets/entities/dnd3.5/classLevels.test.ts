@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { DND35_COMPLETE_DIVINE_NAME } from "@/content/dnd3.5/rulesetNames.ts";
 import type { Klass } from "@/engine/rulesets/dnd3.5/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Activities, Entities } from "@/server/repositories/index.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
@@ -92,16 +93,16 @@ describe("rulesets class levels", () => {
         json: { fields: { [CLASS_LEVEL_BAB]: 1, [CLASS_LEVEL_SKILL_POINTS]: 4 }, position: 1 },
       }),
     );
-    const fifth = await expectOk(
+    const second = await expectOk(
       levels.$post({
         param: classParam(id, classId),
-        json: { fields: { [CLASS_LEVEL_BAB]: 5, [CLASS_LEVEL_SKILL_POINTS]: 4 }, position: 5 },
+        json: { fields: { [CLASS_LEVEL_BAB]: 2, [CLASS_LEVEL_SKILL_POINTS]: 4 }, position: 2 },
       }),
     );
 
     const param = (entityId: string) => ({ id, entityType: "class-levels" as const, entityId });
     expect(await expectOk(requirements.$get({ param: param(first.id) }))).toEqual([]);
-    expect(await expectOk(requirements.$get({ param: param(fifth.id) }))).toEqual([]);
+    expect(await expectOk(requirements.$get({ param: param(second.id) }))).toEqual([]);
   });
 
   test("reads a class's spells per day, spells known, feat pools and spell lists", async () => {
@@ -167,7 +168,7 @@ describe("rulesets class levels", () => {
     const { id, classId } = await setup();
     const post = (position: number) =>
       levels.$post({ param: classParam(id, classId), json: { fields: { [CLASS_LEVEL_BAB]: 1 }, position } });
-    await expectOk(post(3));
+    for (const position of [1, 2, 3]) await expectOk(post(position));
     expect(await (await expectStatus(post(3), 409)).json()).toMatchObject({
       message: "Level Class already has a level 3",
     });
@@ -186,6 +187,8 @@ describe("rulesets class levels", () => {
     expect(await (await expectStatus(post(4), 409)).json()).toMatchObject({
       message: "Level Class already has a level 4",
     });
+    // Views read from here on hold it: the next level is 5
+    RulesetViews.invalidate(id);
 
     // And on an inherited class: a level its source got after the fork's view was read meets the index on its copy
     const fork = await createTestRuleset(SEED_USER_ID, { rulesetId: id });
@@ -227,24 +230,31 @@ describe("rulesets class levels", () => {
     ]);
   });
 
-  test("refuses several levels with one the class has, given twice or out of bounds, making none", async () => {
+  test("refuses levels the class has, given twice, out of bounds or past its next, making none", async () => {
     const { id, classId } = await setup();
     const param = classParam(id, classId);
-    await expectOk(levels.$post({ param, json: levelsAt([3])[0] }));
+    await expectOk(levels.$post({ param, json: levelsAt([1])[0] }));
     const post = (owned: unknown[]) => severalLevels.$post({ param, json: { owned } as never });
     const levelNumbers = async () => (await expectOk(levels.$get({ param }))).map(({ position }) => position);
 
-    expect(await (await expectStatus(post(levelsAt([1, 2, 3, 4])), 409)).json()).toMatchObject({
-      message: "Level Class already has a level 3",
+    expect(await (await expectStatus(post(levelsAt([1, 2, 3])), 409)).json()).toMatchObject({
+      message: "Level Class already has a level 1",
     });
-    expect(await levelNumbers()).toEqual([3]);
+    expect(await levelNumbers()).toEqual([1]);
 
-    expect(await (await expectStatus(post(levelsAt([1, 2, 1])), 400)).json()).toMatchObject({
-      issues: [{ category: "owned.2.position", message: "Level 1 is listed twice" }],
+    expect(await (await expectStatus(post(levelsAt([2, 3, 2])), 400)).json()).toMatchObject({
+      issues: [{ category: "owned.2.position", message: "Level 2 is listed twice" }],
     });
     const pastLast = { fields: { [CLASS_LEVEL_BAB]: 1 }, position: 21 };
-    expect(await (await expectStatus(post([...levelsAt([1]), pastLast]), 400)).json()).toMatchObject({
+    expect(await (await expectStatus(post([...levelsAt([2]), pastLast]), 400)).json()).toMatchObject({
       issues: [{ category: "owned.1.position" }],
+    });
+    // Not the class's next levels: a gap they'd leave stops its characters there
+    expect(await (await expectStatus(post(levelsAt([3, 4])), 409)).json()).toMatchObject({
+      message: "Level Class's next levels are 2 to 3",
+    });
+    expect(await (await expectStatus(levels.$post({ param, json: levelsAt([5])[0] }), 409)).json()).toMatchObject({
+      message: "Level Class's next level is 2",
     });
     await expectStatus(post([]), 400);
     await expectStatus(post([{ ...levelsAt([1])[0], extra: 1 }]), 400);
@@ -253,7 +263,7 @@ describe("rulesets class levels", () => {
     expect(await (await expectStatus(post(many), 400)).json()).toMatchObject({
       issues: [{ category: "owned", message: "A class has at most 20 levels" }],
     });
-    expect(await levelNumbers()).toEqual([3]);
+    expect(await levelNumbers()).toEqual([1]);
   });
 
   test("deletes a class's last level alone, which a level's page says, so its levels keep no gap", async () => {
