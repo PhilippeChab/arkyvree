@@ -10,6 +10,7 @@
 - API keys and a public API, with its OpenAPI reference
 - An MCP server: connect Claude Code or another AI assistant to your characters and rulesets with an API key
 - Read-only API keys
+- Connect Claude or ChatGPT to your account, and see and disconnect them under Settings
 
 ## 0.6.0 — 2026-10-12
 

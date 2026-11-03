@@ -1,11 +1,14 @@
 # MCP server
 
 An agent (Claude Code, Claude, ChatGPT…) uses the app through its MCP server, at `/mcp`: tools over the public API's
-routes ([public-api.md](./public-api.md)), which act as the user who signed in, with nothing to install. A client
-connects with the server's address and an API key, sent as the public API's is (`Authorization: Bearer <key>`):
+routes ([public-api.md](./public-api.md)), which act as the user who signed in, with nothing to install. Claude,
+Claude Code and ChatGPT connect with the server's address alone, and send their user to the app to allow them
+([OAuth](#oauth)): the one way a person connects, which the help shows. An agent that runs on its own, with no browser
+to sign in with, sends an API key, as the public API's is sent (`Authorization: Bearer <key>`), as Stripe's, GitHub's and
+Linear's MCP servers take one beside their OAuth:
 
 ```bash
-claude mcp add --transport http arkyvree https://rpg.arkyvree.com/mcp --header "Authorization: Bearer ark_…"
+claude mcp add --transport http arkyvree https://rpg.arkyvree.com/mcp
 ```
 
 ## The tools
@@ -50,16 +53,56 @@ reference.
   (no handshake: each request carries its version) and the 2025 handshake today's clients send, statelessly: each
   request is answered by a server made for it (`buildMcpServer`), so any of the app's machines answers any request. A
   GET or a DELETE, a 2025 session's, answers 405.
-- **Sign-in:** the public API's key, as `/v1` reads it (`apiKeyMiddleware`), so a key sees and changes what its user
-  can, a demo's key and a revoked one nothing. A read-only key is offered the tools that read alone (no `write`, no
-  `remove`), and the server's instructions say why; its calls carry it, so the routes refuse it a change as `/v1` does. A request from a browser page of another site (an `Origin` that isn't
-  the app's) is refused, as MCP asks of a server over HTTP; the CSRF check skips `/mcp`, which reads no cookie.
+- **Sign-in** (`mcpSignIn`): an OAuth access token ([OAuth](#oauth)), or the public API's key, as `/v1` reads it
+  (`findKeySignIn`), each acting as its user, a demo's and a revoked one nothing. Without either, a 401 names where the
+  sign-in starts (`WWW-Authenticate: Bearer resource_metadata="…/.well-known/oauth-protected-resource/mcp"`), which
+  Claude and ChatGPT read to send their user to the consent page. A read-only key or app is offered the tools that read
+  alone (no `write`, no `remove`), and the server's instructions say why; its calls carry it, so the routes refuse it a
+  change as `/v1` does. A request from a browser page of another site (an `Origin` that isn't the app's) is refused,
+  as MCP asks of a server over HTTP; the CSRF check skips `/mcp`, which reads no cookie.
 - **The routes a tool calls** run in the process (`server/routers/mcp/v1Calls.ts`): v1's routes (`v1/routes.ts`,
   which `/v1` mounts behind its sign-in), with the user the MCP server's sign-in found, passed with the call. Each call
   runs the route's own checks, validation and answer, its errors answered as the app's, and counts toward its user's
-  requests as a key's does (`apiKeyRateLimit`); an address's are counted at `/mcp`, before its key's lookup
-  (`apiAddressRateLimit`). A call sends on the request's address (`X-Forwarded-For`, `X-Real-IP`), which a route
-  that counts per address (an import) counts it by, as it counts a key's call to `/v1`.
+  requests as a key's does (`apiKeyRateLimit`). An address's failed requests alone are counted at `/mcp`
+  (`mcpAddressRateLimit`): Claude's and ChatGPT's servers send every user's requests from a few addresses, which
+  counting every request would throttle together. No v1 route counts per address: an import counts per user
+  (`apiImportRateLimit`), as its PDFs and uploads do.
+
+## OAuth
+
+Claude (on the web, Desktop, mobile, Claude Code) and ChatGPT sign in to the MCP server with OAuth 2.1, as the MCP
+authorization specification asks: the app is the OAuth client, the app (`APP_URL`) its authorization server, and
+`/mcp` the resource, its tokens for it alone.
+
+- **Discovery** (`server/routers/wellKnown.ts`): the protected resource's metadata (RFC 9728, at
+  `/.well-known/oauth-protected-resource` and `…/mcp`: the resource, `APP_URL/mcp`, and its authorization server), and
+  the authorization server's (RFC 8414, `/.well-known/oauth-authorization-server`): S256 PKCE, public clients
+  (`none`), Client ID Metadata Documents, the `iss` of each answer (RFC 9207, which ChatGPT's stable redirect needs),
+  and the scopes, `read` and `write`.
+- **An app names itself by its document's URL** (a Client ID Metadata Document: Claude's
+  `https://claude.ai/oauth/claude-code-client-metadata`, ChatGPT's `https://chatgpt.com/oauth/client.json`): the server
+  fetches it, an https URL whose host is public, no redirect, 5 KB and 5 seconds at most, and keeps it a day
+  (`account.oauth_clients`, `clientMetadata.ts`). It registers nothing first: there's no registration endpoint, which
+  the specification deprecates. A redirect URI is one the document lists, a loopback one (Claude Code's
+  `http://localhost/callback`) on any port.
+- **The sign-in** (`server/routers/oauth/`, `OAuthService`): `/oauth/authorize` checks the app, its redirect URI and
+  its PKCE challenge, stores the request (`account.oauth_authorizations`, 10 minutes) and sends the browser to the
+  consent page (`/oauth/consent`, the client's), whose session cookie, `SameSite=Strict`, a navigation from the app's
+  site doesn't carry, but its own requests do. An app or a redirect URI the server can't check sends the user to the
+  consent page with why, never to the app. The user allows the app, reading alone or not (its Read Only switch), or
+  turns it down (`/auth/oauth/authorizations/:id/…`): the browser goes back to the app with a code (5 minutes, once)
+  and the app's `state`, or `access_denied`.
+- **Tokens** (`/oauth/token`, a form an app's server posts): the code, with its PKCE verifier, for a connected app
+  (`account.oauth_grants`) and a pair (`account.oauth_tokens`, their SHA-256 digests): an access token (`arka_…`, an
+  hour) and a refresh token (`arkr_…`, 30 days), which replaces the pair once. A refresh token used again disconnects
+  the app: it was stolen or replayed. Its refusals answer as OAuth does (`invalid_grant`), which an app reads to sign
+  in again. `/oauth/revoke` (RFC 7009) disconnects the app of either token. The CSRF check skips both, which read no
+  cookie and take an app's server's form with no `Origin`.
+- **Connected apps:** Settings lists the user's (`/auth/connected-apps`), each disconnected there, and signing out
+  everywhere (a password changed or reset, an account deleted) disconnects them all, as it revokes the keys. The
+  daily cleanup deletes expired sign-ins and pairs, and an app left without one.
+- **Its writes:** before the user answers, a sign-in locks no account (`withSignInWrite`); its answer and every write
+  after it lock the user's (`withAccountWrite`).
 
 ## Testing
 

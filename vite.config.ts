@@ -144,6 +144,12 @@ const baseConfig: UserConfig = {
         target: `http://localhost:${apiPort}`,
         changeOrigin: true,
       },
+      // The MCP server and its OAuth sign-in, which an app reaches at the app's origin: the consent page
+      // (`/oauth/consent`) is the client's
+      "^/(mcp|v1)(/.*)?$|^/oauth/(authorize|token|revoke)|^/\\.well-known/oauth-": {
+        target: `http://localhost:${apiPort}`,
+        changeOrigin: true,
+      },
       "/ws": {
         target: `http://localhost:${apiPort}`,
         ws: true,

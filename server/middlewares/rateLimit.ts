@@ -33,6 +33,13 @@ export const apiAttachmentUploadRateLimit = limitRatePerUser({
 export const apiExportRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: EXPORTS_PER_MINUTE, headers: false });
 
 /**
+ * The public API's character imports, counted per user, whatever signs them in: as many a minute as the app's own
+ * allow an address, each building a character level by level. Per user, so an app's servers (Claude's), which send
+ * every user's requests from a few addresses, don't share one count.
+ */
+export const apiImportRateLimit = limitRatePerUser({ windowMs: MINUTE, limit: 10, headers: false });
+
+/**
  * The public API's requests, counted per user, whatever keys of theirs ask: an agent's run reads a character and its
  * choices a few times a level. Per user, a user's ten keys get no more than one.
  */
@@ -58,5 +65,20 @@ export const importRateLimit = limitRate({ windowMs: MINUTE, limit: 10 });
 
 /** What a picked character file is: asked once a file is picked, its header's tags read, nothing built. */
 export const importSourceRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });
+
+/**
+ * The MCP server's failed requests from an address (a wrong token or none, a lookup by digest each): its successes
+ * count nothing, since an app's servers (Claude's, ChatGPT's) send every user's requests from a few addresses.
+ */
+export const mcpAddressRateLimit = limitRate({ windowMs: MINUTE, limit: 600, failedOnly: true });
+
+/** A browser's sign-ins of an app to the MCP server (`/oauth/authorize`), each fetching the app's document at most. */
+export const oauthAuthorizeRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });
+
+/**
+ * The OAuth token endpoint's failed exchanges from an address: its successes count nothing, since an app's servers
+ * exchange every user's codes and refresh tokens from a few addresses.
+ */
+export const oauthTokenRateLimit = limitRate({ windowMs: MINUTE, limit: 120, failedOnly: true });
 
 export const publicApiRateLimit = limitRate({ windowMs: MINUTE, limit: 30 });

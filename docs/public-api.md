@@ -34,8 +34,8 @@ as it is today, never a promise that it holds no other key.
   changes only what its user can, by the checks the services already make. A session's cookie signs in nothing under
   `/v1`.
 - Its requests are counted per user, whichever keys of theirs ask (`apiKeyRateLimit`: 120 a minute), and its PDFs,
-  which each cost a render, and its image uploads apart (`apiExportRateLimit`: 5 a minute;
-  `apiAttachmentUploadRateLimit`: 20), which the app's own routes count per address. An address's
+  which each cost a render, its image uploads and its imports apart (`apiExportRateLimit`: 5 a minute;
+  `apiAttachmentUploadRateLimit`: 20; `apiImportRateLimit`: 10), which the app's own routes count per address. An address's
   requests are counted before its key is looked up (`apiAddressRateLimit`: 600 a minute), so a wrong key or none, a
   lookup by digest each, is bounded too, for a client that sends its own address: the address is the first
   `X-Forwarded-For` entry, as the app's limits read it, which a client can set.

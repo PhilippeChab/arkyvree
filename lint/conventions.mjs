@@ -9,7 +9,7 @@
  * - `repository-instances`: code uses the repositories' shared instances (`@/server/repositories/index.ts`), which
  *   the request cache wraps; only that file builds one.
  * - `route-conventions`: a route's path params are camelCase (`:modifierId`; `.get`, `.route`, `.on`) and its fixed
- *   segments kebab-case (`/read-all`; a file's name, `robots.txt`, or `*` too), it answers with its status
+ *   segments kebab-case (`/read-all`; a file's name, `robots.txt`, `*` or `.well-known` too), it answers with its status
  *   (`c.json(body, status)`), its validation is the app's `validate` (`@/server/middlewares/index.ts`, which answers in
  *   the API's error envelope), its params are a named schema (`validate("param", ownedParams)`: from a `validation.ts`
  *   when several routers use it, declared at the top of its router otherwise), its body and query are written in it
@@ -95,8 +95,8 @@ const CONCURRENT = new Set(["all", "allSettled", "any", "race"]);
 const DIRECTIVE = /^\s*(?:eslint|oxlint)-disable(?:-next-line|-line)?\b/;
 /** The limit a route that renders or queues a PDF counts its requests with: per user under `/v1`, per address else. */
 const EXPORT_RATE_LIMITS = { api: "exportRateLimit", v1: "apiExportRateLimit" };
-/** kebab-case, a file's name (`sitemap.xml`) or a wildcard */
-const FIXED_SEGMENT = /^([a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9]+)?|\*)$/;
+/** kebab-case, a file's name (`sitemap.xml`), a wildcard, or the web's well-known prefix (`.well-known`, RFC 8615) */
+const FIXED_SEGMENT = /^([a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9]+)?|\*|\.well-known)$/;
 /** The scopes that read a ruleset's view fresh under a write's locks: the writes' helpers' and copy-on-write's own. */
 const FRESH_SCOPES = new Set(["withLockedRulesetScope", "withSharedRulesetScope"]);
 /** A module or folder named for no particular thing: `helpers.ts`, `utils/`. */

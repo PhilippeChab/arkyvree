@@ -33,10 +33,10 @@ A key acts as you: it reads and changes your characters and the rulesets you can
 
 ## Can an AI assistant use Arkyvree?
 
-Yes, through Arkyvree's MCP server, with an API key: an assistant that connects to an MCP server with a key, like Claude Code, reads your characters' sheets and rulesets and changes them as the API does, with nothing to install. Add the server at `https://rpg.arkyvree.com/mcp`, sending your key as `Authorization: Bearer <key>`; in Claude Code:
+Yes, through Arkyvree's MCP server: an assistant like Claude or ChatGPT reads your characters' sheets and rulesets and changes them as you can, with nothing to install.
 
-```bash
-claude mcp add --transport http arkyvree https://rpg.arkyvree.com/mcp --header "Authorization: Bearer <key>"
-```
+In Claude or ChatGPT, add a custom connector with the address `https://rpg.arkyvree.com/mcp`. In Claude Code, run `claude mcp add --transport http arkyvree https://rpg.arkyvree.com/mcp`, then `/mcp` to sign in. Either sends you to Arkyvree, where you allow it, or turn on **Read Only** first so it reads and changes nothing. Your connected assistants are listed under **Settings → Connected Apps**, where you disconnect one; changing or resetting your password disconnects them all.
+
+A script or an agent that runs on its own, with no browser to sign in with, sends an API key instead (`Authorization: Bearer <key>`).
 
 Then ask it what you'd ask the app: "what's my character's armor class?", "add a level and take this feat". Arkyvree marks the tool that archives or deletes apart from the others, so your assistant can ask you before it uses it.

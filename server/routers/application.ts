@@ -14,9 +14,11 @@ import apiRouter from "./api/index.ts";
 import authenticationRouter from "./authentication/index.ts";
 import healthRouter from "./health.ts";
 import mcpRouter from "./mcp/index.ts";
+import oauthRouter from "./oauth/index.ts";
 import staticRouter from "./static.ts";
 import v1Router from "./v1/index.ts";
 import openApiRouter from "./v1/openApi.ts";
+import wellKnownRouter from "./wellKnown.ts";
 import wsRouter from "./ws.ts";
 
 export type Application = typeof application;
@@ -106,6 +108,9 @@ export const application = new Hono<{ Variables: Partial<SessionContext["Variabl
   .route("/v1/openapi.json", openApiRouter)
   .route("/v1", v1Router)
   .route("/mcp", mcpRouter)
+  // How an app signs in to the MCP server: before the static router, which answers no `/.well-known/` path
+  .route("/.well-known", wellKnownRouter)
+  .route("/oauth", oauthRouter)
   .route("/", staticRouter)
   // Everything a route or a service throws: the error in the API's envelope, with its status.
   .onError(toErrorResponse);

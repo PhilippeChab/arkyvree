@@ -7,6 +7,9 @@ import {
   EmailVerifications,
   Exports,
   Notifications,
+  OAuthAuthorizations,
+  OAuthGrants,
+  OAuthTokens,
   PasswordResets,
   Sessions,
   Users,
@@ -43,6 +46,25 @@ export async function runCleanupTask(_payload: unknown, helpers: JobHelpers): Pr
       name: "api_keys",
       run: async () => ({
         rowCount: (await withWrite((tx) => ApiKeys.delete(tx, { expiresBefore: now }))).length,
+      }),
+    },
+    {
+      name: "oauth_authorizations",
+      run: async () => ({
+        rowCount: (await withWrite((tx) => OAuthAuthorizations.delete(tx, { expiresBefore: now }))).length,
+      }),
+    },
+    {
+      name: "oauth_tokens",
+      run: async () => ({
+        rowCount: (await withWrite((tx) => OAuthTokens.delete(tx, { refreshExpiresBefore: now }))).length,
+      }),
+    },
+    {
+      // After the tokens: a connected app whose every refresh token expired is disconnected
+      name: "oauth_grants",
+      run: async () => ({
+        rowCount: (await withWrite((tx) => OAuthGrants.delete(tx, { withoutTokens: true }))).length,
       }),
     },
     {
