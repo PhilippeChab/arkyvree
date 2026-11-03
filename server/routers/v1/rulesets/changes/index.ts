@@ -34,6 +34,7 @@ export default new Hono<ApiKeyContext>()
   .post(
     "/:id/entities/:kind/:entityId/restore",
     describeRoute({
+      effect: "removes",
       response: v1RulesetChanges,
       status: 200,
       summary: "Restores a fork's entity to its parent's, answering the fork's changes left",

@@ -7,6 +7,7 @@ Answers to common questions about Arkyvree. Something missing or unclear? [Open 
 - [What is Arkyvree?](about-arkyvree.md#what-is-arkyvree)
 - [Which game systems are supported?](about-arkyvree.md#which-game-systems-are-supported)
 - [Can another program read my characters?](about-arkyvree.md#can-another-program-read-my-characters)
+- [Can an AI assistant use Arkyvree?](about-arkyvree.md#can-an-ai-assistant-use-arkyvree)
 
 ## [Rulesets](rulesets.md)
 

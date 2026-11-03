@@ -7,12 +7,20 @@ import { InternalError } from "@/server/errors/index.ts";
 /**
  * What a public API route documents: what it does, and what it answers when it succeeds, its status and its body
  * (`response`, none for a 204), or the file it answers instead of JSON, by its media type (`file`: a PDF's
- * `application/pdf`, its `response` none).
+ * `application/pdf`, its `response` none). Its `effect`, when its method doesn't say it.
  */
-export type RouteDescription = { status: 200 | 201 | 202 | 204; summary: string } & (
+export type RouteDescription = { effect?: RouteEffect; status: 200 | 201 | 202 | 204; summary: string } & (
   | { file: "application/pdf"; response: null }
   | { file?: never; response: z.ZodType | null }
 );
+
+/**
+ * What a route does to what its user reaches: reads it, changes it, or removes something they won't get back as it was
+ * (a record archived or deleted, a fork's changes discarded, their own access left). Its method says it (`readRouteEffect`)
+ * but where a route's `effect` says otherwise: a POST that only reads (a plan answered, a path checked), or one that
+ * removes.
+ */
+export type RouteEffect = "changes" | "reads" | "removes";
 
 /** Whether a success answers what its route describes: its file's media type, or a JSON body its schema accepts. */
 async function checkAnswer(response: Response, { file, response: schema }: RouteDescription) {
@@ -42,4 +50,12 @@ export function describeRoute(description: RouteDescription) {
     await checkAnswer(c.res, description);
   });
   return Object.assign(middleware, { description });
+}
+
+/** What a route of `method` does (`RouteEffect`): its description's `effect`, or its method's, a GET reading, a DELETE removing. */
+export function readRouteEffect(method: string, { effect }: RouteDescription): RouteEffect {
+  if (effect) return effect;
+  const upper = method.toUpperCase();
+  if (upper === "GET") return "reads";
+  return upper === "DELETE" ? "removes" : "changes";
 }

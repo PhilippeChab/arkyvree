@@ -90,6 +90,7 @@ export default new Hono<ApiKeyContext>()
   .post(
     "/:id/advancement-plan",
     describeRoute({
+      effect: "reads",
       response: v1AdvancementPlanAnswer,
       status: 200,
       summary: "What an advancement plan comes to, saving nothing: the advancements it adds, and each step's answer",
@@ -106,6 +107,7 @@ export default new Hono<ApiKeyContext>()
   .post(
     "/:id/advancement-plan/options/:step",
     describeRoute({
+      effect: "reads",
       response: v1StepOptions,
       status: 200,
       summary: "A page of a step's options over a plan, or of its groups of options, each eligible or not",

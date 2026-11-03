@@ -1,19 +1,19 @@
 import { httpInstrumentationMiddleware } from "@hono/otel";
 import { Hono } from "hono";
 import { cors as buildCors } from "hono/cors";
-import { HTTPException } from "hono/http-exception";
 import { requestId } from "hono/request-id";
 import { secureHeaders } from "hono/secure-headers";
 
 import { runWithRequestCache } from "@/server/database/index.ts";
 import { isProduction, readEnv } from "@/server/environment.ts";
-import { toJson } from "@/server/errors/index.ts";
+import { toErrorResponse } from "@/server/errors/index.ts";
 import { checkCsrf, requestLogger, type SessionContext, wrapNonErrors } from "@/server/middlewares/index.ts";
 import { collectNotified, publishWsEvent } from "@/server/websockets/index.ts";
 
 import apiRouter from "./api/index.ts";
 import authenticationRouter from "./authentication/index.ts";
 import healthRouter from "./health.ts";
+import mcpRouter from "./mcp/index.ts";
 import staticRouter from "./static.ts";
 import v1Router from "./v1/index.ts";
 import openApiRouter from "./v1/openApi.ts";
@@ -105,12 +105,7 @@ export const application = new Hono<{ Variables: Partial<SessionContext["Variabl
   // Before the public API, whose routes all take a key: its document takes none
   .route("/v1/openapi.json", openApiRouter)
   .route("/v1", v1Router)
+  .route("/mcp", mcpRouter)
   .route("/", staticRouter)
-  .onError((err, c) => {
-    if (err instanceof HTTPException)
-      return c.json({ error: "Forbidden", cause: "forbidden", message: "Forbidden" }, 403);
-
-    // Everything a route or a service throws: the error in the API's envelope, with its status.
-    const [error, code] = toJson(err);
-    return c.json(error, code);
-  });
+  // Everything a route or a service throws: the error in the API's envelope, with its status.
+  .onError(toErrorResponse);

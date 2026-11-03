@@ -61,6 +61,7 @@ export default new Hono<ApiKeyContext>()
   .post(
     "/:id/contributors/leave",
     describeRoute({
+      effect: "removes",
       response: null,
       status: 204,
       summary: "The key's user stops contributing to a character",

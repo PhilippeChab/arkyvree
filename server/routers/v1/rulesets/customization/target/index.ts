@@ -17,6 +17,7 @@ export default new Hono<ApiKeyContext>()
   .post(
     "/:id/customization/target/paths/completions",
     describeRoute({
+      effect: "reads",
       response: v1PathCompletions,
       status: 200,
       summary: "A page of completions for a target path being typed, at the cursor's position",
@@ -55,6 +56,7 @@ export default new Hono<ApiKeyContext>()
   .post(
     "/:id/customization/target/paths/validate",
     describeRoute({
+      effect: "reads",
       response: v1PathValidation,
       status: 200,
       summary: "Whether a target path is valid, its errors, and what it could be",
