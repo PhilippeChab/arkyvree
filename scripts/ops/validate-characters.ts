@@ -1,0 +1,50 @@
+/**
+ * Validates every active character:
+ *  1. Reference scope    — every entity a character names is of its ruleset chain
+ *  2. Pool listings      — a pick through a pool names an entity the pool lists
+ *  3. Due choices       — on the levels its ruleset gives one (3.5's ability increases), and only there
+ *  4. Build integrity    — DetailedCharacter.build() + validate()
+ *
+ * Usage: bun run prod:validate-characters (or DATABASE_URL=… bun scripts/ops/validate-characters.ts)
+ */
+
+import { isNull } from "drizzle-orm";
+
+import { charactersInCharacter } from "@/drizzle/schema.ts";
+import { db } from "@/server/database/index.ts";
+import StoredCharacters from "@/server/repositories/stored/StoredCharacters.ts";
+import type { Character } from "@/shared/relations.ts";
+
+import { checkBuilds } from "./validateCharacters/builds.ts";
+import { printCharacterData } from "./validateCharacters/characterData.ts";
+import { checkDueChoices } from "./validateCharacters/dueChoices.ts";
+import { checkPools } from "./validateCharacters/pools.ts";
+import { checkReferences } from "./validateCharacters/references.ts";
+
+async function main() {
+  const rows = await db
+    .select(StoredCharacters.buildColumns())
+    .from(charactersInCharacter)
+    .where(isNull(charactersInCharacter.deletedAt));
+  const characters: Character[] = rows.map((row) => StoredCharacters.toCharacter(row));
+  if (characters.length === 0) {
+    console.log("No characters to validate.");
+    process.exit(0);
+  }
+  console.log(`Validating ${characters.length} characters...\n`);
+  await printCharacterData(characters);
+
+  const totalIssues =
+    (await checkReferences()) +
+    (await checkPools()) +
+    (await checkDueChoices(characters)) +
+    (await checkBuilds(characters));
+  console.log(
+    totalIssues > 0
+      ? `\n${totalIssues} issue(s) found across ${characters.length} character(s).`
+      : `\nAll ${characters.length} characters pass all checks.`,
+  );
+  process.exit(totalIssues > 0 ? 1 : 0);
+}
+
+await main();

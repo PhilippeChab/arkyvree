@@ -1,0 +1,761 @@
+import { describe, expect, test } from "bun:test";
+
+import { and, eq } from "drizzle-orm";
+
+import { playerCharactersInCampaign } from "@/drizzle/schema.ts";
+import type { Race } from "@/engine/rulesets/dnd3.5/index.ts";
+import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
+import { ConflictError, ForbiddenError, NotFoundError } from "@/server/errors/index.ts";
+import { Visibility } from "@/server/repositories/BaseRepository.ts";
+import {
+  Activities,
+  Attachments,
+  Campaigns,
+  CharacterAdvancements,
+  CharacterInventory,
+  CharacterLinks,
+  Characters,
+  Entities,
+  Modifiers,
+  PlayerCharacters,
+  Players,
+  Requirements,
+} from "@/server/repositories/index.ts";
+import { CharactersService } from "@/server/services/characters/index.ts";
+import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
+import type { Session } from "@/shared/relations.ts";
+import { createTestCampaign } from "@/tests/support/campaigns.ts";
+import { backdateLastChange, findLinks } from "@/tests/support/characters.ts";
+import { addCharacterContributor, addRulesetContributor } from "@/tests/support/contributors.ts";
+import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
+import { createWizardWithFamiliar } from "@/tests/support/dnd3.5/levelFixtures.ts";
+import { addCharacterLevel, findClassLevel, findPicks } from "@/tests/support/dnd3.5/levels.ts";
+import { createTestAttachment } from "@/tests/support/files.ts";
+import { queuedPdfJobs } from "@/tests/support/jobs.ts";
+import {
+  copyEntity,
+  createSeededTestRuleset,
+  createTestRuleset,
+  invalidateSeededRuleset,
+  ownerSessionOf,
+} from "@/tests/support/rulesets.ts";
+import { getSeedCtx, NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { createTestUser, makeSession } from "@/tests/support/users.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
+import {
+  CHARACTER_AGE,
+  CHARACTER_ALIGNMENT,
+  CHARACTER_DEITY,
+  CHARACTER_GENDER,
+  CHARACTER_HEIGHT,
+  CHARACTER_WEIGHT,
+  CHARACTER_XP,
+  RACE_BASE_SPEED,
+  RACE_SIZE,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
+
+const page = { limit: 100, page: 1 };
+
+function ids(rows: { id: string }[]) {
+  return rows.map((r) => r.id);
+}
+
+async function fighterLevel() {
+  const { classMap } = await getSeedCtx();
+  return (await findClassLevel(classMap.pc["Fighter"], 1))!;
+}
+
+/** Another user's private ruleset, with a race. */
+async function setupPrivateRuleset() {
+  const { user: owner } = await createTestUser();
+  const ruleset = await createTestRuleset(owner.id);
+  const [race] = await Entities.create<Race>(db, "races", {
+    name: "Private Race",
+    rulesetId: ruleset.id,
+    fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
+  });
+  return { owner, ruleset, race };
+}
+
+describe("CharactersService", () => {
+  describe("creating a character", () => {
+    test("stores its details, and a score of 10 for each ability not given", async () => {
+      const { user, session } = await createTestUser();
+      const { abilityMap } = await getSeedCtx();
+      const details = {
+        name: "Test Paladin",
+        fields: {
+          [CHARACTER_XP]: 2000,
+          [CHARACTER_ALIGNMENT]: "Lawful Good",
+          [CHARACTER_AGE]: 28,
+          [CHARACTER_GENDER]: "Female",
+          [CHARACTER_HEIGHT]: "6'2\"",
+          [CHARACTER_WEIGHT]: "200 lbs",
+          [CHARACTER_DEITY]: "Bahamut",
+        },
+        description: "A noble paladin",
+        notes: "Sworn to protect",
+      } as const;
+      const scores = { [abilityMap["Strength"]]: 18, [abilityMap["Dexterity"]]: 14 };
+      const paladin = await createCharacterAs(session, { ...details, abilities: scores });
+      expect(paladin).toMatchObject({
+        name: details.name,
+        description: details.description,
+        notes: details.notes,
+        userId: user.id,
+        fields: details.fields,
+      });
+
+      const abilities = Object.fromEntries((await findLinks("score", paladin.id)).map((a) => [a.entityId, a.amount]));
+      expect(Object.keys(abilities)).toHaveLength(6);
+      expect(abilities).toMatchObject({ ...scores, [abilityMap["Wisdom"]]: 10 });
+
+      const plain = await createCharacterAs(session);
+      expect(plain).toMatchObject({ description: null, notes: null });
+      expect(plain.fields).not.toHaveProperty(CHARACTER_DEITY);
+    });
+
+    test("has no limit on how many characters a user keeps", async () => {
+      // There once was a limit of six.
+      const { session } = await createTestUser();
+      const first = await createCharacterAs(session);
+      for (let i = 0; i < 6; i++) await createCharacterAs(session);
+      await CharactersService.archiveCharacter(session, first.id);
+      expect(await CharactersService.unarchiveCharacter(session, first.id)).toMatchObject({
+        id: first.id,
+        deletedAt: null,
+      });
+    });
+
+    test("lets a private ruleset's campaign players and contributors in, and nobody else", async () => {
+      const { owner, ruleset, race } = await setupPrivateRuleset();
+      const onPrivate = { rulesetId: ruleset.id, links: { race: race.id } };
+
+      const { user: player, session: playerSession } = await createTestUser();
+      const [campaign] = await Campaigns.create(db, { name: "Test Campaign", rulesetId: ruleset.id });
+      await Players.create(db, { userId: player.id, campaignId: campaign.id, role: "Player Character" });
+      expect(await createCharacterAs(playerSession, onPrivate)).toMatchObject({
+        rulesetId: ruleset.id,
+        links: { race: race.id },
+        userId: player.id,
+      });
+
+      const { user: contributor, session: contributorSession } = await createTestUser();
+      await addRulesetContributor(ruleset.id, contributor, owner.id);
+      expect(await createCharacterAs(contributorSession, onPrivate)).toMatchObject({
+        rulesetId: ruleset.id,
+        links: { race: race.id },
+        userId: contributor.id,
+      });
+
+      // A member of an archived campaign reads the ruleset, but creates only in a live one
+      const { user: former, session: formerSession } = await createTestUser();
+      const [archived] = await Campaigns.create(db, {
+        name: "Archived Campaign",
+        rulesetId: ruleset.id,
+        deletedAt: new Date().toISOString(),
+      });
+      await Players.create(db, { userId: former.id, campaignId: archived.id, role: "Player Character" });
+      expect(createCharacterAs(formerSession, onPrivate)).rejects.toThrow(ForbiddenError);
+
+      // A stranger isn't told the private ruleset exists
+      const { session: stranger } = await createTestUser();
+      expect(createCharacterAs(stranger, onPrivate)).rejects.toThrow(NotFoundError);
+      expect(createCharacterAs(stranger, { rulesetId: NIL_UUID })).rejects.toThrow(NotFoundError);
+    });
+
+    test("takes a race the ruleset inherits from its parent, and not one of an unrelated ruleset", async () => {
+      const { user, session } = await createTestUser();
+      const { ruleset: parent, race } = await setupPrivateRuleset();
+      const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
+      expect(await createCharacterAs(session, { rulesetId: fork.id, links: { race: race.id } })).toMatchObject({
+        rulesetId: fork.id,
+        links: { race: race.id },
+      });
+
+      const unrelated = await setupPrivateRuleset();
+      expect(
+        createCharacterAs(session, { rulesetId: fork.id, links: { race: unrelated.race.id } }),
+      ).rejects.toMatchObject({
+        message: `Race ${unrelated.race.id} does not belong to the character's ruleset`,
+        refusal: "invalid",
+      });
+    });
+
+    test("takes its race and scores by the ids of what its fork copied, as the copies, and refuses one it lacks by name", async () => {
+      const ctx = await getSeedCtx();
+      const session = makeSession();
+      const fork = await createSeededTestRuleset(SEED_USER_ID);
+      const elf = await copyEntity(db, "races", ctx.raceMap.pc["Elf"], fork);
+      const strength = await copyEntity(db, "abilities", ctx.abilityMap["Strength"], fork);
+      RulesetViews.invalidate(fork.id);
+
+      // The seed's ids are the sources': the API takes them, as it takes the copies' the client sends
+      const values = {
+        rulesetId: fork.id,
+        links: { race: ctx.raceMap.pc["Elf"] },
+        abilities: { [ctx.abilityMap["Strength"]]: 17 },
+      };
+      const character = await createCharacterAs(session, values);
+      expect(character.links.race).toBe(elf.id);
+      const scores = await findLinks("score", character.id);
+      expect(scores.map(({ entityId }) => entityId)).not.toContain(ctx.abilityMap["Strength"]);
+      expect(scores.find(({ entityId }) => entityId === strength.id)?.amount).toBe(17);
+
+      const twice = { [ctx.abilityMap["Strength"]]: 17, [strength.id]: 12 };
+      expect(createCharacterAs(session, { ...values, abilities: twice })).rejects.toMatchObject({
+        message: `Ability ${strength.id} is given more than once`,
+        refusal: "invalid",
+      });
+      const lacking = (kind: string) => ({
+        message: `${kind} ${NIL_UUID} does not belong to the character's ruleset`,
+        refusal: "invalid",
+      });
+      expect(createCharacterAs(session, { ...values, links: { race: NIL_UUID } })).rejects.toMatchObject(
+        lacking("Race"),
+      );
+      expect(createCharacterAs(session, { ...values, abilities: { [NIL_UUID]: 12 } })).rejects.toMatchObject(
+        lacking("Ability"),
+      );
+      // A bonded creature's race, named in the rules' word
+      const [bondedRace] = Object.entries(ctx.raceMap).flatMap(([kind, races]) =>
+        kind === PLAYER_CHARACTER_KIND ? [] : Object.values(races ?? {}),
+      );
+      expect(createCharacterAs(session, { ...values, links: { race: bondedRace } })).rejects.toMatchObject({
+        message: "Race is not valid for a player character",
+        refusal: "invalid",
+      });
+    });
+  });
+
+  describe("reading and changing a character", () => {
+    test("reads it built, changes only the fields sent, and refuses an edit from a stale copy", async () => {
+      const { session } = await createTestUser();
+      const created = await createCharacterAs(session, { fields: { [CHARACTER_DEITY]: "Old Deity" } });
+      const sheet = await CharactersService.getCharacter(session, created.id);
+      expect(sheet).toMatchObject({ id: created.id, name: created.name });
+      // Built: its combat, not only who it is
+      expect(sheet.blocks.map(({ key }) => key)).toContain("combat");
+
+      const fields = {
+        [CHARACTER_AGE]: 35,
+        [CHARACTER_XP]: 5000,
+        [CHARACTER_ALIGNMENT]: "Chaotic Good",
+        description: "Updated",
+      };
+      expect(
+        await CharactersService.updateCharacter(session, created.id, { fields, notes: "Updated notes" }),
+      ).toMatchObject({
+        description: "Updated",
+        notes: "Updated notes",
+        id: created.id,
+        name: created.name,
+        fields: {
+          [CHARACTER_AGE]: 35,
+          [CHARACTER_XP]: 5000,
+          [CHARACTER_ALIGNMENT]: "Chaotic Good",
+          [CHARACTER_DEITY]: "Old Deity",
+        },
+      });
+
+      expect(
+        CharactersService.updateCharacter(session, created.id, {
+          fields: { [CHARACTER_AGE]: 40 },
+          updatedAt: created.updatedAt,
+        }),
+      ).rejects.toThrow(ConflictError);
+    });
+
+    test("sets an ability through the id of a fork's copy of it", async () => {
+      // Regression: scores were matched against the stored, pre-copy ability ids, so every save failed once the fork copied an ability.
+      const ctx = await getSeedCtx();
+      const session = makeSession();
+      const fork = await createTestRuleset(SEED_USER_ID, {
+        rulesetId: ctx.rulesetId,
+      });
+      const character = await createCharacterAs(session, { rulesetId: fork.id });
+      const copy = (await copyEntity(db, "abilities", ctx.abilityMap["Strength"], fork)).id as string;
+      RulesetViews.invalidate(fork.id);
+
+      await CharactersService.updateScores(session, character.id, "score", { [copy]: 17 });
+      const scores = await findLinks("score", character.id);
+      expect(scores.find((a) => a.entityId === ctx.abilityMap["Strength"])?.amount).toBe(17);
+    });
+
+    test("sets a score by either id of an ability its fork copied, and refuses one it lacks by name", async () => {
+      const ctx = await getSeedCtx();
+      const session = makeSession();
+      const fork = await createSeededTestRuleset(SEED_USER_ID);
+      const character = await createCharacterAs(session, { rulesetId: fork.id });
+      const strength = await copyEntity(db, "abilities", ctx.abilityMap["Strength"], fork);
+      RulesetViews.invalidate(fork.id);
+
+      await CharactersService.updateScores(session, character.id, "score", { [ctx.abilityMap["Strength"]]: 15 });
+      const scores = await findLinks("score", character.id);
+      expect(scores.find(({ entityId }) => entityId === ctx.abilityMap["Strength"])?.amount).toBe(15);
+
+      const twice = { [ctx.abilityMap["Strength"]]: 15, [strength.id]: 16 };
+      expect(CharactersService.updateScores(session, character.id, "score", twice)).rejects.toMatchObject({
+        message: `Ability ${strength.id} is given more than once`,
+        refusal: "invalid",
+      });
+      expect(CharactersService.updateScores(session, character.id, "score", { [NIL_UUID]: 15 })).rejects.toMatchObject({
+        message: `Ability ${NIL_UUID} does not belong to the character's ruleset`,
+        refusal: "invalid",
+      });
+    });
+
+    test("sets a language by the id of what its fork copied, as the copy, and refuses one sent twice or lacking by name", async () => {
+      const ctx = await getSeedCtx();
+      const session = makeSession();
+      const fork = await createSeededTestRuleset(SEED_USER_ID);
+      const draconic = await copyEntity(db, "languages", ctx.langMap["Draconic"], fork);
+      RulesetViews.invalidate(fork.id);
+      // A human of Intelligence 14: two languages to pick, of any kind but a secret one
+      const abilities = { [ctx.abilityMap["Intelligence"]]: 14 };
+      const character = await createCharacterAs(session, { rulesetId: fork.id, abilities });
+      const spoken = async () => (await findLinks("speaks", character.id)).map(({ entityId }) => entityId);
+
+      const speak = (languageIds: string[]) =>
+        CharactersService.updateCharacter(session, character.id, { links: { speaks: languageIds } });
+
+      await speak([ctx.langMap["Draconic"]]);
+      expect(await spoken()).toEqual([draconic.id]);
+      // Common is the human's own: what it speaks without a pick isn't stored
+      const languageIds = [ctx.langMap["Common"], ctx.langMap["Draconic"], ctx.langMap["Elven"]];
+      await speak(languageIds);
+      expect((await spoken()).toSorted()).toEqual([draconic.id, ctx.langMap["Elven"]].toSorted());
+
+      // Its source's id and its copy's name one language
+      const both = [ctx.langMap["Draconic"], draconic.id];
+      expect(speak(both)).rejects.toMatchObject({
+        message: `Language ${draconic.id} is given more than once`,
+        refusal: "invalid",
+      });
+      expect(speak([NIL_UUID])).rejects.toMatchObject({
+        message: `Language ${NIL_UUID} does not belong to the character's ruleset`,
+        refusal: "invalid",
+      });
+    });
+
+    test("answers what its reader may do with it, as its policy decides: its owner, a contributor, a bonded creature's", async () => {
+      const { masterId, bonded } = await createWizardWithFamiliar();
+      const owner = makeSession();
+      const { user, session: contributor } = await createTestUser("contributor");
+      await addCharacterContributor(masterId, user, SEED_USER_ID);
+      const permissionsOf = async (session: Session, id: string) =>
+        (await CharactersService.getCharacter(session, id)).permissions;
+      const NONE = {
+        canArchive: false,
+        canEdit: false,
+        canEditPortrait: false,
+        canEditRows: false,
+        canExport: false,
+        canHardDelete: false,
+        canInviteContributors: false,
+        canLeave: false,
+        canManageContributors: false,
+        canReadContributors: false,
+        canShare: false,
+        canUnarchive: false,
+      };
+
+      const ownerRights = {
+        ...NONE,
+        canArchive: true,
+        canEdit: true,
+        canEditPortrait: true,
+        canEditRows: true,
+        canExport: true,
+        canInviteContributors: true,
+        canManageContributors: true,
+        canReadContributors: true,
+        canShare: true,
+      };
+      expect(await permissionsOf(owner, masterId)).toEqual(ownerRights);
+      const contributorRights = {
+        ...NONE,
+        canEdit: true,
+        canEditRows: true,
+        canExport: true,
+        canLeave: true,
+        canReadContributors: true,
+      };
+      expect(await permissionsOf(contributor, masterId)).toEqual(contributorRights);
+      // A bonded creature is its master's editors' to edit and export, its portrait too, and nothing more: its own rows
+      // (its levels, scores, inventory, modifiers) are its master's
+      const childRights = { ...NONE, canEdit: true, canEditPortrait: true, canExport: true };
+      expect(await permissionsOf(owner, bonded.id)).toEqual(childRights);
+      expect(await permissionsOf(contributor, bonded.id)).toEqual(childRights);
+
+      // Archived, it's read-only: its owner may bring it back or delete it, a contributor may still leave it
+      await CharactersService.archiveCharacter(owner, masterId);
+      expect(await permissionsOf(owner, masterId)).toEqual({
+        ...NONE,
+        canHardDelete: true,
+        canManageContributors: true,
+        canUnarchive: true,
+        canReadContributors: true,
+      });
+      expect(await permissionsOf(contributor, masterId)).toEqual({
+        ...NONE,
+        canLeave: true,
+        canReadContributors: true,
+      });
+      expect(await permissionsOf(owner, bonded.id)).toEqual(NONE);
+    });
+
+    test("refuses a missing character, and another user's", async () => {
+      const { session: owner } = await createTestUser();
+      const { session: other } = await createTestUser();
+      const character = await createCharacterAs(owner);
+      await CharacterSharingService.generateShareToken(owner, character.id);
+      const calls = (s: Session, id: string) => [
+        () => CharactersService.getCharacter(s, id),
+        () => CharactersService.updateCharacter(s, id, { fields: { [CHARACTER_AGE]: 40 } }),
+        () => CharactersService.enqueuePdf(s, id),
+        () => CharactersService.archiveCharacter(s, id),
+        () => CharactersService.hardDeleteCharacter(s, id),
+        () => CharacterSharingService.generateShareToken(s, id),
+        () => CharacterSharingService.revokeShareToken(s, id),
+      ];
+      // One at a time: the test's transaction has a single connection.
+      for (const call of [...calls(owner, NIL_UUID), ...calls(other, character.id)])
+        expect(call()).rejects.toThrow(NotFoundError);
+
+      await CharactersService.archiveCharacter(owner, character.id);
+      for (const call of [
+        () => CharactersService.unarchiveCharacter(other, character.id),
+        () => CharactersService.unarchiveCharacter(owner, NIL_UUID),
+        () => CharactersService.hardDeleteCharacter(other, character.id),
+        // Its share link is out of reach while it's archived, its owner's too (`canShare`)
+        () => CharacterSharingService.generateShareToken(owner, character.id),
+        () => CharacterSharingService.revokeShareToken(owner, character.id),
+      ])
+        expect(call()).rejects.toThrow(NotFoundError);
+    });
+  });
+
+  describe("listing a user's characters", () => {
+    test("lists only theirs, each its card's chips, searched and sorted", async () => {
+      const { session } = await createTestUser();
+      const { session: other } = await createTestUser();
+      await createCharacterAs(other, { name: "Someone Else" });
+      const list = async (where: Parameters<typeof CharactersService.getCharacters>[1] = {}) =>
+        (await CharactersService.getCharacters(session, where, page)).items as {
+          chips: { label: string }[];
+          id: string;
+          name: string;
+        }[];
+      expect(await list()).toEqual([]);
+
+      const zephyr = await createCharacterAs(session, { name: "Zephyr Warrior" });
+      await createCharacterAs(session, { name: "Aiden Mage" });
+      await addCharacterLevel(zephyr.id, (await fighterLevel()).id);
+
+      // Its card: its race, then its class at its level
+      expect((await list()).find((c) => c.id === zephyr.id)?.chips.map(({ label }) => label)).toEqual([
+        "Human",
+        "Fighter 1",
+      ]);
+      expect((await list({ search: "Zephyr" })).map((c) => c.name)).toEqual(["Zephyr Warrior"]);
+      expect((await list({ orderBy: "name", orderDir: "asc" })).map((c) => c.name)).toEqual([
+        "Aiden Mage",
+        "Zephyr Warrior",
+      ]);
+      expect((await list({ orderBy: "name", orderDir: "desc" })).map((c) => c.name)).toEqual([
+        "Zephyr Warrior",
+        "Aiden Mage",
+      ]);
+    });
+
+    test("lists the last changed first, a level-up as much as an edit, unless told another order", async () => {
+      const { session } = await createTestUser();
+      const ids = async (where: Parameters<typeof CharactersService.getCharacters>[1] = {}) =>
+        ((await CharactersService.getCharacters(session, where, page)).items as { id: string }[]).map((c) => c.id);
+      const leveled = await createCharacterAs(session, { name: "Leveled Later" });
+      const untouched = await createCharacterAs(session, { name: "Made Later" });
+      await backdateLastChange(leveled.id, "2000-01-01T00:00:00Z");
+      await backdateLastChange(untouched.id, "2001-01-01T00:00:00Z");
+      expect(await ids()).toEqual([untouched.id, leveled.id]);
+
+      // A level writes the character's levels, never its own row
+      await addCharacterLevel(leveled.id, (await fighterLevel()).id);
+
+      expect(await ids()).toEqual([leveled.id, untouched.id]);
+      expect(await ids({ orderBy: "lastChangedAt", orderDir: "asc" })).toEqual([untouched.id, leveled.id]);
+      expect(await ids({ orderBy: "name", orderDir: "desc" })).toEqual([untouched.id, leveled.id]);
+    });
+
+    test("lists the archived ones apart, or all together", async () => {
+      const { session } = await createTestUser();
+      const [active, archived] = [await createCharacterAs(session), await createCharacterAs(session)];
+      await CharactersService.archiveCharacter(session, archived.id);
+      const list = async (visibility: "active" | "archived" | "all") =>
+        ids((await CharactersService.getCharacters(session, { visibility }, page)).items as { id: string }[]).sort();
+
+      expect(await list("active")).toEqual([active.id]);
+      expect(await list("archived")).toEqual([archived.id]);
+      expect(await list("all")).toEqual([active.id, archived.id].sort());
+    });
+  });
+
+  describe("archiving", () => {
+    test("refuses its owner archiving an archived character and unarchiving a live one, as its policy decides", async () => {
+      const { session } = await createTestUser();
+      const character = await createCharacterAs(session);
+      expect(CharactersService.unarchiveCharacter(session, character.id)).rejects.toEqual(
+        new ConflictError("Character is not archived"),
+      );
+      await CharactersService.archiveCharacter(session, character.id);
+      expect(CharactersService.archiveCharacter(session, character.id)).rejects.toEqual(
+        new ConflictError("This character is archived"),
+      );
+    });
+
+    test("hides the character and brings it back, its levels, picks, languages and inventory kept live", async () => {
+      const { session } = await createTestUser();
+      const ctx = await getSeedCtx();
+      const character = await createCharacterAs(session);
+      const level = await addCharacterLevel(character.id, (await fighterLevel()).id, {
+        skills: { [ctx.skillMap["Climb"]]: 1 },
+        feats: { [ctx.aptMap["General"]]: [ctx.featMap["Toughness"]] },
+      });
+      await CharacterLinks.createMany(db, character.id, "speaks", [{ entityId: ctx.langMap["Common"] }]);
+      await CharacterInventory.create(db, { characterId: character.id, itemId: ctx.itemMap["Longsword"], quantity: 1 });
+      const children = async () => ({
+        levels: (await CharacterAdvancements.findMany(db, { characterId: character.id })).length,
+        skills: (await findPicks("skills", [level.id])).length,
+        feats: (await findPicks("feats", [level.id])).length,
+        languages: (await findLinks("speaks", character.id)).length,
+        inventory: (await CharacterInventory.findMany(db, { characterId: character.id })).length,
+      });
+      const all = { levels: 1, skills: 1, feats: 1, languages: 1, inventory: 1 };
+
+      expect(await CharactersService.archiveCharacter(session, character.id)).toMatchObject({
+        id: character.id,
+        deletedAt: expect.any(String),
+      });
+      expect(await Characters.findOne(db, { id: character.id }, Visibility.ArchivedOnly)).toBeDefined();
+      expect(await children()).toEqual(all);
+
+      expect(await CharactersService.unarchiveCharacter(session, character.id)).toMatchObject({ deletedAt: null });
+      expect(await children()).toEqual(all);
+    });
+
+    describe("deleting for good", () => {
+      test("removes an archived character with its modifiers, attachments and bonded children", async () => {
+        const { session } = await createTestUser();
+        const { rulesetId, raceMap } = await getSeedCtx();
+        const character = await createCharacterAs(session);
+        await Modifiers.create(db, {
+          sourceId: character.id,
+          sourceType: "characters",
+          target: "abilities.STR.score",
+          value: "1",
+          valueType: "number",
+          operator: "add",
+        });
+        const [familiar] = await Characters.create(db, {
+          userId: session.userId,
+          rulesetId,
+          parentCharacterId: character.id,
+          kind: "familiar",
+          name: "Whiskers",
+          fields: { [CHARACTER_ALIGNMENT]: "True Neutral", [CHARACTER_GENDER]: "Male", [CHARACTER_XP]: 0 },
+          links: { race: raceMap.pc["Human"] },
+        });
+
+        const portraits = [
+          await createTestAttachment("portrait", character.id),
+          await createTestAttachment("portrait", familiar.id),
+        ];
+
+        await CharactersService.archiveCharacter(session, character.id);
+        await CharactersService.hardDeleteCharacter(session, character.id);
+
+        for (const id of [character.id, familiar.id])
+          expect(await Characters.findOne(db, { id }, Visibility.All)).toBeUndefined();
+        expect(await Modifiers.findMany(db, { sourceIds: [character.id], sourceType: "characters" })).toEqual([]);
+        for (const { id } of portraits) expect(await Attachments.findOne(db, { id })).toBeUndefined();
+      });
+
+      test("is refused for a character that isn't archived, or that plays in an active campaign", async () => {
+        const { session } = await createTestUser();
+        const character = await createCharacterAs(session);
+        expect(CharactersService.hardDeleteCharacter(session, character.id)).rejects.toThrow(ConflictError);
+
+        const { player } = await createTestCampaign(session.userId);
+        await PlayerCharacters.create(db, { playerId: player.id, characterId: character.id });
+        await CharactersService.archiveCharacter(session, character.id);
+        expect(CharactersService.hardDeleteCharacter(session, character.id)).rejects.toThrow(ConflictError);
+      });
+
+      test.each(["removed from the campaign", "in an archived campaign"])(
+        "goes through for a character %s",
+        async (situation) => {
+          const { session } = await createTestUser();
+          const character = await createCharacterAs(session);
+          const { campaign, player } = await createTestCampaign(session.userId);
+          await PlayerCharacters.create(db, { playerId: player.id, characterId: character.id });
+          if (situation === "removed from the campaign") {
+            await db
+              .delete(playerCharactersInCampaign)
+              .where(
+                and(
+                  eq(playerCharactersInCampaign.playerId, player.id),
+                  eq(playerCharactersInCampaign.characterId, character.id),
+                ),
+              );
+          } else {
+            await Campaigns.archive(db, { id: campaign.id });
+          }
+
+          await CharactersService.archiveCharacter(session, character.id);
+          await CharactersService.hardDeleteCharacter(session, character.id);
+          expect(await Characters.findOne(db, { id: character.id }, Visibility.All)).toBeUndefined();
+        },
+      );
+    });
+  });
+
+  test("queues the character's PDF on the user's queue, and logs it", async () => {
+    const { session } = await createTestUser();
+    const character = await createCharacterAs(session);
+    await CharactersService.enqueuePdf(session, character.id);
+
+    expect(await queuedPdfJobs(character.id)).toEqual([
+      {
+        task: "generatePdf",
+        queue: `pdf-${session.userId}`,
+        payload: expect.objectContaining({
+          userId: session.userId,
+          characterId: character.id,
+          characterName: character.name,
+        }),
+      },
+    ]);
+    const { items } = await Activities.findPage(db, { userId: session.userId, type: "generatePdf" }, page);
+    expect(items.map((a) => a.targetId)).toEqual([character.id]);
+  });
+
+  describe("sharing", () => {
+    test("gives anyone with the token the built character and its PDF, until it's replaced or revoked", async () => {
+      const { session } = await createTestUser();
+      const character = await createCharacterAs(session);
+      const first = (await CharacterSharingService.generateShareToken(session, character.id)).shareToken!;
+      const shared = await CharacterSharingService.getSharedCharacter(first);
+      expect(shared).toMatchObject({ id: character.id, name: character.name });
+      expect(shared.blocks.map(({ key }) => key)).toContain("combat");
+      // The printed sheet: the PDF the route sends
+      expect((await CharacterSharingService.generateSharedPdf(first)).data.subarray(0, 5).toString()).toBe("%PDF-");
+
+      const second = (await CharacterSharingService.generateShareToken(session, character.id)).shareToken!;
+      expect(second).not.toBe(first);
+      expect(await CharacterSharingService.revokeShareToken(session, character.id)).toMatchObject({ shareToken: null });
+      // Revoking what isn't shared is fine.
+      expect(await CharacterSharingService.revokeShareToken(session, character.id)).toMatchObject({ shareToken: null });
+
+      for (const token of [first, second, NIL_UUID])
+        expect(CharacterSharingService.getSharedCharacter(token)).rejects.toThrow(NotFoundError);
+      expect(CharacterSharingService.generateSharedPdf(NIL_UUID)).rejects.toThrow(NotFoundError);
+    });
+
+    test("answers that its link's reader may do nothing with it, each permission its sheet answers", async () => {
+      const { session } = await createTestUser();
+      const character = await createCharacterAs(session);
+      const { shareToken } = await CharacterSharingService.generateShareToken(session, character.id);
+      const { permissions } = await CharactersService.getCharacter(session, character.id);
+      const shared = await CharacterSharingService.getSharedCharacter(shareToken!);
+      const none = Object.fromEntries(Object.keys(permissions).map((permission) => [permission, false]));
+      expect(shared.permissions as Record<string, boolean>).toEqual(none);
+    });
+
+    test("prints a shared character's sheet named after it, as its export is", async () => {
+      const { session } = await createTestUser();
+      const character = await createCharacterAs(session, { name: "Ada: Draft/1" });
+      const { shareToken } = await CharacterSharingService.generateShareToken(session, character.id);
+
+      expect(await CharacterSharingService.generateSharedPdf(shareToken!)).toMatchObject({
+        fileName: "Ada_ Draft_1-sheet.pdf",
+      });
+    });
+  });
+
+  describe("races a new character can take", () => {
+    test("are all eligible on the seeded ruleset", async () => {
+      const { rulesetId } = await getSeedCtx();
+      const { items, page: pageNumber } = await CharactersService.getCreationOptions(
+        await ownerSessionOf(rulesetId),
+        rulesetId,
+        "race",
+        {},
+        {},
+        page,
+      );
+      expect(pageNumber).toBe(1);
+      expect(items.map((r) => r.name)).toEqual(expect.arrayContaining(["Human", "Elf", "Dwarf"]));
+      expect(items.filter((r) => !r.eligible)).toEqual([]);
+    });
+
+    test.each([
+      [CHARACTER_ALIGNMENT, "identity.beliefs.alignment", "Chaotic Evil", "Lawful Good"],
+      [CHARACTER_GENDER, "identity.physiology.gender", "Female", "Male"],
+    ] as const)("follow a race's %s requirement, once the form gives one", async (field, target, allowed, other) => {
+      const { rulesetId } = await getSeedCtx();
+      const [race] = await Entities.create<Race>(db, "races", {
+        name: `Restricted Race ${uniqueId()}`,
+        rulesetId,
+        fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
+      });
+      await Requirements.create(db, {
+        entityId: race.id,
+        entityType: "races",
+        level: "1",
+        target,
+        operator: "equal",
+        value: allowed,
+        valueType: "string",
+      });
+      invalidateSeededRuleset(rulesetId);
+      const eligible = async (form: Record<string, string>) =>
+        (
+          await CharactersService.getCreationOptions(await ownerSessionOf(rulesetId), rulesetId, "race", form, {}, page)
+        ).items.find((r) => r.id === race.id)!.eligible;
+
+      expect(await eligible({ [field]: allowed })).toBe(true);
+      expect(await eligible({ [field]: other })).toBe(false);
+      // Nothing to judge by yet.
+      expect(await eligible({})).toBe(true);
+    });
+
+    test("count what the form doesn't say as met inside an or, as alone", async () => {
+      const { rulesetId } = await getSeedCtx();
+      const [race] = await Entities.create<Race>(db, "races", {
+        name: `Restricted Race ${uniqueId()}`,
+        rulesetId,
+        fields: { [RACE_SIZE]: "Medium", [RACE_BASE_SPEED]: 30 },
+      });
+      const owner = { entityId: race.id, entityType: "races", operator: "equal", valueType: "string" } as const;
+      await Requirements.createMany(db, [
+        { entityId: race.id, entityType: "races", level: "1", chainingOperator: "or" },
+        { ...owner, level: "1.1", target: "identity.beliefs.alignment", value: "Lawful Good" },
+        { ...owner, level: "1.2", target: "identity.physiology.gender", value: "Male" },
+      ]);
+      invalidateSeededRuleset(rulesetId);
+      const eligible = async (form: Record<string, string>) =>
+        (
+          await CharactersService.getCreationOptions(await ownerSessionOf(rulesetId), rulesetId, "race", form, {}, page)
+        ).items.find((r) => r.id === race.id)!.eligible;
+
+      expect(await eligible({})).toBe(true);
+      // The alignment it doesn't say may meet the group, whatever the gender
+      expect(await eligible({ [CHARACTER_GENDER]: "Female" })).toBe(true);
+      expect(await eligible({ [CHARACTER_ALIGNMENT]: "Lawful Good", [CHARACTER_GENDER]: "Female" })).toBe(true);
+      expect(await eligible({ [CHARACTER_ALIGNMENT]: "Chaotic Evil", [CHARACTER_GENDER]: "Male" })).toBe(true);
+      expect(await eligible({ [CHARACTER_ALIGNMENT]: "Chaotic Evil", [CHARACTER_GENDER]: "Female" })).toBe(false);
+    });
+  });
+});

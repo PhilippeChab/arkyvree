@@ -1,0 +1,923 @@
+import { describe, expect, test } from "bun:test";
+
+import { FieldCodec, type Fields, type FormContext, OwnerValues } from "@/engine/core/fields/index.ts";
+import type { FieldValue } from "@/engine/core/module/index.ts";
+import RulesError from "@/engine/core/RulesError.ts";
+import type { StandaloneKind } from "@/engine/core/view/index.ts";
+import { thrownBy } from "@/tests/support/errors.ts";
+import { heldValues, writtenValues } from "@/tests/support/ownerValues.ts";
+
+/** The made-up kind a reference names: one no module declares, typed as the view's registry types a kind. */
+const GIZMOS = "gizmos" as string as StandaloneKind;
+
+/**
+ * Fields of every kind, as a vocabulary declares them: their labels, the closed lists, a reference to an item, a
+ * field on another's condition and a group its form shows on another field's value, declared among the others (a form
+ * shows it last).
+ */
+const FIELDS = {
+  title: {
+    description: "Its title",
+    // Without a title, the entity keeps none of the fields its form shows
+    keepsForm: true,
+    kind: "text",
+    label: "Title",
+    placeholder: 'e.g., "A"',
+    field: "TITLE",
+    merge: "winner",
+  },
+  school: {
+    description: "Its school",
+    kind: "text",
+    label: "School",
+    field: "SCHOOL",
+    merge: "fallback",
+    values: ["Evocation", "Illusion"],
+  },
+  flag: { description: "Whether it's on", kind: "flag", label: "Flag", field: "FLAG", merge: "fallback" },
+  group: {
+    fields: {
+      level: { description: "Its level", kind: "number", label: "Level", field: "LEVEL", merge: "fallback" },
+      known: {
+        absent: null,
+        description: "Whether it's known",
+        kind: "flag",
+        label: "Known",
+        field: "KNOWN",
+        merge: "fallback",
+      },
+    },
+    kind: "group",
+    label: "Group",
+    shownWhen: [{ field: "TYPE", values: ["Tool"] }],
+  },
+  count: {
+    default: 1,
+    description: "How many",
+    kind: "number",
+    label: "Count",
+    min: 1,
+    field: "COUNT",
+    merge: "fallback",
+    when: { field: "flag", values: [true] },
+  },
+  tags: { description: "Its tags", kind: "list", label: "Tags", field: "TAG", merge: "union", values: ["x", "y"] },
+  kind: {
+    description: "Its kind",
+    kind: "choice",
+    label: "Kind",
+    field: "KIND",
+    merge: "fallback",
+    values: ["Arcane", "Divine"],
+  },
+  owner: {
+    description: "Who owns it",
+    kind: "ref",
+    label: "Owner",
+    references: GIZMOS,
+    role: "owner",
+  },
+} as const;
+
+const CODEC = new FieldCodec(FIELDS);
+
+/** What a form's fields are read with: ids the view resolves by prefixing them, a list's each once. */
+const CONTEXT: FormContext = {
+  resolve: (_type, id) => {
+    if (id === "unknown") throw new RulesError("invalid", `Gizmo ${id} does not belong to this ruleset`);
+    return `view-${id}`;
+  },
+  resolveAll: (type, ids) => {
+    if (new Set(ids).size < ids.length) throw new RulesError("invalid", "Gizmo given more than once");
+    return ids.map((id) => CONTEXT.resolve(type, id));
+  },
+};
+
+/**
+ * A progression up to level 10, two at most a level: one every 3 levels and one more at the first without a row.
+ */
+const PROGRESSION = new FieldCodec({
+  grants: {
+    default: { every: 3, extra: [{ amount: 1, position: 1 }] },
+    description: "What each level grants",
+    kind: "progression",
+    label: "Grants",
+    lastPosition: 10,
+    max: 2,
+    positionWord: { many: "Ranks", one: "Rank" },
+    field: "GRANT",
+    merge: "union",
+  },
+} as const);
+
+/** The fields' values a codec reads off a form (`FieldCodec.parse`), by their names. */
+function valuesOf<S extends Fields>(
+  codec: FieldCodec<S>,
+  given: { fields?: unknown; links?: unknown },
+  context: FormContext,
+) {
+  return codec.parse(given, context).values as Record<string, unknown>;
+}
+
+describe("A field codec", () => {
+  test("reads each field's default without its values", () => {
+    expect(CODEC.read(OwnerValues.NONE)).toEqual({
+      count: 1,
+      flag: false,
+      group: { known: null, level: null },
+      kind: null,
+      owner: null,
+      school: null,
+      tags: [],
+      title: null,
+    });
+    expect(CODEC.read(OwnerValues.NONE)).toEqual(CODEC.defaults);
+  });
+
+  test("reads a flag true once a value is, never off a text, a three-state one false off a false value", () => {
+    expect(
+      CODEC.read(
+        heldValues([
+          ["FLAG", false],
+          ["FLAG", true],
+        ]),
+      ).flag,
+    ).toBe(true);
+    expect(CODEC.read(heldValues([["FLAG", "true"]])).flag).toBe(false);
+    expect(CODEC.read(heldValues([["KNOWN", false]])).group.known).toBe(false);
+    expect(
+      CODEC.read(
+        heldValues([
+          ["KNOWN", false],
+          ["KNOWN", true],
+        ]),
+      ).group.known,
+    ).toBe(true);
+  });
+
+  test("reads a number off the first value that's one in its bounds, never a text or a flag, and its default otherwise", () => {
+    // The flag its condition reads keeps the count, which counts only while it's on
+    const counted = (...counts: FieldValue[]) =>
+      heldValues([["FLAG", true], ...counts.map((count): [string, FieldValue] => ["COUNT", count])]);
+    expect(CODEC.read(counted("x", 0, 3, 4)).count).toBe(3);
+    expect(CODEC.read(counted(0)).count).toBe(1);
+    expect(
+      CODEC.read(
+        heldValues([
+          ["LEVEL", ""],
+          ["LEVEL", -2],
+        ]),
+      ).group.level,
+    ).toBe(-2);
+    expect(
+      CODEC.read(
+        heldValues([
+          ["LEVEL", true],
+          ["LEVEL", "7"],
+          ["LEVEL", 5],
+        ]),
+      ).group.level,
+    ).toBe(5);
+  });
+
+  test("reads a text off its first value and a reference off its link, a choice only among its values, a list whole", () => {
+    const read = CODEC.read(
+      heldValues(
+        [
+          ["TITLE", "A"],
+          ["TITLE", "B"],
+          ["KIND", "Psionic"],
+          ["TAG", "x"],
+          ["TAG", "y"],
+        ],
+        { owner: "id-1" },
+      ),
+    );
+    expect([read.title, read.owner, read.kind, read.tags]).toEqual(["A", "id-1", null, ["x", "y"]]);
+    expect(CODEC.read(heldValues([["KIND", "Divine"]])).kind).toBe("Divine");
+    // A value stored outside its field's closed list still reads
+    expect(CODEC.read(heldValues([["SCHOOL", "Sorcery"]])).school).toBe("Sorcery");
+    // A reference reads its link alone, no field
+    expect(CODEC.read(heldValues([["owner", "id-1"]])).owner).toBeNull();
+  });
+
+  test("writes the fields and links it reads back: each field's values in order, a reference's as its link", () => {
+    const written = writtenValues(CODEC.write({ ...CODEC.defaults, owner: "id-1", tags: ["y", "x"], title: "A" }));
+    expect(written).toEqual({ fields: { TITLE: ["A"], TAG: ["y", "x"] }, links: { owner: "id-1" } });
+    expect(CODEC.read(written)).toMatchObject({ owner: "id-1", tags: ["y", "x"], title: "A" });
+  });
+
+  test("writes a field with a value, of its kind, none for a default number, an empty text or a false two-state flag", () => {
+    const values = { ...CODEC.defaults, flag: false, group: { known: false, level: 2 }, tags: ["x"], title: "A" };
+    expect(writtenValues(CODEC.write(values)).fields).toEqual({
+      TITLE: ["A"],
+      LEVEL: [2],
+      KNOWN: [false],
+      TAG: ["x"],
+    });
+    expect(CODEC.write({ ...values, title: "" }).fields.TITLE).toEqual([]);
+  });
+
+  test("writes nothing of its defaults, a save's write names every field and link, a part its own", () => {
+    expect(writtenValues(CODEC.write(CODEC.defaults))).toEqual({ fields: {}, links: {} });
+    // The fields its form shows without a title it writes as given: its write path keeps none (`FieldWrites`)
+    expect(writtenValues(CODEC.write({ ...CODEC.defaults, owner: "id-1", school: "Illusion" }))).toEqual({
+      fields: { SCHOOL: ["Illusion"] },
+      links: { owner: "id-1" },
+    });
+    expect(CODEC.write({ ...CODEC.defaults, title: "A" })).toEqual({
+      fields: { TITLE: ["A"], SCHOOL: [], FLAG: [], LEVEL: [], KNOWN: [], COUNT: [], TAG: [], KIND: [] },
+      links: { owner: null },
+    });
+    // The fields the values leave out aren't named: their owner keeps them
+    expect(CODEC.write({ owner: null, title: "A" })).toEqual({ fields: { TITLE: ["A"] }, links: { owner: null } });
+    expect(CODEC.write({ group: { known: true, level: null }, title: "A" })).toEqual({
+      fields: { KNOWN: [true], LEVEL: [], TITLE: ["A"] },
+      links: {},
+    });
+  });
+
+  test("reads a field on its condition, writes it as given, and merges an edit's given fields over the kept", () => {
+    const written = (values: typeof CODEC.defaults) => writtenValues(CODEC.write(values)).fields;
+    expect(CODEC.read(heldValues([["COUNT", 3]])).count).toBe(1);
+    // Its write path stores it at its default while its condition doesn't hold (`FieldWrites`)
+    expect(written({ ...CODEC.defaults, count: 3, title: "A" })).toEqual({ TITLE: ["A"], COUNT: [3] });
+    expect(written({ ...CODEC.defaults, count: 3, flag: true, title: "A" })).toEqual({
+      TITLE: ["A"],
+      FLAG: [true],
+      COUNT: [3],
+    });
+    expect(CODEC.merge({ ...CODEC.defaults, title: "A" }, { count: 2, title: undefined })).toMatchObject({
+      count: 2,
+      title: "A",
+    });
+  });
+
+  test("writes what another's values don't hold of those it reads off it, clearing the rest: an item's over its template's", () => {
+    const inherited = new FieldCodec({
+      title: { ...FIELDS.title, inherits: "madeFrom" },
+      tags: { ...FIELDS.tags, inherits: "madeFrom" },
+      kind: FIELDS.kind,
+      owner: FIELDS.owner,
+    } as const);
+    const template = { kind: "Arcane" as const, owner: "id-1", tags: ["y", "x"], title: "A" };
+    const same = inherited.toOverrides({ ...template, tags: ["x", "y"] }, template);
+    // What it doesn't read off another it keeps, the same as another's or not: its kind, its owner
+    expect(writtenValues(same)).toEqual({ fields: { KIND: ["Arcane"] }, links: { owner: "id-1" } });
+    const overrides = inherited.toOverrides({ ...template, owner: "id-2", title: "B" }, template);
+    expect(writtenValues(overrides)).toEqual({ fields: { TITLE: ["B"], KIND: ["Arcane"] }, links: { owner: "id-2" } });
+  });
+
+  test("reads a form's fields with each field's shape, those it gives, refusing one past its bounds or values", () => {
+    const parse = (fields: unknown, kept?: Record<string, unknown>) =>
+      valuesOf(CODEC, { fields }, { ...CONTEXT, kept });
+    expect(valuesOf(CODEC, {}, CONTEXT)).toEqual({});
+    expect(parse({ TAG: ["x"], TITLE: "", SCHOOL: "Illusion", KNOWN: null, LEVEL: 2 })).toEqual({
+      group: { known: null, level: 2 },
+      school: "Illusion",
+      tags: ["x"],
+      title: "",
+    });
+    // A group's fields it gives alone
+    expect(parse({ LEVEL: 3 })).toEqual({ group: { level: 3 } });
+    const refused = [
+      [
+        { FLAG: true, COUNT: 0 },
+        { category: "fields.COUNT", message: "Too small: expected number to be >=1" },
+      ],
+      [
+        { FLAG: true, COUNT: 2.5 },
+        { category: "fields.COUNT", message: "Invalid input: expected int, received number" },
+      ],
+      [{ KIND: "Psionic" }, { category: "fields.KIND", message: "Kind must be one of: Arcane, Divine" }],
+      [{ TAG: ["z"] }, { category: "fields.TAG.0", message: "Tags must be one of: x, y" }],
+      // A number past what it holds exactly, its declared maximum or none
+      [
+        { FLAG: true, COUNT: 1e21 },
+        { category: "fields.COUNT", message: "Too big: expected int to be <=9007199254740991" },
+      ],
+      [
+        { LEVEL: Number.MAX_SAFE_INTEGER + 1 },
+        { category: "fields.LEVEL", message: "Too big: expected int to be <=9007199254740991" },
+      ],
+    ] as const;
+    for (const [invalid, issue] of refused)
+      expect(thrownBy(() => parse(invalid))).toEqual(new RulesError("invalid", "Request validation failed", [issue]));
+    expect(parse({ FLAG: true, COUNT: Number.MAX_SAFE_INTEGER })).toEqual({
+      flag: true,
+      count: Number.MAX_SAFE_INTEGER,
+    });
+    expect(thrownBy(() => parse({ SCHOOL: "Sorcery" }))).toEqual(
+      new RulesError("invalid", "Request validation failed", [
+        { category: "fields.SCHOOL", message: "School must be one of: Evocation, Illusion" },
+      ]),
+    );
+  });
+
+  test("refuses a value outside its type's values the entity keeps, a key that's no field", () => {
+    const kept = { ...CODEC.defaults, school: "Sorcery", tags: ["z"] };
+    expect(thrownBy(() => valuesOf(CODEC, { fields: { SCHOOL: "Sorcery" } }, { ...CONTEXT, kept }))).toEqual(
+      new RulesError("invalid", "Request validation failed", [
+        { category: "fields.SCHOOL", message: "School must be one of: Evocation, Illusion" },
+      ]),
+    );
+    expect(thrownBy(() => valuesOf(CODEC, { fields: { TAG: ["z", "x"] } }, { ...CONTEXT, kept }))).toEqual(
+      new RulesError("invalid", "Request validation failed", [
+        { category: "fields.TAG.0", message: "Tags must be one of: x, y" },
+      ]),
+    );
+    expect(() => valuesOf(CODEC, { fields: { TITLE: "A", UNKNOWN: "x" }, links: { stranger: "x" } }, CONTEXT)).toThrow(
+      expect.objectContaining({
+        issues: [
+          { category: "fields.UNKNOWN", message: "Not a field of this entity" },
+          { category: "links.stranger", message: "Not a field of this entity" },
+        ],
+      }),
+    );
+    // A field's name in its spec is no stored field: a form sends each by the stored field that keeps it
+    expect(thrownBy(() => valuesOf(CODEC, { fields: { title: "A" } }, CONTEXT))).toEqual(
+      new RulesError("invalid", "Request validation failed", [
+        { category: "fields.title", message: "Not a field of this entity" },
+      ]),
+    );
+  });
+
+  test("drops a field its condition leaves out, read over what the entity keeps", () => {
+    // The count counts only while the flag is on: given with it off, it's dropped, whatever it holds
+    expect(valuesOf(CODEC, { fields: { COUNT: null, FLAG: false } }, CONTEXT)).toEqual({ flag: false });
+    expect(valuesOf(CODEC, { fields: { COUNT: 2 } }, { ...CONTEXT, kept: { ...CODEC.defaults, flag: true } })).toEqual({
+      count: 2,
+    });
+  });
+
+  test("reads a reference by its link's role as the id the view keys its entity by, none for an empty one, refused for an unknown one", () => {
+    expect(valuesOf(CODEC, { links: { owner: "id-1" } }, CONTEXT)).toEqual({ owner: "view-id-1" });
+    expect(valuesOf(CODEC, { links: { owner: "" } }, CONTEXT)).toEqual({ owner: null });
+    expect(thrownBy(() => valuesOf(CODEC, { links: { owner: "unknown" } }, CONTEXT))).toEqual(
+      new RulesError("invalid", "Gizmo unknown does not belong to this ruleset"),
+    );
+    expect(CODEC.resolveReferences({ ...CODEC.defaults, owner: "id-1" }, (id) => `copy-${id}`).owner).toBe("copy-id-1");
+  });
+
+  test("holds a group's fields given alone over those kept, as an edit's form gives those it changes", () => {
+    const kept = { ...CODEC.defaults, group: { known: true, level: 4 } };
+    expect(CODEC.merge(kept, { group: { level: 5 } } as never).group).toEqual({ known: true, level: 5 });
+  });
+
+  test("gives its values as its form holds them: by the stored field that keeps each, a reference by its role", () => {
+    expect(CODEC.toForm({ ...CODEC.defaults, owner: "id-1", group: { known: true, level: 2 } })).toEqual({
+      fields: {
+        TITLE: null,
+        SCHOOL: null,
+        FLAG: false,
+        LEVEL: 2,
+        KNOWN: true,
+        COUNT: 1,
+        TAG: [],
+        KIND: null,
+      },
+      links: { owner: "id-1" },
+    });
+  });
+
+  test("describes its fields as a form shows them, in the order they're declared, groups last", () => {
+    const fields = CODEC.describe();
+    expect(
+      fields.map((field) => [field.input === "group" ? field.label : (field.field ?? field.role), field.input]),
+    ).toEqual([
+      ["TITLE", "text"],
+      ["SCHOOL", "choice"],
+      ["FLAG", "flag"],
+      ["COUNT", "number"],
+      ["TAG", "choice"],
+      ["KIND", "choice"],
+      ["owner", "ref"],
+      ["Group", "group"],
+    ]);
+    // Each with the stored field that keeps it, a reference with its link's role
+    expect(fields[0]).toMatchObject({
+      field: "TITLE",
+      label: "Title",
+      help: "Its title",
+      multiple: false,
+      placeholder: 'e.g., "A"',
+    });
+    expect(fields[1]).toMatchObject({ multiple: false, options: ["Evocation", "Illusion"] });
+    expect(fields[3]).toMatchObject({ default: 1, min: 1, shownWhen: [{ path: "fields.FLAG", values: [true] }] });
+    // A number's maximum: its declared one, or the largest it holds exactly
+    expect(fields[3]).toMatchObject({ max: Number.MAX_SAFE_INTEGER });
+    expect(fields[4]).toMatchObject({ multiple: true, options: ["x", "y"] });
+    expect(fields[5]).toMatchObject({ options: ["Arcane", "Divine"] });
+    expect(fields[6]).toMatchObject({ references: GIZMOS, required: false, role: "owner" });
+    expect(fields[6]).not.toHaveProperty("field");
+    expect(fields[7]).toMatchObject({
+      label: "Group",
+      shownWhen: [{ path: "fields.TYPE", values: ["Tool"] }],
+      fields: [
+        { field: "LEVEL", input: "number", default: null, max: Number.MAX_SAFE_INTEGER },
+        { field: "KNOWN", input: "flag", nullable: true },
+      ],
+    });
+  });
+
+  test("shows a field in the groups it names, among their own in declared order, its value its own all the same", () => {
+    const codec = new FieldCodec({
+      title: FIELDS.title,
+      kind: { ...FIELDS.kind, shownIn: ["first", "second"] },
+      first: { fields: { level: FIELDS.group.fields.level }, kind: "group", label: "First" },
+      second: { fields: { known: FIELDS.group.fields.known }, kind: "group", label: "Second" },
+    } as const);
+    const fields = codec.describe();
+    // Not on its own: in each group, by the stored field that keeps it
+    expect(fields.map((field) => (field.input === "group" ? field.label : field.field))).toEqual([
+      "TITLE",
+      "First",
+      "Second",
+    ]);
+    const keysIn = (field: (typeof fields)[number]) =>
+      field.input === "group" ? field.fields.map((inner) => (inner.input === "group" ? "" : inner.field)) : [];
+    expect(keysIn(fields[1]!)).toEqual(["KIND", "LEVEL"]);
+    expect(keysIn(fields[2]!)).toEqual(["KIND", "KNOWN"]);
+
+    expect(
+      codec.read(
+        heldValues([
+          ["KIND", "Divine"],
+          ["LEVEL", 2],
+        ]),
+      ),
+    ).toMatchObject({ first: { level: 2 }, kind: "Divine" });
+    expect(valuesOf(codec, { fields: { KIND: "Arcane" } }, CONTEXT)).toEqual({ kind: "Arcane" });
+  });
+});
+
+describe("A codec's fields beside its name, and those its form doesn't show", () => {
+  /**
+   * A kind's fields: two its form shows beside its name (its weight, kept to two places; its slot, a text always
+   * written with its default), one its rules alone set and always write (whether it's generated), one its page gives
+   * its form (whether it's a template), and one its form shows among its others (its title).
+   */
+  const OWNED = new FieldCodec({
+    weight: {
+      description: "Its weight",
+      field: "WEIGHT",
+      kind: "number",
+      label: "Weight",
+      merge: "winner",
+      min: 0,
+      placement: "beside-name",
+      scale: 2,
+      unit: "lbs",
+    },
+    generated: {
+      default: true,
+      description: "Whether its rules made it",
+      field: "GENERATED",
+      form: "hidden",
+      kind: "flag",
+      label: "Generated",
+      merge: "winner",
+      write: "always",
+    },
+    template: {
+      description: "Whether it's a template",
+      field: "TEMPLATE",
+      form: "unshown",
+      kind: "flag",
+      label: "Template",
+      merge: "winner",
+      write: "always",
+    },
+    title: { description: "Its title", field: "TITLE", kind: "text", label: "Title", merge: "winner" },
+    slot: {
+      default: "Other",
+      description: "Where it's worn",
+      field: "SLOT",
+      kind: "text",
+      label: "Slot",
+      merge: "winner",
+      placement: "beside-name",
+      values: ["Head", "Other"],
+      write: "always",
+    },
+  } as const);
+
+  test("read as any other, their defaults without a row, and by the stored field that keeps each", () => {
+    expect(OWNED.read(OwnerValues.NONE)).toEqual({
+      generated: true,
+      slot: "Other",
+      template: false,
+      title: null,
+      weight: null,
+    });
+    expect(
+      OWNED.readByField(
+        heldValues([
+          ["WEIGHT", 2.5],
+          ["GENERATED", false],
+          ["TITLE", "A"],
+        ]),
+      ),
+    ).toEqual({
+      WEIGHT: 2.5,
+      GENERATED: false,
+      TEMPLATE: false,
+      TITLE: "A",
+      SLOT: "Other",
+    });
+  });
+
+  test("are written always where they say so, a false flag too; one without a value, none", () => {
+    // Its owner's write gives a field always written that holds no value its default (`FieldWrites`)
+    expect(OWNED.write({ generated: false, slot: "", template: false, title: null, weight: null })).toEqual({
+      fields: { WEIGHT: [], GENERATED: [false], TEMPLATE: [false], TITLE: [], SLOT: [] },
+      links: {},
+    });
+  });
+
+  test("its form takes those beside its name and those its page gives, never one its rules alone set", () => {
+    expect(OWNED.formNames).toEqual(["weight", "template", "title", "slot"]);
+    expect(valuesOf(OWNED, { fields: { WEIGHT: 3.005, TEMPLATE: true, SLOT: "Head" } }, CONTEXT)).toEqual({
+      slot: "Head",
+      template: true,
+      weight: 3.01,
+    });
+    expect(thrownBy(() => valuesOf(OWNED, { fields: { GENERATED: false } }, CONTEXT))).toEqual(
+      new RulesError("invalid", "Request validation failed", [
+        { category: "fields.GENERATED", message: "Not a field of this entity" },
+      ]),
+    );
+    expect(OWNED.merge({ ...OWNED.defaults, weight: 3 }, { title: "B" })).toEqual({
+      slot: "Other",
+      template: false,
+      title: "B",
+      weight: 3,
+    });
+  });
+
+  test("describes those beside its name first, each in its unit, and none its form shows no input of", () => {
+    expect(OWNED.describe()).toEqual([
+      {
+        field: "WEIGHT",
+        help: "Its weight",
+        input: "decimal",
+        label: "Weight",
+        max: Number.MAX_SAFE_INTEGER / 100,
+        min: 0,
+        placement: "beside-name",
+        unit: "lbs",
+      },
+      {
+        field: "SLOT",
+        help: "Where it's worn",
+        input: "choice",
+        label: "Slot",
+        multiple: false,
+        options: ["Head", "Other"],
+        placement: "beside-name",
+      },
+      {
+        field: "TITLE",
+        help: "Its title",
+        input: "text",
+        label: "Title",
+        multiple: false,
+        nullable: true,
+        placeholder: undefined,
+      },
+    ]);
+  });
+});
+
+describe("A new entity's form", () => {
+  /**
+   * A kind's fields a new entity's form gives or its defaults fill: a die among its values, its default when the form
+   * gives none; a size it never leaves at none; a required reference; and a list of links a new one needs one of.
+   */
+  const NEEDED = new FieldCodec({
+    die: {
+      default: 8,
+      description: "Its die",
+      field: "DIE",
+      kind: "number",
+      label: "Die",
+      labels: ["d4", "d8"],
+      merge: "winner",
+      placement: "beside-name",
+      values: [4, 8],
+      write: "always",
+    },
+    size: {
+      default: "Medium",
+      description: "Its size",
+      field: "SIZE",
+      kind: "text",
+      label: "Size",
+      merge: "winner",
+      required: true,
+      values: ["Small", "Medium"],
+      write: "always",
+    },
+    stat: {
+      description: "Its stat",
+      kind: "ref",
+      label: "Stat",
+      references: GIZMOS,
+      required: true,
+      role: "stat",
+    },
+    pools: {
+      description: "Its pools",
+      kind: "links",
+      label: "Pools",
+      references: GIZMOS,
+      required: "At least one pool",
+      role: "pools",
+    },
+  } as const);
+  const creating = { ...CONTEXT, creating: true };
+  /** A pool's id. */
+  const POOL = "00000000-0000-4000-8000-000000000001";
+
+  test("needs what it requires, its defaults filling what it leaves out, and refuses none of them on an edit", () => {
+    const parsed = NEEDED.parse({ links: { pools: [{ toId: POOL }], stat: "s" } }, creating);
+    expect(parsed).toEqual({
+      lists: [{ links: [{ toId: `view-${POOL}` }], role: "pools", toType: GIZMOS }],
+      values: { stat: "view-s" },
+    });
+    // Its defaults fill the rest: what a save merges it over
+    expect(NEEDED.merge(NEEDED.defaults, parsed.values)).toEqual({
+      die: 8,
+      size: "Medium",
+      stat: "view-s",
+    });
+    expect(() => NEEDED.parse({}, creating)).toThrow(
+      expect.objectContaining({
+        issues: [
+          expect.objectContaining({ category: "links.stat" }),
+          expect.objectContaining({ category: "links.pools" }),
+        ],
+      }),
+    );
+    expect(() => NEEDED.parse({ links: { pools: [], stat: "s" } }, creating)).toThrow(
+      expect.objectContaining({ issues: [{ category: "links.pools", message: "At least one pool" }] }),
+    );
+    // An edit keeps what it leaves out
+    expect(NEEDED.parse({ fields: { DIE: 4 } }, CONTEXT)).toEqual({ lists: [], values: { die: 4 } });
+  });
+
+  test("never takes none of a field that has a default or is required, nor a value outside its values", () => {
+    const die = { category: "fields.DIE", message: "Die must be one of: 4, 8" };
+    const size = { category: "fields.SIZE", message: "Size must be one of: Small, Medium" };
+    for (const [fields, issue] of [
+      [{ DIE: null }, die],
+      [{ DIE: 6 }, die],
+      [{ SIZE: null }, size],
+      [{ SIZE: "" }, size],
+      [{ SIZE: "Huge" }, size],
+    ] as const) {
+      expect(thrownBy(() => NEEDED.parse({ fields }, CONTEXT))).toEqual(
+        new RulesError("invalid", "Request validation failed", [issue]),
+      );
+    }
+    expect(thrownBy(() => NEEDED.parse({ links: { stat: null } }, CONTEXT))).toEqual(
+      new RulesError("invalid", "Request validation failed", [
+        { category: "links.stat", message: "Invalid input: expected string, received null" },
+      ]),
+    );
+  });
+
+  test("refuses a list naming an entity twice", () => {
+    expect(
+      thrownBy(() => NEEDED.parse({ links: { pools: [{ toId: POOL }, { toId: POOL }], stat: "s" } }, creating)),
+    ).toEqual(new RulesError("invalid", "Gizmo given more than once"));
+  });
+
+  test("describes a number of values as a choice of their labels, which an empty form holds the default of", () => {
+    expect(NEEDED.describe()).toEqual([
+      {
+        default: 8,
+        field: "DIE",
+        help: "Its die",
+        input: "choice",
+        label: "Die",
+        labels: ["d4", "d8"],
+        multiple: false,
+        options: [4, 8],
+        placement: "beside-name",
+        required: true,
+      },
+      {
+        default: "Medium",
+        field: "SIZE",
+        help: "Its size",
+        input: "choice",
+        label: "Size",
+        multiple: false,
+        options: ["Small", "Medium"],
+        required: true,
+      },
+      { help: "Its stat", input: "ref", label: "Stat", references: GIZMOS, required: true, role: "stat" },
+      {
+        help: "Its pools",
+        input: "links",
+        label: "Pools",
+        references: GIZMOS,
+        required: "At least one pool",
+        role: "pools",
+      },
+    ]);
+    // A list of links holds no value: its links are its role's
+    expect(NEEDED.read(OwnerValues.NONE)).not.toHaveProperty("pools");
+  });
+});
+
+describe("A field its form shows as another input on other conditions", () => {
+  const NARROWED = new FieldCodec({
+    type: {
+      description: "Its type",
+      field: "TYPE",
+      kind: "text",
+      label: "Type",
+      merge: "winner",
+      narrowed: {
+        description: "Its copies' type",
+        required: true,
+        shownWhen: [{ field: "TEMPLATE", values: [true] }],
+        values: ["Gadget"],
+      },
+      shownWhen: [{ except: true, field: "TEMPLATE", values: [true] }],
+      values: ["Gadget", "Ring"],
+    },
+  } as const);
+
+  test("describes both inputs, each on its conditions, and takes any of its values", () => {
+    expect(NARROWED.describe()).toEqual([
+      {
+        field: "TYPE",
+        help: "Its type",
+        input: "choice",
+        label: "Type",
+        multiple: false,
+        options: ["Gadget", "Ring"],
+        shownWhen: [{ except: true, path: "fields.TEMPLATE", values: [true] }],
+      },
+      {
+        field: "TYPE",
+        help: "Its copies' type",
+        input: "choice",
+        label: "Type",
+        multiple: false,
+        options: ["Gadget"],
+        required: true,
+        shownWhen: [{ path: "fields.TEMPLATE", values: [true] }],
+      },
+    ]);
+    expect(valuesOf(NARROWED, { fields: { TYPE: "Ring" } }, CONTEXT)).toEqual({ type: "Ring" });
+  });
+});
+
+describe("A progression", () => {
+  test("reads its frequency and each level's first more in its bounds, at most its bound; its default without a value", () => {
+    expect(PROGRESSION.defaults).toEqual({ grants: { every: 3, extra: [{ amount: 1, position: 1 }] } });
+    expect(PROGRESSION.read(OwnerValues.NONE)).toEqual(PROGRESSION.defaults);
+    const held = heldValues([
+      ["GRANT", "5:1"],
+      ["GRANT", "every:4"],
+      ["GRANT", "2:1"],
+      ["GRANT", "2:2"],
+      ["GRANT", "3:5"],
+      ["GRANT", "11:1"],
+      ["GRANT", "4:0"],
+      ["GRANT", "every:x"],
+    ]);
+    expect(PROGRESSION.read(held)).toEqual({
+      grants: {
+        every: 4,
+        extra: [
+          { amount: 1, position: 2 },
+          { amount: 2, position: 3 },
+          { amount: 1, position: 5 },
+        ],
+      },
+    });
+    // A level gives at most its bound with its frequency's: what's past it reads as its bound
+    expect(
+      PROGRESSION.read(
+        heldValues([
+          ["GRANT", "every:4"],
+          ["GRANT", "4:5"],
+          ["GRANT", "6:5"],
+        ]),
+      ),
+    ).toEqual({
+      grants: {
+        every: 4,
+        extra: [
+          { amount: 1, position: 4 },
+          { amount: 2, position: 6 },
+        ],
+      },
+    });
+    // A frequency's value alone: none more; without a frequency in its bounds, its default
+    expect(PROGRESSION.read(heldValues([["GRANT", "every:0"]]))).toEqual({ grants: { every: 0, extra: [] } });
+    for (const values of [
+      heldValues([
+        ["GRANT", "every:11"],
+        ["GRANT", "5:1"],
+      ]),
+      heldValues([["GRANT", "6:1"]]),
+    ])
+      expect(PROGRESSION.read(values)).toEqual(PROGRESSION.defaults);
+  });
+
+  test("writes its frequency's value and one per level it gives more at, which read back", () => {
+    const grants = { every: 0, extra: [{ amount: 2, position: 4 }] };
+    expect(PROGRESSION.write({ grants }).fields).toEqual({ GRANT: ["every:0", "4:2"] });
+    expect(PROGRESSION.read(writtenValues(PROGRESSION.write({ grants })))).toEqual({ grants });
+    expect(PROGRESSION.write({ grants: { every: 5, extra: [] } }).fields).toEqual({ GRANT: ["every:5"] });
+  });
+
+  test("reads a form's progression sorted by position, refusing one listed twice or giving past its bound", () => {
+    const parse = (grants: unknown) => valuesOf(PROGRESSION, { fields: { GRANT: grants } }, CONTEXT);
+    const given = (...extra: [number, number][]) => extra.map(([position, amount]) => ({ amount, position }));
+    expect(parse({ every: 2, extra: given([5, 2], [2, 1]) })).toEqual({
+      grants: { every: 2, extra: given([2, 1], [5, 2]) },
+    });
+    const twice = "Rank 2 is listed twice";
+    const refused = [
+      [
+        { every: 3, extra: given([2, 1], [2, 1]) },
+        [
+          { category: "fields.GRANT.extra.0.position", message: twice },
+          { category: "fields.GRANT.extra.1.position", message: twice },
+        ],
+      ],
+      [
+        { every: 3, extra: given([3, 2]) },
+        [{ category: "fields.GRANT.extra.0.amount", message: "Rank 3 would give 3, at most 2" }],
+      ],
+      [
+        { every: 3, extra: given([11, 1]) },
+        [{ category: "fields.GRANT.extra.0.position", message: "Too big: expected number to be <=10" }],
+      ],
+      [
+        { every: 3, extra: given([2, 0]) },
+        [{ category: "fields.GRANT.extra.0.amount", message: "Too small: expected number to be >=1" }],
+      ],
+      [{ every: 11, extra: [] }, [{ category: "fields.GRANT.every", message: "Too big: expected number to be <=10" }]],
+      [{ every: -1, extra: [] }, [{ category: "fields.GRANT.every", message: "Too small: expected number to be >=0" }]],
+      [
+        { every: 3 },
+        [{ category: "fields.GRANT.extra", message: "Invalid input: expected array, received undefined" }],
+      ],
+      [{ every: 3, extra: [], more: 1 }, [{ category: "fields.GRANT", message: 'Unrecognized key: "more"' }]],
+      [[1, 0, 1], [{ category: "fields.GRANT", message: "Invalid input: expected object, received array" }]],
+    ] as const;
+    for (const [grants, issues] of refused) {
+      expect(thrownBy(() => parse(grants))).toEqual(
+        new RulesError("invalid", "Request validation failed", [...issues]),
+      );
+    }
+  });
+
+  test("refuses a form's progression in the word its field declares", () => {
+    const parse = () =>
+      valuesOf(
+        PROGRESSION,
+        {
+          fields: {
+            GRANT: {
+              every: 3,
+              extra: [
+                { amount: 1, position: 2 },
+                { amount: 1, position: 2 },
+              ],
+            },
+          },
+        },
+        CONTEXT,
+      );
+    expect(thrownBy(parse)).toEqual(
+      new RulesError("invalid", "Request validation failed", [
+        { category: "fields.GRANT.extra.0.position", message: "Rank 2 is listed twice" },
+        { category: "fields.GRANT.extra.1.position", message: "Rank 2 is listed twice" },
+      ]),
+    );
+  });
+
+  test("describes its default and its bounds", () => {
+    expect(PROGRESSION.describe()).toEqual([
+      {
+        default: { every: 3, extra: [{ amount: 1, position: 1 }] },
+        field: "GRANT",
+        help: "What each level grants",
+        input: "progression",
+        label: "Grants",
+        lastPosition: 10,
+        max: 2,
+        positionWord: { many: "Ranks", one: "Rank" },
+      },
+    ]);
+  });
+});

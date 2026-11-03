@@ -1,0 +1,264 @@
+import { Box } from "@mui/material";
+import type { InferRequestType } from "hono/client";
+import { Controller, type UseFormReturn } from "react-hook-form";
+
+import {
+  ConfirmDialog,
+  CreateDialog,
+  DescriptionField,
+  EditDialog,
+  NameField,
+  OptionToggle,
+} from "@/client/src/components/common/index.ts";
+import {
+  ArchiveIcon,
+  ExtensionIcon,
+  PrivateIcon,
+  PublicIcon,
+  PublishIcon,
+  RulesetIcon,
+} from "@/client/src/components/icons/index.ts";
+import type { PublishKind } from "@/client/src/pages/rulesets/hooks/index.ts";
+import type { rpc } from "@/client/src/services/rpc.ts";
+import type { RulesetKind } from "@/shared/enums.ts";
+import { MAX_RULESET_NAME_LENGTH } from "@/shared/rulesets.ts";
+
+interface ArchiveRulesetDialogProps {
+  onClose: () => void;
+  onConfirm: () => void;
+  open: boolean;
+  pending: boolean;
+}
+
+interface EditRulesetDialogProps {
+  /** Its privacy can change (the ruleset's `canMakePrivate`): a public ruleset stays public, and offers none. */
+  canMakePrivate: boolean;
+  form: UseFormReturn<EditRulesetFormData>;
+  /** The kinds it may be given (the ruleset's `kinds`), which it offers where there's a choice */
+  kinds: readonly RulesetKind[];
+  onClose: () => void;
+  onSubmit: (data: EditRulesetFormData) => void;
+  open: boolean;
+  pending: boolean;
+}
+
+interface ForkRulesetDialogProps {
+  form: UseFormReturn<ForkRulesetFormData>;
+  onClose: () => void;
+  onSubmit: (data: ForkRulesetFormData) => void;
+  open: boolean;
+  pending: boolean;
+}
+
+interface PublishRulesetDialogProps {
+  /** What it's published as, which its opener sets to the ruleset's kind */
+  kind: PublishKind;
+  /** The kinds it may be published as (the ruleset's `kinds`), which it offers where there's a choice */
+  kinds: readonly RulesetKind[];
+  onClose: () => void;
+  onConfirm: (kind: PublishKind) => void;
+  onKindChange: (kind: PublishKind) => void;
+  open: boolean;
+  pending: boolean;
+}
+
+interface UnsubscribeExtensionDialogProps {
+  extensionName: string;
+  onClose: () => void;
+  onConfirm: () => void;
+  open: boolean;
+  pending: boolean;
+}
+
+export type EditRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["$put"]>["json"];
+
+export type ForkRulesetFormData = InferRequestType<(typeof rpc.api.rulesets)[":id"]["fork"]["$post"]>["json"];
+
+/** What publishing as each kind means */
+const KIND_CAPTION = "Rulesets are playable directly. Extensions are content packs that other rulesets subscribe to.";
+
+/** What a ruleset is published as: one to play, or an extension other rulesets subscribe to */
+const KIND_OPTIONS = [
+  { value: "ruleset", label: "Ruleset", icon: RulesetIcon },
+  { value: "extension", label: "Extension", icon: ExtensionIcon },
+] as const;
+
+/** A ruleset's privacy: public, or private */
+const PRIVACY_OPTIONS = [
+  { value: false, label: "Public", icon: PublicIcon },
+  { value: true, label: "Private", icon: PrivateIcon },
+] as const;
+
+/** The kinds a ruleset may be given (`kinds`, as the server answers them), as its "Publish as" toggle offers them. */
+function kindOptionsOf(kinds: readonly RulesetKind[]) {
+  return KIND_OPTIONS.filter((option) => kinds.includes(option.value));
+}
+
+/** Archiving a ruleset, which its owner or an Admin archives and only its owner unarchives: the same words to both. */
+export function ArchiveRulesetDialog({ open, onClose, onConfirm, pending }: ArchiveRulesetDialogProps) {
+  return (
+    <ConfirmDialog
+      open={open}
+      onClose={onClose}
+      onConfirm={onConfirm}
+      pending={pending}
+      title="Archive Ruleset"
+      message="Are you sure you want to archive this ruleset? Only its owner can unarchive it."
+      confirmLabel="Archive Ruleset"
+      intent="caution"
+      confirmIcon={<ArchiveIcon />}
+    />
+  );
+}
+
+export function EditRulesetDialog({
+  open,
+  onClose,
+  form,
+  onSubmit,
+  pending,
+  canMakePrivate,
+  kinds,
+}: EditRulesetDialogProps) {
+  const kindOptions = kindOptionsOf(kinds);
+  return (
+    <EditDialog open={open} onClose={onClose} title="Edit Ruleset" form={form} onSubmit={onSubmit} pending={pending}>
+      <NameField control={form.control} name="name" max={MAX_RULESET_NAME_LENGTH} autoFocus disabled={pending} />
+      <DescriptionField control={form.control} name="description" disabled={pending} rows={4} />
+      {canMakePrivate && (
+        <Controller
+          control={form.control}
+          name="private"
+          render={({ field }) => (
+            <OptionToggle
+              label="Privacy"
+              options={PRIVACY_OPTIONS}
+              value={field.value ?? false}
+              onChange={field.onChange}
+              disabled={pending}
+            />
+          )}
+        />
+      )}
+      {kindOptions.length > 1 && (
+        <Controller
+          control={form.control}
+          name="kind"
+          render={({ field }) => (
+            <OptionToggle
+              label="Publish as"
+              options={kindOptions}
+              caption={KIND_CAPTION}
+              value={field.value ?? "ruleset"}
+              onChange={field.onChange}
+              disabled={pending}
+            />
+          )}
+        />
+      )}
+    </EditDialog>
+  );
+}
+
+export function ForkRulesetDialog({ open, onClose, form, onSubmit, pending }: ForkRulesetDialogProps) {
+  return (
+    <CreateDialog
+      open={open}
+      onClose={onClose}
+      title="Fork Ruleset"
+      form={form}
+      onSubmit={onSubmit}
+      pending={pending}
+      submitLabel="Fork Ruleset"
+    >
+      <NameField
+        control={form.control}
+        name="name"
+        label="New Name"
+        max={MAX_RULESET_NAME_LENGTH}
+        autoFocus
+        disabled={pending}
+      />
+      <DescriptionField control={form.control} name="description" disabled={pending} rows={4} />
+      <Controller
+        control={form.control}
+        name="private"
+        render={({ field }) => (
+          <OptionToggle
+            label="Privacy"
+            options={PRIVACY_OPTIONS}
+            value={field.value ?? false}
+            onChange={field.onChange}
+            disabled={pending}
+          />
+        )}
+      />
+    </CreateDialog>
+  );
+}
+
+export function PublishRulesetDialog({
+  open,
+  onClose,
+  onConfirm,
+  pending,
+  kind,
+  kinds,
+  onKindChange,
+}: PublishRulesetDialogProps) {
+  const kindOptions = kindOptionsOf(kinds);
+  return (
+    <ConfirmDialog
+      open={open}
+      onClose={onClose}
+      onConfirm={() => onConfirm(kind)}
+      pending={pending}
+      title="Publish Ruleset"
+      message="Are you sure you want to publish this ruleset? Once published, other users can find it and use it, unless it's private."
+      confirmLabel="Publish Ruleset"
+      intent="positive"
+      confirmIcon={<PublishIcon />}
+    >
+      {kindOptions.length > 1 && (
+        // Its room below the dialog's question
+        <Box sx={{ pt: 2 }}>
+          <OptionToggle
+            label="Publish as"
+            options={kindOptions}
+            caption={KIND_CAPTION}
+            value={kind}
+            onChange={onKindChange}
+            disabled={pending}
+          />
+        </Box>
+      )}
+    </ConfirmDialog>
+  );
+}
+
+export function UnsubscribeExtensionDialog({
+  open,
+  onClose,
+  onConfirm,
+  pending,
+  extensionName,
+}: UnsubscribeExtensionDialogProps) {
+  return (
+    <ConfirmDialog
+      open={open}
+      onClose={onClose}
+      onConfirm={onConfirm}
+      pending={pending}
+      title="Unsubscribe from Extension"
+      message={
+        <>
+          Are you sure you want to unsubscribe from <strong>{extensionName}</strong>? You will lose all associated data
+          from this extension.
+        </>
+      }
+      confirmLabel="Unsubscribe from Extension"
+      intent="destructive"
+      confirmIcon={<ExtensionIcon />}
+    />
+  );
+}

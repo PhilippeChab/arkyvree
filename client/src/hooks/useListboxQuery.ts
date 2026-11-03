@@ -1,0 +1,38 @@
+import {
+  type DefaultError,
+  type InfiniteData,
+  type QueryKey,
+  useInfiniteQuery,
+  type UseInfiniteQueryOptions,
+} from "@tanstack/react-query";
+import { useMemo } from "react";
+
+import { createListboxScrollHandler } from "@/client/src/lib/listboxScroll.ts";
+import { type ListPage, pageItems } from "@/client/src/lib/pageItems.ts";
+
+/**
+ * An infinite query behind a listbox (an Autocomplete's or a Select's options):
+ * the items loaded so far, why they didn't load, whether they're being fetched again, and the `onScroll` that fetches
+ * the next page near the bottom. Give the listbox `ScrollSafeListbox` so the new options keep the scroll.
+ */
+export function useListboxQuery<
+  TPage extends ListPage,
+  TKey extends QueryKey,
+  TPageParam,
+  TData extends InfiniteData<TPage, unknown> = InfiniteData<TPage, TPageParam>,
+>(options: UseInfiniteQueryOptions<TPage, DefaultError, TData, TKey, TPageParam>) {
+  const {
+    data,
+    isLoading,
+    isPending,
+    isPlaceholderData,
+    isFetching,
+    error,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery(options);
+  const items = useMemo(() => pageItems<TPage["items"][number]>(data), [data]);
+  const onScroll = createListboxScrollHandler({ hasNextPage, isFetchingNextPage, fetchNextPage });
+  return { items, onScroll, isLoading, isPending, isPlaceholderData, isFetching, error, isFetchingNextPage };
+}

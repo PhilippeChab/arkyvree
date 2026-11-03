@@ -1,0 +1,86 @@
+import { asc, eq } from "drizzle-orm";
+
+import { DND35_CORE_PACKAGE } from "@/content/dnd3.5/packages/core.ts";
+import type { Dnd35SeedContext as SeedContext } from "@/database/seeders/dnd3.5/Dnd35ContentSeeder.ts";
+import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
+import { modifiersInCustomization, requirementsInCustomization } from "@/drizzle/schema.ts";
+import { db } from "@/server/database/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
+import { findFormValues } from "@/tests/support/ownerValues.ts";
+import { uniqueId } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
+
+import { describeRequirement } from "./seededRows.ts";
+
+/** A modifier as a line: "target operator value valueType". */
+function describeModifier(m: { operator: string; target: string; value: string; valueType: string }) {
+  return `${m.target} ${m.operator} ${m.value} ${m.valueType}`;
+}
+
+/** A seeder of a new extension of the context's ruleset, as an extension's package makes one. */
+export function freshExtensionSeeder(base: SeedContext) {
+  return RulesetSeeder.createExtension(
+    db,
+    DND35_BASE_RULES,
+    { name: `Seed test extension ${uniqueId()}`, description: "An extension a test seeds into" },
+    base,
+  );
+}
+
+/** The names of a context's ids, by id. */
+export function namesOf(ids: Record<string, string>) {
+  return Object.fromEntries(Object.entries(ids).map(([name, id]) => [id, name]));
+}
+
+/**
+ * What an entity was seeded with, as its content reads: its requirements ("level target operator value") by level,
+ * and its modifiers (each with its requirements) and the values its form writes ("field value", a link's "role
+ * entity"), sorted.
+ */
+export async function describeCustomizations(entityId: string) {
+  const requirementsOf = async (id: string) =>
+    (
+      await db
+        .select()
+        .from(requirementsInCustomization)
+        .where(eq(requirementsInCustomization.entityId, id))
+        .orderBy(asc(requirementsInCustomization.level))
+    ).map(describeRequirement);
+  const modifiers = await db
+    .select()
+    .from(modifiersInCustomization)
+    .where(eq(modifiersInCustomization.sourceId, entityId));
+  const modifierLines: string[] = [];
+  for (const modifier of modifiers) {
+    const requirements = await requirementsOf(modifier.id);
+    modifierLines.push([describeModifier(modifier), ...requirements.map((r) => `  if ${r}`)].join("\n"));
+  }
+  const [{ type }] = await Entities.findStored(db, { ids: [entityId] });
+  const { fields, links } = await findFormValues(type, entityId);
+  return {
+    requirements: await requirementsOf(entityId),
+    modifiers: modifierLines.sort(),
+    fields: [
+      ...Object.entries(fields).flatMap(([field, values]) => values.map((value) => `${field} ${value}`)),
+      ...Object.entries(links).map(([role, toId]) => `${role} ${toId}`),
+    ].sort(),
+  };
+}
+
+/** A seeder of a new system ruleset for a test to seed into: naming no rows, or the seeded core's (`named`). */
+export async function freshSeeder({ named = false } = {}) {
+  const seeder = await RulesetSeeder.createCore(db, DND35_BASE_RULES, {
+    name: `Seed test ${uniqueId()}`,
+    description: "A ruleset a test seeds into",
+  });
+  if (!named) return seeder;
+  return new RulesetSeeder(db, {
+    ...(await RulesetSeeder.loadContext(
+      db,
+      await RulesetSeeder.findCoreRulesetId(db, DND35_CORE_PACKAGE, "A seed test naming its rows"),
+    )),
+    rulesetId: seeder.ctx.rulesetId,
+    spellMap: {},
+    inheritedSpellMap: {},
+  });
+}

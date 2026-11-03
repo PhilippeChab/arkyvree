@@ -1,0 +1,27 @@
+import { z } from "zod";
+
+import { Engine } from "@/engine/index.ts";
+import { CHAINING_OPERATORS, MODIFIER_OPERATORS, REQUIREMENT_OPERATORS } from "@/shared/customization/operators.ts";
+
+const chainingOperators = new Set<string>(CHAINING_OPERATORS);
+const modifierOperators = new Set<string>(MODIFIER_OPERATORS);
+const requirementOperators = new Set<string>(REQUIREMENT_OPERATORS);
+
+export const chainingOperator = z.string().refine((value) => chainingOperators.has(value), "Invalid chaining operator");
+/** A customization route's entity: the ruleset (`id`), and the entity by its type and id. */
+export const entityParams = z.object({
+  id: z.string().uuid(),
+  entityType: z.enum(Engine.storage().customizableKinds()),
+  entityId: z.string().uuid(),
+});
+export const modifierOperator = z.string().refine((value) => modifierOperators.has(value), "Invalid modifier operator");
+
+/** As `entityParams`, for the customizations a modifier can own too (its requirements). */
+export const ownerParams = entityParams.extend({
+  entityType: z.enum([...Engine.storage().customizableKinds(), "modifiers"]),
+});
+
+/** Keep RPC input types as strings, matching the existing form schemas. */
+export const requirementOperator = z
+  .string()
+  .refine((value) => requirementOperators.has(value), "Invalid requirement operator");

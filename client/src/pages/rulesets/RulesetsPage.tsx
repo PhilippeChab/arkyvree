@@ -1,0 +1,148 @@
+import { Container, Stack } from "@mui/material";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+
+import {
+  BlankState,
+  CREATED_SORTS,
+  type FilterOption,
+  ListCard,
+  ListCardGrid,
+  ListPageResults,
+  PageHeader,
+  PageTransition,
+  SearchBar,
+  type SortOption,
+  UPDATED_SORTS,
+} from "@/client/src/components/common/index.ts";
+import { RulesetIcon } from "@/client/src/components/icons/index.ts";
+import { useListPageQuery, useListParams, usePageTitle, useRules } from "@/client/src/hooks/index.ts";
+import { oneOf } from "@/client/src/lib/oneOf.ts";
+import {
+  RULESET_LIST_DEFAULTS,
+  rulesetDetailQuery,
+  type RulesetListFilters,
+  rulesetListQuery,
+} from "@/client/src/lib/queries.ts";
+
+import { RulesetFactChips, RulesetStarButton } from "./components/index.ts";
+import { childOnlyOf } from "./details/childOnly.ts";
+import { prefetchSection } from "./details/sectionQueries.ts";
+
+type FilterScope = (typeof SCOPES)[number];
+
+type SortField = RulesetListFilters["orderBy"];
+
+/** The scopes the list filters by, in the order its menu offers them, each with its label. */
+const SCOPE_LABELS = {
+  base: "Base",
+  extensions: "Extensions",
+  systems: "Systems",
+  community: "Community",
+  forked: "Forked",
+  // The rulesets of the campaigns the user plays in
+  campaignAccessible: "My Campaigns",
+  starred: "Starred",
+  archived: "Archived",
+} as const;
+
+const SCOPES = Object.keys(SCOPE_LABELS) as (keyof typeof SCOPE_LABELS)[];
+
+const RULESET_FILTER_OPTIONS: FilterOption<FilterScope>[] = [
+  { value: undefined, label: "All" },
+  ...SCOPES.map((scope) => ({ value: scope, label: SCOPE_LABELS[scope] })),
+];
+
+const RULESET_SORT_OPTIONS: SortOption<SortField>[] = [...CREATED_SORTS, ...UPDATED_SORTS];
+
+export default function RulesetsPage() {
+  usePageTitle("Rulesets");
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { searchParams, updateSearchParams, search, orderBy, orderDir, searchBarProps } = useListParams(
+    ["createdAt", "updatedAt"],
+    RULESET_LIST_DEFAULTS,
+  );
+
+  const scope = oneOf(searchParams.get("scope"), SCOPES);
+  const rulesets = useListPageQuery(rulesetListQuery({ scope, search, orderBy, orderDir }));
+  const { all: allRules } = useRules();
+
+  return (
+    <PageTransition>
+      <Container>
+        <Stack spacing={4}>
+          <PageHeader
+            variant="tinted"
+            title="Game Rulesets"
+            subtitle="Choose your adventure system and dive into infinite possibilities"
+          />
+
+          <Stack spacing={3}>
+            <SearchBar
+              {...searchBarProps}
+              searchPlaceholder="Search rulesets…"
+              filterOptions={RULESET_FILTER_OPTIONS}
+              filterValue={scope}
+              onFilterChange={(value) => updateSearchParams({ scope: value })}
+              sortOptions={RULESET_SORT_OPTIONS}
+            />
+
+            <ListPageResults
+              list={rulesets}
+              what="Rulesets"
+              search={search}
+              empty={
+                <BlankState
+                  icon={RulesetIcon}
+                  title="No rulesets found"
+                  description="Try another filter, or fork a base ruleset."
+                />
+              }
+            >
+              <ListCardGrid>
+                {rulesets.items.map((ruleset, index) => {
+                  // The page opens on its rules' first tab, with "Local Changes" as its answer sets it (`childOnlyOf`)
+                  const prefetch = () => {
+                    const detail = queryClient.fetchQuery(rulesetDetailQuery(ruleset.id));
+                    const rules = allRules?.[ruleset.baseRules];
+                    const first = rules?.kinds[0];
+                    if (!first) return void detail.catch(() => undefined);
+                    void detail.then(
+                      (answer) =>
+                        prefetchSection(
+                          queryClient,
+                          ruleset.id,
+                          first.type,
+                          first,
+                          rules.entityKinds.at(0)?.value,
+                          childOnlyOf(answer),
+                        ),
+                      () => undefined,
+                    );
+                  };
+                  return (
+                    <ListCard
+                      key={ruleset.id}
+                      isArchived={ruleset.status === "Archived"}
+                      animationIndex={index}
+                      animationOffset={rulesets.offset}
+                      onClick={() => navigate(`/rulesets/${ruleset.id}`)}
+                      onMouseEnter={prefetch}
+                      onFocus={prefetch}
+                      avatar={<RulesetIcon sx={{ fontSize: 18 }} />}
+                      title={ruleset.name}
+                      description={ruleset.description}
+                      corner={ruleset.isStarrable && <RulesetStarButton ruleset={ruleset} placement="card" />}
+                      chips={<RulesetFactChips ruleset={ruleset} />}
+                    />
+                  );
+                })}
+              </ListCardGrid>
+            </ListPageResults>
+          </Stack>
+        </Stack>
+      </Container>
+    </PageTransition>
+  );
+}

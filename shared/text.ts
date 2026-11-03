@@ -1,0 +1,41 @@
+/** Text: as it's stored, a name, a label or a bonus written for display, or reduced to a slug. */
+
+/** `s` with its first letter capitalized. */
+export function capitalize(s: string) {
+  return String(s).charAt(0).toUpperCase() + String(s).slice(1);
+}
+
+/** A bonus with its sign ("+2", "-1"), wherever one shows (a sheet, an attack's to-hit); a missing one reads "+0". */
+export function formatSigned(value: number | null | undefined): string {
+  const n = value ?? 0;
+  return n >= 0 ? `+${n}` : `${n}`;
+}
+
+/**
+ * A record's name as it's stored (a character's, a campaign's, a ruleset's): as its owner wrote it, canonically composed
+ * (NFC, which changes no character it shows) and trimmed, never folded as an account's text is: "Kai²" stays "Kai²".
+ * The server stores it so; the client measures it so.
+ */
+export function sanitizeName(name: string) {
+  return name.normalize("NFC").trim();
+}
+
+/** Text as it's stored: Unicode-normalized (NFKC) and trimmed. The server stores it so; the client measures it so. */
+export function sanitizeText(text: string) {
+  return text.normalize("NFKC").trim();
+}
+
+/** `s` as a slug: its letters and digits, lowercased ("Weapon Focus: Longsword" → "weaponfocuslongsword"). */
+export function stripSeparators(s: string) {
+  return String(s)
+    .replaceAll(/[^a-z0-9]/gi, "")
+    .toLowerCase();
+}
+
+/**
+ * A label's words (`s`, in Title Case) as a sentence writes them: its first letter kept, the rest lowercase ("Owned
+ * Step" in "Owned step not found").
+ */
+export function toSentenceCase(s: string) {
+  return s.charAt(0) + s.slice(1).toLowerCase();
+}

@@ -1,0 +1,492 @@
+/**
+ * An entity's fields as its rules describe them (the API's rules' `fields`), as a form holds them, where its save sends
+ * them (`placeOf`): a field's value by the stored field that keeps it, among its form's `fields`, a link's by its role,
+ * among its form's `links`. Where its form shows each (`formSectionsOf`), their values empty, an entity's, as a save
+ * sends them, the options a choice offers, and when one shows.
+ */
+
+import type { InferRequestType } from "hono/client";
+import type { FieldPath, FieldValues, UseFormReturn } from "react-hook-form";
+
+import type { EntityRow } from "@/client/src/lib/entityRequests.ts";
+import { formatDecimal } from "@/client/src/lib/formatNumeric.ts";
+import { byName } from "@/client/src/pages/rulesets/components/byName.ts";
+import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
+import type { rpc } from "@/client/src/services/rpc.ts";
+import { copyProgression } from "@/shared/customization/progression.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
+import { isRecord } from "@/shared/isRecord.ts";
+
+import { grantLabel, sortGrants } from "./grants.ts";
+
+/** A value as a form holds it: a field's, or a list of links' entries (a spell's spell lists, a level's saves). */
+type FormValue = boolean | number | string | string[] | null | ProgressionValue | unknown[];
+
+/** The values a form holds: any, its fields and its links among them. */
+type FormValues = Partial<FormParts> & Record<string, unknown>;
+
+/**
+ * A field of an entity's list of links of a role: a feat's feat pools, a spell's spell lists each at its tier, a level's
+ * saves' amounts and its granted feats.
+ */
+type LinksField = Extract<EntityField, { input: "amounts" | "grants" | "tieredLinks" | "links" }>;
+
+/** What a character's positions give, as a progression's field holds it: a frequency, and more at those it names. */
+type ProgressionValue = Extract<EntityField, { input: "progression" }>["default"];
+
+/** A field of an entity's form that holds a value of its own: any but a group. */
+type ValueField = Exclude<EntityField, { input: "group" }>;
+
+/**
+ * A form's values where its save sends them: its fields by the stored field that keeps each (`fields`), its links by
+ * role (`links`).
+ */
+export interface FormParts {
+  fields: Record<string, unknown>;
+  links: Record<string, unknown>;
+}
+
+/** An entity's fields' values as a form holds them and a save sends them, by the stored field that keeps each. */
+export type EntityFieldValues = NonNullable<
+  InferRequestType<(typeof rpc.api.rulesets)[":id"]["entities"][":entityType"]["$post"]>["json"]["fields"]
+>;
+
+/** An entity a link of an entity read names, as its server sends it: its id and its name. */
+export type LinkedEntity = Pick<EntityRow, "id" | "name">;
+
+/** The inputs of a list of links, which a form shows after its other fields: a feat's pools, a level's feats. */
+const LIST_INPUTS = ["amounts", "grants", "tieredLinks", "links"] as const;
+
+/**
+ * A field's value in an empty form: false (none, for a three-state flag), a number's default, a progression's own copy
+ * of its default, a choice's default or none, no text, no decimal, no reference or template, no list's items.
+ */
+function emptyValueOf(field: ValueField): FormValue {
+  switch (field.input) {
+    case "flag":
+      return field.nullable ? null : false;
+    case "number":
+      return field.default;
+    case "progression":
+      return copyProgression(field.default);
+    case "choice":
+      return field.multiple ? [] : (field.default ?? "");
+    case "text":
+      return field.multiple ? [] : "";
+    case "decimal":
+    case "ref":
+    case "template":
+      return "";
+    case "tieredLinks":
+    case "links":
+    case "grants":
+    case "amounts":
+      return [];
+  }
+}
+
+/**
+ * Of fields that share a place (an item's type, a template's narrower), the one that takes any value it holds, not one
+ * that must hold one of its own: each place once.
+ */
+function firstAtPlace(fields: readonly ValueField[]): ValueField[] {
+  const byPlace = new Map<string, ValueField>();
+  for (const field of fields) {
+    const held = byPlace.get(placeOf(field));
+    if (!held || (held.input === "choice" && held.required)) byPlace.set(placeOf(field), field);
+  }
+  return [...byPlace.values()];
+}
+
+/** A field's value as a form holds it, of an entity's (`value`): its empty value when it has none (`""` for a text). */
+function formValueOf(field: ValueField, value: unknown): FormValue {
+  switch (field.input) {
+    case "flag":
+      return typeof value === "boolean" ? value : emptyValueOf(field);
+    case "number":
+      return typeof value === "number" ? value : emptyValueOf(field);
+    case "progression":
+      return isProgression(value) ? copyProgression(value) : emptyValueOf(field);
+    case "decimal":
+      return typeof value === "number" || typeof value === "string" ? (formatDecimal(value) ?? "") : "";
+    case "tieredLinks":
+    case "links":
+    case "grants":
+    case "amounts":
+      return Array.isArray(value) ? value : [];
+    case "choice":
+      if (!field.multiple) {
+        // One the field must hold, and a value it doesn't offer, reads as its default
+        if (isOneOf(value, field.options)) return value;
+        return field.required ? emptyValueOf(field) : typeof value === "string" ? value : "";
+      }
+      return Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
+    case "text":
+      if (field.multiple) return Array.isArray(value) ? value.filter((item) => typeof item === "string") : [];
+      return typeof value === "string" ? value : "";
+    default:
+      return typeof value === "string" ? value : "";
+  }
+}
+
+/**
+ * A field's value as an entity read holds it: its stored field's (`field`, among its `fields`), its single link's of
+ * its role (a reference's or a template's: the linked entity's id), or a list of its links of its role (among its
+ * `links`), each entry as a form sends it: its linked entity, `toId`, at its tier where the field takes one, in their
+ * names' order; an amount's with its `amount` (a level's saves); a grant's through its `viaId`, in its labels' order
+ * (a level's feats).
+ */
+function heldValueOf(field: ValueField, entity: unknown): unknown {
+  if (field.field) return ownFieldOf(entity, field.field);
+  if (field.input === "ref" || field.input === "template") {
+    const toId = ownLinkOf(entity, field.role)?.toId;
+    return typeof toId === "string" ? toId : undefined;
+  }
+  if (field.input === "links" || field.input === "tieredLinks") {
+    const links = linksOf(field, entity).sort((a, b) => byName(a.linked, b.linked));
+    if (field.input === "links") return links.map(({ linked }) => ({ toId: linked.id }));
+    return links.map(({ linked, tier }) =>
+      typeof tier === "number" ? { toId: linked.id, tier } : { toId: linked.id },
+    );
+  }
+  if (field.input === "amounts") {
+    return linksOf(field, entity).map(({ amount, linked }) => ({
+      toId: linked.id,
+      amount: typeof amount === "number" ? amount : 0,
+    }));
+  }
+  if (field.input !== "grants") return undefined;
+  const grants = linksOf(field, entity).map(({ linked, via }) => ({
+    label: grantLabel(linked.name, via.name),
+    toId: linked.id,
+    viaId: via.id,
+  }));
+  return sortGrants(grants, (grant) => grant.label).map(({ toId, viaId }) => ({ toId, viaId }));
+}
+
+/** Whether a value is a progression's: a frequency, and the positions it gives more at, each with its amount. */
+function isProgression(value: unknown): value is ProgressionValue {
+  return (
+    isRecord(value) &&
+    typeof value.every === "number" &&
+    Array.isArray(value.extra) &&
+    value.extra.every(
+      (given) => isRecord(given) && typeof given.position === "number" && typeof given.amount === "number",
+    )
+  );
+}
+
+/**
+ * An entity read's links of a field of links (its `role`'s, among its `links`; a list's to its kind, `references`: a
+ * level's grants to feats), each its linked entity (its `toId` and `toName`), its tier and its amount, and the one
+ * it's through (its `viaId` and `viaName`), as its server sends them.
+ */
+function linksOf(field: LinksField, entity: unknown) {
+  const ofKind = (link: Record<string, unknown>) =>
+    (field.input !== "amounts" && field.input !== "grants") || link.toType === field.references;
+  return ownLinksOf(entity, field.role).flatMap((link) =>
+    ofKind(link) && typeof link.toId === "string" && typeof link.toName === "string"
+      ? [
+          {
+            amount: link.amount,
+            linked: { id: link.toId, name: link.toName },
+            tier: link.tier,
+            via: {
+              id: typeof link.viaId === "string" ? link.viaId : "",
+              name: typeof link.viaName === "string" ? link.viaName : null,
+            },
+          },
+        ]
+      : [],
+  );
+}
+
+/** A decimal's text as its save sends it: its number, null for none (which clears it). */
+function parseDecimal(value: unknown): number | null {
+  if (typeof value !== "string" || value.trim() === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+/** Values at their places (`entries`), as a form holds them: each among its fields or its links. */
+function partsOf(entries: [string, unknown][]): FormParts {
+  const parts: FormParts = { fields: {}, links: {} };
+  for (const [place, value] of entries) {
+    const [part, ...key] = place.split(".");
+    parts[part as keyof FormParts][key.join(".")] = value;
+  }
+  return parts;
+}
+
+/**
+ * A value as its save sends it whole (`value`, as its form holds it, of a field `wholeFieldsOf` gives): a decimal's
+ * number, none (null) for an empty optional one.
+ */
+function sentValueOf(field: ValueField, value: unknown): unknown {
+  switch (field.input) {
+    case "decimal":
+      return parseDecimal(value);
+    case "choice":
+      return !field.multiple && !field.required && value === "" ? null : value;
+    case "ref":
+      return !field.required && value === "" ? null : value;
+    case "template":
+      return value === "" ? null : value;
+    default:
+      return value;
+  }
+}
+
+/**
+ * The fields that hold a value, a group's among them, each place once (`firstAtPlace`): one shown in several groups
+ * too, and one its form shows on other conditions as another input (an item template's type).
+ */
+function valueFieldsOf(fields: readonly EntityField[]): ValueField[] {
+  return firstAtPlace(fields.flatMap((field) => (field.input === "group" ? valueFieldsOf(field.fields) : [field])));
+}
+
+/** The fields a form sends whole (`wholeFieldsOf`) that hold a value, each place once (`firstAtPlace`). */
+function wholeByPlace(fields: readonly EntityField[]): ValueField[] {
+  return firstAtPlace(wholeFieldsOf(fields).filter((field): field is ValueField => field.input !== "group"));
+}
+
+/** A form's values (`values`) with others at their places (`parts`): its fields and its links over its own. */
+function withParts<V extends FormValues>(values: V, parts: FormParts): V {
+  return {
+    ...values,
+    fields: { ...values.fields, ...parts.fields },
+    links: { ...values.links, ...parts.links },
+  };
+}
+
+/**
+ * A form's values as an edit sends them: of its fields and its links, those it sends whole (`wholeFieldsOf`, of
+ * `fields`) and those it changed from what the form is based on (`baseline`'s). The others stay as the entity keeps
+ * them, a value its ruleset no longer lists too.
+ */
+export function changedValues<V extends FormValues>(values: V, baseline: unknown, fields: readonly EntityField[]): V {
+  const sent = new Set(wholeByPlace(fields).map(placeOf));
+  const changed = (part: keyof FormParts) => {
+    const held = values[part];
+    if (!held) return held;
+    const base = valueAt(baseline, part);
+    return Object.fromEntries(
+      Object.entries(held).filter(
+        ([key, value]) =>
+          sent.has(`${part}.${key}`) ||
+          JSON.stringify(value) !== JSON.stringify(isRecord(base) ? base[key] : undefined),
+      ),
+    );
+  };
+  return { ...values, fields: changed("fields"), links: changed("links") };
+}
+
+/** A choice's options: its own, then the ones the saved form holds (`saved`) it doesn't list, which stand. */
+export function choiceOptions(options: readonly (number | string)[], saved: unknown): (number | string)[] {
+  const held = (Array.isArray(saved) ? saved : [saved]).filter((value) => typeof value === "string" && value !== "");
+  return [...new Set([...options, ...held])];
+}
+
+/** An entity's empty fields: each field's empty value, at its place. */
+export function emptyFieldValues(fields: readonly EntityField[]): FormParts {
+  return partsOf(valueFieldsOf(fields).map((field) => [placeOf(field), emptyValueOf(field)]));
+}
+
+/**
+ * A form's fields by where it shows them (`fields`, its rules'): those beside its name and description (a hit die, an
+ * item's cost, type and template), its others, and its lists of links after them (a feat's pools, a level's saves).
+ */
+export function formSectionsOf(fields: readonly EntityField[]) {
+  const beside = fields.filter((field) => field.input !== "group" && field.placement === "beside-name");
+  const lists = fields.filter((field) => !beside.includes(field) && isOneOf(field.input, LIST_INPUTS));
+  return { beside, body: fields.filter((field) => !beside.includes(field) && !lists.includes(field)), lists };
+}
+
+/**
+ * Whether a field shows, each of its conditions' values read off the form (`watched`, at their paths, in their
+ * order): while every one is among its values, or, one `except`, isn't.
+ */
+export function isFieldShown(field: EntityField, watched: readonly unknown[]) {
+  return (field.shownWhen ?? []).every(
+    (condition, index) => isOneOf(watched[index], condition.values) !== (condition.except ?? false),
+  );
+}
+
+/**
+ * The entities an entity read links its fields of links to (their roles' links), which its form shows by name, each
+ * field's in name order.
+ */
+export function linkedEntities(fields: readonly EntityField[], entity: unknown): LinkedEntity[] {
+  return fields.flatMap((field) => poolsOf([field], entity).sort(byName));
+}
+
+/** The first choice of a select for none: "None", or "Default" when "None" is one of its values. */
+export function noneLabel(options: readonly (number | string)[]) {
+  return options.includes("None") ? "Default" : "None";
+}
+
+/** An entity read's own field's value (`field`, among its `fields`): none where it holds none. */
+export function ownFieldOf(entity: unknown, field: string): unknown {
+  const fields = valueAt(entity, "fields");
+  return isRecord(fields) ? fields[field] : undefined;
+}
+
+/**
+ * A form's values (`values`) of its fields (`fields`) with each one another entity holds the same emptied (`base`, its
+ * description: an item's template's): what the entity holds of its own over the other's, at their places.
+ */
+export function ownFieldValues(fields: readonly EntityField[], values: unknown, base: unknown): FormParts {
+  return partsOf(
+    valueFieldsOf(fields).map((field) => {
+      const value = formValueOf(field, valueAt(values, placeOf(field)));
+      const same = JSON.stringify(value) === JSON.stringify(formValueOf(field, heldValueOf(field, base)));
+      return [placeOf(field), same ? emptyValueOf(field) : value];
+    }),
+  );
+}
+
+/**
+ * An entity read's link of a role (`role`, among its `links`: a single link's, its target `toId`, named `toName`): none
+ * where it holds none.
+ */
+export function ownLinkOf(entity: unknown, role: string): Record<string, unknown> | undefined {
+  return ownLinksOf(entity, role)[0];
+}
+
+/**
+ * An entity read's links of a role (`role`, among its `links`), as its server sends them: each its target `toId`,
+ * named `toName`.
+ */
+export function ownLinksOf(entity: unknown, role: string): Record<string, unknown>[] {
+  const links = valueAt(entity, "links");
+  return (Array.isArray(links) ? links : []).flatMap((link) => (isRecord(link) && link.role === role ? [link] : []));
+}
+
+/**
+ * Where a form holds a field's value, as its save sends it: its stored field's among its fields (`fields.ITEM_TYPE`),
+ * else its link's role's among its links (`links.madeFrom`).
+ */
+export function placeOf(field: ValueField): string {
+  return field.field === undefined ? `links.${field.role ?? ""}` : `fields.${field.field}`;
+}
+
+/**
+ * The pools an entity read is linked to through its fields of pools (their roles' links), as its server lists them: a
+ * feat's feat pools, each a choice its pickers offer it in.
+ */
+export function poolsOf(fields: readonly EntityField[], entity: unknown): LinkedEntity[] {
+  return fields.flatMap((field) =>
+    field.input === "links" || field.input === "tieredLinks" ? linksOf(field, entity).map(({ linked }) => linked) : [],
+  );
+}
+
+/** Sets a form's values at their places (`parts`: its declared fields'), each its own and dirty, the others as they are. */
+export function setFormParts<T extends FieldValues>(form: Pick<UseFormReturn<T>, "setValue">, parts: FormParts) {
+  for (const [part, values] of Object.entries(parts)) {
+    for (const [key, value] of Object.entries(values))
+      form.setValue(`${part}.${key}` as FieldPath<T>, value as never, { shouldDirty: true });
+  }
+}
+
+/**
+ * An entity's fields as its form holds them, off its description (`entity`, which holds each at its stored field, a
+ * reference at its link's role), each at its place.
+ */
+export function toFieldValues(fields: readonly EntityField[], entity: unknown): FormParts {
+  return partsOf(
+    valueFieldsOf(fields).map((field) => [placeOf(field), formValueOf(field, heldValueOf(field, entity))]),
+  );
+}
+
+/**
+ * A form's values (`values`) as its save sends them, those it sends whole (`wholeFieldsOf`, of `fields`) each as its
+ * body takes it: a decimal its number, an optional choice, reference or template null for none, and one its form hides
+ * (every one of its place: an item's slot, its type a template's) null, which its save reads as none.
+ */
+export function toWholeBody<V extends FormValues>(fields: readonly EntityField[], values: V): V {
+  const whole = wholeFieldsOf(fields);
+  const shown = (field: EntityField) =>
+    isFieldShown(
+      field,
+      (field.shownWhen ?? []).map((condition) => valueAt(values, condition.path)),
+    );
+  const visible = new Set(
+    whole.filter((field): field is ValueField => field.input !== "group" && shown(field)).map(placeOf),
+  );
+  const sent = wholeByPlace(fields).map((field): [string, unknown] => {
+    const place = placeOf(field);
+    return [place, visible.has(place) ? sentValueOf(field, valueAt(values, place)) : null];
+  });
+  return withParts(values, partsOf(sent));
+}
+
+/**
+ * An entity's fields its form sends whole (`wholeFieldsOf`, of `fields`), as its form holds them: a new one's empty
+ * values (`entity` none), else those its description holds (a decimal as its text, "15.00"; one that must hold a value
+ * but doesn't offer it, its default; its lists of links off its read's links of their roles: a feat's pools, a spell's
+ * lists each at its tier), each at its place.
+ */
+export function toWholeValues(fields: readonly EntityField[], entity?: unknown): FormParts {
+  return partsOf(
+    wholeByPlace(fields).map((field) => [
+      placeOf(field),
+      entity === undefined ? emptyValueOf(field) : formValueOf(field, heldValueOf(field, entity)),
+    ]),
+  );
+}
+
+/** The value at a dotted path of a form's values (`fields.WEAPON_TYPE`): none where the path leads nowhere. */
+export function valueAt(values: unknown, path: string): unknown {
+  const [part, ...rest] = path.split(".");
+  if (rest.length === 0) return isRecord(values) ? values[part] : undefined;
+  // A form's part holds its values by their stored names, which hold no dot
+  const held = isRecord(values) ? values[part] : undefined;
+  const key = part === "fields" || part === "links" ? [rest.join(".")] : rest;
+  return key.reduce<unknown>((value, each) => (isRecord(value) ? value[each] : undefined), held);
+}
+
+/**
+ * The fields a form sends whole (`fields`, its rules'): those beside its name, which decide each other (an item's type
+ * its slot and its template), and its lists of links, each of which replaces its role's.
+ */
+export function wholeFieldsOf(fields: readonly EntityField[]): EntityField[] {
+  const { beside, lists } = formSectionsOf(fields);
+  return [...beside, ...lists];
+}
+
+/**
+ * A form's values (`values`) with an entity's fields as its rules describe them (`fields`), at their places: those its
+ * description holds (`entity`), or, for a new entity, their empty values; its own until the fields load. Those it sends
+ * whole (`wholeFieldsOf`: beside its name, its lists) stay the form's own, which it makes of them itself (`toEntityForm`,
+ * a level's lists): a duplicate's template, a new level's grants none of its highest's.
+ */
+export function withEntityFields<V extends FormValues>(
+  values: V,
+  fields: readonly EntityField[] | undefined,
+  entity?: unknown,
+): V {
+  if (!fields) return withParts(values, { fields: {}, links: {} });
+  const { body } = formSectionsOf(fields);
+  return withParts(values, entity === undefined ? emptyFieldValues(body) : toFieldValues(body, entity));
+}
+
+/** Fields (`fields`) but those at `omitted`'s places (`placeOf`), a group kept whole. */
+export function withoutPlaces(fields: readonly EntityField[], omitted: readonly string[]): EntityField[] {
+  return fields.filter((field) => field.input === "group" || !omitted.includes(placeOf(field)));
+}
+
+/**
+ * A form's values (`values`) with its fields as its ruleset declares them (`fields`), as its save sent them and its
+ * server keeps them (`saved`: each at its place, a ruleset's Settings'); its own until the fields load.
+ */
+export function withSavedFields<V extends FormValues>(
+  values: V,
+  fields: readonly EntityField[] | undefined,
+  saved: unknown,
+): V {
+  if (!fields) return withParts(values, { fields: {}, links: {} });
+  return withParts(
+    values,
+    partsOf(valueFieldsOf(fields).map((field) => [placeOf(field), formValueOf(field, valueAt(saved, placeOf(field)))])),
+  );
+}

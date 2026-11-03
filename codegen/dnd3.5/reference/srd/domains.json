@@ -1,0 +1,1042 @@
+{
+  "_meta": {
+    "book": "srd",
+    "scrapedAt": "2026-10-05T16:56:45.626Z",
+    "sourceUrl": "https://dnd.arkalseif.info/spells/domains/index.html",
+    "type": "domain"
+  },
+  "overrides": {
+    "Air": {
+      "description": "You can turn or destroy earth creatures in the same manner that a good cleric turns undead. Likewise, you can rebuke, command, or bolster air creatures just as an evil cleric rebukes undead. You may use these abilities a number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
+    },
+    "Animal": {
+      "description": "Once per day, you gain the spell-like ability to use speak with animals. Knowledge (nature) is added to your cleric class skill list."
+    },
+    "Chaos": {
+      "description": "Spells with the chaos descriptor that you cast gain a +1 bonus to caster level."
+    },
+    "Death": {
+      "description": "Once per day, you can employ a death touch, which is a supernatural ability producing a death effect. To use it, you must make a successful melee touch attack against a living creature, following the standard touch spell rules. Upon a successful touch, roll 1d6 for each cleric level you have. If the result equals or exceeds the target's current hit points, the creature dies with no saving throw allowed."
+    },
+    "Destruction": {
+      "description": "You receive the smite ability, a supernatural power allowing you to make one melee attack with a +4 attack roll bonus and a damage bonus equal to your cleric level on a successful hit. The smite must be declared prior to the attack roll. This power can be used once per day."
+    },
+    "Earth": {
+      "description": "You can turn or destroy air creatures in the same way a good cleric turns undead. You can also rebuke, command, or bolster earth creatures as an evil cleric rebukes undead. These abilities can be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
+    },
+    "Evil": {
+      "description": "Spells with the evil descriptor that you cast gain a +1 bonus to caster level."
+    },
+    "Fire": {
+      "description": "You can turn or destroy water creatures in the same manner that a good cleric turns undead. You can also rebuke, command, or bolster fire creatures as an evil cleric rebukes undead. These abilities may be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
+    },
+    "Good": {
+      "description": "Spells with the good descriptor that you cast gain a +1 bonus to caster level."
+    },
+    "Healing": {
+      "description": "Spells from the healing subschool that you cast gain a +1 bonus to caster level."
+    },
+    "Knowledge": {
+      "description": "All Knowledge skills become cleric class skills for you. Additionally, your divination spells are cast at +1 caster level."
+    },
+    "Law": {
+      "description": "Spells with the law descriptor that you cast gain a +1 bonus to caster level."
+    },
+    "Luck": {
+      "description": "Once per day, you gain the extraordinary ability of good fortune. This lets you reroll a single roll you just made, provided the GM has not yet announced whether the result is a success or failure. You must accept the reroll result, even if it is lower than your original roll."
+    },
+    "Magic": {
+      "description": "You can activate scrolls, wands, and other spell completion or spell trigger items as though you were a wizard of half your cleric level (minimum 1st level). If you also have actual wizard levels, those levels stack with this effective wizard level for the purpose of activating such magic items."
+    },
+    "Plant": {
+      "description": "You can rebuke or command plant creatures in the same way an evil cleric rebukes or commands undead. This ability can be used a number of times per day equal to 3 + your Charisma modifier and is a supernatural power. Knowledge (nature) is also added to your cleric class skill list."
+    },
+    "Protection": {
+      "description": "As a supernatural ability, you can create a protective ward. By touching a creature as a standard action, you grant it a resistance bonus on its next saving throw equal to your cleric level. This abjuration effect lasts for 1 hour and may be used once per day."
+    },
+    "Strength": {
+      "description": "As a supernatural ability, you can perform a feat of great strength. You receive an enhancement bonus to Strength equal to your cleric level. Activating this power is a free action, it persists for 1 round, and it can be used once per day."
+    },
+    "Sun": {
+      "description": "Once per day, you may perform a greater turning against undead instead of a normal turning attempt. A greater turning functions identically to a regular turning, except that any undead that would normally be turned are instead destroyed."
+    },
+    "Travel": {
+      "description": "Each day, for a total duration of 1 round per cleric level, you can move and act freely despite magical effects that would normally hinder movement, as though under the effects of freedom of movement. This benefit activates automatically when relevant, persists until its duration is spent or no longer applicable, and can trigger multiple times per day up to the total daily round limit. This is a supernatural ability. Survival is also added to your cleric class skill list."
+    },
+    "Trickery": {
+      "description": "Bluff, Disguise, and Hide are added to your cleric class skill list."
+    },
+    "War": {
+      "description": "You gain Martial Weapon Proficiency with your deity's favored weapon at no cost (if you do not already have it), as well as Weapon Focus with that same weapon.",
+      "featPool": {
+        "aptitude": "War Domain Weapon",
+        "description": "You gain proficiency with ${w} and Weapon Focus with ${w} as granted by the War domain.",
+        "grants": [
+          "Weapon Focus",
+          "Martial Weapon Proficiency"
+        ],
+        "items": "martial",
+        "namePrefix": "War Domain Weapon"
+      },
+      "modifiers": [
+        {
+          "operator": "add",
+          "target": "aptitudes.wardomainweapon.allowed",
+          "value": "1",
+          "valueType": "number"
+        }
+      ]
+    },
+    "Water": {
+      "description": "You can turn or destroy fire creatures in the same manner that a good cleric turns undead. You can also rebuke, command, or bolster water creatures as an evil cleric rebukes undead. These abilities may be used a total number of times per day equal to 3 + your Charisma modifier. This granted power is supernatural in nature."
+    }
+  },
+  "raw": [
+    {
+      "description": "Turn or destroy earth creatures as a good cleric turns undead. Rebuke, command, or bolster air creatures as an evil cleric rebukes undead. Use these abilities a total number of times per day equal to 3 + your Charisma modifier. This granted power is a supernatural ability. Special When casting elemental swarm as an Air Domain spell, only Air elementals may be summoned.",
+      "name": "Air",
+      "page": 185,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Obscuring Mist"
+        },
+        {
+          "level": 2,
+          "name": "Wind Wall"
+        },
+        {
+          "level": 3,
+          "name": "Gaseous Form"
+        },
+        {
+          "level": 4,
+          "name": "Air Walk"
+        },
+        {
+          "level": 5,
+          "name": "Control Winds"
+        },
+        {
+          "level": 6,
+          "name": "Chain Lightning"
+        },
+        {
+          "level": 7,
+          "name": "Control Weather"
+        },
+        {
+          "level": 8,
+          "name": "Whirlwind"
+        },
+        {
+          "level": 9,
+          "name": "Elemental Swarm"
+        }
+      ]
+    },
+    {
+      "description": "You can use speak with animals once per day as a spell-like ability. Add Knowledge (nature) to your list of cleric class skills.",
+      "name": "Animal",
+      "page": 186,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Calm Animals"
+        },
+        {
+          "level": 2,
+          "name": "Hold Animal"
+        },
+        {
+          "level": 3,
+          "name": "Dominate Animal"
+        },
+        {
+          "level": 4,
+          "name": "Summon Nature's Ally IV"
+        },
+        {
+          "level": 5,
+          "name": "Commune With Nature"
+        },
+        {
+          "level": 6,
+          "name": "Antilife Shell"
+        },
+        {
+          "level": 7,
+          "name": "Animal Shapes"
+        },
+        {
+          "level": 8,
+          "name": "Summon Nature's Ally VIII"
+        },
+        {
+          "level": 9,
+          "name": "Shapechange"
+        }
+      ]
+    },
+    {
+      "description": "You cast chaos spells at +1 caster level. Special When casting Summon Monster IX spell as a Chaos Domain spell, only Chaotic creatures may be summoned.",
+      "name": "Chaos",
+      "page": 186,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Protection from Law"
+        },
+        {
+          "level": 2,
+          "name": "Shatter"
+        },
+        {
+          "level": 3,
+          "name": "Magic Circle Against Law"
+        },
+        {
+          "level": 4,
+          "name": "Chaos Hammer"
+        },
+        {
+          "level": 5,
+          "name": "Dispel Law"
+        },
+        {
+          "level": 6,
+          "name": "Animate Objects"
+        },
+        {
+          "level": 7,
+          "name": "Word of Chaos"
+        },
+        {
+          "level": 8,
+          "name": "Cloak of Chaos"
+        },
+        {
+          "level": 9,
+          "name": "Summon Monster IX"
+        }
+      ]
+    },
+    {
+      "description": "You may use a death touch once per day. Your death touch is a supernatural ability that produces a death effect. You must succeed on a melee touch attack against a living creature (using the rules for touch spells). When you touch, roll 1d6 per cleric level you possess. If the total at least equals the creature's current hit points, it dies (no save).",
+      "name": "Death",
+      "page": 186,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Cause Fear"
+        },
+        {
+          "level": 2,
+          "name": "Death Knell"
+        },
+        {
+          "level": 3,
+          "name": "Animate Dead"
+        },
+        {
+          "level": 4,
+          "name": "Death Ward"
+        },
+        {
+          "level": 5,
+          "name": "Slay Living"
+        },
+        {
+          "level": 6,
+          "name": "Create Undead"
+        },
+        {
+          "level": 7,
+          "name": "Destruction"
+        },
+        {
+          "level": 8,
+          "name": "Create Greater Undead"
+        },
+        {
+          "level": 9,
+          "name": "Wail of the Banshee"
+        }
+      ]
+    },
+    {
+      "description": "You gain the smite power, the supernatural ability to make a single melee attack with a +4 bonus on attack rolls and a bonus on damage rolls equal to your cleric level (if you hit). You must declare the smite before making the attack. This ability is usable once per day.",
+      "name": "Destruction",
+      "page": 186,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Inflict Light Wounds"
+        },
+        {
+          "level": 2,
+          "name": "Shatter"
+        },
+        {
+          "level": 3,
+          "name": "Contagion"
+        },
+        {
+          "level": 4,
+          "name": "Inflict Critical Wounds"
+        },
+        {
+          "level": 5,
+          "name": "Inflict Light Wounds, Mass"
+        },
+        {
+          "level": 6,
+          "name": "Harm"
+        },
+        {
+          "level": 7,
+          "name": "Disintegrate"
+        },
+        {
+          "level": 8,
+          "name": "Earthquake"
+        },
+        {
+          "level": 9,
+          "name": "Implosion"
+        }
+      ]
+    },
+    {
+      "description": "Turn or destroy air creatures as a good cleric turns undead. Rebuke, command, or bolster earth creatures as an evil cleric rebukes undead. Use these abilities a total number of times per day equal to 3 + your Charisma modifier. This granted power is a supernatural ability. Special When casting elemental swarm as an Earth Domain spell, only Earth elementals may be summoned.",
+      "name": "Earth",
+      "page": 186,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Magic Stone"
+        },
+        {
+          "level": 2,
+          "name": "Soften Earth and Stone"
+        },
+        {
+          "level": 3,
+          "name": "Stone Shape"
+        },
+        {
+          "level": 4,
+          "name": "Spike Stones"
+        },
+        {
+          "level": 5,
+          "name": "Wall of Stone"
+        },
+        {
+          "level": 6,
+          "name": "Stoneskin"
+        },
+        {
+          "level": 7,
+          "name": "Earthquake"
+        },
+        {
+          "level": 8,
+          "name": "Iron Body"
+        },
+        {
+          "level": 9,
+          "name": "Elemental Swarm"
+        }
+      ]
+    },
+    {
+      "description": "You cast evil spells at +1 caster level. Special When casting Summon Monster IX spell as an Evil Domain spell, only Evil creatures may be summoned.",
+      "name": "Evil",
+      "page": 186,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Protection from Good"
+        },
+        {
+          "level": 2,
+          "name": "Desecrate"
+        },
+        {
+          "level": 3,
+          "name": "Magic Circle Against Good"
+        },
+        {
+          "level": 4,
+          "name": "Unholy Blight"
+        },
+        {
+          "level": 5,
+          "name": "Dispel Good"
+        },
+        {
+          "level": 6,
+          "name": "Create Undead"
+        },
+        {
+          "level": 7,
+          "name": "Blasphemy"
+        },
+        {
+          "level": 8,
+          "name": "Unholy Aura"
+        },
+        {
+          "level": 9,
+          "name": "Summon Monster IX"
+        }
+      ]
+    },
+    {
+      "description": "Turn or destroy water creatures as a good cleric turns undead. Rebuke, command, or bolster fire creatures as an evil cleric rebukes undead. Use these abilities a total number of times per day equal to 3 + your Charisma modifier. This granted power is a supernatural ability. Special When casting elemental swarm as a Fire Domain spell, only Fire elementals may be summoned.",
+      "name": "Fire",
+      "page": 187,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Burning Hands"
+        },
+        {
+          "level": 2,
+          "name": "Produce Flame"
+        },
+        {
+          "level": 3,
+          "name": "Resist Energy"
+        },
+        {
+          "level": 4,
+          "name": "Wall of Fire"
+        },
+        {
+          "level": 5,
+          "name": "Fire Shield"
+        },
+        {
+          "level": 6,
+          "name": "Fire Seeds"
+        },
+        {
+          "level": 7,
+          "name": "Fire Storm"
+        },
+        {
+          "level": 8,
+          "name": "Incendiary Cloud"
+        },
+        {
+          "level": 9,
+          "name": "Elemental Swarm"
+        }
+      ]
+    },
+    {
+      "description": "You cast good spells at +1 caster level. Special When casting Summon Monster IX spell as a Good Domain spell, only Good creatures may be summoned.",
+      "name": "Good",
+      "page": 187,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Protection from Evil"
+        },
+        {
+          "level": 2,
+          "name": "Aid"
+        },
+        {
+          "level": 3,
+          "name": "Magic Circle Against Evil"
+        },
+        {
+          "level": 4,
+          "name": "Holy Smite"
+        },
+        {
+          "level": 5,
+          "name": "Dispel Evil"
+        },
+        {
+          "level": 6,
+          "name": "Blade Barrier"
+        },
+        {
+          "level": 7,
+          "name": "Holy Word"
+        },
+        {
+          "level": 8,
+          "name": "Holy Aura"
+        },
+        {
+          "level": 9,
+          "name": "Summon Monster IX"
+        }
+      ]
+    },
+    {
+      "description": "You cast healing spells at +1 caster level.",
+      "name": "Healing",
+      "page": 187,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Cure Light Wounds"
+        },
+        {
+          "level": 2,
+          "name": "Cure Moderate Wounds"
+        },
+        {
+          "level": 3,
+          "name": "Cure Serious Wounds"
+        },
+        {
+          "level": 4,
+          "name": "Cure Critical Wounds"
+        },
+        {
+          "level": 5,
+          "name": "Cure Light Wounds, Mass"
+        },
+        {
+          "level": 6,
+          "name": "Heal"
+        },
+        {
+          "level": 7,
+          "name": "Regenerate"
+        },
+        {
+          "level": 8,
+          "name": "Cure Critical Wounds, Mass"
+        },
+        {
+          "level": 9,
+          "name": "Heal, Mass"
+        }
+      ]
+    },
+    {
+      "description": "Add all Knowledge skills to your list of cleric class skills. You cast divination spells at +1 caster level.",
+      "name": "Knowledge",
+      "page": 187,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Detect Secret Doors"
+        },
+        {
+          "level": 2,
+          "name": "Detect Thoughts"
+        },
+        {
+          "level": 3,
+          "name": "Clairaudience/Clairvoyance"
+        },
+        {
+          "level": 4,
+          "name": "Divination"
+        },
+        {
+          "level": 5,
+          "name": "True Seeing"
+        },
+        {
+          "level": 6,
+          "name": "Find the Path"
+        },
+        {
+          "level": 7,
+          "name": "Legend Lore"
+        },
+        {
+          "level": 8,
+          "name": "Discern Location"
+        },
+        {
+          "level": 9,
+          "name": "Foresight"
+        }
+      ]
+    },
+    {
+      "description": "You cast law spells at +1 caster level. Special When casting Summon Monster IX spell as a Law Domain spell, only Lawful creatures may be summoned.",
+      "name": "Law",
+      "page": 187,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Protection from Chaos"
+        },
+        {
+          "level": 2,
+          "name": "Calm Emotions"
+        },
+        {
+          "level": 3,
+          "name": "Magic Circle Against Chaos"
+        },
+        {
+          "level": 4,
+          "name": "Order's Wrath"
+        },
+        {
+          "level": 5,
+          "name": "Dispel Chaos"
+        },
+        {
+          "level": 6,
+          "name": "Hold Monster"
+        },
+        {
+          "level": 7,
+          "name": "Dictum"
+        },
+        {
+          "level": 8,
+          "name": "Shield of Law"
+        },
+        {
+          "level": 9,
+          "name": "Summon Monster IX"
+        }
+      ]
+    },
+    {
+      "description": "You gain the power of good fortune, which is usable once per day. This extraordinary ability allows you to reroll one roll that you have just made before the DM declares whether the roll results in success or failure. You must take the result of the reroll, even if it's worse than the original roll.",
+      "name": "Luck",
+      "page": 187,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Entropic Shield"
+        },
+        {
+          "level": 2,
+          "name": "Aid"
+        },
+        {
+          "level": 3,
+          "name": "Protection from Energy"
+        },
+        {
+          "level": 4,
+          "name": "Freedom of Movement"
+        },
+        {
+          "level": 5,
+          "name": "Break Enchantment"
+        },
+        {
+          "level": 6,
+          "name": "Mislead"
+        },
+        {
+          "level": 7,
+          "name": "Spell Turning"
+        },
+        {
+          "level": 8,
+          "name": "Moment of Prescience"
+        },
+        {
+          "level": 9,
+          "name": "Miracle"
+        }
+      ]
+    },
+    {
+      "description": "Use scrolls, wands, and other devices with spell completion or spell trigger activation as a wizard of one-half your cleric level (at least 1st level). For the purpose of using a scroll or other magic device, if you are also a wizard, actual wizard levels and these effective wizard levels stack.",
+      "name": "Magic",
+      "page": 188,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Nystul's Magic Aura"
+        },
+        {
+          "level": 2,
+          "name": "Identify"
+        },
+        {
+          "level": 3,
+          "name": "Dispel Magic"
+        },
+        {
+          "level": 4,
+          "name": "Imbue With Spell Ability"
+        },
+        {
+          "level": 5,
+          "name": "Spell Resistance"
+        },
+        {
+          "level": 6,
+          "name": "Antimagic Field"
+        },
+        {
+          "level": 7,
+          "name": "Spell Turning"
+        },
+        {
+          "level": 8,
+          "name": "Protection from Spells"
+        },
+        {
+          "level": 9,
+          "name": "Mordenkainen's Disjunction"
+        }
+      ]
+    },
+    {
+      "description": "Rebuke or command plant creatures as an evil cleric rebukes or commands undead. Use this ability a total number of times per day equal to 3 + your Charisma modifier. This granted power is a supernatural ability. Add Knowledge (nature) to your list of cleric class skills.",
+      "name": "Plant",
+      "page": 188,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Entangle"
+        },
+        {
+          "level": 2,
+          "name": "Barkskin"
+        },
+        {
+          "level": 3,
+          "name": "Plant Growth"
+        },
+        {
+          "level": 4,
+          "name": "Command Plants"
+        },
+        {
+          "level": 5,
+          "name": "Wall of Thorns"
+        },
+        {
+          "level": 6,
+          "name": "Repel Wood"
+        },
+        {
+          "level": 7,
+          "name": "Animate Plants"
+        },
+        {
+          "level": 8,
+          "name": "Control Plants"
+        },
+        {
+          "level": 9,
+          "name": "Shambler"
+        }
+      ]
+    },
+    {
+      "description": "You can generate a protective ward as a supernatural ability. Grant someone you touch a resistance bonus equal to your cleric level on his or her next saving throw. Activating this power is a standard action. The protective ward is an abjuration effect with a duration of 1 hour that is usable once per day.",
+      "name": "Protection",
+      "page": 188,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Sanctuary"
+        },
+        {
+          "level": 2,
+          "name": "Shield Other"
+        },
+        {
+          "level": 3,
+          "name": "Protection from Energy"
+        },
+        {
+          "level": 4,
+          "name": "Spell Immunity"
+        },
+        {
+          "level": 5,
+          "name": "Spell Resistance"
+        },
+        {
+          "level": 6,
+          "name": "Antimagic Field"
+        },
+        {
+          "level": 7,
+          "name": "Repulsion"
+        },
+        {
+          "level": 8,
+          "name": "Mind Blank"
+        },
+        {
+          "level": 9,
+          "name": "Prismatic Sphere"
+        }
+      ]
+    },
+    {
+      "description": "You can perform a feat of strength as a supernatural ability. You gain an enhancement bonus to Strength equal to your cleric level. Activating the power is a free action, the power lasts 1 round, and it is usable once per day.",
+      "name": "Strength",
+      "page": 188,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Enlarge Person"
+        },
+        {
+          "level": 2,
+          "name": "Bull's Strength"
+        },
+        {
+          "level": 3,
+          "name": "Magic Vestment"
+        },
+        {
+          "level": 4,
+          "name": "Spell Immunity"
+        },
+        {
+          "level": 5,
+          "name": "Righteous Might"
+        },
+        {
+          "level": 6,
+          "name": "Stoneskin"
+        },
+        {
+          "level": 7,
+          "name": "Bigby's Grasping Hand"
+        },
+        {
+          "level": 8,
+          "name": "Bigby's Clenched Fist"
+        },
+        {
+          "level": 9,
+          "name": "Bigby's Crushing Hand"
+        }
+      ]
+    },
+    {
+      "description": "Once per day, you can perform a greater turning against undead in place of a regular turning. The greater turning is like a normal turning except that the undead creatures that would be turned are destroyed instead.",
+      "name": "Sun",
+      "page": 188,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Endure Elements"
+        },
+        {
+          "level": 2,
+          "name": "Heat Metal"
+        },
+        {
+          "level": 3,
+          "name": "Searing Light"
+        },
+        {
+          "level": 4,
+          "name": "Fire Shield"
+        },
+        {
+          "level": 5,
+          "name": "Flame Strike"
+        },
+        {
+          "level": 6,
+          "name": "Fire Seeds"
+        },
+        {
+          "level": 7,
+          "name": "Sunbeam"
+        },
+        {
+          "level": 8,
+          "name": "Sunburst"
+        },
+        {
+          "level": 9,
+          "name": "Prismatic Sphere"
+        }
+      ]
+    },
+    {
+      "description": "For a total time per day of 1 round per cleric level you possess, you can act normally regardless of magical effects that impede movement as if you were affected by the spell freedom of movement. This effect occurs automatically as soon as it applies, lasts until it runs out or is no longer needed, and can operate multiple times per day (up to the total daily limit of rounds). This granted power is a supernatural ability. Add Survival to your list of cleric class skills.",
+      "name": "Travel",
+      "page": 188,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Longstrider"
+        },
+        {
+          "level": 2,
+          "name": "Locate Object"
+        },
+        {
+          "level": 3,
+          "name": "Fly"
+        },
+        {
+          "level": 4,
+          "name": "Dimension Door"
+        },
+        {
+          "level": 5,
+          "name": "Teleport"
+        },
+        {
+          "level": 6,
+          "name": "Find the Path"
+        },
+        {
+          "level": 7,
+          "name": "Teleport, Greater"
+        },
+        {
+          "level": 8,
+          "name": "Phase Door"
+        },
+        {
+          "level": 9,
+          "name": "Astral Projection"
+        }
+      ]
+    },
+    {
+      "description": "Add Bluff, Disguise, and Hide to your list of cleric class skills.",
+      "name": "Trickery",
+      "page": 189,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Disguise Self"
+        },
+        {
+          "level": 2,
+          "name": "Invisibility"
+        },
+        {
+          "level": 3,
+          "name": "Nondetection"
+        },
+        {
+          "level": 4,
+          "name": "Confusion"
+        },
+        {
+          "level": 5,
+          "name": "False Vision"
+        },
+        {
+          "level": 6,
+          "name": "Mislead"
+        },
+        {
+          "level": 7,
+          "name": "Screen"
+        },
+        {
+          "level": 8,
+          "name": "Polymorph Any Object"
+        },
+        {
+          "level": 9,
+          "name": "Time Stop"
+        }
+      ]
+    },
+    {
+      "description": "Free Martial Weapon Proficiency with deity's favored weapon (if necessary) and Weapon Focus with the deity's favored weapon.",
+      "name": "War",
+      "page": 189,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Magic Weapon"
+        },
+        {
+          "level": 2,
+          "name": "Spiritual Weapon"
+        },
+        {
+          "level": 3,
+          "name": "Magic Vestment"
+        },
+        {
+          "level": 4,
+          "name": "Divine Power"
+        },
+        {
+          "level": 5,
+          "name": "Flame Strike"
+        },
+        {
+          "level": 6,
+          "name": "Blade Barrier"
+        },
+        {
+          "level": 7,
+          "name": "Power Word Blind"
+        },
+        {
+          "level": 8,
+          "name": "Power Word Stun"
+        },
+        {
+          "level": 9,
+          "name": "Power Word Kill"
+        }
+      ]
+    },
+    {
+      "description": "Turn or destroy fire creatures as a good cleric turns undead. Rebuke, command, or bolster water creatures as an evil cleric rebukes undead. Use these abilities a total number of times per day equal to 3 + your Charisma modifier. This granted power is a supernatural ability. Special When casting elemental swarm as a Water Domain spell, only Water elementals may be summoned.",
+      "name": "Water",
+      "page": 189,
+      "spells": [
+        {
+          "level": 1,
+          "name": "Obscuring Mist"
+        },
+        {
+          "level": 2,
+          "name": "Fog Cloud"
+        },
+        {
+          "level": 3,
+          "name": "Water Breathing"
+        },
+        {
+          "level": 4,
+          "name": "Control Water"
+        },
+        {
+          "level": 5,
+          "name": "Ice Storm"
+        },
+        {
+          "level": 6,
+          "name": "Cone of Cold"
+        },
+        {
+          "level": 7,
+          "name": "Acid Fog"
+        },
+        {
+          "level": 8,
+          "name": "Horrid Wilting"
+        },
+        {
+          "level": 9,
+          "name": "Elemental Swarm"
+        }
+      ]
+    }
+  ]
+}

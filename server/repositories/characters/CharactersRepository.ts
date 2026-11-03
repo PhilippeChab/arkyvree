@@ -1,0 +1,281 @@
+import { and, count, eq, exists, inArray, isNull, not, or, type SQL, sql } from "drizzle-orm";
+
+import type { Db } from "@/drizzle/database.ts";
+import { charactersInCharacter, contributorsInCharacter } from "@/drizzle/schema.ts";
+import { Engine } from "@/engine/index.ts";
+import { include } from "@/lib/mixins.ts";
+import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
+import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
+import { Paginates, type Pagination } from "@/server/repositories/concerns/Paginates.ts";
+import { Searches } from "@/server/repositories/concerns/Searches.ts";
+import StoredCharacters, { type CharacterValuesWrite } from "@/server/repositories/stored/StoredCharacters.ts";
+import type { Character } from "@/shared/relations.ts";
+
+/**
+ * The filters of the user's characters list: those they own or contribute to (`accessRole` keeps one side; default
+ * both), live unless `visibility` says otherwise, matching `search`.
+ */
+interface CharacterListWhere {
+  accessRole?: "owner" | "contributor";
+  search?: string;
+  userId: string;
+  visibility?: Visibility;
+}
+
+/** A character's row as a write gives it: its own columns, and its fields' values and single links' entities it sets. */
+type CharacterValues = Partial<typeof charactersInCharacter.$inferInsert> & CharacterValuesWrite;
+
+/**
+ * The characters: each one's row as stored, with its fields' values and its single links (`StoredCharacters`: 3.5's
+ * race, alignment, XP).
+ */
+class CharactersRepository extends include(
+  BaseRepository<typeof charactersInCharacter>,
+  GuardsStaleEdits,
+  Paginates,
+  Searches,
+) {
+  constructor() {
+    super(charactersInCharacter);
+  }
+
+  /** The condition that a user actively contributes to the character. */
+  private contributesTo(db: Db, userId: string) {
+    return exists(
+      db
+        .select({ one: sql`1` })
+        .from(contributorsInCharacter)
+        .where(
+          and(
+            eq(contributorsInCharacter.characterId, charactersInCharacter.id),
+            eq(contributorsInCharacter.userId, userId),
+            eq(contributorsInCharacter.status, "Active"),
+          ),
+        ),
+    );
+  }
+
+  /** What the user's characters list keeps: its pages and its total share it. */
+  private listCondition(db: Db, where: CharacterListWhere) {
+    const { accessRole, search, userId, visibility = Visibility.UnarchivedOnly } = where;
+    const owns = eq(this.table.userId, userId);
+    const contributes = this.contributesTo(db, userId);
+    return this.where([
+      accessRole === "owner" ? owns : accessRole === "contributor" ? contributes : or(owns, contributes)!,
+      inArray(this.table.kind, [...Engine.storage().playerKinds()]),
+      this.visibility(visibility),
+      this.search(search, [this.table.name, this.table.description]),
+    ]);
+  }
+
+  /** The characters a condition picks, each with its stored columns, in `order`, a page of them if `page` says. */
+  private async rows(
+    db: Db,
+    where: SQL | undefined,
+    order: SQL[] = [this.orderBy(charactersInCharacter.id)],
+    page?: { limit: number; offset: number },
+  ): Promise<Character[]> {
+    const query = db
+      .select(StoredCharacters.buildColumns())
+      .from(charactersInCharacter)
+      .where(where)
+      .orderBy(...order);
+    const rows = page ? await query.limit(page.limit).offset(page.offset) : await query;
+    return rows.map((row) => StoredCharacters.toCharacter(row));
+  }
+
+  /** Archives a character and its children. */
+  async archive(db: Db, where: { id: string }) {
+    const archived = await db
+      .update(this.table)
+      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), isNull(this.table.deletedAt)))
+      .returning({ id: this.table.id });
+    if (archived.length === 0) return [];
+    await db
+      .update(this.table)
+      .set({ deletedAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.parentCharacterId, where.id), isNull(this.table.deletedAt)));
+    return await this.rows(db, eq(this.table.id, where.id));
+  }
+
+  /** How many characters the user's list holds with these filters: the total of its pages (`findPage`). */
+  async count(db: Db, where: CharacterListWhere) {
+    const [result] = await db.select({ count: count() }).from(this.table).where(this.listCondition(db, where));
+    return result.count;
+  }
+
+  /**
+   * Writes a new character: its row, its fields' values (one always written it gives none of, its default) and its
+   * single links.
+   */
+  async create(db: Db, values: CharacterValues & Pick<Character, "kind" | "name" | "rulesetId" | "userId">) {
+    const { fields, links, ...own } = values;
+    const [created] = await db.insert(this.table).values(own).returning({ id: this.table.id });
+    await StoredCharacters.write(db, [created.id], { fields, links }, true);
+    return await this.rows(db, eq(this.table.id, created.id));
+  }
+
+  /**
+   * Hard delete, of a character (`{ id }`) or of every one a user still owns (`{ userId }`: their account's deletion) —
+   * children follow their parent's levels (3.5's bonded creatures, `BondedPlans`), never archived by a user.
+   */
+  async delete(db: Db, where: { id: string } | { userId: string }) {
+    return await db
+      .delete(this.table)
+      .where(
+        this.branchWhere([
+          "id" in where && eq(this.table.id, where.id),
+          "userId" in where && eq(this.table.userId, where.userId),
+        ]),
+      );
+  }
+
+  /**
+   * Characters by id, or a parent's children (`parentCharacterId`: 3.5's bonded creatures), in the order they were made;
+   * or a user's own player characters (`userId`) whose name holds `search`, the newest first: what a campaign's link
+   * picks from, each one's policy deciding whether the campaign takes it (`CharactersPolicy.isLinkable`).
+   */
+  async findMany(
+    db: Db,
+    where: { ids: string[] } | { parentCharacterId: string } | { search?: string; userId: string },
+    visibility: Visibility = Visibility.UnarchivedOnly,
+  ) {
+    if ("ids" in where && where.ids.length === 0) return [];
+    return await this.rows(
+      db,
+      this.branchWhere(
+        [
+          "ids" in where && inArray(this.table.id, where.ids),
+          "parentCharacterId" in where && eq(this.table.parentCharacterId, where.parentCharacterId),
+          "userId" in where && eq(this.table.userId, where.userId),
+        ],
+        [
+          "userId" in where && inArray(this.table.kind, [...Engine.storage().playerKinds()]),
+          "search" in where && this.search(where.search, [this.table.name]),
+          this.visibility(visibility),
+        ],
+      ),
+      [this.orderBy(this.table.createdAt, "userId" in where ? "desc" : "asc"), this.orderBy(this.table.id)],
+    );
+  }
+
+  /**
+   * A character by id; a player character by share token; or a character's child (3.5's bonded creature). Who may read
+   * or edit one is its policy's (`CharactersPolicy`).
+   */
+  async findOne(
+    db: Db,
+    where: { id: string } | { shareToken: string } | { kind: string; parentCharacterId: string },
+    visibility: Visibility = Visibility.UnarchivedOnly,
+  ) {
+    const [row] = await this.rows(
+      db,
+      this.branchWhere(
+        [
+          "id" in where && eq(this.table.id, where.id),
+          "shareToken" in where && eq(this.table.shareToken, where.shareToken),
+          "parentCharacterId" in where && eq(this.table.parentCharacterId, where.parentCharacterId),
+        ],
+        [
+          "kind" in where && eq(this.table.kind, where.kind),
+          "shareToken" in where && inArray(this.table.kind, [...Engine.storage().playerKinds()]),
+          this.visibility(visibility),
+        ],
+      ),
+    );
+    return row;
+  }
+
+  /**
+   * The user's characters, owned or contributed to: the last changed first (`lastChangedAt`, which every change to a
+   * character or its rows moves), unless the list says another order.
+   */
+  async findPage(
+    db: Db,
+    where: CharacterListWhere & { orderBy?: "name" | "createdAt" | "lastChangedAt"; orderDir?: "asc" | "desc" },
+    pagination: Pagination,
+  ) {
+    const { orderBy = "lastChangedAt", orderDir = "desc" } = where;
+
+    return await this.withPagination(pagination, async ({ limit, offset }) => {
+      const rows = await db
+        .select({
+          ...StoredCharacters.buildColumns(),
+          accessRole: sql<
+            "owner" | "contributor"
+          >`CASE WHEN ${this.table.userId} = ${where.userId} THEN 'owner' ELSE 'contributor' END`,
+        })
+        .from(this.table)
+        .where(this.listCondition(db, where))
+        .orderBy(...this.pageOrder(this.orderBy(this.table[orderBy], orderDir)))
+        .limit(limit)
+        .offset(offset);
+      return rows.map((row) => StoredCharacters.toCharacter(row));
+    });
+  }
+
+  /**
+   * The rulesets of `rulesetIds` the user may edit a character built on (`editorId`: theirs, or one they actively
+   * contribute to), archived or not, whose sheet stays readable: what lets them read a private ruleset.
+   */
+  async findRulesetIds(db: Db, where: { editorId: string; rulesetIds: string[] }) {
+    if (where.rulesetIds.length === 0) return [];
+    const rows = await db
+      .selectDistinct({ rulesetId: charactersInCharacter.rulesetId })
+      .from(charactersInCharacter)
+      .where(
+        and(
+          inArray(charactersInCharacter.rulesetId, where.rulesetIds),
+          inArray(charactersInCharacter.kind, [...Engine.storage().playerKinds()]),
+          or(eq(charactersInCharacter.userId, where.editorId), this.contributesTo(db, where.editorId)),
+        ),
+      );
+    return rows.map(({ rulesetId }) => rulesetId);
+  }
+
+  async unarchive(db: Db, where: { id: string }) {
+    const unarchived = await db
+      .update(this.table)
+      .set({ deletedAt: null, updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.id, where.id), not(isNull(this.table.deletedAt))))
+      .returning({ id: this.table.id });
+    if (unarchived.length === 0) return [];
+    await db
+      .update(this.table)
+      .set({ deletedAt: null, updatedAt: new Date().toISOString() })
+      .where(and(eq(this.table.parentCharacterId, where.id), not(isNull(this.table.deletedAt))));
+    return await this.rows(db, eq(this.table.id, where.id));
+  }
+
+  /**
+   * Writes a change to a live character (`values`), if it's still the version the editor read (`expectedUpdatedAt`), or
+   * to a parent's live children (`parentCharacterId`: 3.5's bonded creatures): its row's columns, its fields' values and
+   * its single links it gives, its `updatedAt` moved as any change moves it. Answers it as written, or nothing.
+   */
+  async update(
+    db: Db,
+    values: CharacterValues,
+    where: { expectedUpdatedAt?: string; id: string } | { parentCharacterId: string },
+  ) {
+    const { fields, links, ...own } = values;
+    const updated = await db
+      .update(this.table)
+      .set({ ...own, updatedAt: new Date().toISOString() })
+      .where(
+        this.branchWhere(
+          [
+            "id" in where && eq(this.table.id, where.id),
+            "parentCharacterId" in where && eq(this.table.parentCharacterId, where.parentCharacterId),
+          ],
+          [isNull(this.table.deletedAt), "id" in where && this.casUpdatedAt(where.expectedUpdatedAt)],
+        ),
+      )
+      .returning({ id: this.table.id });
+    const ids = updated.map((row) => row.id);
+    await StoredCharacters.write(db, ids, { fields, links });
+    return ids.length === 0 ? [] : await this.rows(db, inArray(this.table.id, ids));
+  }
+}
+
+export default CharactersRepository;

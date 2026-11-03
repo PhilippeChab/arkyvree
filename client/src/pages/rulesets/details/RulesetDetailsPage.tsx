@@ -1,0 +1,457 @@
+import { Container, Divider, Menu, Popover, Stack } from "@mui/material";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { type MouseEvent, useState } from "react";
+import { Navigate, useNavigate, useParams } from "react-router-dom";
+
+import {
+  ActionMenuItem,
+  ArchivedNotice,
+  CountChip,
+  DetailPageHeader,
+  HelpLabel,
+  LoadError,
+  PageError,
+  PageLoader,
+  PageTransition,
+  type SectionTab,
+  SectionTabPanel,
+  SectionTabs,
+  ValueChip,
+} from "@/client/src/components/common/index.ts";
+import {
+  ArchiveIcon,
+  CompareArrowsIcon,
+  ContributorsIcon,
+  EditIcon,
+  ExtensionIcon,
+  ForkIcon,
+  HelpIcon,
+  kindIcon,
+  PublishIcon,
+  SettingsIcon,
+  UnarchiveIcon,
+} from "@/client/src/components/icons/index.ts";
+import {
+  useAnchorMenu,
+  usePageTitle,
+  useRules,
+  useRulesetPermissions,
+  useSearchParam,
+} from "@/client/src/hooks/index.ts";
+import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
+import { EXTERNAL_LINKS } from "@/client/src/lib/externalLinks.ts";
+import { formatCount } from "@/client/src/lib/formatNumeric.ts";
+import { oneOf } from "@/client/src/lib/oneOf.ts";
+import { type EntityKindDescription, type RulesDescription, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
+import { entityTypeLabel } from "@/client/src/lib/rulesetLabels.ts";
+import { RulesetFactChips, RulesetStarButton } from "@/client/src/pages/rulesets/components/index.ts";
+import { useRulesetOperations } from "@/client/src/pages/rulesets/hooks/index.ts";
+
+import { childOnlyOf } from "./childOnly.ts";
+import {
+  ArchiveRulesetDialog,
+  EditRulesetDialog,
+  ForkRulesetDialog,
+  LicenseNotice,
+  LocalChangesDialog,
+  PublishRulesetDialog,
+  RulesetContributorsDialog,
+  SubscribeExtensionDialog,
+  UnsubscribeExtensionDialog,
+} from "./components/index.ts";
+import { rulesetExtensionsQuery } from "./rulesetQueries.ts";
+import { prefetchSection, type RulesetSection } from "./sectionQueries.ts";
+import { EntitySection, SettingsSection } from "./sections/index.ts";
+
+/** What a ruleset page's tab is: its key, label and icon, and what it shows: its kind's section (`kind`), or Settings. */
+type TabConfig = SectionTab<RulesetSection> & { kind: EntityKindDescription | null };
+
+/**
+ * The ruleset page's tabs: an entity kind's section each, in the order its rules list them (`rules`), named in their
+ * words, with their picture and what their tab says of them, then its Settings.
+ */
+function rulesetTabs(rules: RulesDescription | undefined): TabConfig[] {
+  const kinds: TabConfig[] = (rules?.kinds ?? []).map((kind) => {
+    const label = entityTypeLabel(kind.type, rules?.words, true);
+    return {
+      key: kind.type,
+      label: kind.help ? <HelpLabel label={label} help={kind.help} /> : label,
+      icon: kindIcon(kind.icon),
+      kind,
+    };
+  });
+  return [
+    ...kinds,
+    {
+      key: "settings",
+      label: <HelpLabel label="Settings" help={rules?.help.settings ?? ""} />,
+      icon: SettingsIcon,
+      kind: null,
+    },
+  ];
+}
+
+export default function RulesetDetailsPage() {
+  const { id = "", section } = useParams<{ id: string; section?: string }>();
+  const navigate = useNavigate();
+
+  // No placeholder data: opening another ruleset (a fork or extension chip) must not show,
+  // or act on, the previous one while it loads.
+  const { data: ruleset, isLoading, error } = useQuery(rulesetDetailQuery(id));
+
+  usePageTitle(ruleset?.name);
+
+  const { data: subscribedExtensions, error: extensionsError } = useQuery(
+    rulesetExtensionsQuery(id, ruleset?.rulesetId),
+  );
+
+  const queryClient = useQueryClient();
+
+  const {
+    editDialog,
+    forkDialog,
+    archiveDialog,
+    publishDialog,
+    publishKind,
+    setPublishKind,
+    subscribeDialog,
+    unsubscribeDialog,
+    editForm,
+    forkForm,
+    updateMutation,
+    forkMutation,
+    archiveMutation,
+    unarchiveMutation,
+    publishMutation,
+    subscribeMutation,
+    unsubscribeMutation,
+    handleEdit,
+    handleFork,
+    handleArchive,
+    handlePublish,
+    handleSubscribe,
+    handleUnsubscribe,
+    confirmArchive,
+    confirmEdit,
+    confirmFork,
+    confirmPublish,
+    confirmSubscribe,
+    confirmUnsubscribe,
+  } = useRulesetOperations();
+
+  const [localChangesOpen, setLocalChangesOpen] = useState(false);
+  const { value: childOnlyParam, setValue: setChildOnlyParam } = useSearchParam("childOnly");
+  const childOnlyChoice = oneOf(childOnlyParam, ["true", "false"]);
+  const setChildOnly = (value: boolean) => setChildOnlyParam(value ? "true" : "false");
+  const menu = useAnchorMenu();
+  const extensionsMenu = useAnchorMenu();
+  if (!subscribedExtensions?.length && extensionsMenu.open) extensionsMenu.closeMenu();
+
+  const {
+    isOwner,
+    canEditEntities,
+    canEditRuleset,
+    canFork,
+    canPublish,
+    canReadContributors,
+    canSubscribeExtensions,
+    canUnarchive,
+    canUnsubscribeExtensions,
+    canViewChanges,
+  } = useRulesetPermissions(ruleset);
+  // Its own entities alone, which an extension opens on: its changes, which the session may view, whatever a link says
+  const childOnly = !!ruleset && childOnlyOf(ruleset, childOnlyChoice);
+
+  const [contributorsDialogOpen, setContributorsDialogOpen] = useState(false);
+  const { rules, isPending: rulesPending } = useRules(ruleset?.baseRules);
+
+  // Its tabs' names are its rules' words: it waits for them too, as they load once
+  if (isLoading || rulesPending) {
+    return (
+      <Container>
+        <PageLoader />
+      </Container>
+    );
+  }
+
+  // A failed background refetch keeps the loaded page (and any edits in progress) on screen.
+  if (!ruleset) {
+    return (
+      <Container>
+        <PageError message={loadFailureMessage("Ruleset", error)} backLabel="Back to Rulesets" backTo={"/rulesets"} />
+      </Container>
+    );
+  }
+
+  const tabConfig = rulesetTabs(rules);
+  const currentTab = tabConfig.find((tab) => tab.key === section);
+
+  // Normalize the URL to a known tab: its rules' first
+  if (!currentTab) return <Navigate to={`/rulesets/${id}/${tabConfig[0]?.key ?? "settings"}`} replace />;
+
+  const isActive = ruleset.status !== "Archived";
+  // What the session may do here: the header's menu, whose button shows only when it holds something
+  const menuItems = [
+    // An archived ruleset's menu leads with Unarchive, as an archived campaign's and character's do
+    canUnarchive && (
+      <ActionMenuItem
+        key="unarchive"
+        icon={UnarchiveIcon}
+        label="Unarchive"
+        intent="positive"
+        onClick={menu.closeMenuAnd(() => unarchiveMutation.mutate(ruleset.id))}
+      />
+    ),
+    canFork && (
+      <ActionMenuItem key="fork" icon={ForkIcon} label="Fork" onClick={menu.closeMenuAnd(() => handleFork(ruleset))} />
+    ),
+    canViewChanges && (
+      <ActionMenuItem
+        key="local-changes"
+        icon={CompareArrowsIcon}
+        label="Local Changes"
+        onClick={menu.closeMenuAnd(() => setLocalChangesOpen(true))}
+      />
+    ),
+    canSubscribeExtensions && (
+      <ActionMenuItem
+        key="subscribe"
+        icon={ExtensionIcon}
+        label="Subscribe"
+        onClick={menu.closeMenuAnd(() => handleSubscribe(ruleset))}
+      />
+    ),
+    // An archived ruleset's too: its owner or an Admin removes a contributor, and a contributor leaves
+    canReadContributors && (
+      <ActionMenuItem
+        key="contributors"
+        icon={ContributorsIcon}
+        label="Contributors"
+        onClick={menu.closeMenuAnd(() => setContributorsDialogOpen(true))}
+      />
+    ),
+    ...(isOwner && !!ruleset.rulesetId && isActive
+      ? [
+          <Divider key="help-divider" />,
+          <ActionMenuItem
+            key="help"
+            icon={HelpIcon}
+            label="Help"
+            href={EXTERNAL_LINKS.help}
+            onClick={menu.closeMenu}
+          />,
+        ]
+      : []),
+    ...(canEditRuleset
+      ? [
+          <ActionMenuItem
+            key="edit"
+            icon={EditIcon}
+            label="Edit"
+            onClick={menu.closeMenuAnd(() => handleEdit(ruleset))}
+          />,
+          canPublish && (
+            <ActionMenuItem
+              key="publish"
+              icon={PublishIcon}
+              label="Publish"
+              intent="positive"
+              onClick={menu.closeMenuAnd(() => handlePublish(ruleset))}
+            />
+          ),
+          <ActionMenuItem
+            key="archive"
+            icon={ArchiveIcon}
+            label="Archive"
+            intent="caution"
+            onClick={menu.closeMenuAnd(() => handleArchive(ruleset))}
+          />,
+        ]
+      : []),
+  ];
+
+  return (
+    <PageTransition>
+      <Container>
+        <Stack spacing={4}>
+          <DetailPageHeader
+            title={ruleset.name}
+            titleAdornment={ruleset.isStarrable && <RulesetStarButton ruleset={ruleset} placement="title" />}
+            backTo={"/rulesets"}
+            onMenuOpen={menuItems.some(Boolean) ? menu.openMenu : undefined}
+            chips={
+              <>
+                <RulesetFactChips ruleset={ruleset} />
+                {subscribedExtensions && subscribedExtensions.length > 0 && (
+                  <>
+                    {/* Opens the list of its extensions; orange while one of them has an update */}
+                    <CountChip
+                      icon={<ExtensionIcon />}
+                      label={formatCount(subscribedExtensions.length, "extension")}
+                      color={subscribedExtensions.some((ext) => ext.updateAvailable) ? "warning" : "default"}
+                      onClick={extensionsMenu.openMenu}
+                      aria-expanded={extensionsMenu.open}
+                    />
+                    <Popover
+                      open={extensionsMenu.open}
+                      anchorEl={extensionsMenu.anchorEl}
+                      onClose={extensionsMenu.closeMenu}
+                      anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                      transformOrigin={{ vertical: "top", horizontal: "center" }}
+                    >
+                      {/* Each extension as long as its name, at the start of the list */}
+                      <Stack spacing={1} sx={{ p: 1.5, maxWidth: 360, alignItems: "flex-start" }}>
+                        {subscribedExtensions.map((ext) => (
+                          <ValueChip
+                            key={ext.extensionId}
+                            icon={<ExtensionIcon />}
+                            label={ext.extensionName}
+                            color={ext.updateAvailable ? "warning" : "default"}
+                            to={`/rulesets/${ext.extensionId}`}
+                            onDelete={
+                              canUnsubscribeExtensions
+                                ? (e: MouseEvent) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleUnsubscribe(ruleset.id, ext.extensionId, ext.extensionName);
+                                  }
+                                : undefined
+                            }
+                          />
+                        ))}
+                      </Stack>
+                    </Popover>
+                  </>
+                )}
+              </>
+            }
+            description={ruleset.description}
+          >
+            {ruleset.system && rules?.license && (
+              <LicenseNotice key={ruleset.id} license={rules.license} name={ruleset.name} />
+            )}
+          </DetailPageHeader>
+
+          {/* An archived ruleset's notice, and extensions that failed to load, above its tabs */}
+          <Stack spacing={3}>
+            {!!extensionsError && !subscribedExtensions && <LoadError what="Extensions" error={extensionsError} />}
+            {!isActive && <ArchivedNotice what="ruleset" canUnarchive={canUnarchive} />}
+
+            <SectionTabs
+              tabs={tabConfig}
+              value={currentTab.key}
+              onChange={(key) => navigate(`/rulesets/${id}/${key}`)}
+              // Changing tab clears the URL's filters, so it opens with the ruleset's default "Local Changes".
+              onTabHover={(key) =>
+                void prefetchSection(
+                  queryClient,
+                  id,
+                  key,
+                  tabConfig.find((tab) => tab.key === key)?.kind ?? null,
+                  rules?.entityKinds.at(0)?.value,
+                  !!ruleset && childOnlyOf(ruleset),
+                )
+              }
+              aria-label="Ruleset Details Tabs"
+            />
+          </Stack>
+
+          <SectionTabPanel>
+            {/* Keyed by ruleset and tab: a list keeps its previous data while a search loads, never another's. */}
+            {currentTab.kind ? (
+              <EntitySection
+                key={`${ruleset.id}:${currentTab.key}`}
+                ruleset={ruleset}
+                childOnly={childOnly}
+                onChildOnlyChange={setChildOnly}
+                kind={currentTab.kind}
+              />
+            ) : (
+              <SettingsSection
+                key={ruleset.id}
+                ruleset={ruleset}
+                childOnly={childOnly}
+                onChildOnlyChange={setChildOnly}
+              />
+            )}
+          </SectionTabPanel>
+        </Stack>
+
+        <Menu anchorEl={menu.anchorEl} open={menu.open} onClose={menu.closeMenu}>
+          {menuItems}
+        </Menu>
+
+        <EditRulesetDialog
+          open={editDialog.open}
+          onClose={editDialog.close}
+          form={editForm}
+          onSubmit={confirmEdit}
+          pending={updateMutation.isPending}
+          // As the ruleset read when the dialog opened, which it keeps while it closes
+          canMakePrivate={!!editDialog.target?.permissions.canMakePrivate}
+          kinds={editDialog.target?.permissions.kinds ?? []}
+        />
+
+        <ArchiveRulesetDialog
+          open={archiveDialog.open}
+          onClose={archiveDialog.close}
+          onConfirm={confirmArchive}
+          pending={archiveMutation.isPending}
+        />
+
+        <PublishRulesetDialog
+          open={publishDialog.open}
+          onClose={publishDialog.close}
+          onConfirm={confirmPublish}
+          pending={publishMutation.isPending}
+          // As the ruleset read when the dialog opened, which it keeps while it closes
+          kinds={publishDialog.target?.permissions.kinds ?? []}
+          kind={publishKind}
+          onKindChange={setPublishKind}
+        />
+
+        <ForkRulesetDialog
+          open={forkDialog.open}
+          onClose={forkDialog.close}
+          form={forkForm}
+          onSubmit={confirmFork}
+          pending={forkMutation.isPending}
+        />
+
+        {ruleset.rulesetId && (
+          <>
+            <LocalChangesDialog
+              open={localChangesOpen}
+              onClose={() => setLocalChangesOpen(false)}
+              rulesetId={ruleset.id}
+              baseRules={ruleset.baseRules}
+              canEdit={canEditEntities}
+            />
+
+            <SubscribeExtensionDialog
+              open={subscribeDialog.open}
+              onClose={subscribeDialog.close}
+              onConfirm={confirmSubscribe}
+              pending={subscribeMutation.isPending}
+              subscribedExtensionIds={subscribedExtensions?.map((ext) => ext.extensionId) ?? []}
+            />
+
+            <UnsubscribeExtensionDialog
+              open={unsubscribeDialog.open}
+              onClose={unsubscribeDialog.close}
+              onConfirm={confirmUnsubscribe}
+              pending={unsubscribeMutation.isPending}
+              extensionName={unsubscribeDialog.target?.extensionName ?? ""}
+            />
+          </>
+        )}
+
+        <RulesetContributorsDialog
+          ruleset={ruleset}
+          open={contributorsDialogOpen}
+          onClose={() => setContributorsDialogOpen(false)}
+        />
+      </Container>
+    </PageTransition>
+  );
+}

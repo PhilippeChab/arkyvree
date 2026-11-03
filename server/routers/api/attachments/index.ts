@@ -1,0 +1,51 @@
+import { Hono } from "hono";
+import { z } from "zod";
+
+import { attachmentUploadRateLimit, sessionMiddleware, validate } from "@/server/middlewares/index.ts";
+import { idParam, signedIdParam } from "@/server/routers/api/validation.ts";
+import { AttachmentsService } from "@/server/services/attachments/index.ts";
+
+export default new Hono()
+  .use(sessionMiddleware)
+  .get(
+    "/",
+    validate(
+      "query",
+      z.object({
+        recordType: z.string().min(1),
+        recordId: z.string().uuid(),
+        name: z.string().min(1),
+      }),
+    ),
+    async (c) => {
+      const query = c.req.valid("query");
+      return c.json(await AttachmentsService.getAttachment(query), 200);
+    },
+  )
+  .post(
+    "/direct-uploads",
+    attachmentUploadRateLimit,
+    validate(
+      "json",
+      z.object({
+        recordType: z.string().min(1),
+        recordId: z.string().uuid(),
+        name: z.string().min(1),
+        filename: z.string().min(1),
+        contentType: z.string().min(1),
+        byteSize: z.number().int().positive(),
+      }),
+    ),
+    async (c) => {
+      const body = c.req.valid("json");
+      return c.json(await AttachmentsService.createDirectUpload(c.var.requestSession, body), 200);
+    },
+  )
+  .post("/:signedId/attach", validate("param", signedIdParam), async (c) => {
+    const { signedId } = c.req.valid("param");
+    return c.json(await AttachmentsService.attach(c.var.requestSession, signedId), 200);
+  })
+  .delete("/:id", validate("param", idParam), async (c) => {
+    const { id } = c.req.valid("param");
+    return c.json(await AttachmentsService.detach(c.var.requestSession, id), 200);
+  });

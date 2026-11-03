@@ -1,0 +1,205 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-10-11T00:27:23.519Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/nightsong-enforcer/",
+    "type": "class"
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Nightsong enforcers are not proficient with any weapon. They are proficient with light armor but not with shields.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A nightsong enforcer deals an extra 1d6 points of damage when flanking an opponent or any time the target would be denied its Dexterity bonus. This extra damage applies to ranged attacks only if the target is within 30 feet. It increases to 2d6 points at 4th level, 3d6 points at 7th level, and 4d6 points at 10th level. See the rogue class feature of the Player's Handbook. If a nightsong enforcer gets a sneak attack bonus from another source (such as levels of rogue), the bonuses on damage stack.",
+        "name": "Sneak Attack",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Nightsong enforcers are trained to keep a close eye on teammates on a joint mission. A nightsong enforcer gains a +20 circumstance bonus on Listen and Spot checks to hear and see allies. At 9th level, a nightsong enforcer's senses are honed so finely that she is aware of the location and status (as with the status spell) of all allies within 100 feet, even if they are not within sight.",
+        "name": "Teamwork (Hear/see Allies)",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 2nd level, a nightsong enforcer reduces the armor check penalty imposed on her by light armor by 2 (to a minimum of 0).",
+        "name": "Agility Training",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level and higher, a nightsong enforcer can use her training to improve the skill of those around her. All allies within 30 feet of the nightsong enforcer gain a +2 competence bonus on Balance, Climb, Escape Artist, Hide, Listen, Move Silently, and Spot checks. Allies must be able to see the nightsong enforcer to gain this bonus. At 7th level, this bonus increases to +4.",
+        "name": "Skill Teamwork",
+        "type": "(Ex)"
+      },
+      {
+        "description": "When a nightsong enforcer of 5th level or higher flanks an opponent, the enforcer and all other allies who threaten the same opponent gain a +1 circumstance bonus on their attack rolls (in addition to the normal flanking bonus, if it applies).",
+        "name": "Flanking Teamwork",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Once per round, a nightsong enforcer of 6th level or higher can make an attack of opportunity against an opponent who has just been injured in melee by another character. See the rogue class feature of the Player's Handbook.",
+        "name": "Opportunist",
+        "type": "(Ex)"
+      },
+      {
+        "description": "If a nightsong enforcer of 8th level or higher is exposed to any effect that normally allows her to attempt a Reflex saving throw for half damage, she takes no damage with a successful saving throw and half damage if the saving throw fails.",
+        "name": "Improved Evasion",
+        "type": "(Ex)"
+      },
+      {
+        "description": "",
+        "name": "Teamwork (Status)"
+      }
+    ],
+    "classSkills": [
+      "Balance",
+      "Climb",
+      "Disable Device",
+      "Disguise",
+      "Escape Artist",
+      "Hide",
+      "Intimidate",
+      "Jump",
+      "Listen",
+      "Move Silently",
+      "Open Lock",
+      "Profession",
+      "Ride",
+      "Search",
+      "Spot",
+      "Swim",
+      "Tumble"
+    ],
+    "description": "The enforcers of the Nightsong Guild focus on the stealth-centered combat training that rogues usually learn; they forgo some of the sleight of hand or fast-talking aspects of being a thief. However, nightsong enforcers are not mere thugs. They are deadly opponents who strike from hidden positions and move silently behind their foes. When in battle, their goal is to eliminate their enemies, not to ?ght. Thus, they strike quickly from the shadows. They do not worry about honor or ?ghting fair, scof?ng at such ideals as childish. Rogues most often become nightsong enforcers, although bards, ?ghters, and urban rangers are also known to undertake the class. On occasion a wizard or sorcerer will endure the intensive training required to join the enforcers' ranks. When working with others, a nightsong enforcer is the linchpin. She is the very picture of ?delity when it comes to supporting teammates on a mission. It is common for an enforcer to lead a team composed of not only other enforcers, but ?ghters, spellcasters, or rogues.",
+    "hitDie": "d8",
+    "name": "Nightsong Enforcer",
+    "prerequisites": {
+      "parsed": {
+        "bab": 5,
+        "feats": [
+          "Improved Initiative"
+        ],
+        "skills": [
+          {
+            "name": "Hide",
+            "ranks": 10
+          },
+          {
+            "name": "Move Silently",
+            "ranks": 10
+          }
+        ],
+        "special": [
+          "Evasion class feature.",
+          "The character must undergo intensive training and tests with the Nightsong Guild before she can gain the class abilities."
+        ]
+      },
+      "text": "Base Attack Bonus: +5 Skills: Hide 10 ranks, Move Silently 10 ranks Feats: Improved Initiative Special: Evasion class feature. Special: The character must undergo intensive training and tests with the Nightsong Guild before she can gain the class abilities."
+    },
+    "progression": [
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Sneak attack +1d6",
+          "teamwork (hear/see allies)"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Agility training"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Skill teamwork +2"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Sneak attack +2d6"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 5,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Flanking teamwork"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Opportunist"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 7,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Sneak attack +3d6",
+          "skill teamwork +4"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 8,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Improved evasion"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 9,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Teamwork (status)"
+        ],
+        "willSave": 3
+      },
+      {
+        "bab": 10,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Sneak attack +4d6"
+        ],
+        "willSave": 3
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

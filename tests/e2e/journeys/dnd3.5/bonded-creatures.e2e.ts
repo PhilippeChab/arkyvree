@@ -1,0 +1,60 @@
+import { expect } from "@playwright/test";
+import { parseResponse } from "hono/client";
+
+import { test } from "@/tests/e2e/fixtures.ts";
+import { apiOf } from "@/tests/e2e/support/api.ts";
+import { signIn } from "@/tests/e2e/support/signIn.ts";
+
+/**
+ * The seeded characters bonded to a creature: its master's sheet sums it up under the feat that bonds it, and links to
+ * its own sheet, read-only, whose Back returns to the master. The tests only read the seeded characters, as their
+ * owner.
+ */
+const BONDS = [
+  { master: "Elara Starweaver", creature: "Owl", feat: "Owl Familiar", klass: "Familiar" },
+  { master: "Rowan Thornwalker", creature: "Wolf", feat: "Wolf Animal Companion", klass: "Animal Companion" },
+  {
+    master: "Aldric Dawnbringer",
+    creature: "Heavy Warhorse",
+    feat: "Heavy Warhorse Special Mount",
+    klass: "Special Mount",
+  },
+];
+
+test.describe("A bonded creature", () => {
+  for (const { master, creature, feat, klass } of BONDS) {
+    test(`of ${master}, a ${creature}, is summed up on the master's sheet and opens its own`, async ({
+      page,
+      seedUser,
+    }) => {
+      await signIn(page, seedUser.email, seedUser.password);
+      const { items } = await parseResponse(apiOf(page).api.characters.$get({ query: { search: master } }));
+      const masterId = items.find((character) => character.name === master)!.id;
+
+      await page.goto(`/characters/${masterId}`);
+      // The feat's details hold the creature's summary
+      await page.getByRole("button", { name: `${feat} details` }).click();
+      const link = page.getByRole("link", { name: creature, exact: true });
+      await expect(link).toBeVisible();
+      // The summary: the innermost block holding the link and its stats
+      const summary = page.locator("div").filter({ has: link }).filter({ hasText: "Combat & Saves" }).last();
+      await expect(summary.getByText("HP:")).toBeVisible();
+
+      await link.click();
+      await expect(page).toHaveURL(/\/characters\/[a-f0-9-]+$/);
+      await expect(page).not.toHaveURL(new RegExp(masterId));
+      await expect(page.getByRole("heading", { level: 1, name: creature })).toBeVisible({ timeout: 15_000 });
+      // Its sheet is the master's to change: its levels show, but it has none to add or edit
+      await page.getByRole("button", { name: new RegExp(`^${klass} \\d+ Levels$`) }).click();
+      const levels = page.getByRole("dialog", { name: `${klass} Levels` });
+      await expect(levels.getByText("Level 1", { exact: true })).toBeVisible();
+      await expect(levels.getByRole("button")).toHaveCount(0);
+      await page.keyboard.press("Escape");
+      await expect(levels).toBeHidden();
+
+      await page.getByRole("link", { name: "Back", exact: true }).click();
+      await expect(page).toHaveURL(new RegExp(`/characters/${masterId}$`));
+      await expect(page.getByRole("heading", { level: 1, name: master })).toBeVisible();
+    });
+  }
+});

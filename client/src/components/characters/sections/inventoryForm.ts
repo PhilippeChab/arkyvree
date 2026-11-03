@@ -1,0 +1,66 @@
+import { shownGroup, storedGroups } from "./groups.ts";
+import type { InventoryEntry, RulesetItem, RulesetItemDetail } from "./inventoryQueries.ts";
+
+/** The add and edit inventory dialogs' form: the item (add only) and where and how it's carried. */
+export interface InventoryFormData {
+  /** The groups it's held in (3.5's weapon sets a hand holds it in), as shown, from 1 (see `shownGroup`). */
+  groups: number[];
+  /** Where it's held: one of the locations its item's placement offers, or none (`"none"`) */
+  location: string;
+  quantity: number;
+  remainingCharges: number;
+  selectedItem: RulesetItem | null;
+  totalCharges: number;
+}
+
+/**
+ * How an item is placed, as its ruleset says: the location it goes to once picked, the locations it can take (each
+ * saying whether the form asks for its groups there), its location field's label (`locationFieldLabel`), and its
+ * charges.
+ */
+export type PlacementProfile = RulesetItemDetail["placement"];
+
+export const EMPTY_INVENTORY_FORM: InventoryFormData = {
+  selectedItem: null,
+  quantity: 1,
+  location: "none",
+  groups: [shownGroup(0)],
+  totalCharges: 0,
+  remainingCharges: 0,
+};
+
+/**
+ * The groups (3.5's weapon sets) the form offers a held item, as shown, from 1: those the character's inventory holds
+ * something in and those the form holds, in order, then a new one past them all.
+ */
+export function groupChoices(entries: Pick<InventoryEntry, "groups">[], picked: number[]) {
+  const sets = new Set([...entries.flatMap((entry) => entry.groups.map(shownGroup)), ...picked]);
+  const ordered = [...sets].sort((a, b) => a - b);
+  return [...ordered, (ordered.at(-1) ?? 0) + 1];
+}
+
+/**
+ * Where a picked item goes: the slot its placement sets, else the location the form holds when the item can take it (an
+ * earlier pick's, which a weapon's hands or another item's slot may not offer), else none.
+ */
+export function pickedLocation(current: InventoryFormData["location"], placement: PlacementProfile) {
+  if (placement.slot) return placement.slot;
+  return placement.locations.some((option) => option.location === current) ? current : "none";
+}
+
+/**
+ * The placement as the inventory endpoints take it: a slot equips the item, and the groups stored from 0. Its charges
+ * are the form's once it holds its item's (`profile`, the placement it was filled from), none while the item's details
+ * load, which would send an earlier pick's. The server keeps the groups where its placement takes them, and the
+ * charges of an item that comes with them alone.
+ */
+export function placementPayload(data: InventoryFormData, profile: PlacementProfile | null) {
+  const location = data.location === "none" ? null : data.location;
+  return {
+    quantity: data.quantity,
+    location,
+    totalCharges: profile ? data.totalCharges : null,
+    remainingCharges: profile ? data.remainingCharges : null,
+    groups: storedGroups(data.groups),
+  };
+}

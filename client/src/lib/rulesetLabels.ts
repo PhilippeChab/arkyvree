@@ -1,0 +1,70 @@
+import { getActivityName } from "@/shared/activity.ts";
+import type { RulesWord } from "@/shared/rulesets.ts";
+
+import type { RulesWords } from "./queries.ts";
+
+/** An owned entity's word for its position along its owner, singular and plural, as its rules give it. */
+export type PositionWord = NonNullable<NonNullable<RulesWords[string]>["position"]>;
+
+/**
+ * The ruleset's word for an entity type (`words`, its rules': "Class Level" for 3.5's `class-levels`, "Class Levels"
+ * with `many`), else a generic one ("Entity"): never the type as the code names it.
+ */
+export function entityTypeLabel(entityType: string, words: RulesWords | undefined, many = false): string {
+  const word = words?.[entityType];
+  if (!word) return many ? "Entities" : "Entity";
+  return many ? word.many : word.one;
+}
+
+/**
+ * The entity type an activity's type names by its activity name (`name`: `Perk` in `createPerk`, `OwnerLevel` in
+ * `createOwnerLevel`), among the types its rules have words for (`words`), if one does.
+ */
+export function entityTypeOfActivityName(name: string, words: RulesWords | undefined): string | undefined {
+  return Object.keys(words ?? {}).find((entityType) => getActivityName(entityType) === name);
+}
+
+/** A count in a word its rules give (`word`: "1 level", "3 levels"), lowercase, as a sentence reads it. */
+export function formatWordCount(count: number, word: RulesWord): string {
+  return `${count} ${(count === 1 ? word.one : word.many).toLowerCase()}`;
+}
+
+/**
+ * The ruleset's words that replace the activity names of its types in an activity's type, as a label spells them
+ * (`words`, its rules': "Create Perk" → "Create Talent" when its perks are talents; none where they're the same).
+ */
+export function getActivityLabelOverrides(words: RulesWords | undefined): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(words ?? {}).flatMap(([entityType, word]) => {
+      if (!word) return [];
+      const spelled = getActivityName(entityType).replace(/(?<=[a-z])(?=[A-Z])/g, " ");
+      return spelled === word.one ? [] : [[spelled, word.one]];
+    }),
+  );
+}
+
+/**
+ * The word for an owned entity's position along its owner (`entityType`'s: 3.5's class level's "Level", in "Level 3"),
+ * as its rules give it (`words`), else its type's own word, as the engine names one (`RulesetData.positionNameOf`).
+ */
+export function positionWordOf(entityType: string, words: RulesWords | undefined): string {
+  return positionWordsOf(entityType, words).one;
+}
+
+/** `positionWordOf`'s word, singular and plural ("Level", "Levels"), else its type's own in both. */
+export function positionWordsOf(entityType: string, words: RulesWords | undefined): PositionWord {
+  return (
+    words?.[entityType]?.position ?? {
+      many: entityTypeLabel(entityType, words, true),
+      one: entityTypeLabel(entityType, words),
+    }
+  );
+}
+
+/**
+ * A word after its article, as a sentence says it ("a level", "an age"), chosen by its first letter: a word that
+ * sounds otherwise than it's spelled ("hour", "unit") takes the wrong one.
+ */
+export function withArticle(word: string): string {
+  return `${/^[aeiou]/i.test(word) ? "an" : "a"} ${word}`;
+}

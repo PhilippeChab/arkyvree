@@ -1,0 +1,66 @@
+import { type QueryKey, useMutation, useQueryClient } from "@tanstack/react-query";
+
+import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
+import { errorMessage, saveBusy } from "@/client/src/lib/errorMessage.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { ApiError } from "@/client/src/services/ApiError.ts";
+
+import { INVITE_KINDS, type InviteAnswer, type InviteVerb } from "./inviteKinds.ts";
+
+/**
+ * Accepting and rejecting an invite, one way wherever it's answered (a notification's buttons, the invite's own page):
+ * its toasts, what it refreshes, and an answer the server refuses for good (a 409: answered or revoked elsewhere, its
+ * parent archived, its campaign already joined), whose reason its toast says, and which `onNoLongerPending` stops
+ * offering while the invites and notifications refresh.
+ */
+export function useAnswerInvite(onNoLongerPending?: (answer: InviteAnswer) => void) {
+  const queryClient = useQueryClient();
+  const snackbar = useSnackbar();
+
+  // Answering marks the invite's notification read server-side
+  const refresh = () => {
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.notifications.all });
+    void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.invites.all });
+  };
+
+  const handleError = (verb: InviteVerb) => (error: Error, answer: InviteAnswer) => {
+    if (error instanceof ApiError && error.status === 409 && !saveBusy(error)) {
+      snackbar.warning(errorMessage(error, "This invite is no longer pending"));
+      refresh();
+      onNoLongerPending?.(answer);
+      return;
+    }
+    // Still pending, or the server busy: its buttons stay, so the user can retry
+    snackbar.error(error, `Failed to ${verb} invite`);
+  };
+
+  const accept = useMutation({
+    mutationKey: [...QUERY_KEYS.invites.answer, "accept"],
+    mutationFn: ({ kind, inviteId }: InviteAnswer): Promise<QueryKey> => INVITE_KINDS[kind].acceptFn(inviteId),
+    // The record it joined refreshes now, cached or not, so its page opens with the user's new rights
+    onSuccess: (detailKey, { kind }) => {
+      snackbar.success(`${INVITE_KINDS[kind].label} accepted`);
+      void queryClient.invalidateQueries({ queryKey: detailKey, refetchType: "all" });
+      void queryClient.invalidateQueries({ queryKey: INVITE_KINDS[kind].listKey });
+      refresh();
+    },
+    onError: handleError("accept"),
+  });
+
+  const reject = useMutation({
+    mutationKey: [...QUERY_KEYS.invites.answer, "reject"],
+    mutationFn: async ({ kind, inviteId }: InviteAnswer) => {
+      await INVITE_KINDS[kind].rejectFn(inviteId);
+    },
+    onSuccess: (_, { kind }) => {
+      snackbar.success(`${INVITE_KINDS[kind].label} rejected`);
+      refresh();
+    },
+    onError: handleError("reject"),
+  });
+
+  // The answer it's sending, which its buttons show running (`useAnsweringInvites` reads every one's, by notification)
+  const answering: InviteVerb | null = accept.isPending ? "accept" : reject.isPending ? "reject" : null;
+
+  return { accept, answering, reject };
+}

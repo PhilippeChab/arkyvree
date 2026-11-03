@@ -1,0 +1,73 @@
+import { Hono } from "hono";
+import { z } from "zod";
+
+import { type SessionContext, validate } from "@/server/middlewares/index.ts";
+import { idParam, limit, page } from "@/server/routers/api/validation.ts";
+import { TargetPathsService } from "@/server/services/rulesets/customization/targetPaths/index.ts";
+import { TARGET_PATH_KINDS } from "@/shared/customization/target.ts";
+
+export default new Hono<SessionContext>()
+  /**
+   * POST /api/rulesets/:id/customization/target/paths/completions
+   * Get paginated completion suggestions for a partial path
+   */
+  .post(
+    "/:id/customization/target/paths/completions",
+    validate("param", idParam),
+    validate(
+      "json",
+      z.object({
+        partialPath: z.string(),
+        position: z.number(),
+        kind: z.enum(TARGET_PATH_KINDS),
+        entityType: z.string().optional(),
+        search: z.string().optional(),
+        flat: z.boolean().optional(),
+        limit,
+        page,
+      }),
+    ),
+    async (c) => {
+      const { id: rulesetId } = c.req.valid("param");
+      const { partialPath, position, kind, entityType, search, flat, limit, page } = c.req.valid("json");
+      return c.json(
+        await TargetPathsService.getCompletions(
+          c.var.requestSession,
+          rulesetId,
+          partialPath,
+          position,
+          kind,
+          entityType,
+          search,
+          limit,
+          page,
+          flat,
+        ),
+        200,
+      );
+    },
+  )
+  /**
+   * POST /api/rulesets/:id/customization/target/paths/validate
+   * Validate a target path like a language server
+   */
+  .post(
+    "/:id/customization/target/paths/validate",
+    validate("param", idParam),
+    validate(
+      "json",
+      z.object({
+        path: z.string(),
+        kind: z.enum(TARGET_PATH_KINDS),
+        entityType: z.string().optional(),
+      }),
+    ),
+    async (c) => {
+      const { id: rulesetId } = c.req.valid("param");
+      const { path, kind, entityType } = c.req.valid("json");
+      return c.json(
+        await TargetPathsService.validatePath(c.var.requestSession, rulesetId, path, kind, entityType),
+        200,
+      );
+    },
+  );

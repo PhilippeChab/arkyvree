@@ -1,0 +1,297 @@
+/**
+ * What equipping an item checks: the slot takes it, as many of it as the entry holds, its hands can wield it, and the
+ * character meets its requirements.
+ */
+
+import { OwnerValues } from "@/engine/core/fields/index.ts";
+import type { CharacterInput } from "@/engine/core/module/index.ts";
+import RulesError from "@/engine/core/RulesError.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
+import { ITEM_FIELDS } from "@/engine/rulesets/dnd3.5/entities/items/fields.ts";
+import type DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import Dnd35CharacterBuilder from "@/engine/rulesets/dnd3.5/model/Dnd35CharacterBuilder.ts";
+import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import { MAX_ITEM_QUANTITY } from "@/shared/characters.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
+import {
+  ITEM_TYPE_LOCATIONS,
+  type ItemLocation,
+  MAX_FINGER_ITEMS,
+  SINGLE_OCCUPANCY_LOCATIONS,
+} from "@/vocabulary/dnd3.5/equipment.ts";
+import { ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
+
+/** An inventory entry an item is equipped from: the entry (null for a new one), its item, and how many of it. */
+interface EquippedEntry {
+  id: string | null;
+  item: Pick<Item, "fields" | "id" | "links">;
+  quantity: number;
+}
+
+/** An equipped entry of the character's, as the slot rules read it, with its item's name as the view has it. */
+type HeldEntry = CharacterInput["rows"]["inventory"][number] & { name: string };
+
+/**
+ * What keeps a location from taking one more item, with what's in the way:
+ * - `occupied`: a location that holds one item holds `entry`;
+ * - `fingers`: both fingers are taken, each ring counted (an entry of two takes both);
+ * - `hands`: a two-handed item can't go where `entries` are in the hands of the same weapon set (each of them: a
+ *   weapon in the main hand and a shield in the off hand);
+ * - `twoHanded`: a hand can't take an item while `entry` is two-handed in the same set;
+ * - `sameHand`: `entry` is already in that hand in the same set.
+ *
+ * An entry held in several sets is in the way in each of them.
+ */
+type SlotConflict =
+  | { entries: HeldEntry[]; reason: "hands" }
+  | { entry: HeldEntry; reason: Exclude<SlotConflictReason, "fingers" | "hands"> }
+  | { reason: "fingers" };
+
+type SlotConflictReason = "occupied" | "fingers" | "hands" | "twoHanded" | "sameHand";
+
+/** Why every finger is taken. */
+const FINGERS_TAKEN_MESSAGE = "Both finger slots are occupied";
+
+/** The hands a two-handed item needs free, in the order its warning names what they hold. */
+const HELD_HANDS = ["Main Hand", "Off Hand"] as const;
+
+/** Why a location can't take an item, by the conflict's reason: the item in the way (`name`), its weapon set from 1. */
+const SLOT_CONFLICT_MESSAGES: Record<
+  Exclude<SlotConflictReason, "fingers" | "hands">,
+  (location: ItemLocation, entry: { location: string | null; name: string }, weaponSet: number) => string
+> = {
+  occupied: (location, entry) => `${location} slot is occupied by ${entry.name}`,
+  twoHanded: (_, entry, weaponSet) => `Cannot equip: ${entry.name} is two-handed in Set ${weaponSet}`,
+  sameHand: (location, entry, weaponSet) => `${location} is occupied by ${entry.name} (Set ${weaponSet})`,
+};
+
+/** Why an item of a type that sets its locations can't go elsewhere. */
+const TYPE_LOCATION_MESSAGES = {
+  Armor: "Body armor can only be equipped in the Torso slot",
+  Shield: "Shields can only be equipped in the Off Hand slot",
+  Weapon: "Weapons can only be equipped in hand slots",
+} as const satisfies Record<keyof typeof ITEM_TYPE_LOCATIONS, string>;
+
+/** How many items the entries hold: a ring each, for an entry of one ring. */
+function countItems(entries: HeldEntry[]) {
+  return entries.reduce((total, entry) => total + entry.quantity, 0);
+}
+
+/**
+ * Why a two-handed item can't go in a weapon set (from 1): what its hands hold, each item in its hand ("Longsword is in
+ * Main Hand and Heavy Steel Shield is in Off Hand").
+ */
+function describeHeldHands(entries: HeldEntry[], weaponSet: number) {
+  const held = entries.map((entry) => `${entry.name} is in ${entry.location}`).join(" and ");
+  return `Cannot equip two-handed: ${held} (Set ${weaponSet})`;
+}
+
+/** Why a location can't take as many of an item as an entry holds (`quantity`): the room it has (`room`). */
+function describeRoom(location: ItemLocation, room: number, quantity: number) {
+  return `${location} slot has room for ${room} ${room === 1 ? "item" : "items"}, not ${quantity}`;
+}
+
+/**
+ * Equipping an item for a character, from its rows (`input`): where it holds it, refused when a slot, a hand or a
+ * requirement says no. The character is built once, when a requirement first reads it.
+ */
+export default class Equipping {
+  constructor(
+    private readonly view: RulesetView,
+    private readonly input: CharacterInput,
+  ) {}
+
+  /** Why a location can't take an item, in a weapon set counted from 1 (`set`) for a hand. */
+  private static describeSlotConflict(conflict: SlotConflict, location: ItemLocation, set: number): string {
+    if (conflict.reason === "fingers") return FINGERS_TAKEN_MESSAGE;
+    if (conflict.reason === "hands") return describeHeldHands(conflict.entries, set);
+    return SLOT_CONFLICT_MESSAGES[conflict.reason](location, conflict.entry, set);
+  }
+
+  /**
+   * How many items `location` has room for beside the `equipped` entries, when none of them is in its way
+   * (`findConflict`): the rings the fingers have room for, each ring worn counted; any number for an item worn nowhere
+   * in particular (`"Other"`: as many as an entry holds); one anywhere else, a slot that holds one or a hand.
+   */
+  private static roomAt(location: ItemLocation, equipped: HeldEntry[]) {
+    if (location === "Other") return MAX_ITEM_QUANTITY;
+    if (location === "Finger") return MAX_FINGER_ITEMS - countItems(equipped.filter((e) => e.location === "Finger"));
+    return 1;
+  }
+
+  /** The character, built from its rows. */
+  private built?: DetailedCharacter;
+
+  /** The character, built from its rows the first time a requirement reads it. */
+  private get character() {
+    return (this.built ??= Dnd35CharacterBuilder.build(this.view, this.input));
+  }
+
+  /**
+   * The character meets the item's requirements and its template's, each its own group. A weapon's aren't checked:
+   * without its proficiency, a -4 penalty applies instead.
+   */
+  private checkItemRequirements(item: EquippedEntry["item"]) {
+    if (item.fields[ITEM_TYPE] === "Weapon") return;
+    const { own: requirements, template: proficiency } = this.view.rulesetData.templateRequirements("items", item);
+    if (proficiency.length === 0 && requirements.length === 0) return;
+
+    // Two entities' requirements, each its own group: their levels each start at "1"
+    const issues = this.character.getUnmetRequirementIssues([proficiency, requirements]);
+    if (issues.length > 0)
+      throw new RulesError("invalid", "Character does not meet the requirements to equip this item", issues);
+  }
+
+  /**
+   * The slot takes the item: no other entry is in its way (the item's own other ones count, a dagger in the other hand;
+   * the entry equipped doesn't), it's a slot of the item's kind, its hands can wield a weapon, and it has room for as
+   * many of it as the entry holds (`roomAt`), unless the entry held them there already: an edit that adds no item to a
+   * place saves, as an entry saved past its room before the room was counted keeps what it holds.
+   */
+  private checkSlot({ id, item, quantity }: EquippedEntry, location: ItemLocation, weaponSets: number[]) {
+    const conflict = this.describeConflict(id, location, weaponSets);
+    if (conflict) throw new RulesError("invalid", conflict);
+
+    const type = item.fields[ITEM_TYPE] ?? null;
+    if (ItemPlacement.isLocatedType(type) && !isOneOf(location, ITEM_TYPE_LOCATIONS[type]))
+      throw new RulesError("invalid", TYPE_LOCATION_MESSAGES[type]);
+    if (ItemPlacement.isHand(location)) this.checkWeaponHands(item.id, location);
+    const room = Equipping.roomAt(location, this.equippedBesides(id));
+    if (quantity > room && quantity > this.countHeld(id, location, weaponSets))
+      throw new RulesError("invalid", describeRoom(location, room, quantity));
+  }
+
+  /**
+   * A weapon's WEAPON_SIZE is its effort as the weapon table gives it for a Medium wielder: Tiny and Small are light,
+   * Medium one-handed, Large two-handed (a bow too: it needs both hands, whatever its size). Every weapon is sized for
+   * its wielder, as its damage is, so a halfling's longsword is one-handed as a human's is, and its greatsword
+   * two-handed.
+   */
+  private checkWeaponHands(itemId: string, location: ItemLocation) {
+    if (ItemPlacement.isTwoHanded(this.weaponFields(itemId).size) && location !== "Two Handed")
+      throw new RulesError("invalid", "This weapon requires two hands");
+  }
+
+  /**
+   * A weapon too large for one hand without training (a bastard sword, a dwarven waraxe: its one-hand training is true)
+   * held in one: only its proficiency there lets it be wielded, "as impossible as wielding a greatsword one-handed"
+   * without. Its proficiency is read in no hand, so what only two hands give (a martial weapon's) doesn't count, and a
+   * race's familiarity (a dwarf's waraxe) does.
+   */
+  private checkWeaponInOneHand(item: EquippedEntry["item"], location: ItemLocation) {
+    const { rulesetData } = this.view;
+    if (item.fields[ITEM_TYPE] !== "Weapon" || !ItemPlacement.isHand(location) || location === "Two Handed") return;
+    if (this.weaponFields(item.id).oneHandTraining !== true) return;
+
+    const { template: proficiency } = rulesetData.templateRequirements("items", item);
+    if (proficiency.length === 0) return;
+
+    if (!this.character.areRequirementsMet([proficiency], { sourceId: null })) {
+      // An issue, as an unmet requirement is: the form shows it, and can equip it anyway (`force`)
+      const entityName = Dnd35View.of(rulesetData).itemsById.get(item.id)?.name;
+      const message = `${entityName ?? "This weapon"} is too large to use in one hand without its proficiency`;
+      throw new RulesError("invalid", message, [
+        { category: "requirements", message, entityName, entityType: "items" },
+      ]);
+    }
+  }
+
+  /**
+   * How many items the entry placed (`entryId`, none for a new one) holds at `location` already, in each of
+   * `weaponSets` for a hand: as many as it's stored with there, none for a new one or one moved (another place, a
+   * weapon set it isn't in).
+   */
+  private countHeld(entryId: string | null, location: ItemLocation, weaponSets: number[]) {
+    const stored = this.input.rows.inventory.find((entry) => entry.id === entryId);
+    if (!stored || stored.location !== location) return 0;
+    const sets = ItemPlacement.heldSets(stored);
+    const moved =
+      ItemPlacement.isHand(location) &&
+      ItemPlacement.heldSets({ groups: weaponSets }).some((set) => !sets.includes(set));
+    return moved ? 0 : stored.quantity;
+  }
+
+  /** The character's equipped entries, each with its item's name, the entry placed (`entryId`, none for a new one) aside. */
+  private equippedBesides(entryId: string | null): HeldEntry[] {
+    return this.view.rulesetData
+      .entriesWithItems(this.input.rows.inventory)
+      .filter(({ entry }) => entry.location !== null && entry.id !== entryId)
+      .map(({ entry, item }) => ({ ...entry, name: item.name }));
+  }
+
+  /** What keeps `location` (in `weaponSet`, stored from 0, for a hand) from taking an item, given the `equipped` entries. */
+  private findConflict(location: ItemLocation, weaponSet: number | null, equipped: HeldEntry[]): SlotConflict | null {
+    if (isOneOf(location, SINGLE_OCCUPANCY_LOCATIONS)) {
+      const entry = equipped.find((e) => e.location === location);
+      if (entry) return { reason: "occupied", entry };
+    }
+
+    if (location === "Finger" && Equipping.roomAt(location, equipped) <= 0) return { reason: "fingers" };
+
+    if (ItemPlacement.isHand(location)) {
+      const sameSet = equipped.filter(
+        (e) => ItemPlacement.isHand(e.location) && ItemPlacement.heldSets(e).includes(weaponSet ?? 0),
+      );
+      const find = (...locations: string[]) =>
+        sameSet.find((e) => e.location !== null && locations.includes(e.location));
+
+      // Each hand's item, the main hand's first
+      const handed = location === "Two Handed" ? HELD_HANDS.flatMap((hand) => find(hand) ?? []) : [];
+      if (handed.length > 0) return { reason: "hands", entries: handed };
+      const twoHanded = location === "Two Handed" ? undefined : find("Two Handed");
+      if (twoHanded) return { reason: "twoHanded", entry: twoHanded };
+      const same = find(location);
+      if (same) return { reason: "sameHand", entry: same };
+    }
+
+    return null;
+  }
+
+  /** The weapon fields of an item, its own over its template's. */
+  private weaponFields(itemId: string) {
+    const { rulesetData } = this.view;
+    const item = Dnd35View.of(rulesetData).itemsById.get(itemId);
+    return ITEM_FIELDS.read(item ? rulesetData.withInheritedFields("items", item) : OwnerValues.NONE).weapon;
+  }
+
+  /**
+   * Equipping an entry's item at `location` (in each of `weaponSets`, for a hand): a hand slot needs a weapon set, the
+   * slot must take the item in each of them, as many of it as the entry holds, and the character must meet its
+   * requirements unless `force`d.
+   */
+  checkEquip(entry: EquippedEntry, location: ItemLocation, weaponSets: number[], force: boolean) {
+    if (ItemPlacement.isHand(location) && weaponSets.length === 0)
+      throw new RulesError("invalid", "A weapon set is required when equipping to a hand slot");
+    this.checkSlot(entry, location, weaponSets);
+    if (force) return;
+    this.checkItemRequirements(entry.item);
+    this.checkWeaponInOneHand(entry.item, location);
+  }
+
+  /**
+   * How many of an item `location` (in each of `weaponSets`, stored from 0, for a hand) has room for, the entry placed
+   * (`entryId`, none for a new one) aside: none when an entry is in its way (`describeConflict`). An entry held there
+   * holds at most that many, and an import wears that many of a piece, carrying the rest.
+   */
+  countRoom(entryId: string | null, location: ItemLocation, weaponSets: number[]): number {
+    if (this.describeConflict(entryId, location, weaponSets)) return 0;
+    return Equipping.roomAt(location, this.equippedBesides(entryId));
+  }
+
+  /**
+   * Why `location` (in each of `weaponSets`, stored from 0, for a hand) can't take one more item, if it can't: an entry
+   * in the way, named with the set it's in the way in, the first such set's; the entry placed (`entryId`, none for a new
+   * one) aside. The inventory dialogs warn of it, and the save refuses it.
+   */
+  describeConflict(entryId: string | null, location: ItemLocation, weaponSets: number[]): string | null {
+    const equipped = this.equippedBesides(entryId);
+    const sets = ItemPlacement.isHand(location) ? ItemPlacement.heldSets({ groups: weaponSets }) : [null];
+    for (const weaponSet of sets) {
+      const conflict = this.findConflict(location, weaponSet, equipped);
+      if (conflict) return Equipping.describeSlotConflict(conflict, location, (weaponSet ?? 0) + 1);
+    }
+    return null;
+  }
+}

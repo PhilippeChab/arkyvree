@@ -1,0 +1,35 @@
+import { useState } from "react";
+
+import { errorMessage } from "@/client/src/lib/errorMessage.ts";
+
+/** What a resend reports back: the mutation's callbacks. */
+interface ResendCallbacks {
+  onError: (error: unknown) => void;
+  onSuccess: () => void;
+}
+
+/**
+ * A verification code form's messages, an auth page's or a dialog's: its `error`, its submit's (`setError`) or its
+ * resend's, and the `notice` a resend gives (`handleResend` runs `resend`'s mutation with the callbacks it's given),
+ * which stands until a later request fails.
+ */
+export function useCodeMessages(resend: (callbacks: ResendCallbacks) => void) {
+  const [error, setPageError] = useState<string | null>(null);
+  const [resent, setResent] = useState(false);
+
+  const setError = (next: string | null) => {
+    setPageError(next);
+    if (next) setResent(false);
+  };
+
+  const handleResend = () => {
+    setError(null);
+    setResent(false);
+    resend({
+      onSuccess: () => setResent(true),
+      onError: (error) => setError(errorMessage(error, "Failed to resend code")),
+    });
+  };
+
+  return { error, setError, handleResend, notice: resent ? "A new code has been sent to your email." : null };
+}

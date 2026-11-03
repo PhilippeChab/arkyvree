@@ -1,0 +1,42 @@
+import { AppBar, Button, Toolbar, Typography } from "@mui/material";
+import { Link } from "react-router-dom";
+
+import { DashboardIcon, PersonAddIcon } from "@/client/src/components/icons/index.ts";
+import { useAuthStore } from "@/client/src/stores/authStore.ts";
+
+import { AppBrand } from "./AppBrand.tsx";
+import { AppMain } from "./AppMain.tsx";
+
+export function PublicLayout() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  return (
+    <>
+      <AppBar position="fixed">
+        <Toolbar sx={{ justifyContent: "space-between" }}>
+          <Typography
+            variant="h6"
+            noWrap
+            component={Link}
+            to="/"
+            sx={{ fontWeight: 700, color: "inherit", textDecoration: "none" }}
+          >
+            <AppBrand />
+          </Typography>
+
+          {isAuthenticated ? (
+            <Button color="inherit" startIcon={<DashboardIcon />} component={Link} to="/dashboard">
+              Dashboard
+            </Button>
+          ) : (
+            <Button color="inherit" startIcon={<PersonAddIcon />} component={Link} to="/sign-up">
+              Sign Up
+            </Button>
+          )}
+        </Toolbar>
+      </AppBar>
+
+      <AppMain />
+    </>
+  );
+}

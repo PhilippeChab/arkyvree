@@ -1,0 +1,73 @@
+/**
+ * Queries of the character pages: the options a new character's creation picks offer, and how it sets its scores; and
+ * what a file picked to import is, and what its import answers.
+ */
+
+import { infiniteQueryOptions, queryOptions, skipToken } from "@tanstack/react-query";
+import { type InferResponseType, parseResponse } from "hono/client";
+
+import { FOREVER } from "@/client/src/lib/durations.ts";
+import { nextPage } from "@/client/src/lib/pageItems.ts";
+import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
+import { rpc } from "@/client/src/services/rpc.ts";
+
+/**
+ * How a new character sets its scores of a scored link: the entities it scores in its sheets' order, its rules'
+ * methods, the scores' bounds, their modifiers.
+ */
+export type CharacterCreation = InferResponseType<typeof rpc.api.characters.creation.$get, 200>;
+
+/** What importing a character answers: the character created, and the report of what was imported and couldn't be. */
+export type CharacterImport = InferResponseType<typeof rpc.api.characters.import.$post, 201>;
+
+/** A way a new character's scores are set, which the create dialog runs by its kind. */
+export type CreationMethod = CharacterCreation["methods"][number];
+
+/**
+ * What a picked character file is, before a ruleset is: the program that saved it, its version, the file's format and
+ * its character's rules, the base rules whose rulesets import it, and why none does.
+ */
+export type ImportFileDescription = InferResponseType<typeof rpc.api.characters.import.source.$post, 200>;
+
+/**
+ * How a new character of a ruleset sets its scores of a scored link's role (`role`: 3.5's `score`), for the entities it
+ * scores: its methods and bounds only a deploy changes, and a write to the ruleset's content refreshes its entities
+ * (`invalidateRulesetEdit`); none until it's picked.
+ */
+export function characterCreationQuery(rulesetId: string, role: string) {
+  return queryOptions({
+    queryKey: QUERY_KEYS.rulesets.characterCreation(rulesetId, role),
+    queryFn: rulesetId
+      ? () => parseResponse(rpc.api.characters.creation.$get({ query: { role, rulesetId } }))
+      : skipToken,
+    staleTime: FOREVER,
+  });
+}
+
+/**
+ * The options a ruleset offers a new character's creation pick (`role`: 3.5's race), each marked eligible or not for
+ * what the fields that narrow them hold (`narrowing`, by their keys: `""` while unpicked); skipped until a ruleset is
+ * picked.
+ */
+export function creationOptionsQuery(rulesetId: string, role: string, narrowing: Record<string, string>) {
+  return infiniteQueryOptions({
+    queryKey: QUERY_KEYS.characters.creationOptions(rulesetId, role, narrowing),
+    queryFn: rulesetId
+      ? ({ pageParam }) =>
+          parseResponse(
+            rpc.api.characters.creation[":role"].$get({
+              param: { role },
+              query: {
+                rulesetId,
+                // A field not set yet narrows nothing
+                ...Object.fromEntries(Object.entries(narrowing).filter(([, value]) => value)),
+                limit: "100",
+                page: pageParam.toString(),
+              },
+            }),
+          )
+      : skipToken,
+    initialPageParam: 1,
+    getNextPageParam: nextPage,
+  });
+}

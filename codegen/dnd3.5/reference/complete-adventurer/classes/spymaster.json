@@ -1,0 +1,208 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-24T22:27:47.388Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/spymaster/",
+    "type": "class"
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Spymasters are proficient with all simple and martial weapons and with light and medium armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "A spymaster has one specific cover identity (such as ?Murek, the tailor from Sumberton?). While operating in that identity, she gains a +4 circumstance bonus on Disguise checks and a +2 circumstance bonus on Bluff and Gather Information checks. A spymaster can add an additional cover identity to her repertoire at 4th level and another at 7th level. Should a spymaster wish to ?retire' a cover identity and develop a new one, she must spend one week rigorously practicing subtle vocal intonations and body language before she earns the bonuses. Cover identities do not in themselves provide the spymaster with additional skills, proficiencies, or class features that others might expect of the professions pretended. Thus, a spymaster must be careful to choose identities that can withstand ordinary scrutiny.",
+        "name": "Cover Identity",
+        "type": "(Ex)"
+      },
+      {
+        "description": "The web of different identities and agendas inside a spymaster's mind makes it impossible for others to detect her alignment by means of any form of divination. This ability functions like an undetectable alignment spell, except that it is always active.",
+        "name": "Undetectable Alignment",
+        "type": "(Ex)"
+      },
+      {
+        "description": "By 2nd level, a spymaster has become adept at quickly switching from one identity to another. She now can don a disguise in one-tenth the normal time (1d3 minutes) and don or remove armor in one-half the normal time.",
+        "name": "Quick Change",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 2nd level, a spymaster adds her class level to Will saves against divination (scrying) spells, as well as to Spot checks made to notice the sensors created by such spells.",
+        "name": "Scrying Defense",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level, a spymaster gains the ability to use Nystul's magic aura at will with a caster level equal to her class level. Most spymasters use this ability to shield their own magic items from detection.",
+        "name": "Magic Aura",
+        "type": "(Sp)"
+      },
+      {
+        "description": "Beginning at 3rd level, a spymaster deals an extra 1d6 points of damage when flanking an opponent or any time the target would be denied its Dexterity bonus. This extra damage applies to ranged attacks only if the target is within 30 feet. It increases to 2d6 points at 6th level. See the rogue class feature of the Player's Handbook. If a spymaster gets a sneak attack bonus from another source (such as levels of rogue), the bonuses on damage stack.",
+        "name": "Sneak Attack",
+        "type": "(Ex)"
+      },
+      {
+        "description": "Starting at 4th level, a spymaster has a second chance to wriggle free from any enchantment spells and effects. See the rogue class feature of the Player's Handbook.",
+        "name": "Slippery Mind",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 5th level and higher, a spymaster can dispel a scrying sensor as if casting a targeted greater dispel magic. Her caster level is equal to her class level + 10. She can use this ability a number of times per day equal to 3 + her Intelligence modifier.",
+        "name": "Dispel Scrying",
+        "type": "(Su)"
+      },
+      {
+        "description": "At 7th level, a spymaster becomes able to quiet her mind and completely immerse herself in her cover identity. While she operates under deep cover, divination spells detect only information appropriate to her cover identity; they reveal nothing relating to her spymaster pers",
+        "name": "Deep Cover",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Balance",
+      "Bluff",
+      "Climb",
+      "Decipher Script",
+      "Diplomacy",
+      "Disable Device",
+      "Disguise",
+      "Escape Artist",
+      "Forgery",
+      "Gather Information",
+      "Hide",
+      "Intimidate",
+      "Jump",
+      "Knowledge (Geography)",
+      "Knowledge (History)",
+      "Knowledge (Local)",
+      "Knowledge (Nobility and Royalty)",
+      "Listen",
+      "Move Silently",
+      "Open Lock",
+      "Search",
+      "Sense Motive",
+      "Sleight of Hand",
+      "Speak Language",
+      "Spot",
+      "Swim",
+      "Tumble",
+      "Use Magic Device",
+      "Use Rope"
+    ],
+    "description": "Spymasters do their work quietly and in private, and they often have a cover identity.",
+    "hitDie": "d6",
+    "name": "Spymaster",
+    "prerequisites": {
+      "parsed": {
+        "feats": [
+          "Skill Focus (bluff)"
+        ],
+        "skills": [
+          {
+            "name": "Bluff",
+            "ranks": 8
+          },
+          {
+            "name": "Diplomacy",
+            "ranks": 4
+          },
+          {
+            "name": "Disguise",
+            "ranks": 8
+          },
+          {
+            "name": "Forgery",
+            "ranks": 4
+          },
+          {
+            "name": "Gather Information",
+            "ranks": 4
+          },
+          {
+            "name": "Sense Motive",
+            "ranks": 4
+          }
+        ]
+      },
+      "text": "Skills: Bluff 8 ranks, Diplomacy 4 ranks, Disguise 8 ranks, Forgery 4 ranks, Gather Information 4 ranks, Sense Motive 4 ranks Feats: Skill Focus (bluff)"
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Cover identity",
+          "undetectable alignment"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Quick change",
+          "scrying defense"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Magic aura",
+          "sneak attack +1d6"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [
+          "Cover identity",
+          "slippery mind"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Dispel scrying"
+        ],
+        "willSave": 1
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [
+          "Sneak attack +2d6"
+        ],
+        "willSave": 2
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [
+          "Cover identity",
+          "deep cover"
+        ],
+        "willSave": 2
+      }
+    ],
+    "skillPointsPerLevel": "8 + Int modifier"
+  }
+}

@@ -1,0 +1,244 @@
+import { bonus } from "@/content/core/builders/customization/modifiers.ts";
+import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
+import type { CasterLevelAdvancement, ClassSeed } from "@/content/dnd3.5/builders/classes/types.ts";
+import type { BaseSeeder } from "@/database/seeders/dnd3.5/BaseSeeder.ts";
+import { getSpellLevelOpenings } from "@/database/seeders/dnd3.5/spellTable.ts";
+import { requirementsInCustomization } from "@/drizzle/schema.ts";
+import { Engine } from "@/engine/index.ts";
+import type { Constructor } from "@/lib/mixins.ts";
+import { stripSeparators } from "@/shared/text.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
+import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
+
+/** A class's levels, as seeded: each level's id and number. */
+type Levels = { id: string; level: number }[];
+
+/**
+ * A class as seeded: a book's (`ClassSeed`), or a bonded creature's (`BondContent`), which gives no base attack, saves
+ * or skill points, its creature's sheet working them out.
+ */
+type SeededClass = Omit<ClassSeed, "bab" | "saves" | "skillPoints"> &
+  Partial<Pick<ClassSeed, "bab" | "saves" | "skillPoints">>;
+
+/** The aptitudes a level that advances spellcasting gives a pick in, by the kind of caster it advances. */
+const CASTER_LEVEL_APTITUDES: Record<CasterLevelAdvancement["type"], string[]> = {
+  divine: ["Bonus Divine Caster Level"],
+  arcane: ["Bonus Arcane Caster Level"],
+  any: ["Bonus Caster Level"],
+  dual: ["Bonus Arcane Caster Level", "Bonus Divine Caster Level"],
+};
+
+/** 3.5's progressions' values at each class level, by how good each is: what a class's seed names its own by. */
+const LEVEL_PRESETS = Engine.forRules(DND35_BASE_RULES).describeLevelPresets();
+
+/** A spellcaster's slots in one of its lists, gated by its requirements. */
+function listSlots(
+  spells: NonNullable<ClassSeed["spells"]>,
+  list: { requirements: RequirementEntry[]; slug: string },
+): (ModifierSeed & { level: number })[] {
+  const slot = (spellLevel: number, kind: string) =>
+    `aptitudes.${list.slug}.${spellLevel + (spells.noCantrips ? 1 : 0)}.${kind}`;
+  const modifier = (level: number, target: string, value: string, operator: string) => ({
+    level,
+    target,
+    value,
+    valueType: "number",
+    operator,
+    ...(list.requirements.length > 0 && { requirements: list.requirements }),
+  });
+  return [
+    ...tableGains(spells.perDay).map((g) => modifier(g.level, slot(g.spellLevel, "uses"), String(g.delta), "add")),
+    ...tableGains(spells.known ?? []).map((g) =>
+      modifier(g.level, slot(g.spellLevel, "allowed"), String(g.delta), "add"),
+    ),
+    ...(spells.knowAll
+      ? getSpellLevelOpenings(spells.perDay).map((o) => modifier(o.level, slot(o.spellLevel, "allowed"), "-1", "set"))
+      : []),
+  ];
+}
+
+/**
+ * A progression's value at a level (`values`, each level's from the first: the engine's base attack bonus or base save,
+ * which the seeded levels store), refused past its last; `what` names it.
+ */
+function presetOf(values: number[], what: string): (level: number) => number {
+  return (level) => {
+    const value = values[level - 1];
+    if (value === undefined) throw new Error(`3.5's rules give no ${what} at level ${level}`);
+    return value;
+  };
+}
+
+/**
+ * A spellcaster's slots, by class level: its spells a day, and the spells it knows (`known`) or can prepare,
+ * all of each level it can cast (`knowAll`). They go to its list, or to each of its `lists` while that one's
+ * requirements are met.
+ */
+function spellSlots(spells: NonNullable<ClassSeed["spells"]>): (ModifierSeed & { level: number })[] {
+  const lists = spells.lists ?? [{ slug: spells.slug, requirements: [] }];
+  return lists.flatMap((list) => listSlots(spells, list));
+}
+
+/** What a table (by class level, then spell level) adds at each class level: `delta` more at `spellLevel`. */
+function tableGains(table: number[][]) {
+  return table.flatMap((row, i) =>
+    row.flatMap((count, spellLevel) => {
+      const delta = count - (table[i - 1]?.[spellLevel] ?? 0);
+      return delta > 0 ? [{ level: i + 1, spellLevel, delta }] : [];
+    }),
+  );
+}
+
+/** Seeding classes. */
+export function SeedsClasses<B extends Constructor<BaseSeeder>>(Base: B) {
+  abstract class SeedingClasses extends Base {
+    /** A class's single links (`bonusSpellAbility`: the ability its bonus spells come from), each an ability's id. */
+    private classLinks(def: SeededClass): Record<string, string> {
+      return Object.fromEntries(
+        Object.entries(def.links ?? {}).map(([role, name]) => [
+          role,
+          this.idOf(this.ctx.abilityMap, name, `${def.name}'s ${role}`),
+        ]),
+      );
+    }
+
+    /**
+     * Its first level's requirements: the class's. A later level requires none of the one before, which the levels are
+     * taken in (`LevelRules.findNextClassLevel`).
+     */
+    private async insertFirstLevelRequirements(def: SeededClass, levelIds: Record<number, string>) {
+      await this.insertAll(
+        requirementsInCustomization,
+        this.requirementRows(levelIds[1], "class-levels", def.requirements),
+      );
+    }
+
+    /** The feats its levels grant: its class features, its proficiencies and its free feats. */
+    private async insertGrantedFeats(def: SeededClass, levelIds: Record<number, string>) {
+      const granted = (level: number, feat: string, aptitude: string, what: string) => ({
+        role: "grants",
+        fromId: levelIds[level],
+        fromType: "class-levels",
+        toId: this.idOf(this.ctx.featMap, feat, `${def.name}'s ${what}`),
+        toType: "feats",
+        viaId: this.idOf(this.ctx.aptMap, aptitude, `${def.name}'s ${what}`),
+        free: true,
+      });
+      const featureAptitude = def.classFeatureAptitude;
+      await this.insertLinks([
+        ...(featureAptitude
+          ? (def.classFeatures ?? []).map(([level, feat]) =>
+              granted(level, feat, featureAptitude, `class feature at level ${level}`),
+            )
+          : []),
+        ...(def.proficiencies ?? []).map((feat) => granted(1, feat, "General", "proficiency")),
+        ...(def.freeFeats ?? []).map(([level, feat, aptitude]) =>
+          granted(level, feat, aptitude, `free feat at level ${level}`),
+        ),
+      ]);
+    }
+
+    /** Its levels' modifiers: spell slots, the class's own, and one more pick in an aptitude. */
+    private async insertLevelModifiers(def: SeededClass, levels: Levels) {
+      const levelModifiers = [...(def.spells ? spellSlots(def.spells) : []), ...(def.modifiers ?? [])];
+      const advancement = def.casterLevelAdvancement;
+      const picks = [
+        ...(def.aptitudePicks ?? []),
+        ...(advancement
+          ? CASTER_LEVEL_APTITUDES[advancement.type].map((aptitude) => ({
+              levels: advancement.levels,
+              target: `aptitudes.${stripSeparators(aptitude)}.allowed`,
+            }))
+          : []),
+      ];
+      await this.insertModifiers(
+        "class-levels",
+        levels.flatMap(({ id, level }) =>
+          [
+            ...levelModifiers.filter((m) => m.level === level),
+            ...picks.filter((pick) => pick.levels.includes(level)).map((pick) => bonus(pick.target, 1)),
+          ].map((modifier) => ({ sourceId: id, modifier })),
+        ),
+      );
+    }
+
+    /** Each level's base saves, by the class's progressions (`saves`): its `baseBonus` links. */
+    private async insertSaves(saves: ClassSeed["saves"], levels: Levels) {
+      const base = (fromId: string, save: string, amount: number) => ({
+        role: "baseBonus",
+        fromId,
+        fromType: "class-levels",
+        toId: this.ctx.saveMap[save],
+        toType: "saves",
+        amount,
+      });
+      const fortitude = presetOf(LEVEL_PRESETS.saves[saves.fortitude], `${saves.fortitude} saves`);
+      const reflex = presetOf(LEVEL_PRESETS.saves[saves.reflex], `${saves.reflex} saves`);
+      const will = presetOf(LEVEL_PRESETS.saves[saves.will], `${saves.will} saves`);
+      await this.insertLinks(
+        levels.flatMap(({ id, level }) => [
+          base(id, "Fortitude", fortitude(level)),
+          base(id, "Reflex", reflex(level)),
+          base(id, "Will", will(level)),
+        ]),
+      );
+    }
+
+    /** Its class skills: its `classSkill` links. */
+    private async insertSkills(def: SeededClass, classId: string) {
+      await this.insertLinks(
+        def.classSkills.map((name) => ({
+          role: "classSkill",
+          fromId: classId,
+          fromType: "classes",
+          toId: this.idOf(this.ctx.skillMap, name, `${def.name}'s class skill`),
+          toType: "skills",
+        })),
+      );
+    }
+
+    /**
+     * Seeds a class, in its partition (its kind's default without one), and its levels: their base attack, saves and
+     * skill points, spell slots, picks and granted feats, and what it takes to reach each. A class that gives no base
+     * attack, saves or skill points (a bonded creature's) leaves its levels' base attack and skill points at their
+     * defaults and gives them no saves. The class's skills and feats must be seeded.
+     */
+    async seedClass(def: SeededClass) {
+      const [classId] = await this.insertRows("classes", [
+        {
+          rulesetId: this.ctx.rulesetId,
+          name: def.name,
+          description: def.description,
+          fields: def.fields,
+          links: this.classLinks(def),
+          partition: def.partition,
+        },
+      ]);
+      const klass = { id: classId };
+      const numbers = Array.from({ length: def.levels }, (_, i) => i + 1);
+      const bab = def.bab && presetOf(LEVEL_PRESETS.bab[def.bab], `${def.bab} bab`);
+      // Each level with its base attack and its skill points
+      const levelRowIds = await this.insertRows(
+        "class-levels",
+        numbers.map((level) => ({
+          ownerId: classId,
+          position: level,
+          fields: {
+            ...(bab && { [CLASS_LEVEL_BAB]: bab(level) }),
+            ...(def.skillPoints !== undefined && { [CLASS_LEVEL_SKILL_POINTS]: def.skillPoints }),
+          },
+        })),
+      );
+      const levels = numbers.map((level, i) => ({ id: levelRowIds[i], level }));
+      const levelIds: Record<number, string> = Object.fromEntries(levels.map((l) => [l.level, l.id]));
+
+      if (def.saves) await this.insertSaves(def.saves, levels);
+      await this.insertLevelModifiers(def, levels);
+      await this.insertFirstLevelRequirements(def, levelIds);
+      await this.insertSkills(def, klass.id);
+      await this.insertGrantedFeats(def, levelIds);
+      return { classId: klass.id, levelIds };
+    }
+  }
+  return SeedingClasses;
+}

@@ -1,0 +1,129 @@
+import type { RulesetView } from "@/engine/core/view/index.ts";
+import { RULESET_FIELDS, type RulesetFieldValues } from "@/engine/rulesets/dnd3.5/ruleset/fields.ts";
+import { countProgressionAt } from "@/shared/customization/progression.ts";
+import { stripSeparators } from "@/shared/text.ts";
+import { MAX_CHARACTER_LEVEL } from "@/vocabulary/dnd3.5/classes.ts";
+import { GENERAL_FEATS_APTITUDE } from "@/vocabulary/dnd3.5/feats.ts";
+
+/** A ruleset's class levels by id, as the next-level rule reads them: each its class and its number in it. */
+type ClassLevelsById = ReadonlyMap<string, { ownerId: string; position: number }>;
+/** What a character's levels give it whatever its classes, by its ruleset's Settings: its feats and its increases. */
+type Progression = Pick<RulesetFieldValues, "abilityIncreases" | "featAdvancement">;
+
+/**
+ * What a character's levels give it whatever its classes, as its ruleset's Settings have it (`of`): the feats it picks
+ * and the ability increases it takes at each character level; and the bounds every ruleset's levels keep.
+ */
+export default class LevelRules {
+  constructor(private readonly progression: Progression) {}
+
+  /**
+   * The slug of the aptitude the general feats count toward (`GENERAL_FEATS_APTITUDE`): what the engine, the target
+   * paths (`aptitudes.general.*`) and the effects know it by.
+   */
+  static readonly GENERAL_FEATS_APTITUDE_SLUG = stripSeparators(GENERAL_FEATS_APTITUDE);
+  /** The hit points a level counts before they're rolled: a level a level-up adds, whose hit points its save sets. */
+  static readonly UNROLLED_LEVEL_HP = 10;
+
+  /**
+   * The levels a character with `totalLevel` levels can still take, whatever their classes: up to a character's last
+   * level (`MAX_CHARACTER_LEVEL`).
+   */
+  static countLevelsLeft(totalLevel: number): number {
+    return Math.max(0, MAX_CHARACTER_LEVEL - totalLevel);
+  }
+
+  /**
+   * The numbers of class `classId`'s levels a character with `levels` holds (its advancements, each with its entry, a
+   * class level of `classLevelsById`, by any id the view keys it by).
+   */
+  static findHeldClassLevels(
+    classLevelsById: ClassLevelsById,
+    levels: { entryId: string }[],
+    classId: string,
+  ): Set<number> {
+    return new Set(
+      levels.flatMap(({ entryId }) => {
+        const classLevel = classLevelsById.get(entryId);
+        return classLevel?.ownerId === classId ? [classLevel.position] : [];
+      }),
+    );
+  }
+
+  /**
+   * The number of class `classId`'s next level for a character with `levels` (its advancements, each with its entry, a
+   * class level of `classLevelsById`): its lowest the character doesn't hold (`findHeldClassLevels`). A class's levels
+   * come one after another, so it's one past the character's levels of the class, or, for a character a level forced
+   * past a class's order left a gap before the rule (a lone Fighter 3), the level it skipped, which fills the gap
+   * (Fighter 1, Fighter 2, then Fighter 4). What the class picker offers, and the only class level a level-up's save or
+   * an import takes; past a class's last level, a number the class has no level at.
+   */
+  static findNextClassLevel(classLevelsById: ClassLevelsById, levels: { entryId: string }[], classId: string): number {
+    const held = this.findHeldClassLevels(classLevelsById, levels, classId);
+    let next = 1;
+    while (held.has(next)) next++;
+    return next;
+  }
+
+  /** Whether class level `classLevel` is its class's next for a character with `levels` (`findNextClassLevel`). */
+  static isNextClassLevel(
+    classLevelsById: ClassLevelsById,
+    levels: { entryId: string }[],
+    classLevel: { ownerId: string; position: number },
+  ): boolean {
+    return this.findNextClassLevel(classLevelsById, levels, classLevel.ownerId) === classLevel.position;
+  }
+
+  /**
+   * The class levels a plan's levels take, in order (`classIds`, each planned level's class, after the character's
+   * `levels`): each its class's next (`findNextClassLevel`) after the character's levels and the plan's before it, a gap
+   * filled first (a lone Fighter 3 planning three Fighter levels takes Fighter 1, 2 and 4); past a class's last, a
+   * number the class has no level at.
+   */
+  static numberPlannedLevels(classLevelsById: ClassLevelsById, levels: { entryId: string }[], classIds: string[]) {
+    const heldByClass = new Map<string, Set<number>>();
+    return classIds.map((classId) => {
+      const held = heldByClass.get(classId) ?? this.findHeldClassLevels(classLevelsById, levels, classId);
+      heldByClass.set(classId, held);
+      let next = 1;
+      while (held.has(next)) next++;
+      held.add(next);
+      return next;
+    });
+  }
+
+  /**
+   * The level rules of a ruleset's view, off its Settings (`RULESET_FIELDS`): the nearest ruleset of its chain's that
+   * holds them, the fork's first, the core rules' when none does.
+   */
+  static of({ ruleset, rulesetData }: RulesetView): LevelRules {
+    return new LevelRules(RULESET_FIELDS.read(rulesetData.rulesetValuesOf(ruleset.id)));
+  }
+
+  /** The ability increases the level after `totalLevel` levels takes, by its Settings (`abilityIncreases`). */
+  countAbilityIncreases(totalLevel: number): number {
+    return countProgressionAt(this.progression.abilityIncreases, totalLevel + 1);
+  }
+
+  /**
+   * The general feats a character has at its total level: those its levels up to it give, by its Settings
+   * (`featAdvancement`): its frequency's, past the last level too, and the more its levels give.
+   */
+  countGeneralFeats(totalLevel: number): number {
+    const { every, extra } = this.progression.featAdvancement;
+    const regular = every > 0 ? Math.floor(totalLevel / every) : 0;
+    return (
+      regular + extra.filter(({ position }) => position <= totalLevel).reduce((sum, { amount }) => sum + amount, 0)
+    );
+  }
+
+  /** The general feats the level after `totalLevel` levels gives, by its Settings (`featAdvancement`). */
+  countGeneralFeatsAfter(totalLevel: number): number {
+    return countProgressionAt(this.progression.featAdvancement, totalLevel + 1);
+  }
+
+  /** Whether the level after `totalLevel` levels takes an ability increase. */
+  isAbilityIncreaseLevel(totalLevel: number): boolean {
+    return this.countAbilityIncreases(totalLevel) > 0;
+  }
+}

@@ -1,0 +1,42 @@
+app = "arkyvree"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+  build_target = "web"
+
+[deploy]
+  release_command = "./migrate-bin"
+
+[processes]
+  web = "./server-bin"
+
+[env]
+  PORT = "8000"
+
+[[services]]
+  processes = ["web"]
+  protocol = "tcp"
+  internal_port = 8000
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+
+  [services.concurrency]
+    type = "requests"
+    soft_limit = 200
+    hard_limit = 250
+
+[[vm]]
+  processes = ["web"]
+  size = "shared-cpu-4x"
+  memory = "1gb"

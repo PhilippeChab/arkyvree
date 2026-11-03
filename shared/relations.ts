@@ -1,0 +1,58 @@
+/**
+ * The rows of what every ruleset shares, as the server and the engine read them: accounts, campaigns, a character's own
+ * row (its own columns, fields and single links, as stored) and inventory, a ruleset's row, its modifiers and
+ * requirements. A kind's entity's row is the engine's (`engine/core/view/rows.ts`), as its module declares it, and so
+ * are a character's links, advancements and picks, as stored (`engine/core/module/storage.ts`).
+ */
+
+import type {
+  campaignsInCampaign,
+  charactersInCharacter,
+  inventoryInCharacter,
+  invitesInCampaign,
+  modifiersInCustomization,
+  playersInCampaign,
+  requirementsInCustomization,
+  rulesetsInRules,
+  sessionsInAccount,
+  usersInAccount,
+} from "@/drizzle/schema.ts";
+
+import type { BaseRules } from "./enums.ts";
+
+export type Campaign = typeof campaignsInCampaign.$inferSelect;
+/**
+ * A character's row as stored: its own columns, its fields' values by field, as its module declares them, each typed as
+ * its column holds it (3.5's `CHARACTER_XP`, a number), and the entity of each of its single links by role (3.5's
+ * `race`). A mapped type, as a row is plain data any record type takes (an interface isn't).
+ */
+export type Character = typeof charactersInCharacter.$inferSelect & {
+  fields: Record<string, CharacterFieldValue>;
+  links: Record<string, string>;
+};
+/**
+ * A character's field's value, as an entity's is held: a single field's, as its typed column holds it (a text, a number
+ * or a flag), or a set's values, in their declared order.
+ */
+export type CharacterFieldValue = boolean | number | string | readonly (boolean | number | string)[];
+/** An inventory entry: an item a character holds, where, in which groups (3.5's weapon sets), and its charges. */
+export type CharacterInventory = Omit<typeof inventoryInCharacter.$inferSelect, "itemType">;
+export type Invite = typeof invitesInCampaign.$inferSelect;
+export type Modifier = typeof modifiersInCustomization.$inferSelect;
+export type Player = typeof playersInCampaign.$inferSelect;
+export type Requirement = typeof requirementsInCustomization.$inferSelect;
+/**
+ * A ruleset's row: its base rules, a registered module's; its content version, which only a write's lock reads, left
+ * out.
+ */
+export type Ruleset = Omit<typeof rulesetsInRules.$inferSelect, "baseRules" | "contentVersion"> & {
+  baseRules: BaseRules;
+};
+/**
+ * Who a request acts as, which the services read: a signed-in session's user, or the user an API key acts as. A demo's
+ * (`isDemo`: its user expires) is refused, by its policies, what pulls in other users or reaches outside its account.
+ */
+export type Session = Pick<SessionRow, "userId"> & { isDemo?: boolean };
+/** A signed-in session's row, which signing in and out write. */
+export type SessionRow = typeof sessionsInAccount.$inferSelect;
+export type User = typeof usersInAccount.$inferSelect;

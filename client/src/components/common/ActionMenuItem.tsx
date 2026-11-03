@@ -1,0 +1,47 @@
+import { ListItemIcon, ListItemText, MenuItem } from "@mui/material";
+import type { ElementType } from "react";
+import { Link } from "react-router-dom";
+
+import { DiceSpinner } from "./DiceSpinner.tsx";
+import { type Intent, INTENT_COLORS } from "./intent.ts";
+
+interface ActionMenuItemProps {
+  /** An outside page it opens, in a new tab (Help). */
+  href?: string;
+  icon: ElementType;
+  intent?: Intent;
+  label: string;
+  /** Its click: closing its menu, and the action when it has no `href` or `to`. */
+  onClick: () => void;
+  /** The request it started is running: it waits, a spinner for its icon (a menu kept open until it's done). */
+  pending?: boolean;
+  /** A page of the app it opens: a link, as everything that only navigates is. */
+  to?: string;
+}
+
+/** An item of a page's action menu: its icon, its label on one line, and its intent's color. */
+export function ActionMenuItem({
+  icon: Icon,
+  label,
+  intent = "default",
+  onClick,
+  href,
+  pending = false,
+  to,
+}: ActionMenuItemProps) {
+  const palette = INTENT_COLORS[intent];
+  const color = palette && `${palette}.main`;
+  const link = href
+    ? { component: "a" as const, href, target: "_blank", rel: "noopener noreferrer" }
+    : to
+      ? { component: Link, to }
+      : {};
+  return (
+    <MenuItem {...link} onClick={onClick} disabled={pending} sx={{ color }}>
+      <ListItemIcon sx={{ color: color && "inherit" }}>
+        {pending ? <DiceSpinner size="small" /> : <Icon fontSize="small" />}
+      </ListItemIcon>
+      <ListItemText primary={label} />
+    </MenuItem>
+  );
+}

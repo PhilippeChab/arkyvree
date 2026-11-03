@@ -1,0 +1,66 @@
+import { describe, expect, test } from "bun:test";
+
+import type { Klass, KlassLevel, RulesetAbility } from "@/engine/rulesets/dnd3.5/index.ts";
+import { db } from "@/server/database/index.ts";
+import { ConflictError } from "@/server/errors/index.ts";
+import { Entities } from "@/server/repositories/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
+import { addBaseBonuses } from "@/tests/support/dnd3.5/links.ts";
+import { createTestUserAndRuleset } from "@/tests/support/dnd3.5/rulesets.ts";
+import { CLASS_HD } from "@/vocabulary/dnd3.5/fields/index.ts";
+
+/** A new user's empty ruleset with two abilities. */
+async function setup() {
+  const { session, ruleset } = await createTestUserAndRuleset();
+  const [constitution, wisdom] = await Entities.createMany<RulesetAbility>(
+    db,
+    "abilities",
+    ["Constitution", "Wisdom"].map((name) => ({ name, description: name, rulesetId: ruleset.id })),
+  );
+  return { session, ruleset, constitution, wisdom };
+}
+
+// CRUD, ownership and copy-on-write are covered for every entity in EntityServices.test.ts.
+describe("EntitiesService: saves", () => {
+  test("stores the ability a save rolls with", async () => {
+    const { session, ruleset, constitution, wisdom } = await setup();
+    const save = await EntitiesService.createEntity(session, ruleset.id, "saves", {
+      name: "Fortitude",
+      description: "Physical resistance",
+      links: { keyAbility: constitution.id },
+    });
+    expect(save).toMatchObject({
+      name: "Fortitude",
+      description: "Physical resistance",
+      links: [{ role: "keyAbility", toId: constitution.id, toName: constitution.name }],
+    });
+
+    const updated = await EntitiesService.updateEntity(session, ruleset.id, "saves", save.id, {
+      name: "Will",
+      description: "Mental resistance",
+      links: { keyAbility: wisdom.id },
+    });
+    expect(updated).toMatchObject({
+      name: "Will",
+      description: "Mental resistance",
+      links: [{ role: "keyAbility", toId: wisdom.id, toName: wisdom.name }],
+    });
+  });
+
+  test("refuses to delete a save that class levels grant", async () => {
+    const { session, ruleset, constitution } = await setup();
+    const save = await EntitiesService.createEntity(session, ruleset.id, "saves", {
+      name: "Fortitude",
+      links: { keyAbility: constitution.id },
+    });
+    const [klass] = await Entities.create<Klass>(db, "classes", {
+      name: "Saving Class",
+      rulesetId: ruleset.id,
+      fields: { [CLASS_HD]: 10 },
+    });
+    const [classLevel] = await Entities.create<KlassLevel>(db, "class-levels", { ownerId: klass.id, position: 1 });
+    await addBaseBonuses(db, classLevel.id, [{ toId: save.id, amount: 2 }]);
+
+    expect(EntitiesService.deleteEntity(session, ruleset.id, "saves", save.id)).rejects.toThrow(ConflictError);
+  });
+});

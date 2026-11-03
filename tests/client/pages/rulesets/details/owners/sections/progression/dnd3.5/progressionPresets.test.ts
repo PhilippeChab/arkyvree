@@ -1,0 +1,60 @@
+import { describe, expect, test } from "bun:test";
+
+import {
+  detectPreset,
+  findNearestPreset,
+  formatTrackValue,
+  presetsOf,
+} from "@/client/src/pages/rulesets/details/owners/sections/progression/progressionPresets.ts";
+import { Engine } from "@/engine/index.ts";
+
+/** 3.5's tracks, as its rules describe them: its base attack bonus, its saves and its skill points. */
+const [BAB, SAVES, SKILLS] = Engine.rules().describeAll()["Dungeons & Dragons: 3.5"].progression.tracks;
+
+/** A track's values at levels 1 to `count`, each `valueAt`'s. */
+function track(count: number, valueAt: (position: number) => number) {
+  return Array.from({ length: count }, (_, index) => ({ position: index + 1, value: valueAt(index + 1) }));
+}
+
+describe("A class's progression presets", () => {
+  test("follow the SRD's base attack bonus and save tables", () => {
+    const at = (presets: ReturnType<typeof presetsOf>, key: string, position: number) =>
+      presets.find((preset) => preset.key === key)!.valueAt(position);
+    const [bab, saves] = [presetsOf(BAB), presetsOf(SAVES)];
+    expect([1, 4, 20].map((position) => at(bab, "good", position))).toEqual([1, 4, 20]);
+    expect([1, 4, 20].map((position) => at(bab, "medium", position))).toEqual([0, 3, 15]);
+    expect([1, 4, 20].map((position) => at(bab, "poor", position))).toEqual([0, 2, 10]);
+    expect([1, 2, 20].map((position) => at(saves, "good", position))).toEqual([2, 3, 12]);
+    expect([1, 3, 20].map((position) => at(saves, "poor", position))).toEqual([0, 1, 6]);
+  });
+
+  test("detect the one a track follows at every position, and the nearest one when none does", () => {
+    const monk = track(20, (position) => Math.floor((position * 3) / 4));
+    expect(detectPreset(presetsOf(BAB), monk)?.key).toBe("medium");
+    // A prestige class's ten levels follow it too
+    expect(
+      detectPreset(
+        presetsOf(SAVES),
+        track(10, (position) => 2 + Math.floor(position / 2)),
+      )?.key,
+    ).toBe("good");
+
+    const odd = monk.map((value) => (value.position === 10 ? { ...value, value: 10 } : value));
+    expect(detectPreset(presetsOf(BAB), odd)).toBeUndefined();
+    expect(findNearestPreset(presetsOf(BAB), odd).key).toBe("medium");
+    expect(detectPreset(presetsOf(BAB), [])).toBeUndefined();
+  });
+
+  test("write a value as its rules label it, and as it is past its labels", () => {
+    expect([0, 5, 6, 11, 20].map((bab) => formatTrackValue(BAB, bab))).toEqual([
+      "+0",
+      "+5",
+      "+6/+1",
+      "+11/+6/+1",
+      "+20/+15/+10/+5",
+    ]);
+    expect([0, 4].map((base) => formatTrackValue(SAVES, base))).toEqual(["+0", "+4"]);
+    expect(formatTrackValue(BAB, 21)).toBe("21");
+    expect(formatTrackValue(SKILLS, 6)).toBe("6");
+  });
+});

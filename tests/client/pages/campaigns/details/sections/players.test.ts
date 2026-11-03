@@ -1,0 +1,63 @@
+import { describe, expect, test } from "bun:test";
+
+import {
+  type CampaignPlayer,
+  getPlayerSlot,
+  playerDisplay,
+} from "@/client/src/pages/campaigns/details/sections/players.ts";
+
+/** A player slot as the API lists it: its user, and its invites (the latest first). */
+function player(
+  user: { emailAddress: string; username: string | null } | null,
+  invites: Partial<NonNullable<CampaignPlayer["invitesInCampaigns"]>[number]>[] = [],
+) {
+  return {
+    id: "p1",
+    userId: user && "u1",
+    usersInAccount: user && { id: "u1", ...user },
+    invitesInCampaigns: invites,
+  } as unknown as CampaignPlayer;
+}
+
+// The slot's row and the dialogs that name it say the same name
+describe("a player slot", () => {
+  test("is named by its user, else its invitee, else what it is, wherever it's named", () => {
+    const players = [
+      player({ username: "ann", emailAddress: "ann@example.com" }),
+      player({ username: null, emailAddress: "bob@example.com" }),
+      player(null, [{ status: "Pending", email: "cy@example.com", usersInAccount: null }]),
+      player(null),
+    ];
+    expect(players.map((p) => getPlayerSlot(p).name)).toEqual([
+      "ann",
+      "bob@example.com",
+      "cy@example.com",
+      "Unassigned Player Slot",
+    ]);
+    expect(players.map((p) => playerDisplay(p))).toEqual([
+      { name: "ann", caption: "ann@example.com" },
+      { name: "bob@example.com", caption: undefined },
+      { name: "cy@example.com", caption: undefined },
+      { name: "Unassigned Player Slot", caption: "No player assigned" },
+    ]);
+  });
+
+  test("archived with its user's account reads Deleted Account, an account of its own, with no status of an active one", () => {
+    const slot = {
+      ...player({ username: null, emailAddress: "deleted:u1" }),
+      deletedAt: "2026-01-01T00:00:00Z",
+    } as CampaignPlayer;
+    expect(getPlayerSlot(slot)).toEqual({ state: "deleted", name: "Deleted Account" });
+    expect(playerDisplay(slot)).toEqual({ name: "Deleted Account", caption: undefined });
+
+    // As the API answers it, whoever reads it
+    const answered = {
+      id: "p1",
+      userId: "u1",
+      usersInAccount: null,
+      invitesInCampaigns: [],
+      deletedAt: slot.deletedAt,
+    };
+    expect(getPlayerSlot(answered as unknown as CampaignPlayer).state).toBe("deleted");
+  });
+});

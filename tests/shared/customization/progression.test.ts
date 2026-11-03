@@ -1,0 +1,60 @@
+import { describe, expect, test } from "bun:test";
+
+import {
+  copyProgression,
+  countProgressionAt,
+  countRegularAt,
+  countRoomAt,
+  findProgressionIssues,
+} from "@/shared/customization/progression.ts";
+
+/** A word a progression's issues say what it counts along in. */
+const LEVEL = { many: "Levels", one: "Level" };
+
+describe("A progression", () => {
+  test("gives one at each multiple of its frequency, none at 0, and its own more at the levels it names", () => {
+    expect([1, 3, 4, 6].map((level) => countRegularAt(3, level))).toEqual([0, 1, 0, 1]);
+    expect([countRegularAt(0, 6), countRegularAt(3, 0), countRegularAt(3, -3)]).toEqual([0, 0, 0]);
+    // What a level may give more within its bound: none where the frequency fills it
+    expect([countRoomAt(4, 8, 1), countRoomAt(4, 6, 1), countRoomAt(3, 6, 10)]).toEqual([0, 1, 9]);
+    const picks = { every: 3, extra: [{ amount: 2, position: 3 }] };
+    expect([1, 3, 6].map((level) => countProgressionAt(picks, level))).toEqual([0, 3, 1]);
+  });
+
+  test("is copied apart from what it's copied from", () => {
+    const original = { every: 3, extra: [{ amount: 1, position: 1 }] };
+    const copy = copyProgression(original);
+    copy.extra[0].amount = 2;
+    expect(original.extra[0].amount).toBe(1);
+  });
+
+  test("finds a level listed twice, both of them, and one giving past its bound, by the part to change", () => {
+    const given = (...extra: [number, number][]) => extra.map(([position, amount]) => ({ amount, position }));
+    expect(findProgressionIssues({ every: 3, extra: given([2, 1], [5, 9]) }, 10, LEVEL)).toEqual([]);
+    expect(findProgressionIssues({ every: 3, extra: given([2, 1], [2, 1], [6, 10]) }, 10, LEVEL)).toEqual([
+      { index: 0, message: "Level 2 is listed twice", part: "position" },
+      { index: 1, message: "Level 2 is listed twice", part: "position" },
+      { index: 2, message: "Level 6 would give 11, at most 10", part: "amount" },
+    ]);
+    // One at most a level: its level is what's wrong
+    expect(findProgressionIssues({ every: 1, extra: given([3, 1]) }, 1, LEVEL)).toEqual([
+      { index: 0, message: "Level 3 gives one already, every level", part: "position" },
+    ]);
+  });
+
+  test("says its issues in the word its ruleset gives it, singular and plural", () => {
+    const given = (...extra: [number, number][]) => extra.map(([position, amount]) => ({ amount, position }));
+    const circle = { many: "Circles", one: "Circle" };
+    expect(findProgressionIssues({ every: 3, extra: given([2, 1], [2, 1], [6, 10]) }, 10, circle)).toEqual([
+      { index: 0, message: "Circle 2 is listed twice", part: "position" },
+      { index: 1, message: "Circle 2 is listed twice", part: "position" },
+      { index: 2, message: "Circle 6 would give 11, at most 10", part: "amount" },
+    ]);
+    expect(findProgressionIssues({ every: 1, extra: given([3, 1]) }, 1, circle)).toEqual([
+      { index: 0, message: "Circle 3 gives one already, every circle", part: "position" },
+    ]);
+    expect(findProgressionIssues({ every: 3, extra: given([3, 1]) }, 1, circle)).toEqual([
+      { index: 0, message: "Circle 3 gives one already, every 3 circles", part: "position" },
+    ]);
+  });
+});

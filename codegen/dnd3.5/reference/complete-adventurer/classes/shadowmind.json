@@ -1,0 +1,218 @@
+{
+  "_meta": {
+    "book": "complete-adventurer",
+    "scrapedAt": "2026-03-24T22:27:47.368Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/shadowmind/",
+    "type": "class"
+  },
+  "overrides": {
+    "skip": true,
+    "classSkills": [
+      "Bluff",
+      "Concentration",
+      "Craft",
+      "Disable Device",
+      "Escape Artist",
+      "Hide",
+      "Jump",
+      "Knowledge (Psionics)",
+      "Listen",
+      "Move Silently",
+      "Open Lock",
+      "Search",
+      "Sense Motive",
+      "Sleight of Hand",
+      "Spot",
+      "Tumble"
+    ]
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "Shadowminds gain no proficiency with any weapon or armor.",
+        "name": "Weapon and Armor Proficiency"
+      },
+      {
+        "description": "At 1st level, a shadowmind adds read thoughts to her repertoire (if she doesn't already know it). Once per day, she can manifest read thoughts at a reduced power point cost. The cost of read thoughts is reduced by the shadowmind's class level, to a minimum of 1 power point. The effect of this power is still restricted by the shadowmind's manifester level.",
+        "name": "Read Thoughts"
+      },
+      {
+        "description": "Beginning at 2nd level, a shadowmind deals an extra 1d6 points of damage when flanking an opponent or any time the target would be denied its Dexterity bonus. This extra damage applies to ranged attacks only if the target is within 30 feet. It increases to 2d6 points at 5th level and 3d6 points at 8th level. See the rogue class feature of the Player's Handbook. If a shadowmind gets a sneak attack bonus from another source (such as levels of rogue), the bonuses on damage stack.",
+        "name": "Sneak Attack",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level, a shadowmind adds cloud mind to her repertoire (if she doesn't already know it). Once per day, she can manifest cloud mind at a reduced power point cost. The cost of cloud mind is reduced by the shadowmind's class level, to a minimum of 1 power point. The effect of this power is still restricted by the shadowmind's manifester level.",
+        "name": "Cloud Mind"
+      },
+      {
+        "description": "At 9th level, a shadowmind adds mass cloud mind to her repertoire (if she doesn't already know it). Once per day, she can manifest mass cloud mind at a reduced power point cost. The cost of mass cloud mind is reduced by the shadowmind's level, to a minimum of 1 power point. The effect of this power is still restricted by the shadowmind's manifester level.",
+        "name": "Mass Cloud Mind"
+      },
+      {
+        "description": "A 10th-level shadowmind can combine a precise blow with a burst of mental energy, removing her presence from the mind and memory of her victim even as she stabs him. Once per round as a free action, immediately after successfully dealing sneak attack damage to an opponent, a shadowmind can manifest cloud mind against that opponent. Manifesting cloud mind in this way uses a reduced power point expenditure as described under the cloud mind ability",
+        "name": "Mind Stab",
+        "type": "(Su)"
+      }
+    ],
+    "classSkills": [
+      "Autohypnosis",
+      "Bluff",
+      "Concentration",
+      "Craft",
+      "Disable Device",
+      "Escape Artist",
+      "Hide",
+      "Jump",
+      "Knowledge (Psionics)",
+      "Listen",
+      "Move Silently",
+      "Open Lock",
+      "Psicraft",
+      "Search",
+      "Sense Motive",
+      "Sleight of Hand",
+      "Spot",
+      "Tumble"
+    ],
+    "description": "A shadowmind blends psionic powers and uncanny stealth into an effective whole.",
+    "hitDie": "d6",
+    "name": "Shadowmind",
+    "prerequisites": {
+      "parsed": {
+        "bab": 3,
+        "classLevels": [
+          {
+            "className": "Manifester",
+            "level": 3
+          }
+        ],
+        "skills": [
+          {
+            "name": "Hide",
+            "ranks": 5
+          },
+          {
+            "name": "Move Silently",
+            "ranks": 5
+          },
+          {
+            "name": "Sleight of Hand",
+            "ranks": 3
+          }
+        ],
+        "special": [
+          "Manifester level 3rd, Able to manifest concealing amorpha."
+        ]
+      },
+      "text": "Base Attack Bonus: +3 Skills: Hide 5 ranks, Move Silently 5 ranks, Sleight of Hand 3 ranks Special: Manifester level 3rd, Able to manifest concealing amorpha."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Read thoughts"
+        ],
+        "spellsPerDay": "+1 level of existing manifesting class",
+        "willSave": 2
+      },
+      {
+        "bab": 1,
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Sneak attack +1d6"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 3
+      },
+      {
+        "bab": 2,
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Cloud mind"
+        ],
+        "spellsPerDay": "+1 level of existing manifesting class",
+        "willSave": 3
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 4,
+        "refSave": 4,
+        "special": [],
+        "spellsPerDay": "+1 level of existing manifesting class",
+        "willSave": 4
+      },
+      {
+        "bab": 3,
+        "fortSave": 1,
+        "level": 5,
+        "refSave": 4,
+        "special": [
+          "Sneak attack +2d6"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 4
+      },
+      {
+        "bab": 4,
+        "fortSave": 2,
+        "level": 6,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "+1 level of existing manifesting class",
+        "willSave": 5
+      },
+      {
+        "bab": 5,
+        "fortSave": 2,
+        "level": 7,
+        "refSave": 5,
+        "special": [],
+        "spellsPerDay": "+1 level of existing manifesting class",
+        "willSave": 5
+      },
+      {
+        "bab": 6,
+        "fortSave": 2,
+        "level": 8,
+        "refSave": 6,
+        "special": [
+          "Sneak attack +3d6"
+        ],
+        "spellsPerDay": "-",
+        "willSave": 6
+      },
+      {
+        "bab": 6,
+        "fortSave": 3,
+        "level": 9,
+        "refSave": 6,
+        "special": [
+          "Mass cloud mind"
+        ],
+        "spellsPerDay": "+1 level of existing manifesting class",
+        "willSave": 6
+      },
+      {
+        "bab": 7,
+        "fortSave": 3,
+        "level": 10,
+        "refSave": 7,
+        "special": [
+          "Mind stab"
+        ],
+        "spellsPerDay": "+1 level of existing manifesting class",
+        "willSave": 7
+      }
+    ],
+    "skillPointsPerLevel": "4 + Int modifier"
+  }
+}

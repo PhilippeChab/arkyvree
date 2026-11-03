@@ -1,0 +1,118 @@
+import { afterEach, expect, test } from "bun:test";
+
+import type { Feat } from "@/engine/rulesets/dnd3.5/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import { RulesetViews, withRulesetScope } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
+import { runWithRequestCache } from "@/server/database/requestCache.ts";
+import { Entities, Rulesets } from "@/server/repositories/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
+import { RulesetExtensionsService } from "@/server/services/rulesets/extensions/index.ts";
+import { createSeededTestRuleset, readTargetPaths } from "@/tests/support/rulesets.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
+import { makeSession } from "@/tests/support/users.ts";
+import { FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
+
+/**
+ * Real repository reads in separate request contexts: an earlier request loads again only after another request's
+ * mutation and cache invalidation complete.
+ */
+async function overlap(read: () => Promise<unknown>, mutate: () => Promise<unknown>) {
+  const ready = Promise.withResolvers<void>();
+  const release = Promise.withResolvers<void>();
+  const old = runWithRequestCache(async () => {
+    try {
+      await read();
+      ready.resolve();
+    } catch (error) {
+      ready.reject(error);
+      throw error;
+    }
+    await release.promise;
+    await read();
+  });
+  try {
+    await ready.promise;
+    await runWithRequestCache(mutate);
+  } finally {
+    release.resolve();
+    await old;
+  }
+}
+
+afterEach(() => RulesetViews.invalidateAll());
+
+for (const action of ["subscribe", "unsubscribe"] as const) {
+  test(`old request metadata cannot undo ${action} in shared COW data or paths`, async () => {
+    const session = makeSession();
+    const host = await createSeededTestRuleset(session.userId);
+    const extension = await createSeededTestRuleset(session.userId);
+    await Rulesets.update(db, { kind: "extension", status: "Published", private: false }, { id: extension.id });
+    const [feat] = await Entities.create<Feat>(db, "feats", { rulesetId: extension.id, name: "Extension Marker" });
+    if (action === "unsubscribe") await RulesetExtensionsService.subscribeExtension(session, host.id, [extension.id]);
+    RulesetViews.invalidateAll();
+    await overlap(
+      () => readTargetPaths(host.id, "requirement"),
+      () =>
+        action === "subscribe"
+          ? RulesetExtensionsService.subscribeExtension(session, host.id, [extension.id])
+          : RulesetExtensionsService.unsubscribeExtension(session, host.id, extension.id),
+    );
+    await runWithRequestCache(async () => {
+      await withRulesetScope(db, host.id, async ({ rulesetData }) => {
+        expect(Dnd35View.of(rulesetData).featsById.has(feat.id)).toBe(action === "subscribe");
+      });
+      const paths = await readTargetPaths(host.id, "requirement");
+      expect(paths.paths.some((path) => path.path === "feats.extensionmarker.possessed")).toBe(action === "subscribe");
+    });
+  });
+}
+
+for (const scenario of ["entity", "cow", "paths"] as const) {
+  test(`an old request cannot refill shared ${scenario} data from stale deduplicated reads`, async () => {
+    const session = makeSession();
+    const fork = await createSeededTestRuleset(session.userId);
+    const seed = await getSeedCtx();
+    const [local] = await Entities.create<Feat>(db, "feats", {
+      rulesetId: fork.id,
+      name: "Before Marker",
+      description: "before",
+    });
+    RulesetViews.invalidateAll();
+    const read = () =>
+      scenario === "paths"
+        ? readTargetPaths(fork.id, "requirement")
+        : withRulesetScope(db, fork.id, async ({ rulesetData }) => rulesetData);
+    let copyId: string | undefined;
+    await overlap(read, async () => {
+      if (scenario === "cow") {
+        const copy = await EntitiesService.updateEntity(session, fork.id, "feats", seed.featMap.Toughness, {
+          name: "Toughness",
+          fields: { [FEAT_FAMILY]: ["Luck"] },
+        });
+        copyId = copy.id;
+      } else {
+        await EntitiesService.updateEntity(session, fork.id, "feats", local.id, {
+          name: "After Marker",
+          description: "after",
+        });
+      }
+    });
+    await runWithRequestCache(async () => {
+      if (scenario === "paths") {
+        const result = await readTargetPaths(fork.id, "requirement");
+        expect(result.paths.some((path) => path.path === "feats.aftermarker.possessed")).toBe(true);
+        expect(result.paths.some((path) => path.path === "feats.beforemarker.possessed")).toBe(false);
+      } else {
+        await withRulesetScope(db, fork.id, async ({ rulesetData }) => {
+          if (scenario === "cow") {
+            expect(copyId).not.toBe(seed.featMap.Toughness);
+            expect(rulesetData.canonicalize(seed.featMap.Toughness)).toBe(copyId!);
+          } else {
+            expect(Dnd35View.of(rulesetData).featsById.get(local.id)?.description).toBe("after");
+          }
+        });
+      }
+    });
+  });
+}

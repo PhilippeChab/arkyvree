@@ -1,0 +1,352 @@
+import { createHmac, randomUUID } from "node:crypto";
+
+import type { Db } from "@/drizzle/database.ts";
+import { compareInConstantTime } from "@/server/constantTime.ts";
+import { db, withUniqueRefusal } from "@/server/database/index.ts";
+import { readEnv } from "@/server/environment.ts";
+import { BadRequestError, ConflictError, InternalError, NotFoundError } from "@/server/errors/index.ts";
+import { Attachments, Blobs } from "@/server/repositories/index.ts";
+import { getPortraitEditableCharacter } from "@/server/services/characters/index.ts";
+import { withAttachmentWrite, withBlobDeletion, withNewBlob } from "@/server/services/writes/index.ts";
+import ObjectStorage from "@/server/storage/ObjectStorage.ts";
+import { ALLOWED_IMAGE_TYPES, ATTACHMENT_SLOTS, MAX_UPLOAD_BYTES } from "@/shared/attachments.ts";
+import type { Session } from "@/shared/relations.ts";
+
+import { getAvatarEditableUser } from "./editableUser.ts";
+import { detectImageType } from "./imageTypes.ts";
+
+interface AttachableConfig {
+  canAttach: AttachRight;
+  names: readonly string[];
+  policy: UploadPolicy;
+}
+interface SignedTokenPayload {
+  blobId: string;
+  iat: number;
+  name: string;
+  recordId: string;
+  recordType: string;
+}
+interface UploadPolicy {
+  contentTypes: string[];
+  maxBytes: number;
+}
+
+/**
+ * Refuses a session that may not change a record's attachments (`recordId`), read through `database` (a write's, under
+ * the record's lock), with its record type's policy's refusal: what it answers otherwise goes unread (each guard
+ * answers its record).
+ */
+type AttachRight = (database: Db, session: Session, recordId: string) => Promise<unknown>;
+
+const imagePolicy: UploadPolicy = {
+  maxBytes: MAX_UPLOAD_BYTES,
+  contentTypes: [...ALLOWED_IMAGE_TYPES],
+};
+
+/**
+ * The records that take attachments: who may attach to one, what they take, under which names. Any signed-in session
+ * reads their attachments: avatars and portraits are display assets, and a URL adds no exposure beyond its page.
+ */
+const ATTACHABLE_TYPES = new Map<string, AttachableConfig>([
+  [
+    ATTACHMENT_SLOTS.avatar.recordType,
+    {
+      // The account's own, which a demo's doesn't take: it stores no file, as its records' policies refuse one. Its
+      // policy refuses anyone else (a 403)
+      canAttach: getAvatarEditableUser,
+      policy: imagePolicy,
+      names: [ATTACHMENT_SLOTS.avatar.name],
+    },
+  ],
+  [
+    ATTACHMENT_SLOTS.portrait.recordType,
+    {
+      // A player character's is its owner's alone; a child's (3.5's bonded creature), whoever edits its parent: its
+      // policy refuses anyone else, with its own status (the 404 an unknown character gets, an archived one's 409)
+      canAttach: getPortraitEditableCharacter,
+      policy: imagePolicy,
+      names: [ATTACHMENT_SLOTS.portrait.name],
+    },
+  ],
+]);
+
+const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
+
+class AttachmentsService {
+  private assertValidName(recordType: string, name: string): void {
+    const { names } = this.getAttachableConfig(recordType);
+    if (!names.includes(name)) throw new BadRequestError(`Slot "${name}" is not allowed for ${recordType}`);
+  }
+
+  private assertWithinPolicy(recordType: string, byteSize: number, contentType: string): void {
+    const { policy } = this.getAttachableConfig(recordType);
+    if (byteSize > policy.maxBytes) throw new BadRequestError(`File exceeds maximum size of ${policy.maxBytes} bytes`);
+
+    if (!policy.contentTypes.includes(contentType))
+      throw new BadRequestError(`Content type "${contentType}" is not allowed for ${recordType}`);
+  }
+
+  private buildKey(blobId: string, filename: string): string {
+    const safe = filename.replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 200) || "file";
+    return `blobs/${blobId}/${safe}`;
+  }
+
+  private getAttachableConfig(recordType: string): AttachableConfig {
+    const config = ATTACHABLE_TYPES.get(recordType);
+    if (!config) throw new BadRequestError(`Unsupported record type: ${recordType}`);
+    return config;
+  }
+
+  private getSigningSecret(): string {
+    const secret = readEnv("SIGNING_SECRET");
+    if (!secret) throw new InternalError("SIGNING_SECRET is not configured");
+    return secret;
+  }
+
+  private signToken(payload: Omit<SignedTokenPayload, "iat">): string {
+    const full: SignedTokenPayload = { ...payload, iat: Date.now() };
+    // Top-level key sort gives stable serialization since SignedTokenPayload
+    // is flat. Switch to a recursive canonical serializer if any field ever
+    // becomes a nested object.
+    const data = Buffer.from(JSON.stringify(full, Object.keys(full).sort())).toString("base64url");
+    const sig = createHmac("sha256", this.getSigningSecret()).update(data).digest("base64url");
+    return `${data}.${sig}`;
+  }
+
+  private verifyToken(token: string): SignedTokenPayload {
+    const [data, sig] = token.split(".");
+    if (!data || !sig) throw new BadRequestError("Invalid signed id");
+    const expected = createHmac("sha256", this.getSigningSecret()).update(data).digest("base64url");
+    if (!compareInConstantTime(sig, expected)) throw new BadRequestError("Invalid signed id");
+
+    let payload: SignedTokenPayload;
+    try {
+      payload = JSON.parse(Buffer.from(data, "base64url").toString());
+    } catch {
+      throw new BadRequestError("Invalid signed id");
+    }
+    if (typeof payload.iat !== "number" || Date.now() - payload.iat > TOKEN_TTL_MS)
+      throw new BadRequestError("Signed id has expired");
+
+    return payload;
+  }
+
+  /**
+   * Refuses a session that may not change the record's attachments, with its record type's own refusal (`canAttach`),
+   * read through `database`: before a write's work, and again under its record's lock (`withAttachmentWrite`), as the
+   * writes before it left the record.
+   */
+  private async assertCanAttach(database: Db, session: Session, recordType: string, recordId: string): Promise<void> {
+    await this.getAttachableConfig(recordType).canAttach(database, session, recordId);
+  }
+
+  /**
+   * Puts a stored blob in its slot, replacing the attachment there: its record locked, then the blob, so the sweep of
+   * unattached blobs can't take it meanwhile (`withAttachmentWrite`), the session's right on the record asked again
+   * under the lock, and marked attached. Answers the old attachment's blob when nothing else holds it.
+   */
+  private async attachBlob(
+    session: Session,
+    slot: { name: string; recordId: string; recordType: string },
+    blobId: string,
+  ) {
+    return await withAttachmentWrite(
+      slot,
+      async (tx: Db) => {
+        await this.assertCanAttach(tx, session, slot.recordType, slot.recordId);
+        const blob = await Blobs.findOne(tx, { id: blobId });
+        if (!blob) throw new NotFoundError("Blob not found");
+        if (blob.attachedAt) throw new ConflictError("Blob is already attached");
+
+        const existing = await Attachments.findOne(tx, {
+          recordType: slot.recordType,
+          recordId: slot.recordId,
+          name: slot.name,
+        });
+        if (existing) await Attachments.delete(tx, { id: existing.id });
+
+        const [attachment] = await withUniqueRefusal(
+          () =>
+            Attachments.create(tx, {
+              recordType: slot.recordType,
+              recordId: slot.recordId,
+              name: slot.name,
+              blobId: blob.id,
+            }),
+          () => new ConflictError("Slot is already attached by a concurrent request"),
+        );
+        if (!attachment) throw new InternalError("Failed to create attachment");
+
+        const updated = await Blobs.update(tx, { attachedAt: new Date().toISOString() }, { id: blob.id });
+        const attachedBlob = updated[0] ?? blob;
+
+        const orphan = existing ? await this.findOrphanedBlob(tx, existing.blobId) : null;
+
+        return { attachment, blob: attachedBlob, orphan };
+      },
+      blobId,
+    );
+  }
+
+  private async findOrphanedBlob(tx: Db, blobId: string): Promise<{ id: string; key: string } | null> {
+    const refs = await Attachments.findMany(tx, { blobIds: [blobId] });
+    if (refs.length > 0) return null;
+    const blob = await Blobs.findOne(tx, { id: blobId });
+    if (!blob) return null;
+    return { id: blob.id, key: blob.key };
+  }
+
+  private async purgeOrphan(orphan: { id: string; key: string } | null): Promise<void> {
+    if (!orphan) return;
+    try {
+      await ObjectStorage.get().deleteObject(orphan.key);
+      await withBlobDeletion(orphan.id, (tx) => Blobs.delete(tx, { id: orphan.id }));
+    } catch (error) {
+      console.warn(
+        `[attachments] S3 cleanup failed for ${orphan.key}: ${error instanceof Error ? error.message : error}`,
+      );
+    }
+  }
+
+  async attach(session: Session, signedId: string) {
+    const payload = this.verifyToken(signedId);
+    await this.assertCanAttach(db, session, payload.recordType, payload.recordId);
+    this.assertValidName(payload.recordType, payload.name);
+
+    // Check upload size before opening the tx — S3 round-trip would otherwise
+    // hold a DB connection for the duration. The one-shot recheck inside the
+    // tx still catches concurrent attaches.
+    //
+    // Race: if a client takes >2h between upload and attach, the sweep can
+    // delete preBlob between this read and the tx — Blobs.findOne(tx) below
+    // returns undefined and we throw NotFoundError. Fails loud, not silent.
+    const preBlob = await Blobs.findOne(db, { id: payload.blobId });
+    if (!preBlob) throw new NotFoundError("Blob not found");
+    if (preBlob.attachedAt) throw new ConflictError("Blob is already attached");
+
+    const stats = await ObjectStorage.get().objectStats(preBlob.key);
+    if (!stats) throw new BadRequestError("Upload not found at expected key");
+    if (stats.size !== preBlob.byteSize)
+      throw new BadRequestError(`Upload size ${stats.size} does not match declared byteSize ${preBlob.byteSize}`);
+
+    const result = await this.attachBlob(session, payload, payload.blobId);
+
+    await this.purgeOrphan(result.orphan);
+    return { attachment: result.attachment, blob: result.blob };
+  }
+
+  async createDirectUpload(
+    session: Session,
+    params: {
+      byteSize: number;
+      contentType: string;
+      filename: string;
+      name: string;
+      recordId: string;
+      recordType: string;
+    },
+  ) {
+    await this.assertCanAttach(db, session, params.recordType, params.recordId);
+    this.assertValidName(params.recordType, params.name);
+    this.assertWithinPolicy(params.recordType, params.byteSize, params.contentType);
+
+    const blobId = randomUUID();
+    const key = this.buildKey(blobId, params.filename);
+
+    const blob = await withNewBlob(async (tx: Db) => {
+      const rows = await Blobs.create(tx, {
+        id: blobId,
+        key,
+        filename: params.filename,
+        contentType: params.contentType,
+        byteSize: params.byteSize,
+      });
+      const row = rows[0];
+      if (!row) throw new InternalError("Failed to create blob");
+      return row;
+    });
+
+    const presignedUrl = ObjectStorage.get().presignPut(key, {
+      contentType: params.contentType,
+    });
+    const signedId = this.signToken({
+      blobId: blob.id,
+      recordType: params.recordType,
+      recordId: params.recordId,
+      name: params.name,
+    });
+
+    return {
+      signedId,
+      presignedUrl,
+      headers: { "Content-Type": params.contentType },
+    };
+  }
+
+  async detach(session: Session, attachmentId: string) {
+    // Its record never changes, so it's read before the lock, and again under it, with the session's right on it
+    const found = await Attachments.findOne(db, { id: attachmentId });
+    if (!found) throw new NotFoundError("Attachment not found");
+    await this.assertCanAttach(db, session, found.recordType, found.recordId);
+    const result = await withAttachmentWrite(found, async (tx: Db) => {
+      await this.assertCanAttach(tx, session, found.recordType, found.recordId);
+      const attachment = await Attachments.findOne(tx, { id: attachmentId });
+      if (!attachment) throw new NotFoundError("Attachment not found");
+
+      await Attachments.delete(tx, { id: attachment.id });
+      const orphan = await this.findOrphanedBlob(tx, attachment.blobId);
+      return { id: attachment.id, orphan };
+    });
+
+    await this.purgeOrphan(result.orphan);
+    return { id: result.id };
+  }
+
+  async getAttachment(params: { name: string; recordId: string; recordType: string }) {
+    // A record type that takes no attachments is refused, as a write's is
+    this.getAttachableConfig(params.recordType);
+    const row = await Attachments.findOneWithBlob(db, {
+      recordType: params.recordType,
+      recordId: params.recordId,
+      name: params.name,
+    });
+    if (!row) return null;
+    return { id: row.id, url: ObjectStorage.findPublicUrl(row.key) };
+  }
+
+  /**
+   * Uploads an image through the server into its slot, at once: its type read from its bytes, stored as a pending blob
+   * first, so one a crash leaves unattached is swept with its row, then put in storage and attached. A failed write or
+   * attach deletes what it stored. Answers the attachment as its read does: its id and its image's URL.
+   */
+  async setAttachment(session: Session, recordType: string, recordId: string, name: string, file: File) {
+    const slot = { name, recordId, recordType };
+    await this.assertCanAttach(db, session, slot.recordType, slot.recordId);
+    this.assertValidName(slot.recordType, slot.name);
+
+    const data = new Uint8Array(await file.arrayBuffer());
+    const contentType = detectImageType(data);
+    if (!contentType) throw new BadRequestError("The file isn't a PNG, JPEG, WebP or GIF image");
+    this.assertWithinPolicy(slot.recordType, data.byteLength, contentType);
+
+    const blobId = randomUUID();
+    const key = this.buildKey(blobId, file.name);
+    await withNewBlob((tx) =>
+      Blobs.create(tx, { id: blobId, key, filename: file.name || "file", contentType, byteSize: data.byteLength }),
+    );
+
+    let result;
+    try {
+      await ObjectStorage.get().putObject(key, data, { contentType });
+      result = await this.attachBlob(session, slot, blobId);
+    } catch (error) {
+      await this.purgeOrphan({ id: blobId, key });
+      throw error;
+    }
+    await this.purgeOrphan(result.orphan);
+    return { id: result.attachment.id, url: ObjectStorage.findPublicUrl(result.blob.key) };
+  }
+}
+
+export default new AttachmentsService();

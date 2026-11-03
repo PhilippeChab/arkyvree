@@ -1,0 +1,99 @@
+import { describe, expect, test } from "bun:test";
+
+import { addClassLevels, addFeats, addSkills, addSpells } from "@/database/seeders/dnd3.5/characters/seedCharacter.ts";
+import type { RulesetSave, Skill } from "@/engine/rulesets/dnd3.5/index.ts";
+import DetailedCharacter from "@/engine/rulesets/dnd3.5/model/DetailedCharacter.ts";
+import { db } from "@/server/database/index.ts";
+import { Characters, Entities } from "@/server/repositories/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
+import { buildAs } from "@/tests/support/dnd3.5/characters.ts";
+import { createSeedCharacter } from "@/tests/support/dnd3.5/levelFixtures.ts";
+import { createSeededTestRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
+import { makeSession } from "@/tests/support/users.ts";
+import {
+  SKILL_CHECK_PENALTY_MULTIPLIER,
+  SKILL_IMPACTED_BY_WEIGHT,
+  SKILL_USABLE_WITHOUT_TRAINING,
+  SPELL_SAVE_EFFECT,
+} from "@/vocabulary/dnd3.5/fields/index.ts";
+
+// A level picks the inherited feat, spell or skill by its id: the sheet must show the fork's copy of it all the same.
+describe("A fork's own description of an inherited", () => {
+  test.each([
+    ["feat", "fighter", "Fighter", 10] as const,
+    ["spell", "wizard", "Wizard", 4] as const,
+    ["skill", "fighter", "Fighter", 10] as const,
+  ])("%s is on the sheet", async (kind, build, klass, hp) => {
+    const session = makeSession();
+    const fork = await createSeededTestRuleset(session.userId);
+    const ctx = await getSeedCtx();
+    const forkCtx = { ...ctx, rulesetId: fork.id };
+    const description = `Overridden in the fork ${fork.id}`;
+    const name = { feat: "Toughness", spell: "Magic Missile", skill: "Climb" }[kind];
+    if (kind === "feat") {
+      await EntitiesService.updateEntity(session, fork.id, "feats", ctx.featMap[name], { name, description });
+    } else if (kind === "spell") {
+      await EntitiesService.updateEntity(session, fork.id, "spells", ctx.spellMap[name], { name, description });
+    } else {
+      const skill = (await Entities.findOne<Skill>(db, { entityType: "skills", id: ctx.skillMap[name] }))!;
+      await EntitiesService.updateEntity(session, fork.id, "skills", skill.id, {
+        name,
+        description,
+        fields: {
+          [SKILL_CHECK_PENALTY_MULTIPLIER]: 1,
+          [SKILL_IMPACTED_BY_WEIGHT]: true,
+          [SKILL_USABLE_WITHOUT_TRAINING]: true,
+        },
+        links: { keyAbility: skill.links.keyAbility },
+      });
+    }
+
+    const characterId = await createSeedCharacter(ctx, build, { rulesetId: fork.id });
+    const levelIds = await addClassLevels(db, forkCtx, characterId, klass, [1], [hp]);
+    if (kind === "feat")
+      await addFeats(db, forkCtx, levelIds, [{ levelIndex: 0, featName: name, aptitude: "General" }]);
+    else if (kind === "spell")
+      await addSpells(db, forkCtx, levelIds, [{ levelIndex: 0, spellName: name, aptitude: "Wizard Spells" }]);
+    else await addSkills(db, forkCtx, levelIds, [{ levelIndex: 0, skillName: name, rank: 4 }]);
+
+    const character = await buildAs(DetailedCharacter, (await Characters.findOne(db, { id: characterId }))!);
+    const levels = Object.values(character.components.classes.getCharacterClasses()).flatMap((k) => k.levels);
+    const descriptions = new Map(
+      levels
+        .flatMap((level) => [...level.feats, ...level.spells, ...level.skills])
+        .map(({ entity }) => [entity.name, entity.description]),
+    );
+    expect(descriptions.get(name)).toBe(description);
+  });
+});
+
+// A spell's saving throw is the fork's too: its save and what a success does
+test("A fork's own saving throw of an inherited spell is on the sheet", async () => {
+  const session = makeSession();
+  const fork = await createSeededTestRuleset(session.userId);
+  const ctx = await getSeedCtx();
+  const forkCtx = { ...ctx, rulesetId: fork.id };
+  const will = (await Entities.findOne<RulesetSave>(db, {
+    entityType: "saves",
+    name: "Will",
+    rulesetId: ctx.rulesetId,
+  }))!;
+  const name = "Magic Missile";
+  await EntitiesService.updateEntity(session, fork.id, "spells", ctx.spellMap[name], {
+    name,
+    fields: { [SPELL_SAVE_EFFECT]: "negates" },
+    links: { resistedBy: will.id },
+  });
+
+  const characterId = await createSeedCharacter(ctx, "wizard", { rulesetId: fork.id });
+  const levelIds = await addClassLevels(db, forkCtx, characterId, "Wizard", [1], [4]);
+  await addSpells(db, forkCtx, levelIds, [{ levelIndex: 0, spellName: name, aptitude: "Wizard Spells" }]);
+
+  const character = await buildAs(DetailedCharacter, (await Characters.findOne(db, { id: characterId }))!);
+  const spell = Object.values(character.components.classes.getCharacterClasses())
+    .flatMap((k) => k.levels)
+    .flatMap((level) => level.spells)
+    .find((p) => p.entity.name === name);
+  expect(spell).toMatchObject({ entity: { fields: { [SPELL_SAVE_EFFECT]: "negates" } }, saveName: "Will" });
+});

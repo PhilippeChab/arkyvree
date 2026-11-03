@@ -1,0 +1,275 @@
+import { describe, expect, test } from "bun:test";
+
+import { db } from "@/server/database/index.ts";
+import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import { CharacterContributors, Users } from "@/server/repositories/index.ts";
+import { CharacterContributorsService } from "@/server/services/characters/contributors/index.ts";
+import { CharactersService } from "@/server/services/characters/index.ts";
+import { CharacterSharingService } from "@/server/services/characters/sharing/index.ts";
+import type { Session } from "@/shared/relations.ts";
+import { createCharacterAs } from "@/tests/support/dnd3.5/characters.ts";
+import { NIL_UUID, uniqueId } from "@/tests/support/seed.ts";
+import { createTestUser } from "@/tests/support/users.ts";
+
+/** A new user's character and another user invited to contribute to it; accepted unless `pending`. */
+async function setup(pending = false) {
+  const { user: owner, session: ownerSession } = await createTestUser("owner");
+  const { user: invitee, session: inviteeSession } = await createTestUser("invitee");
+  const character = await createCharacterAs(ownerSession);
+  const invite = await CharacterContributorsService.inviteContributor(ownerSession, character.id, invitee.emailAddress);
+  if (!pending) await CharacterContributorsService.acceptInvite(inviteeSession, invite.id);
+  return { owner, ownerSession, invitee, inviteeSession, character, invite };
+}
+
+describe("CharacterContributorsService", () => {
+  describe("inviteContributor", () => {
+    test("invites a user by email, or an email without an account, as an Editor", async () => {
+      const { owner, ownerSession, invitee, character, invite } = await setup(true);
+      expect(invite).toMatchObject({
+        characterId: character.id,
+        email: invitee.emailAddress,
+        userId: invitee.id,
+        role: "Editor",
+        status: "Pending",
+        invitedBy: owner.id,
+      });
+
+      const unregistered = await CharacterContributorsService.inviteContributor(
+        ownerSession,
+        character.id,
+        "stranger@example.com",
+      );
+      expect(unregistered).toMatchObject({ email: "stranger@example.com", userId: null, status: "Pending" });
+    });
+
+    test("refuses strangers, the owner's own email, a second invite and an archived character", async () => {
+      const { owner, ownerSession, invitee, character } = await setup(true);
+      const { session: stranger } = await createTestUser("stranger");
+      expect(CharacterContributorsService.inviteContributor(stranger, character.id, "x@example.com")).rejects.toThrow(
+        NotFoundError,
+      );
+      expect(
+        CharacterContributorsService.inviteContributor(ownerSession, character.id, owner.emailAddress),
+      ).rejects.toEqual(new UnprocessableEntityError("Cannot invite the character owner as a contributor"));
+      expect(
+        CharacterContributorsService.inviteContributor(ownerSession, character.id, invitee.emailAddress),
+      ).rejects.toThrow(ConflictError);
+
+      await CharactersService.archiveCharacter(ownerSession, character.id);
+      expect(
+        CharacterContributorsService.inviteContributor(ownerSession, character.id, "late@example.com"),
+      ).rejects.toThrow(ConflictError);
+    });
+
+    test("hands an email-only invite to the account that signs up with that email", async () => {
+      const { session: ownerSession } = await createTestUser("owner");
+      const character = await createCharacterAs(ownerSession);
+      const email = `future-${uniqueId()}@example.com`;
+      const invite = await CharacterContributorsService.inviteContributor(ownerSession, character.id, email);
+
+      const [user] = await Users.create(db, {
+        username: `future-${uniqueId()}`,
+        emailAddress: email,
+        password: "password1234",
+      });
+      await CharacterContributors.backfillUserId(db, email, user.id);
+      expect((await CharacterContributors.findOne(db, { id: invite.id }))?.userId).toBe(user.id);
+    });
+  });
+
+  describe("answering an invite", () => {
+    test("accepting gives the invitee edit access", async () => {
+      const { inviteeSession, character, invite } = await setup(true);
+      expect(await CharacterContributorsService.getInvite(inviteeSession, invite.id)).toMatchObject({
+        id: invite.id,
+        status: "Pending",
+      });
+      expect((await CharacterContributorsService.acceptInvite(inviteeSession, invite.id)).status).toBe("Active");
+      expect(
+        (await CharactersService.updateCharacter(inviteeSession, character.id, { notes: "edited by contributor" }))
+          .notes,
+      ).toBe("edited by contributor");
+    });
+
+    test("rejects an invite", async () => {
+      const { inviteeSession, invite } = await setup(true);
+      expect((await CharacterContributorsService.rejectInvite(inviteeSession, invite.id)).status).toBe("Rejected");
+      expect(CharacterContributorsService.acceptInvite(inviteeSession, invite.id)).rejects.toThrow(ConflictError);
+    });
+
+    test("refuses another user's invite, and an invite to a character archived since", async () => {
+      const { ownerSession, inviteeSession, character, invite } = await setup(true);
+      const { session: stranger } = await createTestUser("stranger");
+      expect(CharacterContributorsService.acceptInvite(stranger, invite.id)).rejects.toThrow(NotFoundError);
+
+      await CharactersService.archiveCharacter(ownerSession, character.id);
+      expect(CharacterContributorsService.acceptInvite(inviteeSession, invite.id)).rejects.toThrow(ConflictError);
+    });
+  });
+
+  describe("getInvite", () => {
+    test("shows the invitee their invite whatever became of it, and whether the character's policy lets it be answered", async () => {
+      const { ownerSession, inviteeSession, character, invite } = await setup(true);
+      const answers = async () => {
+        const { acceptRefusal, canAccept, canReject } = await CharacterContributorsService.getInvite(
+          inviteeSession,
+          invite.id,
+        );
+        return { acceptRefusal, canAccept, canReject };
+      };
+      expect(await CharacterContributorsService.getInvite(inviteeSession, invite.id)).toMatchObject({
+        status: "Pending",
+        charactersInCharacter: { name: character.name },
+      });
+      expect(await answers()).toEqual({ acceptRefusal: null, canAccept: true, canReject: true });
+
+      // An archived character's: refused to accept, in its policy's words, and still rejected
+      await CharactersService.archiveCharacter(ownerSession, character.id);
+      expect(await answers()).toEqual({
+        acceptRefusal: "This character is archived",
+        canAccept: false,
+        canReject: true,
+      });
+
+      // An answered one: neither, whatever its character's state
+      await CharacterContributorsService.rejectInvite(inviteeSession, invite.id);
+      expect(await answers()).toEqual({
+        acceptRefusal: "Invite is no longer pending",
+        canAccept: false,
+        canReject: false,
+      });
+    });
+
+    test("hides the invite from anyone else", async () => {
+      const { invite } = await setup(true);
+      const { session: stranger } = await createTestUser("stranger");
+      expect(CharacterContributorsService.getInvite(stranger, invite.id)).rejects.toThrow(NotFoundError);
+    });
+  });
+
+  describe("contributors", () => {
+    test("lists them to the owner and to contributors, not to strangers", async () => {
+      const { ownerSession, inviteeSession, invitee, character } = await setup();
+      const list = (session: Session) =>
+        CharacterContributorsService.getContributors(session, character.id, {}, { limit: 10, page: 1 });
+      expect((await list(ownerSession)).items.map((c) => c.email)).toEqual([invitee.emailAddress]);
+      expect((await list(inviteeSession)).items).toHaveLength(1);
+      const { session: stranger } = await createTestUser("stranger");
+      expect(list(stranger)).rejects.toThrow(NotFoundError);
+    });
+
+    test("answer, for each row, whether the reader removes it, as the policy decides: its owner, not a contributor", async () => {
+      const { ownerSession, inviteeSession, character } = await setup();
+      const { user: pendingUser } = await createTestUser("pending");
+      await CharacterContributorsService.inviteContributor(ownerSession, character.id, pendingUser.emailAddress);
+      const canRemove = async (session: Session) =>
+        (await CharacterContributorsService.getContributors(session, character.id, {}, { limit: 10, page: 1 })).items
+          .map((row) => [row.status, row.canRemove])
+          .toSorted();
+
+      expect(await canRemove(ownerSession)).toEqual([
+        ["Active", true],
+        ["Pending", true],
+      ]);
+      expect(await canRemove(inviteeSession)).toEqual([
+        ["Active", false],
+        ["Pending", false],
+      ]);
+    });
+
+    test("answer whoever may not read the character as an unknown id: a stranger, a pending or a revoked invitee", async () => {
+      const { ownerSession, character, invite: active } = await setup();
+      const { user: pendingUser, session: pending } = await createTestUser("pending");
+      await CharacterContributorsService.inviteContributor(ownerSession, character.id, pendingUser.emailAddress);
+      const { user: revokedUser, session: revoked } = await createTestUser("revoked");
+      const revokedInvite = await CharacterContributorsService.inviteContributor(
+        ownerSession,
+        character.id,
+        revokedUser.emailAddress,
+      );
+      await CharacterContributorsService.acceptInvite(revoked, revokedInvite.id);
+      await CharacterContributorsService.revokeContributor(ownerSession, character.id, revokedInvite.id);
+      const { session: stranger } = await createTestUser("stranger");
+
+      /** What a call answers: its error's message, or that it went through. */
+      const answerOf = (call: Promise<unknown>) =>
+        call.then(
+          () => "answered",
+          (error: unknown) => (error instanceof NotFoundError ? `404 ${error.message}` : String(error)),
+        );
+      /** What each contributors' request answers `session` on the character (and its active contributor). */
+      const answersOf = async (session: Session, characterId: string, contributorId: string) => [
+        await answerOf(CharacterContributorsService.getContributors(session, characterId, {}, { limit: 10, page: 1 })),
+        await answerOf(CharacterContributorsService.inviteContributor(session, characterId, `x${uniqueId()}@e.com`)),
+        await answerOf(CharacterContributorsService.revokeContributor(session, characterId, contributorId)),
+        await answerOf(CharacterContributorsService.leaveCharacter(session, characterId)),
+      ];
+
+      const unknown = await answersOf(stranger, NIL_UUID, NIL_UUID);
+      expect(unknown).toEqual([
+        "404 Character not found",
+        "404 Character not found",
+        "404 Contributor not found",
+        "404 Character not found",
+      ]);
+      for (const session of [stranger, pending, revoked])
+        expect(await answersOf(session, character.id, active.id)).toEqual(unknown);
+      // Its owner reads it: leaving it is refused as not theirs
+      expect(await answerOf(CharacterContributorsService.leaveCharacter(ownerSession, character.id))).toBe(
+        "404 You are not a contributor of this character",
+      );
+    });
+
+    test("lose edit access when revoked or when they leave", async () => {
+      const revoked = await setup();
+      await CharacterContributorsService.revokeContributor(
+        revoked.ownerSession,
+        revoked.character.id,
+        revoked.invite.id,
+      );
+      expect(
+        CharactersService.updateCharacter(revoked.inviteeSession, revoked.character.id, { notes: "after revoke" }),
+      ).rejects.toThrow(NotFoundError);
+
+      const left = await setup();
+      await CharacterContributorsService.leaveCharacter(left.inviteeSession, left.character.id);
+      expect(
+        CharactersService.updateCharacter(left.inviteeSession, left.character.id, { notes: "after leaving" }),
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    test("can edit and print, but can't archive, share or invite", async () => {
+      const { inviteeSession, character } = await setup();
+      await CharactersService.updateCharacter(inviteeSession, character.id, { notes: "ok" });
+      await CharactersService.enqueuePdf(inviteeSession, character.id);
+
+      expect(CharactersService.archiveCharacter(inviteeSession, character.id)).rejects.toThrow(NotFoundError);
+      expect(CharacterSharingService.generateShareToken(inviteeSession, character.id)).rejects.toThrow(NotFoundError);
+      expect(CharacterSharingService.revokeShareToken(inviteeSession, character.id)).rejects.toThrow(NotFoundError);
+      expect(
+        CharacterContributorsService.inviteContributor(inviteeSession, character.id, "x@example.com"),
+      ).rejects.toThrow(ForbiddenError);
+    });
+
+    test("are the only ones besides the owner who can edit", async () => {
+      const { character } = await setup();
+      const { session: stranger } = await createTestUser("stranger");
+      expect(CharactersService.updateCharacter(stranger, character.id, { notes: "nope" })).rejects.toThrow(
+        NotFoundError,
+      );
+    });
+
+    test("see the characters shared with them among their own, and can filter by access", async () => {
+      const { inviteeSession, character: shared } = await setup();
+      const own = await createCharacterAs(inviteeSession);
+      const list = async (accessRole?: "owner" | "contributor") =>
+        (await CharactersService.getCharacters(inviteeSession, { accessRole }, { limit: 50, page: 1 })).items;
+
+      const all = await list();
+      expect(all.find((c) => c.id === shared.id)?.accessRole).toBe("contributor");
+      expect(all.find((c) => c.id === own.id)?.accessRole).toBe("owner");
+      expect((await list("owner")).map((c) => c.id)).toEqual([own.id]);
+      expect((await list("contributor")).map((c) => c.id)).toEqual([shared.id]);
+    });
+  });
+});

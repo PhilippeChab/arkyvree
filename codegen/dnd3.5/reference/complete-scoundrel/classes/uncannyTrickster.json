@@ -1,0 +1,115 @@
+{
+  "_meta": {
+    "book": "complete-scoundrel",
+    "scrapedAt": "2026-10-11T00:25:40.086Z",
+    "sourceUrl": "https://dndtools.net/classes/complete-scoundrel--60/uncanny-trickster/",
+    "type": "class"
+  },
+  "overrides": {
+    "reviewed": [
+      "Class Features"
+    ]
+  },
+  "raw": {
+    "classFeatures": [
+      {
+        "description": "At each level, you gain a bonus skill trick for which you meet the prerequisite. These bonus tricks do not cost skill points and do not count against your maximum number of skill tricks available.",
+        "name": "Bonus Trick",
+        "type": "(Ex)"
+      },
+      {
+        "description": "You have a limited repertoire of signature stunts. At each level, choose one skill trick you know that you can perform only once per encounter. You can now use that trick one additional time per encounter. You can't choose the same skill trick more than once.",
+        "name": "Favorite Trick",
+        "type": "(Ex)"
+      },
+      {
+        "description": "At 3rd level, you have mastered incorporating tricks into your personal defenses. In any round when you perform a skill trick, you gain a +1 competence bonus on saving throws until the start of your next turn.",
+        "name": "Tricky Defense",
+        "type": "(Ex)"
+      }
+    ],
+    "classSkills": [
+      "Appraise",
+      "Balance",
+      "Bluff",
+      "Climb",
+      "Craft",
+      "Decipher Script",
+      "Diplomacy",
+      "Disable Device",
+      "Disguise",
+      "Escape Artist",
+      "Forgery",
+      "Gather Information",
+      "Hide",
+      "Intimidate",
+      "Jump",
+      "Listen",
+      "Move Silently",
+      "Open Lock",
+      "Perform",
+      "Profession",
+      "Search",
+      "Sense Motive",
+      "Sleight of Hand",
+      "Spot",
+      "Swim",
+      "Tumble",
+      "Use Magic Device",
+      "Use Rope"
+    ],
+    "description": "The uncanny trickster combines the features of his primary class with a wider range of skill tricks than any other character can achieve.",
+    "hitDie": "d6",
+    "name": "Uncanny Trickster",
+    "prerequisites": {
+      "parsed": {},
+      "text": "Skills: Any four skills 8 ranks each. Skill Tricks: Any four."
+    },
+    "progression": [
+      {
+        "bab": 0,
+        "columns": {
+          "Class Features": "-"
+        },
+        "fortSave": 0,
+        "level": 1,
+        "refSave": 2,
+        "special": [
+          "Bonus trick",
+          "favorite trick"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 1,
+        "columns": {
+          "Class Features": "+1 level of existing class features"
+        },
+        "fortSave": 0,
+        "level": 2,
+        "refSave": 3,
+        "special": [
+          "Bonus trick",
+          "favorite trick"
+        ],
+        "willSave": 0
+      },
+      {
+        "bab": 2,
+        "columns": {
+          "Class Features": "+1 level of existing class features"
+        },
+        "fortSave": 1,
+        "level": 3,
+        "refSave": 3,
+        "special": [
+          "Bonus trick",
+          "favorite trick",
+          "tricky defense"
+        ],
+        "willSave": 1
+      }
+    ],
+    "skillPointsPerLevel": "8 + Int modifier"
+  }
+}

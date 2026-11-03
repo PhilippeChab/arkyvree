@@ -1,0 +1,296 @@
+import { describe, expect, test } from "bun:test";
+
+import { db } from "@/server/database/index.ts";
+import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
+import { Contributors, Rulesets } from "@/server/repositories/index.ts";
+import { ContributorsService } from "@/server/services/rulesets/contributors/index.ts";
+import type { ContributorRole } from "@/shared/enums.ts";
+import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { createTestUser } from "@/tests/support/users.ts";
+
+/** A new user invited to the ruleset with `role` by `inviterSession`; accepted unless `pending`. */
+async function addContributor(
+  inviterSession: Parameters<typeof ContributorsService.inviteContributor>[0],
+  rulesetId: string,
+  role: ContributorRole,
+  pending = false,
+) {
+  const { user, session } = await createTestUser(role.toLowerCase());
+  const invite = await ContributorsService.inviteContributor(inviterSession, rulesetId, user.emailAddress, role);
+  if (!pending) await ContributorsService.acceptInvite(session, invite.id);
+  return { user, session, invite };
+}
+
+/** A new user's draft ruleset. */
+async function setup() {
+  const { user: owner, session: ownerSession } = await createTestUser("owner");
+  const ruleset = await createTestRuleset(owner.id);
+  return { owner, ownerSession, ruleset };
+}
+
+describe("ContributorsService", () => {
+  describe("inviteContributor", () => {
+    test("invites a user by email, or an email without an account", async () => {
+      const { owner, ownerSession, ruleset } = await setup();
+      const { user, invite } = await addContributor(ownerSession, ruleset.id, "Editor", true);
+      expect(invite).toMatchObject({
+        rulesetId: ruleset.id,
+        email: user.emailAddress,
+        userId: user.id,
+        role: "Editor",
+        status: "Pending",
+        invitedBy: owner.id,
+      });
+
+      const unregistered = await ContributorsService.inviteContributor(
+        ownerSession,
+        ruleset.id,
+        "unregistered@example.com",
+        "Viewer",
+      );
+      expect(unregistered).toMatchObject({
+        email: "unregistered@example.com",
+        userId: null,
+        role: "Viewer",
+        status: "Pending",
+      });
+    });
+
+    test("lets an Admin invite Editors and Viewers but not Admins", async () => {
+      const { ownerSession, ruleset } = await setup();
+      const { session: admin } = await addContributor(ownerSession, ruleset.id, "Admin");
+      const { user: invitee } = await createTestUser("invitee");
+      expect(
+        (await ContributorsService.inviteContributor(admin, ruleset.id, invitee.emailAddress, "Editor")).role,
+      ).toBe("Editor");
+      const { user: other } = await createTestUser("other");
+      expect(ContributorsService.inviteContributor(admin, ruleset.id, other.emailAddress, "Admin")).rejects.toEqual(
+        new ForbiddenError("Only the owner can manage Admin contributors"),
+      );
+    });
+
+    test("refuses strangers, the owner's own email, a second invite and an archived ruleset", async () => {
+      const { owner, ownerSession, ruleset } = await setup();
+      const { session: stranger } = await createTestUser("stranger");
+      // A private ruleset isn't revealed to a stranger
+      expect(ContributorsService.inviteContributor(stranger, ruleset.id, "test@example.com", "Editor")).rejects.toEqual(
+        new NotFoundError("Ruleset not found"),
+      );
+      expect(
+        ContributorsService.inviteContributor(ownerSession, ruleset.id, owner.emailAddress, "Editor"),
+      ).rejects.toEqual(new UnprocessableEntityError("Cannot invite the ruleset owner as a contributor"));
+
+      const { user } = await addContributor(ownerSession, ruleset.id, "Editor", true);
+      expect(
+        ContributorsService.inviteContributor(ownerSession, ruleset.id, user.emailAddress, "Viewer"),
+      ).rejects.toEqual(new ConflictError("User already has a pending invite"));
+
+      await Rulesets.archive(db, { id: ruleset.id });
+      expect(
+        ContributorsService.inviteContributor(ownerSession, ruleset.id, "late@example.com", "Editor"),
+      ).rejects.toEqual(new ConflictError("This ruleset is archived"));
+    });
+  });
+
+  describe("answering an invite", () => {
+    test("accepts a pending invite once", async () => {
+      const { ownerSession, ruleset } = await setup();
+      const { session, invite } = await addContributor(ownerSession, ruleset.id, "Editor", true);
+      expect((await ContributorsService.acceptInvite(session, invite.id)).status).toBe("Active");
+      expect(ContributorsService.acceptInvite(session, invite.id)).rejects.toEqual(
+        new ConflictError("Invite is no longer pending"),
+      );
+    });
+
+    test("rejects a pending invite", async () => {
+      const { ownerSession, ruleset } = await setup();
+      const { session, invite } = await addContributor(ownerSession, ruleset.id, "Editor", true);
+      expect((await ContributorsService.rejectInvite(session, invite.id)).status).toBe("Rejected");
+    });
+
+    test("refuses another user's invite, and an invite to a ruleset archived since", async () => {
+      const { ownerSession, ruleset } = await setup();
+      const { session, invite } = await addContributor(ownerSession, ruleset.id, "Editor", true);
+      const { session: stranger } = await createTestUser("stranger");
+      expect(ContributorsService.acceptInvite(stranger, invite.id)).rejects.toEqual(
+        new NotFoundError("Contributor invite not found"),
+      );
+
+      await Rulesets.archive(db, { id: ruleset.id });
+      expect(ContributorsService.acceptInvite(session, invite.id)).rejects.toEqual(
+        new ConflictError("This ruleset is archived"),
+      );
+    });
+  });
+
+  describe("getInvite", () => {
+    test("shows the invitee their invite and its ruleset, whatever became of either", async () => {
+      const { ownerSession, ruleset } = await setup();
+      const { session, invite } = await addContributor(ownerSession, ruleset.id, "Editor", true);
+      const fetch = () => ContributorsService.getInvite(session, invite.id);
+
+      expect(await fetch()).toMatchObject({
+        id: invite.id,
+        status: "Pending",
+        rulesetsInRule: { name: ruleset.name, status: "Draft" },
+        canAccept: true,
+        canReject: true,
+        acceptRefusal: null,
+      });
+      // Stale links still resolve, so the page can say what happened, and that it can't be answered again
+      await ContributorsService.acceptInvite(session, invite.id);
+      expect(await fetch()).toMatchObject({
+        status: "Active",
+        canAccept: false,
+        canReject: false,
+        acceptRefusal: "Invite is no longer pending",
+      });
+      await ContributorsService.revokeContributor(ownerSession, ruleset.id, invite.id);
+      expect((await fetch()).status).toBe("Revoked");
+      await Rulesets.archive(db, { id: ruleset.id });
+      expect(await fetch()).toMatchObject({ rulesetsInRule: { status: "Archived" }, canAccept: false });
+    });
+
+    test("answers a pending invite to an archived ruleset as its policy refuses it, and still lets it be rejected", async () => {
+      const { ownerSession, ruleset } = await setup();
+      const { session, invite } = await addContributor(ownerSession, ruleset.id, "Editor", true);
+      await Rulesets.archive(db, { id: ruleset.id });
+
+      expect(await ContributorsService.getInvite(session, invite.id)).toMatchObject({
+        canAccept: false,
+        canReject: true,
+        acceptRefusal: "This ruleset is archived",
+      });
+      expect((await ContributorsService.rejectInvite(session, invite.id)).status).toBe("Rejected");
+    });
+
+    test("hides the invite from anyone else", async () => {
+      const { ownerSession, ruleset } = await setup();
+      const { invite } = await addContributor(ownerSession, ruleset.id, "Editor", true);
+      const { session: stranger } = await createTestUser("stranger");
+      expect(ContributorsService.getInvite(stranger, invite.id)).rejects.toEqual(
+        new NotFoundError("Contributor invite not found"),
+      );
+    });
+  });
+
+  describe("getContributors", () => {
+    test("lists the contributors to the owner and to contributors, not to strangers", async () => {
+      const { ownerSession, ruleset } = await setup();
+      const { user, session: viewer } = await addContributor(ownerSession, ruleset.id, "Viewer");
+      const list = (session: typeof viewer) =>
+        ContributorsService.getContributors(session, ruleset.id, {}, { limit: 10, page: 1 });
+
+      expect((await list(ownerSession)).items.map((c) => c.email)).toEqual([user.emailAddress]);
+      expect((await list(viewer)).items).toHaveLength(1);
+      // A private ruleset isn't revealed to a stranger: its list answers as an unknown ruleset's
+      const { session: stranger } = await createTestUser("stranger");
+      expect(list(stranger)).rejects.toEqual(new NotFoundError("Ruleset not found"));
+    });
+
+    test("answers, for each row, whether the reader removes it and the roles it may give it, as the policy decides", async () => {
+      const { ownerSession, ruleset } = await setup();
+      const { session: admin } = await addContributor(ownerSession, ruleset.id, "Admin");
+      const { session: editor } = await addContributor(ownerSession, ruleset.id, "Editor");
+      await addContributor(ownerSession, ruleset.id, "Viewer", true);
+      const rows = async (session: typeof admin) =>
+        Object.fromEntries(
+          (await ContributorsService.getContributors(session, ruleset.id, {}, { limit: 10, page: 1 })).items.map(
+            (row) => [`${row.role}${row.status === "Pending" ? " invite" : ""}`, [row.canRemove, row.roles]],
+          ),
+        );
+
+      // The owner manages everyone; an invite's role is its invite's
+      expect(await rows(ownerSession)).toEqual({
+        Admin: [true, ["Admin", "Editor", "Viewer"]],
+        Editor: [true, ["Admin", "Editor", "Viewer"]],
+        "Viewer invite": [true, []],
+      });
+      // An Admin manages Editors and Viewers, never an Admin nor to Admin
+      expect(await rows(admin)).toEqual({
+        Admin: [false, []],
+        Editor: [true, ["Editor", "Viewer"]],
+        "Viewer invite": [true, []],
+      });
+      // An Editor manages none
+      expect(await rows(editor)).toEqual({ Admin: [false, []], Editor: [false, []], "Viewer invite": [false, []] });
+    });
+  });
+
+  describe("updateContributorRole", () => {
+    test("changes an active contributor's role", async () => {
+      const { ownerSession, ruleset } = await setup();
+      const { invite } = await addContributor(ownerSession, ruleset.id, "Editor");
+      expect(
+        (await ContributorsService.updateContributorRole(ownerSession, ruleset.id, invite.id, "Viewer")).role,
+      ).toBe("Viewer");
+    });
+
+    test("refuses a pending invite, an archived ruleset, and an Admin promoting to Admin", async () => {
+      const { ownerSession, ruleset } = await setup();
+      const pending = await addContributor(ownerSession, ruleset.id, "Editor", true);
+      expect(
+        ContributorsService.updateContributorRole(ownerSession, ruleset.id, pending.invite.id, "Viewer"),
+      ).rejects.toEqual(new ConflictError("Can only update role of active contributors"));
+
+      const { session: admin } = await addContributor(ownerSession, ruleset.id, "Admin");
+      const editor = await addContributor(ownerSession, ruleset.id, "Editor");
+      expect(ContributorsService.updateContributorRole(admin, ruleset.id, editor.invite.id, "Admin")).rejects.toEqual(
+        new ForbiddenError("Only the owner can manage Admin contributors"),
+      );
+
+      await Rulesets.archive(db, { id: ruleset.id });
+      expect(
+        ContributorsService.updateContributorRole(ownerSession, ruleset.id, editor.invite.id, "Viewer"),
+      ).rejects.toEqual(new ConflictError("This ruleset is archived"));
+    });
+  });
+
+  describe("revokeContributor", () => {
+    test("lets the owner revoke anyone, Admins included", async () => {
+      const { ownerSession, ruleset } = await setup();
+      for (const role of ["Editor", "Admin"] as const) {
+        const { invite } = await addContributor(ownerSession, ruleset.id, role);
+        expect((await ContributorsService.revokeContributor(ownerSession, ruleset.id, invite.id)).status).toBe(
+          "Revoked",
+        );
+      }
+    });
+
+    test("refuses an Admin revoking another Admin", async () => {
+      const { ownerSession, ruleset } = await setup();
+      const { session: admin } = await addContributor(ownerSession, ruleset.id, "Admin");
+      const other = await addContributor(ownerSession, ruleset.id, "Admin");
+      expect(ContributorsService.revokeContributor(admin, ruleset.id, other.invite.id)).rejects.toEqual(
+        new ForbiddenError("Only the owner can manage Admin contributors"),
+      );
+    });
+  });
+
+  describe("leaveRuleset", () => {
+    test("lets a contributor leave, and nobody else", async () => {
+      const { ownerSession, ruleset } = await setup();
+      const { session } = await addContributor(ownerSession, ruleset.id, "Editor");
+      expect((await ContributorsService.leaveRuleset(session, ruleset.id)).status).toBe("Revoked");
+
+      const { session: stranger } = await createTestUser("stranger");
+      expect(ContributorsService.leaveRuleset(stranger, ruleset.id)).rejects.toEqual(
+        new NotFoundError("Ruleset not found"),
+      );
+      // Its owner contributes as no one, as its policy decides (`canLeave`)
+      expect(ContributorsService.leaveRuleset(ownerSession, ruleset.id)).rejects.toEqual(
+        new NotFoundError("You are not a contributor of this ruleset"),
+      );
+    });
+  });
+
+  describe("Contributors.findRole", () => {
+    test("is the role of an active contributor, and null for anyone else", async () => {
+      const { ownerSession, ruleset } = await setup();
+      const { user } = await addContributor(ownerSession, ruleset.id, "Editor");
+      const { user: stranger } = await createTestUser("stranger");
+      expect(await Contributors.findRole(db, { userId: user.id, rulesetId: ruleset.id })).toBe("Editor");
+      expect(await Contributors.findRole(db, { userId: stranger.id, rulesetId: ruleset.id })).toBeUndefined();
+    });
+  });
+});
