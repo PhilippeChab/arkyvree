@@ -17,6 +17,11 @@ as it is today, never a promise that it holds no other key.
 - A key expires when its user chose as they made it: in 30 days, 90 (the form's default) or a year, or never, which its
   form warns works until it's revoked. An expired key is refused as a revoked one is, and the daily cleanup
   (`runCleanup`) deletes it.
+- A key reads and changes what its user can, or only reads, chosen as it's made (`read_only`, its form's Read Only
+  switch; a key made before it reads and changes). Its sign-in says so (`readOnly`), and every route refuses it, before
+  it runs, unless it reads (`describeRoute`, by the route's effect: a GET, or a POST that saves nothing), with a 403.
+  Each route describes itself, so a new one is guarded as it's written, and `tests/routers/v1/readOnly.test.ts` calls
+  every route with one.
 - Wherever the user's other sessions are signed out, their keys are revoked too (`signOutEverywhere`): a password
   reset, a password change and the account's deletion.
 - A key is for a caller that keeps it secret, outside a browser: `/v1` answers no cross-origin request (no CORS but

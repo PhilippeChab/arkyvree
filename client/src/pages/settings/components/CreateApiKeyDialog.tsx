@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 import { useWatch } from "react-hook-form";
 
-import { CreateDialog, FormTextField, SelectField } from "@/client/src/components/common/index.ts";
+import { CreateDialog, FormTextField, SelectField, SwitchField } from "@/client/src/components/common/index.ts";
 import { useSnackbar } from "@/client/src/contexts/useSnackbar.ts";
 import { useFormWith } from "@/client/src/hooks/index.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -21,7 +21,7 @@ interface CreateApiKeyDialogProps {
 /** A new key's form: its lifetime in days, or `""` for one that never expires, as a select's none holds it. */
 type ApiKeyFormData = Omit<ApiKeyRequest, "expiresInDays"> & { expiresInDays: number | "" };
 
-/** A new key's name and lifetime, as its create sends them. */
+/** A new key's name, lifetime and access, as its create sends them. */
 type ApiKeyRequest = InferRequestType<(typeof rpc.auth)["api-keys"]["$post"]>["json"];
 
 /** A new key, as its create answers it: its token among its fields, shown this once. */
@@ -33,16 +33,23 @@ const LIFETIME_OPTIONS = API_KEY_LIFETIMES_IN_DAYS.map((days) => ({
   label: days === 365 ? "1 Year" : `${days} Days`,
 }));
 
-/** Makes a key named for what will use it, expiring when its user chooses or never, then hands it on to show its token. */
+/**
+ * Makes a key named for what will use it, expiring when its user chooses or never, reading and changing or reading
+ * alone, then hands it on to show its token.
+ */
 export function CreateApiKeyDialog({ open, onClose, onCreated, onExited }: CreateApiKeyDialogProps) {
   const snackbar = useSnackbar();
   const queryClient = useQueryClient();
-  const form = useFormWith<ApiKeyFormData>({ expiresInDays: DEFAULT_API_KEY_LIFETIME_IN_DAYS, name: "" });
+  const form = useFormWith<ApiKeyFormData>({
+    expiresInDays: DEFAULT_API_KEY_LIFETIME_IN_DAYS,
+    name: "",
+    readOnly: false,
+  });
   const neverExpires = useWatch({ control: form.control, name: "expiresInDays" }) === "";
 
   const createMutation = useMutation({
-    mutationFn: ({ expiresInDays, name }: ApiKeyFormData) =>
-      parseResponse(rpc.auth["api-keys"].$post({ json: { expiresInDays: expiresInDays || null, name } })),
+    mutationFn: ({ expiresInDays, name, readOnly }: ApiKeyFormData) =>
+      parseResponse(rpc.auth["api-keys"].$post({ json: { expiresInDays: expiresInDays || null, name, readOnly } })),
     onSuccess: (key) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.apiKeys });
       snackbar.success("API key created");
@@ -62,7 +69,8 @@ export function CreateApiKeyDialog({ open, onClose, onCreated, onExited }: Creat
       pending={createMutation.isPending}
     >
       <DialogContentText>
-        A key acts as you on the public API: it reads what you can. Name it for what will use it.
+        A key acts as you on the public API: it reads and changes what you can, or only reads when it's read-only. Name
+        it for what will use it.
       </DialogContentText>
       <FormTextField
         control={form.control}
@@ -82,6 +90,7 @@ export function CreateApiKeyDialog({ open, onClose, onCreated, onExited }: Creat
         helperText={neverExpires ? "A key that never expires works until you revoke it" : undefined}
         disabled={createMutation.isPending}
       />
+      <SwitchField control={form.control} name="readOnly" label="Read Only" />
     </CreateDialog>
   );
 }

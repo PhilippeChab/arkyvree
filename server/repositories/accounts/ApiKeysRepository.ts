@@ -28,7 +28,14 @@ class ApiKeysRepository extends BaseRepository<typeof apiKeysInAccount> {
 
   async create(
     db: Db,
-    values: { digest: string; expiresAt: string | null; name: string; prefix: string; userId: string },
+    values: {
+      digest: string;
+      expiresAt: string | null;
+      name: string;
+      prefix: string;
+      readOnly: boolean;
+      userId: string;
+    },
   ) {
     return await db.insert(this.table).values(values).returning(SHOWN_COLUMNS);
   }

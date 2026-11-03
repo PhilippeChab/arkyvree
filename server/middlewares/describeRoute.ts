@@ -2,7 +2,9 @@ import { createMiddleware } from "hono/factory";
 import type { z } from "zod";
 
 import { isProduction } from "@/server/environment.ts";
-import { InternalError } from "@/server/errors/index.ts";
+import { ForbiddenError, InternalError } from "@/server/errors/index.ts";
+
+import type { ApiKeyContext } from "./apiKey.ts";
 
 /**
  * What a public API route documents: what it does, and what it answers when it succeeds, its status and its body
@@ -38,11 +40,15 @@ async function checkAnswer(response: Response, { file, response: schema }: Route
 
 /**
  * A middleware that carries what its route documents (`description`), which the public API's document reads off its
- * routes (`server/routers/v1/`). Outside production it checks each success the route answers against it, so a test
- * that calls the route fails on an answer its document doesn't describe.
+ * routes (`server/routers/v1/`). It refuses a read-only key (`readOnly`) a route that does more than read
+ * (`readRouteEffect`), before the route runs: every route describes itself, so none is left unguarded. Outside
+ * production it checks each success the route answers against its description, so a test that calls the route fails
+ * on an answer its document doesn't describe.
  */
 export function describeRoute(description: RouteDescription) {
-  const middleware = createMiddleware(async (c, next) => {
+  const middleware = createMiddleware<ApiKeyContext>(async (c, next) => {
+    if (c.var.readOnly && readRouteEffect(c.req.method, description) !== "reads")
+      throw new ForbiddenError("This API key is read-only: it reads, and changes nothing");
     await next();
     if (isProduction() || !c.res.ok) return;
     if (c.res.status !== description.status)
@@ -52,10 +58,13 @@ export function describeRoute(description: RouteDescription) {
   return Object.assign(middleware, { description });
 }
 
-/** What a route of `method` does (`RouteEffect`): its description's `effect`, or its method's, a GET reading, a DELETE removing. */
+/**
+ * What a route of `method` does (`RouteEffect`): its description's `effect`, or its method's, a GET reading (and a
+ * HEAD, which the router answers with the GET route, its body left out), a DELETE removing.
+ */
 export function readRouteEffect(method: string, { effect }: RouteDescription): RouteEffect {
   if (effect) return effect;
   const upper = method.toUpperCase();
-  if (upper === "GET") return "reads";
+  if (upper === "GET" || upper === "HEAD") return "reads";
   return upper === "DELETE" ? "removes" : "changes";
 }

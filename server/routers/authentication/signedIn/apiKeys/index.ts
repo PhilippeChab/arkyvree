@@ -18,11 +18,13 @@ export default new Hono<SessionContext>()
         // Its lifetime in days, or none: a key that never expires
         expiresInDays: z.number().int().min(1).max(MAX_API_KEY_LIFETIME_IN_DAYS).nullable(),
         name: sanitizedText.min(1).max(MAX_API_KEY_NAME_LENGTH),
+        // Whether it only reads: the public API refuses its every other request
+        readOnly: z.boolean().default(false),
       }),
     ),
     async (c) => {
-      const { expiresInDays, name } = c.req.valid("json");
-      return c.json(await ApiKeysService.createKey(c.var.requestSession, name, expiresInDays), 201);
+      const { expiresInDays, name, readOnly } = c.req.valid("json");
+      return c.json(await ApiKeysService.createKey(c.var.requestSession, name, expiresInDays, readOnly), 201);
     },
   )
   .delete("/api-keys/:id", denyDemoUser, validate("param", idParam), async (c) => {

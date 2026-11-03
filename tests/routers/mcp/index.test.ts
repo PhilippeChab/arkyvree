@@ -61,6 +61,18 @@ describe("mcp", () => {
     expect(await callTool(modern, "read", args)).toEqual(await callTool(legacy, "read", args));
   });
 
+  test("offers a read-only key the tools that read alone, and says why", async () => {
+    const { user } = await createTestUser();
+    const { key } = await createKeyedApi(user.id, { readOnly: true });
+    const mcp = await connectMcp(key.token);
+    const { tools } = await mcp.listTools();
+    expect(tools.map(({ name }) => name).sort()).toEqual(["describe_route", "read", "read_sheet", "search_routes"]);
+    expect(mcp.getInstructions()).toContain("read-only");
+    expect(JSON.parse(await callTool(mcp, "read", { method: "GET", path: "/v1/characters" }))).toMatchObject({
+      page: 1,
+    });
+  });
+
   test("finds a route by words, and describes what it takes and answers", async () => {
     const { mcp } = await connectUser();
     const found = JSON.parse(await callTool(mcp, "search_routes", { query: "archives characters" }));

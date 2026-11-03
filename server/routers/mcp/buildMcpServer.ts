@@ -21,9 +21,15 @@ const INSTRUCTIONS = [
     "when the user agrees.",
 ].join("\n\n");
 
-/** The MCP server for one request of the caller's user: its tools, each acting as them. */
+/** What a read-only key's agent reads besides, as it connects: why it has no tool that changes. */
+const READ_ONLY_INSTRUCTIONS =
+  "This sign-in's key is read-only: it reads what the user can, and changes nothing. The tools that change (`write`, " +
+  "`remove`) aren't offered, and a route that changes refuses it (403).";
+
+/** The MCP server for one request of the caller's user: its tools, each acting as them, those that read alone for a read-only key. */
 export function buildMcpServer(caller: Caller) {
-  const server = new McpServer({ name: "arkyvree", title: "Arkyvree", version: "1" }, { instructions: INSTRUCTIONS });
+  const instructions = caller.readOnly ? `${INSTRUCTIONS}\n\n${READ_ONLY_INSTRUCTIONS}` : INSTRUCTIONS;
+  const server = new McpServer({ name: "arkyvree", title: "Arkyvree", version: "1" }, { instructions });
   registerRouteTools(server, caller);
   registerSheetTool(server, caller);
   return server;

@@ -51,7 +51,8 @@ reference.
   request is answered by a server made for it (`buildMcpServer`), so any of the app's machines answers any request. A
   GET or a DELETE, a 2025 session's, answers 405.
 - **Sign-in:** the public API's key, as `/v1` reads it (`apiKeyMiddleware`), so a key sees and changes what its user
-  can, a demo's key and a revoked one nothing. A request from a browser page of another site (an `Origin` that isn't
+  can, a demo's key and a revoked one nothing. A read-only key is offered the tools that read alone (no `write`, no
+  `remove`), and the server's instructions say why; its calls carry it, so the routes refuse it a change as `/v1` does. A request from a browser page of another site (an `Origin` that isn't
   the app's) is refused, as MCP asks of a server over HTTP; the CSRF check skips `/mcp`, which reads no cookie.
 - **The routes a tool calls** run in the process (`server/routers/mcp/v1Calls.ts`): v1's routes (`v1/routes.ts`,
   which `/v1` mounts behind its sign-in), with the user the MCP server's sign-in found, passed with the call. Each call
