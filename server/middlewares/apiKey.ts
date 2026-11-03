@@ -6,9 +6,13 @@ import { UnauthorizedError } from "@/server/errors/index.ts";
 import { ApiKeys } from "@/server/repositories/index.ts";
 import type { Session } from "@/shared/relations.ts";
 
-/** What the public API's routes read of their request: the user its key acts as. */
+/**
+ * What the public API's routes read of their request: the user its key acts as, and whether it only reads
+ * (`readOnly`), which refuses every route but those that read (`describeRoute`).
+ */
 export interface ApiKeyContext {
   Variables: {
+    readOnly: boolean;
     requestSession: Session;
   };
 }
@@ -32,5 +36,6 @@ export default createMiddleware<ApiKeyContext>(async (c, next) => {
     await withWrite(async (tx) => ApiKeys.markUsed(tx, { id: key.id, since: new Date(since).toISOString() }));
 
   c.set("requestSession", { userId: key.userId });
+  c.set("readOnly", key.readOnly);
   await next();
 });

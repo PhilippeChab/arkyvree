@@ -22,6 +22,24 @@ describe("api keys", () => {
     await expectStatus(keys[":id"].$delete({ param: { id: key.id } }), 404);
   });
 
+  test("makes a key that reads and changes, or one that only reads, which its list shows", async () => {
+    const { api } = await createSignedInUser();
+    const keys = api.auth["api-keys"];
+    const full = await expectOk(keys.$post({ json: { expiresInDays: null, name: "Full" } }));
+    const reading = await expectOk(keys.$post({ json: { expiresInDays: null, name: "Reading", readOnly: true } }));
+    expect(full.readOnly).toBe(false);
+    expect(reading.readOnly).toBe(true);
+    // Two keys made in one test share their time: their order is the ids', which the test doesn't read
+    const listed = await expectOk(keys.$get());
+    const byName = listed
+      .map(({ name, readOnly }) => ({ name, readOnly }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    expect(byName).toEqual([
+      { name: "Full", readOnly: false },
+      { name: "Reading", readOnly: true },
+    ]);
+  });
+
   test("refuses a lifetime past a year or under a day", async () => {
     const { api } = await createSignedInUser();
     await expectStatus(api.auth["api-keys"].$post({ json: { expiresInDays: 366, name: "Too long" } }), 400);

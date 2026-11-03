@@ -37,6 +37,7 @@ type ApiKey = InferResponseType<(typeof rpc.auth)["api-keys"]["$get"], 200>[numb
 const API_KEY_COLUMNS: TableColumn[] = [
   { key: "name", label: "Name" },
   { key: "key", label: "Key" },
+  { key: "access", label: "Access" },
   { key: "expires", label: "Expires" },
   { key: "created", label: "Created" },
   { key: "lastUsed", label: "Last Used" },
@@ -83,8 +84,8 @@ export function ApiKeysPanel() {
         </PanelLead>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
           A key lets a program outside the app, such as a script or an assistant, read and change your characters,
-          rulesets and campaigns through the public API. It acts as you: revoke it once nothing uses it. You can keep{" "}
-          {MAX_API_KEYS} at most.
+          rulesets and campaigns through the public API. It acts as you: revoke it once nothing uses it. A read-only key
+          reads them and changes nothing. You can keep {MAX_API_KEYS} at most.
         </Typography>
       </Stack>
       {!keys && !error && <DiceSpinner sx={{ py: 4 }} />}
@@ -97,6 +98,9 @@ export function ApiKeysPanel() {
               <DataCell slot="primary">{key.name}</DataCell>
               <DataCell slot="inline" sx={{ fontFamily: "monospace" }}>
                 {`${key.prefix}…`}
+              </DataCell>
+              <DataCell slot="labeled" label="Access">
+                {key.readOnly ? "Read Only" : "Read and Change"}
               </DataCell>
               <DataCell slot="labeled" label="Expires">
                 {key.expiresAt ? formatDate(key.expiresAt) : "Never"}

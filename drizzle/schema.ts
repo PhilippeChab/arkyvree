@@ -461,6 +461,8 @@ export const apiKeysInAccount = account.table(
     lastUsedAt: timestamp("last_used_at", { mode: "string", withTimezone: true }),
     /** When the key stops working, chosen as it's made: none for a key that never expires. */
     expiresAt: timestamp("expires_at", { mode: "string", withTimezone: true }),
+    /** Whether the key only reads, chosen as it's made: the public API refuses its every other request. */
+    readOnly: boolean("read_only").default(false).notNull(),
   },
   (table) => [
     uniqueIndex("api_keys_digest").using("btree", table.digest.asc().nullsLast()),

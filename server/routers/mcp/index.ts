@@ -47,7 +47,8 @@ export default new Hono<ApiKeyContext>()
   .use(apiAddressRateLimit)
   .use(apiKeyMiddleware)
   .all("/", async (c) => {
-    const caller = { addresses: readAddresses((name) => c.req.header(name)), session: c.var.requestSession };
+    const addresses = readAddresses((name) => c.req.header(name));
+    const caller = { addresses, readOnly: c.var.readOnly, session: c.var.requestSession };
     const handler = createMcpHandler(() => buildMcpServer(caller));
     return await handler.fetch(c.req.raw);
   });

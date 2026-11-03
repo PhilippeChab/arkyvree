@@ -1,0 +1,1 @@
+ALTER TABLE "account"."api_keys" ADD COLUMN "read_only" boolean DEFAULT false NOT NULL;

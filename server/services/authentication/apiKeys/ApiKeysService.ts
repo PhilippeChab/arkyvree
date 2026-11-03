@@ -9,10 +9,10 @@ import type { Session } from "@/shared/relations.ts";
 /** The API keys a user makes and revokes on their settings page: each acts as them on the public API (`/v1`). */
 class ApiKeysService {
   /**
-   * A new key named `name`, expiring `expiresInDays` from now (`null`: never), with its token: the only time the token
-   * is shown, which the database keeps no copy of. Refused past `MAX_API_KEYS`.
+   * A new key named `name`, expiring `expiresInDays` from now (`null`: never), which only reads when it's `readOnly`,
+   * with its token: the only time the token is shown, which the database keeps no copy of. Refused past `MAX_API_KEYS`.
    */
-  async createKey(session: Session, name: string, expiresInDays: number | null) {
+  async createKey(session: Session, name: string, expiresInDays: number | null, readOnly = false) {
     const expiresAt =
       expiresInDays === null ? null : new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000).toISOString();
     const { digest, prefix, token } = generateApiKeyToken();
@@ -20,7 +20,7 @@ class ApiKeysService {
     return await withAccountWrite(session.userId, async (tx) => {
       if ((await ApiKeys.count(tx, { userId: session.userId })) >= MAX_API_KEYS)
         throw new UnprocessableEntityError(`A user keeps ${MAX_API_KEYS} API keys at most: revoke one first`);
-      const [key] = await ApiKeys.create(tx, { digest, expiresAt, name, prefix, userId: session.userId });
+      const [key] = await ApiKeys.create(tx, { digest, expiresAt, name, prefix, readOnly, userId: session.userId });
       if (!key) throw new InternalError("Failed to create the API key");
       return { ...key, token };
     });

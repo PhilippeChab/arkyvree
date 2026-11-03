@@ -121,7 +121,8 @@ async function callRoute(caller: Caller, effect: RouteEffect, { body, method, pa
 
 /**
  * The tools over the public API's routes: two that find and describe them, and one that calls them for each of what
- * they do (`CALLERS`), each marked by it, so a client asks before calling the one that removes.
+ * they do (`CALLERS`), each marked by it, so a client asks before calling the one that removes. A read-only key is
+ * offered the one that reads alone.
  */
 export function registerRouteTools(server: McpServer, caller: Caller) {
   registerDiscovery(server);
@@ -129,6 +130,7 @@ export function registerRouteTools(server: McpServer, caller: Caller) {
     RouteEffect,
     (typeof CALLERS)[RouteEffect],
   ][]) {
+    if (caller.readOnly && effect !== "reads") continue;
     server.registerTool(
       TOOL_OF_EFFECT[effect],
       {

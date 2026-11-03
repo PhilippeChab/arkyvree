@@ -28,9 +28,9 @@ export function sessionIdFrom(response: { headers: Headers }) {
   return sessionId;
 }
 
-/** A new API key of `userId`'s, with its token, and a public API (`/v1`) client that sends it. */
-export async function createKeyedApi(userId: string = SEED_USER_ID) {
-  const key = await ApiKeysService.createKey({ userId }, `Test key ${crypto.randomUUID()}`, null);
+/** A new API key of `userId`'s (`readOnly`: one that only reads), with its token, and a public API (`/v1`) client that sends it. */
+export async function createKeyedApi(userId: string = SEED_USER_ID, { readOnly = false } = {}) {
+  const key = await ApiKeysService.createKey({ userId }, `Test key ${crypto.randomUUID()}`, null, readOnly);
   return { key, api: apiWithKey(key.token) };
 }
 
