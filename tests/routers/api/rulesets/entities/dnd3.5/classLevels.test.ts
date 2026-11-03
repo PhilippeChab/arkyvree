@@ -4,7 +4,7 @@ import { DND35_COMPLETE_DIVINE_NAME } from "@/content/dnd3.5/rulesetNames.ts";
 import type { Klass } from "@/engine/rulesets/dnd3.5/index.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
-import { Entities } from "@/server/repositories/index.ts";
+import { Activities, Entities } from "@/server/repositories/index.ts";
 import { api, expectOk, expectStatus, guestApi } from "@/tests/support/api.ts";
 import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
 import { findSeededRuleset, getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
@@ -14,12 +14,21 @@ const klass = api.api.rulesets[":id"].entities[":entityType"][":entityId"];
 const levels = klass.owned;
 const level = levels[":ownedId"];
 const requirements = api.api.rulesets[":id"].customization[":entityType"][":entityId"].requirements;
+const severalLevels = levels.many;
 
 const table = klass.tables[":table"];
 
 /** A class's route's params: the ruleset, and the class, an entity of the classes' kind. */
 function classParam(id: string, classId: string) {
   return { id, entityType: "classes" as const, entityId: classId };
+}
+
+/** Levels of numbers (`positions`), each its base attack bonus its number and 4 skill points, as a create sends it. */
+function levelsAt(positions: number[]) {
+  return positions.map((position) => ({
+    fields: { [CLASS_LEVEL_BAB]: position, [CLASS_LEVEL_SKILL_POINTS]: 4 },
+    position,
+  }));
 }
 
 /** A seeded fork with a new class. */
@@ -189,6 +198,90 @@ describe("rulesets class levels", () => {
     expect(await (await expectStatus(raced, 409)).json()).toMatchObject({
       message: "Level Class already has a level 5",
     });
+  });
+
+  test("creates several levels at once, recorded as one activity", async () => {
+    const { id, classId } = await setup();
+    const saved = await expectOk(
+      severalLevels.$post({ param: classParam(id, classId), json: { owned: levelsAt([1, 2, 3, 4, 5]) } }),
+    );
+    expect(saved.ownerId).toBe(classId);
+    expect(saved.created.map(({ position, fields }) => ({ position, fields }))).toEqual(
+      levelsAt([1, 2, 3, 4, 5]).map(({ position }) => ({
+        position,
+        fields: { [CLASS_LEVEL_BAB]: position, [CLASS_LEVEL_SKILL_POINTS]: 4 },
+      })),
+    );
+    const listed = await expectOk(levels.$get({ param: classParam(id, classId) }));
+    expect(listed.map(({ position }) => position)).toEqual([1, 2, 3, 4, 5]);
+
+    // One activity, on the first level, which names them all
+    const { items } = await Activities.findPage(db, { userId: SEED_USER_ID }, { limit: 100, page: 1 });
+    const created = items.filter((item) => saved.created.some((made) => made.id === item.targetId));
+    expect(created.map(({ type, targetId, data }) => ({ type, targetId, data }))).toEqual([
+      {
+        type: "createClassLevel",
+        targetId: saved.created[0].id,
+        data: { baseRules: "Dungeons & Dragons: 3.5", entityName: "Level Class", positions: [1, 2, 3, 4, 5] },
+      },
+    ]);
+  });
+
+  test("refuses several levels with one the class has, given twice or out of bounds, making none", async () => {
+    const { id, classId } = await setup();
+    const param = classParam(id, classId);
+    await expectOk(levels.$post({ param, json: levelsAt([3])[0] }));
+    const post = (owned: unknown[]) => severalLevels.$post({ param, json: { owned } as never });
+    const levelNumbers = async () => (await expectOk(levels.$get({ param }))).map(({ position }) => position);
+
+    expect(await (await expectStatus(post(levelsAt([1, 2, 3, 4])), 409)).json()).toMatchObject({
+      message: "Level Class already has a level 3",
+    });
+    expect(await levelNumbers()).toEqual([3]);
+
+    expect(await (await expectStatus(post(levelsAt([1, 2, 1])), 400)).json()).toMatchObject({
+      issues: [{ category: "owned.2.position", message: "Level 1 is listed twice" }],
+    });
+    const pastLast = { fields: { [CLASS_LEVEL_BAB]: 1 }, position: 21 };
+    expect(await (await expectStatus(post([...levelsAt([1]), pastLast]), 400)).json()).toMatchObject({
+      issues: [{ category: "owned.1.position" }],
+    });
+    await expectStatus(post([]), 400);
+    await expectStatus(post([{ ...levelsAt([1])[0], extra: 1 }]), 400);
+    // More than a class has levels, whatever their numbers
+    const many = Array.from({ length: 21 }, () => ({ position: 1 }));
+    expect(await (await expectStatus(post(many), 400)).json()).toMatchObject({
+      issues: [{ category: "owned", message: "A class has at most 20 levels" }],
+    });
+    expect(await levelNumbers()).toEqual([3]);
+  });
+
+  test("creates several levels on an inherited class's copy, made once", async () => {
+    const { id, classId } = await setup();
+    const fork = await createTestRuleset(SEED_USER_ID, { rulesetId: id });
+    const saved = await expectOk(
+      severalLevels.$post({ param: classParam(fork.id, classId), json: { owned: levelsAt([1, 2, 3]) } }),
+    );
+    const copies = await Entities.findMany<Klass>(db, { entityType: "classes", rulesetIds: [fork.id] });
+    expect(copies.map(({ id: copyId, name }) => ({ copyId, name }))).toEqual([
+      { copyId: saved.ownerId, name: "Level Class" },
+    ]);
+    expect(saved.created.map(({ ownerId }) => ownerId)).toEqual([saved.ownerId, saved.ownerId, saved.ownerId]);
+    // The class it inherits keeps no level
+    expect(await expectOk(levels.$get({ param: classParam(id, classId) }))).toEqual([]);
+
+    // Refused on another fork, they leave it no copy of the class, and no activity
+    const refusedFork = await createTestRuleset(SEED_USER_ID, { rulesetId: id });
+    const refused = severalLevels.$post({
+      param: classParam(refusedFork.id, classId),
+      json: { owned: levelsAt([1, 2, 1]) },
+    });
+    await expectStatus(refused, 400);
+    expect(await Entities.findMany(db, { entityType: "classes", rulesetIds: [refusedFork.id] })).toEqual([]);
+    const { items } = await Activities.findPage(db, { userId: SEED_USER_ID }, { limit: 100, page: 1 });
+    expect(items.filter((item) => item.type === "createClassLevel" && item.targetId !== saved.created[0].id)).toEqual(
+      [],
+    );
   });
 
   test("returns 404 for a missing ruleset, class or level, a class or a level named in its rules' word", async () => {

@@ -14,6 +14,7 @@ export type {
   LinkSet,
   LinkWrite,
   MadeEntity,
+  OwnedCreateManyPlan,
   OwnedCreatePlan,
   OwnedDeletePlan,
   OwnedEditPlan,

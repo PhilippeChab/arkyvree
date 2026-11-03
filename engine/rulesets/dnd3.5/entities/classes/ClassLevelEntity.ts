@@ -225,6 +225,20 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     return [...feats, ...links.filter((link) => !isFeat(link))];
   }
 
+  /**
+   * A new level among several (`form`, the `index`th of them), planned as its own create is (`planCreate`): a refusal
+   * of its form names it by its place among them (`owned.2.position`).
+   */
+  private planEach(form: EntityForm, index: number) {
+    try {
+      return this.planCreate(form);
+    } catch (error) {
+      if (!(error instanceof RulesError) || !error.issues) throw error;
+      const issues = error.issues.map((issue) => ({ ...issue, category: `owned.${index}.${issue.category}` }));
+      throw new RulesError(error.refusal, error.message, issues);
+    }
+  }
+
   /** What a new level of a number the class already has (`level`) is refused with: "Fighter already has a level 3". */
   private taken(level: number) {
     return `${this.klass.name} already has a level ${level}`;
@@ -241,5 +255,27 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
       babLabel: CombatSheet.formatBab(this.fieldsOf(levels[index]).bab),
       links: this.linksIn(level.id),
     }));
+  }
+
+  /**
+   * New levels of the class at once (`forms`, each a level's, as `planCreate` reads it: levels 6 to 15 of a class that
+   * has 5), each planned as its own create is, a refusal of one naming it by its place among them; refused as invalid
+   * when there are more than a class has levels, or two give one number. What their one activity records: the class's
+   * name and the levels' numbers, in order.
+   */
+  planCreateMany(forms: readonly EntityForm[]) {
+    if (forms.length > RULESET_LIMITS.classLevel) {
+      const issue = { category: "owned", message: `A class has at most ${RULESET_LIMITS.classLevel} levels` };
+      throw new RulesError("invalid", issue.message, [issue]);
+    }
+    const created = forms.map((form, index) => this.planEach(form, index));
+    const positions = created.map((plan) => plan.row.position);
+    const repeated = positions.findIndex((position, index) => positions.indexOf(position) !== index);
+    if (repeated >= 0) {
+      const issue = { category: `owned.${repeated}.position`, message: `Level ${positions[repeated]} is listed twice` };
+      throw new RulesError("invalid", issue.message, [issue]);
+    }
+    const activity = { entityName: this.klass.name, positions: positions.toSorted((a, b) => a - b) };
+    return { activity, created, owner: this.klass };
   }
 }

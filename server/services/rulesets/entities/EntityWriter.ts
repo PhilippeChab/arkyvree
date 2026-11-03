@@ -71,6 +71,9 @@ interface WrittenEntity {
   entityType: string;
 }
 
+/** An owned entity's create, as its owner's rules plan it: what refuses it when its owner holds one at its place. */
+type OwnedCreate = EntityCreatePlan & { taken: string };
+
 /** An owned entity's plan: what its activity carries beside the plan. */
 type OwnedPlan<P> = P & { activity: Record<string, unknown> };
 
@@ -101,14 +104,15 @@ function linksOf(entity: WrittenEntity, { links, role, toType }: LinkSet) {
 /**
  * Writes a save of an entity as its rules plan it, every kind's and every save's in one order and by one rule: a
  * ruleset entity's create, update and delete (`type`), and those of the entities it owns (its class levels, by
- * `createOwned`, `updateOwned` and `deleteOwned`), each in its transaction and its ruleset's scope. A save checks
- * access, keeps a name free (a create's, taking over a deleted copy's tombstone, and a rename's), and writes the row
- * copy-on-write resolves (`EntityEdit`: the ruleset's own, or the copy of an inherited one, made on its first edit; an
- * owned entity's on its owner's), under the ruleset's lock (`withRulesetWrite`): refused as not found when its fresh
- * view doesn't show it, and as stale when the client's token is behind (a copy's never is). Then its links
- * (`setLinks`), then what its plan writes beside it (`writeBeside`: the entities it removes, then those it makes). A
- * delete is refused while the entity is in use (`EntityUses`). Each first opens the kind's rules for its action
- * (`open`), records its activity (its verb and the written kind's name), and the ruleset's views drop what it changed.
+ * `createOwned`, `createOwnedMany`, `updateOwned` and `deleteOwned`), each in its transaction and its ruleset's scope.
+ * A save checks access, keeps a name free (a create's, taking over a deleted copy's tombstone, and a rename's), and
+ * writes the row copy-on-write resolves (`EntityEdit`: the ruleset's own, or the copy of an inherited one, made on its
+ * first edit; an owned entity's on its owner's), under the ruleset's lock (`withRulesetWrite`): refused as not found
+ * when its fresh view doesn't show it, and as stale when the client's token is behind (a copy's never is). Then its
+ * links (`setLinks`), then what its plan writes beside it (`writeBeside`: the entities it removes, then those it
+ * makes). A delete is refused while the entity is in use (`EntityUses`). Each first opens the kind's rules for its
+ * action (`open`), records its activity (its verb and the written kind's name), and the ruleset's views drop what it
+ * changed.
  */
 export default class EntityWriter {
   constructor(
@@ -139,6 +143,26 @@ export default class EntityWriter {
       tx,
       made.requirements.map((requirement) => ({ ...written, ...requirement })),
     );
+  }
+
+  /**
+   * A new entity an owner holds, as its create's plan writes it (`planned`, of `type`), on the owner's row the write
+   * targets (`ownerId`: its copy, for an inherited owner): its row, refused as its plan says (`taken`) when the owner
+   * holds one at its place, then its links and what its form writes beside it. What its plan answers once written.
+   */
+  private static async makeOwned(
+    tx: Db,
+    scope: LockedRulesetScope,
+    policy: RulesetsPolicy,
+    owned: { ownerId: string; planned: OwnedCreate; type: string },
+  ) {
+    const { ownerId, planned, type } = owned;
+    const [row] = await withUniqueRefusal(
+      () => Entities.create<Row>(tx, type, { ...planned.row, ownerId }),
+      (index) => (index === OWNED_POSITION_INDEX ? new ConflictError(planned.taken) : undefined),
+    );
+    await EntityWriter.setParts(tx, scope, policy, { entityId: row.id, entityType: type }, planned, false);
+    return planned.describe(row, await EntityLinks.findOwn(tx, row.id));
   }
 
   /** Records what a save did to an entity of a kind (`type`, by `verb`), with what the activity carries. */
@@ -347,7 +371,7 @@ export default class EntityWriter {
    * form writes beside it. Refused as its plan says (`taken`) when its owner holds one at its place. What its plan
    * answers once written (`describe`: the row, with its links as stored).
    */
-  async createOwned<P extends OwnedPlan<EntityCreatePlan & { owner: PlannedEntity; taken: string }>>(
+  async createOwned<P extends OwnedPlan<OwnedCreate & { owner: PlannedEntity }>>(
     session: Session,
     rulesetId: string,
     plan: (scope: RulesetScope) => OwnedPlanned<P>,
@@ -356,14 +380,36 @@ export default class EntityWriter {
       policy.canUpdateEntity();
       const { plan: planned, type } = plan(scope);
       const owner = await new EntityEdit(scope).cowToEdit(tx, this.type, planned.owner);
-      const [row] = await withUniqueRefusal(
-        () => Entities.create<Row>(tx, type, { ...planned.row, ownerId: owner.id }),
-        (index) => (index === OWNED_POSITION_INDEX ? new ConflictError(planned.taken) : undefined),
-      );
-      await EntityWriter.setParts(tx, scope, policy, { entityId: row.id, entityType: type }, planned, false);
+      const created = await EntityWriter.makeOwned(tx, scope, policy, { ownerId: owner.id, planned, type });
 
-      await EntityWriter.recordActivity(tx, session, "create", type, row.id, planned.activity);
-      return planned.describe(row, await EntityLinks.findOwn(tx, row.id));
+      await EntityWriter.recordActivity(tx, session, "create", type, created.id, planned.activity);
+      return created;
+    });
+  }
+
+  /**
+   * New entities an entity owns, several at once (a class's levels 6 to 15), as its owner's rules plan them (`plan`:
+   * each one's create, by place, and the owned entities' type): its owner copied once when it's inherited, then each
+   * written as `createOwned` writes its own, in one transaction, all or none, and recorded as one activity, on the
+   * first. Answers the owner they were made on (`ownerId`: its copy, when the write copied it) and each entity as its
+   * plan answers it once written (`created`), in the plan's order.
+   */
+  async createOwnedMany<P extends OwnedPlan<{ created: OwnedCreate[]; owner: PlannedEntity }>>(
+    session: Session,
+    rulesetId: string,
+    plan: (scope: RulesetScope) => OwnedPlanned<P>,
+  ) {
+    return await withRulesetWrite(session, rulesetId, async (tx, scope, policy) => {
+      policy.canUpdateEntity();
+      const { plan: planned, type } = plan(scope);
+      const owner = await new EntityEdit(scope).cowToEdit(tx, this.type, planned.owner);
+      const created: Awaited<ReturnType<typeof EntityWriter.makeOwned>>[] = [];
+      for (const each of planned.created)
+        created.push(await EntityWriter.makeOwned(tx, scope, policy, { ownerId: owner.id, planned: each, type }));
+
+      const [first] = created;
+      if (first) await EntityWriter.recordActivity(tx, session, "create", type, first.id, planned.activity);
+      return { created, ownerId: owner.id };
     });
   }
 

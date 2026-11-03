@@ -71,6 +71,47 @@ test.describe("A class created in a fork", () => {
   });
 });
 
+// A new class's first ten levels in one dialog: each track's preset picked once, every level taking its value there.
+test.describe("A class built from scratch", () => {
+  test("gets ten levels at once, each track following the preset picked for it", async ({ page, ownerUser }) => {
+    await signIn(page, ownerUser.email, ownerUser.password);
+    const forkId = await forkCoreRuleset(page, uniqueName("Levels Fork"));
+    const classId = await parseResponse(
+      apiOf(page).api.rulesets[":id"].entities[":entityType"].$post({
+        param: { id: forkId, entityType: "classes" },
+        json: { name: uniqueName("Batch Class") },
+      }),
+    ).then((created) => created.id);
+    await page.goto(`/rulesets/${forkId}/classes/${classId}/progression`);
+    await expect(page.getByText("No levels", { exact: true })).toBeVisible({ timeout: 10_000 });
+
+    await page.getByRole("button", { name: "Add Level" }).click();
+    await page.getByRole("dialog", { name: "Create New Level" }).getByRole("button", { name: "10" }).click();
+    const levels = page.getByRole("dialog", { name: "Create New Levels" });
+    await expect(levels.getByText("Levels 1 to 10", { exact: true })).toBeVisible();
+    await levels.getByRole("group", { name: "Base Attack Bonus" }).getByRole("button", { name: "Medium (¾)" }).click();
+    await levels.getByRole("group", { name: "Fortitude" }).getByRole("button", { name: "Good" }).click();
+    await levels.getByRole("group", { name: "Reflex" }).getByRole("button", { name: "Poor" }).click();
+    await levels.getByRole("group", { name: "Will" }).getByRole("button", { name: "Poor" }).click();
+    await levels.getByLabel("Skill Points").fill("4");
+    const created = apiResponse(page, "POST", /\/entities\/classes\/[a-f0-9-]+\/owned\/many$/);
+    await levels.getByRole("button", { name: "Create" }).click();
+    await created;
+
+    // The table shows them at once: the tenth's medium base attack bonus, good Fortitude, poor Reflex and Will
+    await expect(page.getByText("10 class levels created")).toBeVisible();
+    const tenth = page.getByRole("row").filter({ has: page.getByRole("cell", { name: "+7/+2", exact: true }) });
+    await expect(tenth).toHaveCount(1, { timeout: 10_000 });
+    await expect(tenth.getByRole("cell", { name: "+7", exact: true })).toHaveCount(1);
+    await expect(tenth.getByRole("cell", { name: "+3", exact: true })).toHaveCount(2);
+    await expect(tenth.getByRole("cell", { name: "4", exact: true })).toBeVisible();
+    // Its Progression reads the presets they follow
+    await expect(
+      page.getByRole("group", { name: "Base Attack Bonus" }).getByRole("button", { name: "Medium (¾)" }),
+    ).toHaveAttribute("aria-pressed", "true");
+  });
+});
+
 // A class's Progression tab: a preset its base attack bonus follows, its skill points, and one save of both, which
 // copies an inherited class into the fork.
 test.describe("A class's progression", () => {

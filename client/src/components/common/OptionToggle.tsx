@@ -1,5 +1,5 @@
 import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
-import { type ElementType } from "react";
+import { type ElementType, useId } from "react";
 
 interface OptionToggleProps<T extends boolean | string> {
   /** What the choice means, under its buttons. */
@@ -30,13 +30,16 @@ export function OptionToggle<T extends boolean | string>({
   disabled,
   caption,
 }: OptionToggleProps<T>) {
+  const labelId = useId();
   return (
     <Box>
-      <Typography variant="subtitle2" component="p" gutterBottom sx={{ color: "text.secondary" }}>
+      <Typography id={labelId} variant="subtitle2" component="p" gutterBottom sx={{ color: "text.secondary" }}>
         {label}
       </Typography>
       <Stack spacing={1} sx={{ alignItems: "flex-start" }}>
         <ToggleButtonGroup
+          // Its buttons are a group its label names
+          aria-labelledby={labelId}
           value={value}
           exclusive
           onChange={(_, next: T | null) => next !== null && onChange(next)}

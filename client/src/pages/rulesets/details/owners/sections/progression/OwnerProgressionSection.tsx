@@ -20,7 +20,6 @@ import { entityTypeLabel, formatWordCount, positionWordsOf, withArticle } from "
 import {
   nextOwned,
   omittedPlacesOf,
-  type OwnedFormData,
   ownedListsOf,
   type OwnedRead,
   readOwned,
@@ -29,7 +28,10 @@ import {
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { RulesetSectionTable } from "@/client/src/pages/rulesets/components/index.ts";
 import { customizationEntityQuery } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
-import { CreateOwnedDialog } from "@/client/src/pages/rulesets/details/owners/components/index.ts";
+import {
+  CreateOwnedDialog,
+  type OwnedCreateFormData,
+} from "@/client/src/pages/rulesets/details/owners/components/index.ts";
 import { ownedPageOf } from "@/client/src/pages/rulesets/details/owners/ownerKind.ts";
 import {
   ownedEntitiesQuery,
@@ -47,6 +49,7 @@ import { isRecord } from "@/shared/isRecord.ts";
 import { toSentenceCase } from "@/shared/text.ts";
 
 import { CHANGED_CELL_SX } from "./changedCell.ts";
+import { buildOwnedBatch, defaultBatchChoices, listBatchCounts, type OwnerTrack } from "./ownedBatch.ts";
 import { OwnerFeaturesCard } from "./OwnerFeaturesCard.tsx";
 import {
   amountTrackKey,
@@ -59,21 +62,12 @@ import {
   withAddedFeatures,
   withAddedPools,
 } from "./progressionDraft.ts";
-import { detectPreset, formatTrackValue, presetsOf, type ProgressionTrack } from "./progressionPresets.ts";
+import { detectPreset, formatTrackValue, presetsOf } from "./progressionPresets.ts";
 import { ProgressionSaveBar } from "./ProgressionSaveBar.tsx";
 import { ProgressionTrackRow } from "./ProgressionTrackRow.tsx";
+import { useCreateOwnedBatch } from "./useCreateOwnedBatch.ts";
 import { useProgressionDraft } from "./useProgressionDraft.ts";
 import { useProgressionSave } from "./useProgressionSave.ts";
-
-/**
- * A track the tab edits: its key, its label (an entity's name, for a track of an owned entity's amounts: 3.5's saves),
- * and its rules' track: its bounds, how its values read, and the progressions it can follow.
- */
-interface Track {
-  key: TrackKey;
-  label: string;
-  rules: ProgressionTrack;
-}
 
 /** A pool of a progression's answer: its `id`, its name and its picks by owned entity. */
 function readPool(pool: unknown): PoolRow[] {
@@ -183,14 +177,28 @@ export function OwnerProgressionSection({
   // An owned entity's position's word, which names one ("Level 3"), and as a sentence says it ("level", "levels")
   const positionWord = positionWordsOf(ownedType, rules?.words);
   const [positionSingular, positionPlural] = [positionWord.one.toLowerCase(), positionWord.many.toLowerCase()];
+  const tracks = trackRules.flatMap((rules): OwnerTrack[] =>
+    rules.source === "amounts"
+      ? (amountEntities ?? []).map((entity) => ({
+          key: amountTrackKey(entity.id),
+          label: entity.name,
+          rules,
+          toId: entity.id,
+        }))
+      : [{ key: rules.key, label: rules.label, rules }],
+  );
+  // Its create opens on one, from which a run of several up to the last position can be picked instead, each track
+  // starting at what the owner's own follow
+  const next = nextOwned(ownedEntities, ownedLists);
+  const batchDefaults = defaultBatchChoices(tracks, ownedEntities);
   const { createDialogProps, handleCreate } = useRulesetSection({
-    createDefaults: withEntityFields(nextOwned(ownedEntities, ownedLists), ownedFields, savedRows.at(-1)),
+    createDefaults: { ...withEntityFields(next, ownedFields, savedRows.at(-1)), choices: batchDefaults, count: 1 },
     rulesetId,
     label: toSentenceCase(ownedWord),
     query,
     data: ownedRows,
     queryKeysToInvalidate,
-    createFn: async (form: OwnedFormData) =>
+    createFn: async ({ choices: _choices, count: _count, ...form }: OwnedCreateFormData) =>
       tag(
         parseResponse(
           rpc.api.rulesets[":id"].entities[":entityType"][":entityId"].owned.$post({
@@ -202,12 +210,22 @@ export function OwnerProgressionSection({
     // The owner the owned entity was made on: the copy an edit of an inherited owner made, its owner
     onCreateSuccess: (created) => followCopy(created.ownerId ?? ownerId, created.sourceEntityId),
   });
-
-  const tracks = trackRules.flatMap((rules): Track[] =>
-    rules.source === "amounts"
-      ? (amountEntities ?? []).map((entity) => ({ key: amountTrackKey(entity.id), label: entity.name, rules }))
-      : [{ key: rules.key, label: rules.label, rules }],
+  const createBatch = useCreateOwnedBatch(
+    rulesetId,
+    ownerId,
+    { ownerType, what: entityTypeLabel(ownedType, rules?.words, true) },
+    createDialogProps.onClose,
   );
+  // Several at once go in one request of their own; one, as it always did
+  const handleCreateSubmit = (data: OwnedCreateFormData) => {
+    if (data.count <= 1) {
+      createDialogProps.onSubmit(data);
+      return;
+    }
+    // A track whose entities loaded after the dialog opened starts where its defaults say, as its toggle shows
+    const choices = { ...batchDefaults, ...data.choices };
+    createBatch.mutate(buildOwnedBatch(data.position, data.count, tracks, choices, ownedLists));
+  };
   const valuesOf = (read: (ownedEntity: OwnedRead) => number) =>
     ownedEntities.map((ownedEntity) => ({
       ownedId: ownedEntity.id,
@@ -501,11 +519,25 @@ export function OwnerProgressionSection({
       )}
       <CreateOwnedDialog
         {...createDialogProps}
+        onSubmit={handleCreateSubmit}
+        pending={createDialogProps.pending || createBatch.isPending}
         rulesetId={rulesetId}
         baseRules={ruleset.baseRules}
+        counts={listBatchCounts(next.position, progressionRules?.lastPosition)}
         lists={ownedLists}
         omitted={omitted}
         ownedType={ownedType}
+        // Several made at once send every amount: they wait for the entities they're of
+        submitDisabled={!!ownedLists.amounts && !amountEntities}
+        tracks={tracks.map((track) => ({
+          initial: batchDefaults[track.key],
+          key: track.key,
+          label: track.label,
+          max: track.rules.max,
+          min: track.rules.min,
+          presets: presetsOf(track.rules),
+          unitLabel: track.rules.unitLabel,
+        }))}
       />
     </Stack>
   );

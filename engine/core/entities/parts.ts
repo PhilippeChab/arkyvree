@@ -8,6 +8,7 @@ import type { EntityForm } from "@/engine/core/fields/index.ts";
 import type {
   LinkAddPlan,
   LinkRemovePlan,
+  OwnedCreateManyPlan,
   OwnedCreatePlan,
   OwnedDeletePlan,
   OwnedEditPlan,
@@ -42,12 +43,13 @@ export interface EntityTables {
 
 /**
  * The entities an entity owns, of their kind (`type`: a class's levels): one described, all of them, and what saving
- * or deleting one writes.
+ * or deleting one writes, and creating several at once.
  */
 export interface OwnedEntities {
   describe(id: string): unknown;
   describeAll(): unknown;
   planCreate(form: EntityForm): OwnedCreatePlan;
+  planCreateMany(forms: readonly EntityForm[]): OwnedCreateManyPlan;
   planDelete(id: string): OwnedDeletePlan<{ id: string }>;
   planEdit(id: string, form: EntityForm): OwnedEditPlan<{ id: string }>;
   readonly type: string;

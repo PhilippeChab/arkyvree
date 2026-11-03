@@ -1,2 +1,2 @@
 export { OwnerDetails } from "./OwnerDetails.tsx";
-export { CreateOwnedDialog, RemoveLinkDialog } from "./OwnerDialogs.tsx";
+export { type BatchTrack, CreateOwnedDialog, type OwnedCreateFormData, RemoveLinkDialog } from "./OwnerDialogs.tsx";

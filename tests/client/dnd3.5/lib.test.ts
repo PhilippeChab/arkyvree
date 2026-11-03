@@ -273,12 +273,17 @@ describe("An activity", () => {
     const dnd35 = { baseRules: "Dungeons & Dragons: 3.5", actorName: "Ann", entityName: "Fighter" };
     expect([
       formatNotificationMessage("createClassLevel", dnd35, RULES),
+      // Several made at once say how many
+      formatNotificationMessage("createClassLevel", { ...dnd35, positions: [6, 7, 8, 9, 10] }, RULES),
+      formatNotificationMessage("createClassLevel", { ...dnd35, positions: [6] }, RULES),
       formatNotificationMessage("updateClassLevel", { actorName: "Ann" }, RULES),
       formatNotificationMessage("deleteClassLevel", dnd35, RULES),
       formatNotificationMessage("updateClassProgression", dnd35, RULES),
       formatNotificationMessage("addClassSkill", { ...dnd35, toName: "Climb" }, RULES),
       formatNotificationMessage("removeClassSkill", { actorName: "Ann" }, RULES),
     ]).toEqual([
+      "Ann added a level to Fighter",
+      "Ann added 5 levels to Fighter",
       "Ann added a level to Fighter",
       "Ann updated a level of a class",
       "Ann removed a level from Fighter",
@@ -310,6 +315,12 @@ describe("An activity", () => {
     expect(
       formatActivityDetails("updateClassLevel", { baseRules: "Dungeons & Dragons: 3.5", position: 3 }, RULES),
     ).toBe("Level 3");
+    // Several made at once: a run of them, or each
+    expect([
+      formatActivityDetails("createClassLevel", { baseRules: "Dungeons & Dragons: 3.5", positions: [6, 7, 8] }, RULES),
+      formatActivityDetails("createClassLevel", { baseRules: "Dungeons & Dragons: 3.5", positions: [1, 3, 5] }, RULES),
+      formatActivityDetails("createClassLevel", { baseRules: "Dungeons & Dragons: 3.5", positions: [4] }, RULES),
+    ]).toEqual(["Levels 6 to 8", "Levels 1, 3 and 5", "Level 4"]);
     // A field reads as its own entity's field, by the stored field or the role that keeps it, never another's: a
     // class's hit die, a language's type, a skill's ability by its link's role, which says only that it changed
     const baseRules = "Dungeons & Dragons: 3.5";

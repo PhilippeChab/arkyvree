@@ -71,6 +71,8 @@ A ruleset can't be deleted: Archive it when you want to step away from it withou
 
 A class's **Progression** tab shows its table, level by level, and edits it all at once. Nothing is written until **Save Progression**, which lists every change first.
 
+**Add Level** adds the class's next level, starting from its highest level's values. To build a class from scratch, pick **5**, **10** or **20** under **Levels to Create** (cut short at level 20): you pick the base attack bonus, each save and the skill points once, and every new level takes its value at its own number. "Levels 1 to 10, base attack Medium, Fortitude Good, Reflex Poor, Will Good, 4 skill points" makes ten levels, which the table shows straight away. They're all made or none is: if one can't be (the class already has that level), nothing is.
+
 - **Base attack bonus and saves** follow a preset: Good, Medium or Poor for the base attack bonus, Good or Poor for a save. Clicking one sets every level. **Custom** (or **Edit Levels**, for a class that follows no preset) shows each level's value, greyed where it follows the preset, so you only type the levels that differ; **Set Levels** sets, raises or lowers a range of levels at once.
 - **Skill points** are one number a level, or set level by level (**Vary by Level**) for a class whose levels differ.
 - **Familiar, Animal Companion and Special Mount** have no base attack bonus, saves or skill points columns: a familiar takes its master's base attack bonus, saves and skill ranks, and an animal companion and a special mount work theirs out from their Hit Dice (a mount takes its master's saves where they're better). Their levels follow their master's, so they spend no skill points.

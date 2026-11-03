@@ -12,8 +12,11 @@ import type { RulesDescription, RulesDescriptions, RulesWords } from "./queries.
 import {
   entityTypeLabel,
   entityTypeOfActivityName,
+  formatWordCount,
   getActivityLabelOverrides,
+  type PositionWord,
   positionWordOf,
+  positionWordsOf,
   withArticle,
 } from "./rulesetLabels.ts";
 
@@ -83,12 +86,15 @@ const NOTIFICATION_MESSAGES: Record<string, (actor: string, d: Record<string, un
 };
 
 /**
- * What the position an activity records (`position`, of the owned entity it's about) reads in: the word of the type it
- * names (`entityType`: its position's, else its own, `positionWordOf`), never another type's; before its rules are in,
- * or for a type they have no word for, the type its activity names, as a label spells it (`name`: "Owner Level").
+ * What the positions an activity records (`position`, of the owned entity it's about; `positions`, of several made at
+ * once) read in, singular and plural: the word of the type it names (`entityType`: its position's, else its own,
+ * `positionWordsOf`), never another type's; before its rules are in, or for a type they have no word for, the type its
+ * activity names, as a label spells it (`name`: "Owner Level"), in both.
  */
-function activityPositionWord(name: string, entityType: string | undefined, words: RulesWords | undefined) {
-  return entityType ? positionWordOf(entityType, words) : formatSegment(name);
+function activityPositionWords(name: string, entityType: string | undefined, words: RulesWords | undefined) {
+  if (entityType) return positionWordsOf(entityType, words);
+  const word = formatSegment(name);
+  return { many: word, one: word };
 }
 
 /**
@@ -186,6 +192,15 @@ function formatLinksChange(change: ChangedLinks, tierNames: TierNames): string {
   return `${change.label}: ${parts.join("; ")}`;
 }
 
+/** Positions as a list in their word: a run "Levels 6 to 15", others "Levels 1, 3 and 5", one "Level 6". */
+function formatPositions(positions: readonly number[], word: PositionWord) {
+  const [first] = positions;
+  const last = positions.at(-1) ?? first;
+  if (positions.length === 1) return `${word.one} ${first}`;
+  if (positions.every((position, index) => position === first + index)) return `${word.many} ${first} to ${last}`;
+  return `${word.many} ${positions.slice(0, -1).join(", ")} and ${last}`;
+}
+
 /**
  * A ruleset's change to what one of its entities holds, as its notification says it, by its type, as its rules describe
  * it (`rules`, its base rules', else every base rules'): a position of a kind another owns, an owned entity being one
@@ -196,6 +211,7 @@ function formatLinksChange(change: ChangedLinks, tierNames: TierNames): string {
  */
 function heldChange(type: string, actor: string, d: Record<string, unknown>, rules: RulesDescriptions | undefined) {
   const baseRules = oneOf(d.baseRules, BASE_RULES_OPTIONS);
+  const made = positionsOf(d).length;
   const described = baseRules ? [rules?.[baseRules]] : Object.values(rules ?? {});
   for (const each of described) {
     if (!each) continue;
@@ -205,7 +221,9 @@ function heldChange(type: string, actor: string, d: Record<string, unknown>, rul
       if (!owner) continue;
       const name = getActivityName(owned);
       const position = withArticle(positionWordOf(owned, each.words).toLowerCase());
-      if (type === `create${name}`) return `${actor} added ${position} to ${of(owner)}`;
+      // Several made at once say how many ("Ann added 10 levels to Fighter")
+      const added = made > 1 ? formatWordCount(made, positionWordsOf(owned, each.words)) : position;
+      if (type === `create${name}`) return `${actor} added ${added} to ${of(owner)}`;
       if (type === `update${name}`) return `${actor} updated ${position} of ${of(owner)}`;
       if (type === `delete${name}`) return `${actor} removed ${position} from ${of(owner)}`;
     }
@@ -240,6 +258,11 @@ function isChangedLinks(value: unknown): value is ChangedLinks {
 /** An activity's payload: the fields its type records, or none. */
 function payload(data: unknown): Record<string, unknown> {
   return isRecord(data) ? data : {};
+}
+
+/** The positions of the owned entities an activity made at once (`positions`, in order), none for another. */
+function positionsOf(d: Record<string, unknown>): number[] {
+  return Array.isArray(d.positions) ? d.positions.filter((position) => typeof position === "number") : [];
 }
 
 /**
@@ -299,9 +322,13 @@ export function formatActivityDetails(type: string, data: unknown, rules?: Rules
     else if (isChangedLinks(change)) parts.push(formatLinksChange(change, tiersOf(d, rules)));
   }
 
-  // A position, else an older row's `level`, which 0112 left where its data was no `jsonb`
+  // A position, else an older row's `level`, which 0112 left where its data was no `jsonb`; several made at once,
+  // theirs
   const position = d.position ?? d.level;
-  if (position != null) parts.push(`${activityPositionWord(name, entityType, words)} ${position}`);
+  const positionWords = activityPositionWords(name, entityType, words);
+  if (position != null) parts.push(`${positionWords.one} ${position}`);
+  const positions = positionsOf(d);
+  if (positions.length > 0) parts.push(formatPositions(positions, positionWords));
 
   // A link's target, as every link's activity records it: a class skill's added or removed
   if (typeof d.toName === "string" && d.toName) parts.push(d.toName);
