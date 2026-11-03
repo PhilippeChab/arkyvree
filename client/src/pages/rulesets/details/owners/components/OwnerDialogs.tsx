@@ -18,6 +18,8 @@ interface BatchCountFieldProps {
 
 interface BatchTrackFieldProps {
   form: UseFormReturn<OwnedCreateFormData>;
+  /** The positions what it makes takes, which a choice's values are said at */
+  positions: readonly number[];
   track: BatchTrack;
 }
 
@@ -64,6 +66,8 @@ interface RemoveLinkDialogProps {
  * "Points a Level").
  */
 export interface BatchTrack {
+  /** What a choice gives what it makes, at their positions, under its toggle ("+16 at level 16, +18 at level 20") */
+  describe?: (choice: number | string, positions: readonly number[]) => string | undefined;
   initial: number | string;
   key: string;
   label: string;
@@ -97,23 +101,25 @@ function BatchCountField({ counts, form, positionWord }: BatchCountFieldProps) {
 
 /**
  * A track's preset across the owned entities made at once, one of its presets' toggle: what it starts at until one is
- * picked (a track whose entities loaded after the dialog opened holds none yet).
+ * picked (a track whose entities loaded after the dialog opened holds none yet), and what it gives them under it.
  */
-function BatchPresetField({ form, track }: BatchTrackFieldProps) {
+function BatchPresetField({ form, positions, track }: BatchTrackFieldProps) {
   const { field } = useController({ control: form.control, name: `choices.${track.key}` });
+  const choice = String(field.value ?? track.initial);
   return (
     <OptionToggle
       label={track.label}
       options={track.presets.map(({ key, label }) => ({ label, value: key }))}
-      value={String(field.value ?? track.initial)}
+      value={choice}
       onChange={field.onChange}
+      caption={track.describe?.(choice, positions)}
     />
   );
 }
 
 /** What a track follows across the owned entities made at once: a preset, or its number at each, in its bounds. */
-function BatchTrackField({ form, track }: BatchTrackFieldProps) {
-  if (track.presets.length > 0) return <BatchPresetField form={form} track={track} />;
+function BatchTrackField({ form, positions, track }: BatchTrackFieldProps) {
+  if (track.presets.length > 0) return <BatchPresetField form={form} positions={positions} track={track} />;
   return (
     <FormTextField
       control={form.control}
@@ -169,7 +175,7 @@ export function CreateOwnedDialog({
       )}
       {counts.length > 1 && <BatchCountField counts={counts} form={form} positionWord={positionWord} />}
       {tracks.map((track) => (
-        <BatchTrackField key={track.key} form={form} track={track} />
+        <BatchTrackField key={track.key} form={form} positions={positions} track={track} />
       ))}
     </CreateDialog>
   );

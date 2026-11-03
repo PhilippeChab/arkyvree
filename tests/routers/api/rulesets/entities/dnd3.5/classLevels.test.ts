@@ -256,6 +256,27 @@ describe("rulesets class levels", () => {
     expect(await levelNumbers()).toEqual([3]);
   });
 
+  test("deletes a class's last level alone, which a level's page says, so its levels keep no gap", async () => {
+    const { id, classId } = await setup();
+    const saved = await expectOk(
+      severalLevels.$post({ param: classParam(id, classId), json: { owned: levelsAt([1, 2, 3]) } }),
+    );
+    const [first, , third] = saved.created;
+    const byId = api.api.rulesets[":id"].entities[":entityType"].owned[":ownedId"];
+    const deletable = async (ownedId: string) =>
+      (await expectOk(byId.$get({ param: { id, entityType: "classes", ownedId } }))).deletable;
+    expect([await deletable(first.id), await deletable(third.id)]).toEqual([false, true]);
+
+    const refused = level.$delete({ param: { ...classParam(id, classId), ownedId: first.id } });
+    expect(await (await expectStatus(refused, 409)).json()).toMatchObject({
+      message: "Only Level Class's last level, level 3, can be deleted",
+    });
+    // Its last, then the one below it
+    for (const ownedId of [third.id, saved.created[1].id, first.id])
+      await expectOk(level.$delete({ param: { ...classParam(id, classId), ownedId } }));
+    expect(await expectOk(levels.$get({ param: classParam(id, classId) }))).toEqual([]);
+  });
+
   test("creates several levels on an inherited class's copy, made once", async () => {
     const { id, classId } = await setup();
     const fork = await createTestRuleset(SEED_USER_ID, { rulesetId: id });

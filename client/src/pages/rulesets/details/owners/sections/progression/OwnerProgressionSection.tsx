@@ -53,7 +53,9 @@ import {
   defaultBatchChoices,
   listBatchCounts,
   listOpenPositions,
+  listTrackValues,
   type OwnerTrack,
+  type ShownOwned,
 } from "./ownedBatch.ts";
 import { OwnerFeaturesCard } from "./OwnerFeaturesCard.tsx";
 import {
@@ -194,7 +196,22 @@ export function OwnerProgressionSection({
     ownedEntities.map(({ position }) => position),
     progressionRules?.lastPosition,
   );
-  const batchDefaults = defaultBatchChoices(tracks, ownedEntities);
+  // What it makes starts and carries on from the owner as the table shows it: its Progression's edits too, unsaved or
+  // saving, which a save keeps showing until its owned entities are read again
+  const shown: ShownOwned = {
+    entities: ownedEntities,
+    read: (ownedEntity, key) => readEditedTrack(ownedEntity, key, draft.edits),
+  };
+  const batchDefaults = defaultBatchChoices(tracks, shown);
+  // What a track's choice gives what it makes, under its toggle: its first and its last ("+16/+11/+6 at level 16,
+  // +18/+13/+8 at level 20")
+  const describeChoice = (track: OwnerTrack) => (choice: number | string, positions: readonly number[]) => {
+    const values = listTrackValues(track, choice, positions, shown);
+    const at = (index: number) =>
+      `${formatTrackValue(track.rules, values[index])} at ${positionSingular} ${positions[index]}`;
+    if (positions.length === 0) return undefined;
+    return positions.length === 1 ? at(0) : `${at(0)}, ${at(positions.length - 1)}`;
+  };
   const createDefaults: OwnedCreateFormData = { choices: batchDefaults, count: 1 };
   const createDialog = useDialogState();
   const createForm = useFormWith<OwnedCreateFormData>(createDefaults);
@@ -212,7 +229,7 @@ export function OwnerProgressionSection({
   // A track whose entities loaded after the dialog opened starts where its defaults say, as its toggle shows
   const handleCreateSubmit = (data: OwnedCreateFormData) => {
     const choices = { ...batchDefaults, ...data.choices };
-    createOwned.mutate(buildOwnedBatch(open.slice(0, data.count), tracks, choices, ownedLists));
+    createOwned.mutate(buildOwnedBatch(open.slice(0, data.count), tracks, choices, ownedLists, shown));
   };
   const valuesOf = (read: (ownedEntity: OwnedRead) => number) =>
     ownedEntities.map((ownedEntity) => ({
@@ -522,6 +539,7 @@ export function OwnerProgressionSection({
         // Its levels send every amount: they wait for the entities they're of
         submitDisabled={!!ownedLists.amounts && !amountEntities}
         tracks={tracks.map((track) => ({
+          describe: describeChoice(track),
           initial: batchDefaults[track.key],
           key: track.key,
           label: track.label,

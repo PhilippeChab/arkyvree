@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import RulesError from "@/engine/core/RulesError.ts";
 import { Engine } from "@/engine/index.ts";
+import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
@@ -72,6 +73,26 @@ describe("A class's levels", () => {
         message: "Fighter already has a level 3",
         refusal: "conflict",
       });
+    });
+  });
+
+  test("let only a class's last level be deleted, which its page says, so its levels keep no gap", async () => {
+    const { classMap, rulesetId } = await getSeedCtx();
+    await withRulesetScope(db, rulesetId, async (scope) => {
+      const levels = Engine.for(scope).owned("classes", classMap.pc["Fighter"]);
+      const [third, last] = [3, 20].map((position) => {
+        const level = Dnd35View.of(scope.rulesetData).classLevelByClassAndLevel.get(
+          `${classMap.pc["Fighter"]}:${position}`,
+        );
+        if (!level) throw new Error(`Fighter has no level ${position}`);
+        return level.id;
+      });
+      expect(refusalOf(() => levels.planDelete(third))).toEqual({
+        message: "Only Fighter's last level, level 20, can be deleted",
+        refusal: "conflict",
+      });
+      expect(levels.planDelete(last).entity.id).toBe(last);
+      expect([levels.describe(third).deletable, levels.describe(last).deletable]).toEqual([false, true]);
     });
   });
 });

@@ -114,6 +114,15 @@ test.describe("A class built from scratch", () => {
     await expect(
       page.getByRole("group", { name: "Base Attack Bonus" }).getByRole("button", { name: "Medium (¾)" }),
     ).toHaveAttribute("aria-pressed", "true");
+
+    // Set to Good on its Progression, unsaved, the next levels start at Good too: what the table shows
+    await page.getByRole("group", { name: "Base Attack Bonus" }).getByRole("button", { name: "Good (full)" }).click();
+    await page.getByRole("button", { name: "Add Level" }).click();
+    const next = page.getByRole("dialog", { name: "Create New Level" });
+    await expect(next.getByText(`Adds level 11 to ${className}.`, { exact: true })).toBeVisible();
+    await expect(
+      next.getByRole("group", { name: "Base Attack Bonus" }).getByRole("button", { name: "Good (full)" }),
+    ).toHaveAttribute("aria-pressed", "true");
   });
 });
 

@@ -145,10 +145,13 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     return {};
   }
 
-  /** One of the class's levels with all its links and its customizations: refused when it isn't the class's. */
+  /**
+   * One of the class's levels with all its links and its customizations, and whether it can be deleted (`deletable`:
+   * the class's last alone, `checkLast`): refused when it isn't the class's.
+   */
   override describe(levelId: string) {
     const level = super.describe(levelId);
-    return { ...level, links: this.linksIn(level.id) };
+    return { ...level, deletable: level.position >= this.lastPosition(), links: this.linksIn(level.id) };
   }
 
   /** One of the class's levels, as the view has it: refused when there's none, or it isn't the class's. */
@@ -175,9 +178,13 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     };
   }
 
-  /** Deleting one of the class's levels: the class and the level, as the view has them. */
+  /**
+   * Deleting one of the class's levels: the class and the level, as the view has them. Refused for a level the class
+   * has one above (`checkLast`).
+   */
   override planDelete(levelId: string) {
     const plan = super.planDelete(levelId);
+    this.checkLast(plan.entity);
     const activity = { rulesetId: this.view.ruleset.id, entityName: this.klass.name, position: plan.entity.position };
     return { ...plan, activity, owner: this.klass };
   }
@@ -192,9 +199,25 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     return { ...plan, activity: { entityName: this.klass.name, position: plan.entity.position }, owner: this.klass };
   }
 
+  /**
+   * Refuses deleting a level the class has one above: its characters take its levels in order, so a gap would stop them
+   * there ("Only Fighter's last level, level 20, can be deleted"). Its last goes, then the one below it.
+   */
+  private checkLast(level: KlassLevel) {
+    const last = this.lastPosition();
+    if (level.position < last)
+      throw new RulesError("conflict", `Only ${this.klass.name}'s last level, level ${last}, can be deleted`);
+  }
+
   /** The view's 3.5 lists and indices. */
   private get dnd35(): Dnd35View {
     return Dnd35View.of(this.rulesetData);
+  }
+
+  /** The class's highest level's number, as the view has its levels; 0 for a class without one. */
+  private lastPosition() {
+    const levels = this.dnd35.classLevelsByClass.get(this.klass.id) ?? [];
+    return Math.max(0, ...levels.map((level) => level.position));
   }
 
   /**
