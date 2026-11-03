@@ -104,16 +104,16 @@ function linksOf(entity: WrittenEntity, { links, role, toType }: LinkSet) {
 /**
  * Writes a save of an entity as its rules plan it, every kind's and every save's in one order and by one rule: a
  * ruleset entity's create, update and delete (`type`), and those of the entities it owns (its class levels, by
- * `createOwned`, `createOwnedMany`, `updateOwned` and `deleteOwned`), each in its transaction and its ruleset's
- * scope. A save checks access, keeps a name free (a create's, taking over a deleted copy's tombstone, and a rename's), and writes the row
- * copy-on-write resolves (`EntityEdit`: the ruleset's own, or the copy of an inherited one, made on its first edit; an
- * owned entity's on its owner's), under the ruleset's lock (`withRulesetWrite`): refused as not found when its fresh
- * view doesn't show it, and as stale when the client's token is behind (a copy's never is). Then its links
- * (`setLinks`), then what its plan writes beside it (`writeBeside`: the entities it removes, then those it makes). A
- * delete is refused while the entity is in use (`EntityUses`). Each first opens the kind's rules for its action
- * (`open`), records its activity (its verb and the written kind's name), and the ruleset's views drop what it changed;
- * but several entities' edits at once (`updateEntities`: a class's spell list's spells), which write in the caller's
- * transaction, its checks and its one activity the caller's.
+ * `createOwned`, `createOwnedMany`, `updateOwned` and `deleteOwned`), each in its transaction and its ruleset's scope.
+ * A save checks access, keeps a name free (a create's, taking over a deleted copy's tombstone, and a rename's), and
+ * writes the row copy-on-write resolves (`EntityEdit`: the ruleset's own, or the copy of an inherited one, made on its
+ * first edit; an owned entity's on its owner's), under the ruleset's lock (`withRulesetWrite`): refused as not found
+ * when its fresh view doesn't show it, and as stale when the client's token is behind (a copy's never is). Then its
+ * links (`setLinks`), then what its plan writes beside it (`writeBeside`: the entities it removes, then those it
+ * makes). A delete is refused while the entity is in use (`EntityUses`). Each first opens the kind's rules for its
+ * action (`open`), records its activity (its verb and the written kind's name), and the ruleset's views drop what it
+ * changed; but several entities' edits at once (`updateEntities`: a class's spell list's spells), which write in the
+ * caller's transaction, its checks and its one activity the caller's.
  */
 export default class EntityWriter {
   constructor(

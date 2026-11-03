@@ -331,6 +331,7 @@ export function RemoveLinkDialog({ restorable, words, ...props }: RemoveLinkDial
   );
 }
 
+/** The confirmation of an entity's removal from an owner's list (3.5's spell's from a class's spell list). */
 export function RemoveListedDialog({ entityName, listName, restorable, words, ...props }: RemoveListedDialogProps) {
   const what = `${entityName} from ${listName}`;
   return (
