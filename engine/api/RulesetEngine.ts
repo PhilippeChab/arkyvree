@@ -1,6 +1,7 @@
 import type {
   EntityAction,
   EntityLinks,
+  EntityLists,
   EntityProgression,
   EntityTables,
   OwnedEntities,
@@ -19,9 +20,9 @@ import TargetPathsEngine from "./TargetPathsEngine.ts";
 
 /**
  * A part of an entity a kind may have, by its method: the entities it owns, one of them by its id alone, the links it
- * edits, its progression and its tables.
+ * edits, the lists its owned entities count on, its progression and its tables.
  */
-type EntityPart = "describeOwned" | "links" | "owned" | "progression" | "tables";
+type EntityPart = "describeOwned" | "links" | "lists" | "owned" | "progression" | "tables";
 
 /**
  * What a kind (`T`, its rules) answers of a part (`P`), if it has it: none of a kind that hasn't, of each of a union.
@@ -35,6 +36,7 @@ export type ProgressionForm = Accepted<ReturnType<RulesetEngine["progression"]>[
 const PART_WORDS: Readonly<Record<EntityPart, string>> = {
   describeOwned: "owned entities",
   links: "links",
+  lists: "lists",
   owned: "owned entities",
   progression: "progression",
   tables: "tables",
@@ -110,6 +112,14 @@ export default class RulesetEngine {
    */
   links<K extends EntityType>(type: K, ownerId: string) {
     return this.part(type, "links", ownerId) as Extract<PartOf<EntityKinds[K], "links">, EntityLinks>;
+  }
+
+  /**
+   * The lists an entity's owned entities count entities on (`type`, `ownerId`: a class's spell lists): refused for a
+   * kind without.
+   */
+  lists<K extends EntityType>(type: K, ownerId: string) {
+    return this.part(type, "lists", ownerId) as Extract<PartOf<EntityKinds[K], "lists">, EntityLists>;
   }
 
   /** An entity's modifiers (`entityType`, `entityId`). */

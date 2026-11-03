@@ -13,7 +13,8 @@ import { isRecord } from "@/shared/isRecord.ts";
 import { createTestCampaign, inviteToSlot } from "@/tests/support/campaigns.ts";
 import { addRulesetContributor } from "@/tests/support/contributors.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
-import { createTestRuleset } from "@/tests/support/rulesets.ts";
+import { createSeededTestRuleset, createTestRuleset } from "@/tests/support/rulesets.ts";
+import { getSeedCtx } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
 import { CLASS_HD, CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS, FEAT_FAMILY } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -237,6 +238,39 @@ describe("activity notifications", () => {
         baseRules,
       }),
     });
+  });
+
+  // The class is inherited, and its list's spells are written on the fork's copies of them: the fork's owner hears of it
+  test("of a class's spell list go to the fork's owner, one activity a save", async () => {
+    const [owner, author] = await users(2);
+    const fork = await createSeededTestRuleset(owner.user.id);
+    await addRulesetContributor(fork.id, author.user, owner.user.id);
+    const { classMap } = await getSeedCtx();
+    const wizard = classMap.pc["Wizard"];
+    const [list] = (await EntitiesService.getEntityTable(
+      author.session,
+      fork.id,
+      "classes",
+      wizard,
+      "spell-lists",
+    )) as {
+      id: string;
+    }[];
+    const { items: spells } = await EntitiesService.getEntities(
+      author.session,
+      fork.id,
+      "spells",
+      { search: "Bless" },
+      { limit: 10, page: 1 },
+    );
+    const bless = spells.find((spell) => spell.name === "Bless")!.id;
+
+    await EntitiesService.addListedEntities(author.session, fork.id, "classes", wizard, list.id, [bless], 1);
+    await EntitiesService.removeListedEntity(author.session, fork.id, "classes", wizard, list.id, bless);
+
+    expect(await inbox(owner)).toEqual([note("addClassSpell", author), note("removeClassSpell", author)]);
+    const { items } = await Activities.findPage(db, { userId: author.user.id }, { limit: 10, page: 1 });
+    expect(items.map(({ data }) => isRecord(data) && data.rulesetId)).toEqual([fork.id, fork.id]);
   });
 
   test("of a class's levels and its progression go to its ruleset's owner, each its own activity", async () => {

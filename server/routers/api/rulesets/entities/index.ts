@@ -44,6 +44,18 @@ const entityParams = kindParams.extend({ entityId: z.string().uuid() });
 const linkParams = entityParams.extend({ targetId: z.string().uuid() });
 
 /**
+ * What an add to a list sends: the entities, 200 at most (an inherited one is copied under the ruleset's lock), and
+ * their tier on the list (a spell's level), which the kind's rules read and bound.
+ */
+const listedBody = z.object({ targetIds: z.array(z.string().uuid()).min(1).max(200), tier: z.number().optional() });
+
+/** A route's list an entity's owned entities count on (a class's spell list): its entity's params, and the list. */
+const listParams = entityParams.extend({ listId: z.string().uuid() });
+
+/** A route's entity on a list an entity's owned entities count on: its list's params, and the entity. */
+const listedParams = listParams.extend({ targetId: z.string().uuid() });
+
+/**
  * An owned entity's body, its create's and its update's, as it stores it: its fields by stored field, its links by role
  * (a class level's saves' base bonuses, the feats it grants), its place among its owner's (`position`, a new one's: a
  * class level's number), which its owner's kind's rules read, and when it was last read (an update's). No other key.
@@ -76,8 +88,9 @@ const tableParams = entityParams.extend({ table: z.string() });
  * filters: `partition`, `listedIn`…, which its rules read), its page, its create, update and delete, and its kind's
  * actions (its groups and a group's entities, `family`, its templates, a duplicate, variants), and an entity's parts
  * its kind may have: the entities it owns (a class's levels, one by its id alone, several made at once), the links it
- * edits (a class's skills), its progression (and what a save of it would leave its tables at, its `plan`) and its
- * tables.
+ * edits (a class's skills), the entities on the lists its owned entities count on (a class's spell lists' spells,
+ * added several at a tier, to its own list made first where the ruleset has none, and removed one at a time), its
+ * progression (and what a save of it would leave its tables at, its `plan`) and its tables.
  */
 export default new Hono<SessionContext>()
   .get(
@@ -196,6 +209,49 @@ export default new Hono<SessionContext>()
       return c.json(await EntitiesService.addEntityLink(c.var.requestSession, id, entityType, entityId, targetId), 200);
     },
   )
+  // An add to the entity's own list (a class's, named for it), made first where the ruleset has none
+  .post(
+    "/:id/entities/:entityType/:entityId/lists",
+    validate("param", entityParams),
+    validate("json", listedBody),
+    async (c) => {
+      const { id, entityType, entityId } = c.req.valid("param");
+      const { targetIds, tier } = c.req.valid("json");
+      return c.json(
+        await EntitiesService.addListedEntities(
+          c.var.requestSession,
+          id,
+          entityType,
+          entityId,
+          undefined,
+          targetIds,
+          tier,
+        ),
+        200,
+      );
+    },
+  )
+  .post(
+    "/:id/entities/:entityType/:entityId/lists/:listId",
+    validate("param", listParams),
+    validate("json", listedBody),
+    async (c) => {
+      const { id, entityType, entityId, listId } = c.req.valid("param");
+      const { targetIds, tier } = c.req.valid("json");
+      return c.json(
+        await EntitiesService.addListedEntities(
+          c.var.requestSession,
+          id,
+          entityType,
+          entityId,
+          listId,
+          targetIds,
+          tier,
+        ),
+        200,
+      );
+    },
+  )
   .post(
     "/:id/entities/:entityType/:entityId/owned",
     validate("param", entityParams),
@@ -310,6 +366,13 @@ export default new Hono<SessionContext>()
     const { id, entityType, entityId, targetId } = c.req.valid("param");
     return c.json(
       await EntitiesService.removeEntityLink(c.var.requestSession, id, entityType, entityId, targetId),
+      200,
+    );
+  })
+  .delete("/:id/entities/:entityType/:entityId/lists/:listId/:targetId", validate("param", listedParams), async (c) => {
+    const { id, entityType, entityId, listId, targetId } = c.req.valid("param");
+    return c.json(
+      await EntitiesService.removeListedEntity(c.var.requestSession, id, entityType, entityId, listId, targetId),
       200,
     );
   })

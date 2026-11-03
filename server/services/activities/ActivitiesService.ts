@@ -1,12 +1,15 @@
 import { Engine } from "@/engine/index.ts";
+import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import {
   Activities,
   CharacterContributors,
   Contributors,
+  Entities,
   Invites,
   type Pagination,
   Players,
+  RULESET_ENTITY_TYPES,
 } from "@/server/repositories/index.ts";
 import { findReadableCampaign, findVisibleCampaignCharacter } from "@/server/services/campaigns/index.ts";
 import { findReadableCharacter } from "@/server/services/characters/index.ts";
@@ -15,9 +18,10 @@ import { isNavigableTarget } from "@/shared/activity.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import { buildEntityPagePath, hasCustomizationPage } from "@/shared/customization/entities.ts";
 import { BASE_RULES_OPTIONS } from "@/shared/enums.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
 
-import { findContentOwner, findContentRuleset } from "./contentRuleset.ts";
+import { type ContentRow, findContentOwner, findContentRuleset } from "./contentRuleset.ts";
 
 /** Where an activity links to: a page, nowhere (null), or a record the user no longer has access to. */
 type ActivityUrl = string | null | { entityType: "ruleset" | "character"; noAccess: true };
@@ -69,6 +73,24 @@ class ActivitiesService {
   }
 
   /**
+   * The id an entity of a ruleset's content (`entity`, its row in the ruleset `stored`) shows by in another ruleset
+   * (`written`, the one an activity recorded writing: a fork's change to what it inherits, its class's spell list's):
+   * the row its view shows in its place (its own, or its copy where the ruleset copied it since), read as a write finds
+   * it (`EntityEdit`): none once that ruleset or one it's built on deleted it (a tombstone stands for it, its row
+   * gone), nor for an entity it doesn't inherit.
+   */
+  private async findShownIn(written: string, entity: ContentRow, stored: string) {
+    if (!isOneOf(entity.type, RULESET_ENTITY_TYPES)) return undefined;
+    const view = await withRulesetScope(db, written, async (scope) => {
+      const cow = scope.rulesetData.cow;
+      return { chain: [written, ...cow.sourceChain], shownId: cow.resolve(entity.id) };
+    });
+    if (!view.chain.includes(stored)) return undefined;
+    const shown = await Entities.findOne(db, { entityType: entity.type, id: view.shownId });
+    return shown && view.chain.includes(shown.rulesetId) ? shown.id : undefined;
+  }
+
+  /**
    * A campaign invite's link: its invitee goes to the invite until they've accepted it (its page answers a pending one
    * and says what became of the others), then to its campaign's page (`campaignUrl`), as anyone else does.
    */
@@ -105,18 +127,31 @@ class ActivitiesService {
   /**
    * A ruleset's content's page: an owned entity's owner's (a class level's class's); a link of a role an owner edits, the
    * owner's on the tab of its targets (a class's skills, whose activity targets the class); any other entity's, its
-   * customization page when it has one, else its own.
+   * customization page when it has one, else its own. It opens in the ruleset the activity recorded writing (`written`)
+   * where that ruleset shows it (`findShownIn`: a fork's spell list change to the class it inherits), else in its own.
    */
-  private async resolveRulesEntity(session: Session, targetType: string, targetId: string): Promise<string | null> {
+  private async resolveRulesEntity(
+    session: Session,
+    targetType: string,
+    targetId: string,
+    written: string | undefined,
+  ): Promise<string | null> {
     const storage = Engine.storage();
     const target = { id: targetId, type: targetType };
     const edited = storage.editedLinks().get(targetType);
     // An owned entity and an edited link show on their owner's own page, as long as no kind that owns another or edits
     // its links has a customization page (3.5's classes: their customizations are their page's tabs)
     const page = storage.ownerOf(targetType) || edited ? await findContentOwner(db, target) : target;
-    const rulesetId = page && (await findContentRuleset(db, page));
-    if (!page || !rulesetId || !(await this.rulesetUrl(session, rulesetId))) return null;
-    return buildEntityPagePath(rulesetId, page.type, page.id, storage.customizationPages(), edited?.to);
+    const stored = page && (await findContentRuleset(db, page));
+    if (!page || !stored) return null;
+    const pages = storage.customizationPages();
+    // In the ruleset the activity recorded writing, while the session may read it and it shows the entity
+    if (written !== undefined && written !== stored && (await this.rulesetUrl(session, written))) {
+      const shownId = await this.findShownIn(written, page, stored);
+      if (shownId) return buildEntityPagePath(written, page.type, shownId, pages, edited?.to);
+    }
+    if (!(await this.rulesetUrl(session, stored))) return null;
+    return buildEntityPagePath(stored, page.type, page.id, pages, edited?.to);
   }
 
   /**
@@ -148,7 +183,16 @@ class ActivitiesService {
     return await Activities.findPage(db, { advancementWord, userId: session.userId, ...query }, pagination);
   }
 
-  async getActivityUrl(session: Session, targetType: string, targetId: string): Promise<ActivityUrl> {
+  /**
+   * Where an activity's target links to now (`targetType`, `targetId`), resolved as it's opened: a ruleset's content in
+   * the ruleset the activity recorded writing (`rulesetId`, its data's) where that ruleset shows it, else in its own.
+   */
+  async getActivityUrl(
+    session: Session,
+    targetType: string,
+    targetId: string,
+    rulesetId?: string,
+  ): Promise<ActivityUrl> {
     if (!isNavigableTarget(targetType)) return null;
     switch (targetType) {
       // Top-level records link to their page, archived or not, until they're deleted
@@ -194,7 +238,7 @@ class ActivitiesService {
       }
       // Rules sub-entities (entity has rulesetId)
       default:
-        return await this.resolveRulesEntity(session, targetType, targetId);
+        return await this.resolveRulesEntity(session, targetType, targetId, rulesetId);
     }
   }
 }

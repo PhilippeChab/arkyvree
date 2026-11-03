@@ -1,4 +1,4 @@
-import { Autocomplete, TextField } from "@mui/material";
+import { Autocomplete, Box, TextField, Typography } from "@mui/material";
 import { type Ref } from "react";
 import type { FieldError } from "react-hook-form";
 
@@ -17,10 +17,18 @@ interface EntitiesAutocompleteProps {
   rulesetId: string;
   /** The kind its entities are of (a feat's pools' kind) */
   type: string;
+  /**
+   * Why an entity can't be picked, if it can't (a spell already on the list it's added to): its option shows greyed,
+   * the reason under its name.
+   */
+  unavailable?: (entity: EntityRow) => string | undefined;
   value: Pick<EntityRow, "id" | "name">[];
 }
 
-/** A form's entities of a kind, any of the ruleset's (a feat's pools, a spell's lists): read-only under `ReadOnlyFields`. */
+/**
+ * A form's entities of a kind, any of the ruleset's (a feat's pools, a spell's lists, the spells a class's list takes):
+ * read-only under `ReadOnlyFields`.
+ */
 export function EntitiesAutocomplete({
   error,
   inputRef,
@@ -28,6 +36,7 @@ export function EntitiesAutocomplete({
   onChange,
   rulesetId,
   type,
+  unavailable,
   value,
 }: EntitiesAutocompleteProps) {
   const { fetchedOptions, autocompleteProps } = useEntityOptions<Pick<EntityRow, "id" | "name">>(rulesetId, type, {
@@ -35,6 +44,13 @@ export function EntitiesAutocomplete({
     what: label,
   });
   const readOnly = useReadOnlyFields();
+  // Why each fetched entity can't be picked, by its id
+  const reasons = new Map(
+    fetchedOptions.flatMap((option) => {
+      const reason = unavailable?.(option);
+      return reason ? [[option.id, reason] as const] : [];
+    }),
+  );
 
   // Merge selected values with fetched options so selected items always appear
   const selectedIds = new Set(value.map((v) => v.id));
@@ -48,6 +64,26 @@ export function EntitiesAutocomplete({
       {...autocompleteProps}
       value={value}
       onChange={(_, newValue) => onChange(newValue)}
+      getOptionDisabled={(option) => reasons.has(option.id)}
+      // An entity that can't be picked says why under its name; the others read as their name alone
+      renderOption={(props, option) => {
+        const { key, ...optionProps } = props;
+        const reason = reasons.get(option.id);
+        return (
+          <Box component="li" key={key} {...optionProps}>
+            {reason === undefined ? (
+              option.name
+            ) : (
+              <Box>
+                <Typography variant="body2">{option.name}</Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  {reason}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        );
+      }}
       renderValue={(tagValue, getItemProps) =>
         tagValue.map((option, index) => {
           const { key, ...chipProps } = getItemProps({ index });

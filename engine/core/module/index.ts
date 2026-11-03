@@ -139,6 +139,7 @@ export {
   type LinkRemovePlan,
   type LinkSet,
   type LinkWrite,
+  type ListEntriesPlan,
   type MadeEntity,
   type OwnedCreateManyPlan,
   type OwnedCreatePlan,

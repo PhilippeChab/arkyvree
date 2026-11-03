@@ -92,14 +92,43 @@ export default class ClassTable {
     return levels.map((level) => ({ ...level, featPools: totals.get(level.id) ?? {} }));
   }
 
-  /** The spell lists the class's levels give slots in, its own first: what its spell list page offers. */
-  describeSpellLists() {
+  /**
+   * The class's own spell list, named for it ("Witch Spells"): the aptitude of its name, as the view has it, whether or
+   * not its levels give slots in it yet; its id none while the ruleset has no such aptitude, its name the one a first
+   * add makes it under.
+   */
+  describeOwnList(): { id: string | null; name: string } {
+    const name = `${this.klass.name} Spells`;
+    const { aptitudeIdBySlug, aptitudesById } = Dnd35View.of(this.view.rulesetData);
+    const aptitude = aptitudesById.get(aptitudeIdBySlug.get(stripSeparators(name)) ?? "");
+    return aptitude ? { id: aptitude.id, name: aptitude.name } : { id: null, name };
+  }
+
+  /**
+   * The spell lists the class's levels give slots in, its own first: what its spell tables add up, and what a character
+   * of the class casts from. Never one they give none in.
+   */
+  describeSlotLists() {
     const { rulesetData } = this.view;
     const { aptitudesById } = Dnd35View.of(rulesetData);
     return getSpellListIds(rulesetData, this.klass).flatMap((listId) => {
       const list = aptitudesById.get(listId);
       return list ? [{ id: list.id, name: list.name }] : [];
     });
+  }
+
+  /**
+   * What the class's spell list page offers: the lists its levels give slots in, its own first (`describeSlotLists`),
+   * else its own list before they give slots in it (`describeOwnList`: "Witch Spells", where the ruleset has it and it
+   * holds no feats, a feat pool being no list of spells; none else, the list a first add makes). Its characters read
+   * the lists its levels give slots in alone.
+   */
+  describeSpellLists(): { id: string; name: string }[] {
+    const lists = this.describeSlotLists();
+    if (lists.length > 0) return lists;
+    const own = this.describeOwnList();
+    if (own.id === null || this.holdsFeats(own.id)) return [];
+    return [{ id: own.id, name: own.name }];
   }
 
   /**
@@ -123,5 +152,11 @@ export default class ClassTable {
     const { levels } = this;
     const totals = LevelTotals.computeRunning(levels, modifiers, LevelTotals.readKnownStep);
     return levels.map((level) => ({ ...level, spellsKnown: totals.get(level.id) ?? {} }));
+  }
+
+  /** Whether an aptitude (`id`) holds feats: a feat pool, which a list of spells can't be. */
+  holdsFeats(id: string) {
+    const { rulesetData } = this.view;
+    return Dnd35View.of(rulesetData).aptitudeIdsWithFeats.has(rulesetData.canonicalize(id));
   }
 }

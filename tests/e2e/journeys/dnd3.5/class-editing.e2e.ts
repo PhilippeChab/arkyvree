@@ -188,3 +188,77 @@ test.describe("A class's progression", () => {
     await expect(page.getByRole("button", { name: "Good (full)" })).toHaveAttribute("aria-pressed", "true");
   });
 });
+
+// A class's Spell List tab: spells added at a spell level in one save, and one removed, each written on the fork's copy
+// of the inherited spell, the class itself as it was.
+test.describe("A class's spell list", () => {
+  test("of an inherited wizard takes two spells at a level in one save, and loses one", async ({ page, ownerUser }) => {
+    await signIn(page, ownerUser.email, ownerUser.password);
+    const forkId = await forkCoreRuleset(page, uniqueName("Spell List Fork"));
+    const { items } = await parseResponse(
+      apiOf(page).api.rulesets[":id"].entities[":entityType"].$get({
+        param: { id: forkId, entityType: "classes" },
+        query: { search: "Wizard" },
+      }),
+    );
+    const wizard = items.find((klass) => klass.name === "Wizard")!;
+
+    // The tab shows its 1st-level spells, the level its add starts on
+    await page.goto(`/rulesets/${forkId}/classes/${wizard.id}/spell-list?tier=1`);
+    await page.getByRole("button", { name: "Add Spells" }).click();
+    const add = page.getByRole("dialog", { name: "Add Spells" });
+    await expect(add.getByRole("combobox", { name: "Level" })).toHaveText("Level 1");
+    const picker = add.getByRole("combobox", { name: "Spells" });
+    // A spell on the list already can't be picked again
+    await picker.fill("Magic Missile");
+    await expect(page.getByRole("option", { name: /^Magic Missile\b/ })).toBeDisabled();
+    for (const name of ["Bless", "Cure Light Wounds"]) {
+      await picker.fill(name);
+      await page.getByRole("option", { name, exact: true }).click();
+    }
+    const added = apiResponse(page, "POST", /\/entities\/classes\/[a-f0-9-]+\/lists\/[a-f0-9-]+$/);
+    await add.getByRole("button", { name: "Add Spells" }).click();
+    await added;
+
+    // Both are on the list at that level; one removed is gone after a reload, the other stays
+    const search = page.getByPlaceholder("Search spells…");
+    await search.fill("Bless");
+    const bless = page.getByRole("row", { name: /^Bless\b/ });
+    await expect(bless).toBeVisible({ timeout: 10_000 });
+    await bless.hover();
+    await bless.getByRole("button", { name: "Remove" }).click();
+    const removed = apiResponse(page, "DELETE", /\/entities\/classes\/[a-f0-9-]+\/lists\/[a-f0-9-]+\/[a-f0-9-]+$/);
+    // The add copied Bless into the fork: Local Changes can restore the removal
+    const remove = page.getByRole("dialog", { name: "Remove Spell" });
+    await expect(remove).toContainText("You can restore it from Local Changes.");
+    await remove.getByRole("button", { name: "Remove Spell" }).click();
+    await removed;
+    await page.reload();
+    await expect(page.getByRole("row", { name: /^Bless\b/ })).toHaveCount(0, { timeout: 10_000 });
+    await search.fill("Cure Light Wounds");
+    await expect(page.getByRole("row", { name: /^Cure Light Wounds\b/ })).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("of a new class with none yet is made by its first add, with the spells picked", async ({ page, ownerUser }) => {
+    await signIn(page, ownerUser.email, ownerUser.password);
+    const forkId = await forkCoreRuleset(page, uniqueName("New List Fork"));
+    const name = uniqueName("Witch");
+    const witch = await parseResponse(
+      apiOf(page).api.rulesets[":id"].entities[":entityType"].$post({
+        param: { id: forkId, entityType: "classes" },
+        json: { name },
+      }),
+    );
+
+    await page.goto(`/rulesets/${forkId}/classes/${witch.id}/spell-list?tier=1`);
+    await page.getByRole("button", { name: "Add Spells" }).click();
+    const add = page.getByRole("dialog", { name: "Add Spells" });
+    await expect(add).toContainText(`${name} Spells, a new list for ${name}`);
+    await add.getByRole("combobox", { name: "Spells" }).fill("Bless");
+    await page.getByRole("option", { name: "Bless", exact: true }).click();
+    const added = apiResponse(page, "POST", /\/entities\/classes\/[a-f0-9-]+\/lists$/);
+    await add.getByRole("button", { name: "Add Spells" }).click();
+    await added;
+    await expect(page.getByRole("row", { name: /^Bless\b/ })).toBeVisible({ timeout: 10_000 });
+  });
+});

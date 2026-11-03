@@ -132,7 +132,7 @@ export function useNotificationActions() {
       return;
     }
     if (!n.readAt) markRead.mutate(n.id);
-    if (isNavigableTarget(n.targetType)) openTarget(n.targetType, n.targetId);
+    if (isNavigableTarget(n.targetType)) openTarget(n.targetType, n.targetId, n.data);
   };
 
   const accept = (n: NotificationLike, onAccepted: (path: string) => void = navigate) => {

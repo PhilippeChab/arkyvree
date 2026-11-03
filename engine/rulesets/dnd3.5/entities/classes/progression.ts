@@ -23,11 +23,11 @@ const SAVE_PRESET_LABELS: Record<SaveType, string> = { good: "Good", poor: "Poor
 /**
  * How a 3.5 class progresses: its base attack bonus (as the sheet writes it, "+6/+1"; good, medium or poor, a point
  * every so many levels), its saves (signed; good or poor, a base and a point every so many levels), its skill points,
- * its features under "Special", and its spells per day and spells known, a column a spell level, Spells Known's
- * "All" carrying down. A class's spell list is the aptitude named for it ("Wizard Spells"). A bonded creature's class
- * has no base attack bonus, saves or skill points (their `omittedFor`: `BONDED_KIND_SLUGS`): its sheet works them out
- * from its master or its hit dice, and its levels follow its master's, spending no skill points, so they hold none and
- * its table leaves them out.
+ * its features under "Special", and its spells per day and spells known, a column a spell level, Spells Known's "All"
+ * carrying down. A class's spell list is the aptitude named for it ("Wizard Spells"), which its Spell List tab's first
+ * add makes where the ruleset has none. A bonded creature's class has no base attack bonus, saves or skill points
+ * (their `omittedFor`: `BONDED_KIND_SLUGS`): its sheet works them out from its master or its hit dice, and its levels
+ * follow its master's, spending no skill points, so they hold none and its table leaves them out.
  */
 export const PROGRESSION: ProgressionDeclaration = {
   counts: {
@@ -35,9 +35,10 @@ export const PROGRESSION: ProgressionDeclaration = {
     list: "spellList",
     lists: "spell-lists",
     listTab: "spell-list",
+    ownList: "ownSpellList",
     none: {
       editor:
-        '{ownerName} has no spell list of its own, so no {tables}. A class that casts gets one from an aptitude named "{ownerName} Spells".',
+        '{ownerName} has no spell list of its own, so no {tables}. Adding spells on its Spell List tab makes one, "{ownerName} Spells".',
       viewer: "{ownerName} casts no spells.",
     },
     refusal: "spellTablesRefusal",

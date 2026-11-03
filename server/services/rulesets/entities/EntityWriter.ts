@@ -112,7 +112,8 @@ function linksOf(entity: WrittenEntity, { links, role, toType }: LinkSet) {
  * links (`setLinks`), then what its plan writes beside it (`writeBeside`: the entities it removes, then those it
  * makes). A delete is refused while the entity is in use (`EntityUses`). Each first opens the kind's rules for its
  * action (`open`), records its activity (its verb and the written kind's name), and the ruleset's views drop what it
- * changed.
+ * changed; but several entities' edits at once (`updateEntities`: a class's spell list's spells), which write in the
+ * caller's transaction, its checks and its one activity the caller's.
  */
 export default class EntityWriter {
   constructor(
@@ -125,14 +126,18 @@ export default class EntityWriter {
   ) {}
 
   /**
-   * An entity a plan makes, in the scope's ruleset: its row (its fields and single links among it), its links, its
-   * modifiers and its requirements.
+   * An entity a plan makes, in the scope's ruleset: its row (its fields and single links among it), taking over the
+   * tombstone of a deleted copy of an ancestor of its name as a create does, its links, its modifiers and its
+   * requirements.
    */
   private static async makeEntity(tx: Db, scope: LockedRulesetScope, made: MadeEntity) {
     const type = entityTypeOf(made.type);
+    const names = new EntityNames(scope);
+    const tombstoneAncestorId = await names.findTombstoneAncestor(tx, type, made.row.name);
     const [entity] = await EntityNames.withNameRefusal(made.row.name, () =>
       Entities.create(tx, type, { ...made.row, rulesetId: scope.ruleset.id }),
     );
+    if (tombstoneAncestorId) await names.repointTombstone(tx, tombstoneAncestorId, entity.id);
     const written = { entityId: entity.id, entityType: type };
     await EntityWriter.setLinks(tx, written, made.links, false);
     await Modifiers.createMany(
@@ -262,6 +267,34 @@ export default class EntityWriter {
   ) {
     await EntityWriter.setLinks(tx, entity, parts.links, replacing);
     if (parts.writes) await EntityWriter.writeBeside(tx, scope, policy, parts.writes);
+  }
+
+  /**
+   * Writes edits of entities of a kind (`type`) as their rules plan them (`plans`, each of one entity, as the view has
+   * it), with no client's token to check, after what their plan writes before them (`before`: the list an add to an
+   * owner's own list makes, which their links name), then in their order: each the row the view's entity resolves to
+   * (the ruleset's own, or its copy, made on its first edit), its list links replaced, and what its plan writes beside
+   * it. Answers what each plan answers once written (`describe`), in their order.
+   */
+  static async updateEntities(
+    tx: Db,
+    scope: LockedRulesetScope,
+    policy: RulesetsPolicy,
+    type: string,
+    plans: readonly EntityEditPlan<PlannedEntity>[],
+    before?: EntityWrites,
+  ) {
+    if (before) await EntityWriter.writeBeside(tx, scope, policy, before);
+    const entityType = entityTypeOf(type);
+    const edit = new EntityEdit(scope);
+    const written = [];
+    for (const planned of plans) {
+      const target = await edit.cowToEdit(tx, entityType, planned.entity);
+      const row = await EntityWriter.updateRow(tx, entityType, planned.row, target, undefined);
+      await EntityWriter.setParts(tx, scope, policy, { entityId: target.id, entityType }, planned, true);
+      written.push(planned.describe(row, await EntityLinks.findOwn(tx, target.id)));
+    }
+    return written;
   }
 
   /** The entity's customizations, copied onto the new ones (`entities`) from `sourceId`'s. */

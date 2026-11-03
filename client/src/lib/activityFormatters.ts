@@ -169,10 +169,10 @@ function formatChange(change: ChangedField, fields: readonly ValueField[]): stri
  * (the pool it's through, its tier by its rules' name of it, `tiers`, else in their word for one, its amount signed,
  * whether it's free): "Power Attack (Fighter Bonus Feats, free)", "Wizard (Level 3)", "Fortitude (+2)".
  */
-function formatLinkEntry(link: ChangedLink, { tiers, word }: TierNames): string {
+function formatLinkEntry(link: ChangedLink, tierNames: TierNames): string {
   const columns = [
     link.viaName,
-    link.tier != null ? (tiers.find(({ tier }) => tier === link.tier)?.label ?? `${word} ${link.tier}`) : undefined,
+    link.tier != null ? formatTier(link.tier, tierNames) : undefined,
     link.amount != null ? formatSigned(link.amount) : undefined,
     link.free ? "free" : undefined,
   ].filter((column) => !!column);
@@ -193,12 +193,27 @@ function formatLinksChange(change: ChangedLinks, tierNames: TierNames): string {
 }
 
 /**
+ * The entities an add to an owner's list records (`toNames`), as its notification names them: the one by its name, else
+ * how many, in its rules' word for its kind (`type`): "Bless", "12 spells".
+ */
+function formatListed(d: Record<string, unknown>, type: string, words: RulesWords): string {
+  const names = readNames(d.toNames);
+  return names.length === 1 ? names[0] : `${names.length} ${entityTypeLabel(type, words, true).toLowerCase()}`;
+}
+
+/** A tier as an activity says it: by its rules' name of it (`tiers`), else in their word for one ("Circle 3"). */
+function formatTier(tier: number, { tiers, word }: TierNames): string {
+  return tiers.find((each) => each.tier === tier)?.label ?? `${word} ${tier}`;
+}
+
+/**
  * A ruleset's change to what one of its entities holds, as its notification says it, by its type, as its rules describe
  * it (`rules`, its base rules', else every base rules'): a position of a kind another owns, an owned entity being one
  * along its owner, in its rules' word (3.5's `createClassLevel`: "Ann added a level to Fighter"), the progression of a
  * kind whose row opens it (3.5's `updateClassProgression`), a link of the role a kind's page edits (3.5's
- * `addClassSkill`: "Ann added Climb to Fighter", its target's name at `toName`, as every link's activity records it);
- * none for another type.
+ * `addClassSkill`: "Ann added Climb to Fighter", its target's name at `toName`, as every link's activity records it),
+ * the entities added to or removed from a list a kind's owned entities count on (3.5's `addClassSpell`: "Ann added 12
+ * spells to Wizard Spells", the list's name at `listName`); none for another type.
  */
 function heldChange(type: string, actor: string, d: Record<string, unknown>, rules: RulesDescriptions | undefined) {
   const baseRules = oneOf(d.baseRules, BASE_RULES_OPTIONS);
@@ -221,6 +236,8 @@ function heldChange(type: string, actor: string, d: Record<string, unknown>, rul
     for (const kind of each.kinds) {
       if (kind.opens === "progression" && type === `update${getActivityName(kind.type)}Progression`)
         return `${actor} updated the progression of ${of(kind.type)}`;
+      const listChange = kind.opens === "progression" ? listedChange(type, actor, d, kind.type, each) : undefined;
+      if (listChange) return listChange;
       const { links } = kind;
       if (!links) continue;
       const target = d.toName || `a ${entityTypeLabel(links.type, each.words).toLowerCase()}`;
@@ -246,6 +263,29 @@ function isChangedLinks(value: unknown): value is ChangedLinks {
   );
 }
 
+/**
+ * An add to or a removal from a list an owner's owned entities count on (`ownerType`'s, as its rules describe what
+ * they count, `rules`: 3.5's `addClassSpell`), as its notification says it: by the list's name (`listName`), else its
+ * kind's word's ("Ann added 12 spells to Wizard Spells", "Ann removed Fireball from Wizard Spells"); none for another
+ * type.
+ */
+function listedChange(
+  type: string,
+  actor: string,
+  d: Record<string, unknown>,
+  ownerType: string,
+  rules: RulesDescription,
+): string | undefined {
+  const counts = rules.progression.counts;
+  if (!counts) return undefined;
+  const listed = `${getActivityName(ownerType)}${getActivityName(counts.type)}`;
+  const one = entityTypeLabel(counts.type, rules.words).toLowerCase();
+  const list = String(d.listName || `a ${one} list`);
+  if (type === `add${listed}`) return `${actor} added ${formatListed(d, counts.type, rules.words)} to ${list}`;
+  if (type === `remove${listed}`) return `${actor} removed ${String(d.toName || `a ${one}`)} from ${list}`;
+  return undefined;
+}
+
 /** An activity's payload: the fields its type records, or none. */
 function payload(data: unknown): Record<string, unknown> {
   return isRecord(data) ? data : {};
@@ -254,6 +294,11 @@ function payload(data: unknown): Record<string, unknown> {
 /** The positions of the owned entities an activity made at once (`positions`, in order), none for another. */
 function positionsOf(d: Record<string, unknown>): number[] {
   return Array.isArray(d.positions) ? d.positions.filter((position) => typeof position === "number") : [];
+}
+
+/** The names an activity records in a list (`toNames`: the entities an add to an owner's list added), its texts alone. */
+function readNames(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((name): name is string => typeof name === "string") : [];
 }
 
 /**
@@ -321,8 +366,13 @@ export function formatActivityDetails(type: string, data: unknown, rules?: Rules
   const positions = positionsOf(d);
   if (positions.length > 0) parts.push(formatPositions(positions, positionWords));
 
-  // A link's target, as every link's activity records it: a class skill's added or removed
-  if (typeof d.toName === "string" && d.toName) parts.push(d.toName);
+  // A link's target, as every link's activity records it (a class skill's added or removed), or the entities an add to
+  // an owner's list records (`toNames`), at the tier it records where it does ("Level 1: Bless, Cure Light Wounds")
+  const targets = typeof d.toName === "string" && d.toName ? [d.toName] : readNames(d.toNames);
+  if (targets.length > 0) {
+    const tier = typeof d.tier === "number" ? `${formatTier(d.tier, tiersOf(d, rules))}: ` : "";
+    parts.push(`${tier}${targets.join(", ")}`);
+  }
 
   // A modifier's or a requirement's change
   if (d.target && typeof d.operator === "string" && d.operator) {

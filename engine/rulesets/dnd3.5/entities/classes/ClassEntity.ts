@@ -1,4 +1,7 @@
-/** A class as a ruleset's entity: its fields, what its form stores, and its parts: its levels, skills and table. */
+/**
+ * A class as a ruleset's entity: its fields, what its form stores, and its parts: its levels, skills, spell lists and
+ * table.
+ */
 
 import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
@@ -6,12 +9,13 @@ import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import ClassLevelEntity from "./ClassLevelEntity.ts";
 import ClassProgression from "./ClassProgression.ts";
 import ClassSkills from "./ClassSkills.ts";
+import ClassSpellLists from "./ClassSpellLists.ts";
 import ClassTable from "./ClassTable.ts";
 import { CLASS_FIELDS } from "./fields.ts";
 
 /**
  * A class as the ruleset describes it, what its form stores, and its parts, each bound to the class as the view has
- * it: its levels, its class skills, its table.
+ * it: its levels, its class skills, its spell lists' spells, its table.
  */
 export default class ClassEntity extends RulesetEntity<"classes", typeof CLASS_FIELDS.fields> {
   /** Its list narrows by the kind it's for, its partition (the player classes', or the others'). */
@@ -38,6 +42,15 @@ export default class ClassEntity extends RulesetEntity<"classes", typeof CLASS_F
    */
   links(classId: string) {
     return new ClassSkills(this.view, this.find(classId));
+  }
+
+  /**
+   * A class's spell lists (`classId`): what adding spells to one, or removing one from it, writes. Refused without the
+   * class.
+   */
+  lists(classId: string) {
+    const klass = this.find(classId);
+    return new ClassSpellLists(this.view, klass, new ClassTable(this.view, klass));
   }
 
   /** A class's levels (`classId`): described, and what saving or deleting one writes. Refused without the class. */

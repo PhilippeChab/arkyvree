@@ -40,6 +40,8 @@ interface RulesetSectionTableProps<T extends { id: string }> {
   onDelete?: (itemId: string) => void;
   onDuplicate?: (item: T) => void;
   onEdit?: (item: T) => void;
+  /** Takes a row off what holds it, the entity itself kept (a spell off a class's spell list) */
+  onRemove?: (item: T) => void;
   onRowClick?: (item: T) => void;
   /** Warms the page a row opens (`useRowPrefetch`): 150ms into a hover, at once on focus */
   onRowPrefetch?: (item: T) => void;
@@ -70,6 +72,7 @@ export function RulesetSectionTable<T extends { id: string }>({
   onDelete,
   onDuplicate,
   onCreateVariants,
+  onRemove,
   onRowClick,
   onRowPrefetch,
   renderCell,
@@ -79,7 +82,7 @@ export function RulesetSectionTable<T extends { id: string }>({
 }: RulesetSectionTableProps<T>) {
   const prefetchProps = useRowPrefetch(onRowPrefetch);
 
-  const showInlineActions = canEdit && !!(onEdit || onDelete || onDuplicate || onCreateVariants);
+  const showInlineActions = canEdit && !!(onEdit || onDelete || onDuplicate || onCreateVariants || onRemove);
 
   const headerColumns = showInlineActions ? [...columns, ACTIONS_COLUMN] : columns;
 
@@ -115,6 +118,9 @@ export function RulesetSectionTable<T extends { id: string }>({
                 {onDuplicate && <RowAction icon={CopyIcon} label="Duplicate" onClick={() => onDuplicate(item)} />}
                 {onCreateVariants && (
                   <RowAction icon={LibraryAddIcon} label="Create Variants" onClick={() => onCreateVariants(item)} />
+                )}
+                {onRemove && (
+                  <RowAction icon={DeleteIcon} label="Remove" intent="destructive" onClick={() => onRemove(item)} />
                 )}
                 {onDelete && (
                   <RowAction

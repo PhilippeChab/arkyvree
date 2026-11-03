@@ -54,8 +54,13 @@ export function describeCountsTabs(counts: ProgressionCounts, rules: RulesDescri
       label: `${entityTypeLabel(counts.type, rules.words)} List`,
       icon: kindIconOf(rules, counts.type),
       Section: OwnerListSection,
-      prefetch: (queryClient, rulesetId, ownerId) =>
-        queryClient.prefetchQuery(ownerListsQuery(rulesetId, ownerType, ownerId, counts.lists)),
+      prefetch: async (queryClient, rulesetId, ownerId) => {
+        await Promise.all([
+          queryClient.prefetchQuery(ownerListsQuery(rulesetId, ownerType, ownerId, counts.lists)),
+          // Its own list, which its add makes where it has none
+          queryClient.prefetchQuery(ownerProgressionQuery(rulesetId, ownerType, ownerId)),
+        ]);
+      },
     },
   ];
 }

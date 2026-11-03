@@ -164,8 +164,10 @@ export interface ListDescription {
  * `severalSpellLists`, which the public API names) and why its tables take no save (`refusal`: `spellTablesRefusal`,
  * in the save's words, which its tables' tab shows its editor; none when they take one), the class's table of its
  * lists (`lists`: `spell-lists`), the URLs of its tables' tab (`tab`: `spells`) and of its list's (`listTab`:
- * `spell-list`), and what its tables' tab says of a class with no list (`none`), to an editor (how a class gets one)
- * and to a viewer, the class's name at `{ownerName}` and its tables' labels at `{tables}`.
+ * `spell-list`), the key a progression's answer gives the class's own list by (`ownList`: `ownSpellList`, its id and
+ * its name, its id none while its ruleset has none, which its list tab's first add makes), and what its tables' tab
+ * says of a class with no list (`none`), to an editor (how a class gets one) and to a viewer, the class's name at
+ * `{ownerName}` and its tables' labels at `{tables}`.
  */
 export interface ProgressionCounts {
   body: string;
@@ -173,6 +175,7 @@ export interface ProgressionCounts {
   lists: string;
   listTab: string;
   none: { editor: string; viewer: string };
+  ownList: string;
   refusal: string;
   several: string;
   tab: string;
