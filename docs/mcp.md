@@ -1,12 +1,14 @@
 # MCP server
 
 An agent (Claude Code, Claude, ChatGPT…) uses the app through its MCP server, at `/mcp`: tools over the public API's
-routes ([public-api.md](./public-api.md)), which act as the user who signed in, with nothing to install. Claude and
-ChatGPT connect with the server's address alone, and send their user to the app to allow them ([OAuth](#oauth)); a
-client that sends a header connects with an API key too, as the public API's is sent (`Authorization: Bearer <key>`):
+routes ([public-api.md](./public-api.md)), which act as the user who signed in, with nothing to install. Claude,
+Claude Code and ChatGPT connect with the server's address alone, and send their user to the app to allow them
+([OAuth](#oauth)): the one way a person connects, which the help shows. An agent that runs on its own, with no browser
+to sign in with, sends an API key, as the public API's is sent (`Authorization: Bearer <key>`), as Stripe's, GitHub's and
+Linear's MCP servers take one beside their OAuth:
 
 ```bash
-claude mcp add --transport http arkyvree https://rpg.arkyvree.com/mcp --header "Authorization: Bearer ark_…"
+claude mcp add --transport http arkyvree https://rpg.arkyvree.com/mcp
 ```
 
 ## The tools

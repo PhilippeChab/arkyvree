@@ -144,7 +144,9 @@ export default function ConsentPage() {
     return (
       <ConsentCard title="Can't Connect This App">
         <Typography variant="body1">
-          {CONSENT_ERRORS[error] ?? "This page answers an app's sign-in: start connecting the app again."}
+          {Object.hasOwn(CONSENT_ERRORS, error)
+            ? CONSENT_ERRORS[error]
+            : "This page answers an app's sign-in: start connecting the app again."}
         </Typography>
         <Box>
           <Button variant="contained" component={Link} to="/dashboard">
