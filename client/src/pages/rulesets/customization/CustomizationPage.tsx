@@ -73,14 +73,9 @@ function CustomizationView({ rulesetId, entityId, section, tabs, ruleset, data, 
 
   // A copy-on-write moves the page to the copy, its queries seeded with the source's: its data is in
   const copy = useCopyOnWrite(rulesetId, entityId, (id) => buildCustomizationPath(type, id));
-  const forgetSource = copy.forgetSource(true);
+  const forgetSource = copy.forgetSource();
   // What this page deletes, the entity or what it holds, comes back with the entity when it's inherited
   const restorable = isRestorable(data);
-
-  // A save answers the entity's row, its fields and its links, not all its page reads (its customizations, an item's
-  // placement, a level's class's name): refetch the entity
-  const refetchSaved = (saved: { id: string }) =>
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.entity(rulesetId, type, saved.id) });
 
   const sectionProps = {
     ruleset,
@@ -122,7 +117,7 @@ function CustomizationView({ rulesetId, entityId, section, tabs, ruleset, data, 
             recordKey: copy.key,
             adoptKey: copy.adoptKey,
             followCopy: copy.followCopy,
-            refetchSaved,
+            cacheKeyOf: (id) => QUERY_KEYS.rulesets.entity(rulesetId, type, id),
           })}
         </ReadOnlyFields>
       )}

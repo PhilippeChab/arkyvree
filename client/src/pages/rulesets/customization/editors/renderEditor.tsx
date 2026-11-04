@@ -1,5 +1,7 @@
 /** The entities the customization page edits, which it can delete too: their editor of their details, and its props. */
 
+import type { QueryKey } from "@tanstack/react-query";
+
 import type { RulesDescription } from "@/client/src/lib/queries.ts";
 import type { CustomizationEntity } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 
@@ -10,17 +12,14 @@ import { OwnedEditor } from "./OwnedEditor.tsx";
 export interface EditorProps<T> {
   /** Set right after a copy-on-write moved the page here: the record the form may still hold. */
   adoptKey?: string;
+  /** The page's entity's key, by its id (a copy's after a copy-on-write), where its save lays the saved row */
+  cacheKeyOf: (entityId: string) => QueryKey;
   entity: T;
   entityId: string;
   /** The page's `followCopy`: a save of an inherited entity copies it, the page moving to the copy (`useEntitySave`) */
   followCopy: (copyId: string, sourceId: string) => void;
   /** The form's record identity (useFormSync's `key`). */
   recordKey: string;
-  /**
-   * Refetches the saved entity, whose save answers its row, its fields and its links, not all its page reads (its
-   * customizations, an item's placement, a level's class's name)
-   */
-  refetchSaved: (saved: { id: string }) => Promise<unknown>;
   rulesetId: string;
 }
 

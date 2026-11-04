@@ -1,5 +1,5 @@
 import { Stack } from "@mui/material";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { type InferRequestType, type InferResponseType, parseResponse } from "hono/client";
 
 import {
@@ -34,7 +34,6 @@ function followNoCopy() {}
  * for. A fork holds its source's until it saves its own. Who edits its content edits them; anyone else reads them.
  */
 export function SettingsSection({ ruleset }: RulesetSectionProps) {
-  const queryClient = useQueryClient();
   const { canEditEntities: canEdit } = useRulesetPermissions(ruleset);
   const settingsQuery = rulesetSettingsQuery(ruleset.id);
   const { data: settings, error } = useQuery(settingsQuery);
@@ -51,9 +50,8 @@ export function SettingsSection({ ruleset }: RulesetSectionProps) {
     saveFn: (data: SettingsFormData) =>
       parseResponse(rpc.api.rulesets[":id"].settings.$put({ param: { id: ruleset.id }, json: data })),
     toFormValues,
-    storeSaved: (saved) => {
-      queryClient.setQueryData(settingsQuery.queryKey, saved);
-    },
+    // The save answers the whole of its Settings
+    cached: { keyOf: () => settingsQuery.queryKey, withSaved: (_cached: Settings, saved) => saved },
     followCopy: followNoCopy,
   });
 

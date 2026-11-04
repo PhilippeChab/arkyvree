@@ -11,8 +11,8 @@ import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
  * ruleset under a new id, and `followCopy` moves the page to the copy, on the tab it shows, unless it has left the
  * entity since. The page stays as it is as it moves, where it's scrolled to (`KEPT_SCROLL`), and what it shows: the
  * source's queries are the copy's until its own rows are in (`seedCopyQueries`). The page's router state says where the
- * copy came from (`copiedFrom`) until the copy's data is in: the form keyed `key` adopts the source's `adoptKey` and
- * keeps its unsaved edits, then `forgetSource` drops it.
+ * copy came from (`copiedFrom`) as it moves: the form keyed `key` adopts the source's `adoptKey` and keeps its unsaved
+ * edits, then `forgetSource` drops it.
  * `pathOf` is an entity's page under the ruleset ("classes/:id").
  */
 export function useCopyOnWrite(rulesetId: string, entityId: string, pathOf: (entityId: string) => string) {
@@ -34,10 +34,11 @@ export function useCopyOnWrite(rulesetId: string, entityId: string, pathOf: (ent
     });
   };
 
-  // Once the copy's own data is in (`loaded`), the same address without its source, so going back and forth in history
-  // never carries edits between the two. A navigation still loading has moved the address bar on: leave it be.
-  const forgetSource = (loaded: boolean) =>
-    copiedFrom && loaded && window.location.pathname === location.pathname
+  // The same address without its source, the copy's data in (its queries seeded with the source's), so going back and
+  // forth in history never carries edits between the two. A navigation still loading has moved the address bar on:
+  // leave it be.
+  const forgetSource = () =>
+    copiedFrom && window.location.pathname === location.pathname
       ? { to: `${location.pathname}${location.search}${location.hash}`, state: stateAfterCopy }
       : undefined;
 
