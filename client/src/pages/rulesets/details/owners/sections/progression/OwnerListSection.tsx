@@ -31,8 +31,8 @@ import {
 import type { OwnerSectionProps } from "@/client/src/pages/rulesets/details/owners/ownerTab.ts";
 import { useOpenEntity, useTierFilter } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { buildEntityPagePath } from "@/shared/customization/entities.ts";
-import { isRecord } from "@/shared/isRecord.ts";
 
+import { readOwnList } from "./ownList.ts";
 import { useOwnerListEntries } from "./useOwnerListEntries.ts";
 
 /** What an owner's owned entities count (`counts`), and the words its tab says them in, its rules' (`rules`). */
@@ -215,15 +215,6 @@ function OwnerList({ rulesetId, ownerId, ownerName, ownerType, ruleset, counts, 
       />
     </Stack>
   );
-}
-
-/**
- * An owner's own list, as its progression's answer gives it (at its rules' `counts.ownList`): its id, none while its
- * ruleset has no such list, which its first add makes, and its name ("Witch Spells").
- */
-function readOwnList(value: unknown): { id: string | null; name: string } | undefined {
-  if (!isRecord(value) || typeof value.name !== "string") return undefined;
-  return { id: typeof value.id === "string" ? value.id : null, name: value.name };
 }
 
 /**

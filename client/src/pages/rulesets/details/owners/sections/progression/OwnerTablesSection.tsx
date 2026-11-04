@@ -39,6 +39,7 @@ import { byPosition } from "@/client/src/pages/rulesets/details/owners/sections/
 import { entityOptionsQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 
+import { readOwnList } from "./ownList.ts";
 import { ProgressionSaveBar } from "./ProgressionSaveBar.tsx";
 import {
   noEdits,
@@ -52,6 +53,7 @@ import {
 import { TableGrid } from "./TableGrid.tsx";
 import { type PlacedCell, type TableRules } from "./tablePaste.ts";
 import { TablePasteBox } from "./TablePasteBox.tsx";
+import { useCreateOwnList } from "./useCreateOwnList.ts";
 import { useOwnerDraft } from "./useOwnerDraft.ts";
 import { useProgressionSave } from "./useProgressionSave.ts";
 
@@ -107,6 +109,10 @@ function OwnerTables({ rulesetId, ownerId, ownerName, ownerType, ruleset, counts
   const answer: Record<string, unknown> | undefined = progression;
   const list = answer?.[counts.list];
   const refusal = answer?.[counts.refusal];
+  // Without a list, its own one, which its editor can make here, as its list tab's first add does
+  const ownList = readOwnList(answer?.[counts.ownList]);
+  const listKind = rules.kinds.find(({ type }) => type === counts.type)?.pools?.type;
+  const createList = useCreateOwnList(rulesetId, ownerType, ownerId, { lists: counts.lists, listKind });
   // An editor's, of an owner whose tables take a save: the others of its kind to start from are only read then
   const editable = canEdit && refusal === null;
   const others = useListboxQuery({
@@ -274,6 +280,20 @@ function OwnerTables({ rulesetId, ownerId, ownerName, ownerType, ruleset, counts
           icon={UsesIcon}
           title={`No ${many.toLowerCase()}`}
           description={canEdit ? say(counts.none.editor) : say(counts.none.viewer)}
+          action={
+            canEdit &&
+            ownList && (
+              <Button
+                variant="contained"
+                disabled={createList.isPending}
+                onClick={() => createList.mutate(ownList.name)}
+              >
+                <DiceSpinner size="small" loading={createList.isPending}>
+                  {counts.create.replace("{name}", () => ownList.name)}
+                </DiceSpinner>
+              </Button>
+            )
+          }
         />
         {saveBar}
       </Stack>

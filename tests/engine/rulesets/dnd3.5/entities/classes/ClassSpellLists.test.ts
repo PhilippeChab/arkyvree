@@ -80,6 +80,11 @@ describe("A class's spell lists", () => {
       expect(listings.links.at(-1)).toEqual({ tier: 1, toId: madeId });
       expect(listings.links).toHaveLength(3);
       expect(plan.activity).toMatchObject({ listName: "Fighter Spells", toNames: ["Bless"] });
+      // Made with no spells, from its Spells tab: the same list
+      expect(fighter.planOwnList()).toMatchObject({
+        created: { name: "Fighter Spells", type: "aptitudes" },
+        writes: { made: [{ type: "aptitudes", row: { name: "Fighter Spells", description: "" } }] },
+      });
     });
   });
 
@@ -87,6 +92,9 @@ describe("A class's spell lists", () => {
     await withFeatPoolWitch((lists, { aptitude, spell }, tables) => {
       expect(tables.describe("spell-lists")).toEqual([]);
       expect(thrownBy(() => lists.planAdd(undefined, [spell], 1))).toEqual(
+        new RulesError("conflict", "Witch Spells is a feat pool, so it can't be Witch's spell list"),
+      );
+      expect(thrownBy(() => lists.planOwnList())).toEqual(
         new RulesError("conflict", "Witch Spells is a feat pool, so it can't be Witch's spell list"),
       );
       // Nor is it one of the class's lists, by its id
@@ -155,6 +163,9 @@ describe("A class's spell lists", () => {
       const lists = Engine.for(scope).lists("classes", templar.id);
       expect(thrownBy(() => lists.planAdd(undefined, [spell.id], 1))).toEqual(
         new RulesError("conflict", "Templar casts from other spell lists: add the spells to one of them"),
+      );
+      expect(thrownBy(() => lists.planOwnList())).toEqual(
+        new RulesError("conflict", "Templar casts from other spell lists, so it has none of its own to make"),
       );
     });
   });

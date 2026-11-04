@@ -165,12 +165,14 @@ export interface ListDescription {
  * in the save's words, which its tables' tab shows its editor; none when they take one), the class's table of its
  * lists (`lists`: `spell-lists`), the URLs of its tables' tab (`tab`: `spells`) and of its list's (`listTab`:
  * `spell-list`), the key a progression's answer gives the class's own list by (`ownList`: `ownSpellList`, its id and
- * its name, its id none while its ruleset has none, which its list tab's first add makes), and what its tables' tab
+ * its name, its id none while its ruleset has none, which its list tab's first add makes), what its tables' tab
  * says of a class with no list (`none`), to an editor (how a class gets one) and to a viewer, the class's name at
- * `{ownerName}` and its tables' labels at `{tables}`.
+ * `{ownerName}` and its tables' labels at `{tables}`, and its button that makes the class's own list there (`create`,
+ * its name at `{name}`: "Create Barbarian Spells").
  */
 export interface ProgressionCounts {
   body: string;
+  create: string;
   list: string;
   lists: string;
   listTab: string;

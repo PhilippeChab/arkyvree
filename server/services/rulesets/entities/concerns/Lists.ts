@@ -39,7 +39,8 @@ async function writeEntries(
 /**
  * The lists an entity's owned entities count entities on (a class's spell lists), as its kind's rules answer them
  * (`Engine.for(scope).lists(type, ownerId)`): adding entities to one at a tier, or removing one from it, each in one
- * transaction, every entity written or none, and recorded as one activity. The entities are written, not the owner.
+ * transaction, every entity written or none, and recorded as one activity, and making the owner's own list with none.
+ * The entities are written, not the owner.
  */
 export function Lists<B extends Constructor>(Base: B) {
   abstract class WithLists extends Base {
@@ -61,6 +62,26 @@ export function Lists<B extends Constructor>(Base: B) {
         policy.canUpdateEntity();
         const plan = Engine.for(scope).lists(type, ownerId).planAdd(listId, targetIds, tier);
         return await writeEntries(tx, session, scope, policy, "add", type, plan);
+      });
+    }
+
+    /**
+     * Makes an owner's own list with no entries yet (`ownerId`'s: a class's "Barbarian Spells"), recorded as the list's
+     * own create. Answers the list made: its id, its name and its kind.
+     */
+    async createOwnList(session: Session, rulesetId: string, type: RulesetEntityType, ownerId: string) {
+      return await withRulesetWrite(session, rulesetId, async (tx, scope, policy) => {
+        policy.canUpdateEntity();
+        const plan = Engine.for(scope).lists(type, ownerId).planOwnList();
+        await EntityWriter.updateEntities(tx, scope, policy, plan.created.type, [], plan.writes);
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: plan.created.id,
+          targetType: plan.created.type,
+          type: `create${getActivityName(plan.created.type)}`,
+          data: plan.activity,
+        });
+        return plan.created;
       });
     }
 

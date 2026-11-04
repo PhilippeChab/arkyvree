@@ -10,6 +10,7 @@ import type {
   FeatureCreatePlan,
   LinkAddPlan,
   LinkRemovePlan,
+  ListCreatePlan,
   ListEntriesPlan,
   OwnedCreateManyPlan,
   OwnedCreatePlan,
@@ -32,10 +33,12 @@ export interface EntityLinks {
 /**
  * The lists an entity's owned entities count entities on (a class's spell lists, each of spells): what adding entities
  * to one at a tier (`tier`: a spell's level on it; `listId` none: the entity's own list, made first where its ruleset
- * has none), or removing one from it, writes on those entities.
+ * has none), or removing one from it, writes on those entities, and what making its own list with none writes
+ * (`planOwnList`: a class's "Barbarian Spells", from its Spells tab).
  */
 export interface EntityLists {
   planAdd(listId: string | undefined, targetIds: string[], tier: number | undefined): ListEntriesPlan;
+  planOwnList(): ListCreatePlan;
   planRemove(listId: string, targetId: string): ListEntriesPlan;
 }
 

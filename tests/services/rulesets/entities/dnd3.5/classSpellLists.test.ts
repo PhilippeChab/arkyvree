@@ -204,6 +204,72 @@ describe("EntitiesService: a class's spell lists", () => {
     expect([await namesOn(fork.id, list.id, 1), await namesOn(fork.id, list.id, 3)]).toEqual([[], []]);
   });
 
+  // As its Spells tab makes it: a class with no spell list gets its own, with no spells, and its spell tables a save
+  test("makes a class's own list with no spells, once, whose spell tables then take a save", async () => {
+    const { fork, session, fighter, wizard } = await setup();
+    const progressionOf = (classId: string) => EntitiesService.getProgression(session, fork.id, "classes", classId);
+    const before = await progressionOf(fighter);
+    expect([before.spellList, before.ownSpellList, before.spellTablesRefusal]).toEqual([
+      null,
+      { id: null, name: "Fighter Spells" },
+      "Fighter has no spell list to give spells in",
+    ]);
+
+    const created = await EntitiesService.createOwnList(session, fork.id, "classes", fighter);
+    expect(created).toMatchObject({ name: "Fighter Spells", type: "aptitudes" });
+    expect((await activityTypesOf(SEED_USER_ID))[0]).toBe("createAptitude");
+    RulesetViews.invalidate(fork.id);
+    const after = await progressionOf(fighter);
+    const list = { id: created.id, name: "Fighter Spells" };
+    expect([after.spellList, after.ownSpellList, after.spellTablesRefusal]).toEqual([list, list, null]);
+    expect(await EntitiesService.getEntityTable(session, fork.id, "classes", fighter, "spell-lists")).toMatchObject([
+      list,
+    ]);
+    // Its spells per day save, on the fork's copy of the class
+    const [first] = await EntitiesService.getOwnedEntities(session, fork.id, "classes", fighter);
+    const saved = await EntitiesService.updateProgression(session, fork.id, "classes", fighter, {
+      spells: { perDay: [{ ownedId: first.id, counts: [3, 2] }] },
+    });
+    const perDay = (await EntitiesService.getEntityTable(session, fork.id, "classes", saved.entityId, "spells")) as {
+      position: number;
+      spellsPerDay: Record<number, number>;
+    }[];
+    expect(perDay.find((level) => level.position === 1)?.spellsPerDay).toEqual({ 0: 3, 1: 2 });
+
+    expect(EntitiesService.createOwnList(session, fork.id, "classes", fighter)).rejects.toEqual(
+      new RulesError("conflict", "Fighter Spells already exists"),
+    );
+    // The wizard casts from its own list already
+    expect(EntitiesService.createOwnList(session, fork.id, "classes", wizard)).rejects.toEqual(
+      new RulesError("conflict", "Wizard Spells already exists"),
+    );
+  });
+
+  // As its first add does, a create from its Spells tab takes over a list the fork deleted, with its spells
+  test("makes a class's own list a fork deleted again from its Spells tab, standing for the deleted one", async () => {
+    const {
+      session,
+      user,
+      ruleset: parent,
+      aptitudeIds: [witchList],
+    } = await createTestUserAndRuleset(["Witch Spells"]);
+    const witch = await EntitiesService.createEntity(session, parent.id, "classes", {
+      name: "Witch",
+      fields: { [CLASS_HD]: 6 },
+    });
+    await EntitiesService.createEntity(session, parent.id, "spells", {
+      name: "Evil Eye",
+      links: { listedIn: [{ toId: witchList, tier: 1 }] },
+    });
+    const fork = await createTestRuleset(user.id, { rulesetId: parent.id });
+    await EntitiesService.deleteEntity(session, fork.id, "aptitudes", witchList);
+
+    const created = await EntitiesService.createOwnList(session, fork.id, "classes", witch.id);
+    const tombstone = await EntitySnapshots.findOne(db, { sourceEntityId: witchList, rulesetId: fork.id });
+    expect(tombstone?.forkedEntityId).toBe(created.id);
+    expect(await namesOn(fork.id, created.id, 1)).toEqual(["Evil Eye"]);
+  });
+
   // A list the fork deleted leaves a tombstone, which the list its add makes takes over, as a create from its tab does
   test("makes a class's own list a fork deleted again, standing for the deleted one with its spells", async () => {
     const {
@@ -373,5 +439,6 @@ describe("EntitiesService: a class's spell lists", () => {
     expect(
       EntitiesService.removeListedEntity(stranger, fork.id, "classes", wizard, wizardList, spellId("Fireball")),
     ).rejects.toThrow(NotFoundError);
+    expect(EntitiesService.createOwnList(stranger, fork.id, "classes", wizard)).rejects.toThrow(NotFoundError);
   });
 });
