@@ -1,6 +1,6 @@
 import { useContext } from "react";
 
-import { OwnerDraftsContext } from "@/client/src/stores/ownerDraftsStore.ts";
+import { OwnerDraftsContext } from "./ownerDraftsStore.ts";
 
 /**
  * The drafts of the progression owner's page this is under (`OwnerDraftsContext`), read with zustand's `useStore`, or

@@ -26,9 +26,9 @@ export interface OwnerTabDraft {
 export const OwnerDraftsContext = createContext<StoreApi<OwnerDraftsState> | null>(null);
 
 /**
- * The unsaved edits of a progression owner's page's tabs (those of its base rules' that edit before a save), made as the
- * page opens and gone as it closes, as a form's edits are (`OwnerDraftsContext`); kept while the page shows another of
- * its tabs, so switching tabs loses none. The page reads whether any changes something, which a reload asks about.
+ * The unsaved edits of a progression owner's page's tabs (those of its base rules' that edit before a save), made as
+ * the page opens and gone as it closes, as a form's edits are (`OwnerDraftsContext`); kept while the page shows another
+ * of its tabs, so switching tabs loses none. The page reads whether any changes something, which a reload asks about.
  */
 export function createOwnerDraftsStore() {
   return createStore<OwnerDraftsState>((set) => ({

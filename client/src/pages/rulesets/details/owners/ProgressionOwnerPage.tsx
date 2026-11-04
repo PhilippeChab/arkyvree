@@ -26,9 +26,9 @@ import {
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { createOwnerDraftsStore, OwnerDraftsContext } from "@/client/src/stores/ownerDraftsStore.ts";
 
 import { OwnerDetails } from "./components/index.ts";
+import { createOwnerDraftsStore, OwnerDraftsContext } from "./ownerDraftsStore.ts";
 import { type OwnerDetail, ownerDetailQuery } from "./ownerSectionQueries.ts";
 import { getOwnerTabAlias, getOwnerTabs } from "./ownerTabs.ts";
 import { useOwnerDrafts } from "./useOwnerDrafts.ts";

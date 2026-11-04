@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useStore } from "zustand";
 
+import type { OwnerTabDraft } from "@/client/src/pages/rulesets/details/owners/ownerDraftsStore.ts";
 import { useOwnerDrafts } from "@/client/src/pages/rulesets/details/owners/useOwnerDrafts.ts";
-import type { OwnerTabDraft } from "@/client/src/stores/ownerDraftsStore.ts";
 
 /** The tokens a draft's save is checked against: its owned entities', as the tab read them when it began. */
 export type DraftTokens = NonNullable<OwnerTabDraft["tokens"]>;
@@ -11,9 +11,9 @@ export type DraftTokens = NonNullable<OwnerTabDraft["tokens"]>;
  * An owner's tab's changes before its save (`edits`, from `empty`), the owner's (`ownerId`) and the tab's (`tab`), kept
  * in the page's drafts while it shows another of its tabs, and gone as it closes; once the page follows a copy of the
  * owner, whose owned entities are others, it holds none. Whether they change anything (`changed`, as the tab reads
- * them) guards the page's reload. Its first edit keeps its `ownedEntities`' tokens (`tokens`), so a save refuses an owned entity
- * changed since, however often the tab reads them again; an edit while they're read again (`fresh` false: what shows
- * may be older) keeps none yet, the next one or the save reading them.
+ * them) guards the page's reload. Its first edit keeps its `ownedEntities`' tokens (`tokens`), so a save refuses an
+ * owned entity changed since, however often the tab reads them again; an edit while they're read again (`fresh` false:
+ * what shows may be older) keeps none yet, the next one or the save reading them.
  */
 export function useOwnerDraft<T>(
   ownerId: string,
