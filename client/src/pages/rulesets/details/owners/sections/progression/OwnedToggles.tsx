@@ -34,6 +34,9 @@ export interface ToggleNote {
   text: string;
 }
 
+/** The toggles a phone's line holds: ten, so a class's 20 levels take two lines and none scrolls out of sight. */
+const PHONE_TOGGLES = 10;
+
 /**
  * One toggle an owned entity, filled where something is granted, outlined where the tab changed it before its save. A
  * toggle with a note says it in its tooltip, which a screen reader reads as its description; one whose grant gives
@@ -56,7 +59,11 @@ export function OwnedToggles({
       aria-label={`${positionWord.many} of ${label}`}
       sx={{
         display: "grid",
-        gridTemplateColumns: `repeat(${Math.max(ownedEntities.length, 1)}, minmax(24px, 1fr))`,
+        // On a phone, ten a line (a class's 20 levels on two); from sm up, one line
+        gridTemplateColumns: {
+          xs: `repeat(${Math.min(Math.max(ownedEntities.length, 1), PHONE_TOGGLES)}, minmax(0, 1fr))`,
+          sm: `repeat(${Math.max(ownedEntities.length, 1)}, minmax(24px, 1fr))`,
+        },
         gap: 0.5,
       }}
     >

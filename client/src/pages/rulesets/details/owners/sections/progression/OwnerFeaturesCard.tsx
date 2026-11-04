@@ -271,7 +271,8 @@ export function OwnerFeaturesCard({
         {grants.words.help}
       </Typography>
       <Box sx={{ overflowX: "auto" }}>
-        <Stack spacing={0.75} sx={{ minWidth: { sm: 640 } }}>
+        {/* On a phone a row is its name over its toggles: farther apart, so a row's toggles don't touch the next name */}
+        <Stack spacing={{ xs: 2, sm: 0.75 }} sx={{ minWidth: { sm: 640 } }}>
           {features.map((row) => (
             <Box key={row.key} sx={grid}>
               <RowName name={row.name} kind={row.viaName ?? grants.words.feature} />
