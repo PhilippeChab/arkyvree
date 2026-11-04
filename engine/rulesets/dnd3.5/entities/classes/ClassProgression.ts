@@ -6,16 +6,20 @@
 import { z } from "zod";
 
 import type { EntityFieldValues, EntityLinkValues } from "@/engine/core/fields/index.ts";
+import type { FeatureCreatePlan, MadeEntity } from "@/engine/core/module/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import AptitudeTargets, { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
+import ClassOffers from "@/engine/rulesets/dnd3.5/rules/ClassOffers.ts";
+import FeatureStacking from "@/engine/rulesets/dnd3.5/rules/FeatureStacking.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { isRecord } from "@/shared/isRecord.ts";
-import { stripSeparators } from "@/shared/text.ts";
+import { sanitizeName, stripSeparators } from "@/shared/text.ts";
+import { FEAT_GENERATED, FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import type ClassLevelEntity from "./ClassLevelEntity.ts";
@@ -173,6 +177,22 @@ function planned(target: string, operator: "add" | "set", value: number): LevelM
 }
 
 /**
+ * The feats a progression's save sends its levels as granting (`owned`: each level's form, its `grants` links), by the
+ * level's id: those whose form sends its grants alone.
+ */
+function readSentGrants(owned: readonly { links?: Record<string, unknown>; ownedId: string }[] = []) {
+  return new Map(
+    owned.flatMap(({ links, ownedId }): [string, string[]][] => {
+      const grants = links?.grants;
+      if (!Array.isArray(grants)) return [];
+      return [
+        [ownedId, grants.flatMap((grant) => (isRecord(grant) && typeof grant.toId === "string" ? [grant.toId] : []))],
+      ];
+    }),
+  );
+}
+
+/**
  * The levels' modifiers as a save plans them (`working`, by the level each is on), as a class's table reads them: those
  * it keeps (`keep`: all of them), each with its level (`sourceId`).
  */
@@ -284,6 +304,12 @@ export default class ClassProgression {
     }));
   }
 
+  /** The notes on a feature's levels, in its rules' words: one that gives nothing (`repeat`), one a click moves it to. */
+  private get noteWords() {
+    const words = PROGRESSION.grants?.words;
+    return { repeat: words?.repeat ?? "", single: words?.single ?? "" };
+  }
+
   /**
    * A save's levels' modifiers (`sent`, read by its schema, refused as invalid when it isn't one or a count is past the
    * rules' bounds): each level's as the view has them (`original`), and as its pools' picks and its spell tables leave
@@ -371,6 +397,17 @@ export default class ClassProgression {
     }
   }
 
+  /** A feature's name as typed, trimmed: refused as invalid when that leaves none. */
+  private readFeatureName(name: string) {
+    const given = sanitizeName(name);
+    if (!given) {
+      throw new RulesError("invalid", "A feature needs a name", [
+        { category: "name", message: "A feature needs a name" },
+      ]);
+    }
+    return given;
+  }
+
   private get rulesetData(): RulesetData {
     return this.view.rulesetData;
   }
@@ -424,8 +461,12 @@ export default class ClassProgression {
    * spell list its spells go to (none for a class without one), whether its levels give spells in several
    * (`severalSpellLists`, which the public API answers), why its spell tables take no save (`spellTablesRefusal`, in
    * the save's words: a class without a list, or with several; none when they take one), its own list (`ownSpellList`:
-   * "Witch Spells", its id none while the ruleset has no such aptitude, which its list's first add makes), and the
-   * picks the ruleset's feats give in pools (`featPicks`, a granted feature's).
+   * "Witch Spells", its id none while the ruleset has no such aptitude, which its list's first add makes), the picks
+   * the ruleset's feats give in pools (`featPicks`, a granted feature's), and the pools its Progression tab offers
+   * (`ClassOffers.describe`): those its features are granted through (`featurePools`), those it may give picks
+   * in (`offeredPools`), and its own feature pool (`ownFeaturePool`: "Witch Class Feature", its id none while the ruleset
+   * has none, which its first created feature makes), and the notes on its levels' grants that give nothing
+   * (`featureNotes`, `FeatureStacking.describeNotes`).
    */
   describe() {
     const { rulesetData } = this;
@@ -447,10 +488,15 @@ export default class ClassProgression {
     });
     const featPicks = ClassProgression.readFeatPicks(rulesetData);
     const list = this.spellList;
+    const offers = new ClassOffers(this.view, this.klass).describe();
     return {
       featPicks,
+      featurePools: offers.featurePools,
+      offeredPools: offers.pools,
+      ownFeaturePool: offers.ownFeaturePool,
       ownSpellList: this.table.describeOwnList(),
       pools,
+      featureNotes: new FeatureStacking(this.view, this.klass).describeNotes(new Map(), this.noteWords),
       severalSpellLists: this.spellLists.length > 1,
       spellList: list ? { id: list.id, name: list.name } : null,
       spellTablesRefusal: this.spellTables.refusal ?? null,
@@ -458,15 +504,33 @@ export default class ClassProgression {
   }
 
   /**
-   * What one save of the class's progression (`sent`) would leave the tables its tables' tab edits at, unwritten: each
-   * by its name (its rules' progression's `tables`), its levels' totals as the class's table reads them once written
+   * The feature a name creates (`name`, as typed: "Hex"), as its picker offers it: the name its create gives it ("Hex
+   * (Witch)"), and whether the ruleset has a feat of that name already (`exists`), which its create refuses. Refused as
+   * invalid without a name.
+   */
+  describeNewFeature(name: string): { exists: boolean; name: string } {
+    return new ClassOffers(this.view, this.klass).describeNewFeature(this.readFeatureName(name));
+  }
+
+  /**
+   * What one save of the class's progression (`sent`) would leave the tables its tables' tab edits at, unwritten
+   * (`tables`): each by its name (its rules' progression's `tables`), its levels' totals as the class's table reads them once written
    * (`ClassTable.describe`). Refused as its save is for what it plans here: its schema, its counts' bounds, its pools'
    * picks and its spell tables. Its levels' own forms (`owned`), which change no table, it reads by its schema alone,
-   * never as their save checks them (`ClassLevelEntity.planEdit`).
+   * never as their save checks them (`ClassLevelEntity.planEdit`), but for the feats they grant: the notes on those
+   * that would give nothing once saved (`featureNotes`, `FeatureStacking.describeNotes`), as the card shows them.
    */
   describePlan(sent: ProgressionForm) {
-    const modifiers = readTableModifiers(this.planModifiers(sent).working);
-    return Object.fromEntries(PROGRESSION.tables.map(({ table }) => [table, this.table.describe(table, modifiers)]));
+    const { body, working } = this.planModifiers(sent);
+    const modifiers = readTableModifiers(working);
+    return {
+      tables: Object.fromEntries(PROGRESSION.tables.map(({ table }) => [table, this.table.describe(table, modifiers)])),
+      // What its levels' grants give once saved, as its card shows them before the save
+      featureNotes: new FeatureStacking(this.view, this.klass).describeNotes(
+        readSentGrants(body.owned),
+        this.noteWords,
+      ),
+    };
   }
 
   /**
@@ -498,6 +562,54 @@ export default class ClassProgression {
       owned,
       ownedType: "class-levels",
       owner: this.klass,
+    };
+  }
+
+  /**
+   * A new feature the class's levels can grant (`name`, as typed: "Hex"), made in its own feature pool under the name
+   * its rules give it ("Hex (Witch)"), the pool made first where the ruleset has none ("Witch Class Feature",
+   * `ClassOffers.describeOwnFeaturePool`): never picked at a level up, and not Stackable until its page says so; what
+   * its activity records is the feat's create's. Refused as invalid without a name, and as a conflict for a feat of the
+   * name the ruleset has already, or an aptitude of the pool's name its spells are listed in.
+   */
+  planFeature(name: string): FeatureCreatePlan {
+    const offers = new ClassOffers(this.view, this.klass);
+    const own = offers.describeOwnFeaturePool();
+    const { exists, name: featName } = offers.describeNewFeature(this.readFeatureName(name));
+    const { dnd35 } = this;
+    if (exists) throw new RulesError("conflict", `${featName} already exists`);
+    if (own.id !== null && dnd35.aptitudeIdsWithSpells.has(own.id))
+      throw new RulesError("conflict", `${own.name} is a spell list, so it can't hold ${this.klass.name}'s features`);
+    const poolId = own.id ?? crypto.randomUUID();
+    const made: MadeEntity[] =
+      own.id === null
+        ? [
+            {
+              links: [],
+              modifiers: [],
+              requirements: [],
+              row: { description: "", id: poolId, name: own.name },
+              type: "aptitudes",
+            },
+          ]
+        : [];
+    const id = crypto.randomUUID();
+    made.push({
+      links: [{ links: [{ tier: null, toId: poolId }], role: "listedIn", toType: "aptitudes" }],
+      modifiers: [],
+      requirements: [],
+      row: {
+        description: "",
+        fields: { [FEAT_GENERATED]: false, [FEAT_SELECTABLE]: false, [FEAT_STACKABLE]: false },
+        id,
+        name: featName,
+      },
+      type: "feats",
+    });
+    return {
+      activity: { entityName: featName, rulesetId: this.view.ruleset.id },
+      created: { id, name: featName, stacks: false, type: "feats", via: { id: poolId, name: own.name } },
+      writes: { made },
     };
   }
 }

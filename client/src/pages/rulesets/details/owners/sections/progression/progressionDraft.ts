@@ -7,16 +7,40 @@
 
 import type { OwnedLists, OwnedRead } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import type { OwnerProgressionBody } from "@/client/src/pages/rulesets/details/owners/ownerSectionQueries.ts";
+import { isRecord } from "@/shared/isRecord.ts";
+
+/** A pool, by its id and its name. */
+interface PoolRef {
+  id: string;
+  name: string;
+}
 
 /**
- * A feature the owner grants (3.5's feat, `toId`, through a feat pool, `viaId`), the owned entities it grants it at, by
- * their ids, and whether a character takes it more than once (`stacks`): one that doesn't is granted at one.
+ * The notes on a feature that doesn't stack (`toId`), as its rules write them: the owned entities that grant it, which a
+ * click on another moves it from (`from`, `moveText`), and those past its first, which give nothing there (`idle`,
+ * `idleText`).
+ */
+export interface FeatureNote {
+  from: string[];
+  idle: string[];
+  idleText: string;
+  moveText: string;
+  toId: string;
+}
+
+/** What an owner's Progression tab offers, as its progression's answer gives it: the pools it may give picks in. */
+export interface FeatureOffers {
+  offeredPools: PoolRef[];
+}
+
+/**
+ * A feature the owner grants (3.5's feat, `toId`, through a feat pool, `viaId`), and the owned entities it grants it
+ * at, by their ids.
  */
 export interface FeatureRow {
   grantedAt: string[];
   key: string;
   name: string;
-  stacks: boolean;
   toId: string;
   viaId: string;
   viaName: string | null;
@@ -51,6 +75,22 @@ const AMOUNT_TRACK = "amount:";
 
 /** A tab that changed nothing yet. */
 export const NO_EDITS: ProgressionEdits = { addedFeatures: [], addedPools: [], features: {}, pools: {}, tracks: {} };
+
+/** Ids as an answer lists them (`value`): its strings, none else. */
+function readIds(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : [];
+}
+
+/** Pools as an answer lists them (`value`): each one of an id and a name, none else. */
+function readPools(value: unknown): PoolRef[] {
+  return Array.isArray(value)
+    ? value.flatMap((pool) =>
+        isRecord(pool) && typeof pool.id === "string" && typeof pool.name === "string"
+          ? [{ id: pool.id, name: pool.name }]
+          : [],
+      )
+    : [];
+}
 
 /** Whether two lists of features' keys hold the same features. */
 function sameKeys(a: readonly string[], b: readonly string[]) {
@@ -155,7 +195,6 @@ export function describeFeatureRows(ownedEntities: readonly OwnedRead[]): Featur
         key,
         grantedAt: [],
         name: grant.toName,
-        stacks: grant.stacks,
         toId: grant.toId,
         viaId: grant.viaId,
         viaName: grant.viaName,
@@ -170,6 +209,57 @@ export function describeFeatureRows(ownedEntities: readonly OwnedRead[]): Featur
 /** A track's value at an owned entity, as the tab shows it: its edit's, or the saved one. */
 export function readEditedTrack(ownedEntity: OwnedRead, key: TrackKey, edits: ProgressionEdits) {
   return edits.tracks[key]?.[ownedEntity.id] ?? readTrack(ownedEntity, key);
+}
+
+/** The notes an answer holds on its features (`value`, as its rules write them), each a feature's. */
+export function readFeatureNotes(value: unknown): FeatureNote[] {
+  return Array.isArray(value)
+    ? value.flatMap((note) =>
+        isRecord(note) &&
+        typeof note.idleText === "string" &&
+        typeof note.moveText === "string" &&
+        typeof note.toId === "string"
+          ? [
+              {
+                from: readIds(note.from),
+                idle: readIds(note.idle),
+                idleText: note.idleText,
+                moveText: note.moveText,
+                toId: note.toId,
+              },
+            ]
+          : [],
+      )
+    : [];
+}
+
+/**
+ * What an owner is offered, read off its progression's answer (`answer`) at the key its rules say (`keys`); none while
+ * either is missing.
+ */
+export function readFeatureOffers(
+  answer: Record<string, unknown> | undefined,
+  keys: { offeredPools: string } | undefined,
+): FeatureOffers | undefined {
+  if (!answer || !keys) return undefined;
+  return { offeredPools: readPools(answer[keys.offeredPools]) };
+}
+
+/**
+ * A listed entity's feature options, as its rules describe it for the owner (its `grantedThrough`: one per pool the
+ * owner grants it through): none for an entity that isn't one.
+ */
+export function readFeatureOptions(entity: unknown): FeatureRow[] {
+  if (!isRecord(entity) || typeof entity.id !== "string" || typeof entity.name !== "string") return [];
+  const { id, name } = entity;
+  return readPools(entity.grantedThrough).map((pool) => ({
+    key: describeFeatureKey({ toId: id, viaId: pool.id }),
+    grantedAt: [],
+    name,
+    toId: id,
+    viaId: pool.id,
+    viaName: pool.name,
+  }));
 }
 
 /**

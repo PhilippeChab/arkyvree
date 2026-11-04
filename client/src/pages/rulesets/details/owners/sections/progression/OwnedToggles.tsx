@@ -4,6 +4,8 @@ import { Fragment, type MouseEvent } from "react";
 import type { PositionWord } from "@/client/src/lib/rulesetLabels.ts";
 
 interface OwnedTogglesProps {
+  /** Waiting on its rules' answer for the last click: an empty toggle's click waits too, its cursor saying so */
+  busy?: boolean;
   /** What the toggles grant, which each one's label names ("Evasion at level 2") */
   label: string;
   /** A toggle's note, which its tooltip says; none for most */
@@ -25,16 +27,15 @@ interface OwnedTogglesProps {
 }
 
 /**
- * What a toggle's tooltip says of it: that a click moves its row's grant there (`move`: a feature granted at one owned entity
- * only, at another), or that what it holds gives nothing (`idle`: that feature's owned entity past its first, saved before the
- * rule).
+ * What a toggle's tooltip says of it, as its rules write it (`text`): that what it holds gives nothing (`idle`), or that
+ * a click moves its row's grant there (`move`).
  */
 export interface ToggleNote {
   kind: "idle" | "move";
   text: string;
 }
 
-/** The toggles a phone's line holds: ten, so a class's 20 levels take two lines and none scrolls out of sight. */
+/** The toggles a phone's line holds: ten, so 20 owned entities (3.5's class's levels) take two lines, none hidden. */
 const PHONE_TOGGLES = 10;
 
 /**
@@ -44,6 +45,7 @@ const PHONE_TOGGLES = 10;
  * click that changes its note keeps the toggle, and its focus.
  */
 export function OwnedToggles({
+  busy = false,
   label,
   noteOf,
   ownedEntities,
@@ -59,7 +61,7 @@ export function OwnedToggles({
       aria-label={`${positionWord.many} of ${label}`}
       sx={{
         display: "grid",
-        // On a phone, ten a line (a class's 20 levels on two); from sm up, one line
+        // On a phone, ten a line (20 owned entities on two); from sm up, one line
         gridTemplateColumns: {
           xs: `repeat(${Math.min(Math.max(ownedEntities.length, 1), PHONE_TOGGLES)}, minmax(0, 1fr))`,
           sm: `repeat(${Math.max(ownedEntities.length, 1)}, minmax(24px, 1fr))`,
@@ -73,16 +75,24 @@ export function OwnedToggles({
         const note = noteOf?.(id);
         const idle = note?.kind === "idle" && count > 0;
         const filled = count > 0 && !idle;
+        // Busy, an empty toggle waits for its rules' answer; a filled one empties at once, whatever the answer
+        const waits = busy && count === 0;
         const handleClick = (event: MouseEvent<HTMLElement>) => onToggle(id, event.currentTarget);
         const toggle = (
           <ButtonBase
             disabled={readOnly}
+            aria-busy={waits || undefined}
             aria-pressed={count > 0}
             aria-label={`${positionWord.one} ${position}: ${label}${count > 1 ? `, ${count} Picks` : ""}${readOnly && idle ? `. ${note.text}` : ""}`}
-            onClick={handleClick}
+            onClick={waits ? undefined : handleClick}
             sx={{
-              fontSize: "0.72rem",
+              // A phone's toggles share its width ten a line: a smaller count, cut rather than spilling on a neighbour
+              fontSize: { xs: "0.66rem", sm: "0.72rem" },
+              minWidth: 0,
+              overflow: "hidden",
+              whiteSpace: "nowrap",
               fontVariantNumeric: "tabular-nums",
+              cursor: waits ? "progress" : undefined,
               py: 0.25,
               borderRadius: 0.5,
               border: 1,

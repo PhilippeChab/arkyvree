@@ -9,6 +9,7 @@ export type {
   EntityGroupMember,
   EntityRemoval,
   EntityWrites,
+  FeatureCreatePlan,
   LinkAddPlan,
   LinkRemovePlan,
   LinkSet,

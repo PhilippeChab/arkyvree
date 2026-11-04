@@ -211,23 +211,34 @@ export interface ProgressionDescription {
  * What a class's levels grant, past their own columns (its levels' `grants` field: 3.5's feats, each through a feat
  * pool), as its Progression tab shows them: the pools a level gives picks in, of a kind and its scope (`pools`: 3.5's
  * `aptitudes`, of `feats`), the most picks a level gives in one (`maxPicks`), where a progression's answer holds the
- * picks a granted entity gives in its pools (`picks`: `featPicks`), the stored field that says a granted entity stacks
- * (`stacks`: `FEAT_STACKABLE`; one that doesn't is granted at one level, as a character holds it once), the class's
+ * picks a granted entity gives in its pools (`picks`: `featPicks`), where it and its plan hold the notes on a feature
+ * that doesn't stack (`notes`: where it gives nothing, and where a click moves it), the class's
  * table of each level's totals by pool (`table`: `feat-pools`, at `totals`: `featPools`), and the words its card and
- * its failures say them in (`words`: `repeat`, a non-stacking feature's level past its first, and `single`, a level a
- * click moves it to, each naming the feature at `{name}` and its first owned entity at `{position}`, in the words of its
- * position).
+ * its failures say them in (`words`: `repeat`, the note on a non-stacking feature's owned entity past its first, and
+ * `single`, on an owned entity a click moves it to, which the engine fills, the feature at `{name}` and its first owned
+ * entity at `{position}`).
  */
 export interface ProgressionGrants {
+  /** The granted kind's list filter that narrows it to what an owner may grant, by the owner's id (3.5's `grantableBy`) */
+  featuresFilter: string;
   maxPicks: number;
+  /**
+   * Where a progression's answer, and its plan's for a draft, hold the notes on each feature that doesn't stack (3.5's
+   * `featureNotes`, `{ from, idle, idleText, moveText, toId }`): the owned entities that grant it, which a click on
+   * another moves it from (`moveText`), and those past its first, which give nothing there (`idleText`)
+   */
+  notes: string;
+  /** Where a progression's answer holds the pools its owner may give picks in (3.5's `offeredPools`) */
+  offeredPools: string;
   picks: string;
   pools: { scope: string; type: string };
-  stacks: string;
   table: string;
   totals: string;
   words: {
     add: string;
     addPool: string;
+    /** A new feature's option, its name at `{name}` ("Create Hex (Witch)") */
+    create: string;
     feature: string;
     help: string;
     pool: string;

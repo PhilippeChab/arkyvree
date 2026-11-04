@@ -2,9 +2,23 @@
 
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import FeatRules from "@/engine/rulesets/dnd3.5/rules/FeatRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+
+import FeatRules from "./FeatRules.ts";
+
+/**
+ * The notes on a feat that isn't Stackable, which the class's card shows, in its rules' words: the levels that grant it
+ * (`from`), which a click on another moves it from (`moveText`), and those past its first, which give nothing there
+ * (`idle`, `idleText`), the feat as its first level names it (`toId`).
+ */
+interface FeatureNote {
+  from: string[];
+  idle: string[];
+  idleText: string;
+  moveText: string;
+  toId: string;
+}
 
 /** A level's feats it grants, before a save and once written, by the ids the view knows them by, and its number. */
 interface LevelGrants {
@@ -73,5 +87,39 @@ export default class FeatureStacking {
       const message = `${feat.name} isn't Stackable: ${this.klass.name} can grant it at one level, not at ${where}`;
       throw new RulesError("conflict", message);
     }
+  }
+
+  /**
+   * The notes on what the class's levels grant once written (`changed`: a changed level's feats by its id, as its save
+   * sends them, the others as the view has them), one for each feat that isn't Stackable, in its rules' words (`words`:
+   * the feat at `{name}`, levels at `{position}`): the levels that grant it, which a click on another moves it from
+   * (`single`), and those past its first, which give nothing there (`repeat`).
+   */
+  describeNotes(changed: ReadonlyMap<string, readonly string[]>, words: { repeat: string; single: string }) {
+    const rules = FeatRules.of(this.view.rulesetData);
+    const levels = (this.dnd35.classLevelsByClass.get(this.klass.id) ?? []).toSorted((a, b) => a.position - b.position);
+    // Each feat that isn't Stackable, by the id the view knows it by: the levels granting it, and its name and id there
+    const feats = new Map<string, { at: KlassLevel[]; name: string; toId: string }>();
+    for (const level of levels) {
+      for (const toId of changed.get(level.id) ?? this.dnd35.grantedFeatsOf(level.id).map((grant) => grant.toId)) {
+        const featId = this.view.rulesetData.canonicalize(toId);
+        const feat = this.dnd35.featsById.get(featId);
+        if (!feat || rules.isStackable(featId)) continue;
+        const held = feats.get(featId) ?? { at: [], name: feat.name, toId };
+        if (!held.at.includes(level)) held.at.push(level);
+        feats.set(featId, held);
+      }
+    }
+    return [...feats.values()].map(({ at, name, toId }): FeatureNote => {
+      const fill = (template: string, position: string) =>
+        template.replace("{name}", () => name).replace("{position}", () => position);
+      return {
+        from: at.map((level) => level.id),
+        idle: at.slice(1).map((level) => level.id),
+        idleText: fill(words.repeat, `level ${at[0].position}`),
+        moveText: fill(words.single, FeatureStacking.formatLevels(at.map((level) => level.position))),
+        toId,
+      };
+    });
   }
 }

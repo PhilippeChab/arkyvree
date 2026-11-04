@@ -135,6 +135,7 @@ export {
   type EntityKindsContract,
   type EntityRemoval,
   type EntityWrites,
+  type FeatureCreatePlan,
   type LinkAddPlan,
   type LinkRemovePlan,
   type LinkSet,

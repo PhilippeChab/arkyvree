@@ -5,6 +5,8 @@ import {
   buildProgressionBody,
   describeFeatureRows,
   NO_EDITS,
+  readFeatureNotes,
+  readFeatureOptions,
   withoutFeature,
   withoutPool,
 } from "@/client/src/pages/rulesets/details/owners/sections/progression/progressionDraft.ts";
@@ -60,7 +62,6 @@ describe("A Progression tab's save", () => {
         key: "evasion-features",
         grantedAt: ["l2"],
         name: "Evasion",
-        stacks: true,
         toId: "evasion",
         viaId: "features",
         viaName: "Class Features",
@@ -145,5 +146,34 @@ describe("A Progression tab's save", () => {
     const edits = withoutPool(withoutFeature({ ...NO_EDITS, addedFeatures: [added], addedPools: [pool] }, added), pool);
     expect([edits.addedFeatures, edits.addedPools]).toEqual([[], []]);
     expect(buildProgressionBody(twoLevels(), LISTS, TRACKS, ["fort"], [], [], edits)).toEqual({});
+  });
+});
+
+describe("A feature's notes", () => {
+  test("are read as the rules write them, each a feature's at an owned entity, none else", () => {
+    const note = { from: ["l1", "l3"], idle: ["l3"], idleText: "No effect.", moveText: "Moves here.", toId: "flurry" };
+
+    expect(readFeatureNotes([note, { ...note, idleText: 3 }, { toId: "aura" }, "l1"])).toEqual([note]);
+    expect(readFeatureNotes(undefined)).toEqual([]);
+  });
+});
+
+describe("A listed feat's options", () => {
+  test("are one per pool its rules say the owner grants it through", () => {
+    const listed = {
+      id: "aura",
+      name: "Aura (Cleric)",
+      grantedThrough: [
+        { id: "own", name: "Cleric Class Feature" },
+        { id: "general", name: "General" },
+      ],
+    };
+
+    expect(readFeatureOptions(listed).map(({ key, viaName }) => ({ key, viaName }))).toEqual([
+      { key: "aura-own", viaName: "Cleric Class Feature" },
+      { key: "aura-general", viaName: "General" },
+    ]);
+    expect(readFeatureOptions({ ...listed, grantedThrough: undefined })).toEqual([]);
+    expect(readFeatureOptions("aura")).toEqual([]);
   });
 });

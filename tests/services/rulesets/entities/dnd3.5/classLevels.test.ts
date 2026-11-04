@@ -387,6 +387,18 @@ describe("EntitiesService: a class's levels", () => {
     // Written past the services, as a class saved before the rule holds it
     await addGrants(db, second.id, "feats", [{ ...grant, free: true }]);
     RulesetViews.invalidate(ruleset.id);
+    // Its progression's notes on Aura: level 2 gives nothing, and a click elsewhere moves it from both, as its card
+    // shows them
+    const answer = await EntitiesService.getProgression(session, ruleset.id, "classes", klass.id);
+    expect((answer as { featureNotes: unknown }).featureNotes).toEqual([
+      {
+        from: [first.id, second.id],
+        idle: [second.id],
+        idleText: "No effect: a character takes Aura once, at level 1. It isn't Stackable.",
+        moveText: "Aura isn't Stackable, so it's granted at one level: a click moves it here from levels 1 and 2.",
+        toId: aura.id,
+      },
+    ]);
     const progression = (body: Parameters<typeof EntitiesService.updateProgression>[4]) =>
       EntitiesService.updateProgression(session, ruleset.id, "classes", klass.id, body);
 

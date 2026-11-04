@@ -1,0 +1,220 @@
+import { describe, expect, test } from "bun:test";
+
+import type { Aptitude, Feat, Klass } from "@/engine/rulesets/dnd3.5/index.ts";
+import { RulesetViews } from "@/server/cow/index.ts";
+import { db } from "@/server/database/index.ts";
+import { Entities, EntityLinks } from "@/server/repositories/index.ts";
+import { EntitiesService } from "@/server/services/rulesets/entities/index.ts";
+import { findFormValues } from "@/tests/support/ownerValues.ts";
+import {
+  createSeededTestRuleset,
+  createSeededTestRulesetWithExtensions,
+  ownerSessionOf,
+} from "@/tests/support/rulesets.ts";
+import { makeSession } from "@/tests/support/users.ts";
+import { FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
+
+/** A pool as a progression's answer names it. */
+interface PoolRef {
+  id: string;
+  name: string;
+}
+
+/** The seed user's fork of the seeded rules with their extensions, and one of its inherited classes. */
+async function forkWithClass(name: string) {
+  const session = makeSession();
+  const fork = await createSeededTestRulesetWithExtensions(session.userId);
+  const klass = (await Entities.findOne<Klass>(db, { entityType: "classes", name, rulesetId: fork.rulesetId! }))!;
+  return { session, fork, klass };
+}
+
+/** The names of the feats a search finds among those a class may grant as its features. */
+async function grantable(rulesetId: string, classId: string, search: string) {
+  return (await grantableRows(rulesetId, classId, search)).map((feat) => feat.name);
+}
+
+/** The feats a search of the ruleset's list finds among those a class may grant as its features, as listed. */
+async function grantableRows(rulesetId: string, classId: string, search: string) {
+  const page = await EntitiesService.getEntities(
+    await ownerSessionOf(rulesetId),
+    rulesetId,
+    "feats",
+    { grantableBy: classId, search },
+    { limit: 50, page: 1 },
+  );
+  return page.items as unknown as { grantedThrough: PoolRef[]; name: string }[];
+}
+
+/** The feature a typed name creates on a class, as its picker offers it. */
+async function newFeature(rulesetId: string, classId: string, name: string) {
+  return await EntitiesService.getNewFeature(await ownerSessionOf(rulesetId), rulesetId, "classes", classId, name);
+}
+
+/** What a class's Progression tab offers, as its progression's answer gives it. */
+async function readOffers(rulesetId: string, classId: string) {
+  const answer = (await EntitiesService.getProgression(
+    await ownerSessionOf(rulesetId),
+    rulesetId,
+    "classes",
+    classId,
+  )) as {
+    featurePools: PoolRef[];
+    offeredPools: PoolRef[];
+    ownFeaturePool: { featureName: string; id: string | null; name: string };
+  };
+  return {
+    featurePools: answer.featurePools.map((pool) => pool.name),
+    offeredPools: answer.offeredPools.map((pool) => pool.name),
+    ownFeaturePool: answer.ownFeaturePool,
+  };
+}
+
+describe("EntitiesService: a class's features and feat pools", () => {
+  test("offer the cleric every feat pool but a class's own features, its own first", async () => {
+    const { fork, klass } = await forkWithClass("Cleric");
+    const offers = await readOffers(fork.id, klass.id);
+
+    expect(offers.offeredPools[0]).toBe("Cleric Domain");
+    expect(offers.offeredPools).toEqual(expect.arrayContaining(["General", "Fighter Bonus Feat", "Wizard Bonus Feat"]));
+    // A class's feature pool holds the features its levels grant outright, which no pick chooses: its own too
+    expect(offers.offeredPools).not.toContain("Cleric Class Feature");
+    expect(offers.offeredPools).not.toContain("Fighter Class Feature");
+    expect(offers.offeredPools).not.toContain("Monk Class Feature");
+    expect(offers.featurePools[0]).toBe("Cleric Class Feature");
+    expect(offers.featurePools).toContain("General");
+    expect(offers.featurePools).not.toContain("Monk Class Feature");
+    expect(offers.ownFeaturePool).toMatchObject({ featureName: "{name} (Cleric)", name: "Cleric Class Feature" });
+  });
+
+  // In the core rules alone, the fighter is the one class giving picks in Fighter Bonus Feat: any class may still
+  test("offer a class of the core rules alone the fighter's bonus feats", async () => {
+    const session = makeSession();
+    const fork = await createSeededTestRuleset(session.userId);
+    const cleric = (await Entities.findOne<Klass>(db, {
+      entityType: "classes",
+      name: "Cleric",
+      rulesetId: fork.rulesetId!,
+    }))!;
+
+    expect((await readOffers(fork.id, cleric.id)).offeredPools).toContain("Fighter Bonus Feat");
+  });
+
+  test("list the feats a class may grant as its features: its own first, then General's, each with its pools", async () => {
+    const { fork, klass } = await forkWithClass("Cleric");
+    const all = await grantableRows(fork.id, klass.id, "");
+    const own = all.filter((feat) => feat.name.endsWith(" (Cleric)"));
+
+    // Its own come first, granted through its own feature pool
+    expect(all.slice(0, own.length)).toEqual(own);
+    expect(own.map((feat) => feat.name)).toContain("Aura (Cleric)");
+    expect(own.map((feat) => feat.name)).toEqual(own.map((feat) => feat.name).toSorted((a, b) => a.localeCompare(b)));
+    expect(own[0]).toMatchObject({ grantedThrough: [{ name: "Cleric Class Feature" }] });
+    // The others by name after them: Improved Toughness, then Toughness
+    const toughness = (await grantableRows(fork.id, klass.id, "Toughness")).find((feat) => feat.name === "Toughness");
+    expect(toughness).toMatchObject({
+      grantedThrough: [{ name: "General" }],
+      name: "Toughness",
+    });
+    expect(await grantable(fork.id, klass.id, "Aura")).toContain("Aura (Cleric)");
+    expect(await grantable(fork.id, klass.id, "Power Attack")).toContain("Power Attack");
+    // Another class's features aren't the cleric's
+    expect(await grantable(fork.id, klass.id, "Flurry")).not.toContain("Flurry of Blows (Monk)");
+  });
+
+  // As its card asks it of a draft: Aura (Cleric), at level 1, granted at level 5 too
+  test("note where a feature that doesn't stack gives nothing, for a draft, and where a click moves it", async () => {
+    const { session, fork, klass } = await forkWithClass("Cleric");
+    const levels = await EntitiesService.getOwnedEntities(session, fork.id, "classes", klass.id);
+    // A level's grants, among its links
+    const grantsOf = (position: number) =>
+      (
+        levels.find((level) => level.position === position)!.links as unknown as {
+          role: string;
+          toId: string;
+          toName: string;
+          viaId: string;
+        }[]
+      )
+        .filter((link) => link.role === "grants")
+        .map(({ toId, toName, viaId }) => ({ toId, toName, viaId }));
+    const aura = grantsOf(1).find((grant) => grant.toName === "Aura (Cleric)")!;
+    const fifth = levels.find((level) => level.position === 5)!;
+    const plan = (await EntitiesService.getProgressionPlan(session, fork.id, "classes", klass.id, {
+      owned: [
+        { ownedId: fifth.id, links: { grants: [...grantsOf(5), aura].map(({ toId, viaId }) => ({ toId, viaId })) } },
+      ],
+    })) as { featureNotes: unknown };
+
+    // Level 5 gives nothing, and a click elsewhere moves it from both; saved, from level 1 alone
+    const auraNote = (notes: unknown) =>
+      (notes as { from: string[]; idle: string[]; idleText: string; moveText: string; toId: string }[]).find(
+        (note) => note.toId === aura.toId,
+      );
+    const first = levels.find((level) => level.position === 1)!;
+    expect(auraNote(plan.featureNotes)).toEqual({
+      from: [first.id, fifth.id],
+      idle: [fifth.id],
+      idleText: "No effect: a character takes Aura (Cleric) once, at level 1. It isn't Stackable.",
+      moveText:
+        "Aura (Cleric) isn't Stackable, so it's granted at one level: a click moves it here from levels 1 and 5.",
+      toId: aura.toId,
+    });
+    const saved = (await EntitiesService.getProgression(session, fork.id, "classes", klass.id)) as {
+      featureNotes: unknown;
+    };
+    expect(auraNote(saved.featureNotes)).toEqual({
+      from: [first.id],
+      idle: [],
+      idleText: "No effect: a character takes Aura (Cleric) once, at level 1. It isn't Stackable.",
+      moveText: "Aura (Cleric) isn't Stackable, so it's granted at one level: a click moves it here from level 1.",
+      toId: aura.toId,
+    });
+  });
+
+  test("create a new class's feature in its own pool, made by its first, and refuse a name it has", async () => {
+    const { session, fork } = await forkWithClass("Cleric");
+    const witch = await EntitiesService.createEntity(session, fork.id, "classes", { name: "Witch" });
+    expect((await readOffers(fork.id, witch.id)).ownFeaturePool).toMatchObject({
+      id: null,
+      name: "Witch Class Feature",
+    });
+
+    // What a typed name creates: its rules' name, "Hex (Witch)" as typed too, and whether the ruleset has it
+    expect(await newFeature(fork.id, witch.id, "Hex")).toEqual({ exists: false, name: "Hex (Witch)" });
+    expect(await newFeature(fork.id, witch.id, " Hex (Witch) ")).toEqual({ exists: false, name: "Hex (Witch)" });
+    expect(await newFeature(fork.id, witch.id, "Cash $&")).toEqual({ exists: false, name: "Cash $& (Witch)" });
+    expect(newFeature(fork.id, witch.id, "  ")).rejects.toMatchObject({ refusal: "invalid" });
+
+    const hex = await EntitiesService.createFeature(session, fork.id, "classes", witch.id, "Hex");
+    const evilEye = await EntitiesService.createFeature(session, fork.id, "classes", witch.id, "Evil Eye (Witch)");
+
+    expect([hex.name, evilEye.name, hex.via.name]).toEqual(["Hex (Witch)", "Evil Eye (Witch)", "Witch Class Feature"]);
+    // One pool for both, listing both, and each feature its rules' flags: never picked at a level up, not Stackable
+    expect(evilEye.via.id).toBe(hex.via.id);
+    const pool = (await Entities.findOne<Aptitude>(db, { entityType: "aptitudes", id: hex.via.id }))!;
+    expect(pool.name).toBe("Witch Class Feature");
+    const listed = await EntityLinks.findMany(db, { fromIds: [hex.id, evilEye.id], role: "listedIn" });
+    expect(listed.map((link) => link.toId)).toEqual([pool.id, pool.id]);
+    const feat = (await Entities.findOne<Feat>(db, { entityType: "feats", id: hex.id }))!;
+    expect([feat.fields[FEAT_SELECTABLE], feat.fields[FEAT_STACKABLE]]).toEqual([false, false]);
+    expect((await findFormValues("feats", hex.id)).fields[FEAT_STACKABLE]).toEqual([false]);
+    RulesetViews.invalidate(fork.id);
+    expect(await readOffers(fork.id, witch.id)).toMatchObject({
+      featurePools: expect.arrayContaining(["Witch Class Feature"]),
+      ownFeaturePool: { id: pool.id },
+    });
+    expect(await grantable(fork.id, witch.id, "Hex")).toEqual(["Hex (Witch)"]);
+    expect(await newFeature(fork.id, witch.id, "Hex")).toEqual({ exists: true, name: "Hex (Witch)" });
+    // Whatever its case, and one space between its words
+    expect(await newFeature(fork.id, witch.id, "hex (witch)")).toEqual({ exists: true, name: "hex (witch)" });
+    expect(await newFeature(fork.id, witch.id, "Evil   Eye")).toEqual({ exists: true, name: "Evil Eye (Witch)" });
+
+    expect(EntitiesService.createFeature(session, fork.id, "classes", witch.id, "Hex")).rejects.toMatchObject({
+      message: "Hex (Witch) already exists",
+      refusal: "conflict",
+    });
+    expect(EntitiesService.createFeature(session, fork.id, "classes", witch.id, "   ")).rejects.toMatchObject({
+      refusal: "invalid",
+    });
+  });
+});

@@ -46,6 +46,40 @@ describe("rulesets class progression", () => {
     });
   });
 
+  test("creates a feature of the class in its own pool, refusing a name the ruleset has, and a guest", async () => {
+    const { param } = await setup();
+    // What the name creates, as the picker offers it, before and after
+    expect(await expectOk(progression.features.$get({ param, query: { name: "Arcane Ward" } }))).toEqual({
+      exists: false,
+      name: "Arcane Ward (Wizard)",
+    });
+
+    const response = await expectStatus(progression.features.$post({ param, json: { name: "Arcane Ward" } }), 201);
+    const created = await response.json();
+    expect(created).toMatchObject({
+      name: "Arcane Ward (Wizard)",
+      stacks: false,
+      via: { name: "Wizard Class Feature" },
+    });
+    // The ruleset's view lists it among the wizard's features now
+    RulesetViews.invalidate(param.id);
+    const read = await expectOk(progression.$get({ param }));
+    expect(read.featurePools.map((pool) => pool.name)).toContain("Wizard Class Feature");
+
+    expect(await expectOk(progression.features.$get({ param, query: { name: "Arcane Ward" } }))).toEqual({
+      exists: true,
+      name: "Arcane Ward (Wizard)",
+    });
+    await expectStatus(progression.features.$post({ param, json: { name: "Arcane Ward" } }), 409);
+    await expectStatus(
+      guestApi.api.rulesets[":id"].entities[":entityType"][":entityId"].progression.features.$post({
+        param,
+        json: { name: "Ward" },
+      }),
+      401,
+    );
+  });
+
   test("saves a level's fields on the fork's copy of an inherited class, and answers the levels it wrote", async () => {
     const { param, wizard, levels } = await setup();
     const first = levels.find((level) => level.position === 1)!;
@@ -170,12 +204,13 @@ describe("rulesets class progression", () => {
     const planned = await expectOk(
       progression.plan.$post({ param, json: { spells: { perDay: [{ ownedId: first.id, counts: [5, 2] }] } } }),
     );
-    // Each table its tables' tab edits, by its name, as its route reads it once saved
-    expect(Object.keys(planned).toSorted()).toEqual(["spells", "spells-known"]);
-    expect(planned.spells?.find((level) => "position" in level && level.position === 1)).toMatchObject({
+    // Each table its tables' tab edits, by its name, as its route reads it once saved, and no feature giving nothing
+    expect(Object.keys(planned.tables).toSorted()).toEqual(["spells", "spells-known"]);
+    expect(planned.tables.spells?.find((level) => "position" in level && level.position === 1)).toMatchObject({
       spellsPerDay: { 0: 5, 1: 2 },
     });
-    expect(planned["spells-known"]?.length).toBe(levels.length);
+    expect(planned.tables["spells-known"]?.length).toBe(levels.length);
+    expect(planned.featureNotes.flatMap((note) => note.idle)).toEqual([]);
     // Nothing written: the fork's wizard is the one it inherits, as it was
     expect((await expectOk(kinds[":entityId"].$get({ param }))).updatedAt).toBe(wizard.updatedAt);
     const perDay = await expectOk(kinds[":entityId"].tables[":table"].$get({ param: { ...param, table: "spells" } }));

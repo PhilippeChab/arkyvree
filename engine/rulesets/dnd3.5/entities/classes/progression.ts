@@ -5,7 +5,7 @@ import ClassProgressions from "@/engine/rulesets/dnd3.5/rules/ClassProgressions.
 import { formatSigned } from "@/shared/text.ts";
 import { BONDED_KIND_SLUGS } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import { type BabType, MAX_CLASS_LEVEL, type SaveType } from "@/vocabulary/dnd3.5/classes.ts";
-import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { SPELL_LEVEL_LABELS, SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import ProgressionLabels from "./ProgressionLabels.ts";
@@ -47,15 +47,18 @@ export const PROGRESSION: ProgressionDeclaration = {
     type: "spells",
   },
   grants: {
+    featuresFilter: "grantableBy",
     maxPicks: RULESET_LIMITS.tableCount,
+    offeredPools: "offeredPools",
     picks: "featPicks",
     pools: { scope: "feats", type: "aptitudes" },
-    stacks: FEAT_STACKABLE,
+    notes: "featureNotes",
     table: "feat-pools",
     totals: "featPools",
     words: {
       add: "Add Class Feature",
       addPool: "Add Feat Pool",
+      create: "Create {name}",
       feature: "Class feature",
       help: "A filled level grants the feature there. A feature that isn't Stackable is granted at one level: clicking another moves it there. A feat pool's filled level gives picks in it: click it again to change how many.",
       pool: "Feat pool",

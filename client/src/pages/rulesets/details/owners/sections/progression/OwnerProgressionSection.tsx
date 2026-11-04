@@ -1,5 +1,5 @@
-import { Box, Stack, Tooltip, Typography } from "@mui/material";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Alert, Box, Stack, Tooltip, Typography } from "@mui/material";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import {
@@ -20,6 +20,7 @@ import {
   useRules,
   useRulesetPermissions,
 } from "@/client/src/hooks/index.ts";
+import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel, formatWordCount, positionWordsOf, withArticle } from "@/client/src/lib/rulesetLabels.ts";
 import {
@@ -40,6 +41,7 @@ import {
   ownedEntitiesQuery,
   ownerProgressionQuery,
   ownerTableQuery,
+  progressionPlanQuery,
 } from "@/client/src/pages/rulesets/details/owners/ownerSectionQueries.ts";
 import type { OwnerSectionProps } from "@/client/src/pages/rulesets/details/owners/ownerTab.ts";
 import { byPosition } from "@/client/src/pages/rulesets/details/owners/sections/byPosition.ts";
@@ -64,6 +66,8 @@ import {
   describeFeatureRows,
   type PoolRow,
   readEditedTrack,
+  readFeatureNotes,
+  readFeatureOffers,
   readTrack,
   type TrackKey,
   withAddedFeatures,
@@ -72,6 +76,7 @@ import {
 import { detectPreset, formatTrackValue, presetsOf } from "./progressionPresets.ts";
 import { ProgressionSaveBar } from "./ProgressionSaveBar.tsx";
 import { ProgressionTrackRow } from "./ProgressionTrackRow.tsx";
+import { useCreateFeature } from "./useCreateFeature.ts";
 import { useCreateOwnedBatch } from "./useCreateOwnedBatch.ts";
 import { useProgressionDraft } from "./useProgressionDraft.ts";
 import { useProgressionSave } from "./useProgressionSave.ts";
@@ -218,6 +223,14 @@ export function OwnerProgressionSection({
     { ownedType, ownerType, word: { one: ownedWord, many: entityTypeLabel(ownedType, rules?.words, true) } },
     createDialog.close,
   );
+  // A created feature's row, granted at no owned entity until one is clicked
+  const createFeature = useCreateFeature(
+    rulesetId,
+    ownerType,
+    ownerId,
+    { granted: ownedLists.grants?.references ?? "", pools: grantsRules?.pools.type ?? "" },
+    draft.addFeature,
+  );
   // Opened on one, whatever a cancelled one held
   const handleCreate = () => {
     createForm.reset(createDefaults);
@@ -279,6 +292,19 @@ export function OwnerProgressionSection({
     savedFeatures,
     savedPools,
     draft.edits,
+  );
+  // The rules' notes on its grants: the draft's, as its plan answers it (the last answer while the next loads), else
+  // the saved ones
+  const sends = Object.keys(body).length > 0;
+  const plan = useQuery({
+    ...progressionPlanQuery(rulesetId, ownerType, ownerId, sends ? body : undefined),
+    enabled: canEdit,
+    placeholderData: keepPreviousData,
+  });
+  const notesKey = grantsRules?.notes ?? "";
+  // A failed plan's notes would be another draft's: none then, the save refusing what the engine refuses
+  const notes = readFeatureNotes(
+    sends ? (plan.isError ? undefined : plan.data?.[notesKey as keyof typeof plan.data]) : answer?.[notesKey],
   );
   // A pool's id in the save
   const poolIdOf = (pool: Record<string, unknown>) => String(pool.id);
@@ -434,6 +460,11 @@ export function OwnerProgressionSection({
         <LoadError what={grantsRules?.words.pools ?? ""} error={progressionError} />
       )}
       {!!poolsError && !poolTotals && <LoadError what={grantsRules?.words.totals ?? ""} error={poolsError} />}
+      {canEdit && plan.isError && (
+        <Alert severity="error">
+          {errorMessage(plan.error, `Failed to check the ${grantsRules?.words.title.toLowerCase() ?? "progression"}`)}
+        </Alert>
+      )}
       <RulesetSectionTable
         what={positionWord.many}
         error={error}
@@ -527,6 +558,13 @@ export function OwnerProgressionSection({
             onAddPool={draft.addPool}
             onRemoveFeature={draft.removeFeature}
             onRemovePool={draft.removePool}
+            offers={readFeatureOffers(answer, grantsRules)}
+            notes={notes}
+            notesWaiting={sends && canEdit && (plan.isPending || plan.isPlaceholderData)}
+            ownerId={ownerId}
+            ownerType={ownerType}
+            creating={createFeature.isPending}
+            onCreateFeature={(name) => createFeature.mutate(name)}
           />
         )}
       {canEdit && ownedEntities.length > 0 && (

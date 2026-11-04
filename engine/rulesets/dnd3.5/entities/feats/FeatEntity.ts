@@ -6,9 +6,10 @@ import type { FormBody } from "@/engine/core/entities/index.ts";
 import type { EntityForm, PartialFieldValues } from "@/engine/core/fields/index.ts";
 import type { EntityRecord } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
-import FeatureStacking from "@/engine/rulesets/dnd3.5/entities/classes/FeatureStacking.ts";
 import ListedEntity from "@/engine/rulesets/dnd3.5/entities/ListedEntity.ts";
+import ClassOffers from "@/engine/rulesets/dnd3.5/rules/ClassOffers.ts";
 import FeatRules from "@/engine/rulesets/dnd3.5/rules/FeatRules.ts";
+import FeatureStacking from "@/engine/rulesets/dnd3.5/rules/FeatureStacking.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Feat } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { FEAT_FAMILY, FEAT_GENERATED, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -22,6 +23,13 @@ export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS
    * its `listedIn` links name).
    */
   protected static override readonly families = { field: FEAT_FAMILY, groupFilters: { listedIn: z.string().uuid() } };
+
+  /**
+   * Its list's filters past its pool: the feats a class's levels may grant as its features (`grantableBy`: the class's
+   * id, `ClassOffers.describeFeatures`), which its Progression tab's Add Class Feature offers, the class's own first,
+   * each with the pools the class grants it through (`grantedThrough`).
+   */
+  protected static override readonly listFilters = { grantableBy: z.string().uuid() };
 
   /**
    * A generated feat keeps its name, which names its option (`Weapon Focus: Longsword`) and which checks and generators
@@ -60,13 +68,21 @@ export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS
   }
 
   /**
-   * A page of the ruleset's feats, as its query asks for it: what it's read with (`filters`: a pool's feats), and its
-   * records described, with their pools as the ruleset composes them.
+   * A page of the ruleset's feats, as its query asks for it: what it's read with (`filters`: a pool's feats, those a
+   * class may grant as its features, its own first), and its records described, with their pools as the ruleset
+   * composes them, and those the class grants each through (`grantedThrough`; none without a class).
    */
-  protected override listOf(where: { listedIn?: string }) {
+  protected override listOf({ grantableBy, listedIn }: { grantableBy?: string; listedIn?: string }) {
+    const pool = this.poolFeatIds(listedIn);
+    const features = grantableBy === undefined ? undefined : this.featuresOf(grantableBy);
+    const listed = pool && new Set(pool);
     return {
-      describe: <T extends Pick<EntityRecord, "fields" | "id" | "links">>(rows: T[]) => this.describeListed(rows),
-      filters: { ids: this.poolFeatIds(where.listedIn) },
+      describe: <T extends Pick<EntityRecord, "fields" | "id" | "links">>(rows: T[]) =>
+        this.describeListed(rows).map((row) => ({ ...row, grantedThrough: features?.through.get(row.id) ?? [] })),
+      filters: {
+        firstIds: features?.ownIds,
+        ids: features ? features.ids.filter((id) => !listed || listed.has(id)) : pool,
+      },
     };
   }
 
@@ -101,6 +117,13 @@ export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS
   /** The view's 3.5 lists and indices. */
   private get dnd35(): Dnd35View {
     return Dnd35View.of(this.rulesetData);
+  }
+
+  /** The feats a class (`classId`) may grant as its features, as its rule gives them: refused for a class it lacks. */
+  private featuresOf(classId: string) {
+    const klass = this.dnd35.classesById.get(this.rulesetData.canonicalize(classId));
+    if (!klass) throw new RulesError("not-found", "Class not found");
+    return new ClassOffers(this.view, klass).describeFeatures();
   }
 
   /** A pool's feats' ids (`aptitudeId`), as the ruleset composes them: every feat's (`undefined`) without one. */

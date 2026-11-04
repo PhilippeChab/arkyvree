@@ -202,10 +202,15 @@ test.describe("A class's progression", () => {
         .getByRole("group", { name: `Levels of ${row}` })
         .getByRole("button", { name: new RegExp(`^Level ${level}:`) });
 
-    // A feature that doesn't stack is granted at one level: a click on another moves it there
+    // A feature that doesn't stack is granted at one level: the rules' note on another says a click moves it there
     await levelOf("Aura (Cleric)", 5).click({ timeout: 10_000 });
     await expect(levelOf("Aura (Cleric)", 5)).toHaveAttribute("aria-pressed", "true");
     await expect(levelOf("Aura (Cleric)", 1)).toHaveAttribute("aria-pressed", "false");
+    await levelOf("Aura (Cleric)", 3).hover();
+    await expect(page.getByRole("tooltip")).toHaveText(
+      "Aura (Cleric) isn't Stackable, so it's granted at one level: a click moves it here from level 5.",
+      { timeout: 10_000 },
+    );
 
     // A filled pool level opens a box that sets its picks: the cleric's two domains, then a third
     await levelOf("Cleric Domain", 1).click();
@@ -227,6 +232,49 @@ test.describe("A class's progression", () => {
     await expect(levelOf("Cleric Domain", 1)).toHaveAccessibleName(/3 Picks/, { timeout: 10_000 });
     await expect(levelOf("Aura (Cleric)", 5)).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByRole("group", { name: `Levels of ${proficiency}` })).toHaveCount(0);
+  });
+
+  test("of an inherited cleric offers the feat pools it may give picks in, and creates a feature of its own granted at a level in one save", async ({
+    page,
+    ownerUser,
+  }) => {
+    await signIn(page, ownerUser.email, ownerUser.password);
+    const forkId = await forkCoreRuleset(page, uniqueName("Pickers Fork"));
+    const { items } = await parseResponse(
+      apiOf(page).api.rulesets[":id"].entities[":entityType"].$get({
+        param: { id: forkId, entityType: "classes" },
+        query: { search: "Cleric" },
+      }),
+    );
+    const cleric = items.find((klass) => klass.name === "Cleric")!;
+    await page.goto(`/rulesets/${forkId}/classes/${cleric.id}/progression`);
+
+    // Every feat pool but those on its card (its Cleric Domain) and the classes' feature pools, its own too
+    const pools = page.getByRole("combobox", { name: "Add Feat Pool" });
+    await pools.click({ timeout: 10_000 });
+    await expect(page.getByRole("option", { name: "General", exact: true })).toBeVisible();
+    await expect(page.getByRole("option", { name: "Fighter Bonus Feat", exact: true })).toBeVisible();
+    for (const left of ["Cleric Domain", "Cleric Class Feature", "Fighter Class Feature"])
+      await expect(page.getByRole("option", { name: left, exact: true })).toHaveCount(0);
+    await page.keyboard.press("Escape");
+
+    // A feature it doesn't have is created, named for the class, its row granted at no level until one is clicked
+    const features = page.getByRole("combobox", { name: "Add Class Feature" });
+    await features.fill("Hex");
+    const created = apiResponse(page, "POST", /\/progression\/features$/);
+    await page.getByRole("option", { name: "Create Hex (Cleric)" }).click();
+    await created;
+    const hexLevel = (level: number) =>
+      page
+        .getByRole("group", { name: "Levels of Hex (Cleric)" })
+        .getByRole("button", { name: new RegExp(`^Level ${level}:`) });
+    await expect(hexLevel(3)).toHaveAttribute("aria-pressed", "false");
+    await hexLevel(3).click();
+    const saved = apiResponse(page, "PUT", /\/entities\/classes\/[a-f0-9-]+\/progression$/);
+    await page.getByRole("button", { name: "Save Progression" }).click();
+    await saved;
+    await page.reload();
+    await expect(hexLevel(3)).toHaveAttribute("aria-pressed", "true", { timeout: 10_000 });
   });
 });
 

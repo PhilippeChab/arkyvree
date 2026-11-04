@@ -9,11 +9,11 @@ import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 import type { NamedLink, RulesetView, ViewLink } from "@/engine/core/view/index.ts";
 import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatSheet.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
+import FeatureStacking from "@/engine/rulesets/dnd3.5/rules/FeatureStacking.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
-import FeatureStacking from "./FeatureStacking.ts";
 import { CLASS_LEVEL_FIELDS } from "./fields.ts";
 import { PROGRESSION } from "./progression.ts";
 

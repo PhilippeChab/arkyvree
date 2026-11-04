@@ -111,6 +111,38 @@ export function Progressions<B extends Constructor>(Base: B) {
       return writtenIds;
     }
 
+    /**
+     * Creates a feature an owner's owned entities can grant (`name`, as typed), as its kind's rules plan it
+     * (`Engine.for(scope).progression(type, ownerId).planFeature`: 3.5's "Hex (Witch)" in "Witch Class Feature", the
+     * pool made first where the ruleset has none), in one transaction, recorded as the feature's create (`createFeat`).
+     * Answers the feature made: its id, its name, its kind, and the pool it's granted through.
+     */
+    async createFeature(session: Session, rulesetId: string, type: RulesetEntityType, ownerId: string, name: string) {
+      return await withRulesetWrite(session, rulesetId, async (tx, scope, policy) => {
+        policy.canUpdateEntity();
+        const plan = Engine.for(scope).progression(type, ownerId).planFeature(name);
+        await EntityWriter.updateEntities(tx, scope, policy, plan.created.type, [], plan.writes);
+        await createActivityWithNotifications(tx, {
+          userId: session.userId,
+          targetId: plan.created.id,
+          targetType: plan.created.type,
+          type: `create${getActivityName(plan.created.type)}`,
+          data: plan.activity,
+        });
+        return plan.created;
+      });
+    }
+
+    /**
+     * The feature a name creates (`name`, as typed) on an entity's progression (`ownerId`), as its picker offers it: the
+     * name its rules give it, and whether it exists.
+     */
+    async getNewFeature(session: Session, rulesetId: string, type: RulesetEntityType, ownerId: string, name: string) {
+      return await withReadableRuleset(db, session, rulesetId, async (scope) =>
+        Engine.for(scope).progression(type, ownerId).describeNewFeature(name),
+      );
+    }
+
     /** What an entity's progression tabs read beside its owned entities and tables (`ownerId`). */
     async getProgression(session: Session, rulesetId: string, type: RulesetEntityType, ownerId: string) {
       return await withReadableRuleset(db, session, rulesetId, async (scope) =>
