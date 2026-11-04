@@ -1,7 +1,9 @@
 import { Stack } from "@mui/material";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
+import { useState } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
+import { useStore } from "zustand";
 
 import { ReadOnlyFields, SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
 import { useDirtyForm, usePageTitle, useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
@@ -24,11 +26,12 @@ import {
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
-import { useOwnerDraftsStore } from "@/client/src/stores/ownerDraftsStore.ts";
+import { createOwnerDraftsStore, OwnerDraftsContext } from "@/client/src/stores/ownerDraftsStore.ts";
 
 import { OwnerDetails } from "./components/index.ts";
 import { type OwnerDetail, ownerDetailQuery } from "./ownerSectionQueries.ts";
 import { getOwnerTabAlias, getOwnerTabs } from "./ownerTabs.ts";
+import { useOwnerDrafts } from "./useOwnerDrafts.ts";
 
 interface OwnerViewProps {
   /** Where Back goes, and its name */
@@ -68,7 +71,8 @@ function OwnerView({ back, ownerId, ownerType, ruleset, rulesetId, section, word
   const { data: ownerData, isLoading, error } = useQuery(ownerDetailQuery(rulesetId, ownerType, ownerId));
 
   // Its tabs' unsaved edits: a reload or a closed tab asks first, in the browser's prompt, as a form's do
-  const unsaved = useOwnerDraftsStore(
+  const unsaved = useStore(
+    useOwnerDrafts(),
     (state) => state.ownerId === ownerId && Object.values(state.drafts).some((draft) => draft.changed),
   );
   useDirtyForm(unsaved);
@@ -215,6 +219,8 @@ export default function ProgressionOwnerPage({ ownerType, rules: kindRules }: Pr
     tab?: string;
   }>();
   const word = entityTypeLabel(ownerType, kindRules.words);
+  // Its tabs' unsaved edits, its own: kept while it shows another tab, gone as it closes, as a form's are
+  const [drafts] = useState(createOwnerDraftsStore);
   const { data: ruleset, isLoading, error } = useQuery(rulesetDetailQuery(rulesetId));
   const { rules } = useRules(ruleset?.baseRules);
   const back = useEntityPageBack(location.state, `/rulesets/${rulesetId}/${ownerType}`, rules?.words);
@@ -232,14 +238,16 @@ export default function ProgressionOwnerPage({ ownerType, rules: kindRules }: Pr
   }
 
   return (
-    <OwnerView
-      back={back}
-      ownerId={ownerId}
-      ownerType={ownerType}
-      ruleset={ruleset}
-      rulesetId={rulesetId}
-      section={section}
-      word={word}
-    />
+    <OwnerDraftsContext.Provider value={drafts}>
+      <OwnerView
+        back={back}
+        ownerId={ownerId}
+        ownerType={ownerType}
+        ruleset={ruleset}
+        rulesetId={rulesetId}
+        section={section}
+        word={word}
+      />
+    </OwnerDraftsContext.Provider>
   );
 }
