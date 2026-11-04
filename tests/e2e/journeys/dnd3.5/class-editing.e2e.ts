@@ -234,7 +234,7 @@ test.describe("A class's progression", () => {
     await expect(page.getByRole("group", { name: `Levels of ${proficiency}` })).toHaveCount(0);
   });
 
-  test("of an inherited cleric offers its own pools, and creates a feature of its own granted at a level in one save", async ({
+  test("of an inherited cleric offers the feat pools it may give picks in, and creates a feature of its own granted at a level in one save", async ({
     page,
     ownerUser,
   }) => {
@@ -249,12 +249,13 @@ test.describe("A class's progression", () => {
     const cleric = items.find((klass) => klass.name === "Cleric")!;
     await page.goto(`/rulesets/${forkId}/classes/${cleric.id}/progression`);
 
-    // Its own pools and the general ones, never another class's features
+    // Every feat pool but those on its card (its Cleric Domain) and the classes' feature pools, its own too
     const pools = page.getByRole("combobox", { name: "Add Feat Pool" });
     await pools.click({ timeout: 10_000 });
-    await expect(page.getByRole("option", { name: "Cleric Domain", exact: true })).toBeVisible();
     await expect(page.getByRole("option", { name: "General", exact: true })).toBeVisible();
-    await expect(page.getByRole("option", { name: "Fighter Class Feature", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("option", { name: "Fighter Bonus Feat", exact: true })).toBeVisible();
+    for (const left of ["Cleric Domain", "Cleric Class Feature", "Fighter Class Feature"])
+      await expect(page.getByRole("option", { name: left, exact: true })).toHaveCount(0);
     await page.keyboard.press("Escape");
 
     // A feature it doesn't have is created, named for the class, its row granted at no level until one is clicked
