@@ -277,6 +277,17 @@ export default new Hono<SessionContext>()
     },
   )
   .post(
+    "/:id/entities/:entityType/:entityId/progression/features",
+    validate("param", entityParams),
+    // A feature its owned entities can grant, by its name as typed: its rules name it and make its pool (3.5's)
+    validate("json", z.strictObject({ name: z.string().min(1) })),
+    async (c) => {
+      const { id, entityType, entityId } = c.req.valid("param");
+      const { name } = c.req.valid("json");
+      return c.json(await EntitiesService.createFeature(c.var.requestSession, id, entityType, entityId, name), 201);
+    },
+  )
+  .post(
     "/:id/entities/:entityType/:entityId/progression/plan",
     validate("param", entityParams),
     // What a progression's save would leave its tables at: the save without its tokens, as it writes nothing

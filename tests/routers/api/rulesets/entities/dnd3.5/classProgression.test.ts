@@ -46,6 +46,31 @@ describe("rulesets class progression", () => {
     });
   });
 
+  test("creates a feature of the class in its own pool, refusing a name the ruleset has, and a guest", async () => {
+    const { param } = await setup();
+
+    const response = await expectStatus(progression.features.$post({ param, json: { name: "Arcane Ward" } }), 201);
+    const created = await response.json();
+    expect(created).toMatchObject({
+      name: "Arcane Ward (Wizard)",
+      stacks: false,
+      via: { name: "Wizard Class Feature" },
+    });
+    // The ruleset's view lists it among the wizard's features now
+    RulesetViews.invalidate(param.id);
+    const read = await expectOk(progression.$get({ param }));
+    expect(read.featurePools.map((pool) => pool.name)).toContain("Wizard Class Feature");
+
+    await expectStatus(progression.features.$post({ param, json: { name: "Arcane Ward" } }), 409);
+    await expectStatus(
+      guestApi.api.rulesets[":id"].entities[":entityType"][":entityId"].progression.features.$post({
+        param,
+        json: { name: "Ward" },
+      }),
+      401,
+    );
+  });
+
   test("saves a level's fields on the fork's copy of an inherited class, and answers the levels it wrote", async () => {
     const { param, wizard, levels } = await setup();
     const first = levels.find((level) => level.position === 1)!;

@@ -64,6 +64,7 @@ import {
   describeFeatureRows,
   type PoolRow,
   readEditedTrack,
+  readFeatureOffers,
   readTrack,
   type TrackKey,
   withAddedFeatures,
@@ -72,6 +73,7 @@ import {
 import { detectPreset, formatTrackValue, presetsOf } from "./progressionPresets.ts";
 import { ProgressionSaveBar } from "./ProgressionSaveBar.tsx";
 import { ProgressionTrackRow } from "./ProgressionTrackRow.tsx";
+import { useCreateFeature } from "./useCreateFeature.ts";
 import { useCreateOwnedBatch } from "./useCreateOwnedBatch.ts";
 import { useProgressionDraft } from "./useProgressionDraft.ts";
 import { useProgressionSave } from "./useProgressionSave.ts";
@@ -217,6 +219,14 @@ export function OwnerProgressionSection({
     ownerId,
     { ownedType, ownerType, word: { one: ownedWord, many: entityTypeLabel(ownedType, rules?.words, true) } },
     createDialog.close,
+  );
+  // A created feature's row, granted at no owned entity until one is clicked
+  const createFeature = useCreateFeature(
+    rulesetId,
+    ownerType,
+    ownerId,
+    { granted: ownedLists.grants?.references ?? "", pools: grantsRules?.pools.type ?? "" },
+    draft.addFeature,
   );
   // Opened on one, whatever a cancelled one held
   const handleCreate = () => {
@@ -510,6 +520,7 @@ export function OwnerProgressionSection({
             grants={grantsRules}
             granted={{
               many: entityTypeLabel(ownedLists.grants?.references ?? "", rules?.words, true),
+              poolFilter: rules?.kinds.find(({ type }) => type === ownedLists.grants?.references)?.pools?.role,
               type: ownedLists.grants?.references ?? "",
             }}
             words={rules?.words}
@@ -527,6 +538,10 @@ export function OwnerProgressionSection({
             onAddPool={draft.addPool}
             onRemoveFeature={draft.removeFeature}
             onRemovePool={draft.removePool}
+            offers={readFeatureOffers(answer, grantsRules)}
+            ownerId={ownerId}
+            creating={createFeature.isPending}
+            onCreateFeature={(name) => createFeature.mutate(name)}
           />
         )}
       {canEdit && ownedEntities.length > 0 && (

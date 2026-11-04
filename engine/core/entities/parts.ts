@@ -7,6 +7,7 @@
 
 import type { EntityForm } from "@/engine/core/fields/index.ts";
 import type {
+  FeatureCreatePlan,
   LinkAddPlan,
   LinkRemovePlan,
   ListEntriesPlan,
@@ -40,12 +41,14 @@ export interface EntityLists {
 
 /**
  * An entity's progression (a class's levels at once): what its tabs read, what one save of them would leave its tables
- * at, unwritten (`describePlan`: its tables' tab's draft), and what one save of them writes.
+ * at, unwritten (`describePlan`: its tables' tab's draft), what one save of them writes, and what creating a feature
+ * its owned entities can grant writes (`planFeature`: 3.5's class feature, named for its class, in its feature pool).
  */
 export interface EntityProgression {
   describe(): unknown;
   describePlan(sent: unknown): unknown;
   plan(sent: unknown): ProgressionPlan & { owner: PlanOwner & { updatedAt: string } };
+  planFeature(name: string): FeatureCreatePlan;
 }
 
 /** An entity's tables, by name (a class's spells per day): each described. */

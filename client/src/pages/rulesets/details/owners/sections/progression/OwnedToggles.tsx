@@ -34,7 +34,7 @@ export interface ToggleNote {
   text: string;
 }
 
-/** The toggles a phone's line holds: ten, so a class's 20 levels take two lines and none scrolls out of sight. */
+/** The toggles a phone's line holds: ten, so 20 owned entities (3.5's class's levels) take two lines, none hidden. */
 const PHONE_TOGGLES = 10;
 
 /**
@@ -59,7 +59,7 @@ export function OwnedToggles({
       aria-label={`${positionWord.many} of ${label}`}
       sx={{
         display: "grid",
-        // On a phone, ten a line (a class's 20 levels on two); from sm up, one line
+        // On a phone, ten a line (20 owned entities on two); from sm up, one line
         gridTemplateColumns: {
           xs: `repeat(${Math.min(Math.max(ownedEntities.length, 1), PHONE_TOGGLES)}, minmax(0, 1fr))`,
           sm: `repeat(${Math.max(ownedEntities.length, 1)}, minmax(24px, 1fr))`,
@@ -81,7 +81,11 @@ export function OwnedToggles({
             aria-label={`${positionWord.one} ${position}: ${label}${count > 1 ? `, ${count} Picks` : ""}${readOnly && idle ? `. ${note.text}` : ""}`}
             onClick={handleClick}
             sx={{
-              fontSize: "0.72rem",
+              // A phone's toggles share its width ten a line: a smaller count, cut rather than spilling on a neighbour
+              fontSize: { xs: "0.66rem", sm: "0.72rem" },
+              minWidth: 0,
+              overflow: "hidden",
+              whiteSpace: "nowrap",
               fontVariantNumeric: "tabular-nums",
               py: 0.25,
               borderRadius: 0.5,

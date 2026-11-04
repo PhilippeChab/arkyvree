@@ -47,7 +47,11 @@ export const PROGRESSION: ProgressionDeclaration = {
     type: "spells",
   },
   grants: {
+    featurePools: "featurePools",
+    featuresFilter: "grantableBy",
     maxPicks: RULESET_LIMITS.tableCount,
+    offeredPools: "offeredPools",
+    ownFeatures: "ownFeaturePool",
     picks: "featPicks",
     pools: { scope: "feats", type: "aptitudes" },
     stacks: FEAT_STACKABLE,
@@ -56,6 +60,7 @@ export const PROGRESSION: ProgressionDeclaration = {
     words: {
       add: "Add Class Feature",
       addPool: "Add Feat Pool",
+      create: "Create {name}",
       feature: "Class feature",
       help: "A filled level grants the feature there. A feature that isn't Stackable is granted at one level: clicking another moves it there. A feat pool's filled level gives picks in it: click it again to change how many.",
       pool: "Feat pool",

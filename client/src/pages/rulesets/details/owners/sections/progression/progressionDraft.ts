@@ -7,6 +7,24 @@
 
 import type { OwnedLists, OwnedRead } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import type { OwnerProgressionBody } from "@/client/src/pages/rulesets/details/owners/ownerSectionQueries.ts";
+import { isRecord } from "@/shared/isRecord.ts";
+
+/** A pool, by its id and its name. */
+interface PoolRef {
+  id: string;
+  name: string;
+}
+
+/**
+ * What an owner's Progression tab offers, as its progression's answer gives it: the pools its features are granted
+ * through (`featurePools`), those it may give picks in (`offeredPools`), and its own feature pool (`ownFeaturePool`: its
+ * id, none while the ruleset has none, its name, and what a feature made in it is named, its typed name at `{name}`).
+ */
+export interface FeatureOffers {
+  featurePools: PoolRef[];
+  offeredPools: PoolRef[];
+  ownFeaturePool: { featureName: string; id: string | null; name: string };
+}
 
 /**
  * A feature the owner grants (3.5's feat, `toId`, through a feat pool, `viaId`), the owned entities it grants it at, by
@@ -143,6 +161,40 @@ export function describeFeatureKey({ toId, viaId }: { toId: string; viaId: strin
 }
 
 /**
+ * A feature's note at an owned entity (`ownedId`), as its toggle's tooltip says it, in its rules' words (`words`): none
+ * for a feature that stacks, is granted at none, or at its first owned entity, whichever of its rows grants it (a
+ * feature granted through two pools is two rows, `features`); one past its first, saved before the rule, gives nothing
+ * (`idle`: `words.repeat`); another is where a click moves it (`move`: `words.single`, none for a viewer, `readOnly`).
+ * Each names the feature at `{name}` and its first owned entity at `{position}`, in its rules' word for one
+ * (`positionWord`: "level 1").
+ */
+export function describeFeatureNote(
+  row: FeatureRow,
+  ownedId: string,
+  context: {
+    features: readonly FeatureRow[];
+    ownedEntities: readonly { id: string; position: number }[];
+    positionWord: { one: string };
+    readOnly: boolean;
+    words: { repeat: string; single: string };
+  },
+): { kind: "idle" | "move"; text: string } | undefined {
+  const { features, ownedEntities, positionWord, readOnly, words } = context;
+  const positionOf = (id: string) => ownedEntities.find((entity) => entity.id === id)?.position ?? 0;
+  const grantedAt = [
+    ...new Set(features.filter((other) => other.toId === row.toId).flatMap((other) => other.grantedAt)),
+  ];
+  if (row.stacks || grantedAt.length === 0) return undefined;
+  const [firstId] = grantedAt.toSorted((a, b) => positionOf(a) - positionOf(b));
+  if (ownedId === firstId) return undefined;
+  const idle = row.grantedAt.includes(ownedId);
+  if (!idle && readOnly) return undefined;
+  const position = `${positionWord.one.toLowerCase()} ${positionOf(firstId)}`;
+  const text = (idle ? words.repeat : words.single).replace("{name}", row.name).replace("{position}", position);
+  return { kind: idle ? "idle" : "move", text };
+}
+
+/**
  * The features the owner's owned entities grant, each with the owned entities it's granted at: by the first of them,
  * then by name, one an entity and the one it's granted through (3.5's feat and its pool).
  */
@@ -170,6 +222,36 @@ export function describeFeatureRows(ownedEntities: readonly OwnedRead[]): Featur
 /** A track's value at an owned entity, as the tab shows it: its edit's, or the saved one. */
 export function readEditedTrack(ownedEntity: OwnedRead, key: TrackKey, edits: ProgressionEdits) {
   return edits.tracks[key]?.[ownedEntity.id] ?? readTrack(ownedEntity, key);
+}
+
+/**
+ * What an owner is offered, read off its progression's answer (`answer`) at the keys its rules say (`keys`); none while
+ * either is missing, or the answer holds none.
+ */
+export function readFeatureOffers(
+  answer: Record<string, unknown> | undefined,
+  keys: { featurePools: string; offeredPools: string; ownFeatures: string } | undefined,
+): FeatureOffers | undefined {
+  if (!answer || !keys) return undefined;
+  const pools = (value: unknown): PoolRef[] =>
+    Array.isArray(value)
+      ? value.flatMap((pool) =>
+          isRecord(pool) && typeof pool.id === "string" && typeof pool.name === "string"
+            ? [{ id: pool.id, name: pool.name }]
+            : [],
+        )
+      : [];
+  const own = answer[keys.ownFeatures];
+  if (!isRecord(own) || typeof own.name !== "string" || typeof own.featureName !== "string") return undefined;
+  return {
+    featurePools: pools(answer[keys.featurePools]),
+    offeredPools: pools(answer[keys.offeredPools]),
+    ownFeaturePool: {
+      featureName: own.featureName,
+      id: typeof own.id === "string" ? own.id : null,
+      name: own.name,
+    },
+  };
 }
 
 /**

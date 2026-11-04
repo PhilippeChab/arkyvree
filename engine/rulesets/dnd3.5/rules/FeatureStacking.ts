@@ -2,9 +2,10 @@
 
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import FeatRules from "@/engine/rulesets/dnd3.5/rules/FeatRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+
+import FeatRules from "./FeatRules.ts";
 
 /** A level's feats it grants, before a save and once written, by the ids the view knows them by, and its number. */
 interface LevelGrants {

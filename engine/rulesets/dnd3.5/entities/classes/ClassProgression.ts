@@ -6,16 +6,19 @@
 import { z } from "zod";
 
 import type { EntityFieldValues, EntityLinkValues } from "@/engine/core/fields/index.ts";
+import type { FeatureCreatePlan, MadeEntity } from "@/engine/core/module/index.ts";
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetData, type RulesetView } from "@/engine/core/view/index.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import AptitudeTargets, { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
+import ClassOffers from "@/engine/rulesets/dnd3.5/rules/ClassOffers.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { isRecord } from "@/shared/isRecord.ts";
-import { stripSeparators } from "@/shared/text.ts";
+import { sanitizeName, stripSeparators } from "@/shared/text.ts";
+import { FEAT_GENERATED, FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 import { SPELL_LEVELS } from "@/vocabulary/dnd3.5/spells.ts";
 
 import type ClassLevelEntity from "./ClassLevelEntity.ts";
@@ -424,8 +427,11 @@ export default class ClassProgression {
    * spell list its spells go to (none for a class without one), whether its levels give spells in several
    * (`severalSpellLists`, which the public API answers), why its spell tables take no save (`spellTablesRefusal`, in
    * the save's words: a class without a list, or with several; none when they take one), its own list (`ownSpellList`:
-   * "Witch Spells", its id none while the ruleset has no such aptitude, which its list's first add makes), and the
-   * picks the ruleset's feats give in pools (`featPicks`, a granted feature's).
+   * "Witch Spells", its id none while the ruleset has no such aptitude, which its list's first add makes), the picks
+   * the ruleset's feats give in pools (`featPicks`, a granted feature's), and the pools its Progression tab offers
+   * (`ClassOffers.describe`): those its features are granted through (`featurePools`), those it may give picks
+   * in (`offeredPools`), and its own feature pool (`ownFeaturePool`: "Witch Class Feature", its id none while the ruleset
+   * has none, which its first created feature makes).
    */
   describe() {
     const { rulesetData } = this;
@@ -447,8 +453,12 @@ export default class ClassProgression {
     });
     const featPicks = ClassProgression.readFeatPicks(rulesetData);
     const list = this.spellList;
+    const offers = new ClassOffers(this.view, this.klass).describe();
     return {
       featPicks,
+      featurePools: offers.featurePools,
+      offeredPools: offers.pools,
+      ownFeaturePool: offers.ownFeaturePool,
       ownSpellList: this.table.describeOwnList(),
       pools,
       severalSpellLists: this.spellLists.length > 1,
@@ -498,6 +508,64 @@ export default class ClassProgression {
       owned,
       ownedType: "class-levels",
       owner: this.klass,
+    };
+  }
+
+  /**
+   * A new feature the class's levels can grant (`name`, as typed: "Hex"), made in its own feature pool under the name
+   * its rules give it ("Hex (Witch)"), the pool made first where the ruleset has none ("Witch Class Feature",
+   * `ClassOffers.describeOwnFeaturePool`): never picked at a level up, and not Stackable until its page says so; what
+   * its activity records is the feat's create's. Refused as invalid without a name, and as a conflict for a feat of the
+   * name the ruleset has already, or an aptitude of the pool's name its spells are listed in.
+   */
+  planFeature(name: string): FeatureCreatePlan {
+    const given = sanitizeName(name);
+    if (!given) {
+      throw new RulesError("invalid", "A feature needs a name", [
+        { category: "name", message: "A feature needs a name" },
+      ]);
+    }
+    const own = new ClassOffers(this.view, this.klass).describeOwnFeaturePool();
+    // "Hex" or "Hex (Witch)" alike make "Hex (Witch)"
+    // A function replaces, so a typed "$&" stays as typed
+    const featName = given.endsWith(own.featureName.replace("{name}", ""))
+      ? given
+      : own.featureName.replace("{name}", () => given);
+    const { dnd35 } = this;
+    if (dnd35.feats.some((feat) => feat.name === featName))
+      throw new RulesError("conflict", `${featName} already exists`);
+    if (own.id !== null && dnd35.aptitudeIdsWithSpells.has(own.id))
+      throw new RulesError("conflict", `${own.name} is a spell list, so it can't hold ${this.klass.name}'s features`);
+    const poolId = own.id ?? crypto.randomUUID();
+    const made: MadeEntity[] =
+      own.id === null
+        ? [
+            {
+              links: [],
+              modifiers: [],
+              requirements: [],
+              row: { description: "", id: poolId, name: own.name },
+              type: "aptitudes",
+            },
+          ]
+        : [];
+    const id = crypto.randomUUID();
+    made.push({
+      links: [{ links: [{ tier: null, toId: poolId }], role: "listedIn", toType: "aptitudes" }],
+      modifiers: [],
+      requirements: [],
+      row: {
+        description: "",
+        fields: { [FEAT_GENERATED]: false, [FEAT_SELECTABLE]: false, [FEAT_STACKABLE]: false },
+        id,
+        name: featName,
+      },
+      type: "feats",
+    });
+    return {
+      activity: { entityName: featName, rulesetId: this.view.ruleset.id },
+      created: { id, name: featName, stacks: false, type: "feats", via: { id: poolId, name: own.name } },
+      writes: { made },
     };
   }
 }

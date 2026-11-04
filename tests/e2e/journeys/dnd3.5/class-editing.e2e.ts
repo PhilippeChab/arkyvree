@@ -233,6 +233,48 @@ test.describe("A class's progression", () => {
     await expect(levelOf("Aura (Cleric)", 5)).toHaveAttribute("aria-pressed", "true");
     await expect(page.getByRole("group", { name: `Levels of ${proficiency}` })).toHaveCount(0);
   });
+
+  test("of an inherited cleric offers its own pools, and creates a feature of its own granted at a level in one save", async ({
+    page,
+    ownerUser,
+  }) => {
+    await signIn(page, ownerUser.email, ownerUser.password);
+    const forkId = await forkCoreRuleset(page, uniqueName("Pickers Fork"));
+    const { items } = await parseResponse(
+      apiOf(page).api.rulesets[":id"].entities[":entityType"].$get({
+        param: { id: forkId, entityType: "classes" },
+        query: { search: "Cleric" },
+      }),
+    );
+    const cleric = items.find((klass) => klass.name === "Cleric")!;
+    await page.goto(`/rulesets/${forkId}/classes/${cleric.id}/progression`);
+
+    // Its own pools and the general ones, never another class's features
+    const pools = page.getByRole("combobox", { name: "Add Feat Pool" });
+    await pools.click({ timeout: 10_000 });
+    await expect(page.getByRole("option", { name: "Cleric Domain", exact: true })).toBeVisible();
+    await expect(page.getByRole("option", { name: "General", exact: true })).toBeVisible();
+    await expect(page.getByRole("option", { name: "Fighter Class Feature", exact: true })).toHaveCount(0);
+    await page.keyboard.press("Escape");
+
+    // A feature it doesn't have is created, named for the class, its row granted at no level until one is clicked
+    const features = page.getByRole("combobox", { name: "Add Class Feature" });
+    await features.fill("Hex");
+    const created = apiResponse(page, "POST", /\/progression\/features$/);
+    await page.getByRole("option", { name: "Create Hex (Cleric)" }).click();
+    await created;
+    const hexLevel = (level: number) =>
+      page
+        .getByRole("group", { name: "Levels of Hex (Cleric)" })
+        .getByRole("button", { name: new RegExp(`^Level ${level}:`) });
+    await expect(hexLevel(3)).toHaveAttribute("aria-pressed", "false");
+    await hexLevel(3).click();
+    const saved = apiResponse(page, "PUT", /\/entities\/classes\/[a-f0-9-]+\/progression$/);
+    await page.getByRole("button", { name: "Save Progression" }).click();
+    await saved;
+    await page.reload();
+    await expect(hexLevel(3)).toHaveAttribute("aria-pressed", "true", { timeout: 10_000 });
+  });
 });
 
 // A class's Spell List tab: spells added at a spell level in one save, and one removed, each written on the fork's copy

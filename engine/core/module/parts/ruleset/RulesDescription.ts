@@ -212,12 +212,23 @@ export interface ProgressionDescription {
  * picks a granted entity gives in its pools (`picks`: `featPicks`), the stored field that says a granted entity stacks
  * (`stacks`: `FEAT_STACKABLE`; one that doesn't is granted at one level, as a character holds it once), the class's
  * table of each level's totals by pool (`table`: `feat-pools`, at `totals`: `featPools`), and the words its card and
- * its failures say them in (`words`: `repeat`, a non-stacking feature's level past its first, and `single`, a level a
- * click moves it to, each naming the feature at `{name}` and its first owned entity at `{position}`, in the words of its
- * position).
+ * its failures say them in (`words`: `repeat`, a non-stacking feature's owned entity past its first, and `single`, an
+ * owned entity a click moves it to, each naming the feature at `{name}` and its first owned entity at `{position}`, in
+ * its rules' word for a position).
  */
 export interface ProgressionGrants {
+  /** Where a progression's answer holds the pools its owner's features are granted through (3.5's `featurePools`) */
+  featurePools: string;
+  /** The granted kind's list filter that narrows it to what an owner may grant, by the owner's id (3.5's `grantableBy`) */
+  featuresFilter: string;
   maxPicks: number;
+  /** Where a progression's answer holds the pools its owner may give picks in (3.5's `offeredPools`) */
+  offeredPools: string;
+  /**
+   * Where a progression's answer holds the owner's own feature pool (3.5's `ownFeaturePool`: its id, none while the
+   * ruleset has none, its name, and what a feature made in it is named, its typed name at `{name}`)
+   */
+  ownFeatures: string;
   picks: string;
   pools: { scope: string; type: string };
   stacks: string;
@@ -226,6 +237,8 @@ export interface ProgressionGrants {
   words: {
     add: string;
     addPool: string;
+    /** A new feature's option, its name at `{name}` ("Create Hex (Witch)") */
+    create: string;
     feature: string;
     help: string;
     pool: string;

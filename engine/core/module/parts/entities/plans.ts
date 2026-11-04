@@ -125,6 +125,18 @@ export interface EntityWrites {
 }
 
 /**
+ * Creating a feature an owner's owned entities can grant (3.5's class feature: a feat in its class's feature pool): what
+ * it makes (`writes.made`, at ids the engine picks: the pool where the ruleset has none, then the feature), the feature
+ * made (`created`: its id, its name, its kind, whether a character takes it more than once, and the pool it's granted
+ * through), and what its activity records.
+ */
+export interface FeatureCreatePlan {
+  activity: Record<string, unknown>;
+  created: { id: string; name: string; stacks: boolean; type: string; via: { id: string; name: string } };
+  writes: EntityWrites;
+}
+
+/**
  * Adding a link of the role its owner edits one at a time (a class's skills): the owner as the view has it, the link
  * from it (`link`: its role, its target), and what its activity records (`activity`).
  */

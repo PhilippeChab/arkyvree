@@ -14,17 +14,18 @@ import { rpc } from "@/client/src/services/rpc.ts";
 
 /**
  * A picker's entities of a kind (`type`), searched on the server, `limit` a page: those of a scope where its kind takes
- * one (an aptitude's: its feats' or its spells'), all of them without one; nothing is asked without a kind. Its key
- * holds its page size, so two pickers of a kind that page it differently never share their pages.
+ * one (an aptitude's: its feats' or its spells'), those its kind's other list filters keep (`filters`, by query key:
+ * 3.5's feats a class may grant, `grantableBy`), all of them without; nothing is asked without a kind. Its key holds
+ * its page size and its filters, so two pickers of a kind that page or narrow it differently never share their pages.
  */
 export function entityOptionsQuery(
   rulesetId: string,
   type: string | undefined,
   search: string,
-  { limit, scope }: { limit: number; scope?: string },
+  { filters = {}, limit, scope }: { filters?: Readonly<Record<string, string>>; limit: number; scope?: string },
 ) {
   return infiniteQueryOptions({
-    queryKey: [...QUERY_KEYS.rulesets.sectionSearch(rulesetId, type ?? "", search, scope), limit],
+    queryKey: [...QUERY_KEYS.rulesets.sectionSearch(rulesetId, type ?? "", search, scope), limit, filters],
     queryFn:
       type === undefined
         ? skipToken
@@ -34,6 +35,7 @@ export function entityOptionsQuery(
               page: pageParam.toString(),
               search: search || undefined,
               scope,
+              ...filters,
             }),
     initialPageParam: 1,
     getNextPageParam: nextPage,
