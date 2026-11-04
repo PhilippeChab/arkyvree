@@ -144,11 +144,12 @@ export default class ClassSpellLists {
   planOwnList(): ListCreatePlan {
     const own = this.table.describeOwnList();
     const lists = this.table.describeSpellLists();
-    if (lists.length > 0 && !lists.some((list) => list.id === own.id))
-      {throw new RulesError(
+    if (lists.length > 0 && !lists.some((list) => list.id === own.id)) {
+      throw new RulesError(
         "conflict",
         `${this.klass.name} casts from other spell lists, so it has none of its own to make`,
-      );}
+      );
+    }
     const list = this.ownList();
     if (!list.made) throw new RulesError("conflict", `${list.name} already exists`);
     return {
