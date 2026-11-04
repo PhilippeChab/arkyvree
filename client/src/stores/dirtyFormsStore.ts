@@ -9,10 +9,10 @@ interface DirtyFormsState {
 /**
  * Global counter of currently-dirty forms. `useDirtyForm` alone counts them (a dialog's form through `FormDialog`, an
  * inline one's through `useFormSync`): it increments on mount-while-dirty and
- * decrements on cleanup / when isDirty flips false. The new version's Refresh
- * action (`WebSocketProvider`) checks `count > 0` to confirm before reloading,
- * and the `beforeunload` handler in main.tsx uses the same to gate
- * the native "leave site?" prompt.
+ * decrements on cleanup / when isDirty flips false. The `beforeunload` handler
+ * in main.tsx checks `count > 0` to gate the native "leave site?" prompt,
+ * which any reload asks: a browser refresh, a closed tab, the new version's
+ * Refresh (`WebSocketProvider`).
  *
  * `useDirtyFormsStore.getState()` is read synchronously inside event handlers
  * (no React subscription) so it doesn't trigger re-renders.
