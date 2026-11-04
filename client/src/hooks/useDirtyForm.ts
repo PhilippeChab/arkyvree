@@ -4,9 +4,9 @@ import { useDirtyFormsStore } from "@/client/src/stores/dirtyFormsStore.ts";
 
 /**
  * Register a form's dirty state with the global tracker. While `isDirty`
- * is true, the page will warn before reload (custom confirm in the
- * new version's Refresh action and a native beforeunload prompt for tab
- * close / browser refresh).
+ * is true, the page will warn before reload (the browser's beforeunload
+ * prompt, for a closed tab, a browser refresh or the new version's
+ * Refresh).
  *
  * `FormDialog` calls this for a dialog's form, and `useFormSync` for an
  * inline form's: nothing else does (`arkyvree/dirty-forms`).

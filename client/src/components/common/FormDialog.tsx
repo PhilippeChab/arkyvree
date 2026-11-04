@@ -52,9 +52,9 @@ export function FormDialog<TFormValues extends FieldValues = FieldValues>({
   const defaults = form.formState.defaultValues;
   const isDirty = !valuesEqual(values, defaults);
 
-  // Register with the global dirty-forms tracker so the deploy-update
-  // Refresh banner and the native beforeunload prompt warn before
-  // discarding unsaved work. Only counts while the dialog is actually
+  // Register with the global dirty-forms tracker so the native
+  // beforeunload prompt warns before a reload (the deploy-update
+  // Refresh banner's too) discards unsaved work. Only counts while the dialog is actually
   // open — many parents leave the form mounted and don't call reset()
   // on Cancel, so a dirty-but-hidden form must not gate page reload.
   useDirtyForm(rest.open && isDirty);
