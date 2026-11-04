@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type InferResponseType, parseResponse } from "hono/client";
 
 import { DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
@@ -21,6 +21,7 @@ import {
   withoutPlaces,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
+import { seedCopyQueries } from "@/client/src/pages/rulesets/copyQueries.ts";
 import type { CustomizationEntity, OwnedEntity } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { ownerDetailQuery } from "@/client/src/pages/rulesets/details/owners/ownerSectionQueries.ts";
 import { useAllAmounts, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
@@ -81,6 +82,7 @@ export function OwnedEditor({
 }: OwnedEditorProps) {
   // Its owner, whose kind (3.5's class's partition) its rules may leave some of its fields out for: its fields load
   // with it, none shown before it says which
+  const queryClient = useQueryClient();
   const { data: ownerData, error: ownerError } = useQuery(ownerDetailQuery(rulesetId, owner, ownerId));
   const allFields = ownerData && rules?.fields[type];
   const omitted = omittedPlacesOf(allFields, rules?.progression.tracks ?? [], ownerData?.partition);
@@ -99,7 +101,12 @@ export function OwnedEditor({
     updatedAt: entity.updatedAt,
     rulesetId,
     entityId,
-    followCopy,
+    // A save of an inherited level copies its owner with it: the owner's queries are its copy's until the copy's own
+    // are in, as the level's are
+    followCopy: (copyId, sourceId, saved) => {
+      if (saved.ownerId && saved.ownerId !== ownerId) seedCopyQueries(queryClient, rulesetId, ownerId, saved.ownerId);
+      followCopy(copyId, sourceId);
+    },
     cached: { keyOf: cacheKeyOf, withSaved: withSavedOwned },
     // Its owner's tabs, its owned entities' table among them, read the owned entity
     listKey: QUERY_KEYS.rulesets.ownerDetail(rulesetId, ownerId),

@@ -16,9 +16,10 @@ export interface EntitySaveOptions<TForm extends FieldValues, TSaved, TCached> {
   fields?: readonly EntityField[];
   /**
    * The page's `followCopy` (`useCopyOnWrite`): a save of an inherited entity copies it into the ruleset, and the page
-   * moves to the copy.
+   * moves to the copy. Handed the saved row too, which may name another entity the save copied with it (a level's
+   * class).
    */
-  followCopy: (copyId: string, sourceId: string) => void;
+  followCopy: (copyId: string, sourceId: string, saved: TSaved) => void;
   /** "Feat", "Class level"… for the toasts. */
   label: string;
   /** The list it shows in, which its save refreshes with the ruleset's Local Changes */
@@ -39,9 +40,11 @@ export interface EntitySaveOptions<TForm extends FieldValues, TSaved, TCached> {
 /**
  * Where a ruleset entity's page caches what it shows of the entity its form saves (`keyOf`, by the entity's id), and how
  * what's cached there takes a save's row (`withSaved`): the row's values laid over it, and the rest of what the page
- * reads (an entity's customizations, a level's class's name) kept.
+ * reads (an entity's customizations, a level's class's name) kept. `apartOf` names where else the entity is cached by
+ * its id, which a save makes stale (a pool filter's pick of it, `pickedEntityQuery`).
  */
 export interface SavedEntityCache<TCached, TSaved> {
+  apartOf?: (entityId: string) => QueryKey;
   keyOf: (entityId: string) => QueryKey;
   withSaved: (cached: TCached, saved: TSaved) => TCached;
 }
@@ -86,22 +89,28 @@ export function useEntitySave<TForm extends FieldValues, TSaved extends { id: st
     // What the save was for, fixed when it is sent: the page may show another record by the time it lands.
     mutationFn: async (data: TForm) => ({
       sourceId: entityId,
+      cache: cached,
       listKey,
       label,
       saved: await saveFn(changesOf(data, sync.baseline(), fields, sendsAllFields), sync.updatedAt()),
     }),
-    onSuccess: ({ saved, sourceId, listKey: savedListKey, label: savedLabel }, submitted) => {
+    onSuccess: ({ saved, sourceId, cache, listKey: savedListKey, label: savedLabel }, submitted) => {
       sync.saved(toFormValues ? toFormValues(saved) : submitted, saved.updatedAt);
-      followCopy(saved.id, sourceId);
+      followCopy(saved.id, sourceId, saved);
       // Into the page's cache, once the page follows a copy (whose queries it seeded with the source's): laid over what's
-      // there at once, so the page shows it, the rest refetched. What's cached under the entity (a pool filter's pick
-      // of it, an owner's tabs), and under its source after a copy, is read again when next shown.
-      queryClient.setQueryData<TCached>(cached.keyOf(saved.id), (held) =>
-        held === undefined ? undefined : cached.withSaved(held, saved),
+      // there at once, so the page shows it, the rest refetched; its source's, after a copy, and where it's cached apart
+      // by either id, read again when next shown. Not what its page's tabs read (an owner's): a save of its details
+      // leaves them be.
+      queryClient.setQueryData<TCached>(cache.keyOf(saved.id), (held) =>
+        held === undefined ? undefined : cache.withSaved(held, saved),
       );
-      for (const id of new Set([saved.id, sourceId]))
-        void queryClient.invalidateQueries({ queryKey: cached.keyOf(id), refetchType: "none" });
-      void queryClient.invalidateQueries({ queryKey: cached.keyOf(saved.id), exact: true });
+      void queryClient.invalidateQueries({ queryKey: cache.keyOf(saved.id), exact: true });
+      if (sourceId !== saved.id)
+        void queryClient.invalidateQueries({ queryKey: cache.keyOf(sourceId), exact: true, refetchType: "none" });
+      for (const id of new Set([saved.id, sourceId])) {
+        const apart = cache.apartOf?.(id);
+        if (apart) void queryClient.invalidateQueries({ queryKey: apart, exact: true, refetchType: "none" });
+      }
       void invalidateRulesetEdit(queryClient, rulesetId, [savedListKey]);
       snackbar.success(`${savedLabel} updated`);
     },

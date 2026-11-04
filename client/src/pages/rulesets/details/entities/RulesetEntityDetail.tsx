@@ -21,6 +21,8 @@ import {
   useEntityPageBack,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
 
+import { pickedEntityQuery } from "./entityDetailQueries.ts";
+
 interface EntityBase {
   description?: string | null;
   id: string;
@@ -106,8 +108,13 @@ function FormDetails<TEntity extends EntityBase, TForm extends FieldValues, TKey
     listKey: QUERY_KEYS.rulesets.section(rulesetId, section),
     saveFn: editing.updateFn,
     toFormValues: editing.toFormValues,
-    // The save's response is the entity's row, which says nothing of its delete: kept as the entity's was
-    cached: { keyOf: (id) => query(id).queryKey, withSaved: (cached: TEntity, saved) => ({ ...cached, ...saved }) },
+    // The save's response is the entity's row, which says nothing of its delete: kept as the entity's was. A list's
+    // pool filter that picked it reads it again too
+    cached: {
+      keyOf: (id) => query(id).queryKey,
+      withSaved: (cached: TEntity, saved) => ({ ...cached, ...saved }),
+      apartOf: (id) => pickedEntityQuery(rulesetId, section, id).queryKey,
+    },
     followCopy: copy.followCopy,
   });
 
