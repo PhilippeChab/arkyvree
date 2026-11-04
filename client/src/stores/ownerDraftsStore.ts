@@ -1,8 +1,6 @@
 import { create } from "zustand";
 
 interface OwnerDraftsState {
-  /** Leaves the owner's drafts behind: the page was left without saving them */
-  discard: () => void;
   /** Its tabs' drafts, by tab: they outlive a tab while the page shows another */
   drafts: Record<string, OwnerTabDraft>;
   /** Whether a tab's draft changes anything, as the tab reads it */
@@ -26,11 +24,10 @@ export interface OwnerTabDraft {
 /**
  * The unsaved edits of a progression owner's page's tabs (those of its base rules' that edit before a save), kept while
  * the page shows another of its tabs, so switching tabs loses none; the page reads whether any changes something, which
- * its leaving asks about.
+ * a reload asks about.
  */
 export const useOwnerDraftsStore = create<OwnerDraftsState>((set) => ({
   drafts: {},
-  discard: () => set({ ownerId: undefined, drafts: {} }),
   markChanged: (ownerId, tab, changed) =>
     set((state) => {
       const draft = state.ownerId === ownerId ? state.drafts[tab] : undefined;

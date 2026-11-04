@@ -37,8 +37,7 @@ const SignUpPage = lazy(() => import("./pages/auth/SignUpPage.tsx"));
 const VerifyEmailPage = lazy(() => import("./pages/auth/VerifyEmailPage.tsx"));
 
 /**
- * The app's pages, under a data router: a page can then act as the user leaves it (`useBlocker`, through
- * `useLeaveDiscard`), as a class's page drops its tabs' unsaved edits.
+ * The app's pages, under a data router.
  */
 const router = createBrowserRouter(
   createRoutesFromElements(
