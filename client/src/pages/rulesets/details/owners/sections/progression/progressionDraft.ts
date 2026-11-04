@@ -16,10 +16,12 @@ interface PoolRef {
 }
 
 /**
- * A note on a feature's owned entity, as its rules write it (`text`): the feature (`toId`) gives nothing there
- * (`ownedId`), past its first.
+ * A note on a feature's owned entity (`toId`, at `ownedId`), as its rules write it (`text`): that it gives nothing there,
+ * past its first (`idle`), or that a click moves it there from the owned entities that grant it (`move`, `from`).
  */
 export interface FeatureNote {
+  from: string[];
+  kind: "idle" | "move";
   ownedId: string;
   text: string;
   toId: string;
@@ -208,10 +210,19 @@ export function readFeatureNotes(value: unknown): FeatureNote[] {
   return Array.isArray(value)
     ? value.flatMap((note) =>
         isRecord(note) &&
+        (note.kind === "idle" || note.kind === "move") &&
         typeof note.ownedId === "string" &&
         typeof note.text === "string" &&
         typeof note.toId === "string"
-          ? [{ ownedId: note.ownedId, text: note.text, toId: note.toId }]
+          ? [
+              {
+                from: Array.isArray(note.from) ? note.from.filter((id) => typeof id === "string") : [],
+                kind: note.kind,
+                ownedId: note.ownedId,
+                text: note.text,
+                toId: note.toId,
+              },
+            ]
           : [],
       )
     : [];

@@ -3,9 +3,21 @@
 import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { Klass } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 import FeatRules from "./FeatRules.ts";
+
+/**
+ * A note on a feat's level, which the class's card shows: that it gives nothing there (`idle`), or that a click moves it
+ * there from the levels that grant it (`move`, `from`), in its rules' words (`text`).
+ */
+interface FeatureNote {
+  from: string[];
+  kind: "idle" | "move";
+  ownedId: string;
+  text: string;
+  toId: string;
+}
 
 /** A level's feats it grants, before a save and once written, by the ids the view knows them by, and its number. */
 interface LevelGrants {
@@ -78,27 +90,36 @@ export default class FeatureStacking {
 
   /**
    * The notes on what the class's levels grant once written (`changed`: a changed level's feats by its id, as its save
-   * sends them, the others as the view has them): a feat that isn't Stackable gives nothing at each level past the first
-   * that grants it, which its note says in its rules' words (`repeat`: the feat at `{name}`, its first level at
-   * `{position}`), by the level's id (`ownedId`) and the feat's as the level names it (`toId`).
+   * sends them, the others as the view has them), for each feat that isn't Stackable, in its rules' words (`words`: the
+   * feat at `{name}`, its first level at `{position}`): at each level past its first that grants it, that it gives
+   * nothing there (`idle`, `repeat`); at each that doesn't, that a click moves it there from the levels that do (`move`,
+   * `single`, `from`: their ids). Each names its level (`ownedId`) and the feat as its first level names it (`toId`).
    */
-  describeNotes(changed: ReadonlyMap<string, readonly string[]>, repeat: string) {
+  describeNotes(changed: ReadonlyMap<string, readonly string[]>, words: { repeat: string; single: string }) {
     const rules = FeatRules.of(this.view.rulesetData);
     const levels = (this.dnd35.classLevelsByClass.get(this.klass.id) ?? []).toSorted((a, b) => a.position - b.position);
-    // Each feat's first level, by the id the view knows it by: a level granting it twice, through two pools, repeats
-    // nothing
-    const first = new Map<string, number>();
-    return levels.flatMap((level) => {
-      const granted = changed.get(level.id) ?? this.dnd35.grantedFeatsOf(level.id).map(({ toId }) => toId);
-      return [...new Set(granted)].flatMap((toId) => {
+    // Each feat that isn't Stackable, by the id the view knows it by: the levels granting it, and its name and id there
+    const feats = new Map<string, { at: KlassLevel[]; name: string; toId: string }>();
+    for (const level of levels) {
+      for (const toId of changed.get(level.id) ?? this.dnd35.grantedFeatsOf(level.id).map((grant) => grant.toId)) {
         const featId = this.view.rulesetData.canonicalize(toId);
         const feat = this.dnd35.featsById.get(featId);
-        if (!feat || rules.isStackable(featId)) return [];
-        const at = first.get(featId) ?? level.position;
-        first.set(featId, at);
-        if (at === level.position) return [];
-        const text = repeat.replace("{name}", () => feat.name).replace("{position}", () => `level ${at}`);
-        return [{ ownedId: level.id, text, toId }];
+        if (!feat || rules.isStackable(featId)) continue;
+        const held = feats.get(featId) ?? { at: [], name: feat.name, toId };
+        if (!held.at.includes(level)) held.at.push(level);
+        feats.set(featId, held);
+      }
+    }
+    return [...feats.values()].flatMap(({ at, name, toId }) => {
+      const [first] = at;
+      const word = (template: string) =>
+        template.replace("{name}", () => name).replace("{position}", () => `level ${first.position}`);
+      const from = at.map((level) => level.id);
+      return levels.flatMap((level): FeatureNote[] => {
+        if (level === first) return [];
+        return at.includes(level)
+          ? [{ from: [], kind: "idle", ownedId: level.id, text: word(words.repeat), toId }]
+          : [{ from, kind: "move", ownedId: level.id, text: word(words.single), toId }];
       });
     });
   }

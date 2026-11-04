@@ -209,19 +209,21 @@ export interface ProgressionDescription {
  * What a class's levels grant, past their own columns (its levels' `grants` field: 3.5's feats, each through a feat
  * pool), as its Progression tab shows them: the pools a level gives picks in, of a kind and its scope (`pools`: 3.5's
  * `aptitudes`, of `feats`), the most picks a level gives in one (`maxPicks`), where a progression's answer holds the
- * picks a granted entity gives in its pools (`picks`: `featPicks`), where it and its plan hold the notes on grants that
- * give nothing (`notes`: a feature that doesn't stack, at an owned entity past its first), the class's
+ * picks a granted entity gives in its pools (`picks`: `featPicks`), where it and its plan hold the notes on a feature
+ * that doesn't stack (`notes`: where it gives nothing, and where a click moves it), the class's
  * table of each level's totals by pool (`table`: `feat-pools`, at `totals`: `featPools`), and the words its card and
- * its failures say them in (`words`: `repeat`, the note on a non-stacking feature's owned entity past its first, which
- * the engine fills, the feature at `{name}` and its first owned entity at `{position}`).
+ * its failures say them in (`words`: `repeat`, the note on a non-stacking feature's owned entity past its first, and
+ * `single`, on an owned entity a click moves it to, which the engine fills, the feature at `{name}` and its first owned
+ * entity at `{position}`).
  */
 export interface ProgressionGrants {
   /** The granted kind's list filter that narrows it to what an owner may grant, by the owner's id (3.5's `grantableBy`) */
   featuresFilter: string;
   maxPicks: number;
   /**
-   * Where a progression's answer, and its plan's for a draft, hold the notes on grants that give nothing (3.5's
-   * `featureNotes`: a feature that doesn't stack, at each owned entity past its first, `{ ownedId, text, toId }`)
+   * Where a progression's answer, and its plan's for a draft, hold the notes on a feature that doesn't stack (3.5's
+   * `featureNotes`, `{ from, kind, ownedId, text, toId }`): at each owned entity past its first that grants it, that it
+   * gives nothing there (`idle`); at each other, that a click moves it there from those that grant it (`move`, `from`)
    */
   notes: string;
   /** Where a progression's answer holds the pools its owner may give picks in (3.5's `offeredPools`) */
@@ -240,6 +242,7 @@ export interface ProgressionGrants {
     pool: string;
     pools: string;
     repeat: string;
+    single: string;
     title: string;
     totals: string;
   };

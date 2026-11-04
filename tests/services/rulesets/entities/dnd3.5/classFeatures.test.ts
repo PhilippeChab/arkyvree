@@ -121,7 +121,7 @@ describe("EntitiesService: a class's features and feat pools", () => {
   });
 
   // As its card asks it of a draft: Aura (Cleric), at level 1, granted at level 5 too
-  test("note, for a draft, a feature that doesn't stack granted past its first level, which gives nothing there", async () => {
+  test("note where a feature that doesn't stack gives nothing, for a draft, and where a click moves it", async () => {
     const { session, fork, klass } = await forkWithClass("Cleric");
     const levels = await EntitiesService.getOwnedEntities(session, fork.id, "classes", klass.id);
     // A level's grants, among its links
@@ -144,18 +144,33 @@ describe("EntitiesService: a class's features and feat pools", () => {
       ],
     })) as { featureNotes: unknown };
 
-    expect(plan.featureNotes).toEqual([
+    // Level 5 gives nothing; saved, a click there moves it from level 1
+    const notesAt = (notes: unknown, ownedId: string) =>
+      (notes as { from: string[]; kind: string; ownedId: string; text: string; toId: string }[]).filter(
+        (note) => note.ownedId === ownedId && note.toId === aura.toId,
+      );
+    expect(notesAt(plan.featureNotes, fifth.id)).toEqual([
       {
+        from: [],
+        kind: "idle",
         ownedId: fifth.id,
         text: "No effect: a character takes Aura (Cleric) once, at level 1. It isn't Stackable.",
         toId: aura.toId,
       },
     ]);
-    // Saved, it has none
     const saved = (await EntitiesService.getProgression(session, fork.id, "classes", klass.id)) as {
       featureNotes: unknown;
     };
-    expect(saved.featureNotes).toEqual([]);
+    const first = levels.find((level) => level.position === 1)!;
+    expect(notesAt(saved.featureNotes, fifth.id)).toEqual([
+      {
+        from: [first.id],
+        kind: "move",
+        ownedId: fifth.id,
+        text: "Aura (Cleric) isn't Stackable, so it's granted at one level: a click moves it here from level 1.",
+        toId: aura.toId,
+      },
+    ]);
   });
 
   test("create a new class's feature in its own pool, made by its first, and refuse a name it has", async () => {

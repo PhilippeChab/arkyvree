@@ -43,7 +43,7 @@ interface OwnerFeaturesCardProps {
   granted: { many: string; type: string };
   /** What its owned entities grant, as its rules describe it: its pools' kind and scope, its words */
   grants: ProgressionGrants;
-  /** The rules' notes on its grants that give nothing: the draft's, as its plan answers it, else the saved ones */
+  /** The rules' notes on its features: the draft's, as its plan answers it, else the saved ones */
   notes: readonly FeatureNote[];
   /** What the owner is offered, as its progression's answer gives it (`readFeatureOffers`): none while it loads */
   offers: FeatureOffers | undefined;
@@ -204,9 +204,9 @@ function RowName({ name, kind, to }: RowNameProps) {
  * An owner's features and pools by position (3.5's feats and feat pools), on its Progression tab, in its rules' words:
  * a row each, whose toggles grant the feature or give picks in the pool at an owned entity, its bin at its end removing
  * it; and pickers that add a feature or a pool, granted at no owned entity until one is clicked. A feature toggle a
- * click fills or empties; where it gives nothing, the rules' note says (`notes`: a feature that doesn't stack, past its
- * first). An empty pool toggle gives a pick; a filled one opens a box that sets how many, or removes them. Read-only,
- * it only shows them.
+ * click fills or empties, or, where the rules' note says (`notes`: a feature that doesn't stack), moves the feature
+ * there; where it gives nothing, the note says too. An empty pool toggle gives a pick; a filled one opens a box that
+ * sets how many, or removes them. Read-only, it only shows them.
  */
 export function OwnerFeaturesCard({
   creating,
@@ -269,17 +269,36 @@ export function OwnerFeaturesCard({
   ];
   const poolOptions = (offers?.offeredPools ?? []).filter((option) => !pools.some((pool) => pool.id === option.id));
   const positionOf = (ownedId: string) => ownedEntities.find(({ id }) => id === ownedId)?.position;
-  // A toggle's note, as the rules wrote it for what the card holds: where a feature gives nothing
+  // A toggle's note, as the rules wrote it for what the card holds: where a feature gives nothing, and, for an editor,
+  // where a click moves it
+  const noteAt = (row: FeatureRow, ownedId: string) =>
+    notes.find((note) => note.ownedId === ownedId && note.toId === row.toId);
   const featureNote = (row: FeatureRow, ownedId: string): ToggleNote | undefined => {
-    const note = notes.find((other) => other.ownedId === ownedId && other.toId === row.toId);
-    return note && row.grantedAt.includes(ownedId) ? { kind: "idle", text: note.text } : undefined;
+    const note = noteAt(row, ownedId);
+    const granted = row.grantedAt.includes(ownedId);
+    if (note?.kind === "idle" && granted) return { kind: "idle", text: note.text };
+    if (note?.kind === "move" && !granted && !readOnly) return { kind: "move", text: note.text };
+    return undefined;
   };
-  // A click fills an empty toggle, and empties a filled one: the rules say, in their notes and at the save, what it gives
-  const handleFeatureClick = (row: FeatureRow, ownedId: string) =>
-    onFeatureGrantedAt(
-      row,
-      row.grantedAt.includes(ownedId) ? row.grantedAt.filter((id) => id !== ownedId) : [...row.grantedAt, ownedId],
-    );
+  // A click empties a filled toggle, and fills an empty one; where the rules say it moves the feature there, it leaves
+  // the owned entities they name, on each of its rows
+  const handleFeatureClick = (row: FeatureRow, ownedId: string) => {
+    if (row.grantedAt.includes(ownedId)) {
+      onFeatureGrantedAt(
+        row,
+        row.grantedAt.filter((id) => id !== ownedId),
+      );
+      return;
+    }
+    const note = noteAt(row, ownedId);
+    const from = note?.kind === "move" ? note.from : [];
+    const left = (other: FeatureRow) => other.grantedAt.filter((id) => !from.includes(id));
+    for (const other of features) {
+      if (other.key !== row.key && other.toId === row.toId && left(other).length < other.grantedAt.length)
+        onFeatureGrantedAt(other, left(other));
+    }
+    onFeatureGrantedAt(row, [...left(row), ownedId]);
+  };
   const pickingPool = picking && pools.find((pool) => pool.id === picking.poolId);
   const pickingCount = (picking && pickingPool?.picks[picking.ownedId]) || 0;
   const savedPicks = (poolId: string, ownedId: string) =>

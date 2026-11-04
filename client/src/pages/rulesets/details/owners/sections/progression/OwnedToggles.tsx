@@ -24,9 +24,12 @@ interface OwnedTogglesProps {
   value: (ownedId: string) => number;
 }
 
-/** What a toggle's tooltip says of it: that what it holds gives nothing (`idle`), as its rules write it (`text`). */
+/**
+ * What a toggle's tooltip says of it, as its rules write it (`text`): that what it holds gives nothing (`idle`), or that
+ * a click moves its row's grant there (`move`).
+ */
 export interface ToggleNote {
-  kind: "idle";
+  kind: "idle" | "move";
   text: string;
 }
 

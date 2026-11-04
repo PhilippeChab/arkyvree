@@ -304,6 +304,12 @@ export default class ClassProgression {
     }));
   }
 
+  /** The notes on a feature's levels, in its rules' words: one that gives nothing (`repeat`), one a click moves it to. */
+  private get noteWords() {
+    const words = PROGRESSION.grants?.words;
+    return { repeat: words?.repeat ?? "", single: words?.single ?? "" };
+  }
+
   /**
    * A save's levels' modifiers (`sent`, read by its schema, refused as invalid when it isn't one or a count is past the
    * rules' bounds): each level's as the view has them (`original`), and as its pools' picks and its spell tables leave
@@ -402,11 +408,6 @@ export default class ClassProgression {
     return given;
   }
 
-  /** The note on a feature's level that gives nothing, in its rules' words (`repeat`). */
-  private get repeatWord() {
-    return PROGRESSION.grants?.words.repeat ?? "";
-  }
-
   private get rulesetData(): RulesetData {
     return this.view.rulesetData;
   }
@@ -495,7 +496,7 @@ export default class ClassProgression {
       ownFeaturePool: offers.ownFeaturePool,
       ownSpellList: this.table.describeOwnList(),
       pools,
-      featureNotes: new FeatureStacking(this.view, this.klass).describeNotes(new Map(), this.repeatWord),
+      featureNotes: new FeatureStacking(this.view, this.klass).describeNotes(new Map(), this.noteWords),
       severalSpellLists: this.spellLists.length > 1,
       spellList: list ? { id: list.id, name: list.name } : null,
       spellTablesRefusal: this.spellTables.refusal ?? null,
@@ -527,7 +528,7 @@ export default class ClassProgression {
       // What its levels' grants give once saved, as its card shows them before the save
       featureNotes: new FeatureStacking(this.view, this.klass).describeNotes(
         readSentGrants(body.owned),
-        this.repeatWord,
+        this.noteWords,
       ),
     };
   }

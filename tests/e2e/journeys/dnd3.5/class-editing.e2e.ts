@@ -202,17 +202,15 @@ test.describe("A class's progression", () => {
         .getByRole("group", { name: `Levels of ${row}` })
         .getByRole("button", { name: new RegExp(`^Level ${level}:`) });
 
-    // A feature that doesn't stack gives nothing at a second level, as the rules' note on it says, until its first goes
+    // A feature that doesn't stack is granted at one level: the rules' note on another says a click moves it there
     await levelOf("Aura (Cleric)", 5).click({ timeout: 10_000 });
     await expect(levelOf("Aura (Cleric)", 5)).toHaveAttribute("aria-pressed", "true");
-    await expect(levelOf("Aura (Cleric)", 1)).toHaveAttribute("aria-pressed", "true");
-    await levelOf("Aura (Cleric)", 5).hover();
+    await expect(levelOf("Aura (Cleric)", 1)).toHaveAttribute("aria-pressed", "false");
+    await levelOf("Aura (Cleric)", 3).hover();
     await expect(page.getByRole("tooltip")).toHaveText(
-      "No effect: a character takes Aura (Cleric) once, at level 1. It isn't Stackable.",
+      "Aura (Cleric) isn't Stackable, so it's granted at one level: a click moves it here from level 5.",
       { timeout: 10_000 },
     );
-    await levelOf("Aura (Cleric)", 1).click();
-    await expect(levelOf("Aura (Cleric)", 1)).toHaveAttribute("aria-pressed", "false");
 
     // A filled pool level opens a box that sets its picks: the cleric's two domains, then a third
     await levelOf("Cleric Domain", 1).click();
