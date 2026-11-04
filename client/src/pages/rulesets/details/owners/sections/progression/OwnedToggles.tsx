@@ -4,6 +4,8 @@ import { Fragment, type MouseEvent } from "react";
 import type { PositionWord } from "@/client/src/lib/rulesetLabels.ts";
 
 interface OwnedTogglesProps {
+  /** Waiting on its rules' answer for the last click: a click waits too, its cursor saying so */
+  busy?: boolean;
   /** What the toggles grant, which each one's label names ("Evasion at level 2") */
   label: string;
   /** A toggle's note, which its tooltip says; none for most */
@@ -43,6 +45,7 @@ const PHONE_TOGGLES = 10;
  * click that changes its note keeps the toggle, and its focus.
  */
 export function OwnedToggles({
+  busy = false,
   label,
   noteOf,
   ownedEntities,
@@ -76,9 +79,10 @@ export function OwnedToggles({
         const toggle = (
           <ButtonBase
             disabled={readOnly}
+            aria-busy={busy || undefined}
             aria-pressed={count > 0}
             aria-label={`${positionWord.one} ${position}: ${label}${count > 1 ? `, ${count} Picks` : ""}${readOnly && idle ? `. ${note.text}` : ""}`}
-            onClick={handleClick}
+            onClick={busy ? undefined : handleClick}
             sx={{
               // A phone's toggles share its width ten a line: a smaller count, cut rather than spilling on a neighbour
               fontSize: { xs: "0.66rem", sm: "0.72rem" },
@@ -86,6 +90,7 @@ export function OwnedToggles({
               overflow: "hidden",
               whiteSpace: "nowrap",
               fontVariantNumeric: "tabular-nums",
+              cursor: busy ? "progress" : undefined,
               py: 0.25,
               borderRadius: 0.5,
               border: 1,

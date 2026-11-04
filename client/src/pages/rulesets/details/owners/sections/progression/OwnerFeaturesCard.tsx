@@ -45,6 +45,8 @@ interface OwnerFeaturesCardProps {
   grants: ProgressionGrants;
   /** The rules' notes on its features: the draft's, as its plan answers it, else the saved ones */
   notes: readonly FeatureNote[];
+  /** The notes are another draft's while its plan answers the last change: a feature's click waits for them */
+  notesWaiting: boolean;
   /** What the owner is offered, as its progression's answer gives it (`readFeatureOffers`): none while it loads */
   offers: FeatureOffers | undefined;
   onAddFeature: (row: FeatureRow) => void;
@@ -222,6 +224,7 @@ export function OwnerFeaturesCard({
   onRemoveFeature,
   onRemovePool,
   notes,
+  notesWaiting,
   offers,
   ownerId,
   ownerType,
@@ -332,6 +335,7 @@ export function OwnerFeaturesCard({
                 <OwnedToggles
                   label={row.name}
                   noteOf={(ownedId) => featureNote(row, ownedId)}
+                  busy={notesWaiting}
                   ownedEntities={ownedEntities}
                   positionWord={positionWord}
                   readOnly={readOnly}

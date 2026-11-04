@@ -559,6 +559,7 @@ export function OwnerProgressionSection({
             onRemovePool={draft.removePool}
             offers={readFeatureOffers(answer, grantsRules)}
             notes={notes}
+            notesWaiting={sends && canEdit && (plan.isPending || plan.isPlaceholderData)}
             ownerId={ownerId}
             ownerType={ownerType}
             creating={createFeature.isPending}
