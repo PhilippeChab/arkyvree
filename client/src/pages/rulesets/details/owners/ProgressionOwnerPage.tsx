@@ -3,8 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { ConfirmDialog, ReadOnlyFields, SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
-import { useLeaveGuard, usePageTitle, useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
+import { ReadOnlyFields, SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
+import { useDirtyForm, usePageTitle, useRules, useRulesetPermissions } from "@/client/src/hooks/index.ts";
 import { loadFailureMessage } from "@/client/src/lib/errorMessage.ts";
 import { type RulesDescription, type RulesetDetail, rulesetDetailQuery } from "@/client/src/lib/queries.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
@@ -16,7 +16,6 @@ import {
   withEntityFields,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
-import { entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
 import {
   useCopyOnWrite,
   useEntityFields,
@@ -68,20 +67,12 @@ function OwnerView({ back, ownerId, ownerType, ruleset, rulesetId, section, word
 
   const { data: ownerData, isLoading, error } = useQuery(ownerDetailQuery(rulesetId, ownerType, ownerId));
 
-  // Its tabs' unsaved edits: a reload asks first, and so does leaving the owner's page (its tabs are the page, and so
-  // is the copy a save of it follows), which discards them
+  // Its tabs' unsaved edits: a reload or a closed tab asks first, in the browser's prompt, as a form's do
   const unsaved = useOwnerDraftsStore(
     (state) => state.ownerId === ownerId && Object.values(state.drafts).some((draft) => draft.changed),
   );
-  const discardDrafts = useOwnerDraftsStore((state) => state.discard);
+  useDirtyForm(unsaved);
   const ownerPath = `/rulesets/${rulesetId}/${ownerType}/${ownerId}`;
-  const leave = useLeaveGuard(
-    unsaved,
-    (next) =>
-      next.pathname === ownerPath ||
-      next.pathname.startsWith(`${ownerPath}/`) ||
-      entityPageState(next.state).copiedFrom === ownerId,
-  );
 
   usePageTitle(ownerData?.name);
 
@@ -204,19 +195,6 @@ function OwnerView({ back, ownerId, ownerType, ruleset, rulesetId, section, word
           </>
         )}
       </EntityDetailLayout>
-      <ConfirmDialog
-        open={leave.blocked}
-        onClose={leave.stay}
-        onConfirm={() => {
-          discardDrafts();
-          leave.proceed();
-        }}
-        pending={false}
-        title="Discard Changes"
-        message={`Are you sure you want to leave this ${word.toLowerCase()}? The changes you haven't saved on its tabs are lost.`}
-        confirmLabel="Discard Changes"
-        intent="destructive"
-      />
     </>
   );
 }

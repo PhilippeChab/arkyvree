@@ -17,8 +17,8 @@ window.addEventListener("vite:preloadError", () => {
 });
 
 // Warn before tab close / browser refresh / navigation when any form
-// has unsaved changes. The new version's toast asks on its own before
-// its Refresh reloads (WebSocketProvider); this is the catch-all.
+// has unsaved changes, the new version's Refresh among them
+// (WebSocketProvider): the browser's own prompt, the one it asks.
 window.addEventListener("beforeunload", (e) => {
   if (useDirtyFormsStore.getState().count > 0) {
     e.preventDefault();

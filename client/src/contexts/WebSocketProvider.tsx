@@ -1,11 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { type ReactNode, useRef, useState } from "react";
+import { type ReactNode, useRef } from "react";
 
-import { ConfirmDialog } from "@/client/src/components/common/index.ts";
-import { APP_NAME } from "@/client/src/lib/brand.ts";
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { useAuthStore } from "@/client/src/stores/authStore.ts";
-import { useDirtyFormsStore } from "@/client/src/stores/dirtyFormsStore.ts";
 import type { WsEvent } from "@/shared/webSocketEvents.ts";
 
 import { useSnackbar } from "./useSnackbar.ts";
@@ -27,22 +24,15 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   const queryClient = useQueryClient();
   const snackbar = useSnackbar();
   const buildVersionRef = useRef<string | null>(null);
-  // A refresh would discard unsaved form work: confirm it first.
-  const [confirmRefresh, setConfirmRefresh] = useState(false);
 
   // Read through `useLatest` by the socket, which keeps its connection whatever this is
   const handleMessage = (event: WsEvent) => {
     if (event.type === "app:version") {
       const { version } = event;
       if (buildVersionRef.current && buildVersionRef.current !== version) {
+        // Its Refresh reloads: with unsaved changes, the browser asks first, as a reload anywhere does (main.tsx)
         snackbar.info("A new version is available", {
-          action: {
-            label: "Refresh",
-            onClick: () => {
-              if (useDirtyFormsStore.getState().count > 0) setConfirmRefresh(true);
-              else window.location.reload();
-            },
-          },
+          action: { label: "Refresh", onClick: () => window.location.reload() },
           persistent: true,
         });
       }
@@ -61,19 +51,5 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
 
   useWebSocket({ enabled: isAuthenticated, identity: userId, onMessage: handleMessage, onReconnect: handleReconnect });
 
-  return (
-    <>
-      {children}
-      <ConfirmDialog
-        open={confirmRefresh}
-        onClose={() => setConfirmRefresh(false)}
-        onConfirm={() => window.location.reload()}
-        pending={false}
-        title={`Refresh ${APP_NAME}`}
-        message="Are you sure you want to refresh? Your unsaved changes will be lost."
-        confirmLabel="Refresh"
-        intent="caution"
-      />
-    </>
-  );
+  return children;
 }
