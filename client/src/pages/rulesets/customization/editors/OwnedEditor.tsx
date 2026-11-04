@@ -59,7 +59,6 @@ export function OwnedEditor({
   ownerId,
   rules,
   type,
-  locked,
   followCopy,
   refetchSaved,
 }: OwnedEditorProps) {
@@ -81,7 +80,6 @@ export function OwnedEditor({
     formKey: recordKey,
     adoptKey,
     updatedAt: entity.updatedAt,
-    locked,
     rulesetId,
     entityId,
     followCopy,

@@ -29,8 +29,6 @@ interface EntityDeletion {
 }
 
 interface EntityDetailLayoutProps {
-  /** Momentarily nowhere sensible to go back to: Back hides meanwhile. */
-  backDisabled?: boolean;
   /** Where Back goes: a link, and where a delete leaves to */
   backTo: string;
   children: ReactNode;
@@ -57,7 +55,6 @@ export function EntityDetailLayout({
   subtitle,
   what,
   backTo,
-  backDisabled,
   deletion,
   isLoading,
   children,
@@ -112,7 +109,7 @@ export function EntityDetailLayout({
           <DetailPageHeader
             title={entityName}
             description={subtitle ?? `${what} in ${rulesetName}`}
-            backTo={backDisabled ? undefined : backTo}
+            backTo={backTo}
             onMenuOpen={deletion ? menu.openMenu : undefined}
           />
           {deletion && (

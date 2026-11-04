@@ -14,8 +14,6 @@ export interface EditorProps<T> {
   entityId: string;
   /** The page's `followCopy`: a save of an inherited entity copies it, the page moving to the copy (`useEntitySave`) */
   followCopy: (copyId: string, sourceId: string) => void;
-  /** No saving: the page still shows the entity a copy was made from. */
-  locked: boolean;
   /** The form's record identity (useFormSync's `key`). */
   recordKey: string;
   /**

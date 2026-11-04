@@ -12,8 +12,6 @@ interface EntityFormOptions<TForm extends FieldValues, TSaved> extends Omit<Enti
   empty: TForm & DefaultValues<TForm>;
   /** The record the form edits, from the URL (`useFormSync`'s `key`: the ruleset's id with an inherited entity's) */
   formKey: string | undefined;
-  /** Its save waits: the page still shows a copy's source */
-  locked?: boolean;
   /** The record's `updatedAt`, its save's stale-edit token, when it has one */
   updatedAt?: string;
   /** The record's values, as the form holds them */
@@ -23,7 +21,7 @@ interface EntityFormOptions<TForm extends FieldValues, TSaved> extends Omit<Enti
 /**
  * A ruleset entity page's inline form, its details': made on its empty values, kept in step with the record's
  * (`useFormSync`), saved through `useEntitySave`; and its save as its card takes it (`EntityDetailsCard`'s `form`): its
- * submit, enabled once something changed (and the page isn't `locked`), pending while it's sent.
+ * submit, enabled once something changed, pending while it's sent.
  */
 export function useEntityForm<TForm extends FieldValues, TSaved extends { id: string; updatedAt?: string }>({
   empty,
@@ -31,7 +29,6 @@ export function useEntityForm<TForm extends FieldValues, TSaved extends { id: st
   formKey,
   adoptKey,
   updatedAt,
-  locked = false,
   ...saveOptions
 }: EntityFormOptions<TForm, TSaved>) {
   const form = useFormWith<TForm>(empty);
@@ -41,7 +38,7 @@ export function useEntityForm<TForm extends FieldValues, TSaved extends { id: st
     form,
     save: {
       onSubmit: sync.handleSubmit((data) => saveMutation.mutate(data)),
-      canSave: sync.isDirty && !locked,
+      canSave: sync.isDirty,
       isSaving: saveMutation.isPending,
     },
   };

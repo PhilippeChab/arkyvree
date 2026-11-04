@@ -40,7 +40,6 @@ export function EntityEditor({
   adoptKey,
   entity,
   kind,
-  locked,
   followCopy,
   refetchSaved,
 }: EntityEditorProps) {
@@ -65,7 +64,6 @@ export function EntityEditor({
     formKey: recordKey,
     adoptKey,
     updatedAt: entity.updatedAt,
-    locked,
     rulesetId,
     entityId,
     followCopy,
