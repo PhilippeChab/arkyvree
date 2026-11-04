@@ -221,9 +221,9 @@ export interface ProgressionGrants {
   featuresFilter: string;
   maxPicks: number;
   /**
-   * Where a progression's answer, and its plan's for a draft, hold the notes on a feature that doesn't stack (3.5's
-   * `featureNotes`, `{ from, kind, ownedId, text, toId }`): at each owned entity past its first that grants it, that it
-   * gives nothing there (`idle`); at each other, that a click moves it there from those that grant it (`move`, `from`)
+   * Where a progression's answer, and its plan's for a draft, hold the notes on each feature that doesn't stack (3.5's
+   * `featureNotes`, `{ from, idle, idleText, moveText, toId }`): the owned entities that grant it, which a click on
+   * another moves it from (`moveText`), and those past its first, which give nothing there (`idleText`)
    */
   notes: string;
   /** Where a progression's answer holds the pools its owner may give picks in (3.5's `offeredPools`) */

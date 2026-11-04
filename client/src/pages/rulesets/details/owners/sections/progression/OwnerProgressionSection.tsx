@@ -302,8 +302,9 @@ export function OwnerProgressionSection({
     placeholderData: keepPreviousData,
   });
   const notesKey = grantsRules?.notes ?? "";
+  // A failed plan's notes would be another draft's: none then, the save refusing what the engine refuses
   const notes = readFeatureNotes(
-    sends && plan.data ? plan.data[notesKey as keyof typeof plan.data] : answer?.[notesKey],
+    sends ? (plan.isError ? undefined : plan.data?.[notesKey as keyof typeof plan.data]) : answer?.[notesKey],
   );
   // A pool's id in the save
   const poolIdOf = (pool: Record<string, unknown>) => String(pool.id);

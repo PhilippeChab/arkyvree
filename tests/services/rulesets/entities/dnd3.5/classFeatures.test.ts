@@ -107,6 +107,7 @@ describe("EntitiesService: a class's features and feat pools", () => {
     // Its own come first, granted through its own feature pool
     expect(all.slice(0, own.length)).toEqual(own);
     expect(own.map((feat) => feat.name)).toContain("Aura (Cleric)");
+    expect(own.map((feat) => feat.name)).toEqual(own.map((feat) => feat.name).toSorted((a, b) => a.localeCompare(b)));
     expect(own[0]).toMatchObject({ grantedThrough: [{ name: "Cleric Class Feature" }] });
     // The others by name after them: Improved Toughness, then Toughness
     const toughness = (await grantableRows(fork.id, klass.id, "Toughness")).find((feat) => feat.name === "Toughness");
@@ -144,33 +145,30 @@ describe("EntitiesService: a class's features and feat pools", () => {
       ],
     })) as { featureNotes: unknown };
 
-    // Level 5 gives nothing; saved, a click there moves it from level 1
-    const notesAt = (notes: unknown, ownedId: string) =>
-      (notes as { from: string[]; kind: string; ownedId: string; text: string; toId: string }[]).filter(
-        (note) => note.ownedId === ownedId && note.toId === aura.toId,
+    // Level 5 gives nothing, and a click elsewhere moves it from both; saved, from level 1 alone
+    const auraNote = (notes: unknown) =>
+      (notes as { from: string[]; idle: string[]; idleText: string; moveText: string; toId: string }[]).find(
+        (note) => note.toId === aura.toId,
       );
-    expect(notesAt(plan.featureNotes, fifth.id)).toEqual([
-      {
-        from: [],
-        kind: "idle",
-        ownedId: fifth.id,
-        text: "No effect: a character takes Aura (Cleric) once, at level 1. It isn't Stackable.",
-        toId: aura.toId,
-      },
-    ]);
+    const first = levels.find((level) => level.position === 1)!;
+    expect(auraNote(plan.featureNotes)).toEqual({
+      from: [first.id, fifth.id],
+      idle: [fifth.id],
+      idleText: "No effect: a character takes Aura (Cleric) once, at level 1. It isn't Stackable.",
+      moveText:
+        "Aura (Cleric) isn't Stackable, so it's granted at one level: a click moves it here from levels 1 and 5.",
+      toId: aura.toId,
+    });
     const saved = (await EntitiesService.getProgression(session, fork.id, "classes", klass.id)) as {
       featureNotes: unknown;
     };
-    const first = levels.find((level) => level.position === 1)!;
-    expect(notesAt(saved.featureNotes, fifth.id)).toEqual([
-      {
-        from: [first.id],
-        kind: "move",
-        ownedId: fifth.id,
-        text: "Aura (Cleric) isn't Stackable, so it's granted at one level: a click moves it here from level 1.",
-        toId: aura.toId,
-      },
-    ]);
+    expect(auraNote(saved.featureNotes)).toEqual({
+      from: [first.id],
+      idle: [],
+      idleText: "No effect: a character takes Aura (Cleric) once, at level 1. It isn't Stackable.",
+      moveText: "Aura (Cleric) isn't Stackable, so it's granted at one level: a click moves it here from level 1.",
+      toId: aura.toId,
+    });
   });
 
   test("create a new class's feature in its own pool, made by its first, and refuse a name it has", async () => {
@@ -207,6 +205,9 @@ describe("EntitiesService: a class's features and feat pools", () => {
     });
     expect(await grantable(fork.id, witch.id, "Hex")).toEqual(["Hex (Witch)"]);
     expect(await newFeature(fork.id, witch.id, "Hex")).toEqual({ exists: true, name: "Hex (Witch)" });
+    // Whatever its case, and one space between its words
+    expect(await newFeature(fork.id, witch.id, "hex (witch)")).toEqual({ exists: true, name: "hex (witch)" });
+    expect(await newFeature(fork.id, witch.id, "Evil   Eye")).toEqual({ exists: true, name: "Evil Eye (Witch)" });
 
     expect(EntitiesService.createFeature(session, fork.id, "classes", witch.id, "Hex")).rejects.toMatchObject({
       message: "Hex (Witch) already exists",

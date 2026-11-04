@@ -210,7 +210,7 @@ describe("rulesets class progression", () => {
       spellsPerDay: { 0: 5, 1: 2 },
     });
     expect(planned.tables["spells-known"]?.length).toBe(levels.length);
-    expect(planned.featureNotes.filter((note) => note.kind === "idle")).toEqual([]);
+    expect(planned.featureNotes.flatMap((note) => note.idle)).toEqual([]);
     // Nothing written: the fork's wizard is the one it inherits, as it was
     expect((await expectOk(kinds[":entityId"].$get({ param }))).updatedAt).toBe(wizard.updatedAt);
     const perDay = await expectOk(kinds[":entityId"].tables[":table"].$get({ param: { ...param, table: "spells" } }));

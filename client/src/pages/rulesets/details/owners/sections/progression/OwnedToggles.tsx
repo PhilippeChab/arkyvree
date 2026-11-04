@@ -4,7 +4,7 @@ import { Fragment, type MouseEvent } from "react";
 import type { PositionWord } from "@/client/src/lib/rulesetLabels.ts";
 
 interface OwnedTogglesProps {
-  /** Waiting on its rules' answer for the last click: a click waits too, its cursor saying so */
+  /** Waiting on its rules' answer for the last click: an empty toggle's click waits too, its cursor saying so */
   busy?: boolean;
   /** What the toggles grant, which each one's label names ("Evasion at level 2") */
   label: string;
@@ -75,14 +75,16 @@ export function OwnedToggles({
         const note = noteOf?.(id);
         const idle = note?.kind === "idle" && count > 0;
         const filled = count > 0 && !idle;
+        // Busy, an empty toggle waits for its rules' answer; a filled one empties at once, whatever the answer
+        const waits = busy && count === 0;
         const handleClick = (event: MouseEvent<HTMLElement>) => onToggle(id, event.currentTarget);
         const toggle = (
           <ButtonBase
             disabled={readOnly}
-            aria-busy={busy || undefined}
+            aria-busy={waits || undefined}
             aria-pressed={count > 0}
             aria-label={`${positionWord.one} ${position}: ${label}${count > 1 ? `, ${count} Picks` : ""}${readOnly && idle ? `. ${note.text}` : ""}`}
-            onClick={busy ? undefined : handleClick}
+            onClick={waits ? undefined : handleClick}
             sx={{
               // A phone's toggles share its width ten a line: a smaller count, cut rather than spilling on a neighbour
               fontSize: { xs: "0.66rem", sm: "0.72rem" },
@@ -90,7 +92,7 @@ export function OwnedToggles({
               overflow: "hidden",
               whiteSpace: "nowrap",
               fontVariantNumeric: "tabular-nums",
-              cursor: busy ? "progress" : undefined,
+              cursor: waits ? "progress" : undefined,
               py: 0.25,
               borderRadius: 0.5,
               border: 1,

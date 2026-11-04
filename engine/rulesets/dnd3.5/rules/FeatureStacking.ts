@@ -8,14 +8,15 @@ import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import FeatRules from "./FeatRules.ts";
 
 /**
- * A note on a feat's level, which the class's card shows: that it gives nothing there (`idle`), or that a click moves it
- * there from the levels that grant it (`move`, `from`), in its rules' words (`text`).
+ * The notes on a feat that isn't Stackable, which the class's card shows, in its rules' words: the levels that grant it
+ * (`from`), which a click on another moves it from (`moveText`), and those past its first, which give nothing there
+ * (`idle`, `idleText`), the feat as its first level names it (`toId`).
  */
 interface FeatureNote {
   from: string[];
-  kind: "idle" | "move";
-  ownedId: string;
-  text: string;
+  idle: string[];
+  idleText: string;
+  moveText: string;
   toId: string;
 }
 
@@ -90,10 +91,9 @@ export default class FeatureStacking {
 
   /**
    * The notes on what the class's levels grant once written (`changed`: a changed level's feats by its id, as its save
-   * sends them, the others as the view has them), for each feat that isn't Stackable, in its rules' words (`words`: the
-   * feat at `{name}`, its first level at `{position}`): at each level past its first that grants it, that it gives
-   * nothing there (`idle`, `repeat`); at each that doesn't, that a click moves it there from the levels that do (`move`,
-   * `single`, `from`: their ids). Each names its level (`ownedId`) and the feat as its first level names it (`toId`).
+   * sends them, the others as the view has them), one for each feat that isn't Stackable, in its rules' words (`words`:
+   * the feat at `{name}`, levels at `{position}`): the levels that grant it, which a click on another moves it from
+   * (`single`), and those past its first, which give nothing there (`repeat`).
    */
   describeNotes(changed: ReadonlyMap<string, readonly string[]>, words: { repeat: string; single: string }) {
     const rules = FeatRules.of(this.view.rulesetData);
@@ -110,17 +110,16 @@ export default class FeatureStacking {
         feats.set(featId, held);
       }
     }
-    return [...feats.values()].flatMap(({ at, name, toId }) => {
-      const [first] = at;
-      const word = (template: string) =>
-        template.replace("{name}", () => name).replace("{position}", () => `level ${first.position}`);
-      const from = at.map((level) => level.id);
-      return levels.flatMap((level): FeatureNote[] => {
-        if (level === first) return [];
-        return at.includes(level)
-          ? [{ from: [], kind: "idle", ownedId: level.id, text: word(words.repeat), toId }]
-          : [{ from, kind: "move", ownedId: level.id, text: word(words.single), toId }];
-      });
+    return [...feats.values()].map(({ at, name, toId }): FeatureNote => {
+      const fill = (template: string, position: string) =>
+        template.replace("{name}", () => name).replace("{position}", () => position);
+      return {
+        from: at.map((level) => level.id),
+        idle: at.slice(1).map((level) => level.id),
+        idleText: fill(words.repeat, `level ${at[0].position}`),
+        moveText: fill(words.single, FeatureStacking.formatLevels(at.map((level) => level.position))),
+        toId,
+      };
     });
   }
 }

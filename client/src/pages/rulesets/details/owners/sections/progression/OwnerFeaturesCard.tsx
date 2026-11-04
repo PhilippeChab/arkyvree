@@ -273,18 +273,17 @@ export function OwnerFeaturesCard({
   const poolOptions = (offers?.offeredPools ?? []).filter((option) => !pools.some((pool) => pool.id === option.id));
   const positionOf = (ownedId: string) => ownedEntities.find(({ id }) => id === ownedId)?.position;
   // A toggle's note, as the rules wrote it for what the card holds: where a feature gives nothing, and, for an editor,
-  // where a click moves it
-  const noteAt = (row: FeatureRow, ownedId: string) =>
-    notes.find((note) => note.ownedId === ownedId && note.toId === row.toId);
+  // where a click moves it (any toggle of its row not granting it)
+  const noteOf = (row: FeatureRow) => notes.find((note) => note.toId === row.toId);
   const featureNote = (row: FeatureRow, ownedId: string): ToggleNote | undefined => {
-    const note = noteAt(row, ownedId);
-    const granted = row.grantedAt.includes(ownedId);
-    if (note?.kind === "idle" && granted) return { kind: "idle", text: note.text };
-    if (note?.kind === "move" && !granted && !readOnly) return { kind: "move", text: note.text };
-    return undefined;
+    const note = noteOf(row);
+    if (!note) return undefined;
+    if (row.grantedAt.includes(ownedId))
+      return note.idle.includes(ownedId) ? { kind: "idle", text: note.idleText } : undefined;
+    return readOnly ? undefined : { kind: "move", text: note.moveText };
   };
-  // A click empties a filled toggle, and fills an empty one; where the rules say it moves the feature there, it leaves
-  // the owned entities they name, on each of its rows
+  // A click empties a filled toggle, and fills an empty one; where the rules note the feature, it moves there, leaving
+  // the owned entities they name on each of its rows
   const handleFeatureClick = (row: FeatureRow, ownedId: string) => {
     if (row.grantedAt.includes(ownedId)) {
       onFeatureGrantedAt(
@@ -293,8 +292,7 @@ export function OwnerFeaturesCard({
       );
       return;
     }
-    const note = noteAt(row, ownedId);
-    const from = note?.kind === "move" ? note.from : [];
+    const from = noteOf(row)?.from ?? [];
     const left = (other: FeatureRow) => other.grantedAt.filter((id) => !from.includes(id));
     for (const other of features) {
       if (other.key !== row.key && other.toId === row.toId && left(other).length < other.grantedAt.length)

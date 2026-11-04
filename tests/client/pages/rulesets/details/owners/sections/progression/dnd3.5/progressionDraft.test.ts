@@ -151,10 +151,9 @@ describe("A Progression tab's save", () => {
 
 describe("A feature's notes", () => {
   test("are read as the rules write them, each a feature's at an owned entity, none else", () => {
-    const idle = { from: [], kind: "idle" as const, ownedId: "l3", text: "No effect.", toId: "flurry" };
-    const move = { from: ["l1"], kind: "move" as const, ownedId: "l2", text: "A click moves it here.", toId: "flurry" };
+    const note = { from: ["l1", "l3"], idle: ["l3"], idleText: "No effect.", moveText: "Moves here.", toId: "flurry" };
 
-    expect(readFeatureNotes([idle, move, { ...move, kind: "other" }, { ownedId: "l2" }, "l1"])).toEqual([idle, move]);
+    expect(readFeatureNotes([note, { ...note, idleText: 3 }, { toId: "aura" }, "l1"])).toEqual([note]);
     expect(readFeatureNotes(undefined)).toEqual([]);
   });
 });

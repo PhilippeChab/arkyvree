@@ -16,14 +16,15 @@ interface PoolRef {
 }
 
 /**
- * A note on a feature's owned entity (`toId`, at `ownedId`), as its rules write it (`text`): that it gives nothing there,
- * past its first (`idle`), or that a click moves it there from the owned entities that grant it (`move`, `from`).
+ * The notes on a feature that doesn't stack (`toId`), as its rules write them: the owned entities that grant it, which a
+ * click on another moves it from (`from`, `moveText`), and those past its first, which give nothing there (`idle`,
+ * `idleText`).
  */
 export interface FeatureNote {
   from: string[];
-  kind: "idle" | "move";
-  ownedId: string;
-  text: string;
+  idle: string[];
+  idleText: string;
+  moveText: string;
   toId: string;
 }
 
@@ -74,6 +75,11 @@ const AMOUNT_TRACK = "amount:";
 
 /** A tab that changed nothing yet. */
 export const NO_EDITS: ProgressionEdits = { addedFeatures: [], addedPools: [], features: {}, pools: {}, tracks: {} };
+
+/** Ids as an answer lists them (`value`): its strings, none else. */
+function readIds(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : [];
+}
 
 /** Pools as an answer lists them (`value`): each one of an id and a name, none else. */
 function readPools(value: unknown): PoolRef[] {
@@ -205,21 +211,20 @@ export function readEditedTrack(ownedEntity: OwnedRead, key: TrackKey, edits: Pr
   return edits.tracks[key]?.[ownedEntity.id] ?? readTrack(ownedEntity, key);
 }
 
-/** The notes an answer holds on its grants (`value`, as its rules write them), each a feature's at an owned entity. */
+/** The notes an answer holds on its features (`value`, as its rules write them), each a feature's. */
 export function readFeatureNotes(value: unknown): FeatureNote[] {
   return Array.isArray(value)
     ? value.flatMap((note) =>
         isRecord(note) &&
-        (note.kind === "idle" || note.kind === "move") &&
-        typeof note.ownedId === "string" &&
-        typeof note.text === "string" &&
+        typeof note.idleText === "string" &&
+        typeof note.moveText === "string" &&
         typeof note.toId === "string"
           ? [
               {
-                from: Array.isArray(note.from) ? note.from.filter((id) => typeof id === "string") : [],
-                kind: note.kind,
-                ownedId: note.ownedId,
-                text: note.text,
+                from: readIds(note.from),
+                idle: readIds(note.idle),
+                idleText: note.idleText,
+                moveText: note.moveText,
                 toId: note.toId,
               },
             ]

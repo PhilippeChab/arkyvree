@@ -30,7 +30,7 @@ const FEATURE_POOL_SUFFIX = "Class Feature";
  * - a pool is a class's when its name starts with the class's ("Cleric Domain", "Fighter Bonus Feat"), the longest
  *   class name that starts it winning ("Ranger Knight Class Feature" is the Ranger Knight's);
  * - its features are granted through its own feature pool ("Witch Class Feature"), the pools its levels already grant
- *   one through (the cleric's Cleric Domain), and General;
+ *   one through, and General;
  * - its picks are given in any feat pool but a class's own feature pool, its own too ("Fighter Class Feature"), which
  *   holds the features its levels grant outright, none a pick may choose: its own pools first (Cleric Domain), then
  *   the others by name (Fighter Bonus Feat, General).
@@ -121,18 +121,29 @@ export default class ClassOffers {
       for (const id of this.dnd35.listFeatIds(pool.id))
         through.set(id, [...(through.get(id) ?? []), { id: pool.id, name: pool.name }]);
     }
-    return { ids: [...through.keys()], ownIds: own.id === null ? [] : this.dnd35.listFeatIds(own.id), through };
+    // Its own by name, as the others come
+    const ownIds = (own.id === null ? [] : this.dnd35.listFeatIds(own.id))
+      .flatMap((id) => this.dnd35.featsById.get(id) ?? [])
+      .toSorted((a, b) => a.name.localeCompare(b.name))
+      .map((feat) => feat.id);
+    return { ids: [...through.keys()], ownIds, through };
   }
 
   /**
    * The feature a name creates (`given`, as typed): the name its rules give it, "Hex" and "Hex (Witch)" alike making
-   * "Hex (Witch)", and whether the ruleset has a feat of that name already (`exists`), which its create refuses.
+   * "Hex (Witch)", one space between its words, and whether the ruleset has a feat of that name already, whatever its
+   * case (`exists`), which its create refuses.
    */
   describeNewFeature(given: string): { exists: boolean; name: string } {
     const { featureName } = this.describeOwnFeaturePool();
-    // A function replaces, so a typed "$&" stays as typed
-    const name = given.endsWith(featureName.replace("{name}", "")) ? given : featureName.replace("{name}", () => given);
-    return { exists: this.dnd35.feats.some((feat) => feat.name === name), name };
+    // One space between words, and its class's name ending it however it's cased; a function replaces, so a typed "$&"
+    // stays as typed
+    const typed = given.replace(/\s+/g, " ");
+    const suffix = featureName.replace("{name}", "").toLowerCase();
+    const name = typed.toLowerCase().endsWith(suffix) ? typed : featureName.replace("{name}", () => typed);
+    // A name is the ruleset's whatever its case: "aura (cleric)" is Aura (Cleric)
+    const lower = name.toLowerCase();
+    return { exists: this.dnd35.feats.some((feat) => feat.name.toLowerCase() === lower), name };
   }
 
   /**
