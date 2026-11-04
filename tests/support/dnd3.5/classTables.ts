@@ -10,9 +10,9 @@ interface ClassTables {
   "spells-known": ReturnType<ClassTable["describeSpellsKnown"]>;
 }
 
-/** One of a class's tables (`table`) as a progression's plan answers it (`plan`, its tables by name). */
-export function readPlannedTable<T extends keyof ClassTables>(plan: Record<string, unknown>, table: T) {
-  return plan[table] as ClassTables[T];
+/** One of a class's tables (`table`) as a progression's plan answers it (`plan`, its tables by name under `tables`). */
+export function readPlannedTable<T extends keyof ClassTables>(plan: { tables: Record<string, unknown> }, table: T) {
+  return plan.tables[table] as ClassTables[T];
 }
 
 /** One of a class's tables (`table`), as its tab reads it: the service answers any of them. */
