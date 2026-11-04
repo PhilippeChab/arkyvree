@@ -67,6 +67,21 @@ describe("rulesets class spell lists", () => {
     expect(await namesOn(id, String(list.id), 1)).toEqual(["Bless"]);
   });
 
+  test("makes a class's own list with no spells, refusing one the ruleset has", async () => {
+    const { id, find } = await setup();
+    const param = { id, entityType: "classes" as const, entityId: await find("classes", "Fighter") };
+    const own = kinds[":entityId"].lists.own;
+
+    const response = await expectStatus(own.$post({ param }), 201);
+    expect(await response.json()).toMatchObject({ name: "Fighter Spells", type: "aptitudes" });
+    const [list] = await expectOk(
+      kinds[":entityId"].tables[":table"].$get({ param: { ...param, table: "spell-lists" } }),
+    );
+    expect(list).toMatchObject({ name: "Fighter Spells" });
+    const again = await expectStatus(own.$post({ param }), 409);
+    expect(await again.json()).toMatchObject({ message: "Fighter Spells already exists" });
+  });
+
   test("refuses an empty add, a level past the rules' bounds, a spell already on the list, and a kind without lists", async () => {
     const { find, param } = await setup();
     const [bless, fireball] = [await find("spells", "Bless"), await find("spells", "Fireball")];
@@ -91,5 +106,7 @@ describe("rulesets class spell lists", () => {
     const bless = await find("spells", "Bless");
 
     await expectStatus(stranger.$post({ param, json: { targetIds: [bless], tier: 1 } }), 404);
+    const strangerOwn = other.api.rulesets[":id"].entities[":entityType"][":entityId"].lists.own;
+    await expectStatus(strangerOwn.$post({ param }), 404);
   });
 });

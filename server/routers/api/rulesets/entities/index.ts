@@ -231,6 +231,11 @@ export default new Hono<SessionContext>()
       );
     },
   )
+  // The entity's own list (a class's, named for it), made with no entries, as its first add makes it
+  .post("/:id/entities/:entityType/:entityId/lists/own", validate("param", entityParams), async (c) => {
+    const { id, entityType, entityId } = c.req.valid("param");
+    return c.json(await EntitiesService.createOwnList(c.var.requestSession, id, entityType, entityId), 201);
+  })
   .post(
     "/:id/entities/:entityType/:entityId/lists/:listId",
     validate("param", listParams),

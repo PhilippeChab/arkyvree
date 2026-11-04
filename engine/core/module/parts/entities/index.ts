@@ -13,6 +13,7 @@ export type {
   LinkRemovePlan,
   LinkSet,
   LinkWrite,
+  ListCreatePlan,
   ListEntriesPlan,
   MadeEntity,
   OwnedCreateManyPlan,

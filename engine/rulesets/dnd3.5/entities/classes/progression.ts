@@ -32,13 +32,14 @@ const SAVE_PRESET_LABELS: Record<SaveType, string> = { good: "Good", poor: "Poor
 export const PROGRESSION: ProgressionDeclaration = {
   counts: {
     body: "spells",
+    create: "Create {name}",
     list: "spellList",
     lists: "spell-lists",
     listTab: "spell-list",
     ownList: "ownSpellList",
     none: {
       editor:
-        '{ownerName} has no spell list of its own, so no {tables}. Adding spells on its Spell List tab makes one, "{ownerName} Spells".',
+        "{ownerName} has no spell list of its own, so no {tables}. Create it here, or add spells on its Spell List tab, which makes it too.",
       viewer: "{ownerName} casts no spells.",
     },
     refusal: "spellTablesRefusal",
