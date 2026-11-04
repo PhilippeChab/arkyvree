@@ -55,7 +55,6 @@ export const ENLIGHTENED_FIST: ClassSeed = {
     [3, "Arcane Fist (Enlightened Fist)"],
     [5, "Arcane Rejuvination (Enlightened Fist)"],
     [6, "Fist of Energy (Burst) (Enlightened Fist)"],
-    [6, "Fist of Energy (Enlightened Fist)"],
     [7, "Hold Ray (Enlightened Fist)"],
     [9, "Diamond Soul (Enlightened Fist)"],
   ],

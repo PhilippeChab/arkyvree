@@ -57,7 +57,6 @@ export const GHOST_FACED_KILLER: ClassSeed = {
     [5, "Sudden Strike (Ghost-faced Killer)"],
     [6, "Frightful Attack (Ghost-faced Killer)"],
     [6, "Ghost Step (Ethereal) (Ghost-faced Killer)"],
-    [6, "Ghost Step (Ghost-faced Killer)"],
     [7, "Ghost Sight (Ghost-faced Killer)"],
     [7, "Ghost Step (Ghost-faced Killer)"],
     [8, "Sudden Strike (Ghost-faced Killer)"],

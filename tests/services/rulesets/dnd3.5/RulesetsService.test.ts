@@ -59,6 +59,7 @@ import { createTestUser } from "@/tests/support/users.ts";
 import {
   CLASS_HD,
   FEAT_FAMILY,
+  FEAT_STACKABLE,
   ITEM_IS_TEMPLATE,
   LANGUAGE_TYPE,
   RACE_BASE_SPEED,
@@ -572,7 +573,10 @@ describe("RulesetsService", () => {
 
       expect(await RulesetsService.archiveRuleset(session, ruleset.id)).toMatchObject({ status: "Archived" });
       expect(await Entities.findOne<Feat>(db, { entityType: "feats", id: feat.id })).toMatchObject({ id: feat.id });
-      expect(await findFormValues("feats", feat.id)).toEqual({ fields: { [FEAT_FAMILY]: ["combat"] }, links: {} });
+      expect(await findFormValues("feats", feat.id)).toEqual({
+        fields: { [FEAT_FAMILY]: ["combat"], [FEAT_STACKABLE]: [false] },
+        links: {},
+      });
 
       expect(await RulesetsService.unarchiveRuleset(session, ruleset.id)).toMatchObject({ status: "Draft" });
     });

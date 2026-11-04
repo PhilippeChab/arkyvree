@@ -208,13 +208,18 @@ export interface ProgressionDescription {
 /**
  * What a class's levels grant, past their own columns (its levels' `grants` field: 3.5's feats, each through a feat
  * pool), as its Progression tab shows them: the pools a level gives picks in, of a kind and its scope (`pools`: 3.5's
- * `aptitudes`, of `feats`), where a progression's answer holds the picks a granted entity gives in its pools (`picks`:
- * `featPicks`), the class's table of each level's totals by pool (`table`: `feat-pools`, at `totals`: `featPools`), and
- * the words its card and its failures say them in (`words`).
+ * `aptitudes`, of `feats`), the most picks a level gives in one (`maxPicks`), where a progression's answer holds the
+ * picks a granted entity gives in its pools (`picks`: `featPicks`), the stored field that says a granted entity stacks
+ * (`stacks`: `FEAT_STACKABLE`; one that doesn't is granted at one level, as a character holds it once), the class's
+ * table of each level's totals by pool (`table`: `feat-pools`, at `totals`: `featPools`), and the words its card and
+ * its failures say them in (`words`: `repeat`, a non-stacking feature's level past its first, and `single`, a level a
+ * click moves it to, each naming the feature at `{name}` and its first level at `{level}`).
  */
 export interface ProgressionGrants {
+  maxPicks: number;
   picks: string;
   pools: { scope: string; type: string };
+  stacks: string;
   table: string;
   totals: string;
   words: {
@@ -224,6 +229,8 @@ export interface ProgressionGrants {
     help: string;
     pool: string;
     pools: string;
+    repeat: string;
+    single: string;
     title: string;
     totals: string;
   };

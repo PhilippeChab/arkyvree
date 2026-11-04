@@ -9,13 +9,14 @@ import type { OwnedLists, OwnedRead } from "@/client/src/pages/rulesets/componen
 import type { OwnerProgressionBody } from "@/client/src/pages/rulesets/details/owners/ownerSectionQueries.ts";
 
 /**
- * A feature the owner grants (3.5's feat, `toId`, through a feat pool, `viaId`), and the owned entities it grants it
- * at, by their ids.
+ * A feature the owner grants (3.5's feat, `toId`, through a feat pool, `viaId`), the owned entities it grants it at, by
+ * their ids, and whether a character takes it more than once (`stacks`): one that doesn't is granted at one.
  */
 export interface FeatureRow {
   grantedAt: string[];
   key: string;
   name: string;
+  stacks: boolean;
   toId: string;
   viaId: string;
   viaName: string | null;
@@ -154,6 +155,7 @@ export function describeFeatureRows(ownedEntities: readonly OwnedRead[]): Featur
         key,
         grantedAt: [],
         name: grant.toName,
+        stacks: grant.stacks,
         toId: grant.toId,
         viaId: grant.viaId,
         viaName: grant.viaName,
@@ -196,4 +198,28 @@ export function withAddedFeatures(features: readonly FeatureRow[], edits: Progre
 /** The pools as saved, then those the edits add that a save hasn't made the owner's yet. */
 export function withAddedPools(pools: readonly PoolRow[], edits: ProgressionEdits): PoolRow[] {
   return [...pools, ...edits.addedPools.filter((added) => !pools.some((pool) => pool.id === added.id))];
+}
+
+/**
+ * The edits once a feature is taken off the owner (`row`): granted at none of its owned entities, which a save takes
+ * its grants off, and gone from the rows they add.
+ */
+export function withoutFeature(edits: ProgressionEdits, row: FeatureRow): ProgressionEdits {
+  return {
+    ...edits,
+    addedFeatures: edits.addedFeatures.filter((added) => added.key !== row.key),
+    features: { ...edits.features, [row.key]: [] },
+  };
+}
+
+/**
+ * The edits once a pool is taken off the owner (`pool`, with its picks as the tab shows them): no picks in it at any
+ * owned entity, and gone from the rows they add.
+ */
+export function withoutPool(edits: ProgressionEdits, pool: PoolRow): ProgressionEdits {
+  return {
+    ...edits,
+    addedPools: edits.addedPools.filter((added) => added.id !== pool.id),
+    pools: { ...edits.pools, [pool.id]: Object.fromEntries(Object.keys(pool.picks).map((id) => [id, 0])) },
+  };
 }

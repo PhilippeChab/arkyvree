@@ -111,10 +111,10 @@
         "level": 3
       },
       "Flurry of Blows": {
-        "aliases": [
-          "Greater Flurry"
-        ],
         "description": "While unarmored, a monk can trade precision for volume of attacks by unleashing a rapid barrage of strikes. This grants one additional attack per round at her highest base attack bonus, but every attack that round (including the extra one) suffers a -2 penalty. The adjusted attack bonuses appear in the Flurry of Blows Attack Bonus column of the class table. Because this penalty persists for the full round, it also applies to any attacks of opportunity the monk takes before her next turn. At 5th level the penalty decreases to -1, and at 9th level it vanishes entirely. Executing a flurry of blows requires a full attack action. During a flurry, the monk may only use unarmed strikes or special monk weapons (kama, nunchaku, quarterstaff, sai, shuriken, and siangham), and she can freely mix unarmed strikes with monk weapon attacks in any combination she chooses. When wielding weapons during a flurry of blows, the monk uses her Strength bonus (not 1-1/2 times or 1/2 times her Strength bonus) for damage on all hits, regardless of whether she holds the weapon in one or both hands. No weapon other than a special monk weapon may be employed as part of a flurry. The quarterstaff is treated as two separate weapons (one for each end) for flurry of blows purposes. Despite requiring two hands, a monk can still alternate between quarterstaff strikes and unarmed strikes within a single flurry, provided she has sufficient attacks to do so. However, she cannot wield any additional weapon simultaneously with a quarterstaff. At 11th level, the flurry of blows ability advances further: in addition to the single extra attack normally granted, the monk gains a second extra attack at her full base attack bonus."
+      },
+      "Greater Flurry": {
+        "description": "At 11th level, a monk's flurry of blows advances further: in addition to the single extra attack it normally grants, she gains a second extra attack at her full base attack bonus."
       },
       "Improved Evasion": {
         "description": "At 9th level, a monk's evasion ability becomes even more effective. She continues to take no damage when she succeeds on a Reflex save against effects like dragon breath or a fireball spell, and now she takes only half damage even on a failed save. A helpless monk (such as one who is unconscious or paralyzed) does not benefit from improved evasion."

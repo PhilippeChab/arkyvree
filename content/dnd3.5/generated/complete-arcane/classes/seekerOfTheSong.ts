@@ -48,6 +48,5 @@ export const SEEKER_OF_THE_SONG: ClassSeed = {
     [5, "Subvocalize (Seeker of the Song)"],
     [7, "Rapture of the Song (Seeker of the Song)"],
     [10, "Rapture of the Song (Freedom of Movement) (Seeker of the Song)"],
-    [10, "Rapture of the Song (Seeker of the Song)"],
   ],
 };

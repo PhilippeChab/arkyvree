@@ -63,16 +63,14 @@ export const DUNGEON_DELVER: ClassSeed = {
     [3, "Skill Mastery (Dungeon Delver)"],
     [4, "Evasion (Dungeon Delver)"],
     [4, "Trap Sense (Dungeon Delver)"],
+    [5, "Blindsense (Dungeon Delver)"],
     [6, "Augury (Dungeon Delver)"],
     [6, "Passwall (Dungeon Delver)"],
     [7, "Trap Sense (Dungeon Delver)"],
     [8, "Find the Path (Dungeon Delver)"],
     [9, "Augury (Dungeon Delver)"],
     [9, "Phase Door (Dungeon Delver)"],
+    [10, "Blindsense (Dungeon Delver)"],
     [10, "Trap Sense (Dungeon Delver)"],
-  ],
-  freeFeats: [
-    [5, "Blindsense", "Dungeon Delver Class Feature"],
-    [10, "Blindsense", "Dungeon Delver Class Feature"],
   ],
 };

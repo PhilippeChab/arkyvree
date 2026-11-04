@@ -131,8 +131,8 @@ test.describe("A class built from scratch", () => {
   });
 });
 
-// A class's Progression tab: a preset its base attack bonus follows, its skill points, and one save of both, which
-// copies an inherited class into the fork.
+// A class's Progression tab: a preset its base attack bonus follows, its skill points, its features and its pools'
+// picks, and one save of them, which copies an inherited class into the fork.
 test.describe("A class's progression", () => {
   test("of an inherited monk follows a good base attack bonus and 6 skill points, in one save", async ({
     page,
@@ -186,6 +186,52 @@ test.describe("A class's progression", () => {
       .first();
     await expect(first.getByRole("cell", { name: "6", exact: true })).toBeVisible({ timeout: 10_000 });
     await expect(page.getByRole("button", { name: "Good (full)" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  test("of an inherited cleric moves a feature that doesn't stack, gives three domain picks and loses a feature, in one save", async ({
+    page,
+    ownerUser,
+  }) => {
+    await signIn(page, ownerUser.email, ownerUser.password);
+    const forkId = await forkCoreRuleset(page, uniqueName("Features Fork"));
+    const { items } = await parseResponse(
+      apiOf(page).api.rulesets[":id"].entities[":entityType"].$get({
+        param: { id: forkId, entityType: "classes" },
+        query: { search: "Cleric" },
+      }),
+    );
+    const cleric = items.find((klass) => klass.name === "Cleric")!;
+    await page.goto(`/rulesets/${forkId}/classes/${cleric.id}/progression`);
+    const levelOf = (row: string, level: number) =>
+      page
+        .getByRole("group", { name: `Levels of ${row}` })
+        .getByRole("button", { name: new RegExp(`^Level ${level}:`) });
+
+    // A feature that doesn't stack is granted at one level: a click on another moves it there
+    await levelOf("Aura (Cleric)", 5).click({ timeout: 10_000 });
+    await expect(levelOf("Aura (Cleric)", 5)).toHaveAttribute("aria-pressed", "true");
+    await expect(levelOf("Aura (Cleric)", 1)).toHaveAttribute("aria-pressed", "false");
+
+    // A filled pool level opens a box that sets its picks: the cleric's two domains, then a third
+    await levelOf("Cleric Domain", 1).click();
+    const picks = page.getByRole("dialog", { name: "Level 1 · Cleric Domain" });
+    await picks.getByRole("button", { name: "More Picks" }).click();
+    await expect(picks.getByText("3", { exact: true })).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(levelOf("Cleric Domain", 1)).toHaveAccessibleName(/3 Picks/);
+
+    // A row's bin clears its levels, and the save takes it off the class
+    const proficiency = "Weapon and Armor Proficiency (Cleric)";
+    await page.getByRole("button", { name: `Remove ${proficiency}` }).click();
+    await expect(levelOf(proficiency, 1)).toHaveAttribute("aria-pressed", "false");
+    const saved = apiResponse(page, "PUT", /\/entities\/classes\/[a-f0-9-]+\/progression$/);
+    await page.getByRole("button", { name: "Save Progression" }).click();
+    await saved;
+    await expect(page).not.toHaveURL(new RegExp(`/classes/${cleric.id}/`), { timeout: 10_000 });
+    await page.reload();
+    await expect(levelOf("Cleric Domain", 1)).toHaveAccessibleName(/3 Picks/, { timeout: 10_000 });
+    await expect(levelOf("Aura (Cleric)", 5)).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("group", { name: `Levels of ${proficiency}` })).toHaveCount(0);
   });
 });
 

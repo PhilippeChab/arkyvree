@@ -16,6 +16,7 @@ import {
   FEAT_FAMILY,
   FEAT_GENERATED,
   FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,
+  FEAT_STACKABLE,
   FEAT_WEAPON_FINESSE,
   ITEM_COST_GP,
   ITEM_IS_TEMPLATE,
@@ -351,9 +352,10 @@ describe("rules", () => {
     expect(fields.spells).toContainEqual(
       expect.objectContaining({ input: "tieredLinks", max: 9, min: 0, references: "aptitudes", role: "listedIn" }),
     );
-    // A feat's flags its rules set, which no form shows
+    // A feat's form shows whether it stacks, but not the flags its rules set (whether a level up picks it)
     expect(fields.feats.map(placeOf)).toEqual([
       "listedIn",
+      FEAT_STACKABLE,
       FEAT_FAMILY,
       FEAT_WEAPON_FINESSE,
       FEAT_OVERSIZED_TWO_WEAPON_FIGHTING,

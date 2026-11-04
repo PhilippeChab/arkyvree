@@ -40,7 +40,9 @@ const READ = {
       viaId: "general",
       viaName: "General",
       free: false,
+      stacks: false,
     },
+    // A grant that doesn't say whether it stacks stacks, as rules that don't say want
     {
       role: "grants",
       toType: "feats",
@@ -78,7 +80,7 @@ describe("a class level's form", () => {
     expect(emptyOwned(LISTS)).toEqual({ position: 1, links: { baseBonus: [], grants: [] } });
   });
 
-  test("reads a level's grants and amounts among its links, by their lists' roles and kinds", () => {
+  test("reads a level's grants and amounts among its links, by their lists' roles and kinds, and whether each stacks", () => {
     const read = readOwned(READ, LISTS);
     expect(read.position).toBe(1);
     expect(read.amounts).toEqual([FORTITUDE]);
@@ -90,8 +92,17 @@ describe("a class level's form", () => {
         viaId: "general",
         viaName: "General",
         free: false,
+        stacks: false,
       },
-      { toId: "dodge", toName: "Dodge", toDescription: null, viaId: "fighter", viaName: null, free: true },
+      {
+        toId: "dodge",
+        toName: "Dodge",
+        toDescription: null,
+        viaId: "fighter",
+        viaName: null,
+        free: true,
+        stacks: true,
+      },
     ]);
   });
 

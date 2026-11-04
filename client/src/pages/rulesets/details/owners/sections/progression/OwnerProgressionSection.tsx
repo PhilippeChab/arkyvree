@@ -525,6 +525,8 @@ export function OwnerProgressionSection({
             onPoolPick={draft.setPoolPick}
             onAddFeature={draft.addFeature}
             onAddPool={draft.addPool}
+            onRemoveFeature={draft.removeFeature}
+            onRemovePool={draft.removePool}
           />
         )}
       {canEdit && ownedEntities.length > 0 && (

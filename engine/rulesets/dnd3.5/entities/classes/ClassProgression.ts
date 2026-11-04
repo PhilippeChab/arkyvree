@@ -472,18 +472,15 @@ export default class ClassProgression {
   /**
    * What one save of the class's progression writes (`sent`, read by its schema), refused as invalid when it isn't one,
    * a count is past the rules' bounds, a level isn't the class's or an entity isn't the ruleset's: the class as the
-   * view has it, each level it changes, by its number, with its form's edit (`ClassLevelEntity.planEdit`) and the
+   * view has it, each level it changes, by its number, with its form's edit (`ClassLevelEntity.planEdits`) and the
    * modifiers it adds and removes, and what its activity records. A level's own modifiers it writes are its pools'
    * picks and its spell tables' increments, never one requirements gate.
    */
   plan(sent: ProgressionForm) {
     const { body, original, working } = this.planModifiers(sent);
-    const edits = new Map(
-      (body.owned ?? []).map(({ ownedId, ...form }) => {
-        const edit = this.levels.planEdit(ownedId, form);
-        return [edit.entity.id, edit];
-      }),
-    );
+    // Its levels' edits are checked together: a feature it moves from one level to another is no repeat
+    const forms = (body.owned ?? []).map(({ ownedId, ...form }) => ({ form, ownedId }));
+    const edits = new Map(this.levels.planEdits(forms).map((edit) => [edit.entity.id, edit]));
     const owned = this.classLevels.flatMap((level) => {
       const kept = working.get(level.id) ?? [];
       const keptIds = new Set(kept.flatMap(({ id }) => id ?? []));

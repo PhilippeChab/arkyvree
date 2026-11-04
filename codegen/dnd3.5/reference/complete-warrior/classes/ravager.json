@@ -15,7 +15,8 @@
         "description": "At 3rd level, the ravager's intimate knowledge of suffering grants deadly accuracy with melee strikes. Before making a melee attack, the ravager must declare the use of this ability; a missed attack wastes the attempt. On a successful hit, the target takes 1d4 points of Constitution damage in addition to normal weapon damage. The ravager gains one daily use of this ability for every three class levels attained, but can only attempt one cruelest cut per round."
       },
       "Pain Touch": {
-        "description": "The ravager's touch channels agonizing supernatural energy. As an unarmed touch attack, this deals 1d8 damage + 1 per ravager class level. When delivered through a weapon attack instead, the bonus damage is reduced to 1d4 + 1 per ravager class level. The ravager gains one additional daily use of this ability for every three levels beyond 1st."
+        "description": "The ravager's touch channels agonizing supernatural energy. As an unarmed touch attack, this deals 1d8 damage + 1 per ravager class level. When delivered through a weapon attack instead, the bonus damage is reduced to 1d4 + 1 per ravager class level. The ravager gains one additional daily use of this ability for every three levels beyond 1st.",
+        "ownFeat": true
       },
       "Visage of Terror": {
         "description": "At 10th level, once per day as a standard action, the ravager can activate a spell-like ability that functions like phantasmal killer (save DC equals 10 + ravager class level + Charisma modifier). The targeted enemy perceives the ravager as an embodiment of its deepest fear."

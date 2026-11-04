@@ -209,29 +209,27 @@ export class ClassMapping {
   }
 
   /**
-   * Each occurrence the table names, by the feature it is: the one it names, one of its aliases, a variant of it, its
-   * plural or singular, or a feature whose name starts with it ("Rage +" for "Rage +1/Day").
+   * Each occurrence the table names, by the feature it is: the one it names or one of its aliases, any feature's not
+   * skipped before a looser match ("Combat Style Mastery" is its own feature, not a variant of Combat Style); else a
+   * variant of it, its plural or singular, or a feature whose name starts with it ("Rage +" for "Rage +1/Day").
    */
   private occurrenceMap(features: ClassReference["mapping"]["features"]): Record<string, string> {
     const occurrenceMap: Record<string, string> = {};
 
+    // A skipped feature leaves its occurrence to the loose matches (the scout's "Fast Movement +", one more Fast Movement)
     for (const [key, feat] of Object.entries(features)) {
+      if (feat.skip) continue;
+      const names = new Set([key, ...(feat.aliases ?? [])].map((name) => name.toLowerCase()));
+      for (const fo of this.detected.featureOccurrences)
+        if (!(fo.name in occurrenceMap) && names.has(fo.name.toLowerCase())) occurrenceMap[fo.name] = key;
+    }
+
+    for (const key of Object.keys(features)) {
       const keyLower = key.toLowerCase();
-      const aliasLower = new Set(feat.aliases?.map((a) => a.toLowerCase()) ?? []);
 
       for (const fo of this.detected.featureOccurrences) {
         if (fo.name in occurrenceMap) continue;
         const foLower = fo.name.toLowerCase();
-        // Direct match
-        if (foLower === keyLower) {
-          occurrenceMap[fo.name] = key;
-          continue;
-        }
-        // Alias match
-        if (aliasLower.has(foLower)) {
-          occurrenceMap[fo.name] = key;
-          continue;
-        }
         // Variant: a suffix ("(Magic)", "Any Distance") or an ordinal ("1st Favored Enemy" → "Favored Enemy")
         if (isVariantOf(foLower, keyLower)) {
           occurrenceMap[fo.name] = key;

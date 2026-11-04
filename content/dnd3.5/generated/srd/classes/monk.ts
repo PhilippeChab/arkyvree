@@ -61,7 +61,6 @@ export const MONK: ClassSeed = {
     [10, "Ki Strike (Monk)"],
     [10, "Slow Fall (Monk)"],
     [11, "Diamond Body (Monk)"],
-    [11, "Flurry of Blows (Monk)"],
     [11, "Greater Flurry (Monk)"],
     [12, "Abundant Step (Monk)"],
     [12, "Slow Fall (Monk)"],

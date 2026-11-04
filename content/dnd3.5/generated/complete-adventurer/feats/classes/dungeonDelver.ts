@@ -12,6 +12,13 @@ export const DUNGEON_DELVER_CLASS_FEATS: FeatSeed[] = [
     fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
   },
   {
+    name: "Blindsense (Dungeon Delver)",
+    description:
+      "At 5th level, a dungeon delver gains the ability to activate an acute sensitivity to sounds, smells, movement, and other disturbances within 30 feet. This functions as described and lasts for 1 minute per class level. A dungeon delver can use blindsense once per day at 5th level and twice per day at 10th level.",
+    aptitudes: ["Dungeon Delver Class Feature"],
+    fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
+  },
+  {
     name: "Darkvision (Dungeon Delver)",
     description:
       "A dungeon delver's long exposure to pitch-black subterranean surroundings enables him to develop darkvision out to 60 feet. If the character already has darkvision, the range increases by 30 feet.",

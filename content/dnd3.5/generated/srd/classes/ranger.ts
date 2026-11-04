@@ -52,7 +52,6 @@ export const RANGER: ClassSeed = {
     [8, "Swift Tracker (Ranger)"],
     [9, "Evasion (Ranger)"],
     [10, "Favored Enemy (Ranger)"],
-    [11, "Combat Style (Ranger)"],
     [11, "Combat Style Mastery (Ranger)"],
     [13, "Camouflage (Ranger)"],
     [15, "Favored Enemy (Ranger)"],
