@@ -27,7 +27,7 @@ export interface AmountRow {
  */
 export interface GrantLink {
   free: boolean;
-  /** Whether a character takes the granted entity more than once: one that doesn't is granted at one level */
+  /** Whether a character takes the granted entity more than once: one that doesn't is granted at one owned entity */
   stacks: boolean;
   toDescription: string | null;
   toId: string;

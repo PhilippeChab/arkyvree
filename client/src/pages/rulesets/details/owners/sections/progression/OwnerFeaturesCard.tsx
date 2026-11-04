@@ -212,28 +212,29 @@ export function OwnerFeaturesCard({
     })),
   );
   const positionOf = (ownedId: string) => ownedEntities.find(({ id }) => id === ownedId)?.position;
-  const levelOf = (position: number | undefined) => `${positionWord.one.toLowerCase()} ${position ?? ""}`.trim();
-  // A feat's owned entities, whichever of its rows grants it there (a feat granted through two pools is two rows)
-  const featGrantedAt = (row: FeatureRow) => [
+  // An owned entity's position, in its rules' word for one ("level 1")
+  const positionNameOf = (position: number | undefined) => `${positionWord.one.toLowerCase()} ${position ?? ""}`.trim();
+  // A granted entity's owned entities, whichever of its rows grants it there (one granted through two pools is two rows)
+  const entityGrantedAt = (row: FeatureRow) => [
     ...new Set(features.filter((other) => other.toId === row.toId).flatMap((other) => other.grantedAt)),
   ];
   // A feature that doesn't stack is granted at its first owned entity: a click on another moves it, and one saved
   // there past its first gives nothing
   const featureNote = (row: FeatureRow, ownedId: string): ToggleNote | undefined => {
-    const grantedAt = featGrantedAt(row);
+    const grantedAt = entityGrantedAt(row);
     if (row.stacks || grantedAt.length === 0) return undefined;
     const [firstId] = grantedAt.toSorted((a, b) => (positionOf(a) ?? 0) - (positionOf(b) ?? 0));
     if (ownedId === firstId) return undefined;
     const idle = row.grantedAt.includes(ownedId);
     const text = (idle ? grants.words.repeat : grants.words.single)
       .replace("{name}", row.name)
-      .replace("{level}", levelOf(positionOf(firstId)));
+      .replace("{position}", positionNameOf(positionOf(firstId)));
     // A viewer reads a grant that gives nothing; a move is an editor's
     if (!idle && readOnly) return undefined;
     return { kind: idle ? "idle" : "move", text };
   };
   // A click clears a filled toggle; an empty one grants a feature that stacks there too, and moves one that doesn't,
-  // off the feat's other rows too
+  // off its entity's other rows too
   const handleFeatureClick = (row: FeatureRow, ownedId: string) => {
     if (row.grantedAt.includes(ownedId)) {
       onFeatureGrantedAt(

@@ -213,7 +213,8 @@ export interface ProgressionDescription {
  * (`stacks`: `FEAT_STACKABLE`; one that doesn't is granted at one level, as a character holds it once), the class's
  * table of each level's totals by pool (`table`: `feat-pools`, at `totals`: `featPools`), and the words its card and
  * its failures say them in (`words`: `repeat`, a non-stacking feature's level past its first, and `single`, a level a
- * click moves it to, each naming the feature at `{name}` and its first level at `{level}`).
+ * click moves it to, each naming the feature at `{name}` and its first owned entity at `{position}`, in the words of its
+ * position).
  */
 export interface ProgressionGrants {
   maxPicks: number;

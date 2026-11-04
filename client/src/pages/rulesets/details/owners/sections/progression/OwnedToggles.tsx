@@ -25,8 +25,8 @@ interface OwnedTogglesProps {
 }
 
 /**
- * What a toggle's tooltip says of it: that a click moves its row's grant there (`move`: a feature granted at one level
- * only, at another), or that what it holds gives nothing (`idle`: that feature's level past its first, saved before the
+ * What a toggle's tooltip says of it: that a click moves its row's grant there (`move`: a feature granted at one owned entity
+ * only, at another), or that what it holds gives nothing (`idle`: that feature's owned entity past its first, saved before the
  * rule).
  */
 export interface ToggleNote {
