@@ -22,8 +22,11 @@ export interface EntitySaveOptions<TForm extends FieldValues, TSaved, TCached> {
   followCopy: (copyId: string, sourceId: string, saved: TSaved) => void;
   /** "Feat", "Class level"… for the toasts. */
   label: string;
-  /** The list it shows in, which its save refreshes with the ruleset's Local Changes */
-  listKey: QueryKey;
+  /**
+   * The list it shows in, which its save refreshes with the ruleset's Local Changes, which it refreshes either way: none
+   * for what no list shows (a ruleset's Settings, whose own query is its `cached`)
+   */
+  listKey?: QueryKey;
   rulesetId: string;
   /** Sends the form under its stale-edit token (the form's `sync.updatedAt()`); resolves to the saved row. */
   saveFn: (data: TForm, updatedAt: string | undefined) => Promise<TSaved>;
@@ -111,7 +114,7 @@ export function useEntitySave<TForm extends FieldValues, TSaved extends { id: st
         const apart = cache.apartOf?.(id);
         if (apart) void queryClient.invalidateQueries({ queryKey: apart, exact: true, refetchType: "none" });
       }
-      void invalidateRulesetEdit(queryClient, rulesetId, [savedListKey]);
+      void invalidateRulesetEdit(queryClient, rulesetId, savedListKey ? [savedListKey] : []);
       snackbar.success(`${savedLabel} updated`);
     },
     onError: (error) => snackbar.error(error, `Failed to update ${label.toLowerCase()}`),

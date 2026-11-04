@@ -46,7 +46,6 @@ export function SettingsSection({ ruleset }: RulesetSectionProps) {
     rulesetId: ruleset.id,
     entityId: ruleset.id,
     label: "Settings",
-    listKey: settingsQuery.queryKey,
     saveFn: (data: SettingsFormData) =>
       parseResponse(rpc.api.rulesets[":id"].settings.$put({ param: { id: ruleset.id }, json: data })),
     toFormValues,
