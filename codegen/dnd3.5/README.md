@@ -197,7 +197,7 @@ Feats (with class features), races and magic items read their bonuses as a `Bonu
 
 - **`modifiers`** — Structured stat modifiers from prose descriptions (e.g. Dragon Disciple ability boosts, natural armor)
 - **`aptitudePicks`** — Links "choose an ability" features to app-specific aptitude pool slugs
-- **`freeFeats` vs `classFeatures`** — Distinguishing existing feats granted for free (e.g. Augment Summoning) from class-specific features (auto-detected by cross-referencing against scraped feat names)
+- **`freeFeats` vs `classFeatures`** — Distinguishing existing feats granted for free (e.g. Augment Summoning) from class-specific features (auto-detected by cross-referencing against scraped feat names); a feature whose name a general feat merely shares (the dungeon delver's Blindsense) is kept its own by its `ownFeat` override
 - **`features`** and any other field — Corrections to what's detected
 
 > Corrections go in `overrides`: it's the only part of a reference file besides the scraped `raw`.

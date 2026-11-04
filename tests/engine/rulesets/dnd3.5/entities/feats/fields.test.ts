@@ -64,8 +64,9 @@ describe("A feat's fields", () => {
       fields: { ...always, [FEAT_SELECTABLE]: [true] },
       links: {},
     });
-    // Its form writes its families, its schools and its rules: the others aren't its form's
+    // Its form writes whether it stacks, its families, its schools and its rules: the others aren't its form's
     expect(FEAT_FIELDS.formNames).toEqual([
+      "stackable",
       "families",
       "weaponFinesse",
       "oversizedTwoWeaponFighting",

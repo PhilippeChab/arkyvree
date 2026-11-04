@@ -102,7 +102,8 @@ export const MONK_CLASS_FEATS: FeatSeed[] = [
   },
   {
     name: "Greater Flurry (Monk)",
-    description: "",
+    description:
+      "At 11th level, a monk's flurry of blows advances further: in addition to the single extra attack it normally grants, she gains a second extra attack at her full base attack bonus.",
     aptitudes: ["Monk Class Feature"],
     fields: { [FEAT_SELECTABLE]: false },
   },

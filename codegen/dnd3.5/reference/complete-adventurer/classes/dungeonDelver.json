@@ -5,6 +5,13 @@
     "sourceUrl": "https://dndtools.net/classes/complete-adventurer--54/dungeon-delver/",
     "type": "class"
   },
+  "overrides": {
+    "features": {
+      "Blindsense": {
+        "ownFeat": true
+      }
+    }
+  },
   "raw": {
     "classFeatures": [
       {

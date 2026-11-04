@@ -18,6 +18,7 @@ import {
   CLASS_LEVEL_SKILL_POINTS,
   DAMAGE_TYPE,
   FEAT_FAMILY,
+  FEAT_STACKABLE,
   FEAT_WEAPON_FINESSE,
   ITEM_IS_TEMPLATE,
   ITEM_MASTERWORK,
@@ -125,7 +126,10 @@ describe("An entity's fields", () => {
       [FEAT_FAMILY]: [],
       [FEAT_WEAPON_FINESSE]: true,
     });
-    expect(listValues(await findFormValues("feats", feat.id))).toEqual([`${FEAT_WEAPON_FINESSE}=true`]);
+    expect(listValues(await findFormValues("feats", feat.id))).toEqual([
+      `${FEAT_STACKABLE}=false`,
+      `${FEAT_WEAPON_FINESSE}=true`,
+    ]);
 
     // A list given a value twice keeps it once
     await EntitiesService.updateEntity(session, rulesetId, "feats", feat.id, {

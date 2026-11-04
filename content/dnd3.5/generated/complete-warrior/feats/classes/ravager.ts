@@ -19,6 +19,13 @@ export const RAVAGER_CLASS_FEATS: FeatSeed[] = [
     fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
   },
   {
+    name: "Pain Touch (Ravager)",
+    description:
+      "The ravager's touch channels agonizing supernatural energy. As an unarmed touch attack, this deals 1d8 damage + 1 per ravager class level. When delivered through a weapon attack instead, the bonus damage is reduced to 1d4 + 1 per ravager class level. The ravager gains one additional daily use of this ability for every three levels beyond 1st.",
+    aptitudes: ["Ravager Class Feature"],
+    fields: { [FEAT_STACKABLE]: true, [FEAT_SELECTABLE]: false },
+  },
+  {
     name: "Visage of Terror (Ravager)",
     description:
       "At 10th level, once per day as a standard action, the ravager can activate a spell-like ability that functions like phantasmal killer (save DC equals 10 + ravager class level + Charisma modifier). The targeted enemy perceives the ravager as an embodiment of its deepest fear.",

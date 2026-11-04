@@ -322,6 +322,85 @@ describe("EntitiesService: a class's levels", () => {
     });
   });
 
+  // A character takes a feat that doesn't stack once, so a second level granting it would give nothing
+  test("grants a feat that doesn't stack at one level, refusing a second in an edit or a new level", async () => {
+    const { session, ruleset, klass, aptitude } = await setup();
+    const [aura, smite] = await Entities.createMany<Feat>(db, "feats", [
+      { name: "Aura", rulesetId: ruleset.id },
+      { name: "Smite", rulesetId: ruleset.id, fields: { [FEAT_STACKABLE]: true } },
+    ]);
+    // Written past the services, which drop the ruleset's view on a save
+    RulesetViews.invalidate(ruleset.id);
+    const grant = (feat: Feat) => ({ toId: feat.id, viaId: aptitude.id });
+    await createLevel(session, ruleset.id, klass.id, 1, { links: { grants: [grant(aura), grant(smite)] } });
+    const second = await createLevel(session, ruleset.id, klass.id, 2, { links: { grants: [grant(smite)] } });
+    const refusal = (levels: string) => ({
+      message: `Aura isn't Stackable: Test Class can grant it at one level, not at levels ${levels}`,
+      refusal: "conflict",
+    });
+
+    expect(
+      EntitiesService.updateOwnedEntity(session, ruleset.id, "classes", klass.id, second.id, {
+        links: { grants: [grant(aura), grant(smite)] },
+      }),
+    ).rejects.toMatchObject(refusal("1 and 2"));
+    expect(createLevel(session, ruleset.id, klass.id, 3, { links: { grants: [grant(aura)] } })).rejects.toMatchObject(
+      refusal("1 and 3"),
+    );
+    expect(
+      EntitiesService.createOwnedEntities(session, ruleset.id, "classes", klass.id, [
+        { fields: levelFields(3, 4), position: 3, links: { grants: [grant(smite)] } },
+        { fields: levelFields(4, 4), position: 4, links: { grants: [grant(aura)] } },
+      ]),
+    ).rejects.toMatchObject(refusal("1 and 4"));
+    expect(
+      (await createLevel(session, ruleset.id, klass.id, 3, { links: { grants: [grant(smite)] } })).id,
+    ).toBeString();
+
+    // Smite stays Stackable while the class grants it at several levels: its later grants would give nothing
+    const untick = () =>
+      EntitiesService.updateEntity(session, ruleset.id, "feats", smite.id, {
+        name: "Smite",
+        fields: { [FEAT_STACKABLE]: false },
+      });
+    expect(untick()).rejects.toMatchObject({
+      message: "Smite stays Stackable while Test Class grants it at levels 1, 2 and 3",
+      refusal: "invalid",
+    });
+    const levels = await EntitiesService.getOwnedEntities(session, ruleset.id, "classes", klass.id);
+    for (const level of levels.filter(({ position }) => position > 1)) {
+      await EntitiesService.updateOwnedEntity(session, ruleset.id, "classes", klass.id, level.id, {
+        links: { grants: [] },
+      });
+    }
+    expect((await untick()).id).toBe(smite.id);
+  });
+
+  // A class saved before the rule may grant one at two levels: its saves keep the repeat, but add no level to it
+  test("keeps a repeat of a feat that doesn't stack a class had, and refuses another level of it", async () => {
+    const { session, ruleset, klass, aptitude } = await setup();
+    const [aura] = await Entities.createMany<Feat>(db, "feats", [{ name: "Aura", rulesetId: ruleset.id }]);
+    const grant = { toId: aura.id, viaId: aptitude.id };
+    const first = await createLevel(session, ruleset.id, klass.id, 1, { links: { grants: [grant] } });
+    const second = await createLevel(session, ruleset.id, klass.id, 2);
+    const third = await createLevel(session, ruleset.id, klass.id, 3);
+    // Written past the services, as a class saved before the rule holds it
+    await addGrants(db, second.id, "feats", [{ ...grant, free: true }]);
+    RulesetViews.invalidate(ruleset.id);
+    const progression = (body: Parameters<typeof EntitiesService.updateProgression>[4]) =>
+      EntitiesService.updateProgression(session, ruleset.id, "classes", klass.id, body);
+
+    await progression({ owned: [{ ownedId: first.id, fields: levelFields(1, 6), links: { grants: [grant] } }] });
+    expect(progression({ owned: [{ ownedId: third.id, links: { grants: [grant] } }] })).rejects.toMatchObject({
+      message: "Aura isn't Stackable: Test Class can grant it at one level, not at levels 1, 2 and 3",
+    });
+    expect(
+      (await EntityLinks.findMany(db, { fromIds: [first.id, second.id, third.id], role: "grants" }))
+        .map(({ fromId }) => fromId)
+        .toSorted(),
+    ).toEqual([first.id, second.id].toSorted());
+  });
+
   test("reads a level with its customizations, and by id alone with its class's name", async () => {
     const { session, ruleset, klass } = await setup();
     await createLevel(session, ruleset.id, klass.id, 1);

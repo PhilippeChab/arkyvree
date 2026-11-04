@@ -218,9 +218,10 @@ const CLASS_LEVEL_FIELDS = {
 
 /**
  * A feat's fields: the pools it's picked in (its `listedIn` links beside its name, a new one needs one), whether a
- * character takes it more than once, whether a level up picks it, whether its ruleset made it (each always written,
- * which its rules set: no form shows them), the families it's in (a feat can be in two), the weapon rules it changes,
- * and the schools it forbids (a specialist wizard's).
+ * character takes it more than once (Stackable, which a class grants it at several levels by too), whether a level up
+ * picks it and whether its ruleset made it (which its rules set: no form shows them), each of those three always
+ * written, the families it's in (a feat can be in two), the weapon rules it changes, and the schools it forbids (a
+ * specialist wizard's).
  */
 const FEAT_FIELDS = {
   listedIn: {
@@ -233,8 +234,7 @@ const FEAT_FIELDS = {
     role: "listedIn",
   },
   stackable: {
-    description: "Whether a character can take the feat more than once",
-    form: "hidden",
+    description: "Whether a character can take the feat more than once, and a class grant it at several levels",
     kind: "flag",
     label: "Stackable",
     field: FEAT_STACKABLE,

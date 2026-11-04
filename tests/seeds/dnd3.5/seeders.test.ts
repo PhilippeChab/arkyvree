@@ -290,12 +290,12 @@ describe("Seeding", () => {
           "combat.ac.dodge add 1 number",
           "combat.ac.dodge add 4 number\n  if 1 or\n  if 1.1 feats.mobility.possessed equal true\n  if 1.2 combat.bab greater_than_or_equal 6",
         ],
-        fields: ["FEAT_FAMILY Dodge"],
+        fields: ["FEAT_FAMILY Dodge", "FEAT_STACKABLE false"],
       });
       expect(await describeCustomizations(ctx.featMap["Test Toughness"])).toEqual({
         requirements: [],
         modifiers: [],
-        fields: [],
+        fields: ["FEAT_STACKABLE true"],
       });
     });
 
@@ -699,7 +699,7 @@ describe("Seeding", () => {
         "aptitudes.testluckdomainspells.joinsclasslist set true boolean",
         "skills.spot.innate set true boolean",
       ].sort(),
-      fields: [],
+      fields: ["FEAT_STACKABLE false"],
     });
     expect(await spellListsOf(ctx, ctx.spellMap["Test Bless"])).toEqual(["Test Luck Domain Spells 1"]);
     expect(await spellListsOf(ctx, ctx.spellMap["Test Aid"])).toEqual(["Test Luck Domain Spells 2"]);

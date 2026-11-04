@@ -3,12 +3,15 @@
 import { z } from "zod";
 
 import type { FormBody } from "@/engine/core/entities/index.ts";
-import type { EntityForm } from "@/engine/core/fields/index.ts";
+import type { EntityForm, PartialFieldValues } from "@/engine/core/fields/index.ts";
 import type { EntityRecord } from "@/engine/core/module/index.ts";
+import RulesError from "@/engine/core/RulesError.ts";
+import FeatureStacking from "@/engine/rulesets/dnd3.5/entities/classes/FeatureStacking.ts";
 import ListedEntity from "@/engine/rulesets/dnd3.5/entities/ListedEntity.ts";
 import FeatRules from "@/engine/rulesets/dnd3.5/rules/FeatRules.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import { FEAT_FAMILY, FEAT_GENERATED } from "@/vocabulary/dnd3.5/fields/index.ts";
+import type { Feat } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import { FEAT_FAMILY, FEAT_GENERATED, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 import { FEAT_FIELDS } from "./fields.ts";
 
@@ -34,11 +37,17 @@ export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS
 
   override readonly type = "feats";
 
-  /** Refuses a feat linked to a pool the view's spells use. */
-  protected override checkForm(body: FormBody) {
+  /**
+   * Refuses a feat linked to a pool the view's spells use, and a Stackable feat's edit that unticks it while a class
+   * grants it at several levels: a character takes a feat that doesn't stack once, so its later grants would give
+   * nothing ("Sneak Attack (Rogue) stays Stackable while Rogue grants it at levels 1, 3 and 5").
+   */
+  protected override checkForm(body: FormBody, given: PartialFieldValues<typeof FEAT_FIELDS.fields>, feat?: Feat) {
     const message = "Cannot link feat to aptitude(s) already used for spells";
     const listIds = (this.listsOf(body) ?? []).map((list) => list.toId);
     this.refuseLists(listIds, this.dnd35.aptitudeIdsWithSpells, message);
+    if (feat && given.stackable === false && FeatRules.of(this.rulesetData).isStackable(feat.id))
+      this.checkStillGranted(feat);
   }
 
   /**
@@ -69,6 +78,24 @@ export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS
     const plan = super.planCreate(form);
     const generated = ancestor?.fields[FEAT_GENERATED] === true;
     return { ...plan, row: { ...plan.row, fields: { ...plan.row.fields, [FEAT_GENERATED]: generated } } };
+  }
+
+  /**
+   * Refuses unticking a feat's Stackable while a class grants it at several levels, naming the first such class and
+   * its levels.
+   */
+  private checkStillGranted(feat: Feat) {
+    const { rulesetData } = this;
+    for (const [classId, levels] of this.dnd35.classLevelsByClass) {
+      const granting = levels.filter((level) =>
+        this.dnd35.grantedFeatsOf(level.id).some(({ toId }) => rulesetData.canonicalize(toId) === feat.id),
+      );
+      if (granting.length < 2) continue;
+      const className = this.dnd35.classesById.get(classId)?.name ?? "A class";
+      const positions = granting.map((level) => level.position).toSorted((a, b) => a - b);
+      const message = `${feat.name} stays Stackable while ${className} grants it at ${FeatureStacking.formatLevels(positions)}`;
+      throw new RulesError("invalid", message, [{ category: `fields.${FEAT_STACKABLE}`, message }]);
+    }
   }
 
   /** The view's 3.5 lists and indices. */

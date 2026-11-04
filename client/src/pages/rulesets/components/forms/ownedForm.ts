@@ -27,6 +27,8 @@ export interface AmountRow {
  */
 export interface GrantLink {
   free: boolean;
+  /** Whether a character takes the granted entity more than once: one that doesn't is granted at one owned entity */
+  stacks: boolean;
   toDescription: string | null;
   toId: string;
   toName: string;
@@ -143,6 +145,8 @@ export function readOwned(
     })),
     grants: linksAt(row, grants).map((link): GrantLink => ({
       free: link.free === true,
+      // Rules that don't say let it stack, as a grant always did
+      stacks: link.stacks !== false,
       toDescription: textAt(link, "toDescription"),
       toId: textAt(link, "toId") ?? "",
       toName: textAt(link, "toName") ?? "",

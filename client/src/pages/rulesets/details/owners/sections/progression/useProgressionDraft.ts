@@ -7,6 +7,8 @@ import {
   type ProgressionEdits,
   readTrack,
   type TrackKey,
+  withoutFeature,
+  withoutPool,
 } from "./progressionDraft.ts";
 import { useOwnerDraft } from "./useOwnerDraft.ts";
 
@@ -63,6 +65,12 @@ export function useProgressionDraft(
         : { ...current, addedFeatures: [...current.addedFeatures, row] },
     );
 
+  /** A feature taken off the owner (`withoutFeature`). */
+  const removeFeature = (row: FeatureRow) => setEdits((current) => withoutFeature(current, row));
+
+  /** A pool taken off the owner (`withoutPool`). */
+  const removePool = (pool: PoolRow) => setEdits((current) => withoutPool(current, pool));
+
   /** A pool the owner's owned entities give no picks in yet. */
   const addPool = (pool: PoolRow) =>
     setEdits((current) =>
@@ -77,6 +85,8 @@ export function useProgressionDraft(
     discard,
     edits,
     forgetTokens,
+    removeFeature,
+    removePool,
     setFeatureGrantedAt,
     setPoolPick,
     setTrack,

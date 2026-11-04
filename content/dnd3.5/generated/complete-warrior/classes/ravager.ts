@@ -30,18 +30,16 @@ export const RAVAGER: ClassSeed = {
   ],
   classFeatureAptitude: "Ravager Class Feature",
   classFeatures: [
+    [1, "Pain Touch (Ravager)"],
     [1, "Weapon and Armor Proficiency (Ravager)"],
     [2, "Aura of Fear (Ravager)"],
     [3, "Cruelest Cut (Ravager)"],
+    [4, "Pain Touch (Ravager)"],
     [5, "Aura of Fear (Ravager)"],
     [6, "Cruelest Cut (Ravager)"],
+    [7, "Pain Touch (Ravager)"],
     [8, "Aura of Fear (Ravager)"],
     [9, "Cruelest Cut (Ravager)"],
     [10, "Visage of Terror (Ravager)"],
-  ],
-  freeFeats: [
-    [1, "Pain Touch", "Ravager Class Feature"],
-    [4, "Pain Touch", "Ravager Class Feature"],
-    [7, "Pain Touch", "Ravager Class Feature"],
   ],
 };

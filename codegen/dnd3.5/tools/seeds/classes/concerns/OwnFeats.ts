@@ -78,8 +78,8 @@ export function OwnFeats<B extends Constructor<BaseClassSeeds>>(Base: B) {
         if (feature.skip) continue;
         const name = this.featName(key, feature);
         const lockedType = lockedFavoredEnemies.get(key.toLowerCase());
-        // An existing feat the class grants is a free feat, not one of its own.
-        if (!lockedType && this.existingFeatGranted(name, feature.description)) continue;
+        // An existing feat the class grants is a free feat, not one of its own, unless its override says it's its own
+        if (!lockedType && !feature.ownFeat && this.existingFeatGranted(name, feature.description)) continue;
 
         const description = normalizeDescription(feature.description ?? "");
         const aptitudes = [feature.aptitude ?? mapping.classFeatureAptitude, ...(feature.sharedAptitudes ?? [])];

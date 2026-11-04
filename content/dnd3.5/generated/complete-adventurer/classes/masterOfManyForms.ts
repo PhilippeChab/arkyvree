@@ -47,11 +47,9 @@ export const MASTER_OF_MANY_FORMS: ClassSeed = {
     [6, "Improved Wild Shape (Aberration; Huge) (Master of Many Forms)"],
     [7, "Extraordinary Wild Shape (Master of Many Forms)"],
     [7, "Improved Wild Shape (Master of Many Forms)"],
-    [8, "Improved Wild Shape (Master of Many Forms)"],
     [8, "Improved Wild Shape (Ooze; Diminutive) (Master of Many Forms)"],
     [9, "Improved Wild Shape (Master of Many Forms)"],
     [10, "Evershifting Form (Master of Many Forms)"],
     [10, "Improved Wild Shape (Dragon; Gargantuan) (Master of Many Forms)"],
-    [10, "Improved Wild Shape (Master of Many Forms)"],
   ],
 };

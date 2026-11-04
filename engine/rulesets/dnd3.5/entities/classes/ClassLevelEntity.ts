@@ -11,16 +11,19 @@ import CombatSheet from "@/engine/rulesets/dnd3.5/characters/description/CombatS
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
-import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
+import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS, FEAT_STACKABLE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
+import FeatureStacking from "./FeatureStacking.ts";
 import { CLASS_LEVEL_FIELDS } from "./fields.ts";
 import { PROGRESSION } from "./progression.ts";
 
 /**
  * A class level's link as its answers carry it (`NamedLink`): a feat it grants with the feat's description
- * (`toDescription`) and its pool's name (`viaName`, none when the pool doesn't list the feat).
+ * (`toDescription`), whether a character takes it more than once (`stacks`: its `FEAT_STACKABLE`), and its pool's name
+ * (`viaName`, none when the pool doesn't list the feat).
  */
 interface LevelLink extends NamedLink {
+  stacks?: boolean;
   toDescription?: string | null;
   viaName?: string | null;
 }
@@ -30,6 +33,11 @@ const BASE_BONUS = "baseBonus";
 
 /** A new level's number: the class's first to its last. */
 const LEVEL = z.number().int().min(1).max(RULESET_LIMITS.classLevel);
+
+/** The feats a level's save grants (`plan`'s `grants` links to feats), by their ids; none where it leaves them as they are. */
+function grantedIn(plan: { links?: LinkSet[] }) {
+  return plan.links?.find((set) => set.role === "grants" && set.toType === "feats")?.links.map(({ toId }) => toId);
+}
 
 /**
  * A class's levels (`klass`, as the view has it) as the ruleset describes them, each with all its links (`links`, as
@@ -78,8 +86,8 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   }
 
   /**
-   * A level's links, each with its target's name (`toName`): a feat it grants with its description (`toDescription`)
-   * and its pool's name (`viaName`), when the pool lists the feat.
+   * A level's links, each with its target's name (`toName`): a feat it grants with its description (`toDescription`),
+   * whether it stacks (`stacks`), and its pool's name (`viaName`), when the pool lists the feat.
    */
   protected override nameLinks(links: readonly ViewLink[]): LevelLink[] {
     const { dnd35 } = this;
@@ -89,7 +97,8 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
       const viaId = link.viaId ?? undefined;
       const listed = viaId !== undefined && dnd35.listLinksOf(feat.id).some((list) => list.toId === viaId);
       const pool = listed ? dnd35.aptitudesById.get(viaId) : undefined;
-      return { ...link, toDescription: feat.description, viaName: pool?.name ?? null };
+      const stacks = feat.fields[FEAT_STACKABLE] === true;
+      return { ...link, stacks, toDescription: feat.description, viaName: pool?.name ?? null };
     });
   }
 
@@ -165,11 +174,12 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
    * A new level of the class: the class as the view has it, the level's row (its number, its `position`) and links,
    * what its form writes beside them, the level it answers once written, with the fields it keeps, and what it's
    * refused with when another save gave the class its number first (`taken`). Refused when it isn't the class's next
-   * (`checkNext`).
+   * (`checkNext`), or granting a feat that isn't Stackable another level grants (`FeatureStacking.check`).
    */
   override planCreate(form: EntityForm) {
     const plan = this.planOne(form);
     this.checkNext([plan.row.position]);
+    this.stacking.check(new Map(), [{ feats: grantedIn(plan) ?? [], position: plan.row.position }]);
     return plan;
   }
 
@@ -185,13 +195,11 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   }
 
   /**
-   * One of the class's levels' edit: the class and the level, as the view has them, its new links when the form sends
-   * them, what its form writes against the fields the view composes for it (those a copy of it holds), and the
-   * level it answers once written, with the fields it keeps.
+   * One of the class's levels' edit (`planEditOne`), refused when it grants a feat that isn't Stackable another of its
+   * levels grants (`FeatureStacking.check`).
    */
   override planEdit(levelId: string, form: EntityForm) {
-    const plan = super.planEdit(levelId, form);
-    return { ...plan, activity: { entityName: this.klass.name, position: plan.entity.position }, owner: this.klass };
+    return this.planEdits([{ form, ownedId: levelId }])[0];
   }
 
   /**
@@ -274,6 +282,16 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   }
 
   /**
+   * One of the class's levels' edit: the class and the level, as the view has them, its new links when the form sends
+   * them, what its form writes against the fields the view composes for it (those a copy of it holds), and the
+   * level it answers once written, with the fields it keeps.
+   */
+  private planEditOne(levelId: string, form: EntityForm) {
+    const plan = super.planEdit(levelId, form);
+    return { ...plan, activity: { entityName: this.klass.name, position: plan.entity.position }, owner: this.klass };
+  }
+
+  /**
    * A new level of the class, its next or not: what `planCreate` answers, and each level of several plans
    * (`planEach`), which `planCreateMany` checks are its next together.
    */
@@ -287,6 +305,11 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
       row: { ...plan.row, position: level },
       taken: this.taken(level),
     };
+  }
+
+  /** Whether the class's levels would grant a feat that isn't Stackable at more than one of them. */
+  private get stacking() {
+    return new FeatureStacking(this.view, this.klass);
   }
 
   /** What a new level of a number the class already has (`level`) is refused with: "Fighter already has a level 3". */
@@ -311,7 +334,8 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
    * New levels of the class at once (`forms`, each a level's, as `planCreate` reads it: levels 6 to 15 of a class that
    * has 5), each planned as its own create is, a refusal of one naming it by its place among them; refused as invalid
    * when there are more than a class has levels, or two give one number, and when they aren't the class's next
-   * (`checkNext`). What their one activity records: the class's name and the levels' numbers, in order.
+   * (`checkNext`), or grant a feat that isn't Stackable at more than one level (`FeatureStacking.check`). What their one
+   * activity records: the class's name and the levels' numbers, in order.
    */
   planCreateMany(forms: readonly EntityForm[]) {
     if (forms.length > RULESET_LIMITS.classLevel) {
@@ -326,7 +350,28 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
       throw new RulesError("invalid", issue.message, [issue]);
     }
     this.checkNext(positions);
+    this.stacking.check(
+      new Map(),
+      created.map((plan) => ({ feats: grantedIn(plan) ?? [], position: plan.row.position })),
+    );
     const activity = { entityName: this.klass.name, positions: positions.toSorted((a, b) => a - b) };
     return { activity, created, owner: this.klass };
+  }
+
+  /**
+   * Several of the class's levels' edits at once (`edits`, each a level's id and its form), each planned as its own edit
+   * is (`planEditOne`), refused when once written they'd grant a feat that isn't Stackable at more than one level
+   * (`FeatureStacking.check`): checked together, a feature moved from one level to another in one save is no repeat.
+   */
+  planEdits(edits: readonly { form: EntityForm; ownedId: string }[]) {
+    const plans = edits.map(({ form, ownedId }) => this.planEditOne(ownedId, form));
+    const changed = new Map(
+      plans.flatMap((plan) => {
+        const feats = grantedIn(plan);
+        return feats ? [[plan.entity.id, feats] as const] : [];
+      }),
+    );
+    this.stacking.check(changed);
+    return plans;
   }
 }

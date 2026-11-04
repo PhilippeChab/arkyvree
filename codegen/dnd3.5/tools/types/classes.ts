@@ -10,6 +10,11 @@ interface ClassFeatureFields {
   aliases?: string[];
   description?: string;
   modifiers?: ModifierSeed[];
+  /**
+   * A feat of its own, even where an existing feat has its name: the dungeon delver's Blindsense (Dungeon Delver), not
+   * the general Blindsense, a wild shape feat
+   */
+  ownFeat?: boolean;
   /** What it takes to pick it, when it's a pick (a pious templar's blackguard list: not good) */
   requirements?: RequirementEntry[];
   seedName?: string;

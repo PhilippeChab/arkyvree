@@ -142,6 +142,51 @@ describe("EntitiesService: a class's progression", () => {
     ).toEqual(kept.map((feat) => feat.toName).toSorted());
   });
 
+  // A character takes a feat that doesn't stack once, so a class's second level granting it would give nothing
+  test("grants a feature that doesn't stack at one level: refuses a second, and moves it in one save", async () => {
+    const { session, fork, klass, levelId } = await forkWithClass("Monk");
+    const read = async () =>
+      new Map(
+        (await EntitiesService.getOwnedEntities(await ownerSessionOf(fork.id), fork.id, "classes", klass.id)).map(
+          (level) => [
+            level.position,
+            linksOf(level, "grants").map(({ toId, toName, viaId }) => ({ toId, toName, viaId: viaId! })),
+          ],
+        ),
+      );
+    const before = await read();
+    const grantsAt = (position: number) => before.get(position)!.map(({ toId, viaId }) => ({ toId, viaId }));
+    const named = (position: number, name: string) => {
+      const { toId, viaId } = before.get(position)!.find((grant) => grant.toName === name)!;
+      return { toId, viaId };
+    };
+    const [evasion, kiStrike] = [named(2, "Evasion (Monk)"), named(4, "Ki Strike (Monk)")];
+    const at = (position: number, grants: { toId: string; viaId: string }[]) => ({
+      ownedId: levelId(position),
+      links: { grants },
+    });
+
+    expect(save(session, fork.id, klass.id, { owned: [at(5, [...grantsAt(5), evasion])] })).rejects.toMatchObject({
+      message: "Evasion (Monk) isn't Stackable: Monk can grant it at one level, not at levels 2 and 5",
+      refusal: "conflict",
+    });
+    // Ki Strike stacks: a fifth level of it as Evasion moves there
+    await save(session, fork.id, klass.id, {
+      owned: [
+        at(
+          2,
+          grantsAt(2).filter(({ toId }) => toId !== evasion.toId),
+        ),
+        at(5, [...grantsAt(5), evasion, kiStrike]),
+      ],
+    });
+
+    const after = await read();
+    const holding = (toId: string) =>
+      [...after].flatMap(([position, grants]) => (grants.some((grant) => grant.toId === toId) ? [position] : []));
+    expect([holding(evasion.toId), holding(kiStrike.toId)]).toEqual([[5], [4, 5, 10, 16]]);
+  });
+
   test("gives a wizard one more 3rd-level spell a day at 9th, every other level keeping its totals", async () => {
     const { session, fork, klass, levelId } = await forkWithClass("Wizard");
 

@@ -83,11 +83,15 @@ mapping                             # Built from detected, with overrides.featur
 │       ├── stackable               #     Multiple levels = stackable
 │       ├── selectable              #     Player picks vs auto-granted
 │       ├── skip                    #     Exclude from generation
+│       ├── ownFeat                 #     A feat of its own, even where an existing feat has its name
+│       │                           #       (the dungeon delver's Blindsense, not the general wild shape feat)
 │       ├── aptitude                #     Custom aptitude (pool sub-options)
 │       ├── modifiers[]             #     Its detected featureModifiers, with its aptitude pick's
 │       ├── requirements[]          #     What it takes to pick it (an override's: a list by alignment)
 │       └── aliases[]               #     Alt occurrence names
-├── occurrenceMap{}                 #   Occurrence name → features{} key
+├── occurrenceMap{}                 #   Occurrence name → features{} key: the feature it names, or one of
+│                                   #     its aliases, any feature's not skipped before a looser match (a
+│                                   #     variant, a plural, a prefix), so "Combat Style Mastery" is its own
 ├── bonusSpellAbility               #   Ability for bonus spells
 ├── languages                       #   Its languages (overrides.languages, else detected)
 └── spells{}                        #   Spell slot config (slug, perDay, known, knowAll,

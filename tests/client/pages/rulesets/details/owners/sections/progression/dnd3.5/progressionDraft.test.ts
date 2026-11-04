@@ -5,6 +5,8 @@ import {
   buildProgressionBody,
   describeFeatureRows,
   NO_EDITS,
+  withoutFeature,
+  withoutPool,
 } from "@/client/src/pages/rulesets/details/owners/sections/progression/progressionDraft.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
 import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
@@ -58,6 +60,7 @@ describe("A Progression tab's save", () => {
         key: "evasion-features",
         grantedAt: ["l2"],
         name: "Evasion",
+        stacks: true,
         toId: "evasion",
         viaId: "features",
         viaName: "Class Features",
@@ -118,5 +121,29 @@ describe("A Progression tab's save", () => {
       ],
       pools: [{ id: "pool", picks: [{ ownedId: "l2", count: 2 }] }],
     });
+  });
+
+  test("takes a removed feature off every level that grants it and a removed pool's picks off its levels", () => {
+    const [evasion] = describeFeatureRows(twoLevels());
+    const pool = { id: "pool", name: "Pool", picks: { l1: 1 } };
+    const edits = withoutPool(withoutFeature(NO_EDITS, evasion), pool);
+    expect(buildProgressionBody(twoLevels(), LISTS, TRACKS, ["fort"], [evasion], [pool], edits)).toEqual({
+      owned: [
+        {
+          ownedId: "l2",
+          fields: { [CLASS_LEVEL_BAB]: 2, [CLASS_LEVEL_SKILL_POINTS]: 4 },
+          links: { baseBonus: [{ toId: "fort", amount: 2 }], grants: [] },
+        },
+      ],
+      pools: [{ id: "pool", picks: [{ ownedId: "l1", count: 0 }] }],
+    });
+  });
+
+  test("drops a feature or pool the tab added and removed, sending nothing", () => {
+    const added = { ...describeFeatureRows(twoLevels())[0], key: "dodge-features", toId: "dodge", grantedAt: [] };
+    const pool = { id: "pool", name: "Pool", picks: {} };
+    const edits = withoutPool(withoutFeature({ ...NO_EDITS, addedFeatures: [added], addedPools: [pool] }, added), pool);
+    expect([edits.addedFeatures, edits.addedPools]).toEqual([[], []]);
+    expect(buildProgressionBody(twoLevels(), LISTS, TRACKS, ["fort"], [], [], edits)).toEqual({});
   });
 });
