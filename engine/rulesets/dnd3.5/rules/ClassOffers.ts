@@ -107,6 +107,35 @@ export default class ClassOffers {
   }
 
   /**
+   * The feats the class's features may be granted as (`ids`), those listed in the pools its features are granted
+   * through, each with those pools (`through`, its own feature pool first), and its own features (`ownIds`, its own
+   * feature pool's), which its picker lists first.
+   */
+  describeFeatures(): { ids: string[]; ownIds: string[]; through: Map<string, PoolRef[]> } {
+    const own = this.describeOwnFeaturePool();
+    const pools = this.featurePoolsOf(this.featPools, own).toSorted(
+      (a, b) => Number(b.id === own.id) - Number(a.id === own.id),
+    );
+    const through = new Map<string, PoolRef[]>();
+    for (const pool of pools) {
+      for (const id of this.dnd35.listFeatIds(pool.id))
+        through.set(id, [...(through.get(id) ?? []), { id: pool.id, name: pool.name }]);
+    }
+    return { ids: [...through.keys()], ownIds: own.id === null ? [] : this.dnd35.listFeatIds(own.id), through };
+  }
+
+  /**
+   * The feature a name creates (`given`, as typed): the name its rules give it, "Hex" and "Hex (Witch)" alike making
+   * "Hex (Witch)", and whether the ruleset has a feat of that name already (`exists`), which its create refuses.
+   */
+  describeNewFeature(given: string): { exists: boolean; name: string } {
+    const { featureName } = this.describeOwnFeaturePool();
+    // A function replaces, so a typed "$&" stays as typed
+    const name = given.endsWith(featureName.replace("{name}", "")) ? given : featureName.replace("{name}", () => given);
+    return { exists: this.dnd35.feats.some((feat) => feat.name === name), name };
+  }
+
+  /**
    * The class's own feature pool ("Witch Class Feature"): the aptitude of its name, its id none while the ruleset has
    * none, and what a feature made in it is named ("{name} (Witch)").
    */
@@ -115,12 +144,5 @@ export default class ClassOffers {
     // By its slug, as a spell list's own is found: "Witch class feature" is the Witch's too
     const id = this.dnd35.aptitudeIdBySlug.get(stripSeparators(name));
     return { featureName: `{name} (${this.klass.name})`, id: id ?? null, name };
-  }
-
-  /** The feats the class's features may be granted as: those listed in the pools its features are granted through. */
-  listFeatureIds(): string[] {
-    const pools = this.featurePoolsOf(this.featPools, this.describeOwnFeaturePool());
-    const ids = pools.flatMap((pool) => this.dnd35.listFeatIds(pool.id));
-    return [...new Set(ids)];
   }
 }

@@ -6,6 +6,7 @@ import {
   describeFeatureNote,
   describeFeatureRows,
   NO_EDITS,
+  readFeatureOptions,
   withoutFeature,
   withoutPool,
 } from "@/client/src/pages/rulesets/details/owners/sections/progression/progressionDraft.ts";
@@ -163,7 +164,15 @@ describe("A feature's note", () => {
     viaName: "Monk Class Feature",
     grantedAt: ["l1", "l3"],
   };
-  const context = { features: [flurry], ownedEntities: levels, positionWord: { one: "Level" }, readOnly: false, words };
+  // Its rules say its level 3 gives nothing
+  const context = {
+    features: [flurry],
+    ownedEntities: levels,
+    positionWord: { one: "Level" },
+    readOnly: false,
+    repeats: [{ ownedId: "l3", toId: "flurry" }],
+    words,
+  };
 
   test("says, in its rules' words, where a click moves a feature that doesn't stack, and a repeat that gives nothing", () => {
     expect([
@@ -172,6 +181,7 @@ describe("A feature's note", () => {
       describeFeatureNote(flurry, "l3", context),
       describeFeatureNote(flurry, "l2", { ...context, readOnly: true }),
       describeFeatureNote({ ...flurry, stacks: true }, "l2", context),
+      describeFeatureNote(flurry, "l3", { ...context, repeats: [] }),
     ]).toEqual([
       undefined,
       {
@@ -184,6 +194,28 @@ describe("A feature's note", () => {
       },
       undefined,
       undefined,
+      undefined,
     ]);
+  });
+});
+
+describe("A listed feat's options", () => {
+  test("are one per pool its rules say the owner grants it through, with whether it stacks", () => {
+    const listed = {
+      id: "aura",
+      name: "Aura (Cleric)",
+      stacks: false,
+      grantedThrough: [
+        { id: "own", name: "Cleric Class Feature" },
+        { id: "general", name: "General" },
+      ],
+    };
+
+    expect(readFeatureOptions(listed).map(({ key, stacks, viaName }) => ({ key, stacks, viaName }))).toEqual([
+      { key: "aura-own", stacks: false, viaName: "Cleric Class Feature" },
+      { key: "aura-general", stacks: false, viaName: "General" },
+    ]);
+    expect(readFeatureOptions({ ...listed, grantedThrough: undefined })).toEqual([]);
+    expect(readFeatureOptions("aura")).toEqual([]);
   });
 });

@@ -13,6 +13,7 @@ import { RequestIds, type RulesetData, type RulesetView } from "@/engine/core/vi
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import AptitudeTargets, { ALLOWED_ALL } from "@/engine/rulesets/dnd3.5/model/aptitudes/AptitudeTargets.ts";
 import ClassOffers from "@/engine/rulesets/dnd3.5/rules/ClassOffers.ts";
+import FeatureStacking from "@/engine/rulesets/dnd3.5/rules/FeatureStacking.ts";
 import SpellLists from "@/engine/rulesets/dnd3.5/rules/SpellLists.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import type { Klass, KlassLevel } from "@/engine/rulesets/dnd3.5/view/rows.ts";
@@ -374,6 +375,17 @@ export default class ClassProgression {
     }
   }
 
+  /** A feature's name as typed, trimmed: refused as invalid when that leaves none. */
+  private readFeatureName(name: string) {
+    const given = sanitizeName(name);
+    if (!given) {
+      throw new RulesError("invalid", "A feature needs a name", [
+        { category: "name", message: "A feature needs a name" },
+      ]);
+    }
+    return given;
+  }
+
   private get rulesetData(): RulesetData {
     return this.view.rulesetData;
   }
@@ -431,7 +443,8 @@ export default class ClassProgression {
    * the ruleset's feats give in pools (`featPicks`, a granted feature's), and the pools its Progression tab offers
    * (`ClassOffers.describe`): those its features are granted through (`featurePools`), those it may give picks
    * in (`offeredPools`), and its own feature pool (`ownFeaturePool`: "Witch Class Feature", its id none while the ruleset
-   * has none, which its first created feature makes).
+   * has none, which its first created feature makes), and its saved grants that give nothing (`repeats`,
+   * `FeatureStacking.describeRepeats`).
    */
   describe() {
     const { rulesetData } = this;
@@ -461,10 +474,20 @@ export default class ClassProgression {
       ownFeaturePool: offers.ownFeaturePool,
       ownSpellList: this.table.describeOwnList(),
       pools,
+      repeats: new FeatureStacking(this.view, this.klass).describeRepeats(),
       severalSpellLists: this.spellLists.length > 1,
       spellList: list ? { id: list.id, name: list.name } : null,
       spellTablesRefusal: this.spellTables.refusal ?? null,
     };
+  }
+
+  /**
+   * The feature a name creates (`name`, as typed: "Hex"), as its picker offers it: the name its create gives it ("Hex
+   * (Witch)"), and whether the ruleset has a feat of that name already (`exists`), which its create refuses. Refused as
+   * invalid without a name.
+   */
+  describeNewFeature(name: string): { exists: boolean; name: string } {
+    return new ClassOffers(this.view, this.klass).describeNewFeature(this.readFeatureName(name));
   }
 
   /**
@@ -519,21 +542,11 @@ export default class ClassProgression {
    * name the ruleset has already, or an aptitude of the pool's name its spells are listed in.
    */
   planFeature(name: string): FeatureCreatePlan {
-    const given = sanitizeName(name);
-    if (!given) {
-      throw new RulesError("invalid", "A feature needs a name", [
-        { category: "name", message: "A feature needs a name" },
-      ]);
-    }
-    const own = new ClassOffers(this.view, this.klass).describeOwnFeaturePool();
-    // "Hex" or "Hex (Witch)" alike make "Hex (Witch)"
-    // A function replaces, so a typed "$&" stays as typed
-    const featName = given.endsWith(own.featureName.replace("{name}", ""))
-      ? given
-      : own.featureName.replace("{name}", () => given);
+    const offers = new ClassOffers(this.view, this.klass);
+    const own = offers.describeOwnFeaturePool();
+    const { exists, name: featName } = offers.describeNewFeature(this.readFeatureName(name));
     const { dnd35 } = this;
-    if (dnd35.feats.some((feat) => feat.name === featName))
-      throw new RulesError("conflict", `${featName} already exists`);
+    if (exists) throw new RulesError("conflict", `${featName} already exists`);
     if (own.id !== null && dnd35.aptitudeIdsWithSpells.has(own.id))
       throw new RulesError("conflict", `${own.name} is a spell list, so it can't hold ${this.klass.name}'s features`);
     const poolId = own.id ?? crypto.randomUUID();

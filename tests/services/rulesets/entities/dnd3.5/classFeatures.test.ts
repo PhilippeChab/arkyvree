@@ -28,8 +28,13 @@ async function forkWithClass(name: string) {
   return { session, fork, klass };
 }
 
-/** The feats a search of the ruleset's list finds among those a class may grant as its features. */
+/** The names of the feats a search finds among those a class may grant as its features. */
 async function grantable(rulesetId: string, classId: string, search: string) {
+  return (await grantableRows(rulesetId, classId, search)).map((feat) => feat.name);
+}
+
+/** The feats a search of the ruleset's list finds among those a class may grant as its features, as listed. */
+async function grantableRows(rulesetId: string, classId: string, search: string) {
   const page = await EntitiesService.getEntities(
     await ownerSessionOf(rulesetId),
     rulesetId,
@@ -37,7 +42,12 @@ async function grantable(rulesetId: string, classId: string, search: string) {
     { grantableBy: classId, search },
     { limit: 50, page: 1 },
   );
-  return page.items.map((feat) => feat.name);
+  return page.items as unknown as { grantedThrough: PoolRef[]; name: string; stacks: boolean }[];
+}
+
+/** The feature a typed name creates on a class, as its picker offers it. */
+async function newFeature(rulesetId: string, classId: string, name: string) {
+  return await EntitiesService.getNewFeature(await ownerSessionOf(rulesetId), rulesetId, "classes", classId, name);
 }
 
 /** What a class's Progression tab offers, as its progression's answer gives it. */
@@ -89,9 +99,22 @@ describe("EntitiesService: a class's features and feat pools", () => {
     expect((await readOffers(fork.id, cleric.id)).offeredPools).toContain("Fighter Bonus Feat");
   });
 
-  test("list the feats a class may grant as its features: its own, and General's", async () => {
+  test("list the feats a class may grant as its features: its own first, then General's, each with its pools", async () => {
     const { fork, klass } = await forkWithClass("Cleric");
+    const all = await grantableRows(fork.id, klass.id, "");
+    const own = all.filter((feat) => feat.name.endsWith(" (Cleric)"));
 
+    // Its own come first, granted through its own feature pool, none Stackable
+    expect(all.slice(0, own.length)).toEqual(own);
+    expect(own.map((feat) => feat.name)).toContain("Aura (Cleric)");
+    expect(own[0]).toMatchObject({ grantedThrough: [{ name: "Cleric Class Feature" }], stacks: false });
+    // The others by name after them: Improved Toughness, then Toughness
+    const toughness = (await grantableRows(fork.id, klass.id, "Toughness")).find((feat) => feat.name === "Toughness");
+    expect(toughness).toMatchObject({
+      grantedThrough: [{ name: "General" }],
+      name: "Toughness",
+      stacks: true,
+    });
     expect(await grantable(fork.id, klass.id, "Aura")).toContain("Aura (Cleric)");
     expect(await grantable(fork.id, klass.id, "Power Attack")).toContain("Power Attack");
     // Another class's features aren't the cleric's
@@ -105,6 +128,12 @@ describe("EntitiesService: a class's features and feat pools", () => {
       id: null,
       name: "Witch Class Feature",
     });
+
+    // What a typed name creates: its rules' name, "Hex (Witch)" as typed too, and whether the ruleset has it
+    expect(await newFeature(fork.id, witch.id, "Hex")).toEqual({ exists: false, name: "Hex (Witch)" });
+    expect(await newFeature(fork.id, witch.id, " Hex (Witch) ")).toEqual({ exists: false, name: "Hex (Witch)" });
+    expect(await newFeature(fork.id, witch.id, "Cash $&")).toEqual({ exists: false, name: "Cash $& (Witch)" });
+    expect(newFeature(fork.id, witch.id, "  ")).rejects.toMatchObject({ refusal: "invalid" });
 
     const hex = await EntitiesService.createFeature(session, fork.id, "classes", witch.id, "Hex");
     const evilEye = await EntitiesService.createFeature(session, fork.id, "classes", witch.id, "Evil Eye (Witch)");
@@ -125,6 +154,7 @@ describe("EntitiesService: a class's features and feat pools", () => {
       ownFeaturePool: { id: pool.id },
     });
     expect(await grantable(fork.id, witch.id, "Hex")).toEqual(["Hex (Witch)"]);
+    expect(await newFeature(fork.id, witch.id, "Hex")).toEqual({ exists: true, name: "Hex (Witch)" });
 
     expect(EntitiesService.createFeature(session, fork.id, "classes", witch.id, "Hex")).rejects.toMatchObject({
       message: "Hex (Witch) already exists",

@@ -48,6 +48,9 @@ export const QUERY_KEYS = {
     owned: (id: string, ownerId: string) => ["rulesets", "detail", id, "owner", ownerId, "owned"] as const,
     ownerProgression: (id: string, ownerId: string) =>
       ["rulesets", "detail", id, "owner", ownerId, "progression"] as const,
+    /** The feature a typed name creates on a progression owner, nested in its progression, which a create refreshes. */
+    ownerNewFeature: (id: string, ownerId: string, name: string) =>
+      ["rulesets", "detail", id, "owner", ownerId, "progression", "newFeature", name] as const,
     /** What a save of a progression owner's tables (`body`) would leave them at, nested in its progression. */
     ownerProgressionPlan: (id: string, ownerId: string, body: object) =>
       ["rulesets", "detail", id, "owner", ownerId, "progression", "plan", body] as const,

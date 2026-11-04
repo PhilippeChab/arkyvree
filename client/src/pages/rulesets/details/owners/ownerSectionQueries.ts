@@ -86,6 +86,22 @@ export function listEntitiesQuery(
   return infiniteQueryOptions({ ...entities, queryFn: listId === undefined ? skipToken : entities.queryFn });
 }
 
+/**
+ * The feature a typed name (`name`) creates on an owner, as its rules answer it: the name its create gives it ("Hex
+ * (Witch)"), and whether its ruleset has it already; skipped for nothing typed.
+ */
+export function newFeatureQuery(rulesetId: string, ownerType: string, ownerId: string, name: string) {
+  return queryOptions({
+    queryKey: QUERY_KEYS.rulesets.ownerNewFeature(rulesetId, ownerId, name),
+    queryFn: name
+      ? async () =>
+          await parseResponse(
+            ownerApi.progression.features.$get({ ...ownerParam(rulesetId, ownerType, ownerId), query: { name } }),
+          )
+      : skipToken,
+  });
+}
+
 /** An owner's owned entities (`ownerType`, its kind: 3.5's `classes`), its Progression tab's, the entities it owns. */
 export function ownedEntitiesQuery(rulesetId: string, ownerType: string, ownerId: string) {
   return queryOptions({

@@ -520,7 +520,6 @@ export function OwnerProgressionSection({
             grants={grantsRules}
             granted={{
               many: entityTypeLabel(ownedLists.grants?.references ?? "", rules?.words, true),
-              poolFilter: rules?.kinds.find(({ type }) => type === ownedLists.grants?.references)?.pools?.role,
               type: ownedLists.grants?.references ?? "",
             }}
             words={rules?.words}
@@ -540,6 +539,7 @@ export function OwnerProgressionSection({
             onRemovePool={draft.removePool}
             offers={readFeatureOffers(answer, grantsRules)}
             ownerId={ownerId}
+            ownerType={ownerType}
             creating={createFeature.isPending}
             onCreateFeature={(name) => createFeature.mutate(name)}
           />

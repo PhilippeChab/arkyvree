@@ -75,4 +75,24 @@ export default class FeatureStacking {
       throw new RulesError("conflict", message);
     }
   }
+
+  /**
+   * The class's grants that give nothing, as the view has them: a feat that isn't Stackable, at each level past the
+   * first that grants it (a class saved before the rule: a copy of the Monk with Flurry of Blows at 1 and 11), by the
+   * level's id (`ownedId`) and the feat's as the level links it (`toId`).
+   */
+  describeRepeats(): { ownedId: string; toId: string }[] {
+    const rules = FeatRules.of(this.view.rulesetData);
+    const levels = (this.dnd35.classLevelsByClass.get(this.klass.id) ?? []).toSorted((a, b) => a.position - b.position);
+    // Each feat's first level: a level granting it twice, through two pools, repeats nothing
+    const first = new Map<string, string>();
+    return levels.flatMap((level) =>
+      this.dnd35.grantedFeatsOf(level.id).flatMap(({ toId }) => {
+        const featId = this.view.rulesetData.canonicalize(toId);
+        if (rules.isStackable(featId)) return [];
+        if (!first.has(featId)) first.set(featId, level.id);
+        return first.get(featId) === level.id ? [] : [{ ownedId: level.id, toId }];
+      }),
+    );
+  }
 }

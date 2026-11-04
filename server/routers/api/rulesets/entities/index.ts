@@ -180,6 +180,17 @@ export default new Hono<SessionContext>()
     const { id, entityType, entityId } = c.req.valid("param");
     return c.json(await EntitiesService.getProgression(c.var.requestSession, id, entityType, entityId), 200);
   })
+  .get(
+    "/:id/entities/:entityType/:entityId/progression/features",
+    validate("param", entityParams),
+    // The feature a name creates, as its picker offers it: the name its rules give it, and whether it exists
+    validate("query", z.object({ name: z.string().min(1) })),
+    async (c) => {
+      const { id, entityType, entityId } = c.req.valid("param");
+      const { name } = c.req.valid("query");
+      return c.json(await EntitiesService.getNewFeature(c.var.requestSession, id, entityType, entityId, name), 200);
+    },
+  )
   .get("/:id/entities/:entityType/:entityId/tables/:table", validate("param", tableParams), async (c) => {
     const { id, entityType, entityId, table } = c.req.valid("param");
     return c.json(await EntitiesService.getEntityTable(c.var.requestSession, id, entityType, entityId, table), 200);

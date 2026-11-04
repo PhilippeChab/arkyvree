@@ -133,6 +133,16 @@ export function Progressions<B extends Constructor>(Base: B) {
       });
     }
 
+    /**
+     * The feature a name creates (`name`, as typed) on an entity's progression (`ownerId`), as its picker offers it: the
+     * name its rules give it, and whether it exists.
+     */
+    async getNewFeature(session: Session, rulesetId: string, type: RulesetEntityType, ownerId: string, name: string) {
+      return await withReadableRuleset(db, session, rulesetId, async (scope) =>
+        Engine.for(scope).progression(type, ownerId).describeNewFeature(name),
+      );
+    }
+
     /** What an entity's progression tabs read beside its owned entities and tables (`ownerId`). */
     async getProgression(session: Session, rulesetId: string, type: RulesetEntityType, ownerId: string) {
       return await withReadableRuleset(db, session, rulesetId, async (scope) =>

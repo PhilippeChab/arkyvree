@@ -48,6 +48,11 @@ describe("rulesets class progression", () => {
 
   test("creates a feature of the class in its own pool, refusing a name the ruleset has, and a guest", async () => {
     const { param } = await setup();
+    // What the name creates, as the picker offers it, before and after
+    expect(await expectOk(progression.features.$get({ param, query: { name: "Arcane Ward" } }))).toEqual({
+      exists: false,
+      name: "Arcane Ward (Wizard)",
+    });
 
     const response = await expectStatus(progression.features.$post({ param, json: { name: "Arcane Ward" } }), 201);
     const created = await response.json();
@@ -61,6 +66,10 @@ describe("rulesets class progression", () => {
     const read = await expectOk(progression.$get({ param }));
     expect(read.featurePools.map((pool) => pool.name)).toContain("Wizard Class Feature");
 
+    expect(await expectOk(progression.features.$get({ param, query: { name: "Arcane Ward" } }))).toEqual({
+      exists: true,
+      name: "Arcane Ward (Wizard)",
+    });
     await expectStatus(progression.features.$post({ param, json: { name: "Arcane Ward" } }), 409);
     await expectStatus(
       guestApi.api.rulesets[":id"].entities[":entityType"][":entityId"].progression.features.$post({

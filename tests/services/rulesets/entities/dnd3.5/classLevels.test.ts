@@ -387,6 +387,11 @@ describe("EntitiesService: a class's levels", () => {
     // Written past the services, as a class saved before the rule holds it
     await addGrants(db, second.id, "feats", [{ ...grant, free: true }]);
     RulesetViews.invalidate(ruleset.id);
+    // Its progression says the repeat gives nothing, as its card shows it
+    const answer = (await EntitiesService.getProgression(session, ruleset.id, "classes", klass.id)) as {
+      repeats: unknown;
+    };
+    expect(answer.repeats).toEqual([{ ownedId: second.id, toId: aura.id }]);
     const progression = (body: Parameters<typeof EntitiesService.updateProgression>[4]) =>
       EntitiesService.updateProgression(session, ruleset.id, "classes", klass.id, body);
 

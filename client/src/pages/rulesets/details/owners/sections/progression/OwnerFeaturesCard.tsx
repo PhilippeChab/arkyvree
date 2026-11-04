@@ -10,7 +10,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { keepPreviousData } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -20,19 +20,18 @@ import { useCustomizationPages, useDebouncedValue, useListboxQuery } from "@/cli
 import { emptyOptionsText } from "@/client/src/lib/errorMessage.ts";
 import type { ProgressionGrants, RulesWords } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel, type PositionWord } from "@/client/src/lib/rulesetLabels.ts";
-import { grantLabel, poolsOf } from "@/client/src/pages/rulesets/components/forms/index.ts";
-import { useEntityFields } from "@/client/src/pages/rulesets/hooks/index.ts";
+import { grantLabel } from "@/client/src/pages/rulesets/components/forms/index.ts";
+import { newFeatureQuery } from "@/client/src/pages/rulesets/details/owners/ownerSectionQueries.ts";
 import { entityOptionsQuery } from "@/client/src/pages/rulesets/optionQueries.ts";
 import { buildEntityPagePath } from "@/shared/customization/entities.ts";
-import { isRecord } from "@/shared/isRecord.ts";
 
 import { OwnedToggles, type ToggleNote } from "./OwnedToggles.tsx";
 import {
-  describeFeatureKey,
   describeFeatureNote,
   type FeatureOffers,
   type FeatureRow,
   type PoolRow,
+  readFeatureOptions,
 } from "./progressionDraft.ts";
 
 interface OwnerFeaturesCardProps {
@@ -40,16 +39,13 @@ interface OwnerFeaturesCardProps {
   creating: boolean;
   /** The features the owner grants, with the owned entities the tab holds for each */
   features: readonly FeatureRow[];
-  /**
-   * The kind its owned entities grant (`references`: 3.5's `feats`), its word for them ("Feats"), and its list's pool
-   * filter (`poolFilter`: its pools' role, 3.5's `listedIn`), which lists the owner's own pool's first
-   */
-  granted: { many: string; poolFilter: string | undefined; type: string };
+  /** The kind its owned entities grant (`references`: 3.5's `feats`), and its word for them ("Feats") */
+  granted: { many: string; type: string };
   /** What its owned entities grant, as its rules describe it: its pools' kind and scope, its words */
   grants: ProgressionGrants;
   /**
-   * What the owner is offered, as its progression's answer gives it (`readFeatureOffers`): none while it loads, which
-   * offers no pool, and every feature's pools
+   * What the owner is told, as its progression's answer gives it (`readFeatureOffers`): the pools it's offered, none
+   * while it loads, and the saved grants that give nothing
    */
   offers: FeatureOffers | undefined;
   onAddFeature: (row: FeatureRow) => void;
@@ -66,6 +62,8 @@ interface OwnerFeaturesCardProps {
   ownedEntities: readonly { id: string; position: number }[];
   /** The owner, whose offered features its granted kind's list narrows to (`grants.featuresFilter`) */
   ownerId: string;
+  /** The owner's kind (3.5's `classes`), whose routes answer what a typed name creates */
+  ownerType: string;
   /** The pools the owner's owned entities give picks in, with the picks the tab holds for each */
   pools: readonly PoolRow[];
   /**
@@ -116,25 +114,16 @@ interface RowNameProps {
 type FeatureOption = FeatureRow | { create: string; label: string };
 
 /**
- * The option that creates a feature by what's typed (`search`): its name as the owner's rules make it (`offers`'s own
- * feature pool's `featureName`: "Hex (Witch)"), in the create's words (`create`); none for nothing typed, before the
- * offers load, while the results found (`found`) are still another search's (`settled` false), or for a name a found
- * feature has already.
+ * The option that creates a feature by what's typed, as its rules answer it (`created`: its name, "Hex (Witch)", and
+ * whether the ruleset has it), in the create's words (`create`): none before an answer, for a name the ruleset has, or
+ * while the answer is another search's (`settled` false).
  */
 function newFeatureOption(
-  search: string,
-  offers: FeatureOffers | undefined,
-  found: readonly FeatureRow[],
+  created: { exists: boolean; name: string } | undefined,
   { create, settled }: { create: string; settled: boolean },
 ): FeatureOption[] {
-  const typed = search.trim();
-  if (!typed || !offers || !settled) return [];
-  const { featureName } = offers.ownFeaturePool;
-  const suffix = featureName.replace("{name}", "");
-  // A function replaces, so a typed "$&" stays as typed
-  const name = typed.endsWith(suffix) ? typed : featureName.replace("{name}", () => typed);
-  if (found.some((option) => option.name.toLowerCase() === name.toLowerCase())) return [];
-  return [{ create: typed, label: create.replace("{name}", () => name) }];
+  if (!created || created.exists || !settled) return [];
+  return [{ create: created.name, label: create.replace("{name}", () => created.name) }];
 }
 
 /**
@@ -235,6 +224,7 @@ export function OwnerFeaturesCard({
   onRemovePool,
   offers,
   ownerId,
+  ownerType,
   pools,
   positionWord,
   readOnly,
@@ -263,53 +253,30 @@ export function OwnerFeaturesCard({
     placeholderData: keepPreviousData,
     enabled: !readOnly,
   });
-  // The owner's own features, listed first: its own pool's entities, which the list above pages among the others
-  const ownPoolId = offers?.ownFeaturePool.id ?? undefined;
-  const ownFilters = granted.poolFilter && ownPoolId ? { [granted.poolFilter]: ownPoolId } : undefined;
-  const {
-    items: ownEntities,
-    isFetching: ownFetching,
-    error: ownError,
-  } = useListboxQuery({
-    // Skipped without a pool of its own, which its first created feature makes
-    ...entityOptionsQuery(rulesetId, ownFilters && granted.type, debouncedSearch, { filters: ownFilters, limit: 50 }),
-    placeholderData: keepPreviousData,
-    enabled: !readOnly,
-  });
-  // An entity's pools, where its rules' fields say a read holds them: those the owner's features are granted through
-  const { fields: grantedFields } = useEntityFields(rulesetId, granted.type);
-  const featurePoolIds = new Set(offers?.featurePools.map(({ id }) => id));
-  const ownOptions = ownEntities.flatMap((entity) => optionsOf(entity).filter((option) => option.viaId === ownPoolId));
-  const entityOptions = [
-    ...ownOptions,
-    ...entities.flatMap(optionsOf).filter((option) => !ownOptions.some((own) => own.key === option.key)),
-  ];
-  // An entity's options, one a pool its features are granted through
-  function optionsOf(entity: (typeof entities)[number]): FeatureRow[] {
-    return poolsOf(grantedFields ?? [], entity)
-      .filter((pool) => !offers || featurePoolIds.has(pool.id))
-      .map((pool): FeatureRow => ({
-        key: describeFeatureKey({ toId: entity.id, viaId: pool.id }),
-        grantedAt: [],
-        name: entity.name,
-        // Whether it stacks, at the stored field its rules say
-        stacks: isRecord(entity.fields) && entity.fields[grants.stacks] === true,
-        toId: entity.id,
-        viaId: pool.id,
-        viaName: pool.name,
-      }));
-  }
+  // What the search creates, as its rules name it
+  const typed = debouncedSearch.trim();
+  const newFeature = useQuery({ ...newFeatureQuery(rulesetId, ownerType, ownerId, typed), enabled: !readOnly });
+  // Each entity's options, as its rules describe it for the owner: the class's own first, one per pool it's granted
+  // through
+  const entityOptions = entities.flatMap(readFeatureOptions);
   const featureOptions: FeatureOption[] = [
     ...entityOptions.filter((option) => !features.some((row) => row.key === option.key)),
-    ...newFeatureOption(search, offers, entityOptions, {
+    ...newFeatureOption(newFeature.data, {
       create: grants.words.create,
-      // The results are what's typed: none still loading, nor typed since
-      settled: search === debouncedSearch && !isFetching && !ownFetching,
+      // The answers are what's typed: none still loading, nor typed since
+      settled: search === debouncedSearch && !isFetching && !newFeature.isFetching,
     }),
   ];
   const poolOptions = (offers?.offeredPools ?? []).filter((option) => !pools.some((pool) => pool.id === option.id));
   const positionOf = (ownedId: string) => ownedEntities.find(({ id }) => id === ownedId)?.position;
-  const noteContext = { features, ownedEntities, positionWord, readOnly, words: grants.words };
+  const noteContext = {
+    features,
+    ownedEntities,
+    positionWord,
+    readOnly,
+    repeats: offers?.repeats ?? [],
+    words: grants.words,
+  };
   const featureNote = (row: FeatureRow, ownedId: string): ToggleNote | undefined =>
     describeFeatureNote(row, ownedId, noteContext);
   // A click clears a filled toggle; an empty one grants a feature that stacks there too, and moves one that doesn't,
@@ -432,7 +399,7 @@ export function OwnerFeaturesCard({
             onInputChange={(_, input, reason) => setSearch(reason === "input" ? input : "")}
             filterOptions={(options) => options}
             loading={isLoading}
-            noOptionsText={emptyOptionsText(granted.many, error ?? ownError)}
+            noOptionsText={emptyOptionsText(granted.many, error ?? newFeature.error)}
             slotProps={{ listbox: { component: ScrollSafeListbox, onScroll } }}
             renderInput={(params) => <TextField {...params} label={grants.words.add} />}
             sx={{ flex: 1 }}

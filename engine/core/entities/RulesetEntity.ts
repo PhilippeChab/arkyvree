@@ -365,12 +365,15 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
   /**
    * A page of the kind's records, of the filters its query gives (`where`, read): what the server reads it with
    * (`filters`: the ruleset's entities, of the values its query gives, by the field, the role or the partition each
-   * filters; a kind's list may narrow them by ids or the links of a role from a kind that name them, `linkedBy`), and
-   * its records described.
+   * filters; a kind's list may narrow them by ids or the links of a role from a kind that name them, `linkedBy`, and
+   * list some first, `firstIds`), and its records described.
    */
   protected listOf({ childOnly: _, ...where }: { childOnly?: boolean } & Record<string, unknown>) {
-    const filters: EntityFilters & { ids?: string[]; linkedBy?: { fromType: string; role: string } } =
-      this.filtersOf(where);
+    const filters: EntityFilters & {
+      firstIds?: readonly string[];
+      ids?: string[];
+      linkedBy?: { fromType: string; role: string };
+    } = this.filtersOf(where);
     return {
       describe: <T extends Pick<EntityRecord, "fields" | "id" | "links">>(rows: T[]) => this.describeRows(rows),
       filters,
