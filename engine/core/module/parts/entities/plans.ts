@@ -171,6 +171,17 @@ export interface LinkWrite {
 }
 
 /**
+ * Making an owner's own list, with no entries yet, or one its ruleset deleted back with its entries (a class's
+ * "Barbarian Spells", which its first add makes too): what its activity records, the list it makes (`created`: its id,
+ * its name and its kind), and what it writes (`writes.made`).
+ */
+export interface ListCreatePlan {
+  activity: Record<string, unknown>;
+  created: { id: string; name: string; type: string };
+  writes: EntityWrites;
+}
+
+/**
  * Adding entities to a list an owner counts on, or removing one from it (a class's spell list's spells): the owner as
  * the view has it, the kind its entities are (`listedType`), what it writes before them (`writes`: the list an add to
  * the owner's own list makes, where the ruleset has none, at the id the entities' links name), each entity's edit (its

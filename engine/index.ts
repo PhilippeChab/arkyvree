@@ -46,6 +46,7 @@ export type {
   LinkPlan,
   LinkSet,
   LinkWrite,
+  ListCreatePlan,
   ListEntriesPlan,
   MadeEntity,
   NewCharacterPlan,

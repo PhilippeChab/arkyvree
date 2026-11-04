@@ -1,6 +1,6 @@
 /** A class's spell lists' spells: what adding spells to one of its lists, or removing one from it, writes. */
 
-import type { ListEntriesPlan, MadeEntity } from "@/engine/core/module/index.ts";
+import type { ListCreatePlan, ListEntriesPlan, MadeEntity } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import { RequestIds, type RulesetView } from "@/engine/core/view/index.ts";
 import SpellEntity from "@/engine/rulesets/dnd3.5/entities/spells/SpellEntity.ts";
@@ -27,7 +27,8 @@ interface Listing {
  * first), and what adding spells to one of them at a spell level, or removing one from it, writes: each spell's edit,
  * its lists as the view composes them with the one changed, as the spell's page saves them (`SpellEntity.planEdit`:
  * an inherited spell's save copies it), its name, its description and its fields as they are. An add to the class's
- * own list (named for it, "Witch Spells") makes it first where the ruleset has none. The class itself isn't written.
+ * own list (named for it, "Witch Spells") makes it first where the ruleset has none, as making it with no spells does
+ * (`planOwnList`, from the class's Spells tab). The class itself isn't written.
  */
 export default class ClassSpellLists {
   constructor(
@@ -131,6 +132,30 @@ export default class ClassSpellLists {
       listedType: "spells",
       owner: this.klass,
       writes: list.made ? { made: [list.made] } : undefined,
+    };
+  }
+
+  /**
+   * Making the class's own spell list, as its first add makes it (`ownList`), which its Spells tab then fills: with no
+   * spells yet ("Barbarian Spells"), or, in a fork that deleted it, the deleted one back with its spells. The list, what
+   * it writes, and what its activity records (its create's: the list's name). Refused as a conflict when the class has
+   * a list already, its own or the ones it casts from, and as `ownList` refuses it (a feat pool of its name).
+   */
+  planOwnList(): ListCreatePlan {
+    const own = this.table.describeOwnList();
+    const lists = this.table.describeSpellLists();
+    if (lists.length > 0 && !lists.some((list) => list.id === own.id)) {
+      throw new RulesError(
+        "conflict",
+        `${this.klass.name} casts from other spell lists, so it has none of its own to make`,
+      );
+    }
+    const list = this.ownList();
+    if (!list.made) throw new RulesError("conflict", `${list.name} already exists`);
+    return {
+      activity: { entityName: list.name, rulesetId: this.view.ruleset.id },
+      created: { id: list.id, name: list.name, type: "aptitudes" },
+      writes: { made: [list.made] },
     };
   }
 
