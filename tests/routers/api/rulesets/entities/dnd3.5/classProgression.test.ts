@@ -204,12 +204,13 @@ describe("rulesets class progression", () => {
     const planned = await expectOk(
       progression.plan.$post({ param, json: { spells: { perDay: [{ ownedId: first.id, counts: [5, 2] }] } } }),
     );
-    // Each table its tables' tab edits, by its name, as its route reads it once saved
-    expect(Object.keys(planned).toSorted()).toEqual(["spells", "spells-known"]);
-    expect(planned.spells?.find((level) => "position" in level && level.position === 1)).toMatchObject({
+    // Each table its tables' tab edits, by its name, as its route reads it once saved, and its grants' notes: none
+    expect(Object.keys(planned.tables).toSorted()).toEqual(["spells", "spells-known"]);
+    expect(planned.tables.spells?.find((level) => "position" in level && level.position === 1)).toMatchObject({
       spellsPerDay: { 0: 5, 1: 2 },
     });
-    expect(planned["spells-known"]?.length).toBe(levels.length);
+    expect(planned.tables["spells-known"]?.length).toBe(levels.length);
+    expect(planned.featureNotes).toEqual([]);
     // Nothing written: the fork's wizard is the one it inherits, as it was
     expect((await expectOk(kinds[":entityId"].$get({ param }))).updatedAt).toBe(wizard.updatedAt);
     const perDay = await expectOk(kinds[":entityId"].tables[":table"].$get({ param: { ...param, table: "spells" } }));

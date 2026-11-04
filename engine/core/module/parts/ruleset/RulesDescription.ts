@@ -209,26 +209,25 @@ export interface ProgressionDescription {
  * What a class's levels grant, past their own columns (its levels' `grants` field: 3.5's feats, each through a feat
  * pool), as its Progression tab shows them: the pools a level gives picks in, of a kind and its scope (`pools`: 3.5's
  * `aptitudes`, of `feats`), the most picks a level gives in one (`maxPicks`), where a progression's answer holds the
- * picks a granted entity gives in its pools (`picks`: `featPicks`), where it holds the saved grants that give nothing
- * (`repeats`: a feature that doesn't stack, at an owned entity past its first), the class's
+ * picks a granted entity gives in its pools (`picks`: `featPicks`), where it and its plan hold the notes on grants that
+ * give nothing (`notes`: a feature that doesn't stack, at an owned entity past its first), the class's
  * table of each level's totals by pool (`table`: `feat-pools`, at `totals`: `featPools`), and the words its card and
- * its failures say them in (`words`: `repeat`, a non-stacking feature's owned entity past its first, and `single`, an
- * owned entity a click moves it to, each naming the feature at `{name}` and its first owned entity at `{position}`, in
- * its rules' word for a position).
+ * its failures say them in (`words`: `repeat`, the note on a non-stacking feature's owned entity past its first, which
+ * the engine fills, the feature at `{name}` and its first owned entity at `{position}`).
  */
 export interface ProgressionGrants {
   /** The granted kind's list filter that narrows it to what an owner may grant, by the owner's id (3.5's `grantableBy`) */
   featuresFilter: string;
   maxPicks: number;
+  /**
+   * Where a progression's answer, and its plan's for a draft, hold the notes on grants that give nothing (3.5's
+   * `featureNotes`: a feature that doesn't stack, at each owned entity past its first, `{ ownedId, text, toId }`)
+   */
+  notes: string;
   /** Where a progression's answer holds the pools its owner may give picks in (3.5's `offeredPools`) */
   offeredPools: string;
   picks: string;
   pools: { scope: string; type: string };
-  /**
-   * Where a progression's answer holds the saved grants that give nothing (3.5's `repeats`: a feature that doesn't
-   * stack, at each owned entity past its first, `{ ownedId, toId }`)
-   */
-  repeats: string;
   table: string;
   totals: string;
   words: {
@@ -241,7 +240,6 @@ export interface ProgressionGrants {
     pool: string;
     pools: string;
     repeat: string;
-    single: string;
     title: string;
     totals: string;
   };

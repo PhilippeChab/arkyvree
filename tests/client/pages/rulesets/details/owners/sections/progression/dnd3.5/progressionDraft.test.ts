@@ -3,15 +3,14 @@ import { describe, expect, test } from "bun:test";
 import { type OwnedLists, ownedListsOf, readOwned } from "@/client/src/pages/rulesets/components/forms/ownedForm.ts";
 import {
   buildProgressionBody,
-  describeFeatureNote,
   describeFeatureRows,
   NO_EDITS,
+  readFeatureNotes,
   readFeatureOptions,
   withoutFeature,
   withoutPool,
 } from "@/client/src/pages/rulesets/details/owners/sections/progression/progressionDraft.ts";
 import type { EntityField } from "@/client/src/pages/rulesets/details/rulesetQueries.ts";
-import { Engine } from "@/engine/index.ts";
 import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd3.5/entities/classes/fields.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "@/vocabulary/dnd3.5/fields/index.ts";
 
@@ -63,7 +62,6 @@ describe("A Progression tab's save", () => {
         key: "evasion-features",
         grantedAt: ["l2"],
         name: "Evasion",
-        stacks: true,
         toId: "evasion",
         viaId: "features",
         viaName: "Class Features",
@@ -151,69 +149,29 @@ describe("A Progression tab's save", () => {
   });
 });
 
-describe("A feature's note", () => {
-  const words = Engine.rules().describeAll()["Dungeons & Dragons: 3.5"].progression.grants!.words;
-  const levels = [level("l1", 1), level("l2", 2), level("l3", 3)];
-  const flurry = {
-    ...describeFeatureRows(levels)[0],
-    key: "flurry-features",
-    name: "Flurry of Blows (Monk)",
-    stacks: false,
-    toId: "flurry",
-    viaId: "features",
-    viaName: "Monk Class Feature",
-    grantedAt: ["l1", "l3"],
-  };
-  // Its rules say its level 3 gives nothing
-  const context = {
-    features: [flurry],
-    ownedEntities: levels,
-    positionWord: { one: "Level" },
-    readOnly: false,
-    repeats: [{ ownedId: "l3", toId: "flurry" }],
-    words,
-  };
+describe("A feature's notes", () => {
+  test("are read as the rules write them, each a feature's at an owned entity, none else", () => {
+    const note = { ownedId: "l3", text: "No effect.", toId: "flurry" };
 
-  test("says, in its rules' words, where a click moves a feature that doesn't stack, and a repeat that gives nothing", () => {
-    expect([
-      describeFeatureNote(flurry, "l1", context),
-      describeFeatureNote(flurry, "l2", context),
-      describeFeatureNote(flurry, "l3", context),
-      describeFeatureNote(flurry, "l2", { ...context, readOnly: true }),
-      describeFeatureNote({ ...flurry, stacks: true }, "l2", context),
-      describeFeatureNote(flurry, "l3", { ...context, repeats: [] }),
-    ]).toEqual([
-      undefined,
-      {
-        kind: "move",
-        text: "Flurry of Blows (Monk) isn't Stackable, so it's granted at one level: a click moves it here from level 1.",
-      },
-      {
-        kind: "idle",
-        text: "No effect: a character takes Flurry of Blows (Monk) once, at level 1. It isn't Stackable.",
-      },
-      undefined,
-      undefined,
-      undefined,
-    ]);
+    expect(readFeatureNotes([note, { ownedId: "l2" }, "l1"])).toEqual([note]);
+    expect(readFeatureNotes(undefined)).toEqual([]);
   });
 });
 
 describe("A listed feat's options", () => {
-  test("are one per pool its rules say the owner grants it through, with whether it stacks", () => {
+  test("are one per pool its rules say the owner grants it through", () => {
     const listed = {
       id: "aura",
       name: "Aura (Cleric)",
-      stacks: false,
       grantedThrough: [
         { id: "own", name: "Cleric Class Feature" },
         { id: "general", name: "General" },
       ],
     };
 
-    expect(readFeatureOptions(listed).map(({ key, stacks, viaName }) => ({ key, stacks, viaName }))).toEqual([
-      { key: "aura-own", stacks: false, viaName: "Cleric Class Feature" },
-      { key: "aura-general", stacks: false, viaName: "General" },
+    expect(readFeatureOptions(listed).map(({ key, viaName }) => ({ key, viaName }))).toEqual([
+      { key: "aura-own", viaName: "Cleric Class Feature" },
+      { key: "aura-general", viaName: "General" },
     ]);
     expect(readFeatureOptions({ ...listed, grantedThrough: undefined })).toEqual([]);
     expect(readFeatureOptions("aura")).toEqual([]);

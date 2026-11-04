@@ -34,7 +34,6 @@ export function useCreateFeature(
         key: describeFeatureKey({ toId: created.id, viaId: created.via.id }),
         grantedAt: [],
         name: created.name,
-        stacks: created.stacks,
         toId: created.id,
         viaId: created.via.id,
         viaName: created.via.name,

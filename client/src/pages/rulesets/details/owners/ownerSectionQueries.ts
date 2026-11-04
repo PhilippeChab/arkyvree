@@ -168,7 +168,7 @@ export function ownerProgressionPlanQuery<T extends object>(
             ownerApi.progression.plan.$post({ ...ownerParam(rulesetId, ownerType, ownerId), json }),
           );
           // Its tables by their names, as its rules name them
-          return { sent, tables: planned as OwnerTablesPlan<T>["tables"] };
+          return { sent, tables: planned.tables as OwnerTablesPlan<T>["tables"] };
         }
       : skipToken,
   });
@@ -195,5 +195,29 @@ export function ownerTableQuery(rulesetId: string, ownerType: string, ownerId: s
   return queryOptions({
     queryKey: QUERY_KEYS.rulesets.ownerTable(rulesetId, ownerId, table ?? ""),
     queryFn: table ? async () => (await readTable(rulesetId, ownerType, ownerId, table)) as TableRow[] : skipToken,
+  });
+}
+
+/**
+ * What a save of an owner's progression (`body`, as its save sends it) would give, as its rules answer it: the notes on
+ * its owned entities' grants that would give nothing (at the key its rules say, 3.5's `featureNotes`), which its card
+ * shows before the save; skipped for a draft that saves nothing (`body` none).
+ */
+export function progressionPlanQuery(
+  rulesetId: string,
+  ownerType: string,
+  ownerId: string,
+  body: OwnerProgressionPlanBody | undefined,
+) {
+  return queryOptions({
+    queryKey: QUERY_KEYS.rulesets.ownerProgressionNotes(rulesetId, ownerId, body ?? {}),
+    // Read again each time it's asked: another editor may change the levels it plans over
+    staleTime: NO_TIME,
+    queryFn: body
+      ? async () =>
+          await parseResponse(
+            ownerApi.progression.plan.$post({ ...ownerParam(rulesetId, ownerType, ownerId), json: body }),
+          )
+      : skipToken,
   });
 }

@@ -27,7 +27,7 @@ export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS
   /**
    * Its list's filters past its pool: the feats a class's levels may grant as its features (`grantableBy`: the class's
    * id, `ClassOffers.describeFeatures`), which its Progression tab's Add Class Feature offers, the class's own first,
-   * each with the pools the class grants it through (`grantedThrough`), and whether it stacks (`stacks`).
+   * each with the pools the class grants it through (`grantedThrough`).
    */
   protected static override readonly listFilters = { grantableBy: z.string().uuid() };
 
@@ -78,11 +78,7 @@ export default class FeatEntity extends ListedEntity<"feats", typeof FEAT_FIELDS
     const listed = pool && new Set(pool);
     return {
       describe: <T extends Pick<EntityRecord, "fields" | "id" | "links">>(rows: T[]) =>
-        this.describeListed(rows).map((row) => ({
-          ...row,
-          grantedThrough: features?.through.get(row.id) ?? [],
-          stacks: FeatRules.of(this.rulesetData).isStackable(row.id),
-        })),
+        this.describeListed(rows).map((row) => ({ ...row, grantedThrough: features?.through.get(row.id) ?? [] })),
       filters: {
         firstIds: features?.ownIds,
         ids: features ? features.ids.filter((id) => !listed || listed.has(id)) : pool,

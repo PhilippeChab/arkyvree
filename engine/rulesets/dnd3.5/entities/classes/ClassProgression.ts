@@ -177,6 +177,22 @@ function planned(target: string, operator: "add" | "set", value: number): LevelM
 }
 
 /**
+ * The feats a progression's save sends its levels as granting (`owned`: each level's form, its `grants` links), by the
+ * level's id: those whose form sends its grants alone.
+ */
+function readSentGrants(owned: readonly { links?: Record<string, unknown>; ownedId: string }[] = []) {
+  return new Map(
+    owned.flatMap(({ links, ownedId }): [string, string[]][] => {
+      const grants = links?.grants;
+      if (!Array.isArray(grants)) return [];
+      return [
+        [ownedId, grants.flatMap((grant) => (isRecord(grant) && typeof grant.toId === "string" ? [grant.toId] : []))],
+      ];
+    }),
+  );
+}
+
+/**
  * The levels' modifiers as a save plans them (`working`, by the level each is on), as a class's table reads them: those
  * it keeps (`keep`: all of them), each with its level (`sourceId`).
  */
@@ -386,6 +402,11 @@ export default class ClassProgression {
     return given;
   }
 
+  /** The note on a feature's level that gives nothing, in its rules' words (`repeat`). */
+  private get repeatWord() {
+    return PROGRESSION.grants?.words.repeat ?? "";
+  }
+
   private get rulesetData(): RulesetData {
     return this.view.rulesetData;
   }
@@ -443,8 +464,8 @@ export default class ClassProgression {
    * the ruleset's feats give in pools (`featPicks`, a granted feature's), and the pools its Progression tab offers
    * (`ClassOffers.describe`): those its features are granted through (`featurePools`), those it may give picks
    * in (`offeredPools`), and its own feature pool (`ownFeaturePool`: "Witch Class Feature", its id none while the ruleset
-   * has none, which its first created feature makes), and its saved grants that give nothing (`repeats`,
-   * `FeatureStacking.describeRepeats`).
+   * has none, which its first created feature makes), and the notes on its levels' grants that give nothing
+   * (`featureNotes`, `FeatureStacking.describeNotes`).
    */
   describe() {
     const { rulesetData } = this;
@@ -474,7 +495,7 @@ export default class ClassProgression {
       ownFeaturePool: offers.ownFeaturePool,
       ownSpellList: this.table.describeOwnList(),
       pools,
-      repeats: new FeatureStacking(this.view, this.klass).describeRepeats(),
+      featureNotes: new FeatureStacking(this.view, this.klass).describeNotes(new Map(), this.repeatWord),
       severalSpellLists: this.spellLists.length > 1,
       spellList: list ? { id: list.id, name: list.name } : null,
       spellTablesRefusal: this.spellTables.refusal ?? null,
@@ -491,15 +512,24 @@ export default class ClassProgression {
   }
 
   /**
-   * What one save of the class's progression (`sent`) would leave the tables its tables' tab edits at, unwritten: each
-   * by its name (its rules' progression's `tables`), its levels' totals as the class's table reads them once written
+   * What one save of the class's progression (`sent`) would leave the tables its tables' tab edits at, unwritten
+   * (`tables`): each by its name (its rules' progression's `tables`), its levels' totals as the class's table reads them once written
    * (`ClassTable.describe`). Refused as its save is for what it plans here: its schema, its counts' bounds, its pools'
    * picks and its spell tables. Its levels' own forms (`owned`), which change no table, it reads by its schema alone,
-   * never as their save checks them (`ClassLevelEntity.planEdit`).
+   * never as their save checks them (`ClassLevelEntity.planEdit`), but for the feats they grant: the notes on those
+   * that would give nothing once saved (`featureNotes`, `FeatureStacking.describeNotes`), as the card shows them.
    */
   describePlan(sent: ProgressionForm) {
-    const modifiers = readTableModifiers(this.planModifiers(sent).working);
-    return Object.fromEntries(PROGRESSION.tables.map(({ table }) => [table, this.table.describe(table, modifiers)]));
+    const { body, working } = this.planModifiers(sent);
+    const modifiers = readTableModifiers(working);
+    return {
+      tables: Object.fromEntries(PROGRESSION.tables.map(({ table }) => [table, this.table.describe(table, modifiers)])),
+      // What its levels' grants give once saved, as its card shows them before the save
+      featureNotes: new FeatureStacking(this.view, this.klass).describeNotes(
+        readSentGrants(body.owned),
+        this.repeatWord,
+      ),
+    };
   }
 
   /**

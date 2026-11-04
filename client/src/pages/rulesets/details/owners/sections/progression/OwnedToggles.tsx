@@ -24,13 +24,9 @@ interface OwnedTogglesProps {
   value: (ownedId: string) => number;
 }
 
-/**
- * What a toggle's tooltip says of it: that a click moves its row's grant there (`move`: a feature granted at one owned entity
- * only, at another), or that what it holds gives nothing (`idle`: that feature's owned entity past its first, saved before the
- * rule).
- */
+/** What a toggle's tooltip says of it: that what it holds gives nothing (`idle`), as its rules write it (`text`). */
 export interface ToggleNote {
-  kind: "idle" | "move";
+  kind: "idle";
   text: string;
 }
 

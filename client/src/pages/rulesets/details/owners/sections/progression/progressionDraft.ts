@@ -16,24 +16,28 @@ interface PoolRef {
 }
 
 /**
- * What an owner's Progression tab is told, as its progression's answer gives it: the pools it may give picks in
- * (`offeredPools`), and the saved grants that give nothing (`repeats`: a feature that doesn't stack, at an owned entity
- * past its first).
+ * A note on a feature's owned entity, as its rules write it (`text`): the feature (`toId`) gives nothing there
+ * (`ownedId`), past its first.
  */
+export interface FeatureNote {
+  ownedId: string;
+  text: string;
+  toId: string;
+}
+
+/** What an owner's Progression tab offers, as its progression's answer gives it: the pools it may give picks in. */
 export interface FeatureOffers {
   offeredPools: PoolRef[];
-  repeats: { ownedId: string; toId: string }[];
 }
 
 /**
- * A feature the owner grants (3.5's feat, `toId`, through a feat pool, `viaId`), the owned entities it grants it at, by
- * their ids, and whether a character takes it more than once (`stacks`): one that doesn't is granted at one.
+ * A feature the owner grants (3.5's feat, `toId`, through a feat pool, `viaId`), and the owned entities it grants it
+ * at, by their ids.
  */
 export interface FeatureRow {
   grantedAt: string[];
   key: string;
   name: string;
-  stacks: boolean;
   toId: string;
   viaId: string;
   viaName: string | null;
@@ -171,46 +175,6 @@ export function describeFeatureKey({ toId, viaId }: { toId: string; viaId: strin
 }
 
 /**
- * A feature's note at an owned entity (`ownedId`), as its toggle's tooltip says it, in its rules' words (`words`): none
- * for a feature that stacks, is granted at none, or at its first owned entity, whichever of its rows grants it (a
- * feature granted through two pools is two rows, `features`); one its rules say gives nothing, still granted there
- * (`repeats`, saved before the rule: `idle`, `words.repeat`); another is where a click moves it (`move`:
- * `words.single`, none for a viewer, `readOnly`).
- * Each names the feature at `{name}` and its first owned entity at `{position}`, in its rules' word for one
- * (`positionWord`: "level 1").
- */
-export function describeFeatureNote(
-  row: FeatureRow,
-  ownedId: string,
-  context: {
-    features: readonly FeatureRow[];
-    ownedEntities: readonly { id: string; position: number }[];
-    positionWord: { one: string };
-    readOnly: boolean;
-    repeats: readonly { ownedId: string; toId: string }[];
-    words: { repeat: string; single: string };
-  },
-): { kind: "idle" | "move"; text: string } | undefined {
-  const { features, ownedEntities, positionWord, readOnly, repeats, words } = context;
-  const positionOf = (id: string) => ownedEntities.find((entity) => entity.id === id)?.position ?? 0;
-  const grantedAt = [
-    ...new Set(features.filter((other) => other.toId === row.toId).flatMap((other) => other.grantedAt)),
-  ];
-  if (row.stacks || grantedAt.length === 0) return undefined;
-  const [firstId] = grantedAt.toSorted((a, b) => positionOf(a) - positionOf(b));
-  if (ownedId === firstId) return undefined;
-  // Granted there: a note only where its rules say it gives nothing; else a click moves it there, for an editor
-  const granted = row.grantedAt.includes(ownedId);
-  const idle = granted && repeats.some((repeat) => repeat.ownedId === ownedId && repeat.toId === row.toId);
-  if (granted ? !idle : readOnly) return undefined;
-  const position = `${positionWord.one.toLowerCase()} ${positionOf(firstId)}`;
-  const text = (idle ? words.repeat : words.single)
-    .replace("{name}", () => row.name)
-    .replace("{position}", () => position);
-  return { kind: idle ? "idle" : "move", text };
-}
-
-/**
  * The features the owner's owned entities grant, each with the owned entities it's granted at: by the first of them,
  * then by name, one an entity and the one it's granted through (3.5's feat and its pool).
  */
@@ -223,7 +187,6 @@ export function describeFeatureRows(ownedEntities: readonly OwnedRead[]): Featur
         key,
         grantedAt: [],
         name: grant.toName,
-        stacks: grant.stacks,
         toId: grant.toId,
         viaId: grant.viaId,
         viaName: grant.viaName,
@@ -240,31 +203,35 @@ export function readEditedTrack(ownedEntity: OwnedRead, key: TrackKey, edits: Pr
   return edits.tracks[key]?.[ownedEntity.id] ?? readTrack(ownedEntity, key);
 }
 
+/** The notes an answer holds on its grants (`value`, as its rules write them), each a feature's at an owned entity. */
+export function readFeatureNotes(value: unknown): FeatureNote[] {
+  return Array.isArray(value)
+    ? value.flatMap((note) =>
+        isRecord(note) &&
+        typeof note.ownedId === "string" &&
+        typeof note.text === "string" &&
+        typeof note.toId === "string"
+          ? [{ ownedId: note.ownedId, text: note.text, toId: note.toId }]
+          : [],
+      )
+    : [];
+}
+
 /**
- * What an owner is told, read off its progression's answer (`answer`) at the keys its rules say (`keys`); none while
+ * What an owner is offered, read off its progression's answer (`answer`) at the key its rules say (`keys`); none while
  * either is missing.
  */
 export function readFeatureOffers(
   answer: Record<string, unknown> | undefined,
-  keys: { offeredPools: string; repeats: string } | undefined,
+  keys: { offeredPools: string } | undefined,
 ): FeatureOffers | undefined {
   if (!answer || !keys) return undefined;
-  const repeats = answer[keys.repeats];
-  return {
-    offeredPools: readPools(answer[keys.offeredPools]),
-    repeats: Array.isArray(repeats)
-      ? repeats.flatMap((repeat) =>
-          isRecord(repeat) && typeof repeat.ownedId === "string" && typeof repeat.toId === "string"
-            ? [{ ownedId: repeat.ownedId, toId: repeat.toId }]
-            : [],
-        )
-      : [],
-  };
+  return { offeredPools: readPools(answer[keys.offeredPools]) };
 }
 
 /**
  * A listed entity's feature options, as its rules describe it for the owner (its `grantedThrough`: one per pool the
- * owner grants it through, and its `stacks`): none for an entity that isn't one.
+ * owner grants it through): none for an entity that isn't one.
  */
 export function readFeatureOptions(entity: unknown): FeatureRow[] {
   if (!isRecord(entity) || typeof entity.id !== "string" || typeof entity.name !== "string") return [];
@@ -273,7 +240,6 @@ export function readFeatureOptions(entity: unknown): FeatureRow[] {
     key: describeFeatureKey({ toId: id, viaId: pool.id }),
     grantedAt: [],
     name,
-    stacks: entity.stacks === true,
     toId: id,
     viaId: pool.id,
     viaName: pool.name,

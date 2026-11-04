@@ -1,734 +1,817 @@
-<!DOCTYPE html>
+<!doctype html>
 <!-- https://dndtools.net/classes/players-handbook-v35--6/cleric/, trimmed to what the parser reads -->
 <html>
-<body>
-<div id="header"><h2>Feats. Spells. Prestige Classes. And more!</h2></div>
-<div id="content">
-      
-        
-      
-      
-      
+  <body>
+    <div id="header"><h2>Feats. Spells. Prestige Classes. And more!</h2></div>
+    <div id="content">
+      <h2>Cleric</h2>
 
-<h2>Cleric</h2>
+      <p>(<a href="/classes/rulebook/players-handbook-v35--6/">Player's Handbook v.3.5</a> variant, p. 30)</p>
 
-<p>(<a href="/classes/rulebook/players-handbook-v35--6/">Player's Handbook v.3.5</a> variant, p. 30)</p>
+      <div class="nice-textile"></div>
 
+      <div class="nice-textile"></div>
 
-<div class="nice-textile">
+      <h4>Hit die</h4>
+      <p>d8</p>
 
-</div>
+      <h4>Alignment</h4>
+      <p>Within one step of deity. Exception: A cleric can only be neutral if his deity is also nuetral.</p>
 
+      <h4>Skill points</h4>
+      <p>2 + Int</p>
 
+      <div class="nice-textile">
+        <h4>Class Features</h4>
 
-  <div class="nice-textile">
-    
-</div>
+        <p>All of the following are class features of the cleric.</p>
 
+        <p>
+          <strong>Weapon and Armor Proficiency</strong>: Clerics are proficient with all simple weapons, with all types
+          of armor (light, medium, and heavy), and with shields (except tower shields).
+        </p>
 
+        <p>
+          Every deity has a favored weapon (see Deities, page 106), and his or her clerics consider it a point of pride
+          to wield that weapon. A cleric who chooses the War domain receives the Weapon Focus feat related to that
+          weapon as a bonus feat. He also receives the appropriate Martial Weapon Proficiency feat as a bonus feat, if
+          the weapon falls into that category. See Chapter 5: Feats for details.
+        </p>
 
-    
-    <h4>Hit die</h4>
-    <p>d8</p>
-    
+        <table>
+          <tbody>
+            <tr>
+              <th>Deity</th>
+              <th>Alignment</th>
+              <th>Domains</th>
+              <th>Typical Worshipers</th>
+            </tr>
+            <tr>
+              <td>Heironeous, god of valor</td>
+              <td>Lawful good</td>
+              <td>Good, Law, War</td>
+              <td>Paladins, fighters, monks</td>
+            </tr>
+            <tr>
+              <td>Moradin, god of the dwarves</td>
+              <td>Lawful good</td>
+              <td>Earth, Good, Law, Protection</td>
+              <td>Dwarves</td>
+            </tr>
+            <tr>
+              <td>Yondalla, goddess of the halflings</td>
+              <td>Lawful good</td>
+              <td>Good, Law, Protection</td>
+              <td>Halflings</td>
+            </tr>
+            <tr>
+              <td>Ehlonna, goddess of the woodlands</td>
+              <td>Neutral good</td>
+              <td>Animal, Good, Plant,</td>
+              <td>Sun Elves gnomes, half-elves, halflings, rangers, druids</td>
+            </tr>
+            <tr>
+              <td>Garl Glittergold, god of the gnomes</td>
+              <td>Neutral good</td>
+              <td>Good, Protection, Trickery</td>
+              <td>Gnomes</td>
+            </tr>
+            <tr>
+              <td>Pelor, god of the sun</td>
+              <td>Neutral good</td>
+              <td>Good, Healing, Strength, Sun</td>
+              <td>Rangers, bards</td>
+            </tr>
+            <tr>
+              <td>Corellon Larethian, god of the elves</td>
+              <td>Chaotic good</td>
+              <td>Chaos, Good, Protection, War</td>
+              <td>Elves, half-elves, bards</td>
+            </tr>
+            <tr>
+              <td>Kord, god of Strength</td>
+              <td>Chaotic good</td>
+              <td>Chaos, Good, Luck, Strength</td>
+              <td>Fighters, barbarians, rogues, athletes</td>
+            </tr>
+            <tr>
+              <td>Wee Jas, goddess of death and magic</td>
+              <td>Lawful neutral</td>
+              <td>Death, Law, Magic</td>
+              <td>Wizards, necromancers, sorcerers</td>
+            </tr>
+            <tr>
+              <td>St. Cuthbert, god of retribution</td>
+              <td>Lawful neutral</td>
+              <td>Destruction, Law, Protection, Strength</td>
+              <td>Fighters, monks, soldiers</td>
+            </tr>
+            <tr>
+              <td>Boccob, god of magic</td>
+              <td>Neutral</td>
+              <td>Knowledge, Magic, Trickery</td>
+              <td>Wizards, sorcerers, sages</td>
+            </tr>
+            <tr>
+              <td>Fharlanghn, god of roads</td>
+              <td>Neutral</td>
+              <td>Luck, Protection, Travel</td>
+              <td>Bards, adventurers, merchants</td>
+            </tr>
+            <tr>
+              <td>Obad-Hai, god of nature</td>
+              <td>Neutral</td>
+              <td>Air, Animal, Earth, Fire, Plant, Water</td>
+              <td>Druids, barbarians, rangers</td>
+            </tr>
+            <tr>
+              <td>Olidammara, god of thieves</td>
+              <td>Chaotic neutral</td>
+              <td>Chaos, Luck, Trickery</td>
+              <td>Rogues, bards, thieves</td>
+            </tr>
+            <tr>
+              <td>Hextor, god of tyranny</td>
+              <td>Lawful evil</td>
+              <td>Destruction, Evil, Law, War</td>
+              <td>Evil fighters, monks</td>
+            </tr>
+            <tr>
+              <td>Nerull, god of death</td>
+              <td>Neutral evil</td>
+              <td>Death, Evil, Trickery</td>
+              <td>Evil necromancers, rogues</td>
+            </tr>
+            <tr>
+              <td>Vecna, god of secrets</td>
+              <td>Neutral evil</td>
+              <td>Evil, Knowledge, Magic</td>
+              <td>Evil wizards, sorcerers, rogues, spies</td>
+            </tr>
+            <tr>
+              <td>Erythnul, god of slaughter</td>
+              <td>Chaotic evil</td>
+              <td>Chaos, Evil, Trickery, War</td>
+              <td>Evil fighters, barbarians, rogues</td>
+            </tr>
+            <tr>
+              <td>Gruumsh, god of the orcs</td>
+              <td>Chaotic evil</td>
+              <td>Chaos, Evil, Strength, War</td>
+              <td>Half-orcs, orcs</td>
+            </tr>
+          </tbody>
+        </table>
 
-    
-    
-    <h4>Alignment</h4>
-    <p>Within one step of deity.  Exception: A cleric can only be neutral if his deity is also nuetral.</p>
-    
+        <p>
+          <strong>Aura (Ex)</strong>: A cleric of a chaotic, evil, good, or lawful deity has a particularly powerful
+          aura corresponding to the deity's alignment (see the detect evil spell for details). Clerics who don't worship
+          a specific deity but choose the Chaotic, Evil, Good, or Lawful domain have a similarly powerful aura of the
+          corresponding alignment.
+        </p>
 
-    
+        <p>
+          <strong>Spells</strong>: A cleric casts divine spells (the same type of spells available to the druid,
+          paladin, and ranger), which are drawn from the cleric spell list (page 183). However, his alignment may
+          restrict him from casting certain spells opposed to his moral or ethical beliefs; see Chaotic, Evil, Good, and
+          Lawful Spells, below. A cleric must choose and prepare his spells in advance (see below). To prepare or cast a
+          spell, a cleric must have a Wisdom score equal to at least 10 + the spell level (Wis 10 for 0-level spells,
+          Wis 11 for 1st-level spells, and so forth). The Difficulty Class for a saving throw against a cleric's spell
+          is 10 + the spell level + the cleric's Wisdom modifier.
+        </p>
 
-    
-    <h4>Skill points</h4>
-    <p>2 + Int</p>
-    
+        <p>
+          Like other spellcasters, a cleric can cast only a certain number of spells of each spell level per day. His
+          base daily spell allotment is given on Table 3-7: The Cleric. In addition, he receives bonus spells per day if
+          he has a high Wisdom score (see Table 1-1: Ability Modifiers and Bonus Spells, page 8). A cleric also gets one
+          domain spell of each spell level he can cast, starting at 1st level. When a cleric prepares a spell in a
+          domain spell slot, it must come from one of his two domains (see Deities, Domains, and Domain Spells, below).
+        </p>
 
-    <div class="nice-textile">
+        <p>
+          Clerics do not acquire their spells from books or scrolls, nor do they prepare them through study. Instead,
+          they meditate or pray for their spells, receiving them through their own strength of faith or as divine
+          inspiration. Each cleric must choose a time at which he must spend 1 hour each day in quiet contemplation or
+          supplication to regain his daily allotment of spells. Typically, this hour is at dawn or noon for good clerics
+          and at dusk or midnight for evil ones. Time spent resting has no effect on whether a cleric can prepare
+          spells. A cleric may prepare and cast any spell on the cleric spell list (page 183), provided that he can cast
+          spells of that level, but he must choose which spells to prepare during his daily meditation.
+        </p>
 
-    <h4>Class Features</h4>
-    
-        	<p>All of the following are class features of the cleric.</p>
+        <p>
+          <strong>Deity, Domains, and Domain Spells</strong>: Choose a deity for your cleric. Sample deities are listed
+          on Table 3-7: Deities and described on page 106-108. The cleric's deity influences his alignment, what magic
+          he can perform, his values, and how others see him. You may also choose for your cleric to have no deity.
+        </p>
 
-	<p><strong>Weapon and Armor Proficiency</strong>: Clerics are proficient with all simple weapons, with all types of armor (light, medium, and heavy), and with shields (except tower shields).</p>
+        <p>
+          If the typical worshipers of a deity include the members of a race, a cleric must be of the indicated race to
+          choose that deity as his own. (The god may have occasional worshipers of other races, but not clerics.)
+        </p>
 
-	<p>Every deity has a favored weapon (see Deities, page 106), and his or her clerics consider it a point of pride to wield that weapon. A cleric who chooses the War domain receives the Weapon Focus feat related to that weapon as a bonus feat. He also receives the appropriate Martial Weapon Proficiency feat as a bonus feat, if the weapon falls into that category. See Chapter 5: Feats for details.</p>
+        <p>
+          When you have chosen an alignment and a deity for your cleric, choose two domains from among those given on
+          Table 3-7 for the deity. While the clerics of a particular religion are united in their reverence for their
+          deity, each cleric emphasizes different aspects of the deity's interests. You can select an alignment domain
+          (Chaos, Evil, Good, or Law) for your cleric only if his alignment matches that domain.
+        </p>
 
-	<table>
-		<tbody><tr>
-			<th>Deity </th>
-			<th>Alignment </th>
-			<th>Domains </th>
-			<th>Typical Worshipers </th>
-		</tr>
-		<tr>
-			<td> Heironeous, god of valor </td>
-			<td> Lawful good </td>
-			<td> Good, Law, War </td>
-			<td> Paladins, fighters, monks </td>
-		</tr>
-		<tr>
-			<td> Moradin, god of the dwarves </td>
-			<td> Lawful good </td>
-			<td> Earth, Good, Law, Protection </td>
-			<td> Dwarves </td>
-		</tr>
-		<tr>
-			<td> Yondalla, goddess of the halflings </td>
-			<td> Lawful good </td>
-			<td> Good, Law, Protection </td>
-			<td> Halflings </td>
-		</tr>
-		<tr>
-			<td> Ehlonna, goddess of the woodlands </td>
-			<td> Neutral good </td>
-			<td> Animal, Good, Plant, </td>
-			<td> Sun Elves gnomes, half-elves, halflings, rangers, druids </td>
-		</tr>
-		<tr>
-			<td> Garl Glittergold, god of the gnomes </td>
-			<td> Neutral good </td>
-			<td> Good, Protection, Trickery </td>
-			<td> Gnomes </td>
-		</tr>
-		<tr>
-			<td> Pelor, god of the sun </td>
-			<td> Neutral good </td>
-			<td> Good, Healing, Strength, Sun </td>
-			<td> Rangers, bards </td>
-		</tr>
-		<tr>
-			<td> Corellon Larethian, god of the elves </td>
-			<td> Chaotic good </td>
-			<td> Chaos, Good, Protection, War </td>
-			<td> Elves, half-elves, bards </td>
-		</tr>
-		<tr>
-			<td> Kord, god of Strength </td>
-			<td> Chaotic good </td>
-			<td> Chaos, Good, Luck, Strength </td>
-			<td> Fighters, barbarians, rogues, athletes </td>
-		</tr>
-		<tr>
-			<td> Wee Jas, goddess of death and magic </td>
-			<td> Lawful neutral </td>
-			<td> Death, Law, Magic </td>
-			<td> Wizards, necromancers, sorcerers </td>
-		</tr>
-		<tr>
-			<td> St. Cuthbert, god of retribution </td>
-			<td> Lawful neutral </td>
-			<td> Destruction, Law, Protection, Strength </td>
-			<td> Fighters, monks, soldiers </td>
-		</tr>
-		<tr>
-			<td> Boccob, god of magic </td>
-			<td> Neutral </td>
-			<td> Knowledge, Magic, Trickery </td>
-			<td> Wizards, sorcerers, sages </td>
-		</tr>
-		<tr>
-			<td> Fharlanghn, god of roads </td>
-			<td> Neutral </td>
-			<td> Luck, Protection, Travel </td>
-			<td> Bards, adventurers, merchants </td>
-		</tr>
-		<tr>
-			<td> Obad-Hai, god of nature </td>
-			<td> Neutral </td>
-			<td> Air, Animal, Earth, Fire, Plant, Water </td>
-			<td> Druids, barbarians, rangers </td>
-		</tr>
-		<tr>
-			<td> Olidammara, god of thieves </td>
-			<td> Chaotic neutral </td>
-			<td> Chaos, Luck, Trickery </td>
-			<td> Rogues, bards, thieves </td>
-		</tr>
-		<tr>
-			<td> Hextor, god of tyranny </td>
-			<td> Lawful evil </td>
-			<td> Destruction, Evil, Law, War </td>
-			<td> Evil fighters, monks </td>
-		</tr>
-		<tr>
-			<td> Nerull, god of death </td>
-			<td> Neutral evil </td>
-			<td> Death, Evil, Trickery </td>
-			<td> Evil necromancers, rogues </td>
-		</tr>
-		<tr>
-			<td> Vecna, god of secrets </td>
-			<td> Neutral evil </td>
-			<td> Evil, Knowledge, Magic </td>
-			<td> Evil wizards, sorcerers, rogues, spies </td>
-		</tr>
-		<tr>
-			<td> Erythnul, god of slaughter </td>
-			<td> Chaotic evil </td>
-			<td> Chaos, Evil, Trickery, War </td>
-			<td> Evil fighters, barbarians, rogues </td>
-		</tr>
-		<tr>
-			<td> Gruumsh, god of the orcs </td>
-			<td> Chaotic evil </td>
-			<td> Chaos, Evil, Strength, War </td>
-			<td> Half-orcs, orcs </td>
-		</tr>
-	</tbody></table>
+        <p>
+          If your cleric is not devoted to a particular deity, you still select two domains to represent his spiritual
+          inclinations and abilities. The restriction on alignment domains still applies.
+        </p>
 
-	<p><strong>Aura (Ex)</strong>: A cleric of a chaotic, evil, good, or lawful deity has a particularly powerful aura corresponding to the deity's alignment (see the detect evil spell for details). Clerics who don't worship a specific deity but choose the Chaotic, Evil, Good, or Lawful domain have a similarly powerful aura of the corresponding alignment.</p>
+        <p>
+          Each domain gives your cleric access to a domain spell at each spell level he can cast, from 1st on up, as
+          well as a granted power. Your cleric gets the granted powers of both the domains selected. With access to two
+          domain spells at a given spell level, a cleric prepares one or the other each day in his domain spell slot. If
+          a domain spell is not on the cleric spell list (page 183), a cleric can prepare it only in his domain spell
+          slot. Domain spells and granted powers are given in Cleric Domains, pages 185-189.
+        </p>
 
-	<p><strong>Spells</strong>: A cleric casts divine spells (the same type of spells available to the druid, paladin, and ranger), which are drawn from the cleric spell list (page 183). However, his alignment may restrict him from casting certain spells opposed to his moral or ethical beliefs; see Chaotic, Evil, Good, and Lawful Spells, below. A cleric must choose and prepare his spells in advance (see below). To prepare or cast a spell, a cleric must have a Wisdom score equal to at least 10 + the spell level (Wis 10 for 0-level spells, Wis 11 for 1st-level spells, and so forth). The Difficulty Class for a saving throw against a cleric's spell is 10 + the spell level + the cleric's Wisdom modifier.</p>
+        <p class="gray-box">
+          For example, Jozan is a 1st-level cleric of Pelor. He chooses Good and Healing (from Pelor's domain options)
+          as his two domains. He gets the granted powers of both his selected domains. The Good domain allows him to
+          cast all spells with the good descriptor at +1 caster level (as if he were one level higher as a cleric) as a
+          granted power, and it gives him access to protection from evil as a 1st-level domain spell. The Healing domain
+          allows him to cast all healing subschool spells of the conjuration school at +1 caster level as a granted
+          power, and it gives him access to <em>cure light wounds</em> as a 1st-level domain spell. When Jozan prepares
+          his spells, he gets one 1st-level spell for being a 1st-level cleric, one bonus 1st-level spell for having a
+          high Wisdom score (15), and one domain spell. The domain spell must be one of the two to which he has access,
+          either <em>protection from evil</em> or <em>cure light wounds</em>.
+        </p>
 
-	<p>Like other spellcasters, a cleric can cast only a certain number of spells of each spell level per day. His base daily spell allotment is given on Table 3-7: The Cleric. In addition, he receives bonus spells per day if he has a high Wisdom score (see Table 1-1: Ability Modifiers and Bonus Spells, page 8). A cleric also gets one domain spell of each spell level he can cast, starting at 1st level. When a cleric prepares a spell in a domain spell slot, it must come from one of his two domains (see Deities, Domains, and Domain Spells, below).</p>
+        <p>
+          <strong>Spontaneous Casting</strong>: A good cleric (or a neutral cleric of a good deity) can channel stored
+          spell energy into healing spells that the cleric did not prepare ahead of time. The cleric can "lose" any
+          prepared spell that is not a domain spell in order to cast any cure spell of the same spell level or lower (a
+          cure spell is any spell with "cure" in its name). For example, a good cleric who has prepared command (a
+          1st-level spell) may lose <em>command</em> in order to cast <em>cure light wounds</em> (also a 1st-level
+          spell). Clerics of good deities can cast cure spells in this way because they are especially proficient at
+          wielding positive energy.
+        </p>
 
-	<p>Clerics do not acquire their spells from books or scrolls, nor do they prepare them through study. Instead, they meditate or pray for their spells, receiving them through their own strength of faith or as divine inspiration. Each cleric must choose a time at which he must spend 1 hour each day in quiet contemplation or supplication to regain his daily allotment of spells. Typically, this hour is at dawn or noon for good clerics and at dusk or midnight for evil ones. Time spent resting has no effect on whether a cleric can prepare spells. A cleric may prepare and cast any spell on the cleric spell list (page 183), provided that he can cast spells of that level, but he must choose which spells to prepare during his daily meditation.</p>
+        <p>
+          An evil cleric (or a neutral cleric of an evil deity), on the other hand, can't convert prepared spells to
+          cure spells but can convert them to inflict spells (an inflict spell is one with "inflict" in its name).
+        </p>
 
-	<p><strong>Deity, Domains, and Domain Spells</strong>: Choose a deity for your cleric. Sample deities are listed on Table 3-7: Deities and described on page 106-108. The cleric's deity influences his alignment, what magic he can perform, his values, and how others see him. You may also choose for your cleric to have no deity.</p>
+        <p>
+          A cleric who is neither good nor evil and whose deity is neither good nor evil can convert spells to either
+          cure spells or inflict spells (player's choice), depending on whether the cleric is more proficient at
+          wielding positive or negative energy. Once the player makes this choice, it cannot be reversed. This choice
+          also determines whether the cleric turns or commands undead (see below). Exceptions: All lawful neutral
+          clerics of Wee Jas (goddess of death and magic) convert prepared spells to inflict spells, not cure spells.
+          All clerics of St. Cuthbert (god of retribution) and all nonevil clerics of Obad-Hai (god of nature) convert
+          prepared spells to cure spells, not inflict spells.
+        </p>
 
-	<p>If the typical worshipers of a deity include the members of a race, a cleric must be of the indicated race to choose that deity as his own. (The god may have occasional worshipers of other races, but not clerics.)</p>
+        <p>
+          <strong>Chaotic, Evil, Good, and Lawful Spells</strong>: A cleric can't cast spells of an alignment opposed to
+          his own or his deity's (if he has one). For example, a good cleric (or a neutral cleric of a good deity)
+          cannot cast evil spells. Spells associated with particular alignments are indicated by the chaos, evil, good,
+          and law descriptors in their spell descriptions (see Chapter 11: Spells).
+        </p>
 
-	<p>When you have chosen an alignment and a deity for your cleric, choose two domains from among those given on Table 3-7 for the deity. While the clerics of a particular religion are united in their reverence for their deity, each cleric emphasizes different aspects of the deity's interests. You can select an alignment domain (Chaos, Evil, Good, or Law) for your cleric only if his alignment matches that domain.</p>
+        <p>
+          <strong>Turn or Rebuke Undead (Su)</strong>: Any cleric, regardless of alignment, has the power to affect
+          undead creatures (such as skeletons, zombies, ghosts, and vampires) by channeling the power of his faith
+          through his holy (or unholy) symbol (see Turn or Rebuke Undead, page 159).
+        </p>
 
-	<p>If your cleric is not devoted to a particular deity, you still select two domains to represent his spiritual inclinations and abilities. The restriction on alignment domains still applies.</p>
+        <p>
+          A good cleric (or a neutral cleric who worships a good deity) can turn or destroy undead creatures. An evil
+          cleric (or a neutral cleric who worships an evil deity) instead rebukes or commands such creatures., forcing
+          them to cower in awe of his power. If your character is a neutral cleric of a neutral deity, you must choose
+          whether his turning ability functions as that of a good cleric or an evil cleric. Once you make this choice,
+          it cannot be reversed. This decision also determines whether the cleric can cast spontaneous cure or inflict
+          spells (see above). Exceptions: All lawful neutral clerics of Wee Jas (goddess of death and magic) rebuke or
+          command undead. All clerics of St. Cuthbert (god of retribution) and all nonevil clerics of Obad-Hai (god of
+          nature) turn of destroy undead. A cleric may attempt to turn undead a number of times per day equal to 3 + his
+          Charisma modifier. A cleric with 5 or more ranks in Knowledge (religion) gets a +2 bonus on turning checks
+          against undead.
+        </p>
 
-	<p>Each domain gives your cleric access to a domain spell at each spell level he can cast, from 1st on up, as well as a granted power. Your cleric gets the granted powers of both the domains selected. With access to two domain spells at a given spell level, a cleric prepares one or the other each day in his domain spell slot. If a domain spell is not on the cleric spell list (page 183), a cleric can prepare it only in his domain spell slot. Domain spells and granted powers are given in Cleric Domains, pages 185-189.</p>
+        <p>
+          <strong>Bonus Languages</strong>: A cleric's bonus language options include Celestial, Abyssal, and Infernal
+          (the languages of good, chaotic evil, and lawful evil outsiders, respectively). These choices are in addition
+          to the bonus languages available to the character because of his race (see Race and Languages, page 12, and
+          the Speak Language skill, page 82).
+        </p>
 
-	<p class="gray-box">For example, Jozan is a 1st-level cleric of Pelor. He chooses Good and Healing (from Pelor's domain options) as his two domains. He gets the granted powers of both his selected domains. The Good domain allows him to cast all spells with the good descriptor at +1 caster level (as if he were one level higher as a cleric) as a granted power, and it gives him access to protection from evil as a 1st-level domain spell. The Healing domain allows him to cast all healing subschool spells of the conjuration school at +1 caster level as a granted power, and it gives him access to <em>cure light wounds</em> as a 1st-level domain spell. When Jozan prepares his spells, he gets one 1st-level spell for being a 1st-level cleric, one bonus 1st-level spell for having a high Wisdom score (15), and one domain spell. The domain spell must be one of the two to which he has access, either <em>protection from evil</em> or <em>cure light wounds</em>. </p>
+        <h4>Ex-Clerics</h4>
 
-	<p><strong>Spontaneous Casting</strong>: A good cleric (or a neutral cleric of a good deity) can channel stored spell energy into healing spells that the cleric did not prepare ahead of time. The cleric can "lose" any prepared spell that is not a domain spell in order to cast any cure spell of the same spell level or lower (a cure spell is any spell with "cure" in its name). For example, a good cleric who has prepared command (a 1st-level spell) may lose <em>command</em> in order to cast <em>cure light wounds</em> (also a 1st-level spell). Clerics of good deities can cast cure spells in this way because they are especially proficient at wielding positive energy.</p>
+        <p>
+          A cleric who grossly violates the code of conduct required by his god (generally by acting in ways opposed to
+          the god's alignment or purposes) loses all spells and class features, except for armor and shield
+          proficiencies and proficiency with simple weapons. He cannot thereafter gain levels as a cleric of that god
+          until he atones (see the atonement spell description, page 201).
+        </p>
 
-	<p>An evil cleric (or a neutral cleric of an evil deity), on the other hand, can't convert prepared spells to cure spells but can convert them to inflict spells (an inflict spell is one with "inflict" in its name).</p>
+        <h3>Advancement</h3>
 
-	<p>A cleric who is neither good nor evil and whose deity is neither good nor evil can convert spells to either cure spells or inflict spells (player's choice), depending on whether the cleric is more proficient at wielding positive or negative energy. Once the player makes this choice, it cannot be reversed. This choice also determines whether the cleric turns or commands undead (see below). Exceptions: All lawful neutral clerics of Wee Jas (goddess of death and magic) convert prepared spells to inflict spells, not cure spells. All clerics of St. Cuthbert (god of retribution) and all nonevil clerics of Obad-Hai (god of nature) convert prepared spells to cure spells, not inflict spells.</p>
+        <table>
+          <tbody>
+            <tr>
+              <th colspan="6"></th>
+              <th style="text-align: center" colspan="10">Spells per Day <sup>1</sup></th>
+            </tr>
+            <tr>
+              <th>Level</th>
+              <th><span class="caps">BAB</span></th>
+              <th>Fort</th>
+              <th>Ref</th>
+              <th>Will</th>
+              <th>Special</th>
+              <th>0th</th>
+              <th>1st</th>
+              <th>2nd</th>
+              <th>3rd</th>
+              <th>4th</th>
+              <th>5th</th>
+              <th>6th</th>
+              <th>7th</th>
+              <th>8th</th>
+              <th>9th</th>
+            </tr>
+            <tr>
+              <td>1st</td>
+              <td>+0</td>
+              <td>+2</td>
+              <td>+0</td>
+              <td>+2</td>
+              <td>Turn or rebuke undead</td>
+              <td>3</td>
+              <td>1+1</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>2nd</td>
+              <td>+1</td>
+              <td>+3</td>
+              <td>+0</td>
+              <td>+3</td>
+              <td></td>
+              <td>4</td>
+              <td>2+1</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>3rd</td>
+              <td>+2</td>
+              <td>+3</td>
+              <td>+1</td>
+              <td>+3</td>
+              <td></td>
+              <td>4</td>
+              <td>2+1</td>
+              <td>1+1</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>4th</td>
+              <td>+3</td>
+              <td>+4</td>
+              <td>+1</td>
+              <td>+4</td>
+              <td></td>
+              <td>5</td>
+              <td>3+1</td>
+              <td>2+1</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>5th</td>
+              <td>+3</td>
+              <td>+4</td>
+              <td>+1</td>
+              <td>+4</td>
+              <td></td>
+              <td>5</td>
+              <td>3+1</td>
+              <td>2+1</td>
+              <td>1+1</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>6th</td>
+              <td>+4</td>
+              <td>+5</td>
+              <td>+2</td>
+              <td>+5</td>
+              <td></td>
+              <td>5</td>
+              <td>3+1</td>
+              <td>3+1</td>
+              <td>2+1</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>7th</td>
+              <td>+5</td>
+              <td>+5</td>
+              <td>+2</td>
+              <td>+5</td>
+              <td></td>
+              <td>6</td>
+              <td>4+1</td>
+              <td>3+1</td>
+              <td>2+1</td>
+              <td>1+1</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>8th</td>
+              <td>+6/+1</td>
+              <td>+6</td>
+              <td>+2</td>
+              <td>+6</td>
+              <td></td>
+              <td>6</td>
+              <td>4+1</td>
+              <td>3+1</td>
+              <td>3+1</td>
+              <td>2+1</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>9th</td>
+              <td>+6/+1</td>
+              <td>+6</td>
+              <td>+3</td>
+              <td>+6</td>
+              <td></td>
+              <td>6</td>
+              <td>4+1</td>
+              <td>4+1</td>
+              <td>3+1</td>
+              <td>2+1</td>
+              <td>1+1</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>10th</td>
+              <td>+7/+2</td>
+              <td>+7</td>
+              <td>+3</td>
+              <td>+7</td>
+              <td></td>
+              <td>6</td>
+              <td>4+1</td>
+              <td>4+1</td>
+              <td>3+1</td>
+              <td>3+1</td>
+              <td>2+1</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>11th</td>
+              <td>+8/+3</td>
+              <td>+7</td>
+              <td>+3</td>
+              <td>+7</td>
+              <td></td>
+              <td>6</td>
+              <td>5+1</td>
+              <td>4+1</td>
+              <td>4+1</td>
+              <td>3+1</td>
+              <td>2+1</td>
+              <td>1+1</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>12th</td>
+              <td>+9/+4</td>
+              <td>+8</td>
+              <td>+4</td>
+              <td>+8</td>
+              <td></td>
+              <td>6</td>
+              <td>5+1</td>
+              <td>4+1</td>
+              <td>4+1</td>
+              <td>3+1</td>
+              <td>3+1</td>
+              <td>2+1</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>13th</td>
+              <td>+9/+4</td>
+              <td>+8</td>
+              <td>+4</td>
+              <td>+8</td>
+              <td></td>
+              <td>6</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>4+1</td>
+              <td>4+1</td>
+              <td>3+1</td>
+              <td>2+1</td>
+              <td>1+1</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>14th</td>
+              <td>+10/+5</td>
+              <td>+9</td>
+              <td>+4</td>
+              <td>+9</td>
+              <td></td>
+              <td>6</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>4+1</td>
+              <td>4+1</td>
+              <td>3+1</td>
+              <td>3+1</td>
+              <td>2+1</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>15th</td>
+              <td>+11/+6/+1</td>
+              <td>+9</td>
+              <td>+5</td>
+              <td>+9</td>
+              <td></td>
+              <td>6</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>4+1</td>
+              <td>4+1</td>
+              <td>3+1</td>
+              <td>2+1</td>
+              <td>1+1</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>16th</td>
+              <td>+12/+7/+2</td>
+              <td>+10</td>
+              <td>+5</td>
+              <td>+10</td>
+              <td></td>
+              <td>6</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>4+1</td>
+              <td>4+1</td>
+              <td>3+1</td>
+              <td>3+1</td>
+              <td>2+1</td>
+              <td>-</td>
+            </tr>
+            <tr>
+              <td>17th</td>
+              <td>+12/+7/+2</td>
+              <td>+10</td>
+              <td>+5</td>
+              <td>+10</td>
+              <td></td>
+              <td>6</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>4+1</td>
+              <td>4+1</td>
+              <td>3+1</td>
+              <td>2+1</td>
+              <td>1+1</td>
+            </tr>
+            <tr>
+              <td>18th</td>
+              <td>+13/+8/+3</td>
+              <td>+11</td>
+              <td>+6</td>
+              <td>+11</td>
+              <td></td>
+              <td>6</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>4+1</td>
+              <td>4+1</td>
+              <td>3+1</td>
+              <td>3+1</td>
+              <td>2+1</td>
+            </tr>
+            <tr>
+              <td>19th</td>
+              <td>+14/+9/+4</td>
+              <td>+11</td>
+              <td>+6</td>
+              <td>+11</td>
+              <td></td>
+              <td>6</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>4+1</td>
+              <td>4+1</td>
+              <td>3+1</td>
+              <td>3+1</td>
+            </tr>
+            <tr>
+              <td>20th</td>
+              <td>+15/+10/+5</td>
+              <td>+12</td>
+              <td>+6</td>
+              <td>+12</td>
+              <td></td>
+              <td>6</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>5+1</td>
+              <td>4+1</td>
+              <td>4+1</td>
+              <td>4+1</td>
+              <td>4+1</td>
+            </tr>
+            <tr>
+              <td colspan="16">
+                <sup>1</sup> In addition to the stated number of spells per day for 1st- through 9th-level spells, a
+                cleric gets a domain spell for each spell level, starting at 1st. The "+1" in the entries on this table
+                represents that spell. Domain spells are in addition to any bonus spells the cleric may receive for
+                having a high Wisdom score.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
 
-	<p><strong>Chaotic, Evil, Good, and Lawful Spells</strong>: A cleric can't cast spells of an alignment opposed to his own or his deity's (if he has one). For example, a good cleric (or a neutral cleric of a good deity) cannot cast evil spells. Spells associated with particular alignments are indicated by the chaos, evil, good, and law descriptors in their spell descriptions (see Chapter 11: Spells).</p>
+      <h3>Class skills</h3>
 
-	<p><strong>Turn or Rebuke Undead (Su)</strong>: Any cleric, regardless of alignment, has the power to affect undead creatures (such as skeletons, zombies, ghosts, and vampires) by channeling the power of his faith through his holy (or unholy) symbol (see Turn or Rebuke Undead, page 159).</p>
+      <table class="common">
+        <tbody>
+          <tr>
+            <th>Skill name</th>
+            <th>Key ability</th>
+            <th>Trained only</th>
+            <th>Armor check penalty</th>
+          </tr>
 
-	<p>A good cleric (or a neutral cleric who worships a good deity) can turn or destroy undead creatures. An evil cleric (or a neutral cleric who worships an evil deity) instead rebukes or commands such creatures., forcing them to cower in awe of his power. If your character is a neutral cleric of a neutral deity, you must choose whether his turning ability functions as that of a good cleric or an evil cleric. Once you make this choice, it cannot be reversed. This decision also determines whether the cleric can cast spontaneous cure or inflict spells (see above). Exceptions: All lawful neutral clerics of Wee Jas (goddess of death and magic) rebuke or command undead. All clerics of St. Cuthbert (god of retribution) and all nonevil clerics of Obad-Hai (god of nature) turn of destroy undead. A cleric may attempt to turn undead a number of times per day equal to 3 + his Charisma modifier. A cleric with 5 or more ranks in Knowledge (religion) gets a +2 bonus on turning checks against undead.</p>
-
-	<p><strong>Bonus Languages</strong>: A cleric's bonus language options include Celestial, Abyssal, and Infernal (the languages of good, chaotic evil, and lawful evil outsiders, respectively). These choices are in addition to the bonus languages available to the character because of his race (see Race and Languages, page 12, and the Speak Language skill, page 82).</p>
-
-	<h4>Ex-Clerics</h4>
-
-	<p>A cleric who grossly violates the code of conduct required by his god (generally by acting in ways opposed to the god's alignment or purposes) loses all spells and class features, except for armor and shield proficiencies and proficiency with simple weapons. He cannot thereafter gain levels as a cleric of that god until he atones (see the atonement spell description, page 201).</p>
-    
-
-    <h3>Advancement</h3>
-
-    	<table>
-		<tbody><tr>
-			<th colspan="6"></th>
-			<th style="text-align:center;" colspan="10">Spells per Day <sup>1</sup>  </th>
-		</tr>
-		<tr>
-			<th>Level </th>
-			<th><span class="caps">BAB</span> </th>
-			<th>Fort </th>
-			<th>Ref </th>
-			<th>Will </th>
-			<th>Special </th>
-			<th>0th </th>
-			<th>1st </th>
-			<th>2nd </th>
-			<th>3rd </th>
-			<th>4th </th>
-			<th>5th </th>
-			<th>6th </th>
-			<th>7th </th>
-			<th>8th </th>
-			<th>9th </th>
-		</tr>
-		<tr>
-			<td> 1st </td>
-			<td> +0 </td>
-			<td> +2 </td>
-			<td> +0 </td>
-			<td> +2 </td>
-			<td> Turn or rebuke undead </td>
-			<td> 3 </td>
-			<td> 1+1 </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-		</tr>
-		<tr>
-			<td> 2nd </td>
-			<td> +1 </td>
-			<td> +3 </td>
-			<td> +0 </td>
-			<td> +3 </td>
-			<td>  </td>
-			<td> 4 </td>
-			<td> 2+1 </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-		</tr>
-		<tr>
-			<td> 3rd </td>
-			<td> +2 </td>
-			<td> +3 </td>
-			<td> +1 </td>
-			<td> +3 </td>
-			<td>  </td>
-			<td> 4 </td>
-			<td> 2+1 </td>
-			<td> 1+1 </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-		</tr>
-		<tr>
-			<td> 4th </td>
-			<td> +3 </td>
-			<td> +4 </td>
-			<td> +1 </td>
-			<td> +4 </td>
-			<td>  </td>
-			<td> 5 </td>
-			<td> 3+1 </td>
-			<td> 2+1 </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-		</tr>
-		<tr>
-			<td> 5th </td>
-			<td> +3 </td>
-			<td> +4 </td>
-			<td> +1 </td>
-			<td> +4 </td>
-			<td>  </td>
-			<td> 5 </td>
-			<td> 3+1 </td>
-			<td> 2+1 </td>
-			<td> 1+1 </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-		</tr>
-		<tr>
-			<td> 6th </td>
-			<td> +4 </td>
-			<td> +5 </td>
-			<td> +2 </td>
-			<td> +5 </td>
-			<td>  </td>
-			<td> 5 </td>
-			<td> 3+1 </td>
-			<td> 3+1 </td>
-			<td> 2+1 </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-		</tr>
-		<tr>
-			<td> 7th </td>
-			<td> +5 </td>
-			<td> +5 </td>
-			<td> +2 </td>
-			<td> +5 </td>
-			<td>  </td>
-			<td> 6 </td>
-			<td> 4+1 </td>
-			<td> 3+1 </td>
-			<td> 2+1 </td>
-			<td> 1+1 </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-		</tr>
-		<tr>
-			<td> 8th </td>
-			<td> +6/+1 </td>
-			<td> +6 </td>
-			<td> +2 </td>
-			<td> +6 </td>
-			<td>  </td>
-			<td> 6 </td>
-			<td> 4+1 </td>
-			<td> 3+1 </td>
-			<td> 3+1 </td>
-			<td> 2+1 </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-		</tr>
-		<tr>
-			<td> 9th </td>
-			<td> +6/+1 </td>
-			<td> +6 </td>
-			<td> +3 </td>
-			<td> +6 </td>
-			<td>  </td>
-			<td> 6 </td>
-			<td> 4+1 </td>
-			<td> 4+1 </td>
-			<td> 3+1 </td>
-			<td> 2+1 </td>
-			<td> 1+1 </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-		</tr>
-		<tr>
-			<td> 10th </td>
-			<td> +7/+2 </td>
-			<td> +7 </td>
-			<td> +3 </td>
-			<td> +7 </td>
-			<td>  </td>
-			<td> 6 </td>
-			<td> 4+1 </td>
-			<td> 4+1 </td>
-			<td> 3+1 </td>
-			<td> 3+1 </td>
-			<td> 2+1 </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-		</tr>
-		<tr>
-			<td> 11th </td>
-			<td> +8/+3 </td>
-			<td> +7 </td>
-			<td> +3 </td>
-			<td> +7 </td>
-			<td>  </td>
-			<td> 6 </td>
-			<td> 5+1 </td>
-			<td> 4+1 </td>
-			<td> 4+1 </td>
-			<td> 3+1 </td>
-			<td> 2+1 </td>
-			<td> 1+1 </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-		</tr>
-		<tr>
-			<td> 12th </td>
-			<td> +9/+4 </td>
-			<td> +8 </td>
-			<td> +4 </td>
-			<td> +8 </td>
-			<td>  </td>
-			<td> 6 </td>
-			<td> 5+1 </td>
-			<td> 4+1 </td>
-			<td> 4+1 </td>
-			<td> 3+1 </td>
-			<td> 3+1 </td>
-			<td> 2+1 </td>
-			<td> - </td>
-			<td> - </td>
-			<td> - </td>
-		</tr>
-		<tr>
-			<td> 13th </td>
-			<td> +9/+4 </td>
-			<td> +8 </td>
-			<td> +4 </td>
-			<td> +8 </td>
-			<td>  </td>
-			<td> 6 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 4+1 </td>
-			<td> 4+1 </td>
-			<td> 3+1 </td>
-			<td> 2+1 </td>
-			<td> 1+1 </td>
-			<td> - </td>
-			<td> - </td>
-		</tr>
-		<tr>
-			<td> 14th </td>
-			<td> +10/+5 </td>
-			<td> +9 </td>
-			<td> +4 </td>
-			<td> +9 </td>
-			<td>  </td>
-			<td> 6 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 4+1 </td>
-			<td> 4+1 </td>
-			<td> 3+1 </td>
-			<td> 3+1 </td>
-			<td> 2+1 </td>
-			<td> - </td>
-			<td> - </td>
-		</tr>
-		<tr>
-			<td> 15th </td>
-			<td> +11/+6/+1 </td>
-			<td> +9 </td>
-			<td> +5 </td>
-			<td> +9 </td>
-			<td>  </td>
-			<td> 6 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 4+1 </td>
-			<td> 4+1 </td>
-			<td> 3+1 </td>
-			<td> 2+1 </td>
-			<td> 1+1 </td>
-			<td> - </td>
-		</tr>
-		<tr>
-			<td> 16th </td>
-			<td> +12/+7/+2 </td>
-			<td> +10 </td>
-			<td> +5 </td>
-			<td> +10 </td>
-			<td>  </td>
-			<td> 6 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 4+1 </td>
-			<td> 4+1 </td>
-			<td> 3+1 </td>
-			<td> 3+1 </td>
-			<td> 2+1 </td>
-			<td> - </td>
-		</tr>
-		<tr>
-			<td> 17th </td>
-			<td> +12/+7/+2 </td>
-			<td> +10 </td>
-			<td> +5 </td>
-			<td> +10 </td>
-			<td>  </td>
-			<td> 6 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 4+1 </td>
-			<td> 4+1 </td>
-			<td> 3+1 </td>
-			<td> 2+1 </td>
-			<td> 1+1 </td>
-		</tr>
-		<tr>
-			<td> 18th </td>
-			<td> +13/+8/+3 </td>
-			<td> +11 </td>
-			<td> +6 </td>
-			<td> +11 </td>
-			<td>  </td>
-			<td> 6 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 4+1 </td>
-			<td> 4+1 </td>
-			<td> 3+1 </td>
-			<td> 3+1 </td>
-			<td> 2+1 </td>
-		</tr>
-		<tr>
-			<td> 19th </td>
-			<td> +14/+9/+4 </td>
-			<td> +11 </td>
-			<td> +6 </td>
-			<td> +11 </td>
-			<td>  </td>
-			<td> 6 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 4+1 </td>
-			<td> 4+1 </td>
-			<td> 3+1 </td>
-			<td> 3+1 </td>
-		</tr>
-		<tr>
-			<td> 20th </td>
-			<td> +15/+10/+5 </td>
-			<td> +12 </td>
-			<td> +6 </td>
-			<td> +12 </td>
-			<td>  </td>
-			<td> 6 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 5+1 </td>
-			<td> 4+1 </td>
-			<td> 4+1 </td>
-			<td> 4+1 </td>
-			<td> 4+1 </td>
-		</tr>
-		<tr>
-			<td colspan="16"><sup>1</sup> In addition to the stated number of spells per day for 1st- through 9th-level spells, a cleric gets a domain spell for each spell level, starting at 1st. The "+1" in the entries on this table represents that spell. Domain spells are in addition to any bonus spells the cleric may receive for having a high Wisdom score. </td>
-		</tr>
-	</tbody></table>
-    </div>
-
-    <h3>Class skills</h3>
-
-    
-      
-
-
-<table class="common">
-<tbody><tr>
-  <th>Skill name</th>
-  <th>Key ability</th>
-  <th>Trained only</th>
-  <th>Armor check penalty</th>
-</tr>
-    
-        <tr>
+          <tr>
             <td><a href="/skills/concentration/">Concentration</a></td>
             <td>CON</td>
-            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon"></td>
-            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon"></td>
-        </tr>
-    
-        <tr>
+            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon" /></td>
+            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon" /></td>
+          </tr>
+
+          <tr>
             <td><a href="/skills/craft/">Craft</a></td>
             <td>INT</td>
-            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon"></td>
-            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon"></td>
-        </tr>
-    
-        <tr>
+            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon" /></td>
+            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon" /></td>
+          </tr>
+
+          <tr>
             <td><a href="/skills/diplomacy/">Diplomacy</a></td>
             <td>CHA</td>
-            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon"></td>
-            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon"></td>
-        </tr>
-    
-        <tr>
+            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon" /></td>
+            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon" /></td>
+          </tr>
+
+          <tr>
             <td><a href="/skills/heal/">Heal</a></td>
             <td>WIS</td>
-            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon"></td>
-            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon"></td>
-        </tr>
-    
-        <tr>
+            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon" /></td>
+            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon" /></td>
+          </tr>
+
+          <tr>
             <td><a href="/skills/knowledge-arcana/">Knowledge (arcana)</a></td>
             <td>INT</td>
-            <td><img src="/static/images/icons/icon-yes.gif" alt="yes" class="yes-no-icon"></td>
-            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon"></td>
-        </tr>
-    
-        <tr>
+            <td><img src="/static/images/icons/icon-yes.gif" alt="yes" class="yes-no-icon" /></td>
+            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon" /></td>
+          </tr>
+
+          <tr>
             <td><a href="/skills/knowledge-history/">Knowledge (history)</a></td>
             <td>INT</td>
-            <td><img src="/static/images/icons/icon-yes.gif" alt="yes" class="yes-no-icon"></td>
-            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon"></td>
-        </tr>
-    
-        <tr>
+            <td><img src="/static/images/icons/icon-yes.gif" alt="yes" class="yes-no-icon" /></td>
+            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon" /></td>
+          </tr>
+
+          <tr>
             <td><a href="/skills/knowledge-religion/">Knowledge (religion)</a></td>
             <td>INT</td>
-            <td><img src="/static/images/icons/icon-yes.gif" alt="yes" class="yes-no-icon"></td>
-            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon"></td>
-        </tr>
-    
-        <tr>
+            <td><img src="/static/images/icons/icon-yes.gif" alt="yes" class="yes-no-icon" /></td>
+            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon" /></td>
+          </tr>
+
+          <tr>
             <td><a href="/skills/knowledge-the-planes/">Knowledge (the planes)</a></td>
             <td>INT</td>
-            <td><img src="/static/images/icons/icon-yes.gif" alt="yes" class="yes-no-icon"></td>
-            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon"></td>
-        </tr>
-    
-        <tr>
+            <td><img src="/static/images/icons/icon-yes.gif" alt="yes" class="yes-no-icon" /></td>
+            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon" /></td>
+          </tr>
+
+          <tr>
             <td><a href="/skills/profession/">Profession</a></td>
             <td>WIS</td>
-            <td><img src="/static/images/icons/icon-yes.gif" alt="yes" class="yes-no-icon"></td>
-            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon"></td>
-        </tr>
-    
-        <tr>
+            <td><img src="/static/images/icons/icon-yes.gif" alt="yes" class="yes-no-icon" /></td>
+            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon" /></td>
+          </tr>
+
+          <tr>
             <td><a href="/skills/spellcraft/">Spellcraft</a></td>
             <td>INT</td>
-            <td><img src="/static/images/icons/icon-yes.gif" alt="yes" class="yes-no-icon"></td>
-            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon"></td>
-        </tr>
-    
-</tbody></table>
-    
+            <td><img src="/static/images/icons/icon-yes.gif" alt="yes" class="yes-no-icon" /></td>
+            <td><img src="/static/images/icons/icon-no.gif" alt="no" class="yes-no-icon" /></td>
+          </tr>
+        </tbody>
+      </table>
 
+      <h3>Also appears in</h3>
+      <ol>
+        <li><a href="/classes/eberron-campaign-setting--12/cleric/">Eberron Campaign Setting</a></li>
 
+        <li><a href="/classes/forgotten-realms-campaign-setting--19/cleric/">Forgotten Realms Campaign Setting</a></li>
 
+        <li><a href="/classes/sandstorm--85/cleric/">Sandstorm</a></li>
+      </ol>
 
+      <h3>Spells for Cleric</h3>
 
-
-
-<h3>Also appears in</h3>
-  <ol>
-  
-    <li><a href="/classes/eberron-campaign-setting--12/cleric/">Eberron Campaign Setting</a></li>
-  
-    <li><a href="/classes/forgotten-realms-campaign-setting--19/cleric/">Forgotten Realms Campaign Setting</a></li>
-  
-    <li><a href="/classes/sandstorm--85/cleric/">Sandstorm</a></li>
-  
-  </ol>
-
-
-<h3>Spells for Cleric</h3>
-
-<ul>
-  <li><a href="/classes/cleric/spells-level-0/">Level 0</a></li>
-  <li><a href="/classes/cleric/spells-level-1/">Level 1</a></li>
-  <li><a href="/classes/cleric/spells-level-2/">Level 2</a></li>
-  <li><a href="/classes/cleric/spells-level-3/">Level 3</a></li>
-  <li><a href="/classes/cleric/spells-level-4/">Level 4</a></li>
-  <li><a href="/classes/cleric/spells-level-5/">Level 5</a></li>
-  <li><a href="/classes/cleric/spells-level-6/">Level 6</a></li>
-  <li><a href="/classes/cleric/spells-level-7/">Level 7</a></li>
-  <li><a href="/classes/cleric/spells-level-8/">Level 8</a></li>
-  <li><a href="/classes/cleric/spells-level-9/">Level 9</a></li>
-</ul>
-
-
+      <ul>
+        <li><a href="/classes/cleric/spells-level-0/">Level 0</a></li>
+        <li><a href="/classes/cleric/spells-level-1/">Level 1</a></li>
+        <li><a href="/classes/cleric/spells-level-2/">Level 2</a></li>
+        <li><a href="/classes/cleric/spells-level-3/">Level 3</a></li>
+        <li><a href="/classes/cleric/spells-level-4/">Level 4</a></li>
+        <li><a href="/classes/cleric/spells-level-5/">Level 5</a></li>
+        <li><a href="/classes/cleric/spells-level-6/">Level 6</a></li>
+        <li><a href="/classes/cleric/spells-level-7/">Level 7</a></li>
+        <li><a href="/classes/cleric/spells-level-8/">Level 8</a></li>
+        <li><a href="/classes/cleric/spells-level-9/">Level 9</a></li>
+      </ul>
     </div>
-</body>
+  </body>
 </html>

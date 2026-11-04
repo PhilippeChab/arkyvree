@@ -42,7 +42,7 @@ async function grantableRows(rulesetId: string, classId: string, search: string)
     { grantableBy: classId, search },
     { limit: 50, page: 1 },
   );
-  return page.items as unknown as { grantedThrough: PoolRef[]; name: string; stacks: boolean }[];
+  return page.items as unknown as { grantedThrough: PoolRef[]; name: string }[];
 }
 
 /** The feature a typed name creates on a class, as its picker offers it. */
@@ -104,21 +104,58 @@ describe("EntitiesService: a class's features and feat pools", () => {
     const all = await grantableRows(fork.id, klass.id, "");
     const own = all.filter((feat) => feat.name.endsWith(" (Cleric)"));
 
-    // Its own come first, granted through its own feature pool, none Stackable
+    // Its own come first, granted through its own feature pool
     expect(all.slice(0, own.length)).toEqual(own);
     expect(own.map((feat) => feat.name)).toContain("Aura (Cleric)");
-    expect(own[0]).toMatchObject({ grantedThrough: [{ name: "Cleric Class Feature" }], stacks: false });
+    expect(own[0]).toMatchObject({ grantedThrough: [{ name: "Cleric Class Feature" }] });
     // The others by name after them: Improved Toughness, then Toughness
     const toughness = (await grantableRows(fork.id, klass.id, "Toughness")).find((feat) => feat.name === "Toughness");
     expect(toughness).toMatchObject({
       grantedThrough: [{ name: "General" }],
       name: "Toughness",
-      stacks: true,
     });
     expect(await grantable(fork.id, klass.id, "Aura")).toContain("Aura (Cleric)");
     expect(await grantable(fork.id, klass.id, "Power Attack")).toContain("Power Attack");
     // Another class's features aren't the cleric's
     expect(await grantable(fork.id, klass.id, "Flurry")).not.toContain("Flurry of Blows (Monk)");
+  });
+
+  // As its card asks it of a draft: Aura (Cleric), at level 1, granted at level 5 too
+  test("note, for a draft, a feature that doesn't stack granted past its first level, which gives nothing there", async () => {
+    const { session, fork, klass } = await forkWithClass("Cleric");
+    const levels = await EntitiesService.getOwnedEntities(session, fork.id, "classes", klass.id);
+    // A level's grants, among its links
+    const grantsOf = (position: number) =>
+      (
+        levels.find((level) => level.position === position)!.links as unknown as {
+          role: string;
+          toId: string;
+          toName: string;
+          viaId: string;
+        }[]
+      )
+        .filter((link) => link.role === "grants")
+        .map(({ toId, toName, viaId }) => ({ toId, toName, viaId }));
+    const aura = grantsOf(1).find((grant) => grant.toName === "Aura (Cleric)")!;
+    const fifth = levels.find((level) => level.position === 5)!;
+    const plan = (await EntitiesService.getProgressionPlan(session, fork.id, "classes", klass.id, {
+      owned: [
+        { ownedId: fifth.id, links: { grants: [...grantsOf(5), aura].map(({ toId, viaId }) => ({ toId, viaId })) } },
+      ],
+    })) as { featureNotes: unknown };
+
+    expect(plan.featureNotes).toEqual([
+      {
+        ownedId: fifth.id,
+        text: "No effect: a character takes Aura (Cleric) once, at level 1. It isn't Stackable.",
+        toId: aura.toId,
+      },
+    ]);
+    // Saved, it has none
+    const saved = (await EntitiesService.getProgression(session, fork.id, "classes", klass.id)) as {
+      featureNotes: unknown;
+    };
+    expect(saved.featureNotes).toEqual([]);
   });
 
   test("create a new class's feature in its own pool, made by its first, and refuse a name it has", async () => {

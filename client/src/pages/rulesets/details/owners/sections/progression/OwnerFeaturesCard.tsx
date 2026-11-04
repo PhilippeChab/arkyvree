@@ -27,7 +27,7 @@ import { buildEntityPagePath } from "@/shared/customization/entities.ts";
 
 import { OwnedToggles, type ToggleNote } from "./OwnedToggles.tsx";
 import {
-  describeFeatureNote,
+  type FeatureNote,
   type FeatureOffers,
   type FeatureRow,
   type PoolRow,
@@ -43,10 +43,9 @@ interface OwnerFeaturesCardProps {
   granted: { many: string; type: string };
   /** What its owned entities grant, as its rules describe it: its pools' kind and scope, its words */
   grants: ProgressionGrants;
-  /**
-   * What the owner is told, as its progression's answer gives it (`readFeatureOffers`): the pools it's offered, none
-   * while it loads, and the saved grants that give nothing
-   */
+  /** The rules' notes on its grants that give nothing: the draft's, as its plan answers it, else the saved ones */
+  notes: readonly FeatureNote[];
+  /** What the owner is offered, as its progression's answer gives it (`readFeatureOffers`): none while it loads */
   offers: FeatureOffers | undefined;
   onAddFeature: (row: FeatureRow) => void;
   onAddPool: (pool: PoolRow) => void;
@@ -204,10 +203,10 @@ function RowName({ name, kind, to }: RowNameProps) {
 /**
  * An owner's features and pools by position (3.5's feats and feat pools), on its Progression tab, in its rules' words:
  * a row each, whose toggles grant the feature or give picks in the pool at an owned entity, its bin at its end removing
- * it; and pickers that add a feature or a pool, granted at no owned entity until one is clicked. A feature that doesn't
- * stack is granted at one owned entity: a click on another moves it there, and one past its first saved before the
- * rule gives nothing, as their notes say. An empty pool toggle gives a pick; a filled one opens a box that sets how
- * many, or removes them. Read-only, it only shows them.
+ * it; and pickers that add a feature or a pool, granted at no owned entity until one is clicked. A feature toggle a
+ * click fills or empties; where it gives nothing, the rules' note says (`notes`: a feature that doesn't stack, past its
+ * first). An empty pool toggle gives a pick; a filled one opens a box that sets how many, or removes them. Read-only,
+ * it only shows them.
  */
 export function OwnerFeaturesCard({
   creating,
@@ -222,6 +221,7 @@ export function OwnerFeaturesCard({
   onPoolPick,
   onRemoveFeature,
   onRemovePool,
+  notes,
   offers,
   ownerId,
   ownerType,
@@ -269,34 +269,17 @@ export function OwnerFeaturesCard({
   ];
   const poolOptions = (offers?.offeredPools ?? []).filter((option) => !pools.some((pool) => pool.id === option.id));
   const positionOf = (ownedId: string) => ownedEntities.find(({ id }) => id === ownedId)?.position;
-  const noteContext = {
-    features,
-    ownedEntities,
-    positionWord,
-    readOnly,
-    repeats: offers?.repeats ?? [],
-    words: grants.words,
+  // A toggle's note, as the rules wrote it for what the card holds: where a feature gives nothing
+  const featureNote = (row: FeatureRow, ownedId: string): ToggleNote | undefined => {
+    const note = notes.find((other) => other.ownedId === ownedId && other.toId === row.toId);
+    return note && row.grantedAt.includes(ownedId) ? { kind: "idle", text: note.text } : undefined;
   };
-  const featureNote = (row: FeatureRow, ownedId: string): ToggleNote | undefined =>
-    describeFeatureNote(row, ownedId, noteContext);
-  // A click clears a filled toggle; an empty one grants a feature that stacks there too, and moves one that doesn't,
-  // off its entity's other rows too
-  const handleFeatureClick = (row: FeatureRow, ownedId: string) => {
-    if (row.grantedAt.includes(ownedId)) {
-      onFeatureGrantedAt(
-        row,
-        row.grantedAt.filter((id) => id !== ownedId),
-      );
-      return;
-    }
-    if (row.stacks) {
-      onFeatureGrantedAt(row, [...row.grantedAt, ownedId]);
-      return;
-    }
-    for (const other of features)
-      if (other.key !== row.key && other.toId === row.toId && other.grantedAt.length > 0) onFeatureGrantedAt(other, []);
-    onFeatureGrantedAt(row, [ownedId]);
-  };
+  // A click fills an empty toggle, and empties a filled one: the rules say, in their notes and at the save, what it gives
+  const handleFeatureClick = (row: FeatureRow, ownedId: string) =>
+    onFeatureGrantedAt(
+      row,
+      row.grantedAt.includes(ownedId) ? row.grantedAt.filter((id) => id !== ownedId) : [...row.grantedAt, ownedId],
+    );
   const pickingPool = picking && pools.find((pool) => pool.id === picking.poolId);
   const pickingCount = (picking && pickingPool?.picks[picking.ownedId]) || 0;
   const savedPicks = (poolId: string, ownedId: string) =>

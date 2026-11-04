@@ -1,5 +1,5 @@
-import { Box, Stack, Tooltip, Typography } from "@mui/material";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Alert, Box, Stack, Tooltip, Typography } from "@mui/material";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 
 import {
@@ -20,6 +20,7 @@ import {
   useRules,
   useRulesetPermissions,
 } from "@/client/src/hooks/index.ts";
+import { errorMessage } from "@/client/src/lib/errorMessage.ts";
 import { rulesetOptionsQuery } from "@/client/src/lib/queries.ts";
 import { entityTypeLabel, formatWordCount, positionWordsOf, withArticle } from "@/client/src/lib/rulesetLabels.ts";
 import {
@@ -40,6 +41,7 @@ import {
   ownedEntitiesQuery,
   ownerProgressionQuery,
   ownerTableQuery,
+  progressionPlanQuery,
 } from "@/client/src/pages/rulesets/details/owners/ownerSectionQueries.ts";
 import type { OwnerSectionProps } from "@/client/src/pages/rulesets/details/owners/ownerTab.ts";
 import { byPosition } from "@/client/src/pages/rulesets/details/owners/sections/byPosition.ts";
@@ -64,6 +66,7 @@ import {
   describeFeatureRows,
   type PoolRow,
   readEditedTrack,
+  readFeatureNotes,
   readFeatureOffers,
   readTrack,
   type TrackKey,
@@ -290,6 +293,18 @@ export function OwnerProgressionSection({
     savedPools,
     draft.edits,
   );
+  // The rules' notes on its grants: the draft's, as its plan answers it (the last answer while the next loads), else
+  // the saved ones
+  const sends = Object.keys(body).length > 0;
+  const plan = useQuery({
+    ...progressionPlanQuery(rulesetId, ownerType, ownerId, sends ? body : undefined),
+    enabled: canEdit,
+    placeholderData: keepPreviousData,
+  });
+  const notesKey = grantsRules?.notes ?? "";
+  const notes = readFeatureNotes(
+    sends && plan.data ? plan.data[notesKey as keyof typeof plan.data] : answer?.[notesKey],
+  );
   // A pool's id in the save
   const poolIdOf = (pool: Record<string, unknown>) => String(pool.id);
   const changes = [
@@ -444,6 +459,11 @@ export function OwnerProgressionSection({
         <LoadError what={grantsRules?.words.pools ?? ""} error={progressionError} />
       )}
       {!!poolsError && !poolTotals && <LoadError what={grantsRules?.words.totals ?? ""} error={poolsError} />}
+      {canEdit && plan.isError && (
+        <Alert severity="error">
+          {errorMessage(plan.error, `Failed to check the ${grantsRules?.words.title.toLowerCase() ?? "progression"}`)}
+        </Alert>
+      )}
       <RulesetSectionTable
         what={positionWord.many}
         error={error}
@@ -538,6 +558,7 @@ export function OwnerProgressionSection({
             onRemoveFeature={draft.removeFeature}
             onRemovePool={draft.removePool}
             offers={readFeatureOffers(answer, grantsRules)}
+            notes={notes}
             ownerId={ownerId}
             ownerType={ownerType}
             creating={createFeature.isPending}
