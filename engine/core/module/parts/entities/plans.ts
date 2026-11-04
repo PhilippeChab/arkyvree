@@ -171,8 +171,9 @@ export interface LinkWrite {
 }
 
 /**
- * Making an owner's own list with no entries yet (a class's "Barbarian Spells", which its first add makes too): what its
- * activity records, the list it makes (`created`: its id, its name and its kind), and what it writes (`writes.made`).
+ * Making an owner's own list, with no entries yet, or one its ruleset deleted back with its entries (a class's
+ * "Barbarian Spells", which its first add makes too): what its activity records, the list it makes (`created`: its id,
+ * its name and its kind), and what it writes (`writes.made`).
  */
 export interface ListCreatePlan {
   activity: Record<string, unknown>;

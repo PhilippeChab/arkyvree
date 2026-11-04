@@ -136,11 +136,19 @@ export default class ClassSpellLists {
   }
 
   /**
-   * Making the class's own spell list with no spells yet ("Barbarian Spells"), as its first add makes it (`ownList`),
-   * which its Spells tab then fills: the list, what it writes, and what its activity records (its create's: the list's
-   * name). Refused as a conflict when the ruleset has it already, and as `ownList` refuses it.
+   * Making the class's own spell list, as its first add makes it (`ownList`), which its Spells tab then fills: with no
+   * spells yet ("Barbarian Spells"), or, in a fork that deleted it, the deleted one back with its spells. The list, what
+   * it writes, and what its activity records (its create's: the list's name). Refused as a conflict when the class has
+   * a list already, its own or the ones it casts from, and as `ownList` refuses it (a feat pool of its name).
    */
   planOwnList(): ListCreatePlan {
+    const own = this.table.describeOwnList();
+    const lists = this.table.describeSpellLists();
+    if (lists.length > 0 && !lists.some((list) => list.id === own.id))
+      {throw new RulesError(
+        "conflict",
+        `${this.klass.name} casts from other spell lists, so it has none of its own to make`,
+      );}
     const list = this.ownList();
     if (!list.made) throw new RulesError("conflict", `${list.name} already exists`);
     return {
