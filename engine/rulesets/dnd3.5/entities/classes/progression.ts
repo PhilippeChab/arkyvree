@@ -38,8 +38,7 @@ export const PROGRESSION: ProgressionDeclaration = {
     listTab: "spell-list",
     ownList: "ownSpellList",
     none: {
-      editor:
-        "{ownerName} has no spell list of its own, so no {tables}. Create it here, or add spells on its Spell List tab, which makes it too.",
+      editor: "{ownerName} has no spell list yet.",
       viewer: "{ownerName} casts no spells.",
     },
     refusal: "spellTablesRefusal",
