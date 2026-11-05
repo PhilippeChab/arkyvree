@@ -6,16 +6,12 @@
 - D&D 3.5: create a class's spell list from its Spells tab
 - D&D 3.5: mark a feat Stackable, remove a class's feature or feat pool, and give a level any number of picks in a pool
 - D&D 3.5: add spells to a class's spell list, several at once, and remove them, from the class's Spell List tab; a class's first add makes its list
-- Rulesets choose the levels that give every character a feat or an ability score increase
-- Import a character from a PCGen file
 - D&D 3.5: edit a class's whole progression at once
 - D&D 3.5: add 5, 10 or 20 levels to a class at once
-- D&D 3.5: an item made from a template takes its weight and cost when it has none of its own
-- The activity feed names every change an update makes, the entries a list gains and loses included
+- Rulesets choose the levels that give every character a feat or an ability score increase
+- Import a character from a PCGen file
 - API keys and a public API, with its OpenAPI reference
 - An MCP server: connect Claude Code or another AI assistant to your characters and rulesets with an API key
-- Read-only API keys
-- Connect Claude or ChatGPT to your account, and see and disconnect them under Settings
 
 ## 0.6.0 — 2026-10-12
 
