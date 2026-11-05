@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.7.0 — 2026-11-04
+
 - D&D 3.5: create a class feature from the class's Progression tab, whose pickers list the class's own features and feat pools first
 - D&D 3.5: create a class's spell list from its Spells tab
 - D&D 3.5: mark a feat Stackable, remove a class's feature or feat pool, and give a level any number of picks in a pool
