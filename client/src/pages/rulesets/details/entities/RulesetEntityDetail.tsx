@@ -1,4 +1,4 @@
-import { type QueryKey, useQuery, useQueryClient, type UseQueryOptions } from "@tanstack/react-query";
+import { type QueryKey, useQuery, type UseQueryOptions } from "@tanstack/react-query";
 import { type ReactNode } from "react";
 import type { DefaultValues, FieldValues, UseFormReturn } from "react-hook-form";
 import { Navigate, useLocation } from "react-router-dom";
@@ -93,11 +93,8 @@ function FormDetails<TEntity extends EntityBase, TForm extends FieldValues, TKey
   editing,
   entity,
 }: FormDetailsProps<TEntity, TForm, TKey>) {
-  const queryClient = useQueryClient();
-
   const copy = useCopyOnWrite(rulesetId, entityId, (id) => `${section}/${id}`);
-  // The copy's data is in as the page moves to it: the save seeds it
-  const forgetSource = copy.forgetSource(true);
+  const forgetSource = copy.forgetSource();
 
   const { form, save } = useEntityForm({
     empty: editing.empty,
@@ -111,19 +108,12 @@ function FormDetails<TEntity extends EntityBase, TForm extends FieldValues, TKey
     listKey: QUERY_KEYS.rulesets.section(rulesetId, section),
     saveFn: editing.updateFn,
     toFormValues: editing.toFormValues,
-    // The save's response is the entity's row: the copy's page shows it at once, its delete as the entity's was
-    storeSaved: (saved, sourceId) => {
-      const savedKey = query(saved.id).queryKey;
-      queryClient.setQueryData<TEntity>(savedKey, { ...entity, ...saved });
-      // Supersede any refetch that left before the save committed; a list's pool filter that picked it (under its key,
-      // `pickedEntityQuery`), by its id or its source's, reads it again too
-      void queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
-      for (const id of new Set([saved.id, sourceId])) {
-        void queryClient.invalidateQueries({
-          queryKey: pickedEntityQuery(rulesetId, section, id).queryKey,
-          exact: true,
-        });
-      }
+    // The save's response is the entity's row, which says nothing of its delete: kept as the entity's was. A list's
+    // pool filter that picked it reads it again too
+    cached: {
+      keyOf: (id) => query(id).queryKey,
+      withSaved: (cached: TEntity, saved) => ({ ...cached, ...saved }),
+      apartOf: (id) => pickedEntityQuery(rulesetId, section, id).queryKey,
     },
     followCopy: copy.followCopy,
   });

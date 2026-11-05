@@ -3,7 +3,8 @@ import { type ReactNode, Suspense, useEffect, useRef } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 
 import { LoadError, PageLoader } from "@/client/src/components/common/index.ts";
-import { useRules } from "@/client/src/hooks/index.ts";
+import { useLatest, useRules } from "@/client/src/hooks/index.ts";
+import { keepsScroll } from "@/client/src/lib/keptScroll.ts";
 import { DURATION } from "@/client/src/theme/animations.ts";
 import { TOOLBAR_HEIGHT } from "@/client/src/theme/appTheme.ts";
 import { pastInset, SAFE_BOTTOM, SAFE_LEFT, SAFE_RIGHT } from "@/client/src/theme/safeArea.ts";
@@ -18,21 +19,25 @@ interface AppMainProps {
 
 /**
  * Scrolling page area of the app shells: sits under the app bar, centers the
- * routed page with the footer below, and eases back to the top on navigation.
+ * routed page with the footer below, and eases back to the top on navigation
+ * (but for a page moving itself to another address, which keeps its scroll:
+ * `keepsScroll`).
  * Its pages wait for the rules every ruleset's pages read (their words, their
  * forms' fields, their tabs), which load once and are kept: should they fail,
  * it says so with a retry in place of the page, which never shows without them.
  */
 export function AppMain({ banner, railWidth = 0 }: AppMainProps) {
   const mainRef = useRef<HTMLDivElement>(null);
-  const { pathname } = useLocation();
+  const { pathname, state } = useLocation();
+  // Read as the address changes, not a reason to scroll of its own: the state changes under one address too
+  const keepScroll = useLatest(keepsScroll(state));
   const { all: rules, error: rulesError, isPending, retry: retryRules, retrying } = useRules();
   // The rules load, or load again after a failure, which its Retry asked
   const rulesPending = isPending || (!rules && retrying);
 
   useEffect(() => {
     const el = mainRef.current;
-    if (!el || el.scrollTop === 0) return;
+    if (!el || el.scrollTop === 0 || keepScroll.current) return;
 
     const start = el.scrollTop;
     const startTime = performance.now();
@@ -46,7 +51,7 @@ export function AppMain({ banner, railWidth = 0 }: AppMainProps) {
 
     frame = requestAnimationFrame(step);
     return () => cancelAnimationFrame(frame);
-  }, [pathname]);
+  }, [pathname, keepScroll]);
 
   return (
     <Stack

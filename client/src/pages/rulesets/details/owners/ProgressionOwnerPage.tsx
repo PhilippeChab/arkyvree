@@ -24,7 +24,6 @@ import {
   useEntityForm,
   useEntityPageBack,
 } from "@/client/src/pages/rulesets/hooks/index.ts";
-import { isStillOpen } from "@/client/src/pages/rulesets/stillOpen.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
 import { OwnerDetails } from "./components/index.ts";
@@ -94,7 +93,7 @@ function OwnerView({ back, ownerId, ownerType, ruleset, rulesetId, section, word
   // Its form of the owner: its fields as its rules describe them for its kind
   const toOwnerForm = (entity: OwnerDetail) =>
     withEntityFields(toEntityForm<EntityFormData>(ownerFields ?? [], entity), ownerFields, entity);
-  const forgetSource = copy.forgetSource(!!ownerData);
+  const forgetSource = copy.forgetSource();
 
   const { form: editForm, save } = useEntityForm({
     // Its rules' empty owner until the owner loads, which its editor never shows
@@ -115,13 +114,10 @@ function OwnerView({ back, ownerId, ownerType, ruleset, rulesetId, section, word
         }),
       ),
     toFormValues: toOwnerForm,
-    storeSaved: (saved, sourceId) => {
-      const savedKey = ownerDetailQuery(rulesetId, ownerType, saved.id).queryKey;
-      // The PUT returns the owner row with its fields: keep showing what the owner's response adds to it until the
-      // refetch brings the saved owner's own; unless the page has left that owner while the save was in flight
-      if (ownerData && isStillOpen(`/rulesets/${rulesetId}/${ownerType}/${sourceId}`))
-        queryClient.setQueryData(savedKey, { ...ownerData, ...saved });
-      void queryClient.invalidateQueries({ queryKey: savedKey, exact: true });
+    // The PUT returns the owner row with its fields: what the owner's response adds to it is kept
+    cached: {
+      keyOf: (id) => ownerDetailQuery(rulesetId, ownerType, id).queryKey,
+      withSaved: (cached: OwnerDetail, saved) => ({ ...cached, ...saved }),
     },
     followCopy: copy.followCopy,
   });

@@ -1,16 +1,10 @@
 import { Stack, Typography } from "@mui/material";
-import { partialMatchKey, type QueryKey, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseResponse } from "hono/client";
 import { type ReactNode } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import {
-  DiceSpinner,
-  ReadOnlyFields,
-  type SectionTab,
-  SectionTabPanel,
-  SectionTabs,
-} from "@/client/src/components/common/index.ts";
+import { ReadOnlyFields, type SectionTab, SectionTabPanel, SectionTabs } from "@/client/src/components/common/index.ts";
 import { TargetPathBreadcrumbs } from "@/client/src/components/customization/index.ts";
 import {
   type CustomizationPage,
@@ -29,7 +23,6 @@ import {
 import { QUERY_KEYS } from "@/client/src/lib/queryKeys.ts";
 import { entityTypeLabel, positionWordOf } from "@/client/src/lib/rulesetLabels.ts";
 import { EntityDetailLayout, EntityPageError } from "@/client/src/pages/rulesets/components/index.ts";
-import { entityPageState } from "@/client/src/pages/rulesets/entityPageState.ts";
 import { useCopyOnWrite, useEntityPageBack, useFormOptions } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 import { CUSTOMIZATION_TYPES } from "@/shared/customization/customizationTypes.ts";
@@ -50,24 +43,13 @@ interface CustomizationViewProps {
   canEdit: boolean;
   data: CustomizationEntity;
   entityId: string;
-  /** Still showing the entity a copy was made from, while the copy loads. */
-  locked: boolean;
   ruleset: RulesetDetail;
   rulesetId: string;
   section: CustomizationSection;
   tabs: SectionTab<CustomizationSection>[];
 }
 
-function CustomizationView({
-  rulesetId,
-  entityId,
-  section,
-  tabs,
-  ruleset,
-  data,
-  canEdit,
-  locked,
-}: CustomizationViewProps) {
+function CustomizationView({ rulesetId, entityId, section, tabs, ruleset, data, canEdit }: CustomizationViewProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -89,16 +71,11 @@ function CustomizationView({
   const ownerQueryKey = data.holder === "owned" ? QUERY_KEYS.rulesets.ownerDetail(rulesetId, data.ownerId) : undefined;
   const customizedKeys = ownerQueryKey ? [entityKey, ownerQueryKey] : [entityKey];
 
-  // A copy-on-write moves the page to the copy; `copiedFrom` keeps the source on screen while the copy loads
+  // A copy-on-write moves the page to the copy, its queries seeded with the source's: its data is in
   const copy = useCopyOnWrite(rulesetId, entityId, (id) => buildCustomizationPath(type, id));
-  const forgetSource = copy.forgetSource(!locked);
+  const forgetSource = copy.forgetSource();
   // What this page deletes, the entity or what it holds, comes back with the entity when it's inherited
   const restorable = isRestorable(data);
-
-  // A save answers the entity's row, its fields and its links, not all its page reads (its customizations, an item's
-  // placement, a level's class's name): refetch the entity
-  const refetchSaved = (saved: { id: string }) =>
-    queryClient.invalidateQueries({ queryKey: QUERY_KEYS.rulesets.entity(rulesetId, type, saved.id) });
 
   const sectionProps = {
     ruleset,
@@ -114,9 +91,8 @@ function CustomizationView({
       what={label}
       subtitle={subtitle}
       backTo={back.to}
-      backDisabled={locked}
       deletion={
-        canEdit && isEditable(data) && isDeletable(data) && !locked
+        canEdit && isEditable(data) && isDeletable(data)
           ? {
               rulesetId,
               deleteFn: () => deleteEntityFn(data, rulesetId, entityId),
@@ -140,9 +116,8 @@ function CustomizationView({
             entityId,
             recordKey: copy.key,
             adoptKey: copy.adoptKey,
-            locked,
             followCopy: copy.followCopy,
-            refetchSaved,
+            cacheKeyOf: (id) => QUERY_KEYS.rulesets.entity(rulesetId, type, id),
           })}
         </ReadOnlyFields>
       )}
@@ -156,22 +131,15 @@ function CustomizationView({
               void queryClient.prefetchQuery(requirementsQuery(rulesetId, type, entityId));
             else void queryClient.prefetchQuery(modifiersQuery(rulesetId, data.type, entityId));
           }}
-          // While locked the entry still says where the copy came from: replace it
-          // rather than leave more entries to clean up.
           onChange={(key) =>
-            navigate(buildEntityPagePath(rulesetId, type, entityId, pages, key), {
-              state: location.state,
-              replace: locked,
-            })
+            navigate(buildEntityPagePath(rulesetId, type, entityId, pages, key), { state: location.state })
           }
           aria-label="Customization Tabs"
         />
 
         <SectionTabPanel>
-          {/* The source's customizations don't belong to the copy: wait for it. A modifier has its requirements alone */}
-          {locked ? (
-            <DiceSpinner sx={{ py: 4 }} />
-          ) : section === "requirements" || data.holder === "modifier" ? (
+          {/* A modifier has its requirements alone */}
+          {section === "requirements" || data.holder === "modifier" ? (
             <RequirementsSection {...sectionProps} entityType={type} queryKeysToInvalidate={customizedKeys} />
           ) : (
             <ModifiersSection {...sectionProps} entityType={data.type} queryKeysToInvalidate={customizedKeys} />
@@ -306,26 +274,6 @@ export default function CustomizationPage() {
     entityType === CUSTOMIZATION_TYPES.modifier ? MODIFIER_PAGE : entityType ? pages.get(entityType) : undefined;
   const validType = page?.type;
 
-  const { copiedFrom } = entityPageState(location.state);
-
-  // Right after a copy-on-write, keep showing the entity the copy was made
-  // from until the copy loads, so the page and any unsaved edits stay; the
-  // page is locked meanwhile. A refetch of the source may already return the
-  // copy, as the server resolves an inherited entity to its copy. The
-  // ruleset must match too: an inherited entity keeps its id in every fork.
-  function keepCopySource(
-    previous: CustomizationEntity | undefined,
-    previousQuery: { queryKey: QueryKey } | undefined,
-  ) {
-    return copiedFrom &&
-      previous &&
-      !!previousQuery &&
-      partialMatchKey(previousQuery.queryKey, QUERY_KEYS.rulesets.detail(rulesetId)) &&
-      (previous.entity.id === copiedFrom || previous.entity.id === entityId)
-      ? previous
-      : undefined;
-  }
-
   const { data: ruleset, isLoading: isRulesetLoading, error: rulesetError } = useQuery(rulesetDetailQuery(rulesetId));
   // Until the entity says what holds it, Back goes where the page was opened from, else to the ruleset
   const { all, rules } = useRules(ruleset?.baseRules);
@@ -333,12 +281,8 @@ export default function CustomizationPage() {
   const {
     data,
     isLoading: isEntityLoading,
-    isPlaceholderData,
     error: entityError,
-  } = useQuery({
-    ...customizationEntityQuery(rulesetId, page, entityId),
-    placeholderData: keepCopySource,
-  });
+  } = useQuery(customizationEntityQuery(rulesetId, page, entityId));
   // Load the editors' pickers alongside the entity: a kind is one module's, so its fields are known before its ruleset
   const { canEditEntities } = useRulesetPermissions(ruleset);
   const pageRules = Object.values(all ?? {}).find((each) =>
@@ -399,7 +343,6 @@ export default function CustomizationPage() {
       ruleset={ruleset}
       data={data}
       canEdit={canEditEntities}
-      locked={isPlaceholderData}
     />
   );
 }

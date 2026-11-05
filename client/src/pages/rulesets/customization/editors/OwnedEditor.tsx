@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { parseResponse } from "hono/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { type InferResponseType, parseResponse } from "hono/client";
 
 import { DiceSpinner, LoadError } from "@/client/src/components/common/index.ts";
 import type { RulesDescription } from "@/client/src/lib/queries.ts";
@@ -21,7 +21,8 @@ import {
   withoutPlaces,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
-import type { OwnedEntity } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import { seedCopyQueries } from "@/client/src/pages/rulesets/copyQueries.ts";
+import type { CustomizationEntity, OwnedEntity } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
 import { ownerDetailQuery } from "@/client/src/pages/rulesets/details/owners/ownerSectionQueries.ts";
 import { useAllAmounts, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
@@ -37,9 +38,26 @@ interface OwnedEditorProps extends EditorProps<OwnedEntity> {
   type: string;
 }
 
+/** An owned entity's row, as its save answers it. */
+type SavedOwned = InferResponseType<
+  (typeof rpc.api.rulesets)[":id"]["entities"][":entityType"][":entityId"]["owned"][":ownedId"]["$put"],
+  200
+>;
+
 /** A grant's label, by its entity's name and the one it's through's. */
 function labelOf(grant: GrantLink) {
   return grantLabel(grant.toName, grant.viaName);
+}
+
+/**
+ * The customization page's owned entity with its save's row laid over it: named as its page names it, by its owner (a
+ * class's), where the row is named as stored; its owner the row's, the copy once a save copies an inherited owner.
+ */
+function withSavedOwned(cached: CustomizationEntity, saved: SavedOwned): CustomizationEntity {
+  if (cached.holder !== "owned") return cached;
+  const ownerId = saved.ownerId ?? cached.ownerId;
+  const position = saved.position ?? cached.entity.position;
+  return { ...cached, ownerId, entity: { ...cached.entity, ...saved, ownerId, position, name: cached.entity.name } };
 }
 
 /**
@@ -59,12 +77,12 @@ export function OwnedEditor({
   ownerId,
   rules,
   type,
-  locked,
   followCopy,
-  refetchSaved,
+  cacheKeyOf,
 }: OwnedEditorProps) {
   // Its owner, whose kind (3.5's class's partition) its rules may leave some of its fields out for: its fields load
   // with it, none shown before it says which
+  const queryClient = useQueryClient();
   const { data: ownerData, error: ownerError } = useQuery(ownerDetailQuery(rulesetId, owner, ownerId));
   const allFields = ownerData && rules?.fields[type];
   const omitted = omittedPlacesOf(allFields, rules?.progression.tracks ?? [], ownerData?.partition);
@@ -81,11 +99,15 @@ export function OwnedEditor({
     formKey: recordKey,
     adoptKey,
     updatedAt: entity.updatedAt,
-    locked,
     rulesetId,
     entityId,
-    followCopy,
-    storeSaved: refetchSaved,
+    // A save of an inherited level copies its owner with it: the owner's queries are its copy's until the copy's own
+    // are in, as the level's are
+    followCopy: (copyId, sourceId, saved) => {
+      if (saved.ownerId && saved.ownerId !== ownerId) seedCopyQueries(queryClient, rulesetId, ownerId, saved.ownerId);
+      followCopy(copyId, sourceId);
+    },
+    cached: { keyOf: cacheKeyOf, withSaved: withSavedOwned },
     // Its owner's tabs, its owned entities' table among them, read the owned entity
     listKey: QUERY_KEYS.rulesets.ownerDetail(rulesetId, ownerId),
     label: toSentenceCase(word),

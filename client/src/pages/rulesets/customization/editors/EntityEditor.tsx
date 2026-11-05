@@ -17,6 +17,8 @@ import {
   withTemplateFlag,
 } from "@/client/src/pages/rulesets/components/forms/index.ts";
 import { EntityDetailsCard } from "@/client/src/pages/rulesets/components/index.ts";
+import type { CustomizationEntity } from "@/client/src/pages/rulesets/customization/entityQueries.ts";
+import { pickedEntityQuery } from "@/client/src/pages/rulesets/details/entities/entityDetailQueries.ts";
 import { useEntityFields, useEntityForm } from "@/client/src/pages/rulesets/hooks/index.ts";
 import { rpc } from "@/client/src/services/rpc.ts";
 
@@ -40,9 +42,8 @@ export function EntityEditor({
   adoptKey,
   entity,
   kind,
-  locked,
   followCopy,
-  refetchSaved,
+  cacheKeyOf,
 }: EntityEditorProps) {
   const { fields } = useEntityFields(rulesetId, kind.type);
   const described = fields ?? [];
@@ -65,11 +66,17 @@ export function EntityEditor({
     formKey: recordKey,
     adoptKey,
     updatedAt: entity.updatedAt,
-    locked,
     rulesetId,
     entityId,
     followCopy,
-    storeSaved: refetchSaved,
+    // The save answers its row, its fields and its links, not all its page reads (its customizations, an item's
+    // placement): laid over the entity, the rest kept. A list's pool filter that picked it reads it again too
+    cached: {
+      keyOf: cacheKeyOf,
+      apartOf: (id) => pickedEntityQuery(rulesetId, kind.type, id).queryKey,
+      withSaved: (cached: CustomizationEntity, saved) =>
+        cached.holder === "entity" ? { ...cached, entity: { ...cached.entity, ...saved } } : cached,
+    },
     listKey: QUERY_KEYS.rulesets.section(rulesetId, kind.type),
     label,
     // Moved to another template, it holds that one's fields: the save sends them all, the server keeping its own
