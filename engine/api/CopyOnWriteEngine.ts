@@ -26,6 +26,8 @@ import StorageEngine from "./StorageEngine.ts";
 
 /** A ruleset's own stored rows, as the server reads them for its view (`buildRawData`). */
 export interface StoredRulesetRows {
+  /** Its base rules, whose module's storage reads its rows */
+  baseRules: BaseRules;
   /** Its live entities, every kind's, by name then id */
   entities: StoredEntity[];
   /** Every modifier whose source is one of its entities, every requirement of them or of those modifiers */
@@ -59,14 +61,15 @@ export default class CopyOnWriteEngine {
   }
 
   /**
-   * A ruleset's own rows as its view composes them (`ruleset`'s), off its stored rows (`stored`, read by its base rules'
-   * storage): each kind's entities by its type, each its record (`StorageEngine.recordOf`: its own columns, its fields,
-   * its single links), an owned kind's by position and owner; each entity's links (`StorageEngine.viewLinksOf`); each
+   * A ruleset's own rows as its view composes them, off its stored rows (`stored`, read by its base rules' storage):
+   * each kind's entities by its type,
+   * each its record (`StorageEngine.recordOf`: its own columns, its fields, its single links), an owned kind's by
+   * position and owner; each entity's links (`StorageEngine.viewLinksOf`); each
    * kind's values kind-wide (`StorageEngine.kindValues`), its own Settings (`StorageEngine.settingsOf`), its modifiers
    * and requirements.
    */
-  buildRawData(ruleset: { baseRules: BaseRules }, stored: StoredRulesetRows): RulesetRawData {
-    const storage = StorageEngine.of(ruleset.baseRules);
+  buildRawData(stored: StoredRulesetRows): RulesetRawData {
+    const storage = StorageEngine.of(stored.baseRules);
     const types = storage.registries().entityTypes;
     const entities: RulesetRawData["entities"] = {};
     for (const { ownerType, type } of types) {
@@ -83,6 +86,7 @@ export default class CopyOnWriteEngine {
       const held = storage.viewLinksOf(entity);
       if (held.length > 0) links.set(entity.id, { links: held, type: entity.type });
     }
+    const { ruleset } = stored;
     return {
       entities,
       kindValues: storage.kindValues(stored.entities),
@@ -90,9 +94,7 @@ export default class CopyOnWriteEngine {
       tierListIds: stored.tierListIds,
       modifiers: stored.modifiers,
       requirements: stored.requirements,
-      ...(stored.ruleset && {
-        settings: { rulesetId: stored.ruleset.id, values: storage.settingsOf(stored.ruleset) },
-      }),
+      ...(ruleset && { settings: { rulesetId: ruleset.id, values: storage.settingsOf(ruleset) } }),
     };
   }
 
@@ -120,10 +122,10 @@ export default class CopyOnWriteEngine {
   /**
    * The owners whose owned entities pair by position (3.5's classes, their levels by level): those the ruleset and its
    * source chain copied (their snapshots say) and their sources, and those of its own and its extensions' of a name
-   * both have (`rows`), by its base rules' kinds (`ruleset`'s).
+   * both have, by its base rules' kinds (`baseRules`).
    */
-  getPairedOwnerIds(ruleset: RulesetSources, rows: Pick<CowRows, "ownNamesakes" | "snapshots">) {
-    return CowSources.getPairedOwnerIds(rows, CopyOnWriteEngine.kinds(ruleset.baseRules).owners);
+  getPairedOwnerIds(rows: Pick<CowRows, "ownNamesakes" | "snapshots">, baseRules: BaseRules) {
+    return CowSources.getPairedOwnerIds(rows, CopyOnWriteEngine.kinds(baseRules).owners);
   }
 
   /** What a ruleset's copy-on-write data is read from, by its base rules' kinds, each read none when it needs none. */
@@ -144,18 +146,18 @@ export default class CopyOnWriteEngine {
   }
 
   /**
-   * What a copy of a sibling winner (of `entityType`, in `ruleset`) takes of its siblings' links beside its own, merged
+   * What a copy of a sibling winner (of `entityType`, of `baseRules`) takes of its siblings' links beside its own, merged
    * as the view merges them: of the roles that merge (a feat's pools), their links to targets it doesn't link to, by the
    * target `resolve` gives.
    */
   mergeLinks<T extends Pick<StoredLink, "role" | "toId" | "toType">>(
-    ruleset: RulesetSources,
     own: readonly T[],
     siblings: (readonly T[])[],
     resolve: (id: string) => string,
     entityType: string,
+    baseRules: BaseRules,
   ): T[] {
-    const union = StorageEngine.of(ruleset.baseRules)
+    const union = StorageEngine.of(baseRules)
       .viewSchema()
       .unionLinks.filter((link) => link.fromType === entityType);
     const merges = (link: T) => union.some(({ role, toType }) => role === link.role && toType === link.toType);
@@ -167,18 +169,18 @@ export default class CopyOnWriteEngine {
   }
 
   /**
-   * A sibling winner's fields and single links (`own`, of `entityType`, in `ruleset`, as stored), with its siblings'
+   * A sibling winner's fields and single links (`own`, of `entityType`, of `baseRules`, as stored), with its siblings'
    * (`siblings`, in the order its `CowData` pairs them) merged in as the view merges them: each field and role by its
    * declared merge, against what each copied (`sources`).
    */
   mergeValues(
-    ruleset: RulesetSources,
     own: StoredValues,
     siblings: StoredValues[],
     entityType: string,
     sources: CopiedSources,
+    baseRules: BaseRules,
   ): StoredValues {
-    const declared = StorageEngine.of(ruleset.baseRules).declaredFields();
+    const declared = StorageEngine.of(baseRules).declaredFields();
     return SiblingMerge.mergeValues(own, siblings, entityType, declared, sources).values;
   }
 }

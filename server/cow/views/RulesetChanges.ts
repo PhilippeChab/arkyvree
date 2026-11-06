@@ -1,6 +1,7 @@
 import type { Db } from "@/drizzle/database.ts";
 import { Engine } from "@/engine/index.ts";
 import { EntitySnapshots, RulesetEntities, type RulesetEntityType } from "@/server/repositories/index.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Ruleset } from "@/shared/relations.ts";
 
@@ -27,11 +28,11 @@ type NamedEntity = ChangedEntity & { rulesetId: string };
  */
 export default class RulesetChanges {
   /**
-   * Whether a restore brings back an entity of the kind (`entityType`) in a ruleset (`ruleset`): one a route writes, of
-   * its base rules (`restorableKindsOf`).
+   * Whether a restore brings back an entity of the kind (`entityType`, of `baseRules`): one a route writes
+   * (`restorableKindsOf`).
    */
-  private static isRestorable(ruleset: Pick<Ruleset, "baseRules">, entityType: string) {
-    return isOneOf(entityType, Engine.rules().restorableKindsOf(ruleset.baseRules));
+  private static isRestorable(baseRules: BaseRules, entityType: string) {
+    return isOneOf(entityType, Engine.rules().restorableKindsOf(baseRules));
   }
 
   /** The ruleset's snapshots, each with its source, if it's still there. */
@@ -75,9 +76,9 @@ export default class RulesetChanges {
       const copy = localById.get(forkedEntityId);
       if (copy && source) {
         copiedIds.add(copy.id);
-        if (RulesetChanges.isRestorable(ruleset, copy.entityType))
+        if (RulesetChanges.isRestorable(ruleset.baseRules, copy.entityType))
           modified.push({ ...of(copy), sourceEntityId: source.id });
-      } else if (source && RulesetChanges.isRestorable(ruleset, source.entityType)) {
+      } else if (source && RulesetChanges.isRestorable(ruleset.baseRules, source.entityType)) {
         deleted.push({ ...of(source), sourceEntityId: source.id });
       }
     }
@@ -98,7 +99,7 @@ export default class RulesetChanges {
     entityType: string,
     entity: { id: string; rulesetId: string },
   ) {
-    if (!ruleset.rulesetId || !RulesetChanges.isRestorable(ruleset, entityType)) return false;
+    if (!ruleset.rulesetId || !RulesetChanges.isRestorable(ruleset.baseRules, entityType)) return false;
     if (entity.rulesetId !== ruleset.id) return true;
     const sourceId = rulesetData.cow.sourceOf(entity.id);
     if (!sourceId) return false;

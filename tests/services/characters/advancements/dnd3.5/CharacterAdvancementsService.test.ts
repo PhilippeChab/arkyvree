@@ -639,7 +639,7 @@ describe("LevelsService", () => {
     test("list the ruleset's skills with the class's marked and the character's current ranks", async () => {
       const { session, character, klass, classLevels, skills } = await setupRuleset();
       await addClassSkills(db, klass.id, [skills["Diplomacy"].id]);
-      const level = await createAdvancement(db, { baseRules: DND35_BASE_RULES }, character.id, {
+      const level = await createAdvancement(db, DND35_BASE_RULES, character.id, {
         entryId: classLevels[0].id,
         picks: [{ step: "hp", amount: 8 }],
       });
@@ -2288,11 +2288,11 @@ describe("LevelsService", () => {
       const characterId = await createSeedCharacter(ctx, "fighter", { fields: { [CHARACTER_XP]: 3000 } });
       const classLevel = async (klass: string, level: number) =>
         (await findClassLevel(ctx.classMap.pc[klass], level))!.id;
-      const fighter2 = await createAdvancement(db, { baseRules: DND35_BASE_RULES }, characterId, {
+      const fighter2 = await createAdvancement(db, DND35_BASE_RULES, characterId, {
         entryId: await classLevel("Fighter", 2),
         picks: [{ step: "hp", amount: 10 }],
       });
-      const rogue1 = await createAdvancement(db, { baseRules: DND35_BASE_RULES }, characterId, {
+      const rogue1 = await createAdvancement(db, DND35_BASE_RULES, characterId, {
         entryId: await classLevel("Rogue", 1),
         picks: [{ step: "hp", amount: 6 }],
       });

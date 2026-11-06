@@ -24,7 +24,8 @@ export default class RawDataReader {
     const requirements = await Requirements.findMany(database, {
       entityIds: [...ids, ...modifiers.map((modifier) => modifier.id)],
     });
-    const data = Engine.copyOnWrite().buildRawData(ruleset, {
+    const data = Engine.copyOnWrite().buildRawData({
+      baseRules: ruleset.baseRules,
       entities,
       tierListIds,
       modifiers,

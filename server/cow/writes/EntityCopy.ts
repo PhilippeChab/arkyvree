@@ -126,9 +126,9 @@ export default class EntityCopy {
     );
 
     // 3. Copy customizations
-    const customizations = await CustomizationCopies.read(tx, this.ruleset, [this.entityId], this.entityType);
+    const customizations = await CustomizationCopies.read(tx, this.ruleset.baseRules, [this.entityId], this.entityType);
     const cust = customizations.get(this.entityId)!;
-    await CustomizationCopies.copy(tx, this.ruleset, newEntity.id, this.entityType, cust, this.copiedIds);
+    await CustomizationCopies.copy(tx, this.ruleset.baseRules, newEntity.id, this.entityType, cust, this.copiedIds);
 
     // 4. Copy its links of the roles it holds many of and the entities it owns, remapped as the row was
     await this.copyLinksAndOwned(tx, newEntity.id, cow);
@@ -186,10 +186,10 @@ export default class EntityCopy {
         true,
       );
       const ids = new Map(owned.map((row, index) => [row.id, copies[index].id]));
-      const customizations = await CustomizationCopies.read(tx, this.ruleset, [...ids.keys()], type);
+      const customizations = await CustomizationCopies.read(tx, this.ruleset.baseRules, [...ids.keys()], type);
       for (const [id, copyId] of ids) {
         const own = customizations.get(id);
-        if (own) await CustomizationCopies.copy(tx, this.ruleset, copyId, type, own, this.copiedIds);
+        if (own) await CustomizationCopies.copy(tx, this.ruleset.baseRules, copyId, type, own, this.copiedIds);
       }
       await this.copyLinks(tx, type, ids, cow);
     }
@@ -204,11 +204,11 @@ export default class EntityCopy {
     const own = await EntityLinks.findMany(tx, { fromIds: [targetEntityId] });
     const siblingLinks = Map.groupBy(await EntityLinks.findMany(tx, { fromIds: siblingIds }), (link) => link.fromId);
     const links = Engine.copyOnWrite().mergeLinks(
-      this.ruleset,
       own,
       siblingIds.map((id) => siblingLinks.get(id) ?? []),
       resolve,
       this.entityType,
+      this.ruleset.baseRules,
     );
     await EntityLinks.createMany(
       tx,
@@ -232,10 +232,10 @@ export default class EntityCopy {
     cow: CowData,
   ) {
     // The losers' own rows, by their stored ids
-    const siblingCusts = await CustomizationCopies.read(tx, this.ruleset, siblingIds, this.entityType);
+    const siblingCusts = await CustomizationCopies.read(tx, this.ruleset.baseRules, siblingIds, this.entityType);
     const siblings = siblingIds.flatMap((id) => siblingCusts.get(id) ?? []);
     const merged = Engine.copyOnWrite().mergeCustomizations(own, siblings, targetEntityId);
-    await CustomizationCopies.copy(tx, this.ruleset, targetEntityId, this.entityType, merged, this.copiedIds);
+    await CustomizationCopies.copy(tx, this.ruleset.baseRules, targetEntityId, this.entityType, merged, this.copiedIds);
     await this.mergeLinks(tx, targetEntityId, siblingIds, cow);
   }
 
@@ -255,9 +255,12 @@ export default class EntityCopy {
     const [own, ...sources] = sourceIds.map((id, index) =>
       id === undefined || (index > 0 && !byId.has(siblingIds[index - 1])) ? undefined : byId.get(id),
     );
-    return Engine.copyOnWrite().mergeValues(this.ruleset, entity, siblings, this.entityType, {
-      own,
-      siblings: sources,
-    });
+    return Engine.copyOnWrite().mergeValues(
+      entity,
+      siblings,
+      this.entityType,
+      { own, siblings: sources },
+      this.ruleset.baseRules,
+    );
   }
 }

@@ -1,7 +1,8 @@
 import type { Db } from "@/drizzle/database.ts";
-import { Engine, type EntityCustomizations, type RulesetSources } from "@/engine/index.ts";
+import { Engine, type EntityCustomizations } from "@/engine/index.ts";
 import { Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { CUSTOMIZATION_TYPES } from "@/shared/customization/customizationTypes.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 
 /**
  * An entity's customizations (its modifiers, each with its requirements, and its requirements), read and copied onto
@@ -31,11 +32,11 @@ export default class CustomizationCopies {
   }
 
   /**
-   * Whether entities of a type (in `ruleset`) have modifiers: a kind its base rules' module declares customizable does
+   * Whether entities of a type (of `baseRules`) have modifiers: a kind its module declares customizable does
    * (`customizableKinds`), any other doesn't.
    */
-  private static hasModifiers(ruleset: Pick<RulesetSources, "baseRules">, entityType: string): boolean {
-    return Engine.storage(ruleset.baseRules).customizableKinds().includes(entityType);
+  private static hasModifiers(baseRules: BaseRules, entityType: string): boolean {
+    return Engine.storage(baseRules).customizableKinds().includes(entityType);
   }
 
   /**
@@ -66,19 +67,19 @@ export default class CustomizationCopies {
   /** Copies customizations onto one entity, each copy's id recorded by its source's (`copiedIds`). */
   static async copy(
     tx: Db,
-    ruleset: Pick<RulesetSources, "baseRules">,
+    baseRules: BaseRules,
     targetEntityId: string,
     entityType: string,
     sourceCust: EntityCustomizations,
     copiedIds?: Map<string, string>,
   ): Promise<void> {
-    await CustomizationCopies.copyToMany(tx, ruleset, [targetEntityId], entityType, sourceCust, copiedIds);
+    await CustomizationCopies.copyToMany(tx, baseRules, [targetEntityId], entityType, sourceCust, copiedIds);
   }
 
   /** Copies customizations onto each of several entities, in one batch per kind. */
   static async copyToMany(
     tx: Db,
-    ruleset: Pick<RulesetSources, "baseRules">,
+    baseRules: BaseRules,
     targetEntityIds: string[],
     entityType: string,
     sourceCust: EntityCustomizations,
@@ -90,7 +91,7 @@ export default class CustomizationCopies {
     if (copiedIds && targetEntityIds.length > 1)
       throw new Error("copiedIds maps each source row to one copy; copy to a single target");
 
-    if (!CustomizationCopies.hasModifiers(ruleset, entityType) && sourceCust.modifiers.length > 0)
+    if (!CustomizationCopies.hasModifiers(baseRules, entityType) && sourceCust.modifiers.length > 0)
       throw new Error(`Cannot copy modifiers onto ${entityType}`);
 
     const sourceModifierIds = new Set(sourceCust.modifiers.map((m) => m.id));
@@ -129,16 +130,16 @@ export default class CustomizationCopies {
   }
 
   /**
-   * The customizations of `entityIds` (of `entityType`, in `ruleset`), by entity, read by their stored ids: their requirements, and,
+   * The customizations of `entityIds` (of `entityType`, of `baseRules`), by entity, read by their stored ids: their requirements, and,
    * for a type modifiers have (`hasModifiers`), their modifiers with each one's requirements.
    */
   static async read(
     tx: Db,
-    ruleset: Pick<RulesetSources, "baseRules">,
+    baseRules: BaseRules,
     entityIds: string[],
     entityType: string,
   ): Promise<Map<string, EntityCustomizations>> {
-    const modifiers = CustomizationCopies.hasModifiers(ruleset, entityType)
+    const modifiers = CustomizationCopies.hasModifiers(baseRules, entityType)
       ? await Modifiers.findMany(tx, { sourceIds: entityIds, sourceType: entityType })
       : [];
     const requirements = await Requirements.findMany(tx, { entityIds, entityType });

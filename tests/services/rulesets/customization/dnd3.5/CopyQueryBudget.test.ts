@@ -38,11 +38,9 @@ test("modifier and requirement copies stay batched as modifier count grows", asy
         chainingOperator: "and",
       })),
     );
-    const customizations = (
-      await CustomizationCopies.read(db, { baseRules: DND35_BASE_RULES }, [source.id], "feats")
-    ).get(source.id)!;
+    const customizations = (await CustomizationCopies.read(db, DND35_BASE_RULES, [source.id], "feats")).get(source.id)!;
     const { timing } = await measure(() =>
-      CustomizationCopies.copy(db, { baseRules: DND35_BASE_RULES }, target.id, "feats", customizations),
+      CustomizationCopies.copy(db, DND35_BASE_RULES, target.id, "feats", customizations),
     );
     counts.push(timing.queryCount);
     const copiedRoots = await Modifiers.findMany(db, { sourceIds: [target.id], sourceType: "feats" });

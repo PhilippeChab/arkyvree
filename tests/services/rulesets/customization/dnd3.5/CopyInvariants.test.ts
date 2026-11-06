@@ -38,9 +38,7 @@ async function setup() {
       valueType: "number",
     },
   ]);
-  const customizations = (
-    await CustomizationCopies.read(db, { baseRules: DND35_BASE_RULES }, [source.id], "feats")
-  ).get(source.id)!;
+  const customizations = (await CustomizationCopies.read(db, DND35_BASE_RULES, [source.id], "feats")).get(source.id)!;
   return { source, targets, modifier, customizations };
 }
 
@@ -48,7 +46,7 @@ test("each target's copied modifier requirement belongs to that target's modifie
   const { targets, customizations } = await setup();
   await CustomizationCopies.copyToMany(
     db,
-    { baseRules: DND35_BASE_RULES },
+    DND35_BASE_RULES,
     targets.map((t) => t.id),
     "feats",
     customizations,
@@ -64,7 +62,7 @@ test("copied-id recording is limited to a single target", async () => {
   expect(
     CustomizationCopies.copyToMany(
       db,
-      { baseRules: DND35_BASE_RULES },
+      DND35_BASE_RULES,
       targets.map((t) => t.id),
       "feats",
       customizations,
@@ -76,7 +74,7 @@ test("copied-id recording is limited to a single target", async () => {
 test("a modifier requirement is never copied onto the source's own modifier", async () => {
   const { targets, modifier, customizations } = await setup();
   expect(
-    CustomizationCopies.copyToMany(db, { baseRules: DND35_BASE_RULES }, [targets[0].id], "feats", {
+    CustomizationCopies.copyToMany(db, DND35_BASE_RULES, [targets[0].id], "feats", {
       ...customizations,
       modifiers: [],
     }),
@@ -87,6 +85,6 @@ test("a modifier requirement is never copied onto the source's own modifier", as
 test("modifiers are not silently dropped for entity types that cannot own them", async () => {
   const { targets, customizations } = await setup();
   expect(
-    CustomizationCopies.copyToMany(db, { baseRules: DND35_BASE_RULES }, [targets[0].id], "skills", customizations),
+    CustomizationCopies.copyToMany(db, DND35_BASE_RULES, [targets[0].id], "skills", customizations),
   ).rejects.toThrow("Cannot copy modifiers onto skills");
 });

@@ -88,9 +88,9 @@ export type EntityBody = EntityForm & { name: string; updatedAt?: string };
 /** The unique index that keeps an owner's entities at their own places (a class's levels at their numbers). */
 const OWNED_POSITION_INDEX = "entities_owner_position_unique_idx";
 
-/** An entity's type, as a plan names it: refused when it isn't one of its ruleset's (`ruleset`) base rules' kinds. */
-function entityTypeOf(ruleset: Ruleset, type: string): RulesetEntityType {
-  const entityType = Engine.storage(ruleset.baseRules)
+/** An entity's type, as a plan names it: refused when it isn't one of its ruleset's base rules' kinds (`baseRules`). */
+function entityTypeOf(baseRules: BaseRules, type: string): RulesetEntityType {
+  const entityType = Engine.storage(baseRules)
     .standaloneKinds()
     .find((known) => known === type);
   if (!entityType) throw new Error(`A save cannot write a ${type} entity`);
@@ -132,7 +132,7 @@ export default class EntityWriter {
    * requirements.
    */
   private static async makeEntity(tx: Db, scope: LockedRulesetScope, made: MadeEntity) {
-    const type = entityTypeOf(scope.ruleset, made.type);
+    const type = entityTypeOf(scope.ruleset.baseRules, made.type);
     const names = new EntityNames(scope);
     const tombstoneAncestorId = await names.findTombstoneAncestor(tx, type, made.row.name);
     const [entity] = await EntityNames.withNameRefusal(made.row.name, () =>
@@ -140,7 +140,7 @@ export default class EntityWriter {
     );
     if (tombstoneAncestorId) await names.repointTombstone(tx, tombstoneAncestorId, entity.id);
     const written = { entityId: entity.id, entityType: type };
-    await EntityWriter.setLinks(tx, scope.ruleset, written, made.links, false);
+    await EntityWriter.setLinks(tx, scope.ruleset.baseRules, written, made.links, false);
     await Modifiers.createMany(
       tx,
       made.modifiers.map((modifier) => ({ ...modifier, sourceId: entity.id, sourceType: type })),
@@ -204,7 +204,7 @@ export default class EntityWriter {
    * links and customizations with it, and a soft-archive would block an entity of the same name made later.
    */
   private static async removeEntity(tx: Db, scope: LockedRulesetScope, policy: RulesetsPolicy, removal: EntityRemoval) {
-    const type = entityTypeOf(scope.ruleset, removal.type);
+    const type = entityTypeOf(scope.ruleset.baseRules, removal.type);
     const inUse = await new EntityUses(scope).refusesDelete(tx, type, removal.id);
     policy.canDeleteEntity({ inUse, refusal: removal.inUse });
 
@@ -214,19 +214,19 @@ export default class EntityWriter {
   }
 
   /**
-   * Updates the row a write targets (`target`) to the plan's (`row`, of `type`, in `ruleset`): refused as stale when
+   * Updates the row a write targets (`target`) to the plan's (`row`, of `type`, of `baseRules`): refused as stale when
    * the client's token (`updatedAt`) is behind, a copy's never being checked (its token is its source's).
    */
   private static async updateRow(
     tx: Db,
-    ruleset: Ruleset,
+    baseRules: BaseRules,
     type: string,
     row: Parameters<typeof Entities.update>[3],
     target: EditTarget,
     updatedAt: string | undefined,
   ): Promise<Row> {
     const expectedUpdatedAt = target.expected(updatedAt);
-    const rows = await Entities.update<Row>(tx, ruleset.baseRules, type, row, { id: target.id, expectedUpdatedAt });
+    const rows = await Entities.update<Row>(tx, baseRules, type, row, { id: target.id, expectedUpdatedAt });
     if (rows.length === 0) throw new ConflictError(STALE_ENTITY_MESSAGE);
     return rows[0];
   }
@@ -247,13 +247,13 @@ export default class EntityWriter {
   }
 
   /**
-   * Writes the links a plan sets on an entity (in `ruleset`), each set in its order, at once: on an entity it had
+   * Writes the links a plan sets on an entity (of `baseRules`), each set in its order, at once: on an entity it had
    * written before (`replacing`: an edit's), each set replaces the entity's links of its role to its kind, and a role it
    * leaves out keeps its links (none given: every one). A new entity holds none to replace.
    */
   static async setLinks(
     tx: Db,
-    ruleset: Ruleset,
+    baseRules: BaseRules,
     entity: WrittenEntity,
     sets: LinkSet[] | undefined,
     replacing: boolean,
@@ -265,7 +265,7 @@ export default class EntityWriter {
     }
     await EntityLinks.createMany(
       tx,
-      ruleset.baseRules,
+      baseRules,
       sets.flatMap((set) => linksOf(entity, set)),
     );
   }
@@ -282,7 +282,7 @@ export default class EntityWriter {
     parts: SavedParts,
     replacing: boolean,
   ) {
-    await EntityWriter.setLinks(tx, scope.ruleset, entity, parts.links, replacing);
+    await EntityWriter.setLinks(tx, scope.ruleset.baseRules, entity, parts.links, replacing);
     if (parts.writes) await EntityWriter.writeBeside(tx, scope, policy, parts.writes);
   }
 
@@ -302,25 +302,25 @@ export default class EntityWriter {
     before?: EntityWrites,
   ) {
     if (before) await EntityWriter.writeBeside(tx, scope, policy, before);
-    const entityType = entityTypeOf(scope.ruleset, type);
+    const entityType = entityTypeOf(scope.ruleset.baseRules, type);
     const edit = new EntityEdit(scope);
     const written = [];
     for (const planned of plans) {
       const target = await edit.cowToEdit(tx, entityType, planned.entity);
-      const row = await EntityWriter.updateRow(tx, scope.ruleset, entityType, planned.row, target, undefined);
+      const row = await EntityWriter.updateRow(tx, scope.ruleset.baseRules, entityType, planned.row, target, undefined);
       await EntityWriter.setParts(tx, scope, policy, { entityId: target.id, entityType }, planned, true);
       written.push(planned.describe(row, await EntityLinks.findOwn(tx, target.id)));
     }
     return written;
   }
 
-  /** The entity's customizations, copied onto the new ones (`entities`, in `ruleset`) from `sourceId`'s. */
-  private async copyCustomizations(tx: Db, ruleset: Ruleset, entities: Row[], sourceId: string) {
-    const customizations = (await CustomizationCopies.read(tx, ruleset, [sourceId], this.type)).get(sourceId);
+  /** The entity's customizations, copied onto the new ones (`entities`, of `baseRules`) from `sourceId`'s. */
+  private async copyCustomizations(tx: Db, baseRules: BaseRules, entities: Row[], sourceId: string) {
+    const customizations = (await CustomizationCopies.read(tx, baseRules, [sourceId], this.type)).get(sourceId);
     if (!customizations) return;
     await CustomizationCopies.copyToMany(
       tx,
-      ruleset,
+      baseRules,
       entities.map((entity) => entity.id),
       this.type,
       customizations,
@@ -351,7 +351,8 @@ export default class EntityWriter {
       written.push(entity);
     }
     // The customizations they copy, before what the plan writes beside them
-    if (plan.copyCustomizationsFrom) await this.copyCustomizations(tx, ruleset, written, plan.copyCustomizationsFrom);
+    if (plan.copyCustomizationsFrom)
+      await this.copyCustomizations(tx, ruleset.baseRules, written, plan.copyCustomizationsFrom);
     for (const entity of written) {
       await EntityWriter.setParts(tx, scope, policy, { entityId: entity.id, entityType: this.type }, plan, false);
       await EntityWriter.recordActivity(tx, session, scope.ruleset, "create", this.type, entity.id, {
@@ -551,7 +552,7 @@ export default class EntityWriter {
       await new EntityNames(scope).assertRenameAvailable(tx, this.type, planned.entity, body.name);
       const target = await new EntityEdit(scope).cowToEdit(tx, this.type, planned.entity);
       const row = await EntityNames.withNameRefusal(body.name, () =>
-        EntityWriter.updateRow(tx, scope.ruleset, this.type, planned.row, target, body.updatedAt),
+        EntityWriter.updateRow(tx, scope.ruleset.baseRules, this.type, planned.row, target, body.updatedAt),
       );
       await EntityWriter.setParts(tx, scope, policy, { entityId: target.id, entityType: this.type }, planned, true);
 
@@ -584,7 +585,7 @@ export default class EntityWriter {
       const notFound = EntityWriter.getNotFound(ruleset, type);
       const edit = new EntityEdit(scope);
       const target = await edit.cowOwned(tx, type, this.type, planned.entity.id, notFound);
-      const row = await EntityWriter.updateRow(tx, ruleset, type, planned.row, target, updatedAt);
+      const row = await EntityWriter.updateRow(tx, ruleset.baseRules, type, planned.row, target, updatedAt);
       await EntityWriter.setParts(tx, scope, policy, { entityId: target.id, entityType: type }, planned, true);
 
       await EntityWriter.recordActivity(tx, session, scope.ruleset, "update", type, target.id, {
