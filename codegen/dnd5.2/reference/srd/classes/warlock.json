@@ -1,0 +1,1225 @@
+{
+  "_meta": {
+    "book": "srd",
+    "scrapedAt": "2026-11-06T21:06:18.375Z",
+    "sourceUrls": {
+      "Classes": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Classes.json",
+      "Features": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Features.json",
+      "Levels": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Levels.json",
+      "Subclasses": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Subclasses.json"
+    },
+    "type": "class"
+  },
+  "raw": {
+    "class": {
+      "hit_die": 8,
+      "index": "warlock",
+      "multi_classing": {
+        "prerequisites": [
+          {
+            "ability_score": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "minimum_score": 13
+          }
+        ],
+        "proficiencies": [
+          {
+            "index": "light-armor",
+            "name": "Light Armor"
+          }
+        ]
+      },
+      "name": "Warlock",
+      "primary_ability": {
+        "ability_scores": [
+          {
+            "index": "cha",
+            "name": "CHA"
+          }
+        ],
+        "desc": "Charisma"
+      },
+      "proficiencies": [
+        {
+          "index": "light-armor",
+          "name": "Light Armor"
+        },
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "saving-throw-wis",
+          "name": "Saving Throw: WIS"
+        },
+        {
+          "index": "saving-throw-cha",
+          "name": "Saving Throw: CHA"
+        }
+      ],
+      "proficiency_choices": [
+        {
+          "choose": 2,
+          "desc": "Choose 2: from Arcana, Deception, History, Intimidation, Investigation, Nature, or Religion",
+          "from": {
+            "option_set_type": "options_array",
+            "options": [
+              {
+                "item": {
+                  "index": "skill-arcana",
+                  "name": "Skill: Arcana"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-deception",
+                  "name": "Skill: Deception"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-history",
+                  "name": "Skill: History"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-intimidation",
+                  "name": "Skill: Intimidation"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-investigation",
+                  "name": "Skill: Investigation"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-nature",
+                  "name": "Skill: Nature"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-religion",
+                  "name": "Skill: Religion"
+                },
+                "option_type": "reference"
+              }
+            ]
+          },
+          "type": "proficiencies"
+        }
+      ],
+      "saving_throws": [
+        {
+          "index": "wis",
+          "name": "WIS"
+        },
+        {
+          "index": "cha",
+          "name": "CHA"
+        }
+      ],
+      "spellcasting": {
+        "info": [
+          {
+            "desc": [
+              "You know two Warlock cantrips of your. Eldritch Blast and Prestidigitation are recommended. Whenever you gain a Warlock level, you can replace one of your cantrips from this feature with another Warlock cantrip of your choice.",
+              "When you reach Warlock levels 4 and 10, you learn another Warlock cantrip of your choice, as shown in the Cantrips column of the Warlock Features table."
+            ],
+            "name": "Cantrips"
+          },
+          {
+            "desc": [
+              "The Warlock table shows how many spell slots you have to cast your Warlock spells of levels 1-5. The table also shows what the level of those slots are, all of which are the same level. You regain all expended Pact Magic spell slots when you finish a Short or Long Rest.",
+              "For example, when you're a level 5 Warlock, you have two level 3 spell slots. To cast the level 1 spell Charm Person, you must spend one of those slots, and you cast it as a level 3 spell."
+            ],
+            "name": "Spell Slots"
+          },
+          {
+            "desc": [
+              "You prepare the list of level 1+ spells that are available for you to cast with this feature. To start, choose two level 1 Warlock spells. Charm Person and Hex are recommended.",
+              "The number of spells on your list increases as you gain Warlock levels, as shown in the Prepared Spells column of the Warlock Features table. Whenever that number increases, choose additional Warlock spells until the number of spells on your list matches the number on the table. The chosen spells must be of a level no higher than what's shown in the table's Slot Level column for your level. When you reach level 6, for example, you learn a new Warlock spell, which can be of levels 1-3.",
+              "If another Warlock feature gives you spells that you always have prepared, those spells don't count against the number of spells you can prepare with this feature, but those spells otherwise count as Warlock spells for you."
+            ],
+            "name": "Prepared Spells of Level 1+"
+          },
+          {
+            "desc": [
+              "Whenever you gain a Warlock level, you can replace one spell on your list with another Warlock spell of an eligible level."
+            ],
+            "name": "Changing Your Prepared Spells"
+          },
+          {
+            "desc": [
+              "Charisma is your spellcasting ability for your Warlock spells."
+            ],
+            "name": "Spellcasting Ability"
+          },
+          {
+            "desc": [
+              "You can use an Arcane Focus as a Spellcasting Focus for your Warlock spells."
+            ],
+            "name": "Spellcasting Focus"
+          }
+        ],
+        "level": 1,
+        "spellcasting_ability": {
+          "index": "cha",
+          "name": "CHA"
+        }
+      },
+      "starting_equipment_options": [
+        {
+          "choose": 1,
+          "desc": "(a) Leather Armor, Sickle, 2 Daggers, Arcane Focus (orb), Book, Scholar’s Pack, and 15 GP; or (b) 100 GP",
+          "from": {
+            "option_set_type": "options_array",
+            "options": [
+              {
+                "items": [
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "leather-armor",
+                      "name": "Leather Armor"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "sickle",
+                      "name": "Sickle"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 2,
+                    "of": {
+                      "index": "dagger",
+                      "name": "Dagger"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "orb",
+                      "name": "Orb"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "book",
+                      "name": "Book"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 1,
+                    "of": {
+                      "index": "scholars-pack",
+                      "name": "Scholar's Pack"
+                    },
+                    "option_type": "counted_reference"
+                  },
+                  {
+                    "count": 15,
+                    "option_type": "money",
+                    "unit": "gp"
+                  }
+                ],
+                "option_type": "multiple"
+              },
+              {
+                "count": 100,
+                "option_type": "money",
+                "unit": "gp"
+              }
+            ]
+          },
+          "type": "equipment"
+        }
+      ],
+      "subclasses": [
+        {
+          "index": "fiend-patron",
+          "name": "Fiend Patron"
+        }
+      ]
+    },
+    "features": [
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "description": "You have unearthed Eldritch Invocations, pieces of forbidden knowledge that imbue you with an abiding magical ability or other lessons. You gain one invocation of your choice, such as Pact of the Tome. Invocations are described in the \"Eldritch Invocation Options\" section later in this class's description.\nPrerequisites. If an invocation has a prerequisite, you must meet it to learn that invocation. For example, if an invocation requires you to be a level 5+ Warlock, you can select the invocation once you reach Warlock level 5.\nReplacing and Gaining Invocations. Whenever you gain a Warlock level, you can replace one of your invocations with another one for which you qualify. You can't replace an invocation if it's a prerequisite for another invocation that you have.\nWhen you gain certain Warlock levels, you gain more invocations of your choice, as shown in the Invocations column of the Warlock Features table.\nYou can't pick the same invocation more than once unless its description says otherwise.",
+        "index": "warlock-eldritch-invocations",
+        "level": {
+          "index": "warlock-1",
+          "name": "Warlock 1"
+        },
+        "name": "Eldritch Invocations"
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "description": "Through occult ceremony, you have formed a pact with a mysterious entity to gain magical powers.\nThe entity is a voice in the shadows—its identity unclear—but its boon to you is concrete: the ability to cast spells. See \"Spells\" for the rules on spellcasting.\nThe information below details how you use those rules with Warlock spells, which appear in the Warlock spell list later in the class's description.\nCantrips. You know two Warlock cantrips of your choice. Eldritch Blast and Prestidigitation are recommended.\nWhenever you gain a Warlock level, you can replace one of your cantrips from this feature with another Warlock cantrip of your choice.\nWhen you reach Warlock levels 4 and 10, you learn another Warlock cantrip of your choice, as shown in the Cantrips column of the Warlock Features table.\nSpell Slots. The Warlock Features table shows how many spell slots you have to cast your Warlock spells of levels 1–5. The table also shows the level of those slots, all of which are the same level. You regain all expended Pact Magic spell slots when you finish a Short or Long Rest.\nFor example, when you're a level 5 Warlock, you have two level 3 spell slots. To cast the level 1 spell Charm Person, you must spend one of those slots, and you cast it as a level 3 spell.\nPrepared Spells of Level 1+. You prepare the list of level 1+ spells that are available for you to cast with this feature. To start, choose two level 1 Warlock spells. Charm Person and Hex are recommended.\nThe number of spells on your list increases as you gain Warlock levels, as shown in the Prepared Spells column of the Warlock Features table. Whenever that number increases, choose additional Warlock spells until the number of spells on your list matches the number in the table. The chosen spells must be of a level no higher than what's shown in the table's Slot Level column for your level. When you reach level 6, for example, you learn a new Warlock spell, which can be of levels 1–3.\nIf another Warlock feature gives you spells that you always have prepared, those spells don't count against the number of spells you can prepare with this feature, but those spells otherwise count as Warlock spells for you.\nChanging Your Prepared Spells. Whenever you gain a Warlock level, you can replace one spell on your list with another Warlock spell of an eligible level.\nSpellcasting Ability. Charisma is the spellcasting ability for your Warlock spells.\nSpellcasting Focus. You can use an Arcane Focus as a Spellcasting Focus for your Warlock spells.",
+        "index": "warlock-pact-magic",
+        "level": {
+          "index": "warlock-1",
+          "name": "Warlock 1"
+        },
+        "name": "Pact Magic"
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "description": "You can perform an esoteric rite for 1 minute. At the end of it, you regain expended Pact Magic spell slots but no more than a number equal to half your maximum (round up). Once you use this feature, you can't do so again until you finish a Long Rest.",
+        "index": "warlock-magical-cunning",
+        "level": {
+          "index": "warlock-2",
+          "name": "Warlock 2"
+        },
+        "name": "Magical Cunning"
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "description": "You gain a Warlock subclass of your choice. The Fiend Patron subclass is detailed after this class's description. A subclass is a specialization that grants you features at certain Warlock levels. For the rest of your career, you gain each of your subclass's features that are of your Warlock level or lower.",
+        "index": "warlock-subclass",
+        "level": {
+          "index": "warlock-3",
+          "name": "Warlock 3"
+        },
+        "name": "Warlock Subclass"
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "description": "You gain the Ability Score Improvement feat (see \"Feats\") or another feat of your choice for which you qualify. You gain this feature again at Warlock levels 8, 12, and 16.",
+        "index": "warlock-ability-score-improvement",
+        "level": {
+          "index": "warlock-4",
+          "name": "Warlock 4"
+        },
+        "name": "Ability Score Improvement"
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "description": "In the past, you usually contacted your patron through intermediaries. Now you can communicate directly; you always have the Contact Other Plane spell prepared. With this feature, you can cast the spell without expending a spell slot to contact your patron, and you automatically succeed on the spell's saving throw.\nOnce you cast the spell with this feature, you can't do so in this way again until you finish a Long Rest.",
+        "index": "warlock-contact-patron",
+        "level": {
+          "index": "warlock-9",
+          "name": "Warlock 9"
+        },
+        "name": "Contact Patron"
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "description": "Your patron grants you a magical secret called an arcanum. Choose one level 6 Warlock spell as this arcanum.\nYou can cast your arcanum spell once without expending a spell slot, and you must finish a Long Rest before you can cast it in this way again.\nAs shown in the Warlock Features table, you gain another Warlock spell of your choice that can be cast in this way when you reach Warlock levels 13 (level 7 spell), 15 (level 8 spell), and 17 (level 9 spell). You regain all uses of your Mystic Arcanum when you finish a Long Rest.\nWhenever you gain a Warlock level, you can replace one of your arcanum spells with another Warlock spell of the same level.",
+        "index": "warlock-mystic-arcanum",
+        "level": {
+          "index": "warlock-11",
+          "name": "Warlock 11"
+        },
+        "name": "Mystic Arcanum"
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "description": "You gain an Epic Boon feat (see \"Feats\") or another feat of your choice for which you qualify. Boon of Fate is recommended.",
+        "index": "warlock-epic-boon",
+        "level": {
+          "index": "warlock-19",
+          "name": "Warlock 19"
+        },
+        "name": "Epic Boon"
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "description": "When you use your Magical Cunning feature, you regain all your expended Pact Magic spell slots.",
+        "index": "warlock-eldritch-master",
+        "level": {
+          "index": "warlock-20",
+          "name": "Warlock 20"
+        },
+        "name": "Eldritch Master"
+      }
+    ],
+    "levels": [
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 1
+        },
+        "features": [
+          {
+            "index": "warlock-eldritch-invocations",
+            "name": "Eldritch Invocations"
+          },
+          {
+            "index": "warlock-pact-magic",
+            "name": "Pact Magic"
+          }
+        ],
+        "index": "warlock-1",
+        "level": 1,
+        "name": "Warlock 1",
+        "prof_bonus": 2,
+        "spellcasting": {
+          "cantrips_known": 2,
+          "prepared_spells": 2,
+          "spell_slots_level_1": 1,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 3
+        },
+        "features": [
+          {
+            "index": "warlock-magical-cunning",
+            "name": "Magical Cunning"
+          }
+        ],
+        "index": "warlock-2",
+        "level": 2,
+        "name": "Warlock 2",
+        "prof_bonus": 2,
+        "spellcasting": {
+          "cantrips_known": 2,
+          "prepared_spells": 3,
+          "spell_slots_level_1": 2,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 3
+        },
+        "features": [
+          {
+            "index": "warlock-subclass",
+            "name": "Warlock Subclass"
+          }
+        ],
+        "index": "warlock-3",
+        "level": 3,
+        "name": "Warlock 3",
+        "prof_bonus": 2,
+        "spellcasting": {
+          "cantrips_known": 2,
+          "prepared_spells": 4,
+          "spell_slots_level_1": 0,
+          "spell_slots_level_2": 2,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 3
+        },
+        "features": [
+          {
+            "index": "warlock-ability-score-improvement",
+            "name": "Ability Score Improvement"
+          }
+        ],
+        "index": "warlock-4",
+        "level": 4,
+        "name": "Warlock 4",
+        "prof_bonus": 2,
+        "spellcasting": {
+          "cantrips_known": 3,
+          "prepared_spells": 5,
+          "spell_slots_level_1": 0,
+          "spell_slots_level_2": 2,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 5
+        },
+        "features": [],
+        "index": "warlock-5",
+        "level": 5,
+        "name": "Warlock 5",
+        "prof_bonus": 3,
+        "spellcasting": {
+          "cantrips_known": 3,
+          "prepared_spells": 6,
+          "spell_slots_level_1": 0,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 2,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 5
+        },
+        "features": [
+          {
+            "index": "warlock-subclass",
+            "name": "Warlock Subclass"
+          }
+        ],
+        "index": "warlock-6",
+        "level": 6,
+        "name": "Warlock 6",
+        "prof_bonus": 3,
+        "spellcasting": {
+          "cantrips_known": 3,
+          "prepared_spells": 7,
+          "spell_slots_level_1": 0,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 2,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 6
+        },
+        "features": [],
+        "index": "warlock-7",
+        "level": 7,
+        "name": "Warlock 7",
+        "prof_bonus": 3,
+        "spellcasting": {
+          "cantrips_known": 3,
+          "prepared_spells": 8,
+          "spell_slots_level_1": 0,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 2,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 6
+        },
+        "features": [
+          {
+            "index": "warlock-ability-score-improvement",
+            "name": "Ability Score Improvement"
+          }
+        ],
+        "index": "warlock-8",
+        "level": 8,
+        "name": "Warlock 8",
+        "prof_bonus": 3,
+        "spellcasting": {
+          "cantrips_known": 3,
+          "prepared_spells": 9,
+          "spell_slots_level_1": 0,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 2,
+          "spell_slots_level_5": 0,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 7
+        },
+        "features": [
+          {
+            "index": "warlock-contact-patron",
+            "name": "Contact Patron"
+          }
+        ],
+        "index": "warlock-9",
+        "level": 9,
+        "name": "Warlock 9",
+        "prof_bonus": 4,
+        "spellcasting": {
+          "cantrips_known": 3,
+          "prepared_spells": 10,
+          "spell_slots_level_1": 0,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 2,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 7
+        },
+        "features": [
+          {
+            "index": "warlock-subclass",
+            "name": "Warlock Subclass"
+          }
+        ],
+        "index": "warlock-10",
+        "level": 10,
+        "name": "Warlock 10",
+        "prof_bonus": 4,
+        "spellcasting": {
+          "cantrips_known": 4,
+          "prepared_spells": 10,
+          "spell_slots_level_1": 0,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 2,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 7
+        },
+        "features": [
+          {
+            "index": "warlock-mystic-arcanum",
+            "name": "Mystic Arcanum"
+          }
+        ],
+        "index": "warlock-11",
+        "level": 11,
+        "name": "Warlock 11",
+        "prof_bonus": 4,
+        "spellcasting": {
+          "cantrips_known": 4,
+          "prepared_spells": 11,
+          "spell_slots_level_1": 0,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 3,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 8
+        },
+        "features": [
+          {
+            "index": "warlock-ability-score-improvement",
+            "name": "Ability Score Improvement"
+          }
+        ],
+        "index": "warlock-12",
+        "level": 12,
+        "name": "Warlock 12",
+        "prof_bonus": 4,
+        "spellcasting": {
+          "cantrips_known": 4,
+          "prepared_spells": 11,
+          "spell_slots_level_1": 0,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 3,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 8
+        },
+        "features": [
+          {
+            "index": "warlock-mystic-arcanum",
+            "name": "Mystic Arcanum"
+          }
+        ],
+        "index": "warlock-13",
+        "level": 13,
+        "name": "Warlock 13",
+        "prof_bonus": 5,
+        "spellcasting": {
+          "cantrips_known": 4,
+          "prepared_spells": 12,
+          "spell_slots_level_1": 0,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 3,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 8
+        },
+        "features": [
+          {
+            "index": "warlock-subclass",
+            "name": "Warlock Subclass"
+          }
+        ],
+        "index": "warlock-14",
+        "level": 14,
+        "name": "Warlock 14",
+        "prof_bonus": 5,
+        "spellcasting": {
+          "cantrips_known": 4,
+          "prepared_spells": 12,
+          "spell_slots_level_1": 0,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 3,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 9
+        },
+        "features": [
+          {
+            "index": "warlock-mystic-arcanum",
+            "name": "Mystic Arcanum"
+          }
+        ],
+        "index": "warlock-15",
+        "level": 15,
+        "name": "Warlock 15",
+        "prof_bonus": 5,
+        "spellcasting": {
+          "cantrips_known": 4,
+          "prepared_spells": 13,
+          "spell_slots_level_1": 0,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 3,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 9
+        },
+        "features": [
+          {
+            "index": "warlock-ability-score-improvement",
+            "name": "Ability Score Improvement"
+          }
+        ],
+        "index": "warlock-16",
+        "level": 16,
+        "name": "Warlock 16",
+        "prof_bonus": 5,
+        "spellcasting": {
+          "cantrips_known": 4,
+          "prepared_spells": 13,
+          "spell_slots_level_1": 0,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 3,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 9
+        },
+        "features": [
+          {
+            "index": "warlock-mystic-arcanum",
+            "name": "Mystic Arcanum"
+          }
+        ],
+        "index": "warlock-17",
+        "level": 17,
+        "name": "Warlock 17",
+        "prof_bonus": 6,
+        "spellcasting": {
+          "cantrips_known": 4,
+          "prepared_spells": 14,
+          "spell_slots_level_1": 0,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 4,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 10
+        },
+        "features": [],
+        "index": "warlock-18",
+        "level": 18,
+        "name": "Warlock 18",
+        "prof_bonus": 6,
+        "spellcasting": {
+          "cantrips_known": 4,
+          "prepared_spells": 14,
+          "spell_slots_level_1": 0,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 4,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 10
+        },
+        "features": [
+          {
+            "index": "warlock-epic-boon",
+            "name": "Epic Boon"
+          }
+        ],
+        "index": "warlock-19",
+        "level": 19,
+        "name": "Warlock 19",
+        "prof_bonus": 6,
+        "spellcasting": {
+          "cantrips_known": 4,
+          "prepared_spells": 15,
+          "spell_slots_level_1": 0,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 4,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      },
+      {
+        "class": {
+          "index": "warlock",
+          "name": "Warlock"
+        },
+        "class_specific": {
+          "eldritch_invocations": 10
+        },
+        "features": [
+          {
+            "index": "warlock-eldritch-master",
+            "name": "Eldritch Master"
+          }
+        ],
+        "index": "warlock-20",
+        "level": 20,
+        "name": "Warlock 20",
+        "prof_bonus": 6,
+        "spellcasting": {
+          "cantrips_known": 4,
+          "prepared_spells": 15,
+          "spell_slots_level_1": 0,
+          "spell_slots_level_2": 0,
+          "spell_slots_level_3": 0,
+          "spell_slots_level_4": 0,
+          "spell_slots_level_5": 4,
+          "spell_slots_level_6": 0,
+          "spell_slots_level_7": 0,
+          "spell_slots_level_8": 0,
+          "spell_slots_level_9": 0
+        }
+      }
+    ],
+    "subclasses": [
+      {
+        "features": [
+          {
+            "class": {
+              "index": "warlock",
+              "name": "Warlock"
+            },
+            "description": "When you reduce an enemy to 0 Hit Points, you gain Temporary Hit Points equal to your Charisma modifier plus your Warlock level (minimum of 1 Temporary Hit Point). You also gain this benefit if someone else reduces an enemy within 10 feet of you to 0 Hit Points.",
+            "index": "fiend-patron-dark-ones-blessing",
+            "level": {
+              "index": "warlock-3",
+              "name": "Warlock 3"
+            },
+            "name": "Dark One's Blessing",
+            "subclass": {
+              "index": "fiend-patron",
+              "name": "Fiend Patron"
+            }
+          },
+          {
+            "class": {
+              "index": "warlock",
+              "name": "Warlock"
+            },
+            "description": "The magic of your patron ensures you always have certain spells ready; when you reach a Warlock level specified in the Fiend Spells table, you thereafter always have the listed spells prepared.\nFiend Spells Warlock Level | Spells\n3 | Burning Hands, Command, Scorching Ray, Suggestion\n5 | Fireball, Stinking Cloud\n7 | Fire Shield, Wall of Fire\n9 | Geas, Insect Plague",
+            "index": "fiend-patron-fiend-spells",
+            "level": {
+              "index": "warlock-3",
+              "name": "Warlock 3"
+            },
+            "name": "Fiend Spells",
+            "subclass": {
+              "index": "fiend-patron",
+              "name": "Fiend Patron"
+            }
+          },
+          {
+            "class": {
+              "index": "warlock",
+              "name": "Warlock"
+            },
+            "description": "You can call on your fiendish patron to alter fate in your favor. When you make an ability check or a saving throw, you can use this feature to add 1d10 to your roll. You can do so after seeing the roll but before any of the roll's effects occur.\nYou can use this feature a number of times equal to your Charisma modifier (minimum of once), but you can use it no more than once per roll. You regain all expended uses when you finish a Long Rest.",
+            "index": "fiend-patron-dark-ones-own-luck",
+            "level": {
+              "index": "warlock-6",
+              "name": "Warlock 6"
+            },
+            "name": "Dark One's Own Luck",
+            "subclass": {
+              "index": "fiend-patron",
+              "name": "Fiend Patron"
+            }
+          },
+          {
+            "class": {
+              "index": "warlock",
+              "name": "Warlock"
+            },
+            "description": "Choose one damage type, other than Force, whenever you finish a Short or Long Rest. You have Resistance to that damage type until you choose a different one with this feature.",
+            "index": "fiend-patron-fiendish-resilience",
+            "level": {
+              "index": "warlock-10",
+              "name": "Warlock 10"
+            },
+            "name": "Fiendish Resilience",
+            "subclass": {
+              "index": "fiend-patron",
+              "name": "Fiend Patron"
+            }
+          },
+          {
+            "class": {
+              "index": "warlock",
+              "name": "Warlock"
+            },
+            "description": "Once per turn when you hit a creature with an attack roll, you can try to instantly transport the target through the Lower Planes. The target must succeed on a Charisma saving throw against your spell save DC, or the target disappears and hurtles through a nightmare landscape. The target takes 8d10 Psychic damage if it isn't a Fiend, and it has the Incapacitated condition until the end of your next turn, when it returns to the space it previously occupied or the nearest unoccupied space.\nOnce you use this feature, you can't use it again until you finish a Long Rest unless you expend a Pact Magic spell slot (no action required) to restore your use of it.",
+            "index": "fiend-patron-hurl-through-hell",
+            "level": {
+              "index": "warlock-14",
+              "name": "Warlock 14"
+            },
+            "name": "Hurl Through Hell",
+            "subclass": {
+              "index": "fiend-patron",
+              "name": "Fiend Patron"
+            }
+          }
+        ],
+        "levels": [
+          {
+            "class": {
+              "index": "warlock",
+              "name": "Warlock"
+            },
+            "features": [
+              {
+                "index": "fiend-patron-dark-ones-blessing",
+                "name": "Dark One's Blessing"
+              },
+              {
+                "index": "fiend-patron-fiend-spells",
+                "name": "Fiend Spells"
+              }
+            ],
+            "index": "fiend-patron-3",
+            "level": 3,
+            "name": "Fiend Patron 3",
+            "subclass": {
+              "index": "fiend-patron",
+              "name": "Fiend Patron"
+            }
+          },
+          {
+            "class": {
+              "index": "warlock",
+              "name": "Warlock"
+            },
+            "features": [
+              {
+                "index": "fiend-patron-dark-ones-own-luck",
+                "name": "Dark One's Own Luck"
+              }
+            ],
+            "index": "fiend-patron-6",
+            "level": 6,
+            "name": "Fiend Patron 6",
+            "subclass": {
+              "index": "fiend-patron",
+              "name": "Fiend Patron"
+            }
+          },
+          {
+            "class": {
+              "index": "warlock",
+              "name": "Warlock"
+            },
+            "features": [
+              {
+                "index": "fiend-patron-fiendish-resilience",
+                "name": "Fiendish Resilience"
+              }
+            ],
+            "index": "fiend-patron-10",
+            "level": 10,
+            "name": "Fiend Patron 10",
+            "subclass": {
+              "index": "fiend-patron",
+              "name": "Fiend Patron"
+            }
+          },
+          {
+            "class": {
+              "index": "warlock",
+              "name": "Warlock"
+            },
+            "features": [
+              {
+                "index": "fiend-patron-hurl-through-hell",
+                "name": "Hurl Through Hell"
+              }
+            ],
+            "index": "fiend-patron-14",
+            "level": 14,
+            "name": "Fiend Patron 14",
+            "subclass": {
+              "index": "fiend-patron",
+              "name": "Fiend Patron"
+            }
+          }
+        ],
+        "subclass": {
+          "class": {
+            "index": "warlock",
+            "name": "Warlock"
+          },
+          "description": "Your pact draws on the Lower Planes, the realms of perdition. You might forge a bargain with a demon lord, an archdevil, or another fiend that is especially mighty. That patron's aims are evil-the corruption or destruction of all things, ultimately including you-and your path is defined by the extent to which you strive against those aims.",
+          "features": [
+            {
+              "description": "When you reduce an enemy to 0 Hit Points, you gain Temporary Hit Points equal to your Charisma modifier plus your Warlock level (minimum of 1 Temporary Hit Point). You also gain this benefit if someone else reduces an enemy within 10 feet of you to 0 Hit Points.",
+              "level": 3,
+              "name": "Dark One's Blessing"
+            },
+            {
+              "description": "The magic of your patron ensures you always have certain spells ready; when you reach a Warlock level specified in the Fiend Spells table, you thereafter always have the listed spells prepared.\nFiend Spells\nWarlock Level Spells\n3 Burning Hands, Command,\nScorching Ray, Suggestion\n5 Fireball, Stinking Cloud\n7 Fire Shield, Wall of Fire\n9 Geas, Insect Plague",
+              "level": 3,
+              "name": "Fiend Spells"
+            },
+            {
+              "description": "You can call on your fiendish patron to alter fate in your favor. When you make an ability check or a saving throw, you can use this feature to add 1d10 to your roll. You can do so after seeing the roll but before any of the roll's effects occur.\n  You can use this feature a number of times equal to your Charisma modifier (minimum of once), but you can use it no more than once per roll. You regain all expended uses when you finish a Long Rest.",
+              "level": 6,
+              "name": "Dark One's Own Luck"
+            },
+            {
+              "description": "Choose one damage type, other than Force, whenever you finish a Short or Long Rest. You have Resistance to that damage type until you choose a different one with this feature.",
+              "level": 10,
+              "name": "Fiendish Resilience"
+            },
+            {
+              "description": "Once per turn when you hit a creature with an attack roll, you can try to instantly transport the target through the Lower Planes. The target must succeed on a Charisma saving throw against your spell save DC, or the target disappears and hurtles through a nightmare landscape. The target takes 8d10 Psychic damage if it isn't a Fiend, and it has the Incapacitated condition until the end of your next turn, when it returns to the space it previously occupied or the nearest unoccupied space.\n  Once you use this feature, you can't use it again until you finish a Long Rest unless you expend a Pact Magic spell slot (no action required) to restore your use of it.",
+              "level": 14,
+              "name": "Hurl Through Hell"
+            }
+          ],
+          "index": "fiend-patron",
+          "name": "Fiend Patron",
+          "summary": "Make a Deal with the Lower Planes"
+        }
+      }
+    ]
+  }
+}

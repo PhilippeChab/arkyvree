@@ -1,0 +1,6687 @@
+{
+  "_meta": {
+    "book": "srd",
+    "scrapedAt": "2026-11-06T21:05:56.207Z",
+    "sourceUrls": {
+      "Equipment": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Equipment.json"
+    },
+    "type": "item"
+  },
+  "overrides": {
+    "Chain Shirt": {
+      "weight": 20
+    },
+    "Half-Plate Armor": {
+      "name": "Half Plate Armor"
+    },
+    "Hide Armor": {
+      "equipment_categories": [
+        {
+          "index": "armor",
+          "name": "Armor"
+        },
+        {
+          "index": "medium-armor",
+          "name": "Medium Armor"
+        }
+      ]
+    },
+    "Sling": {
+      "damage": {
+        "damage_dice": "1d4",
+        "damage_type": {
+          "index": "bludgeoning",
+          "name": "Bludgeoning"
+        }
+      }
+    },
+    "Trident": {
+      "damage": {
+        "damage_dice": "1d8",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "two_handed_damage": {
+        "damage_dice": "1d10",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      }
+    }
+  },
+  "raw": [
+    {
+      "cost": {
+        "quantity": 25,
+        "unit": "gp"
+      },
+      "description": "When you take the Attack action, you can replace one of your attacks with throwing a vial of Acid. Target one creature or object you can see within 20 feet of yourself. The target must succeed on a Dexterity saving throw (DC 8 plus your Dexterity modifier and Proficiency Bonus) or take 2d6 Acid damage.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "acid",
+      "name": "Acid",
+      "weight": 1
+    },
+    {
+      "cost": {
+        "quantity": 25,
+        "unit": "gp"
+      },
+      "description": "When you take the Attack action, you can replace one of your attacks with throwing a flask of Alchemist's Fire. Target one creature or object you can see within 20 feet of yourself. The target must succeed on a Dexterity saving throw (DC 8 plus your Dexterity modifier and Proficiency Bonus) or take 1d4 Fire damage and start burning (see “Rules Glossary”).",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "alchemists-fire",
+      "name": "Alchemist's Fire",
+      "weight": 1
+    },
+    {
+      "ability": {
+        "index": "int",
+        "name": "INT"
+      },
+      "cost": {
+        "quantity": 50,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "acid",
+          "name": "Acid"
+        },
+        {
+          "index": "alchemists-fire",
+          "name": "Alchemist's Fire"
+        },
+        {
+          "index": "component-pouch",
+          "name": "Component Pouch"
+        },
+        {
+          "index": "oil",
+          "name": "Oil"
+        },
+        {
+          "index": "paper",
+          "name": "Paper"
+        },
+        {
+          "index": "perfume",
+          "name": "Perfume"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "artisans-tools",
+          "name": "Artisan's Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "alchemists-supplies",
+      "name": "Alchemist's Supplies",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "int",
+              "name": "INT"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Identify a substance"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "int",
+              "name": "INT"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Start a fire"
+        }
+      ],
+      "weight": 8
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "description": "A Holy Symbol takes one of the forms in the Holy Symbol table and is bejeweled or painted to channel divine magic. A Cleric or Paladin can use a Holy Symbol as a Spellcasting Focus.\nThe table indicates whether a Holy Symbol needs to be held, worn, or borne on fabric (such as a tabard or banner) or a Shield.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        },
+        {
+          "index": "holy-symbols",
+          "name": "Holy Symbols"
+        }
+      ],
+      "index": "amulet",
+      "name": "Amulet",
+      "weight": 1
+    },
+    {
+      "cost": {
+        "quantity": 50,
+        "unit": "gp"
+      },
+      "description": "As a Bonus Action, you can drink a vial of Antitoxin to gain Advantage on saving throws to avoid or end the Poisoned condition for 1 hour.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "antitoxin",
+      "name": "Antitoxin",
+      "weight": 1
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "ammunition",
+          "name": "Ammunition"
+        }
+      ],
+      "index": "arrows",
+      "name": "Arrows",
+      "quantity": 20,
+      "storage": {
+        "index": "quiver",
+        "name": "Quiver"
+      },
+      "weight": 1
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      },
+      "description": "A Backpack holds up to 30 pounds within 1 cubic foot. It can also serve as a saddlebag.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "backpack",
+      "name": "Backpack",
+      "weight": 5
+    },
+    {
+      "ability": {
+        "index": "cha",
+        "name": "CHA"
+      },
+      "cost": {
+        "quantity": 30,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "musical-instruments",
+          "name": "Musical Instruments"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "bagpipes",
+      "name": "Bagpipes",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Play a known tune"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Improvise a song"
+        }
+      ],
+      "weight": 6
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "description": "As a Utilize action, you can spill Ball Bearings from their pouch. They spread to cover a level, 10-footsquare area within 10 feet of yourself. A creature that enters this area for the first time on a turn must succeed on a DC 10 Dexterity saving throw or have the Prone condition. It takes 10 minutes to recover the Ball Bearings.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "ball-bearings",
+      "name": "Ball bearings",
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      },
+      "description": "A Barrel holds up to 40 gallons of liquid or up to 4 cubic feet of dry goods.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "barrel",
+      "name": "Barrel",
+      "weight": 70
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      },
+      "description": "A Basket holds up to 40 pounds within 2 cubic feet.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "basket",
+      "name": "Basket",
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d8",
+        "damage_type": {
+          "index": "slashing",
+          "name": "Slashing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-melee-weapons",
+          "name": "Martial Melee Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "battleaxe",
+      "mastery": {
+        "index": "topple",
+        "name": "Topple"
+      },
+      "name": "Battleaxe",
+      "properties": [
+        {
+          "index": "versatile",
+          "name": "Versatile"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "two_handed_damage": {
+        "damage_dice": "1d10",
+        "damage_type": {
+          "index": "slashing",
+          "name": "Slashing"
+        }
+      },
+      "weight": 4
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      },
+      "description": "A Bedroll sleeps one Small or Medium creature. While in a Bedroll, you automatically succeed on saving throws against extreme cold (see “Gameplay Toolbox”).",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "bedroll",
+      "name": "Bedroll",
+      "weight": 25
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "description": "When rung as a Utilize action, a Bell produces a sound that can be heard up to 60 feet away.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "bell",
+      "name": "Bell",
+      "weight": 1
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "description": "While wrapped in a blanket, you have Advantage on saving throws against extreme cold (see “Gameplay Toolbox”).",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "blanket",
+      "name": "Blanket",
+      "weight": 3
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "description": "A Block and Tackle allows you to hoist up to four times the weight you can normally lift.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "block-and-tackle",
+      "name": "Block and tackle",
+      "weight": 5
+    },
+    {
+      "ammunition": {
+        "index": "needles",
+        "name": "Needles"
+      },
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "martial-ranged-weapons",
+          "name": "Martial Ranged Weapons"
+        },
+        {
+          "index": "ranged-weapons",
+          "name": "Ranged Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "blowgun",
+      "mastery": {
+        "index": "vex",
+        "name": "Vex"
+      },
+      "name": "Blowgun",
+      "properties": [
+        {
+          "index": "ammunition",
+          "name": "Ammunition"
+        },
+        {
+          "index": "loading",
+          "name": "Loading"
+        }
+      ],
+      "range": {
+        "long": 100,
+        "normal": 25
+      },
+      "weight": 1
+    },
+    {
+      "cost": {
+        "quantity": 25,
+        "unit": "gp"
+      },
+      "description": "A Book contains fiction or nonfiction. If you consult an accurate nonfiction Book about its topic, you gain a +5 bonus to Intelligence (Arcana, History, Nature, or Religion) checks you make about that topic.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "book",
+      "name": "Book",
+      "weight": 5
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "ammunition",
+          "name": "Ammunition"
+        }
+      ],
+      "index": "bolts",
+      "name": "Bolts",
+      "quantity": 20,
+      "storage": {
+        "index": "case-crossbow-bolt",
+        "name": "Case, Crossbow Bolt"
+      },
+      "weight": 1.5
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      },
+      "description": "A Glass Bottle holds up to 11/2 pints.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "bottle-glass",
+      "name": "Bottle, Glass",
+      "weight": 2
+    },
+    {
+      "armor_class": {
+        "base": 14,
+        "dex_bonus": true,
+        "max_bonus": 2
+      },
+      "cost": {
+        "quantity": 400,
+        "unit": "gp"
+      },
+      "doff_time": "1 minute",
+      "don_time": "5 minutes",
+      "equipment_categories": [
+        {
+          "index": "armor",
+          "name": "Armor"
+        },
+        {
+          "index": "medium-armor",
+          "name": "Medium Armor"
+        }
+      ],
+      "index": "breastplate",
+      "name": "Breastplate",
+      "stealth_disadvantage": false,
+      "str_minimum": 0,
+      "weight": 20
+    },
+    {
+      "ability": {
+        "index": "int",
+        "name": "INT"
+      },
+      "cost": {
+        "quantity": 20,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "antitoxin",
+          "name": "Antitoxin"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "artisans-tools",
+          "name": "Artisan's Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "brewers-supplies",
+      "name": "Brewer's Supplies",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "int",
+              "name": "INT"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Detect poisoned drink"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "int",
+              "name": "INT"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Identify alcohol"
+        }
+      ],
+      "weight": 9
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "cp"
+      },
+      "description": "A Bucket holds up to half a cubic foot of contents.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "bucket",
+      "name": "Bucket",
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 3,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "ammunition",
+          "name": "Ammunition"
+        }
+      ],
+      "index": "bullets-firearm",
+      "name": "Bullets, Firearm",
+      "quantity": 10,
+      "storage": {
+        "index": "pouch",
+        "name": "Pouch"
+      },
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 4,
+        "unit": "cp"
+      },
+      "equipment_categories": [
+        {
+          "index": "ammunition",
+          "name": "Ammunition"
+        }
+      ],
+      "index": "bullets-sling",
+      "name": "Bullets, Sling",
+      "quantity": 20,
+      "storage": {
+        "index": "pouch",
+        "name": "Pouch"
+      },
+      "weight": 1.5
+    },
+    {
+      "contents": [
+        {
+          "item": {
+            "index": "backpack",
+            "name": "Backpack"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "ball-bearings",
+            "name": "Ball bearings"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "bell",
+            "name": "Bell"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "candle",
+            "name": "Candle"
+          },
+          "quantity": 10
+        },
+        {
+          "item": {
+            "index": "crowbar",
+            "name": "Crowbar"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "lantern-hooded",
+            "name": "Lantern, Hooded"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "flask",
+            "name": "Flask"
+          },
+          "quantity": 7
+        },
+        {
+          "item": {
+            "index": "oil",
+            "name": "Oil"
+          },
+          "quantity": 7
+        },
+        {
+          "item": {
+            "index": "rations",
+            "name": "Rations"
+          },
+          "quantity": 5
+        },
+        {
+          "item": {
+            "index": "rope",
+            "name": "Rope"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "tinderbox",
+            "name": "Tinderbox"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "waterskin",
+            "name": "Waterskin"
+          },
+          "quantity": 1
+        }
+      ],
+      "cost": {
+        "quantity": 16,
+        "unit": "gp"
+      },
+      "description": "A Burglar's Pack contains the following items: Backpack, Ball Bearings, Bell, 10 Candles, Crowbar, Hooded Lantern, 7 flasks of Oil, 5 days of Rations, Rope, Tinderbox, and Waterskin.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        },
+        {
+          "index": "equipment-packs",
+          "name": "Equipment Packs"
+        }
+      ],
+      "index": "burglars-pack",
+      "name": "Burglar's Pack",
+      "weight": 20
+    },
+    {
+      "ability": {
+        "index": "dex",
+        "name": "DEX"
+      },
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "ink",
+          "name": "Ink"
+        },
+        {
+          "index": "spell-scroll-cantrip",
+          "name": "Spell Scroll, Cantrip"
+        },
+        {
+          "index": "spell-scroll-level-1",
+          "name": "Spell Scroll, Level 1"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "artisans-tools",
+          "name": "Artisan's Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "calligraphers-supplies",
+      "name": "Calligrapher's Supplies",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "dex",
+              "name": "DEX"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Write text with impressive flourishes that guard against forgery"
+        }
+      ],
+      "weight": 5
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      },
+      "description": "As a Utilize action, you can spread Caltrops from their bag to cover a 5-foot-square area within 5 feet of yourself. A creature that enters this area for the first time on a turn must succeed on a DC 15 Dexterity saving throw or take 1 Piercing damage and have its Speed reduced to 0 until the start of its next turn. It takes 10 minutes to recover the Caltrops.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "caltrops",
+      "name": "Caltrops",
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "cp"
+      },
+      "description": "For 1 hour, a lit Candle sheds Bright Light in a 5-foot radius and Dim Light for an additional 5 feet.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "candle",
+      "name": "Candle",
+      "weight": 0
+    },
+    {
+      "ability": {
+        "index": "str",
+        "name": "STR"
+      },
+      "cost": {
+        "quantity": 8,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "club",
+          "name": "Club"
+        },
+        {
+          "index": "greatclub",
+          "name": "Greatclub"
+        },
+        {
+          "index": "quarterstaff",
+          "name": "Quarterstaff"
+        },
+        {
+          "index": "barrel",
+          "name": "Barrel"
+        },
+        {
+          "index": "chest",
+          "name": "Chest"
+        },
+        {
+          "index": "ladder",
+          "name": "Ladder"
+        },
+        {
+          "index": "pole",
+          "name": "Pole"
+        },
+        {
+          "index": "ram-portable",
+          "name": "Ram, Portable"
+        },
+        {
+          "index": "torch",
+          "name": "Torch"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "artisans-tools",
+          "name": "Artisan's Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "carpenters-tools",
+      "name": "Carpenter's Tools",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "str",
+              "name": "STR"
+            },
+            "dc_value": 20,
+            "success_type": "none"
+          },
+          "name": ": Seal or pry open a door or container"
+        }
+      ],
+      "weight": 6
+    },
+    {
+      "ability": {
+        "index": "wis",
+        "name": "WIS"
+      },
+      "cost": {
+        "quantity": 15,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "map",
+          "name": "Map"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "artisans-tools",
+          "name": "Artisan's Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "cartographer-tools",
+      "name": "Cartographer's Tools",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "wis",
+              "name": "WIS"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Draft a map of a small area"
+        }
+      ],
+      "weight": 6
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "description": "A Crossbow Bolt Case holds up to 20 Bolts.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "case-crossbow-bolt",
+      "name": "Case, Crossbow Bolt",
+      "weight": 1
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "description": "A Map or Scroll Case holds up to 10 sheets of paper or 5 sheets of parchment.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "case-map-or-scroll",
+      "name": "Case, Map or Scroll",
+      "weight": 1
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "description": "As a Utilize action, you can wrap a Chain around an unwilling creature within 5 feet of yourself that has the Grappled, Incapacitated, or Restrained condition if you succeed on a DC 13 Strength (Athletics) check. If the creature's legs are bound, the creature has the Restrained condition until it escapes. Escaping the Chain requires the creature to make a successful DC 18 Dexterity (Acrobatics) check as an action. Bursting the Chain requires a successful DC 20 Strength (Athletics) check as an action.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "chain",
+      "name": "Chain",
+      "weight": 6
+    },
+    {
+      "armor_class": {
+        "base": 16,
+        "dex_bonus": false,
+        "max_bonus": 0
+      },
+      "cost": {
+        "quantity": 75,
+        "unit": "gp"
+      },
+      "doff_time": "5 minutes",
+      "don_time": "10 minutes",
+      "equipment_categories": [
+        {
+          "index": "armor",
+          "name": "Armor"
+        },
+        {
+          "index": "heavy-armor",
+          "name": "Heavy Armor"
+        }
+      ],
+      "index": "chain-mail",
+      "name": "Chain Mail",
+      "stealth_disadvantage": true,
+      "str_minimum": 13,
+      "weight": 55
+    },
+    {
+      "armor_class": {
+        "base": 13,
+        "dex_bonus": true,
+        "max_bonus": 2
+      },
+      "cost": {
+        "quantity": 50,
+        "unit": "gp"
+      },
+      "doff_time": "1 minute",
+      "don_time": "5 minutes",
+      "equipment_categories": [
+        {
+          "index": "armor",
+          "name": "Armor"
+        },
+        {
+          "index": "medium-armor",
+          "name": "Medium Armor"
+        }
+      ],
+      "index": "chain-shirt",
+      "name": "Chain Shirt",
+      "stealth_disadvantage": false,
+      "str_minimum": 0,
+      "weight": 14
+    },
+    {
+      "cost": {
+        "quantity": 50,
+        "unit": "gp"
+      },
+      "description": "A Chest holds up to 12 cubic feet of contents.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "chest",
+      "name": "Chest",
+      "weight": 20
+    },
+    {
+      "cost": {
+        "quantity": 25,
+        "unit": "gp"
+      },
+      "description": "A Climber's Kit includes boot tips, gloves, pitons, and a harness. As a Utilize action, you can use the Climber's Kit to anchor yourself; when you do, you can't fall more than 25 feet from the anchor point, and you can't move more than 25 feet from there without undoing the anchor as a Bonus Action.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "climbers-kit",
+      "name": "Climber's Kit",
+      "weight": 8
+    },
+    {
+      "cost": {
+        "quantity": 15,
+        "unit": "gp"
+      },
+      "description": "Fine Clothes are made of expensive fabrics and adorned with expertly crafted details. Some events and locations admit only people wearing these clothes.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "clothes-fine",
+      "name": "Clothes, Fine",
+      "weight": 3
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "description": "Traveler's Clothes are resilient garments designed for travel in various environments.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "clothes-travelers",
+      "name": "Clothes, Traveler's",
+      "weight": 4
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "sp"
+      },
+      "damage": {
+        "damage_dice": "1d4",
+        "damage_type": {
+          "index": "bludgeoning",
+          "name": "Bludgeoning"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "simple-melee-weapons",
+          "name": "Simple Melee Weapons"
+        },
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "club",
+      "mastery": {
+        "index": "slow",
+        "name": "Slow"
+      },
+      "name": "Club",
+      "properties": [
+        {
+          "index": "light",
+          "name": "Light"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "weight": 2
+    },
+    {
+      "ability": {
+        "index": "dex",
+        "name": "DEX"
+      },
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "climbers-kit",
+          "name": "Climber's Kit"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "artisans-tools",
+          "name": "Artisan's Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "cobblers-tools",
+      "name": "Cobbler's Tools",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "dex",
+              "name": "DEX"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Modify footwear to give Advantage on the wearer's next Dexterity (Acrobatics) check"
+        }
+      ],
+      "weight": 5
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      },
+      "description": "A Component Pouch is watertight and filled with compartments that hold all the free Material components of your spells.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "component-pouch",
+      "name": "Component Pouch",
+      "weight": 1
+    },
+    {
+      "ability": {
+        "index": "wis",
+        "name": "WIS"
+      },
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "rations",
+          "name": "Rations"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "artisans-tools",
+          "name": "Artisan's Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "cooks-utensils",
+      "name": "Cook's Utensils",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "wis",
+              "name": "WIS"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Improve food's flavor"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "wis",
+              "name": "WIS"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Detect spoiled or poisoned food"
+        }
+      ],
+      "weight": 8
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "description": "While wearing a Costume, you have Advantage on any ability check you make to impersonate the person or type of person it represents.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "costume",
+      "name": "Costume",
+      "weight": 4
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      },
+      "description": "Using a Crowbar gives you Advantage on Strength checks where the Crowbar's leverage can be applied.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "crowbar",
+      "name": "Crowbar",
+      "weight": 5
+    },
+    {
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "arcane-foci",
+          "name": "Arcane Foci"
+        },
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "crystal",
+      "name": "Crystal",
+      "weight": 1
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d4",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "simple-melee-weapons",
+          "name": "Simple Melee Weapons"
+        },
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "dagger",
+      "mastery": {
+        "index": "nick",
+        "name": "Nick"
+      },
+      "name": "Dagger",
+      "properties": [
+        {
+          "index": "finesse",
+          "name": "Finesse"
+        },
+        {
+          "index": "light",
+          "name": "Light"
+        },
+        {
+          "index": "thrown",
+          "name": "Thrown"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "throw_range": {
+        "long": 60,
+        "normal": 20
+      },
+      "weight": 1
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d4",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "ranged-weapons",
+          "name": "Ranged Weapons"
+        },
+        {
+          "index": "simple-ranged-weapons",
+          "name": "Simple Ranged Weapons"
+        },
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "dart",
+      "mastery": {
+        "index": "vex",
+        "name": "Vex"
+      },
+      "name": "Dart",
+      "properties": [
+        {
+          "index": "finesse",
+          "name": "Finesse"
+        },
+        {
+          "index": "thrown",
+          "name": "Thrown"
+        }
+      ],
+      "range": {
+        "long": 60,
+        "normal": 20
+      },
+      "throw_range": {
+        "long": 60,
+        "normal": 20
+      },
+      "weight": 0.25
+    },
+    {
+      "ability": {
+        "index": "wis",
+        "name": "WIS"
+      },
+      "cost": {
+        "quantity": 1,
+        "unit": "sp"
+      },
+      "equipment_categories": [
+        {
+          "index": "gaming-sets",
+          "name": "Gaming Sets"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "dice",
+      "name": "Dice",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "wis",
+              "name": "WIS"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Discern whether someone is cheating"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "wis",
+              "name": "WIS"
+            },
+            "dc_value": 20,
+            "success_type": "none"
+          },
+          "name": "Win the game"
+        }
+      ],
+      "weight": 0
+    },
+    {
+      "contents": [
+        {
+          "item": {
+            "index": "chest",
+            "name": "Chest"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "clothes-fine",
+            "name": "Clothes, Fine"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "ink",
+            "name": "Ink"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "ink-pen",
+            "name": "Ink Pen"
+          },
+          "quantity": 5
+        },
+        {
+          "item": {
+            "index": "lamp",
+            "name": "Lamp"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "case-map-or-scroll",
+            "name": "Case, Map or Scroll"
+          },
+          "quantity": 2
+        },
+        {
+          "item": {
+            "index": "flask",
+            "name": "Flask"
+          },
+          "quantity": 4
+        },
+        {
+          "item": {
+            "index": "oil",
+            "name": "Oil"
+          },
+          "quantity": 4
+        },
+        {
+          "item": {
+            "index": "paper",
+            "name": "Paper"
+          },
+          "quantity": 5
+        },
+        {
+          "item": {
+            "index": "parchment",
+            "name": "Parchment"
+          },
+          "quantity": 5
+        },
+        {
+          "item": {
+            "index": "perfume",
+            "name": "Perfume"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "tinderbox",
+            "name": "Tinderbox"
+          },
+          "quantity": 1
+        }
+      ],
+      "cost": {
+        "quantity": 39,
+        "unit": "gp"
+      },
+      "description": "A Diplomat's Pack contains the following items: Chest, Fine Clothes, Ink, 5 Ink Pens, Lamp, 2 Map or Scroll Cases, 4 flasks of Oil, 5 sheets of Paper, 5 sheets of Parchment, Perfume, and Tinderbox.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        },
+        {
+          "index": "equipment-packs",
+          "name": "Equipment Packs"
+        }
+      ],
+      "index": "diplomat-pack",
+      "name": "Diplomat's Pack",
+      "weight": 20
+    },
+    {
+      "ability": {
+        "index": "cha",
+        "name": "CHA"
+      },
+      "cost": {
+        "quantity": 25,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "costume",
+          "name": "Costume"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        },
+        {
+          "index": "other-tools",
+          "name": "Other Tools"
+        }
+      ],
+      "index": "disguise-kit",
+      "name": "Disguise Kit",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Apply makeup"
+        }
+      ],
+      "weight": 3
+    },
+    {
+      "ability": {
+        "index": "wis",
+        "name": "WIS"
+      },
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "gaming-sets",
+          "name": "Gaming Sets"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "dragonchess",
+      "name": "Dragonchess",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "wis",
+              "name": "WIS"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Discern whether someone is cheating"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "wis",
+              "name": "WIS"
+            },
+            "dc_value": 20,
+            "success_type": "none"
+          },
+          "name": "Win the game"
+        }
+      ],
+      "weight": 0
+    },
+    {
+      "ability": {
+        "index": "cha",
+        "name": "CHA"
+      },
+      "cost": {
+        "quantity": 6,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "musical-instruments",
+          "name": "Musical Instruments"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "drum",
+      "name": "Drum",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Play a known tune"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Improvise a song"
+        }
+      ],
+      "weight": 3
+    },
+    {
+      "ability": {
+        "index": "cha",
+        "name": "CHA"
+      },
+      "cost": {
+        "quantity": 25,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "musical-instruments",
+          "name": "Musical Instruments"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "dulcimer",
+      "name": "Dulcimer",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Play a known tune"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Improvise a song"
+        }
+      ],
+      "weight": 10
+    },
+    {
+      "contents": [
+        {
+          "item": {
+            "index": "backpack",
+            "name": "Backpack"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "caltrops",
+            "name": "Caltrops"
+          },
+          "quantity": 10
+        },
+        {
+          "item": {
+            "index": "crowbar",
+            "name": "Crowbar"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "flask",
+            "name": "Flask"
+          },
+          "quantity": 2
+        },
+        {
+          "item": {
+            "index": "oil",
+            "name": "Oil"
+          },
+          "quantity": 2
+        },
+        {
+          "item": {
+            "index": "rations",
+            "name": "Rations"
+          },
+          "quantity": 10
+        },
+        {
+          "item": {
+            "index": "rope",
+            "name": "Rope"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "tinderbox",
+            "name": "Tinderbox"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "torch",
+            "name": "Torch"
+          },
+          "quantity": 10
+        },
+        {
+          "item": {
+            "index": "waterskin",
+            "name": "Waterskin"
+          },
+          "quantity": 1
+        }
+      ],
+      "cost": {
+        "quantity": 12,
+        "unit": "gp"
+      },
+      "description": "A Dungeoneer's Pack contains the following items: Backpack, Caltrops, Crowbar, 2 flasks of Oil, 10 days of Rations, Rope, Tinderbox, 10 Torches, and Waterskin.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        },
+        {
+          "index": "equipment-packs",
+          "name": "Equipment Packs"
+        }
+      ],
+      "index": "dungeoneer-pack",
+      "name": "Dungeoneer's Pack",
+      "weight": 55
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "description": "A Holy Symbol takes one of the forms in the Holy Symbol table and is bejeweled or painted to channel divine magic. A Cleric or Paladin can use a Holy Symbol as a Spellcasting Focus.\nThe table indicates whether a Holy Symbol needs to be held, worn, or borne on fabric (such as a tabard or banner) or a Shield.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        },
+        {
+          "index": "holy-symbols",
+          "name": "Holy Symbols"
+        }
+      ],
+      "index": "emblem",
+      "name": "Emblem",
+      "weight": 0
+    },
+    {
+      "contents": [
+        {
+          "item": {
+            "index": "backpack",
+            "name": "Backpack"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "bedroll",
+            "name": "Bedroll"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "costume",
+            "name": "Costume"
+          },
+          "quantity": 2
+        },
+        {
+          "item": {
+            "index": "candle",
+            "name": "Candle"
+          },
+          "quantity": 5
+        },
+        {
+          "item": {
+            "index": "rations",
+            "name": "Rations"
+          },
+          "quantity": 5
+        },
+        {
+          "item": {
+            "index": "waterskin",
+            "name": "Waterskin"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "disguise-kit",
+            "name": "Disguise Kit"
+          },
+          "quantity": 1
+        }
+      ],
+      "cost": {
+        "quantity": 40,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "entertainers-pack",
+      "name": "Entertainer's Pack"
+    },
+    {
+      "contents": [
+        {
+          "item": {
+            "index": "backpack",
+            "name": "Backpack"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "bedroll",
+            "name": "Bedroll"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "oil",
+            "name": "Oil"
+          },
+          "quantity": 2
+        },
+        {
+          "item": {
+            "index": "rations",
+            "name": "Rations"
+          },
+          "quantity": 10
+        },
+        {
+          "item": {
+            "index": "rope",
+            "name": "Rope"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "tinderbox",
+            "name": "Tinderbox"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "torch",
+            "name": "Torch"
+          },
+          "quantity": 10
+        },
+        {
+          "item": {
+            "index": "waterskin",
+            "name": "Waterskin"
+          },
+          "quantity": 1
+        }
+      ],
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "description": "An Explorer’s Pack contains the following items: Backpack, Bedroll, 2 flasks of Oil, 10 days of Rations, Rope, Tinderbox, 10 Torches, and Waterskin.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "explorers-pack",
+      "name": "Explorer's Pack",
+      "weight": 55
+    },
+    {
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d8",
+        "damage_type": {
+          "index": "bludgeoning",
+          "name": "Bludgeoning"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-melee-weapons",
+          "name": "Martial Melee Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "flail",
+      "mastery": {
+        "index": "sap",
+        "name": "Sap"
+      },
+      "name": "Flail",
+      "properties": [],
+      "range": {
+        "normal": 5
+      },
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "cp"
+      },
+      "description": "A Flask holds up to 1 pint.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "flask",
+      "name": "Flask",
+      "weight": 1
+    },
+    {
+      "ability": {
+        "index": "cha",
+        "name": "CHA"
+      },
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "musical-instruments",
+          "name": "Musical Instruments"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "flute",
+      "name": "Flute",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Play a known tune"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Improvise a song"
+        }
+      ],
+      "weight": 1
+    },
+    {
+      "ability": {
+        "index": "dex",
+        "name": "DEX"
+      },
+      "cost": {
+        "quantity": 15,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "other-tools",
+          "name": "Other Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "forgery-kit",
+      "name": "Forgery Kit",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "dex",
+              "name": "DEX"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Mimic 10 or fewer words of someone else's handwriting"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "dex",
+              "name": "DEX"
+            },
+            "dc_value": 20,
+            "success_type": "none"
+          },
+          "name": "Duplicate a wax seal"
+        }
+      ],
+      "weight": 5
+    },
+    {
+      "cost": {
+        "quantity": 20,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d10",
+        "damage_type": {
+          "index": "slashing",
+          "name": "Slashing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-melee-weapons",
+          "name": "Martial Melee Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "glaive",
+      "mastery": {
+        "index": "graze",
+        "name": "Graze"
+      },
+      "name": "Glaive",
+      "properties": [
+        {
+          "index": "heavy",
+          "name": "Heavy"
+        },
+        {
+          "index": "reach",
+          "name": "Reach"
+        },
+        {
+          "index": "two-handed",
+          "name": "Two-Handed"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "weight": 6
+    },
+    {
+      "ability": {
+        "index": "int",
+        "name": "INT"
+      },
+      "cost": {
+        "quantity": 30,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "bottle-glass",
+          "name": "Bottle, Glass"
+        },
+        {
+          "index": "magnifying-glass",
+          "name": "Magnifying Glass"
+        },
+        {
+          "index": "spyglass",
+          "name": "Spyglass"
+        },
+        {
+          "index": "vial",
+          "name": "Vial"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "artisans-tools",
+          "name": "Artisan's Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "glassblowers-tools",
+      "name": "Glassblower's Tools",
+      "weight": 5
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      },
+      "description": "As a Utilize action, you can throw the Grappling Hook at a railing, a ledge, or another catch within 50 feet of yourself, and the hook catches on if you succeed on a DC 13 Dexterity (Acrobatics) check. If you tied a Rope to the hook, you can then climb it.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "grappling-hook",
+      "name": "Grappling Hook",
+      "weight": 4
+    },
+    {
+      "cost": {
+        "quantity": 30,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d12",
+        "damage_type": {
+          "index": "slashing",
+          "name": "Slashing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-melee-weapons",
+          "name": "Martial Melee Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "greataxe",
+      "mastery": {
+        "index": "cleave",
+        "name": "Cleave"
+      },
+      "name": "Greataxe",
+      "properties": [
+        {
+          "index": "heavy",
+          "name": "Heavy"
+        },
+        {
+          "index": "two-handed",
+          "name": "Two-Handed"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "weight": 7
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "sp"
+      },
+      "damage": {
+        "damage_dice": "1d8",
+        "damage_type": {
+          "index": "bludgeoning",
+          "name": "Bludgeoning"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "simple-melee-weapons",
+          "name": "Simple Melee Weapons"
+        },
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "greatclub",
+      "mastery": {
+        "index": "push",
+        "name": "Push"
+      },
+      "name": "Greatclub",
+      "properties": [
+        {
+          "index": "two-handed",
+          "name": "Two-Handed"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "weight": 10
+    },
+    {
+      "cost": {
+        "quantity": 50,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "2d6",
+        "damage_type": {
+          "index": "slashing",
+          "name": "Slashing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-melee-weapons",
+          "name": "Martial Melee Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "greatsword",
+      "mastery": {
+        "index": "graze",
+        "name": "Graze"
+      },
+      "name": "Greatsword",
+      "properties": [
+        {
+          "index": "heavy",
+          "name": "Heavy"
+        },
+        {
+          "index": "two-handed",
+          "name": "Two-Handed"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "weight": 6
+    },
+    {
+      "cost": {
+        "quantity": 20,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d10",
+        "damage_type": {
+          "index": "slashing",
+          "name": "Slashing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-melee-weapons",
+          "name": "Martial Melee Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "halberd",
+      "mastery": {
+        "index": "cleave",
+        "name": "Cleave"
+      },
+      "name": "Halberd",
+      "properties": [
+        {
+          "index": "heavy",
+          "name": "Heavy"
+        },
+        {
+          "index": "reach",
+          "name": "Reach"
+        },
+        {
+          "index": "two-handed",
+          "name": "Two-Handed"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "weight": 6
+    },
+    {
+      "armor_class": {
+        "base": 15,
+        "dex_bonus": true,
+        "max_bonus": 2
+      },
+      "cost": {
+        "quantity": 750,
+        "unit": "gp"
+      },
+      "doff_time": "1 minute",
+      "don_time": "5 minutes",
+      "equipment_categories": [
+        {
+          "index": "armor",
+          "name": "Armor"
+        },
+        {
+          "index": "medium-armor",
+          "name": "Medium Armor"
+        }
+      ],
+      "index": "half-plate-armor",
+      "name": "Half-Plate Armor",
+      "stealth_disadvantage": true,
+      "str_minimum": 0,
+      "weight": 40
+    },
+    {
+      "ammunition": {
+        "index": "bolts",
+        "name": "Bolts"
+      },
+      "cost": {
+        "quantity": 25,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d6",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-ranged-weapons",
+          "name": "Martial Ranged Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "ranged-weapons",
+          "name": "Ranged Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "hand-crossbow",
+      "mastery": {
+        "index": "vex",
+        "name": "Vex"
+      },
+      "name": "Hand Crossbow",
+      "properties": [
+        {
+          "index": "ammunition",
+          "name": "Ammunition"
+        },
+        {
+          "index": "light",
+          "name": "Light"
+        },
+        {
+          "index": "loading",
+          "name": "Loading"
+        }
+      ],
+      "range": {
+        "long": 120,
+        "normal": 30
+      },
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d6",
+        "damage_type": {
+          "index": "slashing",
+          "name": "Slashing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "simple-melee-weapons",
+          "name": "Simple Melee Weapons"
+        },
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "handaxe",
+      "mastery": {
+        "index": "vex",
+        "name": "Vex"
+      },
+      "name": "Handaxe",
+      "properties": [
+        {
+          "index": "light",
+          "name": "Light"
+        },
+        {
+          "index": "thrown",
+          "name": "Thrown"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "throw_range": {
+        "long": 60,
+        "normal": 20
+      },
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "description": "A Healer's Kit has ten uses. As a Utilize action, you can expend one of its uses to stabilize an Unconscious creature that has 0 Hit Points without needing to make a Wisdom (Medicine) check.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "healers-kit",
+      "name": "Healer's Kit",
+      "weight": 3
+    },
+    {
+      "ammunition": {
+        "index": "bolts",
+        "name": "Bolts"
+      },
+      "cost": {
+        "quantity": 50,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d10",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-ranged-weapons",
+          "name": "Martial Ranged Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "ranged-weapons",
+          "name": "Ranged Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "heavy-crossbow",
+      "mastery": {
+        "index": "push",
+        "name": "Push"
+      },
+      "name": "Heavy Crossbow",
+      "properties": [
+        {
+          "index": "ammunition",
+          "name": "Ammunition"
+        },
+        {
+          "index": "heavy",
+          "name": "Heavy"
+        },
+        {
+          "index": "loading",
+          "name": "Loading"
+        },
+        {
+          "index": "two-handed",
+          "name": "Two-Handed"
+        }
+      ],
+      "range": {
+        "long": 400,
+        "normal": 100
+      },
+      "weight": 18
+    },
+    {
+      "ability": {
+        "index": "int",
+        "name": "INT"
+      },
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "antitoxin",
+          "name": "Antitoxin"
+        },
+        {
+          "index": "candle",
+          "name": "Candle"
+        },
+        {
+          "index": "healers-kit",
+          "name": "Healer's Kit"
+        },
+        {
+          "index": "potion-of-healing",
+          "name": "Potion of Healing"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "other-tools",
+          "name": "Other Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "herbalism-kit",
+      "name": "Herbalism Kit",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "int",
+              "name": "INT"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Identify a plant"
+        }
+      ],
+      "weight": 3
+    },
+    {
+      "armor_class": {
+        "base": 12,
+        "dex_bonus": true,
+        "max_bonus": 2
+      },
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "doff_time": "1 minute",
+      "don_time": "5 minutes",
+      "equipment_categories": [
+        {
+          "index": "armor",
+          "name": "Armor"
+        },
+        {
+          "index": "light-armor",
+          "name": "Light Armor"
+        }
+      ],
+      "index": "hide-armor",
+      "name": "Hide Armor",
+      "stealth_disadvantage": false,
+      "str_minimum": 0,
+      "weight": 12
+    },
+    {
+      "cost": {
+        "quantity": 25,
+        "unit": "gp"
+      },
+      "description": "When you take the Attack action, you can replace one of your attacks with throwing a flask of Holy Water. Target one creature you can see within 20 feet of yourself. The target must succeed on a Dexterity saving throw (DC 8 plus your Dexterity modifier and Proficiency Bonus) or take 2d8 Radiant damage if it is a Fiend or an Undead.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "holy-water",
+      "name": "Holy Water",
+      "weight": 1
+    },
+    {
+      "ability": {
+        "index": "cha",
+        "name": "CHA"
+      },
+      "cost": {
+        "quantity": 3,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "musical-instruments",
+          "name": "Musical Instruments"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "horn",
+      "name": "Horn",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Play a known tune"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Improvise a song"
+        }
+      ],
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "description": "As a Utilize action, you can set a Hunting Trap, which is a sawtooth steel ring that snaps shut when a creature steps on a pressure plate in the center. The trap is affixed by a heavy chain to an immobile object, such as a tree or a spike driven into the ground. A creature that steps on the plate must succeed on a DC 13 Dexterity saving throw or take 1d4 Piercing damage and have its Speed reduced to 0 until the start of its next turn. Thereafter, until the creature breaks free of the trap, its movement is limited by the length of the chain (typically 3 feet). A creature can use its action to make a DC 13 Strength (Athletics) check, freeing itself or another creature within its reach on a success. Each failed check deals 1 Piercing damage to the trapped creature.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "hunting-trap",
+      "name": "Hunting Trap",
+      "weight": 25
+    },
+    {
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "description": "Ink comes in a 1-ounce bottle, which provides enough ink to write about 500 pages.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "ink",
+      "name": "Ink",
+      "weight": 0
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "cp"
+      },
+      "description": "Using Ink, an Ink Pen is used to write or draw.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "ink-pen",
+      "name": "Ink Pen",
+      "weight": 0
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d6",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "simple-melee-weapons",
+          "name": "Simple Melee Weapons"
+        },
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "javelin",
+      "mastery": {
+        "index": "slow",
+        "name": "Slow"
+      },
+      "name": "Javelin",
+      "properties": [
+        {
+          "index": "thrown",
+          "name": "Thrown"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "throw_range": {
+        "long": 120,
+        "normal": 30
+      },
+      "weight": 2
+    },
+    {
+      "ability": {
+        "index": "int",
+        "name": "INT"
+      },
+      "cost": {
+        "quantity": 25,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "crystal",
+          "name": "Crystal"
+        },
+        {
+          "index": "orb",
+          "name": "Orb"
+        },
+        {
+          "index": "quarterstaff",
+          "name": "Quarterstaff"
+        },
+        {
+          "index": "rod",
+          "name": "Rod"
+        },
+        {
+          "index": "staff",
+          "name": "Staff"
+        },
+        {
+          "index": "wand",
+          "name": "Wand"
+        },
+        {
+          "index": "amulet",
+          "name": "Amulet"
+        },
+        {
+          "index": "emblem",
+          "name": "Emblem"
+        },
+        {
+          "index": "reliquary",
+          "name": "Reliquary"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "artisans-tools",
+          "name": "Artisan's Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "jewelers-tools",
+      "name": "Jeweler's Tools",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "int",
+              "name": "INT"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": " Discern a gem's value"
+        }
+      ],
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "cp"
+      },
+      "description": "A Jug holds up to 1 gallon.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "jug",
+      "name": "Jug",
+      "weight": 4
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "sp"
+      },
+      "description": "A Ladder is 10 feet tall. You must climb to move up or down it. Lamp (5 SP)",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "ladder",
+      "name": "Ladder",
+      "weight": 25
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "sp"
+      },
+      "description": "A Lamp burns Oil as fuel to cast Bright Light in a 15- foot radius and Dim Light for an additional 30 feet",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "lamp",
+      "name": "Lamp",
+      "weight": 1
+    },
+    {
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d10",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-melee-weapons",
+          "name": "Martial Melee Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "lance",
+      "mastery": {
+        "index": "topple",
+        "name": "Topple"
+      },
+      "name": "Lance",
+      "notes": [
+        "Two-handed unless mounted"
+      ],
+      "properties": [
+        {
+          "index": "heavy",
+          "name": "Heavy"
+        },
+        {
+          "index": "reach",
+          "name": "Reach"
+        },
+        {
+          "index": "two-handed",
+          "name": "Two-Handed"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "weight": 6
+    },
+    {
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "description": "A Bullseye Lantern burns Oil as fuel to cast Bright Light in a 60-foot Cone and Dim Light for an additional 60 feet.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "lantern-bullseye",
+      "name": "Lantern, Bullseye",
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "description": "A Hooded Lantern burns Oil as fuel to cast Bright Light in a 30-foot radius and Dim Light for an additional 30 feet. As a Bonus Action, you can lower the hood, reducing the light to Dim Light in a 5-foot radius, or raise it again.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "lantern-hooded",
+      "name": "Lantern, Hooded",
+      "weight": 2
+    },
+    {
+      "armor_class": {
+        "base": 11,
+        "dex_bonus": true
+      },
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "doff_time": "1 minute",
+      "don_time": "1 minute",
+      "equipment_categories": [
+        {
+          "index": "armor",
+          "name": "Armor"
+        },
+        {
+          "index": "light-armor",
+          "name": "Light Armor"
+        }
+      ],
+      "index": "leather-armor",
+      "name": "Leather Armor",
+      "stealth_disadvantage": false,
+      "str_minimum": 0,
+      "weight": 10
+    },
+    {
+      "ability": {
+        "index": "dex",
+        "name": "DEX"
+      },
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "sling",
+          "name": "Sling"
+        },
+        {
+          "index": "whip",
+          "name": "Whip"
+        },
+        {
+          "index": "hide-armor",
+          "name": "Hide Armor"
+        },
+        {
+          "index": "leather-armor",
+          "name": "Leather Armor"
+        },
+        {
+          "index": "studded-leather-armor",
+          "name": "Studded Leather Armor"
+        },
+        {
+          "index": "backpack",
+          "name": "Backpack"
+        },
+        {
+          "index": "case-crossbow-bolt",
+          "name": "Case, Crossbow Bolt"
+        },
+        {
+          "index": "case-map-or-scroll",
+          "name": "Case, Map or Scroll"
+        },
+        {
+          "index": "parchment",
+          "name": "Parchment"
+        },
+        {
+          "index": "pouch",
+          "name": "Pouch"
+        },
+        {
+          "index": "quiver",
+          "name": "Quiver"
+        },
+        {
+          "index": "waterskin",
+          "name": "Waterskin"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "artisans-tools",
+          "name": "Artisan's Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "leatherworkers-tools",
+      "name": "Leatherworker's Tools",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "dex",
+              "name": "DEX"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Add a design to a leather item"
+        }
+      ],
+      "weight": 5
+    },
+    {
+      "ammunition": {
+        "index": "bolts",
+        "name": "Bolts"
+      },
+      "cost": {
+        "quantity": 25,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d8",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "ranged-weapons",
+          "name": "Ranged Weapons"
+        },
+        {
+          "index": "simple-ranged-weapons",
+          "name": "Simple Ranged Weapons"
+        },
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "light-crossbow",
+      "mastery": {
+        "index": "slow",
+        "name": "Slow"
+      },
+      "name": "Light Crossbow",
+      "properties": [
+        {
+          "index": "ammunition",
+          "name": "Ammunition"
+        },
+        {
+          "index": "loading",
+          "name": "Loading"
+        },
+        {
+          "index": "two-handed",
+          "name": "Two-Handed"
+        }
+      ],
+      "range": {
+        "long": 320,
+        "normal": 80
+      },
+      "weight": 5
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d4",
+        "damage_type": {
+          "index": "bludgeoning",
+          "name": "Bludgeoning"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "simple-melee-weapons",
+          "name": "Simple Melee Weapons"
+        },
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "light-hammer",
+      "mastery": {
+        "index": "nick",
+        "name": "Nick"
+      },
+      "name": "Light Hammer",
+      "properties": [
+        {
+          "index": "light",
+          "name": "Light"
+        },
+        {
+          "index": "thrown",
+          "name": "Thrown"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "throw_range": {
+        "long": 60,
+        "normal": 20
+      },
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "description": "A Lock comes with a key. Without the key, a creature can use Thieves' Tools to pick this Lock with a successful DC 15 Dexterity (Sleight of Hand) check.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "lock",
+      "name": "Lock",
+      "weight": 1
+    },
+    {
+      "ammunition": {
+        "index": "arrows",
+        "name": "Arrows"
+      },
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d8",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-ranged-weapons",
+          "name": "Martial Ranged Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "ranged-weapons",
+          "name": "Ranged Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "longbow",
+      "mastery": {
+        "index": "slow",
+        "name": "Slow"
+      },
+      "name": "Longbow",
+      "properties": [
+        {
+          "index": "ammunition",
+          "name": "Ammunition"
+        },
+        {
+          "index": "heavy",
+          "name": "Heavy"
+        },
+        {
+          "index": "two-handed",
+          "name": "Two-Handed"
+        }
+      ],
+      "range": {
+        "long": 600,
+        "normal": 150
+      },
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 15,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d8",
+        "damage_type": {
+          "index": "slashing",
+          "name": "Slashing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-melee-weapons",
+          "name": "Martial Melee Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "longsword",
+      "mastery": {
+        "index": "sap",
+        "name": "Sap"
+      },
+      "name": "Longsword",
+      "properties": [
+        {
+          "index": "versatile",
+          "name": "Versatile"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "two_handed_damage": {
+        "damage_dice": "1d10",
+        "damage_type": {
+          "index": "slashing",
+          "name": "Slashing"
+        }
+      },
+      "weight": 3
+    },
+    {
+      "ability": {
+        "index": "cha",
+        "name": "CHA"
+      },
+      "cost": {
+        "quantity": 35,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "musical-instruments",
+          "name": "Musical Instruments"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "lute",
+      "name": "Lute",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Play a known tune"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Improvise a song"
+        }
+      ],
+      "weight": 2
+    },
+    {
+      "ability": {
+        "index": "cha",
+        "name": "CHA"
+      },
+      "cost": {
+        "quantity": 30,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "musical-instruments",
+          "name": "Musical Instruments"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "lyre",
+      "name": "Lyre",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Play a known tune"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Improvise a song"
+        }
+      ],
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d6",
+        "damage_type": {
+          "index": "bludgeoning",
+          "name": "Bludgeoning"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "simple-melee-weapons",
+          "name": "Simple Melee Weapons"
+        },
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "mace",
+      "mastery": {
+        "index": "sap",
+        "name": "Sap"
+      },
+      "name": "Mace",
+      "properties": [],
+      "range": {
+        "normal": 5
+      },
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 100,
+        "unit": "gp"
+      },
+      "description": "A Magnifying Glass grants Advantage on any ability check made to appraise or inspect a highly detailed item. Lighting a fire with a Magnifying Glass requires light as bright as sunlight to focus, tinder to ignite, and about 5 minutes for the fire to ignite.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "magnifying-glass",
+      "name": "Magnifying Glass",
+      "weight": 0
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      },
+      "description": "As a Utilize action, you can use Manacles to bind an unwilling Small or Medium creature within 5 feet of yourself that has the Grappled, Incapacitated, or Restrained condition if you succeed on a DC 13 Dexterity (Sleight of Hand) check. While bound, a creature has Disadvantage on attack rolls, and the creature is Restrained if the Manacles are attached to a chain or hook that is fixed in place. Escaping the Manacles requires a successful DC 20 Dexterity (Sleight of Hand) check as an action. Bursting them requires a successful DC 25 Strength (Athletics) check as an action.\nEach set of Manacles comes with a key. Without the key, a creature can use Thieves' Tools to pick the Manacles' lock with a successful DC 15 Dexterity (Sleight of Hand) check.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "manacles",
+      "name": "Manacles",
+      "weight": 6
+    },
+    {
+      "ability": {
+        "index": "str",
+        "name": "STR"
+      },
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "block-and-tackle",
+          "name": "Block and tackle"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "artisans-tools",
+          "name": "Artisan's Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "masons-tools",
+      "name": "Mason's Tools",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "str",
+              "name": "STR"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": ": Chisel a symbol or hole in stone"
+        }
+      ],
+      "weight": 8
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "description": "If you consult an accurate Map, you gain a +5 bonus to Wisdom (Survival) checks you make to find your way in the place represented on it.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "map",
+      "name": "Map",
+      "weight": 0
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "description": "A handheld steel Mirror is useful for personal cosmetics but also for peeking around corners and reflecting light as a signal.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "mirror",
+      "name": "Mirror",
+      "weight": 0.5
+    },
+    {
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "2d6",
+        "damage_type": {
+          "index": "bludgeoning",
+          "name": "Bludgeoning"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-melee-weapons",
+          "name": "Martial Melee Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "maul",
+      "mastery": {
+        "index": "topple",
+        "name": "Topple"
+      },
+      "name": "Maul",
+      "properties": [
+        {
+          "index": "heavy",
+          "name": "Heavy"
+        },
+        {
+          "index": "two-handed",
+          "name": "Two-Handed"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "weight": 10
+    },
+    {
+      "cost": {
+        "quantity": 15,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d8",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-melee-weapons",
+          "name": "Martial Melee Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "morningstar",
+      "mastery": {
+        "index": "sap",
+        "name": "Sap"
+      },
+      "name": "Morningstar",
+      "properties": [],
+      "weight": 4
+    },
+    {
+      "ammunition": {
+        "index": "bullets-firearm",
+        "name": "Bullets, Firearm"
+      },
+      "cost": {
+        "quantity": 500,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d12",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-ranged-weapons",
+          "name": "Martial Ranged Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "ranged-weapons",
+          "name": "Ranged Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "musket",
+      "mastery": {
+        "index": "slow",
+        "name": "Slow"
+      },
+      "name": "Musket",
+      "properties": [
+        {
+          "index": "ammunition",
+          "name": "Ammunition"
+        },
+        {
+          "index": "loading",
+          "name": "Loading"
+        },
+        {
+          "index": "two-handed",
+          "name": "Two-Handed"
+        }
+      ],
+      "range": {
+        "long": 120,
+        "normal": 40
+      },
+      "weight": 10
+    },
+    {
+      "ability": {
+        "index": "wis",
+        "name": "WIS"
+      },
+      "cost": {
+        "quantity": 25,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "other-tools",
+          "name": "Other Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "navigators-tools",
+      "name": "Navigator's Tools",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "wis",
+              "name": "WIS"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Plot a course"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "wis",
+              "name": "WIS"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Determine position by stargazing"
+        }
+      ],
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "ammunition",
+          "name": "Ammunition"
+        }
+      ],
+      "index": "needles",
+      "name": "Needles",
+      "quantity": 50,
+      "storage": {
+        "index": "pouch",
+        "name": "Pouch"
+      },
+      "weight": 1
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "description": "When you take the Attack action, you can replace one of your attacks with throwing a Net. Target a creature you can see within 15 feet of yourself. The target must succeed on a Dexterity saving throw (DC 8 plus your Dexterity modifier and Proficiency Bonus) or have the Restrained condition until it escapes. The target succeeds automatically if it is Huge or larger.\nTo escape, the target or a creature within 5 feet of it must take an action to make a DC 10 Strength (Athletics) check, freeing the Restrained creature on a success. Destroying the Net (AC 10; 5 HP; Immunity to Bludgeoning, Poison, and Psychic damage) also frees the target, ending the effect.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "net",
+      "name": "Net",
+      "weight": 3
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "sp"
+      },
+      "description": "You can douse a creature, object, or space with Oil or use it as fuel, as detailed below.\n**Dousing a Creature or an Object.** When you take the Attack action, you can replace one of your attacks with throwing an Oil flask. Target one creature or object within 20 feet of yourself. The target must succeed on a Dexterity saving throw (DC 8 plus your Dexterity modifier and Proficiency Bonus) or be covered in oil. If the target takes Fire damage before the oil dries (after 1 minute), the target takes an extra 5 Fire damage from burning oil.\n**Dousing a Space.** You can take the Utilize action to pour an Oil flask on level ground to cover a 5-foot-square area within 5 feet of yourself. If lit, the oil burns until the end of the turn 2 rounds from when the oil was lit (or 12 seconds) and deals 5 Fire damage to any creature that enters the area or ends its turn there. A creature can take this damage only once per turn.\n**Fuel.**  Oil serves as fuel for Lamps and Lanterns. Once lit, a flask of Oil burns for 6 hours in a Lamp or Lantern. That duration doesn't need to be consecutive; you can extinguish the burning Oil (as a Utilize action) and rekindle it again until it has burned for a total of 6 hours",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "oil",
+      "name": "Oil",
+      "weight": 1
+    },
+    {
+      "cost": {
+        "quantity": 20,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "arcane-foci",
+          "name": "Arcane Foci"
+        },
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "orb",
+      "name": "Orb",
+      "weight": 3
+    },
+    {
+      "armor_class": {
+        "base": 11,
+        "dex_bonus": true
+      },
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "doff_time": "1 minute",
+      "don_time": "1 minute",
+      "equipment_categories": [
+        {
+          "index": "armor",
+          "name": "Armor"
+        },
+        {
+          "index": "light-armor",
+          "name": "Light Armor"
+        }
+      ],
+      "index": "padded-armor",
+      "name": "Padded Armor",
+      "stealth_disadvantage": true,
+      "str_minimum": 0,
+      "weight": 8
+    },
+    {
+      "ability": {
+        "index": "wis",
+        "name": "WIS"
+      },
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "quarterstaff",
+          "name": "Quarterstaff"
+        },
+        {
+          "index": "sprig-of-mistletoe",
+          "name": "Sprig of Mistletoe"
+        },
+        {
+          "index": "staff",
+          "name": "Staff"
+        },
+        {
+          "index": "yew-wand",
+          "name": "Yew Wand"
+        },
+        {
+          "index": "amulet",
+          "name": "Amulet"
+        },
+        {
+          "index": "emblem",
+          "name": "Emblem"
+        },
+        {
+          "index": "reliquary",
+          "name": "Reliquary"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "artisans-tools",
+          "name": "Artisan's Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "painters-supplies",
+      "name": "Painter's Supplies",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "wis",
+              "name": "WIS"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Paint a recognizable image of something you've seen"
+        }
+      ],
+      "weight": 5
+    },
+    {
+      "ability": {
+        "index": "cha",
+        "name": "CHA"
+      },
+      "cost": {
+        "quantity": 12,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "musical-instruments",
+          "name": "Musical Instruments"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "pan-flute",
+      "name": "Pan flute",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Play a known tune"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Improvise a song"
+        }
+      ],
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "sp"
+      },
+      "description": "One sheet of Paper can hold about 250 handwritten words.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "paper",
+      "name": "Paper",
+      "weight": 0
+    },
+    {
+      "cost": {
+        "quantity": 3,
+        "unit": "gp"
+      },
+      "description": "One sheet of Parchment can hold about 250 handwritten words.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "parchment",
+      "name": "Parchment",
+      "weight": 0
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "description": "Perfume comes in a 4-ounce vial. For 1 hour after applying Perfume to yourself, you have Advantage on Charisma (Persuasion) checks made to influence an Indifferent Humanoid within 5 feet of yourself.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "perfume",
+      "name": "Perfume",
+      "weight": 0
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d10",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-melee-weapons",
+          "name": "Martial Melee Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "pike",
+      "mastery": {
+        "index": "push",
+        "name": "Push"
+      },
+      "name": "Pike",
+      "properties": [
+        {
+          "index": "heavy",
+          "name": "Heavy"
+        },
+        {
+          "index": "reach",
+          "name": "Reach"
+        },
+        {
+          "index": "two-handed",
+          "name": "Two-Handed"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "weight": 6
+    },
+    {
+      "ammunition": {
+        "index": "bullets-firearm",
+        "name": "Bullets, Firearm"
+      },
+      "cost": {
+        "quantity": 250,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d10",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-ranged-weapons",
+          "name": "Martial Ranged Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "ranged-weapons",
+          "name": "Ranged Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "pistol",
+      "mastery": {
+        "index": "vex",
+        "name": "Vex"
+      },
+      "name": "Pistol",
+      "properties": [
+        {
+          "index": "ammunition",
+          "name": "Ammunition"
+        },
+        {
+          "index": "loading",
+          "name": "Loading"
+        }
+      ],
+      "range": {
+        "long": 90,
+        "normal": 30
+      },
+      "weight": 3
+    },
+    {
+      "ability": {
+        "index": "int",
+        "name": "INT"
+      },
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "poison-basic",
+          "name": "Poison, Basic"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "other-tools",
+          "name": "Other Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "poisoners-kit",
+      "name": "Poisoner's Kit",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "int",
+              "name": "INT"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Detect a poisoned object"
+        }
+      ],
+      "weight": 2
+    },
+    {
+      "armor_class": {
+        "base": 18,
+        "dex_bonus": false,
+        "max_bonus": 0
+      },
+      "cost": {
+        "quantity": 1500,
+        "unit": "gp"
+      },
+      "doff_time": "5 minutes",
+      "don_time": "10 minutes",
+      "equipment_categories": [
+        {
+          "index": "armor",
+          "name": "Armor"
+        },
+        {
+          "index": "heavy-armor",
+          "name": "Heavy Armor"
+        }
+      ],
+      "index": "plate-armor",
+      "name": "Plate Armor",
+      "stealth_disadvantage": true,
+      "str_minimum": 15,
+      "weight": 65
+    },
+    {
+      "ability": {
+        "index": "wis",
+        "name": "WIS"
+      },
+      "cost": {
+        "quantity": 5,
+        "unit": "sp"
+      },
+      "equipment_categories": [
+        {
+          "index": "gaming-sets",
+          "name": "Gaming Sets"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "playing-cards",
+      "name": "Playing Cards",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "wis",
+              "name": "WIS"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Discern whether someone is cheating"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "wis",
+              "name": "WIS"
+            },
+            "dc_value": 20,
+            "success_type": "none"
+          },
+          "name": "Win the game"
+        }
+      ],
+      "weight": 0
+    },
+    {
+      "cost": {
+        "quantity": 100,
+        "unit": "gp"
+      },
+      "description": "As a Bonus Action, you can use a vial of Basic Poison to coat one weapon or up to three pieces of ammunition. A creature that takes Piercing or Slashing damage from the poisoned weapon or ammunition takes an extra 1d4 Poison damage. Once applied, the poison retains potency for 1 minute or until its damage is dealt, whichever comes first.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "poison-basic",
+      "name": "Poison, Basic",
+      "weight": 0
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "cp"
+      },
+      "description": "A Pole is 10 feet long. You can use it to touch something up to 10 feet away. If you must make a Strength (Athletics) check as part of a High or Long Jump, you can use the Pole to vault, giving yourself Advantage on the check.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "pole",
+      "name": "Pole",
+      "weight": 7
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      },
+      "description": "An Iron Pot holds up to 1 gallon.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "pot-iron",
+      "name": "Pot, Iron",
+      "weight": 10
+    },
+    {
+      "cost": {
+        "quantity": 50,
+        "unit": "gp"
+      },
+      "description": "This potion is a magic item. As a Bonus Action, you can drink it or administer it to another creature within 5 feet of yourself. The creature that drinks the magical red fluid in this vial regains 2d4 + 2 Hit Points.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "potion-of-healing",
+      "name": "Potion of Healing",
+      "weight": 0.5
+    },
+    {
+      "ability": {
+        "index": "int",
+        "name": "INT"
+      },
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "jug",
+          "name": "Jug"
+        },
+        {
+          "index": "lamp",
+          "name": "Lamp"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "artisans-tools",
+          "name": "Artisan's Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "potters-tools",
+      "name": "Potter's Tools",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "int",
+              "name": "INT"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Discern what a ceramic object held in the past 24 hours"
+        }
+      ],
+      "weight": 3
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "sp"
+      },
+      "description": "A Pouch holds up to 6 pounds within one-fifth of a cubic foot.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "pouch",
+      "name": "Pouch",
+      "weight": 1
+    },
+    {
+      "contents": [
+        {
+          "item": {
+            "index": "backpack",
+            "name": "Backpack"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "blanket",
+            "name": "Blanket"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "holy-water",
+            "name": "Holy Water"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "lamp",
+            "name": "Lamp"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "rations",
+            "name": "Rations"
+          },
+          "quantity": 7
+        },
+        {
+          "item": {
+            "index": "robe",
+            "name": "Robe"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "tinderbox",
+            "name": "Tinderbox"
+          },
+          "quantity": 1
+        }
+      ],
+      "cost": {
+        "quantity": 33,
+        "unit": "gp"
+      },
+      "description": "A Priest's Pack contains the following items: Backpack, Blanket, Holy Water, Lamp, 7 days of Rations, Robe, and Tinderbox.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        },
+        {
+          "index": "equipment-packs",
+          "name": "Equipment Packs"
+        }
+      ],
+      "index": "priests-pack",
+      "name": "Priest's Pack",
+      "weight": 29
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "sp"
+      },
+      "damage": {
+        "damage_dice": "1d6",
+        "damage_type": {
+          "index": "bludgeoning",
+          "name": "Bludgeoning"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "arcane-foci",
+          "name": "Arcane Foci"
+        },
+        {
+          "index": "druidic-foci",
+          "name": "Druidic Foci"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "simple-melee-weapons",
+          "name": "Simple Melee Weapons"
+        },
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "quarterstaff",
+      "mastery": {
+        "index": "topple",
+        "name": "Topple"
+      },
+      "name": "Quarterstaff",
+      "properties": [
+        {
+          "index": "versatile",
+          "name": "Versatile"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "two_handed_damage": {
+        "damage_dice": "1d8",
+        "damage_type": {
+          "index": "bludgeoning",
+          "name": "Bludgeoning"
+        }
+      },
+      "weight": 4
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "description": "A Quiver holds up to 20 Arrows.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "quiver",
+      "name": "Quiver",
+      "weight": 1
+    },
+    {
+      "cost": {
+        "quantity": 4,
+        "unit": "gp"
+      },
+      "description": "You can use a Portable Ram to break down doors. When doing so, you gain a +4 bonus to the Strength check. One other character can help you use the ram, giving you Advantage on this check.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "ram-portable",
+      "name": "Ram, Portable",
+      "weight": 35
+    },
+    {
+      "cost": {
+        "quantity": 25,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d8",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-melee-weapons",
+          "name": "Martial Melee Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "rapier",
+      "mastery": {
+        "index": "vex",
+        "name": "Vex"
+      },
+      "name": "Rapier",
+      "properties": [
+        {
+          "index": "finesse",
+          "name": "Finesse"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "sp"
+      },
+      "description": "Rations consist of travel-ready food, including jerky, dried fruit, hardtack, and nuts. See \"Malnutrition\" in \"Rules Glossary\" for the risks of not eating.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "rations",
+      "name": "Rations",
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "description": "A Holy Symbol takes one of the forms in the Holy Symbol table and is bejeweled or painted to channel divine magic. A Cleric or Paladin can use a Holy Symbol as a Spellcasting Focus.\nThe table indicates whether a Holy Symbol needs to be held, worn, or borne on fabric (such as a tabard or banner) or a Shield.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        },
+        {
+          "index": "holy-symbols",
+          "name": "Holy Symbols"
+        }
+      ],
+      "index": "reliquary",
+      "name": "Reliquary",
+      "weight": 2
+    },
+    {
+      "armor_class": {
+        "base": 14,
+        "dex_bonus": false,
+        "max_bonus": 0
+      },
+      "cost": {
+        "quantity": 30,
+        "unit": "gp"
+      },
+      "doff_time": "5 minutes",
+      "don_time": "10 minutes",
+      "equipment_categories": [
+        {
+          "index": "armor",
+          "name": "Armor"
+        },
+        {
+          "index": "heavy-armor",
+          "name": "Heavy Armor"
+        }
+      ],
+      "index": "ring-mail",
+      "name": "Ring Mail",
+      "stealth_disadvantage": true,
+      "str_minimum": 0,
+      "weight": 40
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "description": "A Robe has vocational or ceremonial significance. Some events and locations admit only people wearing a Robe bearing certain colors or symbols.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "robe",
+      "name": "Robe",
+      "weight": 1
+    },
+    {
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "arcane-foci",
+          "name": "Arcane Foci"
+        },
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "rod",
+      "name": "Rod",
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "description": "As a Utilize action, you can tie a knot with Rope if you succeed on a DC 10 Dexterity (Sleight of Hand) check. The Rope can be burst with a successful DC 20 Strength (Athletics) check.\n You can bind an unwilling creature with the Rope only if the creature has the Grappled, Incapacitated, or Restrained condition. If the creature's legs are bound, the creature has the Restrained condition until it escapes. Escaping the Rope requires the creature to make a successful DC 15 Dexterity (Acrobatics) check as an action.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "rope",
+      "name": "Rope",
+      "weight": 5
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "cp"
+      },
+      "description": "A Sack holds up to 30 pounds within 1 cubic foot.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "sack",
+      "name": "Sack",
+      "weight": 1
+    },
+    {
+      "armor_class": {
+        "base": 14,
+        "dex_bonus": true,
+        "max_bonus": 2
+      },
+      "cost": {
+        "quantity": 50,
+        "unit": "gp"
+      },
+      "doff_time": "1 minute",
+      "don_time": "5 minutes",
+      "equipment_categories": [
+        {
+          "index": "armor",
+          "name": "Armor"
+        },
+        {
+          "index": "medium-armor",
+          "name": "Medium Armor"
+        }
+      ],
+      "index": "scale-mail",
+      "name": "Scale Mail",
+      "stealth_disadvantage": true,
+      "str_minimum": 0,
+      "weight": 45
+    },
+    {
+      "contents": [
+        {
+          "item": {
+            "index": "backpack",
+            "name": "Backpack"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "blanket",
+            "name": "Blanket"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "book",
+            "name": "Book"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "ink",
+            "name": "Ink"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "ink-pen",
+            "name": "Ink Pen"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "lamp",
+            "name": "Lamp"
+          },
+          "quantity": 1
+        },
+        {
+          "item": {
+            "index": "oil",
+            "name": "Oil"
+          },
+          "quantity": 10
+        },
+        {
+          "item": {
+            "index": "parchment",
+            "name": "Parchment"
+          },
+          "quantity": 10
+        },
+        {
+          "item": {
+            "index": "tinderbox",
+            "name": "Tinderbox"
+          },
+          "quantity": 1
+        }
+      ],
+      "cost": {
+        "quantity": 40,
+        "unit": "gp"
+      },
+      "description": "A Scholar's Pack contains the following items: Backpack, Blanket, Book, Ink, Ink Pen, Lamp, 10 flasks of Oil, 10 sheets of Parchment, and Tinderbox.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        },
+        {
+          "index": "equipment-packs",
+          "name": "Equipment Packs"
+        }
+      ],
+      "index": "scholars-pack",
+      "name": "Scholar's Pack",
+      "weight": 22
+    },
+    {
+      "cost": {
+        "quantity": 25,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d6",
+        "damage_type": {
+          "index": "slashing",
+          "name": "Slashing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-melee-weapons",
+          "name": "Martial Melee Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "scimitar",
+      "mastery": {
+        "index": "nick",
+        "name": "Nick"
+      },
+      "name": "Scimitar",
+      "properties": [
+        {
+          "index": "finesse",
+          "name": "Finesse"
+        },
+        {
+          "index": "light",
+          "name": "Light"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "weight": 3
+    },
+    {
+      "ability": {
+        "index": "cha",
+        "name": "CHA"
+      },
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "musical-instruments",
+          "name": "Musical Instruments"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "shawm",
+      "name": "Shawm",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Play a known tune"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Improvise a song"
+        }
+      ],
+      "weight": 1
+    },
+    {
+      "armor_class": {
+        "base": 2,
+        "dex_bonus": false
+      },
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "armor",
+          "name": "Armor"
+        },
+        {
+          "index": "shields",
+          "name": "Shields"
+        }
+      ],
+      "index": "shield",
+      "name": "Shield",
+      "stealth_disadvantage": false,
+      "str_minimum": 0,
+      "weight": 6
+    },
+    {
+      "ammunition": {
+        "index": "arrows",
+        "name": "Arrows"
+      },
+      "cost": {
+        "quantity": 25,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d6",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "ranged-weapons",
+          "name": "Ranged Weapons"
+        },
+        {
+          "index": "simple-ranged-weapons",
+          "name": "Simple Ranged Weapons"
+        },
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "shortbow",
+      "mastery": {
+        "index": "vex",
+        "name": "Vex"
+      },
+      "name": "Shortbow",
+      "properties": [
+        {
+          "index": "ammunition",
+          "name": "Ammunition"
+        },
+        {
+          "index": "two-handed",
+          "name": "Two-Handed"
+        }
+      ],
+      "range": {
+        "long": 320,
+        "normal": 80
+      },
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d6",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-melee-weapons",
+          "name": "Martial Melee Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "shortsword",
+      "mastery": {
+        "index": "vex",
+        "name": "Vex"
+      },
+      "name": "Shortsword",
+      "properties": [
+        {
+          "index": "finesse",
+          "name": "Finesse"
+        },
+        {
+          "index": "light",
+          "name": "Light"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      },
+      "description": "Working for 1 hour, you can use a Shovel to dig a hole that is 5 feet on each side in soil or similar material.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "shovel",
+      "name": "Shovel",
+      "weight": 5
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d4",
+        "damage_type": {
+          "index": "slashing",
+          "name": "Slashing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "simple-melee-weapons",
+          "name": "Simple Melee Weapons"
+        },
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "sickle",
+      "mastery": {
+        "index": "nick",
+        "name": "Nick"
+      },
+      "name": "Sickle",
+      "properties": [
+        {
+          "index": "light",
+          "name": "Light"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "cp"
+      },
+      "description": "When blown as a Utilize action, a Signal Whistle produces a sound that can be heard up to 600 feet away.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "signal-whistle",
+      "name": "Signal Whistle",
+      "weight": 0
+    },
+    {
+      "ammunition": {
+        "index": "bullets-sling",
+        "name": "Bullets, Sling"
+      },
+      "cost": {
+        "quantity": 1,
+        "unit": "sp"
+      },
+      "damage": {
+        "damage_dice": "1d4",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "ranged-weapons",
+          "name": "Ranged Weapons"
+        },
+        {
+          "index": "simple-ranged-weapons",
+          "name": "Simple Ranged Weapons"
+        },
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "sling",
+      "mastery": {
+        "index": "slow",
+        "name": "Slow"
+      },
+      "name": "Sling",
+      "properties": [
+        {
+          "index": "ammunition",
+          "name": "Ammunition"
+        }
+      ],
+      "range": {
+        "long": 120,
+        "normal": 30
+      },
+      "weight": 0
+    },
+    {
+      "ability": {
+        "index": "str",
+        "name": "STR"
+      },
+      "cost": {
+        "quantity": 20,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "battleaxe",
+          "name": "Battleaxe"
+        },
+        {
+          "index": "dagger",
+          "name": "Dagger"
+        },
+        {
+          "index": "flail",
+          "name": "Flail"
+        },
+        {
+          "index": "glaive",
+          "name": "Glaive"
+        },
+        {
+          "index": "greataxe",
+          "name": "Greataxe"
+        },
+        {
+          "index": "greatsword",
+          "name": "Greatsword"
+        },
+        {
+          "index": "halberd",
+          "name": "Halberd"
+        },
+        {
+          "index": "handaxe",
+          "name": "Handaxe"
+        },
+        {
+          "index": "javelin",
+          "name": "Javelin"
+        },
+        {
+          "index": "lance",
+          "name": "Lance"
+        },
+        {
+          "index": "light-hammer",
+          "name": "Light Hammer"
+        },
+        {
+          "index": "longsword",
+          "name": "Longsword"
+        },
+        {
+          "index": "mace",
+          "name": "Mace"
+        },
+        {
+          "index": "maul",
+          "name": "Maul"
+        },
+        {
+          "index": "sickle",
+          "name": "Sickle"
+        },
+        {
+          "index": "spear",
+          "name": "Spear"
+        },
+        {
+          "index": "trident",
+          "name": "Trident"
+        },
+        {
+          "index": "warhammer",
+          "name": "Warhammer"
+        },
+        {
+          "index": "war-pick",
+          "name": "War Pick"
+        },
+        {
+          "index": "breastplate",
+          "name": "Breastplate"
+        },
+        {
+          "index": "chain-shirt",
+          "name": "Chain Shirt"
+        },
+        {
+          "index": "half-plate-armor",
+          "name": "Half-Plate Armor"
+        },
+        {
+          "index": "scale-mail",
+          "name": "Scale Mail"
+        },
+        {
+          "index": "chain-mail",
+          "name": "Chain Mail"
+        },
+        {
+          "index": "plate-armor",
+          "name": "Plate Armor"
+        },
+        {
+          "index": "ring-mail",
+          "name": "Ring Mail"
+        },
+        {
+          "index": "splint-armor",
+          "name": "Splint Armor"
+        },
+        {
+          "index": "ball-bearings",
+          "name": "Ball bearings"
+        },
+        {
+          "index": "bucket",
+          "name": "Bucket"
+        },
+        {
+          "index": "caltrops",
+          "name": "Caltrops"
+        },
+        {
+          "index": "chain",
+          "name": "Chain"
+        },
+        {
+          "index": "crowbar",
+          "name": "Crowbar"
+        },
+        {
+          "index": "bullets-firearm",
+          "name": "Bullets, Firearm"
+        },
+        {
+          "index": "grappling-hook",
+          "name": "Grappling Hook"
+        },
+        {
+          "index": "pot-iron",
+          "name": "Pot, Iron"
+        },
+        {
+          "index": "spikes-iron",
+          "name": "Spikes, Iron"
+        },
+        {
+          "index": "bullets-sling",
+          "name": "Bullets, Sling"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "artisans-tools",
+          "name": "Artisan's Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "smiths-tools",
+      "name": "Smith's Tools",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "str",
+              "name": "STR"
+            },
+            "dc_value": 20,
+            "success_type": "none"
+          },
+          "name": "Pry open a door or container"
+        }
+      ],
+      "weight": 8
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d6",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "simple-melee-weapons",
+          "name": "Simple Melee Weapons"
+        },
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "spear",
+      "mastery": {
+        "index": "sap",
+        "name": "Sap"
+      },
+      "name": "Spear",
+      "properties": [
+        {
+          "index": "thrown",
+          "name": "Thrown"
+        },
+        {
+          "index": "versatile",
+          "name": "Versatile"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "throw_range": {
+        "long": 60,
+        "normal": 20
+      },
+      "two_handed_damage": {
+        "damage_dice": "1d8",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 50,
+        "unit": "gp"
+      },
+      "description": "Essential for wizards, a spellbook is a leather-bound tome with 100 blank vellum pages suitable for recording spells.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "spellbook",
+      "name": "Spellbook",
+      "weight": 3
+    },
+    {
+      "cost": {
+        "quantity": 30,
+        "unit": "gp"
+      },
+      "description": "A *Spell Scroll* (Cantrip) or *Spell Scroll* (Level 1) is a magic item that bears the words of a cantrip or level 1 spell, respectively, determined by the scroll's creator. If the spell is on your class's spell list, you can read the scroll and cast the spell using its normal casting time and without providing any Material components.\nIf the spell requires a saving throw or an attack roll, the spell save DC is 13, and the attack bonus is +5. The scroll disintegrates when the casting is completed.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "spell-scroll-cantrip",
+      "name": "Spell Scroll, Cantrip",
+      "weight": 0
+    },
+    {
+      "cost": {
+        "quantity": 50,
+        "unit": "gp"
+      },
+      "description": "A *Spell Scroll* (Cantrip) or *Spell Scroll* (Level 1) is a magic item that bears the words of a cantrip or level 1 spell, respectively, determined by the scroll's creator. If the spell is on your class's spell list, you can read the scroll and cast the spell using its normal casting time and without providing any Material components.\nIf the spell requires a saving throw or an attack roll, the spell save DC is 13, and the attack bonus is +5. The scroll disintegrates when the casting is completed.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "spell-scroll-level-1",
+      "name": "Spell Scroll, Level 1",
+      "weight": 0
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "description": "Iron Spikes come in bundles of ten. As a Utilize action, you can use a blunt object, such as a Light Hammer, to hammer a spike into wood, earth, or a similar material. You can do so to jam a door shut or to then tie a Rope or Chain to the Spike.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "spikes-iron",
+      "name": "Spikes, Iron",
+      "weight": 2
+    },
+    {
+      "armor_class": {
+        "base": 17,
+        "dex_bonus": false,
+        "max_bonus": 0
+      },
+      "cost": {
+        "quantity": 200,
+        "unit": "gp"
+      },
+      "doff_time": "5 minutes",
+      "don_time": "10 minutes",
+      "equipment_categories": [
+        {
+          "index": "armor",
+          "name": "Armor"
+        },
+        {
+          "index": "heavy-armor",
+          "name": "Heavy Armor"
+        }
+      ],
+      "index": "splint-armor",
+      "name": "Splint Armor",
+      "stealth_disadvantage": true,
+      "str_minimum": 15,
+      "weight": 60
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "druidic-foci",
+          "name": "Druidic Foci"
+        },
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "sprig-of-mistletoe",
+      "name": "Sprig of Mistletoe",
+      "weight": 0
+    },
+    {
+      "cost": {
+        "quantity": 1000,
+        "unit": "gp"
+      },
+      "description": "Objects viewed through a Spyglass are magnified to twice their size.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "spyglass",
+      "name": "Spyglass",
+      "weight": 1
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "arcane-foci",
+          "name": "Arcane Foci"
+        },
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        },
+        {
+          "index": "druidic-foci",
+          "name": "Druidic Foci"
+        }
+      ],
+      "index": "staff",
+      "name": "Staff",
+      "weight": 4
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "sp"
+      },
+      "description": "String is 10 feet long. You can tie a knot in it as a Utilize action.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "string",
+      "name": "String",
+      "weight": 0
+    },
+    {
+      "armor_class": {
+        "base": 12,
+        "dex_bonus": true
+      },
+      "cost": {
+        "quantity": 45,
+        "unit": "gp"
+      },
+      "doff_time": "1 minute",
+      "don_time": "1 minute",
+      "equipment_categories": [
+        {
+          "index": "armor",
+          "name": "Armor"
+        },
+        {
+          "index": "light-armor",
+          "name": "Light Armor"
+        }
+      ],
+      "index": "studded-leather-armor",
+      "name": "Studded Leather Armor",
+      "stealth_disadvantage": false,
+      "str_minimum": 0,
+      "weight": 13
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      },
+      "description": "A Tent sleeps up to two Small or Medium creatures.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "tent",
+      "name": "Tent",
+      "weight": 20
+    },
+    {
+      "ability": {
+        "index": "dex",
+        "name": "DEX"
+      },
+      "cost": {
+        "quantity": 25,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "other-tools",
+          "name": "Other Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "thieves-tools",
+      "name": "Thieves' Tools",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "dex",
+              "name": "DEX"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Pick a lock"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "dex",
+              "name": "DEX"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Disarm a trap"
+        }
+      ],
+      "weight": 1
+    },
+    {
+      "ability": {
+        "index": "wis",
+        "name": "WIS"
+      },
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "gaming-sets",
+          "name": "Gaming Sets"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "three-dragon-ante",
+      "name": "Three-Dragon Ante",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "wis",
+              "name": "WIS"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Discern whether someone is cheating"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "wis",
+              "name": "WIS"
+            },
+            "dc_value": 20,
+            "success_type": "none"
+          },
+          "name": "Win the game"
+        }
+      ],
+      "weight": 0
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "sp"
+      },
+      "description": "A Tinderbox is a small container holding flint, fire steel, and tinder (usually dry cloth soaked in light oil) used to kindle a fire. Using it to light a Candle, Lamp, Lantern, or Torch—or anything else with exposed fuel—takes a Bonus Action. Lighting any other fire takes 1 minute.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "tinderbox",
+      "name": "Tinderbox",
+      "weight": 1
+    },
+    {
+      "ability": {
+        "index": "dex",
+        "name": "DEX"
+      },
+      "cost": {
+        "quantity": 50,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "musket",
+          "name": "Musket"
+        },
+        {
+          "index": "pistol",
+          "name": "Pistol"
+        },
+        {
+          "index": "bell",
+          "name": "Bell"
+        },
+        {
+          "index": "lantern-bullseye",
+          "name": "Lantern, Bullseye"
+        },
+        {
+          "index": "flask",
+          "name": "Flask"
+        },
+        {
+          "index": "lantern-hooded",
+          "name": "Lantern, Hooded"
+        },
+        {
+          "index": "hunting-trap",
+          "name": "Hunting Trap"
+        },
+        {
+          "index": "lock",
+          "name": "Lock"
+        },
+        {
+          "index": "manacles",
+          "name": "Manacles"
+        },
+        {
+          "index": "mirror",
+          "name": "Mirror"
+        },
+        {
+          "index": "shovel",
+          "name": "Shovel"
+        },
+        {
+          "index": "signal-whistle",
+          "name": "Signal Whistle"
+        },
+        {
+          "index": "tinderbox",
+          "name": "Tinderbox"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "artisans-tools",
+          "name": "Artisan's Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "tinkers-tools",
+      "name": "Tinker's Tools",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "dex",
+              "name": "DEX"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Assemble a Tiny item composed of scrap, which falls apart in 1 minute"
+        }
+      ],
+      "weight": 10
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "cp"
+      },
+      "description": "A Torch burns for 1 hour, casting Bright Light in a 20-foot radius and Dim Light for an additional 20 feet. When you take the Attack action, you can attack with the Torch, using it as a Simple Melee weapon. On a hit, the target takes 1 Fire damage.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "torch",
+      "name": "Torch",
+      "weight": 1
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d6",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-melee-weapons",
+          "name": "Martial Melee Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "trident",
+      "mastery": {
+        "index": "topple",
+        "name": "Topple"
+      },
+      "name": "Trident",
+      "properties": [
+        {
+          "index": "thrown",
+          "name": "Thrown"
+        },
+        {
+          "index": "versatile",
+          "name": "Versatile"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "throw_range": {
+        "long": 60,
+        "normal": 20
+      },
+      "two_handed_damage": {
+        "damage_dice": "1d8",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "weight": 4
+    },
+    {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "description": "A Vial holds up to 4 ounces.",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "vial",
+      "name": "Vial",
+      "weight": 0
+    },
+    {
+      "ability": {
+        "index": "cha",
+        "name": "CHA"
+      },
+      "cost": {
+        "quantity": 30,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "musical-instruments",
+          "name": "Musical Instruments"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "viol",
+      "name": "Viol",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Play a known tune"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "cha",
+              "name": "CHA"
+            },
+            "dc_value": 15,
+            "success_type": "none"
+          },
+          "name": "Improvise a song"
+        }
+      ],
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "arcane-foci",
+          "name": "Arcane Foci"
+        },
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "wand",
+      "name": "Wand",
+      "weight": 1
+    },
+    {
+      "cost": {
+        "quantity": 15,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d8",
+        "damage_type": {
+          "index": "bludgeoning",
+          "name": "Bludgeoning"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-melee-weapons",
+          "name": "Martial Melee Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "warhammer",
+      "mastery": {
+        "index": "push",
+        "name": "Push"
+      },
+      "name": "Warhammer",
+      "properties": [
+        {
+          "index": "versatile",
+          "name": "Versatile"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "two_handed_damage": {
+        "damage_dice": "1d10",
+        "damage_type": {
+          "index": "bludgeoning",
+          "name": "Bludgeoning"
+        }
+      },
+      "weight": 5
+    },
+    {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d8",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-melee-weapons",
+          "name": "Martial Melee Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "war-pick",
+      "mastery": {
+        "index": "sap",
+        "name": "Sap"
+      },
+      "name": "War Pick",
+      "properties": [
+        {
+          "index": "versatile",
+          "name": "Versatile"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "two_handed_damage": {
+        "damage_dice": "1d10",
+        "damage_type": {
+          "index": "piercing",
+          "name": "Piercing"
+        }
+      },
+      "weight": 2
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "sp"
+      },
+      "description": "A Waterskin holds up to 4 pints. If you don't drink sufficient water, you risk dehydration (see “Rules Glossary”).",
+      "equipment_categories": [
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "waterskin",
+      "name": "Waterskin",
+      "weight": 5
+    },
+    {
+      "ability": {
+        "index": "dex",
+        "name": "DEX"
+      },
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "padded-armor",
+          "name": "Padded Armor"
+        },
+        {
+          "index": "basket",
+          "name": "Basket"
+        },
+        {
+          "index": "bedroll",
+          "name": "Bedroll"
+        },
+        {
+          "index": "blanket",
+          "name": "Blanket"
+        },
+        {
+          "index": "clothes-fine",
+          "name": "Clothes, Fine"
+        },
+        {
+          "index": "net",
+          "name": "Net"
+        },
+        {
+          "index": "robe",
+          "name": "Robe"
+        },
+        {
+          "index": "rope",
+          "name": "Rope"
+        },
+        {
+          "index": "sack",
+          "name": "Sack"
+        },
+        {
+          "index": "string",
+          "name": "String"
+        },
+        {
+          "index": "tent",
+          "name": "Tent"
+        },
+        {
+          "index": "clothes-travelers",
+          "name": "Clothes, Traveler's"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "artisans-tools",
+          "name": "Artisan's Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "weavers-tools",
+      "name": "Weaver's Tools",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "dex",
+              "name": "DEX"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Mend a tear in clothing"
+        },
+        {
+          "dc": {
+            "dc_type": {
+              "index": "dex",
+              "name": "DEX"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "sew a Tiny design"
+        }
+      ],
+      "weight": 5
+    },
+    {
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      },
+      "damage": {
+        "damage_dice": "1d4",
+        "damage_type": {
+          "index": "slashing",
+          "name": "Slashing"
+        }
+      },
+      "equipment_categories": [
+        {
+          "index": "martial-melee-weapons",
+          "name": "Martial Melee Weapons"
+        },
+        {
+          "index": "martial-weapons",
+          "name": "Martial Weapons"
+        },
+        {
+          "index": "melee-weapons",
+          "name": "Melee Weapons"
+        },
+        {
+          "index": "weapons",
+          "name": "Weapons"
+        }
+      ],
+      "index": "whip",
+      "mastery": {
+        "index": "slow",
+        "name": "Slow"
+      },
+      "name": "Whip",
+      "properties": [
+        {
+          "index": "finesse",
+          "name": "Finesse"
+        },
+        {
+          "index": "reach",
+          "name": "Reach"
+        }
+      ],
+      "range": {
+        "normal": 5
+      },
+      "weight": 3
+    },
+    {
+      "ability": {
+        "index": "dex",
+        "name": "DEX"
+      },
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "craft": [
+        {
+          "index": "club",
+          "name": "Club"
+        },
+        {
+          "index": "greatclub",
+          "name": "Greatclub"
+        },
+        {
+          "index": "quarterstaff",
+          "name": "Quarterstaff"
+        },
+        {
+          "index": "blowgun",
+          "name": "Blowgun"
+        },
+        {
+          "index": "dart",
+          "name": "Dart"
+        },
+        {
+          "index": "hand-crossbow",
+          "name": "Hand Crossbow"
+        },
+        {
+          "index": "heavy-crossbow",
+          "name": "Heavy Crossbow"
+        },
+        {
+          "index": "light-crossbow",
+          "name": "Light Crossbow"
+        },
+        {
+          "index": "longbow",
+          "name": "Longbow"
+        },
+        {
+          "index": "shortbow",
+          "name": "Shortbow"
+        },
+        {
+          "index": "crystal",
+          "name": "Crystal"
+        },
+        {
+          "index": "orb",
+          "name": "Orb"
+        },
+        {
+          "index": "quarterstaff",
+          "name": "Quarterstaff"
+        },
+        {
+          "index": "rod",
+          "name": "Rod"
+        },
+        {
+          "index": "staff",
+          "name": "Staff"
+        },
+        {
+          "index": "wand",
+          "name": "Wand"
+        },
+        {
+          "index": "arrows",
+          "name": "Arrows"
+        },
+        {
+          "index": "bolts",
+          "name": "Bolts"
+        },
+        {
+          "index": "sprig-of-mistletoe",
+          "name": "Sprig of Mistletoe"
+        },
+        {
+          "index": "staff",
+          "name": "Staff"
+        },
+        {
+          "index": "yew-wand",
+          "name": "Yew Wand"
+        },
+        {
+          "index": "ink-pen",
+          "name": "Ink Pen"
+        },
+        {
+          "index": "needles",
+          "name": "Needles"
+        }
+      ],
+      "equipment_categories": [
+        {
+          "index": "artisans-tools",
+          "name": "Artisan's Tools"
+        },
+        {
+          "index": "tools",
+          "name": "Tools"
+        }
+      ],
+      "index": "woodcarvers-tools",
+      "name": "Woodcarver's Tools",
+      "utilize": [
+        {
+          "dc": {
+            "dc_type": {
+              "index": "dex",
+              "name": "DEX"
+            },
+            "dc_value": 10,
+            "success_type": "none"
+          },
+          "name": "Carve a pattern in wood"
+        }
+      ],
+      "weight": 5
+    },
+    {
+      "cost": {
+        "quantity": 10,
+        "unit": "gp"
+      },
+      "equipment_categories": [
+        {
+          "index": "druidic-foci",
+          "name": "Druidic Foci"
+        },
+        {
+          "index": "adventuring-gear",
+          "name": "Adventuring Gear"
+        }
+      ],
+      "index": "yew-wand",
+      "name": "Yew Wand",
+      "weight": 1
+    }
+  ]
+}
