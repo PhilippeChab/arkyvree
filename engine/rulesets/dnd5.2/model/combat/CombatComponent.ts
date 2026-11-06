@@ -40,6 +40,8 @@ class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoint
 
     this.addWeapon(0, "Main Hand", UNARMED_STRIKE.name, UNARMED_FIELDS, { entryId: null, itemId: null }, true);
     this.equipWeapons();
+    // A set that holds only a Shield is a set too, whose Armor Class its Shield adds to
+    for (const setKey of Object.keys(this.shieldSets)) this.weaponSet(setKey);
   }
 
   /**

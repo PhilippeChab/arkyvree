@@ -33,8 +33,8 @@ export default class DetailedCharacter extends include(
   }
 
   /**
-   * The spells of each list a feat brings (a domain's, a specialist's school), by its id, then by spell level, as the
-   * ruleset has them (`SpellLists.featListSpells`): a sheet lists the character's own in the list's slots.
+   * The spells of each list a feat brings (a subclass's, a background's Magic Initiate), by its id, then by spell
+   * level, as the ruleset has them (`SpellLists.featListSpells`): a sheet lists the character's own in the list's slots.
    */
   getFeatListSpells() {
     return SpellLists.of(this.rulesetData).featListSpells;

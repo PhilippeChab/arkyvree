@@ -35,10 +35,14 @@ interface FeatPool {
   spent: number;
 }
 
-/** A pool picks overfill: its aptitude, its spell level for a leveled one, its name, the picks in it and its room. */
+/**
+ * A pool picks overfill: its aptitude, its name, the picks in it and its room; a leveled one's spell level (its
+ * cantrips', or a spell level past its highest room's), or its spells of every level its room takes (`leveled`).
+ */
 interface OverfullPool {
   aptitudeId: string;
   level?: string;
+  leveled?: boolean;
   name: string;
   picked: number;
   room: number;
@@ -91,25 +95,38 @@ const NO_OWN_PICKS: OwnPicks = { feats: {}, spells: {} };
 const TIERS = Array.from({ length: MAX_SPELL_LEVEL + 1 }, (_, level) => level);
 
 /**
- * Where a leveled pool's spells go (`counts`, by their spell level in it), as the 2024 rules prepare them: a spell of a
- * level fills room of its level or of a higher one (`allowed`, each spell level's), a cantrip a cantrip's alone; the
- * highest spells first, each in the lowest room it fits. A spell level all its spells are known at (`ALLOWED_ALL`)
- * takes its own spells alone. A spell no room takes stays at its own level, overspent. What each spell level holds.
+ * Where a leveled pool's spells go (`counts`, by their spell level in it), as the 2024 rules prepare them: a cantrip
+ * in a cantrip's room alone; a spell of level 1 up to the highest the pool has room at (`highestRoomOf`) in any of its
+ * room past cantrips, which is one count however the spell levels split it ("six spells of levels 1 and 2 in any
+ * combination"), filled from the highest level's room down. A spell level all its spells are known at (`ALLOWED_ALL`)
+ * takes its own spells alone. What no room takes is overspent: a spell above the highest room's level at its own level,
+ * the others at the highest. What each spell level holds.
  */
 function assignSpells(allowed: (level: number) => number, counts: Readonly<Record<string, number>>): number[] {
   const spent = TIERS.map(() => 0);
-  for (const level of TIERS.toReversed()) {
-    for (let left = counts[String(level)] ?? 0; left > 0; left--) {
-      if (allowed(level) === ALLOWED_ALL) {
-        spent[level]++;
-        continue;
-      }
-      const fits = (tier: number) => (level === 0 ? tier === 0 : tier >= level);
-      const room = TIERS.find((tier) => fits(tier) && allowed(tier) !== ALLOWED_ALL && spent[tier] < allowed(tier));
-      spent[room ?? level]++;
-    }
+  const highest = highestRoomOf(allowed);
+  let fitting = 0;
+  for (const level of TIERS) {
+    const count = counts[String(level)] ?? 0;
+    if (level === 0 || allowed(level) === ALLOWED_ALL || level > highest) spent[level] += count;
+    else fitting += count;
   }
+  for (const tier of TIERS.toReversed()) {
+    if (tier === 0 || allowed(tier) === ALLOWED_ALL) continue;
+    const taken = Math.min(fitting, allowed(tier));
+    spent[tier] += taken;
+    fitting -= taken;
+  }
+  spent[highest] += fitting;
   return spent;
+}
+
+/**
+ * The highest spell level a leveled pool has room at (`allowed`, each spell level's), past cantrips: every spell of its
+ * level or a lower one fits its room, as the 2024 rules prepare them. 0 for a pool with none.
+ */
+function highestRoomOf(allowed: (level: number) => number): number {
+  return TIERS.findLast((tier) => tier > 0 && allowed(tier) !== 0) ?? 0;
 }
 
 /** What's left to pick in all of `pools`. */
@@ -144,7 +161,7 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
 
   /**
    * An entry per aptitude of the ruleset (one per spell level for a leveled one, a spell list's: `SpellLists`): what it
-   * allows, from the class levels' feats and spells and the general feats, and what the character spent on it.
+   * allows, from the class levels' grants through it (its modifiers add the rest), and what the character spent on it.
    */
   override initialize(
     { grantCountsByPool }: Pick<LoadedCharacterData, "grantCountsByPool">,
@@ -229,8 +246,9 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
 
     for (const klass of Object.values(this.classes.getClasses())) {
       for (const level of klass.levels) {
-        // A level's feats are all in a pool: picked, or granted
-        for (const { viaId } of level.feats) spentByAptitudeId[viaId!] = (spentByAptitudeId[viaId!] || 0) + 1;
+        // A level's feats are in a pool, picked or granted, but its class's starting proficiencies, granted through none
+        for (const { viaId } of level.feats)
+          if (viaId !== undefined) spentByAptitudeId[viaId] = (spentByAptitudeId[viaId] || 0) + 1;
 
         for (const { free, spellLevel, viaId } of level.spells) {
           if (free) continue;
@@ -244,6 +262,40 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
       }
     }
     return { spentByAptitudeId, spentByAptitudeIdAndLevel };
+  }
+
+  /**
+   * What a level-up's own spells (`own`, by their spell level) overfill in a leveled aptitude (`key`): its cantrips'
+   * room; its room past cantrips, which its spells of every level up to its highest room's share; and a spell level
+   * past its highest room's, which no room takes.
+   */
+  private findOverfullLevels(key: string, own: Readonly<Record<string, number>>): OverfullPool[] {
+    const aptitude = this.aptitudes[key];
+    const { id: aptitudeId, name } = aptitude;
+    const allowed = (level: number) => this.spellLevelOf(aptitude, String(level))?.allowed ?? 0;
+    const highest = highestRoomOf(allowed);
+    const counts = this.spellCounts.get(key) ?? {};
+    const overfull: OverfullPool[] = [];
+    const cantrips = own["0"] ?? 0;
+    const cantripRoom = allowed(0) === ALLOWED_ALL ? Infinity : allowed(0) - ((counts["0"] ?? 0) - cantrips);
+    if (cantrips > cantripRoom)
+      overfull.push({ aptitudeId, level: "0", name: `${name} (cantrips)`, picked: cantrips, room: cantripRoom });
+    const fits = (level: number) => level > 0 && level <= highest && allowed(level) !== ALLOWED_ALL;
+    const picked = TIERS.filter(fits).reduce((sum, level) => sum + (own[String(level)] ?? 0), 0);
+    const room = TIERS.filter((tier) => tier > 0 && allowed(tier) !== ALLOWED_ALL).reduce(
+      (sum, tier) => sum + allowed(tier),
+      0,
+    );
+    const saved = TIERS.filter(fits).reduce((sum, level) => sum + (counts[String(level)] ?? 0), 0) - picked;
+    if (picked > 0 && picked > room - saved) {
+      const levels = highest > 1 ? `levels 1–${highest}` : "level 1";
+      overfull.push({ aptitudeId, leveled: true, name: `${name} (${levels})`, picked, room: room - saved });
+    }
+    for (const level of TIERS.filter((tier) => tier > highest && (own[String(tier)] ?? 0) > 0)) {
+      const count = own[String(level)];
+      overfull.push({ aptitudeId, level: String(level), name: `${name} (level ${level})`, picked: count, room: 0 });
+    }
+    return overfull;
   }
 
   /**
@@ -281,7 +333,8 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
   /**
    * A leveled aptitude's spell pool (`key`): what each spell level that has room left gives, or that a level-up's own
    * picks (`own`, by their spell level) take room at, with its room for them (what its spells but those leave it), and
-   * all of them. A spell takes room of its level or a higher one (`assignSpells`).
+   * all of them. Its room past cantrips is one count, which its spells of any level up to its highest room's fill, from
+   * the highest level's room down (`assignSpells`): what's left of it shows at its lowest levels.
    */
   private toLeveledPool(key: string, own: Record<string, number>): SpellPool {
     const aptitude = this.aptitudes[key];
@@ -311,6 +364,17 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
 
   getAptitudes(): AptitudesData {
     return this.aptitudes;
+  }
+
+  /**
+   * The highest spell level a leveled aptitude (`aptitudeId`) has room at, past cantrips: the highest level of spell a
+   * pick in its room takes (`highestRoomOf`). 0 for an aptitude with none, or none leveled.
+   */
+  getHighestRoomLevel(aptitudeId: string): number {
+    const key = [...this.leveledAptitudeKeys].find((leveled) => this.aptitudes[leveled].id === aptitudeId);
+    if (key === undefined) return 0;
+    const aptitude = this.aptitudes[key];
+    return highestRoomOf((level) => this.spellLevelOf(aptitude, String(level))?.allowed ?? 0);
   }
 
   /**
@@ -345,8 +409,8 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
 
   /**
    * The pools a level-up's own picks (`own`, which the character holds) overfill: each pool they're in that has less
-   * than nothing left, a leveled one's at each spell level its own picks are of, where a spell no room takes stays,
-   * with how many they pick there and its room for them.
+   * than nothing left, a leveled one's cantrips, its spells of every level its room takes, and its spells past its
+   * highest room's level (`findOverfullLevels`), with how many they pick there and its room for them.
    */
   getOverfullPools(own: OwnPicks): OverfullPool[] {
     const overfull: OverfullPool[] = [];
@@ -358,11 +422,7 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
           overfull.push({ aptitudeId, name, picked, room: aptitude.available + picked });
         continue;
       }
-      for (const [level, picked] of Object.entries(own.spells[aptitudeId] ?? {})) {
-        const available = this.spellLevelOf(aptitude, level)?.available ?? -picked;
-        if (picked > 0 && available < 0)
-          overfull.push({ aptitudeId, level, name: `${name} (level ${level})`, picked, room: available + picked });
-      }
+      overfull.push(...this.findOverfullLevels(key, own.spells[aptitudeId] ?? {}));
     }
     return overfull;
   }

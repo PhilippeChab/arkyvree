@@ -10,7 +10,7 @@ import type SpellGroupingsComponent from "@/engine/rulesets/dnd5.2/model/spells/
 import type SpellsComponent from "@/engine/rulesets/dnd5.2/model/spells/SpellsComponent.ts";
 import type { Modifier } from "@/shared/relations.ts";
 import type { CasterType } from "@/vocabulary/dnd5.2/classes.ts";
-import { MULTICLASS_SPELL_SLOTS, PACT_MAGIC_SLOTS } from "@/vocabulary/dnd5.2/spells.ts";
+import { MULTICLASS_SPELL_SLOTS, PACT_MAGIC_SLOTS, SPELL_LEVELS } from "@/vocabulary/dnd5.2/spells.ts";
 
 /**
  * What the `spellcasting` paths read, as the SRD 5.2.1's Multiclassing rules count it: the levels the character's
@@ -29,13 +29,6 @@ export interface CastingLevels {
 export interface SpellTagLists {
   aptitudeIds: string[];
   joinsClassList: boolean;
-}
-
-/** How many of a class's levels count toward a multiclassed character's spell slots, by its caster type. */
-function casterLevelsOf(casterType: CasterType | undefined, level: number): number {
-  if (casterType === "Full") return level;
-  if (casterType === "Half") return Math.ceil(level / 2);
-  return 0;
 }
 
 /**
@@ -68,8 +61,9 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
         return pact();
       },
       get slots() {
-        const row = MULTICLASS_SPELL_SLOTS[Math.min(casterLevel(), MULTICLASS_SPELL_SLOTS.length) - 1] ?? [];
-        return Object.fromEntries(row.map((count, i) => [String(i + 1), count]));
+        // A character with no caster level has every level's slots, none of them
+        const row = MULTICLASS_SPELL_SLOTS[Math.min(casterLevel(), MULTICLASS_SPELL_SLOTS.length) - 1];
+        return Object.fromEntries(SPELL_LEVELS.slice(1).map((level) => [String(level), row?.[level - 1] ?? 0]));
       },
     };
   })();
@@ -86,12 +80,17 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
 
   protected spellTags: Record<string, string[]> = {};
 
-  /** The levels the character's classes count toward its spell slots: a full caster's all, a half caster's half. */
+  /**
+   * The levels the character's classes count toward its spell slots, as the Multiclassing rules add them: all its levels
+   * in its full casters' classes, and half its levels in its half casters' classes, together, rounded up.
+   */
   private countCasterLevels(): number {
-    return Object.values(this.classes.getCharacterClasses()).reduce(
-      (total, { klass, level }) => total + casterLevelsOf(this.casterTypeByClassId.get(klass.id), level),
-      0,
-    );
+    const levels = { Full: 0, Half: 0 };
+    for (const { klass, level } of Object.values(this.classes.getCharacterClasses())) {
+      const casterType = this.casterTypeByClassId.get(klass.id);
+      if (casterType === "Full" || casterType === "Half") levels[casterType] += level;
+    }
+    return levels.Full + Math.ceil(levels.Half / 2);
   }
 
   /** Its Pact Magic slots: its pact caster's (a warlock's), by its level, none without one. */

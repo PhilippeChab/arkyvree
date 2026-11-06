@@ -97,11 +97,12 @@ export default class DetailedCharacterDataLoader extends include(
     );
     const { feats, grantCountsByPool, spells } = this.buildPicks(rows.picks, rulesetData, levels);
 
-    // Each entity's customizations: per-entity lookups resolve via the cache's pre-built Maps. The character's first
-    // level's requirements are a class's multiclass prerequisites, which a first class doesn't meet
-    const firstLevelId = levels.advancements[0]?.entryId;
+    // Each entity's customizations: per-entity lookups resolve via the cache's pre-built Maps. A class's first level's
+    // requirements are its multiclass prerequisites, which a character of one class needn't meet; once it multiclasses,
+    // its first class's apply as its others' do
+    const singleClassLevelId = classIds.length === 1 ? levels.advancements[0]?.entryId : undefined;
     const classLevels = this.toCustomizedClassLevels(classLevelsRaw, rulesetData).classLevels.map((level) =>
-      level.id === firstLevelId && level.position === 1 ? { ...level, requirements: [] } : level,
+      level.id === singleClassLevelId && level.position === 1 ? { ...level, requirements: [] } : level,
     );
     const classFields = this.readClassFields(classIds, rulesetData, abilityLookup);
     const dcAbilities = { classSpellcastingAbilityMap: classFields.classSpellcastingAbilityMap, classLevels };

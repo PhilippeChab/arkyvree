@@ -7,11 +7,11 @@ import { RULESET_FIELDS } from "./fields.ts";
 import { RULES } from "./rules.ts";
 
 /**
- * What the D&D 5th Edition rules answer of a ruleset as a whole, past its entities: what it needs to be published, its Settings
- * (the ability its characters' skill points come from), and what every D&D 5th Edition ruleset shares (`RULES`).
+ * What the D&D 5th Edition rules answer of a ruleset as a whole, past its entities: what it needs to be published, its
+ * Settings (none past every ruleset's), and what every D&D 5th Edition ruleset shares (`RULES`).
  */
 export default class Dnd52Ruleset extends RulesetPart {
-  /** The ability its characters' skill points come from. */
+  /** Its own fields: none past every ruleset's. */
   protected override readonly fields = RULESET_FIELDS;
 
   /** Its words, its kinds, its bounds and its license. */

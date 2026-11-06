@@ -56,8 +56,8 @@ const SPELL_LEVEL_SLOT_MODIFIERS: Record<
 };
 
 /**
- * A spell list's spells joining the list of the class that gives it (`aptitudes.<list>.joinsclasslist`): a cleric's
- * domain joins the cleric's list. A feat or a class level sets it, and the class is its own, or the one whose level gave
+ * A spell list's spells joining the list of the class that gives it (`aptitudes.<list>.joinsclasslist`): a Life
+ * Domain's spells join the cleric's list. A feat or a class level sets it, and the class is its own, or the one whose level gave
  * the feat.
  */
 export const JOINS_CLASS_LIST = {

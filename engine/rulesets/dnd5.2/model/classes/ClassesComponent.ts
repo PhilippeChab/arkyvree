@@ -26,15 +26,10 @@ interface ClassesData {
 }
 
 /**
- * A character's classes: each one's levels, with what each level picked, and the ruleset's other classes at level 0;
- * and its first class, the class of its first level, whose starting proficiencies it has (a later class's are its
- * multiclass ones).
+ * A character's classes: each one's levels, with what each level picked, and the ruleset's other classes at level 0.
  */
 export default class ClassesComponent extends CharacterComponent<LoadedCharacterData> {
   private readonly classes: ClassesData = {};
-
-  /** The class of the character's first level, by its normalized name: none before its first level. */
-  private firstClass: string | undefined;
 
   /** Each class the character has levels in, its levels sorted with their picks, and the ruleset's others at level 0. */
   override initialize(
@@ -61,7 +56,6 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
       if (!klass) throw new Error("Class not found");
 
       const className = stripSeparators(klass.name);
-      this.firstClass ??= className;
       this.classes[className] ??= { klass, levels: [], level: 0 };
       this.classes[className].levels.push({
         classLevel,
@@ -100,11 +94,6 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
 
   getClasses(): ClassesData {
     return this.classes;
-  }
-
-  /** The class of the character's first level, by its normalized name: none before its first level. */
-  getFirstClass(): string | undefined {
-    return this.firstClass;
   }
 
   /**

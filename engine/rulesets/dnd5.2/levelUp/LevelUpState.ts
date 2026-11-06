@@ -26,20 +26,26 @@ export type PoolPicks = Pick<LevelPicks, "feats" | "spells">;
  */
 export default abstract class LevelUpState extends LevelUpBase<DetailedCharacter> {
   /**
-   * The picks without their latest in the overfull pool (`pool`), as many as it's over: at its spell level for a leveled
-   * one (where a spell its room can't take stays), the highest of the lower ones next; in a shared one, its spells
-   * before its feats, the wizard's later step first.
+   * The picks without their latest in the overfull pool (`pool`), as many as it's over: of its spell level for a
+   * leveled one's cantrips or a level past its room's (`level`), of any level its room takes for its room past cantrips
+   * (`leveled`); in a shared one, its spells before its feats, the wizard's later step first.
    */
-  private dropExcess(picks: PoolPicks, { aptitudeId, level, picked, room }: OverfullPool): PoolPicks {
+  private dropExcess(picks: PoolPicks, { aptitudeId, level, leveled, picked, room }: OverfullPool): PoolPicks {
     let excess = picked - room;
     const lookup = this.buildSpellLevelLookup(picks.spells[aptitudeId] ?? []);
     const spells = [...(picks.spells[aptitudeId] ?? [])];
+    const dropped = (spellId: string) => {
+      const spellLevel = lookup.get(`${spellId}:${aptitudeId}`);
+      if (leveled) return spellLevel != null && spellLevel > 0;
+      return String(spellLevel ?? "") === (level ?? "");
+    };
     for (let i = spells.length - 1; i >= 0 && excess > 0; i--) {
-      if (String(lookup.get(`${spells[i]}:${aptitudeId}`) ?? "") !== (level ?? "")) continue;
+      if (!dropped(spells[i])) continue;
       spells.splice(i, 1);
       excess--;
     }
-    const feats = level === undefined ? (picks.feats[aptitudeId] ?? []).slice(0, -excess || undefined) : undefined;
+    const unleveled = level === undefined && !leveled;
+    const feats = unleveled ? (picks.feats[aptitudeId] ?? []).slice(0, -excess || undefined) : undefined;
     return {
       feats: feats ? { ...picks.feats, [aptitudeId]: feats } : picks.feats,
       spells: { ...picks.spells, [aptitudeId]: spells },

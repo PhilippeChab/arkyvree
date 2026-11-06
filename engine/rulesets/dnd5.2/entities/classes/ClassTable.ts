@@ -1,4 +1,4 @@
-/** A class's table, as its page shows it: each level's feat pools, spells per day and spells known, and its spell lists. */
+/** A class's table, as its page shows it: each level's feat pools and its cantrips and prepared spells, and its spell lists. */
 
 import LiteralValue from "@/engine/core/paths/LiteralValue.ts";
 import RulesError from "@/engine/core/RulesError.ts";
@@ -32,8 +32,8 @@ function getSpellListIds(rulesetData: RulesetData, klass: Klass): string[] {
 }
 
 /**
- * A class's table (`klass`, as the view has it): its levels' feat pools, spells per day and spells known by then, and
- * its spell lists.
+ * A class's table (`klass`, as the view has it): its levels' feat pools, and its cantrips and prepared spells by then,
+ * and its spell lists. Its spell slots are no table of its own: the Multiclass Spellcaster table's.
  */
 export default class ClassTable {
   constructor(
@@ -47,14 +47,13 @@ export default class ClassTable {
   }
 
   /**
-   * One of the class's tables, by its name (`feat-pools`, `spell-lists`, `spells`, `spells-known`): refused as not
-   * found for a table it has none of. Its spell tables read its levels' modifiers as the view has them, or as a save
+   * One of the class's tables, by its name (`feat-pools`, `spell-lists`, `spells-known`): refused as not found for a
+   * table it has none of. Its spell tables read its levels' modifiers as the view has them, or as a save
    * would leave them (`modifiers`: its progression's plan's).
    */
   describe(table: string, modifiers?: TableModifier[]) {
     if (table === "feat-pools") return this.describeFeatPools();
     if (table === "spell-lists") return this.describeSpellLists();
-    if (table === "spells") return this.describeSpells(modifiers);
     if (table === "spells-known") return this.describeSpellsKnown(modifiers);
     throw new RulesError("not-found", `No ${table} table for classes`);
   }
@@ -132,20 +131,8 @@ export default class ClassTable {
   }
 
   /**
-   * The class's levels, each with the spells per day it gives by spell level by then (`spellsPerDay`): from the level a
-   * spell level opens at (its `allowed`, some spells or all of them, as the sheet's bonus spells read it), 0 until its
-   * levels give it uses, as the Core Rulebook's tables write a spell level its bonus spells alone fill. Of its levels' modifiers
-   * as the view has them, or as a save would leave them (`modifiers`: its progression's plan's).
-   */
-  describeSpells(modifiers: TableModifier[] = getLevelModifiers(this.view.rulesetData, this.levels)) {
-    const { levels } = this;
-    const totals = LevelTotals.computeRunning(levels, modifiers, LevelTotals.readPerDayStep);
-    return levels.map((level) => ({ ...level, spellsPerDay: totals.get(level.id) ?? {} }));
-  }
-
-  /**
-   * The class's levels, each with the spells it knows by spell level by then (`spellsKnown`; "All", every spell of its
-   * list, once a level sets it). Of its levels' modifiers as the view has them, or as a save would leave them
+   * The class's levels, each with the cantrips and spells it prepares by spell level by then (`spellsKnown`, a level's
+   * new spells at the highest level it casts then; "All", every spell of its list, once a level sets it). Of its levels' modifiers as the view has them, or as a save would leave them
    * (`modifiers`: its progression's plan's).
    */
   describeSpellsKnown(modifiers: TableModifier[] = getLevelModifiers(this.view.rulesetData, this.levels)) {

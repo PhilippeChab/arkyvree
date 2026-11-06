@@ -118,12 +118,18 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
 
   /**
    * A save's pooled picks (feats and spells by pool) spread over its planned levels, each level taking what its slots
-   * allow, in order, and what's past a pool's slots on the level of the feat that gives it room, or the last
+   * allow, in order (a leveled pool's spells by the highest level its room has by then, the saved character's
+   * included), and what's past a pool's slots on the level of the feat that gives it room, or the last
    * (`PicksDistribution`). `gains`: what the levels give, when the caller has them.
    */
   protected distributePlannedPicks(planned: PlannedLevels, picks: LevelPicks, gains = this.computeLevelGains(planned)) {
     const { perLevelFeatSlots, perLevelSpellSlots } = gains;
-    const data = { levelCount: planned.classLevelEntries.length, perLevelFeatSlots, perLevelSpellSlots };
+    const { aptitudes } = planned.saved.components;
+    const highestRoomLevels = Object.fromEntries(
+      Object.keys(picks.spells).map((aptitudeId) => [aptitudeId, aptitudes.getHighestRoomLevel(aptitudeId)]),
+    );
+    const levelCount = planned.classLevelEntries.length;
+    const data = { highestRoomLevels, levelCount, perLevelFeatSlots, perLevelSpellSlots };
     return new PicksDistribution(data).distribute(
       picks,
       this.buildSpellLevelLookup(Object.values(picks.spells).flat()),

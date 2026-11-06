@@ -13,8 +13,8 @@ interface LanguageEntry {
 
 /**
  * What the languages' target paths read: each of the ruleset's languages by its slug (`languages.<slug>.known`), and
- * the languages the character may pick past those its Intelligence and its Linguistics ranks give it
- * (`languages.extrapicks`), an input a modifier adds to (a loremaster's 4th level).
+ * the languages the character may pick past its two standard ones (`languages.extrapicks`), an input a modifier adds
+ * to.
  */
 interface LanguagesData {
   [slug: string]: LanguageEntry | number;
@@ -59,7 +59,7 @@ export default class LanguagesComponent extends CharacterComponent<LoadedCharact
     }
   }
 
-  /** The languages the character may pick past those its Intelligence and Linguistics ranks give it. */
+  /** The languages the character may pick past its two standard ones. */
   getExtraPicks(): number {
     return this.data.extrapicks;
   }

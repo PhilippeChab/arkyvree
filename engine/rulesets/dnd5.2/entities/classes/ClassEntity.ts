@@ -21,7 +21,7 @@ export default class ClassEntity extends RulesetEntity<Dnd52Kinds, "classes", ty
   /** Its list narrows by the kind it's for, its partition (the player classes', or the others'). */
   protected static override readonly partitioned = true;
 
-  /** Its hit die, the ability its bonus spells use, and the spells it casts. */
+  /** Its hit die, its caster type, its spellcasting ability and its starting proficiencies. */
   protected override readonly fields = CLASS_FIELDS;
 
   override readonly type = "classes";

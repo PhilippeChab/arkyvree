@@ -1,6 +1,6 @@
 /**
  * The entities a D&D 5th Edition character's load gives (`DetailedCharacterDataLoader`), each with its customizations, and what it
- * holds of them: its levels' feats, spells and skill points, each with where it comes from.
+ * holds of them: its levels' feats and spells, each with where it comes from.
  */
 
 import type { StoredAdvancement } from "@/engine/core/module/index.ts";
@@ -46,7 +46,7 @@ export interface LoadedLevels {
   hitPoints: Map<string, number>;
 }
 
-/** A species as the character reads it: its row, its fields' values, and its customizations. */
+/** A background as the character reads it: its row and its customizations. */
 export type CustomizedBackground = Background & {
   modifiers: Modifier[];
   requirements: Requirement[];

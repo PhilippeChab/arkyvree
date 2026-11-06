@@ -9,7 +9,7 @@ import BookPaths from "./BookPaths.ts";
  * target, and the progressions a class's levels follow.
  */
 export default class Dnd52Content extends ContentPart<Dnd52Descriptions> {
-  /** A class's base attack bonus's and saves' values at each class level, by how good each is. */
+  /** What every class's levels follow, by level: the Proficiency Bonus. */
   override describeLevelPresets() {
     return ClassProgressions.describePresets();
   }

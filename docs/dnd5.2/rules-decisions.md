@@ -16,7 +16,8 @@ holds names the code that holds it.
   feat sets.
 - **Skills take no ranks or points.** A skill adds its ability's modifier, the Proficiency Bonus when proficient, twice
   with Expertise, half (rounded down) with Jack of All Trades on an unproficient one, and misc (`SkillsComponent`,
-  `skills.<skill>.proficient`, `.expertise`, `.halfproficient`). The level-up has no skills step.
+  `skills.<skill>.proficient`, `.expertise`, `.halfproficient`; Jack of All Trades sets `skills.*.halfproficient`, a
+  skill a ruleset adds included). The level-up has no skills step.
 - **Proficiencies are feats.** A skill, a saving throw, an armor category, a weapon category or kind, a tool, a weapon
   mastery: each is a feat whose modifier sets the path it gives. A skill's Skill Proficiency and Expertise are made with
   the skill, in the Skill Proficiencies and Expertise pools (`SkillProficiencyFeats`, `ExpertiseFeats`), a skill a
@@ -39,10 +40,11 @@ holds names the code that holds it.
 ## Combat
 
 - **Armor Class** is 10 and Dexterity unarmored; an armor's and its Dexterity, capped at 2 in medium armor, none in
-  heavy armor; a trained Shield's +2; and misc (`ArmorClass`). An Unarmored Defense is a modifier on `combat.ac.misc`
+  heavy armor, a penalty included (Chain Mail's 16 whatever the wearer's Dexterity); a trained Shield's +2; and misc
+  (`ArmorClass`). An Unarmored Defense is a modifier on `combat.ac.misc`
   gated on `combat.armor.category` none (and, a monk's, no Shield held), which reads its ability's modifier.
-- **An attack** adds its ability's modifier (Strength in melee, Dexterity with a ranged weapon, the better with
-  Finesse), the Proficiency Bonus when proficient with the weapon (a feat sets `items.weapons.<kind or category>.proficient`),
+- **An attack** adds its ability's modifier (the better of Strength and Dexterity with a Finesse weapon, as the sheet
+  stands once its increases apply; Dexterity with any other ranged weapon; Strength in melee, a thrown weapon's too), the Proficiency Bonus when proficient with the weapon (a feat sets `items.weapons.<kind or category>.proficient`),
   and its magic and misc; its damage, its ability's modifier, an off-hand attack's only when negative without the
   Two-Weapon Fighting style (`combat.twoweapon.ability`). A Versatile weapon in two hands rolls its two-handed dice
   (`Attacks`). A weapon's mastery property shows once a feat sets `items.weapons.<kind>.mastered`.
@@ -58,9 +60,15 @@ holds names the code that holds it.
 
 ## Spells
 
-- **Spell slots are the Multiclass Spellcaster table's**, by the levels a character's classes count: a full caster's all,
-  a half caster's half, rounded up (`SpellcastingState`); a single class's table gives the same. A warlock's Pact Magic
+- **Spell slots are the Multiclass Spellcaster table's**, by the levels a character's classes count: all its levels in
+  full casters' classes, and half its levels in the Paladin and Ranger classes together, rounded up once (the SRD's
+  "Half your levels (round up) in the Paladin and Ranger classes", read as their sum: a Paladin 1 / Ranger 1 counts 1,
+  not 2) (`SpellcastingState.countCasterLevels`); a single class's table gives the same. A warlock's Pact Magic
   slots are apart, by its level (`PACT_MAGIC_SLOTS`). The SRD has no third caster.
+- **Prepared spells mix levels freely.** A class's table gives its cantrips and its prepared spells by level, a level's
+  new spells counted at the highest level it casts then; the room past cantrips is one count, which any spell of level 1
+  up to that highest level fills (a level 3 Bard's six spells, of levels 1 and 2 in any combination). A spell above it
+  is overspent; cantrips stay apart (`AptitudesComponent.highestRoomOf`, `PicksDistribution`, `SpellPicker`).
 - **A spell save DC is 8, the Proficiency Bonus and the casting class's spellcasting ability** (`SpellGroupingsComponent`),
   whatever the spell's level.
 

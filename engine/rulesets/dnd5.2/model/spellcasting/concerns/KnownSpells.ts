@@ -42,7 +42,7 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
 
     /**
      * The spell levels each aptitude knows every spell of: a leveled one's levels all known, and those of the classes a
-     * list joins (a cleric's domain spells, at the levels the cleric knows his list at). An unleveled one all known
+     * list joins (a Life Domain's spells, at the levels the cleric's list knows all of). An unleveled one all known
      * knows all its spells.
      */
     private knownAptitudeLevels(appliedModifiers: Modifier[]) {
@@ -80,10 +80,9 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
     /**
      * The aptitude spells the character doesn't know yet on the list each goes on, each given at the first level of its
      * class and free: on the list a class level gives slots in, and on the list of each class a list joins that knows the
-     * spell's level (a cleric's domain spells on the cleric's). A joining list's spell no such list knows stays on its
-     * own list, where it knows the level itself (a domain a fighter picks through a prestige class, its slots its own). A
-     * spell is known once per list, and another class's list may know it too: a cleric/wizard's cleric list knows the
-     * cleric spells in his spellbook, at the cleric's DC.
+     * spell's level (a Life Domain's spells on the cleric's). A joining list's spell no such list knows stays on its own
+     * list, where it knows the level itself. A spell is known once per list, and another class's list may know it too: a
+     * cleric/wizard's cleric list knows a spell its wizard list knows too, at the cleric's DC.
      */
     private newKnownSpells(
       spells: HeldSpell[],

@@ -36,8 +36,8 @@ function grantedIn(plan: { links?: LinkSet[] }) {
 
 /**
  * A class's levels (`klass`, as the view has it) as the ruleset describes them, each with all its links (`links`, as
- * its saves answer them too), and what a level's save writes beside its row: its fields, and the feats it grants and
- * its saves' base bonuses (its `grants` and `baseBonus` links, `linksOf`). A level's number is its `position` on its
+ * its saves answer them too), and what a level's save writes beside its row: the feats it grants (its `grants` links,
+ * `linksOf`). A level's number is its `position` on its
  * class's, which the levels are taken in (`LevelRules.findNextClassLevel`): a level requires none of the one before.
  */
 export default class ClassLevelEntity extends CustomizationPageEntity<
@@ -52,14 +52,14 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     super(view);
   }
 
-  /** Its saves' base bonuses and the feats it grants, its base attack bonus and its skill points. */
+  /** The feats it grants, each through its pool. */
   protected override readonly fields = CLASS_LEVEL_FIELDS;
 
   override readonly type = "class-levels";
 
   /**
-   * Refuses a new level without its number (its `position`), past the class's bounds (its fields refuse a save's base
-   * bonus past the rules'), or of a number the class already has (`taken`).
+   * Refuses a new level without its number (its `position`), past the class's bounds, or of a number the class already
+   * has (`taken`).
    */
   protected override checkForm({ position }: FormBody, _given: object, level?: KlassLevel) {
     if (level) return;
@@ -69,8 +69,8 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   }
 
   /**
-   * A form's links, by role: the feats it grants (`grants`, each through its pool, free unless it says), and its saves'
-   * base bonuses (`baseBonus`), each entity the view's. A role the form leaves out it keeps.
+   * A form's links, by role: the feats it grants (`grants`, each through its pool, free unless it says), each entity the
+   * view's. A role the form leaves out it keeps.
    */
   protected override linksOf(body: FormBody): LinkSet[] {
     const sets = super.linksOf(body) ?? [];

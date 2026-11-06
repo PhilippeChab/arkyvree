@@ -25,7 +25,7 @@ const LANGUAGE_PATHS = [
 const PICK_PATHS = [
   {
     path: "extrapicks",
-    description: "Languages to pick past Intelligence and Linguistics ranks (a loremaster's 4th level)",
+    description: "Languages to pick past the two standard ones every character picks",
     type: "number" as const,
   },
 ];
