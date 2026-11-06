@@ -141,14 +141,15 @@ describe("The rules' engine", () => {
   // `GET /v1/rules` reads them as they are: each table a progressing kind names is one its entities answer
   test("describes the tables a progressing kind answers, and the kinds each module's storage customizes", async () => {
     const described = Engine.rules().describeAll();
-    const customizable = Modules.all().flatMap(([baseRules, module]) => {
+    // Each base rules' kinds its own storage customizes, none of another's
+    for (const [baseRules, module] of Modules.all()) {
       const own = described[baseRules].customizable;
       expect(own.filter((type) => !module.storage.kinds[type]?.customizable)).toEqual([]);
-      return own;
-    });
-    expect(customizable.toSorted()).toEqual(
-      [...Engine.forRules(DND35_BASE_RULES).storage().customizableKinds()].toSorted(),
-    );
+      expect({ baseRules, customizable: own.toSorted() }).toEqual({
+        baseRules,
+        customizable: [...Engine.forRules(baseRules).storage().customizableKinds()].toSorted(),
+      });
+    }
 
     const { rulesetId } = await getSeedCtx();
     await withRulesetScope(db, rulesetId, async (scope) => {

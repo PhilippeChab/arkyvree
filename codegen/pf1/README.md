@@ -1,9 +1,8 @@
-# Pathfinder 1 Scraper
+# Pathfinder 1 Parser
 
-Pipeline for scraping Pathfinder 1 books' pages from the Archives of Nethys (aonprd.com) into reference JSON files.
-Its detection and its generator, which will write `content/pf1/generated/` from those references, come with the
-Pathfinder 1 ruleset's engine module and content: they write the content's seed types and read the engine's target
-paths.
+Pipeline for scraping Pathfinder 1 books' pages from the Archives of Nethys (aonprd.com) into reference JSON files, and
+generating the content's books from them (`content/pf1/generated/<book>/`): the content's seed types, their modifiers'
+and requirements' targets the Pathfinder engine's.
 
 ## Usage
 
@@ -23,6 +22,18 @@ bun run parser:pf1:scrape -- class --url "https://aonprd.com/PrestigeClassesDisp
 
 Options: `--no-cache` (fetch every page, past the disk cache, `tools/scraper/.cache/`, which git ignores), `--delay <ms>`
 (between requests, 200 by default).
+
+```bash
+# Generate every book's content from its references, into content/pf1/generated/
+bun run parser:pf1:generate
+# The books a filter picks (a book, a type of reference, a name), or one reference file's book
+bun run parser:pf1:generate core-rulebook --type race
+bun run parser:pf1:generate codegen/pf1/reference/core-rulebook/items.json
+```
+
+A generation runs in a copy of `generated/` (core's `GeneratedFolder.generateAtomically`), laid out by the repo's
+lint and formatter, which takes its place only when every book succeeded: `generated/` is never half-written. What the
+readers leave to review (a race's traits no modifier is, a domain's spell no spell is, the items left out) is logged.
 
 ## The site
 
@@ -45,7 +56,25 @@ publication order): a later book's scrape leaves it out, logging it as a reprint
 
 ```
 aonprd.com pages → Scraper → JSON reference file (raw + overrides)
+JSON reference file → seeds (detection, as read) → code writers → content/pf1/generated/<book>/
 ```
+
+Unlike 3.5's, a Pathfinder reference stores no `detected` or `mapping`: its seeds read it as they're built.
+
+- `tools/cli/generate.ts`: `parser:pf1:generate`.
+- `tools/seeds/`: a book's seeds (`BookSeeds`: its references, each kind's seeds of a reference, built once), a class
+  per kind (`RaceSeeds`, `DomainSeeds`, `ItemSeeds`, `MagicItemSeeds`, `FeatSeeds`, `SpellSeeds`,
+  `classes/ClassSeeds`), and the book's aptitudes (`BookAptitudes`: every aptitude its seeds and the core rules'
+  hand-written feats name, a target's slug of none refused, a bonded creature's aside).
+- `tools/detect/`: the readers a kind's seeds read its pages with: a race's traits (`RaceTraits`), a domain's lines
+  (`DomainDetails`), an item's costs and weights (`amounts`), a specific magic item's base item, stats and
+  enhancement (`MagicItemText`) and the bonuses it gives worn or held (`MagicItemBonuses`); the feats', spells' and
+  classes' in their folders.
+- `tools/generator/`: the `Generator` (a book at a time), a book's (`BookGenerator`, on `BaseBookGenerator`, a concern
+  per kind of file, `concerns/Generates*`; what crosses kinds is its own: a class's bonus feat list's aptitude added to
+  the feats it names, the book's aptitudes), the generated tree (`BookLayout`) and the generated code
+  (`code/CodeFile`, a concern per kind of seed, `code/concerns/Writes*`). The Core Rulebook is the core rules: what a
+  book copies from them (`cowFeats.ts`, `cowSpells.ts`) is empty.
 
 A reference file stores what the scraper read (`raw`) and the corrections made by hand (`overrides`), nothing else: a
 re-scrape replaces `raw` and keeps `overrides`. Its `_meta` names its type, its book, the page it was read from and when.
@@ -66,8 +95,9 @@ saving with their overrides kept), the HTTP client and the page. The Pathfinder 
   and reads a page the book lists under several names once, with each name: an item's variants, a magic item's
   bonuses).
 - `tools/scraper/pages/`: a class per kind of page, on `AonPage` (the entry's title, its sources, its parts by heading,
-  and their readings: labelled paragraphs, a stat block's inline fields, tables): the book's `SourcePage`, `ClassPage`,
-  `FeatPage`, `SpellPage`, `RacePage`, `DomainPage` (a domain, and a subdomain off its section of its domain's page),
+  and their readings: labelled paragraphs, a stat block's inline fields, tables; a page that prints several entries, each
+  under an h1 of its own, `entries`): the book's `SourcePage`, `ClassPage`, `FeatPage`, `SpellPage` (a page that prints
+  several spells, Summon Monster I to IX's, read off the section its book lists, by its title), `RacePage`, `DomainPage` (a domain, and a subdomain off its section of its domain's page),
   `ItemPage` (mundane and magic). The tests read saved pages through them (`tests/codegen/pf1/fixtures`).
 - `tools/types/`: a reference's type per kind, and what every page gives (`pages.ts`: a `Printing`, a book and page an
   entry is printed on; a `LabeledText`; a `PageTable`).

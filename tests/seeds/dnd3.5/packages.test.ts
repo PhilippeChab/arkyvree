@@ -21,15 +21,21 @@ import { ALL_RACES } from "@/content/dnd3.5/generated/srd/races.ts";
 import { ALL_SPELLS } from "@/content/dnd3.5/generated/srd/spells/index.ts";
 import { CORE, TEMPLATE_ITEMS } from "@/content/dnd3.5/packages/core.ts";
 import { DND35_RULESET_NAME } from "@/content/dnd3.5/rulesetNames.ts";
-import { CONTENT_PACKAGES } from "@/database/packages/registry.ts";
+import { CONTENT_PACKAGES, RULESET_CONTENT } from "@/database/packages/registry.ts";
 import { entitiesInRules, entitySnapshotsInRules, rulesetsInRules } from "@/drizzle/schema.ts";
 import type { Item } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities } from "@/server/repositories/index.ts";
 import { invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { ITEM_IS_TEMPLATE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 const BONDS = [FAMILIARS, ANIMAL_COMPANIONS, SPECIAL_MOUNTS];
+const DND35_PACKAGE_NAMES = new Set(
+  [RULESET_CONTENT[DND35_BASE_RULES].core, ...RULESET_CONTENT[DND35_BASE_RULES].extensions].map(({ name }) => name),
+);
+/** 3.5's packages, as the runner applies them: its core rules', then its extensions'. */
+const DND35_PACKAGES = CONTENT_PACKAGES.filter(({ name }) => DND35_PACKAGE_NAMES.has(name));
 function sortedNames(rows: { name: string }[]) {
   return rows.map((row) => row.name).sort();
 }
@@ -49,21 +55,27 @@ async function renameSeeded() {
 
 test("An extension doesn't seed without the core rules", async () => {
   await renameSeeded();
-  const extension = CONTENT_PACKAGES.find((pkg) => pkg.type === "extension")!;
+  const extension = DND35_PACKAGES.find((pkg) => pkg.type === "extension")!;
   expect(extension.seeds[0](db)).rejects.toThrow(`needs ${DND35_RULESET_NAME}, which isn't seeded`);
 });
 
-test("Every content package seeds into a database without them, its extensions extending the core rules it seeds", async () => {
+test("Every 3.5 content package seeds into a database without them, its extensions extending the core rules it seeds", async () => {
   const seeded = await renameSeeded();
-  for (const pkg of CONTENT_PACKAGES) for (const seed of pkg.seeds) await seed(db);
+  for (const pkg of DND35_PACKAGES) for (const seed of pkg.seeds) await seed(db);
 
   const rulesets = await db
     .select()
     .from(rulesetsInRules)
-    .where(and(eq(rulesetsInRules.system, true), notInArray(rulesetsInRules.id, seeded)));
+    .where(
+      and(
+        eq(rulesetsInRules.system, true),
+        eq(rulesetsInRules.baseRules, DND35_BASE_RULES),
+        notInArray(rulesetsInRules.id, seeded),
+      ),
+    );
   const core = rulesets.find((ruleset) => ruleset.name === DND35_RULESET_NAME)!;
   const extensions = rulesets.filter((ruleset) => ruleset !== core);
-  expect(extensions.length).toBe(CONTENT_PACKAGES.length - 1);
+  expect(extensions.length).toBe(DND35_PACKAGES.length - 1);
   for (const extension of extensions)
     expect({ name: extension.name, base: extension.rulesetId }).toEqual({ name: extension.name, base: core.id });
 

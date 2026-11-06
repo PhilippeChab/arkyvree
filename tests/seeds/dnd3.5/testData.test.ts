@@ -120,11 +120,14 @@ test("The test data seeds the seed user's characters as written, each valid, wit
       .from(charactersInCharacter)
       .where(eq(charactersInCharacter.userId, SEED_USER_ID))
   ).map(({ id }) => id);
-  const created = await Characters.findMany(db, { ids: ids.filter((id) => !before.has(id)) }, Visibility.All);
+  // The script seeds every base rules' characters: 3.5's are those on its core rules
+  const { rulesetId } = await getSeedCtx();
+  const created = (await Characters.findMany(db, { ids: ids.filter((id) => !before.has(id)) }, Visibility.All)).filter(
+    (character) => character.rulesetId === rulesetId,
+  );
 
   const masters = created.filter((character) => character.kind === "pc");
   expect(masters.map(({ name }) => name).sort()).toEqual(CHARACTERS.map(({ name }) => name).sort());
-  const { rulesetId } = await getSeedCtx();
   for (const seed of CHARACTERS) {
     const character = masters.find(({ name }) => name === seed.name)!;
     expect(await written(character)).toEqual(seeded(seed, rulesetId));

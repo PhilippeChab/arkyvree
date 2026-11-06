@@ -45,9 +45,12 @@ export default class ClassProgressions {
     };
   }
 
-  /** The base save at `level` (or hit dice), by `progression` (good: 2 + half; poor: a third). */
+  /**
+   * The base save at `level` (or hit dice), by `progression` (good: 2 + half; poor: a third; a prestige class's good:
+   * half of one more; its poor: a third of one more).
+   */
   static saveAt(progression: SaveType, level: number): number {
-    const { base, hitDicePerPoint } = SAVE_PROGRESSIONS[progression];
-    return base + Math.floor(level / hitDicePerPoint);
+    const { base, hitDicePerPoint, offset } = SAVE_PROGRESSIONS[progression];
+    return base + Math.floor((level + offset) / hitDicePerPoint);
   }
 }

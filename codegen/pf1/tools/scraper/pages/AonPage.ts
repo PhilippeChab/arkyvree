@@ -72,11 +72,31 @@ function isHeaderRow($: cheerio.CheerioAPI, row: cheerio.Cheerio<Element>): bool
 }
 
 /**
+ * An entry's own parts, of `parts` from its title's: up to the first h1 or h2 after it that opens with a Source line of
+ * its own, past which a page shows other books' material (a spell's mythic version, a feat's combat trick), or another
+ * entry. An h2 without one is the entry's (a Ring of Elemental Command's Air, Earth, Fire and Water).
+ */
+function ownPartsOf(parts: PagePart[]): PagePart[] {
+  const end = parts.findIndex((part, at) => at > 0 && part.level <= 2 && SOURCE_OPENING.test(part.html));
+  return end < 0 ? parts : parts.slice(0, end);
+}
+
+/**
  * An HTML fragment's text, its line breaks spaces, its whitespace collapsed, and none inside parentheses: the site's
- * marks are images, which leave a space where they stood ("(<img /> +1)": "(+1)").
+ * marks are images, which leave a space where they stood ("(<img /> +1)": "(+1)"). A table in it reads a row at a
+ * time, its cells apart and its rows ending in a semicolon, as its text would otherwise run together ("1d8Color of
+ * Beam1Red": "1d8 Color of Beam; 1 Red …").
  */
 function textOf(html: string): string {
-  return normalizeWs(Page.text(cheerio.load(html, null, false).root()))
+  // On the parsed fragment: the site leaves its rows' closing tags out, which the parse puts back
+  const $ = cheerio.load(html, null, false);
+  $("td, th").append(" ");
+  $("tr")
+    .filter((_, row) => normalizeWs($(row).text()) !== "")
+    .append("; ");
+  return normalizeWs(Page.text($.root()))
+    .replace(/\s+;/g, ";")
+    .replace(/;(\s*;)+/g, ";")
     .replace(/\(\s+/g, "(")
     .replace(/\s+\)/g, ")");
 }
@@ -187,14 +207,22 @@ export class AonPage extends Page {
   private readonly content: string;
 
   /**
+   * Each entry the page prints, its own parts (`ownPartsOf`), its title's first: a page prints several when they share
+   * their text, each under an h1 of its own, with its own Source line, stat block and text (Summon Monster I to IX's,
+   * Heal's and Mass Heal's). Most pages print one.
+   */
+  entries(): PagePart[][] {
+    const parts = this.parts();
+    const titles = parts.flatMap((part, at) => (part.level === 1 ? [at] : []));
+    return titles.map((start, at) => ownPartsOf(parts.slice(start, titles[at + 1] ?? parts.length)));
+  }
+
+  /**
    * The entry's own parts: its title's, and those after it up to the first h1 or h2 that opens with a Source line of
-   * its own, past which a page shows other books' material (a spell's mythic version, a feat's combat trick). An h2
-   * without one is the entry's (a Ring of Elemental Command's Air, Earth, Fire and Water).
+   * its own (`ownPartsOf`).
    */
   ownParts(): PagePart[] {
-    const parts = this.parts();
-    const end = parts.findIndex((part, at) => at > 0 && part.level <= 2 && SOURCE_OPENING.test(part.html));
-    return end < 0 ? parts : parts.slice(0, end);
+    return ownPartsOf(this.parts());
   }
 
   /**

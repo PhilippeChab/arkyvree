@@ -1,5 +1,6 @@
 import type { RulesetModule } from "@/engine/core/module/index.ts";
 import { Dnd35Module } from "@/engine/rulesets/dnd3.5/index.ts";
+import { Pf1Module } from "@/engine/rulesets/pf1/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 /** What a module describes in its own shapes. */
@@ -48,6 +49,7 @@ export type Rest<F, Lead extends unknown[]> = F extends (...args: [...Lead, ...i
  */
 const MODULES = {
   "Dungeons & Dragons: 3.5": Dnd35Module.create(),
+  "Pathfinder: 1": Pf1Module.create(),
 };
 
 /** The base rules' modules, which the engine's handles ask what their rules answer. */

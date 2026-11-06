@@ -12,18 +12,24 @@ Arkyvree is pronounced **archive-ry** — a play on *archive*, a place where rul
 
 ## Which game systems are supported?
 
-**Core SRD 3.5** is the only base ruleset right now. More systems are on the roadmap.
+Two base rulesets, each its own game system: **Core SRD 3.5** (D&D 3.5) and **Core PSD 1** (Pathfinder 1). A ruleset and every character on it follow one game system: a Pathfinder character can't take a 3.5 feat.
 
 Included content for Core SRD 3.5:
 
 - **Base content** — the 11 base classes, all standard races, every SRD spell, the SRD feat list, weapons, armor, magic items.
 - **Sourcebook extensions** — Complete Warrior, Complete Divine, Complete Scoundrel, Complete Arcane, Complete Adventurer and DMG content. Each fork subscribes to the ones it wants.
 
+Included content for Core PSD 1, from the Pathfinder Core Rulebook:
+
+- **Base content** — the 11 base classes, the 5 NPC classes and the 10 prestige classes, the 7 core races, its spells, feats, weapons, armor, gear and magic items, cleric domains, and the familiars, animal companions and paladin mounts.
+- Pathfinder's own rules: its 35 skills (Acrobatics, Perception, Stealth…), class skills' +3, combat maneuvers, and a human's, half-elf's or half-orc's +2 to the ability score of your choice, picked at 1st level.
+
 Excluded:
 
 - **Epic-level play.** No character goes past level 20, whatever its classes, and spells stop at 9th level.
+- **Pathfinder:** artifacts, cursed items, and weapon and armor special abilities; a favored class's bonus, which you add to your character yourself.
 
-The 3.5 data is auto-generated from SRD pages and hand-checked. Errors get fixed in content updates and propagate to every character built on the ruleset — report them with the in-app **Feedback** button.
+The data is auto-generated from the books' open rules and hand-checked. Errors get fixed in content updates and propagate to every character built on the ruleset — report them with the in-app **Feedback** button.
 
 ## Can another program read my characters?
 

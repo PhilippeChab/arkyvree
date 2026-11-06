@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Pathfinder 1: a new game system with the Core Rulebook's races, classes, feats, spells and items, as the ruleset "Core PSD 1"
+
 ## 0.7.0 — 2026-11-04
 
 - D&D 3.5: create a class feature from the class's Progression tab, whose pickers list the class's own features and feat pools first

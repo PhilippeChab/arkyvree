@@ -5,15 +5,14 @@ import { and, asc, eq, isNull } from "drizzle-orm";
 import { charactersInCharacter, rulesetsInRules } from "@/drizzle/schema.ts";
 import type { PrivateNotes } from "@/engine/core/module/index.ts";
 import { Engine } from "@/engine/index.ts";
-import type { Language } from "@/engine/rulesets/dnd3.5/index.ts";
+import type { Item, Language } from "@/engine/rulesets/dnd3.5/index.ts";
 import { withRulesetScope } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { CharacterAdvancements, Characters, Entities, Visibility } from "@/server/repositories/index.ts";
 import { readCharacterInput, readChildInputs } from "@/server/services/characters/characterInputs.ts";
 import { BASE_RULES_OPTIONS, type BaseRules } from "@/shared/enums.ts";
-import { createTestItem } from "@/tests/support/dnd3.5/items.ts";
 import { createTestRuleset, invalidateSeededRuleset } from "@/tests/support/rulesets.ts";
-import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
+import { uniqueId } from "@/tests/support/seed.ts";
 import { LANGUAGE_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 /** An inventory entry's request to carry its item: no location, without charges. */
@@ -21,6 +20,13 @@ const CARRIED = { location: null, quantity: 1, remainingCharges: null, totalChar
 
 /** What opens each character's private notes, which a reader who doesn't read them must not find. */
 const NOTES = "Read by its editors and its Game Master alone:";
+
+/** A plain item of a ruleset (`rulesetId`) of `rules`, written as its base rules store one. */
+async function createItem(rules: BaseRules, rulesetId: string) {
+  const [item] = await Entities.create<Item>(db, rules, "items", { name: `Test Item ${uniqueId()}`, rulesetId });
+  invalidateSeededRuleset(rulesetId);
+  return item;
+}
 
 /**
  * A seeded player character of a ruleset of `rules`: a master of bonded creatures when the seeded ones have any, so
@@ -174,9 +180,8 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
   test("refuses an item of another ruleset in a character's inventory", async () => {
     const record = await findSeededCharacter(rules);
     const input = await readCharacterInput(db, record);
-    const item = await createTestItem({ rulesetId: (await createTestRuleset(null, { baseRules: rules })).id });
-    const own = await createTestItem({ rulesetId: record.rulesetId });
-    invalidateSeededRuleset(record.rulesetId);
+    const item = await createItem(rules, (await createTestRuleset(null, { baseRules: rules })).id);
+    const own = await createItem(rules, record.rulesetId);
 
     await withRulesetScope(db, record.rulesetId, async (scope) => {
       const character = Engine.for(scope).character(input);
@@ -198,7 +203,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
     const input = await readCharacterInput(db, record);
     const kept = input.rows.links.speaks.map(({ entityId }) => entityId);
     const otherRuleset = await createTestRuleset(null, { baseRules: rules });
-    const [{ id: foreign }] = await Entities.create<Language>(db, DND35_BASE_RULES, "languages", {
+    const [{ id: foreign }] = await Entities.create<Language>(db, rules, "languages", {
       rulesetId: otherRuleset.id,
       name: "Foreign",
       fields: { [LANGUAGE_TYPE]: "Common" },
@@ -245,7 +250,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
   });
 
   test("describes the links a kind's page edits by the role its storage declares edited, to their kind", () => {
-    const edited = Engine.forRules(DND35_BASE_RULES).storage().editedLinks();
+    const edited = Engine.forRules(rules).storage().editedLinks();
     const described = Engine.rules()
       .describeAll()
       [rules].kinds.flatMap(({ links, type }) => (links ? [[links.role, { from: type, to: links.type }]] : []));
@@ -297,7 +302,7 @@ describe.each([...BASE_RULES_OPTIONS])("The %s module, as core runs its characte
       const written = [...Object.values(values), ...Object.values(own)];
       for (const value of Object.values(fields)) expect(written).toContain(value);
       // Its kind is a player character's, as its start plans it, which an import's starts from too
-      expect(Engine.forRules(DND35_BASE_RULES).storage().isPlayerKind(plan.row.kind)).toBe(true);
+      expect(Engine.forRules(rules).storage().isPlayerKind(plan.row.kind)).toBe(true);
       expect(characters.planStart(start).row.kind).toBe(plan.row.kind);
       // A field its form doesn't require can be left out
       expect(() => characters.planCreate({ ...start, fields: required })).not.toThrow();

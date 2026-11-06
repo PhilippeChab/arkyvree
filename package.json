@@ -54,6 +54,7 @@
     "parser:dnd3.5:overrides": "bun codegen/dnd3.5/tools/cli/overrides.ts",
     "parser:dnd3.5:validate": "bun codegen/dnd3.5/tools/cli/validate.ts",
     "parser:pf1:scrape": "bun codegen/pf1/tools/cli/scrape.ts",
+    "parser:pf1:generate": "bun codegen/pf1/tools/cli/generate.ts",
     "lint": "oxlint --report-unused-disable-directives-severity=error",
     "lint:fix": "oxlint --fix --report-unused-disable-directives-severity=error",
     "format": "oxfmt '**/*.{ts,tsx,js,mjs,cjs}'",

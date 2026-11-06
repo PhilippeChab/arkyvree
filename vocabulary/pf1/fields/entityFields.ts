@@ -287,10 +287,10 @@ const FEAT_FIELDS = {
     merge: "fallback",
   },
   prohibitedSchools: {
-    description: "School of magic prohibited by wizard specialization",
+    description: "A school of magic a wizard's arcane school opposes: preparing one of its spells takes two slots",
     kind: "list",
     kindWide: true,
-    label: "Prohibited Schools",
+    label: "Opposition Schools",
     field: WIZARD_PROHIBITED_SCHOOL,
     merge: "union",
   },

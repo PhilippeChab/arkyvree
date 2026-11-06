@@ -2,6 +2,7 @@ import SkillNames from "@/engine/rulesets/pf1/characters/description/SkillNames.
 import type LevelUpBase from "@/engine/rulesets/pf1/levelUp/LevelUpBase.ts";
 import PicksDistribution, { type PerLevelDistributionData } from "@/engine/rulesets/pf1/levelUp/PicksDistribution.ts";
 import type DetailedCharacter from "@/engine/rulesets/pf1/model/DetailedCharacter.ts";
+import SkillRules from "@/engine/rulesets/pf1/rules/SkillRules.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /**
@@ -36,7 +37,7 @@ export function SpendsSkillPoints<B extends Constructor<LevelUpBase<DetailedChar
      * - `ranksByPoints`, the ranks it would gain at each count of points from 0, the other skills' points as they are,
      *   up to the most it keeps whole within the budget they leave: what the form's ranks field reads;
      * - `maxPoints`, the most points it keeps spent alone, which picking at random spends up to;
-     * - `rankStep`, a rank, or half a rank for a skill no level makes a class skill;
+     * - `rankStep`, what a point buys: a rank, a class skill's or not (`SkillRules.ranksFor`);
      * - `classSkill`, whether it's a class skill as the form shows it: the step's class's, or the character's classes'
      *   when the levels' classes give different ones.
      */
@@ -64,7 +65,7 @@ export function SpendsSkillPoints<B extends Constructor<LevelUpBase<DetailedChar
           classSkill: multiclass ? skill.isClassSkill : skill.isCurrentClassSkill,
           maxPoints: this.ranksByPoints(distribution, skill.id, {}, budget).length - 1,
           points: own.points,
-          rankStep: perLevelClassSkillIds.some((ids) => ids.includes(skill.id)) ? 1 : 0.5,
+          rankStep: SkillRules.ranksFor(1),
           ranks: own.ranks,
           ranksByPoints: this.ranksByPoints(distribution, skill.id, points, budget - spentAll + own.points),
         };

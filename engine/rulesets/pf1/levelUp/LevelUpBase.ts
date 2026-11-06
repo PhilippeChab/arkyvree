@@ -194,4 +194,15 @@ export default abstract class LevelUpBase<C> {
         .map(([entityId, amount]) => ({ step: "skills", entityId, amount })),
     ];
   }
+
+  /** Picks as a save writes them (`picks`) read back by pool: their feats' and their spells', as a level holds them. */
+  protected toPooledPicks(picks: PickPlan[]): Pick<LevelPicks, "feats" | "spells"> {
+    const pooled = (step: string) => {
+      const pools: Record<string, string[]> = {};
+      for (const { entityId, viaId } of picks.filter((pick) => pick.step === step))
+        if (entityId && viaId) (pools[viaId] ??= []).push(entityId);
+      return pools;
+    };
+    return { feats: pooled("feats"), spells: pooled("spells") };
+  }
 }

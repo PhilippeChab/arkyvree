@@ -14,17 +14,19 @@ export default class LevelUpPreview extends PlannedLevelsState {
    * level's ability increase is picked among them), each level's class, hit die and skill points, and where each pool's
    * next pick goes. The skills step spends the form's points (`picks.skills`, by skill, in its order) over the planned
    * levels, as their save spreads them; the feats and spells steps fit the form's feats and spells (`picks`) to their
-   * pools, as a save would take them, and say what fits (`fitted`) and each pool's room for them.
+   * pools, as a save would take them, and say what fits (`fitted`) and each pool's room for them. The skill points are
+   * the character's holding what fits, as a save counts them (a racial ability pick on Intelligence adds to them).
    */
   private buildLevelUpPreview(planned: PlannedLevels, picks: Partial<LevelPicks>) {
     const { character, savedLevelCount, classLevelEntries } = planned;
     const gains = this.computeLevelGains(planned);
-    const { classSkills, classLevelIds, perLevelSkillPoints } = gains;
-    const levels = { perLevelClassSkillIds: classSkills.perLevel, perLevelSkillPoints, savedLevelCount };
+    const { classSkills, classLevelIds } = gains;
     const fitted = this.fitPicks(picks, (poolPicks) => this.buildWithPicks(planned, poolPicks, gains));
+    const perLevelSkillPoints = this.computeSkillPointsPerLevel(fitted.character, classLevelIds);
+    const levels = { perLevelClassSkillIds: classSkills.perLevel, perLevelSkillPoints, savedLevelCount };
     const pools = fitted.character.components.aptitudes.getLevelUpPools(this.pf1, this.countOwnPicks(fitted.picks));
     return {
-      skills: this.skillStep(character, classSkills.merged, levels, picks.skills ?? {}),
+      skills: this.skillStep(fitted.character, classSkills.merged, levels, picks.skills ?? {}),
       feats: { ...this.featStep(pools, classLevelIds), fitted: fitted.picks.feats },
       spells: { ...this.spellStep(pools, classLevelIds), fitted: fitted.picks.spells },
       attributes: {

@@ -58,9 +58,19 @@ export function diffIsEmpty(d: TableDiff) {
   return d.onlyInRef.length === 0 && d.onlyInTgt.length === 0 && d.fieldChanges.length === 0;
 }
 
-/** Rows read as their business keys alone: a link compared by what it joins. */
+/**
+ * Rows read as their business keys alone: a link compared by what it joins. Rows of one key (a feat's two like
+ * modifiers, one of them under a requirement) are counted, the second and on keyed by their count, so a side that
+ * has fewer of them differs.
+ */
 export function keyed<T>(rows: T[], key: (row: T) => string): IdentifiedRow[] {
-  return rows.map((row) => ({ bk: key(row), id: "", row: {} }));
+  const counts = new Map<string, number>();
+  return rows.map((row) => {
+    const bk = key(row);
+    const count = (counts.get(bk) ?? 0) + 1;
+    counts.set(bk, count);
+    return { bk: count === 1 ? bk : `${bk} (#${count})`, id: "", row: {} };
+  });
 }
 
 /** A diff, line by line, for a person. */

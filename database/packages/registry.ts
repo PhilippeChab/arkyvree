@@ -5,8 +5,11 @@ import { DND35_COMPLETE_DIVINE_PACKAGE } from "@/content/dnd3.5/packages/extensi
 import { DND35_COMPLETE_SCOUNDREL_PACKAGE } from "@/content/dnd3.5/packages/extensions/complete-scoundrel.ts";
 import { DND35_COMPLETE_WARRIOR_PACKAGE } from "@/content/dnd3.5/packages/extensions/complete-warrior.ts";
 import { DND35_DMG_PACKAGE } from "@/content/dnd3.5/packages/extensions/dmg.ts";
-import { seedTestCharacters } from "@/database/seeders/dnd3.5/characters/seedTestCharacters.ts";
-import { RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
+import { PF1_CORE_PACKAGE } from "@/content/pf1/packages/core.ts";
+import { seedTestCharacters as seedDnd35TestCharacters } from "@/database/seeders/dnd3.5/characters/seedTestCharacters.ts";
+import { RulesetSeeder as Dnd35RulesetSeeder } from "@/database/seeders/dnd3.5/RulesetSeeder.ts";
+import { seedTestCharacters as seedPf1TestCharacters } from "@/database/seeders/pf1/characters/seedTestCharacters.ts";
+import { RulesetSeeder as Pf1RulesetSeeder } from "@/database/seeders/pf1/RulesetSeeder.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
 import { listContentPackages } from "./contentPackages.ts";
@@ -29,8 +32,14 @@ export const RULESET_CONTENT = {
       DND35_COMPLETE_ADVENTURER_PACKAGE,
       DND35_COMPLETE_ARCANE_PACKAGE,
     ],
-    seedTestCharacters,
-    seeder: RulesetSeeder,
+    seedTestCharacters: seedDnd35TestCharacters,
+    seeder: Dnd35RulesetSeeder,
+  },
+  "Pathfinder: 1": {
+    core: PF1_CORE_PACKAGE,
+    extensions: [],
+    seedTestCharacters: seedPf1TestCharacters,
+    seeder: Pf1RulesetSeeder,
   },
 } satisfies Record<BaseRules, RulesetContent>;
 
