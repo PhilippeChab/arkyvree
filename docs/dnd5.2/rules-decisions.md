@@ -16,8 +16,9 @@ holds names the code that holds it.
   feat sets.
 - **Skills take no ranks or points.** A skill adds its ability's modifier, the Proficiency Bonus when proficient, twice
   with Expertise, half (rounded down) with Jack of All Trades on an unproficient one, and misc (`SkillsComponent`,
-  `skills.<skill>.proficient`, `.expertise`, `.halfproficient`; Jack of All Trades sets `skills.*.halfproficient`, a
-  skill a ruleset adds included). The level-up has no skills step.
+  `skills.<skill>.proficient`, `.expertise`, `.halfproficient`). The seeded Jack of All Trades sets each of the SRD's
+  skills; a ruleset that adds a skill can set `skills.*.halfproficient`, which reaches every skill, its own included.
+  The level-up has no skills step.
 - **Proficiencies are feats.** A skill, a saving throw, an armor category, a weapon category or kind, a tool, a weapon
   mastery: each is a feat whose modifier sets the path it gives. A skill's Skill Proficiency and Expertise are made with
   the skill, in the Skill Proficiencies and Expertise pools (`SkillProficiencyFeats`, `ExpertiseFeats`), a skill a
@@ -79,11 +80,11 @@ holds names the code that holds it.
 
 - **A subclass is a feat**, picked at its class's 3rd level in the class's subclass pool ("Fighter Subclass"), whose
   modifiers grant its features at their class levels (`classes.<class>.level`).
-- **An Ability Score Improvement takes any feat the character qualifies for.** The General pool lists every feat but an
-  Epic Boon, each behind its prerequisites (a level, a score), and the Epic Boon pool every feat: the SRD's "or another
+- **An Ability Score Improvement takes any feat the character qualifies for.** The General pool lists every feat, each
+  behind its prerequisites (an Epic Boon's level 19 among them), and the Epic Boon pool every feat: the SRD's "or another
   feat of your choice for which you qualify". The Ability Score Improvement feat is 21 variants, a spread each (+2 to
   one ability, or +1 to two), a feat that raises a score of your choice a variant per ability ("Grappler (Strength)").
-- **A species' lineage is a pick** in its lineage pool ("Elven Lineage"), at the first level, whose feats are its
+- **A species' lineage is a pick** in its lineage pool ("Elf Lineage"), at the first level, whose feats are its
   subspecies with their traits: an elf's lineage, a gnome's, a dragonborn's ancestry, a goliath's, a tiefling's legacy.
 - **A species that chooses its size is Medium** (a human's, a tiefling's): a Small one's size is a modifier on its
   character.
@@ -93,7 +94,7 @@ holds names the code that holds it.
 ## Not modelled
 
 - Weapon Mastery's choices changing at a Long Rest: a mastered weapon is picked at a level, as a feat. A barbarian's
-  mastery isn't limited to melee weapons.
+  mastery isn't limited to melee weapons, and a mastery's pick doesn't require proficiency with its weapon.
 - Attunement's limit of three items, and a Small character's gear.
 - Skilled's tool proficiencies (it gives three skills), and a Scholar's or another feat's Expertise limited to some
   skills.
