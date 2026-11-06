@@ -746,10 +746,10 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
       [SPELL_CASTING_TIME]: "Action",
       [SPELL_RANGE]: "Touch",
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
-      [SPELL_MATERIAL]: "a flask of Holy Water worth 25+, GP, which the spell consumes",
+      [SPELL_MATERIAL]: "a flask of Holy Water worth 25+ GP, which the spell consumes",
       [SPELL_DURATION]: "Concentration up to 10 minutes",
       [SPELL_RITUAL]: false,
-      [SPELL_CONCENTRATION]: false,
+      [SPELL_CONCENTRATION]: true,
     },
   },
   {

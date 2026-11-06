@@ -276,7 +276,7 @@ export const MONK_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Monk Starting Proficiencies",
     description:
-      "Gained with a character's first level, when Monk is its first class: Weapon Proficiency: Simple Weapons; Weapon Proficiency: Scimitar; Weapon Proficiency: Shortsword; Weapon Proficiency: Hand Crossbow; Saving Throw Proficiency: Dexterity; Saving Throw Proficiency: Strength; 2 of the skills Acrobatics, Athletics, History, Insight, Religion, Stealth; 1 of the tools Alchemist's Supplies, Brewer's Supplies, Calligrapher's Supplies, Carpenter's Tools, Cartographer's Tools, Cobbler's Tools, Cook's Utensils, Glassblower's Tools, Jeweler's Tools, Leatherworker's Tools, Mason's Tools, Painter's Supplies, Potter's Tools, Smith's Tools, Tinker's Tools, Weaver's Tools, Woodcarver's Tools, Disguise Kit, Forgery Kit, Bagpipes, Drum, Dulcimer, Flute, Lute, Lyre, Horn, Pan flute, Shawm, Viol.",
+      "Gained with a character's first level, when Monk is its first class: Weapon Proficiency: Simple Weapons; Weapon Proficiency: Scimitar; Weapon Proficiency: Shortsword; Weapon Proficiency: Hand Crossbow; Saving Throw Proficiency: Dexterity; Saving Throw Proficiency: Strength; 2 of the skills Acrobatics, Athletics, History, Insight, Religion, Stealth; 1 of the tools Alchemist's Supplies, Brewer's Supplies, Calligrapher's Supplies, Carpenter's Tools, Cartographer's Tools, Cobbler's Tools, Cook's Utensils, Glassblower's Tools, Jeweler's Tools, Leatherworker's Tools, Mason's Tools, Painter's Supplies, Potter's Tools, Smith's Tools, Tinker's Tools, Weaver's Tools, Woodcarver's Tools, Bagpipes, Drum, Dulcimer, Flute, Lute, Lyre, Horn, Pan flute, Shawm, Viol.",
     aptitudes: ["Monk Features"],
     modifiers: [
       {

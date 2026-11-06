@@ -12,6 +12,108 @@
   },
   "overrides": {
     "Rogue": {
+      "multi_classing": {
+        "prerequisites": [
+          {
+            "ability_score": {
+              "index": "dex",
+              "name": "DEX"
+            },
+            "minimum_score": 13
+          }
+        ],
+        "proficiencies": [
+          {
+            "index": "light-armor",
+            "name": "Light Armor"
+          },
+          {
+            "index": "tool-thieves-tools",
+            "name": "Tool: Thieves' Tools"
+          }
+        ],
+        "proficiency_choices": [
+          {
+            "choose": 1,
+            "from": {
+              "option_set_type": "options_array",
+              "options": [
+                {
+                  "item": {
+                    "index": "skill-acrobatics",
+                    "name": "Skill: Acrobatics"
+                  },
+                  "option_type": "reference"
+                },
+                {
+                  "item": {
+                    "index": "skill-athletics",
+                    "name": "Skill: Athletics"
+                  },
+                  "option_type": "reference"
+                },
+                {
+                  "item": {
+                    "index": "skill-deception",
+                    "name": "Skill: Deception"
+                  },
+                  "option_type": "reference"
+                },
+                {
+                  "item": {
+                    "index": "skill-insight",
+                    "name": "Skill: Insight"
+                  },
+                  "option_type": "reference"
+                },
+                {
+                  "item": {
+                    "index": "skill-intimidation",
+                    "name": "Skill: Intimidation"
+                  },
+                  "option_type": "reference"
+                },
+                {
+                  "item": {
+                    "index": "skill-investigation",
+                    "name": "Skill: Investigation"
+                  },
+                  "option_type": "reference"
+                },
+                {
+                  "item": {
+                    "index": "skill-perception",
+                    "name": "Skill: Perception"
+                  },
+                  "option_type": "reference"
+                },
+                {
+                  "item": {
+                    "index": "skill-persuasion",
+                    "name": "Skill: Persuasion"
+                  },
+                  "option_type": "reference"
+                },
+                {
+                  "item": {
+                    "index": "skill-sleight-of-hand",
+                    "name": "Skill: Sleight of Hand"
+                  },
+                  "option_type": "reference"
+                },
+                {
+                  "item": {
+                    "index": "skill-stealth",
+                    "name": "Skill: Stealth"
+                  },
+                  "option_type": "reference"
+                }
+              ]
+            },
+            "type": "proficiencies"
+          }
+        ]
+      },
       "proficiencies": [
         {
           "index": "light-armor",
@@ -52,6 +154,88 @@
         {
           "index": "saving-throw-int",
           "name": "Saving Throw: INT"
+        }
+      ],
+      "proficiency_choices": [
+        {
+          "choose": 4,
+          "desc": "Choose 4: Acrobatics, Athletics, Deception, Insight, Intimidation, Investigation, Perception, Persuasion, Sleight of Hand, or Stealth",
+          "from": {
+            "option_set_type": "options_array",
+            "options": [
+              {
+                "item": {
+                  "index": "skill-acrobatics",
+                  "name": "Skill: Acrobatics"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-athletics",
+                  "name": "Skill: Athletics"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-deception",
+                  "name": "Skill: Deception"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-insight",
+                  "name": "Skill: Insight"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-intimidation",
+                  "name": "Skill: Intimidation"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-investigation",
+                  "name": "Skill: Investigation"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-perception",
+                  "name": "Skill: Perception"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-persuasion",
+                  "name": "Skill: Persuasion"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-sleight-of-hand",
+                  "name": "Skill: Sleight of Hand"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-stealth",
+                  "name": "Skill: Stealth"
+                },
+                "option_type": "reference"
+              }
+            ]
+          },
+          "type": "proficiencies"
         }
       ]
     }

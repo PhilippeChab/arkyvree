@@ -157,7 +157,7 @@ export const WIZARD_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Wizard Starting Proficiencies",
     description:
-      "Gained with a character's first level, when Wizard is its first class: Weapon Proficiency: Simple Weapons; Saving Throw Proficiency: Intelligence; Saving Throw Proficiency: Wisdom; 2 of the skills Arcana, History, Insight, Investigation, Medicine, Religion.",
+      "Gained with a character's first level, when Wizard is its first class: Weapon Proficiency: Simple Weapons; Saving Throw Proficiency: Intelligence; Saving Throw Proficiency: Wisdom; 2 of the skills Arcana, History, Insight, Investigation, Medicine, Nature, Religion.",
     aptitudes: ["Wizard Features"],
     modifiers: [
       {

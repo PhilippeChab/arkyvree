@@ -208,7 +208,7 @@ export const FIGHTER_CLASS_FEATS: FeatSeed[] = [
   {
     name: "Fighter Starting Proficiencies",
     description:
-      "Gained with a character's first level, when Fighter is its first class: Armor Training: Light Armor; Armor Training: Medium Armor; Armor Training: Heavy Armor; Armor Training: Shields; Weapon Proficiency: Simple Weapons; Weapon Proficiency: Martial Weapons; Saving Throw Proficiency: Strength; Saving Throw Proficiency: Constitution; 2 of the skills Acrobatics, Animal Handling, Athletics, History, Insight, Intimidation, Perception, Survival.",
+      "Gained with a character's first level, when Fighter is its first class: Armor Training: Light Armor; Armor Training: Medium Armor; Armor Training: Heavy Armor; Armor Training: Shields; Weapon Proficiency: Simple Weapons; Weapon Proficiency: Martial Weapons; Saving Throw Proficiency: Strength; Saving Throw Proficiency: Constitution; 2 of the skills Acrobatics, Animal Handling, Athletics, History, Insight, Intimidation, Persuasion, Perception, Survival.",
     aptitudes: ["Fighter Features"],
     modifiers: [
       { target: "feats.armortraininglightarmor.possessed", operator: "set", value: "true", valueType: "boolean" },

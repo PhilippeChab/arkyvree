@@ -71,7 +71,7 @@ export const TOOL_FEATS: FeatSeed[] = [
     name: "Tool Proficiency: Disguise Kit",
     description:
       "You have proficiency with Disguise Kit: you add your Proficiency Bonus to any ability check you make with it.",
-    aptitudes: ["Tool Proficiencies", "Monk Tools"],
+    aptitudes: ["Tool Proficiencies"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {
@@ -106,7 +106,7 @@ export const TOOL_FEATS: FeatSeed[] = [
     name: "Tool Proficiency: Forgery Kit",
     description:
       "You have proficiency with Forgery Kit: you add your Proficiency Bonus to any ability check you make with it.",
-    aptitudes: ["Tool Proficiencies", "Monk Tools"],
+    aptitudes: ["Tool Proficiencies"],
     fields: { [FEAT_GENERATED]: true, [FEAT_FAMILY]: ["Tool Proficiency"] },
   },
   {

@@ -53,6 +53,10 @@ describe("A D&D 5th Edition ruleset", () => {
   test("answers with its own module: its feats its own kind, its paths its own, 3.5's and Pathfinder's theirs", async () => {
     const { rulesetId } = await getDnd52SeedCtx();
     expect((await featsKindOf(rulesetId)).constructor).toBe(FeatEntity);
+    // Its species stand where the others' races do: its module refuses the kind as not found
+    await withRulesetScope(db, rulesetId, async (scope) => {
+      expect(() => Engine.for(scope).entities("races")).toThrow(expect.objectContaining({ refusal: "not-found" }));
+    });
     const own = await modifierPathsOf(rulesetId);
     expect(own).toEqual(
       expect.arrayContaining([

@@ -19,6 +19,7 @@ export const FIGHTER: ClassSeed = {
     "History",
     "Insight",
     "Intimidation",
+    "Persuasion",
     "Perception",
     "Survival",
   ],

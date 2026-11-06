@@ -44,9 +44,9 @@ until that commit is changed on purpose. The database's own links (an entry's `u
 `image`) mean nothing outside its API, and are left out.
 
 What the files give was checked against the SRD 5.2.1's text: its 339 spells (27 cantrips and 312 of levels 1 to 9),
-each class's features by level, a subclass's features at its class's levels, and the Weapons and Armor tables, their
-costs and weights included. Where
-the database differs from the SRD, its reference's overrides say what the SRD gives:
+each class's features by level, its skill and tool choices and its table's prepared spells, a subclass's features at
+its class's levels, and the Weapons and Armor tables, their costs and weights included. Where the database differs from
+the SRD, its reference's overrides say what the SRD gives:
 - items: a Sling's damage (bludgeoning), a Trident's (1d8, 1d10 in two hands; the database has the 2014 rules'), Hide
   Armor's category (medium), Half Plate Armor's name, and 27 costs and weights (a Longbow's 50 GP, a Pike's 18 lb.);
 - species: a Human's size, Medium or Small, as its player chooses;
@@ -54,10 +54,14 @@ the database differs from the SRD, its reference's overrides say what the SRD gi
 - feats: Two-Weapon Fighting's name, and the abilities the Boon of Irresistible Offense (Strength or Dexterity) and
   the Boon of Spell Recall (Intelligence, Wisdom or Charisma) increase, where the database has the 2014 rules' "one
   ability score of your choice";
-- classes: a druid's cantrips at levels 7 and 16 (3 and 4: the database counts one more), and a rogue's weapons (the
-  2014 rules' Longswords left out: the SRD's are its Martial weapons with the Finesse or Light property). A class's
-  overrides are by entry's name, the class's (`Rogue`) or a level's (`Druid 7`), each field in place of the
-  database's.
+- classes: a druid's cantrips at levels 7 and 16 (3 and 4: the database counts one more), a wizard's prepared spells at
+  levels 14 to 20 (18, 19, 21, 22, 23, 24 and 25: the database copies the other full casters' column), a rogue's
+  weapons (the 2014 rules' Longswords left out: the SRD's are its Martial weapons with the Finesse or Light property),
+  the skills a class picks among (a fighter's Persuasion and a wizard's Nature, which the database lacks, and a rogue's
+  Performance, which it adds, its multiclass's pick too), and a monk's tools (the Disguise Kit and the Forgery Kit left
+  out of its Artisan's Tools: the SRD files them under Other Tools). A class's overrides are by entry's name, the
+  class's (`Rogue`) or a level's (`Druid 7`), each field in place of the database's;
+- spells: Protection from Evil and Good's Concentration, which its duration names, and its material's words.
 
 A species' trait the database links from its own side alone (a dragonborn's Draconic Ancestry) is read with the
 species it names.
@@ -107,7 +111,8 @@ cache. The D&D 5th Edition parser adds its own:
 The generator reads the content's builders (its seed types, the pools' and the proficiency feats' names,
 `builders/aptitudes/` and `builders/feats/proficiencies.ts`, an item's fields, `builders/items/fields.ts`) and, of
 its hand-written data, the core rules' feats (`content/dnd5.2/data/feats/coreFeats.ts`: the saving throws', armor
-trainings' and weapons' proficiencies, and each weapon's mastery, which no reference lists): a target may name them.
+trainings' and weapons' proficiencies, each weapon's mastery, and a cleric's and a druid's sacred roles, which no
+reference lists as feats): a target may name them, and their pools are the book's.
 
 The books' facts the parser reads are the ruleset's vocabulary (`vocabulary/dnd5.2/`: the book it reads).
 
@@ -151,18 +156,20 @@ of has its modifiers (`terms/`); any other is its text alone.
   Improvement, an Epic Boon's, a Fighting Style's, its Weapon Mastery's kinds, by its levels' counts or its text, its
   Expertise's skills, by its text, and a monk's Unarmored Movement), its multiclass's requirements (13 in its primary
   abilities, one of a fighter's two), and its spells (its list, "Wizard Spells", and the cantrips and prepared spells
-  it has by each level, a level's new ones at the highest spell level its slots reach then, a warlock's Mystic
-  Arcanum's at theirs).
+  it has by each level, a level's new ones at the highest spell level its slots reach then; a warlock's Mystic
+  Arcanum a room at each of its spell levels in a pool of its own, "Mystic Arcanum (Level 6)", which lists the
+  warlock's spells of that level alone, its prepared spells capped at its Pact Magic's 5th level).
 - **Class feats** (`feats/classes/<class>.ts`): each feature's feat, named after its class ("Rage (Barbarian)"),
   granted at each level that lists it (stackable when it's several); each subclass a feat of its class's subclass pool
   ("Fighter Subclass", family Subclass), whose modifiers grant its features' feats ("Improved Critical (Champion)"),
   each from its class level on; its Starting Proficiencies' feat (its saving throws, armor training, weapons and tools
   granted, a room in its skills' and its tools' pools) and its Multiclass Proficiencies' (what the Multiclassing rules
   keep, and its skill or tool pick). The modified features: Unarmored Defense, Extra Attack and its fighter's two
-  more, Fast Movement, Jack of All Trades, Druidic and Thieves' Cant (their languages), Deft Explorer (its languages),
-  Aura of Protection, Disciplined Survivor and Slippery Mind (their saving throws), Primal Champion and Body and Mind,
-  and the subclasses' Improved and Superior Critical, Additional Fighting Style, Bonus Proficiencies and Draconic
-  Resilience.
+  more, Fast Movement, Jack of All Trades, Druidic and Thieves' Cant (their languages, Thieves' Cant's one more to
+  pick), Deft Explorer (its languages), Aura of Protection, Disciplined Survivor and Slippery Mind (their saving
+  throws), Primal Champion and Body and Mind, Primal Knowledge (a room in the barbarian's skills' pool), Divine Order
+  and Primal Order (a room in their pools, whose sacred roles are hand-written feats), and the subclasses' Improved and
+  Superior Critical, Additional Fighting Style, Bonus Proficiencies and Draconic Resilience.
 - **Feats** (`feats/feats.ts`, a list per category): each in its category's pool, and in the General's and the Epic
   Boon's, which take any feat a character qualifies for; its prerequisites as requirements (a level, an ability score,
   a class feature's feats); a feat taken with a choice a family of a feat per option: the Ability Score Improvement's

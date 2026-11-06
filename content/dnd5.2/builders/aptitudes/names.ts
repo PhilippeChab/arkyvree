@@ -7,6 +7,12 @@
 /** The pool of every armor training, a feat per category of armor and the Shields' (granted, never picked). */
 export const ARMOR_TRAINING_POOL = "Armor Training";
 
+/** A cleric's Divine Order: its sacred roles, a feat each, one picked at its first level. */
+export const DIVINE_ORDER_POOL = "Divine Order";
+
+/** A druid's Primal Order: its sacred roles, a feat each, one picked at its first level. */
+export const PRIMAL_ORDER_POOL = "Primal Order";
+
 /** The pool of every saving throw's proficiency, a feat per ability (granted, never picked). */
 export const SAVING_THROW_PROFICIENCIES_POOL = "Saving Throw Proficiencies";
 
@@ -42,6 +48,14 @@ export function classSpells(className: string): string {
 /** A class's subclass pick ("Fighter Subclass"): its level 3 gives room in it, its subclasses its feats. */
 export function classSubclass(className: string): string {
   return `${className} Subclass`;
+}
+
+/**
+ * A warlock's Mystic Arcanum at a spell level ("Mystic Arcanum (Level 6)"): its one spell of that level, the warlock's
+ * list's spells of that level its options, apart from its prepared spells, which its Pact Magic's slots cap.
+ */
+export function mysticArcanum(level: number): string {
+  return `Mystic Arcanum (Level ${level})`;
 }
 
 /** A species' lineage pick ("Elf Lineage"): the species gives room in it, its subspecies its feats. */

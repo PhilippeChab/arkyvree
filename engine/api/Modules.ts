@@ -71,6 +71,14 @@ export default class Modules {
     return Object.entries(modules) as [BaseRules, RulesetModule][];
   }
 
+  /**
+   * A base rules' module as a handle bound to a ruleset's view asks it (`Module`): its entity kinds every module's, by
+   * type, of which its own refuses another's as not found (`EntitiesPart.of`: a request may name one).
+   */
+  static any(baseRules: BaseRules): Module {
+    return Modules.of(baseRules) as Module;
+  }
+
   /** A base rules' module (`B`), by its own types: any registered module's for base rules the caller doesn't know. */
   static of<B extends BaseRules>(baseRules: B): ModuleOf<B> {
     // One module per base rules, the contract's first: a row MODULES lacks or gets wrong is this one error, and `B`
