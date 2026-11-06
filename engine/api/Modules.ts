@@ -1,5 +1,6 @@
 import type { RulesetModule } from "@/engine/core/module/index.ts";
 import { Dnd35Module } from "@/engine/rulesets/dnd3.5/index.ts";
+import { Dnd52Module } from "@/engine/rulesets/dnd5.2/index.ts";
 import { Pf1Module } from "@/engine/rulesets/pf1/index.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 
@@ -8,6 +9,15 @@ type DescriptionsOf<M> = M extends RulesetModule<infer D, infer _E> ? D : never;
 
 /** A module's entity kinds, by type. */
 type EntityKindsOf<M> = M extends RulesetModule<infer _D, infer E> ? E : never;
+
+/** Each type any of the modules' entity kinds (`U`, the union of each one's) holds. */
+type KindTypesOf<U> = U extends unknown ? keyof U : never;
+
+/**
+ * The modules' entity kinds (`U`, the union of each one's), by type: each type any of them declares (3.5's races,
+ * D&D 5th Edition's species), with the kinds of it those that declare it have.
+ */
+type MergedKinds<U> = { [K in KindTypesOf<U>]: U extends Record<K, infer V> ? V : never };
 
 /**
  * The module registered for base rules (`B`), by its own types: read by the rows `MODULES` has, so a row it lacks breaks
@@ -22,13 +32,13 @@ type Registered<B extends BaseRules> = (typeof MODULES)[B & keyof typeof MODULES
 export type Accepted<F> = [F] extends [(...args: infer A) => unknown] ? A : never;
 
 /** Each entity kind's rules, by its type, any registered module's: what `Engine.for(scope).entities(type)` hands out. */
-export type EntityKinds = EntityKindsOf<Registered<BaseRules>>;
+export type EntityKinds = MergedKinds<EntityKindsOf<Registered<BaseRules>>>;
 
 /** An entity kind, by its type: what `Engine.for(scope).entities(type)` takes. */
 export type EntityType = keyof EntityKinds;
 
 /** The module a handle bound to a ruleset's view asks: its base rules' (the view's), any of them. */
-export type Module = ModuleOf<BaseRules>;
+export type Module = RulesetModule<DescriptionsOf<Registered<BaseRules>>, EntityKinds>;
 
 /**
  * A base rules' module (`B`), as the contract's parts (`RulesetModule`) over what it describes and its entity kinds:
@@ -50,6 +60,7 @@ export type Rest<F, Lead extends unknown[]> = F extends (...args: [...Lead, ...i
 const MODULES = {
   "Dungeons & Dragons: 3.5": Dnd35Module.create(),
   "Pathfinder: 1": Pf1Module.create(),
+  "Dungeons & Dragons: 5.2": Dnd52Module.create(),
 };
 
 /** The base rules' modules, which the engine's handles ask what their rules answer. */

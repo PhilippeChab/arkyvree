@@ -58,7 +58,7 @@ export const FIGHTER_CLASS_FEATS: FeatSeed[] = [
     name: "Extra Attack (Fighter)",
     description: "You can attack twice instead of once whenever you take the Attack action on your turn.",
     aptitudes: ["Fighter Features"],
-    modifiers: [{ target: "combat.attacks", operator: "add", value: "1", valueType: "number" }],
+    modifiers: [{ target: "combat.attacks", operator: "set", value: "2", valueType: "number" }],
     fields: { [FEAT_SELECTABLE]: false },
   },
   {
@@ -86,7 +86,7 @@ export const FIGHTER_CLASS_FEATS: FeatSeed[] = [
     name: "Two Extra Attacks (Fighter)",
     description: "You can attack three times instead of once whenever you take the Attack action on your turn.",
     aptitudes: ["Fighter Features"],
-    modifiers: [{ target: "combat.attacks", operator: "add", value: "1", valueType: "number" }],
+    modifiers: [{ target: "combat.attacks", operator: "set", value: "3", valueType: "number" }],
     fields: { [FEAT_SELECTABLE]: false },
   },
   {
@@ -107,7 +107,7 @@ export const FIGHTER_CLASS_FEATS: FeatSeed[] = [
     name: "Three Extra Attacks (Fighter)",
     description: "You can attack four times instead of once whenever you take the Attack action on your turn.",
     aptitudes: ["Fighter Features"],
-    modifiers: [{ target: "combat.attacks", operator: "add", value: "1", valueType: "number" }],
+    modifiers: [{ target: "combat.attacks", operator: "set", value: "4", valueType: "number" }],
     fields: { [FEAT_SELECTABLE]: false },
   },
   {

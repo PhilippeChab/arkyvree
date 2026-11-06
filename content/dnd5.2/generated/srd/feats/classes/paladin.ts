@@ -65,7 +65,7 @@ export const PALADIN_CLASS_FEATS: FeatSeed[] = [
     name: "Extra Attack (Paladin)",
     description: "You can attack twice instead of once whenever you take the Attack action on your turn.",
     aptitudes: ["Paladin Features"],
-    modifiers: [{ target: "combat.attacks", operator: "add", value: "1", valueType: "number" }],
+    modifiers: [{ target: "combat.attacks", operator: "set", value: "2", valueType: "number" }],
     fields: { [FEAT_SELECTABLE]: false },
   },
   {
