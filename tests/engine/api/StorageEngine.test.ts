@@ -331,7 +331,6 @@ describe("A module's storage", () => {
     const kind = storage.playerKind();
     expect(storage.isPlayerKind(kind)).toBe(true);
     expect(storage.isPlayerKind(`${kind}-child`)).toBe(false);
-    expect(Engine.rules().playerKinds()).toContain(kind);
     // By type, as a refusal of another kind lists them
     expect(storage.customizableKinds()).toEqual(
       types.filter((type) => storage.kind(type).customizable).toSorted((a, b) => a.localeCompare(b)),

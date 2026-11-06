@@ -1,5 +1,6 @@
 import type { KindCapabilities, RulesetEntity } from "@/engine/core/entities/index.ts";
 import type { Fields } from "@/engine/core/fields/index.ts";
+import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView, StandaloneKind, ViewKinds } from "@/engine/core/view/index.ts";
 
 /** A kind's rules, of its type (`K`): its `RulesetEntity`, whatever form its saves take. */
@@ -36,8 +37,13 @@ export default abstract class EntitiesPart<E extends EntityKindsContract> {
     return this.kindOf(type).describeCapabilities();
   }
 
-  /** A kind's rules (`type`), bound to a ruleset's view. */
+  /**
+   * A kind's rules (`type`), bound to a ruleset's view: refused as not found for a kind its module doesn't have (another
+   * base rules' kind, which a request may name).
+   */
   of<K extends keyof E>(view: RulesetView, type: K): E[K] {
+    if (!Object.hasOwn(this.kinds, type))
+      throw new RulesError("not-found", `No ${String(type)} in this ruleset's rules`);
     return new (this.kindOf(type))(view);
   }
 }

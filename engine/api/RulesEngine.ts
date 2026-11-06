@@ -335,31 +335,24 @@ export default class RulesEngine {
     return RulesetData.takenOwnedIn(Modules.of(baseRules).ruleset.describeRules().words, ownedType, ownerType);
   }
 
-  /** Whether a character's kind is a player character's, any module's (`playerKinds`), not another's child. */
-  isPlayerKind(kind: string): boolean {
-    return this.playerKinds().includes(kind);
-  }
-
   /**
-   * Every module's player character's kind (3.5's `pc`), each once: what a user's lists, shares and campaigns hold, a
-   * character of any other kind being another's child.
-   */
-  playerKinds(): string[] {
-    return [...new Set(this.modules.map(([baseRules]) => this.storageOf(baseRules).playerKind()))];
-  }
-
-  /**
-   * The kinds a fork restores to its parent's: every module's kind no other owns (`StorageEngine.standaloneKinds`) but
-   * those its rules keep to themselves, which no form writes (`readOnly`: 3.5's abilities), each once. What a revert
-   * takes and a ruleset's Local Changes offer.
+   * The kinds a route that restores an entity takes, every module's (`restorableKindsOf`), each once: the words its
+   * request may name, whose ruleset's own refuse another's.
    */
   restorableKinds(): EntityType[] {
-    const kinds = this.modules.flatMap(([baseRules, module]) =>
-      this.storageOf(baseRules)
-        .standaloneKinds()
-        .filter((type) => !module.entities.capabilitiesOf(type).readOnly),
-    );
-    return [...new Set(kinds)];
+    return [...new Set(this.modules.flatMap(([baseRules]) => this.restorableKindsOf(baseRules)))];
+  }
+
+  /**
+   * The kinds a fork of a base rules restores to its parent's: its module's kinds no other owns
+   * (`StorageEngine.standaloneKinds`) but those its rules keep to themselves, which no form writes (`readOnly`: 3.5's
+   * abilities). What a revert takes and a ruleset's Local Changes offer.
+   */
+  restorableKindsOf(baseRules: BaseRules): EntityType[] {
+    const module = Modules.of(baseRules);
+    return this.storageOf(baseRules)
+      .standaloneKinds()
+      .filter((type) => !module.entities.capabilitiesOf(type).readOnly);
   }
 
   /**

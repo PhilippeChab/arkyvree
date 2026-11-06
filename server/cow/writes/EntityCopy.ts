@@ -131,9 +131,9 @@ export default class EntityCopy {
     );
 
     // 3. Copy customizations
-    const customizations = await CustomizationCopies.read(tx, [this.entityId], this.entityType);
+    const customizations = await CustomizationCopies.read(tx, this.baseRules, [this.entityId], this.entityType);
     const cust = customizations.get(this.entityId)!;
-    await CustomizationCopies.copy(tx, newEntity.id, this.entityType, cust, this.copiedIds);
+    await CustomizationCopies.copy(tx, this.baseRules, newEntity.id, this.entityType, cust, this.copiedIds);
 
     // 4. Copy its links of the roles it holds many of and the entities it owns, remapped as the row was
     await this.copyLinksAndOwned(tx, newEntity.id, cow);
@@ -191,10 +191,10 @@ export default class EntityCopy {
         true,
       );
       const ids = new Map(owned.map((row, index) => [row.id, copies[index].id]));
-      const customizations = await CustomizationCopies.read(tx, [...ids.keys()], type);
+      const customizations = await CustomizationCopies.read(tx, this.baseRules, [...ids.keys()], type);
       for (const [id, copyId] of ids) {
         const own = customizations.get(id);
-        if (own) await CustomizationCopies.copy(tx, copyId, type, own, this.copiedIds);
+        if (own) await CustomizationCopies.copy(tx, this.baseRules, copyId, type, own, this.copiedIds);
       }
       await this.copyLinks(tx, type, ids, cow);
     }
@@ -237,10 +237,10 @@ export default class EntityCopy {
     cow: CowData,
   ) {
     // The losers' own rows, by their stored ids
-    const siblingCusts = await CustomizationCopies.read(tx, siblingIds, this.entityType);
+    const siblingCusts = await CustomizationCopies.read(tx, this.baseRules, siblingIds, this.entityType);
     const siblings = siblingIds.flatMap((id) => siblingCusts.get(id) ?? []);
     const merged = Engine.copyOnWrite().mergeCustomizations(own, siblings, targetEntityId);
-    await CustomizationCopies.copy(tx, targetEntityId, this.entityType, merged, this.copiedIds);
+    await CustomizationCopies.copy(tx, this.baseRules, targetEntityId, this.entityType, merged, this.copiedIds);
     await this.mergeLinks(tx, targetEntityId, siblingIds, cow);
   }
 

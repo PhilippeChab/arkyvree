@@ -38,7 +38,7 @@ async function setup() {
       valueType: "number",
     },
   ]);
-  const customizations = (await CustomizationCopies.read(db, [source.id], "feats")).get(source.id)!;
+  const customizations = (await CustomizationCopies.read(db, DND35_BASE_RULES, [source.id], "feats")).get(source.id)!;
   return { source, targets, modifier, customizations };
 }
 
@@ -46,6 +46,7 @@ test("each target's copied modifier requirement belongs to that target's modifie
   const { targets, customizations } = await setup();
   await CustomizationCopies.copyToMany(
     db,
+    DND35_BASE_RULES,
     targets.map((t) => t.id),
     "feats",
     customizations,
@@ -61,6 +62,7 @@ test("copied-id recording is limited to a single target", async () => {
   expect(
     CustomizationCopies.copyToMany(
       db,
+      DND35_BASE_RULES,
       targets.map((t) => t.id),
       "feats",
       customizations,
@@ -72,14 +74,17 @@ test("copied-id recording is limited to a single target", async () => {
 test("a modifier requirement is never copied onto the source's own modifier", async () => {
   const { targets, modifier, customizations } = await setup();
   expect(
-    CustomizationCopies.copyToMany(db, [targets[0].id], "feats", { ...customizations, modifiers: [] }),
+    CustomizationCopies.copyToMany(db, DND35_BASE_RULES, [targets[0].id], "feats", {
+      ...customizations,
+      modifiers: [],
+    }),
   ).rejects.toThrow("outside the copied set");
   expect(await Requirements.findMany(db, { entityIds: [modifier.id], entityType: "modifiers" })).toHaveLength(1);
 });
 
 test("modifiers are not silently dropped for entity types that cannot own them", async () => {
   const { targets, customizations } = await setup();
-  expect(CustomizationCopies.copyToMany(db, [targets[0].id], "skills", customizations)).rejects.toThrow(
-    "Cannot copy modifiers onto skills",
-  );
+  expect(
+    CustomizationCopies.copyToMany(db, DND35_BASE_RULES, [targets[0].id], "skills", customizations),
+  ).rejects.toThrow("Cannot copy modifiers onto skills");
 });

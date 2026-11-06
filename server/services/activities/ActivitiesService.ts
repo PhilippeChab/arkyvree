@@ -9,7 +9,6 @@ import {
   Invites,
   type Pagination,
   Players,
-  RULESET_ENTITY_TYPES,
 } from "@/server/repositories/index.ts";
 import { findReadableCampaign, findVisibleCampaignCharacter } from "@/server/services/campaigns/index.ts";
 import { findReadableCharacter } from "@/server/services/characters/index.ts";
@@ -17,7 +16,7 @@ import { findReadableRuleset } from "@/server/services/rulesets/index.ts";
 import { isNavigableTarget } from "@/shared/activity.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import { buildEntityPagePath, hasCustomizationPage } from "@/shared/customization/entities.ts";
-import { BASE_RULES_OPTIONS } from "@/shared/enums.ts";
+import { BASE_RULES_OPTIONS, type BaseRules } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
 
@@ -73,14 +72,14 @@ class ActivitiesService {
   }
 
   /**
-   * The id an entity of a ruleset's content (`entity`, its row in the ruleset `stored`) shows by in another ruleset
+   * The id an entity of a ruleset's content (`entity`, of `baseRules`, its row in the ruleset `stored`) shows by in another ruleset
    * (`written`, the one an activity recorded writing: a fork's change to what it inherits, its class's spell list's):
    * the row its view shows in its place (its own, or its copy where the ruleset copied it since), read as a write finds
    * it (`EntityEdit`): none once that ruleset or one it's built on deleted it (a tombstone stands for it, its row
    * gone), nor for an entity it doesn't inherit.
    */
-  private async findShownIn(written: string, entity: ContentRow, stored: string) {
-    if (!isOneOf(entity.type, RULESET_ENTITY_TYPES)) return undefined;
+  private async findShownIn(written: string, entity: ContentRow, stored: string, baseRules: BaseRules) {
+    if (!isOneOf(entity.type, Engine.storage(baseRules).standaloneKinds())) return undefined;
     const view = await withRulesetScope(db, written, async (scope) => {
       const cow = scope.rulesetData.cow;
       return { chain: [written, ...cow.sourceChain], shownId: cow.resolve(entity.id) };
@@ -152,7 +151,7 @@ class ActivitiesService {
     const pages = storage.customizationPages();
     // In the ruleset the activity recorded writing, while the session may read it and it shows the entity
     if (written !== undefined && written !== stored && (await this.rulesetUrl(session, written))) {
-      const shownId = await this.findShownIn(written, page, stored);
+      const shownId = await this.findShownIn(written, page, stored, baseRules);
       if (shownId) return buildEntityPagePath(written, page.type, shownId, pages, edited?.to);
     }
     if (!(await this.rulesetUrl(session, stored))) return null;

@@ -30,7 +30,6 @@ import {
   Modifiers,
   type ReferencedType,
   Requirements,
-  RULESET_ENTITY_TYPES,
   type RulesetEntityType,
 } from "@/server/repositories/index.ts";
 import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
@@ -89,9 +88,11 @@ export type EntityBody = EntityForm & { name: string; updatedAt?: string };
 /** The unique index that keeps an owner's entities at their own places (a class's levels at their numbers). */
 const OWNED_POSITION_INDEX = "entities_owner_position_unique_idx";
 
-/** An entity's type, as a plan names it: refused when it isn't a ruleset entity's. */
-function entityTypeOf(type: string): RulesetEntityType {
-  const entityType = RULESET_ENTITY_TYPES.find((known) => known === type);
+/** An entity's type, as a plan names it: refused when it isn't one of its ruleset's base rules' kinds (`baseRules`). */
+function entityTypeOf(baseRules: BaseRules, type: string): RulesetEntityType {
+  const entityType = Engine.storage(baseRules)
+    .standaloneKinds()
+    .find((known) => known === type);
   if (!entityType) throw new Error(`A save cannot write a ${type} entity`);
   return entityType;
 }
@@ -131,7 +132,7 @@ export default class EntityWriter {
    * requirements.
    */
   private static async makeEntity(tx: Db, scope: LockedRulesetScope, made: MadeEntity) {
-    const type = entityTypeOf(made.type);
+    const type = entityTypeOf(scope.ruleset.baseRules, made.type);
     const names = new EntityNames(scope);
     const tombstoneAncestorId = await names.findTombstoneAncestor(tx, type, made.row.name);
     const [entity] = await EntityNames.withNameRefusal(made.row.name, () =>
@@ -203,7 +204,7 @@ export default class EntityWriter {
    * links and customizations with it, and a soft-archive would block an entity of the same name made later.
    */
   private static async removeEntity(tx: Db, scope: LockedRulesetScope, policy: RulesetsPolicy, removal: EntityRemoval) {
-    const type = entityTypeOf(removal.type);
+    const type = entityTypeOf(scope.ruleset.baseRules, removal.type);
     const inUse = await new EntityUses(scope).refusesDelete(tx, type, removal.id);
     policy.canDeleteEntity({ inUse, refusal: removal.inUse });
 
@@ -301,7 +302,7 @@ export default class EntityWriter {
     before?: EntityWrites,
   ) {
     if (before) await EntityWriter.writeBeside(tx, scope, policy, before);
-    const entityType = entityTypeOf(type);
+    const entityType = entityTypeOf(scope.ruleset.baseRules, type);
     const edit = new EntityEdit(scope);
     const written = [];
     for (const planned of plans) {
@@ -313,12 +314,13 @@ export default class EntityWriter {
     return written;
   }
 
-  /** The entity's customizations, copied onto the new ones (`entities`) from `sourceId`'s. */
-  private async copyCustomizations(tx: Db, entities: Row[], sourceId: string) {
-    const customizations = (await CustomizationCopies.read(tx, [sourceId], this.type)).get(sourceId);
+  /** The entity's customizations, copied onto the new ones (`entities`, of `baseRules`) from `sourceId`'s. */
+  private async copyCustomizations(tx: Db, baseRules: BaseRules, entities: Row[], sourceId: string) {
+    const customizations = (await CustomizationCopies.read(tx, baseRules, [sourceId], this.type)).get(sourceId);
     if (!customizations) return;
     await CustomizationCopies.copyToMany(
       tx,
+      baseRules,
       entities.map((entity) => entity.id),
       this.type,
       customizations,
@@ -349,7 +351,8 @@ export default class EntityWriter {
       written.push(entity);
     }
     // The customizations they copy, before what the plan writes beside them
-    if (plan.copyCustomizationsFrom) await this.copyCustomizations(tx, written, plan.copyCustomizationsFrom);
+    if (plan.copyCustomizationsFrom)
+      await this.copyCustomizations(tx, ruleset.baseRules, written, plan.copyCustomizationsFrom);
     for (const entity of written) {
       await EntityWriter.setParts(tx, scope, policy, { entityId: entity.id, entityType: this.type }, plan, false);
       await EntityWriter.recordActivity(tx, session, scope.ruleset, "create", this.type, entity.id, {

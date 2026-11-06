@@ -7,7 +7,6 @@ import { ConflictError } from "@/server/errors/index.ts";
 import {
   EntityReferences,
   type ReferencedType,
-  RULESET_ENTITY_TYPES,
   RulesetEntities,
   type RulesetEntityType,
 } from "@/server/repositories/index.ts";
@@ -73,10 +72,9 @@ export default class ExtensionDeparture {
       (entity) => entity.entityType,
     );
     const leaving = new Map(
-      RULESET_ENTITY_TYPES.map((type) => [
-        type,
-        [...(own.get(type) ?? []).map((entity) => entity.id), ...(copies.get(type) ?? [])],
-      ]),
+      Engine.storage(baseRules)
+        .standaloneKinds()
+        .map((type) => [type, [...(own.get(type) ?? []).map((entity) => entity.id), ...(copies.get(type) ?? [])]]),
     );
     const left = new Set([...leaving.values()].flat());
     // What each stands in place of, in the view without the extension: an entity's equivalents are of its own kind
@@ -147,7 +145,7 @@ export default class ExtensionDeparture {
    */
   private async findLostReferences(tx: Db): Promise<string[]> {
     const typeOf = new Map<string, RulesetEntityType>();
-    for (const type of RULESET_ENTITY_TYPES)
+    for (const type of Engine.storage(this.scope.ruleset.baseRules).standaloneKinds())
       for (const [id, fallbackId] of this.departures.get(type) ?? []) if (!fallbackId) typeOf.set(id, type);
     const deleted = new Set(this.copyIds);
     const references = (

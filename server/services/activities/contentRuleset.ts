@@ -6,7 +6,7 @@
 
 import type { Db } from "@/drizzle/database.ts";
 import { Engine } from "@/engine/index.ts";
-import { Entities, Modifiers, Requirements, RULESET_ENTITY_TYPES } from "@/server/repositories/index.ts";
+import { Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import { CUSTOMIZATION_TYPES } from "@/shared/customization/customizationTypes.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
@@ -66,7 +66,16 @@ export async function findContentOwner(db: Db, { id, type }: ContentRow): Promis
  * once a row on the way is gone, or for a row of no ruleset's.
  */
 export async function findContentRuleset(db: Db, { id, type }: ContentRow): Promise<string | undefined> {
-  if (isOneOf(type, RULESET_ENTITY_TYPES)) return (await Entities.findOne(db, { entityType: type, id }))?.rulesetId;
+  const customization = CUSTOMIZATION_OWNERS.get(type);
+  if (customization) {
+    const owner = await customization(db, id);
+    return owner && (await findContentRuleset(db, owner));
+  }
+  const baseRules = await Entities.findBaseRules(db, { id });
+  if (!baseRules) return undefined;
+  // A kind no other owns, of its row's base rules: the ruleset's own entity
+  if (isOneOf(type, Engine.storage(baseRules).standaloneKinds()))
+    return (await Entities.findOne(db, { entityType: type, id }))?.rulesetId;
   const owner = await findContentOwner(db, { id, type });
   return owner && (await findContentRuleset(db, owner));
 }

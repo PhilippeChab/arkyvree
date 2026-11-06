@@ -1,16 +1,20 @@
+import { Engine } from "@/engine/index.ts";
 import { EntityNames, EntityRevert, RulesetChanges, RulesetViews } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
-import { RULESET_ENTITY_TYPES, type RulesetEntityType, Rulesets } from "@/server/repositories/index.ts";
+import { NotFoundError } from "@/server/errors/index.ts";
+import { type RulesetEntityType, Rulesets } from "@/server/repositories/index.ts";
 import { getReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { withRulesetWrite } from "@/server/services/writes/index.ts";
+import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Session } from "@/shared/relations.ts";
 
 class RulesetChangesService {
   async getChanges(session: Session, rulesetId: string) {
-    (await getReadableRuleset(db, session, rulesetId)).policy.canViewChanges();
+    const { policy, ruleset } = await getReadableRuleset(db, session, rulesetId);
+    policy.canViewChanges();
 
     // Its changes as copy-on-write reads its snapshots, of the kinds a restore brings back
-    const { added, deleted, modified } = await RulesetChanges.read(db, rulesetId);
+    const { added, deleted, modified } = await RulesetChanges.read(db, rulesetId, ruleset.baseRules);
     const changes = [
       ...added.map(({ entityType, id, name }) => ({ entityType, status: "added" as const, entityId: id, name })),
       ...modified.map(({ entityType, id, name, sourceEntityId }) => ({
@@ -28,11 +32,10 @@ class RulesetChangesService {
       })),
     ];
 
-    // One order, whatever the rows' storage: by kind, in the modules' order, then by name
+    // One order, whatever the rows' storage: by kind, in its module's order, then by name
+    const kinds = Engine.storage(ruleset.baseRules).standaloneKinds();
     return changes.toSorted(
-      (a, b) =>
-        RULESET_ENTITY_TYPES.indexOf(a.entityType) - RULESET_ENTITY_TYPES.indexOf(b.entityType) ||
-        a.name.localeCompare(b.name),
+      (a, b) => kinds.indexOf(a.entityType) - kinds.indexOf(b.entityType) || a.name.localeCompare(b.name),
     );
   }
 
@@ -45,6 +48,10 @@ class RulesetChangesService {
   async revertOverride(session: Session, rulesetId: string, entityType: RulesetEntityType, entityId: string) {
     const subscribers = await withRulesetWrite(session, rulesetId, async (tx, scope, policy) => {
       policy.canRevertChange();
+      // Of a kind its own base rules restore: another's kind is none of its
+      const { baseRules } = scope.ruleset;
+      if (!isOneOf(entityType, Engine.rules().restorableKindsOf(baseRules)))
+        throw new NotFoundError(Engine.rules().describeNotFound(baseRules, entityType));
 
       // The parent's entity shows again: under a name its view shows no other entity of
       const names = new EntityNames(scope);

@@ -2,7 +2,6 @@ import { and, count, eq, exists, inArray, isNull, not, or, type SQL, sql } from 
 
 import type { Db } from "@/drizzle/database.ts";
 import { charactersInCharacter, contributorsInCharacter } from "@/drizzle/schema.ts";
-import { Engine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
@@ -62,7 +61,7 @@ class CharactersRepository extends include(
     const contributes = this.contributesTo(db, userId);
     return this.where([
       accessRole === "owner" ? owns : accessRole === "contributor" ? contributes : or(owns, contributes)!,
-      inArray(this.table.kind, [...Engine.rules().playerKinds()]),
+      isNull(this.table.parentCharacterId),
       this.visibility(visibility),
       this.search(search, [this.table.name, this.table.description]),
     ]);
@@ -151,7 +150,7 @@ class CharactersRepository extends include(
           "userId" in where && eq(this.table.userId, where.userId),
         ],
         [
-          "userId" in where && inArray(this.table.kind, [...Engine.rules().playerKinds()]),
+          "userId" in where && isNull(this.table.parentCharacterId),
           "search" in where && this.search(where.search, [this.table.name]),
           this.visibility(visibility),
         ],
@@ -179,7 +178,7 @@ class CharactersRepository extends include(
         ],
         [
           "kind" in where && eq(this.table.kind, where.kind),
-          "shareToken" in where && inArray(this.table.kind, [...Engine.rules().playerKinds()]),
+          "shareToken" in where && isNull(this.table.parentCharacterId),
           this.visibility(visibility),
         ],
       ),
@@ -227,7 +226,7 @@ class CharactersRepository extends include(
       .where(
         and(
           inArray(charactersInCharacter.rulesetId, where.rulesetIds),
-          inArray(charactersInCharacter.kind, [...Engine.rules().playerKinds()]),
+          isNull(charactersInCharacter.parentCharacterId),
           or(eq(charactersInCharacter.userId, where.editorId), this.contributesTo(db, where.editorId)),
         ),
       );
