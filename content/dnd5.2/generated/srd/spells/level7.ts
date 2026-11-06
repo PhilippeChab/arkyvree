@@ -82,7 +82,14 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
     name: "Etherealness",
     description:
       "You step into the border regions of the Ethereal Plane, where it overlaps with your current plane. You remain in the Border Ethereal for the duration. During this time, you can move in any direction. If you move up or down, every foot of movement costs an extra foot. You can perceive the plane you left, which looks gray, and you can't see anything there more than 60 feet away.\nWhile on the Ethereal Plane, you can affect and be affected only by creatures, objects, and effects on that plane. Creatures that aren't on the Ethereal Plane can't perceive or interact with you unless a feature gives them the ability to do so.\nWhen the spell ends, you return to the plane you left in the spot that corresponds to your space in the Border Ethereal. If you appear in an occupied space, you are shunted to the nearest unoccupied space and take Force damage equal to twice the number of feet you are moved.\nThis spell ends instantly if you cast it while you are on the Ethereal Plane or a plane that doesn't border it, such as one of the Outer Planes.\nUsing a Higher-Level Spell Slot. You can target up to three willing creatures (including yourself) for each spell slot level above 7. The creatures must be within 10 feet of you when you cast the spell.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
+    aptitudes: [
+      "Bard Spells",
+      "Cleric Spells",
+      "Mystic Arcanum (Level 7)",
+      "Sorcerer Spells",
+      "Warlock Spells",
+      "Wizard Spells",
+    ],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
       [SPELL_CASTING_TIME]: "Action",
@@ -97,7 +104,7 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
     name: "Finger of Death",
     description:
       'You unleash negative energy toward a creature you can see within range. The target makes a Constitution saving throw, taking 7d8 + 30 Necrotic damage on a failed save or half as much damage on a successful one.\nA Humanoid killed by this spell rises at the start of your next turn as a Zombie (see "Monsters") that follows your verbal orders.',
-    aptitudes: ["Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
+    aptitudes: ["Mystic Arcanum (Level 7)", "Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Necromancy",
       [SPELL_CASTING_TIME]: "Action",
@@ -129,7 +136,7 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
     name: "Forcecage",
     description:
       "An immobile, Invisible, Cube-shaped prison composed of magical force springs into existence around an area you choose within range. The prison can be a cage or a solid box, as you choose.\nA prison in the shape of a cage can be up to 20 feet on a side and is made from 1/2-inch diameter bars spaced 1/2 inch apart. A prison in the shape of a box can be up to 10 feet on a side, creating a solid barrier that prevents any matter from passing through it and blocking any spells cast into or out from the area.\nWhen you cast the spell, any creature that is completely inside the cage's area is trapped. Creatures only partially within the area, or those too large to fit inside it, are pushed away from the center of the area until they are completely outside it.\nA creature inside the cage can't leave it by nonmagical means. If the creature tries to use teleportation or interplanar travel to leave, it must first make a Charisma saving throw. On a successful save, the creature can use that magic to exit the cage. On a failed save, the creature doesn't exit the cage and wastes the spell or effect. The cage also extends into the Ethereal Plane, blocking ethereal travel. This spell can't be dispelled by Dispel Magic.",
-    aptitudes: ["Bard Spells", "Warlock Spells", "Wizard Spells"],
+    aptitudes: ["Bard Spells", "Mystic Arcanum (Level 7)", "Warlock Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Evocation",
       [SPELL_CASTING_TIME]: "Action",
@@ -177,7 +184,14 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
     name: "Plane Shift",
     description:
       "You and up to eight willing creatures who link hands in a circle are transported to a different plane of existence. You can specify a target destination in general terms, such as a specific city on the Elemental Plane of Fire or palace on the second level of the Nine Hells, and you appear in or near that destination, as determined by the GM.\nAlternatively, if you know the sigil sequence of a teleportation circle on another plane of existence, this spell can take you to that circle. If the teleportation circle is too small to hold all the creatures you transported, they appear in the closest unoccupied spaces next to the circle.",
-    aptitudes: ["Cleric Spells", "Druid Spells", "Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
+    aptitudes: [
+      "Cleric Spells",
+      "Druid Spells",
+      "Mystic Arcanum (Level 7)",
+      "Sorcerer Spells",
+      "Warlock Spells",
+      "Wizard Spells",
+    ],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
       [SPELL_CASTING_TIME]: "Action",

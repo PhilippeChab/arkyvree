@@ -17,7 +17,7 @@ export const LEVEL_9_SPELLS: SpellSeed[] = [
     name: "Astral Projection",
     description:
       "You and up to eight willing creatures within range project your astral bodies into the Astral Plane (the spell ends instantly if you are already on that plane). Each target's body is left behind in a state of suspended animation; it has the Unconscious condition, doesn't need food or air, and doesn't age.\nA target's astral form resembles its body in almost every way, replicating its game statistics and possessions. The principal difference is the addition of a silvery cord that trails from between the shoulder blades of the astral form. The cord fades from view after 1 foot. If the cord is cut-which happens only when an effect states that it does so-the target's body and astral form both die.\nA target's astral form can travel through the Astral Plane. The moment an astral form leaves that plane, the target's body and possessions travel along the silver cord, causing the target to re-enter its body on the new plane.\nAny damage or other effects that apply to an astral form have no effect on the target's body and vice versa. If a target's body or astral form drops to 0 Hit Points, the spell ends for that target. The spell ends for all the targets if you take a Magic action to dismiss it.\nWhen the spell ends for a target who isn't dead, the target reappears in its body and exits the state of suspended animation.",
-    aptitudes: ["Cleric Spells", "Warlock Spells", "Wizard Spells"],
+    aptitudes: ["Cleric Spells", "Mystic Arcanum (Level 9)", "Warlock Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Necromancy",
       [SPELL_CASTING_TIME]: "1 hour",
@@ -34,7 +34,7 @@ export const LEVEL_9_SPELLS: SpellSeed[] = [
     name: "Foresight",
     description:
       "You touch a willing creature and bestow a limited ability to see into the immediate future. For the duration, the target has Advantage on D20 Tests, and other creatures have Disadvantage on attack rolls against it. The spell ends early if you cast it again.",
-    aptitudes: ["Bard Spells", "Druid Spells", "Warlock Spells", "Wizard Spells"],
+    aptitudes: ["Bard Spells", "Druid Spells", "Mystic Arcanum (Level 9)", "Warlock Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Divination",
       [SPELL_CASTING_TIME]: "1 minute",
@@ -50,7 +50,7 @@ export const LEVEL_9_SPELLS: SpellSeed[] = [
     name: "Gate",
     description:
       "You conjure a portal linking an unoccupied space you can see within range to a precise location on a different plane of existence. The portal is a circular opening, which you can make 5 to 20 feet in diameter. You can orient the portal in any direction you choose. The portal lasts for the duration, and the portal's destination is visible through it.\nThe portal has a front and a back on each plane where it appears. Travel through the portal is possible only by moving through its front. Anything that does so is instantly transported to the other plane, appearing in the unoccupied space nearest to the portal.\nDeities and other planar rulers can prevent portals created by this spell from opening in their presence or anywhere within their domains.\nWhen you cast this spell, you can speak the name of a specific creature (a pseudonym, title, or nickname doesn't work). If that creature is on a plane other than the one you are on, the portal opens next to the named creature and transports it to the nearest unoccupied space on your side of the portal. You gain no special power over the creature, and it is free to act as the GM deems appropriate. It might leave, attack you, or help you.",
-    aptitudes: ["Cleric Spells", "Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
+    aptitudes: ["Cleric Spells", "Mystic Arcanum (Level 9)", "Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Conjuration",
       [SPELL_CASTING_TIME]: "Action",
@@ -66,7 +66,7 @@ export const LEVEL_9_SPELLS: SpellSeed[] = [
     name: "Imprisonment",
     description:
       "You create a magical restraint to hold a creature that you can see within range. The target must make a Wisdom saving throw. On a successful save, the target is unaffected, and it is immune to this spell for the next 24 hours. On a failed save, the target is imprisoned. While imprisoned, the target doesn't need to breathe, eat, or drink, and it doesn't age. Divination spells can't locate or perceive the imprisoned target, and the target can't teleport.\nUntil the spell ends, the target is also affected by one of the following effects of your choice: Burial. The target is entombed beneath the earth in a hollow globe of magical force that is just large enough to contain the target. Nothing can pass into or out of the globe. Chaining. Chains firmly rooted in the ground hold the target in place. The target has the Restrained condition and can't be moved by any means. Hedged Prison. The target is trapped in a demiplane that is warded against teleportation and planar travel. The demiplane is your choice of a labyrinth, a cage, a tower, or the like. Minimus Containment. The target becomes 1 inch tall and is trapped inside an indestructible gemstone or a similar object. Light can pass through the gemstone (allowing the target to see out and other creatures to see in), but nothing else can pass through by any means. Slumber. The target has the Unconscious condition and can't be awoken.\nEnding the Spell. When you cast the spell, specify a trigger that will end it. The trigger can be as simple or as elaborate as you choose, but the GM must agree that it has a high likelihood of happening within the next decade. The trigger must be an observable action, such as someone making a particular offering at the temple of your god, saving your true love, or defeating a specific monster.\nA Dispel Magic spell can end the spell only if it is cast with a level 9 spell slot, targeting either the prison or the component used to create it.",
-    aptitudes: ["Warlock Spells", "Wizard Spells"],
+    aptitudes: ["Mystic Arcanum (Level 9)", "Warlock Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Abjuration",
       [SPELL_CASTING_TIME]: "1 minute",
@@ -129,7 +129,7 @@ export const LEVEL_9_SPELLS: SpellSeed[] = [
     name: "Power Word Kill",
     description:
       "You compel one creature you can see within range to die. If the target has 100 Hit Points or fewer, it dies. Otherwise, it takes 12d12 Psychic damage.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
+    aptitudes: ["Bard Spells", "Mystic Arcanum (Level 9)", "Sorcerer Spells", "Warlock Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Enchantment",
       [SPELL_CASTING_TIME]: "Action",
@@ -207,7 +207,7 @@ export const LEVEL_9_SPELLS: SpellSeed[] = [
     name: "True Polymorph",
     description:
       "Choose one creature or nonmagical object that you can see within range. The creature shape-shifts into a different creature or a nonmagical object, or the object shape-shifts into a creature (the object must be neither worn nor carried). The transformation lasts for the duration or until the target dies or is destroyed, but if you maintain Concentration on this spell for the full duration, the spell lasts until dispelled.\nAn unwilling creature can make a Wisdom saving throw, and if it succeeds, it isn't affected by this spell.\nCreature into Creature. If you turn a creature into another kind of creature, the new form can be any kind you choose that has a Challenge Rating equal to or less than the target's Challenge Rating or level. The target's game statistics are replaced by the stat block of the new form, but it retains its Hit Points, Hit Point Dice, alignment, and personality.\nThe target gains a number of Temporary Hit Points equal to the Hit Points of the new form. These Temporary Hit Points vanish if any remain when the spell ends.\nThe target is limited in the actions it can perform by the anatomy of its new form, and it can't speak or cast spells.\nThe target's gear melds into the new form. The creature can't use or otherwise benefit from any of that equipment.\nObject into Creature. You can turn an object into any kind of creature, as long as the creature's size is no larger than the object's size and the creature has a Challenge Rating of 9 or lower. The creature is Friendly to you and your allies. In combat, it takes its turns immediately after yours, and it obeys your commands.\nIf the spell lasts more than an hour, you no longer control the creature. It might remain Friendly to you, depending on how you have treated it.\nCreature into Object. If you turn a creature into an object, it transforms along with whatever it is wearing and carrying into that form, as long as the object's size is no larger than the creature's size. The creature's statistics become those of the object, and the creature has no memory of time spent in this form after the spell ends and it returns to normal.",
-    aptitudes: ["Bard Spells", "Warlock Spells", "Wizard Spells"],
+    aptitudes: ["Bard Spells", "Mystic Arcanum (Level 9)", "Warlock Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Transmutation",
       [SPELL_CASTING_TIME]: "Action",
@@ -240,7 +240,7 @@ export const LEVEL_9_SPELLS: SpellSeed[] = [
     name: "Weird",
     description:
       "You try to create illusory terrors in others' minds. Each creature of your choice in a 30-foot-radius Sphere centered on a point within range makes a Wisdom saving throw. On a failed save, a target takes 10d10 Psychic damage and has the Frightened condition for the duration. On a successful save, a target takes half as much damage only.\nA Frightened target makes a Wisdom saving throw at the end of each of its turns. On a failed save, it takes 5d10 Psychic damage. On a successful save, the spell ends on that target.",
-    aptitudes: ["Warlock Spells", "Wizard Spells"],
+    aptitudes: ["Mystic Arcanum (Level 9)", "Warlock Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Illusion",
       [SPELL_CASTING_TIME]: "Action",

@@ -34,6 +34,7 @@ export const DRUID: ClassSeed = {
     [20, "Archdruid (Druid)"],
   ],
   modifiers: [
+    { level: 1, target: "aptitudes.primalorder.allowed", operator: "add", value: "1", valueType: "number" },
     { level: 3, target: "aptitudes.druidsubclass.allowed", operator: "add", value: "1", valueType: "number" },
     { level: 4, target: "aptitudes.general.allowed", operator: "add", value: "1", valueType: "number" },
     { level: 8, target: "aptitudes.general.allowed", operator: "add", value: "1", valueType: "number" },

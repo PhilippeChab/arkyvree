@@ -20,7 +20,6 @@ export const ROGUE: ClassSeed = {
     "Intimidation",
     "Investigation",
     "Perception",
-    "Performance",
     "Persuasion",
     "Sleight of Hand",
     "Stealth",

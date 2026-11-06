@@ -42,6 +42,7 @@ export const BARBARIAN: ClassSeed = {
   modifiers: [
     { level: 1, target: "aptitudes.weaponmastery.allowed", operator: "add", value: "2", valueType: "number" },
     { level: 3, target: "aptitudes.barbariansubclass.allowed", operator: "add", value: "1", valueType: "number" },
+    { level: 3, target: "aptitudes.barbarianskills.allowed", operator: "add", value: "1", valueType: "number" },
     { level: 4, target: "aptitudes.general.allowed", operator: "add", value: "1", valueType: "number" },
     { level: 4, target: "aptitudes.weaponmastery.allowed", operator: "add", value: "1", valueType: "number" },
     { level: 8, target: "aptitudes.general.allowed", operator: "add", value: "1", valueType: "number" },

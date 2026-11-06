@@ -13,7 +13,8 @@ import {
  * Dwarf Acolyte Cleric 3 (Life Domain) / Fighter 1. Standard array: Str 14, Dex 10, Con 13, Int 8, Wis 15, Cha 12; his
  * background's +2 Wisdom and +1 Charisma (Wis 17, Cha 13). A fighter's multiclass takes 13 Strength or Dexterity, and
  * his cleric's 13 Wisdom: he has both. His fighter level's proficiencies are a multiclass's (no saving throws, no heavy
- * armor, no skill). His background's Magic Initiate gives two more cantrips and a level 1 spell on the cleric's list.
+ * armor, no skill). His background's Magic Initiate gives two more cantrips and a level 1 spell on the cleric's list,
+ * and his Divine Order, a Thaumaturge's, one more cantrip and his Wisdom to his Religion checks.
  */
 export default {
   name: "Thordin Ashbeard",
@@ -39,6 +40,7 @@ export default {
     { levelIndex: 0, featName: "Acolyte: Wisdom +2, Charisma +1", aptitude: "Acolyte Ability Scores" },
     { levelIndex: 0, featName: "Skill Proficiency: Medicine", aptitude: "Cleric Skills" },
     { levelIndex: 0, featName: "Skill Proficiency: Persuasion", aptitude: "Cleric Skills" },
+    { levelIndex: 0, featName: "Divine Order: Thaumaturge", aptitude: "Divine Order" },
     { levelIndex: 2, featName: "Life Domain", aptitude: "Cleric Subclass" },
     { levelIndex: 3, featName: "Defense", aptitude: "Fighting Style" },
     { levelIndex: 3, featName: "Weapon Mastery: Warhammer", aptitude: "Weapon Mastery" },
@@ -46,7 +48,7 @@ export default {
     { levelIndex: 3, featName: "Weapon Mastery: Handaxe", aptitude: "Weapon Mastery" },
   ],
   spells: [
-    ...["Guidance", "Light", "Sacred Flame", "Spare the Dying", "Thaumaturgy"].map((spellName) => ({
+    ...["Guidance", "Light", "Resistance", "Sacred Flame", "Spare the Dying", "Thaumaturgy"].map((spellName) => ({
       levelIndex: 0,
       spellName,
       aptitude: "Cleric Spells",

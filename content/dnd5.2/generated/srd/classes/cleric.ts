@@ -32,6 +32,7 @@ export const CLERIC: ClassSeed = {
     [20, "Greater Divine Intervention (Cleric)"],
   ],
   modifiers: [
+    { level: 1, target: "aptitudes.divineorder.allowed", operator: "add", value: "1", valueType: "number" },
     { level: 3, target: "aptitudes.clericsubclass.allowed", operator: "add", value: "1", valueType: "number" },
     { level: 4, target: "aptitudes.general.allowed", operator: "add", value: "1", valueType: "number" },
     { level: 8, target: "aptitudes.general.allowed", operator: "add", value: "1", valueType: "number" },

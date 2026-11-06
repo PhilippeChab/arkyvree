@@ -6,7 +6,7 @@ import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import { gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { ModifierSeed, RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { classSpells, classSubclass, WEAPON_MASTERY_POOL } from "@/content/dnd5.2/builders/aptitudes/names.ts";
-import { poolRoom } from "@/content/dnd5.2/builders/aptitudes/rooms.ts";
+import { poolRoom, spellRoom } from "@/content/dnd5.2/builders/aptitudes/rooms.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import type { CasterType } from "@/vocabulary/dnd5.2/classes.ts";
@@ -83,14 +83,17 @@ export class ClassProgression {
     );
   }
 
-  /** The rooms its spell room features give (`SPELL_ROOM_FEATURES`), by its level: a spell level's room each time. */
-  private spellRooms(): Map<number, number> {
-    const rooms = new Map<number, number>();
-    for (const { feature, firstLevel } of SPELL_ROOM_FEATURES) {
-      const levels = this.entries.levels().filter(({ features }) => features.some(({ name }) => name === feature));
-      for (const [index, { level }] of levels.entries()) rooms.set(level, firstLevel + index);
-    }
-    return rooms;
+  /**
+   * The rooms its spell room features give (`SPELL_ROOM_FEATURES`), at each level they're gained at: a spell level's
+   * room each time, from the feature's first, in that spell level's pool (a Mystic Arcanum's).
+   */
+  private spellRoomModifiers(): LevelModifier[] {
+    return SPELL_ROOM_FEATURES.flatMap(({ feature, firstLevel, pool }) =>
+      this.entries
+        .levels()
+        .filter(({ features }) => features.some(({ name }) => name === feature))
+        .map(({ level }, index) => ({ ...spellRoom(pool(firstLevel + index), firstLevel + index, 1), level })),
+    );
   }
 
   /**
@@ -105,9 +108,11 @@ export class ClassProgression {
     return readHighestSlot(last) === MAX_SPELL_LEVEL ? "Full" : "Half";
   }
 
-  /** Its levels' modifiers, in level order: its features' rooms, and its counts' increases. */
+  /** Its levels' modifiers, in level order: its features' rooms (its spell room features' too), and its counts' increases. */
   modifiers(): LevelModifier[] {
-    return [...this.featureModifiers(), ...this.countModifiers()].sort((a, b) => a.level - b.level);
+    return [...this.featureModifiers(), ...this.spellRoomModifiers(), ...this.countModifiers()].sort(
+      (a, b) => a.level - b.level,
+    );
   }
 
   /**
@@ -132,15 +137,14 @@ export class ClassProgression {
   /**
    * Its spells, when it casts any: its list, and the cantrips and prepared spells it has by each level (cumulative), a
    * count per spell level from the cantrips' 0. A level's new prepared spells are at the highest spell level its slots
-   * reach then (a warlock's pact slots'), and its spell room features' rooms at theirs (a Mystic Arcanum's).
+   * reach then (a warlock's pact slots'): its spell room features' rooms are in pools of their own (`modifiers`).
    */
   spells(): { known: number[][]; list: string } | undefined {
     const levels = this.entries.levels();
     if (!levels.some(({ spellcasting }) => spellcasting)) return undefined;
-    const rooms = this.spellRooms();
     const known = Array.from({ length: MAX_SPELL_LEVEL + 1 }, () => 0);
     const previous = { cantrips: 0, prepared: 0 };
-    const table = levels.map(({ level, name, spellcasting = {} }) => {
+    const table = levels.map(({ name, spellcasting = {} }) => {
       const cantrips = spellcasting.cantrips_known ?? 0;
       const prepared = spellcasting.prepared_spells ?? 0;
       const highest = readHighestSlot(spellcasting);
@@ -148,8 +152,6 @@ export class ClassProgression {
       if (prepared > previous.prepared && highest === undefined) throw new Error(`${name}: new spells, but no slots`);
       known[0] += cantrips - previous.cantrips;
       if (highest !== undefined) known[highest] += prepared - previous.prepared;
-      const arcanum = rooms.get(level);
-      if (arcanum !== undefined) known[arcanum] += 1;
       Object.assign(previous, { cantrips, prepared });
       return [...known];
     });

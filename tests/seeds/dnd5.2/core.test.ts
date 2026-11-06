@@ -178,6 +178,70 @@ describe("The seeded D&D 5th Edition core rules", () => {
       expect(modifiers(5)).toEqual(["aptitudes.wizardspells.3.allowed add 2"]);
     });
 
+    test("give a wizard 25 prepared spells at its 20th level, the SRD's", async () => {
+      const rows = await seededRows();
+      const rooms = rows.classLevels
+        .filter(({ ownerId }) => ownerId === rows.klass("Wizard").id)
+        .flatMap(({ id }) => rows.modifiersOf(id))
+        .filter(({ target }) => /^aptitudes\.wizardspells\.[1-9]\.allowed$/.test(target));
+      expect(rooms.reduce((total, { value }) => total + Number(value), 0)).toBe(25);
+    });
+
+    test("give a warlock's Mystic Arcanum a pool of its own per spell level, its prepared spells the Pact's levels", async () => {
+      const rows = await seededRows();
+      const warlock = rows.classLevels.filter(({ ownerId }) => ownerId === rows.klass("Warlock").id);
+      const targets = warlock.flatMap(({ id }) => rows.modifiersOf(id).map(({ target }) => target));
+      // The warlock's list's rooms stop at the 5th level, its Pact Magic's
+      expect(targets.filter((target) => /^aptitudes\.warlockspells\.[6-9]\./.test(target))).toEqual([]);
+      expect(rows.modifiersOf(rows.classLevel("Warlock", 11).id).map(describeModifier)).toContain(
+        "aptitudes.mysticarcanumlevel6.6.allowed add 1",
+      );
+      expect(rows.modifiersOf(rows.classLevel("Warlock", 17).id).map(describeModifier)).toContain(
+        "aptitudes.mysticarcanumlevel9.9.allowed add 1",
+      );
+      // An arcanum's pool lists the warlock's spells of its level alone
+      const arcanum = rows.aptitude("Mystic Arcanum (Level 6)");
+      const listed = rows.spells.flatMap(({ id, name }) =>
+        rows.linksOf(id, "listedIn").flatMap(({ tier, toId }) => (toId === arcanum.id ? [`${name} ${tier}`] : [])),
+      );
+      expect(listed.length).toBeGreaterThan(0);
+      expect(listed.filter((spell) => !spell.endsWith(" 6"))).toEqual([]);
+      expect(listed).toContain("Circle of Death 6");
+    });
+
+    test("give a class feature's pick its pool: a cleric's Divine Order, a druid's Primal Order, a barbarian's skill", async () => {
+      const rows = await seededRows();
+      const listedIn = (pool: string) =>
+        rows.feats
+          .filter(({ id }) => rows.linksOf(id, "listedIn").some(({ toId }) => toId === rows.aptitude(pool).id))
+          .map(({ name }) => name)
+          .sort();
+      expect(rows.modifiersOf(rows.classLevel("Cleric", 1).id).map(describeModifier)).toContain(
+        "aptitudes.divineorder.allowed add 1",
+      );
+      expect(listedIn("Divine Order")).toEqual(["Divine Order: Protector", "Divine Order: Thaumaturge"]);
+      expect(rows.modifiersOf(rows.feat("Divine Order: Protector").id).map(describeModifier).sort()).toEqual([
+        "feats.armortrainingheavyarmor.possessed set true",
+        "feats.weaponproficiencymartialweapons.possessed set true",
+      ]);
+      expect(rows.modifiersOf(rows.feat("Divine Order: Thaumaturge").id).map(describeModifier)).toContain(
+        "aptitudes.clericspells.0.allowed add 1",
+      );
+      expect(rows.modifiersOf(rows.classLevel("Druid", 1).id).map(describeModifier)).toContain(
+        "aptitudes.primalorder.allowed add 1",
+      );
+      expect(listedIn("Primal Order")).toEqual(["Primal Order: Magician", "Primal Order: Warden"]);
+      // Primal Knowledge's skill, one more of the barbarian's
+      expect(rows.modifiersOf(rows.classLevel("Barbarian", 3).id).map(describeModifier)).toContain(
+        "aptitudes.barbarianskills.allowed add 1",
+      );
+      // Thieves' Cant, and one more language
+      expect(rows.modifiersOf(rows.feat("Thieves' Cant (Rogue)").id).map(describeModifier).sort()).toEqual([
+        "languages.extrapicks add 1",
+        "languages.thievescant.known set true",
+      ]);
+    });
+
     test("require of a multiclass 13 in its primary abilities, on its class's first level alone", async () => {
       const rows = await seededRows();
       const requirements = (klass: string, level: number) =>
@@ -205,7 +269,9 @@ describe("The seeded D&D 5th Edition core rules", () => {
           .map(({ name }) => name)
           .sort();
       expect(listed("Wizard Skills")).toEqual(
-        ["Arcana", "History", "Insight", "Investigation", "Medicine", "Religion"].map((s) => `Skill Proficiency: ${s}`),
+        ["Arcana", "History", "Insight", "Investigation", "Medicine", "Nature", "Religion"].map(
+          (s) => `Skill Proficiency: ${s}`,
+        ),
       );
       // A bard picks any skill
       expect(listed("Bard Skills")).toHaveLength(SKILL_NAMES.length);

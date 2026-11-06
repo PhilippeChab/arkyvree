@@ -12,11 +12,17 @@ import type {
   RequirementCondition,
   RequirementEntry,
 } from "@/content/core/builders/customization/types.ts";
-import { WEAPON_MASTERY_POOL } from "@/content/dnd5.2/builders/aptitudes/names.ts";
+import {
+  classSkills,
+  DIVINE_ORDER_POOL,
+  mysticArcanum,
+  PRIMAL_ORDER_POOL,
+  WEAPON_MASTERY_POOL,
+} from "@/content/dnd5.2/builders/aptitudes/names.ts";
 import { poolRoom } from "@/content/dnd5.2/builders/aptitudes/rooms.ts";
 import { grantFeat } from "@/content/dnd5.2/builders/feats/possession.ts";
 import { savingThrowProficiency } from "@/content/dnd5.2/builders/feats/proficiencies.ts";
-import { grantLanguage } from "@/content/dnd5.2/builders/languages/knowledge.ts";
+import { grantLanguage, languagePick } from "@/content/dnd5.2/builders/languages/knowledge.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { ABILITY_NAMES } from "@/vocabulary/dnd5.2/abilities.ts";
 import { SKILL_PROFICIENCIES_POOL } from "@/vocabulary/dnd5.2/feats.ts";
@@ -112,7 +118,7 @@ export const FEATURE_MODIFIERS: FeatureModifiers[] = [
     modifiers: [grantFeat(savingThrowProficiency("Wisdom")), grantFeat(savingThrowProficiency("Charisma"))],
   },
   { feature: "Superior Critical", modifiers: [bonus("combat.critical.range", 1)] },
-  { feature: "Thieves' Cant", modifiers: [grantLanguage("Thieves' Cant")] },
+  { feature: "Thieves' Cant", modifiers: [grantLanguage("Thieves' Cant"), languagePick()] },
   { feature: "Three Extra Attacks", modifiers: [setNum("combat.attacks", 4)] },
   { feature: "Two Extra Attacks", modifiers: [setNum("combat.attacks", 3)] },
   {
@@ -132,14 +138,21 @@ export const FEATURE_MODIFIERS: FeatureModifiers[] = [
 /** The pool a feature gives a room in at each level it's gained at, by feature. */
 export const FEATURE_POOLS: { feature: string; pool: string }[] = [
   { feature: "Ability Score Improvement", pool: "General" },
+  { feature: "Divine Order", pool: DIVINE_ORDER_POOL },
   { feature: "Epic Boon", pool: "Epic Boon" },
   { feature: "Fighting Style", pool: "Fighting Style" },
+  { feature: "Primal Knowledge", pool: classSkills("Barbarian") },
+  { feature: "Primal Order", pool: PRIMAL_ORDER_POOL },
 ];
 
 /**
  * The features that give a spell room past a class's prepared spells, one at each level they're gained at, from a
- * spell level up: a warlock's Mystic Arcanum, a level 6 spell at 11, a level 7 one at 13, and so on.
+ * spell level up, each in a pool of its own (`pool`, by spell level) that lists its class's (`owner`) spells of that
+ * level alone: a warlock's Mystic Arcanum, a level 6 spell at 11, a level 7 one at 13, and so on.
  */
-export const SPELL_ROOM_FEATURES: { feature: string; firstLevel: number }[] = [
-  { feature: "Mystic Arcanum", firstLevel: 6 },
-];
+export const SPELL_ROOM_FEATURES: {
+  feature: string;
+  firstLevel: number;
+  owner: string;
+  pool: (level: number) => string;
+}[] = [{ feature: "Mystic Arcanum", firstLevel: 6, owner: "Warlock", pool: mysticArcanum }];

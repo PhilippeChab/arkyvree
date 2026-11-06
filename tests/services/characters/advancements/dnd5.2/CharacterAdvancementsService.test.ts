@@ -299,6 +299,24 @@ describe("A D&D 5th Edition character's levels", () => {
     });
   });
 
+  describe("a warlock's Mystic Arcanum", () => {
+    test("gives a Warlock 11 one level 6 spell, apart from its prepared spells, whose Pact slots cap them", async () => {
+      const character = await createDnd52Character(session, { abilities: { Charisma: 15 } });
+      // Forced: the levels' picks don't matter here, the first's hit points its die's highest
+      for (let level = 1; level <= 10; level++)
+        await addLevel(session, character.id, "Warlock", level, { hp: level === 1 ? 8 : 5 }, true);
+      const eleventh = (spells: Record<string, string[]>) =>
+        outcomeOf(() => addLevel(session, character.id, "Warlock", 11, { hp: 5, spells }, true));
+      // A second level 6 spell, forced or not: refused
+      expect(await eleventh({ "Mystic Arcanum (Level 6)": ["Circle of Death", "Eyebite"] })).toMatch(
+        /Mystic Arcanum \(Level 6\)/,
+      );
+      // A level 6 spell among the prepared ones: above the Pact slots' 5th level
+      expect(await eleventh({ "Warlock Spells": ["Circle of Death"] })).toMatch(/Warlock Spells/);
+      expect(await eleventh({ "Mystic Arcanum (Level 6)": ["Circle of Death"] })).toBe("saved");
+    });
+  });
+
   describe("editing a saved level", () => {
     test("reads its picks back, and saves new ones in their place", async () => {
       const ctx = await getDnd52SeedCtx();

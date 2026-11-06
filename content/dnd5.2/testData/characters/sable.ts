@@ -11,7 +11,8 @@ import {
 /**
  * Halfling Criminal Rogue 3 (Thief). Standard array: Str 8, Dex 15, Con 14, Int 13, Wis 12, Cha 10; her background's
  * increases spread +1 to each of its three abilities (Dex 16, Con 15, Int 14). Her background grants Alert, Sleight of
- * Hand, Stealth and Thieves' Tools; her rogue's Expertise doubles her Proficiency Bonus in Stealth and Perception.
+ * Hand, Stealth and Thieves' Tools; her rogue's Expertise doubles her Proficiency Bonus in Stealth and Perception, and
+ * her Thieves' Cant gives her a third language.
  */
 export default {
   name: "Sable Underleaf",
@@ -27,7 +28,7 @@ export default {
   description:
     "A fence's apprentice from the river docks, Sable can name the owner of any purse by its stitching, and has returned some of them.",
   abilities: { Strength: 8, Dexterity: 15, Constitution: 14, Intelligence: 13, Wisdom: 12, Charisma: 10 },
-  languages: ["Halfling", "Goblin"],
+  languages: ["Halfling", "Goblin", "Common Sign Language"],
   classes: [{ klass: "Rogue", hp: [8, 5, 6] }],
   feats: [
     {
