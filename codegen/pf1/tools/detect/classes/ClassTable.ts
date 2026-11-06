@@ -70,9 +70,16 @@ export class ClassTable {
     return preset;
   }
 
-  /** The values of its progression's column `name` read by `read`, a level each. */
+  /**
+   * The values of its progression's column `name` read by `read`, a level each. A column it lacks, or one without a
+   * cell at each of its levels, throws: none would follow every progression, and seed the first.
+   */
   private values(name: string, read: (cell: string) => number): number[] {
-    return (this.column(name) ?? []).map(read);
+    const cells = this.column(name);
+    if (!cells) throw new Error(`${this.name}'s progression table has no "${name}" column`);
+    if (cells.length !== this.levels() || this.levels() === 0)
+      throw new Error(`${this.name}'s "${name}" column has ${cells.length} cells for ${this.levels()} levels`);
+    return cells.map(read);
   }
 
   /** Its base attack bonus's progression: the engine's preset its values follow. */
@@ -81,7 +88,7 @@ export class ClassTable {
     const bab = (Object.keys(LEVEL_PRESETS.bab) as BabType[]).find((key) =>
       values.every((value, i) => LEVEL_PRESETS.bab[key][i] === value),
     );
-    if (!bab) throw new Error(`Base attack bonuses ${values.join(", ")} follow no progression`);
+    if (!bab) throw new Error(`${this.name}'s base attack bonuses ${values.join(", ")} follow no progression`);
     return bab;
   }
 

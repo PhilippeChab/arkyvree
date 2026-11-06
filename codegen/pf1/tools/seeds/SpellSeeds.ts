@@ -60,6 +60,20 @@ export class SpellSeeds {
     return { fields: { [SPELL_SAVE_EFFECT]: match[2] }, links: { resistedBy: match[1] } };
   }
 
+  /**
+   * Refuses two spells with the same description and Level line: one read off another's section of a page that prints
+   * several (Summon Monster I to IX's), which would file it at the other's levels.
+   */
+  static refuseCopies(entries: SpellEntry[]): void {
+    const read = new Map<string, string>();
+    for (const { description, fields, name } of entries) {
+      const key = JSON.stringify([description, fields.Level ?? ""]);
+      const copied = read.get(key);
+      if (copied !== undefined) throw new Error(`Spells "${copied}" and "${name}" have the same description and Level`);
+      read.set(key, name);
+    }
+  }
+
   /** What's built of the reference, once. */
   private readonly memos = new Memos();
 
@@ -73,9 +87,13 @@ export class SpellSeeds {
     };
   }
 
-  /** Each spell's page read, as its override corrects it. */
+  /** Each spell's page read, as its override corrects it: two spells read alike refused (`refuseCopies`). */
   private detectors(): SpellDetector[] {
-    return this.memos.of("detectors", () => this.ref.raw.map((entry) => new SpellDetector(this.corrected(entry))));
+    return this.memos.of("detectors", () => {
+      const entries = this.ref.raw.map((entry) => this.corrected(entry));
+      SpellSeeds.refuseCopies(entries);
+      return entries.map((entry) => new SpellDetector(entry));
+    });
   }
 
   /**

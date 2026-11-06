@@ -267,8 +267,8 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
    * (at a saved level or a planned one, a later one too, or by a modifier, as an edit of it would refuse it) or a spell
    * it knows in its pool already, the plan's other picks' gifts too, or overfill a pool, forced or not, and the
    * character with them with what it fails, or skill points the levels don't take (past each level's points and a
-   * skill's max ranks there, which a forced save drops), unless `force`d. Each level's writes are its advancement in its class level
-   * and its picks (its hit points, ability increases, skill ranks, feats and spells).
+   * skill's max ranks there, which a forced save drops), unless `force`d. Each level's writes are its advancement in
+   * its class level and its picks (its hit points, ability increases, skill ranks, feats and spells).
    */
   planLevels(bonded: CharacterInput[], request: LevelUpRequest, force: boolean): AdvancementsPlan {
     const { issues, planned, saved } = this.planSaved(request);

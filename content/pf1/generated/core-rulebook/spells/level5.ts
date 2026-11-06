@@ -68,6 +68,22 @@ export const LEVEL_5_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Fortitude" },
   },
   {
+    name: "Beast Shape III",
+    description:
+      "This spell functions as beast shape II, except that it also allows you to assume the form of a Diminutive or Huge creature of the animal type. This spell also allows you to take on the form of a Small or Medium creature of the magical beast type. If the form you assume has any of the following abilities, you gain the listed ability: burrow 30 feet, climb 90 feet, fly 90 feet (good maneuverability), swim 90 feet, blindsense 30 feet, darkvision 60 feet, low-light vision, scent, constrict, ferocity, grab, jet, poison, pounce, rake, trample, trip, and web. Diminutive animal: If the form you take is that of a Diminutive animal, you gain a +6 size bonus to your Dexterity, a –4 penalty to your Strength, and a +1 natural armor bonus. Huge animal: If the form you take is that of a Huge animal, you gain a +6 size bonus to your Strength, a –4 penalty to your Dexterity, and a +6 natural armor bonus. Small magical beast: If the form you take is that of a Small magical beast, you gain a +4 size bonus to your Dexterity, and a +2 natural armor bonus. Medium magical beast: If the form you take is that of a Medium magical beast, you gain a +4 size bonus to your Strength, and a +4 natural armor bonus. Material Component: A piece of the creature whose form you plan to assume.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Transmutation",
+      [SPELL_SUBSCHOOL]: ["Polymorph"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Personal",
+      [SPELL_TARGET]: "You",
+      [SPELL_DURATION]: "1 min./level (D)",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
     name: "Breath of Life",
     description:
       "This spell cures 5d8 points of damage + 1 point per caster level (maximum +25). Unlike other spells that heal damage, breath of life can bring recently slain creatures back to life. If cast upon a creature that has died within 1 round, apply the healing from this spell to the creature. If the healed creature's hit point total is at a negative amount less than its Constitution score, it comes back to life and stabilizes at its new hit point total. If the creature's hit point total is at a negative amount equal to or greater than its Constitution score, the creature remains dead. Creatures brought back to life through breath of life gain a temporary negative level that lasts for 1 day. Creatures slain by death effects cannot be saved by breath of life. Like cure spells, breath of life deals damage to undead creatures rather than curing them, and cannot bring them back to life.",
@@ -86,6 +102,24 @@ export const LEVEL_5_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
+    name: "Call Lightning Storm",
+    description:
+      "This spell functions like call lightning, except that each bolt deals 5d6 points of electricity damage (or 5d10 if created outdoors in a stormy area), and you may call a maximum of 15 bolts.",
+    aptitudes: ["Druid Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Evocation",
+      [SPELL_DESCRIPTOR]: ["Electricity"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_RANGE_TYPE]: "Long",
+      [SPELL_EFFECT]: "One or more 30-ft.-long vertical lines of lightning",
+      [SPELL_DURATION]: "1 min./level",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "half",
+    },
+    links: { resistedBy: "Reflex" },
+  },
+  {
     name: "Cloudkill",
     description:
       "This spell generates a bank of fog, similar to a fog cloud, except that its vapors are yellowish green and poisonous. These vapors automatically kill any living creature with 3 or fewer HD (no save). A living creature with 4 to 6 HD is slain unless it succeeds on a Fortitude save (in which case it takes 1d4 points of Constitution damage on your turn each round while in the cloud). A living creature with 6 or more HD takes 1d4 points of Constitution damage on your turn each round while in the cloud (a successful Fortitude save halves this damage). Holding one's breath doesn't help, but creatures immune to poison are unaffected by the spell. Unlike a fog cloud, the cloudkill moves away from you at 10 feet per round, rolling along the surface of the ground. Figure out the cloud's new spread each round based on its new point of origin, which is 10 feet farther away from the point of origin where you cast the spell. Because the vapors are heavier than air, they sink to the lowest level of the land, even pouring down den or sinkhole openings. It cannot penetrate liquids, nor can it be cast underwater.",
@@ -102,6 +136,25 @@ export const LEVEL_5_SPELLS: SpellSeed[] = [
       [SPELL_SAVE_EFFECT]: "partial; see text",
     },
     links: { resistedBy: "Fortitude" },
+  },
+  {
+    name: "Command, Greater",
+    description:
+      "This spell functions like command, except that up to one creature per level may be affected, and the activities continue beyond 1 round. At the start of each commanded creature's action after the first, it gets another Will save to attempt to break free from the spell. Each creature must receive the same command.",
+    aptitudes: ["Cleric Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Enchantment",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
+      [SPELL_DESCRIPTOR]: ["Language-Dependent", "Mind-Affecting"],
+      [SPELL_COMPONENT]: ["Verbal"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One creature/level, no two of which can be more than 30 ft. apart",
+      [SPELL_DURATION]: "1 round/level",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "negates",
+    },
+    links: { resistedBy: "Will" },
   },
   {
     name: "Commune",
@@ -225,6 +278,28 @@ export const LEVEL_5_SPELLS: SpellSeed[] = [
     },
   },
   {
+    name: "Dispel Magic, Greater",
+    description:
+      "This spell functions like dispel magic, except that it can end more than one spell on a target and it can be used to target multiple creatures. You choose to use greater dispel magic in one of three ways: a targeted dispel, area dispel, or a counterspell: Targeted Dispel: This functions as a targeted dispel magic, but it can dispel one spell for every four caster levels you possess, starting with the highest level spells and proceeding to lower level spells. Additionally, greater dispel magic has a chance to dispel any effect that remove curse can remove, even if dispel magic can't dispel that effect. The DC of this check is equal to the curse's DC. Area Dispel: When greater dispel magic is used in this way, the spell affects everything within a 20-foot-radius burst. Roll one dispel check and apply that check to each creature in the area, as if targeted by dispel magic. For each object within the area that is the target of one or more spells, apply the dispel check as with creatures. Magic items are not affected by an area dispel. For each ongoing area or effect spell whose point of origin is within the area of the greater dispel magic spell, apply the dispel check to dispel the spell. For each ongoing spell whose area overlaps that of the greater dispel magic spell, apply the dispel check to end the effect, but only within the overlapping area. If an object or creature that is the effect of an ongoing spell (such as a monster summoned by summon monster) is in the area, apply the dispel check to end the spell that conjured that object or creature (returning it whence it came) in addition to attempting to dispel one spell targeting the creature or object. You may choose to automatically succeed on dispel checks against any spell that you have cast. Counterspell: This functions as dispel magic, but you receive a +4 bonus on your dispel check to counter the other spellcaster's spell.",
+    aptitudes: ["Bard Spells", "Cleric Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudeLevels: {
+      "Bard Spells": 5,
+      "Cleric Spells": 6,
+      "Druid Spells": 6,
+      "Sorcerer Spells": 6,
+      "Wizard Spells": 6,
+    },
+    fields: {
+      [SPELL_SCHOOL]: "Abjuration",
+      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Medium",
+      [SPELL_TARGET]: "One spellcaster, creature, object, or a 20-ft.-radius burst",
+      [SPELL_DURATION]: "Instantaneous",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
     name: "Disrupting Weapon",
     description:
       "This spell makes a melee weapon deadly to undead. Any undead creature with HD equal to or less than your caster level must succeed on a Will save or be destroyed utterly if struck in combat with this weapon. Spell resistance does not apply against the destruction effect.",
@@ -256,6 +331,22 @@ export const LEVEL_5_SPELLS: SpellSeed[] = [
       [SPELL_TARGET]: "One living creature touched",
       [SPELL_DURATION]: "See text",
       [SPELL_RESISTANCE]: "Yes",
+    },
+  },
+  {
+    name: "Elemental Body II",
+    description:
+      "This spell functions as elemental body I, except that it also allows you to assume the form of a Medium air, earth, fire, or water elemental. The abilities you gain depend upon the elemental. Air elemental: As elemental body I except that you gain a +4 size bonus to your Dexterity and a +3 natural armor bonus. Earth elemental: As elemental body I except that you gain a +4 size bonus to your Strength and a +5 natural armor bonus. Fire elemental: As elemental body I except that you gain a +4 size bonus to your Dexterity and a +3 natural armor bonus. Water elemental: As elemental body I except that you gain a +4 size bonus to your Constitution and a +5 natural armor bonus. Material Component: The element you plan to assume.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Transmutation",
+      [SPELL_SUBSCHOOL]: ["Polymorph"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Personal",
+      [SPELL_TARGET]: "You",
+      [SPELL_DURATION]: "1 min./level",
+      [SPELL_RESISTANCE]: "No",
     },
   },
   {
@@ -345,21 +436,39 @@ export const LEVEL_5_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
-    name: "Heal, Mass",
+    name: "Heroism, Greater",
     description:
-      "Heal enables you to channel positive energy into a creature to wipe away injury and afflictions. It immediately ends any and all of the following adverse conditions affecting the target: ability damage, blinded, confused, dazed, dazzled, deafened, diseased, exhausted, fatigued, feebleminded, insanity, nauseated, poisoned, sickened, and stunned. It also cures 10 hit points of damage per level of the caster, to a maximum of 150 points at 15th level. Heal does not remove negative levels or restore permanently drained ability score points. If used against an undead creature, heal instead acts like harm.",
-    aptitudes: ["Adept Spells", "Cleric Spells", "Druid Spells"],
-    aptitudeLevels: { "Adept Spells": 5, "Cleric Spells": 6, "Druid Spells": 7 },
+      "This spell functions like heroism, except the creature gains a +4 morale bonus on attack rolls, saves, and skill checks, immunity to fear effects, and temporary hit points equal to your caster level (maximum 20).",
+    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudeLevels: { "Bard Spells": 5, "Sorcerer Spells": 6, "Wizard Spells": 6 },
     fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Healing"],
+      [SPELL_SCHOOL]: "Enchantment",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
+      [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Touch",
       [SPELL_TARGET]: "Creature touched",
-      [SPELL_DURATION]: "Instantaneous",
+      [SPELL_DURATION]: "1 min./level",
       [SPELL_RESISTANCE]: "Yes (harmless)",
       [SPELL_SAVE_EFFECT]: "negates (harmless)",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
+    name: "Inflict Light Wounds, Mass",
+    description:
+      "Negative energy spreads out in all directions from the point of origin, dealing 1d8 points of damage + 1 point per caster level (maximum +25) to nearby living enemies. Like other inflict spells, mass inflict light wounds cures undead in its area rather than damaging them. A cleric capable of spontaneously casting inflict spells can also spontaneously cast mass inflict spells.",
+    aptitudes: ["Cleric Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Necromancy",
+      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One creature/level, no two of which can be more than 30 ft. apart",
+      [SPELL_DURATION]: "Instantaneous",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "half",
     },
     links: { resistedBy: "Will" },
   },
@@ -442,6 +551,22 @@ export const LEVEL_5_SPELLS: SpellSeed[] = [
       [SPELL_SAVE_EFFECT]: "negates; see text",
     },
     links: { resistedBy: "Will" },
+  },
+  {
+    name: "Major Creation",
+    description:
+      "This spell functions like minor creation, except that you can also create an object of mineral nature: stone, crystal, metal, or the like. The duration of the created item varies with its relative hardness and rarity, as indicated on the following table. Hardness and Rarity Examples Duration; Vegetable matter 2 hr./level; Stone, crystal, base metals 1 hr./level; Precious metals 20 min./level; Gems 10 min./level; Rare metal* 1 round/level; *Includes adamantine, alchemical silver, and mithral. You can't use major creation to create a cold iron item.; Material Component: A tiny piece of matter of the same sort of item you plan to create with major creation.",
+    aptitudes: ["Adept Spells", "Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Creation"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
+      [SPELL_CASTING_TIME]: "10 minutes",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_EFFECT]: "Unattended, nonmagical object of nonliving matter, up to 1 cu. ft./level",
+      [SPELL_DURATION]: "See text",
+      [SPELL_RESISTANCE]: "No",
+    },
   },
   {
     name: "Mind Fog",
@@ -583,6 +708,24 @@ export const LEVEL_5_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
+    name: "Planar Binding, Lesser",
+    description:
+      "Casting this spell attempts a dangerous act: to lure a creature from another plane to a specifically prepared trap, which must lie within the spell's range. The called creature is held in the trap until it agrees to perform one service in return for its freedom. To create the trap, you must use a magic circle spell, focused inward. The kind of creature to be bound must be known and stated. If you wish to call a specific individual, you must use that individual's proper name in casting the spell. The target creature is allowed a Will saving throw. If the saving throw succeeds, the creature resists the spell. If the saving throw fails, the creature is immediately drawn to the trap (spell resistance does not keep it from being called). The creature can escape from the trap by successfully pitting its spell resistance against your caster level check, by dimensional travel, or with a successful Charisma check (DC 15 + 1/2 your caster level + your Charisma modifier). It can try each method once per day. If it breaks loose, it can flee or attack you. A dimensional anchor cast on the creature prevents its escape via dimensional travel. You can also employ a calling diagram (see magic circle against evil) to make the trap more secure. If the creature does not break free of the trap, you can keep it bound for as long as you dare. You can attempt to compel the creature to perform a service by describing the service and perhaps offering some sort of reward. You make a Charisma check opposed by the creature's Charisma check. The check is assigned a bonus of +0 to +6 based on the nature of the service and the reward. If the creature wins the opposed check, it refuses service. New offers, bribes, and the like can be made or the old ones reoffered every 24 hours. This process can be repeated until the creature promises to serve, until it breaks free, or until you decide to get rid of it by means of some other spell. Impossible demands or unreasonable commands are never agreed to. If you ever roll a natural 1 on the Charisma check, the creature breaks free of the spell's effect and can escape or attack you. Once the requested service is completed, the creature need only to inform you to be instantly sent back whence it came. The creature might later seek revenge. If you assign some open-ended task that the creature cannot complete through its own actions, the spell remains in effect for a maximum of 1 day per caster level, and the creature gains an immediate chance to break free (with the same chance to resist as when it was trapped). Note that a clever recipient can subvert some instructions. When you use a calling spell to call an air, chaotic, earth, evil, fire, good, lawful, or water creature, it is a spell of that type.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Calling"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
+      [SPELL_CASTING_TIME]: "10 minutes",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One elemental or outsider with 6 HD or less",
+      [SPELL_DURATION]: "Instantaneous",
+      [SPELL_RESISTANCE]: "No and yes; see text",
+      [SPELL_SAVE_EFFECT]: "negates",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
     name: "Plane Shift",
     description:
       "You move yourself or some other creature to another plane of existence or alternate dimension. If several willing persons link hands in a circle, as many as eight can be affected by the plane shift at the same time. Precise accuracy as to a particular arrival location on the intended plane is nigh impossible. From the Material Plane, you can reach any other plane, though you appear 5 to 500 miles (5d%) from your intended destination. Plane shift transports creatures instantaneously and then ends. The creatures need to find other means if they are to travel back (including casting plane shift again). Focus: A forked metal rod attuned to the plane of travel.",
@@ -603,38 +746,6 @@ export const LEVEL_5_SPELLS: SpellSeed[] = [
   },
   {
     name: "Plant Shape I",
-    description:
-      "When you cast this spell you can assume the form of any Small or Medium creature of the plant type. If the form you assume has any of the following abilities, you gain the listed ability: darkvision 60 feet, low-light vision, constrict, grab, and poison. If the form you assume does not possess the ability to move, your speed is reduced to 5 feet and you lose all other forms of movement. If the creature has vulnerability to an element, you gain that vulnerability. Small plant: If the form you take is that of a Small plant, you gain a +2 size bonus to your Constitution and a +2 natural armor bonus. Medium plant: If the form you take is that of a Medium plant, you gain a +2 size bonus to your Strength, a +2 enhancement bonus to your Constitution, and a +2 natural armor bonus. Material Component: A piece of the creature whose form you plan to assume.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_SUBSCHOOL]: ["Polymorph"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Personal",
-      [SPELL_TARGET]: "You",
-      [SPELL_DURATION]: "1 min./level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Plant Shape II",
-    description:
-      "When you cast this spell you can assume the form of any Small or Medium creature of the plant type. If the form you assume has any of the following abilities, you gain the listed ability: darkvision 60 feet, low-light vision, constrict, grab, and poison. If the form you assume does not possess the ability to move, your speed is reduced to 5 feet and you lose all other forms of movement. If the creature has vulnerability to an element, you gain that vulnerability. Small plant: If the form you take is that of a Small plant, you gain a +2 size bonus to your Constitution and a +2 natural armor bonus. Medium plant: If the form you take is that of a Medium plant, you gain a +2 size bonus to your Strength, a +2 enhancement bonus to your Constitution, and a +2 natural armor bonus. Material Component: A piece of the creature whose form you plan to assume.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_SUBSCHOOL]: ["Polymorph"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Personal",
-      [SPELL_TARGET]: "You",
-      [SPELL_DURATION]: "1 min./level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Plant Shape III",
     description:
       "When you cast this spell you can assume the form of any Small or Medium creature of the plant type. If the form you assume has any of the following abilities, you gain the listed ability: darkvision 60 feet, low-light vision, constrict, grab, and poison. If the form you assume does not possess the ability to move, your speed is reduced to 5 feet and you lose all other forms of movement. If the creature has vulnerability to an element, you gain that vulnerability. Small plant: If the form you take is that of a Small plant, you gain a +2 size bonus to your Constitution and a +2 natural armor bonus. Medium plant: If the form you take is that of a Medium plant, you gain a +2 size bonus to your Strength, a +2 enhancement bonus to your Constitution, and a +2 natural armor bonus. Material Component: A piece of the creature whose form you plan to assume.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
@@ -749,24 +860,6 @@ export const LEVEL_5_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
-    name: "Shadow Evocation, Greater",
-    description:
-      "You tap energy from the Plane of Shadow to cast a quasi-real, illusory version of a sorcerer or wizard evocation spell of 4th level or lower. Spells that deal damage have normal effects unless an affected creature succeeds on a Will save. Each disbelieving creature takes only one-fifth damage from the attack. If the disbelieved attack has a special effect other than damage, that effect is one-fifth as strong (if applicable) or only 20% likely to occur. If recognized as a shadow evocation, a damaging spell deals only one-fifth (20%) damage. Regardless of the result of the save to disbelieve, an affected creature is also allowed any save (or spell resistance) that the spell being simulated allows, but the save DC is set according to shadow evocation's level (5th) rather than the spell's normal level. Nondamaging effects have normal effects except against those who disbelieve them. Against disbelievers, they have no effect. Objects automatically succeed on their Will saves against this spell.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: ["Shadow"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "See text",
-      [SPELL_EFFECT]: "See text",
-      [SPELL_DURATION]: "See text",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "disbelief (if interacted with)",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
     name: "Shadow Walk",
     description:
       "To use the shadow walk spell, you must be in an area of dim light. You and any creature you touch are then transported along a coiling path of shadowstuff to the edge of the Material Plane where it borders the Plane of Shadow. The effect is largely illusory, but the path is quasi-real. You can take more than one creature along with you (subject to your level limit), but all must be touching each other. In the region of shadow, you move at a rate of 50 miles per hour, moving normally on the borders of the Plane of Shadow but much more rapidly relative to the Material Plane. Thus, you can use this spell to travel rapidly by stepping onto the Plane of Shadow, moving the desired distance, and then stepping back onto the Material Plane. Because of the blurring of reality between the Plane of Shadow and the Material Plane, you can't make out details of the terrain or areas you pass over during transit, nor can you predict perfectly where your travel will end. It's impossible to judge distances accurately, making the spell virtually useless for scouting or spying. Furthermore, when the spell effect ends, you are shunted 1d10 × 100 feet in a random horizontal direction from your desired endpoint. If this would place you within a solid object, you are shunted 1d10 × 1,000 feet in the same direction. If this would still place you within a solid object, you (and any creatures with you) are shunted to the nearest empty space available, but the strain of this activity renders each creature fatigued (no save). Shadow walk can also be used to travel to other planes that border on the Plane of Shadow, but this usage requires the transit of the Plane of Shadow to arrive at a border with another plane of reality. The transit of the Plane of Shadow requires 1d4 hours. Any creatures touched by you when shadow walk is cast also make the transition to the borders of the Plane of Shadow. They may opt to follow you, wander off through the plane, or stumble back into the Material Plane (50% chance for either of the latter results if they are lost or abandoned by you). Creatures unwilling to accompany you into the Plane of Shadow receive a Will saving throw, negating the effect if successful.",
@@ -839,6 +932,58 @@ export const LEVEL_5_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
+    name: "Suggestion, Mass",
+    description:
+      "This spell functions like suggestion, except that it can affect more creatures. The same suggestion applies to all these creatures. Material Component: A snake's tongue and a honeycomb.",
+    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudeLevels: { "Bard Spells": 5, "Sorcerer Spells": 6, "Wizard Spells": 6 },
+    fields: {
+      [SPELL_SCHOOL]: "Enchantment",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
+      [SPELL_DESCRIPTOR]: ["Language-Dependent", "Mind-Affecting"],
+      [SPELL_COMPONENT]: ["Verbal", "Material"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Medium",
+      [SPELL_TARGET]: "One creature/level, no two of which can be more than 30 ft. apart",
+      [SPELL_DURATION]: "1 hour/level or until completed",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "negates",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
+    name: "Summon Monster V",
+    description:
+      "This spell functions like summon monster I, except that you can summon one creature from the 5th-level list, 1d3 creatures of the same kind from the 4th-level list, or 1d4+1 creatures of the same kind from a lower-level list. Focus: A tiny bag and a small candle.",
+    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_EFFECT]: "One summoned creature",
+      [SPELL_DURATION]: "1 round/level (D)",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
+    name: "Summon Nature's Ally V",
+    description:
+      "This spell functions like summon nature's ally I, except that you can summon one 5th-level creature, 1d3 4th-level creatures of the same kind, or 1d4+1 lower-level creatures of the same kind.",
+    aptitudes: ["Druid Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_EFFECT]: "One summoned creature",
+      [SPELL_DURATION]: "1 round/level (D)",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
     name: "Symbol of Pain",
     description:
       "This spell functions like symbol of death, except that each creature within the radius of a symbol of pain instead suffers wracking pains that impose a –4 penalty on attack rolls, skill checks, and ability checks. These effects last for 1 hour after the creature moves farther than 60 feet from the symbol. Unlike symbol of death, symbol of pain has no hit point limit; once triggered, a symbol of pain simply remains active for 10 minutes per caster level. Note: Magic traps such as symbol of pain are hard to detect and disable. A rogue (only) can use the Perception skill to find a symbol of pain and Disable Device to thwart it. The DC in each case is 25 + spell level, or 30 for symbol of pain. Material Component: Mercury and phosphorus, plus powdered diamond and opal worth a total of 1,000 gp.",
@@ -909,23 +1054,6 @@ export const LEVEL_5_SPELLS: SpellSeed[] = [
   },
   {
     name: "Teleport",
-    description:
-      "This spell instantly transports you to a designated destination, which may be as distant as 100 miles per caster level. Interplanar travel is not possible. You can bring along objects as long as their weight doesn't exceed your maximum load. You may also bring one additional willing Medium or smaller creature (carrying gear or objects up to its maximum load) or its equivalent per three caster levels. A Large creature counts as two Medium creatures, a Huge creature counts as four Medium creatures, and so forth. All creatures to be transported must be in contact with one another, and at least one of those creatures must be in contact with you. As with all spells where the range is personal and the target is you, you need not make a saving throw, nor is spell resistance applicable to you. Only objects held or in use (attended) by another person receive saving throws and spell resistance. You must have some clear idea of the location and layout of the destination. The clearer your mental image, the more likely the teleportation works. Areas of strong physical or magical energy may make teleportation more hazardous or even impossible. To see how well the teleportation works, roll d% and consult the table at the end of this spell. Refer to the following information for definitions of the terms on the table. Familiarity: “Very familiar” is a place where you have been very often and where you feel at home. “Studied carefully” is a place you know well, either because you can currently physically see it or you've been there often. “Seen casually” is a place that you have seen more than once but with which you are not very familiar. “Viewed once” is a place that you have seen once, possibly using magic such as scrying. “False destination” is a place that does not truly exist or if you are teleporting to an otherwise familiar location that no longer exists as such or has been so completely altered as to no longer be familiar to you. When traveling to a false destination, roll 1d20+80 to obtain results on the table, rather than rolling d%, since there is no real destination for you to hope to arrive at or even be off target from. On Target: You appear where you want to be. Off Target: You appear safely a random distance away from the destination in a random direction. Distance off target is d% of the distance that was to be traveled. The direction off target is determined randomly. Similar Area: You wind up in an area that's visually or thematically similar to the target area. Generally, you appear in the closest similar place within range. If no such area exists within the spell's range, the spell simply fails instead. Mishap: You and anyone else teleporting with you have gotten “scrambled.” You each take 1d10 points of damage, and you reroll on the chart to see where you wind up. For these rerolls, roll 1d20+80. Each time “Mishap” comes up, the characters take more damage and must reroll. Familiarity On Target Off Target Similar Area Mishap; Very familiar 01-97 98-99 100 —; Studied carefully 01-94 95-97 98-99 100; Seen casually 01-88 89-94 95-98 99-100; Viewed once 01-76 77-88 89-96 97-100; False destination — — 81-92 93-100;",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Teleportation"],
-      [SPELL_COMPONENT]: ["Verbal"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Personal and touch",
-      [SPELL_TARGET]: "You and touched objects or other touched willing creatures",
-      [SPELL_DURATION]: "Instantaneous",
-      [SPELL_RESISTANCE]: "No and yes (object)",
-      [SPELL_SAVE_EFFECT]: "none and Will negates (object)",
-    },
-  },
-  {
-    name: "Teleport, Greater",
     description:
       "This spell instantly transports you to a designated destination, which may be as distant as 100 miles per caster level. Interplanar travel is not possible. You can bring along objects as long as their weight doesn't exceed your maximum load. You may also bring one additional willing Medium or smaller creature (carrying gear or objects up to its maximum load) or its equivalent per three caster levels. A Large creature counts as two Medium creatures, a Huge creature counts as four Medium creatures, and so forth. All creatures to be transported must be in contact with one another, and at least one of those creatures must be in contact with you. As with all spells where the range is personal and the target is you, you need not make a saving throw, nor is spell resistance applicable to you. Only objects held or in use (attended) by another person receive saving throws and spell resistance. You must have some clear idea of the location and layout of the destination. The clearer your mental image, the more likely the teleportation works. Areas of strong physical or magical energy may make teleportation more hazardous or even impossible. To see how well the teleportation works, roll d% and consult the table at the end of this spell. Refer to the following information for definitions of the terms on the table. Familiarity: “Very familiar” is a place where you have been very often and where you feel at home. “Studied carefully” is a place you know well, either because you can currently physically see it or you've been there often. “Seen casually” is a place that you have seen more than once but with which you are not very familiar. “Viewed once” is a place that you have seen once, possibly using magic such as scrying. “False destination” is a place that does not truly exist or if you are teleporting to an otherwise familiar location that no longer exists as such or has been so completely altered as to no longer be familiar to you. When traveling to a false destination, roll 1d20+80 to obtain results on the table, rather than rolling d%, since there is no real destination for you to hope to arrive at or even be off target from. On Target: You appear where you want to be. Off Target: You appear safely a random distance away from the destination in a random direction. Distance off target is d% of the distance that was to be traveled. The direction off target is determined randomly. Similar Area: You wind up in an area that's visually or thematically similar to the target area. Generally, you appear in the closest similar place within range. If no such area exists within the spell's range, the spell simply fails instead. Mishap: You and anyone else teleporting with you have gotten “scrambled.” You each take 1d10 points of damage, and you reroll on the chart to see where you wind up. For these rerolls, roll 1d20+80. Each time “Mishap” comes up, the characters take more damage and must reroll. Familiarity On Target Off Target Similar Area Mishap; Very familiar 01-97 98-99 100 —; Studied carefully 01-94 95-97 98-99 100; Seen casually 01-88 89-94 95-98 99-100; Viewed once 01-76 77-88 89-96 97-100; False destination — — 81-92 93-100;",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],

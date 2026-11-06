@@ -50,70 +50,7 @@ export const LEVEL_3_SPELLS: SpellSeed[] = [
     },
   },
   {
-    name: "Arcane Sight, Greater",
-    description:
-      "This spell makes your eyes glow blue and allows you to see magical auras within 120 feet of you. The effect is similar to that of a detect magic spell, but arcane sight does not require concentration and discerns aura location and power more quickly. You know the location and power of all magical auras within your sight. An aura's power depends on a spell's functioning level or an item's caster level, as noted in the description of the detect magic spell. If the items or creatures bearing the auras are in line of sight, you can make Spellcraft skill checks to determine the school of magic involved in each. (Make one check per aura; DC 15 + spell level, or 15 + half caster level for a nonspell effect.) If you concentrate on a specific creature within 120 feet of you as a standard action, you can determine whether it has any spellcasting or spell-like abilities, whether these are arcane or divine (spell-like abilities register as arcane), and the strength of the most powerful spell or spell-like ability the creature currently has available for use. As with detect magic, you can use this spell to identify the properties of magic items, but not artifacts. Arcane sight can be made permanent with a permanency spell.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Divination",
-      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Personal",
-      [SPELL_TARGET]: "You",
-      [SPELL_DURATION]: "1 min./level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
     name: "Beast Shape I",
-    description:
-      "When you cast this spell, you can assume the form of any Small or Medium creature of the animal type. If the form you assume has any of the following abilities, you gain the listed ability: climb 30 feet, fly 30 feet (average maneuverability), swim 30 feet, darkvision 60 feet, low-light vision, and scent. Small animal: If the form you take is that of a Small animal, you gain a +2 size bonus to your Dexterity and a +1 natural armor bonus. Medium animal: If the form you take is that of a Medium animal, you gain a +2 size bonus to your Strength and a +2 natural armor bonus. Material Component: A piece of the creature whose form you plan to assume.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_SUBSCHOOL]: ["Polymorph"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Personal",
-      [SPELL_TARGET]: "You",
-      [SPELL_DURATION]: "1 min./level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Beast Shape II",
-    description:
-      "When you cast this spell, you can assume the form of any Small or Medium creature of the animal type. If the form you assume has any of the following abilities, you gain the listed ability: climb 30 feet, fly 30 feet (average maneuverability), swim 30 feet, darkvision 60 feet, low-light vision, and scent. Small animal: If the form you take is that of a Small animal, you gain a +2 size bonus to your Dexterity and a +1 natural armor bonus. Medium animal: If the form you take is that of a Medium animal, you gain a +2 size bonus to your Strength and a +2 natural armor bonus. Material Component: A piece of the creature whose form you plan to assume.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_SUBSCHOOL]: ["Polymorph"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Personal",
-      [SPELL_TARGET]: "You",
-      [SPELL_DURATION]: "1 min./level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Beast Shape III",
-    description:
-      "When you cast this spell, you can assume the form of any Small or Medium creature of the animal type. If the form you assume has any of the following abilities, you gain the listed ability: climb 30 feet, fly 30 feet (average maneuverability), swim 30 feet, darkvision 60 feet, low-light vision, and scent. Small animal: If the form you take is that of a Small animal, you gain a +2 size bonus to your Dexterity and a +1 natural armor bonus. Medium animal: If the form you take is that of a Medium animal, you gain a +2 size bonus to your Strength and a +2 natural armor bonus. Material Component: A piece of the creature whose form you plan to assume.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_SUBSCHOOL]: ["Polymorph"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Personal",
-      [SPELL_TARGET]: "You",
-      [SPELL_DURATION]: "1 min./level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Beast Shape IV",
     description:
       "When you cast this spell, you can assume the form of any Small or Medium creature of the animal type. If the form you assume has any of the following abilities, you gain the listed ability: climb 30 feet, fly 30 feet (average maneuverability), swim 30 feet, darkvision 60 feet, low-light vision, and scent. Small animal: If the form you take is that of a Small animal, you gain a +2 size bonus to your Dexterity and a +1 natural armor bonus. Medium animal: If the form you take is that of a Medium animal, you gain a +2 size bonus to your Strength and a +2 natural armor bonus. Material Component: A piece of the creature whose form you plan to assume.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
@@ -180,45 +117,7 @@ export const LEVEL_3_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Reflex" },
   },
   {
-    name: "Call Lightning Storm",
-    description:
-      "Immediately upon completion of the spell, and once per round thereafter, you may call down a 5-foot-wide, 30-foot-long, vertical bolt of lightning that deals 3d6 points of electricity damage. The bolt of lightning flashes down in a vertical stroke at whatever target point you choose within the spell's range (measured from your position at the time). Any creature in the target square or in the path of the bolt is affected. You need not call a bolt of lightning immediately; other actions, even spellcasting, can be performed first. Each round after the first you may use a standard action (concentrating on the spell) to call a bolt. You may call a total number of bolts equal to your caster level (maximum 10 bolts). If you are outdoors and in a stormy area—a rain shower, clouds and wind, hot and cloudy conditions, or even a tornado (including a whirlwind formed by a djinni or an air elemental of at least Large size)—each bolt deals 3d10 points of electricity damage instead of 3d6. This spell functions indoors or underground but not underwater.",
-    aptitudes: ["Druid Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Evocation",
-      [SPELL_DESCRIPTOR]: ["Electricity"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Medium",
-      [SPELL_EFFECT]: "One or more 30-ft.-long vertical lines of lightning",
-      [SPELL_DURATION]: "1 min./level",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "half",
-    },
-    links: { resistedBy: "Reflex" },
-  },
-  {
     name: "Charm Monster",
-    description:
-      "This spell functions like charm person, except that the effect is not restricted by creature type or size.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
-    aptitudeLevels: { "Bard Spells": 3, "Sorcerer Spells": 4, "Wizard Spells": 4 },
-    fields: {
-      [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: ["Charm"],
-      [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_TARGET]: "One living creature",
-      [SPELL_DURATION]: "1 day/level",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "negates",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
-    name: "Charm Monster, Mass",
     description:
       "This spell functions like charm person, except that the effect is not restricted by creature type or size.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
@@ -273,26 +172,6 @@ export const LEVEL_3_SPELLS: SpellSeed[] = [
   },
   {
     name: "Confusion",
-    description:
-      "This spell causes confusion in the targets, making them unable to determine their actions. Roll on the following table at the start of each subject's turn each round to see what it does in that round. d% Behavior; 01-25 Act normally; 26-50 Do nothing but babble incoherently; 51-75 Deal 1d8 points of damage + Str modifier to self with item in hand; 76-100 Attack nearest creature (for this purpose, a familiar counts as part of the subject's self); A confused character who can't carry out the indicated action does nothing but babble incoherently. Attackers are not at any special advantage when attacking a confused character. Any confused character who is attacked automatically attacks its attackers on its next turn, as long as it is still confused when its turn comes. Note that a confused character will not make attacks of opportunity against any creature that it is not already devoted to attacking (either because of its most recent action or because it has just been attacked). Material Component: Three nutshells.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
-    aptitudeLevels: { "Bard Spells": 3, "Sorcerer Spells": 4, "Wizard Spells": 4 },
-    fields: {
-      [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: ["Compulsion"],
-      [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Medium",
-      [SPELL_TARGET]: "All creatures in a 15-ft.-radius burst",
-      [SPELL_DURATION]: "1 round/level",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "negates",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
-    name: "Confusion, Lesser",
     description:
       "This spell causes confusion in the targets, making them unable to determine their actions. Roll on the following table at the start of each subject's turn each round to see what it does in that round. d% Behavior; 01-25 Act normally; 26-50 Do nothing but babble incoherently; 51-75 Deal 1d8 points of damage + Str modifier to self with item in hand; 76-100 Attack nearest creature (for this purpose, a familiar counts as part of the subject's self); A confused character who can't carry out the indicated action does nothing but babble incoherently. Attackers are not at any special advantage when attacking a confused character. Any confused character who is attacked automatically attacks its attackers on its next turn, as long as it is still confused when its turn comes. Note that a confused character will not make attacks of opportunity against any creature that it is not already devoted to attacking (either because of its most recent action or because it has just been attacked). Material Component: Three nutshells.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
@@ -514,29 +393,6 @@ export const LEVEL_3_SPELLS: SpellSeed[] = [
     },
   },
   {
-    name: "Dispel Magic, Greater",
-    description:
-      "You can use dispel magic to end one ongoing spell that has been cast on a creature or object, to temporarily suppress the magical abilities of a magic item, or to counter another spellcaster's spell. A dispelled spell ends as if its duration had expired. Some spells, as detailed in their descriptions, can't be defeated by dispel magic. Dispel magic can dispel (but not counter) spell-like effects just as it does spells. The effect of a spell with an instantaneous duration can't be dispelled, because the magical effect is already over before the dispel magic can take effect. You choose to use dispel magic in one of two ways: a targeted dispel or a counterspell. Targeted Dispel: One object, creature, or spell is the target of the dispel magic spell. You make one dispel check (1d20 + your caster level) and compare that to the spell with highest caster level (DC = 11 + the spell's caster level). If successful, that spell ends. If not, compare the same result to the spell with the next highest caster level. Repeat this process until you have dispelled one spell affecting the target, or you have failed to dispel every spell. For example, a 7th-level caster casts dispel magic, targeting a creature affected by stoneskin (caster level 12th) and fly (caster level 6th). The caster level check results in a 19. This check is not high enough to end the stoneskin (which would have required a 23 or higher), but it is high enough to end the fly (which only required a 17). Had the dispel check resulted in a 23 or higher, the stoneskin would have been dispelled, leaving the fly intact. Had the dispel check been a 16 or less, no spells would have been affected. You can also use a targeted dispel to specifically end one spell affecting the target or one spell affecting an area (such as a wall of fire). You must name the specific spell effect to be targeted in this way. If your caster level check is equal to or higher than the DC of that spell, it ends. No other spells or effects on the target are dispelled if your check is not high enough to end the targeted effect. If you target an object or creature that is the effect of an ongoing spell (such as a monster summoned by summon monster), you make a dispel check to end the spell that conjured the object or creature. If the object that you target is a magic item, you make a dispel check against the item's caster level (DC = 11 + the item's caster level). If you succeed, all the item's magical properties are suppressed for 1d4 rounds, after which the item recovers its magical properties. A suppressed item becomes nonmagical for the duration of the effect. An interdimensional opening (such as a bag of holding) is temporarily closed. A magic item's physical properties are unchanged: A suppressed magic sword is still a sword (a masterwork sword, in fact). Artifacts and deities are unaffected by mortal magic such as this. You automatically succeed on your dispel check against any spell that you cast yourself. Counterspell: When dispel magic is used in this way, the spell targets a spellcaster and is cast as a counterspell. Unlike a true counterspell, however, dispel magic may not work; you must make a dispel check to counter the other spellcaster's spell.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Druid Spells", "Paladin Spells", "Sorcerer Spells", "Wizard Spells"],
-    aptitudeLevels: {
-      "Bard Spells": 3,
-      "Cleric Spells": 3,
-      "Druid Spells": 4,
-      "Paladin Spells": 3,
-      "Sorcerer Spells": 3,
-      "Wizard Spells": 3,
-    },
-    fields: {
-      [SPELL_SCHOOL]: "Abjuration",
-      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Medium",
-      [SPELL_TARGET]: "One spellcaster, creature, or object",
-      [SPELL_DURATION]: "Instantaneous",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
     name: "Displacement",
     description:
       "The subject of this spell appears to be about 2 feet away from its true location. The creature benefits from a 50% miss chance as if it had total concealment. Unlike actual total concealment, displacement does not prevent enemies from targeting the creature normally. True seeing reveals its true location and negates the miss chance. Material Component: A small loop of leather.",
@@ -696,26 +552,6 @@ export const LEVEL_3_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
-    name: "Geas/Quest",
-    description:
-      "A lesser geas places a magical command on a creature to carry out some service or to refrain from some action or course of activity, as desired by you. The creature must have 7 or fewer HD and be able to understand you. While a geas cannot compel a creature to kill itself or perform acts that would result in certain death, it can cause almost any other course of activity. The geased creature must follow the given instructions until the geas is completed, no matter how long it takes. If the instructions involve some open-ended task that the recipient cannot complete through his own actions, the spell remains in effect for a maximum of 1 day per caster level. A clever recipient can subvert some instructions. If the subject is prevented from obeying the lesser geas for 24 hours, it takes a –2 penalty to each of its ability scores. Each day, another –2 penalty accumulates, up to a total of –8. No ability score can be reduced to less than 1 by this effect. The ability score penalties are removed 24 hours after the subject resumes obeying the lesser geas. A lesser geas (and all ability score penalties) can be ended by break enchantment, limited wish, remove curse, miracle, or wish. Dispel magic does not affect a lesser geas.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
-    aptitudeLevels: { "Bard Spells": 3, "Sorcerer Spells": 4, "Wizard Spells": 4 },
-    fields: {
-      [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: ["Compulsion"],
-      [SPELL_DESCRIPTOR]: ["Language-Dependent", "Mind-Affecting"],
-      [SPELL_COMPONENT]: ["Verbal"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_TARGET]: "One living creature with 7 HD or less",
-      [SPELL_DURATION]: "1 day/level or until discharged (D)",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "negates",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
     name: "Glibness",
     description:
       "Your speech becomes fluent and more believable, causing those who hear you to believe every word you say. You gain a +20 bonus on Bluff checks made to convince another of the truth of your words. This bonus doesn't apply to other uses of the Bluff skill, such as feinting in combat, creating a diversion to hide, or communicating a hidden message via innuendo. If a magical effect is used against you that would detect your lies or force you to speak the truth, the user of the effect must succeed on a caster level check (1d20 + caster level) against a DC of 15 + your caster level to succeed. Failure means the effect does not detect your lies or force you to speak only the truth.",
@@ -732,22 +568,6 @@ export const LEVEL_3_SPELLS: SpellSeed[] = [
   },
   {
     name: "Glyph of Warding",
-    description:
-      "This powerful inscription harms those who enter, pass, or open the warded area or object. A glyph of warding can guard a bridge or passage, ward a portal, trap a chest or box, and so on. You set all of the conditions of the ward. Typically, any creature entering the warded area or opening the warded object without speaking a password (which you set when casting the spell) is subject to the magic it stores. Alternatively or in addition to a password trigger, glyphs can be set according to physical characteristics (such as height or weight) or creature type, subtype, or kind. Glyphs can also be set with respect to good, evil, law, or chaos, or to pass those of your religion. They cannot be set according to class, HD, or level. Glyphs respond to invisible creatures normally but are not triggered by those who travel past them ethereally. Multiple glyphs cannot be cast on the same area. However, if a cabinet has three different drawers, each can be separately warded. When casting the spell, you weave a tracery of faintly glowing lines around the warding sigil. A glyph can be placed to conform to any shape up to the limitations of your total square footage. When the spell is completed, the glyph and tracery become nearly invisible. Glyphs cannot be affected or bypassed by such means as physical or magical probing, though they can be dispelled. Mislead, polymorph, and nondetection (and similar magical effects) can fool a glyph, though nonmagical disguises and the like can't. Read magic allows you to identify a glyph of warding with a DC 13 Knowledge (arcana) check. Identifying the glyph does not discharge it and allows you to know the basic nature of the glyph (version, type of damage caused, what spell is stored). Note: Magic traps such as glyph of warding are hard to detect and disable. While any character can use Perception to find a glyph, only a character with the trapfinding class feature can use Disable Device to disarm it. The DC in each case is 25 + spell level, or 28 for glyph of warding. Depending on the version selected, a glyph either blasts the intruder or activates a spell. Blast Glyph: A blast glyph deals 1d8 points of damage per two caster levels (maximum 5d8) to the intruder and to all within 5 feet of him or her. This damage is acid, cold, fire, electricity, or sonic (caster's choice, made at time of casting). Each creature affected can attempt a Reflex save to take half damage. Spell resistance applies against this effect. Spell Glyph: You can store any harmful spell of 3rd level or lower that you know. All level-dependent features of the spell are based on your caster level at the time of casting the glyph. If the spell has a target, it targets the intruder. If the spell has an area or an amorphous effect, the area or effect is centered on the intruder. If the spell summons creatures, they appear as close as possible to the intruder and attack. Saving throws and spell resistance operate as normal, except that the DC is based on the level of the spell stored in the glyph. Material Component: Powdered diamond worth 200 gp.",
-    aptitudes: ["Cleric Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Abjuration",
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
-      [SPELL_CASTING_TIME]: "10 minutes",
-      [SPELL_RANGE_TYPE]: "Touch",
-      [SPELL_TARGET]: "Object touched or up to 5 sq. ft./level",
-      [SPELL_DURATION]: "Permanent until discharged (D)",
-      [SPELL_RESISTANCE]: "No (object) and yes; see text",
-      [SPELL_SAVE_EFFECT]: "see text",
-    },
-  },
-  {
-    name: "Glyph of Warding, Greater",
     description:
       "This powerful inscription harms those who enter, pass, or open the warded area or object. A glyph of warding can guard a bridge or passage, ward a portal, trap a chest or box, and so on. You set all of the conditions of the ward. Typically, any creature entering the warded area or opening the warded object without speaking a password (which you set when casting the spell) is subject to the magic it stores. Alternatively or in addition to a password trigger, glyphs can be set according to physical characteristics (such as height or weight) or creature type, subtype, or kind. Glyphs can also be set with respect to good, evil, law, or chaos, or to pass those of your religion. They cannot be set according to class, HD, or level. Glyphs respond to invisible creatures normally but are not triggered by those who travel past them ethereally. Multiple glyphs cannot be cast on the same area. However, if a cabinet has three different drawers, each can be separately warded. When casting the spell, you weave a tracery of faintly glowing lines around the warding sigil. A glyph can be placed to conform to any shape up to the limitations of your total square footage. When the spell is completed, the glyph and tracery become nearly invisible. Glyphs cannot be affected or bypassed by such means as physical or magical probing, though they can be dispelled. Mislead, polymorph, and nondetection (and similar magical effects) can fool a glyph, though nonmagical disguises and the like can't. Read magic allows you to identify a glyph of warding with a DC 13 Knowledge (arcana) check. Identifying the glyph does not discharge it and allows you to know the basic nature of the glyph (version, type of damage caused, what spell is stored). Note: Magic traps such as glyph of warding are hard to detect and disable. While any character can use Perception to find a glyph, only a character with the trapfinding class feature can use Disable Device to disarm it. The DC in each case is 25 + spell level, or 28 for glyph of warding. Depending on the version selected, a glyph either blasts the intruder or activates a spell. Blast Glyph: A blast glyph deals 1d8 points of damage per two caster levels (maximum 5d8) to the intruder and to all within 5 feet of him or her. This damage is acid, cold, fire, electricity, or sonic (caster's choice, made at time of casting). Each creature affected can attempt a Reflex save to take half damage. Spell resistance applies against this effect. Spell Glyph: You can store any harmful spell of 3rd level or lower that you know. All level-dependent features of the spell are based on your caster level at the time of casting the glyph. If the spell has a target, it targets the intruder. If the spell has an area or an amorphous effect, the area or effect is centered on the intruder. If the spell summons creatures, they appear as close as possible to the intruder and attack. Saving throws and spell resistance operate as normal, except that the DC is based on the level of the spell stored in the glyph. Material Component: Powdered diamond worth 200 gp.",
     aptitudes: ["Cleric Spells"],
@@ -868,23 +688,6 @@ export const LEVEL_3_SPELLS: SpellSeed[] = [
   },
   {
     name: "Inflict Serious Wounds",
-    description:
-      "This spell functions like inflict light wounds, except that it deals 3d8 + 1 point per caster level (maximum +15).",
-    aptitudes: ["Cleric Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Necromancy",
-      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Touch",
-      [SPELL_TARGET]: "Creature touched",
-      [SPELL_DURATION]: "Instantaneous",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "half",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
-    name: "Inflict Serious Wounds, Mass",
     description:
       "This spell functions like inflict light wounds, except that it deals 3d8 + 1 point per caster level (maximum +15).",
     aptitudes: ["Cleric Spells"],
@@ -1041,6 +844,23 @@ export const LEVEL_3_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
+    name: "Magic Fang, Greater",
+    description:
+      "This spell functions like magic fang, except that the enhancement bonus on attack and damage rolls is +1 per four caster levels (maximum +5). This bonus does not allow a natural weapon or unarmed strike to bypass damage reduction aside from magic. Alternatively, you may imbue all of the creature's natural weapons with a +1 enhancement bonus (regardless of your caster level). Greater magic fang can be made permanent with a permanency spell.",
+    aptitudes: ["Druid Spells", "Ranger Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Transmutation",
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One living creature",
+      [SPELL_DURATION]: "1 hour/level",
+      [SPELL_RESISTANCE]: "Yes (harmless)",
+      [SPELL_SAVE_EFFECT]: "negates (harmless)",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
     name: "Magic Vestment",
     description:
       "You imbue a suit of armor or a shield with an enhancement bonus of +1 per four caster levels (maximum +5 at 20th level). An outfit of regular clothing counts as armor that grants no AC bonus for the purpose of this spell.",
@@ -1054,6 +874,42 @@ export const LEVEL_3_SPELLS: SpellSeed[] = [
       [SPELL_DURATION]: "1 hour/level",
       [SPELL_RESISTANCE]: "Yes (harmless, object)",
       [SPELL_SAVE_EFFECT]: "negates (harmless, object)",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
+    name: "Magic Weapon, Greater",
+    description:
+      "This spell functions like magic weapon, except that it gives a weapon an enhancement bonus on attack and damage rolls of +1 per four caster levels (maximum +5). This bonus does not allow a weapon to bypass damage reduction aside from magic. Alternatively, you can affect as many as 50 arrows, bolts, or bullets. The projectiles must be of the same kind, and they have to be together (in the same quiver or other container). Projectiles, but not thrown weapons, lose their transmutation after they are used. Treat shuriken as projectiles, rather than as thrown weapons, for the purpose of this spell. Material Component: Powdered lime and carbon.",
+    aptitudes: ["Cleric Spells", "Paladin Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudeLevels: { "Cleric Spells": 4, "Paladin Spells": 3, "Sorcerer Spells": 3, "Wizard Spells": 3 },
+    fields: {
+      [SPELL_SCHOOL]: "Transmutation",
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One weapon or 50 projectiles (all of which must be together at the time of casting)",
+      [SPELL_DURATION]: "1 hour/level",
+      [SPELL_RESISTANCE]: "Yes (harmless, object)",
+      [SPELL_SAVE_EFFECT]: "negates (harmless, object)",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
+    name: "Major Image",
+    description:
+      "This spell functions like silent image, except that sound, smell, and thermal illusions are included in the spell effect. While concentrating, you can move the image within the range. The image disappears when struck by an opponent unless you cause the illusion to react appropriately. Focus: A bit of fleece.",
+    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Illusion",
+      [SPELL_SUBSCHOOL]: ["Figment"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Long",
+      [SPELL_EFFECT]: "Visual figment that cannot extend beyond four 10-ft. cubes + one 10-ft. cube/level (S)",
+      [SPELL_DURATION]: "Concentration + 3 rounds",
+      [SPELL_RESISTANCE]: "No",
+      [SPELL_SAVE_EFFECT]: "disbelief (if interacted with)",
     },
     links: { resistedBy: "Will" },
   },
@@ -1320,31 +1176,6 @@ export const LEVEL_3_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
-    name: "Scrying, Greater",
-    description:
-      "You can observe a creature at any distance. If the subject succeeds on a Will save, the spell fails. The difficulty of the save depends on how well your knowledge of the subject and what sort of physical connection (if any) you have to that creature. Furthermore, if the subject is on another plane, it gets a +5 bonus on its Will save. Knowledge Will Save Modifier; None* +10; Secondhand (you have heard of the subject) +5; Firsthand (you have met the subject) +0; Familiar (you know the subject well) -5; Connection Will Save Modifier; Likeness or picture -2; Possession or garment -4; Body part, lock of hair, bit of nail, etc. -10; *You must have some sort of connection (see below) to a creature of which you have no knowledge.; If the save fails, you can see and hear the subject and its surroundings (approximately 10 feet in all directions of the subject). If the subject moves, the sensor follows at a speed of up to 150 feet. As with all divination (scrying) spells, the sensor has your full visual acuity, including any magical effects. In addition, the following spells have a 5% chance per caster level of operating through the sensor: detect chaos, detect evil, detect good, detect law, detect magic, and message. If the save succeeds, you can't attempt to scry on that subject again for at least 24 hours. Material Component: A pool of water. Focus: A silver mirror worth 1,000 gp.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells"],
-    aptitudeLevels: {
-      "Bard Spells": 3,
-      "Cleric Spells": 5,
-      "Druid Spells": 4,
-      "Sorcerer Spells": 4,
-      "Wizard Spells": 4,
-    },
-    fields: {
-      [SPELL_SCHOOL]: "Divination",
-      [SPELL_SUBSCHOOL]: ["Scrying"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus", "Focus"],
-      [SPELL_CASTING_TIME]: "1 hour",
-      [SPELL_RANGE_TYPE]: "See text",
-      [SPELL_EFFECT]: "Magical sensor",
-      [SPELL_DURATION]: "1 min./level",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "negates",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
     name: "Sculpt Sound",
     description:
       "You can change the sounds that creatures or objects make. You can create sounds where none exist, deaden sounds, or transform sounds into other sounds. All affected creatures or objects must be transmuted in the same way. Once the transmutation is made, you cannot change it. You can change the qualities of sounds but cannot create words with which you are unfamiliar yourself. A spellcaster whose voice is changed dramatically is unable to cast spells with verbal components.",
@@ -1511,6 +1342,38 @@ export const LEVEL_3_SPELLS: SpellSeed[] = [
       [SPELL_RANGE_TYPE]: "Touch",
       [SPELL_TARGET]: "Stone or stone object touched, up to 10 cu. ft. + 1 cu. ft./level",
       [SPELL_DURATION]: "Instantaneous",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
+    name: "Summon Monster III",
+    description:
+      "This spell functions like summon monster I, except that you can summon one creature from the 3rd-level list, 1d3 creatures of the same kind from the 2nd-level list, or 1d4+1 creatures of the same kind from the 1st-level list. Focus: A tiny bag and a small candle.",
+    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_EFFECT]: "One summoned creature",
+      [SPELL_DURATION]: "1 round/level (D)",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
+    name: "Summon Nature's Ally III",
+    description:
+      "This spell functions like summon nature's ally I, except that you can summon one 3rd-level creature, 1d3 2nd-level creatures of the same kind, or 1d4+1 1st-level creatures of the same kind.",
+    aptitudes: ["Druid Spells", "Ranger Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_EFFECT]: "One summoned creature",
+      [SPELL_DURATION]: "1 round/level (D)",
       [SPELL_RESISTANCE]: "No",
     },
   },

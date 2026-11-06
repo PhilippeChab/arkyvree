@@ -81,6 +81,15 @@ describe("A spell's saving throw", () => {
   });
 });
 
+describe("Two spells read alike", () => {
+  test("are refused: one was read off another's section of a page that prints both", () => {
+    const ref = References.load(References.path(CORE_BOOK, "spell"), "spell");
+    const heal = ref.raw.find(({ name }) => name === "Heal")!;
+    const seeds = new SpellSeeds({ ...ref, raw: [...ref.raw, { ...heal, name: "Heal, Mass (copy)" }] });
+    expect(() => seeds.seeds()).toThrow('Spells "Heal" and "Heal, Mass (copy)" have the same description and Level');
+  });
+});
+
 describe("A spell's override", () => {
   test("corrects its stat block's texts by label and its description", () => {
     const ref = References.load(References.path(CORE_BOOK, "spell"), "spell");

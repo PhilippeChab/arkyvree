@@ -1,9 +1,11 @@
+import { NUMBER_WORDS } from "@/codegen/pf1/tools/terms/featWords.ts";
 import type { LabeledText } from "@/codegen/pf1/tools/types/pages.ts";
 import { eq, eqStr, gte, or } from "@/content/core/builders/customization/requirements.ts";
 import type { RequirementEntry } from "@/content/core/builders/customization/types.ts";
 import { feat } from "@/content/pf1/builders/feats/possession.ts";
 import { language } from "@/content/pf1/builders/languages/knowledge.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { FEAT_FAMILIES } from "@/vocabulary/pf1/feats.ts";
 import { ALIGNMENT_OPTIONS } from "@/vocabulary/pf1/identity.ts";
 import { KNOWLEDGE_SKILLS, SKILL_NAMES } from "@/vocabulary/pf1/skills.ts";
 
@@ -11,6 +13,12 @@ import { splitList } from "./lists.ts";
 
 /** The character's alignment, which an alignment requirement checks. */
 const ALIGNMENT_PATH = "identity.beliefs.alignment";
+
+/**
+ * Ranks in Knowledge skills a skills line leaves to the character ("Knowledge (any two) 7 ranks in each"): read as one
+ * Knowledge skill's (`skills.knowledge.rank`, any of them), as no path counts the skills at a rank.
+ */
+const ANY_KNOWLEDGE = /^Knowledge \(any\b/i;
 
 /** A spellcasting requirement read whole: spells of a level and a kind, one kind or two ("…and 2nd-level arcane spells"). */
 const PLAIN_CASTING =
@@ -30,6 +38,11 @@ function alignmentsOf(text: string): string[] {
   const some = /^any (\w+)$/.exec(line)?.[1];
   if (some) return ALIGNMENT_OPTIONS.filter((alignment) => alignment.toLowerCase().includes(some));
   return ALIGNMENT_OPTIONS.filter((alignment) => alignment.toLowerCase() === line);
+}
+
+/** Whether two names are the same, whatever their case. */
+function sameName(name: string, other: string): boolean {
+  return name.toLowerCase() === other.toLowerCase();
 }
 
 /** A skill a requirement names: its own, or its base skill's for a specialization ("Perform (dance)": Perform). */
@@ -81,10 +94,30 @@ export class ClassRequirements {
   }
 
   /**
+   * Any feats of the families a feats line names, counted all together ("Any three metamagic or item creation feats"):
+   * the first family's count at least the number less the others' (`{{ 3 - [feats.itemcreation.count] }}`), as no path
+   * counts two families' feats at once. None for a family the rules don't know.
+   */
+  private familyFeats(item: string): RequirementEntry | undefined {
+    const [, count, names] = /^any (\w+) (.+?) feats?$/i.exec(item) ?? [];
+    const times = count && NUMBER_WORDS[count.toLowerCase()];
+    if (!times) return undefined;
+    const families = names.split(/,? or |, /).map((name) => FEAT_FAMILIES.find((family) => sameName(family, name)));
+    if (families.some((family) => !family)) return undefined;
+    const [first, ...others] = families.map((family) => `feats.${stripSeparators(family ?? "")}.count`);
+    return gte(
+      first,
+      others.length === 0 ? times : `{{ ${[times, ...others.map((path) => `[${path}]`)].join(" - ")} }}`,
+    );
+  }
+
+  /**
    * A feat a feats line names, as a requirement: the feat, one of a family's options ("Weapon Focus (longbow or
-   * shortbow)"), or Skill Focus in any Knowledge skill; none for a feat its book doesn't have.
+   * shortbow)"), Skill Focus in any Knowledge skill, or any feats of families (`familyFeats`); none for a feat its book
+   * doesn't have.
    */
   private feat(name: string): RequirementEntry | undefined {
+    if (/^any /i.test(name)) return this.familyFeats(name);
     if (/^Skill Focus \(Knowledge \[any/i.test(name))
       return or(...KNOWLEDGE_SKILLS.map((skill) => eq(feat(`Skill Focus: ${skill}`))));
     const family = /^(.+?) \((.+)\)$/.exec(name);
@@ -120,8 +153,11 @@ export class ClassRequirements {
         return this.readItems(items, (item) => this.feat(item));
       case "Languages":
         return this.readItems(items, (item) => (/^[A-Z][a-z]+$/.test(item) ? eq(language(item)) : undefined));
-      case "Skills":
-        return this.readItems(items, (item) => this.skill(item));
+      case "Skills": {
+        const read = this.readItems(items, (item) => this.skill(item));
+        const anyKnowledge = items.filter((item) => ANY_KNOWLEDGE.test(item)).map((item) => `${item} (read in part)`);
+        return { ...read, unread: [...read.unread, ...anyKnowledge] };
+      }
       case "Special":
         return this.readItems([text], (item) => this.special(item));
       case "Spells":
@@ -146,10 +182,13 @@ export class ClassRequirements {
     return { requirements, unread };
   }
 
-  /** A skill's ranks a skills line names ("Acrobatics 2 ranks", "Perform (dance) 2 ranks"): none for "any two". */
+  /**
+   * A skill's ranks a skills line names ("Acrobatics 2 ranks", "Perform (dance) 2 ranks"), any Knowledge skill's for
+   * Knowledge skills it leaves to the character (`ANY_KNOWLEDGE`).
+   */
   private skill(item: string): RequirementEntry | undefined {
     const match = /^(.+?) (\d+) ranks?\b/.exec(item);
-    const skill = match && skillOf(match[1]);
+    const skill = match && (ANY_KNOWLEDGE.test(match[1]) ? "Knowledge" : skillOf(match[1]));
     return skill ? gte(`skills.${stripSeparators(skill)}.rank`, parseInt(match[2], 10)) : undefined;
   }
 

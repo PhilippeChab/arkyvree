@@ -40,17 +40,7 @@ export default class LevelUpPlan extends PlannedLevelsState {
       ...this.getSavedClassLevel({ entryId: classLevelId }),
       abilityIncreases: abilityIncreases[i] ?? [],
     }));
-    const byPool = (step: string) => {
-      const pools: Record<string, string[]> = {};
-      for (const { entityId, viaId } of picks.filter((pick) => pick.step === step))
-        if (entityId && viaId) (pools[viaId] ??= []).push(entityId);
-      return pools;
-    };
-    const distributed = this.distributePicks(classLevelEntries, {
-      feats: byPool("feats"),
-      spells: byPool("spells"),
-      skills: skillPoints,
-    });
+    const distributed = this.distributePicks(classLevelEntries, { ...this.toPooledPicks(picks), skills: skillPoints });
     // The class picker projects the skill ranks alone: it picks the plan's feats and spells itself
     return distributed.map((levelPicks) => this.toPickPlans({ ...levelPicks, feats: {}, spells: {} }));
   }

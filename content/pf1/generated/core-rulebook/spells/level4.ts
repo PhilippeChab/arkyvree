@@ -83,6 +83,22 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     },
   },
   {
+    name: "Beast Shape II",
+    description:
+      "This spell functions as beast shape I, except that it also allows you to assume the form of a Tiny or Large creature of the animal type. If the form you assume has any of the following abilities, you gain the listed ability: climb 60 feet, fly 60 feet (good maneuverability), swim 60 feet, darkvision 60 feet, low-light vision, scent, grab, pounce, and trip. Tiny animal: If the form you take is that of a Tiny animal, you gain a +4 size bonus to your Dexterity, a –2 penalty to your Strength, and a +1 natural armor bonus. Large animal: If the form you take is that of a Large animal, you gain a +4 size bonus to your Strength, a –2 penalty to your Dexterity, and a +4 natural armor bonus. Material Component: A piece of the creature whose form you plan to assume.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Transmutation",
+      [SPELL_SUBSCHOOL]: ["Polymorph"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Personal",
+      [SPELL_TARGET]: "You",
+      [SPELL_DURATION]: "1 min./level (D)",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
     name: "Black Tentacles",
     description:
       "This spell causes a field of rubbery black tentacles to appear, burrowing up from the floor and reaching for any creature in the area. Every creature within the area of the spell is the target of a combat maneuver check made to grapple each round at the beginning of your turn, including the round that black tentacles is cast. Creatures that enter the area of effect are also automatically attacked. The tentacles do not provoke attacks of opportunity. When determining the tentacles' CMB, the tentacles use your caster level as their base attack bonus and receive a +4 bonus due to their Strength and a +1 size bonus. Roll only once for the entire spell effect each round and apply the result to all creatures in the area of effect. If the tentacles succeed in grappling a foe, that foe takes 1d6+4 points of damage and gains the grappled condition. Grappled opponents cannot move without first breaking the grapple. All other movement is prohibited unless the creature breaks the grapple first. The black tentacles spell receives a +5 bonus on grapple checks made against opponents it is already grappling, but cannot move foes or pin foes. Each round that black tentacles succeeds on a grapple check, it deals an additional 1d6+4 points of damage. The CMD of black tentacles, for the purposes of escaping the grapple, is equal to 10 + its CMB. The tentacles created by this spell cannot be damaged, but they can be dispelled as normal. The entire area of effect is considered difficult terrain while the tentacles last. Material Component: Octopus or squid tentacle.",
@@ -399,54 +415,6 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     },
   },
   {
-    name: "Elemental Body II",
-    description:
-      "When you cast this spell, you can assume the form of a Small air, earth, fire, or water elemental. The abilities you gain depend upon the type of elemental into which you change. Elemental abilities based on size, such as burn, vortex, and whirlwind, use the size of the elemental you transform into to determine their effect. Air elemental: If the form you take is that of a Small air elemental, you gain a +2 size bonus to your Dexterity and a +2 natural armor bonus. You also gain fly 60 feet (perfect), darkvision 60 feet, and the ability to create a whirlwind. Earth elemental: If the form you take is that of a Small earth elemental, you gain a +2 size bonus to your Strength and a +4 natural armor bonus. You also gain darkvision 60 feet and the ability to earth glide. Fire elemental: If the form you take is that of a Small fire elemental, you gain a +2 size bonus to your Dexterity and a +2 natural armor bonus. You gain darkvision 60 feet, resist fire 20, vulnerability to cold, and the burn ability. Water elemental: If the form you take is that of a Small water elemental, you gain a +2 size bonus to your Constitution and a +4 natural armor bonus. You also gain swim 60 feet, darkvision 60 feet, the ability to create a vortex, and the ability to breathe water. Material Component: The element you plan to assume.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_SUBSCHOOL]: ["Polymorph"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Personal",
-      [SPELL_TARGET]: "You",
-      [SPELL_DURATION]: "1 min./level",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Elemental Body III",
-    description:
-      "When you cast this spell, you can assume the form of a Small air, earth, fire, or water elemental. The abilities you gain depend upon the type of elemental into which you change. Elemental abilities based on size, such as burn, vortex, and whirlwind, use the size of the elemental you transform into to determine their effect. Air elemental: If the form you take is that of a Small air elemental, you gain a +2 size bonus to your Dexterity and a +2 natural armor bonus. You also gain fly 60 feet (perfect), darkvision 60 feet, and the ability to create a whirlwind. Earth elemental: If the form you take is that of a Small earth elemental, you gain a +2 size bonus to your Strength and a +4 natural armor bonus. You also gain darkvision 60 feet and the ability to earth glide. Fire elemental: If the form you take is that of a Small fire elemental, you gain a +2 size bonus to your Dexterity and a +2 natural armor bonus. You gain darkvision 60 feet, resist fire 20, vulnerability to cold, and the burn ability. Water elemental: If the form you take is that of a Small water elemental, you gain a +2 size bonus to your Constitution and a +4 natural armor bonus. You also gain swim 60 feet, darkvision 60 feet, the ability to create a vortex, and the ability to breathe water. Material Component: The element you plan to assume.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_SUBSCHOOL]: ["Polymorph"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Personal",
-      [SPELL_TARGET]: "You",
-      [SPELL_DURATION]: "1 min./level",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Elemental Body IV",
-    description:
-      "When you cast this spell, you can assume the form of a Small air, earth, fire, or water elemental. The abilities you gain depend upon the type of elemental into which you change. Elemental abilities based on size, such as burn, vortex, and whirlwind, use the size of the elemental you transform into to determine their effect. Air elemental: If the form you take is that of a Small air elemental, you gain a +2 size bonus to your Dexterity and a +2 natural armor bonus. You also gain fly 60 feet (perfect), darkvision 60 feet, and the ability to create a whirlwind. Earth elemental: If the form you take is that of a Small earth elemental, you gain a +2 size bonus to your Strength and a +4 natural armor bonus. You also gain darkvision 60 feet and the ability to earth glide. Fire elemental: If the form you take is that of a Small fire elemental, you gain a +2 size bonus to your Dexterity and a +2 natural armor bonus. You gain darkvision 60 feet, resist fire 20, vulnerability to cold, and the burn ability. Water elemental: If the form you take is that of a Small water elemental, you gain a +2 size bonus to your Constitution and a +4 natural armor bonus. You also gain swim 60 feet, darkvision 60 feet, the ability to create a vortex, and the ability to breathe water. Material Component: The element you plan to assume.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_SUBSCHOOL]: ["Polymorph"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Personal",
-      [SPELL_TARGET]: "You",
-      [SPELL_DURATION]: "1 min./level",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
     name: "Enervation",
     description:
       "You point your finger and fire a black ray of negative energy that suppresses the life force of any living creature it strikes. You must make a ranged touch attack to hit. If you hit, the subject gains 1d4 temporary negative levels (see Special Abilities). Negative levels stack. Assuming the subject survives, it regains lost levels after a number of hours equal to your caster level (maximum 15 hours). Usually, negative levels have a chance of becoming permanent, but the negative levels from enervation don't last long enough to do so. An undead creature struck by the ray gains 1d4 × 5 temporary hit points for 1 hour.",
@@ -460,6 +428,23 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
       [SPELL_DURATION]: "Instantaneous",
       [SPELL_RESISTANCE]: "Yes",
     },
+  },
+  {
+    name: "Enlarge Person, Mass",
+    description:
+      "This spell functions like enlarge person, except that it affects multiple creatures. Material Component: Powdered iron.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Transmutation",
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One humanoid creature/level, no two of which can be more than 30 ft. apart",
+      [SPELL_DURATION]: "1 min./level (D)",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "negates",
+    },
+    links: { resistedBy: "Fortitude" },
   },
   {
     name: "Fire Shield",
@@ -529,6 +514,21 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     },
   },
   {
+    name: "Globe of Invulnerability, Lesser",
+    description:
+      "An immobile, faintly shimmering magical sphere surrounds you and excludes all spell effects of 3rd level or lower. The area or effect of any such spells does not include the area of the lesser globe of invulnerability. Such spells fail to affect any target located within the globe. Excluded effects include spell-like abilities and spells or spell-like effects from items. Any type of spell, however, can be cast through or out of the magical globe. Spells of 4th level and higher are not affected by the globe, nor are spells already in effect when the globe is cast. The globe can be brought down by a dispel magic spell. You can leave and return to the globe without penalty. Note that spell effects are not disrupted unless their effects enter the globe, and even then they are merely suppressed, not dispelled. If a given spell has more than one level depending on which character class is casting it, use the level appropriate to the caster to determine whether lesser globe of invulnerability stops it. Material Component: A glass or crystal bead.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Abjuration",
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "10 ft.",
+      [SPELL_AREA_OF_EFFECT]: "10-ft.-radius spherical emanation, centered on you",
+      [SPELL_DURATION]: "1 round/level (D)",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
     name: "Hallucinatory Terrain",
     description:
       "You make natural terrain look, sound, and smell like some other sort of natural terrain. Structures, equipment, and creatures within the area are not hidden or changed in appearance. Material Component: A stone, a twig, and a green leaf.",
@@ -548,26 +548,6 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
   },
   {
     name: "Hold Monster",
-    description:
-      "This spell functions like hold person, except that it affects any living creature that fails its Will save. Material Component: One hard metal bar or rod, which can be as small as a three-penny nail.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
-    aptitudeLevels: { "Bard Spells": 4, "Sorcerer Spells": 5, "Wizard Spells": 5 },
-    fields: {
-      [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: ["Compulsion"],
-      [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Medium",
-      [SPELL_TARGET]: "One living creature",
-      [SPELL_DURATION]: "1 round/level (D); see text",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "negates; see text",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
-    name: "Hold Monster, Mass",
     description:
       "This spell functions like hold person, except that it affects any living creature that fails its Will save. Material Component: One hard metal bar or rod, which can be as small as a three-penny nail.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
@@ -689,19 +669,19 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
-    name: "Inflict Critical Wounds, Mass",
-    description:
-      "This spell functions like inflict light wounds, except that you deal 4d8 points of damage + 1 point per caster level (maximum +20).",
-    aptitudes: ["Cleric Spells"],
+    name: "Invisibility, Greater",
+    description: "This spell functions like invisibility, except that it doesn't end if the subject attacks.",
+    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
     fields: {
-      [SPELL_SCHOOL]: "Necromancy",
+      [SPELL_SCHOOL]: "Illusion",
+      [SPELL_SUBSCHOOL]: ["Glamer"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic"],
       [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Touch",
-      [SPELL_TARGET]: "Creature touched",
-      [SPELL_DURATION]: "Instantaneous",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "half",
+      [SPELL_RANGE_TYPE]: "Personal or touch",
+      [SPELL_TARGET]: "You or creature touched",
+      [SPELL_DURATION]: "1 round/level (D)",
+      [SPELL_RESISTANCE]: "Yes (harmless)",
+      [SPELL_SAVE_EFFECT]: "negates (harmless)",
     },
     links: { resistedBy: "Will" },
   },
@@ -733,22 +713,6 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
       [SPELL_RANGE_TYPE]: "Long",
       [SPELL_AREA_OF_EFFECT]: "Circle, centered on you, with a radius of 400 ft. + 40 ft./level",
       [SPELL_DURATION]: "10 min./level",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Major Creation",
-    description:
-      "You create a nonmagical, unattended object of nonliving vegetable matter. The volume of the item created cannot exceed 1 cubic foot per caster level. You must succeed on an appropriate Craft skill check to make a complex item. Attempting to use any created object as a material component causes the spell to fail. Material Component: A tiny piece of matter of the same sort of item you plan to create with minor creation.",
-    aptitudes: ["Adept Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Creation"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
-      [SPELL_CASTING_TIME]: "1 minute",
-      [SPELL_RANGE_TYPE]: "0 ft.",
-      [SPELL_EFFECT]: "Unattended, nonmagical object of nonliving plant matter, up to 1 cu. ft./level",
-      [SPELL_DURATION]: "1 hour/level (D)",
       [SPELL_RESISTANCE]: "No",
     },
   },
@@ -856,6 +820,22 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
+    name: "Planar Ally, Lesser",
+    description:
+      "By casting this spell, you request your deity to send you an outsider (of 6 HD or less) of the deity's choice. If you serve no particular deity, the spell is a general plea answered by a creature sharing your philosophical alignment. If you know an individual creature's name, you may request that individual by speaking the name during the spell (though you might get a different creature anyway). You may ask the creature to perform one task in exchange for a payment from you. Tasks might range from the simple to the complex. You must be able to communicate with the creature called in order to bargain for its services. The creature called requires a payment for its services. This payment can take a variety of forms, from donating gold or magic items to an allied temple, to a gift given directly to the creature, to some other action on your part that matches the creature's alignment and goals. Regardless, this payment must be made before the creature agrees to perform any services. The bargaining takes at least 1 round, so any actions by the creature begin in the round after it arrives. A task taking up to 1 minute per caster level requires a payment of 100 gp per HD of the creature called. For a task taking up to 1 hour per caster level, the creature requires a payment of 500 gp per HD. A long-term task, one requiring up to 1 day per caster level, requires a payment of 1,000 gp per HD. A nonhazardous task requires only half the indicated payment, while an especially hazardous task might require a greater gift. Few if any creatures will accept a task that seems suicidal (remember, a called creature actually dies when it is killed, unlike a summoned creature). However, if the task is strongly aligned with the creature's ethos, it may halve or even waive the payment. At the end of its task, or when the duration bargained for expires, the creature returns to its home plane (after reporting back to you, if appropriate and possible). Note: When you use a calling spell that calls an air, chaotic, earth, evil, fire, good, lawful, or water creature, it is a spell of that type. Due to cleric spell alignment restrictions, if a cleric with an outsider subdomain wanted to create a calling diagram to improve her chances, she could enlist the aid of another caster to cast the required magic circle spell. Material Component: Offerings worth 500 gp plus payment, see text.",
+    aptitudes: ["Cleric Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Calling"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "10 minutes",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_EFFECT]: "One called outsider of 6 HD or less",
+      [SPELL_DURATION]: "Instantaneous",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
     name: "Polymorph",
     description:
       "This spell transforms a willing creature into an animal, humanoid or elemental of your choosing; the spell has no effect on unwilling creatures, nor can the creature being targeted by this spell influence the new form assumed (apart from conveying its wishes, if any, to you verbally). If you use this spell to cause the target to take on the form of an animal or magical beast, the spell functions as beast shape II. If the form is that of an elemental, the spell functions as elemental body I. If the form is that of a humanoid, the spell functions as alter self. The subject may choose to resume its normal form as a full-round action; doing so ends the spell for that subject. Material Component: A piece of the creature whose form you choose.",
@@ -894,6 +874,23 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
+    name: "Reduce Person, Mass",
+    description:
+      "This spell functions like reduce person, except that it affects multiple creatures. Material Component: A pinch of powdered iron.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Transmutation",
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One humanoid creature/level, no two of which can be more than 30 ft. apart",
+      [SPELL_DURATION]: "1 min./level (D)",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "negates",
+    },
+    links: { resistedBy: "Fortitude" },
+  },
+  {
     name: "Reincarnate",
     description:
       "With this spell, you bring back a dead creature in another body, provided that its death occurred no more than 1 week before the casting of the spell and the subject’s soul is free and willing to return. If the subject’s soul is not willing to return, the spell does not work; therefore, a subject that wants to return receives no saving throw. Since the dead creature is returning in a new body, all physical ills and afflictions are repaired. The condition of the remains is not a factor. So long as some small portion of the creature’s body still exists, it can be reincarnated, but the portion receiving the spell must have been part of the creature’s body at the time of death. The magic of the spell creates an entirely new young adult body for the soul to inhabit from the natural elements at hand. This process takes 1 hour to complete. When the body is ready, the subject is reincarnated. A reincarnated creature recalls the majority of its former life and form. It retains any class abilities, feats, or skill ranks it formerly possessed. Its class, base attack bonus, base save bonuses, and hit points are unchanged. Strength, Dexterity, and Constitution scores depend partly on the new body. First eliminate the subject’s racial adjustments (since it is no longer necessarily of his previous race) and then apply the adjustments found below to its remaining ability scores. The subject of the spell gains two permanent negative levels when it is reincarnated. Negative levels equal to or greater than the creature’s Hit Dice are instead applied as Constitution drain (if this would reduce its Con to 0 or less, it can’t be reincarnated). A character who died with spells prepared has a 50% chance of losing any given spell upon being reincarnated. A spellcasting creature that doesn’t prepare spells (such as a sorcerer) has a 50% chance of losing any given unused spell slot as if it had been used to cast a spell. It’s possible for the change in the subject’s ability scores to make it difficult for it to pursue its previous character class. If this is the case, the subject is advised to become a multiclass character. For a humanoid creature, the new incarnation is determined using the table on the next page. For nonhumanoid creatures, a similar table of creatures of the same type should be created. A creature that has been turned into an undead creature or killed by a death effect can’t be returned to life by this spell. Constructs, elementals, outsiders, and undead creatures can’t be reincarnated. The spell can bring back a creature that has died of old age. d% Incarnation Str Dex Con; 01 Bugbear +4 +2 +2; 02-13 Dwarf +0 +0 +2; 14-25 Elf +0 +2 -2; 26 Gnoll +4 +0 +2; 27-38 Gnome -2 +0 +2; 39-42 Goblin -2 +2 +0; 43-52 Half-elf +0 +2 +0; 53-62 Half-orc +2 +0 +0; 63-74 Halfling -2 +2 +0; 75-89 Human +0 +0 +2; 90-93 Kobold -4 +0 -2; 94 Lizardfolk +2 +2 +2; 95-98 Orc +4 +0 +0; 99 Troglodyte +0 -2 +4; 100 Other (GM's choice) ? ? ?; The reincarnated creature gains all abilities associated with its new form, including forms of movement and speeds, natural armor, natural attacks, extraordinary abilities, and the like, but it doesn’t automatically speak the language of the new form. A wish or a miracle spell can restore a reincarnated character to his or her original form. Material Component: Oils worth 1,000 gp.",
@@ -929,42 +926,6 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
   },
   {
     name: "Restoration",
-    description:
-      "This spell functions like lesser restoration, except that it also dispels temporary negative levels or one permanent negative level. If this spell is used to dispel a permanent negative level, it has a material component of diamond dust worth 1,000 gp. This spell cannot be used to dispel more than one permanent negative level possessed by a target in a 1-week period. Restoration cures all temporary ability damage, and it restores all points permanently drained from a single ability score (your choice if more than one is drained). It also eliminates any fatigue or exhaustion suffered by the target. Material Component: Diamond dust worth 100 gp or 1,000 gp, see text.",
-    aptitudes: ["Adept Spells", "Cleric Spells", "Paladin Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Healing"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
-      [SPELL_CASTING_TIME]: "3 rounds",
-      [SPELL_RANGE_TYPE]: "Touch",
-      [SPELL_TARGET]: "Creature touched",
-      [SPELL_DURATION]: "Instantaneous",
-      [SPELL_RESISTANCE]: "Yes (harmless)",
-      [SPELL_SAVE_EFFECT]: "negates (harmless)",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
-    name: "Restoration, Greater",
-    description:
-      "This spell functions like lesser restoration, except that it also dispels temporary negative levels or one permanent negative level. If this spell is used to dispel a permanent negative level, it has a material component of diamond dust worth 1,000 gp. This spell cannot be used to dispel more than one permanent negative level possessed by a target in a 1-week period. Restoration cures all temporary ability damage, and it restores all points permanently drained from a single ability score (your choice if more than one is drained). It also eliminates any fatigue or exhaustion suffered by the target. Material Component: Diamond dust worth 100 gp or 1,000 gp, see text.",
-    aptitudes: ["Adept Spells", "Cleric Spells", "Paladin Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Healing"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
-      [SPELL_CASTING_TIME]: "3 rounds",
-      [SPELL_RANGE_TYPE]: "Touch",
-      [SPELL_TARGET]: "Creature touched",
-      [SPELL_DURATION]: "Instantaneous",
-      [SPELL_RESISTANCE]: "Yes (harmless)",
-      [SPELL_SAVE_EFFECT]: "negates (harmless)",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
-    name: "Restoration, Lesser",
     description:
       "This spell functions like lesser restoration, except that it also dispels temporary negative levels or one permanent negative level. If this spell is used to dispel a permanent negative level, it has a material component of diamond dust worth 1,000 gp. This spell cannot be used to dispel more than one permanent negative level possessed by a target in a 1-week period. Restoration cures all temporary ability damage, and it restores all points permanently drained from a single ability score (your choice if more than one is drained). It also eliminates any fatigue or exhaustion suffered by the target. Material Component: Diamond dust worth 100 gp or 1,000 gp, see text.",
     aptitudes: ["Adept Spells", "Cleric Spells", "Paladin Spells"],
@@ -1048,43 +1009,7 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
-    name: "Shadow Conjuration, Greater",
-    description:
-      "You use material from the Plane of Shadow to shape quasi-real illusions of one or more creatures, objects, or forces. Shadow conjuration can mimic any sorcerer or wizard conjuration (summoning) or conjuration (creation) spell of 3rd level or lower. Shadow conjurations are only one-fifth (20%) as strong as the real things, though creatures who believe the shadow conjurations to be real are affected by them at full strength. Any creature that interacts with the spell can make a Will save to recognize its true nature. Spells that deal damage have normal effects unless the affected creature succeeds on a Will save. Each disbelieving creature takes only one-fifth (20%) damage from the attack. If the disbelieved attack has a special effect other than damage, that effect is only 20% likely to occur. Regardless of the result of the save to disbelieve, an affected creature is also allowed any save that the spell being simulated allows, but the save DC is set according to shadow conjuration's level (4th) rather than the spell's normal level. In addition, any effect created by shadow conjuration allows spell resistance, even if the spell it is simulating does not. Shadow objects or substances have normal effects except against those who disbelieve them. Against disbelievers, they are 20% likely to work. A shadow creature has one-fifth the hit points of a normal creature of its kind (regardless of whether it's recognized as shadowy). It deals normal damage and has all normal abilities and weaknesses. Against a creature that recognizes it as a shadow creature, however, the shadow creature's damage is one-fifth (20%) normal, and all special abilities that do not deal lethal damage are only 20% likely to work. (Roll for each use and each affected character separately.) Furthermore, the shadow creature's AC bonuses are just one-fifth as large. A creature that succeeds on its save sees the shadow conjurations as transparent images superimposed on vague, shadowy forms. Objects automatically succeed on their Will saves against this spell.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: ["Shadow"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "See text",
-      [SPELL_EFFECT]: "See text",
-      [SPELL_DURATION]: "See text",
-      [SPELL_RESISTANCE]: "Yes; see text",
-      [SPELL_SAVE_EFFECT]: "disbelief (if interacted with); varies; see text",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
     name: "Shout",
-    description:
-      "You emit an ear-splitting yell that deafens and damages creatures in its path. Any creature within the area is deafened for 2d6 rounds and takes 5d6 points of sonic damage. A successful save negates the deafness and reduces the damage by half. Any exposed brittle or crystalline object or crystalline creature takes 1d6 points of sonic damage per caster level (maximum 15d6). An affected creature is allowed a Fortitude save to reduce the damage by half, and a creature holding fragile objects can negate damage to them with a successful Reflex save. A shout spell cannot penetrate a silence spell.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Evocation",
-      [SPELL_DESCRIPTOR]: ["Sonic"],
-      [SPELL_COMPONENT]: ["Verbal"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "30 ft.",
-      [SPELL_AREA_OF_EFFECT]: "Cone-shaped burst",
-      [SPELL_DURATION]: "Instantaneous",
-      [SPELL_RESISTANCE]: "Yes (object)",
-      [SPELL_SAVE_EFFECT]: "partial or Reflex negates (object); see text",
-    },
-    links: { resistedBy: "Fortitude" },
-  },
-  {
-    name: "Shout, Greater",
     description:
       "You emit an ear-splitting yell that deafens and damages creatures in its path. Any creature within the area is deafened for 2d6 rounds and takes 5d6 points of sonic damage. A successful save negates the deafness and reduces the damage by half. Any exposed brittle or crystalline object or crystalline creature takes 1d6 points of sonic damage per caster level (maximum 15d6). An affected creature is allowed a Fortitude save to reduce the damage by half, and a creature holding fragile objects can negate damage to them with a successful Reflex save. A shout spell cannot penetrate a silence spell.",
     aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
@@ -1135,23 +1060,6 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
-    name: "Spell Immunity, Greater",
-    description:
-      "The warded creature is immune to the effects of one specified spell for every four levels you have. The spells must be of 4th level or lower. The warded creature effectively has unbeatable spell resistance regarding the specified spell or spells. Naturally, that immunity doesn't protect a creature from spells for which spell resistance doesn't apply. Spell immunity protects against spells, spell-like effects of magic items, and innate spell-like abilities of creatures. It does not protect against supernatural or extraordinary abilities, such as breath weapons or gaze attacks. Only a particular spell can be protected against, not a certain domain or school of spells or a group of spells that are similar in effect. A creature can have only one spell immunity or greater spell immunity spell in effect on it at a time.",
-    aptitudes: ["Cleric Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Abjuration",
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Touch",
-      [SPELL_TARGET]: "Creature touched",
-      [SPELL_DURATION]: "10 min./level",
-      [SPELL_RESISTANCE]: "Yes (harmless)",
-      [SPELL_SAVE_EFFECT]: "negates (harmless)",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
     name: "Spike Stones",
     description:
       "Rocky ground, stone floors, and similar surfaces shape themselves into long, sharp points that blend into the background. Spike stones impede progress through an area and deal damage. Any creature moving on foot into or through the spell's area moves at half speed. In addition, each creature moving through the area takes 1d8 points of piercing damage for each 5 feet of movement through the spiked area. Any creature that takes damage from this spell must also succeed on a Reflex save to avoid injuries to its feet and legs. A failed save causes the creature's speed to be reduced to half normal for 24 hours or until the injured creature receives a cure spell (which also restores lost hit points). Another character can remove the penalty by taking 10 minutes to dress the injuries and succeeding on a Heal check against the spell's save DC. Magic traps such as spike stones are hard to detect. A rogue (only) can use the Perception skill to find spike stones. The DC is 25 + spell level, or DC 29 for spike stones. Spike stones is a magic trap that can't be disabled with the Disable Device skill.",
@@ -1186,6 +1094,38 @@ export const LEVEL_4_SPELLS: SpellSeed[] = [
       [SPELL_SAVE_EFFECT]: "negates (harmless)",
     },
     links: { resistedBy: "Will" },
+  },
+  {
+    name: "Summon Monster IV",
+    description:
+      "This spell functions like summon monster I, except that you can summon one creature from the 4th-level list, 1d3 creatures of the same kind from the 3rd-level list, or 1d4+1 creatures of the same kind from a lower-level list. Focus: A tiny bag and a small candle.",
+    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_EFFECT]: "One summoned creature",
+      [SPELL_DURATION]: "1 round/level (D)",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
+    name: "Summon Nature's Ally IV",
+    description:
+      "This spell functions like summon nature's ally I, except that you can summon one 4th-level creature, 1d3 3rd-level creatures of the same kind, or 1d4+1 lower-level creatures of the same kind.",
+    aptitudes: ["Druid Spells", "Ranger Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_EFFECT]: "One summoned creature",
+      [SPELL_DURATION]: "1 round/level (D)",
+      [SPELL_RESISTANCE]: "No",
+    },
   },
   {
     name: "Tree Stride",

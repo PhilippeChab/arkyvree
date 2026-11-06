@@ -164,6 +164,43 @@ export const LEVEL_9_SPELLS: SpellSeed[] = [
     },
   },
   {
+    name: "Heal, Mass",
+    description:
+      "This spell functions like heal, except as noted above. The maximum number of hit points restored to each creature is 250.",
+    aptitudes: ["Cleric Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Healing"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One or more creatures, no two of which can be more than 30 ft. apart",
+      [SPELL_DURATION]: "Instantaneous",
+      [SPELL_RESISTANCE]: "Yes (harmless)",
+      [SPELL_SAVE_EFFECT]: "negates (harmless)",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
+    name: "Hold Monster, Mass",
+    description:
+      "This spell functions like hold person, except that it affects multiple creatures and holds any living creature that fails its Will save. Material Component: One hard metal bar or rod, which can be as small as a three-penny nail.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Enchantment",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
+      [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Medium",
+      [SPELL_TARGET]: "One or more creatures, no two of which can be more than 30 ft. apart",
+      [SPELL_DURATION]: "1 round/level (D); see text",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "negates; see text",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
     name: "Implosion",
     description:
       "This spell causes a destructive resonance in a corporeal creature's body. Each round you concentrate (including the first), you can cause one creature to collapse in on itself, inflicting 10 points of damage per caster level. If you break concentration, the spell immediately ends, though any implosions that have already happened remain in effect. You can target a particular creature only once with each casting of the spell. Implosion has no effect on creatures in gaseous form or on incorporeal creatures.",
@@ -363,6 +400,38 @@ export const LEVEL_9_SPELLS: SpellSeed[] = [
       [SPELL_DURATION]: "Concentration (maximum 10 rounds) (D)",
       [SPELL_RESISTANCE]: "Yes",
       [SPELL_SAVE_EFFECT]: "see text",
+    },
+  },
+  {
+    name: "Summon Monster IX",
+    description:
+      "This spell functions like summon monster I, except that you can summon one creature from the 9th-level list, 1d3 creatures of the same kind from the 8th-level list, or 1d4+1 creatures of the same kind from a lower-level list. Focus: A tiny bag and a small candle.",
+    aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_EFFECT]: "One summoned creature",
+      [SPELL_DURATION]: "1 round/level (D)",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
+    name: "Summon Nature's Ally IX",
+    description:
+      "This spell functions like summon nature's ally I, except that you can summon one 9th-level creature, 1d3 8th-level creatures of the same kind, or 1d4+1 lower-level creatures of the same kind.",
+    aptitudes: ["Druid Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_EFFECT]: "One summoned creature",
+      [SPELL_DURATION]: "1 round/level (D)",
+      [SPELL_RESISTANCE]: "No",
     },
   },
   {

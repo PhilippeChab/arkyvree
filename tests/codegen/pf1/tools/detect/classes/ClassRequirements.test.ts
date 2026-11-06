@@ -48,10 +48,37 @@ describe("A class's requirements", () => {
     expect(read.all()[1]).toEqual(gte("feats.sneakattack.count", 2));
   });
 
-  test("leave unread what no reading takes, and a line read only in part", () => {
+  test("read a loremaster's: feats of two families counted together, and any Knowledge skill's ranks", () => {
     const read = new ClassRequirements(
       [
         { label: "Skills", text: "Knowledge (any two) 7 ranks in each." },
+        {
+          label: "Feats",
+          text: "Any three metamagic or item creation feats, plus Skill Focus (Knowledge [any individual Knowledge skill]).",
+        },
+      ],
+      FEATS,
+    );
+    const [ranks, families, skillFocus] = read.all();
+    expect(ranks).toEqual(gte("skills.knowledge.rank", 7));
+    expect(families).toEqual(gte("feats.metamagic.count", "{{ 3 - [feats.itemcreation.count] }}"));
+    expect(skillFocus).toMatchObject({ chainingOperator: "or" });
+    // Two Knowledge skills at 7 ranks are read as one: no path counts the skills at a rank
+    expect(read.unread()).toEqual(["Skills: Knowledge (any two) 7 ranks in each (read in part)"]);
+  });
+
+  test("read any feats of one family as its count, and leave a family the rules don't know unread", () => {
+    const read = new ClassRequirements(
+      [{ label: "Feats", text: "Any two critical feats, any two teamwork feats." }],
+      FEATS,
+    );
+    expect(read.all()).toEqual([gte("feats.critical.count", 2)]);
+    expect(read.unread()).toEqual(["Feats: any two teamwork feats"]);
+  });
+
+  test("leave unread what no reading takes, and a line read only in part", () => {
+    const read = new ClassRequirements(
+      [
         { label: "Spells", text: "Ability to cast mage hand and at least one arcane spell of 2nd level or higher." },
         { label: "Race", text: "Any nondragon." },
       ],
@@ -59,7 +86,6 @@ describe("A class's requirements", () => {
     );
     expect(read.all()).toEqual([gte("spellcasting.arcane", 2)]);
     expect(read.unread()).toEqual([
-      "Skills: Knowledge (any two) 7 ranks in each",
       "Spells: Ability to cast mage hand and at least one arcane spell of 2nd level or higher. (read in part)",
       "Race: Any nondragon.",
     ]);

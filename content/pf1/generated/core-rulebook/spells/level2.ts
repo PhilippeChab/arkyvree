@@ -166,23 +166,6 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
-    name: "Bear's Endurance, Mass",
-    description:
-      "The affected creature gains greater vitality and stamina. The spell grants the subject a +4 enhancement bonus to Constitution, which adds the usual benefits to hit points, Fortitude saves, Constitution checks, and so forth. Hit points gained by a temporary increase in Constitution score are not temporary hit points. They go away when the subject's Constitution drops back to normal. They are not lost first as temporary hit points are. Material Component: A few hairs, or a pinch of dung, from a bear.",
-    aptitudes: ["Adept Spells", "Cleric Spells", "Druid Spells", "Ranger Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Touch",
-      [SPELL_TARGET]: "Creature touched",
-      [SPELL_DURATION]: "1 min./level",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "negates (harmless)",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
     name: "Blindness/Deafness",
     description: "You call upon the powers of unlife to render the subject blinded or deafened, as you choose.",
     aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
@@ -235,23 +218,6 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
-    name: "Bull's Strength, Mass",
-    description:
-      "The subject becomes stronger. The spell grants a +4 enhancement bonus to Strength, adding the usual benefits to melee attack rolls, melee damage rolls, and other uses of the Strength modifier. Material Component: A few hairs, or a pinch of dung, from a bull.",
-    aptitudes: ["Adept Spells", "Cleric Spells", "Druid Spells", "Paladin Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Touch",
-      [SPELL_TARGET]: "Creature touched",
-      [SPELL_DURATION]: "1 min./level",
-      [SPELL_RESISTANCE]: "Yes (harmless)",
-      [SPELL_SAVE_EFFECT]: "negates (harmless)",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
     name: "Calm Emotions",
     description:
       "This spell calms agitated creatures. You have no control over the affected creatures, but calm emotions can stop raging creatures from fighting or joyous ones from reveling. Creatures so affected cannot take violent actions (although they can defend themselves) or do anything destructive. Any aggressive action against or damage dealt to a calmed creature immediately breaks the spell on all calmed creatures. This spell automatically suppresses (but does not dispel) any morale bonuses granted by spells such as bless, good hope, and rage, and also negates a bard's ability to inspire courage or a barbarian's rage ability. It also suppresses any fear effects and removes the confused condition from all targets. While the spell lasts, a suppressed spell, condition, or effect has no effect. When the calm emotions spell ends, the original spell or effect takes hold of the creature again, provided that its duration has not expired in the meantime.",
@@ -272,23 +238,6 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
   },
   {
     name: "Cat's Grace",
-    description:
-      "The transmuted creature becomes more graceful, agile, and coordinated. The spell grants a +4 enhancement bonus to Dexterity, adding the usual benefits to AC, Reflex saves, and other uses of the Dexterity modifier. Material Component: Pinch of cat fur.",
-    aptitudes: ["Adept Spells", "Bard Spells", "Druid Spells", "Ranger Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Touch",
-      [SPELL_TARGET]: "Creature touched",
-      [SPELL_DURATION]: "1 min./level",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "negates (harmless)",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
-    name: "Cat's Grace, Mass",
     description:
       "The transmuted creature becomes more graceful, agile, and coordinated. The spell grants a +4 enhancement bonus to Dexterity, adding the usual benefits to AC, Reflex saves, and other uses of the Dexterity modifier. Material Component: Pinch of cat fur.",
     aptitudes: ["Adept Spells", "Bard Spells", "Druid Spells", "Ranger Spells", "Sorcerer Spells", "Wizard Spells"],
@@ -658,23 +607,6 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
-    name: "Fox's Cunning, Mass",
-    description:
-      "The target becomes smarter. The spell grants a +4 enhancement bonus to Intelligence, adding the usual benefits to Intelligence-based skill checks and other uses of the Intelligence modifier. Wizards (and other spellcasters who rely on Intelligence) affected by this spell do not gain any additional bonus spells for the increased Intelligence, but the save DCs for spells they cast while under this spell's effect do increase. This spell doesn't grant extra skill ranks. Material Component: Hairs or dung from a fox.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Touch",
-      [SPELL_TARGET]: "Creature touched",
-      [SPELL_DURATION]: "1 min./level",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "negates (harmless)",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
     name: "Gentle Repose",
     description:
       "You preserve the remains of a dead creature so that they do not decay. Doing so effectively extends the time limit on raising that creature from the dead (see raise dead). Days spent under the influence of this spell don't count against the time limit. Additionally, this spell makes transporting a slain (and thus decaying) comrade less unpleasant. The spell also works on severed body parts and the like. Material Component: Salt and a copper piece for each of the corpse's eyes.",
@@ -785,26 +717,6 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
-    name: "Heroism, Greater",
-    description:
-      "This spell imbues a single creature with great bravery and morale in battle. The target gains a +2 morale bonus on attack rolls, saves, and skill checks.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
-    aptitudeLevels: { "Bard Spells": 2, "Sorcerer Spells": 3, "Wizard Spells": 3 },
-    fields: {
-      [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: ["Compulsion"],
-      [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Touch",
-      [SPELL_TARGET]: "Creature touched",
-      [SPELL_DURATION]: "10 min./level",
-      [SPELL_RESISTANCE]: "Yes (harmless)",
-      [SPELL_SAVE_EFFECT]: "negates (harmless)",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
     name: "Hold Animal",
     description: "This spell functions like hold person, except that it affects an animal instead of a humanoid.",
     aptitudes: ["Druid Spells", "Ranger Spells"],
@@ -824,26 +736,6 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
   },
   {
     name: "Hold Person",
-    description:
-      "The subject becomes paralyzed and freezes in place. It is aware and breathes normally but cannot take any actions, even speech. Each round on its turn, the subject may attempt a new saving throw to end the effect. This is a full-round action that does not provoke attacks of opportunity. A winged creature who is paralyzed cannot flap its wings and falls. A swimmer can't swim and may drown. Focus: A small, straight piece of iron.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
-    aptitudeLevels: { "Bard Spells": 2, "Cleric Spells": 2, "Sorcerer Spells": 3, "Wizard Spells": 3 },
-    fields: {
-      [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: ["Compulsion"],
-      [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Medium",
-      [SPELL_TARGET]: "One humanoid creature",
-      [SPELL_DURATION]: "1 round/level (D); see text",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "negates; see text",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
-    name: "Hold Person, Mass",
     description:
       "The subject becomes paralyzed and freezes in place. It is aware and breathes normally but cannot take any actions, even speech. Each round on its turn, the subject may attempt a new saving throw to end the effect. This is a full-round action that does not provoke attacks of opportunity. A winged creature who is paralyzed cannot flap its wings and falls. A swimmer can't swim and may drown. Focus: A small, straight piece of iron.",
     aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
@@ -899,60 +791,7 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
-    name: "Inflict Moderate Wounds, Mass",
-    description:
-      "This spell functions like inflict light wounds, except that you deal 2d8 points of damage + 1 point per caster level (maximum +10).",
-    aptitudes: ["Cleric Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Necromancy",
-      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Touch",
-      [SPELL_TARGET]: "Creature touched",
-      [SPELL_DURATION]: "Instantaneous",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "half",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
     name: "Invisibility",
-    description:
-      "The creature or object touched becomes invisible. If the recipient is a creature carrying gear, that vanishes, too. If you cast the spell on someone else, neither you nor your allies can see the subject, unless you can normally see invisible things or you employ magic to do so. Items dropped or put down by an invisible creature become visible; items picked up disappear if tucked into the clothing or pouches worn by the creature. Light, however, never becomes invisible, although a source of light can become so (thus, the effect is that of a light with no visible source). Any part of an item that the subject carries but that extends more than 10 feet from it becomes visible. Of course, the subject is not magically silenced, and certain other conditions can render the recipient detectable (such as swimming in water or stepping in a puddle). If a check is required, a stationary invisible creature has a +40 bonus on its Stealth checks. This bonus is reduced to +20 if the creature is moving. The spell ends if the subject attacks any creature. For purposes of this spell, an attack includes any spell targeting a foe or whose area or effect includes a foe. Exactly who is a foe depends on the invisible character's perceptions. Actions directed at unattended objects do not break the spell. Causing harm indirectly is not an attack. Thus, an invisible being can open doors, talk, eat, climb stairs, summon monsters and have them attack, cut the ropes holding a rope bridge while enemies are on the bridge, remotely trigger traps, open a portcullis to release attack dogs, and so forth. If the subject attacks directly, however, it immediately becomes visible along with all its gear. Spells such as bless that specifically affect allies but not foes are not attacks for this purpose, even when they include foes in their area. Invisibility can be made permanent (on objects only) with a permanency spell. Material Component: An eyelash encased in gum arabic.",
-    aptitudes: ["Adept Spells", "Bard Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: ["Glamer"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Personal or touch",
-      [SPELL_TARGET]: "You or a creature or object weighing no more than 100 lbs./level",
-      [SPELL_DURATION]: "1 min./level (D)",
-      [SPELL_RESISTANCE]: "Yes (harmless) or yes (harmless, object)",
-      [SPELL_SAVE_EFFECT]: "negates (harmless) or Will negates (harmless, object)",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
-    name: "Invisibility, Greater",
-    description:
-      "The creature or object touched becomes invisible. If the recipient is a creature carrying gear, that vanishes, too. If you cast the spell on someone else, neither you nor your allies can see the subject, unless you can normally see invisible things or you employ magic to do so. Items dropped or put down by an invisible creature become visible; items picked up disappear if tucked into the clothing or pouches worn by the creature. Light, however, never becomes invisible, although a source of light can become so (thus, the effect is that of a light with no visible source). Any part of an item that the subject carries but that extends more than 10 feet from it becomes visible. Of course, the subject is not magically silenced, and certain other conditions can render the recipient detectable (such as swimming in water or stepping in a puddle). If a check is required, a stationary invisible creature has a +40 bonus on its Stealth checks. This bonus is reduced to +20 if the creature is moving. The spell ends if the subject attacks any creature. For purposes of this spell, an attack includes any spell targeting a foe or whose area or effect includes a foe. Exactly who is a foe depends on the invisible character's perceptions. Actions directed at unattended objects do not break the spell. Causing harm indirectly is not an attack. Thus, an invisible being can open doors, talk, eat, climb stairs, summon monsters and have them attack, cut the ropes holding a rope bridge while enemies are on the bridge, remotely trigger traps, open a portcullis to release attack dogs, and so forth. If the subject attacks directly, however, it immediately becomes visible along with all its gear. Spells such as bless that specifically affect allies but not foes are not attacks for this purpose, even when they include foes in their area. Invisibility can be made permanent (on objects only) with a permanency spell. Material Component: An eyelash encased in gum arabic.",
-    aptitudes: ["Adept Spells", "Bard Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: ["Glamer"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Personal or touch",
-      [SPELL_TARGET]: "You or a creature or object weighing no more than 100 lbs./level",
-      [SPELL_DURATION]: "1 min./level (D)",
-      [SPELL_RESISTANCE]: "Yes (harmless) or yes (harmless, object)",
-      [SPELL_SAVE_EFFECT]: "negates (harmless) or Will negates (harmless, object)",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
-    name: "Invisibility, Mass",
     description:
       "The creature or object touched becomes invisible. If the recipient is a creature carrying gear, that vanishes, too. If you cast the spell on someone else, neither you nor your allies can see the subject, unless you can normally see invisible things or you employ magic to do so. Items dropped or put down by an invisible creature become visible; items picked up disappear if tucked into the clothing or pouches worn by the creature. Light, however, never becomes invisible, although a source of light can become so (thus, the effect is that of a light with no visible source). Any part of an item that the subject carries but that extends more than 10 feet from it becomes visible. Of course, the subject is not magically silenced, and certain other conditions can render the recipient detectable (such as swimming in water or stepping in a puddle). If a check is required, a stationary invisible creature has a +40 bonus on its Stealth checks. This bonus is reduced to +20 if the creature is moving. The spell ends if the subject attacks any creature. For purposes of this spell, an attack includes any spell targeting a foe or whose area or effect includes a foe. Exactly who is a foe depends on the invisible character's perceptions. Actions directed at unattended objects do not break the spell. Causing harm indirectly is not an attack. Thus, an invisible being can open doors, talk, eat, climb stairs, summon monsters and have them attack, cut the ropes holding a rope bridge while enemies are on the bridge, remotely trigger traps, open a portcullis to release attack dogs, and so forth. If the subject attacks directly, however, it immediately becomes visible along with all its gear. Spells such as bless that specifically affect allies but not foes are not attacks for this purpose, even when they include foes in their area. Invisibility can be made permanent (on objects only) with a permanency spell. Material Component: An eyelash encased in gum arabic.",
     aptitudes: ["Adept Spells", "Bard Spells", "Sorcerer Spells", "Wizard Spells"],
@@ -1014,24 +853,6 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
       [SPELL_DURATION]: "1 min./level",
       [SPELL_RESISTANCE]: "No",
     },
-  },
-  {
-    name: "Major Image",
-    description:
-      "This spell functions like silent image, except that minor image includes some minor sounds but not understandable speech. Focus: A bit of fleece.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Illusion",
-      [SPELL_SUBSCHOOL]: ["Figment"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Long",
-      [SPELL_EFFECT]: "Visual figment that cannot extend beyond four 10 ft. cubes + one 10 ft. cube/level (S)",
-      [SPELL_DURATION]: "Concentration + 2 rounds",
-      [SPELL_RESISTANCE]: "No",
-      [SPELL_SAVE_EFFECT]: "disbelief (if interacted with)",
-    },
-    links: { resistedBy: "Will" },
   },
   {
     name: "Make Whole",
@@ -1103,23 +924,6 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
   },
   {
     name: "Owl's Wisdom",
-    description:
-      "The transmuted creature becomes wiser. The spell grants a +4 enhancement bonus to Wisdom, adding the usual benefit to Wisdom-related skills. Clerics, druids, and rangers (and other Wisdom-based spellcasters) who receive owl's wisdom do not gain any additional bonus spells for the increased Wisdom, but the save DCs for their spells increase. Material Component: Feathers or droppings from an owl.",
-    aptitudes: ["Cleric Spells", "Druid Spells", "Paladin Spells", "Ranger Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Touch",
-      [SPELL_TARGET]: "Creature touched",
-      [SPELL_DURATION]: "1 min./level",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "negates (harmless)",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
-    name: "Owl's Wisdom, Mass",
     description:
       "The transmuted creature becomes wiser. The spell grants a +4 enhancement bonus to Wisdom, adding the usual benefit to Wisdom-related skills. Clerics, druids, and rangers (and other Wisdom-based spellcasters) who receive owl's wisdom do not gain any additional bonus spells for the increased Wisdom, but the save DCs for their spells increase. Material Component: Feathers or droppings from an owl.",
     aptitudes: ["Cleric Spells", "Druid Spells", "Paladin Spells", "Ranger Spells", "Sorcerer Spells", "Wizard Spells"],
@@ -1549,24 +1353,36 @@ export const LEVEL_2_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
-    name: "Suggestion, Mass",
+    name: "Summon Monster II",
     description:
-      "You influence the actions of the target creature by suggesting a course of activity (limited to a sentence or two). The suggestion must be worded in such a manner as to make the activity sound reasonable. Asking the creature to do some obviously harmful act automatically negates the effect of the spell. The suggested course of activity can continue for the entire duration. If the suggested activity can be completed in a shorter time, the spell ends when the subject finishes what it was asked to do. You can instead specify conditions that will trigger a special activity during the duration. If the condition is not met before the spell duration expires, the activity is not performed. A very reasonable suggestion causes the save to be made with a penalty (such as –1 or –2). Material Component: A snake's tongue and a honeycomb.",
-    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
-    aptitudeLevels: { "Bard Spells": 2, "Sorcerer Spells": 3, "Wizard Spells": 3 },
+      "This spell functions like summon monster I, except that you can summon one creature from the 2nd-level list or 1d3 creatures of the same kind from the 1st-level list. Focus: A tiny bag and a small candle.",
+    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
     fields: {
-      [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: ["Compulsion"],
-      [SPELL_DESCRIPTOR]: ["Language-Dependent", "Mind-Affecting"],
-      [SPELL_COMPONENT]: ["Verbal", "Material"],
-      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 round",
       [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_TARGET]: "One living creature",
-      [SPELL_DURATION]: "1 hour/level or until completed",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "negates",
+      [SPELL_EFFECT]: "One summoned creature",
+      [SPELL_DURATION]: "1 round/level (D)",
+      [SPELL_RESISTANCE]: "No",
     },
-    links: { resistedBy: "Will" },
+  },
+  {
+    name: "Summon Nature's Ally II",
+    description:
+      "This spell functions as summon nature's ally I, except that you summon one 2nd-level creature or 1d3 1st-level creatures of the same kind.",
+    aptitudes: ["Druid Spells", "Ranger Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_EFFECT]: "One summoned creature",
+      [SPELL_DURATION]: "1 round/level (D)",
+      [SPELL_RESISTANCE]: "No",
+    },
   },
   {
     name: "Summon Swarm",

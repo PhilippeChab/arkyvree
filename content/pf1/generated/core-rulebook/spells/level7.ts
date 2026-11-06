@@ -33,6 +33,21 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
     },
   },
   {
+    name: "Arcane Sight, Greater",
+    description:
+      "This spell functions like arcane sight, except that you automatically know which spells or magical effects are active upon any individual or object you see. Unlike arcane sight, this spell cannot be made permanent with a permanency spell.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Divination",
+      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Personal",
+      [SPELL_TARGET]: "You",
+      [SPELL_DURATION]: "1 min./level (D)",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
     name: "Blasphemy",
     description:
       "Any nonevil creature within the area of a blasphemy spell suffers the following ill effects. HD Effect; Equal to caster level Dazed; Up to caster level -1 Weakened, dazed; Up to caster level -5 Paralyzed, weakened, dazed; Up to caster level -10 Killed, paralyzed, weakened, dazed; The effects are cumulative and concurrent. A successful Will save reduces or eliminates these effects. Creatures affected by multiple effects make only one save and apply the result to all the effects. Dazed: The creature can take no actions for 1 round, though it defends itself normally. Save negates. Weakened: The creature's Strength score decreases by 2d6 points for 2d4 rounds. Save for half. Paralyzed: The creature is paralyzed and helpless for 1d10 minutes. Save reduces the paralyzed effect to 1 round. Killed: Living creatures die. Undead creatures are destroyed. Save negates. If the save is successful, the creature instead takes 3d6 points of damage + 1 point per caster level (maximum +25). Furthermore, if you are on your home plane when you cast this spell, nonevil extraplanar creatures within the area are instantly banished back to their home planes. Creatures so banished cannot return for at least 24 hours. This effect takes place regardless of whether the creatures hear the blasphemy or not. The banishment effect allows a Will save (at a –4 penalty) to negate. Creatures whose Hit Dice exceed your caster level are unaffected by blasphemy.",
@@ -188,6 +203,22 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
     },
   },
   {
+    name: "Elemental Body IV",
+    description:
+      "This spell functions as elemental body III, except that it also allows you to assume the form of a Huge air, earth, fire, or water elemental. The abilities you gain depend upon the type of elemental into which you change. You are also immune to bleed damage, critical hits, and sneak attacks while in elemental form and gain DR 5/—. Air elemental: As elemental body I except that you gain a +4 size bonus to your Strength, +6 size bonus to your Dexterity, and a +4 natural armor bonus. You also gain fly 120 feet (perfect). Earth elemental: As elemental body I except that you gain a +8 size bonus to your Strength, a –2 penalty on your Dexterity, a +4 size bonus to your Constitution, and a +6 natural armor bonus. Fire elemental: As elemental body I except that you gain a +6 size bonus to your Dexterity, a +4 size bonus to your Constitution, and a +4 natural armor bonus. Water elemental: As elemental body I except that you gain a +4 size bonus to your Strength, a –2 penalty on your Dexterity, a +8 size bonus to your Constitution, and a +6 natural armor bonus. You also gain swim 120 feet. Material Component: The element you plan to assume.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Transmutation",
+      [SPELL_SUBSCHOOL]: ["Polymorph"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Personal",
+      [SPELL_TARGET]: "You",
+      [SPELL_DURATION]: "1 min./level",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
     name: "Ethereal Jaunt",
     description:
       "You become ethereal, along with your equipment. For the duration of the spell, you are in the Ethereal Plane, which overlaps the Material Plane. When the spell expires, you return to material existence. An ethereal creature is invisible, insubstantial, and capable of moving in any direction, even up or down, albeit at half normal speed. As an insubstantial creature, you can move through solid objects, including living creatures. An ethereal creature can see and hear on the Material Plane, but everything looks gray and ephemeral. Sight and hearing onto the Material Plane are limited to 60 feet. Force effects and abjurations affect an ethereal creature normally. Their effects extend onto the Ethereal Plane from the Material Plane, but not vice versa. An ethereal creature can't attack material creatures, and spells you cast while ethereal affect only other ethereal things. Certain material creatures or objects have attacks or effects that work on the Ethereal Plane. Treat other ethereal creatures and ethereal objects as if they were material. If you end the spell and become material while inside a material object (such as a solid wall), you are shunted off to the nearest open space and take 1d6 points of damage per 5 feet that you so travel.",
@@ -259,9 +290,9 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Reflex" },
   },
   {
-    name: "Giant Form I",
+    name: "Form of the Dragon II",
     description:
-      "When you cast this spell you can assume the form of any Large humanoid creature of the giant subtype. Once you assume your new form, you gain the following abilities: a +6 size bonus to Strength, a –2 penalty to Dexterity, a +4 size bonus to Constitution, a +4 natural armor bonus, and low-light vision. If the form you assume has any of the following abilities, you gain the listed ability: darkvision 60 feet, rend (2d6 damage), regeneration 5, rock catching, and rock throwing (range 60 feet, 2d6 damage). If the creature has immunity or resistance to any elements, you gain resistance 20 to those elements. If the creature has vulnerability to an element, you gain that vulnerability. Material Component: A piece of the creature whose form you plan to assume.",
+      "This spell functions as form of the dragon I except that it also allows you to assume the form of a Large chromatic or metallic dragon. You gain the following abilities: a +6 size bonus to Strength, a +4 size bonus to Constitution, a +6 natural armor bonus, fly 90 feet (poor), darkvision 60 feet, a breath weapon, DR 5/magic, and resistance to one element. You also gain one bite (2d6), two claws (1d8), two wing attacks (1d6), and one tail slap attack (1d8). You can only use the breath weapon twice per casting of this spell, and you must wait 1d4 rounds between uses. All breath weapons deal 8d8 points of damage and allow a Reflex save for half damage. Line breath weapons increase to 80-foot lines and cones increase to 40-foot cones. Material Component: A scale of the dragon type you plan to assume.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Transmutation",
@@ -272,10 +303,11 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
       [SPELL_TARGET]: "You",
       [SPELL_DURATION]: "1 min./level (D)",
       [SPELL_RESISTANCE]: "No",
+      [SPELL_SAVE_EFFECT]: "see below",
     },
   },
   {
-    name: "Giant Form II",
+    name: "Giant Form I",
     description:
       "When you cast this spell you can assume the form of any Large humanoid creature of the giant subtype. Once you assume your new form, you gain the following abilities: a +6 size bonus to Strength, a –2 penalty to Dexterity, a +4 size bonus to Constitution, a +4 natural armor bonus, and low-light vision. If the form you assume has any of the following abilities, you gain the listed ability: darkvision 60 feet, rend (2d6 damage), regeneration 5, rock catching, and rock throwing (range 60 feet, 2d6 damage). If the creature has immunity or resistance to any elements, you gain resistance 20 to those elements. If the creature has vulnerability to an element, you gain that vulnerability. Material Component: A piece of the creature whose form you plan to assume.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
@@ -307,6 +339,25 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
     },
   },
   {
+    name: "Hold Person, Mass",
+    description:
+      "This spell functions like hold person, except as noted above. Focus: A small, straight piece of iron.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Enchantment",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
+      [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Medium",
+      [SPELL_TARGET]: "One or more humanoid creatures, no two of which can be more than 30 ft. apart",
+      [SPELL_DURATION]: "1 round/level (D); see text",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "negates; see text",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
     name: "Holy Word",
     description:
       "Any nongood creature within the area of a holy word spell suffers the following ill effects. HD Effect; Equal to caster level Deafened; Up to caster level -1 Blinded, deafened; Up to caster level -5 Paralyzed, blinded, deafened; Up to caster level -10 Killed, paralyzed, blinded, deafened; The effects are cumulative and concurrent. A successful Will save reduces or eliminates these effects. Creatures affected by multiple effects make only one save and apply the result to all the effects. Deafened: The creature is deafened for 1d4 rounds. Save negates. Blinded: The creature is blinded for 2d4 rounds. Save reduces the blinded effect to 1d4 rounds. Paralyzed: The creature is paralyzed and helpless for 1d10 minutes. Save reduces the paralyzed effect to 1 round. Killed: Living creatures die. Undead creatures are destroyed. Save negates. If the save is successful, the creature instead takes 3d6 points of damage + 1 point per caster level (maximum +25). Furthermore, if you are on your home plane when you cast this spell, nongood extraplanar creatures within the area are instantly banished back to their home planes. Creatures so banished cannot return for at least 24 hours. This effect takes place regardless of whether the creatures hear the holy word or not. The banishment effect allows a Will save (at a –4 penalty) to negate. Creatures whose HD exceed your caster level are unaffected by holy word.",
@@ -321,6 +372,23 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
       [SPELL_DURATION]: "Instantaneous",
       [SPELL_RESISTANCE]: "Yes",
       [SPELL_SAVE_EFFECT]: "partial",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
+    name: "Inflict Serious Wounds, Mass",
+    description:
+      "This spell functions like mass inflict light wounds, except that it deals 3d8 points of damage + 1 point per caster level (maximum +35).",
+    aptitudes: ["Cleric Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Necromancy",
+      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One creature/level, no two of which can be more than 30 ft. apart",
+      [SPELL_DURATION]: "Instantaneous",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "half",
     },
     links: { resistedBy: "Will" },
   },
@@ -358,6 +426,24 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
       [SPELL_DURATION]: "Permanent until discharged",
       [SPELL_RESISTANCE]: "No",
     },
+  },
+  {
+    name: "Invisibility, Mass",
+    description:
+      "This spell functions like invisibility, except that the effect moves with the group and is broken when anyone in the group attacks. Individuals in the group cannot see each other. The spell is broken for any individual who moves more than 180 feet from the nearest member of the group. If only two individuals are affected, the one moving away from the other one loses its invisibility. If both are moving away from each other, they both become visible when the distance between them exceeds 180 feet. Material Component: An eyelash encased in gum arabic.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Illusion",
+      [SPELL_SUBSCHOOL]: ["Glamer"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Long",
+      [SPELL_TARGET]: "Any number of creatures, no two of which can be more than 180 ft. apart",
+      [SPELL_DURATION]: "1 min./level (D)",
+      [SPELL_RESISTANCE]: "Yes (harmless)",
+      [SPELL_SAVE_EFFECT]: "negates (harmless)",
+    },
+    links: { resistedBy: "Will" },
   },
   {
     name: "Limited Wish",
@@ -420,6 +506,22 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
       [SPELL_RANGE_TYPE]: "Touch",
       [SPELL_EFFECT]: "Ethereal 5-ft.-by-8-ft. opening, 10 ft. deep + 5 ft. deep per three levels",
       [SPELL_DURATION]: "One usage per two levels",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
+    name: "Plant Shape III",
+    description:
+      "This spell functions as plant shape II except that it also allows you to assume the form of a Huge creature of the plant type. If the form you assume has any of the following abilities, you gain the listed ability: DR, regeneration 5, and trample. Huge plant: If the form you take is that of a Huge plant, you gain a +8 size bonus to your Strength, a –2 penalty to your Dexterity, a +4 size bonus to your Constitution, and a +6 natural armor bonus. Material Component: A piece of the creature whose form you plan to assume.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Transmutation",
+      [SPELL_SUBSCHOOL]: ["Polymorph"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Personal",
+      [SPELL_TARGET]: "You",
+      [SPELL_DURATION]: "1 min./level (D)",
       [SPELL_RESISTANCE]: "No",
     },
   },
@@ -511,6 +613,24 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Fortitude" },
   },
   {
+    name: "Restoration, Greater",
+    description:
+      "This spell functions like lesser restoration, except that it dispels all permanent and temporary negative levels afflicting the healed creature. Greater restoration also dispels all magical effects penalizing the creature's abilities, cures all temporary ability damage, and restores all points permanently drained from all ability scores. It also eliminates fatigue and exhaustion, and removes all forms of insanity, confusion, and similar mental effects. Material Component: Diamond dust worth 5,000 gp.",
+    aptitudes: ["Cleric Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Healing"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
+      [SPELL_CASTING_TIME]: "3 rounds",
+      [SPELL_RANGE_TYPE]: "Touch",
+      [SPELL_TARGET]: "Creature touched",
+      [SPELL_DURATION]: "Instantaneous",
+      [SPELL_RESISTANCE]: "Yes (harmless)",
+      [SPELL_SAVE_EFFECT]: "negates (harmless)",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
     name: "Resurrection",
     description:
       "This spell functions like raise dead, except that you are able to restore life and complete strength to any deceased creature. The condition of the remains is not a factor. So long as some small portion of the creature's body still exists, it can be resurrected, but the portion receiving the spell must have been part of the creature's body at the time of death. (The remains of a creature hit by a disintegrate spell count as a small portion of its body.) The creature can have been dead no longer than 10 years per caster level. Upon completion of the spell, the creature is immediately restored to full hit points, vigor, and health, with no loss of prepared spells. The subject of the spell gains one permanent negative level when it is raised, just as if it had been hit by an energy-draining creature. If the subject is 1st level, it takes 2 points of Constitution drain instead (if this would reduce its Con to 0 or less, it can't be resurrected). You can resurrect someone killed by a death effect or someone who has been turned into an undead creature and then destroyed. You cannot resurrect someone who has died of old age. Constructs, elementals, outsiders, and undead creatures can't be resurrected. Material Component: Diamond worth 10,000 gp.",
@@ -561,6 +681,24 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
     },
   },
   {
+    name: "Shadow Conjuration, Greater",
+    description:
+      "This spell functions like shadow conjuration, except that it duplicates any sorcerer or wizard conjuration (summoning) or conjuration (creation) spell of 6th level or lower. The illusory conjurations created deal three-fifths (60%) damage to nonbelievers, and nondamaging effects are 60% likely to work against nonbelievers.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Illusion",
+      [SPELL_SUBSCHOOL]: ["Shadow"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "See text",
+      [SPELL_EFFECT]: "See text",
+      [SPELL_DURATION]: "See text",
+      [SPELL_RESISTANCE]: "Yes; see text",
+      [SPELL_SAVE_EFFECT]: "disbelief (if interacted with); varies; see text",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
     name: "Simulacrum",
     description:
       "Simulacrum creates an illusory duplicate of any creature. The duplicate creature is partially real and formed from ice or snow. It appears to be the same as the original, but it has only half of the real creature's levels or HD (and the appropriate hit points, feats, skill ranks, and special abilities for a creature of that level or HD). You can't create a simulacrum of a creature whose HD or levels exceed twice your caster level. You must make a Disguise check when you cast the spell to determine how good the likeness is. A creature familiar with the original might detect the ruse with a successful Perception check (opposed by the caster's Disguise check) or a DC 20 Sense Motive check. At all times, the simulacrum remains under your absolute command. No special telepathic link exists, so command must be exercised in some other manner. A simulacrum has no ability to become more powerful. It cannot increase its level or abilities. If reduced to 0 hit points or otherwise destroyed, it reverts to snow and melts instantly into nothingness. A complex process requiring at least 24 hours, 100 gp per hit point, and a fully equipped magical laboratory can repair damage to a simulacrum. Material Component: Ice sculpture of the target plus powdered rubies worth 500 gp per HD of the simulacrum.",
@@ -607,6 +745,38 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
       [SPELL_SAVE_EFFECT]: "negates (harmless)",
     },
     links: { resistedBy: "Will" },
+  },
+  {
+    name: "Summon Monster VII",
+    description:
+      "This spell functions like summon monster I, except that you can summon one creature from the 7th-level list, 1d3 creatures of the same kind from the 6th-level list, or 1d4+1 creatures of the same kind from a lower-level list. Focus: A tiny bag and a small candle.",
+    aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_EFFECT]: "One summoned creature",
+      [SPELL_DURATION]: "1 round/level (D)",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
+    name: "Summon Nature's Ally VII",
+    description:
+      "This spell functions like summon nature's ally I, except that you can summon one 7th-level creature, 1d3 6th-level creatures of the same kind, or 1d4+1 lower-level creatures of the same kind.",
+    aptitudes: ["Druid Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_EFFECT]: "One summoned creature",
+      [SPELL_DURATION]: "1 round/level (D)",
+      [SPELL_RESISTANCE]: "No",
+    },
   },
   {
     name: "Sunbeam",
@@ -679,6 +849,23 @@ export const LEVEL_7_SPELLS: SpellSeed[] = [
       [SPELL_SAVE_EFFECT]: "negates (object)",
     },
     links: { resistedBy: "Will" },
+  },
+  {
+    name: "Teleport, Greater",
+    description:
+      "This spell functions like teleport, except that there is no range limit and there is no chance you arrive off target. In addition, you need not have seen the destination, but in that case you must have at least a reliable description of the place to which you are teleporting. If you attempt to teleport with insufficient information (or with misleading information), you disappear and simply reappear in your original location. Interplanar travel is not possible.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Teleportation"],
+      [SPELL_COMPONENT]: ["Verbal"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Personal and touch",
+      [SPELL_TARGET]: "You and touched objects or other touched willing creatures",
+      [SPELL_DURATION]: "Instantaneous",
+      [SPELL_RESISTANCE]: "No and yes (object)",
+      [SPELL_SAVE_EFFECT]: "none and Will negates (object)",
+    },
   },
   {
     name: "Transmute Metal to Wood",

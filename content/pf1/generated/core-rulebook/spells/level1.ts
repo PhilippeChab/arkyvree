@@ -283,25 +283,6 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
-    name: "Command, Greater",
-    description:
-      "You give the subject a single command, which it obeys to the best of its ability at its earliest opportunity. You may select from the following options. Approach: On its turn, the subject moves toward you as quickly and directly as possible for 1 round. The creature may do nothing but move during its turn, and it provokes attacks of opportunity for this movement as normal. Drop: On its turn, the subject drops whatever it is holding. It can't pick up any dropped item until its next turn. Fall: On its turn, the subject falls to the ground and remains prone for 1 round. It may act normally while prone but takes any appropriate penalties. Flee: On its turn, the subject moves away from you as quickly as possible for 1 round. It may do nothing but move during its turn, and it provokes attacks of opportunity for this movement as normal. Halt: The subject stands in place for 1 round. It may not take any actions but is not considered helpless. If the subject can't carry out your command on its next turn, the spell automatically fails.",
-    aptitudes: ["Adept Spells", "Cleric Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Enchantment",
-      [SPELL_SUBSCHOOL]: ["Compulsion"],
-      [SPELL_DESCRIPTOR]: ["Language-Dependent", "Mind-Affecting"],
-      [SPELL_COMPONENT]: ["Verbal"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_TARGET]: "One living creature",
-      [SPELL_DURATION]: "1 round",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "negates",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
     name: "Comprehend Languages",
     description:
       "You can understand the spoken words of creatures or read otherwise incomprehensible written messages. The ability to read does not necessarily impart insight into the material, merely its literal meaning. The spell enables you to understand or read an unknown language, not speak or write it. Written material can be read at the rate of one page (250 words) per minute. Magical writing cannot be read, though the spell reveals that it is magical. This spell can be foiled by certain warding magic (such as the secret page and illusory script spells). It does not decipher codes or reveal messages concealed in otherwise normal text. Comprehend languages can be made permanent with a permanency spell. Material Component: Pinch of soot and salt.",
@@ -315,6 +296,24 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
       [SPELL_DURATION]: "10 min./level",
       [SPELL_RESISTANCE]: "No",
     },
+  },
+  {
+    name: "Confusion, Lesser",
+    description: "This spell causes a single creature to become confused for 1 round.",
+    aptitudes: ["Bard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Enchantment",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
+      [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One living creature",
+      [SPELL_DURATION]: "1 round",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "negates",
+    },
+    links: { resistedBy: "Will" },
   },
   {
     name: "Cure Light Wounds",
@@ -612,23 +611,6 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Fortitude" },
   },
   {
-    name: "Enlarge Person, Mass",
-    description:
-      "This spell causes instant growth of a humanoid creature, doubling its height and multiplying its weight by 8. This increase changes the creature's size category to the next larger one. The target gains a +2 size bonus to Strength, a –2 size penalty to Dexterity (to a minimum of 1), and a –1 penalty on attack rolls and AC due to its increased size. A humanoid creature whose size increases to Large has a space of 10 feet and a natural reach of 10 feet. This spell does not change the target's speed. If insufficient room is available for the desired growth, the creature attains the maximum possible size and may make a Strength check (using its increased Strength) to burst any enclosures in the process. If it fails, it is constrained without harm by the materials enclosing it—the spell cannot be used to crush a creature by increasing its size. All equipment worn or carried by a creature is similarly enlarged by the spell. Melee weapons affected by this spell deal more damage (see Table: Tiny and Large Weapon Damage). Other magical properties are not affected by this spell. Any enlarged item that leaves an enlarged creature's possession (including a projectile or thrown weapon) instantly returns to its normal size. This means that thrown and projectile weapons deal their normal damage. Magical properties of enlarged items are not increased by this spell. Multiple magical effects that increase size do not stack. Enlarge person counters and dispels reduce person. Enlarge person can be made permanent with a permanency spell. Material Component: Powdered iron.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_TARGET]: "One humanoid creature",
-      [SPELL_DURATION]: "1 min./level (D)",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "negates",
-    },
-    links: { resistedBy: "Fortitude" },
-  },
-  {
     name: "Entangle",
     description:
       "This spell causes tall grass, weeds, and other plants to wrap around creatures in the area of effect or those that enter the area. Creatures that fail their save gain the entangled condition. Creatures that make their save can move as normal, but those that remain in the area must save again at the end of your turn. Creatures that move into the area must save immediately. Those that fail must end their movement and gain the entangled condition. Entangled creatures can attempt to break free as a move action, making a Strength or Escape Artist check. The DC for this check is equal to the DC of the spell. The entire area of effect is considered difficult terrain while the effect lasts. If the plants in the area are covered in thorns, those in the area take 1 point of damage each time they fail a save against the entangle or fail a check made to break free. Other effects, depending on the local plants, might be possible at GM discretion.",
@@ -894,23 +876,6 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
-    name: "Inflict Light Wounds, Mass",
-    description:
-      "When laying your hand upon a creature, you channel negative energy that deals 1d8 points of damage + 1 point per caster level (maximum +5). Since undead are powered by negative energy, this spell cures such a creature of a like amount of damage, rather than harming it.",
-    aptitudes: ["Cleric Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Necromancy",
-      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Touch",
-      [SPELL_TARGET]: "Creature touched",
-      [SPELL_DURATION]: "Instantaneous",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "half",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
     name: "Jump",
     description:
       "The subject gets a +10 enhancement bonus on Acrobatics checks made to attempt high jumps or long jumps. The enhancement bonus increases to +20 at caster level 5th, and to +30 (the maximum) at caster level 9th. Material Component: A grasshopper's hind leg.",
@@ -996,23 +961,6 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
-    name: "Magic Fang, Greater",
-    description:
-      "Magic fang gives one natural weapon or unarmed strike of the subject a +1 enhancement bonus on attack and damage rolls. The spell can affect a slam attack, fist, bite, or other natural weapon. The spell does not change an unarmed strike's damage from nonlethal damage to lethal damage. Magic fang can be made permanent with a permanency spell.",
-    aptitudes: ["Druid Spells", "Ranger Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Touch",
-      [SPELL_TARGET]: "Living creature touched",
-      [SPELL_DURATION]: "1 min./level",
-      [SPELL_RESISTANCE]: "Yes (harmless)",
-      [SPELL_SAVE_EFFECT]: "negates (harmless)",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
     name: "Magic Missile",
     description:
       "A missile of magical energy darts forth from your fingertip and strikes its target, dealing 1d4+1 points of force damage. The missile strikes unerringly, even if the target is in melee combat, so long as it has less than total cover or total concealment. Specific parts of a creature can't be singled out. Objects are not damaged by the spell. For every two caster levels beyond 1st, you gain an additional missile—two at 3rd level, three at 5th, four at 7th, and the maximum of five missiles at 9th level or higher. If you shoot multiple missiles, you can have them strike a single creature or several creatures. A single missile can strike only one creature. You must designate targets before you check for spell resistance or roll damage.",
@@ -1066,23 +1014,6 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
   },
   {
     name: "Magic Weapon",
-    description:
-      "Magic weapon gives a weapon a +1 enhancement bonus on attack and damage rolls. An enhancement bonus does not stack with a masterwork weapon's +1 bonus on attack rolls. You can't cast this spell on a natural weapon, such as an unarmed strike (instead, see magic fang). A monk's unarmed strike is considered a weapon, and thus it can be enhanced by this spell.",
-    aptitudes: ["Cleric Spells", "Paladin Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Touch",
-      [SPELL_TARGET]: "Weapon touched",
-      [SPELL_DURATION]: "1 min./level",
-      [SPELL_RESISTANCE]: "Yes (harmless, object)",
-      [SPELL_SAVE_EFFECT]: "negates (harmless, object)",
-    },
-    links: { resistedBy: "Will" },
-  },
-  {
-    name: "Magic Weapon, Greater",
     description:
       "Magic weapon gives a weapon a +1 enhancement bonus on attack and damage rolls. An enhancement bonus does not stack with a masterwork weapon's +1 bonus on attack rolls. You can't cast this spell on a natural weapon, such as an unarmed strike (instead, see magic fang). A monk's unarmed strike is considered a weapon, and thus it can be enhanced by this spell.",
     aptitudes: ["Cleric Spells", "Paladin Spells", "Sorcerer Spells", "Wizard Spells"],
@@ -1184,11 +1115,11 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
   {
     name: "Protection from Chaos",
     description:
-      "This spell wards a creature from attacks by evil creatures, from mental control, and from summoned creatures. It creates a magical barrier around the subject at a distance of 1 foot. The barrier moves with the subject and has three major effects. First, the subject gains a +2 deflection bonus to AC and a +2 resistance bonus on saves. Both these bonuses apply against attacks made or effects created by evil creatures. Second, the subject immediately receives another saving throw (if one was allowed to begin with) against any spells or effects that possess or exercise mental control over the creature (including enchantment [charm] effects and enchantment [compulsion] effects, such as charm person, command, and dominate person). This saving throw is made with a +2 morale bonus, using the same DC as the original effect. If successful, such effects are suppressed for the duration of this spell. The effects resume when the duration of this spell expires. While under the effects of this spell, the target is immune to any new attempts to possess or exercise mental control over the target. This spell does not expel a controlling life force (such as a ghost or spellcaster using magic jar), but it does prevent them from controlling the target. This second effect only functions against spells and effects created by evil creatures or objects, subject to GM discretion. Third, the spell prevents bodily contact by evil summoned creatures. This causes the natural weapon attacks of such creatures to fail and the creatures to recoil if such attacks require touching the warded creature. Summoned creatures that are not evil are immune to this effect. The protection against contact by summoned creatures ends if the warded creature makes an attack against or tries to force the barrier against the blocked creature. Spell resistance can allow a creature to overcome this protection and touch the warded creature.",
+      "This spell functions like protection from evil, except that the deflection and resistance bonuses apply to attacks made by chaotic creatures. The target receives a new saving throw against control by chaotic creatures and chaotic summoned creatures cannot touch the target.",
     aptitudes: ["Adept Spells", "Cleric Spells", "Paladin Spells", "Sorcerer Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Abjuration",
-      [SPELL_DESCRIPTOR]: ["Good"],
+      [SPELL_DESCRIPTOR]: ["Lawful"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Touch",
@@ -1220,11 +1151,11 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
   {
     name: "Protection from Good",
     description:
-      "This spell wards a creature from attacks by evil creatures, from mental control, and from summoned creatures. It creates a magical barrier around the subject at a distance of 1 foot. The barrier moves with the subject and has three major effects. First, the subject gains a +2 deflection bonus to AC and a +2 resistance bonus on saves. Both these bonuses apply against attacks made or effects created by evil creatures. Second, the subject immediately receives another saving throw (if one was allowed to begin with) against any spells or effects that possess or exercise mental control over the creature (including enchantment [charm] effects and enchantment [compulsion] effects, such as charm person, command, and dominate person). This saving throw is made with a +2 morale bonus, using the same DC as the original effect. If successful, such effects are suppressed for the duration of this spell. The effects resume when the duration of this spell expires. While under the effects of this spell, the target is immune to any new attempts to possess or exercise mental control over the target. This spell does not expel a controlling life force (such as a ghost or spellcaster using magic jar), but it does prevent them from controlling the target. This second effect only functions against spells and effects created by evil creatures or objects, subject to GM discretion. Third, the spell prevents bodily contact by evil summoned creatures. This causes the natural weapon attacks of such creatures to fail and the creatures to recoil if such attacks require touching the warded creature. Summoned creatures that are not evil are immune to this effect. The protection against contact by summoned creatures ends if the warded creature makes an attack against or tries to force the barrier against the blocked creature. Spell resistance can allow a creature to overcome this protection and touch the warded creature.",
-    aptitudes: ["Adept Spells", "Cleric Spells", "Paladin Spells", "Sorcerer Spells", "Wizard Spells"],
+      "This spell functions like protection from evil, except that the deflection and resistance bonuses apply to attacks made by good creatures. The target receives a new saving throw against control by good creatures and good summoned creatures cannot touch the target.",
+    aptitudes: ["Adept Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Abjuration",
-      [SPELL_DESCRIPTOR]: ["Good"],
+      [SPELL_DESCRIPTOR]: ["Evil"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Touch",
@@ -1238,11 +1169,11 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
   {
     name: "Protection from Law",
     description:
-      "This spell wards a creature from attacks by evil creatures, from mental control, and from summoned creatures. It creates a magical barrier around the subject at a distance of 1 foot. The barrier moves with the subject and has three major effects. First, the subject gains a +2 deflection bonus to AC and a +2 resistance bonus on saves. Both these bonuses apply against attacks made or effects created by evil creatures. Second, the subject immediately receives another saving throw (if one was allowed to begin with) against any spells or effects that possess or exercise mental control over the creature (including enchantment [charm] effects and enchantment [compulsion] effects, such as charm person, command, and dominate person). This saving throw is made with a +2 morale bonus, using the same DC as the original effect. If successful, such effects are suppressed for the duration of this spell. The effects resume when the duration of this spell expires. While under the effects of this spell, the target is immune to any new attempts to possess or exercise mental control over the target. This spell does not expel a controlling life force (such as a ghost or spellcaster using magic jar), but it does prevent them from controlling the target. This second effect only functions against spells and effects created by evil creatures or objects, subject to GM discretion. Third, the spell prevents bodily contact by evil summoned creatures. This causes the natural weapon attacks of such creatures to fail and the creatures to recoil if such attacks require touching the warded creature. Summoned creatures that are not evil are immune to this effect. The protection against contact by summoned creatures ends if the warded creature makes an attack against or tries to force the barrier against the blocked creature. Spell resistance can allow a creature to overcome this protection and touch the warded creature.",
-    aptitudes: ["Adept Spells", "Cleric Spells", "Paladin Spells", "Sorcerer Spells", "Wizard Spells"],
+      "This spell functions like protection from evil, except that the deflection and resistance bonuses apply to attacks made by lawful creatures. The target receives a new saving throw against control by lawful creatures and lawful summoned creatures cannot touch the target.",
+    aptitudes: ["Adept Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Abjuration",
-      [SPELL_DESCRIPTOR]: ["Good"],
+      [SPELL_DESCRIPTOR]: ["Chaotic"],
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 standard action",
       [SPELL_RANGE_TYPE]: "Touch",
@@ -1272,23 +1203,6 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
   },
   {
     name: "Reduce Person",
-    description:
-      "This spell causes instant diminution of a humanoid creature, halving its height, length, and width and dividing its weight by 8. This decrease changes the creature's size category to the next smaller one. The target gains a +2 size bonus to Dexterity, a –2 size penalty to Strength (to a minimum of 1), and a +1 bonus on attack rolls and AC due to its reduced size. A Small humanoid creature whose size decreases to Tiny has a space of 2-1/2 feet and a natural reach of 0 feet (meaning that it must enter an opponent's square to attack). A Large humanoid creature whose size decreases to Medium has a space of 5 feet and a natural reach of 5 feet. This spell doesn't change the target's speed. All equipment worn or carried by a creature is similarly reduced by the spell. Melee and projectile weapons deal less damage. Other magical properties are not affected by this spell. Any reduced item that leaves the reduced creature's possession (including a projectile or thrown weapon) instantly returns to its normal size. This means that thrown weapons deal their normal damage (projectiles deal damage based on the size of the weapon that fired them). Multiple magical effects that reduce size do not stack. Reduce person counters and dispels enlarge person. Reduce person can be made permanent with a permanency spell. Material Component: A pinch of powdered iron.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_TARGET]: "One humanoid creature",
-      [SPELL_DURATION]: "1 min./level (D)",
-      [SPELL_RESISTANCE]: "Yes",
-      [SPELL_SAVE_EFFECT]: "negates",
-    },
-    links: { resistedBy: "Fortitude" },
-  },
-  {
-    name: "Reduce Person, Mass",
     description:
       "This spell causes instant diminution of a humanoid creature, halving its height, length, and width and dividing its weight by 8. This decrease changes the creature's size category to the next smaller one. The target gains a +2 size bonus to Dexterity, a –2 size penalty to Strength (to a minimum of 1), and a +1 bonus on attack rolls and AC due to its reduced size. A Small humanoid creature whose size decreases to Tiny has a space of 2-1/2 feet and a natural reach of 0 feet (meaning that it must enter an opponent's square to attack). A Large humanoid creature whose size decreases to Medium has a space of 5 feet and a natural reach of 5 feet. This spell doesn't change the target's speed. All equipment worn or carried by a creature is similarly reduced by the spell. Melee and projectile weapons deal less damage. Other magical properties are not affected by this spell. Any reduced item that leaves the reduced creature's possession (including a projectile or thrown weapon) instantly returns to its normal size. This means that thrown weapons deal their normal damage (projectiles deal damage based on the size of the weapon that fired them). Multiple magical effects that reduce size do not stack. Reduce person counters and dispels enlarge person. Reduce person can be made permanent with a permanency spell. Material Component: A pinch of powdered iron.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
@@ -1355,6 +1269,25 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
       [SPELL_SAVE_EFFECT]: "negates (harmless)",
     },
     links: { resistedBy: "Fortitude" },
+  },
+  {
+    name: "Restoration, Lesser",
+    description:
+      "Lesser restoration dispels any magical effects reducing one of the subject's ability scores or cures 1d4 points of temporary ability damage to one of the subject's ability scores. It also eliminates any fatigue suffered by the character, and improves an exhausted condition to fatigued. It does not restore permanent ability drain.",
+    aptitudes: ["Cleric Spells", "Druid Spells", "Paladin Spells"],
+    aptitudeLevels: { "Cleric Spells": 2, "Druid Spells": 2, "Paladin Spells": 1 },
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Healing"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
+      [SPELL_CASTING_TIME]: "3 rounds",
+      [SPELL_RANGE_TYPE]: "Touch",
+      [SPELL_TARGET]: "Creature touched",
+      [SPELL_DURATION]: "Instantaneous",
+      [SPELL_RESISTANCE]: "Yes (harmless)",
+      [SPELL_SAVE_EFFECT]: "negates (harmless)",
+    },
+    links: { resistedBy: "Will" },
   },
   {
     name: "Sanctuary",
@@ -1509,263 +1442,7 @@ export const LEVEL_1_SPELLS: SpellSeed[] = [
     },
   },
   {
-    name: "Summon Monster II",
-    description:
-      "This spell summons an extraplanar creature (typically an outsider, elemental, or magical beast native to another plane). It appears where you designate and acts immediately, on your turn. It attacks your opponents to the best of its ability. If you can communicate with the creature, you can direct it not to attack, to attack particular enemies, or to perform other actions. The spell conjures one of the creatures from the 1st Level list on Table 10–1. You choose which kind of creature to summon, and you can choose a different one each time you cast the spell. A summoned monster cannot summon or otherwise conjure another creature, nor can it use any teleportation or planar travel abilities. Creatures cannot be summoned into an environment that cannot support them. Creatures summoned using this spell cannot use spells or spell-like abilities that duplicate spells with expensive material components (such as wish). When you use a summoning spell to summon a creature with an alignment or elemental subtype, it is a spell of that type. Creatures on Table 10–1 marked with an “*” are summoned with the celestial template, if you are good, and the fiendish template, if you are evil. If you are neutral, you may choose which template to apply to the creature. Creatures marked with an “*” always have an alignment that matches yours, regardless of their usual alignment. Summoning these creatures makes the summoning spell's type match your alignment. 1st Level Subtype; Dire rat* —; Dolphin* —; Dog* —; Eagle* —; Fire beetle* —; Poisonous frog* —; Pony (horse)* —; Viper (snake)* —; 2nd Level Subtype; Ant, giant (worker)* —; Elemental (Small) Elemental; Giant centipede* —; Giant frog* —; Giant spider* —; Goblin dog* —; Horse* —; Hyena* —; Lemure (devil) Evil, Lawful; Octopus* —; Squid* —; Wolf* —; 3rd Level Subtype; Ant, giant (soldier)* —; Ape* —; Aurochs (herd animal)* —; Boar* —; Cheetah* —; Constrictor snake* —; Crocodile* —; Dire bat* —; Dretch (demon) Chaotic, Evil; Electric eel* —; Lantern archon Good, Lawful; Leopard (cat)* —; Monitor lizard* —; Shark* —; Wolverine* —; 4th Level Subtype; Ant, giant (drone)* —; Bison (herd animal)* —; Deinonychus (dinosaur)* —; Dire ape* —; Dire boar* —; Dire wolf* —; Elemental (Medium) Elemental; Giant scorpion* —; Giant wasp* —; Grizzly bear* —; Hell hound Evil, Lawful; Hound archon Good, Lawful; Lion* —; Mephit (any) Elemental; Pteranodon (dinosaur)* —; Rhinoceros* —; 5th Level Subtype; Ankylosaurus (dinosaur)* —; Babau (demon) Chaotic, Evil; Bearded devil Evil, Lawful; Bralani azata Chaotic, Good; Dire lion* —; Elemental (Large) Elemental; Giant moray eel* —; Kyton Evil, Lawful; Orca (dolphin)* —; Salamander Evil; Wooly rhinoceros* —; Xill Evil, Lawful; 6th Level Subtype; Dire bear* —; Dire tiger* —; Elasmosaurus (dinosaur)* —; Elemental (Huge) Elemental; Elephant* —; Erinyes (devil) Evil, Lawful; Giant octopus* —; Invisible stalker Air; Lillend azata Chaotic, Good; Shadow demon Chaotic, Evil; Succubus (demon) Chaotic, Evil; Triceratops (dinosaur)* —; 7th Level Subtype; Bebelith Chaotic, Evil; Bone devil Evil, Lawful; Brachiosaurus (dinosaur)* —; Dire crocodile* —; Dire shark* —; Elemental (greater) Elemental; Giant squid* —; Mastadon (elephant)* —; Roc* —; Tyrannosaurus (dinosaur)* —; Vrock (demon) Chaotic, Evil; 8th Level Subtype; Barbed devil Evil, Lawful; Elemental (elder) Elemental; Hezrou (demon) Chaotic, Evil; 9th Level Subtype; Astral Deva (angel) Good; Ghaele azata Chaotic, Good; Glabrezu (demon) Chaotic, Evil; Ice devil Evil, Lawful; Nalfeshnee (demon) Chaotic, Evil; Trumpet archon Good, Lawful; * This creature is summoned with the celestial template if you are good, or the fiendish template if you are evil; you may choose either if you are neutral.; Focus: A tiny bag and a small candle.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Summoning"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_EFFECT]: "One summoned creature",
-      [SPELL_DURATION]: "1 round/level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Summon Monster III",
-    description:
-      "This spell summons an extraplanar creature (typically an outsider, elemental, or magical beast native to another plane). It appears where you designate and acts immediately, on your turn. It attacks your opponents to the best of its ability. If you can communicate with the creature, you can direct it not to attack, to attack particular enemies, or to perform other actions. The spell conjures one of the creatures from the 1st Level list on Table 10–1. You choose which kind of creature to summon, and you can choose a different one each time you cast the spell. A summoned monster cannot summon or otherwise conjure another creature, nor can it use any teleportation or planar travel abilities. Creatures cannot be summoned into an environment that cannot support them. Creatures summoned using this spell cannot use spells or spell-like abilities that duplicate spells with expensive material components (such as wish). When you use a summoning spell to summon a creature with an alignment or elemental subtype, it is a spell of that type. Creatures on Table 10–1 marked with an “*” are summoned with the celestial template, if you are good, and the fiendish template, if you are evil. If you are neutral, you may choose which template to apply to the creature. Creatures marked with an “*” always have an alignment that matches yours, regardless of their usual alignment. Summoning these creatures makes the summoning spell's type match your alignment. 1st Level Subtype; Dire rat* —; Dolphin* —; Dog* —; Eagle* —; Fire beetle* —; Poisonous frog* —; Pony (horse)* —; Viper (snake)* —; 2nd Level Subtype; Ant, giant (worker)* —; Elemental (Small) Elemental; Giant centipede* —; Giant frog* —; Giant spider* —; Goblin dog* —; Horse* —; Hyena* —; Lemure (devil) Evil, Lawful; Octopus* —; Squid* —; Wolf* —; 3rd Level Subtype; Ant, giant (soldier)* —; Ape* —; Aurochs (herd animal)* —; Boar* —; Cheetah* —; Constrictor snake* —; Crocodile* —; Dire bat* —; Dretch (demon) Chaotic, Evil; Electric eel* —; Lantern archon Good, Lawful; Leopard (cat)* —; Monitor lizard* —; Shark* —; Wolverine* —; 4th Level Subtype; Ant, giant (drone)* —; Bison (herd animal)* —; Deinonychus (dinosaur)* —; Dire ape* —; Dire boar* —; Dire wolf* —; Elemental (Medium) Elemental; Giant scorpion* —; Giant wasp* —; Grizzly bear* —; Hell hound Evil, Lawful; Hound archon Good, Lawful; Lion* —; Mephit (any) Elemental; Pteranodon (dinosaur)* —; Rhinoceros* —; 5th Level Subtype; Ankylosaurus (dinosaur)* —; Babau (demon) Chaotic, Evil; Bearded devil Evil, Lawful; Bralani azata Chaotic, Good; Dire lion* —; Elemental (Large) Elemental; Giant moray eel* —; Kyton Evil, Lawful; Orca (dolphin)* —; Salamander Evil; Wooly rhinoceros* —; Xill Evil, Lawful; 6th Level Subtype; Dire bear* —; Dire tiger* —; Elasmosaurus (dinosaur)* —; Elemental (Huge) Elemental; Elephant* —; Erinyes (devil) Evil, Lawful; Giant octopus* —; Invisible stalker Air; Lillend azata Chaotic, Good; Shadow demon Chaotic, Evil; Succubus (demon) Chaotic, Evil; Triceratops (dinosaur)* —; 7th Level Subtype; Bebelith Chaotic, Evil; Bone devil Evil, Lawful; Brachiosaurus (dinosaur)* —; Dire crocodile* —; Dire shark* —; Elemental (greater) Elemental; Giant squid* —; Mastadon (elephant)* —; Roc* —; Tyrannosaurus (dinosaur)* —; Vrock (demon) Chaotic, Evil; 8th Level Subtype; Barbed devil Evil, Lawful; Elemental (elder) Elemental; Hezrou (demon) Chaotic, Evil; 9th Level Subtype; Astral Deva (angel) Good; Ghaele azata Chaotic, Good; Glabrezu (demon) Chaotic, Evil; Ice devil Evil, Lawful; Nalfeshnee (demon) Chaotic, Evil; Trumpet archon Good, Lawful; * This creature is summoned with the celestial template if you are good, or the fiendish template if you are evil; you may choose either if you are neutral.; Focus: A tiny bag and a small candle.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Summoning"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_EFFECT]: "One summoned creature",
-      [SPELL_DURATION]: "1 round/level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Summon Monster IV",
-    description:
-      "This spell summons an extraplanar creature (typically an outsider, elemental, or magical beast native to another plane). It appears where you designate and acts immediately, on your turn. It attacks your opponents to the best of its ability. If you can communicate with the creature, you can direct it not to attack, to attack particular enemies, or to perform other actions. The spell conjures one of the creatures from the 1st Level list on Table 10–1. You choose which kind of creature to summon, and you can choose a different one each time you cast the spell. A summoned monster cannot summon or otherwise conjure another creature, nor can it use any teleportation or planar travel abilities. Creatures cannot be summoned into an environment that cannot support them. Creatures summoned using this spell cannot use spells or spell-like abilities that duplicate spells with expensive material components (such as wish). When you use a summoning spell to summon a creature with an alignment or elemental subtype, it is a spell of that type. Creatures on Table 10–1 marked with an “*” are summoned with the celestial template, if you are good, and the fiendish template, if you are evil. If you are neutral, you may choose which template to apply to the creature. Creatures marked with an “*” always have an alignment that matches yours, regardless of their usual alignment. Summoning these creatures makes the summoning spell's type match your alignment. 1st Level Subtype; Dire rat* —; Dolphin* —; Dog* —; Eagle* —; Fire beetle* —; Poisonous frog* —; Pony (horse)* —; Viper (snake)* —; 2nd Level Subtype; Ant, giant (worker)* —; Elemental (Small) Elemental; Giant centipede* —; Giant frog* —; Giant spider* —; Goblin dog* —; Horse* —; Hyena* —; Lemure (devil) Evil, Lawful; Octopus* —; Squid* —; Wolf* —; 3rd Level Subtype; Ant, giant (soldier)* —; Ape* —; Aurochs (herd animal)* —; Boar* —; Cheetah* —; Constrictor snake* —; Crocodile* —; Dire bat* —; Dretch (demon) Chaotic, Evil; Electric eel* —; Lantern archon Good, Lawful; Leopard (cat)* —; Monitor lizard* —; Shark* —; Wolverine* —; 4th Level Subtype; Ant, giant (drone)* —; Bison (herd animal)* —; Deinonychus (dinosaur)* —; Dire ape* —; Dire boar* —; Dire wolf* —; Elemental (Medium) Elemental; Giant scorpion* —; Giant wasp* —; Grizzly bear* —; Hell hound Evil, Lawful; Hound archon Good, Lawful; Lion* —; Mephit (any) Elemental; Pteranodon (dinosaur)* —; Rhinoceros* —; 5th Level Subtype; Ankylosaurus (dinosaur)* —; Babau (demon) Chaotic, Evil; Bearded devil Evil, Lawful; Bralani azata Chaotic, Good; Dire lion* —; Elemental (Large) Elemental; Giant moray eel* —; Kyton Evil, Lawful; Orca (dolphin)* —; Salamander Evil; Wooly rhinoceros* —; Xill Evil, Lawful; 6th Level Subtype; Dire bear* —; Dire tiger* —; Elasmosaurus (dinosaur)* —; Elemental (Huge) Elemental; Elephant* —; Erinyes (devil) Evil, Lawful; Giant octopus* —; Invisible stalker Air; Lillend azata Chaotic, Good; Shadow demon Chaotic, Evil; Succubus (demon) Chaotic, Evil; Triceratops (dinosaur)* —; 7th Level Subtype; Bebelith Chaotic, Evil; Bone devil Evil, Lawful; Brachiosaurus (dinosaur)* —; Dire crocodile* —; Dire shark* —; Elemental (greater) Elemental; Giant squid* —; Mastadon (elephant)* —; Roc* —; Tyrannosaurus (dinosaur)* —; Vrock (demon) Chaotic, Evil; 8th Level Subtype; Barbed devil Evil, Lawful; Elemental (elder) Elemental; Hezrou (demon) Chaotic, Evil; 9th Level Subtype; Astral Deva (angel) Good; Ghaele azata Chaotic, Good; Glabrezu (demon) Chaotic, Evil; Ice devil Evil, Lawful; Nalfeshnee (demon) Chaotic, Evil; Trumpet archon Good, Lawful; * This creature is summoned with the celestial template if you are good, or the fiendish template if you are evil; you may choose either if you are neutral.; Focus: A tiny bag and a small candle.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Summoning"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_EFFECT]: "One summoned creature",
-      [SPELL_DURATION]: "1 round/level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Summon Monster IX",
-    description:
-      "This spell summons an extraplanar creature (typically an outsider, elemental, or magical beast native to another plane). It appears where you designate and acts immediately, on your turn. It attacks your opponents to the best of its ability. If you can communicate with the creature, you can direct it not to attack, to attack particular enemies, or to perform other actions. The spell conjures one of the creatures from the 1st Level list on Table 10–1. You choose which kind of creature to summon, and you can choose a different one each time you cast the spell. A summoned monster cannot summon or otherwise conjure another creature, nor can it use any teleportation or planar travel abilities. Creatures cannot be summoned into an environment that cannot support them. Creatures summoned using this spell cannot use spells or spell-like abilities that duplicate spells with expensive material components (such as wish). When you use a summoning spell to summon a creature with an alignment or elemental subtype, it is a spell of that type. Creatures on Table 10–1 marked with an “*” are summoned with the celestial template, if you are good, and the fiendish template, if you are evil. If you are neutral, you may choose which template to apply to the creature. Creatures marked with an “*” always have an alignment that matches yours, regardless of their usual alignment. Summoning these creatures makes the summoning spell's type match your alignment. 1st Level Subtype; Dire rat* —; Dolphin* —; Dog* —; Eagle* —; Fire beetle* —; Poisonous frog* —; Pony (horse)* —; Viper (snake)* —; 2nd Level Subtype; Ant, giant (worker)* —; Elemental (Small) Elemental; Giant centipede* —; Giant frog* —; Giant spider* —; Goblin dog* —; Horse* —; Hyena* —; Lemure (devil) Evil, Lawful; Octopus* —; Squid* —; Wolf* —; 3rd Level Subtype; Ant, giant (soldier)* —; Ape* —; Aurochs (herd animal)* —; Boar* —; Cheetah* —; Constrictor snake* —; Crocodile* —; Dire bat* —; Dretch (demon) Chaotic, Evil; Electric eel* —; Lantern archon Good, Lawful; Leopard (cat)* —; Monitor lizard* —; Shark* —; Wolverine* —; 4th Level Subtype; Ant, giant (drone)* —; Bison (herd animal)* —; Deinonychus (dinosaur)* —; Dire ape* —; Dire boar* —; Dire wolf* —; Elemental (Medium) Elemental; Giant scorpion* —; Giant wasp* —; Grizzly bear* —; Hell hound Evil, Lawful; Hound archon Good, Lawful; Lion* —; Mephit (any) Elemental; Pteranodon (dinosaur)* —; Rhinoceros* —; 5th Level Subtype; Ankylosaurus (dinosaur)* —; Babau (demon) Chaotic, Evil; Bearded devil Evil, Lawful; Bralani azata Chaotic, Good; Dire lion* —; Elemental (Large) Elemental; Giant moray eel* —; Kyton Evil, Lawful; Orca (dolphin)* —; Salamander Evil; Wooly rhinoceros* —; Xill Evil, Lawful; 6th Level Subtype; Dire bear* —; Dire tiger* —; Elasmosaurus (dinosaur)* —; Elemental (Huge) Elemental; Elephant* —; Erinyes (devil) Evil, Lawful; Giant octopus* —; Invisible stalker Air; Lillend azata Chaotic, Good; Shadow demon Chaotic, Evil; Succubus (demon) Chaotic, Evil; Triceratops (dinosaur)* —; 7th Level Subtype; Bebelith Chaotic, Evil; Bone devil Evil, Lawful; Brachiosaurus (dinosaur)* —; Dire crocodile* —; Dire shark* —; Elemental (greater) Elemental; Giant squid* —; Mastadon (elephant)* —; Roc* —; Tyrannosaurus (dinosaur)* —; Vrock (demon) Chaotic, Evil; 8th Level Subtype; Barbed devil Evil, Lawful; Elemental (elder) Elemental; Hezrou (demon) Chaotic, Evil; 9th Level Subtype; Astral Deva (angel) Good; Ghaele azata Chaotic, Good; Glabrezu (demon) Chaotic, Evil; Ice devil Evil, Lawful; Nalfeshnee (demon) Chaotic, Evil; Trumpet archon Good, Lawful; * This creature is summoned with the celestial template if you are good, or the fiendish template if you are evil; you may choose either if you are neutral.; Focus: A tiny bag and a small candle.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Summoning"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_EFFECT]: "One summoned creature",
-      [SPELL_DURATION]: "1 round/level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Summon Monster V",
-    description:
-      "This spell summons an extraplanar creature (typically an outsider, elemental, or magical beast native to another plane). It appears where you designate and acts immediately, on your turn. It attacks your opponents to the best of its ability. If you can communicate with the creature, you can direct it not to attack, to attack particular enemies, or to perform other actions. The spell conjures one of the creatures from the 1st Level list on Table 10–1. You choose which kind of creature to summon, and you can choose a different one each time you cast the spell. A summoned monster cannot summon or otherwise conjure another creature, nor can it use any teleportation or planar travel abilities. Creatures cannot be summoned into an environment that cannot support them. Creatures summoned using this spell cannot use spells or spell-like abilities that duplicate spells with expensive material components (such as wish). When you use a summoning spell to summon a creature with an alignment or elemental subtype, it is a spell of that type. Creatures on Table 10–1 marked with an “*” are summoned with the celestial template, if you are good, and the fiendish template, if you are evil. If you are neutral, you may choose which template to apply to the creature. Creatures marked with an “*” always have an alignment that matches yours, regardless of their usual alignment. Summoning these creatures makes the summoning spell's type match your alignment. 1st Level Subtype; Dire rat* —; Dolphin* —; Dog* —; Eagle* —; Fire beetle* —; Poisonous frog* —; Pony (horse)* —; Viper (snake)* —; 2nd Level Subtype; Ant, giant (worker)* —; Elemental (Small) Elemental; Giant centipede* —; Giant frog* —; Giant spider* —; Goblin dog* —; Horse* —; Hyena* —; Lemure (devil) Evil, Lawful; Octopus* —; Squid* —; Wolf* —; 3rd Level Subtype; Ant, giant (soldier)* —; Ape* —; Aurochs (herd animal)* —; Boar* —; Cheetah* —; Constrictor snake* —; Crocodile* —; Dire bat* —; Dretch (demon) Chaotic, Evil; Electric eel* —; Lantern archon Good, Lawful; Leopard (cat)* —; Monitor lizard* —; Shark* —; Wolverine* —; 4th Level Subtype; Ant, giant (drone)* —; Bison (herd animal)* —; Deinonychus (dinosaur)* —; Dire ape* —; Dire boar* —; Dire wolf* —; Elemental (Medium) Elemental; Giant scorpion* —; Giant wasp* —; Grizzly bear* —; Hell hound Evil, Lawful; Hound archon Good, Lawful; Lion* —; Mephit (any) Elemental; Pteranodon (dinosaur)* —; Rhinoceros* —; 5th Level Subtype; Ankylosaurus (dinosaur)* —; Babau (demon) Chaotic, Evil; Bearded devil Evil, Lawful; Bralani azata Chaotic, Good; Dire lion* —; Elemental (Large) Elemental; Giant moray eel* —; Kyton Evil, Lawful; Orca (dolphin)* —; Salamander Evil; Wooly rhinoceros* —; Xill Evil, Lawful; 6th Level Subtype; Dire bear* —; Dire tiger* —; Elasmosaurus (dinosaur)* —; Elemental (Huge) Elemental; Elephant* —; Erinyes (devil) Evil, Lawful; Giant octopus* —; Invisible stalker Air; Lillend azata Chaotic, Good; Shadow demon Chaotic, Evil; Succubus (demon) Chaotic, Evil; Triceratops (dinosaur)* —; 7th Level Subtype; Bebelith Chaotic, Evil; Bone devil Evil, Lawful; Brachiosaurus (dinosaur)* —; Dire crocodile* —; Dire shark* —; Elemental (greater) Elemental; Giant squid* —; Mastadon (elephant)* —; Roc* —; Tyrannosaurus (dinosaur)* —; Vrock (demon) Chaotic, Evil; 8th Level Subtype; Barbed devil Evil, Lawful; Elemental (elder) Elemental; Hezrou (demon) Chaotic, Evil; 9th Level Subtype; Astral Deva (angel) Good; Ghaele azata Chaotic, Good; Glabrezu (demon) Chaotic, Evil; Ice devil Evil, Lawful; Nalfeshnee (demon) Chaotic, Evil; Trumpet archon Good, Lawful; * This creature is summoned with the celestial template if you are good, or the fiendish template if you are evil; you may choose either if you are neutral.; Focus: A tiny bag and a small candle.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Summoning"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_EFFECT]: "One summoned creature",
-      [SPELL_DURATION]: "1 round/level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Summon Monster VI",
-    description:
-      "This spell summons an extraplanar creature (typically an outsider, elemental, or magical beast native to another plane). It appears where you designate and acts immediately, on your turn. It attacks your opponents to the best of its ability. If you can communicate with the creature, you can direct it not to attack, to attack particular enemies, or to perform other actions. The spell conjures one of the creatures from the 1st Level list on Table 10–1. You choose which kind of creature to summon, and you can choose a different one each time you cast the spell. A summoned monster cannot summon or otherwise conjure another creature, nor can it use any teleportation or planar travel abilities. Creatures cannot be summoned into an environment that cannot support them. Creatures summoned using this spell cannot use spells or spell-like abilities that duplicate spells with expensive material components (such as wish). When you use a summoning spell to summon a creature with an alignment or elemental subtype, it is a spell of that type. Creatures on Table 10–1 marked with an “*” are summoned with the celestial template, if you are good, and the fiendish template, if you are evil. If you are neutral, you may choose which template to apply to the creature. Creatures marked with an “*” always have an alignment that matches yours, regardless of their usual alignment. Summoning these creatures makes the summoning spell's type match your alignment. 1st Level Subtype; Dire rat* —; Dolphin* —; Dog* —; Eagle* —; Fire beetle* —; Poisonous frog* —; Pony (horse)* —; Viper (snake)* —; 2nd Level Subtype; Ant, giant (worker)* —; Elemental (Small) Elemental; Giant centipede* —; Giant frog* —; Giant spider* —; Goblin dog* —; Horse* —; Hyena* —; Lemure (devil) Evil, Lawful; Octopus* —; Squid* —; Wolf* —; 3rd Level Subtype; Ant, giant (soldier)* —; Ape* —; Aurochs (herd animal)* —; Boar* —; Cheetah* —; Constrictor snake* —; Crocodile* —; Dire bat* —; Dretch (demon) Chaotic, Evil; Electric eel* —; Lantern archon Good, Lawful; Leopard (cat)* —; Monitor lizard* —; Shark* —; Wolverine* —; 4th Level Subtype; Ant, giant (drone)* —; Bison (herd animal)* —; Deinonychus (dinosaur)* —; Dire ape* —; Dire boar* —; Dire wolf* —; Elemental (Medium) Elemental; Giant scorpion* —; Giant wasp* —; Grizzly bear* —; Hell hound Evil, Lawful; Hound archon Good, Lawful; Lion* —; Mephit (any) Elemental; Pteranodon (dinosaur)* —; Rhinoceros* —; 5th Level Subtype; Ankylosaurus (dinosaur)* —; Babau (demon) Chaotic, Evil; Bearded devil Evil, Lawful; Bralani azata Chaotic, Good; Dire lion* —; Elemental (Large) Elemental; Giant moray eel* —; Kyton Evil, Lawful; Orca (dolphin)* —; Salamander Evil; Wooly rhinoceros* —; Xill Evil, Lawful; 6th Level Subtype; Dire bear* —; Dire tiger* —; Elasmosaurus (dinosaur)* —; Elemental (Huge) Elemental; Elephant* —; Erinyes (devil) Evil, Lawful; Giant octopus* —; Invisible stalker Air; Lillend azata Chaotic, Good; Shadow demon Chaotic, Evil; Succubus (demon) Chaotic, Evil; Triceratops (dinosaur)* —; 7th Level Subtype; Bebelith Chaotic, Evil; Bone devil Evil, Lawful; Brachiosaurus (dinosaur)* —; Dire crocodile* —; Dire shark* —; Elemental (greater) Elemental; Giant squid* —; Mastadon (elephant)* —; Roc* —; Tyrannosaurus (dinosaur)* —; Vrock (demon) Chaotic, Evil; 8th Level Subtype; Barbed devil Evil, Lawful; Elemental (elder) Elemental; Hezrou (demon) Chaotic, Evil; 9th Level Subtype; Astral Deva (angel) Good; Ghaele azata Chaotic, Good; Glabrezu (demon) Chaotic, Evil; Ice devil Evil, Lawful; Nalfeshnee (demon) Chaotic, Evil; Trumpet archon Good, Lawful; * This creature is summoned with the celestial template if you are good, or the fiendish template if you are evil; you may choose either if you are neutral.; Focus: A tiny bag and a small candle.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Summoning"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_EFFECT]: "One summoned creature",
-      [SPELL_DURATION]: "1 round/level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Summon Monster VII",
-    description:
-      "This spell summons an extraplanar creature (typically an outsider, elemental, or magical beast native to another plane). It appears where you designate and acts immediately, on your turn. It attacks your opponents to the best of its ability. If you can communicate with the creature, you can direct it not to attack, to attack particular enemies, or to perform other actions. The spell conjures one of the creatures from the 1st Level list on Table 10–1. You choose which kind of creature to summon, and you can choose a different one each time you cast the spell. A summoned monster cannot summon or otherwise conjure another creature, nor can it use any teleportation or planar travel abilities. Creatures cannot be summoned into an environment that cannot support them. Creatures summoned using this spell cannot use spells or spell-like abilities that duplicate spells with expensive material components (such as wish). When you use a summoning spell to summon a creature with an alignment or elemental subtype, it is a spell of that type. Creatures on Table 10–1 marked with an “*” are summoned with the celestial template, if you are good, and the fiendish template, if you are evil. If you are neutral, you may choose which template to apply to the creature. Creatures marked with an “*” always have an alignment that matches yours, regardless of their usual alignment. Summoning these creatures makes the summoning spell's type match your alignment. 1st Level Subtype; Dire rat* —; Dolphin* —; Dog* —; Eagle* —; Fire beetle* —; Poisonous frog* —; Pony (horse)* —; Viper (snake)* —; 2nd Level Subtype; Ant, giant (worker)* —; Elemental (Small) Elemental; Giant centipede* —; Giant frog* —; Giant spider* —; Goblin dog* —; Horse* —; Hyena* —; Lemure (devil) Evil, Lawful; Octopus* —; Squid* —; Wolf* —; 3rd Level Subtype; Ant, giant (soldier)* —; Ape* —; Aurochs (herd animal)* —; Boar* —; Cheetah* —; Constrictor snake* —; Crocodile* —; Dire bat* —; Dretch (demon) Chaotic, Evil; Electric eel* —; Lantern archon Good, Lawful; Leopard (cat)* —; Monitor lizard* —; Shark* —; Wolverine* —; 4th Level Subtype; Ant, giant (drone)* —; Bison (herd animal)* —; Deinonychus (dinosaur)* —; Dire ape* —; Dire boar* —; Dire wolf* —; Elemental (Medium) Elemental; Giant scorpion* —; Giant wasp* —; Grizzly bear* —; Hell hound Evil, Lawful; Hound archon Good, Lawful; Lion* —; Mephit (any) Elemental; Pteranodon (dinosaur)* —; Rhinoceros* —; 5th Level Subtype; Ankylosaurus (dinosaur)* —; Babau (demon) Chaotic, Evil; Bearded devil Evil, Lawful; Bralani azata Chaotic, Good; Dire lion* —; Elemental (Large) Elemental; Giant moray eel* —; Kyton Evil, Lawful; Orca (dolphin)* —; Salamander Evil; Wooly rhinoceros* —; Xill Evil, Lawful; 6th Level Subtype; Dire bear* —; Dire tiger* —; Elasmosaurus (dinosaur)* —; Elemental (Huge) Elemental; Elephant* —; Erinyes (devil) Evil, Lawful; Giant octopus* —; Invisible stalker Air; Lillend azata Chaotic, Good; Shadow demon Chaotic, Evil; Succubus (demon) Chaotic, Evil; Triceratops (dinosaur)* —; 7th Level Subtype; Bebelith Chaotic, Evil; Bone devil Evil, Lawful; Brachiosaurus (dinosaur)* —; Dire crocodile* —; Dire shark* —; Elemental (greater) Elemental; Giant squid* —; Mastadon (elephant)* —; Roc* —; Tyrannosaurus (dinosaur)* —; Vrock (demon) Chaotic, Evil; 8th Level Subtype; Barbed devil Evil, Lawful; Elemental (elder) Elemental; Hezrou (demon) Chaotic, Evil; 9th Level Subtype; Astral Deva (angel) Good; Ghaele azata Chaotic, Good; Glabrezu (demon) Chaotic, Evil; Ice devil Evil, Lawful; Nalfeshnee (demon) Chaotic, Evil; Trumpet archon Good, Lawful; * This creature is summoned with the celestial template if you are good, or the fiendish template if you are evil; you may choose either if you are neutral.; Focus: A tiny bag and a small candle.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Summoning"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_EFFECT]: "One summoned creature",
-      [SPELL_DURATION]: "1 round/level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Summon Monster VIII",
-    description:
-      "This spell summons an extraplanar creature (typically an outsider, elemental, or magical beast native to another plane). It appears where you designate and acts immediately, on your turn. It attacks your opponents to the best of its ability. If you can communicate with the creature, you can direct it not to attack, to attack particular enemies, or to perform other actions. The spell conjures one of the creatures from the 1st Level list on Table 10–1. You choose which kind of creature to summon, and you can choose a different one each time you cast the spell. A summoned monster cannot summon or otherwise conjure another creature, nor can it use any teleportation or planar travel abilities. Creatures cannot be summoned into an environment that cannot support them. Creatures summoned using this spell cannot use spells or spell-like abilities that duplicate spells with expensive material components (such as wish). When you use a summoning spell to summon a creature with an alignment or elemental subtype, it is a spell of that type. Creatures on Table 10–1 marked with an “*” are summoned with the celestial template, if you are good, and the fiendish template, if you are evil. If you are neutral, you may choose which template to apply to the creature. Creatures marked with an “*” always have an alignment that matches yours, regardless of their usual alignment. Summoning these creatures makes the summoning spell's type match your alignment. 1st Level Subtype; Dire rat* —; Dolphin* —; Dog* —; Eagle* —; Fire beetle* —; Poisonous frog* —; Pony (horse)* —; Viper (snake)* —; 2nd Level Subtype; Ant, giant (worker)* —; Elemental (Small) Elemental; Giant centipede* —; Giant frog* —; Giant spider* —; Goblin dog* —; Horse* —; Hyena* —; Lemure (devil) Evil, Lawful; Octopus* —; Squid* —; Wolf* —; 3rd Level Subtype; Ant, giant (soldier)* —; Ape* —; Aurochs (herd animal)* —; Boar* —; Cheetah* —; Constrictor snake* —; Crocodile* —; Dire bat* —; Dretch (demon) Chaotic, Evil; Electric eel* —; Lantern archon Good, Lawful; Leopard (cat)* —; Monitor lizard* —; Shark* —; Wolverine* —; 4th Level Subtype; Ant, giant (drone)* —; Bison (herd animal)* —; Deinonychus (dinosaur)* —; Dire ape* —; Dire boar* —; Dire wolf* —; Elemental (Medium) Elemental; Giant scorpion* —; Giant wasp* —; Grizzly bear* —; Hell hound Evil, Lawful; Hound archon Good, Lawful; Lion* —; Mephit (any) Elemental; Pteranodon (dinosaur)* —; Rhinoceros* —; 5th Level Subtype; Ankylosaurus (dinosaur)* —; Babau (demon) Chaotic, Evil; Bearded devil Evil, Lawful; Bralani azata Chaotic, Good; Dire lion* —; Elemental (Large) Elemental; Giant moray eel* —; Kyton Evil, Lawful; Orca (dolphin)* —; Salamander Evil; Wooly rhinoceros* —; Xill Evil, Lawful; 6th Level Subtype; Dire bear* —; Dire tiger* —; Elasmosaurus (dinosaur)* —; Elemental (Huge) Elemental; Elephant* —; Erinyes (devil) Evil, Lawful; Giant octopus* —; Invisible stalker Air; Lillend azata Chaotic, Good; Shadow demon Chaotic, Evil; Succubus (demon) Chaotic, Evil; Triceratops (dinosaur)* —; 7th Level Subtype; Bebelith Chaotic, Evil; Bone devil Evil, Lawful; Brachiosaurus (dinosaur)* —; Dire crocodile* —; Dire shark* —; Elemental (greater) Elemental; Giant squid* —; Mastadon (elephant)* —; Roc* —; Tyrannosaurus (dinosaur)* —; Vrock (demon) Chaotic, Evil; 8th Level Subtype; Barbed devil Evil, Lawful; Elemental (elder) Elemental; Hezrou (demon) Chaotic, Evil; 9th Level Subtype; Astral Deva (angel) Good; Ghaele azata Chaotic, Good; Glabrezu (demon) Chaotic, Evil; Ice devil Evil, Lawful; Nalfeshnee (demon) Chaotic, Evil; Trumpet archon Good, Lawful; * This creature is summoned with the celestial template if you are good, or the fiendish template if you are evil; you may choose either if you are neutral.; Focus: A tiny bag and a small candle.",
-    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Summoning"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_EFFECT]: "One summoned creature",
-      [SPELL_DURATION]: "1 round/level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
     name: "Summon Nature's Ally I",
-    description:
-      "This spell summons to your side a natural creature (typically an animal, fey, magical beast, outsider with the elemental subtype, or a giant). The summoned ally appears where you designate and acts immediately, on your turn. It attacks your opponents to the best of its ability. If you can communicate with the creature, you can direct it not to attack, to attack particular enemies, or to perform other actions as you command. A summoned monster cannot summon or otherwise conjure another creature, nor can it use any teleportation or planar travel abilities. Creatures cannot be summoned into an environment that cannot support them. Creatures summoned using this spell cannot use spells or spell-like abilities that duplicate spells that have expensive material components (such as wish). The spell conjures one of the creatures from the 1st Level list on Table 10–2. You choose which kind of creature to summon, and you can change that choice each time you cast the spell. All the creatures on the table are neutral unless otherwise noted. When you use a summoning spell to summon a creature with an alignment or elemental subtype, it is a spell of that type. All creatures summoned with this spell without alignment subtypes have an alignment that matches yours, regardless of their usual alignment. Summoning these creatures makes the summoning spell's type match your alignment.1st Level Subtype; Dire rat —; Dog —; Dolphin —; Eagle —; Giant centipede —; Fire beetle —; Mite (gremlin) —; Poisonous frog —; Pony (horse) —; Stirge —; Viper (snake) —; 2nd Level Subtype; Ant, giant (worker) —; Elemental (Small) Elemental; Giant frog —; Giant spider —; Goblin Dog —; Horse —; Hyena —; Octopus —; Squid —; Wolf —; 3rd Level Subtype; Ant, giant (soldier) —; Ape —; Aurochs (herd animal) —; Boar —; Cheetah —; Constrictor snake —; Crocodile —; Dire bat —; Electric Eel —; Giant crab —; Leopard (cat) —; Monitor lizard —; Shark —; Wolverine —; 4th Level Subtype; Ant, giant (drone) —; Bison (herd animal) —; Deinonychus (dinosaur) —; Dire ape —; Dire boar —; Dire wolf —; Elemental (Medium) Elemental; Giant scorpion —; Giant stag beetle —; Giant wasp —; Griffon —; Grizzly bear —; Lion —; Mephit (any) Elemental; Owlbear —; Pteranodon (dinosaur) —; Rhinoceros —; Satyr —; Tiger —; 5th Level Subtype; Ankylosaurus (dinosaur) —; Cyclops —; Dire lion —; Dolphin (orca) —; Elemental (Large) Elemental; Ettin —; Giant moray eel —; Girallon —; Manticore —; Woolly rhinoceros —; 6th Level Subtype; Bulette —; Dire bear —; Dire tiger —; Elasmosaurus (dinosaur) —; Elemental (Huge) Elemental; Elephant —; Giant octopus —; Hill giant —; Stegosaurus (dinosaur) —; Stone giant Earth; Triceratops (dinosaur) —; 7th Level Subtype; Brachiosaurus (dinosaur) —; Dire crocodile —; Dire shark —; Elemental (greater) Elemental; Fire giant Fire; Frost giant Cold; Giant squid —; Mastadon (elephant) —; Roc —; Tyrannosaurus (dinosaur) —; 8th Level Subtype; Cloud giant Air; Elemental (elder) Elemental; Purple worm —; 9th Level Subtype; Pixie (w/irresistable dance and sleep arrows) —; Storm giant —;",
-    aptitudes: ["Druid Spells", "Ranger Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Summoning"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_EFFECT]: "One summoned creature",
-      [SPELL_DURATION]: "1 round/level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Summon Nature's Ally II",
-    description:
-      "This spell summons to your side a natural creature (typically an animal, fey, magical beast, outsider with the elemental subtype, or a giant). The summoned ally appears where you designate and acts immediately, on your turn. It attacks your opponents to the best of its ability. If you can communicate with the creature, you can direct it not to attack, to attack particular enemies, or to perform other actions as you command. A summoned monster cannot summon or otherwise conjure another creature, nor can it use any teleportation or planar travel abilities. Creatures cannot be summoned into an environment that cannot support them. Creatures summoned using this spell cannot use spells or spell-like abilities that duplicate spells that have expensive material components (such as wish). The spell conjures one of the creatures from the 1st Level list on Table 10–2. You choose which kind of creature to summon, and you can change that choice each time you cast the spell. All the creatures on the table are neutral unless otherwise noted. When you use a summoning spell to summon a creature with an alignment or elemental subtype, it is a spell of that type. All creatures summoned with this spell without alignment subtypes have an alignment that matches yours, regardless of their usual alignment. Summoning these creatures makes the summoning spell's type match your alignment.1st Level Subtype; Dire rat —; Dog —; Dolphin —; Eagle —; Giant centipede —; Fire beetle —; Mite (gremlin) —; Poisonous frog —; Pony (horse) —; Stirge —; Viper (snake) —; 2nd Level Subtype; Ant, giant (worker) —; Elemental (Small) Elemental; Giant frog —; Giant spider —; Goblin Dog —; Horse —; Hyena —; Octopus —; Squid —; Wolf —; 3rd Level Subtype; Ant, giant (soldier) —; Ape —; Aurochs (herd animal) —; Boar —; Cheetah —; Constrictor snake —; Crocodile —; Dire bat —; Electric Eel —; Giant crab —; Leopard (cat) —; Monitor lizard —; Shark —; Wolverine —; 4th Level Subtype; Ant, giant (drone) —; Bison (herd animal) —; Deinonychus (dinosaur) —; Dire ape —; Dire boar —; Dire wolf —; Elemental (Medium) Elemental; Giant scorpion —; Giant stag beetle —; Giant wasp —; Griffon —; Grizzly bear —; Lion —; Mephit (any) Elemental; Owlbear —; Pteranodon (dinosaur) —; Rhinoceros —; Satyr —; Tiger —; 5th Level Subtype; Ankylosaurus (dinosaur) —; Cyclops —; Dire lion —; Dolphin (orca) —; Elemental (Large) Elemental; Ettin —; Giant moray eel —; Girallon —; Manticore —; Woolly rhinoceros —; 6th Level Subtype; Bulette —; Dire bear —; Dire tiger —; Elasmosaurus (dinosaur) —; Elemental (Huge) Elemental; Elephant —; Giant octopus —; Hill giant —; Stegosaurus (dinosaur) —; Stone giant Earth; Triceratops (dinosaur) —; 7th Level Subtype; Brachiosaurus (dinosaur) —; Dire crocodile —; Dire shark —; Elemental (greater) Elemental; Fire giant Fire; Frost giant Cold; Giant squid —; Mastadon (elephant) —; Roc —; Tyrannosaurus (dinosaur) —; 8th Level Subtype; Cloud giant Air; Elemental (elder) Elemental; Purple worm —; 9th Level Subtype; Pixie (w/irresistable dance and sleep arrows) —; Storm giant —;",
-    aptitudes: ["Druid Spells", "Ranger Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Summoning"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_EFFECT]: "One summoned creature",
-      [SPELL_DURATION]: "1 round/level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Summon Nature's Ally III",
-    description:
-      "This spell summons to your side a natural creature (typically an animal, fey, magical beast, outsider with the elemental subtype, or a giant). The summoned ally appears where you designate and acts immediately, on your turn. It attacks your opponents to the best of its ability. If you can communicate with the creature, you can direct it not to attack, to attack particular enemies, or to perform other actions as you command. A summoned monster cannot summon or otherwise conjure another creature, nor can it use any teleportation or planar travel abilities. Creatures cannot be summoned into an environment that cannot support them. Creatures summoned using this spell cannot use spells or spell-like abilities that duplicate spells that have expensive material components (such as wish). The spell conjures one of the creatures from the 1st Level list on Table 10–2. You choose which kind of creature to summon, and you can change that choice each time you cast the spell. All the creatures on the table are neutral unless otherwise noted. When you use a summoning spell to summon a creature with an alignment or elemental subtype, it is a spell of that type. All creatures summoned with this spell without alignment subtypes have an alignment that matches yours, regardless of their usual alignment. Summoning these creatures makes the summoning spell's type match your alignment.1st Level Subtype; Dire rat —; Dog —; Dolphin —; Eagle —; Giant centipede —; Fire beetle —; Mite (gremlin) —; Poisonous frog —; Pony (horse) —; Stirge —; Viper (snake) —; 2nd Level Subtype; Ant, giant (worker) —; Elemental (Small) Elemental; Giant frog —; Giant spider —; Goblin Dog —; Horse —; Hyena —; Octopus —; Squid —; Wolf —; 3rd Level Subtype; Ant, giant (soldier) —; Ape —; Aurochs (herd animal) —; Boar —; Cheetah —; Constrictor snake —; Crocodile —; Dire bat —; Electric Eel —; Giant crab —; Leopard (cat) —; Monitor lizard —; Shark —; Wolverine —; 4th Level Subtype; Ant, giant (drone) —; Bison (herd animal) —; Deinonychus (dinosaur) —; Dire ape —; Dire boar —; Dire wolf —; Elemental (Medium) Elemental; Giant scorpion —; Giant stag beetle —; Giant wasp —; Griffon —; Grizzly bear —; Lion —; Mephit (any) Elemental; Owlbear —; Pteranodon (dinosaur) —; Rhinoceros —; Satyr —; Tiger —; 5th Level Subtype; Ankylosaurus (dinosaur) —; Cyclops —; Dire lion —; Dolphin (orca) —; Elemental (Large) Elemental; Ettin —; Giant moray eel —; Girallon —; Manticore —; Woolly rhinoceros —; 6th Level Subtype; Bulette —; Dire bear —; Dire tiger —; Elasmosaurus (dinosaur) —; Elemental (Huge) Elemental; Elephant —; Giant octopus —; Hill giant —; Stegosaurus (dinosaur) —; Stone giant Earth; Triceratops (dinosaur) —; 7th Level Subtype; Brachiosaurus (dinosaur) —; Dire crocodile —; Dire shark —; Elemental (greater) Elemental; Fire giant Fire; Frost giant Cold; Giant squid —; Mastadon (elephant) —; Roc —; Tyrannosaurus (dinosaur) —; 8th Level Subtype; Cloud giant Air; Elemental (elder) Elemental; Purple worm —; 9th Level Subtype; Pixie (w/irresistable dance and sleep arrows) —; Storm giant —;",
-    aptitudes: ["Druid Spells", "Ranger Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Summoning"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_EFFECT]: "One summoned creature",
-      [SPELL_DURATION]: "1 round/level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Summon Nature's Ally IV",
-    description:
-      "This spell summons to your side a natural creature (typically an animal, fey, magical beast, outsider with the elemental subtype, or a giant). The summoned ally appears where you designate and acts immediately, on your turn. It attacks your opponents to the best of its ability. If you can communicate with the creature, you can direct it not to attack, to attack particular enemies, or to perform other actions as you command. A summoned monster cannot summon or otherwise conjure another creature, nor can it use any teleportation or planar travel abilities. Creatures cannot be summoned into an environment that cannot support them. Creatures summoned using this spell cannot use spells or spell-like abilities that duplicate spells that have expensive material components (such as wish). The spell conjures one of the creatures from the 1st Level list on Table 10–2. You choose which kind of creature to summon, and you can change that choice each time you cast the spell. All the creatures on the table are neutral unless otherwise noted. When you use a summoning spell to summon a creature with an alignment or elemental subtype, it is a spell of that type. All creatures summoned with this spell without alignment subtypes have an alignment that matches yours, regardless of their usual alignment. Summoning these creatures makes the summoning spell's type match your alignment.1st Level Subtype; Dire rat —; Dog —; Dolphin —; Eagle —; Giant centipede —; Fire beetle —; Mite (gremlin) —; Poisonous frog —; Pony (horse) —; Stirge —; Viper (snake) —; 2nd Level Subtype; Ant, giant (worker) —; Elemental (Small) Elemental; Giant frog —; Giant spider —; Goblin Dog —; Horse —; Hyena —; Octopus —; Squid —; Wolf —; 3rd Level Subtype; Ant, giant (soldier) —; Ape —; Aurochs (herd animal) —; Boar —; Cheetah —; Constrictor snake —; Crocodile —; Dire bat —; Electric Eel —; Giant crab —; Leopard (cat) —; Monitor lizard —; Shark —; Wolverine —; 4th Level Subtype; Ant, giant (drone) —; Bison (herd animal) —; Deinonychus (dinosaur) —; Dire ape —; Dire boar —; Dire wolf —; Elemental (Medium) Elemental; Giant scorpion —; Giant stag beetle —; Giant wasp —; Griffon —; Grizzly bear —; Lion —; Mephit (any) Elemental; Owlbear —; Pteranodon (dinosaur) —; Rhinoceros —; Satyr —; Tiger —; 5th Level Subtype; Ankylosaurus (dinosaur) —; Cyclops —; Dire lion —; Dolphin (orca) —; Elemental (Large) Elemental; Ettin —; Giant moray eel —; Girallon —; Manticore —; Woolly rhinoceros —; 6th Level Subtype; Bulette —; Dire bear —; Dire tiger —; Elasmosaurus (dinosaur) —; Elemental (Huge) Elemental; Elephant —; Giant octopus —; Hill giant —; Stegosaurus (dinosaur) —; Stone giant Earth; Triceratops (dinosaur) —; 7th Level Subtype; Brachiosaurus (dinosaur) —; Dire crocodile —; Dire shark —; Elemental (greater) Elemental; Fire giant Fire; Frost giant Cold; Giant squid —; Mastadon (elephant) —; Roc —; Tyrannosaurus (dinosaur) —; 8th Level Subtype; Cloud giant Air; Elemental (elder) Elemental; Purple worm —; 9th Level Subtype; Pixie (w/irresistable dance and sleep arrows) —; Storm giant —;",
-    aptitudes: ["Druid Spells", "Ranger Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Summoning"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_EFFECT]: "One summoned creature",
-      [SPELL_DURATION]: "1 round/level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Summon Nature's Ally IX",
-    description:
-      "This spell summons to your side a natural creature (typically an animal, fey, magical beast, outsider with the elemental subtype, or a giant). The summoned ally appears where you designate and acts immediately, on your turn. It attacks your opponents to the best of its ability. If you can communicate with the creature, you can direct it not to attack, to attack particular enemies, or to perform other actions as you command. A summoned monster cannot summon or otherwise conjure another creature, nor can it use any teleportation or planar travel abilities. Creatures cannot be summoned into an environment that cannot support them. Creatures summoned using this spell cannot use spells or spell-like abilities that duplicate spells that have expensive material components (such as wish). The spell conjures one of the creatures from the 1st Level list on Table 10–2. You choose which kind of creature to summon, and you can change that choice each time you cast the spell. All the creatures on the table are neutral unless otherwise noted. When you use a summoning spell to summon a creature with an alignment or elemental subtype, it is a spell of that type. All creatures summoned with this spell without alignment subtypes have an alignment that matches yours, regardless of their usual alignment. Summoning these creatures makes the summoning spell's type match your alignment.1st Level Subtype; Dire rat —; Dog —; Dolphin —; Eagle —; Giant centipede —; Fire beetle —; Mite (gremlin) —; Poisonous frog —; Pony (horse) —; Stirge —; Viper (snake) —; 2nd Level Subtype; Ant, giant (worker) —; Elemental (Small) Elemental; Giant frog —; Giant spider —; Goblin Dog —; Horse —; Hyena —; Octopus —; Squid —; Wolf —; 3rd Level Subtype; Ant, giant (soldier) —; Ape —; Aurochs (herd animal) —; Boar —; Cheetah —; Constrictor snake —; Crocodile —; Dire bat —; Electric Eel —; Giant crab —; Leopard (cat) —; Monitor lizard —; Shark —; Wolverine —; 4th Level Subtype; Ant, giant (drone) —; Bison (herd animal) —; Deinonychus (dinosaur) —; Dire ape —; Dire boar —; Dire wolf —; Elemental (Medium) Elemental; Giant scorpion —; Giant stag beetle —; Giant wasp —; Griffon —; Grizzly bear —; Lion —; Mephit (any) Elemental; Owlbear —; Pteranodon (dinosaur) —; Rhinoceros —; Satyr —; Tiger —; 5th Level Subtype; Ankylosaurus (dinosaur) —; Cyclops —; Dire lion —; Dolphin (orca) —; Elemental (Large) Elemental; Ettin —; Giant moray eel —; Girallon —; Manticore —; Woolly rhinoceros —; 6th Level Subtype; Bulette —; Dire bear —; Dire tiger —; Elasmosaurus (dinosaur) —; Elemental (Huge) Elemental; Elephant —; Giant octopus —; Hill giant —; Stegosaurus (dinosaur) —; Stone giant Earth; Triceratops (dinosaur) —; 7th Level Subtype; Brachiosaurus (dinosaur) —; Dire crocodile —; Dire shark —; Elemental (greater) Elemental; Fire giant Fire; Frost giant Cold; Giant squid —; Mastadon (elephant) —; Roc —; Tyrannosaurus (dinosaur) —; 8th Level Subtype; Cloud giant Air; Elemental (elder) Elemental; Purple worm —; 9th Level Subtype; Pixie (w/irresistable dance and sleep arrows) —; Storm giant —;",
-    aptitudes: ["Druid Spells", "Ranger Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Summoning"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_EFFECT]: "One summoned creature",
-      [SPELL_DURATION]: "1 round/level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Summon Nature's Ally V",
-    description:
-      "This spell summons to your side a natural creature (typically an animal, fey, magical beast, outsider with the elemental subtype, or a giant). The summoned ally appears where you designate and acts immediately, on your turn. It attacks your opponents to the best of its ability. If you can communicate with the creature, you can direct it not to attack, to attack particular enemies, or to perform other actions as you command. A summoned monster cannot summon or otherwise conjure another creature, nor can it use any teleportation or planar travel abilities. Creatures cannot be summoned into an environment that cannot support them. Creatures summoned using this spell cannot use spells or spell-like abilities that duplicate spells that have expensive material components (such as wish). The spell conjures one of the creatures from the 1st Level list on Table 10–2. You choose which kind of creature to summon, and you can change that choice each time you cast the spell. All the creatures on the table are neutral unless otherwise noted. When you use a summoning spell to summon a creature with an alignment or elemental subtype, it is a spell of that type. All creatures summoned with this spell without alignment subtypes have an alignment that matches yours, regardless of their usual alignment. Summoning these creatures makes the summoning spell's type match your alignment.1st Level Subtype; Dire rat —; Dog —; Dolphin —; Eagle —; Giant centipede —; Fire beetle —; Mite (gremlin) —; Poisonous frog —; Pony (horse) —; Stirge —; Viper (snake) —; 2nd Level Subtype; Ant, giant (worker) —; Elemental (Small) Elemental; Giant frog —; Giant spider —; Goblin Dog —; Horse —; Hyena —; Octopus —; Squid —; Wolf —; 3rd Level Subtype; Ant, giant (soldier) —; Ape —; Aurochs (herd animal) —; Boar —; Cheetah —; Constrictor snake —; Crocodile —; Dire bat —; Electric Eel —; Giant crab —; Leopard (cat) —; Monitor lizard —; Shark —; Wolverine —; 4th Level Subtype; Ant, giant (drone) —; Bison (herd animal) —; Deinonychus (dinosaur) —; Dire ape —; Dire boar —; Dire wolf —; Elemental (Medium) Elemental; Giant scorpion —; Giant stag beetle —; Giant wasp —; Griffon —; Grizzly bear —; Lion —; Mephit (any) Elemental; Owlbear —; Pteranodon (dinosaur) —; Rhinoceros —; Satyr —; Tiger —; 5th Level Subtype; Ankylosaurus (dinosaur) —; Cyclops —; Dire lion —; Dolphin (orca) —; Elemental (Large) Elemental; Ettin —; Giant moray eel —; Girallon —; Manticore —; Woolly rhinoceros —; 6th Level Subtype; Bulette —; Dire bear —; Dire tiger —; Elasmosaurus (dinosaur) —; Elemental (Huge) Elemental; Elephant —; Giant octopus —; Hill giant —; Stegosaurus (dinosaur) —; Stone giant Earth; Triceratops (dinosaur) —; 7th Level Subtype; Brachiosaurus (dinosaur) —; Dire crocodile —; Dire shark —; Elemental (greater) Elemental; Fire giant Fire; Frost giant Cold; Giant squid —; Mastadon (elephant) —; Roc —; Tyrannosaurus (dinosaur) —; 8th Level Subtype; Cloud giant Air; Elemental (elder) Elemental; Purple worm —; 9th Level Subtype; Pixie (w/irresistable dance and sleep arrows) —; Storm giant —;",
-    aptitudes: ["Druid Spells", "Ranger Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Summoning"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_EFFECT]: "One summoned creature",
-      [SPELL_DURATION]: "1 round/level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Summon Nature's Ally VI",
-    description:
-      "This spell summons to your side a natural creature (typically an animal, fey, magical beast, outsider with the elemental subtype, or a giant). The summoned ally appears where you designate and acts immediately, on your turn. It attacks your opponents to the best of its ability. If you can communicate with the creature, you can direct it not to attack, to attack particular enemies, or to perform other actions as you command. A summoned monster cannot summon or otherwise conjure another creature, nor can it use any teleportation or planar travel abilities. Creatures cannot be summoned into an environment that cannot support them. Creatures summoned using this spell cannot use spells or spell-like abilities that duplicate spells that have expensive material components (such as wish). The spell conjures one of the creatures from the 1st Level list on Table 10–2. You choose which kind of creature to summon, and you can change that choice each time you cast the spell. All the creatures on the table are neutral unless otherwise noted. When you use a summoning spell to summon a creature with an alignment or elemental subtype, it is a spell of that type. All creatures summoned with this spell without alignment subtypes have an alignment that matches yours, regardless of their usual alignment. Summoning these creatures makes the summoning spell's type match your alignment.1st Level Subtype; Dire rat —; Dog —; Dolphin —; Eagle —; Giant centipede —; Fire beetle —; Mite (gremlin) —; Poisonous frog —; Pony (horse) —; Stirge —; Viper (snake) —; 2nd Level Subtype; Ant, giant (worker) —; Elemental (Small) Elemental; Giant frog —; Giant spider —; Goblin Dog —; Horse —; Hyena —; Octopus —; Squid —; Wolf —; 3rd Level Subtype; Ant, giant (soldier) —; Ape —; Aurochs (herd animal) —; Boar —; Cheetah —; Constrictor snake —; Crocodile —; Dire bat —; Electric Eel —; Giant crab —; Leopard (cat) —; Monitor lizard —; Shark —; Wolverine —; 4th Level Subtype; Ant, giant (drone) —; Bison (herd animal) —; Deinonychus (dinosaur) —; Dire ape —; Dire boar —; Dire wolf —; Elemental (Medium) Elemental; Giant scorpion —; Giant stag beetle —; Giant wasp —; Griffon —; Grizzly bear —; Lion —; Mephit (any) Elemental; Owlbear —; Pteranodon (dinosaur) —; Rhinoceros —; Satyr —; Tiger —; 5th Level Subtype; Ankylosaurus (dinosaur) —; Cyclops —; Dire lion —; Dolphin (orca) —; Elemental (Large) Elemental; Ettin —; Giant moray eel —; Girallon —; Manticore —; Woolly rhinoceros —; 6th Level Subtype; Bulette —; Dire bear —; Dire tiger —; Elasmosaurus (dinosaur) —; Elemental (Huge) Elemental; Elephant —; Giant octopus —; Hill giant —; Stegosaurus (dinosaur) —; Stone giant Earth; Triceratops (dinosaur) —; 7th Level Subtype; Brachiosaurus (dinosaur) —; Dire crocodile —; Dire shark —; Elemental (greater) Elemental; Fire giant Fire; Frost giant Cold; Giant squid —; Mastadon (elephant) —; Roc —; Tyrannosaurus (dinosaur) —; 8th Level Subtype; Cloud giant Air; Elemental (elder) Elemental; Purple worm —; 9th Level Subtype; Pixie (w/irresistable dance and sleep arrows) —; Storm giant —;",
-    aptitudes: ["Druid Spells", "Ranger Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Summoning"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_EFFECT]: "One summoned creature",
-      [SPELL_DURATION]: "1 round/level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Summon Nature's Ally VII",
-    description:
-      "This spell summons to your side a natural creature (typically an animal, fey, magical beast, outsider with the elemental subtype, or a giant). The summoned ally appears where you designate and acts immediately, on your turn. It attacks your opponents to the best of its ability. If you can communicate with the creature, you can direct it not to attack, to attack particular enemies, or to perform other actions as you command. A summoned monster cannot summon or otherwise conjure another creature, nor can it use any teleportation or planar travel abilities. Creatures cannot be summoned into an environment that cannot support them. Creatures summoned using this spell cannot use spells or spell-like abilities that duplicate spells that have expensive material components (such as wish). The spell conjures one of the creatures from the 1st Level list on Table 10–2. You choose which kind of creature to summon, and you can change that choice each time you cast the spell. All the creatures on the table are neutral unless otherwise noted. When you use a summoning spell to summon a creature with an alignment or elemental subtype, it is a spell of that type. All creatures summoned with this spell without alignment subtypes have an alignment that matches yours, regardless of their usual alignment. Summoning these creatures makes the summoning spell's type match your alignment.1st Level Subtype; Dire rat —; Dog —; Dolphin —; Eagle —; Giant centipede —; Fire beetle —; Mite (gremlin) —; Poisonous frog —; Pony (horse) —; Stirge —; Viper (snake) —; 2nd Level Subtype; Ant, giant (worker) —; Elemental (Small) Elemental; Giant frog —; Giant spider —; Goblin Dog —; Horse —; Hyena —; Octopus —; Squid —; Wolf —; 3rd Level Subtype; Ant, giant (soldier) —; Ape —; Aurochs (herd animal) —; Boar —; Cheetah —; Constrictor snake —; Crocodile —; Dire bat —; Electric Eel —; Giant crab —; Leopard (cat) —; Monitor lizard —; Shark —; Wolverine —; 4th Level Subtype; Ant, giant (drone) —; Bison (herd animal) —; Deinonychus (dinosaur) —; Dire ape —; Dire boar —; Dire wolf —; Elemental (Medium) Elemental; Giant scorpion —; Giant stag beetle —; Giant wasp —; Griffon —; Grizzly bear —; Lion —; Mephit (any) Elemental; Owlbear —; Pteranodon (dinosaur) —; Rhinoceros —; Satyr —; Tiger —; 5th Level Subtype; Ankylosaurus (dinosaur) —; Cyclops —; Dire lion —; Dolphin (orca) —; Elemental (Large) Elemental; Ettin —; Giant moray eel —; Girallon —; Manticore —; Woolly rhinoceros —; 6th Level Subtype; Bulette —; Dire bear —; Dire tiger —; Elasmosaurus (dinosaur) —; Elemental (Huge) Elemental; Elephant —; Giant octopus —; Hill giant —; Stegosaurus (dinosaur) —; Stone giant Earth; Triceratops (dinosaur) —; 7th Level Subtype; Brachiosaurus (dinosaur) —; Dire crocodile —; Dire shark —; Elemental (greater) Elemental; Fire giant Fire; Frost giant Cold; Giant squid —; Mastadon (elephant) —; Roc —; Tyrannosaurus (dinosaur) —; 8th Level Subtype; Cloud giant Air; Elemental (elder) Elemental; Purple worm —; 9th Level Subtype; Pixie (w/irresistable dance and sleep arrows) —; Storm giant —;",
-    aptitudes: ["Druid Spells", "Ranger Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Summoning"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "1 round",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_EFFECT]: "One summoned creature",
-      [SPELL_DURATION]: "1 round/level (D)",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Summon Nature's Ally VIII",
     description:
       "This spell summons to your side a natural creature (typically an animal, fey, magical beast, outsider with the elemental subtype, or a giant). The summoned ally appears where you designate and acts immediately, on your turn. It attacks your opponents to the best of its ability. If you can communicate with the creature, you can direct it not to attack, to attack particular enemies, or to perform other actions as you command. A summoned monster cannot summon or otherwise conjure another creature, nor can it use any teleportation or planar travel abilities. Creatures cannot be summoned into an environment that cannot support them. Creatures summoned using this spell cannot use spells or spell-like abilities that duplicate spells that have expensive material components (such as wish). The spell conjures one of the creatures from the 1st Level list on Table 10–2. You choose which kind of creature to summon, and you can change that choice each time you cast the spell. All the creatures on the table are neutral unless otherwise noted. When you use a summoning spell to summon a creature with an alignment or elemental subtype, it is a spell of that type. All creatures summoned with this spell without alignment subtypes have an alignment that matches yours, regardless of their usual alignment. Summoning these creatures makes the summoning spell's type match your alignment.1st Level Subtype; Dire rat —; Dog —; Dolphin —; Eagle —; Giant centipede —; Fire beetle —; Mite (gremlin) —; Poisonous frog —; Pony (horse) —; Stirge —; Viper (snake) —; 2nd Level Subtype; Ant, giant (worker) —; Elemental (Small) Elemental; Giant frog —; Giant spider —; Goblin Dog —; Horse —; Hyena —; Octopus —; Squid —; Wolf —; 3rd Level Subtype; Ant, giant (soldier) —; Ape —; Aurochs (herd animal) —; Boar —; Cheetah —; Constrictor snake —; Crocodile —; Dire bat —; Electric Eel —; Giant crab —; Leopard (cat) —; Monitor lizard —; Shark —; Wolverine —; 4th Level Subtype; Ant, giant (drone) —; Bison (herd animal) —; Deinonychus (dinosaur) —; Dire ape —; Dire boar —; Dire wolf —; Elemental (Medium) Elemental; Giant scorpion —; Giant stag beetle —; Giant wasp —; Griffon —; Grizzly bear —; Lion —; Mephit (any) Elemental; Owlbear —; Pteranodon (dinosaur) —; Rhinoceros —; Satyr —; Tiger —; 5th Level Subtype; Ankylosaurus (dinosaur) —; Cyclops —; Dire lion —; Dolphin (orca) —; Elemental (Large) Elemental; Ettin —; Giant moray eel —; Girallon —; Manticore —; Woolly rhinoceros —; 6th Level Subtype; Bulette —; Dire bear —; Dire tiger —; Elasmosaurus (dinosaur) —; Elemental (Huge) Elemental; Elephant —; Giant octopus —; Hill giant —; Stegosaurus (dinosaur) —; Stone giant Earth; Triceratops (dinosaur) —; 7th Level Subtype; Brachiosaurus (dinosaur) —; Dire crocodile —; Dire shark —; Elemental (greater) Elemental; Fire giant Fire; Frost giant Cold; Giant squid —; Mastadon (elephant) —; Roc —; Tyrannosaurus (dinosaur) —; 8th Level Subtype; Cloud giant Air; Elemental (elder) Elemental; Purple worm —; 9th Level Subtype; Pixie (w/irresistable dance and sleep arrows) —; Storm giant —;",
     aptitudes: ["Druid Spells", "Ranger Spells"],

@@ -95,8 +95,9 @@ saving with their overrides kept), the HTTP client and the page. The Pathfinder 
   and reads a page the book lists under several names once, with each name: an item's variants, a magic item's
   bonuses).
 - `tools/scraper/pages/`: a class per kind of page, on `AonPage` (the entry's title, its sources, its parts by heading,
-  and their readings: labelled paragraphs, a stat block's inline fields, tables): the book's `SourcePage`, `ClassPage`,
-  `FeatPage`, `SpellPage`, `RacePage`, `DomainPage` (a domain, and a subdomain off its section of its domain's page),
+  and their readings: labelled paragraphs, a stat block's inline fields, tables; a page that prints several entries, each
+  under an h1 of its own, `entries`): the book's `SourcePage`, `ClassPage`, `FeatPage`, `SpellPage` (a page that prints
+  several spells, Summon Monster I to IX's, read off the section its book lists, by its title), `RacePage`, `DomainPage` (a domain, and a subdomain off its section of its domain's page),
   `ItemPage` (mundane and magic). The tests read saved pages through them (`tests/codegen/pf1/fixtures`).
 - `tools/types/`: a reference's type per kind, and what every page gives (`pages.ts`: a `Printing`, a book and page an
   entry is printed on; a `LabeledText`; a `PageTable`).

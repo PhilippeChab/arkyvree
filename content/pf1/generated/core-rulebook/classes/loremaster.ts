@@ -34,6 +34,13 @@ export const LOREMASTER: ClassSeed = {
     "Use Magic Device",
   ],
   requirements: [
+    gte("skills.knowledge.rank", 7),
+    {
+      target: "feats.metamagic.count",
+      operator: "greater_than_or_equal",
+      value: "{{ 3 - [feats.itemcreation.count] }}",
+      valueType: "number",
+    },
     or(
       eq("feats.skillfocusknowledgearcana.possessed"),
       eq("feats.skillfocusknowledgedungeoneering.possessed"),

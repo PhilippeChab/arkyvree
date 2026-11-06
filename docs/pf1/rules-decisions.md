@@ -17,7 +17,8 @@ How the Pathfinder 1 ruleset ("Core PSD 1", the Core Rulebook) reads its rules w
 
 ## Classes
 
-- **A prestige class's saves are its own.** The Core Rulebook's prestige classes give a good save +1 at their 1st level and +5 at their 10th, and a poor one +0 and +3, unlike a base class's +2 and +0. They're presets of their own (`prestigeGood`, `prestigePoor` in `SAVE_PROGRESSIONS`), which the codegen reads off each prestige class's table and refuses a column that follows none (`ClassTable`).
+- **A prestige class's saves are its own.** The Core Rulebook's prestige classes give a good save +1 at their 1st level and +5 at their 10th, and a poor one +0 and +3, unlike a base class's +2 and +0. They're presets of their own (`prestigeGood`, `prestigePoor` in `SAVE_PROGRESSIONS`), which the codegen reads off each prestige class's table and refuses a column that follows none, or a table without the column (`ClassTable`).
+- **A loremaster's two Knowledge skills are one.** Her "Knowledge (any two) 7 ranks in each" checks any one Knowledge skill at 7 ranks (`skills.knowledge.rank`), as no path counts the skills at a rank: the second is the table's to check (`ClassRequirements`). Her "any three metamagic or item creation feats" are counted together, the metamagic feats at least three less the item creation feats (`{{ 3 - [feats.itemcreation.count] }}` on `feats.metamagic.count`), as 3.5's loremaster's are.
 - **A bard's and a sorcerer's cantrips are level-0 slots.** Their tables start at 1st level; the cantrips they know are seeded as level-0 slots, though the book casts them at will.
 - **A bond is a pick between its creature and what it offers instead.** A wizard's Arcane Bond, a druid's Nature Bond, a ranger's Hunter's Bond and a paladin's Divine Bond each give a pick in a pool of the feature's name, between two feats: its creature ("Arcane Bond: Familiar", which gives the pick of a familiar and its level) and the other ("Arcane Bond: Bonded Object", "Nature Bond: Domain", "Hunter's Bond: Companions", "Divine Bond: Bonded Weapon"), whose rules its description gives and the table applies (`BOND_FEATURES`, `FeatureModifiers.bondChoices`). An adept's familiar is no choice.
 - **A cleric picks two domains at 1st level** in the Cleric Domain pool (her Domains feature, `FeatureModifiers`), each a feat that makes its domain's spell list hers, and has a domain slot at each spell level she casts.
@@ -35,6 +36,7 @@ What the Core Rulebook gives that the sheet doesn't compute: the table adds it, 
 - A class feature with no number the sheet reads: a fighter's Armor Training and Weapon Training, a duelist's Canny Defense, sneak attack, bravery, trap sense; and the picks some features give: rogue talents, rage powers, mercies, a sorcerer's bloodline, a loremaster's secrets.
 - A half-elf's Adaptability (Skill Focus as a bonus feat), and a 1st-level wizard's spellbook's spells past the three his table gives (one per point of his Intelligence modifier).
 - A Small character's gear weighing half.
+- An expert's class skills. She chooses any 10 skills as class skills, and the engine has no pick of class skills (3.5's content has no expert to follow): the Expert is seeded with none, and the ten she picks are the table's, their +3 a modifier on the character.
 
 ## Content
 

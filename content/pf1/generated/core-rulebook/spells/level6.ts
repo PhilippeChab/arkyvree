@@ -115,6 +115,39 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
+    name: "Bear's Endurance, Mass",
+    description:
+      "Mass bear's endurance works like bear's endurance, except that it affects multiple creatures. Material Component: A few hairs, or a pinch of dung, from a bear.",
+    aptitudes: ["Cleric Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Transmutation",
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One creature/level, no two of which can be more than 30 ft. apart",
+      [SPELL_DURATION]: "1 min./level",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "negates (harmless)",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
+    name: "Beast Shape IV",
+    description:
+      "This spell functions as beast shape III except that it also allows you to assume the form of a Tiny or Large creature of the magical beast type. If the form you assume has any of the following abilities, you gain the listed ability: burrow 60 feet, climb 90 feet, fly 120 feet (good maneuverability), swim 120 feet, blindsense 60 feet, darkvision 90 feet, low-light vision, scent, tremorsense 60 feet, breath weapon, constrict, ferocity, grab, jet, poison, pounce, rake, rend, roar, spikes, trample, trip, and web. If the creature has immunity or resistance to any elements, you gain resistance 20 to those elements. If the creature has vulnerability to an element, you gain that vulnerability. Tiny magical beast: If the form you take is that of a Tiny magical beast, you gain a –2 penalty to your Strength, a +8 size bonus to your Dexterity, and a +3 natural armor bonus. Large magical beast: If the form you take is that of a Large magical beast, you gain a +6 size bonus to your Strength, a –2 penalty on your Dexterity, a +2 size bonus to your Constitution, and a +6 natural armor bonus. Material Component: A piece of the creature whose form you plan to assume.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Transmutation",
+      [SPELL_SUBSCHOOL]: ["Polymorph"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Personal",
+      [SPELL_TARGET]: "You",
+      [SPELL_DURATION]: "1 min./level (D)",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
     name: "Blade Barrier",
     description:
       "An immobile, vertical curtain of whirling blades shaped of pure force springs into existence. Any creature passing through the wall takes 1d6 points of damage per caster level (maximum 15d6), with a Reflex save for half damage. If you evoke the barrier so that it appears where creatures are, each creature takes damage as if passing through the wall. Each such creature can avoid the wall (ending up on the side of its choice) and thus take no damage by making a successful Reflex save. A blade barrier provides cover (+4 bonus to AC, +2 bonus on Reflex saves) against attacks made through it.",
@@ -134,6 +167,40 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Reflex" },
   },
   {
+    name: "Bull's Strength, Mass",
+    description:
+      "This spell functions like bull's strength, except that it affects multiple creatures. Material Component: A few hairs, or a pinch of dung, from a bull.",
+    aptitudes: ["Cleric Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Transmutation",
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One creature/level, no two of which can be more than 30 ft. apart",
+      [SPELL_DURATION]: "1 min./level",
+      [SPELL_RESISTANCE]: "Yes (harmless)",
+      [SPELL_SAVE_EFFECT]: "negates (harmless)",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
+    name: "Cat's Grace, Mass",
+    description:
+      "This spell functions like cat's grace, except it affects multiple creatures. Material Component: Pinch of cat fur.",
+    aptitudes: ["Bard Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Transmutation",
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One creature/level, no two of which can be more than 30 ft. apart",
+      [SPELL_DURATION]: "1 min./level",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "negates (harmless)",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
     name: "Chain Lightning",
     description:
       "This spell creates an electrical discharge that begins as a single stroke commencing from your fingertips. Unlike lightning bolt, chain lightning strikes one object or creature initially, then arcs to other targets. The bolt deals 1d6 points of electricity damage per caster level (maximum 20d6) to the primary target. After it strikes, lightning can arc to a number of secondary targets equal to your caster level (maximum 20). The secondary bolts each strike one target and deal as much damage as the primary bolt. Each target can attempt a Reflex saving throw for half damage. The Reflex DC to halve the damage of the secondary bolts is 2 lower than the DC to halve the damage of the primary bolt. You choose secondary targets as you like, but they must all be within 30 feet of the primary target, and no target can be struck more than once. You can choose to affect fewer secondary targets than the maximum. Focus: A bit of fur, a piece of amber, glass, or a crystal rod; plus one silver pin per caster level.",
@@ -151,6 +218,26 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
       [SPELL_SAVE_EFFECT]: "half",
     },
     links: { resistedBy: "Reflex" },
+  },
+  {
+    name: "Charm Monster, Mass",
+    description:
+      "This spell functions like charm monster, except that mass charm monster affects a number of creatures whose combined HD do not exceed twice your level, or at least one creature regardless of HD. If there are more potential targets than you can affect, you choose them one at a time until you must choose a creature with too many HD to affect.",
+    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudeLevels: { "Bard Spells": 6, "Sorcerer Spells": 8, "Wizard Spells": 8 },
+    fields: {
+      [SPELL_SCHOOL]: "Enchantment",
+      [SPELL_SUBSCHOOL]: ["Charm"],
+      [SPELL_DESCRIPTOR]: ["Mind-Affecting"],
+      [SPELL_COMPONENT]: ["Verbal"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One or more creatures, no two of which can be more than 30 ft. apart",
+      [SPELL_DURATION]: "1 day/level",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "negates",
+    },
+    links: { resistedBy: "Will" },
   },
   {
     name: "Circle of Death",
@@ -253,6 +340,22 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
       [SPELL_SAVE_EFFECT]: "negates (harmless)",
     },
     links: { resistedBy: "Will" },
+  },
+  {
+    name: "Elemental Body III",
+    description:
+      "This spell functions as elemental body II, except that it also allows you to assume the form of a Large air, earth, fire, or water elemental. The abilities you gain depend upon the type of elemental into which you change. You are also immune to bleed damage, critical hits, and sneak attacks while in elemental form. Air elemental: As elemental body I except that you gain a +2 size bonus to your Strength, +4 size bonus to your Dexterity, and a +4 natural armor bonus. Earth elemental: As elemental body I except that you gain a +6 size bonus to your Strength, a –2 penalty on your Dexterity, a +2 size bonus to your Constitution, and a +6 natural armor bonus. Fire elemental: As elemental body I except that you gain a +4 size bonus to your Dexterity, a +2 size bonus to your Constitution, and a +4 natural armor bonus. Water elemental: As elemental body I except that you gain a +2 size bonus to your Strength, a –2 penalty on your Dexterity, a +6 size bonus to your Constitution, and a +6 natural armor bonus. Material Component: The element you plan to assume.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Transmutation",
+      [SPELL_SUBSCHOOL]: ["Polymorph"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Personal",
+      [SPELL_TARGET]: "You",
+      [SPELL_DURATION]: "1 min./level",
+      [SPELL_RESISTANCE]: "No",
+    },
   },
   {
     name: "Eyebite",
@@ -372,38 +475,21 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
     },
   },
   {
-    name: "Form of the Dragon II",
+    name: "Fox's Cunning, Mass",
     description:
-      "You become a Medium chromatic or metallic dragon. You gain a +4 size bonus to Strength, a +2 size bonus to Constitution, a +4 natural armor bonus, fly 60 feet (poor), darkvision 60 feet, a breath weapon, and resistance to one element. You also gain one bite (1d8), two claws (1d6), and two wing attacks (1d4). Your breath weapon and resistance depend on the type of dragon. You can only use the breath weapon once per casting of this spell. All breath weapons deal 6d8 points of damage and allow a Reflex save for half damage. In addition, some of the dragon types grant additional abilities, as noted below. Black dragon: 60-foot line of acid, resist acid 20, swim 60 feet Blue dragon: 60-foot line of electricity, resist electricity 20, burrow 20 feet Green dragon: 30-foot cone of acid, resist acid 20, swim 40 feet Red dragon: 30-foot cone of fire, resist fire 30, vulnerability to cold White dragon: 30-foot cone of cold, resist cold 20, swim 60 feet, vulnerability to fire Brass dragon: 60-foot line of fire, resist fire 20, burrow 30 feet, vulnerability to cold Bronze dragon: 60-foot line of electricity, resist electricity 20, swim 60 feet Copper dragon: 60-foot line of acid, resist acid 20, spider climb (always active) Gold dragon: 30-foot cone of fire, resist fire 20, swim 60 feet Silver dragon: 30-foot cone of cold, resist cold 30, vulnerability to fire Material Component: A scale of the dragon type you plan to assume.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+      "This spell functions like fox's cunning, except that it affects multiple creatures. Material Component: Hairs or dung from a fox.",
+    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
     fields: {
       [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_SUBSCHOOL]: ["Polymorph"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
       [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Personal",
-      [SPELL_TARGET]: "You",
-      [SPELL_DURATION]: "1 min./level (D)",
-      [SPELL_RESISTANCE]: "No",
-      [SPELL_SAVE_EFFECT]: "see below",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One creature/level, no two of which can be more than 30 ft. apart",
+      [SPELL_DURATION]: "1 min./level",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "negates (harmless)",
     },
-  },
-  {
-    name: "Form of the Dragon III",
-    description:
-      "You become a Medium chromatic or metallic dragon. You gain a +4 size bonus to Strength, a +2 size bonus to Constitution, a +4 natural armor bonus, fly 60 feet (poor), darkvision 60 feet, a breath weapon, and resistance to one element. You also gain one bite (1d8), two claws (1d6), and two wing attacks (1d4). Your breath weapon and resistance depend on the type of dragon. You can only use the breath weapon once per casting of this spell. All breath weapons deal 6d8 points of damage and allow a Reflex save for half damage. In addition, some of the dragon types grant additional abilities, as noted below. Black dragon: 60-foot line of acid, resist acid 20, swim 60 feet Blue dragon: 60-foot line of electricity, resist electricity 20, burrow 20 feet Green dragon: 30-foot cone of acid, resist acid 20, swim 40 feet Red dragon: 30-foot cone of fire, resist fire 30, vulnerability to cold White dragon: 30-foot cone of cold, resist cold 20, swim 60 feet, vulnerability to fire Brass dragon: 60-foot line of fire, resist fire 20, burrow 30 feet, vulnerability to cold Bronze dragon: 60-foot line of electricity, resist electricity 20, swim 60 feet Copper dragon: 60-foot line of acid, resist acid 20, spider climb (always active) Gold dragon: 30-foot cone of fire, resist fire 20, swim 60 feet Silver dragon: 30-foot cone of cold, resist cold 30, vulnerability to fire Material Component: A scale of the dragon type you plan to assume.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Transmutation",
-      [SPELL_SUBSCHOOL]: ["Polymorph"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "Personal",
-      [SPELL_TARGET]: "You",
-      [SPELL_DURATION]: "1 min./level (D)",
-      [SPELL_RESISTANCE]: "No",
-      [SPELL_SAVE_EFFECT]: "see below",
-    },
+    links: { resistedBy: "Will" },
   },
   {
     name: "Freezing Sphere",
@@ -424,6 +510,23 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Reflex" },
   },
   {
+    name: "Geas/Quest",
+    description:
+      "This spell functions similarly to lesser geas, except that it affects a creature of any HD and allows no saving throw. If the subject is prevented from obeying the geas/quest for 24 hours, it takes a –3 penalty to each of its ability scores. Each day, another –3 penalty accumulates, up to a total of –12. No ability score can be reduced to less than 1 by this effect. The ability score penalties are removed 24 hours after the subject resumes obeying the geas/quest. A remove curse spell ends a geas/quest spell only if its caster level is at least two higher than your caster level. Break enchantment does not end a geas/quest, but limited wish, miracle, and wish do. Bards, sorcerers, and wizards usually refer to this spell as geas, while clerics call the same spell quest.",
+    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Enchantment",
+      [SPELL_SUBSCHOOL]: ["Compulsion"],
+      [SPELL_DESCRIPTOR]: ["Language-Dependent", "Mind-Affecting"],
+      [SPELL_COMPONENT]: ["Verbal"],
+      [SPELL_CASTING_TIME]: "10 minutes",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One living creature",
+      [SPELL_DURATION]: "1 day/level or until discharged (D)",
+      [SPELL_RESISTANCE]: "Yes",
+    },
+  },
+  {
     name: "Globe of Invulnerability",
     description:
       "This spell functions like lesser globe of invulnerability, except that it also excludes 4th-level spells and spell-like effects. Material Component: A glass or crystal bead.",
@@ -439,18 +542,19 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
     },
   },
   {
-    name: "Globe of Invulnerability, Lesser",
+    name: "Glyph of Warding, Greater",
     description:
-      "This spell functions like lesser globe of invulnerability, except that it also excludes 4th-level spells and spell-like effects. Material Component: A glass or crystal bead.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+      "This spell functions like glyph of warding, except that a greater blast glyph deals up to 10d8 points of damage, and a greater spell glyph can store a spell of 6th level or lower. Read magic allows you to identify a greater glyph of warding with a DC 16 Spellcraft check. Material Component: You trace the glyph with incense, which must first be sprinkled with powdered diamond worth at least 400 gp. Material Component: Powdered diamond worth 200 gp.",
+    aptitudes: ["Cleric Spells"],
     fields: {
       [SPELL_SCHOOL]: "Abjuration",
       [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
-      [SPELL_CASTING_TIME]: "1 standard action",
-      [SPELL_RANGE_TYPE]: "10 ft.",
-      [SPELL_AREA_OF_EFFECT]: "10-ft.-radius spherical emanation, centered on you",
-      [SPELL_DURATION]: "1 round/level (D)",
-      [SPELL_RESISTANCE]: "No",
+      [SPELL_CASTING_TIME]: "10 minutes",
+      [SPELL_RANGE_TYPE]: "Touch",
+      [SPELL_TARGET]: "Object touched or up to 5 sq. ft./level",
+      [SPELL_DURATION]: "Permanent until discharged (D)",
+      [SPELL_RESISTANCE]: "No (object) and yes; see text",
+      [SPELL_SAVE_EFFECT]: "see text",
     },
   },
   {
@@ -501,6 +605,23 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
       [SPELL_DURATION]: "1 hour plus 12 hours; see text",
       [SPELL_RESISTANCE]: "No",
     },
+  },
+  {
+    name: "Inflict Moderate Wounds, Mass",
+    description:
+      "This spell functions like mass inflict light wounds, except that it deals 2d8 points of damage + 1 point per caster level (maximum +30).",
+    aptitudes: ["Cleric Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Necromancy",
+      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One creature/level, no two of which can be more than 30 ft. apart",
+      [SPELL_DURATION]: "Instantaneous",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "half",
+    },
+    links: { resistedBy: "Will" },
   },
   {
     name: "Ironwood",
@@ -584,6 +705,23 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
     },
   },
   {
+    name: "Owl's Wisdom, Mass",
+    description:
+      "This spell functions like owl's wisdom, except that it affects multiple creatures. Material Component: Feathers or droppings from an owl.",
+    aptitudes: ["Cleric Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Transmutation",
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One creature/level, no two of which can be more than 30 ft. apart",
+      [SPELL_DURATION]: "1 min./level",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "negates (harmless)",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
     name: "Permanent Image",
     description:
       "This spell functions like silent image, except that the figment includes visual, auditory, olfactory, and thermal elements, and the spell is permanent. By concentrating, you can move the image within the limits of the range, but it is static while you are not concentrating. Focus: A bit of fleece.",
@@ -619,40 +757,6 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
     },
   },
   {
-    name: "Planar Ally, Greater",
-    description:
-      "This spell functions like lesser planar ally, except you may call a single creature of 12 HD or less, or two creatures of the same kind whose HD total no more than 12. The creatures agree to help you and request your return payment together. Material Component: Offerings worth 1,250 gp plus payment.",
-    aptitudes: ["Cleric Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Calling"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "10 minutes",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_EFFECT]:
-        "One or two called outsiders, totaling no more than 12 HD, which cannot be more than 30 ft. apart when they appear",
-      [SPELL_DURATION]: "Instantaneous",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
-    name: "Planar Ally, Lesser",
-    description:
-      "This spell functions like lesser planar ally, except you may call a single creature of 12 HD or less, or two creatures of the same kind whose HD total no more than 12. The creatures agree to help you and request your return payment together. Material Component: Offerings worth 1,250 gp plus payment.",
-    aptitudes: ["Cleric Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Calling"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
-      [SPELL_CASTING_TIME]: "10 minutes",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_EFFECT]:
-        "One or two called outsiders, totaling no more than 12 HD, which cannot be more than 30 ft. apart when they appear",
-      [SPELL_DURATION]: "Instantaneous",
-      [SPELL_RESISTANCE]: "No",
-    },
-  },
-  {
     name: "Planar Binding",
     description:
       "This spell functions like lesser planar binding, except that you may call a single creature of 12 HD or less, or up to three creatures of the same kind whose Hit Dice total no more than 12. Each creature gets a saving throw, makes an independent attempt to escape, and must be individually persuaded to aid you.",
@@ -672,42 +776,20 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
-    name: "Planar Binding, Greater",
+    name: "Plant Shape II",
     description:
-      "This spell functions like lesser planar binding, except that you may call a single creature of 12 HD or less, or up to three creatures of the same kind whose Hit Dice total no more than 12. Each creature gets a saving throw, makes an independent attempt to escape, and must be individually persuaded to aid you.",
+      "This spell functions as plant shape I except that it also allows you to assume the form of a Large creature of the plant type. If the creature has immunity or resistance to any elements, you gain resistance 20 to those elements. If the creature has vulnerability to an element, you gain that vulnerability. Large plant: If the form you take is that of a Large plant, you gain a +4 size bonus to your Strength, a +2 size bonus to your Constitution, and a +4 natural armor bonus. Material Component: A piece of the creature whose form you plan to assume.",
     aptitudes: ["Sorcerer Spells", "Wizard Spells"],
     fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Calling"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
-      [SPELL_CASTING_TIME]: "10 minutes",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_TARGET]:
-        "Up to three elementals or outsiders, totaling no more than 12 HD, no two of which can be more than 30 ft. apart when they appear",
-      [SPELL_DURATION]: "Instantaneous",
-      [SPELL_RESISTANCE]: "No and yes; see text",
-      [SPELL_SAVE_EFFECT]: "negates",
+      [SPELL_SCHOOL]: "Transmutation",
+      [SPELL_SUBSCHOOL]: ["Polymorph"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Personal",
+      [SPELL_TARGET]: "You",
+      [SPELL_DURATION]: "1 min./level (D)",
+      [SPELL_RESISTANCE]: "No",
     },
-    links: { resistedBy: "Will" },
-  },
-  {
-    name: "Planar Binding, Lesser",
-    description:
-      "This spell functions like lesser planar binding, except that you may call a single creature of 12 HD or less, or up to three creatures of the same kind whose Hit Dice total no more than 12. Each creature gets a saving throw, makes an independent attempt to escape, and must be individually persuaded to aid you.",
-    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
-    fields: {
-      [SPELL_SCHOOL]: "Conjuration",
-      [SPELL_SUBSCHOOL]: ["Calling"],
-      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
-      [SPELL_CASTING_TIME]: "10 minutes",
-      [SPELL_RANGE_TYPE]: "Close",
-      [SPELL_TARGET]:
-        "Up to three elementals or outsiders, totaling no more than 12 HD, no two of which can be more than 30 ft. apart when they appear",
-      [SPELL_DURATION]: "Instantaneous",
-      [SPELL_RESISTANCE]: "No and yes; see text",
-      [SPELL_SAVE_EFFECT]: "negates",
-    },
-    links: { resistedBy: "Will" },
   },
   {
     name: "Programmed Image",
@@ -780,6 +862,50 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
     links: { resistedBy: "Will" },
   },
   {
+    name: "Scrying, Greater",
+    description:
+      "This spell functions like scrying, except as noted above. Additionally, all of the following spells function reliably through the sensor: detect chaos, detect evil, detect good, detect law, detect magic, message, read magic, and tongues.",
+    aptitudes: ["Bard Spells", "Cleric Spells", "Druid Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudeLevels: {
+      "Bard Spells": 6,
+      "Cleric Spells": 7,
+      "Druid Spells": 7,
+      "Sorcerer Spells": 7,
+      "Wizard Spells": 7,
+    },
+    fields: {
+      [SPELL_SCHOOL]: "Divination",
+      [SPELL_SUBSCHOOL]: ["Scrying"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "See text",
+      [SPELL_EFFECT]: "Magical sensor",
+      [SPELL_DURATION]: "1 hour/level",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "negates",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
+    name: "Shout, Greater",
+    description:
+      "This spell functions like shout, except that the cone deals 10d6 points of sonic damage (or 1d6 points of sonic damage per caster level, maximum 20d6, against exposed brittle or crystalline objects or crystalline creatures). It also causes creatures to be stunned for 1 round and deafened for 4d6 rounds. A creature in the area of the cone can negate the stunning and halve both the damage and the duration of the deafness with a successful Fortitude save. A creature holding vulnerable objects can attempt a Reflex save to negate the damage to those objects. Focus: A metal or ivory horn.",
+    aptitudes: ["Bard Spells", "Sorcerer Spells", "Wizard Spells"],
+    aptitudeLevels: { "Bard Spells": 6, "Sorcerer Spells": 8, "Wizard Spells": 8 },
+    fields: {
+      [SPELL_SCHOOL]: "Evocation",
+      [SPELL_DESCRIPTOR]: ["Sonic"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "60 ft.",
+      [SPELL_AREA_OF_EFFECT]: "Cone-shaped burst",
+      [SPELL_DURATION]: "Instantaneous",
+      [SPELL_RESISTANCE]: "Yes (object)",
+      [SPELL_SAVE_EFFECT]: "partial or Reflex negates (object); see text",
+    },
+    links: { resistedBy: "Fortitude" },
+  },
+  {
     name: "Spellstaff",
     description:
       "You store one spell that you can normally cast in a wooden quarterstaff. Only one such spell can be stored in a staff at a given time, and you cannot have more than one spellstaff at any given time. You can cast a spell stored within a staff just as though it were among those you had prepared, but it does not count against your normal allotment for a given day. You use up any applicable material components required to cast the spell when you store it in the spellstaff. Focus: The staff that stores the spell.",
@@ -828,6 +954,38 @@ export const LEVEL_6_SPELLS: SpellSeed[] = [
       [SPELL_SAVE_EFFECT]: "negates (object); see text",
     },
     links: { resistedBy: "Fortitude" },
+  },
+  {
+    name: "Summon Monster VI",
+    description:
+      "This spell functions like summon monster I, except you can summon one creature from the 6th-level list, 1d3 creatures of the same kind from the 5th-level list, or 1d4+1 creatures of the same kind from a lower-level list. Focus: A tiny bag and a small candle.",
+    aptitudes: ["Bard Spells", "Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_EFFECT]: "One summoned creature",
+      [SPELL_DURATION]: "1 round/level (D)",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
+    name: "Summon Nature's Ally VI",
+    description:
+      "This spell functions like summon nature's ally I, except that you can summon one 6th-level creature, 1d3 5th-level creatures of the same kind, or 1d4+1 lower-level creatures of the same kind.",
+    aptitudes: ["Druid Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_EFFECT]: "One summoned creature",
+      [SPELL_DURATION]: "1 round/level (D)",
+      [SPELL_RESISTANCE]: "No",
+    },
   },
   {
     name: "Symbol of Fear",

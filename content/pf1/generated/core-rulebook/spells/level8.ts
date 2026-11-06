@@ -240,6 +240,39 @@ export const LEVEL_8_SPELLS: SpellSeed[] = [
     },
   },
   {
+    name: "Form of the Dragon III",
+    description:
+      "This spell functions as form of the dragon II save that it also allows you to take the form of a Huge chromatic or metallic dragon. You gain the following abilities: a +10 size bonus to Strength, a +8 size bonus to Constitution, a +8 natural armor bonus, fly 120 feet (poor), blindsense 60 feet, darkvision 120 feet, a breath weapon, DR 10/magic, frightful presence (DC equal to the DC for this spell), and immunity to one element (of the same type form of the dragon I grants resistance to). You also gain one bite (2d8), two claws (2d6), two wing attacks (1d8), and one tail slap attack (2d6). You can use the breath weapon as often as you like, but you must wait 1d4 rounds between uses. All breath weapons deal 12d8 points of damage and allow a Reflex save for half damage. Line breath weapons increase to 100-foot lines and cones increase to 50-foot cones. Material Component: A scale of the dragon type you plan to assume.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Transmutation",
+      [SPELL_SUBSCHOOL]: ["Polymorph"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Personal",
+      [SPELL_TARGET]: "You",
+      [SPELL_DURATION]: "1 min./level (D)",
+      [SPELL_RESISTANCE]: "No",
+      [SPELL_SAVE_EFFECT]: "see below",
+    },
+  },
+  {
+    name: "Giant Form II",
+    description:
+      "This spell functions as giant form I except that it also allows you to assume the form of any Huge creature of the giant type. You gain the following abilities: a +8 size bonus to Strength, a –2 penalty to Dexterity, a +6 size bonus to Constitution, a +6 natural armor bonus, low-light vision, and a +10 foot enhancement bonus to your speed. If the form you assume has any of the following abilities, you gain the listed ability: swim 60 feet, darkvision 60 feet, rend (2d8 damage), regeneration 5, rock catching, and rock throwing (range 120 feet, 2d10 damage). If the creature has immunity or resistance to one element, you gain that immunity or resistance. If the creature has vulnerability to an element, you gain that vulnerability. Material Component: A piece of the creature whose form you plan to assume.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Transmutation",
+      [SPELL_SUBSCHOOL]: ["Polymorph"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Personal",
+      [SPELL_TARGET]: "You",
+      [SPELL_DURATION]: "1 min./level (D)",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
     name: "Holy Aura",
     description:
       "A brilliant divine radiance surrounds the subjects, protecting them from attacks, granting them resistance to spells cast by evil creatures, and causing evil creatures to become blinded when they strike the subjects. This abjuration has four effects. First, each warded creature gains a +4 deflection bonus to AC and a +4 resistance bonus on saves. Unlike protection from evil, this benefit applies against all attacks, not just against attacks by evil creatures. Second, each warded creature gains spell resistance 25 against evil spells and spells cast by evil creatures. Third, the abjuration protects the recipient from possession and mental influence, just as protection from evil does. Finally, if an evil creature succeeds on a melee attack against a creature warded by a holy aura, the offending attacker is blinded (Fortitude save negates, as blindness/deafness, but against holy aura's save DC). Focus: A tiny reliquary worth 500 gp.",
@@ -291,6 +324,23 @@ export const LEVEL_8_SPELLS: SpellSeed[] = [
       [SPELL_SAVE_EFFECT]: "half, see text",
     },
     links: { resistedBy: "Reflex" },
+  },
+  {
+    name: "Inflict Critical Wounds, Mass",
+    description:
+      "This spell functions like mass inflict light wounds, except that it deals 4d8 points of damage + 1 point per caster level (maximum +40).",
+    aptitudes: ["Cleric Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Necromancy",
+      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]: "One creature/level, no two of which can be more than 30 ft. apart",
+      [SPELL_DURATION]: "Instantaneous",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "half",
+    },
+    links: { resistedBy: "Will" },
   },
   {
     name: "Iron Body",
@@ -354,6 +404,42 @@ export const LEVEL_8_SPELLS: SpellSeed[] = [
       [SPELL_DURATION]: "1 hour/level or until discharged",
       [SPELL_RESISTANCE]: "No",
     },
+  },
+  {
+    name: "Planar Ally, Greater",
+    description:
+      "This spell functions like lesser planar ally, except that you may call a single creature of 18 HD or less, or up to three creatures of the same kind whose Hit Dice total no more than 18. The creatures agree to help you and request your return payment together. Material Component: Offerings worth 2,500 plus payment.",
+    aptitudes: ["Cleric Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Calling"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Material", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "10 minutes",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_EFFECT]:
+        "Up to three called outsiders, totaling no more than 18 HD, no two of which can be more than 30 ft. apart when they appear",
+      [SPELL_DURATION]: "Instantaneous",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
+    name: "Planar Binding, Greater",
+    description:
+      "This spell functions like lesser planar binding, except that you may call a single creature of 18 HD or less, or up to three creatures of the same kind whose Hit Dice total no more than 18. Each creature gets a saving throw, makes an independent attempt to escape, and must be individually persuaded to aid you.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Calling"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
+      [SPELL_CASTING_TIME]: "10 minutes",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_TARGET]:
+        "Up to three elementals or outsiders, totaling no more than 18 HD, no two of which can be more than 30 ft. apart when they appear",
+      [SPELL_DURATION]: "Instantaneous",
+      [SPELL_RESISTANCE]: "No and yes; see text",
+      [SPELL_SAVE_EFFECT]: "negates",
+    },
+    links: { resistedBy: "Will" },
   },
   {
     name: "Polar Ray",
@@ -505,6 +591,24 @@ export const LEVEL_8_SPELLS: SpellSeed[] = [
     },
   },
   {
+    name: "Shadow Evocation, Greater",
+    description:
+      "This spell functions like shadow evocation, except that it enables you to create partially real, illusory versions of sorcerer or wizard evocation spells of 7th level or lower. If recognized as a greater shadow evocation, a damaging spell deals only three-fifths (60%) damage.",
+    aptitudes: ["Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Illusion",
+      [SPELL_SUBSCHOOL]: ["Shadow"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "See text",
+      [SPELL_EFFECT]: "See text",
+      [SPELL_DURATION]: "See text",
+      [SPELL_RESISTANCE]: "Yes",
+      [SPELL_SAVE_EFFECT]: "disbelief (if interacted with)",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
     name: "Shield of Law",
     description:
       "A dim, blue glow surrounds the subjects, protecting them from attacks, granting them resistance to spells cast by chaotic creatures, and slowing chaotic creatures when they strike the subjects. This abjuration has four effects. First, each warded creature gains a +4 deflection bonus to AC and a +4 resistance bonus on saves. Unlike protection from chaos, this benefit applies against all attacks, not just against attacks by chaotic creatures. Second, a warded creature gains spell resistance 25 against chaotic spells and spells cast by chaotic creatures. Third, the abjuration protects you from possession and mental influence, just as protection from chaos does. Finally, if a chaotic creature succeeds on a melee attack against a warded creature, the attacker is slowed (Will save negates, as the slow spell, but against shield of law's save DC). Focus: A reliquary worth 500 gp.",
@@ -519,6 +623,55 @@ export const LEVEL_8_SPELLS: SpellSeed[] = [
       [SPELL_DURATION]: "1 round/level (D)",
       [SPELL_RESISTANCE]: "Yes (harmless)",
       [SPELL_SAVE_EFFECT]: "see text",
+    },
+  },
+  {
+    name: "Spell Immunity, Greater",
+    description:
+      "This spell functions like spell immunity, except the immunity applies to spells of 8th level or lower. A creature can have only one spell immunity or greater spell immunity spell in effect on it at a time.",
+    aptitudes: ["Cleric Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Abjuration",
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 standard action",
+      [SPELL_RANGE_TYPE]: "Touch",
+      [SPELL_TARGET]: "Creature touched",
+      [SPELL_DURATION]: "10 min./level",
+      [SPELL_RESISTANCE]: "Yes (harmless)",
+      [SPELL_SAVE_EFFECT]: "negates (harmless)",
+    },
+    links: { resistedBy: "Will" },
+  },
+  {
+    name: "Summon Monster VIII",
+    description:
+      "This spell functions like summon monster I, except that you can summon one creature from the 8th-level list, 1d3 creatures of the same kind from the 7th-level list, or 1d4+1 creatures of the same kind from a lower-level list. Focus: A tiny bag and a small candle.",
+    aptitudes: ["Cleric Spells", "Sorcerer Spells", "Wizard Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Focus", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_EFFECT]: "One summoned creature",
+      [SPELL_DURATION]: "1 round/level (D)",
+      [SPELL_RESISTANCE]: "No",
+    },
+  },
+  {
+    name: "Summon Nature's Ally VIII",
+    description:
+      "This spell functions like summon nature's ally I, except that you can summon one 8th-level creature, 1d3 7th-level creatures of the same kind, or 1d4+1 lower-level creatures of the same kind.",
+    aptitudes: ["Druid Spells"],
+    fields: {
+      [SPELL_SCHOOL]: "Conjuration",
+      [SPELL_SUBSCHOOL]: ["Summoning"],
+      [SPELL_COMPONENT]: ["Verbal", "Somatic", "Divine Focus"],
+      [SPELL_CASTING_TIME]: "1 round",
+      [SPELL_RANGE_TYPE]: "Close",
+      [SPELL_EFFECT]: "One summoned creature",
+      [SPELL_DURATION]: "1 round/level (D)",
+      [SPELL_RESISTANCE]: "No",
     },
   },
   {
