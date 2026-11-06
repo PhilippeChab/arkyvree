@@ -545,6 +545,17 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
     return rows;
   }
 
+  /** An entity's base rules (`id`'s), its ruleset's: none once it's gone, or for an id no entity has. */
+  async findBaseRules(db: Db, where: { id: string }): Promise<BaseRules | undefined> {
+    const [entity] = await db
+      .select({ baseRules: entitiesInRules.baseRules })
+      .from(entitiesInRules)
+      .where(eq(entitiesInRules.id, where.id))
+      .limit(1);
+    // A ruleset's base rules are a registered module's, by their foreign key to `rules.modules`
+    return entity?.baseRules as BaseRules | undefined;
+  }
+
   /**
    * A ruleset's list of a kind, its entities grouped as its rules group them (`groups`: each entity and a group it's in,
    * a feat and a family it's a variant of), one in none a group alone, searched as its list is (its name, its text, and
