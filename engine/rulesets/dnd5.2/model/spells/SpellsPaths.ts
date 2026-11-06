@@ -15,7 +15,7 @@ import {
   type TargetPath,
 } from "@/shared/customization/target.ts";
 import { capitalize, stripSeparators } from "@/shared/text.ts";
-import { SPELL_DESCRIPTOR, SPELL_SCHOOL } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { SPELL_SCHOOL } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 import SpellsComponent from "./SpellsComponent.ts";
 
@@ -27,7 +27,7 @@ const NAVIGATABLE_SPELL_DC_PATHS = [
 /** The spells' target paths: each spell's DC, possession and fields. */
 export default class SpellsPaths implements PathCategory<Dnd52Components> {
   /**
-   * The DC paths of these groupings (a school or descriptor: `spells.groups.<grouping>.*.dc.misc`, each of its spells)
+   * The DC paths of these groupings (a school: `spells.groups.<grouping>.*.dc.misc`, each of its spells)
    * or of these spells (`wildcard` false: `spells.<spell>.dc.*.misc`, each class's DC of it).
    */
   static generateGroupingPaths(
@@ -178,12 +178,6 @@ export default class SpellsPaths implements PathCategory<Dnd52Components> {
         true,
         "school",
       ),
-      ...SpellsPaths.generateGroupingPaths(
-        CategoryPaths.collectValueSlugs(spellValues, SPELL_DESCRIPTOR),
-        kind,
-        true,
-        "descriptor",
-      ),
       ...SpellsPaths.generateGroupingPaths(this.leveledSpellNames(dnd52), kind, false),
     ];
   }
@@ -192,7 +186,7 @@ export default class SpellsPaths implements PathCategory<Dnd52Components> {
     return {
       fields: "Fields",
       known: "Known",
-      // Pathfinder surfaces spell groupings as schools in the path picker
+      // Spell groupings are schools in the path picker
       ...deriveSegmentLabels(NAVIGATABLE_SPELL_DC_PATHS, { dc: "DC", groups: "Schools" }),
     };
   }

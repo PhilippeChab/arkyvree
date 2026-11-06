@@ -1,9 +1,7 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd5.2/model/classes/ClassesComponent.ts";
-import type IdentityComponent from "@/engine/rulesets/dnd5.2/model/identity/IdentityComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd5.2/model/loading/DetailedCharacterDataLoader.ts";
-import LevelRules from "@/engine/rulesets/dnd5.2/rules/LevelRules.ts";
 import SpellLists from "@/engine/rulesets/dnd5.2/rules/SpellLists.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
 import type { Aptitude } from "@/engine/rulesets/dnd5.2/view/rows.ts";
@@ -98,15 +96,7 @@ function sumAvailable(pools: { available: number }[]) {
  * spent, and the pools a level-up picks in.
  */
 export default class AptitudesComponent extends CharacterComponent<LoadedCharacterData> {
-  constructor(
-    private readonly identity: IdentityComponent,
-    private readonly classes: ClassesComponent,
-    /**
-     * The general feats a character has at its total level: its kind's rule, which a bonded creature has none of. The
-     * one rule a component takes from its character, beside its siblings.
-     */
-    private readonly countGeneralFeats: (totalLevel: number) => number,
-  ) {
+  constructor(private readonly classes: ClassesComponent) {
     super();
   }
 
@@ -117,9 +107,6 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
 
   // Track which aptitude keys are leveled (spell aptitudes)
   private readonly leveledAptitudeKeys = new Set<string>();
-
-  /** The general feats the character's level gives, when its ruleset has no aptitude for them to count toward. */
-  private unplacedGeneralFeats = 0;
 
   /**
    * An entry per aptitude of the ruleset (one per spell level for a leveled one, a spell list's: `SpellLists`): what it
@@ -139,18 +126,13 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
 
   /**
    * What each aptitude allows: the feats and the (non-free) spells the class levels grant through it (`grantCounts`,
-   * by its id), and the general feats its total level gives (`countGeneralFeats`).
+   * by its id); its modifiers add the rest (a class level's, a feat's, a species').
    */
   private applyAllowances(aptitudeById: AptitudesById, grantCounts: Record<string, number>) {
     for (const [aptitudeId, count] of Object.entries(grantCounts)) {
       const aptitude = aptitudeById.get(aptitudeId);
       if (aptitude) aptitude.allowed += count;
     }
-
-    const generalFeats = this.countGeneralFeats(this.identity.getIdentity().meta.level);
-    const general = this.aptitudes[LevelRules.GENERAL_FEATS_APTITUDE_SLUG];
-    if (general) general.allowed += generalFeats;
-    this.unplacedGeneralFeats = general ? 0 : generalFeats;
   }
 
   /** Sets what the character spent on each aptitude: flat, or per spell level for a leveled one. */
@@ -355,11 +337,6 @@ export default class AptitudesComponent extends CharacterComponent<LoadedCharact
       }
     }
     return pools;
-  }
-
-  /** The general feats the character's level gives that count toward no aptitude: its ruleset has no General. */
-  getUnplacedGeneralFeats(): number {
-    return this.unplacedGeneralFeats;
   }
 
   isLeveledAptitude(key: string): boolean {

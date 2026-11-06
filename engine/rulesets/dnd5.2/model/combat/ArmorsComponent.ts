@@ -4,21 +4,24 @@ import type InventoryComponent from "@/engine/rulesets/dnd5.2/model/inventory/In
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd5.2/model/loading/DetailedCharacterDataLoader.ts";
 import type { Item } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { MASTERWORK_CHECK_PENALTY_REDUCTION } from "@/vocabulary/dnd5.2/combat.ts";
 import { ITEM_TYPE } from "@/vocabulary/dnd5.2/fields/index.ts";
 
-interface ArmorSlot {
-  ac: { bonus: number; misc: number; readonly total: number };
-  checkpenalty: number;
+/** An armor the character wears: its category, the Armor Class it gives, its cap on Dexterity, its Strength and Stealth. */
+export interface ArmorSlot {
+  /** Its Armor Class: its base (Chain Mail's 16) and what modifiers add (a +1 armor's), counted when read. */
+  ac: { base: number; misc: number; readonly total: number };
+  /** Its category, lowercased as the sheet's armor category reads: light, medium or heavy. */
+  category: string;
   itemId: string;
-  maxdex: number;
+  /** The most Dexterity modifier its wearer adds: none for heavy armor (0), all of it for light armor (null). */
+  maxdex: number | null;
   name: string;
-  /** Whether the character is proficient with it: without, its check penalty applies to attack rolls */
-  proficient: boolean;
-  spellfailure: number;
+  stealthdisadvantage: boolean;
+  /** The Strength score its wearer needs, or its speed is 10 feet lower: 0 for none. */
+  strength: number;
 }
 
-/** Grouping key (normalized) → shared ArmorSlot reference */
+/** Grouping key (its armor's type, normalized) → shared ArmorSlot reference */
 type ArmorsData = Record<string, ArmorSlot>;
 
 /** The armors a character has equipped, under their types: the inventory's (`InventoryComponent.getEquipped`). */
@@ -35,36 +38,26 @@ export default class ArmorsComponent extends CharacterComponent<LoadedCharacterD
       if (entry.item.fields[ITEM_TYPE] === "Armor") this.registerArmor(entry.item, fields);
   }
 
+  /** An armor under its type (Chain Mail's `chainmail`): one without a category isn't one the sheet wears. */
   private registerArmor(item: Item, fields: ItemFieldValues): void {
-    if (fields.armor.proficiency === null) return;
-
-    const acBonus = fields.armor.acBonus ?? 0;
-    let checkPenalty = fields.checkPenalty ?? 0;
-    const spellFailure = fields.spellFailure ?? 0;
-    const maxDex = fields.maxDex ?? 99;
-
-    if (fields.masterwork === true) checkPenalty = Math.min(checkPenalty + MASTERWORK_CHECK_PENALTY_REDUCTION, 0);
-
-    const armorSlot: ArmorSlot = {
+    const { armorClass, category, maxDex, stealthDisadvantage, strength, type } = fields.armor;
+    if (category === null || type === null) return;
+    this.armors[stripSeparators(type)] = {
       name: item.name,
       itemId: item.id,
-      proficient: true,
-      // Its AC's total is computed when read, from the bonus and what modifiers add
+      category: category.toLowerCase(),
+      // Its Armor Class's total is computed when read, from its base and what modifiers add
       ac: {
-        bonus: acBonus,
+        base: armorClass ?? 0,
         misc: 0,
         get total() {
-          return this.bonus + this.misc;
+          return this.base + this.misc;
         },
       },
-      checkpenalty: checkPenalty,
-      spellfailure: spellFailure,
       maxdex: maxDex,
+      strength: strength ?? 0,
+      stealthdisadvantage: stealthDisadvantage === true,
     };
-
-    // Under its type: a full plate's `fullplate`
-    const grouping = fields.armor.type === null ? "" : stripSeparators(fields.armor.type);
-    if (grouping) this.armors[grouping] = armorSlot;
   }
 
   getArmors(): ArmorsData {

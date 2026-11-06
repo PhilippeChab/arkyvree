@@ -10,7 +10,6 @@ import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import { formatFieldValues } from "@/shared/customization/fields.ts";
 import type { Modifier } from "@/shared/relations.ts";
-import { SPELL_SAVE_EFFECT } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 /**
  * The feats, spells and languages a Pathfinder character has without a pick: those its modifiers grant (`set …possessed`, `set
@@ -117,7 +116,6 @@ export function PossessesVirtually<B extends Constructor<CharacterState>>(Base: 
             name: entity.name,
             description: entity.description,
             saveName,
-            saveEffect: entity.fields[SPELL_SAVE_EFFECT] ?? null,
             aptitudeId: viaId,
             level,
             dc: this.components.spells.getSpell(entity.name)?.dc?.[aptitudeSlug]?.total ?? null,

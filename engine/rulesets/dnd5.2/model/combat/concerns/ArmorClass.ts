@@ -1,93 +1,57 @@
-import { type ItemFieldValues } from "@/engine/rulesets/dnd5.2/entities/items/fields.ts";
 import type CombatState from "@/engine/rulesets/dnd5.2/model/combat/CombatState.ts";
 import type { ArmorClassParts, WeaponSet } from "@/engine/rulesets/dnd5.2/model/combat/CombatState.ts";
 import type { ShieldSlot } from "@/engine/rulesets/dnd5.2/model/combat/ShieldsComponent.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { ARMOR_CATEGORIES, COMBAT_RULES } from "@/vocabulary/dnd5.2/combat.ts";
-import { SIZE_AC_ATTACK_MOD } from "@/vocabulary/dnd5.2/sizes.ts";
+import { COMBAT_RULES, type WORN_ARMOR_CATEGORIES } from "@/vocabulary/dnd5.2/combat.ts";
 
-/** The parts of a set's armor class a modifier writes in the set alone, on top of what every set shares. */
-type OwnParts = Pick<ArmorClassParts, "armor" | "base" | "deflection" | "dodge" | "misc" | "natural" | "shield"> & {
-  uncannydodge: boolean | null;
-};
+/** The parts of a set's Armor Class a modifier writes in the set alone, on top of what every set shares. */
+type OwnParts = Pick<ArmorClassParts, "misc" | "shield">;
 
-/** The AC the equipped armors or shields give: each counted once, though an item is under several groupings. */
-function sumAc(slots: Iterable<{ ac: { total: number } }>): number {
-  return [...new Set(slots)].reduce((ac, slot) => ac + slot.ac.total, 0);
-}
+/** The heaviest of the armors a character wears, by its category: the one its Armor Class is from. */
+const CATEGORY_WEIGHT: Record<string, number> = { light: 1, medium: 2, heavy: 3 };
 
-/** An armor class's total: every part. */
-function totalOf(ac: ArmorClassParts): number {
-  return ac.base + ac.armor + ac.shield + ac.dexterity + ac.natural + ac.deflection + ac.dodge + ac.size + ac.misc;
+/** The Armor Class a set's shield adds: its first's, the one it uses, with training to use it (`trained`), else none. */
+function shieldAcOf(shields: readonly ShieldSlot[], trained: boolean): number {
+  return trained ? (shields[0]?.ac.total ?? 0) : 0;
 }
 
 /**
- * A character's armor class, a weapon set's each: its armor and its shield, the Dexterity bonus they leave it, and the
- * parts every set shares.
+ * A character's Armor Class, a weapon set's each, as the SRD 5.2.1 counts it: unarmored, 10 and its Dexterity
+ * modifier; in armor, the armor's and as much of its Dexterity modifier as the armor lets it add (all of it in light
+ * armor, 2 at most in medium armor, none in heavy armor); a Shield's +2, with the training to use it; and what
+ * modifiers add (an Unarmored Defense's ability, gated on no armor). A character in several armors wears the heaviest.
  */
 export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithArmorClass extends Base {
+    /** The armor the character wears: the heaviest of those it has equipped, none when it has none. */
+    private wornArmor() {
+      return Object.values(this.combat.armors).reduce<(typeof this.combat.armors)[string] | undefined>(
+        (worn, armor) => (worn && CATEGORY_WEIGHT[worn.category] >= CATEGORY_WEIGHT[armor.category] ? worn : armor),
+        undefined,
+      );
+    }
+
     /**
-     * A weapon set's armor class and shield: the parts every set shares and what modifiers add in the set alone (in its
-     * scope: `CombatPaths.resolve`), its own shields' AC and their cap on Dexterity, and its totals.
+     * A weapon set's Armor Class and shield: the parts every set shares and what modifiers add in the set alone (in its
+     * scope: `CombatPaths.resolve`), its own shield, and its total.
      */
     protected override defenseOf(setKey: string): Pick<WeaponSet, "ac" | "shield"> {
       const shared = () => this.combat.ac;
-      const own: OwnParts = {
-        armor: 0,
-        base: 0,
-        deflection: 0,
-        dodge: 0,
-        misc: 0,
-        natural: 0,
-        shield: 0,
-        uncannydodge: null,
-      };
+      const own: OwnParts = { misc: 0, shield: 0 };
       const shields = () => this.shieldSets[setKey] ?? [];
-      const shieldAc = () => sumAc(shields());
-      const dexterity = () => this.dexterityAc(shields());
+      const trained = () => this.combat.armortraining.shields;
       const ac: WeaponSet["ac"] = {
         get base() {
-          return shared().base + own.base;
-        },
-        set base(value: number) {
-          own.base = value - shared().base;
-        },
-        get armor() {
-          return shared().armor + own.armor;
-        },
-        set armor(value: number) {
-          own.armor = value - shared().armor;
-        },
-        get shield() {
-          return shieldAc() + own.shield;
-        },
-        set shield(value: number) {
-          own.shield = value - shieldAc();
+          return shared().base;
         },
         get dexterity() {
-          return dexterity();
+          return shared().dexterity;
         },
-        get natural() {
-          return shared().natural + own.natural;
+        get shield() {
+          return shieldAcOf(shields(), trained()) + own.shield;
         },
-        set natural(value: number) {
-          own.natural = value - shared().natural;
-        },
-        get deflection() {
-          return shared().deflection + own.deflection;
-        },
-        set deflection(value: number) {
-          own.deflection = value - shared().deflection;
-        },
-        get dodge() {
-          return shared().dodge + own.dodge;
-        },
-        set dodge(value: number) {
-          own.dodge = value - shared().dodge;
-        },
-        get size() {
-          return shared().size;
+        set shield(value: number) {
+          own.shield = value - shieldAcOf(shields(), trained());
         },
         get misc() {
           return shared().misc + own.misc;
@@ -95,22 +59,8 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
         set misc(value: number) {
           own.misc = value - shared().misc;
         },
-        get uncannydodge() {
-          return own.uncannydodge ?? shared().uncannydodge;
-        },
-        set uncannydodge(value: boolean) {
-          own.uncannydodge = value;
-        },
         get total() {
-          return totalOf(this);
-        },
-        get touch() {
-          return totalOf(this) - this.armor - this.shield - this.natural;
-        },
-        // A flat-footed character loses its Dexterity bonus (a penalty stays) and its dodge bonuses, unless uncanny
-        // dodge keeps them
-        get flatfooted() {
-          return this.uncannydodge ? totalOf(this) : totalOf(this) - Math.max(0, this.dexterity) - this.dodge;
+          return this.base + this.dexterity + this.shield + this.misc;
         },
       };
       return {
@@ -120,90 +70,53 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
             return shields().length > 0;
           },
           get names() {
-            return shields().map((shield) => shield.name);
+            return shields().map(({ name }) => name);
           },
         },
       };
     }
 
-    /** Dexterity's bonus to AC, capped by the lowest maximum of the armor, the `shields` held and the load. */
-    private dexterityAc(shields: ShieldSlot[]): number {
-      const slots = [...Object.values(this.combat.armors), ...shields];
-      const cap = Math.min(...slots.map((slot) => slot.maxdex), this.combat.encumbrance.maxdex);
-      const dexterity = this.abilities.getAbilityModifier("Dexterity");
-      return cap === Infinity ? dexterity : Math.min(dexterity, cap);
-    }
-
-    /** The shields every weapon set holds, each set's: what the armor class reads outside a set, the worst case. */
-    private everyShield(): ShieldSlot[] {
-      return Object.values(this.shieldSets).flat();
-    }
-
     /**
-     * The armor class's parts every weapon set shares (`CombatData.ac`): its inputs (the base, natural armor,
-     * deflection, dodge, misc, uncanny dodge), which modifiers change, and what's computed when read. The armor's AC is
-     * the equipped armor's and what modifiers add to it (a modifier's write keeps only its own part, so the armor's stays
-     * live). The shield's is no set's but each set's own, which modifiers change in each set (`scopesOf`): read outside a
-     * set, it's the greatest set's. Dexterity's bonus is capped by every shield, as a shield carried in any set is the
-     * worst case; whether one is (`combat.shield.held`) too.
+     * The sheet's Armor Class and armor: its base and Dexterity follow the armor worn and the Dexterity, its shield
+     * the best a set holds, when read; misc is an input. The armor's category, its training and its Strength are read
+     * off the armor worn.
      */
     protected initializeArmorClass(): void {
-      const armorAc = () => sumAc(Object.values(this.combat.armors));
-      const shieldAc = () => {
-        const shields = Object.values(this.combat.weaponsets).map((weaponSet) => weaponSet.ac.shield);
-        return shields.length > 0 ? Math.max(...shields) : 0;
-      };
-      const dexterityAc = () => this.dexterityAc(this.everyShield());
-      const size = () => SIZE_AC_ATTACK_MOD[this.raceSize] ?? 0;
-      const held = () => this.everyShield().length > 0;
-      const bonus = this.gearBonus;
+      const worn = () => this.wornArmor();
+      const dexterity = () => this.abilities.getAbilityModifier("Dexterity");
+      const strength = () => this.abilities.getAbility("Strength")?.total ?? 0;
+      const { armortraining } = this.combat;
+      const sets = () => Object.values(this.combat.weaponsets);
       this.combat.ac = {
-        base: COMBAT_RULES.DEFAULT_AC_BASE,
-        get armor() {
-          return armorAc() + bonus.armor;
-        },
-        set armor(value: number) {
-          bonus.armor = value - armorAc();
-        },
-        get shield() {
-          return shieldAc();
+        get base() {
+          return worn()?.ac.total ?? COMBAT_RULES.UNARMORED_AC_BASE;
         },
         get dexterity() {
-          return dexterityAc();
+          const maxdex = worn()?.maxdex ?? null;
+          return maxdex === null ? dexterity() : Math.min(dexterity(), maxdex);
         },
-        natural: 0,
-        deflection: 0,
-        dodge: 0,
-        get size() {
-          return size();
+        get shield() {
+          return Math.max(0, ...sets().map((set) => set.ac.shield));
         },
         misc: 0,
-        uncannydodge: false,
+      };
+      this.combat.armor = {
+        get category() {
+          return (worn()?.category ?? "none") as (typeof WORN_ARMOR_CATEGORIES)[number];
+        },
+        get strengthmet() {
+          return strength() >= (worn()?.strength ?? 0);
+        },
+        get trained() {
+          const category = worn()?.category;
+          return category === undefined || armortraining[category as "heavy" | "light" | "medium"] === true;
+        },
       };
       this.combat.shield = {
         get held() {
-          return held();
+          return sets().some((set) => set.shield.held);
         },
       };
-    }
-
-    /** An armor the character wears: the heaviest one worn (medium and heavy armor slow the character down). */
-    addArmor(fields: ItemFieldValues) {
-      const category = fields.armor.proficiency?.toLowerCase();
-      const worn = ARMOR_CATEGORIES.find((armor) => armor === category);
-      const { armor } = this.combat;
-      if (worn && ARMOR_CATEGORIES.indexOf(worn) > ARMOR_CATEGORIES.indexOf(armor.category)) armor.category = worn;
-    }
-
-    /**
-     * A shield the character carries in a weapon set's off hand (`setKey`): the set is a loadout, though it holds no
-     * weapon, and a tower shield's bulk weighs on its attacks (its maximum Dexterity, on its slot, caps its AC's).
-     */
-    addShield(fields: ItemFieldValues, setKey: string) {
-      const category = fields.shield.proficiency;
-      if (!category) return;
-      this.weaponSet(setKey);
-      if (category === "Tower") this.towerShieldSets.add(setKey);
     }
   }
   return WithArmorClass;

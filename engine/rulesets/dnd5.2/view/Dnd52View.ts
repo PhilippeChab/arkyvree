@@ -3,6 +3,7 @@ import { stripSeparators } from "@/shared/text.ts";
 
 import type {
   Aptitude,
+  Background,
   Feat,
   Item,
   Klass,
@@ -10,14 +11,14 @@ import type {
   Language,
   Mechanic,
   Dnd52Kinds,
-  Race,
   RulesetAbility,
   RulesetSave,
   Skill,
+  Species,
   Spell,
 } from "./rows.ts";
 
-/** Each index Pathfinder's view builds on first read, and keeps. */
+/** Each index D&D 5th Edition's view builds on first read, and keeps. */
 interface Indices {
   aptitudeIdBySlug: Map<string, string>;
   aptitudeIdsWithFeats: Set<string>;
@@ -40,9 +41,9 @@ function buildIdBySlug(rows: { id: string; name: string }[]): Map<string, string
 }
 
 /**
- * Pathfinder's view of a ruleset (`Dnd52View.of`): its kinds' rows as it declares them (`Dnd52Kinds`, read through
- * `DeclaredRows`), its entities' links by their roles (a class's
- * `classSkill` links, a class level's `grants` and `baseBonus`, a feat's or a spell's `listedIn`), and the indices its
+ * D&D 5th Edition's view of a ruleset (`Dnd52View.of`): its kinds' rows as it declares them (`Dnd52Kinds`, read through
+ * `DeclaredRows`), its entities' links by their roles (a class level's `grants`, a feat's or a spell's `listedIn`), and
+ * the indices its
  * rules read them by, derived once with the view and kept (`RulesetData.derive`). An index is built the first time
  * it's read; every id-keyed index takes a stored (pre-COW) id too, as the view's do.
  */
@@ -51,14 +52,14 @@ export default class Dnd52View {
     this.declared = new DeclaredRows(rulesetData);
   }
 
-  /** The view's Pathfinder indices, derived once with it. */
+  /** The view's D&D 5th Edition indices, derived once with it. */
   static of(rulesetData: RulesetData): Dnd52View {
     return rulesetData.derive(Dnd52View);
   }
 
   private readonly built: Partial<Indices> = {};
 
-  /** The view's Pathfinder kinds' rows, as Pathfinder declares them. */
+  /** The view's D&D 5th Edition kinds' rows, as it declares them. */
   private readonly declared: DeclaredRows<Dnd52Kinds>;
 
   /** Each entity's links of a role, by their targets' names, by role and entity, once read (`linksByName`). */
@@ -118,9 +119,12 @@ export default class Dnd52View {
     return this.declared.byId("aptitudes");
   }
 
-  /** A class level's base bonuses to the saves (`classLevelId`): its `baseBonus` links, each its save and its amount. */
-  baseBonusesOf(classLevelId: string): readonly ViewLink[] {
-    return this.rulesetData.linksOf(classLevelId, "baseBonus", "saves");
+  get backgrounds(): Background[] {
+    return this.declared.rows("backgrounds");
+  }
+
+  get backgroundsById(): Map<string, Background> {
+    return this.declared.byId("backgrounds");
   }
 
   get classes(): Klass[] {
@@ -154,11 +158,6 @@ export default class Dnd52View {
 
   get classLevelsById(): Map<string, KlassLevel> {
     return this.declared.byId("class-levels");
-  }
-
-  /** A class's class skills (`classId`): its `classSkill` links, by their skills' names, as the books list them. */
-  classSkillsOf(classId: string): readonly ViewLink[] {
-    return this.linksByName(classId, "classSkill", "skills", this.declared.storedById("skills"));
   }
 
   /** `stripSeparators(feat.name)` → featId, the first match winning: the "set feats.<slug>.possessed" modifier scan. */
@@ -258,13 +257,6 @@ export default class Dnd52View {
     return this.declared.rows("mechanics");
   }
 
-  get races(): Race[] {
-    return this.declared.rows("races");
-  }
-
-  get racesById(): Map<string, Race> {
-    return this.declared.byId("races");
-  }
 
   get saves(): RulesetSave[] {
     return this.declared.rows("saves");
@@ -280,6 +272,14 @@ export default class Dnd52View {
 
   get skillsById(): Map<string, Skill> {
     return this.declared.byId("skills");
+  }
+
+  get species(): Species[] {
+    return this.declared.rows("species");
+  }
+
+  get speciesById(): Map<string, Species> {
+    return this.declared.byId("species");
   }
 
   /**

@@ -1,60 +1,53 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
 import type { StoredAdvancement } from "@/engine/core/module/index.ts";
-import type { RulesetView, ViewLink } from "@/engine/core/view/index.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd5.2/model/loading/DetailedCharacterDataLoader.ts";
 import type {
   CustomizedClassLevel,
   HeldFeat,
   HeldSpell,
-  SkillPick,
 } from "@/engine/rulesets/dnd5.2/model/loading/loadedEntities.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
 import type { Klass, KlassLevel } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
+import { PROFICIENCY_BONUS_BY_LEVEL } from "@/vocabulary/dnd5.2/classes.ts";
 
 interface ClassesData {
   [key: string]: {
-    bonuscasterlevel: number;
-    /** Its class skills: its `classSkill` links */
-    classSkillLinks: ViewLink[];
     klass: Klass;
     level: number;
     levels: {
       advancement: StoredAdvancement;
       classLevel: CustomizedClassLevel;
       feats: HeldFeat[];
-      skills: SkillPick[];
       spells: HeldSpell[];
     }[];
   };
 }
 
-/** A character's classes: each one's levels, with what each level picked, and the ruleset's other classes at level 0. */
+/**
+ * A character's classes: each one's levels, with what each level picked, and the ruleset's other classes at level 0;
+ * and its first class, the class of its first level, whose starting proficiencies it has (a later class's are its
+ * multiclass ones).
+ */
 export default class ClassesComponent extends CharacterComponent<LoadedCharacterData> {
   private readonly classes: ClassesData = {};
 
+  /** The class of the character's first level, by its normalized name: none before its first level. */
+  private firstClass: string | undefined;
+
   /** Each class the character has levels in, its levels sorted with their picks, and the ruleset's others at level 0. */
   override initialize(
-    {
-      advancements,
-      classSkillLinks,
-      feats,
-      classes,
-      classLevels,
-      spells,
-      skills,
-    }: Pick<
+    { advancements, feats, classes, classLevels, spells }: Pick<
       LoadedCharacterData,
-      "advancements" | "classSkillLinks" | "feats" | "classes" | "classLevels" | "spells" | "skills"
+      "advancements" | "feats" | "classes" | "classLevels" | "spells"
     >,
     { rulesetData }: RulesetView,
   ) {
     const classLevelsById = new Map(classLevels.map((level) => [level.id, level]));
     const classesById = new Map(classes.map((klass) => [klass.id, klass]));
-    const classSkillLinksByClass = Map.groupBy(classSkillLinks, (link) => link.fromId);
     // What each level holds, by its advancement: the picks and grants the character loaded are all at a level
     const featsByLevel = Map.groupBy(feats, (feat) => feat.advancementId);
-    const skillsByLevel = Map.groupBy(skills, (skill) => skill.advancementId);
     const spellsByLevel = Map.groupBy(spells, (spell) => spell.advancementId);
 
     for (const advancement of advancements) {
@@ -65,21 +58,12 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
       if (!klass) throw new Error("Class not found");
 
       const className = stripSeparators(klass.name);
-      if (!this.classes[className]) {
-        this.classes[className] = {
-          klass,
-          classSkillLinks: classSkillLinksByClass.get(klass.id) ?? [],
-          levels: [],
-          level: 0,
-          bonuscasterlevel: 0,
-        };
-      }
-
+      this.firstClass ??= className;
+      this.classes[className] ??= { klass, levels: [], level: 0 };
       this.classes[className].levels.push({
         classLevel,
         advancement,
         feats: featsByLevel.get(advancement.id) ?? [],
-        skills: skillsByLevel.get(advancement.id) ?? [],
         spells: spellsByLevel.get(advancement.id) ?? [],
       });
     }
@@ -91,16 +75,7 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
 
     // Add level-0 entries for ruleset classes the character doesn't have
     for (const klass of Dnd52View.of(rulesetData).classes) {
-      const className = stripSeparators(klass.name);
-      if (!this.classes[className]) {
-        this.classes[className] = {
-          klass,
-          classSkillLinks: [],
-          levels: [],
-          level: 0,
-          bonuscasterlevel: 0,
-        };
-      }
+      this.classes[stripSeparators(klass.name)] ??= { klass, levels: [], level: 0 };
     }
   }
 
@@ -112,7 +87,6 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
       classLevel: { ...classLevel, modifiers: [], requirements: [] },
       advancement,
       feats: [],
-      skills: [],
       spells: [],
     });
     entry.level++;
@@ -124,6 +98,25 @@ export default class ClassesComponent extends CharacterComponent<LoadedCharacter
 
   getClasses(): ClassesData {
     return this.classes;
+  }
+
+  /** The class of the character's first level, by its normalized name: none before its first level. */
+  getFirstClass(): string | undefined {
+    return this.firstClass;
+  }
+
+  /**
+   * The character's Proficiency Bonus, by its level (`getTotalLevel`), as the Character Advancement table gives it: a
+   * character before its first level has its first level's.
+   */
+  getProficiencyBonus(): number {
+    const level = Math.min(Math.max(this.getTotalLevel(), 1), PROFICIENCY_BONUS_BY_LEVEL.length);
+    return PROFICIENCY_BONUS_BY_LEVEL[level - 1];
+  }
+
+  /** The character's level: every class's levels together, what its Proficiency Bonus is by. */
+  getTotalLevel(): number {
+    return Object.values(this.classes).reduce((total, klass) => total + klass.level, 0);
   }
 
   removeProjectedLevel(className: string): void {

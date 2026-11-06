@@ -5,8 +5,8 @@
 
 import type { StoredAdvancement } from "@/engine/core/module/index.ts";
 import type { ViewLink } from "@/engine/core/view/index.ts";
-import type { RaceFieldValues } from "@/engine/rulesets/dnd5.2/entities/races/fields.ts";
-import type { Feat, KlassLevel, Race, Skill, Spell } from "@/engine/rulesets/dnd5.2/view/rows.ts";
+import type { SpeciesFieldValues } from "@/engine/rulesets/dnd5.2/entities/species/fields.ts";
+import type { Background, Feat, KlassLevel, Species, Spell } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
 
 /**
@@ -50,13 +50,6 @@ export interface LoadedLevels {
  * A skill a level spends points on (`amount`, its `skills` pick's), at its advancement, with that advancement's class
  * level (its entry).
  */
-export interface SkillPick {
-  advancementId: string;
-  amount: number;
-  classLevelId: string;
-  entity: Skill;
-}
-
 /** A class level as the character reads it, with its customizations: its fields its build reads off the view. */
 export type CustomizedClassLevel = KlassLevel & {
   modifiers: Modifier[];
@@ -64,8 +57,13 @@ export type CustomizedClassLevel = KlassLevel & {
 };
 
 /** A race as the character reads it: its row, its fields' values, and its customizations. */
-export type CustomizedRace = Race &
-  RaceFieldValues & {
+export type CustomizedBackground = Background & {
+  modifiers: Modifier[];
+  requirements: Requirement[];
+};
+
+export type CustomizedSpecies = Species &
+  SpeciesFieldValues & {
     modifiers: Modifier[];
     requirements: Requirement[];
   };

@@ -1,29 +1,15 @@
 import { CharacterBuilder } from "@/engine/core/character/index.ts";
 import type { Character as CharacterRecord } from "@/shared/relations.ts";
-import type { BondedKind, PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd5.2/bondedKinds.ts";
 
-import DetailedCharacterAnimalCompanion from "./bonded/DetailedCharacterAnimalCompanion.ts";
-import DetailedCharacterFamiliar from "./bonded/DetailedCharacterFamiliar.ts";
-import DetailedCharacterMount from "./bonded/DetailedCharacterMount.ts";
 import DetailedCharacter from "./DetailedCharacter.ts";
 
-/** What a Pathfinder character is: a player character, or a creature bonded to one. */
-export type CharacterKind = typeof PLAYER_CHARACTER_KIND | BondedKind;
-
-/** The Pathfinder characters built from the rows the server read, on core's builder: each of its row's kind. */
+/**
+ * The D&D 5th Edition characters built from the rows the server read, on core's builder: a player character, whatever
+ * its row's kind, as the SRD 5.2.1 has no class that levels a companion.
+ */
 class Dnd52CharacterBuilder extends CharacterBuilder<DetailedCharacter> {
-  /** The Pathfinder character a row is, by its kind: a bonded creature's class, or a player character's for any other kind. */
   protected override create(record: CharacterRecord): DetailedCharacter {
-    switch (record.kind as CharacterKind) {
-      case "familiar":
-        return new DetailedCharacterFamiliar(record);
-      case "animalcompanion":
-        return new DetailedCharacterAnimalCompanion(record);
-      case "mount":
-        return new DetailedCharacterMount(record);
-      default:
-        return new DetailedCharacter(record);
-    }
+    return new DetailedCharacter(record);
   }
 }
 

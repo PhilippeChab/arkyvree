@@ -1,10 +1,9 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
+import type CombatComponent from "@/engine/rulesets/dnd5.2/model/combat/CombatComponent.ts";
+import { SLOT_MAP, type WeaponSlot } from "@/engine/rulesets/dnd5.2/model/combat/CombatState.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd5.2/model/loading/DetailedCharacterDataLoader.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { UNARMED_STRIKE } from "@/vocabulary/dnd5.2/combat.ts";
-
-import type CombatComponent from "./CombatComponent.ts";
-import { type HeldWeapon, SLOT_MAP, type WeaponSlot } from "./CombatState.ts";
+import { UNARMED_STRIKE } from "@/vocabulary/dnd5.2/weapons.ts";
 
 /** Record of weapon key ("setIndex_slotKey") → shared WeaponSlot reference */
 type WeaponGroup = Record<string, WeaponSlot>;
@@ -13,8 +12,9 @@ type WeaponGroup = Record<string, WeaponSlot>;
 type WeaponsData = Record<string, WeaponGroup>;
 
 /**
- * The weapons a character holds, under each group the listing offers (`items.weapons.<group>`): the inventory's, as its
- * combat placed them (`CombatComponent.getHeldWeapons`), and an empty hand's unarmed strike.
+ * The weapons a character holds, under each group the listing offers (`items.weapons.<group>`): its kind (`longsword`)
+ * and its category (`martial`), the inventory's, as its combat placed them (`CombatComponent.getHeldWeapons`), and an
+ * empty hand's unarmed strike. A proficiency or a mastery a feat gives is a modifier on a group: every weapon of it.
  */
 export default class WeaponsComponent extends CharacterComponent<LoadedCharacterData> {
   constructor(private readonly combat: CombatComponent) {
@@ -23,66 +23,25 @@ export default class WeaponsComponent extends CharacterComponent<LoadedCharacter
 
   private readonly weapons: WeaponsData = {};
 
+  /** A weapon slot under a group, by its set and hand (`weaponKey`). */
+  private group(grouping: string, weaponKey: string, weapon: WeaponSlot): void {
+    if (grouping) (this.weapons[grouping] ??= {})[weaponKey] = weapon;
+  }
+
   /**
-   * Each weapon the combat placed from the inventory, in its order, then the first set's main hand when it strikes
-   * unarmed (no weapon there).
+   * Each weapon the combat placed from the inventory, in its order, under its kind and its category, then the first
+   * set's main hand when it strikes unarmed (no weapon there).
    */
   override initialize(): void {
-    for (const held of this.combat.getHeldWeapons()) this.registerWeapon(held);
-
-    // The first set's main hand, by its key
-    const set0Mainhand = this.combat.getCombat().weaponsets["0"]?.mainhand;
-    if (set0Mainhand?.name === UNARMED_STRIKE && set0Mainhand.itemId === null)
-      this.registerUnarmedStrike("0_mainhand", set0Mainhand);
-  }
-
-  /**
-   * A slot's unarmed strike (`items.weapons.unarmedstrike`), by its set and hand (`weaponKey`): the one a character
-   * strikes with an empty hand, or a gauntlet's.
-   */
-  private registerUnarmedStrike(weaponKey: string, weapon: WeaponSlot): void {
-    const unarmed = stripSeparators(UNARMED_STRIKE);
-    if (!this.weapons[unarmed]) this.weapons[unarmed] = {};
-
-    this.weapons[unarmed][weaponKey] = weapon;
-  }
-
-  /**
-   * A held weapon under each group the listing offers: its type, its proficiency, and a gauntlet's unarmed strike. The
-   * slot it filled is the one it's grouped by, though a later entry may have taken it since.
-   */
-  private registerWeapon({ fields: weapon, location, setIndex, weapon: weaponRef }: HeldWeapon): void {
-    const slotKey = SLOT_MAP[location];
-    if (!slotKey) return;
-
-    const setKey = String(setIndex);
-    const weaponKey = `${setKey}_${slotKey}`;
-    const grouping = weapon.type === null ? "" : stripSeparators(weapon.type);
-    if (grouping) {
-      if (!this.weapons[grouping]) this.weapons[grouping] = {};
-
-      this.weapons[grouping][weaponKey] = weaponRef;
+    for (const { fields, location, setIndex, weapon } of this.combat.getHeldWeapons()) {
+      const weaponKey = `${setIndex}_${SLOT_MAP[location]}`;
+      this.group(stripSeparators(fields.type ?? ""), weaponKey, weapon);
+      this.group(stripSeparators(fields.category ?? ""), weaponKey, weapon);
     }
 
-    if (weapon.proficiency !== null) {
-      const profGrouping = stripSeparators(weapon.proficiency);
-      if (profGrouping) {
-        if (!this.weapons[profGrouping]) this.weapons[profGrouping] = {};
-
-        this.weapons[profGrouping][weaponKey] = weaponRef;
-      }
-    }
-
-    // RAW: a strike with a gauntlet is otherwise considered an unarmed attack.
-    if (weapon.type === "Gauntlet") this.registerUnarmedStrike(weaponKey, weaponRef);
-  }
-
-  /**
-   * Drops every group: a creature whose stat block replaces its weapon sets with its natural attacks holds none of the
-   * weapons they had. Natural attacks aren't items, so no `items.weapons` path reaches them.
-   */
-  clearGroups(): void {
-    for (const group of Object.keys(this.weapons)) delete this.weapons[group];
+    const mainhand = this.combat.getCombat().weaponsets["0"]?.mainhand;
+    if (mainhand?.name === UNARMED_STRIKE.name && mainhand.itemId === null)
+      this.group(stripSeparators(UNARMED_STRIKE.name), "0_mainhand", mainhand);
   }
 
   getWeapons(): WeaponsData {

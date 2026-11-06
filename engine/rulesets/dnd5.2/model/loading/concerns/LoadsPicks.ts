@@ -2,7 +2,7 @@ import type { CharacterDataLoader } from "@/engine/core/character/index.ts";
 import type { CharacterPicks, StoredAdvancement, StoredPick } from "@/engine/core/module/index.ts";
 import type { RulesetData, ViewLink } from "@/engine/core/view/index.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd5.2/model/loading/DetailedCharacterDataLoader.ts";
-import type { HeldSource, LoadedLevels, SkillPick } from "@/engine/rulesets/dnd5.2/model/loading/loadedEntities.ts";
+import type { HeldSource, LoadedLevels } from "@/engine/rulesets/dnd5.2/model/loading/loadedEntities.ts";
 import SpellsComponent from "@/engine/rulesets/dnd5.2/model/spells/SpellsComponent.ts";
 import FeatRules from "@/engine/rulesets/dnd5.2/rules/FeatRules.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
@@ -38,6 +38,36 @@ function grantedAt<E>(
  * picked entity: deleting one, a fork's deleting an inherited one and unsubscribing its book are refused while a
  * character picks it.
  */
+/**
+ * The feat each class's first level grants as its starting proficiencies (`levels`, the character's, in order): the
+ * feat its class names for a first class (`startingProficiencies`: its saving throws, armor, weapons and skill picks)
+ * at the character's first level, and for a multiclass (`multiclassProficiencies`) at a later class's first level, as
+ * the SRD's Multiclassing rules give them. Each is a grant through no pool, its class's link to the feat.
+ */
+function startingAt(levels: StoredAdvancement[], dnd52: Dnd52View): HeldSource<Feat>[] {
+  return levels.flatMap((level, index) => {
+    const classLevel = dnd52.classLevelsById.get(level.entryId);
+    const klass = classLevel?.position === 1 ? dnd52.classesById.get(classLevel.ownerId) : undefined;
+    const role = index === 0 ? "startingProficiencies" : "multiclassProficiencies";
+    const featId = klass?.links[role];
+    const feat = featId ? dnd52.featsById.get(featId) : undefined;
+    if (!classLevel || !klass || !feat) return [];
+    const grant: ViewLink = {
+      amount: null,
+      free: true,
+      fromId: klass.id,
+      id: `${klass.id}:${role}`,
+      ordinal: 0,
+      role,
+      tier: null,
+      toId: feat.id,
+      toType: "feats",
+      viaId: null,
+    };
+    return [{ advancementId: level.id, classLevelId: classLevel.id, entity: feat, grant, step: "feats" as const }];
+  });
+}
+
 function pickedAt<E>(picks: StoredPick[], levels: StoredAdvancement[], entityOf: (pick: StoredPick) => E | undefined) {
   const classLevelIds = new Map(levels.map((level) => [level.id, level.entryId]));
   return picks.flatMap((pick) => {
@@ -85,7 +115,8 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
       // bonded.familiar.race): picks and grants are gathered by kind, not by level, and a level a level-up replaces
       // keeps its place.
       const levelPosition = new Map(advancements.map((level) => [level.id, level.position]));
-      const feats = [...picked, ...keptGrants].sort(
+      const starting = startingAt(advancements, dnd52);
+      const feats = [...starting, ...picked, ...keptGrants].sort(
         (a, b) => (levelPosition.get(a.advancementId!) ?? 0) - (levelPosition.get(b.advancementId!) ?? 0),
       );
       return { feats, featGrants: keptGrants };
@@ -123,27 +154,14 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
      * composes them; and the room the grants make in each pool (a free spell's none), by the pool's id.
      */
     protected buildPicks(picks: CharacterPicks, rulesetData: RulesetData, levels: LoadedLevels) {
-      const { skillsById } = Dnd52View.of(rulesetData);
-      const skills = pickedAt(picks.skills, levels.advancements, (pick) => skillsById.get(pick.entityId!)).map(
-        ({ advancementId, classLevelId, entity, pick }): SkillPick => ({
-          advancementId,
-          amount: pick.amount!,
-          classLevelId,
-          entity,
-        }),
-      );
       const { feats, featGrants } = this.buildFeats(picks, rulesetData, levels);
       const { spells, spellGrants } = this.buildSpells(picks, rulesetData, levels);
       const grantCountsByPool: Record<string, number> = {};
       for (const { viaId } of [...featGrants, ...spellGrants])
         grantCountsByPool[viaId!] = (grantCountsByPool[viaId!] ?? 0) + 1;
-      return { feats, grantCountsByPool, skills, spells };
+      return { feats, grantCountsByPool, spells };
     }
 
-    /**
-     * The character's levels (its advancements, as the view reads them) in the order it took them, their class levels
-     * (their entries), and the hit points each rolled (its `hp` pick).
-     */
     protected sortLevels(stored: StoredAdvancement[], picks: CharacterPicks): LoadedLevels {
       const advancements = stored.toSorted((a, b) => a.position - b.position);
       return {

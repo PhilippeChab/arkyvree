@@ -1,16 +1,16 @@
 import type { CharacterDataLoader } from "@/engine/core/character/index.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
-import { CLASS_LEVEL_FIELDS } from "@/engine/rulesets/dnd5.2/entities/classes/fields.ts";
-import { RACE_FIELDS } from "@/engine/rulesets/dnd5.2/entities/races/fields.ts";
+import { SPECIES_FIELDS } from "@/engine/rulesets/dnd5.2/entities/species/fields.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd5.2/model/loading/DetailedCharacterDataLoader.ts";
 import type {
+  CustomizedBackground,
   CustomizedClassLevel,
-  CustomizedRace,
+  CustomizedSpecies,
   HeldFeat,
   HeldSource,
   HeldSpell,
 } from "@/engine/rulesets/dnd5.2/model/loading/loadedEntities.ts";
-import type { Feat, KlassLevel, Race, Spell } from "@/engine/rulesets/dnd5.2/view/rows.ts";
+import type { Background, Feat, KlassLevel, Species, Spell } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 
 /** The customizations a character's entities carry, from the view: their modifiers and requirements. */
@@ -20,14 +20,14 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
     private withDcAbilities(
       spells: Omit<HeldSpell, "abilityDcName">[],
       {
-        classBonusSpellAbilityMap,
+        classSpellcastingAbilityMap,
         classLevels,
-      }: { classBonusSpellAbilityMap: Map<string, string>; classLevels: KlassLevel[] },
+      }: { classSpellcastingAbilityMap: Map<string, string>; classLevels: KlassLevel[] },
     ): HeldSpell[] {
       const classIdByLevelId = new Map(classLevels.map((level) => [level.id, level.ownerId]));
       return spells.map((spell) => {
         const classId = spell.classLevelId === undefined ? undefined : classIdByLevelId.get(spell.classLevelId);
-        const abilityDcName = classId === undefined ? undefined : classBonusSpellAbilityMap.get(classId);
+        const abilityDcName = classId === undefined ? undefined : classSpellcastingAbilityMap.get(classId);
         return { ...spell, abilityDcName: abilityDcName ?? null };
       });
     }
@@ -42,17 +42,29 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
         }))
         .sort((a, b) => a.position - b.position);
 
-      const classLevelFields = new Map(classLevels.map((level) => [level.id, CLASS_LEVEL_FIELDS.read(level)]));
-      return { classLevels, classLevelFields };
+      return { classLevels };
     }
 
     /** The race with its fields read (once, here), its modifiers and requirements. */
-    protected toCustomizedRace(race: Race, rulesetData: RulesetData): CustomizedRace {
+    /** The character's background, with its customizations: none before it picks one (an imported character). */
+    protected toCustomizedBackground(
+      background: Background | undefined,
+      rulesetData: RulesetData,
+    ): CustomizedBackground | undefined {
+      if (!background) return undefined;
       return {
-        ...race,
-        ...RACE_FIELDS.read(race),
-        modifiers: rulesetData.modifiersBySource.get(race.id) ?? [],
-        requirements: rulesetData.requirementsByEntity.get(race.id) ?? [],
+        ...background,
+        modifiers: rulesetData.modifiersBySource.get(background.id) ?? [],
+        requirements: rulesetData.requirementsByEntity.get(background.id) ?? [],
+      };
+    }
+
+    protected toCustomizedSpecies(species: Species, rulesetData: RulesetData): CustomizedSpecies {
+      return {
+        ...species,
+        ...SPECIES_FIELDS.read(species),
+        modifiers: rulesetData.modifiersBySource.get(species.id) ?? [],
+        requirements: rulesetData.requirementsByEntity.get(species.id) ?? [],
       };
     }
 
@@ -80,7 +92,7 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
     protected toHeldSpells(
       spells: (HeldSource<Spell> & Pick<HeldSpell, "free" | "saveName" | "spellLevel" | "viaId">)[],
       rulesetData: RulesetData,
-      dcAbilities: { classBonusSpellAbilityMap: Map<string, string>; classLevels: KlassLevel[] },
+      dcAbilities: { classSpellcastingAbilityMap: Map<string, string>; classLevels: KlassLevel[] },
     ): HeldSpell[] {
       const customized = spells.map((spell) => ({
         ...spell,

@@ -15,7 +15,7 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
   abstract class WithKnownSpells extends Base {
     /**
      * The class each spell-giving aptitude a class level gives slots in belongs to, traced through the applied modifiers:
-     * the class level's class, or the class a bonus caster level advances.
+     * the class level's class.
      */
     private aptitudeClassNames(appliedModifiers: Modifier[]) {
       const aptitudeIdToClassName = new Map<string, string>();
@@ -35,11 +35,6 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
             aptitudeIdToClassName.set(aptitude.id, className);
             break;
           }
-        }
-        // Fallback: check bonus class levels from caster level advancement
-        if (!aptitudeIdToClassName.has(aptitude.id)) {
-          const bonusClassName = this.bonusClassLevelClassMap.get(modifier.sourceId);
-          if (bonusClassName) aptitudeIdToClassName.set(aptitude.id, bonusClassName);
         }
       }
       return aptitudeIdToClassName;
@@ -93,7 +88,7 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
     private newKnownSpells(
       spells: HeldSpell[],
       appliedModifiers: Modifier[],
-      classBonusSpellAbilityMap: Map<string, string>,
+      classSpellcastingAbilityMap: Map<string, string>,
     ): HeldSpell[] {
       const aptitudeIdToClassName = this.aptitudeClassNames(appliedModifiers);
       const classes = this.classes.getClasses();
@@ -111,8 +106,8 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
         // Known at its class's first level, taking no room in its list
         const known: HeldSpell = {
           ...spell,
-          // Its DC's ability, as a loaded spell's (`CustomizesEntities.withDcAbilities`): its class's bonus spell ability
-          abilityDcName: classBonusSpellAbilityMap.get(firstLevel.classLevel.ownerId) ?? null,
+          // Its DC's ability, as a loaded spell's (`CustomizesEntities.withDcAbilities`): its class's spellcasting ability
+          abilityDcName: classSpellcastingAbilityMap.get(firstLevel.classLevel.ownerId) ?? null,
           advancementId: firstLevel.advancement.id,
           classLevelId: firstLevel.classLevel.id,
           free: true,
@@ -235,11 +230,11 @@ export function KnownSpells<B extends Constructor<SpellcastingState>>(Base: B) {
     protected enrichAllKnownSpells(
       rulesetData: RulesetData,
       spells: HeldSpell[],
-      classBonusSpellAbilityMap: Map<string, string>,
+      classSpellcastingAbilityMap: Map<string, string>,
       appliedModifiers: Modifier[],
     ) {
       if (this.allAptitudeSpells.length === 0) return;
-      const newSpells = this.newKnownSpells(spells, appliedModifiers, classBonusSpellAbilityMap);
+      const newSpells = this.newKnownSpells(spells, appliedModifiers, classSpellcastingAbilityMap);
       if (newSpells.length > 0) this.registerKnownSpells(rulesetData, newSpells);
     }
 

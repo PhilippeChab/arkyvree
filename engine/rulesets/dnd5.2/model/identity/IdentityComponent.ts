@@ -3,11 +3,13 @@ import CharacterValues from "@/engine/rulesets/dnd5.2/characters/CharacterValues
 import type ClassesComponent from "@/engine/rulesets/dnd5.2/model/classes/ClassesComponent.ts";
 import type LanguagesComponent from "@/engine/rulesets/dnd5.2/model/languages/LanguagesComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd5.2/model/loading/DetailedCharacterDataLoader.ts";
-import type { CustomizedRace } from "@/engine/rulesets/dnd5.2/model/loading/loadedEntities.ts";
+import type { CustomizedSpecies } from "@/engine/rulesets/dnd5.2/model/loading/loadedEntities.ts";
 import type { Language } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 
 interface IdentityData {
   background: {
+    /** Its background's name: none before it has one. */
+    name: string;
     notes: string;
   };
   beliefs: {
@@ -27,7 +29,7 @@ interface IdentityData {
     readonly languages: Language[];
     name: string;
     /** The race as the character reads it, its fields with it: what its size, its legs and its speed follow */
-    race: CustomizedRace;
+    species: CustomizedSpecies;
     weight: string;
   };
 }
@@ -57,7 +59,11 @@ export default class IdentityComponent extends CharacterComponent<LoadedCharacte
    * when read, once modifiers apply; its level (`meta.level`) is the levels its classes hold, counted when read (one a
    * picker projects counts), and what a modifier adds to it.
    */
-  override initialize({ character, race }: Pick<LoadedCharacterData, "character" | "race">) {
+  override initialize({
+    background,
+    character,
+    species,
+  }: Pick<LoadedCharacterData, "background" | "character" | "species">) {
     const levelOfClasses = () =>
       Object.values(this.classes.getClasses()).reduce((acc, klass) => acc + klass.levels.length, 0);
     const spoken = () => this.languages.getSpoken();
@@ -71,7 +77,7 @@ export default class IdentityComponent extends CharacterComponent<LoadedCharacte
       gender: fields.gender,
       height: fields.height ?? "",
       weight: fields.weight ?? "",
-      race,
+      species,
       get languages() {
         return spoken();
       },
@@ -81,6 +87,7 @@ export default class IdentityComponent extends CharacterComponent<LoadedCharacte
       alignment: fields.alignment,
     };
     this.identity.background = {
+      name: background?.name ?? "",
       notes: character.notes || "",
     };
     this.privateNotes = character.privateNotes || "";

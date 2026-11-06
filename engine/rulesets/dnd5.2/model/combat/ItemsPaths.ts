@@ -17,8 +17,8 @@ import {
 } from "@/shared/customization/target.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { UNARMED_STRIKE } from "@/vocabulary/dnd5.2/combat.ts";
-import { ARMOR_TYPE, SHIELD_TYPE, WEAPON_PROFICIENCY, WEAPON_TYPE } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { ARMOR_TYPE, WEAPON_CATEGORY, WEAPON_TYPE } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { UNARMED_STRIKE } from "@/vocabulary/dnd5.2/weapons.ts";
 
 import type ArmorsComponent from "./ArmorsComponent.ts";
 import type ShieldsComponent from "./ShieldsComponent.ts";
@@ -30,35 +30,29 @@ const ALL_WEAPONS = "*";
 
 const ARMOR_LABELS: Record<string, string> = {
   ac: "Armor Class",
-  checkpenalty: "Check Penalty",
-  spellfailure: "Spell Failure",
   maxdex: "Maximum Dexterity",
+  stealthdisadvantage: "Stealth Disadvantage",
 };
 
 const NAVIGATABLE_ARMOR_PATHS = [
-  { path: "ac.bonus", description: "Base AC bonus from armor", type: "number" as const },
-  { path: "ac.misc", description: "Other bonuses to armor AC", type: "number" as const },
+  { path: "ac.base", description: "The armor's own Armor Class", type: "number" as const },
+  { path: "ac.misc", description: "Other bonuses to the armor's AC (a +1 armor's)", type: "number" as const },
   { path: "ac.total", description: "Total AC from this armor", type: "number" as const, requirementOnly: true },
-  { path: "checkpenalty", description: "Penalty to Str/Dex skill checks", type: "number" as const },
-  { path: "spellfailure", description: "Arcane spell failure chance", type: "number" as const },
-  { path: "maxdex", description: "Maximum Dexterity bonus to AC", type: "number" as const },
+  { path: "maxdex", description: "The most Dexterity modifier its wearer adds", type: "number" as const },
+  { path: "strength", description: "The Strength its wearer needs, or its speed is lower", type: "number" as const },
+  { path: "stealthdisadvantage", description: "Whether it hinders Stealth", type: "boolean" as const },
 ];
 
 const NAVIGATABLE_SHIELD_PATHS = [
-  { path: "ac.bonus", description: "Base AC bonus from shield", type: "number" as const },
-  { path: "ac.misc", description: "Other bonuses to shield AC", type: "number" as const },
-  { path: "ac.total", description: "Total AC from this shield", type: "number" as const, requirementOnly: true },
-  { path: "checkpenalty", description: "Penalty to Str/Dex skill checks", type: "number" as const },
-  { path: "spellfailure", description: "Arcane spell failure chance", type: "number" as const },
-  { path: "maxdex", description: "Maximum Dexterity bonus to AC (a tower shield's)", type: "number" as const },
+  { path: "ac.bonus", description: "The Shield's own bonus to AC", type: "number" as const },
+  { path: "ac.misc", description: "Other bonuses to the Shield's AC (a +1 Shield's)", type: "number" as const },
+  { path: "ac.total", description: "Total AC from this Shield", type: "number" as const, requirementOnly: true },
 ];
 
-const SHIELD_LABELS: Record<string, string> = {
-  ac: "Armor Class",
-  checkpenalty: "Check Penalty",
-  spellfailure: "Spell Failure",
-  maxdex: "Maximum Dexterity",
-};
+const SHIELD_LABELS: Record<string, string> = { ac: "Armor Class" };
+
+/** The grouping every Shield is reached by (`items.shields.shield`): the SRD's Shields are of one kind. */
+const SHIELDS = "shield";
 
 /** The equipped items' target paths: items.weapons / items.armors / items.shields, a grouping's items. */
 export default class ItemsPaths implements PathCategory<Dnd52Components> {
@@ -155,15 +149,15 @@ export default class ItemsPaths implements PathCategory<Dnd52Components> {
     // Every character strikes unarmed, without an item: its grouping is always there
     const weaponGroupings = [
       ...new Set([
-        stripSeparators(UNARMED_STRIKE),
+        stripSeparators(UNARMED_STRIKE.name),
         ...CategoryPaths.collectValueSlugs(itemValues, WEAPON_TYPE),
-        ...CategoryPaths.collectValueSlugs(itemValues, WEAPON_PROFICIENCY),
+        ...CategoryPaths.collectValueSlugs(itemValues, WEAPON_CATEGORY),
       ]),
     ];
     return [
       ...ItemsPaths.generateWeaponPaths(weaponGroupings, kind),
       ...ItemsPaths.generateArmorPaths(CategoryPaths.collectValueSlugs(itemValues, ARMOR_TYPE), kind),
-      ...ItemsPaths.generateShieldPaths(CategoryPaths.collectValueSlugs(itemValues, SHIELD_TYPE), kind),
+      ...ItemsPaths.generateShieldPaths([SHIELDS], kind),
     ];
   }
 
@@ -185,7 +179,7 @@ export default class ItemsPaths implements PathCategory<Dnd52Components> {
       .kindValues("items")
       .map(({ value }) => value)
       .filter((value) => /[a-z]/.test(stripSeparators(value)));
-    return { names: deriveNameLabels([UNARMED_STRIKE, ...values]) };
+    return { names: deriveNameLabels([UNARMED_STRIKE.name, "Shield", ...values]) };
   }
 
   /** A grouping's equipped items. Null for another sub-category, or a path that names none. */

@@ -9,14 +9,19 @@ import { stripSeparators } from "@/shared/text.ts";
 interface SavesData {
   [key: string]: {
     readonly ability: number;
-    base: number;
     misc: number;
     name: string;
+    proficient: boolean;
+    readonly proficiency: number;
     readonly total: number;
   };
 }
 
-/** A character's saves: each one's base from its classes' levels and its ability's modifier, counted when read. */
+/**
+ * A character's saving throws, one for each ability: each one's ability modifier, its Proficiency Bonus when the
+ * character is proficient in it (a feat sets it: its first class's starting proficiencies give two), and misc, counted
+ * when read.
+ */
 export default class SavesComponent extends CharacterComponent<LoadedCharacterData> {
   constructor(
     private readonly abilities: AbilitiesComponent,
@@ -27,35 +32,24 @@ export default class SavesComponent extends CharacterComponent<LoadedCharacterDa
 
   private readonly saves: SavesData = {} as SavesData;
 
-  /** Each of the ruleset's saves: its base, the sum of each class's last level's, and its ability's modifier. */
-  override initialize({ baseBonusLinks }: Pick<LoadedCharacterData, "baseBonusLinks">, { rulesetData }: RulesetView) {
-    const saveBaseValues = new Map<string, number>();
-    const classes = this.classes.getClasses();
-    for (const klass of Object.values(classes)) {
-      const lastLevel = klass.levels.at(-1);
-      if (lastLevel) {
-        const levelSaves = baseBonusLinks.filter((link) => link.fromId === lastLevel.classLevel.id);
-        for (const link of levelSaves)
-          saveBaseValues.set(link.toId, (saveBaseValues.get(link.toId) ?? 0) + (link.amount ?? 0));
-      }
-    }
-
+  /** Each of the ruleset's saves, its ability's modifier and its proficiency counted when read. */
+  override initialize(_data: LoadedCharacterData, { rulesetData }: RulesetView) {
+    const { abilities, classes } = this;
     for (const save of Dnd52View.of(rulesetData).saves) {
-      const normalizedName = stripSeparators(save.name);
-      const abilityName = (save.links.keyAbility && this.abilities.getAbilityName(save.links.keyAbility)) ?? "";
-      const base = saveBaseValues.get(save.id) ?? 0;
-      const abilities = this.abilities;
-
-      // The ability's modifier and the total are computed when read, so they follow the abilities and the parts
-      this.saves[normalizedName] = {
+      const abilityName = (save.links.keyAbility && abilities.getAbilityName(save.links.keyAbility)) ?? "";
+      // What's computed is computed when read, so it follows the abilities, the level and the parts
+      this.saves[stripSeparators(save.name)] = {
         name: save.name,
-        base,
         get ability() {
           return abilities.getAbilityModifier(abilityName);
         },
         misc: 0,
+        proficient: false,
+        get proficiency() {
+          return this.proficient ? classes.getProficiencyBonus() : 0;
+        },
         get total() {
-          return this.base + this.ability + this.misc;
+          return this.ability + this.proficiency + this.misc;
         },
       };
     }
