@@ -20,17 +20,34 @@ export const BAB_PROGRESSIONS = {
 export const CASTER_TYPES = ["Arcane", "Divine"] as const;
 /** The hit die a new class has when its form gives none. */
 export const DEFAULT_HIT_DIE = 8;
-/** The feats a character's first level gives to pick in the core rules, past its frequency's. */
-export const FIRST_LEVEL_GENERAL_FEATS = 1;
-/** How many character levels apart the general feats come in the core rules: one at every third level. */
-export const GENERAL_FEAT_LEVEL_INTERVAL = 3;
-/** Each hit die's name, as dice notation writes it, by its place among `HIT_DIE_VALUES`. */
-export const HIT_DIE_LABELS = ["d4", "d6", "d8", "d10", "d12"] as const;
-/** The dice a class's levels roll for hit points. */
-export const HIT_DIE_VALUES = [4, 6, 8, 10, 12] as const;
 /**
- * 3.5's word "Level", in each of its uses: a class level's position along its class ("Level 3"), a character's level,
- * and a spell level, its tier.
+ * What a level of its favored class gives a character, past the class's own, one of them a level, as the player picks
+ * it: a hit point, or a skill rank.
+ */
+export const FAVORED_CLASS_BONUS = { hitPoints: 1, skillRanks: 1 } as const;
+/**
+ * The character levels whose general feat the core rules give, one a level: every odd level, the first among them
+ * (no frequency: a progression's `every` counts levels from a multiple, and an odd level is none's).
+ */
+export const GENERAL_FEAT_LEVELS = [
+  { amount: 1, position: 1 },
+  { amount: 1, position: 3 },
+  { amount: 1, position: 5 },
+  { amount: 1, position: 7 },
+  { amount: 1, position: 9 },
+  { amount: 1, position: 11 },
+  { amount: 1, position: 13 },
+  { amount: 1, position: 15 },
+  { amount: 1, position: 17 },
+  { amount: 1, position: 19 },
+] as const;
+/** Each hit die's name, as dice notation writes it, by its place among `HIT_DIE_VALUES`. */
+export const HIT_DIE_LABELS = ["d6", "d8", "d10", "d12"] as const;
+/** The dice a class's levels roll for hit points: the Core Rulebook's classes roll a d6 to a d12. */
+export const HIT_DIE_VALUES = [6, 8, 10, 12] as const;
+/**
+ * Pathfinder's word "Level", in each of its uses: a class level's position along its class ("Level 3"), a character's
+ * level, and a spell level, its tier.
  */
 export const LEVEL_WORD = { many: "Levels", one: "Level" } as const;
 /** The highest character level: the app has no epic levels. */

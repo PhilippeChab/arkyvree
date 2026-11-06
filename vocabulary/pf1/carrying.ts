@@ -1,9 +1,12 @@
-/** What a creature carries: its capacity by Strength and size, its load categories and what each costs it. */
+/**
+ * What a creature carries, as the Core Rulebook's carrying capacity rules give it (3.5's numbers, unchanged): its
+ * capacity by Strength and size, its load categories and what each costs it.
+ */
 
 export type LoadCategory = (typeof LOAD_CATEGORIES)[number];
 
 /**
- * D&D 3.5 PHB Table 9-1: Carrying Capacity by Strength score (index = Str score, value = heavy load in lbs)
+ * The Core Rulebook's carrying capacity by Strength score (index = Str score, value = heavy load in lbs)
  * Index 0 is unused (no Str 0), indices 1–29 map to Str 1–29
  */
 export const CARRYING_CAPACITY: number[] = [
@@ -49,9 +52,8 @@ export const CARRYING_CAPACITY_STEP_MULTIPLIER = 4;
 export const CARRYING_CAPACITY_STRENGTH_STEP = 10;
 
 /**
- * D&D 3.5 reduced speed for medium/heavy encumbrance (base → reduced)
- *
- * The thirds of its speed a medium or heavy load leaves: rounded up to the step speeds come in (`SPEED_STEP`).
+ * The thirds of its speed a medium or heavy load leaves: rounded up to the step speeds come in (`SPEED_STEP`), 30 ft.
+ * to 20 ft., 20 ft. to 15 ft.
  */
 export const ENCUMBERED_SPEED_THIRDS = 2;
 
@@ -74,7 +76,7 @@ export const MEDIUM_LOAD_THIRDS = 2;
 /** The speed an overloaded creature moves at, whatever its own: 5 ft. */
 export const OVERLOADED_SPEED = 5;
 
-/** A quadruped's carrying capacity by size: it carries more than a biped (SRD, "Bigger and Smaller Creatures"). */
+/** A quadruped's carrying capacity by size: it carries more than a biped ("Bigger and Smaller Creatures"). */
 export const QUADRUPED_SIZE_CARRY_MULTIPLIERS: Record<string, number> = {
   Fine: 1 / 4,
   Diminutive: 1 / 2,

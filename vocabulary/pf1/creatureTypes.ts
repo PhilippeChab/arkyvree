@@ -1,16 +1,18 @@
-/** The creature types a ranger can take as favored enemies. */
+/**
+ * The creature types a ranger can take as favored enemies, as the Core Rulebook's table lists them: no elemental type,
+ * a giant a humanoid's subtype, and the humanoids of another subtype.
+ */
 
 export const CREATURE_TYPES = [
   "Aberration",
   "Animal",
   "Construct",
   "Dragon",
-  "Elemental",
   "Fey",
-  "Giant",
   "Humanoid (Aquatic)",
   "Humanoid (Dwarf)",
   "Humanoid (Elf)",
+  "Humanoid (Giant)",
   "Humanoid (Gnoll)",
   "Humanoid (Gnome)",
   "Humanoid (Goblinoid)",
@@ -18,6 +20,7 @@ export const CREATURE_TYPES = [
   "Humanoid (Human)",
   "Humanoid (Orc)",
   "Humanoid (Reptilian)",
+  "Humanoid (Other)",
   "Magical Beast",
   "Monstrous Humanoid",
   "Ooze",

@@ -1,5 +1,5 @@
 /**
- * A D&D 3.5 character's own fields, its identity and its experience, declared as an entity's are (`FieldSpec`): data
+ * A Pathfinder character's own fields, its identity and its experience, declared as an entity's are (`FieldSpec`): data
  * the engine stores, reads and takes from its sheet's edit by (its characters' codec, `FieldCodec`), and its storage's
  * registry rows. A character is one row, with no sibling copies: each field is its own value (`winner`).
  */
@@ -17,18 +17,18 @@ import {
 } from "./character.ts";
 
 /**
- * A 3.5 character's fields, by name, in the order its sheet shows them: its alignment, its experience and its deity,
+ * A Pathfinder character's fields, by name, in the order its sheet shows them: its alignment, its experience and its deity,
  * then its age, gender, height and weight. Its alignment and gender, among their options (`required`), and its
  * experience, with a default, its forms never leave at none, as an entity's (`Field.isRequired`): they mark them
  * required, and a new character gives them (`FieldInputs`). An edit that sends its alignment or its gender unset
  * leaves it as it is; its experience sent unset, it refuses. The three are always written (`write: "always"`): a
- * character holds them, and an import takes their defaults (True Neutral, Other, 0) when its file has none. Its
+ * character holds them, and an import takes their defaults (Neutral, Other, 0) when its file has none. Its
  * experience is a whole number from 0; its age a whole number from 1, or none; its deity, height and weight texts, or
  * none.
  */
 export const CHARACTER_FIELDS = {
   alignment: {
-    default: "True Neutral",
+    default: "Neutral",
     description: "The character's moral and ethical outlook",
     kind: "text",
     label: "Alignment",

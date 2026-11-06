@@ -1,15 +1,17 @@
 /**
- * The combat rules' numbers and tables: the armor categories, the base AC and speed, the attack penalties and steps,
- * the damage dice's size progression, the Strength a slot adds to damage, and the weapon every character strikes with
- * when its hand holds none.
+ * The combat rules' numbers and tables, as the Core Rulebook gives them: the armor categories, the base AC, combat
+ * maneuver defense and speed, the attack penalties and steps, the damage dice's size progression, the Strength a slot
+ * adds to damage, and the weapon every character strikes with when its hand holds none.
  */
 
 /** The category of the armor a character wears, lightest first: none, or the armor's proficiency category. */
 export const ARMOR_CATEGORIES = ["none", "light", "medium", "heavy"] as const;
 
-/** The combat rules' numbers: the base AC and speed, and the attack penalties and steps. */
+/** The combat rules' numbers: the base AC, combat maneuver defense and speed, and the attack penalties and steps. */
 export const COMBAT_RULES = {
   DEFAULT_AC_BASE: 10,
+  // A combat maneuver defense's base, before the base attack bonus, Strength and Dexterity and the special size modifier
+  DEFAULT_CMD_BASE: 10,
   DEFAULT_SPEED: 30,
   NONPROFICIENCY_PENALTY: -4,
   // A composite bow's penalty to attack when the wielder's Strength bonus is below its rating
@@ -18,7 +20,7 @@ export const COMBAT_RULES = {
   TOWER_SHIELD_PENALTY: -2,
   // A secondary natural attack's penalty to attack, which Multiattack lessens
   SECONDARY_NATURAL_ATTACK_PENALTY: -5,
-  // Two-weapon fighting's penalties on each hand's attacks, 2 less with a light off-hand weapon (PHB Table 8-10)
+  // Two-weapon fighting's penalties on each hand's attacks, 2 less with a light off-hand weapon
   TWO_WEAPON_MAIN_HAND_PENALTY: -6,
   TWO_WEAPON_OFF_HAND_PENALTY: -10,
   LIGHT_OFF_HAND_BONUS: 2,
@@ -32,8 +34,8 @@ export const COMBAT_RULES = {
 } as const;
 
 /**
- * D&D 3.5 damage die progression for size adjustments. All weapon/unarmed damages are defined for Medium size; shift up
- * for Large, down for Small, etc.
+ * The damage die progression for size adjustments. All weapon/unarmed damages are defined for Medium size; shift up for
+ * Large, down for Small, etc.
  */
 export const DAMAGE_PROGRESSION = [
   "1",

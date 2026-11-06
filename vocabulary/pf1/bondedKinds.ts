@@ -1,13 +1,14 @@
 export type BondedKind = (typeof BONDED_KINDS)[number]["slug"];
 
 /**
- * The creatures a character can be bonded to. `className` is the seeded class a bonded creature levels in, kept apart
- * from `label` so renaming one in the UI ("Special Mount" → "Mount") doesn't break `BondedPlans`' class lookup.
+ * The creatures a character can be bonded to: a wizard's familiar, a druid's animal companion, and the mount a
+ * paladin's divine bond calls. `className` is the seeded class a bonded creature levels in, kept apart from `label` so
+ * renaming one in the UI ("Bonded Mount" → "Mount") doesn't break `BondedPlans`' class lookup.
  */
 export const BONDED_KINDS = [
   { slug: "familiar", label: "Familiar", className: "Familiar" },
   { slug: "animalcompanion", label: "Animal Companion", className: "Animal Companion" },
-  { slug: "mount", label: "Special Mount", className: "Special Mount" },
+  { slug: "mount", label: "Bonded Mount", className: "Bonded Mount" },
 ] as const;
 
 /** Each bonded kind's definition, by its slug (typed by hand: `Object.fromEntries` loses its keys' type). */

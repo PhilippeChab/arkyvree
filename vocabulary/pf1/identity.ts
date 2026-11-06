@@ -1,4 +1,7 @@
-/** The value sets of a 3.5 character's identity: its alignment and its gender, which a new character's form offers. */
+/**
+ * The value sets of a Pathfinder character's identity: its alignment, as the Core Rulebook names them (its "Neutral",
+ * 3.5's "True Neutral"), and its gender, which a new character's form offers.
+ */
 
 export type Alignment = (typeof ALIGNMENT_OPTIONS)[number];
 export type Gender = (typeof GENDER_OPTIONS)[number];
@@ -8,7 +11,7 @@ export const ALIGNMENT_OPTIONS = [
   "Neutral Good",
   "Chaotic Good",
   "Lawful Neutral",
-  "True Neutral",
+  "Neutral",
   "Chaotic Neutral",
   "Lawful Evil",
   "Neutral Evil",

@@ -1,7 +1,9 @@
 /**
- * The SRD's armor and shield tables: each base armor and shield type's definition, which its fields are read from
- * (an item's builders, the codegen's items). A name the tables don't have has none. Beside them, what an item's fields
- * offer: their proficiencies, which the tables are written in, and their names, read off them.
+ * The Core Rulebook's armor and shield table: each base armor and shield type's definition, which its fields are read
+ * from (an item's builders, the codegen's items). A name the table doesn't have has none. Its other columns are none of
+ * a definition's: an armor's speed (a 30-ft. wearer's 30 ft. in light armor, 20 ft. in medium or heavy armor) is its
+ * category's, which slows its wearer as a medium or heavy load does, and its cost and weight are its item's. Beside
+ * them, what an item's fields offer: their proficiencies, which the table is written in, and their names, read off it.
  */
 
 interface ArmorDefinition {
@@ -14,6 +16,8 @@ interface ArmorDefinition {
 interface ShieldDefinition {
   acBonus: number;
   checkPenalty: number;
+  /** Its maximum Dexterity bonus to AC, a tower shield's: the table gives the others none. */
+  maxDex?: number;
   shieldType: (typeof SHIELD_PROFICIENCIES)[number];
   spellFailure: number;
 }
@@ -30,20 +34,20 @@ export const ARMOR_TYPE_DEFINITIONS: Partial<Record<string, ArmorDefinition>> = 
   "Leather Armor": { armorType: "Light", acBonus: 2, maxDex: 6, checkPenalty: 0, spellFailure: 10 },
   "Studded Leather": { armorType: "Light", acBonus: 3, maxDex: 5, checkPenalty: -1, spellFailure: 15 },
   "Chain Shirt": { armorType: "Light", acBonus: 4, maxDex: 4, checkPenalty: -2, spellFailure: 20 },
-  "Hide Armor": { armorType: "Medium", acBonus: 3, maxDex: 4, checkPenalty: -3, spellFailure: 20 },
-  "Scale Mail": { armorType: "Medium", acBonus: 4, maxDex: 3, checkPenalty: -4, spellFailure: 25 },
-  "Chain Mail": { armorType: "Medium", acBonus: 5, maxDex: 2, checkPenalty: -5, spellFailure: 30 },
-  Breastplate: { armorType: "Medium", acBonus: 5, maxDex: 3, checkPenalty: -4, spellFailure: 25 },
-  "Splint Mail": { armorType: "Heavy", acBonus: 6, maxDex: 0, checkPenalty: -7, spellFailure: 40 },
-  "Banded Mail": { armorType: "Heavy", acBonus: 6, maxDex: 1, checkPenalty: -6, spellFailure: 35 },
-  "Half-Plate": { armorType: "Heavy", acBonus: 7, maxDex: 0, checkPenalty: -7, spellFailure: 40 },
-  "Full Plate": { armorType: "Heavy", acBonus: 8, maxDex: 1, checkPenalty: -6, spellFailure: 35 },
+  "Hide Armor": { armorType: "Medium", acBonus: 4, maxDex: 4, checkPenalty: -3, spellFailure: 20 },
+  "Scale Mail": { armorType: "Medium", acBonus: 5, maxDex: 3, checkPenalty: -4, spellFailure: 25 },
+  Chainmail: { armorType: "Medium", acBonus: 6, maxDex: 2, checkPenalty: -5, spellFailure: 30 },
+  Breastplate: { armorType: "Medium", acBonus: 6, maxDex: 3, checkPenalty: -4, spellFailure: 25 },
+  "Splint Mail": { armorType: "Heavy", acBonus: 7, maxDex: 0, checkPenalty: -7, spellFailure: 40 },
+  "Banded Mail": { armorType: "Heavy", acBonus: 7, maxDex: 1, checkPenalty: -6, spellFailure: 35 },
+  "Half-Plate": { armorType: "Heavy", acBonus: 8, maxDex: 0, checkPenalty: -7, spellFailure: 40 },
+  "Full Plate": { armorType: "Heavy", acBonus: 9, maxDex: 1, checkPenalty: -6, spellFailure: 35 },
 };
 
 /** The base armor types, the table's, by name. */
 export const ARMOR_TYPE_NAMES = Object.keys(ARMOR_TYPE_DEFINITIONS).toSorted();
 
-/** The shield proficiencies, from the lightest shield to the tower shield. */
+/** The shield proficiencies, from the lightest shield (a buckler is one) to the tower shield. */
 export const SHIELD_PROFICIENCIES = ["Light", "Heavy", "Tower"] as const;
 
 export const SHIELD_TYPE_DEFINITIONS: Partial<Record<string, ShieldDefinition>> = {
@@ -52,7 +56,7 @@ export const SHIELD_TYPE_DEFINITIONS: Partial<Record<string, ShieldDefinition>> 
   "Light Steel Shield": { shieldType: "Light", acBonus: 1, checkPenalty: -1, spellFailure: 5 },
   "Heavy Wooden Shield": { shieldType: "Heavy", acBonus: 2, checkPenalty: -2, spellFailure: 15 },
   "Heavy Steel Shield": { shieldType: "Heavy", acBonus: 2, checkPenalty: -2, spellFailure: 15 },
-  "Tower Shield": { shieldType: "Tower", acBonus: 4, checkPenalty: -10, spellFailure: 50 },
+  "Tower Shield": { shieldType: "Tower", acBonus: 4, maxDex: 2, checkPenalty: -10, spellFailure: 50 },
 };
 
 /** The base shield types, the table's, by name. */

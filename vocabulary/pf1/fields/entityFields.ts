@@ -1,11 +1,12 @@
 /**
- * The D&D 3.5 entities' fields: each entity type's, and a ruleset's Settings', in the order a stat block shows them
+ * The Pathfinder entities' fields: each entity type's, and a ruleset's Settings', in the order a stat block shows them
  * (and its form its fields), each declared once, as data the engine stores, reads and takes from a form by (its kind's
- * codec, `FieldCodec`, and its storage, `Engine.storage()`; `FieldSpec` is a declaration's shape): its name, the stored
- * field that keeps it (a link's, the role of its owner's links: a reference's single link, a list of links its form
- * edits), its label and what it's for, its kind, its closed list of values or the entity its value names, its default,
- * scale and bounds, whether a form must give it (`required`), how sibling copies merge it, the role its entity reads it
- * off another through (an item's, its template's), when it counts (`when`), and how its form shows it: where
+ * codec, `FieldCodec`, and its storage, `Engine.forRules(baseRules).storage()`; `FieldSpec` is a declaration's shape):
+ * its name, the stored field that keeps it (a link's, the role of its owner's links: a reference's single link, a list
+ * of links its form edits), its label and what it's for, its kind, its closed list of values or the entity its value
+ * names, its default, scale and bounds, whether a form must give it (`required`), how sibling copies merge it, the role
+ * its entity reads it off another through (an item's, its template's), when it counts (`when`), and how its form shows
+ * it: where
  * (`placement`, `shownIn`), on what (`shownWhen`), in its unit, by its values' labels, or not at all (`form`). A field
  * merges by what its value is:
  * - a set (a list, a progression) holds every copy's values (`union`);
@@ -31,8 +32,7 @@ import {
   ABILITY_INCREASE_LEVEL_INTERVAL,
   CASTER_TYPES,
   DEFAULT_HIT_DIE,
-  FIRST_LEVEL_GENERAL_FEATS,
-  GENERAL_FEAT_LEVEL_INTERVAL,
+  GENERAL_FEAT_LEVELS,
   HIT_DIE_LABELS,
   HIT_DIE_VALUES,
   LEVEL_WORD,
@@ -63,7 +63,7 @@ import {
 
 import { ARMOR_AC_BONUS, ARMOR_CHECK_PENALTY, ARMOR_MAX_DEX, ARMOR_PROFICIENCY, ARMOR_TYPE } from "./armor.ts";
 import { CLASS_CASTER_TYPE, CLASS_HD } from "./class.ts";
-import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_POINTS } from "./classLevel.ts";
+import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_RANKS } from "./classLevel.ts";
 import {
   FEAT_FAMILY,
   FEAT_GENERATED,
@@ -168,7 +168,7 @@ const CLASS_FIELDS = {
 
 /**
  * A class level's fields: its base bonus to each of the ruleset's saves (its `baseBonus` links) and the feats it grants,
- * each through the pool it's taken for (its `grants` links), then its base attack bonus and its skill points, in their
+ * each through the pool it's taken for (its `grants` links), then its base attack bonus and its skill ranks, in their
  * bounds, 0 without their rows, both always written.
  */
 const CLASS_LEVEL_FIELDS = {
@@ -205,12 +205,12 @@ const CLASS_LEVEL_FIELDS = {
   },
   skills: {
     default: 0,
-    description: "Skill points gained per level",
+    description: "Skill ranks gained per level",
     kind: "number",
-    label: "Skill Points",
+    label: "Skill Ranks",
     max: MAX_TABLE_COUNT,
     min: 0,
-    field: CLASS_LEVEL_SKILL_POINTS,
+    field: CLASS_LEVEL_SKILL_RANKS,
     merge: "fallback",
     write: "always",
   },
@@ -387,7 +387,7 @@ const ITEM_FIELDS = {
   weapon: {
     fields: {
       type: {
-        description: "Base weapon type for feat/modifier targeting (e.g. Longsword, Shortsword)",
+        description: "Base weapon type for feat/modifier targeting (e.g. Longsword, Short Sword)",
         kind: "text",
         kindWide: true,
         label: "Base Weapon",
@@ -407,10 +407,10 @@ const ITEM_FIELDS = {
         values: WEAPON_PROFICIENCIES,
       },
       family: {
-        description: "Weapon family grouping (Sword, Axe, Bow, etc.)",
+        description: "Weapon group, as a fighter's weapon training names them (Blades, Light; Bows; Pole Arms, etc.)",
         kind: "text",
         kindWide: true,
-        label: "Family",
+        label: "Weapon Group",
         field: WEAPON_FAMILY,
         inherits: "madeFrom",
         merge: "fallback",
@@ -774,7 +774,7 @@ const RACE_FIELDS = {
     merge: "fallback",
   },
   quadruped: {
-    description: "Whether the race walks on four legs, which carries more: x1 1/2 when Medium, x3 when Large (SRD)",
+    description: "Whether the race walks on four legs, which carries more: x1 1/2 when Medium, x3 when Large",
     kind: "flag",
     label: "Quadruped",
     field: RACE_QUADRUPED,
@@ -783,24 +783,24 @@ const RACE_FIELDS = {
 } as const;
 
 /**
- * A ruleset's own fields, its Settings: the ability its characters' skill points come from, which a ruleset always
+ * A ruleset's own fields, its Settings: the ability its characters' skill ranks come from, which a ruleset always
  * names, and its progression, which every character follows whatever its classes: the feats its levels give it to
  * pick, and the ability increases they give, each a frequency and more at the levels it names, the core rules'
  * without a row.
  */
 const RULESET_FIELDS = {
-  skillPointAbility: {
-    description: "The ability whose modifier a character adds to the skill points each of its levels gives",
+  skillRankAbility: {
+    description: "The ability whose modifier a character adds to the skill ranks each of its levels gives",
     kind: "ref",
-    label: "Skill Point Ability",
+    label: "Skill Rank Ability",
     references: "abilities",
     required: true,
-    role: "skillPointAbility",
+    role: "skillRankAbility",
   },
   featAdvancement: {
-    default: { every: GENERAL_FEAT_LEVEL_INTERVAL, extra: [{ amount: FIRST_LEVEL_GENERAL_FEATS, position: 1 }] },
+    default: { every: 0, extra: GENERAL_FEAT_LEVELS },
     description:
-      "The feats a character's levels give it to pick, whatever its classes, besides its classes' bonus feats: one every so many levels, and more at the levels listed (the core rules: one every 3 levels, and one more at level 1)",
+      "The feats a character's levels give it to pick, whatever its classes, besides its classes' bonus feats: one every so many levels, and more at the levels listed (the core rules: one at every odd level)",
     kind: "progression",
     label: "Feat Advancement",
     lastPosition: MAX_CHARACTER_LEVEL,
@@ -861,7 +861,7 @@ const SKILL_FIELDS = {
   },
   checkPenaltyMultiplier: {
     default: 1,
-    description: "How many times over the skill takes the armor check penalty (2 for Swim)",
+    description: "How many times over the skill takes the armor check penalty (1 for a skill that takes it)",
     kind: "number",
     label: "Armor Check Penalty Multiplier",
     min: 1,
@@ -880,7 +880,7 @@ const SKILL_FIELDS = {
 
 /**
  * A spell's fields: its spell lists, each at its spell level (its `listedIn` links, a new one needs one), then, in the
- * order a 3.5 stat block shows them, its school, components, range…, and the save it allows (its `resistedBy` link)
+ * order a Pathfinder stat block shows them, its school, components, range…, and the save it allows (its `resistedBy` link)
  * and what a successful save does, which its form shows beside its name.
  */
 const SPELL_FIELDS = {
@@ -924,7 +924,7 @@ const SPELL_FIELDS = {
     values: SPELL_DESCRIPTORS,
   },
   components: {
-    description: "Required component (Verbal, Somatic, Material, Focus, Divine Focus, XP Cost)",
+    description: "Required component (Verbal, Somatic, Material, Focus, Divine Focus)",
     kind: "list",
     kindWide: true,
     label: "Components",

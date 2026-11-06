@@ -1,2 +1,2 @@
-/** The core rules' races, as the books name them. */
-export const RACE_NAMES = ["Human", "Dwarf", "Elf", "Gnome", "Half-Elf", "Half-Orc", "Halfling"];
+/** The Core Rulebook's races, as it names them, in its order. */
+export const RACE_NAMES = ["Dwarf", "Elf", "Gnome", "Half-Elf", "Half-Orc", "Halfling", "Human"];

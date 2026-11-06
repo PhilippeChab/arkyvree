@@ -1,4 +1,4 @@
-/** D&D 3.5 spell fields. */
+/** Pathfinder spell fields. */
 
 export const SPELL_AREA_OF_EFFECT = "SPELL_AREA_OF_EFFECT";
 export const SPELL_CASTING_TIME = "SPELL_CASTING_TIME";
