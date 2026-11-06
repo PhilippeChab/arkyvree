@@ -6,15 +6,17 @@ import type {
   PickPlan,
   StoredAdvancement,
 } from "@/engine/core/module/index.ts";
-import RulesError from "@/engine/core/RulesError.ts";
+import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
 import ClassLevels from "@/engine/rulesets/dnd5.2/characters/ClassLevels.ts";
 import LevelRules from "@/engine/rulesets/dnd5.2/rules/LevelRules.ts";
 import type { KlassLevel } from "@/engine/rulesets/dnd5.2/view/rows.ts";
+import type { Requirement } from "@/shared/relations.ts";
+import { stripSeparators } from "@/shared/text.ts";
 
 import CharacterProjection from "./CharacterProjection.ts";
-import LevelUpBase from "./LevelUpBase.ts";
+import LevelUpBase, { type PlannedClassLevel } from "./LevelUpBase.ts";
 import PicksDistribution from "./PicksDistribution.ts";
-import type { LevelEditRequest, LevelPicks, LevelUpRequest } from "./requests.ts";
+import type { LevelEditRequest, LevelPicks, LevelRequest, LevelUpRequest } from "./requests.ts";
 import type { HoldingCharacter } from "./SelectionChecks.ts";
 
 /** A planned level checked: its class level, hit points and picks. */
@@ -30,6 +32,8 @@ interface PlannedLevel {
  * (`SelectionChecks.checkPicksNotHeld`).
  */
 export interface CheckedCharacter extends HoldingCharacter {
+  /** The issues of the requirement groups (`groups`) it fails: each its owner's, with its tree. */
+  getUnmetRequirementIssues(groups: Requirement[][]): RulesIssue[];
   validate(): ValidationResult;
 }
 
@@ -78,6 +82,38 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     throw new RulesError(
       "invalid",
       `${label}${taken} can't be taken there: ${ClassLevels.format(className, next)} comes next`,
+    );
+  }
+
+  /**
+   * The issues of a planned level (the `index`th of `entries`) that's a class's first level taken as a multiclass, its
+   * prerequisites unmet, on the character before it: its own requirements, then the first levels' of the classes the
+   * character has before it, saved or planned (`LevelUpBase.findFirstLevelIds`: 13 in each one's primary abilities),
+   * each naming that class. None for another level, or the character's first.
+   */
+  private findUnmetPrerequisites(entries: PlannedClassLevel[], index: number): RulesIssue[] {
+    const { klass, classLevel } = entries[index];
+    const planned = entries.slice(0, index).map((entry) => entry.classLevel.id);
+    const before = [...this.character.rows.advancements.map(({ entryId }) => entryId), ...planned];
+    if (classLevel.position !== 1 || before.length === 0) return [];
+    const { classesById, classLevelsById } = this.dnd52;
+    const owned = [classLevel.id, ...LevelUpBase.findFirstLevelIds(this.dnd52, before)].flatMap((id) => {
+      const requirements = this.rulesetData.requirementsByEntity.get(id) ?? [];
+      const held = id === classLevel.id ? undefined : classesById.get(classLevelsById.get(id)?.ownerId ?? "");
+      return requirements.length > 0 ? [{ held, requirements }] : [];
+    });
+    if (owned.length === 0) return [];
+    const projection = new CharacterProjection(this.character);
+    projection.addLevels(planned, { hp: LevelRules.UNROLLED_LEVEL_HP });
+    const character = this.build(projection);
+    return owned.flatMap(({ held, requirements }) =>
+      character.getUnmetRequirementIssues([requirements]).map((issue) => {
+        const who = held ? `a ${held.name} multiclassing ` : "";
+        return {
+          ...issue,
+          message: `Level ${before.length + 1}: ${klass.name}: ${who}requires ${this.wordUnmet(issue)}`,
+        };
+      }),
     );
   }
 
@@ -190,9 +226,38 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
     PicksDistribution.refuseOverfull(this.rules.findOverfullPools(this.view, this.character, holder, picks));
   }
 
+  /**
+   * Refuses a level-up's planned levels (`levels`) whose multiclass prerequisites the character fails
+   * (`findUnmetPrerequisites`), each naming its class and what it fails: a save checks them before its picks fill
+   * their pools, whose room the class's first level would give.
+   */
+  private refuseUnmetPrerequisites(levels: LevelRequest[]) {
+    const entries = this.rules.getPlannedClassLevels(this.view, this.character, levels);
+    RulesError.refuseIssues(entries.flatMap((_, index) => this.findUnmetPrerequisites(entries, index)));
+  }
+
   /** What a level's save writes under its advancement: its hit points, and its picks. */
   private savedPicksOf(hp: number, picks: LevelPicks): PickPlan[] {
     return [{ step: "hp", amount: hp }, ...this.toPickPlans(picks)];
+  }
+
+  /**
+   * What a requirement issue's tree (`requirementTree`) says the character fails, in a sentence: its unmet conditions,
+   * joined as its group chains them ("Strength 13 or Dexterity 13"), an ability score's by the ability's name.
+   */
+  private wordUnmet({ requirementTree = "" }: RulesIssue): string {
+    const lines = requirementTree.split("\n").map((line) => line.trim());
+    const joiner = lines[0] === "(OR)" ? " or " : " and ";
+    const abilities = new Map(this.dnd52.abilities.map(({ name }) => [stripSeparators(name), name]));
+    return lines
+      .filter((line) => line.endsWith("[UNMET]"))
+      .map((line) => {
+        const condition = line.replace(/\s*\[UNMET\]$/, "");
+        const score = /^abilities\.(\w+)\.total >= (\d+)$/.exec(condition);
+        const ability = score && abilities.get(score[1]);
+        return ability ? `${ability} ${score[2]}` : condition;
+      })
+      .join(joiner);
   }
 
   /**
@@ -226,7 +291,9 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
 
   /**
    * The levels a level-up writes (its request's `levels`, with its `picks` spread over them as the rules spread them).
-   * Each level is checked as the levels before it see it, and refused when it's saved already, or picks what it can't;
+   * Unforced, a class's first level whose multiclass prerequisites the character fails is refused first, naming them
+   * (`refuseUnmetPrerequisites`). Each level is checked as the levels before it see it, and refused when it's saved
+   * already, or picks what it can't;
    * the picks are refused when they pick a feat that doesn't stack the character has already (at a saved level or a
    * planned one, a later one too, or by a modifier, as an edit of it would refuse it) or a spell it knows in its pool
    * already, the plan's other picks' gifts too, or overfill a pool, forced or not, and the character with them with what
@@ -234,6 +301,7 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
    * feats and spells). It has no children to change.
    */
   planLevels(request: LevelUpRequest, force: boolean): AdvancementsPlan {
+    if (!force) this.refuseUnmetPrerequisites(request.levels);
     const { issues, planned } = this.planSaved(request);
     if (!force) RulesError.refuseIssues(issues);
     return { ...LevelsPlanning.NO_CHILDREN, advancements: this.advancementsOf(planned) };

@@ -86,6 +86,16 @@ export default abstract class LevelUpBase<C> {
   /** What a character's levels make of its children: none, as no class of the 2024 rules levels a companion. */
   static readonly NO_CHILDREN: ChildrenPlan = { children: [] };
 
+  /**
+   * The first levels of the classes a character's levels (`levelIds`, their class levels) are of, each once: whose
+   * requirements (their multiclass prerequisites) a multiclass meets in its current classes as in its new one.
+   */
+  static findFirstLevelIds(dnd52: Dnd52View, levelIds: string[]): string[] {
+    const { classLevelByClassAndLevel, classLevelsById } = dnd52;
+    const classIds = new Set(levelIds.flatMap((id) => classLevelsById.get(id)?.ownerId ?? []));
+    return [...classIds].flatMap((classId) => classLevelByClassAndLevel.get(`${classId}:1`)?.id ?? []);
+  }
+
   /** The character built from a level-up's projection of its rows: as saved, without one. */
   protected build(projection = new CharacterProjection(this.character)): C {
     return this.rules.buildCharacter(this.view, projection.input);
