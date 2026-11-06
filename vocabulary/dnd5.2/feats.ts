@@ -1,8 +1,9 @@
 /**
  * The feats' categories, as the SRD 5.2.1 names them, each a pool a feat of it is picked in (a character's background
- * gives an Origin feat, a class's Ability Score Improvement a General one, its Fighting Style one of that category, and
- * its level 19 an Epic Boon or a General feat), and the families its feats are grouped by: a feat taken with a choice
- * (an ability score to raise, a spell list) is a family of a feat per choice.
+ * gives an Origin feat; a class's Ability Score Improvement, the Ability Score Improvement feat or another feat the
+ * character qualifies for; its Fighting Style, a feat of that category; its Epic Boon, an Epic Boon feat or another
+ * feat it qualifies for), and the families its feats are grouped by: a feat taken with a choice (an ability score to
+ * raise, a spell list) is a family of a feat per choice.
  */
 
 /** The feats' categories, as the SRD names them, each its feats' pool. */

@@ -26,6 +26,12 @@ export const EXPERIENCE_BY_LEVEL = [
   265000, 305000, 355000,
 ] as const;
 
+/**
+ * The hit points a level after the first gives in place of a roll, by its class's hit die, as the Fixed Hit Points by
+ * Class table gives them: half the die, plus 1 (a d10's 6). A character's first level gives its die's highest.
+ */
+export const FIXED_HIT_POINTS_BY_DIE: Readonly<Record<number, number>> = { 6: 4, 8: 5, 10: 6, 12: 7 };
+
 /** Each hit die's name, as dice notation writes it, by its place among `HIT_DIE_VALUES`. */
 export const HIT_DIE_LABELS = ["d6", "d8", "d10", "d12"] as const;
 
