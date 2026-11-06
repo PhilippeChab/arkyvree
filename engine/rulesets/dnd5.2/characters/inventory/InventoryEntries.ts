@@ -18,7 +18,7 @@ import { LOCATION_OPTIONS } from "@/vocabulary/dnd5.2/equipment.ts";
 
 import Equipping from "./Equipping.ts";
 
-/** A location a request names: one of Pathfinder's, refused as invalid otherwise. */
+/** A location a request names: one of the 2024 rules', refused as invalid otherwise. */
 const LOCATION = z.enum(LOCATION_OPTIONS);
 
 /**
@@ -44,9 +44,9 @@ export default class InventoryEntries {
   }
 
   /**
-   * Why `location` (in each of its `groups`, Pathfinder's weapon sets, stored from 0, for a hand) can't take one more item of
+   * Why `location` (in each of its `groups`, the character's weapon sets, stored from 0, for a hand) can't take one more item of
    * the character's, if it can't: the entry in the way, named with its set, the entry placed (`entryId`, none for a new
-   * one) aside. Refused as invalid when the location isn't one of Pathfinder's.
+   * one) aside. Refused as invalid when the location isn't one of the 2024 rules'.
    */
   static describePlacement(
     view: RulesetView,
@@ -61,9 +61,9 @@ export default class InventoryEntries {
    * Where an entry's add or edit holds its item, from the character's rows: its location, none to carry it, how many
    * of it (any number carried; held somewhere, as many as the place has room for), and its charges, which only an item
    * that comes with them keeps (`ItemPlacement`'s, its template's field among its own). Refused as invalid when the
-   * location isn't one of Pathfinder's, and when the item can't be equipped there, or not that many of it (`Equipping`: an
+   * location isn't one of the 2024 rules', and when the item can't be equipped there, or not that many of it (`Equipping`: an
    * item already carried takes another entry, a second dagger held in the other hand; its requirements unless
-   * `force`d). A new entry's item is Pathfinder's, as its ruleset's view holds it.
+   * `force`d). A new entry's item is the ruleset's, as its ruleset's view holds it.
    */
   static planPlacement(
     view: RulesetView,

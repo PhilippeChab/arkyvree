@@ -1,7 +1,7 @@
 import type { CharacterInput, SheetRequest } from "@/engine/core/module/index.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import CharacterResponse from "@/engine/rulesets/dnd5.2/characters/description/CharacterResponse.ts";
-import Dnd52CharacterBuilder, { type CharacterKind } from "@/engine/rulesets/dnd5.2/model/Dnd52CharacterBuilder.ts";
+import Dnd52CharacterBuilder from "@/engine/rulesets/dnd5.2/model/Dnd52CharacterBuilder.ts";
 
 import DetailedCharacterSheet from "./DetailedCharacterSheet.tsx";
 
@@ -17,7 +17,6 @@ export default class CharacterSheet {
     return (
       <DetailedCharacterSheet
         detailedCharacter={detailedCharacter}
-        kind={character.record.kind as CharacterKind}
         sheet={CharacterResponse.buildSheet(detailedCharacter)}
         {...request}
       />

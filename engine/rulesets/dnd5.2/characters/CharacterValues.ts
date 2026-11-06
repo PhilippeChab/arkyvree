@@ -5,12 +5,11 @@ import type { Character } from "@/shared/relations.ts";
 import { CHARACTER_FIELDS } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 /**
- * A Pathfinder character's own fields' values, by name, as its codec reads them off its row: its identity and its experience,
+ * A character's own fields' values, by name, as its codec reads them off its row: its identity and its experience,
  * typed by their declarations (`CHARACTER_FIELDS`).
  */
 export type Dnd52CharacterFields = FieldValues<typeof CHARACTER_FIELDS>;
 
-/** The role of a Pathfinder character's link to its race, a single one (`character.links`). */
 /** The role of a character's link to its background. */
 export const BACKGROUND_ROLE = "background";
 
@@ -18,12 +17,18 @@ export const BACKGROUND_ROLE = "background";
 export const SPECIES_ROLE = "species";
 
 /**
- * A Pathfinder character's own values, read off its row as stored: its fields by their declarations (`CHARACTER_FIELDS`, its
- * codec's), and its race by its link's role. And what a write of its fields stores, as every write stores them.
+ * A character's own values, read off its row as stored: its fields by their declarations (`CHARACTER_FIELDS`, its
+ * codec's), and its species and background by their links' roles. And what a write of its fields stores, as every
+ * write stores them.
  */
 export default class CharacterValues {
-  /** A Pathfinder character's fields, as the vocabulary declares them (`CHARACTER_FIELDS`). */
+  /** A character's fields, as the vocabulary declares them (`CHARACTER_FIELDS`). */
   static readonly fields = new FieldCodec(CHARACTER_FIELDS);
+
+  /** The character's background, by its id: none before it picks one. */
+  static backgroundOf({ links }: Pick<Character, "links">): string | undefined {
+    return links[BACKGROUND_ROLE] ?? undefined;
+  }
 
   /** A character's own fields (`fields`, as stored), each read by its declaration: its default when it holds none. */
   static fieldsOf({ fields }: Pick<Character, "fields">): Dnd52CharacterFields {
@@ -53,12 +58,6 @@ export default class CharacterValues {
     return values;
   }
 
-  /** A character's race (`links`, its single links as stored): the entity its `race` link names. */
-  /** The character's background, by its id: none before it picks one. */
-  static backgroundOf({ links }: Pick<Character, "links">): string | undefined {
-    return links[BACKGROUND_ROLE] ?? undefined;
-  }
-
   /** The character's species, by its id. */
   static speciesOf({ links }: Pick<Character, "links">): string {
     return links[SPECIES_ROLE];
@@ -66,7 +65,7 @@ export default class CharacterValues {
 
   /**
    * What a write of a character's fields (`values`, by name, those it gives) stores, by field: each value as its
-   * declaration writes it (`FieldCodec.write`: Pathfinder's fields are single ones), null to clear it (none given, or one that
+   * declaration writes it (`FieldCodec.write`: its fields are single ones), null to clear it (none given, or one that
    * writes none: an empty text; one always written, its default, as its storage writes it).
    */
   static writeOf(values: Partial<Dnd52CharacterFields>): Record<string, FieldWrite> {

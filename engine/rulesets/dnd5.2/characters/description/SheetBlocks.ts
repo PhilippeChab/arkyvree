@@ -10,7 +10,6 @@ import type {
   SheetEntry,
   SheetStat,
   StatsBlock,
-  Subsheet,
   TableBlock,
 } from "@/engine/core/module/index.ts";
 import IdentityFields from "@/engine/rulesets/dnd5.2/characters/IdentityFields.ts";
@@ -35,9 +34,9 @@ interface SheetAbility {
 }
 
 /**
- * What a Pathfinder sheet's blocks read of its sheet, as the API answers it: its abilities, saves, combat (its load among
- * it), skills, classes (their levels' feats), the feats it has without a pick, its spells, known and per day, and its
- * equipment.
+ * What a sheet's blocks read of its sheet, as the API answers it: its abilities, saves, combat (what it carries among
+ * it), skills and passive Perception, classes (their levels' feats), the feats it has without a pick, its spells and
+ * spell slots, and its equipment.
  */
 interface SheetParts {
   abilities: (SheetAbility & { abilityId: string })[];
@@ -45,60 +44,45 @@ interface SheetParts {
   combat: ReturnType<typeof CombatSheet.describe>;
   equipment: ReturnType<typeof CharacterResponse.equipmentOf>;
   identity: Parameters<typeof IdentityFields.describe>[0];
+  passivePerception: number | null;
   saves: Record<string, { name: string; parts: SheetStat[]; total: number }>;
   skills: Record<string, SheetSkill>;
   spellGroups: ReturnType<typeof SpellGroups.describe>;
-  spellsPerDay: ReturnType<typeof SpellGroups.describePerDay>;
+  spellSlots: ReturnType<typeof SpellGroups.describeSlots>;
   virtualFeats: SheetFeat[];
 }
 
-/** A skill as its row reads it: its names, whether it's a class skill (`innate`), and its figures. */
+/**
+ * A skill as its row reads it: its name and ability, whether the character is proficient in it, with Expertise or
+ * half proficient (a bard's Jack of All Trades), what its proficiency adds, and its misc and total.
+ */
 interface SheetSkill {
   ability: number;
-  family: string | null;
-  innate?: boolean;
+  abilityName: string;
+  expertise: boolean;
+  halfproficient: boolean;
   misc: number;
   name: string;
-  rank?: number;
-  shortName: string;
+  proficiency: number;
+  proficient: boolean;
   total: number;
-  weight?: number;
 }
-
-/**
- * A bonded creature's sheet (`CharacterResponse.buildBondedSheet`), which its subsheet reads (its blocks, its combat,
- * its feats), with the feat of its master's that bonds it.
- */
-type BondedSheet = Pick<
-  ReturnType<typeof CharacterResponse.buildBondedSheet>,
-  "blocks" | "combat" | "feats" | "id" | "name"
-> & {
-  bondFeatId: string | null;
-};
 
 /** A feat a sheet lists: its id, name and description, and whether the character may hold it more than once. */
 type SheetFeat = Pick<Feat, "description" | "id" | "name"> & { fields: Pick<Feat["fields"], typeof FEAT_STACKABLE> };
 
 /**
  * An attack's columns. On a phone, its weapon leads, its attack bonus at the line's end, and the rest under them
- * ("1d8 · ×3 · 1,100 ft. · -2 / 110 ft. · Piercing").
+ * ("1d8+3 · 20 · 80/320 ft. · Piercing · Vex").
  */
 const ATTACK_COLUMNS: SheetColumn[] = [
   { key: "weapon", label: "Weapon", width: "22%", slot: "primary" },
-  { key: "attack", label: "Attack Bonus", width: "15%", align: "center", slot: "trailing" },
-  { key: "damage", label: "Damage", width: "12%", align: "center", slot: "inline", hideEmpty: true },
-  { key: "critical", label: "Critical", width: "11%", align: "center", slot: "inline" },
-  { key: "range", label: "Range", width: "11%", align: "center", slot: "inline", hideEmpty: true, noWrap: true },
-  {
-    key: "increment",
-    label: "Increment",
-    width: "13%",
-    align: "center",
-    slot: "inline",
-    hideEmpty: true,
-    noWrap: true,
-  },
-  { key: "type", label: "Type", width: "16%", align: "center", slot: "inline", hideEmpty: true },
+  { key: "attack", label: "Attack Bonus", width: "13%", align: "center", slot: "trailing" },
+  { key: "damage", label: "Damage", width: "13%", align: "center", slot: "inline", hideEmpty: true },
+  { key: "critical", label: "Critical", width: "10%", align: "center", slot: "inline" },
+  { key: "range", label: "Range", width: "14%", align: "center", slot: "inline", hideEmpty: true, noWrap: true },
+  { key: "type", label: "Type", width: "14%", align: "center", slot: "inline", hideEmpty: true },
+  { key: "mastery", label: "Mastery", width: "14%", align: "center", slot: "inline", hideEmpty: true },
 ];
 
 /** The fields of an item its equipment's rows read its cost and its weight off, which its add dialog shows them by. */
@@ -153,14 +137,16 @@ const NO_WEAPONS = "No weapons equipped";
 /** A skill's columns: on a phone, its name leads, its total at the line's end, and its parts under them, named. */
 const SKILL_COLUMNS: SheetColumn[] = [
   { key: "skill", label: "Skill", slot: "primary" },
-  { key: "rank", label: "Rank", width: "56px", align: "center", slot: "labeled" },
-  { key: "ability", label: "Ability", width: "64px", align: "center", slot: "labeled" },
+  { key: "ability", label: "Ability", width: "72px", align: "center", slot: "labeled" },
+  { key: "proficiency", label: "Proficiency", width: "96px", align: "center", slot: "labeled", hideEmpty: true },
   { key: "misc", label: "Misc. Bonus", width: "96px", align: "center", slot: "labeled", hideEmpty: true },
-  { key: "weight", label: "Armor Check", width: "104px", align: "center", slot: "labeled", hideEmpty: true },
   { key: "total", label: "Total", width: "56px", align: "center", slot: "trailing", strong: true },
 ];
 
-/** A spell's columns: on a phone, its name leads, its DC at the line's end, its school and save under them. */
+/** A skill's mark beside its name: proficient (*), with Expertise (**), or half proficient (½). */
+const SKILL_MARKS = { expertise: " **", half: " ½", proficient: " *" } as const;
+
+/** A spell's columns: on a phone, its name leads, its DC at the line's end, its school and saving throw under them. */
 const SPELL_COLUMNS: SheetColumn[] = [
   { key: "name", label: "Name", width: "40%", slot: "primary" },
   { key: "school", label: "School", width: "20%", slot: "inline", hideEmpty: true, noDash: true },
@@ -169,8 +155,9 @@ const SPELL_COLUMNS: SheetColumn[] = [
 ];
 
 /**
- * A Pathfinder sheet's blocks, in its order: its ability scores, its saving throws, and its combat with its weapon sets. What
- * its sections show, in the core's shapes (`SheetBlock`).
+ * A D&D 5th Edition sheet's blocks, in its order: its identity, its ability scores, its saving throws, its combat with
+ * its weapon sets, its skills, its feats, its spells and its equipment. What its sections show, in the core's shapes
+ * (`SheetBlock`).
  */
 export default class SheetBlocks {
   /** The ability scores: each its total over its modifier, its base its owner sets within the rules' bounds. */
@@ -203,9 +190,10 @@ export default class SheetBlocks {
   }
 
   /**
-   * The combat: its line (HP, Initiative, Speed, BAB, CMB, CMD), then its weapon sets, each headed by its number and
-   * what its hands hold (none when the character has no weapon set, its one loadout striking unarmed), with its armor
-   * class in boxes and its weapons' attacks, a weapon its wielder isn't proficient with flagged.
+   * The combat: its line (HP, Initiative, Speed, Proficiency Bonus, Attacks), then its weapon sets, each headed by its
+   * number and what its hands hold (none when the character has no weapon set, its one loadout striking unarmed), with
+   * its Armor Class in a box and its weapons' attacks, a weapon its wielder isn't proficient with flagged (its attack
+   * adds no Proficiency Bonus).
    */
   private static combat(combat: SheetParts["combat"]): StatsBlock {
     return {
@@ -233,11 +221,11 @@ export default class SheetBlocks {
                 damage: row.damage,
                 critical: row.critical,
                 range: row.range,
-                increment: row.increment,
                 type: row.types,
+                mastery: row.mastery,
               },
               caption: row.label,
-              ...(!weapon.proficient && { alert: "Not Proficient (-4)" }),
+              ...(!weapon.proficient && { alert: "Not Proficient" }),
             })),
           ),
         },
@@ -285,8 +273,8 @@ export default class SheetBlocks {
 
   /**
    * The equipment: each entry its item's name (empty for an item gone: its words name it), where it's worn, how many,
-   * its weight in pounds and its cost in gold pieces, whether it's equipped, and its charges; then the load it makes,
-   * in pounds.
+   * its weight in pounds and its cost in gold pieces, whether it's equipped, and its charges; then what the character
+   * carries against its capacity, in pounds.
    */
   private static inventory(equipment: SheetParts["equipment"], load: SheetParts["combat"]["load"]): InventoryBlock {
     return {
@@ -319,7 +307,15 @@ export default class SheetBlocks {
     };
   }
 
-  /** The saving throws: each its total, signed, and its parts (its base, its ability's, its misc). */
+  /** A saving throw's name, marked (*) when the character is proficient in it: its parts list its Proficiency Bonus. */
+  private static markedSave(save: { name: string; parts: SheetStat[] }): string {
+    return save.parts.some(({ label }) => label === "Proficiency") ? `${save.name} *` : save.name;
+  }
+
+  /**
+   * The saving throws: each its total, signed, and its parts (its ability's, its Proficiency Bonus when proficient, its
+   * misc), a proficient one marked (*).
+   */
   private static saves(saves: SheetParts["saves"]): ScoresBlock {
     return {
       kind: "scores",
@@ -328,8 +324,8 @@ export default class SheetBlocks {
       empty: "No saving throws",
       scores: Object.entries(saves).map(([key, save]) => ({
         key,
-        label: save.name,
-        short: save.name,
+        label: SheetBlocks.markedSave(save),
+        short: SheetBlocks.markedSave(save),
         value: save.total,
         signed: true,
         parts: save.parts,
@@ -337,50 +333,56 @@ export default class SheetBlocks {
     };
   }
 
+  /** A skill's mark beside its name (`SKILL_MARKS`): none for a skill the character isn't proficient in. */
+  private static skillMark(skill: SheetSkill): string {
+    if (skill.expertise) return SKILL_MARKS.expertise;
+    if (skill.proficient) return SKILL_MARKS.proficient;
+    return skill.halfproficient ? SKILL_MARKS.half : "";
+  }
+
   /**
-   * The skills, by name: each its rank, its ability's modifier, its misc bonus and armor check penalty where it has
-   * them, and its total; a class skill marked ("*", which its note says), and a family two or more share grouped.
+   * The skills, by name: each its ability's modifier, what its proficiency adds and its misc bonus where it has them,
+   * and its total; a proficient one marked (*, ** with Expertise, ½ half proficient), which its note says, with the
+   * character's passive Perception.
    */
-  private static skills(skills: SheetParts["skills"]): TableBlock {
-    const marked = (name: string, skill: SheetSkill) => `${name}${skill.innate ? " *" : ""}`;
+  private static skills(skills: SheetParts["skills"], passivePerception: number | null): TableBlock {
+    const marked = (skill: SheetSkill) => `${skill.name}${SheetBlocks.skillMark(skill)}`;
+    const passive = passivePerception === null ? "" : ` · Passive Perception ${passivePerception}`;
     return {
       kind: "table",
       key: "skills",
       title: "Skills",
       empty: "No skills",
-      note: "* indicates a class skill",
+      note: `* proficient, ** Expertise, ½ half proficient${passive}`,
       table: {
         columns: SKILL_COLUMNS,
         empty: "No skills",
         fixed: true,
-        grouped: true,
-        minWidth: 520,
+        minWidth: 480,
         rows: Object.values(skills)
           .sort((a, b) => a.name.localeCompare(b.name))
           .map((skill) => ({
             key: skill.name,
             cells: {
-              skill: marked(skill.name, skill),
-              rank: String(skill.rank || 0),
-              ability: formatSigned(skill.ability),
+              skill: marked(skill),
+              ability: `${formatSigned(skill.ability)} (${skill.abilityName.slice(0, 3).toUpperCase()})`,
+              proficiency: skill.proficiency !== 0 ? formatSigned(skill.proficiency) : "",
               misc: skill.misc !== 0 ? formatSigned(skill.misc) : "",
-              weight: skill.weight ? `-${skill.weight}` : "",
               total: formatSigned(skill.total),
             },
-            ...(skill.family !== null && { group: skill.family }),
-            short: marked(skill.shortName, skill),
+            short: marked(skill),
           })),
       },
     };
   }
 
   /**
-   * The spells, known and per day: each list's spells by spell level, each level's uses a day where it has them, each
-   * spell its school, save and DC, its tags, and its details and description; and the slots per day, a row per list
-   * with slots. None for a character with neither.
+   * The spells and spell slots: each list's spells by spell level, each spell its school, saving throw and DC, its
+   * tags, and its details and description; and the slots, a row for its Spellcasting's and one for its Pact Magic's.
+   * None for a character with neither.
    */
-  private static spells(spellGroups: SheetParts["spellGroups"], perDay: SheetParts["spellsPerDay"]): PoolsBlock[] {
-    if (spellGroups.length === 0 && perDay.lists.length === 0) return [];
+  private static spells(spellGroups: SheetParts["spellGroups"], slots: SheetParts["spellSlots"]): PoolsBlock[] {
+    if (spellGroups.length === 0 && slots.lists.length === 0) return [];
     return [
       {
         kind: "pools",
@@ -389,21 +391,20 @@ export default class SheetBlocks {
         empty: "No spells",
         entityType: "spells",
         columns: SPELL_COLUMNS,
-        ...(perDay.lists.length > 0 && {
+        ...(slots.lists.length > 0 && {
           counts: {
-            title: "Spells per Day",
-            corner: "Spell List",
-            tiers: perDay.labels,
-            lists: perDay.lists.map(({ aptitudeName, slots }) => ({ name: aptitudeName, counts: slots })),
+            title: "Spell Slots",
+            corner: "Slots",
+            tiers: slots.labels,
+            lists: slots.lists.map(({ aptitudeName, slots: counts }) => ({ name: aptitudeName, counts })),
           },
         }),
         pools: spellGroups.map(({ aptitudeName, levels }) => ({
           key: aptitudeName,
           name: aptitudeName,
-          tiers: levels.map(({ label, level, spells, uses }) => ({
+          tiers: levels.map(({ label, level, spells }) => ({
             key: String(level),
             label,
-            ...(uses != null && { note: `${uses}/day` }),
             entries: spells.map((spell) => ({
               key: spell.name,
               id: spell.id,
@@ -427,36 +428,6 @@ export default class SheetBlocks {
   }
 
   /**
-   * A bonded creature's subsheet, from its sheet: its abilities in compact boxes, its armor class, its summary and its
-   * saves, and its feats' names, sorted.
-   */
-  private static subsheet(bonded: BondedSheet): Subsheet {
-    const scoresOf = (key: string) =>
-      bonded.blocks.find((block): block is ScoresBlock => block.kind === "scores" && block.key === key)?.scores ?? [];
-    const combat = bonded.blocks.find((block) => block.kind === "stats" && block.key === "combat");
-    const featNames = Object.values(bonded.feats)
-      .filter((feat): feat is Extract<typeof feat, { possessed: boolean }> => typeof feat.possessed === "boolean")
-      .filter((feat) => feat.possessed)
-      .map((feat) => feat.name)
-      .sort();
-    return {
-      id: bonded.id,
-      name: bonded.name,
-      scores: { title: "Abilities", scores: scoresOf("abilities") },
-      stats: {
-        title: "Combat & Saves",
-        // A creature has one weapon set, its natural attacks', with no shield: its armor class
-        ...(combat?.kind === "stats" && combat.panels[0]?.boxes && { boxes: combat.panels[0].boxes }),
-        columns: [
-          { key: "summary", lines: bonded.combat.summary },
-          { key: "saves", lines: scoresOf("saves").map(({ label, value }) => ({ label, value: formatSigned(value) })) },
-        ],
-      },
-      chips: { title: "Feats", names: featNames },
-    };
-  }
-
-  /**
    * A sheet's block of a kind (`kind`) under its key (`key`), one `describe` gives every sheet: what the printed
    * sheet's pages render.
    */
@@ -468,22 +439,6 @@ export default class SheetBlocks {
     return block;
   }
 
-  /**
-   * A master's blocks with its bonded creatures (`bonded`, each with the feat that bonds it) in its feats' details:
-   * each feat's entry the subsheet of the creature it bonds (the last one, if several).
-   */
-  static bond(blocks: SheetBlock[], bonded: BondedSheet[]): SheetBlock[] {
-    const byFeat = new Map(bonded.map((creature) => [creature.bondFeatId, creature]));
-    return blocks.map((block) => {
-      if (block.kind !== "entries" || block.key !== "feats") return block;
-      const entries = block.entries.map((entry) => {
-        const creature = entry.id === null ? undefined : byFeat.get(entry.id);
-        return creature ? { ...entry, subsheet: SheetBlocks.subsheet(creature) } : entry;
-      });
-      return { ...block, entries };
-    });
-  }
-
   /** The sheet's blocks, from its parts as the API answers them, in its sections' order. */
   static describe(parts: SheetParts): SheetBlock[] {
     return [
@@ -491,9 +446,9 @@ export default class SheetBlocks {
       SheetBlocks.abilities(parts.abilities),
       SheetBlocks.saves(parts.saves),
       SheetBlocks.combat(parts.combat),
-      SheetBlocks.skills(parts.skills),
+      SheetBlocks.skills(parts.skills, parts.passivePerception),
       SheetBlocks.feats(parts.classes, parts.virtualFeats),
-      ...SheetBlocks.spells(parts.spellGroups, parts.spellsPerDay),
+      ...SheetBlocks.spells(parts.spellGroups, parts.spellSlots),
       SheetBlocks.inventory(parts.equipment, parts.combat.load),
     ];
   }

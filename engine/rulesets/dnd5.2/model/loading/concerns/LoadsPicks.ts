@@ -38,7 +38,22 @@ function grantedAt<E>(
  * picked entity: deleting one, a fork's deleting an inherited one and unsubscribing its book are refused while a
  * character picks it.
  */
+function pickedAt<E>(picks: StoredPick[], levels: StoredAdvancement[], entityOf: (pick: StoredPick) => E | undefined) {
+  const classLevelIds = new Map(levels.map((level) => [level.id, level.entryId]));
+  return picks.flatMap((pick) => {
+    const entity = entityOf(pick);
+    const classLevelId = classLevelIds.get(pick.advancementId);
+    return entity && classLevelId ? [{ advancementId: pick.advancementId, classLevelId, entity, pick }] : [];
+  });
+}
+
 /**
+ * Each saved level's picks of a step (`picks`, in the order they were read) with the entity each names (`entityOf`),
+ * held at the level it's picked at, with that level's class level (its entry). The character's input holds a pick's
+ * references as the ids the view stands for them (a fork's copy, the winner of books' copies), and the view holds every
+ * picked entity: deleting one, a fork's deleting an inherited one and unsubscribing its book are refused while a
+ * character picks it.
+ *
  * The feat each class's first level grants as its starting proficiencies (`levels`, the character's, in order): the
  * feat its class names for a first class (`startingProficiencies`: its saving throws, armor, weapons and skill picks)
  * at the character's first level, and for a multiclass (`multiclassProficiencies`) at a later class's first level, as
@@ -65,15 +80,6 @@ function startingAt(levels: StoredAdvancement[], dnd52: Dnd52View): HeldSource<F
       viaId: null,
     };
     return [{ advancementId: level.id, classLevelId: classLevel.id, entity: feat, grant, step: "feats" as const }];
-  });
-}
-
-function pickedAt<E>(picks: StoredPick[], levels: StoredAdvancement[], entityOf: (pick: StoredPick) => E | undefined) {
-  const classLevelIds = new Map(levels.map((level) => [level.id, level.entryId]));
-  return picks.flatMap((pick) => {
-    const entity = entityOf(pick);
-    const classLevelId = classLevelIds.get(pick.advancementId);
-    return entity && classLevelId ? [{ advancementId: pick.advancementId, classLevelId, entity, pick }] : [];
   });
 }
 
@@ -111,9 +117,8 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
         return kept;
       });
 
-      // Apply feat modifiers in character-level order so later selections win for `set` targets (e.g.
-      // bonded.familiar.race): picks and grants are gathered by kind, not by level, and a level a level-up replaces
-      // keeps its place.
+      // Apply feat modifiers in character-level order so later selections win for `set` targets: picks and grants are
+      // gathered by kind, not by level, and a level a level-up replaces keeps its place.
       const levelPosition = new Map(advancements.map((level) => [level.id, level.position]));
       const starting = startingAt(advancements, dnd52);
       const feats = [...starting, ...picked, ...keptGrants].sort(

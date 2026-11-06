@@ -38,29 +38,29 @@ export default abstract class LevelPicker<Details extends object = object> exten
 
   /**
    * The character a pick is made for: as it was before the edited level (an edit), with the levels planned before this
-   * one and their ability increases, then this class level with its own and the feats and spells picked so far.
+   * one, then this class level with the feats and spells picked so far.
    */
   protected override project() {
-    const { abilityIncreases, editedLevel, planned = {} } = this.query;
+    const { editedLevel, planned = {} } = this.query;
     const projection = new CharacterProjection(this.input);
     if (editedLevel) projection.dropLevelsFrom(editedLevel.id);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
-    projection.addLevels(planned.classLevelIds ?? [], { abilityIncreases: planned.abilityIncreases, hp });
-    projection.pick(projection.addLevel(this.classLevel.id, { abilityIncreases, hp }), planned.picks ?? []);
+    projection.addLevels(planned.classLevelIds ?? [], { hp });
+    projection.pick(projection.addLevel(this.classLevel.id, { hp }), planned.picks ?? []);
     return projection.input;
   }
 
   /**
-   * The character with every level it has and the wizard plans: this class level with its own ability increases and
-   * the feats and spells picked so far (`planned.picks`), in the edited level's place (an edit), or after the levels
-   * planned before it and before those planned after it.
+   * The character with every level it has and the wizard plans: this class level with the feats and spells picked so
+   * far (`planned.picks`), in the edited level's place (an edit), or after the levels planned before it and before
+   * those planned after it.
    */
   private projectHolder() {
-    const { abilityIncreases, editedLevel: replacing, laterClassLevelIds = [], planned = {} } = this.query;
+    const { editedLevel: replacing, laterClassLevelIds = [], planned = {} } = this.query;
     const projection = new CharacterProjection(this.input);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
-    projection.addLevels(planned.classLevelIds ?? [], { abilityIncreases: planned.abilityIncreases, hp });
-    projection.pick(projection.addLevel(this.classLevel.id, { abilityIncreases, hp, replacing }), planned.picks ?? []);
+    projection.addLevels(planned.classLevelIds ?? [], { hp });
+    projection.pick(projection.addLevel(this.classLevel.id, { hp, replacing }), planned.picks ?? []);
     projection.addLevels(laterClassLevelIds, { hp });
     return projection;
   }

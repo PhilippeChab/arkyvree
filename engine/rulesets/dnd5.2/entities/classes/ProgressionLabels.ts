@@ -1,4 +1,4 @@
-/** The labels a Pathfinder class's progression reads its values, its presets and its spell levels by. */
+/** The labels a class's progression reads its values, its presets and its spell levels by. */
 export default class ProgressionLabels {
   /** An ordinal's suffix, as a book's table writes its spell levels: "1st", "2nd", "3rd", "4th". */
   private static formatOrdinal(level: number) {

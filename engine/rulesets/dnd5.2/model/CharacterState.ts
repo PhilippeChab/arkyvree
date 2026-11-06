@@ -10,7 +10,7 @@ import type { CustomizedClassLevel } from "./loading/loadedEntities.ts";
 import SpellsPaths from "./spells/SpellsPaths.ts";
 
 /**
- * A Pathfinder character's state, on core's (`CharacterBase`): its components, and what its build loads. Its concerns add the
+ * A D&D 5th Edition character's state, on core's (`CharacterBase`): its components, and what its build loads. Its concerns add the
  * build's steps (`Builds`), its own issues and the names its issues give (`Diagnoses`), the spells and feats it has
  * without a pick (`PossessesVirtually`) and core's validation (`Validates`); `DetailedCharacter` wires them.
  */
@@ -19,7 +19,7 @@ export default abstract class CharacterState extends CharacterBase<Dnd52Componen
   // per unmet-requirement when formatting validation errors. Build lookup
   // maps once on first use and reuse across subsequent resolve calls.
   // The index is cached for the lifetime of the DetailedCharacter instance;
-  // it relies on the loaded feats, spells, inventory, class levels and race
+  // it relies on the loaded feats, spells, inventory, class levels, species and background
   // being immutable after `build()` returns. If any
   // future code mutates those post-build, invalidate this field first.
   protected diagnosticsIndex?: {

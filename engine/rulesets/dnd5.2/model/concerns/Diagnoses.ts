@@ -111,9 +111,8 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       for (const [source, type] of [
         [this.data.species, "species"],
         [this.data.background, "backgrounds"],
-      ] as const) {
+      ] as const)
         for (const m of source?.modifiers ?? []) modifierOwner.set(m.id, { name: source!.name, type });
-      }
 
       for (const kl of this.data.classLevels) {
         const klass = rulesetClassesById.get(kl.ownerId);

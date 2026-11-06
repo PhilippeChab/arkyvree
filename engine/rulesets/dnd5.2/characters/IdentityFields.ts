@@ -14,9 +14,11 @@ import { CHARACTER_FIELDS } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 import CharacterValues from "./CharacterValues.ts";
 
-/** A Pathfinder character's identity, as its sheet reads it: who it is, its beliefs, its experience, and its notes. */
+/**
+ * A character's identity, as its sheet reads it: who it is, its background, its beliefs, its experience, and its notes.
+ */
 interface SheetIdentity {
-  background: { notes: string; privateNotes?: string };
+  background: { name: string; notes: string; privateNotes?: string };
   beliefs: { alignment: string; deity: string };
   meta: { xp: number };
   physiology: {
@@ -25,30 +27,33 @@ interface SheetIdentity {
     gender: string;
     height: string;
     languages: { id: string; name: string }[];
-    race: { name: string } | null;
+    species: { name: string } | null;
     weight: string;
   };
 }
 
-/** A field of a Pathfinder character's, by its name among its declarations (`CHARACTER_FIELDS`). */
+/** A field of a character's, by its name among its declarations (`CHARACTER_FIELDS`). */
 type FieldName = keyof typeof CHARACTER_FIELDS;
 
 /** The row's own column an identity edit sends among its fields, by its key: its description, a text. */
 const OWN_REQUEST = z.object({ description: z.string().optional() });
 
 /**
- * A Pathfinder character's identity as its sheet's `fields` block: its race (its creation's), alignment, experience and deity
- * on a line, its age, gender, height and weight on the next, its description under them, the languages it speaks, and
- * its notes; a partly seen character's race and physical traits alone. Each field is keyed by the stored field that
+ * A character's identity as its sheet's `fields` block: its species and background (its creation's), alignment,
+ * experience and deity on a line, its age, gender, height and weight on the next, its description under them, the
+ * languages it speaks, and its notes; a partly seen character's species and physical traits alone. Each field is keyed
+ * by the stored field that
  * keeps it, labeled and bounded as it's declared (`CHARACTER_FIELDS`), as a new character's form shows it
  * (`FieldInputs`). And what an edit of its fields writes, read by the character's codec as an entity's form is
  * (`FieldCodec.parse`).
  */
 export default class IdentityFields {
+  /** The key of its background's field, which no stored field keeps: its creation's pick, never edited. */
+  static readonly BACKGROUND_KEY = "background";
   /** The key of its description's field: the row's own column an edit sends among its fields (`OWN_REQUEST`). */
   static readonly DESCRIPTION_KEY = "description";
-  /** The key of its race's field, which no stored field keeps: its creation's pick, never edited. */
-  static readonly RACE_KEY = "race";
+  /** The key of its species' field, which no stored field keeps: its creation's pick, never edited. */
+  static readonly SPECIES_KEY = "species";
 
   /** The identity's fields' values (`identity`, as its sheet reads it), by their names. */
   private static valuesOf({ beliefs, meta, physiology }: SheetIdentity): Record<FieldName, unknown> {
@@ -65,19 +70,26 @@ export default class IdentityFields {
 
   /**
    * The identity's block (`identity`, as its sheet reads it), its private notes as they read (none for a reader who
-   * doesn't read them); `partial`: what a campaign member who sees the character partly reads, its race and its physical
-   * traits alone.
+   * doesn't read them); `partial`: what a campaign member who sees the character partly reads, its species and its
+   * physical traits alone.
    */
   static describe(identity: SheetIdentity, partial = false): FieldsBlock {
     const { background, physiology } = identity;
     const values = IdentityFields.valuesOf(identity);
     const fieldsOf = (names: FieldName[]) =>
       names.map((name) => FieldInputs.sheetFieldOf(CHARACTER_FIELDS[name], values[name]));
-    const race: SheetField = {
-      key: IdentityFields.RACE_KEY,
+    const species: SheetField = {
+      key: IdentityFields.SPECIES_KEY,
       kind: "text",
-      label: "Race",
-      value: physiology.race?.name || "",
+      label: "Species",
+      value: physiology.species?.name || "",
+      fixed: true,
+    };
+    const backgroundField: SheetField = {
+      key: IdentityFields.BACKGROUND_KEY,
+      kind: "text",
+      label: "Background",
+      value: background.name || "",
       fixed: true,
     };
     const traits = fieldsOf(["age", "gender", "height", "weight"]);
@@ -90,10 +102,10 @@ export default class IdentityFields {
       saved: "Character updated",
       failed: "Failed to save character details",
     } as const;
-    if (partial) return { ...head, lines: [[race], traits], fields: [] };
+    if (partial) return { ...head, lines: [[species], traits], fields: [] };
     return {
       ...head,
-      lines: [[race, ...fieldsOf(["alignment", "xp", "deity"])], traits],
+      lines: [[species, backgroundField, ...fieldsOf(["alignment", "xp", "deity"])], traits],
       fields: [
         {
           key: IdentityFields.DESCRIPTION_KEY,

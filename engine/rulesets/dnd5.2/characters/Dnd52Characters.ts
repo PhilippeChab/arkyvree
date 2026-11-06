@@ -8,13 +8,15 @@ import RulesError from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
 import type { Dnd52Descriptions } from "@/engine/rulesets/dnd5.2/descriptions.ts";
 import { ITEM_FIELDS } from "@/engine/rulesets/dnd5.2/entities/items/fields.ts";
-import RacePicker from "@/engine/rulesets/dnd5.2/pickers/RacePicker.ts";
+import BackgroundPicker from "@/engine/rulesets/dnd5.2/pickers/BackgroundPicker.ts";
+import SpeciesPicker from "@/engine/rulesets/dnd5.2/pickers/SpeciesPicker.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
-import { type Item, type Race } from "@/engine/rulesets/dnd5.2/view/rows.ts";
+import { type Item } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import type { Character } from "@/shared/relations.ts";
-import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd5.2/bondedKinds.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd5.2/characterKinds.ts";
 
 import CharacterCards from "./CharacterCards.ts";
+import { BACKGROUND_ROLE, SPECIES_ROLE } from "./CharacterValues.ts";
 import CharacterDescription from "./description/CharacterDescription.ts";
 import IdentityFields from "./IdentityFields.ts";
 import InventoryEntries from "./inventory/InventoryEntries.ts";
@@ -23,17 +25,18 @@ import NewCharacters from "./NewCharacters.ts";
 import CharacterSheet from "./sheet/CharacterSheet.tsx";
 
 /**
- * The Pathfinder characters, as the module answers the server of them: their sheets, as the API answers them, as a member who
- * reads one partly reads it, and printed; the languages they speak and may pick (their `speaks` links); where an
- * item goes and what equipping one checks, and how a new one's ability scores are set (their `score` links) and the
- * races it can pick (its `race` link), a player character's alone. The characters part reads the private notes as the
- * viewer does, and checks an item's ruleset and charges, a language's, and the scores' bounds.
+ * The D&D 5th Edition characters, as the module answers the server of them: their sheets, as the API answers them, as a
+ * member who reads one partly reads it, and printed; the languages they speak and may pick (their `speaks` links);
+ * where an item goes and what equipping one checks, and how a new one's ability scores are set (their `score` links)
+ * and the species it can pick (its `species` link), a player character's alone, and its background (its `background`
+ * link). The characters part reads the private notes as the viewer does, and checks an item's ruleset and charges, a
+ * language's, and the scores' bounds.
  */
 export default class Dnd52Characters extends CharactersPart<Dnd52Descriptions> {
-  /** A new character's race: a player character's (of kind `pc`), not a monster's or a bonded creature's. */
-  protected override checkCreationPick(view: RulesetView, _role: string, race: Race) {
-    if (race.partition !== PLAYER_CHARACTER_KIND)
-      throw new RulesError("invalid", `${view.rulesetData.labelOf("races")} is not valid for a player character`);
+  /** A new character's species: a player character's (of kind `pc`). Any background is one a character takes. */
+  protected override checkCreationPick(view: RulesetView, role: string, entity: { partition?: string | null }) {
+    if (role === SPECIES_ROLE && entity.partition !== PLAYER_CHARACTER_KIND)
+      throw new RulesError("invalid", `${view.rulesetData.labelOf("species")} is not valid for a player character`);
   }
 
   /** A character's printed sheet: the PDF document the server renders. */
@@ -41,12 +44,12 @@ export default class Dnd52Characters extends CharactersPart<Dnd52Descriptions> {
     return CharacterSheet.describeSheet(...args);
   }
 
-  /** A character's sheet as the API answers it, with its bonded creatures', or a creature's. */
+  /** A character's sheet as the API answers it. */
   protected override describeFull(...args: Parameters<typeof CharacterDescription.describeFull>) {
     return CharacterDescription.describeFull(...args);
   }
 
-  /** A character's card's chips: its race and its classes, each at the character's level in it. */
+  /** A character's card's chips: its species and its classes, each at the character's level in it. */
   protected override describeFullCard(view: RulesetView, character: Character, advancements: StoredAdvancement[]) {
     return CharacterCards.describe(Dnd52View.of(view.rulesetData), character, advancements);
   }
@@ -72,21 +75,24 @@ export default class Dnd52Characters extends CharactersPart<Dnd52Descriptions> {
   }
 
   /**
-   * How a new character's ability scores are set (its one scored link's, `score`): the ruleset's abilities, the
-   * Core Rulebook's methods, the scores' bounds, each score's modifier.
+   * How a new character's ability scores are set (its one scored link's, `score`): the ruleset's abilities, the SRD
+   * 5.2.1's methods, the scores' bounds, each score's modifier.
    */
   protected override describeScores(view: RulesetView) {
     return NewCharacters.describeCreation(Dnd52View.of(view.rulesetData));
   }
 
-  /** The languages an edit stores: a new one refused when secret, or past the room its rules give the picks. */
+  /** The languages an edit stores: a new one refused when rare, or past the room its rules give the picks. */
   protected override fitLinks(view: RulesetView, character: CharacterInput, _role: string, picks: string[]) {
     return new SpokenLanguages(view, character).plan(picks);
   }
 
-  /** The race picker of a new character: the races it offers, and whether each is eligible. */
-  protected override openPicker(view: RulesetView, _role: string, query: CreationPickQuery) {
-    return new RacePicker(view, query);
+  /**
+   * The picker of a new character's creation pick, by its role: its background's (`background`), every background, or
+   * its species' (`species`), a player character's; each option checked against what its form says.
+   */
+  protected override openPicker(view: RulesetView, role: string, query: CreationPickQuery) {
+    return role === BACKGROUND_ROLE ? new BackgroundPicker(view, query) : new SpeciesPicker(view, query);
   }
 
   /** What an edit of a character's identity writes: its fields, each checked as declared, and its description. */

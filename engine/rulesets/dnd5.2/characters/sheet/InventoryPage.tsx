@@ -5,12 +5,12 @@ import type { InventoryBlock } from "@/engine/core/module/index.ts";
 import ContinuationHeader from "./ContinuationHeader.tsx";
 import { FONT_SIZE, styles } from "./styles.ts";
 
-/** The color of a load past light, by how grave it is. */
+/** The color of what the character carries past its capacity, by how grave it is. */
 const LOAD_COLORS = { error: "#d32f2f", info: "#0288d1", warning: "#ed6c02" } as const;
 
 /**
- * The sheet's inventory page: its inventory block's rows (`block`), what the character carries and where, and the load
- * it makes, its carried weight first.
+ * The sheet's inventory page: its inventory block's rows (`block`), what the character carries and where, and its
+ * carried weight against its carrying capacity, its carried weight first.
  */
 function InventoryPage({ block, name }: { block: InventoryBlock; name: string }) {
   const { load, rows, units } = block;

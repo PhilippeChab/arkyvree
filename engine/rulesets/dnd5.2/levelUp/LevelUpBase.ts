@@ -2,8 +2,8 @@ import { type CharacterInput, type ChildrenPlan, type PickPlan, type StoredPick 
 import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetData, RulesetView } from "@/engine/core/view/index.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
-import type { Klass, KlassLevel } from "@/engine/rulesets/dnd5.2/view/rows.ts";
-import type { Character } from "@/shared/relations.ts";
+import type { Feat, Klass, KlassLevel } from "@/engine/rulesets/dnd5.2/view/rows.ts";
+import { CLASS_HD } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 import CharacterProjection from "./CharacterProjection.ts";
 import type { OverfullPool } from "./PicksDistribution.ts";
@@ -18,10 +18,9 @@ export interface LevelHitPoints {
 }
 
 /**
- * What the level-up rules decide (`Dnd52LevelUp`), which every level-up flow reads: how a character is built (`C`),
- * what a level's ability increases add up to, the hit points it gains, and what a master's bonded creatures become
- * with it; and what a save's checks (`LevelsPlanning`) ask of them: its planned levels, its picks spread over them, the
- * pools they overfill, the issues an edited level answers for.
+ * What the level-up rules decide (`Dnd52LevelUp`), which every level-up flow reads: how a character is built (`C`), and
+ * the hit points a level gains; and what a save's checks (`LevelsPlanning`) ask of them: its planned levels, its picks
+ * spread over them, the pools they overfill, the issues an edited level answers for.
  */
 export interface LevelUpRules<C> {
   /** The character built from its rows (as the server read them, or with what a level-up adds), in the ruleset's view. */
@@ -48,35 +47,30 @@ export interface LevelUpRules<C> {
     holder: C,
     picks: Pick<LevelPicks, "feats" | "spells">,
   ): OverfullPool[];
-  /** What the ability increases of the level after `totalLevel` levels add up to in the view's ruleset: 0 for none. */
-  getAbilityIncreaseTotal(view: RulesetView, totalLevel: number): number;
   /**
-   * Each planned level's class and class level, with its ability increases (`levels`), the ruleset's: refused when a
-   * class or a class level isn't, or the levels go past its bounds.
+   * Each planned level's class and class level (`levels`), the ruleset's: refused when a class or a class level isn't,
+   * or the levels go past its bounds.
    */
   getPlannedClassLevels(
     view: RulesetView,
     input: CharacterInput,
     levels: Omit<LevelRequest, "hp">[],
   ): PlannedClassLevel[];
-  /** The hit points a level of a class with hit die `hd` gains: the least, the most, and the average. */
-  hitPointsOf(hd: number): LevelHitPoints;
   /**
-   * What the bonded creatures (`bonded`, their rows) become with their master as `master` builds it, from its row
-   * (`record`), which a creature it makes takes after.
+   * The hit points a level after a character's first gains, of a class with hit die `hd`: the least, the most, and the
+   * average, which the rules' fixed value is.
    */
-  planBondedCreatures(view: RulesetView, master: C, record: Character, bonded: CharacterInput[]): ChildrenPlan;
+  hitPointsOf(hd: number): LevelHitPoints;
 }
 
-/** A level a level-up plans: its class and class level, and its ability increases (its `abilities` picks). */
+/** A level a level-up plans: its class and class level. */
 export interface PlannedClassLevel {
-  abilityIncreases: PickPlan[];
   classLevel: KlassLevel;
   klass: Klass;
 }
 
-/** A saved level's picks, by its steps: its hit points, ability increases, skill ranks, feats and spells. */
-export type SavedLevelPicks = Record<"abilities" | "feats" | "hp" | "skills" | "spells", StoredPick[]>;
+/** A saved level's picks, by its steps: its hit points, feats and spells. */
+export type SavedLevelPicks = Record<"feats" | "hp" | "spells", StoredPick[]>;
 
 /**
  * What every level-up flow reads: the ruleset's view, the character's rows (`character`) and the level-up rules
@@ -88,6 +82,9 @@ export default abstract class LevelUpBase<C> {
     protected readonly character: CharacterInput,
     protected readonly rules: LevelUpRules<C>,
   ) {}
+
+  /** What a character's levels make of its children: none, as no class of the 2024 rules levels a companion. */
+  static readonly NO_CHILDREN: ChildrenPlan = { children: [] };
 
   /** The character built from a level-up's projection of its rows: as saved, without one. */
   protected build(projection = new CharacterProjection(this.character)): C {
@@ -122,9 +119,14 @@ export default abstract class LevelUpBase<C> {
     return lookup;
   }
 
-  /** A level's selections checked against the ruleset, and its ability increases against its rules. */
+  /** A level's selections and hit points checked against the ruleset. */
   protected get checks(): SelectionChecks {
-    return new SelectionChecks(this.view, this.rules);
+    return new SelectionChecks(this.view);
+  }
+
+  /** The view's D&D 5th Edition lists and indices. */
+  protected get dnd52(): Dnd52View {
+    return Dnd52View.of(this.rulesetData);
   }
 
   /** The class's level `level`, in the composed ruleset, or a 404. */
@@ -146,33 +148,43 @@ export default abstract class LevelUpBase<C> {
   }
 
   /**
-   * The picks saved level `advancementId` holds, by step, as the character's rows hold them: its hit points, its
-   * ability increases, its skill ranks, and its feats and spells, each in its pool; none for a level it hasn't saved (a
-   * level-up's).
+   * The picks saved level `advancementId` holds, by step, as the character's rows hold them: its hit points, and its
+   * feats and spells, each in its pool; none for a level it hasn't saved (a level-up's).
    */
   protected getSavedPicks(advancementId: string | undefined): SavedLevelPicks {
     const { picks } = this.character.rows;
-    const atLevel = (step: keyof SavedLevelPicks) => picks[step].filter((pick) => pick.advancementId === advancementId);
-    return {
-      hp: atLevel("hp"),
-      abilities: atLevel("abilities"),
-      skills: atLevel("skills"),
-      feats: atLevel("feats"),
-      spells: atLevel("spells"),
-    };
-  }
-
-  /** The view's Pathfinder lists and indices. */
-  protected get dnd52(): Dnd52View {
-    return Dnd52View.of(this.rulesetData);
+    const atLevel = (step: keyof SavedLevelPicks) =>
+      (picks[step] ?? []).filter((pick) => pick.advancementId === advancementId);
+    return { hp: atLevel("hp"), feats: atLevel("feats"), spells: atLevel("spells") };
   }
 
   /**
-   * What the character's bonded creatures (`bonded`, their rows) become with it as `master` builds it: each kind's
-   * creature removed, kept or made, and the levels it takes or loses.
+   * The feats a class level grants a character (`classLevelId`), as its sheet holds them: its `grants` links', and, at
+   * a class's first level, its starting proficiencies (`startingFeatOf`: a first class's, `first`, or a multiclass's).
    */
-  protected planBondedOf(master: C, bonded: CharacterInput[]) {
-    return this.rules.planBondedCreatures(this.view, master, this.character.record, bonded);
+  protected grantedFeatsAt(classLevelId: string, first: boolean): Feat[] {
+    const { dnd52 } = this;
+    const granted = dnd52.grantedFeatsOf(classLevelId).flatMap((grant) => dnd52.featsById.get(grant.toId) ?? []);
+    const classLevel = dnd52.classLevelsById.get(classLevelId);
+    const starting = classLevel && this.startingFeatOf(classLevel, first);
+    return starting ? [starting, ...granted] : granted;
+  }
+
+  /**
+   * Whether a saved level (`level`) is the character's first, which its hit points are its die's highest at, and its
+   * class's starting proficiencies a first class's.
+   */
+  protected isFirstSaved(level: { id: string }): boolean {
+    return this.character.rows.advancements.toSorted((a, b) => a.position - b.position)[0]?.id === level.id;
+  }
+
+  /**
+   * The hit points a level of `klass` gains (`first`: the character's first, its hit die's highest alone), as the SRD
+   * 5.2.1 gives them; any other level's, the rules' (`hitPointsOf`).
+   */
+  protected levelHitPointsOf(klass: Pick<Klass, "fields">, first: boolean): LevelHitPoints {
+    const hd = klass.fields[CLASS_HD];
+    return first ? { average: hd, max: hd, min: hd } : this.rules.hitPointsOf(hd);
   }
 
   protected get rulesetData(): RulesetData {
@@ -180,19 +192,22 @@ export default abstract class LevelUpBase<C> {
   }
 
   /**
-   * A level's picks as a save writes them: its feats and its spells, each in its pool, and its skill ranks but those at
-   * none.
+   * The feat a class's first level grants as its starting proficiencies (`classLevel`, none at another level): its
+   * class's `startingProficiencies` feat when it's the character's first level (`first`), its
+   * `multiclassProficiencies` one when it multiclasses into it, as the character's sheet loads them.
    */
-  protected toPickPlans({ feats, spells, skills }: LevelPicks): PickPlan[] {
+  protected startingFeatOf(classLevel: KlassLevel, first: boolean): Feat | undefined {
+    if (classLevel.position !== 1) return undefined;
+    const klass = this.dnd52.classesById.get(classLevel.ownerId);
+    const featId = klass?.links[first ? "startingProficiencies" : "multiclassProficiencies"];
+    return featId ? this.dnd52.featsById.get(featId) : undefined;
+  }
+
+  /** A level's picks as a save writes them: its feats and its spells, each in its pool. */
+  protected toPickPlans({ feats, spells }: LevelPicks): PickPlan[] {
     const pooled = (step: string, byPool: Record<string, string[]>) =>
       Object.entries(byPool).flatMap(([viaId, ids]) => ids.map((entityId) => ({ step, entityId, viaId })));
-    return [
-      ...pooled("feats", feats),
-      ...pooled("spells", spells),
-      ...Object.entries(skills)
-        .filter(([, rank]) => rank > 0)
-        .map(([entityId, amount]) => ({ step: "skills", entityId, amount })),
-    ];
+    return [...pooled("feats", feats), ...pooled("spells", spells)];
   }
 
   /** Picks as a save writes them (`picks`) read back by pool: their feats' and their spells', as a level holds them. */

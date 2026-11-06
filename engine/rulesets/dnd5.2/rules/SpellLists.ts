@@ -39,7 +39,7 @@ export default class SpellLists {
     spellSlugByAptitudeId?: Map<string, string>;
   } = {};
 
-  /** The view's Pathfinder lists and indices. */
+  /** The view's D&D 5th Edition lists and indices. */
   private get dnd52(): Dnd52View {
     return Dnd52View.of(this.rulesetData);
   }

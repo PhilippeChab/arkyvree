@@ -7,19 +7,19 @@ import type { LevelQuery } from "./requests.ts";
 
 /**
  * The step's level built with the feats and spells that fit at it (`LevelUpSteps.buildPicked`): the character, its class
- * level, what fits, and its pools.
+ * level, whether it's the character's first, what fits, and its pools.
  */
 type Picked = ReturnType<LevelUpSteps["buildPicked"]>;
 
 /**
- * The level-up wizard's steps for a character, from its rows, in their order: its ability increase, its skill points,
- * and its feat and spell pools, each for the character built with the step's level.
+ * The level-up wizard's steps for a character, from its rows, in their order: its feat and spell pools, each for the
+ * character built with the step's level.
  */
 export default class LevelUpSteps extends LevelUpState {
   /**
    * The step's level built with the feats and spells picked at it (`step.picks`), fitted to their pools as a save would
-   * take them (an edited level keeping its own saved feats and spells): the character with what fits, what fits, and
-   * its class level.
+   * take them (an edited level keeping its own saved feats and spells): the character with what fits, what fits, its
+   * class level, and whether it's the character's first level (an edit of its first, or the first a level-up adds).
    */
   private buildPicked(step: LevelQuery) {
     const classLevel = this.readClassLevel(step);
@@ -29,80 +29,22 @@ export default class LevelUpSteps extends LevelUpState {
       this.getSavedPicks(step.editedLevel?.id),
     );
     const pools = fitted.character.components.aptitudes.getLevelUpPools(this.dnd52, this.countOwnPicks(fitted.picks));
-    return { character: fitted.character, classLevel, picks: fitted.picks, pools };
-  }
-
-  /**
-   * The attributes step: the character's abilities, when the level it adds or edits takes an ability increase, after
-   * its levels but the edited one and those after it, and the levels planned before it, which it's built with; and
-   * whether its pick is made, which Next waits for: the level's increases (`step.abilityIncreases`) as its save checks
-   * them, or nothing to pick at a level that takes none.
-   */
-  private describeAbilityStep(step: LevelQuery) {
-    const { abilityIncreases = [], editedLevel, planned } = step;
-    const projection = new CharacterProjection(this.character);
-    if (editedLevel) projection.dropLevelsFrom(editedLevel.id);
-    const hp = LevelRules.UNROLLED_LEVEL_HP;
-    projection.addLevels(planned?.classLevelIds ?? [], { abilityIncreases: planned?.abilityIncreases, hp });
-    // The levels before this one: the level added or edited is the next
-    const levelsBefore = projection.input.rows.advancements.length;
-    if (!LevelRules.of(this.view).isAbilityIncreaseLevel(levelsBefore))
-      return { isAvailable: false, attributes: [], picked: true };
-    return {
-      isAvailable: true,
-      attributes: this.build(projection).components.abilities.getAbilitiesWithIds(),
-      picked: this.checks.areAbilityIncreasesPicked(levelsBefore, abilityIncreases),
-    };
-  }
-
-  /**
-   * The feats step of the step's level: the pools the character picks feats in with it, each with its room for the
-   * feats picked at it (`step.picks`), what of them fits (`fitted`), and its grants.
-   */
-  private describeFeatStep({ classLevel, picks, pools }: Picked) {
-    return { ...this.featStep(pools, [classLevel.id]), fitted: picks.feats };
-  }
-
-  /**
-   * The skills step of the step's level: the points to spend, each skill's class status and what the form's points
-   * (`step.picks.skills`) come to at the level, and the levels the character has with it, the planned ones before it
-   * too (an edit's level takes the edited one's place). The level's points are all the character has left to spend,
-   * holding the feats and spells that fit at the level (`picked`), as a save counts them: a racial ability pick on
-   * Intelligence adds to them.
-   */
-  private describeSkillStep(step: LevelQuery, { character, classLevel }: Picked) {
-    const projection = this.projectStep(classLevel.id, step);
-    // A skill's class status is any of the character's classes' (its max rank, `isClassSkill`) and the leveled class's
-    // (its cost, `isCurrentClassSkill`)
-    const classSkillIds = this.getClassSkillIds(this.dnd52.classSkillsOf(classLevel.ownerId));
-    const levels = {
-      perLevelClassSkillIds: [[...classSkillIds]],
-      perLevelSkillPoints: [this.getSkillPointsToSpend(character)],
-      savedLevelCount: projection.input.rows.advancements.length - 1,
-    };
-    return this.skillStep(character, classSkillIds, levels, step.picks?.skills ?? {});
-  }
-
-  /**
-   * The spells step of the step's level: the pools the character picks spells in with it, each with its room for the
-   * spells picked at it (`step.picks`), what of them fits (`fitted`), and its grants.
-   */
-  private describeSpellStep({ classLevel, picks, pools }: Picked) {
-    return { ...this.spellStep(pools, [classLevel.id]), fitted: picks.spells };
+    const first = step.editedLevel
+      ? this.isFirstSaved(step.editedLevel)
+      : this.character.rows.advancements.length + (step.planned?.classLevelIds?.length ?? 0) === 0;
+    return { character: fitted.character, classLevel, first, picks: fitted.picks, pools };
   }
 
   /**
    * The step's projection: a level of class level `classLevelId` after the levels planned before it, or in the edited
-   * level's place, so the first level stays the first (its x4 skill points), with the feats and spells it picks
-   * (`picks`), when given.
+   * level's place, so the first level stays the first, with the feats and spells it picks (`picks`), when given.
    */
   private projectStep(classLevelId: string, step: LevelQuery, picks?: PoolPicks) {
     const projection = new CharacterProjection(this.character);
     const hp = LevelRules.UNROLLED_LEVEL_HP;
-    projection.addLevels(step.planned?.classLevelIds ?? [], { abilityIncreases: step.planned?.abilityIncreases, hp });
-    const replacing = step.editedLevel;
-    const level = projection.addLevel(classLevelId, { abilityIncreases: step.abilityIncreases, hp, replacing });
-    if (picks) projection.pick(level, this.toPickPlans({ ...picks, skills: {} }));
+    projection.addLevels(step.planned?.classLevelIds ?? [], { hp });
+    const level = projection.addLevel(classLevelId, { hp, replacing: step.editedLevel });
+    if (picks) projection.pick(level, this.toPickPlans(picks));
     return projection;
   }
 
@@ -113,16 +55,15 @@ export default class LevelUpSteps extends LevelUpState {
   }
 
   /**
-   * Every step of the step's level, by its name: its ability increase, its skills, its feats and its spells, the last
-   * three over the level built once with its feats and spells.
+   * Every step of the step's level, by its name: its feats and its spells, over the level built once with its feats and
+   * spells, each with its pools, what fits, and its grants (a class's first level's starting proficiencies among them).
    */
   describeLevelSteps(step: LevelQuery) {
-    const picked = this.buildPicked(step);
+    const { classLevel, first, picks, pools }: Picked = this.buildPicked(step);
+    const levels = [{ classLevelId: classLevel.id, first }];
     return {
-      abilities: this.describeAbilityStep(step),
-      feats: this.describeFeatStep(picked),
-      spells: this.describeSpellStep(picked),
-      skills: this.describeSkillStep(step, picked),
+      feats: { ...this.featStep(pools, levels), fitted: picks.feats },
+      spells: { ...this.spellStep(pools, [classLevel.id]), fitted: picks.spells },
     };
   }
 }

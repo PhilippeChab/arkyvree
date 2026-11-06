@@ -14,10 +14,11 @@ import SpellcastingState, { type CastingLevels } from "./SpellcastingState.ts";
 class SpellcastingComponent extends include(SpellcastingState, KnownSpells) {
   /** The spells its lists know, picked, granted or given by a modifier, with their DCs, and their tags. */
   override finalize(
-    { feats, classSpellcastingAbilityMap, spells }: Pick<
-      LoadedCharacterData,
-      "feats" | "classSpellcastingAbilityMap" | "spells"
-    >,
+    {
+      feats,
+      classSpellcastingAbilityMap,
+      spells,
+    }: Pick<LoadedCharacterData, "feats" | "classSpellcastingAbilityMap" | "spells">,
     { rulesetData }: RulesetView,
     character: BuiltCharacter,
   ) {

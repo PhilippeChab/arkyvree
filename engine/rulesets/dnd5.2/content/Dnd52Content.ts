@@ -5,7 +5,7 @@ import ClassProgressions from "@/engine/rulesets/dnd5.2/rules/ClassProgressions.
 import BookPaths from "./BookPaths.ts";
 
 /**
- * The Pathfinder module's content, as the seeders and the codegen ask of it: what a book's modifiers and requirements can
+ * The D&D 5th Edition module's content, as the seeders and the codegen ask of it: what a book's modifiers and requirements can
  * target, and the progressions a class's levels follow.
  */
 export default class Dnd52Content extends ContentPart<Dnd52Descriptions> {

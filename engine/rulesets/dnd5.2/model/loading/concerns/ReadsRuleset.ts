@@ -8,7 +8,7 @@ import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { CasterType } from "@/vocabulary/dnd5.2/classes.ts";
 
-/** What a character's load reads of its ruleset's view: its rows, their fields and their Pathfinder meaning. */
+/** What a character's load reads of its ruleset's view: its rows, their fields and their 5th Edition meaning. */
 export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCharacterData>>>(Base: B) {
   abstract class ReadingRuleset extends Base {
     /**
@@ -42,7 +42,6 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
       }
       return { classSpellcastingAbilityMap, classCasterTypeMap };
     }
-
   }
 
   return ReadingRuleset;

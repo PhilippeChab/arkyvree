@@ -22,7 +22,7 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
       {
         classSpellcastingAbilityMap,
         classLevels,
-      }: { classSpellcastingAbilityMap: Map<string, string>; classLevels: KlassLevel[] },
+      }: { classLevels: KlassLevel[]; classSpellcastingAbilityMap: Map<string, string> },
     ): HeldSpell[] {
       const classIdByLevelId = new Map(classLevels.map((level) => [level.id, level.ownerId]));
       return spells.map((spell) => {
@@ -30,6 +30,19 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
         const abilityDcName = classId === undefined ? undefined : classSpellcastingAbilityMap.get(classId);
         return { ...spell, abilityDcName: abilityDcName ?? null };
       });
+    }
+
+    /** The character's background, with its customizations: none before it picks one (an imported character). */
+    protected toCustomizedBackground(
+      background: Background | undefined,
+      rulesetData: RulesetData,
+    ): CustomizedBackground | undefined {
+      if (!background) return undefined;
+      return {
+        ...background,
+        modifiers: rulesetData.modifiersBySource.get(background.id) ?? [],
+        requirements: rulesetData.requirementsByEntity.get(background.id) ?? [],
+      };
     }
 
     /** Class levels' modifiers and requirements, and each level's bab and skill points. */
@@ -45,20 +58,7 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
       return { classLevels };
     }
 
-    /** The race with its fields read (once, here), its modifiers and requirements. */
-    /** The character's background, with its customizations: none before it picks one (an imported character). */
-    protected toCustomizedBackground(
-      background: Background | undefined,
-      rulesetData: RulesetData,
-    ): CustomizedBackground | undefined {
-      if (!background) return undefined;
-      return {
-        ...background,
-        modifiers: rulesetData.modifiersBySource.get(background.id) ?? [],
-        requirements: rulesetData.requirementsByEntity.get(background.id) ?? [],
-      };
-    }
-
+    /** The species with its fields read (once, here), its modifiers and requirements. */
     protected toCustomizedSpecies(species: Species, rulesetData: RulesetData): CustomizedSpecies {
       return {
         ...species,
@@ -92,7 +92,7 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
     protected toHeldSpells(
       spells: (HeldSource<Spell> & Pick<HeldSpell, "free" | "saveName" | "spellLevel" | "viaId">)[],
       rulesetData: RulesetData,
-      dcAbilities: { classSpellcastingAbilityMap: Map<string, string>; classLevels: KlassLevel[] },
+      dcAbilities: { classLevels: KlassLevel[]; classSpellcastingAbilityMap: Map<string, string> },
     ): HeldSpell[] {
       const customized = spells.map((spell) => ({
         ...spell,

@@ -1,29 +1,31 @@
 import type { SheetStat } from "@/engine/core/module/index.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd5.2/model/DetailedCharacter.ts";
 import ItemPlacement from "@/engine/rulesets/dnd5.2/rules/ItemPlacement.ts";
-import type { Character, Modifier, Requirement } from "@/shared/relations.ts";
-import { formatSigned } from "@/shared/text.ts";
+import type { Modifier, Requirement } from "@/shared/relations.ts";
+import { formatSigned, stripSeparators } from "@/shared/text.ts";
 
 import CombatSheet from "./CombatSheet.ts";
 import SheetBlocks from "./SheetBlocks.ts";
 import SheetSummaries from "./SheetSummaries.ts";
-import SkillNames from "./SkillNames.ts";
 import SpellGroups from "./SpellGroups.ts";
 
+/** What a passive check adds its skill's total to: 10. */
+const PASSIVE_CHECK_BASE = 10;
+
 /**
- * A built character's sheet: every part of it, which its blocks, its summary and its creatures' subsheets are built
- * from (`buildSheet`); and what the API answers of it past its row's columns, which the characters part writes
- * (`toResponse`): what its modifiers and requirements did and its validation, its summary and its blocks.
+ * A built character's sheet: every part of it, which its blocks and its summary are built from (`buildSheet`); and what
+ * the API answers of it past its row's columns, which the characters part writes (`toResponse`): what its modifiers
+ * and requirements did and its validation, its summary and its blocks.
  */
 export default class CharacterResponse {
-  /** The abilities, each with the parts its box lists beside its base (`parts`: its levels' increases, its misc). */
+  /**
+   * The abilities, each with the parts its box lists beside its base (`parts`: its increases, a background's, a feat's,
+   * an item's).
+   */
   private static abilitiesOf(built: DetailedCharacter) {
     return built.components.abilities.getAbilitiesWithIds().map((ability) => ({
       ...ability,
-      parts: [
-        { label: "Level", value: formatSigned(ability.level) },
-        { label: "Misc", value: formatSigned(ability.misc) },
-      ] satisfies SheetStat[],
+      parts: [{ label: "Increases", value: formatSigned(ability.misc) }] satisfies SheetStat[],
     }));
   }
 
@@ -77,7 +79,18 @@ export default class CharacterResponse {
     return { ...data, background };
   }
 
-  /** The saves, each with the parts its box lists (`parts`: its base, its ability's, its misc). */
+  /**
+   * The character's passive Perception: 10 and its Perception's total, none in a ruleset without a Perception skill.
+   */
+  private static passivePerceptionOf(built: DetailedCharacter): number | null {
+    const perception = built.components.skills.getSkills()[stripSeparators("Perception")];
+    return perception ? PASSIVE_CHECK_BASE + perception.total : null;
+  }
+
+  /**
+   * The saves, each with the parts its box lists (`parts`: its ability's, its Proficiency Bonus when proficient, its
+   * misc).
+   */
   private static savesOf(built: DetailedCharacter) {
     return Object.fromEntries(
       Object.entries(built.components.saves.getSaves()).map(([key, save]) => [
@@ -85,8 +98,8 @@ export default class CharacterResponse {
         {
           ...save,
           parts: [
-            { label: "Base", value: formatSigned(save.base) },
             { label: "Ability", value: formatSigned(save.ability) },
+            ...(save.proficient ? [{ label: "Proficiency", value: formatSigned(save.proficiency) }] : []),
             { label: "Misc", value: formatSigned(save.misc) },
           ] satisfies SheetStat[],
         },
@@ -94,27 +107,24 @@ export default class CharacterResponse {
     );
   }
 
-  /** The skills, each with the family a sheet groups it in and its name within it (`SkillNames`). */
+  /** The skills, each as its row reads it: its ability's modifier, its proficiency and what it adds, its misc. */
   private static skillsOf(built: DetailedCharacter) {
     return Object.fromEntries(
       Object.entries(built.components.skills.getSkills()).map(([slug, skill]) => [
         slug,
-        { ...skill, ...SkillNames.describe(skill.name) },
+        {
+          name: skill.name,
+          ability: skill.ability,
+          abilityName: skill.abilityName,
+          proficient: skill.proficient,
+          expertise: skill.proficient && skill.expertise,
+          halfproficient: !skill.proficient && skill.halfproficient,
+          proficiency: skill.proficiency,
+          misc: skill.misc,
+          total: skill.total,
+        },
       ]),
     );
-  }
-
-  /**
-   * A bonded creature's sheet (`record`, built from its rows: `built`), with its id, its name and its feats: what its
-   * subsheet reads.
-   */
-  static buildBondedSheet(record: Character, built: DetailedCharacter) {
-    return {
-      ...CharacterResponse.buildSheet(built),
-      id: record.id,
-      name: record.name,
-      feats: built.components.feats.getFeats(),
-    };
   }
 
   /**
@@ -134,11 +144,11 @@ export default class CharacterResponse {
     const skills = CharacterResponse.skillsOf(built);
     const virtualFeats = built.getVirtualFeats();
     const spellGroups = SpellGroups.describe(built);
-    const spellsPerDay = SpellGroups.describePerDay(built);
+    const spellSlots = SpellGroups.describeSlots(built);
+    const passivePerception = CharacterResponse.passivePerceptionOf(built);
 
     return {
       identity,
-      skillBudget: built.components.skills.getSkillBudget(),
       abilities,
       combat,
       saves,
@@ -148,7 +158,8 @@ export default class CharacterResponse {
       skills,
       virtualFeats,
       spellGroups,
-      spellsPerDay,
+      spellSlots,
+      passivePerception,
       requirements,
       modifiers,
       validation,
@@ -159,10 +170,11 @@ export default class CharacterResponse {
         combat,
         equipment,
         identity,
+        passivePerception,
         saves,
         skills,
         spellGroups,
-        spellsPerDay,
+        spellSlots,
         virtualFeats,
       }),
     };
@@ -191,8 +203,8 @@ export default class CharacterResponse {
 
   /**
    * A sheet as the API answers it past its row's columns, which the characters part writes: what its modifiers and
-   * requirements did and its validation, its summary and its blocks; none of its parts as Pathfinder holds them, which its
-   * blocks show.
+   * requirements did and its validation, its summary and its blocks; none of its parts as the rules hold them, which
+   * its blocks show.
    */
   static toResponse(sheet: ReturnType<typeof CharacterResponse.buildSheet>) {
     return {

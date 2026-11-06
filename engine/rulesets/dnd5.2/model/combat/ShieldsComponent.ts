@@ -6,17 +6,17 @@ import ItemPlacement from "@/engine/rulesets/dnd5.2/rules/ItemPlacement.ts";
 import type { Item } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import { ITEM_TYPE } from "@/vocabulary/dnd5.2/fields/index.ts";
 
+/** The shields the character holds, by the weapon set holding each */
+type ShieldGroup = Record<string, ShieldSlot>;
+
+type ShieldsData = Record<string, ShieldGroup>;
+
 /** A Shield the character holds: the Armor Class it adds, its own (the SRD's +2) and what modifiers add (a +1 Shield). */
 export interface ShieldSlot {
   ac: { bonus: number; misc: number; readonly total: number };
   itemId: string;
   name: string;
 }
-
-/** The shields the character holds, by the weapon set holding each */
-type ShieldGroup = Record<string, ShieldSlot>;
-
-type ShieldsData = Record<string, ShieldGroup>;
 
 /**
  * The shields a character has equipped, the inventory's (`InventoryComponent.getEquipped`): each under one grouping

@@ -8,20 +8,20 @@ import { FONT_SIZE, styles } from "./styles.ts";
 
 /**
  * The attacks table's columns' widths, by their keys, each wide enough for its value on one line: the weapon's name and
- * how it attacks, four iterative attacks ("+20/+15/+10/+5"), a damage, a critical, a range ("1,200 ft."), its increment
- * ("-2 / 120 ft.") and two damage types ("Slashing, Piercing").
+ * how it attacks, its attack bonus, a damage ("2d6+4"), a critical ("19–20"), a range ("150/600 ft."), a damage type
+ * ("Bludgeoning") and a mastery ("Topple").
  */
 const COLUMN_WIDTHS: Record<string, string> = {
   weapon: "24%",
-  attack: "15%",
+  attack: "11%",
   damage: "12%",
-  critical: "10%",
-  range: "10%",
-  increment: "13%",
-  type: "16%",
+  critical: "9%",
+  range: "15%",
+  type: "15%",
+  mastery: "14%",
 };
 
-/** A weapon set's armor class (`boxes`: its AC, its touch AC and its flat-footed AC), a box each. */
+/** A weapon set's Armor Class (`boxes`), a box each. */
 function ArmorClassBoxes({ boxes }: { boxes: SheetStat[] }) {
   return (
     <View style={[styles.row, { gap: 4 }]}>
@@ -71,7 +71,7 @@ function AttacksTable({ table }: { table: SheetTable }) {
 }
 
 /**
- * A weapon set, as the web sheet shows it: its heading ("SET 1 · Longsword, Heavy Steel Shield"), its armor class, then
+ * A weapon set, as the web sheet shows it: its heading ("SET 1 · Longsword, Shield"), its Armor Class, then
  * its attacks, kept on one page. A character with no weapon set shows its one set without a heading.
  */
 function WeaponSet({ panel }: { panel: StatsPanel }) {

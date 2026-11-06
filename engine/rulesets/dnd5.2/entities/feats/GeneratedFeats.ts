@@ -12,7 +12,7 @@ export type GeneratedFeat = Pick<MadeEntity, "modifiers" | "requirements"> & {
 };
 
 /**
- * A set of feats an entity brings, generated in the pool a ruleset names (`poolSlug`: Pathfinder's general feats'): what a
+ * A set of feats an entity brings, generated in the pool a ruleset names (`poolSlug`: the Skill Proficiencies'): what a
  * name brings (`featsOf`, a skill's, a school's), made with the entity's plan (`make`), and removed with it by a set
  * that removes its feats (`removeFeat`, which a set exposes when it does).
  */

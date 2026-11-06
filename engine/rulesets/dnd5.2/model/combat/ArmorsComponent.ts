@@ -6,6 +6,9 @@ import type { Item } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { ITEM_TYPE } from "@/vocabulary/dnd5.2/fields/index.ts";
 
+/** Grouping key (its armor's type, normalized) → shared ArmorSlot reference */
+type ArmorsData = Record<string, ArmorSlot>;
+
 /** An armor the character wears: its category, the Armor Class it gives, its cap on Dexterity, its Strength and Stealth. */
 export interface ArmorSlot {
   /** Its Armor Class: its base (Chain Mail's 16) and what modifiers add (a +1 armor's), counted when read. */
@@ -20,9 +23,6 @@ export interface ArmorSlot {
   /** The Strength score its wearer needs, or its speed is 10 feet lower: 0 for none. */
   strength: number;
 }
-
-/** Grouping key (its armor's type, normalized) → shared ArmorSlot reference */
-type ArmorsData = Record<string, ArmorSlot>;
 
 /** The armors a character has equipped, under their types: the inventory's (`InventoryComponent.getEquipped`). */
 export default class ArmorsComponent extends CharacterComponent<LoadedCharacterData> {

@@ -5,17 +5,15 @@ import { z } from "zod";
 import { CustomizationPageEntity, type FormBody } from "@/engine/core/entities/index.ts";
 import type { EntityForm } from "@/engine/core/fields/index.ts";
 import type { EntityRecord, EntityWrite, LinkSet } from "@/engine/core/module/index.ts";
-import RulesError, { type RulesIssue } from "@/engine/core/RulesError.ts";
+import RulesError from "@/engine/core/RulesError.ts";
 import type { NamedLink, RulesetView, ViewLink } from "@/engine/core/view/index.ts";
-import CombatSheet from "@/engine/rulesets/dnd5.2/characters/description/CombatSheet.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd5.2/limits.ts";
 import FeatureStacking from "@/engine/rulesets/dnd5.2/rules/FeatureStacking.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
-import type { Klass, KlassLevel, Dnd52Kinds } from "@/engine/rulesets/dnd5.2/view/rows.ts";
-import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_RANKS, FEAT_STACKABLE } from "@/vocabulary/dnd5.2/fields/index.ts";
+import type { Dnd52Kinds, Klass, KlassLevel } from "@/engine/rulesets/dnd5.2/view/rows.ts";
+import { FEAT_STACKABLE } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 import { CLASS_LEVEL_FIELDS } from "./fields.ts";
-import { PROGRESSION } from "./progression.ts";
 
 /**
  * A class level's link as its answers carry it (`NamedLink`): a feat it grants with the feat's description
@@ -27,9 +25,6 @@ interface LevelLink extends NamedLink {
   toDescription?: string | null;
   viaName?: string | null;
 }
-
-/** The role of a level's base bonuses to the saves, its links to them. */
-const BASE_BONUS = "baseBonus";
 
 /** A new level's number: the class's first to its last. */
 const LEVEL = z.number().int().min(1).max(RULESET_LIMITS.classLevel);
@@ -101,48 +96,6 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
       const stacks = feat.fields[FEAT_STACKABLE] === true;
       return { ...link, stacks, toDescription: feat.description, viaName: pool?.name ?? null };
     });
-  }
-
-  /**
-   * A level's form as its kind reads it. A bonded creature's class's levels give no base attack bonus, saves or skill
-   * points, which its sheet works out (the tracks its class's kind leaves out, `omittedFor`): such a form is refused as
-   * invalid, by field, when it sets one other than none or than what the level holds (a read written back), and its save
-   * leaves the level holding none, whatever it held.
-   */
-  protected override readForm(form: EntityForm, level?: KlassLevel) {
-    const read = super.readForm(form, level);
-    const omitted = { bab: this.omits("bab"), saves: this.omits("saves"), skills: this.omits("skills") };
-    if (!omitted.bab && !omitted.saves && !omitted.skills) return read;
-    const held = level && this.fieldsOf(level);
-    const issues: RulesIssue[] = [];
-    const refuse = (category: string, what: string) =>
-      issues.push({
-        category,
-        message: `${this.klass.name} levels give no ${what}, which the creature's sheet works out`,
-      });
-    if (omitted.bab && ![0, held?.bab].includes(read.given.bab ?? 0))
-      refuse(`fields.${CLASS_LEVEL_BAB}`, "base attack bonus");
-    if (omitted.skills && ![0, held?.skills].includes(read.given.skills ?? 0))
-      refuse(`fields.${CLASS_LEVEL_SKILL_RANKS}`, "skill points");
-    const sent = omitted.saves ? (read.body.lists.find((set) => set.role === BASE_BONUS)?.links ?? []) : [];
-    for (const [index, { amount, toId }] of sent.entries()) {
-      const kept = level && this.dnd52.baseBonusesOf(level.id).find((bonus) => bonus.toId === toId)?.amount;
-      if (![0, kept].includes(amount ?? 0)) refuse(`links.${BASE_BONUS}.${index}.amount`, "saves");
-    }
-    if (issues.length > 0) throw new RulesError("invalid", "Request validation failed", issues);
-    const lists = [
-      ...read.body.lists.filter((set) => set.role !== BASE_BONUS),
-      { links: [], role: BASE_BONUS, toType: "saves" },
-    ];
-    const { defaults } = this.fields;
-    return {
-      body: omitted.saves ? { ...read.body, lists } : read.body,
-      given: {
-        ...read.given,
-        ...(omitted.bab && { bab: defaults.bab }),
-        ...(omitted.skills && { skills: defaults.skills }),
-      },
-    };
   }
 
   /** Of a saved level's own links (`links`, as stored), those its answer names: all of them, as a read names them. */
@@ -229,6 +182,11 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     throw new RulesError("conflict", `${this.klass.name}'s next ${what}`);
   }
 
+  /** The view's D&D 5th Edition lists and indices. */
+  private get dnd52(): Dnd52View {
+    return Dnd52View.of(this.rulesetData);
+  }
+
   /** The class's highest level's number, as the view has its levels; 0 for a class without one. */
   private lastPosition() {
     const levels = this.dnd52.classLevelsByClass.get(this.klass.id) ?? [];
@@ -244,14 +202,6 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
   }
 
   /**
-   * Whether the class's kind leaves out its levels' track at `key` (`PROGRESSION`'s tracks' `omittedFor`, by the class's
-   * partition: a bonded creature's, whose sheet works its base attack bonus, saves and skills out).
-   */
-  private omits(key: string) {
-    return PROGRESSION.tracks.some((track) => track.key === key && track.omittedFor?.includes(this.klass.partition));
-  }
-
-  /**
    * A level's links in the order its answers give them (`links`): the feats it grants by their names, as the books list
    * them, then its others (its saves' base bonuses) as they come.
    */
@@ -261,11 +211,6 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     const nameOf = (link: ViewLink) => featsById.get(link.toId)?.name ?? "";
     const feats = links.filter(isFeat).toSorted((a, b) => nameOf(a).localeCompare(nameOf(b)));
     return [...feats, ...links.filter((link) => !isFeat(link))];
-  }
-
-  /** The view's Pathfinder lists and indices. */
-  private get dnd52(): Dnd52View {
-    return Dnd52View.of(this.rulesetData);
   }
 
   /**
@@ -318,17 +263,10 @@ export default class ClassLevelEntity extends CustomizationPageEntity<
     return `${this.klass.name} already has a level ${level}`;
   }
 
-  /**
-   * The class's levels, each with its fields, all its links, and its base attack bonus as the sheet writes it, its
-   * attacks a round (`babLabel`: "+6/+1").
-   */
+  /** The class's levels, each with its fields and all its links. */
   describeAll() {
     const levels = this.dnd52.classLevelsByClass.get(this.klass.id) ?? [];
-    return this.describeRows(levels).map((level, index) => ({
-      ...level,
-      babLabel: CombatSheet.formatBab(this.fieldsOf(levels[index]).bab),
-      links: this.linksIn(level.id),
-    }));
+    return this.describeRows(levels).map((level) => ({ ...level, links: this.linksIn(level.id) }));
   }
 
   /**

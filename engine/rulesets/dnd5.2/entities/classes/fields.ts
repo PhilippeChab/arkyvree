@@ -8,7 +8,6 @@ import { ENTITY_FIELDS } from "@/vocabulary/dnd5.2/fields/index.ts";
 export const CLASS_FIELDS = new FieldCodec(ENTITY_FIELDS.classes);
 
 /**
- * A class level's fields, as the vocabulary declares them (`ENTITY_FIELDS["class-levels"]`): a bonded creature's
- * class's levels hold none, which its sheet works out (`ClassLevelEntity.readForm`).
+ * A class level's fields, as the vocabulary declares them (`ENTITY_FIELDS["class-levels"]`): the feats it grants.
  */
 export const CLASS_LEVEL_FIELDS = new FieldCodec(ENTITY_FIELDS["class-levels"]);

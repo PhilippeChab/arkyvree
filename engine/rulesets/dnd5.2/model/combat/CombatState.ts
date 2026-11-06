@@ -42,9 +42,9 @@ export interface CombatData {
     /** Whether it has training with its armor's category: without, it can't cast spells. */
     readonly trained: boolean;
   };
+  armors: ArmorsData;
   /** Training with each armor category and with shields, each a feat's to set. */
   armortraining: { heavy: boolean; light: boolean; medium: boolean; shields: boolean };
-  armors: ArmorsData;
   /** The attacks it makes when it takes the Attack action: 1, more with Extra Attack. */
   attacks: number;
   carrying: CarryingData;
@@ -120,12 +120,12 @@ export interface WeaponSlot {
   };
   entryId: string | null;
   itemId: string | null;
+  mastered: boolean;
   /** Its mastery property, when its wielder has mastered its kind (`mastered`). */
   readonly mastery: string | null;
-  mastered: boolean;
   name: string;
-  properties: string[];
   proficient: boolean;
+  properties: string[];
   range: { long: number; normal: number } | null;
   tohit: {
     readonly ability: number;
@@ -207,6 +207,9 @@ export default abstract class CombatState extends CharacterComponent<LoadedChara
 
   /** Each weapon set's shields, by its key: the shields component's (`ShieldsComponent.getShieldSets`). */
   protected readonly shieldSets: Readonly<Record<string, ShieldSlot[]>>;
+
+  /** Each level's hit points, which its Constitution modifier adds to (`HitPoints`). */
+  protected levelHitPoints: number[] = [];
 
   /** A weapon set's Armor Class and shield (`WeaponSet`), which read its own: the armor class's concern makes them. */
   protected abstract defenseOf(setKey: string): Pick<WeaponSet, "ac" | "shield">;

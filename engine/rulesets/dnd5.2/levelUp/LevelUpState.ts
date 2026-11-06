@@ -1,11 +1,7 @@
-import type { ViewLink } from "@/engine/core/view/index.ts";
 import type { OwnPicks } from "@/engine/rulesets/dnd5.2/model/aptitudes/AptitudesComponent.ts";
 import type DetailedCharacter from "@/engine/rulesets/dnd5.2/model/DetailedCharacter.ts";
 import FeatRules from "@/engine/rulesets/dnd5.2/rules/FeatRules.ts";
-import SkillRules from "@/engine/rulesets/dnd5.2/rules/SkillRules.ts";
-import { include } from "@/lib/mixins.ts";
 
-import { SpendsSkillPoints } from "./concerns/SpendsSkillPoints.ts";
 import LevelUpBase, { type SavedLevelPicks } from "./LevelUpBase.ts";
 import type { LevelPicks } from "./requests.ts";
 
@@ -15,17 +11,24 @@ type LevelUpPools = ReturnType<DetailedCharacter["components"]["aptitudes"]["get
 /** A pool overfilled by a level-up's picks, as the character holding them says (`getOverfullPools`). */
 type OverfullPool = ReturnType<DetailedCharacter["components"]["aptitudes"]["getOverfullPools"]>[number];
 
+/** A planned level whose grants a step lists: its class level, and whether it's the character's first. */
+export interface GrantingLevel {
+  classLevelId: string;
+  first: boolean;
+}
+
 /** A level-up's feats and spells, each by the pool it's picked in. */
 export type PoolPicks = Pick<LevelPicks, "feats" | "spells">;
 
 /**
- * What a Pathfinder level-up flow reads past every flow's (`LevelUpBase`): the steps the wizard and the preview share, a feats
- * step, a spells step and a skills step (`SpendsSkillPoints`), and which skills a class makes class skills.
+ * What a D&D 5th Edition level-up flow reads past every flow's (`LevelUpBase`): the steps the wizard and the preview
+ * share, a feats step and a spells step.
  */
-export default abstract class LevelUpState extends include(LevelUpBase<DetailedCharacter>, SpendsSkillPoints) {
+export default abstract class LevelUpState extends LevelUpBase<DetailedCharacter> {
   /**
    * The picks without their latest in the overfull pool (`pool`), as many as it's over: at its spell level for a leveled
-   * one; in a shared one, its spells before its feats, the wizard's later step first.
+   * one (where a spell its room can't take stays), the highest of the lower ones next; in a shared one, its spells
+   * before its feats, the wizard's later step first.
    */
   private dropExcess(picks: PoolPicks, { aptitudeId, level, picked, room }: OverfullPool): PoolPicks {
     let excess = picked - room;
@@ -88,15 +91,13 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
 
   /**
    * A feats step, the wizard's and the preview's alike: how many feats the character picks with what's planned
-   * (`pools`), in which pools, and the feats the class levels (`classLevelIds`) grant.
+   * (`pools`), in which pools, and the feats the planned levels (`levels`) grant, a class's first level its starting
+   * proficiencies too.
    */
-  protected featStep(pools: LevelUpPools, classLevelIds: string[]) {
-    const { dnd52 } = this;
+  protected featStep(pools: LevelUpPools, levels: GrantingLevel[]) {
     return {
       featsToSelect: pools.featsToSelect,
-      autoGrantedFeats: classLevelIds.flatMap((id) =>
-        dnd52.grantedFeatsOf(id).flatMap((grant) => dnd52.featsById.get(grant.toId) ?? []),
-      ),
+      autoGrantedFeats: levels.flatMap(({ classLevelId, first }) => this.grantedFeatsAt(classLevelId, first)),
       aptitudePools: pools.featPools,
     };
   }
@@ -122,17 +123,6 @@ export default abstract class LevelUpState extends include(LevelUpBase<DetailedC
       if (!overfull) return { character, picks: fitted };
       fitted = this.dropExcess(fitted, overfull);
     }
-  }
-
-  /**
-   * The skills class skill links (`links`, `classSkill`) make class skills: theirs the view shows, and the ruleset's
-   * subtypes of them ("Craft (…)" of Craft), in the ruleset's order (`SkillRules.classSkillIds`).
-   */
-  protected getClassSkillIds(links: readonly ViewLink[]): Set<string> {
-    return SkillRules.classSkillIds(
-      links.map((link) => link.toId),
-      this.dnd52.skills,
-    );
   }
 
   /**

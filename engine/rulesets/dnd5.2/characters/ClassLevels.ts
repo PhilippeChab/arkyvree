@@ -1,5 +1,5 @@
 /**
- * A Pathfinder character's level in each class, and how its classes read wherever they're named on one line: its sheet's
+ * A character's level in each class, and how its classes read wherever they're named on one line: its sheet's
  * header and its PDF's first page ("Fighter 3 · Rogue 1"), a card's chips ("Fighter 3").
  */
 export default class ClassLevels {

@@ -29,7 +29,7 @@ function isFeatEntry(entry: FeatEntry | FeatGroupEntry | undefined): entry is Fe
  */
 export default class FeatsComponent extends CharacterComponent<LoadedCharacterData> {
   /**
-   * A feat the character has without a pick (`given` when a modifier gives it, not a bonded creature's stat block): no
+   * A feat the character has without a pick (`given` when a modifier gives it): no
    * level holds it, in no pool.
    */
   static toVirtualFeat(feat: Feat, given: boolean, rulesetData: RulesetData): HeldFeat {

@@ -23,14 +23,6 @@ function shieldAcOf(shields: readonly ShieldSlot[], trained: boolean): number {
  */
 export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithArmorClass extends Base {
-    /** The armor the character wears: the heaviest of those it has equipped, none when it has none. */
-    private wornArmor() {
-      return Object.values(this.combat.armors).reduce<(typeof this.combat.armors)[string] | undefined>(
-        (worn, armor) => (worn && CATEGORY_WEIGHT[worn.category] >= CATEGORY_WEIGHT[armor.category] ? worn : armor),
-        undefined,
-      );
-    }
-
     /**
      * A weapon set's Armor Class and shield: the parts every set shares and what modifiers add in the set alone (in its
      * scope: `CombatPaths.resolve`), its own shield, and its total.
@@ -74,6 +66,14 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
           },
         },
       };
+    }
+
+    /** The armor the character wears: the heaviest of those it has equipped, none when it has none. */
+    private wornArmor() {
+      return Object.values(this.combat.armors).reduce<(typeof this.combat.armors)[string] | undefined>(
+        (worn, armor) => (worn && CATEGORY_WEIGHT[worn.category] >= CATEGORY_WEIGHT[armor.category] ? worn : armor),
+        undefined,
+      );
     }
 
     /**

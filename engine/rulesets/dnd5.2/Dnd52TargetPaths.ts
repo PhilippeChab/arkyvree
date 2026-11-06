@@ -3,7 +3,6 @@ import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
 
 import AbilitiesPaths from "./model/abilities/AbilitiesPaths.ts";
 import AptitudesPaths from "./model/aptitudes/AptitudesPaths.ts";
-import BondedPaths from "./model/bonded/BondedPaths.ts";
 import type { Dnd52Components } from "./model/CharacterComponents.ts";
 import ClassesPaths from "./model/classes/ClassesPaths.ts";
 import CombatPaths from "./model/combat/CombatPaths.ts";
@@ -17,7 +16,7 @@ import SkillsPaths from "./model/skills/SkillsPaths.ts";
 import SpellcastingPaths from "./model/spellcasting/SpellcastingPaths.ts";
 import SpellsPaths from "./model/spells/SpellsPaths.ts";
 
-/** The Pathfinder rules' categories of target paths, in the path picker's order (`getCategories`). */
+/** The D&D 5th Edition rules' categories of target paths, in the path picker's order (`getCategories`). */
 const DND52_PATH_CATEGORIES: PathCategory<Dnd52Components>[] = [
   new AbilitiesPaths(),
   new SkillsPaths(),
@@ -32,10 +31,9 @@ const DND52_PATH_CATEGORIES: PathCategory<Dnd52Components>[] = [
   new LanguagesPaths(),
   new AptitudesPaths(),
   new SpellcastingPaths(),
-  new BondedPaths(),
 ];
 
-/** The paths an entity's modifiers and requirements name, in the Pathfinder rules: each category's, and the ruleset's labels. */
+/** The paths an entity's modifiers and requirements name, in the D&D 5th Edition rules: each category's, and the ruleset's labels. */
 export default class Dnd52TargetPaths extends CategoryPaths<Dnd52Components> {
   constructor() {
     super(DND52_PATH_CATEGORIES);

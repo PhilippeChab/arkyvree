@@ -16,7 +16,7 @@ import ClassOffers from "@/engine/rulesets/dnd5.2/rules/ClassOffers.ts";
 import FeatureStacking from "@/engine/rulesets/dnd5.2/rules/FeatureStacking.ts";
 import SpellLists from "@/engine/rulesets/dnd5.2/rules/SpellLists.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
-import type { Klass, KlassLevel, Dnd52Kinds } from "@/engine/rulesets/dnd5.2/view/rows.ts";
+import type { Dnd52Kinds, Klass, KlassLevel } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import { isRecord } from "@/shared/isRecord.ts";
 import { sanitizeName, stripSeparators } from "@/shared/text.ts";
 import { FEAT_GENERATED, FEAT_SELECTABLE, FEAT_STACKABLE } from "@/vocabulary/dnd5.2/fields/index.ts";
@@ -283,6 +283,11 @@ export default class ClassProgression {
     return (this.dnd52.classLevelsByClass.get(this.klass.id) ?? []).toSorted((a, b) => a.position - b.position);
   }
 
+  /** The view's D&D 5th Edition lists and indices. */
+  private get dnd52(): Dnd52View {
+    return Dnd52View.of(this.rulesetData);
+  }
+
   /** The entities a save names by id, as the view reads them: refused, naming one it shows none of. */
   private get ids() {
     return new RequestIds<Dnd52Kinds>(this.rulesetData, "this ruleset");
@@ -303,11 +308,6 @@ export default class ClassProgression {
   private get noteWords() {
     const words = PROGRESSION.grants?.words;
     return { repeat: words?.repeat ?? "", single: words?.single ?? "" };
-  }
-
-  /** The view's Pathfinder lists and indices. */
-  private get dnd52(): Dnd52View {
-    return Dnd52View.of(this.rulesetData);
   }
 
   /**

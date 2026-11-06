@@ -9,7 +9,7 @@ import RulesError from "@/engine/core/RulesError.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd5.2/limits.ts";
 import ItemPlacement from "@/engine/rulesets/dnd5.2/rules/ItemPlacement.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
-import type { Item, Dnd52Kinds } from "@/engine/rulesets/dnd5.2/view/rows.ts";
+import type { Dnd52Kinds, Item } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { ItemLocation } from "@/vocabulary/dnd5.2/equipment.ts";
 import { ITEM_IS_TEMPLATE, ITEM_SLOT, ITEM_TYPE } from "@/vocabulary/dnd5.2/fields/index.ts";
