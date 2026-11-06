@@ -36,5 +36,5 @@ export async function backdateLastChange(characterId: string, at = "2000-01-01T0
 
 /** A character's links of a role it holds many of (`role`: 3.5's `score`, `speaks`), as stored, in their order. */
 export async function findLinks(role: string, characterId: string) {
-  return (await CharacterLinks.findPerRole(db, { baseRules: DND35_BASE_RULES, characterId }))[role];
+  return (await CharacterLinks.findPerRole(db, DND35_BASE_RULES, { characterId }))[role];
 }

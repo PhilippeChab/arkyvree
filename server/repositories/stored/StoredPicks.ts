@@ -105,10 +105,11 @@ class StoredPicks extends BaseRepository<typeof advancementPicksInCharacter> {
    */
   async findPerStep(
     db: Db,
-    where: { advancementIds: string[]; baseRules: BaseRules },
+    baseRules: BaseRules,
+    where: { advancementIds: string[] },
   ): Promise<CharacterRows["picks"]> {
     const picks: CharacterRows["picks"] = Object.fromEntries(
-      Engine.forRules(where.baseRules)
+      Engine.forRules(baseRules)
         .storage()
         .registries()
         .steps.map(({ step }) => [step, []]),

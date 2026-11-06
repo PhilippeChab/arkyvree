@@ -36,8 +36,7 @@ export default class EntityUses {
    * character names through them (a class by its levels).
    */
   async isPicked(tx: Db, entityType: ReferencedType, entityId: string): Promise<boolean> {
-    const ids = await Entities.findPickedIds(tx, {
-      baseRules: this.scope.ruleset.baseRules,
+    const ids = await Entities.findPickedIds(tx, this.scope.ruleset.baseRules, {
       entityType,
       ids: this.cow.getEquivalentIds(entityId),
     });
@@ -50,9 +49,8 @@ export default class EntityUses {
    * answers why), or picked by a character (`isPicked`).
    */
   async refusesDelete(tx: Db, entityType: ReferencedType, entityId: string): Promise<boolean> {
-    const baseRules = this.scope.ruleset.baseRules;
-    if (await EntityLinks.hasRefusing(tx, { baseRules, toId: this.cow.resolve(entityId), toType: entityType }))
-      return true;
+    const refusing = { toId: this.cow.resolve(entityId), toType: entityType };
+    if (await EntityLinks.hasRefusing(tx, this.scope.ruleset.baseRules, refusing)) return true;
     return await this.isPicked(tx, entityType, entityId);
   }
 }

@@ -30,11 +30,10 @@ import { toFieldRows } from "./toFieldRows.ts";
 import { toQualified } from "./toQualified.ts";
 
 /**
- * A picker's page of a kind's entities (of its ruleset's base rules, `baseRules`), among `ids`, of the values of their
- * `fields`, but `excludeIds`, searched as its kind's list is (`buildSearchCondition`).
+ * A picker's page of a kind's entities, among `ids`, of the values of their `fields`, but `excludeIds`, searched as its
+ * kind's list is (`buildSearchCondition`).
  */
 interface OptionWhere {
-  baseRules: BaseRules;
   entityType: string;
   excludeIds?: string[];
   fields?: EntityFilters["fields"];
@@ -54,10 +53,8 @@ interface PageBounds {
  * hides (`inherited`, `CowData.listFilters`); those of `ids`, of the values of their fields, the targets of
  * their single links and their partition (`EntityFilters`: an item's template flag, a feat's family, a race's `pc`),
  * the targets of the links of a role from a kind (`linkedBy`: an aptitude a feat is listed in); searched, in an order.
- * Its filters read their fields' declarations of its ruleset's base rules (`baseRules`).
  */
 export interface EntityListWhere extends EntityFilters {
-  baseRules: BaseRules;
   childOnly?: boolean;
   entityType: string;
   /** The entities listed first, in their order (a tracks picker's, `TrackFilters`), the others after them by name. */
@@ -157,11 +154,11 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   }
 
   /**
-   * A list's filters' conditions (`EntityFilters`, on a kind: `entityType`, of `baseRules`): one a field, a role, the
-   * partitions.
+   * A list's filters' conditions (`EntityFilters`, on a kind: `entityType`, its fields as `baseRules` declare them):
+   * one a field, a role, the partitions.
    */
-  private static buildValueConditions(where: EntityFilters & { baseRules: BaseRules; entityType: string }): SQL[] {
-    const { baseRules, entityType, fields = {}, links = {}, partitions } = where;
+  private static buildValueConditions(baseRules: BaseRules, where: EntityFilters & { entityType: string }): SQL[] {
+    const { entityType, fields = {}, links = {}, partitions } = where;
     return [
       ...Object.entries(fields).map(([field, value]) =>
         StoredEntities.buildFieldCondition(
@@ -177,14 +174,14 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   }
 
   /**
-   * A picker's conditions: a kind's entities among `ids`, of its values, searched as its kind's list is
-   * (`buildSearchCondition`), but `excludeIds`.
+   * A picker's conditions: a kind's entities among `ids`, of its values (its fields as `baseRules` declare them),
+   * searched as its kind's list is (`buildSearchCondition`), but `excludeIds`.
    */
-  private buildOptionConditions(where: OptionWhere): (SQL | false)[] {
+  private buildOptionConditions(baseRules: BaseRules, where: OptionWhere): (SQL | false)[] {
     return [
       eq(entitiesInRules.type, where.entityType),
       inArray(entitiesInRules.id, where.ids),
-      ...StoredEntities.buildValueConditions(where),
+      ...StoredEntities.buildValueConditions(baseRules, where),
       this.buildSearchCondition(where),
       where.excludeIds !== undefined && where.excludeIds.length > 0 && notInArray(entitiesInRules.id, where.excludeIds),
     ];
@@ -584,12 +581,13 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   }
 
   /**
-   * A ruleset's whole list of a kind (`where`, as a page's), by `order` (its name, or its id), as records: of the
-   * rulesets built on it too when `lineage` says (a fork of it, a ruleset subscribing to it), whose views read its
-   * entities (a template's copies, which a change to it reaches).
+   * A ruleset's whole list of a kind (`where`, as a page's, of `baseRules`), by `order` (its name, or its id), as
+   * records: of the rulesets built on it too when `lineage` says (a fork of it, a ruleset subscribing to it), whose
+   * views read its entities (a template's copies, which a change to it reaches).
    */
   async findList<R extends Pick<EntityRecord, "id"> = EntityRecord>(
     db: Db,
+    baseRules: BaseRules,
     where: EntityListWhere & { lineage?: boolean; order: "id" | "name" },
   ): Promise<R[]> {
     if (where.ids !== undefined && where.ids.length === 0) return [];
@@ -606,7 +604,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
         eq(entitiesInRules.type, where.entityType),
         lineage ? or(scope, lineage)! : scope,
         where.ids !== undefined && inArray(entitiesInRules.id, where.ids),
-        ...StoredEntities.buildValueConditions(where),
+        ...StoredEntities.buildValueConditions(baseRules, where),
       ]),
       where.order === "id"
         ? [this.orderBy(entitiesInRules.id)]
@@ -669,35 +667,42 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
   /**
    * A picker's page of a kind's entities (a list's, as the ruleset composes it), a group's entities as one row (a
    * feat's family): the groups an entity is in are given (`groups`), and one in none is a row of its own. Each row is
-   * its group's columns (`groupColumns`: its name an entity's alone, its group's), and its text.
+   * its group's columns (`groupColumns`: its name an entity's alone, its group's), and its text. Its values are read as
+   * `baseRules` declare its fields.
    */
-  async findOptionGroupPage(db: Db, where: OptionWhere & { groups: EntityGroupMember[] }, pagination: Pagination) {
+  async findOptionGroupPage(
+    db: Db,
+    baseRules: BaseRules,
+    where: OptionWhere & { groups: EntityGroupMember[] },
+    pagination: Pagination,
+  ) {
     return await this.readGroupPage(
       db,
-      { conditions: this.buildOptionConditions(where), groups: where.groups, search: where.search },
+      { conditions: this.buildOptionConditions(baseRules, where), groups: where.groups, search: where.search },
       pagination,
     );
   }
 
   /**
    * A picker's page of a kind's entities (a list's, as the ruleset composes it), by name, a search's best match first
-   * as its list orders it: each its name and text.
+   * as its list orders it: each its name and text. Its values are read as `baseRules` declare its fields.
    */
-  async findOptionPage(db: Db, where: OptionWhere, pagination: Pagination) {
+  async findOptionPage(db: Db, baseRules: BaseRules, where: OptionWhere, pagination: Pagination) {
     const order = this.searchOrderBy(where.search, SEARCH_COLUMNS, this.orderBy(entitiesInRules.name));
     const rows = await db
       .select({ id: entitiesInRules.id, name: entitiesInRules.name, description: entitiesInRules.description })
       .from(entitiesInRules)
-      .where(this.where(this.buildOptionConditions(where)))
+      .where(this.where(this.buildOptionConditions(baseRules, where)))
       .orderBy(...this.pageOrder(order))
       .limit(this.paginate(pagination).limit)
       .offset(this.paginate(pagination).offset);
     return this.paginated(rows as { description: string | null; id: string; name: string }[], pagination);
   }
 
-  /** A page of a ruleset's list of a kind (`where`), each as its record. */
+  /** A page of a ruleset's list of a kind (`where`, its fields as `baseRules` declare them), each as its record. */
   async findPage<R extends Pick<EntityRecord, "id"> = EntityRecord>(
     db: Db,
+    baseRules: BaseRules,
     where: EntityListWhere,
     pagination: Pagination,
   ) {
@@ -710,7 +715,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
       where.ids !== undefined && inArray(entitiesInRules.id, where.ids),
       linkedBy !== undefined &&
         sql`${entitiesInRules.id} IN (SELECT ${entityLinksInRules.toId} FROM ${entityLinksInRules} WHERE ${and(eq(entityLinksInRules.role, linkedBy.role), eq(entityLinksInRules.fromType, linkedBy.fromType), eq(entityLinksInRules.toType, where.entityType))})`,
-      ...StoredEntities.buildValueConditions(where),
+      ...StoredEntities.buildValueConditions(baseRules, where),
     ];
     // A tracks picker's pages go in its order whatever its search, none of its own listed first included
     const order = where.firstIds
@@ -726,8 +731,8 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
    * The ids a character names entities of a kind by (`entityType`, of `baseRules`; `ids`): their own, or, of a kind
    * that owns others, those of the entities they own (a class's levels, which a character advances in).
    */
-  async findPickedIds(db: Db, where: { baseRules: BaseRules; entityType: string; ids: string[] }): Promise<string[]> {
-    const ownedKinds = Engine.forRules(where.baseRules).storage().ownedKinds(where.entityType);
+  async findPickedIds(db: Db, baseRules: BaseRules, where: { entityType: string; ids: string[] }): Promise<string[]> {
+    const ownedKinds = Engine.forRules(baseRules).storage().ownedKinds(where.entityType);
     if (ownedKinds.length === 0) return where.ids;
     const owned = [];
     for (const entityType of ownedKinds) owned.push(...(await this.findMany(db, { entityType, ownerIds: where.ids })));

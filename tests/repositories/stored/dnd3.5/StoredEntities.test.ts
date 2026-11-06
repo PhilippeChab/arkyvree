@@ -147,7 +147,8 @@ describe("A stored entity's fields", () => {
       (
         await Entities.findPage<Item>(
           db,
-          { baseRules: DND35_BASE_RULES, entityType: "items", rulesetId, fields },
+          DND35_BASE_RULES,
+          { entityType: "items", rulesetId, fields },
           { limit: 10, page: 1 },
         )
       ).items.map(({ id }) => id);
@@ -171,7 +172,8 @@ describe("A stored entity's fields", () => {
       (
         await Entities.findPage<Feat>(
           db,
-          { baseRules: DND35_BASE_RULES, entityType: "feats", rulesetId, fields },
+          DND35_BASE_RULES,
+          { entityType: "feats", rulesetId, fields },
           { limit: 10, page: 1 },
         )
       ).items

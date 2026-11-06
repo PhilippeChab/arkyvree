@@ -209,7 +209,11 @@ describe("reverting a fork's copy", () => {
       feats: { [ctx.aptMap.General]: [feat.id] },
       skills: { [skill.id]: 2 },
     });
-    await CharacterInventory.create(db, { characterId: character.id, itemId: itemCopy.id, quantity: 1 });
+    await CharacterInventory.create(db, DND35_BASE_RULES, {
+      characterId: character.id,
+      itemId: itemCopy.id,
+      quantity: 1,
+    });
     await CharacterLinks.createMany(db, DND35_BASE_RULES, character.id, "speaks", [{ entityId: languageCopy.id }]);
 
     await RulesetChangesService.revertOverride(session, fork.id, "feats", dodge);

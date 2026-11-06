@@ -242,8 +242,8 @@ class CharactersService extends include(Object, Archives, Imports) {
       // Each option as an entity's row: its columns past those every kind's has are its kind's
       const result = await Entities.findPage<EntityRecord>(
         db,
+        scope.ruleset.baseRules,
         {
-          baseRules: scope.ruleset.baseRules,
           rulesetId,
           ...scope.rulesetData.cow.listFilters,
           ...picker.filters,

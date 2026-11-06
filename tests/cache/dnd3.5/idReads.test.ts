@@ -131,7 +131,7 @@ test("a character's inventory entry carries its item as the view has it", async 
   const fork = await createSeededTestRuleset(SEED_USER_ID);
   const item = await findPlainItem(fork.rulesetId!);
   const character = await createTestCharacter(SEED_USER_ID, { rulesetId: fork.id });
-  await CharacterInventory.create(db, { characterId: character.id, itemId: item.id, quantity: 1 });
+  await CharacterInventory.create(db, DND35_BASE_RULES, { characterId: character.id, itemId: item.id, quantity: 1 });
   // Copied and renamed in the fork: the entry still stores the core's item
   const copy = await copyEntity(db, "items", item.id, fork);
   await Entities.update<Item>(db, DND35_BASE_RULES, "items", { name: "Copied Item" }, { id: copy.id });

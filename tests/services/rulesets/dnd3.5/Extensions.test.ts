@@ -459,7 +459,8 @@ describe("subscribing to an extension", () => {
         await fetchEveryPage((page) =>
           Entities.findPage<Feat>(
             db,
-            { baseRules: DND35_BASE_RULES, entityType: "feats", rulesetId: draft.id, ...listFilters },
+            DND35_BASE_RULES,
+            { entityType: "feats", rulesetId: draft.id, ...listFilters },
             page,
           ),
         )
@@ -1303,7 +1304,11 @@ describe("unsubscribing from an extension", () => {
       )[0];
     const characterOn = async (rulesetId: string) => {
       const character = await createTestCharacter(user.id, { rulesetId, links: { race: copies.race } });
-      await CharacterInventory.create(db, { characterId: character.id, itemId: copies.item, quantity: 1 });
+      await CharacterInventory.create(db, DND35_BASE_RULES, {
+        characterId: character.id,
+        itemId: copies.item,
+        quantity: 1,
+      });
       await CharacterLinks.createMany(db, DND35_BASE_RULES, character.id, "speaks", [{ entityId: copies.language }]);
       const { classLevel } = await createTestClassLevel(rulesetId);
       const level = await addCharacterLevel(character.id, classLevel.id, {

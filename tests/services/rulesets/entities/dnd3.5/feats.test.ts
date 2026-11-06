@@ -265,7 +265,7 @@ describe("EntitiesService: feats", () => {
       const ruleset = await createSeededTestRuleset(SEED_USER_ID);
       await subscribeTestRuleset(ruleset.id, [scoundrel.id]);
       const where = { entityType: "feats", rulesetId: scoundrel.id, fields: { [FEAT_FAMILY]: "Luck" } };
-      const luck = (await Entities.findList<Feat>(db, { baseRules: DND35_BASE_RULES, ...where, order: "name" })).map(
+      const luck = (await Entities.findList<Feat>(db, DND35_BASE_RULES, { ...where, order: "name" })).map(
         (feat) => feat.name,
       );
       expect(luck).toHaveLength(20);

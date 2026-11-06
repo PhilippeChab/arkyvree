@@ -3,10 +3,16 @@ import { describe, expect, test } from "bun:test";
 import type { KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
-import { findContentOwner, findContentRuleset } from "@/server/services/activities/contentRuleset.ts";
+import {
+  type ContentRow,
+  findContentBaseRules,
+  findContentOwner,
+  findContentRuleset,
+} from "@/server/services/activities/contentRuleset.ts";
 import { createTestCharacter } from "@/tests/support/dnd3.5/characters.ts";
 import { getSeedCtx, NIL_UUID } from "@/tests/support/seed.ts";
 import { createTestUser } from "@/tests/support/users.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
 /** A modifier of an owner (`sourceType`, `sourceId`). */
 async function createModifier(sourceType: string, sourceId: string) {
@@ -35,6 +41,12 @@ async function createRequirement(entityType: string, entityId: string) {
   return requirement;
 }
 
+/** The ruleset a row is in, as an activity's link walks to it: its base rules read once, then its rows climbed. */
+async function findRuleset(row: ContentRow) {
+  const baseRules = await findContentBaseRules(db, row);
+  return baseRules && (await findContentRuleset(db, baseRules, row));
+}
+
 describe("the walk from a ruleset's content to its ruleset", () => {
   test("reaches the ruleset from each kind of content: its entities, an owned one, a customization, an edited link", async () => {
     const { rulesetId, featMap, classMap } = await getSeedCtx();
@@ -57,8 +69,9 @@ describe("the walk from a ruleset's content to its ruleset", () => {
       ["classSkill", fighter, { id: fighter, type: "classes" }],
     ] as const) {
       const row = { id, type };
-      expect({ type, owner: await findContentOwner(db, row) }).toEqual({ type, owner });
-      expect({ type, rulesetId: await findContentRuleset(db, row) }).toEqual({ type, rulesetId });
+      expect({ type, baseRules: await findContentBaseRules(db, row) }).toEqual({ type, baseRules: DND35_BASE_RULES });
+      expect({ type, owner: await findContentOwner(db, DND35_BASE_RULES, row) }).toEqual({ type, owner });
+      expect({ type, rulesetId: await findRuleset(row) }).toEqual({ type, rulesetId });
     }
   });
 
@@ -81,18 +94,13 @@ describe("the walk from a ruleset's content to its ruleset", () => {
       ["modifiers", NIL_UUID],
       ["requirements", NIL_UUID],
       ["classSkill", NIL_UUID],
-    ]) {
-      expect({ type, id, rulesetId: await findContentRuleset(db, { id, type }) }).toEqual({
-        type,
-        id,
-        rulesetId: undefined,
-      });
-    }
+    ])
+      expect({ type, id, rulesetId: await findRuleset({ id, type }) }).toEqual({ type, id, rulesetId: undefined });
   });
 
   test("climbs no row of what isn't a ruleset's content", async () => {
     const { featMap } = await getSeedCtx();
     for (const type of ["characters", "campaigns", "listedIn"])
-      expect(await findContentRuleset(db, { id: featMap["Toughness"], type })).toBeUndefined();
+      expect(await findContentRuleset(db, DND35_BASE_RULES, { id: featMap["Toughness"], type })).toBeUndefined();
   });
 });

@@ -516,13 +516,8 @@ describe("RulesetsService", () => {
       });
       expect((await sourcesOf(created.id)).extensionIds).toEqual([extension.id]);
       expect(
-        (
-          await Entities.findPage<Feat>(
-            db,
-            { baseRules: DND35_BASE_RULES, entityType: "feats", rulesetId: created.id },
-            firstPage,
-          )
-        ).items,
+        (await Entities.findPage<Feat>(db, DND35_BASE_RULES, { entityType: "feats", rulesetId: created.id }, firstPage))
+          .items,
       ).toEqual([]);
       expect(await EntitySnapshots.findMany(db, { rulesetId: created.id })).toEqual([]);
       expect(
@@ -544,8 +539,7 @@ describe("RulesetsService", () => {
       const { session } = await createTestUser();
       const parent = await createParent();
       expect(
-        await Entities.findList<Item>(db, {
-          baseRules: DND35_BASE_RULES,
+        await Entities.findList<Item>(db, DND35_BASE_RULES, {
           entityType: "items",
           rulesetId: (await fork(session, parent)).id,
           fields: { [ITEM_IS_TEMPLATE]: true },
@@ -572,7 +566,8 @@ describe("RulesetsService", () => {
       const created = await fork(session, { id: rulesetId }, { private: true });
       const feats = await Entities.findPage<Feat>(
         db,
-        { baseRules: DND35_BASE_RULES, entityType: "feats", rulesetId },
+        DND35_BASE_RULES,
+        { entityType: "feats", rulesetId },
         { limit: 26, page: 1 },
       );
       for (const feat of feats.items) expect((await copyEntity(db, "feats", feat.id, created)).id).not.toBe(feat.id);

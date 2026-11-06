@@ -18,7 +18,7 @@ type WrittenRow = NewCharacterRow &
  * scores, its languages), of its ruleset's base rules (`baseRules`). Answers its row as stored.
  */
 export async function createNewCharacter(tx: Db, baseRules: BaseRules, plan: NewCharacterPlan<WrittenRow>) {
-  const [created] = await Characters.create(tx, plan.row);
+  const [created] = await Characters.create(tx, baseRules, plan.row);
   for (const [role, links] of Object.entries(plan.links))
     await CharacterLinks.createMany(tx, baseRules, created.id, role, links);
   return created;

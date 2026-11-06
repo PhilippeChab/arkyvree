@@ -1117,8 +1117,7 @@ describe("LevelsService", () => {
       const characterId = await createSeedCharacter(ctx, "fighter", { rulesetId: ruleset.id });
       const plan = levelUpPlan([planned(ctx.classMap.pc["Fighter"], 1)]);
       const luck = names(
-        await Entities.findList<Feat>(db, {
-          baseRules: DND35_BASE_RULES,
+        await Entities.findList<Feat>(db, DND35_BASE_RULES, {
           entityType: "feats",
           rulesetId: scoundrel.id,
           fields: { [FEAT_FAMILY]: "Luck" },

@@ -27,6 +27,7 @@ export async function carry(character: Pick<Character, "id">, carried: Carried[]
   await db.delete(inventoryInCharacter).where(eq(inventoryInCharacter.characterId, character.id));
   await CharacterInventory.createMany(
     db,
+    DND35_BASE_RULES,
     carried.map(({ item, quantity = 1, ...rest }) => ({
       characterId: character.id,
       itemId: itemMap[item] ?? item,
@@ -57,8 +58,8 @@ export async function findPlainItem(rulesetId: string) {
   const items = await fetchEveryPage((pagination) =>
     Entities.findPage<Item>(
       db,
+      DND35_BASE_RULES,
       {
-        baseRules: DND35_BASE_RULES,
         entityType: "items",
         rulesetId,
         childOnly: true,

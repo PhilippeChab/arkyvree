@@ -19,10 +19,10 @@ import type { Character } from "@/shared/relations.ts";
  */
 async function readCharacterRows(database: Db, character: Character): Promise<CharacterRows> {
   const { baseRules, id: characterId } = character;
-  const links = await CharacterLinks.findPerRole(database, { baseRules, characterId });
+  const links = await CharacterLinks.findPerRole(database, baseRules, { characterId });
   const inventory = await CharacterInventory.findMany(database, { characterId });
   const advancements = await CharacterAdvancements.findMany(database, { characterId });
-  const picks = await Picks.findPerStep(database, { advancementIds: advancements.map(({ id }) => id), baseRules });
+  const picks = await Picks.findPerStep(database, baseRules, { advancementIds: advancements.map(({ id }) => id) });
   const modifiers = await Modifiers.findMany(database, { sourceIds: [characterId] });
   const requirements = await Requirements.findMany(database, { entityIds: modifiers.map((modifier) => modifier.id) });
   return { links, inventory, advancements, picks, modifiers, requirements };

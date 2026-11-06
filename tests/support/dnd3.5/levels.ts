@@ -102,7 +102,7 @@ export async function findClassLevel(classId: string, level: number) {
  * stored, by the picked entity's name.
  */
 export async function findPicks(step: string, advancementIds: string[]) {
-  return (await Picks.findPerStep(db, { baseRules: DND35_BASE_RULES, advancementIds }))[step];
+  return (await Picks.findPerStep(db, DND35_BASE_RULES, { advancementIds }))[step];
 }
 
 /** A character of `userId`'s on `rulesetId`, who picked the feat at their first level. */

@@ -363,7 +363,12 @@ describe("InventoryService", () => {
       // A plain item's entry, its charges stored as an earlier write left them: an edit keeps none, whatever it's sent
       const plain = await newItem();
       const { id } = await add(session, character.id, plain.id);
-      await CharacterInventory.update(db, { totalCharges: 10, remainingCharges: 5 }, { characterId: character.id, id });
+      await CharacterInventory.update(
+        db,
+        DND35_BASE_RULES,
+        { totalCharges: 10, remainingCharges: 5 },
+        { characterId: character.id, id },
+      );
       expect(await update(session, character.id, plain.id, { quantity: 2, charges: [10, 50] })).toMatchObject({
         quantity: 2,
         totalCharges: null,
@@ -599,7 +604,7 @@ describe("InventoryService", () => {
       // Ten javelins in one hand, as saved before the room was counted
       const wornBefore = async () =>
         (
-          await CharacterInventory.create(db, {
+          await CharacterInventory.create(db, DND35_BASE_RULES, {
             characterId: character.id,
             itemId: javelin.id,
             quantity: 10,

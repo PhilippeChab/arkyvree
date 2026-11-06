@@ -11,6 +11,7 @@ import type {
   StoredLink,
 } from "@/engine/core/module/index.ts";
 import { Engine } from "@/engine/index.ts";
+import { toFieldRows } from "@/server/repositories/stored/toFieldRows.ts";
 import type { Merge } from "@/shared/customization/fields.ts";
 import type { BaseRules } from "@/shared/enums.ts";
 import {
@@ -259,12 +260,14 @@ describe("A module's storage", () => {
       { ownerKind: "character", ownerType: characters, field: "TEST_TITLES", valueKind: "text", multiple: true },
     ]);
     expect(storage.registries().fieldDefs.filter((def) => def.field.startsWith("TEST_"))).toEqual([]);
-    // A character's or a ruleset's write takes its own module's fields: a new one holds its own module's defaults alone
+    // A character's or a ruleset's write takes its own module's fields: a new one holds its own module's defaults
+    // alone, and the write path refuses another's field
     expect(second.writtenFields(characters, {}, true)).toEqual({ TEST_RETIRED: [false] });
     expect(second.writtenFields(settings, { TEST_HOUSE_RULES: true }, false)).toEqual({ TEST_HOUSE_RULES: [true] });
-    expect(() => storage.writtenFields(characters, { TEST_RETIRED: true }, false)).toThrow(
-      `${DND35_BASE_RULES} declares no field TEST_RETIRED of characters`,
-    );
+    const written = storage.writtenFields(characters, { TEST_RETIRED: true }, false);
+    const rows = () =>
+      Object.entries(written).flatMap(([field, values]) => toFieldRows(storage, characters, field, values));
+    expect(rows).toThrow(`${DND35_BASE_RULES} declares no field TEST_RETIRED of characters`);
   });
 
   test("lets two modules declare one kind, each its own fields, which each reads and writes by its own", () => {

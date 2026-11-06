@@ -40,6 +40,7 @@ export function Imports<B extends Constructor>(Base: B) {
         for (const advancement of plan.advancements) await createAdvancement(tx, baseRules, characterId, advancement);
         await CharacterInventory.createMany(
           tx,
+          baseRules,
           plan.inventory.map((entry) => ({ ...entry, characterId })),
         );
         await writeChildren(tx, baseRules, plan.children);

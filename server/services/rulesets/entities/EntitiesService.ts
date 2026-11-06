@@ -49,8 +49,7 @@ class EntitiesService extends include(Object, Copies, Links, Lists, Owned, Progr
     copies: EntityCopies | undefined,
   ) {
     if (!copies) return;
-    const rows = await Entities.findList(tx, {
-      baseRules: ruleset.baseRules,
+    const rows = await Entities.findList(tx, ruleset.baseRules, {
       entityType: type,
       rulesetId: ruleset.id,
       ...rulesetData.cow.listFilters,
@@ -124,8 +123,8 @@ class EntitiesService extends include(Object, Copies, Links, Lists, Owned, Progr
         .openList({ childOnly, ...filters });
       const result = await Entities.findPage<EntityRecord & { name: string }>(
         db,
+        scope.ruleset.baseRules,
         {
-          baseRules: scope.ruleset.baseRules,
           entityType: type,
           rulesetId,
           ...scope.rulesetData.cow.listFilters,
@@ -173,7 +172,6 @@ class EntitiesService extends include(Object, Copies, Links, Lists, Owned, Progr
       return await Entities.findGroupPage(
         db,
         {
-          baseRules: scope.ruleset.baseRules,
           entityType: type,
           rulesetId,
           ...scope.rulesetData.cow.listFilters,

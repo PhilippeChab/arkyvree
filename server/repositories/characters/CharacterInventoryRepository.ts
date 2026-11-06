@@ -6,12 +6,13 @@ import { include } from "@/lib/mixins.ts";
 import BaseRepository from "@/server/repositories/BaseRepository.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
 import StoredCharacters from "@/server/repositories/stored/StoredCharacters.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 import type { CharacterInventory } from "@/shared/relations.ts";
 
 /** An inventory entry as a write gives it: its item, where it's held, its groups, its charges. */
 type InventoryValues = Partial<Omit<CharacterInventory, "createdAt" | "updatedAt">>;
 
-/** An entry's columns: all its own but its item's type and base rules, which are its item's (`stored`). */
+/** An entry's columns: all its own but its item's type and its base rules, which `stored` writes. */
 const COLUMNS = {
   createdAt: inventoryInCharacter.createdAt,
   updatedAt: inventoryInCharacter.updatedAt,
@@ -25,15 +26,13 @@ const COLUMNS = {
   groups: inventoryInCharacter.groups,
 };
 
-/** An entry's row to write: its item's type and base rules its item's own. */
-function stored(values: InventoryValues) {
+/**
+ * An entry's row to write: of its character's base rules (`baseRules`), which its item's must be (its keys hold it),
+ * and its item's type its item's own.
+ */
+function stored(baseRules: BaseRules, values: InventoryValues) {
   const { itemId } = values;
-  return {
-    ...values,
-    ...(itemId !== undefined
-      ? { baseRules: StoredCharacters.buildBaseRulesOf(itemId), itemType: StoredCharacters.buildTypeOf(itemId) }
-      : {}),
-  };
+  return { ...values, baseRules, ...(itemId !== undefined && { itemType: StoredCharacters.buildTypeOf(itemId) }) };
 }
 
 /**
@@ -44,15 +43,25 @@ class CharacterInventoryRepository extends include(BaseRepository<typeof invento
     super(inventoryInCharacter);
   }
 
-  async create(db: Db, values: InventoryValues & { characterId: string; itemId: string; quantity: number }) {
-    return await this.createMany(db, [values]);
+  /** Writes an entry of a character of `baseRules`. */
+  async create(
+    db: Db,
+    baseRules: BaseRules,
+    values: InventoryValues & { characterId: string; itemId: string; quantity: number },
+  ) {
+    return await this.createMany(db, baseRules, [values]);
   }
 
-  async createMany(db: Db, values: (InventoryValues & { characterId: string; itemId: string; quantity: number })[]) {
+  /** Writes entries of characters of `baseRules`. */
+  async createMany(
+    db: Db,
+    baseRules: BaseRules,
+    values: (InventoryValues & { characterId: string; itemId: string; quantity: number })[],
+  ) {
     if (values.length === 0) return [];
     const rows = await db
       .insert(this.table)
-      .values(values.map((value) => stored(value)))
+      .values(values.map((value) => stored(baseRules, value)))
       .returning(COLUMNS);
     return rows;
   }
@@ -77,15 +86,17 @@ class CharacterInventoryRepository extends include(BaseRepository<typeof invento
     return row;
   }
 
+  /** Writes a change to an entry of a character of `baseRules`, if it's still the version the editor read. */
   async update(
     db: Db,
+    baseRules: BaseRules,
     values: InventoryValues,
     where: { characterId: string; expectedUpdatedAt?: string; id: string },
   ) {
     return await db
       .update(this.table)
       .set({
-        ...stored(values),
+        ...stored(baseRules, values),
         updatedAt: new Date().toISOString(),
       })
       .where(

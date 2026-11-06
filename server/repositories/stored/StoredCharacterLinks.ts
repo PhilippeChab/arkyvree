@@ -59,8 +59,8 @@ class StoredCharacterLinks extends BaseRepository<typeof linksInCharacter> {
    * (`Engine.forRules(baseRules).storage().registries().characterRoles`), each one's in the order they were made, read
    * in one query.
    */
-  async findPerRole(db: Db, where: { baseRules: BaseRules; characterId: string }): Promise<CharacterRows["links"]> {
-    const roles = Engine.forRules(where.baseRules)
+  async findPerRole(db: Db, baseRules: BaseRules, where: { characterId: string }): Promise<CharacterRows["links"]> {
+    const roles = Engine.forRules(baseRules)
       .storage()
       .registries()
       .characterRoles.filter((def) => !def.single)

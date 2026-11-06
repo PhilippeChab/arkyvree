@@ -17,7 +17,6 @@ import type {
   RulesDescription,
   RulesetModule,
   StepDef,
-  StorageDeclaration,
   StorageRegistries,
   StoredEntity,
   StoredKind,
@@ -60,7 +59,9 @@ export default class StorageEngine {
     this.kinds = module.storage.kinds;
     this.fields = { ...module.fields, [this.characterOwnerType]: module.characterFields };
     this.playerKindName = module.storage.character.playerKind;
-    this.customizable = StorageEngine.customizableKindsOf({ kinds: this.kinds });
+    this.customizable = Object.keys(this.kinds)
+      .filter((type) => this.kinds[type].customizable)
+      .toSorted((a, b) => a.localeCompare(b));
     this.identityKinds = new Set(this.namesakeKinds("identity"));
     const { registries } = module.storage;
     this.declarations = { ...registries, fieldDefs: this.fieldDefsOf(registries.entityTypes) };
@@ -146,31 +147,6 @@ export default class StorageEngine {
     return Modules.all().map(([baseRules]) => StorageEngine.of(baseRules));
   }
 
-  /**
-   * The kinds a storage declares customizable (`StoredKind.customizable`, of `storage`: a module's, or every module's
-   * merged), by type: the order a refusal of another lists them in.
-   */
-  static customizableKindsOf({ kinds }: Pick<StorageDeclaration, "kinds">): string[] {
-    return Object.keys(kinds)
-      .filter((type) => kinds[type].customizable)
-      .toSorted((a, b) => a.localeCompare(b));
-  }
-
-  /**
-   * The kinds a storage declares customizable (`storage`: a module's, or every module's merged) whose customizations
-   * have a page of their own: all but a kind that owns another, whose customizations are its page's tabs (a class's).
-   * An owned kind's names the kind that owns it (`owner`: a class level's class).
-   */
-  static customizationPagesOf({
-    kinds,
-    registries,
-  }: Pick<StorageDeclaration, "kinds" | "registries">): RulesDescription["customizationPages"] {
-    const owners = new Set(registries.entityTypes.map((def) => def.ownerType));
-    return registries.entityTypes
-      .filter(({ type }) => kinds[type].customizable && !owners.has(type))
-      .map(({ ownerType, type }) => ({ type, ...(ownerType && { owner: ownerType }) }));
-  }
-
   /** A base rules' module's storage: one instance, built on its first read. */
   static of(baseRules: BaseRules): StorageEngine {
     let storage = StorageEngine.instances.get(baseRules);
@@ -235,16 +211,6 @@ export default class StorageEngine {
   private schema?: ViewSchema;
 
   /**
-   * Refuses a write of a character's or a ruleset's Settings' fields (`fields`, of `ownerType`, which every module
-   * declares its own of) naming a field this module doesn't declare of them: another module's.
-   */
-  private checkOwnFields(ownerType: string, fields: Readonly<Record<string, FieldWrite>>) {
-    const declared = new Set(Field.storedLeavesOf(this.fields[ownerType] ?? {}).map((leaf) => leaf.field));
-    for (const field of Object.keys(fields))
-      if (!declared.has(field)) throw new Error(`${this.baseRules} declares no field ${field} of ${ownerType}`);
-  }
-
-  /**
    * The registry rows of its fields (`fields`), each stored field of an owner type (but a reference's, which a
    * single link keeps: `Field.storedLeavesOf`) with its owner's kind, the kind of value it holds and whether it's a set:
    * an entity type's (`entityTypes`), a ruleset's Settings' (`settingsOwnerType`) or a character's
@@ -282,21 +248,24 @@ export default class StorageEngine {
   }
 
   /**
-   * The kinds whose customizations have a page of their own (`customizationPagesOf`, of every module's storage: 3.5's
-   * feats, items, spells, races and class levels), by type: what an activity's link opens, as the client's rules
-   * describe them (`RulesDescription.customizationPages`).
+   * The kinds it declares customizable whose customizations have a page of their own (3.5's feats, items, spells, races
+   * and class levels): all but a kind that owns another, whose customizations are its page's tabs (a class's), an owned
+   * kind's naming the kind that owns it (`owner`: a class level's class). By type, in their declarations' order: what
+   * an activity's link opens, as the client's rules describe them (`RulesDescription.customizationPages`).
    */
   customizationPages(): ReadonlyMap<string, RulesDescription["customizationPages"][number]> {
-    this.pages ??= new Map(
-      StorageEngine.customizationPagesOf({ kinds: this.kinds, registries: this.declarations }).map((page) => [
-        page.type,
-        page,
-      ]),
+    if (this.pages) return this.pages;
+    const types = this.declarations.entityTypes;
+    const owners = new Set(types.map((def) => def.ownerType));
+    this.pages = new Map(
+      types
+        .filter(({ type }) => this.kinds[type].customizable && !owners.has(type))
+        .map(({ ownerType, type }) => [type, { type, ...(ownerType && { owner: ownerType }) }]),
     );
     return this.pages;
   }
 
-  /** The fields every module declares, as a ruleset's view keeps their values (`DeclaredFields`): built once. */
+  /** The fields its module declares, as a ruleset's view keeps their values (`DeclaredFields`): built once. */
   declaredFields(): DeclaredFields {
     this.declared ??= new DeclaredFields(this.fields, this.declarations.linkRoles);
     return this.declared;
@@ -321,7 +290,7 @@ export default class StorageEngine {
     return this.edited;
   }
 
-  /** A field of an owner's type (an entity type, `settingsOwnerType`, `characterOwnerType`), if a module declares it. */
+  /** A field its module declares of an owner's type (an entity type, `settingsOwnerType`, `characterOwnerType`). */
   field(ownerType: string, field: string): FieldDef | undefined {
     return this.declarations.fieldDefs.find((def) => def.ownerType === ownerType && def.field === field);
   }
@@ -511,7 +480,7 @@ export default class StorageEngine {
   }
 
   /**
-   * What a ruleset's view is composed by, of every module's declaration (`ViewSchema`): each kind's owner and what it
+   * What a ruleset's view is composed by, of its module's declaration (`ViewSchema`): each kind's owner and what it
    * inherits, and the links whose sibling copies' merge into their winner's (`unionLinks`: a feat's pools). Read once.
    */
   viewSchema(): ViewSchema {
@@ -551,13 +520,11 @@ export default class StorageEngine {
   /**
    * What a write of an owner's fields (`fields`, of `ownerType`: an entity type, `settingsOwnerType`,
    * `characterOwnerType`) stores, by field, whoever writes it (a seed, a form's save, an import), so the same values store
-   * the same rows (`FieldWrites`): a new owner's (`creating`) or an existing one's, by this module's declarations. A
-   * character's or a ruleset's Settings' fields, which every module declares its own of, are this module's alone: a new
-   * one holds its defaults alone, and a field it doesn't declare of them is refused (`checkOwnFields`).
+   * the same rows (`FieldWrites`): a new owner's (`creating`) or an existing one's, by its module's declarations alone,
+   * a new one holding its defaults. A field its module doesn't declare is left as it is, which the write path refuses
+   * (`toFieldRows`).
    */
   writtenFields(ownerType: string, fields: Readonly<Record<string, FieldWrite>>, creating: boolean) {
-    if (ownerType === this.characterOwnerType || ownerType === this.settingsOwnerType)
-      this.checkOwnFields(ownerType, fields);
     return this.writes.written(ownerType, fields, creating);
   }
 }

@@ -37,7 +37,7 @@ async function addInventory(db: Db, ctx: SeedContext, characterId: string, items
       const itemId = idOf(ctx.itemMap, name, "An inventory's item");
       const request = { groups, location, quantity, remainingCharges: null, totalCharges: null };
       const plan = Engine.for(scope).character(character).planInventoryEntry({ itemId, request }, false);
-      const [row] = await CharacterInventory.create(db, { ...plan, characterId });
+      const [row] = await CharacterInventory.create(db, scope.ruleset.baseRules, { ...plan, characterId });
       character = { ...character, rows: { ...character.rows, inventory: [...character.rows.inventory, row] } };
     }
   });
@@ -56,11 +56,8 @@ async function reconcileChildren(tx: Db, characterId: string): Promise<void> {
   await withRulesetScope(tx, parent.rulesetId, async (scope) => {
     const character = await readCharacterInput(tx, parent);
     const children = await readChildInputs(tx, character);
-    await writeChildren(
-      tx,
-      DND35_BASE_RULES,
-      Engine.for(scope).character(character).advancements().planChildren(children).children,
-    );
+    const { children: plans } = Engine.for(scope).character(character).advancements().planChildren(children);
+    await writeChildren(tx, scope.ruleset.baseRules, plans);
   });
 }
 

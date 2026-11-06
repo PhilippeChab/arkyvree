@@ -105,22 +105,24 @@ class ActivitiesService {
   }
 
   /**
-   * The page that lists an owner's customizations (`entityId`, `entityType`), on the tab of `section` (its modifiers'
-   * or its requirements'): its customization page, or the page of a kind that owns another (a class's), as its base
-   * rules (its row's) declare them; none for an owner outside a ruleset (a character's own modifiers).
+   * The page that lists a customization's owner's customizations (`target`, a modifier or a requirement, whose type is
+   * `section`), on the tab of its type: its customization page, or the page of a kind that owns another (a class's), as
+   * its base rules declare them; none for an owner outside a ruleset (a character's own modifiers).
    */
   private async resolveCustomizationUrl(
     session: Session,
-    entityId: string,
-    entityType: string,
+    target: ContentRow,
     section: "modifiers" | "requirements",
   ): Promise<string | null> {
-    const baseRules = await findContentBaseRules(db, { id: entityId, type: entityType });
-    if (!baseRules) return null;
+    const baseRules = await findContentBaseRules(db, target);
+    // What it belongs to, as the walk to its ruleset reads it: none for a modifier of a modifier
+    const owner = baseRules && (await findContentOwner(db, baseRules, target));
+    if (!baseRules || !owner) return null;
+    const { id: entityId, type: entityType } = owner;
     const storage = Engine.forRules(baseRules).storage();
     const pages = storage.customizationPages();
     if (!storage.ownerKinds().includes(entityType) && !hasCustomizationPage(entityType, pages)) return null;
-    const rulesetId = await findContentRuleset(db, { id: entityId, type: entityType });
+    const rulesetId = await findContentRuleset(db, baseRules, owner);
     if (!rulesetId || !(await this.rulesetUrl(session, rulesetId))) return null;
     return buildEntityPagePath(rulesetId, entityType, entityId, pages, section);
   }
@@ -145,8 +147,8 @@ class ActivitiesService {
     const edited = storage.editedLinks().get(targetType);
     // An owned entity and an edited link show on their owner's own page, as long as no kind that owns another or edits
     // its links has a customization page (3.5's classes: their customizations are their page's tabs)
-    const page = storage.ownerOf(targetType) || edited ? await findContentOwner(db, target) : target;
-    const stored = page && (await findContentRuleset(db, page));
+    const page = storage.ownerOf(targetType) || edited ? await findContentOwner(db, baseRules, target) : target;
+    const stored = page && (await findContentRuleset(db, baseRules, page));
     if (!page || !stored) return null;
     const pages = storage.customizationPages();
     // In the ruleset the activity recorded writing, while the session may read it and it shows the entity
@@ -235,11 +237,8 @@ class ActivitiesService {
 
       // Customization entities
       case TARGET_TYPES.modifiers:
-      case TARGET_TYPES.requirements: {
-        // What it belongs to, as the walk to its ruleset reads it: none for a modifier of a modifier
-        const owner = await findContentOwner(db, { id: targetId, type: targetType });
-        return owner ? await this.resolveCustomizationUrl(session, owner.id, owner.type, targetType) : null;
-      }
+      case TARGET_TYPES.requirements:
+        return await this.resolveCustomizationUrl(session, { id: targetId, type: targetType }, targetType);
       // Rules sub-entities (entity has rulesetId)
       default:
         return await this.resolveRulesEntity(session, targetType, targetId, rulesetId);

@@ -33,13 +33,14 @@ export const RulesetSettings = new StoredSettings();
  * A seeder's state, which every seeding step builds on (`concerns/`, and a ruleset's): the database it writes to, the
  * context it names rows by (`ctx`, its ruleset's id and the ids its steps add), and what the steps write with: the
  * entities' rows with their fields and single links, their links and a ruleset's Settings, as the generic tables store
- * them (`Entities`, `EntityLinks`, `RulesetSettings`, by what its base rules' module declares: `baseRules`, its
- * ruleset's seeder's), the customizations' rows and their inserts, and the copies an extension makes of what it
- * changes.
+ * them (`Entities`, `EntityLinks`, `RulesetSettings`, by what the module of the base rules of the rulesets it seeds
+ * declares: `baseRules`, its ruleset's seeder's), the customizations' rows and their inserts, and the copies an
+ * extension makes of what it changes.
  */
 export abstract class SeederState {
   constructor(
     readonly db: Db,
+    protected readonly baseRules: BaseRules,
     readonly ctx: SeedContext,
   ) {}
 
@@ -47,9 +48,6 @@ export abstract class SeederState {
   static idsByName(rows: { id: string; name: string }[]): Ids {
     return Object.fromEntries(rows.map((row) => [row.name, row.id]));
   }
-
-  /** The base rules of the rulesets it seeds, whose module declares what it writes: its ruleset's seeder's. */
-  protected abstract readonly baseRules: BaseRules;
 
   /** Copies entities' requirements onto their copies (`copies`: each entity's copy, by its id), in one write. */
   private async copyRequirements(copies: Map<string, string>) {

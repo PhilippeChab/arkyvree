@@ -162,7 +162,8 @@ for (const [chainingOperator, reverseOrder] of [
     const rows = await fetchEveryPage((pagination) =>
       Entities.findPage<RulesetAbility>(
         db,
-        { baseRules: DND35_BASE_RULES, entityType: "abilities", rulesetId: host.rulesetId! },
+        DND35_BASE_RULES,
+        { entityType: "abilities", rulesetId: host.rulesetId! },
         pagination,
       ),
     );

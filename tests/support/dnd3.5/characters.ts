@@ -14,6 +14,7 @@ import { CharactersService, readCharacterInput } from "@/server/services/charact
 import type { Character, Session } from "@/shared/relations.ts";
 import { api, expectOk } from "@/tests/support/api.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import {
   CHARACTER_AGE,
@@ -149,7 +150,7 @@ export async function createTestCharacter(
   }: Partial<Omit<Character, "fields" | "links">> & { fields?: Character["fields"]; links?: { race?: string } } = {},
 ) {
   const ctx = await getSeedCtx();
-  const [character] = await Characters.create(db, {
+  const [character] = await Characters.create(db, DND35_BASE_RULES, {
     kind: PLAYER_CHARACTER_KIND,
     userId,
     rulesetId: ctx.rulesetId,

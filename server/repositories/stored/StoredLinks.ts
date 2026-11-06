@@ -159,8 +159,8 @@ class StoredLinks extends BaseRepository<typeof entityLinksInRules> {
    * Whether a link of a role that refuses its target's delete points at an entity of a kind (`toId`, of `toType`, of
    * `baseRules`): an in-use check (a class level's base bonus to a save, whose delete the database would refuse).
    */
-  async hasRefusing(db: Db, where: { baseRules: BaseRules; toId: string; toType: string }) {
-    const roles = Engine.forRules(where.baseRules).storage().refusingRoles(where.toType);
+  async hasRefusing(db: Db, baseRules: BaseRules, where: { toId: string; toType: string }) {
+    const roles = Engine.forRules(baseRules).storage().refusingRoles(where.toType);
     if (roles.length === 0) return false;
     const [link] = await db
       .select({ id: entityLinksInRules.id })

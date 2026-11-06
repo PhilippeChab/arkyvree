@@ -49,6 +49,12 @@ export default class CopyOnWriteEngine {
   /** Its base rules' module's storage. */
   private readonly storage: StorageEngine;
 
+  /** Refuses a ruleset's sources (`ruleset`) of other base rules than its own, whose kinds it doesn't pair by. */
+  private checkSources(ruleset: Pick<RulesetSources, "baseRules">) {
+    if (ruleset.baseRules !== this.baseRules)
+      throw new Error(`A ruleset of ${ruleset.baseRules} is no ruleset of ${this.baseRules}`);
+  }
+
   /** How its kinds pair in its rulesets' chains, by its module's storage declarations. */
   private kinds(): CowKinds {
     return {
@@ -61,6 +67,7 @@ export default class CopyOnWriteEngine {
 
   /** A ruleset's copy-on-write data, from the rows read for it (`getReads`, `getPairedOwnerIds`). */
   buildData(ruleset: RulesetSources, rows: CowRows): CowData {
+    this.checkSources(ruleset);
     return CowDataBuilder.build(ruleset, rows);
   }
 
@@ -103,6 +110,7 @@ export default class CopyOnWriteEngine {
 
   /** A ruleset's source chain: its extensions first (their new entities are visible), then its parent. */
   buildSourceChain(ruleset: Omit<RulesetSources, "id">): string[] {
+    this.checkSources(ruleset);
     return CowSources.buildSourceChain(ruleset);
   }
 
@@ -132,6 +140,7 @@ export default class CopyOnWriteEngine {
 
   /** What a ruleset's copy-on-write data is read from, by its kinds, each read none when it needs none. */
   getReads(ruleset: RulesetSources) {
+    this.checkSources(ruleset);
     return CowSources.getReads(ruleset, this.kinds());
   }
 

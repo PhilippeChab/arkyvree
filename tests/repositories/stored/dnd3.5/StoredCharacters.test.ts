@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { eq, sql } from "drizzle-orm";
 
 import { charactersInCharacter } from "@/drizzle/schema.ts";
+import { Engine } from "@/engine/index.ts";
 import { RACE_ROLE } from "@/engine/rulesets/dnd3.5/characters/CharacterValues.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
 import { db } from "@/server/database/index.ts";
@@ -24,6 +25,9 @@ import {
   CHARACTER_GENDER,
   CHARACTER_XP,
 } from "@/vocabulary/dnd3.5/fields/index.ts";
+
+/** 3.5's storage, which its characters are written by. */
+const STORAGE = Engine.forRules(DND35_BASE_RULES).storage();
 
 /** A character's `character.fields` rows of a field (`field`), as stored, in their order. */
 async function findFieldRows(characterId: string, field: string) {
@@ -47,13 +51,13 @@ async function registerFlagAndSet() {
 describe("A character's fields", () => {
   test("reads a number as stored, the largest it holds exactly too, and refuses one past it", async () => {
     const { id } = await createTestCharacter(SEED_USER_ID);
-    await StoredCharacters.write(db, [id], { fields: { CHARACTER_XP: Number.MAX_SAFE_INTEGER } });
+    await StoredCharacters.write(db, STORAGE, [id], { fields: { CHARACTER_XP: Number.MAX_SAFE_INTEGER } });
 
     const character = await Characters.findOne(db, { id }, Visibility.All);
     expect(character?.fields.CHARACTER_XP).toBe(Number.MAX_SAFE_INTEGER);
     for (const xp of [1e21, Number.MAX_SAFE_INTEGER + 1]) {
       const refused = await db
-        .transaction((tx) => StoredCharacters.write(tx, [id], { fields: { CHARACTER_XP: xp } }))
+        .transaction((tx) => StoredCharacters.write(tx, STORAGE, [id], { fields: { CHARACTER_XP: xp } }))
         .catch((error: unknown) => error);
       expect(refused).toBeInstanceOf(Error);
     }
@@ -62,7 +66,9 @@ describe("A character's fields", () => {
   test("refuses a value of another kind than its field's, and a field no module declares", async () => {
     const { id } = await createTestCharacter(SEED_USER_ID);
     const writing = (fields: Record<string, unknown>) =>
-      db.transaction((tx) => StoredCharacters.write(tx, [id], { fields } as never)).catch((error: unknown) => error);
+      db
+        .transaction((tx) => StoredCharacters.write(tx, STORAGE, [id], { fields } as never))
+        .catch((error: unknown) => error);
 
     expect(await writing({ CHARACTER_XP: "1500" })).toBeInstanceOf(Error);
     expect(await writing({ CHARACTER_XP: Number.NaN })).toBeInstanceOf(Error);
@@ -73,8 +79,8 @@ describe("A character's fields", () => {
 
   test("clears a field written null", async () => {
     const { id } = await createTestCharacter(SEED_USER_ID);
-    await StoredCharacters.write(db, [id], { fields: { CHARACTER_DEITY: "Pelor" } });
-    await StoredCharacters.write(db, [id], { fields: { CHARACTER_DEITY: null } });
+    await StoredCharacters.write(db, STORAGE, [id], { fields: { CHARACTER_DEITY: "Pelor" } });
+    await StoredCharacters.write(db, STORAGE, [id], { fields: { CHARACTER_DEITY: null } });
 
     const character = await Characters.findOne(db, { id }, Visibility.All);
     expect(character?.fields).not.toHaveProperty("CHARACTER_DEITY");
@@ -82,7 +88,7 @@ describe("A character's fields", () => {
 
   test("writes the default of a field always written that a new character leaves out, or a write clears", async () => {
     const { rulesetId, raceMap } = await getSeedCtx();
-    const [created] = await Characters.create(db, {
+    const [created] = await Characters.create(db, DND35_BASE_RULES, {
       kind: PLAYER_CHARACTER_KIND,
       userId: SEED_USER_ID,
       rulesetId,
@@ -98,7 +104,7 @@ describe("A character's fields", () => {
     });
 
     const { id } = await createTestCharacter(SEED_USER_ID, { fields: { [CHARACTER_XP]: 300 } });
-    await StoredCharacters.write(db, [id], {
+    await StoredCharacters.write(db, STORAGE, [id], {
       fields: { [CHARACTER_ALIGNMENT]: null, [CHARACTER_GENDER]: "", [CHARACTER_XP]: null },
     });
     const character = await Characters.findOne(db, { id }, Visibility.All);
@@ -127,39 +133,34 @@ describe("A character's fields", () => {
     const { id } = await createTestCharacter(SEED_USER_ID);
     await registerFlagAndSet();
     // Another module's characters declare the flag, always written: a new 3.5 character holds none of it
-    const beside = storagesOf(modulesWithSecond({ characters: CHARACTER_FLAG_AND_SET }));
-    await StoredCharacters.write(db, [id], {}, true, beside);
+    const beside = storagesOf(modulesWithSecond({ characters: CHARACTER_FLAG_AND_SET }))(DND35_BASE_RULES);
+    await StoredCharacters.write(db, beside, [id], {}, true);
     expect(await findFieldRows(id, "TEST_RETIRED")).toEqual([]);
     expect(await findFieldRows(id, CHARACTER_XP)).not.toEqual([]);
     // Nor does a write of it, which its module doesn't declare
+    const fields = { TEST_RETIRED: true, TEST_TITLES: ["  Sir ", ""] };
     const named = await db
-      .transaction((tx) =>
-        StoredCharacters.write(
-          tx,
-          [id],
-          { fields: { TEST_RETIRED: true, TEST_TITLES: ["  Sir ", ""] } },
-          false,
-          beside,
-        ),
-      )
+      .transaction((tx) => StoredCharacters.write(tx, beside, [id], { fields }))
       .catch((error: unknown) => error);
     expect(named).toBeInstanceOf(Error);
     expect((named as Error).message).toContain("declares no field TEST_RETIRED of characters");
     expect(await findFieldRows(id, "TEST_TITLES")).toEqual([]);
     // Its own module's do: it holds its default
-    await StoredCharacters.write(db, [id], {}, true, storagesOf(modulesWithCharacterFlagAndSet()));
+    const own = storagesOf(modulesWithCharacterFlagAndSet())(DND35_BASE_RULES);
+    await StoredCharacters.write(db, own, [id], {}, true);
     expect(await findFieldRows(id, "TEST_RETIRED")).toEqual([
       { ordinal: 0, value_kind: "flag", multiple: false, text_value: null, flag_value: false },
     ]);
   });
 
   test("writes and reads a flag and a set its module declares, each row as the table's checks take it", async () => {
-    const storage = storagesOf(modulesWithCharacterFlagAndSet());
+    const storageOf = storagesOf(modulesWithCharacterFlagAndSet());
+    const storage = storageOf(DND35_BASE_RULES);
     const { id } = await createTestCharacter(SEED_USER_ID);
     await registerFlagAndSet();
-    await StoredCharacters.write(db, [id], { fields: { TEST_TITLES: ["Lord", "Sir", "Lord"] } }, false, storage);
+    await StoredCharacters.write(db, storage, [id], { fields: { TEST_TITLES: ["Lord", "Sir", "Lord"] } });
     // Always written: false is a value of its own, in the flag's column
-    await StoredCharacters.write(db, [id], { fields: { TEST_RETIRED: false } }, false, storage);
+    await StoredCharacters.write(db, storage, [id], { fields: { TEST_RETIRED: false } });
 
     expect(await findFieldRows(id, "TEST_RETIRED")).toEqual([
       { ordinal: 0, value_kind: "flag", multiple: false, text_value: null, flag_value: false },
@@ -173,7 +174,7 @@ describe("A character's fields", () => {
       .from(charactersInCharacter)
       .where(eq(charactersInCharacter.id, id));
     // A set's values in their declared order
-    expect(StoredCharacters.toCharacter(row, storage).fields).toMatchObject({
+    expect(StoredCharacters.toCharacter(row, storageOf).fields).toMatchObject({
       TEST_RETIRED: false,
       TEST_TITLES: ["Sir", "Lord"],
     });
@@ -188,9 +189,7 @@ describe("A character's fields", () => {
       .catch((error: unknown) => error);
     expect(twice).toBeInstanceOf(Error);
     const several = await db
-      .transaction((tx) =>
-        StoredCharacters.write(tx, [id], { fields: { TEST_RETIRED: [true, false] } }, false, storage),
-      )
+      .transaction((tx) => StoredCharacters.write(tx, storage, [id], { fields: { TEST_RETIRED: [true, false] } }))
       .catch((error: unknown) => error);
     expect(several).toBeInstanceOf(Error);
   });

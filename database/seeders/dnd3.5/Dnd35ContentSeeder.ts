@@ -36,7 +36,7 @@ export abstract class Dnd35ContentSeeder extends ContentSeeder<CoreContent, Book
     db: Db,
     override readonly ctx: Dnd35SeedContext,
   ) {
-    super(db, ctx);
+    super(db, DND35_BASE_RULES, ctx);
   }
 
   /** A context of the ruleset naming none of its rows: what a step needs no names for (items) or names as it goes. */
@@ -77,9 +77,6 @@ export abstract class Dnd35ContentSeeder extends ContentSeeder<CoreContent, Book
       inheritedSpellMap: {},
     };
   }
-
-  /** Its rulesets' base rules: 3.5's. */
-  protected override readonly baseRules = DND35_BASE_RULES;
 
   /**
    * Refuses an item made from a template of another type than its own, or of a type no template is of (a weapon's, an

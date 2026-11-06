@@ -754,11 +754,11 @@ describe("a character's bonded creatures", () => {
     };
     // In a savepoint, which the refusal rolls back alone
     const refused = await db
-      .transaction((tx) => Characters.create(tx, { ...second, name: "Second Familiar" }))
+      .transaction((tx) => Characters.create(tx, DND35_BASE_RULES, { ...second, name: "Second Familiar" }))
       .catch((error: unknown) => error);
     expect(refused).toMatchObject({ cause: { code: "23505", constraint: "characters_one_live_child_per_kind_idx" } });
     await Characters.update(db, { deletedAt: new Date().toISOString() }, { id: familiar.id });
-    const [made] = await Characters.create(db, { ...second, name: "New Familiar" });
+    const [made] = await Characters.create(db, DND35_BASE_RULES, { ...second, name: "New Familiar" });
     expect(made).toMatchObject({ kind: "familiar", parentCharacterId: master.id });
   });
 });

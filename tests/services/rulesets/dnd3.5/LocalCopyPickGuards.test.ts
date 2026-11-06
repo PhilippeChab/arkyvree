@@ -37,7 +37,7 @@ async function setup() {
   const fork = await createSeededTestRuleset(session.userId);
   const baseId = fork.rulesetId!;
   const human = (await Entities.findOne<Race>(db, { entityType: "races", name: "Human", rulesetId: baseId }))!;
-  const [character] = await Characters.create(db, {
+  const [character] = await Characters.create(db, DND35_BASE_RULES, {
     kind: PLAYER_CHARACTER_KIND,
     userId: session.userId,
     rulesetId: fork.id,
@@ -91,7 +91,8 @@ test("a language picked before the fork copied it blocks deleting the copy", asy
     items: [language],
   } = await Entities.findPage<Language>(
     db,
-    { baseRules: DND35_BASE_RULES, entityType: "languages", rulesetId: baseId, childOnly: true },
+    DND35_BASE_RULES,
+    { entityType: "languages", rulesetId: baseId, childOnly: true },
     { limit: 1, page: 1 },
   );
   await CharacterLinks.createMany(db, DND35_BASE_RULES, character.id, "speaks", [{ entityId: language.id }]);
@@ -107,7 +108,7 @@ test("a language picked before the fork copied it blocks deleting the copy", asy
 test("an item picked before the fork copied it blocks deleting the copy", async () => {
   const { session, fork, baseId, character } = await setup();
   const item = await findPlainItem(baseId);
-  await CharacterInventory.create(db, { characterId: character.id, itemId: item.id, quantity: 1 });
+  await CharacterInventory.create(db, DND35_BASE_RULES, { characterId: character.id, itemId: item.id, quantity: 1 });
   const local = await EntitiesService.updateEntity(session, fork.id, "items", item.id, {
     name: item.name,
     description: "Local",

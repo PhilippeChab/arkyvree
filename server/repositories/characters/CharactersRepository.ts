@@ -10,6 +10,7 @@ import { Paginates, type Pagination } from "@/server/repositories/concerns/Pagin
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 import StoredCharacters, { type CharacterValuesWrite } from "@/server/repositories/stored/StoredCharacters.ts";
 import { toQualified } from "@/server/repositories/stored/toQualified.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 import type { Character } from "@/shared/relations.ts";
 
 /**
@@ -117,13 +118,17 @@ class CharactersRepository extends include(
   }
 
   /**
-   * Writes a new character: its row, its fields' values (one always written it gives none of, its default) and its
-   * single links.
+   * Writes a new character of a ruleset of `baseRules`: its row, its fields' values (one always written it gives none
+   * of, its default) and its single links, as its module declares them.
    */
-  async create(db: Db, values: CharacterValues & Pick<Character, "kind" | "name" | "rulesetId" | "userId">) {
+  async create(
+    db: Db,
+    baseRules: BaseRules,
+    values: CharacterValues & Pick<Character, "kind" | "name" | "rulesetId" | "userId">,
+  ) {
     const { fields, links, ...own } = values;
     const [created] = await db.insert(this.table).values(own).returning({ id: this.table.id });
-    await StoredCharacters.write(db, [created.id], { fields, links }, true);
+    await StoredCharacters.write(db, Engine.forRules(baseRules).storage(), [created.id], { fields, links }, true);
     return await this.rows(db, eq(this.table.id, created.id));
   }
 
@@ -262,14 +267,15 @@ class CharactersRepository extends include(
   /**
    * Writes a change to a live character (`values`), if it's still the version the editor read (`expectedUpdatedAt`), or
    * to a parent's live children (`parentCharacterId`: 3.5's bonded creatures): its row's columns, its fields' values and
-   * its single links it gives, its `updatedAt` moved as any change moves it. Answers it as written, or nothing.
+   * its single links it gives, its `updatedAt` moved as any change moves it, its fields and links as its base rules'
+   * module declares them, which the update answers with each row it writes. Answers it as written, or nothing.
    */
   async update(
     db: Db,
     values: CharacterValues,
     where: { expectedUpdatedAt?: string; id: string } | { parentCharacterId: string },
   ) {
-    const { fields, links, ...own } = values;
+    const { fields = {}, links = {}, ...own } = values;
     const updated = await db
       .update(this.table)
       .set({ ...own, updatedAt: new Date().toISOString() })
@@ -282,9 +288,12 @@ class CharactersRepository extends include(
           [isNull(this.table.deletedAt), "id" in where && this.casUpdatedAt(where.expectedUpdatedAt)],
         ),
       )
-      .returning({ id: this.table.id });
+      .returning({ id: this.table.id, baseRules: StoredCharacters.buildBaseRules() });
     const ids = updated.map((row) => row.id);
-    await StoredCharacters.write(db, ids, { fields, links });
+    for (const [baseRules, rows] of Map.groupBy(updated, (row) => row.baseRules)) {
+      const characterIds = rows.map((row) => row.id);
+      await StoredCharacters.write(db, Engine.forRules(baseRules).storage(), characterIds, { fields, links });
+    }
     return ids.length === 0 ? [] : await this.rows(db, inArray(this.table.id, ids));
   }
 }

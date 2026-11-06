@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import Modules from "@/engine/api/Modules.ts";
 import RulesEngine from "@/engine/api/RulesEngine.ts";
-import StorageEngine from "@/engine/api/StorageEngine.ts";
 import type { KindCapabilities } from "@/engine/core/entities/index.ts";
 import type { FormField, GroupFormField } from "@/engine/core/fields/index.ts";
 import type { EntityKindDeclaration, RulesDeclaration, RulesetModule } from "@/engine/core/module/index.ts";
@@ -213,8 +212,7 @@ describe("The rules' engine", () => {
 
   test("refuses, as it's built, a module whose kinds' declarations its rules or storage contradict", () => {
     const [[baseRules, module]] = Modules.all();
-    const storages = [StorageEngine.of(DND35_BASE_RULES)];
-    const build = (broken: RulesetModule) => () => new RulesEngine([[baseRules, broken]], storages);
+    const build = (broken: RulesetModule) => () => new RulesEngine([[baseRules, broken]]);
     const plain = readClassKinds().find(({ capabilities }) => !capabilities.copies)!;
     const unknown = { icon: "help", type: "unknown-kind" as StandaloneKind };
     const withKinds = (kinds: (declared: EntityKindDeclaration[]) => EntityKindDeclaration[]) =>
@@ -303,7 +301,7 @@ describe("The rules' engine", () => {
   test("refuses, as it's built, a module whose list or class table names a field its levels or kind don't declare", () => {
     const [[baseRules, module]] = Modules.all();
     const build = (change: (rules: RulesDeclaration) => RulesDeclaration) => () =>
-      new RulesEngine([[baseRules, withRules(module, change)]], [StorageEngine.of(DND35_BASE_RULES)]);
+      new RulesEngine([[baseRules, withRules(module, change)]]);
     const [type] = Object.keys(module.ruleset.describeRules().lists);
     const column = { field: "noSuchField", reads: "text" as const, share: 10 };
     expect(

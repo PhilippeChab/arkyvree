@@ -527,7 +527,11 @@ describe("CharactersService", () => {
       await CharacterLinks.createMany(db, DND35_BASE_RULES, character.id, "speaks", [
         { entityId: ctx.langMap["Common"] },
       ]);
-      await CharacterInventory.create(db, { characterId: character.id, itemId: ctx.itemMap["Longsword"], quantity: 1 });
+      await CharacterInventory.create(db, DND35_BASE_RULES, {
+        characterId: character.id,
+        itemId: ctx.itemMap["Longsword"],
+        quantity: 1,
+      });
       const children = async () => ({
         levels: (await CharacterAdvancements.findMany(db, { characterId: character.id })).length,
         skills: (await findPicks("skills", [level.id])).length,
@@ -561,7 +565,7 @@ describe("CharactersService", () => {
           valueType: "number",
           operator: "add",
         });
-        const [familiar] = await Characters.create(db, {
+        const [familiar] = await Characters.create(db, DND35_BASE_RULES, {
           userId: session.userId,
           rulesetId,
           parentCharacterId: character.id,

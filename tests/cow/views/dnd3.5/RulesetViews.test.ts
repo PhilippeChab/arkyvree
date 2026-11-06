@@ -471,7 +471,7 @@ describe("RulesetViews", () => {
       const fork = await createFork(seed.id);
 
       const sampleFeats = await fetchEveryPage((p) =>
-        Entities.findPage<Feat>(db, { baseRules: DND35_BASE_RULES, entityType: "feats", rulesetId: seed.id }, p),
+        Entities.findPage<Feat>(db, DND35_BASE_RULES, { entityType: "feats", rulesetId: seed.id }, p),
       );
       const sampleFeat = sampleFeats[0];
       expect(sampleFeat).toBeDefined();
@@ -502,7 +502,7 @@ describe("RulesetViews", () => {
       const fork = await createFork(seed.id);
 
       const sampleFeats = await fetchEveryPage((p) =>
-        Entities.findPage<Feat>(db, { baseRules: DND35_BASE_RULES, entityType: "feats", rulesetId: seed.id }, p),
+        Entities.findPage<Feat>(db, DND35_BASE_RULES, { entityType: "feats", rulesetId: seed.id }, p),
       );
       const sampleFeat = sampleFeats[0];
 
@@ -547,7 +547,7 @@ describe("RulesetViews", () => {
       const fork = await createFork(seed.id);
 
       const [sampleFeat] = await fetchEveryPage((p) =>
-        Entities.findPage<Feat>(db, { baseRules: DND35_BASE_RULES, entityType: "feats", rulesetId: seed.id }, p),
+        Entities.findPage<Feat>(db, DND35_BASE_RULES, { entityType: "feats", rulesetId: seed.id }, p),
       );
       const before = await composeFork(fork);
       const modifierCountBefore = (before.modifiersBySource.get(sampleFeat.id) ?? []).length;
