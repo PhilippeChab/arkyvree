@@ -1,8 +1,9 @@
 import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import { FieldCodec } from "@/engine/core/fields/index.ts";
+import type { Dnd35Kinds } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 /** An ability as the ruleset has it: its rules seed them, and a ruleset's routes read them as they are. */
-export default class AbilityEntity extends RulesetEntity<"abilities"> {
+export default class AbilityEntity extends RulesetEntity<Dnd35Kinds, "abilities"> {
   /** Its rules seed it: a ruleset never writes one. */
   protected static override readonly readOnly = true;
 

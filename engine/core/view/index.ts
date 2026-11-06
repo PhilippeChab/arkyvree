@@ -1,21 +1,23 @@
 /**
  * A ruleset's view: its own rows and its source chain's, composed by copy-on-write (`RulesetComposition`) into the
- * `RulesetData` every read of a ruleset sees, each kind's entities by name (typed by the registry each module fills,
- * `ViewKinds`) and each entity's links by role (`ViewLink`), the rules a sibling's rows merge by, and the entities a
- * request names as the view reads them (`RequestIds`).
+ * `RulesetData` every read of a ruleset sees, each kind's entities by name (each a `ViewEntity`, which a module reads
+ * typed as it declares its kinds into the registry, `ModuleKinds`, through `DeclaredRows`) and each entity's links by
+ * role (`ViewLink`), the rules a sibling's rows merge by, and the entities a request names as the view reads them
+ * (`RequestIds`).
  */
 
+export { default as DeclaredRows } from "./DeclaredRows.ts";
 export { default as RequestIds } from "./RequestIds.ts";
 export type {
-  InventoryItem,
-  InventoryKinds,
+  KindRows,
+  KindType,
+  ModuleKinds,
   NamedLink,
   OwnedKind,
-  OwnedKinds,
   StandaloneKind,
   ViewEntity,
-  ViewKinds,
   ViewLink,
+  ViewRows,
 } from "./rows.ts";
 export { default as RulesetComposition, type RulesetRawData, type ViewSchema } from "./RulesetComposition.ts";
 export { default as RulesetData } from "./RulesetData.ts";

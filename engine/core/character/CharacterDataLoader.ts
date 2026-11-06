@@ -1,14 +1,15 @@
 import type { CharacterRows } from "@/engine/core/module/index.ts";
-import type { InventoryItem, RulesetData, RulesetView } from "@/engine/core/view/index.ts";
+import type { RulesetData, RulesetView, ViewEntity } from "@/engine/core/view/index.ts";
 import type { Character, CharacterInventory, Modifier, Requirement } from "@/shared/relations.ts";
 
 /**
  * What a character's build loads of its rows and its ruleset's view (`CharacterDataLoader`), as every ruleset's build
- * reads it: its inventory, its modifiers and the requirement groups gating them, the item each modifier an item is the
- * source of belongs to, and the rulesets its rows may come from. A ruleset's loaded data adds its own.
+ * reads it: its inventory (its items typed as its module declares its kinds: `I`), its modifiers and the requirement
+ * groups gating them, the item each modifier an item is the source of belongs to, and the rulesets its rows may come
+ * from. A ruleset's loaded data adds its own.
  */
-export interface LoadedCharacter {
-  inventory: InventoryEntry[];
+export interface LoadedCharacter<I extends ViewEntity = ViewEntity> {
+  inventory: InventoryEntry<I>[];
   /** The item each modifier an item is the source of belongs to, by the modifier's id. */
   itemModifiers: Map<string, string>;
   modifiers: Modifier[];
@@ -28,12 +29,12 @@ export interface ModifierSource {
 
 /**
  * An entry of a character's inventory, as its build reads it: its item as the view composes it (the stored row's copy
- * or winner, the row itself without one), its fields those it reads off its template when it holds none among them
- * (`RulesetData.withInheritedFields`), its requirements as its template splits them, and its modifiers when it's
- * equipped.
+ * or winner, the row itself without one; typed as its module declares its kinds, `I`), its fields those it reads off
+ * its template when it holds none among them (`RulesetData.withInheritedFields`), its requirements as its template
+ * splits them, and its modifiers when it's equipped.
  */
-export type InventoryEntry = CharacterInventory & {
-  item: InventoryItem & {
+export type InventoryEntry<I extends ViewEntity = ViewEntity> = CharacterInventory & {
+  item: I & {
     /** The base item's requirements: its template's, or its own when it is one */
     baseItemRequirements: Requirement[];
     modifiers: Modifier[];

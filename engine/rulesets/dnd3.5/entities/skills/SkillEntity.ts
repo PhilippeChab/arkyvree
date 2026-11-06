@@ -5,13 +5,13 @@ import type { PartialFieldValues } from "@/engine/core/fields/index.ts";
 import type { EntityWrites } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import SkillFocusFeats from "@/engine/rulesets/dnd3.5/entities/feats/SkillFocusFeats.ts";
-import type { Skill } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Dnd35Kinds, Skill } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
 import { SKILL_FIELDS } from "./fields.ts";
 
 /** A skill as the ruleset describes it, and what its form or delete writes beside its row: its fields, its feat. */
-export default class SkillEntity extends RulesetEntity<"skills", typeof SKILL_FIELDS.fields> {
+export default class SkillEntity extends RulesetEntity<Dnd35Kinds, "skills", typeof SKILL_FIELDS.fields> {
   /** The skill's Skill Focus, made and removed with it. */
   private readonly skillFocus = new SkillFocusFeats(this.view);
 

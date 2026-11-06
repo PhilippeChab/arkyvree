@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import RulesError from "@/engine/core/RulesError.ts";
-import type { ViewKinds } from "@/engine/core/view/index.ts";
 import type {
   ChoiceSpec,
   FieldCondition,
@@ -50,9 +49,9 @@ export interface FormContext {
   /** What the entity keeps (an edit's, a new one's defaults), which a field's condition reads past what's given. */
   kept?: Readonly<Record<string, unknown>>;
   /** An entity's id as the view keys it, refused when the view shows none (`RequestIds.resolve`). */
-  resolve(entityType: keyof ViewKinds, id: string): string;
+  resolve(entityType: string, id: string): string;
   /** Entities' ids as the view keys them, refused when it shows none of one, or one is given twice (`resolveAll`). */
-  resolveAll(entityType: keyof ViewKinds, ids: string[]): string[];
+  resolveAll(entityType: string, ids: string[]): string[];
 }
 
 /** An entity's id. */
@@ -393,18 +392,17 @@ export default class FieldForms {
     for (const [key, field] of Object.entries(fields)) {
       const value = values[key];
       if (field.kind === "ref" && typeof value === "string") {
-        values[key] = value === "" ? null : context.resolve(field.references as keyof ViewKinds, value);
+        values[key] = value === "" ? null : context.resolve(field.references, value);
       } else if (field.kind === "links" && Array.isArray(value)) {
         const entries = value as EntityLinkEntry[];
-        const type = field.references as keyof ViewKinds;
         const toIds = context.resolveAll(
-          type,
+          field.references,
           entries.map((entry) => entry.toId),
         );
         values[key] = entries.map((entry, index) => ({
           ...entry,
           toId: toIds[index],
-          ...(field.via !== undefined && { viaId: context.resolve(field.via as keyof ViewKinds, entry.viaId!) }),
+          ...(field.via !== undefined && { viaId: context.resolve(field.via, entry.viaId!) }),
         }));
       }
     }

@@ -75,6 +75,5 @@ export type {
   RulesetData,
   RulesetRawData,
   ViewEntity,
-  ViewKinds,
   ViewLink,
 } from "./core/view/index.ts";

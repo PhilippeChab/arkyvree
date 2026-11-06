@@ -4,6 +4,7 @@ import { ITEM_FIELDS, type ItemFieldValues } from "@/engine/rulesets/dnd3.5/enti
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import InventorySlots from "@/engine/rulesets/dnd3.5/rules/InventorySlots.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
+import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
 
 type InventoryData = Record<string, InventorySlotData> & {
@@ -25,7 +26,7 @@ type WeaponSetInventory = Record<
 
 /** An item the character has equipped in a slot, with its fields: what its combat, armors and shields read. */
 export interface EquippedEntry {
-  entry: InventoryEntry;
+  entry: InventoryEntry<Item>;
   fields: ItemFieldValues;
 }
 
@@ -41,7 +42,7 @@ export default class InventoryComponent extends CharacterComponent<LoadedCharact
     weaponsets: {},
   } as InventoryData;
 
-  private rawItems: InventoryEntry[] = [];
+  private rawItems: InventoryEntry<Item>[] = [];
 
   /** The entries, and each equipped one in a slot: what the slot holds, its field values, and the item with its fields. */
   override initialize({ inventory }: Pick<LoadedCharacterData, "inventory">) {
@@ -81,7 +82,7 @@ export default class InventoryComponent extends CharacterComponent<LoadedCharact
     return this.equipped;
   }
 
-  getFlatInventory(): InventoryEntry[] {
+  getFlatInventory(): InventoryEntry<Item>[] {
     return this.rawItems;
   }
 

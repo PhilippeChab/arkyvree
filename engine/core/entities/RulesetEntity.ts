@@ -25,12 +25,13 @@ import type {
 } from "@/engine/core/module/index.ts";
 import RulesError from "@/engine/core/RulesError.ts";
 import {
+  DeclaredRows,
+  type KindRows,
   type NamedLink,
   RequestIds,
   type RulesetData,
   type RulesetView,
   type ViewEntity,
-  type ViewKinds,
   type ViewLink,
 } from "@/engine/core/view/index.ts";
 
@@ -74,8 +75,9 @@ export type EntityAction = "create" | "delete" | "duplicate" | "groups" | "templ
 const COPY_ACTIONS: readonly EntityAction[] = ["duplicate", "templates", "variants"];
 
 /**
- * A ruleset's entity kind (its type, `type`), as its rules answer the server of it in a ruleset's view. Every kind
- * takes the same steps, and adds its rules to the ones they name:
+ * A ruleset's entity kind (its type, `type`, among its module's kinds, `V`, whose entities it reads as its module
+ * declares them), as its rules answer the server of it in a ruleset's view. Every kind takes the same steps, and adds
+ * its rules to the ones they name:
  * - an entity found by its id (`find`) and described (`describe`): as the view composes it (its own columns, its fields
  *   as its codec reads them, by the stored field that keeps each, an item's template's it holds none of among them,
  *   `fieldsHeldBy`; its single links each with its target's name);
@@ -97,7 +99,11 @@ const COPY_ACTIONS: readonly EntityAction[] = ["duplicate", "templates", "varian
  * declares (`listFilters`, and those its `pools`, `tiered` and `partitioned` add); and an edit refuses renaming an
  * entity whose name its kind locks (`lockedName`), in the words its form shows.
  */
-export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends Fields = NoFields> {
+export default abstract class RulesetEntity<
+  V extends KindRows<V>,
+  K extends keyof V & string,
+  S extends Fields = NoFields,
+> {
   constructor(protected readonly view: RulesetView) {}
 
   /** Whether it makes copies of its entities: their templates, a duplicate, variants (an item's). */
@@ -186,7 +192,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
    * Refuses renaming an entity (`entity`, the one edited) whose name its kind locks while its flag holds
    * (`lockedName`: a generated feat's), in the words its form shows.
    */
-  private checkLockedName(body: FormBody, entity: ViewKinds[K]) {
+  private checkLockedName(body: FormBody, entity: V[K]) {
     const locked = this.kind.lockedName;
     if (locked && body.name !== entity.name && entity.fields[locked.field])
       throw new RulesError("invalid", locked.reason);
@@ -212,7 +218,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
    * the links a read describes of it named, `savedLinks`, `nameLinks`, each naming its targets by the ids the view
    * keys them by, a copy's where the ruleset copied one after the link was written).
    */
-  private planWrite(body: FormBody, given: PartialFieldValues<S>, entity?: ViewKinds[K]): EntityCreatePlan {
+  private planWrite(body: FormBody, given: PartialFieldValues<S>, entity?: V[K]): EntityCreatePlan {
     const row = this.storedOf(body);
     const written = this.fieldsWrite(body, given, entity);
     const { cow } = this.rulesetData;
@@ -256,16 +262,16 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
   }
 
   /** Refuses deleting an entity: nothing does, unless its kind's rules say. */
-  protected checkDelete(_entity: ViewKinds[K]) {}
+  protected checkDelete(_entity: V[K]) {}
 
   /**
    * Refuses a form (`given`: the fields it gives, read; `entity`: the one edited, none for a new one): nothing does,
    * unless its kind's rules say.
    */
-  protected checkForm(_body: FormBody, _given: PartialFieldValues<S>, _entity?: ViewKinds[K]) {}
+  protected checkForm(_body: FormBody, _given: PartialFieldValues<S>, _entity?: V[K]) {}
 
   /** What deleting an entity writes with it: nothing, unless its kind's rules say. */
-  protected deleteWritesOf(_entity: ViewKinds[K]): EntityWrites | undefined {
+  protected deleteWritesOf(_entity: V[K]): EntityWrites | undefined {
     return undefined;
   }
 
@@ -273,7 +279,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
    * Entities as stored (`rows`: records, or the view's), each with its fields as its codec reads them, as the view
    * composes them (`fieldsHeldBy`), and its single links as the view composes them, named (`links`, `nameLinks`).
    */
-  protected describeRows<T extends Pick<EntityRecord, "fields" | "id" | "links">>(
+  protected describeRows<T extends Pick<ViewEntity, "fields" | "id" | "links">>(
     rows: T[],
   ): (Omit<T, "fields" | "links"> & { fields: Record<string, unknown>; links: NamedLink[] })[] {
     return rows.map((row) => ({
@@ -288,7 +294,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
    * stored field that keeps it (`FieldCodec.readByField`): the view's, its sibling copies' merged in, with those it
    * reads off another when it holds none (an item's, its template's); a record's own where the view shows none of it.
    */
-  protected fieldsHeldBy(entity: Pick<EntityRecord, "fields" | "id" | "links">): Record<string, unknown> {
+  protected fieldsHeldBy(entity: Pick<ViewEntity, "fields" | "id" | "links">): Record<string, unknown> {
     const viewed: Pick<ViewEntity, "fields" | "links"> = this.rulesetData.find(this.type, entity.id) ?? entity;
     return this.fields.readByField(this.rulesetData.withInheritedFields(this.type, viewed));
   }
@@ -306,7 +312,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
    * The fields a form writes (`given`: those it gives, read; `entity`: the one edited), with the single links its
    * references set: those it gives over those the entity keeps (`formFields`); none when it gives none.
    */
-  protected fieldsWrite(_body: FormBody, given: PartialFieldValues<S>, entity?: ViewKinds[K]): FieldsWrite | undefined {
+  protected fieldsWrite(_body: FormBody, given: PartialFieldValues<S>, entity?: V[K]): FieldsWrite | undefined {
     const fields = this.formFields(given, entity);
     return fields && this.fields.write(fields);
   }
@@ -333,7 +339,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
    * The fields a form writes, of those its form takes: the ones it gives over the edited entity's (a new one's
    * defaults). None when the form gives none: an edit keeps those it has, and a new entity keeps none.
    */
-  protected formFields(given: PartialFieldValues<S>, entity?: ViewKinds[K]) {
+  protected formFields(given: PartialFieldValues<S>, entity?: V[K]) {
     if (this.fields.formNames.every((key) => given[key] === undefined)) return undefined;
     return this.fields.merge(entity ? this.fieldsOf(entity) : this.fields.defaults, given);
   }
@@ -395,7 +401,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
    * one isn't a field its kind declares, of its field's type, in its bounds or among its values, or names an entity the
    * view shows none of (or a list's twice). Every entity it names reads as the id the view keys it by.
    */
-  protected readForm(form: EntityForm, entity?: ViewKinds[K]): { body: FormBody; given: PartialFieldValues<S> } {
+  protected readForm(form: EntityForm, entity?: V[K]): { body: FormBody; given: PartialFieldValues<S> } {
     const { lists, values } = this.fields.parse(
       { fields: form.fields, links: form.links },
       {
@@ -444,7 +450,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
    * What a form writes beside the row (`given`: the fields it gives, read; `entity`: the one edited): nothing, unless
    * its kind's rules say (the feats it makes).
    */
-  protected writesOf(_body: FormBody, _given: PartialFieldValues<S>, _entity?: ViewKinds[K]): EntityWrites | undefined {
+  protected writesOf(_body: FormBody, _given: PartialFieldValues<S>, _entity?: V[K]): EntityWrites | undefined {
     return undefined;
   }
 
@@ -472,8 +478,8 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
   }
 
   /** The entity the view shows for an id: refused when it shows none. */
-  find(id: string): ViewKinds[K] {
-    const entity = this.rulesetData.find(this.type, id);
+  find(id: string): V[K] {
+    const entity = new DeclaredRows<V>(this.rulesetData).find(this.type, id);
     if (!entity) this.refuseMissing();
     return entity;
   }
@@ -522,7 +528,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
   }
 
   /** Deleting an entity (`id`): the entity as the view has it, and what its delete writes with it. */
-  planDelete(id: string): EntityDeletePlan<ViewKinds[K]> {
+  planDelete(id: string): EntityDeletePlan<V[K]> {
     this.checkAction("delete");
     const entity = this.find(id);
     this.checkDelete(entity);
@@ -540,7 +546,7 @@ export default abstract class RulesetEntity<K extends keyof ViewKinds, S extends
    * its activity records it changes (`changes`: each field, single link and list of links it writes another value of,
    * labeled as declared, `EntityChanges`).
    */
-  planEdit(id: string, sent: EntityForm): EntityEditPlan<ViewKinds[K]> {
+  planEdit(id: string, sent: EntityForm): EntityEditPlan<V[K]> {
     this.checkAction("update");
     const entity = this.find(id);
     const { body, given } = this.readForm(sent, entity);

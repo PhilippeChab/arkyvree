@@ -63,12 +63,12 @@ export default class InventoryEntries {
    * that comes with them keeps (`ItemPlacement`'s, its template's field among its own). Refused as invalid when the
    * location isn't one of 3.5's, and when the item can't be equipped there, or not that many of it (`Equipping`: an
    * item already carried takes another entry, a second dagger held in the other hand; its requirements unless
-   * `force`d).
+   * `force`d). A new entry's item is 3.5's, as its ruleset's view holds it.
    */
   static planPlacement(
     view: RulesetView,
     character: CharacterInput,
-    change: PlacementChange,
+    change: PlacementChange<Item>,
     force: boolean,
   ): Omit<InventoryEntryPlan, "itemId"> {
     const { request } = change;

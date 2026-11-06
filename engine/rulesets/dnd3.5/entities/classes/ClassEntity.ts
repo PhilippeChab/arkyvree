@@ -5,6 +5,7 @@
 
 import { RulesetEntity } from "@/engine/core/entities/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
+import type { Dnd35Kinds } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 import ClassLevelEntity from "./ClassLevelEntity.ts";
 import ClassProgression from "./ClassProgression.ts";
@@ -17,7 +18,7 @@ import { CLASS_FIELDS } from "./fields.ts";
  * A class as the ruleset describes it, what its form stores, and its parts, each bound to the class as the view has
  * it: its levels, its class skills, its spell lists' spells, its table.
  */
-export default class ClassEntity extends RulesetEntity<"classes", typeof CLASS_FIELDS.fields> {
+export default class ClassEntity extends RulesetEntity<Dnd35Kinds, "classes", typeof CLASS_FIELDS.fields> {
   /** Its list narrows by the kind it's for, its partition (the player classes', or the others'). */
   protected static override readonly partitioned = true;
 

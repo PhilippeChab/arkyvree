@@ -1,4 +1,5 @@
 import { CustomizationPageEntity } from "@/engine/core/entities/index.ts";
+import type { Dnd35Kinds } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 
 import { RACE_FIELDS } from "./fields.ts";
 
@@ -6,7 +7,7 @@ import { RACE_FIELDS } from "./fields.ts";
  * A race as the ruleset has it: as stored, its fields (its size and base speed, whether it walks on four legs, whether
  * armor and load leave its speed), and its customizations.
  */
-export default class RaceEntity extends CustomizationPageEntity<"races", typeof RACE_FIELDS.fields> {
+export default class RaceEntity extends CustomizationPageEntity<Dnd35Kinds, "races", typeof RACE_FIELDS.fields> {
   /** Its list narrows by the kind it's for, its partition (the player races', or the monsters'). */
   protected static override readonly partitioned = true;
 

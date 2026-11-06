@@ -7,14 +7,10 @@ import {
   RulesetComposition,
   type RulesetData,
   type RulesetRawData,
-  type ViewKinds,
   type ViewLink,
   type ViewSchema,
 } from "@/engine/core/view/index.ts";
 import type { Modifier, Requirement } from "@/shared/relations.ts";
-
-/** A kind of the made-up module a test composes a view of, by its name. */
-export type Kind = keyof ViewKinds;
 
 /** A made-up module's words: its owners', and its owned entities', which name one by its position ("Rung 2"). */
 const WORDS: RulesDescription["words"] = {
@@ -72,7 +68,7 @@ export function composeView(
 
 /** A kind's rows' ids, as a view lists them. */
 export function idsOf(view: RulesetData, type: string) {
-  return view.rows(type as Kind).map((row) => (row as { id: string }).id);
+  return view.rows(type).map((row) => row.id);
 }
 
 /** A link of a role from an entity to another (`fromId`, `role`, `toId`, of `toType`), its first of none else. */

@@ -1,37 +1,28 @@
 /**
  * The entities a ruleset's view holds, each as stored (`ViewEntity`: its own columns, its fields by field, its single
- * links by role), the registries each module fills with its own kinds (`ViewKinds`), which the view's reads are typed
- * by, and with the kinds an entity of another kind owns (`OwnedKinds`); and an entity's links as the view composes them
- * (`ViewLink`).
+ * links by role), the registry each module declares its own kinds into (`ModuleKinds`: each kind's entity typed as its
+ * module holds it, and the kinds an entity of another kind owns), which a module's code reads its kinds by
+ * (`DeclaredRows`) and names a kind by (`KindType`, `OwnedKind`, `StandaloneKind`); and an entity's links as the view
+ * composes them (`ViewLink`).
  */
 
 import type { EntityRecord, OwnerFields } from "@/engine/core/module/index.ts";
 
 /**
- * The kinds of the view a character's inventory holds, by type (3.5's items), as its module declares them
- * (`StorageRegistries.itemTypes`): every registered module declares its own into it, which an inventory entry's item is
- * typed by.
+ * Each registered module's kinds, by the module's name (3.5's `dnd3.5`), as it declares them (`declare module`): each
+ * kind's entity as the view holds it, by its type (`rows`: a `ViewEntity`, the fields its rules read by name and its
+ * single links typed), and the types of those an entity of another kind owns (`owned`: 3.5's class levels, a class's).
+ * An owned kind has no rules of its own in its module's contract, its owner's answering for it, and no field names one.
+ * Each module's kinds are its own, so two modules may each declare a kind of one type (`feats`) with rows of their own:
+ * a module's code reads its kinds as it declares them (`DeclaredRows`), and the engine's machinery as the view holds
+ * any kind's (`RulesetData`, each a `ViewEntity`).
  */
-export interface InventoryKinds {}
+export interface ModuleKinds {}
 
 /** A link as an entity's answer carries it: the view's (`ViewLink`), with its target's name (`toName`). */
 export interface NamedLink extends ViewLink {
   toName: string;
 }
-
-/**
- * The kinds of the view an entity of another kind owns, by type (3.5's class levels, a class's): every registered
- * module declares its own into it. An owned kind has no rules of its own in its module's contract, its owner's
- * answering for it, and no field names one.
- */
-export interface OwnedKinds {}
-
-/**
- * Each kind's entity as the view holds it, by its type (a `ViewEntity`, the fields its rules read by name and its
- * single links typed): every registered module declares its own kinds' into it (`declare module`), which
- * `RulesetData.rows`, `byId` and `find` answer.
- */
-export interface ViewKinds {}
 
 /**
  * A link from an entity, as the view composes it (`RulesetData.linksOf`: a feat's pool, a class level's grant, an
@@ -52,14 +43,25 @@ export interface ViewLink {
   viaId: string | null;
 }
 
-/** An entity a character's inventory holds, as the view holds it: of one of the kinds its modules declare it holds. */
-export type InventoryItem = InventoryKinds[keyof InventoryKinds];
+/**
+ * A module's kinds' entities, by their types (`V`, its `ModuleKinds` entry's `rows`), each as the view holds it: a
+ * standalone kind's named (a `ViewEntity`), an owned kind's maybe not (3.5's class level, named by its position).
+ */
+export type KindRows<V> = { [K in keyof V]: Omit<ViewEntity, "name"> & { name: string | null } };
 
-/** The kinds of the view an entity of another kind owns (3.5's class levels). */
-export type OwnedKind = keyof OwnedKinds;
+/** A kind of the view, by its type, of any registered module (3.5's `feats`, its `class-levels`). */
+export type KindType = { [M in keyof ModuleKinds]: keyof ModuleKinds[M]["rows"] & string }[keyof ModuleKinds];
 
-/** The kinds of the view no entity owns: those a module's contract answers of, and a field names. */
-export type StandaloneKind = Exclude<keyof ViewKinds, OwnedKind>;
+/** The kinds of the view an entity of another kind owns, of any registered module (3.5's class levels). */
+export type OwnedKind = ModuleKinds[keyof ModuleKinds]["owned"];
+
+/**
+ * The kinds of the view no entity owns, of any registered module: those a module's contract answers of, and a field
+ * names.
+ */
+export type StandaloneKind = {
+  [M in keyof ModuleKinds]: Exclude<keyof ModuleKinds[M]["rows"] & string, ModuleKinds[M]["owned"]>;
+}[keyof ModuleKinds];
 
 /**
  * An entity as the view holds it: its record as stored (`EntityRecord`), every field it holds by field, its sibling
@@ -71,3 +73,6 @@ export type ViewEntity<F extends object = OwnerFields, L extends string = string
   EntityRecord,
   "fields" | "links" | "name"
 > & { fields: OwnerFields & Readonly<F>; links: Readonly<Partial<Record<L, string>>>; name: string };
+
+/** Any kind's entities, by their types, as the view holds them: what code that names no module's kinds reads. */
+export type ViewRows = KindRows<Record<string, unknown>>;

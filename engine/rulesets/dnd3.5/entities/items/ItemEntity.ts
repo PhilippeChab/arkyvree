@@ -9,7 +9,7 @@ import RulesError from "@/engine/core/RulesError.ts";
 import { RULESET_LIMITS } from "@/engine/rulesets/dnd3.5/limits.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
-import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
+import type { Dnd35Kinds, Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { ItemLocation } from "@/vocabulary/dnd3.5/equipment.ts";
 import { ITEM_IS_TEMPLATE, ITEM_SLOT, ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -40,7 +40,7 @@ const VARIANTS = z.array(z.unknown()).max(RULESET_LIMITS.itemVariants);
  * template, `inherits`) and requirements, its own over them, and saved by its template rules: a template is its copies'
  * source, never one's copy.
  */
-export default class ItemEntity extends CustomizationPageEntity<"items", typeof ITEM_FIELDS.fields> {
+export default class ItemEntity extends CustomizationPageEntity<Dnd35Kinds, "items", typeof ITEM_FIELDS.fields> {
   /** Its templates, a duplicate, variants. */
   protected static override readonly copies = true;
 
@@ -254,7 +254,7 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
     const templateId = this.templateIdOf(given, item);
     if (!templateId) return;
 
-    const template = this.rulesetData.find("items", templateId);
+    const template = Dnd35View.of(this.rulesetData).itemsById.get(templateId);
     if (!template?.fields[ITEM_IS_TEMPLATE])
       throw new RulesError("unprocessable", "Source item is not a template of this ruleset");
     const type = this.typeOf(given, item);
@@ -274,7 +274,7 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
 
   /** The item a duplicate or variants are made from, as the view has it: refused when there's none of its id. */
   private findSource(itemId: string) {
-    const item = this.rulesetData.find("items", itemId);
+    const item = Dnd35View.of(this.rulesetData).itemsById.get(itemId);
     if (!item) throw new RulesError("not-found", "Source item not found in this ruleset");
     return item;
   }
@@ -318,7 +318,7 @@ export default class ItemEntity extends CustomizationPageEntity<"items", typeof 
 
   /** A template's fields and links, its own alone (a template is no copy): none when the view shows none. */
   private templateValuesOf(templateId: string) {
-    return this.rulesetData.find("items", templateId) ?? OwnerValues.NONE;
+    return Dnd35View.of(this.rulesetData).itemsById.get(templateId) ?? OwnerValues.NONE;
   }
 
   /** The type a form saves an item with: the form's (null or empty: none), or the one the edited item keeps. */

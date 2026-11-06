@@ -1,5 +1,5 @@
 import type { Fields, NoFields } from "@/engine/core/fields/index.ts";
-import type { ViewKinds } from "@/engine/core/view/index.ts";
+import type { KindRows } from "@/engine/core/view/index.ts";
 import type { Requirement } from "@/shared/relations.ts";
 
 import RulesetEntity from "./RulesetEntity.ts";
@@ -10,9 +10,10 @@ import RulesetEntity from "./RulesetEntity.ts";
  * them apart.
  */
 export default abstract class CustomizationPageEntity<
-  K extends keyof ViewKinds,
+  V extends KindRows<V>,
+  K extends keyof V & string,
   S extends Fields = NoFields,
-> extends RulesetEntity<K, S> {
+> extends RulesetEntity<V, K, S> {
   /** An entity as its page shows it, with its fields, its modifiers and its requirements. */
   override describe(id: string) {
     const entity = super.describe(id);
@@ -27,7 +28,7 @@ export default abstract class CustomizationPageEntity<
    * The requirements an entity's page shows (`entity`, as the view holds it): its own (an item's, its template's before
    * its own).
    */
-  protected requirementsOf(entity: ViewKinds[K]): Requirement[] {
+  protected requirementsOf(entity: V[K]): Requirement[] {
     return this.rulesetData.requirementsByEntity.get(entity.id) ?? [];
   }
 }

@@ -3,6 +3,7 @@ import { type ItemFieldValues } from "@/engine/rulesets/dnd3.5/entities/items/fi
 import type InventoryComponent from "@/engine/rulesets/dnd3.5/model/inventory/InventoryComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd3.5/model/loading/DetailedCharacterDataLoader.ts";
 import ItemPlacement from "@/engine/rulesets/dnd3.5/rules/ItemPlacement.ts";
+import type { Item } from "@/engine/rulesets/dnd3.5/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
 import { MASTERWORK_CHECK_PENALTY_REDUCTION } from "@/vocabulary/dnd3.5/combat.ts";
 import { ITEM_TYPE } from "@/vocabulary/dnd3.5/fields/index.ts";
@@ -50,7 +51,7 @@ export default class ShieldsComponent extends CharacterComponent<LoadedCharacter
    * A shield under its type, and in each weapon set its entry is in (the first, for an entry stored without one): the
    * same shield in each, its penalties counted once.
    */
-  private registerShield(entry: InventoryEntry, fields: ItemFieldValues): void {
+  private registerShield(entry: InventoryEntry<Item>, fields: ItemFieldValues): void {
     const { id, item } = entry;
     if (fields.shield.proficiency === null) return;
 

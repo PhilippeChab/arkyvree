@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 
 import { modifiersInCustomization } from "@/drizzle/schema.ts";
 import StorageEngine from "@/engine/api/StorageEngine.ts";
-import type { ViewKinds } from "@/engine/core/view/index.ts";
 import { type Aptitude, type Feat, type Item, type Klass, type KlassLevel } from "@/engine/rulesets/dnd3.5/index.ts";
 import Dnd35View from "@/engine/rulesets/dnd3.5/view/Dnd35View.ts";
 import { SEED_USER_ID } from "@/scripts/db/seeds/users.ts";
@@ -291,8 +290,7 @@ describe("RulesetViews", () => {
       expect(forkView.aptitudes.length).toBe(seedView.aptitudes.length);
       // Fork inherits all customizations via compose: every entity's fields, of every kind, and the Settings
       for (const { type } of StorageEngine.of(DND35_BASE_RULES).viewSchema().kinds) {
-        const fieldsOf = (data: typeof seedData) =>
-          data.rows(type as keyof ViewKinds).map((row) => (row as { fields: unknown }).fields);
+        const fieldsOf = (data: typeof seedData) => data.rows(type).map((row) => row.fields);
         expect(fieldsOf(forkData)).toEqual(fieldsOf(seedData));
         expect(forkData.kindValues(type)).toEqual(seedData.kindValues(type));
       }
