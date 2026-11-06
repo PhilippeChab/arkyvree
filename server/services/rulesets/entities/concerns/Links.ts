@@ -36,13 +36,17 @@ export function Links<B extends Constructor>(Base: B) {
           { ...plan.link, fromId, fromType: type },
         ]);
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: fromId,
-          targetType: plan.link.role,
-          type: `add${getActivityName(plan.link.role)}`,
-          data: plan.activity,
-        });
+        await createActivityWithNotifications(
+          tx,
+          {
+            userId: session.userId,
+            targetId: fromId,
+            targetType: plan.link.role,
+            type: `add${getActivityName(plan.link.role)}`,
+            data: plan.activity,
+          },
+          scope.ruleset,
+        );
 
         return link;
       });
@@ -76,13 +80,17 @@ export function Links<B extends Constructor>(Base: B) {
         // The fresh view showed it, and no other write runs under the lock: a guard, should one have
         if (!link) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: fromId,
-          targetType: plan.role,
-          type: `remove${getActivityName(plan.role)}`,
-          data: plan.activity,
-        });
+        await createActivityWithNotifications(
+          tx,
+          {
+            userId: session.userId,
+            targetId: fromId,
+            targetType: plan.role,
+            type: `remove${getActivityName(plan.role)}`,
+            data: plan.activity,
+          },
+          scope.ruleset,
+        );
 
         return link;
       });

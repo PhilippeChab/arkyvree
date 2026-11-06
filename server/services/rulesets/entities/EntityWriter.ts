@@ -38,7 +38,7 @@ import type { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import { withRulesetWrite } from "@/server/services/writes/index.ts";
 import { getActivityName } from "@/shared/activity.ts";
 import type { BaseRules } from "@/shared/enums.ts";
-import type { Session } from "@/shared/relations.ts";
+import type { Ruleset, Session } from "@/shared/relations.ts";
 
 /** A new entity's row, and the ancestor whose deleted copy's tombstone it takes over by its name, if any. */
 interface NewRow {
@@ -170,22 +170,30 @@ export default class EntityWriter {
     return planned.describe(row, await EntityLinks.findOwn(tx, row.id));
   }
 
-  /** Records what a save did to an entity of a kind (`type`, by `verb`), with what the activity carries. */
+  /**
+   * Records what a save did to an entity of a kind (`type`, by `verb`) in the ruleset it wrote (`ruleset`), with what the
+   * activity carries.
+   */
   private static async recordActivity(
     tx: Db,
     session: Session,
+    ruleset: Ruleset,
     verb: "create" | "delete" | "update",
     type: string,
     targetId: string,
     data: Record<string, unknown>,
   ) {
-    await createActivityWithNotifications(tx, {
-      userId: session.userId,
-      targetId,
-      targetType: type,
-      type: `${verb}${getActivityName(type)}`,
-      data,
-    });
+    await createActivityWithNotifications(
+      tx,
+      {
+        userId: session.userId,
+        targetId,
+        targetType: type,
+        type: `${verb}${getActivityName(type)}`,
+        data,
+      },
+      ruleset,
+    );
   }
 
   /**
@@ -344,7 +352,9 @@ export default class EntityWriter {
     if (plan.copyCustomizationsFrom) await this.copyCustomizations(tx, written, plan.copyCustomizationsFrom);
     for (const entity of written) {
       await EntityWriter.setParts(tx, scope, policy, { entityId: entity.id, entityType: this.type }, plan, false);
-      await EntityWriter.recordActivity(tx, session, "create", this.type, entity.id, { entityName: entity.name });
+      await EntityWriter.recordActivity(tx, session, scope.ruleset, "create", this.type, entity.id, {
+        entityName: entity.name,
+      });
     }
     return written;
   }
@@ -423,7 +433,7 @@ export default class EntityWriter {
       const owner = await new EntityEdit(scope).cowToEdit(tx, this.type, planned.owner);
       const created = await EntityWriter.makeOwned(tx, scope, policy, { ownerId: owner.id, planned, type });
 
-      await EntityWriter.recordActivity(tx, session, "create", type, created.id, planned.activity);
+      await EntityWriter.recordActivity(tx, session, scope.ruleset, "create", type, created.id, planned.activity);
       return created;
     });
   }
@@ -449,7 +459,8 @@ export default class EntityWriter {
         created.push(await EntityWriter.makeOwned(tx, scope, policy, { ownerId: owner.id, planned: each, type }));
 
       const [first] = created;
-      if (first) await EntityWriter.recordActivity(tx, session, "create", type, first.id, planned.activity);
+      if (first)
+        await EntityWriter.recordActivity(tx, session, scope.ruleset, "create", type, first.id, planned.activity);
       return { created, ownerId: owner.id };
     });
   }
@@ -476,7 +487,7 @@ export default class EntityWriter {
 
       // The database deletes its links and customizations with it.
       const [row] = await Entities.delete<Row>(tx, { entityType: this.type, id: targetId });
-      await EntityWriter.recordActivity(tx, session, "delete", this.type, targetId, {
+      await EntityWriter.recordActivity(tx, session, scope.ruleset, "delete", this.type, targetId, {
         rulesetId,
         entityName: planned.entity.name,
       });
@@ -513,7 +524,7 @@ export default class EntityWriter {
 
       // The database deletes its links and its customizations with it
       const [row] = await Entities.delete<Row>(tx, { entityType: type, id: target.id });
-      await EntityWriter.recordActivity(tx, session, "delete", type, row.id, planned.activity);
+      await EntityWriter.recordActivity(tx, session, scope.ruleset, "delete", type, row.id, planned.activity);
       return row;
     });
   }
@@ -542,7 +553,7 @@ export default class EntityWriter {
       );
       await EntityWriter.setParts(tx, scope, policy, { entityId: target.id, entityType: this.type }, planned, true);
 
-      await EntityWriter.recordActivity(tx, session, "update", this.type, target.id, {
+      await EntityWriter.recordActivity(tx, session, scope.ruleset, "update", this.type, target.id, {
         entityName: body.name,
         // What its plan writes another value of, as its rules label it
         changedFields: planned.changes,
@@ -574,7 +585,7 @@ export default class EntityWriter {
       const row = await EntityWriter.updateRow(tx, ruleset.baseRules, type, planned.row, target, updatedAt);
       await EntityWriter.setParts(tx, scope, policy, { entityId: target.id, entityType: type }, planned, true);
 
-      await EntityWriter.recordActivity(tx, session, "update", type, target.id, {
+      await EntityWriter.recordActivity(tx, session, scope.ruleset, "update", type, target.id, {
         ...planned.activity,
         changedFields: planned.changes,
       });

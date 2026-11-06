@@ -125,13 +125,17 @@ export function Progressions<B extends Constructor>(Base: B) {
         policy.canUpdateEntity();
         const plan = Engine.for(scope).progression(type, ownerId).planFeature(name);
         await EntityWriter.updateEntities(tx, scope, policy, plan.created.type, [], plan.writes);
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: plan.created.id,
-          targetType: plan.created.type,
-          type: `create${getActivityName(plan.created.type)}`,
-          data: plan.activity,
-        });
+        await createActivityWithNotifications(
+          tx,
+          {
+            userId: session.userId,
+            targetId: plan.created.id,
+            targetType: plan.created.type,
+            type: `create${getActivityName(plan.created.type)}`,
+            data: plan.activity,
+          },
+          scope.ruleset,
+        );
         return plan.created;
       });
     }
@@ -199,13 +203,17 @@ export function Progressions<B extends Constructor>(Base: B) {
         const { target, updatedAt } = await this.targetOwner(tx, scope, type, plan.owner, gone.owner);
         const ownedIds = await this.writeOwned(tx, scope, policy, target, plan, { gone, tokens });
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: target.id,
-          targetType: type,
-          type: `update${getActivityName(type)}Progression`,
-          data: plan.activity,
-        });
+        await createActivityWithNotifications(
+          tx,
+          {
+            userId: session.userId,
+            targetId: target.id,
+            targetType: type,
+            type: `update${getActivityName(type)}Progression`,
+            data: plan.activity,
+          },
+          scope.ruleset,
+        );
 
         return { entityId: target.id, ownedIds, updatedAt };
       });

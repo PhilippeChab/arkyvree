@@ -26,13 +26,17 @@ async function writeEntries(
   plan: ListEntriesPlan,
 ) {
   const written = await EntityWriter.updateEntities(tx, scope, policy, plan.listedType, plan.edits, plan.writes);
-  await createActivityWithNotifications(tx, {
-    userId: session.userId,
-    targetId: plan.owner.id,
-    targetType: type,
-    type: `${verb}${getActivityName(type)}${getActivityName(plan.listedType)}`,
-    data: plan.activity,
-  });
+  await createActivityWithNotifications(
+    tx,
+    {
+      userId: session.userId,
+      targetId: plan.owner.id,
+      targetType: type,
+      type: `${verb}${getActivityName(type)}${getActivityName(plan.listedType)}`,
+      data: plan.activity,
+    },
+    scope.ruleset,
+  );
   return written;
 }
 
@@ -74,13 +78,17 @@ export function Lists<B extends Constructor>(Base: B) {
         policy.canUpdateEntity();
         const plan = Engine.for(scope).lists(type, ownerId).planOwnList();
         await EntityWriter.updateEntities(tx, scope, policy, plan.created.type, [], plan.writes);
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: plan.created.id,
-          targetType: plan.created.type,
-          type: `create${getActivityName(plan.created.type)}`,
-          data: plan.activity,
-        });
+        await createActivityWithNotifications(
+          tx,
+          {
+            userId: session.userId,
+            targetId: plan.created.id,
+            targetType: plan.created.type,
+            type: `create${getActivityName(plan.created.type)}`,
+            data: plan.activity,
+          },
+          scope.ruleset,
+        );
         return plan.created;
       });
     }

@@ -41,18 +41,6 @@ const CUSTOMIZATION_OWNERS = new Map<string, (db: Db, id: string) => Promise<Con
 ]);
 
 /**
- * Whether a type is of a ruleset's content, as a module declares it: one the walk to its ruleset climbs
- * (`findContentRuleset`). An activity names its row by its type alone, which any module's may be.
- */
-export function isContentType(type: string) {
-  return (
-    isOneOf(type, RULESET_ENTITY_TYPES) ||
-    Engine.storages().some((storage) => storage.ownerOf(type) !== undefined || storage.editedLinks().has(type)) ||
-    CUSTOMIZATION_OWNERS.has(type)
-  );
-}
-
-/**
  * The row a row of a ruleset's content beside its entities belongs to: a customization's entity, an owned entity's owner
  * (a class level's class), an edited link's owner (a class's skills' activity targets the class), each by the
  * declarations of the base rules its entity's row names. None for a ruleset's entity, a row that's gone, or what belongs

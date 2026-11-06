@@ -45,13 +45,17 @@ class ModifiersService {
         if (cust) await CustomizationCopies.copy(tx, modifier.id, modifierType, cust);
       }
 
-      await createActivityWithNotifications(tx, {
-        userId: session.userId,
-        targetId: modifier.id,
-        targetType: TARGET_TYPES.modifiers,
-        type: "createModifier",
-        data: { entityName: entity.name, target: row.target, value: row.value, operator: row.operator },
-      });
+      await createActivityWithNotifications(
+        tx,
+        {
+          userId: session.userId,
+          targetId: modifier.id,
+          targetType: TARGET_TYPES.modifiers,
+          type: "createModifier",
+          data: { entityName: entity.name, target: row.target, value: row.value, operator: row.operator },
+        },
+        scope.ruleset,
+      );
 
       return { ...modifier, resolvedEntityId };
     });
@@ -87,19 +91,23 @@ class ModifiersService {
       const rows = await Modifiers.delete(tx, { ids: [customization.id] });
       const deletedModifier = rows[0];
 
-      await createActivityWithNotifications(tx, {
-        userId: session.userId,
-        targetId: deletedModifier.id,
-        targetType: TARGET_TYPES.modifiers,
-        type: "deleteModifier",
-        data: {
-          rulesetId,
-          entityName: entity.name,
-          target: modifier.target,
-          value: modifier.value,
-          operator: modifier.operator,
+      await createActivityWithNotifications(
+        tx,
+        {
+          userId: session.userId,
+          targetId: deletedModifier.id,
+          targetType: TARGET_TYPES.modifiers,
+          type: "deleteModifier",
+          data: {
+            rulesetId,
+            entityName: entity.name,
+            target: modifier.target,
+            value: modifier.value,
+            operator: modifier.operator,
+          },
         },
-      });
+        scope.ruleset,
+      );
 
       return { ...deletedModifier, resolvedEntityId };
     });
@@ -168,13 +176,17 @@ class ModifiersService {
 
       const updatedModifier = rows[0];
 
-      await createActivityWithNotifications(tx, {
-        userId: session.userId,
-        targetId: updatedModifier.id,
-        targetType: TARGET_TYPES.modifiers,
-        type: "updateModifier",
-        data: { entityName: entity.name, target: row.target, value: row.value, operator: row.operator },
-      });
+      await createActivityWithNotifications(
+        tx,
+        {
+          userId: session.userId,
+          targetId: updatedModifier.id,
+          targetType: TARGET_TYPES.modifiers,
+          type: "updateModifier",
+          data: { entityName: entity.name, target: row.target, value: row.value, operator: row.operator },
+        },
+        scope.ruleset,
+      );
 
       return { ...updatedModifier, resolvedEntityId };
     });

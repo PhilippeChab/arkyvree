@@ -71,13 +71,17 @@ class RequirementsService {
         const requirement = rows[0];
         if (!requirement) throw new InternalError("Failed to create requirement");
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: requirement.id,
-          targetType: TARGET_TYPES.requirements,
-          type: "createRequirement",
-          data: { entityName: entity.name, ...conditionOf(row) },
-        });
+        await createActivityWithNotifications(
+          tx,
+          {
+            userId: session.userId,
+            targetId: requirement.id,
+            targetType: TARGET_TYPES.requirements,
+            type: "createRequirement",
+            data: { entityName: entity.name, ...conditionOf(row) },
+          },
+          scope.ruleset,
+        );
 
         return { ...requirement, resolvedEntityId };
       },
@@ -113,13 +117,17 @@ class RequirementsService {
         const rows = await Requirements.delete(tx, { id: customization.id });
         const deletedRequirement = rows[0];
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: deletedRequirement.id,
-          targetType: TARGET_TYPES.requirements,
-          type: "deleteRequirement",
-          data: { rulesetId, entityName: entity.name, ...conditionOf(requirement) },
-        });
+        await createActivityWithNotifications(
+          tx,
+          {
+            userId: session.userId,
+            targetId: deletedRequirement.id,
+            targetType: TARGET_TYPES.requirements,
+            type: "deleteRequirement",
+            data: { rulesetId, entityName: entity.name, ...conditionOf(requirement) },
+          },
+          scope.ruleset,
+        );
 
         return { ...deletedRequirement, resolvedEntityId };
       },
@@ -175,13 +183,17 @@ class RequirementsService {
         const updatedRequirement = rows[0];
         if (!updatedRequirement) throw new InternalError("Failed to update requirement");
 
-        await createActivityWithNotifications(tx, {
-          userId: session.userId,
-          targetId: updatedRequirement.id,
-          targetType: TARGET_TYPES.requirements,
-          type: "updateRequirement",
-          data: { entityName: entity.name, ...conditionOf(row) },
-        });
+        await createActivityWithNotifications(
+          tx,
+          {
+            userId: session.userId,
+            targetId: updatedRequirement.id,
+            targetType: TARGET_TYPES.requirements,
+            type: "updateRequirement",
+            data: { entityName: entity.name, ...conditionOf(row) },
+          },
+          scope.ruleset,
+        );
 
         return { ...updatedRequirement, resolvedEntityId };
       },
