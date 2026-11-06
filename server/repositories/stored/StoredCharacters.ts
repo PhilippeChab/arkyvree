@@ -53,7 +53,7 @@ export default class StoredCharacters {
     const owner = storage.characterOwnerType;
     const stored = Object.entries(storage.writtenFields(owner, fields, creating));
     if (stored.length === 0) return;
-    const rows = stored.flatMap(([field, values]) => toFieldRows(owner, field, values, storage));
+    const rows = stored.flatMap(([field, values]) => toFieldRows(storage, owner, field, values));
     await db.delete(fieldsInCharacter).where(
       and(
         inArray(fieldsInCharacter.characterId, characterIds),

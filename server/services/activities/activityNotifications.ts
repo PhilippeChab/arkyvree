@@ -135,10 +135,10 @@ async function findRulesetStakeholders(db: Db, ruleset: Ruleset) {
 /**
  * Records an activity (`values`), and notifies the users it concerns, but its actor: a notification each, carrying the
  * activity's data and the actor's name, which their pages hear of once the request is answered. A change to a ruleset's
- * content names the ruleset its write changed (`changed`, which the write holds), whose owner and active contributors
- * hear of it, and records its base rules with it, whose words name what it changed ("created spell Fireball").
+ * content names the ruleset its write changed (`changed`), whose owner and active contributors hear of it, and records
+ * its base rules with it, whose words name what it changed ("created spell Fireball").
  */
-export async function createActivityWithNotifications(tx: Db, values: ActivityValues, changed?: Ruleset) {
+async function recordActivity(tx: Db, changed: Ruleset | undefined, values: ActivityValues) {
   const given = isRecord(values.data) ? values.data : {};
   const data = changed ? { ...given, baseRules: changed.baseRules } : given;
   const [activity] = await Activities.create(tx, changed ? { ...values, data } : values);
@@ -162,4 +162,17 @@ export async function createActivityWithNotifications(tx: Db, values: ActivityVa
   );
   // Their pages hear of it once the request is answered, and its transaction committed
   noteNotified(recipientIds);
+}
+
+/** Records an activity of no ruleset's content (`values`: a campaign's, a character's), and notifies whom it concerns. */
+export async function createActivityWithNotifications(tx: Db, values: ActivityValues) {
+  await recordActivity(tx, undefined, values);
+}
+
+/**
+ * Records a change to a ruleset's content (`values`: an entity's, a customization's), in the ruleset its write changed
+ * (`ruleset`), and notifies its owner and active contributors.
+ */
+export async function createContentActivityWithNotifications(tx: Db, ruleset: Ruleset, values: ActivityValues) {
+  await recordActivity(tx, ruleset, values);
 }

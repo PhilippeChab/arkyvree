@@ -816,7 +816,7 @@ function isNamedBy(target, pattern) {
 
 /**
  * Whether a call on the engine reached by `path` is an operation: its method named for a verb (`planLanguages`,
- * `planCreate`), past the entry's own (`Engine.copyOnWrite()`); a noun's hands out a handle (`character`, `skills`). What
+ * `planCreate`), past the entry's own (`Engine.copyOnWrite(baseRules)`); a noun's hands out a handle (`character`, `skills`). What
  * the modules declare (`ENGINE_DECLARATIONS`: `Engine.storage(baseRules).isPlayerKind(kind)`) is no operation.
  */
 function isOperation(path) {

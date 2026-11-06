@@ -415,7 +415,7 @@ class StoredEntities extends include(BaseRepository, GuardsStaleEdits, Paginates
         );
       }
       for (const [field, write] of fields) {
-        const rows = toFieldRows(entityType, field, write, storage);
+        const rows = toFieldRows(storage, entityType, field, write);
         for (const entityId of ids) fieldRows.push(...rows.map((row) => ({ baseRules, entityId, entityType, ...row })));
       }
       for (const [role, toId] of links) {

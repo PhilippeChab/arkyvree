@@ -6,9 +6,12 @@ import type { BaseRules } from "@/shared/enums.ts";
 
 /**
  * An entity's customizations (its modifiers, each with its requirements, and its requirements), read and copied onto
- * other entities: a copy's (`EntityCopy`), and a duplicate's (an item's, its variants', a modifier's).
+ * other entities: a copy's (`EntityCopy`), and a duplicate's (an item's, its variants', a modifier's), in a base
+ * rules' rulesets (`baseRules`), whose module says which kinds have modifiers.
  */
 export default class CustomizationCopies {
+  constructor(private readonly baseRules: BaseRules) {}
+
   /** Each entity's customizations, by its id: the rows grouped by the entity they belong to, a modifier's by its source. */
   private static group(
     entityIds: string[],
@@ -29,14 +32,6 @@ export default class CustomizationCopies {
       if (entityId) map.get(entityId)?.modifierRequirements.push(mr);
     }
     return map;
-  }
-
-  /**
-   * Whether entities of a type (of `baseRules`) have modifiers: a kind its module declares customizable does
-   * (`customizableKinds`), any other doesn't.
-   */
-  private static hasModifiers(baseRules: BaseRules, entityType: string): boolean {
-    return Engine.storage(baseRules).customizableKinds().includes(entityType);
   }
 
   /**
@@ -64,22 +59,28 @@ export default class CustomizationCopies {
     return copies;
   }
 
+  /**
+   * Whether entities of a type have modifiers: a kind its module declares customizable does (`customizableKinds`), any
+   * other doesn't.
+   */
+  private hasModifiers(entityType: string): boolean {
+    return Engine.storage(this.baseRules).customizableKinds().includes(entityType);
+  }
+
   /** Copies customizations onto one entity, each copy's id recorded by its source's (`copiedIds`). */
-  static async copy(
+  async copy(
     tx: Db,
-    baseRules: BaseRules,
     targetEntityId: string,
     entityType: string,
     sourceCust: EntityCustomizations,
     copiedIds?: Map<string, string>,
   ): Promise<void> {
-    await CustomizationCopies.copyToMany(tx, baseRules, [targetEntityId], entityType, sourceCust, copiedIds);
+    await this.copyToMany(tx, [targetEntityId], entityType, sourceCust, copiedIds);
   }
 
   /** Copies customizations onto each of several entities, in one batch per kind. */
-  static async copyToMany(
+  async copyToMany(
     tx: Db,
-    baseRules: BaseRules,
     targetEntityIds: string[],
     entityType: string,
     sourceCust: EntityCustomizations,
@@ -91,7 +92,7 @@ export default class CustomizationCopies {
     if (copiedIds && targetEntityIds.length > 1)
       throw new Error("copiedIds maps each source row to one copy; copy to a single target");
 
-    if (!CustomizationCopies.hasModifiers(baseRules, entityType) && sourceCust.modifiers.length > 0)
+    if (!this.hasModifiers(entityType) && sourceCust.modifiers.length > 0)
       throw new Error(`Cannot copy modifiers onto ${entityType}`);
 
     const sourceModifierIds = new Set(sourceCust.modifiers.map((m) => m.id));
@@ -130,16 +131,11 @@ export default class CustomizationCopies {
   }
 
   /**
-   * The customizations of `entityIds` (of `entityType`, of `baseRules`), by entity, read by their stored ids: their requirements, and,
+   * The customizations of `entityIds` (of `entityType`), by entity, read by their stored ids: their requirements, and,
    * for a type modifiers have (`hasModifiers`), their modifiers with each one's requirements.
    */
-  static async read(
-    tx: Db,
-    baseRules: BaseRules,
-    entityIds: string[],
-    entityType: string,
-  ): Promise<Map<string, EntityCustomizations>> {
-    const modifiers = CustomizationCopies.hasModifiers(baseRules, entityType)
+  async read(tx: Db, entityIds: string[], entityType: string): Promise<Map<string, EntityCustomizations>> {
+    const modifiers = this.hasModifiers(entityType)
       ? await Modifiers.findMany(tx, { sourceIds: entityIds, sourceType: entityType })
       : [];
     const requirements = await Requirements.findMany(tx, { entityIds, entityType });

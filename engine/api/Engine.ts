@@ -19,9 +19,12 @@ import StorageEngine from "./StorageEngine.ts";
  * copy-on-write, which builds the view (`copyOnWrite`). Which ruleset answers is the engine's to know.
  */
 export default class Engine {
-  /** The copy-on-write the cache builds a ruleset's view with, and its writes copy an entity by. */
-  static copyOnWrite() {
-    return new CopyOnWriteEngine();
+  /**
+   * The copy-on-write of a base rules' rulesets: what the cache builds a ruleset's view with, and its writes copy an
+   * entity by.
+   */
+  static copyOnWrite(baseRules: BaseRules) {
+    return new CopyOnWriteEngine(baseRules);
   }
 
   /**

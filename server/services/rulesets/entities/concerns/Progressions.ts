@@ -5,7 +5,7 @@ import { CustomizationEdit, type EditTarget, EntityEdit, type LockedRulesetScope
 import { db } from "@/server/database/index.ts";
 import { ConflictError, NotFoundError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Entities, Modifiers, type RulesetEntityType } from "@/server/repositories/index.ts";
-import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { createContentActivityWithNotifications } from "@/server/services/activities/index.ts";
 import type { RulesetsPolicy } from "@/server/services/policies/index.ts";
 import EntityWriter from "@/server/services/rulesets/entities/EntityWriter.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
@@ -25,7 +25,7 @@ interface TargetOwner {
  * (of `ownedType`) or one of their modifiers, each in the engine's words (`describeGone`, a modifier's as any change
  * of a customization words it: `CustomizationEdit.describeGone`): "Class level no longer exists; refresh the class".
  */
-function describeGone({ baseRules }: { baseRules: BaseRules }, type: string, ownedType: string) {
+function describeGone(baseRules: BaseRules, type: string, ownedType: string) {
   const rules = Engine.rules();
   return {
     modifier: CustomizationEdit.describeGone(baseRules, "modifier", type),
@@ -125,17 +125,13 @@ export function Progressions<B extends Constructor>(Base: B) {
         policy.canUpdateEntity();
         const plan = Engine.for(scope).progression(type, ownerId).planFeature(name);
         await EntityWriter.updateEntities(tx, scope, policy, plan.created.type, [], plan.writes);
-        await createActivityWithNotifications(
-          tx,
-          {
-            userId: session.userId,
-            targetId: plan.created.id,
-            targetType: plan.created.type,
-            type: `create${getActivityName(plan.created.type)}`,
-            data: plan.activity,
-          },
-          scope.ruleset,
-        );
+        await createContentActivityWithNotifications(tx, scope.ruleset, {
+          userId: session.userId,
+          targetId: plan.created.id,
+          targetType: plan.created.type,
+          type: `create${getActivityName(plan.created.type)}`,
+          data: plan.activity,
+        });
         return plan.created;
       });
     }
@@ -199,21 +195,17 @@ export function Progressions<B extends Constructor>(Base: B) {
         const unchanged = { entityId: plan.owner.id, ownedIds: [] as string[], updatedAt: plan.owner.updatedAt };
         if (plan.owned.length === 0) return unchanged;
 
-        const gone = describeGone(scope.ruleset, type, plan.ownedType);
+        const gone = describeGone(scope.ruleset.baseRules, type, plan.ownedType);
         const { target, updatedAt } = await this.targetOwner(tx, scope, type, plan.owner, gone.owner);
         const ownedIds = await this.writeOwned(tx, scope, policy, target, plan, { gone, tokens });
 
-        await createActivityWithNotifications(
-          tx,
-          {
-            userId: session.userId,
-            targetId: target.id,
-            targetType: type,
-            type: `update${getActivityName(type)}Progression`,
-            data: plan.activity,
-          },
-          scope.ruleset,
-        );
+        await createContentActivityWithNotifications(tx, scope.ruleset, {
+          userId: session.userId,
+          targetId: target.id,
+          targetType: type,
+          type: `update${getActivityName(type)}Progression`,
+          data: plan.activity,
+        });
 
         return { entityId: target.id, ownedIds, updatedAt };
       });

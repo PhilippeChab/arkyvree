@@ -3,7 +3,7 @@ import { CustomizationCopies, CustomizationEdit, RulesetViews } from "@/server/c
 import { db } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { Modifiers } from "@/server/repositories/index.ts";
-import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { createContentActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { withRulesetWrite } from "@/server/services/writes/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
@@ -41,24 +41,18 @@ class ModifiersService {
 
       if (sourceModifierId) {
         const modifierType = CUSTOMIZATION_TYPES.modifier;
-        const { baseRules } = scope.ruleset;
-        const cust = (await CustomizationCopies.read(tx, baseRules, [sourceModifierId], modifierType)).get(
-          sourceModifierId,
-        );
-        if (cust) await CustomizationCopies.copy(tx, baseRules, modifier.id, modifierType, cust);
+        const copies = new CustomizationCopies(scope.ruleset.baseRules);
+        const cust = (await copies.read(tx, [sourceModifierId], modifierType)).get(sourceModifierId);
+        if (cust) await copies.copy(tx, modifier.id, modifierType, cust);
       }
 
-      await createActivityWithNotifications(
-        tx,
-        {
-          userId: session.userId,
-          targetId: modifier.id,
-          targetType: TARGET_TYPES.modifiers,
-          type: "createModifier",
-          data: { entityName: entity.name, target: row.target, value: row.value, operator: row.operator },
-        },
-        scope.ruleset,
-      );
+      await createContentActivityWithNotifications(tx, scope.ruleset, {
+        userId: session.userId,
+        targetId: modifier.id,
+        targetType: TARGET_TYPES.modifiers,
+        type: "createModifier",
+        data: { entityName: entity.name, target: row.target, value: row.value, operator: row.operator },
+      });
 
       return { ...modifier, resolvedEntityId };
     });
@@ -94,23 +88,19 @@ class ModifiersService {
       const rows = await Modifiers.delete(tx, { ids: [customization.id] });
       const deletedModifier = rows[0];
 
-      await createActivityWithNotifications(
-        tx,
-        {
-          userId: session.userId,
-          targetId: deletedModifier.id,
-          targetType: TARGET_TYPES.modifiers,
-          type: "deleteModifier",
-          data: {
-            rulesetId,
-            entityName: entity.name,
-            target: modifier.target,
-            value: modifier.value,
-            operator: modifier.operator,
-          },
+      await createContentActivityWithNotifications(tx, scope.ruleset, {
+        userId: session.userId,
+        targetId: deletedModifier.id,
+        targetType: TARGET_TYPES.modifiers,
+        type: "deleteModifier",
+        data: {
+          rulesetId,
+          entityName: entity.name,
+          target: modifier.target,
+          value: modifier.value,
+          operator: modifier.operator,
         },
-        scope.ruleset,
-      );
+      });
 
       return { ...deletedModifier, resolvedEntityId };
     });
@@ -179,17 +169,13 @@ class ModifiersService {
 
       const updatedModifier = rows[0];
 
-      await createActivityWithNotifications(
-        tx,
-        {
-          userId: session.userId,
-          targetId: updatedModifier.id,
-          targetType: TARGET_TYPES.modifiers,
-          type: "updateModifier",
-          data: { entityName: entity.name, target: row.target, value: row.value, operator: row.operator },
-        },
-        scope.ruleset,
-      );
+      await createContentActivityWithNotifications(tx, scope.ruleset, {
+        userId: session.userId,
+        targetId: updatedModifier.id,
+        targetType: TARGET_TYPES.modifiers,
+        type: "updateModifier",
+        data: { entityName: entity.name, target: row.target, value: row.value, operator: row.operator },
+      });
 
       return { ...updatedModifier, resolvedEntityId };
     });

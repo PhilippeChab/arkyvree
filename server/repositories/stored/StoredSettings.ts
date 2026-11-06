@@ -76,7 +76,7 @@ class StoredSettings {
       const storage = Engine.storage(baseRules);
       const written = storage.writtenFields(storage.settingsOwnerType, write.fields, false);
       return Object.entries(written).flatMap(([field, values]) =>
-        toFieldRows(storage.settingsOwnerType, field, values, storage).map((row) => ({
+        toFieldRows(storage, storage.settingsOwnerType, field, values).map((row) => ({
           baseRules,
           rulesetId: id,
           ...row,

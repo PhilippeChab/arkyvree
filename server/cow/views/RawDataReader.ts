@@ -6,7 +6,7 @@ import { Entities, Modifiers, Requirements, Rulesets, RulesetSettings } from "@/
 /**
  * A ruleset's own rows, none of its ancestors', which the cache keeps one entry of per ruleset
  * (`RulesetViews.getRawData`): its stored entities, every kind's, with their fields and links, its own settings, and
- * every customization of them, which the engine reads as its view's rows (`Engine.copyOnWrite().buildRawData`), by its
+ * every customization of them, which the engine reads as its view's rows (`Engine.copyOnWrite(baseRules).buildRawData`), by its
  * base rules' module. Read through the handle it's given, the shared `db` or a write's transaction, one query at a
  * time, each read needing the ids the one before read.
  */
@@ -24,8 +24,7 @@ export default class RawDataReader {
     const requirements = await Requirements.findMany(database, {
       entityIds: [...ids, ...modifiers.map((modifier) => modifier.id)],
     });
-    const data = Engine.copyOnWrite().buildRawData({
-      baseRules: ruleset.baseRules,
+    const data = Engine.copyOnWrite(ruleset.baseRules).buildRawData({
       entities,
       tierListIds,
       modifiers,

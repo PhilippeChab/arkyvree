@@ -78,7 +78,7 @@ class ActivitiesService {
    * it (`EntityEdit`): none once that ruleset or one it's built on deleted it (a tombstone stands for it, its row
    * gone), nor for an entity it doesn't inherit.
    */
-  private async findShownIn(written: string, entity: ContentRow, stored: string, baseRules: BaseRules) {
+  private async findShownIn(baseRules: BaseRules, written: string, entity: ContentRow, stored: string) {
     if (!isOneOf(entity.type, Engine.storage(baseRules).standaloneKinds())) return undefined;
     const view = await withRulesetScope(db, written, async (scope) => {
       const cow = scope.rulesetData.cow;
@@ -151,7 +151,7 @@ class ActivitiesService {
     const pages = storage.customizationPages();
     // In the ruleset the activity recorded writing, while the session may read it and it shows the entity
     if (written !== undefined && written !== stored && (await this.rulesetUrl(session, written))) {
-      const shownId = await this.findShownIn(written, page, stored, baseRules);
+      const shownId = await this.findShownIn(baseRules, written, page, stored);
       if (shownId) return buildEntityPagePath(written, page.type, shownId, pages, edited?.to);
     }
     if (!(await this.rulesetUrl(session, stored))) return null;

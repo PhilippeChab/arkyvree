@@ -67,7 +67,7 @@ export async function withLockedRulesetScope<T, B = undefined>(
   const checked = (await before?.()) as B;
   const chain = await Locks.lockRulesets(
     tx,
-    { ids: [...new Set([...Engine.copyOnWrite().buildSourceChain(sources), ...reads])] },
+    { ids: [...new Set([...Engine.copyOnWrite(sources.baseRules).buildSourceChain(sources), ...reads])] },
     "share",
   );
   const versions = new Map([[rulesetId, committed], ...chain]);
@@ -132,7 +132,7 @@ export async function withSharedRulesetScope<T, B = undefined>(
   if (!ruleset || !sources) throw new NotFoundError("Ruleset not found");
   const chain = await Locks.lockRulesets(
     tx,
-    { ids: [...new Set(Engine.copyOnWrite().buildSourceChain(sources))] },
+    { ids: [...new Set(Engine.copyOnWrite(sources.baseRules).buildSourceChain(sources))] },
     "share",
   );
   const checked = (await before?.()) as B;

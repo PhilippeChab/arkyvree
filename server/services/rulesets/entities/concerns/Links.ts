@@ -4,7 +4,7 @@ import { EntityEdit, EntityUses } from "@/server/cow/index.ts";
 import { db } from "@/server/database/index.ts";
 import { ConflictError, STALE_ENTITY_MESSAGE } from "@/server/errors/index.ts";
 import { EntityLinks, type RulesetEntityType } from "@/server/repositories/index.ts";
-import { createActivityWithNotifications } from "@/server/services/activities/index.ts";
+import { createContentActivityWithNotifications } from "@/server/services/activities/index.ts";
 import { withReadableRuleset } from "@/server/services/rulesets/readableRuleset.ts";
 import { withRulesetWrite } from "@/server/services/writes/index.ts";
 import { getActivityName } from "@/shared/activity.ts";
@@ -36,17 +36,13 @@ export function Links<B extends Constructor>(Base: B) {
           { ...plan.link, fromId, fromType: type },
         ]);
 
-        await createActivityWithNotifications(
-          tx,
-          {
-            userId: session.userId,
-            targetId: fromId,
-            targetType: plan.link.role,
-            type: `add${getActivityName(plan.link.role)}`,
-            data: plan.activity,
-          },
-          scope.ruleset,
-        );
+        await createContentActivityWithNotifications(tx, scope.ruleset, {
+          userId: session.userId,
+          targetId: fromId,
+          targetType: plan.link.role,
+          type: `add${getActivityName(plan.link.role)}`,
+          data: plan.activity,
+        });
 
         return link;
       });
@@ -80,17 +76,13 @@ export function Links<B extends Constructor>(Base: B) {
         // The fresh view showed it, and no other write runs under the lock: a guard, should one have
         if (!link) throw new ConflictError(STALE_ENTITY_MESSAGE);
 
-        await createActivityWithNotifications(
-          tx,
-          {
-            userId: session.userId,
-            targetId: fromId,
-            targetType: plan.role,
-            type: `remove${getActivityName(plan.role)}`,
-            data: plan.activity,
-          },
-          scope.ruleset,
-        );
+        await createContentActivityWithNotifications(tx, scope.ruleset, {
+          userId: session.userId,
+          targetId: fromId,
+          targetType: plan.role,
+          type: `remove${getActivityName(plan.role)}`,
+          data: plan.activity,
+        });
 
         return link;
       });

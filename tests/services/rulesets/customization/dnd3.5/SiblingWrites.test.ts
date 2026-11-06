@@ -55,7 +55,7 @@ const PRECEDENCE: Record<EntityType, { type: string; valueOf: (index: number) =>
 async function insertFieldRow(type: string, id: string, field: string, value: FieldValue) {
   await insertRows(
     entityFieldsInRules,
-    toFieldRows(type, field, value, StorageEngine.of(DND35_BASE_RULES)).map((row) => ({
+    toFieldRows(StorageEngine.of(DND35_BASE_RULES), type, field, value).map((row) => ({
       baseRules: DND35_BASE_RULES,
       entityId: id,
       entityType: type,
