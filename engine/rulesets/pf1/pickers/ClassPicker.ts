@@ -1,0 +1,153 @@
+import type {
+  CharacterInput,
+  EntityRecord,
+  OptionRow,
+  PickerOption,
+  StepOption,
+  TrackFilters,
+} from "@/engine/core/module/index.ts";
+import { CharacterPicker } from "@/engine/core/pickers/index.ts";
+import type { RulesetView } from "@/engine/core/view/index.ts";
+import CharacterProjection from "@/engine/rulesets/pf1/levelUp/CharacterProjection.ts";
+import type LevelUpPlan from "@/engine/rulesets/pf1/levelUp/LevelUpPlan.ts";
+import type { PlannedSoFar } from "@/engine/rulesets/pf1/levelUp/requests.ts";
+import type DetailedCharacter from "@/engine/rulesets/pf1/model/DetailedCharacter.ts";
+import Pf1CharacterBuilder from "@/engine/rulesets/pf1/model/Pf1CharacterBuilder.ts";
+import LevelRules from "@/engine/rulesets/pf1/rules/LevelRules.ts";
+import Pf1View from "@/engine/rulesets/pf1/view/Pf1View.ts";
+import type { KlassLevel } from "@/engine/rulesets/pf1/view/rows.ts";
+import type { Requirement } from "@/shared/relations.ts";
+import { stripSeparators } from "@/shared/text.ts";
+import { PLAYER_CHARACTER_KIND } from "@/vocabulary/pf1/bondedKinds.ts";
+
+/** What the class picker adds of a class: its place on its track, as a step's option holds it. */
+type TrackDetails = Required<Pick<StepOption, "track">>;
+
+/**
+ * The class picker for the character, from its rows and what the level-up wizard plans so far: a player character's
+ * classes (`filters`), each the character can take another level of offered with the levels it takes next, in order,
+ * and the levels the character has left, and checked with its next level added; highest next level first, then by
+ * name. The skill points spent so far go on the planned levels as a save would spread them (`plan`).
+ */
+export default class ClassPicker extends CharacterPicker<DetailedCharacter, EntityRecord, TrackDetails> {
+  constructor(
+    view: RulesetView,
+    input: CharacterInput,
+    private readonly planned: PlannedSoFar,
+    private readonly plan: LevelUpPlan,
+  ) {
+    super(view, input, Pf1CharacterBuilder);
+  }
+
+  /**
+   * The class's place on its track: the levels the character can still take, whatever their classes (`left`, the same
+   * for every class), and the class's it takes next, in the order a plan takes them (`positions`:
+   * `LevelRules.numberPlannedLevels`, a gap filled first), as many as it has left, up to the class's last. Those the
+   * character has count, not those the wizard plans, which a plan numbers in its place.
+   */
+  protected override detailsOf() {
+    const left = LevelRules.countLevelsLeft(this.input.rows.advancements.length);
+    return (klass: EntityRecord) => ({ track: { left, positions: this.positionsOf(klass, left) } });
+  }
+
+  /** Whether the character meets a class's requirement groups with the class's next level added. */
+  protected override meets(groups: Requirement[][], klass: EntityRecord) {
+    return this.character.meetsWithNextLevel(stripSeparators(klass.name ?? ""), this.nextLevelOf(klass)!, groups);
+  }
+
+  /** The classes the character can take another level of. */
+  protected override offer(classes: EntityRecord[]) {
+    return classes.filter((klass) => this.nextLevelOf(klass));
+  }
+
+  /** Highest next level first, then by name. */
+  protected override order<O extends EntityRecord & { track: { positions: number[] } }>(options: O[]) {
+    const next = (option: O) => option.track.positions[0] ?? 0;
+    return options.sort((a, b) => next(b) - next(a) || (a.name ?? "").localeCompare(b.name ?? ""));
+  }
+
+  /**
+   * What the level-up wizard plans adds to the character, for the class picker: its planned levels, the skill points
+   * spent so far, each planned level's as a save spreads them, and the feats picked so far, which requirements read: at
+   * the first planned level, or at the character's last level when it plans none.
+   */
+  protected override project() {
+    const { abilityIncreases, classLevelIds = [], picks = [] } = this.planned;
+    const projection = new CharacterProjection(this.input);
+    const hp = LevelRules.UNROLLED_LEVEL_HP;
+    const levels = projection.addLevels(classLevelIds, { abilityIncreases, hp });
+    for (const [i, skills] of this.plan.spreadSkillPoints(this.planned).entries()) projection.pick(levels[i], skills);
+    const pickedAt = levels[0] ?? this.input.rows.advancements.toSorted((a, b) => a.position - b.position).at(-1);
+    if (pickedAt) {
+      projection.pick(
+        pickedAt,
+        picks.filter(({ step }) => step === "feats"),
+      );
+    }
+    return projection.input;
+  }
+
+  /** A class's requirement groups: its own and its next level's. */
+  protected override requirementsOf(klass: EntityRecord) {
+    return [klass.id, this.nextLevelOf(klass)!.id]
+      .map((id) => this.rulesetData.requirementsByEntity.get(id) ?? [])
+      .filter((requirements) => requirements.length > 0);
+  }
+
+  /** A class as the step's option: with its place on its track. */
+  protected override stepOptionOf(option: PickerOption<OptionRow, TrackDetails>) {
+    return { ...super.stepOptionOf(option), track: option.track };
+  }
+
+  /**
+   * What the picker offers, a player character's classes (their partition, `pc`), and the order the server pages them
+   * in: the character's own classes first (`firstIds`), as a page orders them (`order`: highest next level first, then
+   * by name), the others after them by name, each next at its first level, as a class whose first the character skipped
+   * is too.
+   */
+  override get filters(): TrackFilters {
+    const { classesById, classLevelsById } = this.pf1;
+    // Each class the character's levels are of, as the view resolves it (a copy for its source), once
+    const held = new Map(
+      this.input.rows.advancements.flatMap(({ entryId }) => {
+        const ownerId = classLevelsById.get(entryId)?.ownerId;
+        const klass = ownerId ? classesById.get(ownerId) : undefined;
+        return klass ? [[klass.id, klass] as const] : [];
+      }),
+    );
+    const classes = [...held.values()].map((klass) => ({ ...klass, track: { positions: this.positionsOf(klass, 1) } }));
+    const firstIds = this.order(classes.filter((klass) => (klass.track.positions[0] ?? 0) > 1)).map(
+      (klass) => klass.id,
+    );
+    return { partitions: [PLAYER_CHARACTER_KIND], firstIds };
+  }
+
+  /**
+   * The class's next level for the character (`LevelRules.findNextClassLevel`): its lowest the character doesn't hold,
+   * none when the class has no more.
+   */
+  private nextLevelOf(klass: EntityRecord): KlassLevel | undefined {
+    const next = LevelRules.findNextClassLevel(this.pf1.classLevelsById, this.input.rows.advancements, klass.id);
+    return this.pf1.classLevelByClassAndLevel.get(`${klass.id}:${next}`);
+  }
+
+  /** The view's Pathfinder lists and indices. */
+  private get pf1(): Pf1View {
+    return Pf1View.of(this.rulesetData);
+  }
+
+  /**
+   * The class's levels the character takes next (`count` of them at most), in the order a plan takes them
+   * (`LevelRules.numberPlannedLevels`), those the class has: none past its last.
+   */
+  private positionsOf(klass: EntityRecord, count: number) {
+    const { classLevelByClassAndLevel, classLevelsById } = this.pf1;
+    const numbered = LevelRules.numberPlannedLevels(
+      classLevelsById,
+      this.input.rows.advancements,
+      Array.from({ length: count }, () => klass.id),
+    );
+    const past = numbered.findIndex((position) => !classLevelByClassAndLevel.has(`${klass.id}:${position}`));
+    return past === -1 ? numbered : numbered.slice(0, past);
+  }
+}

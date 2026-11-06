@@ -1,0 +1,120 @@
+import RulesError from "@/engine/core/RulesError.ts";
+import LevelRules from "@/engine/rulesets/pf1/rules/LevelRules.ts";
+
+import CharacterProjection from "./CharacterProjection.ts";
+import LevelUpState, { type PoolPicks } from "./LevelUpState.ts";
+import type { LevelQuery } from "./requests.ts";
+
+/**
+ * The level-up wizard's steps for a character, from its rows, in their order: its ability increase, its skill points,
+ * and its feat and spell pools, each for the character built with the step's level.
+ */
+export default class LevelUpSteps extends LevelUpState {
+  /**
+   * The step's level built with the feats and spells picked at it (`step.picks`), fitted to their pools as a save would
+   * take them (an edited level keeping its own saved feats and spells): the character with what fits, what fits, and
+   * its class level.
+   */
+  private buildPicked(step: LevelQuery) {
+    const classLevel = this.readClassLevel(step);
+    const fitted = this.fitPicks(
+      step.picks ?? {},
+      (picks) => this.build(this.projectStep(classLevel.id, step, picks)),
+      this.getSavedPicks(step.editedLevel?.id),
+    );
+    const pools = fitted.character.components.aptitudes.getLevelUpPools(this.pf1, this.countOwnPicks(fitted.picks));
+    return { classLevel, picks: fitted.picks, pools };
+  }
+
+  /**
+   * The attributes step: the character's abilities, when the level it adds or edits takes an ability increase, after
+   * its levels but the edited one and those after it, and the levels planned before it, which it's built with; and
+   * whether its pick is made, which Next waits for: the level's increases (`step.abilityIncreases`) as its save checks
+   * them, or nothing to pick at a level that takes none.
+   */
+  private describeAbilityStep(step: LevelQuery) {
+    const { abilityIncreases = [], editedLevel, planned } = step;
+    const projection = new CharacterProjection(this.character);
+    if (editedLevel) projection.dropLevelsFrom(editedLevel.id);
+    const hp = LevelRules.UNROLLED_LEVEL_HP;
+    projection.addLevels(planned?.classLevelIds ?? [], { abilityIncreases: planned?.abilityIncreases, hp });
+    // The levels before this one: the level added or edited is the next
+    const levelsBefore = projection.input.rows.advancements.length;
+    if (!LevelRules.of(this.view).isAbilityIncreaseLevel(levelsBefore))
+      return { isAvailable: false, attributes: [], picked: true };
+    return {
+      isAvailable: true,
+      attributes: this.build(projection).components.abilities.getAbilitiesWithIds(),
+      picked: this.checks.areAbilityIncreasesPicked(levelsBefore, abilityIncreases),
+    };
+  }
+
+  /**
+   * The feats step of the step's level: the pools the character picks feats in with it, each with its room for the
+   * feats picked at it (`step.picks`), what of them fits (`fitted`), and its grants.
+   */
+  private describeFeatStep(step: LevelQuery) {
+    const { classLevel, picks, pools } = this.buildPicked(step);
+    return { ...this.featStep(pools, [classLevel.id]), fitted: picks.feats };
+  }
+
+  /**
+   * The skills step of the step's level: the points to spend, each skill's class status and what the form's points
+   * (`step.picks.skills`) come to at the level, and the levels the character has with it, the planned ones before it
+   * too (an edit's level takes the edited one's place). The level's points are all the character has left to spend.
+   */
+  private describeSkillStep(step: LevelQuery) {
+    const classLevel = this.readClassLevel(step);
+    const projection = this.projectStep(classLevel.id, step);
+    const character = this.build(projection);
+    // A skill's class status is any of the character's classes' (its max rank, `isClassSkill`) and the leveled class's
+    // (its cost, `isCurrentClassSkill`)
+    const classSkillIds = this.getClassSkillIds(this.pf1.classSkillsOf(classLevel.ownerId));
+    const levels = {
+      perLevelClassSkillIds: [[...classSkillIds]],
+      perLevelSkillPoints: [this.getSkillPointsToSpend(character)],
+      savedLevelCount: projection.input.rows.advancements.length - 1,
+    };
+    return this.skillStep(character, classSkillIds, levels, step.picks?.skills ?? {});
+  }
+
+  /**
+   * The spells step of the step's level: the pools the character picks spells in with it, each with its room for the
+   * spells picked at it (`step.picks`), what of them fits (`fitted`), and its grants.
+   */
+  private describeSpellStep(step: LevelQuery) {
+    const { classLevel, picks, pools } = this.buildPicked(step);
+    return { ...this.spellStep(pools, [classLevel.id]), fitted: picks.spells };
+  }
+
+  /**
+   * The step's projection: a level of class level `classLevelId` after the levels planned before it, or in the edited
+   * level's place, so the first level stays the first (its x4 skill points), with the feats and spells it picks
+   * (`picks`), when given.
+   */
+  private projectStep(classLevelId: string, step: LevelQuery, picks?: PoolPicks) {
+    const projection = new CharacterProjection(this.character);
+    const hp = LevelRules.UNROLLED_LEVEL_HP;
+    projection.addLevels(step.planned?.classLevelIds ?? [], { abilityIncreases: step.planned?.abilityIncreases, hp });
+    const replacing = step.editedLevel;
+    const level = projection.addLevel(classLevelId, { abilityIncreases: step.abilityIncreases, hp, replacing });
+    if (picks) projection.pick(level, this.toPickPlans({ ...picks, skills: {} }));
+    return projection;
+  }
+
+  /** The class level the step's level is: refused when the step names no class or level, or the class has no such level. */
+  private readClassLevel({ classId, level }: LevelQuery) {
+    if (!classId || level === undefined) throw new RulesError("invalid", "The step's class and level are required");
+    return this.getClassLevel(classId, level);
+  }
+
+  /** Every step of the step's level, by its name: its ability increase, its skills, its feats and its spells. */
+  describeLevelSteps(step: LevelQuery) {
+    return {
+      abilities: this.describeAbilityStep(step),
+      feats: this.describeFeatStep(step),
+      spells: this.describeSpellStep(step),
+      skills: this.describeSkillStep(step),
+    };
+  }
+}
