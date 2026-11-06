@@ -10,6 +10,52 @@
     },
     "type": "class"
   },
+  "overrides": {
+    "Rogue": {
+      "proficiencies": [
+        {
+          "index": "light-armor",
+          "name": "Light Armor"
+        },
+        {
+          "index": "simple-weapons",
+          "name": "Simple Weapons"
+        },
+        {
+          "index": "rapiers",
+          "name": "Rapiers"
+        },
+        {
+          "index": "scimitars",
+          "name": "Scimitars"
+        },
+        {
+          "index": "shortswords",
+          "name": "Shortswords"
+        },
+        {
+          "index": "whips",
+          "name": "Whips"
+        },
+        {
+          "index": "hand-crossbows",
+          "name": "Hand crossbows"
+        },
+        {
+          "index": "tool-thieves-tools",
+          "name": "Tool: Thieves' Tools"
+        },
+        {
+          "index": "saving-throw-dex",
+          "name": "Saving Throw: DEX"
+        },
+        {
+          "index": "saving-throw-int",
+          "name": "Saving Throw: INT"
+        }
+      ]
+    }
+  },
   "raw": {
     "class": {
       "hit_die": 8,
