@@ -11,6 +11,8 @@ export interface OverfullPool {
 
 /** What a save spreads its pooled picks over its planned levels by: each level's slots in each pool. */
 export interface PerLevelDistributionData extends PoolSlots {
+  /** The highest spell level each leveled pool has room at before the planned levels, by its id. */
+  highestRoomLevels: Record<string, number>;
   /** The planned levels. */
   levelCount: number;
 }
@@ -29,11 +31,12 @@ export type SpellSlots = Record<string, Record<string, number>[]>;
 
 /**
  * A save's pooled picks (`LevelPicks`: feats and spells by pool) spread over its planned levels, in order, by what each
- * level gives (`data`: its slots in each pool). The feats go in the levels' slots; a leveled pool's spells too, a spell
- * of a level in a slot of its level or of a higher one (a cantrip in a cantrip's alone), highest spells first, each in
- * the earliest level that has room for it, there in the lowest slot it fits: as the character's sheet counts a pool's
- * spells (`AptitudesComponent`). A pick past its pool's slots isn't dropped: it goes on the level of the feat that gives
- * its pool more room, or the last one, and the save refuses picks that overfill their pool (`refuseOverfull`).
+ * level gives (`data`: its slots in each pool). The feats go in the levels' slots; a leveled pool's spells too, as the
+ * character's sheet counts them (`AptitudesComponent`): a cantrip in a cantrip's slot, and a spell of a level in any
+ * slot past cantrips of a level that has room at its level or a higher one by then (its saved room's too), highest
+ * spells first, each in the earliest such level. A pick past its pool's slots isn't dropped: it goes on the level of
+ * the feat that gives its pool more room, or the last one, and the save refuses picks that overfill their pool
+ * (`refuseOverfull`).
  */
 export default class PicksDistribution {
   constructor(private readonly data: PerLevelDistributionData) {}
@@ -99,37 +102,46 @@ export default class PicksDistribution {
 
   /**
    * Puts a leveled pool's spells (`spellIds`, each at its level in the pool, `levelOf`) into the levels' slots
-   * (`slotsPerLevel`), highest spells first: each in the earliest level with a slot of its level or a higher one (a
-   * cantrip's alone for a cantrip), the lowest there. What no slot takes goes on the last level (`place`).
+   * (`slotsPerLevel`): its cantrips in order, in its cantrips' slots; its other spells, highest first, each in the
+   * earliest level with a slot past cantrips by which the pool has room at its level or a higher one (`highestRoom`,
+   * its saved room's highest level, then each level's). What no slot takes goes on the last level (`place`).
    */
   private distributeLeveledSpells(
     spellIds: string[],
     levelOf: (spellId: string) => number,
     slotsPerLevel: Record<string, number>[],
+    highestRoom: number,
     place: (level: number, spellId: string) => void,
   ) {
-    const left = slotsPerLevel.map((slots) => ({ ...slots }));
-    const ordered = spellIds.toSorted((a, b) => levelOf(b) - levelOf(a));
-    for (const spellId of ordered) {
-      const spellLevel = levelOf(spellId);
-      const fits = (tier: number) => (spellLevel === 0 ? tier === 0 : tier >= spellLevel);
-      const at = left.findIndex((slots) => Object.entries(slots).some(([tier, n]) => n > 0 && fits(Number(tier))));
+    const last = this.data.levelCount - 1;
+    const cantrips = spellIds.filter((spellId) => levelOf(spellId) === 0);
+    const cantripSlotsAt = (i: number) => slotsPerLevel[i]?.["0"] ?? 0;
+    for (const spellId of this.fillSlots(this.data.levelCount, cantrips, cantripSlotsAt, place)) place(last, spellId);
+
+    const levels = Array.from({ length: this.data.levelCount }, (_, i) => slotsPerLevel[i] ?? {});
+    const room = levels.map((slots) =>
+      Object.entries(slots).reduce((sum, [tier, n]) => sum + (Number(tier) > 0 ? n : 0), 0),
+    );
+    let highest = highestRoom;
+    const highestAt = levels.map((slots) => {
+      for (const [tier, n] of Object.entries(slots)) if (Number(tier) > highest && n > 0) highest = Number(tier);
+      return highest;
+    });
+    const leveled = spellIds.filter((spellId) => levelOf(spellId) > 0).toSorted((a, b) => levelOf(b) - levelOf(a));
+    for (const spellId of leveled) {
+      const at = room.findIndex((left, i) => left > 0 && highestAt[i] >= levelOf(spellId));
       if (at === -1) {
-        place(this.data.levelCount - 1, spellId);
+        place(last, spellId);
         continue;
       }
-      const tier = Object.keys(left[at])
-        .map(Number)
-        .filter((t) => left[at][String(t)] > 0 && fits(t))
-        .toSorted((a, b) => a - b)[0];
-      left[at][String(tier)]--;
+      room[at]--;
       place(at, spellId);
     }
   }
 
   /**
    * Puts each pool's spells into the levels' slots: in order for an unleveled pool, by spell level for a leveled one
-   * (a spell's level per pool from `spellLevelLookup`), a spell in a slot of its level or a higher one.
+   * (a spell's level per pool from `spellLevelLookup`), as the 2024 rules prepare them (`distributeLeveledSpells`).
    */
   private distributeSpells(
     spells: Record<string, string[]>,
@@ -141,7 +153,8 @@ export default class PicksDistribution {
       const place = (i: number, spellId: string) => (result[i].spells[aptitudeId] ??= []).push(spellId);
       const levelOf = (spellId: string) => spellLevelLookup.get(`${spellId}:${aptitudeId}`);
       if (spellIds.some((spellId) => levelOf(spellId) != null)) {
-        this.distributeLeveledSpells(spellIds, (spellId) => levelOf(spellId) ?? 0, slotsPerLevel, place);
+        const highestRoom = this.data.highestRoomLevels[aptitudeId] ?? 0;
+        this.distributeLeveledSpells(spellIds, (spellId) => levelOf(spellId) ?? 0, slotsPerLevel, highestRoom, place);
         continue;
       }
       // What the slots leave goes on the last level

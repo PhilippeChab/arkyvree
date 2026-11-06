@@ -92,7 +92,9 @@ export function ArmorClass<B extends Constructor<CombatState>>(Base: B) {
           return worn()?.ac.total ?? COMBAT_RULES.UNARMORED_AC_BASE;
         },
         get dexterity() {
+          // Heavy armor adds none of it, a penalty included (Chain Mail's 16 whatever its wearer's Dexterity)
           const maxdex = worn()?.maxdex ?? null;
+          if (maxdex === 0) return 0;
           return maxdex === null ? dexterity() : Math.min(dexterity(), maxdex);
         },
         get shield() {

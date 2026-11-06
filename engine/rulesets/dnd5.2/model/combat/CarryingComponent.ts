@@ -3,7 +3,7 @@ import type AbilitiesComponent from "@/engine/rulesets/dnd5.2/model/abilities/Ab
 import type IdentityComponent from "@/engine/rulesets/dnd5.2/model/identity/IdentityComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd5.2/model/loading/DetailedCharacterDataLoader.ts";
 import { CARRY_MULTIPLIER_BY_SIZE, DRAG_LIFT_PUSH_MULTIPLIER } from "@/vocabulary/dnd5.2/carrying.ts";
-import { ITEM_WEIGHT, SPECIES_SIZE } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { ITEM_WEIGHT } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 /** What the character carries, against what it can. */
 export interface CarryingData {
@@ -28,7 +28,8 @@ export default class CarryingComponent extends CharacterComponent<LoadedCharacte
     this.carrying = {
       carriedweight: 0,
       get capacity() {
-        const size = identity.getIdentity().physiology.species.fields[SPECIES_SIZE];
+        // Its size as the sheet has it, which a modifier on `identity.physiology.species.size` changes
+        const { size } = identity.getIdentity().physiology.species;
         return (abilities.getAbility("Strength")?.total ?? 0) * (CARRY_MULTIPLIER_BY_SIZE[size] ?? 0);
       },
       get draglift() {

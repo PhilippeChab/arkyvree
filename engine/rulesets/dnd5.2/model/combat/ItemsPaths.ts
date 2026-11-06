@@ -133,13 +133,12 @@ export default class ItemsPaths implements PathCategory<Dnd52Components> {
   readonly namesEntities = true;
 
   readonly pathDescriptions = {
-    "items.weapons": "Per-weapon attack, damage, critical, and how it's wielded",
-    "items.armors": "Per-armor AC, check penalty, spell failure, and max dexterity",
-    "items.shields": "Per-shield AC, check penalty, spell failure, and max dexterity",
+    "items.weapons": "Per-weapon proficiency, mastery, attack, damage, and how it's wielded",
+    "items.armors": "Per-armor AC, max Dexterity, Strength and Stealth",
+    "items.shields": "The Shield's AC",
     // Item sub-group intermediates (structural keys, dynamic group stripped)
     "items.weapons.tohit": "Attack roll bonuses",
     "items.weapons.damage": "Damage components",
-    "items.weapons.damage.critical": "Critical hit range and multiplier",
     "items.armors.ac": "AC bonus and modifiers",
     "items.shields.ac": "AC bonus and modifiers",
   };

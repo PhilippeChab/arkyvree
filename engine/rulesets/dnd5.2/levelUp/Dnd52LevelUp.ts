@@ -42,10 +42,7 @@ export default class Dnd52LevelUp extends AdvancementsPart implements LevelUpRul
     return new LevelPlans(view, character, this).describeSavedPlan(level);
   }
 
-  /**
-   * A D&D 5th Edition level's steps, in the wizard's order: its class plan (but an edit's), hit points, ability increase, skills,
-   * feats and spells.
-   */
+  /** A level's steps, in the wizard's order: its class plan (but an edit's), hit points, feats and spells. */
   override listSteps(view: RulesetView, character: CharacterInput, edited: boolean) {
     return new LevelPlans(view, character, this).listSteps(edited);
   }
@@ -122,10 +119,7 @@ export default class Dnd52LevelUp extends AdvancementsPart implements LevelUpRul
     return Dnd52CharacterBuilder.build(view, input);
   }
 
-  /**
-   * A save's pooled picks spread over its planned levels: each skill's points within each level's points and max ranks,
-   * class skills first, and the feats and spells in each level's pool slots.
-   */
+  /** A save's pooled picks spread over its planned levels: the feats and spells in each level's pool slots. */
   distributePicks(view: RulesetView, character: CharacterInput, ...args: Parameters<LevelUpPlan["distributePicks"]>) {
     return new LevelUpPlan(view, character, this).distributePicks(...args);
   }

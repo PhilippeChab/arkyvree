@@ -1,6 +1,6 @@
 /**
- * A class's progression as its Progression and Spells tabs edit it at once: its levels' own fields, saves and granted
- * feats, its feat pools' picks, and its spells per day and spells known as totals, which its levels keep as increments.
+ * A class's progression as its Progression and Spells tabs edit it at once: its levels' own fields and granted feats,
+ * its feat pools' picks, and its cantrips and prepared spells as totals, which its levels keep as increments.
  */
 
 import { z } from "zod";
@@ -74,7 +74,6 @@ const COUNTS = z.object({
   spells: z
     .object({
       known: z.array(z.object({ counts: z.array(KNOWN.nullable()).max(SPELL_LEVELS.length) })).optional(),
-      perDay: z.array(z.object({ counts: z.array(COUNT.nullable()).max(SPELL_LEVELS.length) })).optional(),
     })
     .optional(),
 });
@@ -86,8 +85,8 @@ const FIELDS = z.custom<EntityFieldValues>((value) => isRecord(value), "Expected
 const LINKS = z.custom<EntityLinkValues>((value) => isRecord(value), "Expected an object of the entity's links");
 
 /**
- * A progression's save, as its form sends it: its class levels' forms (`owned`, each its fields, and its links: its
- * saves' base bonuses and the feats it grants, by role), its pools' picks by level (each pool by its `id`), and its
+ * A progression's save, as its form sends it: its class levels' forms (`owned`, each its fields, and its links: the
+ * feats it grants, by role), its pools' picks by level (each pool by its `id`), and its
  * spell tables' totals, a level's one a spell level from 0 (`null` for none). Each part refuses a key it doesn't take,
  * as an entity's form does.
  */
@@ -112,9 +111,6 @@ const PROGRESSION_BODY = z.strictObject({
             counts: z.array(z.union([z.number().int(), z.literal("all")]).nullable()),
           }),
         )
-        .optional(),
-      perDay: z
-        .array(z.strictObject({ ownedId: z.string().uuid(), counts: z.array(z.number().int().nullable()) }))
         .optional(),
     })
     .optional(),
@@ -321,11 +317,7 @@ export default class ClassProgression {
     const original = new Map(this.classLevels.map((level) => [level.id, this.modifiersOf(level.id)]));
     const working = new Map(original);
     for (const pool of body.pools ?? []) this.planPool(working, pool);
-    // Spells per day open where spells known do: a save of spells known keeps spells per day's totals as they were
-    const perDay = this.spellTotals("uses", working);
-    if (body.spells?.known)
-      this.planSpells(working, body.spells.known, "allowed", this.spellTotals("allowed", working));
-    if (body.spells) this.planSpells(working, body.spells.perDay ?? [], "uses", perDay);
+    if (body.spells?.known) this.planSpells(working, body.spells.known, this.spellTotals(working));
     if (body.spells) this.checkListKept(working);
     return { body, original, working };
   }
@@ -347,14 +339,13 @@ export default class ClassProgression {
   }
 
   /**
-   * A spell table's totals (`field`: `uses` for spells per day, `allowed` for spells known), each level's given
-   * (`rows`) over the ones it had before the save (`totals`), as each spell level's own modifiers on the class's list:
-   * refused where its spell tables take no save (`spellTables`).
+   * The cantrips and prepared spells table's totals, each level's given (`rows`) over the ones it had before the save
+   * (`totals`), as each spell level's own modifiers on the class's list (`aptitudes.<list>.<level>.allowed`): refused
+   * where its spell tables take no save (`spellTables`).
    */
   private planSpells(
     working: Map<string, LevelModifier[]>,
     rows: SpellRow<number | "all">[],
-    field: "allowed" | "uses",
     totals: Map<string, Record<string | number, SpellTotal>>,
   ) {
     const { list, refusal } = this.spellTables;
@@ -362,10 +353,10 @@ export default class ClassProgression {
     const levels = this.classLevels;
     const given = new Map(rows.map(({ counts, ownedId }) => [this.levels.find(ownedId).id, counts]));
     for (const spellLevel of SPELL_LEVELS) {
-      const target = `aptitudes.${list.slug}.${spellLevel}.${field}`;
+      const target = `aptitudes.${list.slug}.${spellLevel}.allowed`;
       const isOwn = (modifier: LevelModifier) =>
-        modifier.target === target && (isPlainAdd(modifier) || (field === "allowed" && isPlainAll(modifier)));
-      const kept = this.spellTotals(field, working, (modifier) => !isOwn(modifier));
+        modifier.target === target && (isPlainAdd(modifier) || isPlainAll(modifier));
+      const kept = this.spellTotals(working, (modifier) => !isOwn(modifier));
       const asked = levels.map(({ id }): SpellTotal => {
         const count = given.get(id)?.[spellLevel];
         if (count === undefined) return totals.get(id)?.[spellLevel];
@@ -381,7 +372,7 @@ export default class ClassProgression {
       // A column with a modifier the table can't read as a count (one requirements gate, which it counts for every
       // character; one that isn't an add of a number) takes no change: that's its levels' own to make
       const unread = (modifier: LevelModifier) =>
-        modifier.target === target && !isPlainAdd(modifier) && !(field === "allowed" && isPlainAll(modifier));
+        modifier.target === target && !isPlainAdd(modifier) && !isPlainAll(modifier);
       const current = normalizedColumn(levels.map(({ id }) => totals.get(id)?.[spellLevel]));
       const changes = wanted.some((total, index) => total !== current[index]);
       if (changes && levels.some(({ id }) => working.get(id)?.some(unread))) {
@@ -442,17 +433,15 @@ export default class ClassProgression {
   }
 
   /**
-   * A spell table's totals by each level (`field`'s), of the levels' modifiers as a save plans them (`keep`: those).
+   * The cantrips and prepared spells table's totals by each level, of the levels' modifiers as a save plans them
+   * (`keep`: those).
    */
   private spellTotals(
-    field: "allowed" | "uses",
     working: Map<string, LevelModifier[]>,
     keep: (modifier: LevelModifier) => boolean = () => true,
   ): Map<string, Record<string | number, SpellTotal>> {
     const modifiers = readTableModifiers(working, keep);
-    return field === "uses"
-      ? LevelTotals.computeRunning(this.classLevels, modifiers, LevelTotals.readPerDayStep)
-      : LevelTotals.computeRunning(this.classLevels, modifiers, LevelTotals.readKnownStep);
+    return LevelTotals.computeRunning(this.classLevels, modifiers, LevelTotals.readKnownStep);
   }
 
   /**

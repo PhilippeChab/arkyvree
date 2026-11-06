@@ -73,9 +73,4 @@ export default class LevelRules {
       return next;
     });
   }
-
-  /**
-   * The level rules of a ruleset's view, off its Settings (`RULESET_FIELDS`): the nearest ruleset of its chain's that
-   * holds them, the fork's first, the core rules' when none does.
-   */
 }

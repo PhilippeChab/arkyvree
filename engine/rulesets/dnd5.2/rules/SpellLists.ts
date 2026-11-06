@@ -22,7 +22,7 @@ export default class SpellLists {
 
   /**
    * The slug of a spell list's possession paths, from its aptitude's name without the " Spells" suffix ("Wizard Spells"
-   * → "wizard", "Knowledge Domain Spells" → "knowledgedomain").
+   * → "wizard", "Life Domain Spells" → "lifedomain").
    */
   static toSpellPossessionSlug(aptitudeName: string) {
     return stripSeparators(aptitudeName.replace(/ Spells$/, ""));
@@ -64,8 +64,7 @@ export default class SpellLists {
 
   /**
    * Each class's spell lists, by its id: those its levels give slots in (each class's levels by level), a level no
-   * character has taken yet included (a paladin's before his fourth), each with spells on it or none yet (a divine
-   * crusader's: her domain's join it).
+   * character has taken yet included, each with spells on it or none yet (a list a subclass's spells join).
    */
   get classListsByClass(): Map<string, Set<string>> {
     if (this.built.classListsByClass) return this.built.classListsByClass;
@@ -86,8 +85,8 @@ export default class SpellLists {
 
   /**
    * The spell lists a feat brings: those the ruleset's feats give slots in or join to a class's list, and no class gives
-   * slots in (a cleric's domains, a specialist wizard's schools; a feat's extra slot in a class's own list leaves it the
-   * class's). Their spells come with the feat, never learned; their slots follow the feat's class's spell levels.
+   * slots in (a subclass's, a Life Domain's always-prepared spells; a feat's extra slot in a class's own list leaves it
+   * the class's). Their spells come with the feat, never learned; their slots follow the feat's class's spell levels.
    */
   get featListIds(): Set<string> {
     if (this.built.featListIds) return this.built.featListIds;
@@ -105,9 +104,8 @@ export default class SpellLists {
   }
 
   /**
-   * The spells of each list a feat brings (`featListIds`: a domain's, a specialist's school, none on a cleric's domain
-   * slot), by its aptitude id, then by the spell level the list has each at: what a sheet fills the list's slots with,
-   * of the spells the character has.
+   * The spells of each list a feat brings (`featListIds`: a subclass's, a Life Domain's), by its aptitude id, then by
+   * the spell level the list has each at: what a sheet fills the list's slots with, of the spells the character has.
    */
   get featListSpells(): Map<string, Map<number, Set<string>>> {
     if (this.built.featListSpells) return this.built.featListSpells;
@@ -124,7 +122,7 @@ export default class SpellLists {
 
   /**
    * The lists leveled by spell: a list with spells at a level, or one a class or a feat gives slots in before it has
-   * any, or with none of its own (a cleric's domain slot, which his domains' spells fill).
+   * any, or with none of its own.
    */
   get leveledAptitudeIds(): Set<string> {
     if (this.built.leveledAptitudeIds) return this.built.leveledAptitudeIds;

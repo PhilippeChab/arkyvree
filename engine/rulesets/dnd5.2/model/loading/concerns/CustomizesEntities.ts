@@ -45,7 +45,7 @@ export function CustomizesEntities<B extends Constructor<CharacterDataLoader<Loa
       };
     }
 
-    /** Class levels' modifiers and requirements, and each level's bab and skill points. */
+    /** The character's class levels with their modifiers and requirements, by their number. */
     protected toCustomizedClassLevels(classLevelsRaw: KlassLevel[], rulesetData: RulesetData) {
       const classLevels: CustomizedClassLevel[] = classLevelsRaw
         .map((level) => ({

@@ -86,16 +86,20 @@ export default class ClassPicker extends CharacterPicker<DetailedCharacter, Enti
   }
 
   /**
-   * A class's requirement groups: its own, and its next level's but at the character's first level (a class's first
-   * level's, its multiclass prerequisites, which a first class doesn't meet); taking a new class, the first levels' of
-   * the classes it has too (their prerequisites, which a multiclass meets in its current classes as in its new one).
+   * A class's requirement groups: its own, and its next level's (counted after the character's levels and those the
+   * plan takes before it) but at the character's first level (a class's first level's, its multiclass prerequisites,
+   * which a first class doesn't meet); taking a new class, the first levels' of the classes it has too (their
+   * prerequisites, which a multiclass meets in its current classes as in its new one).
    */
   protected override requirementsOf(klass: EntityRecord) {
-    const next = this.nextLevelOf(klass)!;
     const levelIds = this.levelIds();
     const first = levelIds.length === 0;
-    const held = next.position === 1 ? this.heldFirstLevelIds(levelIds) : [];
-    return [klass.id, ...(first ? [] : [next.id]), ...held]
+    // The class's next level after the character's levels and the plan's before this one
+    const levels = levelIds.map((entryId) => ({ entryId }));
+    const position = LevelRules.findNextClassLevel(this.dnd52.classLevelsById, levels, klass.id);
+    const next = this.dnd52.classLevelByClassAndLevel.get(`${klass.id}:${position}`);
+    const held = position === 1 ? this.heldFirstLevelIds(levelIds) : [];
+    return [klass.id, ...(first || !next ? [] : [next.id]), ...held]
       .map((id) => this.rulesetData.requirementsByEntity.get(id) ?? [])
       .filter((requirements) => requirements.length > 0);
   }

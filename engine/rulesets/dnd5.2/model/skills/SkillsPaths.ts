@@ -68,6 +68,17 @@ export default class SkillsPaths implements PathCategory<Dnd52Components> {
       valueType: "number",
       operators: getNumericOperators(kind),
     });
+    // Half the Proficiency Bonus on every unproficient skill (Jack of All Trades), a skill a ruleset adds included
+    if (kind !== "requirement") {
+      paths.push({
+        path: "skills.*.halfproficient",
+        category: "skills",
+        description: "Half the Proficiency Bonus on every skill the character isn't proficient in",
+        groupDescription: "All skills",
+        valueType: "boolean",
+        operators: getOperators("boolean", kind),
+      });
+    }
     return paths;
   }
 

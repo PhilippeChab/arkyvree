@@ -135,7 +135,7 @@ export function PlansAptitudeSlots<B extends Constructor<LevelUpBase<DetailedCha
         }
       }
 
-      // Add baseline unspent slots to the first level (e.g., Human racial bonus feat)
+      // Add baseline unspent slots to the first level (a human's Skillful pick, a background's ability scores)
       for (const [, apt] of Object.entries(baselineAptitudes)) {
         const baselineAvailable = apt.allowed - apt.spent;
         if (baselineAvailable > 0 && perLevelFeatSlots[apt.id]?.[0] !== undefined)

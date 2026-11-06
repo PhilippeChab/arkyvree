@@ -26,12 +26,17 @@ function formatDamage(dice: string, bonus: number): string {
  */
 export function Attacks<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithAttacks extends Base {
-    /** The ability a weapon's attack and damage add: Dexterity at range, the better one with Finesse, else Strength. */
+    /**
+     * The ability a weapon's attack and damage add, as the sheet stands when read (an increase the modifiers applied
+     * counts): the better of Strength and Dexterity with a Finesse weapon, Dexterity with any other ranged weapon,
+     * Strength with any other melee weapon, a thrown one's too.
+     */
     private abilityOf(fields: WeaponFields): "Dexterity" | "Strength" {
-      if (fields.ranged === true) return "Dexterity";
-      if (!fields.properties.includes("Finesse")) return "Strength";
-      const dexterity = this.abilities.getAbilityModifier("Dexterity");
-      return dexterity > this.abilities.getAbilityModifier("Strength") ? "Dexterity" : "Strength";
+      if (fields.properties.includes("Finesse")) {
+        const dexterity = this.abilities.getAbilityModifier("Dexterity");
+        return dexterity > this.abilities.getAbilityModifier("Strength") ? "Dexterity" : "Strength";
+      }
+      return fields.ranged === true ? "Dexterity" : "Strength";
     }
 
     /**
@@ -49,12 +54,14 @@ export function Attacks<B extends Constructor<CombatState>>(Base: B) {
     ): WeaponSlot | undefined {
       const wielded = SLOT_MAP[location];
       if (!wielded) return undefined;
-      const ability = this.abilityOf(fields);
-      const modifier = () => this.abilities.getAbilityModifier(ability);
+      const abilityOf = () => this.abilityOf(fields);
+      const modifier = () => this.abilities.getAbilityModifier(abilityOf());
       const { combat } = this;
       const dice = wielded === "twohanded" && fields.versatileDamage ? fields.versatileDamage : (fields.damage ?? "1");
       const weapon: WeaponSlot = {
-        ability,
+        get ability() {
+          return abilityOf();
+        },
         name,
         ...held,
         properties: [...fields.properties],

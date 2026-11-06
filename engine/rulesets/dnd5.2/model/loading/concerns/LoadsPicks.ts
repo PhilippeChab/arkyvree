@@ -48,12 +48,6 @@ function pickedAt<E>(picks: StoredPick[], levels: StoredAdvancement[], entityOf:
 }
 
 /**
- * Each saved level's picks of a step (`picks`, in the order they were read) with the entity each names (`entityOf`),
- * held at the level it's picked at, with that level's class level (its entry). The character's input holds a pick's
- * references as the ids the view stands for them (a fork's copy, the winner of books' copies), and the view holds every
- * picked entity: deleting one, a fork's deleting an inherited one and unsubscribing its book are refused while a
- * character picks it.
- *
  * The feat each class's first level grants as its starting proficiencies (`levels`, the character's, in order): the
  * feat its class names for a first class (`startingProficiencies`: its saving throws, armor, weapons and skill picks)
  * at the character's first level, and for a multiclass (`multiclassProficiencies`) at a later class's first level, as
@@ -129,8 +123,8 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
 
     /**
      * The spells: picked, then granted, each at its spell level in its pool. A pick's or a grant's spell level is its
-     * composed link's: the ruleset merges the books' copies of a spell and of a list, so a stored pair (Complete
-     * Divine's Bane on Complete Warrior's copy of the favored soul's list) may have no link row of its own.
+     * composed link's: the ruleset merges the books' copies of a spell and of a list, so a stored pair may have no link
+     * row of its own.
      */
     private buildSpells(picks: CharacterPicks, rulesetData: RulesetData, { advancements }: LoadedLevels) {
       const dnd52 = Dnd52View.of(rulesetData);
@@ -155,7 +149,7 @@ export function LoadsPicks<B extends Constructor<CharacterDataLoader<LoadedChara
     }
 
     /**
-     * The character's skill points, feats and spells: what its levels pick and their class levels grant, as the view
+     * The character's feats and spells: what its levels pick and their class levels grant, as the view
      * composes them; and the room the grants make in each pool (a free spell's none), by the pool's id.
      */
     protected buildPicks(picks: CharacterPicks, rulesetData: RulesetData, levels: LoadedLevels) {

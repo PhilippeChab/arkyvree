@@ -13,8 +13,8 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
   abstract class ReadingRuleset extends Base {
     /**
      * Ruleset-scoped rows read from the composed cache's pre-built Maps: the character's languages, class levels and
-     * their saves (their `baseBonus` links), and its classes and their skills (their `classSkill` links), once each.
-     * languagesById is the view's (`RulesetData.byId`): stored pre-COW language ids auto-resolve on lookup.
+     * classes, once each. languagesById is the view's (`RulesetData.byId`): stored pre-COW language ids auto-resolve on
+     * lookup.
      */
     protected readCachedRows(rows: CharacterRows, rulesetData: RulesetData, classLevelIds: string[]) {
       const dnd52 = Dnd52View.of(rulesetData);
@@ -28,7 +28,7 @@ export function ReadsRuleset<B extends Constructor<CharacterDataLoader<LoadedCha
       };
     }
 
-    /** Each class's fields: its bonus spell ability, by the ability's name, and its caster type. */
+    /** Each class's fields: its spellcasting ability, by the ability's name, and its caster type. */
     protected readClassFields(classIds: string[], rulesetData: RulesetData, abilityLookup: Map<string, string>) {
       const classSpellcastingAbilityMap = new Map<string, string>();
       const classCasterTypeMap = new Map<string, CasterType>();

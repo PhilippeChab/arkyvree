@@ -9,8 +9,8 @@ import type { Modifier } from "@/shared/relations.ts";
 import { capitalize } from "@/shared/text.ts";
 
 /**
- * A D&D 5th Edition character's diagnostics, which core's validation reads (`Validates`): the issues its rules flag (its pools'
- * slots, its skill points and ranks, a general feat with no pool), the rows core checks come from its source chain, and
+ * A D&D 5th Edition character's diagnostics, which core's validation reads (`Validates`): the issues its rules flag (its
+ * pools' slots, its armor without its training), the rows core checks come from its source chain, and
  * the names of its entities its issues give, past those core names.
  */
 export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
