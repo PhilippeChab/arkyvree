@@ -8,14 +8,16 @@ import { stripSeparators } from "@/shared/text.ts";
 interface AbilitiesData {
   [key: string]: {
     base: number;
-    level: number; // Bonus from levels
     misc: number;
     readonly modifier: number;
     readonly total: number;
   };
 }
 
-/** A character's ability scores: each one's base, what its levels add and misc, its total and modifier counted when read. */
+/**
+ * A character's ability scores: each one's base and misc (what its background's, its feats' and its items' increases
+ * add), its total and modifier counted when read.
+ */
 export default class AbilitiesComponent extends CharacterComponent<LoadedCharacterData> {
   private readonly abilities: AbilitiesData = {} as AbilitiesData;
 
@@ -25,17 +27,8 @@ export default class AbilitiesComponent extends CharacterComponent<LoadedCharact
    */
   private readonly abilityNames: Map<string, { name: string; normalizedName: string }> = new Map();
 
-  /** What the character's race makes of each ability's misc, by the ability's slug: its permanent score keeps it. */
-  private raceAdjustments: Readonly<Record<string, number>> = {};
-
-  /**
-   * Each of the character's scores (its `score` links), its ability named as the view names it, with what its levels'
-   * ability increases (their `abilities` picks) add.
-   */
-  override initialize(
-    { abilityPicks, scoreLinks }: Pick<LoadedCharacterData, "abilityPicks" | "scoreLinks">,
-    { rulesetData }: RulesetView,
-  ) {
+  /** Each of the character's scores (its `score` links), its ability named as the view names it. */
+  override initialize({ scoreLinks }: Pick<LoadedCharacterData, "scoreLinks">, { rulesetData }: RulesetView) {
     const { abilitiesById } = Dnd52View.of(rulesetData);
     for (const { amount, entityId } of scoreLinks) {
       const name = abilitiesById.get(entityId)?.name ?? "Unknown";
@@ -45,20 +38,14 @@ export default class AbilitiesComponent extends CharacterComponent<LoadedCharact
       // The total and the modifier are computed from the parts when read, so they follow every change to them
       this.abilities[normalizedName] = {
         base: amount!,
-        level: 0,
         misc: 0,
         get total() {
-          return this.base + this.misc + this.level;
+          return this.base + this.misc;
         },
         get modifier() {
           return AbilityRules.computeModifier(this.total);
         },
       };
-    }
-
-    for (const { amount, entityId } of abilityPicks) {
-      const normalizedName = this.abilityNames.get(entityId!)?.normalizedName;
-      if (normalizedName && this.abilities[normalizedName]) this.abilities[normalizedName].level += amount!;
     }
   }
 
@@ -90,38 +77,8 @@ export default class AbilitiesComponent extends CharacterComponent<LoadedCharact
     return this.abilities[stripSeparators(abilityName)]?.modifier ?? 0;
   }
 
-  /**
-   * The modifier of an ability's base and what its levels add, its misc aside: what a bonded creature's stat block lists
-   * its skills at (`SkillsComponent.setStatBlockTotal`).
-   */
-  getAbilityModifierExcludingMisc(abilityName: string) {
-    const ability = this.abilities[stripSeparators(abilityName)];
-    if (!ability) return 0;
-    return AbilityRules.computeModifier(ability.base + ability.level);
-  }
-
   /** An ability's normalized name by its id (as the sheet keys it): none for one the character has no score in. */
   getAbilityName(abilityId: string): string | undefined {
     return this.abilityNames.get(abilityId)?.normalizedName;
-  }
-
-  /**
-   * The modifier of an ability's permanent score (`abilityName`): its base, what its levels add and what its race makes
-   * of its misc (`setRaceAdjustments`: a half-orc's −2 Intelligence), the rest of its misc (an item's enhancement, a
-   * spell's bonus) aside. What the character's skill points and its language picks count.
-   */
-  getPermanentModifier(abilityName: string): number {
-    const slug = stripSeparators(abilityName);
-    const ability = this.abilities[slug];
-    if (!ability) return 0;
-    return AbilityRules.computeModifier(ability.base + ability.level + (this.raceAdjustments[slug] ?? 0));
-  }
-
-  /**
-   * What the character's race makes of each ability's misc (`adjustments`, by the ability's slug), which its permanent
-   * score keeps (`getPermanentModifier`).
-   */
-  setRaceAdjustments(adjustments: Readonly<Record<string, number>>): void {
-    this.raceAdjustments = adjustments;
   }
 }

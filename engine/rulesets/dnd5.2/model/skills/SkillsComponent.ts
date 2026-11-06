@@ -1,327 +1,78 @@
 import { CharacterComponent } from "@/engine/core/character/index.ts";
-import type { RulesIssue } from "@/engine/core/RulesError.ts";
 import type { RulesetView } from "@/engine/core/view/index.ts";
-import { SKILL_FIELDS, type SkillFieldValues } from "@/engine/rulesets/dnd5.2/entities/skills/fields.ts";
 import type AbilitiesComponent from "@/engine/rulesets/dnd5.2/model/abilities/AbilitiesComponent.ts";
 import type ClassesComponent from "@/engine/rulesets/dnd5.2/model/classes/ClassesComponent.ts";
-import type ArmorsComponent from "@/engine/rulesets/dnd5.2/model/combat/ArmorsComponent.ts";
-import type EncumbranceComponent from "@/engine/rulesets/dnd5.2/model/combat/EncumbranceComponent.ts";
-import type ShieldsComponent from "@/engine/rulesets/dnd5.2/model/combat/ShieldsComponent.ts";
-import type IdentityComponent from "@/engine/rulesets/dnd5.2/model/identity/IdentityComponent.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd5.2/model/loading/DetailedCharacterDataLoader.ts";
-import SkillRules from "@/engine/rulesets/dnd5.2/rules/SkillRules.ts";
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
-import type { Skill } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import { stripSeparators } from "@/shared/text.ts";
-import { RACE_SIZE } from "@/vocabulary/dnd5.2/fields/index.ts";
-import { SIZE_FLY_MOD, SIZE_STEALTH_MOD } from "@/vocabulary/dnd5.2/sizes.ts";
+import { EXPERTISE_MULTIPLIER } from "@/vocabulary/dnd5.2/skills.ts";
 
-/** The skill points' budget: a level's bonus points, an input, and the points counted from the character's levels. */
-interface SkillBudget {
-  readonly available: number;
-  perlevel: number;
-  readonly spent: number;
+/** A skill as the sheet counts it. */
+interface SkillData {
+  readonly ability: number;
+  abilityName: string;
+  expertise: boolean;
+  halfproficient: boolean;
+  misc: number;
+  name: string;
+  proficient: boolean;
+  readonly proficiency: number;
   readonly total: number;
 }
 
 interface SkillsData {
-  [key: string]: {
-    readonly ability: number; // Bonus from ability modifier
-    description?: string | null;
-    innate: boolean;
-    misc: number; // Misc from items
-    name: string;
-    rank: number; // Rank from levels
-    size: number; // Size modifier (Hide only), which a modifier can add to
-    readonly total: number; // Total from everything
-    trained: boolean;
-    readonly weight: number; // Armor check penalty, from armor, shield and load
-  };
+  [key: string]: SkillData;
 }
 
 /**
- * A character's skills: each one's ranks from its levels and what its ability, its size and its armor add, counted when
- * read, and the skill points' budget.
+ * A character's skills: each one's ability modifier, the Proficiency Bonus it adds (all of it proficient, twice with
+ * Expertise, half rounded down when its Jack of All Trades reaches an unproficient one; a feat sets each), and misc,
+ * counted when read. A skill takes no ranks.
  */
 export default class SkillsComponent extends CharacterComponent<LoadedCharacterData> {
   constructor(
     private readonly abilities: AbilitiesComponent,
     private readonly classes: ClassesComponent,
-    private readonly identity: IdentityComponent,
-    private readonly armors: ArmorsComponent,
-    private readonly shields: ShieldsComponent,
-    private readonly encumbrance: EncumbranceComponent,
   ) {
     super();
   }
 
-  /** Each skill's key ability, by the skill's slug. */
-  private readonly abilityNameBySkill = new Map<string, string>();
+  private readonly skills: SkillsData = {};
 
-  private readonly innateSkillIds: Set<string> = new Set<string>();
-
-  private readonly rankBySkillId: Map<string, number> = new Map<string, number>();
-
-  /**
-   * The skill points' budget: a level's bonus points (`perlevel`, a human's) are an input, which a modifier changes; the
-   * total, what's left and what's spent are counted when read, from the classes' levels and the skill point ability.
-   */
-  private readonly skillBudget: SkillBudget = (() => {
-    const total = () => this.countTotalPoints();
-    const spent = () => this.countSpentPoints();
-    return {
-      get total() {
-        return total();
-      },
-      get available() {
-        return this.total - this.spent;
-      },
-      get spent() {
-        return spent();
-      },
-      perlevel: 0,
-    };
-  })();
-
-  private readonly skills: SkillsData = {} as SkillsData;
-
-  private skillPointClassLevelFields: Map<string, { bab: number; skills: number }> = new Map();
-
-  private skillRankAbilityId: string | null = null;
-
-  /**
-   * Each of the ruleset's skills, with its fields (`skillFields`) and the ranks the character's class
-   * levels put in it; and the skill points' budget, from the ruleset's skill point ability (`skillRankAbilityId`) and
-   * each class level's points (`classLevelFields`).
-   */
-  override initialize(
-    {
-      classLevelFields,
-      skillFields,
-      skillRankAbilityId,
-    }: Pick<LoadedCharacterData, "classLevelFields" | "skillFields" | "skillRankAbilityId">,
-    { rulesetData }: RulesetView,
-  ) {
-    const rulesetSkills = Dnd52View.of(rulesetData).skills;
-    this.skillRankAbilityId = skillRankAbilityId;
-    this.skillPointClassLevelFields = classLevelFields;
-    const classes = this.classes.getClasses();
-
-    // Each class's class skills (its links' and their subtypes'), which a level's points buy ranks in at a point a
-    // rank; any class's are the character's innate ones
-    const classSkillsOf = new Map(
-      Object.values(classes).map((klass) => [
-        klass,
-        SkillRules.classSkillIds(
-          klass.classSkillLinks.map((link) => link.toId),
-          rulesetSkills,
-        ),
-      ]),
-    );
-    for (const ids of classSkillsOf.values()) for (const id of ids) this.innateSkillIds.add(id);
-
-    // Convert stored points to ranks per class level: a rank a point, a class skill's or not
-    for (const klass of Object.values(classes)) {
-      for (const level of klass.levels) {
-        for (const { amount, entity } of level.skills) {
-          const ranksGained = SkillRules.ranksFor(amount);
-          const current = this.rankBySkillId.get(entity.id) ?? 0;
-          this.rankBySkillId.set(entity.id, current + ranksGained);
-        }
-      }
-    }
-
-    for (const skill of rulesetSkills) {
-      const abilityName = (skill.links.keyAbility && this.abilities.getAbilityName(skill.links.keyAbility)) ?? "";
-      this.abilityNameBySkill.set(stripSeparators(skill.name), abilityName);
-      // A skill without its fields' values has their defaults: armor doesn't weigh on it, and it needs training
-      const fields = skillFields.get(skill.id) ?? SKILL_FIELDS.defaults;
-      this.skills[stripSeparators(skill.name)] = this.newSkill(skill, abilityName, fields);
-    }
-  }
-
-  /** The armor check penalty a skill armor weighs on takes: the worse of the armor and shield's and the load's. */
-  private armorCheckPenalty(): number {
-    let armorPenalty = 0;
-
-    for (const armor of new Set(Object.values(this.armors.getArmors()))) armorPenalty += armor.checkpenalty;
-    // A shield carried in any weapon set weighs on them: the worst set's
-    armorPenalty += this.shields.getCheckPenalty();
-
-    // The Core Rulebook: use the worse (more negative) of armor+shield penalty vs encumbrance penalty
-    const encumbrancePenalty = this.encumbrance.getEncumbrance().checkpenalty;
-    return Math.abs(Math.min(armorPenalty, encumbrancePenalty));
-  }
-
-  /** The skill points the character's levels spent: their skills' ranks. */
-  private countSpentPoints(): number {
-    return Object.values(this.classes.getClasses()).reduce(
-      (acc, klass) =>
-        acc + klass.levels.reduce((acc, level) => acc + level.skills.reduce((acc, skill) => acc + skill.amount, 0), 0),
-      0,
-    );
-  }
-
-  /** The skill points every level gives: its points per level, with the bonus each level adds (`perlevel`). */
-  private countTotalPoints(): number {
-    const { pointsPerLevel, bonusPerLevel } = this.getSkillPointBases();
-    return pointsPerLevel.reduce((acc, points) => acc + SkillRules.levelPoints(points, bonusPerLevel), 0);
-  }
-
-  /**
-   * The modifier of the ruleset's skill point ability's permanent score (`AbilitiesComponent.getPermanentModifier`: its
-   * race's adjustment in, an item's or a spell's bonus aside): 0 when the ruleset names none.
-   */
-  private getSkillPointAbilityModifier(): number {
-    const abilityName = this.skillRankAbilityId ? this.abilities.getAbilityName(this.skillRankAbilityId) : undefined;
-    return abilityName ? this.abilities.getPermanentModifier(abilityName) : 0;
-  }
-
-  /**
-   * A skill as the sheet holds it: its ranks and misc are inputs; the ability's modifier, the armor check penalty and
-   * the total are computed when read, as they follow the abilities, the armor and the load, a class skill with a rank
-   * taking +3 (`SkillRules.classSkillBonus`). A Stealth or a Fly check's size follows the character's, as its identity's
-   * race has it, and keeps what a modifier adds to it.
-   */
-  private newSkill(skill: Skill, abilityName: string, fields: SkillFieldValues): SkillsData[string] {
-    const { abilities } = this;
-    const armorCheckPenalty = () => this.armorCheckPenalty();
-    const raceSize = () => this.identity.getIdentity().physiology.race.fields[RACE_SIZE];
-    const invested = this.rankBySkillId.get(skill.id) ?? 0;
-    // How many times over the skill takes the armor check penalty: none when armor doesn't weigh on it
-    const checkPenaltyMultiplier = fields.impactedByWeight ? fields.checkPenaltyMultiplier : 0;
-    const sizeOfRace = () => {
-      if (skill.name === "Stealth") return SIZE_STEALTH_MOD[raceSize()] ?? 0;
-      if (skill.name === "Fly") return SIZE_FLY_MOD[raceSize()] ?? 0;
-      return 0;
-    };
-    let sizeBonus = 0;
-    return {
-      name: skill.name,
-      description: skill.description ?? undefined,
-      trained: fields.usableWithoutTraining ? true : invested !== 0,
-      innate: this.innateSkillIds.has(skill.id),
-      rank: invested,
-      get ability() {
-        return abilityName ? abilities.getAbilityModifier(abilityName) : 0;
-      },
-      get weight() {
-        return checkPenaltyMultiplier === 0 ? 0 : armorCheckPenalty() * checkPenaltyMultiplier;
-      },
-      get size() {
-        return sizeOfRace() + sizeBonus;
-      },
-      set size(value: number) {
-        sizeBonus = value - sizeOfRace();
-      },
-      misc: 0,
-      get total() {
-        return (
-          this.rank +
-          this.ability +
-          this.size +
-          this.misc -
-          this.weight +
-          SkillRules.classSkillBonus(this.rank, this.innate)
-        );
-      },
-    };
-  }
-
-  /** Ranks a bonded creature's hit dice past its stat block's give a skill. */
-  addRanks(skillName: string, ranks: number): void {
-    const skill = this.skills[stripSeparators(skillName)];
-    if (!skill || ranks === 0) return;
-    skill.rank += ranks;
-    skill.trained = true;
-  }
-
-  /** Raises each skill's ranks to these, by skill slug, where they're better: a familiar's to its master's. */
-  applyBetterRanks(ranks: Record<string, number>): void {
-    for (const [slug, rank] of Object.entries(ranks)) {
-      const skill = this.skills[slug];
-      if (!skill || rank <= skill.rank) continue;
-      skill.rank = rank;
-      skill.trained = true;
-    }
-  }
-
-  /** Enriches ruleset skills with character-specific class/rank data for level-up UI. */
-  getEnrichedSkills<T extends { id: string; name: string }>(
-    allSkills: T[],
-    classSkillIds: Set<string>,
-  ): (T & { currentRank: number; isClassSkill: boolean; isCurrentClassSkill: boolean })[] {
-    return allSkills.map((skill) => {
-      const skillData = this.skills[stripSeparators(skill.name)];
-      return {
-        ...skill,
-        isClassSkill: skillData?.innate ?? classSkillIds.has(skill.id),
-        isCurrentClassSkill: classSkillIds.has(skill.id),
-        currentRank: skillData?.rank || 0,
+  /** Each of the ruleset's skills, its ability's modifier and its proficiency counted when read. */
+  override initialize(_data: LoadedCharacterData, { rulesetData }: RulesetView) {
+    const { abilities, classes } = this;
+    for (const skill of Dnd52View.of(rulesetData).skills) {
+      const abilityName = (skill.links.keyAbility && abilities.getAbilityName(skill.links.keyAbility)) ?? "";
+      // What's computed is computed when read, so it follows the abilities, the level and the parts
+      this.skills[stripSeparators(skill.name)] = {
+        name: skill.name,
+        abilityName,
+        get ability() {
+          return abilities.getAbilityModifier(abilityName);
+        },
+        expertise: false,
+        halfproficient: false,
+        misc: 0,
+        proficient: false,
+        get proficiency() {
+          const bonus = classes.getProficiencyBonus();
+          if (this.proficient) return this.expertise ? bonus * EXPERTISE_MULTIPLIER : bonus;
+          return this.halfproficient ? Math.floor(bonus / 2) : 0;
+        },
+        get total() {
+          return this.ability + this.proficiency + this.misc;
+        },
       };
-    });
+    }
   }
 
-  /** A level's points per level, before the minimum: its class's and the skill point ability's modifier. */
-  getLevelPointsPerLevel(classSkillPoints: number): number {
-    return classSkillPoints + this.getSkillPointAbilityModifier();
-  }
-
-  getSkillBudget(): SkillBudget {
-    return this.skillBudget;
-  }
-
-  /**
-   * Each level's points per level before the minimum, in the order the character took them (the first is its first
-   * level), and the bonus each level adds: what the level-up wizard recomputes the points from when it raises the
-   * skill point ability.
-   */
-  getSkillPointBases(): { bonusPerLevel: number; pointsPerLevel: number[] } {
-    const levels = Object.values(this.classes.getClasses())
-      .flatMap((klass) => klass.levels)
-      .sort((a, b) => a.advancement.position - b.advancement.position);
-    return {
-      pointsPerLevel: levels.map((level) =>
-        this.getLevelPointsPerLevel(this.skillPointClassLevelFields.get(level.classLevel.id)?.skills ?? 0),
-      ),
-      bonusPerLevel: this.skillBudget.perlevel,
-    };
+  /** A skill, by its name, as the sheet counts it: none for a skill the ruleset doesn't have. */
+  getSkill(skillName: string): SkillData | undefined {
+    return this.skills[stripSeparators(skillName)];
   }
 
   getSkills(): SkillsData {
     return this.skills;
-  }
-
-  getValidationIssues(characterLevel: number): RulesIssue[] {
-    const issues: RulesIssue[] = [];
-    for (const [, skill] of Object.entries(this.skills)) {
-      if (skill.rank <= 0) continue;
-      const maxRank = SkillRules.maxRank(characterLevel);
-      if (skill.rank > maxRank) {
-        issues.push({
-          category: "skills",
-          message: `${skill.name}: rank ${skill.rank} exceeds the max of ${maxRank}, the character's hit dice`,
-        });
-      }
-    }
-
-    return issues;
-  }
-
-  /**
-   * A bonded creature's skill as its stat block lists it: its `ranks` (a familiar's, which its master's may better),
-   * and the total less those, the ability's base modifier, the size and what the stat block's feats add (`featBonus`,
-   * which those feats add back), as misc. The ability's part stays live: a raised ability (a companion's advancement,
-   * an item) raises the total.
-   */
-  setStatBlockTotal(skillName: string, total: number, ranks = 0, featBonus = 0): void {
-    const slug = stripSeparators(skillName);
-    const skill = this.skills[slug];
-    if (!skill) return;
-    const abilityName = this.abilityNameBySkill.get(slug);
-    const ability = abilityName ? this.abilities.getAbilityModifierExcludingMisc(abilityName) : 0;
-    skill.rank = ranks;
-    skill.misc = total - ability - skill.size - ranks - featBonus;
-    skill.trained = total > 0;
   }
 }

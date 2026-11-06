@@ -2,9 +2,12 @@ import type { PathCategory } from "@/engine/core/paths/PathCategory.ts";
 import type { RulesetData } from "@/engine/core/view/index.ts";
 import { type Dnd52Components } from "@/engine/rulesets/dnd5.2/model/CharacterComponents.ts";
 import { getOperators } from "@/shared/customization/operators.ts";
-import { deriveSegmentLabels, type OperatorKind, type TargetPath } from "@/shared/customization/target.ts";
+import { deriveSegmentLabels, isLeafOfKind, type OperatorKind, type TargetPath } from "@/shared/customization/target.ts";
 
-const NAVIGATABLE_BACKGROUND_PATHS = [{ path: "notes", description: "Public notes", type: "string" as const }];
+const NAVIGATABLE_BACKGROUND_PATHS = [
+  { path: "name", description: "Background name (e.g., Sage)", type: "string" as const, requirementOnly: true },
+  { path: "notes", description: "Public notes", type: "string" as const },
+];
 
 const NAVIGATABLE_BELIEFS_PATHS = [
   { path: "deity", description: "Character deity", type: "string" as const },
@@ -18,8 +21,8 @@ const NAVIGATABLE_IDENTITY_PATHS = [
   { path: "gender", description: "Character gender", type: "string" as const },
   { path: "height", description: "Character height", type: "string" as const },
   { path: "weight", description: "Body weight", type: "string" as const },
-  { path: "race.name", description: "Race name", type: "string" as const },
-  { path: "race.size", description: "Size (e.g., Medium, Small)", type: "string" as const },
+  { path: "species.name", description: "Species name", type: "string" as const },
+  { path: "species.size", description: "Size (e.g., Medium, Small)", type: "string" as const },
 ];
 
 const NAVIGATABLE_META_PATHS = [
@@ -57,6 +60,7 @@ export default class IdentityPaths implements PathCategory<Dnd52Components> {
     }
 
     for (const subPath of NAVIGATABLE_BACKGROUND_PATHS) {
+      if (!isLeafOfKind(subPath, kind)) continue;
       paths.push({
         path: `identity.background.${subPath.path}`,
         category: "identity",
@@ -92,7 +96,7 @@ export default class IdentityPaths implements PathCategory<Dnd52Components> {
     "identity.beliefs": "Deity and alignment",
     "identity.background": "Notes",
     "identity.meta": "Character level and experience points",
-    "identity.physiology.race": "Character race name and size",
+    "identity.physiology.species": "Character species name and size",
   };
 
   generate(_rulesetData: RulesetData, kind: OperatorKind): TargetPath[] {

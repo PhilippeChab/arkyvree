@@ -11,7 +11,11 @@ import { CHARACTER_FIELDS } from "@/vocabulary/dnd5.2/fields/index.ts";
 export type Dnd52CharacterFields = FieldValues<typeof CHARACTER_FIELDS>;
 
 /** The role of a Pathfinder character's link to its race, a single one (`character.links`). */
-export const RACE_ROLE = "race";
+/** The role of a character's link to its background. */
+export const BACKGROUND_ROLE = "background";
+
+/** The role of a character's link to its species. */
+export const SPECIES_ROLE = "species";
 
 /**
  * A Pathfinder character's own values, read off its row as stored: its fields by their declarations (`CHARACTER_FIELDS`, its
@@ -50,8 +54,14 @@ export default class CharacterValues {
   }
 
   /** A character's race (`links`, its single links as stored): the entity its `race` link names. */
-  static raceOf({ links }: Pick<Character, "links">): string {
-    return links[RACE_ROLE];
+  /** The character's background, by its id: none before it picks one. */
+  static backgroundOf({ links }: Pick<Character, "links">): string | undefined {
+    return links[BACKGROUND_ROLE] ?? undefined;
+  }
+
+  /** The character's species, by its id. */
+  static speciesOf({ links }: Pick<Character, "links">): string {
+    return links[SPECIES_ROLE];
   }
 
   /**

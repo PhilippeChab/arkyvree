@@ -1,5 +1,5 @@
 /**
- * Pathfinder's kinds' entities, as the view holds them (`ViewEntity`: as stored, their fields typed by their vocabulary's
+ * D&D 5th Edition's kinds' entities, as the view holds them (`ViewEntity`: as stored, their fields typed by their vocabulary's
  * declarations, `ENTITY_FIELDS`, and their single links by their storage's roles, `LINK_ROLES`), by type
  * (`Dnd52Kinds`), which it declares into the view's registry (`ModuleKinds`), with its owned kind, and its code reads
  * them by (`DeclaredRows`). Its entities' links of a role they hold many of are the view's (`ViewLink`, by role: a
@@ -13,7 +13,7 @@ import type { HeldFieldValues } from "@/shared/customization/fields.ts";
 import type { ENTITY_FIELDS } from "@/vocabulary/dnd5.2/fields/index.ts";
 
 declare module "@/engine/core/view/rows.ts" {
-  /** Pathfinder's kinds: its kinds' entities, by type, and its owned kind, a class's levels. */
+  /** D&D 5th Edition's kinds: its kinds' entities, by type, and its owned kind, a class's levels. */
   interface ModuleKinds {
     "dnd5.2": { owned: "class-levels"; rows: Dnd52Kinds };
   }
@@ -31,28 +31,34 @@ type Dnd52Entity<T extends keyof typeof ENTITY_FIELDS | null, F extends string> 
 /** The roles of a kind's single links (`fromType`'s), as its storage declares them (`LINK_ROLES`). */
 type SingleRolesOf<F extends string> = Extract<(typeof LINK_ROLES)[number], { fromType: F; single: true }>["role"];
 
-/** Pathfinder's kinds' entities, by type. */
+/** D&D 5th Edition's kinds' entities, by type. */
 export interface Dnd52Kinds {
   abilities: RulesetAbility;
   aptitudes: Aptitude;
+  backgrounds: Background;
   "class-levels": KlassLevel;
   classes: Klass;
   feats: Feat;
   items: Item;
   languages: Language;
   mechanics: Mechanic;
-  races: Race;
   saves: RulesetSave;
   skills: Skill;
+  species: Species;
   spells: Spell;
 }
 
 export type Aptitude = Dnd52Entity<null, "aptitudes">;
+/** A background: the abilities its increases go to aside (its links), its Origin feat and proficiencies its grants. */
+export type Background = Dnd52Entity<"backgrounds", "backgrounds">;
 /** A feat: its pools aside (its links), whether it stacks, whether a level up picks it, whether its ruleset made it… */
 export type Feat = Dnd52Entity<"feats", "feats">;
 /** An item: its cost, its weight, its type, its slot, whether it's a template, its stats, and its template. */
 export type Item = Dnd52Entity<"items", "items">;
-/** A class: its hit die, its caster type, the class it's a kind of (`subclassOf`), its bonus spell ability. */
+/**
+ * A class: its hit die, its caster type, its spellcasting ability, and the feats its starting proficiencies are, as a
+ * first class and as a multiclass.
+ */
 export type Klass = Dnd52Entity<"classes", "classes">;
 /** A class's level, unnamed: its class (`ownerId`) and its number (`position`). */
 export type KlassLevel = Omit<Dnd52Entity<"class-levels", "class-levels">, "name"> & {
@@ -62,12 +68,12 @@ export type KlassLevel = Omit<Dnd52Entity<"class-levels", "class-levels">, "name
 };
 export type Language = Dnd52Entity<"languages", "languages">;
 export type Mechanic = Dnd52Entity<null, "mechanics">;
-/** A race: its size, its base speed, the race it's a kind of (`subraceOf`), and what it's for (`partition`). */
-export type Race = Dnd52Entity<"races", "races">;
 export type RulesetAbility = Dnd52Entity<null, "abilities"> & { description: string };
 /** A save: the ability its bonus comes from (`keyAbility`). */
 export type RulesetSave = Dnd52Entity<"saves", "saves">;
-/** A skill: the ability its checks add (`keyAbility`), and how armor weighs on it. */
+/** A skill: the ability its checks add (`keyAbility`). */
 export type Skill = Dnd52Entity<"skills", "skills">;
-/** A spell: its stat block, what a save against it does, and the save it allows (`resistedBy`). */
+/** A species: its size, its speed, the species it's a kind of (`subspeciesOf`), and what it's for (`partition`). */
+export type Species = Dnd52Entity<"species", "species">;
+/** A spell: its stat block, and the saving throw it calls for (`resistedBy`). */
 export type Spell = Dnd52Entity<"spells", "spells">;

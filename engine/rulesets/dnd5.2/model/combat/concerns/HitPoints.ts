@@ -2,31 +2,31 @@ import type CombatState from "@/engine/rulesets/dnd5.2/model/combat/CombatState.
 import type { Constructor } from "@/lib/mixins.ts";
 import { MIN_HIT_POINTS_PER_LEVEL } from "@/vocabulary/dnd5.2/classes.ts";
 
-/** A character's hit points: its classes' hit dice and its Constitution. */
+/**
+ * A character's hit points, as the SRD 5.2.1 counts them: each level's (its first, its hit die's highest; each other,
+ * rolled or its fixed value, `levelHitPoints`) and its Constitution modifier on each, though a level never gives fewer
+ * than 1.
+ */
 export function HitPoints<B extends Constructor<CombatState>>(Base: B) {
   abstract class WithHitPoints extends Base {
-    /**
-     * The hit points Constitution adds: its modifier on each level's roll, though a penalty never drops a level below 1
-     * hit point (Core Rulebook). A bonded creature's hit dice are its average, so its modifier adds once per hit die.
-     */
+    /** Each level's hit points, which its Constitution modifier adds to. */
+    private levelRolls: number[] = [];
+
+    /** The hit points Constitution adds: its modifier on each level's, a level giving 1 at least. */
     private constitutionHitPoints(): number {
-      const constitutionModifier = this.abilities.getAbilityModifier("Constitution");
-      if (this.hitDiceOverride !== null) return constitutionModifier * this.hitDiceOverride;
-      return this.hitDieRolls.reduce(
-        (acc, roll) => acc + Math.max(constitutionModifier, MIN_HIT_POINTS_PER_LEVEL - roll),
-        0,
-      );
+      const modifier = this.abilities.getAbilityModifier("Constitution");
+      return this.levelRolls.reduce((total, roll) => total + Math.max(modifier, MIN_HIT_POINTS_PER_LEVEL - roll), 0);
     }
 
     /**
-     * The hit points: the rolls (base, each level's: `rolls`) and misc are inputs, which modifiers change;
-     * Constitution's part and the total are computed when read, so they follow the Constitution.
+     * The hit points: the levels' (base) and misc are inputs, which modifiers change; Constitution's part and the total
+     * are computed when read, so they follow the Constitution.
      */
     protected initializeHitPoints(rolls: number[]): void {
       const constitution = () => this.constitutionHitPoints();
-      this.hitDieRolls = rolls;
+      this.levelRolls = rolls;
       this.combat.hp = {
-        base: this.hitDieRolls.reduce((acc, roll) => acc + roll, 0),
+        base: rolls.reduce((total, roll) => total + roll, 0),
         get constitution() {
           return constitution();
         },
@@ -35,10 +35,6 @@ export function HitPoints<B extends Constructor<CombatState>>(Base: B) {
           return this.base + this.constitution + this.misc;
         },
       };
-    }
-
-    setHitDiceOverride(hd: number | null) {
-      this.hitDiceOverride = hd;
     }
   }
   return WithHitPoints;

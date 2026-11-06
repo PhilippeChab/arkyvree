@@ -21,24 +21,29 @@ import { WIELDED_VALUES } from "./CombatState.ts";
  * the misc beside it.
  */
 const WEAPON_PATHS = [
-  { path: "tohit.strength", description: "Str/Dex bonus to attack", type: "number" as const, requirementOnly: true },
-  { path: "tohit.magic", description: "Enhancement bonus to attack", type: "number" as const },
-  { path: "tohit.size", description: "Size modifier to attack", type: "number" as const, requirementOnly: true },
-  { path: "tohit.misc", description: "Other bonuses to attack", type: "number" as const },
   {
-    path: "tohit.gearpenalty",
-    description:
-      "Penalty to attack from the gear: armor or a shield without proficiency, a tower shield, a crossbow in one hand",
+    path: "proficient",
+    description: "Whether the character is proficient with it: its attack adds the Proficiency Bonus",
+    type: "boolean" as const,
+  },
+  {
+    path: "mastered",
+    description: "Whether the character uses its mastery property (Weapon Mastery)",
+    type: "boolean" as const,
+  },
+  { path: "tohit.ability", description: "Str/Dex modifier to attack", type: "number" as const, requirementOnly: true },
+  {
+    path: "tohit.proficiency",
+    description: "The Proficiency Bonus, when proficient",
     type: "number" as const,
     requirementOnly: true,
   },
-  { path: "damage.base", description: "Base damage dice", type: "string" as const },
-  { path: "damage.strength", description: "Str bonus to damage", type: "number" as const, requirementOnly: true },
-  { path: "damage.magic", description: "Enhancement bonus to damage", type: "number" as const },
+  { path: "tohit.magic", description: "A magic weapon's bonus to attack (+1, +2, +3)", type: "number" as const },
+  { path: "tohit.misc", description: "Other bonuses to attack (the Archery style's +2)", type: "number" as const },
+  { path: "damage.dice", description: "Damage dice", type: "string" as const },
+  { path: "damage.ability", description: "Str/Dex modifier to damage", type: "number" as const, requirementOnly: true },
+  { path: "damage.magic", description: "A magic weapon's bonus to damage (+1, +2, +3)", type: "number" as const },
   { path: "damage.misc", description: "Other bonuses to damage", type: "number" as const },
-  { path: "damage.critical.range", description: "Critical threat range", type: "number" as const },
-  { path: "damage.critical.multiplier", description: "Critical hit multiplier", type: "number" as const },
-  { path: "damage.strmultiplier", description: "Str-to-damage ratio (1x/0.5x/1.5x)", type: "number" as const },
   {
     path: "wielded",
     description: "How it's held: in the main hand, the off hand, or two-handed",
@@ -82,7 +87,6 @@ export default class WeaponPaths implements PathCategory<Dnd52Components> {
   readonly pathDescriptions = {
     "weapon.tohit": "Attack roll bonuses of the item's own weapon",
     "weapon.damage": "Damage roll bonuses of the item's own weapon",
-    "weapon.damage.critical": "Critical hit properties",
   };
 
   generate(_rulesetData: RulesetData, kind: OperatorKind): TargetPath[] {
@@ -90,11 +94,7 @@ export default class WeaponPaths implements PathCategory<Dnd52Components> {
   }
 
   getSegmentLabels(): Record<string, string> {
-    return deriveSegmentLabels(WEAPON_PATHS, {
-      weapon: "Weapon",
-      tohit: "To Hit",
-      gearpenalty: "Gear Penalty",
-    });
+    return deriveSegmentLabels(WEAPON_PATHS, { weapon: "Weapon", tohit: "To Hit" });
   }
 
   /** Whether a target is an item's own weapon's (`weapon.tohit.misc`, `weapon.wielded`): the slots holding the item. */

@@ -8,31 +8,35 @@ import {
   type OperatorKind,
   type TargetPath,
 } from "@/shared/customization/target.ts";
+import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd5.2/spells.ts";
 
-/**
- * The highest spell level castable, of each kind, and the highest caster level, of either kind and arcane: computed from
- * the character's classes, a requirement's only.
- */
+/** What a character's spellcasting counts, each for requirements only: what its classes' levels give it. */
 const SPELLCASTING_PATHS = [
-  { path: "arcane", description: "Max arcane spell level castable", type: "number" as const, requirementOnly: true },
-  {
-    path: "arcanecasterlevel",
-    description: "Highest arcane caster level: an arcane class's level and its bonus caster levels",
-    type: "number" as const,
-    requirementOnly: true,
-  },
   {
     path: "casterlevel",
-    description: "Highest caster level: a spellcasting class's level and its bonus caster levels",
+    description: "The levels counting toward spell slots: a full caster's all, a half caster's half, rounded up",
     type: "number" as const,
     requirementOnly: true,
   },
-  { path: "divine", description: "Max divine spell level castable", type: "number" as const, requirementOnly: true },
+  {
+    path: "highestslot",
+    description: "The highest level of spell slots, by the Multiclass Spellcaster table",
+    type: "number" as const,
+    requirementOnly: true,
+  },
+  ...Array.from({ length: MAX_SPELL_LEVEL }, (_, i) => ({
+    path: `slots.${i + 1}`,
+    description: `Spell slots of level ${i + 1}`,
+    type: "number" as const,
+    requirementOnly: true,
+  })),
+  { path: "pact.slots", description: "Pact Magic slots", type: "number" as const, requirementOnly: true },
+  { path: "pact.level", description: "Pact Magic slots' level", type: "number" as const, requirementOnly: true },
 ];
 
-/** The spellcasting target paths: the highest arcane and divine spell levels castable, and the highest caster levels. */
+/** The spellcasting target paths: the levels counting toward spell slots, the slots, and the Pact Magic slots. */
 export default class SpellcastingPaths implements PathCategory<Dnd52Components> {
-  /** The spellcasting paths of `kind`, which every character has, whatever its ruleset. */
+  /** The spellcasting paths of `kind`, which every character has. */
   static generateSpellcastingPaths(kind: OperatorKind): TargetPath[] {
     return SPELLCASTING_PATHS.filter((subPath) => isLeafOfKind(subPath, kind)).map((subPath) => ({
       path: `spellcasting.${subPath.path}`,
@@ -44,8 +48,11 @@ export default class SpellcastingPaths implements PathCategory<Dnd52Components> 
   }
 
   readonly component = { key: "spellcasting", getter: "getSpellcasting" } as const;
-  readonly description = "Maximum spell level castable, arcane or divine, and caster level";
+
+  readonly description = "Spell slots and the levels counting toward them";
+
   readonly label = "Spellcasting";
+
   readonly name = "spellcasting";
 
   generate(_rulesetData: RulesetData, kind: OperatorKind): TargetPath[] {
@@ -53,9 +60,11 @@ export default class SpellcastingPaths implements PathCategory<Dnd52Components> 
   }
 
   getSegmentLabels(): Record<string, string> {
-    return deriveSegmentLabels(SPELLCASTING_PATHS, {
-      arcanecasterlevel: "Arcane Caster Level",
+    return {
+      ...deriveSegmentLabels(SPELLCASTING_PATHS),
       casterlevel: "Caster Level",
-    });
+      highestslot: "Highest Slot",
+      pact: "Pact Magic",
+    };
   }
 }

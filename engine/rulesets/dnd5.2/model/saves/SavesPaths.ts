@@ -14,8 +14,14 @@ import {
 import { stripSeparators } from "@/shared/text.ts";
 
 const NAVIGATABLE_PATHS = [
-  { path: "base", description: "Base save bonus from class levels", type: "number" as const },
-  { path: "ability", description: "From key ability modifier", type: "number" as const, requirementOnly: true },
+  { path: "ability", description: "From its ability's modifier", type: "number" as const, requirementOnly: true },
+  { path: "proficient", description: "Whether the character is proficient in the saving throw", type: "boolean" as const },
+  {
+    path: "proficiency",
+    description: "The Proficiency Bonus, when proficient",
+    type: "number" as const,
+    requirementOnly: true,
+  },
   { path: "misc", description: "From feats, items, and spells", type: "number" as const },
   { path: "total", description: "Final saving throw bonus", type: "number" as const, requirementOnly: true },
 ];
@@ -54,7 +60,7 @@ export default class SavesPaths implements PathCategory<Dnd52Components> {
 
   readonly component = { key: "saves", getter: "getSaves" } as const;
 
-  readonly description = "Fortitude, Reflex, and Will saving throws";
+  readonly description = "Saving throws, one for each ability";
 
   readonly groupDescriptionTemplates = { saves: "{name} saving throw components" };
 

@@ -5,18 +5,17 @@ import type { CustomizedClassLevel } from "@/engine/rulesets/dnd5.2/model/loadin
 import Dnd52View from "@/engine/rulesets/dnd5.2/view/Dnd52View.ts";
 import type { Feat, Klass, Spell } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import type { Constructor } from "@/lib/mixins.ts";
-import { CUSTOMIZATION_TYPES } from "@/shared/customization/customizationTypes.ts";
 import type { Modifier } from "@/shared/relations.ts";
-import { GENERAL_FEATS_APTITUDE } from "@/vocabulary/dnd5.2/feats.ts";
+import { capitalize } from "@/shared/text.ts";
 
 /**
- * A Pathfinder character's diagnostics, which core's validation reads (`Validates`): the issues its rules flag (its pools'
+ * A D&D 5th Edition character's diagnostics, which core's validation reads (`Validates`): the issues its rules flag (its pools'
  * slots, its skill points and ranks, a general feat with no pool), the rows core checks come from its source chain, and
  * the names of its entities its issues give, past those core names.
  */
 export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
   abstract class Diagnosing extends Base {
-    /** The pools' slots unspent or overspent, then the skill points and ranks: what the Pathfinder rules flag first. */
+    /** The pools' slots unspent or overspent, then the armor worn without its training: what the 2024 rules flag. */
     protected override findRulesetIssues(): RulesIssue[] {
       const issues: RulesIssue[] = [];
 
@@ -37,33 +36,34 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
         });
       }
 
-      const { budget, ranks } = this.getSkillValidationIssues();
-      return [...issues, ...budget, ...ranks];
+      return [...issues, ...this.findArmorIssues()];
     }
 
-    /** A general feat with no pool to count toward, then the rows from outside its source chain (core's). */
-    protected override findSourceIssues(): RulesIssue[] {
-      const unplaced = this.components.aptitudes.getUnplacedGeneralFeats();
-      const message = `The ruleset has no ${GENERAL_FEATS_APTITUDE} aptitude: this character's ${unplaced} general feat(s) count toward none`;
-      return [...(unplaced > 0 ? [{ category: "integrity", message }] : []), ...super.findSourceIssues()];
-    }
-
-    /** The character's race, classes, skills, feats and spells, which its source chain must hold. */
+    /** The character's species, background, classes, feats and spells, which its source chain must hold. */
     protected override listEntityRows() {
-      const { race, classes, skills, feats, spells } = this.data;
+      const { background, species, classes, feats, spells } = this.data;
       const entities = <E>(held: { entity: E }[]) => held.map(({ entity }) => entity);
-      return { races: [race], classes, skills: entities(skills), feats: entities(feats), spells: entities(spells) };
+      return {
+        species: [species],
+        backgrounds: background ? [background] : [],
+        classes,
+        feats: entities(feats),
+        spells: entities(spells),
+      };
     }
 
     /**
-     * Its race, a feat or a spell it has, any class of the ruleset, a class level (its own, or one its bonus caster
-     * levels reach) and a modifier of such a level, by name.
+     * Its species, its background, a feat or a spell it has, any class of the ruleset, and a class level of its own, by
+     * name.
      */
     protected override nameEntity(entityId: string, entityType: string): string | undefined {
       const idx = this.getDiagnosticsIndex();
       switch (entityType) {
-        case "races":
-          if (this.data.race.id === entityId) return this.data.race.name;
+        case "species":
+          if (this.data.species.id === entityId) return this.data.species.name;
+          break;
+        case "backgrounds":
+          if (this.data.background?.id === entityId) return this.data.background.name;
           break;
         case "feats":
           return idx.featsById.get(entityId)?.name;
@@ -71,29 +71,12 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
           return idx.spellsById.get(entityId)?.name;
         case "classes":
           return idx.rulesetClassesById.get(entityId)?.name;
-        case CUSTOMIZATION_TYPES.modifier: {
-          // A modifier of a level the bonus caster levels reach, which the spellcasting applies, not the build
-          const mod = this.components.spellcasting.getBonusClassLevelModifiers().find((m) => m.id === entityId);
-          if (mod) return this.resolveEntityName(mod.sourceId, mod.sourceType);
-
-          break;
-        }
         case "class-levels": {
           const kl = idx.classLevelsById.get(entityId);
-          if (kl) {
-            const klass = idx.rulesetClassesById.get(kl.ownerId);
-            const position = this.rulesetData.positionNameOf("class-levels", kl.position);
-            return klass ? `${klass.name} ${position}` : position;
-          }
-          const attribution = this.components.spellcasting.getBonusClassLevelAttribution().get(entityId);
-          if (attribution) return attribution;
-          const bonusKl = this.components.spellcasting.getBonusClassLevels().find((k) => k.id === entityId);
-          if (bonusKl) {
-            const klass = idx.rulesetClassesById.get(bonusKl.ownerId);
-            const position = `${this.rulesetData.positionNameOf("class-levels", bonusKl.position)} (bonus)`;
-            return klass ? `${klass.name} ${position}` : position;
-          }
-          break;
+          if (!kl) break;
+          const klass = idx.rulesetClassesById.get(kl.ownerId);
+          const position = this.rulesetData.positionNameOf("class-levels", kl.position);
+          return klass ? `${klass.name} ${position}` : position;
         }
       }
       return undefined;
@@ -125,8 +108,12 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       for (const inv of this.data.inventory)
         for (const m of inv.item.modifiers) modifierOwner.set(m.id, { name: inv.item.name, type: "items" });
 
-      if (this.data.race.modifiers)
-        for (const m of this.data.race.modifiers) modifierOwner.set(m.id, { name: this.data.race.name, type: "races" });
+      for (const [source, type] of [
+        [this.data.species, "species"],
+        [this.data.background, "backgrounds"],
+      ] as const) {
+        for (const m of source?.modifiers ?? []) modifierOwner.set(m.id, { name: source!.name, type });
+      }
 
       for (const kl of this.data.classLevels) {
         const klass = rulesetClassesById.get(kl.ownerId);
@@ -147,20 +134,16 @@ export function Diagnoses<B extends Constructor<CharacterState>>(Base: B) {
       return this.diagnosticsIndex;
     }
 
-    protected getSkillValidationIssues(): { budget: RulesIssue[]; ranks: RulesIssue[] } {
-      const budget: RulesIssue[] = [];
-      const { available, spent, total } = this.components.skills.getSkillBudget();
-      if (available > 0) {
-        budget.push({ category: "skills", message: `${available} unspent skill point(s) (${spent}/${total})` });
-      } else if (available < 0) {
-        budget.push({
-          category: "skills",
-          message: `Overspent by ${Math.abs(available)} skill point(s) (${spent}/${total})`,
-        });
-      }
-      const characterLevel = this.components.identity.getIdentity().meta.level;
-      const ranks = this.components.skills.getValidationIssues(characterLevel);
-      return { budget, ranks };
+    /**
+     * The armor the character wears without its training, as the SRD 5.2.1's Armor Training says: Disadvantage on every
+     * D20 Test of Strength or Dexterity, and no spellcasting. A sheet tells it as an issue, which the rules don't refuse.
+     */
+    protected findArmorIssues(): RulesIssue[] {
+      const { armor } = this.components.combat.getCombat();
+      if (armor.trained) return [];
+      const category = capitalize(armor.category);
+      const message = `No training with ${category} armor: Disadvantage on Strength and Dexterity tests, and no spellcasting`;
+      return [{ category: "combat", message }];
     }
   }
 

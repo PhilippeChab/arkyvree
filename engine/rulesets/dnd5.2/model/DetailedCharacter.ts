@@ -13,7 +13,7 @@ import { PossessesVirtually } from "./concerns/PossessesVirtually.ts";
 import DetailedCharacterDataLoader from "./loading/DetailedCharacterDataLoader.ts";
 import type { CastingLevels } from "./spellcasting/SpellcastingState.ts";
 
-/** A Pathfinder character: its components wired, built and validated by its concerns, on core's build and validation. */
+/** A D&D 5th Edition character: its components wired, built and validated by its concerns, on core's build and validation. */
 export default class DetailedCharacter extends include(
   CharacterState,
   Builds,
@@ -23,18 +23,13 @@ export default class DetailedCharacter extends include(
 ) {
   constructor(character: Character) {
     super(character, new Dnd52TargetPaths());
-    this.components = CharacterComponents.build((totalLevel) => this.countGeneralFeats(totalLevel));
+    this.components = CharacterComponents.build();
   }
 
   override readonly components: Dnd52Components;
 
   protected override createDataLoader(): DetailedCharacterDataLoader {
     return new DetailedCharacterDataLoader(this.character);
-  }
-
-  /** The general feats the character has at its total level, by its ruleset's Settings (`LevelRules`). */
-  protected countGeneralFeats(totalLevel: number): number {
-    return this.data.levelRules.countGeneralFeats(totalLevel);
   }
 
   /**

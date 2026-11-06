@@ -13,24 +13,13 @@ import {
 } from "@/shared/customization/target.ts";
 import { stripSeparators } from "@/shared/text.ts";
 
-/** A class's paths, `{name}` its name: its levels, and the caster levels prestige classes add to it (a modifier's). */
+/** A class's paths, `{name}` its name: its levels, which a subclass's features are gated by. */
 const CLASS_PATHS = [
-  { path: "level", description: "Number of {name} levels taken", type: "number" as const },
-  {
-    path: "bonuscasterlevel",
-    description: "{name} bonus caster levels from prestige classes",
-    type: "number" as const,
-    modifierOnly: true,
-  },
+  { path: "level", description: "Number of {name} levels taken", type: "number" as const, requirementOnly: false },
 ];
 
-/** The classes' target paths: each class's level and caster level. */
+/** The classes' target paths: each class's level. */
 export default class ClassesPaths implements PathCategory<Dnd52Components> {
-  /** A class's bonus caster levels (`classes.<slug>.bonuscasterlevel`), by the class's name. */
-  static bonusCasterLevel(className: string): string {
-    return `classes.${stripSeparators(className)}.bonuscasterlevel`;
-  }
-
   static generateClassPaths(classes: Klass[], kind: OperatorKind): TargetPath[] {
     const paths: TargetPath[] = [];
 
@@ -59,9 +48,9 @@ export default class ClassesPaths implements PathCategory<Dnd52Components> {
 
   readonly component = { key: "classes", getter: "getClasses" } as const;
 
-  readonly description = "Class levels and bonus caster levels";
+  readonly description = "Class levels";
 
-  readonly groupDescriptionTemplates = { classes: "{name} class level and caster level" };
+  readonly groupDescriptionTemplates = { classes: "{name} class level" };
 
   readonly label = "Classes";
 
@@ -72,7 +61,7 @@ export default class ClassesPaths implements PathCategory<Dnd52Components> {
   }
 
   getSegmentLabels(): Record<string, string> {
-    return deriveSegmentLabels(CLASS_PATHS, { bonuscasterlevel: "Bonus Caster Level" });
+    return deriveSegmentLabels(CLASS_PATHS);
   }
 
   /** The ruleset's classes, labeled by their names. */

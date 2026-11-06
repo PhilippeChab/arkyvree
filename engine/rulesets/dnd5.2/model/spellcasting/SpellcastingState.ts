@@ -8,33 +8,40 @@ import type { LoadedCharacterData } from "@/engine/rulesets/dnd5.2/model/loading
 import type { HeldSpell } from "@/engine/rulesets/dnd5.2/model/loading/loadedEntities.ts";
 import type SpellGroupingsComponent from "@/engine/rulesets/dnd5.2/model/spells/SpellGroupingsComponent.ts";
 import type SpellsComponent from "@/engine/rulesets/dnd5.2/model/spells/SpellsComponent.ts";
-import type { KlassLevel } from "@/engine/rulesets/dnd5.2/view/rows.ts";
 import type { Modifier } from "@/shared/relations.ts";
-import { type CasterType, MAX_CLASS_LEVEL } from "@/vocabulary/dnd5.2/classes.ts";
-import { MAX_SPELL_LEVEL } from "@/vocabulary/dnd5.2/spells.ts";
+import type { CasterType } from "@/vocabulary/dnd5.2/classes.ts";
+import { MULTICLASS_SPELL_SLOTS, PACT_MAGIC_SLOTS } from "@/vocabulary/dnd5.2/spells.ts";
 
 /**
- * What the `spellcasting` paths read: the highest spell levels the character casts, arcane and divine, and its highest
- * caster level, of either kind and arcane.
+ * What the `spellcasting` paths read, as the SRD 5.2.1's Multiclassing rules count it: the levels the character's
+ * classes count toward its spell slots (`casterlevel`: a full caster's all, a half caster's half, rounded up), its spell
+ * slots at each spell level by the Multiclass Spellcaster table (`slots`, by level from 1), the highest of them
+ * (`highestslot`), and its warlock's Pact Magic slots (`pact`), apart.
  */
 export interface CastingLevels {
-  readonly arcane: number;
-  readonly arcanecasterlevel: number;
   readonly casterlevel: number;
-  readonly divine: number;
+  readonly highestslot: number;
+  readonly pact: { readonly level: number; readonly slots: number };
+  readonly slots: Readonly<Record<string, number>>;
 }
 
-/**
- * Where a feat's tag on the spells of a list it gives slots in or joins to its class's list shows (a cleric's domain,
- * "Fire Domain"; a specialist wizard's school, "Evocation Specialist"): on that list and on the lists of the class whose
- * level gave the feat. `joinsClassList`: whether the list's spells join that class's list, as a domain's do.
- */
+/** The spell lists a spell's tags read, and whether its list joins its class's. */
 export interface SpellTagLists {
   aptitudeIds: string[];
   joinsClassList: boolean;
 }
 
-/** What a character's spellcasting holds: its bonus caster levels, its aptitudes' spells, its spell tags. */
+/** How many of a class's levels count toward a multiclassed character's spell slots, by its caster type. */
+function casterLevelsOf(casterType: CasterType | undefined, level: number): number {
+  if (casterType === "Full") return level;
+  if (casterType === "Half") return Math.ceil(level / 2);
+  return 0;
+}
+
+/**
+ * A character's spellcasting's state, which its concerns read: its slots, counted when read off its classes' levels
+ * and caster types, and the spells its lists know.
+ */
 export default abstract class SpellcastingState extends CharacterComponent<LoadedCharacterData> {
   constructor(
     protected readonly classes: ClassesComponent,
@@ -46,114 +53,59 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
     super();
   }
 
-  /**
-   * What the `spellcasting` paths read, counted when read from the classes' slots: as the slot modifiers have given them
-   * so far, so requirements like Scribe Scroll's read what the character casts when they're checked. The highest arcane
-   * and divine spell levels it casts (`spellcasting.arcane`, `.divine`), and its highest caster level, of either kind and
-   * arcane (`spellcasting.casterlevel`, `.arcanecasterlevel`).
-   */
+  /** The character's slots and caster levels, counted when read, so a planned level counts. */
   protected readonly castingLevels: CastingLevels = (() => {
-    const casterLevel = (casterType?: CasterType) => this.highestCasterLevel(casterType);
-    const spellLevel = (casterType: CasterType) => this.highestSpellLevel(casterType);
+    const casterLevel = () => this.countCasterLevels();
+    const pact = () => this.pactSlots();
     return {
-      get arcane() {
-        return spellLevel("Arcane");
-      },
-      get arcanecasterlevel() {
-        return casterLevel("Arcane");
-      },
       get casterlevel() {
         return casterLevel();
       },
-      get divine() {
-        return spellLevel("Divine");
+      get highestslot() {
+        return Math.max(0, ...Object.entries(this.slots).flatMap(([level, count]) => (count > 0 ? [+level] : [])));
+      },
+      get pact() {
+        return pact();
+      },
+      get slots() {
+        const row = MULTICLASS_SPELL_SLOTS[Math.min(casterLevel(), MULTICLASS_SPELL_SLOTS.length) - 1] ?? [];
+        return Object.fromEntries(row.map((count, i) => [String(i + 1), count]));
       },
     };
   })();
 
-  /**
-   * The spells of the lists the character knows every spell of (or a level of), each on its list (`viaId`), at its
-   * spell level there (`collectAptitudeSpells`).
-   */
   protected allAptitudeSpells: Pick<HeldSpell, "entity" | "saveName" | "spellLevel" | "viaId">[] = [];
 
-  /** Maps bonus class level ID → granting source name (e.g. "Stormlord Level 1") */
-  protected bonusClassLevelAttribution = new Map<string, string>();
-
-  protected bonusClassLevelClassMap = new Map<string, string>();
-
-  protected bonusClassLevelModifiers: Modifier[] = [];
-
-  protected bonusClassLevels: KlassLevel[] = [];
-
-  /** Each class's caster type, by its id: a class casting neither has none. */
   protected casterTypeByClassId = new Map<string, CasterType>();
 
-  /** Each class's spell lists, by its id (`initialize`). */
   protected classListsByClassId = new Map<string, Set<string>>();
 
-  /** The lists the character's spells and its lists' spells are each on (their `listedIn` links' targets), by spell. */
   protected listIdsBySpell = new Map<string, string[]>();
 
-  /** Where each spell tag shows, by its name. */
   protected spellTagLists: Record<string, SpellTagLists> = {};
 
   protected spellTags: Record<string, string[]> = {};
 
-  /**
-   * The highest caster level of the classes that cast, of a caster type when one is given (`casterLevelOf`): a class
-   * casts once it has slots at a spell level, cantrips included, so a bard from his first level and a paladin from his
-   * fourth. A multiclass character's caster levels don't add up.
-   */
-  private highestCasterLevel(casterType?: CasterType): number {
-    let highest = 0;
-    for (const [className, classData] of Object.entries(this.classes.getCharacterClasses())) {
-      const classCasterType = this.casterTypeByClassId.get(classData.klass.id);
-      if (!classCasterType || (casterType && classCasterType !== casterType)) continue;
-      if (this.highestSlotLevel(className) >= 0) highest = Math.max(highest, this.casterLevelOf(classData));
-    }
-    return highest;
+  /** The levels the character's classes count toward its spell slots: a full caster's all, a half caster's half. */
+  private countCasterLevels(): number {
+    return Object.values(this.classes.getCharacterClasses()).reduce(
+      (total, { klass, level }) => total + casterLevelsOf(this.casterTypeByClassId.get(klass.id), level),
+      0,
+    );
   }
 
-  /** The highest spell level a class has slots at in any of its lists, cantrips' 0 included: -1 when it has none. */
-  private highestSlotLevel(className: string): number {
-    const aptitudes = this.aptitudes.getAptitudes();
-    let highest = -1;
-    for (const key of this.spellListsOf(className)) {
-      const aptitude = aptitudes[key] as Record<string, unknown> | undefined;
-      if (!aptitude || !this.aptitudes.isLeveledAptitude(key)) continue;
-      for (let spellLevel = MAX_SPELL_LEVEL; spellLevel > highest; spellLevel--) {
-        const levelData = aptitude[String(spellLevel)] as AptitudeLevelData | undefined;
-        if (levelData && levelData.allowed !== 0) {
-          highest = spellLevel;
-          break;
-        }
-      }
-    }
-    return highest;
-  }
-
-  /** The highest spell level any of the classes of a caster type has slots at, in any of its lists: 0 for cantrips alone. */
-  private highestSpellLevel(casterType: CasterType): number {
-    let highest = 0;
-    for (const [className, classData] of Object.entries(this.classes.getCharacterClasses())) {
-      if (this.casterTypeByClassId.get(classData.klass.id) === casterType)
-        highest = Math.max(highest, this.highestSlotLevel(className));
-    }
-    return highest;
+  /** Its Pact Magic slots: its pact caster's (a warlock's), by its level, none without one. */
+  private pactSlots(): { level: number; slots: number } {
+    const pactLevel = Object.values(this.classes.getCharacterClasses()).reduce(
+      (total, { klass, level }) => total + (this.casterTypeByClassId.get(klass.id) === "Pact" ? level : 0),
+      0,
+    );
+    return PACT_MAGIC_SLOTS[Math.min(pactLevel, PACT_MAGIC_SLOTS.length) - 1] ?? { level: 0, slots: 0 };
   }
 
   /**
-   * A class's caster level: its level, and the caster levels other classes add to it (`bonuscasterlevel`, a prestige
-   * class's), up to `MAX_CLASS_LEVEL`. The class level its spells per day are read at.
-   */
-  protected casterLevelOf({ bonuscasterlevel, level }: { bonuscasterlevel: number; level: number }): number {
-    return Math.min(level + bonuscasterlevel, MAX_CLASS_LEVEL);
-  }
-
-  /**
-   * A class's list that knows every spell of a spell level (`allowed` all known), if one does: where the spells of a
-   * list joining it go.
+   * The class's list that knows every spell of a level (`spellLevel`), one of the class's lists whose level is set to
+   * all its spells: a cleric's, a druid's, which prepare from their whole list.
    */
   protected classListKnowing(className: string, spellLevel: number | null) {
     if (spellLevel === null) return undefined;
@@ -164,7 +116,7 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
     });
   }
 
-  /** The class of each of the character's class levels, by the class level's id. */
+  /** Each of the character's class levels' class, by the level's id. */
   protected classNameByClassLevelId() {
     const classNames = new Map<string, string>();
     for (const [className, classData] of Object.entries(this.classes.getCharacterClasses()))
@@ -174,18 +126,15 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
   }
 
   /**
-   * The classes each spell list joins (`aptitudes.<list>.joinsclasslist`) by the modifiers applied (`appliedModifiers`),
-   * by list: the class whose level gave the feat that joins it, or the class level's own class. A cleric's domain joins
-   * the cleric's list.
+   * The classes whose list a list joins (`aptitudes.<list>.joinsclasslist` set true), by the list's key: a feat's or a
+   * class level's modifier joins its class's.
    */
   protected joiningClassNames(appliedModifiers: Modifier[]) {
     const aptitudes = this.aptitudes.getAptitudes() as Record<string, { joinsclasslist?: boolean }>;
     const classes = Object.entries(this.classes.getClasses());
     const classNameByClassLevelId = this.classNameByClassLevelId();
     const classOf = (modifier: Modifier) => {
-      if (modifier.sourceType === "class-levels")
-        return classNameByClassLevelId.get(modifier.sourceId) ?? this.bonusClassLevelClassMap.get(modifier.sourceId);
-
+      if (modifier.sourceType === "class-levels") return classNameByClassLevelId.get(modifier.sourceId);
       if (modifier.sourceType !== "feats") return undefined;
       return classes.find(([, classData]) =>
         classData.levels.some((level) => level.feats.some(({ entity }) => entity.id === modifier.sourceId)),
@@ -205,11 +154,7 @@ export default abstract class SpellcastingState extends CharacterComponent<Loade
     return joining;
   }
 
-  /**
-   * A class's spell lists: those its levels give slots in, the levels the character hasn't taken included (a paladin's
-   * before his fourth); a pious templar's paladin and blackguard lists, the slots of the one she didn't pick gated out.
-   * None for a class without slots.
-   */
+  /** A class's spell lists, by their keys. */
   protected spellListsOf(className: string): string[] {
     const classId = this.classes.getCharacterClasses()[className]?.klass.id;
     return [...((classId && this.classListsByClassId.get(classId)) || [])];

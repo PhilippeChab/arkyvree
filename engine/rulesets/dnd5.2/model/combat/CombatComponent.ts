@@ -3,8 +3,8 @@ import { ITEM_FIELDS } from "@/engine/rulesets/dnd5.2/entities/items/fields.ts";
 import type { LoadedCharacterData } from "@/engine/rulesets/dnd5.2/model/loading/DetailedCharacterDataLoader.ts";
 import ItemPlacement from "@/engine/rulesets/dnd5.2/rules/ItemPlacement.ts";
 import { include } from "@/lib/mixins.ts";
-import { UNARMED_STRIKE, UNARMED_STRIKE_STATS } from "@/vocabulary/dnd5.2/combat.ts";
 import { ITEM_TYPE } from "@/vocabulary/dnd5.2/fields/index.ts";
+import { UNARMED_STRIKE } from "@/vocabulary/dnd5.2/weapons.ts";
 
 import CombatState, { type CombatData, type HeldWeapon } from "./CombatState.ts";
 import { ArmorClass } from "./concerns/ArmorClass.ts";
@@ -12,67 +12,47 @@ import { Attacks } from "./concerns/Attacks.ts";
 import { HitPoints } from "./concerns/HitPoints.ts";
 import { InitiativeAndSpeed } from "./concerns/InitiativeAndSpeed.ts";
 
+/** The unarmed strike's weapon: 1 bludgeoning damage, its attack proficient, every creature's. */
+const UNARMED_FIELDS = {
+  ...ITEM_FIELDS.defaults.weapon,
+  damage: UNARMED_STRIKE.damage,
+  damageType: UNARMED_STRIKE.damageType,
+};
+
 /**
- * A character's combat sheet: its armor class, hit points, initiative, attacks and speed, from its classes, its race and
- * what its inventory has equipped (its weapons in their sets, its armor and shields).
+ * A character's combat sheet: its Armor Class, hit points, initiative, attacks and speed, from its classes, its species
+ * and what its inventory has equipped (its weapons in their sets, its armor and shields).
  */
 class CombatComponent extends include(CombatState, ArmorClass, Attacks, HitPoints, InitiativeAndSpeed) {
   /**
-   * The sheet from the character's classes (its hit dice, its levels' hit points, its base attack bonus) and race (its
-   * speed), an unarmed strike in its first set's main hand, then what its inventory has equipped.
+   * The sheet from the character's levels (their hit points) and species (its speed), an unarmed strike in its first
+   * set's main hand, then what its inventory has equipped.
    */
-  override initialize({
-    classLevelFields,
-    levelHitPoints,
-    race,
-  }: Pick<LoadedCharacterData, "classLevelFields" | "levelHitPoints" | "race">) {
-    const classes = this.classes.getClasses();
-    const levels = Object.values(classes).reduce((acc, klass) => {
-      for (const level of klass.levels) acc.push(level.advancement);
-
-      return acc;
-    }, [] as StoredAdvancement[]);
+  override initialize({ levelHitPoints, species }: Pick<LoadedCharacterData, "levelHitPoints" | "species">) {
+    const levels = Object.values(this.classes.getClasses()).flatMap((klass) =>
+      klass.levels.map((level): StoredAdvancement => level.advancement),
+    );
 
     this.initializeArmorClass();
-    this.initializeHitPoints(levels.map((level) => levelHitPoints.get(level.id)!));
+    this.initializeHitPoints(levels.map((level) => levelHitPoints.get(level.id) ?? 0));
     this.initializeInitiative();
-    this.initializeBaseAttackBonus(classes, classLevelFields);
-    this.initializeCombatManeuvers();
-    this.initializeSpeed(race);
+    this.initializeSpeed(species);
 
-    this.addWeapon(
-      0,
-      "Main Hand",
-      { name: UNARMED_STRIKE },
-      {
-        ...ITEM_FIELDS.defaults.weapon,
-        ...UNARMED_STRIKE_STATS,
-        damageTypes: [...UNARMED_STRIKE_STATS.damageTypes],
-      },
-    );
-    this.equipInventory();
+    this.addWeapon(0, "Main Hand", UNARMED_STRIKE.name, UNARMED_FIELDS, { entryId: null, itemId: null }, true);
+    this.equipWeapons();
   }
 
   /**
-   * What the inventory has equipped (`InventoryComponent.getEquipped`), in its order: each weapon in the hand of each
-   * set that holds it (one without a proficiency fills none), held (`heldWeapons`), the armor worn, and each shield in
-   * the off hand of each set that holds it (the first set, for an entry stored without one).
+   * The weapons the inventory has equipped (`InventoryComponent.getEquipped`), in its order: each in the hand of each
+   * set that holds it, held (`heldWeapons`). Its armor and shields are their components'.
    */
-  private equipInventory(): void {
+  private equipWeapons(): void {
     for (const { entry, fields } of this.inventory.getEquipped()) {
-      if (entry.item.fields[ITEM_TYPE] === "Weapon") {
-        const location = entry.location as "Main Hand" | "Off Hand" | "Two Handed";
-        const held = { itemId: entry.item.id, entryId: entry.id };
-        for (const setIndex of ItemPlacement.heldSets(entry)) {
-          const weapon = this.addWeapon(setIndex, location, entry.item, fields.weapon, held);
-          if (weapon) this.heldWeapons.push({ fields: fields.weapon, location, setIndex, weapon });
-        }
-      } else if (entry.item.fields[ITEM_TYPE] === "Armor") {
-        // The sheet wears it: the heaviest worn slows the character down
-        this.addArmor(fields);
-      } else if (entry.item.fields[ITEM_TYPE] === "Shield") {
-        // Each set that holds it carries it: a tower shield's bulk
-        for (const set of ItemPlacement.heldSets(entry)) this.addShield(fields, String(set));
+      if (entry.item.fields[ITEM_TYPE] !== "Weapon" || !entry.location) continue;
+      const held = { itemId: entry.item.id, entryId: entry.id };
+      for (const setIndex of ItemPlacement.heldSets(entry)) {
+        const weapon = this.addWeapon(setIndex, entry.location, entry.item.name, fields.weapon, held);
+        if (weapon) this.heldWeapons.push({ fields: fields.weapon, location: entry.location, setIndex, weapon });
       }
     }
   }
