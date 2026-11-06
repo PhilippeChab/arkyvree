@@ -109,11 +109,10 @@ export default class ExtensionDeparture {
   static async read(tx: Db, scope: LockedRulesetScope, extensionId: string): Promise<ExtensionDeparture> {
     const { ruleset, sources } = scope;
     const snapshots = await RulesetChanges.copiesOf(tx, sources.id, extensionId);
-    const after = await CowDataReader.read(
-      tx,
-      { ...sources, extensionIds: sources.extensionIds.filter((id) => id !== extensionId) },
-      ruleset.baseRules,
-    );
+    const after = await CowDataReader.read(tx, {
+      ...sources,
+      extensionIds: sources.extensionIds.filter((id) => id !== extensionId),
+    });
     const copies: Copies = new Map(
       [...Map.groupBy(snapshots, (snap) => snap.entityType)].map(([type, snaps]) => [
         type,

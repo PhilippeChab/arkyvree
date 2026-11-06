@@ -4,7 +4,6 @@ import { DependentCache } from "@/server/cache/index.ts";
 import { db } from "@/server/database/index.ts";
 import { Rulesets } from "@/server/repositories/index.ts";
 import type { OperatorKind, TargetPathCatalog, TargetPathKind } from "@/shared/customization/target.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 
 import CowDataReader from "./CowDataReader.ts";
 import RawDataReader from "./RawDataReader.ts";
@@ -72,7 +71,7 @@ class RulesetViews {
   /** The engine's list of a ruleset's target paths of a kind, from its view: a write's own, else the cache's. */
   private async listTargetPaths(scope: TargetPathScope, kind: TargetPathKind): Promise<TargetPathCatalog> {
     const { ruleset, sources } = scope;
-    const rulesetData = scope.rulesetData ?? (await this.getData(sources, ruleset.baseRules));
+    const rulesetData = scope.rulesetData ?? (await this.getData(sources));
     return Engine.for({ ruleset, rulesetData }).targetPaths().list(kind);
   }
 
@@ -107,25 +106,25 @@ class RulesetViews {
    * ordered source chain: a request holding old ruleset metadata must not cache its old subscription chain under the
    * key readers of the newly committed chain use. Read through the shared `db`, never a transaction.
    */
-  async getCowData(ruleset: RulesetSources, baseRules: BaseRules): Promise<CowData> {
+  async getCowData(ruleset: RulesetSources): Promise<CowData> {
     const dependencies = [ruleset.id, ...Engine.copyOnWrite().buildSourceChain(ruleset)];
     const entry = await this.cowData.getOrFetch(JSON.stringify(dependencies), dependencies, async () => {
       const versions = await Rulesets.findVersions(db, { ids: dependencies });
-      return { data: { value: await CowDataReader.read(db, ruleset, baseRules), versions } };
+      return { data: { value: await CowDataReader.read(db, ruleset), versions } };
     });
     return entry.value;
   }
 
   /**
-   * A ruleset's view, of its sources (`ruleset`) and its base rules: its own rows and its source chain's, composed by its
+   * A ruleset's view, of its sources (`ruleset`, its base rules among them): its own rows and its source chain's, composed by its
    * copy-on-write data.
    */
-  async getData(ruleset: RulesetSources, baseRules: BaseRules): Promise<RulesetData> {
-    const cowData = await this.getCowData(ruleset, baseRules);
+  async getData(ruleset: RulesetSources): Promise<RulesetData> {
+    const cowData = await this.getCowData(ruleset);
     const chain = await Promise.all(
       [ruleset.id, ...cowData.sourceChain].map((id) => this.getRawData(id, RulesetViews.rowWritersOf(id, ruleset))),
     );
-    return Engine.copyOnWrite().buildView({ baseRules }, chain, cowData);
+    return Engine.copyOnWrite().buildView(ruleset, chain, cowData);
   }
 
   /**
@@ -134,19 +133,14 @@ class RulesetViews {
    * those versions, and those it keeps at others read again through the transaction, one query at a time, before the
    * write writes anything, so they're the committed rows its locks hold, which the cache keeps in their place.
    */
-  async getFreshData(
-    tx: Db,
-    ruleset: RulesetSources,
-    baseRules: BaseRules,
-    current: ReadonlyMap<string, number>,
-  ): Promise<RulesetData> {
+  async getFreshData(tx: Db, ruleset: RulesetSources, current: ReadonlyMap<string, number>): Promise<RulesetData> {
     const dependencies = [ruleset.id, ...Engine.copyOnWrite().buildSourceChain(ruleset)];
     const cowEntry = await this.cowData.getOrFetch(
       JSON.stringify(dependencies),
       dependencies,
       async () => ({
         data: {
-          value: await CowDataReader.read(tx, ruleset, baseRules),
+          value: await CowDataReader.read(tx, ruleset),
           versions: RulesetViews.versionsOf(dependencies, current),
         },
       }),
@@ -166,7 +160,7 @@ class RulesetViews {
       );
       chain.push(entry.value);
     }
-    return Engine.copyOnWrite().buildView({ baseRules }, chain, cowEntry.value);
+    return Engine.copyOnWrite().buildView(ruleset, chain, cowEntry.value);
   }
 
   /**

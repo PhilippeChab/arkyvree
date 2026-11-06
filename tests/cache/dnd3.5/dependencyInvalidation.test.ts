@@ -28,7 +28,7 @@ for (const phase of ["pending", "cached"] as const) {
     const read = () =>
       Promise.all([
         RulesetViews.getRawData(unrelated.id),
-        RulesetViews.getCowData(sources, DND35_BASE_RULES),
+        RulesetViews.getCowData(sources),
         RulesetViews.getTargetPaths({ ruleset: unrelated, sources }, "modifier"),
       ]);
     const pending = read();

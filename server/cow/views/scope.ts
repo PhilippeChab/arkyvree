@@ -40,7 +40,7 @@ async function readRulesetScope(tx: Db, rulesetId: string): Promise<RulesetScope
   const ruleset = await Rulesets.findOne(tx, { id: rulesetId });
   const sources = await Rulesets.findSources(tx, { id: rulesetId });
   if (!ruleset || !sources) return undefined;
-  return { ruleset, rulesetData: await RulesetViews.getData(sources, ruleset.baseRules), sources };
+  return { ruleset, rulesetData: await RulesetViews.getData(sources), sources };
 }
 
 /**
@@ -71,7 +71,7 @@ export async function withLockedRulesetScope<T, B = undefined>(
     "share",
   );
   const versions = new Map([[rulesetId, committed], ...chain]);
-  const rulesetData = await RulesetViews.getFreshData(tx, sources, ruleset.baseRules, versions);
+  const rulesetData = await RulesetViews.getFreshData(tx, sources, versions);
   return await fn({ ruleset, rulesetData, sources, versions } as unknown as LockedRulesetScope, checked);
 }
 
@@ -137,6 +137,6 @@ export async function withSharedRulesetScope<T, B = undefined>(
   );
   const checked = (await before?.()) as B;
   const versions = new Map([...own, ...chain]);
-  const rulesetData = await RulesetViews.getFreshData(tx, sources, ruleset.baseRules, versions);
+  const rulesetData = await RulesetViews.getFreshData(tx, sources, versions);
   return await fn({ ruleset, rulesetData, sources, versions }, checked);
 }

@@ -15,7 +15,7 @@ test("the system rulesets' rows warmed at boot are the ones a fork's first write
 
   // A write's fresh read of the fork, at the versions its locks would read
   const ids = [fork.id, ...sources.extensionIds, ...(sources.parentId ? [sources.parentId] : [])];
-  await RulesetViews.getFreshData(db, sources, fork.baseRules, await Rulesets.findVersions(db, { ids }));
+  await RulesetViews.getFreshData(db, sources, await Rulesets.findVersions(db, { ids }));
   const kept = await Promise.all(sources.extensionIds.map((id) => RulesetViews.getRawData(id)));
   expect(kept.every((rows, index) => rows === warmed[index])).toBe(true);
   expect(sources.extensionIds.length).toBeGreaterThan(0);

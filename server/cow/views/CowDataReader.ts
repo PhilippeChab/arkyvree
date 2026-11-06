@@ -1,7 +1,6 @@
 import type { Db } from "@/drizzle/database.ts";
 import { type CowData, type CowRows, Engine, type RulesetSources } from "@/engine/index.ts";
 import { Entities, EntitySnapshots, RulesetEntities } from "@/server/repositories/index.ts";
-import type { BaseRules } from "@/shared/enums.ts";
 
 /**
  * A ruleset's `CowData`: the rows the engine builds it from (`copyOnWrite().getReads`: the chain's snapshots, the owned
@@ -11,13 +10,13 @@ import type { BaseRules } from "@/shared/enums.ts";
  * which sees the transaction's own copies (`EntityCopy`, an unsubscribe's departing references), and keeps nothing.
  */
 export default class CowDataReader {
-  /** A ruleset's (`ruleset`, its sources), its kinds paired by its base rules' module's declarations (`baseRules`). */
-  static async read(database: Db, ruleset: RulesetSources, baseRules: BaseRules): Promise<CowData> {
-    const reads = Engine.copyOnWrite().getReads(ruleset, baseRules);
+  /** A ruleset's (`ruleset`, its sources), its kinds paired by its base rules' module's declarations. */
+  static async read(database: Db, ruleset: RulesetSources): Promise<CowData> {
+    const reads = Engine.copyOnWrite().getReads(ruleset);
     const snapshots = await EntitySnapshots.findMany(database, { rulesetIds: reads.snapshotRulesetIds });
     const namesakes = await RulesetEntities.findNativeNames(database, reads.namesakes);
     const ownNamesakes = await RulesetEntities.findOwnNamesakes(database, reads.ownNamesakes);
-    const ownerIds = Engine.copyOnWrite().getPairedOwnerIds({ ownNamesakes, snapshots }, baseRules);
+    const ownerIds = Engine.copyOnWrite().getPairedOwnerIds({ ownNamesakes, snapshots }, ruleset.baseRules);
     const owned: CowRows["owned"] = [];
     for (const entityType of reads.owned.entityTypes) {
       const positions = await Entities.findPositions(database, { entityType, ownerIds });

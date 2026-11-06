@@ -22,11 +22,13 @@ import type { BaseRules } from "./enums.ts";
 
 export type Campaign = typeof campaignsInCampaign.$inferSelect;
 /**
- * A character's row as stored: its own columns, its fields' values by field, as its module declares them, each typed as
- * its column holds it (3.5's `CHARACTER_XP`, a number), and the entity of each of its single links by role (3.5's
- * `race`). A mapped type, as a row is plain data any record type takes (an interface isn't).
+ * A character's row as stored: its own columns, its ruleset's base rules (whose module declares what it holds), its
+ * fields' values by field, as its module declares them, each typed as its column holds it (3.5's `CHARACTER_XP`, a
+ * number), and the entity of each of its single links by role (3.5's `race`). A mapped type, as a row is plain data any
+ * record type takes (an interface isn't).
  */
 export type Character = typeof charactersInCharacter.$inferSelect & {
+  baseRules: BaseRules;
   fields: Record<string, CharacterFieldValue>;
   links: Record<string, string>;
 };

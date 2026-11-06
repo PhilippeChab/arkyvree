@@ -1,4 +1,5 @@
 import type { Db } from "@/drizzle/database.ts";
+import { Engine } from "@/engine/index.ts";
 import { ConflictError, ForbiddenError, NotFoundError, UnprocessableEntityError } from "@/server/errors/index.ts";
 import { CharacterContributors, Characters, Visibility } from "@/server/repositories/index.ts";
 import type { Campaign, Character, Player, Session, User } from "@/shared/relations.ts";
@@ -26,6 +27,14 @@ export interface CharacterStanding {
  */
 const ARCHIVED_CHARACTER = "This character is archived";
 
+/**
+ * Whether a character is a player character, not another's child (3.5's bonded creatures): its kind its own base rules'
+ * player character's (`StorageEngine.isPlayerKind`).
+ */
+function isPlayerCharacter(character: Character) {
+  return Engine.storage(character.baseRules).isPlayerKind(character.kind);
+}
+
 export default class CharactersPolicy extends BasePolicy<Character> {
   constructor(
     session: Session,
@@ -44,12 +53,12 @@ export default class CharactersPolicy extends BasePolicy<Character> {
    * archived parent's child is read-only, as the parent is).
    */
   static async for(db: Db, session: Session, character: Character): Promise<CharactersPolicy> {
-    if (character.parentCharacterId) {
+    if (!isPlayerCharacter(character)) {
       const parent = character.parentCharacterId
         ? await Characters.findOne(db, { id: character.parentCharacterId }, Visibility.All)
         : undefined;
       const isParentEditor =
-        !!parent && !parent.parentCharacterId && (await CharactersPolicy.for(db, session, parent)).isEditor();
+        !!parent && isPlayerCharacter(parent) && (await CharactersPolicy.for(db, session, parent)).isEditor();
       return new CharactersPolicy(session, character, { isParentArchived: !!parent?.deletedAt, isParentEditor });
     }
 
@@ -66,7 +75,7 @@ export default class CharactersPolicy extends BasePolicy<Character> {
    */
   static async forMany(db: Db, session: Session, characters: Character[]): Promise<Map<string, CharactersPolicy>> {
     const contributed = characters.filter(
-      (character) => !character.parentCharacterId && character.userId !== session.userId,
+      (character) => isPlayerCharacter(character) && character.userId !== session.userId,
     );
     const contributions = await CharacterContributors.findMany(db, {
       characterIds: contributed.map((character) => character.id),
@@ -76,7 +85,7 @@ export default class CharactersPolicy extends BasePolicy<Character> {
     const contributedIds = new Set(contributions.map((contribution) => contribution.characterId));
     const policies = new Map<string, CharactersPolicy>();
     for (const character of characters) {
-      const policy = !character.parentCharacterId
+      const policy = isPlayerCharacter(character)
         ? new CharactersPolicy(session, character, { isActiveContributor: contributedIds.has(character.id) })
         : await CharactersPolicy.for(db, session, character);
       policies.set(character.id, policy);
@@ -115,7 +124,7 @@ export default class CharactersPolicy extends BasePolicy<Character> {
   }
 
   private get isPlayerCharacter() {
-    return !this.entity.parentCharacterId;
+    return isPlayerCharacter(this.entity);
   }
 
   /**

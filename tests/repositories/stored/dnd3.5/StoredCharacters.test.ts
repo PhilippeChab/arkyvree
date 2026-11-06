@@ -16,6 +16,7 @@ import {
   storagesOf,
 } from "@/tests/support/modules.ts";
 import { getSeedCtx, uniqueId } from "@/tests/support/seed.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 import { PLAYER_CHARACTER_KIND } from "@/vocabulary/dnd3.5/bondedKinds.ts";
 import {
   CHARACTER_ALIGNMENT,
@@ -39,7 +40,7 @@ async function findFieldRows(characterId: string, field: string) {
 async function registerFlagAndSet() {
   const { retired, titles } = CHARACTER_FLAG_AND_SET;
   await db.execute(
-    sql`insert into rules.field_defs (owner_kind, owner_type, field, value_kind, multiple) values ('character', 'characters', ${retired.field}, 'flag', false), ('character', 'characters', ${titles.field}, 'text', true)`,
+    sql`insert into rules.field_defs (base_rules, owner_kind, owner_type, field, value_kind, multiple) values (${DND35_BASE_RULES}, 'character', 'characters', ${retired.field}, 'flag', false), (${DND35_BASE_RULES}, 'character', 'characters', ${titles.field}, 'text', true)`,
   );
 }
 
@@ -112,10 +113,10 @@ describe("A character's fields", () => {
     const { id } = await createTestCharacter(SEED_USER_ID);
     await registerFlagAndSet();
     await db.execute(
-      sql`insert into character.fields (character_id, field, ordinal, value_kind, multiple, flag_value) values (${id}, 'TEST_RETIRED', 0, 'flag', false, false)`,
+      sql`insert into character.fields (base_rules, character_id, field, ordinal, value_kind, multiple, flag_value) values (${DND35_BASE_RULES}, ${id}, 'TEST_RETIRED', 0, 'flag', false, false)`,
     );
     await db.execute(
-      sql`insert into character.fields (character_id, field, ordinal, value_kind, multiple, text_value) values (${id}, 'TEST_TITLES', 0, 'text', true, 'Sir'), (${id}, 'TEST_TITLES', 1, 'text', true, 'Dame')`,
+      sql`insert into character.fields (base_rules, character_id, field, ordinal, value_kind, multiple, text_value) values (${DND35_BASE_RULES}, ${id}, 'TEST_TITLES', 0, 'text', true, 'Sir'), (${DND35_BASE_RULES}, ${id}, 'TEST_TITLES', 1, 'text', true, 'Dame')`,
     );
 
     const character = await Characters.findOne(db, { id }, Visibility.All);

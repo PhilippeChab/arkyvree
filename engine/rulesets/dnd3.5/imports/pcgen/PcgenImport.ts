@@ -102,6 +102,7 @@ export default class PcgenImport {
     const held = Object.entries(fields).flatMap(([field, value]) => (value === null ? [] : [[field, value] as const]));
     const record = {
       ...row,
+      baseRules: this.view.ruleset.baseRules,
       fields: Object.fromEntries(held),
       ...stamps,
       id,

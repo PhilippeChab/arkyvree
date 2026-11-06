@@ -133,15 +133,14 @@ export default class StoredCharacters {
   /**
    * A character's row as read (`row`, its columns `buildColumns` selects): its fields' values by field, as its ruleset's
    * base rules' module declares them (`storageOf`, each registered module's unless a test gives its own: `fieldsOf`, a
-   * single field's value, a set's values in their declared order), its base rules left out.
+   * single field's value, a set's values in their declared order), its base rules kept.
    */
   static toCharacter<R extends { baseRules: BaseRules; fields: [string, FieldValue][] }>(
     row: R,
     storageOf: StorageOf = (baseRules) => Engine.storage(baseRules),
-  ): Omit<R, "baseRules" | "fields"> & Pick<Character, "fields"> {
-    const { baseRules, fields, ...own } = row;
-    const storage = storageOf(baseRules);
-    return { ...own, fields: storage.fieldsOf(storage.characterOwnerType, fields) };
+  ): Omit<R, "fields"> & Pick<Character, "fields"> {
+    const storage = storageOf(row.baseRules);
+    return { ...row, fields: storage.fieldsOf(storage.characterOwnerType, row.fields) };
   }
 
   /**

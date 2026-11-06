@@ -128,12 +128,9 @@ export default class CopyOnWriteEngine {
     return CowSources.getPairedOwnerIds(rows, CopyOnWriteEngine.kinds(baseRules).owners);
   }
 
-  /**
-   * What a ruleset's copy-on-write data is read from, by its base rules' kinds (`baseRules`), each read none when it
-   * needs none.
-   */
-  getReads(ruleset: RulesetSources, baseRules: BaseRules) {
-    return CowSources.getReads(ruleset, CopyOnWriteEngine.kinds(baseRules));
+  /** What a ruleset's copy-on-write data is read from, by its base rules' kinds, each read none when it needs none. */
+  getReads(ruleset: RulesetSources) {
+    return CowSources.getReads(ruleset, CopyOnWriteEngine.kinds(ruleset.baseRules));
   }
 
   /**

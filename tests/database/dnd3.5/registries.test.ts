@@ -379,7 +379,9 @@ describe("Two modules declaring one name, each its own", () => {
     );
     const [link] = (
       await db.execute<{ from_id: string; to_id: string }>(
-        sql`SELECT from_id, to_id FROM rules.entity_links WHERE role = 'classSkill' LIMIT 1`,
+        sql`SELECT from_id, to_id FROM rules.entity_links l WHERE role = 'classSkill'
+          AND NOT EXISTS (SELECT 1 FROM character.advancement_picks p WHERE p.entity_id = l.to_id)
+          AND NOT EXISTS (SELECT 1 FROM character.links c WHERE c.entity_id = l.to_id) LIMIT 1`,
       )
     ).rows;
     await db.execute(sql`DELETE FROM rules.entities WHERE id = ${link.to_id}`);

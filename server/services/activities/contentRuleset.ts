@@ -9,6 +9,7 @@ import { Engine } from "@/engine/index.ts";
 import { Entities, Modifiers, Requirements } from "@/server/repositories/index.ts";
 import { TARGET_TYPES } from "@/shared/activityTargets.ts";
 import { CUSTOMIZATION_TYPES } from "@/shared/customization/customizationTypes.ts";
+import type { BaseRules } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 
 /** A row of a ruleset's content, by its type: an entity, or what belongs to one (a class level, a customization). */
@@ -39,6 +40,18 @@ const CUSTOMIZATION_OWNERS = new Map<string, (db: Db, id: string) => Promise<Con
     },
   ],
 ]);
+
+/**
+ * The base rules of a row of a ruleset's content: its entity's, as its row names them, a customization's the entity's it
+ * belongs to (a requirement's of a modifier, the modifier's). None once a row on the way is gone, or for a row of no
+ * ruleset's (a character's own modifier).
+ */
+export async function findContentBaseRules(db: Db, { id, type }: ContentRow): Promise<BaseRules | undefined> {
+  const customization = CUSTOMIZATION_OWNERS.get(type);
+  if (!customization) return await Entities.findBaseRules(db, { id });
+  const owner = await customization(db, id);
+  return owner && (await findContentBaseRules(db, owner));
+}
 
 /**
  * The row a row of a ruleset's content beside its entities belongs to: a customization's entity, an owned entity's owner

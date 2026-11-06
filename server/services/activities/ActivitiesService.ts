@@ -20,7 +20,7 @@ import { BASE_RULES_OPTIONS, type BaseRules } from "@/shared/enums.ts";
 import { isOneOf } from "@/shared/isOneOf.ts";
 import type { Invite, Session } from "@/shared/relations.ts";
 
-import { type ContentRow, findContentOwner, findContentRuleset } from "./contentRuleset.ts";
+import { type ContentRow, findContentBaseRules, findContentOwner, findContentRuleset } from "./contentRuleset.ts";
 
 /** Where an activity links to: a page, nowhere (null), or a record the user no longer has access to. */
 type ActivityUrl = string | null | { entityType: "ruleset" | "character"; noAccess: true };
@@ -115,7 +115,7 @@ class ActivitiesService {
     entityType: string,
     section: "modifiers" | "requirements",
   ): Promise<string | null> {
-    const baseRules = await Entities.findBaseRules(db, { id: entityId });
+    const baseRules = await findContentBaseRules(db, { id: entityId, type: entityType });
     if (!baseRules) return null;
     const storage = Engine.storage(baseRules);
     const pages = storage.customizationPages();

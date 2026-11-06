@@ -325,6 +325,8 @@ class RulesetsRepository extends include(
           WHERE ${SUBSCRIBED} ORDER BY ${rulesetExtensionsInRules.ordinal}
         )`,
         id: this.table.id,
+        // A ruleset's base rules are a registered module's, by their foreign key to `rules.modules`
+        baseRules: sql<BaseRules>`${this.table.baseRules}`,
         parentId: this.table.rulesetId,
       })
       .from(this.table)

@@ -55,35 +55,36 @@ const FIXED: Record<string, string> = {
 const FIXTURES: Record<string, string> = {
   // A mechanic, nothing points at, whose type can change; a class with its 20th level alone, a level to move
   "rules.entities": `with ruleset as (
-                       select k.ruleset_id as id from rules.entities k join rules.rulesets r on r.id = k.ruleset_id
+                       select k.ruleset_id as id, r.base_rules from rules.entities k join rules.rulesets r on r.id = k.ruleset_id
                         where r.system and k.type = 'classes'
                           and not exists (select 1 from rules.entities l where l.owner_id = k.id and l.position = 20)
                         limit 1
                      ), mechanic as (
-                       insert into rules.entities (ruleset_id, type, name, description, partition, created_at)
-                       select id, 'mechanics', 'Flanking', 'Two allies on opposite sides', '', now() + interval '1 minute'
+                       insert into rules.entities (base_rules, ruleset_id, type, name, description, partition, created_at)
+                       select base_rules, id, 'mechanics', 'Flanking', 'Two allies on opposite sides', '', now() + interval '1 minute'
                          from ruleset
                      ), klass as (
-                       insert into rules.entities (ruleset_id, type, name, partition)
-                       select id, 'classes', 'Late Bloomer', 'base' from ruleset returning id, ruleset_id
+                       insert into rules.entities (base_rules, ruleset_id, type, name, partition)
+                       select base_rules, id, 'classes', 'Late Bloomer', 'base' from ruleset returning id, ruleset_id, base_rules
                      )
-                     insert into rules.entities (ruleset_id, type, owner_id, owner_type, position, partition)
-                     select ruleset_id, 'class-levels', id, 'classes', 20, '' from klass`,
+                     insert into rules.entities (base_rules, ruleset_id, type, owner_id, owner_type, position, partition)
+                     select base_rules, ruleset_id, 'class-levels', id, 'classes', 20, '' from klass`,
   // A set's value, on a feat with neither set: a field it can move to
-  "rules.entity_fields": `insert into rules.entity_fields (entity_id, entity_type, field, value_kind, multiple, text_value)
-                          select e.id, 'feats', 'WIZARD_PROHIBITED_SCHOOL', 'text', true, 'Necromancy'
+  "rules.entity_fields": `insert into rules.entity_fields (base_rules, entity_id, entity_type, field, value_kind, multiple, text_value)
+                          select e.base_rules, e.id, 'feats', 'WIZARD_PROHIBITED_SCHOOL', 'text', true, 'Necromancy'
                             from rules.entities e join rules.rulesets r on r.id = e.ruleset_id
                            where r.system and e.type = 'feats' and not exists (
                              select 1 from rules.entity_fields f
                               where f.entity_id = e.id and f.field in ('WIZARD_PROHIBITED_SCHOOL', 'FEAT_FAMILY')
                            ) limit 1`,
   // A role a class level's grant can take, and a grant
-  "rules.entity_links": `insert into rules.link_role_kinds (role, from_type, single) values ('alsoGrants', 'class-levels', false);
+  "rules.entity_links": `insert into rules.link_role_kinds (base_rules, role, from_type, single)
+                           values ('Dungeons & Dragons: 3.5', 'alsoGrants', 'class-levels', false);
                          insert into rules.link_roles
-                           (role, from_type, to_type, via_type, single, on_delete, via_on_delete)
-                         values ('alsoGrants', 'class-levels', 'feats', 'aptitudes', false, 'unlink', 'unlink');
-                         insert into rules.entity_links (from_id, from_type, role, single, to_id, to_type, via_id, via_type)
-                         select l.id, 'class-levels', 'grants', false, f.id, 'feats', a.id, 'aptitudes'
+                           (base_rules, role, from_type, to_type, via_type, single, on_delete, via_on_delete)
+                         values ('Dungeons & Dragons: 3.5', 'alsoGrants', 'class-levels', 'feats', 'aptitudes', false, 'unlink', 'unlink');
+                         insert into rules.entity_links (base_rules, from_id, from_type, role, single, to_id, to_type, via_id, via_type)
+                         select l.base_rules, l.id, 'class-levels', 'grants', false, f.id, 'feats', a.id, 'aptitudes'
                            from rules.entities l join rules.rulesets r on r.id = l.ruleset_id
                            join rules.entities f on f.ruleset_id = l.ruleset_id and f.type = 'feats'
                            join rules.entities a on a.ruleset_id = l.ruleset_id and a.type = 'aptitudes'
@@ -91,12 +92,12 @@ const FIXTURES: Record<string, string> = {
                             select 1 from rules.entity_links x where x.from_id = l.id and x.role = 'grants' and x.to_id = f.id
                           ) limit 1`,
   // A ruleset's field of every kind (none is seeded, and only sets of texts are declared), the set's value the newest
-  "rules.ruleset_fields": `insert into rules.field_defs (owner_kind, owner_type, field, value_kind, multiple)
-                           values ('ruleset', 'rulesets', 'TEST_NUMBER', 'number', false),
-                                  ('ruleset', 'rulesets', 'TEST_FLAG', 'flag', false);
-                           insert into rules.ruleset_fields (ruleset_id, field, value_kind, multiple, text_value, number_value, flag_value, created_at)
-                           select r.id, f.field, f.value_kind, f.multiple, f.text_value, f.number_value, f.flag_value, f.created_at
-                             from (select id from rules.rulesets where system order by name limit 1) r,
+  "rules.ruleset_fields": `insert into rules.field_defs (base_rules, owner_kind, owner_type, field, value_kind, multiple)
+                           values ('Dungeons & Dragons: 3.5', 'ruleset', 'rulesets', 'TEST_NUMBER', 'number', false),
+                                  ('Dungeons & Dragons: 3.5', 'ruleset', 'rulesets', 'TEST_FLAG', 'flag', false);
+                           insert into rules.ruleset_fields (base_rules, ruleset_id, field, value_kind, multiple, text_value, number_value, flag_value, created_at)
+                           select r.base_rules, r.id, f.field, f.value_kind, f.multiple, f.text_value, f.number_value, f.flag_value, f.created_at
+                             from (select id, base_rules from rules.rulesets where system order by name limit 1) r,
                                   (values ('RULESET_FEAT_ADVANCEMENT', 'text', true, 'Every third level', null::numeric, null::boolean, now() + interval '1 minute'),
                                           ('TEST_NUMBER', 'number', false, null, 3, null, now()),
                                           ('TEST_FLAG', 'flag', false, null, null, true, now()))
@@ -106,7 +107,8 @@ const FIXTURES: Record<string, string> = {
                                select b.id, e.id, 0 from rules.rulesets b join rules.rulesets e on e.ruleset_id = b.id
                                 where b.system and e.system limit 1`,
   // A role a ruleset's link can take
-  "rules.ruleset_links": `insert into rules.ruleset_roles (role, to_type, on_delete) values ('spellAbility', 'abilities', 'unlink')`,
+  "rules.ruleset_links": `insert into rules.ruleset_roles (base_rules, role, to_type, on_delete)
+                          values ('Dungeons & Dragons: 3.5', 'spellAbility', 'abilities', 'unlink')`,
 };
 
 /** The system rows of each compared table (its alias `t`), with the ruleset whose comparison reads them. */

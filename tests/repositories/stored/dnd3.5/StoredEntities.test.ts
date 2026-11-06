@@ -133,7 +133,7 @@ describe("A stored entity's fields", () => {
     });
     expect(await creating({ [ITEM_WEIGHT]: "heavy" })).toBeInstanceOf(Error);
     expect(await creating({ NO_SUCH_FIELD: "x" })).toMatchObject({
-      message: "No module declares the field NO_SUCH_FIELD of items",
+      message: `${DND35_BASE_RULES} declares no field NO_SUCH_FIELD of items`,
     });
   });
 

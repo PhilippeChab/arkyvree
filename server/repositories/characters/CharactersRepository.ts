@@ -1,13 +1,15 @@
 import { and, count, eq, exists, inArray, isNull, not, or, type SQL, sql } from "drizzle-orm";
 
 import type { Db } from "@/drizzle/database.ts";
-import { charactersInCharacter, contributorsInCharacter } from "@/drizzle/schema.ts";
+import { charactersInCharacter, contributorsInCharacter, rulesetsInRules } from "@/drizzle/schema.ts";
+import { Engine } from "@/engine/index.ts";
 import { include } from "@/lib/mixins.ts";
 import BaseRepository, { Visibility } from "@/server/repositories/BaseRepository.ts";
 import { GuardsStaleEdits } from "@/server/repositories/concerns/GuardsStaleEdits.ts";
 import { Paginates, type Pagination } from "@/server/repositories/concerns/Paginates.ts";
 import { Searches } from "@/server/repositories/concerns/Searches.ts";
 import StoredCharacters, { type CharacterValuesWrite } from "@/server/repositories/stored/StoredCharacters.ts";
+import { toQualified } from "@/server/repositories/stored/toQualified.ts";
 import type { Character } from "@/shared/relations.ts";
 
 /**
@@ -54,6 +56,17 @@ class CharactersRepository extends include(
     );
   }
 
+  /**
+   * The condition that a character is a player character, not another's child (3.5's bonded creatures): its kind its own
+   * ruleset's base rules' player character's (`StorageEngine.playerKind`), each base rules' paired with its own.
+   */
+  private isPlayerCharacter(): SQL {
+    const own = Engine.storages().map((storage) => sql`(${storage.baseRules}, ${storage.playerKind()})`);
+    const rulesetId = toQualified(charactersInCharacter.rulesetId);
+    const kind = toQualified(charactersInCharacter.kind);
+    return sql`((SELECT ${rulesetsInRules.baseRules} FROM ${rulesetsInRules} WHERE ${rulesetsInRules.id} = ${rulesetId}), ${kind}) IN (${sql.join(own, sql`, `)})`;
+  }
+
   /** What the user's characters list keeps: its pages and its total share it. */
   private listCondition(db: Db, where: CharacterListWhere) {
     const { accessRole, search, userId, visibility = Visibility.UnarchivedOnly } = where;
@@ -61,7 +74,7 @@ class CharactersRepository extends include(
     const contributes = this.contributesTo(db, userId);
     return this.where([
       accessRole === "owner" ? owns : accessRole === "contributor" ? contributes : or(owns, contributes)!,
-      isNull(this.table.parentCharacterId),
+      this.isPlayerCharacter(),
       this.visibility(visibility),
       this.search(search, [this.table.name, this.table.description]),
     ]);
@@ -150,7 +163,7 @@ class CharactersRepository extends include(
           "userId" in where && eq(this.table.userId, where.userId),
         ],
         [
-          "userId" in where && isNull(this.table.parentCharacterId),
+          "userId" in where && this.isPlayerCharacter(),
           "search" in where && this.search(where.search, [this.table.name]),
           this.visibility(visibility),
         ],
@@ -178,7 +191,7 @@ class CharactersRepository extends include(
         ],
         [
           "kind" in where && eq(this.table.kind, where.kind),
-          "shareToken" in where && isNull(this.table.parentCharacterId),
+          "shareToken" in where && this.isPlayerCharacter(),
           this.visibility(visibility),
         ],
       ),
@@ -226,7 +239,7 @@ class CharactersRepository extends include(
       .where(
         and(
           inArray(charactersInCharacter.rulesetId, where.rulesetIds),
-          isNull(charactersInCharacter.parentCharacterId),
+          this.isPlayerCharacter(),
           or(eq(charactersInCharacter.userId, where.editorId), this.contributesTo(db, where.editorId)),
         ),
       );
