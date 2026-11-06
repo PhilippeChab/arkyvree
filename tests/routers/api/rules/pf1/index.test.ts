@@ -7,8 +7,8 @@ import { getPf1SeedCtx } from "@/tests/support/pf1/seed.ts";
 import { PF1_BASE_RULES } from "@/vocabulary/pf1/baseRules.ts";
 import { CLASS_LEVEL_BAB, CLASS_LEVEL_SKILL_RANKS } from "@/vocabulary/pf1/fields/index.ts";
 
-/** The other base rules, 3.5's, which Pathfinder's are described beside. */
-const DND35_BASE_RULES = BASE_RULES_OPTIONS.find((rules) => rules !== PF1_BASE_RULES)!;
+/** The base rules Pathfinder's were made from, 3.5's, which Pathfinder's are described beside. */
+const DND35_BASE_RULES = BASE_RULES_OPTIONS.find((rules) => rules === "Dungeons & Dragons: 3.5")!;
 
 /** Where a form's field sends its value: its stored field, a link its role; a group, its label. */
 function placeOf(field: FormField) {
@@ -27,9 +27,9 @@ async function allRules() {
 }
 
 describe("Pathfinder's rules", () => {
-  test("are described beside 3.5's, to anyone", async () => {
+  test("are described beside 3.5's and every other base rules', to anyone", async () => {
     expect(DND35_BASE_RULES).toBe("Dungeons & Dragons: 3.5");
-    expect(Object.keys(await allRules()).sort()).toEqual([DND35_BASE_RULES, PF1_BASE_RULES].sort());
+    expect(Object.keys(await allRules()).sort()).toEqual([...BASE_RULES_OPTIONS].sort());
   });
 
   test("give its kinds, its words and its tiers, its spell levels from the cantrips to the 9th", async () => {
@@ -102,7 +102,7 @@ describe("Pathfinder's rules", () => {
   test("are described by the public API too, by the base rules a ruleset names", async () => {
     const { api } = await createKeyedApi();
     const v1 = await expectOk(api.v1.rules.$get());
-    expect(Object.keys(v1).sort()).toEqual([DND35_BASE_RULES, PF1_BASE_RULES].sort());
+    expect(Object.keys(v1).sort()).toEqual([...BASE_RULES_OPTIONS].sort());
     const { rulesetId } = await getPf1SeedCtx();
     const { baseRules } = await expectOk(api.v1.rulesets[":id"].$get({ param: { id: rulesetId } }));
     expect(baseRules).toBe(PF1_BASE_RULES);

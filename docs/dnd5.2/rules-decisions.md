@@ -16,8 +16,9 @@ holds names the code that holds it.
   feat sets.
 - **Skills take no ranks or points.** A skill adds its ability's modifier, the Proficiency Bonus when proficient, twice
   with Expertise, half (rounded down) with Jack of All Trades on an unproficient one, and misc (`SkillsComponent`,
-  `skills.<skill>.proficient`, `.expertise`, `.halfproficient`; Jack of All Trades sets `skills.*.halfproficient`, a
-  skill a ruleset adds included). The level-up has no skills step.
+  `skills.<skill>.proficient`, `.expertise`, `.halfproficient`). The seeded Jack of All Trades sets each of the SRD's
+  skills; a ruleset that adds a skill can set `skills.*.halfproficient`, which reaches every skill, its own included.
+  The level-up has no skills step.
 - **Proficiencies are feats.** A skill, a saving throw, an armor category, a weapon category or kind, a tool, a weapon
   mastery: each is a feat whose modifier sets the path it gives. A skill's Skill Proficiency and Expertise are made with
   the skill, in the Skill Proficiencies and Expertise pools (`SkillProficiencyFeats`, `ExpertiseFeats`), a skill a
@@ -48,7 +49,10 @@ holds names the code that holds it.
   and its magic and misc; its damage, its ability's modifier, an off-hand attack's only when negative without the
   Two-Weapon Fighting style (`combat.twoweapon.ability`). A Versatile weapon in two hands rolls its two-handed dice
   (`Attacks`). A weapon's mastery property shows once a feat sets `items.weapons.<kind>.mastered`.
-- **Extra attacks** are `combat.attacks`, which Extra Attack and the fighter's later features set.
+- **Extra attacks** are `combat.attacks`, which Extra Attack sets to 2 and the fighter's Two and Three Extra Attacks to
+  3 and 4: two classes' Extra Attacks don't stack (a Fighter 5 / Paladin 5 makes 2). The last of them a character gains
+  wins, so a Fighter 11 who then takes a level of another Extra Attack class reads 2, which the table corrects (a
+  template on its own target, `max([combat.attacks], 2)`, is one the engine skips).
 - **Speed** is the species', 10 feet lower in armor whose Strength the wearer lacks, and 5 feet at most past the carrying
   capacity, Strength × 15 lb. for a Small or Medium creature (`CarryingComponent`). The 2024 rules have no load
   categories.
@@ -72,7 +76,27 @@ holds names the code that holds it.
 - **A spell save DC is 8, the Proficiency Bonus and the casting class's spellcasting ability** (`SpellGroupingsComponent`),
   whatever the spell's level.
 
+## Content
+
+- **A subclass is a feat**, picked at its class's 3rd level in the class's subclass pool ("Fighter Subclass"), whose
+  modifiers grant its features at their class levels (`classes.<class>.level`).
+- **An Ability Score Improvement takes any feat the character qualifies for.** The General pool lists every feat, each
+  behind its prerequisites (an Epic Boon's level 19 among them), and the Epic Boon pool every feat: the SRD's "or another
+  feat of your choice for which you qualify". The Ability Score Improvement feat is 21 variants, a spread each (+2 to
+  one ability, or +1 to two), a feat that raises a score of your choice a variant per ability ("Grappler (Strength)").
+- **A species' lineage is a pick** in its lineage pool ("Elf Lineage"), at the first level, whose feats are its
+  subspecies with their traits: an elf's lineage, a gnome's, a dragonborn's ancestry, a goliath's, a tiefling's legacy.
+- **A species that chooses its size is Medium** (a human's, a tiefling's): a Small one's size is a modifier on its
+  character.
+- **Magic Initiate is a feat per spell list** (Cleric, Druid, Wizard), its two cantrips and its level 1 spell rooms on
+  that list.
+
 ## Not modelled
 
-- Weapon Mastery's choices changing at a Long Rest: a mastered weapon is picked at a level, as a feat.
+- Weapon Mastery's choices changing at a Long Rest: a mastered weapon is picked at a level, as a feat. A barbarian's
+  mastery isn't limited to melee weapons, and a mastery's pick doesn't require proficiency with its weapon.
 - Attunement's limit of three items, and a Small character's gear.
+- Skilled's tool proficiencies (it gives three skills), and a Scholar's or another feat's Expertise limited to some
+  skills.
+- A feature with no number the sheet reads: Rage, Sneak Attack, Bardic Inspiration, Channel Divinity, Wild Shape and the
+  like keep their text.

@@ -62,6 +62,9 @@ content/dnd3.5/generated.lock
 content/pf1/generated.next/
 content/pf1/generated.previous/
 content/pf1/generated.lock
+content/dnd5.2/generated.next/
+content/dnd5.2/generated.previous/
+content/dnd5.2/generated.lock
 
 # Dumps
 *.pgdump

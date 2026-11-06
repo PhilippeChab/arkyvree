@@ -10,6 +10,289 @@
     },
     "type": "class"
   },
+  "overrides": {
+    "Monk": {
+      "proficiency_choices": [
+        {
+          "choose": 2,
+          "desc": "Choose 2: Acrobatics, Athletics, History, Insight, Religion, or Stealth",
+          "from": {
+            "option_set_type": "options_array",
+            "options": [
+              {
+                "item": {
+                  "index": "skill-acrobatics",
+                  "name": "Skill: Acrobatics"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-athletics",
+                  "name": "Skill: Athletics"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-history",
+                  "name": "Skill: History"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-insight",
+                  "name": "Skill: Insight"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-religion",
+                  "name": "Skill: Religion"
+                },
+                "option_type": "reference"
+              },
+              {
+                "item": {
+                  "index": "skill-stealth",
+                  "name": "Skill: Stealth"
+                },
+                "option_type": "reference"
+              }
+            ]
+          },
+          "type": "proficiencies"
+        },
+        {
+          "choose": 1,
+          "desc": "Choose one type of artisan's tools or one musical instrument",
+          "from": {
+            "option_set_type": "options_array",
+            "options": [
+              {
+                "choice": {
+                  "choose": 1,
+                  "desc": "artisan's tools",
+                  "from": {
+                    "option_set_type": "options_array",
+                    "options": [
+                      {
+                        "item": {
+                          "index": "alchemists-supplies",
+                          "name": "Alchemist's Supplies"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "brewers-supplies",
+                          "name": "Brewer's Supplies"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "tool-calligraphers-supplies",
+                          "name": "Tool: Calligrapher's Supplies"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "carpenters-tools",
+                          "name": "Carpenter's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "cartographers-tools",
+                          "name": "Cartographer's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "cobblers-tools",
+                          "name": "Cobbler's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "cooks-utensils",
+                          "name": "Cook's Utensils"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "glassblowers-tools",
+                          "name": "Glassblower's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "jewelers-tools",
+                          "name": "Jeweler's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "leatherworkers-tools",
+                          "name": "Leatherworker's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "masons-tools",
+                          "name": "Mason's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "painters-supplies",
+                          "name": "Painter's Supplies"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "potters-tools",
+                          "name": "Potter's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "smiths-tools",
+                          "name": "Smith's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "tinkers-tools",
+                          "name": "Tinker's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "weavers-tools",
+                          "name": "Weaver's Tools"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "woodcarvers-tools",
+                          "name": "Woodcarver's Tools"
+                        },
+                        "option_type": "reference"
+                      }
+                    ]
+                  },
+                  "type": "proficiencies"
+                },
+                "option_type": "choice"
+              },
+              {
+                "choice": {
+                  "choose": 1,
+                  "desc": "musical instrument",
+                  "from": {
+                    "option_set_type": "options_array",
+                    "options": [
+                      {
+                        "item": {
+                          "index": "bagpipes",
+                          "name": "Bagpipes"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "drum",
+                          "name": "Drum"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "dulcimer",
+                          "name": "Dulcimer"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "flute",
+                          "name": "Flute"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "lute",
+                          "name": "Lute"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "lyre",
+                          "name": "Lyre"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "horn",
+                          "name": "Horn"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "pan-flute",
+                          "name": "Pan flute"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "shawm",
+                          "name": "Shawm"
+                        },
+                        "option_type": "reference"
+                      },
+                      {
+                        "item": {
+                          "index": "viol",
+                          "name": "Viol"
+                        },
+                        "option_type": "reference"
+                      }
+                    ]
+                  },
+                  "type": "proficiencies"
+                },
+                "option_type": "choice"
+              }
+            ]
+          },
+          "type": "proficiencies"
+        }
+      ]
+    }
+  },
   "raw": {
     "class": {
       "hit_die": 8,
