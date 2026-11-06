@@ -21,8 +21,8 @@ export interface SpeciesEntry {
 /** The book's species. */
 export interface SpeciesReference {
   _meta: ScrapedFrom<"species">;
-  /** Corrections made by hand, by species: read by the detection to come. */
-  overrides?: Overrides<unknown>;
+  /** Corrections made by hand, by entry's name: its fields the SRD gives otherwise than the database (a Human's size, which it chooses). */
+  overrides?: Overrides<Partial<SpeciesEntry>>;
   raw: SpeciesEntry[];
 }
 

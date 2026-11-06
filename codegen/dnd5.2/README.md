@@ -22,8 +22,8 @@ read whole, off the files it's gathered from: `--url` doesn't apply, and `--book
 
 ## The source
 
-The SRD 5.2.1 is Wizards of the Coast's, under the Creative Commons Attribution 4.0 license; its text is published as a
-PDF. The [5e-bits database](https://github.com/5e-bits/5e-srd-api) (MIT) transcribes it into JSON, a file per kind of
+The SRD 5.2.1 is under the Creative Commons Attribution 4.0 license, attributed in [OGL.md](../../OGL.md); its text
+is published as a PDF. The [5e-bits database](https://github.com/5e-bits/5e-srd-api) (MIT) transcribes it into JSON, a file per kind of
 entry (`packages/5e-database/src/2024/en/5e-SRD-<Kind>.json`): its classes, their levels and features, subclasses,
 feats, spells, species, their subspecies and traits, backgrounds, equipment and magic items. The parser reads those
 files at one commit of the repository (`DATABASE` in `tools/scraper/BaseScraper.ts`), so a scrape reads the same data
@@ -31,10 +31,17 @@ until that commit is changed on purpose. The database's own links (an entry's `u
 `image`) mean nothing outside its API, and are left out.
 
 What the files give was checked against the SRD 5.2.1's text: its 339 spells (27 cantrips and 312 of levels 1 to 9),
-each class's features by level, a subclass's features at its class's levels, and the Weapons and Armor tables. Where
-the database differs from the SRD, its reference's overrides say what the SRD gives: the items' are a Sling's damage
-(bludgeoning), a Trident's (1d8, 1d10 in two hands; the database has the 2014 rules'), Hide Armor's category (medium),
-a Chain Shirt's weight (20 lb.) and Half Plate Armor's name.
+each class's features by level, a subclass's features at its class's levels, and the Weapons and Armor tables, their
+costs and weights included. Where
+the database differs from the SRD, its reference's overrides say what the SRD gives:
+- items: a Sling's damage (bludgeoning), a Trident's (1d8, 1d10 in two hands; the database has the 2014 rules'), Hide
+  Armor's category (medium), Half Plate Armor's name, and 27 costs and weights (a Longbow's 50 GP, a Pike's 18 lb.);
+- species: a Human's size, Medium or Small, as its player chooses;
+- backgrounds: the Sage's Magic Initiate, the Wizard's;
+- feats: Two-Weapon Fighting's name.
+
+A species' trait the database links from its own side alone (a dragonborn's Draconic Ancestry) is read with the
+species it names.
 
 ## Architecture
 
@@ -87,5 +94,5 @@ when.
 
 ## License
 
-The references hold the SRD 5.2.1's text, which its license requires attributing in Wizards' own words, and no other
+The references hold the SRD 5.2.1's text, which its license requires attributing in the words it gives, and no other
 way: see [OGL.md](../../OGL.md#system-reference-document-521).

@@ -134,6 +134,33 @@ describe("The 5e-bits database's files, read into references", () => {
     expect(elf.subspecies).toEqual([{ index: "drow", name: "Drow", traits: [drow] }]);
   });
 
+  test("give a species the traits that name it but no species or subspecies lists, after its own", () => {
+    const darkvision = { description: "You see in the dark.", index: "darkvision", name: "Darkvision" };
+    const ancestry = {
+      description: "You have draconic ancestry.",
+      index: "draconic-ancestry",
+      name: "Draconic Ancestry",
+    };
+    const dragonborn = { index: "dragonborn", name: "Dragonborn" };
+    const [species] = groupSpecies(
+      [
+        {
+          ...dragonborn,
+          size: "Medium",
+          speed: 30,
+          traits: [{ index: "darkvision", name: "Darkvision" }],
+          type: "Humanoid",
+        },
+      ],
+      [],
+      [
+        { ...ancestry, species: [dragonborn] },
+        { ...darkvision, species: [dragonborn] },
+      ],
+    );
+    expect(species.traits).toEqual([darkvision, ancestry]);
+  });
+
   test("refuse a species naming a trait the database lacks", () => {
     expect(() =>
       groupSpecies(

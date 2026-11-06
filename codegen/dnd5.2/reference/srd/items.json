@@ -8,11 +8,100 @@
     "type": "item"
   },
   "overrides": {
+    "Alchemist's Fire": {
+      "cost": {
+        "quantity": 50,
+        "unit": "gp"
+      }
+    },
+    "Antitoxin": {
+      "weight": 0
+    },
+    "Basket": {
+      "cost": {
+        "quantity": 4,
+        "unit": "sp"
+      }
+    },
+    "Bedroll": {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "weight": 7
+    },
+    "Bell": {
+      "weight": 0
+    },
+    "Blanket": {
+      "cost": {
+        "quantity": 5,
+        "unit": "sp"
+      }
+    },
+    "Burglar's Pack": {
+      "weight": 42
+    },
+    "Caltrops": {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      }
+    },
+    "Chain": {
+      "cost": {
+        "quantity": 50,
+        "unit": "gp"
+      },
+      "weight": 20
+    },
     "Chain Shirt": {
       "weight": 20
     },
+    "Chest": {
+      "cost": {
+        "quantity": 5,
+        "unit": "gp"
+      },
+      "weight": 25
+    },
+    "Climber's Kit": {
+      "weight": 12
+    },
+    "Clothes, Fine": {
+      "weight": 6
+    },
+    "Clothes, Traveler's": {
+      "cost": {
+        "quantity": 2,
+        "unit": "gp"
+      }
+    },
+    "Component Pouch": {
+      "cost": {
+        "quantity": 25,
+        "unit": "gp"
+      },
+      "weight": 2
+    },
+    "Dart": {
+      "cost": {
+        "quantity": 5,
+        "unit": "cp"
+      }
+    },
+    "Diplomat's Pack": {
+      "weight": 39
+    },
     "Half-Plate Armor": {
       "name": "Half Plate Armor"
+    },
+    "Hand Crossbow": {
+      "cost": {
+        "quantity": 75,
+        "unit": "gp"
+      },
+      "weight": 3
     },
     "Hide Armor": {
       "equipment_categories": [
@@ -26,6 +115,42 @@
         }
       ]
     },
+    "Javelin": {
+      "cost": {
+        "quantity": 5,
+        "unit": "sp"
+      }
+    },
+    "Longbow": {
+      "cost": {
+        "quantity": 50,
+        "unit": "gp"
+      }
+    },
+    "Mace": {
+      "weight": 4
+    },
+    "Parchment": {
+      "cost": {
+        "quantity": 1,
+        "unit": "sp"
+      }
+    },
+    "Pike": {
+      "weight": 18
+    },
+    "Poisoner's Kit": {
+      "cost": {
+        "quantity": 50,
+        "unit": "gp"
+      }
+    },
+    "Robe": {
+      "weight": 4
+    },
+    "Sack": {
+      "weight": 0.5
+    },
     "Sling": {
       "damage": {
         "damage_dice": "1d4",
@@ -34,6 +159,16 @@
           "name": "Bludgeoning"
         }
       }
+    },
+    "Spear": {
+      "cost": {
+        "quantity": 1,
+        "unit": "gp"
+      },
+      "weight": 3
+    },
+    "Spikes, Iron": {
+      "weight": 5
     },
     "Trident": {
       "damage": {

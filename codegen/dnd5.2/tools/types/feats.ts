@@ -21,7 +21,7 @@ export interface FeatEntry {
 /** The book's feats. */
 export interface FeatReference {
   _meta: ScrapedFrom<"feat">;
-  /** Corrections made by hand, by feat: read by the detection to come. */
-  overrides?: Overrides<unknown>;
+  /** Corrections made by hand, by entry's name: its fields the SRD gives otherwise than the database (Two-Weapon Fighting's name). */
+  overrides?: Overrides<Partial<FeatEntry>>;
   raw: FeatEntry[];
 }

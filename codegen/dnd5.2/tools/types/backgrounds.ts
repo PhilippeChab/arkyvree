@@ -20,7 +20,7 @@ export interface BackgroundEntry {
 /** The book's backgrounds. */
 export interface BackgroundReference {
   _meta: ScrapedFrom<"background">;
-  /** Corrections made by hand, by background: read by the detection to come. */
-  overrides?: Overrides<unknown>;
+  /** Corrections made by hand, by entry's name: its fields the SRD gives otherwise than the database (the Sage's Magic Initiate, the Wizard's). */
+  overrides?: Overrides<Partial<BackgroundEntry>>;
   raw: BackgroundEntry[];
 }

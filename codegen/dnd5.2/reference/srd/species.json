@@ -1,13 +1,35 @@
 {
   "_meta": {
     "book": "srd",
-    "scrapedAt": "2026-11-06T21:05:55.859Z",
+    "scrapedAt": "2026-11-06T21:28:53.975Z",
     "sourceUrls": {
       "Species": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Species.json",
       "Subspecies": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Subspecies.json",
       "Traits": "https://raw.githubusercontent.com/5e-bits/5e-srd-api/67d8c6aad9a273862fc5ff5f633fcdc06130b94c/packages/5e-database/src/2024/en/5e-SRD-Traits.json"
     },
     "type": "species"
+  },
+  "overrides": {
+    "Human": {
+      "size_options": {
+        "choose": 1,
+        "desc": "Choose a size when you select this species.",
+        "from": {
+          "option_set_type": "options_array",
+          "options": [
+            {
+              "option_type": "size",
+              "size": "Small"
+            },
+            {
+              "option_type": "size",
+              "size": "Medium"
+            }
+          ]
+        },
+        "type": "size_categories"
+      }
+    }
   },
   "raw": [
     {
@@ -227,6 +249,11 @@
           "description": "When you reach character level 5, you can channel draconic magic to give yourself temporary flight. As a Bonus Action, you sprout spectral wings on your back that last for 10 minutes or until you retract the wings (no action required) or have the Incapacitated condition. During that time, you have a Fly Speed equal to your Speed. Your wings appear to be made of the same energy as your Breath Weapon. Once you use this trait, you can't use it again until you finish a Long Rest.",
           "index": "draconic-flight",
           "name": "Draconic Flight"
+        },
+        {
+          "description": "Your lineage stems from a dragon progenitor. Choose the kind of dragon from the Draconic Ancestors table. Your choice affects your Breath Weapon and Damage Resistance traits as well as your appearance.\nDraconic Ancestors\nDragon / Damage Type\nBlack / Acid\nBlue / Lightning\nBrass / Fire\nBronze / Lightning\nCopper / Acid\nGreen / Poison\nGold / Fire\nRed / Fire\nSilver / Cold\nWhite / Cold",
+          "index": "draconic-ancestry",
+          "name": "Draconic Ancestry"
         }
       ],
       "type": "Humanoid"

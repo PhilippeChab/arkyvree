@@ -7,6 +7,15 @@
     },
     "type": "background"
   },
+  "overrides": {
+    "Sage": {
+      "feat": {
+        "index": "magic-initiate",
+        "name": "Magic Initiate",
+        "note": "Wizard"
+      }
+    }
+  },
   "raw": [
     {
       "ability_scores": [
