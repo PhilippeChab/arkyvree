@@ -59,7 +59,7 @@ export const RANGER_CLASS_FEATS: FeatSeed[] = [
     name: "Extra Attack (Ranger)",
     description: "You can attack twice instead of once whenever you take the Attack action on your turn.",
     aptitudes: ["Ranger Features"],
-    modifiers: [{ target: "combat.attacks", operator: "add", value: "1", valueType: "number" }],
+    modifiers: [{ target: "combat.attacks", operator: "set", value: "2", valueType: "number" }],
     fields: { [FEAT_SELECTABLE]: false },
   },
   {

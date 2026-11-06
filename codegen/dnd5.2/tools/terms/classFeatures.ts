@@ -5,7 +5,7 @@
  * Extra Attack's attacks, a Jack of All Trades' half proficiency…). A feature none names is its text alone.
  */
 
-import { bonus, setFlag } from "@/content/core/builders/customization/modifiers.ts";
+import { bonus, setFlag, setNum } from "@/content/core/builders/customization/modifiers.ts";
 import { eqStr } from "@/content/core/builders/customization/requirements.ts";
 import type {
   ModifierSeed,
@@ -94,7 +94,9 @@ export const FEATURE_MODIFIERS: FeatureModifiers[] = [
   },
   { feature: "Deft Explorer", modifiers: [bonus("languages.extrapicks", 2)] },
   { feature: "Druidic", modifiers: [grantLanguage("Druidic")] },
-  { feature: "Extra Attack", modifiers: [bonus("combat.attacks", 1)] },
+  // Each Extra Attack sets the attacks it gives, which two classes' don't add up to: the fighter's later ones set more,
+  // and the last a character gains wins (its feats apply in its levels' order)
+  { feature: "Extra Attack", modifiers: [setNum("combat.attacks", 2)] },
   { feature: "Fast Movement", modifiers: [{ ...bonus("combat.speed.misc", 10), requirements: [NOT_HEAVY] }] },
   { feature: "Improved Critical", modifiers: [bonus("combat.critical.range", 1)] },
   {
@@ -111,8 +113,8 @@ export const FEATURE_MODIFIERS: FeatureModifiers[] = [
   },
   { feature: "Superior Critical", modifiers: [bonus("combat.critical.range", 1)] },
   { feature: "Thieves' Cant", modifiers: [grantLanguage("Thieves' Cant")] },
-  { feature: "Three Extra Attacks", modifiers: [bonus("combat.attacks", 1)] },
-  { feature: "Two Extra Attacks", modifiers: [bonus("combat.attacks", 1)] },
+  { feature: "Three Extra Attacks", modifiers: [setNum("combat.attacks", 4)] },
+  { feature: "Two Extra Attacks", modifiers: [setNum("combat.attacks", 3)] },
   {
     feature: "Unarmored Defense",
     owner: "Barbarian",

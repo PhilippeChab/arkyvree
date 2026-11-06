@@ -49,7 +49,8 @@ const PART_WORDS: Readonly<Record<EntityPart, string>> = {
  */
 export default class RulesetEngine {
   constructor(private readonly view: RulesetView) {
-    this.module = Modules.of(view.ruleset.baseRules);
+    // Its base rules' module, read by every module's kinds of a type: its own refuses another's as not found
+    this.module = Modules.of(view.ruleset.baseRules) as Module;
   }
 
   private readonly module: Module;
