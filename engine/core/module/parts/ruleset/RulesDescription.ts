@@ -366,9 +366,10 @@ export interface RulesDescription {
   kinds: EntityKindDescription[];
   /**
    * What a system ruleset's content is licensed under, under its header (`text`: the license whose text the app
-   * serves): none where nothing needs saying
+   * serves, the Open Game License's; or the Creative Commons Attribution 4.0 license, which the notice links to): none
+   * where nothing needs saying
    */
-  license?: { notice: string; text: "ogl" };
+  license?: { notice: string; text: "cc-by-4.0" | "ogl" };
   /** Each entity type's list on its ruleset's page, by type: its columns of the entities' own values */
   lists: Partial<Record<string, ListDescription>>;
   /** How a class progresses, as its Progression and Spells tabs set it */

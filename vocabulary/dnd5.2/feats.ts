@@ -6,6 +6,9 @@
  * raise, a spell list) is a family of a feat per choice.
  */
 
+/** The pool of Expertise, a feat per skill, which a class's Expertise feature picks in. */
+export const EXPERTISE_POOL = "Expertise";
+
 /** The feats' categories, as the SRD names them, each its feats' pool. */
 export const FEAT_CATEGORIES = ["Origin", "General", "Fighting Style", "Epic Boon"] as const;
 
@@ -40,3 +43,6 @@ export const FEAT_FAMILIES = [
   // A class's subclasses, a feat each
   "Subclass",
 ] as const;
+
+/** The pool of any skill's proficiency, a feat per skill, which a feature that takes any skill picks in. */
+export const SKILL_PROFICIENCIES_POOL = "Skill Proficiencies";

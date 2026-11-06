@@ -36,8 +36,8 @@ export function LicenseNotice({ license, name }: LicenseNoticeProps) {
               <SubsectionTitle>{name}</SubsectionTitle>
               <Typography variant="body2">{license.notice}</Typography>
             </Stack>
-            {/* Its dialog's content mounts as it opens: the license loads then (`text`: the Open Game License alone) */}
-            <OglLicenseText />
+            {/* Its dialog's content mounts as it opens: the Open Game License loads then; a Creative Commons one's notice links to it */}
+            {license.text === "ogl" && <OglLicenseText />}
           </Stack>
         </DialogContent>
         <DialogFooter onCancel={() => setOpen(false)} cancelLabel="Close" />
