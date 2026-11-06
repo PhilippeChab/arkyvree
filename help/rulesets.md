@@ -20,11 +20,11 @@ A ruleset holds:
 - **Settings** — the ruleset's own rules, such as the ability a character's skill points come from, and the levels that give every character a feat or an ability score increase.
 - **Customization** — the layer that wires it all together (an entity's fields, the rules data of its own form; requirements; modifiers).
 
-The base **Core SRD 3.5** ruleset and its sourcebook extensions are read-only — they're maintained by us. To change anything in them, make your own copy. See [What is forking?](forking-and-syncing.md#what-is-forking)
+The base rulesets, **Core SRD 3.5** with its sourcebook extensions and **Core PSD 1**, are read-only — they're maintained by us. To change anything in them, make your own copy. See [What is forking?](forking-and-syncing.md#what-is-forking)
 
 ## What is the Ruleset lifecycle?
 
-A user-owned ruleset has three states: **Draft**, **Published**, **Archived**. The base **Core SRD 3.5** ruleset and its sourcebook extensions stay Published — they're maintained by us and have no lifecycle.
+A user-owned ruleset has three states: **Draft**, **Published**, **Archived**. The base rulesets and their sourcebook extensions stay Published — they're maintained by us and have no lifecycle.
 
 **Campaign access is independent of lifecycle state.** If you invite players into a campaign linked to one of your rulesets, those players get character-creation access to the ruleset — even if it's a private Draft. The campaign membership is the access grant.
 

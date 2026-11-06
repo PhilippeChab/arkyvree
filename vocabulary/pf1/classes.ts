@@ -64,8 +64,14 @@ export const MAX_TABLE_COUNT = 99;
 /** The fewest hit points a level gives, whatever its Constitution: 1. */
 export const MIN_HIT_POINTS_PER_LEVEL = 1;
 
-/** A save's progression by hit dice: a good one's base plus one per two, a poor one's one per three. */
+/**
+ * A save's progression by hit dice, a point per so many of them counted from `offset`, over its base: a base class's good
+ * one's 2 plus one per two, its poor one's one per three; a prestige class's good one's one per two from +1 at its 1st
+ * level, its poor one's one per three from +0 (the Core Rulebook's prestige class tables).
+ */
 export const SAVE_PROGRESSIONS = {
-  good: { base: 2, hitDicePerPoint: 2 },
-  poor: { base: 0, hitDicePerPoint: 3 },
+  good: { base: 2, hitDicePerPoint: 2, offset: 0 },
+  poor: { base: 0, hitDicePerPoint: 3, offset: 0 },
+  prestigeGood: { base: 0, hitDicePerPoint: 2, offset: 1 },
+  prestigePoor: { base: 0, hitDicePerPoint: 3, offset: 1 },
 } as const;

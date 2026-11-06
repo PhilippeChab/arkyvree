@@ -1,0 +1,25 @@
+import type { BaseCodeFile } from "@/codegen/pf1/tools/generator/code/BaseCodeFile.ts";
+import type { RaceSeed } from "@/content/pf1/builders/races/types.ts";
+import type { Constructor } from "@/lib/mixins.ts";
+
+/** Writing a race. */
+export function WritesRaces<B extends Constructor<BaseCodeFile>>(Base: B) {
+  abstract class WritingRaces extends Base {
+    /** A race written as code, a list's item: its fields as stored, then its modifiers. */
+    race(race: RaceSeed): string[] {
+      return [
+        `  {`,
+        `    name: ${this.quote(race.name)},`,
+        `    description: ${this.quote(race.description)},`,
+        `    fields: ${this.seedFields(race.fields)},`,
+        ...this.listField(
+          "modifiers",
+          (race.modifiers ?? []).map((m) => this.plainModifier(m)),
+          "    ",
+        ),
+        `  },`,
+      ];
+    }
+  }
+  return WritingRaces;
+}

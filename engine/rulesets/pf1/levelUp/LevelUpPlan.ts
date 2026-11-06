@@ -29,17 +29,29 @@ export default class LevelUpPlan extends PlannedLevelsState {
 
   /**
    * The skill points the level-up wizard has spent so far (`planned.skillPoints`), spread over the levels it plans as a
-   * save spreads them (within each level's points and max ranks, class skills first): each planned level's skill
-   * ranks, as a save writes them, which the class picker projects. Refused when a planned level isn't one of the view's
-   * class levels.
+   * save spreads them (within each level's points and max ranks, class skills first), each level's points counted with
+   * the feats and spells picked so far (`planned.picks`), as a save counts them: each planned level's skill ranks, as a
+   * save writes them, which the class picker projects. Refused when a planned level isn't one of the view's class
+   * levels.
    */
-  spreadSkillPoints({ abilityIncreases = [], classLevelIds = [], skillPoints = {} }: PlannedSoFar) {
+  spreadSkillPoints({ abilityIncreases = [], classLevelIds = [], picks = [], skillPoints = {} }: PlannedSoFar) {
     if (Object.keys(skillPoints).length === 0) return [];
     const classLevelEntries = classLevelIds.map((classLevelId, i) => ({
       ...this.getSavedClassLevel({ entryId: classLevelId }),
       abilityIncreases: abilityIncreases[i] ?? [],
     }));
-    const distributed = this.distributePicks(classLevelEntries, { feats: {}, spells: {}, skills: skillPoints });
-    return distributed.map((levelPicks) => this.toPickPlans(levelPicks));
+    const byPool = (step: string) => {
+      const pools: Record<string, string[]> = {};
+      for (const { entityId, viaId } of picks.filter((pick) => pick.step === step))
+        if (entityId && viaId) (pools[viaId] ??= []).push(entityId);
+      return pools;
+    };
+    const distributed = this.distributePicks(classLevelEntries, {
+      feats: byPool("feats"),
+      spells: byPool("spells"),
+      skills: skillPoints,
+    });
+    // The class picker projects the skill ranks alone: it picks the plan's feats and spells itself
+    return distributed.map((levelPicks) => this.toPickPlans({ ...levelPicks, feats: {}, spells: {} }));
   }
 }

@@ -73,10 +73,20 @@ function isHeaderRow($: cheerio.CheerioAPI, row: cheerio.Cheerio<Element>): bool
 
 /**
  * An HTML fragment's text, its line breaks spaces, its whitespace collapsed, and none inside parentheses: the site's
- * marks are images, which leave a space where they stood ("(<img /> +1)": "(+1)").
+ * marks are images, which leave a space where they stood ("(<img /> +1)": "(+1)"). A table in it reads a row at a
+ * time, its cells apart and its rows ending in a semicolon, as its text would otherwise run together ("1d8Color of
+ * Beam1Red": "1d8 Color of Beam; 1 Red …").
  */
 function textOf(html: string): string {
-  return normalizeWs(Page.text(cheerio.load(html, null, false).root()))
+  // On the parsed fragment: the site leaves its rows' closing tags out, which the parse puts back
+  const $ = cheerio.load(html, null, false);
+  $("td, th").append(" ");
+  $("tr")
+    .filter((_, row) => normalizeWs($(row).text()) !== "")
+    .append("; ");
+  return normalizeWs(Page.text($.root()))
+    .replace(/\s+;/g, ";")
+    .replace(/;(\s*;)+/g, ";")
     .replace(/\(\s+/g, "(")
     .replace(/\s+\)/g, ")");
 }

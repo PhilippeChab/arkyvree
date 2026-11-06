@@ -6,6 +6,12 @@ import LevelUpState, { type PoolPicks } from "./LevelUpState.ts";
 import type { LevelQuery } from "./requests.ts";
 
 /**
+ * The step's level built with the feats and spells that fit at it (`LevelUpSteps.buildPicked`): the character, its class
+ * level, what fits, and its pools.
+ */
+type Picked = ReturnType<LevelUpSteps["buildPicked"]>;
+
+/**
  * The level-up wizard's steps for a character, from its rows, in their order: its ability increase, its skill points,
  * and its feat and spell pools, each for the character built with the step's level.
  */
@@ -23,7 +29,7 @@ export default class LevelUpSteps extends LevelUpState {
       this.getSavedPicks(step.editedLevel?.id),
     );
     const pools = fitted.character.components.aptitudes.getLevelUpPools(this.pf1, this.countOwnPicks(fitted.picks));
-    return { classLevel, picks: fitted.picks, pools };
+    return { character: fitted.character, classLevel, picks: fitted.picks, pools };
   }
 
   /**
@@ -53,20 +59,19 @@ export default class LevelUpSteps extends LevelUpState {
    * The feats step of the step's level: the pools the character picks feats in with it, each with its room for the
    * feats picked at it (`step.picks`), what of them fits (`fitted`), and its grants.
    */
-  private describeFeatStep(step: LevelQuery) {
-    const { classLevel, picks, pools } = this.buildPicked(step);
+  private describeFeatStep({ classLevel, picks, pools }: Picked) {
     return { ...this.featStep(pools, [classLevel.id]), fitted: picks.feats };
   }
 
   /**
    * The skills step of the step's level: the points to spend, each skill's class status and what the form's points
    * (`step.picks.skills`) come to at the level, and the levels the character has with it, the planned ones before it
-   * too (an edit's level takes the edited one's place). The level's points are all the character has left to spend.
+   * too (an edit's level takes the edited one's place). The level's points are all the character has left to spend,
+   * holding the feats and spells that fit at the level (`picked`), as a save counts them: a racial ability pick on
+   * Intelligence adds to them.
    */
-  private describeSkillStep(step: LevelQuery) {
-    const classLevel = this.readClassLevel(step);
+  private describeSkillStep(step: LevelQuery, { character, classLevel }: Picked) {
     const projection = this.projectStep(classLevel.id, step);
-    const character = this.build(projection);
     // A skill's class status is any of the character's classes' (its max rank, `isClassSkill`) and the leveled class's
     // (its cost, `isCurrentClassSkill`)
     const classSkillIds = this.getClassSkillIds(this.pf1.classSkillsOf(classLevel.ownerId));
@@ -82,8 +87,7 @@ export default class LevelUpSteps extends LevelUpState {
    * The spells step of the step's level: the pools the character picks spells in with it, each with its room for the
    * spells picked at it (`step.picks`), what of them fits (`fitted`), and its grants.
    */
-  private describeSpellStep(step: LevelQuery) {
-    const { classLevel, picks, pools } = this.buildPicked(step);
+  private describeSpellStep({ classLevel, picks, pools }: Picked) {
     return { ...this.spellStep(pools, [classLevel.id]), fitted: picks.spells };
   }
 
@@ -108,13 +112,17 @@ export default class LevelUpSteps extends LevelUpState {
     return this.getClassLevel(classId, level);
   }
 
-  /** Every step of the step's level, by its name: its ability increase, its skills, its feats and its spells. */
+  /**
+   * Every step of the step's level, by its name: its ability increase, its skills, its feats and its spells, the last
+   * three over the level built once with its feats and spells.
+   */
   describeLevelSteps(step: LevelQuery) {
+    const picked = this.buildPicked(step);
     return {
       abilities: this.describeAbilityStep(step),
-      feats: this.describeFeatStep(step),
-      spells: this.describeSpellStep(step),
-      skills: this.describeSkillStep(step),
+      feats: this.describeFeatStep(picked),
+      spells: this.describeSpellStep(picked),
+      skills: this.describeSkillStep(step, picked),
     };
   }
 }

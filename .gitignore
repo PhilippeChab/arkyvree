@@ -58,6 +58,9 @@ codegen/pf1/tools/scraper/.cache/
 content/dnd3.5/generated.next/
 content/dnd3.5/generated.previous/
 content/dnd3.5/generated.lock
+content/pf1/generated.next/
+content/pf1/generated.previous/
+content/pf1/generated.lock
 
 # Dumps
 *.pgdump

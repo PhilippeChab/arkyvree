@@ -3,12 +3,16 @@ import type CharacterState from "@/engine/rulesets/pf1/model/CharacterState.ts";
 import CombatPaths from "@/engine/rulesets/pf1/model/combat/CombatPaths.ts";
 import SpellsPaths from "@/engine/rulesets/pf1/model/spells/SpellsPaths.ts";
 import WeaponRuleFeats, { type WeaponRule } from "@/engine/rulesets/pf1/rules/WeaponRuleFeats.ts";
+import Pf1View from "@/engine/rulesets/pf1/view/Pf1View.ts";
 import type { Constructor } from "@/lib/mixins.ts";
 import type { Modifier } from "@/shared/relations.ts";
+import { stripSeparators } from "@/shared/text.ts";
+import { RACIAL_ABILITY_POOL } from "@/vocabulary/pf1/races.ts";
 
 /**
  * A Pathfinder character's build steps, which core's build runs (`CharacterBase.build`) around its components' setup and finish:
- * its race's adjustments to its ability scores, which its permanent scores keep, before the modifiers (`prepareSheet`),
+ * its race's adjustments to its ability scores (its own, and the one its player picks), which its permanent scores keep,
+ * before the modifiers (`prepareSheet`),
  * its armor class's modifiers applied in each weapon set (`scopesOf`), its weapon rules and its proficiency penalties
  * by the feats the modifiers have given it so far, before each round and after it (`settleSheet`), and its spells' DCs
  * applied last.
@@ -70,9 +74,10 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
     }
 
     /**
-     * What the character's race makes of each ability's misc, by the ability's slug: its modifiers on the abilities
-     * applied to a misc of 0 as the sheet applies them (any operator, `abilities.*.misc` too: a half-orc's −2
-     * Intelligence).
+     * What the character's race makes of each ability's misc, by the ability's slug: its modifiers on the abilities,
+     * then those of the feats its levels pick in the race's pool of an ability of its player's choice
+     * (`RACIAL_ABILITY_POOL`: a human's +2 Intelligence), applied to a misc of 0 as the sheet applies them (any
+     * operator, `abilities.*.misc` too: a half-orc's −2 Intelligence).
      */
     private adjustmentsOfRace(): Record<string, number> {
       const abilities = this.components.abilities.getAbilities();
@@ -80,7 +85,10 @@ export function Builds<B extends Constructor<CharacterState>>(Base: B) {
         Object.keys(abilities).map((slug) => [slug, { misc: 0 }]),
       );
       const evaluator = new ModifierEvaluator(this.targetPaths);
-      for (const modifier of this.data.race.modifiers.filter(({ target }) => target.startsWith("abilities.")))
+      const poolId = Pf1View.of(this.rulesetData).aptitudeIdBySlug.get(stripSeparators(RACIAL_ABILITY_POOL));
+      const picked = this.data.feats.filter((feat) => !feat.virtual && poolId !== undefined && feat.viaId === poolId);
+      const modifiers = [this.data.race, ...picked].flatMap((source) => source.modifiers);
+      for (const modifier of modifiers.filter(({ target }) => target.startsWith("abilities.")))
         evaluator.evaluateModifier(modifier, { abilities: { getAbilities: () => raced } });
       return Object.fromEntries(Object.entries(raced).map(([slug, { misc }]) => [slug, misc]));
     }

@@ -7,11 +7,11 @@ export interface ItemLinks {
   madeFrom?: string;
 }
 
-/** A Pathfinder item: an item (`ItemSeed`) with the fields Pathfinder declares an item's, and the template it's made from. */
-export type Pf1ItemSeed = ItemSeed<ItemFields, ItemLinks>;
-
 /**
  * An item's fields a seed gives, as stored: some of those Pathfinder declares an item's (`ENTITY_FIELDS.items`), by stored
  * field, each of its kind.
  */
 export type ItemFields = StoredFieldValues<typeof ENTITY_FIELDS.items>;
+
+/** A Pathfinder item: an item (`ItemSeed`) with the fields Pathfinder declares an item's, and the template it's made from. */
+export type Pf1ItemSeed = ItemSeed<ItemFields, ItemLinks>;

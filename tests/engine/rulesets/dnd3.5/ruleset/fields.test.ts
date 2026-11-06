@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
+import { eq } from "drizzle-orm";
+
 import { rulesetsInRules } from "@/drizzle/schema.ts";
 import { OwnerValues } from "@/engine/core/fields/index.ts";
 import { Engine } from "@/engine/index.ts";
@@ -79,7 +81,11 @@ describe("A ruleset's own fields", () => {
   });
 
   test("of every seeded ruleset rebuild its Settings", async () => {
-    const rulesets = await db.select({ id: rulesetsInRules.id }).from(rulesetsInRules);
+    // Another base rules' ruleset holds its own fields (Pathfinder's: tests/engine/rulesets/pf1/ruleset/)
+    const rulesets = await db
+      .select({ id: rulesetsInRules.id })
+      .from(rulesetsInRules)
+      .where(eq(rulesetsInRules.baseRules, DND35_BASE_RULES));
     const storage = Engine.forRules(DND35_BASE_RULES).storage();
     const held = (await RulesetSettings.findMany(db, { ids: rulesets.map(({ id }) => id) }))
       .map((ruleset) => storage.settingsOf(ruleset))

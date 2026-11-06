@@ -45,7 +45,7 @@ const FIXED: Record<string, string> = {
   "rules.ruleset_fields.owner_type": "always rulesets",
   "rules.ruleset_fields.value_kind": "its field's declaration's (field_defs)",
   "rules.ruleset_links.to_type": ENTITY_TYPE,
-  "rules.rulesets.base_rules": "one module is registered today",
+  "rules.rulesets.base_rules": "its rows hold it: their foreign keys name its id and its base rules",
 };
 
 /**
@@ -77,12 +77,13 @@ const FIXTURES: Record<string, string> = {
                              select 1 from rules.entity_fields f
                               where f.entity_id = e.id and f.field in ('WIZARD_PROHIBITED_SCHOOL', 'FEAT_FAMILY')
                            ) limit 1`,
-  // A role a class level's grant can take, and a grant
+  // A role a class level's grant can take, in every base rules, and a grant
   "rules.entity_links": `insert into rules.link_role_kinds (base_rules, role, from_type, single)
-                           values ('Dungeons & Dragons: 3.5', 'alsoGrants', 'class-levels', false);
+                           select base_rules, 'alsoGrants', 'class-levels', false from rules.modules;
                          insert into rules.link_roles
                            (base_rules, role, from_type, to_type, via_type, single, on_delete, via_on_delete)
-                         values ('Dungeons & Dragons: 3.5', 'alsoGrants', 'class-levels', 'feats', 'aptitudes', false, 'unlink', 'unlink');
+                         select base_rules, 'alsoGrants', 'class-levels', 'feats', 'aptitudes', false, 'unlink', 'unlink'
+                           from rules.modules;
                          insert into rules.entity_links (base_rules, from_id, from_type, role, single, to_id, to_type, via_id, via_type)
                          select l.base_rules, l.id, 'class-levels', 'grants', false, f.id, 'feats', a.id, 'aptitudes'
                            from rules.entities l join rules.rulesets r on r.id = l.ruleset_id
@@ -91,10 +92,11 @@ const FIXTURES: Record<string, string> = {
                           where r.system and l.type = 'class-levels' and not exists (
                             select 1 from rules.entity_links x where x.from_id = l.id and x.role = 'grants' and x.to_id = f.id
                           ) limit 1`,
-  // A ruleset's field of every kind (none is seeded, and only sets of texts are declared), the set's value the newest
+  // A ruleset's field of every kind (none is seeded, and only sets of texts are declared), in every base rules, the
+  // set's value the newest
   "rules.ruleset_fields": `insert into rules.field_defs (base_rules, owner_kind, owner_type, field, value_kind, multiple)
-                           values ('Dungeons & Dragons: 3.5', 'ruleset', 'rulesets', 'TEST_NUMBER', 'number', false),
-                                  ('Dungeons & Dragons: 3.5', 'ruleset', 'rulesets', 'TEST_FLAG', 'flag', false);
+                           select m.base_rules, 'ruleset', 'rulesets', f.field, f.value_kind, false
+                             from rules.modules m, (values ('TEST_NUMBER', 'number'), ('TEST_FLAG', 'flag')) as f (field, value_kind);
                            insert into rules.ruleset_fields (base_rules, ruleset_id, field, value_kind, multiple, text_value, number_value, flag_value, created_at)
                            select r.base_rules, r.id, f.field, f.value_kind, f.multiple, f.text_value, f.number_value, f.flag_value, f.created_at
                              from (select id, base_rules from rules.rulesets where system order by name limit 1) r,
@@ -106,10 +108,13 @@ const FIXTURES: Record<string, string> = {
   "rules.ruleset_extensions": `insert into rules.ruleset_extensions (ruleset_id, extension_id, ordinal)
                                select b.id, e.id, 0 from rules.rulesets b join rules.rulesets e on e.ruleset_id = b.id
                                 where b.system and e.system limit 1`,
-  // A role a ruleset's link can take
+  // A role a ruleset's link can take, in every base rules: the newest link may be any's
   "rules.ruleset_links": `insert into rules.ruleset_roles (base_rules, role, to_type, on_delete)
-                          values ('Dungeons & Dragons: 3.5', 'spellAbility', 'abilities', 'unlink')`,
+                          select base_rules, 'spellAbility', 'abilities', 'unlink' from rules.modules`,
 };
+
+/** The tables a row points to by its id and its base rules: another base rules' row is none it can point to. */
+const REFERENCED_BY_BASE_RULES = ["rules.entities", "rules.rulesets"];
 
 /** The system rows of each compared table (its alias `t`), with the ruleset whose comparison reads them. */
 const SCOPES: Record<string, { from: string; ruleset: string }> = {
@@ -207,7 +212,8 @@ async function operators(table: string): Promise<string[]> {
 
 /**
  * Other ids `column` can point to: rows of the table its foreign key references, else (a customization's owner, a
- * snapshot's entity) entities; an entity of the type the row names it by (`owner_id`'s `owner_type`) when it does.
+ * snapshot's entity) entities; an entity of the type the row names it by (`owner_id`'s `owner_type`) when it does, and
+ * of the row's base rules when it has one, which its foreign keys hold the row it points to to.
  */
 async function otherIds(
   column: string,
@@ -215,11 +221,15 @@ async function otherIds(
   referenced = "rules.entities",
 ): Promise<string[]> {
   const type = row[`${column.replace(/_id$/, "")}_type`];
-  const byType = referenced === "rules.entities" && typeof type === "string";
+  const filters: [string, unknown][] = [];
+  if (referenced === "rules.entities" && typeof type === "string") filters.push(["type", type]);
+  if (REFERENCED_BY_BASE_RULES.includes(referenced) && typeof row.base_rules === "string")
+    filters.push(["base_rules", row.base_rules]);
   const ids = await query<{ id: string }>(
-    `select id::text from ${referenced} where id::text <> coalesce($1, '') ${byType ? "and type = $2" : ""}
+    `select id::text from ${referenced} where id::text <> coalesce($1, '')
+       ${filters.map(([name], i) => `and ${name} = $${i + 2}`).join(" ")}
       order by created_at desc limit 500`,
-    byType ? [row[column], type] : [row[column]],
+    [row[column], ...filters.map(([, value]) => value)],
   );
   return ids.map(({ id }) => id);
 }
@@ -322,6 +332,24 @@ describe("The content comparison (diff-prod)", () => {
     expect(updates.map((line) => line.split(";")[0])).toEqual([
       `UPDATE rules.entity_links SET amount = ${link.amount} WHERE id = $q$${link.id}$q$`,
     ]);
+  });
+
+  // A feat's two like modifiers, one of them under a requirement, share a key: one gone leaves the other
+  test("sees one of two rows of a key gone", async () => {
+    const [twin] = await query<{ id: string; ruleset_id: string }>(
+      `select m.id, o.ruleset_id from customization.modifiers m
+         join rules.entities o on o.id = m.source_id and o.type = m.source_type
+         join rules.rulesets r on r.id = o.ruleset_id
+        where r.system and exists (
+          select 1 from customization.modifiers n
+           where n.id <> m.id and n.source_id = m.source_id and n.source_type = m.source_type and n.target = m.target
+             and n.operator = m.operator and n.value = m.value and n.value_type = m.value_type
+        ) limit 1`,
+    );
+    const before = await pullTable(query, "customization.modifiers", twin.ruleset_id);
+    await query(`delete from customization.modifiers where id = $1`, [twin.id]);
+    const diff = collectDiff(before, await pullTable(query, "customization.modifiers", twin.ruleset_id));
+    expect(diff.onlyInRef).toHaveLength(1);
   });
 
   // Each column of a system row is changed in turn: the comparison of its ruleset has to see it

@@ -1,7 +1,7 @@
 {
   "_meta": {
     "book": "core-rulebook",
-    "scrapedAt": "2026-11-06T00:10:03.843Z",
+    "scrapedAt": "2026-11-06T17:05:28.990Z",
     "sourceUrl": "https://aonprd.com/SourceDisplay.aspx?FixedSource=PRPG%20Core%20Rulebook",
     "type": "item"
   },
@@ -2276,7 +2276,7 @@
     },
     {
       "category": "weapon",
-      "description": "A wooden gallery of stout construction, a siege tower consists of a tall protective shell with a roof section. The lower story of the tower contains the crew members who propel the tower, and provides total cover to those within. A siege tower with the broken condition moves at half speed. If a siege tower is destroyed, the entire tower collapses. Treat this as a cave-in. The upper section of a siege tower provides improved cover for a number of soldiers (see below) and may have pierced walls allowing creatures to fire ranged weapons out the sides. The roof section may have a battlement and may mount a siege engine of the siege tower's size or smaller and a corvus. Siege towers have a base speed of 15 (or 10 feet if protected with medium or heavy armor). Siege towers have a hardness of 5, and hit points based on their size. A Large siege tower has 60 hit points, a Huge one has 240 hit points, a Gargantuan one has 640 hit points, and a Colossal one has 1,250 hit points. Table 3-17: Siege Tower ComplementSizeSoldiersLarge5Huge20Gargantuan50Colossal200",
+      "description": "A wooden gallery of stout construction, a siege tower consists of a tall protective shell with a roof section. The lower story of the tower contains the crew members who propel the tower, and provides total cover to those within. A siege tower with the broken condition moves at half speed. If a siege tower is destroyed, the entire tower collapses. Treat this as a cave-in. The upper section of a siege tower provides improved cover for a number of soldiers (see below) and may have pierced walls allowing creatures to fire ranged weapons out the sides. The roof section may have a battlement and may mount a siege engine of the siege tower's size or smaller and a corvus. Siege towers have a base speed of 15 (or 10 feet if protected with medium or heavy armor). Siege towers have a hardness of 5, and hit points based on their size. A Large siege tower has 60 hit points, a Huge one has 240 hit points, a Gargantuan one has 640 hit points, and a Colossal one has 1,250 hit points. Table 3-17: Siege Tower ComplementSize Soldiers; Large 5; Huge 20; Gargantuan 50; Colossal 200;",
       "fields": {
         "Aim": "0",
         "Category": "Close Assault",
@@ -3583,7 +3583,7 @@
     },
     {
       "category": "goods",
-      "description": "Barding is a type of armor that covers the head, neck, chest, body, and possibly legs of a horse or other mount. Barding made of medium or heavy armor provides better protection than light barding, but at the expense of speed. Barding can be made of any of the armor types found on Table 1–1: Armor and Shields. Armor for a horse (a Large non-humanoid creature) costs four times as much as armor for a human (a Medium humanoid creature) and also weighs twice as much (see Table 1–2: Armor for Unusual Creatures). If the barding is for a pony or other Medium mount, the price is only double, and the weight is the same as for Medium armor worn by a humanoid. Medium or heavy barding slows a mount that wears it, as shown on the table below. Flying mounts can’t fly in medium or heavy barding. Removing and fitting barding takes five times as long as the figures given on Table 1–3: Donning Armor. A barded animal cannot be used to carry any load other than a rider, and normal saddlebags. Base Speed Barding(40 ft.)(50 ft.)(60 ft.) Medium armor30 ft.35 ft.40 ft. Heavy armor30 ft.*35 ft.*40 ft.* * A mount wearing heavy armor moves at only triple its normal speed when running instead of quadruple.",
+      "description": "Barding is a type of armor that covers the head, neck, chest, body, and possibly legs of a horse or other mount. Barding made of medium or heavy armor provides better protection than light barding, but at the expense of speed. Barding can be made of any of the armor types found on Table 1–1: Armor and Shields. Armor for a horse (a Large non-humanoid creature) costs four times as much as armor for a human (a Medium humanoid creature) and also weighs twice as much (see Table 1–2: Armor for Unusual Creatures). If the barding is for a pony or other Medium mount, the price is only double, and the weight is the same as for Medium armor worn by a humanoid. Medium or heavy barding slows a mount that wears it, as shown on the table below. Flying mounts can’t fly in medium or heavy barding. Removing and fitting barding takes five times as long as the figures given on Table 1–3: Donning Armor. A barded animal cannot be used to carry any load other than a rider, and normal saddlebags. Base Speed; Barding (40 ft.) (50 ft.) (60 ft.); Medium armor 30 ft. 35 ft. 40 ft.; Heavy armor 30 ft.* 35 ft.* 40 ft.*; * A mount wearing heavy armor moves at only triple its normal speed when running instead of quadruple.;",
       "fields": {
         "Price": "×4 (Large creature), ×2 (Medium creature)",
         "Weight": "×2 (Large creature), ×1 (Medium creature)"

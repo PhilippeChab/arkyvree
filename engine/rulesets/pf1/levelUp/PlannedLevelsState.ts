@@ -73,6 +73,19 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
   }
 
   /**
+   * What the planned levels give (`gains`) with each level's skill points counted on the character holding the plan's
+   * feats and spells (`picks`) as a save spreads them, as its sheet counts them: a racial ability pick on Intelligence
+   * adds to the points of the level that picks it (and of every other: the skill point ability counts retroactively).
+   * The gains as they are when the plan spends no skill point.
+   */
+  private countSkillPointsWithPicks(planned: PlannedLevels, picks: LevelPicks, gains: LevelGains): LevelGains {
+    const spends = Object.values(picks.skills).some((points) => points > 0);
+    if (!spends) return gains;
+    const character = this.buildWithPicks(planned, picks, gains);
+    return { ...gains, perLevelSkillPoints: this.computeSkillPointsPerLevel(character, gains.classLevelIds) };
+  }
+
+  /**
    * The feat that gives each pool room past its slots, a pool a feat's modifier creates (`aptitudes.<slug>….allowed`)
    * too: the first-pass feat (one picked in a pool with slots) that targets it.
    */
@@ -161,10 +174,11 @@ export default abstract class PlannedLevelsState extends include(LevelUpState, P
   /**
    * A save's pooled picks (skill ranks, and feats and spells by pool) spread over its planned levels, each level taking
    * what its points and slots allow, in order, and what's past a pool's slots on the level of the feat that gives it
-   * room, or the last (`PicksDistribution`). `gains`: what the levels give, when the caller has them.
+   * room, or the last (`PicksDistribution`). `gains`: what the levels give, when the caller has them; each level's
+   * skill points are counted with the plan's feats and spells (`countSkillPointsWithPicks`).
    */
   protected distributePlannedPicks(planned: PlannedLevels, picks: LevelPicks, gains = this.computeLevelGains(planned)) {
-    const data = this.buildDistributionData(planned, gains);
+    const data = this.buildDistributionData(planned, this.countSkillPointsWithPicks(planned, picks, gains));
     return new PicksDistribution(data).distribute(
       picks,
       this.buildSpellLevelLookup(Object.values(picks.spells).flat()),

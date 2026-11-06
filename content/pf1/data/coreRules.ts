@@ -16,13 +16,10 @@ import {
 import { SECRET_LANGUAGE_TYPE } from "@/vocabulary/pf1/languages.ts";
 import { SKILL_NAMES, type SkillName } from "@/vocabulary/pf1/skills.ts";
 
-/** A skill armor weighs on, once (a Strength or Dexterity skill, the Core Rulebook's skill summary marks them all). */
-const WEIGHED = { [SKILL_IMPACTED_BY_WEIGHT]: true, [SKILL_CHECK_PENALTY_MULTIPLIER]: 1 } as const;
-/** A language that's spoken, not secret. */
-const SPOKEN = { [LANGUAGE_TYPE]: "Spoken" } as const;
 /** A skill used untrained. */
 const UNTRAINED = { [SKILL_USABLE_WITHOUT_TRAINING]: true } as const;
-
+/** A skill armor weighs on, once (a Strength or Dexterity skill, the Core Rulebook's skill summary marks them all). */
+const WEIGHED = { [SKILL_IMPACTED_BY_WEIGHT]: true, [SKILL_CHECK_PENALTY_MULTIPLIER]: 1 } as const;
 /**
  * Each skill's description, key ability and fields, by its name, as the Core Rulebook's skill summary gives them:
  * whether armor weighs on it (once on each, Swim's included) and whether it can be used untrained, each none when not.
@@ -66,6 +63,9 @@ const SKILL_FIELDS: Record<SkillName, Omit<SkillSeed, "name">> = {
   "Swim": { description: "Swim, dive, and stay afloat in rough water.", links: { keyAbility: "Strength" }, fields: { ...WEIGHED, ...UNTRAINED } },
   "Use Magic Device": { description: "Activate magic items you otherwise couldn't, such as a scroll of a spell not on your list.", links: { keyAbility: "Charisma" } },
 };
+
+/** A language that's spoken, not secret. */
+const SPOKEN = { [LANGUAGE_TYPE]: "Spoken" } as const;
 
 export const ABILITIES: AbilitySeed[] = [
   { name: "Strength", description: "Measures physical power and carrying capacity" },

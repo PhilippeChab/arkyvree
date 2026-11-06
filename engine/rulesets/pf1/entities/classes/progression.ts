@@ -18,7 +18,12 @@ const LEVEL_PRESETS = ClassProgressions.describePresets();
 /** What a table in a book heads its level column with, in lower case. */
 const POSITION_ALIASES = ["level", "lvl"];
 /** What a class level form's save presets read: a label for each of their progressions. */
-const SAVE_PRESET_LABELS: Record<SaveType, string> = { good: "Good", poor: "Poor" };
+const SAVE_PRESET_LABELS: Record<SaveType, string> = {
+  good: "Good",
+  poor: "Poor",
+  prestigeGood: "Prestige Good",
+  prestigePoor: "Prestige Poor",
+};
 
 /**
  * How a Pathfinder class progresses: its base attack bonus (as the sheet writes it, "+6/+1"; good, medium or poor, a point

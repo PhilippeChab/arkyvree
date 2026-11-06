@@ -1,3 +1,4 @@
+import type { RaceEntry } from "@/codegen/pf1/tools/types/races.ts";
 import { bonus } from "@/content/core/builders/customization/modifiers.ts";
 import type { Modifier } from "@/content/core/builders/customization/types.ts";
 import { grantFeat } from "@/content/pf1/builders/feats/possession.ts";
@@ -10,8 +11,6 @@ import { SIZE_OPTIONS } from "@/vocabulary/pf1/sizes.ts";
 import { SKILL_NAMES } from "@/vocabulary/pf1/skills.ts";
 import { ALL_WEAPONS, MARTIAL_WEAPONS, SIMPLE_WEAPONS } from "@/vocabulary/pf1/weapons.ts";
 
-import type { RaceEntry } from "../types/races.ts";
-
 /** The saves a bonus "on all saving throws" adds to. */
 const SAVES = ["fortitude", "reflex", "will"];
 
@@ -23,8 +22,9 @@ function signed(text: string): number {
 /**
  * A race's racial traits read into its seed: its size and speed, and its modifiers. A trait's bonus is read only when
  * it always applies: one on checks "made to" do something, against some creatures or effects, or of the race's choice
- * ("+2 to One Ability Score", "a Craft or Profession skill of their choice") isn't, and is left to the table. What no
- * reading takes is listed (`unread`), for review.
+ * ("a Craft or Profession skill of their choice") isn't, and is left to the table; but its ability score of its
+ * player's choice ("+2 to One Ability Score") is a pick in the pool the hand-written core feats give one feat per ability
+ * in. What no reading takes is listed (`unread`), for review.
  */
 export default class RaceTraits {
   constructor(private readonly entry: RaceEntry) {}
@@ -32,8 +32,16 @@ export default class RaceTraits {
   /** The traits read, by label. */
   private readonly read = new Set<string>();
 
-  /** Its ability adjustments: a label of signed scores ("+2 Constitution, +2 Wisdom, –2 Charisma"). */
+  /**
+   * Its ability adjustments: a label of signed scores ("+2 Constitution, +2 Wisdom, –2 Charisma"), or one ability score
+   * of its player's choice ("+2 to One Ability Score"), a pick in the Racial Ability Score pool.
+   */
   private abilities(): Modifier[] {
+    const chosen = this.entry.traits.find(({ label }) => /^\+2 to One Ability Score$/i.test(label));
+    if (chosen) {
+      this.read.add(chosen.label);
+      return [bonus("aptitudes.racialabilityscore.allowed", 1)];
+    }
     const trait = this.entry.traits.find(({ label }) => /^[+–-]\d+ [A-Z][a-z]+(, [+–-]\d+ [A-Z][a-z]+)*$/.test(label));
     if (!trait) return [];
     this.read.add(trait.label);
@@ -115,7 +123,11 @@ export default class RaceTraits {
     return names.map((plural) => {
       const weapon = ALL_WEAPONS.find((name) => `${name.toLowerCase()}s` === plural.toLowerCase());
       if (!weapon) throw new Error(`${this.entry.name}'s weapon familiarity names "${plural}", no weapon's plural`);
-      const group = isOneOf(weapon, SIMPLE_WEAPONS) ? "Simple" : isOneOf(weapon, MARTIAL_WEAPONS) ? "Martial" : "Exotic";
+      const group = isOneOf(weapon, SIMPLE_WEAPONS)
+        ? "Simple"
+        : isOneOf(weapon, MARTIAL_WEAPONS)
+          ? "Martial"
+          : "Exotic";
       return grantFeat(`${group} Weapon Proficiency: ${weapon}`);
     });
   }

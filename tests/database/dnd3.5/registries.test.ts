@@ -260,18 +260,16 @@ describe("The registry sync, which every migrate runs", () => {
     const many = declared((registries) => {
       for (const def of registries.linkRoles) if (def.role === "resistedBy") def.single = false;
     });
+    // 3.5's declaration changed, 3.5's rows rewritten: another module's of one name keep theirs
+    const resisted = (where: ReturnType<typeof sql>) =>
+      countOf(sql`SELECT count(*) AS n FROM rules.entity_links
+        WHERE role = 'resistedBy' AND base_rules = ${DND35_BASE_RULES} AND ${where}`);
     await StoredRegistries.reconcile(db, many);
-    expect(await countOf(sql`SELECT count(*) AS n FROM rules.entity_links WHERE role = 'resistedBy' AND single`)).toBe(
-      0,
-    );
-    expect(await countOf(sql`SELECT count(*) AS n FROM rules.entity_links WHERE role = 'resistedBy'`)).toBeGreaterThan(
-      0,
-    );
+    expect(await resisted(sql`single`)).toBe(0);
+    expect(await resisted(sql`true`)).toBeGreaterThan(0);
 
     await StoredRegistries.reconcile(db);
-    expect(
-      await countOf(sql`SELECT count(*) AS n FROM rules.entity_links WHERE role = 'resistedBy' AND NOT single`),
-    ).toBe(0);
+    expect(await resisted(sql`NOT single`)).toBe(0);
   });
 
   test("refuses to remove a declaration rows still use, naming it", async () => {
@@ -281,7 +279,11 @@ describe("The registry sync, which every migrate runs", () => {
     expect(StoredRegistries.reconcile(db, without)).rejects.toThrow(
       `No module declares the field SPELL_SCHOOL of spells of ${DND35_BASE_RULES} any more, but rows still use it`,
     );
-    expect(await countOf(sql`SELECT count(*) AS n FROM rules.field_defs WHERE field = 'SPELL_SCHOOL'`)).toBe(1);
+    expect(
+      await countOf(
+        sql`SELECT count(*) AS n FROM rules.field_defs WHERE field = 'SPELL_SCHOOL' AND base_rules = ${DND35_BASE_RULES}`,
+      ),
+    ).toBe(1);
   });
 
   test("keeps a character's last change when a declaration rewrites its rows", async () => {
@@ -298,7 +300,8 @@ describe("The registry sync, which every migrate runs", () => {
     });
     await StoredRegistries.reconcile(db, repeating);
     expect(
-      await countOf(sql`SELECT count(*) AS n FROM character.advancement_picks WHERE step = 'hp' AND NOT repeats`),
+      await countOf(sql`SELECT count(*) AS n FROM character.advancement_picks
+        WHERE step = 'hp' AND NOT repeats AND base_rules = ${DND35_BASE_RULES}`),
     ).toBe(0);
     const [after] = (
       await db.execute<{ last_changed_at: string }>(
@@ -323,14 +326,17 @@ describe("Two modules declaring one name, each its own", () => {
         });
       }),
     );
-    expect(await countOf(sql`SELECT count(*) AS n FROM rules.entity_types WHERE type = 'feats'`)).toBe(2);
+    const featTypes = () =>
+      countOf(sql`SELECT count(*) AS n FROM rules.entity_types
+        WHERE type = 'feats' AND base_rules IN (${DND35_BASE_RULES}, ${SECOND})`);
+    expect(await featTypes()).toBe(2);
     expect(
       await rowsOf(sql`SELECT base_rules AS "baseRules" FROM rules.field_defs WHERE field = 'FEAT_SECOND_ONLY'`),
     ).toEqual(linesOf([{ baseRules: SECOND }]));
 
     await StoredRegistries.reconcile(db);
     expect(await countOf(sql`SELECT count(*) AS n FROM rules.modules WHERE base_rules = ${SECOND}`)).toBe(0);
-    expect(await countOf(sql`SELECT count(*) AS n FROM rules.entity_types WHERE type = 'feats'`)).toBe(1);
+    expect(await featTypes()).toBe(1);
   });
 
   test("refuses a 3.5 feat the other's field, and a row whose base rules aren't its entity's or its ruleset's", async () => {

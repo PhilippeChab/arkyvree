@@ -51,7 +51,7 @@ export interface CheckedCharacter extends HoldingCharacter {
  *   other picks, which stay; an edited level's own saved picks stay;
  * - the picks overfill no pool, forced or not (`findOverfullPools`);
  * - the character with them is valid, unless forced: wholly for a level-up, in the issues the level answers for for an
- *   edit (`findEditedLevelIssues`).
+ *   edit (`findEditedLevelIssues`); and a level-up's levels take every skill point it spends, unless forced.
  */
 export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpBase<C> {
   /** What planned levels write: each its advancement in its class level, and its picks. */
@@ -80,6 +80,21 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
       "invalid",
       `${label}${taken} can't be taken there: ${ClassLevels.format(className, next)} comes next`,
     );
+  }
+
+  /**
+   * The skill points a level-up spends (`skills`, by skill) that its planned levels don't take (`distributed`: each
+   * level's, past its points or the skill's max ranks there), an issue a skill: a save drops them, which an unforced
+   * one refuses.
+   */
+  private findDroppedSkillPoints(skills: Record<string, number>, distributed: LevelPicks[]): RulesIssue[] {
+    return Object.entries(skills).flatMap(([skillId, points]) => {
+      const taken = distributed.reduce((sum, level) => sum + (level.skills[skillId] ?? 0), 0);
+      if (points <= taken) return [];
+      const name = this.pf1.skillsById.get(skillId)?.name ?? skillId;
+      const message = `${name}: ${points - taken} skill point(s) past what the levels take`;
+      return [{ category: "skills", message }];
+    });
   }
 
   /**
@@ -113,7 +128,8 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
   /**
    * A level-up's levels (`request`) checked, up to the character with them (`saved`): each level's class level, ability
    * increases, hit points and picks (`planned`), its picks refused when the character holds them already or they
-   * overfill a pool, forced or not; the character's own issues aside, which its callers read.
+   * overfill a pool, forced or not; and what an unforced save refuses, which its callers read (`issues`): the
+   * character's own issues, and the skill points its levels don't take.
    */
   private planSaved({ levels, picks }: LevelUpRequest) {
     const { rows } = this.character;
@@ -145,7 +161,9 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
 
     const saved = holding(picks);
     this.refuseOverfull(saved, picks);
-    return { planned, saved };
+    // What the character with the levels fails, and the skill points the levels don't take, which the save drops
+    const issues = [...this.findDroppedSkillPoints(picks.skills, distributed), ...saved.validate().issues];
+    return { issues, planned, saved };
   }
 
   /**
@@ -248,12 +266,13 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
    * or picks what it can't; the picks are refused when they pick a feat that doesn't stack the character has already
    * (at a saved level or a planned one, a later one too, or by a modifier, as an edit of it would refuse it) or a spell
    * it knows in its pool already, the plan's other picks' gifts too, or overfill a pool, forced or not, and the
-   * character with them with what it fails, unless `force`d. Each level's writes are its advancement in its class level
+   * character with them with what it fails, or skill points the levels don't take (past each level's points and a
+   * skill's max ranks there, which a forced save drops), unless `force`d. Each level's writes are its advancement in its class level
    * and its picks (its hit points, ability increases, skill ranks, feats and spells).
    */
   planLevels(bonded: CharacterInput[], request: LevelUpRequest, force: boolean): AdvancementsPlan {
-    const { planned, saved } = this.planSaved(request);
-    if (!force) RulesError.refuseIssues(saved.validate().issues);
+    const { issues, planned, saved } = this.planSaved(request);
+    if (!force) RulesError.refuseIssues(issues);
     return { ...this.planBondedOf(saved, bonded), advancements: this.advancementsOf(planned) };
   }
 
@@ -263,7 +282,7 @@ export default class LevelsPlanning<C extends CheckedCharacter> extends LevelUpB
    * none when it passes): what's refused even forced refuses them.
    */
   planLevelsForced(request: LevelUpRequest): Pick<AdvancementsPlan, "advancements"> & { issues: RulesIssue[] } {
-    const { planned, saved } = this.planSaved(request);
-    return { advancements: this.advancementsOf(planned), issues: saved.validate().issues };
+    const { issues, planned } = this.planSaved(request);
+    return { advancements: this.advancementsOf(planned), issues };
   }
 }

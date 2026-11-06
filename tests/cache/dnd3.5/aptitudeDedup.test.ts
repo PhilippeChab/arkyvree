@@ -19,8 +19,12 @@ import {
   readView,
   sourcesOf,
 } from "@/tests/support/rulesets.ts";
+import { DND35_BASE_RULES } from "@/vocabulary/dnd3.5/baseRules.ts";
 
-/** The entities of `type` named `name` (`names`), with their rulesets' names, in the rulesets of `rulesetIds`. */
+/**
+ * The 3.5 entities of `type` named `name` (`names`), with their rulesets' names, in the rulesets of `rulesetIds`:
+ * another base rules' rulesets hold their own aptitudes, of the same names ("General").
+ */
 async function namedEntities(type: string, names: string[], rulesetIds?: string[]) {
   return await db
     .select({
@@ -33,6 +37,7 @@ async function namedEntities(type: string, names: string[], rulesetIds?: string[
     .innerJoin(rulesetsInRules, eq(rulesetsInRules.id, entitiesInRules.rulesetId))
     .where(
       and(
+        eq(entitiesInRules.baseRules, DND35_BASE_RULES),
         eq(entitiesInRules.type, type),
         inArray(entitiesInRules.name, names),
         rulesetIds ? inArray(entitiesInRules.rulesetId, rulesetIds) : undefined,
